@@ -7,6 +7,7 @@ import { WebView } from "react-native-webview";
 import { travelApi, type CarResult } from "../../api/travelApi";
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { appFonts } from "../../theme/typography";
+import { colors } from "../../theme/tokens";
 import { useAppTheme } from "../../theme/AppTheme";
 import { formatMarketCurrency } from "../currency/displayCurrency";
 import { buildSearchPlan, safeCanonicalCarResult } from "../flow/travelSearchModel";
@@ -258,8 +259,13 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
     {offer ? <View style={[s.dock, { paddingBottom: 12 + inset.bottom, backgroundColor: theme.surface, borderTopColor: theme.border }]}>
       <View style={s.dockContent}>
         <View style={s.dockPrice}>
-          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={[s.dockTotal, { color: theme.textPrimary }]}>{formatMarketCurrency(offer.pricePerDay, offer.currency)}</Text>
-          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[s.dockPerDay, { color: theme.textSecondary }]}>per day</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={[s.dockTotal, { color: theme.textPrimary }]}>{formatMarketCurrency(offer.totalPrice, offer.currency)}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82} style={[s.dockEyebrow, { color: theme.textSecondary }]}>Estimated rental total</Text>
+        </View>
+        <View style={[s.dockAction, Platform.OS === "android" && s.dockActionAndroid]}>
+          <Pressable accessibilityRole="button" accessibilityState={{ disabled: true }} disabled style={s.continue}>
+            <Text style={s.continueText}>Continue deal</Text>
+          </Pressable>
         </View>
       </View>
     </View> : null}
@@ -439,7 +445,11 @@ const s = StyleSheet.create({
   dockContent: { width: "100%", flexDirection: "row", alignItems: "center", gap: 12 },
   dockPrice: { flex: 1, minWidth: 0, gap: 1 },
   dockTotal: { maxWidth: "100%", fontSize: 19, lineHeight: 22, fontWeight: "600", fontFamily: appFonts.semibold, letterSpacing: -0.25, textAlign: "left", fontVariant: ["tabular-nums"] },
-  dockPerDay: { maxWidth: "100%", fontSize: 10, lineHeight: 13, fontWeight: "500", fontFamily: appFonts.medium, textAlign: "left" },
+  dockEyebrow: { flexShrink: 1, minWidth: 0, fontSize: 11, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
+  dockAction: { flex: 0.78, minWidth: 140, maxWidth: 180 },
+  dockActionAndroid: { flex: 0.76, minWidth: 132, maxWidth: 176 },
+  continue: { width: "100%", minHeight: 48, borderRadius: 8, backgroundColor: colors.blue, paddingHorizontal: 12, alignItems: "center", justifyContent: "center" },
+  continueText: { fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold, color: "white", textAlign: "center" },
   pressed: { opacity: 0.82 },
   loading: { padding: 16, gap: 12 },
   loadingLine: { height: 36, borderRadius: 8 },

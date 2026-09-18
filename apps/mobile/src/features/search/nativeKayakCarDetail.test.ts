@@ -6,6 +6,10 @@ const route = readFileSync("app/car-details.tsx", "utf8");
 const sandboxDetail = readFileSync("src/features/search/NativeKayakCarDetailScreen.tsx", "utf8");
 const normalDetail = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
 const providerPresentation = readFileSync("src/features/search/nativeCarProviderPresentation.ts", "utf8");
+const kayakDockStart = sandboxDetail.indexOf("{offer ? <View style={[s.dock");
+const kayakDockEnd = sandboxDetail.indexOf("</SafeAreaView>;", kayakDockStart);
+const kayakDock = kayakDockStart >= 0 && kayakDockEnd > kayakDockStart ? sandboxDetail.slice(kayakDockStart, kayakDockEnd) : "";
+const kayakCompare = sandboxDetail.slice(sandboxDetail.indexOf("function KayakCompare("), sandboxDetail.indexOf("function TimelineEntry("));
 
 test("native Cars details keep provider detection while KAYAK mirrors the approved Cars Details structure", () => {
   assert.match(route, /NativeKayakCarDetailScreen/);
@@ -91,23 +95,32 @@ test("native KAYAK Cars remove Kurioticket-authored sandbox commentary while ret
   assert.match(sandboxDetail, /providerValue\(offer\.rentalCompanyName\)/);
   assert.match(sandboxDetail, /provider \? <Text numberOfLines=\{1\} style=\{\[s\.providerName/);
   assert.match(sandboxDetail, /supplier \? <View style=\{s\.benefits\}>/);
-  assert.match(sandboxDetail, /formatMarketCurrency\(offer\.pricePerDay, offer\.currency\)/);
-  assert.match(sandboxDetail, />per day<\/Text>/);
+  assert.match(kayakCompare, /money\(offer\.currency, offer\.pricePerDay\)/);
+  assert.match(kayakCompare, />per day<\/Text>/);
   assert.match(sandboxDetail, />Compare deals<\/Text>/);
   assert.match(sandboxDetail, />Pickup and return<\/Text>/);
   assert.match(sandboxDetail, />Location<\/Text>/);
 });
 
-test("native KAYAK Cars dock retains provider price without authored sandbox handoff copy", () => {
-  const source = sandboxDetail.replace(/\s/g, "");
-  assert.match(source, /dock:\{position:"absolute",left:0,right:0,bottom:0,borderTopLeftRadius:22,borderTopRightRadius:22,borderTopWidth:1,paddingHorizontal:16,paddingTop:12,shadowColor:"#0F172A",shadowOffset:\{width:0,height:-8\},shadowOpacity:0\.14,shadowRadius:14,elevation:12\}/);
-  assert.match(source, /dockContent:\{width:"100%",flexDirection:"row",alignItems:"center",gap:12\}/);
-  assert.match(source, /dockPrice:\{flex:1,minWidth:0,gap:1\}/);
-  assert.match(source, /numberOfLines=\{1\}adjustsFontSizeToFitminimumFontScale=\{0\.65\}style=\{\[s\.dockTotal/);
-  assert.match(source, /dockTotal:\{maxWidth:"100%",fontSize:19,lineHeight:22,fontWeight:"600",fontFamily:appFonts\.semibold/);
-  assert.match(source, /numberOfLines=\{1\}adjustsFontSizeToFitminimumFontScale=\{0\.8\}style=\{\[s\.dockPerDay/);
-  assert.match(source, /dockPerDay:\{maxWidth:"100%",fontSize:10,lineHeight:13,fontWeight:"500",fontFamily:appFonts\.medium/);
-  assert.doesNotMatch(source, /dockAction:|continue:|continueText:|OpenKAYAKtestpage|Testpageunavailable|notbookable|simulated/i);
+test("native KAYAK Cars dock uses the total-only disabled handoff", () => {
+  const source = kayakDock.replace(/\s/g, "");
+  assert.match(source, /formatMarketCurrency\(offer\.totalPrice,offer\.currency\)/);
+  assert.match(source, />Estimatedrentaltotal<\/Text>/);
+  assert.match(source, />Continuedeal<\/Text>/);
+  assert.match(source, /accessibilityRole="button"accessibilityState=\{\{disabled:true\}\}disabled/);
+  assert.doesNotMatch(source, /offer\.pricePerDay|>perday<|dockPerDay|onPress|Linking|router|sandboxBookingUrl|sandboxHref|OpenKAYAKtestpage/);
+  assert.match(source, /dockContent/);
+  assert.match(source, /dockPrice/);
+  assert.match(source, /dockAction/);
+  assert.match(source, /dockActionAndroid/);
+  assert.match(source, /s\.continue/);
+  assert.match(source, /s\.continueText/);
+  const detailSource = sandboxDetail.replace(/\s/g, "");
+  assert.match(detailSource, /import\{colors\}from"\.\.\/\.\.\/theme\/tokens"/);
+  assert.match(detailSource, /dockAction:\{flex:0\.78,minWidth:140,maxWidth:180\}/);
+  assert.match(detailSource, /dockActionAndroid:\{flex:0\.76,minWidth:132,maxWidth:176\}/);
+  assert.match(detailSource, /continue:\{width:"100%",minHeight:48,borderRadius:8,backgroundColor:colors\.blue,paddingHorizontal:12,alignItems:"center",justifyContent:"center"\}/);
+  assert.match(detailSource, /continueText:\{fontSize:12,lineHeight:16,fontWeight:"700",fontFamily:appFonts\.bold,color:"white",textAlign:"center"\}/);
 });
 
 test("native KAYAK Cars details do not invent unsupported static-provider facts or fallback notes", () => {
@@ -159,7 +172,8 @@ test("approved and KAYAK details inherit the Results-card price typography contr
     assert.match(source, /daily:\{maxWidth:"100%",fontSize:19,lineHeight:22,fontWeight:"600",fontFamily:appFonts\.semibold,letterSpacing:-0\.25,textAlign:"right",fontVariant:\["tabular-nums"\]\}/);
     assert.match(source, /perDay:\{fontSize:10,lineHeight:13,fontWeight:"500",fontFamily:appFonts\.medium/);
     assert.match(source, /dockTotal:\{maxWidth:"100%",fontSize:19,lineHeight:22,fontWeight:"600",fontFamily:appFonts\.semibold,letterSpacing:-0\.25,textAlign:"left",fontVariant:\["tabular-nums"\]\}/);
-    assert.match(source, /dockPerDay:\{maxWidth:"100%",fontSize:10,lineHeight:13,fontWeight:"500",fontFamily:appFonts\.medium,textAlign:"left"\}/);
+    assert.match(source, /dockEyebrow:\{flexShrink:1,minWidth:0,fontSize:11,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
+    assert.doesNotMatch(source, /dockPerDay:/);
   }
   const resultSource = compact(resultCard);
   assert.match(resultSource, /dailyPrice:\{maxWidth:"100%",fontSize:19,fontWeight:"600",fontFamily:appFonts\.semibold,lineHeight:22,letterSpacing:-0\.25,fontVariant:\["tabular-nums"\]/);
