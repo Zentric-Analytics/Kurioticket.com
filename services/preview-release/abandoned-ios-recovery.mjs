@@ -129,17 +129,17 @@ export async function runAuthorizedAbandonedIosRecovery({
       }
     }
 
-    if (typeof ledger.ensureDetectedRelease !== "function") {
-      throw new Error("iOS recovery requires a durable current-dev release anchor.");
+    if (typeof ledger.reserveNativeBuildRecovery !== "function") {
+      throw new Error("iOS recovery requires atomic current-dev recovery reservation support.");
     }
-    await assertCurrentDev();
-    await ledger.ensureDetectedRelease({ sourceSha: currentDevSha, mode });
     await assertCurrentDev();
     const reservation = await ledger.reserveNativeBuildRecovery({
       sourceSha: currentDevSha,
       platform: "ios",
       fingerprint,
+      releaseMode: mode,
     });
+    await assertCurrentDev();
     let recovery = reservation.action;
     let easHistory = await inspectIosHistory(currentEas, currentDevSha, fingerprint);
     if (["CONFLICT", "MALFORMED_RESPONSE", "FAILED_MATCH", "CANCELED_MATCH"].includes(easHistory.decision)) {

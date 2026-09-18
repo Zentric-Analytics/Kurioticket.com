@@ -158,8 +158,6 @@ test("two provider NO_MATCH checks verify exact current dev before exactly one a
   let historyReads = 0;
   let exactContextCalls = 0;
   let deliveryCalls = 0;
-  let releaseAnchorCalls = 0;
-  let releaseAnchored = false;
   const createdBuildId = "66666666-7777-4888-8999-000000000000";
   const pool = {
     async query(sql) {
@@ -200,18 +198,11 @@ test("two provider NO_MATCH checks verify exact current dev before exactly one a
     pool,
     currentDeliveredNative: async () => null,
     latestNativeBuildRecovery: async () => null,
-    ensureDetectedRelease: async ({ sourceSha: sha, mode }) => {
-      releaseAnchorCalls += 1;
-      assert.equal(sha, currentDevSha);
-      assert.equal(mode, "active");
-      releaseAnchored = true;
-      return { source_sha: sha, mode, state: "DETECTED" };
-    },
-    reserveNativeBuildRecovery: async ({ sourceSha: sha, platform, fingerprint: requested }) => {
-      assert.equal(releaseAnchored, true);
+    reserveNativeBuildRecovery: async ({ sourceSha: sha, platform, fingerprint: requested, releaseMode }) => {
       assert.equal(sha, currentDevSha);
       assert.equal(platform, "ios");
       assert.equal(requested, fingerprint);
+      assert.equal(releaseMode, "active");
       return { created: true, action: structuredClone(recovery) };
     },
     recordAction: async (action) => {
@@ -283,7 +274,6 @@ test("two provider NO_MATCH checks verify exact current dev before exactly one a
   assert.equal(creates, 1);
   assert.equal(historyReads, 4);
   assert.equal(exactContextCalls, 1);
-  assert.equal(releaseAnchorCalls, 1);
   assert.equal(deliveryCalls, 1);
   assert.equal(original.state, "FAILED");
   assert.equal(original.evidence.abandonedReservationRecovery.providerOutcome, "NO_MATCH");

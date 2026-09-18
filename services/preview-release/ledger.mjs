@@ -57,6 +57,14 @@ export class PreviewLedger {
          WHERE source_sha=$1
            AND state NOT IN ('COMPLETE','SUPERSEDED')
            AND (lock_expires_at IS NULL OR lock_expires_at < now() OR lock_owner=$2)
+           AND NOT EXISTS (
+             SELECT 1 FROM preview_release_action recovery
+             WHERE recovery.source_sha=preview_release.source_sha
+               AND recovery.kind IN ('IOS_BUILD','ANDROID_BUILD')
+               AND recovery.identity_key LIKE 'native-build-recovery:%'
+               AND recovery.remote_id IS NULL
+               AND recovery.state NOT IN ('ERRORED','FAILED','CANCELED','CANCELLED','REMOTE_OBJECT_UNAVAILABLE')
+           )
          RETURNING *`,
         [sourceSha, workerId, leaseMs],
       );
@@ -626,16 +634,38 @@ export class PreviewLedger {
     };
   }
 
-  async reserveNativeBuildRecovery({ sourceSha, platform, fingerprint, allowUnavailableDelivered = false }) {
+  async reserveNativeBuildRecovery({ sourceSha, platform, fingerprint, allowUnavailableDelivered = false, releaseMode = null }) {
     assertExactSha(sourceSha);
     const kind = platform === "ios" ? "IOS_BUILD" : platform === "android" ? "ANDROID_BUILD" : null;
     if (!kind || !/^[a-z0-9._-]{3,128}$/i.test(String(fingerprint ?? ""))) throw new Error("Native recovery identity is invalid.");
+    if (releaseMode !== null && !["dry-run", "active"].includes(releaseMode)) throw new Error("Preview recovery release mode is invalid.");
     const canonicalIdentity = `native-build:${platform}:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`;
     const recoveryPrefix = `native-build-recovery:${platform}:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}:`;
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");
       await client.query("SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))", [kind, canonicalIdentity]);
+      if (releaseMode !== null) {
+        await client.query(
+          `INSERT INTO preview_release (source_sha, previous_sha, mode, state)
+           VALUES (
+             $1,
+             (SELECT source_sha FROM preview_release
+              WHERE state='COMPLETE' AND progression_order IS NOT NULL
+              ORDER BY progression_order DESC LIMIT 1),
+             $2,
+             'DETECTED'
+           )
+           ON CONFLICT (source_sha) DO NOTHING`,
+          [sourceSha, releaseMode],
+        );
+        const anchor = await client.query(
+          "SELECT mode FROM preview_release WHERE source_sha=$1 LIMIT 2",
+          [sourceSha],
+        );
+        if (anchor.rowCount !== 1) throw new Error("Preview recovery release anchor was not created uniquely.");
+        if (anchor.rows[0].mode !== releaseMode) throw new Error("Preview recovery release anchor mode mismatch.");
+      }
       const delivered = await client.query(
         "SELECT eas_build_id FROM preview_delivered_native_state WHERE platform=$1 AND fingerprint=$2 LIMIT 1",
         [platform, fingerprint],
