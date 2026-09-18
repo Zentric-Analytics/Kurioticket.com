@@ -17,8 +17,9 @@ test("decorative native glass cannot intercept touch or accessibility", () => {
   const glass = surface.slice(surface.indexOf("<GlassView"), surface.indexOf("/>", surface.indexOf("<GlassView")));
   assert.match(glass, /pointerEvents="none"/);
   assert.match(glass, /accessible=\{false\}/);
-  assert.doesNotMatch(glass, /opacity|tintColor|0\.58/);
-  assert.doesNotMatch(surface.slice(surface.indexOf("nativeGlass:"), surface.indexOf("fallbackGlass:")), /opacity|backgroundColor|0\.58/);
+  assert.match(glass, /style=\{style\}/);
+  assert.doesNotMatch(glass, /opacity|tintColor|backgroundColor|borderColor|intensity|fallbackGlass/);
+  assert.doesNotMatch(surface, /nativeGlass/);
 });
 
 test("unsupported iOS and non-iOS platforms retain the polished BlurView fallback", () => {
@@ -36,5 +37,8 @@ test("Approved and KAYAK Cars share exactly two full-footprint material surfaces
     assert.doesNotMatch(detail, /<BlurView |<GlassView /);
     assert.match(detail, /heroBackGlass:\s*\{\s*\.\.\.StyleSheet\.absoluteFillObject,\s*borderRadius:\s*22\s*\}/);
     assert.match(detail, /heroActionsGlass:\s*\{\s*\.\.\.StyleSheet\.absoluteFillObject,\s*borderRadius:\s*22\s*\}/);
+    const actionsStart = detail.indexOf("heroActions:");
+    const actionsEnd = detail.indexOf("heroActionsGlass:", actionsStart);
+    assert.doesNotMatch(detail.slice(actionsStart, actionsEnd), /overflow|opacity:/);
   }
 });

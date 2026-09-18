@@ -71,9 +71,10 @@ test("Back and Save Share controls use the shared Cars glass material outside sc
   }
 
   const actions = styleRule("heroActions", "heroActionsGlass");
-  for (const contract of ['position:"absolute"', "right:20", "width:96", "height:44", "borderRadius:22", 'flexDirection:"row"', 'overflow:"hidden"', "zIndex:20", "elevation:7"]) {
+  for (const contract of ['position:"absolute"', "right:20", "width:96", "height:44", "borderRadius:22", 'flexDirection:"row"', "zIndex:20", "elevation:7"]) {
     assert.ok(actions.includes(contract), contract);
   }
+  assert.doesNotMatch(actions, /overflow|opacity:/);
   assert.doesNotMatch(back, /backgroundColor/);
   assert.doesNotMatch(actions, /backgroundColor/);
 
