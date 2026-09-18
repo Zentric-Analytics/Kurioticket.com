@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const surface = readFileSync("src/features/search/CarDetailGlassSurface.tsx", "utf8");
+const surface = readFileSync("src/features/search/DetailGlassSurface.tsx", "utf8");
 const approved = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
 const kayak = readFileSync("src/features/search/NativeKayakCarDetailScreen.tsx", "utf8");
+const flight = readFileSync("src/features/search/NativeFlightDetails.tsx", "utf8");
 
 test("Cars Liquid Glass is gated by platform and both native runtime capabilities", () => {
   assert.match(surface, /from "expo-glass-effect"/);
@@ -32,8 +33,8 @@ test("unsupported iOS and non-iOS platforms retain the polished BlurView fallbac
 
 test("Approved and KAYAK Cars share exactly two full-footprint material surfaces", () => {
   for (const detail of [approved, kayak]) {
-    assert.match(detail, /import \{ CarDetailGlassSurface \} from "\.\/CarDetailGlassSurface"/);
-    assert.equal((detail.match(/<CarDetailGlassSurface /g) ?? []).length, 2);
+    assert.match(detail, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
+    assert.equal((detail.match(/<DetailGlassSurface /g) ?? []).length, 2);
     assert.doesNotMatch(detail, /<BlurView |<GlassView /);
     assert.match(detail, /heroBackGlass:\s*\{\s*\.\.\.StyleSheet\.absoluteFillObject,\s*borderRadius:\s*22\s*\}/);
     assert.match(detail, /heroActionsGlass:\s*\{\s*\.\.\.StyleSheet\.absoluteFillObject,\s*borderRadius:\s*22\s*\}/);
@@ -41,4 +42,13 @@ test("Approved and KAYAK Cars share exactly two full-footprint material surfaces
     const actionsEnd = detail.indexOf("heroActionsGlass:", actionsStart);
     assert.doesNotMatch(detail.slice(actionsStart, actionsEnd), /overflow|opacity:/);
   }
+});
+
+
+test("loaded and loading Flight controls share the neutral detail glass material", () => {
+  assert.match(flight, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
+  assert.equal((flight.match(/<DetailGlassSurface /g) ?? []).length, 4);
+  assert.doesNotMatch(flight, /import \{ BlurView \} from "expo-blur"|<BlurView |rgba\(255, 255, 255, 0\.68\)/);
+  assert.match(flight, /heroIconGlass:\{position:"absolute",left:2,right:2,top:2,bottom:2,borderRadius:20\}/);
+  assert.match(flight, /heroActionsGlass:\{position:"absolute",left:0,right:0,top:2,bottom:2,borderRadius:20\}/);
 });

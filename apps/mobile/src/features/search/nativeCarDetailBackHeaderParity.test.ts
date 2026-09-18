@@ -44,11 +44,11 @@ for (const [kind, source] of [["approved", normal], ["KAYAK sandbox", sandbox]] 
     for (const value of ['position:"absolute"', "right:20", "width:96", "height:44", "borderRadius:22", 'flexDirection:"row"', "zIndex:20"]) assert.ok(actions.includes(value), value);
     assert.doesNotMatch(back, /backgroundColor/);
     assert.doesNotMatch(actions, /backgroundColor/);
-    assert.match(source, /import \{ CarDetailGlassSurface \} from "\.\/CarDetailGlassSurface"/);
+    assert.match(source, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
     assert.doesNotMatch(source, /carInformationSurface|#E7EBF1/);
-    assert.equal((source.match(/<CarDetailGlassSurface /g) ?? []).length, 2);
-    assert.match(source, /<CarDetailGlassSurface dark=\{theme\.dark\} style=\{s\.heroBackGlass\}/);
-    assert.match(source, /<CarDetailGlassSurface dark=\{theme\.dark\} style=\{s\.heroActionsGlass\}/);
+    assert.equal((source.match(/<DetailGlassSurface /g) ?? []).length, 2);
+    assert.match(source, /<DetailGlassSurface dark=\{theme\.dark\} style=\{s\.heroBackGlass\}/);
+    assert.match(source, /<DetailGlassSurface dark=\{theme\.dark\} style=\{s\.heroActionsGlass\}/);
     const action = style(source, "heroAction");
     for (const value of ["width:48", "height:44", 'alignItems:"center"', 'justifyContent:"center"']) assert.ok(action.includes(value), value);
   });

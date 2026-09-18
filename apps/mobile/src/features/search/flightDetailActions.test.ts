@@ -72,7 +72,9 @@ test("hero controls preserve independent save and share targets in a smaller gla
   const controlsEnd = native.indexOf("</SafeAreaView>", controlsStart);
   const controls = native.slice(controlsStart, controlsEnd);
   assert.match(native, /heroActions:\{[^}]*width:88,height:44,flexDirection:"row"/);
-  assert.match(native, /heroActionsGlass:\{[^}]*top:2,bottom:2,borderRadius:20[^}]*backgroundColor:"rgba\(255, 255, 255, 0\.68\)"/);
+  assert.match(native, /heroActionsGlass:\{[^}]*top:2,bottom:2,borderRadius:20\}/);
+  assert.match(controls, /<DetailGlassSurface dark=\{false\} style=\{s\.heroActionsGlass\}\/>/);
+  assert.doesNotMatch(native, /rgba\(255, 255, 255, 0\.68\)/);
   assert.match(native, /heroAction:\{width:44,height:44,alignItems:"center",justifyContent:"center"\}/);
   assert.equal(controls.match(/<IconButton/g)?.length, 2);
   assert.match(controls, /label=\{saved\?"Remove saved flight":"Save flight"\} onPress=\{\(\)=>savedFlights\.toggle/);
