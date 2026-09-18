@@ -1357,7 +1357,7 @@ test("Render blueprint matches the active auto-deployed worker and keeps staging
   assert.match(render, /PREVIEW_POLL_INTERVAL_MS\s+value: 60000/);
   assert.match(render, /PREVIEW_LEASE_MS\s+value: 90000/);
   assert.match(render, /name: kurioticket-preview-release-db/);
-  assert.match(render, /name: kurioticket-web-staging[\s\S]*?autoDeployTrigger: off/);
+  assert.match(render, /name: kurioticket-web-staging[\s\S]*?autoDeployTrigger: checksPass/);
   for (const path of PREVIEW_WORKER_BUILD_PATHS) assert.match(render, new RegExp(`- ${path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
 });
 
