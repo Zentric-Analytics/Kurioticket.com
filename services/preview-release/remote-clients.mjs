@@ -76,14 +76,10 @@ export class RenderClient {
     if (this.serviceId !== PREVIEW_IDENTITY.renderStagingServiceId) throw new Error("Unapproved Render service identity.");
     const service = await this.request(`/services/${this.serviceId}`);
     if (service?.id !== this.serviceId || typeof service?.name !== "string") throw new Error("Render service response is malformed or mismatched.");
-    const autoDeployMode = service.autoDeployTrigger
-      ?? (service.autoDeploy === false || service.autoDeploy === "no" ? "off"
-        : service.autoDeploy === true || service.autoDeploy === "yes" ? "commit"
-          : null);
-    if (!new Set(["off", "commit", "checksPass"]).has(autoDeployMode)) {
-      throw new Error("Render Preview staging auto-deploy mode is unsupported.");
-    }
-    return { ...service, autoDeployMode, autoDeployOff: autoDeployMode === "off" };
+    const autoDeployOff = service.autoDeployTrigger === "off"
+      || (service.autoDeployTrigger === undefined && (service.autoDeploy === false || service.autoDeploy === "no"));
+    if (!autoDeployOff) throw new Error("Render Preview staging auto-deploy must be Off; the release worker is the exclusive deployment owner.");
+    return { ...service, autoDeployOff };
   }
   async getPreviewWorkerService() {
     if (this.serviceId !== PREVIEW_IDENTITY.renderWorkerServiceId) throw new Error("Unapproved Render worker identity.");
