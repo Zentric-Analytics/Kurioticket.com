@@ -1344,6 +1344,7 @@ test("web recovery replaces one terminal recorded deploy through an atomic ledge
     },
     github: {},
     render: {
+      getService: async () => ({ autoDeployOff: true }),
       createDeploy: async () => { creates += 1; return replacement; },
       findDeploysBySha: async () => [recorded],
       getDeploy: async (id) => id === recorded.id ? recorded : replacement,
@@ -1992,6 +1993,7 @@ test("web recovery replaces a terminal exact-SHA deploy discovered before the le
     },
     github: {},
     render: {
+      getService: async () => ({ autoDeployOff: true }),
       createDeploy: async () => { creates += 1; return replacement; },
       findDeploysBySha: async () => [deactivated],
       getDeploy: async (id) => id === deactivated.id ? deactivated : replacement,
