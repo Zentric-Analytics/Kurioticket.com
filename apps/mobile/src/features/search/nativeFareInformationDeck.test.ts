@@ -23,7 +23,7 @@ test("fare categories and active content form one connected horizontally scrolla
 
 test("selection uses blue outlines and underlines without turning tab or fare-price text blue",()=>{
   const fareRail=between('<Text style={[s.fareSectionTitle,{color:theme.textPrimary}]}>Pick your fare</Text>','<View testID="fare-information-deck"');
-  assert.match(deck,/style=\{\[s\.fareInfoTabText,\{color:fareHeadingTextColor\},tab===key&&s\.fareInfoTabTextActive\]\}/);
+  assert.match(deck,/style=\{\[s\.fareInfoTabText,\{color:tab===key\?fareHeadingTextColor:theme\.textSecondary\},tab===key&&s\.fareInfoTabTextActive\]\}/);
   assert.match(deck,/tab===key\?<View style=\{s\.fareTabIndicator\}/);
   assert.match(source,/fareTabIndicator:\{[^}]*backgroundColor:ui\.blue/);
   assert.doesNotMatch(deck,/fareTabActiveTextColor|color:tab===key\?ui\.blue/);
@@ -145,35 +145,46 @@ test("deck baseline adds a 10dp local inset to the unchanged 14dp content gap fo
   assert.doesNotMatch(deckStyles,/fareInfoTab(?:Text)?:\{[^}]*(?:transform|position:"absolute")/);
   assert.match(source,/loadingTabRail:\{[^}]*marginHorizontal:-10\}/);
   assert.match(deck,/borderBottomColor:theme\.border/);
-  assert.doesNotMatch(deckStyles,/elevation|shadow/);
+  assert.doesNotMatch(between("fareInfoDeck:", "dealList:"),/elevation|shadow/);
   assert.match(source,/contentBody:\{paddingHorizontal:18,gap:14\}/);
   assert.match(deckStyles,/fareInfoDeck:\{gap:0,marginTop:10\}/);
   assert.doesNotMatch(deckStyles,/fareInfoDeck:\{[^}]*marginTop:24/);
   assert.equal(14+10,24,"the content-body gap and local deck inset provide the intended total separation");
   assert.match(source,/loadingInfoDeck:\{height:174,marginTop:10\}/);
   assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
-  assert.match(source,/fareCard:\{borderRadius:15,minHeight:142,position:"relative",paddingHorizontal:12,paddingTop:4,paddingBottom:8,gap:4\}/);
+  assert.match(source,/fareCard:\{borderWidth:1\.5,borderRadius:15,minHeight:142,position:"relative",paddingHorizontal:12,paddingTop:6,paddingBottom:8,gap:4\}/);
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);
-  assert.match(source,/fareCardSelected:\{borderWidth:1\.5\}/);
+  assert.match(source,/fareCardSelected:\{zIndex:1\}/);
 });
 
 test("fare information typography strengthens state-driven navigation while preserving content metrics",()=>{
   const deckStyles=between("fareInfoDeck:", "notice:");
-  assert.match(deckStyles,/fareInfoTabText:\{fontSize:15,lineHeight:21,fontWeight:"600"\}/);
+  assert.match(deckStyles,/fareInfoTabText:\{fontSize:14,lineHeight:20,fontWeight:"500"\}/);
   assert.match(deckStyles,/fareInfoTabTextActive:\{fontWeight:"700"\}/);
   assert.match(source,/const fareHeadingTextColor=theme\.dark\?theme\.textPrimary:"#1A1A1A"/);
-  assert.match(deck,/color:fareHeadingTextColor/);
+  assert.match(deck,/color:tab===key\?fareHeadingTextColor:theme\.textSecondary/);
   assert.doesNotMatch(deck,/color:tab===key\?ui\.blue:/);
   assert.doesNotMatch(source,/#3F506F|#D3DBEA|#2F466A|#D8E1F0/);
   assert.doesNotMatch(deck,/Fare conditions[^\n]*color:ui\.blue/);
-  assert.match(deckStyles,/fareGroupLabel:\{fontSize:11,lineHeight:15,fontWeight:"600"/);
-  assert.match(deckStyles,/detailLabel:\{[^}]*fontWeight:"500"\}/);
-  assert.match(deckStyles,/detailValue:\{[^}]*fontWeight:"400"[^}]*\}/);
-  assert.match(deckStyles,/conditionState:\{[^}]*fontWeight:"500"\}/);
+  assert.match(deckStyles,/fareGroupLabel:\{fontSize:11,lineHeight:15,fontWeight:"700"/);
+  assert.match(deckStyles,/detailLabel:\{[^}]*fontWeight:"400"\}/);
+  assert.match(deckStyles,/detailValue:\{[^}]*fontWeight:"500"[^}]*\}/);
+  assert.match(deckStyles,/conditionState:\{[^}]*fontWeight:"600"\}/);
   assert.match(deckStyles,/conditionScope:\{[^}]*fontWeight:"400"\}/);
-  assert.match(deckStyles,/serviceDescription:\{[^}]*fontWeight:"500"\}/);
+  assert.match(deckStyles,/serviceDescription:\{[^}]*fontWeight:"600"\}/);
   assert.match(deckStyles,/serviceMeta:\{[^}]*fontWeight:"400"\}/);
-  assert.doesNotMatch(deckStyles,/detailValue:\{[^}]*fontWeight:"600"\}|emptyTitle:\{[^}]*fontWeight:"700"\}/);
+  assert.doesNotMatch(deckStyles,/detailValue:\{[^}]*fontWeight:"700"\}|emptyTitle:\{[^}]*fontWeight:"700"\}/);
+});
+
+test("selected deals gain restrained theme-aware depth without changing their card geometry",()=>{
+  const deals=between('if(tab==="deals")', 'if(tab==="details")');
+  const dealStyles=between("dealList:", "conditionGroup:");
+  assert.match(deals,/backgroundColor:isSelected\?\(theme\.dark\?"#14243E":"#F8FBFF"\):theme\.surface/);
+  assert.match(deals,/isSelected&&\(theme\.dark\?s\.dealCardSelectedDark:s\.dealCardSelectedLight\)/);
+  assert.match(dealStyles,/dealCard:\{[^}]*borderWidth:1[^}]*borderRadius:14/);
+  assert.doesNotMatch(dealStyles,/dealCardSelected(?:Light|Dark):\{[^}]*(?:borderWidth|borderRadius|padding|minHeight)/);
+  assert.match(dealStyles,/dealRadio:\{width:20,height:20,borderRadius:10,borderWidth:1\.5/);
+  assert.match(dealStyles,/dealRadioDot:\{width:8,height:8,borderRadius:4,backgroundColor:ui\.blue\}/);
 });
 
 test("fare content uses category, primary, and supporting colors without duplicating icon semantics in text",()=>{
