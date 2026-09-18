@@ -106,95 +106,42 @@ export async function runAuthorizedAbandonedIosRecovery({
 
   const currentDevSha = await github.latestDevSha();
   if (!EXACT_SHA.test(currentDevSha)) throw new Error("Current dev SHA is malformed during iOS recovery.");
-  const currentRelease = await ledger.releaseBySha(currentDevSha);
-  const currentFingerprint = actionEvidence(currentRelease)?.fingerprints?.ios;
-  if (currentFingerprint !== fingerprint) {
-    throw new Error("Current dev iOS fingerprint no longer matches the abandoned reservation; replacement build is blocked.");
+  if (typeof orchestrator.withExactCurrentNativeContext !== "function") {
+    throw new Error("iOS recovery requires exact-current native verification support.");
   }
 
-  const delivered = typeof ledger.currentDeliveredNative === "function"
-    ? await ledger.currentDeliveredNative("ios")
-    : null;
-  if (delivered?.native_fingerprint === fingerprint || delivered?.fingerprint === fingerprint) {
-    return { state: "ALREADY_DELIVERED", sourceSha: currentDevSha, fingerprint, buildId: delivered.eas_build_id ?? delivered.native_build_id ?? delivered.buildId ?? null };
-  }
-
-  if (typeof ledger.latestNativeBuildRecovery === "function") {
-    const prior = await ledger.latestNativeBuildRecovery({ platform: "ios", fingerprint });
-    if (prior && isTerminalState(normalizeState(prior.state))) {
-      throw new Error("A prior iOS replacement attempt is terminal; a fresh operator authorization is required before another paid build can be created.");
-    }
-  }
-
-  const reservation = await ledger.reserveNativeBuildRecovery({
+  return orchestrator.withExactCurrentNativeContext({
     sourceSha: currentDevSha,
     platform: "ios",
-    fingerprint,
-  });
-  let recovery = reservation.action;
-  let easHistory = await inspectIosHistory(eas, currentDevSha, fingerprint);
-  if (["CONFLICT", "MALFORMED_RESPONSE", "FAILED_MATCH", "CANCELED_MATCH"].includes(easHistory.decision)) {
-    throw new Error(`Authorized iOS recovery history failed closed: ${easHistory.decision}.`);
-  }
-
-  if (!recovery.remote_id && ACTIVE_OR_FINISHED.has(easHistory.decision)) {
-    const attached = await attachAuthorizedIosRecoveryBuild({
-      ledger,
-      recovery,
-      sourceSha: currentDevSha,
-      fingerprint,
-      actionId,
-      build: easHistory.build,
-    });
-    if (!attached.claimed && attached.action?.remote_id !== easHistory.build.id) {
-      throw new Error("iOS recovery action changed while attaching an existing provider build; automatic replacement creation is blocked.");
-    }
-    recovery = attached.action;
-    console.log(JSON.stringify({
-      event: "authorized-ios-recovery-existing-build-attached",
-      actionId,
-      sourceSha: currentDevSha,
-      fingerprint,
-      buildId: recovery.remote_id,
-      status: normalizeState(recovery.state),
-    }));
-  }
-
-  if (!recovery.remote_id) {
-    const recoveryEvidence = actionEvidence(recovery);
-    if (normalizeState(recovery.state) === "CREATING" || recoveryEvidence?.providerCreationAttempt === "STARTED") {
-      throw new Error("An authorized iOS replacement creation attempt already started without a durable EAS build ID; a second paid build is blocked pending separate operator review.");
+    expectedFingerprint: fingerprint,
+  }, async ({ directory, eas: currentEas, assertCurrentDev }) => {
+    const delivered = typeof ledger.currentDeliveredNative === "function"
+      ? await ledger.currentDeliveredNative("ios")
+      : null;
+    if (delivered?.native_fingerprint === fingerprint || delivered?.fingerprint === fingerprint) {
+      return { state: "ALREADY_DELIVERED", sourceSha: currentDevSha, fingerprint, buildId: delivered.eas_build_id ?? delivered.native_build_id ?? delivered.buildId ?? null };
     }
 
-    const claimed = await claimAuthorizedIosRecoveryCreation({
-      ledger,
-      recovery,
-      sourceSha: currentDevSha,
-      fingerprint,
-      actionId,
-      now: now(),
-    });
-    if (!claimed.claimed) {
-      const state = normalizeState(claimed.action?.state);
-      if (state === "CREATING" || actionEvidence(claimed.action)?.providerCreationAttempt === "STARTED") {
-        throw new Error("An authorized iOS replacement creation attempt already started without a durable EAS build ID; a second paid build is blocked pending separate operator review.");
+    if (typeof ledger.latestNativeBuildRecovery === "function") {
+      const prior = await ledger.latestNativeBuildRecovery({ platform: "ios", fingerprint });
+      if (prior && isTerminalState(normalizeState(prior.state))) {
+        throw new Error("A prior iOS replacement attempt is terminal; a fresh operator authorization is required before another paid build can be created.");
       }
-      throw new Error("Another worker changed the iOS recovery reservation before provider creation; automatic creation is blocked.");
     }
-    recovery = claimed.action;
-    console.log(JSON.stringify({
-      event: "authorized-ios-recovery-create-started",
-      actionId,
-      sourceSha: currentDevSha,
-      fingerprint,
-      recoveryIdentity: recovery.identity_key,
-    }));
 
-    easHistory = await inspectIosHistory(eas, currentDevSha, fingerprint);
+    await assertCurrentDev();
+    const reservation = await ledger.reserveNativeBuildRecovery({
+      sourceSha: currentDevSha,
+      platform: "ios",
+      fingerprint,
+    });
+    let recovery = reservation.action;
+    let easHistory = await inspectIosHistory(currentEas, currentDevSha, fingerprint);
     if (["CONFLICT", "MALFORMED_RESPONSE", "FAILED_MATCH", "CANCELED_MATCH"].includes(easHistory.decision)) {
-      throw new Error(`Authorized iOS recovery final history check failed closed: ${easHistory.decision}.`);
+      throw new Error(`Authorized iOS recovery history failed closed: ${easHistory.decision}.`);
     }
-    if (ACTIVE_OR_FINISHED.has(easHistory.decision)) {
+
+    if (!recovery.remote_id && ACTIVE_OR_FINISHED.has(easHistory.decision)) {
       const attached = await attachAuthorizedIosRecoveryBuild({
         ledger,
         recovery,
@@ -204,52 +151,123 @@ export async function runAuthorizedAbandonedIosRecovery({
         build: easHistory.build,
       });
       if (!attached.claimed && attached.action?.remote_id !== easHistory.build.id) {
-        throw new Error("iOS recovery action changed during the final provider-history check; replacement creation is blocked.");
+        throw new Error("iOS recovery action changed while attaching an existing provider build; automatic replacement creation is blocked.");
       }
       recovery = attached.action;
       console.log(JSON.stringify({
-        event: "authorized-ios-recovery-existing-build-attached-after-claim",
+        event: "authorized-ios-recovery-existing-build-attached",
         actionId,
         sourceSha: currentDevSha,
         fingerprint,
         buildId: recovery.remote_id,
         status: normalizeState(recovery.state),
       }));
-    } else {
-      const created = await eas.createIosBuild();
-      if (!created?.id) throw new Error("EAS accepted iOS recovery creation without returning a durable build ID.");
-      recovery = await ledger.recordAction({
+    }
+
+    if (!recovery.remote_id) {
+      const recoveryEvidence = actionEvidence(recovery);
+      if (normalizeState(recovery.state) === "CREATING" || recoveryEvidence?.providerCreationAttempt === "STARTED") {
+        throw new Error("An authorized iOS replacement creation attempt already started without a durable EAS build ID; a second paid build is blocked pending separate operator review.");
+      }
+
+      await assertCurrentDev();
+      const claimed = await claimAuthorizedIosRecoveryCreation({
+        ledger,
+        recovery,
         sourceSha: currentDevSha,
-        kind: "IOS_BUILD",
-        identityKey: recovery.identity_key,
-        remoteId: created.id,
-        state: "CREATED",
-        evidence: {
-          ...created,
-          ...actionEvidence(recovery),
-          nativeFingerprint: fingerprint,
-          nativeArtifactSourceSha: currentDevSha,
-          latestCompatibleSourceSha: currentDevSha,
-          ownershipSource: "OWNER_AUTHORIZED_ABANDONED_RESERVATION_REPLACEMENT",
-          replacesAbandonedActionId: actionId,
-          providerCreationAttempt: "ACCEPTED",
-        },
+        fingerprint,
+        actionId,
+        now: now(),
       });
+      if (!claimed.claimed) {
+        const state = normalizeState(claimed.action?.state);
+        if (state === "CREATING" || actionEvidence(claimed.action)?.providerCreationAttempt === "STARTED") {
+          throw new Error("An authorized iOS replacement creation attempt already started without a durable EAS build ID; a second paid build is blocked pending separate operator review.");
+        }
+        throw new Error("Another worker changed the iOS recovery reservation before provider creation; automatic creation is blocked.");
+      }
+      recovery = claimed.action;
       console.log(JSON.stringify({
-        event: "authorized-ios-recovery-create-accepted",
+        event: "authorized-ios-recovery-create-started",
         actionId,
         sourceSha: currentDevSha,
         fingerprint,
-        buildId: recovery.remote_id,
+        recoveryIdentity: recovery.identity_key,
       }));
-    }
-  }
 
-  const result = await orchestrator.recoverCanonicalNativeBuild({
-    sourceSha: currentDevSha,
-    platform: "ios",
+      easHistory = await inspectIosHistory(currentEas, currentDevSha, fingerprint);
+      if (["CONFLICT", "MALFORMED_RESPONSE", "FAILED_MATCH", "CANCELED_MATCH"].includes(easHistory.decision)) {
+        throw new Error(`Authorized iOS recovery final history check failed closed: ${easHistory.decision}.`);
+      }
+      if (ACTIVE_OR_FINISHED.has(easHistory.decision)) {
+        const attached = await attachAuthorizedIosRecoveryBuild({
+          ledger,
+          recovery,
+          sourceSha: currentDevSha,
+          fingerprint,
+          actionId,
+          build: easHistory.build,
+        });
+        if (!attached.claimed && attached.action?.remote_id !== easHistory.build.id) {
+          throw new Error("iOS recovery action changed during the final provider-history check; replacement creation is blocked.");
+        }
+        recovery = attached.action;
+        console.log(JSON.stringify({
+          event: "authorized-ios-recovery-existing-build-attached-after-claim",
+          actionId,
+          sourceSha: currentDevSha,
+          fingerprint,
+          buildId: recovery.remote_id,
+          status: normalizeState(recovery.state),
+        }));
+      } else {
+        await assertCurrentDev();
+        const created = await currentEas.createIosBuild();
+        if (!created?.id) throw new Error("EAS accepted iOS recovery creation without returning a durable build ID.");
+        recovery = await ledger.recordAction({
+          sourceSha: currentDevSha,
+          kind: "IOS_BUILD",
+          identityKey: recovery.identity_key,
+          remoteId: created.id,
+          state: "CREATED",
+          evidence: {
+            ...created,
+            ...actionEvidence(recovery),
+            nativeFingerprint: fingerprint,
+            nativeArtifactSourceSha: currentDevSha,
+            latestCompatibleSourceSha: currentDevSha,
+            ownershipSource: "OWNER_AUTHORIZED_ABANDONED_RESERVATION_REPLACEMENT",
+            replacesAbandonedActionId: actionId,
+            providerCreationAttempt: "ACCEPTED",
+          },
+        });
+        console.log(JSON.stringify({
+          event: "authorized-ios-recovery-create-accepted",
+          actionId,
+          sourceSha: currentDevSha,
+          fingerprint,
+          buildId: recovery.remote_id,
+        }));
+      }
+    }
+
+    const result = await orchestrator.deliverIos(currentDevSha, directory, { checkpoint: async () => {} }, fingerprint);
+    const finished = await currentEas.viewBuild(result.buildId);
+    const comparison = await currentEas.compareBuildFingerprint(result.buildId, fingerprint);
+    if (String(finished?.status ?? "").toUpperCase() !== "FINISHED"
+      || comparison.expectedHash !== fingerprint || comparison.buildHash !== fingerprint) {
+      throw new Error("Recovered iOS build failed final fingerprint verification.");
+    }
+    console.log(JSON.stringify({
+      event: "authorized-ios-recovery-verified",
+      actionId,
+      sourceSha: currentDevSha,
+      fingerprint,
+      buildId: result.buildId,
+      buildNumber: result.buildNumber,
+    }));
+    return { state: "RECOVERY_COMPLETE", sourceSha: currentDevSha, fingerprint, ...result };
   });
-  return { state: "RECOVERY_COMPLETE", sourceSha: currentDevSha, fingerprint, ...result };
 }
 
 export async function claimAuthorizedIosRecoveryCreation({ ledger, recovery, sourceSha, fingerprint, actionId, now = Date.now() }) {
