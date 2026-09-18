@@ -53,21 +53,24 @@ test("vehicle identity remains the accessible name and category directly below t
   for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"600"', "fontFamily:appFonts.semibold", "letterSpacing:0"]) assert.ok(similarStyle.includes(contract), contract);
 });
 
-test("Hotel-style Back and Save Share controls use the Results information surface outside scrolling content", () => {
-  assert.match(native, /const carInformationSurface = theme\.dark \? carCanvasColor : "#E7EBF1"/);
+test("Back and Save Share controls use accessible frosted glass outside scrolling content", () => {
+  assert.match(native, /import \{ BlurView \} from "expo-blur"/);
+  assert.doesNotMatch(native, /carInformationSurface|#E7EBF1/);
   assert.ok(scrollEnd >= 0 && backStart > scrollEnd && actionsStart > backStart);
   assert.equal((native.match(/accessibilityLabel="Back to Cars results"/g) ?? []).length, 1);
   assert.doesNotMatch(native, />Back to Cars results<\/Text>/);
-  assert.match(native, /accessibilityLabel="Back to Cars results" onPress=\{returnToCarResults\} style=\{\[s\.heroBack,\{top:inset\.top\+12,backgroundColor:carInformationSurface\}\]\}/);
-  assert.match(native, /<View style=\{\[s\.heroActions,\{top:inset\.top\+12,backgroundColor:carInformationSurface\}\]\}>/);
+  assert.match(native, /accessibilityLabel="Back to Cars results" onPress=\{returnToCarResults\} style=\{\[s\.heroBack,\{top:inset\.top\+12\}\]\}/);
+  assert.match(native, /<View style=\{\[s\.heroActions,\{top:inset\.top\+12\}\]\}>/);
+  assert.equal((native.match(/<BlurView /g) ?? []).length, 2);
+  for (const contract of [/pointerEvents="none"/, /intensity=\{32\}/, /tint=\{theme\.dark\?"dark":"light"\}/, /dimezisBlurView/]) assert.match(native, contract);
 
-  const back = styleRule("heroBack", "heroActions");
-  for (const contract of ['position:"absolute"', "left:20", "width:44", "height:44", "borderRadius:22", 'alignItems:"center"', 'justifyContent:"center"', "zIndex:20", "elevation:10"]) {
+  const back = styleRule("heroBack", "heroBackGlass");
+  for (const contract of ['position:"absolute"', "left:20", "width:44", "height:44", "borderRadius:22", 'alignItems:"center"', 'justifyContent:"center"', "zIndex:20", "elevation:7"]) {
     assert.ok(back.includes(contract), contract);
   }
 
-  const actions = styleRule("heroActions", "heroAction");
-  for (const contract of ['position:"absolute"', "right:20", "width:96", "height:44", "borderRadius:22", 'flexDirection:"row"', 'overflow:"hidden"', "zIndex:20", "elevation:10"]) {
+  const actions = styleRule("heroActions", "heroActionsGlass");
+  for (const contract of ['position:"absolute"', "right:20", "width:96", "height:44", "borderRadius:22", 'flexDirection:"row"', 'overflow:"hidden"', "zIndex:20", "elevation:7"]) {
     assert.ok(actions.includes(contract), contract);
   }
   assert.doesNotMatch(back, /backgroundColor/);
