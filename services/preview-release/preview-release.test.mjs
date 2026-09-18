@@ -113,32 +113,35 @@ test("Render preflight reads only the approved staging service", async () => {
   assert.equal(requests.every(({ url }) => url.includes(PREVIEW_IDENTITY.renderStagingServiceId)), true);
 });
 
-test("Render preflight rejects wrong identity, authentication failure, and malformed responses", async () => {
+test("Render preflight preserves staging identity while tolerating admin-managed auto-deploy modes", async () => {
   const wrong = new RenderClient({ apiKey: "x", serviceId: "srv-other", fetchImpl: async () => ({ ok: true, text: async () => "{}" }) });
   await assert.rejects(wrong.getService(), /Unapproved/);
   const unauthorized = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({ ok: false, status: 401 }) });
   await assert.rejects(unauthorized.getService(), /HTTP 401/);
   const malformed = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({ ok: true, text: async () => JSON.stringify({ id: "wrong" }) }) });
   await assert.rejects(malformed.getService(), /malformed or mismatched/);
-  for (const service of [
-    { autoDeployTrigger: "commit" },
-    { autoDeployTrigger: "checksPass" },
-    { autoDeploy: true },
-    { autoDeploy: "yes" },
+  for (const [service, mode, off] of [
+    [{ autoDeployTrigger: "off" }, "off", true],
+    [{ autoDeployTrigger: "commit" }, "commit", false],
+    [{ autoDeployTrigger: "checksPass" }, "checksPass", false],
+    [{ autoDeploy: false }, "off", true],
+    [{ autoDeploy: "no" }, "off", true],
+    [{ autoDeploy: true }, "commit", false],
+    [{ autoDeploy: "yes" }, "commit", false],
   ]) {
-    const drifted = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({
+    const client = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({
       ok: true,
       text: async () => JSON.stringify({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging", ...service }),
     }) });
-    await assert.rejects(drifted.getService(), /staging auto-deploy must be Off/);
+    const resolved = await client.getService();
+    assert.equal(resolved.autoDeployMode, mode);
+    assert.equal(resolved.autoDeployOff, off);
   }
-  for (const service of [{ autoDeployTrigger: "off" }, { autoDeploy: false }, { autoDeploy: "no" }]) {
-    const orchestrated = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({
-      ok: true,
-      text: async () => JSON.stringify({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging", ...service }),
-    }) });
-    assert.equal((await orchestrated.getService()).autoDeployOff, true);
-  }
+  const unknown = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({
+    ok: true,
+    text: async () => JSON.stringify({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging", autoDeployTrigger: "unexpected" }),
+  }) });
+  await assert.rejects(unknown.getService(), /auto-deploy mode is unsupported/);
 });
 
 test("Render deploy creation reconciles an accepted mutation after an empty response", async () => {
@@ -226,7 +229,7 @@ test("provider preflight validates all read-only identities without mutation in 
       config: { mode },
       ledger: { healthCheck: async () => ({ connected: true }) },
       github: { latestDevSha: async () => sha },
-      render: { getService: async () => ({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging", autoDeployOff: true }), latestDeploy: async () => ({ id: "dep-stage", status: "live" }), createDeploy: async () => { mutations += 1; } },
+      render: { getService: async () => ({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket-web-staging", autoDeployOff: false, autoDeployMode: "checksPass" }), latestDeploy: async () => ({ id: "dep-stage", status: "live" }), createDeploy: async () => { mutations += 1; } },
       renderWorker: { getPreviewWorkerService: async () => ({ id: PREVIEW_IDENTITY.renderWorkerServiceId, autoDeployOnCommit: true, branch: "dev" }) },
       eas: { projectInfo: async () => ({ projectId: PREVIEW_IDENTITY.easProjectId }), previewBuildHistory: async () => [], previewUpdateHistoryProbe: async () => [], createIosBuild: async () => { mutations += 1; }, publishUpdate: async () => { mutations += 1; } },
       apple: { previewContext: async () => ({ app: { id: "6797447471" }, group: { id: "group-preview", attributes: { isInternalGroup: true } } }) },
@@ -235,7 +238,8 @@ test("provider preflight validates all read-only identities without mutation in 
     assert.equal(result.mode, mode);
     assert.equal(result.submissionPerformed, false);
     assert.equal(result.renderWorkerAutoDeploy, true);
-    assert.equal(result.renderStagingAutoDeployOff, true);
+    assert.equal(result.renderStagingAutoDeployOff, false);
+    assert.equal(result.renderStagingAutoDeployMode, "checksPass");
     assert.equal(mutations, 0);
   }
 });
