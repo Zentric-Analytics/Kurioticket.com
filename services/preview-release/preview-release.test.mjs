@@ -1252,6 +1252,36 @@ test("exact-checkout preparation fails closed when dependency manifests differ",
   }
 });
 
+test("web delivery adopts Render auto-deploy for exact SHA without creating a competing deploy", async () => {
+  let creates = 0;
+  let historyReads = 0;
+  const deploy = { id: "dep-auto", status: "live", commit: { id: sha } };
+  const orchestrator = new PreviewOrchestrator({
+    config: {},
+    ledger: {
+      getAction: async () => null,
+      recordAction: async (action) => action,
+    },
+    github: {},
+    render: {
+      getService: async () => ({ autoDeployMode: "checksPass", autoDeployOff: false }),
+      findDeploysBySha: async () => {
+        historyReads += 1;
+        return historyReads < 2 ? [] : [deploy];
+      },
+      createDeploy: async () => { creates += 1; return deploy; },
+      getDeploy: async () => deploy,
+    },
+    stagingWait: async ({ targetSha }) => ({ ready: true, commitSha: targetSha }),
+    sleep: async () => {},
+  });
+  const result = await orchestrator.deliverWeb(sha, { checkpoint: async () => {} });
+  assert.equal(creates, 0);
+  assert.equal(historyReads >= 2, true);
+  assert.equal(result.deployId, deploy.id);
+  assert.equal(result.deployedSha, sha);
+});
+
 test("web recovery adopts the recorded Render deploy without creating a duplicate", async () => {
   let creates = 0;
   const actions = [];
