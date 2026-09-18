@@ -188,7 +188,7 @@ test("Render deploy creation reconciles an accepted mutation after an empty resp
     },
   });
   assert.equal((await client.createDeploy(sha, { sleep: async () => {} })).id, deploy.id);
-  assert.equal(requests, 3);
+  assert.equal(requests, 4);
 });
 
 test("Render deploy reconciliation excludes every deployment that existed before the POST", async () => {
