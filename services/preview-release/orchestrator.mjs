@@ -414,8 +414,18 @@ export class PreviewOrchestrator {
 
   async deliverWeb(sha, lease) {
     await lease.checkpoint();
+    const service = await this.render.getService();
+    const workerOwnsDeploys = service.autoDeployOff === true;
     const recorded = await this.ledger.getAction("WEB", sha);
-    const remoteMatches = recorded?.remote_id ? [] : await this.render.findDeploysBySha(sha);
+    let remoteMatches = recorded?.remote_id ? [] : await this.render.findDeploysBySha(sha);
+    if (!recorded?.remote_id && !remoteMatches.length && !workerOwnsDeploys) {
+      for (let attempt = 0; attempt < 120 && !remoteMatches.length; attempt += 1) {
+        await lease.checkpoint();
+        await this.sleep(5_000);
+        remoteMatches = await this.render.findDeploysBySha(sha);
+      }
+      if (!remoteMatches.length) throw new Error("Render auto-deploy did not publish the exact requested staging SHA within the bounded wait.");
+    }
     let deploy = recorded?.remote_id
       ? await this.render.getDeploy(recorded.remote_id)
       : remoteMatches[0] ?? await this.render.createDeploy(sha);
@@ -423,6 +433,7 @@ export class PreviewOrchestrator {
     const initialStatus = String(deploy.status ?? "CREATED").toUpperCase();
     if (["BUILD_FAILED", "UPDATE_FAILED", "CANCELED", "DEACTIVATED"].includes(initialStatus)) {
       await this.ledger.recordAction({ sourceSha: sha, kind: "WEB", identityKey: sha, remoteId: deploy.id, state: initialStatus, evidence: deploy });
+      if (!workerOwnsDeploys) throw new Error(`Render auto-deploy for ${sha} ended in ${initialStatus.toLowerCase()}; worker replacement deploy is disabled while staging auto-deploy is enabled.`);
       await lease.checkpoint();
       const existingReplacements = (await this.render.findDeploysBySha(sha)).filter(({ id }) => id !== deploy.id);
       const replacement = existingReplacements[0] ?? await this.render.createDeploy(sha, { excludeIds: [deploy.id] });
