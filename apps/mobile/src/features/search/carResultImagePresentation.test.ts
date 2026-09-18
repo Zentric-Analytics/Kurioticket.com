@@ -36,7 +36,7 @@ test("native Cars prewarm artwork separately from the virtualized row sample", (
   assert.match(resultsScreen, /Image\.prefetch\(uri\)/);
   assert.match(resultsScreen, /KURIOTICKET_COMPARE_LOGO_URI/);
   assert.match(resultsScreen, /<FlatList ref=\{carScrollRef\}/);
-  assert.match(resultsScreen, /const CAR_RESULT_INITIAL_RENDER_COUNT = 8/);
+  assert.match(resultsScreen, /const CAR_RESULT_INITIAL_RENDER_COUNT = 10/);
   assert.match(resultsScreen, /initialNumToRender=\{CAR_RESULT_INITIAL_RENDER_COUNT\}/);
   assert.match(resultsScreen, /maxToRenderPerBatch=\{6\}/);
   assert.match(resultsScreen, /windowSize=\{7\}/);

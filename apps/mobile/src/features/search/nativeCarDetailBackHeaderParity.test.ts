@@ -47,8 +47,8 @@ for (const [kind, source] of [["approved", normal], ["KAYAK sandbox", sandbox]] 
     assert.match(source, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
     assert.doesNotMatch(source, /carInformationSurface|#E7EBF1/);
     assert.equal((source.match(/<DetailGlassSurface /g) ?? []).length, 2);
-    assert.match(source, /<DetailGlassSurface dark=\{theme\.dark\} style=\{s\.heroBackGlass\}/);
-    assert.match(source, /<DetailGlassSurface dark=\{theme\.dark\} style=\{s\.heroActionsGlass\}/);
+    assert.match(source, /<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical" style=\{s\.heroBackGlass\}/);
+    assert.match(source, /<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical" style=\{s\.heroActionsGlass\}/);
     const action = style(source, "heroAction");
     for (const value of ["width:48", "height:44", 'alignItems:"center"', 'justifyContent:"center"']) assert.ok(action.includes(value), value);
   });
