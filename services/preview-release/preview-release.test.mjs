@@ -173,9 +173,16 @@ test("Render deploy creation reconciles an accepted mutation after an empty resp
   const client = new RenderClient({
     apiKey: "render-secret",
     serviceId: PREVIEW_IDENTITY.renderStagingServiceId,
-    fetchImpl: async (_url, options) => {
+    fetchImpl: async (url, options) => {
       requests += 1;
       if (options.method === "POST") return { ok: true, text: async () => "" };
+      if (url.endsWith(`/services/${PREVIEW_IDENTITY.renderStagingServiceId}`)) {
+        return { ok: true, text: async () => JSON.stringify({
+          id: PREVIEW_IDENTITY.renderStagingServiceId,
+          name: "Kurioticket-web-staging",
+          autoDeployTrigger: "off",
+        }) };
+      }
       historyReads += 1;
       return { ok: true, text: async () => JSON.stringify(historyReads === 1 ? [] : [{ deploy }]) };
     },
@@ -191,8 +198,15 @@ test("Render deploy reconciliation excludes every deployment that existed before
   const client = new RenderClient({
     apiKey: "render-secret",
     serviceId: PREVIEW_IDENTITY.renderStagingServiceId,
-    fetchImpl: async (_url, options) => {
+    fetchImpl: async (url, options) => {
       if (options.method === "POST") return { ok: true, text: async () => "" };
+      if (url.endsWith(`/services/${PREVIEW_IDENTITY.renderStagingServiceId}`)) {
+        return { ok: true, text: async () => JSON.stringify({
+          id: PREVIEW_IDENTITY.renderStagingServiceId,
+          name: "Kurioticket-web-staging",
+          autoDeployTrigger: "off",
+        }) };
+      }
       historyReads += 1;
       const deploys = historyReads === 1 ? [terminal] : [replacement, terminal];
       return { ok: true, text: async () => JSON.stringify(deploys.map((deploy) => ({ deploy }))) };
