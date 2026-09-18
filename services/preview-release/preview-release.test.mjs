@@ -1294,6 +1294,7 @@ test("web recovery adopts the recorded Render deploy without creating a duplicat
     },
     github: {},
     render: {
+      getService: async () => ({ autoDeployMode: "off", autoDeployOff: true }),
       createDeploy: async () => { creates += 1; return deploy; },
       getDeploy: async (id) => ({ ...deploy, id }),
     },
@@ -1323,6 +1324,7 @@ test("web recovery replaces one terminal recorded deploy through an atomic ledge
     },
     github: {},
     render: {
+      getService: async () => ({ autoDeployMode: "off", autoDeployOff: true }),
       createDeploy: async () => { creates += 1; return replacement; },
       findDeploysBySha: async () => [recorded],
       getDeploy: async (id) => id === recorded.id ? recorded : replacement,
