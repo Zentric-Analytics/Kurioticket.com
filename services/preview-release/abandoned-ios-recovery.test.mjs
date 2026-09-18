@@ -250,7 +250,12 @@ test("two provider NO_MATCH checks verify exact current dev before exactly one a
         assert.equal(sha, currentDevSha);
         assert.equal(platform, "ios");
         assert.equal(expectedFingerprint, fingerprint);
-        return operation({ directory: "/tmp/exact-current-dev", eas: currentEas, fingerprint });
+        return operation({
+          directory: "/tmp/exact-current-dev",
+          eas: currentEas,
+          fingerprint,
+          assertCurrentDev: async () => {},
+        });
       },
       deliverIos: async (sha, directory, lease, requestedFingerprint) => {
         deliveryCalls += 1;
