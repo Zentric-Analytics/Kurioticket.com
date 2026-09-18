@@ -114,7 +114,7 @@ export async function runAuthorizedAbandonedIosRecovery({
     sourceSha: currentDevSha,
     platform: "ios",
     expectedFingerprint: fingerprint,
-  }, async ({ directory, eas: currentEas }) => {
+  }, async ({ directory, eas: currentEas, assertCurrentDev }) => {
     const delivered = typeof ledger.currentDeliveredNative === "function"
       ? await ledger.currentDeliveredNative("ios")
       : null;
@@ -129,6 +129,7 @@ export async function runAuthorizedAbandonedIosRecovery({
       }
     }
 
+    await assertCurrentDev();
     const reservation = await ledger.reserveNativeBuildRecovery({
       sourceSha: currentDevSha,
       platform: "ios",
@@ -169,6 +170,7 @@ export async function runAuthorizedAbandonedIosRecovery({
         throw new Error("An authorized iOS replacement creation attempt already started without a durable EAS build ID; a second paid build is blocked pending separate operator review.");
       }
 
+      await assertCurrentDev();
       const claimed = await claimAuthorizedIosRecoveryCreation({
         ledger,
         recovery,
@@ -219,6 +221,7 @@ export async function runAuthorizedAbandonedIosRecovery({
           status: normalizeState(recovery.state),
         }));
       } else {
+        await assertCurrentDev();
         const created = await currentEas.createIosBuild();
         if (!created?.id) throw new Error("EAS accepted iOS recovery creation without returning a durable build ID.");
         recovery = await ledger.recordAction({
