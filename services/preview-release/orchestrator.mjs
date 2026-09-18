@@ -33,6 +33,32 @@ export class PreviewOrchestrator {
     this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.appleFactory = appleFactory; this.checkoutFactory = checkoutFactory; this.changeSetFactory = changeSetFactory; this.prepareCheckoutFactory = prepareCheckoutFactory; this.identityFactory = identityFactory; this.fingerprintsFactory = fingerprintsFactory; this.stagingWait = stagingWait; this.sleep = sleep;
   }
 
+  async withExactCurrentNativeContext({ sourceSha, platform, expectedFingerprint }, operation) {
+    const platformLabel = platform === "ios" ? "iOS" : platform === "android" ? "Android" : null;
+    if (!platformLabel) throw new Error("Current native recovery platform is invalid.");
+    if (!/^[0-9a-f]{40}$/.test(String(sourceSha ?? ""))) throw new Error("Current native recovery source SHA is malformed.");
+    if (!/^[0-9a-f]{40}$/.test(String(expectedFingerprint ?? ""))) throw new Error("Current native recovery fingerprint is malformed.");
+    if (typeof operation !== "function") throw new Error("Current native recovery operation is missing.");
+    if (await this.github.latestDevSha() !== sourceSha) throw new Error("Current dev changed before native recovery verification could start.");
+
+    const checkout = await this.checkoutFactory({ repository: this.config.repository, token: this.config.githubReadToken, sha: sourceSha });
+    try {
+      await this.prepareCheckoutFactory(checkout.directory, { allowRootScriptDrift: true });
+      assertPreviewIdentity(await this.identityFactory(checkout.directory));
+      const fingerprints = await this.fingerprintsFactory(checkout.directory);
+      if (fingerprints[platform] !== expectedFingerprint) {
+        throw new Error(`Current dev ${platformLabel} fingerprint no longer matches the abandoned reservation; replacement build is blocked.`);
+      }
+      if (await this.github.latestDevSha() !== sourceSha) {
+        throw new Error("Current dev changed during native recovery verification; replacement build is blocked.");
+      }
+      const eas = this.easFactory(join(checkout.directory, "apps/mobile"));
+      return await operation({ directory: checkout.directory, eas, fingerprint: fingerprints[platform] });
+    } finally {
+      await checkout.cleanup();
+    }
+  }
+
   async cycle() {
     const decision = await this.deriveDecision();
     console.log(JSON.stringify({ event: "PREVIEW_DECISION", ...decision.trace }));
