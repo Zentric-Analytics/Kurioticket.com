@@ -2,7 +2,7 @@
 
 Operational status: **PREVIEW RELEASE CUTOVER VERIFIED**. The Render worker `srv-d9qisaaju40c73bbago0` is the sole approved automatic Preview delivery owner, running on Standard / 2 GB with PostgreSQL `dpg-d9qifcbm8hqs738hg570-a`. Current approved Preview release infrastructure cost is `$35.50/month`. Do not restore the superseded GitHub Actions Preview delivery workflows.
 
-The worker must track repository `Zentric-Analytics/Kurioticket.com`, branch `dev`, with Render Auto-Deploy set to **On Commit**. The staging web service is admin-managed and currently uses **After CI Checks Pass** (`checksPass`). Startup and the read-only preflight verify the worker identity and accept the supported staging modes `off`, `commit`, or `checksPass`. When staging auto-deploy is enabled, Render is the sole web deployment owner: the Preview worker waits for, adopts, and verifies the exact-SHA Render deployment and never creates or replaces a competing web deploy. When staging auto-deploy is `off`, the worker retains its existing exact-SHA create/recovery behavior. Unknown modes fail closed.
+The worker must track repository `Zentric-Analytics/Kurioticket.com`, branch `dev`, with Render Auto-Deploy set to **On Commit**. The staging web service must keep Auto-Deploy **Off** because the worker is its exclusive deployment owner. Startup and the read-only preflight verify both settings through the Render API and fail visibly if either drifts. This is required because the immutable worker dependency manifests must advance with `dev`, while an independent staging auto-deploy can race the worker's exact-SHA deployment and leave the wrong successful build live.
 
 Run locally in non-mutating mode:
 
@@ -29,7 +29,7 @@ Exact-checkout preparation installs only the production mobile dependency tree r
 2. Preserve any remote IDs already present.
 3. Correct the root cause.
 4. Allow the expired lease to be reclaimed or explicitly clear only the stale lease after confirming the former worker is stopped.
-5. Restart the worker. Reconciliation adopts matching remote operations. For web delivery, a recorded Render deploy ID is adopted and monitored. If staging auto-deploy is enabled, the worker waits for and adopts the exact-SHA Render-created deployment and never creates or replaces it; a missing or terminal auto-deploy fails closed for operator attention. If staging auto-deploy is `off`, the worker may create the exact-SHA deployment and may roll over one terminal deployment through the existing atomic ledger compare-and-swap recovery path.
+5. Restart the worker. Reconciliation adopts matching remote operations. For web delivery, a recorded Render deploy ID is adopted and monitored before any new deploy may be created. A terminally failed recorded deployment may roll over once through an atomic ledger compare-and-swap after its terminal state is persisted.
 
 Never delete ledger rows to force a retry. Never reset an EAS build number. Never issue a manual TestFlight submission or manually associate a build with the internal group while the ledger reports an existing or unknown action. An iOS delivery is complete only after the exact processed Apple build is read back in the immutable `Kurioticket Preview Internal` group. If a POST response is lost, the worker reads Apple membership before retrying and adopts the accepted relationship.
 
