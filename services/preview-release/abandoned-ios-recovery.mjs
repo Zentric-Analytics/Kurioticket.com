@@ -129,6 +129,11 @@ export async function runAuthorizedAbandonedIosRecovery({
       }
     }
 
+    if (typeof ledger.ensureDetectedRelease !== "function") {
+      throw new Error("iOS recovery requires a durable current-dev release anchor.");
+    }
+    await assertCurrentDev();
+    await ledger.ensureDetectedRelease({ sourceSha: currentDevSha, mode });
     await assertCurrentDev();
     const reservation = await ledger.reserveNativeBuildRecovery({
       sourceSha: currentDevSha,
