@@ -110,17 +110,31 @@ test("native Flight Details prefers each provider-supplied segment airline logo 
   assert.match(itinerary,/logoUrl=\{segment\.airlineLogo\?\?\(canUseOfferAirlineLogo\(segment,offerAirlineName,offerAirlineLogo\)\?offerAirlineLogo:null\)\}/);
 });
 
-test("journey remains the visual hero with a restrained details scale",()=>{
+test("journey times remain the visual anchor with tabular numerals and a restrained details scale",()=>{
   for(const fact of ["leg.departureTime","leg.arrivalTime","leg.originAirport","leg.destinationAirport","leg.duration","leg.stops"]) assert.match(itinerary,new RegExp(fact.replace(".","\\.")));
   assert.match(itinerary,/Non-stop/);
   assert.match(itinerary,/<FlowIcon name="flight"/);
   assert.equal(itinerary.match(/numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.85\} style=\{\[s\.journeyTime/g)?.length,2);
   assert.match(source,/route:\{color:"#FFFFFF",fontSize:27,lineHeight:32,fontWeight:"800"/);
   assert.match(source,/routeMetadata:\{color:"#FFFFFF",fontSize:11,lineHeight:16,fontWeight:"700"/);
-  assert.match(source,/journeyTime:\{fontSize:16,lineHeight:21,fontWeight:"700"\}/);
-  assert.match(source,/airportCode:\{fontSize:12,lineHeight:16,fontWeight:"700"\}/);
+  assert.match(source,/journeyTime:\{fontSize:19,lineHeight:24,fontWeight:"800",fontVariant:\["tabular-nums"\]\}/);
+  assert.match(source,/airportCode:\{fontSize:13,lineHeight:17,fontWeight:"700"\}/);
   assert.match(source,/journeyDuration:\{fontSize:11,lineHeight:16,fontWeight:"600"/);
   assert.match(source,/stopStatus:\{fontSize:10,lineHeight:13,fontWeight:"500"/);
+});
+
+test("itinerary surface depth is deliberately stronger, theme-aware, and shared by the loading card",()=>{
+  assert.match(source,/itineraryCardLight:\{shadowColor:ui\.navy,shadowOffset:\{width:0,height:6\},shadowOpacity:\.12,shadowRadius:20,elevation:4\}/);
+  assert.match(source,/itineraryCardDark:\{shadowColor:"#000000",shadowOffset:\{width:0,height:5\},shadowOpacity:\.28,shadowRadius:18,elevation:4\}/);
+  assert.match(itinerary,/theme\.dark\?s\.itineraryCardDark:s\.itineraryCardLight/);
+  assert.match(source,/testID="flight-details-loading-itinerary" style=\{\[s\.itineraryCard,s\.loadingItineraryCard,theme\.dark\?s\.itineraryCardDark:s\.itineraryCardLight/);
+  assert.match(source,/borderColor:theme\.dark\?theme\.border:ui\.border/);
+});
+
+test("the polished route retains dot-line-plane-line-dot without nested itinerary cards",()=>{
+  assert.match(itinerary,/<View style=\{s\.pathDot\}\/?>\s*<View style=\{\[s\.pathLine/);
+  assert.match(itinerary,/<FlowIcon name="flight" size=\{16\} color=\{ui\.blue\}\/?>\s*<View style=\{\[s\.pathLine/);
+  assert.equal(itinerary.match(/<View[^>]*style=\{\[s\.itineraryCard/g)?.length,1);
 });
 
 test("airport names retain provider fallback order and terminals remain conditional",()=>{
@@ -155,8 +169,8 @@ test("segment rows carry airline, flight number, aircraft and distance while Fli
 });
 
 test("Flight info preserves its compact scale while labels lead readable regular values without icons",()=>{
-  assert.match(source,/technicalHeading:\{fontSize:11,lineHeight:15,fontWeight:"600"/);
-  assert.match(source,/technicalLabel:\{[^}]*fontSize:11,lineHeight:16,fontWeight:"500"\}/);
+  assert.match(source,/technicalHeading:\{fontSize:12,lineHeight:16,fontWeight:"700"/);
+  assert.match(source,/technicalLabel:\{[^}]*fontSize:11,lineHeight:16,fontWeight:"600"\}/);
   assert.match(source,/technicalValue:\{[^}]*fontSize:11,lineHeight:16,fontWeight:"400"/);
   assert.match(itinerary,/s\.technicalHeading,\{color:theme\.textPrimary\}/);
   assert.ok((itinerary.match(/s\.technicalLabel,\{color:theme\.textPrimary\}/g)?.length??0)>=2);
