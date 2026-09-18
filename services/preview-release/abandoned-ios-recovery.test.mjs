@@ -151,12 +151,14 @@ test("orphaned iOS reservation adopts one exact EAS history match instead of cre
   assert.equal(row.evidence.abandonedReservationRecovery.ownershipSource, "EXPLICIT_OPERATOR_AUTHORIZATION");
 });
 
-test("two provider NO_MATCH checks permit exactly one authorized replacement creation", async () => {
+test("two provider NO_MATCH checks verify exact current dev before exactly one authorized replacement creation", async () => {
   let original = originalReservation();
   let recovery = recoveryReservation();
   let creates = 0;
   let historyReads = 0;
-  let recoveryCalls = 0;
+  let exactContextCalls = 0;
+  let deliveryCalls = 0;
+  const createdBuildId = "66666666-7777-4888-8999-000000000000";
   const pool = {
     async query(sql) {
       if (sql.startsWith("SELECT * FROM preview_release_action WHERE id=$1 LIMIT 2")) {
@@ -194,10 +196,6 @@ test("two provider NO_MATCH checks permit exactly one authorized replacement cre
   };
   const ledger = {
     pool,
-    releaseBySha: async (sha) => {
-      assert.equal(sha, currentDevSha);
-      return { source_sha: sha, evidence: { fingerprints: { ios: fingerprint } } };
-    },
     currentDeliveredNative: async () => null,
     latestNativeBuildRecovery: async () => null,
     reserveNativeBuildRecovery: async ({ sourceSha: sha, platform, fingerprint: requested }) => {
@@ -213,23 +211,53 @@ test("two provider NO_MATCH checks permit exactly one authorized replacement cre
       return structuredClone(recovery);
     },
   };
+  const currentEas = {
+    listIosBuilds: async (sha) => {
+      historyReads += 1;
+      assert.equal(sha, currentDevSha);
+      return [];
+    },
+    createIosBuild: async () => {
+      creates += 1;
+      return exactIosBuild({ id: createdBuildId, status: "NEW", gitCommitHash: currentDevSha });
+    },
+    viewBuild: async (id) => {
+      assert.equal(id, createdBuildId);
+      return exactIosBuild({ id, status: "FINISHED", gitCommitHash: currentDevSha });
+    },
+    compareBuildFingerprint: async (id, expected) => {
+      assert.equal(id, createdBuildId);
+      assert.equal(expected, fingerprint);
+      return { expectedHash: fingerprint, buildHash: fingerprint };
+    },
+  };
   const result = await runAuthorizedAbandonedIosRecovery({
     authorization: { actionId, sourceSha, fingerprint },
     mode: "active",
     ledger,
     github: { latestDevSha: async () => currentDevSha },
     eas: {
-      listIosBuilds: async () => { historyReads += 1; return []; },
-      createIosBuild: async () => {
-        creates += 1;
-        return exactIosBuild({ id: "66666666-7777-4888-8999-000000000000", status: "NEW", gitCommitHash: currentDevSha });
+      listIosBuilds: async (sha) => {
+        historyReads += 1;
+        assert.equal(sha, sourceSha);
+        return [];
       },
+      createIosBuild: async () => { throw new Error("root worker checkout must not create the recovery build"); },
     },
     orchestrator: {
-      recoverCanonicalNativeBuild: async ({ sourceSha: sha, platform }) => {
-        recoveryCalls += 1;
+      withExactCurrentNativeContext: async ({ sourceSha: sha, platform, expectedFingerprint }, operation) => {
+        exactContextCalls += 1;
         assert.equal(sha, currentDevSha);
         assert.equal(platform, "ios");
+        assert.equal(expectedFingerprint, fingerprint);
+        return operation({ directory: "/tmp/exact-current-dev", eas: currentEas, fingerprint });
+      },
+      deliverIos: async (sha, directory, lease, requestedFingerprint) => {
+        deliveryCalls += 1;
+        assert.equal(sha, currentDevSha);
+        assert.equal(directory, "/tmp/exact-current-dev");
+        assert.equal(requestedFingerprint, fingerprint);
+        await lease.checkpoint();
         return { buildId: recovery.remote_id, buildNumber: "58", submissionState: "FINISHED" };
       },
     },
@@ -239,7 +267,8 @@ test("two provider NO_MATCH checks permit exactly one authorized replacement cre
   assert.equal(result.state, "RECOVERY_COMPLETE");
   assert.equal(creates, 1);
   assert.equal(historyReads, 4);
-  assert.equal(recoveryCalls, 1);
+  assert.equal(exactContextCalls, 1);
+  assert.equal(deliveryCalls, 1);
   assert.equal(original.state, "FAILED");
   assert.equal(original.evidence.abandonedReservationRecovery.providerOutcome, "NO_MATCH");
   assert.equal(recovery.state, "CREATED");
