@@ -31,6 +31,12 @@ test("hero presents the airport route first, metadata second, and no city-route 
   assert.equal((heroCopy.match(/<Text\b/g)??[]).length,2);
 });
 
+test("brightened hero keeps small metadata on a localized contrast backing",()=>{
+  assert.match(source,/heroOverlay:\{\.\.\.StyleSheet\.absoluteFillObject,backgroundColor:"rgba\(5, 13, 26, 0\.30\)"\}/);
+  assert.match(source,/<View style=\{s\.routeMetadataBackdrop\}><Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\} style=\{s\.routeMetadata\}>\{tripMetadata\}<\/Text><\/View>/);
+  assert.match(source,/routeMetadataBackdrop:\{alignSelf:"flex-start",backgroundColor:"rgba\(5, 13, 26, 0\.20\)",paddingHorizontal:4,paddingVertical:1,borderRadius:4\}/);
+});
+
 test("hero controls preserve actions and semantics while reducing only their visible glass surfaces",()=>{
   const controlsStart=source.indexOf('testID="flight-details-floating-controls"');
   const controlsEnd=source.indexOf('<ScrollView testID="flight-details-scroll-content"',controlsStart);
