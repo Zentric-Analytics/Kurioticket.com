@@ -14,6 +14,31 @@ export class PreviewLedger {
     return { connected: true };
   }
 
+  async ensureDetectedRelease({ sourceSha, mode }) {
+    assertExactSha(sourceSha);
+    if (!["dry-run", "active"].includes(mode)) throw new Error("Preview release mode is invalid.");
+    await this.pool.query(
+      `INSERT INTO preview_release (source_sha, previous_sha, mode, state)
+       VALUES (
+         $1,
+         (SELECT source_sha FROM preview_release
+          WHERE state='COMPLETE' AND progression_order IS NOT NULL
+          ORDER BY progression_order DESC LIMIT 1),
+         $2,
+         'DETECTED'
+       )
+       ON CONFLICT (source_sha) DO NOTHING`,
+      [sourceSha, mode],
+    );
+    const result = await this.pool.query(
+      "SELECT * FROM preview_release WHERE source_sha=$1 LIMIT 2",
+      [sourceSha],
+    );
+    if (result.rowCount !== 1) throw new Error("Preview recovery release anchor was not created uniquely.");
+    if (result.rows[0].mode !== mode) throw new Error("Preview recovery release anchor mode mismatch.");
+    return result.rows[0];
+  }
+
   async claim({ sourceSha, previousSha, workerId, leaseMs, mode }) {
     assertExactSha(sourceSha);
     if (previousSha) assertExactSha(previousSha, "Previous SHA");
