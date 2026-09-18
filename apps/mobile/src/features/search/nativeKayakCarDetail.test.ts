@@ -6,6 +6,7 @@ const route = readFileSync("app/car-details.tsx", "utf8");
 const sandboxDetail = readFileSync("src/features/search/NativeKayakCarDetailScreen.tsx", "utf8");
 const normalDetail = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
 const providerPresentation = readFileSync("src/features/search/nativeCarProviderPresentation.ts", "utf8");
+const glassSurface = readFileSync("src/features/search/CarDetailGlassSurface.tsx", "utf8");
 const kayakDockStart = sandboxDetail.indexOf("{offer ? <View style={[s.dock");
 const kayakDockEnd = sandboxDetail.indexOf("</SafeAreaView>;", kayakDockStart);
 const kayakDock = kayakDockStart >= 0 && kayakDockEnd > kayakDockStart ? sandboxDetail.slice(kayakDockStart, kayakDockEnd) : "";
@@ -39,14 +40,16 @@ test("approved and KAYAK Cars details share the light canvas and vehicle image s
     assert.match(detail, /const carCanvasColor\s*=\s*theme\.dark\s*\?\s*theme\.background\s*:\s*CAR_DETAIL_LIGHT_CANVAS/);
     assert.doesNotMatch(detail, /carInformationSurface|#E7EBF1/);
     assert.match(detail, /s\.safe,\s*\{\s*backgroundColor:\s*carCanvasColor\s*\}/);
-    assert.equal((detail.match(/<BlurView /g) ?? []).length, 2);
-    assert.match(detail, /import \{ BlurView \} from "expo-blur"/);
-    for (const contract of [/pointerEvents="none"/, /intensity=\{32\}/, /dimezisBlurView/, /backgroundColor:\s*"rgba\(255, 255, 255, 0\.58\)"/, /borderWidth:\s*StyleSheet\.hairlineWidth/, /borderColor:\s*"rgba\(255, 255, 255, 0\.78\)"/]) assert.match(detail, contract);
+    assert.equal((detail.match(/<CarDetailGlassSurface /g) ?? []).length, 2);
+    assert.match(detail, /import \{ CarDetailGlassSurface \} from "\.\/CarDetailGlassSurface"/);
     assert.doesNotMatch(detail, /hero(?:Back|Actions):\s*\{[^}]*backgroundColor:\s*"#(?:FFFFFF|E7EBF1)"/);
     assert.match(detail, /<ScrollView[^>]*style=\{\{\s*backgroundColor:\s*carCanvasColor\s*\}\}/);
     assert.match(detail, /s\.hero,\s*\{\s*backgroundColor:\s*carCanvasColor,\s*borderColor:\s*theme\.border\s*\}/);
     assert.match(detail, /s\.imageBox,\s*\{[^}]*backgroundColor:\s*theme\.surface\s*\}/);
   }
+  assert.match(glassSurface, /import \{ BlurView \} from "expo-blur"/);
+  assert.match(glassSurface, /experimentalBlurMethod=\{Platform\.OS === "android" \? "dimezisBlurView" : undefined\}/);
+  assert.match(glassSurface, /borderWidth: StyleSheet\.hairlineWidth/);
 });
 
 test("KAYAK Cars only show or similar when the normalized provider result says so", () => {
