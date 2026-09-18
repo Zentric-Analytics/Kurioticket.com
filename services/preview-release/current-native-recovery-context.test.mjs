@@ -61,11 +61,13 @@ test("exact-current native context fingerprints the exact dev checkout before re
     sourceSha,
     platform: "ios",
     expectedFingerprint: iosFingerprint,
-  }, async ({ directory, eas, fingerprint }) => {
+  }, async ({ directory, eas, fingerprint, assertCurrentDev }) => {
     operations += 1;
     assert.equal(directory, "/tmp/exact-current");
     assert.equal(eas, exactEas);
     assert.equal(fingerprint, iosFingerprint);
+    assert.equal(typeof assertCurrentDev, "function");
+    await assertCurrentDev();
     return { ok: true };
   });
 
