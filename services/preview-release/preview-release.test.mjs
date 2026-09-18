@@ -1248,6 +1248,61 @@ test("exact-checkout preparation fails closed when dependency manifests differ",
   }
 });
 
+test("web delivery rechecks staging ownership before creating a deploy", async () => {
+  let creates = 0;
+  const orchestrator = new PreviewOrchestrator({
+    config: {},
+    ledger: {
+      getAction: async () => null,
+      recordAction: async (action) => action,
+    },
+    github: {},
+    render: {
+      findDeploysBySha: async () => [],
+      getService: async () => { throw new Error("Render Preview staging auto-deploy must be Off; the release worker is the exclusive deployment owner."); },
+      createDeploy: async () => { creates += 1; return { id: "unexpected", status: "live", commit: { id: sha } }; },
+    },
+    stagingWait: async ({ targetSha }) => ({ ready: true, commitSha: targetSha }),
+    sleep: async () => {},
+  });
+
+  await assert.rejects(
+    orchestrator.deliverWeb(sha, { checkpoint: async () => {} }),
+    /staging auto-deploy must be Off/,
+  );
+  assert.equal(creates, 0);
+});
+
+test("web recovery rechecks staging ownership before replacing a terminal deploy", async () => {
+  let creates = 0;
+  let replacements = 0;
+  const recorded = { id: "dep-failed", status: "build_failed", commit: { id: sha } };
+  const orchestrator = new PreviewOrchestrator({
+    config: {},
+    ledger: {
+      getAction: async () => ({ remote_id: recorded.id }),
+      recordAction: async (action) => action,
+      replaceTerminalAction: async (action) => { replacements += 1; return action; },
+    },
+    github: {},
+    render: {
+      getDeploy: async () => recorded,
+      findDeploysBySha: async () => [recorded],
+      getService: async () => { throw new Error("Render Preview staging auto-deploy must be Off; the release worker is the exclusive deployment owner."); },
+      createDeploy: async () => { creates += 1; return { id: "unexpected", status: "live", commit: { id: sha } }; },
+    },
+    stagingWait: async ({ targetSha }) => ({ ready: true, commitSha: targetSha }),
+    sleep: async () => {},
+  });
+
+  await assert.rejects(
+    orchestrator.deliverWeb(sha, { checkpoint: async () => {} }),
+    /staging auto-deploy must be Off/,
+  );
+  assert.equal(creates, 0);
+  assert.equal(replacements, 0);
+});
+
 test("web recovery adopts the recorded Render deploy without creating a duplicate", async () => {
   let creates = 0;
   const actions = [];
