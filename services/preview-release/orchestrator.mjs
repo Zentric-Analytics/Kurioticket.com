@@ -39,7 +39,12 @@ export class PreviewOrchestrator {
     if (!/^[0-9a-f]{40}$/.test(String(sourceSha ?? ""))) throw new Error("Current native recovery source SHA is malformed.");
     if (!/^[0-9a-f]{40}$/.test(String(expectedFingerprint ?? ""))) throw new Error("Current native recovery fingerprint is malformed.");
     if (typeof operation !== "function") throw new Error("Current native recovery operation is missing.");
-    if (await this.github.latestDevSha() !== sourceSha) throw new Error("Current dev changed before native recovery verification could start.");
+    const assertCurrentDev = async () => {
+      if (await this.github.latestDevSha() !== sourceSha) {
+        throw new Error("Current dev changed during native recovery verification; replacement build is blocked.");
+      }
+    };
+    await assertCurrentDev();
 
     const checkout = await this.checkoutFactory({ repository: this.config.repository, token: this.config.githubReadToken, sha: sourceSha });
     try {
@@ -49,11 +54,9 @@ export class PreviewOrchestrator {
       if (fingerprints[platform] !== expectedFingerprint) {
         throw new Error(`Current dev ${platformLabel} fingerprint no longer matches the abandoned reservation; replacement build is blocked.`);
       }
-      if (await this.github.latestDevSha() !== sourceSha) {
-        throw new Error("Current dev changed during native recovery verification; replacement build is blocked.");
-      }
+      await assertCurrentDev();
       const eas = this.easFactory(join(checkout.directory, "apps/mobile"));
-      return await operation({ directory: checkout.directory, eas, fingerprint: fingerprints[platform] });
+      return await operation({ directory: checkout.directory, eas, fingerprint: fingerprints[platform], assertCurrentDev });
     } finally {
       await checkout.cleanup();
     }
