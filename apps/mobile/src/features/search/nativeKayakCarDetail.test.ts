@@ -37,11 +37,12 @@ test("approved and KAYAK Cars details share the light canvas and vehicle image s
   for (const detail of [normalDetail, sandboxDetail]) {
     assert.match(detail, /const CAR_DETAIL_LIGHT_CANVAS = "#F5F7FB"/);
     assert.match(detail, /const carCanvasColor\s*=\s*theme\.dark\s*\?\s*theme\.background\s*:\s*CAR_DETAIL_LIGHT_CANVAS/);
-    assert.match(detail, /const carInformationSurface\s*=\s*theme\.dark\s*\?\s*carCanvasColor\s*:\s*"#E7EBF1"/);
+    assert.doesNotMatch(detail, /carInformationSurface|#E7EBF1/);
     assert.match(detail, /s\.safe,\s*\{\s*backgroundColor:\s*carCanvasColor\s*\}/);
-    assert.match(detail, /style=\{\[s\.heroBack,\s*\{\s*top:\s*inset\.top\s*\+\s*12,\s*backgroundColor:\s*carInformationSurface\s*\}\]\}/);
-    assert.match(detail, /style=\{\[s\.heroActions,\s*\{\s*top:\s*inset\.top\s*\+\s*12,\s*backgroundColor:\s*carInformationSurface\s*\}\]\}/);
-    assert.doesNotMatch(detail, /hero(?:Back|Actions):\s*\{[^}]*backgroundColor:\s*"#FFFFFF"/);
+    assert.equal((detail.match(/<BlurView /g) ?? []).length, 2);
+    assert.match(detail, /import \{ BlurView \} from "expo-blur"/);
+    for (const contract of [/pointerEvents="none"/, /intensity=\{32\}/, /dimezisBlurView/, /backgroundColor:\s*"rgba\(255, 255, 255, 0\.58\)"/, /borderWidth:\s*StyleSheet\.hairlineWidth/, /borderColor:\s*"rgba\(255, 255, 255, 0\.78\)"/]) assert.match(detail, contract);
+    assert.doesNotMatch(detail, /hero(?:Back|Actions):\s*\{[^}]*backgroundColor:\s*"#(?:FFFFFF|E7EBF1)"/);
     assert.match(detail, /<ScrollView[^>]*style=\{\{\s*backgroundColor:\s*carCanvasColor\s*\}\}/);
     assert.match(detail, /s\.hero,\s*\{\s*backgroundColor:\s*carCanvasColor,\s*borderColor:\s*theme\.border\s*\}/);
     assert.match(detail, /s\.imageBox,\s*\{[^}]*backgroundColor:\s*theme\.surface\s*\}/);

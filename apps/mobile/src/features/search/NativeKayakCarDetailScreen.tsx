@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Image, Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
+import { BlurView } from "expo-blur";
 import { ArrowLeft, BriefcaseBusiness, CarFront, Clock3, DoorOpen, ExternalLink, Heart, MapPin, Share2, Users } from "lucide-react-native";
 import { WebView } from "react-native-webview";
 import { travelApi, type CarResult } from "../../api/travelApi";
@@ -143,7 +144,6 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
   };
   const light = !theme.dark;
   const carCanvasColor = theme.dark ? theme.background : CAR_DETAIL_LIGHT_CANVAS;
-  const carInformationSurface = theme.dark ? carCanvasColor : "#E7EBF1";
 
   const syncCarTabsPinned = useCallback((offset: number) => {
     const stickyStart = carTabsStickyStartRef.current;
@@ -248,10 +248,12 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
       </View>
     </ScrollView>
 
-    <Pressable accessibilityRole="button" accessibilityLabel="Back to Cars results" onPress={returnToCarResults} style={[s.heroBack, { top: inset.top + 12, backgroundColor: carInformationSurface }]}>
+    <Pressable accessibilityRole="button" accessibilityLabel="Back to Cars results" onPress={returnToCarResults} style={[s.heroBack, { top: inset.top + 12 }]}>
+      <BlurView accessible={false} pointerEvents="none" intensity={32} tint={theme.dark ? "dark" : "light"} experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined} style={[s.heroBackGlass, theme.dark && s.heroGlassDark]} />
       <ArrowLeft size={25} strokeWidth={2.2} color={light ? "#0F172A" : theme.icon} />
     </Pressable>
-    <View style={[s.heroActions, { top: inset.top + 12, backgroundColor: carInformationSurface }]}>
+    <View style={[s.heroActions, { top: inset.top + 12 }]}>
+      <BlurView accessible={false} pointerEvents="none" intensity={32} tint={theme.dark ? "dark" : "light"} experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined} style={[s.heroActionsGlass, theme.dark && s.heroGlassDark]} />
       <Pressable accessibilityRole="button" accessibilityLabel={saved.saved ? "Remove car from saved" : "Save car"} accessibilityState={{ selected: saved.saved }} onPress={saved.toggle} style={s.heroAction}><Heart size={22} strokeWidth={2} color={saved.saved ? androidFavoriteColors.savedStroke : light ? androidFavoriteColors.unsavedStroke : theme.icon} fill={saved.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="Share car" onPress={() => void Share.share({ message: `${result.modelName} — ${result.categoryLabel}` })} style={s.heroAction}><Share2 size={21} color={light ? "#0F172A" : theme.icon} /></Pressable>
     </View>
@@ -370,8 +372,11 @@ function KayakCarUnavailable() {
 
 const s = StyleSheet.create({
   safe: { flex: 1 },
-  heroBack: { position: "absolute", left: 20, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
-  heroActions: { position: "absolute", right: 20, width: 96, height: 44, borderRadius: 22, flexDirection: "row", overflow: "hidden", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
+  heroBack: { position: "absolute", left: 20, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.11, shadowRadius: 6, elevation: 7 },
+  heroBackGlass: { position: "absolute", left: 2, right: 2, top: 2, bottom: 2, borderRadius: 20, overflow: "hidden", backgroundColor: "rgba(255, 255, 255, 0.58)", borderWidth: StyleSheet.hairlineWidth, borderColor: "rgba(255, 255, 255, 0.78)" },
+  heroActions: { position: "absolute", right: 20, width: 96, height: 44, borderRadius: 22, flexDirection: "row", overflow: "hidden", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.11, shadowRadius: 6, elevation: 7 },
+  heroActionsGlass: { position: "absolute", left: 0, right: 0, top: 2, bottom: 2, borderRadius: 20, overflow: "hidden", backgroundColor: "rgba(255, 255, 255, 0.58)", borderWidth: StyleSheet.hairlineWidth, borderColor: "rgba(255, 255, 255, 0.78)" },
+  heroGlassDark: { backgroundColor: "rgba(15, 23, 42, 0.48)", borderColor: "rgba(255, 255, 255, 0.18)" },
   heroAction: { width: 48, height: 44, alignItems: "center", justifyContent: "center" },
   hero: { paddingBottom: 16, borderBottomWidth: 1 },
   identityBlock: { paddingHorizontal: 16, paddingTop: 14 },
