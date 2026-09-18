@@ -54,15 +54,15 @@ test("entry loading renders an accessible, theme-aware Flight Details skeleton",
 test("entry skeleton anticipates route, itinerary, fare carousel, and information deck", () => {
   for (const style of ["heroCopy", "loadingItineraryCard", "loadingFareHeading", "loadingFareCard", "loadingInfoDeck"]) assert.match(loading, new RegExp(`s\\.${style}`));
   assert.match(loading, /width:fareCardWidth/);
-  assert.match(details, /loadingFareCard:\{height:142,position:"relative"[^}]*paddingHorizontal:12,paddingTop:4,paddingBottom:8,gap:4\}/);
+  assert.match(details, /loadingFareCard:\{height:142,position:"relative",borderWidth:1\.5,borderRadius:15,paddingHorizontal:12,paddingTop:6,paddingBottom:8,gap:4\}/);
   assert.equal((details.match(/s\.loadingFareCard/g) ?? []).length, 2, "both loading rails use the shared loading card style");
   assert.match(details, /loadingFareIdentity:\{alignSelf:"stretch",alignItems:"center"/);
   assert.match(details, /loadingFareNameRow:\{maxWidth:"100%",flexDirection:"row",alignItems:"flex-start",gap:6\}/);
-  assert.match(details, /loadingFareIcon:\{width:16,height:16[^}]*flexShrink:0/);
-  assert.match(details, /loadingFareName:\{width:72,height:12/);
+  assert.match(details, /loadingFareIcon:\{width:24,height:24[^}]*flexShrink:0/);
+  assert.match(details, /loadingFareName:\{width:72,height:12,marginTop:6/);
   assert.match(details, /loadingBenefitDot:\{width:16,height:16/);
   assert.match(loading, /s\.loadingFareContent[\s\S]*?s\.loadingFareIdentity[\s\S]*?s\.loadingBenefitRow[\s\S]*?s\.loadingFarePriceBlock/);
-  assert.match(details, /loadingFareContent:\{alignSelf:"stretch",gap:4,paddingBottom:28\}/);
+  assert.match(details, /loadingFareContent:\{alignSelf:"stretch",gap:5,paddingBottom:31\}/);
   assert.match(details, /loadingFarePriceBlock:\{position:"absolute",bottom:6,left:12,right:12,alignItems:"center"\}/);
   assert.doesNotMatch(details, /loadingFarePriceBlock:\{[^}]*marginTop:"auto"/);
   assert.match(loading, /120\s*\+\s*bottomInset/);
