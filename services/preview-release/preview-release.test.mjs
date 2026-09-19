@@ -1872,20 +1872,22 @@ test("coalesced NO_DELIVERY overlay is accepted only with exact canonical finger
   }), /cannot advance the delivered-native baseline/);
 });
 
-test("OTA client verifies exact Preview history before returning publication success", async () => {
+test("OTA client verifies exact Preview identity even when EAS decorates the displayed message", async () => {
   const runtime = "a".repeat(40);
   const message = `Automatic Preview iOS OTA for ${sha}; audit run 0`;
+  const decoratedMessage = `"${message}" (14 minutes ago by GitHub App · @Zentric-Analytics (robot))`;
   const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused", sleep: async () => {} });
   const calls = [];
   client.validateOtaStartup = async () => {};
   client.run = async (args) => {
     calls.push(args);
     if (args[1] === "update") return [{ id: "update-id", group: "ios-group", branch: "preview", runtimeVersion: runtime, platforms: ["ios"], message }];
-    if (args[1] === "update:list") return [{ branch: "preview", runtimeVersion: runtime, group: "ios-group", platforms: ["ios"], message }];
+    if (args[1] === "update:list") return [{ branch: "preview", runtimeVersion: runtime, group: "ios-group", platforms: ["ios"], message: decoratedMessage }];
     return [];
   };
   const published = await client.publishUpdate(message, "ios", runtime, sha);
   assert.equal(published[0].group, "ios-group");
+  assert.equal(published[0].message, decoratedMessage);
   assert.equal(calls[0][calls[0].indexOf("--platform") + 1], "ios");
   assert.equal(calls[0][calls[0].indexOf("--environment") + 1], "preview");
   assert.ok(calls.some((args) => args[1] === "update:list"), "post-publish provider history must be checked");
@@ -1894,6 +1896,23 @@ test("OTA client verifies exact Preview history before returning publication suc
   await assert.rejects(client.publishUpdate(message, "ios", runtime, sha), /runtime does not match/);
   const source = readFileSync(resolve(repositoryRoot, "services/preview-release/remote-clients.mjs"), "utf8");
   assert.match(source, /isUpdatePublish \? 1024 : 128/);
+});
+
+test("OTA post-publish verification still rejects a different EAS group", async () => {
+  const runtime = "a".repeat(40);
+  const message = `Automatic Preview iOS OTA for ${sha}; audit run 0`;
+  const decoratedMessage = `"${message}" (now by GitHub App · @Zentric-Analytics (robot))`;
+  const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused", sleep: async () => {} });
+  client.validateOtaStartup = async () => {};
+  client.run = async (args) => {
+    if (args[1] === "update") return [{ id: "update-id", group: "published-group", branch: "preview", runtimeVersion: runtime, platforms: ["ios"], message }];
+    if (args[1] === "update:list") return [{ branch: "preview", runtimeVersion: runtime, group: "different-group", platforms: ["ios"], message: decoratedMessage }];
+    return [];
+  };
+  await assert.rejects(
+    client.publishUpdate(message, "ios", runtime, sha),
+    /published group is not uniquely visible/,
+  );
 });
 
 test("OTA client fails closed when a successful publish is not observable in Preview history", async () => {
