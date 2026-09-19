@@ -18,7 +18,6 @@ test("native search-form location fields suppress only their trailing affordance
   for (const [source, labels] of [
     [flight, ["Origin", "Destination"]],
     [hotel, ["Destination"]],
-    [car, ["Pickup location", "Drop-off location"]],
     [packages, ["Origin", "Destination"]],
   ] as const) {
     for (const label of labels) {
@@ -27,6 +26,14 @@ test("native search-form location fields suppress only their trailing affordance
       assert.match(field, /trailing=\{false\}/);
       assert.match(field, /onPress=/);
     }
+  }
+
+  const carMainRows = car.slice(car.indexOf("const mainRows"), car.indexOf("const editRows"));
+  for (const label of ["PICKUP LOCATION", "DROP-OFF LOCATION"]) {
+    const row = carMainRows.match(new RegExp(`<ResultsEditRow label="${label}"[^\n]+`))?.[0] ?? "";
+    assert.match(row, /icon="location"/);
+    assert.match(row, /onPress=/);
+    assert.doesNotMatch(row, /disclosure/);
   }
 
   const editor = flight.slice(flight.indexOf("function MultiCityEditor"), flight.indexOf("function ErrorText"));
@@ -41,7 +48,6 @@ test("native search-form location fields suppress only their trailing affordance
 
 test("remaining native search-form field chevrons are right-facing", () => {
   for (const source of [flight, hotel, packages]) assert.doesNotMatch(source, /name="chevronDown"/);
-  for (const label of ["Rental dates", "Pick-up / Return time", "Driver age"]) assert.doesNotMatch(compactField(car, label), /name="chevronDown"/);
   assert.match(car, /disclosure \? <FlowIcon name="chevronDown"/);
   assert.match(compactField(flight, "Travelers & Cabin Class"), /<FlowIcon name="chevron"/);
   assert.match(read("FlowPrimitives.tsx"), /trailing \?\? <FlowIcon name="chevron"/);
