@@ -62,7 +62,7 @@ test("Home keeps Hotel in the shared card and gives Cars a quiet, borderless for
   assert.match(home, /function HomeSearchSurface[\s\S]*?style=\{\[ft\.styles\.card, ft\.styles\.shadow\]\}/);
   assert.match(home, /<HomeSearchSurface>\s*<HotelSearchPanel embedded params=\{\{\}\} \/>\s*<\/HomeSearchSurface>/);
   assert.match(home, /function HomeCarsSearchSurface[\s\S]*?backgroundColor: ft\.colors\.input/);
-  assert.match(home, /homeCarsSearchSurface: \{[\s\S]*?padding: 12,[\s\S]*?paddingBottom: 6,[\s\S]*?borderRadius: 18/);
+  assert.match(home, /homeCarsSearchSurface: \{[\s\S]*?padding: 8,[\s\S]*?paddingBottom: 4,[\s\S]*?borderRadius: 18/);
   assert.match(home, /<HomeCarsSearchSurface>\s*<CarSearchPanel embedded params=\{\{\}\} startWithEmptyRentalDates \/>\s*<\/HomeCarsSearchSurface>/);
   assert.doesNotMatch(home.slice(home.indexOf("function HomeCarsSearchSurface"), home.indexOf("function HomeFlightSearchSurface")), /borderWidth|ft\.styles\.shadow/);
   assert.match(home, /cars:[\s\S]*startWithEmptyRentalDates/);
