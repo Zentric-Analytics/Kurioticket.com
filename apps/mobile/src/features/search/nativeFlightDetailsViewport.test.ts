@@ -12,6 +12,11 @@ test("loaded and loading vertical content containers are explicitly bounded to t
   assert.doesNotMatch(source, /safe:\{[^}]*overflow:"hidden"/);
 });
 
+test("loaded and loading root scrollers lock native overscroll at the viewport boundary", () => {
+  assert.match(source, /testID="flight-details-scroll-content"[\s\S]*?contentInsetAdjustmentBehavior="never"[\s\S]*?bounces=\{false\}[\s\S]*?alwaysBounceVertical=\{false\}[\s\S]*?overScrollMode="never"/);
+  assert.match(source, /testID="flight-details-loading-scroll"[\s\S]*?contentInsetAdjustmentBehavior="never"[\s\S]*?bounces=\{false\}[\s\S]*?alwaysBounceVertical=\{false\}[\s\S]*?overScrollMode="never"/);
+});
+
 test("the overlapped itinerary remains inside the viewport gutter at representative phone widths", () => {
   const bodyPadding = 18;
   const overlap = 10;
