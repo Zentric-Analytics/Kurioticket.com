@@ -428,7 +428,7 @@ function HotelDetail({
 
   const openProviderInApp = async (url: string) => {
     const WebBrowser = await import("expo-web-browser");
-    return WebBrowser.openBrowserAsync(url);
+    return WebBrowser.openBrowserAsync(url, { dismissButtonStyle: "close" });
   };
 
   const continueSelectedRate = async () => {
