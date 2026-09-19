@@ -39,8 +39,8 @@ test("native Hotel keeps one selected-provider dock visible across Rates, Overvi
   assert.match(detailSource, /s\.bookingDock/);
   assert.match(detailSource, /selectedRate\.totalPrice/);
   assert.match(detailSource, /selectedRate\.totalLabel/);
-  assert.match(detailSource, /Continue to[\s\S]*selectedRate\.providerName/);
-  assert.doesNotMatch(detailSource, /View deal|Choose room/);
+  assert.match(detailSource, /const bookingActionLabel = "View deal"/);
+  assert.doesNotMatch(detailSource, /Continue to|Choose room/);
   assert.match(detailSource, /bookingDockButtonText\}>\{bookingActionLabel\}<\/Text>/);
   assert.match(detailSource, /onPress=\{\(\) => void continueSelectedRate\(\)\}/);
   assert.match(detailSource, /contentContainerStyle=\{\{ paddingBottom: selectedRate \? 120 \+ inset\.bottom : 24 \+ inset\.bottom \}\}/);
