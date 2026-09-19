@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { HotelRoomOption } from "../../../../../src/lib/hotels/hotelRoomOptions";
 import { appFonts } from "../../theme/typography";
 import type { HotelRoomDisplayPrice } from "./hotelDetailCurrency";
+import { DetailGlassSurface } from "./DetailGlassSurface";
 
 type HotelTheme = {
   dark: boolean;
@@ -180,7 +181,10 @@ export function NativeHotelGallery({
             setActiveImage(Math.max(0, Math.min(images.length - 1, Math.round(event.nativeEvent.contentOffset.x / measuredWidth))));
           }}
         />
-        <Text style={s.counter}>{activeIndex + 1} / {images.length}</Text>
+        <View pointerEvents="none" style={s.counter}>
+          <DetailGlassSurface dark={false} variant="hotelLight" style={s.counterGlass} />
+          <Text style={s.counterText}>{activeIndex + 1} / {images.length}</Text>
+        </View>
       </View>
 
       <Modal
@@ -347,7 +351,9 @@ const s = StyleSheet.create({
   heroFrame: { width: "100%", overflow: "hidden", backgroundColor: "#DCE2EB" },
   hero: { backgroundColor: "#DCE2EB" },
   heroImage: { width: "100%", height: "100%" },
-  counter: { position: "absolute", left: "50%", bottom: 15, minWidth: 48, transform: [{ translateX: -24 }], color: "white", backgroundColor: "rgba(0,0,0,.72)", paddingHorizontal: 9, paddingVertical: 5, borderRadius: 4, fontSize: 13, lineHeight: 18, fontWeight: "800", fontFamily: appFonts.extraBold, textAlign: "center" },
+  counter: { position: "absolute", left: "50%", bottom: 15, minWidth: 52, minHeight: 30, transform: [{ translateX: -26 }], paddingHorizontal: 10, alignItems: "center", justifyContent: "center", shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 5, elevation: 4 },
+  counterGlass: { ...StyleSheet.absoluteFillObject, borderRadius: 15 },
+  counterText: { color: "#0F172A", fontSize: 13, lineHeight: 18, fontWeight: "800", fontFamily: appFonts.extraBold, textAlign: "center" },
   unavailable: { width: "100%", alignItems: "center", justifyContent: "center" },
   unavailableText: { fontSize: 13, lineHeight: 19, fontFamily: appFonts.regular },
   galleryModal: { flex: 1, position: "relative" },

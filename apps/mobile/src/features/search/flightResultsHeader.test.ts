@@ -178,6 +178,14 @@ test("Hotel Results owns a web-parity summary card without weakening Flight cont
   assert.doesNotMatch(hotelHeader, /position:\s*"absolute"|margin(?:Left|Right|Start|End):\s*-/);
 });
 
+test("Hotel Results uses light glass only on Back and the edit affordance", () => {
+  assert.match(hotelHeader, /accessibilityLabel="Go back"[\s\S]*?<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s0\.hotelHeaderBackGlass\} \/>[\s\S]*?<ArrowLeft size=\{25\} strokeWidth=\{2\} color="#0F172A" \/>/);
+  assert.match(hotelHeader, /style=\{s0\.hotelSummaryEditSlot\}[\s\S]*?<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s0\.hotelSummaryEditGlass\} \/>[\s\S]*?<SquarePen size=\{16\} strokeWidth=\{2\.2\} color="#0F172A" \/>/);
+  assert.match(styles, /hotelHeaderBackGlass: \{ position: "absolute", left: 2, right: 2, top: 2, bottom: 2, borderRadius: 20 \}/);
+  assert.match(styles, /hotelSummaryEditGlass: \{ position: "absolute", left: 4, right: 4, top: 4, bottom: 4, borderRadius: 18 \}/);
+  assert.match(hotelHeader, /backgroundColor: theme\.surface/);
+});
+
 test("Hotel Results receives presentation-only summary copy while Edit preserves canonical search state", () => {
   assert.doesNotMatch(hotelInvocation, /metadata|shortDate/);
   assert.doesNotMatch(hotelHeader, /metadata|hotelHeaderMeta/);
