@@ -262,7 +262,10 @@ export function NativeHotelRatesSection({
       >
         {rows.map((row, index) => {
           const selected = row.id === selectedRateId;
-          const showSelectionMarker = rows.length > 1 && selected;
+          const selectedBackground = theme.dark
+            ? "rgba(143, 181, 255, 0.07)"
+            : "rgba(0, 75, 184, 0.035)";
+          const showSelectedBackground = rows.length > 1 && selected;
           return (
             <View key={row.id}>
               {index > 0 ? <View style={[s.rateDivider, { backgroundColor: theme.border }]} /> : null}
@@ -274,13 +277,10 @@ export function NativeHotelRatesSection({
                 onPress={row.actionable ? () => onSelectRate(row.id) : undefined}
                 style={({ pressed }) => [
                   s.rateCard,
-                  { backgroundColor: theme.surface },
+                  { backgroundColor: showSelectedBackground ? selectedBackground : theme.surface },
                   pressed && row.actionable && s.rateCardPressed,
                 ]}
               >
-                {showSelectionMarker ? (
-                  <View pointerEvents="none" style={[s.selectedBar, { backgroundColor: accentColor }]} />
-                ) : null}
                 <View style={s.rateMain}>
                   <View style={s.rateCopy}>
                     <View style={s.providerIdentity}>
@@ -359,14 +359,6 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     justifyContent: "center",
-    position: "relative",
-  },
-  selectedBar: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 3,
   },
   rateCardPressed: { opacity: 0.84 },
   rateMain: {
