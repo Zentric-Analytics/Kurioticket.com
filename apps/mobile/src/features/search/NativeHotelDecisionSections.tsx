@@ -55,11 +55,11 @@ function RelatedHotelCard({ item, theme, onView }: { item: NativeRelatedHotel; t
   </Pressable>;
 }
 
-export function NativeRelatedHotelsSection({ city, hotels, theme, onViewHotel }: { city?: string | null; hotels: NativeRelatedHotel[]; theme: Theme; onViewHotel: (item: NativeRelatedHotel) => void }) {
+export function NativeRelatedHotelsSection({ destination, hotels, theme, onViewHotel }: { destination: string; hotels: NativeRelatedHotel[]; theme: Theme; onViewHotel: (item: NativeRelatedHotel) => void }) {
   if (!hotels.length) return null;
-  const cityName = city?.trim();
+  const destinationName = destination.trim();
   return <View style={styles.relatedSection}>
-    <View style={styles.relatedHeader}><Text accessibilityRole="header" numberOfLines={1} style={[styles.heading, { color: theme.textPrimary }]}>{cityName ? `More hotels in ${cityName}` : "More hotels nearby"}</Text></View>
+    <View style={styles.relatedHeader}><Text accessibilityRole="header" numberOfLines={1} style={[styles.heading, { color: theme.textPrimary }]}>{destinationName ? `More hotels in ${destinationName}` : "More hotels"}</Text></View>
     <ScrollView horizontal style={styles.carouselViewport} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carousel} directionalLockEnabled>{hotels.map((item) => <View key={item.hotel.id} style={styles.relatedCardSlot}><RelatedHotelCard item={item} theme={theme} onView={onViewHotel} /></View>)}</ScrollView>
   </View>;
 }
