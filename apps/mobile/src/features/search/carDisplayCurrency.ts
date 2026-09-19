@@ -1,7 +1,6 @@
-import type { CarResult } from "../../api/travelApi";
 import { displayPrice, type ExchangeRates } from "../currency/displayCurrency";
-
-type CarOffer = CarResult["offers"][number];
+import { getPrimaryCarOffer } from "../../../../../src/lib/cars/carResults";
+import type { CarOffer, NormalizedCarResult } from "../../../../../src/lib/cars/types";
 
 /**
  * Build a presentation-only copy of a provider offer in the selected app currency.
@@ -26,4 +25,16 @@ export function presentCarOfferCurrency(
     totalPrice: total.amount,
     pricePerDay: perDay.amount,
   };
+}
+
+/** Resolve the exact normalized daily amount rendered by a Cars result card. */
+export function carDisplayPricePerDay(
+  car: NormalizedCarResult,
+  displayCurrency: string,
+  rates: ExchangeRates,
+) {
+  const primaryOffer = getPrimaryCarOffer(car);
+  if (!primaryOffer) return undefined;
+  const price = presentCarOfferCurrency(primaryOffer, displayCurrency, rates).pricePerDay;
+  return Number.isFinite(price) && price >= 0 ? price : undefined;
 }

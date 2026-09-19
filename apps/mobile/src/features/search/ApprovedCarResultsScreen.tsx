@@ -14,7 +14,7 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { NativeBrandedSearchLoading } from "./NativeBrandedSearchLoading";
 import { carQuickFilterGroupIds } from "../../../../../src/lib/cars/carFilterPresentation";
-import { ensureCarProviderCoverage, filterCarResults, sortCarResults, type CarSort, type SelectedCarFilters } from "../../../../../src/lib/cars/carResults";
+import { ensureCarProviderCoverage, filterCarResults, sortCarResults, type CarPricePerDayResolver, type CarSort, type SelectedCarFilters } from "../../../../../src/lib/cars/carResults";
 import { CarFilterSheet, activeCarFilterCount, visibleCarFilterGroups } from "./CarFilterSheet";
 import { CarResultsQuickFilterSheet } from "./CarResultsQuickFilterSheet";
 import { carFilterCopy, carFilterGroupLabel } from "./carFilterCopy";
@@ -26,6 +26,8 @@ import { getLocationFieldDisplay } from "../../../../../src/lib/search/locationF
 import { NATIVE_FILTER_RESULTS_TRANSITION_MS } from "./filterResultsTransition";
 import { formatCarResultsScheduleSummary } from "../../../../../src/lib/cars/carResultsSummary";
 import { resolveCarResultImageSource } from "../../../../../src/lib/cars/carResultImage";
+import { useCarDisplayCurrency } from "./useCarDisplayCurrency";
+import { carDisplayPricePerDay } from "./carDisplayCurrency";
 
 type Status = "loading" | "ready" | "empty" | "error";
 const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB";
@@ -53,6 +55,8 @@ export function ApprovedCarResultsScreen() {
     ? { top: 4, right: 3, bottom: Math.max(insets.bottom, 8), left: 0 }
     : undefined;
   const { locale } = useMobileLocalization();
+  const { displayCurrency, rates } = useCarDisplayCurrency();
+  const pricePerDay: CarPricePerDayResolver = useCallback((car) => carDisplayPricePerDay(car, displayCurrency, rates), [displayCurrency, rates]);
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string,string|string[]>>();
   const plan = useMemo(() => buildSearchPlan("car",params),[JSON.stringify(params)]);
@@ -86,10 +90,10 @@ export function ApprovedCarResultsScreen() {
   },[plan.plan?.key,retry]);
   useEffect(()=>{const executionKey=`${plan.plan?.key??"invalid"}:${retry}`;if(searchAbortTimer.current)clearTimeout(searchAbortTimer.current);searchAbortTimer.current=undefined;if(activeExecutionKey.current!==executionKey){activeExecutionKey.current=executionKey;void load();}return()=>{searchAbortTimer.current=setTimeout(()=>{if(activeExecutionKey.current!==executionKey)return;searchSequence.current+=1;activeSearch.current?.abort("screen-cleanup");activeExecutionKey.current=undefined;},0);};},[load,plan.plan?.key,retry]);
   useEffect(()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);carResultsApplyingTimer.current=undefined;setCarResultsApplying(false);return()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);};},[plan.plan?.key]);
-  const filterGroups=useMemo(()=>visibleCarFilterGroups(results),[results]);
+  const filterGroups=useMemo(()=>visibleCarFilterGroups(results,pricePerDay),[pricePerDay,results]);
   const quickGroups=useMemo(()=>carQuickFilterGroupIds.flatMap(id=>{const group=filterGroups.find(candidate=>candidate.id===id);return group?[group]:[];}),[filterGroups]);
   const copy=useMemo(()=>carFilterCopy(locale),[locale]);
-  const filtered=useMemo(()=>{const ranked=sortCarResults(filterCarResults(results,filters),sort);return sort==="recommended"?ensureCarProviderCoverage(ranked):ranked;},[results,filters,sort]);
+  const filtered=useMemo(()=>{const ranked=sortCarResults(filterCarResults(results,filters,pricePerDay),sort);return sort==="recommended"?ensureCarProviderCoverage(ranked):ranked;},[results,filters,pricePerDay,sort]);
   const payload=plan.plan?.payload||{};
   const canonicalPickupLocation=String(payload.pickupLocation||"");
   const carSummaryDestination=getLocationFieldDisplay(canonicalPickupLocation).primary;
@@ -117,8 +121,8 @@ export function ApprovedCarResultsScreen() {
       {quickGroups.map(group=><CarResultsShortcut key={group.id} label={carFilterGroupLabel(copy,group)} count={filters[group.id]?.length||undefined} expanded={quickSheetKind===group.id} onPress={()=>openQuickFilter(group.id)}/>)}
     </ScrollView></View>
     <FlatList ref={carScrollRef} style={{backgroundColor:carCanvasColor}} data={listData} keyExtractor={result=>result.id} renderItem={({item,index})=><View style={r.carResultCardSlot}><CarResultCard result={item} rank={index} imageUri={resolveNativeCarImageUri(item.imageUrl)} searchParams={payload} resultBackgroundColor={carCanvasColor} onViewDeal={()=>openDeal(item)}/></View>} ItemSeparatorComponent={CarResultItemSeparator} ListHeaderComponent={listHeader} ListEmptyComponent={listEmpty} initialNumToRender={CAR_RESULT_INITIAL_RENDER_COUNT} maxToRenderPerBatch={CAR_RESULT_RENDER_BATCH_SIZE} windowSize={CAR_RESULT_WINDOW_SIZE} updateCellsBatchingPeriod={CAR_RESULT_BATCHING_PERIOD_MS} removeClippedSubviews={Platform.OS === "android"} showsVerticalScrollIndicator={true} automaticallyAdjustsScrollIndicatorInsets={false} scrollIndicatorInsets={carResultsScrollIndicatorInsets} alwaysBounceVertical={false} bounces={false} overScrollMode="never" keyboardShouldPersistTaps="handled" contentContainerStyle={[r.body,{paddingBottom:Math.max(insets.bottom + 16,16)}]}/>
-    <CarFilterSheet visible={filterSheetVisible} results={results} filters={filters} onChange={changeCarFilters} onClose={completeCarFilterSession}/>
-    {quickSheetKind ? <CarResultsQuickFilterSheet key={quickSheetKind} kind={quickSheetKind} results={results} filters={filters} sort={sort} onApplyFilters={(next)=>{changeCarFilters(next);}} onApplySort={(next)=>{if(next!==sort){setSort(next);startCarResultsTransition();}}} onClose={()=>{setQuickSheetKind(null);if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}}}/> : null}
+    <CarFilterSheet visible={filterSheetVisible} results={results} filters={filters} pricePerDay={pricePerDay} onChange={changeCarFilters} onClose={completeCarFilterSession}/>
+    {quickSheetKind ? <CarResultsQuickFilterSheet key={quickSheetKind} kind={quickSheetKind} results={results} filters={filters} pricePerDay={pricePerDay} sort={sort} onApplyFilters={(next)=>{changeCarFilters(next);}} onApplySort={(next)=>{if(next!==sort){setSort(next);startCarResultsTransition();}}} onClose={()=>{setQuickSheetKind(null);if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}}}/> : null}
     <CarEditSearchModal visible={carEditSearchOpen} params={params} onClose={()=>setCarEditSearchOpen(false)}/>
   </SafeAreaView>;
 }

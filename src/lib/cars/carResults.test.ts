@@ -7,6 +7,7 @@ import {
   ensureCarProviderCoverage,
   filterCarResults,
   getPrimaryCarOffer,
+  doesCarMatchFilterOption,
   sortCarOffers,
   sortCarResults,
 } from "@/lib/cars/carResults";
@@ -41,9 +42,11 @@ test("recommended results visibly represent every successful car provider", () =
   assert.equal(covered.length, cars.length + 1);
 });
 const expectations: Record<string, (c: (typeof cars)[number]) => boolean> = {
-  totalUnder100: (c) => (getPrimaryCarOffer(c)?.totalPrice ?? Infinity) < 100,
-  total100To149: (c) => { const total = getPrimaryCarOffer(c)?.totalPrice ?? Infinity; return total >= 100 && total < 150; },
-  total150Plus: (c) => (getPrimaryCarOffer(c)?.totalPrice ?? -Infinity) >= 150,
+  daily0To49: (c) => { const price = getPrimaryCarOffer(c)?.pricePerDay ?? Infinity; return price >= 0 && price < 50; },
+  daily50To99: (c) => { const price = getPrimaryCarOffer(c)?.pricePerDay ?? Infinity; return price >= 50 && price < 100; },
+  daily100To149: (c) => { const price = getPrimaryCarOffer(c)?.pricePerDay ?? Infinity; return price >= 100 && price < 150; },
+  daily150To199: (c) => { const price = getPrimaryCarOffer(c)?.pricePerDay ?? Infinity; return price >= 150 && price < 200; },
+  daily200Plus: (c) => (getPrimaryCarOffer(c)?.pricePerDay ?? -Infinity) >= 200,
   smallCars: (c) => ["mini", "economy", "compact"].includes(c.category),
   mediumCars: (c) => ["intermediate", "full-size"].includes(c.category),
   suvs: (c) => c.category === "suv",
@@ -70,9 +73,33 @@ const expectations: Record<string, (c: (typeof cars)[number]) => boolean> = {
 for (const [option, predicate] of Object.entries(expectations))
   test(`filter ${option}`, () => {
     const output = filterCarResults(cars, { group: [option] });
-    assert.ok(output.length);
+    if (!option.startsWith("daily")) assert.ok(output.length);
     assert.ok(output.every(predicate));
   });
+test("daily price ranges cover every finite non-negative boundary exactly once", () => {
+  const options = ["daily0To49", "daily50To99", "daily100To149", "daily150To199", "daily200Plus"];
+  const boundaries = [
+    [0, "daily0To49"], [49.99, "daily0To49"],
+    [50, "daily50To99"], [99.99, "daily50To99"],
+    [100, "daily100To149"], [149.99, "daily100To149"],
+    [150, "daily150To199"], [199.99, "daily150To199"],
+    [200, "daily200Plus"],
+  ] as const;
+  for (const [price, expected] of boundaries) {
+    const matches = options.filter((option) => doesCarMatchFilterOption(cars[0], option, () => price));
+    assert.deepEqual(matches, [expected]);
+  }
+  for (const price of [-1, Infinity, -Infinity, Number.NaN])
+    assert.equal(options.some((option) => doesCarMatchFilterOption(cars[0], option, () => price)), false);
+});
+test("daily price filtering resolves the authoritative primary offer rather than total price", () => {
+  const primary = getPrimaryCarOffer(cars[0]);
+  assert.ok(primary);
+  const result = { ...cars[0], offers: cars[0].offers.map((offer) => offer.id === primary.id ? { ...offer, pricePerDay: 42, totalPrice: 175 } : { ...offer, pricePerDay: 250, totalPrice: 1_000 }) };
+  assert.equal(getPrimaryCarOffer(result)?.id, primary.id);
+  assert.deepEqual(filterCarResults([result], { pricePerDay: ["daily0To49"] }), [result]);
+  assert.deepEqual(filterCarResults([result], { pricePerDay: ["daily200Plus"] }), []);
+});
 test("filters use OR within and AND across groups and clearing restores source", () => {
   const or = filterCarResults(cars, { transmission: ["automatic", "manual"] });
   assert.equal(or.length, cars.length);
