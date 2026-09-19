@@ -75,7 +75,8 @@ test("non-bookable KAYAK rates keep a visible disabled Choose room control", () 
   assert.match(ratesSource, /const visibleProviderOffer = providerOffer \?\? displayOnlyKayakOffer/);
   assert.match(ratesSource, /actionable: Boolean\(providerOffer\)/);
   assert.match(ratesSource, /actionLabel: "Choose room"/);
-  assert.match(ratesSource, /disabled=\{!row\.actionable\}/);\n  assert.match(ratesSource, /!row\.actionable && s\.actionControlDisabled/);
+  assert.match(ratesSource, /disabled=\{!row\.actionable\}/);
+  assert.match(ratesSource, /!row\.actionable && s\.actionControlDisabled/);
 });
 
 test("Kurioticket fallback keeps the bundled wordmark and existing app fonts", () => {
