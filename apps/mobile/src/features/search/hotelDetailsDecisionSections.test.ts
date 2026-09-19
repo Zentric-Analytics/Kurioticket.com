@@ -47,10 +47,11 @@ test("active Details combines location and related hotels in order from the enri
   const booking = readFileSync("src/features/search/NativeHotelBookingDetails.tsx", "utf8");
   assert.ok(booking.indexOf("NativeHotelLocationSection") < booking.indexOf("NativeRelatedHotelsSection"));
   assert.match(detail, /hotels: details\?\.relatedHotels \?\? \[\]/);
-  assert.match(detail, /<NativeHotelBookingDetails[\s\S]*?locationProperty=\{locationProperty\}[\s\S]*?relatedHotels=\{relatedHotels\}[\s\S]*?relatedHotelsHasMore=\{relatedHotelsHasMore\}[\s\S]*?relatedDestination=\{destination\}/);
-  assert.match(detail, /onSeeMoreRelatedHotels=\{returnToHotelResults\}/);
+  assert.match(detail, /<NativeHotelBookingDetails[\s\S]*?locationProperty=\{locationProperty\}[\s\S]*?relatedHotels=\{relatedHotels\}[\s\S]*?relatedDestination=\{destination\}/);
   assert.match(booking, /<NativeHotelLocationSection[\s\S]*?hotelId=\{result\.id\}[\s\S]*?hotelName=\{result\.name\}[\s\S]*?propertyDetails=\{locationProperty\}[\s\S]*?theme=\{theme\}/);
-  assert.match(booking, /<NativeRelatedHotelsSection[\s\S]*?destination=\{relatedDestination\}[\s\S]*?hotels=\{relatedHotels\}[\s\S]*?hasMore=\{relatedHotelsHasMore\}[\s\S]*?onSeeMore=\{onSeeMoreRelatedHotels\}/);
+  assert.match(booking, /<NativeRelatedHotelsSection[\s\S]*?destination=\{relatedDestination\}[\s\S]*?hotels=\{relatedHotels\}/);
+  assert.doesNotMatch(detail, /onSeeMoreRelatedHotels|relatedHotelsHasMore/);
+  assert.doesNotMatch(booking, /onSeeMore|relatedHotelsHasMore|hasMore=/);
   assert.doesNotMatch(detail, /travelApi\.hotels?Search/);
 });
 
@@ -87,7 +88,7 @@ test("native Compare Property location uses its preview as the sole full-map lau
   assert.match(component, /address:\s*\{[^}]*marginTop:\s*4[^}]*fontSize:\s*14[^}]*lineHeight:\s*20[^}]*fontWeight:\s*"400"[^}]*fontFamily:\s*appFonts\.regular/);
 });
 
-test("native related hotel header keeps one top-right See more and the existing horizontal carousel", () => {
+test("native related hotel header hides See more while keeping the 12-card horizontal preview", () => {
   const component = readFileSync("src/features/search/NativeHotelDecisionSections.tsx", "utf8");
   const section = component.slice(
     component.indexOf("export function NativeRelatedHotelsSection"),
@@ -99,15 +100,12 @@ test("native related hotel header keeps one top-right See more and the existing 
   assert.match(section, /const destinationName = destination\.split\(","\)\[0\]\?\.trim\(\) \?\? ""/);
   assert.match(section, /const displayedHotels = hotels\.slice\(0, 12\)/);
   assert.match(section, /destinationName \? `More hotels in \$\{destinationName\}` : "More hotels"/);
-  assert.match(section, /hasMore \? <Pressable[\s\S]*?>See more<\/Text><\/Pressable> : null/);
-  assert.equal(section.match(/>See more<\/Text>/g)?.length, 1);
   assert.match(section, /displayedHotels\.map\(\(item\) =>/);
-  assert.doesNotMatch(section, /More hotels nearby|cityName|city\?|12 of|Based on your search|See all/);
-  assert.doesNotMatch(component, /useLocalSearchParams|HOTEL_LIMITS|normalizedCount/);
+  assert.doesNotMatch(section, /See more|More hotels nearby|cityName|city\?|12 of|Based on your search|See all|onSeeMore|hasMore/);
+  assert.doesNotMatch(component, /seeMoreButton|seeMoreText|seeMorePressed/);
   assert.match(section, /<ScrollView horizontal style=\{styles\.carouselViewport\} showsHorizontalScrollIndicator=\{false\}/);
   assert.doesNotMatch(relatedSectionStyle, /marginHorizontal/);
-  assert.match(component, /relatedHeader:\s*\{[^}]*flexDirection:\s*"row"[^}]*alignItems:\s*"center"[^}]*justifyContent:\s*"space-between"/);
-  assert.match(component, /seeMoreText:\s*\{[^}]*fontSize:\s*14[^}]*fontWeight:\s*"600"/);
+  assert.match(component, /relatedHeader:\s*\{[^}]*flexDirection:\s*"row"[^}]*alignItems:\s*"center"/);
   assert.match(component, /carouselViewport:\s*\{[^}]*marginHorizontal:\s*-16[^}]*marginTop:\s*8/);
   assert.match(component, /carousel:\s*\{[^}]*gap:\s*12[^}]*paddingHorizontal:\s*16/);
 });
