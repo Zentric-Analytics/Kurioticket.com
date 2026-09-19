@@ -95,7 +95,7 @@ test("native related hotel header contains only the heading and carousel", () =>
   const relatedSectionStyle = component.match(/relatedSection:\s*\{([^}]*)\}/)?.[1] ?? "";
 
   assert.match(section, /<View style=\{styles\.relatedHeader\}>[\s\S]*?accessibilityRole="header"/);
-  assert.match(section, /destinationName \? `More hotels in \$\{destinationName\}` : "More hotels"/);
+  assert.match(section, /const destinationName = destination\.split\(","\)\[0\]\?\.trim\(\) \?\? ""/);\n  assert.match(section, /destinationName \? `More hotels in \$\{destinationName\}` : "More hotels"/);
   assert.doesNotMatch(section, /More hotels nearby|cityName|city\?/);
   assert.doesNotMatch(section, /See all|seeAllHotels|router\.push|\/hotel-results|seeAllButton|seeAllText|seeAllPressed/);
   assert.doesNotMatch(component, /useLocalSearchParams|HOTEL_LIMITS|normalizedCount/);
