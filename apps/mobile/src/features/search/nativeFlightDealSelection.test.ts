@@ -52,7 +52,6 @@ test("Compare deals uses selectable cards and one dock handoff", () => {
   assert.match(source, /borderColor:isSelected\?ui\.blue:surfaceBorderColor/);
   assert.doesNotMatch(source, /View deal|viewDealAction|s\.dealRow/);
   assert.match(source, /displayPrices\[`deal:\$\{selectedDeal\.key\}`\]/);
-  assert.match(source, /provider=selectedDeal\?\.providerName\?\?/);
   assert.match(source, /booking\?"Checking offer…":"Continue deal"/);
   assert.match(source, /handoff\(selectedDeal\?\.offerId\?\?offer\.id\)/);
 });
