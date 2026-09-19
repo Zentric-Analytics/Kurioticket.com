@@ -6,18 +6,18 @@ import { flightDetailsHeaderProtectionGeometry } from "./flightDetailsHeaderProt
 const flight = readFileSync("src/features/search/NativeFlightDetails.tsx", "utf8");
 const hotel = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
 
-test("Flight header protection derives its threshold from the measured hero height", () => {
-  assert.deepEqual(flightDetailsHeaderProtectionGeometry(47, 318), {
+test("Flight header protection derives its threshold from the measured first foreground content", () => {
+  assert.deepEqual(flightDetailsHeaderProtectionGeometry(47, 318, -104), {
     protectedHeight: 111,
-    threshold: 207,
+    threshold: 103,
   });
-  assert.deepEqual(flightDetailsHeaderProtectionGeometry(47, 382), {
+  assert.deepEqual(flightDetailsHeaderProtectionGeometry(47, 382, -104), {
     protectedHeight: 111,
-    threshold: 271,
+    threshold: 167,
   });
-  assert.deepEqual(flightDetailsHeaderProtectionGeometry(24, 350), {
+  assert.deepEqual(flightDetailsHeaderProtectionGeometry(24, 350, -88), {
     protectedHeight: 88,
-    threshold: 262,
+    threshold: 174,
   });
 });
 
@@ -40,6 +40,7 @@ test("loaded Flight content drives a non-interactive protected layer while contr
   assert.match(available, /onScroll=\{\(\{ nativeEvent \}\)=>syncHeaderProtection\(nativeEvent\.contentOffset\.y\)\}/);
   assert.match(available, /scrollEventThrottle=\{16\}/);
   assert.match(available, /testID="flight-details-hero"[^>]*onLayout=\{\(\{ nativeEvent \}\)=>measureHeaderHero\(nativeEvent\.layout\.height\)\}/);
+  assert.match(available, /testID="flight-details-itinerary-overlap"[^>]*onLayout=\{\(\{ nativeEvent \}\)=>measureHeaderForeground\(nativeEvent\.layout\.y\)\}/);
   assert.match(flight, /const reload = useCallback\(\(\) => \{ resetHeaderProtection\(\); setRevision\(\(value\) => value \+ 1\); \}, \[resetHeaderProtection\]\);/);
   assert.match(flight, /protectedHeader:\{position:"absolute",left:0,right:0,top:0,zIndex:10,elevation:11\}/);
   assert.match(flight, /floatingControls:\{zIndex:20,elevation:12\}/);
@@ -51,6 +52,7 @@ test("loading Flight content receives equivalent protection because its skeleton
   assert.match(loading, /backgroundColor:headerProtected\?contentCanvasColor:"transparent"/);
   assert.match(loading, /testID="flight-details-loading-scroll"[\s\S]*?onScroll=\{\(\{ nativeEvent \}\)=>syncHeaderProtection\(nativeEvent\.contentOffset\.y\)\}/);
   assert.match(loading, /testID="flight-details-loading-hero"[^>]*onLayout=\{\(\{ nativeEvent \}\)=>measureHeaderHero\(nativeEvent\.layout\.height\)\}/);
+  assert.match(loading, /testID="flight-details-loading-itinerary-overlap"[^>]*onLayout=\{\(\{ nativeEvent \}\)=>measureHeaderForeground\(nativeEvent\.layout\.y\)\}/);
 });
 
 test("Hotel reference still owns its original independent sticky protection", () => {
