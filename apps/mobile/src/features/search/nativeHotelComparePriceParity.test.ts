@@ -90,7 +90,7 @@ test("Rates use compact grouped rows, date context only, and concise summary tex
   assert.match(styleRule(ratesSource, "rateCard", "rateCardPressed"), /minHeight: 88[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 10[\s\S]*justifyContent: "center"/);
   assert.match(styleRule(ratesSource, "rateMain", "providerIdentity"), /flexDirection: "row"[\s\S]*alignItems: "flex-start"[\s\S]*gap: 12/);
   assert.match(styleRule(ratesSource, "rateTitle", "rateMeta"), /marginTop: 7/);
-  assert.match(styleRule(ratesSource, "priceBlock", "price"), /alignItems: "flex-end"/);
+  assert.match(styleRule(ratesSource, "priceBlock", "price"), /marginTop: 25[\s\S]*alignItems: "flex-end"/);
   assert.doesNotMatch(ratesSource, />Rates<\/Text>/);
   assert.match(ratesSource, /\[stayDateText, nightText\]\.filter\(Boolean\)\.join\(" · "\)/);
   assert.match(ratesSource, /function conciseCondition/);
@@ -104,7 +104,8 @@ test("Rates render nightly price only; continuation lives in the persistent bott
   assert.doesNotMatch(ratesSource, /actionLabel: "Choose room"|actionControl/);
   assert.match(hotel, /selectedRate\.totalPrice/);
   assert.match(hotel, /selectedRate\.totalLabel/);
-  assert.match(hotel, />Choose room<\/Text>/);
+  assert.match(hotel, /const bookingActionLabel = selectedRate\?\.providerKind === "provider" \? "View deal" : "Choose room"/);
+  assert.match(hotel, /bookingDockButtonText\}>\{bookingActionLabel\}<\/Text>/);
   assert.match(hotel, /onPress=\{\(\) => void continueSelectedRate\(\)\}/);
 });
 

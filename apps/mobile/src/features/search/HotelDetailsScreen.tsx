@@ -425,6 +425,7 @@ function HotelDetail({
     ?? rateRows.find((row) => row.actionable)
     ?? null;
   const selectedRateIdForView = selectedRate?.id ?? null;
+  const bookingActionLabel = selectedRate?.providerKind === "provider" ? "View deal" : "Choose room";
 
   const continueSelectedRate = async () => {
     if (!selectedRate?.actionable) return;
@@ -747,7 +748,7 @@ function HotelDetail({
             <View style={s.bookingDockAction}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Choose room. ${selectedRate.title}. ${selectedRate.totalAccessibilityLabel}`}
+                accessibilityLabel={`${bookingActionLabel}. ${selectedRate.title}. ${selectedRate.totalAccessibilityLabel}`}
                 onPress={() => void continueSelectedRate()}
                 style={({ pressed }) => [
                   s.bookingDockButton,
@@ -755,7 +756,7 @@ function HotelDetail({
                   pressed && s.bookingDockButtonPressed,
                 ]}
               >
-                <Text style={s.bookingDockButtonText}>Choose room</Text>
+                <Text style={s.bookingDockButtonText}>{bookingActionLabel}</Text>
               </Pressable>
             </View>
           </View>
