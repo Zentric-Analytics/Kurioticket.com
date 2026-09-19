@@ -58,10 +58,11 @@ test("Home structured Flight submits align with their cards without changing Res
   assert.doesNotMatch(home, /searchFooter|homeSubmitFooterAppearance/);
 });
 
-test("Home keeps Hotel in the shared card and gives Cars a quiet, borderless form surface", () => {
+test("Home keeps Hotel in the shared card and blends the borderless Cars form surface into the page", () => {
   assert.match(home, /function HomeSearchSurface[\s\S]*?style=\{\[ft\.styles\.card, ft\.styles\.shadow\]\}/);
   assert.match(home, /<HomeSearchSurface>\s*<HotelSearchPanel embedded params=\{\{\}\} \/>\s*<\/HomeSearchSurface>/);
-  assert.match(home, /function HomeCarsSearchSurface[\s\S]*?backgroundColor: ft\.colors\.input/);
+  assert.match(home, /function HomeCarsSearchSurface[\s\S]*?backgroundColor: ft\.colors\.page/);
+  assert.doesNotMatch(home, /function HomeCarsSearchSurface[\s\S]*?backgroundColor: ft\.colors\.input/);
   assert.match(home, /homeCarsSearchSurface: \{[\s\S]*?padding: 8,[\s\S]*?paddingBottom: 4,[\s\S]*?borderRadius: 18/);
   assert.match(home, /<HomeCarsSearchSurface>\s*<CarSearchPanel embedded params=\{\{\}\} startWithEmptyRentalDates \/>\s*<\/HomeCarsSearchSurface>/);
   assert.doesNotMatch(home.slice(home.indexOf("function HomeCarsSearchSurface"), home.indexOf("function HomeFlightSearchSurface")), /borderWidth|ft\.styles\.shadow/);

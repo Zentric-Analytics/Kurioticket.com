@@ -131,7 +131,7 @@ function HomeSearchSurface({ children }: { children: React.ReactNode }) {
 
 function HomeCarsSearchSurface({ children }: { children: React.ReactNode }) {
   const ft = useFlowTheme();
-  return <View style={[styles.homeCarsSearchSurface, { backgroundColor: ft.colors.input }]}>{children}</View>;
+  return <View style={[styles.homeCarsSearchSurface, { backgroundColor: ft.colors.page }]}>{children}</View>;
 }
 
 function HomeFlightSearchSurface({ children }: { children: React.ReactNode }) {
