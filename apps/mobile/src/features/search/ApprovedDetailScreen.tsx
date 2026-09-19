@@ -684,7 +684,7 @@ function HotelDetail({
                 />
               ) : null}
               <NativeRelatedHotelsSection
-                city={property?.city}
+                destination={destination}
                 hotels={relatedHotels}
                 theme={theme}
                 onViewHotel={viewRelatedHotel}

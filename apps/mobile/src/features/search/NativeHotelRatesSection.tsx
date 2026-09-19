@@ -74,9 +74,9 @@ export function buildNativeHotelRateRows({
         hasPrice && totalPrice ? totalPrice.formatted : "Price unavailable",
       totalAccessibilityLabel:
         hasPrice && totalPrice
-          ? `${totalPrice.accessibilityLabel} estimated stay total`
+          ? `${totalPrice.accessibilityLabel} stay total`
           : "Price unavailable",
-      totalLabel: "Estimated stay total",
+      totalLabel: "Stay total",
       hasDisplayedPrice: Boolean(hasPrice && nightlyPrice),
       actionable: true,
     });

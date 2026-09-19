@@ -64,8 +64,8 @@ test("Rates use independent selectable cards with the Flight radio treatment", (
 test("Rates show provider nightly prices while the persistent dock owns the selected stay total", () => {
   assert.match(ratesSource, /nightlyPrice:[\s\S]*nightlyPrice\.formatted/);
   assert.match(ratesSource, /totalPrice:[\s\S]*totalPrice\.formatted/);
-  assert.match(ratesSource, /totalLabel: "Estimated stay total"/);
-  assert.match(ratesSource, /totalLabel: "Stay total"/);
+  assert.equal(ratesSource.match(/totalLabel: "Stay total"/g)?.length, 2);
+  assert.doesNotMatch(ratesSource, /totalLabel: "Estimated stay total"|estimated stay total/);
   assert.match(ratesSource, /"per night"/);
   assert.match(detailSource, /selectedRate\.totalAccessibilityLabel/);
 });

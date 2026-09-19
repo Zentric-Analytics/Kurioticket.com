@@ -643,6 +643,7 @@ function HotelDetail({
               detailsStatus={detailsStatus}
               classification={classification}
               relatedHotels={relatedHotels}
+              relatedDestination={destination}
               theme={theme}
               onViewHotel={viewRelatedHotel}
               onLookAroundInteractionChange={setLookAroundInteracting}

@@ -75,6 +75,7 @@ export function NativeHotelBookingDetails({
   detailsStatus,
   classification,
   relatedHotels,
+  relatedDestination,
   theme,
   onViewHotel,
   onLookAroundInteractionChange,
@@ -85,6 +86,7 @@ export function NativeHotelBookingDetails({
   detailsStatus: HotelDetailsStatus;
   classification: number | null;
   relatedHotels: NativeRelatedHotel[];
+  relatedDestination: string;
   theme: Theme;
   onViewHotel: (item: NativeRelatedHotel) => void;
   onLookAroundInteractionChange: (interacting: boolean) => void;
@@ -200,7 +202,7 @@ export function NativeHotelBookingDetails({
 
       <SectionGap />
 
-      <NativeRelatedHotelsSection city={property?.city || locationProperty?.city} hotels={relatedHotels} theme={theme} onViewHotel={onViewHotel} />
+      <NativeRelatedHotelsSection destination={relatedDestination} hotels={relatedHotels} theme={theme} onViewHotel={onViewHotel} />
 
       <Modal visible={amenitiesOpen} transparent animationType="slide" onRequestClose={() => setAmenitiesOpen(false)}>
         <View style={s.modalRoot}>

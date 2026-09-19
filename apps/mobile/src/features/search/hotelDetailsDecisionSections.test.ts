@@ -13,12 +13,12 @@ const hotel = (id: string, overrides: Partial<PublicHotelResult> = {}): PublicHo
   pricePerNight: 100, totalPrice: 300, currency: "USD", ...overrides,
 } as PublicHotelResult);
 
-test("related hotels preserve backend order while excluding current, duplicates, and results beyond seven", () => {
+test("related hotels preserve the full backend cohort while excluding current and duplicate ids", () => {
   const prepared = prepareNativeRelatedHotels({
     hotels: [hotel("current"), hotel("a"), hotel("a"), ..."bcdefgh".split("").map((id) => hotel(id))],
     currentHotelId: "current", displayCurrency: "USD", rates: {},
   });
-  assert.deepEqual(prepared.map(({ hotel: item }) => item.id), ["a", "b", "c", "d", "e", "f", "g"]);
+  assert.deepEqual(prepared.map(({ hotel: item }) => item.id), ["a", "b", "c", "d", "e", "f", "g", "h"]);
 });
 
 test("related cards retain static internal-detail policy and classification truth", () => {
@@ -47,9 +47,9 @@ test("active Details combines location and related hotels in order from the enri
   const booking = readFileSync("src/features/search/NativeHotelBookingDetails.tsx", "utf8");
   assert.ok(booking.indexOf("NativeHotelLocationSection") < booking.indexOf("NativeRelatedHotelsSection"));
   assert.match(detail, /hotels: details\?\.relatedHotels \?\? \[\]/);
-  assert.match(detail, /<NativeHotelBookingDetails[\s\S]*?locationProperty=\{locationProperty\}[\s\S]*?relatedHotels=\{relatedHotels\}/);
+  assert.match(detail, /<NativeHotelBookingDetails[\s\S]*?locationProperty=\{locationProperty\}[\s\S]*?relatedHotels=\{relatedHotels\}[\s\S]*?relatedDestination=\{destination\}/);
   assert.match(booking, /<NativeHotelLocationSection[\s\S]*?hotelId=\{result\.id\}[\s\S]*?hotelName=\{result\.name\}[\s\S]*?propertyDetails=\{locationProperty\}[\s\S]*?theme=\{theme\}/);
-  assert.match(booking, /<NativeRelatedHotelsSection[\s\S]*?hotels=\{relatedHotels\}/);
+  assert.match(booking, /<NativeRelatedHotelsSection[\s\S]*?destination=\{relatedDestination\}[\s\S]*?hotels=\{relatedHotels\}/);
   assert.doesNotMatch(detail, /travelApi\.hotels?Search/);
 });
 
@@ -95,6 +95,8 @@ test("native related hotel header contains only the heading and carousel", () =>
   const relatedSectionStyle = component.match(/relatedSection:\s*\{([^}]*)\}/)?.[1] ?? "";
 
   assert.match(section, /<View style=\{styles\.relatedHeader\}>[\s\S]*?accessibilityRole="header"/);
+  assert.match(section, /destinationName \? `More hotels in \$\{destinationName\}` : "More hotels"/);
+  assert.doesNotMatch(section, /More hotels nearby|cityName|city\?/);
   assert.doesNotMatch(section, /See all|seeAllHotels|router\.push|\/hotel-results|seeAllButton|seeAllText|seeAllPressed/);
   assert.doesNotMatch(component, /useLocalSearchParams|HOTEL_LIMITS|normalizedCount/);
   assert.match(section, /<ScrollView horizontal style=\{styles\.carouselViewport\} showsHorizontalScrollIndicator=\{false\}/);
