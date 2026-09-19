@@ -408,7 +408,8 @@ function HotelDetail({
   const staySummary = hotelStaySummary(checkIn, checkOut, guestCount, roomCount);
   const rateRows = buildNativeHotelRateRows({
     offers: hotelOffers,
-    providerName: result.provider,
+    providerName: result.bookingProviderName?.trim() || result.provider,
+    providerLogoUrl: result.providerLogoUrl ?? null,
     nightlyPrice: displayPrices?.nightly ?? null,
     totalPrice: displayPrices?.total ?? null,
     hasPrice,
