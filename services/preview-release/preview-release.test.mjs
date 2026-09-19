@@ -12,7 +12,7 @@ import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, asse
 import { createExactCheckoutDirectory, easCommandEnvironment, easCommandFailureMessage, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, isExactEasObjectMissing, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
-import { PreviewLedger } from "./ledger.mjs";
+import { mergeOtaActionEvidence, PreviewLedger } from "./ledger.mjs";
 import { runWorkerCycle } from "./worker-cycle.mjs";
 import { fetchWithDeadline, withDeadline } from "./deadlines.mjs";
 import { normalizePreviewUpdatePage } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
@@ -1537,6 +1537,18 @@ test("missing EAS build classification survives the single-line failure envelope
 
   assert.equal(isExactEasObjectMissing(error, "build", buildId), true);
   assert.equal(isExactEasObjectMissing(error, "build", "43f85cc7-4284-4d86-afed-0a9fe04884f1"), false);
+});
+
+test("OTA evidence merge preserves iOS while later Android reconciliation updates the same action", () => {
+  const ios = { group: "ios-group", runtimeVersion: "ios-runtime", platforms: ["ios"] };
+  const android = { group: "android-group", runtimeVersion: "android-runtime", platforms: ["android"] };
+  const merged = mergeOtaActionEvidence(
+    { updates: [ios], providerVerifiedPlatforms: ["ios"], runtimeContextVersion: "native-platform-v1" },
+    { updates: [android], providerVerifiedPlatforms: ["android"], runtimeContextVersion: "native-platform-v1" },
+  );
+  assert.deepEqual(merged.updates, [ios, android]);
+  assert.deepEqual(merged.providerVerifiedPlatforms, ["android", "ios"]);
+  assert.equal(mergeOtaActionEvidence(merged, { updates: [ios] }).updates.length, 2);
 });
 
 test("OTA delivery publishes platforms sequentially and resumes only a missing platform", async () => {
