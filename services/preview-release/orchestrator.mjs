@@ -483,6 +483,33 @@ export class PreviewOrchestrator {
     throw new Error(`Render deployment ${deploy.id} exceeded its bounded polling window.`);
   }
 
+  async verifyPublishedOta({ eas, sha, platform, expectedRuntime, message, published, lease }) {
+    const publishedIdentity = canonicalPreviewOtaRemoteIdentity({ [platform]: published });
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      await lease.checkpoint();
+      const history = await eas.listUpdates();
+      const replay = inspectPreviewUpdateHistory(history, sha, platform, expectedRuntime);
+      if (replay.matchingUpdates > 1) throw new Error(`EAS update history contains conflicting exact-SHA ${platform} groups after publication.`);
+      if (replay.alreadyPublished) {
+        const visible = history.filter((entry) =>
+          entry.branch === PREVIEW_IDENTITY.channel
+          && entry.runtimeVersion === expectedRuntime
+          && Array.isArray(entry.platforms)
+          && entry.platforms.includes(platform)
+          && entry.message === message
+        );
+        if (visible.length !== 1) throw new Error(`EAS Update ${platform} publication is not uniquely visible on the Preview branch.`);
+        const visibleIdentity = canonicalPreviewOtaRemoteIdentity({ [platform]: visible });
+        if (visibleIdentity !== publishedIdentity) {
+          throw new Error(`EAS Update ${platform} post-publish identity does not match the published group.`);
+        }
+        return visible;
+      }
+      if (attempt < 5) await this.sleep(2_000);
+    }
+    throw new Error(`EAS Update ${platform} publication was not observable in Preview history after the bounded verification window.`);
+  }
+
   async deliverOta(sha, cwd, lease, platforms = ["ios", "android"], runtimeByPlatform = null) {
     const eas = this.easFactory(join(cwd, "apps/mobile"));
     const runtimes = Object.fromEntries(platforms.map((platform) => [platform, runtimeByPlatform?.[platform] ?? PREVIEW_IDENTITY.runtime]));
@@ -548,12 +575,21 @@ export class PreviewOrchestrator {
         });
         throw error;
       }
-      updatesByPlatform[platform] = published;
+      updatesByPlatform[platform] = await this.verifyPublishedOta({
+        eas,
+        sha,
+        platform,
+        expectedRuntime,
+        message,
+        published,
+        lease,
+      });
     }
     const updates = Object.values(updatesByPlatform).flat();
     const ids = updates.map((entry) => entry.id ?? entry.group);
     const correctedRemoteId = canonicalPreviewOtaRemoteIdentity(updatesByPlatform);
-    const evidence = { updates, runtimeContextVersion: OTA_RUNTIME_CONTEXT_VERSION };
+    const providerVerifiedPlatforms = Object.keys(updatesByPlatform).filter((platform) => platforms.includes(platform)).sort();
+    const evidence = { updates, runtimeContextVersion: OTA_RUNTIME_CONTEXT_VERSION, providerVerifiedPlatforms };
     if (correctingLegacyMismatch) {
       if (!recorded.remote_id || typeof this.ledger.replaceTerminalAction !== "function") {
         throw new Error("Legacy OTA runtime correction requires atomic durable identity replacement.");
