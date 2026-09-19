@@ -318,6 +318,7 @@ export function normalizeSandboxOffers(
                     .displayName,
                 ),
               ].filter(Boolean);
+      const hotelLocation = vertical === "hotels" ? kayakHotelLocation(result) : undefined;
       const flightCabin = vertical === "flights" ? kayakFlightCabin(data, result, option) : undefined;
       const flightFareFamily = vertical === "flights" ? fareFamilyName(option.fareFamily) : undefined;
       const flightFareTerms = vertical === "flights" ? kayakFareTerms(option.fees, currency) : [];
@@ -353,7 +354,7 @@ export function normalizeSandboxOffers(
           ? { hotelReviewCount: result.numberOfReviews } : {}),
         ...(vertical === "hotels" ? {
           amenities: kayakHotelAmenities(result.features, data.amenityDictionary),
-          ...(kayakHotelLocation(result) ? { hotelLocation: kayakHotelLocation(result) } : {}),
+          ...(hotelLocation ? { hotelLocation } : {}),
         } : {}),
         ...(vertical === "flights" ? { flightLegs: kayakFlightLegs(data, result).map((leg, legIndex) => ({
           ...leg,
