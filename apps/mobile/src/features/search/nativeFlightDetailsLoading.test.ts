@@ -27,9 +27,9 @@ function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWi
     React: { createElement: host }, View: "View", ScrollView: "ScrollView", SafeAreaView: "SafeAreaView",
     Pressable: "Pressable", Text: "Text", DetailGlassSurface: (props: any) => host("DetailGlassSurface", props), ArrowLeft: "ArrowLeft", Heart: "Heart", FlowIcon: "FlowIcon", StatusBar: "StatusBar", Svg: "Svg", Path: "Path",
     Animated: { View: "Animated.View", Value: class { constructor(public value: number) {} } },
-    useState: (value: unknown) => [value, () => {}], useRef: (current: unknown) => ({ current }), useEffect: () => {},
+    useState: (value: unknown) => [value, () => {}], useRef: (current: unknown) => ({ current }), useEffect: () => {}, useCallback: (callback: unknown) => callback,
     Platform: { OS: "android" }, StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1, absoluteFillObject: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 } }, ui: { blue: "#2563EB", green: "#16A34A" },
-    router: { back: () => { backs += 1; } }, FLIGHT_RESULTS_LIGHT_CANVAS: "#F5F7FB",
+    router: { back: () => { backs += 1; } }, flightDetailsHeaderProtectionGeometry: (top: number) => ({ protectedHeight: top + 64, threshold: Math.max(0, 150 - top) }), FLIGHT_RESULTS_LIGHT_CANVAS: "#F5F7FB",
     input: { theme, topInset, bottomInset, fareCardWidth, viewportWidth: 390 },
   }) as Element;
   return { root, theme, backCount: () => backs };
