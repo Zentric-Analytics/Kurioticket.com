@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Platform,
   Pressable,
   ScrollView,
   Share,
@@ -14,6 +15,7 @@ import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "exp
 import { ArrowLeft, Heart, Users } from "lucide-react-native";
 import { travelApi, type HotelResult, type MobileHotelDetailsResponse } from "../../api/travelApi";
 import { useAppTheme } from "../../theme/AppTheme";
+import { getApiBaseUrl } from "../../config/apiUrl";
 import { colors } from "../../theme/tokens";
 import { appFonts } from "../../theme/typography";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
@@ -30,18 +32,17 @@ import { visualHotels } from "./visualFixtures";
 import { DetailGlassSurface } from "./DetailGlassSurface";
 import {
   canonicalHotelAddress,
-  HotelRoomOptionsModal,
   NativeHotelGallery,
 } from "./NativeHotelDetails";
 import {
   hotelStaySummary,
   nativeHotelOffers,
   nativeHotelProviderUrl,
+  nativeKurioticketHotelDetailsUrl,
 } from "./nativeHotelDetailsModel";
 import {
   canReuseHotelDisplayPrices,
   createHotelDisplayPrices,
-  createHotelRoomDisplayPrice,
   type HotelDisplayPriceSnapshot,
 } from "./hotelDetailCurrency";
 import { prepareNativeRelatedHotels, type NativeRelatedHotel } from "./nativeHotelRelatedHotelsModel";
@@ -153,7 +154,6 @@ function HotelDetail({
     status: HotelDetailsStatus;
     response: MobileHotelDetailsResponse | null;
   } | null>(null);
-  const [roomsOpen, setRoomsOpen] = useState(false);
   const [selectedRateId, setSelectedRateId] = useState<string | null>(null);
   const guestCount = positiveCount(params.guests, 2, HOTEL_LIMITS.guests.max);
   const roomCount = positiveCount(params.rooms, 1, HOTEL_LIMITS.rooms.max);
@@ -164,7 +164,6 @@ function HotelDetail({
 
   useEffect(() => {
     setSelectedRateId(null);
-    setRoomsOpen(false);
     setLookAroundInteracting(false);
   }, [result.id]);
 
@@ -234,8 +233,23 @@ function HotelDetail({
   const providerHandoffAvailable =
     Boolean(redirectUrl) &&
     (result.searchPolicy.bookable || result.searchPolicy.source === "kayak-sandbox");
-  const internalRoomFlowAvailable = roomOptions.length > 0;
-  const hotelOffers = nativeHotelOffers(internalRoomFlowAvailable, providerHandoffAvailable);
+  const apiBase = getApiBaseUrl(Platform.OS, __DEV__);
+  const kurioticketWebUrl = apiBase.ok
+    ? nativeKurioticketHotelDetailsUrl(apiBase.baseUrl, {
+        id: result.id,
+        destination: String(params.destination || property?.city || result.location),
+        checkIn,
+        checkOut,
+        guests: guestCount,
+        rooms: roomCount,
+      })
+    : "";
+  const kurioticketHandoffAvailable =
+    roomOptions.length > 0 && Boolean(kurioticketWebUrl);
+  const hotelOffers = nativeHotelOffers(
+    kurioticketHandoffAvailable,
+    providerHandoffAvailable,
+  );
   const hasPrice = result.pricePerNight != null && result.totalPrice != null;
   const passedDisplayPrices = parse<HotelDisplayPriceSnapshot>(
     params.hotelDisplayPrices,
@@ -389,25 +403,10 @@ function HotelDetail({
     });
   };
 
-  const presentedRoomOptions = roomOptions.map((option) => ({
-    ...option,
-    displayPrice: nightlyPrice
-      ? createHotelRoomDisplayPrice(
-          option.pricePerNight,
-          option.totalPrice,
-          option.currency,
-          nightlyPrice.currency,
-          hotelCurrencyRates,
-        )
-      : null,
-  }));
   const staySummary = hotelStaySummary(checkIn, checkOut, guestCount, roomCount);
   const rateRows = buildNativeHotelRateRows({
     offers: hotelOffers,
-    roomOptions: presentedRoomOptions,
     providerName: result.provider,
-    roomType: result.roomType,
-    cancellationInfo: result.cancellationInfo,
     nightlyPrice: displayPrices?.nightly ?? null,
     totalPrice: displayPrices?.total ?? null,
     hasPrice,
@@ -426,7 +425,7 @@ function HotelDetail({
     ?? rateRows.find((row) => row.actionable)
     ?? null;
   const selectedRateIdForView = selectedRate?.id ?? null;
-  const bookingActionLabel = selectedRate?.providerKind === "provider" ? "View deal" : "Choose room";
+  const bookingActionLabel = "View deal";
 
   const openProviderInApp = async (url: string) => {
     const WebBrowser = await import("expo-web-browser");
@@ -435,13 +434,15 @@ function HotelDetail({
 
   const continueSelectedRate = async () => {
     if (!selectedRate?.actionable) return;
-    if (selectedRate.offerId === "internal-rooms") {
-      setRoomsOpen(true);
-      return;
-    }
-    if (selectedRate.offerId !== "provider" || !providerHandoffAvailable || !redirectUrl) return;
+    const targetUrl =
+      selectedRate.offerId === "internal-rooms"
+        ? kurioticketWebUrl
+        : selectedRate.offerId === "provider" && providerHandoffAvailable
+          ? redirectUrl
+          : "";
+    if (!targetUrl) return;
     try {
-      await openProviderInApp(redirectUrl);
+      await openProviderInApp(targetUrl);
     } catch {
       Alert.alert("Unable to open provider", "Please refresh and try again.");
     }
@@ -532,7 +533,7 @@ function HotelDetail({
         alwaysBounceVertical={false}
         overScrollMode="never"
         style={{ backgroundColor: hotelCanvasColor }}
-        contentContainerStyle={{ paddingBottom: selectedRate ? 108 + inset.bottom : 24 + inset.bottom }}
+        contentContainerStyle={{ paddingBottom: selectedRate ? 120 + inset.bottom : 24 + inset.bottom }}
         onScroll={({ nativeEvent }) => {
           const offset = nativeEvent.contentOffset.y;
           currentHotelScrollOffset.current = offset;
@@ -727,7 +728,7 @@ function HotelDetail({
           style={[
             s.bookingDock,
             {
-              paddingBottom: 8 + inset.bottom,
+              paddingBottom: Math.max(inset.bottom, 10),
               backgroundColor: theme.surface,
               borderTopColor: theme.border,
             },
@@ -756,7 +757,7 @@ function HotelDetail({
             <View style={s.bookingDockAction}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`${bookingActionLabel}. ${selectedRate.title}. ${selectedRate.totalAccessibilityLabel}`}
+                accessibilityLabel={`${bookingActionLabel} with ${selectedRate.providerName}. ${selectedRate.totalAccessibilityLabel}`}
                 onPress={() => void continueSelectedRate()}
                 style={({ pressed }) => [
                   s.bookingDockButton,
@@ -771,17 +772,7 @@ function HotelDetail({
         </View>
       ) : null}
 
-      <HotelRoomOptionsModal
-        visible={roomsOpen}
-        onClose={() => setRoomsOpen(false)}
-        options={
-          selectedRate?.roomOptionId
-            ? presentedRoomOptions.filter((option) => option.id === selectedRate.roomOptionId)
-            : presentedRoomOptions
-        }
-        theme={theme}
-        accentColor={hotelAccent}
-      />
+
     </SafeAreaView>
   );
 }
@@ -821,29 +812,29 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    borderTopWidth: 1,
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    minHeight: 88,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 18,
+    paddingTop: 11,
     shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: -5 },
+    shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 10,
+    shadowRadius: 12,
+    elevation: 7,
     zIndex: 25,
   },
   bookingDockContent: {
     width: "100%",
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: 10,
+    gap: 14,
   },
-  bookingDockPrice: { flex: 1, minWidth: 0, gap: 0 },
+  bookingDockPrice: { flex: 1, minWidth: 0, gap: 1 },
   bookingDockTotal: {
     maxWidth: "100%",
-    fontSize: 18,
-    lineHeight: 21,
+    fontSize: 19,
+    lineHeight: 22,
     fontWeight: "600",
     fontFamily: appFonts.semibold,
     letterSpacing: -0.25,
@@ -854,14 +845,14 @@ const s = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
     fontSize: 11,
-    lineHeight: 15,
+    lineHeight: 16,
     fontWeight: "600",
     fontFamily: appFonts.semibold,
   },
-  bookingDockAction: { flex: 0.9, minWidth: 144, maxWidth: 188 },
+  bookingDockAction: { flex: 0.78, minWidth: 140, maxWidth: 180 },
   bookingDockButton: {
     width: "100%",
-    minHeight: 44,
+    minHeight: 48,
     borderRadius: 8,
     paddingHorizontal: 12,
     alignItems: "center",
@@ -870,8 +861,8 @@ const s = StyleSheet.create({
   bookingDockButtonPressed: { opacity: 0.82 },
   bookingDockButtonText: {
     color: "#FFFFFF",
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: "700",
     fontFamily: appFonts.bold,
     textAlign: "center",

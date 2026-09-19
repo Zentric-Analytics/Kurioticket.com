@@ -86,7 +86,6 @@ test("active Hotel light canvas matches the web white article while allowing a f
   assert.match(hotel, /s\.tabsShell,[\s\S]*?paddingTop: hotelStickyTabsTop,[\s\S]*?marginTop: 1 - hotelStickyTabsTop,[\s\S]*?backgroundColor: hotelTabsPinned \? hotelCanvasColor : "transparent"/);
   assert.match(hotel, /style=\{\[s\.tabsRow, \{ backgroundColor: hotelCanvasColor \}\]\}/);
   assert.match(hotel, /backgroundColor: hotelCanvasColor/);
-  assert.doesNotMatch(hotel, /Platform\.OS/);
 });
 
 test("active Hotel section navigation keeps one deterministic compact tab row", () => {
@@ -167,14 +166,15 @@ test("native gallery remains interactive and full-bleed with the two-level mobil
   assert.doesNotMatch(gallery, /Previous photo|Next photo|ChevronLeft|ChevronRight/);
 });
 
-test("active Hotel detail keeps the existing multi-rate tint while a single rate stays white", () => {
+test("active Hotel Rates reuse the Flight selectable deal-card language", () => {
   assert.match(hotel, /const hotelAccent = theme\.dark \? "#8FB5FF" : colors\.blue/);
   assert.match(hotel, /<NativeHotelRatesSection[\s\S]*?accentColor=\{hotelAccent\}/);
-  assert.match(rates, /const selectedBackground = theme\.dark/);
-  assert.match(rates, /const showSelectedBackground = rows\.length > 1 && selected/);
-  assert.match(rates, /backgroundColor: showSelectedBackground \? selectedBackground : theme\.surface/);
-  assert.doesNotMatch(rates, /selectedBar|showSelectionMarker|<Check|selectedMark|borderColor: selected|borderWidth: selected|reserveButton|>Reserve<\/Text>|accessibilityRole="radio"/);
-  assert.doesNotMatch(rates, /borderWidth: 6/);
+  assert.match(rates, /const selectedBackground = theme\.dark \? "#142844" : "#F4F8FF"/);
+  assert.match(rates, /accessibilityRole="radiogroup"/);
+  assert.match(rates, /accessibilityRole="radio"/);
+  assert.match(rates, /borderColor: selected \? accentColor : surfaceBorderColor/);
+  assert.match(rates, /s\.dealRadioDot/);
+  assert.doesNotMatch(rates, /rateTitle|rateMeta|selectedBar|showSelectionMarker|<Check|reserveButton|>Reserve<\/Text>|Compact room|Deluxe|Suite/);
   assert.match(hotelSource, /bookingDockButton/);
   assert.match(tokens, /blue: "#004BB8"/);
 });
@@ -201,18 +201,21 @@ test("active Hotel provider selection validates candidates and allows safe KAYAK
   assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
 });
 
-test("active Hotel Rates use a truthful persistent action for native and provider rates", () => {
-  assert.match(hotel, /nativeHotelOffers\(internalRoomFlowAvailable, providerHandoffAvailable\)/);
+test("active Hotel Rates use one Continue-to-provider action for Kurioticket and external providers", () => {
+  assert.match(hotel, /nativeKurioticketHotelDetailsUrl/);
+  assert.match(hotel, /const kurioticketHandoffAvailable =[\s\S]*?roomOptions\.length > 0 && Boolean\(kurioticketWebUrl\)/);
+  assert.match(hotel, /nativeHotelOffers\([\s\S]*?kurioticketHandoffAvailable,[\s\S]*?providerHandoffAvailable/);
   assert.match(hotel, /const rateRows = buildNativeHotelRateRows/);
   assert.match(hotel, /const selectedRate: NativeHotelRateRow \| null/);
-  assert.match(hotel, /if \(selectedRate\.offerId === "internal-rooms"\)/);
-  assert.match(hotel, /selectedRate\.offerId !== "provider" \|\| !providerHandoffAvailable \|\| !redirectUrl/);
+  assert.match(hotel, /const bookingActionLabel = "View deal"/);
+  assert.doesNotMatch(hotel, /Continue to|Choose room/);
+  assert.match(hotel, /selectedRate\.offerId === "internal-rooms"[\s\S]*?\? kurioticketWebUrl/);
+  assert.match(hotel, /selectedRate\.offerId === "provider" && providerHandoffAvailable[\s\S]*?\? redirectUrl/);
   assert.match(hotel, /await import\("expo-web-browser"\)/);
   assert.match(hotel, /WebBrowser\.openBrowserAsync\(url, \{ dismissButtonStyle: "close" \}\)/);
-  assert.match(hotel, /await openProviderInApp\(redirectUrl\)/);
-  assert.doesNotMatch(hotel, /openPreviewLegalBrowser|openAuthSessionAsync|Linking\.openURL\(redirectUrl\)/);
+  assert.match(hotel, /await openProviderInApp\(targetUrl\)/);
+  assert.doesNotMatch(hotel, /Continue to|Choose room|HotelRoomOptionsModal|setRoomsOpen/);
   assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
-  assert.match(hotel, /const bookingActionLabel = selectedRate\?\.providerKind === "provider" \? "View deal" : "Choose room"/);
   assert.match(hotel, /bookingDockButtonText\}>\{bookingActionLabel\}<\/Text>/);
   assert.match(hotel, /selectedRate\.totalPrice/);
 });
@@ -229,10 +232,9 @@ test("Car detail parity remains protected", () => {
   assert.match(car, /primaryValidCarOffer\(result\.offers\)/);
 });
 
-test("room modal receives display-price truth and does not format source currency", () => {
-  assert.match(hotel, /createHotelRoomDisplayPrice/);
-  assert.match(hotel, /selectedRate\?\.roomOptionId[\s\S]*?presentedRoomOptions\.filter\(\(option\) => option\.id === selectedRate\.roomOptionId\)[\s\S]*?: presentedRoomOptions/);
+test("Hotel Rates no longer expose native room-option cards or a room modal", () => {
+  assert.doesNotMatch(hotel, /HotelRoomOptionsModal|createHotelRoomDisplayPrice|presentedRoomOptions|roomOptionId|setRoomsOpen/);
+  assert.doesNotMatch(rates, /roomOptions|roomOptionId|roomRatePresentation|rateTitle|rateMeta|Compact room|Deluxe|Suite/);
   assert.doesNotMatch(gallery, /Intl\.NumberFormat/);
-  assert.match(gallery, /displayPrice\.total\.accessibilityLabel/);
-  assert.match(gallery, /displayPrice\.nightly\.accessibilityLabel/);
 });
+

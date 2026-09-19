@@ -15,8 +15,13 @@ test("native uses only canonical server search APIs for all provider inventory",
   assert.doesNotMatch(api, /api\/sandbox\/kayak|KAYAK_SANDBOX_API_KEY/);
 });
 
-test("native keeps provider classification for unified metasearch while Cars omit authored sandbox status copy", () => {
+test("native keeps provider classification while Hotel and Cars omit redundant sandbox status copy", () => {
+  const hotelCard = results.slice(
+    results.indexOf("function HotelCard"),
+    results.indexOf("function FlightResultsSummaryRow"),
+  );
   assert.match(results, /KAYAK sandbox · Simulated · Not bookable/);
+  assert.doesNotMatch(hotelCard, /KAYAK sandbox · Simulated · Not bookable/);
   assert.match(results, /filterAndSortFlights\(/);
   assert.match(results, /filterHotels\(results as HotelResult\[\], hotelFilters/);
   assert.match(cars, /filterCarResults\(results,filters,pricePerDay\)/);
