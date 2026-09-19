@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { CarResult } from "../../api/travelApi";
-import { presentCarOfferCurrency } from "./carDisplayCurrency";
+import { carDisplayPricePerDay, presentCarOfferCurrency } from "./carDisplayCurrency";
 
 const offer: CarResult["offers"][number] = {
   id: "offer-1",
@@ -33,4 +33,10 @@ test("Cars keeps authoritative provider prices when conversion is unnecessary or
   assert.equal(presentCarOfferCurrency(offer, "USD", { USD: 1 }), offer);
   assert.equal(presentCarOfferCurrency(offer, "EUR", { USD: 1 }), offer);
   assert.equal(presentCarOfferCurrency(offer, "not-a-currency", { USD: 1, EUR: 0.9 }), offer);
+});
+
+test("Cars price filters can resolve the same converted daily amount shown on result cards", () => {
+  const car = { offers: [offer] } as CarResult;
+  assert.equal(carDisplayPricePerDay(car, "EUR", { USD: 1, EUR: 0.9 }), 45);
+  assert.equal(carDisplayPricePerDay(car, "USD", { USD: 1 }), 50);
 });

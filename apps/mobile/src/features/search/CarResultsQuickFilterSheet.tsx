@@ -5,7 +5,7 @@ import type { CarResult } from "../../api/travelApi";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
-import type { CarSort, SelectedCarFilters } from "../../../../../src/lib/cars/carResults";
+import type { CarPricePerDayResolver, CarSort, SelectedCarFilters } from "../../../../../src/lib/cars/carResults";
 import { FLIGHT_FILTER_LIGHT_CANVAS, FLIGHT_FILTER_LIGHT_OUTLINE, FlightResultsSheetShell } from "./FlightResultsSheetShell";
 import { visibleCarFilterGroups } from "./CarFilterSheet";
 import { carFilterCopy, carFilterGroupLabel, carFilterOptionLabel } from "./carFilterCopy";
@@ -13,12 +13,12 @@ import { NATIVE_FILTER_SELECTION_FEEDBACK_MS } from "./filterResultsTransition";
 import { ui } from "./SearchUi";
 
 type Kind = "sort" | string;
-type Props = { kind: Kind; results: CarResult[]; filters: SelectedCarFilters; sort: CarSort; onApplyFilters: (filters: SelectedCarFilters) => void; onApplySort: (sort: CarSort) => void; onClose: () => void };
+type Props = { kind: Kind; results: CarResult[]; filters: SelectedCarFilters; pricePerDay: CarPricePerDayResolver; sort: CarSort; onApplyFilters: (filters: SelectedCarFilters) => void; onApplySort: (sort: CarSort) => void; onClose: () => void };
 const sortOptions: Array<{value:CarSort;label:string;description:string}> = [{value:"recommended",label:"Recommended",description:"Best overall value first"},{value:"lowestTotal",label:"Total price",description:"Lowest rental total first"},{value:"topRated",label:"Top rated",description:"Highest supplier rating first"}];
 
-export function CarResultsQuickFilterSheet({kind,results,filters,sort,onApplyFilters,onApplySort,onClose}:Props){
+export function CarResultsQuickFilterSheet({kind,results,filters,pricePerDay,sort,onApplyFilters,onApplySort,onClose}:Props){
  const {theme}=useAppTheme(); const {locale,direction}=useMobileLocalization(); const copy=useMemo(()=>carFilterCopy(locale),[locale]);
- const group=useMemo(()=>visibleCarFilterGroups(results).find(item=>item.id===kind),[results,kind]);
+ const group=useMemo(()=>visibleCarFilterGroups(results,pricePerDay).find(item=>item.id===kind),[results,pricePerDay,kind]);
  const [draft,setDraft]=useState<string[]>(kind==="sort"?[]:[...(filters[kind]??[])]); const [draftSort,setDraftSort]=useState<CarSort>(sort);
  const [updating,setUpdating]=useState(false); const timer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined);
  useEffect(()=>()=>{if(timer.current)clearTimeout(timer.current);},[]); const mark=()=>{if(timer.current)clearTimeout(timer.current);setUpdating(true);timer.current=setTimeout(()=>setUpdating(false),NATIVE_FILTER_SELECTION_FEEDBACK_MS);};
