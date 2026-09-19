@@ -87,6 +87,7 @@ import {
 } from "./flightFilters";
 import { FlightFilterSheet, type FlightFilterSectionName } from "./FlightFilterSheet";
 import { FlightResultsQuickControls } from "./FlightResultsQuickControls";
+import { DetailGlassSurface } from "./DetailGlassSurface";
 import { FlightSortSheet } from "./FlightSortSheet";
 import { FLIGHT_QUICK_SHEET_HORIZONTAL_INSET } from "./FlightResultsSheetShell";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
@@ -1142,7 +1143,8 @@ function FlightResultsHeader({
             onPress={() => router.back()}
             style={({ pressed }) => [s0.flightHeaderBack, pressed && s0.flightHeaderControlPressed]}
           >
-            <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
+            <DetailGlassSurface dark={false} variant="hotelLight" style={s0.flightHeaderBackGlass} />
+            <ArrowLeft size={25} strokeWidth={2} color="#0F172A" />
           </Pressable>
         </View>
         <Pressable
@@ -1825,6 +1827,7 @@ const s0 = StyleSheet.create({
   flightHeaderMainRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
   flightHeaderSide: { width: 44, flexShrink: 0 },
   flightHeaderBack: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  flightHeaderBackGlass: { position: "absolute", left: 2, right: 2, top: 2, bottom: 2, borderRadius: 20 },
   flightHeaderControlPressed: { opacity: 0.55 },
   flightRouteSummaryCard: { flex: 1, minWidth: 0, minHeight: 62, borderWidth: 1, borderRadius: 13, flexDirection: "row", alignItems: "center", overflow: "hidden" },
   flightRouteSummaryCopy: { flex: 1, minWidth: 0, justifyContent: "center", paddingLeft: 14, paddingVertical: 9 },
