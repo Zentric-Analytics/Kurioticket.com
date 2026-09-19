@@ -207,6 +207,7 @@ function HotelDetail({
   }, [enrichmentKey, result.id, checkIn, checkOut, guestCount, roomCount]);
 
   const property = details?.propertyDetails ?? null;
+  const locationProperty = details?.locationDetails ?? property;
   const roomOptions = details?.roomOptions ?? [];
   const images = result.imageUrls?.length
     ? result.imageUrls
@@ -609,6 +610,7 @@ function HotelDetail({
             <NativeHotelBookingDetails
               result={result}
               property={property}
+              locationProperty={locationProperty}
               detailsStatus={detailsStatus}
               classification={classification}
               relatedHotels={relatedHotels}
