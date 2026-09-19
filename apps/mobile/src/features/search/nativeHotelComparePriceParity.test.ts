@@ -66,7 +66,7 @@ test("provider room parsing removes duplicated generic cancellation copy", () =>
 
 test("selected Hotel rate uses only a subtle tint without an outline, checkmark, or radio control", () => {
   assert.match(ratesSource, /const selected = row\.id === selectedRateId/);
-  assert.match(ratesSource, /const selectedBackground = theme\.dark[\s\S]*?rgba\(0, 75, 184, 0\.045\)/);
+  assert.match(ratesSource, /const selectedBackground = theme\.dark[\s\S]*?rgba\(0, 75, 184, 0\.035\)/);
   assert.match(ratesSource, /selected && \{ backgroundColor: selectedBackground \}/);
   assert.match(ratesSource, /accessibilityState=\{\{ selected, disabled: !row\.actionable \}\}/);
   assert.doesNotMatch(ratesSource, /<Check|selectedMark|borderColor: selected|borderWidth: selected|accessibilityRole="radio"|radioDot|radiogroup/);
@@ -75,15 +75,15 @@ test("selected Hotel rate uses only a subtle tint without an outline, checkmark,
 test("Kurioticket cards keep the bundled wordmark and app typography", () => {
   assert.ok(existsSync("assets/kurioticket-logo-primary-light-bg.png"));
   assert.match(ratesSource, /providerKind === "kurioticket"[\s\S]*?<Image[\s\S]*?accessibilityLabel="Kurioticket"[\s\S]*?require\("\.\.\/\.\.\/\.\.\/assets\/kurioticket-logo-primary-light-bg\.png"\)/);
-  assert.match(styleRule(ratesSource, "rateTitle", "benefitList"), /fontFamily: appFonts\.bold/);
+  assert.match(styleRule(ratesSource, "rateTitle", "rateMeta"), /fontFamily: appFonts\.bold/);
   assert.match(styleRule(ratesSource, "rateMeta", "priceBlock"), /fontFamily: appFonts\.regular/);
   assert.match(styleRule(ratesSource, "price", "priceUnit"), /fontFamily: appFonts\.bold/);
 });
 
 test("Rates use compact grouped rows with dividers and reference-style density", () => {
   assert.match(styleRule(ratesSource, "rateList", "rateDivider"), /borderWidth: 1[\s\S]*borderRadius: 10[\s\S]*overflow: "hidden"/);
-  assert.match(styleRule(ratesSource, "rateDivider", "rateCard"), /height: StyleSheet\.hairlineWidth[\s\S]*marginHorizontal: 12/);
-  assert.match(styleRule(ratesSource, "rateCard", "rateCardPressed"), /minHeight: 92[\s\S]*paddingHorizontal: 12[\s\S]*paddingVertical: 10[\s\S]*justifyContent: "center"/);
+  assert.match(styleRule(ratesSource, "rateDivider", "rateCard"), /height: StyleSheet\.hairlineWidth/);
+  assert.match(styleRule(ratesSource, "rateCard", "rateCardPressed"), /minHeight: 94[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 11[\s\S]*justifyContent: "center"/);
   assert.match(styleRule(ratesSource, "rateMain", "providerIdentity"), /flexDirection: "row"[\s\S]*alignItems: "center"[\s\S]*gap: 12/);
   assert.match(styleRule(ratesSource, "priceBlock", "price"), /alignItems: "flex-end"/);
   assert.match(ratesSource, />Rates<\/Text>/);
