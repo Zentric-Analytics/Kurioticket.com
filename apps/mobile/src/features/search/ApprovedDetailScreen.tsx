@@ -502,7 +502,7 @@ function HotelDetail({
               onPress={() => void canonical.toggleHotel(result, params)}
               style={d.hotelHeroAction}
             >
-              <Heart size={22} strokeWidth={2} color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} />
+              <Heart size={22} strokeWidth={androidFavoriteColors.strokeWidth} color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} />
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -510,7 +510,7 @@ function HotelDetail({
               onPress={shareHotel}
               style={d.hotelHeroAction}
             >
-              <FlowIcon name="share" size={22} color="#0F172A" />
+              <FlowIcon name="share" size={22} strokeWidth={androidFavoriteColors.strokeWidth} color={androidFavoriteColors.shareStroke} />
             </Pressable>
           </View>
         </View>

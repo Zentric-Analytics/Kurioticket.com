@@ -88,9 +88,9 @@ test("favorite and share behavior survive relocation into independent hero actio
   const controls = native.slice(backStart, native.indexOf("{offer?<View style={[s.dock", actionsStart));
   assert.match(controls, /accessibilityLabel=\{saved\.saved\?"Remove car from saved":"Save car"\}/);
   assert.match(controls, /accessibilityState=\{\{selected:saved\.saved\}\} onPress=\{saved\.toggle\} style=\{s\.heroAction\}/);
-  assert.match(controls, /<Heart size=\{22\} strokeWidth=\{2\} color=\{saved\.saved\?androidFavoriteColors\.savedStroke:light\?androidFavoriteColors\.unsavedStroke:theme\.icon\} fill=\{saved\.saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/\>/);
+  assert.match(controls, /<Heart size=\{22\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{saved\.saved\?androidFavoriteColors\.savedStroke:light\?androidFavoriteColors\.unsavedStroke:theme\.icon\} fill=\{saved\.saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/\>/);
   assert.match(controls, /accessibilityLabel="Share car" onPress=\{\(\)=>void Share\.share\(\{message:`\$\{result\.modelName\} — \$\{result\.categoryLabel\}`\}\)\} style=\{s\.heroAction\}/);
-  assert.match(controls, /<Share2 size=\{21\} color=\{light\?"#0F172A":theme\.icon\}\/\>/);
+  assert.match(controls, /<Share2 size=\{21\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{light\?androidFavoriteColors\.shareStroke:theme\.icon\}\/\>/);
   assert.equal((controls.match(/style=\{s\.heroAction\}/g) ?? []).length, 2);
 });
 
