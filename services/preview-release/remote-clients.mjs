@@ -5,7 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { PREVIEW_IDENTITY, PREVIEW_WORKER_BUILD_PATHS, assertExactSha } from "./config.mjs";
-import { normalizePreviewUpdatePage } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
+import { canonicalPreviewOtaRemoteIdentity, inspectPreviewUpdateHistory, normalizePreviewUpdatePage } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
 import { fetchWithDeadline, LOCAL_COMMAND_TIMEOUT_MS } from "./deadlines.mjs";
 
 const exec = promisify(execFile);
@@ -134,7 +134,7 @@ export class RenderClient {
 }
 
 export class EasClient {
-  constructor({ expoToken, cwd, command = process.platform === "win32" ? "npx.cmd" : "npx", fetchImpl = fetch }) { this.expoToken = expoToken; this.cwd = cwd; this.command = command; this.fetch = fetchImpl; }
+  constructor({ expoToken, cwd, command = process.platform === "win32" ? "npx.cmd" : "npx", fetchImpl = fetch, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)) }) { this.expoToken = expoToken; this.cwd = cwd; this.command = command; this.fetch = fetchImpl; this.sleep = sleep; }
   async listIosBuilds(targetSha) {
     return this.listBuilds("ios", targetSha);
   }
@@ -247,9 +247,10 @@ export class EasClient {
     }
     throw new Error("Expo submission history exceeded the bounded pagination limit.");
   }
-  async publishUpdate(message, platform, expectedRuntime) {
+  async publishUpdate(message, platform, expectedRuntime, targetSha) {
     if (platform !== "ios" && platform !== "android") throw new Error("EAS Update platform is invalid.");
     if (!/^[0-9a-f]{40,128}$/.test(expectedRuntime ?? "")) throw new Error("EAS Update expected runtime is invalid.");
+    assertExactSha(targetSha, "EAS Update target SHA");
     await this.validateOtaStartup();
     const value = await this.run(["eas-cli@16.17.4", "update", "--channel", "preview", "--platform", platform, "--environment", "preview", "--message", message, "--non-interactive", "--json"]);
     const entries = Array.isArray(value) ? value : [value];
@@ -257,7 +258,27 @@ export class EasClient {
     if (entries.some((entry) => entry.runtimeVersion !== expectedRuntime)) {
       throw new EasUpdateRuntimeMismatchError(platform, expectedRuntime, entries);
     }
-    return entries;
+    const publishedIdentity = canonicalPreviewOtaRemoteIdentity({ [platform]: entries });
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const history = await this.listUpdates();
+      const replay = inspectPreviewUpdateHistory(history, targetSha, platform, expectedRuntime);
+      if (replay.matchingUpdates > 1) throw new Error(`EAS Update ${platform} post-publish history contains conflicting exact-SHA groups.`);
+      if (replay.alreadyPublished) {
+        const visible = history.filter((entry) =>
+          entry.branch === PREVIEW_IDENTITY.channel
+          && entry.runtimeVersion === expectedRuntime
+          && Array.isArray(entry.platforms)
+          && entry.platforms.includes(platform)
+          && entry.message === message
+        );
+        if (visible.length !== 1) throw new Error(`EAS Update ${platform} publication is not uniquely visible on the Preview branch.`);
+        const visibleIdentity = canonicalPreviewOtaRemoteIdentity({ [platform]: visible });
+        if (visibleIdentity !== publishedIdentity) throw new Error(`EAS Update ${platform} post-publish identity does not match the published group.`);
+        return visible;
+      }
+      if (attempt < 5) await this.sleep(2_000);
+    }
+    throw new Error(`EAS Update ${platform} publication was not observable in Preview history after the bounded verification window.`);
   }
   async validateOtaStartup() {
     try {
