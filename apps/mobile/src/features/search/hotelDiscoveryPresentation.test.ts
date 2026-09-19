@@ -46,8 +46,8 @@ test("narrow active Hotel layout keeps concise grouped rows and a persistent con
   assert.match(rates, /minimumFontScale=\{0\.68\}/);
   assert.match(rates, /borderRadius: 10/);
   assert.match(rates, /minHeight: 88/);
-  assert.match(rates, /const showSelectionMarker = rows\.length > 1 && selected/);
-  assert.match(rates, /s\.selectedBar/);
+  assert.match(rates, /const showSelectedBackground = rows\.length > 1 && selected/);
+  assert.match(rates, /backgroundColor: showSelectedBackground \? selectedBackground : theme\.surface/);
   assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
   assert.match(rates, /disabled=\{!row\.actionable\}/);
   assert.match(rates, /s\.rateDivider/);
