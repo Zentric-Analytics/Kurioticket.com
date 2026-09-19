@@ -21,7 +21,7 @@ export type HotelResult = ContractResult<PublicHotelResult>;
 export type HotelSearchResponse = TravelSearchResponse<PublicHotelResult> & {
   warningCategory?: "provider_unavailable" | string;
 };
-export type MobileHotelDetailsResponse = { hotel: PublicHotelResult; propertyDetails: PublicHotelPropertyDetails | null; roomOptions: HotelRoomOption[]; relatedHotels: PublicHotelResult[] };
+export type MobileHotelDetailsResponse = { hotel: PublicHotelResult; propertyDetails: PublicHotelPropertyDetails | null; locationDetails?: PublicHotelPropertyDetails | null; roomOptions: HotelRoomOption[]; relatedHotels: PublicHotelResult[] };
 export type MobileHotelDetailsRequest = { id: string; checkIn: string; checkOut: string; guests: number; rooms: number };
 export type CarResult = ContractResult<NormalizedCarResult>;
 export type PackageComponent = { status: "success" | "empty" | "unavailable"; results: (FlightResult | HotelResult | CarResult)[]; warnings: string[]; source: string; requestId: string };
