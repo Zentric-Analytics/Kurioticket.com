@@ -86,7 +86,7 @@ export async function GET(request: Request) {
     rooms: Number(url.searchParams.get("rooms")) || 1,
   };
   const memoryContext = getHotelDetailsCacheContext(id);
-  const persistedContext = memoryContext?.relatedHotels.length
+  const persistedContext = memoryContext
     ? null
     : await getProviderResultContext<NormalizedHotelResult>("hotel", id);
   const cached = memoryContext?.hotel ?? persistedContext?.result ?? null;
