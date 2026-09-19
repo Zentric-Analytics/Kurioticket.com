@@ -59,11 +59,12 @@ test("provider handoff keeps room terms, nightly price, and stay total separate"
   assert.match(ratesSource, /actionable: Boolean\(providerOffer\)/);
 });
 
-test("provider room parsing removes duplicated generic cancellation copy", () => {
+test("provider room parsing keeps only one concise supporting condition", () => {
   assert.match(ratesSource, /split\(\/\\s\+\[—–-\]\\s\+\//);
-  assert.match(ratesSource, /non\[- \]\?refundable\|refundable\|free cancellation\|cancel/);
-  assert.match(ratesSource, /cancellation conditions apply\|see supplied rate details/);
-  assert.match(ratesSource, /\.slice\(0, 3\)/);
+  assert.match(ratesSource, /function conciseCondition/);
+  assert.match(ratesSource, /\.map\(conciseCondition\)[\s\S]*?\.find\(Boolean\)/);
+  assert.match(ratesSource, /return condition \? \[condition\] : \[\]/);
+  assert.doesNotMatch(ratesSource, /\.slice\(0, 3\)/);
 });
 
 test("selected Hotel rate uses only a slim left marker when more than one rate exists", () => {
