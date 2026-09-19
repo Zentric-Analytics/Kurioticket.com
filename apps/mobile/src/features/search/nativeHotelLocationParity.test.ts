@@ -42,7 +42,9 @@ test("Location is rendered by the active native hotel booking details flow", () 
   assert.match(screen, /import \{ NativeHotelBookingDetails \} from "\.\/NativeHotelBookingDetails";/);
   assert.match(screen, /activeHotelTab === "details"[\s\S]*?<NativeHotelBookingDetails/);
   assert.match(bookingDetails, /import \{ NativeHotelLocationSection \} from "\.\/NativeHotelLocationSection";/);
-  assert.match(bookingDetails, /<NativeHotelLocationSection[\s\S]*?hotelId=\{result\.id\}/);
+  assert.match(screen, /const locationProperty = details\?\.locationDetails \?\? property;/);
+  assert.match(screen, /locationProperty=\{locationProperty\}/);
+  assert.match(bookingDetails, /<NativeHotelLocationSection[\s\S]*?hotelId=\{result\.id\}[\s\S]*?propertyDetails=\{locationProperty\}/);
 });
 
 test("Location uses one horizontal padding owner with a dense booking-page vertical rhythm", () => {
