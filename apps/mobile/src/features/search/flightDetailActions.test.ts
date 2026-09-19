@@ -120,7 +120,7 @@ test("flight optical glass keeps unsaved Save icon visible in dark mode", () => 
 test("flight save action uses the canonical favorite visual states", () => {
   assert.match(native, /label=\{saved\?"Remove saved flight":"Save flight"\} onPress=\{\(\)=>savedFlights\.toggle/);
   assert.match(native, /savedFlights\.toggle\(savedOffer,nativeFlightEditSearchParams\(details,one\(params\.currency\)\)\)/);
-  assert.match(native, /<Heart size=\{17\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\} fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/>/);
+  assert.match(native, /<Heart size=\{17\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{saved \? androidFavoriteColors\.savedStroke : theme\.dark \? theme\.icon : androidFavoriteColors\.unsavedStroke\} fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/>/);
   assert.match(native, /const heroIconColor=theme\.dark\?theme\.icon:"#0F172A"/);
   assert.doesNotMatch(native, /<Heart[^>]*fill="transparent"/);
 });
