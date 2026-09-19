@@ -167,9 +167,10 @@ function HotelDetail({
     setLookAroundInteracting(false);
   }, [result.id]);
 
+  const destination = String(params.destination || result.location);
   const checkIn = String(params.checkIn || "");
   const checkOut = String(params.checkOut || "");
-  const enrichmentKey = `${result.id}\u0000${checkIn}\u0000${checkOut}\u0000${guestCount}\u0000${roomCount}`;
+  const enrichmentKey = `${result.id}\u0000${destination}\u0000${checkIn}\u0000${checkOut}\u0000${guestCount}\u0000${roomCount}`;
   const details = detailsState?.key === enrichmentKey ? detailsState.response : null;
   const detailsStatus: HotelDetailsStatus = detailsState?.key === enrichmentKey
     ? detailsState.status
@@ -183,6 +184,7 @@ function HotelDetail({
       .hotelDetails(
         {
           id: result.id,
+          destination,
           checkIn,
           checkOut,
           guests: guestCount,
@@ -207,7 +209,7 @@ function HotelDetail({
       eligible = false;
       controller.abort();
     };
-  }, [enrichmentKey, result.id, checkIn, checkOut, guestCount, roomCount]);
+  }, [enrichmentKey, result.id, destination, checkIn, checkOut, guestCount, roomCount]);
 
   const property = details?.propertyDetails ?? null;
   const locationProperty = details?.locationDetails ?? property;
