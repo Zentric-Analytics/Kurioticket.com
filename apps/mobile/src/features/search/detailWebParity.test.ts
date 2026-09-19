@@ -208,7 +208,7 @@ test("active Hotel Rates use a truthful persistent action for native and provide
   assert.match(hotel, /if \(selectedRate\.offerId === "internal-rooms"\)/);
   assert.match(hotel, /selectedRate\.offerId !== "provider" \|\| !providerHandoffAvailable \|\| !redirectUrl/);
   assert.match(hotel, /await import\("expo-web-browser"\)/);
-  assert.match(hotel, /WebBrowser\.openBrowserAsync\(url\)/);
+  assert.match(hotel, /WebBrowser\.openBrowserAsync\(url, \{ dismissButtonStyle: "close" \}\)/);
   assert.match(hotel, /await openProviderInApp\(redirectUrl\)/);
   assert.doesNotMatch(hotel, /openPreviewLegalBrowser|openAuthSessionAsync|Linking\.openURL\(redirectUrl\)/);
   assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
