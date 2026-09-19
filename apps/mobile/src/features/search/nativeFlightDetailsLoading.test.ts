@@ -28,7 +28,7 @@ function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWi
     Pressable: "Pressable", Text: "Text", DetailGlassSurface: (props: any) => host("DetailGlassSurface", props), ArrowLeft: "ArrowLeft", Heart: "Heart", FlowIcon: "FlowIcon", StatusBar: "StatusBar", Svg: "Svg", Path: "Path", Defs: "Defs", LinearGradient: "LinearGradient", Stop: "Stop", Rect: "Rect",
     Animated: { View: "Animated.View", Value: class { constructor(public value: number) {} } },
     useState: (value: unknown) => [value, () => {}], useRef: (current: unknown) => ({ current }), useEffect: () => {}, useCallback: (callback: unknown) => callback,
-    Platform: { OS: "android" }, StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1, absoluteFillObject: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 } }, ui: { blue: "#2563EB", green: "#16A34A" },
+    Platform: { OS: "android" }, StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1, absoluteFillObject: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 } }, ui: { blue: "#2563EB", green: "#16A34A" }, appFonts: { semibold: "Inter-SemiBold", bold: "Inter-Bold" }, colors: { blue: "#004BB8" },
     router: { back: () => { backs += 1; } }, flightDetailsHeaderProtectionGeometry: (top: number) => ({ protectedHeight: top + 64, threshold: Math.max(0, 150 - top) }), FLIGHT_RESULTS_LIGHT_CANVAS: "#F5F7FB",
     input: { theme, topInset, bottomInset, fareCardWidth, viewportWidth: 390 },
   }) as Element;
