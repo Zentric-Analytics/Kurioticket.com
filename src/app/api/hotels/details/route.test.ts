@@ -292,3 +292,88 @@ test("static hotel details return only available sanitized same-city alternative
     );
   }
 });
+
+
+test("static Hotel details can recommend KAYAK hotels from the same merged search cohort", async () => {
+  const selected = testHotel("hotel-le-six-paris", "Hotel Le Six");
+  selected.provider = "Kurioticket static catalogue";
+  selected.location = "Paris, France";
+
+  const kayak = testHotel(`kayak-sandbox:related-${Date.now()}`, "KAYAK Paris Alternative");
+  kayak.provider = "KAYAK sandbox";
+  kayak.dataSource = "demo";
+  kayak.location = "Paris, France";
+
+  rememberHotels(
+    [selected, kayak],
+    {
+      destination: "Paris",
+      checkIn: "2027-06-01",
+      checkOut: "2027-06-04",
+      guests: 2,
+      rooms: 1,
+    },
+  );
+
+  const response = await GET(
+    new Request(
+      "https://kurioticket.test/api/hotels/details?id=hotel-le-six-paris&checkIn=2027-06-01&checkOut=2027-06-04&rooms=1&guests=2",
+    ),
+  );
+  const payload = (await response.json()) as {
+    relatedHotels: Array<{
+      id: string;
+      provider: string;
+      rawProviderReference?: unknown;
+    }>;
+  };
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.relatedHotels.length, 1);
+  assert.equal(payload.relatedHotels[0]?.id, kayak.id);
+  assert.equal(payload.relatedHotels[0]?.provider, "KAYAK sandbox");
+  assert.equal(Object.hasOwn(payload.relatedHotels[0] ?? {}, "rawProviderReference"), false);
+});
+
+test("KAYAK Hotel details can recommend Kurioticket hotels from the same merged search cohort", async () => {
+  const selected = testHotel(`kayak-sandbox:selected-${Date.now()}`, "KAYAK New York Hotel");
+  selected.provider = "KAYAK sandbox";
+  selected.dataSource = "demo";
+  selected.location = "New York, United States";
+
+  const kurioticket = testHotel("hotel-le-six-paris", "Kurioticket Alternative");
+  kurioticket.provider = "Kurioticket static catalogue";
+  kurioticket.location = "New York, United States";
+
+  rememberHotels(
+    [selected, kurioticket],
+    {
+      destination: "New York",
+      checkIn: "2027-07-01",
+      checkOut: "2027-07-04",
+      guests: 2,
+      rooms: 1,
+    },
+  );
+
+  const response = await GET(
+    new Request(
+      `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selected.id)}&destination=${encodeURIComponent("New York")}&checkIn=2027-07-01&checkOut=2027-07-04&rooms=1&guests=2`,
+    ),
+  );
+  const payload = (await response.json()) as {
+    hotel: { id: string };
+    relatedHotels: Array<{
+      id: string;
+      provider: string;
+      rawProviderReference?: unknown;
+    }>;
+  };
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.hotel.id, selected.id);
+  assert.equal(payload.relatedHotels.length, 1);
+  assert.equal(payload.relatedHotels[0]?.id, kurioticket.id);
+  assert.equal(payload.relatedHotels[0]?.provider, "Kurioticket static catalogue");
+  assert.equal(Object.hasOwn(payload.relatedHotels[0] ?? {}, "rawProviderReference"), false);
+});

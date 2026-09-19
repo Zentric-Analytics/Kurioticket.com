@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getHotelFromCache, toPublicHotel } from "@/lib/searchCache";
+import { getHotelDetailsCacheContext, getHotelFromCache, toPublicHotel } from "@/lib/searchCache";
 import {
   buildStaticHotelResult,
   buildRelatedStaticHotelResults,
@@ -7,8 +7,9 @@ import {
   getStaticHotelById,
 } from "@/services/travel/staticHotelResults";
 import type { StaticHotelRecord } from "@/services/travel/staticHotelCatalogue";
-import { getProviderResult } from "@/services/travel/providerResultCache";
-import type { NormalizedHotelResult } from "@/lib/types";
+import { getHotelSearchCohort, getProviderResultWithContext } from "@/services/travel/providerResultCache";
+import { compareHotelsByAvailablePrice } from "@/lib/hotels/hotelResultAvailability";
+import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import type { PublicHotelProviderDetails } from "@/lib/hotels/hotelProviderDetails";
 import { kayakHotelLocationDetails } from "@/lib/hotels/kayakHotelLocation";
 
@@ -41,6 +42,46 @@ function providerDetails(result: NormalizedHotelResult): PublicHotelProviderDeta
   return details.source === "KAYAK" ? details : null;
 }
 
+function relatedHotelsFromSearchCohort(
+  hotels: NormalizedHotelResult[],
+  currentHotelId: string,
+) {
+  const seenIds = new Set<string>([currentHotelId]);
+  const seenIdentity = new Set<string>();
+  return hotels
+    .filter((hotel) => {
+      if (!hotel.id || seenIds.has(hotel.id)) return false;
+      const identity = `${hotel.name.trim().toLocaleLowerCase()}|${hotel.location.trim().toLocaleLowerCase()}`;
+      if (seenIdentity.has(identity)) return false;
+      seenIds.add(hotel.id);
+      seenIdentity.add(identity);
+      return true;
+    })
+    .sort(compareHotelsByAvailablePrice)
+    .slice(0, 7)
+    .map(toPublicHotel);
+}
+
+
+function hotelSearchContext(value: unknown): HotelSearchParams | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const candidate = value as Partial<HotelSearchParams>;
+  if (
+    typeof candidate.destination !== "string" ||
+    typeof candidate.checkIn !== "string" ||
+    typeof candidate.checkOut !== "string" ||
+    typeof candidate.guests !== "number" ||
+    typeof candidate.rooms !== "number"
+  ) return null;
+  return {
+    destination: candidate.destination,
+    checkIn: candidate.checkIn,
+    checkOut: candidate.checkOut,
+    guests: candidate.guests,
+    rooms: candidate.rooms,
+  };
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const id = url.searchParams.get("id")?.trim();
@@ -57,19 +98,38 @@ export async function GET(request: Request) {
     .slice(0, 10);
   const checkOut = url.searchParams.get("checkOut") || tomorrow;
   const record = getStaticHotelById(id);
-  const search = {
-    destination: record?.city || "",
+  const requestedDestination = url.searchParams.get("destination")?.trim() || "";
+  const search: HotelSearchParams = {
+    destination: requestedDestination || record?.city || "",
     checkIn,
     checkOut,
     guests: Number(url.searchParams.get("guests")) || 2,
     rooms: Number(url.searchParams.get("rooms")) || 1,
   };
-  const cached = getHotelFromCache(id) ?? (!record
-    ? await getProviderResult<NormalizedHotelResult>("hotel", id)
-    : null);
-  const relatedHotels = record
-    ? buildRelatedStaticHotelResults(record, search).map(toPublicHotel)
+  const memoryContext = search.destination
+    ? getHotelDetailsCacheContext(id, search)
+    : null;
+  const unscopedCached = !record && !memoryContext
+    ? getHotelFromCache(id)
+    : null;
+  const providerContext = !record && !memoryContext && !unscopedCached
+    ? await getProviderResultWithContext<NormalizedHotelResult>("hotel", id)
+    : null;
+  const persistedSearch = search.destination
+    ? search
+    : hotelSearchContext(providerContext?.searchContext);
+  const persistedCohort = !memoryContext && persistedSearch
+    ? await getHotelSearchCohort(persistedSearch)
     : [];
+  const cached = memoryContext?.hotel ?? unscopedCached ?? providerContext?.result ?? null;
+  const relatedSearchCohort = memoryContext
+    ? memoryContext.relatedHotels
+    : persistedCohort;
+  const relatedHotels = relatedSearchCohort.length
+    ? relatedHotelsFromSearchCohort(relatedSearchCohort, id)
+    : record
+      ? buildRelatedStaticHotelResults(record, search).map(toPublicHotel)
+      : [];
   if (record) {
     const hotel = buildStaticHotelResult(record, search);
     const propertyDetails = toPublicPropertyDetails(record);
@@ -89,7 +149,7 @@ export async function GET(request: Request) {
       locationDetails: kayakHotelLocationDetails(cached),
       providerDetails: providerDetails(cached),
       roomOptions: [],
-      relatedHotels: [],
+      relatedHotels,
     });
   return NextResponse.json({ error: "Hotel not found." }, { status: 404 });
 }

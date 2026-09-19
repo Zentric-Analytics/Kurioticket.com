@@ -200,7 +200,7 @@ export function NativeHotelBookingDetails({
 
       <SectionGap />
 
-      <NativeRelatedHotelsSection city={property?.city} hotels={relatedHotels} theme={theme} onViewHotel={onViewHotel} />
+      <NativeRelatedHotelsSection city={property?.city || locationProperty?.city} hotels={relatedHotels} theme={theme} onViewHotel={onViewHotel} />
 
       <Modal visible={amenitiesOpen} transparent animationType="slide" onRequestClose={() => setAmenitiesOpen(false)}>
         <View style={s.modalRoot}>
