@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import type { NativeHotelOffer } from "./nativeHotelDetailsModel";
 import type { PresentedHotelRoomOption } from "./NativeHotelDetails";
 import { appFonts } from "../../theme/typography";
@@ -29,6 +29,8 @@ type RateRow = {
   priceUnit?: string;
   priceAccessibilityLabel: string;
   hasDisplayedPrice: boolean;
+  actionable: boolean;
+  actionLabel?: string;
 };
 
 function capitalize(value: string) {
@@ -116,11 +118,9 @@ function providerRateTerms(roomTerms: string[], cancellationInfo?: string | null
     .slice(0, 2);
 }
 
-const previewReserve = () => undefined;
-const reserveLabel = "Reserve";
-
 export function NativeHotelRatesSection({
   offers,
+  onSelectOffer,
   roomOptions,
   providerName,
   roomType,
@@ -175,6 +175,8 @@ export function NativeHotelRatesSection({
           ? `${total.accessibilityLabel} stay price`
           : "Price unavailable",
         hasDisplayedPrice: Boolean(total),
+        actionable: true,
+        actionLabel: "Choose room",
       });
     }
   }
@@ -195,6 +197,8 @@ export function NativeHotelRatesSection({
         ? `${providerPrice.accessibilityLabel} per night`
         : "Price confirmed on provider site",
       hasDisplayedPrice: Boolean(providerPrice),
+      actionable: Boolean(providerOffer),
+      actionLabel: providerOffer ? "View deal" : undefined,
     });
   }
 
@@ -213,7 +217,21 @@ export function NativeHotelRatesSection({
 
   return (
     <View style={s.section}>
-      <View style={[s.rateCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+      <Pressable
+        accessibilityRole={row.actionable ? "button" : undefined}
+        accessibilityLabel={
+          row.actionable && row.actionLabel
+            ? `${row.actionLabel}. ${row.title}. ${row.priceAccessibilityLabel}`
+            : undefined
+        }
+        disabled={!row.actionable}
+        onPress={row.actionable ? () => onSelectOffer(row.offerId) : undefined}
+        style={({ pressed }) => [
+          s.rateCard,
+          { backgroundColor: theme.surface, borderColor: theme.border },
+          pressed && row.actionable && s.rateCardPressed,
+        ]}
+      >
         <View style={s.rateCopy}>
           {row.providerKind === "kurioticket" ? (
             <Image
@@ -243,7 +261,7 @@ export function NativeHotelRatesSection({
           ) : null}
         </View>
 
-        <View style={s.rateActionColumn}>
+        <View style={[s.rateActionColumn, !row.actionable && s.rateActionColumnDisplayOnly]}>
           <View style={s.priceBlock}>
             <Text
               numberOfLines={1}
@@ -262,17 +280,13 @@ export function NativeHotelRatesSection({
               <Text style={[s.priceUnit, { color: theme.textSecondary }]}>{row.priceUnit}</Text>
             ) : null}
           </View>
-          <TouchableOpacity
-            accessibilityRole={"button"}
-            accessibilityLabel={`Reserve ${row.title}`}
-            activeOpacity={0.84}
-            onPress={previewReserve}
-            style={[s.actionControl, { backgroundColor: accentColor }]}
-          >
-            <Text style={s.actionControlText}>{reserveLabel}</Text>
-          </TouchableOpacity>
+          {row.actionable && row.actionLabel ? (
+            <View pointerEvents="none" style={[s.actionControl, { backgroundColor: accentColor }]}>
+              <Text style={s.actionControlText}>{row.actionLabel}</Text>
+            </View>
+          ) : null}
         </View>
-      </View>
+      </Pressable>
     </View>
   );
 }
@@ -289,6 +303,7 @@ const s = StyleSheet.create({
     paddingVertical: 16,
     gap: 14,
   },
+  rateCardPressed: { opacity: 0.86 },
   rateCopy: { flex: 1, minWidth: 0, justifyContent: "flex-start" },
   brandLogo: { width: 88, height: 18, flexShrink: 0, marginBottom: 8 },
   providerName: {
@@ -317,6 +332,7 @@ const s = StyleSheet.create({
     alignItems: "flex-end",
     justifyContent: "space-between",
   },
+  rateActionColumnDisplayOnly: { justifyContent: "flex-start" },
   priceBlock: { width: "100%", minWidth: 0, alignItems: "flex-end" },
   price: {
     maxWidth: "100%",

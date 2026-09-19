@@ -69,10 +69,13 @@ test("provider room parsing removes duplicated generic cancellation copy", () =>
   assert.match(ratesSource, /\.slice\(0, 2\)/);
 });
 
-test("non-bookable KAYAK rates remain displayable when a supplied price exists", () => {
+test("non-bookable KAYAK rates remain display-only when a supplied price exists", () => {
   assert.match(ratesSource, /providerName\.trim\(\) === "KAYAK sandbox"/);
   assert.match(ratesSource, /hasPrice &&[\s\S]*nightlyPrice[\s\S]*\? \(\{ id: "provider", kind: "provider-handoff" \} as const\)/);
   assert.match(ratesSource, /const visibleProviderOffer = providerOffer \?\? displayOnlyKayakOffer/);
+  assert.match(ratesSource, /actionable: Boolean\(providerOffer\)/);
+  assert.match(ratesSource, /actionLabel: providerOffer \? "View deal" : undefined/);
+  assert.match(ratesSource, /disabled=\{!row\.actionable\}/);
 });
 
 test("Kurioticket fallback keeps the bundled wordmark and existing app fonts", () => {
@@ -91,7 +94,7 @@ test("Rates keeps one square metasearch card with a wider commerce column", () =
   assert.match(styleRule(ratesSource, "rateActionColumn", "priceBlock"), /width: 128[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
 });
 
-test("Rates renders nightly price and per-night label separately with a visual-only Reserve action", () => {
+test("Rates renders price context with a real whole-card continuation action", () => {
   assert.match(ratesSource, /\$\{total\.accessibilityLabel\} stay price/);
   assert.match(ratesSource, /priceUnit: providerPrice \? "per night" : undefined/);
   assert.match(ratesSource, /\{row\.priceUnit \? \(/);
@@ -103,11 +106,11 @@ test("Rates renders nightly price and per-night label separately with a visual-o
   assert.match(priceText, /minimumFontScale=\{0\.68\}/);
   assert.match(styleRule(ratesSource, "price", "priceUnit"), /fontVariant: \["tabular-nums"\]/);
   assert.match(styleRule(ratesSource, "priceUnit", "priceUnavailable"), /fontSize: 12[\s\S]*fontFamily: appFonts\.medium/);
-  assert.match(ratesSource, /const previewReserve = \(\) => undefined/);
-  assert.match(ratesSource, /const reserveLabel = "Reserve"/);
-  assert.match(ratesSource, /<TouchableOpacity[\s\S]*?onPress=\{previewReserve\}/);
+  assert.match(ratesSource, /<Pressable[\s\S]*?disabled=\{!row\.actionable\}[\s\S]*?onPress=\{row\.actionable \? \(\) => onSelectOffer\(row\.offerId\) : undefined\}/);
+  assert.match(ratesSource, /actionLabel: "Choose room"/);
+  assert.match(ratesSource, /actionLabel: providerOffer \? "View deal" : undefined/);
   assert.match(styleRule(ratesSource, "actionControl", "actionControlText"), /minWidth: 82[\s\S]*minHeight: 44[\s\S]*borderRadius: 10/);
-  assert.doesNotMatch(ratesSource, /onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}/);
+  assert.doesNotMatch(ratesSource, /previewReserve|TouchableOpacity/);
   assert.doesNotMatch(ratesSource, /Selected|>Select<|accessibilityRole="radio"/);
 });
 

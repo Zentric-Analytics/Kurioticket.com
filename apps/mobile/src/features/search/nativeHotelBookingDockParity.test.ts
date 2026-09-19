@@ -42,13 +42,15 @@ test("native Hotel removes the checkout-style dock from Rates, Overview, and Rev
   assert.match(detailSource, /contentContainerStyle=\{\{ paddingBottom: 24 \+ inset\.bottom \}\}/);
 });
 
-test("Rates keeps price and visual Reserve action inside each square provider card", () => {
+test("Rates keeps price and real continuation action inside each square provider card", () => {
   assert.match(rateStyle("rateCard", "rateCopy"), /borderWidth: 1[\s\S]*borderRadius: 0/);
   assert.match(rateStyle("rateActionColumn", "priceBlock"), /width: 128[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
   assert.match(rateStyle("actionControl", "actionControlText"), /minWidth: 82[\s\S]*minHeight: 44[\s\S]*borderRadius: 10/);
-  assert.match(ratesSource, /const previewReserve = \(\) => undefined/);
-  assert.match(ratesSource, /onPress=\{previewReserve\}/);
-  assert.doesNotMatch(ratesSource, /onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}/);
+  assert.match(ratesSource, /onPress=\{row\.actionable \? \(\) => onSelectOffer\(row\.offerId\) : undefined\}/);
+  assert.match(ratesSource, /disabled=\{!row\.actionable\}/);
+  assert.match(ratesSource, /actionLabel: "Choose room"/);
+  assert.match(ratesSource, /actionLabel: providerOffer \? "View deal" : undefined/);
+  assert.doesNotMatch(ratesSource, /previewReserve/);
 });
 
 test("Rates show stay-level totals without a per-night label", () => {

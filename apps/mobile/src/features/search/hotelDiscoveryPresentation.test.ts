@@ -39,13 +39,14 @@ test("active Hotel details derive rates from supplied inventory instead of fabri
   assert.match(reviews, /Verified guest reviews are not connected/);
 });
 
-test("narrow active Hotel layout keeps square rate cards and a visual-only Reserve action", () => {
+test("narrow active Hotel layout keeps square rate cards with truthful real actions", () => {
   assert.match(hotel, /useWindowDimensions\(\)\.width/);
   assert.match(rates, /adjustsFontSizeToFit/);
   assert.match(rates, /minimumFontScale=\{0\.68\}/);
   assert.match(rates, /width: 128/);
   assert.match(rates, /borderRadius: 0/);
-  assert.match(rates, /onPress=\{previewReserve\}/);
-  assert.doesNotMatch(rates, /onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}/);
+  assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectOffer\(row\.offerId\) : undefined\}/);
+  assert.match(rates, /disabled=\{!row\.actionable\}/);
+  assert.doesNotMatch(rates, /previewReserve/);
   assert.doesNotMatch(hotel, /s\.dockPrice|s\.continueButton/);
 });
