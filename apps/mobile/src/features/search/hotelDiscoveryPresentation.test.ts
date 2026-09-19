@@ -47,6 +47,8 @@ test("narrow active Hotel layout keeps square rate cards with truthful real acti
   assert.match(rates, /borderRadius: 0/);
   assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectOffer\(row\.offerId\) : undefined\}/);
   assert.match(rates, /disabled=\{!row\.actionable\}/);
+  assert.equal((rates.match(/actionLabel: "Choose room"/g) ?? []).length, 2);
+  assert.match(rates, /!row\.actionable && s\.actionControlDisabled/);
   assert.doesNotMatch(rates, /previewReserve/);
   assert.doesNotMatch(hotel, /s\.dockPrice|s\.continueButton/);
 });

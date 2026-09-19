@@ -198,7 +198,7 @@ export function NativeHotelRatesSection({
         : "Price confirmed on provider site",
       hasDisplayedPrice: Boolean(providerPrice),
       actionable: Boolean(providerOffer),
-      actionLabel: providerOffer ? "View deal" : undefined,
+      actionLabel: "Choose room",
     });
   }
 
@@ -261,7 +261,7 @@ export function NativeHotelRatesSection({
           ) : null}
         </View>
 
-        <View style={[s.rateActionColumn, !row.actionable && s.rateActionColumnDisplayOnly]}>
+        <View style={s.rateActionColumn}>
           <View style={s.priceBlock}>
             <Text
               numberOfLines={1}
@@ -280,8 +280,17 @@ export function NativeHotelRatesSection({
               <Text style={[s.priceUnit, { color: theme.textSecondary }]}>{row.priceUnit}</Text>
             ) : null}
           </View>
-          {row.actionable && row.actionLabel ? (
-            <View pointerEvents="none" style={[s.actionControl, { backgroundColor: accentColor }]}>
+          {row.actionLabel ? (
+            <View
+              pointerEvents="none"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={[
+                s.actionControl,
+                { backgroundColor: accentColor },
+                !row.actionable && s.actionControlDisabled,
+              ]}
+            >
               <Text style={s.actionControlText}>{row.actionLabel}</Text>
             </View>
           ) : null}
@@ -332,7 +341,6 @@ const s = StyleSheet.create({
     alignItems: "flex-end",
     justifyContent: "space-between",
   },
-  rateActionColumnDisplayOnly: { justifyContent: "flex-start" },
   priceBlock: { width: "100%", minWidth: 0, alignItems: "flex-end" },
   price: {
     maxWidth: "100%",
@@ -365,6 +373,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 12,
   },
+  actionControlDisabled: { opacity: 0.5 },
   actionControlText: {
     color: "#FFFFFF",
     fontSize: 15,

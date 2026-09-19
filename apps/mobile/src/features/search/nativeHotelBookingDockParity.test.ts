@@ -49,7 +49,7 @@ test("Rates keeps price and real continuation action inside each square provider
   assert.match(ratesSource, /onPress=\{row\.actionable \? \(\) => onSelectOffer\(row\.offerId\) : undefined\}/);
   assert.match(ratesSource, /disabled=\{!row\.actionable\}/);
   assert.match(ratesSource, /actionLabel: "Choose room"/);
-  assert.match(ratesSource, /actionLabel: providerOffer \? "View deal" : undefined/);
+  assert.equal((ratesSource.match(/actionLabel: "Choose room"/g) ?? []).length, 2);
   assert.doesNotMatch(ratesSource, /previewReserve/);
 });
 
