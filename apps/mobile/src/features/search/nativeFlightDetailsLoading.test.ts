@@ -142,9 +142,11 @@ test("entry loading reserves an edge-to-edge hero and two ordered identity lines
     const glass = actions.children[0];
     assert.equal(glass.type, "DetailGlassSurface");
     assert.equal(glass.props.dark, false);
-    assert.equal(style(glass).top, 2);
-    assert.equal(style(glass).bottom, 2);
-    assert.equal(style(glass).borderRadius, 20);
+    assert.equal(style(glass).top, 0);
+    assert.equal(style(glass).right, 0);
+    assert.equal(style(glass).bottom, 0);
+    assert.equal(style(glass).left, 0);
+    assert.equal(style(glass).borderRadius, 22);
     assert.equal(actions.props.pointerEvents, "none");
     assert.equal(actions.props.accessibilityElementsHidden, true);
     assert.equal(actions.props.importantForAccessibility, "no-hide-descendants");
