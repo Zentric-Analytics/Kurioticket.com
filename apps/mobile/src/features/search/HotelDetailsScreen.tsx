@@ -425,9 +425,7 @@ function HotelDetail({
     ?? rateRows.find((row) => row.actionable)
     ?? null;
   const selectedRateIdForView = selectedRate?.id ?? null;
-  const bookingActionLabel = selectedRate
-    ? `Continue to ${selectedRate.providerName}`
-    : "Continue";
+  const bookingActionLabel = "View deal";
 
   const openProviderInApp = async (url: string) => {
     const WebBrowser = await import("expo-web-browser");
@@ -759,7 +757,7 @@ function HotelDetail({
             <View style={s.bookingDockAction}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`${bookingActionLabel}. ${selectedRate.totalAccessibilityLabel}`}
+                accessibilityLabel={`${bookingActionLabel} with ${selectedRate.providerName}. ${selectedRate.totalAccessibilityLabel}`}
                 onPress={() => void continueSelectedRate()}
                 style={({ pressed }) => [
                   s.bookingDockButton,
