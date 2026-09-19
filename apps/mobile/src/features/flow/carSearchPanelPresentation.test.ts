@@ -26,15 +26,17 @@ test("Cars main selectors use a polished independent-card treatment without chan
   }
   assert.match(panel, /editCardStyle = \[styles\.resultsEditCard, \{ backgroundColor: ft\.colors\.card, borderColor: ft\.colors\.border \}\]/);
   assert.match(panel, /mainCardStyle = \[styles\.mainCard, \{ backgroundColor: ft\.colors\.card, borderColor: ft\.colors\.border \}\]/);
-  assert.match(panel, /mainStack:\{width:"100%",gap:12\}/);
+  assert.match(panel, /mainStack:\{width:"100%",gap:8\}/);
   assert.match(panel, /mainCard:\{width:"100%",borderWidth:StyleSheet\.hairlineWidth,borderRadius:15,overflow:"hidden"\}/);
-  assert.match(panel, /mainRow:\{minHeight:74,paddingHorizontal:17,paddingVertical:12\}/);
+  assert.match(panel, /mainRow:\{minHeight:66,paddingHorizontal:12,paddingVertical:9\}/);
   assert.match(panel, /mainCopy:\{gap:4\}/);
-  assert.match(panel, /mainLabel:\{fontSize:11,lineHeight:15,fontWeight:"700",letterSpacing:0\.35\}/);
-  assert.match(panel, /mainValue:\{fontSize:15,lineHeight:20,fontWeight:"500"\}/);
+  assert.match(panel, /mainLabel:\{fontSize:10,lineHeight:13,fontWeight:"800",letterSpacing:0\.5\}/);
+  assert.match(panel, /mainValue:\{fontSize:15,lineHeight:20,fontWeight:"600"\}/);
   assert.match(panel, /mainSecondary:\{fontSize:12,lineHeight:16\}/);
   assert.match(panel, /mainIconSlot:\{width:18,alignItems:"center",justifyContent:"center"\}/);
-  assert.match(panel, /mainDisclosureSlot:\{width:18,alignItems:"center",justifyContent:"center"\}/);
+  assert.match(panel, /mainDisclosureSlot:\{width:16,alignItems:"center",justifyContent:"center"\}/);
+  assert.match(panel, /<FlowIcon name=\{icon\} size=\{mainAppearance \? 18 : 16\}/);
+  assert.match(panel, /<FlowIcon name="chevronDown" size=\{mainAppearance \? 16 : 18\}/);
   assert.doesNotMatch(mainRows, /CompactSearchField|borderTopWidth|divider/);
 });
 
