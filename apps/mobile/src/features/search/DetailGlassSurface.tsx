@@ -73,7 +73,7 @@ export function DetailGlassSurface({ style, dark, variant = "neutral" }: Props) 
 }
 
 function OpticalGlassFrame({ style, dark, children }: Props & { children: ReactNode }) {
-  return <View pointerEvents="none" accessible={false} style={[style, styles.opticalFrame]}>{children}<View style={[styles.opticalRim, dark && styles.opticalRimDark]} /><View style={styles.opticalSpecular} /></View>;
+  return <View pointerEvents="none" accessible={false} style={[style, styles.opticalFrame]}>{children}<View style={[styles.opticalRim, dark && styles.opticalRimDark]} /></View>;
 }
 
 const styles = StyleSheet.create({
@@ -113,13 +113,5 @@ const styles = StyleSheet.create({
   },
   opticalRimDark: {
     borderColor: "rgba(255, 255, 255, 0.42)",
-  },
-  opticalSpecular: {
-    position: "absolute",
-    top: 2,
-    left: 8,
-    right: 8,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: "rgba(255, 255, 255, 0.72)",
   },
 });
