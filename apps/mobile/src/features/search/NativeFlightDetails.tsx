@@ -39,6 +39,12 @@ const FLIGHT_DETAILS_LIGHT_BORDER = "#D7E0EC";
 const FLIGHT_DETAILS_LIGHT_ITINERARY_SURFACE = "#FCFDFE";
 const FLIGHT_DETAILS_LIGHT_ITINERARY_BORDER = "#E1E7EF";
 const FLIGHT_DETAILS_DARK_BORDER = "#344154";
+const FLIGHT_DETAILS_LIGHT_CONNECTION_SURFACE = "#F3F7FC";
+const FLIGHT_DETAILS_LIGHT_CONNECTION_BORDER = "#D6E2F0";
+const FLIGHT_DETAILS_LIGHT_CONNECTION_ACCENT = "#5F7799";
+const FLIGHT_DETAILS_DARK_CONNECTION_SURFACE = "#182536";
+const FLIGHT_DETAILS_DARK_CONNECTION_BORDER = "#31445D";
+const FLIGHT_DETAILS_DARK_CONNECTION_ACCENT = "#9AB2D2";
 const FLIGHT_DETAILS_LIGHT_SELECTED = "#F4F8FF";
 const FLIGHT_DETAILS_DARK_SELECTED = "#142844";
 function useFlightDetailsHeaderProtection(topInset: number) {
@@ -367,9 +373,9 @@ function Itinerary({leg,index,offerAirlineName,offerAirlineLogo,theme,intlLocale
   const arrivalShortDate=providerLocalFlightDate(leg.arrivalTime,intlLocale);
   const layoverLabel=(airport:string)=>{const point=leg.segments.flatMap((segment)=>[segment.destinationDetails,segment.originDetails]).find((candidate)=>candidate?.iataCode===airport);return point?.cityName&&point.cityName!==airport?`${point.cityName} • ${airport}`:airport;};
   const pathColor=theme.dark?theme.textSecondary:ui.muted;
-  const connectionSurface=theme.dark?"#182536":"#F3F7FC";
-  const connectionBorder="#D6E2F0";
-  const connectionAccent=theme.dark?"#8FA9CC":"#5F7799";
+  const connectionSurface=theme.dark?FLIGHT_DETAILS_DARK_CONNECTION_SURFACE:FLIGHT_DETAILS_LIGHT_CONNECTION_SURFACE;
+  const connectionBorder=theme.dark?FLIGHT_DETAILS_DARK_CONNECTION_BORDER:FLIGHT_DETAILS_LIGHT_CONNECTION_BORDER;
+  const connectionAccent=theme.dark?FLIGHT_DETAILS_DARK_CONNECTION_ACCENT:FLIGHT_DETAILS_LIGHT_CONNECTION_ACCENT;
   return <View style={[s.itineraryCard,theme.dark?s.itineraryCardDark:s.itineraryCardLight,{backgroundColor:theme.dark?theme.surface:FLIGHT_DETAILS_LIGHT_ITINERARY_SURFACE,borderColor:theme.dark?surfaceBorderColor:FLIGHT_DETAILS_LIGHT_ITINERARY_BORDER}]}>
     <ItineraryGlossSurface dark={theme.dark} testID="flight-details-itinerary-gloss"/>
     <View style={s.itineraryHeader}>
@@ -414,7 +420,7 @@ function Itinerary({leg,index,offerAirlineName,offerAirlineLogo,theme,intlLocale
       const aircraftSuffix=segment.aircraft?.name?.trim()&&segment.aircraft?.iataCode?.trim()?` (${segment.aircraft.iataCode.trim()})`:"";
       const layover=i>0?leg.layovers[i-1]:undefined;
       return <View key={`${segment.originAirport}-${segment.destinationAirport}-${segment.departureTime}-${i}`} style={s.segmentItem}>
-        {layover?<View testID="flight-details-connection-row" style={[s.segmentConnection,{backgroundColor:connectionSurface,borderColor:connectionBorder},theme.dark&&{borderColor:theme.border}]}><FlowIcon name="clock" size={13} strokeWidth={1.8} color={connectionAccent}/><Text numberOfLines={1} ellipsizeMode="tail" style={[s.segmentConnectionText,{color:theme.textPrimary}]}>Connection at {layoverLabel(layover.airport)}<Text style={[s.segmentConnectionDuration,{color:theme.textSecondary}]}> · {layover.duration}</Text></Text></View>:null}
+        {layover?<View testID="flight-details-connection-row" style={[s.segmentConnection,{backgroundColor:connectionSurface,borderColor:connectionBorder}]}><FlowIcon name="clock" size={13} strokeWidth={1.8} color={connectionAccent}/><Text numberOfLines={1} ellipsizeMode="tail" style={[s.segmentConnectionText,{color:theme.textPrimary}]}>Connection at {layoverLabel(layover.airport)}<Text style={[s.segmentConnectionDuration,{color:theme.textSecondary}]}> · {layover.duration}</Text></Text></View>:null}
         <View style={s.segmentRow}>
           {carrier?<AirlineLogo airlineName={carrier} logoUrl={segment.airlineLogo??(canUseOfferAirlineLogo(segment,offerAirlineName,offerAirlineLogo)?offerAirlineLogo:null)} variant="result-card"/>:null}
           <View style={s.segmentCopy}>
