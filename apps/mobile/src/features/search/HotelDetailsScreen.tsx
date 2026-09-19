@@ -524,7 +524,7 @@ function HotelDetail({
         alwaysBounceVertical={false}
         overScrollMode="never"
         style={{ backgroundColor: hotelCanvasColor }}
-        contentContainerStyle={{ paddingBottom: selectedRate ? 124 + inset.bottom : 24 + inset.bottom }}
+        contentContainerStyle={{ paddingBottom: selectedRate ? 108 + inset.bottom : 24 + inset.bottom }}
         onScroll={({ nativeEvent }) => {
           const offset = nativeEvent.contentOffset.y;
           currentHotelScrollOffset.current = offset;
@@ -718,7 +718,7 @@ function HotelDetail({
           style={[
             s.bookingDock,
             {
-              paddingBottom: 12 + inset.bottom,
+              paddingBottom: 8 + inset.bottom,
               backgroundColor: theme.surface,
               borderTopColor: theme.border,
             },
@@ -793,7 +793,7 @@ const s = StyleSheet.create({
   heroShareIcon: { transform: [{ translateX: -6 }] },
   heroBackGlass: { position: "absolute", left: 2, right: 2, top: 2, bottom: 2, borderRadius: 20 },
   heroActionsGlass: { position: "absolute", left: 0, right: 0, top: 2, bottom: 2, borderRadius: 20 },
-  identity: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
+  identity: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 },
   hotelName: { minWidth: 0, fontSize: 24, lineHeight: 30, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.5 },
   hotelNamePhoneFit: { letterSpacing: -0.6 },
   stars: { marginTop: 4, color: "#F59E0B", fontSize: 20, lineHeight: 24, letterSpacing: 1.4, fontWeight: "400", fontFamily: appFonts.regular },
@@ -812,29 +812,29 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
     borderTopWidth: 1,
     paddingHorizontal: 16,
     paddingTop: 12,
     shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.14,
-    shadowRadius: 14,
-    elevation: 12,
+    shadowOffset: { width: 0, height: -5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 10,
     zIndex: 25,
   },
   bookingDockContent: {
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
   },
-  bookingDockPrice: { flex: 1, minWidth: 0, gap: 1 },
+  bookingDockPrice: { flex: 1, minWidth: 0, gap: 0 },
   bookingDockTotal: {
     maxWidth: "100%",
-    fontSize: 19,
-    lineHeight: 22,
+    fontSize: 18,
+    lineHeight: 21,
     fontWeight: "600",
     fontFamily: appFonts.semibold,
     letterSpacing: -0.25,
@@ -845,14 +845,14 @@ const s = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
     fontSize: 11,
-    lineHeight: 16,
+    lineHeight: 15,
     fontWeight: "600",
     fontFamily: appFonts.semibold,
   },
   bookingDockAction: { flex: 0.9, minWidth: 144, maxWidth: 188 },
   bookingDockButton: {
     width: "100%",
-    minHeight: 48,
+    minHeight: 44,
     borderRadius: 8,
     paddingHorizontal: 12,
     alignItems: "center",
