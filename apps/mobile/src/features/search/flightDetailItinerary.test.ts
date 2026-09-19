@@ -168,10 +168,21 @@ test("airport names retain provider fallback order and terminals remain conditio
 
 test("connections sit between their corresponding authoritative segments",()=>{
   assert.match(itinerary,/const layover=i>0\?leg\.layovers\[i-1\]:undefined/);
-  assert.match(itinerary,/Connection at \{layoverLabel\(layover\.airport\)\} · \{layover\.duration\}/);
+  assert.match(itinerary,/testID="flight-details-connection-row"/);
+  assert.match(itinerary,/<FlowIcon name="clock" size=\{13\} strokeWidth=\{1\.8\} color=\{connectionAccent\}\/?>/);
+  assert.match(itinerary,/<Text numberOfLines=\{1\} ellipsizeMode="tail"[^>]*>Connection at \{layoverLabel\(layover\.airport\)\}<Text[^>]*> · \{layover\.duration\}<\/Text><\/Text>/);
   assert.match(itinerary,/candidate\?\.iataCode===airport/);
   assert.match(itinerary,/point\?\.cityName&&point\.cityName!==airport\?`\$\{point\.cityName\} • \$\{airport\}`:airport/);
   assert.doesNotMatch(itinerary,/s\.connectionList/);
+});
+
+test("connection polish stays compact and uses restrained theme-aware surfaces",()=>{
+  assert.match(itinerary,/const connectionSurface=theme\.dark\?"#182536":"#F3F7FC"/);
+  assert.match(itinerary,/const connectionBorder=theme\.dark\?"#33465E":"#D6E2F0"/);
+  assert.match(itinerary,/const connectionAccent=theme\.dark\?"#8FA9CC":"#5F7799"/);
+  assert.match(source,/segmentConnection:\{borderWidth:StyleSheet\.hairlineWidth,borderRadius:9,paddingHorizontal:11,paddingVertical:8,marginBottom:2,flexDirection:"row",alignItems:"center",gap:7\}/);
+  assert.match(source,/segmentConnectionText:\{flex:1,minWidth:0,fontSize:11,lineHeight:16,fontWeight:"600"\}/);
+  assert.match(source,/segmentConnectionDuration:\{fontWeight:"500"\}/);
 });
 
 test("segment rows carry airline, flight number, aircraft and distance while Flight info is reserved for endpoint timezones",()=>{
