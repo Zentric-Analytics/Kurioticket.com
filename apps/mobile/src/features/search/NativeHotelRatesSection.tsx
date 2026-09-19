@@ -263,8 +263,8 @@ export function NativeHotelRatesSection({
         {rows.map((row, index) => {
           const selected = row.id === selectedRateId;
           const selectedBackground = theme.dark
-            ? "rgba(143, 181, 255, 0.08)"
-            : "rgba(0, 75, 184, 0.045)";
+            ? "rgba(143, 181, 255, 0.07)"
+            : "rgba(0, 75, 184, 0.035)";
           return (
             <View key={row.id}>
               {index > 0 ? <View style={[s.rateDivider, { backgroundColor: theme.border }]} /> : null}
@@ -359,11 +359,11 @@ const s = StyleSheet.create({
     borderRadius: 10,
     overflow: "hidden",
   },
-  rateDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 12 },
+  rateDivider: { height: StyleSheet.hairlineWidth },
   rateCard: {
-    minHeight: 92,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    minHeight: 94,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
     justifyContent: "center",
   },
   rateCardPressed: { opacity: 0.84 },
