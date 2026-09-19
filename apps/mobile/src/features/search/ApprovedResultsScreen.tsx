@@ -1577,7 +1577,6 @@ function HotelCard({
         <View style={s0.hotelTitleRow}>
           <Text numberOfLines={2} style={[s0.hotelName,{color:theme.textPrimary}]}>{result.name}</Text>
         </View>
-        {result.searchPolicy.source === "kayak-sandbox" ? <Text style={s0.hotelAttributionLink}>KAYAK sandbox · Simulated · Not bookable</Text> : null}
         <View style={[s0.hotelActions, compact && s0.hotelActionsCompact]}>
           <Pressable
             accessibilityRole="button"
