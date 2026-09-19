@@ -14,7 +14,7 @@ test("Car uses shared Results Edit card rows for pick-up and conditional drop-of
   const closedForm = car.slice(0, car.indexOf("export function CarLocationSheet"));
 
   assert.match(closedForm, /<ResultsEditRow label="PICKUP LOCATION"[^\n]*value=\{pickupLocationDisplay\.primary[^\n]*secondary=\{pickupLocationDisplay\.secondary\}[^\n]*icon="location"[^\n]*setLocationPicker\("pickup"\)/);
-  assert.match(closedForm, /form\.separateDropoff \? <FieldError[^\n]*<View style=\{editCardStyle\}><ResultsEditRow label="DROP-OFF LOCATION"[^\n]*value=\{dropoffLocationDisplay\.primary[^\n]*secondary=\{dropoffLocationDisplay\.secondary\}[^\n]*icon="location"[^\n]*setLocationPicker\("return"\)/);
+  assert.match(closedForm, /form\.separateDropoff \? <FieldError[^\n]*<View style={mainCardStyle}><ResultsEditRow label="DROP-OFF LOCATION"[^\n]*value=\{dropoffLocationDisplay\.primary[^\n]*secondary=\{dropoffLocationDisplay\.secondary\}[^\n]*icon="location"[^\n]*setLocationPicker\("return"\)/);
   assert.doesNotMatch(closedForm, /LocationLauncher|TextInput[^>]*accessibilityLabel="Pick-up location"/);
 });
 

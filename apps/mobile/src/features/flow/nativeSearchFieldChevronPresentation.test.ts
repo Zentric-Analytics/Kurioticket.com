@@ -48,7 +48,7 @@ test("native search-form location fields suppress only their trailing affordance
 
 test("remaining native search-form field chevrons are right-facing", () => {
   for (const source of [flight, hotel, packages]) assert.doesNotMatch(source, /name="chevronDown"/);
-  assert.match(car, /disclosure \? <FlowIcon name="chevronDown"/);
+  assert.match(car, /disclosure \? <View[^>]*><FlowIcon name="chevronDown"/);
   assert.match(compactField(flight, "Travelers & Cabin Class"), /<FlowIcon name="chevron"/);
   assert.match(read("FlowPrimitives.tsx"), /trailing \?\? <FlowIcon name="chevron"/);
 });
