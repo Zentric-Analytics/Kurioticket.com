@@ -14,10 +14,22 @@ export const sortCarOffers = (offers: CarOffer[]) =>
     .filter((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0)
     .sort((a, b) => a.totalPrice - b.totalPrice || a.id.localeCompare(b.id));
 
+export type CarPricePerDayResolver = (car: NormalizedCarResult) => number | undefined;
+
+export const getPrimaryCarPricePerDay: CarPricePerDayResolver = (car) => {
+  const price = getPrimaryCarOffer(car)?.pricePerDay;
+  return typeof price === "number" && Number.isFinite(price) && price >= 0 ? price : undefined;
+};
+
+const dailyPriceOptionMatches: Record<string, (price: number) => boolean> = {
+  daily0To49: (price) => price >= 0 && price < 50,
+  daily50To99: (price) => price >= 50 && price < 100,
+  daily100To149: (price) => price >= 100 && price < 150,
+  daily150To199: (price) => price >= 150 && price < 200,
+  daily200Plus: (price) => price >= 200,
+};
+
 const optionMatches: Record<string, (car: NormalizedCarResult) => boolean> = {
-  totalUnder100: (car) => (getPrimaryCarOffer(car)?.totalPrice ?? Infinity) < 100,
-  total100To149: (car) => { const total = getPrimaryCarOffer(car)?.totalPrice ?? Infinity; return total >= 100 && total < 150; },
-  total150Plus: (car) => (getPrimaryCarOffer(car)?.totalPrice ?? -Infinity) >= 150,
   smallCars: (car) => ["mini", "economy", "compact"].includes(car.category),
   mediumCars: (car) => ["intermediate", "full-size"].includes(car.category),
   suvs: (car) => car.category === "suv",
@@ -42,17 +54,22 @@ const optionMatches: Record<string, (car: NormalizedCarResult) => boolean> = {
   cityLocation: (car) => car.pickupType === "city-location",
 };
 
-export const doesCarMatchFilterOption = (car: NormalizedCarResult, option: string) => {
+export const doesCarMatchFilterOption = (car: NormalizedCarResult, option: string, resolvePricePerDay: CarPricePerDayResolver = getPrimaryCarPricePerDay) => {
+  const dailyPricePredicate = dailyPriceOptionMatches[option];
+  if (dailyPricePredicate) {
+    const price = resolvePricePerDay(car);
+    return typeof price === "number" && Number.isFinite(price) && price >= 0 && dailyPricePredicate(price);
+  }
   // Legacy required defaults must never turn unknown supplier data into a match.
-  if (car.sandboxPresentation && !option.startsWith("total")) {
+  if (car.sandboxPresentation) {
     return car.sandboxPresentation.filterOptions?.includes(option) ?? false;
   }
   return optionMatches[option]?.(car) ?? false;
 };
 
-export function filterCarResults<T extends NormalizedCarResult>(results: T[], filters: SelectedCarFilters): T[] {
+export function filterCarResults<T extends NormalizedCarResult>(results: T[], filters: SelectedCarFilters, resolvePricePerDay: CarPricePerDayResolver = getPrimaryCarPricePerDay): T[] {
   const groups = Object.values(filters).filter((options) => options.length);
-  return results.filter((car) => groups.every((options) => options.some((option) => doesCarMatchFilterOption(car, option))));
+  return results.filter((car) => groups.every((options) => options.some((option) => doesCarMatchFilterOption(car, option, resolvePricePerDay))));
 }
 
 // Kurioticket's transparent recommendation tie-breaker rewards practical rental terms.

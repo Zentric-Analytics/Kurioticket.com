@@ -14,10 +14,12 @@ export type CarFilterGroup = {
 
 /** One platform-neutral list of the Car filter dimensions exposed by Web and Native. */
 export const carFilterGroups: CarFilterGroup[] = [
-  { id: "totalPrice", titleKey: "", title: "Total price", options: [
-    { id: "totalUnder100", labelKey: "", label: "Under $100 total" },
-    { id: "total100To149", labelKey: "", label: "$100–$149 total" },
-    { id: "total150Plus", labelKey: "", label: "$150+ total" },
+  { id: "pricePerDay", titleKey: "", title: "Price (per day)", options: [
+    { id: "daily0To49", labelKey: "", label: "$0 – $50" },
+    { id: "daily50To99", labelKey: "", label: "$50 – $100" },
+    { id: "daily100To149", labelKey: "", label: "$100 – $150" },
+    { id: "daily150To199", labelKey: "", label: "$150 – $200" },
+    { id: "daily200Plus", labelKey: "", label: "$200+" },
   ] },
   { id: "vehicleType", titleKey: "carsResults.vehicleType", options: [
     { id: "smallCars", labelKey: "carsResults.smallCars" },
@@ -59,4 +61,4 @@ export const carFilterGroups: CarFilterGroup[] = [
   ] },
 ];
 
-export const carQuickFilterGroupIds = ["totalPrice", "vehicleType", "transmission", "seats", "cancellation", "pickupLocationType"] as const;
+export const carQuickFilterGroupIds = ["pricePerDay", "vehicleType", "transmission", "seats", "cancellation", "pickupLocationType"] as const;

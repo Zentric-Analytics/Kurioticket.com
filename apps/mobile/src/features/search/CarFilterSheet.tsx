@@ -7,27 +7,27 @@ import { useMobileLocalization } from "../../localization/MobileLocalizationProv
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { carFilterGroups, type CarFilterGroup } from "../../../../../src/lib/cars/carFilterPresentation";
-import { doesCarMatchFilterOption, filterCarResults, type SelectedCarFilters } from "../../../../../src/lib/cars/carResults";
+import { doesCarMatchFilterOption, filterCarResults, type CarPricePerDayResolver, type SelectedCarFilters } from "../../../../../src/lib/cars/carResults";
 import { FLIGHT_FILTER_LIGHT_CANVAS, FLIGHT_FILTER_LIGHT_OUTLINE } from "./FlightResultsSheetShell";
 import { ui } from "./SearchUi";
 import { carFilterCopy, carFilterGroupLabel, carFilterOptionLabel } from "./carFilterCopy";
 import { NATIVE_FILTER_SELECTION_FEEDBACK_MS } from "./filterResultsTransition";
 
-type Props = { visible: boolean; results: CarResult[]; filters: SelectedCarFilters; onChange: (filters: SelectedCarFilters) => void; onClose: () => void };
+type Props = { visible: boolean; results: CarResult[]; filters: SelectedCarFilters; pricePerDay: CarPricePerDayResolver; onChange: (filters: SelectedCarFilters) => void; onClose: () => void };
 
-export function visibleCarFilterGroups(results: CarResult[]): CarFilterGroup[] {
-  return carFilterGroups.map((group) => ({ ...group, options: group.options.map((option) => ({ ...option, count: results.filter((car) => doesCarMatchFilterOption(car, option.id)).length })).filter((option) => option.count > 0) })).filter((group) => group.options.length > 0);
+export function visibleCarFilterGroups(results: CarResult[], pricePerDay?: CarPricePerDayResolver): CarFilterGroup[] {
+  return carFilterGroups.map((group) => ({ ...group, options: group.options.map((option) => ({ ...option, count: results.filter((car) => doesCarMatchFilterOption(car, option.id, pricePerDay)).length })).filter((option) => group.id === "pricePerDay" || option.count > 0) })).filter((group) => group.options.length > 0);
 }
 export const activeCarFilterCount = (filters: SelectedCarFilters) => Object.values(filters).reduce((total, options) => total + options.length, 0);
 
-export function CarFilterSheet({ visible, results, filters, onChange, onClose }: Props) {
+export function CarFilterSheet({ visible, results, filters, pricePerDay, onChange, onClose }: Props) {
   const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
   const { locale, direction } = useMobileLocalization();
   const copy = useMemo(() => carFilterCopy(locale), [locale]);
-  const groups = useMemo(() => visibleCarFilterGroups(results), [results]);
+  const groups = useMemo(() => visibleCarFilterGroups(results, pricePerDay), [pricePerDay, results]);
   const active = activeCarFilterCount(filters);
-  const matching = useMemo(() => filterCarResults(results, filters).length, [filters, results]);
+  const matching = useMemo(() => filterCarResults(results, filters, pricePerDay).length, [filters, pricePerDay, results]);
   const filterCanvas = theme.dark ? theme.background : FLIGHT_FILTER_LIGHT_CANVAS;
   const filterOutline = theme.dark ? theme.border : FLIGHT_FILTER_LIGHT_OUTLINE;
   const [filterUpdating, setFilterUpdating] = useState(false);

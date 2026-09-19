@@ -19,7 +19,7 @@ test("native keeps provider classification for unified metasearch while Cars omi
   assert.match(results, /KAYAK sandbox · Simulated · Not bookable/);
   assert.match(results, /filterAndSortFlights\(/);
   assert.match(results, /filterHotels\(results as HotelResult\[\], hotelFilters/);
-  assert.match(cars, /filterCarResults\(results,filters\)/);
+  assert.match(cars, /filterCarResults\(results,filters,pricePerDay\)/);
   assert.match(carCard, /const sandbox = isKayakSandboxCar\(result\)/);
   assert.doesNotMatch(carCard, /KAYAK sandbox · Simulated · Not bookable/);
   assert.match(carProviderPresentation, /result\.searchPolicy\.source === "kayak-sandbox"/);

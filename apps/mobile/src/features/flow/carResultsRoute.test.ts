@@ -49,7 +49,7 @@ test("car results preserve controls and count with one continuous virtualized li
   assert.doesNotMatch(screen, /\bBottomNav\b/);
   assert.match(screen, /<CarFilterSheet/);
   assert.match(screen, /carQuickFilterGroupIds/);
-  assert.match(screen, /filterCarResults\(results,filters\)/);
+  assert.match(screen, /filterCarResults\(results,filters,pricePerDay\)/);
   assert.match(screen, /sortCarResults\(/);
   assert.doesNotMatch(screen, /cycle\(|priceFilter|setCategory|setCompany|Rental company/);
   assert.match(screen, /carResultCountLabel\(filtered\.length\)/);
