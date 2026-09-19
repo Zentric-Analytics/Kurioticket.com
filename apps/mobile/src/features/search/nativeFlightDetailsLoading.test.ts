@@ -25,7 +25,7 @@ function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWi
   const theme = { dark, background: "#101114", surface: dark ? "#202126" : "#FFFFFF", border: dark ? "#454650" : "#CBD5E1" };
   const root = runInNewContext(code, {
     React: { createElement: host }, View: "View", ScrollView: "ScrollView", SafeAreaView: "SafeAreaView",
-    Pressable: "Pressable", Text: "Text", DetailGlassSurface: (props: any) => host("DetailGlassSurface", props), ArrowLeft: "ArrowLeft", Heart: "Heart", FlowIcon: "FlowIcon", StatusBar: "StatusBar", Svg: "Svg", Path: "Path",
+    Pressable: "Pressable", Text: "Text", DetailGlassSurface: (props: any) => host("DetailGlassSurface", props), ArrowLeft: "ArrowLeft", Heart: "Heart", FlowIcon: "FlowIcon", StatusBar: "StatusBar", Svg: "Svg", Path: "Path", Defs: "Defs", LinearGradient: "LinearGradient", Stop: "Stop", Rect: "Rect",
     Animated: { View: "Animated.View", Value: class { constructor(public value: number) {} } },
     useState: (value: unknown) => [value, () => {}], useRef: (current: unknown) => ({ current }), useEffect: () => {}, useCallback: (callback: unknown) => callback,
     Platform: { OS: "android" }, StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1, absoluteFillObject: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 } }, ui: { blue: "#2563EB", green: "#16A34A" },
@@ -170,9 +170,22 @@ test("entry itinerary overlaps the hero with loaded card breadth and representat
   assert.equal(style(card).borderRadius, 15);
   assert.equal(style(card).padding, 15);
   assert.equal(style(card).borderWidth, 1);
-  assert.equal(style(card).backgroundColor, theme.surface);
+  assert.equal(style(card).backgroundColor, "#FCFDFE");
+  assert.equal(style(card).borderColor, "#E1E7EF");
+  const gloss = find(card, "flight-details-loading-itinerary-gloss");
+  assert.equal(card.children[0], gloss, "the inert finish must paint behind loading content");
+  assert.equal(gloss.props.pointerEvents, "none");
+  assert.equal(gloss.props.accessible, false);
   assert.equal(style(card).marginHorizontal, undefined, "do not double the loaded horizontal overlap");
   for (const part of ["direction-date", "journey", "airports", "airline"]) find(card, `flight-details-loading-${part}`);
+});
+
+test("dark loading itinerary keeps its semantic surface without the light gloss layer", () => {
+  const { root, theme } = renderLoading(true);
+  const card = find(root, "flight-details-loading-itinerary");
+  assert.equal(style(card).backgroundColor, theme.surface);
+  assert.equal(style(card).borderColor, "#344154");
+  assert.equal(descendants(card).some(({ props }) => props.testID === "flight-details-loading-itinerary-gloss"), false);
 });
 
 test("entry loading mirrors the loaded hero curve and screen-level action geometry",()=>{
