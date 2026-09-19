@@ -68,9 +68,11 @@ test("Approved and KAYAK Cars share exactly two full-footprint material surfaces
   }
 });
 
-test("loaded and loading Flight controls share the neutral detail glass material", () => {
+test("loaded and loading Flight controls share the Cars optical glass material", () => {
   assert.match(flight, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
   assert.equal((flight.match(/<DetailGlassSurface /g) ?? []).length, 4);
+  assert.equal((flight.match(/variant="carsOptical"/g) ?? []).length, 4);
+  assert.equal((flight.match(/<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical"/g) ?? []).length, 4);
   assert.doesNotMatch(flight, /import \{ BlurView \} from "expo-blur"|<BlurView |rgba\(255, 255, 255, 0\.68\)/);
   assert.match(flight, /heroIconGlass:\{position:"absolute",left:2,right:2,top:2,bottom:2,borderRadius:20\}/);
   assert.match(flight, /heroActionsGlass:\{position:"absolute",left:0,right:0,top:2,bottom:2,borderRadius:20\}/);
