@@ -40,16 +40,17 @@ test("active Hotel details derive rates from supplied inventory instead of fabri
   assert.match(reviews, /Verified guest reviews are not connected/);
 });
 
-test("narrow active Hotel layout keeps square selectable cards and a persistent continuation dock", () => {
+test("narrow active Hotel layout keeps compact grouped rate rows and a persistent continuation dock", () => {
   assert.match(hotel, /useWindowDimensions\(\)\.width/);
   assert.match(rates, /adjustsFontSizeToFit/);
   assert.match(rates, /minimumFontScale=\{0\.68\}/);
-  assert.match(rates, /borderRadius: 0/);
-  assert.match(rates, /borderColor: selected \? accentColor : theme\.border/);
-  assert.match(rates, /<Check size=\{19\}/);
+  assert.match(rates, /borderRadius: 10/);
+  assert.match(rates, /minHeight: 92/);
+  assert.match(rates, /selected && \{ backgroundColor: selectedBackground \}/);
   assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
   assert.match(rates, /disabled=\{!row\.actionable\}/);
-  assert.doesNotMatch(rates, /actionControlDisabled|actionLabel: "Choose room"|previewReserve/);
+  assert.match(rates, /s\.rateDivider/);
+  assert.doesNotMatch(rates, /<Check|selectedMark|borderColor: selected|borderWidth: selected|actionControlDisabled|actionLabel: "Choose room"|previewReserve/);
   assert.match(hotel, /s\.bookingDock/);
   assert.match(hotel, />Choose room<\/Text>/);
 });
