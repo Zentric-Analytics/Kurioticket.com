@@ -20,16 +20,20 @@ test("checkout never falls back to a serialized provider URL", () => {
   assert.match(native, /error\.status===409 && error\.details\?\.code==="offer_changed"/);
 });
 
-test("checkout dock keeps a responsive price and action hierarchy with theme-aware separation", () => {
-  assert.match(native, /style=\{\[s\.sticky,theme\.dark\?s\.stickyDark:s\.stickyLight,\{paddingBottom:Math\.max\(inset\.bottom,10\)/);
-  assert.match(native, /checkoutTotal:\{flex:1,minWidth:0,maxWidth:"46%",gap:2\}/);
-  assert.match(native, /checkoutAction:\{flex:1,maxWidth:210,minWidth:132\}/);
-  assert.match(native, /checkoutLabel:\{fontSize:11,lineHeight:15,fontWeight:"600"/);
-  assert.match(native, /total:\{fontSize:24,lineHeight:29,fontWeight:"900"[^}]*fontVariant:\["tabular-nums"\]/);
-  assert.match(native, /<Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.72\} style=\{\[s\.total/);
-  assert.match(native, /sticky:\{position:"absolute",left:0,right:0,bottom:0[^}]*borderTopWidth:StyleSheet\.hairlineWidth[^}]*elevation:7\}/);
-  assert.match(native, /stickyLight:\{[^}]*shadowOffset:\{width:0,height:-4\}[^}]*shadowOpacity:\.1/);
-  assert.match(native, /stickyDark:\{[^}]*shadowOffset:\{width:0,height:-4\}[^}]*shadowOpacity:\.28/);
+test("checkout dock mirrors the native Cars price hierarchy, typography, geometry, and CTA treatment", () => {
+  assert.match(native, /style=\{\[s\.sticky,\{paddingBottom:12\+inset\.bottom,backgroundColor:theme\.surface,borderTopColor:theme\.border\}\]\}/);
+  assert.match(native, /<View style=\{s\.checkoutTotal\}><Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.65\} style=\{\[s\.total/);
+  assert.match(native, /<Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.82\} style=\{\[s\.checkoutLabel/);
+  assert.ok(native.indexOf("s.total") < native.indexOf("s.checkoutLabel"), "Flight dock must order total above traveler label like Cars");
+  assert.match(native, /checkoutTotal:\{flex:1,minWidth:0,gap:1\}/);
+  assert.match(native, /checkoutLabel:\{flexShrink:1,minWidth:0,fontSize:11,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
+  assert.match(native, /total:\{maxWidth:"100%",fontSize:19,lineHeight:22,fontWeight:"600",fontFamily:appFonts\.semibold,letterSpacing:-0\.25,textAlign:"left",fontVariant:\["tabular-nums"\]\}/);
+  assert.match(native, /checkoutAction:\{flex:\.78,minWidth:140,maxWidth:180\}/);
+  assert.match(native, /checkoutActionAndroid:\{flex:\.76,minWidth:132,maxWidth:176\}/);
+  assert.match(native, /continue:\{width:"100%",minHeight:48,borderRadius:8,backgroundColor:colors\.blue,paddingHorizontal:12,alignItems:"center",justifyContent:"center"\}/);
+  assert.match(native, /continueText:\{fontSize:12,lineHeight:16,fontWeight:"700",fontFamily:appFonts\.bold,color:"white",textAlign:"center"\}/);
+  assert.match(native, /sticky:\{position:"absolute",left:0,right:0,bottom:0,borderTopLeftRadius:22,borderTopRightRadius:22,borderTopWidth:1,paddingHorizontal:16,paddingTop:12,shadowColor:"#0F172A",shadowOffset:\{width:0,height:-8\},shadowOpacity:\.14,shadowRadius:14,elevation:12\}/);
+  assert.match(native, /<Text style=\{s\.continueText\}>\{booking\?"Checking offer…":"Continue deal"\}<\/Text>/);
 });
 
 test("native actions and checkout meet accessibility requirements", () => {
