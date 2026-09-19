@@ -148,7 +148,11 @@ export function kayakHotelCardModel(offer: SandboxOffer, nights: number): Normal
     pricePerNight:offer.price/nights,totalPrice:offer.price,currency:offer.currency,
     bookingUrl:offer.testUrl,partnerRedirectUrl:offer.testUrl,valueScore:0,travelConfidenceScore:0,arrivalSuitabilityScore:0,
     recommendationReasons:[],badges:[],dataSource:"demo",providerDetails,
-    rawProviderReference:{kind:"kayak-hotel-details",details:providerDetails}} as NormalizedHotelResult & { providerDetails: PublicHotelProviderDetails });
+    rawProviderReference:{
+      kind:"kayak-hotel-details",
+      details:providerDetails,
+      ...(offer.hotelLocation ? { location: offer.hotelLocation } : {}),
+    }} as NormalizedHotelResult & { providerDetails: PublicHotelProviderDetails });
 }
 
 export function kayakCarCardModel(offer: SandboxOffer, days: number, pickup: string): NormalizedCarResult {
