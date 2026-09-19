@@ -97,7 +97,7 @@ test("loading presentation remains isolated from success and existing failure st
 
 test("information skeleton mirrors flat tab content and the loaded navigation baseline",()=>{assert.match(loading,/s\.loadingTabs,\{borderBottomColor:surfaceBorderColor\}/);assert.match(details,/loadingTabs:\{height:48,borderBottomWidth:1,/);assert.doesNotMatch(details,/loadingInfoBody:\{[^}]*(?:borderWidth|borderRadius|backgroundColor)/);});
 
-test("Flight hero controls use the theme-aware Cars optical material in loading state", () => {
+test("Flight hero controls use the Hotel light material in loading state", () => {
   const { root } = renderLoading(true);
   const controls = find(root, "flight-details-loading-controls");
   const backGlass = controls.children[0].children[0];
@@ -105,14 +105,14 @@ test("Flight hero controls use the theme-aware Cars optical material in loading 
   const actionsGlass = actions.children[0];
 
   assert.equal(backGlass.type, "DetailGlassSurface");
-  assert.equal(backGlass.props.dark, true);
-  assert.equal(backGlass.props.variant, "carsOptical");
+  assert.equal(backGlass.props.dark, false);
+  assert.equal(backGlass.props.variant, "hotelLight");
   assert.equal(actionsGlass.type, "DetailGlassSurface");
-  assert.equal(actionsGlass.props.dark, true);
-  assert.equal(actionsGlass.props.variant, "carsOptical");
+  assert.equal(actionsGlass.props.dark, false);
+  assert.equal(actionsGlass.props.variant, "hotelLight");
 
-  assert.match(details, /<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical" style=\{s\.heroIconGlass\}\/>/);
-  assert.match(details, /<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical" style=\{s\.heroActionsGlass\}\/>/);
+  assert.match(details, /<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s\.heroIconGlass\}\/>/);
+  assert.match(details, /<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s\.heroActionsGlass\}\/>/);
 });
 
 test("entry loading reserves an edge-to-edge hero and two ordered identity lines", () => {
@@ -143,11 +143,11 @@ test("entry loading reserves an edge-to-edge hero and two ordered identity lines
     const glass = actions.children[0];
     assert.equal(glass.type, "DetailGlassSurface");
     assert.equal(glass.props.dark, false);
-    assert.equal(style(glass).top, 0);
+    assert.equal(style(glass).top, 2);
     assert.equal(style(glass).right, 0);
-    assert.equal(style(glass).bottom, 0);
+    assert.equal(style(glass).bottom, 2);
     assert.equal(style(glass).left, 0);
-    assert.equal(style(glass).borderRadius, 22);
+    assert.equal(style(glass).borderRadius, 20);
     assert.equal(actions.props.pointerEvents, "none");
     assert.equal(actions.props.accessibilityElementsHidden, true);
     assert.equal(actions.props.importantForAccessibility, "no-hide-descendants");
