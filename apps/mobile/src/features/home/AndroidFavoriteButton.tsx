@@ -3,10 +3,12 @@ import { Pressable, StyleSheet } from "react-native";
 import { FlowIcon } from "../flow/FlowIcon";
 
 export const androidFavoriteColors = {
-  unsavedStroke: "#000000",
+  unsavedStroke: "#334155",
+  shareStroke: "#334155",
   savedStroke: "#E92D55",
   savedFill: "#E92D55",
-  unsavedFill: "#FFFFFF",
+  unsavedFill: "none",
+  strokeWidth: 2,
   background: "rgba(2,15,42,.62)",
 } as const;
 
@@ -32,7 +34,7 @@ export function AndroidFavoriteButton({
       hitSlop={androidFavoriteHitSlop}
       style={[styles.button, style]}
     >
-      <FlowIcon name="heart" size={18} color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} />
+      <FlowIcon name="heart" size={18} strokeWidth={androidFavoriteColors.strokeWidth} color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} />
     </Pressable>
   );
 }
