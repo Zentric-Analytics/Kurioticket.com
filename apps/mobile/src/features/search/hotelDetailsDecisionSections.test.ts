@@ -47,8 +47,8 @@ test("active Details combines location and related hotels in order from the enri
   const booking = readFileSync("src/features/search/NativeHotelBookingDetails.tsx", "utf8");
   assert.ok(booking.indexOf("NativeHotelLocationSection") < booking.indexOf("NativeRelatedHotelsSection"));
   assert.match(detail, /hotels: details\?\.relatedHotels \?\? \[\]/);
-  assert.match(detail, /<NativeHotelBookingDetails[\s\S]*?relatedHotels=\{relatedHotels\}/);
-  assert.match(booking, /<NativeHotelLocationSection[\s\S]*?hotelId=\{result\.id\}[\s\S]*?hotelName=\{result\.name\}[\s\S]*?propertyDetails=\{property\}[\s\S]*?theme=\{theme\}/);
+  assert.match(detail, /<NativeHotelBookingDetails[\s\S]*?locationProperty=\{locationProperty\}[\s\S]*?relatedHotels=\{relatedHotels\}/);
+  assert.match(booking, /<NativeHotelLocationSection[\s\S]*?hotelId=\{result\.id\}[\s\S]*?hotelName=\{result\.name\}[\s\S]*?propertyDetails=\{locationProperty\}[\s\S]*?theme=\{theme\}/);
   assert.match(booking, /<NativeRelatedHotelsSection[\s\S]*?hotels=\{relatedHotels\}/);
   assert.doesNotMatch(detail, /travelApi\.hotels?Search/);
 });

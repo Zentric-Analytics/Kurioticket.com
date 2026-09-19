@@ -75,6 +75,12 @@ export type SandboxOffer = {
   hotelReviewScore?: number;
   hotelReviewCount?: number;
   amenities?: string[];
+  hotelLocation?: {
+    address?: string;
+    countryCode?: string;
+    latitude?: number;
+    longitude?: number;
+  };
 };
 export type SandboxPlace = { label: string; value: string; kind?: string };
 type ObjectValue = Record<string, unknown>;
@@ -143,6 +149,44 @@ function kayakOptionalServices(value: unknown, currency: string): FlightOptional
     if (!description || !price || service.optional !== true) return [];
     return [{type:text(service.type) || "service",description,price:price.amount,currency:price.currency}];
   });
+}
+
+function finiteCoordinate(value: unknown, min: number, max: number): number | undefined {
+  const parsed = typeof value === "number"
+    ? value
+    : typeof value === "string" && value.trim()
+      ? Number(value)
+      : Number.NaN;
+  return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : undefined;
+}
+
+function kayakHotelLocation(result: ObjectValue): SandboxOffer["hotelLocation"] | undefined {
+  const candidates = [
+    result,
+    object(result.coordinates),
+    object(result.location),
+    object(result.geo),
+    object(result.geoLocation),
+  ];
+  let latitude: number | undefined;
+  let longitude: number | undefined;
+  for (const candidate of candidates) {
+    const nextLatitude = finiteCoordinate(candidate.latitude ?? candidate.lat, -90, 90);
+    const nextLongitude = finiteCoordinate(candidate.longitude ?? candidate.lon ?? candidate.lng, -180, 180);
+    if (nextLatitude !== undefined && nextLongitude !== undefined) {
+      latitude = nextLatitude;
+      longitude = nextLongitude;
+      break;
+    }
+  }
+  const address = text(result.address).trim() || undefined;
+  const countryCode = text(result.hotelCountryCode).trim().toUpperCase() || undefined;
+  if (!address && !countryCode && latitude === undefined && longitude === undefined) return undefined;
+  return {
+    ...(address ? { address } : {}),
+    ...(countryCode ? { countryCode } : {}),
+    ...(latitude !== undefined && longitude !== undefined ? { latitude, longitude } : {}),
+  };
 }
 
 function kayakSegmentCabins(data: ObjectValue, result: ObjectValue, option: ObjectValue) {
@@ -274,6 +318,7 @@ export function normalizeSandboxOffers(
                     .displayName,
                 ),
               ].filter(Boolean);
+      const hotelLocation = vertical === "hotels" ? kayakHotelLocation(result) : undefined;
       const flightCabin = vertical === "flights" ? kayakFlightCabin(data, result, option) : undefined;
       const flightFareFamily = vertical === "flights" ? fareFamilyName(option.fareFamily) : undefined;
       const flightFareTerms = vertical === "flights" ? kayakFareTerms(option.fees, currency) : [];
@@ -307,7 +352,10 @@ export function normalizeSandboxOffers(
           ? { hotelReviewScore: result.guestRating } : {}),
         ...(vertical === "hotels" && typeof result.numberOfReviews === "number" && Number.isInteger(result.numberOfReviews) && result.numberOfReviews >= 0
           ? { hotelReviewCount: result.numberOfReviews } : {}),
-        ...(vertical === "hotels" ? {amenities: kayakHotelAmenities(result.features, data.amenityDictionary)} : {}),
+        ...(vertical === "hotels" ? {
+          amenities: kayakHotelAmenities(result.features, data.amenityDictionary),
+          ...(hotelLocation ? { hotelLocation } : {}),
+        } : {}),
         ...(vertical === "flights" ? { flightLegs: kayakFlightLegs(data, result).map((leg, legIndex) => ({
           ...leg,
           segments:leg.segments.map((segment, segmentIndex) => {

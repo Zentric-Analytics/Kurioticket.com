@@ -59,6 +59,56 @@ test("only explicit structured conditions and optional purchasable services are 
   assert.deepEqual(offer.flightOptionalServices,[{type:"seat",description:"Preferred seat",price:25,currency:"USD"}]);
 });
 
+test("hotel search preserves only provider-supplied valid coordinates", () => {
+  const [direct] = normalizeSandboxOffers("hotels", {
+    currencyCode: "USD",
+    results: [{
+      id: "hotel-one",
+      name: "Provider Hotel",
+      address: "10 Test Street",
+      hotelCountryCode: "US",
+      latitude: 40.75,
+      longitude: -73.98,
+      rates: [{ totalRate: 100, bookUri: click }],
+    }],
+  });
+  assert.deepEqual(direct.hotelLocation, {
+    address: "10 Test Street",
+    countryCode: "US",
+    latitude: 40.75,
+    longitude: -73.98,
+  });
+
+  const [nested] = normalizeSandboxOffers("hotels", {
+    currencyCode: "USD",
+    results: [{
+      id: "hotel-two",
+      name: "Nested Provider Hotel",
+      address: "20 Test Street",
+      geoLocation: { lat: "48.8566", lng: "2.3522" },
+      rates: [{ totalRate: 110, bookUri: click }],
+    }],
+  });
+  assert.deepEqual(nested.hotelLocation, {
+    address: "20 Test Street",
+    latitude: 48.8566,
+    longitude: 2.3522,
+  });
+
+  const [invalid] = normalizeSandboxOffers("hotels", {
+    currencyCode: "USD",
+    results: [{
+      id: "hotel-three",
+      name: "Invalid Provider Hotel",
+      address: "30 Test Street",
+      latitude: 200,
+      longitude: -73.98,
+      rates: [{ totalRate: 120, bookUri: click }],
+    }],
+  });
+  assert.deepEqual(invalid.hotelLocation, { address: "30 Test Street" });
+});
+
 test("hotel guest scores preserve the provider rating without inventing unrated scores", () => {
   for (const guestRating of [8.6, 0, 10, -1, 11, NaN, Infinity, "8.6", undefined]) {
     const [offer] = normalizeSandboxOffers("hotels", {currencyCode:"USD",results:[{
