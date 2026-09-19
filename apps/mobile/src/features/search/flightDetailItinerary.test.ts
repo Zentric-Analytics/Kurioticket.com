@@ -40,7 +40,7 @@ test("brightened hero protects its lower text with a localized soft fade rather 
   assert.doesNotMatch(source,/routeMetadataBackdrop|backgroundColor:[^}]*routeMetadata/);
 });
 
-test("hero controls preserve actions and semantics with full-footprint glass surfaces",()=>{
+test("hero controls preserve actions and semantics with inset Hotel light glass surfaces",()=>{
   const controlsStart=source.indexOf('testID="flight-details-floating-controls"');
   const controlsEnd=source.indexOf('<ScrollView testID="flight-details-scroll-content"',controlsStart);
   const controls=source.slice(controlsStart,controlsEnd);
@@ -50,12 +50,12 @@ test("hero controls preserve actions and semantics with full-footprint glass sur
   assert.match(controls,/savedFlights\.toggle/);
   assert.match(controls,/onPress=\{\(\)=>void share\(\)\}/);
   assert.match(source,/heroActions:\{width:88,height:44/);
-  assert.match(source,/heroActionsGlass:\{\.\.\.StyleSheet\.absoluteFillObject,borderRadius:22\}/);
+  assert.match(source,/heroActionsGlass:\{position:"absolute",left:0,right:0,top:2,bottom:2,borderRadius:20\}/);
   assert.match(source,/heroAction:\{width:44,height:44/);
   assert.match(source,/heroIconButton:\{width:44,height:44/);
-  assert.match(source,/heroIconGlass:\{\.\.\.StyleSheet\.absoluteFillObject,borderRadius:22\}/);
-  assert.equal((controls.match(/variant="carsOptical"/g)??[]).length,2);
-  assert.match(controls,/<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical"/);
+  assert.match(source,/heroIconGlass:\{position:"absolute",left:2,right:2,top:2,bottom:2,borderRadius:20\}/);
+  assert.equal((controls.match(/variant="hotelLight"/g)??[]).length,2);
+  assert.match(controls,/<DetailGlassSurface dark=\{false\} variant="hotelLight"/);
   assert.match(controls,/<Heart size=\{17\}/);
   assert.match(controls,/<FlowIcon name="share" size=\{17\}/);
 });
