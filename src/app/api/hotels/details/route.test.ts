@@ -335,7 +335,7 @@ test("static Hotel details can recommend KAYAK hotels from the same merged searc
   assert.equal(Object.hasOwn(payload.relatedHotels[0] ?? {}, "rawProviderReference"), false);
 });
 
-test("Hotel details return every other hotel from an 18-result New York search cohort", async () => {
+test("Hotel details cap an 18-result New York related preview at twelve and signal more results", async () => {
   const search = {
     destination: "New York",
     checkIn: "2027-10-17",
@@ -366,18 +366,20 @@ test("Hotel details return every other hotel from an 18-result New York search c
   const payload = (await response.json()) as {
     hotel: { id: string };
     relatedHotels: Array<{ id: string; provider: string }>;
+    relatedHotelsHasMore?: boolean;
   };
 
   assert.equal(response.status, 200);
   assert.equal(payload.hotel.id, selected.id);
-  assert.equal(payload.relatedHotels.length, 17);
-  assert.equal(new Set(payload.relatedHotels.map((hotel) => hotel.id)).size, 17);
+  assert.equal(payload.relatedHotels.length, 12);
+  assert.equal(payload.relatedHotelsHasMore, true);
+  assert.equal(new Set(payload.relatedHotels.map((hotel) => hotel.id)).size, 12);
   assert.equal(payload.relatedHotels.some((hotel) => hotel.id === selected.id), false);
   assert.ok(payload.relatedHotels.some((hotel) => hotel.provider === "KAYAK sandbox"));
   assert.ok(payload.relatedHotels.some((hotel) => hotel.provider === "Kurioticket static catalogue"));
   assert.deepEqual(
     payload.relatedHotels.map((hotel) => hotel.id),
-    hotels.slice(1).map((hotel) => hotel.id),
+    hotels.slice(1, 13).map((hotel) => hotel.id),
   );
 });
 
