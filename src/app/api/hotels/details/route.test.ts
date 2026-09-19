@@ -360,7 +360,7 @@ test("Hotel details cap an 18-result New York related preview at twelve and sign
   const selected = hotels[0]!;
   const response = await GET(
     new Request(
-      `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selected.id)}&destination=${encodeURIComponent(search.destination)}&checkIn=${search.checkIn}&checkOut=${search.checkOut}&rooms=${search.rooms}&guests=${search.guests}`,
+      `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selected.id)}&destination=${encodeURIComponent(search.destination)}&checkIn=${search.checkIn}&checkOut=${search.checkOut}&rooms=${search.rooms}&guests=${search.guests}&relatedLimit=12`,
     ),
   );
   const payload = (await response.json()) as {
