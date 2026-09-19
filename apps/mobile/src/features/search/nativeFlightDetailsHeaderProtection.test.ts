@@ -9,15 +9,22 @@ const hotel = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8")
 test("Flight header protection derives its threshold from the measured hero height", () => {
   assert.deepEqual(flightDetailsHeaderProtectionGeometry(47, 318), {
     protectedHeight: 111,
-    threshold: 103,
+    threshold: 207,
   });
   assert.deepEqual(flightDetailsHeaderProtectionGeometry(47, 382), {
     protectedHeight: 111,
-    threshold: 167,
+    threshold: 271,
   });
   assert.deepEqual(flightDetailsHeaderProtectionGeometry(24, 350), {
     protectedHeight: 88,
-    threshold: 158,
+    threshold: 262,
+  });
+});
+
+test("Flight header protection clamps the threshold when the hero is shorter than the protected region", () => {
+  assert.deepEqual(flightDetailsHeaderProtectionGeometry(47, 100), {
+    protectedHeight: 111,
+    threshold: 0,
   });
 });
 
