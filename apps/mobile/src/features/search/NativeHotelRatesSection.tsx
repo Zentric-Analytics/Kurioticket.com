@@ -108,20 +108,13 @@ function providerRoomPresentation(value?: string | null) {
 }
 
 function providerRateTerms(roomTerms: string[], cancellationInfo?: string | null) {
-  const hasSpecificCancellation = roomTerms.some((term) =>
-    /non[- ]?refundable|refundable|free cancellation|cancel/i.test(term),
-  );
-  return [...roomTerms, ...meaningfulProviderMeta(cancellationInfo)]
-    .map(cleanRateCopy)
-    .filter(Boolean)
-    .filter((term) =>
-      !(hasSpecificCancellation && /cancellation conditions apply|see supplied rate details/i.test(term)),
-    )
-    .filter(
-      (term, index, values) =>
-        values.findIndex((candidate) => candidate.toLocaleLowerCase() === term.toLocaleLowerCase()) === index,
-    )
-    .slice(0, 3);
+  const condition = [
+    ...roomTerms,
+    ...meaningfulProviderMeta(cancellationInfo),
+  ]
+    .map(conciseCondition)
+    .find(Boolean);
+  return condition ? [condition] : [];
 }
 
 export function buildNativeHotelRateRows({
