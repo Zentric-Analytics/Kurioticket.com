@@ -104,10 +104,12 @@ test("active Hotel details enrichment is keyed, abortable, and does not expose f
   const screen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
   const bookingDetails = readFileSync("src/features/search/NativeHotelBookingDetails.tsx", "utf8");
   assert.match(api, /`\/api\/hotels\/details\?\$\{params\.toString\(\)\}`/);
-  for (const field of ["id", "checkIn", "checkOut"]) assert.match(api, new RegExp(`${field}: input\\.${field}`));
+  for (const field of ["id", "destination", "checkIn", "checkOut"]) assert.match(api, new RegExp(`${field}: input\\.${field}`));
   for (const field of ["guests", "rooms"]) assert.match(api, new RegExp(`${field}: String\\(input\\.${field}\\)`));
   assert.match(api, /options: \{ signal\?: AbortSignal \}/);
   assert.match(screen, /const enrichmentKey = `\$\{result\.id\}/);
+  assert.match(screen, /const destination = String\(params\.destination \|\| result\.location\)/);
+  assert.match(screen, /destination,/);
   assert.match(screen, /detailsState\?\.key === enrichmentKey/);
   assert.match(screen, /response\.hotel\?\.id !== result\.id/);
   assert.match(screen, /status: "loading", response: null/);
