@@ -75,6 +75,34 @@ export function nativeHotelProviderUrl(
   return "";
 }
 
+export function nativeKurioticketHotelDetailsUrl(
+  baseUrl: string,
+  input: {
+    id: string;
+    destination: string;
+    checkIn: string;
+    checkOut: string;
+    guests: number;
+    rooms: number;
+  },
+) {
+  try {
+    const url = new URL(baseUrl);
+    const basePath = url.pathname.replace(/\/+$/, "");
+    url.pathname = `${basePath}/hotels/details/${encodeURIComponent(input.id)}`;
+    url.search = new URLSearchParams({
+      destination: input.destination,
+      checkIn: input.checkIn,
+      checkOut: input.checkOut,
+      guests: String(input.guests),
+      rooms: String(input.rooms),
+    }).toString();
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
 export function nativeHotelOffers(internalAvailable: boolean, providerAvailable: boolean) {
   const offers: NativeHotelOffer[] = [];
   if (internalAvailable) offers.push({ id: "internal-rooms", kind: "internal-room-flow" });
