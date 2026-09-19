@@ -49,7 +49,7 @@ test("available Flight Details uses a universal edge-to-edge hero with safe cont
   const available = native.slice(availableReturn, native.indexOf("function FlightDetailsLoadingSkeleton"));
 
   assert.match(available, /<StatusBar style=\{headerProtected\?\(theme\.dark\?"light":"dark"\):"light"\} translucent backgroundColor="transparent"\/?>/);
-  assert.match(available, /<ImageBackground testID="flight-details-hero" source=\{require\("\.\.\/\.\.\/\.\.\/assets\/heroes\/flight-details-hero\.webp"\)\}/);
+  assert.match(available, /<ImageBackground testID="flight-details-hero"[^>]*source=\{require\("\.\.\/\.\.\/\.\.\/assets\/heroes\/flight-details-hero\.webp"\)\}/);
   const scrollStart = available.indexOf('<ScrollView testID="flight-details-scroll-content"');
   const controls = available.indexOf('testID="flight-details-floating-controls"');
   assert.ok(controls > -1 && controls < scrollStart, "floating actions must be screen-level siblings before the vertical ScrollView so accessibility order matches the visual header");
@@ -102,7 +102,7 @@ test("available Flight Details uses the Flight Results canvas without flattening
   assert.match(native, /const FLIGHT_DETAILS_LIGHT_CANVAS = "#F3F6FA"/);
   assert.match(native, /const contentCanvasColor=theme\.dark\?theme\.background:FLIGHT_DETAILS_LIGHT_CANVAS/);
   assert.match(available, /style=\{\[s\.safe,\{backgroundColor:contentCanvasColor\}\]\}/);
-  assert.match(available, /<ImageBackground testID="flight-details-hero" source=\{require\("\.\.\/\.\.\/\.\.\/assets\/heroes\/flight-details-hero\.webp"\)\}/);
+  assert.match(available, /<ImageBackground testID="flight-details-hero"[^>]*source=\{require\("\.\.\/\.\.\/\.\.\/assets\/heroes\/flight-details-hero\.webp"\)\}/);
   assert.match(available, /s\.sticky,[^\]]*\{[^}]*backgroundColor:theme\.surface/);
   assert.match(resultsShell, /FLIGHT_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
 });
