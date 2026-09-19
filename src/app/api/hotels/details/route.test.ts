@@ -358,7 +358,7 @@ test("KAYAK Hotel details can recommend Kurioticket hotels from the same merged 
 
   const response = await GET(
     new Request(
-      `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selected.id)}&checkIn=2027-07-01&checkOut=2027-07-04&rooms=1&guests=2`,
+      `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selected.id)}&destination=${encodeURIComponent("New York")}&checkIn=2027-07-01&checkOut=2027-07-04&rooms=1&guests=2`,
     ),
   );
   const payload = (await response.json()) as {
