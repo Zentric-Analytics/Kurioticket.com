@@ -21,7 +21,7 @@ export type HotelResult = ContractResult<PublicHotelResult>;
 export type HotelSearchResponse = TravelSearchResponse<PublicHotelResult> & {
   warningCategory?: "provider_unavailable" | string;
 };
-export type MobileHotelDetailsResponse = { hotel: PublicHotelResult; propertyDetails: PublicHotelPropertyDetails | null; locationDetails?: PublicHotelPropertyDetails | null; roomOptions: HotelRoomOption[]; relatedHotels: PublicHotelResult[] };
+export type MobileHotelDetailsResponse = { hotel: PublicHotelResult; propertyDetails: PublicHotelPropertyDetails | null; locationDetails?: PublicHotelPropertyDetails | null; roomOptions: HotelRoomOption[]; relatedHotels: PublicHotelResult[]; relatedHotelsHasMore?: boolean };
 export type MobileHotelDetailsRequest = { id: string; destination: string; checkIn: string; checkOut: string; guests: number; rooms: number };
 export type CarResult = ContractResult<NormalizedCarResult>;
 export type PackageComponent = { status: "success" | "empty" | "unavailable"; results: (FlightResult | HotelResult | CarResult)[]; warnings: string[]; source: string; requestId: string };
@@ -169,7 +169,7 @@ export const travelApi = {
   flightRedirect: (id: string, options: { signal?: AbortSignal; sourcePage?: string } = {}) => request<FlightRedirectResponse>("/api/redirect", { method: "POST", body: JSON.stringify({ id, type: "flight", sourcePage: options.sourcePage ?? "native_flight_details" }) }, { signal: options.signal }),
   searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<HotelSearchResponse>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   hotelDetails: (input: MobileHotelDetailsRequest, options: { signal?: AbortSignal } = {}) => {
-    const params = new URLSearchParams({ id: input.id, destination: input.destination, checkIn: input.checkIn, checkOut: input.checkOut, guests: String(input.guests), rooms: String(input.rooms) });
+    const params = new URLSearchParams({ id: input.id, destination: input.destination, checkIn: input.checkIn, checkOut: input.checkOut, guests: String(input.guests), rooms: String(input.rooms), relatedLimit: "12" });
     return request<MobileHotelDetailsResponse>(`/api/hotels/details?${params.toString()}`, {}, options);
   },
   searchHotelDestinations: (query: string, options: { signal?: AbortSignal; countryCode?: string; locale?: string; limit?: number } = {}) => {
