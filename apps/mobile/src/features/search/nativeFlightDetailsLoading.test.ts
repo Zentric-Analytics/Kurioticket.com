@@ -243,11 +243,12 @@ test("loading uses the final canvas and reserves an inert safe-area checkout doc
     const dock = find(root, "flight-details-loading-checkout");
     assert.equal(style(dock).position, "absolute");
     assert.equal(style(dock).bottom, 0);
-    assert.equal(style(dock).minHeight, 88);
-    assert.equal(style(dock).elevation, 7);
-    assert.equal(style(dock).shadowOffset.height, -4);
-    assert.equal(style(dock).shadowOpacity, dark ? 0.28 : 0.1);
-    assert.equal(style(dock).paddingBottom, Math.max(bottom, 10));
+    assert.equal(style(dock).borderTopLeftRadius, 22);
+    assert.equal(style(dock).borderTopRightRadius, 22);
+    assert.equal(style(dock).elevation, 12);
+    assert.equal(style(dock).shadowOffset.height, -8);
+    assert.equal(style(dock).shadowOpacity, 0.14);
+    assert.equal(style(dock).paddingBottom, 12 + bottom);
     assert.equal(style(dock).backgroundColor, theme.surface);
     assert.equal(dock.props.pointerEvents, "none");
     assert.equal(dock.props.accessibilityElementsHidden, true);
