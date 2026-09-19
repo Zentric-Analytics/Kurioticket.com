@@ -45,7 +45,7 @@ test("narrow active Hotel layout keeps compact grouped rate rows and a persisten
   assert.match(rates, /adjustsFontSizeToFit/);
   assert.match(rates, /minimumFontScale=\{0\.68\}/);
   assert.match(rates, /borderRadius: 10/);
-  assert.match(rates, /minHeight: 92/);
+  assert.match(rates, /minHeight: 94/);
   assert.match(rates, /selected && \{ backgroundColor: selectedBackground \}/);
   assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
   assert.match(rates, /disabled=\{!row\.actionable\}/);
