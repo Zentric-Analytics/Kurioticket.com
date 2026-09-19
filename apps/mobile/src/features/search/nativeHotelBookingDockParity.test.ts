@@ -34,37 +34,39 @@ test("mobile web reference retains its independent Hotel stay dock contract", ()
   ]) assert.ok(webDock.includes(token), `mobile web dock must retain ${token}`);
 });
 
-test("native Hotel keeps one selected-rate dock visible across Rates, Overview, and Reviews", () => {
+test("native Hotel keeps one selected-provider dock visible across Rates, Overview, and Reviews", () => {
   assert.match(detailSource, /detailsStatus !== "loading" && selectedRate/);
   assert.match(detailSource, /s\.bookingDock/);
   assert.match(detailSource, /selectedRate\.totalPrice/);
   assert.match(detailSource, /selectedRate\.totalLabel/);
-  assert.match(detailSource, /const bookingActionLabel = selectedRate\?\.providerKind === "provider" \? "View deal" : "Choose room"/);
+  assert.match(detailSource, /Continue to[\s\S]*selectedRate\.providerName/);
+  assert.doesNotMatch(detailSource, /View deal|Choose room/);
   assert.match(detailSource, /bookingDockButtonText\}>\{bookingActionLabel\}<\/Text>/);
   assert.match(detailSource, /onPress=\{\(\) => void continueSelectedRate\(\)\}/);
-  assert.match(detailSource, /contentContainerStyle=\{\{ paddingBottom: selectedRate \? 108 \+ inset\.bottom : 24 \+ inset\.bottom \}\}/);
+  assert.match(detailSource, /contentContainerStyle=\{\{ paddingBottom: selectedRate \? 120 \+ inset\.bottom : 24 \+ inset\.bottom \}\}/);
   const tabsEnd = detailSource.indexOf("</ScrollView>");
   const dock = detailSource.indexOf("s.bookingDock");
   assert.ok(tabsEnd >= 0 && dock > tabsEnd, "booking dock must sit outside tab-specific scrolling content");
 });
 
-test("Rates keep single-rate rows white while preserving the existing multi-rate tint", () => {
-  assert.match(rateStyle("rateList", "rateDivider"), /borderWidth: 1[\s\S]*borderRadius: 10[\s\S]*overflow: "hidden"/);
-  assert.match(rateStyle("rateCard", "rateCardPressed"), /minHeight: 88[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 10/);
-  assert.match(ratesSource, /const selectedBackground = theme\.dark[\s\S]*?rgba\(0, 75, 184, 0\.035\)/);
-  assert.match(ratesSource, /const showSelectedBackground = rows\.length > 1 && selected/);
-  assert.match(ratesSource, /backgroundColor: showSelectedBackground \? selectedBackground : theme\.surface/);
-  assert.match(ratesSource, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
-  assert.match(ratesSource, /<View style=\{\[s\.rateDivider, \{ backgroundColor: theme\.border \}\]\} \/>/);
-  assert.doesNotMatch(ratesSource, /selectedBar|showSelectionMarker|<Check|selectedMark|borderColor: selected|borderWidth: selected|accessibilityRole="radio"|radioDot/);
-  assert.doesNotMatch(ratesSource, /actionControl|actionLabel: "Choose room"/);
+test("Rates use independent selectable cards with the Flight radio treatment", () => {
+  assert.match(rateStyle("dealList", "dealCard"), /gap: 10[\s\S]*paddingVertical: 12/);
+  assert.match(rateStyle("dealCard", "dealCardSelectedLight"), /minHeight: 96[\s\S]*borderWidth: 1[\s\S]*borderRadius: 14[\s\S]*paddingHorizontal: 15[\s\S]*paddingVertical: 13/);
+  assert.match(ratesSource, /const selectedBackground = theme\.dark \? "#142844" : "#F4F8FF"/);
+  assert.match(ratesSource, /backgroundColor: selected[\s\S]*\? selectedBackground[\s\S]*: theme\.surface/);
+  assert.match(ratesSource, /borderColor: selected \? accentColor : surfaceBorderColor/);
+  assert.match(ratesSource, /accessibilityRole="radiogroup"/);
+  assert.match(ratesSource, /accessibilityRole="radio"/);
+  assert.match(ratesSource, /s\.dealRadioDot/);
+  assert.doesNotMatch(ratesSource, /rateDivider|rateList|rateTitle|rateMeta|actionControl|Choose room/);
 });
 
-test("Rates show nightly prices while the persistent dock owns the selected stay total", () => {
-  assert.match(ratesSource, /nightlyPrice: nightly\?\.formatted/);
-  assert.match(ratesSource, /totalPrice: total\?\.formatted/);
+test("Rates show provider nightly prices while the persistent dock owns the selected stay total", () => {
+  assert.match(ratesSource, /nightlyPrice:[\s\S]*nightlyPrice\.formatted/);
+  assert.match(ratesSource, /totalPrice:[\s\S]*totalPrice\.formatted/);
   assert.match(ratesSource, /totalLabel: "Estimated stay total"/);
   assert.match(ratesSource, /totalLabel: "Stay total"/);
-  assert.match(ratesSource, />per night<\/Text>/);
+  assert.match(ratesSource, /"per night"/);
   assert.match(detailSource, /selectedRate\.totalAccessibilityLabel/);
 });
+
