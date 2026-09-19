@@ -29,6 +29,11 @@ test("embedded iOS Look Around is native MapKit and never a Google WebView", () 
   assert.match(view, /override func hitTest\(_ point: CGPoint, with event: UIEvent\?\) -> UIView\?/);
   assert.match(view, /controllerView\.hitTest\(controllerPoint, with: event\)/);
   assert.match(view, /lookAroundController\.view\.isUserInteractionEnabled = true/);
+  assert.match(view, /private final class InlineLookAroundViewController: MKLookAroundViewController/);
+  assert.match(view, /override func present\(/);
+  assert.match(view, /override func show\(_ viewController: UIViewController, sender: Any\?\)/);
+  assert.match(view, /override func showDetailViewController\(_ viewController: UIViewController, sender: Any\?\)/);
+  assert.match(view, /hideFullScreenAffordance\(in: view\)/);
   assert.doesNotMatch(bridge + module + view, /Google|WebView|google\.com/);
   assert.match(fingerprint, /modules\/kurioticket-hotel-look-around/);
 });

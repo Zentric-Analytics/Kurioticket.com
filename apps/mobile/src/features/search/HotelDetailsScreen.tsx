@@ -142,6 +142,7 @@ function HotelDetail({
   const hotelTabsStickyStartRef = useRef<number | null>(null);
   const hotelTabsPinnedRef = useRef(false);
   const [hotelTabsPinned, setHotelTabsPinned] = useState(false);
+  const [lookAroundInteracting, setLookAroundInteracting] = useState(false);
   const hotelTabScrollOffsets = useRef<Record<HotelDetailTab, number | null>>({
     details: null,
     reviews: null,
@@ -164,6 +165,7 @@ function HotelDetail({
   useEffect(() => {
     setSelectedRateId(null);
     setRoomsOpen(false);
+    setLookAroundInteracting(false);
   }, [result.id]);
 
   const checkIn = String(params.checkIn || "");
@@ -523,6 +525,7 @@ function HotelDetail({
     >
       <ScrollView
         ref={hotelDetailScrollRef}
+        scrollEnabled={!lookAroundInteracting}
         stickyHeaderIndices={[2]}
         contentInsetAdjustmentBehavior="never"
         bounces={false}
@@ -639,6 +642,7 @@ function HotelDetail({
               relatedHotels={relatedHotels}
               theme={theme}
               onViewHotel={viewRelatedHotel}
+              onLookAroundInteractionChange={setLookAroundInteracting}
             />
           ) : null}
 

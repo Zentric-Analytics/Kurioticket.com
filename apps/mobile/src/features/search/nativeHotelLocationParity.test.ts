@@ -86,9 +86,12 @@ test("Location uses Apple Look Around on iOS and Google Street View on Android",
   assert.match(compare, /nativeHotelLocationPreviewUrl\(api\.baseUrl, hotelId\)/);
   assert.match(component, /const streetViewUrl = Platform\.OS === "ios" \? null : api\.ok \? nativeHotelLocationEmbedUrl\(api\.baseUrl, hotelId, "streetview"\) : null;/);
   assert.match(component, /\{option === "map" \? "Map" : Platform\.OS === "ios" \? "Look Around" : "Street View"\}/);
-  assert.match(component, /NativeAppleCarLookAroundPreview/);
-  assert.match(component, /locationLabel=\{hotelName\}/);
-  assert.doesNotMatch(component, /NativeAppleHotelLookAround/);
+  assert.match(component, /NativeAppleHotelLookAround/);
+  assert.match(component, /hotelName=\{hotelName\}/);
+  assert.doesNotMatch(component, /NativeAppleCarLookAroundPreview/);
+  assert.match(component, /onTouchStart=\{syncLookAroundInteraction\}/);
+  assert.match(component, /onTouchEnd=\{syncLookAroundInteraction\}/);
+  assert.match(component, /onTouchCancel=\{syncLookAroundInteraction\}/);
   assert.match(component, /effectiveView === "map" \? <Pressable/);
   assert.match(component, /accessibilityRole="button" accessibilityLabel=\{`Open full map for \$\{hotelName\}`\}/);
   assert.match(component, /<NativeHotelFullMapModal visible=\{fullMapOpen\} hotelId=\{hotelId\} theme=\{theme\}/);
