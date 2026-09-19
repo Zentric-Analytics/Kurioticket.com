@@ -1,5 +1,4 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { Check } from "lucide-react-native";
 import type { NativeHotelOffer } from "./nativeHotelDetailsModel";
 import type { PresentedHotelRoomOption } from "./NativeHotelDetails";
 import { appFonts } from "../../theme/typography";
@@ -252,93 +251,86 @@ export function NativeHotelRatesSection({
         ) : null}
       </View>
 
-      <View style={s.rateList}>
-        {rows.map((row) => {
+      <View
+        style={[
+          s.rateList,
+          {
+            backgroundColor: theme.surface,
+            borderColor: theme.border,
+          },
+        ]}
+      >
+        {rows.map((row, index) => {
           const selected = row.id === selectedRateId;
+          const selectedBackground = theme.dark
+            ? "rgba(143, 181, 255, 0.08)"
+            : "rgba(0, 75, 184, 0.045)";
           return (
-            <Pressable
-              key={row.id}
-              accessibilityRole="button"
-              accessibilityState={{ selected, disabled: !row.actionable }}
-              accessibilityLabel={`${selected ? "Selected. " : ""}${row.title}. ${row.nightlyAccessibilityLabel}`}
-              disabled={!row.actionable}
-              onPress={row.actionable ? () => onSelectRate(row.id) : undefined}
-              style={({ pressed }) => [
-                s.rateCard,
-                {
-                  backgroundColor: theme.surface,
-                  borderColor: selected ? accentColor : theme.border,
-                  borderWidth: selected ? 2 : 1,
-                },
-                pressed && row.actionable && s.rateCardPressed,
-              ]}
-            >
-              <View style={s.rateTop}>
-                <View style={s.providerIdentity}>
-                  {row.providerKind === "kurioticket" ? (
-                    <Image
-                      accessible
-                      accessibilityLabel="Kurioticket"
-                      accessibilityIgnoresInvertColors
-                      source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
-                      resizeMode="contain"
-                      style={s.brandLogo}
-                    />
-                  ) : (
-                    <Text numberOfLines={1} style={[s.providerName, { color: theme.textPrimary }]}>
-                      {row.providerName}
-                    </Text>
-                  )}
-                </View>
-                {selected ? (
-                  <View
-                    pointerEvents="none"
-                    accessible={false}
-                    accessibilityElementsHidden
-                    importantForAccessibility="no-hide-descendants"
-                    style={s.selectedMark}
-                  >
-                    <Check size={19} strokeWidth={2.6} color={accentColor} />
-                  </View>
-                ) : null}
-              </View>
-
-              <View style={s.rateBottom}>
-                <View style={s.rateCopy}>
-                  <Text numberOfLines={2} style={[s.rateTitle, { color: theme.textPrimary }]}>
-                    {row.title}
-                  </Text>
-                  {row.meta.length ? (
-                    <View style={s.benefitList}>
-                      {row.meta.map((benefit) => (
-                        <Text key={benefit} numberOfLines={1} style={[s.rateMeta, { color: theme.textSecondary }]}>
-                          {benefit}
+            <View key={row.id}>
+              {index > 0 ? <View style={[s.rateDivider, { backgroundColor: theme.border }]} /> : null}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected, disabled: !row.actionable }}
+                accessibilityLabel={`${selected ? "Selected. " : ""}${row.title}. ${row.nightlyAccessibilityLabel}`}
+                disabled={!row.actionable}
+                onPress={row.actionable ? () => onSelectRate(row.id) : undefined}
+                style={({ pressed }) => [
+                  s.rateCard,
+                  selected && { backgroundColor: selectedBackground },
+                  pressed && row.actionable && s.rateCardPressed,
+                ]}
+              >
+                <View style={s.rateMain}>
+                  <View style={s.rateCopy}>
+                    <View style={s.providerIdentity}>
+                      {row.providerKind === "kurioticket" ? (
+                        <Image
+                          accessible
+                          accessibilityLabel="Kurioticket"
+                          accessibilityIgnoresInvertColors
+                          source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
+                          resizeMode="contain"
+                          style={s.brandLogo}
+                        />
+                      ) : (
+                        <Text numberOfLines={1} style={[s.providerName, { color: theme.textPrimary }]}>
+                          {row.providerName}
                         </Text>
-                      ))}
+                      )}
                     </View>
-                  ) : null}
-                </View>
 
-                <View style={s.priceBlock}>
-                  <Text
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.68}
-                    accessibilityLabel={row.nightlyAccessibilityLabel}
-                    style={[
-                      s.price,
-                      !row.hasDisplayedPrice && s.priceUnavailable,
-                      { color: row.hasDisplayedPrice ? theme.textPrimary : theme.textSecondary },
-                    ]}
-                  >
-                    {row.nightlyPrice}
-                  </Text>
-                  {row.hasDisplayedPrice ? (
-                    <Text style={[s.priceUnit, { color: accentColor }]}>per night</Text>
-                  ) : null}
+                    <Text numberOfLines={2} style={[s.rateTitle, { color: theme.textPrimary }]}>
+                      {row.title}
+                    </Text>
+
+                    {row.meta.length ? (
+                      <Text numberOfLines={1} style={[s.rateMeta, { color: theme.textSecondary }]}>
+                        {row.meta.join(" · ")}
+                      </Text>
+                    ) : null}
+                  </View>
+
+                  <View style={s.priceBlock}>
+                    <Text
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.68}
+                      accessibilityLabel={row.nightlyAccessibilityLabel}
+                      style={[
+                        s.price,
+                        !row.hasDisplayedPrice && s.priceUnavailable,
+                        { color: row.hasDisplayedPrice ? theme.textPrimary : theme.textSecondary },
+                      ]}
+                    >
+                      {row.nightlyPrice}
+                    </Text>
+                    {row.hasDisplayedPrice ? (
+                      <Text style={[s.priceUnit, { color: accentColor }]}>per night</Text>
+                    ) : null}
+                  </View>
                 </View>
-              </View>
-            </Pressable>
+              </Pressable>
+            </View>
           );
         })}
       </View>
@@ -362,61 +354,51 @@ const s = StyleSheet.create({
     fontWeight: "400",
     fontFamily: appFonts.regular,
   },
-  rateList: { gap: 12 },
-  rateCard: {
-    minHeight: 126,
-    borderRadius: 0,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+  rateList: {
+    borderWidth: 1,
+    borderRadius: 10,
     overflow: "hidden",
   },
-  rateCardPressed: { opacity: 0.88 },
-  rateTop: {
-    minHeight: 22,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 10,
+  rateDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 12 },
+  rateCard: {
+    minHeight: 92,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    justifyContent: "center",
   },
-  providerIdentity: { flex: 1, minWidth: 0 },
-  brandLogo: { width: 104, height: 22, flexShrink: 0 },
+  rateCardPressed: { opacity: 0.84 },
+  rateMain: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  providerIdentity: { minHeight: 18, justifyContent: "center" },
+  brandLogo: { width: 92, height: 19, flexShrink: 0 },
   providerName: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
     fontWeight: "700",
     fontFamily: appFonts.bold,
-  },
-  selectedMark: {
-    width: 24,
-    height: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  rateBottom: {
-    marginTop: 12,
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 14,
   },
   rateCopy: { flex: 1, minWidth: 0 },
   rateTitle: {
-    fontSize: 15,
-    lineHeight: 21,
+    marginTop: 5,
+    fontSize: 14,
+    lineHeight: 19,
     fontWeight: "700",
     fontFamily: appFonts.bold,
   },
-  benefitList: { marginTop: 7, gap: 2 },
   rateMeta: {
+    marginTop: 3,
     fontSize: 12,
-    lineHeight: 18,
+    lineHeight: 17,
     fontWeight: "400",
     fontFamily: appFonts.regular,
   },
   priceBlock: {
-    flexShrink: 1,
+    flexShrink: 0,
     minWidth: 112,
-    maxWidth: "44%",
+    maxWidth: "42%",
     alignItems: "flex-end",
   },
   price: {
