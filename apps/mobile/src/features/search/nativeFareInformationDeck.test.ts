@@ -27,7 +27,7 @@ test("selection uses blue outlines and underlines without turning tab or fare-pr
   assert.match(deck,/tab===key\?<View style=\{s\.fareTabIndicator\}/);
   assert.match(source,/fareTabIndicator:\{[^}]*backgroundColor:ui\.blue/);
   assert.doesNotMatch(deck,/fareTabActiveTextColor|color:tab===key\?ui\.blue/);
-  assert.match(fareRail,/borderColor:isSelected\?ui\.blue:theme\.border/);
+  assert.match(fareRail,/borderColor:isSelected\?ui\.blue:surfaceBorderColor/);
   assert.match(fareRail,/s\.farePrice,\{color:fareHeadingTextColor\}/);
   assert.doesNotMatch(fareRail,/color:isSelected\?ui\.blue/);
 });
@@ -129,28 +129,28 @@ test("optional extras remain non-interactive provider-authored information",()=>
   assert.doesNotMatch(extras,/<Pressable|chevron/);
 });
 
-test("deck baseline adds a 10dp local inset to the unchanged 14dp content gap for 24dp total separation",()=>{
+test("deck baseline adds a 12dp local inset to the unchanged content rhythm",()=>{
   const deckStyles=between("fareInfoDeck:", "notice:");
-  assert.match(deckStyles,/fareInfoDeck:\{gap:0,marginTop:10\}/);
+  assert.match(deckStyles,/fareInfoDeck:\{gap:0,marginTop:12\}/);
   assert.match(deckStyles,/fareTabRail:\{flexGrow:0,borderBottomWidth:1,marginHorizontal:-10\}/);
   assert.match(deckStyles,/fareTabRailContent:\{paddingHorizontal:0\}/);
-  assert.match(deckStyles,/fareInfoBody:\{paddingHorizontal:4,paddingVertical:4\}/);
+  assert.match(deckStyles,/fareInfoBody:\{paddingHorizontal:4,paddingTop:7,paddingBottom:4\}/);
   assert.doesNotMatch(deckStyles,/fareInfoBody:\{[^}]*(?:borderWidth|borderRadius|backgroundColor)/);
   assert.match(deckStyles,/fareTabList:\{flexDirection:"row",gap:22\}/);
   assert.match(deckStyles,/fareInfoTab:\{minHeight:48,justifyContent:"center",position:"relative",paddingHorizontal:0\}/);
-  assert.match(deckStyles,/fareTabIndicator:\{position:"absolute",height:2,borderRadius:1,backgroundColor:ui\.blue,left:0,right:0,bottom:0\}/);
+  assert.match(deckStyles,/fareTabIndicator:\{position:"absolute",height:3,borderRadius:2,backgroundColor:ui\.blue,left:2,right:2,bottom:-1\}/);
   assert.match(deckStyles,/sectionDivider:\{borderTopWidth:StyleSheet\.hairlineWidth\}/);
   assert.match(deckStyles,/fareGroupDivider:\{height:StyleSheet\.hairlineWidth,marginVertical:11\}/);
   assert.match(deckStyles,/secondaryFacts:\{borderTopWidth:StyleSheet\.hairlineWidth,paddingVertical:11\}/);
   assert.doesNotMatch(deckStyles,/fareInfoTab(?:Text)?:\{[^}]*(?:transform|position:"absolute")/);
   assert.match(source,/loadingTabRail:\{[^}]*marginHorizontal:-10\}/);
-  assert.match(deck,/borderBottomColor:theme\.border/);
+  assert.match(deck,/borderBottomColor:surfaceBorderColor/);
   assert.doesNotMatch(between("fareInfoDeck:", "dealList:"),/elevation|shadow/);
   assert.match(source,/contentBody:\{paddingHorizontal:18,gap:14\}/);
-  assert.match(deckStyles,/fareInfoDeck:\{gap:0,marginTop:10\}/);
+  assert.match(deckStyles,/fareInfoDeck:\{gap:0,marginTop:12\}/);
   assert.doesNotMatch(deckStyles,/fareInfoDeck:\{[^}]*marginTop:24/);
-  assert.equal(14+10,24,"the content-body gap and local deck inset provide the intended total separation");
-  assert.match(source,/loadingInfoDeck:\{height:174,marginTop:10\}/);
+  assert.equal(14+12,26,"the content-body gap and local deck inset provide clearer section separation");
+  assert.match(source,/loadingInfoDeck:\{height:177,marginTop:12\}/);
   assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
   assert.match(source,/fareCard:\{borderWidth:1\.5,borderRadius:15,minHeight:142,position:"relative",paddingHorizontal:12,paddingTop:6,paddingBottom:8,gap:4\}/);
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);
@@ -159,8 +159,8 @@ test("deck baseline adds a 10dp local inset to the unchanged 14dp content gap fo
 
 test("fare information typography strengthens state-driven navigation while preserving content metrics",()=>{
   const deckStyles=between("fareInfoDeck:", "notice:");
-  assert.match(deckStyles,/fareInfoTabText:\{fontSize:14,lineHeight:20,fontWeight:"500"\}/);
-  assert.match(deckStyles,/fareInfoTabTextActive:\{fontWeight:"700"\}/);
+  assert.match(deckStyles,/fareInfoTabText:\{fontSize:14,lineHeight:20,fontWeight:"600"\}/);
+  assert.match(deckStyles,/fareInfoTabTextActive:\{fontWeight:"800"\}/);
   assert.match(source,/const fareHeadingTextColor=theme\.dark\?theme\.textPrimary:"#1A1A1A"/);
   assert.match(deck,/color:tab===key\?fareHeadingTextColor:theme\.textSecondary/);
   assert.doesNotMatch(deck,/color:tab===key\?ui\.blue:/);
@@ -179,7 +179,7 @@ test("fare information typography strengthens state-driven navigation while pres
 test("selected deals gain restrained theme-aware depth without changing their card geometry",()=>{
   const deals=between('if(tab==="deals")', 'if(tab==="details")');
   const dealStyles=between("dealList:", "conditionGroup:");
-  assert.match(deals,/backgroundColor:isSelected\?\(theme\.dark\?"#14243E":"#F8FBFF"\):theme\.surface/);
+  assert.match(deals,/backgroundColor:isSelected\?\(theme\.dark\?FLIGHT_DETAILS_DARK_SELECTED:FLIGHT_DETAILS_LIGHT_SELECTED\):theme\.surface/);
   assert.match(deals,/isSelected&&\(theme\.dark\?s\.dealCardSelectedDark:s\.dealCardSelectedLight\)/);
   assert.match(dealStyles,/dealCard:\{[^}]*borderWidth:1[^}]*borderRadius:14/);
   assert.doesNotMatch(dealStyles,/dealCardSelected(?:Light|Dark):\{[^}]*(?:borderWidth|borderRadius|padding|minHeight)/);

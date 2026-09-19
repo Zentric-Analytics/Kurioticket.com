@@ -99,8 +99,8 @@ test("hero controls preserve independent save and share targets in a smaller gla
 
 test("available Flight Details uses the Flight Results canvas without flattening hero or sticky surfaces", () => {
   const available = native.slice(native.indexOf('return <SafeAreaView edges={[]}'), native.indexOf("function FlightDetailsLoadingSkeleton"));
-  assert.match(native, /import \{ FLIGHT_RESULTS_LIGHT_CANVAS \} from "\.\/FlightResultsSheetShell"/);
-  assert.match(native, /const contentCanvasColor=theme\.dark\?theme\.background:FLIGHT_RESULTS_LIGHT_CANVAS/);
+  assert.match(native, /const FLIGHT_DETAILS_LIGHT_CANVAS = "#F3F6FA"/);
+  assert.match(native, /const contentCanvasColor=theme\.dark\?theme\.background:FLIGHT_DETAILS_LIGHT_CANVAS/);
   assert.match(available, /style=\{\[s\.safe,\{backgroundColor:contentCanvasColor\}\]\}/);
   assert.match(available, /<ImageBackground testID="flight-details-hero" source=\{require\("\.\.\/\.\.\/\.\.\/assets\/heroes\/flight-details-hero\.webp"\)\}/);
   assert.match(available, /s\.sticky,[^\]]*\{[^}]*backgroundColor:theme\.surface/);
