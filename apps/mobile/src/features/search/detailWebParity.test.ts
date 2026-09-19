@@ -207,13 +207,14 @@ test("active Hotel Rates use one Continue-to-provider action for Kurioticket and
   assert.match(hotel, /nativeHotelOffers\([\s\S]*?kurioticketHandoffAvailable,[\s\S]*?providerHandoffAvailable/);
   assert.match(hotel, /const rateRows = buildNativeHotelRateRows/);
   assert.match(hotel, /const selectedRate: NativeHotelRateRow \| null/);
-  assert.match(hotel, /Continue to[\s\S]*selectedRate\.providerName/);
+  assert.match(hotel, /const bookingActionLabel = "View deal"/);
+  assert.doesNotMatch(hotel, /Continue to|Choose room/);
   assert.match(hotel, /selectedRate\.offerId === "internal-rooms"[\s\S]*?\? kurioticketWebUrl/);
   assert.match(hotel, /selectedRate\.offerId === "provider" && providerHandoffAvailable[\s\S]*?\? redirectUrl/);
   assert.match(hotel, /await import\("expo-web-browser"\)/);
   assert.match(hotel, /WebBrowser\.openBrowserAsync\(url, \{ dismissButtonStyle: "close" \}\)/);
   assert.match(hotel, /await openProviderInApp\(targetUrl\)/);
-  assert.doesNotMatch(hotel, /Choose room|HotelRoomOptionsModal|setRoomsOpen/);
+  assert.doesNotMatch(hotel, /Continue to|Choose room|HotelRoomOptionsModal|setRoomsOpen/);
   assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
   assert.match(hotel, /bookingDockButtonText\}>\{bookingActionLabel\}<\/Text>/);
   assert.match(hotel, /selectedRate\.totalPrice/);
