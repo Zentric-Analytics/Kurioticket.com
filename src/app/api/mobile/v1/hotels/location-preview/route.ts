@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { getStaticHotelById } from "@/services/travel/staticHotelResults";
+import { resolveHotelLocation } from "@/services/travel/hotelLocationResolver";
 
 const TILE_SIZE = 256;
 const ZOOM = 15;
@@ -22,12 +22,13 @@ function tilePosition(latitude: number, longitude: number) {
 export async function GET(request: Request) {
   const id = new URL(request.url).searchParams.get("id")?.trim();
   if (!id) return new Response("Hotel id is required.", { status: 400 });
-  const hotel = getStaticHotelById(id);
-  if (!hotel) return new Response("Hotel not found.", { status: 404 });
-  if (!Number.isFinite(hotel.latitude) || !Number.isFinite(hotel.longitude)) return new Response("Map preview unavailable.", { status: 503 });
+  const location = await resolveHotelLocation(id);
+  if (!location) return new Response("Hotel not found.", { status: 404 });
+  const { latitude, longitude } = location.propertyDetails;
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return new Response("Map preview unavailable.", { status: 503 });
 
   try {
-    const center = tilePosition(hotel.latitude, hotel.longitude);
+    const center = tilePosition(latitude, longitude);
     const centerX = Math.floor(center.x);
     const centerY = Math.floor(center.y);
     const tiles = await Promise.all([-1, 0, 1].flatMap((dx) => [-1, 0, 1].map(async (dy) => {
