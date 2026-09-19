@@ -62,7 +62,7 @@ test("hero controls preserve actions and semantics with inset Hotel light glass 
 
 test("the route transitions directly to every authoritative leg card without an itinerary heading",()=>{
   assert.doesNotMatch(source,/>Flight itinerary<\/Text>/);
-  assert.match(source,/<View testID="flight-details-itinerary-overlap" style=\{s\.itineraryStack\}>\{\(offer\.legs\?\.length\?offer\.legs:\[\]\)\.map\(\(leg,index\)=><Itinerary/);
+  assert.match(source,/<View testID="flight-details-itinerary-overlap"[^\n]*style=\{s\.itineraryStack\}>\{\(offer\.legs\?\.length\?offer\.legs:\[\]\)\.map\(\(leg,index\)=><Itinerary/);
   assert.doesNotMatch(source,/itinerarySectionLabel:/);
   assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10,marginTop:-104,zIndex:1\}/);
   assert.match(itinerary,/leg\.direction==="outbound"\?"Outbound":leg\.direction==="return"\?"Return":`Flight \$\{leg\.legIndex\?\?index\+1\}`/);
@@ -227,6 +227,6 @@ test("only the first itinerary card overlaps an extended hero with a smooth full
   assert.match(hero,/<HeroCurve testID="flight-details-hero-curve" color=\{contentCanvasColor\}\/?>/);
   assert.match(source,/function HeroCurve[\s\S]*?<Svg[^>]*viewBox="0 0 100 64"[^>]*preserveAspectRatio="none"[\s\S]*?<Path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z"/);
   assert.match(source,/heroCurve:\{position:"absolute",left:0,right:0,bottom:-1,width:"100%",height:65\}/);
-  assert.match(source,/<View testID="flight-details-itinerary-overlap" style=\{s\.itineraryStack\}>\{\(offer\.legs\?\.length\?offer\.legs:\[\]\)\.map/);
+  assert.match(source,/<View testID="flight-details-itinerary-overlap"[^\n]*style=\{s\.itineraryStack\}>\{\(offer\.legs\?\.length\?offer\.legs:\[\]\)\.map/);
   assert.doesNotMatch(itinerary,/HeroCurve|flight-details-hero|marginTop:-104/);
 });
