@@ -393,6 +393,7 @@ const s = StyleSheet.create({
     flexShrink: 0,
     minWidth: 112,
     maxWidth: "42%",
+    marginTop: 25,
     alignItems: "flex-end",
   },
   price: {
