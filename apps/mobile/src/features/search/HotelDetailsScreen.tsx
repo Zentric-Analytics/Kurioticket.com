@@ -28,6 +28,7 @@ import {
 } from "../currency/displayCurrency";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { visualHotels } from "./visualFixtures";
+import { DetailGlassSurface } from "./DetailGlassSurface";
 import {
   canonicalHotelAddress,
   HotelRoomOptionsModal,
@@ -663,9 +664,11 @@ function HotelDetail({
           },
         ]}
       >
+        <DetailGlassSurface dark={false} style={s.heroBackGlass} />
         <ArrowLeft size={25} strokeWidth={2.2} color="#0F172A" />
       </Pressable>
-      <View style={[s.heroActions, { top: inset.top + 12 }]}> 
+      <View style={[s.heroActions, { top: inset.top + 12 }]}>
+        <DetailGlassSurface dark={false} style={s.heroActionsGlass} />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
@@ -714,11 +717,13 @@ const s = StyleSheet.create({
   missingButtonText: { color: "white", fontSize: 14, lineHeight: 20, fontWeight: "700", fontFamily: appFonts.bold },
   detailsLoadingOverlay: { zIndex: 30, overflow: "hidden" },
   heroShell: { position: "relative", width: "100%" },
-  heroBack: { position: "absolute", left: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
-  heroActions: { position: "absolute", right: 20, width: 96, height: 44, borderRadius: 22, backgroundColor: "#FFFFFF", flexDirection: "row", overflow: "hidden", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 5, elevation: 10 },
+  heroBack: { position: "absolute", left: 20, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 6, elevation: 6 },
+  heroActions: { position: "absolute", right: 20, width: 96, height: 44, borderRadius: 22, flexDirection: "row", zIndex: 20, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 6, elevation: 6 },
   heroAction: { width: 48, height: 44, alignItems: "center", justifyContent: "center" },
   heroHeartIcon: { transform: [{ translateX: 6 }] },
   heroShareIcon: { transform: [{ translateX: -6 }] },
+  heroBackGlass: { position: "absolute", left: 2, right: 2, top: 2, bottom: 2, borderRadius: 20 },
+  heroActionsGlass: { position: "absolute", left: 0, right: 0, top: 2, bottom: 2, borderRadius: 20 },
   identity: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   hotelName: { minWidth: 0, fontSize: 24, lineHeight: 30, fontWeight: "700", fontFamily: appFonts.bold, letterSpacing: -0.5 },
   hotelNamePhoneFit: { letterSpacing: -0.6 },
