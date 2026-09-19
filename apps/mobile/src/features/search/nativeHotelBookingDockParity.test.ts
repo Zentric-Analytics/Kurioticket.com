@@ -34,28 +34,34 @@ test("mobile web reference retains its independent Hotel stay dock contract", ()
   ]) assert.ok(webDock.includes(token), `mobile web dock must retain ${token}`);
 });
 
-test("native Hotel removes the checkout-style dock from Rates, Overview, and Reviews", () => {
-  assert.doesNotMatch(detailSource, /estimated stay total/);
-  assert.doesNotMatch(detailSource, />Continue booking</);
-  assert.doesNotMatch(detailSource, /s\.sticky|s\.dockContent|s\.dockPrice|s\.dockAction/);
-  assert.doesNotMatch(detailSource, /continueButton|continuePressed|continueDisabled|continueText/);
-  assert.match(detailSource, /contentContainerStyle=\{\{ paddingBottom: 24 \+ inset\.bottom \}\}/);
+test("native Hotel keeps one selected-rate dock visible across Rates, Overview, and Reviews", () => {
+  assert.match(detailSource, /detailsStatus !== "loading" && selectedRate/);
+  assert.match(detailSource, /s\.bookingDock/);
+  assert.match(detailSource, /selectedRate\.totalPrice/);
+  assert.match(detailSource, /selectedRate\.totalLabel/);
+  assert.match(detailSource, />Choose room<\/Text>/);
+  assert.match(detailSource, /onPress=\{\(\) => void continueSelectedRate\(\)\}/);
+  assert.match(detailSource, /contentContainerStyle=\{\{ paddingBottom: selectedRate \? 124 \+ inset\.bottom : 24 \+ inset\.bottom \}\}/);
+  const tabsEnd = detailSource.indexOf("</ScrollView>");
+  const dock = detailSource.indexOf("s.bookingDock");
+  assert.ok(tabsEnd >= 0 && dock > tabsEnd, "booking dock must sit outside tab-specific scrolling content");
 });
 
-test("Rates keeps price and real continuation action inside each square provider card", () => {
-  assert.match(rateStyle("rateCard", "rateCopy"), /borderWidth: 1[\s\S]*borderRadius: 0/);
-  assert.match(rateStyle("rateActionColumn", "priceBlock"), /width: 128[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
-  assert.match(rateStyle("actionControl", "actionControlText"), /minWidth: 82[\s\S]*minHeight: 44[\s\S]*borderRadius: 10/);
-  assert.match(ratesSource, /onPress=\{row\.actionable \? \(\) => onSelectOffer\(row\.offerId\) : undefined\}/);
-  assert.match(ratesSource, /disabled=\{!row\.actionable\}/);
-  assert.match(ratesSource, /actionLabel: "Choose room"/);
-  assert.equal((ratesSource.match(/actionLabel: "Choose room"/g) ?? []).length, 2);
-  assert.doesNotMatch(ratesSource, /previewReserve/);
+test("Rates keeps square cards and uses outline plus checkmark instead of circular selectors", () => {
+  assert.match(rateStyle("rateCard", "rateCardPressed"), /borderRadius: 0/);
+  assert.match(ratesSource, /borderColor: selected \? accentColor : theme\.border/);
+  assert.match(ratesSource, /borderWidth: selected \? 2 : 1/);
+  assert.match(ratesSource, /<Check size=\{19\}/);
+  assert.match(ratesSource, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
+  assert.doesNotMatch(ratesSource, /accessibilityRole="radio"|radioDot|borderRadius: 8[^\n]*borderWidth/);
+  assert.doesNotMatch(ratesSource, /actionControl|actionLabel: "Choose room"/);
 });
 
-test("Rates show stay-level totals without a per-night label", () => {
-  assert.match(ratesSource, /option\.displayPrice\?\.total/);
-  assert.match(ratesSource, /\$\{total\.accessibilityLabel\} stay price/);
-  assert.doesNotMatch(ratesSource, />per night<\/Text>|s\.perNight|perNight:/);
-  assert.match(ratesSource, /Price on provider/);
+test("Rates show nightly prices while the persistent dock owns the selected stay total", () => {
+  assert.match(ratesSource, /nightlyPrice: nightly\?\.formatted/);
+  assert.match(ratesSource, /totalPrice: total\?\.formatted/);
+  assert.match(ratesSource, /totalLabel: "Estimated stay total"/);
+  assert.match(ratesSource, /totalLabel: "Stay total"/);
+  assert.match(ratesSource, />per night<\/Text>/);
+  assert.match(detailSource, /selectedRate\.totalAccessibilityLabel/);
 });
