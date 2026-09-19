@@ -381,6 +381,19 @@ test("Hotel details cap an 18-result New York related preview at twelve and sign
     payload.relatedHotels.map((hotel) => hotel.id),
     hotels.slice(1, 13).map((hotel) => hotel.id),
   );
+
+  const fullResponse = await GET(
+    new Request(
+      `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selected.id)}&destination=${encodeURIComponent(search.destination)}&checkIn=${search.checkIn}&checkOut=${search.checkOut}&rooms=${search.rooms}&guests=${search.guests}`,
+    ),
+  );
+  const fullPayload = (await fullResponse.json()) as {
+    relatedHotels: Array<{ id: string }>;
+    relatedHotelsHasMore?: boolean;
+  };
+  assert.equal(fullResponse.status, 200);
+  assert.equal(fullPayload.relatedHotels.length, 17);
+  assert.equal(fullPayload.relatedHotelsHasMore, false);
 });
 
 test("KAYAK Hotel details can recommend Kurioticket hotels from the same merged search cohort", async () => {
