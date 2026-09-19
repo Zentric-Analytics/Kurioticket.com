@@ -201,7 +201,7 @@ test("active Hotel provider selection validates candidates and allows safe KAYAK
   assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
 });
 
-test("active Hotel Rates select first, then hand off from the persistent Choose room action", () => {
+test("active Hotel Rates use a truthful persistent action for native and provider rates", () => {
   assert.match(hotel, /nativeHotelOffers\(internalRoomFlowAvailable, providerHandoffAvailable\)/);
   assert.match(hotel, /const rateRows = buildNativeHotelRateRows/);
   assert.match(hotel, /const selectedRate: NativeHotelRateRow \| null/);
@@ -209,7 +209,8 @@ test("active Hotel Rates select first, then hand off from the persistent Choose 
   assert.match(hotel, /selectedRate\.offerId !== "provider" \|\| !providerHandoffAvailable \|\| !redirectUrl/);
   assert.match(hotel, /Linking\.openURL\(redirectUrl\)/);
   assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
-  assert.match(hotel, />Choose room<\/Text>/);
+  assert.match(hotel, /const bookingActionLabel = selectedRate\?\.providerKind === "provider" \? "View deal" : "Choose room"/);
+  assert.match(hotel, /bookingDockButtonText\}>\{bookingActionLabel\}<\/Text>/);
   assert.match(hotel, /selectedRate\.totalPrice/);
 });
 
