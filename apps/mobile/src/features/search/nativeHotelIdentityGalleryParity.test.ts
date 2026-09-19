@@ -109,13 +109,16 @@ test("compact stay card exposes full-size edit targets without shrinking the vis
   assert.match(stayEditor, /router\.setParams\(\{ \.\.\.detailParams, hotelResultsStack: "0" \}\)/);
 });
 
-test("inline gallery keeps swiping and a centered measured counter without the thumbnail rail", () => {
+test("inline gallery keeps swiping and uses a centered native glass image counter", () => {
   assert.match(gallery, /horizontal\s*pagingEnabled[\s\S]*?data=\{images\}/);
   assert.match(gallery, /accessibilityHint=\{images\.length > 1 \? "Swipe horizontally to preview photos, or tap to open all photos\." : "Tap to open all photos\."\}/);
-  assert.match(styleRule(gallery, "counter", "unavailable"), /left: "50%"[^}]*bottom: 15[^}]*minWidth: 48[^}]*translateX: -24/);
+  assert.match(gallery, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
+  assert.match(gallery, /<View pointerEvents="none" style=\{s\.counter\}>[\s\S]*?<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s\.counterGlass\} \/>[\s\S]*?<Text style=\{s\.counterText\}>\{activeIndex \+ 1\} \/ \{images\.length\}<\/Text>/);
+  assert.match(styleRule(gallery, "counter", "counterGlass"), /left: "50%"[^}]*bottom: 15[^}]*minWidth: 52[^}]*minHeight: 30[^}]*translateX: -26/);
+  assert.match(styleRule(gallery, "counterGlass", "counterText"), /StyleSheet\.absoluteFillObject[^}]*borderRadius: 15/);
+  assert.match(styleRule(gallery, "counterText", "unavailable"), /color: "#0F172A"[^}]*fontSize: 13[^}]*fontWeight: "800"/);
   const inline = gallery.slice(gallery.indexOf("return (", gallery.indexOf("export function NativeHotelGallery")), gallery.indexOf("<Modal"));
   assert.doesNotMatch(inline, /images\.slice\(0, 5\)|s\.thumbnails|s\.thumbnailFrame|Previous photo|Next photo/);
-  assert.match(inline, /\{activeIndex \+ 1\} \/ \{images\.length\}/);
 });
 
 test("expanded gallery uses a mosaic and swipe viewer without arrows or thumbnails", () => {
