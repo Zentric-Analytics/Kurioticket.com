@@ -41,22 +41,25 @@ function providerDetails(result: NormalizedHotelResult): PublicHotelProviderDeta
   return details.source === "KAYAK" ? details : null;
 }
 
+const RELATED_HOTEL_PREVIEW_LIMIT = 12;
+
 function relatedHotelsFromSearchCohort(
   hotels: NormalizedHotelResult[],
   currentHotelId: string,
 ) {
   const seenIds = new Set<string>([currentHotelId]);
   const seenIdentity = new Set<string>();
-  return hotels
-    .filter((hotel) => {
-      if (!hotel.id || seenIds.has(hotel.id)) return false;
-      const identity = `${hotel.name.trim().toLocaleLowerCase()}|${hotel.location.trim().toLocaleLowerCase()}`;
-      if (seenIdentity.has(identity)) return false;
-      seenIds.add(hotel.id);
-      seenIdentity.add(identity);
-      return true;
-    })
-    .map(toPublicHotel);
+  const relatedHotels = [];
+  for (const hotel of hotels) {
+    if (!hotel.id || seenIds.has(hotel.id)) continue;
+    const identity = `${hotel.name.trim().toLocaleLowerCase()}|${hotel.location.trim().toLocaleLowerCase()}`;
+    if (seenIdentity.has(identity)) continue;
+    seenIds.add(hotel.id);
+    seenIdentity.add(identity);
+    relatedHotels.push(toPublicHotel(hotel));
+    if (relatedHotels.length > RELATED_HOTEL_PREVIEW_LIMIT) break;
+  }
+  return relatedHotels;
 }
 
 
@@ -122,11 +125,13 @@ export async function GET(request: Request) {
   const relatedSearchCohort = memoryContext
     ? memoryContext.relatedHotels
     : persistedCohort;
-  const relatedHotels = relatedSearchCohort.length
+  const relatedHotelCandidates = relatedSearchCohort.length
     ? relatedHotelsFromSearchCohort(relatedSearchCohort, id)
     : record
       ? buildRelatedStaticHotelResults(record, search).map(toPublicHotel)
       : [];
+  const relatedHotelsHasMore = relatedHotelCandidates.length > RELATED_HOTEL_PREVIEW_LIMIT;
+  const relatedHotels = relatedHotelCandidates.slice(0, RELATED_HOTEL_PREVIEW_LIMIT);
   if (record) {
     const hotel = buildStaticHotelResult(record, search);
     const propertyDetails = toPublicPropertyDetails(record);
@@ -137,6 +142,7 @@ export async function GET(request: Request) {
       providerDetails: null,
       roomOptions: buildStaticHotelRoomOptions(record, search),
       relatedHotels,
+      relatedHotelsHasMore,
     });
   }
   if (cached)
@@ -147,6 +153,7 @@ export async function GET(request: Request) {
       providerDetails: providerDetails(cached),
       roomOptions: [],
       relatedHotels,
+      relatedHotelsHasMore,
     });
   return NextResponse.json({ error: "Hotel not found." }, { status: 404 });
 }
