@@ -64,13 +64,12 @@ test("provider room parsing removes duplicated generic cancellation copy", () =>
   assert.match(ratesSource, /\.slice\(0, 3\)/);
 });
 
-test("selected Hotel rate uses a blue outline and checkmark without a circular selector", () => {
+test("selected Hotel rate uses only a subtle tint without an outline, checkmark, or radio control", () => {
   assert.match(ratesSource, /const selected = row\.id === selectedRateId/);
-  assert.match(ratesSource, /borderColor: selected \? accentColor : theme\.border/);
-  assert.match(ratesSource, /borderWidth: selected \? 2 : 1/);
-  assert.match(ratesSource, /<Check size=\{19\} strokeWidth=\{2\.6\} color=\{accentColor\}/);
+  assert.match(ratesSource, /const selectedBackground = theme\.dark[\s\S]*?rgba\(0, 75, 184, 0\.045\)/);
+  assert.match(ratesSource, /selected && \{ backgroundColor: selectedBackground \}/);
   assert.match(ratesSource, /accessibilityState=\{\{ selected, disabled: !row\.actionable \}\}/);
-  assert.doesNotMatch(ratesSource, /accessibilityRole="radio"|radioDot|radiogroup/);
+  assert.doesNotMatch(ratesSource, /<Check|selectedMark|borderColor: selected|borderWidth: selected|accessibilityRole="radio"|radioDot|radiogroup/);
 });
 
 test("Kurioticket cards keep the bundled wordmark and app typography", () => {
@@ -81,10 +80,11 @@ test("Kurioticket cards keep the bundled wordmark and app typography", () => {
   assert.match(styleRule(ratesSource, "price", "priceUnit"), /fontFamily: appFonts\.bold/);
 });
 
-test("Rates keeps square cards while borrowing Cars-style comparison hierarchy", () => {
-  assert.match(styleRule(ratesSource, "rateCard", "rateCardPressed"), /minHeight: 126[\s\S]*borderRadius: 0[\s\S]*paddingHorizontal: 14[\s\S]*paddingVertical: 14/);
-  assert.match(styleRule(ratesSource, "rateTop", "providerIdentity"), /flexDirection: "row"[\s\S]*justifyContent: "space-between"/);
-  assert.match(styleRule(ratesSource, "rateBottom", "rateCopy"), /flexDirection: "row"[\s\S]*alignItems: "flex-end"/);
+test("Rates use compact grouped rows with dividers and reference-style density", () => {
+  assert.match(styleRule(ratesSource, "rateList", "rateDivider"), /borderWidth: 1[\s\S]*borderRadius: 10[\s\S]*overflow: "hidden"/);
+  assert.match(styleRule(ratesSource, "rateDivider", "rateCard"), /height: StyleSheet\.hairlineWidth[\s\S]*marginHorizontal: 12/);
+  assert.match(styleRule(ratesSource, "rateCard", "rateCardPressed"), /minHeight: 92[\s\S]*paddingHorizontal: 12[\s\S]*paddingVertical: 10[\s\S]*justifyContent: "center"/);
+  assert.match(styleRule(ratesSource, "rateMain", "providerIdentity"), /flexDirection: "row"[\s\S]*alignItems: "center"[\s\S]*gap: 12/);
   assert.match(styleRule(ratesSource, "priceBlock", "price"), /alignItems: "flex-end"/);
   assert.match(ratesSource, />Rates<\/Text>/);
   assert.match(ratesSource, /\[stayDateText, nightText\]\.filter\(Boolean\)\.join\(" · "\)/);
