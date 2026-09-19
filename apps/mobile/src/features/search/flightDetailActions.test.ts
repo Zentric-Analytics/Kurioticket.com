@@ -25,7 +25,8 @@ test("checkout dock mirrors the native Cars price hierarchy, typography, geometr
   assert.match(native, /<View style=\{s\.checkoutTotal\}><Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.65\} style=\{\[s\.total/);
   assert.match(native, /<Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.82\} style=\{\[s\.checkoutLabel/);
   assert.ok(native.indexOf("s.total") < native.indexOf("s.checkoutLabel"), "Flight dock must order total above traveler label like Cars");
-  assert.match(native, /checkoutContent:\{width:"100%",flexDirection:"row",alignItems:"center",gap:12\}/);\n  assert.match(native, /checkoutTotal:\{flex:1,minWidth:0,gap:1\}/);
+  assert.match(native, /checkoutContent:\{width:"100%",flexDirection:"row",alignItems:"center",gap:12\}/);
+  assert.match(native, /checkoutTotal:\{flex:1,minWidth:0,gap:1\}/);
   assert.match(native, /checkoutLabel:\{flexShrink:1,minWidth:0,fontSize:11,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
   assert.match(native, /total:\{maxWidth:"100%",fontSize:19,lineHeight:22,fontWeight:"600",fontFamily:appFonts\.semibold,letterSpacing:-0\.25,textAlign:"left",fontVariant:\["tabular-nums"\]\}/);
   assert.match(native, /checkoutAction:\{flex:\.78,minWidth:140,maxWidth:180\}/);
