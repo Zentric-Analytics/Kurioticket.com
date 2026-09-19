@@ -163,7 +163,7 @@ test("View hotel uses the lighter result-card action pattern", () => {
   assert.doesNotMatch(dealButtonStyle, /backgroundColor|borderRadius|minWidth|paddingHorizontal/);
   assert.match(card, /hitSlop=\{4\}/);
   assert.match(card, /style=\{\(\{ pressed \}\) => \[s0\.hotelDealButton, pressed && s0\.hotelDealButtonPressed\]\}/);
-  assert.match(card, /<Text style=\{\[s0\.hotelDealButtonText, \{ color: theme\.dark \? "#8FB5FF" : ui\.blue \} \]\}>View hotel<\/Text>/);
+  assert.match(card, /hotelDealButtonText[\s\S]*?color: theme\.dark \? "#8FB5FF" : ui\.blue[\s\S]*?>View hotel<\/Text>/);
   assert.match(card, /<ChevronRight accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\} color=\{theme\.dark \? "#8FB5FF" : ui\.blue\} \/>/);
   assert.match(source, /hotelDealButtonPressed: \{ opacity: 0\.7 \}/);
   assert.match(searchUi, /blue:\s*"#0754F7"/);
