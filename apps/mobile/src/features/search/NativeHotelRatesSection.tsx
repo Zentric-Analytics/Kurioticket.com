@@ -363,7 +363,7 @@ const s = StyleSheet.create({
   rateCardPressed: { opacity: 0.84 },
   rateMain: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 12,
   },
   providerIdentity: { minHeight: 18, justifyContent: "center" },
@@ -376,7 +376,7 @@ const s = StyleSheet.create({
   },
   rateCopy: { flex: 1, minWidth: 0 },
   rateTitle: {
-    marginTop: 4,
+    marginTop: 7,
     fontSize: 13,
     lineHeight: 18,
     fontWeight: "600",
