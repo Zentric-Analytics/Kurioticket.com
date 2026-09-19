@@ -47,14 +47,15 @@ test("native Hotel keeps one selected-rate dock visible across Rates, Overview, 
   assert.ok(tabsEnd >= 0 && dock > tabsEnd, "booking dock must sit outside tab-specific scrolling content");
 });
 
-test("Rates use compact grouped rows with a subtle selected tint and no selection icon", () => {
+test("Rates keep single-rate rows white while preserving the existing multi-rate tint", () => {
   assert.match(rateStyle("rateList", "rateDivider"), /borderWidth: 1[\s\S]*borderRadius: 10[\s\S]*overflow: "hidden"/);
-  assert.match(rateStyle("rateCard", "rateCardPressed"), /minHeight: 94[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 11/);
+  assert.match(rateStyle("rateCard", "rateCardPressed"), /minHeight: 88[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 10/);
   assert.match(ratesSource, /const selectedBackground = theme\.dark[\s\S]*?rgba\(0, 75, 184, 0\.035\)/);
-  assert.match(ratesSource, /selected && \{ backgroundColor: selectedBackground \}/);
+  assert.match(ratesSource, /const showSelectedBackground = rows\.length > 1 && selected/);
+  assert.match(ratesSource, /backgroundColor: showSelectedBackground \? selectedBackground : theme\.surface/);
   assert.match(ratesSource, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
   assert.match(ratesSource, /<View style=\{\[s\.rateDivider, \{ backgroundColor: theme\.border \}\]\} \/>/);
-  assert.doesNotMatch(ratesSource, /<Check|selectedMark|borderColor: selected|borderWidth: selected|accessibilityRole="radio"|radioDot/);
+  assert.doesNotMatch(ratesSource, /selectedBar|showSelectionMarker|<Check|selectedMark|borderColor: selected|borderWidth: selected|accessibilityRole="radio"|radioDot/);
   assert.doesNotMatch(ratesSource, /actionControl|actionLabel: "Choose room"/);
 });
 

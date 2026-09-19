@@ -41,7 +41,9 @@ test("Rates presents every supplied Kurioticket room option instead of collapsin
   assert.match(ratesSource, /roomOptionId: option\.id/);
   assert.match(ratesSource, /nightlyPrice: nightly\?\.formatted/);
   assert.match(ratesSource, /totalPrice: total\?\.formatted/);
-  assert.match(ratesSource, /meaningfulRateMeta\(option, title\)/);
+  assert.match(ratesSource, /const presentation = roomRatePresentation\(option\)/);
+  assert.match(ratesSource, /title: presentation\.title/);
+  assert.match(ratesSource, /meta: presentation\.meta/);
   assert.doesNotMatch(ratesSource, /roomOptions\[0\]/);
   assert.doesNotMatch(ratesSource, /STATIC_RATE_GROUPS|\$1,225|Standard Room, 1 Queen Bed/);
 });
@@ -57,37 +59,42 @@ test("provider handoff keeps room terms, nightly price, and stay total separate"
   assert.match(ratesSource, /actionable: Boolean\(providerOffer\)/);
 });
 
-test("provider room parsing removes duplicated generic cancellation copy", () => {
+test("provider room parsing keeps only one concise supporting condition", () => {
   assert.match(ratesSource, /split\(\/\\s\+\[—–-\]\\s\+\//);
-  assert.match(ratesSource, /non\[- \]\?refundable\|refundable\|free cancellation\|cancel/);
-  assert.match(ratesSource, /cancellation conditions apply\|see supplied rate details/);
-  assert.match(ratesSource, /\.slice\(0, 3\)/);
+  assert.match(ratesSource, /function conciseCondition/);
+  assert.match(ratesSource, /\.map\(conciseCondition\)[\s\S]*?\.find\(Boolean\)/);
+  assert.match(ratesSource, /return condition \? \[condition\] : \[\]/);
+  assert.doesNotMatch(ratesSource, /\.slice\(0, 3\)/);
 });
 
-test("selected Hotel rate uses only a subtle tint without an outline, checkmark, or radio control", () => {
+test("selected Hotel rate keeps the existing multi-rate tint while a single rate remains white", () => {
   assert.match(ratesSource, /const selected = row\.id === selectedRateId/);
   assert.match(ratesSource, /const selectedBackground = theme\.dark[\s\S]*?rgba\(0, 75, 184, 0\.035\)/);
-  assert.match(ratesSource, /selected && \{ backgroundColor: selectedBackground \}/);
+  assert.match(ratesSource, /const showSelectedBackground = rows\.length > 1 && selected/);
+  assert.match(ratesSource, /backgroundColor: showSelectedBackground \? selectedBackground : theme\.surface/);
   assert.match(ratesSource, /accessibilityState=\{\{ selected, disabled: !row\.actionable \}\}/);
-  assert.doesNotMatch(ratesSource, /<Check|selectedMark|borderColor: selected|borderWidth: selected|accessibilityRole="radio"|radioDot|radiogroup/);
+  assert.doesNotMatch(ratesSource, /selectedBar|showSelectionMarker|<Check|selectedMark|borderColor: selected|borderWidth: selected|accessibilityRole="radio"|radioDot|radiogroup/);
 });
 
 test("Kurioticket cards keep the bundled wordmark and app typography", () => {
   assert.ok(existsSync("assets/kurioticket-logo-primary-light-bg.png"));
   assert.match(ratesSource, /providerKind === "kurioticket"[\s\S]*?<Image[\s\S]*?accessibilityLabel="Kurioticket"[\s\S]*?require\("\.\.\/\.\.\/\.\.\/assets\/kurioticket-logo-primary-light-bg\.png"\)/);
-  assert.match(styleRule(ratesSource, "rateTitle", "rateMeta"), /fontFamily: appFonts\.bold/);
+  assert.match(styleRule(ratesSource, "rateTitle", "rateMeta"), /fontFamily: appFonts\.semibold/);
   assert.match(styleRule(ratesSource, "rateMeta", "priceBlock"), /fontFamily: appFonts\.regular/);
   assert.match(styleRule(ratesSource, "price", "priceUnit"), /fontFamily: appFonts\.bold/);
 });
 
-test("Rates use compact grouped rows with dividers and reference-style density", () => {
+test("Rates use compact grouped rows, date context only, and concise summary text", () => {
   assert.match(styleRule(ratesSource, "rateList", "rateDivider"), /borderWidth: 1[\s\S]*borderRadius: 10[\s\S]*overflow: "hidden"/);
   assert.match(styleRule(ratesSource, "rateDivider", "rateCard"), /height: StyleSheet\.hairlineWidth/);
-  assert.match(styleRule(ratesSource, "rateCard", "rateCardPressed"), /minHeight: 94[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 11[\s\S]*justifyContent: "center"/);
+  assert.match(styleRule(ratesSource, "rateCard", "rateCardPressed"), /minHeight: 88[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 10[\s\S]*justifyContent: "center"/);
   assert.match(styleRule(ratesSource, "rateMain", "providerIdentity"), /flexDirection: "row"[\s\S]*alignItems: "center"[\s\S]*gap: 12/);
   assert.match(styleRule(ratesSource, "priceBlock", "price"), /alignItems: "flex-end"/);
-  assert.match(ratesSource, />Rates<\/Text>/);
+  assert.doesNotMatch(ratesSource, />Rates<\/Text>/);
   assert.match(ratesSource, /\[stayDateText, nightText\]\.filter\(Boolean\)\.join\(" · "\)/);
+  assert.match(ratesSource, /function conciseCondition/);
+  assert.match(ratesSource, /meta: \[suffixCondition \|\| cancellationCondition \|\| mealCondition \|\| featureCondition\]\.filter\(Boolean\)/);
+  assert.match(ratesSource, /row\.meta\.join\(" · "\)/);
 });
 
 test("Rates render nightly price only; continuation lives in the persistent bottom dock", () => {
