@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getHotelDetailsCacheContext, toPublicHotel } from "@/lib/searchCache";
+import { getHotelDetailsCacheContext, getHotelFromCache, toPublicHotel } from "@/lib/searchCache";
 import {
   buildStaticHotelResult,
   buildRelatedStaticHotelResults,
@@ -109,7 +109,10 @@ export async function GET(request: Request) {
   const memoryContext = search.destination
     ? getHotelDetailsCacheContext(id, search)
     : null;
-  const providerContext = !record && !memoryContext
+  const unscopedCached = !record && !memoryContext
+    ? getHotelFromCache(id)
+    : null;
+  const providerContext = !record && !memoryContext && !unscopedCached
     ? await getProviderResultWithContext<NormalizedHotelResult>("hotel", id)
     : null;
   const persistedSearch = search.destination
@@ -118,7 +121,7 @@ export async function GET(request: Request) {
   const persistedCohort = !memoryContext && persistedSearch
     ? await getHotelSearchCohort(persistedSearch)
     : [];
-  const cached = memoryContext?.hotel ?? providerContext?.result ?? null;
+  const cached = memoryContext?.hotel ?? unscopedCached ?? providerContext?.result ?? null;
   const relatedSearchCohort = memoryContext
     ? memoryContext.relatedHotels
     : persistedCohort;
