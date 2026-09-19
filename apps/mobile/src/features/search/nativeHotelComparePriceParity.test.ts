@@ -78,10 +78,14 @@ test("selected Hotel provider uses the same radio-card treatment as Flight Compa
   assert.match(styleRule(ratesSource, "dealCard", "dealCardSelectedLight"), /minHeight: 96[\s\S]*borderRadius: 14[\s\S]*paddingHorizontal: 15[\s\S]*paddingVertical: 13/);
 });
 
-test("Kurioticket uses the same text identity treatment as every other Hotel provider", () => {
+test("Hotel rate cards render provider branding with truthful fallbacks", () => {
   assert.match(ratesSource, /providerName: "Kurioticket"/);
-  assert.match(ratesSource, /row\.providerName/);
-  assert.doesNotMatch(ratesSource, /kurioticket-logo-primary-light-bg|<Image/);
+  assert.match(ratesSource, /kurioticket-logo-primary-light-bg\.png/);
+  assert.match(ratesSource, /<ProviderLogo[\s\S]*?provider=\{row\.providerName\}[\s\S]*?logoUrl=\{row\.providerLogoUrl\}/);
+  assert.match(ratesSource, /if \(row\.providerLogoUrl\)/);
+  assert.match(ratesSource, /\{row\.providerName\}/);
+  assert.match(hotel, /providerName: result\.bookingProviderName\?\.trim\(\) \|\| result\.provider/);
+  assert.match(hotel, /providerLogoUrl: result\.providerLogoUrl \?\? null/);
   assert.match(styleRule(ratesSource, "dealProvider", "dealRadio"), /fontFamily: appFonts\.bold/);
   assert.match(styleRule(ratesSource, "dealPrice", "dealPriceUnavailable"), /fontFamily: appFonts\.bold/);
 });

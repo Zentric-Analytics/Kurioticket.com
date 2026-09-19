@@ -253,6 +253,8 @@ type HotelInventory = HotelInventoryBookable | HotelInventoryDiscovery;
 type NormalizedHotelBase = {
   id: string;
   provider: string;
+  bookingProviderName?: string;
+  providerLogoUrl?: string;
   name: string;
   imageUrl?: string;
   imageUrls?: string[];
@@ -286,6 +288,8 @@ type NormalizedHotelBase = {
 type PublicHotelBase = {
   id: string;
   provider: string;
+  bookingProviderName?: string;
+  providerLogoUrl?: string;
   name: string;
   imageUrl?: string;
   imageUrls?: string[];

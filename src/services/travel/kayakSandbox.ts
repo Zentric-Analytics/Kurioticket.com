@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { isIP } from "node:net";
-import { kayakImages, kayakFlightLegs, kayakFlightCabin, kayakFlightAttributes, kayakAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
+import { kayakImageUrl, kayakImages, kayakFlightLegs, kayakFlightCabin, kayakFlightAttributes, kayakAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
 import { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
 import type { FlightFareTerm, FlightOptionalService, FlightProviderCondition } from "@/lib/types";
 export { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
@@ -68,6 +68,7 @@ export type SandboxOffer = {
   flightOptionalServices?: FlightOptionalService[];
   /** Provider-supplied booking seller for customer-facing deal presentation. */
   bookingProviderName?: string;
+  bookingProviderLogoUrl?: string;
   attributes?: KayakAttribute[];
   carSpecs?: string[];
   carFilterOptions?: string[];
@@ -369,7 +370,12 @@ export function normalizeSandboxOffers(
             };
           }),
         })) } : {}),
-        ...(vertical === "flights" && description ? { bookingProviderName: description } : {}),
+        ...((vertical === "flights" || vertical === "hotels") && (text(provider.displayName) || text(option.providerCode))
+          ? { bookingProviderName: text(provider.displayName) || text(option.providerCode) }
+          : {}),
+        ...((vertical === "flights" || vertical === "hotels") && kayakImageUrl(provider.logoUrl)
+          ? { bookingProviderLogoUrl: kayakImageUrl(provider.logoUrl) }
+          : {}),
         ...(vertical === "flights" ? {flightCabin} : {}),
         ...(flightFareFamily ? {flightFareFamily} : {}),
         ...(vertical === "flights" && list(object(option.fees).carryOnBag).some(bag => object(bag).bagNumber === "first" && text(object(bag).restriction))

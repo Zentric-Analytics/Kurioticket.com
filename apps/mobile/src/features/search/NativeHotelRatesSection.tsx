@@ -1,6 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import type { NativeHotelOffer } from "./nativeHotelDetailsModel";
 import { appFonts } from "../../theme/typography";
+import { ProviderLogo } from "./ProviderLogo";
 
 type Theme = {
   dark: boolean;
@@ -22,6 +23,7 @@ export type NativeHotelRateRow = {
   offerId: NativeHotelOffer["id"];
   providerKind: "kurioticket" | "provider";
   providerName: string;
+  providerLogoUrl: string | null;
   nightlyPrice: string;
   nightlyAccessibilityLabel: string;
   totalPrice: string;
@@ -34,12 +36,14 @@ export type NativeHotelRateRow = {
 export function buildNativeHotelRateRows({
   offers,
   providerName,
+  providerLogoUrl,
   nightlyPrice,
   totalPrice,
   hasPrice,
 }: {
   offers: NativeHotelOffer[];
   providerName: string;
+  providerLogoUrl?: string | null;
   nightlyPrice: DisplayPrice;
   totalPrice: DisplayPrice;
   hasPrice: boolean;
@@ -64,6 +68,7 @@ export function buildNativeHotelRateRows({
       offerId: internalOffer.id,
       providerKind: "kurioticket",
       providerName: "Kurioticket",
+      providerLogoUrl: null,
       nightlyPrice:
         hasPrice && nightlyPrice ? nightlyPrice.formatted : "Price unavailable",
       nightlyAccessibilityLabel:
@@ -88,6 +93,7 @@ export function buildNativeHotelRateRows({
       offerId: visibleProviderOffer.id,
       providerKind: "provider",
       providerName: providerName.trim() || "Provider",
+      providerLogoUrl: providerLogoUrl?.trim() || null,
       nightlyPrice:
         hasPrice && nightlyPrice ? nightlyPrice.formatted : "Price on provider",
       nightlyAccessibilityLabel:
@@ -107,6 +113,47 @@ export function buildNativeHotelRateRows({
   }
 
   return rows;
+}
+
+function HotelRateProviderBrand({
+  row,
+  theme,
+}: {
+  row: NativeHotelRateRow;
+  theme: Theme;
+}) {
+  if (row.providerKind === "kurioticket") {
+    return (
+      <Image
+        accessible
+        accessibilityLabel="Kurioticket logo"
+        accessibilityIgnoresInvertColors
+        source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
+        resizeMode="contain"
+        style={s.kurioticketProviderLogo}
+      />
+    );
+  }
+
+  if (row.providerLogoUrl) {
+    return (
+      <View style={s.providerLogoTile}>
+        <ProviderLogo
+          provider={row.providerName}
+          logoUrl={row.providerLogoUrl}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <Text
+      numberOfLines={1}
+      style={[s.dealProvider, { color: theme.textPrimary }]}
+    >
+      {row.providerName}
+    </Text>
+  );
 }
 
 export function NativeHotelRatesSection({
@@ -204,12 +251,9 @@ export function NativeHotelRatesSection({
               ]}
             >
               <View style={s.dealTop}>
-                <Text
-                  numberOfLines={1}
-                  style={[s.dealProvider, { color: theme.textPrimary }]}
-                >
-                  {row.providerName}
-                </Text>
+                <View style={s.dealProviderBrand}>
+                  <HotelRateProviderBrand row={row} theme={theme} />
+                </View>
                 <View
                   accessible={false}
                   style={[
@@ -306,6 +350,24 @@ const s = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 12,
+  },
+  dealProviderBrand: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 32,
+    justifyContent: "center",
+    alignItems: "flex-start",
+  },
+  kurioticketProviderLogo: {
+    width: 132,
+    height: 30,
+    maxWidth: "100%",
+  },
+  providerLogoTile: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
   },
   dealProvider: {
     flex: 1,
