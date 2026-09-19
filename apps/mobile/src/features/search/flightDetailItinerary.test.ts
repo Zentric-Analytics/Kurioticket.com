@@ -134,12 +134,20 @@ test("journey times remain the visual anchor with tabular numerals and a restrai
   assert.match(source,/stopStatus:\{fontSize:10,lineHeight:13,fontWeight:"500"/);
 });
 
-test("itinerary surface depth is deliberately stronger, theme-aware, and shared by the loading card",()=>{
+test("itinerary surface pairs controlled depth with a light-only gloss finish shared by the loading card",()=>{
   assert.match(source,/itineraryCardLight:\{shadowColor:ui\.navy,shadowOffset:\{width:0,height:6\},shadowOpacity:\.14,shadowRadius:18,elevation:4\}/);
   assert.match(source,/itineraryCardDark:\{shadowColor:"#000000",shadowOffset:\{width:0,height:5\},shadowOpacity:\.32,shadowRadius:18,elevation:4\}/);
   assert.match(itinerary,/theme\.dark\?s\.itineraryCardDark:s\.itineraryCardLight/);
   assert.match(source,/testID="flight-details-loading-itinerary" style=\{\[s\.itineraryCard,s\.loadingItineraryCard,theme\.dark\?s\.itineraryCardDark:s\.itineraryCardLight/);
   assert.match(source,/const surfaceBorderColor=theme\.dark\?FLIGHT_DETAILS_DARK_BORDER:FLIGHT_DETAILS_LIGHT_BORDER/);
+  assert.match(source,/const FLIGHT_DETAILS_LIGHT_ITINERARY_SURFACE = "#FCFDFE"/);
+  assert.match(source,/const FLIGHT_DETAILS_LIGHT_ITINERARY_BORDER = "#E1E7EF"/);
+  assert.match(source,/function ItineraryGlossSurface[\s\S]*?if\(dark\)return null/);
+  assert.match(source,/<Svg testID=\{testID\} pointerEvents="none" accessible=\{false\} style=\{s\.itineraryGlossSurface\}/);
+  assert.match(source,/<LinearGradient[^>]*x1="0" y1="0" x2="0" y2="1"/);
+  assert.match(itinerary,/<ItineraryGlossSurface dark=\{theme\.dark\} testID="flight-details-itinerary-gloss"\/>/);
+  assert.match(source,/<ItineraryGlossSurface dark=\{theme\.dark\} testID="flight-details-loading-itinerary-gloss"\/>/);
+  assert.match(source,/itineraryGlossSurface:\{\.\.\.StyleSheet\.absoluteFillObject,borderRadius:14,overflow:"hidden"\}/);
 });
 
 test("the polished route retains dot-line-plane-line-dot without nested itinerary cards",()=>{
@@ -206,7 +214,7 @@ test("information progresses from journey summary to airports, segment details, 
 test("itinerary breadth expands from 18dp to 8dp side gaps while preserving current fare-card geometry",()=>{
   assert.match(source,/contentBody:\{paddingHorizontal:18,gap:14\}/);
   assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10,marginTop:-104,zIndex:1\}/);
-  assert.match(source,/itineraryCard:\{borderWidth:1,borderRadius:15,padding:15/);
+  assert.match(source,/itineraryCard:\{position:"relative",borderWidth:1,borderRadius:15,padding:15/);
   assert.match(source,/fareCard:\{borderWidth:1\.5,borderRadius:15,minHeight:142,position:"relative",paddingHorizontal:12,paddingTop:6,paddingBottom:8,gap:4\}/);
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);
 });
