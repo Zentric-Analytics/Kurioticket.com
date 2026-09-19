@@ -8,7 +8,6 @@ import {
 } from "@/services/travel/staticHotelResults";
 import type { StaticHotelRecord } from "@/services/travel/staticHotelCatalogue";
 import { getHotelSearchCohort, getProviderResultWithContext } from "@/services/travel/providerResultCache";
-import { compareHotelsByAvailablePrice } from "@/lib/hotels/hotelResultAvailability";
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import type { PublicHotelProviderDetails } from "@/lib/hotels/hotelProviderDetails";
 import { kayakHotelLocationDetails } from "@/lib/hotels/kayakHotelLocation";
@@ -57,8 +56,6 @@ function relatedHotelsFromSearchCohort(
       seenIdentity.add(identity);
       return true;
     })
-    .sort(compareHotelsByAvailablePrice)
-    .slice(0, 7)
     .map(toPublicHotel);
 }
 
