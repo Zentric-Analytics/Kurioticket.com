@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
-  Linking,
+  Platform,
   Pressable,
   ScrollView,
   Share,
@@ -56,6 +56,7 @@ import {
   type NativeHotelRateRow,
 } from "./NativeHotelRatesSection";
 import { HotelDetailsLoadingState } from "./HotelDetailsLoadingState";
+import { openPreviewLegalBrowser } from "../profile/profileNavigation";
 
 type HotelDetailTab = "details" | "reviews" | "deals";
 type HotelDetailsStatus = "loading" | "ready" | "error";
@@ -427,6 +428,11 @@ function HotelDetail({
   const selectedRateIdForView = selectedRate?.id ?? null;
   const bookingActionLabel = selectedRate?.providerKind === "provider" ? "View deal" : "Choose room";
 
+  const openProviderInApp = async (url: string) => {
+    const WebBrowser = await import("expo-web-browser");
+    return openPreviewLegalBrowser(url, Platform.OS, WebBrowser);
+  };
+
   const continueSelectedRate = async () => {
     if (!selectedRate?.actionable) return;
     if (selectedRate.offerId === "internal-rooms") {
@@ -435,7 +441,7 @@ function HotelDetail({
     }
     if (selectedRate.offerId !== "provider" || !providerHandoffAvailable || !redirectUrl) return;
     try {
-      await Linking.openURL(redirectUrl);
+      await openProviderInApp(redirectUrl);
     } catch {
       Alert.alert("Unable to open provider", "Please refresh and try again.");
     }
