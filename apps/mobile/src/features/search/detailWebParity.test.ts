@@ -167,12 +167,14 @@ test("native gallery remains interactive and full-bleed with the two-level mobil
   assert.doesNotMatch(gallery, /Previous photo|Next photo|ChevronLeft|ChevronRight/);
 });
 
-test("active Hotel detail keeps theme-aware accents without exposing an inactive rate action", () => {
+test("active Hotel detail keeps theme-aware accents for selected rates and the persistent action", () => {
   assert.match(hotel, /const hotelAccent = theme\.dark \? "#8FB5FF" : colors\.blue/);
   assert.match(hotel, /<NativeHotelRatesSection[\s\S]*?accentColor=\{hotelAccent\}/);
-  assert.doesNotMatch(rates, /reserveButton|>Reserve<\/Text>|Selected|>Select<|accessibilityRole="button"/);
+  assert.match(rates, /borderColor: selected \? accentColor : theme\.border/);
+  assert.match(rates, /<Check size=\{19\}/);
+  assert.doesNotMatch(rates, /reserveButton|>Reserve<\/Text>|accessibilityRole="radio"/);
   assert.doesNotMatch(rates, /borderWidth: 6/);
-  assert.doesNotMatch(hotelSource, /continueButton|continuePressed/);
+  assert.match(hotelSource, /bookingDockButton/);
   assert.match(tokens, /blue: "#004BB8"/);
 });
 
@@ -198,14 +200,16 @@ test("active Hotel provider selection validates candidates and allows safe KAYAK
   assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
 });
 
-test("active Hotel Rates hand off safe provider offers while retaining the native room flow", () => {
+test("active Hotel Rates select first, then hand off from the persistent Choose room action", () => {
   assert.match(hotel, /nativeHotelOffers\(internalRoomFlowAvailable, providerHandoffAvailable\)/);
-  assert.match(hotel, /const offer = hotelOffers\.find\(\(\{ id \}\) => id === offerId\)/);
-  assert.match(hotel, /if \(offer\.kind === "internal-room-flow"\)/);
-  assert.match(hotel, /offer\.kind !== "provider-handoff" \|\| !providerHandoffAvailable \|\| !redirectUrl/);
+  assert.match(hotel, /const rateRows = buildNativeHotelRateRows/);
+  assert.match(hotel, /const selectedRate: NativeHotelRateRow \| null/);
+  assert.match(hotel, /if \(selectedRate\.offerId === "internal-rooms"\)/);
+  assert.match(hotel, /selectedRate\.offerId !== "provider" \|\| !providerHandoffAvailable \|\| !redirectUrl/);
   assert.match(hotel, /Linking\.openURL\(redirectUrl\)/);
-  assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectOffer\(row\.offerId\) : undefined\}/);
-  assert.doesNotMatch(hotel, /estimated stay total|Continue booking/);
+  assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
+  assert.match(hotel, />Choose room<\/Text>/);
+  assert.match(hotel, /selectedRate\.totalPrice/);
 });
 
 test("Car detail parity remains protected", () => {
@@ -222,7 +226,7 @@ test("Car detail parity remains protected", () => {
 
 test("room modal receives display-price truth and does not format source currency", () => {
   assert.match(hotel, /createHotelRoomDisplayPrice/);
-  assert.match(hotel, /options=\{presentedRoomOptions\}/);
+  assert.match(hotel, /selectedRate\?\.roomOptionId[\s\S]*?presentedRoomOptions\.filter\(\(option\) => option\.id === selectedRate\.roomOptionId\)[\s\S]*?: presentedRoomOptions/);
   assert.doesNotMatch(gallery, /Intl\.NumberFormat/);
   assert.match(gallery, /displayPrice\.total\.accessibilityLabel/);
   assert.match(gallery, /displayPrice\.nightly\.accessibilityLabel/);

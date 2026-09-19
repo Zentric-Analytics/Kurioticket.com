@@ -22,9 +22,10 @@ test("active native Hotel continuation distinguishes Kurioticket rooms and provi
   assert.match(hotel, /nativeHotelProviderUrl\([\s\S]*?result\.partnerRedirectUrl,[\s\S]*?result\.bookingUrl/);
   assert.match(hotel, /const providerHandoffAvailable =[\s\S]*?Boolean\(redirectUrl\)[\s\S]*?result\.searchPolicy\.bookable \|\| result\.searchPolicy\.source === "kayak-sandbox"/);
   assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
-  assert.match(hotel, /const offer = hotelOffers\.find\(\(\{ id \}\) => id === offerId\)/);
-  assert.match(hotel, /if \(offer\.kind === "internal-room-flow"\)/);
-  assert.match(hotel, /offer\.kind !== "provider-handoff"/);
+  assert.match(hotel, /const rateRows = buildNativeHotelRateRows/);
+  assert.match(hotel, /const selectedRate: NativeHotelRateRow \| null/);
+  assert.match(hotel, /if \(selectedRate\.offerId === "internal-rooms"\)/);
+  assert.match(hotel, /selectedRate\.offerId !== "provider"/);
   assert.match(rates, /No reservable rates available/);
   assert.doesNotMatch(hotel, /Booked|Reserved|Available now/);
 });
@@ -32,23 +33,23 @@ test("active native Hotel continuation distinguishes Kurioticket rooms and provi
 test("active Hotel details derive rates from supplied inventory instead of fabricating rooms or price", () => {
   assert.doesNotMatch(hotel, /Math\.round\(result\.rating\)|reviewScore \?\? result\.rating/);
   assert.match(hotel, /roomOptions\.length > 0/);
-  assert.match(rates, /const option = roomOptions\[0\]/);
-  assert.doesNotMatch(rates, /roomOptions\.forEach\(\(option\) =>/);
+  assert.match(rates, /for \(const option of roomOptions\)/);
+  assert.match(rates, /option\.displayPrice\?\.nightly/);
   assert.match(rates, /option\.displayPrice\?\.total/);
   assert.doesNotMatch(rates, /STATIC_RATE_GROUPS|\$1,225|Standard Room, 1 Queen Bed/);
   assert.match(reviews, /Verified guest reviews are not connected/);
 });
 
-test("narrow active Hotel layout keeps square rate cards with truthful real actions", () => {
+test("narrow active Hotel layout keeps square selectable cards and a persistent continuation dock", () => {
   assert.match(hotel, /useWindowDimensions\(\)\.width/);
   assert.match(rates, /adjustsFontSizeToFit/);
   assert.match(rates, /minimumFontScale=\{0\.68\}/);
-  assert.match(rates, /width: 128/);
   assert.match(rates, /borderRadius: 0/);
-  assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectOffer\(row\.offerId\) : undefined\}/);
+  assert.match(rates, /borderColor: selected \? accentColor : theme\.border/);
+  assert.match(rates, /<Check size=\{19\}/);
+  assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
   assert.match(rates, /disabled=\{!row\.actionable\}/);
-  assert.equal((rates.match(/actionLabel: "Choose room"/g) ?? []).length, 2);
-  assert.match(rates, /!row\.actionable && s\.actionControlDisabled/);
-  assert.doesNotMatch(rates, /previewReserve/);
-  assert.doesNotMatch(hotel, /s\.dockPrice|s\.continueButton/);
+  assert.doesNotMatch(rates, /actionControlDisabled|actionLabel: "Choose room"|previewReserve/);
+  assert.match(hotel, /s\.bookingDock/);
+  assert.match(hotel, />Choose room<\/Text>/);
 });

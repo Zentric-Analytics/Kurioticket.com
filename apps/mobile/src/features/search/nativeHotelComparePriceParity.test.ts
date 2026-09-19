@@ -24,113 +24,101 @@ function styleRule(source: string, name: string, nextName: string) {
   return source.slice(start, end);
 }
 
-test("active Rates tab delegates current rate presentation", () => {
+test("active Rates tab delegates selectable Hotel rate rows", () => {
   assert.match(hotel, /activeHotelTab === "deals"/);
+  assert.match(hotel, /const rateRows = buildNativeHotelRateRows/);
   assert.match(hotel, /<NativeHotelRatesSection/);
-  assert.match(hotel, /offers=\{hotelOffers\}/);
-  assert.match(hotel, /roomOptions=\{presentedRoomOptions\}/);
-  assert.match(hotel, /nightlyPrice=\{nightlyPrice \?\? null\}/);
+  assert.match(hotel, /rows=\{rateRows\}/);
+  assert.match(hotel, /selectedRateId=\{selectedRateIdForView\}/);
+  assert.match(hotel, /onSelectRate=\{setSelectedRateId\}/);
+  assert.match(hotel, /stayDateText=\{staySummary\.dateText\}/);
+  assert.match(hotel, /nightText=\{staySummary\.nightText\}/);
 });
 
-test("Rates keeps only one current offer card and removes room-category preview sections", () => {
-  assert.match(ratesSource, /const option = roomOptions\[0\]/);
-  assert.match(ratesSource, /rows\.push\(/);
-  assert.match(ratesSource, /rows\.unshift\(/);
-  assert.match(ratesSource, /const row = rows\[0\] \?\? null/);
-  assert.doesNotMatch(ratesSource, /withCompactRoomSectionPreview|preview-deluxe-room-options|preview-suite-room-options/);
-  assert.doesNotMatch(ratesSource, /groupTitle|groupSection|groupCards/);
-  assert.doesNotMatch(ratesSource, /Compact room options|Deluxe room options|Suite room options/);
-});
-
-test("Rates derives its single Kurioticket fallback card from supplied room data", () => {
-  assert.match(ratesSource, /const option = roomOptions\[0\]/);
-  assert.match(ratesSource, /const title = roomRateTitle\(option\)/);
-  assert.match(ratesSource, /option\.displayPrice\?\.total/);
+test("Rates presents every supplied Kurioticket room option instead of collapsing to the first one", () => {
+  assert.match(ratesSource, /for \(const option of roomOptions\)/);
+  assert.match(ratesSource, /id: `room-\$\{option\.id\}`/);
+  assert.match(ratesSource, /roomOptionId: option\.id/);
+  assert.match(ratesSource, /nightlyPrice: nightly\?\.formatted/);
+  assert.match(ratesSource, /totalPrice: total\?\.formatted/);
   assert.match(ratesSource, /meaningfulRateMeta\(option, title\)/);
+  assert.doesNotMatch(ratesSource, /roomOptions\[0\]/);
   assert.doesNotMatch(ratesSource, /STATIC_RATE_GROUPS|\$1,225|Standard Room, 1 Queen Bed/);
 });
 
-test("provider handoff keeps room and terms separate and shows the supplied provider price", () => {
+test("provider handoff keeps room terms, nightly price, and stay total separate", () => {
   assert.match(ratesSource, /offers\.find\(\(offer\) => offer\.kind === "provider-handoff"\)/);
   assert.match(ratesSource, /const visibleProviderOffer = providerOffer \?\? displayOnlyKayakOffer/);
   assert.match(ratesSource, /const providerRoom = providerRoomPresentation\(roomType\)/);
   assert.match(ratesSource, /title: providerRoom\.title/);
   assert.match(ratesSource, /meta: providerRateTerms\(providerRoom\.terms, cancellationInfo\)/);
-  assert.match(ratesSource, /const providerPrice = hasPrice \? nightlyPrice : null/);
-  assert.match(ratesSource, /price: providerPrice \? providerPrice\.formatted : "Price on provider"/);
-  assert.match(ratesSource, /priceUnit: providerPrice \? "per night" : undefined/);
-  assert.match(ratesSource, /\$\{providerPrice\.accessibilityLabel\} per night/);
+  assert.match(ratesSource, /nightlyPrice: hasPrice && nightlyPrice \? nightlyPrice\.formatted : "Price on provider"/);
+  assert.match(ratesSource, /totalPrice: hasPrice && totalPrice \? totalPrice\.formatted : "Price on provider"/);
+  assert.match(ratesSource, /actionable: Boolean\(providerOffer\)/);
 });
 
 test("provider room parsing removes duplicated generic cancellation copy", () => {
   assert.match(ratesSource, /split\(\/\\s\+\[—–-\]\\s\+\//);
   assert.match(ratesSource, /non\[- \]\?refundable\|refundable\|free cancellation\|cancel/);
   assert.match(ratesSource, /cancellation conditions apply\|see supplied rate details/);
-  assert.match(ratesSource, /\.slice\(0, 2\)/);
+  assert.match(ratesSource, /\.slice\(0, 3\)/);
 });
 
-test("non-bookable KAYAK rates keep a visible disabled Choose room control", () => {
-  assert.match(ratesSource, /providerName\.trim\(\) === "KAYAK sandbox"/);
-  assert.match(ratesSource, /hasPrice &&[\s\S]*nightlyPrice[\s\S]*\? \(\{ id: "provider", kind: "provider-handoff" \} as const\)/);
-  assert.match(ratesSource, /const visibleProviderOffer = providerOffer \?\? displayOnlyKayakOffer/);
-  assert.match(ratesSource, /actionable: Boolean\(providerOffer\)/);
-  assert.match(ratesSource, /actionLabel: "Choose room"/);
-  assert.match(ratesSource, /disabled=\{!row\.actionable\}/);
-  assert.match(ratesSource, /!row\.actionable && s\.actionControlDisabled/);
+test("selected Hotel rate uses a blue outline and checkmark without a circular selector", () => {
+  assert.match(ratesSource, /const selected = row\.id === selectedRateId/);
+  assert.match(ratesSource, /borderColor: selected \? accentColor : theme\.border/);
+  assert.match(ratesSource, /borderWidth: selected \? 2 : 1/);
+  assert.match(ratesSource, /<Check size=\{19\} strokeWidth=\{2\.6\} color=\{accentColor\}/);
+  assert.match(ratesSource, /accessibilityState=\{\{ selected, disabled: !row\.actionable \}\}/);
+  assert.doesNotMatch(ratesSource, /accessibilityRole="radio"|radioDot|radiogroup/);
 });
 
-test("Kurioticket fallback keeps the bundled wordmark and existing app fonts", () => {
+test("Kurioticket cards keep the bundled wordmark and app typography", () => {
   assert.ok(existsSync("assets/kurioticket-logo-primary-light-bg.png"));
   assert.match(ratesSource, /providerKind === "kurioticket"[\s\S]*?<Image[\s\S]*?accessibilityLabel="Kurioticket"[\s\S]*?require\("\.\.\/\.\.\/\.\.\/assets\/kurioticket-logo-primary-light-bg\.png"\)/);
   assert.match(styleRule(ratesSource, "rateTitle", "benefitList"), /fontFamily: appFonts\.bold/);
-  assert.match(styleRule(ratesSource, "rateMeta", "rateActionColumn"), /fontFamily: appFonts\.regular/);
-  assert.match(styleRule(ratesSource, "actionControlText", "emptyCard"), /fontFamily: appFonts\.bold/);
+  assert.match(styleRule(ratesSource, "rateMeta", "priceBlock"), /fontFamily: appFonts\.regular/);
+  assert.match(styleRule(ratesSource, "price", "priceUnit"), /fontFamily: appFonts\.bold/);
 });
 
-test("Rates keeps one square metasearch card with a wider commerce column", () => {
-  assert.match(styleRule(ratesSource, "section", "rateCard"), /paddingBottom: 12/);
-  assert.match(styleRule(ratesSource, "rateCard", "rateCopy"), /minHeight: 134[\s\S]*borderWidth: 1[\s\S]*borderRadius: 0[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 16[\s\S]*gap: 14/);
-  assert.match(styleRule(ratesSource, "brandLogo", "providerName"), /width: 88[\s\S]*height: 18[\s\S]*marginBottom: 8/);
-  assert.match(styleRule(ratesSource, "benefitList", "rateMeta"), /marginTop: 8[\s\S]*gap: 2/);
-  assert.match(styleRule(ratesSource, "rateActionColumn", "priceBlock"), /width: 128[\s\S]*alignItems: "flex-end"[\s\S]*justifyContent: "space-between"/);
+test("Rates keeps square cards while borrowing Cars-style comparison hierarchy", () => {
+  assert.match(styleRule(ratesSource, "rateCard", "rateCardPressed"), /minHeight: 126[\s\S]*borderRadius: 0[\s\S]*paddingHorizontal: 14[\s\S]*paddingVertical: 14/);
+  assert.match(styleRule(ratesSource, "rateTop", "providerIdentity"), /flexDirection: "row"[\s\S]*justifyContent: "space-between"/);
+  assert.match(styleRule(ratesSource, "rateBottom", "rateCopy"), /flexDirection: "row"[\s\S]*alignItems: "flex-end"/);
+  assert.match(styleRule(ratesSource, "priceBlock", "price"), /alignItems: "flex-end"/);
+  assert.match(ratesSource, />Rates<\/Text>/);
+  assert.match(ratesSource, /\[stayDateText, nightText\]\.filter\(Boolean\)\.join\(" · "\)/);
 });
 
-test("Rates renders price context with a real whole-card continuation action", () => {
-  assert.match(ratesSource, /\$\{total\.accessibilityLabel\} stay price/);
-  assert.match(ratesSource, /priceUnit: providerPrice \? "per night" : undefined/);
-  assert.match(ratesSource, /\{row\.priceUnit \? \(/);
-  const priceTextStart = ratesSource.indexOf("<Text\n              numberOfLines={1}");
-  const priceTextEnd = ratesSource.indexOf("</Text>", priceTextStart);
-  const priceText = ratesSource.slice(priceTextStart, priceTextEnd);
-  assert.match(priceText, /numberOfLines=\{1\}/);
-  assert.match(priceText, /adjustsFontSizeToFit/);
-  assert.match(priceText, /minimumFontScale=\{0\.68\}/);
-  assert.match(styleRule(ratesSource, "price", "priceUnit"), /fontVariant: \["tabular-nums"\]/);
-  assert.match(styleRule(ratesSource, "priceUnit", "priceUnavailable"), /fontSize: 12[\s\S]*fontFamily: appFonts\.medium/);
-  assert.match(ratesSource, /<Pressable[\s\S]*?disabled=\{!row\.actionable\}[\s\S]*?onPress=\{row\.actionable \? \(\) => onSelectOffer\(row\.offerId\) : undefined\}/);
-  assert.match(ratesSource, /actionLabel: "Choose room"/);
-  assert.equal((ratesSource.match(/actionLabel: "Choose room"/g) ?? []).length, 2);
-  assert.match(styleRule(ratesSource, "actionControl", "actionControlText"), /minWidth: 82[\s\S]*minHeight: 44[\s\S]*borderRadius: 10/);
-  assert.doesNotMatch(ratesSource, /previewReserve|TouchableOpacity/);
-  assert.doesNotMatch(ratesSource, /Selected|>Select<|accessibilityRole="radio"/);
+test("Rates render nightly price only; continuation lives in the persistent bottom dock", () => {
+  assert.match(ratesSource, />per night<\/Text>/);
+  assert.match(ratesSource, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
+  assert.doesNotMatch(ratesSource, /actionLabel: "Choose room"|actionControl/);
+  assert.match(hotel, /selectedRate\.totalPrice/);
+  assert.match(hotel, /selectedRate\.totalLabel/);
+  assert.match(hotel, />Choose room<\/Text>/);
+  assert.match(hotel, /onPress=\{\(\) => void continueSelectedRate\(\)\}/);
 });
 
-test("Rates preserves provider identities for bookable and display-only provider presentation", () => {
-  assert.match(ratesSource, /offers\.find\(\(offer\) => offer\.kind === "internal-room-flow"\)/);
-  assert.match(ratesSource, /offers\.find\(\(offer\) => offer\.kind === "provider-handoff"\)/);
-  assert.match(ratesSource, /offerId: internalOffer\.id/);
-  assert.match(ratesSource, /offerId: visibleProviderOffer\.id/);
+test("persistent booking dock remains outside tab content and follows selected rate", () => {
+  assert.match(hotel, /const selectedRate: NativeHotelRateRow \| null/);
+  assert.match(hotel, /rateRows\.find\(\(row\) => row\.id === selectedRateId && row\.actionable\)/);
+  assert.match(hotel, /detailsStatus !== "loading" && selectedRate/);
+  assert.match(hotel, /s\.bookingDock/);
+  assert.match(hotel, /contentContainerStyle=\{\{ paddingBottom: selectedRate \? 124 \+ inset\.bottom : 24 \+ inset\.bottom \}\}/);
+  assert.ok(hotel.indexOf("s.bookingDock") > hotel.indexOf("</ScrollView>"));
+});
+
+test("internal continuation remains tied to the tapped room option", () => {
+  assert.match(hotel, /if \(selectedRate\.offerId === "internal-rooms"\)/);
+  assert.match(hotel, /selectedRate\?\.roomOptionId[\s\S]*?presentedRoomOptions\.filter\(\(option\) => option\.id === selectedRate\.roomOptionId\)/);
+  assert.match(hotel, /setRoomsOpen\(true\)/);
 });
 
 test("Rates preserves loading and truthful empty states", () => {
   assert.match(ratesSource, /if \(detailsStatus === "loading"\) return null/);
   assert.match(ratesSource, /No reservable rates available/);
   assert.match(ratesSource, /Try updating your stay or check again later/);
-});
-
-test("Hotel Details removes its checkout-style bottom booking dock", () => {
-  assert.doesNotMatch(detailSource, /estimated stay total|Continue booking|dockTotal|continueButton/);
-  assert.match(detailSource, /contentContainerStyle=\{\{ paddingBottom: 24 \+ inset\.bottom \}\}/);
 });
 
 test("web reference remains unchanged while native Rates is independently aligned", () => {
