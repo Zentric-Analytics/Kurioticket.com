@@ -14,6 +14,12 @@ test("KAYAK hotel model preserves only sanitized customer-facing detail facts", 
     testUrl: "https://affiliates.kayak.com/sandbox-clickout",
     hotelReviewScore: 8.9,
     hotelReviewCount: 420,
+    hotelLocation: {
+      address: "10 Test Street",
+      countryCode: "US",
+      latitude: 40.75,
+      longitude: -73.98,
+    },
     attributes: [
       { label: "address", value: "10 Test Street" },
       { label: "hotel Country Code", value: "US" },
@@ -51,7 +57,14 @@ test("KAYAK hotel model preserves only sanitized customer-facing detail facts", 
   const reference = model.rawProviderReference as {
     kind: string;
     details: typeof model.providerDetails;
+    location?: { address?: string; countryCode?: string; latitude?: number; longitude?: number };
   };
   assert.equal(reference.kind, "kayak-hotel-details");
   assert.deepEqual(reference.details, model.providerDetails);
+  assert.deepEqual(reference.location, {
+    address: "10 Test Street",
+    countryCode: "US",
+    latitude: 40.75,
+    longitude: -73.98,
+  });
 });
