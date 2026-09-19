@@ -35,10 +35,9 @@ import {
   NativeHotelGallery,
 } from "./NativeHotelDetails";
 import {
+  hotelStaySummary,
   nativeHotelOffers,
   nativeHotelProviderUrl,
-  reconcileNativeHotelOfferSelection,
-  type NativeHotelOffer,
 } from "./nativeHotelDetailsModel";
 import {
   canReuseHotelDisplayPrices,
@@ -51,7 +50,11 @@ import { NativeHotelReviewsSection, nativeHotelReviewPresentation } from "./Nati
 import { hotelResultsDismissCount } from "./hotelDetailReturnNavigation";
 import { HotelStayEditor } from "./HotelStayEditor";
 import { NativeHotelBookingDetails } from "./NativeHotelBookingDetails";
-import { NativeHotelRatesSection } from "./NativeHotelRatesSection";
+import {
+  buildNativeHotelRateRows,
+  NativeHotelRatesSection,
+  type NativeHotelRateRow,
+} from "./NativeHotelRatesSection";
 import { HotelDetailsLoadingState } from "./HotelDetailsLoadingState";
 
 type HotelDetailTab = "details" | "reviews" | "deals";
@@ -151,7 +154,7 @@ function HotelDetail({
     response: MobileHotelDetailsResponse | null;
   } | null>(null);
   const [roomsOpen, setRoomsOpen] = useState(false);
-  const [selectedOfferId, setSelectedOfferId] = useState<NativeHotelOffer["id"] | null>(null);
+  const [selectedRateId, setSelectedRateId] = useState<string | null>(null);
   const guestCount = positiveCount(params.guests, 2, HOTEL_LIMITS.guests.max);
   const roomCount = positiveCount(params.rooms, 1, HOTEL_LIMITS.rooms.max);
   const hotelResultsStack =
@@ -160,7 +163,7 @@ function HotelDetail({
       : params.hotelResultsStack) === "1";
 
   useEffect(() => {
-    setSelectedOfferId(null);
+    setSelectedRateId(null);
     setRoomsOpen(false);
   }, [result.id]);
 
@@ -232,16 +235,6 @@ function HotelDetail({
     (result.searchPolicy.bookable || result.searchPolicy.source === "kayak-sandbox");
   const internalRoomFlowAvailable = roomOptions.length > 0;
   const hotelOffers = nativeHotelOffers(internalRoomFlowAvailable, providerHandoffAvailable);
-  const offerKey = hotelOffers.map(({ id }) => id).join("\u0000");
-
-  useEffect(() => {
-    setSelectedOfferId((current) =>
-      reconcileNativeHotelOfferSelection(current, hotelOffers),
-    );
-  }, [offerKey]);
-
-  const selectedOffer =
-    hotelOffers.find(({ id }) => id === selectedOfferId) ?? hotelOffers[0] ?? null;
   const hasPrice = result.pricePerNight != null && result.totalPrice != null;
   const passedDisplayPrices = parse<HotelDisplayPriceSnapshot>(
     params.hotelDisplayPrices,
@@ -407,16 +400,39 @@ function HotelDetail({
         )
       : null,
   }));
+  const staySummary = hotelStaySummary(checkIn, checkOut, guestCount, roomCount);
+  const rateRows = buildNativeHotelRateRows({
+    offers: hotelOffers,
+    roomOptions: presentedRoomOptions,
+    providerName: result.provider,
+    roomType: result.roomType,
+    cancellationInfo: result.cancellationInfo,
+    nightlyPrice: displayPrices?.nightly ?? null,
+    totalPrice: displayPrices?.total ?? null,
+    hasPrice,
+  });
+  const rateRowKey = rateRows.map(({ id, actionable }) => `${id}:${actionable ? "1" : "0"}`).join("\u0000");
 
-  const reserveOffer = async (offerId: NativeHotelOffer["id"]) => {
-    const offer = hotelOffers.find(({ id }) => id === offerId);
-    if (!offer) return;
-    setSelectedOfferId(offer.id);
-    if (offer.kind === "internal-room-flow") {
+  useEffect(() => {
+    setSelectedRateId((current) => {
+      if (current && rateRows.some((row) => row.id === current && row.actionable)) return current;
+      return rateRows.find((row) => row.actionable)?.id ?? null;
+    });
+  }, [rateRowKey]);
+
+  const selectedRate: NativeHotelRateRow | null =
+    rateRows.find((row) => row.id === selectedRateId && row.actionable)
+    ?? rateRows.find((row) => row.actionable)
+    ?? null;
+  const selectedRateIdForView = selectedRate?.id ?? null;
+
+  const continueSelectedRate = async () => {
+    if (!selectedRate?.actionable) return;
+    if (selectedRate.offerId === "internal-rooms") {
       setRoomsOpen(true);
       return;
     }
-    if (offer.kind !== "provider-handoff" || !providerHandoffAvailable || !redirectUrl) return;
+    if (selectedRate.offerId !== "provider" || !providerHandoffAvailable || !redirectUrl) return;
     try {
       await Linking.openURL(redirectUrl);
     } catch {
@@ -508,7 +524,7 @@ function HotelDetail({
         alwaysBounceVertical={false}
         overScrollMode="never"
         style={{ backgroundColor: hotelCanvasColor }}
-        contentContainerStyle={{ paddingBottom: 24 + inset.bottom }}
+        contentContainerStyle={{ paddingBottom: selectedRate ? 124 + inset.bottom : 24 + inset.bottom }}
         onScroll={({ nativeEvent }) => {
           const offset = nativeEvent.contentOffset.y;
           currentHotelScrollOffset.current = offset;
@@ -627,15 +643,11 @@ function HotelDetail({
 
           {activeHotelTab === "deals" ? (
             <NativeHotelRatesSection
-              offers={hotelOffers}
-              selectedOfferId={selectedOffer?.id ?? null}
-              onSelectOffer={(offerId) => void reserveOffer(offerId)}
-              roomOptions={presentedRoomOptions}
-              providerName={result.provider}
-              roomType={result.roomType}
-              cancellationInfo={result.cancellationInfo}
-              nightlyPrice={nightlyPrice ?? null}
-              hasPrice={hasPrice}
+              rows={rateRows}
+              selectedRateId={selectedRateIdForView}
+              onSelectRate={setSelectedRateId}
+              stayDateText={staySummary.dateText}
+              nightText={staySummary.nightText}
               detailsStatus={detailsStatus}
               theme={theme}
               accentColor={hotelAccent}
@@ -701,6 +713,55 @@ function HotelDetail({
         </Pressable>
       </View>
 
+      {detailsStatus !== "loading" && selectedRate ? (
+        <View
+          style={[
+            s.bookingDock,
+            {
+              paddingBottom: 12 + inset.bottom,
+              backgroundColor: theme.surface,
+              borderTopColor: theme.border,
+            },
+          ]}
+        >
+          <View style={s.bookingDockContent}>
+            <View style={s.bookingDockPrice}>
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.62}
+                accessibilityLabel={selectedRate.totalAccessibilityLabel}
+                style={[s.bookingDockTotal, { color: theme.textPrimary }]}
+              >
+                {selectedRate.totalPrice}
+              </Text>
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.82}
+                style={[s.bookingDockLabel, { color: theme.textSecondary }]}
+              >
+                {selectedRate.totalLabel}
+              </Text>
+            </View>
+            <View style={s.bookingDockAction}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Choose room. ${selectedRate.title}. ${selectedRate.totalAccessibilityLabel}`}
+                onPress={() => void continueSelectedRate()}
+                style={({ pressed }) => [
+                  s.bookingDockButton,
+                  { backgroundColor: hotelAccent },
+                  pressed && s.bookingDockButtonPressed,
+                ]}
+              >
+                <Text style={s.bookingDockButtonText}>Choose room</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      ) : null}
+
       <HotelRoomOptionsModal
         visible={roomsOpen}
         onClose={() => setRoomsOpen(false)}
@@ -742,4 +803,64 @@ const s = StyleSheet.create({
   tabText: { fontSize: 13, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
   tabTextCompact: { fontSize: 12 },
   detailBody: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8, gap: 6 },
+  bookingDock: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderTopWidth: 1,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    elevation: 12,
+    zIndex: 25,
+  },
+  bookingDockContent: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  bookingDockPrice: { flex: 1, minWidth: 0, gap: 1 },
+  bookingDockTotal: {
+    maxWidth: "100%",
+    fontSize: 19,
+    lineHeight: 22,
+    fontWeight: "600",
+    fontFamily: appFonts.semibold,
+    letterSpacing: -0.25,
+    textAlign: "left",
+    fontVariant: ["tabular-nums"],
+  },
+  bookingDockLabel: {
+    flexShrink: 1,
+    minWidth: 0,
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: "600",
+    fontFamily: appFonts.semibold,
+  },
+  bookingDockAction: { flex: 0.9, minWidth: 144, maxWidth: 188 },
+  bookingDockButton: {
+    width: "100%",
+    minHeight: 48,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bookingDockButtonPressed: { opacity: 0.82 },
+  bookingDockButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "700",
+    fontFamily: appFonts.bold,
+    textAlign: "center",
+  },
 });
