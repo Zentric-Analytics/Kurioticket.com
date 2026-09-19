@@ -38,8 +38,8 @@ test("native Cars prewarm artwork separately from the virtualized row sample", (
   assert.match(resultsScreen, /<FlatList ref=\{carScrollRef\}/);
   assert.match(resultsScreen, /const CAR_RESULT_INITIAL_RENDER_COUNT = 10/);
   assert.match(resultsScreen, /initialNumToRender=\{CAR_RESULT_INITIAL_RENDER_COUNT\}/);
-  assert.match(resultsScreen, /maxToRenderPerBatch=\{6\}/);
-  assert.match(resultsScreen, /windowSize=\{7\}/);
+  assert.match(resultsScreen, /maxToRenderPerBatch=\{CAR_RESULT_RENDER_BATCH_SIZE\}/);
+  assert.match(resultsScreen, /windowSize=\{CAR_RESULT_WINDOW_SIZE\}/);
 });
 
 test("native Cars pass the already-versioned artwork URL into Details for the same cache key", () => {
