@@ -153,13 +153,19 @@ test("Hotel card shell preserves its split layout with Flight-family depth", () 
   assert.match(source, /shadowOffset: \{ width: 0, height: 2 \}, shadowOpacity: 0\.08, shadowRadius: 10, elevation: 2/);
 });
 
-test("View hotel uses the web brand blue and compact reference geometry", () => {
+test("View hotel uses the lighter result-card action pattern", () => {
   const dealButtonStyle = source.match(/\n  hotelDealButton:\s*\{[^}]*\}/s)?.[0] ?? "";
   assert.equal(colors.blue, "#004BB8");
-  assert.match(dealButtonStyle, /backgroundColor:\s*colors\.blue/);
-  assert.match(source, /hotelDealButtonCompact: \{ minHeight: 36, minWidth: 92, paddingHorizontal: 12 \}/);
+  assert.match(dealButtonStyle, /minHeight:\s*36/);
+  assert.match(dealButtonStyle, /flexDirection:\s*"row"/);
+  assert.match(dealButtonStyle, /justifyContent:\s*"flex-end"/);
+  assert.match(dealButtonStyle, /gap:\s*4/);
+  assert.doesNotMatch(dealButtonStyle, /backgroundColor|borderRadius|minWidth|paddingHorizontal/);
   assert.match(card, /hitSlop=\{4\}/);
-  assert.match(card, /style=\{\(\{ pressed \}\) => \[s0\.hotelDealButton, compact && s0\.hotelDealButtonCompact, pressed && s0\.hotelDealButtonPressed\]\}/);
+  assert.match(card, /style=\{\(\{ pressed \}\) => \[s0\.hotelDealButton, pressed && s0\.hotelDealButtonPressed\]\}/);
+  assert.match(card, /<Text style=\{\[s0\.hotelDealButtonText, \{ color: theme\.dark \? "#8FB5FF" : ui\.blue \} \]\}>View hotel<\/Text>/);
+  assert.match(card, /<ChevronRight accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\} color=\{theme\.dark \? "#8FB5FF" : ui\.blue\} \/>/);
+  assert.match(source, /hotelDealButtonPressed: \{ opacity: 0\.7 \}/);
   assert.match(searchUi, /blue:\s*"#0754F7"/);
   assert.match(webHotelCard, /bg-\[#004BB8\]/);
 });
