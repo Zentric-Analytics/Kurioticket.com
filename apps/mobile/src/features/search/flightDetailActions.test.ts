@@ -84,7 +84,7 @@ test("hero controls preserve independent save and share targets in a smaller gla
   const controlsEnd = native.indexOf("</SafeAreaView>", controlsStart);
   const controls = native.slice(controlsStart, controlsEnd);
   assert.match(native, /heroActions:\{[^}]*width:88,height:44,flexDirection:"row"/);
-  assert.match(native, /heroActionsGlass:\{[^}]*top:2,bottom:2,borderRadius:20\}/);
+  assert.match(native, /heroActionsGlass:\{\.\.\.StyleSheet\.absoluteFillObject,borderRadius:22\}/);
   assert.match(controls, /<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical" style=\{s\.heroActionsGlass\}\/>/);
   assert.doesNotMatch(native, /rgba\(255, 255, 255, 0\.68\)/);
   assert.match(native, /heroAction:\{width:44,height:44,alignItems:"center",justifyContent:"center"\}/);
