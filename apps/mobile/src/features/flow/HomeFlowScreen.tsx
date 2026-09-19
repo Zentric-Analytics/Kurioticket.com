@@ -129,6 +129,11 @@ function HomeSearchSurface({ children }: { children: React.ReactNode }) {
   return <View style={[ft.styles.card, ft.styles.shadow]}>{children}</View>;
 }
 
+function HomeCarsSearchSurface({ children }: { children: React.ReactNode }) {
+  const ft = useFlowTheme();
+  return <View style={[styles.homeCarsSearchSurface, { backgroundColor: ft.colors.input }]}>{children}</View>;
+}
+
 function HomeFlightSearchSurface({ children }: { children: React.ReactNode }) {
   const ft = useFlowTheme();
   return (
@@ -176,9 +181,9 @@ export function SharedHomePage() {
         </HomeSearchSurface>
       : <UnavailableNotice text="Hotel search is temporarily unavailable. Flights and cars remain available." />,
     cars: availability.carSearch
-      ? <HomeSearchSurface>
+      ? <HomeCarsSearchSurface>
           <CarSearchPanel embedded params={{}} startWithEmptyRentalDates />
-        </HomeSearchSurface>
+        </HomeCarsSearchSurface>
       : <UnavailableNotice text="Car search is temporarily unavailable. Flights and hotels remain available." />,
     packages: availability.deals
       ? <PackagesSearchPanel presentation="home" />
@@ -286,6 +291,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 12,
     elevation: 1,
+  },
+  homeCarsSearchSurface: {
+    padding: 12,
+    paddingBottom: 6,
+    borderRadius: 18,
   },
   products: {
     marginTop: -34,

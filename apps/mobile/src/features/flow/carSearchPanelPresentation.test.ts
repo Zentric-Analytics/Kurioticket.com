@@ -8,7 +8,7 @@ const pickers = readFileSync("src/features/flow/CarSearchPickers.tsx", "utf8");
 const dateRange = readFileSync("src/features/flow/DateRangeSheet.tsx", "utf8");
 const icons = readFileSync("src/features/flow/FlowIcon.tsx", "utf8") + readFileSync("src/features/flow/flowIconTypes.ts", "utf8");
 
-test("Cars main selectors reuse the Results Edit independent-card treatment", () => {
+test("Cars main selectors use a polished independent-card treatment without changing Results Edit", () => {
   const mainRows = panel.slice(panel.indexOf("const mainRows"), panel.indexOf("const editRows"));
   const fields = [
     ["PICKUP LOCATION", "location"],
@@ -18,15 +18,23 @@ test("Cars main selectors reuse the Results Edit independent-card treatment", ()
     ["DRIVER AGE", "person"],
   ] as const;
 
-  assert.match(mainRows, /<View style=\{styles\.resultsEditStack\}>/);
-  assert.equal((mainRows.match(/<View style=\{editCardStyle\}>/g) ?? []).length, fields.length);
+  assert.match(mainRows, /<View style=\{styles\.mainStack\}>/);
+  assert.equal((mainRows.match(/<View style=\{mainCardStyle\}>/g) ?? []).length, fields.length);
   assert.equal((mainRows.match(/<ResultsEditRow /g) ?? []).length, fields.length);
   for (const [label, icon] of fields) {
-    assert.match(mainRows, new RegExp(`<ResultsEditRow label="${label.replace("/", "\\/")}"[^\n]*icon="${icon}"`));
+    assert.match(mainRows, new RegExp(`<ResultsEditRow label="${label.replace("/", "\\/")}" appearance="main"[^\n]*icon="${icon}"`));
   }
   assert.match(panel, /editCardStyle = \[styles\.resultsEditCard, \{ backgroundColor: ft\.colors\.card, borderColor: ft\.colors\.border \}\]/);
-  assert.match(panel, /resultsEditStack:\{width:"100%",gap:10\}/);
-  assert.match(panel, /resultsEditCard:\{width:"100%",borderWidth:1,borderRadius:13,overflow:"hidden"\}/);
+  assert.match(panel, /mainCardStyle = \[styles\.mainCard, \{ backgroundColor: ft\.colors\.card, borderColor: ft\.colors\.border \}\]/);
+  assert.match(panel, /mainStack:\{width:"100%",gap:12\}/);
+  assert.match(panel, /mainCard:\{width:"100%",borderWidth:StyleSheet\.hairlineWidth,borderRadius:15,overflow:"hidden"\}/);
+  assert.match(panel, /mainRow:\{minHeight:74,paddingHorizontal:17,paddingVertical:12\}/);
+  assert.match(panel, /mainCopy:\{gap:4\}/);
+  assert.match(panel, /mainLabel:\{fontSize:11,lineHeight:15,fontWeight:"700",letterSpacing:0\.35\}/);
+  assert.match(panel, /mainValue:\{fontSize:15,lineHeight:20,fontWeight:"500"\}/);
+  assert.match(panel, /mainSecondary:\{fontSize:12,lineHeight:16\}/);
+  assert.match(panel, /mainIconSlot:\{width:18,alignItems:"center",justifyContent:"center"\}/);
+  assert.match(panel, /mainDisclosureSlot:\{width:18,alignItems:"center",justifyContent:"center"\}/);
   assert.doesNotMatch(mainRows, /CompactSearchField|borderTopWidth|divider/);
 });
 
