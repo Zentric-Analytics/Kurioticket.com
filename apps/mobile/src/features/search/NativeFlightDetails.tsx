@@ -40,16 +40,27 @@ const FLIGHT_DETAILS_DARK_BORDER = "#344154";
 const FLIGHT_DETAILS_LIGHT_SELECTED = "#F4F8FF";
 const FLIGHT_DETAILS_DARK_SELECTED = "#142844";
 function useFlightDetailsHeaderProtection(topInset: number) {
-  const { protectedHeight, threshold } = flightDetailsHeaderProtectionGeometry(topInset);
+  const { protectedHeight } = flightDetailsHeaderProtectionGeometry(topInset, 0);
   const protectedRef = useRef(false);
+  const thresholdRef = useRef<number | null>(null);
   const [headerProtected, setHeaderProtected] = useState(false);
+  const measureHeaderHero = useCallback((heroHeight: number) => {
+    thresholdRef.current = flightDetailsHeaderProtectionGeometry(topInset, heroHeight).threshold;
+  }, [topInset]);
+  const resetHeaderProtection = useCallback(() => {
+    thresholdRef.current = null;
+    protectedRef.current = false;
+    setHeaderProtected(false);
+  }, []);
   const syncHeaderProtection = useCallback((offset: number) => {
+    const threshold = thresholdRef.current;
+    if (threshold === null) return;
     const nextProtected = offset >= threshold;
     if (nextProtected === protectedRef.current) return;
     protectedRef.current = nextProtected;
     setHeaderProtected(nextProtected);
-  }, [threshold]);
-  return { headerProtected, protectedHeaderHeight: protectedHeight, syncHeaderProtection };
+  }, []);
+  return { headerProtected, protectedHeaderHeight: protectedHeight, measureHeaderHero, resetHeaderProtection, syncHeaderProtection };
 }
 
 type Params = Record<string, string | string[] | undefined>;
@@ -130,7 +141,7 @@ export function NativeFlightDetails({ params }: { params: Params }) {
   const [tab, setTab] = useState<"deals"|"details"|"conditions"|"extras">("deals");
   const fareHeadingTextColor=theme.dark?theme.textPrimary:"#1A1A1A";
   const contentCanvasColor=theme.dark?theme.background:FLIGHT_DETAILS_LIGHT_CANVAS;
-  const {headerProtected,protectedHeaderHeight,syncHeaderProtection}=useFlightDetailsHeaderProtection(inset.top);
+  const {headerProtected,protectedHeaderHeight,measureHeaderHero,resetHeaderProtection,syncHeaderProtection}=useFlightDetailsHeaderProtection(inset.top);
   const surfaceBorderColor=theme.dark?FLIGHT_DETAILS_DARK_BORDER:FLIGHT_DETAILS_LIGHT_BORDER;
   const heroIconColor="#0F172A";
   const [booking, setBooking] = useState(false);
@@ -141,10 +152,11 @@ export function NativeFlightDetails({ params }: { params: Params }) {
   const preserveMessageOnReload = useRef(false);
   const savedFlights = useSavedFlights();
 
-  const reload = useCallback(() => setRevision((value) => value + 1), []);
+  const reload = useCallback(() => { resetHeaderProtection(); setRevision((value) => value + 1); }, [resetHeaderProtection]);
   useEffect(() => {
     const controller = new AbortController();
     let active = true;
+    resetHeaderProtection();
     setState("loading");
     setDisplayPrices({});
     setDisplayPricesReady(false);
@@ -177,7 +189,7 @@ export function NativeFlightDetails({ params }: { params: Params }) {
       });
     }).catch((error) => { if (!active || controller.signal.aborted) return; setDetails(null); setMessage(error instanceof Error ? error.message : "Flight details could not be loaded."); setState(error instanceof TravelApiError && [404,409].includes(error.status) ? "unavailable" : "error"); });
     return () => { active=false; controller.abort(); };
-  }, [id, revision]);
+  }, [id, revision, resetHeaderProtection]);
   const selected = details?.fareChoices.find(({ key }) => key === selectedKey) ?? null;
   const fareCardWidth = nativeLoadedFareCardWidth(windowWidth);
   const loadedFareCardWidth = nativeLoadedFareCardWidth(windowWidth, details?.fareChoices.length ?? 0);
@@ -198,7 +210,7 @@ export function NativeFlightDetails({ params }: { params: Params }) {
   const handoff=async(offerId:string) => { if(booking||!fareReady)return; setBooking(true); setMessage(""); try { const response=await travelApi.flightRedirect(offerId); await Linking.openURL(response.url); } catch(error) { if(error instanceof TravelApiError && error.status===409 && error.details?.code==="offer_changed") { preserveMessageOnReload.current=true; setMessage("The provider updated this offer. Review the refreshed price and terms before continuing."); reload(); } else setMessage(error instanceof Error?error.message:"Booking is currently unavailable."); } finally { setBooking(false); } };
   const share=async()=>{if(sharePending.current)return;sharePending.current=true;try{const outcome=await shareFlightForAuthenticatedSession({readSession,share:(message)=>Share.share({message}),message:flightShareMessage(activeOffer,activePrice?.formatted??"price unavailable")});if(outcome==="sign-in-required")Alert.alert("Sign in required","Sign in to share this flight.",[{text:"Sign in",onPress:()=>router.push("/email-auth")},{text:"Cancel",style:"cancel"}]);}finally{sharePending.current=false;}};
   return <SafeAreaView edges={[]} style={[s.safe,{backgroundColor:contentCanvasColor}]}><StatusBar style={headerProtected?(theme.dark?"light":"dark"):"light"} translucent backgroundColor="transparent"/><View testID="flight-details-protected-header" pointerEvents="none" style={[s.protectedHeader,{height:protectedHeaderHeight,backgroundColor:headerProtected?contentCanvasColor:"transparent"}]}/><View testID="flight-details-floating-controls" style={[s.heroControls,s.floatingControls,{top:inset.top+8}]}><Pressable accessibilityRole="button" accessibilityLabel="Back to results" onPress={()=>router.back()} style={s.heroIconButton}><DetailGlassSurface dark={false} variant="hotelLight" style={s.heroIconGlass}/><ArrowLeft size={20} color={heroIconColor}/></Pressable><View style={s.heroActions}><DetailGlassSurface dark={false} variant="hotelLight" style={s.heroActionsGlass}/><IconButton label={saved?"Remove saved flight":"Save flight"} onPress={()=>savedFlights.toggle(savedOffer,nativeFlightEditSearchParams(details,one(params.currency)))} iconStyle={s.heroHeartIcon}><Heart size={17} strokeWidth={androidFavoriteColors.strokeWidth} color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved?androidFavoriteColors.savedFill:androidFavoriteColors.unsavedFill}/></IconButton><IconButton label="Share flight" onPress={()=>void share()} iconStyle={s.heroShareIcon}><FlowIcon name="share" size={17} strokeWidth={androidFavoriteColors.strokeWidth} color={androidFavoriteColors.shareStroke}/></IconButton></View></View><ScrollView testID="flight-details-scroll-content" contentInsetAdjustmentBehavior="never" bounces={false} alwaysBounceVertical={false} overScrollMode="never" onScroll={({ nativeEvent })=>syncHeaderProtection(nativeEvent.contentOffset.y)} scrollEventThrottle={16} style={{backgroundColor:contentCanvasColor}} contentContainerStyle={[s.content,{width:windowWidth,maxWidth:windowWidth,paddingBottom:120+inset.bottom}]}>
-    <ImageBackground testID="flight-details-hero" source={require("../../../assets/heroes/flight-details-hero.webp")} resizeMode="cover" style={[s.hero,{paddingTop:inset.top+64}]} imageStyle={s.heroImage}>
+    <ImageBackground testID="flight-details-hero" onLayout={({ nativeEvent })=>measureHeaderHero(nativeEvent.layout.height)} source={require("../../../assets/heroes/flight-details-hero.webp")} resizeMode="cover" style={[s.hero,{paddingTop:inset.top+64}]} imageStyle={s.heroImage}>
       <View style={s.heroOverlay}/>
       <Svg testID="flight-details-hero-text-fade" pointerEvents="none" accessible={false} style={s.heroTextFade}><Defs><LinearGradient id="flightHeroTextFade" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#050D1A" stopOpacity="0"/><Stop offset="0.45" stopColor="#050D1A" stopOpacity="0.18"/><Stop offset="1" stopColor="#050D1A" stopOpacity="0.42"/></LinearGradient></Defs><Rect width="100%" height="100%" fill="url(#flightHeroTextFade)"/></Svg>
       <View testID="flight-details-route-summary" style={s.heroCopy}><Text accessibilityRole="header" numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8} style={s.route}>{flightDetailsRouteLabel(details.search.tripType,offer.legs??[],offer.originAirport,offer.destinationAirport)}</Text><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={s.routeMetadata}>{tripMetadata}</Text></View>
@@ -251,7 +263,7 @@ function FlightDetailsLoadingSkeleton({theme,topInset,bottomInset,fareCardWidth,
   const contentCanvasColor=theme.dark?theme.background:FLIGHT_DETAILS_LIGHT_CANVAS;
   const surfaceBorderColor=theme.dark?FLIGHT_DETAILS_DARK_BORDER:FLIGHT_DETAILS_LIGHT_BORDER;
   const heroIconColor="#0F172A";
-  const {headerProtected,protectedHeaderHeight,syncHeaderProtection}=useFlightDetailsHeaderProtection(topInset);
+  const {headerProtected,protectedHeaderHeight,measureHeaderHero,syncHeaderProtection}=useFlightDetailsHeaderProtection(topInset);
   return <SafeAreaView edges={[]} style={[s.safe,{backgroundColor:contentCanvasColor}]}>
     <StatusBar style={theme.dark?"light":"dark"} translucent backgroundColor="transparent"/>
     {/* Keep the busy announcement separate so it does not group/hide the safe Back action. */}
@@ -266,7 +278,7 @@ function FlightDetailsLoadingSkeleton({theme,topInset,bottomInset,fareCardWidth,
       </View>
     </View>
     <ScrollView testID="flight-details-loading-scroll" contentInsetAdjustmentBehavior="never" bounces={false} alwaysBounceVertical={false} overScrollMode="never" onScroll={({ nativeEvent })=>syncHeaderProtection(nativeEvent.contentOffset.y)} scrollEventThrottle={16} style={{backgroundColor:contentCanvasColor}} contentContainerStyle={[s.content,{width:viewportWidth,maxWidth:viewportWidth,paddingBottom:120+bottomInset}]}>
-      <View testID="flight-details-loading-hero" style={[s.hero,{paddingTop:topInset+64,backgroundColor:theme.dark?"#27272A":"#E2E8F0"}]}>
+      <View testID="flight-details-loading-hero" onLayout={({ nativeEvent })=>measureHeaderHero(nativeEvent.layout.height)} style={[s.hero,{paddingTop:topInset+64,backgroundColor:theme.dark?"#27272A":"#E2E8F0"}]}>
         <Animated.View testID="flight-details-loading-copy" pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[s.heroCopy,{opacity}]}>
           <View testID="flight-details-loading-route" style={[s.loadingLine,s.loadingRouteLine,placeholder]}/>
           <View testID="flight-details-loading-metadata" style={[s.loadingLine,s.loadingMetadataLine,placeholder]}/>
