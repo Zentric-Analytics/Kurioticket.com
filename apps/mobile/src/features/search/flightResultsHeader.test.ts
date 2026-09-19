@@ -75,6 +75,14 @@ test("Back retains navigation while Edit opens the local results overlay", () =>
   assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
 });
 
+test("Flight Results Back reuses Hotel light glass without glassifying the route summary", () => {
+  assert.match(results, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
+  assert.match(header, /accessibilityLabel="Go back"[\s\S]*?<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s0\.flightHeaderBackGlass\} \/>[\s\S]*?<ArrowLeft size=\{25\} strokeWidth=\{2\} color="#0F172A" \/>/);
+  assert.match(styles, /flightHeaderBackGlass: \{ position: "absolute", left: 2, right: 2, top: 2, bottom: 2, borderRadius: 20 \}/);
+  assert.doesNotMatch(routeCard, /DetailGlassSurface|hotelLight/);
+  assert.match(header, /backgroundColor: theme\.surface/);
+});
+
 test("Flight Results header separates Back from one Web-aligned editable summary", () => {
   assert.match(styles, /flightHeaderMainRow: \{[\s\S]*?flexDirection: "row"/);
   assert.match(styles, /flightHeaderSide: \{ width: 44/);
