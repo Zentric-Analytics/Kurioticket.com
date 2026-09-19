@@ -178,6 +178,7 @@ const flightSupportText = {
 } as const;
 const flightResultsLightCanvas = "#F5F7FB";
 const HOTEL_UTILITY_ICON_COLOR = "#334155";
+const HOTEL_GALLERY_CHEVRON_CONTRAST = "rgba(0,0,0,0.85)";
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 const hotelStayNightCount = (checkIn?: string, checkOut?: string) => {
   const start = Date.parse(`${checkIn ?? ""}T00:00:00Z`);
@@ -1553,19 +1554,20 @@ function HotelCard({
         )}
         {usableGallery.length>1?<>
           <Pressable accessibilityRole="button" accessibilityLabel={`Previous photo of ${result.name}`} onPress={(event)=>{event.stopPropagation();setActiveImage(index=>(index-1+usableGallery.length)%usableGallery.length);}} style={[s0.galleryControl,s0.galleryPrevious]}>
-            <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[s0.galleryControlVisual,s0.galleryControlVisualPrevious]}>
-              <DetailGlassSurface dark={false} variant="hotelLight" style={s0.galleryControlGlass} />
-              <ChevronLeft accessible={false} color="#0F172A" size={20} strokeWidth={2.2}/>
+            <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[s0.galleryChevronStack,s0.galleryIconPrevious]}>
+              <ChevronLeft accessible={false} color={HOTEL_GALLERY_CHEVRON_CONTRAST} size={20} strokeWidth={4} style={s0.galleryChevronUnderlay}/>
+              <ChevronLeft accessible={false} color="white" size={20} strokeWidth={2.2}/>
             </View>
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel={`Next photo of ${result.name}`} onPress={(event)=>{event.stopPropagation();setActiveImage(index=>(index+1)%usableGallery.length);}} style={[s0.galleryControl,s0.galleryNext]}>
-            <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[s0.galleryControlVisual,s0.galleryControlVisualNext]}>
-              <DetailGlassSurface dark={false} variant="hotelLight" style={s0.galleryControlGlass} />
-              <ChevronRight accessible={false} color="#0F172A" size={20} strokeWidth={2.2}/>
+            <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[s0.galleryChevronStack,s0.galleryIconNext]}>
+              <ChevronRight accessible={false} color={HOTEL_GALLERY_CHEVRON_CONTRAST} size={20} strokeWidth={4} style={s0.galleryChevronUnderlay}/>
+              <ChevronRight accessible={false} color="white" size={20} strokeWidth={2.2}/>
             </View>
           </Pressable>
         </>:null}
-        {usableGallery.length ? <View style={s0.overlay}>
+        {usableGallery.length ? <View pointerEvents="none" style={s0.overlay}>
+          <DetailGlassSurface dark={false} variant="hotelLight" style={s0.overlayGlass} />
           <Text style={s0.overlayText}>
             {activeImage+1} / {usableGallery.length}
           </Text>
@@ -1973,12 +1975,13 @@ const s0 = StyleSheet.create({
   galleryControl:{position:"absolute",top:"50%",width:44,height:44,transform:[{translateY:-22}],alignItems:"center",justifyContent:"center"},
   galleryPrevious:{left:0},
   galleryNext:{right:0},
-  galleryControlVisual:{width:34,height:34,borderRadius:17,alignItems:"center",justifyContent:"center",shadowColor:"#0F172A",shadowOffset:{width:0,height:2},shadowOpacity:0.12,shadowRadius:5,elevation:4},
-  galleryControlVisualPrevious:{transform:[{translateX:-5}]},
-  galleryControlVisualNext:{transform:[{translateX:5}]},
-  galleryControlGlass:{...StyleSheet.absoluteFillObject,borderRadius:17},
-  overlay: { position: "absolute", bottom: 10, left: 10, backgroundColor: "rgba(0,0,0,.72)", padding: 6, borderRadius: 5 },
-  overlayText: { color: "white", fontSize: 10, fontWeight: "700" },
+  galleryIconPrevious:{transform:[{translateX:-6}]},
+  galleryIconNext:{transform:[{translateX:6}]},
+  galleryChevronStack:{width:20,height:20},
+  galleryChevronUnderlay:{position:"absolute",left:0,top:0},
+  overlay: { position: "absolute", bottom: 10, left: 10, minWidth: 46, minHeight: 28, paddingHorizontal: 9, alignItems: "center", justifyContent: "center", shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 5, elevation: 4 },
+  overlayGlass: { ...StyleSheet.absoluteFillObject, borderRadius: 14 },
+  overlayText: { color: "#0F172A", fontSize: 10, lineHeight: 14, fontWeight: "700" },
   hotelBadge: { alignSelf: "flex-start" },
   hotelCopy: { position: "relative", flex: 1, minWidth: 0, padding: 12, gap: 4 },
   hotelCopyCompact: { padding: 8 },
