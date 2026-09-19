@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { canonicalHotelAddress, hotelStaySummary, isSafeNativeHotelProviderUrl, meaningfulHotelCenterDistance, nativeHotelOffers, nativeHotelProviderUrl, reconcileNativeHotelOfferSelection } from "./nativeHotelDetailsModel";
+import { canonicalHotelAddress, hotelStaySummary, isSafeNativeHotelProviderUrl, meaningfulHotelCenterDistance, nativeHotelOffers, nativeHotelProviderUrl, nativeKurioticketHotelDetailsUrl, reconcileNativeHotelOfferSelection } from "./nativeHotelDetailsModel";
 
 test("stay summary keeps same-year dates compact and orders rooms before guests", () => {
   assert.deepEqual(hotelStaySummary("2026-09-06", "2026-09-09", 1, 1), {
@@ -61,6 +61,28 @@ test("Hotel provider URL selects the first safe canonical candidate", () => {
   assert.equal(nativeHotelProviderUrl("http://partner.example/hotel"), "http://partner.example/hotel");
 });
 
+test("Kurioticket Hotel handoff preserves the selected stay on the web route", () => {
+  assert.equal(
+    nativeKurioticketHotelDetailsUrl("https://staging.kurioticket.test", {
+      id: "hotel id",
+      destination: "Lagos, Nigeria",
+      checkIn: "2026-10-01",
+      checkOut: "2026-10-04",
+      guests: 2,
+      rooms: 1,
+    }),
+    "https://staging.kurioticket.test/hotels/details/hotel%20id?destination=Lagos%2C+Nigeria&checkIn=2026-10-01&checkOut=2026-10-04&guests=2&rooms=1",
+  );
+  assert.equal(nativeKurioticketHotelDetailsUrl("not-a-url", {
+    id: "hotel",
+    destination: "Lagos",
+    checkIn: "2026-10-01",
+    checkOut: "2026-10-02",
+    guests: 1,
+    rooms: 1,
+  }), "");
+});
+
 test("Hotel offer selection preserves explicit choices without freezing automatic enrichment", () => {
   const both = nativeHotelOffers(true, true);
   assert.equal(reconcileNativeHotelOfferSelection(null, nativeHotelOffers(false, true)), null);
@@ -113,5 +135,5 @@ test("active Hotel detail tabs preserve independent scroll state and reset for a
   assert.match(screen, /onScroll=\{\(\{ nativeEvent \}\) =>/);
   assert.match(screen, /\[result\.id\]/);
   assert.match(screen, /setSelectedRateId\(null\)/);
-  assert.match(screen, /setRoomsOpen\(false\)/);
+  assert.doesNotMatch(screen, /setRoomsOpen\(|HotelRoomOptionsModal/);
 });
