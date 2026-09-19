@@ -10,7 +10,7 @@ import type { ReactNode } from "react";
 type Props = {
   style: StyleProp<ViewStyle>;
   dark: boolean;
-  variant?: "neutral" | "carsOptical";
+  variant?: "neutral" | "carsOptical" | "hotelLight";
 };
 
 export function DetailGlassSurface({ style, dark, variant = "neutral" }: Props) {
@@ -20,6 +20,18 @@ export function DetailGlassSurface({ style, dark, variant = "neutral" }: Props) 
     && isGlassEffectAPIAvailable();
 
   if (liquidGlassAvailable) {
+    if (variant === "hotelLight") {
+      return (
+        <GlassView
+          pointerEvents="none"
+          accessible={false}
+          glassEffectStyle="regular"
+          tintColor="rgba(255, 255, 255, 0.24)"
+          style={style}
+        />
+      );
+    }
+
     const glass = (
       <GlassView
         pointerEvents="none"
@@ -31,6 +43,19 @@ export function DetailGlassSurface({ style, dark, variant = "neutral" }: Props) 
     );
     if (variant === "neutral") return glass;
     return <OpticalGlassFrame style={style} dark={dark}>{glass}</OpticalGlassFrame>;
+  }
+
+  if (variant === "hotelLight") {
+    return (
+      <BlurView
+        pointerEvents="none"
+        accessible={false}
+        intensity={28}
+        tint="light"
+        experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined}
+        style={[style, styles.fallbackGlass, styles.fallbackGlassHotel]}
+      />
+    );
   }
 
   const fallback = (
@@ -61,6 +86,10 @@ const styles = StyleSheet.create({
   fallbackGlassDark: {
     backgroundColor: "rgba(15, 23, 42, 0.38)",
     borderColor: "rgba(255, 255, 255, 0.16)",
+  },
+  fallbackGlassHotel: {
+    backgroundColor: "rgba(255, 255, 255, 0.56)",
+    borderColor: "rgba(255, 255, 255, 0.78)",
   },
   fallbackGlassOptical: {
     backgroundColor: "rgba(255, 255, 255, 0.10)",

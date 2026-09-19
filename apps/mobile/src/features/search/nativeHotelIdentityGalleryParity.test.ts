@@ -40,8 +40,8 @@ test("active hotel keeps icon-only header controls fixed over the hero and scrol
   assert.match(hotel, /style=\{\[\s*s\.heroBack,\s*\{\s*top: inset\.top \+ 12,\s*zIndex: detailsStatus === "loading" \? 40 : 20,\s*\},\s*\]\}/);
   assert.match(hotel, /style=\{\[s\.heroActions, \{ top: inset\.top \+ 12 \}\]\}/);
   assert.match(detailSource, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
-  assert.match(hotel, /<DetailGlassSurface dark=\{false\} style=\{s\.heroBackGlass\} \/>/);
-  assert.match(hotel, /<DetailGlassSurface dark=\{false\} style=\{s\.heroActionsGlass\} \/>/);
+  assert.match(hotel, /<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s\.heroBackGlass\} \/>/);
+  assert.match(hotel, /<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s\.heroActionsGlass\} \/>/);
   assert.match(heroBackStyle, /left: 20[^}]*width: 44[^}]*height: 44[^}]*borderRadius: 22[^}]*zIndex: 20/);
   assert.doesNotMatch(heroBackStyle, /backgroundColor/);
   assert.match(heroBackStyle, /elevation: 6/);

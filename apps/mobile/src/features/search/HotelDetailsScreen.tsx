@@ -664,11 +664,11 @@ function HotelDetail({
           },
         ]}
       >
-        <DetailGlassSurface dark={false} style={s.heroBackGlass} />
+        <DetailGlassSurface dark={false} variant="hotelLight" style={s.heroBackGlass} />
         <ArrowLeft size={25} strokeWidth={2.2} color="#0F172A" />
       </Pressable>
       <View style={[s.heroActions, { top: inset.top + 12 }]}>
-        <DetailGlassSurface dark={false} style={s.heroActionsGlass} />
+        <DetailGlassSurface dark={false} variant="hotelLight" style={s.heroActionsGlass} />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}

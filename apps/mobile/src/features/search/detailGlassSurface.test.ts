@@ -14,8 +14,9 @@ test("Cars Liquid Glass is gated by platform and both native runtime capabilitie
   assert.match(surface, /glassEffectStyle="clear"/);
 });
 
-test("native Liquid Glass stays optically strong while using a fully transparent tint", () => {
-  const glass = surface.slice(surface.indexOf("<GlassView"), surface.indexOf("/>", surface.indexOf("<GlassView")));
+test("Flight and Cars keep the existing clear Liquid Glass material", () => {
+  const clearStart = surface.indexOf("const glass = (");
+  const glass = surface.slice(clearStart, surface.indexOf("/>", clearStart));
   assert.match(glass, /pointerEvents="none"/);
   assert.match(glass, /accessible=\{false\}/);
   assert.match(glass, /glassEffectStyle="clear"/);
@@ -23,6 +24,16 @@ test("native Liquid Glass stays optically strong while using a fully transparent
   assert.match(glass, /style=\{variant === "carsOptical" \? StyleSheet\.absoluteFill : style\}/);
   assert.doesNotMatch(glass, /opacity|backgroundColor|borderColor|intensity|fallbackGlass/);
   assert.doesNotMatch(surface, /nativeGlass/);
+});
+
+test("Hotel light variant keeps its own native glass body across hero imagery", () => {
+  const hotelStart = surface.indexOf('if (variant === "hotelLight")');
+  const hotelGlass = surface.slice(hotelStart, surface.indexOf("const glass = (", hotelStart));
+  assert.match(surface, /variant\?: "neutral" \| "carsOptical" \| "hotelLight"/);
+  assert.match(hotelGlass, /<GlassView/);
+  assert.match(hotelGlass, /glassEffectStyle="regular"/);
+  assert.match(hotelGlass, /tintColor="rgba\(255, 255, 255, 0\.24\)"/);
+  assert.match(surface, /fallbackGlassHotel:[\s\S]*backgroundColor: "rgba\(255, 255, 255, 0\.56\)"[\s\S]*borderColor: "rgba\(255, 255, 255, 0\.78\)"/);
 });
 
 test("unsupported iOS and non-iOS platforms retain the polished BlurView fallback", () => {
