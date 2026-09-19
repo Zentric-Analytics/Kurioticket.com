@@ -23,7 +23,7 @@ import { NativeAppleCarMap } from "./NativeAppleCarMap";
 import { NativeCarFullMapModal } from "./NativeCarFullMapModal";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { DetailGlassSurface } from "./DetailGlassSurface";
-import { carDetailHeaderProtectionGeometry } from "./carDetailHeaderProtection";
+import { carDetailHeaderProtectionGeometry, shouldProtectCarDetailHeader } from "./carDetailHeaderProtection";
 
 type Status = "loading" | "ready" | "unavailable";
 type Params = Record<string,string|string[]>;
@@ -43,7 +43,7 @@ function CarDetailContent({result,params}:{result:CarResult;params:Params}) {
   const heroControlSafeZoneHeight = inset.top + 12 + 44 + 14;
   const heroVehicleStageHeight = Math.min(224, Math.max(176, width * 0.5));
   const heroMediaHeight = heroControlSafeZoneHeight + heroVehicleStageHeight;
-  const { protectedHeight: carHeaderProtectedHeight, threshold: carHeaderProtectionThreshold } = carDetailHeaderProtectionGeometry(inset.top, heroMediaHeight);
+  const { protectedHeight: carHeaderProtectedHeight, activationThreshold: carHeaderProtectionActivationThreshold, deactivationThreshold: carHeaderProtectionDeactivationThreshold } = carDetailHeaderProtectionGeometry(inset.top, heroMediaHeight);
   const carStickyTabsTop = inset.top + 72;
   const [activeTab, setActiveTab] = useState<CarDetailTab>("compare");
   const activeCarTabRef = useRef<CarDetailTab>("compare");
@@ -81,11 +81,11 @@ function CarDetailContent({result,params}:{result:CarResult;params:Params}) {
   const carCanvasColor = theme.dark ? theme.background : CAR_DETAIL_LIGHT_CANVAS;
 
   const syncCarHeaderProtection = useCallback((offset: number) => {
-    const nextProtected = offset >= carHeaderProtectionThreshold;
+    const nextProtected = shouldProtectCarDetailHeader(offset, carHeaderProtectedRef.current, carHeaderProtectionActivationThreshold, carHeaderProtectionDeactivationThreshold);
     if (nextProtected === carHeaderProtectedRef.current) return;
     carHeaderProtectedRef.current = nextProtected;
     setCarHeaderProtected(nextProtected);
-  }, [carHeaderProtectionThreshold]);
+  }, [carHeaderProtectionActivationThreshold, carHeaderProtectionDeactivationThreshold]);
 
   const syncCarTabsPinned = useCallback((offset: number) => {
     const stickyStart = carTabsStickyStartRef.current;

@@ -16,7 +16,7 @@ test("approved and KAYAK Cars adopt the Hotel scroll and sticky-safe-area contra
 
 test("approved and KAYAK Cars protect floating controls when hero foreground reaches them", () => {
   for (const { name, source } of details) {
-    for (const contract of [/carDetailHeaderProtectionGeometry\(inset\.top, heroMediaHeight\)/, /carHeaderProtectedRef = useRef\(false\)/, /syncCarHeaderProtection\(offset\)/, /syncCarHeaderProtection\(targetOffset\)/, /testID="car-details-protected-header"/, /pointerEvents="none"/, /backgroundColor:\s*carHeaderProtected\s*\?\s*carCanvasColor\s*:\s*"transparent"/, /protectedHeader:\s*\{[^}]*position:\s*"absolute"[^}]*zIndex:\s*10/]) assert.match(source, contract, name);
+    for (const contract of [/carDetailHeaderProtectionGeometry\(inset\.top, heroMediaHeight\)/, /shouldProtectCarDetailHeader\(offset, carHeaderProtectedRef\.current, carHeaderProtectionActivationThreshold, carHeaderProtectionDeactivationThreshold\)/, /carHeaderProtectedRef = useRef\(false\)/, /syncCarHeaderProtection\(offset\)/, /syncCarHeaderProtection\(targetOffset\)/, /testID="car-details-protected-header"/, /pointerEvents="none"/, /backgroundColor:\s*carHeaderProtected\s*\?\s*carCanvasColor\s*:\s*"transparent"/, /protectedHeader:\s*\{[^}]*position:\s*"absolute"[^}]*zIndex:\s*10/]) assert.match(source, contract, name);
     assert.match(source, /heroBack:\s*\{[^}]*zIndex:\s*20/, name);
     assert.match(source, /heroActions:\s*\{[^}]*zIndex:\s*20/, name);
   }
