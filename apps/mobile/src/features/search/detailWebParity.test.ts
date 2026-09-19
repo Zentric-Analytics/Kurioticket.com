@@ -207,7 +207,10 @@ test("active Hotel Rates use a truthful persistent action for native and provide
   assert.match(hotel, /const selectedRate: NativeHotelRateRow \| null/);
   assert.match(hotel, /if \(selectedRate\.offerId === "internal-rooms"\)/);
   assert.match(hotel, /selectedRate\.offerId !== "provider" \|\| !providerHandoffAvailable \|\| !redirectUrl/);
-  assert.match(hotel, /Linking\.openURL\(redirectUrl\)/);
+  assert.match(hotel, /await import\("expo-web-browser"\)/);
+  assert.match(hotel, /openPreviewLegalBrowser\(url, Platform\.OS, WebBrowser\)/);
+  assert.match(hotel, /await openProviderInApp\(redirectUrl\)/);
+  assert.doesNotMatch(hotel, /Linking\.openURL\(redirectUrl\)/);
   assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
   assert.match(hotel, /const bookingActionLabel = selectedRate\?\.providerKind === "provider" \? "View deal" : "Choose room"/);
   assert.match(hotel, /bookingDockButtonText\}>\{bookingActionLabel\}<\/Text>/);
