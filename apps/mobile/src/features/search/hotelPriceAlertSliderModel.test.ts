@@ -82,3 +82,12 @@ test("hotel result price alert sheet is safe-area aware and scrollable for large
   assert.match(component, /paddingBottom: Math\.max\(insets\.bottom, 12\)/);
   assert.match(component, /sheet: \{ maxHeight: "92%"/);
 });
+
+test("hotel result price alert keeps the polished compact sheet geometry", () => {
+  const component = readFileSync("src/features/search/HotelPriceAlert.tsx", "utf8");
+  assert.match(component, /sheetContent: \{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 10, gap: 13 \}/);
+  assert.match(component, /currentPriceCard: \{ minHeight: 58[\s\S]*paddingVertical: 8/);
+  assert.match(component, /summary: \{ minHeight: 58[\s\S]*paddingVertical: 8/);
+  assert.match(component, /metricValue: \{ marginTop: 1, fontSize: 15, lineHeight: 20/);
+  assert.match(component, /create: \{ minHeight: 46/);
+});
