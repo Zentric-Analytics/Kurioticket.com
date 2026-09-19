@@ -22,10 +22,11 @@ test("checkout never falls back to a serialized provider URL", () => {
 
 test("checkout dock keeps a responsive price and action hierarchy with theme-aware separation", () => {
   assert.match(native, /style=\{\[s\.sticky,theme\.dark\?s\.stickyDark:s\.stickyLight,\{paddingBottom:Math\.max\(inset\.bottom,10\)/);
-  assert.match(native, /checkoutTotal:\{flex:1,minWidth:0,maxWidth:"46%",gap:2\}/);
-  assert.match(native, /checkoutAction:\{flex:1,maxWidth:210,minWidth:132\}/);
-  assert.match(native, /checkoutLabel:\{fontSize:11,lineHeight:15,fontWeight:"600"/);
-  assert.match(native, /total:\{fontSize:24,lineHeight:29,fontWeight:"900"[^}]*fontVariant:\["tabular-nums"\]/);
+  assert.match(native, /checkoutTotal:\{flex:1,minWidth:0,gap:1\}/);
+  assert.match(native, /checkoutAction:\{flex:\.78,minWidth:140,maxWidth:180\}/);
+  assert.match(native, /checkoutActionAndroid:\{flex:\.76,minWidth:132,maxWidth:176\}/);
+  assert.match(native, /checkoutLabel:\{flexShrink:1,minWidth:0,fontSize:11,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
+  assert.match(native, /total:\{maxWidth:"100%",fontSize:19,lineHeight:22,fontWeight:"600",fontFamily:appFonts\.semibold[^}]*fontVariant:\["tabular-nums"\]/);
   assert.match(native, /<Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.72\} style=\{\[s\.total/);
   assert.match(native, /sticky:\{position:"absolute",left:0,right:0,bottom:0[^}]*borderTopWidth:StyleSheet\.hairlineWidth[^}]*elevation:7\}/);
   assert.match(native, /stickyLight:\{[^}]*shadowOffset:\{width:0,height:-4\}[^}]*shadowOpacity:\.1/);
