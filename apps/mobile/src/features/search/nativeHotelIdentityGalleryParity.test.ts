@@ -57,9 +57,9 @@ test("save and share remain independent accessible actions inside one compact pi
   assert.match(hotel, /accessibilityLabel=\{saved \? `Remove \$\{result\.name\} hotel from saved` : `Save \$\{result\.name\} hotel`\}/);
   assert.match(hotel, /accessibilityState=\{\{ selected: saved \}\}/);
   assert.match(hotel, /onPress=\{\(\) => void canonical\.toggleHotel\(result, params\)\}/);
-  assert.match(hotel, /<Heart[\s\S]*?size=\{22\}[\s\S]*?strokeWidth=\{2\}/);
+  assert.match(hotel, /<Heart[\s\S]*?size=\{22\}[\s\S]*?strokeWidth=\{androidFavoriteColors\.strokeWidth\}/);
   assert.match(hotel, /accessibilityLabel=\{`Share \$\{result\.name\}`\}[\s\S]*?onPress=\{shareHotel\}/);
-  assert.match(hotel, /<FlowIcon name="share" size=\{22\} color="#0F172A" \/>/);
+  assert.match(hotel, /<FlowIcon name="share" size=\{22\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{androidFavoriteColors\.shareStroke\} \/>/);
 });
 
 test("active identity, tabs, and editable stay summary follow the tightened hierarchy", () => {

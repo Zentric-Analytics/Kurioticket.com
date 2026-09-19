@@ -254,8 +254,8 @@ function KayakCarDetailContent({ result, params }: { result: CarResult; params: 
     </Pressable>
     <View style={[s.heroActions, { top: inset.top + 12 }]}>
       <DetailGlassSurface dark={theme.dark} variant="carsOptical" style={s.heroActionsGlass} />
-      <Pressable accessibilityRole="button" accessibilityLabel={saved.saved ? "Remove car from saved" : "Save car"} accessibilityState={{ selected: saved.saved }} onPress={saved.toggle} style={s.heroAction}><Heart size={22} strokeWidth={2} color={saved.saved ? androidFavoriteColors.savedStroke : light ? androidFavoriteColors.unsavedStroke : theme.icon} fill={saved.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="Share car" onPress={() => void Share.share({ message: `${result.modelName} — ${result.categoryLabel}` })} style={s.heroAction}><Share2 size={21} color={light ? "#0F172A" : theme.icon} /></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel={saved.saved ? "Remove car from saved" : "Save car"} accessibilityState={{ selected: saved.saved }} onPress={saved.toggle} style={s.heroAction}><Heart size={22} strokeWidth={androidFavoriteColors.strokeWidth} color={saved.saved ? androidFavoriteColors.savedStroke : light ? androidFavoriteColors.unsavedStroke : theme.icon} fill={saved.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Share car" onPress={() => void Share.share({ message: `${result.modelName} — ${result.categoryLabel}` })} style={s.heroAction}><Share2 size={21} strokeWidth={androidFavoriteColors.strokeWidth} color={light ? androidFavoriteColors.shareStroke : theme.icon} /></Pressable>
     </View>
 
     {offer ? <View style={[s.dock, { paddingBottom: 12 + inset.bottom, backgroundColor: theme.surface, borderTopColor: theme.border }]}>

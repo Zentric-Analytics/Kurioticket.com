@@ -1585,6 +1585,7 @@ function HotelCard({
             <Heart
               accessible={false}
               size={20}
+              strokeWidth={androidFavoriteColors.strokeWidth}
               color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke}
               fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill}
             />
@@ -1595,7 +1596,7 @@ function HotelCard({
             onPress={(event) => { event.stopPropagation(); shareHotel(); }}
             style={[s0.hotelAction, s0.hotelShareAction]}
           >
-            <Share2 accessible={false} size={20} color={theme.dark ? theme.icon : HOTEL_UTILITY_ICON_COLOR} />
+            <Share2 accessible={false} size={20} strokeWidth={androidFavoriteColors.strokeWidth} color={theme.dark ? theme.icon : androidFavoriteColors.shareStroke} />
           </Pressable>
         </View>
         {showCheapestBadge && hasPrice ? (

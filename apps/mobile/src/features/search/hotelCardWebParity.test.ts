@@ -66,7 +66,7 @@ test("hotel favorite uses canonical states while share keeps its utility color",
   assert.match(source, /const HOTEL_UTILITY_ICON_COLOR = "#334155"/);
   assert.match(card, /color=\{saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\}/);
   assert.match(card, /fill=\{saved \? androidFavoriteColors\.savedFill : androidFavoriteColors\.unsavedFill\}/);
-  assert.match(card, /<Share2 accessible=\{false\} size=\{20\} color=\{theme\.dark \? theme\.icon : HOTEL_UTILITY_ICON_COLOR\} \/>/);
+  assert.match(card, /<Share2 accessible=\{false\} size=\{20\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{theme\.dark \? theme\.icon : androidFavoriteColors\.shareStroke\} \/>/);
 });
 
 test("hotel location uses compact dedicated native typography", () => {

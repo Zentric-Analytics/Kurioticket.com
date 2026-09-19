@@ -679,7 +679,7 @@ function HotelDetail({
           <View pointerEvents="none" style={s.heroHeartIcon}>
             <Heart
               size={22}
-              strokeWidth={2}
+              strokeWidth={androidFavoriteColors.strokeWidth}
               color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke}
               fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill}
             />
@@ -692,7 +692,7 @@ function HotelDetail({
           style={s.heroAction}
         >
           <View pointerEvents="none" style={s.heroShareIcon}>
-            <FlowIcon name="share" size={22} color="#0F172A" />
+            <FlowIcon name="share" size={22} strokeWidth={androidFavoriteColors.strokeWidth} color={androidFavoriteColors.shareStroke} />
           </View>
         </Pressable>
       </View>
