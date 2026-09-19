@@ -10,8 +10,8 @@ export async function searchHotels(search: HotelSearchParams, options: { kayak?:
   const startedAt=Date.now();
   const [catalogue,kayak]=await Promise.all([Promise.resolve(buildStaticHotelResults(search)),searchKayakHotels(search,options.kayak)]);
   const results=dedupeHotels([...catalogue,...kayak.results]).sort(compareHotelsByAvailablePrice);
-  if(results.length)rememberHotels(results);
-  await rememberProviderResults("hotel", kayak.results, search);
+  if(results.length)rememberHotels(results, search);
+  await rememberProviderResults("hotel", results, search);
   return {results,providerStatuses:[{provider:"Kurioticket static catalogue",results:catalogue,status:"success",latencyMs:Date.now()-startedAt},kayak],warnings:kayak.status==="failed"?["KAYAK is temporarily unavailable. Other provider results are shown."]:[],latencyMs:Date.now()-startedAt};
 }
 function dedupeHotels(results:NormalizedHotelResult[]){const seen=new Map<string,NormalizedHotelResult>();for(const result of results){const key=`${result.name.toLowerCase()}|${result.location.toLowerCase()}`;if(!seen.has(key))seen.set(key,result);}return [...seen.values()];}
