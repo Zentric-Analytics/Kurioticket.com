@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
-  Linking,
   Pressable,
   ScrollView,
   Share,
@@ -427,6 +426,11 @@ function HotelDetail({
   const selectedRateIdForView = selectedRate?.id ?? null;
   const bookingActionLabel = selectedRate?.providerKind === "provider" ? "View deal" : "Choose room";
 
+  const openProviderInApp = async (url: string) => {
+    const WebBrowser = await import("expo-web-browser");
+    return WebBrowser.openBrowserAsync(url);
+  };
+
   const continueSelectedRate = async () => {
     if (!selectedRate?.actionable) return;
     if (selectedRate.offerId === "internal-rooms") {
@@ -435,7 +439,7 @@ function HotelDetail({
     }
     if (selectedRate.offerId !== "provider" || !providerHandoffAvailable || !redirectUrl) return;
     try {
-      await Linking.openURL(redirectUrl);
+      await openProviderInApp(redirectUrl);
     } catch {
       Alert.alert("Unable to open provider", "Please refresh and try again.");
     }
