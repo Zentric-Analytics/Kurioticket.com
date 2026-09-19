@@ -1632,10 +1632,11 @@ function HotelCard({
             accessibilityLabel={`View hotel for ${result.name}`}
             accessibilityHint="Opens this hotel"
             hitSlop={4}
-            style={({ pressed }) => [s0.hotelDealButton, compact && s0.hotelDealButtonCompact, pressed && s0.hotelDealButtonPressed]}
+            style={({ pressed }) => [s0.hotelDealButton, pressed && s0.hotelDealButtonPressed]}
             onPress={(event) => { event.stopPropagation(); openHotel(); }}
           >
-            <Text style={s0.hotelDealButtonText}>View hotel</Text>
+            <Text style={[s0.hotelDealButtonText, { color: theme.dark ? "#8FB5FF" : ui.blue }]}>View hotel</Text>
+            <ChevronRight accessible={false} size={16} strokeWidth={2.2} color={theme.dark ? "#8FB5FF" : ui.blue} />
           </Pressable>
         </View>
       </View>
@@ -1993,10 +1994,9 @@ const s0 = StyleSheet.create({
   hotelPriceCopy: { minWidth: 0, alignItems: "flex-end" },
   hotelNightlyPrice: { fontSize: 18, lineHeight: 24, fontWeight: "700", fontFamily: appFonts.bold, color: ui.navy, textAlign: "right", fontVariant: ["tabular-nums"] },
   hotelPerNight: { marginTop: 1, fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium, color: ui.muted, textAlign: "right" },
-  hotelDealButton: { minHeight: 40, minWidth: 104, marginTop: 6, paddingHorizontal: 14, borderRadius: 8, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center" },
-  hotelDealButtonCompact: { minHeight: 36, minWidth: 92, paddingHorizontal: 12 },
-  hotelDealButtonPressed: { backgroundColor: "#003B91" },
-  hotelDealButtonText: { fontSize: 14, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold, color: "white" },
+  hotelDealButton: { minHeight: 36, marginTop: 2, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 },
+  hotelDealButtonPressed: { opacity: 0.7 },
+  hotelDealButtonText: { fontSize: 13, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
   loadingState: { width: "100%", gap: 14 },
   loadingMessage: { minHeight: 40, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9 },
   loadingText: { fontSize: 13, lineHeight: 18, color: ui.navy, fontWeight: "700" },
