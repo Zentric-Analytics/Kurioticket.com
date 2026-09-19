@@ -29,7 +29,8 @@ test("native favorite tokens make the state contract explicit and theme-independ
 });
 
 test("every direct native interactive favorite uses the canonical stroke and fill contract", () => {
-  assert.match(shared, canonicalFlowHeart);
+  assert.match(shared, /color=\{saved \? \(webParity \? webParityFavoriteColors\.savedStroke : androidFavoriteColors\.savedStroke\) : \(webParity \? webParityFavoriteColors\.unsavedStroke : androidFavoriteColors\.unsavedStroke\)\}/);
+  assert.match(shared, /fill=\{saved \? \(webParity \? webParityFavoriteColors\.savedFill : androidFavoriteColors\.savedFill\) : \(webParity \? webParityFavoriteColors\.unsavedFill : androidFavoriteColors\.unsavedFill\)\}/);
   assert.match(carResult, canonicalFlowHeart);
   assert.match(explore, canonicalFlowHeart);
   for (const detail of [hotelResult, hotelDetail, approvedHotelDetail]) assert.match(detail, canonicalHeart);
