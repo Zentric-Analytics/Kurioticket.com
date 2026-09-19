@@ -138,7 +138,8 @@ export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<strin
 export function kayakHotelCardModel(offer: SandboxOffer, nights: number): NormalizedHotelResult {
   const providerDetails = kayakHotelProviderDetails(offer);
   const freeCancellation = providerDetails.rate?.freeCancellation;
-  return ({id:`kayak-sandbox:${offer.id}`,provider:"KAYAK sandbox",name:offer.title,
+  return ({id:`kayak-sandbox:${offer.id}`,provider:"KAYAK sandbox",
+    bookingProviderName:offer.bookingProviderName,providerLogoUrl:offer.bookingProviderLogoUrl,name:offer.title,
     imageUrl:offer.images?.[0]?.url,imageUrls:offer.images?.map(image=>image.url),
     rating:0,classificationStars:offer.hotelStars && [1,2,3,4,5].includes(offer.hotelStars) ? offer.hotelStars as HotelClassificationStars : undefined,
     reviewScore:offer.hotelReviewScore,reviewScale:offer.hotelReviewScore === undefined ? undefined : 10,
