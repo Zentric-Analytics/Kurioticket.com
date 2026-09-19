@@ -199,7 +199,7 @@ test("Hotel Results receives presentation-only summary copy while Edit preserves
 
 test("Flight Details and result content remain present without a results-screen BottomNav", () => {
   assert.match(details, /accessibilityLabel="Back to results"/);
-  assert.match(details, /<View testID="flight-details-itinerary-overlap" style=\{s\.itineraryStack\}>[\s\S]*?<Itinerary/);
+  assert.match(details, /<View testID="flight-details-itinerary-overlap"[^>]*style=\{s\.itineraryStack\}>[\s\S]*?<Itinerary/);
   assert.doesNotMatch(details, />Flight itinerary<\/Text>/);
   assert.match(details, />Pick your fare<\/Text>/);
   assert.match(results, /<DateStrip/);
