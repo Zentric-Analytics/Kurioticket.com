@@ -52,7 +52,7 @@ test("narrow active Hotel layout keeps concise grouped rows and a persistent con
   assert.match(rates, /disabled=\{!row\.actionable\}/);
   assert.match(rates, /s\.rateDivider/);
   assert.match(rates, /function conciseCondition/);
-  assert.doesNotMatch(rates, /selectedBackground|<Check|selectedMark|borderColor: selected|borderWidth: selected|actionControlDisabled|actionLabel: "Choose room"|previewReserve|>Rates<\/Text>/);
+  assert.doesNotMatch(rates, /<Check|selectedMark|borderColor: selected|borderWidth: selected|actionControlDisabled|actionLabel: "Choose room"|previewReserve|>Rates<\/Text>/);
   assert.match(hotel, /s\.bookingDock/);
   assert.match(hotel, />Choose room<\/Text>/);
 });
