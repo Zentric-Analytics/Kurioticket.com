@@ -139,6 +139,7 @@ export function PopularDestinationStays({
                 />
                 <AndroidFavoriteButton
                   saved={saved}
+                  variant="webParity"
                   label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
                   onPress={(event) => {
                     event.stopPropagation();

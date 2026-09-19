@@ -10,20 +10,38 @@ const explore = source("src/features/explore/ExploreScreen.tsx");
 const details = source("src/features/explore/DestinationDetailsScreen.tsx");
 const savedRecent = source("src/features/saved/SavedScreen.tsx");
 
-test("shared Android favorite button preserves geometry and applies the semantic visual contract", () => {
+test("shared favorite preserves its existing default treatment", () => {
   assert.match(favorite, /background:\s*"rgba\(2,15,42,\.62\)"/);
   assert.match(favorite, /width:\s*40/);
   assert.match(favorite, /height:\s*40/);
   assert.match(favorite, /borderRadius:\s*20/);
-  assert.match(favorite, /<FlowIcon name="heart" size=\{18\}/);
+  assert.match(favorite, /size=\{webParity \? 15 : 18\}/);
   assert.match(favorite, /unsavedStroke:\s*"#334155"/);
   assert.match(favorite, /savedStroke:\s*"#E92D55"/);
   assert.match(favorite, /savedFill:\s*"#E92D55"/);
   assert.match(favorite, /unsavedFill:\s*"none"/);
-  assert.match(favorite, /color=\{saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\}/);
-  assert.match(favorite, /fill=\{saved \? androidFavoriteColors\.savedFill : androidFavoriteColors\.unsavedFill\}/);
-  assert.doesNotMatch(favorite, /shadowOpacity|elevation|pressed/);
+  assert.match(favorite, /variant\?: "default" \| "webParity"/);
+  assert.match(favorite, /variant = "default"/);
   assert.match(shim, /export \{ AndroidFavoriteButton, androidFavoriteColors \}/);
+});
+
+test("web-parity image-overlay favorite exactly mirrors the mobile-web unsaved treatment", () => {
+  assert.match(favorite, /unsavedBackground: "rgba\(255,255,255,0\.90\)"/);
+  assert.match(favorite, /unsavedBorder: "rgba\(255,255,255,0\.80\)"/);
+  assert.match(favorite, /unsavedStroke: "#64748B"/);
+  assert.match(favorite, /unsavedFill: "none"/);
+  assert.match(favorite, /webParitySurface: \{[\s\S]*position: "absolute",[\s\S]*top: 0,[\s\S]*right: 0,[\s\S]*width: 32,[\s\S]*height: 32,[\s\S]*borderRadius: 16,[\s\S]*borderWidth: 1/);
+  assert.match(favorite, /size=\{webParity \? 15 : 18\}/);
+  assert.match(favorite, /strokeWidth=\{webParity \? webParityFavoriteColors\.strokeWidth : androidFavoriteColors\.strokeWidth\}/);
+  assert.match(favorite, /fill=\{saved \? \(webParity \? webParityFavoriteColors\.savedFill : androidFavoriteColors\.savedFill\) : \(webParity \? webParityFavoriteColors\.unsavedFill : androidFavoriteColors\.unsavedFill\)\}/);
+});
+
+test("web-parity image-overlay saved state remains visibly distinct", () => {
+  assert.match(favorite, /savedBackground: "#FFF1F2"/);
+  assert.match(favorite, /savedBorder: "#FECDD3"/);
+  assert.match(favorite, /savedStroke: "#E11D48"/);
+  assert.match(favorite, /savedFill: "#E11D48"/);
+  assert.match(favorite, /saved \? styles\.webParitySaved : styles\.webParityUnsaved/);
 });
 
 test("shared Android favorite button keeps a minimum 44 by 44 touch target", () => {
@@ -42,6 +60,17 @@ test("all current save-enabled destination cards share one Android favorite comp
   assert.equal((`${details}\n${explore}`.match(/<AndroidFavoriteButton/g) ?? []).length, 2);
 });
 
+test("only image-card consumers opt into the mobile-web overlay variant", () => {
+  const popular = source("src/features/home/PopularDestinationStays.tsx");
+  const adventure = source("src/features/home/HomepageAdventureDiscovery.tsx");
+  const region = source("src/features/explore/ExploreRegionScreen.tsx");
+  for (const imageCard of [popular, adventure, explore, region]) {
+    assert.match(imageCard, /<AndroidFavoriteButton[\s\S]*?variant="webParity"/);
+  }
+  assert.doesNotMatch(details, /variant="webParity"/);
+  assert.doesNotMatch(savedRecent, /variant="webParity"/);
+});
+
 test("favorite behavior, navigation, and propagation remain unchanged", () => {
   const hook = source("src/storage/useSavedDestinations.ts");
   const store = source("src/storage/savedDestinationsStore.ts");
@@ -51,12 +80,13 @@ test("favorite behavior, navigation, and propagation remain unchanged", () => {
   assert.match(explore, /onPress=\{onSelect\}/);
 });
 
-test("favorite light and dark mode values remain unchanged", () => {
+test("favorite tokens are image-independent in light and dark modes", () => {
   assert.match(favorite, /unsavedStroke:\s*"#334155"/);
   assert.match(favorite, /savedStroke:\s*"#E92D55"/);
   assert.match(favorite, /savedFill:\s*"#E92D55"/);
   assert.match(favorite, /unsavedFill:\s*"none"/);
   assert.match(favorite, /background:\s*"rgba\(2,15,42,\.62\)"/);
+  assert.match(favorite, /unsavedBackground: "rgba\(255,255,255,0\.90\)"/);
   assert.doesNotMatch(favorite, /useColorScheme|dark|light|theme/);
 });
 
