@@ -463,8 +463,8 @@ export class PreviewLedger {
                VALUES ($1,$2,$3,$4,$5,$6::jsonb) RETURNING *`,
               [sourceSha, kind, identityKey, remoteId, state, JSON.stringify(mergedEvidence)],
             );
-        await client.query("COMMIT");
         if (result.rowCount !== 1) throw new Error(`Conflicting remote identity for ${kind}:${identityKey}.`);
+        await client.query("COMMIT");
         return result.rows[0];
       } catch (error) {
         await client.query("ROLLBACK");
