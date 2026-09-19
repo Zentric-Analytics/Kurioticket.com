@@ -765,7 +765,11 @@ function HotelDetail({
       <HotelRoomOptionsModal
         visible={roomsOpen}
         onClose={() => setRoomsOpen(false)}
-        options={presentedRoomOptions}
+        options={
+          selectedRate?.roomOptionId
+            ? presentedRoomOptions.filter((option) => option.id === selectedRate.roomOptionId)
+            : presentedRoomOptions
+        }
         theme={theme}
         accentColor={hotelAccent}
       />
