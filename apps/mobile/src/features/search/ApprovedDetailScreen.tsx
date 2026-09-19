@@ -686,10 +686,8 @@ function HotelDetail({
               <NativeRelatedHotelsSection
                 destination={destination}
                 hotels={relatedHotels}
-                hasMore={details?.relatedHotelsHasMore === true}
                 theme={theme}
                 onViewHotel={viewRelatedHotel}
-                onSeeMore={returnToHotelResults}
               />
             </>
           ) : null}

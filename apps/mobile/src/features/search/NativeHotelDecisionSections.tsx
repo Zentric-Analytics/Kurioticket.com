@@ -5,7 +5,6 @@ import { ImageOff, MapPin } from "lucide-react-native";
 import type { PublicHotelPropertyDetails } from "../../../../../src/lib/types";
 import { buildHotelAddress, hasValidHotelCoordinates } from "../../../../../src/lib/hotels/hotelMap";
 import { getApiBaseUrl } from "../../config/apiUrl";
-import { colors } from "../../theme/tokens";
 import { appFonts } from "../../theme/typography";
 import { NativeHotelFullMapModal } from "./NativeHotelFullMapModal";
 import { nativeHotelLocationPreviewUrl } from "./nativeHotelLocationModel";
@@ -56,14 +55,13 @@ function RelatedHotelCard({ item, theme, onView }: { item: NativeRelatedHotel; t
   </Pressable>;
 }
 
-export function NativeRelatedHotelsSection({ destination, hotels, hasMore, theme, onViewHotel, onSeeMore }: { destination: string; hotels: NativeRelatedHotel[]; hasMore: boolean; theme: Theme; onViewHotel: (item: NativeRelatedHotel) => void; onSeeMore: () => void }) {
+export function NativeRelatedHotelsSection({ destination, hotels, theme, onViewHotel }: { destination: string; hotels: NativeRelatedHotel[]; theme: Theme; onViewHotel: (item: NativeRelatedHotel) => void }) {
   if (!hotels.length) return null;
   const destinationName = destination.split(",")[0]?.trim() ?? "";
   const displayedHotels = hotels.slice(0, 12);
   return <View style={styles.relatedSection}>
     <View style={styles.relatedHeader}>
       <Text accessibilityRole="header" numberOfLines={1} style={[styles.heading, { color: theme.textPrimary }]}>{destinationName ? `More hotels in ${destinationName}` : "More hotels"}</Text>
-      {hasMore ? <Pressable accessibilityRole="button" accessibilityLabel={destinationName ? `See more hotels in ${destinationName}` : "See more hotels"} onPress={onSeeMore} style={({ pressed }) => [styles.seeMoreButton, pressed && styles.seeMorePressed]}><Text style={[styles.seeMoreText, { color: theme.dark ? "#8FB5FF" : colors.blue }]}>See more</Text></Pressable> : null}
     </View>
     <ScrollView horizontal style={styles.carouselViewport} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carousel} directionalLockEnabled>{displayedHotels.map((item) => <View key={item.hotel.id} style={styles.relatedCardSlot}><RelatedHotelCard item={item} theme={theme} onView={onViewHotel} /></View>)}</ScrollView>
   </View>;
@@ -79,10 +77,7 @@ const styles = StyleSheet.create({
   map: { flex: 1 },
   mapFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },
   relatedSection: { marginTop: 4 },
-  relatedHeader: { minHeight: 32, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  seeMoreButton: { minHeight: 32, justifyContent: "center", paddingLeft: 8 },
-  seeMorePressed: { opacity: 0.7 },
-  seeMoreText: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
+  relatedHeader: { minHeight: 32, flexDirection: "row", alignItems: "center" },
   carouselViewport: { marginHorizontal: -16, marginTop: 8 },
   carousel: { gap: 12, paddingHorizontal: 16, paddingBottom: 4 },
   relatedCardSlot: { width: RELATED_HOTEL_CARD_WIDTH },
