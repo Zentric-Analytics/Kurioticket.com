@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
-  Platform,
   Pressable,
   ScrollView,
   Share,
@@ -56,7 +55,6 @@ import {
   type NativeHotelRateRow,
 } from "./NativeHotelRatesSection";
 import { HotelDetailsLoadingState } from "./HotelDetailsLoadingState";
-import { openPreviewLegalBrowser } from "../profile/profileNavigation";
 
 type HotelDetailTab = "details" | "reviews" | "deals";
 type HotelDetailsStatus = "loading" | "ready" | "error";
@@ -430,7 +428,7 @@ function HotelDetail({
 
   const openProviderInApp = async (url: string) => {
     const WebBrowser = await import("expo-web-browser");
-    return openPreviewLegalBrowser(url, Platform.OS, WebBrowser);
+    return WebBrowser.openBrowserAsync(url);
   };
 
   const continueSelectedRate = async () => {
