@@ -22,6 +22,24 @@ test("regular flight card model keeps all legs without inventing fare benefits",
   assert.deepEqual(model?.badges,[]);
   assert.equal(model?.bookingProviderName,"seller");
 });
+test("KAYAK Hotel cards preserve booking provider branding for Rates", () => {
+  const model = kayakHotelCardModel({
+    id: "hotel-brand",
+    title: "Hotel",
+    description: "King room",
+    details: [],
+    price: 200,
+    currency: "USD",
+    priceBasis: "total",
+    testUrl: "https://affiliates.kayak.com/sandbox-clickout",
+    bookingProviderName: "Seller Display",
+    bookingProviderLogoUrl: "https://content.r9cdn.net/provider-logo.png",
+  }, 2);
+  assert.equal(model.provider, "KAYAK sandbox");
+  assert.equal(model.bookingProviderName, "Seller Display");
+  assert.equal(model.providerLogoUrl, "https://content.r9cdn.net/provider-logo.png");
+});
+
 test("hotel and car models preserve images and mark unknown specifications",()=>{
   const offer={id:"1",title:"Test",description:"Supplier",details:[],price:100,currency:"USD",priceBasis:"total",testUrl:"https://affiliates.kayak.com/sandbox-clickout",images:[{url:"https://content.r9cdn.net/image.jpg",alt:"Test"}]};
   assert.equal(kayakHotelCardModel(offer,2).imageUrls?.[0],offer.images[0].url);
