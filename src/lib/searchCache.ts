@@ -1,5 +1,6 @@
 import type {
   FlightSearchParams,
+  HotelSearchParams,
   NormalizedFlightResult,
   NormalizedHotelResult,
   PublicFlightResult,
@@ -36,7 +37,13 @@ export interface SharedFlightCacheBackend {
 export const FLIGHT_CACHE_TTL_MS = 1000 * 60 * 30;
 const CLEANUP_LIMIT = 200;
 const CLEANUP_INTERVAL_MS = 60_000;
-const hotelCache = new Map<string, CacheRecord<NormalizedHotelResult>>();
+type HotelCacheRecord = CacheRecord<NormalizedHotelResult> & {
+  searchKey: string | null;
+  searchContext: HotelSearchParams | null;
+};
+
+const hotelCache = new Map<string, HotelCacheRecord>();
+const hotelSearchCache = new Map<string, CacheRecord<NormalizedHotelResult[]>>();
 
 const clone = <T>(value: T): T => structuredClone(value);
 const jsonClone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
@@ -394,16 +401,64 @@ export async function getFlightDetailsCacheContext(id: string, now = Date.now())
   return flightResultCache.getDetailsContext(id, now);
 }
 
-export function rememberHotels(results: NormalizedHotelResult[]) {
-  purgeExpired(hotelCache);
+function hotelSearchIdentity(search: HotelSearchParams) {
+  return JSON.stringify([
+    "hotel-search-context-v1",
+    search.destinationId ?? "",
+    search.destination.trim().toLocaleLowerCase(),
+    search.checkIn,
+    search.checkOut,
+    search.guests,
+    search.rooms,
+  ]);
+}
+
+export function rememberHotels(
+  results: NormalizedHotelResult[],
+  search?: HotelSearchParams,
+  now = Date.now(),
+) {
+  purgeExpired(hotelCache, now);
+  purgeExpired(hotelSearchCache, now);
+  const expiresAt = now + FLIGHT_CACHE_TTL_MS;
+  const searchKey = search ? hotelSearchIdentity(search) : null;
+  const searchContext = search ? clone(search) : null;
+  if (searchKey) {
+    hotelSearchCache.set(searchKey, {
+      value: clone(results),
+      expiresAt,
+    });
+  }
   for (const result of results) {
-    hotelCache.set(result.id, { value: result, expiresAt: Date.now() + FLIGHT_CACHE_TTL_MS });
+    hotelCache.set(result.id, {
+      value: clone(result),
+      expiresAt,
+      searchKey,
+      searchContext,
+    });
   }
 }
 
-export function getHotelFromCache(id: string) {
-  purgeExpired(hotelCache);
+export function getHotelFromCache(id: string, now = Date.now()) {
+  purgeExpired(hotelCache, now);
   return hotelCache.get(id)?.value ?? null;
+}
+
+export function getHotelDetailsCacheContext(id: string, now = Date.now()) {
+  purgeExpired(hotelCache, now);
+  purgeExpired(hotelSearchCache, now);
+  const selected = hotelCache.get(id);
+  if (!selected) return null;
+  const cohort = selected.searchKey
+    ? hotelSearchCache.get(selected.searchKey)?.value ?? []
+    : [];
+  return {
+    hotel: clone(selected.value),
+    searchContext: selected.searchContext ? clone(selected.searchContext) : null,
+    relatedHotels: cohort
+      .filter((hotel) => hotel.id !== id)
+      .map(clone),
+  };
 }
 
 export function toPublicFlight(result: NormalizedFlightResult): PublicFlightResult {
