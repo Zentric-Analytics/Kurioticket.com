@@ -69,13 +69,13 @@ test("provider room parsing removes duplicated generic cancellation copy", () =>
   assert.match(ratesSource, /\.slice\(0, 2\)/);
 });
 
-test("non-bookable KAYAK rates remain display-only when a supplied price exists", () => {
+test("non-bookable KAYAK rates keep a visible disabled Choose room control", () => {
   assert.match(ratesSource, /providerName\.trim\(\) === "KAYAK sandbox"/);
   assert.match(ratesSource, /hasPrice &&[\s\S]*nightlyPrice[\s\S]*\? \(\{ id: "provider", kind: "provider-handoff" \} as const\)/);
   assert.match(ratesSource, /const visibleProviderOffer = providerOffer \?\? displayOnlyKayakOffer/);
   assert.match(ratesSource, /actionable: Boolean\(providerOffer\)/);
-  assert.match(ratesSource, /actionLabel: providerOffer \? "View deal" : undefined/);
-  assert.match(ratesSource, /disabled=\{!row\.actionable\}/);
+  assert.match(ratesSource, /actionLabel: "Choose room"/);
+  assert.match(ratesSource, /disabled=\{!row\.actionable\}/);\n  assert.match(ratesSource, /!row\.actionable && s\.actionControlDisabled/);
 });
 
 test("Kurioticket fallback keeps the bundled wordmark and existing app fonts", () => {
@@ -108,7 +108,7 @@ test("Rates renders price context with a real whole-card continuation action", (
   assert.match(styleRule(ratesSource, "priceUnit", "priceUnavailable"), /fontSize: 12[\s\S]*fontFamily: appFonts\.medium/);
   assert.match(ratesSource, /<Pressable[\s\S]*?disabled=\{!row\.actionable\}[\s\S]*?onPress=\{row\.actionable \? \(\) => onSelectOffer\(row\.offerId\) : undefined\}/);
   assert.match(ratesSource, /actionLabel: "Choose room"/);
-  assert.match(ratesSource, /actionLabel: providerOffer \? "View deal" : undefined/);
+  assert.equal((ratesSource.match(/actionLabel: "Choose room"/g) ?? []).length, 2);
   assert.match(styleRule(ratesSource, "actionControl", "actionControlText"), /minWidth: 82[\s\S]*minHeight: 44[\s\S]*borderRadius: 10/);
   assert.doesNotMatch(ratesSource, /previewReserve|TouchableOpacity/);
   assert.doesNotMatch(ratesSource, /Selected|>Select<|accessibilityRole="radio"/);
