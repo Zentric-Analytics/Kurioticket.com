@@ -52,7 +52,8 @@ test("narrow active Hotel layout mirrors Flight Compare deals cards and persiste
   assert.match(rates, /disabled=\{!row\.actionable\}/);
   assert.doesNotMatch(rates, /rateTitle|rateMeta|Compact room|Deluxe|Suite|Choose room/);
   assert.match(hotel, /s\.bookingDock/);
-  assert.match(hotel, /Continue to[\s\S]*selectedRate\.providerName/);
+  assert.match(hotel, /const bookingActionLabel = "View deal"/);
+  assert.doesNotMatch(hotel, /Continue to|Choose room/);
   assert.match(hotel, /bookingDockButtonText\}>\{bookingActionLabel\}<\/Text>/);
 });
 
