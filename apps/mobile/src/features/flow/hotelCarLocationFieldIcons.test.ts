@@ -10,11 +10,11 @@ test("Hotel Destination uses the shared compact location field", () => {
   assert.doesNotMatch(hotel, /accessibilityLabel="Hotel destination"|locationFieldRow|locationFieldContent|destinationRef/);
 });
 
-test("Car uses shared compact location fields for pick-up and conditional drop-off", () => {
+test("Car uses shared Results Edit card rows for pick-up and conditional drop-off", () => {
   const closedForm = car.slice(0, car.indexOf("export function CarLocationSheet"));
 
-  assert.match(closedForm, /<CompactSearchField label="Pickup location"[^\n]*value=\{pickupLocationDisplay\.primary[^\n]*meta=\{pickupLocationDisplay\.secondary\}[^\n]*metaNumberOfLines=\{1\}[^\n]*icon="location"[^\n]*setLocationPicker\("pickup"\)/);
-  assert.match(closedForm, /form\.separateDropoff \? <FieldError[^\n]*<CompactSearchField label="Drop-off location"[^\n]*value=\{dropoffLocationDisplay\.primary[^\n]*meta=\{dropoffLocationDisplay\.secondary\}[^\n]*metaNumberOfLines=\{1\}[^\n]*icon="location"[^\n]*setLocationPicker\("return"\)/);
+  assert.match(closedForm, /<ResultsEditRow label="PICKUP LOCATION"[^\n]*value=\{pickupLocationDisplay\.primary[^\n]*secondary=\{pickupLocationDisplay\.secondary\}[^\n]*icon="location"[^\n]*setLocationPicker\("pickup"\)/);
+  assert.match(closedForm, /form\.separateDropoff \? <FieldError[^\n]*<View style=\{editCardStyle\}><ResultsEditRow label="DROP-OFF LOCATION"[^\n]*value=\{dropoffLocationDisplay\.primary[^\n]*secondary=\{dropoffLocationDisplay\.secondary\}[^\n]*icon="location"[^\n]*setLocationPicker\("return"\)/);
   assert.doesNotMatch(closedForm, /LocationLauncher|TextInput[^>]*accessibilityLabel="Pick-up location"/);
 });
 

@@ -19,7 +19,7 @@ test("web and native Cars pickup fields use the shared location display contract
 
 test("Paris uses separate primary and supporting lines in the native closed field", () => {
   assert.deepEqual(getLocationFieldDisplay("Paris, France"), { primary: "Paris", secondary: "France" });
-  assert.match(closedNative, /label="Pickup location"[^\n]*value=\{pickupLocationDisplay\.primary \|\| form\.pickupLocation\.trim\(\) \|\| "Airport, city, or address"\}[^\n]*meta=\{pickupLocationDisplay\.secondary\}[^\n]*metaNumberOfLines=\{1\}[^\n]*muted=\{!form\.pickupLocation\}[^\n]*icon="location"[^\n]*setLocationPicker\("pickup"\)/);
+  assert.match(closedNative, /label="PICKUP LOCATION"[^\n]*value=\{pickupLocationDisplay\.primary \|\| form\.pickupLocation\.trim\(\) \|\| "Airport, city, or address"\}[^\n]*secondary=\{pickupLocationDisplay\.secondary\}[^\n]*muted=\{!form\.pickupLocation\}[^\n]*icon="location"[^\n]*setLocationPicker\("pickup"\)/);
   assert.doesNotMatch(closedNative, /label="Pick-up location"|value=\{form\.pickupLocation \|\| "Airport, city, or address"\}/);
 });
 
