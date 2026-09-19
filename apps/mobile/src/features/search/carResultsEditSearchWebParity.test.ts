@@ -56,7 +56,7 @@ test("Cars edit rows use the web icon and disclosure contract", () => {
   assert.match(editRows, /label="PICKUP LOCATION"[^\n]*icon="location"[^\n]*onPress/);
   assert.doesNotMatch(editRows.match(/label="PICKUP LOCATION"[^\n]+/)?.[0] ?? "", /disclosure|chevron/);
   for (const [label, icon] of [["RENTAL DATES", "calendar"], ["PICK-UP / RETURN TIME", "clock"], ["DRIVER AGE", "person"]]) assert.match(editRows, new RegExp(`label="${label.replace("/", "\\/")}"[^\\n]*icon="${icon}"[^\\n]*disclosure`));
-  assert.match(panel, /disclosure \? <FlowIcon name="chevronDown"/);
+  assert.match(panel, /disclosure \? <View[^>]*><FlowIcon name="chevronDown"/);
   assert.doesNotMatch(editRows, /name="chevron"/);
 });
 
