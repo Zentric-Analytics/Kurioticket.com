@@ -27,7 +27,7 @@ test("Cars main selectors use a polished independent-card treatment without chan
   assert.match(panel, /editCardStyle = \[styles\.resultsEditCard, \{ backgroundColor: ft\.colors\.card, borderColor: ft\.colors\.border \}\]/);
   assert.match(panel, /mainCardStyle = \[styles\.mainCard, \{ backgroundColor: ft\.colors\.card, borderColor: ft\.colors\.border \}\]/);
   assert.match(panel, /mainStack:\{width:"100%",gap:8\}/);
-  assert.match(panel, /mainCard:\{width:"100%",borderWidth:StyleSheet\.hairlineWidth,borderRadius:15,overflow:"hidden"\}/);
+  assert.match(panel, /mainCard:\{width:"100%",borderWidth:1,borderRadius:15,overflow:"hidden"\}/);
   assert.match(panel, /mainRow:\{minHeight:66,paddingHorizontal:12,paddingVertical:9\}/);
   assert.match(panel, /mainCopy:\{gap:4\}/);
   assert.match(panel, /mainLabel:\{fontSize:10,lineHeight:13,fontWeight:"800",letterSpacing:0\.5\}/);

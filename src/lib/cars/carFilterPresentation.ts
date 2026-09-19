@@ -14,7 +14,7 @@ export type CarFilterGroup = {
 
 /** One platform-neutral list of the Car filter dimensions exposed by Web and Native. */
 export const carFilterGroups: CarFilterGroup[] = [
-  { id: "pricePerDay", titleKey: "", title: "Price (per day)", options: [
+  { id: "pricePerDay", titleKey: "", title: "Price", options: [
     { id: "daily0To49", labelKey: "", label: "$0 – $50" },
     { id: "daily50To99", labelKey: "", label: "$50 – $100" },
     { id: "daily100To149", labelKey: "", label: "$100 – $150" },
