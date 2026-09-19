@@ -45,10 +45,10 @@ test("unsupported iOS and non-iOS platforms retain the polished BlurView fallbac
   assert.match(surface, /fallbackGlassOptical:[\s\S]*backgroundColor: "rgba\(255, 255, 255, 0\.10\)"/);
 });
 
-test("Cars optical variant adds luminous depth without covering the clear material", () => {
+test("Cars optical variant keeps one rim without stacking a separate top highlight", () => {
   assert.match(surface, /function OpticalGlassFrame/);
   assert.match(surface, /styles\.opticalRim/);
-  assert.match(surface, /styles\.opticalSpecular/);
+  assert.doesNotMatch(surface, /opticalSpecular/);
   assert.match(surface, /borderColor: "rgba\(255, 255, 255, 0\.82\)"/);
   assert.doesNotMatch(surface, /setInterval|requestAnimationFrame/);
 });
