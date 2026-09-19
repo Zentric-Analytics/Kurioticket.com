@@ -444,9 +444,27 @@ export function getHotelFromCache(id: string, now = Date.now()) {
   return hotelCache.get(id)?.value ?? null;
 }
 
-export function getHotelDetailsCacheContext(id: string, now = Date.now()) {
+export function getHotelDetailsCacheContext(
+  id: string,
+  search?: HotelSearchParams,
+  now = Date.now(),
+) {
   purgeExpired(hotelCache, now);
   purgeExpired(hotelSearchCache, now);
+
+  if (search) {
+    const cohort = hotelSearchCache.get(hotelSearchIdentity(search))?.value ?? [];
+    const selected = cohort.find((hotel) => hotel.id === id);
+    if (!selected) return null;
+    return {
+      hotel: clone(selected),
+      searchContext: clone(search),
+      relatedHotels: cohort
+        .filter((hotel) => hotel.id !== id)
+        .map(clone),
+    };
+  }
+
   const selected = hotelCache.get(id);
   if (!selected) return null;
   const cohort = selected.searchKey
