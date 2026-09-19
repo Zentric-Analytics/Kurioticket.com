@@ -29,7 +29,7 @@ function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWi
     useState: (value: unknown) => [value, () => {}], useRef: (current: unknown) => ({ current }), useEffect: () => {},
     Platform: { OS: "android" }, StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1, absoluteFillObject: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 } }, ui: { blue: "#2563EB", green: "#16A34A" },
     router: { back: () => { backs += 1; } }, FLIGHT_RESULTS_LIGHT_CANVAS: "#F5F7FB",
-    input: { theme, topInset, bottomInset, fareCardWidth },
+    input: { theme, topInset, bottomInset, fareCardWidth, viewportWidth: 390 },
   }) as Element;
   return { root, theme, backCount: () => backs };
 }
@@ -96,7 +96,7 @@ test("loading presentation remains isolated from success and existing failure st
 
 test("information skeleton mirrors flat tab content and the loaded navigation baseline",()=>{assert.match(loading,/s\.loadingTabs,\{borderBottomColor:theme\.border\}/);assert.match(details,/loadingTabs:\{height:48,borderBottomWidth:1,/);assert.doesNotMatch(details,/loadingInfoBody:\{[^}]*(?:borderWidth|borderRadius|backgroundColor)/);});
 
-test("Flight hero controls keep a light fallback surface so dark icons remain visible in dark mode", () => {
+test("Flight hero controls use the theme-aware Cars optical material in loading state", () => {
   const { root } = renderLoading(true);
   const controls = find(root, "flight-details-loading-controls");
   const backGlass = controls.children[0].children[0];
@@ -104,12 +104,14 @@ test("Flight hero controls keep a light fallback surface so dark icons remain vi
   const actionsGlass = actions.children[0];
 
   assert.equal(backGlass.type, "DetailGlassSurface");
-  assert.equal(backGlass.props.dark, false);
+  assert.equal(backGlass.props.dark, true);
+  assert.equal(backGlass.props.variant, "carsOptical");
   assert.equal(actionsGlass.type, "DetailGlassSurface");
-  assert.equal(actionsGlass.props.dark, false);
+  assert.equal(actionsGlass.props.dark, true);
+  assert.equal(actionsGlass.props.variant, "carsOptical");
 
-  assert.match(details, /<DetailGlassSurface dark=\{false\} style=\{s\.heroIconGlass\}\/>/);
-  assert.match(details, /<DetailGlassSurface dark=\{false\} style=\{s\.heroActionsGlass\}\/>/);
+  assert.match(details, /<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical" style=\{s\.heroIconGlass\}\/>/);
+  assert.match(details, /<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical" style=\{s\.heroActionsGlass\}\/>/);
 });
 
 test("entry loading reserves an edge-to-edge hero and two ordered identity lines", () => {
@@ -216,6 +218,8 @@ test("loading uses the final canvas and reserves an inert safe-area checkout doc
     assert.equal(style(root).backgroundColor, dark ? theme.background : "#F5F7FB");
     const scroll = find(root, "flight-details-loading-scroll");
     assert.equal(scroll.props.contentContainerStyle.at(-1).paddingBottom, 120 + bottom);
+    assert.equal(scroll.props.contentContainerStyle.at(-1).width, 390);
+    assert.equal(scroll.props.contentContainerStyle.at(-1).maxWidth, 390);
     const dock = find(root, "flight-details-loading-checkout");
     assert.equal(style(dock).position, "absolute");
     assert.equal(style(dock).bottom, 0);
