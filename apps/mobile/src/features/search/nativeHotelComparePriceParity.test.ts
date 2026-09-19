@@ -67,12 +67,13 @@ test("provider room parsing keeps only one concise supporting condition", () => 
   assert.doesNotMatch(ratesSource, /\.slice\(0, 3\)/);
 });
 
-test("selected Hotel rate uses only a slim left marker when more than one rate exists", () => {
+test("selected Hotel rate keeps the existing multi-rate tint while a single rate remains white", () => {
   assert.match(ratesSource, /const selected = row\.id === selectedRateId/);
-  assert.match(ratesSource, /const showSelectionMarker = rows\.length > 1 && selected/);
-  assert.match(ratesSource, /showSelectionMarker \? \([\s\S]*?s\.selectedBar/);
+  assert.match(ratesSource, /const selectedBackground = theme\.dark[\s\S]*?rgba\(0, 75, 184, 0\.035\)/);
+  assert.match(ratesSource, /const showSelectedBackground = rows\.length > 1 && selected/);
+  assert.match(ratesSource, /backgroundColor: showSelectedBackground \? selectedBackground : theme\.surface/);
   assert.match(ratesSource, /accessibilityState=\{\{ selected, disabled: !row\.actionable \}\}/);
-  assert.doesNotMatch(ratesSource, /selectedBackground|<Check|selectedMark|borderColor: selected|borderWidth: selected|accessibilityRole="radio"|radioDot|radiogroup/);
+  assert.doesNotMatch(ratesSource, /selectedBar|showSelectionMarker|<Check|selectedMark|borderColor: selected|borderWidth: selected|accessibilityRole="radio"|radioDot|radiogroup/);
 });
 
 test("Kurioticket cards keep the bundled wordmark and app typography", () => {
