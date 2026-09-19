@@ -167,13 +167,13 @@ test("native gallery remains interactive and full-bleed with the two-level mobil
   assert.doesNotMatch(gallery, /Previous photo|Next photo|ChevronLeft|ChevronRight/);
 });
 
-test("active Hotel detail keeps theme-aware accents while only multi-rate selection gets a slim marker", () => {
+test("active Hotel detail keeps the existing multi-rate tint while a single rate stays white", () => {
   assert.match(hotel, /const hotelAccent = theme\.dark \? "#8FB5FF" : colors\.blue/);
   assert.match(hotel, /<NativeHotelRatesSection[\s\S]*?accentColor=\{hotelAccent\}/);
-  assert.match(rates, /const showSelectionMarker = rows\.length > 1 && selected/);
-  assert.match(rates, /showSelectionMarker \? \([\s\S]*?s\.selectedBar/);
-  assert.match(rates, /backgroundColor: theme\.surface/);
-  assert.doesNotMatch(rates, /selectedBackground|<Check|selectedMark|borderColor: selected|borderWidth: selected|reserveButton|>Reserve<\/Text>|accessibilityRole="radio"/);
+  assert.match(rates, /const selectedBackground = theme\.dark/);
+  assert.match(rates, /const showSelectedBackground = rows\.length > 1 && selected/);
+  assert.match(rates, /backgroundColor: showSelectedBackground \? selectedBackground : theme\.surface/);
+  assert.doesNotMatch(rates, /selectedBar|showSelectionMarker|<Check|selectedMark|borderColor: selected|borderWidth: selected|reserveButton|>Reserve<\/Text>|accessibilityRole="radio"/);
   assert.doesNotMatch(rates, /borderWidth: 6/);
   assert.match(hotelSource, /bookingDockButton/);
   assert.match(tokens, /blue: "#004BB8"/);
