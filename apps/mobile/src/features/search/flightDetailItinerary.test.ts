@@ -31,10 +31,13 @@ test("hero presents the airport route first, metadata second, and no city-route 
   assert.equal((heroCopy.match(/<Text\b/g)??[]).length,2);
 });
 
-test("brightened hero keeps small metadata on a localized contrast backing",()=>{
+test("brightened hero protects its lower text with a localized soft fade rather than a metadata badge",()=>{
   assert.match(source,/heroOverlay:\{\.\.\.StyleSheet\.absoluteFillObject,backgroundColor:"rgba\(5, 13, 26, 0\.30\)"\}/);
-  assert.match(source,/<View style=\{s\.routeMetadataBackdrop\}><Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\} style=\{s\.routeMetadata\}>\{tripMetadata\}<\/Text><\/View>/);
-  assert.match(source,/routeMetadataBackdrop:\{alignSelf:"flex-start",backgroundColor:"rgba\(5, 13, 26, 0\.20\)",paddingHorizontal:4,paddingVertical:1,borderRadius:4\}/);
+  assert.match(source,/testID="flight-details-hero-text-fade" pointerEvents="none" accessible=\{false\}/);
+  assert.match(source,/<LinearGradient id="flightHeroTextFade"[\s\S]*?<Stop offset="0"[^>]*stopOpacity="0"[\s\S]*?<Stop offset="1"[^>]*stopOpacity="0\.42"/);
+  assert.match(source,/heroTextFade:\{position:"absolute",left:0,right:0,bottom:66,height:150\}/);
+  assert.match(source,/<Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\} style=\{s\.routeMetadata\}>\{tripMetadata\}<\/Text>/);
+  assert.doesNotMatch(source,/routeMetadataBackdrop|backgroundColor:[^}]*routeMetadata/);
 });
 
 test("hero controls preserve actions and semantics while reducing only their visible glass surfaces",()=>{
@@ -51,6 +54,8 @@ test("hero controls preserve actions and semantics while reducing only their vis
   assert.match(source,/heroAction:\{width:44,height:44/);
   assert.match(source,/heroIconButton:\{width:44,height:44/);
   assert.match(source,/heroIconGlass:\{[^}]*top:2,bottom:2[^}]*borderRadius:20/s);
+  assert.equal((controls.match(/variant="carsOptical"/g)??[]).length,2);
+  assert.match(controls,/<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical"/);
   assert.match(controls,/<Heart size=\{17\}/);
   assert.match(controls,/<FlowIcon name="share" size=\{17\}/);
 });
