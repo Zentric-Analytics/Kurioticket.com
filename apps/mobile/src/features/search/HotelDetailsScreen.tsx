@@ -227,9 +227,11 @@ function HotelDetail({
     result.partnerRedirectUrl,
     result.bookingUrl,
   );
-  const providerBookable = result.searchPolicy.bookable && Boolean(redirectUrl);
+  const providerHandoffAvailable =
+    Boolean(redirectUrl) &&
+    (result.searchPolicy.bookable || result.searchPolicy.source === "kayak-sandbox");
   const internalRoomFlowAvailable = roomOptions.length > 0;
-  const hotelOffers = nativeHotelOffers(internalRoomFlowAvailable, providerBookable);
+  const hotelOffers = nativeHotelOffers(internalRoomFlowAvailable, providerHandoffAvailable);
   const offerKey = hotelOffers.map(({ id }) => id).join("\u0000");
 
   useEffect(() => {
@@ -414,7 +416,7 @@ function HotelDetail({
       setRoomsOpen(true);
       return;
     }
-    if (offer.kind !== "provider-handoff" || !providerBookable || !redirectUrl) return;
+    if (offer.kind !== "provider-handoff" || !providerHandoffAvailable || !redirectUrl) return;
     try {
       await Linking.openURL(redirectUrl);
     } catch {

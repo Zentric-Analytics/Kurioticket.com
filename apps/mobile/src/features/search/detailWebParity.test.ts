@@ -192,19 +192,19 @@ test("active Details is flat, keeps the useful fact sections, and exposes all am
   assert.doesNotMatch(bookingDetails, /width: "48%"|flexWrap: "wrap"/);
 });
 
-test("active Hotel provider selection validates candidates before precedence", () => {
+test("active Hotel provider selection validates candidates and allows safe KAYAK sandbox handoff", () => {
   assert.match(hotel, /nativeHotelProviderUrl\([\s\S]*?result\.partnerRedirectUrl,[\s\S]*?result\.bookingUrl/);
-  assert.match(hotel, /result\.searchPolicy\.bookable && Boolean\(redirectUrl\)/);
+  assert.match(hotel, /const providerHandoffAvailable =[\s\S]*?Boolean\(redirectUrl\)[\s\S]*?result\.searchPolicy\.bookable \|\| result\.searchPolicy\.source === "kayak-sandbox"/);
   assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
 });
 
-test("active Hotel Rates retain future continuation plumbing without exposing an inactive action", () => {
-  assert.match(hotel, /nativeHotelOffers\(internalRoomFlowAvailable, providerBookable\)/);
+test("active Hotel Rates hand off safe provider offers while retaining the native room flow", () => {
+  assert.match(hotel, /nativeHotelOffers\(internalRoomFlowAvailable, providerHandoffAvailable\)/);
   assert.match(hotel, /const offer = hotelOffers\.find\(\(\{ id \}\) => id === offerId\)/);
   assert.match(hotel, /if \(offer\.kind === "internal-room-flow"\)/);
-  assert.match(hotel, /offer\.kind !== "provider-handoff"/);
+  assert.match(hotel, /offer\.kind !== "provider-handoff" \|\| !providerHandoffAvailable \|\| !redirectUrl/);
   assert.match(hotel, /Linking\.openURL\(redirectUrl\)/);
-  assert.doesNotMatch(rates, /onPress=\{\(\) => onSelectOffer\(row\.offerId\)\}|accessibilityRole="button"|>Reserve<\/Text>/);
+  assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectOffer\(row\.offerId\) : undefined\}/);
   assert.doesNotMatch(hotel, /estimated stay total|Continue booking/);
 });
 
