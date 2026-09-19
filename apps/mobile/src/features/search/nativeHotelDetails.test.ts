@@ -106,6 +106,7 @@ test("active Hotel details enrichment is keyed, abortable, and does not expose f
   assert.match(api, /`\/api\/hotels\/details\?\$\{params\.toString\(\)\}`/);
   for (const field of ["id", "destination", "checkIn", "checkOut"]) assert.match(api, new RegExp(`${field}: input\\.${field}`));
   for (const field of ["guests", "rooms"]) assert.match(api, new RegExp(`${field}: String\\(input\\.${field}\\)`));
+  assert.match(api, /relatedLimit: "12"/);
   assert.match(api, /options: \{ signal\?: AbortSignal \}/);
   assert.match(screen, /const enrichmentKey = `\$\{result\.id\}/);
   assert.match(screen, /const destination = String\(params\.destination \|\| result\.location\)/);
