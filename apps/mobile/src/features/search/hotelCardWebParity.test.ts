@@ -29,20 +29,24 @@ test("hotel card gallery navigates, loops, and recovers failed images", () => {
   assert.match(card, /Hotel image unavailable/);
 });
 
-test("hotel card galleries use native light glass inside 44dp edge controls", () => {
-  const galleryStyles = source.slice(source.indexOf("  galleryControl:"), source.indexOf("  overlay:"));
+test("hotel card galleries keep plain arrows and a native light-glass image counter", () => {
+  const galleryStyles = source.slice(source.indexOf("  galleryControl:"), source.indexOf("  hotelBadge:"));
   assert.match(galleryStyles, /galleryControl:\s*\{[^}]*position:\s*"absolute"[^}]*top:\s*"50%"[^}]*width:\s*44[^}]*height:\s*44/s);
   assert.match(galleryStyles, /transform:\s*\[\{translateY:\s*-22\}\]/);
   assert.match(galleryStyles, /galleryPrevious:\s*\{left:\s*0\}/);
   assert.match(galleryStyles, /galleryNext:\s*\{right:\s*0\}/);
-  assert.match(galleryStyles, /galleryControlVisual:\s*\{[^}]*width:\s*34[^}]*height:\s*34[^}]*borderRadius:\s*17/s);
-  assert.match(galleryStyles, /galleryControlVisualPrevious:\s*\{transform:\s*\[\{translateX:\s*-5\}\]\}/);
-  assert.match(galleryStyles, /galleryControlVisualNext:\s*\{transform:\s*\[\{translateX:\s*5\}\]\}/);
-  assert.match(galleryStyles, /galleryControlGlass:\s*\{\.\.\.StyleSheet\.absoluteFillObject,borderRadius:17\}/);
-  assert.doesNotMatch(galleryStyles, /galleryChevronUnderlay|galleryChevronStack|HOTEL_GALLERY_CHEVRON_CONTRAST/);
-  assert.equal((card.match(/<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s0\.galleryControlGlass\} \/>/g) ?? []).length, 2);
-  assert.match(card, /<ChevronLeft accessible=\{false\} color="#0F172A" size=\{20\} strokeWidth=\{2\.2\}\/?>/);
-  assert.match(card, /<ChevronRight accessible=\{false\} color="#0F172A" size=\{20\} strokeWidth=\{2\.2\}\/?>/);
+  assert.match(galleryStyles, /galleryIconPrevious:\s*\{transform:\s*\[\{translateX:\s*-6\}\]\}/);
+  assert.match(galleryStyles, /galleryIconNext:\s*\{transform:\s*\[\{translateX:\s*6\}\]\}/);
+  assert.match(galleryStyles, /galleryChevronStack:\s*\{width:\s*20,height:\s*20\}/);
+  assert.match(galleryStyles, /galleryChevronUnderlay:\s*\{position:\s*"absolute",left:\s*0,top:\s*0\}/);
+  assert.match(source, /const HOTEL_GALLERY_CHEVRON_CONTRAST = "rgba\(0,0,0,0\.85\)"/);
+  assert.doesNotMatch(galleryStyles, /galleryControlGlass|galleryControlVisual/);
+  assert.doesNotMatch(card, /style=\{s0\.galleryControlGlass\}/);
+  assert.match(card, /<ChevronLeft accessible=\{false\} color=\{HOTEL_GALLERY_CHEVRON_CONTRAST\} size=\{20\} strokeWidth=\{4\} style=\{s0\.galleryChevronUnderlay\}\/?>[\s\S]*?<ChevronLeft accessible=\{false\} color="white" size=\{20\} strokeWidth=\{2\.2\}\/?>/);
+  assert.match(card, /<ChevronRight accessible=\{false\} color=\{HOTEL_GALLERY_CHEVRON_CONTRAST\} size=\{20\} strokeWidth=\{4\} style=\{s0\.galleryChevronUnderlay\}\/?>[\s\S]*?<ChevronRight accessible=\{false\} color="white" size=\{20\} strokeWidth=\{2\.2\}\/?>/);
+  assert.match(card, /<View pointerEvents="none" style=\{s0\.overlay\}>[\s\S]*?<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s0\.overlayGlass\} \/>[\s\S]*?\{activeImage\+1\} \/ \{usableGallery\.length\}/);
+  assert.match(galleryStyles, /overlayGlass:\s*\{ \.\.\.StyleSheet\.absoluteFillObject, borderRadius: 14 \}/);
+  assert.match(galleryStyles, /overlayText:\s*\{ color: "#0F172A"/);
 });
 
 test("hotel actions independently save and share without share navigation", () => {
