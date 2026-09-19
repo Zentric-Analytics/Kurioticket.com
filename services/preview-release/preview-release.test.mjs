@@ -1559,6 +1559,7 @@ test("OTA delivery publishes platforms sequentially and resumes only a missing p
   assert.deepEqual(published, ["android"]);
   assert.deepEqual(result.updateIds, ["ios-existing", "android-new"]);
   assert.equal(actions[0].state, "PUBLISHED");
+  assert.deepEqual(actions[0].evidence.providerVerifiedPlatforms, ["android", "ios"]);
   assert.equal(actions[0].remoteId, "ios=ios-existing,android=android-group");
 });
 
@@ -1859,19 +1860,46 @@ test("coalesced NO_DELIVERY overlay is accepted only with exact canonical finger
   }), /cannot advance the delivered-native baseline/);
 });
 
-test("OTA client rejects all-platform publication and uses bounded sequential export memory", async () => {
-  const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused" });
+test("OTA client verifies exact Preview history before returning publication success", async () => {
+  const runtime = "a".repeat(40);
+  const message = `Automatic Preview iOS OTA for ${sha}; audit run 0`;
+  const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused", sleep: async () => {} });
   const calls = [];
   client.validateOtaStartup = async () => {};
-  client.run = async (args) => { calls.push(args); return [{ id: "update-id", runtimeVersion: "a".repeat(40) }]; };
-  await client.publishUpdate("message", "ios", "a".repeat(40));
+  client.run = async (args) => {
+    calls.push(args);
+    if (args[1] === "update") return [{ id: "update-id", group: "ios-group", branch: "preview", runtimeVersion: runtime, platforms: ["ios"], message }];
+    if (args[1] === "update:list") return [{ branch: "preview", runtimeVersion: runtime, group: "ios-group", platforms: ["ios"], message }];
+    return [];
+  };
+  const published = await client.publishUpdate(message, "ios", runtime, sha);
+  assert.equal(published[0].group, "ios-group");
   assert.equal(calls[0][calls[0].indexOf("--platform") + 1], "ios");
   assert.equal(calls[0][calls[0].indexOf("--environment") + 1], "preview");
-  await assert.rejects(client.publishUpdate("message", "all", "a".repeat(40)), /platform is invalid/);
-  client.run = async () => [{ id: "wrong-runtime", runtimeVersion: "b".repeat(40) }];
-  await assert.rejects(client.publishUpdate("message", "ios", "a".repeat(40)), /runtime does not match/);
+  assert.ok(calls.some((args) => args[1] === "update:list"), "post-publish provider history must be checked");
+  await assert.rejects(client.publishUpdate(message, "all", runtime, sha), /platform is invalid/);
+  client.run = async () => [{ id: "wrong-runtime", group: "wrong-runtime-group", runtimeVersion: "b".repeat(40) }];
+  await assert.rejects(client.publishUpdate(message, "ios", runtime, sha), /runtime does not match/);
   const source = readFileSync(resolve(repositoryRoot, "services/preview-release/remote-clients.mjs"), "utf8");
   assert.match(source, /isUpdatePublish \? 1024 : 128/);
+});
+
+test("OTA client fails closed when a successful publish is not observable in Preview history", async () => {
+  const runtime = "a".repeat(40);
+  const message = `Automatic Preview iOS OTA for ${sha}; audit run 0`;
+  const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused", sleep: async () => {} });
+  client.validateOtaStartup = async () => {};
+  let historyReads = 0;
+  client.run = async (args) => {
+    if (args[1] === "update") return [{ id: "update-id", group: "ios-group", branch: "preview", runtimeVersion: runtime, platforms: ["ios"], message }];
+    if (args[1] === "update:list") { historyReads += 1; return []; }
+    return [];
+  };
+  await assert.rejects(
+    client.publishUpdate(message, "ios", runtime, sha),
+    /was not observable in Preview history/,
+  );
+  assert.equal(historyReads, 6);
 });
 
 test("OTA publication fails closed before EAS mutation when startup validation fails", async () => {
@@ -1880,7 +1908,7 @@ test("OTA publication fails closed before EAS mutation when startup validation f
   client.validateOtaStartup = async () => { throw new Error("startup incompatible"); };
   client.run = async () => { mutations += 1; return []; };
 
-  await assert.rejects(client.publishUpdate("message", "ios", "a".repeat(40)), /startup incompatible/);
+  await assert.rejects(client.publishUpdate(`Automatic Preview iOS OTA for ${sha}; audit run 0`, "ios", "a".repeat(40), sha), /startup incompatible/);
   assert.equal(mutations, 0);
 });
 
