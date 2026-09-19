@@ -12,6 +12,9 @@ test("KAYAK overview reuses existing hotel sections with provider-authored facts
   assert.match(overview, /providerDetails\?\.rate\?\.roomName/);
   assert.match(overview, />Location</);
   assert.match(overview, />Room &amp; comfort</);
+  assert.match(overview, /locationProperty: PublicHotelPropertyDetails \| null/);
+  assert.match(overview, /\{locationProperty \? \(/);
+  assert.match(overview, /propertyDetails=\{locationProperty\}/);
   assert.doesNotMatch(overview, /latitude:\s*0|longitude:\s*0|fake|placeholder coordinates/i);
 });
 

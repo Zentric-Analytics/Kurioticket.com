@@ -71,6 +71,7 @@ function providerFactValues(details?: PublicHotelProviderDetails) {
 export function NativeHotelBookingDetails({
   result,
   property,
+  locationProperty,
   detailsStatus,
   classification,
   relatedHotels,
@@ -79,6 +80,7 @@ export function NativeHotelBookingDetails({
 }: {
   result: HotelResult;
   property: PublicHotelPropertyDetails | null;
+  locationProperty: PublicHotelPropertyDetails | null;
   detailsStatus: HotelDetailsStatus;
   classification: number | null;
   relatedHotels: NativeRelatedHotel[];
@@ -128,9 +130,9 @@ export function NativeHotelBookingDetails({
 
       <SectionGap />
 
-      {property ? (
+      {locationProperty ? (
         <>
-          <NativeHotelLocationSection hotelId={result.id} hotelName={result.name} propertyDetails={property} theme={theme} />
+          <NativeHotelLocationSection hotelId={result.id} hotelName={result.name} propertyDetails={locationProperty} theme={theme} />
           <SectionGap />
         </>
       ) : providerAddress || providerPlace ? (
