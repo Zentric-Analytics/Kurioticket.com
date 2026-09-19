@@ -41,11 +41,10 @@ function providerDetails(result: NormalizedHotelResult): PublicHotelProviderDeta
   return details.source === "KAYAK" ? details : null;
 }
 
-const RELATED_HOTEL_PREVIEW_LIMIT = 12;
-
 function relatedHotelsFromSearchCohort(
   hotels: NormalizedHotelResult[],
   currentHotelId: string,
+  previewLimit: number | null,
 ) {
   const seenIds = new Set<string>([currentHotelId]);
   const seenIdentity = new Set<string>();
@@ -57,7 +56,7 @@ function relatedHotelsFromSearchCohort(
     seenIds.add(hotel.id);
     seenIdentity.add(identity);
     relatedHotels.push(toPublicHotel(hotel));
-    if (relatedHotels.length > RELATED_HOTEL_PREVIEW_LIMIT) break;
+    if (previewLimit !== null && relatedHotels.length > previewLimit) break;
   }
   return relatedHotels;
 }
@@ -98,6 +97,13 @@ export async function GET(request: Request) {
     .slice(0, 10);
   const checkOut = url.searchParams.get("checkOut") || tomorrow;
   const record = getStaticHotelById(id);
+  const requestedPreviewLimit = Number(url.searchParams.get("relatedLimit"));
+  const relatedPreviewLimit =
+    Number.isInteger(requestedPreviewLimit) &&
+    requestedPreviewLimit >= 1 &&
+    requestedPreviewLimit <= 24
+      ? requestedPreviewLimit
+      : null;
   const requestedDestination = url.searchParams.get("destination")?.trim() || "";
   const search: HotelSearchParams = {
     destination: requestedDestination || record?.city || "",
@@ -126,12 +132,17 @@ export async function GET(request: Request) {
     ? memoryContext.relatedHotels
     : persistedCohort;
   const relatedHotelCandidates = relatedSearchCohort.length
-    ? relatedHotelsFromSearchCohort(relatedSearchCohort, id)
+    ? relatedHotelsFromSearchCohort(relatedSearchCohort, id, relatedPreviewLimit)
     : record
       ? buildRelatedStaticHotelResults(record, search).map(toPublicHotel)
       : [];
-  const relatedHotelsHasMore = relatedHotelCandidates.length > RELATED_HOTEL_PREVIEW_LIMIT;
-  const relatedHotels = relatedHotelCandidates.slice(0, RELATED_HOTEL_PREVIEW_LIMIT);
+  const relatedHotelsHasMore =
+    relatedPreviewLimit !== null &&
+    relatedHotelCandidates.length > relatedPreviewLimit;
+  const relatedHotels =
+    relatedPreviewLimit === null
+      ? relatedHotelCandidates
+      : relatedHotelCandidates.slice(0, relatedPreviewLimit);
   if (record) {
     const hotel = buildStaticHotelResult(record, search);
     const propertyDetails = toPublicPropertyDetails(record);
