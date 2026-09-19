@@ -20,7 +20,7 @@ test("discovery Hotel results never imply live price, saves, or classification",
 test("active native Hotel continuation distinguishes Kurioticket rooms and provider handoff", () => {
   assert.match(hotel, /const internalRoomFlowAvailable = roomOptions\.length > 0/);
   assert.match(hotel, /nativeHotelProviderUrl\([\s\S]*?result\.partnerRedirectUrl,[\s\S]*?result\.bookingUrl/);
-  assert.match(hotel, /result\.searchPolicy\.bookable && Boolean\(redirectUrl\)/);
+  assert.match(hotel, /const providerHandoffAvailable =[\s\S]*?Boolean\(redirectUrl\)[\s\S]*?result\.searchPolicy\.bookable \|\| result\.searchPolicy\.source === "kayak-sandbox"/);
   assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
   assert.match(hotel, /const offer = hotelOffers\.find\(\(\{ id \}\) => id === offerId\)/);
   assert.match(hotel, /if \(offer\.kind === "internal-room-flow"\)/);
