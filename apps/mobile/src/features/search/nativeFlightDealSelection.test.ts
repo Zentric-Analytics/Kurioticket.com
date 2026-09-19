@@ -49,7 +49,7 @@ test("a sole provider is selected without requiring invented provider data", () 
 test("Compare deals uses selectable cards and one dock handoff", () => {
   assert.match(source, /accessibilityRole="radiogroup" accessibilityLabel="Flight deal options"/);
   assert.match(source, /accessibilityRole="radio" accessibilityState=\{\{selected:isSelected\}\}/);
-  assert.match(source, /borderColor:isSelected\?ui\.blue:theme\.border/);
+  assert.match(source, /borderColor:isSelected\?ui\.blue:surfaceBorderColor/);
   assert.doesNotMatch(source, /View deal|viewDealAction|s\.dealRow/);
   assert.match(source, /displayPrices\[`deal:\$\{selectedDeal\.key\}`\]/);
   assert.match(source, /provider=selectedDeal\?\.providerName\?\?/);

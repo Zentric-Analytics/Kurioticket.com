@@ -16,9 +16,10 @@ function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWi
   let backs = 0;
   const host = (type: string | ((props: any) => Element), props: Record<string, any> | null, ...children: any[]): Element =>
     typeof type === "function" ? type(props) : { type, props: props ?? {}, children: children.flat(Infinity).filter((child) => child && typeof child === "object") };
+  const palette = details.slice(details.indexOf("const FLIGHT_DETAILS_LIGHT_CANVAS"), details.indexOf("type Params"));
   const styles = details.slice(details.indexOf("const s=StyleSheet.create"));
   const topBar = details.slice(loadingEnd, details.indexOf("function IconButton", loadingEnd));
-  const code = ts.transpileModule(`${loading}\n${topBar}\n${styles}\nFlightDetailsLoadingSkeleton(input);`, {
+  const code = ts.transpileModule(`${palette}\n${loading}\n${topBar}\n${styles}\nFlightDetailsLoadingSkeleton(input);`, {
     compilerOptions: { jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const theme = { dark, background: "#101114", surface: dark ? "#202126" : "#FFFFFF", border: dark ? "#454650" : "#CBD5E1" };
@@ -94,7 +95,7 @@ test("loading presentation remains isolated from success and existing failure st
   assert.match(details, /testID="fare-information-deck"/);
 });
 
-test("information skeleton mirrors flat tab content and the loaded navigation baseline",()=>{assert.match(loading,/s\.loadingTabs,\{borderBottomColor:theme\.border\}/);assert.match(details,/loadingTabs:\{height:48,borderBottomWidth:1,/);assert.doesNotMatch(details,/loadingInfoBody:\{[^}]*(?:borderWidth|borderRadius|backgroundColor)/);});
+test("information skeleton mirrors flat tab content and the loaded navigation baseline",()=>{assert.match(loading,/s\.loadingTabs,\{borderBottomColor:surfaceBorderColor\}/);assert.match(details,/loadingTabs:\{height:48,borderBottomWidth:1,/);assert.doesNotMatch(details,/loadingInfoBody:\{[^}]*(?:borderWidth|borderRadius|backgroundColor)/);});
 
 test("Flight hero controls use the theme-aware Cars optical material in loading state", () => {
   const { root } = renderLoading(true);
@@ -217,7 +218,7 @@ test("entry fare and information rails reserve real widths, bottom price zones a
 test("loading uses the final canvas and reserves an inert safe-area checkout dock", () => {
   for (const dark of [false, true]) for (const bottom of [0, 34]) {
     const { root, theme } = renderLoading(dark, 47, bottom);
-    assert.equal(style(root).backgroundColor, dark ? theme.background : "#F5F7FB");
+    assert.equal(style(root).backgroundColor, dark ? theme.background : "#F3F6FA");
     const scroll = find(root, "flight-details-loading-scroll");
     assert.equal(scroll.props.contentContainerStyle.at(-1).paddingBottom, 120 + bottom);
     assert.equal(scroll.props.contentContainerStyle.at(-1).width, 390);

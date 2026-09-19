@@ -135,11 +135,11 @@ test("journey times remain the visual anchor with tabular numerals and a restrai
 });
 
 test("itinerary surface depth is deliberately stronger, theme-aware, and shared by the loading card",()=>{
-  assert.match(source,/itineraryCardLight:\{shadowColor:ui\.navy,shadowOffset:\{width:0,height:6\},shadowOpacity:\.12,shadowRadius:20,elevation:4\}/);
-  assert.match(source,/itineraryCardDark:\{shadowColor:"#000000",shadowOffset:\{width:0,height:5\},shadowOpacity:\.28,shadowRadius:18,elevation:4\}/);
+  assert.match(source,/itineraryCardLight:\{shadowColor:ui\.navy,shadowOffset:\{width:0,height:6\},shadowOpacity:\.14,shadowRadius:18,elevation:4\}/);
+  assert.match(source,/itineraryCardDark:\{shadowColor:"#000000",shadowOffset:\{width:0,height:5\},shadowOpacity:\.32,shadowRadius:18,elevation:4\}/);
   assert.match(itinerary,/theme\.dark\?s\.itineraryCardDark:s\.itineraryCardLight/);
   assert.match(source,/testID="flight-details-loading-itinerary" style=\{\[s\.itineraryCard,s\.loadingItineraryCard,theme\.dark\?s\.itineraryCardDark:s\.itineraryCardLight/);
-  assert.match(source,/borderColor:theme\.dark\?theme\.border:ui\.border/);
+  assert.match(source,/const surfaceBorderColor=theme\.dark\?FLIGHT_DETAILS_DARK_BORDER:FLIGHT_DETAILS_LIGHT_BORDER/);
 });
 
 test("the polished route retains dot-line-plane-line-dot without nested itinerary cards",()=>{
