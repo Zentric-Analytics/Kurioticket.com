@@ -87,7 +87,7 @@ test("Kurioticket cards keep the bundled wordmark and app typography", () => {
 test("Rates use compact grouped rows, date context only, and concise summary text", () => {
   assert.match(styleRule(ratesSource, "rateList", "rateDivider"), /borderWidth: 1[\s\S]*borderRadius: 10[\s\S]*overflow: "hidden"/);
   assert.match(styleRule(ratesSource, "rateDivider", "rateCard"), /height: StyleSheet\.hairlineWidth/);
-  assert.match(styleRule(ratesSource, "rateCard", "selectedBar"), /minHeight: 88[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 10[\s\S]*justifyContent: "center"/);
+  assert.match(styleRule(ratesSource, "rateCard", "rateCardPressed"), /minHeight: 88[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 10[\s\S]*justifyContent: "center"/);
   assert.match(styleRule(ratesSource, "rateMain", "providerIdentity"), /flexDirection: "row"[\s\S]*alignItems: "center"[\s\S]*gap: 12/);
   assert.match(styleRule(ratesSource, "priceBlock", "price"), /alignItems: "flex-end"/);
   assert.doesNotMatch(ratesSource, />Rates<\/Text>/);
