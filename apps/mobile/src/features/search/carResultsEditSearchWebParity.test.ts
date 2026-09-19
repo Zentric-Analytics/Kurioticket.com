@@ -83,7 +83,7 @@ test("Results edit suppresses only the landing checkbox and supports different r
   assert.match(panel, /form\.separateDropoff \? <View style=\{editCardStyle\}><ResultsEditRow label="RETURN LOCATION"/);
   assert.match(panel, /actionLabel="Same as pickup"/);
   assert.match(panel, /separateDropoff: false, dropoffLocation: ""/);
-  assert.match(panel, /form\.separateDropoff \? <FieldError[\s\S]*label="Drop-off location"/);
+  assert.match(panel, /form\.separateDropoff \? <FieldError[\s\S]*label="DROP-OFF LOCATION"/);
 });
 
 test("Results edit CTA matches mobile web without changing the default CTA", () => {
