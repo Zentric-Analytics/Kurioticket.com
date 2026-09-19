@@ -492,6 +492,11 @@ export class PreviewOrchestrator {
     const identityKey = `${sha}:${PREVIEW_IDENTITY.channel}`;
     const recorded = typeof this.ledger.getAction === "function" ? await this.ledger.getAction("OTA", identityKey) : null;
     const recordedEvidence = parseActionEvidence(recorded?.evidence);
+    const providerVerifiedPlatforms = new Set(
+      Array.isArray(recordedEvidence?.providerVerifiedPlatforms)
+        ? recordedEvidence.providerVerifiedPlatforms.filter((platform) => platform === "ios" || platform === "android")
+        : [],
+    );
     const correctingLegacyMismatch = recorded?.state === "RUNTIME_MISMATCH" && recordedEvidence?.runtimeContextVersion !== OTA_RUNTIME_CONTEXT_VERSION;
     if (recorded?.state === "RUNTIME_MISMATCH" && !correctingLegacyMismatch) {
       throw new Error(`EAS Update runtime mismatch is already recorded for ${sha}; automatic republication is blocked.`);
@@ -516,13 +521,14 @@ export class PreviewOrchestrator {
           throw new Error(`Conflicting remote identity in EAS update history for OTA:${identityKey}:${platform}.`);
         }
         updatesByPlatform[platform] = replayed;
+        providerVerifiedPlatforms.add(platform);
         continue;
       }
       await lease.checkpoint();
       const message = `Automatic Preview ${platform === "ios" ? "iOS" : "Android"} OTA for ${sha}; audit run 0`;
       let published;
       try {
-        published = await eas.publishUpdate(message, platform, expectedRuntime);
+        published = await eas.publishUpdate(message, platform, expectedRuntime, sha);
       } catch (error) {
         if (correctingLegacyMismatch) {
           await this.ledger.recordAction({
@@ -549,11 +555,16 @@ export class PreviewOrchestrator {
         throw error;
       }
       updatesByPlatform[platform] = published;
+      providerVerifiedPlatforms.add(platform);
     }
     const updates = Object.values(updatesByPlatform).flat();
     const ids = updates.map((entry) => entry.id ?? entry.group);
     const correctedRemoteId = canonicalPreviewOtaRemoteIdentity(updatesByPlatform);
-    const evidence = { updates, runtimeContextVersion: OTA_RUNTIME_CONTEXT_VERSION };
+    const evidence = {
+      updates,
+      runtimeContextVersion: OTA_RUNTIME_CONTEXT_VERSION,
+      providerVerifiedPlatforms: [...providerVerifiedPlatforms].sort(),
+    };
     if (correctingLegacyMismatch) {
       if (!recorded.remote_id || typeof this.ledger.replaceTerminalAction !== "function") {
         throw new Error("Legacy OTA runtime correction requires atomic durable identity replacement.");
