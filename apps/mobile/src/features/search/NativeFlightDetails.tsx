@@ -368,7 +368,7 @@ function Itinerary({leg,index,offerAirlineName,offerAirlineLogo,theme,intlLocale
   const layoverLabel=(airport:string)=>{const point=leg.segments.flatMap((segment)=>[segment.destinationDetails,segment.originDetails]).find((candidate)=>candidate?.iataCode===airport);return point?.cityName&&point.cityName!==airport?`${point.cityName} • ${airport}`:airport;};
   const pathColor=theme.dark?theme.textSecondary:ui.muted;
   const connectionSurface=theme.dark?"#182536":"#F3F7FC";
-  const connectionBorder=theme.dark?"#33465E":"#D6E2F0";
+  const connectionBorder="#D6E2F0";
   const connectionAccent=theme.dark?"#8FA9CC":"#5F7799";
   return <View style={[s.itineraryCard,theme.dark?s.itineraryCardDark:s.itineraryCardLight,{backgroundColor:theme.dark?theme.surface:FLIGHT_DETAILS_LIGHT_ITINERARY_SURFACE,borderColor:theme.dark?surfaceBorderColor:FLIGHT_DETAILS_LIGHT_ITINERARY_BORDER}]}>
     <ItineraryGlossSurface dark={theme.dark} testID="flight-details-itinerary-gloss"/>
@@ -414,7 +414,7 @@ function Itinerary({leg,index,offerAirlineName,offerAirlineLogo,theme,intlLocale
       const aircraftSuffix=segment.aircraft?.name?.trim()&&segment.aircraft?.iataCode?.trim()?` (${segment.aircraft.iataCode.trim()})`:"";
       const layover=i>0?leg.layovers[i-1]:undefined;
       return <View key={`${segment.originAirport}-${segment.destinationAirport}-${segment.departureTime}-${i}`} style={s.segmentItem}>
-        {layover?<View testID="flight-details-connection-row" style={[s.segmentConnection,{backgroundColor:connectionSurface,borderColor:connectionBorder}]}><FlowIcon name="clock" size={13} strokeWidth={1.8} color={connectionAccent}/><Text numberOfLines={1} ellipsizeMode="tail" style={[s.segmentConnectionText,{color:theme.textPrimary}]}>Connection at {layoverLabel(layover.airport)}<Text style={[s.segmentConnectionDuration,{color:theme.textSecondary}]}> · {layover.duration}</Text></Text></View>:null}
+        {layover?<View testID="flight-details-connection-row" style={[s.segmentConnection,{backgroundColor:connectionSurface,borderColor:connectionBorder},theme.dark&&{borderColor:theme.border}]}><FlowIcon name="clock" size={13} strokeWidth={1.8} color={connectionAccent}/><Text numberOfLines={1} ellipsizeMode="tail" style={[s.segmentConnectionText,{color:theme.textPrimary}]}>Connection at {layoverLabel(layover.airport)}<Text style={[s.segmentConnectionDuration,{color:theme.textSecondary}]}> · {layover.duration}</Text></Text></View>:null}
         <View style={s.segmentRow}>
           {carrier?<AirlineLogo airlineName={carrier} logoUrl={segment.airlineLogo??(canUseOfferAirlineLogo(segment,offerAirlineName,offerAirlineLogo)?offerAirlineLogo:null)} variant="result-card"/>:null}
           <View style={s.segmentCopy}>
