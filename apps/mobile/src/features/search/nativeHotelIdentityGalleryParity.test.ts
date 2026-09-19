@@ -39,7 +39,7 @@ test("active hotel keeps icon-only header controls fixed over the hero and scrol
   assert.match(hotel, /accessibilityLabel="Back to hotel results"[\s\S]*?onPress=\{returnToHotelResults\}[\s\S]*?s\.heroBack/);
   assert.match(hotel, /style=\{\[\s*s\.heroBack,\s*\{\s*top: inset\.top \+ 12,\s*zIndex: detailsStatus === "loading" \? 40 : 20,\s*\},\s*\]\}/);
   assert.match(hotel, /style=\{\[s\.heroActions, \{ top: inset\.top \+ 12 \}\]\}/);
-  assert.match(hotel, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
+  assert.match(detailSource, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
   assert.match(hotel, /<DetailGlassSurface dark=\{false\} style=\{s\.heroBackGlass\} \/>/);
   assert.match(hotel, /<DetailGlassSurface dark=\{false\} style=\{s\.heroActionsGlass\} \/>/);
   assert.match(heroBackStyle, /left: 20[^}]*width: 44[^}]*height: 44[^}]*borderRadius: 22[^}]*zIndex: 20/);
