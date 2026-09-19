@@ -167,12 +167,12 @@ test("native gallery remains interactive and full-bleed with the two-level mobil
   assert.doesNotMatch(gallery, /Previous photo|Next photo|ChevronLeft|ChevronRight/);
 });
 
-test("active Hotel detail keeps theme-aware accents for selected rates and the persistent action", () => {
+test("active Hotel detail keeps theme-aware accents while rate selection stays visually subtle", () => {
   assert.match(hotel, /const hotelAccent = theme\.dark \? "#8FB5FF" : colors\.blue/);
   assert.match(hotel, /<NativeHotelRatesSection[\s\S]*?accentColor=\{hotelAccent\}/);
-  assert.match(rates, /borderColor: selected \? accentColor : theme\.border/);
-  assert.match(rates, /<Check size=\{19\}/);
-  assert.doesNotMatch(rates, /reserveButton|>Reserve<\/Text>|accessibilityRole="radio"/);
+  assert.match(rates, /const selectedBackground = theme\.dark/);
+  assert.match(rates, /selected && \{ backgroundColor: selectedBackground \}/);
+  assert.doesNotMatch(rates, /<Check|selectedMark|borderColor: selected|borderWidth: selected|reserveButton|>Reserve<\/Text>|accessibilityRole="radio"/);
   assert.doesNotMatch(rates, /borderWidth: 6/);
   assert.match(hotelSource, /bookingDockButton/);
   assert.match(tokens, /blue: "#004BB8"/);
