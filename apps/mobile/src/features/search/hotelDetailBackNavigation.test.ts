@@ -13,7 +13,7 @@ const resultsHotelDetailsPush = results.slice(
 );
 const relatedHotelPush = details.slice(
   details.indexOf("const viewRelatedHotel"),
-  details.indexOf("const presentedRoomOptions"),
+  details.indexOf("const staySummary", details.indexOf("const viewRelatedHotel")),
 );
 const returnToHotelResults = details.slice(
   details.indexOf("const returnToHotelResults"),
