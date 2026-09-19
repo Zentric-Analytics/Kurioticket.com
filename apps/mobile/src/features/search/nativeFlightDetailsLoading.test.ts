@@ -220,6 +220,10 @@ test("loading uses the final canvas and reserves an inert safe-area checkout doc
     const { root, theme } = renderLoading(dark, 47, bottom);
     assert.equal(style(root).backgroundColor, dark ? theme.background : "#F3F6FA");
     const scroll = find(root, "flight-details-loading-scroll");
+    assert.equal(scroll.props.contentInsetAdjustmentBehavior, "never");
+    assert.equal(scroll.props.bounces, false);
+    assert.equal(scroll.props.alwaysBounceVertical, false);
+    assert.equal(scroll.props.overScrollMode, "never");
     assert.equal(scroll.props.contentContainerStyle.at(-1).paddingBottom, 120 + bottom);
     assert.equal(scroll.props.contentContainerStyle.at(-1).width, 390);
     assert.equal(scroll.props.contentContainerStyle.at(-1).maxWidth, 390);
