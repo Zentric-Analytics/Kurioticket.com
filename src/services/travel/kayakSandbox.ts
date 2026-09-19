@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { isIP } from "node:net";
-import { kayakImages, kayakFlightLegs, kayakFlightCabin, kayakFlightAttributes, kayakAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
+import { kayakImageUrl, kayakImages, kayakFlightLegs, kayakFlightCabin, kayakFlightAttributes, kayakAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
 import { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
 import type { FlightFareTerm, FlightOptionalService, FlightProviderCondition } from "@/lib/types";
 export { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
