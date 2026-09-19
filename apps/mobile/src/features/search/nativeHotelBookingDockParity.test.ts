@@ -49,8 +49,8 @@ test("native Hotel keeps one selected-rate dock visible across Rates, Overview, 
 
 test("Rates use compact grouped rows with a subtle selected tint and no selection icon", () => {
   assert.match(rateStyle("rateList", "rateDivider"), /borderWidth: 1[\s\S]*borderRadius: 10[\s\S]*overflow: "hidden"/);
-  assert.match(rateStyle("rateCard", "rateCardPressed"), /minHeight: 92[\s\S]*paddingHorizontal: 12[\s\S]*paddingVertical: 10/);
-  assert.match(ratesSource, /const selectedBackground = theme\.dark[\s\S]*?rgba\(0, 75, 184, 0\.045\)/);
+  assert.match(rateStyle("rateCard", "rateCardPressed"), /minHeight: 94[\s\S]*paddingHorizontal: 16[\s\S]*paddingVertical: 11/);
+  assert.match(ratesSource, /const selectedBackground = theme\.dark[\s\S]*?rgba\(0, 75, 184, 0\.035\)/);
   assert.match(ratesSource, /selected && \{ backgroundColor: selectedBackground \}/);
   assert.match(ratesSource, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
   assert.match(ratesSource, /<View style=\{\[s\.rateDivider, \{ backgroundColor: theme\.border \}\]\} \/>/);
