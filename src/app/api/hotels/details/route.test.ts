@@ -88,6 +88,65 @@ test("hotel details returns the selected cached public hotel", async () => {
   assert.deepEqual(payload.roomOptions, []);
 });
 
+test("provider hotel details keep property facts separate while exposing verified KAYAK location coordinates", async () => {
+  const id = `kayak-sandbox:location-${Date.now()}`;
+  const hotel = testHotel(id, "KAYAK Provider Hotel");
+  hotel.provider = "KAYAK sandbox";
+  hotel.dataSource = "demo";
+  hotel.location = "10 Test Street";
+  hotel.rawProviderReference = {
+    kind: "kayak-hotel-details",
+    details: {
+      source: "KAYAK",
+      overview: { address: "10 Test Street", countryCode: "US" },
+    },
+    location: {
+      address: "10 Test Street",
+      countryCode: "US",
+      latitude: 40.75,
+      longitude: -73.98,
+    },
+  };
+  rememberHotels([hotel]);
+
+  const response = await GET(
+    new Request(
+      `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(id)}`,
+    ),
+  );
+  const payload = (await response.json()) as {
+    hotel: Record<string, unknown>;
+    propertyDetails: unknown;
+    locationDetails: {
+      latitude: number;
+      longitude: number;
+      streetAddress: string;
+      country: string;
+    } | null;
+    providerDetails?: {
+      source?: string;
+      overview?: { address?: string; countryCode?: string };
+    } | null;
+  };
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.propertyDetails, null);
+  assert.deepEqual(payload.locationDetails && {
+    latitude: payload.locationDetails.latitude,
+    longitude: payload.locationDetails.longitude,
+    streetAddress: payload.locationDetails.streetAddress,
+    country: payload.locationDetails.country,
+  }, {
+    latitude: 40.75,
+    longitude: -73.98,
+    streetAddress: "10 Test Street",
+    country: "US",
+  });
+  assert.equal(payload.providerDetails?.source, "KAYAK");
+  assert.equal(payload.providerDetails?.overview?.address, "10 Test Street");
+  assert.equal(Object.hasOwn(payload.hotel, "rawProviderReference"), false);
+});
+
 test("static details include sanitized room options and requested stay totals", async () => {
   const response = await GET(
     new Request(
@@ -97,6 +156,7 @@ test("static details include sanitized room options and requested stay totals", 
   const payload = (await response.json()) as {
     hotel: Record<string, unknown>;
     propertyDetails: Record<string, unknown>;
+    locationDetails?: Record<string, unknown>;
     roomOptions: Array<Record<string, unknown>>;
   };
   assert.equal(response.status, 200);
@@ -109,6 +169,8 @@ test("static details include sanitized room options and requested stay totals", 
   assert.equal(typeof payload.propertyDetails.latitude, "number");
   assert.equal(typeof payload.propertyDetails.longitude, "number");
   assert.equal(payload.propertyDetails.city, "Paris");
+  assert.equal(payload.locationDetails?.latitude, payload.propertyDetails.latitude);
+  assert.equal(payload.locationDetails?.longitude, payload.propertyDetails.longitude);
   assert.equal(
     Object.hasOwn(payload.propertyDetails, "rawProviderReference"),
     false,
