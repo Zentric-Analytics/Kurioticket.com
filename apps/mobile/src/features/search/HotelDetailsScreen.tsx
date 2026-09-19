@@ -378,6 +378,7 @@ function HotelDetail({
     displayCurrency: nightlyPrice?.currency,
     rates: hotelCurrencyRates,
   });
+  const relatedHotelsHasMore = details?.relatedHotelsHasMore === true;
 
   const viewRelatedHotel = (item: NativeRelatedHotel) => {
     const snapshot = item.displayPrices;
@@ -643,9 +644,11 @@ function HotelDetail({
               detailsStatus={detailsStatus}
               classification={classification}
               relatedHotels={relatedHotels}
+              relatedHotelsHasMore={relatedHotelsHasMore}
               relatedDestination={destination}
               theme={theme}
               onViewHotel={viewRelatedHotel}
+              onSeeMoreRelatedHotels={returnToHotelResults}
               onLookAroundInteractionChange={setLookAroundInteracting}
             />
           ) : null}
