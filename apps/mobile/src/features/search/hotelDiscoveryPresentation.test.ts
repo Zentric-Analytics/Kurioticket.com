@@ -17,43 +17,42 @@ test("discovery Hotel results never imply live price, saves, or classification",
   assert.match(resultCard, /"Price unavailable"/);
 });
 
-test("active native Hotel continuation distinguishes Kurioticket rooms and provider handoff", () => {
-  assert.match(hotel, /const internalRoomFlowAvailable = roomOptions\.length > 0/);
+test("active native Hotel continuation uses one provider handoff pattern for Kurioticket and external providers", () => {
+  assert.match(hotel, /nativeKurioticketHotelDetailsUrl/);
+  assert.match(hotel, /const kurioticketHandoffAvailable =[\s\S]*?roomOptions\.length > 0 && Boolean\(kurioticketWebUrl\)/);
   assert.match(hotel, /nativeHotelProviderUrl\([\s\S]*?result\.partnerRedirectUrl,[\s\S]*?result\.bookingUrl/);
   assert.match(hotel, /const providerHandoffAvailable =[\s\S]*?Boolean\(redirectUrl\)[\s\S]*?result\.searchPolicy\.bookable \|\| result\.searchPolicy\.source === "kayak-sandbox"/);
-  assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
-  assert.match(hotel, /const rateRows = buildNativeHotelRateRows/);
-  assert.match(hotel, /const selectedRate: NativeHotelRateRow \| null/);
-  assert.match(hotel, /if \(selectedRate\.offerId === "internal-rooms"\)/);
-  assert.match(hotel, /selectedRate\.offerId !== "provider"/);
+  assert.match(hotel, /const hotelOffers = nativeHotelOffers\([\s\S]*?kurioticketHandoffAvailable,[\s\S]*?providerHandoffAvailable/);
+  assert.match(hotel, /const targetUrl =[\s\S]*?selectedRate\.offerId === "internal-rooms"[\s\S]*?\? kurioticketWebUrl[\s\S]*?: selectedRate\.offerId === "provider"/);
+  assert.match(hotel, /await openProviderInApp\(targetUrl\)/);
+  assert.doesNotMatch(hotel, /HotelRoomOptionsModal|Choose room|setRoomsOpen/);
   assert.match(rates, /No reservable rates available/);
-  assert.doesNotMatch(hotel, /Booked|Reserved|Available now/);
 });
 
-test("active Hotel details derive rates from supplied inventory instead of fabricating rooms or price", () => {
+test("active Hotel details derive provider rows from supplied inventory without exposing room-card detail", () => {
   assert.doesNotMatch(hotel, /Math\.round\(result\.rating\)|reviewScore \?\? result\.rating/);
   assert.match(hotel, /roomOptions\.length > 0/);
-  assert.match(rates, /for \(const option of roomOptions\)/);
-  assert.match(rates, /option\.displayPrice\?\.nightly/);
-  assert.match(rates, /option\.displayPrice\?\.total/);
-  assert.doesNotMatch(rates, /STATIC_RATE_GROUPS|\$1,225|Standard Room, 1 Queen Bed/);
+  assert.match(rates, /id: "provider-kurioticket"/);
+  assert.match(rates, /nightlyPrice:[\s\S]*nightlyPrice\.formatted/);
+  assert.match(rates, /totalPrice:[\s\S]*totalPrice\.formatted/);
+  assert.doesNotMatch(rates, /roomOptions|roomOptionId|Compact room|Deluxe|Suite|STATIC_RATE_GROUPS|\$1,225|Standard Room, 1 Queen Bed/);
   assert.match(reviews, /Verified guest reviews are not connected/);
 });
 
-test("narrow active Hotel layout keeps concise grouped rows and a persistent continuation dock", () => {
+test("narrow active Hotel layout mirrors Flight Compare deals cards and persistent continuation dock", () => {
   assert.match(hotel, /useWindowDimensions\(\)\.width/);
   assert.match(rates, /adjustsFontSizeToFit/);
-  assert.match(rates, /minimumFontScale=\{0\.68\}/);
-  assert.match(rates, /borderRadius: 10/);
-  assert.match(rates, /minHeight: 88/);
-  assert.match(rates, /const showSelectedBackground = rows\.length > 1 && selected/);
-  assert.match(rates, /backgroundColor: showSelectedBackground \? selectedBackground : theme\.surface/);
+  assert.match(rates, /minimumFontScale=\{0\.72\}/);
+  assert.match(rates, /borderRadius: 14/);
+  assert.match(rates, /minHeight: 96/);
+  assert.match(rates, /accessibilityRole="radiogroup"/);
+  assert.match(rates, /accessibilityRole="radio"/);
+  assert.match(rates, /s\.dealRadioDot/);
   assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
   assert.match(rates, /disabled=\{!row\.actionable\}/);
-  assert.match(rates, /s\.rateDivider/);
-  assert.match(rates, /function conciseCondition/);
-  assert.doesNotMatch(rates, /<Check|selectedMark|borderColor: selected|borderWidth: selected|actionControlDisabled|actionLabel: "Choose room"|previewReserve|>Rates<\/Text>/);
+  assert.doesNotMatch(rates, /rateTitle|rateMeta|Compact room|Deluxe|Suite|Choose room/);
   assert.match(hotel, /s\.bookingDock/);
-  assert.match(hotel, /const bookingActionLabel = selectedRate\?\.providerKind === "provider" \? "View deal" : "Choose room"/);
+  assert.match(hotel, /Continue to[\s\S]*selectedRate\.providerName/);
   assert.match(hotel, /bookingDockButtonText\}>\{bookingActionLabel\}<\/Text>/);
 });
+
