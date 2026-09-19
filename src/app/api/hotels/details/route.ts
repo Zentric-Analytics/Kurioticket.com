@@ -10,6 +10,7 @@ import type { StaticHotelRecord } from "@/services/travel/staticHotelCatalogue";
 import { getProviderResult } from "@/services/travel/providerResultCache";
 import type { NormalizedHotelResult } from "@/lib/types";
 import type { PublicHotelProviderDetails } from "@/lib/hotels/hotelProviderDetails";
+import { kayakHotelLocationDetails } from "@/lib/hotels/kayakHotelLocation";
 
 function toPublicPropertyDetails(record: StaticHotelRecord | null) {
   if (!record) return null;
@@ -71,9 +72,11 @@ export async function GET(request: Request) {
     : [];
   if (record) {
     const hotel = buildStaticHotelResult(record, search);
+    const propertyDetails = toPublicPropertyDetails(record);
     return NextResponse.json({
       hotel: toPublicHotel(hotel),
-      propertyDetails: toPublicPropertyDetails(record),
+      propertyDetails,
+      locationDetails: propertyDetails,
       providerDetails: null,
       roomOptions: buildStaticHotelRoomOptions(record, search),
       relatedHotels,
@@ -83,6 +86,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       hotel: toPublicHotel(cached),
       propertyDetails: null,
+      locationDetails: kayakHotelLocationDetails(cached),
       providerDetails: providerDetails(cached),
       roomOptions: [],
       relatedHotels: [],
