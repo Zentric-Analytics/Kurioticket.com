@@ -68,6 +68,7 @@ export type SandboxOffer = {
   flightOptionalServices?: FlightOptionalService[];
   /** Provider-supplied booking seller for customer-facing deal presentation. */
   bookingProviderName?: string;
+  bookingProviderLogoUrl?: string;
   attributes?: KayakAttribute[];
   carSpecs?: string[];
   carFilterOptions?: string[];
@@ -369,7 +370,12 @@ export function normalizeSandboxOffers(
             };
           }),
         })) } : {}),
-        ...(vertical === "flights" && description ? { bookingProviderName: description } : {}),
+        ...((vertical === "flights" || vertical === "hotels") && (text(provider.displayName) || text(option.providerCode))
+          ? { bookingProviderName: text(provider.displayName) || text(option.providerCode) }
+          : {}),
+        ...((vertical === "flights" || vertical === "hotels") && kayakImageUrl(provider.logoUrl)
+          ? { bookingProviderLogoUrl: kayakImageUrl(provider.logoUrl) }
+          : {}),
         ...(vertical === "flights" ? {flightCabin} : {}),
         ...(flightFareFamily ? {flightFareFamily} : {}),
         ...(vertical === "flights" && list(object(option.fees).carryOnBag).some(bag => object(bag).bagNumber === "first" && text(object(bag).restriction))
