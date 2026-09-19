@@ -335,6 +335,52 @@ test("static Hotel details can recommend KAYAK hotels from the same merged searc
   assert.equal(Object.hasOwn(payload.relatedHotels[0] ?? {}, "rawProviderReference"), false);
 });
 
+test("Hotel details return every other hotel from an 18-result New York search cohort", async () => {
+  const search = {
+    destination: "New York",
+    checkIn: "2027-10-17",
+    checkOut: "2027-10-24",
+    guests: 2,
+    rooms: 1,
+  };
+  const hotels = Array.from({ length: 18 }, (_, index) => {
+    const hotel = testHotel(
+      `new-york-related-${index + 1}-${Date.now()}`,
+      `New York Hotel ${index + 1}`,
+    );
+    hotel.provider = index % 2 === 0 ? "Kurioticket static catalogue" : "KAYAK sandbox";
+    hotel.dataSource = index % 2 === 0 ? "live" : "demo";
+    hotel.location = "New York, United States";
+    hotel.pricePerNight = 100 + index;
+    hotel.totalPrice = (100 + index) * 7;
+    return hotel;
+  });
+  rememberHotels(hotels, search);
+
+  const selected = hotels[0]!;
+  const response = await GET(
+    new Request(
+      `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selected.id)}&destination=${encodeURIComponent(search.destination)}&checkIn=${search.checkIn}&checkOut=${search.checkOut}&rooms=${search.rooms}&guests=${search.guests}`,
+    ),
+  );
+  const payload = (await response.json()) as {
+    hotel: { id: string };
+    relatedHotels: Array<{ id: string; provider: string }>;
+  };
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.hotel.id, selected.id);
+  assert.equal(payload.relatedHotels.length, 17);
+  assert.equal(new Set(payload.relatedHotels.map((hotel) => hotel.id)).size, 17);
+  assert.equal(payload.relatedHotels.some((hotel) => hotel.id === selected.id), false);
+  assert.ok(payload.relatedHotels.some((hotel) => hotel.provider === "KAYAK sandbox"));
+  assert.ok(payload.relatedHotels.some((hotel) => hotel.provider === "Kurioticket static catalogue"));
+  assert.deepEqual(
+    payload.relatedHotels.map((hotel) => hotel.id),
+    hotels.slice(1).map((hotel) => hotel.id),
+  );
+});
+
 test("KAYAK Hotel details can recommend Kurioticket hotels from the same merged search cohort", async () => {
   const selected = testHotel(`kayak-sandbox:selected-${Date.now()}`, "KAYAK New York Hotel");
   selected.provider = "KAYAK sandbox";
