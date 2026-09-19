@@ -293,8 +293,8 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   homeCarsSearchSurface: {
-    padding: 12,
-    paddingBottom: 6,
+    padding: 8,
+    paddingBottom: 4,
     borderRadius: 18,
   },
   products: {
