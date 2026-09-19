@@ -101,8 +101,8 @@ test("Rates show provider and nightly price while one persistent dock continues 
   assert.match(ratesSource, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
   assert.match(hotel, /selectedRate\.totalPrice/);
   assert.match(hotel, /selectedRate\.totalLabel/);
-  assert.match(hotel, /Continue to[\s\S]*selectedRate\.providerName/);
-  assert.doesNotMatch(hotel, /View deal|Choose room/);
+  assert.match(hotel, /const bookingActionLabel = "View deal"/);
+  assert.doesNotMatch(hotel, /Continue to|Choose room/);
   assert.match(hotel, /bookingDockButtonText\}>\{bookingActionLabel\}<\/Text>/);
   assert.match(hotel, /onPress=\{\(\) => void continueSelectedRate\(\)\}/);
 });
