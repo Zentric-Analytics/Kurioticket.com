@@ -84,7 +84,7 @@ function withoutUnusedRawProviderReference(result: NormalizedFlightResult) {
   return persisted;
 }
 
-function purgeExpired<T>(cache: Map<string, CacheRecord<T>>, now = Date.now()) {
+function purgeExpired<T extends { expiresAt: number }>(cache: Map<string, T>, now = Date.now()) {
   for (const [key, record] of cache.entries()) {
     if (record.expiresAt <= now) cache.delete(key);
   }
