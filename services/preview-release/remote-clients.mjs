@@ -264,16 +264,24 @@ export class EasClient {
       const replay = inspectPreviewUpdateHistory(history, targetSha, platform, expectedRuntime);
       if (replay.matchingUpdates > 1) throw new Error(`EAS Update ${platform} post-publish history contains conflicting exact-SHA groups.`);
       if (replay.alreadyPublished) {
-        const visible = history.filter((entry) =>
-          entry.branch === PREVIEW_IDENTITY.channel
-          && entry.runtimeVersion === expectedRuntime
-          && Array.isArray(entry.platforms)
-          && entry.platforms.includes(platform)
-          && entry.message === message
-        );
-        if (visible.length !== 1) throw new Error(`EAS Update ${platform} publication is not uniquely visible on the Preview branch.`);
-        const visibleIdentity = canonicalPreviewOtaRemoteIdentity({ [platform]: visible });
-        if (visibleIdentity !== publishedIdentity) throw new Error(`EAS Update ${platform} post-publish identity does not match the published group.`);
+        const visible = history.filter((entry) => {
+          if (
+            entry.branch !== PREVIEW_IDENTITY.channel
+            || entry.runtimeVersion !== expectedRuntime
+            || !Array.isArray(entry.platforms)
+            || !entry.platforms.includes(platform)
+          ) return false;
+          try {
+            return canonicalPreviewOtaRemoteIdentity({ [platform]: [entry] }) === publishedIdentity;
+          } catch {
+            return false;
+          }
+        });
+        if (visible.length !== 1) throw new Error(`EAS Update ${platform} published group is not uniquely visible on the Preview branch.`);
+        const visibleReplay = inspectPreviewUpdateHistory(visible, targetSha, platform, expectedRuntime);
+        if (!visibleReplay.alreadyPublished || visibleReplay.matchingUpdates !== 1) {
+          throw new Error(`EAS Update ${platform} published group does not attest the requested target SHA.`);
+        }
         return visible;
       }
       if (attempt < 5) await this.sleep(2_000);
