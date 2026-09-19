@@ -52,27 +52,36 @@ function cleanRateCopy(value?: string | null) {
     .trim();
 }
 
-function roomRateTitle(option: PresentedHotelRoomOption) {
-  const cleanedName = cleanRateCopy(option.name);
-  if (cleanedName) return capitalize(cleanedName);
-  const mealPlan = cleanRateCopy(option.mealPlan);
-  return capitalize(mealPlan || "Room rate");
+function conciseCondition(value?: string | null) {
+  const cleaned = cleanRateCopy(value);
+  if (!cleaned) return "";
+  if (/free cancellation/i.test(cleaned)) return "Free cancellation";
+  if (/non[- ]?refundable/i.test(cleaned)) return "Non-refundable";
+  if (/pay later/i.test(cleaned)) return "Pay later";
+  if (/breakfast/i.test(cleaned)) return "Breakfast included";
+  if (/room only/i.test(cleaned)) return "Room only";
+  if (/flexible/i.test(cleaned)) return "Flexible rate";
+  return "";
 }
 
-function meaningfulRateMeta(option: PresentedHotelRoomOption, title: string) {
-  const rawValues = [
-    option.bedConfiguration,
-    option.mealPlan,
-    option.cancellationInfo,
-    ...option.features.filter((feature) => !/planning|estimate/i.test(feature)),
-  ];
-  const normalizedTitle = title.toLocaleLowerCase();
-  return rawValues
-    .map(cleanRateCopy)
-    .filter(Boolean)
-    .filter((value, index, values) => values.indexOf(value) === index)
-    .filter((value) => value.toLocaleLowerCase() !== normalizedTitle)
-    .slice(0, 3);
+function roomRatePresentation(option: PresentedHotelRoomOption) {
+  const cleanedName = cleanRateCopy(option.name);
+  const parts = cleanedName
+    .split(/\s+[—–-]\s+/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const title = capitalize(parts[0] || cleanRateCopy(option.name) || "Room rate");
+  const suffixCondition = conciseCondition(parts.slice(1).join(" "));
+  const cancellationCondition = conciseCondition(option.cancellationInfo);
+  const mealCondition = conciseCondition(option.mealPlan);
+  const featureCondition = option.features
+    .map(conciseCondition)
+    .find(Boolean) ?? "";
+
+  return {
+    title,
+    meta: [suffixCondition || cancellationCondition || mealCondition || featureCondition].filter(Boolean),
+  };
 }
 
 function meaningfulProviderMeta(value?: string | null) {
@@ -171,7 +180,7 @@ export function buildNativeHotelRateRows({
 
   if (internalOffer) {
     for (const option of roomOptions) {
-      const title = roomRateTitle(option);
+      const presentation = roomRatePresentation(option);
       const nightly = option.displayPrice?.nightly ?? null;
       const total = option.displayPrice?.total ?? null;
       rows.push({
@@ -180,8 +189,8 @@ export function buildNativeHotelRateRows({
         roomOptionId: option.id,
         providerKind: "kurioticket",
         providerName: "Kurioticket",
-        title,
-        meta: meaningfulRateMeta(option, title),
+        title: presentation.title,
+        meta: presentation.meta,
         nightlyPrice: nightly?.formatted ?? "Price unavailable",
         nightlyAccessibilityLabel: nightly
           ? `${nightly.accessibilityLabel} per night`
@@ -225,7 +234,6 @@ export function NativeHotelRatesSection({
     return (
       <View style={s.section}>
         <View style={s.sectionHeading}>
-          <Text style={[s.heading, { color: theme.textPrimary }]}>Rates</Text>
           {stayDateText || nightText ? (
             <Text style={[s.stay, { color: theme.textSecondary }]}>
               {[stayDateText, nightText].filter(Boolean).join(" · ")}
@@ -243,7 +251,6 @@ export function NativeHotelRatesSection({
   return (
     <View style={s.section}>
       <View style={s.sectionHeading}>
-        <Text style={[s.heading, { color: theme.textPrimary }]}>Rates</Text>
         {stayDateText || nightText ? (
           <Text style={[s.stay, { color: theme.textSecondary }]}>
             {[stayDateText, nightText].filter(Boolean).join(" · ")}
@@ -262,9 +269,7 @@ export function NativeHotelRatesSection({
       >
         {rows.map((row, index) => {
           const selected = row.id === selectedRateId;
-          const selectedBackground = theme.dark
-            ? "rgba(143, 181, 255, 0.07)"
-            : "rgba(0, 75, 184, 0.035)";
+          const showSelectionMarker = rows.length > 1 && selected;
           return (
             <View key={row.id}>
               {index > 0 ? <View style={[s.rateDivider, { backgroundColor: theme.border }]} /> : null}
@@ -276,10 +281,13 @@ export function NativeHotelRatesSection({
                 onPress={row.actionable ? () => onSelectRate(row.id) : undefined}
                 style={({ pressed }) => [
                   s.rateCard,
-                  selected && { backgroundColor: selectedBackground },
+                  { backgroundColor: theme.surface },
                   pressed && row.actionable && s.rateCardPressed,
                 ]}
               >
+                {showSelectionMarker ? (
+                  <View pointerEvents="none" style={[s.selectedBar, { backgroundColor: accentColor }]} />
+                ) : null}
                 <View style={s.rateMain}>
                   <View style={s.rateCopy}>
                     <View style={s.providerIdentity}>
@@ -340,15 +348,8 @@ export function NativeHotelRatesSection({
 
 const s = StyleSheet.create({
   section: { paddingBottom: 18 },
-  sectionHeading: { paddingBottom: 14 },
-  heading: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: "700",
-    fontFamily: appFonts.bold,
-  },
+  sectionHeading: { paddingBottom: 12 },
   stay: {
-    marginTop: 4,
     fontSize: 13,
     lineHeight: 19,
     fontWeight: "400",
@@ -361,10 +362,18 @@ const s = StyleSheet.create({
   },
   rateDivider: { height: StyleSheet.hairlineWidth },
   rateCard: {
-    minHeight: 94,
+    minHeight: 88,
     paddingHorizontal: 16,
-    paddingVertical: 11,
+    paddingVertical: 10,
     justifyContent: "center",
+    position: "relative",
+  },
+  selectedBar: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
   },
   rateCardPressed: { opacity: 0.84 },
   rateMain: {
@@ -377,19 +386,19 @@ const s = StyleSheet.create({
   providerName: {
     fontSize: 13,
     lineHeight: 18,
-    fontWeight: "700",
-    fontFamily: appFonts.bold,
+    fontWeight: "600",
+    fontFamily: appFonts.semibold,
   },
   rateCopy: { flex: 1, minWidth: 0 },
   rateTitle: {
-    marginTop: 5,
-    fontSize: 14,
-    lineHeight: 19,
-    fontWeight: "700",
-    fontFamily: appFonts.bold,
+    marginTop: 4,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "600",
+    fontFamily: appFonts.semibold,
   },
   rateMeta: {
-    marginTop: 3,
+    marginTop: 2,
     fontSize: 12,
     lineHeight: 17,
     fontWeight: "400",
@@ -403,8 +412,8 @@ const s = StyleSheet.create({
   },
   price: {
     maxWidth: "100%",
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: "700",
     fontFamily: appFonts.bold,
     textAlign: "right",
