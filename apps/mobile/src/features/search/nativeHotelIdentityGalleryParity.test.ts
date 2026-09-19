@@ -39,11 +39,18 @@ test("active hotel keeps icon-only header controls fixed over the hero and scrol
   assert.match(hotel, /accessibilityLabel="Back to hotel results"[\s\S]*?onPress=\{returnToHotelResults\}[\s\S]*?s\.heroBack/);
   assert.match(hotel, /style=\{\[\s*s\.heroBack,\s*\{\s*top: inset\.top \+ 12,\s*zIndex: detailsStatus === "loading" \? 40 : 20,\s*\},\s*\]\}/);
   assert.match(hotel, /style=\{\[s\.heroActions, \{ top: inset\.top \+ 12 \}\]\}/);
-  assert.match(heroBackStyle, /left: 20[^}]*width: 44[^}]*height: 44[^}]*borderRadius: 22[^}]*backgroundColor: "#FFFFFF"[^}]*zIndex: 20/);
-  assert.match(heroBackStyle, /elevation: 10/);
-  assert.match(heroActionsStyle, /right: 20[^}]*width: 96[^}]*height: 44[^}]*borderRadius: 22[^}]*backgroundColor: "#FFFFFF"[^}]*flexDirection: "row"[^}]*zIndex: 20/);
-  assert.match(heroActionsStyle, /elevation: 10/);
+  assert.match(detailSource, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
+  assert.match(hotel, /<DetailGlassSurface dark=\{false\} style=\{s\.heroBackGlass\} \/>/);
+  assert.match(hotel, /<DetailGlassSurface dark=\{false\} style=\{s\.heroActionsGlass\} \/>/);
+  assert.match(heroBackStyle, /left: 20[^}]*width: 44[^}]*height: 44[^}]*borderRadius: 22[^}]*zIndex: 20/);
+  assert.doesNotMatch(heroBackStyle, /backgroundColor/);
+  assert.match(heroBackStyle, /elevation: 6/);
+  assert.match(heroActionsStyle, /right: 20[^}]*width: 96[^}]*height: 44[^}]*borderRadius: 22[^}]*flexDirection: "row"[^}]*zIndex: 20/);
+  assert.doesNotMatch(heroActionsStyle, /backgroundColor|overflow: "hidden"/);
+  assert.match(heroActionsStyle, /elevation: 6/);
   assert.match(styleRule(detailSource, "heroAction", "identity"), /width: 48[^}]*height: 44/);
+  assert.match(detailSource, /heroBackGlass: \{ position: "absolute", left: 2, right: 2, top: 2, bottom: 2, borderRadius: 20 \}/);
+  assert.match(detailSource, /heroActionsGlass: \{ position: "absolute", left: 0, right: 0, top: 2, bottom: 2, borderRadius: 20 \}/);
 });
 
 test("save and share remain independent accessible actions inside one compact pill", () => {
