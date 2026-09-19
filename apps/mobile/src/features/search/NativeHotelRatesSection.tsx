@@ -229,7 +229,6 @@ export function NativeHotelRatesSection({
         style={({ pressed }) => [
           s.rateCard,
           { backgroundColor: theme.surface, borderColor: theme.border },
-          row.actionable && s.rateCardActionable,
           pressed && row.actionable && s.rateCardPressed,
         ]}
       >
@@ -304,7 +303,6 @@ const s = StyleSheet.create({
     paddingVertical: 16,
     gap: 14,
   },
-  rateCardActionable: { cursor: "pointer" },
   rateCardPressed: { opacity: 0.86 },
   rateCopy: { flex: 1, minWidth: 0, justifyContent: "flex-start" },
   brandLogo: { width: 88, height: 18, flexShrink: 0, marginBottom: 8 },
