@@ -177,10 +177,15 @@ test("connections sit between their corresponding authoritative segments",()=>{
 });
 
 test("connection polish stays compact and uses restrained theme-aware surfaces",()=>{
-  assert.match(itinerary,/const connectionSurface=theme\.dark\?"#182536":"#F3F7FC"/);
-  assert.match(itinerary,/const connectionBorder="#D6E2F0"/);
+  assert.match(source,/const FLIGHT_DETAILS_LIGHT_CONNECTION_SURFACE = "#F3F7FC"/);
+  assert.match(source,/const FLIGHT_DETAILS_LIGHT_CONNECTION_BORDER = "#D6E2F0"/);
+  assert.match(source,/const FLIGHT_DETAILS_LIGHT_CONNECTION_ACCENT = "#5F7799"/);
+  assert.match(source,/const FLIGHT_DETAILS_DARK_CONNECTION_SURFACE = "#182536"/);
+  assert.match(source,/const FLIGHT_DETAILS_DARK_CONNECTION_ACCENT = "#9AB2D2"/);
+  assert.match(itinerary,/const connectionSurface=theme\.dark\?FLIGHT_DETAILS_DARK_CONNECTION_SURFACE:FLIGHT_DETAILS_LIGHT_CONNECTION_SURFACE/);
+  assert.match(itinerary,/const connectionBorder=FLIGHT_DETAILS_LIGHT_CONNECTION_BORDER/);
+  assert.match(itinerary,/const connectionAccent=theme\.dark\?FLIGHT_DETAILS_DARK_CONNECTION_ACCENT:FLIGHT_DETAILS_LIGHT_CONNECTION_ACCENT/);
   assert.match(itinerary,/theme\.dark&&\{borderColor:theme\.border\}/);
-  assert.match(itinerary,/const connectionAccent=theme\.dark\?"#8FA9CC":"#5F7799"/);
   assert.match(source,/segmentConnection:\{borderWidth:StyleSheet\.hairlineWidth,borderRadius:9,paddingHorizontal:11,paddingVertical:8,marginBottom:2,flexDirection:"row",alignItems:"center",gap:7\}/);
   assert.match(source,/segmentConnectionText:\{flex:1,minWidth:0,fontSize:11,lineHeight:16,fontWeight:"600"\}/);
   assert.match(source,/segmentConnectionDuration:\{fontWeight:"500"\}/);
