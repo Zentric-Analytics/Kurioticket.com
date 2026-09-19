@@ -45,12 +45,28 @@ function useFlightDetailsHeaderProtection(topInset: number) {
   const { protectedHeight } = flightDetailsHeaderProtectionGeometry(topInset, 0);
   const protectedRef = useRef(false);
   const thresholdRef = useRef<number | null>(null);
+  const heroHeightRef = useRef<number | null>(null);
+  const foregroundOffsetRef = useRef<number | null>(null);
   const [headerProtected, setHeaderProtected] = useState(false);
-  const measureHeaderHero = useCallback((heroHeight: number) => {
-    thresholdRef.current = flightDetailsHeaderProtectionGeometry(topInset, heroHeight).threshold;
+  const syncMeasuredThreshold = useCallback(() => {
+    const heroHeight = heroHeightRef.current;
+    const foregroundOffset = foregroundOffsetRef.current;
+    thresholdRef.current = heroHeight === null || foregroundOffset === null
+      ? null
+      : flightDetailsHeaderProtectionGeometry(topInset, heroHeight, foregroundOffset).threshold;
   }, [topInset]);
+  const measureHeaderHero = useCallback((heroHeight: number) => {
+    heroHeightRef.current = heroHeight;
+    syncMeasuredThreshold();
+  }, [syncMeasuredThreshold]);
+  const measureHeaderForeground = useCallback((foregroundOffset: number) => {
+    foregroundOffsetRef.current = foregroundOffset;
+    syncMeasuredThreshold();
+  }, [syncMeasuredThreshold]);
   const resetHeaderProtection = useCallback(() => {
     thresholdRef.current = null;
+    heroHeightRef.current = null;
+    foregroundOffsetRef.current = null;
     protectedRef.current = false;
     setHeaderProtected(false);
   }, []);
@@ -62,7 +78,7 @@ function useFlightDetailsHeaderProtection(topInset: number) {
     protectedRef.current = nextProtected;
     setHeaderProtected(nextProtected);
   }, []);
-  return { headerProtected, protectedHeaderHeight: protectedHeight, measureHeaderHero, resetHeaderProtection, syncHeaderProtection };
+  return { headerProtected, protectedHeaderHeight: protectedHeight, measureHeaderForeground, measureHeaderHero, resetHeaderProtection, syncHeaderProtection };
 }
 
 type Params = Record<string, string | string[] | undefined>;
@@ -143,7 +159,7 @@ export function NativeFlightDetails({ params }: { params: Params }) {
   const [tab, setTab] = useState<"deals"|"details"|"conditions"|"extras">("deals");
   const fareHeadingTextColor=theme.dark?theme.textPrimary:"#1A1A1A";
   const contentCanvasColor=theme.dark?theme.background:FLIGHT_DETAILS_LIGHT_CANVAS;
-  const {headerProtected,protectedHeaderHeight,measureHeaderHero,resetHeaderProtection,syncHeaderProtection}=useFlightDetailsHeaderProtection(inset.top);
+  const {headerProtected,protectedHeaderHeight,measureHeaderForeground,measureHeaderHero,resetHeaderProtection,syncHeaderProtection}=useFlightDetailsHeaderProtection(inset.top);
   const surfaceBorderColor=theme.dark?FLIGHT_DETAILS_DARK_BORDER:FLIGHT_DETAILS_LIGHT_BORDER;
   const heroIconColor="#0F172A";
   const [booking, setBooking] = useState(false);
@@ -219,7 +235,7 @@ export function NativeFlightDetails({ params }: { params: Params }) {
       <HeroCurve testID="flight-details-hero-curve" color={contentCanvasColor}/>
     </ImageBackground>
     <View style={s.contentBody}>
-    <View testID="flight-details-itinerary-overlap" style={s.itineraryStack}>{(offer.legs?.length?offer.legs:[]).map((leg,index)=><Itinerary key={`${leg.departureTime}-${index}`} leg={leg} index={index} offerAirlineName={offer.airlineName} offerAirlineLogo={offer.airlineLogo} theme={theme} intlLocale={intlLocale}/>)}</View>
+    <View testID="flight-details-itinerary-overlap" onLayout={({ nativeEvent })=>measureHeaderForeground(nativeEvent.layout.y)} style={s.itineraryStack}>{(offer.legs?.length?offer.legs:[]).map((leg,index)=><Itinerary key={`${leg.departureTime}-${index}`} leg={leg} index={index} offerAirlineName={offer.airlineName} offerAirlineLogo={offer.airlineLogo} theme={theme} intlLocale={intlLocale}/>)}</View>
     {message?<View accessibilityRole="alert" style={s.notice}><Text style={s.noticeText}>{message}</Text></View>:null}
     <Text style={[s.fareSectionTitle,{color:theme.textPrimary}]}>Pick your fare</Text>
     {displayPricesReady?<ScrollView accessibilityRole="radiogroup" accessibilityLabel="Available fares" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[s.fares,details.fareChoices.length>1?s.faresMultiple:s.faresSingle]}>
@@ -265,7 +281,7 @@ function FlightDetailsLoadingSkeleton({theme,topInset,bottomInset,fareCardWidth,
   const contentCanvasColor=theme.dark?theme.background:FLIGHT_DETAILS_LIGHT_CANVAS;
   const surfaceBorderColor=theme.dark?FLIGHT_DETAILS_DARK_BORDER:FLIGHT_DETAILS_LIGHT_BORDER;
   const heroIconColor="#0F172A";
-  const {headerProtected,protectedHeaderHeight,measureHeaderHero,syncHeaderProtection}=useFlightDetailsHeaderProtection(topInset);
+  const {headerProtected,protectedHeaderHeight,measureHeaderForeground,measureHeaderHero,syncHeaderProtection}=useFlightDetailsHeaderProtection(topInset);
   return <SafeAreaView edges={[]} style={[s.safe,{backgroundColor:contentCanvasColor}]}>
     <StatusBar style={theme.dark?"light":"dark"} translucent backgroundColor="transparent"/>
     {/* Keep the busy announcement separate so it does not group/hide the safe Back action. */}
@@ -288,7 +304,7 @@ function FlightDetailsLoadingSkeleton({theme,topInset,bottomInset,fareCardWidth,
         <HeroCurve testID="flight-details-loading-hero-curve" color={contentCanvasColor}/>
       </View>
       <Animated.View testID="flight-details-loading-body" pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[s.contentBody,{opacity}]}>
-        <View testID="flight-details-loading-itinerary-overlap" style={s.itineraryStack}>
+        <View testID="flight-details-loading-itinerary-overlap" onLayout={({ nativeEvent })=>measureHeaderForeground(nativeEvent.layout.y)} style={s.itineraryStack}>
           <View testID="flight-details-loading-itinerary" style={[s.itineraryCard,s.loadingItineraryCard,theme.dark?s.itineraryCardDark:s.itineraryCardLight,{backgroundColor:theme.dark?theme.surface:FLIGHT_DETAILS_LIGHT_ITINERARY_SURFACE,borderColor:theme.dark?surfaceBorderColor:FLIGHT_DETAILS_LIGHT_ITINERARY_BORDER}]}>
             <ItineraryGlossSurface dark={theme.dark} testID="flight-details-loading-itinerary-gloss"/>
             <View testID="flight-details-loading-direction-date" style={s.itineraryHeader}><View style={[s.loadingLine,s.loadingDirectionLine,placeholder]}/><View style={[s.loadingLine,s.loadingDateLine,placeholder]}/></View>
