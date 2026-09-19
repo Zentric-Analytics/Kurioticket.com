@@ -112,7 +112,7 @@ test("persistent booking dock remains outside tab content and follows selected r
   assert.match(hotel, /rateRows\.find\(\(row\) => row\.id === selectedRateId && row\.actionable\)/);
   assert.match(hotel, /detailsStatus !== "loading" && selectedRate/);
   assert.match(hotel, /s\.bookingDock/);
-  assert.match(hotel, /contentContainerStyle=\{\{ paddingBottom: selectedRate \? 124 \+ inset\.bottom : 24 \+ inset\.bottom \}\}/);
+  assert.match(hotel, /contentContainerStyle=\{\{ paddingBottom: selectedRate \? 108 \+ inset\.bottom : 24 \+ inset\.bottom \}\}/);
   assert.ok(hotel.indexOf("s.bookingDock") > hotel.indexOf("</ScrollView>"));
 });
 

@@ -41,7 +41,7 @@ test("native Hotel keeps one selected-rate dock visible across Rates, Overview, 
   assert.match(detailSource, /selectedRate\.totalLabel/);
   assert.match(detailSource, />Choose room<\/Text>/);
   assert.match(detailSource, /onPress=\{\(\) => void continueSelectedRate\(\)\}/);
-  assert.match(detailSource, /contentContainerStyle=\{\{ paddingBottom: selectedRate \? 124 \+ inset\.bottom : 24 \+ inset\.bottom \}\}/);
+  assert.match(detailSource, /contentContainerStyle=\{\{ paddingBottom: selectedRate \? 108 \+ inset\.bottom : 24 \+ inset\.bottom \}\}/);
   const tabsEnd = detailSource.indexOf("</ScrollView>");
   const dock = detailSource.indexOf("s.bookingDock");
   assert.ok(tabsEnd >= 0 && dock > tabsEnd, "booking dock must sit outside tab-specific scrolling content");
