@@ -84,8 +84,8 @@ test("hero controls preserve independent save and share targets in a smaller gla
   const controlsEnd = native.indexOf("</SafeAreaView>", controlsStart);
   const controls = native.slice(controlsStart, controlsEnd);
   assert.match(native, /heroActions:\{[^}]*width:88,height:44,flexDirection:"row"/);
-  assert.match(native, /heroActionsGlass:\{\.\.\.StyleSheet\.absoluteFillObject,borderRadius:22\}/);
-  assert.match(controls, /<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical" style=\{s\.heroActionsGlass\}\/>/);
+  assert.match(native, /heroActionsGlass:\{position:"absolute",left:0,right:0,top:2,bottom:2,borderRadius:20\}/);
+  assert.match(controls, /<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s\.heroActionsGlass\}\/>/);
   assert.doesNotMatch(native, /rgba\(255, 255, 255, 0\.68\)/);
   assert.match(native, /heroAction:\{width:44,height:44,alignItems:"center",justifyContent:"center"\}/);
   assert.equal(controls.match(/<IconButton/g)?.length, 2);
@@ -113,14 +113,14 @@ test("only unavailable and error states retain the fixed page header", () => {
   assert.match(native, /state !== "available" \|\| !details \|\| !selected[\s\S]*?<TopBar backgroundColor=\{theme\.background\}\/>/);
 });
 
-test("flight optical glass keeps unsaved Save icon visible in dark mode", () => {
-  assert.match(native, /color=\{saved \? androidFavoriteColors\.savedStroke : theme\.dark \? theme\.icon : androidFavoriteColors\.unsavedStroke\}/);
+test("flight Hotel light glass keeps unsaved Save icon visible in dark mode", () => {
+  assert.match(native, /color=\{saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\}/);
 });
 
 test("flight save action uses the canonical favorite visual states", () => {
   assert.match(native, /label=\{saved\?"Remove saved flight":"Save flight"\} onPress=\{\(\)=>savedFlights\.toggle/);
   assert.match(native, /savedFlights\.toggle\(savedOffer,nativeFlightEditSearchParams\(details,one\(params\.currency\)\)\)/);
-  assert.match(native, /<Heart size=\{17\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{saved \? androidFavoriteColors\.savedStroke : theme\.dark \? theme\.icon : androidFavoriteColors\.unsavedStroke\} fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/>/);
-  assert.match(native, /const heroIconColor=theme\.dark\?theme\.icon:"#0F172A"/);
+  assert.match(native, /<Heart size=\{17\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\} fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/>/);
+  assert.match(native, /const heroIconColor="#0F172A"/);
   assert.doesNotMatch(native, /<Heart[^>]*fill="transparent"/);
 });
