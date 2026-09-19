@@ -19,13 +19,13 @@ const hotelLocation = readFileSync(
   "utf8",
 );
 
-test("Cars and Hotel share the working default Look Around presentation", () => {
+test("Cars keeps its Look Around bridge while Hotel uses its inline-only bridge", () => {
   assert.match(carFullMap, /NativeAppleCarLookAroundPreview/);
-  assert.match(hotelLocation, /NativeAppleCarLookAroundPreview/);
+  assert.match(hotelLocation, /NativeAppleHotelLookAround/);
+  assert.doesNotMatch(hotelLocation, /NativeAppleCarLookAroundPreview/);
   assert.match(bridge, /presentationMode = "swiftUI"/);
   assert.match(bridge, /presentationMode=\{presentationMode\}/);
   assert.doesNotMatch(carFullMap, /presentationMode=/);
-  assert.doesNotMatch(hotelLocation, /presentationMode=/);
 });
 
 test("Cars repositions only the supported Apple Legal label instead of hiding MapKit attribution", () => {
