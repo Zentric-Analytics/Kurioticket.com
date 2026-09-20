@@ -476,12 +476,10 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               </div>
             </header>
 
-            <div className="order-3">
-              <HotelDetailsSectionNav
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-              />
-            </div>
+            <HotelDetailsSectionNav
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+            />
 
             <div
               className="order-4"
