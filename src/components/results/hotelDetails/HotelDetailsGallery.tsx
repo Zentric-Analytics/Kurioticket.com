@@ -73,7 +73,6 @@ export function HotelDetailsGallery({
   activeIndex,
   activePosition,
   selectPhotoLabel,
-  viewAllPhotosLabel: _viewAllPhotosLabel,
   openPhotoViewerLabel,
   closePhotoViewerLabel,
   photoViewerTitle,
