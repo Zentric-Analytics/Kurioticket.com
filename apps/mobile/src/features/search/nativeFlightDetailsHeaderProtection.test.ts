@@ -31,20 +31,20 @@ test("Flight header protection clamps the threshold when the hero is shorter tha
 test("loaded Flight content drives a non-interactive protected layer while controls stay fixed above it", () => {
   const available = flight.slice(flight.indexOf('return <SafeAreaView edges={[]}'), flight.indexOf("function FlightDetailsLoadingSkeleton"));
   const layer = available.indexOf('testID="flight-details-protected-header"');
-  const controls = available.indexOf('testID="flight-details-floating-controls"');
+  const controls = available.indexOf('testID="flight-details-back-control"');
   const scroll = available.indexOf('testID="flight-details-scroll-content"');
 
   assert.ok(layer > -1 && layer < controls && controls < scroll);
   assert.match(available, /testID="flight-details-protected-header" pointerEvents="none"/);
   assert.match(available, /s\.protectedHeader,Platform\.OS==="android"&&s\.androidFlatControlLayer,\{height:protectedHeaderHeight,backgroundColor:headerProtected\?contentCanvasColor:"transparent"\}/);
-  assert.match(available, /s\.heroControls,s\.floatingControls,Platform\.OS==="android"&&s\.androidFlatControlLayer/);
+  assert.match(available, /s\.heroBackControl,\{top:inset\.top\+8\}/);
   assert.match(available, /onScroll=\{\(\{ nativeEvent \}\)=>syncHeaderProtection\(nativeEvent\.contentOffset\.y\)\}/);
   assert.match(available, /scrollEventThrottle=\{16\}/);
   assert.match(available, /testID="flight-details-hero"[^>]*onLayout=\{\(\{ nativeEvent \}\)=>measureHeaderHero\(nativeEvent\.layout\.height\)\}/);
   assert.match(available, /testID="flight-details-itinerary-overlap"[^>]*onLayout=\{\(\{ nativeEvent \}\)=>measureHeaderForeground\(nativeEvent\.layout\.y\)\}/);
   assert.match(flight, /const reload = useCallback\(\(\) => \{ resetHeaderProtection\(\); setRevision\(\(value\) => value \+ 1\); \}, \[resetHeaderProtection\]\);/);
   assert.match(flight, /protectedHeader:\{position:"absolute",left:0,right:0,top:0,zIndex:10,elevation:11\}/);
-  assert.match(flight, /floatingControls:\{zIndex:20,elevation:12\}/);
+  assert.match(flight, /heroBackControl:\{position:"absolute",left:16,width:44,height:44,zIndex:20\}/);
   assert.match(flight, /androidFlatControlLayer:\{elevation:0\}/);
 });
 
@@ -52,7 +52,7 @@ test("loading Flight content receives equivalent protection because its skeleton
   const loading = flight.slice(flight.indexOf("function FlightDetailsLoadingSkeleton"), flight.indexOf("function HeroCurve"));
   assert.match(loading, /testID="flight-details-loading-protected-header" pointerEvents="none"/);
   assert.match(loading, /s\.protectedHeader,Platform\.OS==="android"&&s\.androidFlatControlLayer/);
-  assert.match(loading, /s\.heroControls,s\.floatingControls,Platform\.OS==="android"&&s\.androidFlatControlLayer/);
+  assert.match(loading, /s\.heroBackControl,\{top:topInset\+8\}/);
   assert.match(loading, /backgroundColor:headerProtected\?contentCanvasColor:"transparent"/);
   assert.match(loading, /testID="flight-details-loading-scroll"[\s\S]*?onScroll=\{\(\{ nativeEvent \}\)=>syncHeaderProtection\(nativeEvent\.contentOffset\.y\)\}/);
   assert.match(loading, /testID="flight-details-loading-hero"[^>]*onLayout=\{\(\{ nativeEvent \}\)=>measureHeaderHero\(nativeEvent\.layout\.height\)\}/);

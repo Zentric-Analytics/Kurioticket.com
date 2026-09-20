@@ -52,12 +52,12 @@ test("available Flight Details uses a universal edge-to-edge hero with safe cont
   assert.match(available, /<StatusBar style=\{headerProtected\?\(theme\.dark\?"light":"dark"\):"light"\} translucent backgroundColor="transparent"\/?>/);
   assert.match(available, /<ImageBackground testID="flight-details-hero"[^\n]*source=\{require\("\.\.\/\.\.\/\.\.\/assets\/heroes\/flight-details-hero\.webp"\)\}/);
   const scrollStart = available.indexOf('<ScrollView testID="flight-details-scroll-content"');
-  const controls = available.indexOf('testID="flight-details-floating-controls"');
-  assert.ok(controls > -1 && controls < scrollStart, "floating actions must be screen-level siblings before the vertical ScrollView so accessibility order matches the visual header");
-  assert.match(available, /testID="flight-details-floating-controls" style=\{\[s\.heroControls,s\.floatingControls,Platform\.OS==="android"&&s\.androidFlatControlLayer,\{top:inset\.top\+8\}\]\}/);
+  const controls = available.indexOf('testID="flight-details-back-control"');
+  assert.ok(controls > -1 && controls < scrollStart, "the compact Back control must be a screen-level sibling before the vertical ScrollView");
+  assert.match(available, /testID="flight-details-back-control" style=\{\[s\.heroBackControl,\{top:inset\.top\+8\}\]\}/);
   assert.match(available, /accessibilityLabel="Back to results" onPress=\{\(\)=>router\.back\(\)\} style=\{s\.heroIconButton\}>[\s\S]*?<ArrowLeft/);
   assert.match(native, /heroIconButton:\{width:44,height:44,borderRadius:22/);
-  assert.match(native, /floatingControls:\{zIndex:\d+,elevation:\d+\}/);
+  assert.match(native, /heroBackControl:\{position:"absolute",left:16,width:44,height:44,zIndex:\d+\}/);
   assert.doesNotMatch(loading, /flight-details-hero|ImageBackground|StatusBar style="light"/);
 });
 
@@ -70,8 +70,8 @@ test("hero owns route while screen-level actions preserve Save and Share without
   assert.match(hero, /flightDetailsRouteLabel/);
   assert.match(hero, /\{tripMetadata\}/);
   assert.doesNotMatch(hero, /label=\{saved\?"Remove saved flight":"Save flight"\}|label="Share flight"|Back to results/);
-  assert.match(native, /testID="flight-details-floating-controls"[\s\S]*?label=\{saved\?"Remove saved flight":"Save flight"\}/);
-  assert.match(native, /testID="flight-details-floating-controls"[\s\S]*?label="Share flight"/);
+  assert.match(native, /testID="flight-details-floating-actions"[\s\S]*?label=\{saved\?"Remove saved flight":"Save flight"\}/);
+  assert.match(native, /testID="flight-details-floating-actions"[\s\S]*?label="Share flight"/);
   const metadata = hero.indexOf("{tripMetadata}");
   const route = hero.indexOf("flightDetailsRouteLabel");
   assert.ok(route > -1 && metadata > route, "hero orders airport route first, then trip metadata");
@@ -81,7 +81,7 @@ test("hero owns route while screen-level actions preserve Save and Share without
 });
 
 test("hero controls preserve independent save and share targets in a smaller glass pill", () => {
-  const controlsStart = native.indexOf('<View testID="flight-details-floating-controls"');
+  const controlsStart = native.indexOf('<View testID="flight-details-back-control"');
   const controlsEnd = native.indexOf("</SafeAreaView>", controlsStart);
   const controls = native.slice(controlsStart, controlsEnd);
   assert.match(native, /heroActions:\{[^}]*width:88,height:44,flexDirection:"row"/);
