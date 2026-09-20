@@ -5,6 +5,7 @@ import test from "node:test";
 import { priceAlertSchema } from "@/lib/validation";
 
 const routeSource = readFileSync("src/app/api/price-alerts/route.ts", "utf8");
+const statusRouteSource = readFileSync("src/app/api/price-alerts/[id]/route.ts", "utf8");
 const serviceSource = readFileSync("src/services/priceTrackingService.ts", "utf8");
 
 test("price alert API keeps auth, malformed JSON, validation and duplicate handling", () => {
@@ -73,4 +74,16 @@ test("Hotel price alert schema requires and preserves complete matching stay con
   assert.equal(parsed.data.currency, "EUR");
   assert.equal(priceAlertSchema.safeParse({ ...input, query: { ...input.query, rooms: undefined } }).success, false);
   assert.equal(priceAlertSchema.safeParse({ ...input, destination: "London" }).success, false);
+});
+
+
+test("web price alert status API supports authenticated pause and resume", () => {
+  assert.match(statusRouteSource, /requireWebApiSession\(\)/);
+  assert.match(statusRouteSource, /z\.enum\(\["ACTIVE", "PAUSED"\]\)/);
+  assert.match(statusRouteSource, /updateUserPriceAlertStatus/);
+  assert.match(statusRouteSource, /PriceAlertNotFoundError/);
+  assert.match(statusRouteSource, /InvalidPriceAlertTransitionError/);
+  assert.match(statusRouteSource, /status: 401/);
+  assert.match(statusRouteSource, /status: 404/);
+  assert.match(statusRouteSource, /status: 409/);
 });
