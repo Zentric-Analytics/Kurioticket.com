@@ -1,4 +1,5 @@
 import { Award, Bed, Laptop, Sparkles, UtensilsCrossed, Wifi, Wine, type LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import type { HotelAmenityPresentationItem } from "@/components/results/hotelAmenityPresentation";
 
 function iconFor(item: HotelAmenityPresentationItem): LucideIcon {
@@ -18,6 +19,7 @@ export function HotelAboutSection({
   roomSummary,
   bedSummary,
   accessibility = [],
+  mobileAfterDescription,
 }: {
   description: string;
   amenities: HotelAmenityPresentationItem[];
@@ -26,6 +28,7 @@ export function HotelAboutSection({
   roomSummary?: string;
   bedSummary?: string;
   accessibility?: string[];
+  mobileAfterDescription?: ReactNode;
 }) {
   const mobilePopularAmenities = amenities.slice(0, 4);
   const mobileRemainingAmenities = amenities.slice(4);
@@ -55,8 +58,14 @@ export function HotelAboutSection({
         </p>
       )}
 
+      {mobileAfterDescription ? (
+        <div className="-mx-4 mt-5 lg:hidden" data-mobile-hotel-overview-location-slot>
+          {mobileAfterDescription}
+        </div>
+      ) : null}
+
       <div className="lg:hidden" data-mobile-hotel-overview-core>
-        <h3 className="mt-6 text-[16px] font-bold leading-6 text-slate-950">
+        <h3 className="mt-5 text-[16px] font-bold leading-6 text-slate-950">
           Popular amenities
         </h3>
         {mobilePopularAmenities.length ? (
