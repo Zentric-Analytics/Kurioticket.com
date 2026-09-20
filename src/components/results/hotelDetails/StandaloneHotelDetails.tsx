@@ -102,6 +102,7 @@ export type StandaloneHotelDetailsProps = {
     yourStay: string;
     edit: string;
     continueBooking: string;
+    viewDeal: string;
     roomTitle: string;
     closeRooms: string;
     roomTerms: string;
@@ -218,7 +219,10 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
   const externalProviderOffers = props.onProviderOfferHandoff
     ? (props.providerOffers ?? []).filter(isActionableExternalHotelProviderOffer)
     : [];
-  const providerOffers = [kurioticketOffer, ...externalProviderOffers];
+  const providerOffers = [
+    ...(internalRoomFlowAvailable ? [kurioticketOffer] : []),
+    ...externalProviderOffers,
+  ];
   const selectableProviderOfferIds = new Set(
     providerOffers
       .filter((offer) => isActionableHotelProviderOffer(offer, internalRoomFlowAvailable))
@@ -249,6 +253,35 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
     offers: providerOffers,
     internalRoomFlowAvailable,
   });
+
+  const selectedProviderOffer =
+    providerOffers.find((offer) => offer.id === selectedProviderOfferId) ?? null;
+  const bookingActionAvailable =
+    selectedProviderOffer !== null &&
+    (bookingContinuation.kind === "internal-room-flow" ||
+      bookingContinuation.kind === "provider-handoff");
+  const bookingActionLabel =
+    bookingContinuation.kind === "provider-handoff"
+      ? props.labels.viewDeal
+      : props.labels.continueBooking;
+  const selectedProviderIsExternal =
+    bookingContinuation.kind === "provider-handoff";
+  const mobileDockUsesProviderTotal =
+    selectedProviderIsExternal && Boolean(selectedProviderOffer?.totalPrice);
+  const mobileDockPrimaryPrice = selectedProviderIsExternal
+    ? selectedProviderOffer?.totalPrice || selectedProviderOffer?.nightlyPrice || props.labels.priceUnavailable
+    : props.totalDisplayPrice?.formatted || selectedProviderOffer?.nightlyPrice || props.labels.priceUnavailable;
+  const mobileDockPrimaryLabel = mobileDockUsesProviderTotal || !selectedProviderIsExternal
+    ? props.estimatedTotalText
+    : props.perNightText.replace("{{price}}", "").trim();
+  const mobileDockSupportingText = selectedProviderIsExternal
+    ? mobileDockUsesProviderTotal && selectedProviderOffer
+      ? props.perNightText.replace("{{price}}", selectedProviderOffer.nightlyPrice)
+      : selectedProviderOffer?.providerName || ""
+    : props.nightlyDisplayPrice
+      ? props.perNightText.replace("{{price}}", props.nightlyDisplayPrice.formatted)
+      : selectedProviderOffer?.providerName || "";
+  const mobileDockProviderName = selectedProviderOffer?.providerName || "";
 
   function focusComparePrices(targetId = "hotel-compare-heading") {
     setActiveTab("compare");
@@ -286,7 +319,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
 
   return (
     <div
-      className="min-w-0 pb-[calc(8.5rem+env(safe-area-inset-bottom))] lg:pb-0"
+      className={bookingActionAvailable ? "min-w-0 pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:pb-0" : "min-w-0 pb-6 lg:pb-0"}
       data-standalone-hotel-details
       data-mobile-web-hotel-details
     >
@@ -723,11 +756,11 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
             )}
             <button
               type="button"
-              disabled={bookingContinuation.kind === "unavailable" || bookingContinuation.kind === "selection-required" || pendingProviderOfferId !== null}
+              disabled={!bookingActionAvailable || pendingProviderOfferId !== null}
               onClick={(event) => continueBooking(event.currentTarget)}
               className="focus-ring mt-6 flex h-12 w-full items-center justify-center rounded-lg bg-blue px-4 text-sm font-bold text-white hover:bg-blue-dark disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {props.labels.continueBooking}
+              {bookingActionLabel}
             </button>
           </section>
           {activeTab === "compare" && props.propertyDetails ? (
@@ -742,53 +775,45 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
         </aside>
       </div>
 
-      <section
-        className="fixed inset-x-0 bottom-0 z-[90] rounded-t-[22px] border-t border-slate-200 bg-white px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-8px_28px_rgba(15,23,42,0.14)] lg:hidden"
-        data-mobile-hotel-stay-dock
-      >
-        <div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_minmax(132px,0.9fr)] items-center gap-3">
-          <div className="min-w-0">
-            <p className="flex items-center gap-1 text-[12px] font-semibold leading-4 text-slate-600">
-              {props.estimatedTotalText}
-              <Info className="h-3 w-3" aria-hidden="true" />
-            </p>
-            {props.totalDisplayPrice ? (
+      {bookingActionAvailable && selectedProviderOffer ? (
+        <section
+          className="fixed inset-x-0 bottom-0 z-[90] border-t border-slate-200 bg-white px-3 pb-[calc(0.625rem+env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-6px_22px_rgba(15,23,42,0.12)] min-[390px]:px-4 min-[390px]:pt-3 lg:hidden"
+          data-mobile-hotel-stay-dock
+        >
+          <div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_minmax(124px,42%)] items-center gap-2.5 min-[390px]:grid-cols-[minmax(0,1fr)_minmax(140px,0.82fr)] min-[390px]:gap-3">
+            <div className="min-w-0" data-mobile-hotel-selected-rate>
+              <p className="flex min-w-0 items-center gap-1 text-[11px] font-semibold leading-4 text-slate-600 min-[390px]:text-[12px]">
+                <span className="truncate">{mobileDockPrimaryLabel}</span>
+                {mobileDockPrimaryLabel === props.estimatedTotalText ? (
+                  <Info className="h-3 w-3 shrink-0" aria-hidden="true" />
+                ) : null}
+              </p>
               <p
-                className="text-[clamp(1.25rem,6vw,1.5rem)] font-extrabold leading-tight text-slate-950"
-                title={props.totalDisplayPrice.title}
-                aria-label={props.totalDisplayPrice.ariaLabel}
+                className="break-words text-[18px] font-semibold leading-[21px] tracking-[-0.02em] text-slate-950 tabular-nums min-[390px]:text-[20px] min-[390px]:leading-6"
+                title={selectedProviderIsExternal ? selectedProviderOffer.nightlyPriceTitle : props.totalDisplayPrice?.title}
+                aria-label={selectedProviderIsExternal ? selectedProviderOffer.nightlyPriceAriaLabel : props.totalDisplayPrice?.ariaLabel}
               >
-                {props.totalDisplayPrice.formatted}
+                {mobileDockPrimaryPrice}
               </p>
-            ) : (
-              <p className="text-sm font-bold text-slate-700">
-                {props.labels.priceUnavailable}
+              <p className="mt-0.5 truncate text-[11px] font-medium leading-4 text-slate-500">
+                <span>{mobileDockProviderName}</span>
+                {mobileDockSupportingText ? <span> · {mobileDockSupportingText}</span> : null}
               </p>
-            )}
-            {props.nightlyDisplayPrice ? (
-              <p
-                className="text-[12px] leading-4 text-slate-600"
-                title={props.nightlyDisplayPrice.title}
+            </div>
+            <div className="min-w-0">
+              <button
+                type="button"
+                aria-label={`${bookingActionLabel} with ${mobileDockProviderName}`}
+                disabled={pendingProviderOfferId !== null}
+                onClick={(event) => continueBooking(event.currentTarget)}
+                className="focus-ring min-h-12 w-full rounded-lg bg-blue px-2 text-[12px] font-bold leading-4 text-white disabled:opacity-50 min-[390px]:px-3 min-[390px]:text-[13px] min-[390px]:leading-[18px]"
               >
-                {props.perNightText.replace(
-                  "{{price}}",
-                  props.nightlyDisplayPrice.formatted,
-                )}
-              </p>
-            ) : null}
+                {bookingActionLabel}
+              </button>
+            </div>
           </div>
-          <div>
-            <button
-              type="button"
-              disabled={bookingContinuation.kind === "unavailable" || bookingContinuation.kind === "selection-required" || pendingProviderOfferId !== null}
-              onClick={(event) => continueBooking(event.currentTarget)}
-              className="focus-ring min-h-12 w-full rounded-lg bg-blue px-3 text-[13px] font-bold leading-[18px] text-white disabled:opacity-50"
-            >
-              {props.labels.continueBooking}
-            </button>
-          </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       {roomsOpen ? (
         <div
