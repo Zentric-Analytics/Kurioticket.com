@@ -39,7 +39,7 @@ export function HotelDetailsSectionNav({
     <div
       role="tablist"
       aria-label="Hotel details"
-      className="sticky top-0 z-30 mt-1 grid grid-cols-4 border-b border-slate-200 bg-white px-2 lg:mt-5 lg:grid-cols-[minmax(0,1.65fr)_repeat(3,minmax(0,1fr))] lg:px-0"
+      className="order-3 sticky top-0 z-30 mt-1 grid grid-cols-4 border-b border-slate-200 bg-white px-2 lg:mt-5 lg:grid-cols-[minmax(0,1.65fr)_repeat(3,minmax(0,1fr))] lg:px-0"
       data-hotel-details-section-nav
     >
       {tabs.map((tab, index) => {
