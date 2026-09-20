@@ -59,9 +59,10 @@ test("Home structured Flight submits align with their cards without changing Res
 });
 
 test("Home gives separate-card Hotel and Cars forms quiet full-width rounded lower boundaries", () => {
-  assert.match(home, /function HomeHotelSearchSurface[\s\S]*?backgroundColor: ft\.colors\.page/);
-  assert.match(home, /function HomeHotelSearchSurface[\s\S]*?shadowColor: ft\.colors\.shadow/);
-  assert.doesNotMatch(home, /function HomeHotelSearchSurface[\s\S]*?ft\.styles\.card|function HomeHotelSearchSurface[\s\S]*?ft\.styles\.shadow/);
+  const hotelWrapper = home.slice(home.indexOf("function HomeHotelSearchSurface"), home.indexOf("function HomeCarsSearchSurface"));
+  assert.match(hotelWrapper, /backgroundColor: ft\.colors\.page/);
+  assert.match(hotelWrapper, /shadowColor: ft\.colors\.shadow/);
+  assert.doesNotMatch(hotelWrapper, /ft\.styles\.card|ft\.styles\.shadow/);
   assert.match(home, /homeHotelSearchSurface: \{[\s\S]*?marginHorizontal: -HOME_CONTENT_HORIZONTAL_PADDING,[\s\S]*?paddingHorizontal: HOME_CONTENT_HORIZONTAL_PADDING \+ 8,[\s\S]*?paddingTop: 8,[\s\S]*?paddingBottom: 12/);
   assert.match(home, /homeHotelSearchSurface: \{[\s\S]*?borderBottomLeftRadius: 30,[\s\S]*?borderBottomRightRadius: 30/);
   assert.match(home, /<HomeHotelSearchSurface>\s*<HotelSearchPanel embedded params=\{\{\}\} \/>\s*<\/HomeHotelSearchSurface>/);
