@@ -43,8 +43,8 @@ test("mobile gallery uses a full-bleed hero with controls and counter while desk
 test("mobile header owns stay metadata while the dock follows the selected rate", () => {
   assert.equal(source.match(/data-mobile-hotel-stay-dock/g)?.length, 1);
   assert.match(source, /fixed inset-x-0 bottom-0/);
-  assert.match(source, /env\\(safe-area-inset-bottom\\)/);
-  assert.match(source, /bookingActionAvailable \\? "min-w-0 pb-\\[calc\\(7\\.5rem\\+env\\(safe-area-inset-bottom\\)\\)\\]/);
+  assert.match(source, /env\(safe-area-inset-bottom\)/);
+  assert.match(source, /bookingActionAvailable \? "min-w-0 pb-\[calc\(7\.5rem\+env\(safe-area-inset-bottom\)\)\]/);
   assert.match(source, /hidden min-w-0 lg:flex lg:flex-col/);
 
   const headerStart = source.indexOf("data-mobile-property-header");
