@@ -250,7 +250,7 @@ export function HotelDetailsClient({
     mode,
   ]);
 
-  async function continueToProvider(throwOnError = false) {
+  async function runProviderRedirect() {
     if (!hotel || redirecting || !canUseHotelDetailsProviderLink(hotel)) return;
     setRedirecting(true);
     setRedirectError("");
@@ -279,7 +279,15 @@ export function HotelDetailsClient({
       setRedirectError(message);
       setRedirecting(false);
       setResultReceivedAt(null);
-      if (throwOnError) throw new Error(message);
+      throw new Error(message);
+    }
+  }
+
+  async function continueToProvider() {
+    try {
+      await runProviderRedirect();
+    } catch {
+      // Existing booking panels read redirectError from state.
     }
   }
 
@@ -918,7 +926,7 @@ export function HotelDetailsClient({
                 onProviderOfferHandoff={
                   standaloneProviderOffers.length
                     ? async () => {
-                        await continueToProvider(true);
+                        await runProviderRedirect();
                       }
                     : undefined
                 }
