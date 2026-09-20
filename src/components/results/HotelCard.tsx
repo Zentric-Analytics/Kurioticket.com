@@ -503,7 +503,7 @@ export function HotelCard({
                   >
                     <ChevronRight className="h-5 w-5 translate-x-2.5" aria-hidden="true" />
                   </button>
-                  <div className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] whitespace-nowrap rounded-full bg-slate-950/75 px-2 py-1 text-[10px] font-semibold text-white shadow-lg ring-1 ring-white/30 sm:text-xs" aria-live="polite">
+                  <div className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] whitespace-nowrap rounded-full bg-slate-950/75 px-2 py-1 text-[11px] font-semibold text-white shadow-lg ring-1 ring-white/30 sm:text-xs" aria-live="polite">
                     {photoCounterText}
                   </div>
                 </>
@@ -549,7 +549,7 @@ export function HotelCard({
 
                 {sortBadgeConfig && SortBadgeIcon ? (
                   <span
-                    className={`mt-1 inline-flex max-w-full items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-4 md:px-2 md:text-[11px] ${sortBadgeConfig.className}`}
+                    className={`mt-1 inline-flex max-w-full items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-semibold leading-4 md:px-2 ${sortBadgeConfig.className}`}
                   >
                     <SortBadgeIcon className="h-3.5 w-3.5" aria-hidden="true" />
                     {sortBadgeConfig.label}
@@ -587,7 +587,7 @@ export function HotelCard({
                 </p>
               </div>
               {reviewBand || reviewCountText ? (
-                <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[10px] font-semibold text-slate-600 md:mt-2 md:gap-1.5 md:text-[11px]">
+                <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px] font-semibold leading-4 text-slate-600 md:mt-2 md:gap-1.5">
                   {reviewBand ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-white">
                       <span>
@@ -604,7 +604,7 @@ export function HotelCard({
                 </div>
               ) : null}
               {sourceAttributions.length ? (
-                <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[10px] font-medium text-slate-600 md:mt-2 md:gap-1.5 md:text-[11px]">
+                <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px] font-medium leading-4 text-slate-600 md:mt-2 md:gap-1.5">
                   {sourceAttributions.map((attribution, index) => (
                     <span
                       key={`${attribution.provider}-${index}`}
@@ -634,14 +634,14 @@ export function HotelCard({
               {shouldShowMealPlanText || collapsedAmenityItems.length > 0 ? (
                 <div className="space-y-1.5">
                   {shouldShowMealPlanText ? (
-                    <p className="text-[11px] font-normal leading-4 text-slate-600 md:text-[13px] md:leading-5">
+                    <p className="text-[12px] font-normal leading-[18px] text-slate-600 md:text-[13px] md:leading-5">
                       {mealPlanText}
                     </p>
                   ) : null}
                   <HotelAmenityList
                     items={collapsedAmenityItems}
                     t={t}
-                    className="grid grid-cols-1 gap-y-1 text-[11px] leading-4 md:grid-cols-2 md:gap-x-3 md:gap-y-1.5 md:text-xs"
+                    className="grid grid-cols-1 gap-y-1 text-[12px] leading-[18px] md:grid-cols-2 md:gap-x-3 md:gap-y-1.5 md:text-xs md:leading-4"
                   />
                 </div>
               ) : null}
@@ -649,8 +649,8 @@ export function HotelCard({
                 <p
                   className={
                     cancellationDisplay.positive
-                      ? "mt-1.5 text-[11px] font-medium leading-4 text-emerald-700 md:mt-2 md:text-[13px] md:leading-5"
-                      : "mt-1.5 text-[11px] font-medium leading-4 text-slate-600 md:mt-2 md:text-[13px] md:leading-5"
+                      ? "mt-1.5 text-[12px] font-medium leading-[18px] text-emerald-700 md:mt-2 md:text-[13px] md:leading-5"
+                      : "mt-1.5 text-[12px] font-medium leading-[18px] text-slate-600 md:mt-2 md:text-[13px] md:leading-5"
                   }
                 >
                   {cancellationDisplay.label}
