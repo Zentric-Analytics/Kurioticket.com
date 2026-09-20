@@ -10,6 +10,10 @@ const hotelSource = readFileSync(
   new URL("../search/HotelSearchBar.tsx", import.meta.url),
   "utf8",
 );
+const hotelSummarySource = readFileSync(
+  new URL("./HotelMobileResultsSummary.tsx", import.meta.url),
+  "utf8",
+);
 const summary = source.slice(
   source.indexOf("const renderMobileControlsRow"),
   source.indexOf("const renderCarsSearchForm"),
@@ -42,7 +46,7 @@ test("normal Cars mobile summary preserves Cars content and its actual Edit Sear
   assert.doesNotMatch(summary, /group-active:bg-/);
 });
 
-test("normal Cars summary pins the current Hotel edit affordance contract", () => {
+test("Cars and Hotel results keep the same quiet edit-affordance family", () => {
   for (const contract of [
     /<SquarePen size=\{16\} strokeWidth=\{2\.2\}/,
     /h-11 w-11/,
@@ -50,10 +54,11 @@ test("normal Cars summary pins the current Hotel edit affordance contract", () =
     /text-slate-700/,
   ]) {
     assert.match(summary, contract);
-    assert.match(hotelSource, contract);
+    assert.match(hotelSummarySource, contract);
   }
+  assert.match(hotelSource, /<HotelMobileResultsSummary/);
   assert.doesNotMatch(summary, /SquarePen[\s\S]{0,300}bg-\[#004BB8\]\/8/);
-  assert.doesNotMatch(summary, /PencilLine|border-\[#004BB8\]\/12/);
+  assert.doesNotMatch(hotelSummarySource, /SquarePen[\s\S]{0,300}bg-\[#004BB8\]\/8/);
 });
 
 test("normal Cars summary uses the Flights mobile presentation and remains mobile-only", () => {
