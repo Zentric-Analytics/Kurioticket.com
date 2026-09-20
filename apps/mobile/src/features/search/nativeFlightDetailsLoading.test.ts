@@ -170,7 +170,7 @@ test("entry itinerary overlaps the hero with loaded card breadth and representat
   assert.equal(style(card).borderRadius, 15);
   assert.equal(style(card).padding, 15);
   assert.equal(style(card).borderWidth, 1);
-  assert.equal(style(card).backgroundColor, "#FCFDFE");
+  assert.equal(style(card).backgroundColor, "#FFFFFF");
   assert.equal(style(card).borderColor, "#E1E7EF");
   const gloss = find(card, "flight-details-loading-itinerary-gloss");
   assert.equal(card.children[0], gloss, "the inert finish must paint behind loading content");
