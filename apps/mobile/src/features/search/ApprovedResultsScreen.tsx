@@ -178,10 +178,10 @@ const flightSupportText = {
 } as const;
 const flightResultsLightCanvas = "#F5F7FB";
 const FLIGHT_RESULT_INITIAL_RENDER_COUNT = 10;
-// RN 0.81 estimates an unmeasured VirtualizedList tail from measured rows. A
-// larger bounded render-ahead window lets the native content extent settle
-// early, so iOS does not keep resizing the scroll-indicator thumb while the
-// user traverses a long result set. Virtualization remains enabled.
+// RN 0.81 constrains an unmeasured VirtualizedList tail spacer to the highest
+// measured row. Keep a normal, bounded render-ahead window so the native
+// content extent settles before traversal instead of growing one small window
+// at a time. Virtualization remains enabled.
 const FLIGHT_RESULT_RENDER_BATCH_SIZE = 10;
 const FLIGHT_RESULT_WINDOW_SIZE = 21;
 const FLIGHT_RESULT_BATCHING_PERIOD_MS = 16;
@@ -199,6 +199,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const insets = useSafeAreaInsets();
   const flightResults = product === "flight";
   const flightCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
+  const flightResultsScrollIndicatorInsets = Platform.OS === "ios"
+    ? { top: 4, right: 3, bottom: Math.max(insets.bottom, 8), left: 0 }
+    : undefined;
   const hotelCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
@@ -1000,6 +1003,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               />
             </View>
           ) : null}
+          showsVerticalScrollIndicator={true}
+          automaticallyAdjustsScrollIndicatorInsets={false}
+          scrollIndicatorInsets={flightResultsScrollIndicatorInsets}
           alwaysBounceVertical={false}
           bounces={false}
           overScrollMode="never"
