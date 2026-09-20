@@ -12,7 +12,7 @@ const loading = details.slice(loadingStart, loadingEnd);
 type Element = { type: string; props: Record<string, any>; children: Element[] };
 // Execute the actual skeleton JSX/styles without booting RN's native runtime.
 // Host elements and inert hooks are the boundary; no flight data/actions are supplied.
-function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWidth = 216) {
+function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWidth = 216, platform: "android" | "ios" = "android") {
   let backs = 0;
   const host = (type: string | ((props: any) => Element), props: Record<string, any> | null, ...children: any[]): Element =>
     typeof type === "function" ? type(props) : { type, props: props ?? {}, children: children.flat(Infinity).filter((child) => child && typeof child === "object") };
@@ -28,7 +28,7 @@ function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWi
     Pressable: "Pressable", Text: "Text", DetailGlassSurface: (props: any) => host("DetailGlassSurface", props), ArrowLeft: "ArrowLeft", Heart: "Heart", FlowIcon: "FlowIcon", StatusBar: "StatusBar", Svg: "Svg", Path: "Path", Defs: "Defs", LinearGradient: "LinearGradient", Stop: "Stop", Rect: "Rect",
     Animated: { View: "Animated.View", Value: class { constructor(public value: number) {} } },
     useState: (value: unknown) => [value, () => {}], useRef: (current: unknown) => ({ current }), useEffect: () => {}, useCallback: (callback: unknown) => callback,
-    Platform: { OS: "android" }, StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1, absoluteFillObject: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 } }, ui: { blue: "#2563EB", green: "#16A34A" }, appFonts: { semibold: "Inter_600SemiBold", bold: "Inter_700Bold" },
+    Platform: { OS: platform }, StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1, absoluteFillObject: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 } }, ui: { blue: "#2563EB", green: "#16A34A" }, appFonts: { semibold: "Inter_600SemiBold", bold: "Inter_700Bold" },
     router: { back: () => { backs += 1; } }, flightDetailsHeaderProtectionGeometry: (top: number) => ({ protectedHeight: top + 64, threshold: Math.max(0, 150 - top) }), FLIGHT_RESULTS_LIGHT_CANVAS: "#F5F7FB",
     input: { theme, topInset, bottomInset, fareCardWidth, viewportWidth: 390 },
   }) as Element;
@@ -202,7 +202,23 @@ test("entry loading mirrors the loaded hero curve and screen-level action geomet
   assert.ok(!descendants(scroll).includes(controls));
   assert.equal(style(controls).top,55);
   assert.equal(style(controls).zIndex,20);
-  assert.ok(style(controls).elevation>=10);
+  assert.equal(style(controls).elevation,0);
+});
+
+test("Android flattens only full-width control layers while iOS keeps the approved elevation contract",()=>{
+  const android=renderLoading(false,47,34,216,"android").root;
+  const ios=renderLoading(false,47,34,216,"ios").root;
+  const androidProtection=find(android,"flight-details-loading-protected-header");
+  const androidControls=find(android,"flight-details-loading-controls");
+  const iosProtection=find(ios,"flight-details-loading-protected-header");
+  const iosControls=find(ios,"flight-details-loading-controls");
+
+  assert.equal(style(androidProtection).elevation,0,"the Android canvas protection must not cast a full-width shadow");
+  assert.equal(style(androidControls).elevation,0,"the Android controls wrapper must not become an elevated full-width surface");
+  assert.equal(style(iosProtection).elevation,11,"iOS keeps the existing protected-layer style");
+  assert.equal(style(iosControls).elevation,12,"iOS keeps the existing floating-control style");
+  assert.equal(style(androidControls.children[0]).elevation,6,"the individual Android Back control keeps its floating depth");
+  assert.equal(style(find(androidControls,"flight-details-loading-actions")).elevation,6,"the individual Android action control keeps its floating depth");
 });
 
 test("entry fare and information rails reserve real widths, bottom price zones and four tabs", () => {

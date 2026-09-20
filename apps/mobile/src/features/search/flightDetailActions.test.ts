@@ -54,7 +54,7 @@ test("available Flight Details uses a universal edge-to-edge hero with safe cont
   const scrollStart = available.indexOf('<ScrollView testID="flight-details-scroll-content"');
   const controls = available.indexOf('testID="flight-details-floating-controls"');
   assert.ok(controls > -1 && controls < scrollStart, "floating actions must be screen-level siblings before the vertical ScrollView so accessibility order matches the visual header");
-  assert.match(available, /testID="flight-details-floating-controls" style=\{\[s\.heroControls,s\.floatingControls,\{top:inset\.top\+8\}\]\}/);
+  assert.match(available, /testID="flight-details-floating-controls" style=\{\[s\.heroControls,s\.floatingControls,Platform\.OS==="android"&&s\.androidFlatControlLayer,\{top:inset\.top\+8\}\]\}/);
   assert.match(available, /accessibilityLabel="Back to results" onPress=\{\(\)=>router\.back\(\)\} style=\{s\.heroIconButton\}>[\s\S]*?<ArrowLeft/);
   assert.match(native, /heroIconButton:\{width:44,height:44,borderRadius:22/);
   assert.match(native, /floatingControls:\{zIndex:\d+,elevation:\d+\}/);
