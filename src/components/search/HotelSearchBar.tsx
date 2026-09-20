@@ -1074,11 +1074,9 @@ export function HotelSearchBar({
                 ? cn(
                     "lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]",
                     mobileSearchOpen &&
-                      cn(
-                        "mx-auto flex w-full max-w-xl flex-col gap-0 overflow-hidden rounded-[14px] border border-slate-200 bg-white divide-y divide-slate-200 sm:grid sm:max-w-none sm:gap-1.5 lg:gap-0",
-                        mobileResultsSheet &&
-                          "gap-3 overflow-visible rounded-none border-0 bg-transparent sm:flex",
-                      ),
+                      (mobileResultsSheet
+                        ? "mx-auto flex w-full max-w-xl flex-col gap-3 overflow-visible bg-transparent sm:flex sm:max-w-none"
+                        : "mx-auto flex w-full max-w-xl flex-col gap-0 overflow-hidden rounded-[14px] border border-slate-200 bg-white divide-y divide-slate-200 sm:grid sm:max-w-none sm:gap-1.5 lg:gap-0"),
                   )
                 : !isStickyDialog
                   ? "lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_104px]"
