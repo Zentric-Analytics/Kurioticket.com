@@ -295,7 +295,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
         data-standalone-hotel-main-grid
       >
         <div className="min-w-0">
-          <article className="flex min-w-0 flex-col bg-white lg:block lg:rounded-[17px] lg:border lg:border-slate-200/80 lg:p-6 lg:shadow-[0_5px_24px_rgba(15,23,42,0.045)]">
+          <article className="flex min-w-0 flex-col bg-white lg:rounded-[17px] lg:border lg:border-slate-200/80 lg:p-6 lg:shadow-[0_5px_24px_rgba(15,23,42,0.045)]">
             <div className="relative order-1 lg:order-2" data-mobile-hotel-hero-shell>
               <HotelDetailsGallery
                 {...props.galleryProps}
