@@ -73,6 +73,7 @@ export function ApprovedCarResultsScreen() {
   const carFilterSessionDirtyRef=useRef(false);
   const [carEditSearchOpen,setCarEditSearchOpen] = useState(false);
   const [priceAlertFeedback,setPriceAlertFeedback] = useState<CarPriceAlertFeedback>(null);
+  const dismissPriceAlertFeedback=useCallback((feedback: Exclude<CarPriceAlertFeedback, null>)=>setPriceAlertFeedback(current=>current===feedback?null:current),[]);
   const carScrollRef=useRef<FlatList<CarResult>>(null);
   const searchSequence=useRef(0);
   const activeSearch=useRef<AbortController|null>(null);
@@ -125,7 +126,7 @@ export function ApprovedCarResultsScreen() {
     <CarFilterSheet visible={filterSheetVisible} results={results} filters={filters} pricePerDay={pricePerDay} onChange={changeCarFilters} onClose={completeCarFilterSession}/>
     {quickSheetKind ? <CarResultsQuickFilterSheet key={quickSheetKind} kind={quickSheetKind} results={results} filters={filters} pricePerDay={pricePerDay} sort={sort} onApplyFilters={(next)=>{changeCarFilters(next);}} onApplySort={(next)=>{if(next!==sort){setSort(next);startCarResultsTransition();}}} onClose={()=>{setQuickSheetKind(null);if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}}}/> : null}
     <CarEditSearchModal visible={carEditSearchOpen} params={params} onClose={()=>setCarEditSearchOpen(false)}/>
-    {priceAlertFeedback ? <CarPriceAlertSnackbar key={priceAlertFeedback} feedback={priceAlertFeedback}/> : null}
+    {priceAlertFeedback ? <CarPriceAlertSnackbar key={priceAlertFeedback} feedback={priceAlertFeedback} onDismiss={dismissPriceAlertFeedback}/> : null}
   </SafeAreaView>;
 }
 

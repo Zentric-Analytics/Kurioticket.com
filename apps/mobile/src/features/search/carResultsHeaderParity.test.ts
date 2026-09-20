@@ -107,7 +107,8 @@ test("Cars use one truthful compact price alert before the summary and cards", (
   assert.match(carAlert, /<ActivityIndicator[^>]*color=\{theme\.priceAlertAccent\}/);
   assert.match(carAlert, /styles\.title, \{ color: theme\.textPrimary \}/);
   assert.match(carAlert, /control: \{ width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1/);
-  assert.match(carAlert, /switch: \{ minWidth: 51, minHeight: 44, flexShrink: 0/);
+  assert.match(carAlert, /loadingSlot: \{ width: 20, minHeight: 44/);
+  assert.match(carAlert, /switchSlot: \{ width: 51, minHeight: 44/);
   assert.match(carAlert, /travelApi\.priceAlerts\(\)/); assert.match(carAlert, /updatePriceAlertStatus/); assert.match(carAlert, /createPriceAlert/);
   assert.doesNotMatch(carAlert, /not available yet/);
   assert.match(hotels, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
@@ -138,9 +139,9 @@ test("Cars Results gives handled child taps to its primary vertical scroll owner
 test("Cars Price Alert keeps focus reconciliation silent while mutation progress remains visible", () => {
   assert.match(carAlert, /const reconcile = useCallback\(async \(\) => \{[\s\S]*?setLoading\(true\)/);
   assert.match(carAlert, /useFocusEffect\(useCallback\(\(\) => \{ void reconcile\(\); \}, \[reconcile\]\)\)/);
-  assert.match(carAlert, /\{pending \? <ActivityIndicator[^>]*color=\{theme\.priceAlertAccent\}[^>]*\/> : null\}<Switch/);
+  assert.match(carAlert, /styles\.loadingSlot\}>\{pending \? <ActivityIndicator[^>]*color=\{theme\.priceAlertAccent\}[^>]*\/> : null\}<\/View><View style=\{styles\.switchSlot\}><Switch/);
   assert.doesNotMatch(carAlert, /pending \|\| loading \? <ActivityIndicator/);
-  assert.doesNotMatch(carAlert, /loading[^?\n]*\? <ActivityIndicator/);
+  assert.doesNotMatch(carAlert, /\{loading \? <ActivityIndicator/);
   assert.match(carAlert, /accessibilityState=\{\{ checked: tracking, disabled, busy: pending \}\}/);
   assert.doesNotMatch(carAlert, /busy: pending \|\| loading/);
 });
@@ -206,8 +207,12 @@ test("Cars Price Alert removes the manual target sheet and uses transient snackb
   assert.match(carAlert, /feedback === "active"/);
   assert.match(carAlert, /Price tracking is on/);
   assert.match(carAlert, /Price tracking paused/);
-  assert.match(carAlert, /We'll let you know when this rental gets cheaper\./);
+  assert.match(carAlert, /We'll notify you if the price drops\./);
   assert.match(carAlert, /accessibilityLabel="Manage price alerts"/);
   assert.match(carAlert, /router\.push\("\/price-alerts"\)/);
-  assert.match(carAlert, /feedbackTimer\.current = setTimeout\(\(\) => onFeedback\?\.\(null\), CAR_PRICE_ALERT_SNACKBAR_DURATION_MS\)/);
+  assert.match(carAlert, /const dismissTimer = setTimeout/);
+  assert.match(carAlert, /Animated\.timing\(opacity, \{ toValue: 0/);
+  assert.match(carAlert, /if \(finished\) onDismiss\(feedback\)/);
+  assert.match(carAlert, /clearTimeout\(dismissTimer\)/);
+  assert.match(cars, /onDismiss=\{dismissPriceAlertFeedback\}/);
 });

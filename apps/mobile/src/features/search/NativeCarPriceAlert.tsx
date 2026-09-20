@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Animated, Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Animated, Easing, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { Bell } from "lucide-react-native";
+import { Bell, CircleCheck } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { travelApi, TravelApiError, type CarResult, type MobilePriceAlert } from "../../api/travelApi";
 import { readSession } from "../../storage/sessionStorage";
@@ -24,18 +24,14 @@ export function NativeCarPriceAlert({ plan, results, available, onFeedback }: { 
   const [pending, setPending] = useState(false);
   const pendingRef = useRef(false);
   const reconciliationRef = useRef(0);
-  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const planRef = useRef(plan);
   planRef.current = plan;
   const planKey = plan?.key;
   const matchingAlert = matchingAlertState && matchingAlertState.planKey === planKey ? matchingAlertState.alert : undefined;
   const alertKnown = Boolean(planKey) && reconciledPlanKey === planKey;
 
-  useEffect(() => () => { if (feedbackTimer.current) clearTimeout(feedbackTimer.current); onFeedback?.(null); }, [onFeedback]);
   const showFeedback = useCallback((feedback: Exclude<CarPriceAlertFeedback, null>) => {
-    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
     onFeedback?.(feedback);
-    feedbackTimer.current = setTimeout(() => onFeedback?.(null), CAR_PRICE_ALERT_SNACKBAR_DURATION_MS);
   }, [onFeedback]);
   const setCurrentMatchingAlert = useCallback((alert: MobilePriceAlert | undefined) => setMatchingAlertState(alert && planKey ? { planKey, alert } : undefined), [planKey]);
   const signIn = () => Alert.alert("Sign in required", "Sign in to save this price alert to your account.", [{ text: "Sign in", onPress: () => router.push(signInHref("/(tabs)/profile")) }, { text: "Cancel", style: "cancel" }]);
@@ -103,35 +99,50 @@ export function NativeCarPriceAlert({ plan, results, available, onFeedback }: { 
   return <View accessibilityLabel="Track rental car prices" style={[styles.control, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}>
     <Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/>
     <Text style={[styles.title, { color: theme.textPrimary }]}>Track rental car prices</Text>
-    <View style={styles.switch}>{pending ? <ActivityIndicator size="small" color={theme.priceAlertAccent}/> : null}<Switch accessibilityRole="switch" accessibilityLabel="Track rental car prices" accessibilityState={{ checked: tracking, disabled, busy: pending }} disabled={disabled} value={tracking} onValueChange={(next) => void toggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor="#FFFFFF" /></View>
+    <View style={styles.switchControls}><View style={styles.loadingSlot}>{pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}</View><View style={styles.switchSlot}><Switch accessibilityRole="switch" accessibilityLabel="Track rental car prices" accessibilityState={{ checked: tracking, disabled, busy: pending }} disabled={disabled} value={tracking} onValueChange={(next) => void toggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor="#FFFFFF" /></View></View>
   </View>;
 }
 
-export function CarPriceAlertSnackbar({ feedback }: { feedback: Exclude<CarPriceAlertFeedback, null> }) {
+export function CarPriceAlertSnackbar({ feedback, onDismiss }: { feedback: Exclude<CarPriceAlertFeedback, null>; onDismiss: (feedback: Exclude<CarPriceAlertFeedback, null>) => void }) {
   const { theme } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const translateY = useRef(new Animated.Value(24)).current;
+  const translateY = useRef(new Animated.Value(10)).current;
   const opacity = useRef(new Animated.Value(0)).current;
-  useEffect(() => { Animated.parallel([Animated.timing(translateY, { toValue: 0, duration: 220, useNativeDriver: true }), Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true })]).start(); }, [opacity, translateY]);
+  useEffect(() => {
+    const enter = Animated.parallel([
+      Animated.timing(translateY, { toValue: 0, duration: 200, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 1, duration: 160, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+    ]);
+    enter.start();
+    const dismissTimer = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(translateY, { toValue: 8, duration: 180, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0, duration: 160, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+      ]).start(({ finished }) => { if (finished) onDismiss(feedback); });
+    }, CAR_PRICE_ALERT_SNACKBAR_DURATION_MS);
+    return () => { clearTimeout(dismissTimer); enter.stop(); translateY.stopAnimation(); opacity.stopAnimation(); };
+  }, [feedback, onDismiss, opacity, translateY]);
   const active = feedback === "active";
   return <Animated.View accessibilityLiveRegion="polite" style={[styles.snackbarPosition, { bottom: Math.max(insets.bottom, 12) + 12, opacity, transform: [{ translateY }] }]}>
     <View style={[styles.snackbar, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-      <Bell accessible={false} size={20} color={theme.priceAlertAccent}/>
-      <View style={styles.snackbarCopy}><Text style={[styles.snackbarTitle, { color: theme.textPrimary }]}>{active ? "Price tracking is on" : "Price tracking paused"}</Text>{active ? <Text style={[styles.snackbarBody, { color: theme.textSecondary }]}>We'll let you know when this rental gets cheaper.</Text> : null}</View>
+      <CircleCheck accessible={false} size={20} strokeWidth={2.2} color={theme.priceAlertAccent}/>
+      <View style={styles.snackbarCopy}><Text style={[styles.snackbarTitle, { color: theme.textPrimary }]}>{active ? "Price tracking is on" : "Price tracking paused"}</Text>{active ? <Text style={[styles.snackbarBody, { color: theme.textSecondary }]}>We'll notify you if the price drops.</Text> : null}</View>
       {active ? <Pressable accessibilityRole="button" accessibilityLabel="Manage price alerts" onPress={() => router.push("/price-alerts")} style={styles.manage}><Text style={[styles.manageText, { color: theme.priceAlertAccent }]}>Manage</Text></Pressable> : null}
     </View>
   </Animated.View>;
 }
 
 const styles = StyleSheet.create({
-  control: { width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 8 },
+  control: { width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1, paddingLeft: 12, paddingRight: 10, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 8 },
   title: { flex: 1, flexShrink: 1, fontSize: 12.5, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },
-  switch: { minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 },
+  switchControls: { minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 6 },
+  loadingSlot: { width: 20, minHeight: 44, alignItems: "center", justifyContent: "center" },
+  switchSlot: { width: 51, minHeight: 44, alignItems: "flex-end", justifyContent: "center" },
   snackbarPosition: { position: "absolute", left: 16, right: 16, zIndex: 50 },
-  snackbar: { minHeight: 78, borderWidth: StyleSheet.hairlineWidth, borderRadius: 16, padding: 14, flexDirection: "row", alignItems: "center", gap: 11, shadowColor: "#0F172A", shadowOpacity: 0.2, shadowRadius: 14, elevation: 12 },
-  snackbarCopy: { flex: 1, minWidth: 0, gap: 2 },
-  snackbarTitle: { fontSize: 15, lineHeight: 20, fontWeight: "800", fontFamily: appFonts.bold },
-  snackbarBody: { fontSize: 13, lineHeight: 18 },
+  snackbar: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, paddingHorizontal: 13, paddingVertical: 11, flexDirection: "row", alignItems: "center", gap: 10, shadowColor: "#0F172A", shadowOpacity: 0.18, shadowRadius: 12, elevation: 10 },
+  snackbarCopy: { flex: 1, minWidth: 0, gap: 1 },
+  snackbarTitle: { fontSize: 14, lineHeight: 19, fontWeight: "700", fontFamily: appFonts.bold },
+  snackbarBody: { fontSize: 12.5, lineHeight: 17 },
   manage: { minHeight: 44, justifyContent: "center", paddingHorizontal: 4 },
-  manageText: { fontSize: 14, fontWeight: "800", fontFamily: appFonts.bold },
+  manageText: { fontSize: 13.5, fontWeight: "700", fontFamily: appFonts.bold },
 });
