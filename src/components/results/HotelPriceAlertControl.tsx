@@ -292,7 +292,7 @@ export function HotelPriceAlertControl({
         </div>
         <button
           type="button"
-          className="min-h-11 shrink-0 rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+          className="min-h-9 shrink-0 rounded-lg border border-[#004BB8]/20 bg-blue-50 px-3 text-sm font-bold text-[#004BB8] transition hover:border-[#004BB8]/35 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 sm:min-h-11 sm:rounded-xl sm:border-transparent sm:bg-[#004BB8] sm:px-4 sm:text-white sm:hover:bg-[#003f9c]"
           onClick={() => {
             setStatus("idle");
             setOpen(true);
