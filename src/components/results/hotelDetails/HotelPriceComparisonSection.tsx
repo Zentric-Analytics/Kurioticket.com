@@ -18,10 +18,10 @@ function ProviderOffer({
 }) {
   return (
     <label
-      className={`relative block min-w-0 rounded-xl border bg-white px-3 py-4 transition sm:px-4 ${
+      className={`relative block min-w-0 rounded-[14px] border px-3 py-3.5 transition sm:rounded-xl sm:px-4 sm:py-4 ${
         selected
-          ? "border-[#075EE8] ring-1 ring-[#075EE8]/10"
-          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/40"
+          ? "border-[#075EE8] bg-[#F4F8FF] ring-1 ring-[#075EE8]/10 sm:bg-white"
+          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/40"
       } ${selectable ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
       data-provider-offer
       data-provider-offer-id={offer.id}
@@ -38,11 +38,11 @@ function ProviderOffer({
         aria-label={`Select ${offer.providerName} offer`}
       />
       <span
-        className="pointer-events-none absolute inset-0 rounded-xl peer-focus-visible:ring-2 peer-focus-visible:ring-[#075EE8] peer-focus-visible:ring-offset-2"
+        className="pointer-events-none absolute inset-0 rounded-[14px] peer-focus-visible:ring-2 peer-focus-visible:ring-[#075EE8] peer-focus-visible:ring-offset-2 sm:rounded-xl"
         aria-hidden="true"
       />
 
-      <span className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto_auto] gap-x-3 sm:grid-rows-[auto_auto_auto] sm:gap-x-6">
+      <span className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto] gap-x-3 sm:gap-x-6">
         <span className="min-w-0 self-start" data-provider-brand>
           {offer.providerLogoUrl ? (
             <Image
@@ -50,7 +50,7 @@ function ProviderOffer({
               alt={offer.providerName}
               width={136}
               height={30}
-              className="h-auto max-h-7 w-auto max-w-32 object-contain object-left sm:max-w-36"
+              className="h-auto max-h-7 w-auto max-w-28 object-contain object-left sm:max-w-36"
             />
           ) : (
             <strong className="block text-base font-bold text-slate-950">
@@ -70,7 +70,7 @@ function ProviderOffer({
 
         <span aria-hidden="true" />
         <strong
-          className="mt-3 min-w-0 text-right text-xl font-extrabold tracking-tight text-slate-950 tabular-nums"
+          className="mt-3 min-w-0 text-right text-[18px] font-extrabold leading-[22px] tracking-tight text-slate-950 tabular-nums sm:text-xl sm:leading-normal"
           title={offer.nightlyPriceTitle}
           aria-label={offer.nightlyPriceAriaLabel}
           data-provider-price
@@ -80,10 +80,10 @@ function ProviderOffer({
         </strong>
 
         <span
-          className="col-span-2 row-start-3 mt-0.5 flex min-w-0 items-center justify-between"
+          className="col-span-2 row-start-3 mt-1 flex min-w-0 items-center justify-between gap-3"
           data-provider-bottom-row
         >
-          <span className="min-w-0" data-provider-amenities>
+          <span className="hidden min-w-0 sm:block" data-provider-amenities>
             <HotelAmenityList
               items={offer.amenities ?? []}
               t={() => ""}
@@ -91,7 +91,7 @@ function ProviderOffer({
             />
           </span>
           <span
-            className="shrink-0 whitespace-nowrap text-right text-xs font-medium leading-4 text-[#075EE8]"
+            className="ms-auto shrink-0 whitespace-nowrap text-right text-[12px] font-medium leading-4 text-slate-600 sm:text-[#075EE8]"
             data-nightly-supporting-label
           >
             {perNightText.replace("{{price}}", "").trim()}
@@ -122,19 +122,20 @@ export function HotelPriceComparisonSection({
   return (
     <section
       id="hotel-compare-prices"
-      className="scroll-mt-16 border-b border-slate-200 px-4 py-7 lg:px-0 lg:py-8"
+      className="scroll-mt-16 border-b border-slate-200 px-4 py-5 lg:px-0 lg:py-8"
       aria-labelledby="hotel-compare-heading"
       data-hotel-compare-prices
     >
       <h2
         id="hotel-compare-heading"
         tabIndex={-1}
-        className="text-xl font-extrabold tracking-tight text-slate-950"
+        className="text-[18px] font-extrabold tracking-tight text-slate-950 sm:text-xl"
       >
-        Compare prices
+        <span className="lg:hidden">Rates</span>
+        <span className="hidden lg:inline">Compare prices</span>
       </h2>
       {stayContext ? (
-        <p className="mt-1 text-sm font-medium text-slate-600">{stayContext}</p>
+        <p className="mt-1 text-[13px] font-medium leading-5 text-slate-600 sm:text-sm">{stayContext}</p>
       ) : null}
       {providerHandoffError ? (
         <p
@@ -149,7 +150,7 @@ export function HotelPriceComparisonSection({
       <div
         role="radiogroup"
         aria-label="Hotel provider offers"
-        className="-mx-1 mt-5 space-y-3 sm:mx-0"
+        className="mt-4 space-y-2.5 sm:-mx-1 sm:mt-5 sm:space-y-3 lg:mx-0"
         data-comparison-offers
       >
         {offers.map((offer) => (
