@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Building2, ChevronLeft, ChevronRight, Images } from "lucide-react";
+import { Building2, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -73,7 +73,7 @@ export function HotelDetailsGallery({
   activeIndex,
   activePosition,
   selectPhotoLabel,
-  viewAllPhotosLabel,
+  viewAllPhotosLabel: _viewAllPhotosLabel,
   openPhotoViewerLabel,
   closePhotoViewerLabel,
   photoViewerTitle,
@@ -245,12 +245,9 @@ export function HotelDetailsGallery({
     </div>
   );
 
-  const mobileThumbnailIndices = usableIndices.slice(0, 5);
-  const mobileRemainingCount = Math.max(usableIndices.length - 5, 0);
-
   const hero = (
     <div
-      className="relative aspect-[16/10] min-h-[190px] max-h-[420px] w-full overflow-hidden rounded-[11px] bg-slate-100 lg:rounded-none"
+      className={`relative w-full overflow-hidden bg-slate-100 ${layout === "mosaic" ? "aspect-[6/5] min-h-[280px] max-h-[440px] rounded-none lg:aspect-auto lg:min-h-0 lg:max-h-none" : "aspect-[16/10] min-h-[190px] max-h-[420px] rounded-[11px] lg:rounded-none"}`}
       style={{ touchAction: "pan-y" }}
       onPointerDown={(event) => {
         if (event.pointerType !== "mouse")
@@ -313,62 +310,12 @@ export function HotelDetailsGallery({
     </div>
   );
 
-  const mobileThumbnails = showGalleryControls ? (
-    <div
-      ref={thumbnailStripRef}
-      className="mt-2 grid grid-cols-5 gap-1.5 lg:hidden"
-      data-hotel-mobile-thumbnail-strip
-    >
-      {mobileThumbnailIndices.map((imageIndex, visibleIndex) => {
-        const thumbnailUrl = displayCandidates[imageIndex];
-        const isRemainingTile = visibleIndex === 4 && mobileRemainingCount > 0;
-        return (
-          <button
-            key={thumbnailUrl}
-            type="button"
-            data-gallery-index={imageIndex}
-            aria-pressed={activeIndex === imageIndex}
-            aria-label={
-              isRemainingTile
-                ? viewAllPhotosLabel
-                : selectPhotoLabel.replace(
-                    "{{number}}",
-                    String(visibleIndex + 1),
-                  )
-            }
-            className={`relative aspect-[4/3] min-w-0 overflow-hidden rounded-md bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue ${activeIndex === imageIndex ? "ring-2 ring-blue" : "ring-1 ring-slate-200"}`}
-            onClick={(event) => {
-              onSelectImage(imageIndex);
-              if (isRemainingTile) openViewer(event.currentTarget);
-            }}
-          >
-            <Image
-              src={thumbnailUrl}
-              alt=""
-              fill
-              className="object-cover"
-              sizes="20vw"
-              onError={() => onImageError(thumbnailUrl)}
-            />
-            {isRemainingTile ? (
-              <span className="absolute inset-0 flex items-center justify-center bg-slate-950/55 text-xs font-bold text-white">
-                <Images className="mr-1 h-4 w-4" aria-hidden="true" />+
-                {mobileRemainingCount}
-              </span>
-            ) : null}
-          </button>
-        );
-      })}
-    </div>
-  ) : null;
-
   const content = (
     <>
       {layout === "mosaic" ? (
         <>
-          <div className="mx-3 lg:hidden" data-hotel-mobile-gallery-unit>
+          <div className="lg:hidden" data-hotel-mobile-gallery-unit>
             {hero}
-            {mobileThumbnails}
           </div>
           {mosaic}
         </>
