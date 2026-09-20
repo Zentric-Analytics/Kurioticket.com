@@ -10,6 +10,7 @@ import {
 type ExploreMapProps = {
   place?: string;
   airportCode?: string;
+  coordinates?: { latitude: number; longitude: number };
 };
 
 const WORLD_REGION: Region = {
@@ -96,12 +97,27 @@ function matchingAirports(place: string, airportCode?: string) {
   );
 }
 
-export function ExploreMap({ place = "", airportCode }: ExploreMapProps) {
+export function ExploreMap({ place = "", airportCode, coordinates: destinationCoordinates }: ExploreMapProps) {
   const mapRef = useRef<MapView | null>(null);
-  const region = useMemo(
-    () => regionForAirports(matchingAirports(place, airportCode)),
-    [airportCode, place],
-  );
+  const region = useMemo(() => {
+    if (
+      destinationCoordinates &&
+      Number.isFinite(destinationCoordinates.latitude) &&
+      destinationCoordinates.latitude >= -90 &&
+      destinationCoordinates.latitude <= 90 &&
+      Number.isFinite(destinationCoordinates.longitude) &&
+      destinationCoordinates.longitude >= -180 &&
+      destinationCoordinates.longitude <= 180
+    ) {
+      return {
+        latitude: destinationCoordinates.latitude,
+        longitude: destinationCoordinates.longitude,
+        latitudeDelta: 0.9,
+        longitudeDelta: 0.9,
+      };
+    }
+    return regionForAirports(matchingAirports(place, airportCode));
+  }, [airportCode, destinationCoordinates, place]);
 
   useEffect(() => {
     mapRef.current?.animateToRegion(region, 300);
