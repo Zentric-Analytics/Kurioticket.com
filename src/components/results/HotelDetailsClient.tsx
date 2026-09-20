@@ -827,7 +827,7 @@ export function HotelDetailsClient({
 
     return (
       <main className="flex-1 bg-white sm:bg-[#f8fafc]">
-        <section className="py-2 lg:py-2">
+        <section className="py-0 lg:py-2">
           <div className="mx-auto w-full max-w-[1400px] px-0 lg:px-7" data-hotel-details-page-shell>
             <div className="hidden lg:block lg:px-0">
               <Link
