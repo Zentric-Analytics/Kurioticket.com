@@ -33,7 +33,7 @@ export function HotelDetailsLoadingState({
         data-hotel-details-state-shell
       >
         {!embedded ? (
-          <div className="mb-4 px-4 lg:px-0">
+          <div className="mb-4 hidden px-4 lg:block lg:px-0">
             <DetailsBackLink href={resultsHref}>
               {backToResultsText}
             </DetailsBackLink>
@@ -53,14 +53,14 @@ export function HotelDetailsLoadingState({
           data-hotel-loading-main-grid
         >
           <div
-            className="min-w-0 bg-white lg:rounded-[17px] lg:border lg:border-slate-200/80 lg:p-6"
+            className="flex min-w-0 flex-col bg-white lg:block lg:rounded-[17px] lg:border lg:border-slate-200/80 lg:p-6"
             data-hotel-loading-property-shell
           >
             <div
-              className="mb-4 px-4 lg:px-0"
+              className="order-2 px-4 pb-2 pt-3 lg:order-none lg:mb-4 lg:px-0 lg:py-0"
               data-hotel-loading-property-identity
             >
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+              <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
                 <div
                   className="min-w-0 space-y-1.5"
                   data-hotel-loading-metadata
@@ -71,29 +71,22 @@ export function HotelDetailsLoadingState({
                   <SkeletonBlock className="h-5 w-full max-w-md" />
                   <SkeletonBlock className="h-5 w-24" />
                 </div>
-                <div className="flex gap-1 sm:gap-3" data-hotel-loading-actions>
+                <div className="hidden gap-3 lg:flex" data-hotel-loading-actions>
                   <SkeletonBlock className="size-11 lg:h-10 lg:w-24" />
                   <SkeletonBlock className="size-11 lg:h-10 lg:w-24" />
                 </div>
               </div>
             </div>
-            <div className="mx-3 lg:mx-0" data-hotel-loading-gallery>
-              <SkeletonBlock className="aspect-[16/10] min-h-[190px] max-h-[420px] w-full rounded-[11px] lg:hidden" />
+            <div className="relative order-1 lg:order-none lg:mx-0" data-hotel-loading-gallery>
+              <SkeletonBlock className="aspect-[6/5] min-h-[280px] max-h-[440px] w-full rounded-none lg:hidden" />
               <SkeletonBlock className="hidden h-[300px] w-full rounded-[10px] lg:block" />
-              <div
-                className="mt-2 grid grid-cols-5 gap-1.5 lg:hidden"
-                data-hotel-loading-thumbnails
-              >
-                {Array.from({ length: 5 }, (_, index) => (
-                  <SkeletonBlock
-                    key={index}
-                    className="aspect-[4/3] min-w-0 rounded-md"
-                  />
-                ))}
+              <div className="pointer-events-none absolute inset-x-0 top-3 flex items-center justify-between px-3 lg:hidden" data-hotel-loading-hero-actions>
+                <SkeletonBlock className="size-11 rounded-full bg-white/90" />
+                <SkeletonBlock className="h-11 w-[88px] rounded-full bg-white/90" />
               </div>
             </div>
             <div
-              className="mx-4 mt-3 grid min-h-[52px] grid-cols-2 gap-px overflow-hidden rounded-[11px] border border-slate-200 p-2 sm:grid-cols-4 lg:mx-0 lg:grid-cols-5"
+              className="order-3 mx-4 mt-3 grid min-h-[52px] grid-cols-2 gap-px overflow-hidden rounded-[11px] border border-slate-200 p-2 sm:grid-cols-4 lg:order-none lg:mx-0 lg:grid-cols-5"
               data-hotel-loading-amenities
             >
               {Array.from({ length: 5 }, (_, index) => (

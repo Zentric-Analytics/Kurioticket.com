@@ -179,7 +179,7 @@ test("gallery embedded mode shares one JSX body and preserves interactions", () 
   assert.match(gallerySource, /const content = \(/);
   assert.match(gallerySource, /if \(embedded\)/);
   assert.equal(gallerySource.match(/<Card\b/g)?.length, 1);
-  assert.equal(gallerySource.match(/aspect-\[4\/3\]/g)?.length, 1);
+  assert.doesNotMatch(gallerySource, /data-hotel-mobile-thumbnail-strip|mobileThumbnailIndices/);
   for (const contract of [
     "onKeyDown={handleGalleryKeyDown}",
     "border-t border-border",

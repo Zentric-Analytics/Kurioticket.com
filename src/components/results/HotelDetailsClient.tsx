@@ -827,12 +827,12 @@ export function HotelDetailsClient({
 
     return (
       <main className="flex-1 bg-white sm:bg-[#f8fafc]">
-        <section className="py-2 lg:py-2">
+        <section className="py-0 lg:py-2">
           <div className="mx-auto w-full max-w-[1400px] px-0 lg:px-7" data-hotel-details-page-shell>
-            <div className="px-4 lg:px-0">
+            <div className="hidden lg:block lg:px-0">
               <Link
                 href={resultsHref}
-                className="mb-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#075EE8] hover:text-[#004BB8] focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 lg:min-h-10 lg:text-[13px]"
+                className="mb-3 inline-flex min-h-10 items-center gap-2 text-[13px] font-semibold text-[#075EE8] hover:text-[#004BB8] focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35"
                 data-standalone-hotel-back-link
               >
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" />

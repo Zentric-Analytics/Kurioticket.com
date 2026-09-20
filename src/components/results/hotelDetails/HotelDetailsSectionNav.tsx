@@ -4,8 +4,8 @@ import { useRef } from "react";
 
 export type HotelDetailsTab = "compare" | "about" | "location" | "reviews";
 
-const tabs: ReadonlyArray<{ id: HotelDetailsTab; label: string }> = [
-  { id: "compare", label: "Compare prices" },
+const tabs: ReadonlyArray<{ id: HotelDetailsTab; label: string; mobileLabel?: string }> = [
+  { id: "compare", label: "Compare prices", mobileLabel: "Rates" },
   { id: "about", label: "About" },
   { id: "location", label: "Location" },
   { id: "reviews", label: "Reviews" },
@@ -39,7 +39,7 @@ export function HotelDetailsSectionNav({
     <div
       role="tablist"
       aria-label="Hotel details"
-      className="sticky top-0 z-30 mt-3 grid grid-cols-[minmax(0,1.65fr)_repeat(3,minmax(0,1fr))] border-b border-slate-200 bg-white px-2 lg:mt-5 lg:px-0"
+      className="order-3 sticky top-0 z-30 mt-1 grid grid-cols-4 border-b border-slate-200 bg-white px-2 lg:mt-5 lg:grid-cols-[minmax(0,1.65fr)_repeat(3,minmax(0,1fr))] lg:px-0"
       data-hotel-details-section-nav
     >
       {tabs.map((tab, index) => {
@@ -60,7 +60,14 @@ export function HotelDetailsSectionNav({
             onKeyDown={(event) => handleKeyDown(event, index)}
             className={`focus-ring relative inline-flex min-h-11 min-w-0 items-center justify-center whitespace-nowrap px-0.5 text-[13px] font-bold transition-colors sm:px-2 sm:text-sm ${selected ? "text-blue" : "text-slate-600 hover:text-slate-950"}`}
           >
-            {tab.label}
+            {tab.mobileLabel ? (
+              <>
+                <span className="lg:hidden">{tab.mobileLabel}</span>
+                <span className="hidden lg:inline">{tab.label}</span>
+              </>
+            ) : (
+              tab.label
+            )}
             <span
               className={`absolute inset-x-1 bottom-0 h-0.5 bg-blue transition-opacity sm:inset-x-2 ${selected ? "opacity-100" : "opacity-0"}`}
               aria-hidden="true"

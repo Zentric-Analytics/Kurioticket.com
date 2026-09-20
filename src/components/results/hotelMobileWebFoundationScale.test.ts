@@ -80,11 +80,12 @@ test("mobile-web Hotel details use a phone-readable identity scale while desktop
 test("mobile-web Hotel details navigation remains web-native but legible", () => {
   assert.match(
     detailsClient,
-    /min-h-11 items-center gap-2 text-sm font-semibold[\s\S]*?lg:min-h-10 lg:text-\[13px\]/,
+    /hidden lg:block lg:px-0[\s\S]*?min-h-10 items-center gap-2 text-\[13px\] font-semibold/,
   );
   assert.match(
     detailsNav,
-    /min-h-11[\s\S]*?text-\[13px\] font-bold[\s\S]*?sm:text-sm/,
+    /grid-cols-4[\s\S]*?min-h-11[\s\S]*?text-\[13px\] font-bold[\s\S]*?sm:text-sm/,
   );
+  assert.match(detailsNav, /mobileLabel: "Rates"/);
   assert.doesNotMatch(detailsNav, /min-\[390px\]:text-\[13px\]/);
 });

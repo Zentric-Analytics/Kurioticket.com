@@ -11,15 +11,16 @@ const routeLoadingSource = readFileSync(
   "utf8",
 );
 
-test("mobile hotel loading geometry matches the loaded property shell", () => {
+test("mobile hotel loading geometry matches the full-bleed hero-first property shell", () => {
   for (const contract of [
     "data-hotel-loading-property-identity",
     "data-hotel-loading-metadata",
     "data-hotel-loading-actions",
-    "aspect-[16/10]",
-    "data-hotel-loading-thumbnails",
-    "Array.from({ length: 5 }",
-    "grid-cols-5 gap-1.5",
+    "aspect-[6/5]",
+    "data-hotel-loading-gallery",
+    "data-hotel-loading-hero-actions",
+    "size-11 rounded-full bg-white/90",
+    "h-11 w-[88px] rounded-full bg-white/90",
     "data-hotel-loading-amenities",
     "data-hotel-loading-mobile-dock",
     "grid-cols-[minmax(0,1fr)_minmax(132px,0.9fr)]",
@@ -28,8 +29,10 @@ test("mobile hotel loading geometry matches the loaded property shell", () => {
   ])
     assert.ok(source.includes(contract), contract);
 
-  assert.match(source, /lg:hidden/);
-  assert.doesNotMatch(source, /grid-cols-4 gap-2/);
+  assert.match(source, /order-1 lg:order-none/);
+  assert.match(source, /order-2[\s\S]*data-hotel-loading-property-identity/);
+  assert.match(source, /hidden gap-3 lg:flex[\s\S]*data-hotel-loading-actions/);
+  assert.doesNotMatch(source, /data-hotel-loading-thumbnails|Array\.from\(\{ length: 5 \}/);
 });
 
 test("the destination route owns the branded first loading paint", () => {

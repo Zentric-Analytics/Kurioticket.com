@@ -23,21 +23,20 @@ const mapSource = readFileSync(
   "utf8",
 );
 
-test("mobile gallery uses a truthful hero, controls, counter, and five-slot thumbnail strip while desktop keeps mosaic", () => {
+test("mobile gallery uses a full-bleed hero with controls and counter while desktop keeps its mosaic", () => {
   for (const contract of [
-    "data-hotel-mobile-thumbnail-strip",
     "activePosition} / {usableIndices.length",
-    "mobileThumbnailIndices = usableIndices.slice(0, 5)",
-    "mobileRemainingCount",
     "onPrevious",
     "onNext",
     "lg:hidden",
     "hidden h-[300px]",
     "lg:grid",
     "data-hotel-mobile-gallery-unit",
-    "mx-3 lg:hidden",
+    "aspect-[6/5]",
+    "rounded-none",
   ])
     assert.ok(gallerySource.includes(contract), contract);
+  assert.doesNotMatch(gallerySource, /data-hotel-mobile-thumbnail-strip|mobileThumbnailIndices|mobileRemainingCount|mx-3 lg:hidden/);
   assert.doesNotMatch(gallerySource, /1 \/ 29|\+25/);
 });
 
@@ -47,9 +46,10 @@ test("mobile header owns stay metadata while the two-column dock owns price and 
   assert.match(source, /env\(safe-area-inset-bottom\)/);
   assert.match(source, /pb-\[calc\(8\.5rem\+env\(safe-area-inset-bottom\)\)\]/);
   assert.match(source, /hidden min-w-0 lg:flex lg:flex-col/);
+  const headerStart = source.indexOf("data-mobile-property-header");
   const header = source.slice(
-    source.indexOf("data-mobile-property-header"),
-    source.indexOf("<HotelDetailsGallery"),
+    headerStart,
+    source.indexOf("</header>", headerStart),
   );
   const dock = source.slice(
     source.indexOf("data-mobile-hotel-stay-dock"),
@@ -90,16 +90,18 @@ test("mobile header owns stay metadata while the two-column dock owns price and 
     assert.ok(aside.includes(contract), contract);
 });
 
-test("mobile property header renders the canonical identity in the approved order", () => {
+test("mobile property identity follows the hero and keeps Hotel facts readable", () => {
+  const identityStart = source.indexOf("data-mobile-hotel-identity");
   const header = source.slice(
-    source.indexOf("data-mobile-hotel-identity"),
-    source.indexOf("<HotelDetailsGallery"),
+    identityStart,
+    source.indexOf("</header>", identityStart),
   );
   const orderedContracts = [
+    "data-mobile-hotel-classification-stars",
+    "data-mobile-hotel-review-summary",
+    "data-mobile-hotel-address-row",
     "data-mobile-hotel-stay-dates",
     "data-mobile-hotel-stay-guests",
-    "data-mobile-hotel-address-row",
-    "data-mobile-hotel-classification-stars",
   ];
   let previous = -1;
   for (const contract of orderedContracts) {
@@ -108,35 +110,31 @@ test("mobile property header renders the canonical identity in the approved orde
     previous = index;
   }
   for (const contract of [
-    "data-property-header-actions",
-    "grid-cols-[minmax(0,1fr)_auto]",
-    "min-w-0 break-words",
+    "data-mobile-hotel-hero-shell",
+    "data-mobile-hotel-hero-actions",
+    "aria-label=\"Back to hotel results\"",
     "aria-pressed={props.isSaved}",
-    'className="hidden lg:inline"',
     "data-mobile-hotel-address-row",
     "buildHotelAddress(props.propertyDetails)",
-    "min-w-0 break-words",
     "title={canonicalAddress}",
     "data-mobile-property-metadata",
     "grid-cols-[1rem_minmax(0,1fr)]",
     "data-mobile-hotel-address-icon",
-    "data-mobile-hotel-classification-icon",
     "<MapPin",
-    "<Award",
     "aria-label={props.starRatingAriaLabel}",
   ])
     assert.ok(source.includes(contract), contract);
   assert.doesNotMatch(
     header,
-    /Show directions|href=\{directionsUrl\}|grid-cols-\[1rem_minmax\(0,1fr\)_auto\]|<Star\b|min-w-0 flex-1 truncate|\btruncate\b/,
+    /Show directions|href=\{directionsUrl\}|grid-cols-\[1rem_minmax\(0,1fr\)_auto\]|<Award\b|<Star\b/,
   );
   assert.ok(
-    source.indexOf("{props.hotelName}") <
-      source.indexOf("data-mobile-hotel-stay-dates"),
+    source.indexOf("data-mobile-hotel-hero-shell") <
+      source.indexOf("data-mobile-property-header"),
   );
   assert.ok(
-    source.indexOf("data-mobile-hotel-classification-stars") <
-      source.indexOf("<HotelDetailsGallery"),
+    source.indexOf("data-mobile-property-header") <
+      source.indexOf("<HotelDetailsSectionNav"),
   );
   assert.doesNotMatch(header, /href="#hotel-location"/);
   assert.doesNotMatch(header, /propertyDetails\.neighbourhood/);
@@ -151,48 +149,45 @@ test("canonical hotel result name flows directly into the standalone title", () 
   assert.doesNotMatch(source, /hotelName\.(?:slice|split|replace)|slug|alias/i);
 });
 
-test("mobile save and share are independent unboxed 44px actions", () => {
-  const actions = source.slice(
-    source.indexOf("data-property-header-actions"),
-    source.indexOf("</header>"),
+test("mobile Back, Save, and Share stay fixed over the Hotel hero as 44px controls", () => {
+  const heroActions = source.slice(
+    source.indexOf("data-mobile-hotel-hero-actions"),
+    source.indexOf("</div>\n            </div>", source.indexOf("data-mobile-hotel-hero-actions")),
   );
-  assert.equal(actions.match(/<button/g)?.length, 2);
-  assert.match(actions, /size-11/);
-  assert.equal(actions.match(/size-11/g)?.length, 2);
-  assert.match(actions, /justify-end/);
-  assert.match(actions, /justify-start/);
-  assert.match(actions, /h-5 w-5/);
-  assert.equal(actions.match(/-translate-y-1 lg:translate-y-0/g)?.length, 2);
-  assert.match(actions, /border-0 bg-transparent/);
-  assert.match(actions, /aria-pressed=\{props\.isSaved\}/);
-  assert.doesNotMatch(
-    actions.match(/data-property-header-actions[\s\S]*?>/)?.[0] ?? "",
-    /border|bg-white|shadow/,
-  );
+  assert.match(heroActions, /aria-label="Back to hotel results"/);
+  assert.equal(heroActions.match(/<button/g)?.length, 2);
+  assert.equal(heroActions.match(/size-11/g)?.length, 3);
+  assert.match(heroActions, /rounded-full/);
+  assert.match(heroActions, /bg-white\/95/);
+  assert.match(heroActions, /aria-pressed=\{props\.isSaved\}/);
+  assert.match(heroActions, /<Heart/);
+  assert.match(heroActions, /<Share2/);
 });
 
-test("mobile title and actions share a collision-safe top-aligned row", () => {
+test("mobile Hotel title uses the full identity width because hero actions are separate", () => {
   const titleRow = source.slice(
-    source.indexOf('data-mobile-property-header'),
-    source.indexOf('</header>'),
+    source.indexOf("data-mobile-property-header"),
+    source.indexOf("</header>", source.indexOf("data-mobile-property-header")),
   );
-  assert.match(titleRow, /grid-cols-\[minmax\(0,1fr\)_auto\] items-start/);
+  assert.match(titleRow, /grid-cols-1 items-start/);
   assert.match(titleRow, /<h1 className="min-w-0 break-words/);
-  assert.match(titleRow, /data-property-header-actions/);
-  assert.match(titleRow, /shrink-0/);
+  assert.doesNotMatch(titleRow, /data-mobile-hotel-hero-actions/);
+  assert.doesNotMatch(titleRow, /grid-cols-\[minmax\(0,1fr\)_auto\]/);
   assert.doesNotMatch(titleRow, /whitespace-nowrap[^>]*>\s*\{props\.hotelName\}/);
 });
 
-test("standalone hotel navigation locally matches the Flight-style mobile treatment", () => {
+test("standalone Hotel navigation uses the hero Back control on mobile and keeps the desktop text link", () => {
   const standalone = clientSource.slice(
     clientSource.indexOf('if (mode === "standalone")'),
     clientSource.indexOf("<StandaloneHotelDetails"),
   );
+  assert.match(standalone, /className="hidden lg:block lg:px-0"/);
   assert.match(standalone, /data-standalone-hotel-back-link/);
   assert.match(standalone, /text-\[#075EE8\]/);
   assert.match(standalone, /<ArrowLeft className="h-4 w-4"/);
-  assert.match(standalone, /min-h-10 items-center gap-2 text-\[13px\] font-semibold/);
   assert.doesNotMatch(standalone, /<DetailsBackLink/);
+  assert.match(source, /data-mobile-hotel-hero-actions[\s\S]*?aria-label="Back to hotel results"/);
+  assert.match(source, /<ArrowLeft className="h-5 w-5"/);
   assert.match(standalone, /bg-white sm:bg-\[#f8fafc\]/);
   assert.doesNotMatch(standalone, /border-b border-slate/);
 });
@@ -325,7 +320,7 @@ test("desktop Google map uses the outer stay-summary column without narrowing co
 test("desktop mosaic gallery uses independent transparent edge controls", () => {
   const mosaic = gallerySource.slice(
     gallerySource.indexOf("const mosaic = ("),
-    gallerySource.indexOf("const mobileThumbnailIndices"),
+    gallerySource.indexOf("  const hero = ("),
   );
   assert.match(mosaic, /aria-label=\{previousPhotoLabel\}/);
   assert.match(mosaic, /aria-label=\{nextPhotoLabel\}/);
