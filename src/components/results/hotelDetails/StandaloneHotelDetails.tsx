@@ -282,6 +282,16 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
       ? props.perNightText.replace("{{price}}", props.nightlyDisplayPrice.formatted)
       : selectedProviderOffer?.providerName || "";
   const mobileDockProviderName = selectedProviderOffer?.providerName || "";
+  const mobileDockPrimaryTitle = selectedProviderIsExternal
+    ? mobileDockUsesProviderTotal
+      ? undefined
+      : selectedProviderOffer?.nightlyPriceTitle
+    : props.totalDisplayPrice?.title;
+  const mobileDockPrimaryAriaLabel = selectedProviderIsExternal
+    ? mobileDockUsesProviderTotal && selectedProviderOffer?.totalPrice
+      ? `${selectedProviderOffer.totalPrice} ${props.estimatedTotalText}`
+      : selectedProviderOffer?.nightlyPriceAriaLabel
+    : props.totalDisplayPrice?.ariaLabel;
 
   function focusComparePrices(targetId = "hotel-compare-heading") {
     setActiveTab("compare");
@@ -790,8 +800,8 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               </p>
               <p
                 className="break-words text-[18px] font-semibold leading-[21px] tracking-[-0.02em] text-slate-950 tabular-nums min-[390px]:text-[20px] min-[390px]:leading-6"
-                title={selectedProviderIsExternal ? selectedProviderOffer.nightlyPriceTitle : props.totalDisplayPrice?.title}
-                aria-label={selectedProviderIsExternal ? selectedProviderOffer.nightlyPriceAriaLabel : props.totalDisplayPrice?.ariaLabel}
+                title={mobileDockPrimaryTitle}
+                aria-label={mobileDockPrimaryAriaLabel}
               >
                 {mobileDockPrimaryPrice}
               </p>
