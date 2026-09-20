@@ -49,10 +49,13 @@ test("standalone mobile Hotel gallery is full bleed without inline thumbnails", 
   assert.match(gallery, /HotelDetailsGalleryDialog/);
 });
 
-test("mobile Hotel detail navigation uses a compact web-native four-tab row", () => {
+test("mobile Hotel detail navigation uses Rates, Overview, and Reviews while desktop keeps Location", () => {
   assert.match(nav, /mobileLabel: "Rates"/);
-  assert.match(nav, /grid-cols-4/);
+  assert.match(nav, /mobileLabel: "Overview"/);
+  assert.match(nav, /desktopOnly: true/);
+  assert.match(nav, /grid-cols-3/);
   assert.match(nav, /lg:grid-cols-\[minmax\(0,1\.65fr\)_repeat\(3,minmax\(0,1fr\)\)\]/);
+  assert.match(nav, /activeTab !== "location"|activeTab === "location"/);
   for (const id of ["compare", "about", "location", "reviews"]) {
     assert.match(nav, new RegExp(`id: "${id}"`));
   }
