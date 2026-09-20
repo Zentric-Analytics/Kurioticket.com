@@ -6,7 +6,7 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { encodeExploreMapQuery } from "./exploreMapQuery";
 import { appFonts } from "../../theme/typography";
 
-export function ExploreMap({ place = "" }: { place?: string }) {
+export function ExploreMap({ place = "" }: { place?: string; airportCode?: string; coordinates?: { latitude: number; longitude: number } }) {
   const { theme } = useAppTheme();
   const [attempt, setAttempt] = useState(0);
   const [failed, setFailed] = useState(false);
