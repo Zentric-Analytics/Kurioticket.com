@@ -73,7 +73,7 @@ test("mobile-web Hotel details use a phone-readable identity scale while desktop
   );
   assert.match(
     details,
-    /min-h-12 w-full rounded-lg bg-blue px-3 text-\[13px\] font-bold leading-\[18px\]/,
+    /min-h-12 w-full rounded-lg bg-blue px-2 text-\[12px\] font-bold leading-4[\s\S]*?min-\[390px\]:px-3 min-\[390px\]:text-\[13px\] min-\[390px\]:leading-\[18px\]/,
   );
 });
 
