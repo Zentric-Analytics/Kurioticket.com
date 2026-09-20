@@ -1684,6 +1684,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         : null}
       <ResultsRoot
         className={guided ? "mt-6 min-w-0" : "flex-1 overflow-x-clip bg-[#f6f8fb] pb-8"}
+        {...(!guided ? { "data-mobile-web-hotel-results": "" } : {})}
         {...(guided && !error
           ? {
               role: "region",
@@ -1729,8 +1730,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
               </button>
               <button type="button" onClick={openMobileHotelSearch} className="min-w-0 px-1 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]" aria-label={t("editHotelSearch") || "Edit hotel search"}>
                 <span className="block min-w-0">
-                  <span className="block truncate text-sm font-bold text-slate-950">{body.destination}</span>
-                  <span className="inline-flex max-w-full items-center gap-1.5 text-xs font-medium text-slate-600">
+                  <span className="block truncate text-[15px] font-bold leading-5 text-slate-950">{body.destination}</span>
+                  <span className="inline-flex max-w-full items-center gap-1.5 text-[13px] font-medium leading-[18px] text-slate-600">
                     <span className="min-w-0 truncate">
                       {desktopMinimizedDateSummary} · {desktopMinimizedGuestsSummary}
                     </span>
