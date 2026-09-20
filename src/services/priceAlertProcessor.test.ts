@@ -3,7 +3,7 @@ import test from "node:test";
 
 import type { NormalizedHotelResult } from "@/lib/types";
 import type { Notification, Prisma } from "@/generated/prisma/client";
-import { buildPriceAlertIdempotencyKey, isAuthorizedCronRequest, processDuePriceAlerts, selectHotelPriceAlertResult, type ResolvedPrice } from "@/services/priceAlertProcessor";
+import { buildPriceAlertIdempotencyKey, CAR_AUTOMATIC_DROP_RATIO, isAuthorizedCronRequest, processDuePriceAlerts, selectHotelPriceAlertResult, type ResolvedPrice } from "@/services/priceAlertProcessor";
 
 const now = new Date("2026-07-10T00:00:00.000Z");
 type TestDb = NonNullable<NonNullable<Parameters<typeof processDuePriceAlerts>[0]>["db"]>;
@@ -297,6 +297,50 @@ test("duplicate runs do not send twice", async () => {
 
 test("correct idempotency key", () => {
   assert.equal(buildPriceAlertIdempotencyKey(alert({ targetPrice: "199.99", currency: "USD" })), "price-alert:alert-1:199.99:USD");
+});
+
+test("Cars automatic policy triggers at 2 percent but not below it", async () => {
+  assert.equal(CAR_AUTOMATIC_DROP_RATIO, 0.02);
+  const below = await run([alert({ type: "CAR", mode: "AUTOMATIC", baselinePrice: 486, targetPrice: null })], { price: { price: 482 } });
+  assert.equal(below.counts.notTriggered, 1);
+  assert.equal(below.fakeDb.state.notifications.length, 0);
+  const boundary = await run([alert({ type: "CAR", mode: "AUTOMATIC", baselinePrice: 500, targetPrice: null })], { price: { price: 490 } });
+  assert.equal(boundary.counts.eventsCreated, 1);
+  assert.equal(boundary.fakeDb.state.notifications[0].title, "Rental price dropped 2%");
+  assert.match(boundary.fakeDb.state.notifications[0].body, /\$500\.00 → \$490\.00/);
+});
+
+test("Cars automatic alerts establish a missing baseline without a false event", async () => {
+  const a = alert({ type: "CAR", mode: "AUTOMATIC", baselinePrice: null, targetPrice: null });
+  const { counts, fakeDb } = await run([a], { price: { price: 486 } });
+  assert.equal(counts.notTriggered, 1);
+  assert.equal(a.baselinePrice, 486);
+  assert.equal(fakeDb.state.snapshots.length, 1);
+  assert.equal(fakeDb.state.notifications.length, 0);
+});
+
+test("Cars automatic alerts compare later drops with lastNotifiedPrice", async () => {
+  const a = alert({ type: "CAR", mode: "AUTOMATIC", baselinePrice: 486, targetPrice: null });
+  const fakeDb = db([a]);
+  const emails: unknown[] = [];
+  const process = (price: number, processingTime: Date) => processDuePriceAlerts({ now: processingTime, db: fakeDb, resolvePrice: async () => resolved({ price }), sendEmail: async (input) => { emails.push(input); return { skipped: false, id: `email-${emails.length}` }; } });
+  await process(475, now);
+  assert.equal(a.lastNotifiedPrice, 475);
+  assert.equal(fakeDb.state.notifications.length, 1);
+  await process(473, new Date(now.getTime() + 24 * 60 * 60 * 1000));
+  assert.equal(fakeDb.state.notifications.length, 1);
+  await process(463, new Date(now.getTime() + 48 * 60 * 60 * 1000));
+  assert.equal(a.lastNotifiedPrice, 463);
+  assert.equal(fakeDb.state.notifications.length, 2);
+  assert.equal(emails.length, 2);
+});
+
+test("Cars automatic currency mismatch cannot establish or trigger a baseline", async () => {
+  const a = alert({ type: "CAR", mode: "AUTOMATIC", baselinePrice: null, targetPrice: null });
+  const { counts, fakeDb } = await run([a], { price: { price: 100, currency: "EUR" } });
+  assert.equal(counts.notTriggered, 1);
+  assert.equal(a.baselinePrice, null);
+  assert.equal(fakeDb.state.notifications.length, 0);
 });
 
 test("hotel alert selection skips leading discovery hotel and returns following priced hotel", () => {

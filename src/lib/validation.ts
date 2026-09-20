@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { buildFlightPriceAlertPayload } from "@/lib/price-alerts/flightPriceAlerts";
 import { buildHotelPriceAlertPayload } from "@/lib/price-alerts/hotelPriceAlerts";
-import { buildCarPriceAlertPayload } from "@/lib/price-alerts/carPriceAlerts";
+import { buildAutomaticCarPriceAlertPayload, buildCarPriceAlertPayload } from "@/lib/price-alerts/carPriceAlerts";
 import { MULTI_CITY_MAX_LEGS, MULTI_CITY_MIN_LEGS, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
 import { searchLocationSchema } from "@/lib/locations/searchTarget";
 
@@ -304,11 +304,14 @@ const flightPriceAlertSchema = z.object({
 
 const carPriceAlertSchema = z.object({
   type: z.literal("CAR"), origin: z.string().trim().min(2), destination: z.string().trim().min(2),
-  targetPrice: z.coerce.number().positive(), mode: z.literal("TARGET").default("TARGET"),
+  targetPrice: z.coerce.number().positive().optional(), baselinePrice: z.coerce.number().positive().optional(), mode: z.enum(["AUTOMATIC", "TARGET"]).default("TARGET"),
   currency: z.string().trim().length(3), query: z.record(z.string(), z.unknown()),
 }).transform((value, context) => {
   try {
-    const payload = buildCarPriceAlertPayload(value.query as never, value.targetPrice, value.currency);
+    if (value.mode === "TARGET" && value.targetPrice === undefined) throw new Error("Target price is required for target alerts.");
+    const payload = value.mode === "AUTOMATIC"
+      ? buildAutomaticCarPriceAlertPayload(value.query as never, value.baselinePrice ?? Number.NaN, value.currency)
+      : buildCarPriceAlertPayload(value.query as never, value.targetPrice!, value.currency);
     if (value.origin.toLowerCase() !== payload.origin.toLowerCase() || value.destination.toLowerCase() !== payload.destination.toLowerCase()) throw new Error("Locations must match the car search query.");
     return payload;
   } catch (error) {

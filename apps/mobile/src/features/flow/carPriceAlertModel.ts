@@ -9,25 +9,27 @@ const fields = ["pickupLocation", "dropoffLocation", "pickupDate", "pickupTime",
 export function carAlertPresentation(plan: SearchPlan | undefined, results: CarResult[]) {
   const comparable = plan ? results.flatMap((result) => result.offers).filter((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && supported.has(offer.currency.trim().toUpperCase())) : [];
   const currencies = [...new Set(comparable.map((offer) => offer.currency.trim().toUpperCase()))];
-  return { visible: Boolean(plan) && comparable.length > 0, comparable, currencies, enabled: currencies.length > 0 };
+  const baselineOffer = comparable.slice().sort((left, right) => left.totalPrice - right.totalPrice)[0];
+  return { visible: Boolean(plan) && comparable.length > 0, comparable, currencies, baselineOffer, enabled: Boolean(baselineOffer) };
 }
 
-export function buildCarPriceAlertPayload(plan: SearchPlan, targetPrice: number, currency: string) {
+export function buildAutomaticCarPriceAlertPayload(plan: SearchPlan, baselinePrice: number, currency: string) {
   const payload = plan.payload;
   const pickupLocation = String(payload.pickupLocation).trim();
   const query = { pickupLocation, dropoffLocation: String(payload.dropoffLocation || pickupLocation).trim(), pickupDate: String(payload.pickupDate), pickupTime: String(payload.pickupTime), dropoffDate: String(payload.dropoffDate), dropoffTime: String(payload.dropoffTime), driverAge: String(payload.driverAge) };
   const normalizedCurrency = currency.trim().toUpperCase();
   if (!supported.has(normalizedCurrency)) throw new Error("Unsupported alert currency.");
-  return { type: "CAR" as const, origin: query.pickupLocation, destination: query.dropoffLocation, targetPrice, mode: "TARGET" as const, currency: normalizedCurrency, query };
+  if (!Number.isFinite(baselinePrice) || baselinePrice <= 0) throw new Error("A valid rental total is required.");
+  return { type: "CAR" as const, origin: query.pickupLocation, destination: query.dropoffLocation, mode: "AUTOMATIC" as const, baselinePrice, currency: normalizedCurrency, query };
 }
 
 export function carPriceAlertMatchesPlan(alert: MobilePriceAlert, plan: SearchPlan) {
   if (alert.type !== "CAR") return false;
-  const expected = buildCarPriceAlertPayload(plan, 1, "USD").query;
+  const expected = buildAutomaticCarPriceAlertPayload(plan, 1, "USD").query;
   return fields.every((field) => text(alert.query[field]) === text(expected[field]));
 }
 
 export function matchingCarPriceAlert(alerts: MobilePriceAlert[], plan: SearchPlan) {
-  const matches = alerts.filter((alert) => carPriceAlertMatchesPlan(alert, plan));
+  const matches = alerts.filter((alert) => alert.mode === "AUTOMATIC" && carPriceAlertMatchesPlan(alert, plan));
   return matches.find(({ status }) => status === "ACTIVE") ?? matches.find(({ status }) => status === "PAUSED");
 }
