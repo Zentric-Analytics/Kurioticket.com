@@ -37,7 +37,7 @@ export { nativeFareBenefitPresentation } from "./nativeFareBenefitPresentation";
 
 const FLIGHT_DETAILS_LIGHT_CANVAS = "#F3F6FA";
 const FLIGHT_DETAILS_LIGHT_BORDER = "#D7E0EC";
-const FLIGHT_DETAILS_LIGHT_ITINERARY_SURFACE = "#FCFDFE";
+const FLIGHT_DETAILS_LIGHT_ITINERARY_SURFACE = "#FFFFFF";
 const FLIGHT_DETAILS_LIGHT_ITINERARY_BORDER = "#E1E7EF";
 const FLIGHT_DETAILS_DARK_BORDER = "#344154";
 const FLIGHT_DETAILS_LIGHT_CONNECTION_SURFACE = "#F3F7FC";
@@ -351,11 +351,10 @@ function ItineraryGlossSurface({dark,testID}:{dark:boolean;testID:string}) {
   if(dark)return null;
   return <Svg testID={testID} pointerEvents="none" accessible={false} style={s.itineraryGlossSurface} viewBox="0 0 100 100" preserveAspectRatio="none">
     <Defs>
-      <LinearGradient id={`${testID}-base`} x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#FFFFFF"/><Stop offset="0.58" stopColor="#FAFCFF"/><Stop offset="1" stopColor="#EEF4FA"/></LinearGradient>
-      <LinearGradient id={`${testID}-sheen`} x1="0" y1="0" x2="1" y2="1"><Stop offset="0" stopColor="#FFFFFF" stopOpacity="0.72"/><Stop offset="0.48" stopColor="#FFFFFF" stopOpacity="0.20"/><Stop offset="1" stopColor="#FFFFFF" stopOpacity="0"/></LinearGradient>
+      <LinearGradient id={`${testID}-sheen`} x1="0" y1="0" x2="1" y2="1"><Stop offset="0" stopColor="#FFFFFF" stopOpacity="0.78"/><Stop offset="0.46" stopColor="#FFFFFF" stopOpacity="0.18"/><Stop offset="1" stopColor="#FFFFFF" stopOpacity="0"/></LinearGradient>
     </Defs>
-    <Rect width="100" height="100" fill={`url(#${testID}-base)`}/>
-    <Rect width="100" height="58" fill={`url(#${testID}-sheen)`}/>
+    <Rect width="100" height="52" fill={`url(#${testID}-sheen)`}/>
+    <Rect x="0.5" y="0.5" width="99" height="99" fill="none" stroke="#FFFFFF" strokeOpacity="0.86" strokeWidth="1"/>
   </Svg>;
 }
 
