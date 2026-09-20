@@ -188,14 +188,13 @@ test("Hotel sticky lifecycle and neighboring search/filter contracts remain inta
   assert.match(source, /desktopCompactFilterTopOffset = 116/);
 });
 
-test("mobile compact Hotel search has narrow gutters and distinct back, edit, and filter affordances", () => {
+test("mobile compact Hotel search reuses the canonical summary control between Back and Filters", () => {
   const compactSearch = mobileCompactHotelSearchSource();
 
   assert.match(
     compactSearch,
     /z-\[900\] px-2 pt-\[env\(safe-area-inset-top\)\]/,
   );
-  assert.doesNotMatch(compactSearch, /z-\[900\] px-3/);
   assert.match(
     compactSearch,
     /grid-cols-\[auto_minmax\(0,1fr\)_auto\]/,
@@ -206,37 +205,16 @@ test("mobile compact Hotel search has narrow gutters and distinct back, edit, an
   );
   assert.match(
     compactSearch,
-    /onClick=\{openMobileHotelSearch\}[\s\S]*?aria-label=\{t\("editHotelSearch"\) \|\| "Edit hotel search"\}/,
+    /<HotelMobileResultsSummary[\s\S]*?destination=\{body\.destination\}[\s\S]*?desktopMinimizedDateSummary[\s\S]*?desktopMinimizedGuestsSummary[\s\S]*?onClick=\{openMobileHotelSearch\}[\s\S]*?variant="sticky"/,
   );
-  const editButton = compactSearch.match(
-    /<button\s+type="button"\s+onClick=\{openMobileHotelSearch\}[\s\S]*?<\/button>/,
-  )?.[0];
-  assert.ok(editButton, "the existing middle Edit Search button exists");
-  assert.match(
-    editButton,
-    /desktopMinimizedGuestsSummary\}[\s\S]*?<Pencil/,
-    "the pencil follows the dates/guests/rooms summary",
-  );
-  assert.match(editButton, /<Pencil[\s\S]*?aria-hidden="true"/);
-  assert.match(
-    editButton,
-    /className="h-3\.5 w-3\.5 shrink-0 text-slate-500"/,
-  );
-  assert.match(editButton, /strokeWidth=\{2\}/);
-  assert.equal(
-    compactSearch.match(/<button/g)?.length,
-    3,
-    "the compact toolbar retains exactly Back, Edit Search, and Filters controls",
-  );
-  assert.equal(
-    compactSearch.match(/<Pencil/g)?.length,
-    1,
-    "the pencil is decorative within Edit Search, not a separate control",
-  );
-  assert.doesNotMatch(compactSearch, /PencilLine/);
-  assert.doesNotMatch(compactSearch, /<ChevronRight/);
   assert.match(
     compactSearch,
     /onClick=\{\(event\) => \{[\s\S]*?setFiltersOpen\(true\);\s*\}\}[\s\S]*?<SlidersHorizontal[\s\S]*?aria-hidden="true"[\s\S]*?\{t\("filters"\)\}/,
   );
+  assert.equal(
+    compactSearch.match(/<button/g)?.length,
+    2,
+    "Back and Filters stay local; the shared summary component owns the Edit Search button",
+  );
+  assert.doesNotMatch(compactSearch, /<Pencil|PencilLine/);
 });
