@@ -11,7 +11,7 @@ import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
 import { HotelCardSkeleton } from "@/components/ui/Skeleton";
-import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
+import { PAGINATION_MIN_BUSY_MS, PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
 import { HotelMobileResultsSummary } from "@/components/results/HotelMobileResultsSummary";
@@ -887,7 +887,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     setCurrentResultsPage(target);
     setPaginationTransitionPhase("settling");
     setPaginationMinHeight(null);
-    await new Promise<void>((resolve) => window.setTimeout(resolve, 520));
+    await new Promise<void>((resolve) => window.setTimeout(resolve, PAGINATION_MIN_BUSY_MS));
     await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
     positionResultsStart();
     await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
@@ -1903,21 +1903,19 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
           <section className="min-w-0 space-y-4">
             {!guided && kayak && results.length === 0 ? <CombinedSearchEmpty otherStatus={loading ? "loading" : error ? "error" : "success"} retry={retryGuidedHotelSearch} /> : error && results.length === 0 ? (
-              <div ref={guided ? guidedErrorRef : undefined} tabIndex={guided ? -1 : undefined} className={cn(hotelResultStackClass, "rounded-md border border-danger/30 bg-red-50 p-4 text-danger")}>
-                <p role="alert">{error}</p>
-                {guided ? (
-                  <Button className="mt-4 min-h-11" onClick={retryGuidedHotelSearch}>
-                    {t("deals.guided.hotelResults.retry")}
-                  </Button>
-                ) : null}
+              <div ref={guided ? guidedErrorRef : undefined} tabIndex={guided ? -1 : undefined} className={cn(hotelResultStackClass, "rounded-[13px] border border-danger/20 bg-white p-4 text-slate-950 shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] sm:rounded-md sm:border-danger/30 sm:bg-red-50 sm:text-danger sm:shadow-none")}>
+                <p role="alert" className="text-sm font-semibold leading-5">{error}</p>
+                <Button className="mt-4 min-h-11 w-full sm:w-auto" onClick={retryGuidedHotelSearch}>
+                  {t("deals.guided.hotelResults.retry")}
+                </Button>
               </div>
             ) : showFilteredEmptyState ? (
               <div className={cn(hotelResultStackClass, "space-y-4")}>
                 <ActiveHotelFilterChips chips={activeFilterChips} onRemove={removeFilterChip} t={t} />
-                <div className="rounded-2xl border border-[#004BB8]/10 bg-white p-4 shadow-[0_16px_40px_-24px_rgba(2,28,43,0.28)]">
-                  <p className="text-base font-bold text-[#021C2B]">{t("hotelResults.noStaysMatchFiltersTitle")}</p>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">{t("hotelResults.noStaysMatchFiltersBody")}</p>
-                  <Button variant="secondary" className="mt-4" onClick={resetFilters}>
+                <div className="rounded-[13px] border border-slate-200 bg-white p-4 shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] sm:rounded-2xl sm:border-[#004BB8]/10 sm:shadow-[0_16px_40px_-24px_rgba(2,28,43,0.28)]">
+                  <p className="text-[16px] font-bold leading-6 text-[#021C2B]">{t("hotelResults.noStaysMatchFiltersTitle")}</p>
+                  <p className="mt-1.5 max-w-2xl text-[13px] leading-5 text-muted sm:mt-2 sm:text-sm sm:leading-6">{t("hotelResults.noStaysMatchFiltersBody")}</p>
+                  <Button variant="secondary" className="mt-4 min-h-11 w-full sm:w-auto" onClick={resetFilters}>
                     {t("hotelResults.resetFilters")}
                   </Button>
                 </div>
@@ -2070,17 +2068,17 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                         return <HotelCard key={hotel.id} hotel={hotel} detailsHref={resultActionHref(hotel, internalHref)} providerLabel={isKayakSandboxResult(hotel) ? "KAYAK sandbox · Not bookable" : undefined} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided&&!isKayakSandboxResult(hotel)} stayNights={stayNights} sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined} />;
                       })
                     ) : (
-                      <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
+                      <div className="rounded-[13px] border border-slate-200 bg-white p-4 text-[13px] font-semibold leading-5 text-muted shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] sm:rounded-xl sm:p-6 sm:text-sm sm:shadow-sm">
                         <p>{guided && results.length === 0 ? t("deals.guided.hotelResults.empty") : t("hotelResults.noStaysMatchFiltersInline")}</p>
                         {guided && results.length === 0 ? (
-                          <Button className="mt-4 min-h-11" onClick={retryGuidedHotelSearch}>
+                          <Button className="mt-4 min-h-11 w-full sm:w-auto" onClick={retryGuidedHotelSearch}>
                             {t("deals.guided.hotelResults.retry")}
                           </Button>
                         ) : null}
                       </div>
                     )}
                     {!guided && totalHotelResultPages > 1 && !filterApplying ? (
-                      <nav aria-label="Hotel results pages" className="flex flex-wrap items-center justify-center gap-1.5 pt-4">
+                      <nav aria-label="Hotel results pages" className="flex flex-wrap items-center justify-center gap-1 pt-2 sm:gap-1.5 sm:pt-4">
                         <button type="button" aria-label="Previous page" disabled={currentResultsPage === 1 || paginationPendingPage !== null} onClick={() => changeResultsPage(currentResultsPage - 1)} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-transparent bg-transparent text-[#07133B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent sm:border-slate-200 sm:bg-white sm:text-slate-700 sm:disabled:opacity-40">
                           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                         </button>
