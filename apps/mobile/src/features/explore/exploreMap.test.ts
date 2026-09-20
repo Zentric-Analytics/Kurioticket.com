@@ -46,3 +46,19 @@ test("map queries respect the endpoint limit without breaking Unicode", () => {
  assert.match(screen, /trailingSpace=\{listTrailingSpace\}/);
  assert.match(screen, /paddingBottom: trailingSpace/);
  });
+
+
+test("Explore uses native Apple Maps on iOS and keeps the existing Android Google map", () => {
+  const ios = readFileSync("src/features/explore/ExploreMap.ios.tsx", "utf8");
+  const fallback = readFileSync("src/features/explore/ExploreMap.tsx", "utf8");
+
+  assert.match(ios, /from "react-native-maps"/);
+  assert.match(ios, /<MapView/);
+  assert.match(ios, /showsUserLocation=\{false\}/);
+  assert.match(ios, /searchAirports/);
+  assert.doesNotMatch(ios, /PROVIDER_GOOGLE|provider=|WebView|google\.com/);
+
+  assert.match(fallback, /from "react-native-webview"/);
+  assert.match(fallback, /\/api\/mobile\/v1\/explore\/map-embed/);
+  assert.match(screen, /airportCode=\{results\.length === 1 \? results\[0\]\.destination\.primaryAirportCode : undefined\}/);
+});
