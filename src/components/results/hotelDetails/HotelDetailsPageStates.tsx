@@ -60,7 +60,7 @@ export function HotelDetailsLoadingState({
               className="order-2 px-4 pb-2 pt-3 lg:order-none lg:mb-4 lg:px-0 lg:py-0"
               data-hotel-loading-property-identity
             >
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+              <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
                 <div
                   className="min-w-0 space-y-1.5"
                   data-hotel-loading-metadata
@@ -71,7 +71,7 @@ export function HotelDetailsLoadingState({
                   <SkeletonBlock className="h-5 w-full max-w-md" />
                   <SkeletonBlock className="h-5 w-24" />
                 </div>
-                <div className="flex gap-1 sm:gap-3" data-hotel-loading-actions>
+                <div className="hidden gap-3 lg:flex" data-hotel-loading-actions>
                   <SkeletonBlock className="size-11 lg:h-10 lg:w-24" />
                   <SkeletonBlock className="size-11 lg:h-10 lg:w-24" />
                 </div>
