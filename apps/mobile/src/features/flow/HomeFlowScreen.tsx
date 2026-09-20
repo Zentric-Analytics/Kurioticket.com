@@ -131,7 +131,20 @@ function HomeSearchSurface({ children }: { children: React.ReactNode }) {
 
 function HomeCarsSearchSurface({ children }: { children: React.ReactNode }) {
   const ft = useFlowTheme();
-  return <View style={[styles.homeCarsSearchSurface, { backgroundColor: ft.colors.page }]}>{children}</View>;
+  return (
+    <View
+      style={[
+        styles.homeCarsSearchSurface,
+        {
+          backgroundColor: ft.colors.page,
+          shadowColor: ft.colors.shadow,
+          shadowOpacity: ft.theme.dark ? 0.07 : 0.08,
+        },
+      ]}
+    >
+      {children}
+    </View>
+  );
 }
 
 function HomeFlightSearchSurface({ children }: { children: React.ReactNode }) {
@@ -293,9 +306,15 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   homeCarsSearchSurface: {
-    padding: 8,
-    paddingBottom: 4,
-    borderRadius: 18,
+    marginHorizontal: -HOME_CONTENT_HORIZONTAL_PADDING,
+    paddingHorizontal: HOME_CONTENT_HORIZONTAL_PADDING + 8,
+    paddingTop: 8,
+    paddingBottom: 12,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+    elevation: 1,
   },
   products: {
     marginTop: -34,
