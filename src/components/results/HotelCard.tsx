@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   Award,
@@ -207,6 +208,7 @@ export function HotelCard({
     hotel.amenities,
     8,
   );
+  const mobileAmenityItems = expandedAmenityItems.slice(0, 3);
   const collapsedAmenityItems = expandedAmenityItems.slice(0, 4);
   const hasBreakfastAmenity = expandedAmenityItems.some(
     (item) => item.iconKey === "breakfast",
@@ -454,15 +456,22 @@ export function HotelCard({
   }
 
   return (
-    <Card className="mx-auto w-[calc(100%+0.5rem)] max-w-[800px] overflow-hidden rounded-2xl border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_22px_50px_-24px_rgba(2,28,43,0.30)] focus-within:border-[#004BB8]/40 focus-within:ring-2 focus-within:ring-[#004BB8]/10 motion-reduce:transform-none motion-reduce:transition-none sm:w-full lg:mx-0 lg:max-w-none">
-      {providerLabel && <p className="px-4 pt-3 text-xs font-semibold text-amber-800">{providerLabel}</p>}
+    <Card className="relative mx-auto w-full max-w-[800px] overflow-hidden rounded-[13px] border-slate-200 bg-white shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] transition focus-within:border-[#004BB8]/40 focus-within:ring-2 focus-within:ring-[#004BB8]/10 motion-reduce:transform-none motion-reduce:transition-none sm:rounded-2xl sm:shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] sm:hover:-translate-y-0.5 sm:hover:border-slate-300 sm:hover:shadow-[0_22px_50px_-24px_rgba(2,28,43,0.30)] lg:mx-0 lg:max-w-none">
+      {resolvedDetailsHref ? (
+        <Link
+          href={resolvedDetailsHref}
+          aria-label={actionAriaLabel || `View hotel for ${hotel.name}`}
+          className="absolute inset-0 z-[1] sm:hidden"
+        />
+      ) : null}
+      {providerLabel ? <p className="hidden px-4 pt-3 text-xs font-semibold text-amber-800 sm:block">{providerLabel}</p> : null}
       <div
         data-hotel-card-mobile-grid
-        className="grid min-h-[260px] grid-cols-[41%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[clamp(280px,36%,340px)_minmax(0,1fr)]"
+        className="grid min-h-[244px] grid-cols-[39%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[clamp(280px,36%,340px)_minmax(0,1fr)]"
       >
         <div
           data-hotel-card-image
-          className="relative h-full min-h-[260px] overflow-hidden bg-slate-200 md:min-h-[230px] lg:min-h-[240px]"
+          className="relative z-[2] h-full min-h-[244px] overflow-hidden bg-slate-200 md:min-h-[230px] lg:min-h-[240px]"
         >
           <div className="absolute right-2 top-2 z-20 hidden items-center gap-0.5 md:flex lg:hidden">
             {renderSaveButton("flex hover:bg-white/90")}
@@ -482,7 +491,7 @@ export function HotelCard({
                   )}
                 fill
                 className="bg-slate-200 object-cover"
-                sizes="(min-width: 768px) 320px, 41vw"
+                sizes="(min-width: 768px) 320px, 39vw"
                 onError={() => markImageFailed(displayImageUrl)}
               />
               {showGalleryControls ? (
@@ -520,14 +529,14 @@ export function HotelCard({
         </div>
         <div
           data-hotel-card-details
-          className="relative flex min-w-0 flex-col px-3 py-3 md:min-h-0 md:px-3 md:py-3"
+          className="relative z-[2] flex min-w-0 flex-col px-2.5 py-2.5 md:min-h-0 md:px-3 md:py-3"
         >
           <div className="flex flex-1 flex-col">
             <div className="min-w-0">
               <div>
                 <div className="relative min-w-0">
                   <div className="min-w-0 pe-[88px] md:pe-0 lg:pe-[88px]">
-                    <h2 className="min-w-0 text-[15px] font-bold leading-5 text-slate-950 sm:text-base lg:line-clamp-2 lg:text-[17px]">
+                    <h2 className="line-clamp-2 min-w-0 text-[15px] font-bold leading-5 text-slate-950 sm:text-base lg:text-[17px]">
                       {hotel.name}
                     </h2>
                   </div>
@@ -546,6 +555,11 @@ export function HotelCard({
                     {renderShareButton("flex ps-1", "justify-start")}
                   </div>
                 </div>
+                {providerLabel ? (
+                  <p data-hotel-provider-label className="mt-1 line-clamp-1 text-[11px] font-medium leading-4 text-slate-500 sm:hidden">
+                    {providerLabel}
+                  </p>
+                ) : null}
 
                 {sortBadgeConfig && SortBadgeIcon ? (
                   <span
@@ -583,11 +597,11 @@ export function HotelCard({
                     className="mt-px shrink-0 text-[#004BB8]"
                     aria-hidden="true"
                   />
-                  <span className="min-w-0">{hotel.location}</span>
+                  <span className="min-w-0 line-clamp-1 sm:line-clamp-none">{hotel.location}</span>
                 </p>
               </div>
               {reviewBand || reviewCountText ? (
-                <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px] font-semibold leading-4 text-slate-600 md:mt-2 md:gap-1.5">
+                <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[12px] font-semibold leading-4 text-slate-600 md:mt-2 md:gap-1.5">
                   {reviewBand ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-white">
                       <span>
@@ -604,7 +618,7 @@ export function HotelCard({
                 </div>
               ) : null}
               {sourceAttributions.length ? (
-                <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px] font-medium leading-4 text-slate-600 md:mt-2 md:gap-1.5">
+                <div className="mt-1.5 hidden flex-wrap items-center gap-1 text-[11px] font-medium leading-4 text-slate-600 sm:flex md:mt-2 md:gap-1.5">
                   {sourceAttributions.map((attribution, index) => (
                     <span
                       key={`${attribution.provider}-${index}`}
@@ -618,7 +632,7 @@ export function HotelCard({
                           target="_blank"
                           rel="noopener noreferrer"
                           translate="no"
-                          className="text-[#004BB8] hover:underline"
+                          className="relative z-20 text-[#004BB8] hover:underline"
                         >
                           {attribution.provider}
                         </a>
@@ -639,9 +653,14 @@ export function HotelCard({
                     </p>
                   ) : null}
                   <HotelAmenityList
+                    items={mobileAmenityItems}
+                    t={t}
+                    className="grid grid-cols-1 gap-y-1 text-[12px] leading-[18px] sm:hidden"
+                  />
+                  <HotelAmenityList
                     items={collapsedAmenityItems}
                     t={t}
-                    className="grid grid-cols-1 gap-y-1 text-[12px] leading-[18px] md:grid-cols-2 md:gap-x-3 md:gap-y-1.5 md:text-xs md:leading-4"
+                    className="hidden grid-cols-1 gap-y-1 text-[12px] leading-[18px] sm:grid md:grid-cols-2 md:gap-x-3 md:gap-y-1.5 md:text-xs md:leading-4"
                   />
                 </div>
               ) : null}
@@ -668,7 +687,7 @@ export function HotelCard({
                     >
                       <span
                         aria-hidden="true"
-                        className="block whitespace-nowrap text-lg font-bold leading-6 text-slate-950 tabular-nums sm:text-xl"
+                        className="block break-words text-[17px] font-bold leading-6 text-slate-950 tabular-nums min-[390px]:text-lg sm:whitespace-nowrap sm:text-xl"
                       >
                         {nightlyDisplayPrice.formatted}
                       </span>
