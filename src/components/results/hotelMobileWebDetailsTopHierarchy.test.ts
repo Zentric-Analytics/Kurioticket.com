@@ -27,7 +27,7 @@ test("standalone mobile Hotel details follow hero, identity, tabs, then content"
   assert.ok(hero >= 0 && hero < identity);
   assert.ok(identity < tabs);
   assert.ok(tabs < panel);
-  assert.match(details, /data-mobile-hotel-hero-shell[\s\S]*?order-1 lg:order-2/);
+  assert.match(details, /order-1 lg:order-2[\s\S]*?data-mobile-hotel-hero-shell/);
   assert.match(details, /data-mobile-property-header[\s\S]*?order-2|order-2[\s\S]*?data-mobile-property-header/);
   assert.match(nav, /order-3 sticky top-0/);
 });
