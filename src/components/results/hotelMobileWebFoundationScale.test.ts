@@ -84,8 +84,10 @@ test("mobile-web Hotel details navigation remains web-native but legible", () =>
   );
   assert.match(
     detailsNav,
-    /grid-cols-4[\s\S]*?min-h-11[\s\S]*?text-\[13px\] font-bold[\s\S]*?sm:text-sm/,
+    /grid-cols-3[\s\S]*?min-h-11[\s\S]*?text-\[13px\] font-bold[\s\S]*?sm:text-sm/,
   );
   assert.match(detailsNav, /mobileLabel: "Rates"/);
+  assert.match(detailsNav, /mobileLabel: "Overview"/);
+  assert.match(detailsNav, /desktopOnly: true/);
   assert.doesNotMatch(detailsNav, /min-\[390px\]:text-\[13px\]/);
 });
