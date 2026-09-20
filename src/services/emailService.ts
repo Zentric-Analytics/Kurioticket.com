@@ -170,17 +170,19 @@ export function priceAlertEmail(input: {
   name?: string | null;
   route: string;
   price: string;
+  previousPrice?: string;
   url: string;
 }) {
   const name = escapeHtml(input.name);
   const route = escapeHtml(input.route);
   const price = escapeHtml(input.price);
+  const previousPrice = escapeHtml(input.previousPrice);
   const url = escapeHtml(input.url);
 
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
-      <h1 style="font-size:22px">A meaningful price change was found</h1>
-      <p>${name ? `Hi ${name},` : "Hi,"} Kurioticket found an option for ${route} at ${price}.</p>
+      <h1 style="font-size:22px">${previousPrice ? "Your tracked price dropped" : "A meaningful price change was found"}</h1>
+      <p>${name ? `Hi ${name},` : "Hi,"} ${previousPrice ? `your tracked ${route} search dropped from ${previousPrice} to ${price}.` : `Kurioticket found an option for ${route} at ${price}.`}</p>
       <p>Review the route on Kurioticket, then confirm current price, availability, and fare rules on the external provider site.</p>
       <p><a href="${url}" style="color:#0f766e">View alert</a></p>
     </div>

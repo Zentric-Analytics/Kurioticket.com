@@ -153,10 +153,14 @@ test("Cars Price Alert reconciliation remains race-safe and preserves its known 
   assert.doesNotMatch(carAlert, /setLoading\(true\);\s*setCurrentMatchingAlert\(undefined\)/);
 });
 
-test("Cars Price Alert keeps user mutation progress and create feedback", () => {
-  assert.match(carAlert, /const toggle = async[\s\S]*setPending\(true\)[\s\S]*updatePriceAlertStatus[\s\S]*setPending\(false\)/);
-  assert.match(carAlert, /const create = async[\s\S]*setPending\(true\)[\s\S]*createPriceAlert[\s\S]*setPending\(false\)/);
-  assert.match(carAlert, /label=\{pending \? "Creating…" : "Create alert"\}/);
+test("Cars Price Alert keeps automatic toggle mutation progress and feedback", () => {
+  assert.match(carAlert, /const toggle = async[\s\S]*setPending\(true\)/);
+  assert.match(carAlert, /travelApi\.createPriceAlert\(buildAutomaticCarPriceAlertPayload\(/);
+  assert.match(carAlert, /travelApi\.updatePriceAlertStatus/);
+  assert.match(carAlert, /showFeedback\(next \? "active" : "paused"\)/);
+  assert.match(carAlert, /finally \{ pendingRef\.current = false; setPending\(false\); \}/);
+  assert.match(carAlert, /onValueChange=\{\(next\) => void toggle\(next\)\}/);
+  assert.doesNotMatch(carAlert, /const create = async|Create alert|Target rental total/);
 });
 
 
@@ -195,20 +199,15 @@ test("Cars Results carries the Flight-family canvas without a white filter band"
   assert.doesNotMatch(cars, /r\.filterRail,\{backgroundColor:theme\.dark\?theme\.surface:"#FFFFFF"\}/);
 });
 
-test("Cars Price Alert close is state-owned so keyboard teardown cannot race ahead of the target sheet", () => {
-  assert.match(carAlert, /<View style=\{styles\.sheetHeader\}>[\s\S]*Track rental car prices[\s\S]*<Pressable accessibilityRole="button" accessibilityLabel="Close price alert"/);
-  assert.match(carAlert, /<X accessible=\{false\} size=\{22\} color=\{theme\.icon\}/);
-  assert.match(carAlert, /sheetHeaderTitle: \{ flex: 1, minWidth: 0, textAlign: "center" \}/);
-  assert.match(carAlert, /sheetClose: \{ width: 44, height: 44/);
-  assert.doesNotMatch(carAlert, /<Button label="Cancel"/);
-  const close = carAlert.slice(carAlert.indexOf("const closeTargetSheet"), carAlert.indexOf("const openTargetSheet"));
-  assert.match(close, /targetIntentRef\.current\.close\(\);[\s\S]*setOpen\(false\);/);
-  assert.doesNotMatch(close, /Keyboard\.dismiss|\.blur\(|async|await|setTimeout|InteractionManager|keyboard(?:Did|Will)Hide|requestAnimationFrame/);
-  assert.match(carAlertModal, /\{open \? <Modal\s+visible\s+transparent\s+animationType="none"/);
-  assert.doesNotMatch(carAlert, /<Modal visible=\{open\}/);
-  assert.match(carAlertModal, /<KeyboardAvoidingView style=\{styles\.keyboardAvoider\} behavior="padding" pointerEvents="box-none">/);
-  assert.match(carAlert, /<TextInput[\s\S]*?autoFocus=\{Platform\.OS === "ios"\}/);
-  assert.match(carAlertModal, /onRequestClose=\{\(\) => \{ if \(!pending\) closeTargetSheet\(\); \}\}/);
-  assert.match(carAlert, /accessibilityLabel="Close price alert" disabled=\{pending\} onPressIn=\{closeTargetSheet\} onPress=\{closeTargetSheet\}/);
-  assert.equal(carAlert.match(/closeTargetSheet/g)?.length, 11);
+test("Cars Price Alert removes the manual target sheet and uses transient snackbar feedback", () => {
+  assert.doesNotMatch(carAlert, /<Modal|<TextInput|KeyboardAvoidingView|Close price alert|closeTargetSheet|openTargetSheet|targetIntentRef|sheetHeader|sheetClose/);
+  assert.match(carAlert, /export const CAR_PRICE_ALERT_SNACKBAR_DURATION_MS = 3_600/);
+  assert.match(carAlert, /export function CarPriceAlertSnackbar/);
+  assert.match(carAlert, /feedback === "active"/);
+  assert.match(carAlert, /Price tracking is on/);
+  assert.match(carAlert, /Price tracking paused/);
+  assert.match(carAlert, /We'll let you know when this rental gets cheaper\./);
+  assert.match(carAlert, /accessibilityLabel="Manage price alerts"/);
+  assert.match(carAlert, /router\.push\("\/price-alerts"\)/);
+  assert.match(carAlert, /feedbackTimer\.current = setTimeout\(\(\) => onFeedback\?\.\(null\), CAR_PRICE_ALERT_SNACKBAR_DURATION_MS\)/);
 });

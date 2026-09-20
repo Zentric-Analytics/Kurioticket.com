@@ -43,12 +43,19 @@ export function buildCarPriceAlertPayload(search: CarSearchParams, targetPrice: 
   };
 }
 
-export function carPriceAlertDuplicateKey(input: { origin: string | null; destination: string; targetPrice: { toString(): string } | number | string | null; currency: string | null; query: unknown }) {
+export function buildAutomaticCarPriceAlertPayload(search: CarSearchParams, baselinePrice: number, currency: string) {
+  const targetPayload = buildCarPriceAlertPayload(search, 1, currency);
+  if (!Number.isFinite(baselinePrice) || baselinePrice <= 0) throw new Error("A valid baseline price is required.");
+  return { ...targetPayload, targetPrice: undefined, mode: "AUTOMATIC" as const, baselinePrice };
+}
+
+export function carPriceAlertDuplicateKey(input: { origin: string | null; destination: string; targetPrice?: { toString(): string } | number | string | null; mode?: "AUTOMATIC" | "TARGET"; currency: string | null; query: unknown }) {
   const parsed = canonicalCarPriceAlertQuerySchema.safeParse(input.query);
   const target = input.targetPrice == null ? NaN : Number(input.targetPrice.toString());
-  if (!parsed.success || !Number.isFinite(target) || target <= 0) return null;
+  const mode = input.mode ?? "TARGET";
+  if (!parsed.success || (mode === "TARGET" && (!Number.isFinite(target) || target <= 0))) return null;
   const query = parsed.data;
   if (input.origin?.trim().toLowerCase() !== query.pickupLocation.toLowerCase() || input.destination.trim().toLowerCase() !== query.dropoffLocation.toLowerCase()) return null;
   return [query.pickupLocation, query.dropoffLocation, query.pickupDate, query.pickupTime, query.dropoffDate, query.dropoffTime, query.driverAge]
-    .map((value) => value.toLowerCase()).concat((input.currency || "").trim().toUpperCase(), target.toFixed(2)).join("|");
+    .map((value) => value.toLowerCase()).concat((input.currency || "").trim().toUpperCase(), mode, mode === "TARGET" ? target.toFixed(2) : "automatic").join("|");
 }

@@ -134,6 +134,7 @@ export async function createPriceAlert(input: {
   origin?: string;
   destination: string;
   targetPrice?: number;
+  baselinePrice?: number;
   mode?: "AUTOMATIC" | "TARGET";
   currency: string;
   query: Record<string, unknown>;
@@ -179,10 +180,10 @@ export async function createPriceAlert(input: {
       const duplicate = requestedKey && existingAlerts.find((alert) => hotelPriceAlertDuplicateKey(alert) === requestedKey);
       if (duplicate) throw new DuplicatePriceAlertError(serializePriceAlert(duplicate));
     }
-    if (input.type === "CAR" && mode === "TARGET") {
+    if (input.type === "CAR") {
       const requestedKey = carPriceAlertDuplicateKey({ ...input, origin: input.origin ?? null, targetPrice: input.targetPrice ?? null });
       const existingAlerts = await db.priceAlert.findMany({
-        where: { userId: input.userId, type: "CAR", status: { in: ["ACTIVE", "PAUSED"] }, origin: input.origin, destination: input.destination, currency: input.currency },
+        where: { userId: input.userId, type: "CAR", mode, status: { in: ["ACTIVE", "PAUSED"] }, origin: input.origin, destination: input.destination, currency: input.currency },
         select: { id: true, type: true, origin: true, destination: true, targetPrice: true, mode: true, currency: true, status: true, query: true, createdAt: true, updatedAt: true },
       });
       const duplicate = requestedKey && existingAlerts.find((alert) => carPriceAlertDuplicateKey(alert) === requestedKey);
@@ -196,6 +197,7 @@ export async function createPriceAlert(input: {
         origin: input.origin,
         destination: input.destination,
         targetPrice: input.targetPrice,
+        baselinePrice: input.baselinePrice,
         mode,
         currency: input.currency,
         query: input.query as never,

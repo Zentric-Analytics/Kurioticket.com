@@ -20,7 +20,7 @@ import { CarResultsQuickFilterSheet } from "./CarResultsQuickFilterSheet";
 import { carFilterCopy, carFilterGroupLabel } from "./carFilterCopy";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { CarEditSearchModal } from "./CarEditSearchModal";
-import { NativeCarPriceAlert } from "./NativeCarPriceAlert";
+import { CarPriceAlertSnackbar, NativeCarPriceAlert, type CarPriceAlertFeedback } from "./NativeCarPriceAlert";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { getLocationFieldDisplay } from "../../../../../src/lib/search/locationFieldDisplay";
 import { NATIVE_FILTER_RESULTS_TRANSITION_MS } from "./filterResultsTransition";
@@ -72,6 +72,7 @@ export function ApprovedCarResultsScreen() {
   const carResultsApplyingTimer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined);
   const carFilterSessionDirtyRef=useRef(false);
   const [carEditSearchOpen,setCarEditSearchOpen] = useState(false);
+  const [priceAlertFeedback,setPriceAlertFeedback] = useState<CarPriceAlertFeedback>(null);
   const carScrollRef=useRef<FlatList<CarResult>>(null);
   const searchSequence=useRef(0);
   const activeSearch=useRef<AbortController|null>(null);
@@ -110,7 +111,7 @@ export function ApprovedCarResultsScreen() {
     : router.push({pathname:"/car-details",params:{result:JSON.stringify({...result,imageUrl:resolveNativeCarImageUri(result.imageUrl)??result.imageUrl}),resultId:result.id,...Object.fromEntries(Object.entries(payload).map(([key,value])=>[key,String(value)])),carResultsStack:"1"}});
   const clearFilters=()=>{setFilters({});startCarResultsTransition();};
   const listData=status==="ready"&&!carResultsApplying?filtered:[];
-  const listHeader=<>{message?<Text accessibilityRole="alert" style={[r.notice,{backgroundColor:theme.surface,color:theme.textPrimary,borderColor:theme.dark?theme.border:"#D8E1EC"}]}>{message}</Text>:null}{status==="ready"?<><NativeCarPriceAlert plan={plan.plan} results={results} available={availability.priceAlerts}/>{!carResultsApplying?<View accessibilityLabel="Car results summary" style={r.carResultsSummaryRow}><Text accessibilityRole="header" style={[r.carResultCount,{color:theme.textPrimary}]}>{carResultCountLabel(filtered.length)}</Text></View>:null}</>:null}</>;
+  const listHeader=<>{message?<Text accessibilityRole="alert" style={[r.notice,{backgroundColor:theme.surface,color:theme.textPrimary,borderColor:theme.dark?theme.border:"#D8E1EC"}]}>{message}</Text>:null}{status==="ready"?<><NativeCarPriceAlert plan={plan.plan} results={results} available={availability.priceAlerts} onFeedback={setPriceAlertFeedback}/>{!carResultsApplying?<View accessibilityLabel="Car results summary" style={r.carResultsSummaryRow}><Text accessibilityRole="header" style={[r.carResultCount,{color:theme.textPrimary}]}>{carResultCountLabel(filtered.length)}</Text></View>:null}</>:null}</>;
   const listEmpty=status==="empty"?<Empty title="No rental cars found" body="Try changing your dates, pickup location, or filters." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:status==="error"?<Empty title="Car search could not be completed" body={message||"Check your connection and try again."} retry={()=>setRetry((value)=>value+1)} edit={edit}/>:status==="ready"&&carResultsApplying?<CarSkeletons/>:status==="ready"&&!filtered.length?<Empty title="No cars match these filters" body="Clear filters to see the available rental cars." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:null;
   if(status==="loading") return <NativeBrandedSearchLoading product="car"/>;
   return <SafeAreaView style={[r.safe,{backgroundColor:carCanvasColor}]} edges={["top"]}>
@@ -124,6 +125,7 @@ export function ApprovedCarResultsScreen() {
     <CarFilterSheet visible={filterSheetVisible} results={results} filters={filters} pricePerDay={pricePerDay} onChange={changeCarFilters} onClose={completeCarFilterSession}/>
     {quickSheetKind ? <CarResultsQuickFilterSheet key={quickSheetKind} kind={quickSheetKind} results={results} filters={filters} pricePerDay={pricePerDay} sort={sort} onApplyFilters={(next)=>{changeCarFilters(next);}} onApplySort={(next)=>{if(next!==sort){setSort(next);startCarResultsTransition();}}} onClose={()=>{setQuickSheetKind(null);if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}}}/> : null}
     <CarEditSearchModal visible={carEditSearchOpen} params={params} onClose={()=>setCarEditSearchOpen(false)}/>
+    {priceAlertFeedback ? <CarPriceAlertSnackbar key={priceAlertFeedback} feedback={priceAlertFeedback}/> : null}
   </SafeAreaView>;
 }
 

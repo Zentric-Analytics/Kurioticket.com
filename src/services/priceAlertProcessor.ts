@@ -14,6 +14,7 @@ import { isFeatureEnabled } from "@/lib/feature-controls/service";
 export const PRICE_ALERT_BATCH_SIZE = 50;
 const DEFAULT_RETRY_DELAY_MS = 1000 * 60 * 60;
 const DEFAULT_CHECK_DELAY_MS = 1000 * 60 * 60 * 24;
+export const CAR_AUTOMATIC_DROP_RATIO = 0.02;
 
 export type ResolvedPrice = {
   provider: string;
@@ -139,12 +140,6 @@ export async function processDuePriceAlerts(options: {
       const targetPrice = toFiniteNumber(alert.targetPrice);
       const baseline = toFiniteNumber(alert.lastNotifiedPrice) ?? toFiniteNumber(alert.baselinePrice);
       const isAutomatic = alert.mode === "AUTOMATIC";
-      if (isAutomatic && baseline === null) {
-        await recordSuccessfulCheck(db, alert, resolved, now, new Date(now.getTime() + checkDelayMs), { baselinePrice: resolved.price });
-        counts.notTriggered += 1;
-        continue;
-      }
-      const automaticDrop = isAutomatic && baseline !== null && (baseline - resolved.price >= 25 || (baseline - resolved.price) / baseline >= 0.15);
 
       if (resolved.currency.toUpperCase() !== alert.currency.toUpperCase()) {
         await recordSuccessfulCheck(db, alert, resolved, now, new Date(now.getTime() + checkDelayMs));
@@ -152,6 +147,15 @@ export async function processDuePriceAlerts(options: {
         counts.notTriggered += 1;
         continue;
       }
+      if (isAutomatic && baseline === null) {
+        await recordSuccessfulCheck(db, alert, resolved, now, new Date(now.getTime() + checkDelayMs), { baselinePrice: resolved.price });
+        counts.notTriggered += 1;
+        continue;
+      }
+      const automaticDropRatio = baseline === null ? 0 : (baseline - resolved.price) / baseline;
+      const automaticDrop = isAutomatic && baseline !== null && (alert.type === "CAR"
+        ? automaticDropRatio >= CAR_AUTOMATIC_DROP_RATIO
+        : baseline - resolved.price >= 25 || automaticDropRatio >= 0.15);
 
       if ((!isAutomatic && (targetPrice === null || resolved.price > targetPrice)) || (isAutomatic && !automaticDrop)) {
         await recordSuccessfulCheck(db, alert, resolved, now, new Date(now.getTime() + checkDelayMs));
@@ -160,12 +164,17 @@ export async function processDuePriceAlerts(options: {
       }
 
       const route = alert.type !== "HOTEL" && alert.origin && alert.origin.toLowerCase() !== alert.destination.toLowerCase() ? `${alert.origin} to ${alert.destination}` : alert.destination;
+      const dropPercent = Math.max(0, automaticDropRatio * 100);
+      const automaticTitle = alert.type === "CAR" ? `Rental price dropped ${formatPercent(dropPercent)}` : `Price drop detected for ${route}`;
+      const automaticBody = alert.type === "CAR" && baseline !== null
+        ? `${formatPrice(baseline, resolved.currency)} → ${formatPrice(resolved.price, resolved.currency)} for your ${route} rental.`
+        : `${formatPrice(resolved.price, resolved.currency)} is meaningfully lower than the tracked price.`;
       const eventKey = isAutomatic ? `price-alert:${alert.id}:automatic:${resolved.currency}:${resolved.price.toFixed(2)}` : buildPriceAlertIdempotencyKey(alert);
       const event = await db.$transaction(async (tx) => {
         const triggered = await tx.priceAlert.updateMany({ where: { id: alert.id, status: "ACTIVE", nextCheckAt: alert.nextCheckAt }, data: isAutomatic ? { lastSeenPrice: resolved.price, lastNotifiedPrice: resolved.price, lastNotifiedAt: now, lastCheckedAt: now, nextCheckAt: new Date(now.getTime() + checkDelayMs), consecutiveFailures: 0, lastErrorCode: null } : { status: "TRIGGERED", lastSeenPrice: resolved.price, lastCheckedAt: now, nextCheckAt: null } });
         if (triggered.count === 0) return null;
         await tx.priceSnapshot.create({ data: { priceAlertId: alert.id, provider: resolved.provider, price: resolved.price, currency: resolved.currency, payload: resolved.payload ?? {} } });
-        return persistCanonicalNotificationEvent({ userId: alert.userId, eventKey, type: "PRICE_ALERT", title: isAutomatic ? `Price drop detected for ${route}` : `Price target reached for ${route}`, body: isAutomatic ? `${formatPrice(resolved.price, resolved.currency)} is meaningfully lower than the tracked price.` : `${formatPrice(resolved.price, resolved.currency)} is at or below your target.`, actionPath: "/price-alerts", metadata: { alertId: alert.id, mode: alert.mode, currentPrice: resolved.price, currency: resolved.currency } }, tx);
+        return persistCanonicalNotificationEvent({ userId: alert.userId, eventKey, type: "PRICE_ALERT", title: isAutomatic ? automaticTitle : `Price target reached for ${route}`, body: isAutomatic ? automaticBody : `${formatPrice(resolved.price, resolved.currency)} is at or below your target.`, actionPath: "/price-alerts", metadata: { alertId: alert.id, mode: alert.mode, previousPrice: baseline, currentPrice: resolved.price, dropPercent, currency: resolved.currency } }, tx);
       });
       if (!event) continue;
       if (event.created) counts.eventsCreated += 1;
@@ -177,12 +186,12 @@ export async function processDuePriceAlerts(options: {
       }
 
       const url = resolved.url || `${process.env.NEXT_PUBLIC_APP_URL || "https://kurioticket.com"}/dashboard/alerts`;
-      const html = priceAlertEmail({ name: alert.user.name, route, price: formatPrice(resolved.price, resolved.currency), url });
+      const html = priceAlertEmail({ name: alert.user.name, route, price: formatPrice(resolved.price, resolved.currency), previousPrice: isAutomatic && baseline !== null ? formatPrice(baseline, resolved.currency) : undefined, url });
       const result = await sendEmail({
         userId: alert.userId,
         category: "priceAlerts",
         to: alert.user.email,
-        subject: `Price alert: ${route} reached ${formatPrice(resolved.price, resolved.currency)}`,
+        subject: isAutomatic ? automaticTitle : `Price alert: ${route} reached ${formatPrice(resolved.price, resolved.currency)}`,
         html,
         template: "price_alert",
         idempotencyKey: eventKey,
@@ -242,6 +251,7 @@ function emptyCounts(): PriceAlertProcessingCounts { return { processed: 0, even
 function toFiniteNumber(value: PriceAlertRecord["targetPrice"] | undefined) { const n = value == null ? NaN : Number(value.toString()); return Number.isFinite(n) ? n : null; }
 export function buildPriceAlertIdempotencyKey(alert: Pick<PriceAlertRecord, "id" | "targetPrice" | "currency">) { return `price-alert:${alert.id}:${alert.targetPrice?.toString() ?? "none"}:${alert.currency}`; }
 function formatPrice(price: number, currency: string) { return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(price); }
+function formatPercent(percent: number) { return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(percent)}%`; }
 function safeError(error: unknown, alertId: string) { return { alertId, message: error instanceof Error ? error.message : "Unknown price alert processing error" }; }
 
 export function isAuthorizedCronRequest(request: Request, secret = process.env.PRICE_ALERTS_CRON_SECRET?.trim()) {
