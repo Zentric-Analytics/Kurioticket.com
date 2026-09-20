@@ -23,7 +23,8 @@ test("mobile hotel loading geometry matches the full-bleed hero-first property s
     "h-11 w-[88px] rounded-full bg-white/90",
     "data-hotel-loading-amenities",
     "data-hotel-loading-mobile-dock",
-    "grid-cols-[minmax(0,1fr)_minmax(132px,0.9fr)]",
+    "grid-cols-[minmax(0,1fr)_minmax(124px,42%)]",
+    "min-[390px]:grid-cols-[minmax(0,1fr)_minmax(140px,0.82fr)]",
     'role="status"',
     'aria-live="polite"',
   ])

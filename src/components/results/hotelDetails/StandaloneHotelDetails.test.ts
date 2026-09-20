@@ -40,54 +40,50 @@ test("mobile gallery uses a full-bleed hero with controls and counter while desk
   assert.doesNotMatch(gallerySource, /1 \/ 29|\+25/);
 });
 
-test("mobile header owns stay metadata while the two-column dock owns price and CTA", () => {
+test("mobile header owns stay metadata while the dock follows the selected rate", () => {
   assert.equal(source.match(/data-mobile-hotel-stay-dock/g)?.length, 1);
   assert.match(source, /fixed inset-x-0 bottom-0/);
   assert.match(source, /env\(safe-area-inset-bottom\)/);
-  assert.match(source, /pb-\[calc\(8\.5rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(source, /bookingActionAvailable \? "min-w-0 pb-\[calc\(7\.5rem\+env\(safe-area-inset-bottom\)\)\]/);
   assert.match(source, /hidden min-w-0 lg:flex lg:flex-col/);
+
   const headerStart = source.indexOf("data-mobile-property-header");
-  const header = source.slice(
-    headerStart,
-    source.indexOf("</header>", headerStart),
-  );
-  const dock = source.slice(
-    source.indexOf("data-mobile-hotel-stay-dock"),
-    source.indexOf("{roomsOpen ? ("),
-  );
-  const aside = source.slice(
-    source.indexOf("data-standalone-stay-summary"),
-    source.indexOf("data-mobile-hotel-stay-dock"),
-  );
+  const header = source.slice(headerStart, source.indexOf("</header>", headerStart));
+  const dock = source.slice(source.indexOf("data-mobile-hotel-stay-dock"), source.indexOf("{roomsOpen ? ("));
+  const aside = source.slice(source.indexOf("data-standalone-stay-summary"), source.indexOf("data-mobile-hotel-stay-dock"));
+
   for (const contract of [
     "data-mobile-hotel-stay-dates",
     "data-mobile-hotel-stay-guests",
     "props.staySummary.nightText",
     "props.staySummary.dateText",
     "props.staySummary.occupancyText",
-  ])
-    assert.ok(header.includes(contract), contract);
+  ]) assert.ok(header.includes(contract), contract);
+
   for (const contract of [
-    "props.totalDisplayPrice.formatted",
-    "props.nightlyDisplayPrice.formatted",
-    "props.labels.continueBooking",
-    "grid-cols-[minmax(0,1fr)_minmax(132px,0.9fr)]",
-  ])
-    assert.ok(dock.includes(contract), contract);
+    "data-mobile-hotel-selected-rate",
+    "mobileDockPrimaryLabel",
+    "mobileDockPrimaryPrice",
+    "mobileDockProviderName",
+    "mobileDockSupportingText",
+    "bookingActionLabel",
+    "grid-cols-[minmax(0,1fr)_minmax(124px,42%)]",
+    "min-[390px]:grid-cols-[minmax(0,1fr)_minmax(140px,0.82fr)]",
+  ]) assert.ok(dock.includes(contract), contract);
+
   for (const removed of [
     "props.staySummary.nightText",
     "props.staySummary.dateText",
     "props.staySummary.occupancyText",
     "CalendarDays",
     "<Users",
-  ])
-    assert.ok(!dock.includes(removed), removed);
+  ]) assert.ok(!dock.includes(removed), removed);
+
   for (const contract of [
     "props.staySummary.nightText",
     "props.staySummary.dateText",
     "props.staySummary.occupancyText",
-  ])
-    assert.ok(aside.includes(contract), contract);
+  ]) assert.ok(aside.includes(contract), contract);
 });
 
 test("mobile property identity follows the hero and keeps Hotel facts readable", () => {
@@ -289,8 +285,8 @@ test("stay summary retains all functional data and pricing contracts", () => {
     "props.totalDisplayPrice.formatted",
     "props.nightlyDisplayPrice.formatted",
     "props.taxesText || props.planningPriceText",
-    "props.labels.continueBooking",
-    'bookingContinuation.kind === "unavailable"',
+    "bookingActionLabel",
+    "bookingActionAvailable",
   ])
     assert.ok(source.includes(contract), contract);
 });
@@ -343,14 +339,11 @@ test("desktop mosaic gallery uses independent transparent edge controls", () => 
   assert.doesNotMatch(edgeControls, /bg-slate-950|rounded-full|rounded-lg/);
 });
 
-test("persistent booking actions use the translated continuation copy without support text", () => {
-  assert.equal(source.match(/props\.labels\.continueBooking/g)?.length, 2);
+test("persistent booking actions use provider-aware continuation copy without support text", () => {
+  assert.match(source, /bookingContinuation\.kind === "provider-handoff"[\s\S]*?props\.labels\.viewDeal[\s\S]*?props\.labels\.continueBooking/);
   assert.doesNotMatch(source, /props\.labels\.(?:viewRooms|roomSupport)/);
-  assert.match(
-    clientSource,
-    /continueBooking: t\("hotelDetails\.continueBooking"\) \|\| "Continue booking"/,
-  );
-  assert.doesNotMatch(clientSource, /roomSupport: t\("hotelDetails\.roomOptionsSupport"\)/);
+  assert.match(clientSource, /continueBooking: t\("hotelDetails\.continueBooking"\) \|\| "Continue booking"/);
+  assert.match(clientSource, /viewDeal: t\("hotelDetails\.viewDeal"\) \|\| "View deal"/);
 
   const desktopAction = source.slice(
     source.indexOf('data-standalone-stay-summary'),
@@ -362,9 +355,10 @@ test("persistent booking actions use the translated continuation copy without su
   );
   for (const action of [desktopAction, mobileAction]) {
     assert.match(action, /onClick=\{\(event\) => continueBooking\(event\.currentTarget\)\}/);
-    assert.match(action, /props\.labels\.continueBooking/);
+    assert.match(action, /bookingActionLabel/);
     assert.doesNotMatch(action, /roomSupport/);
   }
+  assert.match(mobileAction, /aria-label=\{`\$\{bookingActionLabel\} with \$\{mobileDockProviderName\}`\}/);
 });
 
 test("standalone pricing and search context are supplied by existing client pipelines", () => {
@@ -376,6 +370,10 @@ test("standalone pricing and search context are supplied by existing client pipe
     "roomOptions.map",
     "formatDisplayPrice",
     "relatedHotels={relatedHotels}",
+    "providerOffers={standaloneProviderOffers}",
+    "onProviderOfferHandoff=",
+    'providerOfferId: "current-provider"',
+    "await runProviderRedirect()",
   ])
     assert.ok(clientSource.includes(contract), contract);
 });
