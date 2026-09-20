@@ -41,7 +41,7 @@ test("brightened hero protects its lower text with a localized soft fade rather 
 });
 
 test("hero controls preserve actions and semantics with inset Hotel light glass surfaces",()=>{
-  const controlsStart=source.indexOf('testID="flight-details-floating-controls"');
+  const controlsStart=source.indexOf('testID="flight-details-back-control"');
   const controlsEnd=source.indexOf('<ScrollView testID="flight-details-scroll-content"',controlsStart);
   const controls=source.slice(controlsStart,controlsEnd);
   assert.match(controls,/accessibilityRole="button" accessibilityLabel="Back to results"/);

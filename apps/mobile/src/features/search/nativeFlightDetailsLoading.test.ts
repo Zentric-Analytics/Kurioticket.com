@@ -99,9 +99,9 @@ test("information skeleton mirrors flat tab content and the loaded navigation ba
 
 test("Flight hero controls use the Hotel light material in loading state", () => {
   const { root } = renderLoading(true);
-  const controls = find(root, "flight-details-loading-controls");
+  const controls = find(root, "flight-details-loading-back-control");
   const backGlass = controls.children[0].children[0];
-  const actions = find(controls, "flight-details-loading-actions");
+  const actions = find(root, "flight-details-loading-actions");
   const actionsGlass = actions.children[0];
 
   assert.equal(backGlass.type, "DetailGlassSurface");
@@ -130,14 +130,18 @@ test("entry loading reserves an edge-to-edge hero and two ordered identity lines
     ]);
     assert.deepEqual(copy.children.map((line) => style(line).height), [32, 16]);
     assert.equal(style(copy).gap, 3);
-    const controls = find(root, "flight-details-loading-controls");
+    const controls = find(root, "flight-details-loading-back-control");
     assert.ok(!descendants(hero).includes(controls), "loading controls must be outside scrolling hero content");
     assert.equal(style(controls).top, top + 8);
     assert.equal(style(controls).left, 16);
-    assert.equal(style(controls).right, 16);
+    assert.equal(style(controls).right, undefined);
+    assert.equal(style(controls).width, 44);
+    assert.equal(style(controls).height, 44);
     assert.equal(style(controls.children[0]).width, 44);
     assert.equal(style(controls.children[0]).height, 44);
-    const actions = find(controls, "flight-details-loading-actions");
+    const actions = find(root, "flight-details-loading-actions");
+    assert.equal(style(actions).right, 16);
+    assert.equal(style(actions).top, top + 8);
     assert.equal(style(actions).width, 88);
     assert.equal(style(actions).height, 44);
     const glass = actions.children[0];
@@ -198,27 +202,28 @@ test("entry loading mirrors the loaded hero curve and screen-level action geomet
   assert.equal(curve.props.preserveAspectRatio,"none");
   assert.equal(style(curve).height,65);
   assert.equal(curve.children[0].props.d,"M0 12 Q50 64 100 12 L100 64 L0 64 Z");
-  const controls=find(root,"flight-details-loading-controls");
+  const controls=find(root,"flight-details-loading-back-control");
   assert.ok(!descendants(scroll).includes(controls));
   assert.equal(style(controls).top,55);
   assert.equal(style(controls).zIndex,20);
-  assert.equal(style(controls).elevation,0);
+  assert.equal(style(controls).width,44);
+  assert.equal(style(controls).height,44);
 });
 
-test("Android flattens only full-width control layers while iOS keeps the approved elevation contract",()=>{
+test("platforms keep the Back wrapper compact while only the protected canvas layer varies",()=>{
   const android=renderLoading(false,47,34,216,"android").root;
   const ios=renderLoading(false,47,34,216,"ios").root;
   const androidProtection=find(android,"flight-details-loading-protected-header");
-  const androidControls=find(android,"flight-details-loading-controls");
+  const androidControls=find(android,"flight-details-loading-back-control");
   const iosProtection=find(ios,"flight-details-loading-protected-header");
-  const iosControls=find(ios,"flight-details-loading-controls");
+  const iosControls=find(ios,"flight-details-loading-back-control");
 
   assert.equal(style(androidProtection).elevation,0,"the Android canvas protection must not cast a full-width shadow");
-  assert.equal(style(androidControls).elevation,0,"the Android controls wrapper must not become an elevated full-width surface");
+  assert.deepEqual([style(androidControls).width,style(androidControls).height],[44,44]);
   assert.equal(style(iosProtection).elevation,11,"iOS keeps the existing protected-layer style");
-  assert.equal(style(iosControls).elevation,12,"iOS keeps the existing floating-control style");
+  assert.deepEqual([style(iosControls).width,style(iosControls).height],[44,44]);
   assert.equal(style(androidControls.children[0]).elevation,6,"the individual Android Back control keeps its floating depth");
-  assert.equal(style(find(androidControls,"flight-details-loading-actions")).elevation,6,"the individual Android action control keeps its floating depth");
+  assert.equal(style(find(android,"flight-details-loading-actions")).elevation,6,"the individual Android action control keeps its floating depth");
 });
 
 test("entry fare and information rails reserve real widths, bottom price zones and four tabs", () => {
