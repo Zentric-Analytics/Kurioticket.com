@@ -28,8 +28,8 @@ test("Hotel shortcut rail stays in document flow and owns the handoff sentinel",
   assert.ok(shortcutsStart >= 0 && shortcutsEnd > shortcutsStart);
   assert.doesNotMatch(shortcutBranch, /sticky top-/);
   assert.match(shortcutBranch, /mobileSearchSummarySentinelRef/);
-  assert.match(shortcutBranch, /trigger\("sort", mobileSortLabel/);
-  assert.doesNotMatch(shortcutBranch, />\s*Sort\s*</);
+  assert.doesNotMatch(shortcutBranch, /trigger\("sort"/);
+  assert.match(source, /openMobileShortcutMenu\("sort", event\.currentTarget\)/);
 });
 
 test("Hotel mobile handoff updates directly in the scroll event", () => {

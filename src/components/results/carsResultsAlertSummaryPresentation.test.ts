@@ -31,7 +31,7 @@ test("Cars has one alert after quick filters and before the result summary", () 
   assert.ok(quickFilters >= 0 && quickFilters < alertControl && alertControl < summary);
 });
 
-test("Cars alert preserves its full title and follows Hotel mobile CTA colors", () => {
+test("Cars alert preserves its existing full-title CTA presentation", () => {
   const title = '<h2 className="whitespace-nowrap text-sm font-bold text-slate-950 sm:text-base">{t("travel.account.carAlert.title")}</h2>';
   assert.ok(alert.includes(title));
   assert.doesNotMatch(alert, /<h2 className="[^"]*truncate/);
@@ -46,8 +46,21 @@ test("Cars alert preserves its full title and follows Hotel mobile CTA colors", 
     "sm:text-white sm:hover:bg-[#003f9c]",
   ]) {
     assert.ok(alert.includes(colorContract), `Cars CTA is missing ${colorContract}`);
-    assert.ok(hotelAlert.includes(colorContract), `Hotel reference is missing ${colorContract}`);
   }
+});
+
+test("Hotel mobile web uses a real tracking switch while desktop keeps Create price alert", () => {
+  assert.match(hotelAlert, /role="switch"/);
+  assert.match(hotelAlert, /aria-checked=\{Boolean\(isTracking\)\}/);
+  assert.match(hotelAlert, /handleMobileToggle\(!isTracking\)/);
+  assert.match(hotelAlert, /fetch\("\/api\/price-alerts", \{ cache: "no-store"/);
+  assert.match(hotelAlert, /method: "PATCH"/);
+  assert.match(hotelAlert, /status: "PAUSED"/);
+  assert.match(hotelAlert, /status: "ACTIVE"/);
+  assert.match(hotelAlert, /sm:hidden/);
+  assert.match(hotelAlert, /hidden rounded-2xl[^"]*sm:block/);
+  assert.match(hotelAlert, /travel\.account\.hotelAlert\.create/);
+  assert.match(hotelAlert, /createPortal/);
 });
 
 test("Cars alert presentation leaves authentication, API, and canonical payload behavior intact", () => {
