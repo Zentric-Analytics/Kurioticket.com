@@ -29,7 +29,7 @@ test("standalone web Hotel Rates receive the current actionable external provide
   assert.match(client, /providerOfferId: "current-provider"/);
   assert.match(client, /providerOffers=\{standaloneProviderOffers\}/);
   assert.match(client, /onProviderOfferHandoff=/);
-  assert.match(client, /await continueToProvider\(true\)/);
+  assert.match(client, /await runProviderRedirect\(\)/);
 });
 
 test("standalone provider handoff remains server-authoritative", () => {
