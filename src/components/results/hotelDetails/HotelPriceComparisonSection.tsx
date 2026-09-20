@@ -147,23 +147,37 @@ export function HotelPriceComparisonSection({
           {providerHandoffError}
         </p>
       ) : null}
-      <div
-        role="radiogroup"
-        aria-label="Hotel provider offers"
-        className="mt-4 space-y-2.5 sm:-mx-1 sm:mt-5 sm:space-y-3 lg:mx-0"
-        data-comparison-offers
-      >
-        {offers.map((offer) => (
-          <ProviderOffer
-            key={offer.id}
-            offer={offer}
-            perNightText={perNightText}
-            selected={offer.id === selectedOfferId}
-            selectable={selectableOfferIds.has(offer.id)}
-            onSelect={onSelectOffer}
-          />
-        ))}
-      </div>
+      {offers.length ? (
+        <div
+          role="radiogroup"
+          aria-label="Hotel provider offers"
+          className="mt-4 space-y-2.5 sm:-mx-1 sm:mt-5 sm:space-y-3 lg:mx-0"
+          data-comparison-offers
+        >
+          {offers.map((offer) => (
+            <ProviderOffer
+              key={offer.id}
+              offer={offer}
+              perNightText={perNightText}
+              selected={offer.id === selectedOfferId}
+              selectable={selectableOfferIds.has(offer.id)}
+              onSelect={onSelectOffer}
+            />
+          ))}
+        </div>
+      ) : (
+        <div
+          className="mt-4 rounded-[14px] border border-slate-200 bg-white px-4 py-4"
+          data-hotel-rates-empty
+        >
+          <p className="text-[15px] font-bold leading-5 text-slate-950">
+            No reservable rates available
+          </p>
+          <p className="mt-1 text-[13px] leading-5 text-slate-600">
+            Try updating your stay or check again later.
+          </p>
+        </div>
+      )}
     </section>
   );
 }
