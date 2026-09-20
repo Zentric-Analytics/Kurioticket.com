@@ -8,11 +8,20 @@ const search = read("./HotelSearchBar.tsx");
 const sheet = read("./MobileResultsEditSheet.tsx");
 const styles = read("../../app/globals.css");
 
-test("mobile hotel results fields are separated rows with only the required chevrons", () => {
+test("mobile hotel results fields use independent rounded cards with only the required chevrons", () => {
   assert.match(
     search,
-    /data-hotel-results-edit-fields=[\s\S]*?flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white divide-y divide-slate-200/,
+    /data-hotel-results-edit-fields=[\s\S]*?className=\{mobileResultsSheet \? "flex flex-col gap-2\.5" : "contents"\}/,
   );
+  assert.equal(
+    (search.match(/min-h-\[72px\] rounded-\[13px\] border border-\[#D8E1EC\] bg-white px-4 py-3/g) ?? []).length,
+    3,
+  );
+  const fields = search.slice(
+    search.indexOf("data-hotel-results-edit-fields"),
+    search.indexOf("data-hotel-mobile-edit-search-action"),
+  );
+  assert.doesNotMatch(fields, /divide-y divide-slate-200|rounded-none border-0/);
   assert.doesNotMatch(search, /mobileResultsEditGroupClass/);
   assert.match(
     search,
