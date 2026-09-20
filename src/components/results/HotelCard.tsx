@@ -471,7 +471,7 @@ export function HotelCard({
       >
         <div
           data-hotel-card-image
-          className="relative z-[2] h-full min-h-[244px] overflow-hidden bg-slate-200 md:min-h-[230px] lg:min-h-[240px]"
+          className="relative h-full min-h-[244px] overflow-hidden bg-slate-200 md:min-h-[230px] lg:min-h-[240px]"
         >
           <div className="absolute right-2 top-2 z-20 hidden items-center gap-0.5 md:flex lg:hidden">
             {renderSaveButton("flex hover:bg-white/90")}
@@ -529,7 +529,7 @@ export function HotelCard({
         </div>
         <div
           data-hotel-card-details
-          className="relative z-[2] flex min-w-0 flex-col px-2.5 py-2.5 md:min-h-0 md:px-3 md:py-3"
+          className="relative flex min-w-0 flex-col px-2.5 py-2.5 md:min-h-0 md:px-3 md:py-3"
         >
           <div className="flex flex-1 flex-col">
             <div className="min-w-0">
