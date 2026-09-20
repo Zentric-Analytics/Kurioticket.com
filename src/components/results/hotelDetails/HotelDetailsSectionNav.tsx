@@ -58,7 +58,7 @@ export function HotelDetailsSectionNav({
             tabIndex={selected ? 0 : -1}
             onClick={() => onTabChange(tab.id)}
             onKeyDown={(event) => handleKeyDown(event, index)}
-            className={`focus-ring relative inline-flex min-h-11 min-w-0 items-center justify-center whitespace-nowrap px-0.5 text-[12px] font-bold transition-colors min-[390px]:text-[13px] sm:px-2 sm:text-sm ${selected ? "text-blue" : "text-slate-600 hover:text-slate-950"}`}
+            className={`focus-ring relative inline-flex min-h-11 min-w-0 items-center justify-center whitespace-nowrap px-0.5 text-[13px] font-bold transition-colors sm:px-2 sm:text-sm ${selected ? "text-blue" : "text-slate-600 hover:text-slate-950"}`}
           >
             {tab.label}
             <span
