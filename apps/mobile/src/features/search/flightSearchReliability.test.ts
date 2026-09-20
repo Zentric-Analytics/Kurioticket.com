@@ -79,7 +79,7 @@ test("flight results virtualize cards, keep controls persistent, and do not own 
   assert.match(screen, /renderSectionHeader=\{\(\) => \([\s\S]*?\{filterRail\}/);
   assert.match(screen, /<Animated\.SectionList[\s\S]*?ListHeaderComponent=\{flightDateStrip\}/);
   assert.match(screen, /renderSectionHeader[\s\S]*?stickySectionHeadersEnabled/);
-  assert.match(screen, /initialNumToRender=\{6\}/);
+  assert.match(screen, /initialNumToRender=\{FLIGHT_RESULT_INITIAL_RENDER_COUNT\}/);
   assert.doesNotMatch(screen, /sorted\.map\(\(x, i\) =>\s*product === "flight"/);
   assert.doesNotMatch(screen, /useSavedFlights\(\)|flightSavedSignature\(item\)|toggleSavedFlight\(item, params\)/);
   assert.doesNotMatch(card, /savedRepository|readSession|SecureStore|saved: boolean|pending: boolean|onToggleSaved/);

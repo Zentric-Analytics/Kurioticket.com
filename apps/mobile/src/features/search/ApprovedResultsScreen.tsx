@@ -177,6 +177,14 @@ const flightSupportText = {
   dark: "#B8C3D8",
 } as const;
 const flightResultsLightCanvas = "#F5F7FB";
+const FLIGHT_RESULT_INITIAL_RENDER_COUNT = 10;
+// RN 0.81 constrains an unmeasured VirtualizedList tail spacer to the highest
+// measured row. Keep a normal, bounded render-ahead window so the native
+// content extent settles before traversal instead of growing one small window
+// at a time. Virtualization remains enabled.
+const FLIGHT_RESULT_RENDER_BATCH_SIZE = 10;
+const FLIGHT_RESULT_WINDOW_SIZE = 21;
+const FLIGHT_RESULT_BATCHING_PERIOD_MS = 16;
 const HOTEL_UTILITY_ICON_COLOR = "#334155";
 const HOTEL_GALLERY_CHEVRON_CONTRAST = "rgba(0,0,0,0.85)";
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -191,6 +199,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const insets = useSafeAreaInsets();
   const flightResults = product === "flight";
   const flightCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
+  const flightResultsScrollIndicatorInsets = Platform.OS === "ios"
+    ? { top: 4, right: 3, bottom: Math.max(insets.bottom, 8), left: 0 }
+    : undefined;
   const hotelCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
@@ -992,6 +1003,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               />
             </View>
           ) : null}
+          showsVerticalScrollIndicator={true}
+          automaticallyAdjustsScrollIndicatorInsets={false}
+          scrollIndicatorInsets={flightResultsScrollIndicatorInsets}
           alwaysBounceVertical={false}
           bounces={false}
           overScrollMode="never"
@@ -1000,10 +1014,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             s0.flightResultsContent,
             { paddingBottom: Math.max(insets.bottom + 16, 16) },
           ]}
-          initialNumToRender={6}
-          maxToRenderPerBatch={5}
-          updateCellsBatchingPeriod={50}
-          windowSize={7}
+          initialNumToRender={FLIGHT_RESULT_INITIAL_RENDER_COUNT}
+          maxToRenderPerBatch={FLIGHT_RESULT_RENDER_BATCH_SIZE}
+          updateCellsBatchingPeriod={FLIGHT_RESULT_BATCHING_PERIOD_MS}
+          windowSize={FLIGHT_RESULT_WINDOW_SIZE}
         />
 
         </View>
