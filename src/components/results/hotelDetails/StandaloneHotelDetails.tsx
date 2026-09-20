@@ -287,6 +287,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
     <div
       className="min-w-0 pb-[calc(8.5rem+env(safe-area-inset-bottom))] lg:pb-0"
       data-standalone-hotel-details
+      data-mobile-web-hotel-details
     >
       <div
         className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_334px] lg:items-stretch lg:gap-7"
@@ -298,7 +299,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                 <div className="min-w-0">
                   <div className="flex min-w-0 flex-col items-start gap-y-1.5 lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-4">
-                    <h1 className="min-w-0 break-words text-[22px] font-extrabold leading-tight tracking-[-0.025em] text-slate-950 lg:text-[30px]">
+                    <h1 className="min-w-0 break-words text-[24px] font-extrabold leading-[30px] tracking-[-0.025em] text-slate-950 lg:text-[30px] lg:leading-tight">
                       {props.hotelName}
                     </h1>
                     {props.starRating ? (
@@ -365,7 +366,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     {props.staySummary ? (
                       <>
                         <div
-                          className="flex min-w-0 items-center gap-1.5 text-xs font-semibold leading-5 text-slate-700"
+                          className="flex min-w-0 items-center gap-1.5 text-[13px] font-semibold leading-5 text-slate-700"
                           data-mobile-hotel-stay-dates
                         >
                           <CalendarDays
@@ -378,7 +379,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                           </span>
                         </div>
                         <div
-                          className="flex min-w-0 items-center gap-1.5 text-xs font-semibold leading-5 text-slate-700"
+                          className="flex min-w-0 items-center gap-1.5 text-[13px] font-semibold leading-5 text-slate-700"
                           data-mobile-hotel-stay-guests
                         >
                           <Users
@@ -391,7 +392,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     ) : null}
                     {canonicalAddress ? (
                       <div
-                        className="grid w-[calc(100%+6.25rem)] min-w-0 max-w-[calc(100vw-2rem)] grid-cols-[1rem_minmax(0,1fr)] items-start gap-x-1.5 text-xs font-semibold leading-5 text-slate-700"
+                        className="grid w-[calc(100%+6.25rem)] min-w-0 max-w-[calc(100vw-2rem)] grid-cols-[1rem_minmax(0,1fr)] items-start gap-x-1.5 text-[13px] font-semibold leading-5 text-slate-700"
                         data-mobile-hotel-address-row
                       >
                         <MapPin
@@ -684,7 +685,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
       >
         <div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_minmax(132px,0.9fr)] items-center gap-3">
           <div className="min-w-0">
-            <p className="flex items-center gap-1 text-[11px] font-semibold text-slate-600">
+            <p className="flex items-center gap-1 text-[12px] font-semibold leading-4 text-slate-600">
               {props.estimatedTotalText}
               <Info className="h-3 w-3" aria-hidden="true" />
             </p>
@@ -703,7 +704,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
             )}
             {props.nightlyDisplayPrice ? (
               <p
-                className="text-[11px] text-slate-600"
+                className="text-[12px] leading-4 text-slate-600"
                 title={props.nightlyDisplayPrice.title}
               >
                 {props.perNightText.replace(
@@ -718,7 +719,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               type="button"
               disabled={bookingContinuation.kind === "unavailable" || bookingContinuation.kind === "selection-required" || pendingProviderOfferId !== null}
               onClick={(event) => continueBooking(event.currentTarget)}
-              className="focus-ring min-h-12 w-full rounded-lg bg-blue px-3 text-xs font-bold leading-4 text-white disabled:opacity-50"
+              className="focus-ring min-h-12 w-full rounded-lg bg-blue px-3 text-[13px] font-bold leading-[18px] text-white disabled:opacity-50"
             >
               {props.labels.continueBooking}
             </button>
