@@ -31,7 +31,7 @@ export function HotelReviewsSection({
       {hasVerifiedReview ? (
         <>
           <div
-            className="mt-3 flex items-center gap-4 rounded-[16px] border border-slate-200 bg-white px-4 py-4 sm:hidden"
+            className="mt-3 flex items-center gap-4 rounded-[16px] border border-slate-200 bg-white px-4 py-4 lg:hidden"
             data-mobile-hotel-review-card
           >
             <div className="flex min-w-[104px] items-end">
@@ -53,7 +53,7 @@ export function HotelReviewsSection({
             </div>
           </div>
 
-          <div className="mt-4 hidden items-center gap-4 sm:flex">
+          <div className="mt-4 hidden items-center gap-4 lg:flex">
             <strong className="inline-flex h-14 min-w-14 items-center justify-center rounded-lg bg-blue px-2 text-xl font-extrabold text-white">
               {score}
             </strong>
