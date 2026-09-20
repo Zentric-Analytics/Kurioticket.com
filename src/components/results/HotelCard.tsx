@@ -460,7 +460,8 @@ export function HotelCard({
       {resolvedDetailsHref ? (
         <Link
           href={resolvedDetailsHref}
-          aria-label={actionAriaLabel || `View hotel for ${hotel.name}`}
+          aria-hidden="true"
+          tabIndex={-1}
           className="absolute inset-0 z-10 sm:hidden"
         />
       ) : null}
