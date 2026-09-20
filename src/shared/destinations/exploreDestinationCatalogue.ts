@@ -4,6 +4,7 @@ import type { AirportOption } from "../airports";
 export type ExploreDestinationProvenance = {
   airports: "shared-airport-catalogue";
   image: "website-curated" | "mobile-or-fallback";
+  coordinates: { latitude: number; longitude: number };
 };
 
 export type CanonicalExploreDestination = {
@@ -95,6 +96,7 @@ export function buildCanonicalExploreDestinations(
       provenance: {
         airports: "shared-airport-catalogue" as const,
         image: curatedDestinationImage(id) ? ("website-curated" as const) : ("mobile-or-fallback" as const),
+        coordinates: { latitude, longitude },
       },
     };
   });
