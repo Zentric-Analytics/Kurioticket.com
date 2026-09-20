@@ -7,12 +7,12 @@ const searchBar = read("./HotelSearchBar.tsx");
 const sheet = read("./MobileResultsEditSheet.tsx");
 const results = read("../results/HotelResultsClient.tsx");
 
-test("Hotel results editor groups three canonical rows with visible separators", () => {
+test("Hotel results editor keeps three canonical independent field cards", () => {
   assert.match(searchBar, /compact && !mobileResultsSheet \? \(/);
   assert.match(searchBar, /data-hotel-results-edit-fields=/);
-  assert.match(searchBar, /className=\{mobileResultsSheet \? "flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white divide-y divide-slate-200" : "contents"\}/);
+  assert.match(searchBar, /className=\{mobileResultsSheet \? "flex flex-col gap-2\.5" : "contents"\}/);
   assert.equal(searchBar.match(/data-hotel-mobile-edit-row=/g)?.length, 3);
-  assert.equal(searchBar.match(/min-h-\[72px\] rounded-none border-0 px-4 py-3/g)?.length, 3);
+  assert.equal(searchBar.match(/min-h-\[72px\] rounded-\[13px\] border border-\[#D8E1EC\] bg-white px-4 py-3/g)?.length, 3);
   assert.doesNotMatch(searchBar, /mobileResultsEditGroupClass/);
 
   const fieldsStart = searchBar.indexOf("data-hotel-results-edit-fields");
@@ -68,15 +68,15 @@ test("Hotel results cards place their icons and approved affordances in value ro
   assert.equal((searchBar.match(/<ChevronRight aria-hidden="true" className=/g) ?? []).length, 2);
 });
 
-test("Hotel results sheet matches the focused selector motion and backdrop", () => {
-  assert.match(results, /browserCanvasColor="#ffffff"/);
+test("Hotel results sheet uses the results canvas behind separate white field cards", () => {
+  assert.match(results, /browserCanvasColor="#f6f8fb"/);
   assert.doesNotMatch(results, /<MobileResultsEditSheet[^>]*cleanBackdrop/);
   assert.doesNotMatch(results, /<MobileResultsEditSheet[^>]*smoothMotion/);
   assert.match(results, /closing=\{mobileHotelSearchClosing\}/);
-  assert.match(results, /className="bg-white"/);
-  assert.match(results, /contentClassName="!pt-3 bg-white/);
+  assert.match(results, /className="bg-\[#f6f8fb\]"/);
+  assert.match(results, /contentClassName="!pt-3 bg-\[#f6f8fb\]/);
   assert.match(results, /bottomSurfaceContinuation/);
-  assert.doesNotMatch(results, /bottomSurfaceContinuationClassName="bg-slate-50"/);
+  assert.match(results, /bottomSurfaceContinuationClassName="bg-\[#f6f8fb\]"/);
   assert.match(sheet, /mobile-results-sheet-content[\s\S]*?bg-inherit/);
   assert.match(sheet, /border-b border-slate-200\/80 bg-white/);
 });

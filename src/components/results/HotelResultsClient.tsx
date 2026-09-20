@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type Keyboard
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
-import { ArrowLeft, ArrowUp, Calendar, Check, ChevronLeft, ChevronRight, ChevronDown, MapPin, Pencil, SlidersHorizontal, Star, Users, X } from "lucide-react";
+import { ArrowLeft, ArrowUp, Calendar, Check, ChevronLeft, ChevronRight, ChevronDown, MapPin, SlidersHorizontal, Star, Users, X } from "lucide-react";
 
 import type { PublicHotelResult } from "@/lib/types";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
@@ -14,6 +14,7 @@ import { HotelCardSkeleton } from "@/components/ui/Skeleton";
 import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
+import { HotelMobileResultsSummary } from "@/components/results/HotelMobileResultsSummary";
 import { useKayakResults } from "./KayakResultsContext";
 import { isKayakSandboxResult, resultActionHref } from "@/lib/travel/resultAction";
 import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
@@ -1728,17 +1729,13 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
               <button type="button" aria-label="Back to hotels" onClick={() => router.push("/hotels")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center bg-transparent text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
                 <ArrowLeft className="h-5 w-5" aria-hidden="true" />
               </button>
-              <button type="button" onClick={openMobileHotelSearch} className="min-w-0 px-1 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]" aria-label={t("editHotelSearch") || "Edit hotel search"}>
-                <span className="block min-w-0">
-                  <span className="block truncate text-[15px] font-bold leading-5 text-slate-950">{body.destination}</span>
-                  <span className="inline-flex max-w-full items-center gap-1.5 text-[13px] font-medium leading-[18px] text-slate-600">
-                    <span className="min-w-0 truncate">
-                      {desktopMinimizedDateSummary} · {desktopMinimizedGuestsSummary}
-                    </span>
-                    <Pencil aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-slate-500" strokeWidth={2} />
-                  </span>
-                </span>
-              </button>
+              <HotelMobileResultsSummary
+                destination={body.destination}
+                summary={`${desktopMinimizedDateSummary} · ${desktopMinimizedGuestsSummary}`}
+                ariaLabel={t("editHotelSearch") || "Edit hotel search"}
+                onClick={openMobileHotelSearch}
+                variant="sticky"
+              />
               <button
                   type="button"
                   onClick={(event) => {
@@ -1763,7 +1760,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         ) : null}
 
         {!guided ? (
-          <MobileResultsEditSheet open={mobileHotelSearchOpen} browserCanvasColor="#ffffff" bottomSurfaceContinuation closing={mobileHotelSearchClosing} nestedLayerOpen={mobileHotelNestedLayerOpen} title={t("editHotelSearch") || "Edit hotel search"} onClose={closeMobileHotelSearch} className="bg-white" contentClassName="!pt-3 bg-white pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <MobileResultsEditSheet open={mobileHotelSearchOpen} browserCanvasColor="#f6f8fb" bottomSurfaceContinuation bottomSurfaceContinuationClassName="bg-[#f6f8fb]" closing={mobileHotelSearchClosing} nestedLayerOpen={mobileHotelNestedLayerOpen} title={t("editHotelSearch") || "Edit hotel search"} onClose={closeMobileHotelSearch} className="bg-[#f6f8fb]" contentClassName="!pt-3 bg-[#f6f8fb] pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             <HotelSearchBar
               key={`mobile-drawer-${bodySearchKey}-${body.sort}`}
               idPrefix="hotel-results-mobile-drawer"

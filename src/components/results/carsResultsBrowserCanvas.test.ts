@@ -21,7 +21,6 @@ test("Cars uses a stable white browser canvas and clean backdrop while Results s
   assert.match(carsSource, /<MobileResultsEditSheet\s+[\s\S]{0,400}smoothMotion/);
   assert.match(
     hotelSource,
-    /<MobileResultsEditSheet\s+[^>]*browserCanvasColor="#ffffff"[^>]*bottomSurfaceContinuation[^>]*className="bg-white"/,
+    /<MobileResultsEditSheet\s+[^>]*browserCanvasColor="#f6f8fb"[^>]*bottomSurfaceContinuation[^>]*bottomSurfaceContinuationClassName="bg-\[#f6f8fb\]"[^>]*className="bg-\[#f6f8fb\]"/,
   );
-  assert.doesNotMatch(hotelSource, /bottomSurfaceContinuationClassName="bg-slate-50"/);
 });

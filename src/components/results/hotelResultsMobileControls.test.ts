@@ -14,6 +14,10 @@ const searchBarSource = readFileSync(
   new URL("../search/HotelSearchBar.tsx", import.meta.url),
   "utf8",
 );
+const mobileSummarySource = readFileSync(
+  new URL("./HotelMobileResultsSummary.tsx", import.meta.url),
+  "utf8",
+);
 
 test("Hotel Results hides only the mobile category tabs", () => {
   const headerCall = [...pageSource.matchAll(/<AppHeader\b[\s\S]*?\/>/g)]
@@ -34,11 +38,12 @@ test("mobile Hotel search uses the Flight-parity data-driven summary shell", () 
   assert.notEqual(controlsStart, -1);
   assert.match(searchBarSource, /mobileLayout === "controls"/);
   assert.match(searchBarSource, /destination\.trim\(\) \|\| t\("destination"\)/);
-  assert.match(searchBarSource, /\{resultsSearchSummary\}/);
-  assert.match(searchBarSource, /<SquarePen size=\{16\} strokeWidth=\{2\.2\}/);
+  assert.match(searchBarSource, /summary=\{resultsSearchSummary\}/);
+  assert.match(searchBarSource, /<HotelMobileResultsSummary/);
   assert.match(searchBarSource, /onClick=\{openMobileSearchPanel\}/);
-  assert.match(searchBarSource, /h-16[\s\S]*?rounded-\[13px\][\s\S]*?border-\[#D8E1EC\]/);
-  assert.match(searchBarSource, /h-11 w-11[\s\S]*?bg-transparent[\s\S]*?text-slate-700/);
+  assert.match(mobileSummarySource, /h-16 w-full[\s\S]*?rounded-\[13px\][\s\S]*?border-\[#D8E1EC\]/);
+  assert.match(mobileSummarySource, /h-11 w-11[\s\S]*?bg-transparent[\s\S]*?text-slate-700/);
+  assert.match(mobileSummarySource, /<SquarePen size=\{16\} strokeWidth=\{2\.2\}/);
   assert.match(
     searchBarSource,
     /import \{[\s\S]*?formatCompactHotelDateRange,[\s\S]*?\} from "@\/lib\/hotelsDateFormatting"/,
@@ -47,7 +52,7 @@ test("mobile Hotel search uses the Flight-parity data-driven summary shell", () 
     searchBarSource,
     /formatCompactHotelDateRange\(checkIn, checkOut, calendarLocale\) \?\?\s+dateSummary/,
   );
-  assert.doesNotMatch(searchBarSource, /SquarePen[\s\S]{0,300}bg-\[#004BB8\]\/8/);
+  assert.doesNotMatch(mobileSummarySource, /SquarePen[\s\S]{0,300}bg-\[#004BB8\]\/8/);
   assert.doesNotMatch(
     searchBarSource.slice(controlsStart, controlsEnd),
     /mobileLayout === "controls"[\s\S]*?w-\[72px\]/,
