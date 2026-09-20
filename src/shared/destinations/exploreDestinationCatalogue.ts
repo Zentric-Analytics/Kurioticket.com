@@ -12,6 +12,8 @@ export type CanonicalExploreDestination = {
   country: string;
   countryCode: string;
   primaryAirportCode: string;
+  latitude: number;
+  longitude: number;
   airportCodes: readonly string[];
   airportNames: readonly string[];
   searchAliases: readonly string[];
@@ -71,12 +73,21 @@ export function buildCanonicalExploreDestinations(
     const ordered = [...group].sort(
       (a, b) => (b.priority ?? 0) - (a.priority ?? 0) || a.code.localeCompare(b.code),
     );
+    const primary = ordered[0]!;
+    const latitude = primary.latitude ?? primary.lat;
+    const longitude = primary.longitude ?? primary.lon;
+    if (
+      typeof latitude !== "number" || !Number.isFinite(latitude) ||
+      typeof longitude !== "number" || !Number.isFinite(longitude)
+    ) throw new Error(`Explore destination ${id} is missing primary airport coordinates.`);
     return {
       id,
       name,
       country: first.country!,
       countryCode,
-      primaryAirportCode: ordered[0]!.code,
+      primaryAirportCode: primary.code,
+      latitude,
+      longitude,
       airportCodes: ordered.map((airport) => airport.code),
       airportNames: ordered.map((airport) => airport.airport),
       searchAliases: [...new Set([...group.map((airport) => airport.city), ...(override?.aliases ?? [])])].sort(),
