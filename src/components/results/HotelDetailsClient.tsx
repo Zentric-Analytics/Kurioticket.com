@@ -832,7 +832,7 @@ export function HotelDetailsClient({
             <div className="px-4 lg:px-0">
               <Link
                 href={resultsHref}
-                className="mb-3 inline-flex min-h-10 items-center gap-2 text-[13px] font-semibold text-[#075EE8] hover:text-[#004BB8] focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35"
+                className="mb-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#075EE8] hover:text-[#004BB8] focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 lg:min-h-10 lg:text-[13px]"
                 data-standalone-hotel-back-link
               >
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" />
