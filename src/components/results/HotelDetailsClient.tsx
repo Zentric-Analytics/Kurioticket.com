@@ -177,8 +177,17 @@ export function HotelDetailsClient({
       setFailedImageUrls(new Set());
     });
 
+    const detailsParams = buildDealsHotelDetailsApiParams({
+      id: requestId,
+      checkIn: requestCheckIn,
+      checkOut: requestCheckOut,
+      guests: requestGuests,
+      rooms: requestRooms,
+    });
+    if (mode === "standalone") detailsParams.set("relatedLimit", "12");
+
     fetch(
-      `/api/hotels/details?${buildDealsHotelDetailsApiParams({ id: requestId, checkIn: requestCheckIn, checkOut: requestCheckOut, guests: requestGuests, rooms: requestRooms }).toString()}`,
+      `/api/hotels/details?${detailsParams.toString()}`,
       { signal: controller.signal },
     )
       .then(async (response) => {
@@ -237,6 +246,7 @@ export function HotelDetailsClient({
     requestGuests,
     requestRooms,
     loadAttempt,
+    mode,
   ]);
 
   async function continueToProvider() {

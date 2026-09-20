@@ -21,7 +21,7 @@ test("renders a factual responsive hotel location card", () => {
     'useState<"map" | "streetview">("map")',
     'loading="lazy"',
     'referrerPolicy="strict-origin-when-cross-origin"',
-    "h-[200px]",
+    "h-[216px]",
     "sm:h-[220px]",
     "lg:h-[240px]",
   ])
@@ -35,9 +35,10 @@ test("keeps the stable in-page location anchor without an external directions li
 test("never substitutes a non-Google map when Google configuration is absent", () => {
   assert.doesNotMatch(source, /buildHotelMapEmbedUrl|OpenStreetMap|openstreetmap/i);
 });
-test("keeps location-fit and accessibility details visibly expanded", () => {
+test("keeps location-fit visible while mobile Overview avoids duplicate accessibility copy", () => {
   assert.match(source, /stayFitFacts\.map/);
   assert.match(source, /Accessibility and location details/);
+  assert.match(source, /hidden lg:block[\s\S]*?Accessibility and location details/);
   assert.doesNotMatch(source, /stayFitFacts\.slice|<details|<summary/);
 });
 test("keys the iframe to stable property coordinates", () => {

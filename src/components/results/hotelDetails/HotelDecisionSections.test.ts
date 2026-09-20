@@ -35,7 +35,7 @@ const continuation = readFileSync(
   "utf8",
 );
 
-test("standalone decision sections render as four isolated content modes", () => {
+test("desktop keeps four decision modes while mobile Overview owns location and related stays", () => {
   assert.match(standalone, /<HotelDetailsSectionNav/);
   assert.match(standalone, /useState<HotelDetailsTab>\("compare"\)/);
   assert.match(standalone, /activeTab=\{activeTab\}/);
@@ -47,12 +47,14 @@ test("standalone decision sections render as four isolated content modes", () =>
   }
   assert.equal(standalone.match(/<HotelPriceComparisonSection/g)?.length, 1);
   assert.equal(standalone.match(/<HotelAboutSection/g)?.length, 1);
-  assert.equal(standalone.match(/<HotelLocationSection/g)?.length, 1);
+  assert.equal(standalone.match(/<HotelLocationSection/g)?.length, 2);
   assert.equal(standalone.match(/<HotelReviewsSection/g)?.length, 1);
-  assert.equal(standalone.match(/<RelatedHotelsSection/g)?.length, 1);
+  assert.equal(standalone.match(/<RelatedHotelsSection/g)?.length, 2);
+  assert.match(standalone, /data-hotel-mobile-overview-related/);
+  assert.match(standalone, /mobileAfterDescription=/);
 });
 
-test("section navigator is a controlled four-tab interface", () => {
+test("section navigator exposes three semantic mobile tabs and four desktop tabs", () => {
   for (const label of ["Compare prices", "About", "Location", "Reviews"]) {
     assert.equal(
       navigator.match(new RegExp(`label: "${label}"`, "g"))?.length,
@@ -68,6 +70,12 @@ test("section navigator is a controlled four-tab interface", () => {
   assert.match(navigator, /ArrowLeft/);
   assert.match(navigator, /ArrowRight/);
   assert.match(navigator, /sticky top-0/);
+  assert.match(navigator, /mobileLabel: "Rates"/);
+  assert.match(navigator, /mobileLabel: "Overview"/);
+  assert.match(navigator, /desktopOnly: true/);
+  assert.match(navigator, /grid-cols-3/);
+  assert.match(navigator, /hidden lg:inline-flex/);
+  assert.match(navigator, /matchMedia\("\(max-width: 1023px\)"\)/);
   assert.doesNotMatch(
     navigator,
     /IntersectionObserver|scrollIntoView|aria-current|hotel-reviews.*about|href=/,
@@ -76,27 +84,23 @@ test("section navigator is a controlled four-tab interface", () => {
   assert.match(navigator, /min-h-11/);
 });
 
-test("each content component belongs only to its selected tab", () => {
+test("mobile Rates is rate-only while Overview owns mobile location and related stays", () => {
   const comparePanel = standalone.slice(
     standalone.indexOf('{activeTab === "compare"'),
     standalone.indexOf('{activeTab === "about"'),
   );
   assert.match(comparePanel, /<HotelPriceComparisonSection/);
-  assert.match(comparePanel, /<RelatedHotelsSection/);
-  assert.doesNotMatch(
-    comparePanel,
-    /<HotelAboutSection|<HotelLocationSection|<HotelReviewsSection/,
-  );
+  assert.match(comparePanel, /hidden lg:block[\s\S]*?<RelatedHotelsSection/);
+  assert.doesNotMatch(comparePanel, /data-hotel-mobile-map|<HotelLocationSection/);
 
   const aboutPanel = standalone.slice(
     standalone.indexOf('{activeTab === "about"'),
     standalone.indexOf('{activeTab === "reviews"'),
   );
   assert.match(aboutPanel, /<HotelAboutSection/);
-  assert.doesNotMatch(
-    aboutPanel,
-    /<HotelPriceComparisonSection|<RelatedHotelsSection|<HotelLocationSection|<HotelReviewsSection/,
-  );
+  assert.match(aboutPanel, /mobileAfterDescription=[\s\S]*?<HotelLocationSection/);
+  assert.match(aboutPanel, /data-hotel-mobile-overview-related[\s\S]*?<RelatedHotelsSection/);
+  assert.doesNotMatch(aboutPanel, /<HotelPriceComparisonSection|<HotelReviewsSection/);
 
   const reviewsPanel = standalone.slice(
     standalone.indexOf('{activeTab === "reviews"'),
@@ -126,7 +130,8 @@ test("comparison presents Kurioticket as a normalized provider without developme
   assert.match(standalone, /buildKurioticketHotelDetailsProviderOffer/);
   assert.match(continuation, /kurioticket-logo-primary-light-bg\.svg/);
   assert.match(continuation, /action: \{ kind: "internal-room-flow" \}/);
-  assert.match(compare, />\s*Compare prices\s*<\/h2>/);
+  assert.match(compare, /<span className="lg:hidden">Rates<\/span>/);
+  assert.match(compare, /<span className="hidden lg:inline">Compare prices<\/span>/);
   assert.match(compare, /\{stayContext\}/);
   assert.doesNotMatch(compare, /totalPrice\.formatted|>total</);
   assert.match(compare, /perNightText\.replace/);
@@ -150,10 +155,11 @@ test("comparison presents Kurioticket as a normalized provider without developme
   );
   assert.match(compare, /data-provider-selector/);
   assert.match(compare, /data-provider-bottom-row/);
-  assert.match(compare, /col-span-2 row-start-3 mt-0\.5 flex/);
+  assert.match(compare, /col-span-2 row-start-3 mt-1 flex/);
   assert.match(compare, /text-\[#075EE8\][^>]*data-nightly-supporting-label/);
   assert.doesNotMatch(compare, /row-span-2|data-provider-price-action/);
   assert.match(compare, /data-provider-amenities/);
+  assert.match(compare, /hidden min-w-0 lg:block/);
   assert.match(compare, /flex-nowrap/);
   assert.match(compare, /gap-x-4/);
   assert.doesNotMatch(compare, /\[&>li\]:text-\[11px\]/);
@@ -240,29 +246,29 @@ test("persistent continuation uses the selected provider decision", () => {
   assert.match(compare, /role="alert"/);
 });
 
-test("about exposes the full property information architecture without expansion controls", () => {
+test("Overview keeps mobile content concise while preserving the fuller desktop property detail set", () => {
   assert.match(standalone, /description=\{description\}/);
   assert.match(standalone, /amenities=\{props\.amenityItems\}/);
   assert.match(standalone, /propertyType=\{props\.propertyDetails\?\.propertyType\}/);
-  assert.match(
-    standalone,
-    /bedSummary=\{props\.propertyDetails\?\.bedSummary\}/,
-  );
-  for (const heading of [
-    "Property highlights",
-    "All amenities",
-    "Room &amp; comfort",
-    "Hotel information",
-    "Accessibility",
-  ])
-    assert.ok(about.includes(heading), heading);
-  assert.doesNotMatch(
-    about,
-    /line-clamp|descriptionExpanded|amenitiesExpanded|See all amenities|Show fewer|>More</,
-  );
-  assert.match(about, /remainingAmenities\.map/);
+  assert.match(standalone, /bedSummary=\{props\.propertyDetails\?\.bedSummary\}/);
+  assert.match(about, /data-mobile-hotel-overview-core/);
+  assert.match(about, /Popular amenities/);
+  assert.match(about, /mobilePopularAmenities = amenities\.slice\(0, 4\)/);
+  assert.match(about, /See all amenities/);
+  assert.match(about, /data-mobile-all-amenities/);
+  assert.match(about, /Room &amp; comfort/);
+  assert.match(about, /Accessibility/);
+  assert.match(about, /data-desktop-hotel-about-details/);
+  assert.match(about, /Property highlights/);
+  assert.match(about, /All amenities/);
+  assert.match(about, /Hotel information/);
   assert.match(about, /\{propertyType\}/);
   assert.match(about, /\{starRating\}-star classification/);
+  const mobileCore = about.slice(
+    about.indexOf('data-mobile-hotel-overview-core'),
+    about.indexOf('data-desktop-hotel-about-details'),
+  );
+  assert.doesNotMatch(mobileCore, /Hotel information|Property highlights/);
 });
 
 test("guest reviews remains visible and never manufactures review values", () => {
