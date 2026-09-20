@@ -500,19 +500,12 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     providerHandoffError={providerHandoffError}
                     onSelectOffer={setSelectedProviderOfferId}
                   />
-                  <div className="lg:hidden" data-hotel-mobile-map>
-                    {props.propertyDetails ? (
-                      <HotelDetailsGoogleMap
-                        hotelName={props.hotelName}
-                        propertyDetails={props.propertyDetails}
-                      />
-                    ) : null}
-                  </div>
-                  <RelatedHotelsSection
-                    hotels={props.relatedHotels}
-                    city={props.propertyDetails?.city || ""}
-                    searchContext={props.relatedSearchContext}
-                    labels={{
+                  <div className="hidden lg:block">
+                    <RelatedHotelsSection
+                      hotels={props.relatedHotels}
+                      city={props.propertyDetails?.city || ""}
+                      searchContext={props.relatedSearchContext}
+                      labels={{
                       heading: props.labels.moreHotelsIn,
                       viewHotel: props.labels.viewHotel,
                       pricePerNight: props.labels.pricePerNight,
@@ -523,7 +516,8 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                       nearLocation: props.labels.nearLocation,
                       starHotelAria: props.labels.starHotelAria,
                     }}
-                  />
+                    />
+                  </div>
                 </>
               ) : null}
 
@@ -539,7 +533,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     accessibility={props.propertyDetails?.accessibility}
                   />
                   {providerFacts.length ? (
-                    <section className="border-b border-slate-200 px-4 py-8 lg:px-0 lg:py-10" aria-labelledby="provider-details-heading" data-provider-hotel-details>
+                    <section className="hidden border-b border-slate-200 px-4 py-8 lg:block lg:px-0 lg:py-10" aria-labelledby="provider-details-heading" data-provider-hotel-details>
                       <h2 id="provider-details-heading" className="text-xl font-extrabold text-slate-950">KAYAK-provided details</h2>
                       <p className="mt-2 text-sm text-slate-600">Information supplied for this exact sandbox offer.</p>
                       <dl className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
@@ -552,6 +546,48 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                       </dl>
                     </section>
                   ) : null}
+                  <div className="lg:hidden" data-hotel-mobile-overview-location>
+                    {props.propertyDetails ? (
+                      <HotelLocationSection
+                        hotelName={props.hotelName}
+                        propertyDetails={props.propertyDetails}
+                        locationLabel="Location"
+                        mapLabel={props.labels.map}
+                        streetViewLabel={props.labels.streetView}
+                        stayFitFacts={[
+                          props.propertyDetails.neighbourhood ? `${props.propertyDetails.neighbourhood} neighborhood` : "",
+                          props.propertyDetails.businessSuitable ? "Work-friendly property" : "",
+                          props.propertyDetails.familySuitable ? "Family-friendly" : "",
+                          props.propertyDetails.interestTags?.some((tag) => /sightseeing|culture|history|art|theatre/i.test(tag)) ? "Good for sightseeing" : "",
+                          props.propertyDetails.accessibility?.length ? "Accessibility details available" : "",
+                        ].filter(Boolean)}
+                        accessibilityDetails={props.propertyDetails.accessibility}
+                      />
+                    ) : (
+                      <section className="border-b border-slate-200 px-4 py-6" aria-labelledby="hotel-overview-location-heading">
+                        <h2 id="hotel-overview-location-heading" className="text-[17px] font-bold text-slate-950">Location</h2>
+                        <p className="mt-2 text-[13px] leading-5 text-slate-600">Verified location details are not available for this property yet.</p>
+                      </section>
+                    )}
+                  </div>
+                  <div className="lg:hidden" data-hotel-mobile-overview-related>
+                    <RelatedHotelsSection
+                      hotels={props.relatedHotels}
+                      city={props.propertyDetails?.city || ""}
+                      searchContext={props.relatedSearchContext}
+                      labels={{
+                      heading: props.labels.moreHotelsIn,
+                      viewHotel: props.labels.viewHotel,
+                      pricePerNight: props.labels.pricePerNight,
+                      estimatedStayTotal: props.labels.estimatedStayTotal,
+                      priceUnavailable: props.labels.priceUnavailable,
+                      imageUnavailable: props.labels.imageUnavailable,
+                      imageAlt: props.labels.imageAlt,
+                      nearLocation: props.labels.nearLocation,
+                      starHotelAria: props.labels.starHotelAria,
+                    }}
+                    />
+                  </div>
                 </>
               ) : null}
 
