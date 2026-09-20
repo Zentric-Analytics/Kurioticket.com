@@ -20,7 +20,7 @@ function ProviderOffer({
     <label
       className={`relative block min-w-0 rounded-[14px] border px-3 py-3.5 transition sm:rounded-xl sm:px-4 sm:py-4 ${
         selected
-          ? "border-[#075EE8] bg-[#F4F8FF] ring-1 ring-[#075EE8]/10 sm:bg-white"
+          ? "border-[#075EE8] bg-[#F4F8FF] ring-1 ring-[#075EE8]/10 lg:bg-white"
           : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/40"
       } ${selectable ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
       data-provider-offer
@@ -83,7 +83,7 @@ function ProviderOffer({
           className="col-span-2 row-start-3 mt-1 flex min-w-0 items-center justify-between gap-3"
           data-provider-bottom-row
         >
-          <span className="hidden min-w-0 sm:block" data-provider-amenities>
+          <span className="hidden min-w-0 lg:block" data-provider-amenities>
             <HotelAmenityList
               items={offer.amenities ?? []}
               t={() => ""}
