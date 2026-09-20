@@ -18,13 +18,13 @@ import {
   MapPin,
   Minus,
   PencilLine,
-  SquarePen,
   Plus,
   SlidersHorizontal,
   UserRound,
 } from "lucide-react";
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
+import { HotelMobileResultsSummary } from "@/components/results/HotelMobileResultsSummary";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { openMobilePickerWithKeyboard } from "@/components/search/mobilePickerKeyboardFocus";
@@ -959,39 +959,23 @@ export function HotelSearchBar({
                 </span>
               </button>
             </div>
+          ) : mobileLayout === "controls" ? (
+            <HotelMobileResultsSummary
+              destination={destination.trim() || t("destination")}
+              summary={resultsSearchSummary}
+              ariaLabel={t("editHotelSearch")}
+              onClick={openMobileSearchPanel}
+              className="relative z-10"
+            />
           ) : (
             <button
               type="button"
               onClick={openMobileSearchPanel}
-              className={cn(
-                "focus-ring w-full touch-manipulation bg-white text-start transition [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
-                mobileLayout === "controls"
-                  ? "group relative z-10 flex h-16 min-w-0 items-center justify-between gap-3 overflow-hidden rounded-[13px] border border-[#D8E1EC] px-4 py-0 shadow-[0_6px_18px_-16px_rgba(15,23,42,0.32)] hover:border-[#C6D2E0] hover:shadow-[0_8px_20px_-16px_rgba(15,23,42,0.36)]"
-                  : "rounded-xl border border-[#004BB8]/12 px-4 py-4 shadow-[0_12px_26px_rgba(15,23,42,0.10)] hover:border-[#004BB8]/20 focus-visible:border-[#004BB8]",
-              )}
+              className="focus-ring w-full touch-manipulation rounded-xl border border-[#004BB8]/12 bg-white px-4 py-4 text-start shadow-[0_12px_26px_rgba(15,23,42,0.10)] transition [-webkit-tap-highlight-color:transparent] hover:border-[#004BB8]/20 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
             >
-              {mobileLayout === "controls" ? (
-                <>
-                  <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
-                    <span className="block truncate text-[16px] font-bold leading-5 tracking-[-0.01em] text-[#142033]">
-                      {destination.trim() || t("destination")}
-                    </span>
-                    <span className="mt-[3px] block truncate text-[12.5px] font-semibold leading-[17px] text-slate-600">
-                      {resultsSearchSummary}
-                    </span>
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className="-my-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100"
-                  >
-                    <SquarePen size={16} strokeWidth={2.2} />
-                  </span>
-                </>
-              ) : (
-                <span className="block truncate text-sm font-semibold text-slate-950">
-                  {mobileSearchSummary}
-                </span>
-              )}
+              <span className="block truncate text-sm font-semibold text-slate-950">
+                {mobileSearchSummary}
+              </span>
             </button>
           )}
         </div>
@@ -1011,7 +995,7 @@ export function HotelSearchBar({
                 : "fixed inset-0 z-[10000] flex h-[100dvh] min-h-0 w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:hidden"
               : "hidden sm:block sm:space-y-2"
             : "space-y-4",
-          mobileResultsSheet && "bg-white",
+          mobileResultsSheet && "bg-transparent",
         )}
         noValidate
       >
@@ -1105,7 +1089,7 @@ export function HotelSearchBar({
               data-hotel-results-edit-fields={
                 mobileResultsSheet ? "" : undefined
               }
-              className={mobileResultsSheet ? "flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white divide-y divide-slate-200" : "contents"}
+              className={mobileResultsSheet ? "flex flex-col gap-2.5" : "contents"}
             >
             <label
               ref={destinationWrapperRef}
@@ -1117,7 +1101,7 @@ export function HotelSearchBar({
                 "lg:rounded-s-xl",
                 shouldShowDestinationSuggestions && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-[72px] rounded-none border-0 px-4 py-3 shadow-none hover:bg-slate-50 focus-within:bg-white focus-within:ring-0",
+                  "min-h-[72px] rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-3 shadow-none hover:border-[#C6D2E0] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/20",
               )}
             >
               <span className={fieldLabelClassName}>
@@ -1307,7 +1291,7 @@ export function HotelSearchBar({
                 fieldClassName,
                 datesOpen && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-[72px] rounded-none border-0 px-4 py-3 shadow-none hover:bg-slate-50 focus-within:bg-white focus-within:ring-0",
+                  "min-h-[72px] rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-3 shadow-none hover:border-[#C6D2E0] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/20",
               )}
             >
               <span className={fieldLabelClassName}>
@@ -1488,7 +1472,7 @@ export function HotelSearchBar({
                 fieldClassName,
                 guestsRoomsOpen && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-[72px] rounded-none border-0 px-4 py-3 shadow-none hover:bg-slate-50 focus-within:bg-white focus-within:ring-0",
+                  "min-h-[72px] rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-3 shadow-none hover:border-[#C6D2E0] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/20",
               )}
             >
               <span className={fieldLabelClassName}>
@@ -1700,7 +1684,7 @@ export function HotelSearchBar({
                         mobileSearchOpen &&
                           cn(
                             "mt-3 h-12 rounded-[11px] text-[15px] sm:mt-0 sm:h-[54px] sm:rounded-xl lg:rounded-s-none",
-                            mobileResultsSheet && "mt-0 h-[52px] rounded-xl text-[16px] font-semibold shadow-none active:bg-[#003f9c]",
+                            mobileResultsSheet && "mt-0 h-[52px] rounded-[13px] text-[16px] font-semibold shadow-none active:bg-[#003f9c]",
                           ),
                       )
                     : !isStickyDialog
