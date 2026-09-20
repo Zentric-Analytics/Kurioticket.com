@@ -349,14 +349,6 @@ function HeroCurve({testID,color}:{testID:string;color:string}) { return <Svg te
 
 function ItineraryGlossSurface({dark,testID}:{dark:boolean;testID:string}) {
   if(dark)return null;
-  return <Svg testID={testID} pointerEvents="none" accessible={false} style={s.itineraryGlossSurface} viewBox="0 0 100 100" preserveAspectRatio="none">
-    <Defs>
-      <LinearGradient id={`${testID}-base`} x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#FFFFFF"/><Stop offset="0.58" stopColor="#FAFCFF"/><Stop offset="1" stopColor="#EEF4FA"/></LinearGradient>
-      <LinearGradient id={`${testID}-sheen`} x1="0" y1="0" x2="1" y2="1"><Stop offset="0" stopColor="#FFFFFF" stopOpacity="0.72"/><Stop offset="0.48" stopColor="#FFFFFF" stopOpacity="0.20"/><Stop offset="1" stopColor="#FFFFFF" stopOpacity="0"/></LinearGradient>
-    </Defs>
-    <Rect width="100" height="100" rx="14" fill={`url(#${testID}-base)`}/>
-    <Rect width="100" height="58" rx="14" fill={`url(#${testID}-sheen)`}/>
-  </Svg>;
   return <><Svg testID={testID} pointerEvents="none" accessible={false} style={s.itineraryGlossSurface} viewBox="0 0 100 100" preserveAspectRatio="none">
     <Defs>
       <LinearGradient id={`${testID}-base`} x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#FFFFFF"/><Stop offset="0.58" stopColor="#FAFCFF"/><Stop offset="1" stopColor="#EEF4FA"/></LinearGradient>
