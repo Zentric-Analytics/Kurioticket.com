@@ -228,17 +228,16 @@ test("future offers share the concise provider price and action presentation", (
   );
 });
 
-test("persistent continuation uses the selected provider decision", () => {
+test("persistent continuation follows the auto-selected actionable provider", () => {
+  assert.match(standalone, /resolveSelectedHotelProviderOfferId/);
   assert.match(standalone, /resolveHotelBookingContinuation/);
-  assert.match(
-    standalone,
-    /bookingContinuation\.kind === "internal-room-flow"/,
-  );
+  assert.match(standalone, /selectedProviderOffer/);
+  assert.match(standalone, /bookingContinuation\.kind === "internal-room-flow"/);
   assert.match(standalone, /bookingContinuation\.kind === "provider-handoff"/);
-  assert.match(
-    standalone,
-    /bookingContinuation\.kind === "selection-required"/,
-  );
+  assert.match(standalone, /bookingActionAvailable/);
+  assert.match(standalone, /props\.labels\.viewDeal/);
+  assert.match(standalone, /props\.labels\.continueBooking/);
+  assert.doesNotMatch(standalone, /bookingContinuation\.kind === "selection-required"/);
   assert.match(standalone, /setActiveTab\("compare"\)/);
   assert.match(standalone, /hotel-compare-heading/);
   assert.match(standalone, /focus\(\{ preventScroll: true \}\)/);
