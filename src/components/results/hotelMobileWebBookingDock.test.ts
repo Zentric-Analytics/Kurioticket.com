@@ -64,7 +64,29 @@ test("mobile Hotel booking dock reflects the selected provider and action semant
   assert.match(details, /mobileDockPrimaryPrice/);
   assert.match(details, /mobileDockProviderName/);
   assert.match(details, /mobileDockSupportingText/);
+  assert.match(
+    details,
+    /const mobileDockSupportingText = selectedProviderIsExternal[\s\S]*?mobileDockUsesProviderTotal[\s\S]*?: ""/,
+  );
   assert.match(details, /aria-label=\{[\s\S]*?bookingActionLabel[\s\S]*?mobileDockProviderName/);
+});
+
+test("changing the selected Hotel rate clears stale provider handoff feedback", () => {
+  assert.match(
+    details,
+    /function selectProviderOffer\(offerId: string\) \{[\s\S]*?setProviderHandoffError\(null\);[\s\S]*?setSelectedProviderOfferId\(offerId\);[\s\S]*?\}/,
+  );
+  assert.match(details, /onSelectOffer=\{selectProviderOffer\}/);
+});
+
+test("web Hotel provider action stays live-price gated and server-authoritative", () => {
+  assert.match(client, /const providerEnabled = canUseHotelDetailsProviderLink\(hotel\)/);
+  assert.match(
+    client,
+    /mode === "standalone" &&[\s\S]*?providerEnabled &&[\s\S]*?nightlyDisplayPrice &&/,
+  );
+  assert.match(client, /fetch\("\/api\/redirect"/);
+  assert.match(client, /window\.location\.href = data\.url/);
 });
 
 test("mobile Hotel booking dock remains usable on narrow phones and respects the safe area", () => {
