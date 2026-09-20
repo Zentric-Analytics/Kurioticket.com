@@ -285,8 +285,8 @@ test("stay summary retains all functional data and pricing contracts", () => {
     "props.totalDisplayPrice.formatted",
     "props.nightlyDisplayPrice.formatted",
     "props.taxesText || props.planningPriceText",
-    "props.labels.continueBooking",
-    'bookingContinuation.kind === "unavailable"',
+    "bookingActionLabel",
+    "bookingActionAvailable",
   ])
     assert.ok(source.includes(contract), contract);
 });
@@ -339,14 +339,11 @@ test("desktop mosaic gallery uses independent transparent edge controls", () => 
   assert.doesNotMatch(edgeControls, /bg-slate-950|rounded-full|rounded-lg/);
 });
 
-test("persistent booking actions use the translated continuation copy without support text", () => {
-  assert.equal(source.match(/props\.labels\.continueBooking/g)?.length, 2);
+test("persistent booking actions use provider-aware continuation copy without support text", () => {
+  assert.match(source, /bookingContinuation\.kind === "provider-handoff"[\s\S]*?props\.labels\.viewDeal[\s\S]*?props\.labels\.continueBooking/);
   assert.doesNotMatch(source, /props\.labels\.(?:viewRooms|roomSupport)/);
-  assert.match(
-    clientSource,
-    /continueBooking: t\("hotelDetails\.continueBooking"\) \|\| "Continue booking"/,
-  );
-  assert.doesNotMatch(clientSource, /roomSupport: t\("hotelDetails\.roomOptionsSupport"\)/);
+  assert.match(clientSource, /continueBooking: t\("hotelDetails\.continueBooking"\) \|\| "Continue booking"/);
+  assert.match(clientSource, /viewDeal: t\("hotelDetails\.viewDeal"\) \|\| "View deal"/);
 
   const desktopAction = source.slice(
     source.indexOf('data-standalone-stay-summary'),
@@ -358,9 +355,10 @@ test("persistent booking actions use the translated continuation copy without su
   );
   for (const action of [desktopAction, mobileAction]) {
     assert.match(action, /onClick=\{\(event\) => continueBooking\(event\.currentTarget\)\}/);
-    assert.match(action, /props\.labels\.continueBooking/);
+    assert.match(action, /bookingActionLabel/);
     assert.doesNotMatch(action, /roomSupport/);
   }
+  assert.match(mobileAction, /aria-label=\{`\$\{bookingActionLabel\} with \$\{mobileDockProviderName\}`\}/);
 });
 
 test("standalone pricing and search context are supplied by existing client pipelines", () => {
@@ -372,6 +370,10 @@ test("standalone pricing and search context are supplied by existing client pipe
     "roomOptions.map",
     "formatDisplayPrice",
     "relatedHotels={relatedHotels}",
+    "providerOffers={standaloneProviderOffers}",
+    "onProviderOfferHandoff=",
+    'providerOfferId: "current-provider"',
+    "await continueToProvider(true)",
   ])
     assert.ok(clientSource.includes(contract), contract);
 });
