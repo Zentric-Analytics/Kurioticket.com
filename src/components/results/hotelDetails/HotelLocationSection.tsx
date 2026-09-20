@@ -65,19 +65,19 @@ export function HotelLocationSection({
   return (
     <section
       id="hotel-location"
-      className="scroll-mt-16 border-b border-slate-200 px-4 py-8 lg:px-0 lg:py-10"
+      className="scroll-mt-16 border-b border-slate-200 px-4 py-5 lg:px-0 lg:py-10"
       aria-labelledby="hotel-location-heading"
       data-hotel-location-section
     >
       <h2
         id="hotel-location-heading"
-        className="text-xl font-extrabold tracking-tight text-slate-950"
+        className="text-[17px] font-bold tracking-tight text-slate-950 lg:text-xl lg:font-extrabold"
       >
         {locationLabel}
       </h2>
 
       {hasAddress ? (
-        <div className="mt-3 flex items-start gap-3">
+        <div className="mt-2.5 flex items-start gap-3 lg:mt-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue">
             <MapPin className="h-[18px] w-[18px]" aria-hidden="true" />
           </span>
@@ -96,7 +96,7 @@ export function HotelLocationSection({
         </div>
       ) : null}
 
-      <div className="mt-4 overflow-hidden rounded-[14px] border border-slate-200 bg-white">
+      <div className="mt-3.5 overflow-hidden rounded-[14px] border border-slate-200 bg-white lg:mt-4">
         {streetViewUrl ? (
           <div
             className="flex min-h-11 border-b border-slate-200 px-1"
@@ -130,15 +130,14 @@ export function HotelLocationSection({
             src={activeEmbedUrl}
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
-            className="h-[200px] w-full border-0 sm:h-[220px] lg:h-[240px]"
+            className="h-[216px] w-full border-0 sm:h-[220px] lg:h-[240px]"
           />
         ) : null}
       </div>
-      <div className="mt-7" data-hotel-stay-fit-facts>
-          <h3 className="text-base font-bold text-slate-950">Why this location works</h3>
-          {stayFitFacts.length ? <div className="mt-3 flex flex-wrap gap-2">{stayFitFacts.map((fact) => <span key={fact} className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">{fact}</span>)}</div> : <p className="mt-3 text-sm text-slate-600">Location fit details are limited to the verified address and map.</p>}
-          <h3 className="mt-7 text-base font-bold text-slate-950">Accessibility and location details</h3>
-          {accessibilityDetails.length ? <ul className="mt-3 list-disc space-y-2 ps-5 text-sm leading-6 text-slate-700">{accessibilityDetails.map((detail) => <li key={detail}>{detail}</li>)}</ul> : <p className="mt-3 text-sm leading-6 text-slate-600">Confirm specific accessibility requirements with the property before travel.</p>}
+      <div className="mt-5 lg:mt-7" data-hotel-stay-fit-facts>
+          <h3 className="text-[16px] font-bold leading-6 text-slate-950">Why this location works</h3>
+          {stayFitFacts.length ? <div className="mt-2.5 flex flex-wrap gap-2">{stayFitFacts.map((fact) => <span key={fact} className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">{fact}</span>)}</div> : <p className="mt-2.5 text-[13px] leading-5 text-slate-600 sm:text-sm">Location fit details are limited to the verified address and map.</p>}
+          <div className="hidden lg:block"><h3 className="mt-7 text-base font-bold text-slate-950">Accessibility and location details</h3>{accessibilityDetails.length ? <ul className="mt-3 list-disc space-y-2 ps-5 text-sm leading-6 text-slate-700">{accessibilityDetails.map((detail) => <li key={detail}>{detail}</li>)}</ul> : <p className="mt-3 text-sm leading-6 text-slate-600">Confirm specific accessibility requirements with the property before travel.</p>}</div>
         </div>
     </section>
   );
