@@ -11,26 +11,29 @@ const webStatusRoute = readFileSync(
   "utf8",
 );
 
-test("mobile web Hotel price tracking uses a compact switch and retains target setup", () => {
+test("mobile web Hotel price tracking uses a compact real switch with web-native target setup", () => {
   assert.match(control, /role="switch"/);
-  assert.match(control, /aria-checked=\{tracking\}/);
+  assert.match(control, /aria-checked=\{Boolean\(isTracking\)\}/);
   assert.match(control, /travel\.account\.hotelAlert\.title/);
-  assert.match(control, /setOpen\(true\)/);
+  assert.match(control, /handleMobileToggle\(!isTracking\)/);
+  assert.match(control, /setMobileOpen\(true\)/);
+  assert.match(control, /createPortal/);
+  assert.match(control, /role="dialog"/);
   assert.match(control, /buildHotelPriceAlertPayload\(search, value, currency\)/);
   assert.match(control, /inputMode="decimal"/);
   assert.match(control, /sm:hidden/);
-  assert.match(control, /hidden items-center justify-between gap-3 sm:flex/);
+  assert.match(control, /hidden rounded-2xl[^"]*sm:block/);
 });
 
-test("mobile web Hotel price tracking reconciles, pauses, and resumes the matching search", () => {
-  assert.match(control, /fetch\("\/api\/price-alerts", \{/);
-  assert.match(control, /chooseMatchingAlert/);
+test("mobile web Hotel price tracking reconciles, pauses, and can reactivate the matching search", () => {
+  assert.match(control, /fetch\("\/api\/price-alerts", \{ cache: "no-store"/);
+  assert.match(control, /matchesHotelSearch/);
   assert.match(control, /alert\.status === "ACTIVE"/);
   assert.match(control, /alert\.status === "PAUSED"/);
   assert.match(control, /method: "PATCH"/);
-  assert.match(control, /status: nextStatus/);
-  assert.match(control, /updateAlertStatus\(matchingAlert, "ACTIVE"\)/);
-  assert.match(control, /updateAlertStatus\(matchingAlert, "PAUSED"\)/);
+  assert.match(control, /body: JSON\.stringify\(\{ status: nextStatus \}\)/);
+  assert.match(control, /updateStatus\(matchingAlert, "PAUSED"\)/);
+  assert.match(control, /updateStatus\(samePausedTarget, "ACTIVE"\)/);
   assert.match(control, /callbackUrl/);
 });
 
