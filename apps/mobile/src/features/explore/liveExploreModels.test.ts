@@ -17,6 +17,8 @@ function destination(id: string, name: string, country: string, countryCode: str
     country,
     countryCode,
     primaryAirportCode: airportCode,
+    latitude: 0,
+    longitude: 0,
     airportCodes: [airportCode],
     airportNames: [`${name} International Airport`],
     searchAliases: [name],
