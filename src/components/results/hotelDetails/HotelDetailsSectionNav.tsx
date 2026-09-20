@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 export type HotelDetailsTab = "compare" | "about" | "location" | "reviews";
 
@@ -21,6 +21,17 @@ export function HotelDetailsSectionNav({
   onTabChange,
 }: HotelDetailsSectionNavProps) {
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  useEffect(() => {
+    if (activeTab !== "location") return;
+    const media = window.matchMedia("(max-width: 1023px)");
+    const normalizeMobileTab = () => {
+      if (media.matches) onTabChange("about");
+    };
+    normalizeMobileTab();
+    media.addEventListener("change", normalizeMobileTab);
+    return () => media.removeEventListener("change", normalizeMobileTab);
+  }, [activeTab, onTabChange]);
 
   function handleKeyDown(
     event: React.KeyboardEvent<HTMLButtonElement>,
