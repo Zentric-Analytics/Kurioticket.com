@@ -27,6 +27,7 @@ test("mobile hero uses small visible arrows inside accessible targets without ch
     "pe-2",
     "bg-transparent",
     "text-white",
+    "aspect-[6/5]",
     "aspect-[16/10]",
   ])
     assert.ok(gallerySource.includes(contract), contract);
@@ -35,24 +36,17 @@ test("mobile hero uses small visible arrows inside accessible targets without ch
   assert.doesNotMatch(gallerySource, /left-3 top-1\/2|right-3 top-1\/2/);
 });
 
-test("mobile hero and thumbnails share one balanced gallery gutter", () => {
+test("standalone mobile mosaic uses one full-bleed hero without an inline thumbnail strip", () => {
+  const unitStart = gallerySource.indexOf('className="lg:hidden" data-hotel-mobile-gallery-unit');
   const unit = gallerySource.slice(
-    gallerySource.indexOf('className="mx-3 lg:hidden"'),
-    gallerySource.indexOf(
-      "{mosaic}",
-      gallerySource.indexOf('className="mx-3 lg:hidden"'),
-    ),
+    unitStart,
+    gallerySource.indexOf("{mosaic}", unitStart),
   );
-  for (const contract of [
-    "data-hotel-mobile-gallery-unit",
-    "{hero}",
-    "{mobileThumbnails}",
-  ])
-    assert.ok(unit.includes(contract), contract);
-  assert.equal(
-    gallerySource.match(/data-hotel-mobile-gallery-unit/g)?.length,
-    1,
-  );
+  assert.ok(unitStart >= 0);
+  assert.ok(unit.includes("{hero}"));
+  assert.doesNotMatch(unit, /mobileThumbnails|data-hotel-mobile-thumbnail-strip|mx-3/);
+  assert.doesNotMatch(gallerySource, /mobileThumbnailIndices|mobileRemainingCount|<Images/);
+  assert.equal(gallerySource.match(/data-hotel-mobile-gallery-unit/g)?.length, 1);
 });
 
 test("preserves pointer swipe and keyboard gallery navigation", () => {
@@ -79,13 +73,11 @@ test("preserves pointer swipe and keyboard gallery navigation", () => {
     assert.ok(gallerySource.includes(interactionContract), interactionContract);
 });
 
-test("preserves counter, viewer, thumbnails, and image behavior", () => {
+test("preserves counter, viewer, optional hero-layout thumbnails, and image behavior", () => {
   for (const galleryContract of [
     "photoCounter",
     "bottom-3",
     "right-3",
-    "Images",
-    "viewAllPhotosLabel",
     "openViewer",
     "left-0",
     "thumbnailStripRef",
