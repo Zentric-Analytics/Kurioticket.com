@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo } from "react";
+import { StyleSheet } from "react-native";
 import MapView, { type Region } from "react-native-maps";
 import {
   airports,
@@ -98,7 +99,6 @@ function matchingAirports(place: string, airportCode?: string) {
 }
 
 export function ExploreMap({ place = "", airportCode, coordinates: destinationCoordinates }: ExploreMapProps) {
-  const mapRef = useRef<MapView | null>(null);
   const region = useMemo(() => {
     if (
       destinationCoordinates &&
@@ -119,16 +119,10 @@ export function ExploreMap({ place = "", airportCode, coordinates: destinationCo
     return regionForAirports(matchingAirports(place, airportCode));
   }, [airportCode, destinationCoordinates, place]);
 
-  useEffect(() => {
-    mapRef.current?.animateToRegion(region, 300);
-  }, [region]);
-
   return (
     <MapView
-      ref={mapRef}
-      style={{ flex: 1 }}
-      initialRegion={region}
-      mapType="standard"
+      style={styles.map}
+      region={region}
       showsUserLocation={false}
       scrollEnabled
       zoomEnabled
@@ -138,3 +132,7 @@ export function ExploreMap({ place = "", airportCode, coordinates: destinationCo
     />
   );
 }
+
+const styles = StyleSheet.create({
+  map: StyleSheet.absoluteFillObject,
+});
