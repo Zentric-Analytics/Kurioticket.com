@@ -570,6 +570,23 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                       </dl>
                     </section>
                   ) : null}
+                  {providerFacts.length ? (
+                    <section className="border-b border-slate-200 px-4 py-3 lg:hidden" data-mobile-provider-hotel-details>
+                      <details>
+                        <summary className="focus-ring inline-flex min-h-11 cursor-pointer list-none items-center text-[14px] font-semibold text-blue [&::-webkit-details-marker]:hidden">
+                          Provider details
+                        </summary>
+                        <dl className="space-y-3 pb-2">
+                          {providerFacts.map(([label, value], index) => (
+                            <div key={`mobile-${label}-${value}-${index}`} className="min-w-0">
+                              <dt className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</dt>
+                              <dd className="mt-0.5 break-words text-[13px] font-medium leading-5 text-slate-800">{value}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      </details>
+                    </section>
+                  ) : null}
 
                   <div className="lg:hidden" data-hotel-mobile-overview-related>
                     <RelatedHotelsSection
