@@ -295,24 +295,32 @@ test("stay summary retains all functional data and pricing contracts", () => {
     assert.ok(source.includes(contract), contract);
 });
 
-test("desktop Google map uses the outer stay-summary column without narrowing compare prices", () => {
+test("mobile Overview owns Location while desktop compare keeps its side-column map", () => {
   const comparePanel = source.slice(
     source.indexOf('{activeTab === "compare" ? ('),
     source.indexOf('{activeTab === "about" ? ('),
+  );
+  const aboutPanel = source.slice(
+    source.indexOf('{activeTab === "about" ? ('),
+    source.indexOf('{activeTab === "reviews" ? ('),
   );
   const stayAside = source.slice(
     source.indexOf("<aside"),
     source.indexOf("</aside>") + "</aside>".length,
   );
-  assert.doesNotMatch(comparePanel, /data-hotel-compare-map-grid|lg:grid-cols/);
+
   assert.match(comparePanel, /<HotelPriceComparisonSection/);
-  assert.match(comparePanel, /data-hotel-mobile-map/);
-  assert.match(comparePanel, /className="lg:hidden"/);
+  assert.doesNotMatch(comparePanel, /data-hotel-mobile-map|<HotelLocationSection/);
+  assert.match(comparePanel, /hidden lg:block[\s\S]*?<RelatedHotelsSection/);
+
+  assert.match(aboutPanel, /mobileAfterDescription=[\s\S]*?<HotelLocationSection/);
+  assert.match(aboutPanel, /data-hotel-mobile-overview-related[\s\S]*?<RelatedHotelsSection/);
+
   assert.match(stayAside, /data-hotel-desktop-map/);
   assert.match(stayAside, /className="min-h-0 flex-1 pt-6"/);
   assert.match(stayAside, /fillHeight/);
   assert.match(stayAside, /activeTab === "compare"/);
-  assert.equal(source.match(/<HotelDetailsGoogleMap/g)?.length, 2);
+  assert.equal(source.match(/<HotelDetailsGoogleMap/g)?.length, 1);
   assert.match(mapSource, /lg:h-\[320px\]/);
   assert.doesNotMatch(source, /Show directions|href=\{directionsUrl\}/);
 });
