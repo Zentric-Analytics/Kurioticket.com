@@ -492,7 +492,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
               {activeTab === "compare" ? (
                 <>
                   <HotelPriceComparisonSection
-                    stayContext={props.staySummary ? `${props.staySummary.dateText} · ${props.staySummary.occupancyText}` : undefined}
+                    stayContext={props.staySummary ? `${props.staySummary.dateText} · ${props.staySummary.nightText}` : undefined}
                     perNightText={props.perNightText}
                     offers={providerOffers}
                     selectedOfferId={selectedProviderOfferId}
