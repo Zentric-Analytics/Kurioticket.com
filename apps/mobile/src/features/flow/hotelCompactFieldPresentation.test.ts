@@ -16,8 +16,9 @@ test("Hotel closed rows reuse the Packages CompactSearchField architecture", () 
   assert.doesNotMatch(hotel, /function (?:HotelCompactField|HotelSearchRow|PackageStyleHotelField)/);
 });
 
-test("Destination uses the Hotel wording and shared location row", () => {
-  assert.match(closedFields, /<CompactSearchField label="Destination"[^>]*value=\{destinationDisplay\.primary \|\| form\.destination\.trim\(\) \|\| "City or hotel"\}[^>]*meta=\{editAppearance \? undefined : destinationDisplay\.secondary\}[^>]*trailing=\{false\}[^>]*appearance=\{editAppearance \? "resultsEdit" : "default"\}/);
+test("Destination uses the Hotel wording inside the separate-card architecture", () => {
+  assert.match(hotel, /const fieldAppearance = editAppearance \? "resultsEdit" : "resultsModalCard"/);
+  assert.match(closedFields, /<CompactSearchField label="Destination"[^>]*value=\{destinationDisplay\.primary \|\| form\.destination\.trim\(\) \|\| "City or hotel"\}[^>]*meta=\{editAppearance \? undefined : destinationDisplay\.secondary\}[^>]*trailing=\{false\}[^>]*appearance=\{fieldAppearance\}/);
   assert.doesNotMatch(closedFields, /City, area, or hotel/);
 });
 
@@ -27,8 +28,8 @@ test("Travel dates truncate only for edit appearance and otherwise wrap without 
   assert.doesNotMatch(closedFields, /label="Guests"[^>]*valueNumberOfLines/);
 });
 
-test("Guests keeps the existing Hotel count summary in the shared person row", () => {
-  assert.match(closedFields, /<CompactSearchField label="Guests" value=\{`\$\{countLabel\(form\.guests, "guest"\)\}, \$\{countLabel\(form\.rooms, "room"\)\}`\}[^>]*appearance=\{editAppearance \? "resultsEdit" : "default"\}/);
+test("Guests keeps the existing Hotel count summary in its own card", () => {
+  assert.match(closedFields, /<CompactSearchField label="Guests" value=\{`\$\{countLabel\(form\.guests, "guest"\)\}, \$\{countLabel\(form\.rooms, "room"\)\}`\}[^>]*appearance=\{fieldAppearance\}/);
 });
 
 test("the obsolete closed input ref stays removed while the real picker ref remains", () => {
@@ -40,16 +41,18 @@ test("the obsolete closed input ref stays removed while the real picker ref rema
 });
 
 
-test("Hotel Results Edit groups the canonical fields above its Search action", () => {
-  assert.match(closedFields, /resultsEditFields/);
-  assert.match(hotel, /resultsEditFields:\{borderWidth:1,borderRadius:16,overflow:"hidden"\}/);
-  assert.equal(closedFields.match(/testID="hotel-results-edit-divider"/g)?.length, 2);
+test("Hotel main and Results Edit forms use three separate rounded field cards above Search", () => {
+  assert.match(hotel, /mainStack:\{width:"100%",gap:8\}/);
+  assert.match(hotel, /mainCard:\{width:"100%",borderWidth:1,borderRadius:15,overflow:"hidden"\}/);
+  assert.match(hotel, /resultsEditStack:\{width:"100%",gap:10\}/);
+  assert.match(hotel, /resultsEditCard:\{width:"100%",borderWidth:1,borderRadius:13,overflow:"hidden"\}/);
+  assert.equal(closedFields.match(/<View style=\{fieldCardStyle\}>/g)?.length, 3);
+  assert.doesNotMatch(closedFields, /hotel-results-edit-divider|resultsEditFields|resultsEditDivider/);
   const destination = closedFields.indexOf('label="Destination"');
   const dates = closedFields.indexOf('label="Travel dates"');
   const guests = closedFields.indexOf('label="Guests"');
-  const groupEnd = closedFields.indexOf("</View>", guests);
-  const search = closedFields.indexOf('<PrimaryButton appearance="resultsEdit"', groupEnd);
-  assert.ok(destination >= 0 && dates > destination && guests > dates && groupEnd > guests && search > groupEnd);
+  const search = closedFields.indexOf('<PrimaryButton appearance="resultsEdit"');
+  assert.ok(destination >= 0 && dates > destination && guests > dates && search > guests);
   assert.match(closedFields, /label="Destination"[^>]*trailing=\{false\}/);
   assert.equal(closedFields.match(/trailing=\{false\}/g)?.length, 1);
 });

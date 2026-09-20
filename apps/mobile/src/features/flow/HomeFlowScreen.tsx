@@ -124,9 +124,22 @@ export function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
 
 type HomeProduct = "flights" | "hotels" | "cars" | "packages";
 
-function HomeSearchSurface({ children }: { children: React.ReactNode }) {
+function HomeHotelSearchSurface({ children }: { children: React.ReactNode }) {
   const ft = useFlowTheme();
-  return <View style={[ft.styles.card, ft.styles.shadow]}>{children}</View>;
+  return (
+    <View
+      style={[
+        styles.homeHotelSearchSurface,
+        {
+          backgroundColor: ft.colors.page,
+          shadowColor: ft.colors.shadow,
+          shadowOpacity: ft.theme.dark ? 0.07 : 0.08,
+        },
+      ]}
+    >
+      {children}
+    </View>
+  );
 }
 
 function HomeCarsSearchSurface({ children }: { children: React.ReactNode }) {
@@ -189,9 +202,9 @@ export function SharedHomePage() {
         </HomeFlightSearchSurface>
       : <UnavailableNotice text="Flight search is temporarily unavailable. Hotels and cars remain available." />,
     hotels: availability.hotelSearch
-      ? <HomeSearchSurface>
+      ? <HomeHotelSearchSurface>
           <HotelSearchPanel embedded params={{}} />
-        </HomeSearchSurface>
+        </HomeHotelSearchSurface>
       : <UnavailableNotice text="Hotel search is temporarily unavailable. Flights and cars remain available." />,
     cars: availability.carSearch
       ? <HomeCarsSearchSurface>
@@ -298,6 +311,17 @@ const styles = StyleSheet.create({
   homeFlightSearchSurface: {
     marginHorizontal: -HOME_CONTENT_HORIZONTAL_PADDING,
     paddingHorizontal: HOME_CONTENT_HORIZONTAL_PADDING,
+    paddingBottom: 12,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+    elevation: 1,
+  },
+  homeHotelSearchSurface: {
+    marginHorizontal: -HOME_CONTENT_HORIZONTAL_PADDING,
+    paddingHorizontal: HOME_CONTENT_HORIZONTAL_PADDING + 8,
+    paddingTop: 8,
     paddingBottom: 12,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,

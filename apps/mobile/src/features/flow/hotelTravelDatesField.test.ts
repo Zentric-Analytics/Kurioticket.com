@@ -21,7 +21,8 @@ test("Hotel date validation opens the same range picker", () => {
 });
 
 
-test("Hotel dates truncate only in Results Edit appearance", () => {
+test("Hotel dates truncate only in Results Edit appearance and use the separate-card field presentation", () => {
   assert.match(panel, /label="Travel dates"[^>]*valueNumberOfLines=\{editAppearance \? 1 : 0\}/);
-  assert.match(panel, /appearance=\{editAppearance \? "resultsEdit" : "default"\}/);
+  assert.match(panel, /const fieldAppearance = editAppearance \? "resultsEdit" : "resultsModalCard"/);
+  assert.match(panel, /label="Travel dates"[^>]*appearance=\{fieldAppearance\}/);
 });

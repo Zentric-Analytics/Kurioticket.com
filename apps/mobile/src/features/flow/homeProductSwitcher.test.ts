@@ -23,7 +23,7 @@ test("Home product tabs expose one selected state driven by activeProduct", () =
 
 test("Home switches the search area to reusable panels without route screens", () => {
   assert.match(home, /flights: availability\.flightSearch[\s\S]*?<FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker \/>/);
-  assert.match(home, /hotels: availability\.hotelSearch[\s\S]*?<HomeSearchSurface>\s*<HotelSearchPanel embedded params=\{\{\}\} \/>\s*<\/HomeSearchSurface>/);
+  assert.match(home, /hotels: availability\.hotelSearch[\s\S]*?<HomeHotelSearchSurface>\s*<HotelSearchPanel embedded params=\{\{\}\} \/>\s*<\/HomeHotelSearchSurface>/);
   assert.match(home, /cars: availability\.carSearch[\s\S]*?<HomeCarsSearchSurface>\s*<CarSearchPanel embedded params=\{\{\}\} startWithEmptyRentalDates \/>\s*<\/HomeCarsSearchSurface>/);
   assert.match(home, /packages: availability\.deals[\s\S]*?<PackagesSearchPanel presentation="home" \/>/);
   assert.match(home, /\{searchPanel\[activeProduct\]\}/);

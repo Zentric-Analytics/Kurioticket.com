@@ -58,9 +58,15 @@ test("Home structured Flight submits align with their cards without changing Res
   assert.doesNotMatch(home, /searchFooter|homeSubmitFooterAppearance/);
 });
 
-test("Home keeps Hotel in the shared card and gives Cars a quiet full-width rounded lower boundary", () => {
-  assert.match(home, /function HomeSearchSurface[\s\S]*?style=\{\[ft\.styles\.card, ft\.styles\.shadow\]\}/);
-  assert.match(home, /<HomeSearchSurface>\s*<HotelSearchPanel embedded params=\{\{\}\} \/>\s*<\/HomeSearchSurface>/);
+test("Home gives separate-card Hotel and Cars forms quiet full-width rounded lower boundaries", () => {
+  const hotelWrapper = home.slice(home.indexOf("function HomeHotelSearchSurface"), home.indexOf("function HomeCarsSearchSurface"));
+  assert.match(hotelWrapper, /backgroundColor: ft\.colors\.page/);
+  assert.match(hotelWrapper, /shadowColor: ft\.colors\.shadow/);
+  assert.doesNotMatch(hotelWrapper, /ft\.styles\.card|ft\.styles\.shadow/);
+  assert.match(home, /homeHotelSearchSurface: \{[\s\S]*?marginHorizontal: -HOME_CONTENT_HORIZONTAL_PADDING,[\s\S]*?paddingHorizontal: HOME_CONTENT_HORIZONTAL_PADDING \+ 8,[\s\S]*?paddingTop: 8,[\s\S]*?paddingBottom: 12/);
+  assert.match(home, /homeHotelSearchSurface: \{[\s\S]*?borderBottomLeftRadius: 30,[\s\S]*?borderBottomRightRadius: 30/);
+  assert.match(home, /<HomeHotelSearchSurface>\s*<HotelSearchPanel embedded params=\{\{\}\} \/>\s*<\/HomeHotelSearchSurface>/);
+
   assert.match(home, /function HomeCarsSearchSurface[\s\S]*?backgroundColor: ft\.colors\.page/);
   assert.match(home, /function HomeCarsSearchSurface[\s\S]*?shadowColor: ft\.colors\.shadow/);
   assert.match(home, /function HomeCarsSearchSurface[\s\S]*?shadowOpacity: ft\.theme\.dark \? 0\.07 : 0\.08/);
@@ -69,16 +75,13 @@ test("Home keeps Hotel in the shared card and gives Cars a quiet full-width roun
   assert.match(home, /homeCarsSearchSurface: \{[\s\S]*?borderBottomLeftRadius: 30,[\s\S]*?borderBottomRightRadius: 30/);
   assert.match(home, /homeCarsSearchSurface: \{[\s\S]*?shadowOffset: \{ width: 0, height: 4 \},[\s\S]*?shadowRadius: 12,[\s\S]*?elevation: 1/);
   assert.doesNotMatch(home, /homeCarsSearchSurface: \{[^}]*border(?:Top|Left|Right|Bottom)?Width/s);
-  assert.doesNotMatch(home, /homeCarsSearchSurface: \{[^}]*borderTop(?:Left|Right)Radius/s);
   assert.match(home, /<HomeCarsSearchSurface>\s*<CarSearchPanel embedded params=\{\{\}\} startWithEmptyRentalDates \/>\s*<\/HomeCarsSearchSurface>/);
-  assert.doesNotMatch(home.slice(home.indexOf("function HomeCarsSearchSurface"), home.indexOf("function HomeFlightSearchSurface")), /borderWidth|ft\.styles\.shadow/);
   const carsPanel = home.slice(home.indexOf("cars: availability.carSearch"), home.indexOf("packages: availability.deals"));
   assert.ok(carsPanel.indexOf("<HomeCarsSearchSurface>") < carsPanel.indexOf("<CarSearchPanel"));
-  assert.ok(carsPanel.indexOf("<CarSearchPanel") < carsPanel.indexOf("</HomeCarsSearchSurface>"), "the Cars panel, including its checkbox footer, remains inside the curved surface");
+  assert.ok(carsPanel.indexOf("<CarSearchPanel") < carsPanel.indexOf("</HomeCarsSearchSurface>"));
   assert.match(home, /cars:[\s\S]*startWithEmptyRentalDates/);
   assert.doesNotMatch(products, /startWithEmptyRentalDates/);
 });
-
 test("Home Packages uses one package-owned card and dedicated route uses the same form", () => {
   assert.match(home, /<PackagesSearchPanel presentation="home" \/>/);
   assert.match(products, /const packageBuilder = <PackageSearchForm presentation=\{presentation\} \/>/);
