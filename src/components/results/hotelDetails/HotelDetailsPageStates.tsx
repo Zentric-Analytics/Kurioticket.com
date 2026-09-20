@@ -122,10 +122,10 @@ export function HotelDetailsLoadingState({
       </div>
       {!embedded ? (
         <div
-          className="fixed inset-x-0 bottom-0 z-[90] border-t border-slate-200 bg-white px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-8px_28px_rgba(15,23,42,0.14)] lg:hidden"
+          className="fixed inset-x-0 bottom-0 z-[90] border-t border-slate-200 bg-white px-3 pb-[calc(0.625rem+env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-6px_22px_rgba(15,23,42,0.12)] min-[390px]:px-4 min-[390px]:pt-3 lg:hidden"
           data-hotel-loading-mobile-dock
         >
-          <div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_minmax(132px,0.9fr)] items-center gap-3">
+          <div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_minmax(124px,42%)] items-center gap-2.5 min-[390px]:grid-cols-[minmax(0,1fr)_minmax(140px,0.82fr)] min-[390px]:gap-3">
             <SkeletonBlock className="h-12 w-32 max-w-full" />
             <SkeletonBlock className="h-12 w-full" />
           </div>
