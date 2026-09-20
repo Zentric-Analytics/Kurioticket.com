@@ -531,6 +531,30 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     roomSummary={props.propertyDetails?.roomSummary}
                     bedSummary={props.propertyDetails?.bedSummary}
                     accessibility={props.propertyDetails?.accessibility}
+                    mobileAfterDescription={
+                      props.propertyDetails ? (
+                        <HotelLocationSection
+                          hotelName={props.hotelName}
+                          propertyDetails={props.propertyDetails}
+                          locationLabel="Location"
+                          mapLabel={props.labels.map}
+                          streetViewLabel={props.labels.streetView}
+                          stayFitFacts={[
+                            props.propertyDetails.neighbourhood ? `${props.propertyDetails.neighbourhood} neighborhood` : "",
+                            props.propertyDetails.businessSuitable ? "Work-friendly property" : "",
+                            props.propertyDetails.familySuitable ? "Family-friendly" : "",
+                            props.propertyDetails.interestTags?.some((tag) => /sightseeing|culture|history|art|theatre/i.test(tag)) ? "Good for sightseeing" : "",
+                            props.propertyDetails.accessibility?.length ? "Accessibility details available" : "",
+                          ].filter(Boolean)}
+                          accessibilityDetails={props.propertyDetails.accessibility}
+                        />
+                      ) : (
+                        <section className="border-b border-slate-200 px-4 py-5" aria-labelledby="hotel-overview-location-heading">
+                          <h2 id="hotel-overview-location-heading" className="text-[17px] font-bold text-slate-950">Location</h2>
+                          <p className="mt-2 text-[13px] leading-5 text-slate-600">Verified location details are not available for this property yet.</p>
+                        </section>
+                      )
+                    }
                   />
                   {providerFacts.length ? (
                     <section className="hidden border-b border-slate-200 px-4 py-8 lg:block lg:px-0 lg:py-10" aria-labelledby="provider-details-heading" data-provider-hotel-details>
@@ -546,30 +570,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                       </dl>
                     </section>
                   ) : null}
-                  <div className="lg:hidden" data-hotel-mobile-overview-location>
-                    {props.propertyDetails ? (
-                      <HotelLocationSection
-                        hotelName={props.hotelName}
-                        propertyDetails={props.propertyDetails}
-                        locationLabel="Location"
-                        mapLabel={props.labels.map}
-                        streetViewLabel={props.labels.streetView}
-                        stayFitFacts={[
-                          props.propertyDetails.neighbourhood ? `${props.propertyDetails.neighbourhood} neighborhood` : "",
-                          props.propertyDetails.businessSuitable ? "Work-friendly property" : "",
-                          props.propertyDetails.familySuitable ? "Family-friendly" : "",
-                          props.propertyDetails.interestTags?.some((tag) => /sightseeing|culture|history|art|theatre/i.test(tag)) ? "Good for sightseeing" : "",
-                          props.propertyDetails.accessibility?.length ? "Accessibility details available" : "",
-                        ].filter(Boolean)}
-                        accessibilityDetails={props.propertyDetails.accessibility}
-                      />
-                    ) : (
-                      <section className="border-b border-slate-200 px-4 py-6" aria-labelledby="hotel-overview-location-heading">
-                        <h2 id="hotel-overview-location-heading" className="text-[17px] font-bold text-slate-950">Location</h2>
-                        <p className="mt-2 text-[13px] leading-5 text-slate-600">Verified location details are not available for this property yet.</p>
-                      </section>
-                    )}
-                  </div>
+
                   <div className="lg:hidden" data-hotel-mobile-overview-related>
                     <RelatedHotelsSection
                       hotels={props.relatedHotels}
