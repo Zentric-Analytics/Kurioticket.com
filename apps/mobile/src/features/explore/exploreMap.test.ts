@@ -56,9 +56,12 @@ test("Explore uses native Apple Maps on iOS and keeps the existing Android Googl
   assert.match(ios, /<MapView/);
   assert.match(ios, /showsUserLocation=\{false\}/);
   assert.match(ios, /searchAirports/);
-  assert.doesNotMatch(ios, /PROVIDER_GOOGLE|provider=|WebView|google\.com/);
+  assert.match(ios, /destinationCoordinates/);
+  assert.match(ios, /Number\.isFinite\(destinationCoordinates\.latitude\)/);
+  assert.doesNotMatch(ios, /PROVIDER_GOOGLE|provider=|WebView|google\.com|map-embed|getApiBaseUrl/);
 
   assert.match(fallback, /from "react-native-webview"/);
   assert.match(fallback, /\/api\/mobile\/v1\/explore\/map-embed/);
   assert.match(screen, /airportCode=\{results\.length === 1 \? results\[0\]\.destination\.primaryAirportCode : undefined\}/);
+  assert.match(screen, /coordinates=\{results\.length === 1 \? \{ latitude: results\[0\]\.destination\.latitude, longitude: results\[0\]\.destination\.longitude \} : undefined\}/);
 });
