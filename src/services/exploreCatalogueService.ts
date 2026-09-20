@@ -67,7 +67,7 @@ function mapCoordinates(value: unknown): { latitude: number; longitude: number }
     : null;
 }
 
-function destinationMapCoordinates(destination: {
+export function resolveExploreDestinationMapCoordinates(destination: {
   id: string;
   primaryAirportCode: string;
   sourceProvenance: unknown;
@@ -125,7 +125,7 @@ export async function loadPublishedExploreCatalogue(): Promise<MobileExploreCata
       name: region.name,
       slug: region.slug,
       destinations: region.destinations.map((destination) => {
-        const coordinates = destinationMapCoordinates(destination);
+        const coordinates = resolveExploreDestinationMapCoordinates(destination);
         return {
         id: destination.id,
         name: destination.name,
