@@ -61,6 +61,7 @@ import {
   parseHotelDetailsSearchDate,
   toHotelDetailsTitleCase,
   translateKnownHotelDetailsLabel,
+  type HotelDetailsProviderOffer,
   type HotelDetailsSearchContext,
 } from "@/components/results/hotelDetails/hotelDetailsPresentation";
 import {
@@ -249,7 +250,7 @@ export function HotelDetailsClient({
     mode,
   ]);
 
-  async function continueToProvider() {
+  async function continueToProvider(throwOnError = false) {
     if (!hotel || redirecting || !canUseHotelDetailsProviderLink(hotel)) return;
     setRedirecting(true);
     setRedirectError("");
@@ -271,13 +272,14 @@ export function HotelDetailsClient({
         throw new Error(data.error || t("hotelDetails.redirectError"));
       window.location.href = data.url;
     } catch (error) {
-      setRedirectError(
+      const message =
         error instanceof Error
           ? error.message
-          : t("hotelDetails.redirectError"),
-      );
+          : t("hotelDetails.redirectError");
+      setRedirectError(message);
       setRedirecting(false);
       setResultReceivedAt(null);
+      if (throwOnError) throw new Error(message);
     }
   }
 
@@ -579,6 +581,32 @@ export function HotelDetailsClient({
           : !providerEnabled
             ? t("hotelDetails.directLinkUnavailable")
             : "";
+
+  const standaloneProviderName =
+    hotel.bookingProviderName?.trim() || hotel.provider.trim();
+  const standaloneProviderOffers: HotelDetailsProviderOffer[] =
+    mode === "standalone" &&
+    providerEnabled &&
+    nightlyDisplayPrice &&
+    standaloneProviderName &&
+    standaloneProviderName.toLocaleLowerCase() !== "kurioticket" &&
+    hotel.provider !== "Kurioticket static catalogue"
+      ? [
+          {
+            id: "current-provider",
+            providerName: standaloneProviderName,
+            providerLogoUrl: hotel.providerLogoUrl,
+            nightlyPrice: nightlyDisplayPrice.formatted,
+            nightlyPriceTitle: nightlyDisplayPrice.title,
+            nightlyPriceAriaLabel: nightlyDisplayPrice.ariaLabel,
+            totalPrice: totalDisplayPrice?.formatted,
+            action: {
+              kind: "provider-handoff",
+              providerOfferId: "current-provider",
+            },
+          },
+        ]
+      : [];
   const guidedSelection =
     mode === "guided" && guidedSearch && resultReceivedAt !== null
       ? buildDealsHotelDetailsSelection({
@@ -886,6 +914,14 @@ export function HotelDetailsClient({
                 taxesText={taxesText}
                 planningPriceText={t("hotelDetails.planningPriceMayVary") || "Final taxes, availability, and terms may vary."}
                 roomChoices={roomChoices}
+                providerOffers={standaloneProviderOffers}
+                onProviderOfferHandoff={
+                  standaloneProviderOffers.length
+                    ? async () => {
+                        await continueToProvider(true);
+                      }
+                    : undefined
+                }
                 galleryProps={{
                   activeUrl,
                   hotelName: hotel.name,
@@ -919,6 +955,7 @@ export function HotelDetailsClient({
                   yourStay: t("hotelDetails.yourStay") || "Your stay",
                   edit: t("edit") || "Edit",
                   continueBooking: t("hotelDetails.continueBooking") || "Continue booking",
+                  viewDeal: t("hotelDetails.viewDeal") || "View deal",
                   roomTitle: t("hotelDetails.roomOptionsTitle") || "Room options",
                   closeRooms: t("hotelDetails.closeRoomOptions") || "Close room options",
                   roomTerms: t("hotelDetails.termsBody") || "Final room availability and terms must be confirmed.",
