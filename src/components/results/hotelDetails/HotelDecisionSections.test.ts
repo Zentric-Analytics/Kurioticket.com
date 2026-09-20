@@ -185,6 +185,9 @@ test("comparison presents Kurioticket as a normalized provider without developme
   assert.match(compare, /items=\{offer\.amenities \?\? \[\]\}/);
   assert.equal(compare.match(/\{stayContext\}/g)?.length, 1);
   assert.match(compare, /offers\.map/);
+  assert.match(compare, /data-hotel-rates-empty/);
+  assert.match(compare, /No reservable rates available/);
+  assert.match(compare, /Try updating your stay or check again later/);
   assert.doesNotMatch(
     compare,
     /stayFacts|nightText|Estimated stay price|Estimated for your selected stay|Planning estimate|Additional booking-site prices|Live booking-site rates are not connected yet|Comparable provider offers will appear here when available/,
