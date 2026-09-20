@@ -461,7 +461,7 @@ export function HotelCard({
         <Link
           href={resolvedDetailsHref}
           aria-label={actionAriaLabel || `View hotel for ${hotel.name}`}
-          className="absolute inset-0 z-[1] sm:hidden"
+          className="absolute inset-0 z-10 sm:hidden"
         />
       ) : null}
       {providerLabel ? <p className="hidden px-4 pt-3 text-xs font-semibold text-amber-800 sm:block">{providerLabel}</p> : null}
@@ -500,7 +500,7 @@ export function HotelCard({
                     type="button"
                     aria-label={`Previous photo of ${hotel.name}`}
                     onClick={() => moveGallery(-1)}
-                    className="absolute left-0 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-transparent text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-reduce:transition-none"
+                    className="absolute left-0 top-1/2 z-30 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-transparent text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-reduce:transition-none"
                   >
                     <ChevronLeft className="h-5 w-5 -translate-x-2.5" aria-hidden="true" />
                   </button>
@@ -508,7 +508,7 @@ export function HotelCard({
                     type="button"
                     aria-label={`Next photo of ${hotel.name}`}
                     onClick={() => moveGallery(1)}
-                    className="absolute right-0 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-transparent text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-reduce:transition-none"
+                    className="absolute right-0 top-1/2 z-30 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-transparent text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-reduce:transition-none"
                   >
                     <ChevronRight className="h-5 w-5 translate-x-2.5" aria-hidden="true" />
                   </button>
@@ -675,6 +675,25 @@ export function HotelCard({
                   {cancellationDisplay.label}
                 </p>
               ) : null}
+              {sourceAttributions.length ? (
+                <p className="mt-1 line-clamp-1 text-[11px] font-medium leading-4 text-slate-500 sm:hidden">
+                  <span>Source: </span>
+                  {allowExternalAttribution && isSafeHttpUrl(sourceAttributions[0]?.providerUri) ? (
+                    <a
+                      href={sourceAttributions[0]?.providerUri}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      translate="no"
+                      className="relative z-20 text-[#004BB8] hover:underline"
+                    >
+                      {sourceAttributions[0]?.provider}
+                    </a>
+                  ) : (
+                    <span translate="no">{sourceAttributions[0]?.provider}</span>
+                  )}
+                  {sourceAttributions.length > 1 ? <span>{` +${sourceAttributions.length - 1}`}</span> : null}
+                </p>
+              ) : null}
             </div>
             <div className="mt-auto pt-2 md:pt-3">
               <div data-hotel-card-price className="min-w-0 text-end">
@@ -704,35 +723,50 @@ export function HotelCard({
                         {priceUnavailableText}
                       </p>
                       <p className="text-xs font-medium leading-5 text-slate-500">
-                        {liveRateUnavailableText}
+                        <span className="sm:hidden">No live rate</span>
+                        <span className="hidden sm:inline">{liveRateUnavailableText}</span>
                       </p>
                     </div>
                   )}
                 </div>
               </div>
-              <div data-hotel-card-action className="mt-1.5 flex justify-end">
+              <div data-hotel-card-action className="mt-1 flex justify-end sm:mt-1.5">
                 {resolvedDetailsHref === null ? (
-                  <Button
-                    type="button"
-                    disabled
-                    aria-label={unavailableActionAriaLabel}
-                    variant="secondary"
-                    size="sm"
-                    className="h-10 min-h-10 w-auto whitespace-normal rounded-lg px-3 text-sm font-semibold"
-                  >
-                    {unavailableActionLabel ||
-                      t("deals.guided.hotelResults.roomsUnavailable")}
-                  </Button>
+                  <>
+                    <span className="min-h-9 text-end text-[13px] font-semibold leading-5 text-slate-500 sm:hidden">
+                      {unavailableActionLabel || t("deals.guided.hotelResults.roomsUnavailable")}
+                    </span>
+                    <Button
+                      type="button"
+                      disabled
+                      aria-label={unavailableActionAriaLabel}
+                      variant="secondary"
+                      size="sm"
+                      className="hidden h-10 min-h-10 w-auto whitespace-normal rounded-lg px-3 text-sm font-semibold sm:inline-flex"
+                    >
+                      {unavailableActionLabel || t("deals.guided.hotelResults.roomsUnavailable")}
+                    </Button>
+                  </>
                 ) : (
-                  <LinkButton
-                    href={resolvedDetailsHref}
-                    aria-label={actionAriaLabel}
-                    variant="accent"
-                    size="sm"
-                    className="h-10 min-h-10 w-auto whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3.5 text-sm font-semibold text-white shadow-none hover:border-[#003B91] hover:bg-[#003B91] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-                  >
-                    {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
-                  </LinkButton>
+                  <>
+                    <Link
+                      href={resolvedDetailsHref}
+                      aria-label={actionAriaLabel || `View hotel for ${hotel.name}`}
+                      className="relative z-20 inline-flex min-h-9 items-center gap-1 text-[13px] font-semibold leading-5 text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 sm:hidden"
+                    >
+                      <span>{actionLabel || t("hotelResults.viewHotel") || "View hotel"}</span>
+                      <ChevronRight className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
+                    </Link>
+                    <LinkButton
+                      href={resolvedDetailsHref}
+                      aria-label={actionAriaLabel}
+                      variant="accent"
+                      size="sm"
+                      className="hidden h-10 min-h-10 w-auto whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3.5 text-sm font-semibold text-white shadow-none hover:border-[#003B91] hover:bg-[#003B91] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 sm:inline-flex"
+                    >
+                      {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
+                    </LinkButton>
+                  </>
                 )}
               </div>
             </div>
