@@ -277,7 +277,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
   const mobileDockSupportingText = selectedProviderIsExternal
     ? mobileDockUsesProviderTotal && selectedProviderOffer
       ? props.perNightText.replace("{{price}}", selectedProviderOffer.nightlyPrice)
-      : selectedProviderOffer?.providerName || ""
+      : ""
     : props.nightlyDisplayPrice
       ? props.perNightText.replace("{{price}}", props.nightlyDisplayPrice.formatted)
       : selectedProviderOffer?.providerName || "";
@@ -301,6 +301,11 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
       target?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
       target?.focus({ preventScroll: true });
     });
+  }
+
+  function selectProviderOffer(offerId: string) {
+    setProviderHandoffError(null);
+    setSelectedProviderOfferId(offerId);
   }
 
   async function runProviderOfferHandoff(providerOfferId: string) {
@@ -541,7 +546,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     selectedOfferId={selectedProviderOfferId}
                     selectableOfferIds={selectableProviderOfferIds}
                     providerHandoffError={providerHandoffError}
-                    onSelectOffer={setSelectedProviderOfferId}
+                    onSelectOffer={selectProviderOffer}
                   />
                   <div className="hidden lg:block">
                     <RelatedHotelsSection
