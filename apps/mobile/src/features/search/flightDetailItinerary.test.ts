@@ -148,7 +148,9 @@ test("itinerary surface pairs controlled depth with a light-only gloss finish sh
   assert.match(source,/<LinearGradient id=\{`\$\{testID\}-base`\} x1="0" y1="0" x2="0" y2="1">[\s\S]*?<Stop offset="0" stopColor="#FFFFFF"\/>[\s\S]*?<Stop offset="0\.58" stopColor="#FAFCFF"\/>[\s\S]*?<Stop offset="1" stopColor="#EEF4FA"\/>/);
   assert.match(source,/<LinearGradient id=\{`\$\{testID\}-sheen`\} x1="0" y1="0" x2="1" y2="1">[\s\S]*?<Stop offset="0" stopColor="#FFFFFF" stopOpacity="0\.72"\/>[\s\S]*?<Stop offset="1" stopColor="#FFFFFF" stopOpacity="0"\/>/);
   assert.match(source,/<Rect width="100" height="58" rx="14" fill=\{`url\(#\$\{testID\}-sheen\)`\}\/>/);
-  assert.match(source,/<Rect x="0\.5" y="0\.5" width="99" height="99" rx="13\.5" fill="none" stroke="#FFFFFF" strokeOpacity="0\.78" strokeWidth="1"\/>/);
+  assert.doesNotMatch(source,/<Rect x="0\.5" y="0\.5" width="99" height="99" rx="13\.5"/);
+  assert.match(source,/<View testID=\{`\$\{testID\}-rim`\} pointerEvents="none" accessible=\{false\} style=\{s\.itineraryGlossRim\}\/>/);
+  assert.match(source,/itineraryGlossRim:\{\.\.\.StyleSheet\.absoluteFillObject,borderRadius:14,borderWidth:StyleSheet\.hairlineWidth,borderColor:"rgba\(255,255,255,0\.82\)"\}/);
   assert.match(itinerary,/<ItineraryGlossSurface dark=\{theme\.dark\} testID="flight-details-itinerary-gloss"\/>/);
   assert.match(source,/<ItineraryGlossSurface dark=\{theme\.dark\} testID="flight-details-loading-itinerary-gloss"\/>/);
   assert.match(source,/itineraryGlossSurface:\{\.\.\.StyleSheet\.absoluteFillObject,borderRadius:14,overflow:"hidden"\}/);
