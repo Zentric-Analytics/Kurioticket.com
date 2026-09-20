@@ -159,7 +159,7 @@ test("comparison presents Kurioticket as a normalized provider without developme
   assert.match(compare, /text-\[#075EE8\][^>]*data-nightly-supporting-label/);
   assert.doesNotMatch(compare, /row-span-2|data-provider-price-action/);
   assert.match(compare, /data-provider-amenities/);
-  assert.match(compare, /hidden min-w-0 sm:block/);
+  assert.match(compare, /hidden min-w-0 lg:block/);
   assert.match(compare, /flex-nowrap/);
   assert.match(compare, /gap-x-4/);
   assert.doesNotMatch(compare, /\[&>li\]:text-\[11px\]/);
