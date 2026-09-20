@@ -55,8 +55,8 @@ test("mobile Rates contains provider decisions only", () => {
   assert.match(comparePanel, /hidden lg:block[\s\S]*?<RelatedHotelsSection/);
 
   assert.match(rates, /<span className="lg:hidden">Rates<\/span>/);
-  assert.match(rates, /bg-\[#F4F8FF\][\s\S]*?sm:bg-white/);
-  assert.match(rates, /hidden min-w-0 sm:block[\s\S]*?data-provider-amenities/);
+  assert.match(rates, /bg-\[#F4F8FF\][\s\S]*?lg:bg-white/);
+  assert.match(rates, /hidden min-w-0 lg:block[\s\S]*?data-provider-amenities/);
   assert.match(rates, /text-\[18px\] font-extrabold/);
 });
 
