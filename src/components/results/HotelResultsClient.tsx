@@ -677,9 +677,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     let active = true;
     const controller = new AbortController();
 
-    fetch("/api/hotels/search" + (providerMode ? "?provider=kayak-sandbox" : ""), {
+    fetch("/api/hotels/search", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(providerMode ? { "x-hotel-provider-mode": providerMode } : {}),
+      },
       body: JSON.stringify(body),
       signal: controller.signal,
     })
