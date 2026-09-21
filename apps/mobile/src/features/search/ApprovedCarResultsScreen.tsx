@@ -32,14 +32,6 @@ import { carDisplayPricePerDay } from "./carDisplayCurrency";
 type Status = "loading" | "ready" | "empty" | "error";
 const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB";
 const CAR_RESULT_INITIAL_IMAGE_COUNT = 3;
-const CAR_RESULT_INITIAL_RENDER_COUNT = 10;
-// RN 0.81 constrains an unmeasured VirtualizedList tail spacer to the highest
-// measured row. Keep a normal, bounded render-ahead window so the native
-// content extent settles before traversal instead of growing one small window
-// at a time. This is deliberately independent of image prefetching.
-const CAR_RESULT_RENDER_BATCH_SIZE = 10;
-const CAR_RESULT_WINDOW_SIZE = 21;
-const CAR_RESULT_BATCHING_PERIOD_MS = 16;
 const CAR_RESULT_IMAGE_PREFETCH_TIMEOUT_MS = 1_800;
 const KURIOTICKET_COMPARE_LOGO_URI = Image.resolveAssetSource(require("../../../assets/kurioticket-logo-primary-light-bg.png")).uri;
 const one = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
@@ -122,7 +114,11 @@ export function ApprovedCarResultsScreen() {
       <CarResultsShortcut label={sort === "recommended" ? "Sort" : sort === "lowestTotal" ? "Total price" : "Top rated"} accessibilityLabel={`Sort, ${sort === "recommended" ? "Recommended" : sort === "lowestTotal" ? "Total price" : "Top rated"}`} expanded={quickSheetKind === "sort"} onPress={()=>openQuickFilter("sort")}/>
       {quickGroups.map(group=><CarResultsShortcut key={group.id} label={carFilterGroupLabel(copy,group)} count={filters[group.id]?.length||undefined} expanded={quickSheetKind===group.id} onPress={()=>openQuickFilter(group.id)}/>)}
     </ScrollView></View>
-    <FlatList ref={carScrollRef} style={{backgroundColor:carCanvasColor}} data={listData} keyExtractor={result=>result.id} renderItem={({item,index})=><View style={r.carResultCardSlot}><CarResultCard result={item} rank={index} imageUri={resolveNativeCarImageUri(item.imageUrl)} searchParams={payload} resultBackgroundColor={carCanvasColor} onViewDeal={()=>openDeal(item)}/></View>} ItemSeparatorComponent={CarResultItemSeparator} ListHeaderComponent={listHeader} ListEmptyComponent={listEmpty} initialNumToRender={CAR_RESULT_INITIAL_RENDER_COUNT} maxToRenderPerBatch={CAR_RESULT_RENDER_BATCH_SIZE} windowSize={CAR_RESULT_WINDOW_SIZE} updateCellsBatchingPeriod={CAR_RESULT_BATCHING_PERIOD_MS} removeClippedSubviews={Platform.OS === "android"} showsVerticalScrollIndicator={true} automaticallyAdjustsScrollIndicatorInsets={false} scrollIndicatorInsets={carResultsScrollIndicatorInsets} alwaysBounceVertical={false} bounces={false} overScrollMode="never" keyboardShouldPersistTaps="handled" contentContainerStyle={[r.body,{paddingBottom:Math.max(insets.bottom + 16,16)}]}/>
+    {/* Cars cards are naturally sized, so a virtualized tail can only estimate
+        their unmounted extent. Mount this bounded result set as one logical
+        list: UIKit receives the final contentSize before scrolling starts and
+        its proportional indicator no longer shrinks as rows are discovered. */}
+    <FlatList ref={carScrollRef} style={{backgroundColor:carCanvasColor}} data={listData} keyExtractor={result=>result.id} renderItem={({item,index})=><View style={r.carResultCardSlot}><CarResultCard result={item} rank={index} imageUri={resolveNativeCarImageUri(item.imageUrl)} searchParams={payload} resultBackgroundColor={carCanvasColor} onViewDeal={()=>openDeal(item)}/></View>} ItemSeparatorComponent={CarResultItemSeparator} ListHeaderComponent={listHeader} ListEmptyComponent={listEmpty} disableVirtualization removeClippedSubviews={false} showsVerticalScrollIndicator={true} automaticallyAdjustsScrollIndicatorInsets={false} scrollIndicatorInsets={carResultsScrollIndicatorInsets} alwaysBounceVertical={false} bounces={Platform.OS === "ios"} overScrollMode="never" keyboardShouldPersistTaps="handled" contentContainerStyle={[r.body,{paddingBottom:Math.max(insets.bottom + 16,16)}]}/>
     <CarFilterSheet visible={filterSheetVisible} results={results} filters={filters} pricePerDay={pricePerDay} onChange={changeCarFilters} onClose={completeCarFilterSession}/>
     {quickSheetKind ? <CarResultsQuickFilterSheet key={quickSheetKind} kind={quickSheetKind} results={results} filters={filters} pricePerDay={pricePerDay} sort={sort} onApplyFilters={(next)=>{changeCarFilters(next);}} onApplySort={(next)=>{if(next!==sort){setSort(next);startCarResultsTransition();}}} onClose={()=>{setQuickSheetKind(null);if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}}}/> : null}
     <CarEditSearchModal visible={carEditSearchOpen} params={params} onClose={()=>setCarEditSearchOpen(false)}/>
