@@ -26,12 +26,16 @@ test("sandbox Hotel results use the canonical Hotel results shell", () => {
 });
 
 test("KAYAK Hotel place ids are validated at the provider boundary without weakening normal destination ids", () => {
-  assert.match(resultsPage, /\^kplace:\\\d\+\$\/\.test\(requestedDestinationId\)/);
+  assert.ok(resultsPage.includes("/^kplace:\\d+$/.test(requestedDestinationId)"));
   assert.match(
     resultsPage,
     /destinationId: sandboxDestinationId \? undefined : requestedDestinationId/,
   );
-  assert.match(searchRoute, /providerMode === "kayak-sandbox" && \/\^kplace:\\\d\+\$\/\.test\(rawDestinationId\)/);
+  assert.ok(
+    searchRoute.includes(
+      'providerMode === "kayak-sandbox" && /^kplace:\\d+$/.test(rawDestinationId)',
+    ),
+  );
   assert.match(
     searchRoute,
     /validationPayload = providerDestinationId[\s\S]*?destinationId: undefined/,
@@ -43,7 +47,7 @@ test("KAYAK Hotel place ids are validated at the provider boundary without weake
 });
 
 test("provider-only Hotel search still uses the canonical server search and details cache", () => {
-  assert.match(searchRoute, /searchHotelsByProvider\(parsed\.data, providerMode/);
+  assert.match(searchRoute, /searchHotelsByProvider\(search, providerMode/);
   assert.match(searchRoute, /source: providerMode \|\| classified\.source/);
   assert.match(aggregator, /export async function searchHotelsByProvider/);
   assert.match(aggregator, /rememberProviderResults\("hotel", results, search\)/);
