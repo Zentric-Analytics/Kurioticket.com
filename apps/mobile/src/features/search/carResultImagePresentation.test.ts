@@ -30,15 +30,14 @@ test("native Cars results version curated URLs before resolving the API origin",
   assert.match(resultsScreen, /new URL\(resolved,`\$\{base\.baseUrl\}\/`\)/);
 });
 
-test("native Cars prewarm artwork separately from the virtualized row sample", () => {
+test("native Cars prewarm artwork separately from the full initial row extent", () => {
   assert.match(resultsScreen, /const CAR_RESULT_INITIAL_IMAGE_COUNT = 3/);
   assert.match(resultsScreen, /prefetchInitialCarImages\(acceptance\.accepted\)/);
   assert.match(resultsScreen, /Image\.prefetch\(uri\)/);
   assert.match(resultsScreen, /KURIOTICKET_COMPARE_LOGO_URI/);
   assert.match(resultsScreen, /<FlatList ref=\{carScrollRef\}/);
-  assert.match(resultsScreen, /const CAR_RESULT_INITIAL_RENDER_COUNT = 10/);
-  assert.match(resultsScreen, /initialNumToRender=\{CAR_RESULT_INITIAL_RENDER_COUNT\}/);
-  assert.match(resultsScreen, /maxToRenderPerBatch=\{CAR_RESULT_RENDER_BATCH_SIZE\}/);
+  assert.match(resultsScreen, /initialNumToRender=\{Math\.max\(results\.length,1\)\}/);
+  assert.match(resultsScreen, /maxToRenderPerBatch=\{Math\.max\(results\.length,CAR_RESULT_RENDER_BATCH_SIZE\)\}/);
   assert.match(resultsScreen, /windowSize=\{CAR_RESULT_WINDOW_SIZE\}/);
 });
 
