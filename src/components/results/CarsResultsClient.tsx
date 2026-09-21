@@ -508,8 +508,6 @@ export function CarsResultsClient({
   inventoryStatus: CarInventoryStatus;
 }) {
   const { locale, t: dictionary } = useLocale();
-  const { selectedOption } = useRegion();
-  const currencyRates = useCurrencyRates();
   const router = useRouter();
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
   const intlLocale = getCarsResultsIntlLocale(locale);
@@ -1805,6 +1803,8 @@ export function CarsResultsExperience({
   onSelectCar?: (car: NormalizedCarResult) => void;
 }) {
   const { locale, t: dictionary } = useLocale();
+  const { selectedOption } = useRegion();
+  const currencyRates = useCurrencyRates();
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [filtersOpen, setFiltersOpen] = useState(false);
