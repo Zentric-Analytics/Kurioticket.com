@@ -41,6 +41,10 @@ export default async function HotelDetailsPage({
     checkOut: getFirstSearchParam(query.checkOut),
     guests: getFirstSearchParam(query.guests),
     rooms: getFirstSearchParam(query.rooms),
+    provider:
+      getFirstSearchParam(query.provider) === "kayak-sandbox"
+        ? "kayak-sandbox"
+        : undefined,
   } satisfies HotelDetailsSearchContext;
 
   return (
