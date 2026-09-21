@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import test, { afterEach } from "node:test";
 import { getTranslations } from "@/lib/i18n";
 import { runInNewContext } from "node:vm";
@@ -557,8 +557,9 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /xl:max-w-\[1276px\] xl:grid-cols-4/);
   assert.match(source, /: "w-\[min\(100%,270px\)\] max-w-\[270px\]"/);
   assert.doesNotMatch(source, /: "w-full"/);
-  assert.doesNotMatch(source, /min-h-\[126px\]/);
-  assert.doesNotMatch(source, /min-h-\[(?:1[2-9]\d|[2-9]\d\d)px\]/);
+  const fareRailMarkup = source.slice(source.indexOf(`role="radiogroup"`), source.indexOf(`role="tablist"`));
+  assert.doesNotMatch(fareRailMarkup, /min-h-\[126px\]/);
+  assert.doesNotMatch(fareRailMarkup, /min-h-\[(?:1[2-9]\d|[2-9]\d\d)px\]/);
   assert.match(source, /w-\[min\(78vw,275px\)\] max-w-\[275px\] shrink-0 snap-center/);
   assert.doesNotMatch(source, /310px\)\] max-w-\[310px\]/);
   assert.match(source, /min-w-0 rounded-\[10px\]/);
@@ -672,6 +673,23 @@ test("details expose authoritative cabin class without provider secrets", async 
   assert.equal(details.status, "available");
   if (details.status === "available") assert.equal(details.search.cabinClass, "business");
   assert.doesNotMatch(JSON.stringify(details), /providerOfferId|rawProviderReference|partnerRedirectUrl|bookingUrl/);
+});
+
+test("Flight Details web hero reuses the native asset and keeps navigation accessible", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const loadingSource = await readFile(new URL("./FlightDetailsLoadingShell.tsx", import.meta.url), "utf8");
+  await access("apps/mobile/assets/heroes/flight-details-hero.webp");
+  assert.match(source, /data-testid="flight-details-hero"/);
+  assert.match(source, /import flightDetailsHero from "\.\.\/\.\.\/\.\.\/\.\.\/apps\/mobile\/assets\/heroes\/flight-details-hero\.webp"/);
+  assert.match(source, /src=\{flightDetailsHero\} alt="" fill priority/);
+  assert.match(source, /bg-gradient-to-t from-slate-950\/80/);
+  assert.match(source, /<h1 ref=\{headingRef\} id="flight-details-heading"/);
+  assert.match(source, /-mt-8 p-4 pt-0/);
+  assert.match(source, /<Link href=\{resultsHref\}[\s\S]*?Back to results/);
+  assert.match(source, /ref=\{editSearchLauncherRef\}[\s\S]*?sm:hidden/);
+  assert.match(loadingSource, /import flightDetailsHero from "\.\.\/\.\.\/\.\.\/\.\.\/apps\/mobile\/assets\/heroes\/flight-details-hero\.webp"/);
+  assert.match(loadingSource, /src=\{flightDetailsHero\} alt="" fill priority/);
+  assert.match(loadingSource, /Back to results/);
 });
 
 test("Flight Details mobile cleanup uses shared editing, peek tabs, and fare carousel", async () => {

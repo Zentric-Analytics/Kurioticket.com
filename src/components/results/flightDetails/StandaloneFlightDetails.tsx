@@ -33,6 +33,7 @@ import type {
 import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
 import { appendFlightLegParams, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
 import type { FlightLeg, FlightProviderCondition, FlightSegment } from "@/lib/types";
+import flightDetailsHero from "../../../../apps/mobile/assets/heroes/flight-details-hero.webp";
 
 type FareTab = "deals" | "details" | "conditions" | "extras";
 const fareTabs: Array<{ id: FareTab; label: string }> = [
@@ -223,22 +224,28 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   };
 
   return (
-    <main className="flex-1 bg-white pb-[calc(6.75rem+env(safe-area-inset-bottom))] pt-2 text-[#142033] sm:bg-[#F7F9FC] sm:pt-4 lg:pb-16 lg:pt-3">
+    <main className="flex-1 bg-white pb-[calc(6.75rem+env(safe-area-inset-bottom))] text-[#142033] sm:bg-[#F7F9FC] sm:pt-4 lg:pb-16 lg:pt-3">
       <div className="mx-auto w-full max-w-[1470px] px-0 sm:px-6 lg:px-[34px]">
-        <Link href={resultsHref} className="mb-3 ml-4 inline-flex min-h-10 items-center gap-2 text-[13px] font-semibold text-[#075EE8] hover:text-[#004BB8] focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:ml-0">
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to results
-        </Link>
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
-          <section className="min-w-0 border-y border-[#E2E8F0] bg-white p-4 sm:rounded-[13px] sm:border sm:p-6 sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)] lg:p-6" aria-labelledby="flight-details-heading">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h1 ref={headingRef} id="flight-details-heading" tabIndex={-1} className="text-[22px] font-bold leading-tight tracking-[-0.025em] text-slate-950 outline-none sm:text-[26px]">{route}</h1>
-                <p className="mt-1.5 text-[13px] font-medium text-slate-600">{tripLine}</p>
+          <section className="min-w-0 overflow-hidden border-y border-[#E2E8F0] bg-white sm:rounded-[13px] sm:border sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
+            <div data-testid="flight-details-hero" className="relative flex min-h-[310px] flex-col justify-between overflow-hidden px-4 pb-16 pt-[calc(1rem+env(safe-area-inset-top))] sm:min-h-[280px] sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
+              <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
+              <div className="absolute inset-0 bg-slate-950/35" aria-hidden="true" />
+              <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-slate-950/80 via-slate-950/35 to-transparent" aria-hidden="true" />
+              <div className="relative z-10 flex items-start justify-between gap-3">
+                <Link href={resultsHref} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/55 bg-white/90 px-4 text-[13px] font-bold text-slate-900 shadow-sm backdrop-blur-md hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/60">
+                  <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to results
+                </Link>
+                <button ref={editSearchLauncherRef} type="button" onClick={() => setEditSearchOpen(true)} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full border border-white/55 bg-white/90 px-4 text-xs font-bold text-slate-900 shadow-sm backdrop-blur-md hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/60 sm:hidden"><Pencil className="h-4 w-4" aria-hidden="true" /> {t("editSearch")}</button>
+                <Link href={resultsHref} className="hidden min-h-11 shrink-0 items-center justify-center gap-2 rounded-full border border-white/55 bg-white/90 px-4 text-sm font-bold text-slate-900 shadow-sm backdrop-blur-md hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/60 sm:inline-flex"><Pencil className="h-4 w-4" aria-hidden="true" /> {t("editSearch")}</Link>
               </div>
-              <button ref={editSearchLauncherRef} type="button" onClick={() => setEditSearchOpen(true)} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#075EE8] bg-white px-3 text-xs font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:hidden"><Pencil className="h-4 w-4" aria-hidden="true" /> {t("editSearch")}</button>
-              <Link href={resultsHref} className="hidden min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#075EE8] bg-white px-4 text-sm font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:inline-flex"><Pencil className="h-4 w-4" aria-hidden="true" /> {t("editSearch")}</Link>
+              <div className="relative z-10 min-w-0 text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.55)]">
+                <h1 ref={headingRef} id="flight-details-heading" tabIndex={-1} className="text-[27px] font-extrabold leading-[1.12] tracking-[-0.025em] outline-none sm:text-[30px]">{route}</h1>
+                <p className="mt-2 text-xs font-bold uppercase tracking-[0.08em] text-white/95 sm:text-[13px]">{tripLine}</p>
+              </div>
             </div>
-            <div className="mt-5 space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
+            <div className="relative z-10 -mt-8 p-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0 lg:px-6 lg:pb-6">
+            <div className="space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
 
             <h2 className="mb-3 mt-6 text-[18px] font-semibold leading-tight text-slate-950">Pick your fare</h2>
             <div ref={fareRailRef} role="radiogroup" aria-label="Available fares" className={`min-w-0 ${fareChoices.length > 1 ? "flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden px-4 pb-2 [scroll-padding-inline:1rem] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:snap-none sm:overflow-visible sm:px-0 sm:pb-0" : "grid gap-3"} ${fareChoices.length === 1 ? "max-w-[270px]" : fareChoices.length === 2 ? "sm:grid-cols-2 lg:max-w-[632px]" : fareChoices.length === 3 ? "sm:grid-cols-2 md:grid-cols-3 lg:max-w-[954px]" : "sm:grid-cols-2 xl:max-w-[1276px] xl:grid-cols-4"}`}>
@@ -256,6 +263,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
             <div className="mt-5 flex min-w-0 flex-nowrap gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-0 sm:overflow-visible" role="tablist" aria-label="Fare information">{fareTabs.map((tab, index) => <button key={tab.id} ref={(element) => { tabRefs.current[index] = element; }} id={`fare-tab-${tab.id}`} type="button" role="tab" aria-selected={activeTab === tab.id} aria-controls={`fare-panel-${tab.id}`} tabIndex={activeTab === tab.id ? 0 : -1} onClick={() => setActiveTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)} className={`min-h-11 w-auto shrink-0 whitespace-nowrap border-b-2 px-1 text-center text-[11px] font-semibold min-[390px]:text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 sm:flex-1 sm:text-sm ${activeTab === tab.id ? "border-[#075EE8] text-[#075EE8]" : "border-transparent text-slate-700 hover:text-slate-950"}`}>{tab.label}</button>)}</div>
             <FarePanel activeTab={activeTab} fare={selectedFare} offer={selectedOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} onViewDeal={continueToOffer} />
             <MobileCheckoutDock travelerCount={travelers.count} price={providerPrice} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
+            </div>
           </section>
           <TripSidebar tripType={available.search.tripType} legs={legs} route={route} date={date} tripLine={tripLine} travelers={travelers.label} travelerCount={travelers.count} selectedFare={selectedFare?.label || selectedOffer.cabinClass || ""} fareTerms={selectedFare?.distinguishingTerms ?? []} price={providerPrice} locale={locale} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
         </div>
