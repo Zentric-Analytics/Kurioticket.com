@@ -76,8 +76,8 @@ test("car results keep separate stable virtualized vertical and horizontal scrol
   assert.equal(layout.match(/<ScrollView/g)?.length, 1);
   assert.equal(layout.match(/<FlatList/g)?.length, 1);
   for (const prop of verticalStableProps) assert.match(verticalOwner, prop);
-  assert.match(verticalOwner, /initialNumToRender=\{CAR_RESULT_INITIAL_RENDER_COUNT\}/);
-  assert.match(verticalOwner, /maxToRenderPerBatch=\{CAR_RESULT_RENDER_BATCH_SIZE\}/);
+  assert.match(verticalOwner, /initialNumToRender=\{Math\.max\(results\.length,1\)\}/);
+  assert.match(verticalOwner, /maxToRenderPerBatch=\{Math\.max\(results\.length,CAR_RESULT_RENDER_BATCH_SIZE\)\}/);
   assert.match(verticalOwner, /windowSize=\{CAR_RESULT_WINDOW_SIZE\}/);
   assert.match(verticalOwner, /removeClippedSubviews=\{Platform\.OS === "android"\}/);
   assert.doesNotMatch(verticalOwner, /onScroll=|scrollEventThrottle=/);
