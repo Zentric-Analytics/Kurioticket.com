@@ -1694,6 +1694,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     );
   }
 
+  let loadingContent = null;
   if (loading) {
     if (guided) {
       return (
@@ -1706,7 +1707,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         </section>
       );
     }
-    return (
+    loadingContent = (
       <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.16),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)]">
         <BrandedLoading variant="fullscreen" visual="logoPulse" showProgress={false} searchType="hotel" className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5" contentClassName="max-w-md text-center" />
       </main>
@@ -1733,6 +1734,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           <SquarePen className="h-5 w-5 shrink-0 text-[#142033]" strokeWidth={2} aria-hidden="true" />
         </button>
       } /> : null}
+      {loadingContent ?? <>
       <ResultsRoot
         onClickCapture={(event) => {
           if (guided || !window.matchMedia("(max-width: 639px)").matches) return;
@@ -2164,6 +2166,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         </aside>
       </ResultsRoot>
       {!guided ? <Footer variant="brand-legal-only" /> : null}
+      </>}
     </>
   );
 }

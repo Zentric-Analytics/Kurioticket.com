@@ -1217,7 +1217,7 @@ export function AppHeader({
                   </div>
 
                   <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
-                    {mobileResultsSearch ? <button type="button" aria-haspopup="dialog" onClick={() => { if (isSignedIn) { setMobileMenuOpen(false); setMobileAccountOpen(true); } else setMobileSigninOpen(true); }} className="focus-ring mb-5 flex min-h-12 w-full items-center gap-3 rounded-lg bg-transparent px-3 text-left text-[15px] font-medium text-slate-900 active:bg-slate-100"><UserCircle size={22} /><span>{isSignedIn ? t["accountMenu.myAccount.label"] : t.signIn}</span></button> : null}
+                    {mobileResultsSearch ? <button type="button" aria-haspopup="dialog" onClick={() => { setMobileMenuOpen(false); if (isSignedIn) { setMobileAccountOpen(true); } else setMobileSigninOpen(true); }} className="focus-ring mb-5 flex min-h-12 w-full items-center gap-3 rounded-lg bg-transparent px-3 text-left text-[15px] font-medium text-slate-900 active:bg-slate-100"><UserCircle size={22} /><span>{isSignedIn ? t["accountMenu.myAccount.label"] : t.signIn}</span></button> : null}
 
                     <section aria-labelledby="mobile-menu-preferences-heading">
                       <p

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { AppHeader } from "@/components/layout/AppHeader";
 import { cookies } from "next/headers";
 import { redirect, notFound } from "next/navigation";
 import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
@@ -70,11 +71,14 @@ export default async function HotelResultsPage({
     <>
       <Suspense
         fallback={
-          <main className="page-shell min-h-[calc(100svh-5rem)] flex-1 py-6">
-            <div className="rounded-3xl border border-indigo-100 bg-white p-5 text-sm font-semibold text-violet-700 shadow-sm">
-              <LocalizedLoadingLabel labelKey="loadingHotelSearch" />
-            </div>
-          </main>
+          <>
+            <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs />
+            <main className="page-shell min-h-[calc(100svh-5rem)] flex-1 py-6">
+              <div className="rounded-3xl border border-indigo-100 bg-white p-5 text-sm font-semibold text-violet-700 shadow-sm">
+                <LocalizedLoadingLabel labelKey="loadingHotelSearch" />
+              </div>
+            </main>
+          </>
         }
       >
         <HotelResultsClient />
