@@ -74,7 +74,7 @@ test("source contract uses a desktop summary and a mobile safe-area booking dock
   assert.match(clientSource, /fixed inset-x-0 bottom-0/);
   assert.match(clientSource, /safe-area-inset-bottom/);
   assert.match(clientSource, /data-mobile-car-booking-dock/);
-  assert.match(clientSource, /<main className="flex-1 bg-white pb-/);
+  assert.match(clientSource, /<main className="flex-1 bg-\[#F5F7FB\] pb-/);
 
   const summaryRenders = clientSource.match(/<BookingSummary\b/g) ?? [];
   assert.equal(summaryRenders.length, 1);
@@ -103,40 +103,34 @@ test("source contract uses a desktop summary and a mobile safe-area booking dock
   );
 });
 
-test("standalone details separate mobile model actions from the image while retaining the desktop overlay", () => {
-  const title = clientSource.indexOf("data-car-details-actions");
-  const hero = clientSource.indexOf("<CarDetailsHero");
-  assert.ok(hero >= 0 && title > hero);
-  assert.match(heroSource, /data-car-details-mobile-header/);
-  assert.match(heroSource, /px-4 pb-3 md:hidden/);
-  assert.match(heroSource, /absolute inset-x-0 top-0 z-10 hidden bg-gradient-to-b/);
-  assert.match(heroSource, /md:block/);
-  assert.match(heroSource, /{overlay}/);
+test("standalone details use native-ordered mobile hero controls, identity, and specifications", () => {
+  assert.match(heroSource, /data-car-details-image-stage/);
+  assert.match(heroSource, /data-car-details-mobile-controls/);
+  assert.match(heroSource, /data-car-details-mobile-identity/);
+  assert.match(heroSource, /data-car-details-specifications/);
+  assert.match(heroSource, /bg-\[#F5F7FB\]/);
+  assert.match(heroSource, /bg-white/);
+  assert.match(heroSource, /fit="contain"/);
+  assert.match(heroSource, /fit="cover"/);
+  assert.match(heroSource, /grid-cols-2/);
+  assert.match(clientSource, /data-car-details-mobile-back/);
+  assert.match(clientSource, /aria-label="Back to Cars results"/);
+  assert.match(clientSource, /or similar/);
   assert.match(clientSource, /useSavedCar\(car, search\)/);
   assert.match(clientSource, /navigator\.share/);
-  assert.match(clientSource, /text-\[#075EE8\] md:text-white\/85/);
   assert.match(
     clientSource,
-    /isSaved \? "text-rose-500 md:text-rose-300" : "text-slate-700 md:text-white"/,
+    /rounded-full border border-white\/70 bg-white\/85/,
   );
-  assert.match(
-    clientSource,
-    /rounded-lg border-0 bg-transparent text-slate-700 shadow-none/,
-  );
-  assert.match(clientSource, /items-center gap-0" data-car-details-actions/);
-  assert.match(clientSource, /<Heart[\s\S]*?className="translate-x-1\.5"/);
-  assert.match(clientSource, /<Share2 size=\{19\} className="-translate-x-1\.5"/);
-  assert.doesNotMatch(clientSource, /md:size-10/);
-  assert.match(heroSource, /className="shrink-0 text-slate-600"/);
+  assert.match(clientSource, /aria-pressed={isSaved}/);
   assert.match(clientSource, /<CarDetailsSectionNav activeTab={activeTab}/);
 
   const navSource = readFileSync(
     new URL("./CarDetailsSectionNav.tsx", import.meta.url),
     "utf8",
   ).replace(/\s+/g, " ");
-  for (const label of ["compare", "pickup", "location"]) {
-    assert.match(navSource, new RegExp(`label: labels\\.${label}`));
-  }
+  assert.match(navSource, /bg-\[#F5F7FB\].*lg:bg-white/);
+  assert.match(navSource, /mobileCompare/);
   assert.match(navSource, /role="tablist"/);
   assert.match(navSource, /ArrowLeft/);
   assert.match(navSource, /ArrowRight/);
@@ -155,10 +149,19 @@ test("price comparison aligns icon benefits and the per-day price on one row", (
   for (const icon of ["ShieldCheck", "Fuel", "Gauge"]) {
     assert.match(comparison, new RegExp(`Icon: ${icon}`));
   }
-  assert.match(comparison, /flex min-w-0 items-end gap-x-4 overflow-visible/);
-  assert.match(comparison, /flex-1 flex-nowrap items-end gap-x-4 overflow-x-auto overflow-y-hidden/);
+  assert.match(
+    comparison,
+    /flex min-w-0 items-end gap-x-2 overflow-visible.*lg:gap-x-4/,
+  );
+  assert.match(
+    comparison,
+    /flex-1 flex-wrap items-center.*lg:flex-nowrap.*lg:overflow-x-auto/,
+  );
   assert.doesNotMatch(comparison, /overflow-y-hidden pb-1/);
-  assert.match(comparison, /min-h-9 shrink-0 flex-col items-end justify-end overflow-visible/);
+  assert.match(
+    comparison,
+    /min-h-9 shrink-0 flex-col items-end justify-end overflow-visible/,
+  );
   assert.match(comparison, /carsResults\.perDay/);
   assert.match(comparison, /min-h-4[^\"]*overflow-visible[^\"]*leading-4/);
   assert.match(comparison, /font-extrabold leading-5 tracking-tight/);
