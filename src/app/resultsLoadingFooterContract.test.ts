@@ -84,3 +84,13 @@ test("hotel navbar stays outside the inventory loading branch", () => {
   const page = readFileSync(new URL("./hotels/results/page.tsx", import.meta.url), "utf8");
   assert.match(page, /fallback=\{[\s\S]*?<AppHeader[\s\S]*?<LocalizedLoadingLabel/);
 });
+
+test("flight loading and ready states each own one AppHeader", () => {
+  const source = readFileSync(new URL("../components/results/FlightResultsClient.tsx", import.meta.url), "utf8");
+  assert.equal(source.match(/<AppHeader/g)?.length, 2);
+  assert.match(source, /if \(resultsUiPreparing\)[\s\S]*?<AppHeader[\s\S]*?<BrandedLoading/);
+  assert.match(source, /return \(\s*<>\s*<AppHeader[\s\S]*?<main data-flight-results-main/);
+
+  const page = readFileSync(new URL("./flights/results/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /fallback=\{[\s\S]*?<AppHeader[\s\S]*?<ResultsFallback/);
+});

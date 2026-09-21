@@ -18,31 +18,17 @@ function expectInteractionOnlyGating(region: string) {
   assert.doesNotMatch(region, /mobileSearchOpen && "(?:hidden|invisible|h-0|max-h-0|absolute)"/);
 }
 
-test("flight mobile summary and shortcuts stay in normal flow beneath Edit Search", () => {
-  const start = flights.indexOf('data-flight-results-top-summary');
-  const end = flights.indexOf("<FlightEditSearchDrawer", start);
-  const underlyingControls = flights.slice(start, end);
-
-  assert.ok(start >= 0 && end > start);
-  assert.equal(underlyingControls.match(/inert=\{mobileSearchOpen \? true : undefined\}/g)?.length, 1);
-  expectInteractionOnlyGating(underlyingControls);
-  assert.doesNotMatch(underlyingControls, /\{!mobileSearchOpen \? \(/);
-  assert.match(underlyingControls, /renderMobileControlsRow\(\)/);
+test("flight AppHeader summary remains mounted while Edit Search owns its overlay", () => {
+  assert.match(flights, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.match(flights, /function renderMobileEditSearchDrawer\(\)[\s\S]*<FlightEditSearchDrawer/);
+  assert.doesNotMatch(flights, /data-flight-results-top-summary|renderMobileControlsRow/);
   assert.match(flights, /data-flight-mobile-results-shortcuts[\s\S]*renderMobileSortResultsRow\(\)/);
   assert.match(flights, /data-flight-mobile-results-shortcuts[\s\S]*inert=\{mobileSearchOpen \? true : undefined\}/);
 });
 
 test("hotel mobile results summary stays mounted beneath Edit Search", () => {
-  const start = hotelResults.indexOf('aria-label="Hotel search controls"');
-  const end = hotelResults.indexOf("<MobileResultsEditSheet", start);
-  const summaryWrapper = hotelResults.slice(start, end);
-
-  assert.ok(start >= 0 && end > start);
-  assert.match(summaryWrapper, /inert=\{mobileHotelSearchOpen \? true : undefined\}/);
-  assert.match(summaryWrapper, /aria-hidden=\{mobileHotelSearchOpen \? true : undefined\}/);
-  assert.match(summaryWrapper, /mobileHotelSearchOpen && "pointer-events-none"/);
-  assert.doesNotMatch(summaryWrapper, /mobileHotelSearchOpen && "hidden"/);
-  assert.doesNotMatch(summaryWrapper, /!mobileHotelSearchOpen \? \(/);
+  assert.match(hotelResults, /mobileResultsSearch=\{/);
+  assert.match(hotelResults, /<MobileResultsEditSheet/);
   assert.match(hotelSearch, /compact && !mobileResultsSheet \? \(/);
 });
 

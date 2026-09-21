@@ -2,20 +2,12 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const pageSource = readFileSync(
-  new URL("../../app/hotels/results/page.tsx", import.meta.url),
-  "utf8",
-);
 const resultsSource = readFileSync(
   new URL("./HotelResultsClient.tsx", import.meta.url),
   "utf8",
 );
 const searchBarSource = readFileSync(
   new URL("../search/HotelSearchBar.tsx", import.meta.url),
-  "utf8",
-);
-const mobileSummarySource = readFileSync(
-  new URL("./HotelMobileResultsSummary.tsx", import.meta.url),
   "utf8",
 );
 
@@ -28,34 +20,14 @@ test("Hotel Results hides only the mobile category tabs", () => {
   assert.doesNotMatch(headerCall, /hideTravelNav/);
 });
 
-test("mobile Hotel search uses the Flight-parity data-driven summary shell", () => {
-  const controlsStart = searchBarSource.indexOf(
-    '{onOpenFilters && mobileLayout !== "controls" ? (',
-  );
-  const controlsEnd = searchBarSource.indexOf("</div>", controlsStart);
-
-  assert.notEqual(controlsStart, -1);
+test("mobile Hotel search keeps the compact AppHeader results summary", () => {
+  assert.match(resultsSource, /mobileResultsSearch=\{/);
+  assert.match(resultsSource, /h-\[52px\][\s\S]*rounded-\[10px\][\s\S]*border-\[#D8E1EC\]/);
+  assert.match(resultsSource, /bg-\[#f6f8fb\][\s\S]*px-3/);
+  assert.match(resultsSource, /text-\[14px\] font-semibold leading-5/);
+  assert.match(resultsSource, /text-\[12px\] leading-4 text-slate-600/);
+  assert.match(resultsSource, /<SquarePen className="h-5 w-5/);
   assert.match(searchBarSource, /mobileLayout === "controls"/);
-  assert.match(searchBarSource, /destination\.trim\(\) \|\| t\("destination"\)/);
-  assert.match(searchBarSource, /summary=\{resultsSearchSummary\}/);
-  assert.match(searchBarSource, /<HotelMobileResultsSummary/);
-  assert.match(searchBarSource, /onClick=\{openMobileSearchPanel\}/);
-  assert.match(mobileSummarySource, /h-16 w-full[\s\S]*?rounded-\[13px\][\s\S]*?border-\[#D8E1EC\]/);
-  assert.match(mobileSummarySource, /h-11 w-11[\s\S]*?bg-transparent[\s\S]*?text-slate-700/);
-  assert.match(mobileSummarySource, /<SquarePen size=\{16\} strokeWidth=\{2\.2\}/);
-  assert.match(
-    searchBarSource,
-    /import \{[\s\S]*?formatCompactHotelDateRange,[\s\S]*?\} from "@\/lib\/hotelsDateFormatting"/,
-  );
-  assert.match(
-    searchBarSource,
-    /formatCompactHotelDateRange\(checkIn, checkOut, calendarLocale\) \?\?\s+dateSummary/,
-  );
-  assert.doesNotMatch(mobileSummarySource, /SquarePen[\s\S]{0,300}bg-\[#004BB8\]\/8/);
-  assert.doesNotMatch(
-    searchBarSource.slice(controlsStart, controlsEnd),
-    /mobileLayout === "controls"[\s\S]*?w-\[72px\]/,
-  );
 });
 
 test("mobile Hotel shortcut rail keeps Filter Price Stars Facilities Room & bed while Sort lives with results", () => {

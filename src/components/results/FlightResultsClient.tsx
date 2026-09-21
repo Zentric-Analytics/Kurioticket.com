@@ -22,7 +22,6 @@ import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
-  ArrowLeft,
   ArrowRightLeft,
   ChevronLeft,
   ChevronRight,
@@ -46,6 +45,7 @@ import {
 
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
+import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { FlightCard } from "@/components/results/FlightCard";
 import { useKayakResults } from "./KayakResultsContext";
@@ -1151,15 +1151,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [draftCabinClassInput, setDraftCabinClassInput] =
     useState<CabinClassValue>(cabinClassInput);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [mobileCompactHeaderVisible, setMobileCompactHeaderVisible] =
-    useState(false);
-  const mobileSearchOpenRef = useRef(false);
-  const mobileCompactHeaderUpdateRef = useRef<(() => void) | null>(null);
-  const mobileCompactHeaderResyncFrameRef = useRef<number | null>(null);
   const [activeMobileAirportPicker, setActiveMobileAirportPicker] = useState<
     "origin" | "destination" | null
   >(null);
-  const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchScrollRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchScrollTopRef = useRef(0);
   const pendingMobileDatePickerRef = useRef<"departure" | "return" | null>(
@@ -1643,68 +1637,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       }
     };
   }, [loading]);
-
-  useEffect(() => {
-    if (loading || typeof window === "undefined") {
-      return undefined;
-    }
-
-    const sentinel = mobileSearchSummarySentinelRef.current;
-
-    const updateFromSentinel = () => {
-      if (mobileSearchOpenRef.current) return;
-
-      const currentSentinel = mobileSearchSummarySentinelRef.current;
-
-      if (!currentSentinel) {
-        setMobileCompactHeaderVisible(false);
-        return;
-      }
-
-      const rect = currentSentinel.getBoundingClientRect();
-      setMobileCompactHeaderVisible(rect.bottom < 8 && window.scrollY > 96);
-    };
-
-    mobileCompactHeaderUpdateRef.current = updateFromSentinel;
-
-    updateFromSentinel();
-
-    if (typeof IntersectionObserver === "undefined" || !sentinel) {
-      window.addEventListener("scroll", updateFromSentinel, { passive: true });
-      window.addEventListener("resize", updateFromSentinel);
-
-      return () => {
-        window.removeEventListener("scroll", updateFromSentinel);
-        window.removeEventListener("resize", updateFromSentinel);
-        mobileCompactHeaderUpdateRef.current = null;
-      };
-    }
-
-    const observer = new IntersectionObserver(
-      () => {
-        updateFromSentinel();
-      },
-      { rootMargin: "-8px 0px 0px 0px", threshold: 0 },
-    );
-
-    observer.observe(sentinel);
-    window.addEventListener("scroll", updateFromSentinel, { passive: true });
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", updateFromSentinel);
-      mobileCompactHeaderUpdateRef.current = null;
-    };
-  }, [loading]);
-
-  useEffect(
-    () => () => {
-      if (mobileCompactHeaderResyncFrameRef.current !== null) {
-        window.cancelAnimationFrame(mobileCompactHeaderResyncFrameRef.current);
-      }
-    },
-    [],
-  );
 
   const refreshBackendSavedItems = useCallback(async (signal?: AbortSignal) => {
     const result = await fetchBackendSavedDiscoveries(signal);
@@ -2248,17 +2180,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }: MobileOverlayCloseOptions = {}) {
     closeFlightSearchPopovers();
     shouldRestoreMobileSearchFocusRef.current = restoreFocus;
-    mobileSearchOpenRef.current = false;
     setMobileSearchOpen(false);
-    if (typeof window !== "undefined") {
-      if (mobileCompactHeaderResyncFrameRef.current !== null) {
-        window.cancelAnimationFrame(mobileCompactHeaderResyncFrameRef.current);
-      }
-      mobileCompactHeaderResyncFrameRef.current = window.requestAnimationFrame(() => {
-        mobileCompactHeaderResyncFrameRef.current = null;
-        mobileCompactHeaderUpdateRef.current?.();
-      });
-    }
   }
 
   function closeMobileFiltersDrawer({
@@ -2277,7 +2199,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     mobileSearchModalityRef.current = modality;
     closeMobileFiltersDrawer({ restoreFocus: false });
     closeFlightSearchPopovers();
-    mobileSearchOpenRef.current = true;
     setMobileSearchOpen(true);
   }
 
@@ -6492,85 +6413,48 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     );
   }
 
-  function renderMobileRouteSummaryCard(variant: "normal" | "sticky") {
+  function renderMobileRouteSummaryCard() {
     return (
       <button
         type="button"
-        data-flight-mobile-summary-card={variant}
+        data-flight-mobile-summary-card
         aria-label={t("editFlightSearch")}
+        aria-haspopup="dialog"
+        aria-expanded={mobileSearchOpen}
         onClick={(event) => openMobileSearchDrawer(event.currentTarget, getOverlayActivationModality(event))}
-        className="group relative z-10 flex h-16 min-w-0 w-full touch-manipulation items-center justify-between gap-3 overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-0 text-start shadow-[0_6px_18px_-16px_rgba(15,23,42,0.32)] transition [-webkit-tap-highlight-color:transparent] hover:border-[#C6D2E0] hover:bg-white hover:shadow-[0_8px_20px_-16px_rgba(15,23,42,0.36)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+        className="focus-ring group flex h-[52px] w-full min-w-0 touch-manipulation items-center gap-3 overflow-hidden rounded-[10px] border border-[#D8E1EC] bg-[#f6f8fb] px-3 text-start [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
       >
-        <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
-          <span className="block truncate text-[14px] font-bold leading-[18px] tracking-[-0.01em] text-[#142033]">
+        <span className="min-w-0 flex-1">
+          <span className="block w-full truncate text-[14px] font-semibold leading-5 text-[#142033]">
             {mobileRouteSummary}
           </span>
-          <span className="mt-[3px] block truncate text-[10.5px] font-medium leading-[14px] text-slate-600">
+          <span className="mt-0.5 block w-full truncate text-[12px] leading-4 text-slate-600">
             {mobileTripTypeSummary} · {mobileDateSummary} ·{" "}
             {mobileTravelerSummary} · {mobileCabinClassSummary}
           </span>
         </span>
-        <span
-          aria-hidden="true"
-          className="-my-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100"
-        >
-          <SquarePen size={16} strokeWidth={2.2} />
-        </span>
+        <SquarePen className="h-5 w-5 shrink-0 text-[#142033]" strokeWidth={2} aria-hidden="true" />
       </button>
     );
   }
 
-  function handleMobileResultsBack() {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-      return;
-    }
-    router.push("/flights");
-  }
-
-  function renderMobileCompactResultsHeader() {
-
+  function renderMobileEditSearchDrawer() {
     return (
-      <header
-        data-flight-results-compact-header
-        className={cn(
-          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white/95 px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_10px_26px_-20px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-opacity duration-200 ease-out motion-reduce:transition-none sm:hidden",
-          mobileCompactHeaderVisible ? "opacity-100" : "opacity-0",
-          mobileCompactHeaderVisible && !mobileSearchOpen
-            ? "pointer-events-auto"
-            : "pointer-events-none",
-        )}
-        inert={mobileSearchOpen ? true : undefined}
-        aria-hidden={!mobileCompactHeaderVisible || mobileSearchOpen}
-      >
-        <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-2">
-          <button
-            type="button"
-            aria-label="Go back"
-            onClick={handleMobileResultsBack}
-            className="focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/80 bg-white/75 text-slate-800 shadow-sm backdrop-blur transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-          >
-            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
-          </button>
-
-          <div className="min-w-0 flex-1">
-            {renderMobileRouteSummaryCard("sticky")}
-          </div>
-        </div>
-      </header>
-    );
-  }
-
-  function renderMobileControlsRow() {
-    return (
-      <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-2">
-        <button type="button" aria-label="Go back" onClick={handleMobileResultsBack} className="focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/80 bg-white/75 text-slate-800 shadow-sm backdrop-blur transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
-          <ArrowLeft className="h-5 w-5" aria-hidden="true" />
-        </button>
-        <div className="min-w-0 flex-1">
-          {renderMobileRouteSummaryCard("normal")}
-        </div>
-      </div>
+      <FlightEditSearchDrawer
+        resultsMode
+        open={mobileSearchOpen}
+        presentation="bottom-sheet"
+        initialValue={{ tripType: tripTypeInput === "multi-city" ? "multi-city" : tripTypeInput === "one-way" ? "one-way" : "round-trip", legs: tripTypeInput === "multi-city" ? multiCityLegs : [{ origin: originCode || originInput.trim(), destination: destinationCode || destinationInput.trim(), departureDate: departureDateInput }], departureDate: departureDateInput, returnDate: returnDateInput || undefined, adults: adultCount, children: childCount, infants: infantCount, cabinClass: cabinClassInput }}
+        onClose={() => closeMobileSearchDrawer()}
+        onSearch={(value: FlightEditSearchValue) => {
+          const projection = projectSearchLegs(value.tripType, value.legs);
+          const nextParams = new URLSearchParams({ tripType: value.tripType, origin: projection.origin, destination: projection.destination, departureDate: value.departureDate, adults: String(value.adults), children: String(value.children), infants: String(value.infants), travelers: String(value.adults + value.children + value.infants), cabinClass: value.cabinClass });
+          if (value.tripType === "round-trip" && value.returnDate) nextParams.set("returnDate", value.returnDate);
+          if (value.tripType === "multi-city") { nextParams.set("currency", selectedCurrency); appendFlightLegParams(nextParams, value.legs); }
+          closeMobileSearchDrawer({ restoreFocus: false });
+          router.push(`/flights/results?${nextParams.toString()}`, { scroll: true });
+        }}
+      />
     );
   }
 
@@ -6608,6 +6492,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   if (resultsUiPreparing) {
     if (guidedMode) return <section aria-labelledby="deals-guided-flight-results-heading" className="mt-6" data-flight-results-experience="deals-guided"><h2 id="deals-guided-flight-results-heading" tabIndex={-1} className="text-xl font-extrabold text-slate-950">{t("deals.guided.flightResults.loadingTitle")}</h2><div ref={loadingFocusRef} role="status" tabIndex={-1} className="mt-4 space-y-3"><FlightCardSkeleton /><FlightCardSkeleton /></div></section>;
     return (
+      <>
+      <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs mobileResultsSearch={renderMobileRouteSummaryCard()} />
+      {renderMobileEditSearchDrawer()}
       <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
         <BrandedLoading
           variant="fullscreen"
@@ -6633,6 +6520,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           ]}
         />
       </main>
+      </>
     );
   }
 
@@ -6652,8 +6540,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   return (
     <>
+    <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs mobileResultsSearch={renderMobileRouteSummaryCard()} />
     <main data-flight-results-main className="flex-1 bg-[#F5F7FB] pb-8 sm:bg-[#F3F6FA]">
-      {renderMobileCompactResultsHeader()}
       {paginationPendingPage !== null ? (
         <div
           data-flight-results-transition-cover
@@ -6678,42 +6566,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           </div>
         </div>
       ) : null}
-      <section
-        data-flight-results-top-summary
-        data-flight-mobile-results-summary
-        inert={mobileSearchOpen ? true : undefined}
-        aria-hidden={mobileSearchOpen ? true : undefined}
-        className={cn(
-          "relative z-40 bg-[#F5F7FB] px-4 pb-3 pt-3 sm:hidden",
-          mobileSearchOpen && "pointer-events-none",
-        )}
-        aria-label="Flight search controls"
-      >
-        <div className="relative">
-          {renderMobileControlsRow()}
-        </div>
-        <div
-          ref={mobileSearchSummarySentinelRef}
-          className="pointer-events-none h-px w-full"
-          aria-hidden="true"
-        />
-      </section>
-
-      <FlightEditSearchDrawer
-        resultsMode
-        open={mobileSearchOpen}
-        presentation="bottom-sheet"
-        initialValue={{ tripType: tripTypeInput === "multi-city" ? "multi-city" : tripTypeInput === "one-way" ? "one-way" : "round-trip", legs: tripTypeInput === "multi-city" ? multiCityLegs : [{ origin: originCode || originInput.trim(), destination: destinationCode || destinationInput.trim(), departureDate: departureDateInput }], departureDate: departureDateInput, returnDate: returnDateInput || undefined, adults: adultCount, children: childCount, infants: infantCount, cabinClass: cabinClassInput }}
-        onClose={() => closeMobileSearchDrawer()}
-        onSearch={(value: FlightEditSearchValue) => {
-          const projection = projectSearchLegs(value.tripType, value.legs);
-          const nextParams = new URLSearchParams({ tripType: value.tripType, origin: projection.origin, destination: projection.destination, departureDate: value.departureDate, adults: String(value.adults), children: String(value.children), infants: String(value.infants), travelers: String(value.adults + value.children + value.infants), cabinClass: value.cabinClass });
-          if (value.tripType === "round-trip" && value.returnDate) nextParams.set("returnDate", value.returnDate);
-          if (value.tripType === "multi-city") { nextParams.set("currency", selectedCurrency); appendFlightLegParams(nextParams, value.legs); }
-          closeMobileSearchDrawer({ restoreFocus: false });
-          router.push(`/flights/results?${nextParams.toString()}`, { scroll: true });
-        }}
-      />
+      {renderMobileEditSearchDrawer()}
 
       {renderDesktopMinimizedSearchBar()}
       {renderStickySearchPopoutOverlay()}
@@ -7100,8 +6953,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 inert={mobileSearchOpen ? true : undefined}
                 aria-hidden={mobileSearchOpen ? true : undefined}
                 className={cn(
-                  "sticky z-30 -mx-0 bg-[#F5F7FB]/95 px-3 py-1 backdrop-blur transition-[top] motion-reduce:transition-none sm:hidden",
-                  mobileCompactHeaderVisible ? "top-[calc(5.5rem+env(safe-area-inset-top))]" : "top-0",
+                  "sticky top-[calc(72px+env(safe-area-inset-top))] z-30 -mx-0 bg-[#F5F7FB]/95 px-3 py-1 backdrop-blur sm:hidden",
                   mobileSearchOpen && "pointer-events-none",
                 )}
                 aria-label="Flight result filters"
