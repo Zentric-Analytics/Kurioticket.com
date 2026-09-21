@@ -27,7 +27,7 @@ test("mobile-web Hotel results keep a readable foundation scale without browser 
   assert.match(results, /data-mobile-web-hotel-results/);
   assert.match(
     results,
-    /block truncate text-\[15px\] font-bold leading-5 text-slate-950/,
+    /block truncate text-\[14px\] font-semibold leading-5 text-slate-950/,
   );
   assert.match(
     results,
@@ -44,13 +44,13 @@ test("mobile-web Hotel cards no longer compress supporting content to 10px", () 
   );
   assert.match(
     card,
-    /grid grid-cols-1 gap-y-1 text-\[12px\] leading-\[18px\][\s\S]*?md:text-xs md:leading-4/,
+    /grid grid-cols-1 gap-y-0\.5 text-\[11px\] leading-4[\s\S]*?md:text-xs md:leading-4/,
   );
   assert.match(
     card,
     /text-\[12px\] font-medium leading-\[18px\] text-emerald-700 md:mt-2 md:text-\[13px\] md:leading-5/,
   );
-  assert.match(card, /text-\[15px\] font-bold leading-5[\s\S]*?lg:text-\[17px\]/);
+  assert.match(card, /text-\[14px\] font-semibold leading-5[\s\S]*?lg:text-\[17px\]/);
 });
 
 test("mobile-web Hotel details use a phone-readable identity scale while desktop stays unchanged", () => {

@@ -1092,7 +1092,7 @@ export function HotelSearchBar({
               data-hotel-results-edit-fields={
                 mobileResultsSheet ? "" : undefined
               }
-              className={mobileResultsSheet ? "flex flex-col gap-2.5" : "contents"}
+              className={mobileResultsSheet ? "flex flex-col gap-3" : "contents"}
             >
             <label
               ref={destinationWrapperRef}
@@ -1104,7 +1104,7 @@ export function HotelSearchBar({
                 "lg:rounded-s-xl",
                 shouldShowDestinationSuggestions && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-[72px] rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-3 shadow-none hover:border-[#C6D2E0] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/20",
+                  "min-h-[72px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-none hover:bg-slate-50 focus-within:bg-white focus-within:ring-0",
               )}
             >
               <span className={fieldLabelClassName}>
@@ -1294,7 +1294,7 @@ export function HotelSearchBar({
                 fieldClassName,
                 datesOpen && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-[72px] rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-3 shadow-none hover:border-[#C6D2E0] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/20",
+                  "min-h-[72px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-none hover:bg-slate-50 focus-within:bg-white focus-within:ring-0",
               )}
             >
               <span className={fieldLabelClassName}>
@@ -1324,7 +1324,7 @@ export function HotelSearchBar({
                     mobileResultsSheet && "h-[18px] w-[18px]",
                   )}
                 />
-                <span className="truncate">{dateSummary}</span>
+                <span className="truncate">{mobileResultsSheet ? formatCompactHotelDateRange(checkIn, checkOut, calendarLocale) ?? dateSummary : dateSummary}</span>
                 {mobileResultsSheet ? <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" /> : null}
               </button>
               {datesOpen ? (
@@ -1475,7 +1475,7 @@ export function HotelSearchBar({
                 fieldClassName,
                 guestsRoomsOpen && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-[72px] rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-3 shadow-none hover:border-[#C6D2E0] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/20",
+                  "min-h-[72px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-none hover:bg-slate-50 focus-within:bg-white focus-within:ring-0",
               )}
             >
               <span className={fieldLabelClassName}>

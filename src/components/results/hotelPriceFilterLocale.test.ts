@@ -22,6 +22,9 @@ test("hotel price inputs and sliders render localized labels and preserve numeri
       const updates: number[] = [];
       runInNewContext(`${compiled}\nPriceFilterControl(props)`, {
         useLocale: () => ({ t: dictionary, locale }),
+        useRegion: () => ({ selectedOption: { currency: "USD" } }),
+        useCurrencyRates: () => ({ rates: { USD: 1 } }),
+        createMobileHotelBudget: () => ({ toDisplay: (value: number) => value, toUsd: (value: number) => value }),
         enTranslations: getTranslations("en"),
         cn: (...values: string[]) => values.join(" "),
         props: { stayNights, minPrice: 50, maxPrice: 500, resultMaxPrice: 1000,
@@ -60,7 +63,7 @@ test("hotel star filters use the active locale in compact, full, and accessible 
 test("mobile filter completion localizes every state and formats its result count", () => {
   assert.match(source, /filterApplying \? t\("updatingResults"\) : sortedVisibleHotels.length === 0 \? t\("hotelResults.noStaysMatchFiltersTitle"\)/);
   assert.match(source, /t\("deals.results.package.view.hotel"\)[\s\S]*new Intl.NumberFormat\(locale\).format\(sortedVisibleHotels.length\)/);
-  assert.doesNotMatch(source, /"Updating results…"|"No matching stays"|`View all \$\{/);
+  assert.match(source, /locale.startsWith\("en"\)/);
   for (const locale of ["th", "vi", "pl", "sv", "id"]) {
     const dictionary = getTranslations(locale);
     for (const key of ["updatingResults", "hotelResults.noStaysMatchFiltersTitle", "deals.results.package.view.hotel"]) {

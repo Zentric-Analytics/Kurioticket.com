@@ -16,6 +16,7 @@ import { acquireMobileResultsScrollLock } from "@/lib/search/mobileResultsScroll
 import { acquireMobileResultsOverlayCanvas } from "@/lib/search/mobileResultsOverlayCanvas";
 
 type Props = {
+  placement?: "top" | "bottom";
   open: boolean;
   title: string;
   children: ReactNode;
@@ -34,6 +35,7 @@ type Props = {
 
 /** Presentation-only shell used by mobile search editors on Results pages. */
 export function MobileResultsEditSheet({
+  placement = "bottom",
   open,
   title,
   children,
@@ -113,6 +115,7 @@ export function MobileResultsEditSheet({
       data-mobile-results-edit-sheet
       className={cn(
         "mobile-results-overlay-root mobile-results-sheet-backdrop fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none bg-slate-950/35 motion-reduce:transition-none sm:hidden",
+        placement === "top" && "items-start",
         cleanBackdrop && "mobile-results-sheet-backdrop-clean",
         closing && "mobile-results-sheet-backdrop-closing",
       )}
@@ -121,6 +124,7 @@ export function MobileResultsEditSheet({
       <div
         className={cn(
           "mobile-results-sheet-surface relative flex max-h-[94dvh] min-h-0 w-full flex-col",
+          placement === "top" && "origin-top [animation:none]",
           smoothMotion && "mobile-results-sheet-surface-smooth",
           closing && "mobile-results-sheet-surface-closing",
         )}
@@ -131,7 +135,7 @@ export function MobileResultsEditSheet({
           tabIndex={-1}
           aria-modal="true"
           aria-labelledby={titleId}
-          className={cn("relative z-10 flex min-h-0 w-full flex-col overflow-hidden rounded-t-[22px] border border-b-0 border-slate-200/80 bg-white shadow-[0_-12px_36px_rgba(15,23,42,0.18)] outline-none", className)}
+          className={cn("relative z-10 flex min-h-0 w-full flex-col overflow-hidden rounded-t-[22px] border border-b-0 border-slate-200/80 bg-white shadow-[0_-12px_36px_rgba(15,23,42,0.18)] outline-none", placement === "top" && "rounded-t-none rounded-b-[22px] border-t-0 border-b pt-[env(safe-area-inset-top)]", className)}
         >
           <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 pt-2">
             <div className="mx-auto flex min-h-11 w-full max-w-xl items-center justify-between gap-3">
