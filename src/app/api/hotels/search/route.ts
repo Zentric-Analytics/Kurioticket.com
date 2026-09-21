@@ -24,7 +24,9 @@ export async function POST(request: Request) {
   }
 
   const payload = await request.json();
-  const requestedProvider = new URL(request.url).searchParams.get("provider");
+  const requestedProvider =
+    request.headers.get("x-hotel-provider-mode")?.trim() ||
+    new URL(request.url).searchParams.get("provider");
   const providerMode: HotelProviderMode | null =
     requestedProvider === "kayak-sandbox" ? requestedProvider : null;
   if (requestedProvider && !providerMode) {
