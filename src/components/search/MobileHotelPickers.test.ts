@@ -127,10 +127,10 @@ test("Hotel results edit flow uses compact guest spacing and separate rounded fi
   assert.match(standalone, /data-hotel-results-edit-fields=/);
   assert.match(
     standalone,
-    /className=\{mobileResultsSheet \? "flex flex-col gap-2\.5" : "contents"\}/,
+    /className=\{mobileResultsSheet \? "flex flex-col gap-3" : "contents"\}/,
   );
   assert.equal(
-    (standalone.match(/min-h-\[72px\] rounded-\[13px\] border border-\[#D8E1EC\] bg-white px-4 py-3/g) ?? []).length,
+    (standalone.match(/min-h-\[72px\] rounded-2xl border border-slate-200 bg-white px-4 py-3/g) ?? []).length,
     3,
   );
   assert.doesNotMatch(standalone, /mobileResultsEditGroupClass/);

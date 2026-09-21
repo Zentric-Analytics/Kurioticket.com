@@ -18,8 +18,8 @@ const skeletons = readFileSync(
 test("mobile web Hotel cards fit the results gutter without the old width overflow", () => {
   assert.match(card, /relative mx-auto w-full max-w-\[800px\]/);
   assert.doesNotMatch(card, /w-\[calc\(100%\+0\.5rem\)\]/);
-  assert.match(card, /grid min-h-\[244px\] grid-cols-\[39%_minmax\(0,1fr\)\]/);
-  assert.match(card, /sizes="\(min-width: 768px\) 320px, 39vw"/);
+  assert.match(card, /grid min-h-\[236px\] grid-cols-\[35%_minmax\(0,1fr\)\]/);
+  assert.match(card, /sizes="\(min-width: 768px\) 320px, 35vw"/);
 });
 
 test("mobile Hotel cards remain directly openable while utilities stay independent", () => {
@@ -31,14 +31,14 @@ test("mobile Hotel cards remain directly openable while utilities stay independe
   assert.match(card, /renderShareButton[\s\S]*?z-20/);
   assert.match(card, /Previous photo[\s\S]*?z-30/);
   assert.match(card, /Next photo[\s\S]*?z-30/);
-  assert.match(card, /relative z-20 inline-flex min-h-9[\s\S]*?sm:hidden/);
+  assert.match(card, /relative z-20 h-11 min-h-11[\s\S]*?sm:h-10/);
 });
 
 test("mobile Hotel cards keep supporting content compact without hiding truthful state", () => {
-  assert.match(card, /const mobileAmenityItems = expandedAmenityItems\.slice\(0, 3\)/);
+  assert.match(card, /const collapsedAmenityItems = expandedAmenityItems\.slice\(0, 4\)/);
   assert.match(card, /data-hotel-provider-label[\s\S]*?sm:hidden/);
   assert.match(card, /Source:[\s\S]*?sm:hidden/);
-  assert.match(card, /break-words text-\[17px\][\s\S]*?min-\[390px\]:text-lg/);
+  assert.match(card, /whitespace-nowrap text-\[17px\][\s\S]*?sm:text-xl/);
   assert.match(card, /<span className="sm:hidden">No live rate<\/span>/);
 });
 

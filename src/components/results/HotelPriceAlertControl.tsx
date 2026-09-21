@@ -221,10 +221,10 @@ export function HotelPriceAlertControl({ search, results }: { search: HotelSearc
     : null;
 
   return (
-    <section aria-label={t("travel.account.hotelAlert.title")} className="mb-4 sm:mb-5">
-      <div className="flex min-h-12 items-center gap-2 rounded-xl border border-[#D8E1EC] bg-white px-3 sm:hidden">
-        <Bell className="h-[17px] w-[17px] shrink-0 text-[#004BB8]" strokeWidth={2} aria-hidden="true" />
-        <h2 className="min-w-0 flex-1 truncate text-[13px] font-bold leading-4 text-slate-950">{t("travel.account.hotelAlert.title")}</h2>
+    <section aria-label={t("travel.account.hotelAlert.title")} className="mb-3 sm:mb-5">
+      <div className="flex min-h-[52px] items-center gap-2.5 rounded-[10px] border border-[#D8E1EC] bg-[#f0f5fc] px-3 sm:hidden">
+        <Bell className="h-[18px] w-[18px] shrink-0 text-[#004BB8]" strokeWidth={2} aria-hidden="true" />
+        <h2 className="min-w-0 flex-1 text-[13px] font-medium leading-4 text-[#142033]">{t("travel.account.hotelAlert.title")}</h2>
         <button
           type="button"
           role="switch"

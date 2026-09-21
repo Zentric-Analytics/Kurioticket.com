@@ -14,9 +14,9 @@ test("wide desktop uses a dedicated 288px rail and smaller screens use the filte
 });
 
 test("facets follow the production hierarchy and omit cancellation claims", () => {
-  const price = source.indexOf('title={t("hotelResults.budgetPrice")}');
-  const hotelClass = source.indexOf('title={t("hotelResults.starRating")}', price);
-  const area = source.indexOf('title={t("hotelResults.locationArea")}', hotelClass);
+  const price = source.indexOf('title={layout === "mobile" ? "Budget / Price"');
+  const hotelClass = source.indexOf('title={layout === "mobile" && locale.startsWith("en") ? "Hotel class"', price);
+  const area = source.indexOf('title={layout === "mobile" ? "Area"', hotelClass);
   const property = source.indexOf('title={t("hotelResults.propertyType")}', area);
   const amenities = source.indexOf('title={t("hotelResults.facilities")}', property);
   const room = source.indexOf('title="Room & bed"', amenities);
@@ -74,22 +74,20 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.doesNotMatch(source, /mobileQuickFacilities = \["wifi", "breakfast", "pool"\]/);
   assert.match(source, /overflow-x-auto overscroll-x-contain/);
   assert.match(source, /\[&::-webkit-scrollbar\]:hidden/);
-  assert.match(source, /<span>Filter<\/span>[\s\S]*trigger\("price", "Price"[\s\S]*trigger\(\s*"stars",\s*"Stars"[\s\S]*trigger\(\s*"facilities",\s*"Facilities"[\s\S]*trigger\(\s*"roomTypes",\s*"Room & bed"/);
-  assert.match(source, /type MobileHotelShortcutMenu = "sort" \| "price" \| "stars" \| "facilities" \| "roomTypes"/);
+  assert.match(source, /<span>Filter<\/span>[\s\S]*trigger\("price", "Price"[\s\S]*trigger\(\s*"stars",\s*"Stars"[\s\S]*trigger\(\s*"amenities",\s*"Facilities"/);
+  assert.match(source, /type MobileHotelShortcutMenu = "price" \| "stars" \| "amenities"/);
   assert.match(source, /trigger\("price", "Price", priceFilterActive \? 1 : 0\)/);
   assert.match(source, /mobileShortcutDraftMinPrice/);
   assert.match(source, /setMinPrice\(mobileShortcutDraftMinPrice\)/);
   assert.match(source, /role="dialog"[\s\S]*mobile-hotel-\$\{mobileShortcutMenu\}-title/);
   assert.match(source, /mobileShortcutMenu === "stars"[\s\S]*setSelectedHotelClasses\(mobileShortcutDraftStars\)/);
   assert.match(source, /facilities: mobileShortcutDraftFacilities/);
-  assert.match(source, /roomTypes: mobileShortcutDraftRoomTypes/);
-  assert.match(source, /fixed inset-y-0 right-0[^\n]*h-\[100dvh\][^\n]*w-full/);
-  assert.match(source, /!guided && showMobileCompactHotelSearch/);
-  assert.doesNotMatch(source.slice(source.indexOf("data-mobile-hotel-shortcuts"), source.indexOf("{menu}", source.indexOf("data-mobile-hotel-shortcuts"))), /trigger\("sort"/);
-  assert.match(source, /openMobileShortcutMenu\("sort", event\.currentTarget\)/);
+  assert.match(source, /fixed inset-y-0 right-0[^\n]*h-\[95dvh\][^\n]*w-full/);
+  assert.match(source, /mobileResultsSearch=/);
+  assert.doesNotMatch(source, /trigger\("sort",/);
   assert.doesNotMatch(source, /transition-all duration-200 sm:hidden/);
-  assert.match(source, /mt-10 bg-\[#f6f8fb\] px-1 pb-0 pt-1 sm:hidden/);
-  assert.match(source, /page-shell grid gap-y-5 pb-6 pt-3 sm:pt-6/);
+  assert.match(source, /bg-\[#f6f8fb\] px-1 pb-0 pt-2 sm:hidden/);
+  assert.match(source, /page-shell grid gap-y-5 pb-6 pt-1 sm:pt-6/);
 });
 
 test("results omit the superseded comparison disclosure", () => {
