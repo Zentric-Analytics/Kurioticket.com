@@ -465,7 +465,10 @@ function CarPriceComparisonSection({
   headingLevel: HeadingLevel;
 }) {
   const daily = price(offer.pricePerDay, offer.currency);
-  const facts = [
+  const facts = car.sandboxPresentation ? [
+    { label: "KAYAK sandbox", Icon: ShieldCheck },
+    { label: "Simulated inventory — no real booking", Icon: Gauge },
+  ] : [
     {
       label: offer.freeCancellation
         ? copy("carDetails.freeCancellation")
@@ -610,7 +613,7 @@ function CarLocationSection({
             {pickupLocation}
           </p>
           <p className="text-xs leading-5 text-slate-500">
-            {pickupTypeLabels[car.pickupType]}
+            {car.sandboxPresentation?.pickupLabel ?? pickupTypeLabels[car.pickupType]}
           </p>
         </div>
       </div>
@@ -844,7 +847,7 @@ function PickupReturnSection({
         ))}
       </div>
       <p className="mt-4 text-sm font-medium">
-        {pickupTypeLabels[car.pickupType]}
+        {car.sandboxPresentation?.pickupLabel ?? pickupTypeLabels[car.pickupType]}
         {car.shuttleRequired ? ` · ${copy("carDetails.shuttleRequired")}` : ""}
       </p>
       {car.pickupInstructions && (

@@ -28,6 +28,10 @@ test("CarResultCard accepts string and null href actions without provider fallba
   );
 });
 
+test("KAYAK detail links cannot prefetch and duplicate provider recovery", () => {
+  assert.equal((source.match(/prefetch=\{car\.inventorySource === "kayak-sandbox" \? false : undefined\}/g) ?? []).length, 2);
+});
+
 test("standalone mobile follows native daily-price and View deal commerce", () => {
   const mobile = source.slice(
     source.indexOf("data-car-card-mobile-lower-band"),
