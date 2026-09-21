@@ -19,6 +19,8 @@ test("sandbox Hotel results use the canonical Hotel results shell", () => {
   assert.match(resultsClient, /provider:\s*params\.get\("provider"\) === "kayak-sandbox"/);
   assert.match(resultsClient, /fetch\(providerMode \? "\/api\/hotels\/search\?provider=kayak-sandbox" : "\/api\/hotels\/search"/);
   assert.match(resultsClient, /return <HotelCard key=\{hotel\.id\}/);
+  assert.match(resultsClient, /allowSave=\{!guided\}/);
+  assert.doesNotMatch(resultsClient, /allowSave=\{!guided&&!isKayakSandboxResult\(hotel\)\}/);
   assert.doesNotMatch(resultsClient, /useKayakResults|KayakResultCard|kayakHotelCardModel|kayak\.offers/);
   assert.doesNotMatch(resultsClient, /\/sandbox\/kayak\/details/);
 });
