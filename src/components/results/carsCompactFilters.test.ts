@@ -105,6 +105,26 @@ test("source-contract: full desktop and mobile filter styling remain separate", 
   );
 });
 
+test("source-contract: mobile price filters omit the per-day qualifier without changing desktop copy", () => {
+  assert.match(
+    source,
+    /return mobile \? group\.title \?\? "Price" : t\("carsResults\.pricePerDay"\)/,
+  );
+  assert.equal(
+    (source.match(/carFilterGroupLabel\([^\n]+, t, true\)/g) ?? []).length,
+    2,
+  );
+  assert.match(
+    source,
+    /carFilterGroupLabel\(group, t, layout === "mobile"\)/,
+  );
+  assert.match(presentation, /id: "pricePerDay", titleKey: "", title: "Price"/);
+  assert.doesNotMatch(
+    presentation,
+    /label: "[^"]*(?:\(|\[)per day(?:\)|\])"/i,
+  );
+});
+
 test("source-contract: Cars filters use the Flights desktop lifecycle", () => {
   assert.doesNotMatch(
     source,
