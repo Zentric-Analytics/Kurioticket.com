@@ -15,11 +15,7 @@ import { PAGINATION_MIN_BUSY_MS, PAGINATION_REVEAL_MS, prefersReducedResultsMoti
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
 import { HotelMobileResultsSummary } from "@/components/results/HotelMobileResultsSummary";
-import { useKayakResults } from "./KayakResultsContext";
 import { isKayakSandboxResult, resultActionHref } from "@/lib/travel/resultAction";
-import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
-import { kayakHotelCardModel } from "./kayakCardModels";
-import { KayakResultCard } from "./KayakResultCard";
 import { HotelPriceAlertControl } from "@/components/results/HotelPriceAlertControl";
 import { buildHotelFacilityFilterOptions, hotelMatchesFacilityFilters } from "@/components/results/hotelFacilityFilter";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
@@ -258,6 +254,7 @@ type HotelMobileSearchDraft = {
 
 export type HotelResultsSearchInput = HotelMobileSearchDraft & {
   sort?: string;
+  provider?: "kayak-sandbox";
 };
 
 export function HotelResultsClient() {
@@ -265,12 +262,20 @@ export function HotelResultsClient() {
   const searchInput = useMemo<HotelResultsSearchInput>(
     () => ({
       destinationId: params.get("destinationId") || undefined,
-      destination: normalizeHotelDestinationSearchValue(params.get("destination") || ""),
+      destination:
+        normalizeHotelDestinationSearchValue(params.get("destination") || "") ||
+        (params.get("provider") === "kayak-sandbox"
+          ? "KAYAK sandbox destination"
+          : ""),
       checkIn: params.get("checkIn") || "",
       checkOut: params.get("checkOut") || "",
       guests: Number(params.get("guests")),
       rooms: Number(params.get("rooms")),
       sort: params.get("sort") || "cheapest",
+      provider:
+        params.get("provider") === "kayak-sandbox"
+          ? "kayak-sandbox"
+          : undefined,
     }),
     [params],
   );
@@ -284,16 +289,10 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const currencyRates = useCurrencyRates();
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
 
-  const [providerResults, setResults] = useState<PublicHotelResult[]>([]);
-  const kayak = useKayakResults();
-  const results = useMemo(() => {
-    if (guided || kayak?.vertical !== "hotels") return providerResults;
-    const nights = Math.max(1, Math.ceil((Date.parse(kayak.criteria.checkOut) - Date.parse(kayak.criteria.checkIn))/86400000) || 1);
-    return [...providerResults, ...kayak.offers.map(offer => kayakHotelCardModel(offer,nights))];
-  }, [guided,kayak,providerResults]);
+  const [results, setResults] = useState<PublicHotelResult[]>([]);
   const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>([]);
   const [inventoryLoading, setLoading] = useState(true);
-  const loading = inventoryLoading || (!guided && kayak?.vertical === "hotels" && kayak.status === "loading");
+  const loading = inventoryLoading;
   const [error, setError] = useState("");
   const [retryKey, setRetryKey] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -369,7 +368,19 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     currencyRatesRef.current = currencyRates.rates;
   }, [currencyRates.rates]);
 
-  const body = useMemo(() => ({ ...searchInput, sort: searchInput.sort || "cheapest" }), [searchInput]);
+  const providerMode = searchInput.provider === "kayak-sandbox" ? "kayak-sandbox" : undefined;
+  const body = useMemo(
+    () => ({
+      destinationId: searchInput.destinationId,
+      destination: searchInput.destination,
+      checkIn: searchInput.checkIn,
+      checkOut: searchInput.checkOut,
+      guests: searchInput.guests,
+      rooms: searchInput.rooms,
+      sort: searchInput.sort || "cheapest",
+    }),
+    [searchInput],
+  );
   const hotelDetailsSearchParams = useMemo(() => {
     return new URLSearchParams({
       ...(body.destinationId ? { destinationId: body.destinationId } : {}),
@@ -378,9 +389,10 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       checkOut: body.checkOut,
       guests: String(body.guests),
       rooms: String(body.rooms),
+      ...(providerMode ? { provider: providerMode } : {}),
     }).toString();
-  }, [body.checkIn, body.checkOut, body.destination, body.destinationId, body.guests, body.rooms]);
-  const bodySearchKey = [body.destinationId, body.destination, body.checkIn, body.checkOut, body.guests, body.rooms].join("-");
+  }, [body.checkIn, body.checkOut, body.destination, body.destinationId, body.guests, body.rooms, providerMode]);
+  const bodySearchKey = [body.destinationId, body.destination, body.checkIn, body.checkOut, body.guests, body.rooms, providerMode].join("-");
   const bodyMobileSearchDraft = useMemo<HotelMobileSearchDraft>(
     () => ({
       destinationId: body.destinationId,
@@ -665,7 +677,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     let active = true;
     const controller = new AbortController();
 
-    fetch("/api/hotels/search", {
+    fetch(providerMode ? "/api/hotels/search?provider=kayak-sandbox" : "/api/hotels/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -718,7 +730,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       active = false;
       controller.abort();
     };
-  }, [body, retryKey, t]);
+  }, [body, providerMode, retryKey, t]);
 
   const retryGuidedHotelSearch = useCallback(() => {
     retryFocusPendingRef.current = true;
@@ -1902,7 +1914,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           ) : null}
 
           <section className="min-w-0 space-y-4">
-            {!guided && kayak && results.length === 0 ? <CombinedSearchEmpty otherStatus={loading ? "loading" : error ? "error" : "success"} retry={retryGuidedHotelSearch} /> : error && results.length === 0 ? (
+            {error && results.length === 0 ? (
               <div ref={guided ? guidedErrorRef : undefined} tabIndex={guided ? -1 : undefined} className={cn(hotelResultStackClass, "rounded-[13px] border border-danger/20 bg-white p-4 text-slate-950 shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] sm:rounded-md sm:border-danger/30 sm:bg-red-50 sm:text-danger sm:shadow-none")}>
                 <p role="alert" className="text-sm font-semibold leading-5">{error}</p>
                 <Button className="mt-4 min-h-11 w-full sm:w-auto" onClick={retryGuidedHotelSearch}>
@@ -2062,8 +2074,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                       </div>
                     ) : paginatedVisibleHotels.length ? (
                       paginatedVisibleHotels.map((hotel, index) => {
-                        const sandboxOffer = !guided && kayak?.vertical === "hotels" ? kayak.offers.find(offer => `kayak-sandbox:${offer.id}` === hotel.id) : undefined;
-                        if (sandboxOffer && kayak) return <KayakResultCard key={hotel.id} offer={sandboxOffer} vertical="hotels" criteria={kayak.criteria} />;
                         const internalHref = guided ? (buildDetailsHref?.(hotel.id) ?? null) : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`;
                         return <HotelCard key={hotel.id} hotel={hotel} detailsHref={resultActionHref(hotel, internalHref)} providerLabel={isKayakSandboxResult(hotel) ? "KAYAK sandbox · Not bookable" : undefined} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided&&!isKayakSandboxResult(hotel)} stayNights={stayNights} sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined} />;
                       })
