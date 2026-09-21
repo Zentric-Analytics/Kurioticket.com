@@ -7,6 +7,7 @@ import {
   ensureCarProviderCoverage,
   filterCarResults,
   getPrimaryCarOffer,
+  getComparisonCarOffers,
   doesCarMatchFilterOption,
   sortCarOffers,
   sortCarResults,
@@ -160,6 +161,25 @@ test("details offers sort by total then stable id and primary defaults safely", 
   );
   assert.equal(getPrimaryCarOffer({ ...cars[0], offers: [] }), undefined);
   assert.equal(getPrimaryCarOffer(cars[0])?.id, sorted[0].id);
+});
+test("comparison offers mirror native compact deal selection without fabricating prices", () => {
+  const source = [...cars[0].offers].reverse();
+  const duplicate = {
+    ...source[0],
+    id: `${source[0].id}-duplicate-price`,
+    totalPrice: source[0].totalPrice + 50,
+  };
+  const comparison = getComparisonCarOffers([...source, duplicate]);
+  assert.equal(comparison.length, 3);
+  assert.equal(new Set(comparison.map((offer) => `${offer.currency}:${offer.pricePerDay}`)).size, 3);
+  assert.ok(
+    comparison.every(
+      (offer, index) =>
+        index === 0 || comparison[index - 1].totalPrice <= offer.totalPrice,
+    ),
+  );
+  assert.deepEqual(getComparisonCarOffers(source, 0), []);
+  assert.equal(getComparisonCarOffers(source, 2).length, 2);
 });
 test("selecting another offer provides different summary data", () => {
   const first = cars[0].offers[0];
