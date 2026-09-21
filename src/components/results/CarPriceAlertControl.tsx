@@ -100,7 +100,7 @@ export function CarPriceAlertControl({ search, results }: { search: CarSearchPar
     <section
       aria-label={t("carsResults.priceTracking.title")}
       data-cars-price-alert
-      className="w-full min-w-0 max-w-full rounded-xl border border-[#C8DFF7] bg-[#EDF6FF] px-3 py-1 mb-1 sm:mb-0 sm:rounded-2xl sm:border-blue-100 sm:bg-white sm:px-4 sm:shadow-sm lg:w-auto"
+      className="mb-1 w-full min-w-0 max-w-full rounded-xl border border-[#C8DFF7] bg-[#EDF6FF] px-3 py-0 sm:mb-0 sm:rounded-2xl sm:border-blue-100 sm:bg-white sm:px-4 sm:py-1 sm:shadow-sm lg:w-auto"
     >
       <div className="flex min-h-[52px] min-w-0 items-center gap-2 sm:gap-2.5">
         <span className="inline-flex shrink-0 items-center justify-center text-[#1769AA] sm:h-8 sm:w-8 sm:rounded-full sm:bg-blue-50 sm:text-[#004BB8]"><Bell className="h-[17px] w-[17px]" aria-hidden="true" /></span>
