@@ -23,3 +23,13 @@ test("pending geometry and transient feedback remain stable and accessible", () 
   assert.match(source, /aria-live="polite"/);
   assert.match(source, /href="\/price-alerts"/);
 });
+
+test("mobile Cars price tracking fills its content gutter without compromising narrow layouts", () => {
+  assert.match(source, /data-cars-price-alert/);
+  assert.match(source, /w-full min-w-0 max-w-full/);
+  assert.match(source, /lg:w-auto/);
+  assert.match(source, /min-h-\[52px\] min-w-0 items-center/);
+  assert.match(source, /min-w-0 flex-1 \[overflow-wrap:anywhere\]/);
+  assert.match(source, /h-8 w-8 shrink-0/);
+  assert.match(source, /h-11 shrink-0 items-center/);
+});

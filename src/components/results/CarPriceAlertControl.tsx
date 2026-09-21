@@ -94,10 +94,14 @@ export function CarPriceAlertControl({ search, results }: { search: CarSearchPar
   const tracking = matchingAlert?.status === "ACTIVE";
   const disabled = pending || !reconciled;
   return <>
-    <section aria-label={t("carsResults.priceTracking.title")} className="rounded-xl border border-blue-100 bg-white px-3 py-1 shadow-sm sm:rounded-2xl sm:px-4">
-      <div className="flex min-h-[52px] items-center gap-2.5">
+    <section
+      aria-label={t("carsResults.priceTracking.title")}
+      data-cars-price-alert
+      className="w-full min-w-0 max-w-full rounded-xl border border-blue-100 bg-white px-3 py-1 shadow-sm sm:rounded-2xl sm:px-4 lg:w-auto"
+    >
+      <div className="flex min-h-[52px] min-w-0 items-center gap-2 sm:gap-2.5">
         <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8]"><Bell className="h-4 w-4" aria-hidden="true" /></span>
-        <h2 className="min-w-0 flex-1 text-[13px] font-bold leading-4 text-slate-950 sm:text-sm">{t("carsResults.priceTracking.title")}</h2>
+        <h2 className="min-w-0 flex-1 [overflow-wrap:anywhere] text-[13px] font-bold leading-4 text-slate-950 sm:text-sm">{t("carsResults.priceTracking.title")}</h2>
         <span className="flex h-11 shrink-0 items-center gap-1.5"><span className="flex w-5 justify-center">{pending ? <LoaderCircle className="h-4 w-4 animate-spin text-[#004BB8] motion-reduce:animate-none" aria-hidden="true" /> : null}</span><span className="flex w-[51px] justify-end"><button type="button" role="switch" aria-checked={tracking} aria-busy={pending} disabled={disabled} aria-label={t("carsResults.priceTracking.title")} onClick={() => void toggle(!tracking)} className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-wait ${tracking ? "border-[#004BB8] bg-[#004BB8]" : "border-slate-300 bg-slate-200"}`}><span className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${tracking ? "translate-x-[22px] rtl:-translate-x-[22px]" : "translate-x-[3px] rtl:-translate-x-[3px]"}`} /></button></span></span>
       </div>
     </section>
