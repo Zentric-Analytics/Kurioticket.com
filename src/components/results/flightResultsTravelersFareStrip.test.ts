@@ -72,11 +72,38 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.match(mobileStrip, /scroll-padding-inline:0\.75rem/);
   assert.match(mobileStrip, /scrollbar-width:none/);
   assert.match(mobileStrip, /data-fare-date-cell/);
-  assert.match(mobileStrip, /min-h-\[76px\]/);
+  assert.match(mobileStrip, /h-\[80px\]/);
+  assert.match(mobileStrip, /py-\[5px\]/);
+  assert.match(mobileStrip, /h-\[70px\]/);
+  assert.match(mobileStrip, /w-\[clamp\(76px,calc\(27\.4vw_-_11\.8px\),96px\)\]/);
+  assert.match(mobileStrip, /rounded-lg/);
+  assert.match(mobileStrip, /px-1\.5 py-2/);
+  assert.match(mobileStrip, /text-\[11px\] font-bold uppercase leading-\[14px\]/);
+  assert.match(mobileStrip, /text-\[10px\] font-semibold uppercase leading-\[13px\]/);
   assert.match(mobileStrip, /aria-current=\{selected \? "date"/);
   assert.match(mobileStrip, /aria-pressed=\{selected\}/);
   assert.match(mobileStrip, /disabled=\{selected \|\| loading \|\| fare\.status === "loading"\}/);
   assert.doesNotMatch(mobileStrip, /onPointer|onTouch|preventDefault\(\)/);
+});
+
+test("mobile nearby fares use native-scale price typography with adaptive fitting", () => {
+  assert.match(styles, /\[data-nearby-fare-presentation="mobile"\] \.flight-fare-strip-price \{[\s\S]*?font-size: 0\.6875rem;[\s\S]*?line-height: 0\.875rem;[\s\S]*?font-weight: 600;/);
+  assert.match(styles, /\[data-nearby-fare-presentation="mobile"\] \.flight-fare-strip-price\[data-price-size="long"\] \{[\s\S]*?font-size: 0\.625rem;/);
+  assert.match(styles, /\[data-nearby-fare-presentation="mobile"\] \.flight-fare-strip-price\[data-price-size="extra-long"\] \{[\s\S]*?font-size: 0\.5625rem;/);
+  assert.match(source, /data-price-size=\{\(\(displayPrice \?\? "Unavailable"\)/);
+});
+
+test("responsive mobile sizing shows three complete dates and a fourth-date peek", () => {
+  for (const viewport of [360, 390, 412]) {
+    const railContentWidth = viewport - 32 - 24;
+    const cardWidth = Math.min(96, Math.max(76, viewport * 0.274 - 11.8));
+    const threeCardsWidth = cardWidth * 3 + 8 * 2;
+    const fourCardsWidth = cardWidth * 4 + 8 * 3;
+
+    assert.ok(threeCardsWidth <= railContentWidth, `${viewport}px fits three cards`);
+    assert.ok(fourCardsWidth > railContentWidth, `${viewport}px keeps the fourth partial`);
+    assert.ok(railContentWidth - (threeCardsWidth + 8) > 0, `${viewport}px exposes a fourth-card peek`);
+  }
 });
 
 test("mobile nearby fares align per search and recover visibility after layout or page resume", () => {
