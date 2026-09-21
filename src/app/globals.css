@@ -1258,7 +1258,8 @@ textarea {
 }
 
 .flight-card-price-value[data-price-size="compact"] {
-  font-size: clamp(1rem, 5vw, 1.25rem);
+  font-size: clamp(0.875rem, 3.8vw, 1rem);
+  letter-spacing: -0.045em;
 }
 
 .flight-card-price-value.flight-card-price {
@@ -1276,7 +1277,8 @@ textarea {
 }
 
 .flight-card-price-value.flight-card-price[data-price-size="compact"] {
-  font-size: clamp(1rem, 5vw, 1.25rem);
+  font-size: clamp(0.875rem, 3.8vw, 1rem);
+  letter-spacing: -0.045em;
 }
 
 @media (max-width: 1023px) {
@@ -1290,7 +1292,8 @@ textarea {
   }
 
   .flight-card-price-value.flight-card-price[data-price-size="compact"] {
-    font-size: clamp(1rem, 4.6vw, 1.1875rem);
+    font-size: clamp(0.8125rem, 3.6vw, 0.9375rem);
+    letter-spacing: -0.045em;
   }
 }
 
