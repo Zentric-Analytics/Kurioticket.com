@@ -131,6 +131,11 @@ import {
   type SavedDiscoveryFlightSearch,
 } from "@/lib/saved-items-api";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import {
+  compareFlightPrices,
+  getComparableFlightPrice,
+  getComparableFlightPriceBounds,
+} from "@/lib/flights/flightResultPrices";
 import type { FlightSearchLeg, PublicFlightResult, SortMode } from "@/lib/types";
 import {
   appendFlightLegParams,
@@ -3394,10 +3399,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     router.push(`/flights/results?${nextParams.toString()}`, { scroll: true });
   }
 
-  const priceLabelCurrency = useMemo(
-    () => getUniformResultCurrency(results),
-    [results],
-  );
+  const priceLabelCurrency = selectedCurrency;
 
   const mixedProviderCurrenciesLabel =
     dictionary.mixedProviderCurrencies ??
@@ -3412,7 +3414,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               amount,
               sourceCurrency,
               displayCurrency: selectedCurrency,
-              convertUsdEstimate: true,
+              convertSourceEstimate: true,
+              useFlightResultSymbols: true,
               rates: currencyRates.rates,
               isFallbackRate: currencyRates.isFallback,
             }).formatted
@@ -3503,7 +3506,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const stopOptions = useMemo(() => {
     const buckets = new Map<
       string,
-      { count: number; minPrice: number; currencies: Set<string> }
+      { count: number; minPrice: number }
     >();
 
     results.forEach((flight) => {
@@ -3511,21 +3514,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       const current = buckets.get(bucket) ?? {
         count: 0,
         minPrice: Number.POSITIVE_INFINITY,
-        currencies: new Set<string>(),
       };
-      const currencies = new Set(current.currencies);
-
-      if (flight.currency) {
-        currencies.add(flight.currency.toUpperCase());
-      }
+      const comparablePrice = getComparableFlightPrice(flight, selectedCurrency, currencyRates.rates);
 
       buckets.set(bucket, {
         count: current.count + 1,
         minPrice:
-          Number.isFinite(flight.price) && flight.price > 0
-            ? Math.min(current.minPrice, flight.price)
+          comparablePrice && comparablePrice.amount > 0
+            ? Math.min(current.minPrice, comparablePrice.amount)
             : current.minPrice,
-        currencies,
       });
     });
 
@@ -3535,21 +3532,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       count: data.count,
       secondaryLabel: formatOptionsFound(data.count, t),
       rightLabel: Number.isFinite(data.minPrice)
-        ? formatResultPriceLabel(
-            data.minPrice,
-            data.currencies.size === 1 ? Array.from(data.currencies)[0] : null,
-          )
+        ? formatResultPriceLabel(data.minPrice, selectedCurrency)
         : undefined,
     })).sort(
       (first, second) =>
         stopBucketSortValue(first.value) - stopBucketSortValue(second.value),
     );
-  }, [formatResultPriceLabel, results, t]);
+  }, [currencyRates.rates, formatResultPriceLabel, results, selectedCurrency, t]);
 
   const airlineOptions = useMemo(() => {
     const buckets = new Map<
       string,
-      { count: number; minPrice: number; currencies: Set<string> }
+      { count: number; minPrice: number }
     >();
 
     results.forEach((flight) => {
@@ -3560,21 +3554,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       const current = buckets.get(airlineName) ?? {
         count: 0,
         minPrice: Number.POSITIVE_INFINITY,
-        currencies: new Set<string>(),
       };
-      const currencies = new Set(current.currencies);
-
-      if (flight.currency) {
-        currencies.add(flight.currency.toUpperCase());
-      }
+      const comparablePrice = getComparableFlightPrice(flight, selectedCurrency, currencyRates.rates);
 
       buckets.set(airlineName, {
         count: current.count + 1,
         minPrice:
-          Number.isFinite(flight.price) && flight.price > 0
-            ? Math.min(current.minPrice, flight.price)
+          comparablePrice && comparablePrice.amount > 0
+            ? Math.min(current.minPrice, comparablePrice.amount)
             : current.minPrice,
-        currencies,
       });
     });
 
@@ -3583,10 +3571,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       label: value,
       count: data.count,
       rightLabel: Number.isFinite(data.minPrice)
-        ? formatResultPriceLabel(
-            data.minPrice,
-            data.currencies.size === 1 ? Array.from(data.currencies)[0] : null,
-          )
+        ? formatResultPriceLabel(data.minPrice, selectedCurrency)
         : undefined,
     }))
       .sort((first, second) => {
@@ -3595,7 +3580,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         return first.label.localeCompare(second.label);
       })
       .slice(0, 8);
-  }, [formatResultPriceLabel, results]);
+  }, [currencyRates.rates, formatResultPriceLabel, results, selectedCurrency]);
 
   useEffect(() => {
     if (guidedMode) {
@@ -3673,19 +3658,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   });
 
   const priceBounds = useMemo(() => {
-    const prices = results
-      .map((flight) => flight.price)
-      .filter((price) => Number.isFinite(price));
-
-    if (!prices.length) {
-      return { min: 0, max: 0 };
-    }
-
-    return {
-      min: Math.floor(Math.min(...prices)),
-      max: Math.ceil(Math.max(...prices)),
-    };
-  }, [results]);
+    return getComparableFlightPriceBounds(results, selectedCurrency, currencyRates.rates);
+  }, [currencyRates.rates, results, selectedCurrency]);
 
   const timeBounds = useMemo(() => {
     const departureMinutes = results
@@ -4303,7 +4277,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const filtered = useMemo(
     () =>
       results.filter((flight) => {
-        const matchesPrice = flight.price <= maxPrice;
+        const comparablePrice = getComparableFlightPrice(
+          flight,
+          selectedCurrency,
+          currencyRates.rates,
+        );
+        const matchesPrice = comparablePrice === null || comparablePrice.amount <= maxPrice;
         const matchesSelectedStops =
           selectedStops.length === 0 ||
           selectedStops.includes(getStopBucket(flight.stops));
@@ -4363,6 +4342,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       maxTakeoffMinutes,
       renderFlightQualityFilter,
       results,
+      selectedCurrency,
+      currencyRates.rates,
       selectedAirlines,
       selectedAirports,
       selectedFlightQuality,
@@ -4375,7 +4356,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     nextResults.sort((first, second) => {
       if (sortMode === "cheapest") {
-        return first.price - second.price;
+        return compareFlightPrices(first, second, selectedCurrency, currencyRates.rates);
       }
 
       if (sortMode === "fastest") {
@@ -4383,7 +4364,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       }
 
       if (sortMode === "stops") {
-        return first.stops - second.stops || first.price - second.price;
+        return first.stops - second.stops || compareFlightPrices(first, second, selectedCurrency, currencyRates.rates);
       }
 
       const firstBestScore =
@@ -4398,11 +4379,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         second.comfortScore -
         second.riskScore;
 
-      return secondBestScore - firstBestScore || first.price - second.price;
+      return secondBestScore - firstBestScore || compareFlightPrices(first, second, selectedCurrency, currencyRates.rates);
     });
 
     return nextResults;
-  }, [filtered, sortMode]);
+  }, [currencyRates.rates, filtered, selectedCurrency, sortMode]);
 
   const totalResultPages = getFlightResultsPageCount(sortedResults.length);
   const requestedResultsPage = guidedMode
@@ -4579,7 +4560,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       };
     }
 
-    const cheapest = [...filtered].sort((a, b) => a.price - b.price)[0];
+    const cheapest = [...filtered].sort((a, b) =>
+      compareFlightPrices(a, b, selectedCurrency, currencyRates.rates)
+    )[0];
     const fastest = filtered.filter(flight => Number.isFinite(flight.durationMinutes)).sort(
       (a, b) => a.durationMinutes - b.durationMinutes,
     )[0];
@@ -4589,7 +4572,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       const bScore =
         b.valueScore + b.travelConfidenceScore + b.comfortScore - b.riskScore;
 
-      return bScore - aScore || a.price - b.price;
+      return bScore - aScore || compareFlightPrices(a, b, selectedCurrency, currencyRates.rates);
     })[0];
 
     return {
@@ -4597,7 +4580,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       best,
       fastest,
     };
-  }, [filtered]);
+  }, [currencyRates.rates, filtered, selectedCurrency]);
 
   const resultBadgeByFlightId = useMemo(() => {
     const badges = new Map<string, "best" | "fastest" | "cheapest">();
@@ -7088,7 +7071,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     <div ref={mobileNearbyFareRailRef} className="flex w-full min-w-0 max-w-full snap-x snap-proximity gap-2 overflow-x-auto overflow-y-hidden px-3 py-0.5 [scroll-padding-inline:0.75rem] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       {(nearbyFares.length ? nearbyFares : Array.from({ length: nearbyFareRangeSize }, (_, index) => ({ date: `loading-mobile-${index}`, status: "loading" as const }))).map((fare) => {
                         const selected = fare.date === body?.departureDate;
-                        const displayPrice = fare.status === "success" ? formatDisplayPrice({ amount: fare.amount, sourceCurrency: fare.currency, displayCurrency: selectedCurrency, convertUsdEstimate: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback }).formatted : null;
+                        const displayPrice = fare.status === "success" ? formatDisplayPrice({ amount: fare.amount, sourceCurrency: fare.currency, displayCurrency: selectedCurrency, convertSourceEstimate: true, useFlightResultSymbols: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback }).formatted : null;
                         const accessibleFare = displayPrice ?? (fare.status === "loading" ? "Loading fare" : "Unavailable");
                         const accessibleDate = fare.date.startsWith("loading-") ? "Loading date" : `${formatFareStripWeekdayLabel(fare.date, calendarLocale)}, ${formatFareStripDateLabel(fare.date, calendarLocale)}`;
                         return (
@@ -7141,7 +7124,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                               amount: fare.amount,
                               sourceCurrency: fare.currency,
                               displayCurrency: selectedCurrency,
-                              convertUsdEstimate: true,
+                              convertSourceEstimate: true,
+                              useFlightResultSymbols: true,
                               rates: currencyRates.rates,
                               isFallbackRate: currencyRates.isFallback,
                             })
@@ -7369,7 +7353,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               ) : sortedResults.length ? (
                 <>
                   <div className="mb-3 sm:hidden">
-                    <p className="text-[16px] font-semibold leading-6 tracking-[-0.01em] text-slate-900">
+                    <p className="flight-results-count text-[16px] font-semibold leading-6 tracking-[-0.01em] text-slate-900">
                       {formatResultsFound(sortedResults.length, t)}
                     </p>
                     {resultsDisplayRange ? (
@@ -7622,18 +7606,6 @@ function filterResultsByRequestedOutboundDate(
 
     return getItineraryDateKey(departureTime) === requestedDepartureDate;
   });
-}
-
-function getUniformResultCurrency(results: PublicFlightResult[]) {
-  const currencies = new Set(
-    results.map((result) => result.currency?.toUpperCase()).filter(Boolean),
-  );
-
-  if (currencies.size === 1) {
-    return Array.from(currencies)[0];
-  }
-
-  return null;
 }
 
 function startOfMonth(date: Date): Date {
@@ -9102,7 +9074,8 @@ function Filters({
           amount,
           sourceCurrency: priceLabelCurrency,
           displayCurrency: selectedCurrency,
-          convertUsdEstimate: true,
+          convertSourceEstimate: true,
+          useFlightResultSymbols: true,
           rates: currencyRates.rates,
           isFallbackRate: currencyRates.isFallback,
         }).formatted

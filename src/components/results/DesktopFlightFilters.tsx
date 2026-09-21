@@ -163,7 +163,8 @@ export function DesktopFlightFilters({
           amount,
           sourceCurrency: priceLabelCurrency,
           displayCurrency: selectedCurrency,
-          convertUsdEstimate: true,
+          convertSourceEstimate: true,
+          useFlightResultSymbols: true,
           rates: currencyRates.rates,
           isFallbackRate: currencyRates.isFallback,
         }).formatted

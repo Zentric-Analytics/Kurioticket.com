@@ -48,6 +48,41 @@ export function formatCurrency(
   }).format(amount);
 }
 
+const flightResultCurrencySymbols: Record<string, string> = {
+  NGN: "₦", USD: "$", CAD: "$", AUD: "$", GBP: "£", EUR: "€",
+};
+
+/** Canonical symbols used by the native and web Flight Results presentations. */
+export function formatFlightResultCurrency(
+  amount: number,
+  currency: string,
+  options: {
+    maximumFractionDigits?: number;
+    minimumFractionDigits?: number;
+    locale?: string;
+    notation?: "standard" | "compact";
+  } = {},
+) {
+  const normalizedCurrency = currency.toUpperCase();
+  const defaultFractionDigits = zeroDecimalCurrencies.has(normalizedCurrency) ? 0 : 2;
+  const formatter = new Intl.NumberFormat(options.locale, {
+    style: "currency",
+    currency: normalizedCurrency,
+    notation: options.notation,
+    compactDisplay: options.notation === "compact" ? "short" : undefined,
+    maximumFractionDigits: options.maximumFractionDigits ?? defaultFractionDigits,
+    minimumFractionDigits: options.notation === "compact"
+      ? 0
+      : options.minimumFractionDigits ?? options.maximumFractionDigits ?? defaultFractionDigits,
+  });
+  const formatted = formatter.format(amount);
+  const symbol = flightResultCurrencySymbols[normalizedCurrency];
+  if (!symbol) return formatted;
+
+  const currencyToken = formatter.formatToParts(amount).find((part) => part.type === "currency")?.value;
+  return currencyToken ? formatted.replace(currencyToken, symbol) : formatted;
+}
+
 export function formatCurrencyFromUsd(amountUsd: number, currency: string, rates?: ExchangeRates) {
   const activeRates = rates ?? fallbackExchangeRatesFromUsd;
   const displayCurrency = resolveDisplayCurrency(currency, activeRates) ?? "USD";
@@ -77,6 +112,7 @@ export function formatDisplayPrice({
   maximumFractionDigits,
   rates,
   isFallbackRate = rates ? false : true,
+  useFlightResultSymbols = false,
 }: {
   amount: number;
   sourceCurrency: string;
@@ -86,6 +122,7 @@ export function formatDisplayPrice({
   maximumFractionDigits?: number;
   rates?: ExchangeRates;
   isFallbackRate?: boolean;
+  useFlightResultSymbols?: boolean;
 }): DisplayPrice {
   const activeRates = rates ?? fallbackExchangeRatesFromUsd;
   const normalizedSourceCurrency = sourceCurrency.toUpperCase();
@@ -109,8 +146,9 @@ export function formatDisplayPrice({
     convertedAmount !== null;
   const displayAmount = shouldUseConvertedEstimate ? convertedAmount : amount;
   const currency = shouldUseConvertedEstimate ? normalizedDisplayCurrency : normalizedSourceCurrency;
-  const formatted = formatCurrency(displayAmount, currency, { maximumFractionDigits });
-  const providerFormatted = formatCurrency(amount, normalizedSourceCurrency, {
+  const priceFormatter = useFlightResultSymbols ? formatFlightResultCurrency : formatCurrency;
+  const formatted = priceFormatter(displayAmount, currency, { maximumFractionDigits });
+  const providerFormatted = priceFormatter(amount, normalizedSourceCurrency, {
     maximumFractionDigits,
   });
   const rateCopy = isFallbackRate ? " Emergency fallback rates are being used." : "";

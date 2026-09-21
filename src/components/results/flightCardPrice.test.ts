@@ -19,9 +19,9 @@ test("FlightCard preserves complete normal and seven-digit NGN prices", () => {
 });
 
 test("FlightCard compacts only eight-digit and larger NGN prices", () => {
-  assert.deepEqual(cardPrice(10_000_000), { formatted: "NGN\u00a010M", size: "compact" });
-  assert.deepEqual(cardPrice(25_850_000), { formatted: "NGN\u00a025.9M", size: "compact" });
-  assert.deepEqual(cardPrice(105_000_000), { formatted: "NGN\u00a0105M", size: "compact" });
+  assert.deepEqual(cardPrice(10_000_000), { formatted: "₦\u00a010M", size: "compact" });
+  assert.deepEqual(cardPrice(25_850_000), { formatted: "₦\u00a025.9M", size: "compact" });
+  assert.deepEqual(cardPrice(105_000_000), { formatted: "₦\u00a0105M", size: "compact" });
 });
 
 test("FlightCard applies the same controlled fallback to other currencies", () => {
