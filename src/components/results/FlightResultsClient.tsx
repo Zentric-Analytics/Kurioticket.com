@@ -6361,11 +6361,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       mobileSortOptions.find((option) => option.value === sortMode) ??
       mobileSortOptions[0];
     const shortcutButtonClass =
-      "focus-ring inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[11px] border border-[#D8E1EC] bg-white px-3.5 text-[14px] font-semibold text-[#142033] transition hover:border-[#B9C8D9] hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
+      "focus-ring group inline-flex h-11 min-w-11 shrink-0 items-center justify-center whitespace-nowrap rounded-[9px] p-0 text-[13px] font-semibold leading-4 text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
+    const shortcutCapsuleClass =
+      "inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2.5 transition group-hover:border-[#B9C8D9] group-hover:bg-slate-50 group-focus-visible:border-[#004BB8]";
     const menuClass =
       "z-[90] max-h-72 overflow-y-auto rounded-[12px] border border-[#D8E1EC] bg-white p-1 shadow-[0_14px_32px_-18px_rgba(15,23,42,0.28)]";
     const menuItemClass =
-      "flex min-h-11 w-full items-center justify-between gap-2 rounded-[9px] px-2.5 text-left text-[14px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
+      "flex min-h-11 w-full items-center justify-between gap-2 rounded-[9px] px-2.5 text-left text-[13px] font-semibold leading-[18px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
     const activeMenu = getActiveMobileShortcutMenu();
 
     const openMobileShortcutMenu = (
@@ -6406,14 +6408,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           }}
           className={shortcutButtonClass}
         >
-          <span className="whitespace-nowrap">{label}</span>
-          <ChevronDown
-            className={cn(
-              "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
-              menuOpen && "rotate-180",
-            )}
-            aria-hidden="true"
-          />
+          <span className={shortcutCapsuleClass}>
+            <span className="whitespace-nowrap">{label}</span>
+            <ChevronDown
+              className={cn(
+                "h-[13px] w-[13px] shrink-0 text-slate-500 transition-transform",
+                menuOpen && "rotate-180",
+              )}
+              aria-hidden="true"
+            />
+          </span>
         </button>
       </div>
     );
@@ -6559,7 +6563,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           onScroll={closeMobileShortcutMenus}
         >
           <div className="flex w-max flex-nowrap items-center gap-2">
-            {renderFloatingFilterButton(shortcutButtonClass)}
+            {renderFloatingFilterButton(shortcutButtonClass, shortcutCapsuleClass)}
             {renderTrigger(
               "sort",
               activeSortOption.label,
@@ -6595,7 +6599,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     );
   }
 
-  function renderFloatingFilterButton(className?: string) {
+  function renderFloatingFilterButton(className?: string, capsuleClassName?: string) {
     const label =
       activeFilterCount > 0
         ? t("openFiltersWithCount").replace("{{count}}", activeFilterLabel)
@@ -6610,22 +6614,24 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         type="button"
         aria-label={label}
         className={cn(
-          "focus-ring relative inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[11px] border border-[#D8E1EC] bg-white px-3.5 text-[14px] font-semibold text-[#142033] transition hover:border-[#B9C8D9] hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
+          "focus-ring group relative inline-flex h-11 min-w-11 shrink-0 items-center justify-center whitespace-nowrap rounded-[9px] p-0 text-[13px] font-semibold leading-4 text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
           className,
         )}
         onClick={handleClick}
       >
-        <SlidersHorizontal
-          className="h-4 w-4 text-[#004BB8]"
-          strokeWidth={2.2}
-          aria-hidden="true"
-        />
-        <span>Filter</span>
-        {activeFilterCount > 0 ? (
-          <span className="ms-0.5 inline-flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-semibold leading-none text-[#004BB8]">
-            {activeFilterCount}
-          </span>
-        ) : null}
+        <span className={capsuleClassName ?? "inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2.5 transition group-hover:border-[#B9C8D9] group-hover:bg-slate-50 group-focus-visible:border-[#004BB8]"}>
+          <SlidersHorizontal
+            className="h-4 w-4 text-[#004BB8]"
+            strokeWidth={2.2}
+            aria-hidden="true"
+          />
+          <span>Filter</span>
+          {activeFilterCount > 0 ? (
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-semibold leading-[14px] text-[#004BB8]">
+              {activeFilterCount}
+            </span>
+          ) : null}
+        </span>
       </button>
     );
   }

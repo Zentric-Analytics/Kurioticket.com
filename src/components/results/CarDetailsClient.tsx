@@ -213,7 +213,7 @@ export function CarDetailsExperience({
   );
   return (
     <div
-      className={presentation === "guided-content" ? "mt-6" : ""}
+      className={`${presentation === "guided-content" ? "mt-6" : ""} [--car-details-mobile-header-boundary:calc(env(safe-area-inset-top)+4.375rem)]`}
       data-car-details-experience
     >
       {shareConfirmation ? (
@@ -228,7 +228,7 @@ export function CarDetailsExperience({
       {presentation === "standalone-content" ? (
         <div
           ref={mobileHeaderRef}
-          className={`pointer-events-none fixed inset-x-0 top-0 z-40 h-[calc(env(safe-area-inset-top)+4.375rem)] transition-colors duration-150 lg:hidden ${mobileHeaderProtected ? "bg-[#F5F7FB]" : "bg-transparent"}`}
+          className={`pointer-events-none fixed inset-x-0 top-0 z-40 h-[var(--car-details-mobile-header-boundary)] transition-colors duration-150 lg:hidden ${mobileHeaderProtected ? "bg-[#F5F7FB]" : "bg-transparent"}`}
           data-car-details-mobile-controls
           data-protected={mobileHeaderProtected ? "true" : "false"}
         >

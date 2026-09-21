@@ -31,6 +31,16 @@ test("Cars has one alert after quick filters and before the result summary", () 
   assert.ok(quickFilters >= 0 && quickFilters < alertControl && alertControl < summary);
 });
 
+test("Cars adds spacing only below the mobile price alert", () => {
+  assert.match(alert, /data-cars-price-alert[\s\S]*?className="[^"]*\bmb-1\b[^"]*\bsm:mb-0\b/);
+  assert.match(
+    cars,
+    /data-cars-results-toolbar[\s\S]*?className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-2"[\s\S]*?data-cars-results-summary-row/,
+  );
+  assert.match(cars, /items-start gap-2 pt-1 sm:gap-3 lg:py-1/);
+  assert.doesNotMatch(cars, /data-cars-results-summary-row[^>]*className="[^"]*mt-/);
+});
+
 test("Cars alert preserves its existing full-title CTA presentation", () => {
   const title = '<h2 className="whitespace-nowrap text-sm font-bold text-slate-950 sm:text-base">{t("travel.account.carAlert.title")}</h2>';
   assert.ok(alert.includes(title));
