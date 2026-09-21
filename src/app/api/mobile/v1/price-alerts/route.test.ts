@@ -22,7 +22,7 @@ test("Cars API accepts automatic baseline creation without weakening target crea
   const common = { type: "CAR" as const, origin: "Everett", destination: "Everett", currency: "USD", query: carQuery };
   const automatic = priceAlertSchema.safeParse({ ...common, mode: "AUTOMATIC", baselinePrice: 486 });
   assert.equal(automatic.success, true);
-  if (automatic.success) { assert.equal(automatic.data.mode, "AUTOMATIC"); assert.equal(automatic.data.targetPrice, undefined); }
+  if (automatic.success) { assert.equal(automatic.data.mode, "AUTOMATIC"); assert.equal((automatic.data as { targetPrice?: unknown }).targetPrice, undefined); }
   assert.equal(priceAlertSchema.safeParse({ ...common, mode: "AUTOMATIC" }).success, false);
   assert.equal(priceAlertSchema.safeParse({ ...common, mode: "TARGET", targetPrice: 450 }).success, true);
   assert.equal(priceAlertSchema.safeParse({ ...common, mode: "TARGET" }).success, false);

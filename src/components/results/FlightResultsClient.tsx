@@ -6962,7 +6962,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               </section>
 
               <div data-flight-mobile-results-intro className="space-y-3 px-3 pt-2 sm:hidden">
-                {mobileFlightPriceAlertQuery ? <FlightPriceAlertControl query={mobileFlightPriceAlertQuery} /> : null}
+                {mobileFlightPriceAlertQuery ? <FlightPriceAlertControl query={mobileFlightPriceAlertQuery} results={providerResults} /> : null}
                 <p className="flight-results-count text-[13px] font-bold leading-[17px] tracking-[-0.005em] text-slate-900">
                   {formatMobileFlightResultsFound(sortedResults.length, t, locale)}
                 </p>

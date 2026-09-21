@@ -144,11 +144,12 @@ export async function createPriceAlert(input: {
     const db = getPrisma();
     const mode = input.mode ?? "TARGET";
     if (mode === "TARGET" && input.targetPrice === undefined) throw new PriceAlertUnavailableError("Target price is required for target alerts.");
-    if (input.type === "FLIGHT" && mode === "TARGET") {
+    if (input.type === "FLIGHT") {
       const requestedKey = flightPriceAlertDuplicateKey({
         origin: input.origin ?? null,
         destination: input.destination,
         targetPrice: input.targetPrice ?? null,
+        mode,
         currency: input.currency,
         query: input.query,
       });
@@ -158,6 +159,7 @@ export async function createPriceAlert(input: {
           where: {
             userId: input.userId,
             type: "FLIGHT",
+            mode,
             status: { in: ["ACTIVE", "PAUSED"] },
             origin: input.origin,
             destination: input.destination,

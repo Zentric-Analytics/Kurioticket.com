@@ -9,7 +9,7 @@ export type CanonicalCabin = "economy" | "premium-economy" | "business" | "first
 export function flightAlertPresentation(product: "flight" | "hotel" | "car", hasPlan: boolean, results: FlightResult[]) {
   const liveResults = product === "flight" ? results.filter((result) => result.searchPolicy.source === "duffel" && result.searchPolicy.bookable) : [];
   const currencies = availableFlightAlertCurrencies(liveResults);
-  return { visible: product === "flight" && hasPlan, liveResults, currencies, enabled: currencies.length > 0 };
+  return { visible: product === "flight" && hasPlan, liveResults, currencies, enabled: Boolean(selectAutomaticFlightBaseline(liveResults)) };
 }
 
 export function availableFlightAlertCurrencies(results: FlightResult[]) {
@@ -43,6 +43,23 @@ export function buildFlightPriceAlertPayload(plan: SearchPlan, targetPrice: numb
   };
 }
 
+export function selectAutomaticFlightBaseline(results: FlightResult[], preferredCurrency?: unknown) {
+  const live = results.filter((result) => result.searchPolicy.source === "duffel" && result.searchPolicy.bookable
+    && Number.isFinite(result.price) && result.price > 0 && supported.has(result.currency.trim().toUpperCase()));
+  const preferred = String(preferredCurrency ?? "").trim().toUpperCase();
+  const currency = live.find((result) => result.currency.trim().toUpperCase() === preferred)?.currency ?? live[0]?.currency;
+  if (!currency) return undefined;
+  const normalized = currency.trim().toUpperCase();
+  return live.filter((result) => result.currency.trim().toUpperCase() === normalized)
+    .reduce<FlightResult | undefined>((lowest, result) => !lowest || result.price < lowest.price ? result : lowest, undefined);
+}
+
+export function buildAutomaticFlightPriceAlertPayload(plan: SearchPlan, baselinePrice: number, currency: string) {
+  const target = buildFlightPriceAlertPayload(plan, 1, currency);
+  if (!Number.isFinite(baselinePrice) || baselinePrice <= 0) throw new Error("A valid live flight price is required.");
+  return { ...target, targetPrice: undefined, mode: "AUTOMATIC" as const, baselinePrice };
+}
+
 const canonicalText = (value: unknown) => String(value ?? "").trim().toLowerCase();
 const canonicalCount = (value: unknown) => Number(value ?? 0);
 
@@ -58,6 +75,6 @@ export function flightPriceAlertMatchesPlan(alert: MobilePriceAlert, plan: Searc
 }
 
 export function matchingFlightPriceAlert(alerts: MobilePriceAlert[], plan: SearchPlan) {
-  const matches = alerts.filter((alert) => flightPriceAlertMatchesPlan(alert, plan));
+  const matches = alerts.filter((alert) => alert.mode === "AUTOMATIC" && flightPriceAlertMatchesPlan(alert, plan));
   return matches.find(({ status }) => status === "ACTIVE") ?? matches.find(({ status }) => status === "PAUSED");
 }
