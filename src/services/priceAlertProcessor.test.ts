@@ -3,7 +3,7 @@ import test from "node:test";
 
 import type { NormalizedHotelResult } from "@/lib/types";
 import type { Notification, Prisma } from "@/generated/prisma/client";
-import { buildPriceAlertIdempotencyKey, CAR_AUTOMATIC_DROP_RATIO, isAuthorizedCronRequest, processDuePriceAlerts, selectHotelPriceAlertResult, type ResolvedPrice } from "@/services/priceAlertProcessor";
+import { buildPriceAlertIdempotencyKey, CAR_AUTOMATIC_DROP_RATIO, isAuthorizedCronRequest, processDuePriceAlerts, selectFlightPriceAlertResult, selectHotelPriceAlertResult, type ResolvedPrice } from "@/services/priceAlertProcessor";
 
 const now = new Date("2026-07-10T00:00:00.000Z");
 type TestDb = NonNullable<NonNullable<Parameters<typeof processDuePriceAlerts>[0]>["db"]>;
@@ -341,6 +341,21 @@ test("Cars automatic currency mismatch cannot establish or trigger a baseline", 
   assert.equal(counts.notTriggered, 1);
   assert.equal(a.baselinePrice, null);
   assert.equal(fakeDb.state.notifications.length, 0);
+});
+
+test("Flight automatic alerts compare from their persisted baseline and remain active", async () => {
+  const a = alert({ mode: "AUTOMATIC", baselinePrice: 500, targetPrice: null });
+  const { counts } = await run([a], { price: { price: 420 } });
+  assert.equal(counts.eventsCreated, 1);
+  assert.equal(a.status, "ACTIVE");
+  assert.equal(a.lastNotifiedPrice, 420);
+});
+
+test("Flight resolver selection uses the lowest live fare in the stored currency", () => {
+  const flight = (id: string, price: number, currency: string, provider = "Duffel") => ({ id, price, currency, provider, partnerRedirectUrl: `https://example.com/${id}` }) as never;
+  assert.deepEqual(selectFlightPriceAlertResult([flight("eur", 100, "EUR"), flight("high", 200, "USD"), flight("low", 150, "USD"), flight("sandbox", 1, "USD", "KAYAK sandbox")], "usd"), {
+    provider: "Duffel", price: 150, currency: "USD", url: "https://example.com/low", payload: { resultId: "low" },
+  });
 });
 
 test("hotel alert selection skips leading discovery hotel and returns following priced hotel", () => {

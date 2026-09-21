@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import { getPrisma } from "@/lib/prisma";
-import type { FlightSearchParams, HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
+import type { FlightSearchParams, HotelSearchParams, NormalizedFlightResult, NormalizedHotelResult } from "@/lib/types";
 import { searchFlights } from "@/services/travel/flightAggregator";
 import { searchHotels } from "@/services/travel/hotelAggregator";
 import { searchCars } from "@/services/travel/carAggregator";
@@ -101,6 +101,14 @@ export function selectCarPriceAlertResult(cars: readonly NormalizedCarResult[], 
     .sort((left, right) => left.offer.totalPrice - right.offer.totalPrice || left.car.id.localeCompare(right.car.id) || left.offer.id.localeCompare(right.offer.id));
   const selected = candidates[0];
   return selected ? { provider: selected.offer.bookingProviderName, price: selected.offer.totalPrice, currency, url: selected.offer.bookingUrl, payload: { resultId: selected.car.id, offerId: selected.offer.id } } : null;
+}
+
+export function selectFlightPriceAlertResult(flights: readonly NormalizedFlightResult[], requestedCurrency: string): ResolvedPrice | null {
+  const currency = requestedCurrency.trim().toUpperCase();
+  const selected = flights
+    .filter((flight) => flight.provider !== "KAYAK sandbox" && flight.currency.trim().toUpperCase() === currency && Number.isFinite(flight.price) && flight.price > 0)
+    .sort((left, right) => left.price - right.price || left.id.localeCompare(right.id))[0];
+  return selected ? { provider: selected.provider, price: selected.price, currency, url: selected.partnerRedirectUrl || selected.bookingUrl, payload: { resultId: selected.id } } : null;
 }
 
 export async function processDuePriceAlerts(options: {
@@ -219,8 +227,9 @@ export async function resolveAlertPrice(alert: PriceAlertRecord): Promise<Resolv
     const search = alert.query as Partial<FlightSearchParams>;
     const result = await searchFlights(search as FlightSearchParams);
     if (result.results.length === 0) throw new Error("live_flight_price_unavailable");
-    const best = result.results[0];
-    return { provider: best.provider, price: best.price, currency: best.currency, url: best.partnerRedirectUrl || best.bookingUrl, payload: { resultId: best.id } };
+    const selected = selectFlightPriceAlertResult(result.results, alert.currency);
+    if (!selected) throw new Error("live_flight_price_unavailable");
+    return selected;
   }
   if (alert.type === "CAR") {
     const result = await searchCars(alert.query as CarSearchParams);

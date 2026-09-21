@@ -89,7 +89,6 @@ import { FlightFilterSheet, type FlightFilterSectionName } from "./FlightFilterS
 import { FlightResultsQuickControls } from "./FlightResultsQuickControls";
 import { DetailGlassSurface } from "./DetailGlassSurface";
 import { FlightSortSheet } from "./FlightSortSheet";
-import { FLIGHT_QUICK_SHEET_HORIZONTAL_INSET } from "./FlightResultsSheetShell";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import {
   convertAmount,
@@ -137,10 +136,11 @@ import { flightOperatingCarrierPresentation } from "./flightOperatingCarrier";
 import { deriveFlightResultHighlights, type FlightResultHighlight } from "./flightResultHighlights";
 import { readSession } from "../../storage/sessionStorage";
 import {
-  buildFlightPriceAlertPayload,
+  buildAutomaticFlightPriceAlertPayload,
   flightAlertPresentation,
   matchingFlightPriceAlert,
   parseTargetPrice,
+  selectAutomaticFlightBaseline,
 } from "../flow/flightPriceAlertModel";
 import { buildHotelPriceAlertPayload, hotelAlertPresentation, matchingHotelPriceAlert } from "../flow/hotelPriceAlertModel";
 import { PriceAlertTargetIntent } from "./priceAlertTargetIntent";
@@ -159,6 +159,7 @@ import { clampHotelResultsPage, getHotelResultsPageCount, paginateHotelResults }
 import { buildHotelFilterChips, hasGoogleMapsDiscovery } from "./hotelResultsPresentation";
 import { HotelResultsPagination } from "./HotelResultsPagination";
 import { HotelPriceAlert } from "./HotelPriceAlert";
+import { PriceTrackingSnackbar, type CarPriceAlertFeedback } from "./NativeCarPriceAlert";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { mobileLocales, type MobileLocale } from "../../localization/mobileLocalizationCatalog";
 import { travelAccountMessage } from "../../localization/travelAccountMessages";
@@ -248,6 +249,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
   const [nearbyFareIdentity, setNearbyFareIdentity] = useState<string>();
   const [nearbyFareResume, setNearbyFareResume] = useState(0);
+  const [flightPriceAlertFeedback, setFlightPriceAlertFeedback] = useState<CarPriceAlertFeedback>(null);
   const nearbyFareCache = useRef(new Map<string, NearbyFareState>());
   const nearbyFareRequests = useRef(new Map<string, AbortController>());
   const nearbyFareGeneration = useRef(0);
@@ -975,7 +977,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           stickySectionHeadersEnabled
           renderItem={({ item, index }) => item === null ? (
             <View style={[s0.flightResultsIntro, { backgroundColor: flightCanvasColor }]}>
-              {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><PriceAlert product="flight" plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} compact /></View> : null}
+              {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><PriceAlert product="flight" plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} compact onFeedback={setFlightPriceAlertFeedback} /></View> : null}
               <FlightResultsSummaryRow count={sorted.length} />
             </View>
           ) : (
@@ -1120,6 +1122,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           onSubmit={submitFlightEditSearch}
         />
       ) : null}
+      {flightPriceAlertFeedback ? <PriceTrackingSnackbar key={flightPriceAlertFeedback} feedback={flightPriceAlertFeedback} onDismiss={(feedback) => setFlightPriceAlertFeedback((current) => current === feedback ? null : current)} /> : null}
     </SafeAreaView>
   );
 }
@@ -1703,9 +1706,8 @@ function HotelResultsSummaryRow({ count, sortLabel, expanded, onSort }: {
   );
 }
 
-function PriceAlert({ product, plan, results, hotelResults, available = true, compact = false }: { product: Product; plan?: SearchPlan; results?: FlightResult[]; hotelResults?: HotelResult[]; available?: boolean; compact?: boolean }) {
+function PriceAlert({ product, plan, results, hotelResults, available = true, compact = false, onFeedback }: { product: Product; plan?: SearchPlan; results?: FlightResult[]; hotelResults?: HotelResult[]; available?: boolean; compact?: boolean; onFeedback?: (feedback: Exclude<CarPriceAlertFeedback, null>) => void }) {
   const { theme } = useAppTheme();
-  const safeAreaInsets = useSafeAreaInsets();
   const { locale, t } = useMobileLocalization();
   const message = useCallback((key: Parameters<typeof travelAccountMessage>[1]) => travelAccountMessage(locale, key), [locale]);
   const flight = product === "flight";
@@ -1764,7 +1766,6 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   useFocusEffect(useCallback(() => { void reconcile(); }, [reconcile]));
   const handleToggle = async (next: boolean) => {
     if (pendingRef.current || (flight && loadingAlert) || (!flight && !hotelAlertKnown) || !plan) return;
-    const targetIntent = next ? targetIntentRef.current.beginOpen() : 0;
     if (!flight && loadingAlert) {
       reconciliationRef.current += 1;
       setLoadingAlert(false);
@@ -1773,20 +1774,37 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
       if (unavailable) return;
       if (!await readSession().catch(() => null)) { requireSignIn(); return; }
       if (isTracking) return;
-      if (!targetIntentRef.current.isCurrent(targetIntent)) return;
       if (!flight) {
+        const targetIntent = targetIntentRef.current.beginOpen();
+        if (!targetIntentRef.current.isCurrent(targetIntent)) return;
         setTargetDraft(""); setTargetError(""); setTargetOpen(true); return;
       }
-      if (!matchingAlert) { setTargetError(""); setTargetOpen(true); return; }
       pendingRef.current = true; setPending(true);
-      try { setCurrentMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")).alert); }
-      catch (error) { if (error instanceof TravelApiError && error.status === 401) { if (!flight) setCurrentMatchingAlert(undefined); requireSignIn(); } else Alert.alert("Unable to track prices", error instanceof TravelApiError ? error.message : "Please try again."); }
+      try {
+        let saved: MobilePriceAlert;
+        if (matchingAlert?.status === "PAUSED") saved = (await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")).alert;
+        else {
+          const baseline = selectAutomaticFlightBaseline(presentation.liveResults, plan.payload.currency);
+          if (!baseline) throw new Error("missing_live_baseline");
+          saved = (await travelApi.createPriceAlert(buildAutomaticFlightPriceAlertPayload(plan, baseline.price, baseline.currency))).alert;
+        }
+        setCurrentMatchingAlert(saved); onFeedback?.("active");
+      } catch (error) {
+        if (error instanceof TravelApiError && error.status === 409) {
+          const canonical = matchingFlightPriceAlert((await travelApi.priceAlerts()).alerts, plan);
+          if (canonical) {
+            const saved = canonical.status === "PAUSED" ? (await travelApi.updatePriceAlertStatus(canonical.id, "ACTIVE")).alert : canonical;
+            setCurrentMatchingAlert(saved); onFeedback?.("active");
+          } else Alert.alert("Unable to track prices", "Please try again.");
+        } else if (error instanceof TravelApiError && error.status === 401) { setCurrentMatchingAlert(undefined); requireSignIn(); }
+        else Alert.alert("Unable to track prices", error instanceof TravelApiError ? error.message : "Please try again.");
+      }
       finally { pendingRef.current = false; setPending(false); }
       return;
     }
     if (!isTracking || !matchingAlert) return;
     pendingRef.current = true; setPending(true);
-    try { setCurrentMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "PAUSED")).alert); }
+    try { setCurrentMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "PAUSED")).alert); if (flight) onFeedback?.("paused"); }
     catch (error) { if (error instanceof TravelApiError && error.status === 401) { if (!flight) setCurrentMatchingAlert(undefined); requireSignIn(); } else Alert.alert("Unable to pause price tracking", error instanceof TravelApiError ? error.message : "Please try again."); }
     finally { pendingRef.current = false; setPending(false); }
   };
@@ -1798,17 +1816,15 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
     try {
       const session = await readSession().catch(() => null);
       if (!session) { closeTargetSheet(); requireSignIn(); return; }
-      const samePausedHotelTarget = !flight
-        ? (await travelApi.priceAlerts()).alerts.find((alert) =>
+      const samePausedHotelTarget = (await travelApi.priceAlerts()).alerts.find((alert) =>
             alert.status === "PAUSED"
             && Number(alert.targetPrice) === parsed.value
             && alert.currency?.toUpperCase() === currency.toUpperCase()
             && matchingHotelPriceAlert([alert], plan)?.id === alert.id,
-          )
-        : undefined;
+          );
       const saved = samePausedHotelTarget
         ? await travelApi.updatePriceAlertStatus(samePausedHotelTarget.id, "ACTIVE")
-        : await travelApi.createPriceAlert(flight ? buildFlightPriceAlertPayload(plan, parsed.value, currency) : buildHotelPriceAlertPayload(plan, parsed.value, currency));
+        : await travelApi.createPriceAlert(buildHotelPriceAlertPayload(plan, parsed.value, currency));
       setCurrentMatchingAlert(saved.alert); closeTargetSheet(); setTargetDraft("");
     } catch (error) {
       if (error instanceof TravelApiError && error.status === 401) { closeTargetSheet(); requireSignIn(); }
@@ -1818,7 +1834,7 @@ function PriceAlert({ product, plan, results, hotelResults, available = true, co
   };
   if (flight) {
     const toggleDisabled = pending || loadingAlert || unavailable;
-    return <View accessibilityLabel="Flight price alert" style={[compact ? s0.compactPriceAlert : s0.flightAlert,{ backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}>{compact ? <Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/> : null}<View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[compact ? s0.flightAlertCompactTitle : s0.flightAlertTitle, { color: theme.textPrimary }]}>Track this flight price</Text></View><View style={s0.compactPriceAlertSwitchSlot}>{pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}<Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} hitSlop={6} accessibilityRole="switch" accessibilityLabel="Track this flight price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View>{targetOpen ? <Modal visible transparent animationType="none" onRequestClose={() => { if (!pending) closeTargetSheet(); }} accessibilityViewIsModal><View style={s0.flightAlertOverlay} onAccessibilityEscape={() => { if (!pending) closeTargetSheet(); }}><View pointerEvents="none" style={[StyleSheet.absoluteFill, s0.flightAlertScrim]}/><Pressable accessible={false} disabled={pending} onPressIn={closeTargetSheet} onPress={closeTargetSheet} style={StyleSheet.absoluteFill}/><KeyboardAvoidingView style={s0.flightAlertTouchContent} behavior={Platform.OS === "ios" ? "padding" : "height"} pointerEvents="box-none"><View style={[s0.alertSheet, s0.flightAlertSheet, { backgroundColor: theme.surface, borderColor: theme.border, marginBottom: Math.max(safeAreaInsets.bottom, 12) }]} accessibilityLabel="Create flight price alert"><View style={s0.hotelAlertSheetHeader}><Text accessibilityRole="header" style={[s0.flightAlertTitle, s0.hotelAlertSheetTitle, { color: theme.textPrimary }]}>Track prices</Text><Pressable accessibilityRole="button" accessibilityLabel="Close price alert" disabled={pending} onPressIn={closeTargetSheet} onPress={closeTargetSheet} style={({ pressed }) => [s0.hotelAlertSheetClose, pressed && s0.flightHeaderControlPressed]}><X accessible={false} size={22} color={theme.icon}/></Pressable></View><Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Target price ({currency})</Text><TextInput autoFocus accessibilityLabel={`Target price in ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} placeholderTextColor={theme.textSecondary} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border, backgroundColor: theme.background }]} />{targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={[s0.alertError, theme.dark && { color: "#FF9C9C" }]}>{targetError}</Text> : null}<Button label={pending ? "Creating…" : "Create alert"} onPress={() => void createAlert()} /></View></KeyboardAvoidingView></View></Modal> : null}</View>;
+    return <View accessibilityLabel="Flight price alert" style={[compact ? s0.compactPriceAlert : s0.flightAlert,{ backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}>{compact ? <Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/> : null}<View style={s0.flightAlertCopy}><Text numberOfLines={1} ellipsizeMode="tail" style={[compact ? s0.flightAlertCompactTitle : s0.flightAlertTitle, { color: theme.textPrimary }]}>Track this flight price</Text></View><View style={s0.compactPriceAlertSwitchSlot}><View style={s0.flightAlertLoadingSlot}>{pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}</View><Switch style={Platform.OS === "ios" ? s0.compactPriceAlertSwitchIos : undefined} hitSlop={6} accessibilityRole="switch" accessibilityLabel="Track this flight price" accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }} disabled={toggleDisabled} value={isTracking} onValueChange={(next) => void handleToggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"} ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}/></View></View>;
   }
   if (product !== "hotel" || !plan) return null;
   if (!activePresentation.enabled) return null;
@@ -2080,15 +2096,12 @@ const s0 = StyleSheet.create({
   flightAlertTitle: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlertSubtitle: { fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
   compactPriceAlertSwitchSlot: { minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 },
+  flightAlertLoadingSlot: { width: 20, minHeight: 44, alignItems: "center", justifyContent: "center" },
   compactPriceAlertSwitchIos: { transform: [{ translateY: 8 }] },
   alertModalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,.45)" },
   hotelAlertTouchContainer: { flex: 1 },
   hotelAlertTouchContent: { flexGrow: 1, justifyContent: "flex-end" },
-  flightAlertOverlay: { flex: 1 },
-  flightAlertScrim: { backgroundColor: "rgba(0,0,0,.45)" },
-  flightAlertTouchContent: { flex: 1, justifyContent: "flex-end" },
   alertSheet: { padding: 20, gap: 12, borderTopWidth: 1, borderTopLeftRadius: 18, borderTopRightRadius: 18 },
-  flightAlertSheet: { marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, borderWidth: 1, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 },
   hotelAlertSheetHeader: { flexDirection: "row", alignItems: "center" },
   hotelAlertSheetTitle: { flex: 1, minWidth: 0 },
   hotelAlertSheetClose: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },

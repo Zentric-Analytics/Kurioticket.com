@@ -3,9 +3,12 @@ import test from "node:test";
 
 import {
   buildCanonicalFlightPriceAlertQuery,
+  buildAutomaticFlightPriceAlertPayload,
   buildFlightPriceAlertPayload,
   flightPriceAlertDuplicateKey,
   MAX_PRICE_ALERT_TARGET,
+  matchingAutomaticFlightPriceAlert,
+  selectAutomaticFlightBaseline,
 } from "./flightPriceAlerts";
 
 const query = {
@@ -87,4 +90,39 @@ test("duplicate key includes target price and canonical search fields", () => {
   assert.equal(first, same);
   assert.notEqual(first, differentTarget);
   assert.notEqual(first, differentRoute);
+});
+
+test("automatic payload persists a positive provider-currency baseline", () => {
+  const payload = buildAutomaticFlightPriceAlertPayload({ origin: "JFK", destination: "LHR", baselinePrice: 612.5, currency: "EUR", query });
+  assert.equal(payload.mode, "AUTOMATIC");
+  assert.equal(payload.baselinePrice, 612.5);
+  assert.equal(payload.currency, "EUR");
+  assert.equal(payload.query.currency, "EUR");
+  assert.equal("targetPrice" in payload, false);
+  assert.throws(() => buildAutomaticFlightPriceAlertPayload({ origin: "JFK", destination: "LHR", baselinePrice: 0, currency: "EUR", query }));
+});
+
+test("automatic duplicate identity is canonical and separate from target alerts", () => {
+  const automatic = flightPriceAlertDuplicateKey({ origin: "JFK", destination: "LHR", targetPrice: null, mode: "AUTOMATIC", currency: "USD", query });
+  const same = flightPriceAlertDuplicateKey({ origin: "JFK", destination: "LHR", targetPrice: null, mode: "AUTOMATIC", currency: "USD", query: { ...query, arbitrary: "changed" } });
+  const target = flightPriceAlertDuplicateKey({ origin: "JFK", destination: "LHR", targetPrice: 499, mode: "TARGET", currency: "USD", query });
+  assert.equal(automatic, same);
+  assert.notEqual(automatic, target);
+});
+
+test("automatic switch matching ignores target alerts and display-currency changes", () => {
+  const automatic = { type: "FLIGHT", mode: "AUTOMATIC", status: "PAUSED", query: { ...query, currency: "EUR" } };
+  const target = { type: "FLIGHT", mode: "TARGET", status: "ACTIVE", query };
+  assert.equal(matchingAutomaticFlightPriceAlert([target, automatic], query), automatic);
+});
+
+test("baseline selection uses live provider inventory and never compares unlike currencies", () => {
+  const fares = [
+    { price: 100, currency: "EUR", provider: "Duffel" },
+    { price: 120, currency: "USD", provider: "Duffel" },
+    { price: 90, currency: "USD", provider: "Duffel" },
+    { price: 1, currency: "USD", provider: "KAYAK sandbox" },
+  ];
+  assert.equal(selectAutomaticFlightBaseline(fares, "USD")?.price, 90);
+  assert.equal(selectAutomaticFlightBaseline(fares, "NGN")?.currency, "EUR");
 });

@@ -140,17 +140,89 @@ export function buildFlightPriceAlertPayload(input: {
   };
 }
 
+export function buildAutomaticFlightPriceAlertPayload(input: {
+  origin: string;
+  destination: string;
+  baselinePrice: number;
+  currency: string;
+  query: unknown;
+}) {
+  const currency = normalizeCurrency(input.currency);
+  const rawQuery = input.query && typeof input.query === "object" && !Array.isArray(input.query)
+    ? input.query as Record<string, unknown>
+    : {};
+  const query = canonicalFlightPriceAlertQuerySchema.parse({ ...rawQuery, currency });
+  const baselinePrice = z.number().finite().positive().parse(input.baselinePrice);
+
+  if (input.origin.trim().toUpperCase() !== query.origin || input.destination.trim().toUpperCase() !== query.destination) {
+    throw new Error("Route must match the flight search query.");
+  }
+
+  return {
+    type: "FLIGHT" as const,
+    origin: query.origin,
+    destination: query.destination,
+    baselinePrice,
+    mode: "AUTOMATIC" as const,
+    currency,
+    query,
+  };
+}
+
+type FlightBaselineResult = { price: number; currency: string; provider?: string; searchPolicy?: { source?: string; bookable?: boolean } };
+
+/** Selects a real provider fare without comparing unlike currencies as raw numbers. */
+export function selectAutomaticFlightBaseline<T extends FlightBaselineResult>(results: readonly T[], preferredCurrency?: string) {
+  const eligible = results.filter((result) => Number.isFinite(result.price) && result.price > 0
+    && supportedCurrencyCodes.has(normalizeCurrency(result.currency))
+    && result.provider !== "KAYAK sandbox"
+    && result.searchPolicy?.source !== "kayak-sandbox"
+    && result.searchPolicy?.bookable !== false);
+  const preferred = preferredCurrency ? normalizeCurrency(preferredCurrency) : "";
+  const currency = eligible.find((result) => normalizeCurrency(result.currency) === preferred)?.currency
+    ?? eligible[0]?.currency;
+  if (!currency) return null;
+  const normalizedCurrency = normalizeCurrency(currency);
+  return eligible
+    .filter((result) => normalizeCurrency(result.currency) === normalizedCurrency)
+    .reduce<T | null>((lowest, result) => !lowest || result.price < lowest.price ? result : lowest, null);
+}
+
+export type MatchableFlightPriceAlert = {
+  type: string;
+  mode?: "AUTOMATIC" | "TARGET";
+  status: string;
+  query: unknown;
+};
+
+const flightSearchIdentityFields = ["origin", "destination", "departureDate", "returnDate", "tripType", "cabinClass", "adults", "children", "infants", "travelers"] as const;
+
+export function automaticFlightPriceAlertMatchesQuery(alert: MatchableFlightPriceAlert, query: unknown) {
+  if (alert.type !== "FLIGHT" || alert.mode !== "AUTOMATIC") return false;
+  const expected = canonicalFlightPriceAlertQuerySchema.safeParse(query);
+  const actual = canonicalFlightPriceAlertQuerySchema.safeParse(alert.query);
+  return expected.success && actual.success && flightSearchIdentityFields.every((field) =>
+    String(actual.data[field] ?? "").toLowerCase() === String(expected.data[field] ?? "").toLowerCase());
+}
+
+export function matchingAutomaticFlightPriceAlert<T extends MatchableFlightPriceAlert>(alerts: T[], query: unknown) {
+  const matches = alerts.filter((alert) => automaticFlightPriceAlertMatchesQuery(alert, query));
+  return matches.find(({ status }) => status === "ACTIVE") ?? matches.find(({ status }) => status === "PAUSED");
+}
+
 export function flightPriceAlertDuplicateKey(input: {
   origin: string | null;
   destination: string;
   targetPrice: { toString(): string } | string | number | null;
+  mode?: "AUTOMATIC" | "TARGET";
   currency: string | null;
   query: unknown;
 }) {
   const parsed = canonicalFlightPriceAlertQuerySchema.safeParse(input.query);
-  if (!parsed.success || input.targetPrice === null) return null;
-  const price = Number(input.targetPrice.toString());
-  if (!Number.isFinite(price)) return null;
+  const mode = input.mode ?? "TARGET";
+  if (!parsed.success || (mode === "TARGET" && input.targetPrice === null)) return null;
+  const price = input.targetPrice === null ? Number.NaN : Number(input.targetPrice.toString());
+  if (mode === "TARGET" && !Number.isFinite(price)) return null;
 
   return [
     parsed.data.origin,
@@ -164,6 +236,7 @@ export function flightPriceAlertDuplicateKey(input: {
     parsed.data.infants,
     parsed.data.travelers,
     (input.currency || parsed.data.currency).toUpperCase(),
-    price.toFixed(2),
+    mode,
+    mode === "TARGET" ? price.toFixed(2) : "automatic",
   ].join("|");
 }
