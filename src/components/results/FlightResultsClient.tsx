@@ -135,6 +135,7 @@ import {
   compareFlightPrices,
   getComparableFlightPrice,
   getComparableFlightPriceBounds,
+  getLowestComparableFlightFare,
 } from "@/lib/flights/flightResultPrices";
 import type { FlightSearchLeg, PublicFlightResult, SortMode } from "@/lib/types";
 import {
@@ -2828,7 +2829,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     let active = true;
     const dates = getNearbyFareDateRange(getNearbyFareWindowStart(centerDate));
     const fetchedAt = Date.now();
-    const currentFare = getLowestProviderFare(providerResults);
+    const currentFare = getLowestComparableFlightFare(
+      providerResults,
+      selectedCurrency,
+      currencyRates.rates,
+    );
     const selectedKey = getNearbyFareCacheKey(body, body.departureDate);
 
     if (currentFare) {
@@ -2895,7 +2900,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           const data = (await response.json()) as {
             results?: PublicFlightResult[];
           };
-          const fare = getLowestProviderFare(data.results ?? []);
+          const fare = getLowestComparableFlightFare(
+            data.results ?? [],
+            selectedCurrency,
+            currencyRates.rates,
+          );
           const state: NearbyFareState = fare
             ? {
                 date,
@@ -2974,7 +2983,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       activeRequests.forEach((request) => request.controller.abort());
       activeRequests.clear();
     };
-  }, [body, guidedMode, providerResults]);
+  }, [body, currencyRates.rates, guidedMode, providerResults, selectedCurrency]);
 
   useEffect(() => {
     if (!tripTypeMenuOpen) return;
@@ -7756,21 +7765,6 @@ function preserveRoundTripDuration(
   );
 
   return formatDateValue(addDays(nextDepartureDate, durationDays));
-}
-
-function getLowestProviderFare(results: PublicFlightResult[]) {
-  return results.reduce<{ price: number; currency: string } | null>(
-    (lowest, result) => {
-      if (!Number.isFinite(result.price) || !result.currency) return lowest;
-
-      if (!lowest || result.price < lowest.price) {
-        return { price: result.price, currency: result.currency };
-      }
-
-      return lowest;
-    },
-    null,
-  );
 }
 
 function getNearbyFareCacheKey(
