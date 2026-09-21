@@ -9,7 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 import { CarResultImage } from "@/components/results/CarResultImage";
 import type { NormalizedCarResult } from "@/lib/cars/types";
 import {
@@ -23,15 +23,15 @@ export function CarDetailsHero({
   text,
   identity,
   desktopOverlay,
-  mobileBackControl,
-  mobileActions,
+  imageStageRef,
+  guidedMobileActions,
 }: {
   car: NormalizedCarResult;
   text: Record<string, string>;
   identity: ReactNode;
   desktopOverlay: ReactNode;
-  mobileBackControl?: ReactNode;
-  mobileActions: ReactNode;
+  imageStageRef?: Ref<HTMLElement>;
+  guidedMobileActions?: ReactNode;
 }) {
   const normalizedSpecs: Array<[LucideIcon, string]> = [
     [Users, `${car.passengers} ${text.passengers}`],
@@ -51,13 +51,14 @@ export function CarDetailsHero({
     normalizedSpecs.splice(4, 0, [Snowflake, text.airConditioning]);
   // Zero/default normalized fields are not provider claims.
   const specs: Array<[LucideIcon, string]> = car.sandboxPresentation
-    ? car.sandboxPresentation.specs.map(label => [CarFront, label])
+    ? car.sandboxPresentation.specs.map((label) => [CarFront, label])
     : normalizedSpecs;
 
   return (
     <section className="-mx-4 border-b border-slate-200 bg-[#F5F7FB] pb-4 sm:mx-0 lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
       <div className="grid gap-0 lg:grid-cols-2 lg:items-start lg:gap-6">
         <figure
+          ref={imageStageRef}
           className="relative min-w-0 bg-white"
           data-car-details-image-stage
         >
@@ -88,13 +89,11 @@ export function CarDetailsHero({
               {desktopOverlay}
             </div>
           </div>
-          <div
-            className="absolute inset-x-0 top-0 z-20 flex items-start justify-between pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-3 lg:hidden"
-            data-car-details-mobile-controls
-          >
-            {mobileBackControl}
-            {mobileActions}
-          </div>
+          {guidedMobileActions ? (
+            <div className="absolute right-[max(1rem,env(safe-area-inset-right))] top-3 z-20 lg:hidden">
+              {guidedMobileActions}
+            </div>
+          ) : null}
         </figure>
         <div className="min-w-0 px-4 pt-3.5 lg:px-0 lg:pt-0">
           <div className="lg:hidden" data-car-details-mobile-identity>

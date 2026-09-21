@@ -14,7 +14,7 @@ import {
   Share2,
   ShieldCheck,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -116,6 +116,10 @@ export function CarDetailsExperience({
   const { isSaved, toggleSavedCar } = useSavedCar(car, search);
   const [activeTab, setActiveTab] = useState<CarDetailsTab>("compare");
   const [shareConfirmation, setShareConfirmation] = useState("");
+  const [mobileHeaderProtected, setMobileHeaderProtected] = useState(false);
+  const mobileHeaderProtectedRef = useRef(false);
+  const mobileHeaderRef = useRef<HTMLDivElement>(null);
+  const heroImageStageRef = useRef<HTMLElement>(null);
   const copy = (key: string) => t[key] || enTranslations[key] || key;
   const text = {
     passengers: copy("carsResults.passengers").toLowerCase(),
@@ -158,6 +162,45 @@ export function CarDetailsExperience({
       if (error instanceof DOMException && error.name === "AbortError") return;
     }
   }
+  useEffect(() => {
+    if (presentation !== "standalone-content") return;
+
+    let animationFrame = 0;
+    const protectionLead = 16;
+    const protectionHysteresis = 12;
+
+    const syncProtection = () => {
+      animationFrame = 0;
+      const imageStage = heroImageStageRef.current;
+      const protectedHeader = mobileHeaderRef.current;
+      if (!imageStage || !protectedHeader) return;
+
+      const headerBottom = protectedHeader.getBoundingClientRect().bottom;
+      const imageBottom = imageStage.getBoundingClientRect().bottom;
+      const threshold = mobileHeaderProtectedRef.current
+        ? headerBottom + protectionLead + protectionHysteresis
+        : headerBottom + protectionLead;
+      const nextProtected = imageBottom <= threshold;
+      if (nextProtected === mobileHeaderProtectedRef.current) return;
+      mobileHeaderProtectedRef.current = nextProtected;
+      setMobileHeaderProtected(nextProtected);
+    };
+    const scheduleProtectionSync = () => {
+      if (animationFrame) return;
+      animationFrame = window.requestAnimationFrame(syncProtection);
+    };
+
+    syncProtection();
+    window.addEventListener("scroll", scheduleProtectionSync, {
+      passive: true,
+    });
+    window.addEventListener("resize", scheduleProtectionSync);
+    return () => {
+      window.removeEventListener("scroll", scheduleProtectionSync);
+      window.removeEventListener("resize", scheduleProtectionSync);
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+    };
+  }, [presentation]);
   const pickupSection = (
     <PickupReturnSection
       car={car}
@@ -182,6 +225,27 @@ export function CarDetailsExperience({
           {shareConfirmation}
         </span>
       ) : null}
+      {presentation === "standalone-content" ? (
+        <div
+          ref={mobileHeaderRef}
+          className={`pointer-events-none fixed inset-x-0 top-0 z-40 h-[calc(env(safe-area-inset-top)+4.375rem)] transition-colors duration-150 lg:hidden ${mobileHeaderProtected ? "bg-[#F5F7FB]" : "bg-transparent"}`}
+          data-car-details-mobile-controls
+          data-protected={mobileHeaderProtected ? "true" : "false"}
+        >
+          <div className="absolute inset-x-0 top-[calc(env(safe-area-inset-top)+0.75rem)] flex items-start justify-between pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
+            <div className="pointer-events-auto">{mobileBackControl}</div>
+            <div className="pointer-events-auto">
+              <CarHeroActions
+                car={car}
+                isSaved={isSaved}
+                toggleSavedCar={toggleSavedCar}
+                shareCar={shareCar}
+                copy={copy}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div
           className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:space-y-5" : "space-y-4 lg:space-y-5"}`}
@@ -189,7 +253,7 @@ export function CarDetailsExperience({
           <CarDetailsHero
             car={car}
             text={text}
-            mobileBackControl={mobileBackControl}
+            imageStageRef={heroImageStageRef}
             identity={
               <div className="min-w-0">
                 <Heading
@@ -233,14 +297,16 @@ export function CarDetailsExperience({
                 />
               </div>
             }
-            mobileActions={
-              <CarHeroActions
-                car={car}
-                isSaved={isSaved}
-                toggleSavedCar={toggleSavedCar}
-                shareCar={shareCar}
-                copy={copy}
-              />
+            guidedMobileActions={
+              presentation === "guided-content" ? (
+                <CarHeroActions
+                  car={car}
+                  isSaved={isSaved}
+                  toggleSavedCar={toggleSavedCar}
+                  shareCar={shareCar}
+                  copy={copy}
+                />
+              ) : undefined
             }
           />
           {presentation === "standalone-content" ? (
@@ -465,33 +531,35 @@ function CarPriceComparisonSection({
   headingLevel: HeadingLevel;
 }) {
   const daily = price(offer.pricePerDay, offer.currency);
-  const facts = car.sandboxPresentation ? [
-    { label: "KAYAK sandbox", Icon: ShieldCheck },
-    { label: "Simulated inventory — no real booking", Icon: Gauge },
-  ] : [
-    {
-      label: offer.freeCancellation
-        ? copy("carDetails.freeCancellation")
-        : copy("carDetails.nonRefundable"),
-      Icon: ShieldCheck,
-    },
-    {
-      label:
-        car.fuelPolicy === "full-to-full"
-          ? copy("carsResults.fullToFull")
-          : car.fuelPolicy === "same-to-same"
-            ? copy("carsResults.sameToSame")
-            : copy("carsResults.fuelPolicy"),
-      Icon: Fuel,
-    },
-    {
-      label:
-        car.mileagePolicy === "unlimited"
-          ? copy("carDetails.unlimitedMileage")
-          : `${car.limitedMileageKm ?? "—"} km ${copy("carDetails.includedShort")}`,
-      Icon: Gauge,
-    },
-  ];
+  const facts = car.sandboxPresentation
+    ? [
+        { label: "KAYAK sandbox", Icon: ShieldCheck },
+        { label: "Simulated inventory — no real booking", Icon: Gauge },
+      ]
+    : [
+        {
+          label: offer.freeCancellation
+            ? copy("carDetails.freeCancellation")
+            : copy("carDetails.nonRefundable"),
+          Icon: ShieldCheck,
+        },
+        {
+          label:
+            car.fuelPolicy === "full-to-full"
+              ? copy("carsResults.fullToFull")
+              : car.fuelPolicy === "same-to-same"
+                ? copy("carsResults.sameToSame")
+                : copy("carsResults.fuelPolicy"),
+          Icon: Fuel,
+        },
+        {
+          label:
+            car.mileagePolicy === "unlimited"
+              ? copy("carDetails.unlimitedMileage")
+              : `${car.limitedMileageKm ?? "—"} km ${copy("carDetails.includedShort")}`,
+          Icon: Gauge,
+        },
+      ];
   return (
     <div
       className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:bg-transparent"
@@ -613,7 +681,8 @@ function CarLocationSection({
             {pickupLocation}
           </p>
           <p className="text-xs leading-5 text-slate-500">
-            {car.sandboxPresentation?.pickupLabel ?? pickupTypeLabels[car.pickupType]}
+            {car.sandboxPresentation?.pickupLabel ??
+              pickupTypeLabels[car.pickupType]}
           </p>
         </div>
       </div>
@@ -847,7 +916,8 @@ function PickupReturnSection({
         ))}
       </div>
       <p className="mt-4 text-sm font-medium">
-        {car.sandboxPresentation?.pickupLabel ?? pickupTypeLabels[car.pickupType]}
+        {car.sandboxPresentation?.pickupLabel ??
+          pickupTypeLabels[car.pickupType]}
         {car.shuttleRequired ? ` · ${copy("carDetails.shuttleRequired")}` : ""}
       </p>
       {car.pickupInstructions && (
