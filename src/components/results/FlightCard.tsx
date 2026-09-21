@@ -60,14 +60,13 @@ export function FlightCard({
     displayCurrency: selectedOption.currency,
     convertSourceEstimate: true,
     useFlightResultSymbols: true,
+    maximumFractionDigits: 0,
     rates: currencyRates.rates,
     isFallbackRate: currencyRates.isFallback,
   });
   const cardPrice = formatFlightCardPrice({
     amount: displayPrice.amount,
-    currency: displayPrice.currency,
     formatted: displayPrice.formatted,
-    locale,
   });
   const details = buildFlightDetails(flight, t);
   const visibleLegs = getVisibleLegs(flight);

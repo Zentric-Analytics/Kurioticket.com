@@ -1,6 +1,4 @@
-import { formatFlightResultCurrency } from "@/lib/currency/formatCurrency";
-
-const FLIGHT_CARD_COMPACT_THRESHOLD = 10_000_000;
+const FLIGHT_CARD_COMPACT_TYPOGRAPHY_THRESHOLD = 10_000_000;
 
 export type FlightCardPriceDisplay = {
   formatted: string;
@@ -8,37 +6,24 @@ export type FlightCardPriceDisplay = {
 };
 
 /**
- * Produces the constrained price shown on a FlightCard. Exact prices below
- * eight digits are preserved; only exceptionally long amounts use compact
- * notation. Full values remain available to details and accessibility copy.
+ * Produces the full price shown on a FlightCard. Size categories adapt the
+ * typography for long values without abbreviating the monetary amount.
  */
 export function formatFlightCardPrice({
   amount,
-  currency,
   formatted,
-  locale,
 }: {
   amount: number;
-  currency: string;
   formatted: string;
-  locale?: string;
 }): FlightCardPriceDisplay {
   const magnitude = Math.abs(amount);
 
-  if (magnitude < FLIGHT_CARD_COMPACT_THRESHOLD) {
-    return {
-      formatted,
-      size: magnitude >= 1_000_000 ? "large" : "normal",
-    };
-  }
-
   return {
-    formatted: formatFlightResultCurrency(amount, currency, {
-      notation: "compact",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 1,
-      locale,
-    }),
-    size: "compact",
+    formatted,
+    size: magnitude >= FLIGHT_CARD_COMPACT_TYPOGRAPHY_THRESHOLD
+      ? "compact"
+      : magnitude >= 1_000_000
+        ? "large"
+        : "normal",
   };
 }
