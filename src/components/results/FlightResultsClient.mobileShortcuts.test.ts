@@ -27,13 +27,13 @@ test("mobile flight shortcuts remain an ordered single-row scroll rail", () => {
   assert.doesNotMatch(shortcuts, /flex-wrap/);
 });
 
-test("mobile flight shortcut triggers share compact 44px chip styling", () => {
-  assert.match(shortcuts, /inline-flex h-11 shrink-0/);
+test("mobile flight shortcut triggers separate a 44px target from a native-scale capsule", () => {
+  assert.match(shortcuts, /inline-flex h-11 min-w-11 shrink-0/);
   assert.match(shortcuts, /whitespace-nowrap/);
-  assert.match(shortcuts, /rounded-\[11px\]/);
-  assert.match(shortcuts, /border-\[#D8E1EC\]/);
-  assert.match(shortcuts, /bg-white/);
-  assert.match(shortcuts, /text-\[14px\]/);
+  assert.match(shortcuts, /inline-flex h-9 items-center justify-center gap-1 rounded-\[9px\]/);
+  assert.match(shortcuts, /border-\[#D8E1EC\][^\"]*bg-white[^\"]*px-2\.5/);
+  assert.match(shortcuts, /text-\[13px\][^\"]*leading-4/);
+  assert.match(shortcuts, /h-\[13px\] w-\[13px\]/);
   assert.match(shortcuts, /<ChevronDown/);
   assert.match(shortcuts, /openMobileShortcutMenu\(menu, width, event\.currentTarget\)/);
 });
@@ -44,7 +44,7 @@ test("mobile shortcut popovers share one compact production surface", () => {
   assert.match(shortcuts, /border-\[#D8E1EC\]/);
   assert.match(shortcuts, /bg-white p-1/);
   assert.match(shortcuts, /shadow-\[0_14px_32px_-18px_rgba\(15,23,42,0\.28\)\]/);
-  assert.match(shortcuts, /const menuItemClass =\s*"[^"]*min-h-11[^"]*rounded-\[9px\][^"]*text-\[14px\]/);
+  assert.match(shortcuts, /const menuItemClass =\s*"[^"]*min-h-11[^"]*rounded-\[9px\][^"]*text-\[13px\][^"]*leading-\[18px\]/);
   assert.match(shortcuts, /mobileSortMenuOpen,\s*164,/);
   assert.match(shortcuts, /mobileAirlineMenuOpen,\s*220,/);
   assert.match(shortcuts, /mobileStopsMenuOpen,\s*172,/);
@@ -87,10 +87,20 @@ test("mobile Filter retains its icon and existing drawer handler", () => {
   const filterEnd = source.indexOf("function renderMobileCompactResultsHeader", filterStart);
   const filter = source.slice(filterStart, filterEnd);
 
-  assert.match(filter, /inline-flex h-11 shrink-0/);
+  assert.match(filter, /inline-flex h-11 min-w-11 shrink-0/);
   assert.match(filter, /whitespace-nowrap/);
   assert.match(filter, /border-\[#D8E1EC\]/);
   assert.match(filter, /bg-white/);
   assert.match(filter, /<SlidersHorizontal/);
+  assert.match(filter, /className="h-4 w-4 text-\[#004BB8\]"/);
+  assert.match(filter, /inline-flex h-5 min-w-5[^\"]*text-\[11px\][^\"]*leading-\[14px\]/);
   assert.match(filter, /openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/);
+});
+
+test("all five shortcut controls use the shared compact visual system", () => {
+  assert.match(shortcuts, /renderFloatingFilterButton\(shortcutButtonClass, shortcutCapsuleClass\)/);
+  assert.equal(shortcuts.match(/renderTrigger\(/g)?.length, 4);
+  for (const control of ["sort", "airlines", "stops", "airports"]) {
+    assert.match(shortcuts, new RegExp(`renderTrigger\\(\\s*"${control}"`));
+  }
 });
