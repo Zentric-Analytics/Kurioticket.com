@@ -2505,7 +2505,7 @@ export function CarsResultsExperience({
                               : "border-slate-300 bg-white text-[#07133B] hover:bg-slate-50",
                           )}
                         >
-                          {group.id === "pricePerDay" ? t("carsResults.pricePerDay") : group.titleKey ? t(group.titleKey) : group.title ?? ""}
+                          {carFilterGroupLabel(group, t, true)}
                           {count > 0 ? <span className="rounded-full bg-[#004BB8] px-1.5 py-0.5 text-[10px] text-white">{count}</span> : null}
                           <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>
@@ -2861,7 +2861,7 @@ export function CarsResultsExperience({
             <section ref={quickFiltersDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={`cars-quick-${activeQuickFilterGroup.id}`} onMouseDown={(event) => event.stopPropagation()} className="w-full rounded-t-[1.5rem] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-24px_70px_-30px_rgba(15,23,42,0.65)]">
               <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-300" aria-hidden="true" />
               <div className="flex items-center justify-between px-5 pb-3 pt-3">
-                <div><h2 id={`cars-quick-${activeQuickFilterGroup.id}`} className="text-lg font-extrabold text-slate-950">{activeQuickFilterGroup.id === "pricePerDay" ? t("carsResults.pricePerDay") : activeQuickFilterGroup.titleKey ? t(activeQuickFilterGroup.titleKey) : activeQuickFilterGroup.title ?? ""}</h2>{(selectedCarFilters[activeQuickFilterGroup.id]?.length ?? 0) > 0 ? <p className="mt-0.5 text-xs font-semibold text-[#536B92]">{selectedCarFilters[activeQuickFilterGroup.id]?.length} selected</p> : null}</div>
+                <div><h2 id={`cars-quick-${activeQuickFilterGroup.id}`} className="text-lg font-extrabold text-slate-950">{carFilterGroupLabel(activeQuickFilterGroup, t, true)}</h2>{(selectedCarFilters[activeQuickFilterGroup.id]?.length ?? 0) > 0 ? <p className="mt-0.5 text-xs font-semibold text-[#536B92]">{selectedCarFilters[activeQuickFilterGroup.id]?.length} selected</p> : null}</div>
                 <button ref={quickFiltersCloseButtonRef} type="button" aria-label="Close" onClick={() => setQuickFilterGroupId(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><X className="h-5 w-5" aria-hidden="true" /></button>
               </div>
               <div className="max-h-[55dvh] overflow-y-auto overscroll-contain border-y border-slate-100 px-4 py-2">
@@ -3837,6 +3837,18 @@ function CarFilters({
   );
 }
 
+function carFilterGroupLabel(
+  group: CarFilterGroup,
+  t: (key: string) => string,
+  mobile = false,
+) {
+  if (group.id === "pricePerDay") {
+    return mobile ? group.title ?? "Price" : t("carsResults.pricePerDay");
+  }
+
+  return group.titleKey ? t(group.titleKey) : group.title ?? "";
+}
+
 function FilterSection({
   layout,
   group,
@@ -3877,7 +3889,7 @@ function FilterSection({
             compactOpen && "text-[#004BB8]",
           )}
         >
-          <span className="min-w-0 truncate">{group.id === "pricePerDay" ? t("carsResults.pricePerDay") : group.titleKey ? t(group.titleKey) : group.title ?? ""}</span>
+          <span className="min-w-0 truncate">{carFilterGroupLabel(group, t, layout === "mobile")}</span>
           <span className="flex shrink-0 items-center gap-2">
             {selectedOptions.length ? (
               <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[11px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">
@@ -3896,7 +3908,7 @@ function FilterSection({
         </button>
       ) : (
         <h3 className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950">
-          {group.id === "pricePerDay" ? t("carsResults.pricePerDay") : group.titleKey ? t(group.titleKey) : group.title ?? ""}
+          {carFilterGroupLabel(group, t)}
         </h3>
       )}
       <div
