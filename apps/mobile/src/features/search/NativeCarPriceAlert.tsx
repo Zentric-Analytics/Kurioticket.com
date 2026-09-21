@@ -133,7 +133,7 @@ export function CarPriceAlertSnackbar({ feedback, onDismiss }: { feedback: Exclu
 }
 
 const styles = StyleSheet.create({
-  control: { width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1, paddingLeft: 12, paddingRight: 10, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 8 },
+  control: { width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1, paddingLeft: 12, paddingRight: 14, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 8 },
   title: { flex: 1, flexShrink: 1, fontSize: 12.5, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },
   switchControls: { minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 6 },
   loadingSlot: { width: 20, minHeight: 44, alignItems: "center", justifyContent: "center" },
