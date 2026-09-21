@@ -18,6 +18,7 @@ type BrandedLoadingProps = {
   contentClassName?: string;
   showLogo?: boolean;
   showProgress?: boolean;
+  accessibleProgress?: boolean;
   visual?: "default" | "logoPulse";
 };
 
@@ -62,9 +63,10 @@ export function BrandedLoading({
   contentClassName,
   showLogo = true,
   showProgress = true,
+  accessibleProgress = false,
   visual = "default",
 }: BrandedLoadingProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const isFullscreen = variant === "fullscreen";
   const logoPulse = visual === "logoPulse";
   const hotelSearchCopy = useMemo(
@@ -82,14 +84,14 @@ export function BrandedLoading({
     if (!searchType) return undefined;
     if (searchType === "hotel") return hotelSearchCopy;
     if (searchType === "flight" || searchType === "car") {
-      const presentation = searchLoadingPresentation(searchType);
+      const presentation = searchLoadingPresentation(searchType, locale);
       return {
         title: presentation.title,
         messages: [...presentation.messages],
       };
     }
     return searchLoadingCopy[searchType];
-  }, [hotelSearchCopy, searchType]);
+  }, [hotelSearchCopy, locale, searchType]);
   const defaultLoadingMessages = useMemo(
     () => [t["brandedLoading.default.preparingExperience"]],
     [t],
@@ -125,7 +127,8 @@ export function BrandedLoading({
         variantClasses[variant],
         className,
       )}
-      role="status"
+      role={accessibleProgress ? "progressbar" : "status"}
+      aria-label={accessibleProgress ? `${resolvedTitle}. ${resolvedDescription}` : undefined}
       aria-live="polite"
       aria-busy="true"
     >

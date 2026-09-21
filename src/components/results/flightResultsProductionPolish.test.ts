@@ -20,18 +20,16 @@ test("mobile filter sheet has one contextual reset and a result-count action", a
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
-  const start = source.lastIndexOf('id="flight-mobile-filters-dialog"');
-  const end = source.indexOf("</aside>", start);
-  const sheet = source.slice(start, end);
+  const sheet = await readFile(new URL("./MobileFlightFiltersSheet.tsx", import.meta.url), "utf8");
 
-  assert.match(sheet, /activeFilterCount > 0 \?/);
-  assert.match(sheet, /\{t\("clearAll"\)\}/);
-  assert.match(sheet, /formatResultsFound\(sortedResults\.length, t\)/);
+  assert.match(sheet, /activeFilterCount > 0 \? <button[^>]*>Reset<\/button>/);
+  assert.match(sheet, /`View \$\{matchingCount\}/);
+  assert.match(sheet, /disabled=\{matchingCount === 0\}/);
   assert.match(sheet, /env\(safe-area-inset-bottom\)/);
-  assert.match(sheet, /overflow-y-auto overscroll-contain/);
+  assert.match(source, /overflow-y-auto overscroll-contain/);
   assert.match(source, /mb-2\.5 text-sm font-bold leading-5/);
   assert.doesNotMatch(source, /font-extrabold uppercase leading-5 tracking-\[0\.14em\]/);
-  assert.match(source, /min-h-11 gap-3 px-1\.5/);
+  assert.match(source, /min-h-11/);
 });
 
 test("pagination uses an occluding full-page transition with an accessible status", async () => {

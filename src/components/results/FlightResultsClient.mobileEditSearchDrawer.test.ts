@@ -4,9 +4,10 @@ import test from "node:test";
 const source = readFileSync(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
 
 test("standard mobile filters unmount when closed and wire existing focus management", () => {
-  const start = source.lastIndexOf('{filtersOpen ? <aside');
+  const start = source.indexOf("function renderMobileFullFiltersSheet");
   assert.ok(start > 0);
-  const drawer = source.slice(start, source.indexOf('</aside> : null}', start));
+  const drawer = source.slice(start, source.indexOf("if (guidedMode)", start));
+  assert.match(drawer, /if \(!filtersOpen\) return null/);
   assert.match(drawer, /ref=\{mobileFiltersDialogRef\}/);
   assert.match(drawer, /ref=\{mobileFiltersCloseButtonRef\}/);
   assert.doesNotMatch(drawer, /translate-y-full/);

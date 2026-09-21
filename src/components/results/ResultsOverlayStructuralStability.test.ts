@@ -24,11 +24,12 @@ test("flight mobile summary and shortcuts stay in normal flow beneath Edit Searc
   const underlyingControls = flights.slice(start, end);
 
   assert.ok(start >= 0 && end > start);
-  assert.equal(underlyingControls.match(/inert=\{mobileSearchOpen \? true : undefined\}/g)?.length, 2);
+  assert.equal(underlyingControls.match(/inert=\{mobileSearchOpen \? true : undefined\}/g)?.length, 1);
   expectInteractionOnlyGating(underlyingControls);
   assert.doesNotMatch(underlyingControls, /\{!mobileSearchOpen \? \(/);
   assert.match(underlyingControls, /renderMobileControlsRow\(\)/);
-  assert.match(underlyingControls, /renderMobileSortResultsRow\(\)/);
+  assert.match(flights, /data-flight-mobile-results-shortcuts[\s\S]*renderMobileSortResultsRow\(\)/);
+  assert.match(flights, /data-flight-mobile-results-shortcuts[\s\S]*inert=\{mobileSearchOpen \? true : undefined\}/);
 });
 
 test("hotel mobile results summary stays mounted beneath Edit Search", () => {
@@ -55,13 +56,14 @@ test("cars mobile results summary stays mounted beneath Edit Search", () => {
   assert.match(summary, /renderMobileControlsRow\(\)/);
 });
 
-test("standalone flight cards own responsive list spacing and pagination follows the list", () => {
-  const start = flights.indexOf("<div data-flight-results-card-list");
-  const end = flights.indexOf("</div>", start);
-  const pagination = flights.indexOf("<FlightResultsPagination", end);
+test("standalone mobile flight cards are continuous while desktop pagination follows its list", () => {
+  const mobileStart = flights.indexOf("data-mobile-continuous-flight-list");
+  const mobileEnd = flights.indexOf("ref={paginationListRef}", mobileStart);
+  const desktopStart = flights.indexOf('<div data-flight-results-card-list className="space-y-3 sm:space-y-4">');
+  const pagination = flights.indexOf("<FlightResultsPagination", desktopStart);
 
-  assert.ok(start >= 0 && end > start && pagination > end);
-  assert.match(flights.slice(start, end), /className="space-y-3 sm:space-y-4"/);
-  assert.match(flights.slice(start, end), /<FlightCard/);
-  assert.doesNotMatch(flights.slice(start, end), /<FlightResultsPagination/);
+  assert.ok(mobileStart >= 0 && desktopStart > mobileStart && pagination > desktopStart);
+  assert.match(flights.slice(mobileStart, mobileEnd), /sortedResults\.map/);
+  assert.doesNotMatch(flights.slice(mobileStart, mobileEnd), /<FlightResultsPagination/);
+  assert.match(flights.slice(desktopStart, pagination), /visibleResults\.map/);
 });
