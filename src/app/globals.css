@@ -1279,6 +1279,21 @@ textarea {
   font-size: clamp(1rem, 5vw, 1.25rem);
 }
 
+@media (max-width: 1023px) {
+  .flight-card-price-value.flight-card-price[data-price-size="normal"] {
+    font-size: 1.1875rem;
+    line-height: 1.5rem;
+  }
+
+  .flight-card-price-value.flight-card-price[data-price-size="large"] {
+    font-size: clamp(0.9375rem, 4.1vw, 1.0625rem);
+  }
+
+  .flight-card-price-value.flight-card-price[data-price-size="compact"] {
+    font-size: clamp(1rem, 4.6vw, 1.1875rem);
+  }
+}
+
 .flight-card-provider-price {
   width: 100%;
   max-width: 100%;
