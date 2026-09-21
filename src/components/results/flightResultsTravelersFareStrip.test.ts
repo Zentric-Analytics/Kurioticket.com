@@ -90,7 +90,23 @@ test("mobile nearby fares use native-scale price typography with adaptive fittin
   assert.match(styles, /\[data-nearby-fare-presentation="mobile"\] \.flight-fare-strip-price \{[\s\S]*?font-size: 0\.6875rem;[\s\S]*?line-height: 0\.875rem;[\s\S]*?font-weight: 600;/);
   assert.match(styles, /\[data-nearby-fare-presentation="mobile"\] \.flight-fare-strip-price\[data-price-size="long"\] \{[\s\S]*?font-size: 0\.625rem;/);
   assert.match(styles, /\[data-nearby-fare-presentation="mobile"\] \.flight-fare-strip-price\[data-price-size="extra-long"\] \{[\s\S]*?font-size: 0\.5625rem;/);
-  assert.match(source, /data-price-size=\{\(\(displayPrice \?\? "Unavailable"\)/);
+  assert.match(source, /data-price-size=\{visibleFare\.replace/);
+});
+
+test("mobile nearby fare states match native terminology", () => {
+  for (const state of ["•••", "No fare", "Try later", "—"]) assert.match(source, new RegExp(state));
+  assert.match(source, /Fare loading/);
+  assert.match(source, /Fare unavailable/);
+  assert.match(source, /Fare could not be checked/);
+  assert.match(source, /Fare not checked/);
+  assert.doesNotMatch(source.slice(source.indexOf('data-nearby-fare-presentation="mobile"'), source.indexOf('data-desktop-nearby-fare-rail')), />Unavailable</);
+});
+
+test("mobile date rail precedes the sticky quick-filter rail", () => {
+  const dateRail = source.indexOf('data-nearby-fare-presentation="mobile"');
+  const shortcuts = source.indexOf("data-flight-mobile-results-shortcuts", dateRail);
+  assert.ok(dateRail >= 0 && shortcuts > dateRail);
+  assert.match(source.slice(shortcuts, shortcuts + 900), /sticky z-30[\s\S]*mobileCompactHeaderVisible[\s\S]*top-\[calc\(5\.5rem\+env\(safe-area-inset-top\)\)\][\s\S]*top-0/);
 });
 
 test("responsive mobile sizing shows three complete dates and a fourth-date peek", () => {

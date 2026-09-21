@@ -2,105 +2,86 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const source = readFileSync(
-  new URL("./FlightResultsClient.tsx", import.meta.url),
-  "utf8",
-);
-
+const source = readFileSync(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
 const start = source.indexOf("function renderMobileSortResultsRow()");
 const end = source.indexOf("function renderFloatingFilterButton", start);
 const shortcuts = source.slice(start, end);
 
 test("mobile flight shortcuts remain an ordered single-row scroll rail", () => {
   const filter = shortcuts.indexOf("renderFloatingFilterButton");
-  const sort = shortcuts.indexOf('renderTrigger(\n              "sort"');
-  const airlines = shortcuts.indexOf('renderTrigger(\n              "airlines"');
-  const stops = shortcuts.indexOf('renderTrigger(\n              "stops"');
-  const airports = shortcuts.indexOf('renderTrigger(\n              "airports"');
-
+  const sort = shortcuts.indexOf('renderTrigger("sort"');
+  const airlines = shortcuts.indexOf('renderTrigger("airlines"');
+  const stops = shortcuts.indexOf('renderTrigger("stops"');
+  const airports = shortcuts.indexOf('renderTrigger("airports"');
   assert.ok(filter >= 0 && filter < sort && sort < airlines && airlines < stops && stops < airports);
   assert.match(shortcuts, /data-mobile-flight-shortcuts/);
   assert.match(shortcuts, /overflow-x-auto/);
   assert.match(shortcuts, /flex-nowrap/);
   assert.match(shortcuts, /w-max/);
-  assert.match(shortcuts, /pe-3/);
-  assert.doesNotMatch(shortcuts, /flex-wrap/);
 });
 
-test("mobile flight shortcut triggers separate a 44px target from a native-scale capsule", () => {
+test("mobile flight shortcut triggers preserve native-scale target and capsule geometry", () => {
   assert.match(shortcuts, /inline-flex h-11 min-w-11 shrink-0/);
-  assert.match(shortcuts, /whitespace-nowrap/);
   assert.match(shortcuts, /inline-flex h-9 items-center justify-center gap-1 rounded-\[9px\]/);
-  assert.match(shortcuts, /border-\[#D8E1EC\][^\"]*bg-white[^\"]*px-2\.5/);
-  assert.match(shortcuts, /text-\[13px\][^\"]*leading-4/);
+  assert.match(shortcuts, /text-\[13px\][^"]*leading-4/);
   assert.match(shortcuts, /h-\[13px\] w-\[13px\]/);
-  assert.match(shortcuts, /<ChevronDown/);
-  assert.match(shortcuts, /openMobileShortcutMenu\(menu, width, event\.currentTarget\)/);
+  assert.match(shortcuts, /aria-haspopup="dialog"/);
 });
 
-test("mobile shortcut popovers share one compact production surface", () => {
-  assert.equal(shortcuts.match(/const menuClass =/g)?.length, 1);
-  assert.match(shortcuts, /rounded-\[12px\]/);
-  assert.match(shortcuts, /border-\[#D8E1EC\]/);
-  assert.match(shortcuts, /bg-white p-1/);
-  assert.match(shortcuts, /shadow-\[0_14px_32px_-18px_rgba\(15,23,42,0\.28\)\]/);
-  assert.match(shortcuts, /const menuItemClass =\s*"[^"]*min-h-11[^"]*rounded-\[9px\][^"]*text-\[13px\][^"]*leading-\[18px\]/);
-  assert.match(shortcuts, /mobileSortMenuOpen,\s*164,/);
-  assert.match(shortcuts, /mobileAirlineMenuOpen,\s*220,/);
-  assert.match(shortcuts, /mobileStopsMenuOpen,\s*172,/);
-  assert.match(shortcuts, /mobileAirportMenuOpen,\s*204,/);
+test("mobile shortcut copy matches native without changing desktop copy", () => {
+  assert.match(shortcuts, /label: "Best"/);
+  assert.match(shortcuts, /label: "Cheapest"/);
+  assert.match(shortcuts, /label: "Fastest"/);
+  assert.doesNotMatch(shortcuts, /Quickest|t\("quickest"\)/);
+  const filter = source.slice(source.indexOf("function renderFloatingFilterButton"), source.indexOf("function renderMobileRouteSummaryCard"));
+  assert.match(filter, /<span>Filters<\/span>/);
+  const desktop = source.slice(source.indexOf("function renderDesktopSortControl"), source.indexOf("function renderGuidedRetryButton"));
+  assert.match(desktop, /selectedSortLabel/);
 });
 
-test("shortcut menu choices retain accessible behavior and restrained selection", () => {
-  assert.match(shortcuts, /role="menuitemradio"/);
-  assert.match(shortcuts, /role="menuitemcheckbox"/);
-  assert.match(shortcuts, /aria-checked=\{sortMode === option\.value\}/);
-  assert.match(shortcuts, /aria-checked=\{selectedAirlines\.includes\(option\.value\)\}/);
-  assert.match(shortcuts, /aria-checked=\{selectedStops\.includes\(option\.value\)\}/);
-  assert.match(shortcuts, /aria-checked=\{selectedAirports\.includes\(option\.value\)\}/);
-  assert.match(shortcuts, /bg-\[#F7FAFF\] text-\[#004BB8\]/);
-  assert.doesNotMatch(shortcuts, /bg-\[#004BB8\]\/6/);
-  assert.match(shortcuts, /text-slate-700 hover:bg-slate-50/);
-  assert.match(shortcuts, /<Check className="h-4 w-4 shrink-0"/);
-  assert.match(shortcuts, /\{option\.count\}/);
-  assert.match(shortcuts, /setSortMode\(option\.value\)/);
-  assert.match(shortcuts, /toggleFilterValue\(option\.value, setSelectedAirlines\)/);
-  assert.match(shortcuts, /toggleFilterValue\(option\.value, setSelectedStops\)/);
-  assert.match(shortcuts, /toggleFilterValue\(option\.value, setSelectedAirports\)/);
+test("sort and quick filters open one accessible mobile bottom-sheet system", () => {
+  assert.match(shortcuts, /role="dialog"/);
+  assert.match(shortcuts, /aria-modal="true"/);
+  assert.match(shortcuts, /rounded-t-\[24px\]/);
+  assert.match(shortcuts, /safe-area-inset-bottom/);
+  assert.doesNotMatch(shortcuts, /role="menu"|position:\s*"fixed"|mobileShortcutMenuPosition/);
+  for (const kind of ["sort", "airlines", "stops", "airports"]) assert.match(shortcuts, new RegExp(`mobileShortcutSheet === "${kind}"`));
 });
 
-test("shortcut menu placement follows its trigger and clamps to the viewport", () => {
-  const positionStart = source.indexOf("const positionMobileShortcutMenu");
-  const positionEnd = source.indexOf("useEffect(() =>", positionStart);
-  const position = source.slice(positionStart, positionEnd);
-
-  assert.match(shortcuts, /trigger\.getBoundingClientRect\(\)/);
-  assert.match(shortcuts, /positionMobileShortcutMenu\(rect, width\)/);
-  assert.match(position, /const gutter = 12/);
-  assert.match(position, /Math\.min\(width, window\.innerWidth - gutter \* 2\)/);
-  assert.match(position, /Math\.max\(rect\.left, gutter\)/);
-  assert.match(position, /rect\.bottom \+ 8/);
+test("sort sheet stages native options and descriptions until Apply", () => {
+  for (const copy of ["Sort flights", "Choose how results are ordered", "Best balance of price and journey time", "Lowest total price", "Shortest journey time"]) assert.match(shortcuts, new RegExp(copy));
+  assert.match(shortcuts, /setMobileDraftSort\(option\.value\)/);
+  assert.match(shortcuts, /if \(mobileShortcutSheet === "sort"\) setSortMode\(mobileDraftSort\)/);
+  assert.match(shortcuts, /setMobileDraftSort\("best"\)/);
+  assert.match(shortcuts, /\? "Apply" :/);
 });
 
-test("mobile Filter retains its icon and existing drawer handler", () => {
-  const filterStart = source.indexOf("function renderFloatingFilterButton");
-  const filterEnd = source.indexOf("function renderMobileCompactResultsHeader", filterStart);
-  const filter = source.slice(filterStart, filterEnd);
+test("airlines, stops, and airports use staged native quick-sheet controls", () => {
+  assert.match(shortcuts, /placeholder="Search airlines"/);
+  assert.match(shortcuts, /Show less/);
+  assert.match(shortcuts, /Show more/);
+  assert.match(shortcuts, /fromAirportOptions/);
+  assert.match(shortcuts, /toAirportOptions/);
+  assert.match(shortcuts, />From</);
+  assert.match(shortcuts, />To</);
+  assert.match(shortcuts, /setSelectedAirlines\(mobileDraftAirlines\)/);
+  assert.match(shortcuts, /setSelectedStops\(mobileDraftStops\)/);
+  assert.match(shortcuts, /setSelectedAirports\(mobileDraftAirports\)/);
+  assert.match(shortcuts, /View \$\{draftMatches\}/);
+});
 
-  assert.match(filter, /inline-flex h-11 min-w-11 shrink-0/);
-  assert.match(filter, /whitespace-nowrap/);
-  assert.match(filter, /border-\[#D8E1EC\]/);
-  assert.match(filter, /bg-white/);
-  assert.match(filter, /<SlidersHorizontal/);
-  assert.match(filter, /className="h-4 w-4 text-\[#004BB8\]"/);
-  assert.match(filter, /inline-flex h-5 min-w-5[^\"]*text-\[11px\][^\"]*leading-\[14px\]/);
+test("sheet lifecycle traps focus, closes with Escape, locks scroll, and restores launcher focus", () => {
+  assert.match(source, /acquireMobileResultsScrollLock\(\)/);
+  assert.match(source, /event\.key === "Escape"/);
+  assert.match(source, /event\.key !== "Tab"/);
+  assert.match(source, /mobileShortcutLauncherRef\.current\?\.focus/);
+  assert.match(source, /mobileShortcutSheetCloseRef\.current\?\.focus/);
+  assert.match(shortcuts, /event\.target === event\.currentTarget/);
+});
+
+test("full Filters launcher remains separate and retains its active count", () => {
+  const filter = source.slice(source.indexOf("function renderFloatingFilterButton"), source.indexOf("function renderMobileRouteSummaryCard"));
   assert.match(filter, /openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/);
-});
-
-test("all five shortcut controls use the shared compact visual system", () => {
-  assert.match(shortcuts, /renderFloatingFilterButton\(shortcutButtonClass, shortcutCapsuleClass\)/);
-  assert.equal(shortcuts.match(/renderTrigger\(/g)?.length, 4);
-  for (const control of ["sort", "airlines", "stops", "airports"]) {
-    assert.match(shortcuts, new RegExp(`renderTrigger\\(\\s*"${control}"`));
-  }
+  assert.match(filter, /activeFilterCount > 0/);
+  assert.match(filter, /h-5 min-w-5/);
 });
