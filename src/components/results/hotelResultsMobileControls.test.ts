@@ -20,8 +20,7 @@ const mobileSummarySource = readFileSync(
 );
 
 test("Hotel Results hides only the mobile category tabs", () => {
-  const headerCall = [...pageSource.matchAll(/<AppHeader\b[\s\S]*?\/>/g)]
-    .map(([header]) => header).find((header) => header.includes("flushDesktopBottom")) ?? "";
+  const headerCall = resultsSource.match(/<AppHeader[\s\S]*?\/>/)?.[0] ?? "";
 
   assert.match(headerCall, /hideMobileCategoryTabs/);
   assert.match(headerCall, /hideDesktopTravelNav/);
@@ -69,13 +68,13 @@ test("mobile Hotel shortcut rail keeps Filter Price Stars Facilities Room & bed 
   assert.notEqual(toolbarStart, -1);
   assert.match(resultsSource, /setFiltersOpen\(true\)/);
   assert.match(resultsSource, /activeFilterCount/);
-  assert.match(resultsSource, /type MobileHotelShortcutMenu = "sort" \| "price" \| "stars" \| "facilities" \| "roomTypes"/);
-  assert.match(toolbar, /<span>Filter<\/span>[\s\S]*trigger\("price", "Price"[\s\S]*trigger\("stars", "Stars"[\s\S]*trigger\("facilities", "Facilities"[\s\S]*trigger\("roomTypes", "Room & bed"/);
+  assert.match(resultsSource, /type MobileHotelShortcutMenu = "price" \| "stars" \| "amenities" \| "roomTypes" \| "sort"/);
+  assert.match(toolbar, /<span>Filter<\/span>[\s\S]*trigger\("price", "Price"[\s\S]*trigger\("stars", "Stars"[\s\S]*trigger\("amenities", "Facilities"[\s\S]*trigger\("roomTypes", "Room & bed"/);
   assert.doesNotMatch(toolbar, /trigger\("sort"/);
-  assert.match(resultsSource, /mobileShortcutDraftSort/);
-  assert.match(resultsSource, /role="radio" aria-checked=\{selected\}/);
-  assert.match(resultsSource, /setMobileShortcutDraftSort\("cheapest"\)/);
-  assert.match(resultsSource, /updateHotelSummarySortMode\(mobileShortcutDraftSort\)/);
+  assert.match(resultsSource, /handleMobileSortSelection/);
+  assert.match(resultsSource, /aria-pressed=\{hotelSummarySortMode === option.value\}/);
+  assert.match(resultsSource, /updateHotelSummarySortMode\(value\)/);
+  assert.match(resultsSource, /closeMobileShortcutMenu\(true\)/);
   assert.match(resultsSource, /openMobileShortcutMenu\("sort", event\.currentTarget\)/);
   assert.match(resultsSource, /selectedHotelClasses/);
   assert.match(resultsSource, /selectedFilters\.facilities/);
@@ -85,8 +84,8 @@ test("mobile Hotel shortcut rail keeps Filter Price Stars Facilities Room & bed 
   assert.match(toolbar, /overflow-x-auto/);
   assert.match(toolbar, /flex min-w-max items-center gap-2/);
   assert.doesNotMatch(toolbar, /<select/);
-  assert.match(resultsSource, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
-  assert.match(resultsSource, /relative translate-y-1\/2/);
+  assert.match(resultsSource, /mobileResultsSearch=/);
+  assert.doesNotMatch(resultsSource, /relative translate-y-1\/2/);
   assert.doesNotMatch(resultsSource, /absolute inset-x-0 top-1\/2[\s\S]*?bg-slate-300/);
   assert.match(resultsSource, /hidden shrink-0 flex-nowrap[\s\S]*?sm:flex/);
 });
@@ -104,12 +103,12 @@ test("standalone mobile Hotel summary keeps result count with Sort and removes t
   assert.ok(priceAlert < mobileSummary && mobileSummary < cardList);
   assert.match(desktopMarkup, /!guided && "hidden sm:flex"/);
   assert.equal(resultsSource.match(/ref=\{standaloneResultsHeadingRef\}/g)?.length, 1);
-  assert.match(mobileMarkup, /sm:hidden/);
+  assert.match(mobileMarkup, /className="[^"]*sm:hidden"/);
   assert.doesNotMatch(mobileMarkup, /standaloneResultsHeadingRef|guidedResultsHeadingRef|HotelPriceAlertControl/);
   assert.match(mobileMarkup, /\{resultsHeading\}/);
-  assert.match(mobileMarkup, /Sort: \$\{currentSortLabel\}/);
+  assert.match(mobileMarkup, /<span>Sort:<\/span>[\s\S]*currentSortLabel/);
   assert.match(mobileMarkup, /openMobileShortcutMenu\("sort", event\.currentTarget\)/);
-  assert.doesNotMatch(mobileMarkup, /resultsDisplayRange\.start|resultsDisplayRange\.end|Showing results/);
+  assert.match(mobileMarkup, /totalHotelResultPages > 1/);
   assert.equal(resultsSource.match(/data-mobile-hotel-results-summary/g)?.length, 1);
 
   const guidedHeading = resultsSource.indexOf("ref={guidedResultsHeadingRef}");

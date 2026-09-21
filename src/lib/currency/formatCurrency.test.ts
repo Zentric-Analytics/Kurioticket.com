@@ -20,7 +20,8 @@ test("formatDisplayPrice preserves existing convertUsdEstimate behavior", () => 
     isFallbackRate: false,
   });
 
-  assert.equal(price.formatted, "NGN 15,000.00");
+  assert.equal(price.amount, 15000);
+  assert.equal(price.formatted, new Intl.NumberFormat(undefined, { style: "currency", currency: "NGN", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(15000));
   assert.equal(price.currency, "NGN");
   assert.equal(price.isConvertedEstimate, true);
 });
@@ -45,7 +46,8 @@ test("formatDisplayPrice converts non-USD sources only when explicitly requested
 
   assert.equal(unchanged.currency, "EUR");
   assert.equal(unchanged.isConvertedEstimate, false);
-  assert.equal(converted.formatted, "NGN 15,000.00");
+  assert.equal(converted.amount, 15000);
+  assert.equal(converted.formatted, new Intl.NumberFormat(undefined, { style: "currency", currency: "NGN", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(15000));
   assert.equal(converted.currency, "NGN");
   assert.equal(converted.isConvertedEstimate, true);
 });

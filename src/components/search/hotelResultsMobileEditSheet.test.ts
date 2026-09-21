@@ -10,9 +10,9 @@ const results = read("../results/HotelResultsClient.tsx");
 test("Hotel results editor keeps three canonical independent field cards", () => {
   assert.match(searchBar, /compact && !mobileResultsSheet \? \(/);
   assert.match(searchBar, /data-hotel-results-edit-fields=/);
-  assert.match(searchBar, /className=\{mobileResultsSheet \? "flex flex-col gap-2\.5" : "contents"\}/);
+  assert.match(searchBar, /className=\{mobileResultsSheet \? "flex flex-col gap-3" : "contents"\}/);
   assert.equal(searchBar.match(/data-hotel-mobile-edit-row=/g)?.length, 3);
-  assert.equal(searchBar.match(/min-h-\[72px\] rounded-\[13px\] border border-\[#D8E1EC\] bg-white px-4 py-3/g)?.length, 3);
+  assert.equal(searchBar.match(/min-h-\[72px\] rounded-2xl border border-slate-200 bg-white px-4 py-3/g)?.length, 3);
   assert.doesNotMatch(searchBar, /mobileResultsEditGroupClass/);
 
   const fieldsStart = searchBar.indexOf("data-hotel-results-edit-fields");
@@ -39,20 +39,11 @@ test("Hotel Results keeps page summaries mounted but omits the sheet summary", (
   assert.doesNotMatch(searchBar.slice(form), /\{mobileSearchSummary\}/);
 });
 
-test("top and compact Hotel headers remain scroll-owned when Edit Search opens", () => {
-  const topHeader = results.slice(
-    results.indexOf('aria-label="Hotel search controls"') - 300,
-    results.indexOf('aria-label="Hotel search controls"') + 500,
-  );
-  const compactHeader = results.slice(
-    results.indexOf('fixed inset-x-0 top-0 z-[900]'),
-    results.indexOf('fixed inset-x-0 top-0 z-[900]') + 900,
-  );
-
-  assert.doesNotMatch(topHeader, /mobileHotelSearchOpen && "(?:hidden|opacity|translate|position|height|padding)/);
-  assert.doesNotMatch(compactHeader, /mobileHotelSearchOpen && "(?:opacity|translate|top-|h-)/);
-  assert.match(compactHeader, /mobileHotelSearchOpen && "pointer-events-none"/);
-  assert.match(compactHeader, /inert=\{mobileHotelSearchOpen \? true : undefined\}/);
+test("hotel editing keeps a single mounted navbar and top-opening sheet", () => {
+  assert.match(results, /mobileResultsSearch=/);
+  assert.match(results, /placement="top"/);
+  assert.match(results, /aria-expanded=\{mobileHotelSearchOpen\}/);
+  assert.doesNotMatch(results, /showMobileCompactHotelSearch/);
 });
 
 test("Hotel results cards place their icons and approved affordances in value rows", () => {
@@ -68,17 +59,11 @@ test("Hotel results cards place their icons and approved affordances in value ro
   assert.equal((searchBar.match(/<ChevronRight aria-hidden="true" className=/g) ?? []).length, 2);
 });
 
-test("Hotel results sheet uses the results canvas behind separate white field cards", () => {
-  assert.match(results, /browserCanvasColor="#f6f8fb"/);
-  assert.doesNotMatch(results, /<MobileResultsEditSheet[^>]*cleanBackdrop/);
-  assert.doesNotMatch(results, /<MobileResultsEditSheet[^>]*smoothMotion/);
+test("Hotel results sheet uses a white top-opening surface", () => {
+  assert.match(results, /browserCanvasColor="#ffffff"/);
+  assert.match(results, /contentClassName="!pt-3 bg-white/);
   assert.match(results, /closing=\{mobileHotelSearchClosing\}/);
-  assert.match(results, /className="bg-\[#f6f8fb\]"/);
-  assert.match(results, /contentClassName="!pt-3 bg-\[#f6f8fb\]/);
-  assert.match(results, /bottomSurfaceContinuation/);
-  assert.match(results, /bottomSurfaceContinuationClassName="bg-\[#f6f8fb\]"/);
-  assert.match(sheet, /mobile-results-sheet-content[\s\S]*?bg-inherit/);
-  assert.match(sheet, /border-b border-slate-200\/80 bg-white/);
+  assert.match(sheet, /placement === "top"/);
 });
 
 test("Hotel results launcher avoids touch flash while retaining keyboard focus", () => {

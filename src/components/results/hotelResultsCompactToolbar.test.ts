@@ -38,18 +38,6 @@ function desktopCompactStickyWrapperSource() {
   return source.slice(start, end);
 }
 
-function mobileCompactHotelSearchSource() {
-  const start = source.indexOf('"fixed inset-x-0 top-0 z-[900]');
-  const end = source.indexOf("<MobileResultsEditSheet", start);
-
-  assert.notEqual(start, -1, "mobile compact Hotel search exists");
-  assert.notEqual(
-    end,
-    -1,
-    "mobile Edit Search sheet follows the compact search",
-  );
-  return source.slice(start, end);
-}
 
 test("Hotel desktop compact sticky wrapper is a transparent positioning layer", () => {
   const wrapper = desktopCompactStickyWrapperSource();
@@ -188,33 +176,9 @@ test("Hotel sticky lifecycle and neighboring search/filter contracts remain inta
   assert.match(source, /desktopCompactFilterTopOffset = 116/);
 });
 
-test("mobile compact Hotel search reuses the canonical summary control between Back and Filters", () => {
-  const compactSearch = mobileCompactHotelSearchSource();
-
-  assert.match(
-    compactSearch,
-    /z-\[900\] px-2 pt-\[env\(safe-area-inset-top\)\]/,
-  );
-  assert.match(
-    compactSearch,
-    /grid-cols-\[auto_minmax\(0,1fr\)_auto\]/,
-  );
-  assert.match(
-    compactSearch,
-    /aria-label="Back to hotels"[\s\S]*?router\.push\("\/hotels"\)[\s\S]*?<ArrowLeft[\s\S]*?aria-hidden="true"[\s\S]*?<\/button>/,
-  );
-  assert.match(
-    compactSearch,
-    /<HotelMobileResultsSummary[\s\S]*?destination=\{body\.destination\}[\s\S]*?desktopMinimizedDateSummary[\s\S]*?desktopMinimizedGuestsSummary[\s\S]*?onClick=\{openMobileHotelSearch\}[\s\S]*?variant="sticky"/,
-  );
-  assert.match(
-    compactSearch,
-    /onClick=\{\(event\) => \{[\s\S]*?setFiltersOpen\(true\);\s*\}\}[\s\S]*?<SlidersHorizontal[\s\S]*?aria-hidden="true"[\s\S]*?\{t\("filters"\)\}/,
-  );
-  assert.equal(
-    compactSearch.match(/<button/g)?.length,
-    2,
-    "Back and Filters stay local; the shared summary component owns the Edit Search button",
-  );
-  assert.doesNotMatch(compactSearch, /<Pencil|PencilLine/);
+test("mobile hotel search stays in one navbar with an edit icon", () => {
+  assert.match(source, /mobileResultsSearch=/);
+  assert.match(source, /<SquarePen/);
+  assert.match(source, /aria-haspopup="dialog" aria-expanded=\{mobileHotelSearchOpen\}/);
+  assert.doesNotMatch(source, /showMobileCompactHotelSearch/);
 });

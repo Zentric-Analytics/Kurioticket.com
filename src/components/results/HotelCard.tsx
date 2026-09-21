@@ -24,6 +24,7 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { MobileHotelPriceText } from "./MobileHotelPriceText";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import {
   normalizeHotelClassificationStars,
@@ -208,7 +209,6 @@ export function HotelCard({
     hotel.amenities,
     8,
   );
-  const mobileAmenityItems = expandedAmenityItems.slice(0, 3);
   const collapsedAmenityItems = expandedAmenityItems.slice(0, 4);
   const hasBreakfastAmenity = expandedAmenityItems.some(
     (item) => item.iconKey === "breakfast",
@@ -456,7 +456,7 @@ export function HotelCard({
   }
 
   return (
-    <Card className="relative mx-auto w-full max-w-[800px] overflow-hidden rounded-[13px] border-slate-200 bg-white shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] transition focus-within:border-[#004BB8]/40 focus-within:ring-2 focus-within:ring-[#004BB8]/10 motion-reduce:transform-none motion-reduce:transition-none sm:rounded-2xl sm:shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] sm:hover:-translate-y-0.5 sm:hover:border-slate-300 sm:hover:shadow-[0_22px_50px_-24px_rgba(2,28,43,0.30)] lg:mx-0 lg:max-w-none">
+    <Card className="relative mx-auto w-full max-w-[800px] overflow-hidden rounded-xl border-slate-200/80 bg-white shadow-[0_2px_6px_rgba(2,28,43,0.08)] transition sm:rounded-2xl sm:border-slate-200 sm:shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] sm:hover:-translate-y-0.5 sm:hover:border-slate-300 sm:hover:shadow-[0_22px_50px_-24px_rgba(2,28,43,0.30)] focus-within:border-[#004BB8]/40 focus-within:ring-2 focus-within:ring-[#004BB8]/10 motion-reduce:transform-none motion-reduce:transition-none sm:w-full lg:mx-0 lg:max-w-none">
       {resolvedDetailsHref ? (
         <Link
           href={resolvedDetailsHref}
@@ -468,11 +468,11 @@ export function HotelCard({
       {providerLabel ? <p className="hidden px-4 pt-3 text-xs font-semibold text-amber-800 sm:block">{providerLabel}</p> : null}
       <div
         data-hotel-card-mobile-grid
-        className="grid min-h-[244px] grid-cols-[39%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[clamp(280px,36%,340px)_minmax(0,1fr)]"
+        className="grid min-h-[236px] grid-cols-[35%_minmax(0,1fr)] sm:min-h-[244px] sm:grid-cols-[39%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[clamp(280px,36%,340px)_minmax(0,1fr)]"
       >
         <div
           data-hotel-card-image
-          className="relative h-full min-h-[244px] overflow-hidden bg-slate-200 md:min-h-[230px] lg:min-h-[240px]"
+          className="relative h-full min-h-[236px] sm:min-h-[244px] overflow-hidden bg-slate-200 md:min-h-[230px] lg:min-h-[240px]"
         >
           <div className="absolute right-2 top-2 z-20 hidden items-center gap-0.5 md:flex lg:hidden">
             {renderSaveButton("flex hover:bg-white/90")}
@@ -492,7 +492,7 @@ export function HotelCard({
                   )}
                 fill
                 className="bg-slate-200 object-cover"
-                sizes="(min-width: 768px) 320px, 39vw"
+                sizes="(min-width: 768px) 320px, 35vw"
                 onError={() => markImageFailed(displayImageUrl)}
               />
               {showGalleryControls ? (
@@ -536,14 +536,15 @@ export function HotelCard({
             <div className="min-w-0">
               <div>
                 <div className="relative min-w-0">
-                  <div className="min-w-0 pe-[88px] md:pe-0 lg:pe-[88px]">
-                    <h2 className="line-clamp-2 min-w-0 text-[15px] font-bold leading-5 text-slate-950 sm:text-base lg:text-[17px]">
+                  <div className="min-w-0 sm:pe-[88px] md:pe-0 lg:pe-[88px]">
+                    <h2 className="min-w-0 text-[14px] font-semibold leading-5 text-slate-950 sm:line-clamp-2 sm:text-base sm:font-bold lg:line-clamp-2 lg:text-[17px]">
+                      <span aria-hidden="true" className="float-end h-9 w-[76px] sm:hidden" />
                       {hotel.name}
                     </h2>
                   </div>
                   <div
                     data-hotel-utility-actions
-                    className="absolute -end-3 -top-2 flex shrink-0 items-center gap-0 md:hidden"
+                    className="absolute -end-2.5 -top-2 flex shrink-0 items-center gap-0 sm:-end-3 md:hidden"
                   >
                     {renderSaveButton("flex pe-1", "justify-end")}
                     {renderShareButton("flex ps-1", "justify-start")}
@@ -585,14 +586,14 @@ export function HotelCard({
                   >
                     <span
                       aria-hidden="true"
-                      className="text-[14px] leading-5 tracking-[0.08em] text-amber-500"
+                      className="text-[12px] leading-4 tracking-[0.06em] text-amber-500 sm:text-[14px] sm:leading-5 sm:tracking-[0.08em]"
                     >
                       {"★".repeat(starRating)}
                     </span>
                   </div>
                 ) : null}
 
-                <p className="mt-1 flex min-w-0 items-start gap-x-1 text-[12px] font-semibold leading-4 text-[#004BB8] sm:text-[13px] lg:text-sm">
+                <p className="mt-1 flex min-w-0 items-start gap-x-1 text-[12px] font-normal leading-4 text-[#004BB8] sm:text-[13px] sm:font-semibold lg:text-sm">
                   <MapPin
                     size={14}
                     className="mt-px shrink-0 text-[#004BB8]"
@@ -654,14 +655,9 @@ export function HotelCard({
                     </p>
                   ) : null}
                   <HotelAmenityList
-                    items={mobileAmenityItems}
-                    t={t}
-                    className="grid grid-cols-1 gap-y-1 text-[12px] leading-[18px] sm:hidden"
-                  />
-                  <HotelAmenityList
                     items={collapsedAmenityItems}
                     t={t}
-                    className="hidden grid-cols-1 gap-y-1 text-[12px] leading-[18px] sm:grid md:grid-cols-2 md:gap-x-3 md:gap-y-1.5 md:text-xs md:leading-4"
+                    className="grid grid-cols-1 gap-y-0.5 text-[11px] leading-4 max-sm:[&>li]:text-[11px] max-sm:[&>li]:font-normal max-sm:[&>li>svg]:h-3.5 max-sm:[&>li>svg]:w-3.5 sm:gap-y-1 sm:text-[12px] sm:leading-[18px] md:grid-cols-2 md:gap-x-3 md:gap-y-1.5 md:text-xs md:leading-4"
                   />
                 </div>
               ) : null}
@@ -707,13 +703,13 @@ export function HotelCard({
                     >
                       <span
                         aria-hidden="true"
-                        className="block break-words text-[17px] font-bold leading-6 text-slate-950 tabular-nums min-[390px]:text-lg sm:whitespace-nowrap sm:text-xl"
+                        className="block whitespace-nowrap text-[17px] font-semibold leading-6 text-slate-950 tabular-nums sm:text-xl sm:font-bold"
                       >
-                        {nightlyDisplayPrice.formatted}
+                        <MobileHotelPriceText text={nightlyDisplayPrice.formatted} />
                       </span>
                       <span
                         aria-hidden="true"
-                        className="mt-0.5 block text-xs font-medium leading-4 text-slate-500"
+                        className="mt-0.5 block text-[11px] font-normal leading-4 text-slate-500 sm:text-xs sm:font-medium"
                       >
                         {perNightLabel}
                       </span>
@@ -749,25 +745,16 @@ export function HotelCard({
                     </Button>
                   </>
                 ) : (
-                  <>
-                    <Link
-                      href={resolvedDetailsHref}
-                      aria-label={actionAriaLabel || `View hotel for ${hotel.name}`}
-                      className="relative z-20 inline-flex min-h-9 items-center gap-1 text-[13px] font-semibold leading-5 text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 sm:hidden"
-                    >
-                      <span>{actionLabel || t("hotelResults.viewHotel") || "View hotel"}</span>
-                      <ChevronRight className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
-                    </Link>
-                    <LinkButton
-                      href={resolvedDetailsHref}
-                      aria-label={actionAriaLabel}
-                      variant="accent"
-                      size="sm"
-                      className="hidden h-10 min-h-10 w-auto whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3.5 text-sm font-semibold text-white shadow-none hover:border-[#003B91] hover:bg-[#003B91] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 sm:inline-flex"
-                    >
-                      {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
-                    </LinkButton>
-                  </>
+                  <LinkButton
+                    href={resolvedDetailsHref}
+                    aria-label={actionAriaLabel}
+                    variant="accent"
+                    size="sm"
+                    className="relative z-20 h-11 min-h-11 w-auto whitespace-nowrap rounded-lg border border-transparent bg-transparent px-0 text-sm font-semibold text-[#004BB8] shadow-none hover:border-transparent hover:bg-transparent hover:text-[#003B91] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 sm:h-10 sm:min-h-10 sm:border-[#004BB8] sm:bg-[#004BB8] sm:px-3.5 sm:text-white sm:hover:border-[#003B91] sm:hover:bg-[#003B91] sm:hover:text-white"
+                  >
+                    {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
+                    <ChevronRight className="h-4 w-4 sm:hidden" aria-hidden="true" />
+                  </LinkButton>
                 )}
               </div>
             </div>

@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
+  type ReactNode,
 } from "react";
 
 import { signOut, useSession } from "next-auth/react";
@@ -39,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 
+import { MobileSigninDialog } from "@/components/auth/MobileSigninDialog";
 import { PackagesIcon } from "@/components/icons/PackagesIcon";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
@@ -73,6 +75,7 @@ function SavedHeartIcon({
 }
 
 type AppHeaderProps = {
+  mobileResultsSearch?: ReactNode;
   hideMobileSecondaryNavLinks?: boolean;
   mobileHeroOverlay?: boolean;
   mobileHeroOverlayLowered?: boolean;
@@ -128,6 +131,7 @@ const mobileInfoLegalMenuItems = [
 ];
 
 export function AppHeader({
+  mobileResultsSearch,
   hideMobileSecondaryNavLinks = false,
   mobileHeroOverlay = false,
   hideMobileCategoryTabs = false,
@@ -142,6 +146,8 @@ export function AppHeader({
   const isSignedIn = Boolean(session?.user);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSigninOpen, setMobileSigninOpen] = useState(false);
+  const closeMobileSignin = useCallback(() => setMobileSigninOpen(false), []);
   const [mobileAccountOpen, setMobileAccountOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [languageQuery, setLanguageQuery] = useState("");
@@ -704,16 +710,25 @@ export function AppHeader({
 
   return (
     <>
+      {mobileSigninOpen ? <MobileSigninDialog callbackUrl={`${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`} onClose={closeMobileSignin} /> : null}
       <header
         data-app-header
         className={cn(
           "relative z-50 border-b border-[#D8E1EC] bg-white pt-[env(safe-area-inset-top)] text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
+          mobileResultsSearch && "max-sm:sticky max-sm:top-0 max-sm:z-[950]",
           flushMobileBottom &&
             "border-b-0 shadow-none sm:border-b sm:shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
           flushDesktopBottom && "sm:border-b-0 sm:shadow-none",
         )}
       >
-        <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3">
+        {mobileResultsSearch ? <div data-hotel-results-navbar className="flex h-[72px] items-center gap-2 border-b border-slate-200 px-2 sm:hidden">
+          <button type="button" aria-label={mobileMenuOpen ? t.closeMobileMenu : t.openMobileMenu} aria-expanded={mobileMenuOpen} aria-controls="mobile-menu-drawer" aria-haspopup="dialog" onClick={() => { setMobileAccountOpen(false); setMobileMenuOpen((value) => !value); }} className="focus-ring flex h-11 w-12 shrink-0 items-center justify-center gap-1 rounded-lg">
+            <RawImage src="/brand/kurioticket-icon-blue.svg" alt="Kurioticket" className="h-7 w-7" /><ChevronDown className={cn("h-3 w-3 text-slate-700", mobileMenuOpen && "rotate-180")} aria-hidden="true" />
+          </button>
+          <div className="min-w-0 flex-1" onClickCapture={() => setMobileMenuOpen(false)}>{mobileResultsSearch}</div>
+
+        </div> : null}
+        <div className={cn("page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3", mobileResultsSearch && "max-sm:hidden")}>
           <div className="flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8">
             <Link
               href="/"
@@ -1167,7 +1182,7 @@ export function AppHeader({
         {mobileMenuOpen && typeof document !== "undefined"
           ? createPortal(
               <div
-                className="fixed inset-0 z-[70] md:hidden"
+                className={cn("fixed inset-0 z-[70] md:hidden", mobileResultsSearch && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:z-[940]")}
                 role="presentation"
               >
                 <button
@@ -1182,9 +1197,9 @@ export function AppHeader({
                   role="dialog"
                   aria-modal="true"
                   aria-label={t.menu}
-                  className="fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
+                  className={cn("fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl", mobileResultsSearch && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:h-[calc(100dvh-72px-env(safe-area-inset-top))]")}
                 >
-                  <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+                  <div className={cn("flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4", mobileResultsSearch && "max-sm:hidden")}>
                     <div className="min-w-0">
                       <h2 className="truncate text-xl font-semibold tracking-[-0.02em] text-slate-950">
                         {t.menu}
@@ -1202,6 +1217,8 @@ export function AppHeader({
                   </div>
 
                   <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
+                    {mobileResultsSearch ? <button type="button" aria-haspopup="dialog" onClick={() => { setMobileMenuOpen(false); if (isSignedIn) { setMobileAccountOpen(true); } else setMobileSigninOpen(true); }} className="focus-ring mb-5 flex min-h-12 w-full items-center gap-3 rounded-lg bg-transparent px-3 text-left text-[15px] font-medium text-slate-900 active:bg-slate-100"><UserCircle size={22} /><span>{isSignedIn ? t["accountMenu.myAccount.label"] : t.signIn}</span></button> : null}
+
                     <section aria-labelledby="mobile-menu-preferences-heading">
                       <p
                         id="mobile-menu-preferences-heading"
@@ -1278,12 +1295,13 @@ export function AppHeader({
                               <Link
                                 key={item.href}
                                 href={item.href}
+                                aria-current={mobileResultsSearch && item.href === "/hotels" ? "page" : undefined}
                                 onClick={(event) =>
                                   handleRouteLinkClick(event, item.href, () =>
                                     setMobileMenuOpen(false),
                                   )
                                 }
-                                className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                                className={cn("group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25", mobileResultsSearch && item.href === "/hotels" && "rounded-lg bg-slate-100 text-[#004BB8]")}
                               >
                                 {Icon ? (
                                   <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-[#004BB8]">

@@ -91,8 +91,6 @@ export default async function SigninPage({ searchParams }: SigninPageProps) {
     getGoogleClientId().trim() && getGoogleClientSecret().trim(),
   );
 
-  console.error(`Google OAuth enabled: ${googleEnabled}`);
-
   return (
     <>
       <AppHeader simpleHeader />

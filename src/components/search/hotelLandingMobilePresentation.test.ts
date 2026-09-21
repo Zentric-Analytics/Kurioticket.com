@@ -76,7 +76,7 @@ test("landing value rows retain Calendar and add UserRound while keeping the gue
   );
 
   assert.ok(
-    datesLauncher.indexOf("<Calendar") < datesLauncher.indexOf("{dateSummary}"),
+    datesLauncher.indexOf("<Calendar") < datesLauncher.indexOf('<span className="truncate">'),
   );
   assert.ok(
     guestsLauncher.indexOf("<UserRound") <
