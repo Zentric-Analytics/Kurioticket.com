@@ -840,7 +840,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   );
   const currentSortLabel = hotelSortOptions.find((option) => option.value === hotelSummarySortMode)?.label ?? hotelSortOptions[0]?.label ?? "";
   const formattedDisplayedHotelCount = formatHotelCount(visibleFilteredHotels.length, locale);
-  const resultsHeading = !guided && kayak && results.length === 0 ? "Search results" : t(visibleFilteredHotels.length === 1 ? "resultFound" : "resultsFound").replace("{{count}}", formattedDisplayedHotelCount);
+  const resultsHeading = t(visibleFilteredHotels.length === 1 ? "resultFound" : "resultsFound").replace("{{count}}", formattedDisplayedHotelCount);
   const resultsDisplayRange = guided
     ? null
     : getResultsDisplayRange({
@@ -2033,7 +2033,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                     </p>
                   ) : null}
 
-                  {!guided && providerResults.length > 0 ? <HotelPriceAlertControl search={{ destination: body.destination, checkIn: body.checkIn, checkOut: body.checkOut, guests: body.guests, rooms: body.rooms }} results={providerResults} /> : null}
+                  {!guided && results.length > 0 ? <HotelPriceAlertControl search={{ destination: body.destination, checkIn: body.checkIn, checkOut: body.checkOut, guests: body.guests, rooms: body.rooms }} results={results} /> : null}
 
                   {!guided ? (
                     <div data-mobile-hotel-results-summary role="group" aria-label={t("hotelResults.summaryAria")} className="flex items-center justify-between gap-3 sm:hidden">
