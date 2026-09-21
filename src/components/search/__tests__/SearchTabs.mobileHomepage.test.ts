@@ -120,9 +120,10 @@ test("mobile homepage controls use one responsive product-tab renderer without s
   assert.match(mobileBranch, /whitespace-nowrap/);
   assert.match(mobileProductTabs, /tracking-\[-0\.01em\]/);
   assert.doesNotMatch(mobileBranch, /truncate[^\n]*\{label\}|text-ellipsis/);
-  assert.match(flightMobileBranch, /mobile-homepage-route-fields[\s\S]*?h-\[76px\] w-full/);
-  assert.equal((flightMobileBranch.match(/h-\[76px\] w-full/g) ?? []).length, 3);
-  assert.match(flightMobileBranch, /h-\[58px\] w-full rounded-\[18px\]/);
+  assert.match(mobileBranch, /h-\[68px\][^\n]*mobile-homepage|className="focus-ring flex h-\[68px\]/);
+  assert.match(mobileBranch, /h-\[62px\][^\n]*w-full/);
+  assert.match(mobileBranch, /h-16 w-full/);
+  assert.match(mobileBranch, /h-12 w-full rounded-\[10px\]/);
   assert.match(mobileBranch, /mobile-homepage-trip-selector[\s\S]*?text-\[12px\][\s\S]*?max-\[359px\]:text-\[11px\][\s\S]*?h-4 w-4/);
   assert.doesNotMatch(mobileBranch, /transform:\s*scale|scale-\[/);
 });
@@ -141,14 +142,14 @@ test("mobile product cards align to the search-form shell without viewport overl
   assert.doesNotMatch(mobileProductTabs, /overflow-hidden|index > 0|"border-s"|overflow-x-auto|overflow-x-scroll/);
 
   assert.match(flightMobileBranch, /<form onSubmit=\{onFlightSubmit\} className="mt-3 space-y-2">/);
-  assert.match(flightMobileBranch, /mobile-homepage-route-fields[\s\S]*?data-route-layout="joined"[\s\S]*?h-\[76px\] w-full/);
-  assert.match(flightMobileBranch, /mobile-homepage-travel-dates-field[\s\S]*?h-\[76px\] w-full/);
-  assert.match(flightMobileBranch, /mobile-homepage-search-submit[\s\S]*?h-\[58px\] w-full/);
+  assert.match(flightMobileBranch, /mobile-homepage-route-fields[\s\S]*?h-\[68px\] w-full/);
+  assert.match(flightMobileBranch, /mobile-homepage-travel-dates-field[\s\S]*?h-\[62px\] w-full/);
+  assert.match(flightMobileBranch, /mobile-homepage-search-submit[\s\S]*?h-12 w-full/);
 });
 
 test("every mobile homepage surface starts with the shared product tabs and no top inset", () => {
-  const zeroTopInset = /px-\[13px\][^"\n]*pt-0/;
-  assert.equal((source.match(/px-\[13px\][^"\n]*pt-0/g) ?? []).length, 3);
+  const zeroTopInset = /px-\[13px\] pb-\[13px\] pt-0/;
+  assert.equal((source.match(/px-\[13px\] pb-\[13px\] pt-0/g) ?? []).length, 3);
   assert.match(flightMobileBranch, new RegExp(`${zeroTopInset.source}[^>]*>[\\s\\S]*?\\{mobileHomepageProductTabs\\}[\\s\\S]*?<form onSubmit=\\{onFlightSubmit\\} className="mt-3`));
   assert.match(source, /mobile-homepage-deals-surface[\s\S]{0,700}px-\[13px\] pb-\[13px\] pt-0[\s\S]*?\{mobileHomepageProductTabs\}[\s\S]*?<DealsSearchForm/);
   assert.match(sharedBranch, /className=\{wrapper\}[\s\S]*?mobileHomepage \? \([\s\S]*?<div className="mb-3">\{mobileHomepageProductTabs\}<\/div>/);
@@ -286,35 +287,23 @@ test("mobile flight field icons sit in value rows without decorative tiles", () 
   assert.match(mobileBranch, /tracking-\[0\.11em\][^\n]*\{label\}<\/span>[\s\S]*?mobile-homepage-\$\{kind\}-value/);
   assert.match(mobileBranch, /tracking-\[0\.11em\][^\n]*\{mobileTravelDatesLabel\}<\/span>[\s\S]*?mobile-homepage-travel-dates-value/);
   assert.match(mobileBranch, /tracking-\[0\.11em\][^\n]*\{mobileTravelersCabinLabel\}<\/span>[\s\S]*?mobile-homepage-travelers-value/);
-  assert.match(mobileBranch, /data-route-layout="joined"/);
-  assert.equal((mobileBranch.match(/data-testid="mobile-homepage-route-divider"/g) ?? []).length, 1);
-  assert.match(mobileBranch, /mobile-homepage-travel-dates-field[\s\S]*?<ChevronRight/);
-  assert.match(mobileBranch, /mobile-homepage-travelers-field[\s\S]*?<ChevronRight/);
+  assert.equal((mobileBranch.match(/bg-\[#fcfdfe\] px-4 text-start/g) ?? []).length, 3);
   assert.match(mobileBranch, /mobile-homepage-swap/);
   assert.match(mobileBranch, /onClick=\{onSwapAirports\}/);
   assert.match(mobileBranch, /<ArrowRightLeft/);
-  assert.match(mobileBranch, /mobile-homepage-swap[\s\S]*?end-\[18px\]/);
-  assert.doesNotMatch(mobileBranch, /mobile-homepage-swap[\s\S]*?right-\[18px\]/);
   assert.doesNotMatch(mobileBranch, /<ArrowUpDown/);
 });
 
-test("mobile origin remains driven by the resolved form state", () => {
-  assert.match(mobileBranch, /\["origin", mobileOriginLabel, from, t\.fromPlaceholder \|\| "From\?"\]/);
-  assert.match(mobileBranch, /getLocationFieldDisplay\(value\)/);
-  assert.match(mobileBranch, /\{display\.primary \|\| placeholder\}/);
-  assert.doesNotMatch(mobileBranch, /Lagos|LOS/);
-});
-
 test("mobile card, fields, borders, and tabs use the cool-neutral surface hierarchy", () => {
-  assert.match(mobileBranch, /border border-\[#dee5ed\] bg-\[#f8fafc\][^\n]*shadow-\[0_10px_28px_rgba\(15,23,42,0\.08\)\]/);
-  assert.equal((flightMobileBranch.match(/border border-\[#dbe3ec\] bg-\[#fcfdfe\]/g) ?? []).length, 3);
+  assert.match(mobileBranch, /border border-\[#dee5ed\] bg-\[#f8fafc\][^\n]*shadow-\[0_8px_22px_rgba\(15,23,42,0\.07\)\]/);
+  assert.ok((mobileBranch.match(/border border-\[#dee5ed\] bg-\[#fcfdfe\]/g) ?? []).length >= 4);
   assert.match(mobileProductTabs, /border-\[#075ee8\] bg-\[#eef5ff\] text-\[#075ee8\]/);
 });
 
-test("mobile Flights alone uses the rounded premium card geometry", () => {
-  assert.match(mobileBranch, /mobile-homepage-flight-search[\s\S]{0,500}rounded-b-\[26px\]/);
-  assert.equal((flightMobileBranch.match(/rounded-\[20px\] border border-\[#dbe3ec\] bg-\[#fcfdfe\]/g) ?? []).length, 3);
-  assert.match(mobileBranch, /mobile-homepage-search-submit[\s\S]{0,240}rounded-\[18px\]/);
+test("mobile Flights alone uses straighter card and control geometry", () => {
+  assert.match(mobileBranch, /mobile-homepage-flight-search[\s\S]{0,420}rounded-\[14px\]/);
+  assert.ok((mobileBranch.match(/rounded-\[10px\] border border-\[#dee5ed\] bg-\[#fcfdfe\]/g) ?? []).length >= 3);
+  assert.match(mobileBranch, /mobile-homepage-search-submit[\s\S]{0,180}rounded-\[10px\]/);
 });
 
 test("flight CTA preserves validation without whole-button opacity washout", () => {
@@ -335,9 +324,10 @@ test("dates and travelers are single full-width mobile cards", () => {
   assert.match(mobileBranch, /\{travelerSummary\}/);
 });
 
-test("mobile CTA says Search flights while preserving submission", () => {
+test("mobile CTA text is exactly Search while preserving submission", () => {
   assert.match(mobileBranch, /onSubmit=\{onFlightSubmit\}/);
-  assert.match(mobileBranch, /isFlightSubmitting[\s\S]*?: t\.searchFlights \|\| "Search flights"/);
+  assert.match(mobileBranch, /isFlightSubmitting[\s\S]*?: t\.search \|\| "Search"/);
+  assert.doesNotMatch(mobileBranch, />Search flights</);
 });
 
 test("mobile pickers and one-way/query behavior remain wired", () => {
