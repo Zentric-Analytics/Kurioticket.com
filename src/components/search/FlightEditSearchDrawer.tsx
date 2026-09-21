@@ -249,8 +249,8 @@ export function FlightEditSearchDrawer({
           (draft.tripType !== "round-trip" ||
             (draft.returnDate && draft.returnDate >= draft.departureDate)),
         );
-  const fieldClass =
-    "min-h-[60px] w-full min-w-0 bg-white px-4 py-2.5 text-start transition-colors hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25";
+  const editSearchTitle = resultsMode && locale.toLowerCase().startsWith("en") ? "Change your search" : t("editFlightSearch");
+  const fieldClass = `w-full min-w-0 bg-white text-start transition-colors focus-visible:outline-none focus-visible:ring-2 ${resultsMode ? "min-h-[66px] px-3 py-[9px] text-[#071A48] focus-visible:ring-[#064CF7]/25" : "min-h-[60px] px-4 py-2.5 hover:border-slate-300 focus-visible:ring-[#004BB8]/25"}`;
   const field = (
     label: string,
     value: string,
@@ -261,17 +261,17 @@ export function FlightEditSearchDrawer({
     const display = location ? getLocationFieldDisplay(value) : { primary: value };
     return (
     <span className="block min-w-0">
-      <span className="mb-1.5 block text-[11px] font-semibold uppercase leading-3 tracking-[0.08em] text-slate-500">
+      <span className={resultsMode ? "mb-1 block text-[10px] font-extrabold uppercase leading-[14px] tracking-[0.5px] text-[#56658E]" : "mb-1.5 block text-[11px] font-semibold uppercase leading-3 tracking-[0.08em] text-slate-500"}>
         {label}
       </span>
       <span
-        className="grid min-w-0 grid-cols-[22px_minmax(0,1fr)_20px] items-center gap-2.5"
+        className={resultsMode ? "grid min-w-0 grid-cols-[18px_minmax(0,1fr)_16px] items-center gap-2.5" : "grid min-w-0 grid-cols-[22px_minmax(0,1fr)_20px] items-center gap-2.5"}
         data-mobile-value-row
       >
         {icon}
-        <span className="min-w-0 text-slate-950">
-          <span className="block truncate text-[16px] font-semibold leading-5">{display.primary}</span>
-          {display.secondary ? <span className="block truncate text-xs font-medium leading-4 text-slate-600">{display.secondary}</span> : null}
+        <span className={resultsMode ? "min-w-0 text-[#071A48]" : "min-w-0 text-slate-950"}>
+          <span className={resultsMode ? "block truncate text-[15px] font-semibold leading-5" : "block truncate text-[16px] font-semibold leading-5"}>{display.primary}</span>
+          {display.secondary ? <span className={resultsMode ? "block truncate text-[12px] font-medium leading-[17px] text-[#56658E]" : "block truncate text-xs font-medium leading-4 text-slate-600"}>{display.secondary}</span> : null}
         </span>
         {trailing ?? <span aria-hidden="true" />}
       </span>
@@ -288,12 +288,12 @@ export function FlightEditSearchDrawer({
       }}
       data-mobile-results-overlay-root={bottomSheet ? true : undefined}
       data-flight-edit-presentation={presentation}
-      className={`${bottomSheet ? `mobile-results-overlay-root mobile-results-sheet-backdrop mobile-results-sheet-backdrop-clean fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none sm:hidden ${isClosing ? "mobile-results-sheet-backdrop-closing" : ""}` : "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden overscroll-contain bg-slate-50 sm:hidden"}`}
+      className={`${bottomSheet ? `mobile-results-overlay-root mobile-results-sheet-backdrop ${resultsMode ? "mobile-flight-edit-backdrop p-3" : "mobile-results-sheet-backdrop-clean"} fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none sm:hidden ${isClosing ? "mobile-results-sheet-backdrop-closing" : ""}` : "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden overscroll-contain bg-slate-50 sm:hidden"}`}
     >
       <div
         className={
           bottomSheet
-            ? `mobile-results-sheet-surface mobile-results-sheet-surface-smooth relative flex max-h-[94dvh] min-h-0 w-full flex-col ${isClosing ? "mobile-results-sheet-surface-closing" : ""}`
+            ? `mobile-results-sheet-surface mobile-results-sheet-surface-smooth relative flex ${resultsMode ? "max-h-[88dvh]" : "max-h-[94dvh]"} min-h-0 w-full flex-col ${isClosing ? "mobile-results-sheet-surface-closing" : ""}`
             : "contents"
         }
       >
@@ -313,35 +313,35 @@ export function FlightEditSearchDrawer({
             onSearch(draft);
           }
         }}
-        className={`relative z-10 flex min-h-0 w-full min-w-0 flex-col bg-white ${bottomSheet ? "overflow-hidden rounded-t-[22px] shadow-[0_-12px_36px_rgba(15,23,42,0.18)]" : "h-full"}`}
+        className={`relative z-10 flex min-h-0 w-full min-w-0 flex-col ${resultsMode ? "bg-[#F5F7FB]" : "bg-white"} ${bottomSheet ? `overflow-hidden ${resultsMode ? "rounded-[24px] shadow-[0_18px_48px_rgba(15,23,42,0.22)]" : "rounded-t-[22px] shadow-[0_-12px_36px_rgba(15,23,42,0.18)]"}` : "h-full"}`}
       >
         <div
-          className={`shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 ${bottomSheet ? "pt-2" : "pt-[calc(0.5rem+env(safe-area-inset-top))]"}`}
+          className={`shrink-0 px-4 ${resultsMode ? "bg-[#F5F7FB] text-[#071A48]" : "border-b border-slate-200/80 bg-white"} ${bottomSheet ? (resultsMode ? "py-1" : "pb-2 pt-2") : "pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))]"}`}
         >
           <div className="flex min-h-11 items-center justify-between gap-3">
             <h2
               id="flight-mobile-search-title"
-              className="text-xl font-bold leading-6 tracking-[-0.01em] text-slate-950"
+              className={resultsMode ? "text-[19px] font-semibold leading-6 text-[#071A48]" : "text-xl font-bold leading-6 tracking-[-0.01em] text-slate-950"}
             >
-              {t("editFlightSearch")}
+              {editSearchTitle}
             </h2>
             <button
               type="button"
               aria-label={t("closeEditSearch")}
               onClick={closeDrawer}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-[10px] text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+              className={resultsMode ? "inline-flex h-11 w-11 items-center justify-center rounded-full text-[#56658E] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#064CF7]/30" : "inline-flex h-11 w-11 items-center justify-center rounded-[10px] text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"}
             >
-              <X className="h-5 w-5" aria-hidden="true" />
+              <X className={resultsMode ? "h-[23px] w-[23px]" : "h-5 w-5"} aria-hidden="true" />
             </button>
           </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
+        <div className={`min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain ${resultsMode ? "bg-[#F5F7FB] px-3" : "bg-white px-4"} pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3`}>
           <div className="mx-auto flex w-full min-w-0 max-w-xl flex-col gap-3.5">
             <div
               role="radiogroup"
               aria-label={t("tripType")}
               data-mobile-trip-type-grid
-              className="grid min-h-11 w-full min-w-0 grid-cols-3 items-stretch gap-1 rounded-[13px] bg-slate-100/75 p-1"
+              className={resultsMode ? "grid min-h-[50px] w-full min-w-0 grid-cols-3 border-b border-[#E7ECF5]" : "grid min-h-11 w-full min-w-0 grid-cols-3 items-stretch gap-1 rounded-[13px] bg-slate-100/75 p-1"}
             >
               {(
                 [
@@ -372,16 +372,16 @@ export function FlightEditSearchDrawer({
                           : current.legs,
                     }))
                   }
-                  className={`inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-1 text-[13px] font-semibold min-[360px]:text-sm ${draft.tripType === value ? "bg-white text-slate-950 shadow-sm" : "text-slate-600"}`}
+                  className={resultsMode ? `relative inline-flex min-h-[50px] min-w-0 items-center justify-center whitespace-nowrap px-1 text-[11px] ${draft.tripType === value ? "font-extrabold text-[#064CF7] after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:bg-[#064CF7]" : "font-semibold text-[#56658E]"}` : `inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-1 text-[13px] font-semibold min-[360px]:text-sm ${draft.tripType === value ? "bg-white text-slate-950 shadow-sm" : "text-slate-600"}`}
                 >
-                  <span
+                  {!resultsMode ? <span
                     aria-hidden="true"
                     className={`inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border ${draft.tripType === value ? "border-[#004BB8]" : "border-slate-300"}`}
                   >
                     <span
                       className={`h-2 w-2 rounded-full ${draft.tripType === value ? "bg-[#004BB8]" : "bg-transparent"}`}
                     />
-                  </span>
+                  </span> : null}
                   {label}
                 </button>
               ))}
@@ -399,11 +399,12 @@ export function FlightEditSearchDrawer({
             ) : resultsMode ? (
               <div
                 data-flight-results-edit-fields
-                className="min-w-0 overflow-hidden rounded-[14px] border border-slate-200 bg-white"
+                className="contents"
               >
                 <div
                   data-mobile-route-fields
-                  className="relative grid divide-y divide-slate-200"
+                  data-mobile-results-route-card
+                  className="relative grid min-w-0 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white divide-y divide-[#E7ECF5]"
                 >
                   <button
                     ref={originRef}
@@ -422,7 +423,7 @@ export function FlightEditSearchDrawer({
                       t("origin"),
                       firstLeg.origin || t("chooseOrigin"),
                       <MapPin
-                        className="h-5 w-5 text-slate-700"
+                        className="h-[18px] w-[18px] text-[#56658E]"
                         aria-hidden="true"
                       />,
                       undefined,
@@ -446,9 +447,10 @@ export function FlightEditSearchDrawer({
                       }))
                     }
                     data-mobile-swap-control
-                    className="absolute left-1/2 top-1/2 z-10 inline-flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#D8E1EC] bg-white text-[#004BB8]"
+                    disabled={!firstLeg.origin || !firstLeg.destination}
+                    className="absolute left-1/2 top-1/2 z-10 inline-flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[#064CF7] disabled:opacity-40"
                   >
-                    <ArrowRightLeft className="h-5 w-5" aria-hidden="true" />
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#E7ECF5] bg-white shadow-[0_4px_10px_rgba(24,48,91,0.1)]"><ArrowRightLeft className="h-[17px] w-[17px]" aria-hidden="true" /></span>
                   </button>
                   <button
                     ref={destinationRef}
@@ -467,7 +469,7 @@ export function FlightEditSearchDrawer({
                       t("destination"),
                       firstLeg.destination || t("chooseDestination"),
                       <MapPin
-                        className="h-5 w-5 text-slate-700"
+                        className="h-[18px] w-[18px] text-[#56658E]"
                         aria-hidden="true"
                       />,
                       undefined,
@@ -479,8 +481,9 @@ export function FlightEditSearchDrawer({
                   ref={datesRef}
                   type="button"
                   onClick={() => setDatePickerOpen(true)}
-                  className={`${fieldClass} border-t border-slate-200`}
+                  className={`${fieldClass} overflow-hidden rounded-[13px] border border-[#E7ECF5]`}
                   data-mobile-field="dates"
+                  data-mobile-results-dates-card
                   title={travelDatesDisplay ?? t("travelDates")}
                   aria-label={`${t("travelDates")}: ${travelDatesDisplay ?? t("travelDates")}`}
                 >
@@ -488,7 +491,7 @@ export function FlightEditSearchDrawer({
                     t("travelDates"),
                     travelDatesDisplay ?? t("travelDates"),
                     <Calendar
-                      className="h-5 w-5 text-slate-700"
+                      className="h-[18px] w-[18px] text-[#56658E]"
                       aria-hidden="true"
                     />,
                   )}
@@ -497,18 +500,19 @@ export function FlightEditSearchDrawer({
                   ref={travelersRef}
                   type="button"
                   onClick={() => setTravelerPickerOpen(true)}
-                  className={`${fieldClass} border-t border-slate-200`}
+                  className={`${fieldClass} overflow-hidden rounded-[13px] border border-[#E7ECF5]`}
                   data-mobile-field="travelers"
+                  data-mobile-results-travelers-card
                 >
                   {field(
                     t("travelersAndCabin"),
                     travelerSummary,
                     <UserRound
-                      className="h-5 w-5 text-slate-700"
+                      className="h-[18px] w-[18px] text-[#56658E]"
                       aria-hidden="true"
                     />,
                     <ChevronDown
-                      className="h-4 w-4 text-slate-500"
+                      className="h-4 w-4 text-[#56658E]"
                       aria-hidden="true"
                     />,
                   )}
@@ -639,14 +643,14 @@ export function FlightEditSearchDrawer({
             <Button
               type="submit"
               disabled={!canSearch}
-              className="mt-1 h-12 w-full rounded-[11px] bg-[#004BB8] text-[15px] font-semibold text-white shadow-sm"
+              className={resultsMode ? "mt-1 min-h-[54px] w-full rounded-[9px] bg-[#064CF7] text-[15px] font-extrabold text-white hover:bg-[#064CF7]" : "mt-1 h-12 w-full rounded-[11px] bg-[#004BB8] text-[15px] font-semibold text-white shadow-sm"}
             >
               {t("search")}
             </Button>
           </div>
         </div>
       </form>
-      {bottomSheet ? (
+      {bottomSheet && !resultsMode ? (
         <div
           aria-hidden="true"
           data-flight-edit-bottom-continuation

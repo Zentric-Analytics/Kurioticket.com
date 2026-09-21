@@ -6,10 +6,11 @@ const source = readFileSync(
   new URL("./FlightEditSearchDrawer.tsx", import.meta.url),
   "utf8",
 );
+const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 
 test("shared mobile flight editor retains the approved drawer structure", () => {
   assert.match(source, /id="flight-mobile-search-title"/);
-  assert.match(source, />\s*\{t\("editFlightSearch"\)\}\s*</);
+  assert.match(source, /"Change your search"/);
   assert.match(source, /aria-label=\{t\("closeEditSearch"\)\}/);
   assert.match(source, /data-mobile-trip-type-grid/);
   assert.match(source, /grid-cols-3/);
@@ -47,12 +48,15 @@ test("shared editor supports a Details-only bottom sheet while fullscreen remain
   assert.match(source, /presentation = "fullscreen"/);
   assert.match(source, /data-flight-edit-presentation=\{presentation\}/);
   assert.match(source, /max-h-\[94dvh\]/);
+  assert.match(source, /max-h-\[88dvh\]/);
   assert.doesNotMatch(source, /(?:^|\s)h-\[94dvh\]/);
   assert.match(source, /flex min-h-0 w-full min-w-0 flex-col/);
   assert.match(source, /max-h-\[94dvh\]/);
-  assert.match(source, /overflow-hidden rounded-t-\[22px\]/);
+  assert.match(source, /rounded-\[24px\]/);
   assert.match(source, /rounded-t-\[22px\]/);
   assert.match(source, /mobile-results-sheet-backdrop-clean/);
+  assert.match(source, /mobile-flight-edit-backdrop p-3/);
+  assert.match(styles, /\.mobile-flight-edit-backdrop[\s\S]*?rgba\(8, 18, 35, 0\.52\)/);
   assert.match(source, /canvasColor: "#ffffff"/);
   assert.match(source, /data-flight-edit-bottom-continuation/);
   assert.match(source, /data-mobile-results-sheet-bottom-continuation/);
@@ -125,11 +129,13 @@ test("bottom sheet uses the shared no-shake lock and delegates launcher focus", 
 });
 
 test("Results flight fields use compact grouped rows", () => {
-  assert.match(source, /data-mobile-results-edit-group/);
-  assert.match(source, /min-h-\[60px\]/);
-  assert.match(source, /rounded-\[14px\].*border border-slate-200/);
+  assert.match(source, /data-mobile-results-route-card/);
+  assert.match(source, /data-mobile-results-dates-card/);
+  assert.match(source, /data-mobile-results-travelers-card/);
+  assert.match(source, /min-h-\[66px\]/);
+  assert.match(source, /rounded-\[13px\].*border border-\[#E7ECF5\]/);
   assert.doesNotMatch(source, /min-h-\[70px\]/);
-  assert.equal(source.match(/h-5 w-5 text-slate-700/g)?.length, 8);
+  assert.equal(source.match(/h-\[18px\] w-\[18px\] text-\[#56658E\]/g)?.length, 4);
 });
 
 test("Results mode connects all non-multi-city fields while preserving route swap geometry", () => {
@@ -143,7 +149,7 @@ test("Results mode connects all non-multi-city fields while preserving route swa
   const group = source.slice(groupStart, groupEnd);
   assert.match(
     group,
-    /min-w-0 overflow-hidden rounded-\[14px\] border border-slate-200 bg-white/,
+    /min-w-0 overflow-hidden rounded-\[13px\] border border-\[#E7ECF5\] bg-white/,
   );
   const fields = ["origin", "destination", "dates", "travelers"].map((field) =>
     group.indexOf(`data-mobile-field="${field}"`),
@@ -168,10 +174,8 @@ test("Results mode connects all non-multi-city fields while preserving route swa
     route,
     /data-mobile-field="dates"|data-mobile-field="travelers"/,
   );
-  assert.match(
-    group,
-    /data-mobile-field="dates"[\s\S]*border-t border-slate-200[\s\S]*data-mobile-field="travelers"/,
-  );
+  assert.match(group, /data-mobile-results-dates-card/);
+  assert.match(group, /data-mobile-results-travelers-card/);
 });
 
 test("Results airport pickers opt in without changing the shared default flow", () => {

@@ -6283,7 +6283,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const shortcutButtonClass =
       "focus-ring group inline-flex h-11 min-w-11 shrink-0 items-center justify-center whitespace-nowrap rounded-[9px] p-0 text-[13px] font-semibold leading-4 text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
     const shortcutCapsuleClass =
-      "inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2.5 transition group-hover:border-[#B9C8D9] group-hover:bg-slate-50 group-focus-visible:border-[#004BB8]";
+      "inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2.5 transition group-hover:border-[#B9C8D9] group-hover:bg-[#F8FAFC] group-focus-visible:border-[#064CF7]";
     const openSheet = (sheet: MobileShortcutSheet, launcher: HTMLButtonElement) => {
       mobileShortcutLauncherRef.current = launcher;
       setMobileDraftSort(sortMode);
@@ -6304,7 +6304,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       >
         <span className={shortcutCapsuleClass}>
           <span className="whitespace-nowrap">{label}</span>
-          <ChevronDown className={cn("h-[13px] w-[13px] shrink-0 text-slate-500 transition-transform", mobileShortcutSheet === sheet && "rotate-180")} aria-hidden="true" />
+          <ChevronDown className={cn("h-[13px] w-[13px] shrink-0 text-[#64748B] transition-transform", mobileShortcutSheet === sheet && "rotate-180")} aria-hidden="true" />
         </span>
       </button>
     );
@@ -6336,27 +6336,27 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const fromAirportOptions = buildCountOptions(results.map((flight) => flight.originAirport));
     const toAirportOptions = buildCountOptions(results.map((flight) => flight.destinationAirport));
     const sheetTitle = mobileShortcutSheet === "sort" ? "Sort flights" : mobileShortcutSheet === "airlines" ? "Airlines" : mobileShortcutSheet === "stops" ? "Stops" : "Airports";
-    const choiceClass = "focus-ring flex min-h-11 w-full items-center justify-between gap-3 rounded-[10px] px-2.5 py-2 text-left transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
+    const choiceClass = "focus-ring flex min-h-12 w-full items-center justify-between gap-2.5 px-2.5 py-[5px] text-left transition hover:bg-[#F8FAFC] focus-visible:ring-2 focus-visible:ring-[#064CF7]/30";
     const renderChoice = (label: string, detail: string | number | undefined, selected: boolean, onClick: () => void, role: "radio" | "checkbox" = "checkbox") => (
-      <button type="button" role={role} aria-checked={selected} onClick={onClick} className={choiceClass}>
-        <span className="min-w-0"><span className="block truncate text-[14px] font-semibold leading-[18px] text-slate-900">{label}</span>{detail !== undefined ? <span className="mt-0.5 block truncate text-[10.5px] font-medium leading-[14px] text-slate-500">{detail}</span> : null}</span>
-        <span className={cn("inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border", selected ? "border-[#075EE8] bg-[#075EE8] text-white" : "border-slate-300 bg-white")}>{selected ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : null}</span>
+      <button type="button" role={role} aria-checked={selected} onClick={onClick} className={cn(choiceClass, role === "radio" && "min-h-[52px] py-[7px]")}>
+        <span className="min-w-0"><span className="block truncate text-[14px] font-semibold leading-[18px] text-[#071A48]">{label}</span>{detail !== undefined ? <span className="mt-0.5 block truncate text-[10.5px] font-medium leading-[14px] text-[#56658E]">{detail}</span> : null}</span>
+        {role === "radio" ? (selected ? <Check className="h-[17px] w-[17px] shrink-0 text-[#064CF7]" aria-hidden="true" /> : <span className="h-[17px] w-[17px] shrink-0" aria-hidden="true" />) : <span className={cn("inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border-[1.5px]", selected ? "border-[#064CF7] bg-[#064CF7] text-white" : "border-[#D8DEE8] bg-transparent text-transparent")}>{selected ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : null}</span>}
       </button>
     );
     const sheet = mobileShortcutSheet && typeof document !== "undefined" ? createPortal(
-      <div className="fixed inset-0 z-[10000] flex items-end bg-slate-950/35 sm:hidden" onMouseDown={(event) => { if (event.target === event.currentTarget) closeMobileShortcutSheet(); }}>
-        <section ref={mobileShortcutSheetRef} role="dialog" aria-modal="true" aria-labelledby="mobile-flight-quick-sheet-title" className="flex max-h-[min(78dvh,640px)] w-full flex-col overflow-hidden rounded-t-[24px] border border-b-0 border-slate-200 bg-[#F5F7FB] shadow-2xl motion-reduce:transition-none" onMouseDown={(event) => event.stopPropagation()}>
-          <header className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 bg-white px-4 pb-3 pt-4">
-            <div><h2 id="mobile-flight-quick-sheet-title" className="text-[18px] font-bold leading-6 text-slate-950">{sheetTitle}</h2>{mobileShortcutSheet === "sort" ? <p className="mt-0.5 text-[12px] font-medium leading-4 text-slate-500">Choose how results are ordered</p> : null}</div>
-            <button ref={mobileShortcutSheetCloseRef} type="button" aria-label={`Close ${sheetTitle.toLowerCase()}`} onClick={() => closeMobileShortcutSheet()} className="focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100"><X className="h-5 w-5" aria-hidden="true" /></button>
+      <div className="fixed inset-0 z-[10000] flex items-end bg-slate-950/35 p-3 sm:hidden" onMouseDown={(event) => { if (event.target === event.currentTarget) closeMobileShortcutSheet(); }}>
+        <section ref={mobileShortcutSheetRef} role="dialog" aria-modal="true" aria-labelledby="mobile-flight-quick-sheet-title" className="flex max-h-[min(78dvh,640px)] w-full flex-col overflow-hidden rounded-[24px] border border-[#D8DEE8] bg-[#F2F4F8] shadow-2xl motion-reduce:transition-none" onMouseDown={(event) => event.stopPropagation()}>
+          <header className="grid shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-start px-3 pb-2 pt-2">
+            <span className="h-11 w-11" aria-hidden="true" /><div className="min-w-0 pt-2 text-center"><h2 id="mobile-flight-quick-sheet-title" className="truncate text-[18px] font-bold leading-[23px] text-[#071A48]">{sheetTitle}</h2>{mobileShortcutSheet === "sort" ? <p className="mt-0.5 text-[11px] font-medium leading-[14px] text-[#56658E]">Choose how results are ordered</p> : null}</div>
+            <button ref={mobileShortcutSheetCloseRef} type="button" aria-label={`Close ${sheetTitle.toLowerCase()}`} onClick={() => closeMobileShortcutSheet()} className="focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#56658E] hover:bg-white"><X className="h-5 w-5" aria-hidden="true" /></button>
           </header>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
             {mobileShortcutSheet === "sort" ? <div role="radiogroup">{mobileSortOptions.map((option) => <div key={option.value}>{renderChoice(option.label, option.description, mobileDraftSort === option.value, () => setMobileDraftSort(option.value), "radio")}</div>)}</div> : null}
-            {mobileShortcutSheet === "airlines" ? <div><label className="sr-only" htmlFor="mobile-flight-airline-search">Search airlines</label><input id="mobile-flight-airline-search" type="search" value={mobileAirlineSearch} onChange={(event) => setMobileAirlineSearch(event.target.value)} placeholder="Search airlines" className="mb-2 h-11 w-full rounded-[10px] border border-slate-300 bg-white px-3 text-[13px] font-medium outline-none focus:border-[#075EE8] focus:ring-2 focus:ring-[#075EE8]/25" />{visibleAirlines.map((option) => <div key={option.value}>{renderChoice(option.label, option.count, mobileDraftAirlines.includes(option.value), () => toggleDraft(option.value, mobileDraftAirlines, setMobileDraftAirlines))}</div>)}{!mobileAirlineSearch.trim() && airlineOptions.length > 5 ? <button type="button" onClick={() => setMobileShowAllAirlines((current) => !current)} className="focus-ring mt-1 min-h-11 px-2 text-[13px] font-semibold text-[#075EE8]">{mobileShowAllAirlines ? "Show less" : "Show more"}</button> : null}</div> : null}
+            {mobileShortcutSheet === "airlines" ? <div><label className="sr-only" htmlFor="mobile-flight-airline-search">Search airlines</label><input id="mobile-flight-airline-search" type="search" value={mobileAirlineSearch} onChange={(event) => setMobileAirlineSearch(event.target.value)} placeholder="Search airlines" className="mb-2 h-11 w-full rounded-[10px] border border-[#D8DEE8] bg-white px-3 text-[13px] font-medium text-[#071A48] outline-none placeholder:text-[#56658E] focus:border-[#064CF7] focus:ring-2 focus:ring-[#064CF7]/25" />{visibleAirlines.map((option) => <div key={option.value}>{renderChoice(option.label, option.count, mobileDraftAirlines.includes(option.value), () => toggleDraft(option.value, mobileDraftAirlines, setMobileDraftAirlines))}</div>)}{!mobileAirlineSearch.trim() && airlineOptions.length > 5 ? <button type="button" onClick={() => setMobileShowAllAirlines((current) => !current)} className="focus-ring mt-1 min-h-11 px-2 text-[13px] font-semibold text-[#064CF7]">{mobileShowAllAirlines ? "Show less" : "Show more"}</button> : null}</div> : null}
             {mobileShortcutSheet === "stops" ? <div>{stopOptions.map((option) => <div key={option.value}>{renderChoice(option.label, option.count, mobileDraftStops.includes(option.value), () => toggleDraft(option.value, mobileDraftStops, setMobileDraftStops))}</div>)}</div> : null}
             {mobileShortcutSheet === "airports" ? <div><h3 className="px-2 pb-1 pt-1 text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">From</h3>{fromAirportOptions.map((option) => <div key={`from-${option.value}`}>{renderChoice(option.label, option.count, mobileDraftAirports.includes(option.value), () => toggleDraft(option.value, mobileDraftAirports, setMobileDraftAirports))}</div>)}<h3 className="mt-3 px-2 pb-1 text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">To</h3>{toAirportOptions.map((option) => <div key={`to-${option.value}`}>{renderChoice(option.label, option.count, mobileDraftAirports.includes(option.value), () => toggleDraft(option.value, mobileDraftAirports, setMobileDraftAirports))}</div>)}</div> : null}
           </div>
-          <footer className="flex shrink-0 gap-3 border-t border-slate-200 bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3"><button type="button" onClick={resetSheet} className="focus-ring h-[49px] min-w-[116px] rounded-[12px] border border-slate-300 bg-white px-4 text-[15px] font-bold text-slate-900">Reset</button><button type="button" onClick={applySheet} className="focus-ring h-[49px] flex-1 rounded-[12px] bg-[#075EE8] px-4 text-[15px] font-bold text-white">{mobileShortcutSheet === "sort" ? "Apply" : `View ${draftMatches} ${draftMatches === 1 ? "flight" : "flights"}`}</button></footer>
+          <footer className="flex shrink-0 gap-3 bg-[#F2F4F8] px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3"><button type="button" onClick={resetSheet} className="focus-ring h-[49px] min-w-[116px] rounded-[12px] border border-[#D8DEE8] bg-transparent px-4 text-[15px] font-bold text-[#071A48]">Reset</button><button type="button" disabled={mobileShortcutSheet !== "sort" && draftMatches === 0} onClick={applySheet} className="focus-ring h-[49px] flex-1 rounded-[12px] bg-[#064CF7] px-4 text-[15px] font-bold text-white disabled:opacity-45">{mobileShortcutSheet === "sort" ? "Apply" : `View ${draftMatches} ${draftMatches === 1 ? "flight" : "flights"}`}</button></footer>
         </section>
       </div>,
       document.body,
@@ -6364,7 +6364,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     return (
       <>
         <div data-mobile-flight-shortcuts className="w-full min-w-0 overflow-x-auto pe-3 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
-          <div className="flex w-max flex-nowrap items-center gap-2">
+          <div className="flex w-max flex-nowrap items-center gap-1.5">
             {renderFloatingFilterButton(shortcutButtonClass, shortcutCapsuleClass)}
             {renderTrigger("sort", activeSortOption.label)}
             {renderTrigger("airlines", "Airlines")}
@@ -6396,15 +6396,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         )}
         onClick={handleClick}
       >
-        <span className={capsuleClassName ?? "inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2.5 transition group-hover:border-[#B9C8D9] group-hover:bg-slate-50 group-focus-visible:border-[#004BB8]"}>
+        <span className={capsuleClassName ?? "inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2.5 transition group-hover:border-[#B9C8D9] group-hover:bg-[#F8FAFC] group-focus-visible:border-[#064CF7]"}>
           <SlidersHorizontal
-            className="h-4 w-4 text-[#004BB8]"
+            className="h-4 w-4 text-[#142033]"
             strokeWidth={2.2}
             aria-hidden="true"
           />
           <span>Filters</span>
           {activeFilterCount > 0 ? (
-            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-semibold leading-[14px] text-[#004BB8]">
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F1F5F9] px-1.5 text-[11px] font-semibold leading-[14px] text-[#142033]">
               {activeFilterCount}
             </span>
           ) : null}

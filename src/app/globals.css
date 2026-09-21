@@ -236,6 +236,30 @@ textarea {
 .mobile-results-sheet-backdrop-clean {
   background-color: rgb(15 23 42 / 8%);
 }
+.mobile-flight-edit-backdrop {
+  background-color: rgba(8, 18, 35, 0.52);
+}
+@media (max-width: 639px) {
+  #flight-mobile-filters-dialog,
+  #flight-mobile-filters-dialog > header,
+  #flight-mobile-filters-dialog > div {
+    background-color: #f2f4f8;
+  }
+  #flight-mobile-filters-dialog > header {
+    border-bottom: 0;
+    padding-inline: 1.5rem;
+  }
+  #flight-mobile-filters-dialog > div {
+    padding-inline: 1.5rem;
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+  }
+  #flight-mobile-filters-title {
+    color: #071a48;
+    font-size: 18px;
+    line-height: 23px;
+  }
+}
 .mobile-results-sheet-surface {
   position: relative;
   z-index: 10;

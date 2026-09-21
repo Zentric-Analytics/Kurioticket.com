@@ -4,6 +4,7 @@ import test from "node:test";
 
 const client = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
 const sheet = readFileSync("src/components/results/MobileFlightFiltersSheet.tsx", "utf8");
+const styles = readFileSync("src/app/globals.css", "utf8");
 
 test("mobile full Filters uses the native section hierarchy", () => {
   const order = ["Price", "Flight times", "Duration", "Stops", "Airlines", "Airports", "Fare preferences"].map((title) => sheet.indexOf(`title=\"${title}\"`));
@@ -28,6 +29,11 @@ test("native filter controls and footer semantics are retained", () => {
   assert.match(sheet, /activeFilterCount > 0 \? <button[^>]*>Reset<\/button>/);
   assert.match(sheet, /disabled=\{matchingCount === 0\}/);
   assert.match(sheet, /matchingCount === 0 \? "No flights" : `View/);
+  assert.match(styles, /#flight-mobile-filters-dialog[\s\S]*?background-color: #f2f4f8/);
+  assert.match(sheet, /min-h-\[46px\]/);
+  assert.match(sheet, /text-\[13px\] font-medium leading-\[18px\] text-\[#071A48\]/);
+  assert.match(sheet, /rounded-\[4px\] border-\[1\.5px\]/);
+  assert.match(sheet, /min-h-\[34px\] rounded-full text-\[12px\] font-extrabold/);
 });
 
 test("mobile endpoint airports exclude layovers while desktop options remain unchanged", () => {

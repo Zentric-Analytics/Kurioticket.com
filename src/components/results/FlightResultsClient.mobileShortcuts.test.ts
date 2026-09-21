@@ -18,6 +18,7 @@ test("mobile flight shortcuts remain an ordered single-row scroll rail", () => {
   assert.match(shortcuts, /overflow-x-auto/);
   assert.match(shortcuts, /flex-nowrap/);
   assert.match(shortcuts, /w-max/);
+  assert.match(shortcuts, /items-center gap-1\.5/);
 });
 
 test("mobile flight shortcut triggers preserve native-scale target and capsule geometry", () => {
@@ -42,7 +43,9 @@ test("mobile shortcut copy matches native without changing desktop copy", () => 
 test("sort and quick filters open one accessible mobile bottom-sheet system", () => {
   assert.match(shortcuts, /role="dialog"/);
   assert.match(shortcuts, /aria-modal="true"/);
-  assert.match(shortcuts, /rounded-t-\[24px\]/);
+  assert.match(shortcuts, /bg-slate-950\/35 p-3/);
+  assert.match(shortcuts, /rounded-\[24px\]/);
+  assert.match(shortcuts, /bg-\[#F2F4F8\]/);
   assert.match(shortcuts, /safe-area-inset-bottom/);
   assert.doesNotMatch(shortcuts, /role="menu"|position:\s*"fixed"|mobileShortcutMenuPosition/);
   for (const kind of ["sort", "airlines", "stops", "airports"]) assert.match(shortcuts, new RegExp(`mobileShortcutSheet === "${kind}"`));
@@ -84,4 +87,6 @@ test("full Filters launcher remains separate and retains its active count", () =
   assert.match(filter, /openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/);
   assert.match(filter, /activeFilterCount > 0/);
   assert.match(filter, /h-5 min-w-5/);
+  assert.match(filter, /text-\[#142033\]/);
+  assert.match(filter, /bg-\[#F1F5F9\]/);
 });
