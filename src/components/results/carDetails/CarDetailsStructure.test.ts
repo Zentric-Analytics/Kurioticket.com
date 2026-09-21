@@ -2,20 +2,33 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const clientSource = readFileSync(new URL("../CarDetailsClient.tsx", import.meta.url), "utf8");
-const guidedSource = readFileSync(new URL("../deals/DealsCarDetailsStage.tsx", import.meta.url), "utf8");
+const clientSource = readFileSync(
+  new URL("../CarDetailsClient.tsx", import.meta.url),
+  "utf8",
+);
+const guidedSource = readFileSync(
+  new URL("../deals/DealsCarDetailsStage.tsx", import.meta.url),
+  "utf8",
+);
 
 const experienceSource = clientSource.slice(
   clientSource.indexOf("export function CarDetailsExperience"),
   clientSource.indexOf("export function CarDetailsClient"),
 );
-const standaloneSource = clientSource.slice(clientSource.indexOf("export function CarDetailsClient"));
+const standaloneSource = clientSource.slice(
+  clientSource.indexOf("export function CarDetailsClient"),
+);
 
 test("standalone Car details owns exactly one page wrapper and back link", () => {
   assert.equal(standaloneSource.match(/<main\b/g)?.length, 1);
-  assert.equal(standaloneSource.match(/page-shell py-2 sm:py-7/g)?.length, 1);
+  assert.equal(standaloneSource.match(/page-shell py-0 lg:py-7/g)?.length, 1);
   assert.equal(standaloneSource.match(/<DetailsBackLink\b/g)?.length, 1);
-  assert.equal(standaloneSource.match(/bg-transparent sm:bg-white lg:border-b lg:border-border lg:pb-14/g)?.length, 1);
+  assert.equal(
+    standaloneSource.match(
+      /bg-transparent lg:bg-white lg:border-b lg:border-border lg:pb-14/g,
+    )?.length,
+    1,
+  );
   assert.match(standaloneSource, /presentation="standalone-content"/);
   assert.match(standaloneSource, /standalone-disabled-provider/);
 });
@@ -25,7 +38,10 @@ test("CarDetailsExperience is content-only for standalone and guided callers", (
   assert.doesNotMatch(experienceSource, /page-shell/);
   assert.doesNotMatch(experienceSource, /DetailsBackLink/);
   assert.match(experienceSource, /data-car-details-experience/);
-  assert.match(experienceSource, /presentation === "guided-content" \? "mt-6" : ""/);
+  assert.match(
+    experienceSource,
+    /presentation === "guided-content" \? "mt-6" : ""/,
+  );
 });
 
 test("guided Car details renders content-only experience with guided headings", () => {

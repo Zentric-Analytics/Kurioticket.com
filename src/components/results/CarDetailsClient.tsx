@@ -2,7 +2,9 @@
 
 import type { ReactNode, Ref } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
+  ArrowLeft,
   Clock3,
   ExternalLink,
   Fuel,
@@ -95,6 +97,7 @@ export function CarDetailsExperience({
   sectionHeadingLevel = 2,
   itemHeadingLevel = 3,
   modelHeadingRef,
+  mobileBackControl,
 }: {
   car: NormalizedCarResult;
   search: CarSearchParams;
@@ -105,6 +108,7 @@ export function CarDetailsExperience({
   sectionHeadingLevel?: HeadingLevel;
   itemHeadingLevel?: HeadingLevel;
   modelHeadingRef?: Ref<HTMLHeadingElement>;
+  mobileBackControl?: ReactNode;
 }) {
   const { locale, t } = useLocale();
   const { selectedOption } = useRegion();
@@ -179,52 +183,64 @@ export function CarDetailsExperience({
         </span>
       ) : null}
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="min-w-0 space-y-4 sm:space-y-5">
+        <div
+          className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:space-y-5" : "space-y-4 lg:space-y-5"}`}
+        >
           <CarDetailsHero
             car={car}
             text={text}
-            overlay={
-              <div className="flex min-w-0 items-start justify-between gap-3 text-slate-950 md:text-white">
+            mobileBackControl={mobileBackControl}
+            identity={
+              <div className="min-w-0">
+                <Heading
+                  level={modelHeadingLevel}
+                  headingRef={modelHeadingRef}
+                  className="scroll-mt-24 text-[22px] font-extrabold leading-7 tracking-[-0.025em] text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]"
+                >
+                  {car.modelName}
+                  {car.orSimilar ? (
+                    <span className="ms-1.5 inline text-sm font-semibold leading-5 tracking-normal text-slate-500">
+                      or similar
+                    </span>
+                  ) : null}
+                </Heading>
+                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.14em] text-[#075EE8]">
+                  {car.categoryLabel}
+                </p>
+              </div>
+            }
+            desktopOverlay={
+              <div className="flex min-w-0 items-start justify-between gap-3 text-white">
                 <div className="min-w-0 pt-0.5">
-                  <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#075EE8] md:text-white/85">
+                  <p className="text-[10px] font-bold uppercase tracking-[.14em] text-white/85">
                     {car.categoryLabel}
                   </p>
                   <Heading
                     level={modelHeadingLevel}
                     headingRef={modelHeadingRef}
-                    className="mt-0.5 scroll-mt-24 text-xl font-extrabold leading-tight tracking-[-0.025em] text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8] sm:text-3xl md:text-white md:focus-visible:ring-white"
+                    className="mt-0.5 scroll-mt-24 text-3xl font-extrabold leading-tight tracking-[-0.025em] text-white outline-none focus-visible:ring-2 focus-visible:ring-white"
                   >
                     {car.modelName}
                   </Heading>
                 </div>
-                <div
-                  className="flex shrink-0 items-center gap-0"
-                  data-car-details-actions
-                >
-                  <button
-                    type="button"
-                    aria-label={`${isSaved ? copy("carDetails.unsave") : copy("carDetails.save")} ${car.modelName}`}
-                    aria-pressed={isSaved}
-                    onClick={toggleSavedCar}
-                    className={`focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent shadow-none transition hover:bg-slate-100 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:backdrop-blur-sm md:hover:bg-slate-950/55 ${isSaved ? "text-rose-500 md:text-rose-300" : "text-slate-700 md:text-white"}`}
-                  >
-                    <Heart
-                      size={20}
-                      className="translate-x-1.5"
-                      fill={isSaved ? "currentColor" : "none"}
-                      aria-hidden="true"
-                    />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={`${copy("carDetails.share")} ${car.modelName}`}
-                    onClick={() => void shareCar()}
-                    className="focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent text-slate-700 shadow-none transition hover:bg-slate-100 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:text-white md:backdrop-blur-sm md:hover:bg-slate-950/55"
-                  >
-                    <Share2 size={19} className="-translate-x-1.5" aria-hidden="true" />
-                  </button>
-                </div>
+                <CarHeroActions
+                  car={car}
+                  isSaved={isSaved}
+                  toggleSavedCar={toggleSavedCar}
+                  shareCar={shareCar}
+                  copy={copy}
+                  desktop
+                />
               </div>
+            }
+            mobileActions={
+              <CarHeroActions
+                car={car}
+                isSaved={isSaved}
+                toggleSavedCar={toggleSavedCar}
+                shareCar={shareCar}
+                copy={copy}
+              />
             }
           />
           {presentation === "standalone-content" ? (
@@ -235,6 +251,7 @@ export function CarDetailsExperience({
                 labels={{
                   navigation: copy("carDetails.title"),
                   compare: copy("carDetails.comparePrices"),
+                  mobileCompare: "Compare deals",
                   pickup: copy("carDetails.pickupReturn"),
                   location: copy("carDetails.location"),
                 }}
@@ -320,6 +337,55 @@ export function CarDetailsExperience({
   );
 }
 
+function CarHeroActions({
+  car,
+  isSaved,
+  toggleSavedCar,
+  shareCar,
+  copy,
+  desktop = false,
+}: {
+  car: NormalizedCarResult;
+  isSaved: boolean;
+  toggleSavedCar: () => void;
+  shareCar: () => Promise<void>;
+  copy: (key: string) => string;
+  desktop?: boolean;
+}) {
+  return (
+    <div
+      className={
+        desktop
+          ? "flex shrink-0 items-center gap-1"
+          : "flex h-11 shrink-0 items-center overflow-hidden rounded-full border border-white/70 bg-white/85 shadow-[0_2px_7px_rgba(15,23,42,0.08)] backdrop-blur-md"
+      }
+      data-car-details-actions
+    >
+      <button
+        type="button"
+        aria-label={`${isSaved ? copy("carDetails.unsave") : copy("carDetails.save")} ${car.modelName}`}
+        aria-pressed={isSaved}
+        onClick={toggleSavedCar}
+        className={`focus-ring flex size-11 items-center justify-center transition ${desktop ? "rounded-full border border-white/35 bg-slate-950/35 hover:bg-slate-950/55" : "bg-transparent hover:bg-white/70"} ${isSaved ? "text-rose-500" : desktop ? "text-white" : "text-slate-700"}`}
+      >
+        <Heart
+          size={desktop ? 20 : 22}
+          fill={isSaved ? "currentColor" : "none"}
+          aria-hidden="true"
+        />
+      </button>
+      <button
+        type="button"
+        aria-label={`${copy("carDetails.share")} ${car.modelName}`}
+        onClick={() => void shareCar()}
+        className={`focus-ring flex size-11 items-center justify-center transition ${desktop ? "rounded-full border border-white/35 bg-slate-950/35 text-white hover:bg-slate-950/55" : "bg-transparent text-slate-700 hover:bg-white/70"}`}
+      >
+        <Share2 size={desktop ? 19 : 21} aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
 export function CarDetailsClient({
   car,
   search,
@@ -331,28 +397,46 @@ export function CarDetailsClient({
 }) {
   const { t } = useLocale();
   const copy = (key: string) => t[key] || enTranslations[key] || key;
-  const sandboxHref = car.inventorySource === "kayak-sandbox"
-    ? sandboxBookingUrl(getPrimaryCarOffer(car)?.bookingUrl)
-    : null;
+  const sandboxHref =
+    car.inventorySource === "kayak-sandbox"
+      ? sandboxBookingUrl(getPrimaryCarOffer(car)?.bookingUrl)
+      : null;
   const primaryAction: CarDetailsPrimaryAction = sandboxHref
-    ? { kind: "sandbox-handoff", label: "Open KAYAK test page", href: sandboxHref }
-    : { kind: "standalone-disabled-provider", label: copy("carDetails.continueDeal") };
+    ? {
+        kind: "sandbox-handoff",
+        label: "Open KAYAK test page",
+        href: sandboxHref,
+      }
+    : {
+        kind: "standalone-disabled-provider",
+        label: copy("carDetails.continueDeal"),
+      };
   return (
-    <main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-surface-muted/40 lg:pb-0">
-      <section className="bg-transparent sm:bg-white lg:border-b lg:border-border lg:pb-14">
-        <div className="page-shell py-2 sm:py-7">
+    <main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:bg-surface-muted/40 lg:pb-0">
+      <section className="bg-transparent lg:bg-white lg:border-b lg:border-border lg:pb-14">
+        <div className="page-shell py-0 lg:py-7">
           <DetailsBackLink
             href={resultsHref}
-            className="text-[#075EE8] hover:text-[#004BB8]"
+            className="hidden text-[#075EE8] hover:text-[#004BB8] lg:inline-flex"
           >
             {copy("carDetails.backToResults")}
           </DetailsBackLink>
-          <div className="mt-2 sm:mt-5">
+          <div className="lg:mt-5">
             <CarDetailsExperience
               car={car}
               search={search}
               presentation="standalone-content"
               primaryAction={primaryAction}
+              mobileBackControl={
+                <Link
+                  href={resultsHref}
+                  aria-label="Back to Cars results"
+                  className="focus-ring flex size-11 shrink-0 items-center justify-center rounded-full border border-white/70 bg-white/85 text-slate-900 shadow-[0_2px_7px_rgba(15,23,42,0.08)] backdrop-blur-md"
+                  data-car-details-mobile-back
+                >
+                  <ArrowLeft size={25} strokeWidth={2.2} aria-hidden="true" />
+                </Link>
+              }
             />
           </div>
         </div>
@@ -407,21 +491,24 @@ function CarPriceComparisonSection({
   ];
   return (
     <div
-      className="border-b border-slate-200 pb-7 pt-3"
+      className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:bg-transparent"
       data-car-price-comparison
     >
       <Heading
         level={headingLevel}
-        className="text-xl font-extrabold tracking-tight text-slate-950"
+        className="text-xs font-bold tracking-[-0.0125em] text-slate-950 lg:text-xl lg:font-extrabold lg:tracking-tight"
       >
-        {copy("carDetails.comparePrices")}
+        <span className="lg:hidden">Compare deals</span>
+        <span className="hidden lg:inline">
+          {copy("carDetails.comparePrices")}
+        </span>
       </Heading>
       <p className="mt-1 text-sm font-medium text-slate-600">
         {formatCarDate(search.pickupDate, locale)} –{" "}
         {formatCarDate(search.dropoffDate, locale)} · {days}{" "}
         {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
       </p>
-      <div className="-mx-3 mt-5 rounded-[14px] border border-[#075EE8] bg-white px-2 py-4 ring-1 ring-[#075EE8]/10 sm:mx-0 sm:px-4">
+      <div className="mt-5 rounded-[14px] border border-[#075EE8] bg-white px-2 py-3 ring-1 ring-[#075EE8]/10 lg:px-4 lg:py-4">
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-3 sm:gap-x-6">
           <Image
             src="/brand/kurioticket-logo-primary-light-bg.svg"
@@ -436,8 +523,8 @@ function CarPriceComparisonSection({
           >
             <span className="size-2.5 rounded-full bg-[#075EE8]" />
           </span>
-          <div className="col-span-2 mt-5 flex min-w-0 items-end gap-x-4 overflow-visible">
-            <div className="flex min-w-0 flex-1 flex-nowrap items-end gap-x-4 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="col-span-2 mt-3 flex min-w-0 items-end gap-x-2 overflow-visible lg:mt-5 lg:gap-x-4">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-1.5 lg:flex-nowrap lg:items-end lg:gap-x-4 lg:overflow-x-auto lg:overflow-y-hidden lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden">
               {facts.map(({ label, Icon }) => (
                 <span
                   key={label}
@@ -505,12 +592,12 @@ function CarLocationSection({
   );
   return (
     <div
-      className="border-b border-slate-200 pb-7 pt-3"
+      className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:bg-transparent"
       data-car-location-section
     >
       <Heading
         level={headingLevel}
-        className="text-xl font-extrabold tracking-tight text-slate-950"
+        className="text-xs font-bold tracking-[-0.0125em] text-slate-950 lg:text-xl lg:font-extrabold lg:tracking-tight"
       >
         {copy("carDetails.location")}
       </Heading>
@@ -715,10 +802,10 @@ function PickupReturnSection({
   itemHeadingLevel: HeadingLevel;
 }) {
   return (
-    <section className="border-y border-slate-200 bg-white py-5 sm:rounded-[13px] sm:border sm:p-6 sm:shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
+    <section className="-mx-4 border-y border-slate-200 bg-[#F5F7FB] px-4 py-5 lg:mx-0 lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
       <Heading
         level={sectionHeadingLevel}
-        className="text-lg font-bold tracking-[-0.015em] text-[#102A43] sm:text-xl"
+        className="text-xs font-bold tracking-[-0.0125em] text-[#102A43] lg:text-xl lg:tracking-[-0.015em]"
       >
         {copy("carDetails.pickupReturn")}
       </Heading>
@@ -772,7 +859,6 @@ function PickupReturnSection({
 
 function MobileBookingDock({
   offer,
-  days,
   price,
   copy,
   action,
@@ -783,8 +869,7 @@ function MobileBookingDock({
   copy: (k: string) => string;
   action: CarDetailsPrimaryAction;
 }) {
-  const daily = price(offer.pricePerDay, offer.currency),
-    total = price(offer.totalPrice, offer.currency);
+  const total = price(offer.totalPrice, offer.currency);
   return (
     <section
       className="fixed inset-x-0 bottom-0 z-[90] rounded-t-[22px] border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_28px_rgba(15,23,42,0.14)] lg:hidden"
@@ -793,30 +878,20 @@ function MobileBookingDock({
     >
       <div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_minmax(132px,0.9fr)] items-center gap-3">
         <div className="min-w-0">
-          <h2
-            id="mobile-car-rental-total-heading"
-            className="text-[11px] font-semibold leading-4 text-slate-600"
-          >
-            {copy("carDetails.bookingSummary")}
-          </h2>
           <p
-            className="truncate text-[clamp(1.25rem,6vw,1.5rem)] font-extrabold leading-tight text-slate-950"
+            className="truncate text-[clamp(1.2rem,5.5vw,1.5rem)] font-semibold leading-[22px] tracking-[-0.015em] text-slate-950"
             dir="ltr"
             title={total.title}
             aria-label={total.ariaLabel}
           >
             {total.formatted}
           </p>
-          <p className="truncate text-[11px] text-slate-600">
-            <span>
-              {days}{" "}
-              {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
-            </span>
-            <span aria-hidden="true"> · </span>
-            <span dir="ltr" title={daily.title} aria-label={daily.ariaLabel}>
-              {daily.formatted} {copy("carsResults.perDay")}
-            </span>
-          </p>
+          <h2
+            id="mobile-car-rental-total-heading"
+            className="truncate text-[11px] font-semibold leading-4 text-slate-600"
+          >
+            {copy("carDetails.bookingSummary")}
+          </h2>
         </div>
         {action.kind === "sandbox-handoff" ? (
           <a
