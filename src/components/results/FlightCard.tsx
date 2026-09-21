@@ -58,7 +58,8 @@ export function FlightCard({
     amount: flight.price,
     sourceCurrency: flight.currency,
     displayCurrency: selectedOption.currency,
-    convertUsdEstimate: true,
+    convertSourceEstimate: true,
+    useFlightResultSymbols: true,
     rates: currencyRates.rates,
     isFallbackRate: currencyRates.isFallback,
   });

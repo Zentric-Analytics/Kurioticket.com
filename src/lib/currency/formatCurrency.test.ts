@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { formatDisplayPrice } from "./formatCurrency";
+import { formatDisplayPrice, formatFlightResultCurrency } from "./formatCurrency";
 import type { ExchangeRates } from "./exchangeRates";
 
 const rates: ExchangeRates = {
@@ -110,4 +110,26 @@ test("formatDisplayPrice reflects fallback-rate state in explanatory metadata", 
   assert.equal(price.isFallbackRate, true);
   assert.match(price.title ?? "", /Emergency fallback rates/);
   assert.match(price.supportingText ?? "", /Emergency fallback rates/);
+});
+
+test("Flight Results uses the native canonical symbols", () => {
+  assert.match(formatFlightResultCurrency(10, "NGN", { maximumFractionDigits: 0 }), /^₦\s?10$/);
+  for (const currency of ["USD", "CAD", "AUD"]) {
+    assert.match(formatFlightResultCurrency(10, currency, { maximumFractionDigits: 0 }), /^\$\s?10$/);
+  }
+  assert.match(formatFlightResultCurrency(10, "GBP", { maximumFractionDigits: 0 }), /^£\s?10$/);
+  assert.match(formatFlightResultCurrency(10, "EUR", { maximumFractionDigits: 0 }), /^€\s?10$/);
+});
+
+test("Flight Results preserves provider truth while converting EUR and GBP to NGN", () => {
+  const withGbp = { ...rates, GBP: 0.5 };
+  for (const [sourceCurrency, amount] of [["EUR", 8], ["GBP", 5]] as const) {
+    const price = formatDisplayPrice({ amount, sourceCurrency, displayCurrency: "NGN", convertSourceEstimate: true, useFlightResultSymbols: true, rates: withGbp, isFallbackRate: true });
+    assert.equal(price.currency, "NGN");
+    assert.match(price.formatted, /^₦/);
+    assert.equal(price.sourceCurrency, sourceCurrency);
+    assert.equal(price.isConvertedEstimate, true);
+    assert.equal(price.isFallbackRate, true);
+    assert.match(price.ariaLabel, /Display estimate converted from/);
+  }
 });

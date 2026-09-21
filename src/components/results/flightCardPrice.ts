@@ -1,3 +1,5 @@
+import { formatFlightResultCurrency } from "@/lib/currency/formatCurrency";
+
 const FLIGHT_CARD_COMPACT_THRESHOLD = 10_000_000;
 
 export type FlightCardPriceDisplay = {
@@ -31,14 +33,12 @@ export function formatFlightCardPrice({
   }
 
   return {
-    formatted: new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: currency.toUpperCase(),
+    formatted: formatFlightResultCurrency(amount, currency, {
       notation: "compact",
-      compactDisplay: "short",
       minimumFractionDigits: 0,
       maximumFractionDigits: 1,
-    }).format(amount),
+      locale,
+    }),
     size: "compact",
   };
 }
