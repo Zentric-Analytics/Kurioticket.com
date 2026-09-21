@@ -126,6 +126,28 @@ test("mobile primary specs are deterministic and capped at four", () => {
   );
   assert.equal(getMobileCarPrimarySpecs(limited).length, 4);
 });
+test("mobile card matches native compact height, spec columns, and top-aligned actions", () => {
+  assert.match(source, /data-car-card-mobile-main[\s\S]*?min-h-\[156px\]/);
+  assert.doesNotMatch(source, /data-car-card-mobile-main[\s\S]*?min-h-\[168px\]/);
+  assert.match(source, /const mobileSpecColumns = \[/);
+  assert.match(source, /mobilePrimarySpecs\.slice\(0, 2\)/);
+  assert.match(source, /mobilePrimarySpecs\.slice\(2, 4\)/);
+  const specs = source.slice(
+    source.indexOf("data-car-card-mobile-specs"),
+    source.indexOf('className="flex min-w-0 flex-[1.35]', source.indexOf("data-car-card-mobile-specs")),
+  );
+  assert.match(specs, /px-2 py-2\.5/);
+  assert.match(specs, /space-y-2/);
+  assert.doesNotMatch(specs, /<li[^>]*py-2\.5/);
+
+  const actions = source.slice(
+    source.indexOf("data-car-card-mobile-actions"),
+    source.indexOf("return ("),
+  );
+  assert.equal((actions.match(/items-start justify-center/g) ?? []).length, 2);
+  assert.equal((actions.match(/h-11 w-9/g) ?? []).length, 2);
+});
+
 test("Free cancellation is data-driven in mobile and secondary benefits stay desktop-only", () => {
   const mobileMain = source.slice(
     source.indexOf("data-car-card-mobile-main"),
