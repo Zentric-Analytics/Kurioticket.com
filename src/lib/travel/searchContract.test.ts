@@ -61,3 +61,18 @@ test("KAYAK shared search policy enters Kurioticket details before any provider 
     assert.match(response.results[0].searchPolicy.action.href, /^\/flights\/details\/kayak-sandbox%3Aone/);
   }
 });
+
+test("KAYAK car details destinations preserve the opaque ID and canonical search", () => {
+  const id = "kayak-sandbox:opaque-provider-id:4";
+  const search = { pickupLocation: "BOS", dropoffLocation: "BOS", pickupDate: "2027-02-10", dropoffDate: "2027-02-13", pickupTime: "10:30", dropoffTime: "16:00", driverAge: "30" };
+  const response = classifyCars([{ id, inventorySource: "kayak-sandbox", offers: [] } as never], search, "request");
+  const result = response.results[0];
+  assert.equal(result.searchPolicy.source, "kayak-sandbox");
+  assert.equal(result.searchPolicy.bookable, false);
+  assert.equal(result.searchPolicy.action.kind, "internal-detail");
+  if (result.searchPolicy.action.kind === "internal-detail") {
+    const destination = new URL(result.searchPolicy.action.href, "https://kurioticket.test");
+    assert.equal(destination.pathname, "/cars/details/kayak-sandbox%3Aopaque-provider-id%3A4");
+    for (const [key, value] of Object.entries(search)) assert.equal(destination.searchParams.get(key), value);
+  }
+});
