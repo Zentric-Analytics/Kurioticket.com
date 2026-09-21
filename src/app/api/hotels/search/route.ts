@@ -24,11 +24,6 @@ export async function POST(request: Request) {
   }
 
   const payload = await request.json();
-  const parsed = hotelSearchSchema.safeParse(payload);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Search needs a little more detail.", issues: parsed.error.flatten() }, { status: 400 });
-  }
-
   const requestedProvider = new URL(request.url).searchParams.get("provider");
   const providerMode: HotelProviderMode | null =
     requestedProvider === "kayak-sandbox" ? requestedProvider : null;
@@ -45,6 +40,28 @@ export async function POST(request: Request) {
     );
   }
 
+  const rawDestinationId =
+    payload && typeof payload === "object" && "destinationId" in payload
+      ? String((payload as { destinationId?: unknown }).destinationId ?? "").trim()
+      : "";
+  const providerDestinationId =
+    providerMode === "kayak-sandbox" && /^kplace:\d+$/.test(rawDestinationId)
+      ? rawDestinationId
+      : undefined;
+  const validationPayload = providerDestinationId
+    ? { ...(payload as Record<string, unknown>), destinationId: undefined }
+    : payload;
+  const parsed = hotelSearchSchema.safeParse(validationPayload);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Search needs a little more detail.", issues: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+  const search = providerDestinationId
+    ? { ...parsed.data, destinationId: providerDestinationId }
+    : parsed.data;
+
   const session = (await resolveOptionalWebApiSession())?.session;
   const kayakContext = {
     clientIp: getKayakClientIp(request),
@@ -52,8 +69,8 @@ export async function POST(request: Request) {
     signal: request.signal,
   };
   const aggregate = providerMode
-    ? await searchHotelsByProvider(parsed.data, providerMode, { kayak: kayakContext })
-    : await searchHotels(parsed.data, { kayak: kayakContext });
+    ? await searchHotelsByProvider(search, providerMode, { kayak: kayakContext })
+    : await searchHotels(search, { kayak: kayakContext });
   if (aggregate.unavailableMessage) {
     await Promise.all(
       aggregate.providerStatuses.map((provider) =>
@@ -97,10 +114,10 @@ export async function POST(request: Request) {
     logSearchHistory({
       userId: session?.user?.id,
       type: "HOTEL",
-      destination: parsed.data.destination,
-      checkIn: new Date(parsed.data.checkIn),
-      checkOut: new Date(parsed.data.checkOut),
-      query: parsed.data,
+      destination: search.destination,
+      checkIn: new Date(search.checkIn),
+      checkOut: new Date(search.checkOut),
+      query: search,
       resultCount: publicResults.length,
       latencyMs: aggregate.latencyMs,
       status,
@@ -110,7 +127,7 @@ export async function POST(request: Request) {
       type: "SEARCH",
       name: "hotel_search",
       metadata: {
-        destination: parsed.data.destination,
+        destination: search.destination,
         resultCount: publicResults.length,
       },
     }),
