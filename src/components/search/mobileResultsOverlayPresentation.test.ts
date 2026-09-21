@@ -34,3 +34,11 @@ test("shared Results sheet motion supports synchronized close and reduced motion
     /@media \(prefers-reduced-motion: reduce\)[\s\S]*?mobile-results-sheet-backdrop-closing[\s\S]*?mobile-results-sheet-surface-closing[\s\S]*?mobile-results-sheet-bottom-continuation-closing[\s\S]*?animation: none/,
   );
 });
+
+test("the isolated backdrop is a separate animated layer that outlives sheet dismissal", () => {
+  assert.match(styles, /\.mobile-results-sheet-backdrop-layer\s*\{[\s\S]*?mobile-results-sheet-backdrop-in/);
+  assert.match(
+    styles,
+    /\.mobile-results-sheet-backdrop-layer-closing\s*\{[\s\S]*?mobile-results-sheet-backdrop-out 280ms ease-out both/,
+  );
+});

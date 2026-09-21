@@ -27,11 +27,24 @@ test("mobile Results editor is an accessible rounded bottom sheet", () => {
   assert.match(source, /bottomSurfaceContinuationClassName\?: string/);
   assert.match(source, /smoothMotion\?: boolean/);
   assert.match(source, /closing\?: boolean/);
+  assert.match(source, /isolatedBackdrop\?: boolean/);
+  assert.match(source, /onCloseAnimationComplete\?: \(\) => void/);
   assert.match(source, /data-mobile-results-sheet-bottom-continuation/);
   assert.match(source, /mobile-results-sheet-bottom-continuation/);
   assert.match(
     source,
     /mobile-results-sheet-bottom-continuation[\s\S]*?bg-white[\s\S]*?bottomSurfaceContinuationClassName/,
+  );
+});
+
+test("isolated backdrop animation never changes the sheet surface opacity", () => {
+  assert.match(
+    source,
+    /isolatedBackdrop \? \([\s\S]*?mobile-results-sheet-backdrop-layer[\s\S]*?pointer-events-none/,
+  );
+  assert.match(
+    source,
+    /event\.animationName === "mobile-results-sheet-surface-out"[\s\S]*?onCloseAnimationComplete\?\.\(\)/,
   );
 });
 

@@ -31,6 +31,8 @@ type Props = {
   bottomSurfaceContinuationClassName?: string;
   smoothMotion?: boolean;
   closing?: boolean;
+  isolatedBackdrop?: boolean;
+  onCloseAnimationComplete?: () => void;
 };
 
 /** Presentation-only shell used by mobile search editors on Results pages. */
@@ -50,6 +52,8 @@ export function MobileResultsEditSheet({
   bottomSurfaceContinuationClassName,
   smoothMotion = false,
   closing = false,
+  isolatedBackdrop = false,
+  onCloseAnimationComplete,
 }: Props) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -114,13 +118,24 @@ export function MobileResultsEditSheet({
       data-mobile-results-overlay-root
       data-mobile-results-edit-sheet
       className={cn(
-        "mobile-results-overlay-root mobile-results-sheet-backdrop fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none bg-slate-950/35 motion-reduce:transition-none sm:hidden",
+        "mobile-results-overlay-root fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none motion-reduce:transition-none sm:hidden",
+        !isolatedBackdrop && "mobile-results-sheet-backdrop bg-slate-950/35",
         placement === "top" && "items-start",
-        cleanBackdrop && "mobile-results-sheet-backdrop-clean",
-        closing && "mobile-results-sheet-backdrop-closing",
+        !isolatedBackdrop && cleanBackdrop && "mobile-results-sheet-backdrop-clean",
+        !isolatedBackdrop && closing && "mobile-results-sheet-backdrop-closing",
       )}
       onPointerDown={(event) => { if (event.target === event.currentTarget) close(); }}
     >
+      {isolatedBackdrop ? (
+        <div
+          aria-hidden="true"
+          className={cn(
+            "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 bg-slate-950/35",
+            cleanBackdrop && "mobile-results-sheet-backdrop-clean",
+            closing && "mobile-results-sheet-backdrop-layer-closing",
+          )}
+        />
+      ) : null}
       <div
         className={cn(
           "mobile-results-sheet-surface relative flex max-h-[94dvh] min-h-0 w-full flex-col",
@@ -128,6 +143,15 @@ export function MobileResultsEditSheet({
           smoothMotion && "mobile-results-sheet-surface-smooth",
           closing && "mobile-results-sheet-surface-closing",
         )}
+        onAnimationEnd={(event) => {
+          if (
+            closing &&
+            event.target === event.currentTarget &&
+            event.animationName === "mobile-results-sheet-surface-out"
+          ) {
+            onCloseAnimationComplete?.();
+          }
+        }}
       >
         <div
           ref={dialogRef}

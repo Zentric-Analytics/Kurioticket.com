@@ -233,6 +233,9 @@ textarea {
 }
 
 .mobile-results-sheet-backdrop { animation: mobile-results-sheet-backdrop-in 180ms ease-out both; }
+.mobile-results-sheet-backdrop-layer {
+  animation: mobile-results-sheet-backdrop-in 180ms ease-out both;
+}
 .mobile-results-sheet-backdrop-clean {
   background-color: rgb(15 23 42 / 8%);
 }
@@ -244,6 +247,9 @@ textarea {
 }
 .mobile-results-sheet-surface-smooth { animation-duration: 320ms; }
 .mobile-results-sheet-backdrop-closing { animation: mobile-results-sheet-backdrop-out 200ms ease-out both; }
+.mobile-results-sheet-backdrop-layer-closing {
+  animation: mobile-results-sheet-backdrop-out 280ms ease-out both;
+}
 .mobile-results-sheet-surface-closing {
   animation: mobile-results-sheet-surface-out 280ms cubic-bezier(0.4, 0, 0.8, 0.2) both;
   will-change: transform;
@@ -265,8 +271,10 @@ textarea {
 
 @media (prefers-reduced-motion: reduce) {
   .mobile-results-sheet-backdrop,
+  .mobile-results-sheet-backdrop-layer,
   .mobile-results-sheet-surface,
   .mobile-results-sheet-backdrop-closing,
+  .mobile-results-sheet-backdrop-layer-closing,
   .mobile-results-sheet-surface-closing,
   .mobile-results-sheet-bottom-continuation-closing { animation: none; }
 }
