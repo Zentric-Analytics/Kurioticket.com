@@ -88,3 +88,12 @@ test("desktop product navigation remains independent of the mobile suppression p
   assert.doesNotMatch(desktopRail, /hideMobileSecondaryNavLinks/);
   assert.doesNotMatch(desktopRail, /gap-0 md:hidden/);
 });
+
+test("results navbar drawer uses pathname-aware product highlighting", () => {
+  assert.match(headerSource, /data-mobile-results-navbar/);
+  assert.match(headerSource, /const active = mobileResultsSearch && isNavItemActive\(item\.href\)/);
+  assert.match(headerSource, /aria-current=\{active \? "page" : undefined\}/);
+  assert.doesNotMatch(headerSource, /mobileResultsSearch && item\.href === "\/hotels"/);
+  assert.match(headerSource, /href\.startsWith\("\/flights"\)[\s\S]*pathname\.startsWith\("\/flights"\)/);
+  assert.match(headerSource, /href\.startsWith\("\/hotels"\)[\s\S]*pathname\.startsWith\("\/hotels"\)/);
+});

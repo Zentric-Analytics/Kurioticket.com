@@ -142,18 +142,15 @@ export default async function FlightResultsPage({
 
   return (
     <>
-      <AppHeader
-        flushDesktopBottom
-        flushMobileBottom
-        hideDesktopTravelNav
-        hideMobileCategoryTabs
-      />
       <Suspense
         fallback={
-          <ResultsFallback
-            title={t["flightResults.loading.title"]}
-            description={t["flightResults.loading.checkingAirlinesAndFares"]}
-          />
+          <>
+            <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs />
+            <ResultsFallback
+              title={t["flightResults.loading.title"]}
+              description={t["flightResults.loading.checkingAirlinesAndFares"]}
+            />
+          </>
         }
       >
         <FlightResultsClient />

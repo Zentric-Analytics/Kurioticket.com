@@ -16,12 +16,9 @@ test("Results shared drawer uses production mobile picker components", () => {
   assert.match(drawer, /<MobileAirportPicker/);
 });
 
-test("compact Flight header reuses the full mobile route summary card", () => {
-  const start = results.indexOf("function renderMobileCompactResultsHeader");
-  const end = results.indexOf("function renderMobile", start + 20);
-  const header = results.slice(start, end);
-  assert.match(header, /renderMobileRouteSummaryCard\("sticky"\)/);
-  assert.match(header, /<ArrowLeft/);
-  assert.doesNotMatch(header, /Modify search|<Pencil|data-flight-compact-edit-icon/);
-  assert.doesNotMatch(header, /<SlidersHorizontal|openMobileFiltersDrawer/);
+test("Flight Results keeps one stable AppHeader summary launcher", () => {
+  assert.match(results, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.match(results, /data-flight-mobile-summary-card/);
+  assert.doesNotMatch(results, /renderMobileCompactResultsHeader|<ArrowLeft/);
+  assert.doesNotMatch(results, /Modify search|<Pencil|data-flight-compact-edit-icon/);
 });

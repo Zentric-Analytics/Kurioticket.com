@@ -8,8 +8,8 @@ test("mobile results rhythm has no decorative divider or oversized spacer", asyn
     "utf8",
   );
 
-  assert.match(source, /data-flight-mobile-results-summary/);
-  assert.match(source, /px-4 py-3/);
+  assert.match(source, /data-flight-mobile-summary-card/);
+  assert.match(source, /h-\[52px\][\s\S]{0,200}rounded-\[10px\]/);
   assert.match(source, /data-flight-mobile-results-shortcuts/);
   assert.match(source, /pt-2/);
   assert.doesNotMatch(source, /data-flight-mobile-results-shortcuts[\s\S]{0,300}pt-12/);
