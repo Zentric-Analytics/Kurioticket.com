@@ -14,7 +14,7 @@ import {
   Share2,
   ShieldCheck,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -33,7 +33,7 @@ import {
   buildCarDirectionsUrl,
   buildGoogleCarMapEmbedUrl,
 } from "@/lib/cars/carMap";
-import { calculateRentalDays, getPrimaryCarOffer } from "@/lib/cars/carResults";
+import { calculateRentalDays, getComparisonCarOffers, getPrimaryCarOffer } from "@/lib/cars/carResults";
 import type {
   CarOffer,
   CarSearchParams,
@@ -135,7 +135,42 @@ export function CarDetailsExperience({
     includedShort: copy("carDetails.includedShort"),
     notIncluded: copy("carDetails.notIncluded"),
   };
-  const primaryOffer = suppliedPrimaryOffer ?? getPrimaryCarOffer(car);
+  const canonicalPrimaryOffer = suppliedPrimaryOffer ?? getPrimaryCarOffer(car);
+  const comparisonOffers = useMemo(
+    () => getComparisonCarOffers(car.offers),
+    [car.offers],
+  );
+  const [selectedOfferId, setSelectedOfferId] = useState<string | undefined>(
+    () => canonicalPrimaryOffer?.id,
+  );
+  useEffect(() => {
+    if (presentation !== "standalone-content") {
+      setSelectedOfferId(canonicalPrimaryOffer?.id);
+      return;
+    }
+    if (
+      selectedOfferId &&
+      comparisonOffers.some((candidate) => candidate.id === selectedOfferId)
+    ) {
+      return;
+    }
+    const nextOffer =
+      (canonicalPrimaryOffer &&
+      comparisonOffers.some((candidate) => candidate.id === canonicalPrimaryOffer.id)
+        ? canonicalPrimaryOffer
+        : comparisonOffers[0]) ?? canonicalPrimaryOffer;
+    setSelectedOfferId(nextOffer?.id);
+  }, [
+    canonicalPrimaryOffer,
+    comparisonOffers,
+    presentation,
+    selectedOfferId,
+  ]);
+  const primaryOffer =
+    presentation === "standalone-content"
+      ? comparisonOffers.find((candidate) => candidate.id === selectedOfferId) ??
+        canonicalPrimaryOffer
+      : canonicalPrimaryOffer;
   const days = calculateRentalDays(search.pickupDate, search.dropoffDate);
   const price = (amount: number, currency: string) =>
     formatDisplayPrice({
@@ -334,7 +369,9 @@ export function CarDetailsExperience({
                     <CarPriceComparisonSection
                       car={car}
                       search={search}
-                      offer={primaryOffer}
+                      offers={comparisonOffers.length ? comparisonOffers : [primaryOffer]}
+                      selectedOfferId={primaryOffer.id}
+                      onSelectOffer={setSelectedOfferId}
                       days={days}
                       price={price}
                       copy={copy}
@@ -514,7 +551,9 @@ export function CarDetailsClient({
 function CarPriceComparisonSection({
   car,
   search,
-  offer,
+  offers,
+  selectedOfferId,
+  onSelectOffer,
   days,
   price,
   copy,
@@ -523,43 +562,47 @@ function CarPriceComparisonSection({
 }: {
   car: NormalizedCarResult;
   search: CarSearchParams;
-  offer: CarOffer;
+  offers: CarOffer[];
+  selectedOfferId?: string;
+  onSelectOffer: (id: string) => void;
   days: number;
   price: PriceFn;
   copy: (key: string) => string;
   locale: string;
   headingLevel: HeadingLevel;
 }) {
-  const daily = price(offer.pricePerDay, offer.currency);
-  const facts = car.sandboxPresentation
-    ? [
-        { label: "KAYAK sandbox", Icon: ShieldCheck },
-        { label: "Simulated inventory — no real booking", Icon: Gauge },
-      ]
-    : [
-        {
-          label: offer.freeCancellation
-            ? copy("carDetails.freeCancellation")
-            : copy("carDetails.nonRefundable"),
-          Icon: ShieldCheck,
-        },
-        {
-          label:
-            car.fuelPolicy === "full-to-full"
-              ? copy("carsResults.fullToFull")
-              : car.fuelPolicy === "same-to-same"
-                ? copy("carsResults.sameToSame")
-                : copy("carsResults.fuelPolicy"),
-          Icon: Fuel,
-        },
-        {
-          label:
-            car.mileagePolicy === "unlimited"
-              ? copy("carDetails.unlimitedMileage")
-              : `${car.limitedMileageKm ?? "—"} km ${copy("carDetails.includedShort")}`,
-          Icon: Gauge,
-        },
-      ];
+  const selectedOffer =
+    offers.find((candidate) => candidate.id === selectedOfferId) ?? offers[0];
+  const factsForOffer = (offer: CarOffer) =>
+    car.sandboxPresentation
+      ? [
+          { label: "KAYAK sandbox", Icon: ShieldCheck },
+          { label: "Simulated inventory — no real booking", Icon: Gauge },
+        ]
+      : [
+          {
+            label: offer.freeCancellation
+              ? copy("carDetails.freeCancellation")
+              : copy("carDetails.nonRefundable"),
+            Icon: ShieldCheck,
+          },
+          {
+            label:
+              car.fuelPolicy === "full-to-full"
+                ? copy("carsResults.fullToFull")
+                : car.fuelPolicy === "same-to-same"
+                  ? copy("carsResults.sameToSame")
+                  : copy("carsResults.fuelPolicy"),
+            Icon: Fuel,
+          },
+          {
+            label:
+              car.mileagePolicy === "unlimited"
+                ? copy("carDetails.unlimitedMileage")
+                : `${car.limitedMileageKm ?? "—"} km ${copy("carDetails.includedShort")}`,
+            Icon: Gauge,
+          },
+        ];
   return (
     <div
       className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:bg-transparent"
@@ -574,59 +617,133 @@ function CarPriceComparisonSection({
           {copy("carDetails.comparePrices")}
         </span>
       </Heading>
-      <p className="mt-1 text-sm font-medium text-slate-600">
+      <p className="mt-1 text-[11px] font-medium leading-4 text-slate-600 lg:text-sm lg:leading-normal">
         {formatCarDate(search.pickupDate, locale)} –{" "}
         {formatCarDate(search.dropoffDate, locale)} · {days}{" "}
         {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
       </p>
-      <div className="mt-5 rounded-[14px] border border-[#075EE8] bg-white px-2 py-3 ring-1 ring-[#075EE8]/10 lg:px-4 lg:py-4">
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-3 sm:gap-x-6">
-          <Image
-            src="/brand/kurioticket-logo-primary-light-bg.svg"
-            alt="Kurioticket"
-            width={146}
-            height={32}
-            className="self-start object-contain object-left"
-          />
-          <span
-            className="flex size-[22px] items-center justify-center justify-self-end rounded-full border-2 border-[#075EE8] bg-white"
-            aria-hidden="true"
-          >
-            <span className="size-2.5 rounded-full bg-[#075EE8]" />
-          </span>
-          <div className="col-span-2 mt-3 flex min-w-0 items-end gap-x-2 overflow-visible lg:mt-5 lg:gap-x-4">
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-1.5 lg:flex-nowrap lg:items-end lg:gap-x-4 lg:overflow-x-auto lg:overflow-y-hidden lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden">
-              {facts.map(({ label, Icon }) => (
+
+      <div
+        className="mt-5 space-y-2.5 lg:hidden"
+        role="radiogroup"
+        aria-label="Car deal options"
+        data-mobile-car-deal-list
+      >
+        {offers.map((offer) => {
+          const selected = offer.id === selectedOffer?.id;
+          const daily = price(offer.pricePerDay, offer.currency);
+          const facts = factsForOffer(offer);
+          return (
+            <button
+              key={offer.id}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              aria-label={`${daily.ariaLabel} ${copy("carsResults.perDay")}`}
+              onClick={() => onSelectOffer(offer.id)}
+              className={`block w-full rounded-[14px] border bg-white px-2 py-3 text-start transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 ${selected ? "border-[#075EE8] ring-1 ring-[#075EE8]/10" : "border-slate-200"}`}
+            >
+              <span className="flex min-w-0 items-center justify-between gap-3">
+                <Image
+                  src="/brand/kurioticket-logo-primary-light-bg.svg"
+                  alt="Kurioticket"
+                  width={108}
+                  height={24}
+                  className="h-6 w-[108px] shrink-0 object-contain object-left"
+                />
                 <span
-                  key={label}
-                  className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-[11px] font-semibold text-slate-700 sm:gap-1.5 sm:text-xs"
+                  className={`flex size-4 shrink-0 items-center justify-center rounded-full border-[1.5px] bg-white ${selected ? "border-[#075EE8]" : "border-slate-400"}`}
+                  aria-hidden="true"
                 >
-                  <Icon
-                    size={14}
-                    strokeWidth={2}
-                    className="shrink-0 text-slate-600"
-                    aria-hidden="true"
-                  />
-                  {label}
+                  {selected ? <span className="size-1.5 rounded-full bg-[#075EE8]" /> : null}
                 </span>
-              ))}
-            </div>
-            <span className="ms-auto inline-flex min-h-9 shrink-0 flex-col items-end justify-end overflow-visible whitespace-nowrap text-right">
-              <strong
-                className="text-xl font-extrabold leading-5 tracking-tight text-slate-950 tabular-nums"
-                dir="ltr"
-                title={daily.title}
-                aria-label={daily.ariaLabel}
-              >
-                {daily.formatted}
-              </strong>
-              <span className="inline-flex min-h-4 items-center overflow-visible text-[11px] font-medium leading-4 text-[#075EE8] sm:text-xs">
-                {copy("carsResults.perDay")}
               </span>
+              <span className="mt-3 flex min-w-0 items-end gap-2.5">
+                <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-[7px]">
+                  {facts.map(({ label, Icon }) => (
+                    <span
+                      key={label}
+                      className="inline-flex shrink-0 items-center gap-[3px] whitespace-nowrap text-[10.5px] font-semibold leading-[15px] text-slate-700"
+                    >
+                      <Icon
+                        size={14}
+                        strokeWidth={2}
+                        className="shrink-0 text-slate-600"
+                        aria-hidden="true"
+                      />
+                      {label}
+                    </span>
+                  ))}
+                </span>
+                <span className="flex min-w-[72px] max-w-[42%] shrink flex-col items-end">
+                  <strong
+                    className="max-w-full whitespace-nowrap text-[19px] font-semibold leading-[22px] tracking-[-0.015em] text-slate-950 tabular-nums"
+                    dir="ltr"
+                    title={daily.title}
+                    aria-label={daily.ariaLabel}
+                  >
+                    {daily.formatted}
+                  </strong>
+                  <span className="text-[10px] font-medium leading-[13px] text-[#075EE8]">
+                    {copy("carsResults.perDay")}
+                  </span>
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {selectedOffer ? (
+        <div className="mt-5 hidden rounded-[14px] border border-[#075EE8] bg-white px-4 py-4 ring-1 ring-[#075EE8]/10 lg:block">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-6">
+            <Image
+              src="/brand/kurioticket-logo-primary-light-bg.svg"
+              alt="Kurioticket"
+              width={146}
+              height={32}
+              className="self-start object-contain object-left"
+            />
+            <span
+              className="flex size-[22px] items-center justify-center justify-self-end rounded-full border-2 border-[#075EE8] bg-white"
+              aria-hidden="true"
+            >
+              <span className="size-2.5 rounded-full bg-[#075EE8]" />
             </span>
+            <div className="col-span-2 mt-5 flex min-w-0 items-end gap-x-4 overflow-visible">
+              <div className="flex min-w-0 flex-1 flex-nowrap items-end gap-x-4 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {factsForOffer(selectedOffer).map(({ label, Icon }) => (
+                  <span
+                    key={label}
+                    className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-slate-700"
+                  >
+                    <Icon
+                      size={14}
+                      strokeWidth={2}
+                      className="shrink-0 text-slate-600"
+                      aria-hidden="true"
+                    />
+                    {label}
+                  </span>
+                ))}
+              </div>
+              <span className="ms-auto inline-flex min-h-9 shrink-0 flex-col items-end justify-end overflow-visible whitespace-nowrap text-right">
+                <strong
+                  className="text-xl font-extrabold leading-5 tracking-tight text-slate-950 tabular-nums"
+                  dir="ltr"
+                  title={price(selectedOffer.pricePerDay, selectedOffer.currency).title}
+                  aria-label={price(selectedOffer.pricePerDay, selectedOffer.currency).ariaLabel}
+                >
+                  {price(selectedOffer.pricePerDay, selectedOffer.currency).formatted}
+                </strong>
+                <span className="inline-flex min-h-4 items-center overflow-visible text-xs font-medium leading-4 text-[#075EE8]">
+                  {copy("carsResults.perDay")}
+                </span>
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }
