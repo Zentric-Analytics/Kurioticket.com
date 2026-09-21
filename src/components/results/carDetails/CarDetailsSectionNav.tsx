@@ -11,7 +11,10 @@ export function CarDetailsSectionNav({
 }: {
   activeTab: CarDetailsTab;
   onTabChange: (tab: CarDetailsTab) => void;
-  labels: Record<CarDetailsTab, string> & { navigation: string };
+  labels: Record<CarDetailsTab, string> & {
+    navigation: string;
+    mobileCompare?: string;
+  };
 }) {
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const tabs: ReadonlyArray<{ id: CarDetailsTab; label: string }> = [
@@ -37,7 +40,7 @@ export function CarDetailsSectionNav({
     <div
       role="tablist"
       aria-label={labels.navigation}
-      className="sticky top-0 z-30 mt-1 flex items-stretch justify-between gap-2 border-b border-slate-200 bg-white"
+      className="sticky top-0 z-30 mt-0 flex w-full items-stretch border-b border-slate-200 bg-[#F5F7FB] lg:mt-1 lg:justify-between lg:gap-2 lg:bg-white"
       data-car-details-section-nav
     >
       {tabs.map((tab, index) => {
@@ -56,9 +59,16 @@ export function CarDetailsSectionNav({
             tabIndex={selected ? 0 : -1}
             onClick={() => onTabChange(tab.id)}
             onKeyDown={(event) => handleKeyDown(event, index)}
-            className={`focus-ring relative inline-flex min-h-12 min-w-0 items-center justify-center whitespace-nowrap px-0.5 text-[11px] font-bold transition-colors min-[390px]:text-[12px] sm:px-2 sm:text-sm ${selected ? "text-blue" : "text-slate-600 hover:text-slate-950"}`}
+            className={`focus-ring relative inline-flex min-h-12 min-w-0 items-center justify-center whitespace-nowrap px-0.5 text-[11px] font-semibold transition-colors min-[390px]:text-[12px] lg:w-auto lg:flex-1 lg:px-2 lg:text-sm lg:font-bold ${tab.id === "compare" ? "w-[32%]" : tab.id === "pickup" ? "w-[43%]" : "w-[25%]"} ${selected ? "text-blue" : "text-slate-600 hover:text-slate-950"}`}
           >
-            {tab.label}
+            {tab.id === "compare" && labels.mobileCompare ? (
+              <>
+                <span className="lg:hidden">{labels.mobileCompare}</span>
+                <span className="hidden lg:inline">{tab.label}</span>
+              </>
+            ) : (
+              tab.label
+            )}
             <span
               className={`absolute inset-x-2 bottom-0 h-0.5 bg-blue transition-opacity ${selected ? "opacity-100" : "opacity-0"}`}
               aria-hidden="true"
