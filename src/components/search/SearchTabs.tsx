@@ -3030,7 +3030,7 @@ export function SearchTabs({
               onClick={onSwapAirports}
               aria-label={t.swapOriginDestination || "Swap origin and destination"}
               data-testid="mobile-homepage-swap"
-              className="focus-ring absolute right-[18px] top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#dbe3ec] bg-white text-[#075ee8] shadow-[0_4px_12px_rgba(15,23,42,0.12)] before:absolute before:-inset-0.5 before:rounded-full"
+              className="focus-ring absolute end-[18px] top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#dbe3ec] bg-white text-[#075ee8] shadow-[0_4px_12px_rgba(15,23,42,0.12)] before:absolute before:-inset-0.5 before:rounded-full"
             >
               <ArrowRightLeft aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
             </button>
