@@ -45,14 +45,19 @@ export default async function HotelResultsPage({
   const sandboxProviderMode = first(query.provider) === "kayak-sandbox";
   if (sandboxProviderMode && !isKayakSandboxEnabled()) notFound();
 
+  const requestedDestinationId = first(query.destinationId);
+  const sandboxDestinationId =
+    sandboxProviderMode &&
+    requestedDestinationId &&
+    /^kplace:\d+$/.test(requestedDestinationId)
+      ? requestedDestinationId
+      : undefined;
   const destination =
     first(query.destination) ||
-    (sandboxProviderMode && first(query.destinationId)
-      ? "KAYAK sandbox destination"
-      : undefined);
+    (sandboxDestinationId ? "KAYAK sandbox destination" : undefined);
   const route = resolveHotelResultsRoute({
     destination,
-    destinationId: first(query.destinationId),
+    destinationId: sandboxDestinationId ? undefined : requestedDestinationId,
     checkIn: first(query.checkIn),
     checkOut: first(query.checkOut),
     guests: first(query.guests),
