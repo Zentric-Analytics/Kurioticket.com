@@ -3,6 +3,7 @@ import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import type { PublicHotelResult } from "@/lib/types";
 
 export type HotelDetailsSearchContext = {
+  destinationId?: string;
   destination?: string;
   checkIn?: string;
   checkOut?: string;
@@ -100,6 +101,9 @@ export function buildHotelDetailsResultsHref(searchContext?: HotelDetailsSearchC
   const roomCount = parseHotelDetailsSearchCount(searchContext?.rooms, 1, 6);
   if (!destination || destination.length > 120 || checkInDate === null || checkOutDate === null || checkOutDate.getTime() <= checkInDate.getTime() || guestCount === null || roomCount === null) return destination ? `/hotels?${new URLSearchParams({ destination }).toString()}` : "/hotels";
   const params = new URLSearchParams({
+    ...(searchContext?.destinationId
+      ? { destinationId: searchContext.destinationId }
+      : {}),
     destination,
     checkIn: searchContext?.checkIn || "",
     checkOut: searchContext?.checkOut || "",
