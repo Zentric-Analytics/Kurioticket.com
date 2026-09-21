@@ -129,7 +129,10 @@ test("mobile primary specs are deterministic and capped at four", () => {
 test("mobile card matches native compact height, spec columns, and top-aligned actions", () => {
   assert.match(source, /data-car-card-mobile-main[\s\S]*?min-h-\[156px\]/);
   assert.doesNotMatch(source, /data-car-card-mobile-main[\s\S]*?min-h-\[168px\]/);
-  assert.match(source, /const mobileSpecColumns = \[/);
+  assert.match(source, /const mobileSpecColumns = \(/);
+  assert.match(source, /car\.sandboxPresentation/);
+  assert.match(source, /index % 2 === 0/);
+  assert.match(source, /index % 2 === 1/);
   assert.match(source, /mobilePrimarySpecs\.slice\(0, 2\)/);
   assert.match(source, /mobilePrimarySpecs\.slice\(2, 4\)/);
   const specs = source.slice(
