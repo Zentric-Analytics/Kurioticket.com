@@ -17,10 +17,12 @@ test("sandbox Hotel results use the canonical Hotel results shell", () => {
   assert.doesNotMatch(resultsPage, /KayakSandboxResults|adaptKayakHotelSearch/);
 
   assert.match(resultsClient, /provider:\s*params\.get\("provider"\) === "kayak-sandbox"/);
+  assert.match(resultsClient, /fetch\("\/api\/hotels\/search"/);
   assert.match(
     resultsClient,
-    /fetch\("\/api\/hotels\/search" \+ \(providerMode \? "\?provider=kayak-sandbox" : ""\)/,
+    /providerMode \? \{ "x-hotel-provider-mode": providerMode \} : \{\}/,
   );
+  assert.match(searchRoute, /request\.headers\.get\("x-hotel-provider-mode"\)/);
   assert.match(resultsClient, /return <HotelCard key=\{hotel\.id\}/);
   assert.match(resultsClient, /allowSave=\{!guided\}/);
   assert.doesNotMatch(resultsClient, /allowSave=\{!guided&&!isKayakSandboxResult\(hotel\)\}/);
