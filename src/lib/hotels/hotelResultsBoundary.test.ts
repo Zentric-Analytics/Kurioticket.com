@@ -42,7 +42,7 @@ test("incomplete web Hotel results redirect before the API-owning client mounts"
   assert.match(resultsPage, /resolveHotelResultsRoute/);
   assert.match(resultsPage, /if \(!route\.resultsReady\) redirect\(route\.recoveryHref\)/);
   assert.ok(resultsPage.indexOf("resolveHotelResultsRoute") < resultsPage.indexOf("<HotelResultsClient />"));
-  assert.match(resultsClient, /fetch\(providerMode \? "\/api\/hotels\/search\?provider=kayak-sandbox" : "\/api\/hotels\/search"/);
+  assert.match(resultsClient, /fetch\("\/api\/hotels\/search"/);
 });
 
 test("web Hotel results require explicit destination, dates, guests, and rooms", () => {
