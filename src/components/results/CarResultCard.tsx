@@ -120,6 +120,10 @@ export function CarResultCard({
       ? [...primarySpecifications, [Snowflake, "Air conditioning"]]
       : primarySpecifications;
   const mobilePrimarySpecs = car.sandboxPresentation ? specifications : getMobileCarPrimarySpecs(car);
+  const mobileSpecColumns = [
+    mobilePrimarySpecs.slice(0, 2),
+    mobilePrimarySpecs.slice(2, 4),
+  ].filter((column) => column.length);
   const comparisonSources: CarComparisonSource[] = [
     {
       id: `${car.id}-kurioticket-estimate`,
@@ -190,7 +194,7 @@ export function CarResultCard({
         aria-label={`${isSaved ? "Unsave" : "Save"} ${car.modelName}`}
         aria-pressed={isSaved}
         onClick={toggleSavedCar}
-        className={`relative flex h-11 w-9 shrink-0 items-center justify-center rounded-full border border-transparent bg-transparent transition before:absolute before:inset-y-0 before:-start-2 before:end-0 before:content-[''] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 ${isSaved ? "text-rose-600" : "text-slate-700"}`}
+        className={`relative flex h-11 w-9 shrink-0 items-start justify-center rounded-full border border-transparent bg-transparent pt-0.5 transition before:absolute before:inset-y-0 before:-start-2 before:end-0 before:content-[''] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 ${isSaved ? "text-rose-600" : "text-slate-700"}`}
       >
         <Heart
           size={18}
@@ -203,7 +207,7 @@ export function CarResultCard({
         type="button"
         aria-label={`Share ${car.modelName}`}
         onClick={() => void shareCar()}
-        className="relative flex h-11 w-9 shrink-0 items-center justify-center rounded-full border border-transparent bg-transparent text-slate-700 transition before:absolute before:inset-y-0 before:start-0 before:-end-2 before:content-[''] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+        className="relative flex h-11 w-9 shrink-0 items-start justify-center rounded-full border border-transparent bg-transparent pt-0.5 text-slate-700 transition before:absolute before:inset-y-0 before:start-0 before:-end-2 before:content-[''] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
       >
         <Share2 size={18} className="-translate-x-1" aria-hidden="true" />
       </button>
@@ -226,7 +230,7 @@ export function CarResultCard({
         <div className="md:hidden">
           <div
             data-car-card-mobile-main
-            className="grid min-h-[168px] grid-cols-[40%_minmax(0,1fr)]"
+            className="grid min-h-[156px] grid-cols-[40%_minmax(0,1fr)]"
           >
             <div
               data-car-card-mobile-image
@@ -296,14 +300,21 @@ export function CarResultCard({
             data-car-card-mobile-lower-band
             className="flex min-w-0 items-stretch border-t border-[#CBD5E1] bg-[#E7EBF1]"
           >
-            <ul data-car-card-mobile-specs className="grid min-w-0 flex-[2] grid-cols-2 gap-x-1 text-[11px] font-medium leading-[14px] text-[#536B92]">
-              {mobilePrimarySpecs.map(([Icon, label]) => (
-                <li key={label} className="flex min-w-0 items-start gap-1 px-2 py-2.5 odd:pe-1 even:ps-1">
-                  <Icon size={14} className="mt-px shrink-0 text-slate-500" aria-hidden="true" />
-                  <span className="min-w-0 break-words">{label}</span>
-                </li>
+            <div
+              data-car-card-mobile-specs
+              className="grid min-w-0 flex-[2] grid-cols-2 gap-x-1 px-2 py-2.5 text-[11px] font-medium leading-[14px] text-[#536B92]"
+            >
+              {mobileSpecColumns.map((column, columnIndex) => (
+                <ul key={columnIndex} className="min-w-0 space-y-2">
+                  {column.map(([Icon, label]) => (
+                    <li key={label} className="flex min-w-0 items-start gap-1">
+                      <Icon size={14} className="mt-px shrink-0 text-slate-500" aria-hidden="true" />
+                      <span className="min-w-0 break-words">{label}</span>
+                    </li>
+                  ))}
+                </ul>
               ))}
-            </ul>
+            </div>
             <div className="flex min-w-0 flex-[1.35] flex-col items-end px-2.5 pb-1 pt-2">
               <p
                 className="max-w-full whitespace-nowrap text-[19px] font-semibold leading-[22px] tracking-[-0.02em] text-[#07133B] tabular-nums"
