@@ -40,7 +40,7 @@ export function CarDetailsSectionNav({
     <div
       role="tablist"
       aria-label={labels.navigation}
-      className="sticky top-[calc(env(safe-area-inset-top)+4.5rem)] z-30 mt-0 flex w-full items-stretch border-b border-slate-200 bg-[#F5F7FB] lg:top-0 lg:mt-1 lg:justify-between lg:gap-2 lg:bg-white"
+      className="sticky top-[var(--car-details-mobile-header-boundary)] z-30 mt-0 flex w-full items-stretch border-b border-slate-200 bg-[#F5F7FB] lg:top-0 lg:mt-1 lg:justify-between lg:gap-2 lg:bg-white"
       data-car-details-section-nav
     >
       {tabs.map((tab, index) => {

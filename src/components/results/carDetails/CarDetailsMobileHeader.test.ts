@@ -53,9 +53,12 @@ test("mobile header uses safe areas and protects controls with the Cars canvas",
 
 test("mobile tabs pin below the control zone while desktop keeps top zero", () => {
   assert.match(
-    sectionNav,
-    /top-\[calc\(env\(safe-area-inset-top\)\+4\.5rem\)\]/,
+    client,
+    /\[--car-details-mobile-header-boundary:calc\(env\(safe-area-inset-top\)\+4\.375rem\)\]/,
   );
+  assert.match(client, /h-\[var\(--car-details-mobile-header-boundary\)\]/);
+  assert.match(sectionNav, /top-\[var\(--car-details-mobile-header-boundary\)\]/);
+  assert.doesNotMatch(sectionNav, /safe-area-inset-top|4\.5rem/);
   assert.match(sectionNav, /lg:top-0/);
   assert.match(sectionNav, /z-30/);
   assert.match(client, /data-mobile-car-booking-dock/);
