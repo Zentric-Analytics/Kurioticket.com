@@ -86,8 +86,9 @@ export function CarResultCard({
   const offer = getPrimaryCarOffer(car);
   if (!offer) return null;
   const guidedPlanning = presentation === "guided-planning";
+  const orSimilarLabel = planningLabels?.orSimilar ?? t("deals.results.car.orSimilar");
   const vehicleName = car.orSimilar
-    ? `${car.modelName} ${planningLabels?.orSimilar ?? "or similar"}`
+    ? `${car.modelName} ${orSimilarLabel}`
     : car.modelName;
   const BadgeIcon = badge ? carResultBadgeIcons[badge] : null;
   const dailyDisplayPrice = formatDisplayPrice({
@@ -273,11 +274,24 @@ export function CarResultCard({
                 >
                   <div data-car-card-mobile-identity className="min-w-0">
                     {headingLevel === "h3" ? (
-                      <h3 className="min-w-0 break-words text-[15px] font-bold leading-[18px] tracking-[-0.01em] text-[#07133B]">{car.modelName}</h3>
+                      <h3 className="min-w-0 break-words text-[15px] font-bold leading-[18px] tracking-[-0.01em] text-[#07133B]">
+                        {car.modelName}
+                        {car.orSimilar ? (
+                          <span className="whitespace-nowrap text-[11px] font-medium text-[#536B92]">
+                            {"\u00A0"}{orSimilarLabel}
+                          </span>
+                        ) : null}
+                      </h3>
                     ) : (
-                      <h2 className="min-w-0 break-words text-[15px] font-bold leading-[18px] tracking-[-0.01em] text-[#07133B]">{car.modelName}</h2>
+                      <h2 className="min-w-0 break-words text-[15px] font-bold leading-[18px] tracking-[-0.01em] text-[#07133B]">
+                        {car.modelName}
+                        {car.orSimilar ? (
+                          <span className="whitespace-nowrap text-[11px] font-medium text-[#536B92]">
+                            {"\u00A0"}{orSimilarLabel}
+                          </span>
+                        ) : null}
+                      </h2>
                     )}
-                    {car.orSimilar ? <span className="text-[11px] font-medium leading-4 text-[#536B92]">or similar</span> : null}
                     {car.categoryLabel ? <p className="mt-0.5 truncate text-[10px] font-bold uppercase leading-[15px] tracking-[0.09em] text-[#004BB8]">{car.categoryLabel}</p> : null}
                   </div>
                 </div>

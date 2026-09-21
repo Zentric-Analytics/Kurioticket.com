@@ -66,21 +66,30 @@ test("desktop save and share glyphs sit closer within independent targets", () =
   assert.match(actions, /-translate-x-1\.5/);
 });
 
-test("standalone identity separates the semantic model heading from its qualifier", () => {
+test("standalone mobile keeps the conditional qualifier with the semantic model heading", () => {
   const mobile = source.slice(
     source.indexOf("data-car-card-mobile-information"),
     source.indexOf("data-car-card-mobile-specs"),
   );
-  assert.match(mobile, /<h[23][^>]*>\s*\{car\.modelName\}\s*<\/h[23]>/);
+  assert.equal(
+    (mobile.match(/\{car\.orSimilar \? \(/g) ?? []).length,
+    2,
+    "both supported heading levels conditionally render the qualifier",
+  );
   assert.doesNotMatch(mobile, /<h[23][^>]*>\s*\{vehicleName\}\s*<\/h[23]>/);
-  assert.match(mobile, /car\.orSimilar \?/);
   assert.match(
     mobile,
-    /text-\[11px\] font-medium leading-4 text-\[#536B92\][^>]*>\s*or similar/,
+    /<h3[\s\S]*?\{car\.modelName\}[\s\S]*?\{car\.orSimilar \? \([\s\S]*?<span className="whitespace-nowrap text-\[11px\] font-medium text-\[#536B92\]">[\s\S]*?\{"\\u00A0"\}\{orSimilarLabel\}[\s\S]*?<\/h3>/,
   );
+  assert.match(mobile, /<h2[\s\S]*?\{car\.modelName\}[\s\S]*?\{car\.orSimilar \? \([\s\S]*?<\/h2>/);
   assert.match(
     mobile,
     /text-\[15px\] font-bold leading-\[18px\]/,
+  );
+  assert.doesNotMatch(
+    mobile,
+    /<\/h[23]>\s*\{car\.orSimilar/,
+    "the qualifier must not be a sibling block beneath the heading",
   );
   assert.doesNotMatch(mobile, /aria-hidden[^>]*>\s*or similar/);
 });
@@ -88,7 +97,7 @@ test("standalone identity separates the semantic model heading from its qualifie
 test("guided planning retains its localized combined vehicle-name contract", () => {
   assert.match(
     source,
-    /`\$\{car\.modelName\} \$\{planningLabels\?\.orSimilar \?\? "or similar"\}`/,
+    /`\$\{car\.modelName\} \$\{orSimilarLabel\}`/,
   );
   assert.match(source, /guidedPlanning \? \([\s\S]*?\{vehicleName\}/);
 });
