@@ -14,11 +14,17 @@ test("mobile Flight Results uses the native compact hierarchy without changing d
   assert.match(mobile, /flight-card-time[\s\S]*?font-size: 0\.875rem;[\s\S]*?font-weight: 800/);
   assert.match(mobile, /flight-card-price[\s\S]*?font-size: 1\.1875rem;[\s\S]*?white-space: nowrap/);
   assert.match(css, /@media \(max-width: 1023px\)[\s\S]*?flight-card-price-value\.flight-card-price\[data-price-size="normal"\][\s\S]*?font-size: 1\.1875rem/);
+  assert.match(css, /@media \(max-width: 1023px\)[\s\S]*?flight-card-price-value\.flight-card-price\[data-price-size="compact"\][\s\S]*?font-size: clamp\(0\.8125rem, 3\.6vw, 0\.9375rem\)/);
   assert.match(mobile, /flight-card-view-button[\s\S]*?min-height: 44px/);
   assert.match(desktop, /\.flight-card-time \{[\s\S]*?font-size: 1\.125rem/);
 });
 
 test("long airline and numeric-price overflow protections remain in place", () => {
-  assert.match(readFileSync(new URL("./FlightCard.tsx", import.meta.url), "utf8"), /flight-card-airline-name truncate whitespace-nowrap/);
+  const card = readFileSync(new URL("./FlightCard.tsx", import.meta.url), "utf8");
+  assert.match(card, /flight-card-airline-name truncate whitespace-nowrap/);
+  assert.match(card, /maximumFractionDigits: 0/);
+  assert.match(card, /flight-card-price-value[\s\S]*data-price-size=\{priceSize\}/);
+  assert.match(card, /\{formattedPrice\}[\s\S]*\{viewFlightLabel\}/);
+  assert.match(mobile, /flight-card-price[\s\S]*?white-space: nowrap/);
   assert.match(mobile, /font-variant-numeric: tabular-nums/);
 });
