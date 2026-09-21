@@ -293,6 +293,47 @@ test("errors never expose request credentials or upstream response bodies", asyn
       error instanceof KayakError && !error.message.includes("very-secret"),
   );
 });
+test("a transient car transport failure retries once with the same tracking identity", async () => {
+  const calls: URL[] = [];
+  const client = new KayakSandboxClient(
+    "key",
+    fake((url) => {
+      calls.push(url);
+      if (calls.length === 1) throw new TypeError("temporary connection reset");
+      return Response.json({
+        status: "complete",
+        currency: "USD",
+        priceMode: "total",
+        results: [{ id: "car", bookingOptions: [{ car: { brand: "Provider car" }, price: { price: 90 }, bookingUrl: click }] }],
+      });
+    }),
+    async () => {},
+  );
+
+  const offers = await client.search({ vertical: "cars", origin: "LHR", departure: "2099-10-12", returnDate: "2099-10-15" }, "car-search-track");
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every((url) => url.searchParams.get("userTrackId") === "car-search-track"));
+  assert.equal(offers.length, 1);
+  assert.equal(offers[0].title, "Provider car");
+});
+
+test("transient recovery is bounded and does not retry permanent failures", async () => {
+  let networkCalls = 0;
+  const unavailable = new KayakSandboxClient("key", fake(() => {
+    networkCalls++;
+    throw new TypeError("connection reset");
+  }), async () => {});
+  await assert.rejects(unavailable.search({ vertical: "cars", origin: "LHR", departure: "2099-10-12", returnDate: "2099-10-15" }, "bounded"), { code: "unavailable" });
+  assert.equal(networkCalls, 2);
+
+  let rejectedCalls = 0;
+  const rejected = new KayakSandboxClient("key", fake(() => {
+    rejectedCalls++;
+    return new Response("bad request", { status: 400 });
+  }), async () => {});
+  await assert.rejects(rejected.search(flight, "permanent"), { code: "request_rejected" });
+  assert.equal(rejectedCalls, 1);
+});
 test("polling is bounded and rejects malformed search state", async () => {
   let count = 0;
   const c = new KayakSandboxClient(
