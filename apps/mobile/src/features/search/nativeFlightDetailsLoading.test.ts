@@ -180,6 +180,8 @@ test("entry itinerary overlaps the hero with loaded card breadth and representat
   assert.equal(card.children[0], gloss, "the inert finish must paint behind loading content");
   assert.equal(gloss.props.pointerEvents, "none");
   assert.equal(gloss.props.accessible, false);
+  assert.equal(style(gloss).borderRadius, style(card).borderRadius);
+  assert.equal(style(gloss).overflow, "hidden");
   assert.equal(style(card).marginHorizontal, undefined, "do not double the loaded horizontal overlap");
   for (const part of ["direction-date", "journey", "airports", "airline"]) find(card, `flight-details-loading-${part}`);
 });

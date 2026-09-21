@@ -25,7 +25,7 @@ function rateStyle(name: string, nextName?: string) {
 
 test("mobile web reference retains its independent Hotel stay dock contract", () => {
   for (const token of [
-    "rounded-t-[22px]",
+    "border-t",
     "px-4",
     "safe-area-inset-bottom",
     "min-h-12",
