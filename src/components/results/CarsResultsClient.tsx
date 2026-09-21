@@ -1814,6 +1814,7 @@ export function CarsResultsExperience({
   ],[presentation,kayak,providerResults,search.dropoffDate,search.pickupDate,search.pickupLocation]);
   const providersLoading = presentation === "standalone" && kayak?.vertical === "cars" && kayak.status === "loading";
   const [quickFilterGroupId, setQuickFilterGroupId] = useState<string | null>(null);
+  const mobileFiltersOverlayOpen = filtersOpen || quickFilterGroupId !== null;
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
@@ -2088,19 +2089,28 @@ export function CarsResultsExperience({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [carsSortOpen]);
-  useEffect(() => {
-    const releaseExistingLock = () => {
-      mobileFiltersScrollLockRef.current?.();
-      mobileFiltersScrollLockRef.current = null;
+  useLayoutEffect(() => {
+    if (!mobileFiltersOverlayOpen || typeof window === "undefined") return undefined;
+
+    const media = window.matchMedia("(max-width: 1023px)");
+    if (!media.matches) return undefined;
+
+    const releaseScrollLock = acquireMobileResultsScrollLock();
+    mobileFiltersScrollLockRef.current = releaseScrollLock;
+    return () => {
+      releaseScrollLock();
+      if (mobileFiltersScrollLockRef.current === releaseScrollLock) {
+        mobileFiltersScrollLockRef.current = null;
+      }
     };
+  }, [mobileFiltersOverlayOpen]);
+  useEffect(() => {
     if ((!filtersOpen && !quickFilterGroupId) || typeof window === "undefined") {
-      releaseExistingLock();
-      return releaseExistingLock;
+      return undefined;
     }
     const media = window.matchMedia("(max-width: 1023px)");
     if (!media.matches) {
-      releaseExistingLock();
-      return releaseExistingLock;
+      return undefined;
     }
     let shouldRestoreFocus = true;
     const activeDialogRef = quickFilterGroupId ? quickFiltersDialogRef : filtersDialogRef;
@@ -2147,7 +2157,6 @@ export function CarsResultsExperience({
         }
       }
     };
-    mobileFiltersScrollLockRef.current = acquireMobileResultsScrollLock();
     window.addEventListener("keydown", handleKeyDown);
     media.addEventListener("change", closeForDesktop);
     const launcher =
@@ -2156,7 +2165,6 @@ export function CarsResultsExperience({
       cancelAnimationFrame(focusDrawer);
       window.removeEventListener("keydown", handleKeyDown);
       media.removeEventListener("change", closeForDesktop);
-      releaseExistingLock();
       if (shouldRestoreFocus) restoreOverlayLauncherFocus(launcher, mobileFiltersModalityRef.current);
     };
   }, [filtersOpen, quickFilterGroupId]);
