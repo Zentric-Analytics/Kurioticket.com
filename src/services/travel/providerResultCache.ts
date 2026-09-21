@@ -1,10 +1,12 @@
 import { createHash } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
+import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 
 export type ProviderDetailsVertical = "hotel" | "car";
 const TTL_MS = 30 * 60 * 1000;
 const HOTEL_SEARCH_COHORT_PREFIX = "__hotel-search-cohort__:";
+const CAR_SEARCH_COHORT_PREFIX = "__car-search-cohort__:";
 
 const cacheKey = (vertical: ProviderDetailsVertical, resultId: string) =>
   `${vertical}:${resultId}`;
@@ -19,6 +21,20 @@ function hotelSearchCohortId(search: HotelSearchParams) {
     search.rooms,
   ]);
   return `${HOTEL_SEARCH_COHORT_PREFIX}${createHash("sha256").update(identity).digest("hex")}`;
+}
+
+function carSearchCohortId(search: CarSearchParams) {
+  const identity = JSON.stringify([
+    "car-search-cohort-v1",
+    search.pickupLocation.trim().toLocaleLowerCase(),
+    search.dropoffLocation.trim().toLocaleLowerCase(),
+    search.pickupDate,
+    search.pickupTime,
+    search.dropoffDate,
+    search.dropoffTime,
+    search.driverAge,
+  ]);
+  return `${CAR_SEARCH_COHORT_PREFIX}${createHash("sha256").update(identity).digest("hex")}`;
 }
 
 export async function rememberProviderResults<T extends { id: string }>(
@@ -85,6 +101,51 @@ export async function getProviderResultWithContext<T>(
   } catch {
     console.error("[provider-result-cache]", { event: "context_read_error", vertical });
     return null;
+  }
+}
+
+/** A server-owned copy of the complete provider result set provides continuity
+ * when an individual upsert fails. It is keyed by canonical search fields, not
+ * by client-supplied result data. */
+export async function rememberCarSearchCohort(
+  results: NormalizedCarResult[],
+  search: CarSearchParams,
+  now = Date.now(),
+) {
+  if (!results.length) return;
+  const resultId = carSearchCohortId(search);
+  try {
+    await getPrisma().providerResultCache.upsert({
+      where: { cacheKey: cacheKey("car", resultId) },
+      create: {
+        cacheKey: cacheKey("car", resultId), vertical: "car", resultId,
+        normalizedResult: results as never, searchContext: search as never,
+        expiresAt: new Date(now + TTL_MS),
+      },
+      update: {
+        normalizedResult: results as never, searchContext: search as never,
+        expiresAt: new Date(now + TTL_MS),
+      },
+    });
+  } catch {
+    console.error("[provider-result-cache]", { event: "cohort_write_error", vertical: "car" });
+  }
+}
+
+export async function getCarSearchCohort(
+  search: CarSearchParams,
+  now = Date.now(),
+): Promise<NormalizedCarResult[]> {
+  const resultId = carSearchCohortId(search);
+  try {
+    const row = await getPrisma().providerResultCache.findUnique({
+      where: { cacheKey: cacheKey("car", resultId) },
+    });
+    if (!row || row.expiresAt.getTime() <= now || !Array.isArray(row.normalizedResult)) return [];
+    return structuredClone(row.normalizedResult) as unknown as NormalizedCarResult[];
+  } catch {
+    console.error("[provider-result-cache]", { event: "cohort_read_error", vertical: "car" });
+    return [];
   }
 }
 

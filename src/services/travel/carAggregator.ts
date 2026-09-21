@@ -1,7 +1,7 @@
 import type { CarInventoryStatus, CarSearchParams, LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { buildStaticCarResults } from "@/services/travel/staticCarResults";
 import { searchKayakCars, type KayakRequestContext } from "./kayakMetasearchProvider";
-import { getProviderResult, rememberProviderResults } from "./providerResultCache";
+import { getCarSearchCohort, getProviderResult, rememberCarSearchCohort, rememberProviderResults } from "./providerResultCache";
 
 export type CarSearchResult={results:NormalizedCarResult[];status:CarInventoryStatus;warnings:string[]};
 export async function searchCars(search:LocationBoundCarSearchParams,options:{kayak?:KayakRequestContext;requestId?:string}={}):Promise<CarSearchResult>{
@@ -19,11 +19,73 @@ export async function searchCars(search:LocationBoundCarSearchParams,options:{ka
     errorCategory: kayak.errorCategory,
     errorReason: kayak.errorReason,
   });
-  await rememberProviderResults("car", kayak.results, search);
+  await Promise.all([
+    rememberProviderResults("car", kayak.results, search),
+    rememberCarSearchCohort(kayak.results, search),
+  ]);
   return{results:[...catalogue,...kayak.results],status:"available",warnings:kayak.status==="failed"?["KAYAK is temporarily unavailable. Other provider results are shown."]:[]};
 }
-export async function getCarDetails(id:string,search?:CarSearchParams){
-  const cached=await getProviderResult<NormalizedCarResult>("car",id);
-  if(cached) return cached;
-  return search?buildStaticCarResults(search).find(car=>car.id===id)??null:null;
+const KAYAK_CAR_ID_PREFIX = "kayak-sandbox:";
+
+export function isKayakCarResultId(id: string) {
+  const opaqueId = id.startsWith(KAYAK_CAR_ID_PREFIX) ? id.slice(KAYAK_CAR_ID_PREFIX.length) : "";
+  return opaqueId.length > 0 && opaqueId.length <= 512 && !/[\\/?#\u0000-\u001f\u007f]/.test(opaqueId);
 }
+
+function isExactKayakCar(result: NormalizedCarResult | null | undefined, id: string) {
+  const policy = (result as (NormalizedCarResult & { searchPolicy?: { source?: string } }) | null | undefined)?.searchPolicy;
+  return Boolean(result && result.id === id && result.inventorySource === "kayak-sandbox" &&
+    (!policy || policy.source === "kayak-sandbox") && Array.isArray(result.offers));
+}
+
+export type CarDetailsDependencies = {
+  getExact: typeof getProviderResult<NormalizedCarResult>;
+  getCohort: typeof getCarSearchCohort;
+  searchKayak: typeof searchKayakCars;
+  rememberExact: typeof rememberProviderResults<NormalizedCarResult>;
+  rememberCohort: typeof rememberCarSearchCohort;
+  buildStatic: typeof buildStaticCarResults;
+};
+
+const carDetailsDependencies: CarDetailsDependencies = {
+  getExact: (vertical, id) => getProviderResult<NormalizedCarResult>(vertical, id),
+  getCohort: getCarSearchCohort,
+  searchKayak: searchKayakCars,
+  rememberExact: rememberProviderResults,
+  rememberCohort: rememberCarSearchCohort,
+  buildStatic: buildStaticCarResults,
+};
+
+/** Resolve provider IDs without ever interpreting them as static catalogue IDs.
+ * All accepted result data comes from server-owned cache records or a fresh
+ * provider response; the URL supplies only identity and canonical criteria. */
+export async function resolveCarDetails(
+  id: string,
+  search?: CarSearchParams,
+  kayak?: KayakRequestContext,
+  dependencies: CarDetailsDependencies = carDetailsDependencies,
+) {
+  if (!id.startsWith(KAYAK_CAR_ID_PREFIX)) {
+    return search ? dependencies.buildStatic(search).find(car => car.id === id) ?? null : null;
+  }
+  if (!isKayakCarResultId(id)) return null;
+
+  const cached = await dependencies.getExact("car", id);
+  if (isExactKayakCar(cached, id)) return cached;
+  if (!search) return null;
+
+  const cohortMatch = (await dependencies.getCohort(search)).find(result => isExactKayakCar(result, id));
+  if (cohortMatch) return cohortMatch;
+
+  const recovered = await dependencies.searchKayak(search, kayak);
+  const exact = recovered.results.find(result => isExactKayakCar(result, id)) ?? null;
+  if (exact) {
+    await Promise.all([
+      dependencies.rememberExact("car", recovered.results, search),
+      dependencies.rememberCohort(recovered.results, search),
+    ]);
+  }
+  return exact;
+}
+
+export const getCarDetails = resolveCarDetails;

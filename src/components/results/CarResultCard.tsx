@@ -326,6 +326,7 @@ export function CarResultCard({
             ) : detailsHref ? (
               <Link
                 href={detailsHref}
+                prefetch={car.inventorySource === "kayak-sandbox" ? false : undefined}
                 aria-label={actionAriaLabel}
                 className="inline-flex min-h-9 shrink-0 items-center justify-end gap-1 text-[13px] font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
               >
@@ -513,6 +514,7 @@ export function CarResultCard({
           ) : detailsHref ? (
             <Link
               href={detailsHref}
+              prefetch={car.inventorySource === "kayak-sandbox" ? false : undefined}
               aria-label={actionAriaLabel}
               className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#004BB8] px-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 md:px-5"
             >

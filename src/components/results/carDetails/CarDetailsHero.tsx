@@ -33,7 +33,7 @@ export function CarDetailsHero({
   mobileBackControl?: ReactNode;
   mobileActions: ReactNode;
 }) {
-  const specs: Array<[LucideIcon, string]> = [
+  const normalizedSpecs: Array<[LucideIcon, string]> = [
     [Users, `${car.passengers} ${text.passengers}`],
     [BriefcaseBusiness, `${car.bags} ${text.bags}`],
     [DoorOpen, `${car.doors} ${text.doors}`],
@@ -48,7 +48,11 @@ export function CarDetailsHero({
     [MapPin, pickupTypeLabels[car.pickupType]],
   ];
   if (car.airConditioning)
-    specs.splice(4, 0, [Snowflake, text.airConditioning]);
+    normalizedSpecs.splice(4, 0, [Snowflake, text.airConditioning]);
+  // Zero/default normalized fields are not provider claims.
+  const specs: Array<[LucideIcon, string]> = car.sandboxPresentation
+    ? car.sandboxPresentation.specs.map(label => [CarFront, label])
+    : normalizedSpecs;
 
   return (
     <section className="-mx-4 border-b border-slate-200 bg-[#F5F7FB] pb-4 sm:mx-0 lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
