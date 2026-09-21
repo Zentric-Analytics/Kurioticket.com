@@ -26,7 +26,6 @@ import {
   ArrowRightLeft,
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
   Calendar,
   Check,
   ChevronDown,
@@ -57,6 +56,7 @@ import { KayakResultCard } from "./KayakResultCard";
 import { nearbyFarePrice } from "@/components/results/nearbyFarePrice";
 import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters";
 import { FlightPriceAlertControl } from "@/components/results/FlightPriceAlertControl";
+import { MobileFlightResultsState } from "@/components/results/MobileFlightResultsState";
 import {
   MobileFlightFiltersSheet,
   mobileFlightLegKey,
@@ -1036,7 +1036,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [mobileDraftAirports, setMobileDraftAirports] = useState<string[]>([]);
   const [mobileAirlineSearch, setMobileAirlineSearch] = useState("");
   const [mobileShowAllAirlines, setMobileShowAllAirlines] = useState(false);
-  const [showMobileBackToTop, setShowMobileBackToTop] = useState(false);
   const mobileShortcutLauncherRef = useRef<HTMLButtonElement | null>(null);
   const mobileShortcutSheetRef = useRef<HTMLElement | null>(null);
   const mobileShortcutSheetCloseRef = useRef<HTMLButtonElement | null>(null);
@@ -1863,21 +1862,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     };
   }, [closeMobileShortcutSheet, mobileShortcutSheet]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const threshold = 600;
-    const handleScroll = () => {
-      const shouldShow = window.scrollY > threshold;
-      setShowMobileBackToTop((current) =>
-        current === shouldShow ? current : shouldShow,
-      );
-    };
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   useLayoutEffect(() => {
     if (!mobileSearchOpen) return;
@@ -6628,10 +6612,19 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <BrandedLoading
           variant="fullscreen"
           visual="logoPulse"
-          showProgress={false}
-          className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
+          showProgress
+          accessibleProgress
           contentClassName="max-w-md text-center"
           searchType="flight"
+          className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5 sm:hidden"
+        />
+        <BrandedLoading
+          variant="fullscreen"
+          visual="logoPulse"
+          showProgress={false}
+          contentClassName="max-w-md text-center"
+          searchType="flight"
+          className="hidden min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5 sm:flex"
           messages={[
             t("flightResults.loading.checkingAirlinesAndFares"),
             t("flightResults.loading.comparingRoutesAndProviders"),
@@ -6664,7 +6657,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       {paginationPendingPage !== null ? (
         <div
           data-flight-results-transition-cover
-          className="fixed inset-0 z-[9990] overflow-hidden bg-[#F3F6FA]"
+          className="fixed inset-0 z-[9990] hidden overflow-hidden bg-[#F3F6FA] sm:block"
           aria-busy="true"
         >
           <p className="sr-only" role="status" aria-live="polite">
@@ -6921,11 +6914,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           <h2 ref={resultsHeadingRef} tabIndex={-1} className="sr-only">
             {!guidedMode && kayak && results.length === 0 ? "Search results" : formatResultsFound(sortedResults.length, t)}
           </h2>
-          {!guidedMode && kayak && results.length === 0 ? <CombinedSearchEmpty otherStatus={loading ? "loading" : error ? "error" : "success"} retry={retryMainInventorySearch} /> : error && results.length === 0 ? (
-            <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger">
-              {error}
-            </div>
-          ) : (
+          {!guidedMode && kayak && results.length === 0 ? <CombinedSearchEmpty otherStatus={loading ? "loading" : error ? "error" : "success"} retry={retryMainInventorySearch} /> : (
             <div className={cn(resultStackClass, "space-y-4")}>
               {body?.tripType !== "multi-city" ? (
                 <>
@@ -7219,13 +7208,36 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 </div>
               ) : null}
 
+              <div className="sm:hidden">
+                <p role="status" aria-live="polite" className="sr-only">{filterApplying ? t("updatingResults") : ""}</p>
+                {error && results.length === 0 ? (
+                  <MobileFlightResultsState kind="error" onPrimary={retryMainInventorySearch} onSecondary={() => openMobileSearchDrawer()} />
+                ) : results.length === 0 ? (
+                  <MobileFlightResultsState kind="empty" onPrimary={() => openMobileSearchDrawer()} />
+                ) : sortedResults.length === 0 ? (
+                  <MobileFlightResultsState kind="filtered" onPrimary={clearFlightFilters} onSecondary={() => openMobileFiltersDrawer()} />
+                ) : (
+                  <div data-flight-results-card-list data-mobile-continuous-flight-list className="space-y-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+                    {sortedResults.map((flight, index) => {
+                      const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
+                      if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
+                      const detailsQuery = params.toString();
+                      const internalDetailsHref = `/flights/details/${encodeURIComponent(flight.id)}` + (detailsQuery ? `?${detailsQuery}` : "");
+                      return <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={resultActionHref(flight, internalDetailsHref)} providerLabel={isKayakSandboxResult(flight) ? "KAYAK sandbox · Simulated · Not bookable" : undefined} />;
+                    })}
+                  </div>
+                )}
+              </div>
+
               <div
                 ref={paginationListRef}
                 aria-busy={paginationPendingPage !== null}
                 style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined}
-                className={paginationRevealing ? "animate-[fadeIn_150ms_ease-out]" : undefined}
+                className={cn("hidden sm:block", paginationRevealing && "animate-[fadeIn_150ms_ease-out]")}
               >
-              {filterApplying || paginationPendingPage !== null ? (
+              {error && results.length === 0 ? (
+                <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger">{error}</div>
+              ) : filterApplying || paginationPendingPage !== null ? (
                 <div className="space-y-3">
                   <div role="status" aria-live="polite" className="sr-only">
                     {t("updatingResults")}
@@ -7254,7 +7266,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                           isAccented={index % 2 === 0}
                           resultBadge={resultBadgeByFlightId.get(flight.id)}
                           detailsHref={detailsHref}
-                          providerLabel={isKayakSandboxResult(flight) ? "KAYAK sandbox · Not bookable" : undefined}
+                          providerLabel={isKayakSandboxResult(flight) ? "KAYAK sandbox · Simulated · Not bookable" : undefined}
                         />
                       );
                     })}
@@ -7281,23 +7293,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         />
       </div>
 
-      <button
-        type="button"
-        aria-label="Back to top"
-        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className={cn(
-          "fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-[80] inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#004BB8]/20 bg-white text-[#004BB8] shadow-[0_12px_28px_rgba(15,23,42,0.18)] transition sm:hidden",
-          showMobileBackToTop
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none translate-y-3 opacity-0",
-        )}
-      >
-        <ChevronUp className="h-5 w-5" strokeWidth={2.6} aria-hidden="true" />
-      </button>
-
       {renderMobileFullFiltersSheet()}
     </main>
-    <Footer variant="brand-legal-only" />
+    <div className="hidden sm:block"><Footer variant="brand-legal-only" /></div>
     </>
   );
 }
