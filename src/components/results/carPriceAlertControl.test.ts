@@ -28,6 +28,7 @@ test("mobile Cars price tracking fills its content gutter without compromising n
   assert.match(source, /data-cars-price-alert/);
   assert.match(source, /w-full min-w-0 max-w-full/);
   assert.match(source, /lg:w-auto/);
+  assert.match(source, /bg-\[#EDF6FF\][^"]*px-3 py-0[^"]*sm:py-1/);
   assert.match(source, /min-h-\[52px\] min-w-0 items-center/);
   assert.match(source, /min-w-0 flex-1 \[overflow-wrap:anywhere\]/);
   assert.match(source, /h-8 w-8 shrink-0/);
