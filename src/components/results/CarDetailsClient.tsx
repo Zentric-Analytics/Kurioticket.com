@@ -10,6 +10,7 @@ import {
   Fuel,
   Gauge,
   Heart,
+  IdCard,
   MapPin,
   Share2,
   ShieldCheck,
@@ -294,7 +295,7 @@ export function CarDetailsExperience({
                 <Heading
                   level={modelHeadingLevel}
                   headingRef={modelHeadingRef}
-                  className="scroll-mt-24 text-[22px] font-extrabold leading-7 tracking-[-0.025em] text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]"
+                  className="scroll-mt-24 text-[22px] font-extrabold leading-7 tracking-[-0.5px] text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]"
                 >
                   {car.modelName}
                   {car.orSimilar ? (
@@ -303,7 +304,7 @@ export function CarDetailsExperience({
                     </span>
                   ) : null}
                 </Heading>
-                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.14em] text-[#075EE8]">
+                <p className="mt-0.5 text-[10px] font-bold uppercase leading-[14px] tracking-[.14em] text-[#075EE8]">
                   {car.categoryLabel}
                 </p>
               </div>
@@ -610,7 +611,7 @@ function CarPriceComparisonSection({
     >
       <Heading
         level={headingLevel}
-        className="text-xs font-bold tracking-[-0.0125em] text-slate-950 lg:text-xl lg:font-extrabold lg:tracking-tight"
+        className="text-xs font-bold leading-[18px] tracking-[-0.2px] text-slate-950 lg:text-xl lg:font-extrabold lg:leading-normal lg:tracking-tight"
       >
         <span className="lg:hidden">Compare deals</span>
         <span className="hidden lg:inline">
@@ -785,7 +786,7 @@ function CarLocationSection({
     >
       <Heading
         level={headingLevel}
-        className="text-xs font-bold tracking-[-0.0125em] text-slate-950 lg:text-xl lg:font-extrabold lg:tracking-tight"
+        className="text-xs font-bold leading-[18px] tracking-[-0.2px] text-slate-950 lg:text-xl lg:font-extrabold lg:leading-normal lg:tracking-tight"
       >
         {copy("carDetails.location")}
       </Heading>
@@ -852,11 +853,11 @@ function CarLocationSection({
                 ) : null}
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                <p className="text-[15px] font-bold leading-[22px] text-slate-900 lg:text-xs lg:uppercase lg:leading-normal lg:tracking-wide lg:text-slate-500">
                   {label}
                 </p>
-                <p className="mt-1 font-semibold text-slate-900">{location}</p>
-                <p className="mt-1 text-xs text-slate-600">
+                <p className="mt-1 text-[14px] font-medium leading-5 text-slate-900 lg:text-base lg:font-semibold lg:leading-normal">{location}</p>
+                <p className="mt-1 text-[13px] font-normal leading-5 text-slate-600 lg:text-xs lg:leading-normal">
                   {formatCarDate(date, locale)}
                   {time ? ` · ${time}` : ""}
                 </p>
@@ -877,10 +878,10 @@ function CarLocationSection({
         ) : null}
       </div>
       <div className="mt-7">
-        <h3 className="text-base font-bold text-slate-950">
+        <h3 className="text-[14px] font-bold leading-5 text-slate-950 lg:text-base lg:leading-normal">
           {copy("carDetails.pickupLocationDetails")}
         </h3>
-        <ul className="mt-3 list-disc space-y-2 ps-5 text-sm leading-6 text-slate-700">
+        <ul className="mt-3 list-disc space-y-2 ps-5 text-sm leading-5 text-slate-700 lg:leading-6">
           {car.pickupInstructions ? <li>{car.pickupInstructions}</li> : null}
           <li>{copy("carDetails.confirmPickupDetails")}</li>
         </ul>
@@ -990,11 +991,14 @@ function PickupReturnSection({
   sectionHeadingLevel: HeadingLevel;
   itemHeadingLevel: HeadingLevel;
 }) {
+  const hasDriverLicenseRequirement = car.requiredDocuments.some((document) =>
+    /driv(?:ing|er'?s?)\s+licen[cs]e/i.test(document),
+  );
   return (
     <section className="-mx-4 border-y border-slate-200 bg-[#F5F7FB] px-4 py-5 lg:mx-0 lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
       <Heading
         level={sectionHeadingLevel}
-        className="text-xs font-bold tracking-[-0.0125em] text-[#102A43] lg:text-xl lg:tracking-[-0.015em]"
+        className="text-xs font-bold leading-[18px] tracking-[-0.2px] text-[#102A43] lg:text-xl lg:leading-normal lg:tracking-[-0.015em]"
       >
         {copy("carDetails.pickupReturn")}
       </Heading>
@@ -1015,14 +1019,14 @@ function PickupReturnSection({
         ].map(([label, location, date, time]) => (
           <div key={label} className="relative border-s-2 border-blue-200 ps-5">
             <span className="absolute -start-[7px] top-1 size-3 rounded-full bg-[#004BB8]" />
-            <Heading level={itemHeadingLevel} className="font-bold">
+            <Heading level={itemHeadingLevel} className="text-[15px] font-bold leading-[22px] lg:text-base lg:leading-normal">
               {label}
             </Heading>
-            <p className="mt-1 flex gap-2 text-sm">
+            <p className="mt-1 flex gap-2 text-[14px] font-medium leading-5 lg:text-sm lg:font-normal lg:leading-normal">
               <MapPin size={16} className="shrink-0 text-[#004BB8]" />
               {location || copy("carDetails.locationUnavailable")}
             </p>
-            <p className="mt-1 flex gap-2 text-sm text-slate-600">
+            <p className="mt-1 flex gap-2 text-[13px] font-normal leading-5 text-slate-600 lg:text-sm lg:leading-normal">
               <Clock3 size={16} />
               <time dateTime={`${date}T${time}`}>
                 {formatCarDate(date, locale)}
@@ -1032,17 +1036,35 @@ function PickupReturnSection({
           </div>
         ))}
       </div>
-      <p className="mt-4 text-sm font-medium">
+      <p className="mt-4 text-sm font-medium leading-5 lg:leading-normal">
         {car.sandboxPresentation?.pickupLabel ??
           pickupTypeLabels[car.pickupType]}
         {car.shuttleRequired ? ` · ${copy("carDetails.shuttleRequired")}` : ""}
       </p>
       {car.pickupInstructions && (
-        <p className="mt-2 text-sm">
+        <p className="mt-2 text-sm font-normal leading-5 lg:leading-normal">
           <strong>{copy("carDetails.pickupInstructions")}:</strong>{" "}
           {car.pickupInstructions}
         </p>
       )}
+      {hasDriverLicenseRequirement ? (
+        <div className="mt-5">
+          <Heading
+            level={itemHeadingLevel}
+            className="text-[14px] font-bold leading-5 lg:text-base lg:leading-normal"
+          >
+            Pickup requirements
+          </Heading>
+          <p className="mt-2.5 flex items-start gap-2.5 text-[14px] font-medium leading-5 lg:text-sm lg:leading-normal">
+            <IdCard
+              size={19}
+              className="mt-px shrink-0 text-slate-600"
+              aria-hidden="true"
+            />
+            Valid driver&apos;s license
+          </p>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -1069,7 +1091,7 @@ function MobileBookingDock({
       <div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_minmax(132px,0.9fr)] items-center gap-3">
         <div className="min-w-0">
           <p
-            className="truncate text-[clamp(1.2rem,5.5vw,1.5rem)] font-semibold leading-[22px] tracking-[-0.015em] text-slate-950"
+            className="truncate text-[19px] font-semibold leading-[22px] tracking-[-0.25px] text-slate-950 tabular-nums"
             dir="ltr"
             title={total.title}
             aria-label={total.ariaLabel}

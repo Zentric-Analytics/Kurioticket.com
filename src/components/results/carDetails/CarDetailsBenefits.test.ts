@@ -19,10 +19,14 @@ function sourceBetween(source: string, startText: string, endText: string) {
   return source.slice(start, end);
 }
 
-test("source contract keeps getPrimaryCarOffer as the authoritative pricing offer", () => {
+test("source contract keeps the canonical primary offer as the selection fallback", () => {
   assert.match(
     clientSource,
-    /const primaryOffer = suppliedPrimaryOffer \?\? getPrimaryCarOffer\(car\);/,
+    /const canonicalPrimaryOffer = suppliedPrimaryOffer \?\? getPrimaryCarOffer\(car\);/,
+  );
+  assert.match(
+    clientSource,
+    /comparisonOffers\.find\(\(candidate\) => candidate\.id === selectedOfferId\)[\s\S]*?canonicalPrimaryOffer/,
   );
   assert.doesNotMatch(clientSource, /car\.offers\[0\]/);
 });
@@ -153,12 +157,17 @@ test("price comparison aligns icon benefits and the per-day price on one row", (
   }
   assert.match(
     comparison,
-    /flex min-w-0 items-end gap-x-2 overflow-visible.*lg:gap-x-4/,
+    /mt-3 flex min-w-0 items-end gap-2\.5/,
   );
   assert.match(
     comparison,
-    /flex-1 flex-wrap items-center.*lg:flex-nowrap.*lg:overflow-x-auto/,
+    /flex-1 flex-wrap items-center gap-x-2\.5 gap-y-\[7px\]/,
   );
+  assert.match(
+    comparison,
+    /col-span-2 mt-5 flex min-w-0 items-end gap-x-4 overflow-visible/,
+  );
+  assert.match(comparison, /flex-1 flex-nowrap items-end gap-x-4 overflow-x-auto/);
   assert.doesNotMatch(comparison, /overflow-y-hidden pb-1/);
   assert.match(
     comparison,
@@ -168,7 +177,11 @@ test("price comparison aligns icon benefits and the per-day price on one row", (
   assert.match(comparison, /min-h-4[^\"]*overflow-visible[^\"]*leading-4/);
   assert.match(comparison, /font-extrabold leading-5 tracking-tight/);
   assert.doesNotMatch(comparison, /leading-none/);
-  assert.match(comparison, /text-\[#075EE8\] sm:text-xs/);
+  assert.match(
+    comparison,
+    /text-\[10px\] font-medium leading-\[13px\] text-\[#075EE8\]/,
+  );
+  assert.match(comparison, /text-xs font-medium leading-4 text-\[#075EE8\]/);
   assert.match(comparison, /className="shrink-0 text-slate-600"/);
   assert.match(comparison, /carsResults\.fullToFull/);
   assert.doesNotMatch(comparison, /carDetails\.estimatedCataloguePrice/);
