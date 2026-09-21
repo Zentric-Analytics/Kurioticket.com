@@ -293,6 +293,8 @@ test("mobile flight field icons sit in value rows without decorative tiles", () 
   assert.match(mobileBranch, /mobile-homepage-swap/);
   assert.match(mobileBranch, /onClick=\{onSwapAirports\}/);
   assert.match(mobileBranch, /<ArrowRightLeft/);
+  assert.match(mobileBranch, /mobile-homepage-swap[\s\S]*?end-\[18px\]/);
+  assert.doesNotMatch(mobileBranch, /mobile-homepage-swap[\s\S]*?right-\[18px\]/);
   assert.doesNotMatch(mobileBranch, /<ArrowUpDown/);
 });
 
