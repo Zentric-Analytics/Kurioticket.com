@@ -2566,12 +2566,20 @@ export function CarsResultsExperience({
                     {resultsDisplayRange ? (
                       <p
                         aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${visibleResults.length}`}
-                        className="mt-0.5 text-xs font-medium leading-4 text-slate-500"
+                        className="mt-0.5 hidden text-xs font-medium leading-4 text-slate-500 sm:block"
                       >
                         {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
                       </p>
                     ) : null}
                   </div>
+                  {resultsDisplayRange ? (
+                    <p
+                      aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${visibleResults.length}`}
+                      className="shrink-0 whitespace-nowrap text-right text-xs font-medium leading-4 text-slate-500 sm:hidden"
+                    >
+                      {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
+                    </p>
+                  ) : null}
                   <div className="hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
                     <span className="shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
                       {t("carsResults.sortBy")}:
