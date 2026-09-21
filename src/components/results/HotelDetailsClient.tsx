@@ -907,6 +907,7 @@ export function HotelDetailsClient({
                   checkOut: requestCheckOut,
                   guests: requestGuests,
                   rooms: requestRooms,
+                  provider: searchContext?.provider,
                 }}
                 amenityItems={amenityItems}
                 isSaved={isSaved}
