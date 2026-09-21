@@ -71,6 +71,9 @@ import type {
 } from "@/lib/cars/types";
 import { carFilterGroups, carQuickFilterGroupIds, type CarFilterGroup } from "@/lib/cars/carFilterPresentation";
 import { formatCarResultsScheduleSummary } from "@/lib/cars/carResultsSummary";
+import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
+import { useRegion } from "@/components/region/RegionProvider";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 
 type CarsPaginationTransitionPhase = "idle" | "covering" | "settling";
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
@@ -1133,7 +1136,7 @@ export function CarsResultsClient({
         >
           <div
             className={cn(
-              placement === "mobile" && "grid grid-cols-1 gap-0 overflow-hidden rounded-[14px] border border-[#D8E1EC] bg-white divide-y divide-[#E2E8F0]",
+              placement === "mobile" && "grid grid-cols-1 gap-2",
               placement !== "mobile" && (returnToDifferentLocation
                 ? differentReturnSearchGridClass
                 : sameReturnSearchGridClass),
@@ -1800,6 +1803,8 @@ export function CarsResultsExperience({
   onSelectCar?: (car: NormalizedCarResult) => void;
 }) {
   const { locale, t: dictionary } = useLocale();
+  const { selectedOption } = useRegion();
+  const currencyRates = useCurrencyRates();
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -1870,13 +1875,26 @@ export function CarsResultsExperience({
   const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), {
     count: String(activeFilterCount),
   });
+  const displayPricePerDay = useCallback((car: NormalizedCarResult) => {
+    const offer = [...car.offers].filter((item) => Number.isFinite(item.totalPrice) && item.totalPrice >= 0)
+      .sort((left, right) => left.totalPrice - right.totalPrice || left.pricePerDay - right.pricePerDay || left.id.localeCompare(right.id))[0];
+    if (!offer) return undefined;
+    return formatDisplayPrice({
+      amount: offer.pricePerDay,
+      sourceCurrency: offer.currency,
+      displayCurrency: selectedOption.currency,
+      convertSourceEstimate: true,
+      rates: currencyRates.rates,
+      isFallbackRate: currencyRates.isFallback,
+    }).amount;
+  }, [currencyRates.isFallback, currencyRates.rates, selectedOption.currency]);
   const visibleCarFilterGroups = useMemo(() => carFilterGroups.map((group) => ({
     ...group,
     options: group.options.map((option) => ({
       ...option,
-      count: results.filter((car) => doesCarMatchFilterOption(car, option.id)).length,
-    })).filter((option) => option.count > 0),
-  })).filter((group) => group.options.length > 0), [results]);
+      count: results.filter((car) => doesCarMatchFilterOption(car, option.id, displayPricePerDay)).length,
+    })).filter((option) => group.id === "pricePerDay" || option.count > 0),
+  })).filter((group) => group.options.length > 0), [displayPricePerDay, results]);
   const appliedCarFilters = useMemo(() => visibleCarFilterGroups.flatMap((group) =>
     (selectedCarFilters[group.id] ?? []).map((optionId) => {
       const option = group.options.find((item) => item.id === optionId);
@@ -1935,9 +1953,9 @@ export function CarsResultsExperience({
     [guidedPlanning, results],
   );
   const visibleResults = useMemo(() => {
-    const ranked = sortCarResults(filterCarResults(results, selectedCarFilters), sort);
+    const ranked = sortCarResults(filterCarResults(results, selectedCarFilters, displayPricePerDay), sort);
     return sort === "recommended" ? ensureCarProviderCoverage(ranked) : ranked;
-  }, [results, selectedCarFilters, sort]);
+  }, [displayPricePerDay, results, selectedCarFilters, sort]);
   const visibleProviderSignature = useMemo(
     () => Array.from(new Set(visibleResults.map((result) => result.inventorySource))).sort().join("|"),
     [visibleResults],
@@ -2487,7 +2505,7 @@ export function CarsResultsExperience({
                               : "border-slate-300 bg-white text-[#07133B] hover:bg-slate-50",
                           )}
                         >
-                          {group.title ?? t(group.titleKey)}
+                          {group.id === "pricePerDay" ? t("carsResults.pricePerDay") : group.titleKey ? t(group.titleKey) : group.title ?? ""}
                           {count > 0 ? <span className="rounded-full bg-[#004BB8] px-1.5 py-0.5 text-[10px] text-white">{count}</span> : null}
                           <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>
@@ -2843,7 +2861,7 @@ export function CarsResultsExperience({
             <section ref={quickFiltersDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={`cars-quick-${activeQuickFilterGroup.id}`} onMouseDown={(event) => event.stopPropagation()} className="w-full rounded-t-[1.5rem] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-24px_70px_-30px_rgba(15,23,42,0.65)]">
               <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-300" aria-hidden="true" />
               <div className="flex items-center justify-between px-5 pb-3 pt-3">
-                <div><h2 id={`cars-quick-${activeQuickFilterGroup.id}`} className="text-lg font-extrabold text-slate-950">{activeQuickFilterGroup.title ?? t(activeQuickFilterGroup.titleKey)}</h2>{(selectedCarFilters[activeQuickFilterGroup.id]?.length ?? 0) > 0 ? <p className="mt-0.5 text-xs font-semibold text-[#536B92]">{selectedCarFilters[activeQuickFilterGroup.id]?.length} selected</p> : null}</div>
+                <div><h2 id={`cars-quick-${activeQuickFilterGroup.id}`} className="text-lg font-extrabold text-slate-950">{activeQuickFilterGroup.id === "pricePerDay" ? t("carsResults.pricePerDay") : activeQuickFilterGroup.titleKey ? t(activeQuickFilterGroup.titleKey) : activeQuickFilterGroup.title ?? ""}</h2>{(selectedCarFilters[activeQuickFilterGroup.id]?.length ?? 0) > 0 ? <p className="mt-0.5 text-xs font-semibold text-[#536B92]">{selectedCarFilters[activeQuickFilterGroup.id]?.length} selected</p> : null}</div>
                 <button ref={quickFiltersCloseButtonRef} type="button" aria-label="Close" onClick={() => setQuickFilterGroupId(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><X className="h-5 w-5" aria-hidden="true" /></button>
               </div>
               <div className="max-h-[55dvh] overflow-y-auto overscroll-contain border-y border-slate-100 px-4 py-2">
@@ -2905,8 +2923,8 @@ function MobileLocationLauncher({
 }) {
   const display = getLocationFieldDisplay(value);
   return (
-    <div data-cars-mobile-grouped-row className={cn(groupedMobile ? "relative flex min-h-16 flex-col justify-center px-4 py-2 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, className)}>
-      <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[10px] leading-4 text-[#64748B]")}>
+    <div data-cars-mobile-grouped-row className={cn(groupedMobile ? "relative flex min-h-16 flex-col justify-center rounded-[12px] border border-[#D8E1EC] bg-white px-4 py-2 shadow-[0_2px_8px_rgba(15,23,42,0.035)] focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25" : fieldShellClass, className)}>
+      <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
         <span className="truncate">{label}</span>
       </div>
       <div className="flex min-w-0 items-center gap-2">
@@ -3164,9 +3182,9 @@ function SearchDateCell({
     <div
       ref={wrapRef}
       data-cars-mobile-grouped-row={groupedMobile || undefined}
-      className={cn(groupedMobile ? "relative flex min-h-16 flex-col justify-center px-4 py-2 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, isCompact && compactFieldShellClass)}
+      className={cn(groupedMobile ? "relative flex min-h-16 flex-col justify-center rounded-[12px] border border-[#D8E1EC] bg-white px-4 py-2 shadow-[0_2px_8px_rgba(15,23,42,0.035)] focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25" : fieldShellClass, isCompact && compactFieldShellClass)}
     >
-      <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[10px] leading-4 text-[#64748B]")}>
+      <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
         <CalendarDays
           className={cn("h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden", groupedMobile && "hidden")}
           aria-hidden="true"
@@ -3429,9 +3447,9 @@ function SearchTimeCell({
     <div
       ref={wrapRef}
       data-cars-mobile-grouped-row={groupedMobile || undefined}
-      className={cn(groupedMobile ? "relative flex min-h-16 flex-col justify-center px-4 py-2 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, isCompact && compactFieldShellClass)}
+      className={cn(groupedMobile ? "relative flex min-h-16 flex-col justify-center rounded-[12px] border border-[#D8E1EC] bg-white px-4 py-2 shadow-[0_2px_8px_rgba(15,23,42,0.035)] focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25" : fieldShellClass, isCompact && compactFieldShellClass)}
     >
-      <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[10px] leading-4 text-[#64748B]")}>
+      <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
         <Clock3
           className={cn("h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden", groupedMobile && "hidden")}
           aria-hidden="true"
@@ -3575,9 +3593,9 @@ function DriverAgeCell({
     <div
       ref={wrapRef}
       data-cars-mobile-grouped-row={groupedMobile || undefined}
-      className={cn(groupedMobile ? "relative flex min-h-16 flex-col justify-center px-4 py-2 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/30" : fieldShellClass, isCompact && compactFieldShellClass)}
+      className={cn(groupedMobile ? "relative flex min-h-16 flex-col justify-center rounded-[12px] border border-[#D8E1EC] bg-white px-4 py-2 shadow-[0_2px_8px_rgba(15,23,42,0.035)] focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25" : fieldShellClass, isCompact && compactFieldShellClass)}
     >
-      <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[10px] leading-4 text-[#64748B]")}>
+      <div className={cn(fieldLabelClass, groupedMobile && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
         <UserRound
           className={cn("h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden", groupedMobile && "hidden")}
           aria-hidden="true"
@@ -3717,7 +3735,7 @@ function CarFilters({
   t: (key: string) => string;
 }) {
   const [openCompactSection, setOpenCompactSection] = useState<string | null>(
-    layout === "mobile" ? "totalPrice" : null,
+    layout === "mobile" ? "pricePerDay" : null,
   );
   const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), {
     count: String(activeFilterCount),
@@ -3859,7 +3877,7 @@ function FilterSection({
             compactOpen && "text-[#004BB8]",
           )}
         >
-          <span className="min-w-0 truncate">{group.title ?? t(group.titleKey)}</span>
+          <span className="min-w-0 truncate">{group.id === "pricePerDay" ? t("carsResults.pricePerDay") : group.titleKey ? t(group.titleKey) : group.title ?? ""}</span>
           <span className="flex shrink-0 items-center gap-2">
             {selectedOptions.length ? (
               <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[11px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">
@@ -3878,7 +3896,7 @@ function FilterSection({
         </button>
       ) : (
         <h3 className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950">
-          {group.title ?? t(group.titleKey)}
+          {group.id === "pricePerDay" ? t("carsResults.pricePerDay") : group.titleKey ? t(group.titleKey) : group.title ?? ""}
         </h3>
       )}
       <div

@@ -531,7 +531,7 @@ function CarsSummaryField({
 
   return (
     <div ref={wrapperRef} className={cn("relative rounded-xl border border-slate-300 bg-white", className)}>
-      <span className="mb-1 block text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500 lg:text-[10px] lg:tracking-[0.10em] lg:text-slate-600">{label}</span>
+      <span className="mb-1 block text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-600 sm:font-semibold sm:text-slate-500 lg:text-[10px] lg:tracking-[0.10em] lg:text-slate-600">{label}</span>
       <button ref={launcherRef} type="button" aria-expanded={open} aria-controls={panelId} aria-haspopup={popupRole} onClick={() => onOpenChange(!open)} className="flex h-8 w-full min-w-0 items-center justify-between gap-2 rounded-md text-start text-[16px] font-medium text-slate-900 outline-none focus-visible:ring-0 sm:text-[15px] lg:text-[15px]">
         <span className={cn("flex min-w-0 items-center gap-2 truncate", valueClassName)}>
           {leadingIcon}
@@ -970,7 +970,7 @@ export function SearchTabs({
     compactHero ? "min-h-[58px] px-4 py-2 lg:min-h-[58px]" : "min-h-[58px] px-3.5 py-2"
   );
   const carsMobileHomepageFieldClassName = mobileHomepage
-    ? "rounded-[11px] border-[#dee5ed] bg-[#fcfdfe] sm:rounded-xl sm:border-slate-300 sm:bg-white"
+    ? "min-h-[64px] rounded-[11px] border-[#D8E1EC] bg-white px-4 py-2 shadow-[0_2px_8px_rgba(15,23,42,0.035)] sm:min-h-[58px] sm:rounded-xl sm:border-slate-300 sm:px-3.5 sm:py-2 sm:shadow-none"
     : "";
   const flightFieldLabelClassName = cn(
     "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600",
@@ -985,7 +985,7 @@ export function SearchTabs({
     compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-900"
   );
   const hotelFieldLabelClassName = cn(
-    "mb-1 block text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500",
+    "mb-1 block text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-600 sm:font-semibold sm:text-slate-500",
     compactHero && "lg:text-[10px] lg:font-semibold lg:tracking-[0.10em] lg:text-slate-600"
   );
   const hotelFieldValueClassName = cn(

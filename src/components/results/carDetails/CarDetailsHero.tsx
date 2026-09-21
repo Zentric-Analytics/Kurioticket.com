@@ -53,16 +53,29 @@ export function CarDetailsHero({
       </div>
       <div className="grid gap-4 md:grid-cols-2 md:items-start md:gap-6">
         <figure className="min-w-0">
-          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[11px] bg-slate-100 sm:aspect-[4/3] sm:rounded-xl">
-            <CarResultImage
-              imageUrl={car.imageUrl}
-              imageAlt={car.imageAlt}
-              modelName={car.modelName}
-              category={car.category}
-              sizes="(min-width: 1024px) 420px, (min-width: 768px) 50vw, 100vw"
-              fit="cover"
-              priority
-            />
+          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[11px] bg-white sm:aspect-[4/3] sm:rounded-xl sm:bg-slate-100">
+            <div className="absolute inset-0 sm:hidden">
+              <CarResultImage
+                imageUrl={car.imageUrl}
+                imageAlt={car.imageAlt}
+                modelName={car.modelName}
+                category={car.category}
+                sizes="100vw"
+                fit="contain"
+                priority
+              />
+            </div>
+            <div className="absolute inset-0 hidden sm:block">
+              <CarResultImage
+                imageUrl={car.imageUrl}
+                imageAlt={car.imageAlt}
+                modelName={car.modelName}
+                category={car.category}
+                sizes="(min-width: 1024px) 420px, (min-width: 768px) 50vw"
+                fit="cover"
+                priority
+              />
+            </div>
             <div className="absolute inset-x-0 top-0 z-10 hidden bg-gradient-to-b from-slate-950/80 via-slate-950/35 to-transparent px-4 pb-12 pt-3.5 md:block md:px-5 md:pt-4">
               {overlay}
             </div>
