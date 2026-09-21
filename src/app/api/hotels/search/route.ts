@@ -5,7 +5,11 @@ import { toPublicHotel } from "@/lib/searchCache";
 import { hotelSearchSchema } from "@/lib/validation";
 import { classifyHotels } from "@/lib/travel/searchContract";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
-import { searchHotels } from "@/services/travel/hotelAggregator";
+import {
+  searchHotels,
+  searchHotelsByProvider,
+  type HotelProviderMode,
+} from "@/services/travel/hotelAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
 
@@ -24,8 +28,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Search needs a little more detail.", issues: parsed.error.flatten() }, { status: 400 });
   }
 
+  const requestedProvider = new URL(request.url).searchParams.get("provider");
+  const providerMode: HotelProviderMode | null =
+    requestedProvider === "kayak-sandbox" ? requestedProvider : null;
+  if (requestedProvider && !providerMode) {
+    return NextResponse.json(
+      { error: "Unsupported Hotel provider mode." },
+      { status: 400 },
+    );
+  }
+
   const session = (await resolveOptionalWebApiSession())?.session;
-  const aggregate = await searchHotels(parsed.data, { kayak: { clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
+  const kayakContext = {
+    clientIp: getKayakClientIp(request),
+    userAgent: request.headers.get("user-agent") || undefined,
+    signal: request.signal,
+  };
+  const aggregate = providerMode
+    ? await searchHotelsByProvider(parsed.data, providerMode, { kayak: kayakContext })
+    : await searchHotels(parsed.data, { kayak: kayakContext });
   if (aggregate.unavailableMessage) {
     await Promise.all(
       aggregate.providerStatuses.map((provider) =>
@@ -45,7 +66,7 @@ export async function POST(request: Request) {
         error: aggregate.unavailableMessage,
         results: [],
         status: "unavailable",
-        source: "kurioticket-static-hotels",
+        source: providerMode || "kurioticket-static-hotels",
         warnings: aggregate.warnings,
         partial: false,
         requestId,
@@ -117,7 +138,12 @@ function sanitizeProviderError(error?: string) {
   return "provider_unavailable";
 }
 
-function deriveHotelWarningCategory(aggregate: Awaited<ReturnType<typeof searchHotels>>) {
+function deriveHotelWarningCategory(
+  aggregate: Pick<
+    Awaited<ReturnType<typeof searchHotels>>,
+    "providerStatuses" | "results"
+  >,
+) {
   if (aggregate.providerStatuses.some((provider) => provider.error === "unsupported_destination")) {
     return "unsupported_destination";
   }
