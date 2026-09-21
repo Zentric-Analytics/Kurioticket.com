@@ -28,7 +28,6 @@ import {
   Clock,
   MapPin,
   ChevronDown,
-  ChevronRight,
   Minus,
   Plane,
   Plus,
@@ -2946,7 +2945,7 @@ export function SearchTabs({
         data-input-modality={homepageInputModality}
         onPointerDownCapture={() => setHomepageInputModality("pointer")}
         onKeyDownCapture={(event) => { if (event.key === "Tab" || event.key.startsWith("Arrow")) setHomepageInputModality("keyboard"); }}
-        className="homepage-search-modality rounded-t-[14px] rounded-b-[26px] border border-[#dee5ed] bg-[#f8fafc] px-[13px] pb-4 pt-0 shadow-[0_10px_28px_rgba(15,23,42,0.08)] sm:hidden"
+        className="homepage-search-modality rounded-[14px] border border-[#dee5ed] bg-[#f8fafc] px-[13px] pb-[13px] pt-0 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden"
       >
         {mobileHomepageProductTabs}
         <form onSubmit={onFlightSubmit} className="mt-3 space-y-2">
@@ -2989,7 +2988,7 @@ export function SearchTabs({
 
           {tripType === "multi-city" ? (
             <MultiCityFlightEditor legs={multiCityLegs} onChange={setMultiCityLegs} minimumDate={toIsoDate(new Date())} presentation="homepage" onAirportValidityChange={setMultiCityAirportsValid} />
-          ) : <><div className="relative rounded-[20px] border border-[#dbe3ec] bg-[#fcfdfe]" data-testid="mobile-homepage-route-fields" data-route-layout="joined">
+          ) : <><div className="relative space-y-2" data-testid="mobile-homepage-route-fields">
             {([
               ["origin", mobileOriginLabel, from, t.fromPlaceholder || "From?"],
               ["destination", mobileDestinationLabel, to, mobileDestinationPlaceholder],
@@ -3009,7 +3008,7 @@ export function SearchTabs({
                     setActiveMobileAirportPicker(kind);
                   }, `homepage-${kind}-picker-search`);
                 }}
-                className="focus-ring relative flex h-[76px] w-full items-center px-[18px] pe-[68px] text-start"
+                className="focus-ring flex h-[68px] w-full items-center rounded-[10px] border border-[#dee5ed] bg-[#fcfdfe] px-4 text-start"
                 data-testid={`mobile-homepage-${kind}-field`}
               >
                 <span className="min-w-0">
@@ -3024,13 +3023,12 @@ export function SearchTabs({
                 </span>
               </button>
             })}
-            <div aria-hidden="true" data-testid="mobile-homepage-route-divider" className="pointer-events-none absolute inset-x-[18px] top-1/2 h-px bg-[#dbe3ec]" />
             <button
               type="button"
               onClick={onSwapAirports}
               aria-label={t.swapOriginDestination || "Swap origin and destination"}
               data-testid="mobile-homepage-swap"
-              className="focus-ring absolute end-[18px] top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#dbe3ec] bg-white text-[#075ee8] shadow-[0_4px_12px_rgba(15,23,42,0.12)] before:absolute before:-inset-0.5 before:rounded-full"
+              className="focus-ring absolute left-1/2 top-[72px] z-20 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#dee5ed] bg-[#fcfdfe] text-[#075ee8] shadow-[0_4px_10px_rgba(15,23,42,0.10)] before:absolute before:-inset-0.5 before:rounded-full"
             >
               <ArrowRightLeft aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
             </button>
@@ -3044,7 +3042,7 @@ export function SearchTabs({
             aria-label={translate("chooseTravelDates") || "Choose travel dates"}
             onClick={() => setFlightDatesOpen(true)}
             data-testid="mobile-homepage-travel-dates-field"
-            className="focus-ring flex h-[76px] w-full items-center justify-between gap-3 rounded-[20px] border border-[#dbe3ec] bg-[#fcfdfe] px-[18px] text-start"
+            className="focus-ring flex h-[62px] w-full items-center rounded-[10px] border border-[#dee5ed] bg-[#fcfdfe] px-4 text-start"
           >
             <span className="min-w-0">
               <span className="block text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{mobileTravelDatesLabel}</span>
@@ -3053,7 +3051,6 @@ export function SearchTabs({
                 <span className="truncate">{dateSummary}</span>
               </span>
             </span>
-            <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-500" />
           </button>
           </>}
 
@@ -3065,7 +3062,7 @@ export function SearchTabs({
             aria-label={`${mobileTravelersCabinLabel}: ${travelerSummary}`}
             onClick={() => travelersMenuOpen ? cancelTravelersDraft() : openTravelersMenu()}
             data-testid="mobile-homepage-travelers-field"
-            className="focus-ring flex h-[76px] w-full items-center justify-between gap-3 rounded-[20px] border border-[#dbe3ec] bg-[#fcfdfe] px-[18px] text-start"
+            className="focus-ring flex h-16 w-full items-center justify-between gap-3 rounded-[10px] border border-[#dee5ed] bg-[#fcfdfe] px-4 text-start"
           >
             <span className="min-w-0">
               <span className="block truncate text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{mobileTravelersCabinLabel}</span>
@@ -3074,7 +3071,7 @@ export function SearchTabs({
                 <span className="truncate">{travelerSummary}</span>
               </span>
             </span>
-            <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-500" />
+            <ChevronDown aria-hidden="true" className={cn("h-4 w-4 shrink-0 text-slate-500 transition-transform", travelersMenuOpen && "rotate-180")} />
           </button>
 
           <Button
@@ -3083,9 +3080,9 @@ export function SearchTabs({
             aria-busy={isFlightSubmitting}
             aria-label={t.searchFlights || "Search flights"}
             data-testid="mobile-homepage-search-submit"
-            className="h-[58px] w-full rounded-[18px] bg-[#004BB8] text-[16px] font-bold text-white shadow-[0_6px_14px_rgba(0,75,184,0.18)] enabled:hover:bg-[#003f9c] enabled:active:bg-[#003785] disabled:cursor-not-allowed disabled:bg-[#004BB8] disabled:text-white disabled:opacity-100"
+            className="h-12 w-full rounded-[10px] bg-[#004BB8] text-[16px] font-semibold text-white shadow-none enabled:hover:bg-[#003f9c] enabled:active:bg-[#003785] disabled:cursor-not-allowed disabled:bg-[#004BB8] disabled:text-white disabled:opacity-100"
           >
-            {isFlightSubmitting ? t.searchingFlights || "Searching flights..." : t.searchFlights || "Search flights"}
+            {isFlightSubmitting ? t.searchingFlights || "Searching flights..." : t.search || "Search"}
           </Button>
         </form>
 
