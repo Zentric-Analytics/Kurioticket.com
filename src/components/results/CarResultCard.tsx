@@ -6,6 +6,7 @@ import {
   BriefcaseBusiness,
   CarFront,
   Check,
+  ChevronRight,
   DoorOpen,
   Heart,
   MapPin,
@@ -210,7 +211,7 @@ export function CarResultCard({
   );
 
   return (
-    <article className="relative w-full overflow-hidden rounded-[13px] border md:rounded-2xl border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] transition duration-200 hover:-translate-y-0.5 hover:border-[#CBD6E2] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]">
+    <article className="relative w-full overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-[#E7EBF1] shadow-[0_2px_10px_rgba(24,48,91,0.08)] md:rounded-2xl md:bg-white md:shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] md:transition md:duration-200 md:hover:-translate-y-0.5 md:hover:border-[#CBD6E2] md:hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]">
       {providerLabel && <p className="px-4 pt-3 text-xs font-semibold text-amber-800">{providerLabel}</p>}
       {shareConfirmation ? (
         <span
@@ -229,7 +230,7 @@ export function CarResultCard({
           >
             <div
               data-car-card-mobile-image
-              className="relative min-h-full overflow-hidden bg-slate-50"
+              className="relative min-h-full overflow-hidden bg-white p-1.5"
             >
               <CarResultImage
                 imageUrl={car.imageUrl}
@@ -244,72 +245,46 @@ export function CarResultCard({
 
             <div
               data-car-card-mobile-information
-              className="min-w-0 ps-2.5 pe-2 py-2.5"
+              className="min-w-0 bg-[#E7EBF1] px-2.5 pb-2 pt-[7px]"
             >
+              {badge && BadgeIcon ? (
+                <div className="mb-1 flex min-w-0 justify-end">
+                  <span className="inline-flex min-h-5 shrink-0 items-center gap-1 whitespace-nowrap rounded-[5px] bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold leading-4 text-emerald-700">
+                    <BadgeIcon size={11} aria-hidden="true" />
+                    {badge}
+                  </span>
+                </div>
+              ) : null}
               <header
                 data-car-card-mobile-utility-row
-                className="flex min-h-11 min-w-0 items-center gap-2"
+                className="flex min-w-0 items-start gap-1.5"
               >
                 <div
                   data-car-card-mobile-utility-copy
-                  className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden"
+                  className="min-w-0 flex-1 overflow-hidden"
                 >
-                  <p className="min-w-0 shrink truncate whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]">
-                    {car.categoryLabel}
-                  </p>
-                  {badge && BadgeIcon && (
-                    <span className="inline-flex min-h-5 shrink-0 items-center gap-1 whitespace-nowrap rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-emerald-700">
-                      <BadgeIcon size={11} aria-hidden="true" />
-                      {badge}
-                    </span>
-                  )}
+                  <div data-car-card-mobile-identity className="min-w-0">
+                    {headingLevel === "h3" ? (
+                      <h3 className="min-w-0 break-words text-[15px] font-bold leading-[18px] tracking-[-0.01em] text-[#07133B]">{car.modelName}</h3>
+                    ) : (
+                      <h2 className="min-w-0 break-words text-[15px] font-bold leading-[18px] tracking-[-0.01em] text-[#07133B]">{car.modelName}</h2>
+                    )}
+                    {car.orSimilar ? <span className="text-[11px] font-medium leading-4 text-[#536B92]">or similar</span> : null}
+                    {car.categoryLabel ? <p className="mt-0.5 truncate text-[10px] font-bold uppercase leading-[15px] tracking-[0.09em] text-[#004BB8]">{car.categoryLabel}</p> : null}
+                  </div>
                 </div>
                 {mobileCardActions}
               </header>
-              <div
-                data-car-card-mobile-identity
-                className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0"
-              >
-                {headingLevel === "h3" ? (
-                  <h3 className="min-w-0 break-words text-[18px] font-bold leading-[1.18] text-[#07133B]">
-                    {car.modelName}
-                  </h3>
-                ) : (
-                  <h2 className="min-w-0 break-words text-[18px] font-bold leading-[1.18] text-[#07133B]">
-                    {car.modelName}
-                  </h2>
-                )}
-                {car.orSimilar ? (
-                  <span className="text-[11px] font-medium leading-4 text-[#536B92]">
-                    or similar
-                  </span>
-                ) : null}
-              </div>
-              <p className="mt-1 flex min-w-0 items-start gap-1 text-[12px] font-medium leading-4 text-[#536B92]">
+              <p className="mt-1.5 flex min-w-0 items-start gap-1 text-[11px] font-medium leading-[15px] text-[#536B92]">
                 <MapPin
                   size={13}
-                  className="mt-0.5 shrink-0 text-[#004BB8]"
+                  className="mt-px shrink-0 text-[#07133B]"
                   aria-hidden="true"
                 />
                 <span className="min-w-0">{car.pickupLocation}</span>
               </p>
-              <ul
-                data-car-card-mobile-specs
-                className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1.5 text-[12px] font-medium leading-4 text-[#536B92]"
-              >
-                {mobilePrimarySpecs.map(([Icon, label]) => (
-                  <li key={label} className="flex min-w-0 items-start gap-1">
-                    <Icon
-                      size={14}
-                      className="mt-px shrink-0 text-slate-500"
-                      aria-hidden="true"
-                    />
-                    <span className="min-w-0 break-words">{label}</span>
-                  </li>
-                ))}
-              </ul>
               {offer.freeCancellation && (
-                <span className="mt-2 inline-flex min-h-5 max-w-full items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-emerald-700">
+                <span className="mt-1.5 inline-flex max-w-full items-center gap-1 text-[11px] font-semibold leading-[15px] text-black">
                   <Check size={13} className="shrink-0" aria-hidden="true" />
                   <span className="min-w-0">Free cancellation</span>
                 </span>
@@ -318,58 +293,55 @@ export function CarResultCard({
           </div>
 
           <div
-            data-car-card-mobile-conversion
-            className="flex min-w-0 items-center justify-between gap-3 border-t border-[#E2E8F0] bg-slate-50/45 px-3 py-2.5"
+            data-car-card-mobile-lower-band
+            className="flex min-w-0 items-stretch border-t border-[#CBD5E1] bg-[#E7EBF1]"
           >
-            <div className="min-w-0">
+            <ul data-car-card-mobile-specs className="grid min-w-0 flex-[2] grid-cols-2 gap-x-1 text-[11px] font-medium leading-[14px] text-[#536B92]">
+              {mobilePrimarySpecs.map(([Icon, label]) => (
+                <li key={label} className="flex min-w-0 items-start gap-1 px-2 py-2.5 odd:pe-1 even:ps-1">
+                  <Icon size={14} className="mt-px shrink-0 text-slate-500" aria-hidden="true" />
+                  <span className="min-w-0 break-words">{label}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="flex min-w-0 flex-[1.35] flex-col items-end px-2.5 pb-1 pt-2">
               <p
-                className="max-w-full whitespace-nowrap text-[23px] font-semibold leading-none tracking-[-0.02em] text-[#07133B] tabular-nums"
+                className="max-w-full whitespace-nowrap text-[19px] font-semibold leading-[22px] tracking-[-0.02em] text-[#07133B] tabular-nums"
                 dir="ltr"
-                title={totalDisplayPrice.title}
-                aria-label={totalDisplayPrice.ariaLabel}
+                title={dailyDisplayPrice.title}
+                aria-label={dailyDisplayPrice.ariaLabel}
               >
-                {totalDisplayPrice.formatted}
+                {dailyDisplayPrice.formatted}
               </p>
-              <p className="mt-1 flex flex-wrap items-center gap-x-1 text-[10px] font-medium uppercase leading-3 tracking-[0.06em] text-slate-500">
-                <span>Total</span>
-                <span aria-hidden="true">·</span>
-                <span
-                  className="whitespace-nowrap normal-case tracking-normal text-slate-600 tabular-nums"
-                  dir="ltr"
-                  title={dailyDisplayPrice.title}
-                  aria-label={dailyDisplayPrice.ariaLabel}
-                >
-                  {dailyDisplayPrice.formatted}/day
-                </span>
-              </p>
-            </div>
+              <p className="mt-px text-[10px] font-medium leading-[13px] text-[#536B92]">per day</p>
             {onSelect ? (
               <button
                 type="button"
                 onClick={() => onSelect(car)}
                 aria-label={actionAriaLabel}
-                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-md bg-[#004BB8] px-4 text-sm font-semibold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
+                className="inline-flex min-h-9 shrink-0 items-center justify-end gap-1 text-[13px] font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
               >
-                {actionLabel}
+                View deal <ChevronRight size={16} aria-hidden="true" />
               </button>
             ) : detailsHref ? (
               <Link
                 href={detailsHref}
                 aria-label={actionAriaLabel}
-                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-md bg-[#004BB8] px-4 text-sm font-semibold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
+                className="inline-flex min-h-9 shrink-0 items-center justify-end gap-1 text-[13px] font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
               >
-                {actionLabel}
+                View deal <ChevronRight size={16} aria-hidden="true" />
               </Link>
             ) : (
               <button
                 type="button"
                 disabled
                 aria-label={actionAriaLabel}
-                className="inline-flex min-h-11 shrink-0 cursor-not-allowed items-center justify-center rounded-md bg-slate-300 px-4 text-sm font-semibold text-white"
+                className="inline-flex min-h-9 shrink-0 cursor-not-allowed items-center justify-end gap-1 text-[13px] font-semibold text-slate-400"
               >
-                {actionLabel}
+                View deal <ChevronRight size={16} aria-hidden="true" />
               </button>
             )}
+            </div>
           </div>
         </div>
       )}

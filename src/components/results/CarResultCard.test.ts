@@ -28,22 +28,20 @@ test("CarResultCard accepts string and null href actions without provider fallba
   );
 });
 
-test("standalone mobile keeps total primary, per-day supporting, and its action compact", () => {
+test("standalone mobile follows native daily-price and View deal commerce", () => {
   const mobile = source.slice(
-    source.indexOf("data-car-card-mobile-conversion"),
+    source.indexOf("data-car-card-mobile-lower-band"),
     source.indexOf("grid-cols-[minmax(0,1.1fr)"),
   );
-  assert.ok(
-    mobile.indexOf("totalDisplayPrice.formatted") <
-      mobile.indexOf("dailyDisplayPrice.formatted"),
-  );
+  assert.doesNotMatch(mobile, /totalDisplayPrice\.formatted|>Total</);
   assert.match(
     mobile,
-    /text-\[23px\][^\"]*font-semibold[^\"]*text-\[#07133B\][^\"]*tabular-nums/,
+    /text-\[19px\][^\"]*font-semibold[^\"]*text-\[#07133B\][^\"]*tabular-nums/,
   );
-  assert.match(mobile, /dailyDisplayPrice\.formatted\}\/day/);
-  assert.match(mobile, /min-h-11/);
-  assert.match(mobile, /bg-\[#004BB8\]/);
+  assert.match(mobile, /dailyDisplayPrice\.formatted/);
+  assert.match(mobile, />per day</);
+  assert.match(mobile, /View deal <ChevronRight/);
+  assert.doesNotMatch(mobile, /bg-\[#004BB8\]/);
   assert.doesNotMatch(mobile, /Taxes and fees included/);
 });
 
@@ -71,14 +69,14 @@ test("standalone identity separates the semantic model heading from its qualifie
   );
   assert.match(mobile, /<h[23][^>]*>\s*\{car\.modelName\}\s*<\/h[23]>/);
   assert.doesNotMatch(mobile, /<h[23][^>]*>\s*\{vehicleName\}\s*<\/h[23]>/);
-  assert.match(mobile, /car\.orSimilar \? \(/);
+  assert.match(mobile, /car\.orSimilar \?/);
   assert.match(
     mobile,
     /text-\[11px\] font-medium leading-4 text-\[#536B92\][^>]*>\s*or similar/,
   );
   assert.match(
     mobile,
-    /text-\[18px\] font-bold leading-\[1\.18\] text-\[#07133B\]/,
+    /text-\[15px\] font-bold leading-\[18px\]/,
   );
   assert.doesNotMatch(mobile, /aria-hidden[^>]*>\s*or similar/);
 });
@@ -127,7 +125,7 @@ test("mobile primary specs are deterministic and capped at four", () => {
 test("Free cancellation is data-driven in mobile and secondary benefits stay desktop-only", () => {
   const mobileMain = source.slice(
     source.indexOf("data-car-card-mobile-main"),
-    source.indexOf("data-car-card-mobile-conversion"),
+    source.indexOf("data-car-card-mobile-lower-band"),
   );
   assert.match(mobileMain, /offer\.freeCancellation &&/);
   assert.match(mobileMain, /Free cancellation/);
@@ -172,12 +170,8 @@ test("cards expose compact, functional save and share actions", () => {
   );
   assert.match(mobileUtility, /\{mobileCardActions\}/);
   assert.ok(
-    mobileUtility.indexOf("car.categoryLabel") <
+    mobileUtility.indexOf("data-car-card-mobile-identity") <
       mobileUtility.indexOf("{mobileCardActions}"),
-  );
-  assert.ok(
-    mobileUtility.indexOf("{mobileCardActions}") <
-      mobileUtility.indexOf("data-car-card-mobile-identity"),
   );
   const actions = source.slice(
     source.indexOf("data-car-card-mobile-actions"),
@@ -186,7 +180,7 @@ test("cards expose compact, functional save and share actions", () => {
   assert.doesNotMatch(actions, /car\.modelName\}\s*<\/h[23]>/);
   assert.match(
     mobileUtility,
-    /data-car-card-mobile-identity[\s\S]*min-w-0 flex-wrap/,
+    /data-car-card-mobile-identity[\s\S]*className="min-w-0"/,
   );
   assert.match(
     source,
@@ -218,22 +212,19 @@ test("cards expose compact, functional save and share actions", () => {
   assert.match(actions, /<Heart[\s\S]*?className="translate-x-1"/);
   assert.match(actions, /<Share2 size=\{18\} className="-translate-x-1"/);
   assert.doesNotMatch(actions, /before:-inset-/);
-  assert.match(mobileUtility, /min-h-11 min-w-0 items-center gap-2/);
+  assert.match(mobileUtility, /flex min-w-0 items-start gap-1\.5/);
   assert.match(
     mobileUtility,
-    /data-car-card-mobile-utility-copy[\s\S]*?flex min-w-0 flex-1 items-center gap-1\.5 overflow-hidden/,
+    /data-car-card-mobile-utility-copy[\s\S]*?min-w-0 flex-1 overflow-hidden/,
   );
   assert.match(
     mobileUtility,
-    /<p className="min-w-0 shrink truncate whitespace-nowrap text-\[10px\]/,
+    /truncate text-\[10px\][^>]*>\{car\.categoryLabel\}/,
   );
-  assert.match(
-    mobileUtility,
-    /<span className="inline-flex min-h-5 shrink-0 items-center gap-1 whitespace-nowrap/,
-  );
+  assert.match(source, /inline-flex min-h-5 shrink-0 items-center gap-1 whitespace-nowrap/);
   assert.match(
     source,
-    /data-car-card-mobile-information[\s\S]*?className="min-w-0 ps-2\.5 pe-2 py-2\.5"/,
+    /data-car-card-mobile-information[\s\S]*?bg-\[#E7EBF1\]/,
   );
 });
 
@@ -261,7 +252,7 @@ test("long mobile model names retain an action-independent identity row", () => 
     source.indexOf("data-car-card-mobile-specs"),
   );
   assert.match(identity, /\{car\.modelName\}/);
-  assert.match(identity, /min-w-0 break-words text-\[18px\]/);
+  assert.match(identity, /min-w-0 break-words text-\[15px\]/);
   assert.doesNotMatch(
     identity,
     /data-car-card-mobile-actions|p[er]-\d+|w-\[(?:80|88)px\]/,

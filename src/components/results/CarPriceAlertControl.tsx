@@ -53,13 +53,16 @@ export function CarPriceAlertControl({ search, results }: { search: CarSearchPar
   useEffect(() => { void reconcile(); return () => { requestRef.current += 1; }; }, [reconcile]);
   useEffect(() => {
     if (!feedback) return;
-    setSnackbarLeaving(false);
     const leave = window.setTimeout(() => setSnackbarLeaving(true), CAR_PRICE_ALERT_SNACKBAR_DURATION_MS - 180);
     const dismiss = window.setTimeout(() => setFeedback(null), CAR_PRICE_ALERT_SNACKBAR_DURATION_MS);
     return () => { window.clearTimeout(leave); window.clearTimeout(dismiss); };
   }, [feedback]);
 
   const signIn = () => router.push(`/auth/signin?callbackUrl=${encodeURIComponent(location.pathname + location.search)}`);
+  const showFeedback = (next: Exclude<Feedback, null>) => {
+    setSnackbarLeaving(false);
+    setFeedback(next);
+  };
   const patchStatus = async (alert: WebCarPriceAlert, status: "ACTIVE" | "PAUSED") => {
     const response = await fetch(`/api/price-alerts/${encodeURIComponent(alert.id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
     if (response.status === 401) { signIn(); return undefined; }
@@ -83,10 +86,10 @@ export function CarPriceAlertControl({ search, results }: { search: CarSearchPar
           saved = canonical?.status === "PAUSED" ? await patchStatus(canonical, "ACTIVE") : canonical;
         } else if (response.ok) saved = ((await response.json()) as { alert: WebCarPriceAlert }).alert;
       }
-      if (!saved) { setFeedback(next ? "error-start" : "error-pause"); return; }
+      if (!saved) { showFeedback(next ? "error-start" : "error-pause"); return; }
       setMatchingAlert(saved);
-      setFeedback(next ? "active" : "paused");
-    } catch { setFeedback(next ? "error-start" : "error-pause"); }
+      showFeedback(next ? "active" : "paused");
+    } catch { showFeedback(next ? "error-start" : "error-pause"); }
     finally { pendingRef.current = false; setPending(false); }
   };
 
@@ -97,10 +100,10 @@ export function CarPriceAlertControl({ search, results }: { search: CarSearchPar
     <section
       aria-label={t("carsResults.priceTracking.title")}
       data-cars-price-alert
-      className="w-full min-w-0 max-w-full rounded-xl border border-blue-100 bg-white px-3 py-1 shadow-sm sm:rounded-2xl sm:px-4 lg:w-auto"
+      className="w-full min-w-0 max-w-full rounded-xl border border-[#C8DFF7] bg-[#EDF6FF] px-3 py-1 sm:rounded-2xl sm:border-blue-100 sm:bg-white sm:px-4 sm:shadow-sm lg:w-auto"
     >
       <div className="flex min-h-[52px] min-w-0 items-center gap-2 sm:gap-2.5">
-        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8]"><Bell className="h-4 w-4" aria-hidden="true" /></span>
+        <span className="inline-flex shrink-0 items-center justify-center text-[#1769AA] sm:h-8 sm:w-8 sm:rounded-full sm:bg-blue-50 sm:text-[#004BB8]"><Bell className="h-[17px] w-[17px]" aria-hidden="true" /></span>
         <h2 className="min-w-0 flex-1 [overflow-wrap:anywhere] text-[13px] font-bold leading-4 text-slate-950 sm:text-sm">{t("carsResults.priceTracking.title")}</h2>
         <span className="flex h-11 shrink-0 items-center gap-1.5"><span className="flex w-5 justify-center">{pending ? <LoaderCircle className="h-4 w-4 animate-spin text-[#004BB8] motion-reduce:animate-none" aria-hidden="true" /> : null}</span><span className="flex w-[51px] justify-end"><button type="button" role="switch" aria-checked={tracking} aria-busy={pending} disabled={disabled} aria-label={t("carsResults.priceTracking.title")} onClick={() => void toggle(!tracking)} className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-wait ${tracking ? "border-[#004BB8] bg-[#004BB8]" : "border-slate-300 bg-slate-200"}`}><span className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${tracking ? "translate-x-[22px] rtl:-translate-x-[22px]" : "translate-x-[3px] rtl:-translate-x-[3px]"}`} /></button></span></span>
       </div>

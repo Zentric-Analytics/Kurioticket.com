@@ -1411,7 +1411,7 @@ export function CarsResultsClient({
 
   if (isSearchSubmitting) {
     return (
-      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
+      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[#F5F7FB] sm:bg-white">
         <BrandedLoading
           variant="fullscreen"
           visual="logoPulse"
@@ -1432,12 +1432,12 @@ export function CarsResultsClient({
 
   return (
     <>
-    <main className="flex-1 bg-[#f6f8fb] pb-8">
+    <main className="flex-1 bg-[#F5F7FB] pb-8 sm:bg-[#f6f8fb]">
       <section
         inert={mobileSearchOpen ? true : undefined}
         aria-hidden={mobileSearchOpen ? true : undefined}
         className={cn(
-          "relative z-40 bg-white pb-0 pt-0 sm:hidden",
+          "relative z-40 bg-[#F5F7FB] pb-0 pt-0 sm:hidden",
           mobileSearchOpen && "pointer-events-none",
         )}
         aria-label={t("carsResults.carRentalSearch")}
@@ -2471,18 +2471,34 @@ export function CarsResultsExperience({
                 {!guidedPlanning ? (
                   <div
                     data-cars-results-quick-filters
-                    className="scrollbar-hide -mx-1 flex w-[calc(100%+0.5rem)] flex-nowrap gap-2 overflow-x-auto overscroll-x-contain px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden"
+                    className="scrollbar-hide -mx-1 flex w-[calc(100%+0.5rem)] flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain px-1 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden"
                   >
                     <button
                       ref={filtersButtonRef}
                       type="button"
-                      className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-[#07133B] transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                      className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-[9px] border border-[#D8E1EC] bg-white px-2.5 text-[13px] font-semibold text-[#142033] transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                       onClick={(event) => openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))}
                     >
-                      <SlidersHorizontal size={17} aria-hidden="true" />
+                      <SlidersHorizontal size={16} aria-hidden="true" />
                       {activeFilterCount > 0
                         ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount))
                         : t("filters")}
+                    </button>
+                    <button
+                      type="button"
+                      aria-haspopup="dialog"
+                      aria-expanded={quickFilterGroupId === "sort"}
+                      aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
+                      onClick={(event) => {
+                        mobileFiltersLauncherRef.current = event.currentTarget;
+                        mobileFiltersModalityRef.current = getOverlayActivationModality(event);
+                        setFiltersOpen(false);
+                        setQuickFilterGroupId("sort");
+                      }}
+                      className="inline-flex h-9 shrink-0 items-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2.5 text-[13px] font-semibold text-[#142033] transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                    >
+                      {sort === "recommended" ? "Sort" : selectedCarSortLabel}
+                      <ChevronDown className="h-[13px] w-[13px] text-slate-500" aria-hidden="true" />
                     </button>
                     {quickFilterGroups.map((group) => {
                       const count = selectedCarFilters[group.id]?.length ?? 0;
@@ -2499,10 +2515,10 @@ export function CarsResultsExperience({
                             setQuickFilterGroupId(group.id);
                           }}
                           className={cn(
-                            "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
+                            "inline-flex h-9 shrink-0 items-center gap-1 rounded-[9px] border px-2.5 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
                             count > 0
                               ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
-                              : "border-slate-300 bg-white text-[#07133B] hover:bg-slate-50",
+                              : "border-[#D8E1EC] bg-white text-[#142033] hover:bg-slate-50",
                           )}
                         >
                           {carFilterGroupLabel(group, t, true)}
@@ -2533,7 +2549,7 @@ export function CarsResultsExperience({
                       ref={resultHeadingRef}
                       id={resultHeadingId}
                       tabIndex={-1}
-                      className="truncate whitespace-nowrap text-[16px] font-bold leading-6 tracking-[-0.005em] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[17px]"
+                      className="truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[17px] sm:leading-6 sm:tracking-[-0.005em]"
                     >
                       {resultHeading ??
                         t(
@@ -2556,7 +2572,7 @@ export function CarsResultsExperience({
                       </p>
                     ) : null}
                   </div>
-                  <div className="flex min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
+                  <div className="hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
                     <span className="shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
                       {t("carsResults.sortBy")}:
                     </span>
@@ -2638,7 +2654,7 @@ export function CarsResultsExperience({
                   style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined}
                   className={cn(
                     "w-full space-y-4",
-                    !guidedPlanning && "-mx-1.5 w-auto sm:mx-0 sm:w-full",
+                    !guidedPlanning && "w-full",
                   )}
                 >
                   {Array.from({ length: paginationPendingPage !== null ? pageResults.length : 3 }, (_, item) => (
@@ -2659,7 +2675,7 @@ export function CarsResultsExperience({
                   aria-busy="false"
                   className={cn(
                     "w-full space-y-4",
-                    !guidedPlanning && "-mx-1.5 w-auto sm:mx-0 sm:w-full",
+                    !guidedPlanning && "w-full",
                     paginationRevealing && "animate-[fadeIn_150ms_ease-out]",
                   )}
                 >
@@ -2856,6 +2872,25 @@ export function CarsResultsExperience({
           </div>
         </aside>
       ) : null}
+      {quickFilterGroupId === "sort" && typeof document !== "undefined" ? createPortal(
+        <div className="fixed inset-0 z-[10010] flex items-end bg-slate-950/35 px-3 pt-16 backdrop-blur-[1px] lg:hidden" role="presentation" onMouseDown={() => setQuickFilterGroupId(null)}>
+          <section ref={quickFiltersDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="cars-quick-sort" onMouseDown={(event) => event.stopPropagation()} className="w-full rounded-t-[1.5rem] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-24px_70px_-30px_rgba(15,23,42,0.65)]">
+            <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-300" aria-hidden="true" />
+            <div className="flex items-center justify-between px-5 pb-3 pt-3">
+              <h2 id="cars-quick-sort" className="text-lg font-extrabold text-slate-950">Sort</h2>
+              <button ref={quickFiltersCloseButtonRef} type="button" aria-label="Close" onClick={() => setQuickFilterGroupId(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><X className="h-5 w-5" aria-hidden="true" /></button>
+            </div>
+            <div className="border-y border-slate-100 px-4 py-2">
+              {carSortOptions.map((option) => (
+                <button key={option.value} type="button" role="radio" aria-checked={sort === option.value} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-start text-sm font-semibold text-slate-800 hover:bg-slate-50" onClick={() => { if (option.value !== sort) { setTransition(); setCurrentPage(1); setSort(option.value); } setQuickFilterGroupId(null); }}>
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-slate-300 text-xs text-[#004BB8]">{sort === option.value ? "✓" : ""}</span>
+                  <span className="min-w-0 flex-1">{option.label}</span>
+                </button>
+              ))}
+            </div>
+            <div className="px-4 py-3"><Button type="button" className="h-12 w-full bg-[#004BB8] text-white" onClick={() => setQuickFilterGroupId(null)}>Apply</Button></div>
+          </section>
+        </div>, document.body) : null}
       {activeQuickFilterGroup ? createPortal(
           <div className="fixed inset-0 z-[10010] flex items-end bg-slate-950/35 px-3 pt-16 backdrop-blur-[1px] lg:hidden" role="presentation" onMouseDown={() => setQuickFilterGroupId(null)}>
             <section ref={quickFiltersDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={`cars-quick-${activeQuickFilterGroup.id}`} onMouseDown={(event) => event.stopPropagation()} className="w-full rounded-t-[1.5rem] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-24px_70px_-30px_rgba(15,23,42,0.65)]">
@@ -2892,7 +2927,7 @@ export function CarsResultsExperience({
 
 function CarsResultsPageTransitionSkeleton() {
   return (
-    <div aria-hidden="true" className="fixed inset-0 z-[1200] overflow-hidden bg-[#f6f8fb]">
+    <div aria-hidden="true" className="fixed inset-0 z-[1200] overflow-hidden bg-[#F5F7FB] sm:bg-[#f6f8fb]">
       <div className="h-20 border-b border-slate-100 bg-white px-4 sm:h-24"><div className="mx-auto flex h-full max-w-[1400px] items-center justify-between"><div className="h-8 w-40 animate-pulse rounded-md bg-slate-200 motion-reduce:animate-none" /><div className="h-10 w-10 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none" /></div></div>
       <div className="border-b border-slate-100 bg-white px-4 py-5"><div className="mx-auto max-w-[1180px]"><div className="hidden h-[72px] animate-pulse grid-cols-[1.2fr_.9fr_1fr_.7fr_112px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm motion-reduce:animate-none sm:grid">{["pickup", "return", "dates", "age"].map((item) => <div key={item} className="border-r border-slate-200 p-4"><div className="h-4 w-28 rounded bg-slate-200" /><div className="mt-2 h-3 w-20 rounded bg-slate-100" /></div>)}<div className="m-2 rounded-xl bg-[#D9E7F7]" /></div><div className="h-16 animate-pulse rounded-2xl border border-slate-200 bg-white p-4 shadow-sm motion-reduce:animate-none sm:hidden"><div className="h-4 w-52 rounded bg-slate-200" /><div className="mt-2 h-3 w-36 rounded bg-slate-100" /></div></div></div>
       <div className="mx-auto max-w-[1400px] px-4 py-5 sm:py-6"><div className="mb-4 flex gap-2 sm:hidden">{[84, 92, 76, 116].map((width) => <div key={width} className="h-11 shrink-0 animate-pulse rounded-lg border border-slate-200 bg-white motion-reduce:animate-none" style={{ width }} />)}</div><div className="grid min-w-0 gap-5 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]"><aside className="hidden space-y-5 border-r border-slate-200 pr-5 lg:block"><div className="h-6 w-24 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />{["vehicle", "transmission", "seats", "features"].map((item) => <div key={item} className="border-t border-slate-200 pt-5"><div className="h-4 w-28 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /><div className="mt-4 h-4 w-4/5 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /><div className="mt-3 h-4 w-3/5 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div>)}</aside><section className="min-w-0"><div className="mb-4 flex items-center justify-between"><div><div className="h-6 w-40 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /><div className="mt-2 h-3 w-16 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div><div className="hidden h-9 w-36 animate-pulse rounded bg-slate-200 motion-reduce:animate-none sm:block" /></div><div className="space-y-4"><CarCardSkeleton /><CarCardSkeleton /><CarCardSkeleton /></div></section></div></div>
