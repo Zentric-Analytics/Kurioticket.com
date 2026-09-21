@@ -22,7 +22,9 @@ test("mobile identity, journeys, badges, and track match native hierarchy", () =
   assert.match(card, /Operated by|Includes flight operated by/);
   for (const label of ["Best value", "Cheapest", "Fastest", "OUTBOUND", "RETURN", "FLIGHT "]) assert.match(card, new RegExp(label));
   assert.doesNotMatch(card, /Award|Zap|Tag/);
-  assert.match(card, /rounded-full bg-slate-400[\s\S]*h-px flex-1 bg-slate-300[\s\S]*<Plane[\s\S]*h-px flex-1 bg-slate-300[\s\S]*rounded-full bg-slate-400/);
+  assert.match(card, /h-\[7px\][\s\S]*h-\[1\.5px\] flex-1 bg-slate-300[\s\S]*<PlaneTakeoff[\s\S]*h-\[1\.5px\] flex-1 bg-slate-300[\s\S]*h-\[7px\]/);
+  assert.match(card, /grid-cols-\[72px_minmax\(46px,1fr\)_72px\]/);
+  assert.doesNotMatch(card, /ml-\[46px\]/);
   assert.doesNotMatch(card, /formatLayover|layoverSummaryTemplate|Layover:/);
 });
 
@@ -52,6 +54,8 @@ test("mobile terminal states are distinct and expose working actions", () => {
   assert.match(results, /kind="empty"/);
   assert.match(results, /kind="filtered" onPrimary=\{clearFlightFilters\}/);
   assert.match(results, /openMobileFiltersDrawer\(\)/);
+  assert.match(state, /min-h-\[210px\]/);
+  assert.match(state, /aria-live="polite"/);
 });
 
 test("mobile list is continuous while desktop retains pagination", () => {

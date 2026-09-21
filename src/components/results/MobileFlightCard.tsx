@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Armchair, ChevronRight, FileText, Luggage, Plane } from "lucide-react";
+import { Armchair, ChevronRight, FileText, Luggage, Plane, PlaneTakeoff } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -55,7 +55,7 @@ export function MobileFlightCard({
       <div className="flex min-w-0 items-start gap-2.5">
         <AirlineLogo flight={flight} />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] font-bold leading-[17px] text-slate-900">{flight.airlineName}</p>
+          <p className="line-clamp-2 text-[13px] font-bold leading-[17px] text-slate-900">{flight.airlineName}</p>
           {providerLabel ? <p className="truncate text-[10px] font-semibold leading-[14px] text-amber-800">{providerLabel}</p> : null}
           {flight.flightNumber ? <p className="truncate text-[11px] font-medium leading-[14px] text-slate-500" dir="ltr">{flight.flightNumber}</p> : null}
           {operator ? <p className="truncate text-[11px] font-medium leading-[15px] text-slate-500">{operator.text}</p> : null}
@@ -63,17 +63,17 @@ export function MobileFlightCard({
         <MobileBadge badge={resultBadge} />
       </div>
 
-      <div className="ml-[46px] mt-2.5 space-y-3">
+      <div className="mt-2 space-y-2.5">
         {legs.map((leg, index) => <MobileJourney key={`${leg.direction}-${leg.departureTime}-${index}`} leg={leg} label={legLabel(leg, index, legs)} locale={locale} stops={stopsLabel(leg.stops, t)} />)}
       </div>
 
-      <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-t border-slate-200 pt-2.5">
-        <div className="min-w-0 space-y-1.5 text-[10.5px] leading-[15px]">
+      <div className="mt-[5px] grid grid-cols-[minmax(0,1fr)_minmax(104px,46%)] gap-2 border-t border-slate-200 pt-[7px]">
+        <div className="min-w-0 space-y-[5px] pt-px text-[10.5px] leading-[15px]">
           <Metadata icon={Luggage} label={t("baggage")} value={baggageSummary(flight.baggageInfo, t)} />
           <Metadata icon={Armchair} label={t("cabin")} value={cabinSummary(flight.cabinClass, t)} />
           <Metadata icon={FileText} label={t("fareRules")} value={locale.startsWith("en") ? "Review" : (t("reviewBeforeBooking") || "Review")} />
         </div>
-        <div className="flex max-w-[47vw] flex-col items-end justify-end text-right">
+        <div className="flex min-w-[104px] flex-col items-end justify-between text-right">
           <p className={cn("max-w-full whitespace-nowrap font-bold tracking-[-0.025em] text-slate-950", price.size === "normal" ? "text-[19px] leading-6" : price.size === "large" ? "text-[17px] leading-[22px]" : "text-[15px] leading-5")} data-price-size={price.size} dir="ltr" title={displayPrice.isConvertedEstimate ? providerPrice : undefined}>{price.formatted}</p>
           <span className="mt-1 inline-flex items-center gap-0.5 text-[13px] font-semibold leading-[15px] text-[#004BB8]">View deals <ChevronRight className="h-4 w-4" aria-hidden="true" /></span>
         </div>
@@ -100,24 +100,30 @@ function MobileBadge({ badge }: { badge?: ResultBadge }) {
 function MobileJourney({ leg, label, locale, stops }: { leg: FlightLeg; label: string; locale: string; stops: string }) {
   return <section aria-label={label}>
     <p className="text-[10px] font-bold uppercase leading-3 tracking-[0.08em] text-[#0057E7]">{label}</p>
-    <div className="mt-1 grid grid-cols-[minmax(0,1fr)_minmax(84px,1.35fr)_minmax(0,1fr)] items-start gap-2">
-      <Endpoint time={leg.departureTime} airport={leg.originAirport} locale={locale} />
-      <div className="min-w-0 pt-0.5 text-center">
-        <p className="truncate text-[11px] font-medium leading-[14px] text-slate-600">{leg.duration}</p>
-        <div className="mt-1 flex items-center" aria-hidden="true"><span className="h-1.5 w-1.5 rounded-full bg-slate-400" /><span className="h-px flex-1 bg-slate-300" /><Plane className="mx-1 h-3 w-3 rotate-90 text-[#004BB8]" /><span className="h-px flex-1 bg-slate-300" /><span className="h-1.5 w-1.5 rounded-full bg-slate-400" /></div>
-        <p className="mt-1 text-[10px] font-semibold leading-[13px] text-slate-500">{stops}</p>
-      </div>
-      <Endpoint time={leg.arrivalTime} airport={leg.destinationAirport} locale={locale} align="right" />
+    <div className="mt-1 grid grid-cols-[72px_minmax(46px,1fr)_72px] items-center gap-1.5">
+      <p className="text-[14px] font-extrabold leading-[18px] text-slate-950" dir="ltr">{formatTime(leg.departureTime, locale)}</p>
+      <p className="truncate text-center text-[11px] font-semibold leading-[14px] text-slate-600">{leg.duration}</p>
+      <p className="text-right text-[14px] font-extrabold leading-[18px] text-slate-950" dir="ltr">{formatTime(leg.arrivalTime, locale)}</p>
+    </div>
+    <div className="mt-0.5 grid grid-cols-[72px_minmax(46px,1fr)_72px] items-center gap-1.5">
+      <Endpoint airport={leg.originAirport} time={leg.departureTime} locale={locale} />
+      <div className="flex min-w-[46px] items-center gap-0.5" aria-hidden="true"><span className="h-[7px] w-[7px] shrink-0 rounded-full bg-slate-400" /><span className="h-[1.5px] flex-1 bg-slate-300" /><PlaneTakeoff className="h-3.5 w-3.5 shrink-0 text-[#004BB8]" /><span className="h-[1.5px] flex-1 bg-slate-300" /><span className="h-[7px] w-[7px] shrink-0 rounded-full bg-slate-400" /></div>
+      <Endpoint airport={leg.destinationAirport} time={leg.arrivalTime} locale={locale} align="right" />
+    </div>
+    <div className="mt-0.5 grid grid-cols-[72px_minmax(46px,1fr)_72px] gap-1.5">
+      <span />
+      <p className="truncate text-center text-[10px] font-medium leading-[13px] text-slate-500">{stops}</p>
+      <span />
     </div>
   </section>;
 }
 
 function Endpoint({ time, airport, locale, align = "left" }: { time: string; airport: string; locale: string; align?: "left" | "right" }) {
-  return <div className={cn("min-w-0", align === "right" && "text-right")}><p className="text-[14px] font-extrabold leading-[18px] text-slate-950" dir="ltr">{formatTime(time, locale)}</p><p className="truncate text-[11px] font-bold leading-[14px] text-slate-900" dir="ltr">{airport}</p><p className="truncate text-[9.5px] font-medium leading-3 text-slate-500">{formatItineraryShortDate({ value: time, locale })}</p></div>;
+  return <div className={cn("min-w-0", align === "right" && "text-right")}><p className="truncate text-[11px] font-bold leading-[14px] text-slate-900" dir="ltr">{airport}</p><p className="mt-px truncate text-[9.5px] font-medium leading-3 text-slate-500">{formatItineraryShortDate({ value: time, locale })}</p></div>;
 }
 
 function Metadata({ icon: Icon, label, value }: { icon: typeof Luggage; label: string; value: string }) {
-  return <p className="flex min-w-0 items-center gap-1.5 text-slate-600"><Icon className="h-[15px] w-[15px] shrink-0 text-slate-500" aria-hidden="true" /><span className="shrink-0 font-semibold">{label}:</span><span className="truncate font-medium" title={value}>{value}</span></p>;
+  return <p className="flex min-h-4 min-w-0 items-center gap-1.5 text-slate-600"><Icon className="h-[15px] w-[15px] shrink-0 text-slate-500" aria-hidden="true" /><span className="shrink-0 font-semibold">{label}:</span><span className="truncate font-medium" title={value}>{value}</span></p>;
 }
 
 function getVisibleLegs(flight: PublicFlightResult): FlightLeg[] {
