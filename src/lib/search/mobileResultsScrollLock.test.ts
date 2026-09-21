@@ -5,10 +5,15 @@ import { acquireMobileResultsScrollLock } from "./mobileResultsScrollLock";
 
 function installBrowser({ scrollbarWidth = 0 } = {}) {
   const bodyStyle: Record<string, string> = {
+    left: "3px",
     overflow: "clip",
     overscrollBehavior: "contain",
     paddingRight: "7px",
+    position: "relative",
+    right: "4px",
+    top: "5px",
     touchAction: "pan-y",
+    width: "98%",
     scrollbarGutter: "stable",
   };
   const rootStyle: Record<string, string> = {
@@ -36,15 +41,20 @@ function installBrowser({ scrollbarWidth = 0 } = {}) {
   return { bodyStyle, rootStyle, calls, fakeWindow };
 }
 
-test("locks once without changing layout geometry, nests safely, and restores exact styles", () => {
+test("first acquisition fixes the document, nesting preserves the snapshot, and final release restores exactly", () => {
   const browser = installBrowser({ scrollbarWidth: 15 });
   const originalBody = { ...browser.bodyStyle };
   const originalRoot = { ...browser.rootStyle };
   const first = acquireMobileResultsScrollLock();
-  assert.equal(browser.bodyStyle.overflow, "clip");
+  assert.equal(browser.bodyStyle.position, "fixed");
+  assert.equal(browser.bodyStyle.top, "-1800px");
+  assert.equal(browser.bodyStyle.left, "-12px");
+  assert.equal(browser.bodyStyle.right, "0");
+  assert.equal(browser.bodyStyle.width, "100%");
+  assert.equal(browser.bodyStyle.overflow, "hidden");
   assert.equal(browser.bodyStyle.paddingRight, "7px");
   assert.equal(browser.bodyStyle.overscrollBehavior, "none");
-  assert.equal(browser.rootStyle.overflow, "visible");
+  assert.equal(browser.rootStyle.overflow, "hidden");
   assert.equal(browser.bodyStyle.touchAction, "pan-y");
   assert.equal(browser.bodyStyle.scrollbarGutter, "stable");
   assert.equal(browser.rootStyle.touchAction, "auto");
@@ -52,16 +62,16 @@ test("locks once without changing layout geometry, nests safely, and restores ex
 
   browser.fakeWindow.scrollY = 2600;
   const nested = acquireMobileResultsScrollLock();
-  assert.equal(browser.bodyStyle.paddingRight, "7px");
+  assert.equal(browser.bodyStyle.top, "-1800px");
   nested();
-  assert.equal(browser.bodyStyle.overscrollBehavior, "none");
+  assert.equal(browser.bodyStyle.position, "fixed");
 
   browser.fakeWindow.scrollY = 1800;
   first();
   first();
   assert.deepEqual(browser.bodyStyle, originalBody);
   assert.deepEqual(browser.rootStyle, originalRoot);
-  assert.equal(browser.calls.length, 0);
+  assert.deepEqual(browser.calls, [[{ left: 12, top: 1800, behavior: "auto" }]]);
 });
 
 test("corrects genuine viewport drift exactly once on final release", () => {
@@ -72,4 +82,26 @@ test("corrects genuine viewport drift exactly once on final release", () => {
   release();
   release();
   assert.deepEqual(browser.calls, [[{ left: 12, top: 1800, behavior: "auto" }]]);
+});
+
+test("restoreScroll false survives an earlier nested release and skips final restoration", () => {
+  const browser = installBrowser();
+  const first = acquireMobileResultsScrollLock();
+  const nested = acquireMobileResultsScrollLock();
+  first({ restoreScroll: false });
+  assert.equal(browser.bodyStyle.position, "fixed");
+  nested();
+  nested();
+  assert.equal(browser.bodyStyle.position, "relative");
+  assert.deepEqual(browser.calls, []);
+});
+
+test("is safe when browser globals are unavailable", () => {
+  Reflect.deleteProperty(globalThis, "window");
+  Reflect.deleteProperty(globalThis, "document");
+  assert.doesNotThrow(() => {
+    const release = acquireMobileResultsScrollLock();
+    release();
+    release({ restoreScroll: false });
+  });
 });

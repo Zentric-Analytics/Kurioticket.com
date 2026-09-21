@@ -17,6 +17,7 @@ test("Cars Edit Search records first-open, reopen, and Safari viewport geometry"
   const overlay = page.locator("[data-mobile-results-overlay-root]");
   await expect(overlay).toBeVisible();
   const firstOpen = await collectSafariDiagnostics(page, "first-open");
+  expect(firstOpen.viewport.scrollY).toBeCloseTo(beforeFirst.viewport.scrollY, 0);
   const firstScreenshot = testInfo.outputPath("cars-first-open.png");
   await page.screenshot({ path: firstScreenshot, fullPage: false });
   await testInfo.attach("Cars first open", { path: firstScreenshot, contentType: "image/png" });
@@ -37,20 +38,37 @@ test("Cars Edit Search records first-open, reopen, and Safari viewport geometry"
     await groupedRows.nth(index).getByRole("button").first().click();
     const picker = page.locator("[data-flight-mobile-picker-shell]");
     await expect(picker).toBeVisible();
+    const pickerOpen = await collectSafariDiagnostics(page, `open-${name}`);
+    expect(pickerOpen.viewport.scrollY).toBeCloseTo(secondOpen.viewport.scrollY, 0);
     await page.getByRole("button", { name: /back/i }).first().click();
     await expect(picker).toBeHidden();
     const returned = await collectSafariDiagnostics(page, `returned-from-${name}`);
     expect(returned.rects.dialog.top).toBeCloseTo(secondOpen.rects.dialog.top, 0);
     expect(returned.rects.dialog.bottom).toBeCloseTo(secondOpen.rects.dialog.bottom, 0);
+    expect(returned.viewport.scrollY).toBeCloseTo(secondOpen.viewport.scrollY, 0);
     nestedPickerReturns.push({ name, returned });
   }
 
+  // Gesture on the backdrop, rather than the internally scrollable sheet.
+  await page.mouse.move(2, 2);
   await page.mouse.wheel(0, 900);
   await page.waitForTimeout(500);
   const afterDownwardGesture = await collectSafariDiagnostics(page, "after-downward-scroll-input");
+  expect(afterDownwardGesture.viewport.scrollY).toBeCloseTo(secondOpen.viewport.scrollY, 0);
   await page.mouse.wheel(0, -900);
   await page.waitForTimeout(500);
   const afterUpwardGesture = await collectSafariDiagnostics(page, "after-upward-scroll-input");
+  expect(afterUpwardGesture.viewport.scrollY).toBeCloseTo(secondOpen.viewport.scrollY, 0);
+
+  const sheetContent = page.locator(".mobile-results-sheet-content");
+  const internalScroll = await sheetContent.evaluate((element) => {
+    const before = element.scrollTop;
+    element.scrollTop = Math.min(before + 200, element.scrollHeight - element.clientHeight);
+    return { before, after: element.scrollTop, canScroll: element.scrollHeight > element.clientHeight };
+  });
+  if (internalScroll.canScroll) expect(internalScroll.after).toBeGreaterThan(internalScroll.before);
+  const afterInternalScroll = await collectSafariDiagnostics(page, "after-sheet-internal-scroll");
+  expect(afterInternalScroll.viewport.scrollY).toBeCloseTo(secondOpen.viewport.scrollY, 0);
 
   await page.getByRole("button", { name: /close edit search/i }).click();
   const afterSecondClose = await collectSafariDiagnostics(page, "after-second-close");

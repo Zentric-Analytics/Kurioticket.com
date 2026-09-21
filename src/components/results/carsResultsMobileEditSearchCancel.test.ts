@@ -84,20 +84,22 @@ test("a committed Results navigation remounts client state for the new search", 
   );
 });
 
-test("mobile search uses the shared stable Results lock and restores focus without scrolling", () => {
+test("mobile search uses the shared fixed-body Results lock and restores focus without scrolling", () => {
   assert.match(
     scrollLifecycle,
     /mobileSearchScrollLockRef\.current\?\.\(\)/,
   );
   assert.match(
     scrollLockSource,
-    /restoreScroll = true[\s\S]*Math\.abs\(window\.scrollY - original\.scrollY\) > 1[\s\S]*window\.scrollTo/,
+    /restoreScroll = true[\s\S]*shouldRestoreScroll[\s\S]*window\.scrollTo/,
   );
   assert.match(scrollLockSource, /body\.style\.overscrollBehavior = "none"/);
   assert.match(scrollLockSource, /root\.style\.overscrollBehavior = "none"/);
-  assert.doesNotMatch(scrollLockSource, /style\.overflow\s*=/);
+  assert.match(scrollLockSource, /body\.style\.overflow = "hidden"/);
+  assert.match(scrollLockSource, /root\.style\.overflow = "hidden"/);
   assert.match(scrollLockSource, /if \(released\) return;[\s\S]*released = true/);
-  assert.doesNotMatch(scrollLockSource, /style\.position = "fixed"/);
+  assert.match(scrollLockSource, /body\.style\.position = "fixed"/);
+  assert.match(scrollLockSource, /body\.style\.top = `\$\{-snapshot\.scrollY\}px`/);
   assert.doesNotMatch(scrollLockSource, /behavior: "smooth"/);
   assert.match(scrollLifecycle, /restoreOverlayLauncherFocus\(launcher, mobileSearchModalityRef\.current\)/);
   assert.match(source, /openMobileSearchDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/);
