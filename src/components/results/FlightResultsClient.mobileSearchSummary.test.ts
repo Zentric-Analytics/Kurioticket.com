@@ -69,7 +69,8 @@ test("full Edit Search controls are not duplicated into the compact summary", ()
 
 test("sticky mobile header keeps back navigation and replaces the miniature toolbar with the full summary card", () => {
   assert.match(stickySummary, /<ArrowLeft className="h-5 w-5" aria-hidden="true" \/>/);
-  assert.match(stickySummary, /router\.push\("\/flights"\)/);
+  assert.match(stickySummary, /aria-label="Go back"/);
+  assert.match(stickySummary, /onClick=\{handleMobileResultsBack\}/);
   assert.match(stickySummary, /renderMobileRouteSummaryCard\("sticky"\)/);
   assert.doesNotMatch(stickySummary, /Modify search|routeLabel|data-flight-compact-edit-icon/);
   assert.doesNotMatch(stickySummary, /<SlidersHorizontal|openMobileFiltersDrawer|>Filter</);
@@ -81,8 +82,15 @@ test("normal mobile filter shortcut remains available outside the sticky header"
   const filter = source.slice(filterStart, filterEnd);
 
   assert.match(filter, /<SlidersHorizontal/);
-  assert.match(filter, /<span>Filter<\/span>/);
+  assert.match(filter, /<span>Filters<\/span>/);
   assert.match(filter, /openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/);
+});
+
+test("initial mobile header exposes a separate accessible Back control before scrolling", () => {
+  assert.match(normalSummary, /aria-label="Go back"/);
+  assert.match(normalSummary, /onClick=\{handleMobileResultsBack\}/);
+  assert.match(normalSummary, /renderMobileRouteSummaryCard\("normal"\)/);
+  assert.match(source, /window\.history\.length > 1[\s\S]*router\.back\(\)[\s\S]*router\.push\("\/flights"\)/);
 });
 
 test("desktop search toolbar stays isolated from the mobile card typography", () => {
