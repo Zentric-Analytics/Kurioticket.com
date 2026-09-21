@@ -120,10 +120,14 @@ export function CarResultCard({
       ? [...primarySpecifications, [Snowflake, "Air conditioning"]]
       : primarySpecifications;
   const mobilePrimarySpecs = car.sandboxPresentation ? specifications : getMobileCarPrimarySpecs(car);
-  const mobileSpecColumns = [
-    mobilePrimarySpecs.slice(0, 2),
-    mobilePrimarySpecs.slice(2, 4),
-  ].filter((column) => column.length);
+  const mobileSpecColumns = (
+    car.sandboxPresentation
+      ? [
+          mobilePrimarySpecs.filter((_, index) => index % 2 === 0),
+          mobilePrimarySpecs.filter((_, index) => index % 2 === 1),
+        ]
+      : [mobilePrimarySpecs.slice(0, 2), mobilePrimarySpecs.slice(2, 4)]
+  ).filter((column) => column.length);
   const comparisonSources: CarComparisonSource[] = [
     {
       id: `${car.id}-kurioticket-estimate`,
