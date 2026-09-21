@@ -210,7 +210,9 @@ export class KayakError extends Error {
       | "unauthorized"
       | "rate_limited"
       | "timeout"
-      | "invalid_response",
+      | "invalid_response"
+      | "server_error"
+      | "request_rejected",
   ) {
     super(`KAYAK sandbox ${code.replaceAll("_", " ")}.`);
   }
@@ -417,6 +419,7 @@ export class KayakSandboxClient {
     body: unknown,
     signal: AbortSignal,
     empty = false,
+    retryTransient = false,
   ): Promise<ObjectValue> {
     if (!this.key.trim()) throw new KayakError("unauthorized");
     const url = new URL(path, KAYAK_SANDBOX_ORIGIN);
@@ -425,39 +428,57 @@ export class KayakSandboxClient {
       apiKey: this.key,
       userTrackId,
     }).toString();
-    try {
-      const response = await this.fetcher(url, {
-        method: body ? "POST" : "GET",
-        cache: "no-store",
-        redirect: "error",
-        signal,
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": this.userAgent,
-          ...(isIP(this.clientIp)
-            ? { "x-original-client-ip": this.clientIp }
-            : {}),
-          ...(empty ? { "sandbox-api-empty": "true" } : {}),
-        },
-        ...(body ? { body: JSON.stringify(body) } : {}),
-      });
-      if (!response.ok)
-        throw new KayakError(
-          response.status === 429
+    // The sandbox car poll has a documented history of occasionally dropping a
+    // connection before returning a response. Retry that narrow, transient
+    // transport/edge failure once, with the same track id. Do not retry auth,
+    // quota, validation, cancellation, or malformed provider responses.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const response = await this.fetcher(url, {
+          method: body ? "POST" : "GET",
+          cache: "no-store",
+          redirect: "error",
+          signal,
+          headers: {
+            "Content-Type": "application/json",
+            "User-Agent": this.userAgent,
+            ...(isIP(this.clientIp)
+              ? { "x-original-client-ip": this.clientIp }
+              : {}),
+            ...(empty ? { "sandbox-api-empty": "true" } : {}),
+          },
+          ...(body ? { body: JSON.stringify(body) } : {}),
+        });
+        if (!response.ok) {
+          const code = response.status === 429
             ? "rate_limited"
             : [401, 403].includes(response.status)
               ? "unauthorized"
-              : "unavailable",
-        );
-      const parsed: unknown = await response.json();
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
-        throw new KayakError("invalid_response");
-      return parsed as ObjectValue;
-    } catch (error) {
-      if (error instanceof KayakError) throw error;
-      // Fetch exceptions can contain the credential-bearing request URL. Never log/rethrow them.
-      throw new KayakError(signal.aborted ? "timeout" : "unavailable");
+              : response.status >= 500
+                ? "server_error"
+                : "request_rejected";
+          if (retryTransient && code === "server_error" && attempt === 0 && !signal.aborted) {
+            await this.pause(300);
+            continue;
+          }
+          throw new KayakError(code);
+        }
+        const parsed: unknown = await response.json();
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+          throw new KayakError("invalid_response");
+        return parsed as ObjectValue;
+      } catch (error) {
+        if (error instanceof KayakError) throw error;
+        // Fetch exceptions can contain the credential-bearing request URL. Never log/rethrow them.
+        if (signal.aborted) throw new KayakError("timeout");
+        if (retryTransient && attempt === 0) {
+          await this.pause(300);
+          continue;
+        }
+        throw new KayakError("unavailable");
+      }
     }
+    throw new KayakError("unavailable");
   }
 
   async places(
@@ -560,6 +581,7 @@ export class KayakSandboxClient {
         body && resultParameters ? { ...object(body), resultParameters } : body,
         signal,
         empty,
+        search.vertical === "cars",
       );
       if (
         search.vertical === "hotels"

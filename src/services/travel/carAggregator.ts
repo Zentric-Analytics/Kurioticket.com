@@ -4,9 +4,20 @@ import { searchKayakCars, type KayakRequestContext } from "./kayakMetasearchProv
 import { getCarSearchCohort, getProviderResult, rememberCarSearchCohort, rememberProviderResults } from "./providerResultCache";
 
 export type CarSearchResult={results:NormalizedCarResult[];status:CarInventoryStatus;warnings:string[]};
-export async function searchCars(search:LocationBoundCarSearchParams,options:{kayak?:KayakRequestContext;requestId?:string}={}):Promise<CarSearchResult>{
+type CarSearchDependencies = {
+  searchKayak: typeof searchKayakCars;
+  rememberResults: typeof rememberProviderResults<NormalizedCarResult>;
+  rememberCohort: typeof rememberCarSearchCohort;
+};
+const carSearchDependencies: CarSearchDependencies = {
+  searchKayak: searchKayakCars,
+  rememberResults: rememberProviderResults,
+  rememberCohort: rememberCarSearchCohort,
+};
+export async function searchCars(search:LocationBoundCarSearchParams,options:{kayak?:KayakRequestContext;requestId?:string;dependencies?:CarSearchDependencies}={}):Promise<CarSearchResult>{
   if(!search.pickupLocation||!search.pickupDate||!search.dropoffDate)return{results:[],status:"invalid-search",warnings:[]};
-  const [catalogue,kayak]=await Promise.all([Promise.resolve(buildStaticCarResults(search)),searchKayakCars(search,options.kayak)]);
+  const dependencies = options.dependencies ?? carSearchDependencies;
+  const [catalogue,kayak]=await Promise.all([Promise.resolve(buildStaticCarResults(search)),dependencies.searchKayak(search,options.kayak)]);
   console.info("[car-search:provider-diagnostics]", {
     requestId: options.requestId,
     kayakClientIpPresent: Boolean(options.kayak?.clientIp),
@@ -20,8 +31,8 @@ export async function searchCars(search:LocationBoundCarSearchParams,options:{ka
     errorReason: kayak.errorReason,
   });
   await Promise.all([
-    rememberProviderResults("car", kayak.results, search),
-    rememberCarSearchCohort(kayak.results, search),
+    dependencies.rememberResults("car", kayak.results, search),
+    dependencies.rememberCohort(kayak.results, search),
   ]);
   return{results:[...catalogue,...kayak.results],status:"available",warnings:kayak.status==="failed"?["KAYAK is temporarily unavailable. Other provider results are shown."]:[]};
 }

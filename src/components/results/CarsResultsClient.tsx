@@ -2817,41 +2817,39 @@ export function CarsResultsExperience({
         </div>
       </div>
       {filtersOpen ? (
+        <button
+          type="button"
+          aria-label={t("carsResults.closeFilters")}
+          onClick={() => setFiltersOpen(false)}
+          className="fixed inset-0 z-[9999] hidden bg-slate-950/35 backdrop-blur-[1px] sm:block lg:hidden"
+        />
+      ) : null}
+      {filtersOpen ? (
         <aside
           ref={filtersDialogRef}
           tabIndex={-1}
           role="dialog"
           aria-modal="true"
           aria-labelledby="cars-guided-filters-title"
-          className="fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden bg-[#F7F9FC] lg:hidden"
+          data-cars-mobile-filter-shell
+          className="fixed inset-y-0 right-0 z-[10000] flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F6F8FB] shadow-2xl sm:w-[420px] lg:hidden"
         >
-          <div className="shrink-0 bg-white px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)]">
+          <div className="shrink-0 border-b border-slate-200 bg-white px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)] sm:px-5 sm:pb-4 sm:pt-4">
             <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <h2
-                  id="cars-guided-filters-title"
-                  className="text-xl font-extrabold leading-7 tracking-[-0.015em] text-slate-950"
-                >
-                  {t("filters")}
-                </h2>
-                {activeFilterCount > 0 ? (
-                  <p className="mt-1 text-xs font-semibold text-[#536B92]">
-                    {activeFilterLabel}
-                  </p>
-                ) : null}
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center text-slate-700" aria-hidden="true"><SlidersHorizontal className="h-4 w-4" /></span>
+                <div className="min-w-0">
+                  <h2 id="cars-guided-filters-title" className="truncate text-lg font-bold leading-6 tracking-[-0.01em] text-slate-950">{t("filters")}</h2>
+                  <p className="text-xs font-medium text-slate-500">{activeFilterCount > 0 ? activeFilterLabel : "All cars shown"}</p>
+                </div>
               </div>
-              <button
-                ref={filtersCloseButtonRef}
-                type="button"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-                aria-label={t("carsResults.closeFilters")}
-                onClick={() => setFiltersOpen(false)}
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-1">
+                {activeFilterCount > 0 ? <button type="button" onClick={clearCarFilters} className="min-h-11 rounded-lg px-2.5 text-sm font-bold text-[#004BB8] transition hover:bg-[#EAF2FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30">{t("clearAll")}</button> : null}
+                <button ref={filtersCloseButtonRef} type="button" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-700 transition hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2" aria-label={t("carsResults.closeFilters")} onClick={() => setFiltersOpen(false)}><X size={20} /></button>
+              </div>
             </div>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 [scrollbar-gutter:stable]">
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 [scrollbar-gutter:stable] sm:px-5">
             <CarFilters
               groups={
                 guidedPlanning
@@ -2868,11 +2866,10 @@ export function CarsResultsExperience({
               t={t}
             />
           </div>
-          <div className="flex shrink-0 items-center gap-3 border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_30px_-24px_rgba(15,23,42,0.45)]">
-            {activeFilterCount > 0 ? <Button type="button" variant="ghost" className="h-12 px-3" onClick={clearCarFilters}>{t("clearAll")}</Button> : null}
+          <div className="flex shrink-0 items-center border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.08)] sm:px-5 sm:pb-4 sm:pt-4">
             <Button
               type="button"
-              className="h-12 flex-1 bg-[#004BB8] text-white"
+              className="h-12 w-full min-w-0 rounded-xl bg-[#004BB8] px-5 text-base font-bold text-white shadow-md shadow-[#004BB8]/12"
               onClick={() => setFiltersOpen(false)}
             >
               Show {visibleResults.length} {visibleResults.length === 1 ? "car" : "cars"}
@@ -2881,14 +2878,12 @@ export function CarsResultsExperience({
         </aside>
       ) : null}
       {quickFilterGroupId === "sort" && typeof document !== "undefined" ? createPortal(
-        <div className="fixed inset-0 z-[10010] flex items-end bg-slate-950/35 px-3 pt-16 backdrop-blur-[1px] lg:hidden" role="presentation" onMouseDown={() => setQuickFilterGroupId(null)}>
-          <section ref={quickFiltersDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="cars-quick-sort" onMouseDown={(event) => event.stopPropagation()} className="w-full rounded-t-[1.5rem] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-24px_70px_-30px_rgba(15,23,42,0.65)]">
-            <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-300" aria-hidden="true" />
-            <div className="flex items-center justify-between px-5 pb-3 pt-3">
-              <h2 id="cars-quick-sort" className="text-lg font-extrabold text-slate-950">Sort</h2>
-              <button ref={quickFiltersCloseButtonRef} type="button" aria-label="Close" onClick={() => setQuickFilterGroupId(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><X className="h-5 w-5" aria-hidden="true" /></button>
-            </div>
-            <div className="border-y border-slate-100 px-4 py-2">
+        <div data-cars-quick-sheet-backdrop className="fixed inset-0 z-[10010] flex items-end bg-slate-950/35 backdrop-blur-[1px] lg:hidden" role="presentation" onMouseDown={() => setQuickFilterGroupId(null)}>
+          <section data-cars-quick-sheet ref={quickFiltersDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="cars-quick-sort" onMouseDown={(event) => event.stopPropagation()} className="max-h-[min(76dvh,620px)] w-full overflow-hidden rounded-t-[24px] bg-[#F6F8FB] shadow-2xl">
+            <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3"><div><h2 id="cars-quick-sort" className="text-lg font-bold text-slate-950">Sort</h2><p className="text-xs font-medium text-slate-500">Choose one option</p></div>
+              <button ref={quickFiltersCloseButtonRef} type="button" aria-label="Close" onClick={() => setQuickFilterGroupId(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><X className="h-5 w-5" aria-hidden="true" /></button>
+            </header>
+            <div className="max-h-[calc(min(76dvh,620px)-9rem)] overflow-y-auto overscroll-contain px-4 py-4">
               {carSortOptions.map((option) => (
                 <button key={option.value} type="button" role="radio" aria-checked={sort === option.value} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-start text-sm font-semibold text-slate-800 hover:bg-slate-50" onClick={() => { if (option.value !== sort) { setTransition(); setCurrentPage(1); setSort(option.value); } setQuickFilterGroupId(null); }}>
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-slate-300 text-xs text-[#004BB8]">{sort === option.value ? "✓" : ""}</span>
@@ -2896,24 +2891,23 @@ export function CarsResultsExperience({
                 </button>
               ))}
             </div>
-            <div className="px-4 py-3"><Button type="button" className="h-12 w-full bg-[#004BB8] text-white" onClick={() => setQuickFilterGroupId(null)}>Apply</Button></div>
+            <footer className="border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3"><Button type="button" className="h-12 w-full rounded-xl bg-[#004BB8] text-white" onClick={() => setQuickFilterGroupId(null)}>Apply</Button></footer>
           </section>
         </div>, document.body) : null}
       {activeQuickFilterGroup ? createPortal(
-          <div className="fixed inset-0 z-[10010] flex items-end bg-slate-950/35 px-3 pt-16 backdrop-blur-[1px] lg:hidden" role="presentation" onMouseDown={() => setQuickFilterGroupId(null)}>
-            <section ref={quickFiltersDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={`cars-quick-${activeQuickFilterGroup.id}`} onMouseDown={(event) => event.stopPropagation()} className="w-full rounded-t-[1.5rem] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-24px_70px_-30px_rgba(15,23,42,0.65)]">
-              <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-300" aria-hidden="true" />
-              <div className="flex items-center justify-between px-5 pb-3 pt-3">
+          <div data-cars-quick-sheet-backdrop className="fixed inset-0 z-[10010] flex items-end bg-slate-950/35 backdrop-blur-[1px] lg:hidden" role="presentation" onMouseDown={() => setQuickFilterGroupId(null)}>
+            <section data-cars-quick-sheet ref={quickFiltersDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={`cars-quick-${activeQuickFilterGroup.id}`} onMouseDown={(event) => event.stopPropagation()} className="max-h-[min(76dvh,620px)] w-full overflow-hidden rounded-t-[24px] bg-[#F6F8FB] shadow-2xl">
+              <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
                 <div><h2 id={`cars-quick-${activeQuickFilterGroup.id}`} className="text-lg font-extrabold text-slate-950">{carFilterGroupLabel(activeQuickFilterGroup, t, true)}</h2>{(selectedCarFilters[activeQuickFilterGroup.id]?.length ?? 0) > 0 ? <p className="mt-0.5 text-xs font-semibold text-[#536B92]">{selectedCarFilters[activeQuickFilterGroup.id]?.length} selected</p> : null}</div>
-                <button ref={quickFiltersCloseButtonRef} type="button" aria-label="Close" onClick={() => setQuickFilterGroupId(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><X className="h-5 w-5" aria-hidden="true" /></button>
-              </div>
-              <div className="max-h-[55dvh] overflow-y-auto overscroll-contain border-y border-slate-100 px-4 py-2">
+                <button ref={quickFiltersCloseButtonRef} type="button" aria-label="Close" onClick={() => setQuickFilterGroupId(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><X className="h-5 w-5" aria-hidden="true" /></button>
+              </header>
+              <div className="max-h-[calc(min(76dvh,620px)-9rem)] overflow-y-auto overscroll-contain px-4 py-4">
                 {activeQuickFilterGroup.options.map((option) => {
                   const selected = selectedCarFilters[activeQuickFilterGroup.id]?.includes(option.id) ?? false;
                   return <label key={option.id} className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl px-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"><input type="checkbox" checked={selected} onChange={() => toggleCarFilter(activeQuickFilterGroup.id, option.id)} className="h-5 w-5 rounded border-slate-300 accent-blue" /><span className="min-w-0 flex-1">{option.label ?? t(option.labelKey)}</span>{typeof option.count === "number" ? <span className="text-xs tabular-nums text-slate-500">{option.count}</span> : null}</label>;
                 })}
               </div>
-              <div className="flex items-center gap-3 px-4 py-3">{(selectedCarFilters[activeQuickFilterGroup.id]?.length ?? 0) > 0 ? <Button type="button" variant="ghost" className="h-12" onClick={() => { setSelectedCarFilters((current) => { const next = {...current}; delete next[activeQuickFilterGroup.id]; return next; }); setCurrentPage(1); }}>{t("clearAll")}</Button> : null}<Button type="button" className="h-12 flex-1 bg-[#004BB8] text-white" onClick={() => setQuickFilterGroupId(null)}>Apply</Button></div>
+              <footer className="flex items-center gap-3 border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">{(selectedCarFilters[activeQuickFilterGroup.id]?.length ?? 0) > 0 ? <Button type="button" variant="secondary" className="h-12 min-w-24 rounded-xl" onClick={() => { setSelectedCarFilters((current) => { const next = {...current}; delete next[activeQuickFilterGroup.id]; return next; }); setCurrentPage(1); }}>{t("clearAll")}</Button> : null}<Button type="button" className="h-12 flex-1 rounded-xl bg-[#004BB8] text-white" onClick={() => setQuickFilterGroupId(null)}>Apply</Button></footer>
             </section>
           </div>, document.body) : null}
       {!guidedPlanning && showBackToTop && !filtersOpen ? (
