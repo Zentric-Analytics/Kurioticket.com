@@ -32,6 +32,21 @@ export function getComparableFlightPriceBounds(
     : { min: 0, max: 0 };
 }
 
+export function getLowestComparableFlightFare<T extends Pick<PublicFlightResult, "price" | "currency">>(
+  flights: T[],
+  displayCurrency: string,
+  rates: ExchangeRates,
+): T | null {
+  return flights.reduce<{ flight: T; amount: number } | null>((lowest, flight) => {
+    const comparable = getComparableFlightPrice(flight, displayCurrency, rates);
+    if (!comparable) return lowest;
+    if (!lowest || comparable.amount < lowest.amount) {
+      return { flight, amount: comparable.amount };
+    }
+    return lowest;
+  }, null)?.flight ?? null;
+}
+
 /** Comparable prices sort first; an unavailable FX rate preserves input order. */
 export function compareFlightPrices(
   first: Pick<PublicFlightResult, "price" | "currency">,
