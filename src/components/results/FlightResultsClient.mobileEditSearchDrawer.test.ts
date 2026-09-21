@@ -20,8 +20,8 @@ test("Results delegates mobile Edit Search to the shared drawer", () => {
 });
 
 test("Results launcher avoids Android tap flash while retaining focus-visible", () => {
-  const start = source.indexOf("function renderMobileControlsRow");
-  const end = source.indexOf("function renderDesktopSortControl", start);
+  const start = source.indexOf("function renderMobileRouteSummaryCard");
+  const end = source.indexOf("function renderMobileCompactResultsHeader", start);
   const launcher = source.slice(start, end);
   assert.match(launcher, /\[-webkit-tap-highlight-color:transparent\]/);
   assert.match(launcher, /focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/35/);
