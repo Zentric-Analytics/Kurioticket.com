@@ -4,6 +4,7 @@ import {
   compareFlightPrices,
   getComparableFlightPrice,
   getComparableFlightPriceBounds,
+  getLowestComparableFlightFare,
 } from "./flightResultPrices";
 
 const rates = { USD: 1, EUR: 0.8, GBP: 0.5, NGN: 1_000 };
@@ -26,4 +27,15 @@ test("missing rates are never treated as directly comparable raw amounts", () =>
   assert.equal(getComparableFlightPrice(flight(1, "XYZ"), "NGN", rates), null);
   assert.equal(compareFlightPrices(flight(600, "USD"), flight(1, "XYZ"), "NGN", rates), -1);
   assert.equal(compareFlightPrices(flight(1, "XYZ"), flight(2, "ABC"), "NGN", rates), 0);
+});
+
+
+test("selects the true lowest nearby fare after currency normalization", () => {
+  const fares = [flight(100, "EUR"), flight(110, "USD")];
+  assert.equal(getLowestComparableFlightFare(fares, "USD", rates), fares[1]);
+});
+
+test("ignores nearby fares that cannot be normalized instead of comparing raw amounts", () => {
+  const fares = [flight(1, "XYZ"), flight(110, "USD")];
+  assert.equal(getLowestComparableFlightFare(fares, "USD", rates), fares[1]);
 });
