@@ -36,8 +36,26 @@ test("Cars shortcut backdrop and inside-click dismissal boundaries remain explic
   assert.equal((cars.match(/onMouseDown=\{\(\) => setQuickFilterGroupId\(null\)\}/g) ?? []).length, 2);
   assert.equal((cars.match(/data-cars-quick-sheet ref=\{quickFiltersDialogRef\}[\s\S]{0,220}onMouseDown=\{\(event\) => event\.stopPropagation\(\)\}/g) ?? []).length, 2);
   assert.match(cars, /window\.addEventListener\("keydown", handleKeyDown\)/);
-  assert.match(cars, /mobileFiltersScrollLockRef\.current = acquireMobileResultsScrollLock\(\)/);
+  assert.match(cars, /const mobileFiltersOverlayOpen = filtersOpen \|\| quickFilterGroupId !== null/);
+  assert.match(cars, /const releaseScrollLock = acquireMobileResultsScrollLock\(\)/);
+  assert.match(cars, /\}, \[mobileFiltersOverlayOpen\]\)/);
   assert.match(cars, /restoreOverlayLauncherFocus\(launcher, mobileFiltersModalityRef\.current\)/);
+});
+
+test("every canonical Cars shortcut shares the one stable mobile overlay lock", () => {
+  assert.match(cars, /carQuickFilterGroupIds/);
+  assert.match(cars, /quickFilterGroups = carQuickFilterGroupIds\.flatMap/);
+  for (const group of [
+    "pricePerDay",
+    "vehicleType",
+    "transmission",
+    "seats",
+    "cancellation",
+    "pickupLocationType",
+  ]) {
+    assert.match(cars, new RegExp(`\\b${group}\\b`));
+  }
+  assert.equal((cars.match(/acquireMobileResultsScrollLock\(\)/g) ?? []).length, 3);
 });
 
 test("Cars-specific Sort and filter option data remain wired into shortcut sheets", () => {

@@ -4,6 +4,16 @@ import { collectSafariDiagnostics, installViewportEventRecorder, readViewportEve
 
 const carsResults = "/cars/results?pickupLocation=LAX%20Airport&dropoffLocation=LAX%20Airport&pickupDate=2026-09-10&pickupTime=10%3A00&dropoffDate=2026-09-12&dropoffTime=10%3A00&driverAge=42";
 
+async function expectDocumentFrozen(page: import("@playwright/test").Page, expectedScrollY: number) {
+  await page.mouse.move(2, 2);
+  await page.mouse.wheel(0, 1200);
+  await page.waitForTimeout(100);
+  expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(expectedScrollY, 0);
+  await page.mouse.wheel(0, -1200);
+  await page.waitForTimeout(100);
+  expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(expectedScrollY, 0);
+}
+
 test("Cars Edit Search records first-open, reopen, and Safari viewport geometry", async ({ page }, testInfo) => {
   await page.goto(carsResults, { waitUntil: "domcontentloaded" });
   await installViewportEventRecorder(page);
@@ -87,4 +97,43 @@ test("Cars Edit Search records first-open, reopen, and Safari viewport geometry"
 
   expect(afterFirstClose.viewport.scrollY).toBe(beforeFirst.viewport.scrollY);
   expect(afterSecondClose.viewport.scrollY).toBe(beforeFirst.viewport.scrollY);
+});
+
+test("Cars full Filters and representative quick sheets freeze the document while their content scrolls", async ({ page }) => {
+  await page.goto(carsResults, { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => window.scrollTo(0, Math.min(1400, document.body.scrollHeight - window.innerHeight)));
+  await page.waitForTimeout(500);
+  const originalScrollY = await page.evaluate(() => window.scrollY);
+  expect(originalScrollY).toBeGreaterThan(0);
+
+  await page.getByRole("button", { name: /^filters?$/i }).first().click();
+  const fullFilters = page.locator("[data-cars-mobile-filter-shell]");
+  await expect(fullFilters).toBeVisible();
+  expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
+  await expectDocumentFrozen(page, originalScrollY);
+  const filterScroller = fullFilters.locator(".overflow-y-auto");
+  const fullFilterScroll = await filterScroller.evaluate((element) => {
+    const before = element.scrollTop;
+    element.scrollTop = Math.min(before + 300, element.scrollHeight - element.clientHeight);
+    return { before, after: element.scrollTop, canScroll: element.scrollHeight > element.clientHeight };
+  });
+  expect(fullFilterScroll.canScroll).toBe(true);
+  expect(fullFilterScroll.after).toBeGreaterThan(fullFilterScroll.before);
+  expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
+  await fullFilters.getByRole("button", { name: /close filters/i }).click();
+  await expect(fullFilters).toBeHidden();
+  expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
+
+  for (const launcher of [/sort by/i, /^price/i, /^vehicle type/i, /^transmission/i]) {
+    const button = page.getByRole("button", { name: launcher }).first();
+    await button.scrollIntoViewIfNeeded();
+    await button.click();
+    const sheet = page.locator("[data-cars-quick-sheet]");
+    await expect(sheet).toBeVisible();
+    expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
+    await expectDocumentFrozen(page, originalScrollY);
+    await sheet.getByRole("button", { name: "Close" }).click();
+    await expect(sheet).toBeHidden();
+    expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
+  }
 });
