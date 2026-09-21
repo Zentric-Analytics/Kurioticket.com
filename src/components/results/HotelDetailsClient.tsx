@@ -902,6 +902,7 @@ export function HotelDetailsClient({
                 reviewSource={hotel.reviewSource}
                 relatedHotels={relatedHotels}
                 relatedSearchContext={{
+                  destinationId: searchContext?.destinationId,
                   destination: propertyDetails?.city || searchContext?.destination,
                   checkIn: requestCheckIn,
                   checkOut: requestCheckOut,
