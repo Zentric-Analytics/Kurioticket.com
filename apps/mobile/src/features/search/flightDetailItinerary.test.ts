@@ -148,12 +148,14 @@ test("itinerary surface pairs controlled depth with a light-only gloss finish sh
   assert.match(source,/<LinearGradient id=\{`\$\{testID\}-sheen`\} x1="0" y1="0" x2="1" y2="1">[\s\S]*?<Stop offset="0" stopColor="#FFFFFF" stopOpacity="0\.78"\/>[\s\S]*?<Stop offset="1" stopColor="#FFFFFF" stopOpacity="0"\/>/);
   assert.doesNotMatch(source,/\$\{testID\}-base|#FAFCFF|#EEF4FA/);
   assert.match(source,/<Rect width="100" height="52" fill=\{`url\(#\$\{testID\}-sheen\)`\}\/>/);
-  assert.match(source,/<Rect x="0\.5" y="0\.5" width="99" height="99" fill="none" stroke="#FFFFFF" strokeOpacity="0\.86" strokeWidth="1"\/>/);
+  assert.doesNotMatch(source,/<Rect[^>]*(?:stroke|fill="none")/);
   assert.doesNotMatch(source,/<Rect[^>]*\srx=/);
   assert.doesNotMatch(source,/itineraryGlossRim/);
   assert.match(itinerary,/<ItineraryGlossSurface dark=\{theme\.dark\} testID="flight-details-itinerary-gloss"\/>/);
   assert.match(source,/<ItineraryGlossSurface dark=\{theme\.dark\} testID="flight-details-loading-itinerary-gloss"\/>/);
-  assert.match(source,/itineraryGlossSurface:\{\.\.\.StyleSheet\.absoluteFillObject,borderRadius:14,overflow:"hidden"\}/);
+  assert.match(source,/const FLIGHT_DETAILS_ITINERARY_RADIUS = 15/);
+  assert.match(source,/itineraryCard:\{position:"relative",borderWidth:1,borderRadius:FLIGHT_DETAILS_ITINERARY_RADIUS,padding:15,gap:0\}/);
+  assert.match(source,/itineraryGlossSurface:\{\.\.\.StyleSheet\.absoluteFillObject,borderRadius:FLIGHT_DETAILS_ITINERARY_RADIUS,overflow:"hidden"\}/);
 });
 
 test("the polished route retains dot-line-plane-line-dot without nested itinerary cards",()=>{
@@ -237,7 +239,7 @@ test("information progresses from journey summary to airports, segment details, 
 test("itinerary breadth expands from 18dp to 8dp side gaps while preserving current fare-card geometry",()=>{
   assert.match(source,/contentBody:\{paddingHorizontal:18,gap:14\}/);
   assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10,marginTop:-104,zIndex:1\}/);
-  assert.match(source,/itineraryCard:\{position:"relative",borderWidth:1,borderRadius:15,padding:15/);
+  assert.match(source,/itineraryCard:\{position:"relative",borderWidth:1,borderRadius:FLIGHT_DETAILS_ITINERARY_RADIUS,padding:15/);
   assert.match(source,/fareCard:\{borderWidth:1\.5,borderRadius:15,minHeight:142,position:"relative",paddingHorizontal:12,paddingTop:6,paddingBottom:8,gap:4\}/);
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);
 });
