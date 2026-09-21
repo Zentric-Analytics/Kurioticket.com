@@ -21,9 +21,12 @@ test("Cars owns a modest safe-area-aware native iOS scroll indicator", () => {
 test("Cars resolves its full logical content extent independently of image prefetch", () => {
   assert.match(screen, /const CAR_RESULT_INITIAL_IMAGE_COUNT = 3/);
   assert.match(screen, /\.slice\(0,CAR_RESULT_INITIAL_IMAGE_COUNT\)/);
-  assert.match(list, /disableVirtualization/);
-  assert.match(list, /removeClippedSubviews=\{false\}/);
-  assert.doesNotMatch(list, /initialNumToRender|maxToRenderPerBatch|windowSize|updateCellsBatchingPeriod/);
+  assert.match(list, /initialNumToRender=\{Math\.max\(results\.length,1\)\}/);
+  assert.match(list, /maxToRenderPerBatch=\{Math\.max\(results\.length,CAR_RESULT_RENDER_BATCH_SIZE\)\}/);
+  assert.match(list, /windowSize=\{CAR_RESULT_WINDOW_SIZE\}/);
+  assert.match(list, /updateCellsBatchingPeriod=\{CAR_RESULT_BATCHING_PERIOD_MS\}/);
+  assert.match(list, /removeClippedSubviews=\{Platform\.OS === "android"\}/);
+  assert.doesNotMatch(list, /disableVirtualization/);
 });
 
 test("Cars gives the native indicator stable naturally-sized card geometry", () => {
@@ -36,9 +39,9 @@ test("Cars gives the native indicator stable naturally-sized card geometry", () 
   assert.doesNotMatch(cardStyle.replace(/shadowOffset:\{[^}]*\}/, ""), /(?:^|,)height:/);
 });
 
-test("Cars leaves iOS boundary compression to the native scroll view", () => {
+test("Cars keeps stable cross-platform boundary behavior", () => {
   assert.match(list, /alwaysBounceVertical=\{false\}/);
-  assert.match(list, /bounces=\{Platform\.OS === "ios"\}/);
+  assert.match(list, /bounces=\{false\}/);
   assert.match(list, /overScrollMode="never"/);
   assert.doesNotMatch(list, /onScroll=|scrollEventThrottle=/);
 });
