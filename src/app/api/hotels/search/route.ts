@@ -12,6 +12,7 @@ import {
 } from "@/services/travel/hotelAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
+import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
 
 export async function POST(request: Request) {
   const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
@@ -35,6 +36,12 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Unsupported Hotel provider mode." },
       { status: 400 },
+    );
+  }
+  if (providerMode === "kayak-sandbox" && !isKayakSandboxEnabled()) {
+    return NextResponse.json(
+      { error: "Hotel provider mode is unavailable." },
+      { status: 404 },
     );
   }
 
@@ -119,8 +126,10 @@ export async function POST(request: Request) {
     ),
   ]);
 
+  const classified = classifyHotels(publicResults, aggregate.warnings, requestId);
   return NextResponse.json({
-    ...classifyHotels(publicResults, aggregate.warnings, requestId),
+    ...classified,
+    source: providerMode || classified.source,
     providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs, error }) => ({
       provider,
       status,
