@@ -15,7 +15,7 @@ test("standalone Car details owns exactly one page wrapper and back link", () =>
   assert.equal(standaloneSource.match(/<main\b/g)?.length, 1);
   assert.equal(standaloneSource.match(/page-shell py-2 sm:py-7/g)?.length, 1);
   assert.equal(standaloneSource.match(/<DetailsBackLink\b/g)?.length, 1);
-  assert.equal(standaloneSource.match(/bg-white lg:border-b lg:border-border lg:pb-14/g)?.length, 1);
+  assert.equal(standaloneSource.match(/bg-transparent sm:bg-white lg:border-b lg:border-border lg:pb-14/g)?.length, 1);
   assert.match(standaloneSource, /presentation="standalone-content"/);
   assert.match(standaloneSource, /standalone-disabled-provider/);
 });

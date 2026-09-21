@@ -49,6 +49,30 @@ export function buildAutomaticCarPriceAlertPayload(search: CarSearchParams, base
   return { ...targetPayload, targetPrice: undefined, mode: "AUTOMATIC" as const, baselinePrice };
 }
 
+const carAlertMatchFields = ["pickupLocation", "dropoffLocation", "pickupDate", "pickupTime", "dropoffDate", "dropoffTime", "driverAge"] as const;
+const normalizedAlertText = (value: unknown) => String(value ?? "").trim().toLowerCase();
+
+export type MatchableCarPriceAlert = {
+  type: string;
+  mode?: "AUTOMATIC" | "TARGET";
+  status: string;
+  query: unknown;
+};
+
+/** Canonical automatic-alert identity shared by Cars clients and duplicate handling. */
+export function carPriceAlertMatchesSearch(alert: MatchableCarPriceAlert, search: CarSearchParams) {
+  if (alert.type !== "CAR" || alert.mode !== "AUTOMATIC") return false;
+  const expected = canonicalCarPriceAlertQuerySchema.safeParse(search);
+  const actual = canonicalCarPriceAlertQuerySchema.safeParse(alert.query);
+  return expected.success && actual.success && carAlertMatchFields.every((field) =>
+    normalizedAlertText(actual.data[field]) === normalizedAlertText(expected.data[field]));
+}
+
+export function matchingAutomaticCarPriceAlert<T extends MatchableCarPriceAlert>(alerts: T[], search: CarSearchParams) {
+  const matches = alerts.filter((alert) => carPriceAlertMatchesSearch(alert, search));
+  return matches.find(({ status }) => status === "ACTIVE") ?? matches.find(({ status }) => status === "PAUSED");
+}
+
 export function carPriceAlertDuplicateKey(input: { origin: string | null; destination: string; targetPrice?: { toString(): string } | number | string | null; mode?: "AUTOMATIC" | "TARGET"; currency: string | null; query: unknown }) {
   const parsed = canonicalCarPriceAlertQuerySchema.safeParse(input.query);
   const target = input.targetPrice == null ? NaN : Number(input.targetPrice.toString());

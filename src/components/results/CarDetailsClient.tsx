@@ -338,8 +338,8 @@ export function CarDetailsClient({
     ? { kind: "sandbox-handoff", label: "Open KAYAK test page", href: sandboxHref }
     : { kind: "standalone-disabled-provider", label: copy("carDetails.continueDeal") };
   return (
-    <main className="flex-1 bg-white pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-surface-muted/40 lg:pb-0">
-      <section className="bg-white lg:border-b lg:border-border lg:pb-14">
+    <main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-surface-muted/40 lg:pb-0">
+      <section className="bg-transparent sm:bg-white lg:border-b lg:border-border lg:pb-14">
         <div className="page-shell py-2 sm:py-7">
           <DetailsBackLink
             href={resultsHref}
