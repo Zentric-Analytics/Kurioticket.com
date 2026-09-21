@@ -70,8 +70,8 @@ test("source-contract: mobile Cars typography uses a restrained primary-secondar
     source.indexOf("data-cars-results-quick-filters"),
     source.indexOf("data-cars-results-summary-row"),
   );
-  assert.match(quickFilters, /text-sm font-semibold text-\[#07133B\]/);
-  assert.match(quickFilters, /text-sm font-semibold transition/);
+  assert.match(quickFilters, /text-\[13px\] font-semibold text-\[#142033\]/);
+  assert.match(quickFilters, /text-\[13px\] font-semibold transition/);
 });
 
 test("source-contract: mobile Cars range is end-aligned on the count row while desktop stays stacked", () => {
@@ -125,7 +125,7 @@ test("source-contract: Cars result count and Sort share a shrink-safe row", () =
 
   assert.match(
     summaryRow,
-    /className="flex min-w-0 max-w-full[^"]*justify-end/,
+    /className="hidden min-w-0 max-w-full[^"]*justify-end[^"]*sm:flex/,
   );
   assert.ok(
     summaryRow.indexOf("<h2") < summaryRow.indexOf("ref={carsSortRef}"),
