@@ -103,9 +103,11 @@ test("source contract uses a desktop summary and a mobile safe-area booking dock
   );
 });
 
-test("standalone details use native-ordered mobile hero controls, identity, and specifications", () => {
+test("standalone details use persistent mobile controls with native-ordered hero content", () => {
   assert.match(heroSource, /data-car-details-image-stage/);
-  assert.match(heroSource, /data-car-details-mobile-controls/);
+  assert.doesNotMatch(heroSource, /data-car-details-mobile-controls/);
+  assert.match(clientSource, /data-car-details-mobile-controls/);
+  assert.match(clientSource, /pointer-events-none fixed inset-x-0 top-0/);
   assert.match(heroSource, /data-car-details-mobile-identity/);
   assert.match(heroSource, /data-car-details-specifications/);
   assert.match(heroSource, /bg-\[#F5F7FB\]/);
