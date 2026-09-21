@@ -496,8 +496,6 @@ const fieldLabelClass =
 const fieldInputClass =
   "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[15px] lg:font-medium lg:leading-6";
 
-const mobileSearchCloseMotionMs = 280;
-
 export function CarsResultsClient({
   values,
   initialResults,
@@ -552,7 +550,6 @@ export function CarsResultsClient({
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(null);
-  const mobileSearchCloseTimerRef = useRef<number | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileSearchModalityRef = useRef<OverlayActivationModality>("programmatic");
   const mobileSearchSnapshotRef = useRef<CarsResultsSearchSnapshot | null>(
@@ -857,10 +854,6 @@ export function CarsResultsClient({
         driverAge,
       };
       mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock();
-      if (mobileSearchCloseTimerRef.current !== null) {
-        window.clearTimeout(mobileSearchCloseTimerRef.current);
-        mobileSearchCloseTimerRef.current = null;
-      }
       setMobileSearchClosing(false);
       setMobileSearchOpen(true);
       setMobilePicker(null);
@@ -931,17 +924,7 @@ export function CarsResultsClient({
       return;
     }
     setMobileSearchClosing(true);
-    mobileSearchCloseTimerRef.current = window.setTimeout(() => {
-      mobileSearchCloseTimerRef.current = null;
-      cancelMobileSearchDrawer();
-    }, mobileSearchCloseMotionMs);
   }, [cancelMobileSearchDrawer, mobileSearchClosing]);
-
-  useEffect(() => () => {
-    if (mobileSearchCloseTimerRef.current !== null) {
-      window.clearTimeout(mobileSearchCloseTimerRef.current);
-    }
-  }, []);
 
   const submitMobileSearch = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
@@ -1542,7 +1525,9 @@ export function CarsResultsClient({
         cleanBackdrop
         bottomSurfaceContinuation
         smoothMotion
+        isolatedBackdrop
         closing={mobileSearchClosing}
+        onCloseAnimationComplete={cancelMobileSearchDrawer}
         title={t("carsResults.editSearch")}
         nestedLayerOpen={mobilePicker !== null}
         onClose={requestMobileSearchDrawerClose}
