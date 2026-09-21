@@ -20,10 +20,10 @@ const hotelSource = readFileSync(
 );
 
 const mainWrapper = '<main className="flex-1 bg-surface-muted/40">';
-const successfulMainWrapper = '<main className="flex-1 bg-white pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-surface-muted/40 lg:pb-0">';
+const successfulMainWrapper = '<main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-surface-muted/40 lg:pb-0">';
 const whiteSection = '<section className="border-b border-border bg-white">';
 const successfulSection =
-  '<section className="bg-white lg:border-b lg:border-border lg:pb-14">';
+  '<section className="bg-transparent sm:bg-white lg:border-b lg:border-border lg:pb-14">';
 
 function assertOrdered(source: string, parts: string[]) {
   let previous = -1;
@@ -57,7 +57,7 @@ test("reference details pages retain the shared background architecture", () => 
   }
 });
 
-test("successful Cars Details uses a full-width white section inside the muted main", () => {
+test("successful Cars Details uses a soft mobile canvas and restores the white section above mobile", () => {
   assertOrdered(clientSource, [
     successfulMainWrapper,
     successfulSection,
@@ -68,6 +68,7 @@ test("successful Cars Details uses a full-width white section inside the muted m
     /<main className="[^"]*lg:pb-14[^"]*">/,
   );
   assert.doesNotMatch(clientSource, /flex-1 bg-\[#f6f8fb\] lg:pb-14/);
+  assert.match(clientSource, /bg-\[#F5F7FB\]/);
   assert.match(clientSource, /page-shell py-2 sm:py-7/);
   assertNoForbiddenBackgroundTreatments(
     clientSource.slice(
