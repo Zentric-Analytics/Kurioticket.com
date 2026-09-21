@@ -6,15 +6,15 @@ const results = readFileSync(new URL("./FlightResultsClient.tsx", import.meta.ur
 const card = readFileSync(new URL("./MobileFlightCard.tsx", import.meta.url), "utf8");
 
 test("final mobile Flight Results order and controls remain intact", () => {
-  const initialBack = results.indexOf('aria-label="Go back"');
-  const summary = results.indexOf("renderMobileRouteSummaryCard(\"normal\")");
+  const summary = results.indexOf("mobileResultsSearch={renderMobileRouteSummaryCard()}");
   const nearby = results.indexOf('data-nearby-fare-presentation="mobile"');
   const shortcuts = results.indexOf("data-flight-mobile-results-shortcuts");
   const alert = results.indexOf("<FlightPriceAlertControl");
   const count = results.indexOf("formatMobileFlightResultsFound");
   const cards = results.indexOf("data-mobile-continuous-flight-list");
 
-  assert.ok(initialBack >= 0 && initialBack < summary);
+  assert.ok(summary >= 0 && summary < nearby);
+  assert.doesNotMatch(results, /aria-label="Go back"|renderMobileCompactResultsHeader/);
   assert.match(results, /aria-label=\{t\("editFlightSearch"\)\}/);
   assert.ok(nearby >= 0 && nearby < shortcuts && shortcuts < alert && alert < count && count < cards);
   assert.match(results, /<span>Filters<\/span>/);

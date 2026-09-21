@@ -111,8 +111,8 @@ test("automatic duplicate identity is canonical and separate from target alerts"
 });
 
 test("automatic switch matching ignores target alerts and display-currency changes", () => {
-  const automatic = { type: "FLIGHT", mode: "AUTOMATIC", status: "PAUSED", query: { ...query, currency: "EUR" } };
-  const target = { type: "FLIGHT", mode: "TARGET", status: "ACTIVE", query };
+  const automatic = { type: "FLIGHT", mode: "AUTOMATIC" as const, status: "PAUSED", query: { ...query, currency: "EUR" } };
+  const target = { type: "FLIGHT", mode: "TARGET" as const, status: "ACTIVE", query };
   assert.equal(matchingAutomaticFlightPriceAlert([target, automatic], query), automatic);
 });
 

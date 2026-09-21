@@ -721,7 +721,7 @@ export function AppHeader({
           flushDesktopBottom && "sm:border-b-0 sm:shadow-none",
         )}
       >
-        {mobileResultsSearch ? <div data-hotel-results-navbar className="flex h-[72px] items-center gap-2 border-b border-slate-200 px-2 sm:hidden">
+        {mobileResultsSearch ? <div data-mobile-results-navbar className="flex h-[72px] items-center gap-2 border-b border-slate-200 px-2 sm:hidden">
           <button type="button" aria-label={mobileMenuOpen ? t.closeMobileMenu : t.openMobileMenu} aria-expanded={mobileMenuOpen} aria-controls="mobile-menu-drawer" aria-haspopup="dialog" onClick={() => { setMobileAccountOpen(false); setMobileMenuOpen((value) => !value); }} className="focus-ring flex h-11 w-12 shrink-0 items-center justify-center gap-1 rounded-lg">
             <RawImage src="/brand/kurioticket-icon-blue.svg" alt="Kurioticket" className="h-7 w-7" /><ChevronDown className={cn("h-3 w-3 text-slate-700", mobileMenuOpen && "rotate-180")} aria-hidden="true" />
           </button>
@@ -1290,18 +1290,19 @@ export function AppHeader({
                         <div className="mt-1.5 grid">
                           {mobileTravelMenuNavItems.map((item) => {
                             const Icon = item.icon;
+                            const active = mobileResultsSearch && isNavItemActive(item.href);
 
                             return (
                               <Link
                                 key={item.href}
                                 href={item.href}
-                                aria-current={mobileResultsSearch && item.href === "/hotels" ? "page" : undefined}
+                                aria-current={active ? "page" : undefined}
                                 onClick={(event) =>
                                   handleRouteLinkClick(event, item.href, () =>
                                     setMobileMenuOpen(false),
                                   )
                                 }
-                                className={cn("group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25", mobileResultsSearch && item.href === "/hotels" && "rounded-lg bg-slate-100 text-[#004BB8]")}
+                                className={cn("group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25", active && "rounded-lg bg-slate-100 text-[#004BB8]")}
                               >
                                 {Icon ? (
                                   <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-[#004BB8]">

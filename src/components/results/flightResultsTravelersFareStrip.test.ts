@@ -106,7 +106,7 @@ test("mobile date rail precedes the sticky quick-filter rail", () => {
   const dateRail = source.indexOf('data-nearby-fare-presentation="mobile"');
   const shortcuts = source.indexOf("data-flight-mobile-results-shortcuts", dateRail);
   assert.ok(dateRail >= 0 && shortcuts > dateRail);
-  assert.match(source.slice(shortcuts, shortcuts + 900), /sticky z-30[\s\S]*mobileCompactHeaderVisible[\s\S]*top-\[calc\(5\.5rem\+env\(safe-area-inset-top\)\)\][\s\S]*top-0/);
+  assert.match(source.slice(shortcuts, shortcuts + 900), /sticky top-\[calc\(72px\+env\(safe-area-inset-top\)\)\] z-30/);
 });
 
 test("responsive mobile sizing shows three complete dates and a fourth-date peek", () => {
@@ -196,20 +196,10 @@ test("nearby fare DOM remains outside the paginated card subtree", () => {
   assert.doesNotMatch(source.slice(rail, paginatedCards), /paginationPendingPage/);
 });
 
-test("mobile compact header freezes geometry and sentinel state while Edit Search owns interaction", () => {
-  const headerStart = source.indexOf("function renderMobileCompactResultsHeader");
-  const headerEnd = source.indexOf("function renderMobile", headerStart + 20);
-  const header = source.slice(headerStart, headerEnd > headerStart ? headerEnd : headerStart + 8000);
-  assert.match(header, /transition-opacity/);
-  assert.doesNotMatch(header, /transition-all|-translate-y-2|translate-y-0/);
-  assert.match(header, /mobileCompactHeaderVisible \? "opacity-100" : "opacity-0"/);
-  assert.match(header, /mobileCompactHeaderVisible && !mobileSearchOpen[\s\S]*pointer-events-auto[\s\S]*pointer-events-none/);
-  assert.match(header, /aria-hidden=\{!mobileCompactHeaderVisible \|\| mobileSearchOpen\}/);
-
-  assert.match(source, /if \(mobileSearchOpenRef\.current\) return/);
-  assert.match(source, /mobileSearchOpenRef\.current = true/);
-  assert.match(source, /mobileSearchOpenRef\.current = false/);
-  assert.match(source, /requestAnimationFrame\(\(\) => \{[\s\S]*mobileCompactHeaderUpdateRef\.current\?\.\(\)/);
+test("mobile Results navbar is stable and has no sentinel-driven replacement", () => {
+  assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.doesNotMatch(source, /renderMobileCompactResultsHeader|mobileCompactHeaderVisible/);
+  assert.doesNotMatch(source, /mobileSearchSummarySentinelRef|mobileCompactHeaderUpdateRef/);
 });
 
 test("results pagination preserves the searched departure date and its blue selected state", () => {

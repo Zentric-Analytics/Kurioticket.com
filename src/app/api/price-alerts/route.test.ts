@@ -68,8 +68,11 @@ test("flight price alert schema hardens canonical creation payload", () => {
 test("automatic Flight alerts require and preserve a current baseline while TARGET stays compatible", () => {
   const common = { type: "FLIGHT" as const, origin: "JFK", destination: "LHR", currency: "EUR", query: { tripType: "one-way", origin: "JFK", destination: "LHR", departureDate: "2099-08-10", adults: 1, children: 0, infants: 0, travelers: 1, cabinClass: "economy", currency: "EUR" } };
   const automatic = priceAlertSchema.safeParse({ ...common, mode: "AUTOMATIC", baselinePrice: 612.5 });
-  assert.equal(automatic.success, true);
-  if (automatic.success) assert.equal(automatic.data.baselinePrice, 612.5);
+  assert.ok(automatic.success);
+  assert.equal(automatic.data.type, "FLIGHT");
+  assert.equal(automatic.data.mode, "AUTOMATIC");
+  assert.ok("baselinePrice" in automatic.data);
+  assert.equal(automatic.data.baselinePrice, 612.5);
   assert.equal(priceAlertSchema.safeParse({ ...common, mode: "AUTOMATIC" }).success, false);
   assert.equal(priceAlertSchema.safeParse({ ...common, mode: "TARGET", targetPrice: 500 }).success, true);
   assert.equal(priceAlertSchema.safeParse({ ...common, mode: "TARGET" }).success, false);
