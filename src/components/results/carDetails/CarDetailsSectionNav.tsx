@@ -59,7 +59,7 @@ export function CarDetailsSectionNav({
             tabIndex={selected ? 0 : -1}
             onClick={() => onTabChange(tab.id)}
             onKeyDown={(event) => handleKeyDown(event, index)}
-            className={`focus-ring relative inline-flex min-h-12 min-w-0 items-center justify-center whitespace-nowrap px-0.5 text-[11px] font-semibold transition-colors min-[390px]:text-[12px] lg:w-auto lg:flex-1 lg:px-2 lg:text-sm lg:font-bold ${tab.id === "compare" ? "w-[32%]" : tab.id === "pickup" ? "w-[43%]" : "w-[25%]"} ${selected ? "text-blue" : "text-slate-600 hover:text-slate-950"}`}
+            className={`focus-ring relative inline-flex min-h-12 min-w-0 items-center justify-center whitespace-nowrap px-0.5 text-[12px] font-semibold leading-[18px] transition-colors min-[390px]:text-[13px] lg:w-auto lg:flex-1 lg:px-2 lg:text-sm lg:font-bold lg:leading-normal ${tab.id === "compare" ? "w-[32%]" : tab.id === "pickup" ? "w-[43%]" : "w-[25%]"} ${selected ? "text-blue" : "text-slate-600 hover:text-slate-950"}`}
           >
             {tab.id === "compare" && labels.mobileCompare ? (
               <>
