@@ -144,6 +144,22 @@ test("Compare deals renders compact selectable real-price cards and leaves total
     assert.ok(style("comparePrice").includes(contract), contract);
 });
 
+test("web mobile Compare deals uses the same compact real-offer contract as native", () => {
+  assert.match(web, /getComparisonCarOffers\(car\.offers\)/);
+  assert.match(web, /role="radiogroup"/);
+  assert.match(web, /role="radio"/);
+  assert.match(web, /aria-checked=\{selected\}/);
+  assert.match(web, /onClick=\{\(\) => onSelectOffer\(offer\.id\)\}/);
+  assert.match(web, /width=\{108\}/);
+  assert.match(web, /height=\{24\}/);
+  assert.match(web, /size-4 shrink-0/);
+  assert.match(web, /size-1\.5 rounded-full bg-\[#075EE8\]/);
+  assert.match(web, /text-\[10\.5px\][^"]*leading-\[15px\]/);
+  assert.match(web, /text-\[19px\][^"]*leading-\[22px\]/);
+  assert.match(web, /space-y-2\.5/);
+  assert.doesNotMatch(web, /Math\.random|pricePerDay\s*[+*\-]\s*\d/);
+});
+
 test("Compare deals keeps the full unlimited-mile copy used elsewhere", () => {
   assert.match(native, /<Spec Icon=\{Gauge\} text=\{nativeCarMileageLabel\(result\)\}/);
   assert.match(native, /const compareMileageLabel=result\.mileagePolicy==="unlimited"\?"Unlimited mileage":nativeCarMileageLabel\(result\)/);
