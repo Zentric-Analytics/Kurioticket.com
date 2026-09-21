@@ -33,7 +33,6 @@ import {
   Heart,
   MapPin,
   Minus,
-  Pencil,
   SquarePen,
   Users,
   UserRound,
@@ -6631,9 +6630,35 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     );
   }
 
+  function renderMobileRouteSummaryCard(variant: "normal" | "sticky") {
+    return (
+      <button
+        type="button"
+        data-flight-mobile-summary-card={variant}
+        aria-label={t("editFlightSearch")}
+        onClick={(event) => openMobileSearchDrawer(event.currentTarget, getOverlayActivationModality(event))}
+        className="group relative z-10 flex h-16 min-w-0 w-full touch-manipulation items-center justify-between gap-3 overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-0 text-start shadow-[0_6px_18px_-16px_rgba(15,23,42,0.32)] transition [-webkit-tap-highlight-color:transparent] hover:border-[#C6D2E0] hover:bg-white hover:shadow-[0_8px_20px_-16px_rgba(15,23,42,0.36)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+      >
+        <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
+          <span className="block truncate text-[14px] font-bold leading-[18px] tracking-[-0.01em] text-[#142033]">
+            {mobileRouteSummary}
+          </span>
+          <span className="mt-[3px] block truncate text-[10.5px] font-medium leading-[14px] text-slate-600">
+            {mobileTripTypeSummary} · {mobileDateSummary} ·{" "}
+            {mobileTravelerSummary} · {mobileCabinClassSummary}
+          </span>
+        </span>
+        <span
+          aria-hidden="true"
+          className="-my-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100"
+        >
+          <SquarePen size={16} strokeWidth={2.2} />
+        </span>
+      </button>
+    );
+  }
+
   function renderMobileCompactResultsHeader() {
-    const routeLabel = `${mobileOriginSummary} ⇄ ${mobileDestinationSummary}`;
-    const modifySearchLabel = `Modify flight search from ${mobileOriginSummary} to ${mobileDestinationSummary}`;
 
     return (
       <header
@@ -6648,56 +6673,19 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         inert={mobileSearchOpen ? true : undefined}
         aria-hidden={!mobileCompactHeaderVisible || mobileSearchOpen}
       >
-        <div className="mx-auto grid h-12 w-full max-w-3xl grid-cols-[44px_minmax(0,1fr)_82px] items-center gap-2">
+        <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-2">
           <button
             type="button"
             aria-label="Back to flights"
             onClick={() => router.push("/flights")}
-            className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+            className="focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </button>
 
-          <button
-            type="button"
-            aria-label={modifySearchLabel}
-            onClick={(event) => openMobileSearchDrawer(event.currentTarget, getOverlayActivationModality(event))}
-            className="focus-ring flex min-w-0 flex-col items-center justify-center rounded-xl px-2 py-1 text-center transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-          >
-            <span
-              className="block max-w-full truncate text-[15px] font-extrabold leading-5 tracking-[-0.015em] text-slate-950"
-              dir="ltr"
-            >
-              {routeLabel}
-            </span>
-            <span className="mt-0.5 inline-flex items-center justify-center gap-1 text-[11px] font-semibold leading-4 text-slate-500">
-              <span>Modify search</span>
-              <Pencil
-                data-flight-compact-edit-icon
-                className="h-3 w-3 shrink-0 text-[#536B92]"
-                strokeWidth={2}
-                aria-hidden="true"
-              />
-            </span>
-          </button>
-
-          <button
-            type="button"
-            aria-label={
-              activeFilterCount > 0
-                ? `Open filters, ${activeFilterCount} active`
-                : "Open filters"
-            }
-            onClick={(event) => openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))}
-            className="focus-ring inline-flex h-11 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-[13px] font-bold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-          >
-            <SlidersHorizontal
-              className="h-4 w-4 shrink-0 text-[#004BB8]"
-              strokeWidth={2.2}
-              aria-hidden="true"
-            />
-            <span className="truncate">Filter</span>
-          </button>
+          <div className="min-w-0 flex-1">
+            {renderMobileRouteSummaryCard("sticky")}
+          </div>
         </div>
       </header>
     );
@@ -6706,27 +6694,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   function renderMobileControlsRow() {
     return (
       <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center">
-        <button
-          type="button"
-          onClick={(event) => openMobileSearchDrawer(event.currentTarget, getOverlayActivationModality(event))}
-          className="group relative z-10 flex h-16 min-w-0 w-full max-w-[30rem] touch-manipulation items-center justify-between gap-3 overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-0 text-start shadow-[0_6px_18px_-16px_rgba(15,23,42,0.32)] transition [-webkit-tap-highlight-color:transparent] hover:border-[#C6D2E0] hover:bg-white hover:shadow-[0_8px_20px_-16px_rgba(15,23,42,0.36)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-        >
-          <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
-            <span className="block truncate text-[16px] font-bold leading-5 tracking-[-0.01em] text-[#142033]">
-              {mobileRouteSummary}
-            </span>
-            <span className="mt-[3px] block truncate text-[12.5px] font-semibold leading-[17px] text-slate-600">
-              {mobileTripTypeSummary} · {mobileDateSummary} ·{" "}
-              {mobileTravelerSummary} · {mobileCabinClassSummary}
-            </span>
-          </span>
-          <span
-            aria-hidden="true"
-            className="-my-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100"
-          >
-            <SquarePen size={16} strokeWidth={2.2} />
-          </span>
-        </button>
+        <div className="w-full max-w-[30rem]">
+          {renderMobileRouteSummaryCard("normal")}
+        </div>
       </div>
     );
   }
