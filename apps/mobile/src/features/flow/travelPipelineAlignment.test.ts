@@ -13,7 +13,7 @@ test("Android and website use the shared travel search pipeline", () => {
   assert.match(mobileApi, /"\/api\/hotels\/search"/);
   assert.match(mobileApi, /"\/api\/cars\/search"/);
   assert.match(desktopFlights, /fetch\("\/api\/flights\/search"/);
-  assert.match(desktopHotels, /fetch\(providerMode \? "\/api\/hotels\/search\?provider=kayak-sandbox" : "\/api\/hotels\/search"/);
+  assert.match(desktopHotels, /fetch\("\/api\/hotels\/search"/);
   assert.match(desktopCars, /searchCars\(values, \{ kayak:/);
 });
 
