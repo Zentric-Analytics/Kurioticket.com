@@ -2,8 +2,6 @@ import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { redirect, notFound } from "next/navigation";
 import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
-import { adaptKayakHotelSearch } from "@/services/travel/kayakSearchAdapter";
-import { KayakSandboxResults } from "@/components/results/KayakSandboxResults";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { HotelResultsClient } from "@/components/results/HotelResultsClient";
@@ -12,9 +10,16 @@ import { getTranslations } from "@/lib/i18n";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
 import { resolveHotelResultsRoute } from "@/lib/hotels/hotelResultsRoute";
 
-export async function generateMetadata({ searchParams }: { searchParams: HotelResultsSearchParams }) {
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: HotelResultsSearchParams;
+}) {
   if (first((await searchParams).provider) === "kayak-sandbox") {
-    return { title: "KAYAK sandbox hotel results", robots: { index: false, follow: false } };
+    return {
+      title: "KAYAK sandbox hotel results",
+      robots: { index: false, follow: false },
+    };
   }
   const cookieStore = await cookies();
   const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
@@ -25,20 +30,37 @@ export async function generateMetadata({ searchParams }: { searchParams: HotelRe
   };
 }
 
-type HotelResultsSearchParams = Promise<Record<string, string | string[] | undefined>>;
-const first = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
+type HotelResultsSearchParams = Promise<
+  Record<string, string | string[] | undefined>
+>;
+const first = (value: string | string[] | undefined) =>
+  Array.isArray(value) ? value[0] : value;
 
-export default async function HotelResultsPage({ searchParams }: { searchParams: HotelResultsSearchParams }) {
+export default async function HotelResultsPage({
+  searchParams,
+}: {
+  searchParams: HotelResultsSearchParams;
+}) {
   const query = await searchParams;
-  if (first(query.provider) === "kayak-sandbox") {
-    if (!isKayakSandboxEnabled()) notFound();
-    const adapted = adaptKayakHotelSearch(Object.fromEntries(Object.entries(query).map(([key, value]) => [key, first(value)])));
-    return <><AppHeader />{adapted.supported
-      ? <KayakSandboxResults key={JSON.stringify(adapted.search)} search={adapted.search} />
-      : <main className="page-shell py-6"><h1>KAYAK sandbox search unavailable</h1><p>{adapted.reason}</p><a href="/sandbox/kayak">Edit sandbox search</a></main>}</>;
-  }
-  const route = resolveHotelResultsRoute({ destination: first(query.destination), destinationId: first(query.destinationId), checkIn: first(query.checkIn), checkOut: first(query.checkOut), guests: first(query.guests), rooms: first(query.rooms), sort: first(query.sort) });
+  const sandboxProviderMode = first(query.provider) === "kayak-sandbox";
+  if (sandboxProviderMode && !isKayakSandboxEnabled()) notFound();
+
+  const destination =
+    first(query.destination) ||
+    (sandboxProviderMode && first(query.destinationId)
+      ? "KAYAK sandbox destination"
+      : undefined);
+  const route = resolveHotelResultsRoute({
+    destination,
+    destinationId: first(query.destinationId),
+    checkIn: first(query.checkIn),
+    checkOut: first(query.checkOut),
+    guests: first(query.guests),
+    rooms: first(query.rooms),
+    sort: first(query.sort),
+  });
   if (!route.resultsReady) redirect(route.recoveryHref);
+
   return (
     <>
       <AppHeader
