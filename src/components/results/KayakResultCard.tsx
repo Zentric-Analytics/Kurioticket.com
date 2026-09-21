@@ -14,7 +14,7 @@ export function KayakResultCard({offer,vertical,criteria}:{offer:SandboxOffer;ve
   const detailsHref=`/sandbox/kayak/details?id=${encodeURIComponent(offer.id)}`;
   const preserve=()=>saveKayakOffer(sessionStorage,{offer,vertical,criteria});
   return <div className="min-w-0" onClickCapture={preserve}>
-    {flight ? <FlightCard flight={flight} detailsHref={detailsHref} actionLabel="View flight" providerLabel="KAYAK sandbox · Not bookable" />
+    {flight ? <FlightCard flight={flight} detailsHref={detailsHref} actionLabel="View flight" providerLabel="KAYAK sandbox · Simulated · Not bookable" />
       : vertical === "hotels" ? <HotelCard hotel={kayakHotelCardModel(offer,days)} detailsHref={detailsHref} allowSave={false} actionLabel="View hotel" unavailableActionLabel="View hotel" providerLabel="KAYAK sandbox · Not bookable" />
       : vertical === "cars" ? <CarResultCard car={kayakCarCardModel(offer,days,criteria.pickupLocation || "Not supplied")}
         detailsHref={detailsHref} actionLabel="View car" providerLabel="KAYAK sandbox · Not bookable" search={{pickupLocation:criteria.pickupLocation||"",dropoffLocation:criteria.dropoffLocation||criteria.pickupLocation||"",pickupDate:start,pickupTime:criteria.pickupTime||"",dropoffDate:end,dropoffTime:criteria.dropoffTime||"",driverAge:criteria.driverAge||""}} />

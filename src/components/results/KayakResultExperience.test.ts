@@ -8,11 +8,11 @@ const offer = {id:"safe-offer",title:"Test offer",description:"Supplied by KAYAK
 
 test("normal KAYAK results use regular cards with compact labels and details actions", () => {
   const source = readFileSync("src/components/results/KayakResultCard.tsx", "utf8");
-  assert.match(source, /providerLabel="KAYAK sandbox · Not bookable"/);
+  assert.match(source, /providerLabel="KAYAK sandbox · Simulated · Not bookable"/);
   assert.match(source, /actionLabel="View flight"/);
   assert.match(source, /actionLabel="View hotel"/);
   assert.match(source, /actionLabel="View car"/);
-  assert.doesNotMatch(source, /Sandbox only|Simulated/);
+  assert.doesNotMatch(source, /Sandbox only/);
   assert.doesNotMatch(source, /Open KAYAK test page/);
 });
 

@@ -21,6 +21,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn, formatItineraryShortDate, formatTime } from "@/lib/utils";
 import { formatFlightCardPrice } from "@/components/results/flightCardPrice";
+import { MobileFlightCard } from "@/components/results/MobileFlightCard";
 
 type DetailItem = {
   label: string;
@@ -89,10 +90,18 @@ export function FlightCard({
   const resolvedActionLabel = actionLabel ?? t("viewFlight");
 
   return (
+    <>
+      <MobileFlightCard
+        flight={flight}
+        resultBadge={resultBadge}
+        detailsHref={resolvedDetailsHref}
+        providerLabel={providerLabel}
+        onAction={onAction}
+      />
     <Card
       data-flight-result-card
       className={cn(
-        "relative w-full overflow-hidden rounded-[14px] border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.5)] transition duration-200 hover:-translate-y-0.5 hover:border-[#BFCEDF] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.4)] lg:rounded-2xl lg:border-[#CDD8E5] lg:bg-[#FEFFFF]",
+        "relative hidden w-full overflow-hidden rounded-[14px] border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.5)] transition duration-200 hover:-translate-y-0.5 hover:border-[#BFCEDF] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.4)] sm:block lg:rounded-2xl lg:border-[#CDD8E5] lg:bg-[#FEFFFF]",
         isAccented && "ring-1 ring-slate-950/[0.03]",
       )}
       onClick={(event) => {
@@ -158,6 +167,7 @@ export function FlightCard({
         </div>
       </div>
     </Card>
+    </>
   );
 }
 
