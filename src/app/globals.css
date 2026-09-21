@@ -1232,6 +1232,22 @@ textarea {
   letter-spacing: -0.045em;
 }
 
+[data-nearby-fare-presentation="mobile"] .flight-fare-strip-price {
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
+  font-weight: 600;
+}
+
+[data-nearby-fare-presentation="mobile"] .flight-fare-strip-price[data-price-size="long"] {
+  font-size: 0.625rem;
+  letter-spacing: -0.025em;
+}
+
+[data-nearby-fare-presentation="mobile"] .flight-fare-strip-price[data-price-size="extra-long"] {
+  font-size: 0.5625rem;
+  letter-spacing: -0.045em;
+}
+
 .flight-card-price-frame {
   width: 100%;
   max-width: 100%;
