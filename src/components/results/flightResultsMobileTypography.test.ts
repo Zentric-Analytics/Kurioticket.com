@@ -13,6 +13,7 @@ test("mobile Flight Results uses the native compact hierarchy without changing d
   assert.match(mobile, /flight-card-flight-number[\s\S]*?font-size: 0\.6875rem/);
   assert.match(mobile, /flight-card-time[\s\S]*?font-size: 0\.875rem;[\s\S]*?font-weight: 800/);
   assert.match(mobile, /flight-card-price[\s\S]*?font-size: 1\.1875rem;[\s\S]*?white-space: nowrap/);
+  assert.match(css, /@media \(max-width: 1023px\)[\s\S]*?flight-card-price-value\.flight-card-price\[data-price-size="normal"\][\s\S]*?font-size: 1\.1875rem/);
   assert.match(mobile, /flight-card-view-button[\s\S]*?min-height: 44px/);
   assert.match(desktop, /\.flight-card-time \{[\s\S]*?font-size: 1\.125rem/);
 });
