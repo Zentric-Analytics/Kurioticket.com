@@ -18,6 +18,7 @@ export function KayakSandboxSearch({ initialVertical = "flights" }: { initialVer
   const active = useRef(false);
   const [origin, setOrigin] = useState("BOS");
   const [destination, setDestination] = useState(initialVertical === "hotels" ? "" : "JFK");
+  const [destinationLabel, setDestinationLabel] = useState("");
   function openResults(form: FormData) {
     if (form.get("empty") === "on") {
       setMessage("Use the preview search button for the forced no-results test.");
@@ -29,7 +30,7 @@ export function KayakSandboxSearch({ initialVertical = "flights" }: { initialVer
     const values = vertical === "flights"
       ? { origin, destination, departureDate: start, returnDate: end, adults, travelers: adults, children: "0", infants: "0", cabinClass: "economy", tripType: end ? "round-trip" : "one-way" }
       : vertical === "hotels"
-        ? { destinationId: destination, checkIn: start, checkOut: end, guests: adults, rooms: "1" }
+        ? { destinationId: destination, destination: destinationLabel || "KAYAK sandbox destination", checkIn: start, checkOut: end, guests: adults, rooms: "1" }
         : { pickupLocation: origin, dropoffLocation: origin, pickupDate: start, dropoffDate: end, pickupTime: "12:00", dropoffTime: "12:00" };
     const query = new URLSearchParams({ provider: "kayak-sandbox" });
     for (const [key, value] of Object.entries(values)) if (value !== undefined) query.set(key, value);
@@ -119,6 +120,7 @@ export function KayakSandboxSearch({ initialVertical = "flights" }: { initialVer
             const value = event.target.value as KayakVertical;
             setVertical(value);
             setDestination(value === "hotels" ? "" : "JFK");
+            setDestinationLabel("");
             setOffers([]);
             setPlaces([]);
             setMessage("");
@@ -159,8 +161,10 @@ export function KayakSandboxSearch({ initialVertical = "flights" }: { initialVer
               className="rounded border px-3 py-2 text-left"
               disabled={busy}
               onClick={() => {
-                if (vertical === "hotels") setDestination(place.value);
-                else setOrigin(place.value);
+                if (vertical === "hotels") {
+                  setDestination(place.value);
+                  setDestinationLabel(place.label);
+                } else setOrigin(place.value);
               }}
             >
               {place.label} — use as{" "}
@@ -209,7 +213,7 @@ export function KayakSandboxSearch({ initialVertical = "flights" }: { initialVer
             <input
               className={input}
               aria-label="Destination"
-              value={destination}
+              value={vertical === "hotels" ? destinationLabel : destination}
               onChange={(event) =>
                 setDestination(event.target.value.toUpperCase())
               }

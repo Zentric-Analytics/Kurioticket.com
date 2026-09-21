@@ -818,6 +818,11 @@ export function HotelSearchBar({
       params.set("sort", initialSort);
     }
 
+    const providerMode = searchParams.get("provider");
+    if (providerMode === "kayak-sandbox") {
+      params.set("provider", providerMode);
+    }
+
     const nextUrl = `/hotels/results?${params.toString()}`;
 
     setRooms(String(normalizedRooms));

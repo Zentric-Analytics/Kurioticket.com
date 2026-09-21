@@ -36,11 +36,16 @@ export default async function HotelDetailsPage({
 }: HotelDetailsPageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const searchContext = {
+    destinationId: getFirstSearchParam(query.destinationId),
     destination: getFirstSearchParam(query.destination),
     checkIn: getFirstSearchParam(query.checkIn),
     checkOut: getFirstSearchParam(query.checkOut),
     guests: getFirstSearchParam(query.guests),
     rooms: getFirstSearchParam(query.rooms),
+    provider:
+      getFirstSearchParam(query.provider) === "kayak-sandbox"
+        ? "kayak-sandbox"
+        : undefined,
   } satisfies HotelDetailsSearchContext;
 
   return (

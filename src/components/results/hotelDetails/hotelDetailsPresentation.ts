@@ -3,11 +3,13 @@ import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import type { PublicHotelResult } from "@/lib/types";
 
 export type HotelDetailsSearchContext = {
+  destinationId?: string;
   destination?: string;
   checkIn?: string;
   checkOut?: string;
   guests?: string;
   rooms?: string;
+  provider?: "kayak-sandbox";
 };
 
 export type HotelDetailsProviderOfferAction =
@@ -98,7 +100,19 @@ export function buildHotelDetailsResultsHref(searchContext?: HotelDetailsSearchC
   const guestCount = parseHotelDetailsSearchCount(searchContext?.guests, 1, 12);
   const roomCount = parseHotelDetailsSearchCount(searchContext?.rooms, 1, 6);
   if (!destination || destination.length > 120 || checkInDate === null || checkOutDate === null || checkOutDate.getTime() <= checkInDate.getTime() || guestCount === null || roomCount === null) return destination ? `/hotels?${new URLSearchParams({ destination }).toString()}` : "/hotels";
-  const params = new URLSearchParams({ destination, checkIn: searchContext?.checkIn || "", checkOut: searchContext?.checkOut || "", guests: String(guestCount), rooms: String(roomCount) });
+  const params = new URLSearchParams({
+    ...(searchContext?.destinationId
+      ? { destinationId: searchContext.destinationId }
+      : {}),
+    destination,
+    checkIn: searchContext?.checkIn || "",
+    checkOut: searchContext?.checkOut || "",
+    guests: String(guestCount),
+    rooms: String(roomCount),
+    ...(searchContext?.provider === "kayak-sandbox"
+      ? { provider: "kayak-sandbox" }
+      : {}),
+  });
   return `/hotels/results?${params.toString()}`;
 }
 

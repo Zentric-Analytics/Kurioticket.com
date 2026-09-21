@@ -902,11 +902,13 @@ export function HotelDetailsClient({
                 reviewSource={hotel.reviewSource}
                 relatedHotels={relatedHotels}
                 relatedSearchContext={{
+                  destinationId: searchContext?.destinationId,
                   destination: propertyDetails?.city || searchContext?.destination,
                   checkIn: requestCheckIn,
                   checkOut: requestCheckOut,
                   guests: requestGuests,
                   rooms: requestRooms,
+                  provider: searchContext?.provider,
                 }}
                 amenityItems={amenityItems}
                 isSaved={isSaved}
