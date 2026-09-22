@@ -84,6 +84,50 @@ test("Flight Results keeps the Back leading action in both loading and ready App
   }
 });
 
+test("mobile Flight Results uses the Cars-style scroll handoff header", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const appHeader = await readFile(
+    new URL("../layout/AppHeader.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(appHeader, /mobileResultsSticky\?: boolean/);
+  assert.match(appHeader, /mobileResultsSticky = true/);
+  assert.match(
+    appHeader,
+    /mobileResultsSearch && mobileResultsSticky && "max-sm:sticky max-sm:top-0 max-sm:z-\[950\]"/,
+  );
+
+  assert.match(
+    source,
+    /const \[mobileCompactHeaderVisible, setMobileCompactHeaderVisible\] = useState\(false\)/,
+  );
+  assert.match(
+    source,
+    /const mobileSearchSummarySentinelRef = useRef<HTMLDivElement \| null>\(null\)/,
+  );
+  assert.match(source, /rect\.bottom < 8 && window\.scrollY > 96/);
+  assert.match(source, /rootMargin: "-8px 0px 0px 0px"/);
+  assert.match(source, /function renderMobileCompactResultsHeader\(\)/);
+  assert.match(source, /data-flight-results-compact-header/);
+  assert.match(
+    source,
+    /grid-cols-\[44px_minmax\(0,1fr\)_82px\]/,
+  );
+  assert.match(source, /\{mobileRouteSummary\}/);
+  assert.match(source, /t\("deals\.results\.modifySearch"\)/);
+  assert.match(source, /data-flight-compact-edit-icon/);
+  assert.match(source, /openMobileSearchDrawer\(event\.currentTarget/);
+  assert.match(source, /openMobileFiltersDrawer\(event\.currentTarget/);
+  assert.match(source, /<span className="truncate">\{t\("filters"\)\}<\/span>/);
+  assert.match(source, /mobileResultsSticky=\{false\}/);
+  assert.match(source, /ref=\{mobileSearchSummarySentinelRef\}/);
+  assert.match(source, /\{renderMobileCompactResultsHeader\(\)\}/);
+});
+
 test("mobile filter sheet has one contextual reset and a result-count action", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
