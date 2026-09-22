@@ -21,12 +21,13 @@ test("final mobile Flight Results order and controls remain intact", () => {
   for (const trigger of ['renderTrigger("sort", activeSortOption.label)', 'renderTrigger("airlines", "Airlines")', 'renderTrigger("stops", "Stops")', 'renderTrigger("airports", "Airports")']) assert.ok(results.includes(trigger));
 });
 
-test("mobile list omits web-only page extras while desktop keeps them", () => {
+test("mobile list stays continuous while restoring the shared website footer controls", () => {
   assert.match(results, /data-mobile-continuous-flight-list/);
   assert.match(results, /sortedResults\.map\(\(flight, index\)/);
-  assert.doesNotMatch(results, /aria-label="Back to top"/);
+  assert.match(results, /aria-label="Back to top"/);
   assert.match(results, /className=\{cn\("hidden sm:block"[\s\S]*<FlightResultsPagination/);
-  assert.match(results, /<div className="hidden sm:block"><Footer variant="brand-legal-only" \/><\/div>/);
+  assert.match(results, /<Footer variant="brand-legal-only" \/>/);
+  assert.doesNotMatch(results, /<div className="hidden sm:block"><Footer variant="brand-legal-only" \/><\/div>/);
 });
 
 test("mobile and desktop commercial actions stay isolated", () => {
