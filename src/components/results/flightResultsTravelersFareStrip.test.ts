@@ -196,10 +196,13 @@ test("nearby fare DOM remains outside the paginated card subtree", () => {
   assert.doesNotMatch(source.slice(rail, paginatedCards), /paginationPendingPage/);
 });
 
-test("mobile Results navbar is stable and has no sentinel-driven replacement", () => {
+test("mobile Results navbar hands off to the Cars-style compact header after scroll", () => {
   assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
-  assert.doesNotMatch(source, /renderMobileCompactResultsHeader|mobileCompactHeaderVisible/);
-  assert.doesNotMatch(source, /mobileSearchSummarySentinelRef|mobileCompactHeaderUpdateRef/);
+  assert.match(source, /mobileResultsSticky=\{false\}/);
+  assert.match(source, /renderMobileCompactResultsHeader/);
+  assert.match(source, /mobileCompactHeaderVisible/);
+  assert.match(source, /mobileSearchSummarySentinelRef/);
+  assert.match(source, /rect\.bottom < 8 && window\.scrollY > 96/);
 });
 
 test("results pagination preserves the searched departure date and its blue selected state", () => {
