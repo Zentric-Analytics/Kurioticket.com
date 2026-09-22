@@ -7118,7 +7118,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 inert={mobileSearchOpen ? true : undefined}
                 aria-hidden={mobileSearchOpen ? true : undefined}
                 className={cn(
-                  "sticky top-[calc(72px+env(safe-area-inset-top))] z-30 -mx-[14px] bg-[#F5F7FB]/95 px-0 py-1 backdrop-blur sm:hidden",
+                  "-mx-[14px] bg-[#F5F7FB] px-0 py-1 sm:hidden",
                   mobileSearchOpen && "pointer-events-none",
                 )}
                 aria-label="Flight result filters"
