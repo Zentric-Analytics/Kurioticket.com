@@ -63,8 +63,9 @@ test("mobile list is continuous while desktop retains pagination", () => {
   assert.match(results, /sortedResults\.map\(\(flight, index\)/);
   assert.match(results, /className=\{cn\("hidden sm:block"[\s\S]*<FlightResultsPagination/);
   assert.match(results, /data-flight-results-transition-cover[\s\S]*hidden[\s\S]*sm:block/);
-  assert.doesNotMatch(results, /aria-label="Back to top"/);
-  assert.match(results, /<div className="hidden sm:block"><Footer variant="brand-legal-only" \/><\/div>/);
+  assert.match(results, /aria-label="Back to top"/);
+  assert.match(results, /<Footer variant="brand-legal-only" \/>/);
+  assert.doesNotMatch(results, /<div className="hidden sm:block"><Footer variant="brand-legal-only" \/><\/div>/);
 });
 
 test("Batch 1 and Batch 2 surfaces remain before the card list", () => {
