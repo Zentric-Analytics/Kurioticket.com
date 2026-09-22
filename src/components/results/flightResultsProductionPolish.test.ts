@@ -62,6 +62,28 @@ test("mobile Flight Results restores the brand footer and Hotel-style Back to to
   assert.doesNotMatch(source, /<div className="hidden sm:block"><Footer variant="brand-legal-only" \/><\/div>/);
 });
 
+test("Flight Results keeps the Back leading action in both loading and ready AppHeader paths", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+
+  const standaloneHeaders = Array.from(
+    source.matchAll(
+      /<AppHeader[^>]*mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}[^>]*\/>/g,
+    ),
+    (match) => match[0],
+  );
+
+  assert.equal(standaloneHeaders.length, 2);
+  for (const header of standaloneHeaders) {
+    assert.match(
+      header,
+      /mobileResultsLeadingAction=\{renderMobileResultsBackButton\(\)\}/,
+    );
+  }
+});
+
 test("mobile filter sheet has one contextual reset and a result-count action", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),

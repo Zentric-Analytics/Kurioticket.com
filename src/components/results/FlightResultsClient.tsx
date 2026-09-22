@@ -6576,7 +6576,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   return (
     <>
-    <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs mobileResultsSearch={renderMobileRouteSummaryCard()} />
+    <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs mobileResultsLeadingAction={renderMobileResultsBackButton()} mobileResultsSearch={renderMobileRouteSummaryCard()} />
     <main data-flight-results-main className="flex-1 bg-[#F5F7FB] pb-8 sm:bg-[#F3F6FA]">
       {paginationPendingPage !== null ? (
         <div
