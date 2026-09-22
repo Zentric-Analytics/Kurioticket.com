@@ -2915,10 +2915,15 @@ export function CarsResultsExperience({
       {quickFilterGroupId && (quickFilterGroupId === "sort" || activeQuickFilterGroup) && typeof document !== "undefined" ? createPortal(
         <div
           data-cars-quick-sheet-backdrop
-          className={cn("cars-native-quick-backdrop fixed inset-0 z-[10010] flex items-end bg-[rgba(15,23,42,0.35)] lg:hidden", quickSheetClosing && "cars-native-quick-backdrop--closing")}
+          className="fixed inset-0 z-[10010] flex items-end lg:hidden"
           role="presentation"
           onMouseDown={closeQuickFilter}
         >
+          <div
+            aria-hidden="true"
+            data-cars-quick-sheet-scrim
+            className={cn("cars-native-quick-scrim pointer-events-none absolute inset-0 bg-[rgba(15,23,42,0.35)]", quickSheetClosing && "cars-native-quick-scrim--closing")}
+          />
           <section
             data-cars-quick-sheet
             ref={quickFiltersDialogRef}
@@ -2927,7 +2932,7 @@ export function CarsResultsExperience({
             aria-modal="true"
             aria-labelledby={`cars-quick-${quickFilterGroupId}`}
             onMouseDown={(event) => event.stopPropagation()}
-            className={cn("cars-native-quick-sheet flex min-h-[240px] max-h-[min(76dvh,620px)] w-full flex-col overflow-hidden rounded-t-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]", quickSheetClosing && "cars-native-quick-sheet--closing")}
+            className={cn("cars-native-quick-sheet relative z-10 flex min-h-[240px] max-h-[min(76dvh,620px)] w-full flex-col overflow-hidden rounded-t-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]", quickSheetClosing && "cars-native-quick-sheet--closing")}
           >
             <header className="grid min-h-[76px] shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-center bg-[#F2F4F8] px-[10px]">
               <span aria-hidden="true" className="h-11 w-11" />

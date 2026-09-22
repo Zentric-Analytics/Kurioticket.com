@@ -45,8 +45,9 @@ test("Cars mobile filter sections remain expanded with native row and checkbox g
 test("Cars shortcuts keep the mobile-web attached bottom-sheet presentation with native internal polishing", () => {
   const sheets = cars.slice(cars.indexOf("data-cars-quick-sheet-backdrop"), cars.indexOf("!guidedPlanning && showBackToTop"));
   for (const contract of [
-    /fixed inset-0.*items-end.*bg-\[rgba\(15,23,42,0\.35\)\]/,
-    /flex min-h-\[240px\].*max-h-\[min\(76dvh,620px\)\].*w-full.*rounded-t-\[24px\].*bg-\[#F2F4F8\]/,
+    /fixed inset-0.*items-end.*lg:hidden/,
+    /cars-native-quick-scrim.*absolute inset-0.*bg-\[rgba\(15,23,42,0\.35\)\]/,
+    /cars-native-quick-sheet relative z-10.*flex min-h-\[240px\].*max-h-\[min\(76dvh,620px\)\].*w-full.*rounded-t-\[24px\].*bg-\[#F2F4F8\]/,
     /grid min-h-\[76px\].*grid-cols-\[44px_minmax\(0,1fr\)_44px\].*bg-\[#F2F4F8\].*px-\[10px\]/,
     /text-center text-\[18px\] font-bold leading-\[23px\]/,
     /<X className="h-\[22px\] w-\[22px\]"/,
@@ -62,16 +63,25 @@ test("Cars shortcuts keep the mobile-web attached bottom-sheet presentation with
   ]) assert.match(sheets, contract);
   assert.doesNotMatch(sheets, /\bmx-3\b|\bmb-3\b|w-\[calc\(100%-24px\)\]|rounded-\[24px\]/);
   assert.doesNotMatch(sheets, /backdrop-blur|bg-\[#F6F8FB\]|bg-white|Choose one option|selected<\/p>/);
-  assert.match(styles, /cars-native-quick-backdrop-in[\s\S]*?opacity: 0[\s\S]*?opacity: 1/);
+  assert.match(styles, /cars-native-quick-scrim-in[\s\S]*?opacity: 0[\s\S]*?opacity: 1/);
+  assert.match(styles, /cars-native-quick-scrim-out[\s\S]*?opacity: 1[\s\S]*?opacity: 0/);
   assert.match(styles, /cars-native-quick-sheet-in[\s\S]*?28px[\s\S]*?translate3d\(0, 0, 0\)/);
-  assert.match(styles, /cars-native-quick-backdrop-in 160ms/);
+  assert.match(styles, /cars-native-quick-scrim-in 160ms/);
+  assert.match(styles, /cars-native-quick-scrim-out 160ms/);
   assert.match(styles, /cars-native-quick-sheet-in 220ms/);
+  assert.match(styles, /cars-native-quick-sheet-out 220ms/);
+  const sheetKeyframes = styles.slice(styles.indexOf("@keyframes cars-native-quick-sheet-in"), styles.indexOf(".cars-native-quick-scrim"));
+  assert.doesNotMatch(sheetKeyframes, /opacity\s*:/);
   assert.match(styles, /prefers-reduced-motion: reduce/);
+  assert.match(styles, /prefers-reduced-motion: reduce[\s\S]*?\.cars-native-quick-scrim,[\s\S]*?\.cars-native-quick-sheet,[\s\S]*?\.cars-native-quick-scrim--closing,[\s\S]*?\.cars-native-quick-sheet--closing[\s\S]*?animation: none/);
 });
 
 test("Cars shortcut backdrop and inside-click dismissal boundaries remain explicit", () => {
   assert.equal((cars.match(/data-cars-quick-sheet-backdrop/g) ?? []).length, 1);
-  assert.match(cars, /onMouseDown=\{closeQuickFilter\}/);
+  const wrapperTag = cars.match(/<div\s+data-cars-quick-sheet-backdrop[\s\S]*?onMouseDown=\{closeQuickFilter\}\s*>/)?.[0] ?? "";
+  assert.match(wrapperTag, /className="fixed inset-0 z-\[10010\] flex items-end lg:hidden"/);
+  assert.doesNotMatch(wrapperTag, /cars-native-quick-(?:backdrop|scrim|sheet)|bg-\[rgba|opacity/);
+  assert.match(cars, /data-cars-quick-sheet-scrim[\s\S]{0,250}cars-native-quick-scrim pointer-events-none absolute inset-0 bg-\[rgba\(15,23,42,0\.35\)\][\s\S]{0,150}cars-native-quick-scrim--closing/);
   assert.match(cars, /data-cars-quick-sheet[\s\S]{0,350}onMouseDown=\{\(event\) => event\.stopPropagation\(\)\}/);
   assert.match(cars, /window\.addEventListener\("keydown", handleKeyDown\)/);
   assert.match(cars, /const mobileFiltersOverlayOpen = filtersOpen \|\| quickFilterGroupId !== null/);
@@ -87,7 +97,7 @@ test("every canonical Cars shortcut shares the one stable mobile overlay lock", 
     assert.match(presentation, new RegExp(`"${groupId}"`));
   }
   assert.match(cars, /quickFilterGroupId === "sort" \|\| activeQuickFilterGroup/);
-  assert.equal((cars.match(/data-cars-quick-sheet(?:-backdrop)?/g) ?? []).length, 2);
+  assert.equal((cars.match(/data-cars-quick-sheet(?:-backdrop|-scrim)?/g) ?? []).length, 3);
   assert.equal((cars.match(/acquireMobileResultsScrollLock\(\)/g) ?? []).length, 3);
 });
 
