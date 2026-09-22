@@ -1859,7 +1859,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
               inert={mobileHotelSearchOpen ? true : undefined}
               aria-hidden={mobileHotelSearchOpen ? true : undefined}
               className={cn(
-                "relative z-40 bg-[#F5F7FB] pb-0 pt-0 sm:hidden",
+                "relative z-40 bg-white pb-0 pt-0 sm:hidden",
                 mobileHotelSearchOpen && "pointer-events-none",
               )}
               aria-label={t("editHotelSearch") || "Edit hotel search"}
@@ -2025,7 +2025,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           </nav>
         ) : null}
 
-        <div ref={resultsGridRef} className={cn(guided ? "grid gap-y-5 pb-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8" : "page-shell grid gap-y-5 pb-6 pt-4 sm:pt-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8")}>
+        <div ref={resultsGridRef} className={cn(guided ? "grid gap-y-5 pb-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8" : "page-shell grid gap-y-5 pb-6 pt-4 max-sm:w-[calc(100%-24px)] sm:pt-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8")}>
           <aside ref={desktopFilterSidebarRef} className="relative hidden w-[288px] self-stretch min-[1200px]:block min-[1200px]:justify-self-end">
             <div>
               <HotelFilters layout="desktop" propertyNameQuery={propertyNameQuery} setPropertyNameQuery={updatePropertyNameQuery} t={t} maxPrice={maxPrice} minPrice={minPrice} setMaxPrice={updateMaxPrice} setMinPrice={updateMinPrice} resultMaxPrice={resultMaxPrice} hasPricedResults={hasPricedResults} formatPrice={formatHotelFilterPrice} locale={locale} stayNights={stayNights} selectedRatings={selectedHotelClasses} toggleRating={toggleHotelClass} starRatingCounts={starRatingCounts} options={filterOptions} selectedFilters={selectedFilters} toggleFilter={toggleFilter} activeFilterCount={activeFilterCount} onClear={resetFilters} />
@@ -2174,7 +2174,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                   {!guided ? (
                     <div data-mobile-hotel-results-summary role="group" aria-label={t("hotelResults.summaryAria")} className="flex items-center justify-between gap-2 sm:hidden">
                       <div className="min-w-0">
-                        <h1 tabIndex={-1} className="scroll-mt-20 truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#07133B]">
+                        <h1 tabIndex={-1} className="scroll-mt-20 truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#071A48]">
                         {resultsHeading}
                       </h1>
                       {resultsDisplayRange && totalHotelResultPages > 1 ? (
@@ -2184,8 +2184,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                         </p>
                       ) : null}
                       </div>
-                      <button type="button" aria-label={`Sort hotels: ${currentSortLabel}`} aria-haspopup="dialog" aria-expanded={mobileShortcutMenu === "sort"} onClick={(event) => openMobileShortcutMenu("sort", event.currentTarget)} className="focus-ring inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg py-2 ps-2 text-[13px] font-medium text-[#536B92]">
-                        <span>Sort:</span><span className="font-semibold text-[#07133B]">{currentSortLabel}</span><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                      <button type="button" aria-label={`Sort hotels: ${currentSortLabel}`} aria-haspopup="dialog" aria-expanded={mobileShortcutMenu === "sort"} onClick={(event) => openMobileShortcutMenu("sort", event.currentTarget)} className="focus-ring inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg py-2 ps-2 text-[13px] font-medium text-[#56658E]">
+                        <span>Sort:</span><span className="font-semibold text-[#071A48]">{currentSortLabel}</span><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
                       </button>
                     </div>
                   ) : null}
