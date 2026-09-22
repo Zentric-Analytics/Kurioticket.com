@@ -104,3 +104,12 @@ test("results navbar accepts a custom leading action while preserving the defaul
   assert.match(headerSource, /kurioticket-icon-blue\.svg/);
   assert.match(headerSource, /aria-controls="mobile-menu-drawer"/);
 });
+
+test("results navbar can opt out of sticky behavior for a scroll handoff", () => {
+  assert.match(headerSource, /mobileResultsSticky\?: boolean/);
+  assert.match(headerSource, /mobileResultsSticky = true/);
+  assert.match(
+    headerSource,
+    /mobileResultsSearch && mobileResultsSticky && "max-sm:sticky max-sm:top-0 max-sm:z-\[950\]"/,
+  );
+});
