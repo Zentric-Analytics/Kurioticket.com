@@ -7173,7 +7173,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         })
       }
       className={cn(
-        "fixed right-4 z-[800] flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#004BB8] shadow-md transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:bottom-6 sm:right-6",
+        "fixed right-4 z-[800] flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#004BB8] shadow-md transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:hidden",
         "bottom-[calc(5rem+env(safe-area-inset-bottom))]",
         showBackToTop
           ? "translate-y-0 opacity-100"
