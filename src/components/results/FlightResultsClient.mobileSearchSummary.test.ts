@@ -15,6 +15,23 @@ test("standalone Flight Results owns one AppHeader results navbar", () => {
   assert.match(source, /aria-label="Go back"/);
 });
 
+test("loading and ready Flight Results keep the same Back leading action", () => {
+  const standaloneHeaderCalls = Array.from(
+    source.matchAll(
+      /<AppHeader[^>]*mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}[^>]*\/>/g,
+    ),
+    (match) => match[0],
+  );
+
+  assert.equal(standaloneHeaderCalls.length, 2);
+  for (const call of standaloneHeaderCalls) {
+    assert.match(
+      call,
+      /mobileResultsLeadingAction=\{renderMobileResultsBackButton\(\)\}/,
+    );
+  }
+});
+
 test("Flight Results uses a 44px Back navigation control in the AppHeader leading slot", () => {
   assert.match(source, /function renderMobileResultsBackButton\(\)/);
   assert.match(source, /aria-label="Go back"/);
