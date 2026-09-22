@@ -76,6 +76,7 @@ function SavedHeartIcon({
 
 type AppHeaderProps = {
   mobileResultsSearch?: ReactNode;
+  mobileResultsLeadingAction?: ReactNode;
   hideMobileSecondaryNavLinks?: boolean;
   mobileHeroOverlay?: boolean;
   mobileHeroOverlayLowered?: boolean;
@@ -132,6 +133,7 @@ const mobileInfoLegalMenuItems = [
 
 export function AppHeader({
   mobileResultsSearch,
+  mobileResultsLeadingAction,
   hideMobileSecondaryNavLinks = false,
   mobileHeroOverlay = false,
   hideMobileCategoryTabs = false,
@@ -722,9 +724,11 @@ export function AppHeader({
         )}
       >
         {mobileResultsSearch ? <div data-mobile-results-navbar className="flex h-[72px] items-center gap-2 border-b border-slate-200 px-2 sm:hidden">
-          <button type="button" aria-label={mobileMenuOpen ? t.closeMobileMenu : t.openMobileMenu} aria-expanded={mobileMenuOpen} aria-controls="mobile-menu-drawer" aria-haspopup="dialog" onClick={() => { setMobileAccountOpen(false); setMobileMenuOpen((value) => !value); }} className="focus-ring flex h-11 w-12 shrink-0 items-center justify-center gap-1 rounded-lg">
-            <RawImage src="/brand/kurioticket-icon-blue.svg" alt="Kurioticket" className="h-7 w-7" /><ChevronDown className={cn("h-3 w-3 text-slate-700", mobileMenuOpen && "rotate-180")} aria-hidden="true" />
-          </button>
+          {mobileResultsLeadingAction ?? (
+            <button type="button" aria-label={mobileMenuOpen ? t.closeMobileMenu : t.openMobileMenu} aria-expanded={mobileMenuOpen} aria-controls="mobile-menu-drawer" aria-haspopup="dialog" onClick={() => { setMobileAccountOpen(false); setMobileMenuOpen((value) => !value); }} className="focus-ring flex h-11 w-12 shrink-0 items-center justify-center gap-1 rounded-lg">
+              <RawImage src="/brand/kurioticket-icon-blue.svg" alt="Kurioticket" className="h-7 w-7" /><ChevronDown className={cn("h-3 w-3 text-slate-700", mobileMenuOpen && "rotate-180")} aria-hidden="true" />
+            </button>
+          )}
           <div className="min-w-0 flex-1" onClickCapture={() => setMobileMenuOpen(false)}>{mobileResultsSearch}</div>
 
         </div> : null}
