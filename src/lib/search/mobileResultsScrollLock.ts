@@ -19,6 +19,10 @@ export type MobileResultsScrollLockRelease = (options?: {
   restoreScroll?: boolean;
 }) => void;
 
+export type MobileResultsScrollOwner = HTMLElement | null;
+
+const ownerLocks = new WeakMap<HTMLElement, { count: number; overflow: string }>();
+
 const activeLocks = new Set<symbol>();
 let snapshot: InlineSnapshot | null = null;
 let restoreScrollOnFinalRelease = true;
@@ -45,9 +49,32 @@ function captureSnapshot(): InlineSnapshot {
   };
 }
 
-export function acquireMobileResultsScrollLock(): MobileResultsScrollLockRelease {
+export function acquireMobileResultsScrollLock(
+  scrollOwner: MobileResultsScrollOwner = null,
+): MobileResultsScrollLockRelease {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return () => undefined;
+  }
+
+  if (scrollOwner) {
+    const active = ownerLocks.get(scrollOwner);
+    if (active) active.count += 1;
+    else {
+      ownerLocks.set(scrollOwner, { count: 1, overflow: scrollOwner.style.overflow });
+      scrollOwner.style.overflow = "hidden";
+    }
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      const current = ownerLocks.get(scrollOwner);
+      if (!current) return;
+      current.count -= 1;
+      if (current.count === 0) {
+        scrollOwner.style.overflow = current.overflow;
+        ownerLocks.delete(scrollOwner);
+      }
+    };
   }
 
   const token = Symbol("mobile-results-scroll-lock");
