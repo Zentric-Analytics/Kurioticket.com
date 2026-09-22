@@ -6552,10 +6552,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             type="button"
             aria-label={modifySearchLabel}
             onClick={(event) =>
-              openMobileSearchDrawer(
-                event.currentTarget,
-                getOverlayActivationModality(event),
-              )
+              openMobileSearchDrawer(event.currentTarget, getOverlayActivationModality(event))
             }
             className="focus-ring flex min-h-11 min-w-0 flex-col items-center justify-center px-2 py-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
@@ -6584,10 +6581,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 : t("openFilters")
             }
             onClick={(event) =>
-              openMobileFiltersDrawer(
-                event.currentTarget,
-                getOverlayActivationModality(event),
-              )
+              openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))
             }
             className="focus-ring inline-flex h-11 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-[14px] font-semibold text-[#07133B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
