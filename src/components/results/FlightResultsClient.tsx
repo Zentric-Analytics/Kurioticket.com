@@ -1153,8 +1153,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [draftCabinClassInput, setDraftCabinClassInput] =
     useState<CabinClassValue>(cabinClassInput);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [mobileCompactHeaderVisible, setMobileCompactHeaderVisible] =
-    useState(false);
+  const [mobileCompactHeaderVisible, setMobileCompactHeaderVisible] = useState(false);
   const [activeMobileAirportPicker, setActiveMobileAirportPicker] = useState<
     "origin" | "destination" | null
   >(null);
