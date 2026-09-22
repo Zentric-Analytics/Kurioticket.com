@@ -60,11 +60,11 @@ test("hotel result cards retain image fallback and presentation contracts", () =
 test("hotel result cards use a horizontal image and details grid on mobile", () => {
   assert.match(
     source,
-    /data-hotel-card-mobile-grid[\s\S]*grid-cols-\[40%_minmax\(0,1fr\)\]/,
+    /data-hotel-card-mobile-grid[\s\S]*grid-cols-\[38%_minmax\(0,1fr\)\][\s\S]*min-\[430px\]:grid-cols-\[39%_minmax\(0,1fr\)\]/,
   );
   assert.match(
     source,
-    /data-hotel-card-image[\s\S]*h-full[\s\S]*min-h-\[156px\]/,
+    /data-hotel-card-image[\s\S]*min-h-\[calc\(\(100vw-2rem\)\*0\.7\)\][\s\S]*min-\[430px\]:min-h-\[260px\]/,
   );
   assert.match(source, /data-hotel-card-details/);
   assert.ok(!source.includes("h-[clamp(220px,58vw,250px)]"));
@@ -74,12 +74,15 @@ test("hotel result cards use a horizontal image and details grid on mobile", () 
   assert.match(source, /lg:max-w-none/);
 });
 
-test("mobile Hotel cards use the Cars shell and type rhythm", () => {
-  assert.match(source, /rounded-\[13px\] border-\[#D8E1EC\] bg-\[#E7EBF1\] shadow-\[0_2px_10px/);
-  assert.match(source, /text-\[15px\] font-bold leading-\[18px\][\s\S]*text-\[#07133B\]/);
-  assert.match(source, /text-\[11px\] font-medium leading-\[15px\] text-\[#536B92\]/);
-  assert.match(source, /text-\[19px\] font-semibold leading-\[22px\][\s\S]*text-\[#07133B\]/);
-  assert.match(source, /text-\[10px\] font-medium leading-\[13px\] text-\[#536B92\]/);
+test("mobile Hotel cards use the native Hotel result size, surface, type and colour rhythm", () => {
+  assert.match(source, /rounded-\[13px\] border-\[#D8E1EC\] bg-white shadow-\[0_2px_10px/);
+  assert.match(source, /grid-cols-\[38%_minmax\(0,1fr\)\][\s\S]*min-\[430px\]:grid-cols-\[39%_minmax\(0,1fr\)\]/);
+  assert.match(source, /min-h-\[calc\(\(100vw-2rem\)\*0\.7\)\][\s\S]*min-\[430px\]:min-h-\[260px\]/);
+  assert.match(source, /text-\[15px\] font-bold leading-5 text-\[#071A48\]/);
+  assert.match(source, /text-\[12px\] font-semibold leading-4 text-\[#004BB8\]/);
+  assert.match(source, /text-\[18px\] font-bold leading-6 text-\[#071A48\]/);
+  assert.match(source, /text-\[12px\] font-medium leading-4 text-\[#56658E\]/);
+  assert.match(source, /h-9 min-h-9[\s\S]*text-\[13px\] font-semibold leading-4 text-\[#0754F7\]/);
 });
 
 test("desktop cards narrow only the details column and remain left aligned", () => {
@@ -174,14 +177,14 @@ test("hotel result cards separate the nightly amount from its localized label", 
     source,
     /aria-hidden="true"[\s\S]*nightlyDisplayPrice\.formatted[\s\S]*aria-hidden="true"[\s\S]*perNightLabel/,
   );
-  assert.match(source, /text-\[19px\] font-semibold leading-\[22px\][\s\S]*tabular-nums[\s\S]*sm:text-xl/);
+  assert.match(source, /text-\[18px\] font-bold leading-6[\s\S]*tabular-nums[\s\S]*sm:text-xl/);
   assert.match(source, /text-xs[\s\S]*text-slate-500/);
 });
 
 test("hotel result cards keep mobile amenities compact while desktop retains the fuller set", () => {
   assert.ok(source.includes("expandedAmenityItems.slice(0, 4)"));
   assert.ok(source.includes("expandedAmenityItems.slice(0, 4)"));
-  assert.match(source, /max-sm:\[&>li\]:text-\[11px\]/);
+  assert.match(source, /max-sm:\[&>li\]:text-\[13px\]/);
   assert.ok(source.includes("items={collapsedAmenityItems}"));
   assert.match(
     source,
@@ -254,7 +257,7 @@ test("standalone Hotel actions and attribution retain their link fallbacks", () 
 });
 
 test("hotel galleries keep imagery edge-to-edge with unobtrusive edge controls", () => {
-  assert.match(source, /data-hotel-card-image[\s\S]*overflow-hidden bg-white[\s\S]*sm:bg-slate-200/);
+  assert.match(source, /data-hotel-card-image[\s\S]*overflow-hidden bg-\[#E9EDF3\][\s\S]*sm:bg-slate-200/);
   assert.match(source, /className="bg-slate-200 object-cover"/);
   assert.match(source, /Previous photo[\s\S]*absolute left-0[\s\S]*h-11 w-11[\s\S]*bg-transparent text-white/);
   assert.match(source, /Next photo[\s\S]*absolute right-0[\s\S]*h-11 w-11[\s\S]*bg-transparent text-white/);
@@ -277,6 +280,6 @@ test("mobile Hotel result cards use a full-card destination with independent uti
 test("mobile Hotel cards keep provider provenance quiet and the View hotel action lightweight", () => {
   assert.match(source, /data-hotel-provider-label[\s\S]*?sm:hidden/);
   assert.match(source, /Source:[\s\S]*?sm:hidden/);
-  assert.match(source, /relative z-20 h-11 min-h-11[\s\S]*?text-\[#004BB8\]/);
+  assert.match(source, /relative z-20 h-9 min-h-9[\s\S]*?text-\[#0754F7\]/);
   assert.match(source, /sm:h-10 sm:min-h-10[\s\S]*?sm:bg-\[#004BB8\]/);
 });
