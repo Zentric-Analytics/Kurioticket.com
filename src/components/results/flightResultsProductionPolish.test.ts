@@ -15,6 +15,18 @@ test("mobile results rhythm has no decorative divider or oversized spacer", asyn
   assert.doesNotMatch(source, /data-flight-mobile-results-shortcuts[\s\S]{0,300}pt-12/);
 });
 
+test("mobile nearby insight, quick filters, and price alert use compact native-like rhythm", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /cn\(resultStackClass, "space-y-0 sm:space-y-4"\)/);
+  assert.match(source, /min-h-\[28px\][^"]*">Cheaper nearby:/);
+  assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,350}py-1/);
+  assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 px-3 pt-2/);
+});
+
 test("mobile filter sheet has one contextual reset and a result-count action", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
