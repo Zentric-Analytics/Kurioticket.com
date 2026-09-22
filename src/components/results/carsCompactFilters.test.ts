@@ -94,11 +94,9 @@ test("source-contract: full desktop and mobile filter styling remain separate", 
     source,
     /layout === "desktop"\s*\? "desktop-filter-sidebar border border-slate-200\/80 bg-transparent p-0 shadow-none rounded-none"/,
   );
-  assert.match(
-    source,
-    /layout === "mobile"\s*\? "mb-2 overflow-hidden rounded-xl border border-slate-200 bg-white/,
-  );
-  assert.match(source, /layout === "mobile" \? "min-h-14 px-4 py-3 text-\[15px\]" : "min-h-9 rounded-md px-2\.5 py-2 text-\[13px\]/);
+  assert.match(source, /if \(layout === "mobile"\) \{[\s\S]*?grid gap-\[5px\][\s\S]*?min-h-\[46px\]/);
+  assert.doesNotMatch(source, /layout === "mobile"\s*\? "mb-2 overflow-hidden rounded-xl/);
+  assert.match(source, /layout === "compact" \? \([\s\S]*?aria-expanded=\{compactOpen\}/);
   assert.match(
     source,
     /layout === "compact"\s*\? "mt-0\.5 h-3\.5 w-3\.5[^"\n]*"\s*: "h-4 w-4 rounded border-slate-300 accent-blue"/,
@@ -112,11 +110,11 @@ test("source-contract: mobile price filters omit the per-day qualifier without c
   );
   assert.equal(
     (source.match(/carFilterGroupLabel\([^\n]+, t, true\)/g) ?? []).length,
-    2,
+    3,
   );
   assert.match(
     source,
-    /carFilterGroupLabel\(group, t, layout === "mobile"\)/,
+    /carFilterGroupLabel\(group, t, true\)/,
   );
   assert.match(presentation, /id: "pricePerDay", titleKey: "", title: "Price"/);
   assert.doesNotMatch(
@@ -185,8 +183,8 @@ test("source-contract: Cars filters use the Flights desktop lifecycle", () => {
   );
   assert.match(source, /new ResizeObserver\(scheduleMeasurement\)/);
   assert.match(source, /layout: "desktop" \| "compact" \| "mobile"/);
-  assert.match(source, /hidden=\{\(layout === "compact" \|\| layout === "mobile"\) && !compactOpen\}/);
-  assert.match(source, /aria-hidden=\{\(layout === "compact" \|\| layout === "mobile"\) && !compactOpen\}/);
+  assert.match(source, /hidden=\{layout === "compact" && !compactOpen\}/);
+  assert.match(source, /aria-hidden=\{layout === "compact" && !compactOpen\}/);
   assert.equal(
     (
       presentation.match(

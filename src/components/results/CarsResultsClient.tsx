@@ -24,6 +24,7 @@ import {
   CalendarDays,
   ArrowUp,
   ArrowLeft,
+  Check,
   CheckCircle2,
   ChevronDown,
   ChevronLeft,
@@ -2836,24 +2837,20 @@ export function CarsResultsExperience({
           aria-modal="true"
           aria-labelledby="cars-guided-filters-title"
           data-cars-mobile-filter-shell
-          className="fixed inset-y-0 right-0 z-[10000] flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F6F8FB] shadow-2xl sm:w-[420px] lg:hidden"
+          className="fixed inset-y-0 right-0 z-[10000] flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2F4F8] sm:w-[420px] lg:hidden"
         >
-          <div className="shrink-0 border-b border-slate-200 bg-white px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)] sm:px-5 sm:pb-4 sm:pt-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center text-slate-700" aria-hidden="true"><SlidersHorizontal className="h-4 w-4" /></span>
-                <div className="min-w-0">
-                  <h2 id="cars-guided-filters-title" className="truncate text-lg font-bold leading-6 tracking-[-0.01em] text-slate-950">{t("filters")}</h2>
-                  <p className="text-xs font-medium text-slate-500">{activeFilterCount > 0 ? activeFilterLabel : "All cars shown"}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                {activeFilterCount > 0 ? <button type="button" onClick={clearCarFilters} className="min-h-11 rounded-lg px-2.5 text-sm font-bold text-[#004BB8] transition hover:bg-[#EAF2FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30">{t("clearAll")}</button> : null}
-                <button ref={filtersCloseButtonRef} type="button" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-700 transition hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2" aria-label={t("carsResults.closeFilters")} onClick={() => setFiltersOpen(false)}><X size={20} /></button>
-              </div>
+          <header className="flex min-h-[76px] shrink-0 items-center bg-[#F2F4F8] pe-[10px] ps-5 pt-[env(safe-area-inset-top)]">
+            <div className="min-w-0 flex-1">
+              <h2 id="cars-guided-filters-title" className="truncate text-[18px] font-bold leading-[23px] text-slate-950">{t("filters")}</h2>
+              {activeFilterCount > 0 ? (
+                <p className="text-xs font-medium leading-4 text-slate-500">{activeFilterLabel}</p>
+              ) : null}
             </div>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 [scrollbar-gutter:stable] sm:px-5">
+            <button ref={filtersCloseButtonRef} type="button" className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-700 transition hover:text-slate-950 focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35" aria-label={t("carsResults.closeFilters")} onClick={() => setFiltersOpen(false)}>
+              <X className="h-[22px] w-[22px]" aria-hidden="true" />
+            </button>
+          </header>
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#F2F4F8] px-6 pb-8 pt-4">
             <CarFilters
               groups={
                 guidedPlanning
@@ -2870,15 +2867,20 @@ export function CarsResultsExperience({
               t={t}
             />
           </div>
-          <div className="flex shrink-0 items-center border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.08)] sm:px-5 sm:pb-4 sm:pt-4">
+          <footer className="flex shrink-0 items-center gap-3.5 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+            {activeFilterCount > 0 ? (
+              <button type="button" aria-label={t("carsResults.resetFilters")} onClick={clearCarFilters} className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
+                {t("carsResults.reset")}
+              </button>
+            ) : null}
             <Button
               type="button"
-              className="h-12 w-full min-w-0 rounded-xl bg-[#004BB8] px-5 text-base font-bold text-white shadow-md shadow-[#004BB8]/12"
+              className="min-h-[50px] min-w-0 flex-1 rounded-[10px] bg-[#004BB8] px-5 text-base font-bold leading-[22px] text-white shadow-none"
               onClick={() => setFiltersOpen(false)}
             >
               Show {visibleResults.length} {visibleResults.length === 1 ? "car" : "cars"}
             </Button>
-          </div>
+          </footer>
         </aside>
       ) : null}
       {quickFilterGroupId === "sort" && typeof document !== "undefined" ? createPortal(
@@ -3776,7 +3778,7 @@ function CarFilters({
   t: (key: string) => string;
 }) {
   const [openCompactSection, setOpenCompactSection] = useState<string | null>(
-    layout === "mobile" ? "pricePerDay" : null,
+    null,
   );
   const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), {
     count: String(activeFilterCount),
@@ -3789,7 +3791,7 @@ function CarFilters({
           ? "desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-[#D8E1EC] bg-[#EEF3F8] p-0 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.42)]"
           : layout === "desktop"
             ? "desktop-filter-sidebar border border-slate-200/80 bg-transparent p-0 shadow-none rounded-none"
-            : "overflow-hidden bg-white",
+            : "bg-transparent",
       )}
     >
       {layout === "compact" ? (
@@ -3853,7 +3855,7 @@ function CarFilters({
           layout === "compact"
             ? "min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-[#EEF3F8] px-2 py-1"
             : layout === "mobile"
-              ? "space-y-0 bg-white"
+              ? "grid gap-6 bg-transparent"
               : "space-y-0 bg-transparent px-3 py-1",
         )}
       >
@@ -3908,17 +3910,63 @@ function FilterSection({
   t: (key: string) => string;
 }) {
   const panelId = `cars-compact-filter-${group.id}`;
+  if (layout === "mobile") {
+    return (
+      <section className="grid gap-[5px]">
+        <div className="flex min-h-7 items-center">
+          <h3 className="text-[15px] font-extrabold text-slate-950">
+            {carFilterGroupLabel(group, t, true)}
+          </h3>
+        </div>
+        <div>
+          {group.options.map((option) => {
+            const selected = selectedOptions.includes(option.id);
+            return (
+              <label
+                key={option.id}
+                className="flex min-h-[46px] cursor-pointer items-center gap-2.5 text-[13px] font-medium text-slate-950 transition-opacity active:opacity-70"
+              >
+                <input
+                  type="checkbox"
+                  checked={selected}
+                  onChange={() => onToggle(group.id, option.id)}
+                  className="peer sr-only"
+                />
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "flex h-5 w-5 shrink-0 items-center justify-center rounded border-[1.5px] transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/35 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#F2F4F8]",
+                    selected
+                      ? "border-[#004BB8] bg-[#004BB8] text-white"
+                      : "border-[#D8DEE8] bg-transparent",
+                  )}
+                >
+                  {selected ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : null}
+                </span>
+                <span className="min-w-0 flex-1 break-words">
+                  {option.label ?? t(option.labelKey)}
+                </span>
+                {typeof option.count === "number" ? (
+                  <span className="ms-0.5 max-w-[42%] shrink-0 text-right text-xs leading-4 tabular-nums text-slate-500">
+                    {option.count}
+                  </span>
+                ) : null}
+              </label>
+            );
+          })}
+        </div>
+      </section>
+    );
+  }
   return (
     <section
       className={cn(
         layout === "compact"
           ? "border-t border-[#D8E1EC]/75 first:border-t-0"
-          : layout === "mobile"
-            ? "mb-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_10px_26px_-24px_rgba(15,23,42,0.45)] last:mb-0"
-            : "border-t border-slate-200/75 py-3 first:border-t-0",
+          : "border-t border-slate-200/75 py-3 first:border-t-0",
       )}
     >
-      {layout === "compact" || layout === "mobile" ? (
+      {layout === "compact" ? (
         <button
           type="button"
           aria-expanded={compactOpen}
@@ -3926,11 +3974,11 @@ function FilterSection({
           onClick={onCompactOpen}
           className={cn(
             "group flex w-full items-center justify-between gap-3 text-start font-semibold text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
-            layout === "mobile" ? "min-h-14 px-4 py-3 text-[15px]" : "min-h-9 rounded-md px-2.5 py-2 text-[13px] leading-5 tracking-[-0.005em] hover:bg-[#E5ECF4]",
+            "min-h-9 rounded-md px-2.5 py-2 text-[13px] leading-5 tracking-[-0.005em] hover:bg-[#E5ECF4]",
             compactOpen && "text-[#004BB8]",
           )}
         >
-          <span className="min-w-0 truncate">{carFilterGroupLabel(group, t, layout === "mobile")}</span>
+          <span className="min-w-0 truncate">{carFilterGroupLabel(group, t)}</span>
           <span className="flex shrink-0 items-center gap-2">
             {selectedOptions.length ? (
               <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[11px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">
@@ -3954,14 +4002,12 @@ function FilterSection({
       )}
       <div
         id={panelId}
-        hidden={(layout === "compact" || layout === "mobile") && !compactOpen}
-        aria-hidden={(layout === "compact" || layout === "mobile") && !compactOpen}
+        hidden={layout === "compact" && !compactOpen}
+        aria-hidden={layout === "compact" && !compactOpen}
         className={cn(
           layout === "compact"
             ? "grid h-auto gap-0.5 overflow-visible bg-transparent px-2.5 pb-3 pt-0.5"
-            : layout === "mobile"
-              ? "grid gap-1 border-t border-slate-100 px-3 pb-3 pt-2"
-              : "mt-2 grid gap-0.5",
+            : "mt-2 grid gap-0.5",
         )}
       >
         {group.options.map((option) => {
@@ -3991,9 +4037,7 @@ function FilterSection({
               className={cn(
                 layout === "compact"
                   ? "flex min-h-8 cursor-pointer items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-[13px] font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
-                  : layout === "mobile"
-                    ? "flex min-h-12 cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-sm font-medium transition hover:bg-slate-50"
-                    : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm font-medium transition-all",
+                  : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm font-medium transition-all",
                 selected
                   ? "font-semibold text-[#021C2B]"
                   : layout === "compact"
