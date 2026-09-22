@@ -14,11 +14,24 @@ const presentationSource = readFileSync(
   "src/lib/cars/carFilterPresentation.ts",
   "utf8",
 );
+const mobileSummarySection = resultsSource.slice(
+  resultsSource.indexOf('aria-label={t("carsResults.carRentalSearch")}') - 200,
+  resultsSource.indexOf("<MobileDatePickerDialog"),
+);
+const mobileSummaryControls = resultsSource.slice(
+  resultsSource.indexOf("const renderMobileControlsRow"),
+  resultsSource.indexOf("const renderCarsSearchForm"),
+);
 
 test("mobile Cars Results owns the native canvas without changing the desktop canvas", () => {
   assert.match(resultsSource, /bg-\[#F5F7FB\] pb-8 sm:bg-\[#f6f8fb\]/);
-  assert.match(resultsSource, /bg-\[#F5F7FB\] pb-0 pt-0 sm:hidden/);
-  assert.match(resultsSource, /rounded-xl border border-slate-200\/80 bg-white/);
+});
+
+test("mobile Cars Results keeps its summary band white above the native canvas", () => {
+  assert.match(mobileSummarySection, /bg-white pb-0 pt-0 sm:hidden/);
+  assert.doesNotMatch(mobileSummarySection, /bg-\[#F5F7FB\]/);
+  assert.match(mobileSummarySection, /relative translate-y-1\/2/);
+  assert.match(mobileSummaryControls, /rounded-xl border border-slate-200\/80 bg-white/);
 });
 
 test("mobile shortcuts are compact, scrollable touch targets in canonical order", () => {
