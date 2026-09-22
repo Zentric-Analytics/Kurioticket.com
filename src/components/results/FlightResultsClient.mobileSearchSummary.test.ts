@@ -4,81 +4,60 @@ import test from "node:test";
 
 const source = readFileSync(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
 const cardStart = source.indexOf("function renderMobileRouteSummaryCard(");
-const cardEnd = source.indexOf("function renderMobileEditSearchDrawer()", cardStart);
+const cardEnd = source.indexOf("function renderMobileCompactResultsHeader()", cardStart);
 const card = source.slice(cardStart, cardEnd);
 
-test("standalone Flight Results hands the top summary off to a Cars-style compact toolbar", () => {
-  assert.match(source, /<AppHeader[\s\S]*mobileResultsLeadingAction=\{renderMobileResultsBackButton\(\)\}[\s\S]*mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
-  assert.match(source, /mobileResultsSticky=\{false\}/);
+test("standalone Flight Results uses the Cars normal summary surface and compact scroll toolbar", () => {
+  assert.match(source, /<AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs \/>/);
+  assert.doesNotMatch(source, /mobileResultsSearch=|mobileResultsLeadingAction=|mobileResultsSticky=/);
+  assert.match(source, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
+  assert.match(source, /relative translate-y-1\/2/);
+  assert.match(source, /ref=\{mobileSearchSummarySentinelRef\}/);
   assert.match(source, /renderMobileCompactResultsHeader/);
   assert.match(source, /data-flight-results-compact-header/);
   assert.match(source, /mobileCompactHeaderVisible/);
-  assert.match(source, /mobileSearchSummarySentinelRef/);
-  assert.match(source, /aria-label="Go back"/);
 });
 
-test("loading and ready Flight Results keep the same Back leading action", () => {
-  const standaloneHeaderCalls = Array.from(
-    source.matchAll(
-      /<AppHeader[^>]*mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}[^>]*\/>/g,
-    ),
-    (match) => match[0],
-  );
-
-  assert.equal(standaloneHeaderCalls.length, 2);
-  for (const call of standaloneHeaderCalls) {
-    assert.match(
-      call,
-      /mobileResultsLeadingAction=\{renderMobileResultsBackButton\(\)\}/,
-    );
-  }
-});
-
-test("compact Flight header mirrors Cars Back, Modify search, and Filters structure", () => {
-  assert.match(source, /function renderMobileCompactResultsHeader\(\)/);
-  assert.match(source, /grid-cols-\[44px_minmax\(0,1fr\)_82px\]/);
-  assert.match(source, /\{mobileRouteSummary\}/);
-  assert.match(source, /t\("deals\.results\.modifySearch"\)/);
-  assert.match(source, /data-flight-compact-edit-icon/);
-  assert.match(source, /openMobileSearchDrawer\(event\.currentTarget/);
-  assert.match(source, /openMobileFiltersDrawer\(event\.currentTarget/);
-  assert.match(source, /<span className="truncate">\{t\("filters"\)\}<\/span>/);
-});
-
-test("Flight Results uses a 44px Back navigation control in the AppHeader leading slot", () => {
-  assert.match(source, /function renderMobileResultsBackButton\(\)/);
-  assert.match(source, /aria-label="Go back"/);
-  assert.match(source, /h-11 w-12/);
-  assert.match(source, /<ChevronLeft className="h-5 w-5"/);
-  assert.match(source, /window\.history\.length > 1[\s\S]*router\.back\(\)/);
-  assert.match(source, /router\.push\("\/flights"\)/);
-});
-
-test("Flight summary is the Hotel-style whole-card Edit Search launcher", () => {
+test("Flight summary matches Cars card placement, color, geometry, and typography", () => {
   assert.ok(cardStart >= 0);
+  assert.match(card, /mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center px-4/);
+  assert.match(card, /h-\[4\.25rem\]/);
+  assert.match(card, /max-w-\[30rem\]/);
+  assert.match(card, /rounded-xl border border-slate-200\/80 bg-white px-4/);
+  assert.match(card, /shadow-\[0_16px_34px_-26px_rgba\(15,23,42,0\.55\)\]/);
+  assert.match(card, /text-\[16px\] font-bold[^"]*text-\[#07133B\]/);
+  assert.match(card, /text-\[12\.5px\] font-medium[^"]*text-\[#536B92\]/);
+  assert.match(card, /<SquarePen size=\{16\} strokeWidth=\{2\.2\} \/>/);
+  assert.doesNotMatch(card, /bg-\[#f6f8fb\]|h-\[52px\]|rounded-\[10px\]/);
+});
+
+test("Flight summary remains the whole-card Edit Search launcher", () => {
   assert.match(card, /<button[\s\S]*openMobileSearchDrawer/);
   assert.match(card, /aria-haspopup="dialog"/);
   assert.match(card, /aria-expanded=\{mobileSearchOpen\}/);
   assert.match(card, /\{mobileRouteSummary\}/);
   assert.match(card, /\{mobileTripTypeSummary\} · \{mobileDateSummary\} ·/);
   assert.match(card, /\{mobileTravelerSummary\} · \{mobileCabinClassSummary\}/);
-  assert.match(card, /<SquarePen className="h-5 w-5/);
-  assert.doesNotMatch(card, /Economy|Modify search/);
 });
 
-test("Flight summary matches the Hotel results navbar geometry", () => {
-  assert.match(card, /h-\[52px\]/);
-  assert.match(card, /rounded-\[10px\]/);
-  assert.match(card, /border-\[#D8E1EC\]/);
-  assert.match(card, /bg-\[#f6f8fb\]/);
-  assert.match(card, /px-3/);
-  assert.match(card, /text-\[14px\] font-semibold leading-5/);
-  assert.match(card, /text-\[12px\] leading-4 text-slate-600/);
-  assert.doesNotMatch(card, /h-16|rounded-\[13px\]|text-\[10\.5px\]/);
+test("compact Flight header mirrors Cars Back, Modify search, Filters, colors, and geometry", () => {
+  const start = source.indexOf("function renderMobileCompactResultsHeader()");
+  const end = source.indexOf("function renderMobileEditSearchDrawer()", start);
+  const compact = source.slice(start, end);
+
+  assert.match(compact, /fixed inset-x-0 top-0 z-\[90\] bg-white px-3 pb-2/);
+  assert.match(compact, /grid-cols-\[44px_minmax\(0,1fr\)_82px\]/);
+  assert.match(compact, /<ArrowLeft className="h-5 w-5" aria-hidden="true" \/>/);
+  assert.match(compact, /router\.push\("\/flights"\)/);
+  assert.match(compact, /text-\[15px\] font-bold[^"]*text-\[#07133B\]/);
+  assert.match(compact, /text-\[11px\] font-medium[^"]*text-\[#536B92\]/);
+  assert.match(compact, /<Pencil[\s\S]*data-flight-compact-edit-icon/);
+  assert.match(compact, /<SlidersHorizontal[\s\S]*text-\[#004BB8\]/);
+  assert.match(compact, /<span className="truncate">\{t\("filters"\)\}<\/span>/);
 });
 
-test("desktop search toolbar remains isolated from the mobile navbar", () => {
+test("desktop search toolbar remains isolated from the mobile Cars-style summary", () => {
   const start = source.indexOf("function renderDesktopMinimizedSearchBar()");
   const end = source.indexOf("function renderStickySearchPopoutOverlay()", start);
-  assert.doesNotMatch(source.slice(start, end), /renderMobileRouteSummaryCard|h-\[52px\]/);
+  assert.doesNotMatch(source.slice(start, end), /renderMobileRouteSummaryCard|h-\[4\.25rem\]/);
 });
