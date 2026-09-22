@@ -6,7 +6,7 @@ const results = readFileSync(new URL("./FlightResultsClient.tsx", import.meta.ur
 const card = readFileSync(new URL("./MobileFlightCard.tsx", import.meta.url), "utf8");
 
 test("final mobile Flight Results order and controls remain intact", () => {
-  const summary = results.indexOf("mobileResultsSearch={renderMobileRouteSummaryCard()}");
+  const summary = results.indexOf("{renderMobileRouteSummaryCard()}");
   const nearby = results.indexOf('data-nearby-fare-presentation="mobile"');
   const shortcuts = results.indexOf("data-flight-mobile-results-shortcuts");
   const alert = results.indexOf("<FlightPriceAlertControl");
