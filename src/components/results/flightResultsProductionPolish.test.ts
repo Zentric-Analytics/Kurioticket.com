@@ -45,6 +45,22 @@ test("mobile Flight Results uses the native horizontal gutter relationship", asy
   assert.match(card, /block w-full rounded-2xl/);
 });
 
+test("mobile Flight Results restores the brand footer and Hotel-style Back to top", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /const \[showBackToTop, setShowBackToTop\] = useState\(false\)/);
+  assert.match(source, /setShowBackToTop\(window\.scrollY > 600\)/);
+  assert.match(source, /window\.addEventListener\("scroll", update, \{ passive: true \}\)/);
+  assert.match(source, /aria-label="Back to top"/);
+  assert.match(source, /prefersReducedResultsMotion\(\) \? "auto" : "smooth"/);
+  assert.match(source, /<ArrowUp className="h-\[18px\] w-\[18px\]"/);
+  assert.match(source, /<Footer variant="brand-legal-only" \/>/);
+  assert.doesNotMatch(source, /<div className="hidden sm:block"><Footer variant="brand-legal-only" \/><\/div>/);
+});
+
 test("mobile filter sheet has one contextual reset and a result-count action", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
