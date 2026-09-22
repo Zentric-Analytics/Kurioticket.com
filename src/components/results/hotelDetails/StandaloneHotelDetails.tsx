@@ -66,6 +66,7 @@ export type StandaloneHotelDetailsProps = {
   starRatingAriaLabel: string;
   locationParts: string[];
   propertyDetails: PublicHotelPropertyDetails | null;
+  locationDetails?: PublicHotelPropertyDetails | null;
   providerDetails?: PublicHotelProviderDetails | null;
   reviewScore: string;
   reviewLabel: string;
@@ -128,8 +129,9 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
   const roomOptionsButtonRef = useRef<HTMLButtonElement>(null);
   const roomDialogRef = useRef<HTMLElement>(null);
   const description = props.propertyDetails?.description || "";
-  const canonicalAddress = props.propertyDetails
-    ? buildHotelAddress(props.propertyDetails)
+  const locationProperty = props.locationDetails ?? props.propertyDetails;
+  const canonicalAddress = locationProperty
+    ? buildHotelAddress(locationProperty)
     : "";
   const providerFacts: ReadonlyArray<readonly [string, string]> = props.providerDetails?.source === "KAYAK"
     ? ([
@@ -148,6 +150,13 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
         ...(props.providerDetails.rate?.conditions ?? []).map((fact) => [fact.label, fact.value] as const),
       ] as Array<readonly [string, string] | null>).filter((fact): fact is readonly [string, string] => fact !== null && Boolean(fact[1].trim()))
     : [];
+
+  const mobileProviderPolicies = [...new Set(
+    (props.providerDetails?.overview?.policies ?? [])
+      .map(({ value }) => value.trim())
+      .filter(Boolean),
+  )];
+  const providerRoomName = props.providerDetails?.rate?.roomName?.trim() || "";
 
   useEffect(() => {
     if (!roomsOpen) return;
@@ -551,7 +560,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                   <div className="hidden lg:block">
                     <RelatedHotelsSection
                       hotels={props.relatedHotels}
-                      city={props.propertyDetails?.city || ""}
+                      city={props.propertyDetails?.city || locationProperty?.city || ""}
                       searchContext={props.relatedSearchContext}
                       labels={{
                       heading: props.labels.moreHotelsIn,
@@ -579,22 +588,24 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                     roomSummary={props.propertyDetails?.roomSummary}
                     bedSummary={props.propertyDetails?.bedSummary}
                     accessibility={props.propertyDetails?.accessibility}
+                    mobilePolicies={mobileProviderPolicies}
+                    providerRoomName={providerRoomName}
                     mobileAfterDescription={
-                      props.propertyDetails ? (
+                      locationProperty ? (
                         <HotelLocationSection
                           hotelName={props.hotelName}
-                          propertyDetails={props.propertyDetails}
+                          propertyDetails={locationProperty}
                           locationLabel="Location"
                           mapLabel={props.labels.map}
                           streetViewLabel={props.labels.streetView}
                           stayFitFacts={[
-                            props.propertyDetails.neighbourhood ? `${props.propertyDetails.neighbourhood} neighborhood` : "",
-                            props.propertyDetails.businessSuitable ? "Work-friendly property" : "",
-                            props.propertyDetails.familySuitable ? "Family-friendly" : "",
-                            props.propertyDetails.interestTags?.some((tag) => /sightseeing|culture|history|art|theatre/i.test(tag)) ? "Good for sightseeing" : "",
-                            props.propertyDetails.accessibility?.length ? "Accessibility details available" : "",
+                            locationProperty.neighbourhood ? `${locationProperty.neighbourhood} neighborhood` : "",
+                            locationProperty.businessSuitable ? "Work-friendly property" : "",
+                            locationProperty.familySuitable ? "Family-friendly" : "",
+                            locationProperty.interestTags?.some((tag) => /sightseeing|culture|history|art|theatre/i.test(tag)) ? "Good for sightseeing" : "",
+                            locationProperty.accessibility?.length ? "Accessibility details available" : "",
                           ].filter(Boolean)}
-                          accessibilityDetails={props.propertyDetails.accessibility}
+                          accessibilityDetails={locationProperty.accessibility}
                         />
                       ) : (
                         <section className="border-b border-slate-200 px-4 py-5" aria-labelledby="hotel-overview-location-heading">
@@ -618,28 +629,11 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                       </dl>
                     </section>
                   ) : null}
-                  {providerFacts.length ? (
-                    <section className="border-b border-slate-200 px-4 py-3 lg:hidden" data-mobile-provider-hotel-details>
-                      <details>
-                        <summary className="focus-ring inline-flex min-h-11 cursor-pointer list-none items-center text-[14px] font-semibold text-blue [&::-webkit-details-marker]:hidden">
-                          Provider details
-                        </summary>
-                        <dl className="space-y-3 pb-2">
-                          {providerFacts.map(([label, value], index) => (
-                            <div key={`mobile-${label}-${value}-${index}`} className="min-w-0">
-                              <dt className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</dt>
-                              <dd className="mt-0.5 break-words text-[13px] font-medium leading-5 text-slate-800">{value}</dd>
-                            </div>
-                          ))}
-                        </dl>
-                      </details>
-                    </section>
-                  ) : null}
 
                   <div className="lg:hidden" data-hotel-mobile-overview-related>
                     <RelatedHotelsSection
                       hotels={props.relatedHotels}
-                      city={props.propertyDetails?.city || ""}
+                      city={props.propertyDetails?.city || locationProperty?.city || ""}
                       searchContext={props.relatedSearchContext}
                       labels={{
                       heading: props.labels.moreHotelsIn,
@@ -666,21 +660,21 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
                 />
               ) : null}
 
-              {activeTab === "location" ? props.propertyDetails ? (
+              {activeTab === "location" ? locationProperty ? (
                 <HotelLocationSection
                   hotelName={props.hotelName}
-                  propertyDetails={props.propertyDetails}
+                  propertyDetails={locationProperty}
                   locationLabel="Location & stay fit"
                   mapLabel={props.labels.map}
                   streetViewLabel={props.labels.streetView}
                   stayFitFacts={[
-                    props.propertyDetails.neighbourhood ? `${props.propertyDetails.neighbourhood} neighborhood` : "",
-                    props.propertyDetails.businessSuitable ? "Work-friendly property" : "",
-                    props.propertyDetails.familySuitable ? "Family-friendly" : "",
-                    props.propertyDetails.interestTags?.some((tag) => /sightseeing|culture|history|art|theatre/i.test(tag)) ? "Good for sightseeing" : "",
-                    props.propertyDetails.accessibility?.length ? "Accessibility details available" : "",
+                    locationProperty.neighbourhood ? `${locationProperty.neighbourhood} neighborhood` : "",
+                    locationProperty.businessSuitable ? "Work-friendly property" : "",
+                    locationProperty.familySuitable ? "Family-friendly" : "",
+                    locationProperty.interestTags?.some((tag) => /sightseeing|culture|history|art|theatre/i.test(tag)) ? "Good for sightseeing" : "",
+                    locationProperty.accessibility?.length ? "Accessibility details available" : "",
                   ].filter(Boolean)}
-                  accessibilityDetails={props.propertyDetails.accessibility}
+                  accessibilityDetails={locationProperty.accessibility}
                 />
               ) : (
                 <section className="border-b border-slate-200 px-4 py-8 lg:px-0 lg:py-10" aria-labelledby="hotel-location-heading"><h2 id="hotel-location-heading" className="text-xl font-extrabold text-slate-950">Location &amp; stay fit</h2><p className="mt-3 text-sm text-slate-600">Verified location details are not available for this property yet.</p></section>
