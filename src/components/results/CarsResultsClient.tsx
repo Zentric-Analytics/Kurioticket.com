@@ -2927,7 +2927,7 @@ export function CarsResultsExperience({
             aria-modal="true"
             aria-labelledby={`cars-quick-${quickFilterGroupId}`}
             onMouseDown={(event) => event.stopPropagation()}
-            className={cn("cars-native-quick-sheet mx-3 mb-3 flex min-h-[240px] max-h-[min(76dvh,620px)] w-[calc(100%-24px)] flex-col overflow-hidden rounded-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]", quickSheetClosing && "cars-native-quick-sheet--closing")}
+            className={cn("cars-native-quick-sheet flex min-h-[240px] max-h-[min(76dvh,620px)] w-full flex-col overflow-hidden rounded-t-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]", quickSheetClosing && "cars-native-quick-sheet--closing")}
           >
             <header className="grid min-h-[76px] shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-center bg-[#F2F4F8] px-[10px]">
               <span aria-hidden="true" className="h-11 w-11" />
