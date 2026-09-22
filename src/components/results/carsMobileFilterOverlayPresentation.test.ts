@@ -4,6 +4,7 @@ import test from "node:test";
 
 const cars = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
+const presentation = readFileSync(new URL("../../lib/cars/carFilterPresentation.ts", import.meta.url), "utf8");
 
 test("Cars full Filter follows the native Cars filter hierarchy without changing desktop filters", () => {
   const start = cars.indexOf("data-cars-mobile-filter-shell");
@@ -41,11 +42,11 @@ test("Cars mobile filter sections remain expanded with native row and checkbox g
   assert.match(cars, /layout === "mobile"\s*\? "grid gap-6 bg-transparent"/);
 });
 
-test("Cars shortcuts use the native floating quick-sheet presentation", () => {
+test("Cars shortcuts keep the mobile-web attached bottom-sheet presentation with native internal polishing", () => {
   const sheets = cars.slice(cars.indexOf("data-cars-quick-sheet-backdrop"), cars.indexOf("!guidedPlanning && showBackToTop"));
   for (const contract of [
     /fixed inset-0.*items-end.*bg-\[rgba\(15,23,42,0\.35\)\]/,
-    /mx-3 mb-3.*min-h-\[240px\].*max-h-\[min\(76dvh,620px\)\].*w-\[calc\(100%-24px\)\].*rounded-\[24px\].*bg-\[#F2F4F8\]/,
+    /flex min-h-\[240px\].*max-h-\[min\(76dvh,620px\)\].*w-full.*rounded-t-\[24px\].*bg-\[#F2F4F8\]/,
     /grid min-h-\[76px\].*grid-cols-\[44px_minmax\(0,1fr\)_44px\].*bg-\[#F2F4F8\].*px-\[10px\]/,
     /text-center text-\[18px\] font-bold leading-\[23px\]/,
     /<X className="h-\[22px\] w-\[22px\]"/,
@@ -59,6 +60,7 @@ test("Cars shortcuts use the native floating quick-sheet presentation", () => {
     /h-\[49px\].*flex-1.*rounded-xl.*bg-\[#004BB8\]/,
     /gap-\[10px\] bg-\[#F2F4F8\]/,
   ]) assert.match(sheets, contract);
+  assert.doesNotMatch(sheets, /\bmx-3\b|\bmb-3\b|w-\[calc\(100%-24px\)\]|rounded-\[24px\]/);
   assert.doesNotMatch(sheets, /backdrop-blur|bg-\[#F6F8FB\]|bg-white|Choose one option|selected<\/p>/);
   assert.match(styles, /cars-native-quick-backdrop-in[\s\S]*?opacity: 0[\s\S]*?opacity: 1/);
   assert.match(styles, /cars-native-quick-sheet-in[\s\S]*?28px[\s\S]*?translate3d\(0, 0, 0\)/);
@@ -81,6 +83,11 @@ test("Cars shortcut backdrop and inside-click dismissal boundaries remain explic
 test("every canonical Cars shortcut shares the one stable mobile overlay lock", () => {
   assert.match(cars, /carQuickFilterGroupIds/);
   assert.match(cars, /quickFilterGroups = carQuickFilterGroupIds\.flatMap/);
+  for (const groupId of ["pricePerDay", "vehicleType", "transmission", "seats", "cancellation", "pickupLocationType"]) {
+    assert.match(presentation, new RegExp(`"${groupId}"`));
+  }
+  assert.match(cars, /quickFilterGroupId === "sort" \|\| activeQuickFilterGroup/);
+  assert.equal((cars.match(/data-cars-quick-sheet(?:-backdrop)?/g) ?? []).length, 2);
   assert.equal((cars.match(/acquireMobileResultsScrollLock\(\)/g) ?? []).length, 3);
 });
 
