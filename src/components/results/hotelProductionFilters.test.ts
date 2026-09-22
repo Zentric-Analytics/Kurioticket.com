@@ -83,11 +83,12 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.match(source, /mobileShortcutMenu === "stars"[\s\S]*setSelectedHotelClasses\(mobileShortcutDraftStars\)/);
   assert.match(source, /facilities: mobileShortcutDraftFacilities/);
   assert.match(source, /fixed inset-y-0 right-0[^\n]*h-\[95dvh\][^\n]*w-full/);
-  assert.match(source, /mobileResultsSearch=/);
+  assert.doesNotMatch(source, /mobileResultsSearch=/);
+  assert.match(source, /h-\[4\.25rem\][\s\S]*max-w-\[30rem\]/);
   assert.doesNotMatch(source, /trigger\("sort",/);
   assert.doesNotMatch(source, /transition-all duration-200 sm:hidden/);
-  assert.match(source, /bg-\[#f6f8fb\] px-1 pb-0 pt-2 sm:hidden/);
-  assert.match(source, /page-shell grid gap-y-5 pb-6 pt-1 sm:pt-6/);
+  assert.match(source, /bg-\[#F5F7FB\] px-1 pb-0 pt-10 sm:hidden/);
+  assert.match(source, /page-shell grid gap-y-5 pb-6 pt-4 sm:pt-6/);
 });
 
 test("results omit the superseded comparison disclosure", () => {
