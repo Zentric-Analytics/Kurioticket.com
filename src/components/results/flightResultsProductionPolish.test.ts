@@ -27,6 +27,24 @@ test("mobile nearby insight, quick filters, and price alert use compact native-l
   assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 px-3 pt-2/);
 });
 
+test("mobile Flight Results uses the native horizontal gutter relationship", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+  const card = await readFile(new URL("./MobileFlightCard.tsx", import.meta.url), "utf8");
+
+  assert.match(styles, /@media \(max-width: 639px\)[\s\S]*\.flight-results-grid \{\s*width: calc\(100% - 28px\);/);
+  assert.match(source, /min-h-\[28px\][^\n]*max-w-full[^\n]*px-0[^\n]*>Cheaper nearby:/);
+  assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,500}-mx-\[14px\][\s\S]{0,120}px-0/);
+  assert.match(source, /data-mobile-flight-shortcuts[^\n]*ps-2 pe-4/);
+  assert.match(source, /flex w-max flex-nowrap items-center gap-1\.5/);
+  assert.match(source, /data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden"/);
+  assert.doesNotMatch(source, /data-flight-mobile-results-intro[^\n]*px-3/);
+  assert.match(card, /block w-full rounded-2xl/);
+});
+
 test("mobile filter sheet has one contextual reset and a result-count action", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
