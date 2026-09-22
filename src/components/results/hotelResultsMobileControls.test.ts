@@ -26,7 +26,7 @@ test("Hotel Results hides only the mobile category tabs", () => {
 
 test("mobile Hotel search uses the Cars floating results summary below the page navbar", () => {
   assert.doesNotMatch(resultsSource, /mobileResultsSearch=\{/);
-  assert.match(resultsSource, /relative z-40 bg-\[#F5F7FB\] pb-0 pt-0 sm:hidden/);
+  assert.match(resultsSource, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
   assert.match(resultsSource, /h-\[4\.25rem\][\s\S]*rounded-xl border border-slate-200\/80 bg-white/);
   assert.match(resultsSource, /max-w-\[30rem\]/);
   assert.match(resultsSource, /text-\[16px\] font-bold leading-5[\s\S]*text-\[#07133B\]/);
