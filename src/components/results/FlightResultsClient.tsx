@@ -6363,8 +6363,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     ) : null;
     return (
       <>
-        <div data-mobile-flight-shortcuts className="w-full min-w-0 overflow-x-auto pe-3 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
-          <div className="flex w-max flex-nowrap items-center gap-2">
+        <div data-mobile-flight-shortcuts className="w-full min-w-0 overflow-x-auto ps-2 pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+          <div className="flex w-max flex-nowrap items-center gap-1.5">
             {renderFloatingFilterButton(shortcutButtonClass, shortcutCapsuleClass)}
             {renderTrigger("sort", activeSortOption.label)}
             {renderTrigger("airlines", "Airlines")}
@@ -6793,7 +6793,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         );
                       })}
                     </div>
-                    {cheaperNearbyFare ? <button type="button" onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)} className="focus-ring mx-3 flex min-h-[28px] max-w-[calc(100%-1.5rem)] items-center px-1 text-left text-[11px] font-semibold leading-[15px] text-slate-600 hover:text-[#075EE8]">Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}</button> : null}
+                    {cheaperNearbyFare ? <button type="button" onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)} className="focus-ring flex min-h-[28px] max-w-full items-center px-0 text-left text-[11px] font-semibold leading-[15px] text-slate-600 hover:text-[#075EE8]">Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}</button> : null}
                   </div>
                   <div
                   className="hidden w-full sm:block"
@@ -6953,7 +6953,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 inert={mobileSearchOpen ? true : undefined}
                 aria-hidden={mobileSearchOpen ? true : undefined}
                 className={cn(
-                  "sticky top-[calc(72px+env(safe-area-inset-top))] z-30 -mx-0 bg-[#F5F7FB]/95 px-3 py-1 backdrop-blur sm:hidden",
+                  "sticky top-[calc(72px+env(safe-area-inset-top))] z-30 -mx-[14px] bg-[#F5F7FB]/95 px-0 py-1 backdrop-blur sm:hidden",
                   mobileSearchOpen && "pointer-events-none",
                 )}
                 aria-label="Flight result filters"
@@ -6961,7 +6961,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 {renderMobileSortResultsRow()}
               </section>
 
-              <div data-flight-mobile-results-intro className="space-y-3 px-3 pt-2 sm:hidden">
+              <div data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden">
                 {mobileFlightPriceAlertQuery ? <FlightPriceAlertControl query={mobileFlightPriceAlertQuery} results={providerResults} /> : null}
                 <p className="flight-results-count text-[13px] font-bold leading-[17px] tracking-[-0.005em] text-slate-900">
                   {formatMobileFlightResultsFound(sortedResults.length, t, locale)}
