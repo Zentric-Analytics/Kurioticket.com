@@ -24,7 +24,7 @@ test("mobile nearby insight, quick filters, and price alert use compact native-l
   assert.match(source, /cn\(resultStackClass, "space-y-1 sm:space-y-4"\)/);
   assert.match(source, /min-h-\[28px\][^"]*">Cheaper nearby:/);
   assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,350}py-1/);
-  assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 px-3 pt-2/);
+  assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 pt-2/);
 });
 
 test("mobile Flight Results uses the native horizontal gutter relationship", async () => {
