@@ -44,7 +44,6 @@ import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 const hotelResultStackClass = "w-full max-w-[800px] lg:max-w-[860px]";
 const desktopCompactFilterTopOffset = 116;
 const desktopCompactFilterBottomGap = 16;
-const mobileHotelSearchCloseMotionMs = 280;
 
 type DesktopCompactFilterFrame = {
   left: number;
@@ -355,7 +354,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const mobileHotelSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
   const mobileHotelSearchModalityRef = useRef<OverlayActivationModality>("programmatic");
-  const mobileHotelSearchCloseTimerRef = useRef<number | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLElement | null>(null);
   const mobileFiltersDialogRef = useRef<HTMLElement | null>(null);
   const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
@@ -551,10 +549,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }, [closeDesktopStickyHotelSearch, desktopStickyHotelSearchOpen]);
 
   const openMobileHotelSearch = useCallback((event?: ReactMouseEvent<HTMLElement>) => {
-    if (mobileHotelSearchCloseTimerRef.current !== null) {
-      window.clearTimeout(mobileHotelSearchCloseTimerRef.current);
-      mobileHotelSearchCloseTimerRef.current = null;
-    }
     setMobileHotelSearchClosing(false);
     mobileHotelSearchLauncherRef.current = event?.currentTarget ?? null;
     mobileHotelSearchModalityRef.current = event ? getOverlayActivationModality(event) : "programmatic";
@@ -563,35 +557,24 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     setMobileHotelSearchOpen(true);
   }, []);
 
+  const finishMobileHotelSearchClose = useCallback(() => {
+    setMobileHotelSearchOpen(false);
+    setMobileHotelSearchClosing(false);
+  }, []);
+
   const closeMobileHotelSearch = useCallback(() => {
     if (mobileHotelSearchClosing) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      finishMobileHotelSearchClose();
+      return;
+    }
     setMobileHotelSearchClosing(true);
-    mobileHotelSearchCloseTimerRef.current = window.setTimeout(() => {
-      mobileHotelSearchCloseTimerRef.current = null;
-      setMobileHotelSearchOpen(false);
-      setMobileHotelSearchClosing(false);
-    }, mobileHotelSearchCloseMotionMs);
-  }, [mobileHotelSearchClosing]);
+  }, [finishMobileHotelSearchClose, mobileHotelSearchClosing]);
 
   useEffect(() => {
-    const closeId = window.setTimeout(() => {
-      if (mobileHotelSearchCloseTimerRef.current !== null) {
-        window.clearTimeout(mobileHotelSearchCloseTimerRef.current);
-        mobileHotelSearchCloseTimerRef.current = null;
-      }
-      setMobileHotelSearchOpen(false);
-      setMobileHotelSearchClosing(false);
-    }, 0);
-
-    return () => window.clearTimeout(closeId);
+    setMobileHotelSearchOpen(false);
+    setMobileHotelSearchClosing(false);
   }, [bodySearchKey]);
-
-  useEffect(
-    () => () => {
-      if (mobileHotelSearchCloseTimerRef.current !== null) window.clearTimeout(mobileHotelSearchCloseTimerRef.current);
-    },
-    [],
-  );
 
   useEffect(() => {
     if (mobileHotelSearchOpen) return;
@@ -1925,6 +1908,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             smoothMotion
             isolatedBackdrop
             closing={mobileHotelSearchClosing}
+            onCloseAnimationComplete={finishMobileHotelSearchClose}
             nestedLayerOpen={mobileHotelNestedLayerOpen}
             title={t("editHotelSearch") || "Edit hotel search"}
             onClose={closeMobileHotelSearch}
