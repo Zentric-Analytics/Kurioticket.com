@@ -1800,6 +1800,12 @@ export function CarsResultsExperience({
   ],[presentation,kayak,providerResults,search.dropoffDate,search.pickupDate,search.pickupLocation]);
   const providersLoading = presentation === "standalone" && kayak?.vertical === "cars" && kayak.status === "loading";
   const [quickFilterGroupId, setQuickFilterGroupId] = useState<string | null>(null);
+  const [quickFilterDraft, setQuickFilterDraft] = useState<string[]>([]);
+  const [quickSortDraft, setQuickSortDraft] = useState<CarSort>("recommended");
+  const [quickFilterUpdating, setQuickFilterUpdating] = useState(false);
+  const [quickSheetClosing, setQuickSheetClosing] = useState(false);
+  const quickFilterFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const quickSheetCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mobileFiltersOverlayOpen = filtersOpen || quickFilterGroupId !== null;
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
@@ -2049,10 +2055,39 @@ export function CarsResultsExperience({
     setQuickFilterGroupId(null);
     setFiltersOpen(true);
   };
+  const markQuickFilterUpdating = () => {
+    if (quickFilterFeedbackTimerRef.current) clearTimeout(quickFilterFeedbackTimerRef.current);
+    setQuickFilterUpdating(true);
+    quickFilterFeedbackTimerRef.current = setTimeout(() => setQuickFilterUpdating(false), 400);
+  };
+  const closeQuickFilter = () => {
+    if (quickSheetClosing || quickFilterGroupId === null) return;
+    setQuickSheetClosing(true);
+    quickSheetCloseTimerRef.current = setTimeout(() => {
+      setQuickFilterGroupId(null);
+      setQuickSheetClosing(false);
+      setQuickFilterUpdating(false);
+    }, 220);
+  };
+  const openQuickFilter = (kind: string, launcher: HTMLButtonElement, modality: OverlayActivationModality) => {
+    if (quickSheetCloseTimerRef.current) clearTimeout(quickSheetCloseTimerRef.current);
+    mobileFiltersLauncherRef.current = launcher;
+    mobileFiltersModalityRef.current = modality;
+    setQuickFilterDraft(kind === "sort" ? [] : [...(selectedCarFilters[kind] ?? [])]);
+    setQuickSortDraft(sort);
+    setQuickFilterUpdating(false);
+    setQuickSheetClosing(false);
+    setFiltersOpen(false);
+    setQuickFilterGroupId(kind);
+  };
   useEffect(
     () => () => {
       if (resultsTransitionTimerRef.current)
         clearTimeout(resultsTransitionTimerRef.current);
+      if (quickFilterFeedbackTimerRef.current)
+        clearTimeout(quickFilterFeedbackTimerRef.current);
+      if (quickSheetCloseTimerRef.current)
+        clearTimeout(quickSheetCloseTimerRef.current);
     },
     [],
   );
@@ -2114,8 +2149,8 @@ export function CarsResultsExperience({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        setFiltersOpen(false);
-        setQuickFilterGroupId(null);
+        if (quickFilterGroupId) closeQuickFilter();
+        else setFiltersOpen(false);
       }
       const dialog = activeDialogRef.current;
       if (event.key === "Tab" && dialog) {
@@ -2489,10 +2524,7 @@ export function CarsResultsExperience({
                       aria-expanded={quickFilterGroupId === "sort"}
                       aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
                       onClick={(event) => {
-                        mobileFiltersLauncherRef.current = event.currentTarget;
-                        mobileFiltersModalityRef.current = getOverlayActivationModality(event);
-                        setFiltersOpen(false);
-                        setQuickFilterGroupId("sort");
+                        openQuickFilter("sort", event.currentTarget, getOverlayActivationModality(event));
                       }}
                       className="group inline-flex min-h-11 min-w-11 shrink-0 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
                     >
@@ -2510,10 +2542,7 @@ export function CarsResultsExperience({
                           aria-haspopup="dialog"
                           aria-expanded={quickFilterGroupId === group.id}
                           onClick={(event) => {
-                            mobileFiltersLauncherRef.current = event.currentTarget;
-                            mobileFiltersModalityRef.current = getOverlayActivationModality(event);
-                            setFiltersOpen(false);
-                            setQuickFilterGroupId(group.id);
+                            openQuickFilter(group.id, event.currentTarget, getOverlayActivationModality(event));
                           }}
                           className={cn(
                             "group inline-flex min-h-11 min-w-11 shrink-0 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35",
@@ -2883,39 +2912,61 @@ export function CarsResultsExperience({
           </footer>
         </aside>
       ) : null}
-      {quickFilterGroupId === "sort" && typeof document !== "undefined" ? createPortal(
-        <div data-cars-quick-sheet-backdrop className="fixed inset-0 z-[10010] flex items-end bg-slate-950/35 backdrop-blur-[1px] lg:hidden" role="presentation" onMouseDown={() => setQuickFilterGroupId(null)}>
-          <section data-cars-quick-sheet ref={quickFiltersDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="cars-quick-sort" onMouseDown={(event) => event.stopPropagation()} className="max-h-[min(76dvh,620px)] w-full overflow-hidden rounded-t-[24px] bg-[#F6F8FB] shadow-2xl">
-            <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3"><div><h2 id="cars-quick-sort" className="text-lg font-bold text-slate-950">Sort</h2><p className="text-xs font-medium text-slate-500">Choose one option</p></div>
-              <button ref={quickFiltersCloseButtonRef} type="button" aria-label="Close" onClick={() => setQuickFilterGroupId(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><X className="h-5 w-5" aria-hidden="true" /></button>
+      {quickFilterGroupId && (quickFilterGroupId === "sort" || activeQuickFilterGroup) && typeof document !== "undefined" ? createPortal(
+        <div
+          data-cars-quick-sheet-backdrop
+          className={cn("cars-native-quick-backdrop fixed inset-0 z-[10010] flex items-end bg-[rgba(15,23,42,0.35)] lg:hidden", quickSheetClosing && "cars-native-quick-backdrop--closing")}
+          role="presentation"
+          onMouseDown={closeQuickFilter}
+        >
+          <section
+            data-cars-quick-sheet
+            ref={quickFiltersDialogRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`cars-quick-${quickFilterGroupId}`}
+            onMouseDown={(event) => event.stopPropagation()}
+            className={cn("cars-native-quick-sheet mx-3 mb-3 flex min-h-[240px] max-h-[min(76dvh,620px)] w-[calc(100%-24px)] flex-col overflow-hidden rounded-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]", quickSheetClosing && "cars-native-quick-sheet--closing")}
+          >
+            <header className="grid min-h-[76px] shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-center bg-[#F2F4F8] px-[10px]">
+              <span aria-hidden="true" className="h-11 w-11" />
+              <h2 id={`cars-quick-${quickFilterGroupId}`} className="text-center text-[18px] font-bold leading-[23px] text-slate-950">
+                {quickFilterGroupId === "sort" ? "Sort" : carFilterGroupLabel(activeQuickFilterGroup!, t, true)}
+              </h2>
+              <button ref={quickFiltersCloseButtonRef} type="button" aria-label="Close" onClick={closeQuickFilter} className="inline-flex h-11 w-11 items-center justify-center text-slate-700 focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
+                <X className="h-[22px] w-[22px]" aria-hidden="true" />
+              </button>
             </header>
-            <div className="max-h-[calc(min(76dvh,620px)-9rem)] overflow-y-auto overscroll-contain px-4 py-4">
-              {carSortOptions.map((option) => (
-                <button key={option.value} type="button" role="radio" aria-checked={sort === option.value} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-start text-sm font-semibold text-slate-800 hover:bg-slate-50" onClick={() => { if (option.value !== sort) { setTransition(); setCurrentPage(1); setSort(option.value); } setQuickFilterGroupId(null); }}>
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-slate-300 text-xs text-[#004BB8]">{sort === option.value ? "✓" : ""}</span>
-                  <span className="min-w-0 flex-1">{option.label}</span>
-                </button>
-              ))}
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#F2F4F8] p-4">
+              {quickFilterGroupId === "sort" ? (
+                <div role="radiogroup">
+                  {carSortOptions.map((option) => {
+                    const descriptions: Record<CarSort, string> = { recommended: "Best overall value first", lowestTotal: "Lowest rental total first", topRated: "Highest supplier rating first" };
+                    return <button key={option.value} type="button" role="radio" aria-checked={quickSortDraft === option.value} className="flex min-h-[52px] w-full items-center px-[10px] py-[7px] text-start text-slate-950 focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35" onClick={() => { markQuickFilterUpdating(); setQuickSortDraft(option.value); }}>
+                      <span className="min-w-0 flex-1"><span className="block text-sm font-semibold leading-5">{option.label}</span><span className="block text-[10.5px] font-medium leading-[14px] text-slate-500">{descriptions[option.value]}</span></span>
+                      {quickSortDraft === option.value ? <Check className="h-[17px] w-[17px] shrink-0 text-[#004BB8]" aria-hidden="true" /> : null}
+                    </button>;
+                  })}
+                </div>
+              ) : activeQuickFilterGroup!.options.map((option) => {
+                const selected = quickFilterDraft.includes(option.id);
+                return <label key={option.id} className="flex min-h-[52px] cursor-pointer items-center gap-[10px] px-[10px] focus-within:rounded-lg focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/35 rtl:flex-row-reverse">
+                  <input type="checkbox" checked={selected} onChange={() => { markQuickFilterUpdating(); setQuickFilterDraft((current) => current.includes(option.id) ? current.filter((id) => id !== option.id) : [...current, option.id]); }} className="peer sr-only" />
+                  <span aria-hidden="true" className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border-[1.5px]", selected ? "border-[#004BB8] bg-[#004BB8]" : "border-[#D8DEE8]")}>{selected ? <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} /> : null}</span>
+                  <span className="min-w-0 flex-1 text-start text-sm font-semibold leading-5 text-slate-950">{option.label ?? t(option.labelKey)}</span>
+                  {typeof option.count === "number" ? <span className="shrink-0 text-end text-[13px] font-medium tabular-nums text-slate-500">{option.count}</span> : null}
+                </label>;
+              })}
             </div>
-            <footer className="border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3"><Button type="button" className="h-12 w-full rounded-xl bg-[#004BB8] text-white" onClick={() => setQuickFilterGroupId(null)}>Apply</Button></footer>
+            <footer className="flex shrink-0 items-center gap-[10px] bg-[#F2F4F8] px-4 pb-[max(12px,calc(env(safe-area-inset-bottom)-12px))] pt-3">
+              <button type="button" onClick={() => { markQuickFilterUpdating(); if (quickFilterGroupId === "sort") setQuickSortDraft("recommended"); else setQuickFilterDraft([]); }} className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">Reset</button>
+              <button type="button" disabled={quickFilterUpdating} onClick={() => { setTransition(); setCurrentPage(1); if (quickFilterGroupId === "sort") setSort(quickSortDraft); else setSelectedCarFilters((current) => { const next = { ...current }; if (quickFilterDraft.length) next[quickFilterGroupId] = [...quickFilterDraft]; else delete next[quickFilterGroupId]; return next; }); closeQuickFilter(); }} className="flex h-[49px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-3 text-[15px] font-bold text-white disabled:cursor-wait disabled:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2">
+                {quickFilterUpdating ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/45 border-t-white motion-reduce:animate-none" aria-hidden="true" /><span>Updating filters…</span></> : "Apply"}
+              </button>
+            </footer>
           </section>
         </div>, document.body) : null}
-      {activeQuickFilterGroup ? createPortal(
-          <div data-cars-quick-sheet-backdrop className="fixed inset-0 z-[10010] flex items-end bg-slate-950/35 backdrop-blur-[1px] lg:hidden" role="presentation" onMouseDown={() => setQuickFilterGroupId(null)}>
-            <section data-cars-quick-sheet ref={quickFiltersDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={`cars-quick-${activeQuickFilterGroup.id}`} onMouseDown={(event) => event.stopPropagation()} className="max-h-[min(76dvh,620px)] w-full overflow-hidden rounded-t-[24px] bg-[#F6F8FB] shadow-2xl">
-              <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-                <div><h2 id={`cars-quick-${activeQuickFilterGroup.id}`} className="text-lg font-extrabold text-slate-950">{carFilterGroupLabel(activeQuickFilterGroup, t, true)}</h2>{(selectedCarFilters[activeQuickFilterGroup.id]?.length ?? 0) > 0 ? <p className="mt-0.5 text-xs font-semibold text-[#536B92]">{selectedCarFilters[activeQuickFilterGroup.id]?.length} selected</p> : null}</div>
-                <button ref={quickFiltersCloseButtonRef} type="button" aria-label="Close" onClick={() => setQuickFilterGroupId(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><X className="h-5 w-5" aria-hidden="true" /></button>
-              </header>
-              <div className="max-h-[calc(min(76dvh,620px)-9rem)] overflow-y-auto overscroll-contain px-4 py-4">
-                {activeQuickFilterGroup.options.map((option) => {
-                  const selected = selectedCarFilters[activeQuickFilterGroup.id]?.includes(option.id) ?? false;
-                  return <label key={option.id} className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl px-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"><input type="checkbox" checked={selected} onChange={() => toggleCarFilter(activeQuickFilterGroup.id, option.id)} className="h-5 w-5 rounded border-slate-300 accent-blue" /><span className="min-w-0 flex-1">{option.label ?? t(option.labelKey)}</span>{typeof option.count === "number" ? <span className="text-xs tabular-nums text-slate-500">{option.count}</span> : null}</label>;
-                })}
-              </div>
-              <footer className="flex items-center gap-3 border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">{(selectedCarFilters[activeQuickFilterGroup.id]?.length ?? 0) > 0 ? <Button type="button" variant="secondary" className="h-12 min-w-24 rounded-xl" onClick={() => { setSelectedCarFilters((current) => { const next = {...current}; delete next[activeQuickFilterGroup.id]; return next; }); setCurrentPage(1); }}>{t("clearAll")}</Button> : null}<Button type="button" className="h-12 flex-1 rounded-xl bg-[#004BB8] text-white" onClick={() => setQuickFilterGroupId(null)}>Apply</Button></footer>
-            </section>
-          </div>, document.body) : null}
       {!guidedPlanning && showBackToTop && !filtersOpen ? (
         <button
           type="button"
