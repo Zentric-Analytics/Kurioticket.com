@@ -14,7 +14,7 @@ test("final mobile Flight Results order and controls remain intact", () => {
   const cards = results.indexOf("data-mobile-continuous-flight-list");
 
   assert.ok(summary >= 0 && summary < nearby);
-  assert.doesNotMatch(results, /aria-label="Go back"|renderMobileCompactResultsHeader/);
+  assert.match(results, /aria-label="Go back"/);\n  assert.match(results, /renderMobileCompactResultsHeader/);\n  assert.match(results, /data-flight-results-compact-header/);
   assert.match(results, /aria-label=\{t\("editFlightSearch"\)\}/);
   assert.ok(nearby >= 0 && nearby < shortcuts && shortcuts < alert && alert < count && count < cards);
   assert.match(results, /<span>Filters<\/span>/);
