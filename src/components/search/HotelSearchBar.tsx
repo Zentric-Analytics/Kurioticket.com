@@ -1092,7 +1092,7 @@ export function HotelSearchBar({
               data-hotel-results-edit-fields={
                 mobileResultsSheet ? "" : undefined
               }
-              className={mobileResultsSheet ? "flex flex-col gap-3" : "contents"}
+              className={mobileResultsSheet ? "flex flex-col gap-2" : "contents"}
             >
             <label
               ref={destinationWrapperRef}
@@ -1104,10 +1104,10 @@ export function HotelSearchBar({
                 "lg:rounded-s-xl",
                 shouldShowDestinationSuggestions && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-[72px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-none hover:bg-slate-50 focus-within:bg-white focus-within:ring-0",
+                  "min-h-16 rounded-[12px] border border-[#D8E1EC] bg-white px-4 py-2 shadow-[0_2px_8px_rgba(15,23,42,0.035)] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25",
               )}
             >
-              <span className={fieldLabelClassName}>
+              <span className={cn(fieldLabelClassName, mobileResultsSheet && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
                 {t("hotelSearchDestinationLabel")}
               </span>
               <span className="relative block">
@@ -1133,7 +1133,7 @@ export function HotelSearchBar({
                     "flex items-center gap-2 text-start sm:hidden",
                     !mobileLandingPresentation && "justify-between pe-2",
                     mobileResultsSheet &&
-                      "mt-1 h-auto min-h-5 justify-start gap-0 pe-0 text-[16px] font-semibold leading-5",
+                      "mt-0.5 h-auto min-h-6 justify-start gap-0 pe-0 text-[16px] font-medium leading-5 text-slate-900",
                   )}
                 >
                   {mobileLandingPresentation || mobileResultsSheet ? (
@@ -1294,10 +1294,10 @@ export function HotelSearchBar({
                 fieldClassName,
                 datesOpen && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-[72px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-none hover:bg-slate-50 focus-within:bg-white focus-within:ring-0",
+                  "min-h-16 rounded-[12px] border border-[#D8E1EC] bg-white px-4 py-2 shadow-[0_2px_8px_rgba(15,23,42,0.035)] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25",
               )}
             >
-              <span className={fieldLabelClassName}>
+              <span className={cn(fieldLabelClassName, mobileResultsSheet && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
                 {t("hotelSearchTravelDatesLabel")}
               </span>
               <button
@@ -1314,7 +1314,7 @@ export function HotelSearchBar({
                   valueControlClassName,
                   "flex items-center gap-1.5 text-start",
                   mobileResultsSheet &&
-                    "mt-1 grid h-auto min-h-5 grid-cols-[20px_minmax(0,1fr)_16px] items-center gap-2.5 text-[15px] font-semibold leading-5",
+                    "mt-0.5 grid h-auto min-h-6 grid-cols-[20px_minmax(0,1fr)_16px] items-center gap-2 text-[16px] font-medium leading-5 text-slate-900",
                 )}
               >
                 <Calendar
@@ -1475,10 +1475,10 @@ export function HotelSearchBar({
                 fieldClassName,
                 guestsRoomsOpen && "z-[1000]",
                 mobileResultsSheet &&
-                  "min-h-[72px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-none hover:bg-slate-50 focus-within:bg-white focus-within:ring-0",
+                  "min-h-16 rounded-[12px] border border-[#D8E1EC] bg-white px-4 py-2 shadow-[0_2px_8px_rgba(15,23,42,0.035)] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25",
               )}
             >
-              <span className={fieldLabelClassName}>
+              <span className={cn(fieldLabelClassName, mobileResultsSheet && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
                 {t("hotelSearchGuestsLabel")}
               </span>
               <button
@@ -1495,7 +1495,7 @@ export function HotelSearchBar({
                   valueControlClassName,
                   "flex items-center justify-between gap-1.5 text-start",
                   mobileResultsSheet &&
-                    "mt-1 grid h-auto min-h-5 grid-cols-[20px_minmax(0,1fr)_16px] items-center gap-2.5 text-[16px] font-semibold leading-5",
+                    "mt-0.5 grid h-auto min-h-6 grid-cols-[20px_minmax(0,1fr)_16px] items-center gap-2 text-[16px] font-medium leading-5 text-slate-900",
                 )}
               >
                 <span className={cn("flex min-w-0 items-center gap-2", mobileResultsSheet && "contents")}>
@@ -1687,7 +1687,7 @@ export function HotelSearchBar({
                         mobileSearchOpen &&
                           cn(
                             "mt-3 h-12 rounded-[11px] text-[15px] sm:mt-0 sm:h-[54px] sm:rounded-xl lg:rounded-s-none",
-                            mobileResultsSheet && "mt-0 h-[52px] rounded-[13px] text-[16px] font-semibold shadow-none active:bg-[#003f9c]",
+                            mobileResultsSheet && "mt-[13px] h-12 rounded-[10px] text-[15px] font-semibold shadow-none active:bg-[#003f9c]",
                           ),
                       )
                     : !isStickyDialog
