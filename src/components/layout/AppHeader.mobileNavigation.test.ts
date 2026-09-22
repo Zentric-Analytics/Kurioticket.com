@@ -97,3 +97,10 @@ test("results navbar drawer uses pathname-aware product highlighting", () => {
   assert.match(headerSource, /href\.startsWith\("\/flights"\)[\s\S]*pathname\.startsWith\("\/flights"\)/);
   assert.match(headerSource, /href\.startsWith\("\/hotels"\)[\s\S]*pathname\.startsWith\("\/hotels"\)/);
 });
+
+test("results navbar accepts a custom leading action while preserving the default menu launcher", () => {
+  assert.match(headerSource, /mobileResultsLeadingAction\?: ReactNode/);
+  assert.match(headerSource, /mobileResultsLeadingAction \?\?/);
+  assert.match(headerSource, /kurioticket-icon-blue\.svg/);
+  assert.match(headerSource, /aria-controls="mobile-menu-drawer"/);
+});

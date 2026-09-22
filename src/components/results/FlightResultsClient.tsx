@@ -6429,6 +6429,26 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     );
   }
 
+  function renderMobileResultsBackButton() {
+    return (
+      <button
+        type="button"
+        aria-label="Go back"
+        onClick={() => {
+          if (typeof window !== "undefined" && window.history.length > 1) {
+            router.back();
+            return;
+          }
+
+          router.push("/flights");
+        }}
+        className="focus-ring flex h-11 w-12 shrink-0 items-center justify-center rounded-lg text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+      >
+        <ChevronLeft className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
+      </button>
+    );
+  }
+
   function renderMobileRouteSummaryCard() {
     return (
       <button
@@ -6509,7 +6529,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     if (guidedMode) return <section aria-labelledby="deals-guided-flight-results-heading" className="mt-6" data-flight-results-experience="deals-guided"><h2 id="deals-guided-flight-results-heading" tabIndex={-1} className="text-xl font-extrabold text-slate-950">{t("deals.guided.flightResults.loadingTitle")}</h2><div ref={loadingFocusRef} role="status" tabIndex={-1} className="mt-4 space-y-3"><FlightCardSkeleton /><FlightCardSkeleton /></div></section>;
     return (
       <>
-      <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs mobileResultsSearch={renderMobileRouteSummaryCard()} />
+      <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs mobileResultsLeadingAction={renderMobileResultsBackButton()} mobileResultsSearch={renderMobileRouteSummaryCard()} />
       {renderMobileEditSearchDrawer()}
       <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
         <BrandedLoading

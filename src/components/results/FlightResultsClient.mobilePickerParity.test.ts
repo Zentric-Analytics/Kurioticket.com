@@ -17,8 +17,9 @@ test("Results shared drawer uses production mobile picker components", () => {
 });
 
 test("Flight Results keeps one stable AppHeader summary launcher", () => {
+  assert.match(results, /mobileResultsLeadingAction=\{renderMobileResultsBackButton\(\)\}/);
   assert.match(results, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
   assert.match(results, /data-flight-mobile-summary-card/);
-  assert.doesNotMatch(results, /renderMobileCompactResultsHeader|<ArrowLeft/);
+  assert.doesNotMatch(results, /renderMobileCompactResultsHeader/);
   assert.doesNotMatch(results, /Modify search|<Pencil|data-flight-compact-edit-icon/);
 });

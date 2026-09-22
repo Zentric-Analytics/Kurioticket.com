@@ -9,6 +9,7 @@ const source = readFileSync(
 
 test("Hotel results keeps one mobile navbar instead of replacing it on scroll", () => {
   assert.match(source, /mobileResultsSearch=/);
+  assert.doesNotMatch(source, /mobileResultsLeadingAction=/);
   assert.doesNotMatch(source, /showMobileCompactHotelSearch|mobileSearchSummarySentinelRef/);
   assert.match(source, /placement="top"/);
 });
