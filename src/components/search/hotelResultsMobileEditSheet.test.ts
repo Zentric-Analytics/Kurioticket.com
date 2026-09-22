@@ -64,6 +64,9 @@ test("Hotel results sheet uses the Cars bottom-sheet surface and motion contract
   assert.match(results, /browserCanvasColor="#ffffff"/);
   assert.match(results, /contentClassName="!pt-3 pb-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\]"/);
   assert.match(results, /closing=\{mobileHotelSearchClosing\}/);
+  assert.match(results, /onCloseAnimationComplete=\{finishMobileHotelSearchClose\}/);
+  assert.doesNotMatch(results, /mobileHotelSearchCloseTimerRef|mobileHotelSearchCloseMotionMs/);
+  assert.match(results, /prefers-reduced-motion: reduce/);
   assert.match(results, /cleanBackdrop/);
   assert.match(results, /bottomSurfaceContinuation/);
   assert.doesNotMatch(results, /placement="top"/);
