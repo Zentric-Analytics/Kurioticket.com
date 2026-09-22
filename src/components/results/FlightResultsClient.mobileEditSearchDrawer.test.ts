@@ -37,9 +37,11 @@ test("Results parent leaves Edit Search scroll locking to the drawer", () => {
   assert.match(source, /mobileFiltersScrollLockRef\.current \?\?= acquireMobileResultsScrollLock\(\)/);
 });
 
-test("Edit Search remains wired to the stable AppHeader results launcher", () => {
+test("Edit Search remains wired to the top summary and compact scroll launcher", () => {
   assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
   assert.match(source, /aria-expanded=\{mobileSearchOpen\}/);
   assert.match(source, /data-flight-results-main/);
-  assert.doesNotMatch(source, /data-flight-results-compact-header|mobileCompactHeaderVisible/);
+  assert.match(source, /data-flight-results-compact-header/);
+  assert.match(source, /mobileCompactHeaderVisible/);
+  assert.match(source, /openMobileSearchDrawer\(event\.currentTarget/);
 });
