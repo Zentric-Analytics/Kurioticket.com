@@ -56,7 +56,8 @@ test("mobile Flight Results restores the brand footer and Hotel-style Back to to
   assert.match(source, /window\.addEventListener\("scroll", update, \{ passive: true \}\)/);
   assert.match(source, /aria-label="Back to top"/);
   assert.match(source, /prefersReducedResultsMotion\(\) \? "auto" : "smooth"/);
-  assert.match(source, /focus-visible:outline-\[#004BB8\] sm:hidden/);\n  assert.match(source, /<ArrowUp className="h-\[18px\] w-\[18px\]"/);
+  assert.match(source, /focus-visible:outline-\[#004BB8\] sm:hidden/);
+  assert.match(source, /<ArrowUp className="h-\[18px\] w-\[18px\]"/);
   assert.match(source, /<Footer variant="brand-legal-only" \/>/);
   assert.doesNotMatch(source, /<div className="hidden sm:block"><Footer variant="brand-legal-only" \/><\/div>/);
 });
