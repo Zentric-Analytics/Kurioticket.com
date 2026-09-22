@@ -6,13 +6,17 @@ const resultsSource = readFileSync(
   new URL("./HotelResultsClient.tsx", import.meta.url),
   "utf8",
 );
+const resultsPageSource = readFileSync(
+  new URL("../../app/hotels/results/page.tsx", import.meta.url),
+  "utf8",
+);
 const searchBarSource = readFileSync(
   new URL("../search/HotelSearchBar.tsx", import.meta.url),
   "utf8",
 );
 
 test("Hotel Results hides only the mobile category tabs", () => {
-  const headerCall = resultsSource.match(/<AppHeader[\s\S]*?\/>/)?.[0] ?? "";
+  const headerCall = resultsPageSource.match(/<AppHeader[\s\S]*?\/>/)?.[0] ?? "";
 
   assert.match(headerCall, /hideMobileCategoryTabs/);
   assert.match(headerCall, /hideDesktopTravelNav/);
@@ -20,13 +24,14 @@ test("Hotel Results hides only the mobile category tabs", () => {
   assert.doesNotMatch(headerCall, /hideTravelNav/);
 });
 
-test("mobile Hotel search keeps the compact AppHeader results summary", () => {
-  assert.match(resultsSource, /mobileResultsSearch=\{/);
-  assert.match(resultsSource, /h-\[52px\][\s\S]*rounded-\[10px\][\s\S]*border-\[#D8E1EC\]/);
-  assert.match(resultsSource, /bg-\[#f6f8fb\][\s\S]*px-3/);
-  assert.match(resultsSource, /text-\[14px\] font-semibold leading-5/);
-  assert.match(resultsSource, /text-\[12px\] leading-4 text-slate-600/);
-  assert.match(resultsSource, /<SquarePen className="h-5 w-5/);
+test("mobile Hotel search uses the Cars floating results summary below the page navbar", () => {
+  assert.doesNotMatch(resultsSource, /mobileResultsSearch=\{/);
+  assert.match(resultsSource, /relative z-40 bg-\[#F5F7FB\] pb-0 pt-0 sm:hidden/);
+  assert.match(resultsSource, /h-\[4\.25rem\][\s\S]*rounded-xl border border-slate-200\/80 bg-white/);
+  assert.match(resultsSource, /max-w-\[30rem\]/);
+  assert.match(resultsSource, /text-\[16px\] font-bold leading-5[\s\S]*text-\[#07133B\]/);
+  assert.match(resultsSource, /text-\[12\.5px\] font-medium leading-4 text-\[#536B92\]/);
+  assert.match(resultsSource, /<SquarePen size=\{16\} strokeWidth=\{2\.2\}/);
   assert.match(searchBarSource, /mobileLayout === "controls"/);
 });
 
@@ -56,9 +61,9 @@ test("mobile Hotel shortcut rail keeps Filter Price Stars Facilities Room & bed 
   assert.match(toolbar, /overflow-x-auto/);
   assert.match(toolbar, /flex min-w-max items-center gap-2/);
   assert.doesNotMatch(toolbar, /<select/);
-  assert.match(resultsSource, /mobileResultsSearch=/);
-  assert.doesNotMatch(resultsSource, /relative translate-y-1\/2/);
-  assert.doesNotMatch(resultsSource, /absolute inset-x-0 top-1\/2[\s\S]*?bg-slate-300/);
+  assert.doesNotMatch(resultsSource, /mobileResultsSearch=/);
+  assert.match(resultsSource, /relative translate-y-1\/2/);
+  assert.match(resultsSource, /absolute inset-x-0 top-1\/2[\s\S]*?bg-slate-300/);
   assert.match(resultsSource, /hidden shrink-0 flex-nowrap[\s\S]*?sm:flex/);
 });
 

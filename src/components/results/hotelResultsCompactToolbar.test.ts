@@ -176,9 +176,11 @@ test("Hotel sticky lifecycle and neighboring search/filter contracts remain inta
   assert.match(source, /desktopCompactFilterTopOffset = 116/);
 });
 
-test("mobile hotel search stays in one navbar with an edit icon", () => {
-  assert.match(source, /mobileResultsSearch=/);
-  assert.match(source, /<SquarePen/);
-  assert.match(source, /aria-haspopup="dialog" aria-expanded=\{mobileHotelSearchOpen\}/);
+test("mobile hotel search mirrors the Cars floating search-summary treatment", () => {
+  assert.doesNotMatch(source, /mobileResultsSearch=/);
+  assert.match(source, /relative translate-y-1\/2/);
+  assert.match(source, /h-\[4\.25rem\][\s\S]*max-w-\[30rem\]/);
+  assert.match(source, /<SquarePen size=\{16\} strokeWidth=\{2\.2\}/);
+  assert.match(source, /aria-haspopup="dialog"[\s\S]*aria-expanded=\{mobileHotelSearchOpen\}/);
   assert.doesNotMatch(source, /showMobileCompactHotelSearch/);
 });

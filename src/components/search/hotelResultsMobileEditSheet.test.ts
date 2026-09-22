@@ -10,9 +10,9 @@ const results = read("../results/HotelResultsClient.tsx");
 test("Hotel results editor keeps three canonical independent field cards", () => {
   assert.match(searchBar, /compact && !mobileResultsSheet \? \(/);
   assert.match(searchBar, /data-hotel-results-edit-fields=/);
-  assert.match(searchBar, /className=\{mobileResultsSheet \? "flex flex-col gap-3" : "contents"\}/);
+  assert.match(searchBar, /className=\{mobileResultsSheet \? "flex flex-col gap-2" : "contents"\}/);
   assert.equal(searchBar.match(/data-hotel-mobile-edit-row=/g)?.length, 3);
-  assert.equal(searchBar.match(/min-h-\[72px\] rounded-2xl border border-slate-200 bg-white px-4 py-3/g)?.length, 3);
+  assert.equal(searchBar.match(/min-h-16 rounded-\[12px\] border border-\[#D8E1EC\] bg-white px-4 py-2/g)?.length, 3);
   assert.doesNotMatch(searchBar, /mobileResultsEditGroupClass/);
 
   const fieldsStart = searchBar.indexOf("data-hotel-results-edit-fields");
@@ -39,11 +39,12 @@ test("Hotel Results keeps page summaries mounted but omits the sheet summary", (
   assert.doesNotMatch(searchBar.slice(form), /\{mobileSearchSummary\}/);
 });
 
-test("hotel editing keeps a single mounted navbar and top-opening sheet", () => {
-  assert.match(results, /mobileResultsSearch=/);
-  assert.match(results, /placement="top"/);
+test("hotel editing follows the Cars floating-summary and bottom-sheet structure", () => {
+  assert.doesNotMatch(results, /mobileResultsSearch=/);
+  assert.doesNotMatch(results, /placement="top"/);
+  assert.match(results, /h-\[4\.25rem\][\s\S]*max-w-\[30rem\]/);
+  assert.match(results, /cleanBackdrop[\s\S]*bottomSurfaceContinuation[\s\S]*smoothMotion[\s\S]*isolatedBackdrop/);
   assert.match(results, /aria-expanded=\{mobileHotelSearchOpen\}/);
-  assert.doesNotMatch(results, /showMobileCompactHotelSearch/);
 });
 
 test("Hotel results cards place their icons and approved affordances in value rows", () => {
@@ -59,10 +60,13 @@ test("Hotel results cards place their icons and approved affordances in value ro
   assert.equal((searchBar.match(/<ChevronRight aria-hidden="true" className=/g) ?? []).length, 2);
 });
 
-test("Hotel results sheet uses a white top-opening surface", () => {
+test("Hotel results sheet uses the Cars bottom-sheet surface and motion contract", () => {
   assert.match(results, /browserCanvasColor="#ffffff"/);
-  assert.match(results, /contentClassName="!pt-3 bg-white/);
+  assert.match(results, /contentClassName="!pt-3 pb-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\]"/);
   assert.match(results, /closing=\{mobileHotelSearchClosing\}/);
+  assert.match(results, /cleanBackdrop/);
+  assert.match(results, /bottomSurfaceContinuation/);
+  assert.doesNotMatch(results, /placement="top"/);
   assert.match(sheet, /placement === "top"/);
 });
 

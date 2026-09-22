@@ -26,8 +26,12 @@ test("flight AppHeader summary remains mounted while Edit Search owns its overla
   assert.match(flights, /data-flight-mobile-results-shortcuts[\s\S]*inert=\{mobileSearchOpen \? true : undefined\}/);
 });
 
-test("hotel mobile results summary stays mounted beneath Edit Search", () => {
-  assert.match(hotelResults, /mobileResultsSearch=\{/);
+test("hotel mobile results summary stays mounted beneath Edit Search like Cars", () => {
+  assert.doesNotMatch(hotelResults, /mobileResultsSearch=\{/);
+  assert.match(hotelResults, /inert=\{mobileHotelSearchOpen \? true : undefined\}/);
+  assert.match(hotelResults, /aria-hidden=\{mobileHotelSearchOpen \? true : undefined\}/);
+  assert.match(hotelResults, /mobileHotelSearchOpen && "pointer-events-none"/);
+  assert.match(hotelResults, /relative translate-y-1\/2/);
   assert.match(hotelResults, /<MobileResultsEditSheet/);
   assert.match(hotelSearch, /compact && !mobileResultsSheet \? \(/);
 });

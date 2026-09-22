@@ -456,7 +456,7 @@ export function HotelCard({
   }
 
   return (
-    <Card className="relative mx-auto w-full max-w-[800px] overflow-hidden rounded-xl border-slate-200/80 bg-white shadow-[0_2px_6px_rgba(2,28,43,0.08)] transition sm:rounded-2xl sm:border-slate-200 sm:shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] sm:hover:-translate-y-0.5 sm:hover:border-slate-300 sm:hover:shadow-[0_22px_50px_-24px_rgba(2,28,43,0.30)] focus-within:border-[#004BB8]/40 focus-within:ring-2 focus-within:ring-[#004BB8]/10 motion-reduce:transform-none motion-reduce:transition-none sm:w-full lg:mx-0 lg:max-w-none">
+    <Card className="relative mx-auto w-full max-w-[800px] overflow-hidden rounded-[13px] border-[#D8E1EC] bg-[#E7EBF1] shadow-[0_2px_10px_rgba(24,48,91,0.08)] transition sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] sm:hover:-translate-y-0.5 sm:hover:border-slate-300 sm:hover:shadow-[0_22px_50px_-24px_rgba(2,28,43,0.30)] focus-within:border-[#004BB8]/40 focus-within:ring-2 focus-within:ring-[#004BB8]/10 motion-reduce:transform-none motion-reduce:transition-none sm:w-full lg:mx-0 lg:max-w-none">
       {resolvedDetailsHref ? (
         <Link
           href={resolvedDetailsHref}
@@ -468,11 +468,11 @@ export function HotelCard({
       {providerLabel ? <p className="hidden px-4 pt-3 text-xs font-semibold text-amber-800 sm:block">{providerLabel}</p> : null}
       <div
         data-hotel-card-mobile-grid
-        className="grid min-h-[236px] grid-cols-[35%_minmax(0,1fr)] sm:min-h-[244px] sm:grid-cols-[39%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[clamp(280px,36%,340px)_minmax(0,1fr)]"
+        className="grid min-h-[156px] grid-cols-[40%_minmax(0,1fr)] sm:min-h-[244px] sm:grid-cols-[39%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[clamp(280px,36%,340px)_minmax(0,1fr)]"
       >
         <div
           data-hotel-card-image
-          className="relative h-full min-h-[236px] sm:min-h-[244px] overflow-hidden bg-slate-200 md:min-h-[230px] lg:min-h-[240px]"
+          className="relative h-full min-h-[156px] overflow-hidden bg-white sm:min-h-[244px] sm:bg-slate-200 md:min-h-[230px] lg:min-h-[240px]"
         >
           <div className="absolute right-2 top-2 z-20 hidden items-center gap-0.5 md:flex lg:hidden">
             {renderSaveButton("flex hover:bg-white/90")}
@@ -530,14 +530,14 @@ export function HotelCard({
         </div>
         <div
           data-hotel-card-details
-          className="relative flex min-w-0 flex-col px-2.5 py-2.5 md:min-h-0 md:px-3 md:py-3"
+          className="relative flex min-w-0 flex-col bg-[#E7EBF1] px-2.5 pb-2 pt-[7px] sm:bg-white sm:py-2.5 md:min-h-0 md:px-3 md:py-3"
         >
           <div className="flex flex-1 flex-col">
             <div className="min-w-0">
               <div>
                 <div className="relative min-w-0">
                   <div className="min-w-0 sm:pe-[88px] md:pe-0 lg:pe-[88px]">
-                    <h2 className="min-w-0 text-[14px] font-semibold leading-5 text-slate-950 sm:line-clamp-2 sm:text-base sm:font-bold lg:line-clamp-2 lg:text-[17px]">
+                    <h2 className="min-w-0 text-[15px] font-bold leading-[18px] tracking-[-0.01em] text-[#07133B] sm:line-clamp-2 sm:text-base sm:font-bold sm:leading-5 sm:tracking-normal lg:line-clamp-2 lg:text-[17px]">
                       <span aria-hidden="true" className="float-end h-9 w-[76px] sm:hidden" />
                       {hotel.name}
                     </h2>
@@ -593,17 +593,17 @@ export function HotelCard({
                   </div>
                 ) : null}
 
-                <p className="mt-1 flex min-w-0 items-start gap-x-1 text-[12px] font-normal leading-4 text-[#004BB8] sm:text-[13px] sm:font-semibold lg:text-sm">
+                <p className="mt-1.5 flex min-w-0 items-start gap-x-1 text-[11px] font-medium leading-[15px] text-[#536B92] sm:mt-1 sm:text-[13px] sm:font-semibold sm:leading-4 sm:text-[#004BB8] lg:text-sm">
                   <MapPin
                     size={14}
-                    className="mt-px shrink-0 text-[#004BB8]"
+                    className="mt-px shrink-0 text-[#07133B] sm:text-[#004BB8]"
                     aria-hidden="true"
                   />
                   <span className="min-w-0 line-clamp-1 sm:line-clamp-none">{hotel.location}</span>
                 </p>
               </div>
               {reviewBand || reviewCountText ? (
-                <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[12px] font-semibold leading-4 text-slate-600 md:mt-2 md:gap-1.5">
+                <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px] font-medium leading-[15px] text-[#536B92] sm:text-[12px] sm:font-semibold sm:leading-4 sm:text-slate-600 md:mt-2 md:gap-1.5">
                   {reviewBand ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-white">
                       <span>
@@ -657,7 +657,7 @@ export function HotelCard({
                   <HotelAmenityList
                     items={collapsedAmenityItems}
                     t={t}
-                    className="grid grid-cols-1 gap-y-0.5 text-[11px] leading-4 max-sm:[&>li]:text-[11px] max-sm:[&>li]:font-normal max-sm:[&>li>svg]:h-3.5 max-sm:[&>li>svg]:w-3.5 sm:gap-y-1 sm:text-[12px] sm:leading-[18px] md:grid-cols-2 md:gap-x-3 md:gap-y-1.5 md:text-xs md:leading-4"
+                    className="grid grid-cols-1 gap-y-0.5 text-[11px] font-medium leading-[14px] text-[#536B92] max-sm:[&>li]:text-[11px] max-sm:[&>li]:font-medium max-sm:[&>li>svg]:h-3.5 max-sm:[&>li>svg]:w-3.5 sm:gap-y-1 sm:text-[12px] sm:leading-[18px] md:grid-cols-2 md:gap-x-3 md:gap-y-1.5 md:text-xs md:leading-4"
                   />
                 </div>
               ) : null}
@@ -703,13 +703,13 @@ export function HotelCard({
                     >
                       <span
                         aria-hidden="true"
-                        className="block whitespace-nowrap text-[17px] font-semibold leading-6 text-slate-950 tabular-nums sm:text-xl sm:font-bold"
+                        className="block whitespace-nowrap text-[19px] font-semibold leading-[22px] tracking-[-0.02em] text-[#07133B] tabular-nums sm:text-xl sm:font-bold sm:leading-6 sm:tracking-normal sm:text-slate-950"
                       >
                         <MobileHotelPriceText text={nightlyDisplayPrice.formatted} />
                       </span>
                       <span
                         aria-hidden="true"
-                        className="mt-0.5 block text-[11px] font-normal leading-4 text-slate-500 sm:text-xs sm:font-medium"
+                        className="mt-px block text-[10px] font-medium leading-[13px] text-[#536B92] sm:mt-0.5 sm:text-xs sm:leading-4 sm:text-slate-500"
                       >
                         {perNightLabel}
                       </span>

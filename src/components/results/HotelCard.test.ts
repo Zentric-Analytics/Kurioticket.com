@@ -60,11 +60,11 @@ test("hotel result cards retain image fallback and presentation contracts", () =
 test("hotel result cards use a horizontal image and details grid on mobile", () => {
   assert.match(
     source,
-    /data-hotel-card-mobile-grid[\s\S]*grid-cols-\[35%_minmax\(0,1fr\)\]/,
+    /data-hotel-card-mobile-grid[\s\S]*grid-cols-\[40%_minmax\(0,1fr\)\]/,
   );
   assert.match(
     source,
-    /data-hotel-card-image[\s\S]*h-full[\s\S]*min-h-\[236px\]/,
+    /data-hotel-card-image[\s\S]*h-full[\s\S]*min-h-\[156px\]/,
   );
   assert.match(source, /data-hotel-card-details/);
   assert.ok(!source.includes("h-[clamp(220px,58vw,250px)]"));
@@ -72,6 +72,14 @@ test("hotel result cards use a horizontal image and details grid on mobile", () 
   assert.match(source, /md:grid-cols-\[40%_minmax\(0,1fr\)\]/);
   assert.match(source, /lg:grid-cols-\[clamp\(280px,36%,340px\)_minmax\(0,1fr\)\]/);
   assert.match(source, /lg:max-w-none/);
+});
+
+test("mobile Hotel cards use the Cars shell and type rhythm", () => {
+  assert.match(source, /rounded-\[13px\] border-\[#D8E1EC\] bg-\[#E7EBF1\] shadow-\[0_2px_10px/);
+  assert.match(source, /text-\[15px\] font-bold leading-\[18px\][\s\S]*text-\[#07133B\]/);
+  assert.match(source, /text-\[11px\] font-medium leading-\[15px\] text-\[#536B92\]/);
+  assert.match(source, /text-\[19px\] font-semibold leading-\[22px\][\s\S]*text-\[#07133B\]/);
+  assert.match(source, /text-\[10px\] font-medium leading-\[13px\] text-\[#536B92\]/);
 });
 
 test("desktop cards narrow only the details column and remain left aligned", () => {
@@ -166,7 +174,7 @@ test("hotel result cards separate the nightly amount from its localized label", 
     source,
     /aria-hidden="true"[\s\S]*nightlyDisplayPrice\.formatted[\s\S]*aria-hidden="true"[\s\S]*perNightLabel/,
   );
-  assert.match(source, /text-\[17px\] font-semibold[\s\S]*tabular-nums[\s\S]*sm:text-xl/);
+  assert.match(source, /text-\[19px\] font-semibold leading-\[22px\][\s\S]*tabular-nums[\s\S]*sm:text-xl/);
   assert.match(source, /text-xs[\s\S]*text-slate-500/);
 });
 
@@ -246,7 +254,7 @@ test("standalone Hotel actions and attribution retain their link fallbacks", () 
 });
 
 test("hotel galleries keep imagery edge-to-edge with unobtrusive edge controls", () => {
-  assert.match(source, /data-hotel-card-image[\s\S]*overflow-hidden bg-slate-200/);
+  assert.match(source, /data-hotel-card-image[\s\S]*overflow-hidden bg-white[\s\S]*sm:bg-slate-200/);
   assert.match(source, /className="bg-slate-200 object-cover"/);
   assert.match(source, /Previous photo[\s\S]*absolute left-0[\s\S]*h-11 w-11[\s\S]*bg-transparent text-white/);
   assert.match(source, /Next photo[\s\S]*absolute right-0[\s\S]*h-11 w-11[\s\S]*bg-transparent text-white/);
