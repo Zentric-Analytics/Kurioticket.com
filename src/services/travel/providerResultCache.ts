@@ -7,6 +7,31 @@ export type ProviderDetailsVertical = "hotel" | "car";
 const TTL_MS = 30 * 60 * 1000;
 const HOTEL_SEARCH_COHORT_PREFIX = "__hotel-search-cohort__:";
 const CAR_SEARCH_COHORT_PREFIX = "__car-search-cohort__:";
+const memoryResults = new Map<string, { value: unknown; expiresAt: number }>();
+const MEMORY_RESULT_LIMIT = 500;
+
+function rememberInMemory(key: string, value: unknown, expiresAt: number) {
+  const now = Date.now();
+  for (const [candidate, entry] of memoryResults) {
+    if (entry.expiresAt <= now) memoryResults.delete(candidate);
+  }
+  if (!memoryResults.has(key) && memoryResults.size >= MEMORY_RESULT_LIMIT) {
+    const oldest = memoryResults.keys().next().value;
+    if (oldest) memoryResults.delete(oldest);
+  }
+  memoryResults.delete(key);
+  memoryResults.set(key, { value: structuredClone(value), expiresAt });
+}
+
+function readInMemory<T>(key: string, now: number): T | null {
+  const entry = memoryResults.get(key);
+  if (!entry) return null;
+  if (entry.expiresAt <= now) {
+    memoryResults.delete(key);
+    return null;
+  }
+  return structuredClone(entry.value) as T;
+}
 
 const cacheKey = (vertical: ProviderDetailsVertical, resultId: string) =>
   `${vertical}:${resultId}`;
@@ -45,6 +70,8 @@ export async function rememberProviderResults<T extends { id: string }>(
 ) {
   if (!results.length) return;
   const expiresAt = new Date(now + TTL_MS);
+  for (const result of results)
+    rememberInMemory(cacheKey(vertical, result.id), result, expiresAt.getTime());
   try {
     await Promise.all(results.map((result) => getPrisma().providerResultCache.upsert({
       where: { cacheKey: cacheKey(vertical, result.id) },
@@ -72,6 +99,8 @@ export async function getProviderResult<T>(
   resultId: string,
   now = Date.now(),
 ): Promise<T | null> {
+  const memory = readInMemory<T>(cacheKey(vertical, resultId), now);
+  if (memory) return memory;
   try {
     const row = await getPrisma().providerResultCache.findUnique({
       where: { cacheKey: cacheKey(vertical, resultId) },
@@ -114,6 +143,7 @@ export async function rememberCarSearchCohort(
 ) {
   if (!results.length) return;
   const resultId = carSearchCohortId(search);
+  rememberInMemory(cacheKey("car", resultId), results, now + TTL_MS);
   try {
     await getPrisma().providerResultCache.upsert({
       where: { cacheKey: cacheKey("car", resultId) },
@@ -137,6 +167,8 @@ export async function getCarSearchCohort(
   now = Date.now(),
 ): Promise<NormalizedCarResult[]> {
   const resultId = carSearchCohortId(search);
+  const memory = readInMemory<NormalizedCarResult[]>(cacheKey("car", resultId), now);
+  if (memory) return memory;
   try {
     const row = await getPrisma().providerResultCache.findUnique({
       where: { cacheKey: cacheKey("car", resultId) },
