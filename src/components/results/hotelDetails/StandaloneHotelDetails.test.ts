@@ -111,7 +111,7 @@ test("mobile property identity follows the hero and keeps Hotel facts readable",
     "aria-label=\"Back to hotel results\"",
     "aria-pressed={props.isSaved}",
     "data-mobile-hotel-address-row",
-    "buildHotelAddress(props.propertyDetails)",
+    "buildHotelAddress(locationProperty)",
     "title={canonicalAddress}",
     "data-mobile-property-metadata",
     "grid-cols-[1rem_minmax(0,1fr)]",
@@ -134,6 +134,22 @@ test("mobile property identity follows the hero and keeps Hotel facts readable",
   );
   assert.doesNotMatch(header, /href="#hotel-location"/);
   assert.doesNotMatch(header, /propertyDetails\.neighbourhood/);
+});
+
+test("web Hotel details preserves the native locationDetails fallback separately from property details", () => {
+  assert.match(clientSource, /locationDetails\?: PublicHotelPropertyDetails \| null/);
+  assert.match(clientSource, /locationDetails: data\.locationDetails \?\? data\.propertyDetails \?\? null/);
+  assert.match(clientSource, /setLocationDetails\(nextLocationDetails\)/);
+  assert.match(clientSource, /locationDetails=\{locationDetails\}/);
+  assert.match(source, /const locationProperty = props\.locationDetails \?\? props\.propertyDetails/);
+  assert.match(source, /buildHotelAddress\(locationProperty\)/);
+  assert.match(source, /propertyDetails=\{locationProperty\}/);
+});
+
+test("mobile Hotel Overview places provider policies and provider room name in native semantic sections", () => {
+  assert.match(source, /mobilePolicies=\{mobileProviderPolicies\}/);
+  assert.match(source, /providerRoomName=\{providerRoomName\}/);
+  assert.doesNotMatch(source, /data-mobile-provider-hotel-details/);
 });
 
 test("canonical hotel result name flows directly into the standalone title", () => {

@@ -19,6 +19,8 @@ export function HotelAboutSection({
   roomSummary,
   bedSummary,
   accessibility = [],
+  mobilePolicies = [],
+  providerRoomName = "",
   mobileAfterDescription,
 }: {
   description: string;
@@ -28,6 +30,8 @@ export function HotelAboutSection({
   roomSummary?: string;
   bedSummary?: string;
   accessibility?: string[];
+  mobilePolicies?: string[];
+  providerRoomName?: string;
   mobileAfterDescription?: ReactNode;
 }) {
   const mobilePopularAmenities = amenities.slice(0, 4);
@@ -57,6 +61,17 @@ export function HotelAboutSection({
           A property description is not available yet.
         </p>
       )}
+
+      {mobilePolicies.length ? (
+        <ul className="mt-3 space-y-1.5 text-[14px] leading-5 text-slate-600 lg:hidden" data-mobile-hotel-provider-policies>
+          {mobilePolicies.map((policy) => (
+            <li key={policy} className="flex items-start gap-2">
+              <span aria-hidden="true" className="w-3 shrink-0">•</span>
+              <span>{policy}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       {mobileAfterDescription ? (
         <div className="-mx-4 mt-5 lg:hidden" data-mobile-hotel-overview-location-slot>
@@ -121,7 +136,13 @@ export function HotelAboutSection({
               <span>{bedSummary}</span>
             </p>
           ) : null}
-          {!roomSummary && !bedSummary ? (
+          {providerRoomName && providerRoomName !== roomSummary && providerRoomName !== bedSummary ? (
+            <p className="flex items-start gap-2.5">
+              <Bed className="mt-0.5 h-[18px] w-[18px] shrink-0 text-slate-700" strokeWidth={1.5} aria-hidden="true" />
+              <span>{providerRoomName}</span>
+            </p>
+          ) : null}
+          {!roomSummary && !bedSummary && !providerRoomName ? (
             <p>Room details are confirmed when you choose a room.</p>
           ) : null}
         </div>
