@@ -23,6 +23,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   ArrowRightLeft,
+  ArrowUp,
   ChevronLeft,
   ChevronRight,
   Calendar,
@@ -1029,6 +1030,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const errorHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const emptyHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const [mobileShortcutSheet, setMobileShortcutSheet] = useState<MobileShortcutSheet | null>(null);
   const [mobileDraftSort, setMobileDraftSort] = useState<SortMode>(sortMode);
   const [mobileDraftAirlines, setMobileDraftAirlines] = useState<string[]>([]);
@@ -1383,6 +1385,20 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   const isStickySearchPanelOpen =
     isSearchCollapsed && isSearchExpandedWhileSticky;
+
+  useEffect(() => {
+    if (guidedMode || typeof window === "undefined") return undefined;
+    const update = () => {
+      setShowBackToTop(window.scrollY > 600);
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [guidedMode]);
 
   useEffect(() => {
     stickySearchPanelOpenRef.current = isStickySearchPanelOpen;
@@ -7147,7 +7163,26 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
       {renderMobileFullFiltersSheet()}
     </main>
-    <div className="hidden sm:block"><Footer variant="brand-legal-only" /></div>
+    <button
+      type="button"
+      aria-label="Back to top"
+      onClick={() =>
+        window.scrollTo({
+          top: 0,
+          behavior: prefersReducedResultsMotion() ? "auto" : "smooth",
+        })
+      }
+      className={cn(
+        "fixed right-4 z-[800] flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#004BB8] shadow-md transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:bottom-6 sm:right-6",
+        "bottom-[calc(5rem+env(safe-area-inset-bottom))]",
+        showBackToTop
+          ? "translate-y-0 opacity-100"
+          : "pointer-events-none translate-y-2 opacity-0",
+      )}
+    >
+      <ArrowUp className="h-[18px] w-[18px]" aria-hidden="true" />
+    </button>
+    <Footer variant="brand-legal-only" />
     </>
   );
 }
