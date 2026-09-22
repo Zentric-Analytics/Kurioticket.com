@@ -673,7 +673,7 @@ export function HotelCard({
                 </p>
               ) : null}
               {sourceAttributions.length ? (
-                <p className="mt-1 line-clamp-1 text-[11px] font-medium leading-4 text-slate-500 sm:hidden">
+                <p className="mt-1 line-clamp-1 text-[10px] font-normal leading-[14px] text-[#56658E] sm:hidden">
                   <span>Source: </span>
                   {allowExternalAttribution && isSafeHttpUrl(sourceAttributions[0]?.providerUri) ? (
                     <a
@@ -750,7 +750,7 @@ export function HotelCard({
                     aria-label={actionAriaLabel}
                     variant="accent"
                     size="sm"
-                    className="relative z-20 h-9 min-h-9 w-auto whitespace-nowrap rounded-lg border border-transparent bg-transparent px-0 text-[13px] font-semibold leading-4 text-[#0754F7] shadow-none sm:h-10 sm:min-h-10 sm:text-sm sm:leading-5 sm:text-[#004BB8] hover:border-transparent hover:bg-transparent hover:text-[#003B91] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 sm:h-10 sm:min-h-10 sm:border-[#004BB8] sm:bg-[#004BB8] sm:px-3.5 sm:text-white sm:hover:border-[#003B91] sm:hover:bg-[#003B91] sm:hover:text-white"
+                    className="relative z-20 h-9 min-h-9 w-auto whitespace-nowrap rounded-lg border border-transparent bg-transparent px-0 text-[13px] font-semibold leading-4 text-[#0754F7] shadow-none hover:border-transparent hover:bg-transparent hover:text-[#003B91] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 sm:h-10 sm:min-h-10 sm:border-[#004BB8] sm:bg-[#004BB8] sm:px-3.5 sm:text-sm sm:leading-5 sm:text-white sm:hover:border-[#003B91] sm:hover:bg-[#003B91] sm:hover:text-white"
                   >
                     {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
                     <ChevronRight className="h-4 w-4 sm:hidden" aria-hidden="true" />
