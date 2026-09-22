@@ -102,11 +102,13 @@ test("mobile nearby fare states match native terminology", () => {
   assert.doesNotMatch(source.slice(source.indexOf('data-nearby-fare-presentation="mobile"'), source.indexOf('data-desktop-nearby-fare-rail')), />Unavailable</);
 });
 
-test("mobile date rail precedes the sticky quick-filter rail", () => {
+test("mobile date rail precedes a non-sticky quick-filter rail", () => {
   const dateRail = source.indexOf('data-nearby-fare-presentation="mobile"');
   const shortcuts = source.indexOf("data-flight-mobile-results-shortcuts", dateRail);
   assert.ok(dateRail >= 0 && shortcuts > dateRail);
-  assert.match(source.slice(shortcuts, shortcuts + 900), /sticky top-\[calc\(72px\+env\(safe-area-inset-top\)\)\] z-30/);
+  const shortcutRegion = source.slice(shortcuts, shortcuts + 900);
+  assert.match(shortcutRegion, /-mx-\[14px\] bg-\[#F5F7FB\] px-0 py-1 sm:hidden/);
+  assert.doesNotMatch(shortcutRegion, /sticky|top-\[calc\(|backdrop-blur/);
 });
 
 test("responsive mobile sizing shows three complete dates and a fourth-date peek", () => {
