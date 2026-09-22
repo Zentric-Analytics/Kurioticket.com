@@ -7,11 +7,13 @@ const cardStart = source.indexOf("function renderMobileRouteSummaryCard(");
 const cardEnd = source.indexOf("function renderMobileEditSearchDrawer()", cardStart);
 const card = source.slice(cardStart, cardEnd);
 
-test("standalone Flight Results owns one AppHeader results navbar", () => {
+test("standalone Flight Results hands the top summary off to a Cars-style compact toolbar", () => {
   assert.match(source, /<AppHeader[\s\S]*mobileResultsLeadingAction=\{renderMobileResultsBackButton\(\)\}[\s\S]*mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
-  assert.doesNotMatch(source, /renderMobileCompactResultsHeader|renderMobileControlsRow/);
-  assert.doesNotMatch(source, /data-flight-results-compact-header|data-flight-results-top-summary/);
-  assert.doesNotMatch(source, /mobileCompactHeaderVisible|mobileSearchSummarySentinelRef/);
+  assert.match(source, /mobileResultsSticky=\{false\}/);
+  assert.match(source, /renderMobileCompactResultsHeader/);
+  assert.match(source, /data-flight-results-compact-header/);
+  assert.match(source, /mobileCompactHeaderVisible/);
+  assert.match(source, /mobileSearchSummarySentinelRef/);
   assert.match(source, /aria-label="Go back"/);
 });
 
@@ -30,6 +32,17 @@ test("loading and ready Flight Results keep the same Back leading action", () =>
       /mobileResultsLeadingAction=\{renderMobileResultsBackButton\(\)\}/,
     );
   }
+});
+
+test("compact Flight header mirrors Cars Back, Modify search, and Filters structure", () => {
+  assert.match(source, /function renderMobileCompactResultsHeader\(\)/);
+  assert.match(source, /grid-cols-\[44px_minmax\(0,1fr\)_82px\]/);
+  assert.match(source, /\{mobileRouteSummary\}/);
+  assert.match(source, /t\("deals\.results\.modifySearch"\)/);
+  assert.match(source, /data-flight-compact-edit-icon/);
+  assert.match(source, /openMobileSearchDrawer\(event\.currentTarget/);
+  assert.match(source, /openMobileFiltersDrawer\(event\.currentTarget/);
+  assert.match(source, /<span className="truncate">\{t\("filters"\)\}<\/span>/);
 });
 
 test("Flight Results uses a 44px Back navigation control in the AppHeader leading slot", () => {
