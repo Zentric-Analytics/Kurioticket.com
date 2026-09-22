@@ -18,12 +18,16 @@ function expectInteractionOnlyGating(region: string) {
   assert.doesNotMatch(region, /mobileSearchOpen && "(?:hidden|invisible|h-0|max-h-0|absolute)"/);
 }
 
-test("flight AppHeader summary remains mounted while Edit Search owns its overlay", () => {
-  assert.match(flights, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+test("flight Cars-style summary remains mounted while Edit Search owns its overlay", () => {
+  const start = flights.indexOf('<section\n        inert={mobileSearchOpen ? true : undefined}');
+  const end = flights.indexOf("{renderMobileCompactResultsHeader()}", 0);
   assert.match(flights, /function renderMobileEditSearchDrawer\(\)[\s\S]*<FlightEditSearchDrawer/);
-  assert.doesNotMatch(flights, /data-flight-results-top-summary|renderMobileControlsRow/);
+  assert.doesNotMatch(flights, /mobileResultsSearch=|mobileResultsLeadingAction=/);
+  assert.match(flights, /relative translate-y-1\/2/);
+  assert.match(flights, /renderMobileRouteSummaryCard\(\)/);
   assert.match(flights, /data-flight-mobile-results-shortcuts[\s\S]*renderMobileSortResultsRow\(\)/);
-  assert.match(flights, /data-flight-mobile-results-shortcuts[\s\S]*inert=\{mobileSearchOpen \? true : undefined\}/);
+  assert.ok(start >= 0);
+  assert.match(flights.slice(start, flights.indexOf("</section>", start) + 10), /inert=\{mobileSearchOpen \? true : undefined\}/);
 });
 
 test("hotel mobile results summary stays mounted beneath Edit Search like Cars", () => {

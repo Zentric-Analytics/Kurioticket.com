@@ -9,7 +9,9 @@ test("mobile results rhythm has no decorative divider or oversized spacer", asyn
   );
 
   assert.match(source, /data-flight-mobile-summary-card/);
-  assert.match(source, /h-\[52px\][\s\S]{0,200}rounded-\[10px\]/);
+  assert.match(source, /h-\[4\.25rem\][\s\S]{0,260}rounded-xl/);
+  assert.match(source, /relative translate-y-1\/2/);
+  assert.match(source, /bg-white pb-0 pt-0 sm:hidden/);
   assert.match(source, /data-flight-mobile-results-shortcuts/);
   assert.match(source, /pt-2/);
   assert.doesNotMatch(source, /data-flight-mobile-results-shortcuts[\s\S]{0,300}pt-12/);
@@ -62,26 +64,18 @@ test("mobile Flight Results restores the brand footer and Hotel-style Back to to
   assert.doesNotMatch(source, /<div className="hidden sm:block"><Footer variant="brand-legal-only" \/><\/div>/);
 });
 
-test("Flight Results keeps the Back leading action in both loading and ready AppHeader paths", async () => {
+test("Flight Results uses the normal AppHeader and the Cars summary below it", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
 
-  const standaloneHeaders = Array.from(
-    source.matchAll(
-      /<AppHeader[^>]*mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}[^>]*\/>/g,
-    ),
-    (match) => match[0],
+  assert.ok(
+    (source.match(/<AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs \/>/g) ?? []).length >= 2,
   );
-
-  assert.equal(standaloneHeaders.length, 2);
-  for (const header of standaloneHeaders) {
-    assert.match(
-      header,
-      /mobileResultsLeadingAction=\{renderMobileResultsBackButton\(\)\}/,
-    );
-  }
+  assert.doesNotMatch(source, /mobileResultsSearch=|mobileResultsLeadingAction=|mobileResultsSticky=/);
+  assert.match(source, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
+  assert.match(source, /relative translate-y-1\/2/);
 });
 
 test("mobile Flight Results uses the Cars-style scroll handoff header", async () => {
@@ -123,9 +117,13 @@ test("mobile Flight Results uses the Cars-style scroll handoff header", async ()
   assert.match(source, /openMobileSearchDrawer\(event\.currentTarget/);
   assert.match(source, /openMobileFiltersDrawer\(event\.currentTarget/);
   assert.match(source, /<span className="truncate">\{t\("filters"\)\}<\/span>/);
-  assert.match(source, /mobileResultsSticky=\{false\}/);
+  assert.doesNotMatch(source, /mobileResultsSticky=|mobileResultsSearch=|mobileResultsLeadingAction=/);
+  assert.match(source, /relative translate-y-1\/2/);
   assert.match(source, /ref=\{mobileSearchSummarySentinelRef\}/);
   assert.match(source, /\{renderMobileCompactResultsHeader\(\)\}/);
+  assert.match(source, /fixed inset-x-0 top-0 z-\[90\] bg-white px-3 pb-2/);
+  assert.match(source, /<ArrowLeft className="h-5 w-5" aria-hidden="true" \/>/);
+  assert.match(source, /<Pencil[\s\S]*data-flight-compact-edit-icon/);
 });
 
 test("mobile filter sheet has one contextual reset and a result-count action", async () => {

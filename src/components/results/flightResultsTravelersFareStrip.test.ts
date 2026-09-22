@@ -196,9 +196,10 @@ test("nearby fare DOM remains outside the paginated card subtree", () => {
   assert.doesNotMatch(source.slice(rail, paginatedCards), /paginationPendingPage/);
 });
 
-test("mobile Results navbar hands off to the Cars-style compact header after scroll", () => {
-  assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
-  assert.match(source, /mobileResultsSticky=\{false\}/);
+test("mobile Cars-style summary hands off to the compact header after scroll", () => {
+  assert.doesNotMatch(source, /mobileResultsSearch=|mobileResultsSticky=/);
+  assert.match(source, /relative translate-y-1\/2/);
+  assert.match(source, /renderMobileRouteSummaryCard\(\)/);
   assert.match(source, /renderMobileCompactResultsHeader/);
   assert.match(source, /mobileCompactHeaderVisible/);
   assert.match(source, /mobileSearchSummarySentinelRef/);
