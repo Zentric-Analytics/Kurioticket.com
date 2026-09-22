@@ -1080,7 +1080,7 @@ export function HotelSearchBar({
                     "lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]",
                     mobileSearchOpen &&
                       (mobileResultsSheet
-                        ? "mx-auto flex w-full max-w-xl flex-col gap-3 overflow-visible bg-transparent sm:flex sm:max-w-none"
+                        ? "mx-auto flex w-full max-w-xl flex-col gap-0 overflow-visible bg-transparent sm:flex sm:max-w-none"
                         : "mx-auto flex w-full max-w-xl flex-col gap-0 overflow-hidden rounded-[14px] border border-slate-200 bg-white divide-y divide-slate-200 sm:grid sm:max-w-none sm:gap-1.5 lg:gap-0"),
                   )
                 : !isStickyDialog
