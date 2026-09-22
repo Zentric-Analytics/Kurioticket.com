@@ -8,11 +8,20 @@ const cardEnd = source.indexOf("function renderMobileEditSearchDrawer()", cardSt
 const card = source.slice(cardStart, cardEnd);
 
 test("standalone Flight Results owns one AppHeader results navbar", () => {
-  assert.match(source, /<AppHeader[\s\S]*mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.match(source, /<AppHeader[\s\S]*mobileResultsLeadingAction=\{renderMobileResultsBackButton\(\)\}[\s\S]*mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
   assert.doesNotMatch(source, /renderMobileCompactResultsHeader|renderMobileControlsRow/);
   assert.doesNotMatch(source, /data-flight-results-compact-header|data-flight-results-top-summary/);
   assert.doesNotMatch(source, /mobileCompactHeaderVisible|mobileSearchSummarySentinelRef/);
-  assert.doesNotMatch(source, /aria-label="Go back"|<ArrowLeft/);
+  assert.match(source, /aria-label="Go back"/);
+});
+
+test("Flight Results uses a 44px Back navigation control in the AppHeader leading slot", () => {
+  assert.match(source, /function renderMobileResultsBackButton\(\)/);
+  assert.match(source, /aria-label="Go back"/);
+  assert.match(source, /h-11 w-12/);
+  assert.match(source, /<ChevronLeft className="h-5 w-5"/);
+  assert.match(source, /window\.history\.length > 1[\s\S]*router\.back\(\)/);
+  assert.match(source, /router\.push\("\/flights"\)/);
 });
 
 test("Flight summary is the Hotel-style whole-card Edit Search launcher", () => {
