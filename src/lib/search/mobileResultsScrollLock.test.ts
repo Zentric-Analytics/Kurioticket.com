@@ -105,18 +105,3 @@ test("is safe when browser globals are unavailable", () => {
     release({ restoreScroll: false });
   });
 });
-
-test("a dedicated Results owner is locked in place without creating a document scroll owner", () => {
-  const browser = installBrowser();
-  const owner = { style: { overflow: "auto" }, scrollTop: 640 } as unknown as HTMLElement;
-  const first = acquireMobileResultsScrollLock(owner);
-  const nested = acquireMobileResultsScrollLock(owner);
-  assert.equal(owner.style.overflow, "hidden");
-  assert.equal(browser.bodyStyle.position, "relative");
-  assert.equal((owner as unknown as { scrollTop: number }).scrollTop, 640);
-  first();
-  assert.equal(owner.style.overflow, "hidden");
-  nested();
-  assert.equal(owner.style.overflow, "auto");
-  assert.deepEqual(browser.calls, []);
-});

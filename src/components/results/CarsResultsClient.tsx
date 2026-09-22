@@ -548,7 +548,6 @@ export function CarsResultsClient({
   const returnLocationLauncherRef = useRef<HTMLButtonElement | null>(null);
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
-  const mobileResultsScrollOwnerRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
@@ -854,9 +853,7 @@ export function CarsResultsClient({
         dropoffTime,
         driverAge,
       };
-      mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock(
-        mobileResultsScrollOwnerRef.current,
-      );
+      mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock();
       setMobileSearchClosing(false);
       setMobileSearchOpen(true);
       setMobilePicker(null);
@@ -949,7 +946,7 @@ export function CarsResultsClient({
         isSearchSubmittingRef.current = true;
         setIsSearchSubmitting(true);
         releaseMobileSearchScrollLock({ restoreScroll: false });
-        mobileResultsScrollOwnerRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       }
 
       setMobileSearchOpen(false);
@@ -979,9 +976,7 @@ export function CarsResultsClient({
       return releaseSearchOverlay;
     }
 
-    mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock(
-      mobileResultsScrollOwnerRef.current,
-    );
+    mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock();
     return releaseSearchOverlay;
   }, [mobileSearchOpen]);
 
@@ -997,18 +992,15 @@ export function CarsResultsClient({
       }
 
       const rect = currentSentinel.getBoundingClientRect();
-      setMobileCompactHeaderVisible(
-        rect.bottom < 8 && (mobileResultsScrollOwnerRef.current?.scrollTop ?? window.scrollY) > 96,
-      );
+      setMobileCompactHeaderVisible(rect.bottom < 8 && window.scrollY > 96);
     };
 
     updateFromSentinel();
     if (typeof IntersectionObserver === "undefined" || !sentinel) {
-      const owner = mobileResultsScrollOwnerRef.current;
-      owner?.addEventListener("scroll", updateFromSentinel, { passive: true });
+      window.addEventListener("scroll", updateFromSentinel, { passive: true });
       window.addEventListener("resize", updateFromSentinel);
       return () => {
-        owner?.removeEventListener("scroll", updateFromSentinel);
+        window.removeEventListener("scroll", updateFromSentinel);
         window.removeEventListener("resize", updateFromSentinel);
       };
     }
@@ -1016,17 +1008,16 @@ export function CarsResultsClient({
     const observer = new IntersectionObserver(
       ([entry]) => {
         setMobileCompactHeaderVisible(
-          !entry.isIntersecting && (mobileResultsScrollOwnerRef.current?.scrollTop ?? window.scrollY) > 96,
+          !entry.isIntersecting && window.scrollY > 96,
         );
       },
-      { root: mobileResultsScrollOwnerRef.current, rootMargin: "-8px 0px 0px 0px", threshold: 0 },
+      { rootMargin: "-8px 0px 0px 0px", threshold: 0 },
     );
     observer.observe(sentinel);
-    const owner = mobileResultsScrollOwnerRef.current;
-    owner?.addEventListener("scroll", updateFromSentinel, { passive: true });
+    window.addEventListener("scroll", updateFromSentinel, { passive: true });
     return () => {
       observer.disconnect();
-      owner?.removeEventListener("scroll", updateFromSentinel);
+      window.removeEventListener("scroll", updateFromSentinel);
     };
   }, []);
 
@@ -1423,11 +1414,7 @@ export function CarsResultsClient({
   }
 
   return (
-    <div
-      ref={mobileResultsScrollOwnerRef}
-      data-cars-mobile-results-scroll-owner
-      className="max-sm:h-[calc(100dvh-61px-env(safe-area-inset-top))] max-sm:overflow-y-auto max-sm:overscroll-y-contain max-sm:[-webkit-overflow-scrolling:touch] sm:contents"
-    >
+    <>
     <main className="flex-1 bg-[#F5F7FB] pb-8 sm:bg-[#f6f8fb]">
       <section
         inert={mobileSearchOpen ? true : undefined}
@@ -1753,12 +1740,11 @@ export function CarsResultsClient({
           mobileSearchSummary={locationPairSummary}
           onMobileBack={() => router.push("/cars")}
           onMobileModifySearch={openMobileSearchDrawer}
-          mobileScrollOwnerRef={mobileResultsScrollOwnerRef}
         />
       </div>
     </main>
     <Footer variant="brand-legal-only" />
-    </div>
+    </>
   );
 }
 
@@ -1781,7 +1767,6 @@ export function CarsResultsExperience({
   mobileSearchSummary,
   onMobileBack,
   onMobileModifySearch,
-  mobileScrollOwnerRef,
 }: {
   results: NormalizedCarResult[];
   search: CarSearchParams;
@@ -1797,7 +1782,6 @@ export function CarsResultsExperience({
   mobileSearchSummary?: string;
   onMobileBack?: () => void;
   onMobileModifySearch?: (launcher?: HTMLElement | null) => void;
-  mobileScrollOwnerRef?: RefObject<HTMLDivElement | null>;
   detailsHrefForCar: (car: NormalizedCarResult) => string | null;
   actionLabel?: string;
   actionAriaLabelForCar?: (car: NormalizedCarResult) => string;
@@ -1986,13 +1970,11 @@ export function CarsResultsExperience({
   useEffect(() => {
     if (guidedPlanning) return undefined;
     const update = () =>
-      setShowBackToTop((mobileScrollOwnerRef?.current?.scrollTop ?? window.scrollY) >= CAR_BACK_TO_TOP_SCROLL_THRESHOLD);
+      setShowBackToTop(window.scrollY >= CAR_BACK_TO_TOP_SCROLL_THRESHOLD);
     update();
-    const owner = mobileScrollOwnerRef?.current;
-    owner?.addEventListener("scroll", update, { passive: true });
     window.addEventListener("scroll", update, { passive: true });
-    return () => { owner?.removeEventListener("scroll", update); window.removeEventListener("scroll", update); };
-  }, [guidedPlanning, mobileScrollOwnerRef]);
+    return () => window.removeEventListener("scroll", update);
+  }, [guidedPlanning]);
 
   const changePage = async (page: number) => {
     if (paginationPendingPage !== null || page === currentPage) return;
@@ -2008,11 +1990,8 @@ export function CarsResultsExperience({
       const anchor = resultsStartRef.current;
       if (!anchor) return;
       const stickyOffset = window.innerWidth < 640 ? 8 : 160;
-      const owner = mobileScrollOwnerRef?.current;
-      const currentTop = owner?.scrollTop ?? window.scrollY;
-      const ownerTop = owner?.getBoundingClientRect().top ?? 0;
-      const top = Math.max(0, currentTop + anchor.getBoundingClientRect().top - ownerTop - stickyOffset);
-      (owner ?? window).scrollTo({ top, behavior: "auto" });
+      const top = Math.max(0, window.scrollY + anchor.getBoundingClientRect().top - stickyOffset);
+      window.scrollTo({ top, behavior: "auto" });
     };
     setCurrentPage(page);
     setPaginationTransitionPhase("settling");
@@ -2101,7 +2080,7 @@ export function CarsResultsExperience({
     const media = window.matchMedia("(max-width: 1023px)");
     if (!media.matches) return undefined;
 
-    const releaseScrollLock = acquireMobileResultsScrollLock(mobileScrollOwnerRef?.current ?? null);
+    const releaseScrollLock = acquireMobileResultsScrollLock();
     mobileFiltersScrollLockRef.current = releaseScrollLock;
     return () => {
       releaseScrollLock();
@@ -2326,14 +2305,14 @@ export function CarsResultsExperience({
     return (
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-[90] border-b border-[#D8E1EC] bg-white px-3 pb-1 pt-[calc(0.25rem+env(safe-area-inset-top))] shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)] transition-[transform,opacity] duration-200 ease-out sm:hidden",
+          "fixed inset-x-0 top-0 z-[90] bg-white px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)] transition-[transform,opacity] duration-200 ease-out sm:hidden",
           mobileCompactToolbarVisible
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-2 opacity-0",
         )}
         aria-hidden={!mobileCompactToolbarVisible}
       >
-        <div className="mx-auto grid h-[52px] w-full max-w-3xl grid-cols-[44px_minmax(0,1fr)_82px] items-center gap-2">
+        <div className="mx-auto grid h-12 w-full max-w-3xl grid-cols-[44px_minmax(0,1fr)_82px] items-center gap-2">
           <button
             type="button"
             aria-label={t("carDetails.backToResults")}
@@ -2940,7 +2919,7 @@ export function CarsResultsExperience({
           type="button"
           aria-label="Back to top"
           onClick={() => {
-            (mobileScrollOwnerRef?.current ?? window).scrollTo({ top: 0, left: 0, behavior: "auto" });
+            window.scrollTo({ top: 0, left: 0, behavior: "auto" });
           }}
           className="fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] end-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#004BB8] shadow-lg transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
         >

@@ -13,12 +13,12 @@ test("standalone Cars owns one accessible immediate Back-to-top control", () => 
   assert.match(source, /CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 320/);
   assert.match(
     source,
-    /mobileScrollOwnerRef\?\.current\?\.scrollTop \?\? window\.scrollY\) >= CAR_BACK_TO_TOP_SCROLL_THRESHOLD/,
+    /window\.scrollY >= CAR_BACK_TO_TOP_SCROLL_THRESHOLD/,
   );
   assert.doesNotMatch(source, /window\.scrollY >= 600/);
   assert.match(
     source,
-    /\(mobileScrollOwnerRef\?\.current \?\? window\)\.scrollTo\(\{ top: 0, left: 0, behavior: "auto" \}\)/,
+    /window\.scrollTo\(\{ top: 0, left: 0, behavior: "auto" \}\)/,
   );
   assert.match(source, /h-11 w-11/);
   assert.match(source, /end-4 z-40/);

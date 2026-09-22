@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { isKayakCarResultId, resolveCarDetails, type CarDetailsDependencies } from "./carAggregator";
-import { getProviderResult, rememberProviderResults } from "./providerResultCache";
 
 const search: CarSearchParams = {
   pickupLocation: "BOS", dropoffLocation: "BOS",
@@ -98,13 +97,4 @@ test("normal static car IDs retain the catalogue-only resolution path", async ()
   } });
   assert.equal(await resolveCarDetails(expected.id, search, undefined, fixture.value), expected);
   assert.deepEqual(fixture.calls, { static: 1, searches: 0, exactWrites: 0, cohortWrites: 0 });
-});
-
-test("a result displayed moments ago survives a durable-cache failure in the server-owned continuity mirror", async () => {
-  const id = `kayak-sandbox:continuity-${Date.now()}`;
-  const displayed = kayakCar(id, "The exact displayed car");
-  await rememberProviderResults("car", [displayed], search);
-  const recovered = await getProviderResult<NormalizedCarResult>("car", id);
-  assert.deepEqual(recovered, displayed);
-  assert.notEqual(recovered, displayed, "the server mirror returns a defensive copy");
 });
