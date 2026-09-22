@@ -1150,6 +1150,12 @@ textarea {
   justify-content: center;
 }
 
+@media (max-width: 639px) {
+  .flight-results-grid {
+    width: calc(100% - 28px);
+  }
+}
+
 .flight-results-right-rail {
   display: none;
 }

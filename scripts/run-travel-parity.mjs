@@ -25,6 +25,7 @@ const matrices = {
     "src/lib/cars/carResults.test.ts",
     "src/services/travel/packageOrchestrator.test.ts",
     "src/app/api/packages/search/route.test.ts",
+    "src/components/results/flightResultsProductionPolish.test.ts",
     "src/components/results/accountCapabilityContract.test.ts",
     "src/lib/price-alerts/hotelPriceAlerts.test.ts",
     "src/services/savedRecentService.test.ts",
