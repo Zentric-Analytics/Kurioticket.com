@@ -44,7 +44,6 @@ import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 const hotelResultStackClass = "w-full max-w-[800px] lg:max-w-[860px]";
 const desktopCompactFilterTopOffset = 116;
 const desktopCompactFilterBottomGap = 16;
-const mobileHotelSearchCloseMotionMs = 280;
 
 type DesktopCompactFilterFrame = {
   left: number;
@@ -355,7 +354,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const mobileHotelSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
   const mobileHotelSearchModalityRef = useRef<OverlayActivationModality>("programmatic");
-  const mobileHotelSearchCloseTimerRef = useRef<number | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLElement | null>(null);
   const mobileFiltersDialogRef = useRef<HTMLElement | null>(null);
   const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
@@ -551,10 +549,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }, [closeDesktopStickyHotelSearch, desktopStickyHotelSearchOpen]);
 
   const openMobileHotelSearch = useCallback((event?: ReactMouseEvent<HTMLElement>) => {
-    if (mobileHotelSearchCloseTimerRef.current !== null) {
-      window.clearTimeout(mobileHotelSearchCloseTimerRef.current);
-      mobileHotelSearchCloseTimerRef.current = null;
-    }
     setMobileHotelSearchClosing(false);
     mobileHotelSearchLauncherRef.current = event?.currentTarget ?? null;
     mobileHotelSearchModalityRef.current = event ? getOverlayActivationModality(event) : "programmatic";
@@ -563,35 +557,24 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     setMobileHotelSearchOpen(true);
   }, []);
 
+  const finishMobileHotelSearchClose = useCallback(() => {
+    setMobileHotelSearchOpen(false);
+    setMobileHotelSearchClosing(false);
+  }, []);
+
   const closeMobileHotelSearch = useCallback(() => {
     if (mobileHotelSearchClosing) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      finishMobileHotelSearchClose();
+      return;
+    }
     setMobileHotelSearchClosing(true);
-    mobileHotelSearchCloseTimerRef.current = window.setTimeout(() => {
-      mobileHotelSearchCloseTimerRef.current = null;
-      setMobileHotelSearchOpen(false);
-      setMobileHotelSearchClosing(false);
-    }, mobileHotelSearchCloseMotionMs);
-  }, [mobileHotelSearchClosing]);
+  }, [finishMobileHotelSearchClose, mobileHotelSearchClosing]);
 
   useEffect(() => {
-    const closeId = window.setTimeout(() => {
-      if (mobileHotelSearchCloseTimerRef.current !== null) {
-        window.clearTimeout(mobileHotelSearchCloseTimerRef.current);
-        mobileHotelSearchCloseTimerRef.current = null;
-      }
-      setMobileHotelSearchOpen(false);
-      setMobileHotelSearchClosing(false);
-    }, 0);
-
-    return () => window.clearTimeout(closeId);
+    setMobileHotelSearchOpen(false);
+    setMobileHotelSearchClosing(false);
   }, [bodySearchKey]);
-
-  useEffect(
-    () => () => {
-      if (mobileHotelSearchCloseTimerRef.current !== null) window.clearTimeout(mobileHotelSearchCloseTimerRef.current);
-    },
-    [],
-  );
 
   useEffect(() => {
     if (mobileHotelSearchOpen) return;
@@ -1859,7 +1842,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
               inert={mobileHotelSearchOpen ? true : undefined}
               aria-hidden={mobileHotelSearchOpen ? true : undefined}
               className={cn(
-                "relative z-40 bg-[#F5F7FB] pb-0 pt-0 sm:hidden",
+                "relative z-40 bg-white pb-0 pt-0 sm:hidden",
                 mobileHotelSearchOpen && "pointer-events-none",
               )}
               aria-label={t("editHotelSearch") || "Edit hotel search"}
@@ -1925,6 +1908,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             smoothMotion
             isolatedBackdrop
             closing={mobileHotelSearchClosing}
+            onCloseAnimationComplete={finishMobileHotelSearchClose}
             nestedLayerOpen={mobileHotelNestedLayerOpen}
             title={t("editHotelSearch") || "Edit hotel search"}
             onClose={closeMobileHotelSearch}
@@ -2025,7 +2009,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           </nav>
         ) : null}
 
-        <div ref={resultsGridRef} className={cn(guided ? "grid gap-y-5 pb-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8" : "page-shell grid gap-y-5 pb-6 pt-4 sm:pt-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8")}>
+        <div ref={resultsGridRef} className={cn(guided ? "grid gap-y-5 pb-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8" : "page-shell grid gap-y-5 pb-6 pt-4 max-sm:w-[calc(100%-24px)] sm:pt-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8")}>
           <aside ref={desktopFilterSidebarRef} className="relative hidden w-[288px] self-stretch min-[1200px]:block min-[1200px]:justify-self-end">
             <div>
               <HotelFilters layout="desktop" propertyNameQuery={propertyNameQuery} setPropertyNameQuery={updatePropertyNameQuery} t={t} maxPrice={maxPrice} minPrice={minPrice} setMaxPrice={updateMaxPrice} setMinPrice={updateMinPrice} resultMaxPrice={resultMaxPrice} hasPricedResults={hasPricedResults} formatPrice={formatHotelFilterPrice} locale={locale} stayNights={stayNights} selectedRatings={selectedHotelClasses} toggleRating={toggleHotelClass} starRatingCounts={starRatingCounts} options={filterOptions} selectedFilters={selectedFilters} toggleFilter={toggleFilter} activeFilterCount={activeFilterCount} onClear={resetFilters} />
@@ -2174,7 +2158,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                   {!guided ? (
                     <div data-mobile-hotel-results-summary role="group" aria-label={t("hotelResults.summaryAria")} className="flex items-center justify-between gap-2 sm:hidden">
                       <div className="min-w-0">
-                        <h1 tabIndex={-1} className="scroll-mt-20 truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#07133B]">
+                        <h1 tabIndex={-1} className="scroll-mt-20 truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#071A48]">
                         {resultsHeading}
                       </h1>
                       {resultsDisplayRange && totalHotelResultPages > 1 ? (
@@ -2184,8 +2168,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                         </p>
                       ) : null}
                       </div>
-                      <button type="button" aria-label={`Sort hotels: ${currentSortLabel}`} aria-haspopup="dialog" aria-expanded={mobileShortcutMenu === "sort"} onClick={(event) => openMobileShortcutMenu("sort", event.currentTarget)} className="focus-ring inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg py-2 ps-2 text-[13px] font-medium text-[#536B92]">
-                        <span>Sort:</span><span className="font-semibold text-[#07133B]">{currentSortLabel}</span><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                      <button type="button" aria-label={`Sort hotels: ${currentSortLabel}`} aria-haspopup="dialog" aria-expanded={mobileShortcutMenu === "sort"} onClick={(event) => openMobileShortcutMenu("sort", event.currentTarget)} className="focus-ring inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg py-2 ps-2 text-[13px] font-medium text-[#56658E]">
+                        <span>Sort:</span><span className="font-semibold text-[#071A48]">{currentSortLabel}</span><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
                       </button>
                     </div>
                   ) : null}

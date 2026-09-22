@@ -23,12 +23,14 @@ test("opening and closing Hotel Edit Search does not reset scroll visibility", (
   const openHandler = source.match(
     /const openMobileHotelSearch = useCallback\([\s\S]*?\n\s+\}, \[\]\);/,
   )?.[0];
-  const closeHandler = source.match(
-    /const closeMobileHotelSearch = useCallback\([\s\S]*?\n\s+\}, \[\]\);/,
-  )?.[0];
+  const closeStart = source.indexOf("const closeMobileHotelSearch = useCallback");
+  const closeEnd = source.indexOf("useEffect(() =>", closeStart);
+  const closeHandler = source.slice(closeStart, closeEnd);
 
   assert.ok(openHandler);
-  assert.ok(closeHandler);
+  assert.ok(closeStart >= 0 && closeEnd > closeStart);
   assert.doesNotMatch(openHandler, /setShowMobileCompactHotelSearch/);
   assert.doesNotMatch(closeHandler, /setShowMobileCompactHotelSearch/);
+  assert.match(closeHandler, /prefers-reduced-motion: reduce/);
+  assert.match(closeHandler, /setMobileHotelSearchClosing\(true\)/);
 });
