@@ -167,6 +167,7 @@ export function HotelDetailsClient({
       setLoading(true);
       setHotel(null);
       setPropertyDetails(null);
+      setLocationDetails(null);
       setProviderDetails(null);
       setRoomOptions([]);
       setRelatedHotels([]);
