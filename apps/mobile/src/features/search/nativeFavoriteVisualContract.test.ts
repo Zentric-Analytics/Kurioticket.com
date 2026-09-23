@@ -34,7 +34,8 @@ test("every direct native interactive favorite uses the canonical stroke and fil
   assert.match(carResult, canonicalFlowHeart);
   assert.match(explore, canonicalFlowHeart);
   for (const detail of [hotelResult, hotelDetail, approvedHotelDetail]) assert.match(detail, canonicalHeart);
-  assert.match(flightDetail, /const saveColor=saveDisabled\?"#94A3B8":saved\?androidFavoriteColors\.savedStroke:androidFavoriteColors\.unsavedStroke/);\n  assert.match(flightDetail, /<Heart[^>]*strokeWidth=\{androidFavoriteColors\.strokeWidth\}[^>]*color=\{saveColor\}[^>]*fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}/);
+  assert.match(flightDetail, /const saveColor=saveDisabled\?"#94A3B8":saved\?androidFavoriteColors\.savedStroke:androidFavoriteColors\.unsavedStroke/);
+  assert.match(flightDetail, /<Heart[^>]*strokeWidth=\{androidFavoriteColors\.strokeWidth\}[^>]*color=\{saveColor\}[^>]*fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}/);
   for (const detail of [carDetail, kayakCarDetail]) assert.match(detail, /<Heart[^>]*strokeWidth=\{androidFavoriteColors\.strokeWidth\}[^>]*color=\{saved\.saved\s*\?\s*androidFavoriteColors\.savedStroke\s*:\s*light\s*\?\s*androidFavoriteColors\.unsavedStroke\s*:\s*theme\.icon\}[^>]*fill=\{saved\.saved\s*\?\s*androidFavoriteColors\.savedFill\s*:\s*androidFavoriteColors\.unsavedFill\}/);
 });
 
