@@ -172,7 +172,7 @@ export function MobileResultsEditSheet({
         >
           <div className={cn("shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 pt-2", carsResultsEdit && "border-b-0 bg-[#F5F7FB] py-0 ps-4 pe-2")}>
             <div className={cn("mx-auto flex min-h-11 w-full max-w-xl items-center justify-between gap-3", carsResultsEdit && "min-h-[52px]")}>
-              <h2 id={titleId} className={cn("text-xl font-bold tracking-[-0.01em] text-slate-950", carsResultsEdit && "text-[18px] font-semibold leading-[23px] tracking-normal")}>{title}</h2>
+              <h2 id={titleId} className={cn("text-xl font-bold tracking-[-0.01em] text-slate-950", carsResultsEdit && "text-[19px] font-semibold leading-[24px] tracking-normal")}>{title}</h2>
               <button type="button" aria-label={`Close ${title.toLocaleLowerCase()}`} onClick={close} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>

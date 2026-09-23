@@ -426,7 +426,8 @@ export function CarsDriverAgePickerContent({
     () => (nativeCarsAppearance ? driverAgeOptions.slice(1) : driverAgeOptions),
     [nativeCarsAppearance],
   );
-  const initialIndex = Math.max(0, ageOptions.indexOf(selectedAge));
+  const selectedIndex = ageOptions.indexOf(selectedAge);
+  const initialIndex = selectedIndex < 0 ? 0 : selectedIndex;
   const [focusedIndex, setFocusedIndex] = useState(initialIndex);
   const listRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -443,7 +444,8 @@ export function CarsDriverAgePickerContent({
         option.offsetTop + option.offsetHeight - list.clientHeight;
   };
   useEffect(() => {
-    const index = Math.max(0, ageOptions.indexOf(selectedAge));
+    const selectedIndex = ageOptions.indexOf(selectedAge);
+    const index = selectedIndex < 0 ? 0 : selectedIndex;
     const frame = requestAnimationFrame(() => reveal(index));
     return () => cancelAnimationFrame(frame);
   }, [ageOptions, selectedAge]);
@@ -657,17 +659,17 @@ export function MobileCarDriverAgePickerDialog({
 }) {
   const nativeCarsAppearance =
     presentation === "carsResultsEdit" || presentation === "carsMain";
-  const [draftAge, setDraftAge] = useState(
-    nativeCarsAppearance && driverAge === defaultDriverAge
+  const initialDraftAge =
+    presentation === "carsMain" && driverAge === defaultDriverAge
       ? "30"
-      : driverAge,
-  );
+      : driverAge;
+  const [draftAge, setDraftAge] = useState(initialDraftAge);
   const [draftSource, setDraftSource] = useState({ open, driverAge });
   if (draftSource.open !== open || draftSource.driverAge !== driverAge) {
     setDraftSource({ open, driverAge });
     if (open)
       setDraftAge(
-        nativeCarsAppearance && driverAge === defaultDriverAge
+        presentation === "carsMain" && driverAge === defaultDriverAge
           ? "30"
           : driverAge,
       );

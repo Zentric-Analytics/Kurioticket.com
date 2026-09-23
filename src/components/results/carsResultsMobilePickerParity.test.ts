@@ -77,10 +77,18 @@ test("Cars Edit children preserve polished Cars content in the full-height mobil
     carsPickerContent,
     /nativeCarsAppearance \? driverAgeOptions\.slice\(1\)/,
   );
-  assert.match(
-    carsPickerContent,
-    /driverAge === defaultDriverAge[\s\S]*?\? "30"/,
+  const resultsAgeDialog = carsPickerContent.slice(
+    carsPickerContent.indexOf("export function MobileCarDriverAgePickerDialog"),
   );
+  assert.match(
+    resultsAgeDialog,
+    /presentation === "carsMain" && driverAge === defaultDriverAge/,
+  );
+  assert.doesNotMatch(
+    resultsAgeDialog,
+    /presentation === "carsResultsEdit" && driverAge === defaultDriverAge[\s\S]*?\? "30"/,
+  );
+  assert.match(resultsAgeDialog, /: driverAge;/);
   assert.match(carsPickerContent, /`\$\{age\} years old`/);
   assert.match(carsPickerContent, /!nativeCarsAppearance \? \(/);
   assert.doesNotMatch(
@@ -146,4 +154,30 @@ test("mobile Driver Age delegates numeric formatting to the shared picker", () =
     source.match(/<MobileCarDriverAgePickerDialog[\s\S]*?\/>/)?.[0] ?? "",
     /years old/,
   );
+});
+
+test("Results Edit preserves the Any Age sentinel without selecting a numeric row", () => {
+  const agePicker = carsPickerContent.slice(
+    carsPickerContent.indexOf("export function CarsDriverAgePickerContent"),
+    carsPickerContent.indexOf("export function MobileCarTimePickerDialog"),
+  );
+  const ageDialog = carsPickerContent.slice(
+    carsPickerContent.indexOf("export function MobileCarDriverAgePickerDialog"),
+  );
+
+  assert.match(
+    agePicker,
+    /nativeCarsAppearance \? driverAgeOptions\.slice\(1\) : driverAgeOptions/,
+  );
+  assert.match(agePicker, /const selectedIndex = ageOptions\.indexOf\(selectedAge\)/);
+  assert.match(agePicker, /selectedIndex < 0 \? 0 : selectedIndex/);
+  assert.match(agePicker, /const selected = selectedAge === age/);
+  assert.match(agePicker, /aria-selected=\{selected\}/);
+
+  assert.match(
+    ageDialog,
+    /presentation === "carsMain" && driverAge === defaultDriverAge[\s\S]*?: driverAge/,
+  );
+  assert.match(ageDialog, /onCommit\(draftAge\)/);
+  assert.match(ageDialog, /onClose=\{onClose\}/);
 });
