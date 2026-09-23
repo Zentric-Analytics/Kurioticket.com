@@ -114,7 +114,7 @@ export async function GET(request: Request) {
   };
   const memoryContext = search.destination
     ? getHotelDetailsCacheContext(id, search)
-    : null;
+    : getHotelDetailsCacheContext(id);
   const unscopedCached = !record && !memoryContext
     ? getHotelFromCache(id)
     : null;
@@ -128,9 +128,15 @@ export async function GET(request: Request) {
     ? await getHotelSearchCohort(persistedSearch)
     : [];
   const cached = memoryContext?.hotel ?? unscopedCached ?? providerContext?.result ?? null;
-  const relatedSearchCohort = memoryContext
-    ? memoryContext.relatedHotels
-    : persistedCohort;
+  const relatedSearchContext = memoryContext?.searchContext ?? persistedSearch;
+  const relatedStayMatches =
+    relatedSearchContext?.checkIn === search.checkIn &&
+    relatedSearchContext?.checkOut === search.checkOut &&
+    relatedSearchContext?.guests === search.guests &&
+    relatedSearchContext?.rooms === search.rooms;
+  const relatedSearchCohort = relatedStayMatches
+    ? memoryContext?.relatedHotels ?? persistedCohort
+    : [];
   const relatedHotelCandidates = relatedSearchCohort.length
     ? relatedHotelsFromSearchCohort(relatedSearchCohort, id, relatedPreviewLimit)
     : record
