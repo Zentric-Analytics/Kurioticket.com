@@ -145,7 +145,13 @@ export const flightSearchSchema = z
 
 export const hotelSearchSchema = z
   .object({
-    destinationId: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(80).optional(),
+    // Autocomplete emits canonical hotel/place/airport IDs as well as legacy slugs.
+    // Provider-specific kplace IDs remain gated by the sandbox route.
+    destinationId: z.union([
+      z.string().trim().regex(/^(?:hotel:)?[a-z0-9]+(?:-[a-z0-9]+)*$/).max(86),
+      z.string().trim().regex(/^place:[\p{L}\p{N}][\p{L}\p{N}-]*$/u).max(126),
+      z.string().trim().regex(/^airport:[A-Z]{3}$/),
+    ]).optional(),
     destination: z.string().trim().min(2, "Enter a destination.").max(120),
     checkIn: hotelFutureDate,
     checkOut: hotelFutureDate,
