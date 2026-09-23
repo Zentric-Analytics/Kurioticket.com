@@ -156,8 +156,9 @@ test("mobile card matches native compact height, spec columns, and top-aligned a
     source.indexOf("data-car-card-mobile-actions"),
     source.indexOf("return ("),
   );
-  assert.equal((actions.match(/items-start justify-center/g) ?? []).length, 2);
-  assert.equal((actions.match(/h-11 w-9/g) ?? []).length, 2);
+  assert.match(actions, /items-start justify-end/);
+  assert.match(actions, /items-start justify-start/);
+  assert.equal((actions.match(/h-11 w-7/g) ?? []).length, 2);
 });
 
 test("Free cancellation is data-driven in mobile and secondary benefits stay desktop-only", () => {
@@ -233,22 +234,21 @@ test("cards expose compact, functional save and share actions", () => {
   assert.match(source, /aria-live="polite"/);
   assert.match(actions, /gap-0/);
   assert.equal(
-    (actions.match(/h-11 w-9/g) ?? []).length,
+    (actions.match(/h-11 w-7/g) ?? []).length,
     2,
-    "save and share each use a 44px by 36px layout box",
+    "save and share each use the native 44px by 28px layout box",
   );
   assert.match(
     actions,
-    /h-11 w-9[^\n]*before:inset-y-0[^\n]*before:-start-2[^\n]*before:end-0/,
+    /h-11 w-7[^\n]*before:inset-y-0[^\n]*before:-start-2[^\n]*before:end-0/,
   );
   assert.match(
     actions,
-    /h-11 w-9[^\n]*before:inset-y-0[^\n]*before:start-0[^\n]*before:-end-2/,
+    /h-11 w-7[^\n]*before:inset-y-0[^\n]*before:start-0[^\n]*before:-end-2/,
   );
   assert.match(actions, /<Heart\s+size=\{18\}/);
   assert.match(actions, /<Share2 size=\{18\}/);
-  assert.match(actions, /<Heart[\s\S]*?className="translate-x-1"/);
-  assert.match(actions, /<Share2 size=\{18\} className="-translate-x-1"/);
+  assert.doesNotMatch(actions, /translate-x/);
   assert.doesNotMatch(actions, /before:-inset-/);
   assert.match(mobileUtility, /flex min-w-0 items-start gap-1\.5/);
   assert.match(
