@@ -263,7 +263,7 @@ test("only Back can act during entry loading and placeholders stay out of access
   assert.equal(style(progress[0]).top, 0);
   assert.equal(style(progress[0]).bottom, 0);
   assert.equal(progress[0].props.pointerEvents, "none");
-  const interactive = nodes.filter(({ props }) => Object.keys(props).some((key) => /^on(?:Press|Touch)/.test(key)));
+  const interactive = nodes.filter(({ props }) => props.disabled !== true && Object.keys(props).some((key) => /^on(?:Press|Touch)/.test(key)));
   assert.deepEqual(interactive.map(({ props }) => props.accessibilityLabel), ["Back to results"]);
   assert.equal(nodes.filter(({ props }) => ["radio", "tab", "link"].includes(props.accessibilityRole)).length, 0);
   for (const id of ["copy", "body", "actions", "checkout"]) {
