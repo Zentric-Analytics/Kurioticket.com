@@ -39,9 +39,11 @@ test("every direct native interactive favorite uses the canonical stroke and fil
 });
 
 test("interactive share icons use the same subtle stroke contract as unsaved hearts", () => {
-  for (const detail of [carResult, carDetail, kayakCarDetail, hotelResult, hotelDetail, approvedHotelDetail, flightDetail]) {
+  for (const detail of [carResult, carDetail, kayakCarDetail, hotelResult, hotelDetail, approvedHotelDetail]) {
     assert.match(detail, /(?:Share2|FlowIcon name="share")[^>]*strokeWidth=\{androidFavoriteColors\.strokeWidth\}[^>]*(?:androidFavoriteColors\.shareStroke|theme\.dark \? theme\.icon : androidFavoriteColors\.shareStroke)/);
   }
+  assert.match(flightDetail, /const shareColor=shareDisabled\?"#94A3B8":androidFavoriteColors\.shareStroke/);
+  assert.match(flightDetail, /<FlowIcon name="share"[^>]*strokeWidth=\{androidFavoriteColors\.strokeWidth\}[^>]*color=\{shareColor\}/);
 });
 
 test("legacy interactive favorite colors and empty fills cannot return", () => {
