@@ -347,7 +347,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     <main className="flex-1 bg-[#F5F7FB] pb-[calc(6.75rem+env(safe-area-inset-bottom))] text-[#142033] sm:bg-[#F7F9FC] sm:pt-4 lg:pb-16 lg:pt-3">
       <div className="mx-auto w-full max-w-[1470px] px-0 sm:px-6 lg:px-[34px]">
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
-          <section className="min-w-0 overflow-hidden border-y border-[#E2E8F0] bg-[#F5F7FB] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
+          <section className="min-w-0 overflow-hidden border-b border-[#E2E8F0] bg-[#F5F7FB] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
             <MobileFlightDetailsBrandHeader
               resultsHref={resultsHref}
               saved={flightSaved}
