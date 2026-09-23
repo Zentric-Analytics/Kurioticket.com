@@ -115,18 +115,18 @@ test("Cars quick sheets keep changes local until Apply and discard them when clo
   assert.match(cars, /setQuickSortDraft\(sort\)/);
   assert.match(cars, /setQuickFilterDraft\(\(current\) =>/);
   assert.match(cars, /setQuickSortDraft\(option\.value\)/);
-  assert.match(cars, /if \(quickFilterGroupId === "sort"\) setSort\(quickSortDraft\)/);
+  assert.match(cars, /startFilterResultsTransition\(\); setCurrentPage\(1\); if \(quickFilterGroupId === "sort"\) setSort\(quickSortDraft\)/);
   assert.match(cars, /next\[quickFilterGroupId\] = \[\.\.\.quickFilterDraft\]/);
   assert.match(cars, /onClick=\{closeQuickFilter\}/);
   assert.match(cars, /if \(quickFilterGroupId\) closeQuickFilter\(\)/);
   assert.match(cars, /setQuickSortDraft\("recommended"\)/);
-  assert.match(cars, /disabled=\{quickFilterUpdating\}/);
-  assert.match(cars, /Updating filters…/);
+  assert.doesNotMatch(cars, /quickFilterUpdating|markQuickFilterUpdating|Updating filters…/);
+  assert.doesNotMatch(cars, /quickFilterFeedbackTimerRef|setTimeout\([^)]*400/);
 });
 
 test("Cars quick sheets dismiss promptly without a web-only closing lifecycle", () => {
   assert.doesNotMatch(cars, /quickSheetClosing|quickSheetCloseTimerRef/);
   assert.doesNotMatch(cars, /cars-native-quick-(?:scrim|sheet)--closing/);
   assert.doesNotMatch(cars, /setTimeout\([\s\S]{0,250}setQuickFilterGroupId\(null\)[\s\S]{0,80}220/);
-  assert.match(cars, /const closeQuickFilter = useCallback\(\(\) => \{\s*if \(quickFilterGroupId === null\) return;\s*setQuickFilterGroupId\(null\);\s*setQuickFilterUpdating\(false\);\s*\}, \[quickFilterGroupId\]\)/);
+  assert.match(cars, /const closeQuickFilter = useCallback\(\(\) => \{\s*if \(quickFilterGroupId === null\) return;\s*setQuickFilterGroupId\(null\);\s*\}, \[quickFilterGroupId\]\)/);
 });

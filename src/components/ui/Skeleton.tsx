@@ -129,12 +129,19 @@ export function HotelCardSkeleton() {
   );
 }
 
-export function CarCardSkeleton() {
+export function CarCardSkeleton({
+  transitionMotion = "pulse",
+}: {
+  transitionMotion?: "pulse" | "shimmer";
+} = {}) {
   return (
     <div
       role="status"
       aria-label="Loading car result"
-      className="overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white md:rounded-2xl"
+      className={cn(
+        "overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white md:rounded-2xl",
+        transitionMotion === "shimmer" && "cars-filter-card-skeleton",
+      )}
     >
       <span className="sr-only">Loading car result</span>
       <div data-car-card-skeleton-mobile className="md:hidden">

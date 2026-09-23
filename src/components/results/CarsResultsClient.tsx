@@ -81,6 +81,9 @@ import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 
 type CarsPaginationTransitionPhase = "idle" | "covering" | "settling";
+type CarsFilterTransitionPhase = "idle" | "covering" | "revealing";
+const CARS_FILTER_MIN_BUSY_MS = 220;
+const CARS_FILTER_REVEAL_MS = 160;
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
 import {
   calculateCompactFilterPlacement,
@@ -1879,8 +1882,6 @@ export function CarsResultsExperience({
   const [quickFilterGroupId, setQuickFilterGroupId] = useState<string | null>(null);
   const [quickFilterDraft, setQuickFilterDraft] = useState<string[]>([]);
   const [quickSortDraft, setQuickSortDraft] = useState<CarSort>("recommended");
-  const [quickFilterUpdating, setQuickFilterUpdating] = useState(false);
-  const quickFilterFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mobileFiltersOverlayOpen = filtersOpen || quickFilterGroupId !== null;
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
@@ -1900,15 +1901,20 @@ export function CarsResultsExperience({
   const [currentPage, setCurrentPage] = useState(1);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [carsSortOpen, setCarsSortOpen] = useState(false);
-  const [resultsTransitioning, setResultsTransitioning] = useState(false);
+  const [filterTransitionPhase, setFilterTransitionPhase] =
+    useState<CarsFilterTransitionPhase>("idle");
+  const [filterTransitionMinHeight, setFilterTransitionMinHeight] = useState<
+    number | null
+  >(null);
   const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
   const [paginationTransitionPhase, setPaginationTransitionPhase] = useState<CarsPaginationTransitionPhase>("idle");
   const [paginationMinHeight, setPaginationMinHeight] = useState<number | null>(null);
   const [paginationRevealing, setPaginationRevealing] = useState(false);
   const paginationListRef = useRef<HTMLDivElement | null>(null);
-  const resultsTransitionTimerRef = useRef<ReturnType<
-    typeof setTimeout
-  > | null>(null);
+  const filterTransitionTimerRef = useRef<number | null>(null);
+  const filterTransitionFrameRef = useRef<number | null>(null);
+  const filterTransitionRunRef = useRef(0);
+  const filterTransitionMobileRef = useRef(false);
   const carsSortRef = useRef<HTMLDivElement | null>(null);
   const carsSortButtonRef = useRef<HTMLButtonElement | null>(null);
   const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
@@ -2095,17 +2101,49 @@ export function CarsResultsExperience({
       window.setTimeout(() => setPaginationRevealing(false), PAGINATION_REVEAL_MS);
     }
   };
-  const setTransition = () => {
-    setResultsTransitioning(true);
-    if (resultsTransitionTimerRef.current)
-      clearTimeout(resultsTransitionTimerRef.current);
-    resultsTransitionTimerRef.current = setTimeout(
-      () => setResultsTransitioning(false),
-      160,
+  const startFilterResultsTransition = () => {
+    const run = ++filterTransitionRunRef.current;
+    const mobile = window.innerWidth < 1024;
+    filterTransitionMobileRef.current = mobile;
+    if (filterTransitionTimerRef.current !== null)
+      window.clearTimeout(filterTransitionTimerRef.current);
+    if (filterTransitionFrameRef.current !== null)
+      window.cancelAnimationFrame(filterTransitionFrameRef.current);
+
+    setFilterTransitionMinHeight(
+      paginationListRef.current?.getBoundingClientRect().height ?? null,
     );
+    setFilterTransitionPhase("covering");
+    const startedAt = performance.now();
+
+    // Two frames guarantee that the covering state reaches a browser paint
+    // before the synchronous, already-filtered results are revealed.
+    filterTransitionFrameRef.current = window.requestAnimationFrame(() => {
+      filterTransitionFrameRef.current = window.requestAnimationFrame(() => {
+        const minimumBusyMs = prefersReducedResultsMotion()
+          ? 0
+          : mobile
+            ? CARS_FILTER_MIN_BUSY_MS
+            : 160;
+        const remaining = Math.max(0, minimumBusyMs - (performance.now() - startedAt));
+        filterTransitionTimerRef.current = window.setTimeout(() => {
+          if (filterTransitionRunRef.current !== run) return;
+          setFilterTransitionMinHeight(null);
+          if (prefersReducedResultsMotion() || !mobile) {
+            setFilterTransitionPhase("idle");
+            return;
+          }
+          setFilterTransitionPhase("revealing");
+          filterTransitionTimerRef.current = window.setTimeout(() => {
+            if (filterTransitionRunRef.current === run)
+              setFilterTransitionPhase("idle");
+          }, CARS_FILTER_REVEAL_MS);
+        }, remaining);
+      });
+    });
   };
   const toggleCarFilter = (groupId: string, option: string) => {
-    setTransition();
+    startFilterResultsTransition();
     setCurrentPage(1);
     setSelectedCarFilters((current) => {
       const currentGroupSelections = current[groupId] ?? [];
@@ -2120,7 +2158,7 @@ export function CarsResultsExperience({
     });
   };
   const clearCarFilters = () => {
-    setTransition();
+    startFilterResultsTransition();
     setCurrentPage(1);
     setSelectedCarFilters({});
   };
@@ -2130,31 +2168,25 @@ export function CarsResultsExperience({
     setQuickFilterGroupId(null);
     setFiltersOpen(true);
   };
-  const markQuickFilterUpdating = () => {
-    if (quickFilterFeedbackTimerRef.current) clearTimeout(quickFilterFeedbackTimerRef.current);
-    setQuickFilterUpdating(true);
-    quickFilterFeedbackTimerRef.current = setTimeout(() => setQuickFilterUpdating(false), 400);
-  };
   const closeQuickFilter = useCallback(() => {
     if (quickFilterGroupId === null) return;
     setQuickFilterGroupId(null);
-    setQuickFilterUpdating(false);
   }, [quickFilterGroupId]);
   const openQuickFilter = (kind: string, launcher: HTMLButtonElement, modality: OverlayActivationModality) => {
     mobileFiltersLauncherRef.current = launcher;
     mobileFiltersModalityRef.current = modality;
     setQuickFilterDraft(kind === "sort" ? [] : [...(selectedCarFilters[kind] ?? [])]);
     setQuickSortDraft(sort);
-    setQuickFilterUpdating(false);
     setFiltersOpen(false);
     setQuickFilterGroupId(kind);
   };
   useEffect(
     () => () => {
-      if (resultsTransitionTimerRef.current)
-        clearTimeout(resultsTransitionTimerRef.current);
-      if (quickFilterFeedbackTimerRef.current)
-        clearTimeout(quickFilterFeedbackTimerRef.current);
+      filterTransitionRunRef.current += 1;
+      if (filterTransitionTimerRef.current !== null)
+        window.clearTimeout(filterTransitionTimerRef.current);
+      if (filterTransitionFrameRef.current !== null)
+        window.cancelAnimationFrame(filterTransitionFrameRef.current);
     },
     [],
   );
@@ -2729,7 +2761,7 @@ export function CarsResultsExperience({
                             tabIndex={carsSortOpen ? 0 : -1}
                             className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold"
                             onClick={() => {
-                              setTransition();
+                              startFilterResultsTransition();
                               setCurrentPage(1);
                               setSort(option.value);
                               setCarsSortOpen(false);
@@ -2755,19 +2787,36 @@ export function CarsResultsExperience({
                   </div>
                 ) : null}
               </div>
-              {resultsTransitioning || paginationTransitionPhase === "covering" ? (
+              {filterTransitionPhase === "covering" || paginationTransitionPhase === "covering" ? (
                 <div
                   ref={paginationListRef}
                   data-cars-results-card-list
-                  aria-busy={paginationPendingPage !== null}
-                  style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined}
+                  aria-busy="true"
+                  style={
+                    filterTransitionPhase === "covering" && filterTransitionMinHeight
+                      ? { minHeight: filterTransitionMinHeight }
+                      : paginationMinHeight
+                        ? { minHeight: paginationMinHeight }
+                        : undefined
+                  }
                   className={cn(
                     "w-full space-y-3.5 max-sm:!mt-2.5 sm:space-y-4",
                     !guidedPlanning && "w-full",
                   )}
                 >
                   {Array.from({ length: paginationPendingPage !== null ? pageResults.length : 3 }, (_, item) => (
-                    <CarCardSkeleton key={item} />
+                    <div
+                      key={item}
+                      aria-hidden={filterTransitionPhase === "covering" ? "true" : undefined}
+                    >
+                      <CarCardSkeleton
+                        transitionMotion={
+                          filterTransitionPhase === "covering" && filterTransitionMobileRef.current
+                            ? "shimmer"
+                            : "pulse"
+                        }
+                      />
+                    </div>
                   ))}
                   {paginationPendingPage !== null && pagination.totalPages > 1 ? (
                     <nav aria-label="Car results pagination" className="flex flex-wrap items-center justify-center gap-1.5 pt-4">
@@ -2786,6 +2835,9 @@ export function CarsResultsExperience({
                     "w-full space-y-3.5 max-sm:!mt-2.5 sm:space-y-4",
                     !guidedPlanning && "w-full",
                     paginationRevealing && "animate-[fadeIn_150ms_ease-out]",
+                    filterTransitionPhase === "revealing" &&
+                      filterTransitionMobileRef.current &&
+                      "cars-filter-results-reveal",
                   )}
                 >
                   {pageResults.map((car) => car.inventorySource === "kayak-sandbox" && kayak?.offers.some(offer => `kayak-sandbox:${offer.id}` === car.id) ? <KayakResultCard key={car.id} offer={kayak.offers.find(offer => `kayak-sandbox:${offer.id}` === car.id)!} vertical="cars" criteria={kayak.criteria} /> : (
@@ -2882,7 +2934,13 @@ export function CarsResultsExperience({
               ) : (
                 <div
                   role="status"
-                  className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center"
+                  aria-busy="false"
+                  className={cn(
+                    "w-full rounded-xl border border-slate-200 bg-white p-8 text-center",
+                    filterTransitionPhase === "revealing" &&
+                      filterTransitionMobileRef.current &&
+                      "cars-filter-results-reveal",
+                  )}
                 >
                   <p className="font-bold text-slate-950">
                     {t("carsResults.filteredEmpty") ||
@@ -3015,7 +3073,7 @@ export function CarsResultsExperience({
                 <div role="radiogroup">
                   {carSortOptions.map((option) => {
                     const descriptions: Record<CarSort, string> = { recommended: "Best overall value first", lowestTotal: "Lowest rental total first", topRated: "Highest supplier rating first" };
-                    return <button key={option.value} type="button" role="radio" aria-checked={quickSortDraft === option.value} className="flex min-h-[52px] w-full items-center px-[10px] py-[7px] text-start text-slate-950 focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35" onClick={() => { markQuickFilterUpdating(); setQuickSortDraft(option.value); }}>
+                    return <button key={option.value} type="button" role="radio" aria-checked={quickSortDraft === option.value} className="flex min-h-[52px] w-full items-center px-[10px] py-[7px] text-start text-slate-950 focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35" onClick={() => setQuickSortDraft(option.value)}>
                       <span className="min-w-0 flex-1"><span className="block text-sm font-semibold leading-5">{option.label}</span><span className="block text-[10.5px] font-medium leading-[14px] text-slate-500">{descriptions[option.value]}</span></span>
                       {quickSortDraft === option.value ? <Check className="h-[17px] w-[17px] shrink-0 text-[#004BB8]" aria-hidden="true" /> : null}
                     </button>;
@@ -3024,7 +3082,7 @@ export function CarsResultsExperience({
               ) : activeQuickFilterGroup!.options.map((option) => {
                 const selected = quickFilterDraft.includes(option.id);
                 return <label key={option.id} className="flex min-h-[52px] cursor-pointer items-center gap-[10px] px-[10px] focus-within:rounded-lg focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/35 rtl:flex-row-reverse">
-                  <input type="checkbox" checked={selected} onChange={() => { markQuickFilterUpdating(); setQuickFilterDraft((current) => current.includes(option.id) ? current.filter((id) => id !== option.id) : [...current, option.id]); }} className="peer sr-only" />
+                  <input type="checkbox" checked={selected} onChange={() => setQuickFilterDraft((current) => current.includes(option.id) ? current.filter((id) => id !== option.id) : [...current, option.id])} className="peer sr-only" />
                   <span aria-hidden="true" className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border-[1.5px]", selected ? "border-[#004BB8] bg-[#004BB8]" : "border-[#D8DEE8]")}>{selected ? <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} /> : null}</span>
                   <span className="min-w-0 flex-1 text-start text-sm font-semibold leading-5 text-slate-950">{option.label ?? t(option.labelKey)}</span>
                   {typeof option.count === "number" ? <span className="shrink-0 text-end text-[13px] font-medium tabular-nums text-slate-500">{option.count}</span> : null}
@@ -3032,9 +3090,9 @@ export function CarsResultsExperience({
               })}
             </div>
             <footer className="flex shrink-0 items-center gap-[10px] bg-[#F2F4F8] px-4 pb-[max(12px,calc(env(safe-area-inset-bottom)-12px))] pt-3">
-              <button type="button" onClick={() => { markQuickFilterUpdating(); if (quickFilterGroupId === "sort") setQuickSortDraft("recommended"); else setQuickFilterDraft([]); }} className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">Reset</button>
-              <button type="button" disabled={quickFilterUpdating} onClick={() => { setTransition(); setCurrentPage(1); if (quickFilterGroupId === "sort") setSort(quickSortDraft); else setSelectedCarFilters((current) => { const next = { ...current }; if (quickFilterDraft.length) next[quickFilterGroupId] = [...quickFilterDraft]; else delete next[quickFilterGroupId]; return next; }); closeQuickFilter(); }} className="flex h-[49px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-3 text-[15px] font-bold text-white disabled:cursor-wait disabled:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2">
-                {quickFilterUpdating ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/45 border-t-white motion-reduce:animate-none" aria-hidden="true" /><span>Updating filters…</span></> : "Apply"}
+              <button type="button" onClick={() => { if (quickFilterGroupId === "sort") setQuickSortDraft("recommended"); else setQuickFilterDraft([]); }} className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">Reset</button>
+              <button type="button" onClick={() => { startFilterResultsTransition(); setCurrentPage(1); if (quickFilterGroupId === "sort") setSort(quickSortDraft); else setSelectedCarFilters((current) => { const next = { ...current }; if (quickFilterDraft.length) next[quickFilterGroupId] = [...quickFilterDraft]; else delete next[quickFilterGroupId]; return next; }); closeQuickFilter(); }} className="flex h-[49px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-3 text-[15px] font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2">
+                Apply
               </button>
             </footer>
           </section>
