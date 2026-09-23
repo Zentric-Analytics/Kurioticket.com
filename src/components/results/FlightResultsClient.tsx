@@ -1024,6 +1024,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const userInitiatedRetryRef = useRef(false);
   const loadingFocusRef = useRef<HTMLDivElement | null>(null);
   const resultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const mobileResultsPageTopRef = useRef<HTMLDivElement | null>(null);
   const paginationListRef = useRef<HTMLDivElement | null>(null);
   const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
   const [paginationCommitting, setPaginationCommitting] = useState(false);
@@ -4482,9 +4483,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
     setPaginationPendingPage(page);
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    const target = flightResultsTopRef.current;
+    const mobileViewport = window.matchMedia("(max-width: 639px)").matches;
+    const target = mobileViewport
+      ? mobileResultsPageTopRef.current
+      : flightResultsTopRef.current;
+    const topOffset = mobileViewport ? 76 : desktopCompactFilterTopOffset + 16;
     const top = target
-      ? target.getBoundingClientRect().top + window.scrollY - (desktopCompactFilterTopOffset + 16)
+      ? target.getBoundingClientRect().top + window.scrollY - topOffset
       : 0;
     await scrollToResultsAndWait({ top });
     setPaginationCommitting(true);
@@ -7131,9 +7136,23 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
               <div data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden">
                 {mobileFlightPriceAlertQuery ? <FlightPriceAlertControl query={mobileFlightPriceAlertQuery} results={providerResults} /> : null}
-                <p className="flight-results-count text-[13px] font-bold leading-[17px] tracking-[-0.005em] text-slate-900">
-                  {formatMobileFlightResultsFound(sortedResults.length, t, locale)}
-                </p>
+                <div
+                  ref={mobileResultsPageTopRef}
+                  data-mobile-flight-results-summary-row
+                  className="flex w-full items-center justify-between gap-3"
+                >
+                  <p className="flight-results-count min-w-0 text-[13px] font-bold leading-[17px] tracking-[-0.005em] text-slate-900">
+                    {formatMobileFlightResultsFound(sortedResults.length, t, locale)}
+                  </p>
+                  {resultsDisplayRange ? (
+                    <p
+                      aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${sortedResults.length}`}
+                      className="shrink-0 text-[12px] font-medium leading-4 text-[#536B92]"
+                    >
+                      {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
+                    </p>
+                  ) : null}
+                </div>
               </div>
 
               <div className="hidden w-full items-center justify-between gap-4 pt-2 sm:flex lg:bg-transparent lg:px-0 lg:pb-0.5">
@@ -7237,14 +7256,29 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 ) : sortedResults.length === 0 ? (
                   <MobileFlightResultsState kind="filtered" onPrimary={clearFlightFilters} onSecondary={() => openMobileFiltersDrawer()} />
                 ) : (
-                  <div data-flight-results-card-list data-mobile-continuous-flight-list className="space-y-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-                    {sortedResults.map((flight, index) => {
-                      const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
-                      if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
-                      const detailsQuery = params.toString();
-                      const internalDetailsHref = `/flights/details/${encodeURIComponent(flight.id)}` + (detailsQuery ? `?${detailsQuery}` : "");
-                      return <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={resultActionHref(flight, internalDetailsHref)} providerLabel={isKayakSandboxResult(flight) ? "KAYAK sandbox · Simulated · Not bookable" : undefined} />;
-                    })}
+                  <div
+                    data-mobile-paginated-flight-results
+                    aria-busy={paginationPendingPage !== null}
+                    className={cn(
+                      "pb-[calc(1rem+env(safe-area-inset-bottom))]",
+                      paginationRevealing && "animate-[fadeIn_150ms_ease-out]",
+                    )}
+                  >
+                    <div data-flight-results-card-list className="space-y-3">
+                      {visibleResults.map((flight, index) => {
+                        const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
+                        if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
+                        const detailsQuery = params.toString();
+                        const internalDetailsHref = `/flights/details/${encodeURIComponent(flight.id)}` + (detailsQuery ? `?${detailsQuery}` : "");
+                        return <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={resultActionHref(flight, internalDetailsHref)} providerLabel={isKayakSandboxResult(flight) ? "KAYAK sandbox · Simulated · Not bookable" : undefined} />;
+                      })}
+                    </div>
+                    <FlightResultsPagination
+                      currentPage={validResultsPage}
+                      totalPages={totalResultPages}
+                      onPageChange={changeResultsPage}
+                      disabled={paginationPendingPage !== null}
+                    />
                   </div>
                 )}
               </div>
