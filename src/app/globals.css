@@ -1582,3 +1582,16 @@ textarea {
 @media (max-width: 420px) {
   .flight-results-pagination { gap: 0; padding-inline: 0.25rem; }
 }
+
+/* Native iPhone parity is opt-in: other Results sheets keep their defaults. */
+.mobile-results-sheet-cars-edit-backdrop {
+  background-color: rgba(8, 18, 35, 0.52);
+  animation-duration: 280ms;
+}
+.mobile-results-sheet-cars-edit-surface {
+  animation-duration: 280ms;
+}
+.mobile-results-sheet-cars-edit-surface.mobile-results-sheet-surface-closing,
+.mobile-results-sheet-cars-edit-backdrop.mobile-results-sheet-backdrop-layer-closing {
+  animation-duration: 240ms;
+}

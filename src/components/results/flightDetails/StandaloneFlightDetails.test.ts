@@ -684,7 +684,9 @@ test("Flight Details web hero reuses the native asset and keeps navigation acces
   assert.match(source, /src=\{flightDetailsHero\} alt="" fill priority/);
   assert.match(source, /bg-gradient-to-t from-slate-950\/80/);
   assert.match(source, /<h1 ref=\{headingRef\} id="flight-details-heading"/);
+  assert.match(source, /min-h-\[318px\][\s\S]*pb-\[122px\]/);
   assert.match(source, /-mt-8 p-4 pt-0/);
+  assert.match(source, /data-mobile-native-itinerary-stack[\s\S]*-mt-\[72px\]/);
   assert.match(source, /<Link[\s\S]*href=\{resultsHref\}[\s\S]*aria-label="Back to results"[\s\S]*h-11 w-11/);
   assert.match(source, /data-flight-details-floating-actions/);
   assert.match(source, /aria-label=\{flightSaved \? "Remove saved flight" : "Save flight"\}/);
@@ -699,33 +701,44 @@ test("Flight Details web hero reuses the native asset and keeps navigation acces
   assert.match(loadingSource, /<Share2 className="h-\[18px\] w-\[18px\]"/);
 });
 
-test("Flight Details mobile cleanup uses compact hero actions, peek tabs, and fare carousel", async () => {
+test("Flight Details mobile cleanup uses compact hero actions, native fare rail, peek tabs, and fare information", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const fareSource = await readFile(new URL("./MobileNativeFareRail.tsx", import.meta.url), "utf8");
+
   assert.doesNotMatch(source, /FlightEditSearchDrawer|editSearchLauncherRef|setEditSearchOpen|submitEditedSearch/);
   assert.match(source, /data-flight-details-floating-actions/);
   assert.match(source, /aria-label="Back to results"/);
   assert.match(source, /aria-label=\{flightSaved \? "Remove saved flight" : "Save flight"\}/);
   assert.match(source, /aria-label="Share flight"/);
+  assert.match(source, /<MobileNativeFareRail fares=\{fareChoices\}/);
+  assert.doesNotMatch(source, /fareRailRef|initialFareAlignmentRef/);
+
+  assert.match(fareSource, /data-mobile-native-fare-rail/);
+  assert.match(fareSource, /gap-\[10px\].*pb-\[18px\].*pt-3.*pr-\[38px\]/);
+  assert.match(fareSource, /w-\[clamp\(197px,calc\(197px\+\(100vw-320px\)\*0\.27\),217px\)\]/);
+  assert.match(fareSource, /min-h-\[142px\]/);
+  assert.match(fareSource, /rounded-\[15px\] border-\[1\.5px\]/);
+  assert.match(fareSource, /border-\[#075EE8\] bg-\[#F4F8FF\] shadow-\[0_6px_14px_rgba\(7,19,59,0\.18\)\]/);
+  assert.match(fareSource, /border-\[#D7E0EC\] bg-white shadow-\[0_2px_6px_rgba\(7,19,59,0\.06\)\]/);
+  assert.match(fareSource, /h-6 w-6.*rounded-lg.*border-\[#CFE3FA\].*bg-\[#EAF3FF\]/);
+  assert.match(fareSource, /text-\[13px\] font-extrabold leading-\[17px\]/);
+  assert.match(fareSource, /nativeFareBenefitRows\(/);
+  assert.match(fareSource, /ensureStandardRows: true/);
+  assert.match(fareSource, /aria-expanded=\{expanded\}/);
+  assert.match(fareSource, /row\.semantic === "positive"/);
+  assert.match(fareSource, /ChevronDown/);
+  assert.match(fareSource, /absolute inset-x-3 bottom-1\.5/);
+  assert.match(fareSource, /text-\[19px\] font-extrabold leading-\[23px\] tabular-nums text-\[#1A1A1A\]/);
+  assert.doesNotMatch(fareSource, /text-\[#075EE8\].*price/);
+  assert.match(fareSource, /getCenteredFareScrollLeft/);
+  assert.match(fareSource, /rail\.scrollTo\(/);
+
   assert.match(source, /flex-nowrap gap-1 overflow-x-auto/);
   assert.match(source, /w-auto shrink-0 whitespace-nowrap border-b-2/);
   assert.doesNotMatch(source, /w-\[30%\] min-w-\[105px\]/);
   assert.match(source, /Optional extras/);
   assert.match(source, /px-1 text-center text-\[11px\].*min-\[390px\]:text-xs.*sm:text-sm/);
-  assert.match(source, /flex snap-x snap-mandatory gap-3/);
-  assert.match(source, /overflow-x-auto overflow-y-hidden/);
-  const fareRailClasses = source.match(/fareChoices\.length > 1 \? "([^"]+)"/)?.[1] ?? "";
-  assert.doesNotMatch(fareRailClasses, /touch-pan-x|touch-action:\s*(?:pan-x|none)|overscroll-x-contain|overscroll-behavior:\s*none/);
-  assert.match(fareRailClasses, /px-4/);
-  assert.match(fareRailClasses, /scroll-padding-inline:1rem/);
-  assert.match(source, /w-\[min\(78vw,275px\)\]/);
-  assert.match(source, /ref=\{fareRailRef\} role="radiogroup"/);
-  assert.match(source, /initialFareAlignmentRef/);
-  assert.match(source, /rail\.scrollTo\(\{ left: clampedLeft, behavior: "auto" \}\)/);
-  assert.match(source, /const railRect = rail\.getBoundingClientRect\(\)/);
-  assert.match(source, /selectedLeft: selectedRect\.left/);
-  assert.match(source, /fareChoices\.length < 2/);
-  assert.match(source, /selectedFareKey !== initialSelectedFareKey/);
-  assert.match(source, /fareChoices.length === 1 \? "max-w-\[270px\]"/);
+  assert.match(source, /hidden min-w-0 sm:grid sm:gap-3/);
   const emptyBranch = source.split("\n").find((line) => line.includes("if (deals.length === 0)")) ?? "";
   assert.match(emptyBranch, /No live booking deals are available for this fare right now\./);
   assert.doesNotMatch(emptyBranch, /Compare available booking options|deals available/);
@@ -746,4 +759,48 @@ test("itinerary headers use authoritative per-leg dates with a localized year", 
   assert.match(source, /<time dateTime=\{departureDate\}/);
   assert.match(source, /formatItineraryDepartureDate\(departureDate, locale\)/);
   assert.match(source, /available\.search\.tripType === "multi-city" \? `FLIGHT \$\{index \+ 1\}`/);
+});
+
+test("mobile web Flight Details itinerary mirrors the native card hierarchy and surface treatment", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("function ItineraryCard(");
+  const end = source.indexOf("function FareTerm(", start);
+  const itinerary = source.slice(start, end);
+
+  assert.match(source, /data-mobile-native-itinerary-stack/);
+  assert.match(source, /-mx-2 -mt-\[72px\] space-y-\[14px\]/);
+  assert.match(itinerary, /data-mobile-native-itinerary-card/);
+  assert.match(itinerary, /rounded-\[15px\].*border-\[#D8E1EC\].*bg-white.*shadow-\[0_6px_18px_rgba\(7,19,59,0\.14\)\]/);
+  assert.match(itinerary, /data-flight-details-itinerary-gloss/);
+  assert.match(itinerary, /linear-gradient\(135deg,rgba\(255,255,255,0\.78\)_0%,rgba\(255,255,255,0\.18\)_46%,rgba\(255,255,255,0\)_100%\)/);
+  assert.match(itinerary, /text-\[19px\] font-extrabold leading-6 tabular-nums/);
+  assert.match(itinerary, /providerLocalFlightDate\(leg\.departureTime, locale\)/);
+  assert.match(itinerary, /providerLocalFlightDate\(leg\.arrivalTime, locale\)/);
+  assert.match(itinerary, /h-1\.5 w-1\.5.*bg-\[#075EE8\][\s\S]*h-px.*bg-\[#94A3B8\]\/60[\s\S]*<Plane className="h-4 w-4.*text-\[#075EE8\]"/);
+  assert.match(itinerary, /const stopStatus = leg\.stops === 0 \? "Non-stop" :/);
+  assert.match(itinerary, /data-flight-details-connection-row/);
+  assert.match(itinerary, /<Clock3 className="h-\[13px\] w-\[13px\] shrink-0 text-\[#5D7496\]"/);
+  assert.match(itinerary, /preferSegmentLogo/);
+  assert.match(itinerary, /Aircraft: \{aircraftName\}/);
+  assert.match(itinerary, /Flight distance: \{formatDistanceKm\(segment\.distanceKm, locale\)\}/);
+  assert.match(itinerary, />Flight info<\/p>/);
+  assert.doesNotMatch(itinerary.slice(0, itinerary.indexOf('<section className="hidden')), /Technical stop at/);
+  assert.match(itinerary, /<section className="hidden[^"]*sm:block"/);
+});
+
+test("mobile web Flight Details loading itinerary matches native-parity geometry", async () => {
+  const source = await readFile(new URL("./FlightDetailsLoadingShell.tsx", import.meta.url), "utf8");
+  assert.match(source, /bg-\[#F5F7FB\]/);
+  assert.match(source, /min-h-\[318px\]/);
+  assert.match(source, /pb-\[122px\]/);
+  assert.match(source, /data-mobile-native-itinerary-loading/);
+  assert.match(source, /-mx-2 -mt-\[72px\]/);
+  assert.match(source, /rounded-\[15px\].*border-\[#D8E1EC\].*bg-white.*shadow-\[0_6px_18px_rgba\(7,19,59,0\.14\)\]/);
+  assert.match(source, /linear-gradient\(135deg,rgba\(255,255,255,0\.78\)_0%,rgba\(255,255,255,0\.18\)_46%,rgba\(255,255,255,0\)_100%\)/);
+  assert.match(source, /sm:rounded-\[10px\] sm:border-slate-200 sm:bg-slate-100 sm:shadow-lg/);
+  assert.match(source, /data-mobile-native-fare-loading/);
+  assert.match(source, /h-\[142px\] w-\[clamp\(197px,calc\(197px\+\(100vw-320px\)\*0\.27\),217px\)\]/);
+  assert.match(source, /rounded-\[15px\] border-\[1\.5px\] border-\[#D7E0EC\] bg-white/);
+  assert.match(source, /gap-\[10px\].*pb-\[18px\].*pr-\[38px\]/);
+  assert.match(source, /\{\[0, 1\]\.map/);
 });

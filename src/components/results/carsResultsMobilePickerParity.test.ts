@@ -7,6 +7,7 @@ const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
   "utf8",
 );
+const pickerShell = readFileSync(new URL("../search/FlightMobilePickerShell.tsx", import.meta.url), "utf8");
 
 const mobileForm = variableInitializer(source, "renderCarsSearchForm");
 
@@ -21,6 +22,16 @@ test("mobile Results uses the main Cars dedicated picker dialogs", () => {
     source,
     /type CarsResultsMobilePicker =\s*\| "pickupLocation"\s*\| "returnLocation"\s*\| "dates"\s*\| "times"\s*\| "driverAge"\s*\| null/,
   );
+});
+
+test("every Cars Edit child opts into the layered iOS sheet presentation", () => {
+  assert.equal((source.match(/presentation="carsResultsEdit"/g) ?? []).length, 5);
+  assert.match(source, /nestedLayerOpen=\{mobilePicker !== null\}/);
+  assert.match(pickerShell, /data-cars-results-edit-picker/);
+  assert.match(pickerShell, /bg-\[rgba\(8,18,35,0\.20\)\]/);
+  assert.match(pickerShell, /rounded-t-\[24px\]/);
+  assert.match(pickerShell, /max-h-\[82dvh\]/);
+  assert.match(pickerShell, /presentation = "default"/);
 });
 
 test("mobile launchers enter one nested picker instead of inline panels", () => {
