@@ -46,6 +46,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 import { CarResultCard } from "@/components/results/CarResultCard";
+import { CarsResultsScrollIndicator } from "@/components/results/CarsResultsScrollIndicator";
 import { CarPriceAlertControl } from "@/components/results/CarPriceAlertControl";
 import { CarCardSkeleton } from "@/components/ui/Skeleton";
 import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
@@ -1745,6 +1746,7 @@ export function CarsResultsClient({
       </div>
     </main>
     <Footer variant="brand-legal-only" />
+    <CarsResultsScrollIndicator />
     </>
   );
 }
