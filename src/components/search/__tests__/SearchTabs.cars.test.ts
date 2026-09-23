@@ -186,6 +186,18 @@ test("Cars results URL retains every required parameter and validation", () => {
   assert.match(submit, /router\.push\(href\)/);
 });
 
+test("homepage Cars preserves canonical location targets into Results", () => {
+  const submit = source.slice(
+    source.indexOf("const onCarsSubmit"),
+    source.indexOf("const isCarsSearchDisabled"),
+  );
+  assert.match(submit, /carsValues\.pickupLocationTarget\?\.trim\(\)/);
+  assert.match(submit, /params\.set\("pickupLocationTarget", pickupLocationTarget\)/);
+  assert.match(submit, /params\.set\("dropoffLocationTarget", dropoffLocationTarget\)/);
+  assert.match(carsBranch, /onSelect=\{\(suggestion\) => updateCarsValue\("pickupLocationTarget", serializeCarLocationTarget\(suggestion\)\)\}/);
+  assert.match(carsBranch, /onCommit=\{\(value, suggestion\) => \{/);
+});
+
 test("valid Cars submission signals page pending only after validation and href construction", () => {
   const submit = source.slice(source.indexOf("const onCarsSubmit"), source.indexOf("const isCarsSearchDisabled"));
   const validationIndex = submit.indexOf("validateCarsForm");
