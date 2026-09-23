@@ -1139,6 +1139,20 @@ export function CarsResultsClient({
         <input type="hidden" name="pickupTime" value={pickupTime} />
         <input type="hidden" name="dropoffTime" value={dropoffTime} />
         <input type="hidden" name="driverAge" value={driverAge} />
+        {pickupLocationTarget ? (
+          <input
+            type="hidden"
+            name="pickupLocationTarget"
+            value={pickupLocationTarget}
+          />
+        ) : null}
+        {returnToDifferentLocation && dropoffLocationTarget ? (
+          <input
+            type="hidden"
+            name="dropoffLocationTarget"
+            value={dropoffLocationTarget}
+          />
+        ) : null}
         {returnToDifferentLocation ? (
           <input type="hidden" name="returnToDifferentLocation" value="1" />
         ) : null}
@@ -1313,28 +1327,12 @@ export function CarsResultsClient({
                   name="pickupLocation"
                   value={pickupLocation}
                 />
-                {pickupLocationTarget ? (
+                {returnToDifferentLocation ? (
                   <input
                     type="hidden"
-                    name="pickupLocationTarget"
-                    value={pickupLocationTarget}
+                    name="dropoffLocation"
+                    value={dropoffLocation}
                   />
-                ) : null}
-                {returnToDifferentLocation ? (
-                  <>
-                    <input
-                      type="hidden"
-                      name="dropoffLocation"
-                      value={dropoffLocation}
-                    />
-                    {dropoffLocationTarget ? (
-                      <input
-                        type="hidden"
-                        name="dropoffLocationTarget"
-                        value={dropoffLocationTarget}
-                      />
-                    ) : null}
-                  </>
                 ) : null}
               </>
             ) : null}
