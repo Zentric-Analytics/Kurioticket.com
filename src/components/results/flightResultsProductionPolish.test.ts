@@ -152,6 +152,37 @@ test("mobile filter sheet has one contextual reset and a result-count action", a
   assert.match(source, /min-h-11/);
 });
 
+test("mobile Flight filter and quick-filter surfaces match Cars backgrounds", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const sheet = await readFile(
+    new URL("./MobileFlightFiltersSheet.tsx", import.meta.url),
+    "utf8",
+  );
+
+  const fullFilterStart = source.indexOf("function renderMobileFullFiltersSheet()");
+  const fullFilterEnd = source.indexOf("function renderDesktopSortControl()", fullFilterStart);
+  const fullFilter = source.slice(fullFilterStart, fullFilterEnd);
+
+  assert.match(fullFilter, /bg-\[#F2F4F8\]/);
+  assert.match(fullFilter, /overflow-y-auto overscroll-contain bg-\[#F2F4F8\]/);
+  assert.doesNotMatch(fullFilter, /overflow-y-auto overscroll-contain bg-white/);
+
+  const quickStart = source.indexOf("const sheet = mobileShortcutSheet");
+  const quickEnd = source.indexOf("return (", quickStart);
+  const quickSheet = source.slice(quickStart, quickEnd);
+  assert.match(quickSheet, /bg-\[rgba\(15,23,42,0\.35\)\]/);
+  assert.match(quickSheet, /rounded-t-\[24px\][^"]*bg-\[#F2F4F8\]/);
+  assert.match(quickSheet, /overflow-y-auto overscroll-contain bg-\[#F2F4F8\]/);
+  assert.match(quickSheet, /border-t border-\[#D8DEE8\] bg-\[#F2F4F8\]/);
+  assert.match(quickSheet, /border border-\[#D8DEE8\] bg-\[#F2F4F8\]/);
+
+  assert.match(sheet, /data-mobile-flight-filter-footer[^\n]*border-t border-\[#D8DEE8\] bg-\[#F2F4F8\]/);
+  assert.match(sheet, /rounded-xl border border-\[#D8DEE8\] bg-\[#F2F4F8\]/);
+});
+
 test("pagination uses an occluding full-page transition with an accessible status on mobile and desktop", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),

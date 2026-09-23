@@ -107,7 +107,8 @@ test("mobile date rail precedes a non-sticky quick-filter rail", () => {
   const shortcuts = source.indexOf("data-flight-mobile-results-shortcuts", dateRail);
   assert.ok(dateRail >= 0 && shortcuts > dateRail);
   const shortcutRegion = source.slice(shortcuts, shortcuts + 900);
-  assert.match(shortcutRegion, /-mx-\[14px\] bg-\[#F5F7FB\] px-0 py-1 sm:hidden/);
+  assert.match(shortcutRegion, /-mx-\[14px\] px-0 py-1 sm:hidden/);
+  assert.doesNotMatch(shortcutRegion, /bg-\[#F5F7FB\]|bg-white/);
   assert.doesNotMatch(shortcutRegion, /sticky|top-\[calc\(|backdrop-blur/);
 });
 
