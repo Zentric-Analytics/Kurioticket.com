@@ -42,9 +42,28 @@ test("shared time content renders two independently scrollable button lists", ()
   assert.match(shared, /grid min-h-0 flex-1 grid-cols-2 overflow-hidden/);
   assert.match(shared, /min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain/);
   assert.match(shared, /list\.scrollTop = Math\.max/);
-  assert.match(shared, /if \(!autoRevealSelected\)[\s\S]*?scrollTop = 0/);
-  assert.match(shared, /autoRevealSelected=\{presentation !== "carsMain"\}/);
+  assert.match(shared, /if \(!mobileShell \|\| autoRevealSelected \|\| !open\) return/);
+  assert.match(shared, /pickupListRef\.current\.scrollTop = 0/);
+  assert.match(shared, /returnListRef\.current\.scrollTop = 0/);
+  assert.match(shared, /open=\{open\}/);
+  assert.match(shared, /autoRevealSelected=\{!nativeCarsAppearance\}/);
   assert.equal(shared.includes("scrollIntoView"), false);
+});
+
+test("native Cars time dialogs reset both lists only when the picker opens", () => {
+  assert.match(shared, /autoRevealSelected=\{!nativeCarsAppearance\}/);
+  assert.match(shared, /open=\{open\}/);
+  assert.match(shared, /if \(!mobileShell \|\| autoRevealSelected \|\| !open\) return/);
+  assert.match(shared, /pickupListRef\.current\.scrollTop = 0/);
+  assert.match(shared, /returnListRef\.current\.scrollTop = 0/);
+  assert.match(
+    shared,
+    /\}, \[autoRevealSelected, mobileShell, open\]\);/,
+  );
+  assert.doesNotMatch(
+    shared,
+    /\}, \[autoRevealSelected, mobileShell, open, (?:pickupTime|returnTime)/,
+  );
 });
 
 test("shared age content provides compact selection and keyboard semantics", () => {
