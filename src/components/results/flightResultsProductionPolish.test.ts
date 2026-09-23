@@ -166,8 +166,8 @@ test("mobile Flight full-filter and quick-filter popups use Cars visual contract
   assert.match(sheet, /border-\[#D8DEE8\] bg-transparent/);
   assert.doesNotMatch(sheet, /data-mobile-flight-filter-footer|border-b border-slate-200 pb-6/);
 
-  const quickStart = source.indexOf("const sheet = mobileShortcutSheet");
-  const quickEnd = source.indexOf("return (", quickStart);
+  const quickStart = source.indexOf("const renderSortChoice =");
+  const quickEnd = source.indexOf("function renderFloatingFilterButton", quickStart);
   const quick = source.slice(quickStart, quickEnd);
   assert.match(quick, /cars-native-quick-scrim/);
   assert.match(quick, /cars-native-quick-sheet/);
