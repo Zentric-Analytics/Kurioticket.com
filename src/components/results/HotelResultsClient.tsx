@@ -2932,7 +2932,7 @@ function StarRatingFilterControl({ selectedRatings, onToggle, counts, locale, t,
               <input className="peer sr-only" type="checkbox" value={rating} checked={selected} onChange={() => onToggle(rating)} aria-label={label} />
 
               <span aria-hidden="true" className={cn("flex shrink-0 items-center justify-center rounded-[2px] border transition-colors", layout === "desktop" ? "mt-0.5 h-[14px] w-[14px]" : layout === "mobile" ? "h-5 w-5 rounded sm:h-4 sm:w-4" : "h-4 w-4", selected ? "border-[#0754F7] bg-[#0754F7] text-white" : "border-slate-300 bg-white group-hover:border-slate-400", "peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2")}>
-                {selected ? <Check className={cn(layout === "desktop" ? "h-2.5 w-2.5" : "h-3 w-3")} strokeWidth={3} aria-hidden="true" /> : null}
+                {selected ? <Check className={cn(layout === "desktop" ? "h-2.5 w-2.5" : "h-3 w-3")} strokeWidth={layout === "mobile" ? 2.2 : 3} aria-hidden="true" /> : null}
               </span>
 
               <span className="flex items-center gap-[2px]" aria-label={label}>
@@ -3000,7 +3000,7 @@ function CheckboxFilterOptions({
   const visibleOptions = expanded ? options : options.slice(0, collapsedCount);
   const hasMore = options.length > collapsedCount;
   const optionRowClass = cn("group flex min-h-11 min-w-0 cursor-pointer items-center justify-between gap-3 transition hover:bg-slate-50 hover:text-slate-950", layout === "desktop" ? "rounded-md px-0.5 py-1 text-[12px] font-medium leading-5 text-slate-700" : layout === "compact" ? "min-h-8 gap-2 rounded-lg px-1.5 py-1 text-[13px] font-medium text-slate-600" : "min-h-[46px] rounded-lg px-0 py-1 text-[14px] font-normal leading-5 text-[#071A48] sm:min-h-11 sm:px-1.5 sm:py-1.5 sm:font-medium sm:text-slate-600");
-  const controlClass = (checked: boolean) => cn("flex shrink-0 items-center justify-center rounded-[2px] border transition-colors", layout === "desktop" ? "mt-0.5 h-[14px] w-[14px]" : layout === "compact" ? "mt-0.5 h-3.5 w-3.5" : "h-5 w-5 rounded-[4px] sm:mt-0.5 sm:h-4 sm:w-4", checked ? "border-[#0754F7] bg-[#0754F7] text-white" : "border-slate-300 bg-white group-hover:border-slate-400", "peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2");
+  const controlClass = (checked: boolean) => cn("flex shrink-0 items-center justify-center rounded-[2px] border transition-colors", layout === "desktop" ? "mt-0.5 h-[14px] w-[14px]" : layout === "compact" ? "mt-0.5 h-3.5 w-3.5" : "h-5 w-5 rounded-[4px] sm:mt-0.5 sm:h-4 sm:w-4", checked ? "border-[#0754F7] bg-[#0754F7] text-white" : layout === "mobile" ? "border-[#D8DEE8] bg-transparent sm:border-slate-300 sm:bg-white" : "border-slate-300 bg-white group-hover:border-slate-400", "peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2");
   const checkClass = layout === "desktop" ? "h-2.5 w-2.5" : layout === "compact" ? "h-2.5 w-2.5" : "h-3 w-3";
   const countClass = cn("min-w-6 shrink-0 text-right font-medium tabular-nums text-slate-500", layout === "desktop" ? "text-[12px] leading-5" : layout === "compact" ? "text-[12px] leading-5" : "text-[12px] font-normal leading-4");
 
@@ -3019,9 +3019,9 @@ function CheckboxFilterOptions({
                 }}
               />
               <span aria-hidden="true" className={controlClass(allOptionChecked)}>
-                {allOptionChecked ? <Check className={checkClass} strokeWidth={3} aria-hidden="true" /> : null}
+                {allOptionChecked ? <Check className={checkClass} strokeWidth={layout === "mobile" ? 2.2 : 3} aria-hidden="true" /> : null}
               </span>
-              <span className={cn("min-w-0 truncate", allOptionChecked ? "font-semibold text-[#0057B8]" : undefined)}>{allOption.label}</span>
+              <span className={cn("min-w-0 truncate", allOptionChecked && layout !== "mobile" ? "font-semibold text-[#0057B8]" : undefined)}>{allOption.label}</span>
             </span>
             <span className={countClass}>{formatHotelCount(allOption.count, locale)}</span>
           </label>
@@ -3034,9 +3034,9 @@ function CheckboxFilterOptions({
               <span className={cn("flex min-w-0 flex-1 items-start gap-2", layout === "mobile" && "max-sm:items-center max-sm:gap-[10px]")}>
                 <input className="peer sr-only" type="checkbox" checked={checked} onChange={() => onToggle(option.value)} />
                 <span aria-hidden="true" className={controlClass(checked)}>
-                  {checked ? <Check className={checkClass} strokeWidth={3} aria-hidden="true" /> : null}
+                  {checked ? <Check className={checkClass} strokeWidth={layout === "mobile" ? 2.2 : 3} aria-hidden="true" /> : null}
                 </span>
-                <span className={cn("min-w-0 truncate", checked ? "font-semibold text-navy" : undefined)}>{option.label}</span>
+                <span className={cn("min-w-0 truncate", checked && layout !== "mobile" ? "font-semibold text-navy" : undefined)}>{option.label}</span>
               </span>
               <span className={countClass}>{formatHotelCount(option.count, locale)}</span>
             </label>
