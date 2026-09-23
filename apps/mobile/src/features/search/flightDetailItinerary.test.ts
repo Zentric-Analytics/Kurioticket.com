@@ -40,21 +40,24 @@ test("brightened hero protects its lower text with a localized soft fade rather 
   assert.doesNotMatch(source,/routeMetadataBackdrop|backgroundColor:[^}]*routeMetadata/);
 });
 
-test("branded header owns actions while the hero remains route-only",()=>{
-  const headerStart=source.indexOf("function FlightDetailsBrandHeader");
-  const headerEnd=source.indexOf("function FareStatusIcon",headerStart);
-  const header=source.slice(headerStart,headerEnd);
-  const heroStart=source.indexOf('<ImageBackground testID="flight-details-hero"');
-  const heroEnd=source.indexOf("</ImageBackground>",heroStart);
-  const hero=source.slice(heroStart,heroEnd);
-  assert.match(header,/accessibilityRole="button" accessibilityLabel="Back to results"/);
-  assert.match(header,/accessibilityLabel=\{saved\?"Remove saved flight":"Save flight"\}/);
-  assert.match(header,/accessibilityLabel="Share flight"/);
-  assert.match(header,/kurioticket-logo-primary-light-bg\.png/);
-  assert.match(source,/brandHeaderAction:\{width:44,height:44/);
-  assert.match(source,/brandHeaderLogo:\{width:128,height:32/);
-  assert.doesNotMatch(hero,/Back to results|Save flight|Share flight|Kurioticket/);
-  assert.doesNotMatch(source,/DetailGlassSurface|heroIconGlass|heroActionsGlass/);
+test("hero controls preserve actions and semantics with inset Hotel light glass surfaces",()=>{
+  const controlsStart=source.indexOf('testID="flight-details-back-control"');
+  const controlsEnd=source.indexOf('<ScrollView testID="flight-details-scroll-content"',controlsStart);
+  const controls=source.slice(controlsStart,controlsEnd);
+  assert.match(controls,/accessibilityRole="button" accessibilityLabel="Back to results"/);
+  assert.match(controls,/label=\{saved\?"Remove saved flight":"Save flight"\}/);
+  assert.match(controls,/label="Share flight"/);
+  assert.match(controls,/savedFlights\.toggle/);
+  assert.match(controls,/onPress=\{\(\)=>void share\(\)\}/);
+  assert.match(source,/heroActions:\{width:88,height:44/);
+  assert.match(source,/heroActionsGlass:\{position:"absolute",left:0,right:0,top:2,bottom:2,borderRadius:20\}/);
+  assert.match(source,/heroAction:\{width:44,height:44/);
+  assert.match(source,/heroIconButton:\{width:44,height:44/);
+  assert.match(source,/heroIconGlass:\{position:"absolute",left:2,right:2,top:2,bottom:2,borderRadius:20\}/);
+  assert.equal((controls.match(/variant="hotelLight"/g)??[]).length,2);
+  assert.match(controls,/<DetailGlassSurface dark=\{false\} variant="hotelLight"/);
+  assert.match(controls,/<Heart size=\{17\}/);
+  assert.match(controls,/<FlowIcon name="share" size=\{17\}/);
 });
 
 test("the route transitions directly to every authoritative leg card without an itinerary heading",()=>{
