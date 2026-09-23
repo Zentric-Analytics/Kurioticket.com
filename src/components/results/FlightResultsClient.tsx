@@ -168,6 +168,8 @@ import {
 } from "@/lib/flights/dateFormatting";
 
 const resultStackClass = "w-full min-w-0";
+export const FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
+
 const desktopCompactFilterTopOffset = 116;
 type MobileShortcutSheet = "sort" | "airlines" | "stops" | "airports";
 type DesktopCompactFilterFrame = {
@@ -1434,16 +1436,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   useEffect(() => {
     if (guidedMode || typeof window === "undefined") return undefined;
-    const update = () => {
-      setShowBackToTop(window.scrollY > 600);
-    };
+    const update = () =>
+      setShowBackToTop(window.scrollY >= FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD);
     update();
     window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
+    return () => window.removeEventListener("scroll", update);
   }, [guidedMode]);
 
   useEffect(() => {
@@ -7349,25 +7346,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
       {renderMobileFullFiltersSheet()}
     </main>
-    <button
-      type="button"
-      aria-label="Back to top"
-      onClick={() =>
-        window.scrollTo({
-          top: 0,
-          behavior: prefersReducedResultsMotion() ? "auto" : "smooth",
-        })
-      }
-      className={cn(
-        "fixed right-4 z-[800] flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#004BB8] shadow-md transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:hidden",
-        "bottom-[calc(5rem+env(safe-area-inset-bottom))]",
-        showBackToTop
-          ? "translate-y-0 opacity-100"
-          : "pointer-events-none translate-y-2 opacity-0",
-      )}
-    >
-      <ArrowUp className="h-[18px] w-[18px]" aria-hidden="true" />
-    </button>
+    {!guidedMode && showBackToTop && !filtersOpen ? (
+      <button
+        type="button"
+        aria-label="Back to top"
+        onClick={() => {
+          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        }}
+        className="fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] end-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#004BB8] shadow-lg transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
+      >
+        <ArrowUp className="h-5 w-5" aria-hidden="true" />
+      </button>
+    ) : null}
     <Footer variant="brand-legal-only" />
     </>
   );
