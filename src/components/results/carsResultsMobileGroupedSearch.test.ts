@@ -3,6 +3,10 @@ import test from "node:test";
 import fs from "node:fs";
 
 const source = fs.readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
+const editSheet = fs.readFileSync(
+  new URL("../search/MobileResultsEditSheet.tsx", import.meta.url),
+  "utf8",
+);
 
 function classConstant(name: string) {
   const value = source.match(new RegExp(`const ${name} =\\s*\\n?\\s*"([^"]+)";`))?.[1];
@@ -17,6 +21,13 @@ test("Cars mobile edit search uses independent cards with an external CTA", () =
   assert.match(source, /data-cars-mobile-grouped-row/);
   assert.match(source, /data-cars-mobile-search-submit/);
   assert.match(source, /placement === "mobile"[\s\S]*border-0 bg-transparent p-0 shadow-none ring-0/);
+});
+
+test("Cars mobile Edit Search title keeps a restrained native-like hierarchy", () => {
+  assert.match(
+    editSheet,
+    /carsResultsEdit && "text-\[18px\] font-semibold leading-\[23px\] tracking-normal"/,
+  );
 });
 
 test("mobile pickup uses a leading MapPin without a disclosure arrow", () => {
@@ -58,12 +69,13 @@ test("grouped mobile copy matches the native label and value rhythm", () => {
   const value = classConstant("carsMobileEditValueClass");
 
   assert.match(label, /mb-0/);
-  assert.match(label, /text-\[10px\]/);
-  assert.match(label, /leading-\[14px\]/);
+  assert.match(label, /text-\[9\.5px\]/);
+  assert.match(label, /leading-\[13px\]/);
+  assert.match(label, /tracking-\[0\.95px\]/);
   assert.match(label, /font-semibold/);
   assert.match(value, /h-auto/);
-  assert.match(value, /text-\[14px\]/);
-  assert.match(value, /leading-\[19px\]/);
+  assert.match(value, /text-\[13px\]/);
+  assert.match(value, /leading-\[18px\]/);
   assert.match(value, /font-medium/);
   assert.equal(classConstant("carsMobileEditValueRowClass"), "gap-2.5");
 });
@@ -72,18 +84,25 @@ test("grouped location values keep natural two-line typography", () => {
   const launcher = source.slice(source.indexOf("function MobileLocationLauncher"), source.indexOf("function SearchInputCell"));
 
   assert.match(launcher, /groupedMobile && carsMobileEditValueClass/);
-  assert.match(launcher, /text-\[11px\] font-normal leading-\[15px\] text-slate-600/);
+  assert.match(launcher, /text-\[10px\] font-normal leading-\[14px\] text-slate-600/);
   assert.match(launcher, /block truncate/);
   assert.doesNotMatch(classConstant("carsMobileEditValueClass"), /text-\[16px\]/);
 });
 
-test("grouped date summary uses the native value line height", () => {
+test("grouped date summary uses the refined mobile value line height", () => {
   const start = source.indexOf("function SearchDateCell");
   const end = source.indexOf("function SearchTimeCell", start);
   const cell = source.slice(start, end);
 
-  assert.match(cell, /groupedMobile && "leading-\[19px\]"/);
+  assert.match(cell, /groupedMobile && "leading-\[18px\]"/);
   assert.match(cell, /groupedMobile \? \[carsMobileEditValueClass, carsMobileEditValueRowClass\] : "h-8 gap-2"/);
+});
+
+test("mobile Search keeps its full touch target with restrained copy", () => {
+  assert.match(
+    source,
+    /data-cars-mobile-search-submit[\s\S]*?h-12 w-full rounded-\[10px\][^\"]*text-\[14px\][^\"]*font-semibold[^\"]*leading-\[18px\]/,
+  );
 });
 
 test("dates, time, and driver age retain disclosure chevrons", () => {

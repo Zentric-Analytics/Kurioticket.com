@@ -11,8 +11,9 @@ test("shared mobile calendar renders one card with localized stacked months and 
   assert.match(source, /grid grid-cols-7/);
   assert.match(source, /data-adjacent-month-placeholder/);
   assert.match(source, /border-t border-slate-200\/70/);
-  assert.match(source, /carsResultsEdit[\s\S]*?resultsMonth/);
-  assert.match(source, /ChevronLeft|ChevronRight/);
+  assert.match(source, /Array\.from\(\{ length: monthCount \}/);
+  assert.match(source, /data-scroll-direction=\{carsResultsEdit \? "vertical"/);
+  assert.doesNotMatch(source, /resultsMonth|ChevronLeft|ChevronRight/);
 });
 
 test("range endpoints and continuous band use the approved distinct treatments", () => {
@@ -69,10 +70,9 @@ test("calendar preserves internal mobile scrolling, safe fixed footer, accessibi
 
 
 test("Cars Results Edit uses native compact date hierarchy", () => {
-  assert.match(source, /data-cars-results-date-range-header/);
-  assert.match(source, /text-\[10px\] font-semibold leading-\[14px\]/);
-  assert.match(source, /text-\[13px\] font-medium leading-\[18px\]/);
-  assert.match(source, /min-h-12/);
-  assert.match(source, /h-11 w-11/);
+  assert.doesNotMatch(source, /data-cars-results-date-range-header/);
+  assert.doesNotMatch(source, /Previous month|Next month/);
+  assert.match(source, /text-\[16px\] font-semibold leading-5/);
   assert.match(source, /h-8 w-8 rounded-lg text-xs/);
+  assert.match(source, /endpoint && !carsResultsEdit/);
 });
