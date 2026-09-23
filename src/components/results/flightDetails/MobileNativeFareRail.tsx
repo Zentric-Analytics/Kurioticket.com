@@ -1,12 +1,11 @@
 "use client";
 
 import { Check, ChevronDown, Luggage } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { ExchangeRates } from "@/lib/currency/exchangeRates";
 import type { FlightDetailsFareChoice } from "@/lib/flights/flightDetailsContract";
-import { getCenteredFareScrollLeft } from "@/lib/flights/flightDetailsPresentation";
 import { nativeFareBenefitRows } from "@/lib/flights/nativeFareBenefitPresentation";
 import type { TripType } from "@/lib/types";
 
@@ -17,7 +16,6 @@ export function MobileNativeFareRail({
   selectedCurrency,
   currencyRates,
   isFallbackRate,
-  alignmentKey,
   onSelect,
 }: {
   fares: FlightDetailsFareChoice[];
@@ -26,41 +24,10 @@ export function MobileNativeFareRail({
   selectedCurrency: string;
   currencyRates: ExchangeRates;
   isFallbackRate: boolean;
-  alignmentKey: string;
   onSelect: (index: number) => void;
 }) {
-  const railRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const alignedKeyRef = useRef("");
   const [expandedFareBenefit, setExpandedFareBenefit] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (fares.length < 2) return;
-    const initialSelectedFareKey = fares.find((fare) => fare.selectedOffer)?.key ?? fares[0]?.key;
-    if (!initialSelectedFareKey || selectedFareKey !== initialSelectedFareKey) return;
-    const stableAlignmentKey = `${alignmentKey}:${initialSelectedFareKey}:${fares.map((fare) => fare.key).join("|")}`;
-    if (alignedKeyRef.current === stableAlignmentKey) return;
-
-    const rail = railRef.current;
-    const selectedIndex = fares.findIndex((fare) => fare.key === initialSelectedFareKey);
-    const selectedElement = cardRefs.current[selectedIndex];
-    if (!rail || !selectedElement) return;
-
-    const railRect = rail.getBoundingClientRect();
-    const selectedRect = selectedElement.getBoundingClientRect();
-    rail.scrollTo({
-      left: getCenteredFareScrollLeft({
-        railLeft: railRect.left,
-        railScrollLeft: rail.scrollLeft,
-        railClientWidth: rail.clientWidth,
-        railScrollWidth: rail.scrollWidth,
-        selectedLeft: selectedRect.left,
-        selectedWidth: selectedElement.offsetWidth,
-      }),
-      behavior: "auto",
-    });
-    alignedKeyRef.current = stableAlignmentKey;
-  }, [alignmentKey, fares, selectedFareKey]);
 
   function selectWithKeyboard(event: React.KeyboardEvent<HTMLButtonElement>, index: number) {
     const offset = event.key === "ArrowRight" || event.key === "ArrowDown"
@@ -79,11 +46,10 @@ export function MobileNativeFareRail({
 
   return (
     <div
-      ref={railRef}
       role="radiogroup"
       aria-label="Available fares"
       data-mobile-native-fare-rail
-      className="flex min-w-0 snap-x snap-mandatory items-start gap-[10px] overflow-x-auto overflow-y-visible pb-[18px] pt-3 pr-[38px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
+      className="flex min-w-0 items-start gap-[10px] overflow-x-auto overflow-y-visible pb-[18px] pt-3 pr-[38px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
     >
       {fares.map((fare, index) => {
         const selected = fare.key === selectedFareKey;
@@ -114,7 +80,7 @@ export function MobileNativeFareRail({
           <div
             key={fare.key}
             data-mobile-native-fare-card
-            className={`relative min-h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 snap-start rounded-[15px] border-[1.5px] px-3 pb-2 pt-1.5 transition-[border-color,background-color,box-shadow] ${
+            className={`relative min-h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 rounded-[15px] border-[1.5px] px-3 pb-2 pt-1.5 transition-[border-color,background-color,box-shadow] ${
               selected
                 ? "z-[1] border-[#075EE8] bg-[#F4F8FF] shadow-[0_6px_14px_rgba(7,19,59,0.18)]"
                 : "z-0 border-[#D7E0EC] bg-white shadow-[0_2px_6px_rgba(7,19,59,0.06)]"
@@ -138,7 +104,7 @@ export function MobileNativeFareRail({
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-[#CFE3FA] bg-[#EAF3FF] text-[#075EE8]">
                     <Luggage className="h-3.5 w-3.5" aria-hidden="true" />
                   </span>
-                  <p className="min-w-0 shrink text-[13px] font-extrabold leading-[17px] tracking-[0.1px] text-[#1A1A1A]">
+                  <p className="line-clamp-2 min-w-0 shrink text-[13px] font-extrabold leading-[17px] tracking-[0.1px] text-[#1A1A1A]">
                     {fare.label}
                   </p>
                 </div>
