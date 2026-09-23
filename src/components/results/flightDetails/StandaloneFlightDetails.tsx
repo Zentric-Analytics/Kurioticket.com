@@ -255,6 +255,8 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     ? `${t("multiCity")} • ${new Intl.NumberFormat(locale).format(legs.length)} ${t("flights")}`
     : t(available.search.tripType === "round-trip" ? "roundTrip" : "oneWay");
   const tripLine = `${tripType} • ${new Intl.NumberFormat(locale).format(travelers.count)} ${t(travelers.count === 1 ? "deals.travelerSingular" : "deals.travelerPlural")}`;
+  const nativeTripType = available.search.tripType === "round-trip" ? "Round-trip" : available.search.tripType === "multi-city" ? "Multi-city" : "One-way";
+  const nativeTripLine = `${nativeTripType} · ${available.search.travelers} traveler${available.search.travelers === 1 ? "" : "s"} · ${titleCase(available.search.cabinClass)}`;
   const date = available.search.tripType === "multi-city"
     ? available.search.legs.map((leg) => formatTripDate(leg.departureDate, locale)).join(" • ")
     : available.search.returnDate
@@ -442,7 +444,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               </div>
               <div className="relative z-10 min-w-0 text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.55)]">
                 <h1 ref={headingRef} id="flight-details-heading" tabIndex={-1} className="text-[27px] font-extrabold leading-[1.12] tracking-[-0.025em] outline-none sm:text-[30px]">{route}</h1>
-                <p className="mt-[3px] text-[11px] font-bold uppercase leading-4 tracking-[0.55px] text-white/95 sm:mt-2 sm:text-[13px] sm:leading-normal sm:tracking-[0.08em]">{tripLine}</p>
+                <p className="mt-[3px] text-[11px] font-bold uppercase leading-4 tracking-[0.55px] text-white/95 sm:mt-2 sm:text-[13px] sm:leading-normal sm:tracking-[0.08em]"><span className="sm:hidden">{nativeTripLine}</span><span className="hidden sm:inline">{tripLine}</span></p>
               </div>
               <svg data-flight-details-hero-curve aria-hidden="true" viewBox="0 0 100 64" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[65px] w-full sm:hidden"><path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z" fill="#F3F6FA" /></svg>
             </div>
@@ -524,6 +526,10 @@ function providerLocalFlightDateLong(value: string | null | undefined, locale: s
   return new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(calendarDay));
 }
 
+function NativeFlightGlyph({ className = "" }: { className?: string }) {
+  return <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m3 13 7.5-2.5L8 4l2-1 5 6 5-1.5c1.5-.4 2.4.2 2.6 1 .2.9-.6 1.7-1.8 2.2L15 13l-2 7-2 .7.2-6L5 17l-2-4Z" /></svg>;
+}
+
 function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, offerAirlineLogo }: { leg: FlightLeg; label: string; departureDate: string; locale: string; offerAirlineName: string; offerAirlineLogo?: string | null }) {
   const departurePoint = leg.segments[0]?.originDetails;
   const arrivalPoint = leg.segments.at(-1)?.destinationDetails;
@@ -571,7 +577,7 @@ function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, of
             <div className="mt-[5px] flex items-center" aria-hidden="true">
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" />
               <span className="h-px min-w-1 flex-1 bg-[#94A3B8]/60" />
-              <Plane className="h-4 w-4 shrink-0 rotate-45 text-[#075EE8]" />
+              <NativeFlightGlyph className="h-4 w-4 shrink-0 text-[#075EE8]" />
               <span className="h-px min-w-1 flex-1 bg-[#94A3B8]/60" />
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" />
             </div>
