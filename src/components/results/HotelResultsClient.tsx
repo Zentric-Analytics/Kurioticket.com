@@ -1716,7 +1716,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             className={shortcutButtonClass}
           >
             <span className={cn(shortcutChipClass, "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50")}>
-              <span>{hotelSummarySortMode === "recommended" ? "Sort" : currentSortLabel}</span>
+              <span>{hotelSummarySortMode === "cheapest" ? "Sort" : currentSortLabel}</span>
               <ChevronDown className={cn("h-[13px] w-[13px] shrink-0 text-slate-500 transition-transform", mobileShortcutMenu === "sort" && "rotate-180")} aria-hidden="true" />
             </span>
           </button>
