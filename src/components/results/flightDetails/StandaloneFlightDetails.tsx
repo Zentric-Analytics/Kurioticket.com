@@ -355,7 +355,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               onToggleSaved={() => void toggleSavedFlight()}
               onShare={() => void shareFlight()}
             />
-            <div data-testid="flight-details-hero" className="relative flex min-h-[318px] flex-col justify-between overflow-hidden px-4 pb-[122px] pt-4 sm:min-h-[280px] sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
+            <div data-testid="flight-details-hero" className="relative flex min-h-[318px] flex-col justify-between overflow-hidden px-4 pb-[122px] pt-8 sm:min-h-[280px] sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
               <div className="absolute inset-0 bg-slate-950/35" aria-hidden="true" />
               <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-slate-950/80 via-slate-950/35 to-transparent" aria-hidden="true" />
