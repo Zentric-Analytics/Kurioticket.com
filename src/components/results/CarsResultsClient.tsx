@@ -69,8 +69,11 @@ import {
 import type {
   CarInventoryStatus,
   CarSearchParams,
+  LocationBoundCarSearchParams,
   NormalizedCarResult,
 } from "@/lib/cars/types";
+import type { CarLocationSuggestion } from "@/lib/cars/carLocationSuggestions";
+import { serializeCarLocationTarget } from "@/lib/cars/carSearchLocationTarget";
 import { carFilterGroups, carQuickFilterGroupIds, type CarFilterGroup } from "@/lib/cars/carFilterPresentation";
 import { formatCarResultsScheduleSummary } from "@/lib/cars/carResultsSummary";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
@@ -108,15 +111,8 @@ import {
 
 export const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
 
-type CarsResultsValues = CarSearchParams & {
+type CarsResultsValues = LocationBoundCarSearchParams & {
   returnToDifferentLocation: boolean;
-  pickupLocation: string;
-  dropoffLocation: string;
-  pickupDate: string;
-  pickupTime: string;
-  dropoffDate: string;
-  dropoffTime: string;
-  driverAge: string;
 };
 
 type CarsResultsMobilePicker =
@@ -129,7 +125,9 @@ type CarsResultsMobilePicker =
 
 type CarsResultsSearchSnapshot = {
   pickupLocation: string;
+  pickupLocationTarget: string;
   dropoffLocation: string;
+  dropoffLocationTarget: string;
   returnToDifferentLocation: boolean;
   pickupDate: string;
   dropoffDate: string;
@@ -137,6 +135,10 @@ type CarsResultsSearchSnapshot = {
   dropoffTime: string;
   driverAge: string;
 };
+
+const serializeSuggestionLocationTarget = (
+  suggestion?: CarLocationSuggestion,
+) => (suggestion?.canonical ? JSON.stringify(suggestion.canonical) : "");
 
 export function buildCarsResultsHref(formData: FormData) {
   const params = new URLSearchParams();
@@ -532,8 +534,17 @@ export function CarsResultsClient({
     "locations" | "dates" | "times" | "driverAge" | null
   >(null);
   const [pickupLocation, setPickupLocation] = useState(values.pickupLocation);
+  const [pickupLocationTarget, setPickupLocationTarget] = useState(
+    () => serializeCarLocationTarget(values.pickupLocationTarget) ?? "",
+  );
   const [dropoffLocation, setDropoffLocation] = useState(
     values.returnToDifferentLocation ? values.dropoffLocation : "",
+  );
+  const [dropoffLocationTarget, setDropoffLocationTarget] = useState(
+    () =>
+      values.returnToDifferentLocation
+        ? serializeCarLocationTarget(values.dropoffLocationTarget) ?? ""
+        : "",
   );
   const [returnToDifferentLocation, setReturnToDifferentLocation] = useState(
     values.returnToDifferentLocation,
@@ -855,7 +866,9 @@ export function CarsResultsClient({
       mobileSearchModalityRef.current = modality;
       mobileSearchSnapshotRef.current = {
         pickupLocation,
+        pickupLocationTarget,
         dropoffLocation,
+        dropoffLocationTarget,
         returnToDifferentLocation,
         pickupDate,
         dropoffDate,
@@ -874,7 +887,9 @@ export function CarsResultsClient({
     },
     [
       pickupLocation,
+      pickupLocationTarget,
       dropoffLocation,
+      dropoffLocationTarget,
       returnToDifferentLocation,
       pickupDate,
       dropoffDate,
@@ -905,7 +920,9 @@ export function CarsResultsClient({
     const snapshot = mobileSearchSnapshotRef.current;
     if (snapshot) {
       setPickupLocation(snapshot.pickupLocation);
+      setPickupLocationTarget(snapshot.pickupLocationTarget);
       setDropoffLocation(snapshot.dropoffLocation);
+      setDropoffLocationTarget(snapshot.dropoffLocationTarget);
       setReturnToDifferentLocation(snapshot.returnToDifferentLocation);
       setPickupDate(snapshot.pickupDate);
       setDropoffDate(snapshot.dropoffDate);
@@ -1178,6 +1195,12 @@ export function CarsResultsClient({
                 name="pickupLocation"
                 onChange={(nextValue) => {
                   setPickupLocation(nextValue);
+                  setPickupLocationTarget("");
+                }}
+                onSelect={(suggestion) => {
+                  setPickupLocationTarget(
+                    serializeSuggestionLocationTarget(suggestion),
+                  );
                 }}
                 isOpen={surfaceOwnsPopovers && openLocation === "pickup"}
                 onOpenChange={(open) => {
@@ -1190,6 +1213,7 @@ export function CarsResultsClient({
                 }}
                 onClear={() => {
                   setPickupLocation("");
+                  setPickupLocationTarget("");
                   searchSurfaceRefs.pickupInputRef.current?.focus();
                 }}
                 placeholder={t("carsSearch.pickupLocationPlaceholder")}
@@ -1222,6 +1246,7 @@ export function CarsResultsClient({
                     onClick: () => {
                       setReturnToDifferentLocation(false);
                       setDropoffLocation("");
+                      setDropoffLocationTarget("");
                       setMobilePicker(null);
                     },
                   }}
@@ -1240,6 +1265,12 @@ export function CarsResultsClient({
                   name="dropoffLocation"
                   onChange={(nextValue) => {
                     setDropoffLocation(nextValue);
+                    setDropoffLocationTarget("");
+                  }}
+                  onSelect={(suggestion) => {
+                    setDropoffLocationTarget(
+                      serializeSuggestionLocationTarget(suggestion),
+                    );
                   }}
                   isOpen={surfaceOwnsPopovers && openLocation === "dropoff"}
                   onOpenChange={(open) => {
@@ -1252,6 +1283,7 @@ export function CarsResultsClient({
                   }}
                   onClear={() => {
                     setDropoffLocation("");
+                    setDropoffLocationTarget("");
                     searchSurfaceRefs.dropoffInputRef.current?.focus();
                   }}
                   placeholder={t("carsResults.sameAsPickup")}
@@ -1267,6 +1299,7 @@ export function CarsResultsClient({
                       });
                       setReturnToDifferentLocation(false);
                       setDropoffLocation("");
+                      setDropoffLocationTarget("");
                       setOpenLocation(null);
                     },
                   }}
@@ -1280,12 +1313,28 @@ export function CarsResultsClient({
                   name="pickupLocation"
                   value={pickupLocation}
                 />
-                {returnToDifferentLocation ? (
+                {pickupLocationTarget ? (
                   <input
                     type="hidden"
-                    name="dropoffLocation"
-                    value={dropoffLocation}
+                    name="pickupLocationTarget"
+                    value={pickupLocationTarget}
                   />
+                ) : null}
+                {returnToDifferentLocation ? (
+                  <>
+                    <input
+                      type="hidden"
+                      name="dropoffLocation"
+                      value={dropoffLocation}
+                    />
+                    {dropoffLocationTarget ? (
+                      <input
+                        type="hidden"
+                        name="dropoffLocationTarget"
+                        value={dropoffLocationTarget}
+                      />
+                    ) : null}
+                  </>
                 ) : null}
               </>
             ) : null}
@@ -1493,7 +1542,12 @@ export function CarsResultsClient({
         value={pickupLocation}
         launcherRef={pickupLocationLauncherRef}
         commitOnSelect
-        onCommit={setPickupLocation}
+        onCommit={(nextValue, suggestion) => {
+          setPickupLocation(nextValue);
+          setPickupLocationTarget(
+            serializeSuggestionLocationTarget(suggestion),
+          );
+        }}
         onClose={() => setMobilePicker(null)}
       />
 
@@ -1505,7 +1559,12 @@ export function CarsResultsClient({
         value={dropoffLocation}
         launcherRef={returnLocationLauncherRef}
         commitOnSelect
-        onCommit={setDropoffLocation}
+        onCommit={(nextValue, suggestion) => {
+          setDropoffLocation(nextValue);
+          setDropoffLocationTarget(
+            serializeSuggestionLocationTarget(suggestion),
+          );
+        }}
         onClose={() => setMobilePicker(null)}
       />
 
@@ -3079,6 +3138,7 @@ function SearchInputCell({
   onChange,
   onClear,
   onOpenChange,
+  onSelect,
   placeholder,
   secondaryAction,
   showClearButton = true,
@@ -3097,6 +3157,7 @@ function SearchInputCell({
   onChange: (value: string) => void;
   onClear: () => void;
   onOpenChange: (open: boolean) => void;
+  onSelect?: (suggestion: CarLocationSuggestion) => void;
   placeholder: string;
   secondaryAction?: { label: string; onClick: () => void };
   showClearButton?: boolean;
@@ -3142,6 +3203,7 @@ function SearchInputCell({
             name={name}
             value={value}
             onValueChange={onChange}
+            onSelect={onSelect}
             placeholder={placeholder}
             inputClassName={cn(fieldInputClass, showClearButton && "pr-8")}
             presentation="desktop"
