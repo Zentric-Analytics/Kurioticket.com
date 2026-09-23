@@ -42,6 +42,7 @@ type FlightMobilePickerShellProps = {
   /** The containing native dialog owns focus containment and document locking. */
   withinDialog?: boolean;
   presentation?: "default" | "carsResultsEdit";
+  surfaceVariant?: "default" | "white";
 };
 
 type ScrollLockSnapshot = {
@@ -165,8 +166,10 @@ export function FlightMobilePickerShell({
   backIcon,
   withinDialog = false,
   presentation = "default",
+  surfaceVariant = "default",
 }: FlightMobilePickerShellProps) {
   const carsResultsEdit = presentation === "carsResultsEdit";
+  const whiteSurface = surfaceVariant === "white";
   const { t } = useLocale();
   const [isClosing, setIsClosing] = useState(false);
   const closeInteractionRef = useRef<"keyboard" | "pointer">("pointer");
@@ -388,7 +391,7 @@ export function FlightMobilePickerShell({
       data-cars-results-edit-picker={carsResultsEdit ? "true" : undefined}
       className={cn(
         "fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden bg-white sm:hidden",
-        carsResultsEdit && "bg-[#F5F7FB]",
+        carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]",
       )}
     >
       <div
@@ -405,11 +408,11 @@ export function FlightMobilePickerShell({
         }}
         className={cn(
           "fixed inset-0 flex h-[100dvh] min-h-0 w-screen max-w-full flex-col overflow-hidden bg-white pt-[env(safe-area-inset-top)]",
-          carsResultsEdit && "bg-[#F5F7FB]",
+          carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]",
           className,
         )}
       >
-        <div className={cn("shrink-0 border-b border-slate-200/80 bg-white px-4", carsResultsEdit && "border-b-0 bg-[#F5F7FB] px-2")}>
+        <div className={cn("shrink-0 border-b border-slate-200/80 bg-white px-4", carsResultsEdit && "border-b-0 px-2", carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]")}>
           <div data-mobile-picker-header={headerVariant} className={cn("mx-auto grid min-h-[62px] w-full max-w-xl grid-cols-[1fr_auto_1fr] items-center gap-2", carsResultsEdit && "min-h-[56px]")}>
             {!showBackAction ? <span aria-hidden="true" /> : headerVariant === "close" ? (
               <button type="button" aria-label={t.cancel} onClick={requestClose} disabled={isClosing} className="focus-ring inline-flex h-11 w-11 items-center justify-center justify-self-start rounded-full text-slate-950 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60">
@@ -457,7 +460,7 @@ export function FlightMobilePickerShell({
           data-content-layout={contentLayout}
           className={cn(
             "min-h-0 flex-1 overflow-x-hidden bg-slate-50 px-4 py-4",
-            carsResultsEdit && "bg-[#F5F7FB]",
+            carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]",
             contentLayout === "scroll"
               ? "touch-pan-y overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]"
               : "flex touch-auto flex-col overflow-y-hidden",
@@ -468,7 +471,7 @@ export function FlightMobilePickerShell({
         </div>
 
         {renderedFooter ? (
-          <div className={cn("shrink-0 border-t border-slate-200/80 bg-white px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]", carsResultsEdit && "border-t-0 bg-[#F5F7FB] pt-2")}>
+          <div className={cn("shrink-0 border-t border-slate-200/80 bg-white px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]", carsResultsEdit && "border-t-0 pt-2", carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]")}>
             <div className="mx-auto w-full max-w-xl">{renderedFooter}</div>
           </div>
         ) : null}

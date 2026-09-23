@@ -129,13 +129,45 @@ test("commitOnSelect immediately commits the canonical row and closes without Do
   assert.equal((picker.match(/onCommit\(/g) ?? []).length, 2);
 });
 
-test("rows use the clean neutral MapPin hierarchy without chips or chevrons", () => {
-  assert.match(picker, /className="h-5 w-5 shrink-0 text-slate-700"/);
-  assert.match(picker, /selected && "bg-blue-50\/60"/);
-  assert.match(picker, /text-\[13px\] font-medium leading-5 text-slate-500/);
+test("Cars Results Edit rows use the native car hierarchy without chips or chevrons", () => {
+  assert.match(picker, /<CarFront className="h-\[22px\] w-\[22px\] text-\[#071A48\]"/);
+  assert.match(picker, /h-\[46px\] w-\[46px\][\s\S]*rounded-xl bg-white/);
+  assert.match(picker, /<MapPin[\s\S]*h-\[18px\] w-\[18px\][\s\S]*<input/);
+  assert.match(picker, /selected && resultsEdit && "border-l-\[#064CF7\] bg-\[#F2F6FF\]"/);
+  assert.match(picker, /text-\[14px\] font-bold leading-\[19px\] text-\[#071A48\]/);
+  assert.match(picker, /text-\[11px\] font-normal leading-4 text-\[#56658E\]/);
   assert.doesNotMatch(
     picker,
     /Building2|Plane|ChevronRight|Check(?:Circle)?|rounded-full bg-slate-50 px-2|>City<|>Airport<|>Area</,
+  );
+});
+
+test("Cars Results Edit owns a native white surface and a dedicated results scroller", () => {
+  assert.match(picker, /surfaceVariant=\{resultsEdit \? "white" : "default"\}/);
+  assert.match(picker, /contentLayout=\{resultsEdit \? "contained" : "scroll"\}/);
+  assert.match(picker, /resultsEdit && "bg-white px-5 py-3"/);
+  assert.match(picker, /resultsEdit && "flex h-full min-h-0 flex-col"/);
+  assert.match(picker, /resultsEdit && "shrink-0"/);
+  assert.match(
+    picker,
+    /mt-3 min-h-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-contain bg-white \[-webkit-overflow-scrolling:touch\]/,
+  );
+  assert.match(picker, /role=\{resultsEdit \? "listbox" : undefined\}/);
+  assert.match(picker, /role=\{resultsEdit \? "option" : undefined\}/);
+});
+
+test("Cars Results Edit rows use native geometry without the shared outer card", () => {
+  assert.match(
+    picker,
+    /min-h-\[68px\] gap-\[10px\] border-b-\[#E7ECF5\] border-l-\[3px\] border-l-transparent px-2 py-2\.5/,
+  );
+  assert.match(
+    picker,
+    /!resultsEdit &&[\s\S]*"overflow-hidden rounded-\[11px\] border border-slate-200 bg-white shadow-/,
+  );
+  assert.doesNotMatch(
+    picker,
+    /className="overflow-hidden rounded-\[11px\] border border-slate-200 bg-white shadow-/,
   );
 });
 

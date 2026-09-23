@@ -11,7 +11,7 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
       <div className="mx-auto w-full max-w-[1500px] px-0 sm:px-6 lg:px-8">
         <div role="status" aria-label="Loading flight details" className="grid gap-5 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
           <span className="sr-only">Loading flight details</span>
-          <div className="overflow-hidden border-y border-slate-200 bg-[#F5F7FB] sm:rounded-[15px] sm:border sm:bg-white">
+          <div className="overflow-hidden border-b border-slate-200 bg-[#F5F7FB] sm:rounded-[15px] sm:border sm:bg-white">
             {resultsHref ? <MobileFlightDetailsBrandHeader resultsHref={resultsHref} actionsDisabled/> : null}
             <div className="relative min-h-[290px] overflow-hidden px-4 pb-[122px] pt-10 sm:min-h-[280px] sm:px-6 sm:pb-16 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
