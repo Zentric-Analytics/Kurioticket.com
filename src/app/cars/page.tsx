@@ -1275,6 +1275,7 @@ function CarsMobilePickerDialogs({
   return (
     <>
       <MobileCarLocationPicker
+        presentation="carsMain"
         open={activeMobilePicker === "pickupLocation"}
         mode="pickup"
         inputId="cars-page-pickup-mobile-input"
@@ -1291,6 +1292,7 @@ function CarsMobilePickerDialogs({
       />
 
       <MobileCarLocationPicker
+        presentation="carsMain"
         open={activeMobilePicker === "dropoffLocation"}
         mode="return"
         inputId="cars-page-return-mobile-input"
@@ -1334,6 +1336,7 @@ function CarsMobilePickerDialogs({
       />
 
       <MobileCarTimePickerDialog
+        presentation="carsMain"
         open={activeMobilePicker === "times"}
         launcherRef={timesLauncherRef}
         onClose={onClose}
@@ -1355,6 +1358,7 @@ function CarsMobilePickerDialogs({
       />
 
       <MobileCarDriverAgePickerDialog
+        presentation="carsMain"
         open={activeMobilePicker === "driverAge"}
         launcherRef={driverAgeLauncherRef}
         onClose={onClose}

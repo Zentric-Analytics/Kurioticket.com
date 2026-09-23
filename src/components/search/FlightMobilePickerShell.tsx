@@ -41,7 +41,7 @@ type FlightMobilePickerShellProps = {
   backIcon?: ReactNode;
   /** The containing native dialog owns focus containment and document locking. */
   withinDialog?: boolean;
-  presentation?: "default" | "carsResultsEdit";
+  presentation?: "default" | "carsResultsEdit" | "carsMain";
   surfaceVariant?: "default" | "white";
 };
 
@@ -169,6 +169,7 @@ export function FlightMobilePickerShell({
   surfaceVariant = "default",
 }: FlightMobilePickerShellProps) {
   const carsResultsEdit = presentation === "carsResultsEdit";
+  const carsMain = presentation === "carsMain";
   const whiteSurface = surfaceVariant === "white";
   const { t } = useLocale();
   const [isClosing, setIsClosing] = useState(false);
@@ -389,6 +390,7 @@ export function FlightMobilePickerShell({
       }
       data-closing={isClosing ? "true" : undefined}
       data-cars-results-edit-picker={carsResultsEdit ? "true" : undefined}
+      data-cars-main-picker={carsMain ? "true" : undefined}
       className={cn(
         "fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden bg-white sm:hidden",
         carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]",
