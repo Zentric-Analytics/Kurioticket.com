@@ -731,6 +731,7 @@ test("mobile web Flight Details removes the branded header and uses the native e
   assert.match(source, /data-mobile-native-itinerary-stack[\s\S]*-mx-\[10px\] -mt-\[104px\]/);
   assert.match(source, /relative z-10 hidden items-start justify-between gap-3 sm:flex/);
   assert.match(source, /function FlightDetailsUnavailable[\s\S]*Back to results/);
+  assert.match(source, /const nativeTripLine = `[\\s\\S]*titleCase\(available\.search\.cabinClass\)/);
   assert.match(loading, /bg-\[#F3F6FA\]/);
   assert.match(loading, /data-mobile-native-itinerary-loading[\s\S]*-mx-\[10px\] -mt-\[104px\]/);
   assert.match(loading, /h-\[226px\]/);
@@ -846,7 +847,7 @@ test("mobile web Flight Details itinerary mirrors the native card hierarchy and 
   assert.match(itinerary, /text-\[19px\] font-extrabold leading-6 tabular-nums/);
   assert.match(itinerary, /providerLocalFlightDate\(leg\.departureTime, locale\)/);
   assert.match(itinerary, /providerLocalFlightDate\(leg\.arrivalTime, locale\)/);
-  assert.match(itinerary, /h-1\.5 w-1\.5.*bg-\[#075EE8\][\s\S]*h-px.*bg-\[#94A3B8\]\/60[\s\S]*<Plane className="h-4 w-4.*text-\[#075EE8\]"/);
+  assert.match(itinerary, /h-1\.5 w-1\.5.*bg-\[#075EE8\][\s\S]*h-px.*bg-\[#94A3B8\]\/60[\s\S]*<NativeFlightGlyph className="h-4 w-4 shrink-0 text-\[#075EE8\]"/);
   assert.match(itinerary, /const stopStatus = leg\.stops === 0 \? "Non-stop" :/);
   assert.match(itinerary, /data-flight-details-connection-row/);
   assert.match(itinerary, /<Clock3 className="h-\[13px\] w-\[13px\] shrink-0 text-\[#5D7496\]"/);
