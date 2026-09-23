@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const source = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
+const shellSource = readFileSync(new URL("../search/MobileResultsEditSheet.tsx", import.meta.url), "utf8");
+const cssSource = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 
 test("Cars mobile Edit Search isolates backdrop motion and closes on animation completion", () => {
   const start = source.indexOf("<MobileResultsEditSheet");
@@ -11,7 +13,23 @@ test("Cars mobile Edit Search isolates backdrop motion and closes on animation c
 
   assert.ok(start >= 0 && end > start);
   assert.match(sheet, /isolatedBackdrop/);
+  assert.match(sheet, /appearance="carsResultsEdit"/);
+  assert.match(sheet, /browserCanvasColor="#F5F7FB"/);
+  assert.doesNotMatch(sheet, /bottomSurfaceContinuation/);
   assert.match(sheet, /closing=\{mobileSearchClosing\}/);
   assert.match(sheet, /onCloseAnimationComplete=\{cancelMobileSearchDrawer\}/);
-  assert.doesNotMatch(source, /mobileSearchCloseMotionMs|mobileSearchCloseTimerRef/);
+  assert.match(source, /mobileSearchCloseTimerRef/);
+});
+
+test("Cars appearance owns the native floating geometry without changing shared defaults", () => {
+  assert.match(shellSource, /appearance\?: "default" \| "carsResultsEdit"/);
+  assert.match(shellSource, /max-h-\[88dvh\]/);
+  assert.match(shellSource, /rounded-\[24px\]/);
+  assert.match(shellSource, /mx-3 mb-\[calc\(12px\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(shellSource, /bg-\[#F5F7FB\]/);
+  assert.match(shellSource, /text-\[19px\] font-semibold leading-6/);
+  assert.match(shellSource, /min-h-\[52px\]/);
+  assert.match(cssSource, /rgba\(8, 18, 35, 0\.52\)/);
+  assert.match(cssSource, /animation-duration: 280ms/);
+  assert.match(cssSource, /animation-duration: 240ms/);
 });

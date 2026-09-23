@@ -37,6 +37,7 @@ type FlightMobilePickerShellProps = {
   headerVariant?: "navigation" | "close";
   showCancelAction?: boolean;
   showBackLabel?: boolean;
+  presentation?: "default" | "carsResultsEdit";
 };
 
 type ScrollLockSnapshot = {
@@ -156,7 +157,9 @@ export function FlightMobilePickerShell({
   headerVariant = "navigation",
   showCancelAction = true,
   showBackLabel = true,
+  presentation = "default",
 }: FlightMobilePickerShellProps) {
+  const carsResultsEdit = presentation === "carsResultsEdit";
   const { t } = useLocale();
   const [isClosing, setIsClosing] = useState(false);
   const closeInteractionRef = useRef<"keyboard" | "pointer">("pointer");
@@ -375,7 +378,11 @@ export function FlightMobilePickerShell({
         pickerMarker === "traveler-cabin" ? "true" : undefined
       }
       data-closing={isClosing ? "true" : undefined}
-      className="fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden bg-white sm:hidden"
+      data-cars-results-edit-picker={carsResultsEdit ? "true" : undefined}
+      className={cn("fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden sm:hidden", carsResultsEdit ? "flex items-end bg-[rgba(8,18,35,0.20)]" : "bg-white")}
+      onPointerDown={(event) => {
+        if (carsResultsEdit && event.target === event.currentTarget) requestClose();
+      }}
     >
       <div
         id={dialogId}
@@ -390,12 +397,14 @@ export function FlightMobilePickerShell({
           }
         }}
         className={cn(
-          "fixed inset-0 flex h-[100dvh] min-h-0 w-screen max-w-full flex-col overflow-hidden bg-white pt-[env(safe-area-inset-top)]",
+          carsResultsEdit
+            ? "relative flex max-h-[82dvh] min-h-0 w-full flex-col overflow-hidden rounded-t-[24px] bg-[#F5F7FB] shadow-[0_-12px_32px_rgba(8,18,35,0.18)]"
+            : "fixed inset-0 flex h-[100dvh] min-h-0 w-screen max-w-full flex-col overflow-hidden bg-white pt-[env(safe-area-inset-top)]",
           className,
         )}
       >
-        <div className="shrink-0 border-b border-slate-200/80 bg-white px-4">
-          <div data-mobile-picker-header={headerVariant} className="mx-auto grid min-h-[62px] w-full max-w-xl grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <div className={cn("shrink-0 border-b border-slate-200/80 bg-white px-4", carsResultsEdit && "border-b-0 bg-[#F5F7FB] px-2")}>
+          <div data-mobile-picker-header={headerVariant} className={cn("mx-auto grid min-h-[62px] w-full max-w-xl grid-cols-[1fr_auto_1fr] items-center gap-2", carsResultsEdit && "min-h-[56px]")}>
             {headerVariant === "close" ? (
               <button type="button" aria-label={t.cancel} onClick={requestClose} disabled={isClosing} className="focus-ring inline-flex h-11 w-11 items-center justify-center justify-self-start rounded-full text-slate-950 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60">
                 <X className="h-6 w-6" aria-hidden="true" />
@@ -408,13 +417,13 @@ export function FlightMobilePickerShell({
                 disabled={isClosing}
                 className="focus-ring inline-flex min-h-10 items-center justify-self-start gap-2 rounded-full px-2 py-2 text-[15px] font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60"
               >
-                <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
-                {showBackLabel ? t.back : null}
+                {carsResultsEdit ? <X className="h-[22px] w-[22px]" aria-hidden="true" /> : <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />}
+                {!carsResultsEdit && showBackLabel ? t.back : null}
               </button>
             )}
             <h2
               id={titleId}
-              className="max-w-[52vw] truncate text-[17px] font-bold text-slate-950"
+              className={cn("max-w-[52vw] truncate text-[17px] font-bold text-slate-950", carsResultsEdit && "font-semibold leading-6")}
             >
               {title}
             </h2>
@@ -442,6 +451,7 @@ export function FlightMobilePickerShell({
           data-content-layout={contentLayout}
           className={cn(
             "min-h-0 flex-1 overflow-x-hidden bg-slate-50 px-4 py-4",
+            carsResultsEdit && "bg-[#F5F7FB]",
             contentLayout === "scroll"
               ? "touch-pan-y overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]"
               : "flex touch-auto flex-col overflow-y-hidden",
@@ -452,7 +462,7 @@ export function FlightMobilePickerShell({
         </div>
 
         {renderedFooter ? (
-          <div className="shrink-0 border-t border-slate-200/80 bg-white px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className={cn("shrink-0 border-t border-slate-200/80 bg-white px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]", carsResultsEdit && "border-t-0 bg-[#F5F7FB] pt-2")}>
             <div className="mx-auto w-full max-w-xl">{renderedFooter}</div>
           </div>
         ) : null}

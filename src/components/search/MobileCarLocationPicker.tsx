@@ -20,6 +20,7 @@ type Props = {
   commitOnSelect?: boolean;
   onClose: () => void;
   onCommit: (value: string) => void;
+  presentation?: "default" | "carsResultsEdit";
 };
 
 export function formatSelectedCarLocation(item: CarLocationSuggestion) {
@@ -88,6 +89,7 @@ export function MobileCarLocationPicker({
   commitOnSelect = true,
   onClose,
   onCommit,
+  presentation = "default",
 }: Props) {
   const { t } = useLocale();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -214,9 +216,10 @@ export function MobileCarLocationPicker({
       titleId={`cars-${mode}-location-title`}
       launcherRef={launcherRef}
       onClose={onClose}
+      presentation={presentation}
       showBackLabel={true}
       showCancelAction={false}
-      contentClassName="bg-[#fcfdff] px-4 py-6"
+      contentClassName={cn("bg-[#fcfdff] px-4 py-6", presentation === "carsResultsEdit" && "bg-[#F5F7FB] px-5 py-3")}
       footer={
         commitOnSelect
           ? undefined
