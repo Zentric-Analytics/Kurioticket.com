@@ -50,7 +50,11 @@ test("Cars Edit children preserve polished Cars content in the full-height mobil
     pickerShell,
     /fixed inset-0 flex h-\[100dvh\] min-h-0 w-screen max-w-full flex-col overflow-hidden bg-white pt-\[env\(safe-area-inset-top\)\]/,
   );
-  assert.match(pickerShell, /carsResultsEdit && "bg-\[#F5F7FB\]"/);
+  assert.match(
+    pickerShell,
+    /carsResultsEdit && !whiteSurface && "bg-\[#F5F7FB\]"/,
+  );
+  assert.match(pickerShell, /surfaceVariant = "default"/);
   assert.doesNotMatch(pickerShell, /bg-\[rgba\(8,18,35,0\.20\)\]/);
   assert.doesNotMatch(pickerShell, /max-h-\[82dvh\]/);
   assert.doesNotMatch(carsPickerContent, /max-h-\[72dvh\]/);
@@ -64,7 +68,9 @@ test("Cars Edit children preserve polished Cars content in the full-height mobil
   assert.doesNotMatch(datePicker, /data-cars-results-date-range-header/);
   assert.match(datePicker, /endpoint && !carsResultsEdit/);
   assert.match(datePicker, /`\$\{fullDate\}, \$\{endpoint\}`/);
-  assert.match(locationPicker, /bg-\[#F5F7FB\]/);
+  assert.match(locationPicker, /surfaceVariant=\{resultsEdit \? "white" : "default"\}/);
+  assert.match(locationPicker, /contentLayout=\{resultsEdit \? "contained" : "scroll"\}/);
+  assert.match(locationPicker, /resultsEdit && "bg-white px-5 py-3"/);
   assert.match(locationPicker, /h-\[50px\].*rounded-\[10px\]/);
   assert.match(carsPickerContent, /min-h-14/);
   assert.match(

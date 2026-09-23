@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { MapPin, X } from "lucide-react";
+import { CarFront, MapPin, X } from "lucide-react";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
@@ -88,20 +88,43 @@ function LocationRow({
       type="button"
       onClick={onSelect}
       aria-label={`${primaryText}, ${secondaryText}`}
-      aria-pressed={selected}
+      role={resultsEdit ? "option" : undefined}
+      aria-selected={resultsEdit ? selected : undefined}
+      aria-pressed={resultsEdit ? undefined : selected}
       className={cn(
         "focus-ring flex min-h-[80px] w-full items-center gap-3 border-b border-slate-200 px-5 py-3 text-start transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50",
-        resultsEdit && "min-h-[68px] gap-2.5 px-2 py-2.5",
-        selected && "bg-blue-50/60",
+        resultsEdit &&
+          "min-h-[68px] gap-[10px] border-b-[#E7ECF5] border-l-[3px] border-l-transparent px-2 py-2.5 last:border-b",
+        selected && !resultsEdit && "bg-blue-50/60",
+        selected && resultsEdit && "border-l-[#064CF7] bg-[#F2F6FF]",
       )}
     >
-      <MapPin aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
+      {resultsEdit ? (
+        <span
+          aria-hidden="true"
+          className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl bg-white"
+        >
+          <CarFront className="h-[22px] w-[22px] text-[#071A48]" />
+        </span>
+      ) : (
+        <MapPin aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
+      )}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[16px] font-semibold leading-5 text-slate-950">
+        <span
+          className={cn(
+            "block truncate text-[16px] font-semibold leading-5 text-slate-950",
+            resultsEdit && "text-[14px] font-bold leading-[19px] text-[#071A48]",
+          )}
+        >
           {primaryText}
         </span>
         {secondaryText ? (
-          <span className="mt-1 block truncate text-[13px] font-medium leading-5 text-slate-500">
+          <span
+            className={cn(
+              "mt-1 block truncate text-[13px] font-medium leading-5 text-slate-500",
+              resultsEdit && "mt-[3px] text-[11px] font-normal leading-4 text-[#56658E]",
+            )}
+          >
             {secondaryText}
           </span>
         ) : null}
@@ -267,11 +290,13 @@ export function MobileCarLocationPicker({
       launcherRef={launcherRef}
       onClose={onClose}
       presentation={presentation}
+      surfaceVariant={resultsEdit ? "white" : "default"}
+      contentLayout={resultsEdit ? "contained" : "scroll"}
       showBackLabel={true}
       showCancelAction={false}
       contentClassName={cn(
         "bg-[#fcfdff] px-4 py-6",
-        presentation === "carsResultsEdit" && "bg-[#F5F7FB] px-5 py-3",
+        resultsEdit && "bg-white px-5 py-3",
       )}
       footer={
         commitOnSelect
@@ -289,8 +314,13 @@ export function MobileCarLocationPicker({
       }
     >
       {(requestClose) => (
-        <div className="mx-auto w-full max-w-xl">
-          <div className="relative">
+        <div
+          className={cn(
+            "mx-auto w-full max-w-xl",
+            resultsEdit && "flex h-full min-h-0 flex-col",
+          )}
+        >
+          <div className={cn("relative", resultsEdit && "shrink-0")}>
             <MapPin
               aria-hidden="true"
               className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-700"
@@ -323,7 +353,14 @@ export function MobileCarLocationPicker({
             </button>
           </div>
 
-          <div className="mt-8">
+          <div
+            data-car-location-results-viewport={resultsEdit ? "true" : undefined}
+            className={cn(
+              resultsEdit
+                ? "mt-3 min-h-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-contain bg-white [-webkit-overflow-scrolling:touch]"
+                : "mt-8",
+            )}
+          >
             {loading ? (
               <p
                 className="px-4 py-8 text-center text-sm font-medium text-slate-500"
@@ -346,7 +383,14 @@ export function MobileCarLocationPicker({
                   : `${text("carsSearch.suggestionsUnavailable", "Suggestions unavailable.")} ${text("carsSearch.continueTypingManually", "Continue typing manually.")}`}
               </p>
             ) : visibleResults.length ? (
-              <div className="overflow-hidden rounded-[11px] border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
+              <div
+                role={resultsEdit ? "listbox" : undefined}
+                aria-label={resultsEdit ? "Car location suggestions" : undefined}
+                className={cn(
+                  !resultsEdit &&
+                    "overflow-hidden rounded-[11px] border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)]",
+                )}
+              >
                 {visibleResults.map((item) => (
                   <LocationRow
                     key={item.id}
