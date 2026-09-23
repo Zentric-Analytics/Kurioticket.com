@@ -395,7 +395,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }, [body.checkIn, body.checkOut, body.destination, body.destinationId, body.guests, body.rooms, providerMode]);
   const bodySearchKey = [body.destinationId, body.destination, body.checkIn, body.checkOut, body.guests, body.rooms, providerMode].join("-");
   // A changed search must not display cards belonging to the previous request.
-  const loading = inventoryLoading || searchApplying || completedSearchKey !== bodySearchKey;
+  const loading = inventoryLoading || completedSearchKey !== bodySearchKey;
   const bodyMobileSearchDraft = useMemo<HotelMobileSearchDraft>(
     () => ({
       destinationId: body.destinationId,
