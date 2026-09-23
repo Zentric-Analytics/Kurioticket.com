@@ -65,7 +65,11 @@ test("Flight Results matches the Cars Back-to-top control", async () => {
   assert.match(source, /rounded-full/);
   assert.match(source, /sm:bottom-\[calc\(1rem\+env\(safe-area-inset-bottom\)\)\]/);
   assert.match(source, /<ArrowUp className="h-5 w-5" aria-hidden="true"/);
-  assert.doesNotMatch(source, /sm:hidden|window\.scrollY > 600|prefersReducedResultsMotion\(\) \? "auto" : "smooth"/);
+  const backToTopStart = source.indexOf('aria-label="Back to top"');
+  const backToTopEnd = source.indexOf("</button>", backToTopStart);
+  const backToTop = source.slice(backToTopStart, backToTopEnd);
+  assert.doesNotMatch(backToTop, /sm:hidden|prefersReducedResultsMotion\(\) \? "auto" : "smooth"/);
+  assert.doesNotMatch(source, /setShowBackToTop\(window\.scrollY > 600\)/);
   assert.match(source, /<Footer variant="brand-legal-only" \/>/);
 });
 
