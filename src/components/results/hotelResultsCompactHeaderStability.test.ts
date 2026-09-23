@@ -7,12 +7,13 @@ const source = readFileSync(
   "utf8",
 );
 
-test("Hotel results uses one native sticky search summary without a scroll-driven duplicate", () => {
+test("Hotel results uses the Cars-style floating search summary instead of a sticky Hotel-only layer", () => {
   assert.doesNotMatch(source, /mobileResultsSearch=/);
   assert.doesNotMatch(source, /mobileResultsLeadingAction=/);
-  assert.match(source, /data-hotel-mobile-sticky-search/);
-  assert.match(source, /sticky top-0 z-40 bg-white/);
-  assert.doesNotMatch(source, /mobileCompactHeaderVisible|renderMobileCompactResultsHeader|mobileSearchSummarySentinelRef/);
+  assert.match(source, /data-hotel-mobile-search-summary/);
+  assert.match(source, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
+  assert.match(source, /relative translate-y-1\/2/);
+  assert.doesNotMatch(source, /sticky top-0 z-40 bg-white/);
   assert.match(source, /ref=\{mobileResultsTopRef\}/);
 });
 
