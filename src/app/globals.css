@@ -266,9 +266,37 @@ textarea {
 .cars-native-quick-scrim { animation: cars-native-quick-scrim-in 160ms ease-out both; }
 .cars-native-quick-sheet { animation: cars-native-quick-sheet-in 220ms ease-out both; }
 
+@keyframes cars-filter-skeleton-shimmer {
+  from { background-position: 140% 0; }
+  to { background-position: -40% 0; }
+}
+
+.cars-filter-card-skeleton .animate-pulse {
+  animation: cars-filter-skeleton-shimmer 720ms ease-in-out infinite;
+  background-image: linear-gradient(
+    100deg,
+    rgb(226 232 240 / 0) 25%,
+    rgb(255 255 255 / 0.72) 48%,
+    rgb(226 232 240 / 0) 71%
+  );
+  background-size: 220% 100%;
+}
+
+@keyframes cars-filter-results-reveal {
+  from { opacity: 0.72; }
+  to { opacity: 1; }
+}
+
+.cars-filter-results-reveal {
+  animation: cars-filter-results-reveal 160ms ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cars-native-quick-scrim,
   .cars-native-quick-sheet { animation: none; }
+
+  .cars-filter-card-skeleton .animate-pulse,
+  .cars-filter-results-reveal { animation: none; }
 }
 
 @keyframes cars-price-alert-snackbar-rise {
