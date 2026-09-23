@@ -88,7 +88,7 @@ test("Cars Edit children preserve polished Cars content in the full-height mobil
     resultsAgeDialog,
     /presentation === "carsResultsEdit" && driverAge === defaultDriverAge[\s\S]*?\? "30"/,
   );
-  assert.match(resultsAgeDialog, /: driverAge;/);
+  assert.match(resultsAgeDialog, /\? undefined\s*: driverAge;/);
   assert.match(carsPickerContent, /`\$\{age\} years old`/);
   assert.match(carsPickerContent, /!nativeCarsAppearance \? \(/);
   assert.doesNotMatch(
@@ -176,7 +176,7 @@ test("Results Edit preserves the Any Age sentinel without selecting a numeric ro
 
   assert.match(
     ageDialog,
-    /presentation === "carsMain" && driverAge === defaultDriverAge[\s\S]*?: driverAge/,
+    /presentation === "carsMain" && driverAge === defaultDriverAge[\s\S]*?\? undefined[\s\S]*?: driverAge/,
   );
   assert.match(ageDialog, /onCommit\(draftAge\)/);
   assert.match(ageDialog, /onClose=\{onClose\}/);

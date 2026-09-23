@@ -42,6 +42,8 @@ test("shared time content renders two independently scrollable button lists", ()
   assert.match(shared, /grid min-h-0 flex-1 grid-cols-2 overflow-hidden/);
   assert.match(shared, /min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain/);
   assert.match(shared, /list\.scrollTop = Math\.max/);
+  assert.match(shared, /if \(!autoRevealSelected\)[\s\S]*?scrollTop = 0/);
+  assert.match(shared, /autoRevealSelected=\{presentation !== "carsMain"\}/);
   assert.equal(shared.includes("scrollIntoView"), false);
 });
 
@@ -113,7 +115,10 @@ test("Cars Main shares native time and concrete-age internals without changing d
   assert.match(shared, /presentation === "carsResultsEdit" \|\| presentation === "carsMain"/);
   assert.match(shared, /presentation === "carsMain"[\s\S]*?"bg-white px-4 py-3"/);
   assert.match(shared, /nativeCarsAppearance \? driverAgeOptions\.slice\(1\) : driverAgeOptions/);
-  assert.match(shared, /presentation === "carsMain" && driverAge === defaultDriverAge[\s\S]*?\? "30"/);
+  assert.match(shared, /presentation === "carsMain" && driverAge === defaultDriverAge[\s\S]*?\? undefined/);
+  assert.doesNotMatch(shared, /driverAge === defaultDriverAge[\s\S]*?\? "30"/);
+  assert.match(shared, /disabled=\{presentation === "carsMain" && draftAge === undefined\}/);
+  assert.match(shared, /if \(draftAge === undefined\) return;[\s\S]*?onCommit\(draftAge\)/);
   assert.doesNotMatch(shared, /presentation === "carsResultsEdit" && driverAge === defaultDriverAge[\s\S]*?\? "30"/);
   assert.match(shared, /nativeCarsAppearance \?[\s\S]*?`\$\{age\} years old`/);
 });

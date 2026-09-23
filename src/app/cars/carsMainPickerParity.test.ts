@@ -7,6 +7,14 @@ const globals = readFileSync(
   new URL("../globals.css", import.meta.url),
   "utf8",
 );
+const pickerContent = readFileSync(
+  new URL("../../components/search/CarsPickerContent.tsx", import.meta.url),
+  "utf8",
+);
+const pickerShell = readFileSync(
+  new URL("../../components/search/FlightMobilePickerShell.tsx", import.meta.url),
+  "utf8",
+);
 
 const timeField = page.match(
   /function TimeRangeField\([\s\S]*?\n}\n\nfunction SearchCell/,
@@ -82,4 +90,42 @@ test("main desktop Return Time selection updates and stays open", () => {
     /onDone|setTimesOpen|timesLauncherRef|\.focus\(/,
   );
   assert.doesNotMatch(timeField, /\bonDone\b/);
+});
+
+test("Cars Main mobile time starts at the top while Results Edit still reveals selection", () => {
+  assert.match(
+    pickerContent,
+    /autoRevealSelected=\{presentation !== "carsMain"\}/,
+  );
+  assert.match(
+    pickerContent,
+    /if \(!autoRevealSelected\)[\s\S]*?pickupListRef\.current\.scrollTop = 0[\s\S]*?returnListRef\.current\.scrollTop = 0/,
+  );
+  assert.match(pickerContent, /positionSelected\(pickupListRef\.current, pickupTime\)/);
+  assert.match(pickerContent, /positionSelected\(returnListRef\.current, returnTime\)/);
+  assert.match(pickerContent, /nativeCarsAppearance \? "gap-2\.5"/);
+  assert.match(pickerContent, /min-h-\[50px\] px-2/);
+  assert.match(pickerContent, /h-\[17px\] w-\[17px\]/);
+});
+
+test("Cars Main default driver age requires an explicit numeric selection", () => {
+  assert.match(
+    pickerContent,
+    /presentation === "carsMain" && driverAge === defaultDriverAge[\s\S]*?\? undefined/,
+  );
+  assert.doesNotMatch(pickerContent, /driverAge === defaultDriverAge[\s\S]*?\? "(?:18|30)"/);
+  assert.match(pickerContent, /driverAgeOptions\.slice\(1\)/);
+  assert.match(pickerContent, /disabled=\{presentation === "carsMain" && draftAge === undefined\}/);
+  assert.match(pickerContent, /aria-selected=\{selected\}/);
+  assert.match(pickerContent, /const selected = selectedAge === age/);
+  assert.match(pickerContent, /min-h-14/);
+  assert.match(pickerContent, /h-\[22px\] w-\[22px\]/);
+});
+
+test("Cars Main child pickers retain the full-height white mobile-web shell", () => {
+  assert.match(pickerShell, /data-cars-main-picker/);
+  assert.match(pickerShell, /fixed inset-0 z-\[2147483647\] h-\[100dvh\]/);
+  assert.match(pickerShell, /fixed inset-0 flex h-\[100dvh\]/);
+  assert.doesNotMatch(pickerShell, /max-h-\[(?:72|82)dvh\]/);
+  assert.match(pickerContent, /presentation === "carsMain"[\s\S]*?"bg-white px-4 py-3"/);
 });
