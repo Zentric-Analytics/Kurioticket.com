@@ -85,3 +85,22 @@ test("full Filters launcher remains separate and retains its active count", () =
   assert.match(filter, /activeFilterCount > 0/);
   assert.match(filter, /h-5 min-w-5/);
 });
+
+
+test("mobile Flight filter and quick-filter colors mirror Cars", () => {
+  const filter = source.slice(
+    source.indexOf("function renderFloatingFilterButton"),
+    source.indexOf("function renderMobileRouteSummaryCard"),
+  );
+
+  assert.match(filter, /border border-\[#D8E1EC\] bg-white[^"]*text-\[#142033\]/);
+  assert.match(filter, /<SlidersHorizontal[\s\S]*className="h-4 w-4 shrink-0"/);
+  assert.doesNotMatch(filter, /SlidersHorizontal[\s\S]*text-\[#004BB8\]/);
+
+  assert.match(shortcuts, /selected \? "border-\[#075EE8\] bg-\[#EAF2FF\] text-\[#004BB8\]"/);
+  assert.match(shortcuts, /"border-\[#D8E1EC\] bg-white text-\[#142033\] group-hover:bg-slate-50"/);
+  assert.match(shortcuts, /rounded-full bg-\[#004BB8\][^"]*text-\[10px\] text-white/);
+  assert.match(shortcuts, /renderTrigger\("airlines", "Airlines", selectedAirlines\.length\)/);
+  assert.match(shortcuts, /renderTrigger\("stops", "Stops", selectedStops\.length\)/);
+  assert.match(shortcuts, /renderTrigger\("airports", "Airports", selectedAirports\.length\)/);
+});
