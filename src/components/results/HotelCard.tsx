@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import styles from "./HotelResultsMobile.module.css";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
@@ -25,6 +26,7 @@ import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { MobileHotelPriceText } from "./MobileHotelPriceText";
+import { formatMobileHotelPrice } from "./hotelDetails/mobileHotelDetailsPresentation";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import {
   normalizeHotelClassificationStars,
@@ -386,7 +388,7 @@ export function HotelCard({
         }
         disabled={!isSaved && !hasValidPrice}
         className={`${className} ${horizontalAlignment} z-20 flex min-h-11 min-w-11 shrink-0 items-center rounded-full border border-transparent bg-transparent transition hover:bg-slate-100/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] ${
-          isSaved ? "text-rose-600" : "text-slate-700"
+          isSaved ? "text-[#E92D55] sm:text-rose-600" : "text-slate-700"
         }`}
         onClick={() => {
           if (isSaved || hasValidPrice) void toggleSavedHotel();
@@ -456,7 +458,7 @@ export function HotelCard({
   }
 
   return (
-    <Card className="relative mx-auto w-full max-w-[800px] overflow-hidden rounded-[13px] border-[#D8E1EC] bg-white shadow-[0_2px_10px_rgba(24,48,91,0.08)] transition sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] sm:hover:-translate-y-0.5 sm:hover:border-slate-300 sm:hover:shadow-[0_22px_50px_-24px_rgba(2,28,43,0.30)] focus-within:border-[#004BB8]/40 focus-within:ring-2 focus-within:ring-[#004BB8]/10 motion-reduce:transform-none motion-reduce:transition-none sm:w-full lg:mx-0 lg:max-w-none">
+    <Card className={`${styles.card} relative mx-auto w-full max-w-[800px] overflow-hidden rounded-[13px] border-[#D8E1EC] bg-white shadow-[0_2px_10px_rgba(24,48,91,0.08)] transition sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] sm:hover:-translate-y-0.5 sm:hover:border-slate-300 sm:hover:shadow-[0_22px_50px_-24px_rgba(2,28,43,0.30)] focus-within:border-[#004BB8]/40 focus-within:ring-2 focus-within:ring-[#004BB8]/10 motion-reduce:transform-none motion-reduce:transition-none sm:w-full lg:mx-0 lg:max-w-none`}>
       {resolvedDetailsHref ? (
         <Link
           href={resolvedDetailsHref}
@@ -513,11 +515,11 @@ export function HotelCard({
                   >
                     <ChevronRight className="h-5 w-5 translate-x-2.5" aria-hidden="true" />
                   </button>
-                  <div className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] whitespace-nowrap rounded-full bg-slate-950/75 px-2 py-1 text-[11px] font-semibold text-white shadow-lg ring-1 ring-white/30 sm:text-xs" aria-live="polite">
-                    {photoCounterText}
-                  </div>
                 </>
               ) : null}
+              <div data-hotel-photo-counter data-single-photo={!showGalleryControls} className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] whitespace-nowrap rounded-full bg-slate-950/75 px-2 py-1 text-[11px] font-semibold text-white shadow-lg ring-1 ring-white/30 sm:text-xs" aria-live="polite" aria-label={photoCounterText}>
+                <span aria-hidden="true" className="sm:hidden">{activeGalleryPosition + 1} / {availableImageIndices.length}</span><span className="hidden sm:inline">{photoCounterText}</span>
+              </div>
             </>
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue/10 via-surface to-surface-subtle px-5 text-center">
@@ -603,7 +605,7 @@ export function HotelCard({
                 </p>
               </div>
               {reviewBand || reviewCountText ? (
-                <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px] font-normal leading-[15px] text-[#071A48] sm:text-[12px] sm:font-semibold sm:leading-4 sm:text-slate-600 md:mt-2 md:gap-1.5">
+                <div data-hotel-card-reviews className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px] font-normal leading-[15px] text-[#071A48] sm:text-[12px] sm:font-semibold sm:leading-4 sm:text-slate-600 md:mt-2 md:gap-1.5">
                   {reviewBand ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-[#0754F7] px-2 py-0.5 text-white sm:bg-slate-900">
                       <span>
@@ -705,7 +707,7 @@ export function HotelCard({
                         aria-hidden="true"
                         className="block whitespace-nowrap text-[18px] font-bold leading-6 text-[#071A48] tabular-nums sm:text-xl sm:font-bold sm:leading-6 sm:text-slate-950"
                       >
-                        <MobileHotelPriceText text={nightlyDisplayPrice.formatted} />
+                        <MobileHotelPriceText text={nightlyDisplayPrice.formatted} mobileText={formatMobileHotelPrice(nightlyDisplayPrice, nightlyDisplayPrice.formatted)} />
                       </span>
                       <span
                         aria-hidden="true"
