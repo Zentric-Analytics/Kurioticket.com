@@ -21,12 +21,17 @@ test("Cars mobile Edit Search isolates backdrop motion and closes on animation c
   assert.match(source, /mobileSearchCloseTimerRef/);
 });
 
-test("Cars appearance owns the native floating geometry without changing shared defaults", () => {
+test("Cars Edit Search keeps polished Cars content in an attached mobile-web bottom sheet", () => {
   assert.match(shellSource, /appearance\?: "default" \| "carsResultsEdit"/);
-  assert.match(shellSource, /max-h-\[88dvh\]/);
-  assert.match(shellSource, /rounded-\[24px\]/);
-  assert.match(shellSource, /mx-3 mb-\[calc\(12px\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(shellSource, /mobile-results-sheet-cars-edit-surface mx-0 mb-0 w-full/);
+  assert.match(shellSource, /rounded-t-\[22px\]/);
+  assert.doesNotMatch(shellSource, /max-h-\[88dvh\]/);
+  assert.doesNotMatch(shellSource, /rounded-\[24px\]/);
+  assert.doesNotMatch(shellSource, /mx-3/);
+  assert.doesNotMatch(shellSource, /w-\[calc\(100%-24px\)\]/);
+  assert.doesNotMatch(shellSource, /mb-\[calc\(12px\+env\(safe-area-inset-bottom\)\)\]/);
   assert.match(shellSource, /bg-\[#F5F7FB\]/);
+  assert.match(shellSource, /pb-\[max\(20px,env\(safe-area-inset-bottom\)\)\]/);
   assert.match(shellSource, /text-\[19px\] font-semibold leading-6/);
   assert.match(shellSource, /min-h-\[52px\]/);
   assert.match(cssSource, /rgba\(8, 18, 35, 0\.52\)/);
