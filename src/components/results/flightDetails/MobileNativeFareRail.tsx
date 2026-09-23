@@ -91,7 +91,9 @@ export function MobileNativeFareRail({
           amount: fare.offer.price,
           sourceCurrency: fare.offer.currency,
           displayCurrency: selectedCurrency,
-          convertUsdEstimate: true,
+          convertSourceEstimate: true,
+          useFlightResultSymbols: true,
+          maximumFractionDigits: 0,
           rates: currencyRates,
           isFallbackRate,
         });
