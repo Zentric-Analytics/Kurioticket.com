@@ -7,16 +7,13 @@ const source = readFileSync(
   "utf8",
 );
 
-test("Hotel results keeps the page navbar and Cars-style floating plus compact mobile search chrome", () => {
+test("Hotel results uses one native sticky search summary without a scroll-driven duplicate", () => {
   assert.doesNotMatch(source, /mobileResultsSearch=/);
   assert.doesNotMatch(source, /mobileResultsLeadingAction=/);
-  assert.match(source, /mobileSearchSummarySentinelRef/);
-  assert.match(source, /setMobileCompactHeaderVisible/);
-  assert.match(source, /h-\[4\.25rem\][\s\S]*max-w-\[30rem\]/);
-  assert.match(source, /relative translate-y-1\/2/);
-  assert.match(source, /grid-cols-\[44px_minmax\(0,1fr\)_82px\]/);
-  assert.match(source, /data-hotels-compact-edit-icon/);
-  assert.doesNotMatch(source, /placement="top"/);
+  assert.match(source, /data-hotel-mobile-sticky-search/);
+  assert.match(source, /sticky top-0 z-40 bg-white/);
+  assert.doesNotMatch(source, /mobileCompactHeaderVisible|renderMobileCompactResultsHeader|mobileSearchSummarySentinelRef/);
+  assert.match(source, /ref=\{mobileResultsTopRef\}/);
 });
 
 test("opening and closing Hotel Edit Search does not reset scroll visibility", () => {
