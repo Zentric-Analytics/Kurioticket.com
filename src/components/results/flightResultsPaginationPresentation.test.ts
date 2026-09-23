@@ -37,6 +37,8 @@ test("Flight Results pagination keeps its semantic controls and compact mobile i
   assert.match(pagination, /aria-label="Next flight results page"/);
   assert.match(pagination, /aria-current=\{item === currentPage \? "page" : undefined\}/);
   assert.match(pagination, /buildFlightPaginationItems\(currentPage, totalPages, true\)/);
+  assert.match(componentSource, /data-mobile-flight-results-summary-row[\s\S]*resultsDisplayRange\.start[\s\S]*resultsDisplayRange\.end/);
+  assert.match(componentSource, /data-mobile-paginated-flight-results[\s\S]*visibleResults\.map[\s\S]*<FlightResultsPagination/);
   assert.match(pagination, /aria-hidden="true">…<\/span>/, "desktop ellipses remain renderable");
   assert.doesNotMatch(
     pagination,
