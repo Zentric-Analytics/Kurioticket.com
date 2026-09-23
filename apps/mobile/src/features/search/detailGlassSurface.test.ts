@@ -68,12 +68,9 @@ test("Approved and KAYAK Cars share exactly two full-footprint material surfaces
   }
 });
 
-test("loaded and loading Flight controls reuse inset Hotel light glass", () => {
-  assert.match(flight, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
-  assert.equal((flight.match(/<DetailGlassSurface /g) ?? []).length, 4);
-  assert.equal((flight.match(/variant="hotelLight"/g) ?? []).length, 4);
-  assert.equal((flight.match(/<DetailGlassSurface dark=\{false\} variant="hotelLight"/g) ?? []).length, 4);
-  assert.doesNotMatch(flight, /variant="carsOptical"|import \{ BlurView \} from "expo-blur"|<BlurView |rgba\(255, 255, 255, 0\.68\)/);
-  assert.match(flight, /heroIconGlass:\{position:"absolute",left:2,right:2,top:2,bottom:2,borderRadius:20\}/);
-  assert.match(flight, /heroActionsGlass:\{position:"absolute",left:0,right:0,top:2,bottom:2,borderRadius:20\}/);
+test("Flight Details no longer uses floating glass controls above the hero", () => {
+  assert.doesNotMatch(flight, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
+  assert.equal((flight.match(/<DetailGlassSurface /g) ?? []).length, 0);
+  assert.match(flight, /testID="flight-details-brand-header"/);
+  assert.match(flight, /backgroundColor:"#FFFFFF"/);
 });
