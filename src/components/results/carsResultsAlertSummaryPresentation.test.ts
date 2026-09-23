@@ -41,22 +41,11 @@ test("Cars adds spacing only below the mobile price alert", () => {
   assert.doesNotMatch(cars, /data-cars-results-summary-row[^>]*className="[^"]*mt-/);
 });
 
-test("Cars alert preserves its existing full-title CTA presentation", () => {
-  const title = '<h2 className="whitespace-nowrap text-sm font-bold text-slate-950 sm:text-base">{t("travel.account.carAlert.title")}</h2>';
-  assert.ok(alert.includes(title));
-  assert.doesNotMatch(alert, /<h2 className="[^"]*truncate/);
-  assert.match(alert, /flex-wrap[^"]*min-\[360px\]:flex-nowrap/);
-
-  for (const colorContract of [
-    "border border-[#004BB8]/20 bg-blue-50",
-    "text-[#004BB8]",
-    "hover:border-[#004BB8]/35 hover:bg-blue-100",
-    "focus-visible:ring-[#004BB8]/30",
-    "sm:border-transparent sm:bg-[#004BB8]",
-    "sm:text-white sm:hover:bg-[#003f9c]",
-  ]) {
-    assert.ok(alert.includes(colorContract), `Cars CTA is missing ${colorContract}`);
-  }
+test("Cars alert preserves its existing switch presentation", () => {
+  assert.match(alert, /<h2 className="[^"]*flex-1[^>]*>\{t\("carsResults\.priceTracking\.title"\)\}<\/h2>/);
+  assert.match(alert, /role="switch"/);
+  assert.match(alert, /aria-checked=\{tracking\}/);
+  assert.match(alert, /tracking \? "border-\[#004BB8\] bg-\[#004BB8\]" : "border-slate-300 bg-slate-200"/);
 });
 
 test("Hotel mobile web uses a real tracking switch while desktop keeps Create price alert", () => {
@@ -74,7 +63,8 @@ test("Hotel mobile web uses a real tracking switch while desktop keeps Create pr
 });
 
 test("Cars alert presentation leaves authentication, API, and canonical payload behavior intact", () => {
-  assert.match(alert, /buildCarPriceAlertPayload\(search, value, currency\)/);
+  assert.match(alert, /buildAutomaticCarPriceAlertPayload\(search, baseline\.totalPrice, baseline\.currency\)/);
+  assert.match(alert, /matchingAutomaticCarPriceAlert/);
   assert.match(alert, /fetch\("\/api\/price-alerts"/);
   assert.match(alert, /response\.status === 401/);
   assert.match(alert, /response\.status === 409/);

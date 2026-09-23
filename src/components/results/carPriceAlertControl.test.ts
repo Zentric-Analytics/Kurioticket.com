@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const source = readFileSync(new URL("./CarPriceAlertControl.tsx", import.meta.url), "utf8");
+const globals = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 
 test("Cars Results uses server-authoritative automatic price tracking", () => {
   assert.match(source, /buildAutomaticCarPriceAlertPayload\(search, baseline\.totalPrice, baseline\.currency\)/);
@@ -24,6 +25,34 @@ test("pending geometry and transient feedback remain stable and accessible", () 
   assert.match(source, /href="\/price-alerts"/);
 });
 
+test("Cars price tracking snackbar matches the compact native presentation", () => {
+  assert.match(source, /fixed bottom-\[calc\(max\(env\(safe-area-inset-bottom\),12px\)\+12px\)\] left-4 right-4/);
+  assert.match(source, /max-w-md items-center gap-2\.5 rounded-\[14px\]/);
+  assert.match(source, /border-\[0\.5px\] border-slate-300\/80/);
+  assert.match(source, /px-\[13px\] py-\[11px\]/);
+  assert.match(source, /shadow-\[0_4px_16px_rgba\(15,23,42,0\.16\)\]/);
+  assert.match(source, /CheckCircle2 className=\{`h-5 w-5 shrink-0/);
+  assert.match(source, /text-\[14px\] font-bold leading-\[19px\]/);
+  assert.match(source, /text-\[12\.5px\] leading-\[17px\]/);
+  assert.match(source, /min-h-11 shrink-0 items-center px-1 text-\[13\.5px\] font-bold/);
+});
+
+test("Cars price tracking snackbar renders active-only supporting content and action", () => {
+  assert.match(source, /feedback === "active" \? <span[^>]*>\{t\("carsResults\.priceTracking\.activeBody"\)\}<\/span> : null/);
+  assert.match(source, /feedback === "active" \? <Link href="\/price-alerts"/);
+  assert.doesNotMatch(source, /min-h-\[(?:7[0-9]|[89][0-9])px\]/);
+});
+
+test("Cars price tracking snackbar defines enter, exit, and reduced-motion behavior", () => {
+  assert.match(source, /cars-price-alert-snackbar-leaving/);
+  assert.match(source, /cars-price-alert-snackbar-entering/);
+  assert.match(globals, /cars-price-alert-snackbar-rise[\s\S]*translate3d\(0, 10px, 0\)[\s\S]*200ms/);
+  assert.match(globals, /cars-price-alert-snackbar-fade-in[\s\S]*160ms/);
+  assert.match(globals, /cars-price-alert-snackbar-settle[\s\S]*translate3d\(0, 8px, 0\)[\s\S]*180ms/);
+  assert.match(globals, /cars-price-alert-snackbar-fade-out[\s\S]*160ms/);
+  assert.match(globals, /prefers-reduced-motion: reduce[\s\S]*cars-price-alert-snackbar-entering,[\s\S]*cars-price-alert-snackbar-leaving \{ animation: none; \}/);
+});
+
 test("mobile Cars price tracking fills its content gutter without compromising narrow layouts", () => {
   assert.match(source, /data-cars-price-alert/);
   assert.match(source, /w-full min-w-0 max-w-full/);
@@ -31,6 +60,6 @@ test("mobile Cars price tracking fills its content gutter without compromising n
   assert.match(source, /bg-\[#EDF6FF\][^"]*px-3 py-0[^"]*sm:py-1/);
   assert.match(source, /min-h-\[52px\] min-w-0 items-center/);
   assert.match(source, /min-w-0 flex-1 \[overflow-wrap:anywhere\]/);
-  assert.match(source, /h-8 w-8 shrink-0/);
+  assert.match(source, /shrink-0 items-center justify-center[^"\n]*sm:h-8 sm:w-8/);
   assert.match(source, /h-11 shrink-0 items-center/);
 });
