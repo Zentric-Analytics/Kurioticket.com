@@ -64,6 +64,15 @@ test("different-return Search serializes both current drafts exactly once", () =
   assert.deepEqual(data.getAll("returnToDifferentLocation"), ["1"]);
 });
 
+test("mobile Search carries canonical location targets into the next Results request", () => {
+  assert.match(source, /name="pickupLocationTarget"[\s\S]*value=\{pickupLocationTarget\}/);
+  assert.match(source, /name="dropoffLocationTarget"[\s\S]*value=\{dropoffLocationTarget\}/);
+  assert.match(source, /setPickupLocationTarget\([\s\S]*serializeSuggestionLocationTarget\(suggestion\)/);
+  assert.match(source, /setDropoffLocationTarget\([\s\S]*serializeSuggestionLocationTarget\(suggestion\)/);
+  assert.match(source, /setPickupLocationTarget\(""\)/);
+  assert.match(source, /setDropoffLocationTarget\(""\)/);
+});
+
 test("mobile Search captures the live form before submit-close and router navigation", () => {
   const submitHandler = mobileSubmit;
   const preventDefaultIndex = submitHandler.indexOf("event.preventDefault()");

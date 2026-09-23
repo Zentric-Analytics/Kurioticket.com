@@ -31,6 +31,7 @@ import {
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
+import type { CarLocationSuggestion } from "@/lib/cars/carLocationSuggestions";
 import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
 import { openMobilePickerWithKeyboard } from "@/components/search/mobilePickerKeyboardFocus";
 import {
@@ -78,6 +79,9 @@ import {
   type CarImageCard,
   type CarPickupCard,
 } from "@/data/carsLandingContent";
+
+const serializeCarLocationTarget = (suggestion?: CarLocationSuggestion) =>
+  suggestion?.canonical ? JSON.stringify(suggestion.canonical) : undefined;
 
 const getCarsIntlLocale = (locale: string) => {
   const normalizedLocale = locale.toLowerCase();
@@ -253,8 +257,15 @@ function CarsSearchPage() {
     setValues((current) => {
       const next = { ...current, [key]: value };
 
+      if (key === "pickupLocation") {
+        next.pickupLocationTarget = undefined;
+      }
+      if (key === "dropoffLocation") {
+        next.dropoffLocationTarget = undefined;
+      }
       if (key === "returnToDifferentLocation" && value === false) {
         next.dropoffLocation = "";
+        next.dropoffLocationTarget = undefined;
       }
 
       return next;
@@ -294,6 +305,18 @@ function CarsSearchPage() {
       driverAge: values.driverAge,
     });
 
+    const pickupLocationTarget = values.pickupLocationTarget?.trim();
+    const dropoffLocationTarget = (
+      values.returnToDifferentLocation
+        ? values.dropoffLocationTarget
+        : values.pickupLocationTarget
+    )?.trim();
+    if (pickupLocationTarget) {
+      params.set("pickupLocationTarget", pickupLocationTarget);
+    }
+    if (dropoffLocationTarget) {
+      params.set("dropoffLocationTarget", dropoffLocationTarget);
+    }
     if (values.returnToDifferentLocation) {
       params.set("dropoffLocation", values.dropoffLocation.trim());
       params.set("returnToDifferentLocation", "1");
@@ -937,6 +960,12 @@ function CarsSearchBar({
                         onValueChange={(nextValue) =>
                           updateValue("pickupLocation", nextValue)
                         }
+                        onSelect={(suggestion) =>
+                          updateValue(
+                            "pickupLocationTarget",
+                            serializeCarLocationTarget(suggestion),
+                          )
+                        }
                         placeholder={t("carsSearch.pickupLocationPlaceholder")}
                         inputRef={pickupLocationRef}
                         inputClassName="hidden h-7 w-full border-none bg-transparent py-0 ps-0 text-[16px] font-medium text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8"
@@ -999,6 +1028,12 @@ function CarsSearchBar({
                         value={values.dropoffLocation}
                         onValueChange={(nextValue) =>
                           updateValue("dropoffLocation", nextValue)
+                        }
+                        onSelect={(suggestion) =>
+                          updateValue(
+                            "dropoffLocationTarget",
+                            serializeCarLocationTarget(suggestion),
+                          )
                         }
                         placeholder={t("carsSearch.returnLocationPlaceholder")}
                         inputRef={dropoffLocationRef}
@@ -1246,7 +1281,13 @@ function CarsMobilePickerDialogs({
         value={values.pickupLocation}
         launcherRef={pickupLocationLauncherRef}
         onClose={onClose}
-        onCommit={(nextValue) => updateValue("pickupLocation", nextValue)}
+        onCommit={(nextValue, suggestion) => {
+          updateValue("pickupLocation", nextValue);
+          updateValue(
+            "pickupLocationTarget",
+            serializeCarLocationTarget(suggestion),
+          );
+        }}
       />
 
       <MobileCarLocationPicker
@@ -1256,7 +1297,13 @@ function CarsMobilePickerDialogs({
         value={values.dropoffLocation}
         launcherRef={dropoffLocationLauncherRef}
         onClose={onClose}
-        onCommit={(nextValue) => updateValue("dropoffLocation", nextValue)}
+        onCommit={(nextValue, suggestion) => {
+          updateValue("dropoffLocation", nextValue);
+          updateValue(
+            "dropoffLocationTarget",
+            serializeCarLocationTarget(suggestion),
+          );
+        }}
       />
 
       <MobileDatePickerDialog

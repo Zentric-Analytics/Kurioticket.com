@@ -60,6 +60,7 @@ import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShe
 import { MobileHotelGuestsRoomsPicker } from "@/components/search/MobileHotelGuestsRoomsPicker";
 import { DealsSearchForm } from "@/components/search/DealsSearchForm";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
+import type { CarLocationSuggestion } from "@/lib/cars/carLocationSuggestions";
 import { resolveDesktopPopoverGeometry } from "@/components/search/desktopPopoverGeometry";
 import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
 import {
@@ -145,6 +146,9 @@ type SearchTabsProps = {
   locale?: string;
   onCarsResultsNavigationStart?: () => void;
 };
+
+const serializeCarLocationTarget = (suggestion?: CarLocationSuggestion) =>
+  suggestion?.canonical ? JSON.stringify(suggestion.canonical) : undefined;
 
 const normalizeHomepageCalendarLocale = normalizeFlightsCalendarLocale;
 
@@ -2183,8 +2187,15 @@ export function SearchTabs({
     setCarsValues((current) => {
       const next = { ...current, [key]: value };
 
+      if (key === "pickupLocation") {
+        next.pickupLocationTarget = undefined;
+      }
+      if (key === "dropoffLocation") {
+        next.dropoffLocationTarget = undefined;
+      }
       if (key === "returnToDifferentLocation" && value === false) {
         next.dropoffLocation = "";
+        next.dropoffLocationTarget = undefined;
       }
 
       return next;
@@ -2259,6 +2270,18 @@ export function SearchTabs({
       driverAge: carsValues.driverAge,
       dropoffLocation,
     });
+    const pickupLocationTarget = carsValues.pickupLocationTarget?.trim();
+    const dropoffLocationTarget = (
+      carsValues.returnToDifferentLocation
+        ? carsValues.dropoffLocationTarget
+        : carsValues.pickupLocationTarget
+    )?.trim();
+    if (pickupLocationTarget) {
+      params.set("pickupLocationTarget", pickupLocationTarget);
+    }
+    if (dropoffLocationTarget) {
+      params.set("dropoffLocationTarget", dropoffLocationTarget);
+    }
     if (carsValues.returnToDifferentLocation) {
       params.set("returnToDifferentLocation", "1");
     }
@@ -2868,6 +2891,12 @@ export function SearchTabs({
         name="dropoffLocation"
         value={carsValues.dropoffLocation}
         onValueChange={(value) => updateCarsValue("dropoffLocation", value)}
+        onSelect={(suggestion) =>
+          updateCarsValue(
+            "dropoffLocationTarget",
+            serializeCarLocationTarget(suggestion),
+          )
+        }
         placeholder={translate("carsSearch.returnLocationPlaceholder") || "Return city, airport or address"}
         presentation="responsive"
         inputClassName={cn(hotelFieldValueClassName, "h-8 w-full ps-6")}
@@ -4485,7 +4514,7 @@ export function SearchTabs({
                 </button> : null}
                 <div className={cn("relative", mobileHomepage && "hidden sm:block")}>
                   <MapPin aria-hidden="true" className="pointer-events-none absolute start-0 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-500" />
-                  <CarLocationAutocomplete id={mobileHomepage ? "homepage-cars-pickup-desktop" : "homepage-cars-pickup"} name="pickupLocation" value={carsValues.pickupLocation} onValueChange={(value) => updateCarsValue("pickupLocation", value)} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} presentation="responsive" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full ps-6")} strings={carsLocationStrings} isOpen={carsOpenPicker === "pickup"} onOpenChange={(open) => setCarsOpenPicker(open ? "pickup" : null)} />
+                  <CarLocationAutocomplete id={mobileHomepage ? "homepage-cars-pickup-desktop" : "homepage-cars-pickup"} name="pickupLocation" value={carsValues.pickupLocation} onValueChange={(value) => updateCarsValue("pickupLocation", value)} onSelect={(suggestion) => updateCarsValue("pickupLocationTarget", serializeCarLocationTarget(suggestion))} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} presentation="responsive" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full ps-6")} strings={carsLocationStrings} isOpen={carsOpenPicker === "pickup"} onOpenChange={(open) => setCarsOpenPicker(open ? "pickup" : null)} />
                 </div>
                 {carsErrors.pickupLocation ? <p className="absolute start-3 top-full z-10 mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
               </div>
@@ -4540,7 +4569,18 @@ export function SearchTabs({
                 value={isPickup ? carsValues.pickupLocation : carsValues.dropoffLocation}
                 launcherRef={isPickup ? carsPickupLauncherRef : carsDropoffLauncherRef}
                 onClose={() => setCarsOpenPicker(null)}
-                onCommit={(value) => updateCarsValue(isPickup ? "pickupLocation" : "dropoffLocation", value)}
+                onCommit={(value, suggestion) => {
+                  updateCarsValue(
+                    isPickup ? "pickupLocation" : "dropoffLocation",
+                    value,
+                  );
+                  updateCarsValue(
+                    isPickup
+                      ? "pickupLocationTarget"
+                      : "dropoffLocationTarget",
+                    serializeCarLocationTarget(suggestion),
+                  );
+                }}
               />
             );
           })}

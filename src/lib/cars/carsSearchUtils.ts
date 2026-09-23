@@ -1,5 +1,7 @@
 export type CarsFormValues = {
   pickupLocation: string;
+  /** Serialized canonical location selected from Cars discovery. */
+  pickupLocationTarget?: string;
   pickupDate: string;
   pickupTime: string;
   dropoffDate: string;
@@ -7,6 +9,8 @@ export type CarsFormValues = {
   driverAge: string;
   returnToDifferentLocation: boolean;
   dropoffLocation: string;
+  /** Serialized canonical return location selected from Cars discovery. */
+  dropoffLocationTarget?: string;
 };
 
 export type CarsFormErrors = Partial<
@@ -190,8 +194,12 @@ export const getInitialValues = (
     marker: getSearchParam(params, "returnToDifferentLocation"),
   });
 
+  const pickupLocationTarget = getSearchParam(params, "pickupLocationTarget");
+  const dropoffLocationTarget = getSearchParam(params, "dropoffLocationTarget");
+
   return {
     pickupLocation,
+    ...(pickupLocationTarget ? { pickupLocationTarget } : {}),
     pickupDate: getSearchParam(params, "pickupDate"),
     pickupTime: getSearchParam(params, "pickupTime") || "10:00",
     dropoffDate: getSearchParam(params, "dropoffDate"),
@@ -199,6 +207,9 @@ export const getInitialValues = (
     driverAge: normalizeDriverAge(getSearchParam(params, "driverAge")),
     returnToDifferentLocation: differentDropoff,
     dropoffLocation: differentDropoff ? dropoffLocation : "",
+    ...(differentDropoff && dropoffLocationTarget
+      ? { dropoffLocationTarget }
+      : {}),
   };
 };
 

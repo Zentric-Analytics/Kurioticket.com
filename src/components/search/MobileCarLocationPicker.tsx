@@ -20,7 +20,7 @@ type Props = {
   launcherRef?: RefObject<HTMLElement | null>;
   commitOnSelect?: boolean;
   onClose: () => void;
-  onCommit: (value: string) => void;
+  onCommit: (value: string, suggestion?: CarLocationSuggestion) => void;
   presentation?: "default" | "carsResultsEdit";
 };
 
@@ -36,6 +36,32 @@ export function formatSelectedCarLocation(item: CarLocationSuggestion) {
 function locationSecondaryText(item: CarLocationSuggestion) {
   if (item.canonical) return item.canonical.supportingLabel;
   return item.kind === "airport" ? item.primaryText : item.secondaryText;
+}
+
+async function loadCarLocationSuggestions(
+  query: string,
+  signal: AbortSignal,
+  limit = 8,
+) {
+  const params = new URLSearchParams({ q: query.trim(), limit: String(limit) });
+  try {
+    const response = await fetch(`/api/cars/locations?${params.toString()}`, {
+      signal,
+      cache: "no-store",
+    });
+    if (!response.ok) throw new Error("Car locations unavailable");
+    const payload = (await response.json()) as {
+      suggestions?: CarLocationSuggestion[];
+    };
+    return Array.isArray(payload.suggestions) ? payload.suggestions : [];
+  } catch (error) {
+    if (signal.aborted || (error as { name?: string }).name === "AbortError") {
+      throw error;
+    }
+    // Keep the existing deterministic catalogue as a graceful fallback. The
+    // server discovery route remains authoritative whenever it is reachable.
+    return searchCarLocationSuggestions(query.trim(), { limit });
+  }
 }
 
 function LocationRow({
@@ -113,6 +139,7 @@ export function MobileCarLocationPicker({
 
   useEffect(() => {
     if (!open) return;
+    const controller = new AbortController();
     const frame = requestAnimationFrame(() => {
       const requestId = ++searchRequestRef.current;
       setQuery("");
@@ -125,7 +152,7 @@ export function MobileCarLocationPicker({
         inputRef.current.focus({ preventScroll: true });
       }
       if (resultsEdit) return;
-      void searchCarLocationSuggestions("", { limit: 8 })
+      void loadCarLocationSuggestions("", controller.signal, 8)
         .then((items) => {
           if (requestId !== searchRequestRef.current) return;
           setResults(items);
@@ -140,7 +167,10 @@ export function MobileCarLocationPicker({
           if (requestId === searchRequestRef.current) setLoading(false);
         });
     });
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      controller.abort();
+      cancelAnimationFrame(frame);
+    };
   }, [open, resultsEdit, value]);
 
   useEffect(() => {
@@ -152,12 +182,13 @@ export function MobileCarLocationPicker({
     if (!eligible) return;
 
     let active = true;
+    const controller = new AbortController();
     const requestId = ++searchRequestRef.current;
     const timer = window.setTimeout(
       () => {
         setLoading(true);
         setError(false);
-        void searchCarLocationSuggestions(trimmedQuery, { limit: 8 })
+        void loadCarLocationSuggestions(trimmedQuery, controller.signal, 8)
           .then((items) => {
             if (!active || requestId !== searchRequestRef.current) return;
             setResults(items);
@@ -178,6 +209,7 @@ export function MobileCarLocationPicker({
     );
     return () => {
       active = false;
+      controller.abort();
       window.clearTimeout(timer);
     };
   }, [draft, open, query, resultsEdit]);
@@ -185,7 +217,7 @@ export function MobileCarLocationPicker({
   const select = (item: CarLocationSuggestion, requestClose: () => void) => {
     searchRequestRef.current += 1;
     if (commitOnSelect) {
-      onCommit(item.value);
+      onCommit(item.value, item);
       requestClose();
       return;
     }
@@ -210,7 +242,7 @@ export function MobileCarLocationPicker({
 
   const commit = (requestClose: () => void) => {
     if (!draft) return;
-    onCommit(draft.value);
+    onCommit(draft.value, draft);
     requestClose();
   };
 
