@@ -19,6 +19,7 @@ type HotelDestinationsApiResponse = { suggestions?: HotelDestinationSuggestion[]
 
 type Props = {
   open: boolean;
+  appearance?: "default" | "app";
   value: string;
   titleId: string;
   inputId: string;
@@ -48,7 +49,7 @@ function MobileHotelDestinationRow({ option, selected, locale, onSelect, id }: {
   );
 }
 
-export function HotelDestinationMobilePicker({ open, value, titleId, inputId, launcherRef, selectedCountryHint = "", detectedCountryHint = "", onChange, onSelect, onClose }: Props) {
+export function HotelDestinationMobilePicker({ appearance, open, value, titleId, inputId, launcherRef, selectedCountryHint = "", detectedCountryHint = "", onChange, onSelect, onClose }: Props) {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const inputRef = useRef<HTMLInputElement>(null);
@@ -99,7 +100,7 @@ export function HotelDestinationMobilePicker({ open, value, titleId, inputId, la
   const statusId = `${inputId}-status`;
   const activeId = highlightedIndex >= 0 && rows[highlightedIndex] ? `${listboxId}-option-${highlightedIndex}` : undefined;
 
-  return <HotelMobilePickerShell open={open} title={t("chooseDestination")} titleId={titleId} launcherRef={launcherRef}
+  return <HotelMobilePickerShell appearance={appearance} open={open} title={t("chooseDestination")} titleId={titleId} launcherRef={launcherRef}
     onClose={onClose} showCancelAction={false} contentClassName="bg-[#fcfdfe] px-4 py-6">
     {(requestClose) => <>
     <div className="mx-auto w-full max-w-xl">

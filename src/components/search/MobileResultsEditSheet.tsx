@@ -27,6 +27,7 @@ type Props = {
   contentClassName?: string;
   browserCanvasColor?: string;
   cleanBackdrop?: boolean;
+  backdropClassName?: string;
   bottomSurfaceContinuation?: boolean;
   bottomSurfaceContinuationClassName?: string;
   smoothMotion?: boolean;
@@ -48,6 +49,7 @@ export function MobileResultsEditSheet({
   contentClassName,
   browserCanvasColor,
   cleanBackdrop = false,
+  backdropClassName,
   bottomSurfaceContinuation = false,
   bottomSurfaceContinuationClassName,
   smoothMotion = false,
@@ -133,6 +135,7 @@ export function MobileResultsEditSheet({
             "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 bg-slate-950/35",
             cleanBackdrop && "mobile-results-sheet-backdrop-clean",
             closing && "mobile-results-sheet-backdrop-layer-closing",
+            backdropClassName,
           )}
         />
       ) : null}

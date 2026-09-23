@@ -37,6 +37,10 @@ type FlightMobilePickerShellProps = {
   headerVariant?: "navigation" | "close";
   showCancelAction?: boolean;
   showBackLabel?: boolean;
+  showBackAction?: boolean;
+  backIcon?: ReactNode;
+  /** The containing native dialog owns focus containment and document locking. */
+  withinDialog?: boolean;
 };
 
 type ScrollLockSnapshot = {
@@ -156,6 +160,9 @@ export function FlightMobilePickerShell({
   headerVariant = "navigation",
   showCancelAction = true,
   showBackLabel = true,
+  showBackAction = true,
+  backIcon,
+  withinDialog = false,
 }: FlightMobilePickerShellProps) {
   const { t } = useLocale();
   const [isClosing, setIsClosing] = useState(false);
@@ -256,7 +263,7 @@ export function FlightMobilePickerShell({
   }, [open]);
 
   useEffect(() => {
-    if (!open || typeof window === "undefined") return;
+    if (!open || withinDialog || typeof window === "undefined") return;
 
     const mobileQuery = window.matchMedia("(max-width: 639px)");
     if (!mobileQuery.matches) return;
@@ -348,7 +355,7 @@ export function FlightMobilePickerShell({
         restoreLauncherFocus(launcherElement);
       }
     };
-  }, [launcherRef, open, restoreLauncherFocus, restorePagePosition]);
+  }, [launcherRef, open, withinDialog, restoreLauncherFocus, restorePagePosition]);
 
   if (!open || !portalElement) return null;
 
@@ -364,7 +371,7 @@ export function FlightMobilePickerShell({
         footer(requestClose)
       : footer;
 
-  return createPortal(
+  const content = (
     <div
       ref={shellRef}
       data-flight-mobile-picker-shell
@@ -396,7 +403,7 @@ export function FlightMobilePickerShell({
       >
         <div className="shrink-0 border-b border-slate-200/80 bg-white px-4">
           <div data-mobile-picker-header={headerVariant} className="mx-auto grid min-h-[62px] w-full max-w-xl grid-cols-[1fr_auto_1fr] items-center gap-2">
-            {headerVariant === "close" ? (
+            {!showBackAction ? <span aria-hidden="true" /> : headerVariant === "close" ? (
               <button type="button" aria-label={t.cancel} onClick={requestClose} disabled={isClosing} className="focus-ring inline-flex h-11 w-11 items-center justify-center justify-self-start rounded-full text-slate-950 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60">
                 <X className="h-6 w-6" aria-hidden="true" />
               </button>
@@ -408,7 +415,7 @@ export function FlightMobilePickerShell({
                 disabled={isClosing}
                 className="focus-ring inline-flex min-h-10 items-center justify-self-start gap-2 rounded-full px-2 py-2 text-[15px] font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60"
               >
-                <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+                {backIcon ?? <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />}
                 {showBackLabel ? t.back : null}
               </button>
             )}
@@ -457,7 +464,7 @@ export function FlightMobilePickerShell({
           </div>
         ) : null}
       </div>
-    </div>,
-    portalElement,
+    </div>
   );
+  return withinDialog ? content : createPortal(content, portalElement);
 }

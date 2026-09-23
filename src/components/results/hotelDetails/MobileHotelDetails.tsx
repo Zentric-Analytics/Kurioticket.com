@@ -1,14 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowLeft, Bed, CalendarDays, ChevronLeft, ChevronRight, Heart, MapPin, Minus, Plus, Users, X } from "lucide-react";
+import { ArrowLeft, Bed, CalendarDays, ChevronLeft, ChevronRight, Heart, MapPin, Users, X } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { HotelAmenityList } from "../HotelAmenityList";
 import { RelatedHotelsSection } from "./RelatedHotelsSection";
 import { buildHotelMapEmbedUrl, buildGoogleHotelStreetViewEmbedUrl } from "@/lib/hotels/hotelMap";
 import type { StandaloneHotelDetailsProps } from "./StandaloneHotelDetails";
 import { formatMobileHotelPrice, mobileHotelAbout, mobileHotelAmenityGroups, mobileHotelStay } from "./mobileHotelDetailsPresentation";
+import { MobileHotelStayEditor } from "./MobileHotelStayEditor";
 import styles from "./HotelDetailsMobile.module.css";
 
 type Tab = "rates" | "overview" | "reviews";
@@ -37,8 +38,10 @@ function DetailsDialog({ title, onClose, children, full = false, back }: { title
 
 export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("rates");
-  const [overlay, setOverlay] = useState<Overlay>(null);
+  const searchParams = useSearchParams();
+  const reopenStayEditor = searchParams.get("hotelStayEditor") === "1";
+  const [tab, setTab] = useState<Tab>(reopenStayEditor ? "overview" : "rates");
+  const [overlay, setOverlay] = useState<Overlay>(reopenStayEditor ? "stay" : null);
   const [mapView, setMapView] = useState<"map" | "streetview">("map");
   const [shareStatus, setShareStatus] = useState("");
   const [handoffError, setHandoffError] = useState("");
@@ -54,14 +57,12 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
   const offsets = useRef<Partial<Record<Tab, number>>>({ rates: 0 });
   const context = props.relatedSearchContext;
   const stay = mobileHotelStay(context);
-  const [checkIn, setCheckIn] = useState(context?.checkIn ?? "");
-  const [checkOut, setCheckOut] = useState(context?.checkOut ?? "");
-  const [guests, setGuests] = useState(Number(context?.guests) || 1);
-  const [rooms, setRooms] = useState(Number(context?.rooms) || 1);
-  function openStay() {
-    setCheckIn(context?.checkIn ?? ""); setCheckOut(context?.checkOut ?? "");
-    setGuests(Number(context?.guests) || 1); setRooms(Number(context?.rooms) || 1);
-    setOverlay("stay");
+  function openStay() { setOverlay("stay"); }
+  function closeStay() {
+    setOverlay(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("hotelStayEditor");
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}`);
   }
   const property = props.propertyDetails;
   const location = props.locationDetails ?? property;
@@ -193,17 +194,13 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
     {selected ? <section className={styles.dock} data-mobile-hotel-stay-dock><div><strong title={props.totalDisplayPrice?.ariaLabel}>{total}</strong><span>Stay total</span></div><button type="button" onClick={() => void viewDeal()} disabled={pending}>{pending ? "Opening…" : "View deal"}</button></section> : null}
     <span role="status" className="sr-only">{shareStatus}</span>
 
-    {overlay ? <DetailsDialog title={overlay === "gallery" ? "Photos" : overlay === "photo" ? `${gallery.activePosition} / ${gallery.usableIndices.length}` : overlay === "amenities" ? "All amenities" : overlay === "stay" ? "Your stay" : overlay === "map" ? "Location" : "Room options"} full={overlay === "gallery" || overlay === "photo" || overlay === "map"} back={overlay === "photo" ? () => setOverlay("gallery") : undefined} onClose={() => setOverlay(null)}>
+    {overlay && overlay !== "stay" ? <DetailsDialog title={overlay === "gallery" ? "Photos" : overlay === "photo" ? `${gallery.activePosition} / ${gallery.usableIndices.length}` : overlay === "amenities" ? "All amenities" : overlay === "map" ? "Location" : "Room options"} full={overlay === "gallery" || overlay === "photo" || overlay === "map"} back={overlay === "photo" ? () => setOverlay("gallery") : undefined} onClose={() => setOverlay(null)}>
       {overlay === "gallery" ? <div className={styles.galleryGrid}>{gallery.usableIndices.map((index, position) => <button type="button" key={index} onClick={() => { gallery.onSelectImage(index); setOverlay("photo"); }} aria-label={`View photo ${position + 1}`}><Image src={gallery.displayCandidates[index]} alt={`${props.hotelName} photo ${position + 1}`} fill sizes={position % 3 === 0 ? "100vw" : "50vw"} className={styles.cover} onError={() => gallery.onImageError(gallery.displayCandidates[index])} /></button>)}</div> : null}
       {overlay === "photo" ? <div className={styles.viewer} onTouchStart={event => { touchStart.current = {x:event.touches[0].clientX,y:event.touches[0].clientY}; }} onTouchEnd={event => { const start = touchStart.current; const touch = event.changedTouches[0]; if (start && Math.abs(touch.clientX-start.x)>40 && Math.abs(touch.clientY-start.y)<80) { if(touch.clientX>start.x) gallery.onPrevious(); else gallery.onNext(); } touchStart.current=null; }}><Image src={gallery.activeUrl} alt={gallery.imageAlt} fill sizes="100vw" style={{ objectFit: "contain" }} /><button type="button" aria-label="Previous photo" onClick={gallery.onPrevious}><ChevronLeft /></button><button type="button" aria-label="Next photo" onClick={gallery.onNext}><ChevronRight /></button></div> : null}
       {overlay === "amenities" ? <div className={styles.sheetBody}><>{mobileHotelAmenityGroups(props.amenityItems).map(group => <section key={group.title} className={styles.amenityGroup}><h3>{group.title}</h3><HotelAmenityList items={group.items} t={() => ""} className={styles.amenities} /></section>)}</></div> : null}
       {overlay === "map" && mapUrl ? <iframe className={styles.fullMap} title={`Full map for ${props.hotelName}`} src={mapUrl} referrerPolicy="strict-origin-when-cross-origin" /> : null}
       {overlay === "rooms" ? <div className={styles.sheetBody}><p>Indicative planning choices. Final prices, availability, and terms are confirmed before booking.</p>{props.roomChoices.map(room => <article className={styles.room} key={room.id}><h3>{room.name}</h3><p>{room.details}</p><strong>{room.total} total</strong><p>{room.nightly}</p><small>Planning option · indicative price</small></article>)}</div> : null}
-      {overlay === "stay" ? <form className={styles.sheetBody} onSubmit={event => { event.preventDefault(); const url = new URL(window.location.href); url.searchParams.set("checkIn", checkIn); url.searchParams.set("checkOut", checkOut); url.searchParams.set("guests", String(guests)); url.searchParams.set("rooms", String(rooms)); setOverlay(null); router.replace(`${url.pathname}${url.search}`, {scroll:false}); }}>
-        <div className={styles.dateFields}><label>Check-in<input type="date" required value={checkIn} onChange={event => setCheckIn(event.target.value)} /></label><label>Check-out<input type="date" required min={checkIn} value={checkOut} onChange={event => setCheckOut(event.target.value)} /></label></div>
-        {([{label:"Guests",value:guests,set:setGuests,max:12},{label:"Rooms",value:rooms,set:setRooms,max:6}]).map(counter => <div className={styles.counterRow} key={counter.label}><strong>{counter.label}</strong><button type="button" aria-label={`Decrease ${counter.label.toLowerCase()}`} disabled={counter.value<=1} onClick={() => counter.set(counter.value-1)}><Minus size={18} /></button><span>{counter.value}</span><button type="button" aria-label={`Increase ${counter.label.toLowerCase()}`} disabled={counter.value>=counter.max} onClick={() => counter.set(counter.value+1)}><Plus size={18} /></button></div>)}
-        <button className={styles.done} type="submit" disabled={!checkIn || !checkOut || checkOut<=checkIn}>Done</button>
-      </form> : null}
     </DetailsDialog> : null}
+    {overlay === "stay" ? <MobileHotelStayEditor checkIn={context?.checkIn ?? ""} checkOut={context?.checkOut ?? ""} guests={Number(context?.guests) || 1} rooms={Number(context?.rooms) || 1} onClose={closeStay} onCommit={next => { const url = new URL(window.location.href); url.searchParams.set("hotelStayEditor", "1"); for (const [key, value] of Object.entries(next)) url.searchParams.set(key, String(value)); router.replace(`${url.pathname}${url.search}`, { scroll: false }); }} /> : null}
   </div>;
 }
