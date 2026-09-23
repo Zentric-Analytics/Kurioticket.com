@@ -27,7 +27,8 @@ test("mobile date dialogs expose only the shared Done footer", () => {
   );
   assert.match(dialog, /onCommit\(draftStart, rangeRequired \? draftEnd : ""\)/);
   assert.doesNotMatch(dialog, />\s*Clear\s*</);
-  assert.match(dialog, /carsResultsEdit \? \([\s\S]*?ChevronLeft[\s\S]*?ChevronRight/);
+  assert.match(dialog, /Array\.from\(\{ length: monthCount \}/);
+  assert.doesNotMatch(dialog, /Previous month|Next month/);
 });
 
 test("desktop calendar implementations remain available beside mobile dialogs", () => {

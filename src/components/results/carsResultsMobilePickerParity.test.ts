@@ -57,7 +57,13 @@ test("Cars Edit children preserve polished Cars content in the full-height mobil
   assert.match(pickerShell, /presentation = "default"/);
   assert.match(datePicker, /carsResultsEdit &&[\s\S]*?"h-8 w-8 rounded-lg text-xs/);
   assert.match(datePicker, /text-\[16px\] font-semibold leading-5/);
-  assert.match(datePicker, /data-cars-results-date-range-header/);
+  assert.match(datePicker, /data-scroll-direction=\{carsResultsEdit \? "vertical"/);
+  assert.match(datePicker, /Array\.from\(\{ length: monthCount \}/);
+  assert.doesNotMatch(datePicker, /\[resultsMonth\]/);
+  assert.doesNotMatch(datePicker, /Previous month|Next month/);
+  assert.doesNotMatch(datePicker, /data-cars-results-date-range-header/);
+  assert.match(datePicker, /endpoint && !carsResultsEdit/);
+  assert.match(datePicker, /`\$\{fullDate\}, \$\{endpoint\}`/);
   assert.match(locationPicker, /bg-\[#F5F7FB\]/);
   assert.match(locationPicker, /h-\[50px\].*rounded-\[10px\]/);
   assert.match(carsPickerContent, /min-h-14/);
@@ -70,6 +76,13 @@ test("Cars Edit children preserve polished Cars content in the full-height mobil
     /driverAge === defaultDriverAge[\s\S]*?\? "30"/,
   );
   assert.match(carsPickerContent, /`\$\{age\} years old`/);
+  assert.match(carsPickerContent, /presentation !== "carsResultsEdit" \? \(/);
+  assert.doesNotMatch(
+    carsPickerContent.slice(
+      carsPickerContent.indexOf("export function MobileCarDriverAgePickerDialog"),
+    ),
+    />Driver must be between 18 and 70 years old\.</,
+  );
   assert.match(carsPickerContent, /h-\[22px\] w-\[22px\]/);
   assert.match(carsPickerContent, /min-h-\[50px\] px-2/);
   assert.match(carsPickerContent, /h-\[17px\] w-\[17px\] text-\[#075EE8\]/);
