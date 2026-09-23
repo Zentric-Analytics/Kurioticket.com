@@ -2609,7 +2609,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         );
         setWarnings(snapshot.warnings);
         setError("");
-        setLoading(false);
+        // Fresh snapshots can render immediately. A stale snapshot is retained
+        // as a fallback, but keep the blocking Results loader visible until the
+        // refresh settles so the page cannot expose a changing scroll extent.
+        setLoading(refreshingStaleSnapshot);
         setBackgroundRefreshing(refreshingStaleSnapshot);
         if (!refreshingStaleSnapshot) return;
       } else {
