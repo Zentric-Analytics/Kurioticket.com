@@ -23,6 +23,7 @@ import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { FlightDetailsLoadingShell } from "@/components/results/flightDetails/FlightDetailsLoadingShell";
 import { MobileNativeFareRail } from "@/components/results/flightDetails/MobileNativeFareRail";
 import { MobileNativeFareInformationDeck, type MobileFareInfoTab } from "@/components/results/flightDetails/MobileNativeFareInformationDeck";
+import { MobileFlightDetailsBrandHeader } from "@/components/results/flightDetails/MobileFlightDetailsBrandHeader";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -47,62 +48,6 @@ const fareTabs: Array<{ id: FareTab; label: string }> = [
   { id: "conditions", label: "Fare conditions" },
   { id: "extras", label: "Optional extras" },
 ];
-
-function MobileFlightDetailsBrandHeader({
-  resultsHref,
-  saved,
-  savedPending,
-  onToggleSaved,
-  onShare,
-}: {
-  resultsHref: string;
-  saved: boolean;
-  savedPending: boolean;
-  onToggleSaved: () => void;
-  onShare: () => void;
-}) {
-  return (
-    <div data-mobile-flight-details-brand-header className="flex min-h-[64px] items-center justify-between gap-3 bg-white px-4 sm:hidden">
-      <div className="flex min-w-0 items-center gap-2">
-        <Link
-          href={resultsHref}
-          aria-label="Back to results"
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0754F7]/35"
-        >
-          <ArrowLeft className="h-[25px] w-[25px]" strokeWidth={2.2} aria-hidden="true" />
-        </Link>
-        <Image
-          src="/brand/kurioticket-logo-primary-light-bg.svg"
-          alt="Kurioticket"
-          width={128}
-          height={32}
-          className="h-8 w-32 shrink-0 object-contain object-left"
-          priority
-        />
-      </div>
-      <div className="flex shrink-0 items-center">
-        <button
-          type="button"
-          aria-label={saved ? "Remove saved flight" : "Save flight"}
-          aria-pressed={saved}
-          disabled={savedPending}
-          onClick={onToggleSaved}
-          className="inline-flex h-11 w-11 items-center justify-center text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0754F7]/35 disabled:cursor-wait disabled:opacity-50"
-        >
-          <Heart className="h-[21px] w-[21px]" strokeWidth={2} fill={saved ? "currentColor" : "none"} aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          aria-label="Share flight"
-          onClick={onShare}
-          className="inline-flex h-11 w-11 items-center justify-center text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0754F7]/35"
-        >
-          <Share2 className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resultsHref: string }) {
   const searchParams = useSearchParams();
@@ -782,7 +727,7 @@ function TripSidebar({ tripType, legs, route, date, tripLine, travelers, travele
 }
 
 function FlightDetailsSkeleton({ resultsHref }: { resultsHref: string }) { return <FlightDetailsLoadingShell resultsHref={resultsHref} />; }
-function FlightDetailsUnavailable({ resultsHref, message }: { resultsHref: string; message: string }) { return <main className="flex-1 bg-white py-10 sm:bg-[#F7F9FC]"><div className="mx-auto max-w-3xl px-0 sm:px-4"><Link href={resultsHref} className="ml-4 inline-flex items-center gap-2 text-sm font-semibold text-[#075EE8] sm:ml-0"><ArrowLeft className="h-4 w-4" /> Back to results</Link><section className="mt-4 border-y border-slate-200 bg-white p-6 sm:rounded-[15px] sm:border sm:p-8"><h1 className="text-xl font-bold">Flight quote unavailable</h1><p className="mt-2 text-sm text-slate-600">{message || "Please return to results and search again for current prices."}</p></section></div></main>; }
+function FlightDetailsUnavailable({ resultsHref, message }: { resultsHref: string; message: string }) { return <main className="flex-1 bg-white sm:bg-[#F7F9FC] sm:py-10"><MobileFlightDetailsBrandHeader resultsHref={resultsHref} actionsDisabled/><div className="mx-auto max-w-3xl px-0 sm:px-4"><Link href={resultsHref} className="ml-4 hidden items-center gap-2 text-sm font-semibold text-[#075EE8] sm:inline-flex sm:ml-0"><ArrowLeft className="h-4 w-4" /> Back to results</Link><section className="mt-4 border-y border-slate-200 bg-white p-6 sm:rounded-[15px] sm:border sm:p-8"><h1 className="text-xl font-bold">Flight quote unavailable</h1><p className="mt-2 text-sm text-slate-600">{message || "Please return to results and search again for current prices."}</p></section></div></main>; }
 
 function readTravelerSummary(search: { adults: number; children: number; infants: number; travelers: number }, locale: string, t: (key: string) => string) {
   const number = new Intl.NumberFormat(locale);
