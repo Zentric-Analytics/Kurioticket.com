@@ -68,21 +68,21 @@ test("Cars Edit children preserve polished Cars content in the full-height mobil
   assert.doesNotMatch(datePicker, /data-cars-results-date-range-header/);
   assert.match(datePicker, /endpoint && !carsResultsEdit/);
   assert.match(datePicker, /`\$\{fullDate\}, \$\{endpoint\}`/);
-  assert.match(locationPicker, /surfaceVariant=\{resultsEdit \? "white" : "default"\}/);
-  assert.match(locationPicker, /contentLayout=\{resultsEdit \? "contained" : "scroll"\}/);
-  assert.match(locationPicker, /resultsEdit && "bg-white px-5 py-3"/);
+  assert.match(locationPicker, /surfaceVariant=\{nativeCarsAppearance \? "white" : "default"\}/);
+  assert.match(locationPicker, /contentLayout=\{nativeCarsAppearance \? "contained" : "scroll"\}/);
+  assert.match(locationPicker, /nativeCarsAppearance && "bg-white px-5 py-3"/);
   assert.match(locationPicker, /h-\[50px\].*rounded-\[10px\]/);
   assert.match(carsPickerContent, /min-h-14/);
   assert.match(
     carsPickerContent,
-    /resultsEdit \? driverAgeOptions\.slice\(1\)/,
+    /nativeCarsAppearance \? driverAgeOptions\.slice\(1\)/,
   );
   assert.match(
     carsPickerContent,
     /driverAge === defaultDriverAge[\s\S]*?\? "30"/,
   );
   assert.match(carsPickerContent, /`\$\{age\} years old`/);
-  assert.match(carsPickerContent, /presentation !== "carsResultsEdit" \? \(/);
+  assert.match(carsPickerContent, /!nativeCarsAppearance \? \(/);
   assert.doesNotMatch(
     carsPickerContent.slice(
       carsPickerContent.indexOf("export function MobileCarDriverAgePickerDialog"),
