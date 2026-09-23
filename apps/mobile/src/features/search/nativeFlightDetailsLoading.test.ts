@@ -25,7 +25,7 @@ function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWi
   const theme = { dark, background: "#101114", surface: dark ? "#202126" : "#FFFFFF", border: dark ? "#454650" : "#CBD5E1" };
   const root = runInNewContext(code, {
     React: { createElement: host }, View: "View", ScrollView: "ScrollView", SafeAreaView: "SafeAreaView",
-    Pressable: "Pressable", Text: "Text", DetailGlassSurface: (props: any) => host("DetailGlassSurface", props), ArrowLeft: "ArrowLeft", Heart: "Heart", FlowIcon: "FlowIcon", StatusBar: "StatusBar", Svg: "Svg", Path: "Path", Defs: "Defs", LinearGradient: "LinearGradient", Stop: "Stop", Rect: "Rect",
+    Pressable: "Pressable", Text: "Text", Image: "Image", ArrowLeft: "ArrowLeft", Heart: "Heart", FlowIcon: "FlowIcon", StatusBar: "StatusBar", Svg: "Svg", Path: "Path", Defs: "Defs", LinearGradient: "LinearGradient", Stop: "Stop", Rect: "Rect",
     Animated: { View: "Animated.View", Value: class { constructor(public value: number) {} } },
     useState: (value: unknown) => [value, () => {}], useRef: (current: unknown) => ({ current }), useEffect: () => {}, useCallback: (callback: unknown) => callback,
     Platform: { OS: platform }, StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1, absoluteFillObject: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 } }, ui: { blue: "#2563EB", green: "#16A34A" }, appFonts: { semibold: "Inter_600SemiBold", bold: "Inter_700Bold" },
@@ -97,31 +97,32 @@ test("loading presentation remains isolated from success and existing failure st
 
 test("information skeleton mirrors flat tab content and the loaded navigation baseline",()=>{assert.match(loading,/s\.loadingTabs,\{borderBottomColor:surfaceBorderColor\}/);assert.match(details,/loadingTabs:\{height:48,borderBottomWidth:1,/);assert.doesNotMatch(details,/loadingInfoBody:\{[^}]*(?:borderWidth|borderRadius|backgroundColor)/);});
 
-test("Flight hero controls use the Hotel light material in loading state", () => {
-  const { root } = renderLoading(true);
-  const controls = find(root, "flight-details-loading-back-control");
-  const backGlass = controls.children[0].children[0];
-  const actions = find(root, "flight-details-loading-actions");
-  const actionsGlass = actions.children[0];
-
-  assert.equal(backGlass.type, "DetailGlassSurface");
-  assert.equal(backGlass.props.dark, false);
-  assert.equal(backGlass.props.variant, "hotelLight");
-  assert.equal(actionsGlass.type, "DetailGlassSurface");
-  assert.equal(actionsGlass.props.dark, false);
-  assert.equal(actionsGlass.props.variant, "hotelLight");
-
-  assert.match(details, /<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s\.heroIconGlass\}\/>/);
-  assert.match(details, /<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s\.heroActionsGlass\}\/>/);
+test("loading uses the branded white Flight Details header with disabled actions", () => {
+  const { root } = renderLoading(true, 47);
+  const header = find(root, "flight-details-brand-header");
+  assert.equal(style(header).backgroundColor, "#FFFFFF");
+  assert.equal(style(header).paddingTop, 47);
+  const back = descendants(header).find(({ props }) => props.accessibilityLabel === "Back to results");
+  const logo = descendants(header).find(({ props }) => props.accessibilityLabel === "Kurioticket");
+  const save = descendants(header).find(({ props }) => props.accessibilityLabel === "Save flight");
+  const share = descendants(header).find(({ props }) => props.accessibilityLabel === "Share flight");
+  assert.ok(back);
+  assert.ok(logo);
+  assert.equal(save?.props.disabled, true);
+  assert.equal(share?.props.disabled, true);
+  assert.match(details, /kurioticket-logo-primary-light-bg\.png/);
+  assert.doesNotMatch(details, /DetailGlassSurface|heroIconGlass|heroActionsGlass/);
 });
 
-test("entry loading reserves an edge-to-edge hero and two ordered identity lines", () => {
+test("entry loading keeps the branded header above a fixed-height hero with two identity lines", () => {
   for (const top of [0, 24, 47, 59]) {
     const { root } = renderLoading(false, top);
-    assert.equal(root.props.edges.length, 0, "hero must extend through the top safe area");
+    assert.equal(root.props.edges.length, 0);
+    const header = find(root, "flight-details-brand-header");
+    assert.equal(style(header).paddingTop, top);
     const hero = find(root, "flight-details-loading-hero");
     assert.equal(style(hero).minHeight, 318);
-    assert.equal(style(hero).paddingTop, top + 64);
+    assert.equal(style(hero).paddingTop, undefined);
     assert.equal(style(hero).paddingBottom, 122);
     assert.equal(style(hero).paddingHorizontal, 18);
     const copy = find(hero, "flight-details-loading-copy");
@@ -130,33 +131,10 @@ test("entry loading reserves an edge-to-edge hero and two ordered identity lines
     ]);
     assert.deepEqual(copy.children.map((line) => style(line).height), [32, 16]);
     assert.equal(style(copy).gap, 3);
-    const controls = find(root, "flight-details-loading-back-control");
-    assert.ok(!descendants(hero).includes(controls), "loading controls must be outside scrolling hero content");
-    assert.equal(style(controls).top, top + 8);
-    assert.equal(style(controls).left, 16);
-    assert.equal(style(controls).right, undefined);
-    assert.equal(style(controls).width, 44);
-    assert.equal(style(controls).height, 44);
-    assert.equal(style(controls.children[0]).width, 44);
-    assert.equal(style(controls.children[0]).height, 44);
-    const actions = find(root, "flight-details-loading-actions");
-    assert.equal(style(actions).right, 16);
-    assert.equal(style(actions).top, top + 8);
-    assert.equal(style(actions).width, 88);
-    assert.equal(style(actions).height, 44);
-    const glass = actions.children[0];
-    assert.equal(glass.type, "DetailGlassSurface");
-    assert.equal(glass.props.dark, false);
-    assert.equal(style(glass).top, 2);
-    assert.equal(style(glass).right, 0);
-    assert.equal(style(glass).bottom, 2);
-    assert.equal(style(glass).left, 0);
-    assert.equal(style(glass).borderRadius, 20);
-    assert.equal(actions.props.pointerEvents, "none");
-    assert.equal(actions.props.accessibilityElementsHidden, true);
-    assert.equal(actions.props.importantForAccessibility, "no-hide-descendants");
-    assert.equal(actions.children.length, 3);
-    assert.equal(actions.children.filter((child) => style(child).width === 44).length, 2);
+    const back = descendants(header).find(({ props }) => props.accessibilityLabel === "Back to results");
+    assert.ok(back);
+    assert.equal(style(back!).width, 44);
+    assert.equal(style(back!).height, 44);
   }
 });
 
@@ -194,38 +172,31 @@ test("dark loading itinerary keeps its semantic surface without the light gloss 
   assert.equal(descendants(card).some(({ props }) => props.testID === "flight-details-loading-itinerary-gloss"), false);
 });
 
-test("entry loading mirrors the loaded hero curve and screen-level action geometry",()=>{
+test("entry loading mirrors the loaded hero curve beneath the branded header",()=>{
   const {root}=renderLoading(false,47);
+  const header=find(root,"flight-details-brand-header");
   const scroll=find(root,"flight-details-loading-scroll");
   const hero=find(scroll,"flight-details-loading-hero");
   const curve=find(hero,"flight-details-loading-hero-curve");
+  assert.ok(!descendants(scroll).includes(header));
   assert.equal(curve.type,"Svg");
   assert.equal(curve.props.viewBox,"0 0 100 64");
   assert.equal(curve.props.preserveAspectRatio,"none");
   assert.equal(style(curve).height,65);
   assert.equal(curve.children[0].props.d,"M0 12 Q50 64 100 12 L100 64 L0 64 Z");
-  const controls=find(root,"flight-details-loading-back-control");
-  assert.ok(!descendants(scroll).includes(controls));
-  assert.equal(style(controls).top,55);
-  assert.equal(style(controls).zIndex,20);
-  assert.equal(style(controls).width,44);
-  assert.equal(style(controls).height,44);
 });
 
-test("platforms keep the Back wrapper compact while only the protected canvas layer varies",()=>{
+test("platforms share the same branded header geometry",()=>{
   const android=renderLoading(false,47,34,216,"android").root;
   const ios=renderLoading(false,47,34,216,"ios").root;
-  const androidProtection=find(android,"flight-details-loading-protected-header");
-  const androidControls=find(android,"flight-details-loading-back-control");
-  const iosProtection=find(ios,"flight-details-loading-protected-header");
-  const iosControls=find(ios,"flight-details-loading-back-control");
-
-  assert.equal(style(androidProtection).elevation,0,"the Android canvas protection must not cast a full-width shadow");
-  assert.deepEqual([style(androidControls).width,style(androidControls).height],[44,44]);
-  assert.equal(style(iosProtection).elevation,11,"iOS keeps the existing protected-layer style");
-  assert.deepEqual([style(iosControls).width,style(iosControls).height],[44,44]);
-  assert.equal(style(androidControls.children[0]).elevation,6,"the individual Android Back control keeps its floating depth");
-  assert.equal(style(find(android,"flight-details-loading-actions")).elevation,6,"the individual Android action control keeps its floating depth");
+  for (const root of [android,ios]) {
+    const header=find(root,"flight-details-brand-header");
+    assert.equal(style(header).backgroundColor,"#FFFFFF");
+    assert.equal(style(header).paddingTop,47);
+    const back=descendants(header).find(({props})=>props.accessibilityLabel==="Back to results");
+    assert.ok(back);
+    assert.deepEqual([style(back!).width,style(back!).height],[44,44]);
+  }
 });
 
 test("entry fare and information rails reserve real widths, bottom price zones and four tabs", () => {
