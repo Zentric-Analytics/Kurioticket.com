@@ -5,9 +5,9 @@ import fs from "node:fs";
 const source = fs.readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
 
 test("Cars mobile edit search uses independent cards with an external CTA", () => {
-  assert.match(source, /placement === "mobile" && "grid grid-cols-1 gap-2"/);
+  assert.match(source, /placement === "mobile" && "grid grid-cols-1 gap-2.5"/);
   assert.doesNotMatch(source, /placement === "mobile"[^\n]*divide-y/);
-  assert.match(source, /rounded-\[12px\] border border-\[#D8E1EC\] bg-white/);
+  assert.match(source, /rounded-\[13px\] border border-\[#D8E1EC\] bg-white/);
   assert.match(source, /data-cars-mobile-grouped-row/);
   assert.match(source, /data-cars-mobile-search-submit/);
   assert.match(source, /placement === "mobile"[\s\S]*border-0 bg-transparent p-0 shadow-none ring-0/);
@@ -36,8 +36,7 @@ test("grouped mobile leading field icons use one neutral color", () => {
 });
 
 test("grouped mobile rows stay compact without sacrificing their touch target", () => {
-  assert.equal(source.match(/min-h-16 flex-col justify-center rounded-\[12px\]/g)?.length, 4);
-  assert.doesNotMatch(source, /data-cars-mobile-grouped-row[^\n]*min-h-\[70px\]/);
+  assert.equal(source.match(/min-h-\[70px\] flex-col justify-center rounded-\[13px\]/g)?.length, 4);
 });
 
 test("dates, time, and driver age retain disclosure chevrons", () => {

@@ -16,6 +16,7 @@ import { acquireMobileResultsScrollLock } from "@/lib/search/mobileResultsScroll
 import { acquireMobileResultsOverlayCanvas } from "@/lib/search/mobileResultsOverlayCanvas";
 
 type Props = {
+  appearance?: "default" | "carsResultsEdit";
   placement?: "top" | "bottom";
   open: boolean;
   title: string;
@@ -37,6 +38,7 @@ type Props = {
 
 /** Presentation-only shell used by mobile search editors on Results pages. */
 export function MobileResultsEditSheet({
+  appearance = "default",
   placement = "bottom",
   open,
   title,
@@ -55,6 +57,7 @@ export function MobileResultsEditSheet({
   isolatedBackdrop = false,
   onCloseAnimationComplete,
 }: Props) {
+  const carsResultsEdit = appearance === "carsResultsEdit";
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -123,6 +126,7 @@ export function MobileResultsEditSheet({
         placement === "top" && "items-start",
         !isolatedBackdrop && cleanBackdrop && "mobile-results-sheet-backdrop-clean",
         !isolatedBackdrop && closing && "mobile-results-sheet-backdrop-closing",
+        carsResultsEdit && "mobile-results-sheet-cars-edit",
       )}
       onPointerDown={(event) => { if (event.target === event.currentTarget) close(); }}
     >
@@ -133,6 +137,7 @@ export function MobileResultsEditSheet({
             "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 bg-slate-950/35",
             cleanBackdrop && "mobile-results-sheet-backdrop-clean",
             closing && "mobile-results-sheet-backdrop-layer-closing",
+            carsResultsEdit && "mobile-results-sheet-cars-edit-backdrop",
           )}
         />
       ) : null}
@@ -142,6 +147,7 @@ export function MobileResultsEditSheet({
           placement === "top" && "origin-top [animation:none]",
           smoothMotion && "mobile-results-sheet-surface-smooth",
           closing && "mobile-results-sheet-surface-closing",
+          carsResultsEdit && "mobile-results-sheet-cars-edit-surface mx-3 mb-[calc(12px+env(safe-area-inset-bottom))] w-[calc(100%-24px)]",
         )}
         onAnimationEnd={(event) => {
           if (
@@ -159,17 +165,17 @@ export function MobileResultsEditSheet({
           tabIndex={-1}
           aria-modal="true"
           aria-labelledby={titleId}
-          className={cn("relative z-10 flex min-h-0 w-full flex-col overflow-hidden rounded-t-[22px] border border-b-0 border-slate-200/80 bg-white shadow-[0_-12px_36px_rgba(15,23,42,0.18)] outline-none", placement === "top" && "rounded-t-none rounded-b-[22px] border-t-0 border-b pt-[env(safe-area-inset-top)]", className)}
+          className={cn("relative z-10 flex min-h-0 w-full flex-col overflow-hidden rounded-t-[22px] border border-b-0 border-slate-200/80 bg-white shadow-[0_-12px_36px_rgba(15,23,42,0.18)] outline-none", placement === "top" && "rounded-t-none rounded-b-[22px] border-t-0 border-b pt-[env(safe-area-inset-top)]", carsResultsEdit && "max-h-[88dvh] rounded-[24px] border border-slate-200/80 bg-[#F5F7FB] shadow-[0_12px_36px_rgba(8,18,35,0.22)]", className)}
         >
-          <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 pt-2">
-            <div className="mx-auto flex min-h-11 w-full max-w-xl items-center justify-between gap-3">
-              <h2 id={titleId} className="text-xl font-bold tracking-[-0.01em] text-slate-950">{title}</h2>
+          <div className={cn("shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 pt-2", carsResultsEdit && "border-b-0 bg-[#F5F7FB] py-0 ps-4 pe-2")}>
+            <div className={cn("mx-auto flex min-h-11 w-full max-w-xl items-center justify-between gap-3", carsResultsEdit && "min-h-[52px]")}>
+              <h2 id={titleId} className={cn("text-xl font-bold tracking-[-0.01em] text-slate-950", carsResultsEdit && "text-[19px] font-semibold leading-6 tracking-normal")}>{title}</h2>
               <button type="button" aria-label={`Close ${title.toLocaleLowerCase()}`} onClick={close} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
           </div>
-          <div className={cn("mobile-results-sheet-content min-h-0 flex-1 overflow-y-auto overscroll-contain bg-inherit px-4 py-4", footer && "pb-2", contentClassName)}>{children}</div>
+          <div className={cn("mobile-results-sheet-content min-h-0 flex-1 overflow-y-auto overscroll-contain bg-inherit px-4 py-4", carsResultsEdit && "px-3 pb-[max(20px,env(safe-area-inset-bottom))] pt-2.5", footer && "pb-2", contentClassName)}>{children}</div>
           {footer ? <div className="shrink-0 border-t border-slate-200 bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">{footer}</div> : null}
         </div>
       </div>
