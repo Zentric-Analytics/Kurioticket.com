@@ -798,4 +798,9 @@ test("mobile web Flight Details loading itinerary matches native-parity geometry
   assert.match(source, /rounded-\[15px\].*border-\[#D8E1EC\].*bg-white.*shadow-\[0_6px_18px_rgba\(7,19,59,0\.14\)\]/);
   assert.match(source, /linear-gradient\(135deg,rgba\(255,255,255,0\.78\)_0%,rgba\(255,255,255,0\.18\)_46%,rgba\(255,255,255,0\)_100%\)/);
   assert.match(source, /sm:rounded-\[10px\] sm:border-slate-200 sm:bg-slate-100 sm:shadow-lg/);
+  assert.match(source, /data-mobile-native-fare-loading/);
+  assert.match(source, /h-\[142px\] w-\[clamp\(197px,calc\(197px\+\(100vw-320px\)\*0\.27\),217px\)\]/);
+  assert.match(source, /rounded-\[15px\] border-\[1\.5px\] border-\[#D7E0EC\] bg-white/);
+  assert.match(source, /gap-\[10px\].*pb-\[18px\].*pr-\[38px\]/);
+  assert.match(source, /\{\[0, 1\]\.map/);
 });
