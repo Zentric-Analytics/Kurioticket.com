@@ -684,7 +684,9 @@ test("Flight Details web hero reuses the native asset and keeps navigation acces
   assert.match(source, /src=\{flightDetailsHero\} alt="" fill priority/);
   assert.match(source, /bg-gradient-to-t from-slate-950\/80/);
   assert.match(source, /<h1 ref=\{headingRef\} id="flight-details-heading"/);
+  assert.match(source, /min-h-\[318px\][\s\S]*pb-\[122px\]/);
   assert.match(source, /-mt-8 p-4 pt-0/);
+  assert.match(source, /data-mobile-native-itinerary-stack[\s\S]*-mt-\[72px\]/);
   assert.match(source, /<Link[\s\S]*href=\{resultsHref\}[\s\S]*aria-label="Back to results"[\s\S]*h-11 w-11/);
   assert.match(source, /data-flight-details-floating-actions/);
   assert.match(source, /aria-label=\{flightSaved \? "Remove saved flight" : "Save flight"\}/);
@@ -746,4 +748,43 @@ test("itinerary headers use authoritative per-leg dates with a localized year", 
   assert.match(source, /<time dateTime=\{departureDate\}/);
   assert.match(source, /formatItineraryDepartureDate\(departureDate, locale\)/);
   assert.match(source, /available\.search\.tripType === "multi-city" \? `FLIGHT \$\{index \+ 1\}`/);
+});
+
+test("mobile web Flight Details itinerary mirrors the native card hierarchy and surface treatment", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("function ItineraryCard(");
+  const end = source.indexOf("function FareTerm(", start);
+  const itinerary = source.slice(start, end);
+
+  assert.match(source, /data-mobile-native-itinerary-stack/);
+  assert.match(source, /-mx-2 -mt-\[72px\] space-y-\[14px\]/);
+  assert.match(itinerary, /data-mobile-native-itinerary-card/);
+  assert.match(itinerary, /rounded-\[15px\].*border-\[#D8E1EC\].*bg-white.*shadow-\[0_6px_18px_rgba\(7,19,59,0\.14\)\]/);
+  assert.match(itinerary, /data-flight-details-itinerary-gloss/);
+  assert.match(itinerary, /linear-gradient\(135deg,rgba\(255,255,255,0\.78\)_0%,rgba\(255,255,255,0\.18\)_46%,rgba\(255,255,255,0\)_100%\)/);
+  assert.match(itinerary, /text-\[19px\] font-extrabold leading-6 tabular-nums/);
+  assert.match(itinerary, /providerLocalFlightDate\(leg\.departureTime, locale\)/);
+  assert.match(itinerary, /providerLocalFlightDate\(leg\.arrivalTime, locale\)/);
+  assert.match(itinerary, /h-1\.5 w-1\.5.*bg-\[#075EE8\][\s\S]*h-px.*bg-\[#94A3B8\]\/60[\s\S]*<Plane className="h-4 w-4.*text-\[#075EE8\]"/);
+  assert.match(itinerary, /const stopStatus = leg\.stops === 0 \? "Non-stop" :/);
+  assert.match(itinerary, /data-flight-details-connection-row/);
+  assert.match(itinerary, /<Clock3 className="h-\[13px\] w-\[13px\] shrink-0 text-\[#5D7496\]"/);
+  assert.match(itinerary, /preferSegmentLogo/);
+  assert.match(itinerary, /Aircraft: \{aircraftName\}/);
+  assert.match(itinerary, /Flight distance: \{formatDistanceKm\(segment\.distanceKm, locale\)\}/);
+  assert.match(itinerary, />Flight info<\/p>/);
+  assert.doesNotMatch(itinerary.slice(0, itinerary.indexOf('<section className="hidden')), /Technical stop at/);
+  assert.match(itinerary, /<section className="hidden[^"]*sm:block"/);
+});
+
+test("mobile web Flight Details loading itinerary matches native-parity geometry", async () => {
+  const source = await readFile(new URL("./FlightDetailsLoadingShell.tsx", import.meta.url), "utf8");
+  assert.match(source, /bg-\[#F5F7FB\]/);
+  assert.match(source, /min-h-\[318px\]/);
+  assert.match(source, /pb-\[122px\]/);
+  assert.match(source, /data-mobile-native-itinerary-loading/);
+  assert.match(source, /-mx-2 -mt-\[72px\]/);
+  assert.match(source, /rounded-\[15px\].*border-\[#D8E1EC\].*bg-white.*shadow-\[0_6px_18px_rgba\(7,19,59,0\.14\)\]/);
+  assert.match(source, /linear-gradient\(135deg,rgba\(255,255,255,0\.78\)_0%,rgba\(255,255,255,0\.18\)_46%,rgba\(255,255,255,0\)_100%\)/);
+  assert.match(source, /sm:rounded-\[10px\] sm:border-slate-200 sm:bg-slate-100 sm:shadow-lg/);
 });

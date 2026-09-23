@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import {
   ArrowLeft,
   Check,
+  Clock3,
   LockKeyhole,
   Luggage,
   Leaf,
@@ -340,11 +341,11 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     : localSavedFlightIds.includes(savedFlightKey);
 
   return (
-    <main className="flex-1 bg-white pb-[calc(6.75rem+env(safe-area-inset-bottom))] text-[#142033] sm:bg-[#F7F9FC] sm:pt-4 lg:pb-16 lg:pt-3">
+    <main className="flex-1 bg-[#F5F7FB] pb-[calc(6.75rem+env(safe-area-inset-bottom))] text-[#142033] sm:bg-[#F7F9FC] sm:pt-4 lg:pb-16 lg:pt-3">
       <div className="mx-auto w-full max-w-[1470px] px-0 sm:px-6 lg:px-[34px]">
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
-          <section className="min-w-0 overflow-hidden border-y border-[#E2E8F0] bg-white sm:rounded-[13px] sm:border sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
-            <div data-testid="flight-details-hero" className="relative flex min-h-[310px] flex-col justify-between overflow-hidden px-4 pb-16 pt-[calc(1rem+env(safe-area-inset-top))] sm:min-h-[280px] sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
+          <section className="min-w-0 overflow-hidden border-y border-[#E2E8F0] bg-[#F5F7FB] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
+            <div data-testid="flight-details-hero" className="relative flex min-h-[318px] flex-col justify-between overflow-hidden px-4 pb-[122px] pt-[calc(1rem+env(safe-area-inset-top))] sm:min-h-[280px] sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
               <div className="absolute inset-0 bg-slate-950/35" aria-hidden="true" />
               <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-slate-950/80 via-slate-950/35 to-transparent" aria-hidden="true" />
@@ -387,7 +388,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               </div>
             </div>
             <div className="relative z-10 -mt-8 p-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0 lg:px-6 lg:pb-6">
-            <div className="space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
+            <div data-mobile-native-itinerary-stack className="-mx-2 -mt-[72px] space-y-[14px] sm:mx-0 sm:mt-0 sm:space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
 
             <h2 className="mb-3 mt-6 text-[18px] font-semibold leading-tight text-slate-950">Pick your fare</h2>
             <div ref={fareRailRef} role="radiogroup" aria-label="Available fares" className={`min-w-0 ${fareChoices.length > 1 ? "flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden px-4 pb-2 [scroll-padding-inline:1rem] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:snap-none sm:overflow-visible sm:px-0 sm:pb-0" : "grid gap-3"} ${fareChoices.length === 1 ? "max-w-[270px]" : fareChoices.length === 2 ? "sm:grid-cols-2 lg:max-w-[632px]" : fareChoices.length === 3 ? "sm:grid-cols-2 md:grid-cols-3 lg:max-w-[954px]" : "sm:grid-cols-2 xl:max-w-[1276px] xl:grid-cols-4"}`}>
@@ -414,47 +415,210 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   );
 }
 
-function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, offerAirlineLogo }: { leg: FlightLeg; label: string; departureDate: string; locale: string; offerAirlineName: string; offerAirlineLogo?: string | null }) {
-  return <section className="overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-white" aria-labelledby={`${label.toLowerCase()}-heading`}>
-    <div className="flex items-center justify-between gap-3 px-3 pt-3 sm:px-4 sm:pt-4">
-      <h2 id={`${label.toLowerCase()}-heading`} className="inline-flex rounded-md bg-blue-50 px-2 py-1 text-[10px] font-bold tracking-[0.04em] text-[#075EE8]">{label}</h2>
-      <time dateTime={departureDate} className="whitespace-nowrap text-right text-[12px] font-semibold text-slate-600">{formatItineraryDepartureDate(departureDate, locale)}</time>
-    </div>
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(82px,1.1fr)_minmax(0,1fr)] items-center gap-2 px-3 pb-4 pt-3 sm:gap-5 sm:px-4 lg:px-5 lg:pb-5">
-      <AirportTime time={leg.departureTime} airport={leg.originAirport} city={leg.segments[0]?.originDetails?.cityName || ""} name={leg.segments[0]?.originDetails?.name} terminal={leg.segments[0]?.originDetails?.terminal} timeZone={leg.segments[0]?.originDetails?.timeZone} locale={locale} />
-      <div className="min-w-0 text-center"><p className="mb-2 text-[11px] font-medium text-slate-600">{leg.duration}</p><div className="flex items-center gap-1 text-[#075EE8]"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" /><span className="min-w-2 flex-1 border-t border-dashed border-[#075EE8]" /><Plane className="h-[18px] w-[18px] shrink-0 rotate-45" aria-hidden="true" /><span className="min-w-2 flex-1 border-t border-dashed border-[#075EE8]" /><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" /></div><p className="mt-2 text-[11px] font-medium text-slate-600">{formatStops(leg.stops, technicalStopCount(leg))}</p></div>
-      <div className="text-right"><AirportTime time={leg.arrivalTime} airport={leg.destinationAirport} city={leg.segments.at(-1)?.destinationDetails?.cityName || ""} name={leg.segments.at(-1)?.destinationDetails?.name} terminal={leg.segments.at(-1)?.destinationDetails?.terminal} timeZone={leg.segments.at(-1)?.destinationDetails?.timeZone} locale={locale} /></div>
-    </div>
-    <div className="border-t border-[#E2E8F0] px-3 py-3.5 sm:px-4 lg:px-5">
-      <ol className="space-y-3">
-        {leg.segments.map((segment, index) => (
-          <li key={`${segment.originAirport}-${segment.destinationAirport}-${segment.departureTime}`}>
-            {index > 0 && leg.layovers[index - 1] ? <p className="mb-3 rounded-md bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">Connection at {leg.layovers[index - 1].airport} • {leg.layovers[index - 1].duration}</p> : null}
-            <div className="flex items-start gap-3">
-              <SegmentAirlineMark segment={segment} offerAirlineName={offerAirlineName} offerAirlineLogo={offerAirlineLogo} />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center justify-between gap-3 text-sm"><p className="font-semibold text-slate-900">{segment.originAirport} → {segment.destinationAirport}</p><p className="text-xs text-slate-600">{formatTime(segment.departureTime, locale)} – {formatTime(segment.arrivalTime, locale)}</p></div>
-                <p className="mt-1 text-xs text-slate-600">{resolveSegmentCarrierName(segment, offerAirlineName)}{segment.flightNumber || segment.marketingFlightNumber ? ` • Flight ${segment.flightNumber || segment.marketingFlightNumber}` : ""}</p>
-                {segment.operatingCarrier && segment.marketingCarrier && (segment.operatingCarrier.name !== segment.marketingCarrier.name || segment.operatingFlightNumber !== segment.marketingFlightNumber) ? <p className="mt-1 text-xs text-slate-600">Operated by {segment.operatingCarrier.name}{segment.operatingFlightNumber ? ` • Flight ${segment.operatingFlightNumber}` : ""}</p> : null}
-                {segment.aircraft?.name || segment.aircraft?.iataCode ? <p className="mt-1 text-xs text-slate-600">Aircraft: {segment.aircraft.name || segment.aircraft.iataCode}{segment.aircraft.name && segment.aircraft.iataCode ? ` (${segment.aircraft.iataCode})` : ""}</p> : null}
-                {segment.distanceKm !== undefined ? <p className="mt-1 text-xs text-slate-600">Flight distance: {formatDistanceKm(segment.distanceKm, locale)}</p> : null}
-              </div>
-            </div>
-            {segment.technicalStops?.map((stop) => <div key={`${stop.airport.iataCode}-${stop.arrivalTime || "stop"}`} className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-slate-700"><p>Technical stop at {stop.airport.iataCode}{stop.airport.name ? ` — ${stop.airport.name}` : ""}{stop.duration ? ` • ${stop.duration}` : ""}</p>{stop.arrivalTime || stop.departureTime ? <p className="mt-1 font-normal">{stop.arrivalTime ? `Arrives ${formatTime(stop.arrivalTime, locale)}` : ""}{stop.arrivalTime && stop.departureTime ? " • " : ""}{stop.departureTime ? `Departs ${formatTime(stop.departureTime, locale)}` : ""}</p> : null}</div>)}
-          </li>
-        ))}
-      </ol>
-    </div>
-  </section>;
+const PROVIDER_LOCAL_ISO_DATETIME =
+  /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-](\d{2}):(\d{2}))?)?$/;
+
+function providerLocalCalendarDay(value: string | null | undefined): number | null {
+  if (typeof value !== "string") return null;
+  const match = PROVIDER_LOCAL_ISO_DATETIME.exec(value.trim());
+  if (!match) return null;
+  const [, yearText, monthText, dayText, hourText, minuteText, secondText = "0", offsetHourText, offsetMinuteText] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const hour = Number(hourText ?? 0);
+  const minute = Number(minuteText ?? 0);
+  const second = Number(secondText);
+  const offsetHour = Number(offsetHourText ?? 0);
+  const offsetMinute = Number(offsetMinuteText ?? 0);
+  if (hour > 23 || minute > 59 || second > 59 || offsetHour > 23 || offsetMinute > 59) return null;
+  const calendarDay = Date.UTC(year, month - 1, day);
+  const validated = new Date(calendarDay);
+  if (validated.getUTCFullYear() !== year || validated.getUTCMonth() !== month - 1 || validated.getUTCDate() !== day) return null;
+  return calendarDay;
 }
 
-function AirportTime({ time, airport, city, name, terminal, timeZone, locale }: { time: string; airport: string; city: string; name?: string; terminal?: string; timeZone?: string; locale: string }) { return <div className="min-w-0"><p className="text-[15px] font-bold sm:text-[17px]">{formatTime(time, locale)}</p><p className="mt-1 text-sm font-bold">{airport}</p>{name ? <p className="mt-1 break-words text-[10px] leading-4 text-slate-600 sm:text-xs">{name}</p> : null}{city && city !== airport ? <p className="mt-1 break-words text-[10px] leading-4 text-slate-600 sm:text-xs">{city}</p> : null}{terminal ? <p className="mt-1 text-[10px] font-medium leading-4 text-slate-600 sm:text-xs">Terminal {terminal}</p> : null}{timeZone ? <p className="mt-1 break-words text-[10px] leading-4 text-slate-600 sm:text-xs">Time zone: {timeZone}</p> : null}</div>; }
+function providerLocalFlightDate(value: string | null | undefined, locale: string): string | null {
+  const calendarDay = providerLocalCalendarDay(value);
+  if (calendarDay === null) return null;
+  return new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(calendarDay));
+}
 
-function SegmentAirlineMark({ segment, offerAirlineName, offerAirlineLogo }: { segment: FlightSegment; offerAirlineName: string; offerAirlineLogo?: string | null }) {
+function providerLocalFlightDateLong(value: string | null | undefined, locale: string): string | null {
+  const calendarDay = providerLocalCalendarDay(value);
+  if (calendarDay === null) return null;
+  return new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(calendarDay));
+}
+
+function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, offerAirlineLogo }: { leg: FlightLeg; label: string; departureDate: string; locale: string; offerAirlineName: string; offerAirlineLogo?: string | null }) {
+  const departurePoint = leg.segments[0]?.originDetails;
+  const arrivalPoint = leg.segments.at(-1)?.destinationDetails;
+  const airportName = (point: typeof departurePoint, fallback: string) => point?.name ?? point?.cityName ?? point?.iataCode ?? fallback;
+  const stopStatus = leg.stops === 0 ? "Non-stop" : `${leg.stops} ${leg.stops === 1 ? "stop" : "stops"}`;
+  const departureLongDate = providerLocalFlightDateLong(leg.departureTime, locale) ?? formatItineraryDepartureDate(departureDate, locale);
+  const departureShortDate = providerLocalFlightDate(leg.departureTime, locale);
+  const arrivalShortDate = providerLocalFlightDate(leg.arrivalTime, locale);
+  const departureTimeZone = departurePoint?.timeZone;
+  const arrivalTimeZone = arrivalPoint?.timeZone;
+  const hasFlightInfo = Boolean(departureTimeZone || arrivalTimeZone);
+  const layoverLabel = (airport: string) => {
+    const point = leg.segments
+      .flatMap((segment) => [segment.destinationDetails, segment.originDetails])
+      .find((candidate) => candidate?.iataCode === airport);
+    return point?.cityName && point.cityName !== airport ? `${point.cityName} • ${airport}` : airport;
+  };
+
+  return <>
+    <section
+      data-mobile-native-itinerary-card
+      className="relative overflow-hidden rounded-[15px] border border-[#D8E1EC] bg-white p-[15px] shadow-[0_6px_18px_rgba(7,19,59,0.14)] sm:hidden"
+      aria-labelledby={`${label.toLowerCase()}-mobile-heading`}
+    >
+      <div
+        data-flight-details-itinerary-gloss
+        className="pointer-events-none absolute inset-x-0 top-0 h-[52%] overflow-hidden rounded-t-[15px] bg-[linear-gradient(135deg,rgba(255,255,255,0.78)_0%,rgba(255,255,255,0.18)_46%,rgba(255,255,255,0)_100%)]"
+        aria-hidden="true"
+      />
+      <div className="relative z-[1]">
+        <div className="flex items-start justify-between gap-3">
+          <h2 id={`${label.toLowerCase()}-mobile-heading`} className="min-w-0 shrink text-[11px] font-extrabold uppercase leading-[15px] tracking-[0.5px] text-[#075EE8]">{label}</h2>
+          <time dateTime={leg.departureTime} className="shrink-0 whitespace-nowrap text-right text-[11px] font-medium leading-[15px] text-[#536B92]">{departureLongDate}</time>
+        </div>
+
+        <div className="mt-[14px] grid grid-cols-[1.1fr_.8fr_1.1fr] items-center gap-2">
+          <div className="min-w-0">
+            <p className="whitespace-nowrap text-[19px] font-extrabold leading-6 tabular-nums text-[#142033]">{formatTime(leg.departureTime, locale)}</p>
+            <p className="mt-[3px] text-[13px] font-bold leading-[17px] text-[#142033]">{leg.originAirport}</p>
+            {departureShortDate ? <p className="mt-px whitespace-nowrap text-[9.5px] font-medium leading-3 text-[#536B92]">{departureShortDate}</p> : null}
+          </div>
+
+          <div className="min-w-[72px] text-center">
+            <p className="text-[11px] font-semibold leading-4 text-[#536B92]">{leg.duration}</p>
+            <div className="mt-[5px] flex items-center" aria-hidden="true">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" />
+              <span className="h-px min-w-1 flex-1 bg-[#94A3B8]/60" />
+              <Plane className="h-4 w-4 shrink-0 rotate-45 text-[#075EE8]" />
+              <span className="h-px min-w-1 flex-1 bg-[#94A3B8]/60" />
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" />
+            </div>
+            <p className="mt-[5px] text-[10px] font-medium leading-[13px] text-[#536B92]">{stopStatus}</p>
+          </div>
+
+          <div className="min-w-0 text-right">
+            <p className="whitespace-nowrap text-[19px] font-extrabold leading-6 tabular-nums text-[#142033]">{formatTime(leg.arrivalTime, locale)}</p>
+            <p className="mt-[3px] text-[13px] font-bold leading-[17px] text-[#142033]">{leg.destinationAirport}</p>
+            {arrivalShortDate ? <p className="mt-px whitespace-nowrap text-[9.5px] font-medium leading-3 text-[#536B92]">{arrivalShortDate}</p> : null}
+          </div>
+        </div>
+
+        <div className="mt-[13px] grid grid-cols-2 items-start gap-5">
+          <div className="min-w-0">
+            <p className="text-[12px] font-medium leading-[17px] text-[#142033]">{airportName(departurePoint, leg.originAirport)}</p>
+            {departurePoint?.terminal ? <p className="mt-[5px] text-[11px] font-normal leading-4 text-[#536B92]">Terminal {departurePoint.terminal}</p> : null}
+          </div>
+          <div className="min-w-0 text-right">
+            <p className="text-[12px] font-medium leading-[17px] text-[#142033]">{airportName(arrivalPoint, leg.destinationAirport)}</p>
+            {arrivalPoint?.terminal ? <p className="mt-[5px] text-[11px] font-normal leading-4 text-[#536B92]">Terminal {arrivalPoint.terminal}</p> : null}
+          </div>
+        </div>
+
+        <div className="my-[13px] h-px bg-[#E2E8F0]" />
+
+        <ol>
+          {leg.segments.map((segment, index) => {
+            const carrier = resolveSegmentCarrierName(segment, offerAirlineName);
+            const flightNumber = segment.marketingFlightNumber ?? segment.flightNumber;
+            const operatingDiffers = Boolean(segment.operatingCarrier && (segment.operatingCarrier.name !== segment.marketingCarrier?.name || segment.operatingFlightNumber !== segment.marketingFlightNumber));
+            const aircraftName = segment.aircraft?.name?.trim() || segment.aircraft?.iataCode?.trim();
+            const aircraftSuffix = segment.aircraft?.name?.trim() && segment.aircraft?.iataCode?.trim() ? ` (${segment.aircraft.iataCode.trim()})` : "";
+            const layover = index > 0 ? leg.layovers[index - 1] : undefined;
+            return <li key={`${segment.originAirport}-${segment.destinationAirport}-${segment.departureTime}-${index}`}>
+              {layover ? (
+                <div data-flight-details-connection-row className="mb-0.5 flex items-center gap-[7px] rounded-[9px] border border-[#D6E2F0] bg-[#F3F7FC] px-[11px] py-2">
+                  <Clock3 className="h-[13px] w-[13px] shrink-0 text-[#5D7496]" strokeWidth={1.8} aria-hidden="true" />
+                  <p className="min-w-0 flex-1 truncate text-[11px] font-semibold leading-4 text-[#142033]">
+                    Connection at {layoverLabel(layover.airport)}
+                    <span className="font-medium text-[#536B92]"> · {layover.duration}</span>
+                  </p>
+                </div>
+              ) : null}
+              <div className="flex items-start gap-[10px] py-[9px]">
+                <SegmentAirlineMark segment={segment} offerAirlineName={offerAirlineName} offerAirlineLogo={offerAirlineLogo} preferSegmentLogo />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-[10px]">
+                    <p className="min-w-0 shrink text-[13px] font-bold leading-[18px] text-[#142033]">{segment.originAirport} → {segment.destinationAirport}</p>
+                    <p className="max-w-[48%] shrink-0 whitespace-nowrap text-right text-[11px] font-semibold leading-4 tabular-nums text-[#142033]">{formatTime(segment.departureTime, locale)} – {formatTime(segment.arrivalTime, locale)}</p>
+                  </div>
+                  <p className="mt-0.5 text-[11px] font-medium leading-4 text-[#536B92]">{carrier || "Carrier not supplied"}{flightNumber ? ` · Flight ${flightNumber}` : ""}</p>
+                  {operatingDiffers ? <p className="mt-0.5 text-[11px] font-normal leading-4 text-[#536B92]">Operated by {segment.operatingCarrier?.name}{segment.operatingFlightNumber ? ` · Flight ${segment.operatingFlightNumber}` : ""}</p> : null}
+                  {aircraftName ? <p className="mt-0.5 text-[11px] font-normal leading-4 text-[#536B92]">Aircraft: {aircraftName}{aircraftSuffix}</p> : null}
+                  {segment.distanceKm !== undefined ? <p className="mt-0.5 text-[11px] font-normal leading-4 text-[#536B92]">Flight distance: {formatDistanceKm(segment.distanceKm, locale)}</p> : null}
+                </div>
+              </div>
+            </li>;
+          })}
+        </ol>
+
+        {hasFlightInfo ? <>
+          <div className="my-[13px] h-px bg-[#E2E8F0]" />
+          <div className="space-y-[7px]">
+            <p className="mb-0.5 text-[12px] font-bold uppercase leading-4 tracking-[0.65px] text-[#142033]">Flight info</p>
+            {departureTimeZone && arrivalTimeZone && departureTimeZone === arrivalTimeZone ? (
+              <div className="flex items-start justify-between gap-3">
+                <span className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-[#142033]">Time zone</span>
+                <span className="max-w-[52%] text-right text-[11px] font-normal leading-4 text-[#536B92]">{departureTimeZone}</span>
+              </div>
+            ) : <>
+              {departureTimeZone ? <div className="flex items-start justify-between gap-3"><span className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-[#142033]">Departure time zone</span><span className="max-w-[52%] text-right text-[11px] font-normal leading-4 text-[#536B92]">{departureTimeZone}</span></div> : null}
+              {arrivalTimeZone ? <div className="flex items-start justify-between gap-3"><span className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-[#142033]">Arrival time zone</span><span className="max-w-[52%] text-right text-[11px] font-normal leading-4 text-[#536B92]">{arrivalTimeZone}</span></div> : null}
+            </>}
+          </div>
+        </> : null}
+      </div>
+    </section>
+
+    <section className="hidden overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-white sm:block" aria-labelledby={`${label.toLowerCase()}-heading`}>
+      <div className="flex items-center justify-between gap-3 px-4 pt-4">
+        <h2 id={`${label.toLowerCase()}-heading`} className="inline-flex rounded-md bg-blue-50 px-2 py-1 text-[10px] font-bold tracking-[0.04em] text-[#075EE8]">{label}</h2>
+        <time dateTime={departureDate} className="whitespace-nowrap text-right text-[12px] font-semibold text-slate-600">{formatItineraryDepartureDate(departureDate, locale)}</time>
+      </div>
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(82px,1.1fr)_minmax(0,1fr)] items-center gap-5 px-4 pb-4 pt-3 lg:px-5 lg:pb-5">
+        <AirportTime time={leg.departureTime} airport={leg.originAirport} city={departurePoint?.cityName || ""} name={departurePoint?.name} terminal={departurePoint?.terminal} timeZone={departurePoint?.timeZone} locale={locale} />
+        <div className="min-w-0 text-center"><p className="mb-2 text-[11px] font-medium text-slate-600">{leg.duration}</p><div className="flex items-center gap-1 text-[#075EE8]"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" /><span className="min-w-2 flex-1 border-t border-dashed border-[#075EE8]" /><Plane className="h-[18px] w-[18px] shrink-0 rotate-45" aria-hidden="true" /><span className="min-w-2 flex-1 border-t border-dashed border-[#075EE8]" /><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" /></div><p className="mt-2 text-[11px] font-medium text-slate-600">{formatStops(leg.stops, technicalStopCount(leg))}</p></div>
+        <div className="text-right"><AirportTime time={leg.arrivalTime} airport={leg.destinationAirport} city={arrivalPoint?.cityName || ""} name={arrivalPoint?.name} terminal={arrivalPoint?.terminal} timeZone={arrivalPoint?.timeZone} locale={locale} /></div>
+      </div>
+      <div className="border-t border-[#E2E8F0] px-4 py-3.5 lg:px-5">
+        <ol className="space-y-3">
+          {leg.segments.map((segment, index) => (
+            <li key={`${segment.originAirport}-${segment.destinationAirport}-${segment.departureTime}`}>
+              {index > 0 && leg.layovers[index - 1] ? <p className="mb-3 rounded-md bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">Connection at {leg.layovers[index - 1].airport} • {leg.layovers[index - 1].duration}</p> : null}
+              <div className="flex items-start gap-3">
+                <SegmentAirlineMark segment={segment} offerAirlineName={offerAirlineName} offerAirlineLogo={offerAirlineLogo} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-3 text-sm"><p className="font-semibold text-slate-900">{segment.originAirport} → {segment.destinationAirport}</p><p className="text-xs text-slate-600">{formatTime(segment.departureTime, locale)} – {formatTime(segment.arrivalTime, locale)}</p></div>
+                  <p className="mt-1 text-xs text-slate-600">{resolveSegmentCarrierName(segment, offerAirlineName)}{segment.flightNumber || segment.marketingFlightNumber ? ` • Flight ${segment.flightNumber || segment.marketingFlightNumber}` : ""}</p>
+                  {segment.operatingCarrier && segment.marketingCarrier && (segment.operatingCarrier.name !== segment.marketingCarrier.name || segment.operatingFlightNumber !== segment.marketingFlightNumber) ? <p className="mt-1 text-xs text-slate-600">Operated by {segment.operatingCarrier.name}{segment.operatingFlightNumber ? ` • Flight ${segment.operatingFlightNumber}` : ""}</p> : null}
+                  {segment.aircraft?.name || segment.aircraft?.iataCode ? <p className="mt-1 text-xs text-slate-600">Aircraft: {segment.aircraft.name || segment.aircraft.iataCode}{segment.aircraft.name && segment.aircraft.iataCode ? ` (${segment.aircraft.iataCode})` : ""}</p> : null}
+                  {segment.distanceKm !== undefined ? <p className="mt-1 text-xs text-slate-600">Flight distance: {formatDistanceKm(segment.distanceKm, locale)}</p> : null}
+                </div>
+              </div>
+              {segment.technicalStops?.map((stop) => <div key={`${stop.airport.iataCode}-${stop.arrivalTime || "stop"}`} className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-slate-700"><p>Technical stop at {stop.airport.iataCode}{stop.airport.name ? ` — ${stop.airport.name}` : ""}{stop.duration ? ` • ${stop.duration}` : ""}</p>{stop.arrivalTime || stop.departureTime ? <p className="mt-1 font-normal">{stop.arrivalTime ? `Arrives ${formatTime(stop.arrivalTime, locale)}` : ""}{stop.arrivalTime && stop.departureTime ? " • " : ""}{stop.departureTime ? `Departs ${formatTime(stop.departureTime, locale)}` : ""}</p> : null}</div>)}
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  </>;
+}
+
+function AirportTime({ time, airport, city, name, terminal, timeZone, locale }: { time: string; airport: string; city: string; name?: string; terminal?: string; timeZone?: string; locale: string }) { return <div className="min-w-0"><p className="text-[17px] font-bold">{formatTime(time, locale)}</p><p className="mt-1 text-sm font-bold">{airport}</p>{name ? <p className="mt-1 break-words text-xs leading-4 text-slate-600">{name}</p> : null}{city && city !== airport ? <p className="mt-1 break-words text-xs leading-4 text-slate-600">{city}</p> : null}{terminal ? <p className="mt-1 text-xs font-medium leading-4 text-slate-600">Terminal {terminal}</p> : null}{timeZone ? <p className="mt-1 break-words text-xs leading-4 text-slate-600">Time zone: {timeZone}</p> : null}</div>; }
+
+function SegmentAirlineMark({ segment, offerAirlineName, offerAirlineLogo, preferSegmentLogo = false }: { segment: FlightSegment; offerAirlineName: string; offerAirlineLogo?: string | null; preferSegmentLogo?: boolean }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const carrierName = resolveSegmentCarrierName(segment, offerAirlineName);
   const canUseOfferLogo = canUseOfferAirlineLogo(segment, offerAirlineName, offerAirlineLogo);
-  return <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#075EE8]" aria-label={`${carrierName} airline mark`}>{canUseOfferLogo && !logoFailed ? <Image src={offerAirlineLogo!} alt="" width={24} height={24} className="h-6 w-6 object-contain" onError={() => setLogoFailed(true)} /> : <Plane className="h-4 w-4 rotate-45" aria-hidden="true" />}</span>;
+  const logoUrl = preferSegmentLogo ? segment.airlineLogo ?? (canUseOfferLogo ? offerAirlineLogo : null) : canUseOfferLogo ? offerAirlineLogo : null;
+  return <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#075EE8]" aria-label={`${carrierName} airline mark`}>{logoUrl && !logoFailed ? <Image src={logoUrl} alt="" width={24} height={24} className="h-6 w-6 object-contain" onError={() => setLogoFailed(true)} /> : <Plane className="h-4 w-4 rotate-45" aria-hidden="true" />}</span>;
 }
 
 function FareTerm({ term, text = term.text, compact = false }: { term: FlightDetailsFareChoice["distinguishingTerms"][number]; text?: string; compact?: boolean }) {
