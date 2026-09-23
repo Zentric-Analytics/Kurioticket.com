@@ -275,6 +275,7 @@ export function CarsTimeRangePickerContent({
   resultsEdit = false,
   nativeCarsAppearance = resultsEdit,
   autoRevealSelected = true,
+  open = false,
 }: {
   formatTime: (time: string) => string;
   onPickupTimeChange: (time: string) => void;
@@ -287,19 +288,12 @@ export function CarsTimeRangePickerContent({
   resultsEdit?: boolean;
   nativeCarsAppearance?: boolean;
   autoRevealSelected?: boolean;
+  open?: boolean;
 }) {
   const pickupListRef = useRef<HTMLDivElement>(null);
   const returnListRef = useRef<HTMLDivElement>(null);
-  const initializedTopScrollRef = useRef(false);
   useEffect(() => {
-    if (!mobileShell) return;
-    if (!autoRevealSelected) {
-      if (initializedTopScrollRef.current) return;
-      initializedTopScrollRef.current = true;
-      if (pickupListRef.current) pickupListRef.current.scrollTop = 0;
-      if (returnListRef.current) returnListRef.current.scrollTop = 0;
-      return;
-    }
+    if (!mobileShell || !autoRevealSelected) return;
     const positionSelected = (list: HTMLDivElement | null, value: string) => {
       const option = list?.querySelector<HTMLElement>(
         `[data-time-value="${value}"]`,
@@ -316,6 +310,15 @@ export function CarsTimeRangePickerContent({
     });
     return () => cancelAnimationFrame(frame);
   }, [autoRevealSelected, mobileShell, pickupTime, returnTime]);
+
+  useEffect(() => {
+    if (!mobileShell || autoRevealSelected || !open) return;
+    const frame = requestAnimationFrame(() => {
+      if (pickupListRef.current) pickupListRef.current.scrollTop = 0;
+      if (returnListRef.current) returnListRef.current.scrollTop = 0;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [autoRevealSelected, mobileShell, open]);
 
   return (
     <div
@@ -639,7 +642,8 @@ export function MobileCarTimePickerDialog({
           returnTime={draftReturn}
           resultsEdit={presentation === "carsResultsEdit"}
           nativeCarsAppearance={nativeCarsAppearance}
-          autoRevealSelected={presentation !== "carsMain"}
+          open={open}
+          autoRevealSelected={!nativeCarsAppearance}
           onPickupTimeChange={setDraftPickup}
           onReturnTimeChange={setDraftReturn}
         />
