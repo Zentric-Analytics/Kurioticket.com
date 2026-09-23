@@ -2486,10 +2486,10 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
         {filtersOpen ? <button type="button" aria-label={t("closeFilters")} onClick={() => setFiltersOpen(false)} className="fixed inset-0 z-[9999] bg-slate-950/35 sm:backdrop-blur-[1px] min-[1200px]:hidden" /> : null}
 
-        <aside ref={mobileFiltersDialogRef} role="dialog" aria-modal="true" aria-label="Hotel filters" aria-hidden={!filtersOpen} className={cn("fixed inset-y-0 right-0 z-[10000] flex h-[95dvh] w-full flex-col overflow-clip rounded-t-[20px] bg-[#F2F4F8] shadow-2xl transition-transform duration-200 ease-out motion-reduce:transition-none max-sm:top-auto sm:h-[100dvh] sm:rounded-none sm:w-[420px] min-[1200px]:hidden", filtersOpen ? "translate-y-0 sm:translate-x-0" : "pointer-events-none translate-y-full sm:translate-x-full sm:translate-y-0")}>
-          <div className="relative flex h-16 shrink-0 items-center justify-start bg-[#F2F4F8] px-5 sm:hidden">
-            <div><h2 className="text-base font-semibold text-slate-950">Filters</h2>{activeFilterCount > 0 ? <p className="text-xs font-medium text-slate-500">{activeFilterCount} applied</p> : null}</div>
-            <button type="button" aria-label={t("closeFilters")} onClick={() => setFiltersOpen(false)} className="focus-ring absolute right-3 flex h-11 w-11 items-center justify-center rounded-lg text-slate-700"><X size={22} /></button>
+        <aside ref={mobileFiltersDialogRef} role="dialog" aria-modal="true" aria-label="Hotel filters" aria-hidden={!filtersOpen} className={cn("fixed inset-0 z-[10000] flex h-[100dvh] w-full flex-col overflow-hidden rounded-none bg-[#F2F4F8] shadow-2xl transition-transform duration-200 ease-out motion-reduce:transition-none sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[420px] min-[1200px]:hidden", filtersOpen ? "translate-y-0 sm:translate-x-0" : "pointer-events-none translate-y-full sm:translate-x-full sm:translate-y-0")}>
+          <div className="relative flex min-h-[76px] shrink-0 items-center justify-start bg-[#F2F4F8] pe-[10px] ps-5 pt-[env(safe-area-inset-top)] sm:hidden">
+            <div className="min-w-0 flex-1"><h2 className="text-[20px] font-bold leading-[26px] text-[#071A48]">Filters</h2>{activeFilterCount > 0 ? <p className="text-[13px] font-normal leading-[18px] text-[#56658E]">{activeFilterCount} applied</p> : null}</div>
+            <button type="button" aria-label={t("closeFilters")} onClick={() => setFiltersOpen(false)} className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center text-[#1A1A1A]"><X size={21} strokeWidth={1.3} /></button>
           </div>
           <div className="hidden sm:contents">
           <div className="shrink-0 border-b border-slate-200 bg-[#F2F4F8] px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)] sm:px-5 sm:pb-4 sm:pt-4">
@@ -2519,7 +2519,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           </div>
 
           </div>
-          <div className={cn("hotel-filter-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#F2F4F8] px-6 py-4 sm:px-5", filterScrollbarVisible ? "hotel-filter-scrollbar--visible" : undefined)} onScroll={showFilterScrollbarWhileScrolling}>
+          <div className={cn("hotel-filter-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#F2F4F8] px-6 pb-8 pt-4 sm:px-5 sm:pb-4", filterScrollbarVisible ? "hotel-filter-scrollbar--visible" : undefined)} onScroll={showFilterScrollbarWhileScrolling}>
             {activeFilterChips.length ? (
               <div className="hidden sm:block mb-3 rounded-xl border border-[#C9D9EA] bg-white p-3 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.5)]">
                 <ActiveHotelFilterChips chips={activeFilterChips} onRemove={removeFilterChip} t={t} />
@@ -2528,13 +2528,13 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             <HotelFilters key={filtersOpen ? "open" : "closed"} layout="mobile" propertyNameQuery={propertyNameQuery} setPropertyNameQuery={updatePropertyNameQuery} t={t} maxPrice={maxPrice} minPrice={minPrice} setMaxPrice={updateMaxPrice} setMinPrice={updateMinPrice} resultMaxPrice={resultMaxPrice} hasPricedResults={hasPricedResults} formatPrice={formatHotelFilterPrice} locale={locale} stayNights={stayNights} selectedRatings={selectedHotelClasses} toggleRating={toggleHotelClass} starRatingCounts={starRatingCounts} options={{ ...filterOptions, propertyTypes: buildTermOptions(results, PROPERTY_TYPE_FILTERS, (hotel) => hotel.catalogueProfile?.propertyType ?? "", t, true) }} selectedFilters={selectedFilters} toggleFilter={toggleFilter} activeFilterCount={activeFilterCount} onClear={resetFilters} />
           </div>
 
-          <div className="flex shrink-0 items-center gap-3 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.08)] sm:px-5 sm:pb-4 sm:pt-4">
-            {activeFilterCount > 0 ? <button type="button" aria-label="Reset hotel filters" className="focus-ring h-11 w-[30%] shrink-0 rounded-lg border border-[#D8DEE8] bg-[#F2F4F8] px-5 text-sm font-semibold text-slate-700 sm:hidden" onClick={resetFilters}>Reset</button> : null}
+          <div className="flex shrink-0 items-center gap-3.5 border-t border-[#E7ECF5] bg-[#F2F4F8] px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:pb-4 sm:pt-4">
+            {activeFilterCount > 0 ? <button type="button" aria-label="Reset hotel filters" className="focus-ring h-[49px] min-w-[116px] shrink-0 rounded-[12px] border border-[#D8DEE8] bg-transparent px-4 text-[14px] font-semibold leading-5 text-[#071A48] sm:hidden" onClick={resetFilters}>Reset</button> : null}
             <Button
               type="button"
               disabled={filterApplying || sortedVisibleHotels.length === 0}
               aria-live="polite"
-              className="h-11 flex-1 min-w-0 rounded-lg sm:h-12 sm:rounded-xl bg-[#004BB8] px-5 text-sm font-semibold sm:text-base sm:font-bold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
+              className="min-h-[50px] flex-1 min-w-0 rounded-[10px] sm:h-12 sm:rounded-xl bg-[#0754F7] px-5 text-[15px] font-bold leading-5 sm:text-base text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
               onClick={() => {
                 triggerFilterApplying();
                 setFiltersOpen(false);
@@ -2712,7 +2712,13 @@ function HotelResultsPageTransitionSkeleton() {
 }
 
 function HotelFilters({ layout = "desktop", propertyNameQuery, setPropertyNameQuery, t, minPrice, maxPrice, setMinPrice, setMaxPrice, resultMaxPrice, hasPricedResults, formatPrice, locale, stayNights, selectedRatings, toggleRating, starRatingCounts, options, selectedFilters, toggleFilter, activeFilterCount, onClear }: { layout?: "desktop" | "compact" | "mobile"; propertyNameQuery: string; setPropertyNameQuery: (value: string) => void; t: (key: string) => string; maxPrice: number; minPrice: number; setMaxPrice: (value: number) => void; setMinPrice: (value: number) => void; resultMaxPrice: number; hasPricedResults: boolean; formatPrice: (amountUsd: number) => string; locale: string; stayNights: number; selectedRatings: number[]; toggleRating: (value: number) => void; starRatingCounts: Record<HotelStarRatingSelection, number>; options: ReturnType<typeof buildHotelFilterOptions>; selectedFilters: HotelFilterSelections; toggleFilter: (group: keyof HotelFilterSelections, value?: string) => void; activeFilterCount: number; onClear: () => void }) {
-  const filterRangeClass = cn(layout === "desktop" ? "h-1.5 w-full cursor-pointer appearance-none rounded-full bg-[#D7E5F8] accent-[#0067DB] disabled:cursor-not-allowed disabled:opacity-60" : "h-2 w-full cursor-pointer appearance-none rounded-full bg-border outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[#2F73C8] [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#2F73C8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#2F73C8] [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#2F73C8] [&::-moz-range-thumb]:shadow-md");
+  const filterRangeClass = cn(
+    layout === "desktop"
+      ? "h-1.5 w-full cursor-pointer appearance-none rounded-full bg-[#D7E5F8] accent-[#0067DB] disabled:cursor-not-allowed disabled:opacity-60"
+      : layout === "mobile"
+        ? "h-11 w-full cursor-pointer appearance-none bg-transparent outline-none disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[#E7ECF5] [&::-webkit-slider-thumb]:mt-[-7px] [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#0754F7] [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-[#E7ECF5] [&::-moz-range-progress]:h-1 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#0754F7] [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-[3px] [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#0754F7]"
+        : "h-2 w-full cursor-pointer appearance-none rounded-full bg-border outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[#2F73C8] [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#2F73C8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#2F73C8] [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#2F73C8] [&::-moz-range-thumb]:shadow-md",
+  );
 
   const [openCompactSection, setOpenCompactSection] = useState<CompactHotelFilterSectionId>(null);
   const getSelectedCount = (group: keyof HotelFilterSelections) => selectedFilters[group].length;
@@ -2824,12 +2830,12 @@ function HotelFilters({ layout = "desktop", propertyNameQuery, setPropertyNameQu
       ) : null}
 
       {
-        <div className={cn("border-b border-slate-200 pb-4", layout === "mobile" ? "mb-6 border-0 bg-transparent pb-0 sm:mb-3 sm:bg-white sm:rounded-xl sm:border sm:p-4 sm:shadow-[0_8px_24px_-20px_rgba(15,23,42,0.5)]" : "mb-2")}>
-          <label className={cn("block text-sm font-bold text-slate-950", layout === "mobile" && "max-sm:text-lg max-sm:font-semibold")} htmlFor={`hotel-property-search-${layout}`}>
+        <div className={cn("border-b border-slate-200 pb-4", layout === "mobile" ? "mb-0 border-0 bg-transparent pb-0 sm:mb-3 sm:bg-white sm:rounded-xl sm:border sm:p-4 sm:shadow-[0_8px_24px_-20px_rgba(15,23,42,0.5)]" : "mb-2")}>
+          <label className={cn("block text-sm font-bold text-slate-950", layout === "mobile" && "max-sm:text-[16px] max-sm:font-bold max-sm:leading-[22px]")} htmlFor={`hotel-property-search-${layout}`}>
             Property name
           </label>
           <div className="relative mt-2">
-            <input id={`hotel-property-search-${layout}`} type="search" value={propertyNameQuery} onChange={(event) => setPropertyNameQuery(event.target.value)} placeholder="Search properties" autoComplete="off" className="h-11 w-full appearance-none rounded-lg border border-slate-300 bg-white px-3 pr-10 text-sm text-slate-950 outline-none placeholder:text-slate-500 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20 [&::-webkit-search-cancel-button]:appearance-none" />
+            <input id={`hotel-property-search-${layout}`} type="search" value={propertyNameQuery} onChange={(event) => setPropertyNameQuery(event.target.value)} placeholder="Search properties" autoComplete="off" className="h-11 w-full appearance-none rounded-[10px] border border-[#D8DEE8] bg-white px-3 pr-10 text-[14px] font-normal leading-5 text-[#071A48] outline-none placeholder:text-slate-500 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20 [&::-webkit-search-cancel-button]:appearance-none" />
             {propertyNameQuery ? (
               <button type="button" aria-label="Clear property search" onClick={() => setPropertyNameQuery("")} className="absolute right-1 top-1 inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30">
                 <X className="h-4 w-4" aria-hidden="true" />
@@ -2888,9 +2894,9 @@ function PriceFilterControl({ mobile = false, showEstimate = true, stayNights, m
         {mobile ? `Estimated total for ${stayNights} ${stayNights === 1 ? "night" : "nights"}.` : <>{totalLabel} · {new Intl.NumberFormat(locale).format(stayNights)} {t(stayNights === 1 ? "deals.results.night" : "deals.results.nights")}</>}
       </p> : null}
       <div className="grid grid-cols-2 gap-2">
-        <label className="text-xs font-semibold text-slate-700">
+        <label className="text-[13px] font-medium leading-[18px] text-[#56658E]">
           {minimumLabel}
-          <input type="number" min={0} max={toInput(maxPrice)} step={mobile ? "any" : 25} value={toInput(minPrice)} onChange={(event) => setMinPrice(mobile ? Math.min(maxPrice, fromInput(Number(event.target.value))) : Number(event.target.value))} className="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-sm text-slate-950 outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20" aria-label={minimumAriaLabel} />
+          <input type="number" min={0} max={toInput(maxPrice)} step={mobile ? "any" : 25} value={toInput(minPrice)} onChange={(event) => setMinPrice(mobile ? Math.min(maxPrice, fromInput(Number(event.target.value))) : Number(event.target.value))} className="mt-1.5 h-11 w-full rounded-[10px] border border-[#D8DEE8] bg-white px-3 text-[14px] font-normal leading-5 text-[#071A48] outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20" aria-label={minimumAriaLabel} />
         </label>
         <label className="text-xs font-semibold text-slate-700">
           {maximumLabel}
@@ -2921,11 +2927,11 @@ function StarRatingFilterControl({ selectedRatings, onToggle, counts, locale, t,
         const label = formatHotelRating(rating as HotelStarRatingSelection, t, locale);
 
         return (
-          <label key={rating} className={cn("group flex min-h-11 cursor-pointer justify-between gap-3 rounded-lg text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-950", layout === "desktop" ? "items-start px-0.5 py-1 text-[12px] font-medium leading-5" : layout === "mobile" ? "items-center px-0 py-1.5 text-sm sm:px-1.5" : "items-center px-1.5 py-1.5 text-sm")}>
+          <label key={rating} className={cn("group flex min-h-11 cursor-pointer justify-between gap-3 rounded-lg text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-950", layout === "desktop" ? "items-start px-0.5 py-1 text-[12px] font-medium leading-5" : layout === "mobile" ? "min-h-[46px] items-center px-0 py-1 text-[14px] leading-5 sm:min-h-11 sm:px-1.5 sm:py-1.5" : "items-center px-1.5 py-1.5 text-sm")}>
             <span className={cn("flex min-w-0 items-center gap-2", layout === "mobile" && "max-sm:gap-[10px]")}>
               <input className="peer sr-only" type="checkbox" value={rating} checked={selected} onChange={() => onToggle(rating)} aria-label={label} />
 
-              <span aria-hidden="true" className={cn("flex shrink-0 items-center justify-center rounded-[2px] border transition-colors", layout === "desktop" ? "mt-0.5 h-[14px] w-[14px]" : layout === "mobile" ? "h-5 w-5 rounded sm:h-4 sm:w-4" : "h-4 w-4", selected ? "border-[#0067DB] bg-[#0067DB] text-white" : "border-slate-300 bg-white group-hover:border-slate-400", "peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2")}>
+              <span aria-hidden="true" className={cn("flex shrink-0 items-center justify-center rounded-[2px] border transition-colors", layout === "desktop" ? "mt-0.5 h-[14px] w-[14px]" : layout === "mobile" ? "h-5 w-5 rounded sm:h-4 sm:w-4" : "h-4 w-4", selected ? "border-[#0754F7] bg-[#0754F7] text-white" : "border-slate-300 bg-white group-hover:border-slate-400", "peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2")}>
                 {selected ? <Check className={cn(layout === "desktop" ? "h-2.5 w-2.5" : "h-3 w-3")} strokeWidth={3} aria-hidden="true" /> : null}
               </span>
 
@@ -2993,10 +2999,10 @@ function CheckboxFilterOptions({
   const allOptionChecked = Boolean(allOption) && selected.length === 0;
   const visibleOptions = expanded ? options : options.slice(0, collapsedCount);
   const hasMore = options.length > collapsedCount;
-  const optionRowClass = cn("group flex min-h-11 min-w-0 cursor-pointer items-center justify-between gap-3 transition hover:bg-slate-50 hover:text-slate-950", layout === "desktop" ? "rounded-md px-0.5 py-1 text-[12px] font-medium leading-5 text-slate-700" : layout === "compact" ? "min-h-8 gap-2 rounded-lg px-1.5 py-1 text-[13px] font-medium text-slate-600" : "rounded-lg px-0 py-1.5 text-sm font-normal text-slate-700 sm:px-1.5 sm:font-medium sm:text-slate-600");
-  const controlClass = (checked: boolean) => cn("flex shrink-0 items-center justify-center rounded-[2px] border transition-colors", layout === "desktop" ? "mt-0.5 h-[14px] w-[14px]" : layout === "compact" ? "mt-0.5 h-3.5 w-3.5" : "h-5 w-5 rounded sm:mt-0.5 sm:h-4 sm:w-4", checked ? "border-[#0067DB] bg-[#0067DB] text-white" : "border-slate-300 bg-white group-hover:border-slate-400", "peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2");
+  const optionRowClass = cn("group flex min-h-11 min-w-0 cursor-pointer items-center justify-between gap-3 transition hover:bg-slate-50 hover:text-slate-950", layout === "desktop" ? "rounded-md px-0.5 py-1 text-[12px] font-medium leading-5 text-slate-700" : layout === "compact" ? "min-h-8 gap-2 rounded-lg px-1.5 py-1 text-[13px] font-medium text-slate-600" : "min-h-[46px] rounded-lg px-0 py-1 text-[14px] font-normal leading-5 text-[#071A48] sm:min-h-11 sm:px-1.5 sm:py-1.5 sm:font-medium sm:text-slate-600");
+  const controlClass = (checked: boolean) => cn("flex shrink-0 items-center justify-center rounded-[2px] border transition-colors", layout === "desktop" ? "mt-0.5 h-[14px] w-[14px]" : layout === "compact" ? "mt-0.5 h-3.5 w-3.5" : "h-5 w-5 rounded-[4px] sm:mt-0.5 sm:h-4 sm:w-4", checked ? "border-[#0754F7] bg-[#0754F7] text-white" : "border-slate-300 bg-white group-hover:border-slate-400", "peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2");
   const checkClass = layout === "desktop" ? "h-2.5 w-2.5" : layout === "compact" ? "h-2.5 w-2.5" : "h-3 w-3";
-  const countClass = cn("min-w-6 shrink-0 text-right font-medium tabular-nums text-slate-500", layout === "desktop" ? "text-[12px] leading-5" : layout === "compact" ? "text-[12px] leading-5" : "text-xs");
+  const countClass = cn("min-w-6 shrink-0 text-right font-medium tabular-nums text-slate-500", layout === "desktop" ? "text-[12px] leading-5" : layout === "compact" ? "text-[12px] leading-5" : "text-[12px] font-normal leading-4");
 
   return (
     <>
@@ -3052,8 +3058,8 @@ function FilterSection({ title, children, layout = "desktop" }: { title: string;
   const panelId = useId();
   return (
     <section className={cn("border-t border-slate-200/75 first:border-t-0", layout === "desktop" ? "border-t-0 py-0" : layout === "mobile" ? "border-t-0 bg-transparent py-0 sm:bg-white sm:rounded-xl sm:border sm:px-4 sm:py-1 sm:shadow-[0_8px_24px_-20px_rgba(15,23,42,0.5)]" : "py-4")}>
-      <h3 className={cn(layout === "mobile" ? "text-lg font-semibold leading-6 text-slate-950 sm:text-sm sm:font-bold sm:leading-5" : "text-sm font-bold leading-5 text-slate-950")}>
-        {layout === "mobile" ? <span className="flex min-h-11 items-center sm:hidden">{title}</span> : null}
+      <h3 className={cn(layout === "mobile" ? "text-[16px] font-bold leading-[22px] text-[#071A48] sm:text-sm sm:font-bold sm:leading-5" : "text-sm font-bold leading-5 text-slate-950")}>
+        {layout === "mobile" ? <span className="flex min-h-7 items-center sm:hidden">{title}</span> : null}
         <button type="button" className={cn("flex min-h-11 w-full items-center justify-between gap-3 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30", layout === "mobile" && "max-sm:hidden")} aria-expanded={expanded} aria-controls={panelId} onClick={() => setExpanded((value) => !value)}>
           <span>{title}</span>
           <ChevronDown className={cn("h-4 w-4 text-slate-500 transition-transform", expanded && "rotate-180")} aria-hidden="true" />
