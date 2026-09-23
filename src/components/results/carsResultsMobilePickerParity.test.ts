@@ -156,6 +156,30 @@ test("mobile Driver Age delegates numeric formatting to the shared picker", () =
   );
 });
 
+test("Results Edit time opens at the top without discarding selected draft values", () => {
+  assert.match(
+    source,
+    /<MobileCarTimePickerDialog[\s\S]*?presentation="carsResultsEdit"[\s\S]*?pickupTime=\{pickupTime\}[\s\S]*?returnTime=\{dropoffTime\}/,
+  );
+  assert.match(carsPickerContent, /autoRevealSelected=\{!nativeCarsAppearance\}/);
+  assert.match(
+    carsPickerContent,
+    /presentation === "carsResultsEdit" \|\| presentation === "carsMain"/,
+  );
+  assert.match(carsPickerContent, /open=\{open\}/);
+  assert.match(carsPickerContent, /pickupListRef\.current\.scrollTop = 0/);
+  assert.match(carsPickerContent, /returnListRef\.current\.scrollTop = 0/);
+  assert.match(carsPickerContent, /aria-selected=\{selectedTime === time\}/);
+  assert.match(
+    carsPickerContent,
+    /mobileShell && selectedTime === time[\s\S]*?data-selected-time-indicator/,
+  );
+  assert.match(
+    carsPickerContent,
+    /\}, \[autoRevealSelected, mobileShell, open\]\);/,
+  );
+});
+
 test("Results Edit preserves the Any Age sentinel without selecting a numeric row", () => {
   const agePicker = carsPickerContent.slice(
     carsPickerContent.indexOf("export function CarsDriverAgePickerContent"),
