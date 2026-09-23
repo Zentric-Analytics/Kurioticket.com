@@ -35,12 +35,14 @@ test("checkout dock keeps a responsive price and action hierarchy with theme-awa
 
 test("native actions and checkout meet accessibility requirements", () => {
   assert.match(native, /accessibilityLabel="Back to results"/);
-  assert.match(native, /label="Share flight"/);
+  assert.match(native, /accessibilityLabel=\{saved\?"Remove saved flight":"Save flight"\}/);
+  assert.match(native, /accessibilityLabel="Share flight"/);
+  assert.match(native, /accessibilityLabel="Kurioticket"/);
   assert.match(native, /accessibilityRole="radiogroup"/);
   assert.match(native, /accessibilityRole="radio" accessibilityState=\{\{selected:/);
   assert.match(native, /accessibilityRole="tab" accessibilityState=\{\{selected:/);
-  assert.match(native, /heroIconButton:\{width:44,height:44/);
-  assert.match(native, /<FlowIcon name="share" size=\{17\}/);
+  assert.match(native, /brandHeaderAction:\{width:44,height:44/);
+  assert.match(native, /<FlowIcon name="share" size=\{20\}/);
   assert.match(native, /fareInfoTab:\{minHeight:48/);
 });
 
@@ -111,14 +113,14 @@ test("loaded, loading, and error states all use the branded Flight Details heade
   assert.doesNotMatch(native, /function TopBar|<TopBar/);
 });
 
-test("flight Hotel light glass keeps unsaved Save icon visible in dark mode", () => {
-  assert.match(native, /color=\{saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\}/);
+test("white branded header keeps canonical favorite and share colors", () => {
+  assert.match(native, /const saveColor=saveDisabled\?"#94A3B8":saved\?androidFavoriteColors\.savedStroke:androidFavoriteColors\.unsavedStroke/);
+  assert.match(native, /const shareColor=shareDisabled\?"#94A3B8":androidFavoriteColors\.shareStroke/);
+  assert.match(native, /backgroundColor:"#FFFFFF"/);
 });
 
 test("flight save action uses the canonical favorite visual states", () => {
-  assert.match(native, /label=\{saved\?"Remove saved flight":"Save flight"\} onPress=\{\(\)=>savedFlights\.toggle/);
-  assert.match(native, /savedFlights\.toggle\(savedOffer,nativeFlightEditSearchParams\(details,one\(params\.currency\)\)\)/);
-  assert.match(native, /<Heart size=\{17\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\} fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/>/);
-  assert.match(native, /const heroIconColor="#0F172A"/);
-  assert.doesNotMatch(native, /<Heart[^>]*fill="transparent"/);
+  assert.match(native, /onToggleSaved=\{\(\)=>savedFlights\.toggle\(savedOffer,nativeFlightEditSearchParams\(details,one\(params\.currency\)\)\)\}/);
+  assert.match(native, /<Heart size=\{21\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{saveColor\} fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/>/);
+  assert.doesNotMatch(native, /const heroIconColor=/);
 });
