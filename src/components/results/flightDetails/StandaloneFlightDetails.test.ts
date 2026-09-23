@@ -729,6 +729,10 @@ test("mobile web Flight Details owns the Kurioticket branded header while deskto
   const header = await readFile(new URL("./MobileFlightDetailsBrandHeader.tsx", import.meta.url), "utf8");
 
   assert.match(source, /<MobileFlightDetailsBrandHeader[\s\S]*resultsHref=\{resultsHref\}[\s\S]*saved=\{flightSaved\}/);
+  assert.match(source, /overflow-hidden border-b border-\[#E2E8F0\][\s\S]*sm:rounded-\[13px\] sm:border/);
+  assert.doesNotMatch(source, /overflow-hidden border-y border-\[#E2E8F0\]/);
+  assert.match(loading, /overflow-hidden border-b border-slate-200[\s\S]*sm:rounded-\[15px\] sm:border/);
+  assert.doesNotMatch(loading, /overflow-hidden border-y border-slate-200/);
   assert.match(source, /data-testid="flight-details-hero"[\s\S]*min-h-\[290px\][\s\S]*pt-10 sm:min-h-\[280px\][\s\S]*sm:pt-5/);
   assert.match(source, /relative z-10 hidden items-start justify-between gap-3 sm:flex/);
   assert.match(source, /function FlightDetailsUnavailable[\s\S]*<MobileFlightDetailsBrandHeader resultsHref=\{resultsHref\} actionsDisabled\/>/);
