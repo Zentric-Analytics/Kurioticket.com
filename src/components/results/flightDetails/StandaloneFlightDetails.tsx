@@ -101,6 +101,14 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     setLocalSavedFlightIds(readSavedItemIds());
   }, [sessionStatus]);
 
+  const available = response?.status === "available" ? response : null;
+  const fareChoices = useMemo(() => available?.fareChoices ?? [], [available]);
+  const selectedFare = fareChoices.find((fare) => fare.key === selectedFareKey) ?? fareChoices[0];
+  const selectedOffer = selectedFare?.offer ?? available?.flight;
+  const savedFlightKey = selectedOffer?.id ?? id;
+  const handoff = selectedFare?.handoff ?? available?.handoff ?? { available: false as const };
+  const canContinue = Boolean(selectedOffer && handoff.available);
+
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !selectedOffer) {
       setSavedFlightBackendId(null);
@@ -127,14 +135,6 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   }, [selectedOffer, sessionStatus]);
 
 
-
-  const available = response?.status === "available" ? response : null;
-  const fareChoices = useMemo(() => available?.fareChoices ?? [], [available]);
-  const selectedFare = fareChoices.find((fare) => fare.key === selectedFareKey) ?? fareChoices[0];
-  const selectedOffer = selectedFare?.offer ?? available?.flight;
-  const savedFlightKey = selectedOffer?.id ?? id;
-  const handoff = selectedFare?.handoff ?? available?.handoff ?? { available: false as const };
-  const canContinue = Boolean(selectedOffer && handoff.available);
 
   useEffect(() => {
     if (fareChoices.length < 2 || window.matchMedia("(min-width: 640px)").matches) return;
