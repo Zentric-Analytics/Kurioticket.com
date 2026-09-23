@@ -16,9 +16,11 @@ test("Cars Results uses server-authoritative automatic price tracking", () => {
   assert.doesNotMatch(source, /buildCarPriceAlertPayload|Target rental total|inputMode="decimal"/);
 });
 
-test("pending geometry and transient feedback remain stable and accessible", () => {
-  assert.match(source, /w-5 justify-center/);
-  assert.match(source, /w-\[51px\] justify-end/);
+test("submission is optimistic without visible loading UI and feedback remains accessible", () => {
+  assert.doesNotMatch(source, /LoaderCircle|animate-spin|w-5 justify-center/);
+  assert.match(source, /pendingRef\.current/);
+  assert.match(source, /optimisticTracking/);
+  assert.match(source, /h-11 w-\[51px\] shrink-0 items-center justify-end/);
   assert.match(source, /CAR_PRICE_ALERT_SNACKBAR_DURATION_MS = 3_600/);
   assert.match(source, /window\.clearTimeout\(leave\)/);
   assert.match(source, /aria-live="polite"/);
@@ -31,18 +33,17 @@ test("Cars price tracking snackbar matches the compact native presentation", () 
   assert.match(source, /border-\[0\.5px\] border-\[#C8DFF7\] bg-\[#EDF6FF\]/);
   assert.match(source, /px-\[13px\] py-\[11px\]/);
   assert.match(source, /shadow-\[0_4px_16px_rgba\(15,23,42,0\.16\)\]/);
-  assert.match(source, /CheckCircle2 className=\{`h-5 w-5 shrink-0/);
-  assert.match(source, /feedback\.startsWith\("error"\) \? "text-rose-600" : "text-\[#1769AA\]"/);
+  assert.match(source, /CheckCircle2 className="h-5 w-5 shrink-0 text-\[#1769AA\]"/);
   assert.match(source, /text-\[14px\] font-bold leading-\[19px\]/);
   assert.match(source, /text-\[12\.5px\] leading-\[17px\]/);
   assert.match(source, /min-h-11 shrink-0 items-center px-1 text-\[13\.5px\] font-bold text-\[#1769AA\]/);
   assert.doesNotMatch(source, /border-slate-200 bg-white|border-slate-300\/80 bg-white/);
 });
 
-test("Cars price tracking snackbar renders active-only supporting content and action", () => {
-  assert.match(source, /feedback === "active" \? "carsResults\.priceTracking\.active" : feedback === "paused" \? "carsResults\.priceTracking\.paused"/);
-  assert.match(source, /feedback === "active" \? <span[^>]*>\{t\("carsResults\.priceTracking\.activeBody"\)\}<\/span> : null/);
-  assert.match(source, /feedback === "active" \? <Link href="\/price-alerts"/);
+test("Cars price tracking snackbar renders complete on and off content and action", () => {
+  assert.match(source, /carsResults\.priceTracking\.inactive/);
+  assert.match(source, /carsResults\.priceTracking\.inactiveBody/);
+  assert.match(source, /<Link href="\/price-alerts"/);
   assert.doesNotMatch(source, /min-h-\[(?:7[0-9]|[89][0-9])px\]/);
 });
 
@@ -64,5 +65,15 @@ test("mobile Cars price tracking fills its content gutter without compromising n
   assert.match(source, /min-h-\[52px\] min-w-0 items-center/);
   assert.match(source, /min-w-0 flex-1 \[overflow-wrap:anywhere\]/);
   assert.match(source, /shrink-0 items-center justify-center[^"\n]*sm:h-8 sm:w-8/);
-  assert.match(source, /h-11 shrink-0 items-center/);
+  assert.match(source, /h-11 w-\[51px\] shrink-0 items-center/);
+});
+
+
+test("Cars price tracking failures use an accessible blocking dialog", () => {
+  assert.match(source, /role="alertdialog" aria-modal="true"/);
+  assert.match(source, /aria-labelledby="cars-price-alert-error-title"/);
+  assert.match(source, /aria-describedby="cars-price-alert-error-body"/);
+  assert.match(source, /carsResults\.priceTracking\.cancel/);
+  assert.match(source, /carsResults\.priceTracking\.retry/);
+  assert.doesNotMatch(source, /type SuccessFeedback =[^;]*error-/);
 });

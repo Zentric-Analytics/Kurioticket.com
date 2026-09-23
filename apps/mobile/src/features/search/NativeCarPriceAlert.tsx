@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Animated, Easing, Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { Alert, Animated, Easing, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Bell, CircleCheck } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,6 +22,7 @@ export function NativeCarPriceAlert({ plan, results, available, onFeedback }: { 
   const [reconciledPlanKey, setReconciledPlanKey] = useState<string>();
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
+  const [optimisticTracking, setOptimisticTracking] = useState<boolean | null>(null);
   const pendingRef = useRef(false);
   const reconciliationRef = useRef(0);
   const planRef = useRef(plan);
@@ -35,6 +36,11 @@ export function NativeCarPriceAlert({ plan, results, available, onFeedback }: { 
   }, [onFeedback]);
   const setCurrentMatchingAlert = useCallback((alert: MobilePriceAlert | undefined) => setMatchingAlertState(alert && planKey ? { planKey, alert } : undefined), [planKey]);
   const signIn = () => Alert.alert("Sign in required", "Sign in to save this price alert to your account.", [{ text: "Sign in", onPress: () => router.push(signInHref("/(tabs)/profile")) }, { text: "Cancel", style: "cancel" }]);
+  const showFailure = (next: boolean) => Alert.alert(
+    next ? "Couldn’t turn on price tracking" : "Couldn’t turn off price tracking",
+    next ? "There was a problem starting price tracking. Check your connection and try again." : "There was a problem turning off price tracking. Check your connection and try again.",
+    [{ text: "Cancel", style: "cancel" }, { text: "Try again", onPress: () => void toggle(next) }],
+  );
 
   const reconcile = useCallback(async () => {
     const reconciliationPlan = planRef.current;
@@ -64,6 +70,7 @@ export function NativeCarPriceAlert({ plan, results, available, onFeedback }: { 
     pendingRef.current = true;
     ++reconciliationRef.current;
     setPending(true);
+    setOptimisticTracking(next);
     try {
       if (next && !await readSession().catch(() => null)) { signIn(); return; }
       let saved: MobilePriceAlert;
@@ -86,20 +93,21 @@ export function NativeCarPriceAlert({ plan, results, available, onFeedback }: { 
         if (canonical) {
           const saved = canonical.status === "PAUSED" ? (await travelApi.updatePriceAlertStatus(canonical.id, "ACTIVE")).alert : canonical;
           setCurrentMatchingAlert(saved); setReconciledPlanKey(planKey); showFeedback("active");
-        } else Alert.alert("Couldn't start price tracking. Try again.");
+        } else showFailure(true);
       } else if (cause instanceof TravelApiError && cause.status === 401) {
         setCurrentMatchingAlert(undefined); setReconciledPlanKey(planKey); signIn();
-      } else Alert.alert(next ? "Couldn't start price tracking. Try again." : "Couldn't pause price tracking. Try again.");
-    } finally { pendingRef.current = false; setPending(false); }
+      } else showFailure(next);
+    } finally { pendingRef.current = false; setPending(false); setOptimisticTracking(null); }
   };
 
   if (!presentation.visible) return null;
-  const tracking = matchingAlert?.status === "ACTIVE";
-  const disabled = pending || loading || !alertKnown || (!available && !tracking);
+  const committedTracking = matchingAlert?.status === "ACTIVE";
+  const tracking = optimisticTracking ?? committedTracking;
+  const disabled = loading || !alertKnown || (!available && !tracking);
   return <View accessibilityLabel="Track rental car prices" style={[styles.control, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}>
     <Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/>
     <Text style={[styles.title, { color: theme.textPrimary }]}>Track rental car prices</Text>
-    <View style={styles.switchControls}><View style={styles.loadingSlot}>{pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent}/> : null}</View><View style={styles.switchSlot}><Switch accessibilityRole="switch" accessibilityLabel="Track rental car prices" accessibilityState={{ checked: tracking, disabled, busy: pending }} disabled={disabled} value={tracking} onValueChange={(next) => void toggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor="#FFFFFF" /></View></View>
+    <View style={styles.switchSlot}><Switch accessibilityRole="switch" accessibilityLabel="Track rental car prices" accessibilityState={{ checked: tracking, disabled, busy: pending }} disabled={disabled} value={tracking} onValueChange={(next) => void toggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor="#FFFFFF" /></View>
   </View>;
 }
 
@@ -126,8 +134,8 @@ export function CarPriceAlertSnackbar({ feedback, onDismiss }: { feedback: Exclu
   return <Animated.View accessibilityLiveRegion="polite" style={[styles.snackbarPosition, { bottom: Math.max(insets.bottom, 12) + 12, opacity, transform: [{ translateY }] }]}>
     <View style={[styles.snackbar, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}>
       <CircleCheck accessible={false} size={20} strokeWidth={2.2} color={theme.priceAlertAccent}/>
-      <View style={styles.snackbarCopy}><Text style={[styles.snackbarTitle, { color: theme.textPrimary }]}>{active ? "Price tracking is on" : "Price tracking paused"}</Text>{active ? <Text style={[styles.snackbarBody, { color: theme.textSecondary }]}>We'll notify you if the price drops.</Text> : null}</View>
-      {active ? <Pressable accessibilityRole="button" accessibilityLabel="Manage price alerts" onPress={() => router.push("/price-alerts")} style={styles.manage}><Text style={[styles.manageText, { color: theme.priceAlertAccent }]}>Manage</Text></Pressable> : null}
+      <View style={styles.snackbarCopy}><Text style={[styles.snackbarTitle, { color: theme.textPrimary }]}>{active ? "Price tracking is on" : "Price tracking is off"}</Text><Text style={[styles.snackbarBody, { color: theme.textSecondary }]}>{active ? "We'll notify you if the price drops." : "You’ll no longer receive price-drop alerts for this rental."}</Text></View>
+      <Pressable accessibilityRole="button" accessibilityLabel="Manage price alerts" onPress={() => router.push("/price-alerts")} style={styles.manage}><Text style={[styles.manageText, { color: theme.priceAlertAccent }]}>Manage</Text></Pressable>
     </View>
   </Animated.View>;
 }
@@ -137,8 +145,6 @@ export const PriceTrackingSnackbar = CarPriceAlertSnackbar;
 const styles = StyleSheet.create({
   control: { width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1, paddingLeft: 12, paddingRight: 14, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 8 },
   title: { flex: 1, flexShrink: 1, fontSize: 12.5, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },
-  switchControls: { minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 6 },
-  loadingSlot: { width: 20, minHeight: 44, alignItems: "center", justifyContent: "center" },
   switchSlot: { width: 51, minHeight: 44, alignItems: "flex-end", justifyContent: "center" },
   snackbarPosition: { position: "absolute", left: 16, right: 16, zIndex: 50 },
   snackbar: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, paddingHorizontal: 13, paddingVertical: 11, flexDirection: "row", alignItems: "center", gap: 10, shadowColor: "#0F172A", shadowOpacity: 0.18, shadowRadius: 12, elevation: 10 },
