@@ -2830,7 +2830,7 @@ function HotelFilters({ layout = "desktop", propertyNameQuery, setPropertyNameQu
       ) : null}
 
       {
-        <div className={cn("border-b border-slate-200 pb-4", layout === "mobile" ? "mb-0 border-0 bg-transparent pb-0 sm:mb-3 sm:bg-white sm:rounded-xl sm:border sm:p-4 sm:shadow-[0_8px_24px_-20px_rgba(15,23,42,0.5)]" : "mb-2")}>
+        <div className={cn("border-b border-slate-200 pb-4", layout === "mobile" ? "mb-6 border-0 bg-transparent pb-0 sm:mb-3 sm:bg-white sm:rounded-xl sm:border sm:p-4 sm:shadow-[0_8px_24px_-20px_rgba(15,23,42,0.5)]" : "mb-2")}>
           <label className={cn("block text-sm font-bold text-slate-950", layout === "mobile" && "max-sm:text-[16px] max-sm:font-bold max-sm:leading-[22px]")} htmlFor={`hotel-property-search-${layout}`}>
             Property name
           </label>
@@ -3006,7 +3006,7 @@ function CheckboxFilterOptions({
 
   return (
     <>
-      <div className="grid gap-0.5">
+      <div className={cn("grid", layout === "mobile" ? "gap-[5px] sm:gap-0.5" : "gap-0.5")}>
         {allOption ? (
           <label className={optionRowClass}>
             <span className={cn("flex min-w-0 flex-1 items-start gap-2", layout === "mobile" && "max-sm:items-center max-sm:gap-[10px]")}>
@@ -3057,7 +3057,7 @@ function FilterSection({ title, children, layout = "desktop" }: { title: string;
   const [expanded, setExpanded] = useState(true);
   const panelId = useId();
   return (
-    <section className={cn("border-t border-slate-200/75 first:border-t-0", layout === "desktop" ? "border-t-0 py-0" : layout === "mobile" ? "border-t-0 bg-transparent py-0 sm:bg-white sm:rounded-xl sm:border sm:px-4 sm:py-1 sm:shadow-[0_8px_24px_-20px_rgba(15,23,42,0.5)]" : "py-4")}>
+    <section className={cn("border-t border-slate-200/75 first:border-t-0", layout === "desktop" ? "border-t-0 py-0" : layout === "mobile" ? "border-t-0 bg-transparent py-0 max-sm:space-y-[5px] sm:bg-white sm:rounded-xl sm:border sm:px-4 sm:py-1 sm:shadow-[0_8px_24px_-20px_rgba(15,23,42,0.5)]" : "py-4")}>
       <h3 className={cn(layout === "mobile" ? "text-[16px] font-bold leading-[22px] text-[#071A48] sm:text-sm sm:font-bold sm:leading-5" : "text-sm font-bold leading-5 text-slate-950")}>
         {layout === "mobile" ? <span className="flex min-h-7 items-center sm:hidden">{title}</span> : null}
         <button type="button" className={cn("flex min-h-11 w-full items-center justify-between gap-3 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30", layout === "mobile" && "max-sm:hidden")} aria-expanded={expanded} aria-controls={panelId} onClick={() => setExpanded((value) => !value)}>
@@ -3065,7 +3065,7 @@ function FilterSection({ title, children, layout = "desktop" }: { title: string;
           <ChevronDown className={cn("h-4 w-4 text-slate-500 transition-transform", expanded && "rotate-180")} aria-hidden="true" />
         </button>
       </h3>
-      <div id={panelId} className={cn("gap-0.5", layout === "mobile" ? "pb-0 sm:pb-4" : "pb-4", expanded ? "grid" : layout === "mobile" ? "grid sm:hidden" : "hidden")}>
+      <div id={panelId} className={cn(layout === "mobile" ? "gap-[5px] pb-0 sm:gap-0.5 sm:pb-4" : "gap-0.5 pb-4", expanded ? "grid" : layout === "mobile" ? "grid sm:hidden" : "hidden")}>
         {children}
       </div>
     </section>
