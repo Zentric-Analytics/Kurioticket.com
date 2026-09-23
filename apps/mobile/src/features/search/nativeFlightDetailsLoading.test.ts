@@ -21,7 +21,9 @@ function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWi
   const headerStart = details.indexOf("function FlightDetailsBrandHeader");
   const headerEnd = details.indexOf("function FareStatusIcon", headerStart);
   const brandHeader = details.slice(headerStart, headerEnd);
-  const code = ts.transpileModule(`${palette}\n${loading}\n${brandHeader}\n${styles}\nFlightDetailsLoadingSkeleton(input);`, {
+  const supportStart = details.indexOf("function HeroCurve", loadingEnd);
+  const support = details.slice(supportStart, headerStart);
+  const code = ts.transpileModule(`${palette}\n${loading}\n${support}\n${brandHeader}\n${styles}\nFlightDetailsLoadingSkeleton(input);`, {
     compilerOptions: { jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const theme = { dark, background: "#101114", surface: dark ? "#202126" : "#FFFFFF", border: dark ? "#454650" : "#CBD5E1" };
