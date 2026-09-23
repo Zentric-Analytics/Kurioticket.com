@@ -42,7 +42,7 @@ export function MobileNativeFareInformationDeck({
   return (
     <section data-mobile-native-fare-information-deck className="mt-3 sm:hidden">
       <div className="-mx-2 overflow-x-auto border-b border-[#D8E1EC] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div role="tablist" aria-label="Fare information" className="flex w-max min-w-full gap-[22px] px-0">
+        <div role="tablist" aria-label="Fare information" className="flex w-max min-w-full gap-[28px] px-0">
           {tabs.map((tab) => {
             const selected = activeTab === tab.id;
             return (
@@ -54,12 +54,15 @@ export function MobileNativeFareInformationDeck({
                 aria-selected={selected}
                 aria-controls={`mobile-fare-panel-${tab.id}`}
                 onClick={() => onTabChange(tab.id)}
-                className={`relative min-h-12 shrink-0 whitespace-nowrap px-0 text-[14px] leading-5 text-[#56658E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0754F7]/35 ${
-                  selected ? "font-extrabold text-[#1A1A1A]" : "font-semibold"
-                }`}
+                style={{
+                  color: selected ? "#1A1A1A" : "#536B92",
+                  fontWeight: selected ? 800 : 600,
+                  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+                className="relative min-h-[64px] shrink-0 whitespace-nowrap px-0 text-[18px] leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0754F7]/35"
               >
                 {tab.label}
-                {selected ? <span className="absolute -bottom-px left-[2px] right-[2px] h-[3px] rounded-full bg-[#0754F7]" aria-hidden="true" /> : null}
+                {selected ? <span className="absolute -bottom-px left-[1px] right-[1px] h-[4px] rounded-full bg-[#0754F7]" aria-hidden="true" /> : null}
               </button>
             );
           })}

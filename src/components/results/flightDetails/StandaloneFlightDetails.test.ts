@@ -802,13 +802,14 @@ test("mobile web Fare information deck mirrors native tabs and selection-only de
   assert.match(source, /onSelectDeal=\{setSelectedDealOfferId\}/);
   assert.match(deck, /data-mobile-native-fare-information-deck/);
   assert.match(deck, /role="tablist" aria-label="Fare information"/);
-  assert.match(deck, /min-h-12/);
-  assert.match(deck, /gap-\[22px\]/);
+  assert.match(deck, /min-h-\[64px\]/);
+  assert.match(deck, /gap-\[28px\]/);
   assert.match(deck, /px-0/);
-  assert.doesNotMatch(deck, /gap-\[22px\] px-2/);
-  assert.match(deck, /text-\[14px\] leading-5 text-\[#56658E\]/);
-  assert.match(deck, /font-extrabold text-\[#1A1A1A\]/);
-  assert.match(deck, /left-\[2px\] right-\[2px\] h-\[3px\] rounded-full bg-\[#0754F7\]/);
+  assert.match(deck, /text-\[18px\] leading-6/);
+  assert.match(deck, /fontWeight: selected \? 800 : 600/);
+  assert.match(deck, /color: selected \? "#1A1A1A" : "#536B92"/);
+  assert.match(deck, /fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"/);
+  assert.match(deck, /left-\[1px\] right-\[1px\] h-\[4px\] rounded-full bg-\[#0754F7\]/);
   assert.doesNotMatch(deck, /text-\[#0754F7\].*tab\.label/);
 
   assert.match(deck, /role="radiogroup" aria-label="Flight deal options"/);
