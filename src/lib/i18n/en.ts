@@ -3653,7 +3653,7 @@ export const translations: TranslationDictionary = {
   "Live flight results are temporarily unavailable. Please try again shortly.":
     "Live flight results are temporarily unavailable. Please try again shortly.",
   limitedProviderChecks:
-    "Some provider checks may be limited for this search. Review final availability and fare details with the provider before booking.",
+    "Some providers couldn’t be checked. Showing available results.",
   closeFilters: "Close filters",
   editFlightSearch: "Edit flight search",
   travelersAndCabin: "Travelers and cabin",
