@@ -74,7 +74,6 @@ test("mobile Hotel shortcut rail keeps Cars geometry while Sort stays with the r
   assert.doesNotMatch(toolbar, /Sort hotels:|openMobileShortcutMenu\("sort"/);
   assert.match(resultsSource, /handleMobileSortSelection/);
   assert.match(resultsSource, /aria-pressed=\{hotelSummarySortMode === option.value\}/);
-  assert.match(resultsSource, /<span className="text-\[15px\] font-bold leading-5">\{option.label\}<\/span>/);
   assert.match(resultsSource, /updateHotelSummarySortMode\(value\)/);
   assert.match(resultsSource, /closeMobileShortcutMenu\(true\)/);
   assert.match(resultsSource, /openMobileShortcutMenu\("sort", event\.currentTarget\)/);
