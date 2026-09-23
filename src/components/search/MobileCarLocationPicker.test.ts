@@ -77,6 +77,22 @@ test("Cars Main opens empty without requesting default suggestions", () => {
   assert.match(picker, /"Choose pick-up location"/);
 });
 
+test("a retained Cars Main picker clears stale state before paint and invalidates its old request", () => {
+  assert.match(picker, /useLayoutEffect\(\(\) => \{/);
+  assert.match(
+    picker,
+    /const requestId = \+\+searchRequestRef\.current;[\s\S]*?setQuery\(""\);[\s\S]*?setResults\(\[\]\);[\s\S]*?const frame = requestAnimationFrame/,
+  );
+  assert.match(
+    picker,
+    /return \(\) => \{\s*searchRequestRef\.current \+= 1;\s*controller\.abort\(\);/,
+  );
+  assert.match(
+    picker,
+    /if \(!active \|\| requestId !== searchRequestRef\.current\) return;\s*setResults\(items\)/,
+  );
+});
+
 test("selecting Rome canonically updates the query and leaves exactly one row", () => {
   assert.match(
     picker,

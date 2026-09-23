@@ -79,7 +79,7 @@ test("return location is a distinct desktop field only when enabled", () => {
     searchBar,
     /values\.returnToDifferentLocation \? \([\s\S]*?carsSearch\.returnLocationLabel[\s\S]*?dropoffLocationDesktop/,
   );
-  assert.match(searchBar, /className="hidden sm:block sm:border-e/);
+  assert.match(searchBar, /className="sm:border-e sm:border-b/);
   assert.match(
     source,
     /if \(key === "returnToDifferentLocation" && value === false\) \{[\s\S]*?next\.dropoffLocation = ""/,
@@ -174,8 +174,12 @@ test("desktop field labels are text-only and neutral icons lead every value", ()
     source.indexOf("function TimeRangeField"),
     source.indexOf("function SearchCell"),
   );
-  assert.match(rentalDates, /className="h-4 w-4 shrink-0 text-slate-500"/);
-  assert.match(time, /className="h-4 w-4 shrink-0 text-slate-500"/);
+  for (const field of [rentalDates, time]) {
+    assert.match(
+      field,
+      /className="h-\[18px\] w-\[18px\] shrink-0 text-slate-500 sm:h-4 sm:w-4"/,
+    );
+  }
 
   const age = searchBar.slice(
     searchBar.indexOf(

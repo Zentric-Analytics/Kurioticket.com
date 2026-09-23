@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { CarFront, MapPin, X } from "lucide-react";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -161,17 +161,25 @@ export function MobileCarLocationPicker({
   const resultsEdit = presentation === "carsResultsEdit";
   const nativeCarsAppearance = resultsEdit || presentation === "carsMain";
 
-  useEffect(() => {
+  // Reset retained picker state before the newly-opened portal paints. Doing
+  // this in a passive effect (and then again in requestAnimationFrame) leaves
+  // the previous query/results visible for a frame and allows the search
+  // effect below to launch a request for that stale query.
+  useLayoutEffect(() => {
     if (!open) return;
     const controller = new AbortController();
+    const requestId = ++searchRequestRef.current;
+    /* A retained full-screen portal must clear its prior session atomically
+       before paint; deferring these updates is the bug this reset prevents. */
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setQuery("");
+    setDraft(null);
+    setResults([]);
+    setSearchCompleted(false);
+    setLoading(!nativeCarsAppearance);
+    setError(false);
+    /* eslint-enable react-hooks/set-state-in-effect */
     const frame = requestAnimationFrame(() => {
-      const requestId = ++searchRequestRef.current;
-      setQuery("");
-      setDraft(null);
-      setResults([]);
-      setSearchCompleted(false);
-      setLoading(!nativeCarsAppearance);
-      setError(false);
       if (inputRef.current && document.activeElement !== inputRef.current) {
         inputRef.current.focus({ preventScroll: true });
       }
@@ -192,6 +200,7 @@ export function MobileCarLocationPicker({
         });
     });
     return () => {
+      searchRequestRef.current += 1;
       controller.abort();
       cancelAnimationFrame(frame);
     };

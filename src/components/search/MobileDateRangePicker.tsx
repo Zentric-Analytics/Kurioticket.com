@@ -44,7 +44,7 @@ export type MobileDateRangePickerLabels = {
 };
 
 type MobileDateRangePickerProps = {
-  appearance?: "default" | "carsResultsEdit";
+  appearance?: "default" | "carsResultsEdit" | "carsMain";
   startDate: string;
   endDate: string;
   firstMonth: Date;
@@ -71,6 +71,8 @@ export function MobileDateRangePicker({
   selectedMonthRef,
 }: MobileDateRangePickerProps) {
   const carsResultsEdit = appearance === "carsResultsEdit";
+  const carsMain = appearance === "carsMain";
+  const compactCars = carsResultsEdit || carsMain;
   const start = parseIsoDate(startDate);
   const end = parseIsoDate(endDate);
   const todayIso = toIsoDate(new Date());
@@ -96,7 +98,7 @@ export function MobileDateRangePicker({
 
   return (
     <div className="mx-auto w-full max-w-xl">
-      {!carsResultsEdit ? (
+      {!compactCars ? (
         <h3 className="mb-4 text-[18px] font-bold tracking-tight text-slate-950">
           {labels.selectDates}
         </h3>
@@ -104,10 +106,10 @@ export function MobileDateRangePicker({
       <div
         data-mobile-date-calendar-card
         data-month-count={months.length}
-        data-scroll-direction={carsResultsEdit ? "vertical" : undefined}
+        data-scroll-direction={compactCars ? "vertical" : undefined}
         className={cn(
           "overflow-hidden rounded-[11px] border border-slate-200 bg-white",
-          carsResultsEdit && "rounded-none border-0 bg-transparent",
+          compactCars && "rounded-none border-0 bg-transparent",
         )}
       >
         {months.map((month, monthIndex) => {
@@ -119,14 +121,14 @@ export function MobileDateRangePicker({
               data-mobile-calendar-month={monthKey}
               aria-label={monthFormatter.format(month)}
               className={cn(
-                carsResultsEdit ? "px-0 pb-4 pt-3" : "px-3 pb-4 pt-5 sm:px-4",
+                compactCars ? "px-0 pb-4 pt-3" : "px-3 pb-4 pt-5 sm:px-4",
                 monthIndex > 0 && "border-t border-slate-200/70",
               )}
             >
               <h4
                 className={cn(
                   "mb-3 text-center text-[17px] font-bold tracking-tight text-slate-950",
-                  carsResultsEdit &&
+                  compactCars &&
                     "text-[16px] font-semibold leading-5 tracking-normal",
                 )}
               >
@@ -135,7 +137,7 @@ export function MobileDateRangePicker({
               <div
                 className={cn(
                   "grid grid-cols-7 text-center text-[12px] font-semibold text-slate-500",
-                  carsResultsEdit && "text-[10px] font-medium leading-[14px]",
+                  compactCars && "text-[10px] font-medium leading-[14px]",
                 )}
               >
                 {weekdays.map((weekday, index) => (
@@ -153,7 +155,7 @@ export function MobileDateRangePicker({
                         key={`blank-${iso}`}
                         data-adjacent-month-placeholder
                         aria-hidden="true"
-                        className={carsResultsEdit ? "h-11" : "h-[54px]"}
+                        className={compactCars ? "h-11" : "h-[54px]"}
                       />
                     );
                   }
@@ -182,7 +184,7 @@ export function MobileDateRangePicker({
                       key={iso}
                       className={cn(
                         "relative h-[54px] min-w-0",
-                        carsResultsEdit && "h-11",
+                        compactCars && "h-11",
                       )}
                       data-mobile-calendar-day={iso}
                       data-range-start={isStart || undefined}
@@ -210,7 +212,7 @@ export function MobileDateRangePicker({
                         onClick={() => onSelectDate(date)}
                         className={cn(
                           "focus-ring relative z-10 mx-auto flex h-9 w-9 items-center justify-center rounded-full text-[15px] font-medium transition-colors disabled:cursor-not-allowed",
-                          carsResultsEdit &&
+                          compactCars &&
                             "h-8 w-8 rounded-lg text-xs font-normal leading-4",
                           disabled
                             ? "text-slate-300"
@@ -223,14 +225,14 @@ export function MobileDateRangePicker({
                           isStart &&
                             "bg-[#075ee8] font-semibold text-white hover:bg-[#075ee8] hover:text-white",
                           isEnd &&
-                            (carsResultsEdit
+                            (compactCars
                               ? "bg-[#075ee8] font-semibold text-white hover:bg-[#075ee8] hover:text-white"
                               : "border-[1.5px] border-[#075ee8] bg-white font-semibold text-[#075ee8] hover:bg-white"),
                         )}
                       >
                         {date.getDate()}
                       </button>
-                      {endpoint && !carsResultsEdit ? (
+                      {endpoint && !compactCars ? (
                         <span className="relative z-10 mt-0.5 block text-center text-[10px] font-semibold leading-3 text-[#075ee8]">
                           {endpoint}
                         </span>
@@ -250,7 +252,7 @@ export function MobileDateRangePicker({
 type MobileDatePickerDialogProps = {
   showBackAction?: boolean;
   withinDialog?: boolean;
-  presentation?: "default" | "carsResultsEdit";
+  presentation?: "default" | "carsResultsEdit" | "carsMain";
   open: boolean;
   title: string;
   titleId: string;
@@ -362,6 +364,7 @@ export function MobileDatePickerDialog({
       contentClassName={cn(
         "bg-[#fcfdfe] px-4 py-4",
         presentation === "carsResultsEdit" && "bg-[#F5F7FB] px-4 py-3",
+        presentation === "carsMain" && "bg-white px-4 py-3",
       )}
       footer={(requestClose) => (
         <button
@@ -374,6 +377,8 @@ export function MobileDatePickerDialog({
           className={cn(
             "focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-semibold text-white transition-colors hover:bg-[#004bb8] disabled:cursor-not-allowed disabled:bg-[#075ee8] disabled:text-white disabled:opacity-100",
             presentation === "carsResultsEdit" &&
+              "h-12 rounded-[10px] text-[15px]",
+            presentation === "carsMain" &&
               "h-12 rounded-[10px] text-[15px]",
           )}
         >
