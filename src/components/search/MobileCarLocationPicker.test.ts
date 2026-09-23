@@ -33,7 +33,7 @@ test("shared Cars picker matches the Flight navigation and input geometry", () =
   assert.doesNotMatch(picker, /\bSearch\b|<Search/);
 });
 
-test("Cars Results Edit gates searches and keeps a native empty state", () => {
+test("native Cars presentations gate searches and keep a native empty state", () => {
   assert.match(
     picker,
     /hasMinimumCarLocationSearchLetters\(query\)/,
@@ -41,6 +41,7 @@ test("Cars Results Edit gates searches and keeps a native empty state", () => {
   assert.match(picker, /if \(nativeCarsAppearance\) return;/);
   assert.match(picker, /nativeCarsAppearance \? 180 : 120/);
   assert.match(picker, /Start typing to find a location\./);
+  assert.match(picker, /nativeCarsAppearance && !eligible/);
   assert.match(
     picker,
     /fetch\(\`\/api\/cars\/locations\?\$\{params\.toString\(\)\}\`/,
@@ -57,6 +58,23 @@ test("Cars Results Edit gates searches and keeps a native empty state", () => {
     picker,
     /Popular locations|Recent searches|readRecentCarLocations|recents/,
   );
+});
+
+test("Cars Main opens empty without requesting default suggestions", () => {
+  assert.match(
+    picker,
+    /const nativeCarsAppearance = resultsEdit \|\| presentation === "carsMain"/,
+  );
+  assert.match(
+    picker,
+    /setQuery\(""\);[\s\S]*?setDraft\(null\);[\s\S]*?setResults\(\[\]\);[\s\S]*?setSearchCompleted\(false\);[\s\S]*?setLoading\(!nativeCarsAppearance\);[\s\S]*?setError\(false\);/,
+  );
+  assert.match(
+    picker,
+    /if \(nativeCarsAppearance\) return;\s*void loadCarLocationSuggestions\(""/,
+  );
+  assert.match(picker, /nativeCarsAppearance \? 180 : 120/);
+  assert.match(picker, /"Choose pick-up location"/);
 });
 
 test("selecting Rome canonically updates the query and leaves exactly one row", () => {
@@ -101,7 +119,7 @@ test("editing after selection clears the draft and returns to search mode", () =
 test("clear X resets all selection and search state before focusing the input", () => {
   assert.match(
     picker,
-    /const clear = \(\) => \{[\s\S]*?setQuery\(""\);[\s\S]*?setDraft\(null\);[\s\S]*?setResults\(\[\]\);[\s\S]*?setSearchCompleted\(false\);[\s\S]*?inputRef\.current\?\.focus\(\{ preventScroll: true \}\)/,
+    /const clear = \(\) => \{[\s\S]*?setQuery\(""\);[\s\S]*?setDraft\(null\);[\s\S]*?setResults\(\[\]\);[\s\S]*?setSearchCompleted\(false\);[\s\S]*?setLoading\(false\);[\s\S]*?setError\(false\);[\s\S]*?inputRef\.current\?\.focus\(\{ preventScroll: true \}\)/,
   );
   assert.match(picker, /onClick=\{clear\}/);
 });

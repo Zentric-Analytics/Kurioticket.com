@@ -284,7 +284,7 @@ export function MobileCarLocationPicker({
       open={open}
       title={
         mode === "pickup"
-          ? text("carsSearch.choosePickupLocation", "Choose pickup location")
+          ? text("carsSearch.choosePickupLocation", "Choose pick-up location")
           : text("carsSearch.chooseReturnLocation", "Choose return location")
       }
       titleId={`cars-${mode}-location-title`}
@@ -405,7 +405,7 @@ export function MobileCarLocationPicker({
                   />
                 ))}
               </div>
-            ) : nativeCarsAppearance && !trimmedQuery ? (
+            ) : nativeCarsAppearance && !eligible ? (
               <p className="px-4 py-7 text-center text-sm font-medium text-slate-500">
                 Start typing to find a location.
               </p>

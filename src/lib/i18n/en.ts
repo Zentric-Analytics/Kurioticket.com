@@ -1722,7 +1722,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.returnLocationLabel": "Return location",
   "carsSearch.pickupLocationPlaceholder": "Airport, city, or address",
   "carsSearch.returnLocationPlaceholder": "Return city, airport, or address",
-  "carsSearch.choosePickupLocation": "Choose pickup location",
+  "carsSearch.choosePickupLocation": "Choose pick-up location",
   "carsSearch.chooseReturnLocation": "Choose return location",
   "carsSearch.returnToSameLocation": "Return to same location",
   "carsSearch.differentReturnLocation": "Different return location",
@@ -1741,7 +1741,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.type.customLocation": "Custom location",
   "carsSearch.rentalDatesLabel": "Rental dates",
   "carsSearch.rentalDatePlaceholder": "Pickup date — Return date",
-  "carsSearch.pickupReturnTimeLabel": "Pickup / return time",
+  "carsSearch.pickupReturnTimeLabel": "Pick-up / Return time",
   "carsSearch.mobileTimeIntro":
     "Select when you’ll pick up and return your car.",
   "carsSearch.pickupReturnTimeSummary":
@@ -1765,7 +1765,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.startsNewPickupDate": "starts a new pickup date",
   "carsSearch.choosePickupReturnTimesAria": "Choose pickup and return times",
   "carsSearch.pickupReturnTimeSelectorAria": "Pickup and return time selector",
-  "carsSearch.pickupTimeLabel": "Pickup time",
+  "carsSearch.pickupTimeLabel": "Pick-up time",
   "carsSearch.returnTimeLabel": "Return time",
   "carsSearch.error.pickupLocationRequired": "Enter a pickup location.",
   "carsSearch.error.pickupDateRequired": "Select a pickup date.",

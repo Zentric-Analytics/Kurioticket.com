@@ -274,6 +274,7 @@ export function CarsTimeRangePickerContent({
   mobileShell = false,
   resultsEdit = false,
   nativeCarsAppearance = resultsEdit,
+  autoRevealSelected = true,
 }: {
   formatTime: (time: string) => string;
   onPickupTimeChange: (time: string) => void;
@@ -285,11 +286,20 @@ export function CarsTimeRangePickerContent({
   mobileShell?: boolean;
   resultsEdit?: boolean;
   nativeCarsAppearance?: boolean;
+  autoRevealSelected?: boolean;
 }) {
   const pickupListRef = useRef<HTMLDivElement>(null);
   const returnListRef = useRef<HTMLDivElement>(null);
+  const initializedTopScrollRef = useRef(false);
   useEffect(() => {
     if (!mobileShell) return;
+    if (!autoRevealSelected) {
+      if (initializedTopScrollRef.current) return;
+      initializedTopScrollRef.current = true;
+      if (pickupListRef.current) pickupListRef.current.scrollTop = 0;
+      if (returnListRef.current) returnListRef.current.scrollTop = 0;
+      return;
+    }
     const positionSelected = (list: HTMLDivElement | null, value: string) => {
       const option = list?.querySelector<HTMLElement>(
         `[data-time-value="${value}"]`,
@@ -305,7 +315,7 @@ export function CarsTimeRangePickerContent({
       positionSelected(returnListRef.current, returnTime);
     });
     return () => cancelAnimationFrame(frame);
-  }, [mobileShell, pickupTime, returnTime]);
+  }, [autoRevealSelected, mobileShell, pickupTime, returnTime]);
 
   return (
     <div
@@ -417,7 +427,7 @@ export function CarsDriverAgePickerContent({
   anyAgeLabel: string;
   formatAge?: (age: string) => string;
   onSelect: (age: string) => void;
-  selectedAge: string;
+  selectedAge?: string;
   mobileShell?: boolean;
   resultsEdit?: boolean;
   nativeCarsAppearance?: boolean;
@@ -629,6 +639,7 @@ export function MobileCarTimePickerDialog({
           returnTime={draftReturn}
           resultsEdit={presentation === "carsResultsEdit"}
           nativeCarsAppearance={nativeCarsAppearance}
+          autoRevealSelected={presentation !== "carsMain"}
           onPickupTimeChange={setDraftPickup}
           onReturnTimeChange={setDraftReturn}
         />
@@ -659,10 +670,11 @@ export function MobileCarDriverAgePickerDialog({
 }) {
   const nativeCarsAppearance =
     presentation === "carsResultsEdit" || presentation === "carsMain";
-  const initialDraftAge =
+  const concreteDraftAge =
     presentation === "carsMain" && driverAge === defaultDriverAge
-      ? "30"
+      ? undefined
       : driverAge;
+  const initialDraftAge = concreteDraftAge;
   const [draftAge, setDraftAge] = useState(initialDraftAge);
   const [draftSource, setDraftSource] = useState({ open, driverAge });
   if (draftSource.open !== open || draftSource.driverAge !== driverAge) {
@@ -670,7 +682,7 @@ export function MobileCarDriverAgePickerDialog({
     if (open)
       setDraftAge(
         presentation === "carsMain" && driverAge === defaultDriverAge
-          ? "30"
+          ? undefined
           : driverAge,
       );
   }
@@ -695,14 +707,19 @@ export function MobileCarDriverAgePickerDialog({
       footer={(requestClose) => (
         <button
           type="button"
+          disabled={presentation === "carsMain" && draftAge === undefined}
+          aria-disabled={
+            presentation === "carsMain" && draftAge === undefined
+          }
           onClick={() => {
+            if (draftAge === undefined) return;
             onCommit(draftAge);
             requestClose();
           }}
           className={
             presentation === "carsResultsEdit"
               ? "focus-ring h-12 w-full rounded-[10px] bg-[#004BB8] text-[15px] font-semibold text-white"
-              : "focus-ring h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-bold text-white"
+              : "focus-ring h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-bold text-white disabled:cursor-not-allowed disabled:bg-[#A9C5FA]"
           }
         >
           {doneLabel}
