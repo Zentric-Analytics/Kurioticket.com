@@ -35,6 +35,19 @@ test("mobile Hotel search uses the Cars floating results summary below the page 
   assert.match(searchBarSource, /mobileLayout === "controls"/);
 });
 
+test("Hotel mobile filter and quick-filter surfaces match Cars background treatment", () => {
+  assert.match(resultsSource, /data-mobile-hotel-shortcuts className="w-full min-w-0 bg-transparent"/);
+  assert.match(resultsSource, /count > 0 && "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"/);
+  assert.match(resultsSource, /mobileShortcutMenuContentRef[sS]*rounded-t-[20px] bg-[#F2F4F8]/);
+  assert.match(resultsSource, /mobileShortcutMenuContentRef[sS]*header className="[^"]*bg-[#F2F4F8]/);
+  assert.match(resultsSource, /max-h-[calc(min(76dvh,620px)-9rem)][^"]*bg-[#F2F4F8]/);
+  assert.match(resultsSource, /mobileShortcutMenu !== "sort" ? <footer className="[^"]*bg-[#F2F4F8]/);
+  assert.match(resultsSource, /aria-label="Hotel filters"[sS]*bg-[#F2F4F8]/);
+  assert.match(resultsSource, /hotel-filter-scrollbar[^"]*bg-[#F2F4F8]/);
+  assert.match(resultsSource, /border-t border-[#D8DEE8] bg-[#F2F4F8]/);
+  assert.doesNotMatch(resultsSource, /aria-label="Hotel filters"[sS]{0,500}bg-[#F1F3F8]|sm:bg-[#F6F8FB]/);
+});
+
 test("mobile Hotel shortcut rail keeps Filter Price Stars Facilities Room & bed while Sort lives with results", () => {
   const toolbarStart = resultsSource.indexOf(
     "data-mobile-hotel-shortcuts",
