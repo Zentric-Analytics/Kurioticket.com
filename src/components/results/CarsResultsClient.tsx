@@ -75,6 +75,7 @@ import type {
 import type { CarLocationSuggestion } from "@/lib/cars/carLocationSuggestions";
 import { serializeCarLocationTarget } from "@/lib/cars/carSearchLocationTarget";
 import { carFilterGroups, carQuickFilterGroupIds, type CarFilterGroup } from "@/lib/cars/carFilterPresentation";
+import { getSelectedCarFiltersSignature } from "@/lib/cars/carFilterSelection";
 import { formatCarResultsScheduleSummary } from "@/lib/cars/carResultsSummary";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -1894,6 +1895,10 @@ export function CarsResultsExperience({
     null,
   );
   const [selectedCarFilters, setSelectedCarFilters] = useState<SelectedCarFilters>({});
+  const selectedCarFiltersRef = useRef(selectedCarFilters);
+  const mobileFilterDrawerInitialFiltersRef = useRef(
+    getSelectedCarFiltersSignature(selectedCarFilters),
+  );
   const filterUrlReadyRef = useRef(false);
   const [sort, setSort] = useState<CarSort>(
     presentation === "guided-planning" ? "lowestTotal" : "recommended",
@@ -1928,6 +1933,10 @@ export function CarsResultsExperience({
     useState<DesktopCompactFilterFrame | null>(null);
   const [desktopCompactFilterPlacement, setDesktopCompactFilterPlacement] =
     useState<DesktopCompactFilterPlacementState>("hidden");
+
+  useLayoutEffect(() => {
+    selectedCarFiltersRef.current = selectedCarFilters;
+  }, [selectedCarFilters]);
   const desktopCompactFilterVisibilityRef = useRef(false);
   const desktopCompactFilterPlacementRef =
     useRef<DesktopCompactFilterPlacementState>("hidden");
@@ -2101,7 +2110,7 @@ export function CarsResultsExperience({
       window.setTimeout(() => setPaginationRevealing(false), PAGINATION_REVEAL_MS);
     }
   };
-  const startFilterResultsTransition = () => {
+  const startFilterResultsTransition = useCallback(() => {
     const run = ++filterTransitionRunRef.current;
     const mobile = window.innerWidth < 1024;
     filterTransitionMobileRef.current = mobile;
@@ -2141,7 +2150,7 @@ export function CarsResultsExperience({
         }, remaining);
       });
     });
-  };
+  }, []);
   const toggleCarFilter = (groupId: string, option: string) => {
     startFilterResultsTransition();
     setCurrentPage(1);
@@ -2162,9 +2171,36 @@ export function CarsResultsExperience({
     setCurrentPage(1);
     setSelectedCarFilters({});
   };
+  const toggleMobileDrawerCarFilter = (groupId: string, option: string) => {
+    setCurrentPage(1);
+    setSelectedCarFilters((current) => {
+      const currentGroupSelections = current[groupId] ?? [];
+      const nextGroupSelections = currentGroupSelections.includes(option)
+        ? currentGroupSelections.filter((selected) => selected !== option)
+        : [...currentGroupSelections, option];
+      const nextFilters = { ...current };
+      if (nextGroupSelections.length > 0)
+        nextFilters[groupId] = nextGroupSelections;
+      else delete nextFilters[groupId];
+      return nextFilters;
+    });
+  };
+  const clearMobileDrawerCarFilters = () => {
+    setCurrentPage(1);
+    setSelectedCarFilters({});
+  };
+  const closeMobileFiltersDrawer = useCallback(() => {
+    const filtersChanged =
+      mobileFilterDrawerInitialFiltersRef.current !==
+      getSelectedCarFiltersSignature(selectedCarFiltersRef.current);
+    if (filtersChanged) startFilterResultsTransition();
+    setFiltersOpen(false);
+  }, [startFilterResultsTransition]);
   const openMobileFiltersDrawer = (launcher: HTMLButtonElement, modality: OverlayActivationModality) => {
     mobileFiltersLauncherRef.current = launcher;
     mobileFiltersModalityRef.current = modality;
+    mobileFilterDrawerInitialFiltersRef.current =
+      getSelectedCarFiltersSignature(selectedCarFiltersRef.current);
     setQuickFilterGroupId(null);
     setFiltersOpen(true);
   };
@@ -2241,7 +2277,8 @@ export function CarsResultsExperience({
     const closeForDesktop = () => {
       if (!media.matches) {
         shouldRestoreFocus = false;
-        setFiltersOpen(false);
+        if (filtersOpen) closeMobileFiltersDrawer();
+        else setFiltersOpen(false);
         setQuickFilterGroupId(null);
       }
     };
@@ -2249,7 +2286,7 @@ export function CarsResultsExperience({
       if (event.key === "Escape") {
         event.preventDefault();
         if (quickFilterGroupId) closeQuickFilter();
-        else setFiltersOpen(false);
+        else closeMobileFiltersDrawer();
       }
       const dialog = activeDialogRef.current;
       if (event.key === "Tab" && dialog) {
@@ -2287,7 +2324,7 @@ export function CarsResultsExperience({
       media.removeEventListener("change", closeForDesktop);
       if (shouldRestoreFocus) restoreOverlayLauncherFocus(launcher, mobileFiltersModalityRef.current);
     };
-  }, [closeQuickFilter, filtersOpen, quickFilterGroupId]);
+  }, [closeMobileFiltersDrawer, closeQuickFilter, filtersOpen, quickFilterGroupId]);
 
   useEffect(() => {
     if (presentation !== "standalone" || typeof window === "undefined")
@@ -2979,7 +3016,7 @@ export function CarsResultsExperience({
         <button
           type="button"
           aria-label={t("carsResults.closeFilters")}
-          onClick={() => setFiltersOpen(false)}
+          onClick={closeMobileFiltersDrawer}
           className="fixed inset-0 z-[9999] hidden bg-slate-950/35 backdrop-blur-[1px] sm:block lg:hidden"
         />
       ) : null}
@@ -3000,7 +3037,7 @@ export function CarsResultsExperience({
                 <p className="text-xs font-medium leading-4 text-slate-500">{activeFilterLabel}</p>
               ) : null}
             </div>
-            <button ref={filtersCloseButtonRef} type="button" className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-700 transition hover:text-slate-950 focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35" aria-label={t("carsResults.closeFilters")} onClick={() => setFiltersOpen(false)}>
+            <button ref={filtersCloseButtonRef} type="button" className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-700 transition hover:text-slate-950 focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35" aria-label={t("carsResults.closeFilters")} onClick={closeMobileFiltersDrawer}>
               <X className="h-[22px] w-[22px]" aria-hidden="true" />
             </button>
           </header>
@@ -3015,22 +3052,22 @@ export function CarsResultsExperience({
               }
               activeFilterCount={activeFilterCount}
               layout="mobile"
-              onClear={clearCarFilters}
-              onToggle={toggleCarFilter}
+              onClear={clearMobileDrawerCarFilters}
+              onToggle={toggleMobileDrawerCarFilter}
               selectedFilters={selectedCarFilters}
               t={t}
             />
           </div>
           <footer className="flex shrink-0 items-center gap-3.5 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
             {activeFilterCount > 0 ? (
-              <button type="button" aria-label={t("carsResults.resetFilters")} onClick={clearCarFilters} className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
+              <button type="button" aria-label={t("carsResults.resetFilters")} onClick={clearMobileDrawerCarFilters} className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
                 {t("carsResults.reset")}
               </button>
             ) : null}
             <Button
               type="button"
               className="min-h-[50px] min-w-0 flex-1 rounded-[10px] bg-[#004BB8] px-5 text-base font-bold leading-[22px] text-white shadow-none"
-              onClick={() => setFiltersOpen(false)}
+              onClick={closeMobileFiltersDrawer}
             >
               Show {visibleResults.length} {visibleResults.length === 1 ? "car" : "cars"}
             </Button>
