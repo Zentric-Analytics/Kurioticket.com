@@ -15,7 +15,17 @@ function canonicalSearch(value: unknown): LocationBoundCarSearchParams | null {
   const pickupTarget = searchLocationSchema.safeParse(body.pickupLocationTarget);
   const dropoffTarget = searchLocationSchema.safeParse(body.dropoffLocationTarget);
   const search: LocationBoundCarSearchParams = { pickupLocation: text(body.pickupLocation), dropoffLocation: text(body.dropoffLocation), pickupDate: text(body.pickupDate), pickupTime: text(body.pickupTime), dropoffDate: text(body.dropoffDate), dropoffTime: text(body.dropoffTime), driverAge: text(body.driverAge), ...(pickupTarget.success ? { pickupLocationTarget: pickupTarget.data } : {}), ...(dropoffTarget.success ? { dropoffLocationTarget: dropoffTarget.data } : {}) };
-  const values: CarsFormValues = { ...search, returnToDifferentLocation: search.dropoffLocation !== search.pickupLocation };
+  const values: CarsFormValues = {
+    pickupLocation: search.pickupLocation,
+    pickupDate: search.pickupDate,
+    pickupTime: search.pickupTime,
+    dropoffDate: search.dropoffDate,
+    dropoffTime: search.dropoffTime,
+    driverAge: search.driverAge,
+    returnToDifferentLocation:
+      search.dropoffLocation !== search.pickupLocation,
+    dropoffLocation: search.dropoffLocation,
+  };
   const today = new Date().toISOString().slice(0, 10);
   if (Object.keys(validateCarsForm(values, today)).length) return null;
   return search;
