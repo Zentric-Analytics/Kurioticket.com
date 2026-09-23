@@ -471,3 +471,39 @@ test("KAYAK details without a destination recover related hotels from the origin
   assert.equal(Object.hasOwn(payload.relatedHotels[0], "rawProviderReference"), false);
   assert.equal(payload.relatedHotelsHasMore, false);
 });
+
+for (const change of [
+  { checkIn: "2027-10-02" },
+  { checkOut: "2027-10-09" },
+  { guests: 2 },
+  { rooms: 2 },
+]) {
+  test(`KAYAK related hotels exclude an overwritten cohort with different ${Object.keys(change)[0]}`, async () => {
+    const selected = testHotel(`kayak-sandbox:stay-match-${Object.keys(change)[0]}`, "Selected Hotel");
+    const originalAlternative = testHotel(selected.id + "-original", "Original Alternative");
+    const laterAlternative = testHotel(selected.id + "-later", "Later Alternative");
+    const originalSearch = {
+      destination: "New York",
+      checkIn: "2027-10-01",
+      checkOut: "2027-10-08",
+      guests: 1,
+      rooms: 1,
+    };
+    rememberHotels([selected, originalAlternative], originalSearch);
+    rememberHotels([selected, laterAlternative], { ...originalSearch, ...change });
+
+    const params = new URLSearchParams({
+      id: selected.id,
+      checkIn: originalSearch.checkIn,
+      checkOut: originalSearch.checkOut,
+      guests: String(originalSearch.guests),
+      rooms: String(originalSearch.rooms),
+      relatedLimit: "12",
+    });
+    const response = await GET(new Request(`https://kurioticket.test/api/hotels/details?${params}`));
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+    assert.deepEqual(payload.relatedHotels, []);
+    assert.equal(payload.relatedHotelsHasMore, false);
+  });
+}
