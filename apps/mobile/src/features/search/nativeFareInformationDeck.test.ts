@@ -56,8 +56,8 @@ test("deal comparison presents authoritative provider data as selection-only car
 });
 
 test("provider-authored money uses the same canonical symbols as Flight Results",()=>{
-  assert.match(source,/import \\{ formatCurrency, resolveDisplayCurrencyContext/);
-  assert.match(source,/const sourceMoney = \\(amount:number,currency:string\\) => formatCurrency\\(amount,currency\\);/);
+  assert.match(source,/import \{ formatCurrency, resolveDisplayCurrencyContext/);
+  assert.match(source,/const sourceMoney = \(amount:number,currency:string\) => formatCurrency\(amount,currency\);/);
   assert.doesNotMatch(source,/currencyDisplay:"code"/);
 });
 
