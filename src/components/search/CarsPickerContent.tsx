@@ -436,7 +436,7 @@ export function CarsDriverAgePickerContent({
     () => (nativeCarsAppearance ? driverAgeOptions.slice(1) : driverAgeOptions),
     [nativeCarsAppearance],
   );
-  const selectedIndex = ageOptions.indexOf(selectedAge);
+  const selectedIndex = selectedAge ? ageOptions.indexOf(selectedAge) : -1;
   const initialIndex = selectedIndex < 0 ? 0 : selectedIndex;
   const [focusedIndex, setFocusedIndex] = useState(initialIndex);
   const listRef = useRef<HTMLDivElement>(null);
@@ -454,7 +454,7 @@ export function CarsDriverAgePickerContent({
         option.offsetTop + option.offsetHeight - list.clientHeight;
   };
   useEffect(() => {
-    const selectedIndex = ageOptions.indexOf(selectedAge);
+    const selectedIndex = selectedAge ? ageOptions.indexOf(selectedAge) : -1;
     const index = selectedIndex < 0 ? 0 : selectedIndex;
     const frame = requestAnimationFrame(() => reveal(index));
     return () => cancelAnimationFrame(frame);
