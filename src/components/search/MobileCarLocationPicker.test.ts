@@ -43,7 +43,15 @@ test("Cars Results Edit gates searches and keeps a native empty state", () => {
   assert.match(picker, /Start typing to find a location\./);
   assert.match(
     picker,
-    /searchCarLocationSuggestions\(trimmedQuery, \{ limit: 8 \}\)/,
+    /fetch\(\`\/api\/cars\/locations\?\$\{params\.toString\(\)\}\`/,
+  );
+  assert.match(
+    picker,
+    /loadCarLocationSuggestions\(trimmedQuery, controller\.signal, 8\)/,
+  );
+  assert.match(
+    picker,
+    /return searchCarLocationSuggestions\(query\.trim\(\), \{ limit \}\)/,
   );
   assert.doesNotMatch(
     picker,
@@ -102,7 +110,7 @@ test("default mode auto-commits while canonical draft behavior remains available
   assert.match(picker, /commitOnSelect = true/);
   assert.match(
     picker,
-    /if \(!draft\) return;\s*onCommit\(draft\.value\);\s*requestClose\(\);/,
+    /if \(!draft\) return;\s*onCommit\(draft\.value, draft\);\s*requestClose\(\);/,
   );
   assert.match(picker, /disabled=\{!draft\}/);
   assert.match(picker, /launcherRef=\{launcherRef\}[\s\S]*onClose=\{onClose\}/);
@@ -114,7 +122,7 @@ test("commitOnSelect immediately commits the canonical row and closes without Do
   assert.match(picker, /commitOnSelect\?: boolean/);
   assert.match(
     picker,
-    /searchRequestRef\.current \+= 1;\s*if \(commitOnSelect\) \{\s*onCommit\(item\.value\);\s*requestClose\(\);\s*return;/,
+    /searchRequestRef\.current \+= 1;\s*if \(commitOnSelect\) \{\s*onCommit\(item\.value, item\);\s*requestClose\(\);\s*return;/,
   );
   assert.match(picker, /\{\(requestClose\) => \(/);
   assert.match(picker, /onSelect=\{\(\) => select\(item, requestClose\)\}/);
@@ -140,8 +148,10 @@ test("Pickup and Return share one implementation across every Cars surface", () 
   for (const source of [homepage, cars, packages]) {
     assert.match(source, /<MobileCarLocationPicker/);
   }
-  assert.match(homepage, /onCommit=\{\(value\) => updateCarsValue/);
-  assert.match(cars, /onCommit=\{\(nextValue\) => updateValue/);
+  assert.match(homepage, /onCommit=\{\(value, suggestion\) => \{/);
+  assert.match(homepage, /"pickupLocationTarget"[\s\S]*serializeCarLocationTarget\(suggestion\)/);
+  assert.match(cars, /onCommit=\{\(nextValue, suggestion\) => \{/);
+  assert.match(cars, /"pickupLocationTarget"[\s\S]*serializeCarLocationTarget\(suggestion\)/);
   assert.match(
     packages,
     /customizeInheritedField\(current, "carPickup", nextValue\)/,
