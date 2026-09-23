@@ -23,7 +23,6 @@ import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { FlightDetailsLoadingShell } from "@/components/results/flightDetails/FlightDetailsLoadingShell";
 import { MobileNativeFareRail } from "@/components/results/flightDetails/MobileNativeFareRail";
 import { MobileNativeFareInformationDeck, type MobileFareInfoTab } from "@/components/results/flightDetails/MobileNativeFareInformationDeck";
-import { MobileFlightDetailsBrandHeader } from "@/components/results/flightDetails/MobileFlightDetailsBrandHeader";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -72,6 +71,10 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const headingRef = useRef<HTMLHeadingElement>(null);
   const fareButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const mobileHeroRef = useRef<HTMLDivElement>(null);
+  const mobileItineraryRef = useRef<HTMLDivElement>(null);
+  const mobileBackControlRef = useRef<HTMLDivElement>(null);
+  const [mobileHeaderProtected, setMobileHeaderProtected] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -105,6 +108,33 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     setLocalSavedFlightIds(readSavedItemIds());
   }, [sessionStatus]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sync = () => {
+      if (window.matchMedia("(min-width: 640px)").matches) {
+        setMobileHeaderProtected(false);
+        return;
+      }
+      const hero = mobileHeroRef.current;
+      const itinerary = mobileItineraryRef.current;
+      if (!hero || !itinerary) return;
+      const heroTop = hero.getBoundingClientRect().top + window.scrollY;
+      const heroHeight = hero.getBoundingClientRect().height;
+      const itineraryTop = itinerary.getBoundingClientRect().top + window.scrollY;
+      const foregroundOffset = itineraryTop - (heroTop + heroHeight);
+      const protectedHeight = (mobileBackControlRef.current?.getBoundingClientRect().bottom ?? 52) + 12;
+      const threshold = Math.max(0, heroTop + heroHeight + foregroundOffset - protectedHeight);
+      setMobileHeaderProtected(window.scrollY >= threshold);
+    };
+    sync();
+    window.addEventListener("scroll", sync, { passive: true });
+    window.addEventListener("resize", sync);
+    return () => {
+      window.removeEventListener("scroll", sync);
+      window.removeEventListener("resize", sync);
+    };
+  }, [response]);
+
   const available = response?.status === "available" ? response : null;
   const fareChoices = useMemo(() => available?.fareChoices ?? [], [available]);
   const selectedFare = fareChoices.find((fare) => fare.key === selectedFareKey) ?? fareChoices[0];
@@ -117,7 +147,13 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     ? { available: true as const, providerName: selectedDeal.providerName }
     : handoff;
   const canContinue = Boolean(selectedOffer && handoff.available);
-  const canContinueMobile = Boolean(activeOffer && (selectedDeal || handoff.available));
+  const mobilePricesReady = !currencyRates.isLoading;
+  const canUseMobilePrice = (price: ReturnType<typeof formatDisplayPrice> | null, sourceCurrency: string) =>
+    Boolean(price && (
+      sourceCurrency.toUpperCase() === selectedOption.currency.toUpperCase()
+      || (!currencyRates.isFallback && price.currency.toUpperCase() === selectedOption.currency.toUpperCase())
+    ));
+  const canContinueMobile = Boolean(activeOffer && mobilePricesReady && (selectedDeal || handoff.available));
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !selectedOffer) {
@@ -219,6 +255,8 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     ? `${t("multiCity")} • ${new Intl.NumberFormat(locale).format(legs.length)} ${t("flights")}`
     : t(available.search.tripType === "round-trip" ? "roundTrip" : "oneWay");
   const tripLine = `${tripType} • ${new Intl.NumberFormat(locale).format(travelers.count)} ${t(travelers.count === 1 ? "deals.travelerSingular" : "deals.travelerPlural")}`;
+  const nativeTripType = available.search.tripType === "round-trip" ? "Round-trip" : available.search.tripType === "multi-city" ? "Multi-city" : "One-way";
+  const nativeTripLine = `${nativeTripType} · ${available.search.travelers} traveler${available.search.travelers === 1 ? "" : "s"} · ${titleCase(available.search.cabinClass)}`;
   const date = available.search.tripType === "multi-city"
     ? available.search.legs.map((leg) => formatTripDate(leg.departureDate, locale)).join(" • ")
     : available.search.returnDate
@@ -234,7 +272,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         isFallbackRate: currencyRates.isFallback,
       })
     : null;
-  const mobilePrice = selectedDeal
+  const mobilePriceCandidate = selectedDeal
     ? formatDisplayPrice({
         amount: selectedDeal.price,
         sourceCurrency: selectedDeal.currency,
@@ -244,6 +282,10 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         isFallbackRate: currencyRates.isFallback,
       })
     : providerPrice;
+  const mobilePriceSourceCurrency = selectedDeal?.currency ?? selectedOffer.currency;
+  const mobilePrice = mobilePricesReady && canUseMobilePrice(mobilePriceCandidate, mobilePriceSourceCurrency)
+    ? mobilePriceCandidate
+    : null;
 
   const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
     const offset = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
@@ -344,21 +386,29 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     : localSavedFlightIds.includes(savedFlightKey);
 
   return (
-    <main className="flex-1 bg-[#F5F7FB] pb-[calc(6.75rem+env(safe-area-inset-bottom))] text-[#142033] sm:bg-[#F7F9FC] sm:pt-4 lg:pb-16 lg:pt-3">
+    <main className="flex-1 bg-[#F3F6FA] pb-[calc(6.75rem+env(safe-area-inset-bottom))] text-[#142033] sm:bg-[#F7F9FC] sm:pt-4 lg:pb-16 lg:pt-3">
+      <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 top-0 z-[70] h-[calc(env(safe-area-inset-top)+64px)] transition-colors sm:hidden ${mobileHeaderProtected ? "bg-[#F3F6FA]" : "bg-transparent"}`} />
+      <div ref={mobileBackControlRef} className="fixed left-4 top-[calc(env(safe-area-inset-top)+8px)] z-[80] sm:hidden">
+        <Link href={resultsHref} aria-label="Back to results" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/55 bg-white/90 text-slate-900 shadow-[0_2px_6px_rgba(15,23,42,0.12)] backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">
+          <ArrowLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+        </Link>
+      </div>
+      <div data-flight-details-mobile-floating-actions className="fixed right-4 top-[calc(env(safe-area-inset-top)+8px)] z-[80] inline-flex h-11 w-[88px] items-center rounded-[20px] border border-white/55 bg-white/90 shadow-[0_2px_6px_rgba(15,23,42,0.12)] backdrop-blur-md sm:hidden">
+        <button type="button" aria-label={flightSaved ? "Remove saved flight" : "Save flight"} aria-pressed={flightSaved} disabled={savedFlightPending} onClick={() => void toggleSavedFlight()} className="inline-flex h-11 w-11 items-center justify-center rounded-l-[20px] text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 disabled:cursor-wait disabled:opacity-60">
+          <Heart className="h-[17px] w-[17px] translate-x-1" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
+        </button>
+        <button type="button" aria-label="Share flight" onClick={() => void shareFlight()} className="inline-flex h-11 w-11 items-center justify-center rounded-r-[20px] text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35">
+          <Share2 className="h-[17px] w-[17px] -translate-x-1" strokeWidth={2} aria-hidden="true" />
+        </button>
+      </div>
+      <span className="sr-only" role="status" aria-live="polite">{shareFeedback}</span>
       <div className="mx-auto w-full max-w-[1470px] px-0 sm:px-6 lg:px-[34px]">
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
-          <section className="min-w-0 overflow-hidden border-b border-[#E2E8F0] bg-[#F5F7FB] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
-            <MobileFlightDetailsBrandHeader
-              resultsHref={resultsHref}
-              saved={flightSaved}
-              savedPending={savedFlightPending}
-              onToggleSaved={() => void toggleSavedFlight()}
-              onShare={() => void shareFlight()}
-            />
-            <div data-testid="flight-details-hero" className="relative flex min-h-[290px] flex-col justify-between overflow-hidden px-4 pb-[122px] pt-10 sm:min-h-[280px] sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
+          <section className="min-w-0 overflow-hidden border-b border-[#E2E8F0] bg-[#F3F6FA] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
+            <div ref={mobileHeroRef} data-testid="flight-details-hero" className="relative flex min-h-[318px] flex-col justify-end overflow-hidden px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:justify-between sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
-              <div className="absolute inset-0 bg-slate-950/35" aria-hidden="true" />
-              <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-slate-950/80 via-slate-950/35 to-transparent" aria-hidden="true" />
+              <div className="absolute inset-0 bg-[rgba(5,13,26,0.30)]" aria-hidden="true" />
+              <div className="absolute inset-x-0 bottom-[66px] h-[150px] bg-gradient-to-b from-transparent via-[rgba(5,13,26,0.18)] to-[rgba(5,13,26,0.42)] sm:bottom-0 sm:h-3/4 sm:bg-gradient-to-t sm:from-slate-950/80 sm:via-slate-950/35 sm:to-transparent" aria-hidden="true" />
               <div className="relative z-10 hidden items-start justify-between gap-3 sm:flex">
                 <Link
                   href={resultsHref}
@@ -394,14 +444,15 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               </div>
               <div className="relative z-10 min-w-0 text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.55)]">
                 <h1 ref={headingRef} id="flight-details-heading" tabIndex={-1} className="text-[27px] font-extrabold leading-[1.12] tracking-[-0.025em] outline-none sm:text-[30px]">{route}</h1>
-                <p className="mt-2 text-xs font-bold uppercase tracking-[0.08em] text-white/95 sm:text-[13px]">{tripLine}</p>
+                <p className="mt-[3px] text-[11px] font-bold uppercase leading-4 tracking-[0.55px] text-white/95 sm:mt-2 sm:text-[13px] sm:leading-normal sm:tracking-[0.08em]"><span className="sm:hidden">{nativeTripLine}</span><span className="hidden sm:inline">{tripLine}</span></p>
               </div>
+              <svg data-flight-details-hero-curve aria-hidden="true" viewBox="0 0 100 64" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[65px] w-full sm:hidden"><path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z" fill="#F3F6FA" /></svg>
             </div>
-            <div className="relative z-10 -mt-8 p-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0 lg:px-6 lg:pb-6">
-            <div data-mobile-native-itinerary-stack className="-mx-2 -mt-[72px] space-y-[14px] sm:mx-0 sm:mt-0 sm:space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
+            <div className="relative z-10 px-[18px] pb-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0 lg:px-6 lg:pb-6">
+            <div ref={mobileItineraryRef} data-mobile-native-itinerary-stack className="-mx-[10px] -mt-[104px] space-y-[14px] sm:mx-0 sm:mt-0 sm:space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
 
             <h2 className="mb-0 mt-6 text-[18px] font-extrabold leading-[23px] tracking-[-0.15px] text-[#1A1A1A] sm:mb-3 sm:font-semibold sm:leading-tight sm:tracking-normal sm:text-slate-950">Pick your fare</h2>
-            <MobileNativeFareRail fares={fareChoices} selectedFareKey={selectedFare?.key ?? ""} tripType={available.search.tripType} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} alignmentKey={`${id}:${reloadToken}`} onSelect={selectFare} />
+            {mobilePricesReady ? <MobileNativeFareRail fares={fareChoices} selectedFareKey={selectedFare?.key ?? ""} tripType={available.search.tripType} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} onSelect={selectFare} /> : <div data-mobile-native-fare-price-loading role="progressbar" aria-label="Loading fare prices" aria-busy="true" className="flex gap-[10px] overflow-hidden pb-[18px] pt-3 pr-[38px] sm:hidden">{fareChoices.slice(0,2).map((fare)=><div key={fare.key} className="relative h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-1.5 shadow-[0_2px_6px_rgba(7,19,59,0.06)]"><div className="flex justify-center gap-[7px]"><div className="h-6 w-6 animate-pulse rounded-lg bg-slate-200"/><div className="mt-1.5 h-3 w-[72px] animate-pulse rounded bg-slate-200"/></div><div className="mt-[5px] space-y-[5px]">{[0,1,2].map((row)=><div key={row} className="flex items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200"/><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-200"/></div>)}</div><div className="absolute inset-x-3 bottom-1.5 flex justify-center"><div className="h-4 w-[82px] animate-pulse rounded bg-slate-200"/></div></div>)}</div>}
             <div role="radiogroup" aria-label="Available fares" className={`hidden min-w-0 sm:grid sm:gap-3 ${fareChoices.length === 1 ? "max-w-[270px]" : fareChoices.length === 2 ? "sm:grid-cols-2 lg:max-w-[632px]" : fareChoices.length === 3 ? "sm:grid-cols-2 md:grid-cols-3 lg:max-w-[954px]" : "sm:grid-cols-2 xl:max-w-[1276px] xl:grid-cols-4"}`}>
               {fareChoices.map((fare, index) => {
                 const selected = fare.key === selectedFare?.key;
@@ -425,10 +476,11 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               currencyRates={currencyRates.rates}
               isFallbackRate={currencyRates.isFallback}
               locale={locale}
+              pricesReady={mobilePricesReady}
             />
             <div className="mt-5 hidden min-w-0 flex-nowrap gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex sm:gap-0 sm:overflow-visible" role="tablist" aria-label="Fare information">{fareTabs.map((tab, index) => <button key={tab.id} ref={(element) => { tabRefs.current[index] = element; }} id={`fare-tab-${tab.id}`} type="button" role="tab" aria-selected={activeTab === tab.id} aria-controls={`fare-panel-${tab.id}`} tabIndex={activeTab === tab.id ? 0 : -1} onClick={() => setActiveTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)} className={`min-h-11 w-auto shrink-0 whitespace-nowrap border-b-2 px-1 text-center text-[11px] font-semibold min-[390px]:text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 sm:flex-1 sm:text-sm ${activeTab === tab.id ? "border-[#075EE8] text-[#075EE8]" : "border-transparent text-slate-700 hover:text-slate-950"}`}>{tab.label}</button>)}</div>
             <div className="hidden sm:block"><FarePanel activeTab={activeTab} fare={selectedFare} offer={selectedOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} onViewDeal={continueToOffer} /></div>
-            <MobileCheckoutDock travelerCount={travelers.count} price={mobilePrice} redirecting={redirecting} handoff={mobileHandoff} canContinue={canContinueMobile} onContinue={() => continueToOffer(selectedDeal?.offerId ?? selectedOffer.id)} error={error || notice} />
+            <MobileCheckoutDock travelerCount={travelers.count} price={mobilePrice} redirecting={redirecting} handoff={mobileHandoff} canContinue={canContinueMobile && Boolean(mobilePrice)} onContinue={() => continueToOffer(selectedDeal?.offerId ?? selectedOffer.id)} error={error || notice} priceLoading={!mobilePricesReady} />
             <TabletCheckoutDock travelerCount={travelers.count} price={providerPrice} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
             </div>
           </section>
@@ -474,6 +526,10 @@ function providerLocalFlightDateLong(value: string | null | undefined, locale: s
   return new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(calendarDay));
 }
 
+function NativeFlightGlyph({ className = "" }: { className?: string }) {
+  return <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m3 13 7.5-2.5L8 4l2-1 5 6 5-1.5c1.5-.4 2.4.2 2.6 1 .2.9-.6 1.7-1.8 2.2L15 13l-2 7-2 .7.2-6L5 17l-2-4Z" /></svg>;
+}
+
 function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, offerAirlineLogo }: { leg: FlightLeg; label: string; departureDate: string; locale: string; offerAirlineName: string; offerAirlineLogo?: string | null }) {
   const departurePoint = leg.segments[0]?.originDetails;
   const arrivalPoint = leg.segments.at(-1)?.destinationDetails;
@@ -495,7 +551,7 @@ function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, of
   return <>
     <section
       data-mobile-native-itinerary-card
-      className="relative overflow-hidden rounded-[15px] border border-[#D8E1EC] bg-white p-[15px] shadow-[0_6px_18px_rgba(7,19,59,0.14)] sm:hidden"
+      className="relative overflow-hidden rounded-[15px] border border-[#E1E7EF] bg-white p-[15px] shadow-[0_6px_18px_rgba(7,19,59,0.14)] sm:hidden"
       aria-labelledby={`${label.toLowerCase()}-mobile-heading`}
     >
       <div
@@ -521,7 +577,7 @@ function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, of
             <div className="mt-[5px] flex items-center" aria-hidden="true">
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" />
               <span className="h-px min-w-1 flex-1 bg-[#94A3B8]/60" />
-              <Plane className="h-4 w-4 shrink-0 rotate-45 text-[#075EE8]" />
+              <NativeFlightGlyph className="h-4 w-4 shrink-0 text-[#075EE8]" />
               <span className="h-px min-w-1 flex-1 bg-[#94A3B8]/60" />
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" />
             </div>
@@ -710,7 +766,7 @@ function EmissionsRow({ amount, locale }: { amount: number; locale: string }) { 
 
 function CheckoutButton({ redirecting, handoff, canContinue, onContinue, dock = false, mobileDock = false, label = "Continue booking", pendingLabel = "Opening booking…" }: { redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; dock?: boolean; mobileDock?: boolean; label?: string; pendingLabel?: string }) { return <button type="button" aria-label={handoff.available ? label : "Booking currently unavailable"} aria-disabled={!canContinue || redirecting} disabled={!canContinue || redirecting} onClick={onContinue} className={`${mobileDock ? "inline-flex h-12 min-w-[140px] max-w-[180px] flex-[0.78]" : dock ? "inline-flex min-h-[50px] min-w-[168px] flex-1 sm:max-w-[260px]" : "mt-4 inline-flex min-h-[50px] w-full"} items-center justify-center whitespace-nowrap rounded-[8px] bg-[#075EE8] px-3 ${mobileDock ? "text-xs font-bold" : "gap-2 text-sm font-semibold"} text-white transition hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`}>{!mobileDock ? <LockKeyhole className="h-4 w-4" aria-hidden="true" /> : null}{redirecting ? pendingLabel : label}</button>; }
 
-function MobileCheckoutDock({ travelerCount, price, redirecting, handoff, canContinue, onContinue, error }: { travelerCount: number; price: ReturnType<typeof formatDisplayPrice> | null; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) { const totalLabel=`Total for ${travelerCount} traveler${travelerCount===1?"":"s"}`; return <section className="fixed inset-x-0 bottom-0 z-[90] min-h-[88px] border-t border-[#E2E8F0] bg-white px-[18px] pb-[max(10px,env(safe-area-inset-bottom))] pt-[11px] shadow-[0_-4px_12px_rgba(7,19,59,0.10)] sm:hidden" aria-labelledby="mobile-trip-total-heading"><div className="mx-auto max-w-3xl">{error ? <p role="alert" className="mb-2 line-clamp-2 text-xs font-medium leading-4 text-red-700">{error}</p> : null}<div className="flex min-h-[48px] items-center justify-between gap-[14px]"><div className="min-w-0 flex-1">{price ? <p className="truncate text-[19px] font-semibold leading-[22px] tracking-[-0.25px] text-[#1A1A1A] tabular-nums" aria-label={price.ariaLabel}>{price.formatted}</p> : <p className="text-sm font-semibold text-slate-500">Price unavailable</p>}<h2 id="mobile-trip-total-heading" className="mt-px truncate text-[11px] font-semibold leading-4 text-[#536B92]">{totalLabel}</h2></div><CheckoutButton mobileDock redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={onContinue} label="Continue deal" pendingLabel="Checking offer…" /></div></div></section>; }
+function MobileCheckoutDock({ travelerCount, price, redirecting, handoff, canContinue, onContinue, error, priceLoading=false }: { travelerCount: number; price: ReturnType<typeof formatDisplayPrice> | null; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string; priceLoading?: boolean }) { const totalLabel=`Total for ${travelerCount} traveler${travelerCount===1?"":"s"}`; return <section className="fixed inset-x-0 bottom-0 z-[90] min-h-[88px] border-t border-[#E2E8F0] bg-white px-[18px] pb-[max(10px,env(safe-area-inset-bottom))] pt-[11px] shadow-[0_-4px_12px_rgba(7,19,59,0.10)] sm:hidden" aria-labelledby="mobile-trip-total-heading"><div className="mx-auto max-w-3xl">{error ? <p role="alert" className="mb-2 line-clamp-2 text-xs font-medium leading-4 text-red-700">{error}</p> : null}<div className="flex min-h-[48px] items-center justify-between gap-[14px]"><div className="min-w-0 flex-1">{priceLoading ? <p className="truncate text-[19px] font-semibold leading-[22px] tracking-[-0.25px] text-[#1A1A1A]">Loading price…</p> : price ? <p className="truncate text-[19px] font-semibold leading-[22px] tracking-[-0.25px] text-[#1A1A1A] tabular-nums" aria-label={price.ariaLabel}>{price.formatted}</p> : <p className="text-sm font-semibold text-slate-500">Price unavailable</p>}<h2 id="mobile-trip-total-heading" className="mt-px truncate text-[11px] font-semibold leading-4 text-[#536B92]">{totalLabel}</h2></div><CheckoutButton mobileDock redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={onContinue} label="Continue deal" pendingLabel="Checking offer…" /></div></div></section>; }
 
 function TabletCheckoutDock({ travelerCount, price, redirecting, handoff, canContinue, onContinue, error }: { travelerCount: number; price: ReturnType<typeof formatDisplayPrice> | null; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) { return <section className="fixed inset-x-0 bottom-0 z-[90] hidden border-t border-[#E2E8F0] bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.10)] sm:block lg:hidden" aria-labelledby="tablet-trip-total-heading"><div className="mx-auto max-w-3xl">{error ? <p role="alert" className="mb-2 line-clamp-2 text-xs font-medium leading-4 text-red-700">{error}</p> : null}<div className="flex items-center gap-3"><div className="min-w-0 flex-1"><h2 id="tablet-trip-total-heading" className="text-[11px] font-semibold leading-4 text-slate-600">{flightDetailsTotalLabel(travelerCount)}</h2>{price ? <p className="truncate text-[22px] font-bold leading-6 text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p> : <p className="text-sm font-semibold text-slate-500">Price unavailable</p>}</div><CheckoutButton dock redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={onContinue} /></div></div></section>; }
 
@@ -727,7 +783,7 @@ function TripSidebar({ tripType, legs, route, date, tripLine, travelers, travele
 }
 
 function FlightDetailsSkeleton({ resultsHref }: { resultsHref: string }) { return <FlightDetailsLoadingShell resultsHref={resultsHref} />; }
-function FlightDetailsUnavailable({ resultsHref, message }: { resultsHref: string; message: string }) { return <main className="flex-1 bg-white sm:bg-[#F7F9FC] sm:py-10"><MobileFlightDetailsBrandHeader resultsHref={resultsHref} actionsDisabled/><div className="mx-auto max-w-3xl px-0 sm:px-4"><Link href={resultsHref} className="ml-4 hidden items-center gap-2 text-sm font-semibold text-[#075EE8] sm:inline-flex sm:ml-0"><ArrowLeft className="h-4 w-4" /> Back to results</Link><section className="mt-4 border-y border-slate-200 bg-white p-6 sm:rounded-[15px] sm:border sm:p-8"><h1 className="text-xl font-bold">Flight quote unavailable</h1><p className="mt-2 text-sm text-slate-600">{message || "Please return to results and search again for current prices."}</p></section></div></main>; }
+function FlightDetailsUnavailable({ resultsHref, message }: { resultsHref: string; message: string }) { return <main className="flex-1 bg-white sm:bg-[#F7F9FC] sm:py-10"><div className="flex min-h-[52px] items-center px-4 pt-[env(safe-area-inset-top)] sm:hidden"><Link href={resultsHref} aria-label="Back to results" className="inline-flex min-h-11 items-center gap-2 text-sm font-extrabold text-[#075EE8]"><ArrowLeft className="h-[18px] w-[18px]" /><span>Back to results</span></Link></div><div className="mx-auto max-w-3xl px-0 sm:px-4"><Link href={resultsHref} className="ml-4 hidden items-center gap-2 text-sm font-semibold text-[#075EE8] sm:inline-flex sm:ml-0"><ArrowLeft className="h-4 w-4" /> Back to results</Link><section className="mt-4 border-y border-slate-200 bg-white p-6 sm:rounded-[15px] sm:border sm:p-8"><h1 className="text-xl font-bold">Flight quote unavailable</h1><p className="mt-2 text-sm text-slate-600">{message || "Please return to results and search again for current prices."}</p></section></div></main>; }
 
 function readTravelerSummary(search: { adults: number; children: number; infants: number; travelers: number }, locale: string, t: (key: string) => string) {
   const number = new Intl.NumberFormat(locale);
