@@ -6349,7 +6349,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const shortcutButtonClass =
       "focus-ring group inline-flex h-11 min-w-11 shrink-0 items-center justify-center whitespace-nowrap rounded-[9px] p-0 text-[13px] font-semibold leading-4 text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
     const shortcutCapsuleClass =
-      "inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2.5 transition group-hover:border-[#B9C8D9] group-hover:bg-slate-50 group-focus-visible:border-[#004BB8]";
+      "inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border px-2 text-[13px] font-semibold transition";
     const openSheet = (sheet: MobileShortcutSheet, launcher: HTMLButtonElement) => {
       mobileShortcutLauncherRef.current = launcher;
       setMobileDraftSort(sortMode);
@@ -6360,20 +6360,47 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setMobileShowAllAirlines(false);
       setMobileShortcutSheet(sheet);
     };
-    const renderTrigger = (sheet: MobileShortcutSheet, label: string) => (
-      <button
-        type="button"
-        aria-haspopup="dialog"
-        aria-expanded={mobileShortcutSheet === sheet}
-        onClick={(event) => openSheet(sheet, event.currentTarget)}
-        className={shortcutButtonClass}
-      >
-        <span className={shortcutCapsuleClass}>
-          <span className="whitespace-nowrap">{label}</span>
-          <ChevronDown className={cn("h-[13px] w-[13px] shrink-0 text-slate-500 transition-transform", mobileShortcutSheet === sheet && "rotate-180")} aria-hidden="true" />
-        </span>
-      </button>
-    );
+    const renderTrigger = (
+      sheet: MobileShortcutSheet,
+      label: string,
+      selectedCount = 0,
+    ) => {
+      const selected = sheet !== "sort" && selectedCount > 0;
+
+      return (
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={mobileShortcutSheet === sheet}
+          onClick={(event) => openSheet(sheet, event.currentTarget)}
+          className={shortcutButtonClass}
+        >
+          <span
+            className={cn(
+              shortcutCapsuleClass,
+              selected
+                ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
+                : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
+            )}
+          >
+            <span className="whitespace-nowrap">{label}</span>
+            {selected ? (
+              <span className="rounded-full bg-[#004BB8] px-1.5 py-0.5 text-[10px] text-white">
+                {selectedCount}
+              </span>
+            ) : null}
+            <ChevronDown
+              className={cn(
+                "shrink-0 transition-transform",
+                sheet === "sort" ? "h-[13px] w-[13px] text-slate-500" : "h-3.5 w-3.5",
+                mobileShortcutSheet === sheet && "rotate-180",
+              )}
+              aria-hidden="true"
+            />
+          </span>
+        </button>
+      );
+    };
     const toggleDraft = (value: string, values: string[], setValues: Dispatch<SetStateAction<string[]>>) =>
       setValues(values.includes(value) ? values.filter((entry) => entry !== value) : [...values, value]);
     const draftMatches = results.filter((flight) => {
@@ -6431,18 +6458,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <>
         <div data-mobile-flight-shortcuts className="w-full min-w-0 overflow-x-auto ps-2 pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
           <div className="flex w-max flex-nowrap items-center gap-1.5">
-            {renderFloatingFilterButton(shortcutButtonClass, shortcutCapsuleClass)}
+            {renderFloatingFilterButton(shortcutButtonClass)}
             {renderTrigger("sort", activeSortOption.label)}
-            {renderTrigger("airlines", "Airlines")}
-            {renderTrigger("stops", "Stops")}
-            {renderTrigger("airports", "Airports")}
+            {renderTrigger("airlines", "Airlines", selectedAirlines.length)}
+            {renderTrigger("stops", "Stops", selectedStops.length)}
+            {renderTrigger("airports", "Airports", selectedAirports.length)}
           </div>
         </div>
         {sheet}
       </>
     );
   }
-  function renderFloatingFilterButton(className?: string, capsuleClassName?: string) {
+  function renderFloatingFilterButton(className?: string) {
     const label =
       activeFilterCount > 0
         ? t("openFiltersWithCount").replace("{{count}}", activeFilterLabel)
@@ -6462,18 +6489,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         )}
         onClick={handleClick}
       >
-        <span className={capsuleClassName ?? "inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2.5 transition group-hover:border-[#B9C8D9] group-hover:bg-slate-50 group-focus-visible:border-[#004BB8]"}>
+        <span className="inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2 text-[13px] font-semibold text-[#142033] transition group-hover:bg-slate-50">
           <SlidersHorizontal
-            className="h-4 w-4 text-[#004BB8]"
-            strokeWidth={2.2}
+            className="h-4 w-4 shrink-0"
             aria-hidden="true"
           />
-          <span>Filters</span>
-          {activeFilterCount > 0 ? (
-            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-semibold leading-[14px] text-[#004BB8]">
-              {activeFilterCount}
-            </span>
-          ) : null}
+          <span>
+            {activeFilterCount > 0
+              ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount))
+              : "Filters"}
+          </span>
         </span>
       </button>
     );
