@@ -113,6 +113,7 @@ test("Cars Main shares native time and concrete-age internals without changing d
   assert.match(shared, /presentation === "carsResultsEdit" \|\| presentation === "carsMain"/);
   assert.match(shared, /presentation === "carsMain"[\s\S]*?"bg-white px-4 py-3"/);
   assert.match(shared, /nativeCarsAppearance \? driverAgeOptions\.slice\(1\) : driverAgeOptions/);
-  assert.match(shared, /nativeCarsAppearance && driverAge === defaultDriverAge[\s\S]*?\? "30"/);
+  assert.match(shared, /presentation === "carsMain" && driverAge === defaultDriverAge[\s\S]*?\? "30"/);
+  assert.doesNotMatch(shared, /presentation === "carsResultsEdit" && driverAge === defaultDriverAge[\s\S]*?\? "30"/);
   assert.match(shared, /nativeCarsAppearance \?[\s\S]*?`\$\{age\} years old`/);
 });
