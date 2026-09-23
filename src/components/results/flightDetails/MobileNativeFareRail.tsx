@@ -63,6 +63,8 @@ export function MobileNativeFareRail({
           rates: currencyRates,
           isFallbackRate,
         });
+        const priceAvailable = fare.offer.currency.toUpperCase() === selectedCurrency.toUpperCase()
+          || (!isFallbackRate && price.currency.toUpperCase() === selectedCurrency.toUpperCase());
         const isKayak = fare.offer.provider === "KAYAK sandbox";
         const benefitRows = nativeFareBenefitRows(
           fare.distinguishingTerms,
@@ -91,7 +93,7 @@ export function MobileNativeFareRail({
               type="button"
               role="radio"
               aria-checked={selected}
-              aria-label={`${fare.label}, ${price.ariaLabel}`}
+              aria-label={`${fare.label}, ${priceAvailable ? price.ariaLabel : "price unavailable"}`}
               tabIndex={selected ? 0 : -1}
               onClick={() => onSelect(index)}
               onKeyDown={(event) => selectWithKeyboard(event, index)}
@@ -168,7 +170,7 @@ export function MobileNativeFareRail({
                 className="max-w-full truncate text-center text-[19px] font-extrabold leading-[23px] tabular-nums text-[#1A1A1A]"
                 aria-label={price.ariaLabel}
               >
-                {price.formatted}
+                {priceAvailable ? price.formatted : "Price unavailable"}
               </p>
             </div>
           </div>
