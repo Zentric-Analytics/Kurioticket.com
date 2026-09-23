@@ -12,7 +12,7 @@ import {
 const passedNgnFare: DisplayPrice = {
   amount: 92_720,
   currency: "NGN",
-  formatted: "NGN 92,720",
+  formatted: "₦92,720",
   accessibilityLabel: "92,720 Nigerian nairas",
   providerAmount: 67,
   providerCurrency: "USD",
@@ -33,7 +33,7 @@ test("keeps the Results NGN snapshot when Details location fails with en-US loca
     providerCurrency: "USD",
     preferredCurrency: null,
   }), true);
-  assert.equal(passedNgnFare.formatted, "NGN 92,720");
+  assert.equal(passedNgnFare.formatted, "₦92,720");
   assert.notEqual(passedNgnFare.formatted, "$67");
 });
 
