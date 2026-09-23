@@ -10,6 +10,7 @@ import flightDetailsHero from "../../../../apps/mobile/assets/heroes/flight-deta
 export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: string }) {
   const heroRef = useRef<HTMLDivElement>(null);
   const itineraryRef = useRef<HTMLDivElement>(null);
+  const backControlRef = useRef<HTMLDivElement>(null);
   const [headerProtected, setHeaderProtected] = useState(false);
 
   useEffect(() => {
@@ -25,7 +26,8 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
       const heroHeight = hero.getBoundingClientRect().height;
       const itineraryTop = itinerary.getBoundingClientRect().top + window.scrollY;
       const foregroundOffset = itineraryTop - (heroTop + heroHeight);
-      const threshold = Math.max(0, heroTop + heroHeight + foregroundOffset - 64);
+      const protectedHeight = (backControlRef.current?.getBoundingClientRect().bottom ?? 52) + 12;
+      const threshold = Math.max(0, heroTop + heroHeight + foregroundOffset - protectedHeight);
       setHeaderProtected(window.scrollY >= threshold);
     };
     sync();
@@ -38,10 +40,10 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
   }, []);
 
   return (
-    <main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-[#F7F9FC] sm:py-7 lg:pt-7">
-      <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 top-0 z-[70] h-[calc(env(safe-area-inset-top)+64px)] transition-colors sm:hidden ${headerProtected ? "bg-[#F5F7FB]" : "bg-transparent"}`} />
+    <main className="flex-1 bg-[#F3F6FA] pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-[#F7F9FC] sm:py-7 lg:pt-7">
+      <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 top-0 z-[70] h-[calc(env(safe-area-inset-top)+64px)] transition-colors sm:hidden ${headerProtected ? "bg-[#F3F6FA]" : "bg-transparent"}`} />
       {resultsHref ? (
-        <div className="fixed left-4 top-[calc(env(safe-area-inset-top)+8px)] z-[80] sm:hidden">
+        <div ref={backControlRef} className="fixed left-4 top-[calc(env(safe-area-inset-top)+8px)] z-[80] sm:hidden">
           <Link href={resultsHref} aria-label="Back to results" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/55 bg-white/90 text-slate-900 shadow-[0_2px_6px_rgba(15,23,42,0.12)] backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">
             <ArrowLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
           </Link>
@@ -54,10 +56,10 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
       <div className="mx-auto w-full max-w-[1500px] px-0 sm:px-6 lg:px-8">
         <div role="status" aria-label="Loading flight details" className="grid gap-5 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
           <span className="sr-only">Loading flight details</span>
-          <div className="overflow-hidden border-b border-slate-200 bg-[#F5F7FB] sm:rounded-[15px] sm:border sm:bg-white">
-            <div ref={heroRef} className="relative flex min-h-[318px] flex-col justify-end overflow-hidden px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:block sm:px-6 sm:pb-16 sm:pt-5 lg:min-h-[300px]">
-              <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
-              <div className="absolute inset-0 bg-slate-950/50" aria-hidden="true" />
+          <div className="overflow-hidden border-b border-slate-200 bg-[#F3F6FA] sm:rounded-[15px] sm:border sm:bg-white">
+            <div ref={heroRef} className="relative flex min-h-[318px] flex-col justify-end overflow-hidden bg-[#E2E8F0] px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:block sm:bg-transparent sm:px-6 sm:pb-16 sm:pt-5 lg:min-h-[300px]">
+              <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="hidden object-cover sm:block" />
+              <div className="absolute inset-0 hidden bg-slate-950/50 sm:block" aria-hidden="true" />
               <div className="relative z-10 hidden items-start justify-between gap-3 sm:flex">
                 {resultsHref ? (
                   <Link
@@ -80,11 +82,15 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
                   </span>
                 </div>
               </div>
-              <div className="relative z-10 mb-1 h-8 w-[62%] animate-pulse rounded bg-white/35 sm:absolute sm:inset-x-6 sm:top-auto sm:bottom-16 sm:mb-0 sm:w-2/5" />
+              <div className="relative z-10 flex w-full flex-col gap-[3px] sm:absolute sm:inset-x-6 sm:bottom-16 sm:w-2/5">
+                <div className="h-8 w-[62%] animate-pulse rounded-lg bg-slate-300 sm:w-full sm:bg-white/35" />
+                <div className="h-4 w-[58%] animate-pulse rounded bg-slate-300 sm:hidden" />
+              </div>
+              <svg data-flight-details-loading-hero-curve aria-hidden="true" viewBox="0 0 100 64" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[65px] w-full sm:hidden"><path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z" fill="#F3F6FA" /></svg>
             </div>
             <div className="relative z-10 px-[18px] pb-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0">
             <div ref={itineraryRef} data-mobile-native-itinerary-loading className="-mx-[10px] -mt-[104px] sm:mx-0 sm:mt-0">
-              <div className="relative h-56 overflow-hidden rounded-[15px] border border-[#D8E1EC] bg-white shadow-[0_6px_18px_rgba(7,19,59,0.14)] sm:rounded-[10px] sm:border-slate-200 sm:bg-slate-100 sm:shadow-lg">
+              <div className="relative h-[226px] overflow-hidden rounded-[15px] border border-[#E1E7EF] bg-white shadow-[0_6px_18px_rgba(7,19,59,0.14)] sm:rounded-[10px] sm:border-slate-200 sm:bg-slate-100 sm:shadow-lg">
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-[52%] rounded-t-[15px] bg-[linear-gradient(135deg,rgba(255,255,255,0.78)_0%,rgba(255,255,255,0.18)_46%,rgba(255,255,255,0)_100%)] sm:hidden" aria-hidden="true" />
                 <div className="relative z-[1] p-[15px] sm:hidden">
                   <div className="flex items-start justify-between"><div className="h-[10px] w-16 animate-pulse rounded bg-slate-200" /><div className="h-[10px] w-24 animate-pulse rounded bg-slate-200" /></div>
