@@ -58,14 +58,15 @@ test("mobile terminal states are distinct and expose working actions", () => {
   assert.match(state, /aria-live="polite"/);
 });
 
-test("mobile list is continuous while desktop retains pagination", () => {
-  assert.match(results, /data-mobile-continuous-flight-list/);
-  assert.match(results, /sortedResults\.map\(\(flight, index\)/);
-  assert.match(results, /className=\{cn\("hidden sm:block"[\s\S]*<FlightResultsPagination/);
+test("mobile list paginates twenty results with the shared pagination state", () => {
+  assert.match(results, /data-mobile-paginated-flight-results/);
+  assert.match(results, /visibleResults\.map\(\(flight, index\)/);
+  assert.match(results, /<FlightResultsPagination[\s\S]*currentPage=\{validResultsPage\}[\s\S]*totalPages=\{totalResultPages\}/);
+  assert.match(results, /FLIGHT_RESULTS_PAGE_SIZE/);
   assert.match(results, /data-flight-results-transition-cover[\s\S]*hidden[\s\S]*sm:block/);
   assert.match(results, /aria-label="Back to top"/);
   assert.match(results, /<Footer variant="brand-legal-only" \/>/);
-  assert.doesNotMatch(results, /<div className="hidden sm:block"><Footer variant="brand-legal-only" \/><\/div>/);
+  assert.doesNotMatch(results, /data-mobile-continuous-flight-list|sortedResults\.map\(\(flight, index\)/);
 });
 
 test("Batch 1 and Batch 2 surfaces remain before the card list", () => {
@@ -73,6 +74,6 @@ test("Batch 1 and Batch 2 surfaces remain before the card list", () => {
   const shortcuts = results.indexOf("data-flight-mobile-results-shortcuts");
   const alert = results.indexOf("<FlightPriceAlertControl");
   const count = results.indexOf("formatMobileFlightResultsFound");
-  const list = results.indexOf("data-mobile-continuous-flight-list");
+  const list = results.indexOf("data-mobile-paginated-flight-results");
   assert.ok(nearby >= 0 && nearby < shortcuts && shortcuts < alert && alert < count && count < list);
 });
