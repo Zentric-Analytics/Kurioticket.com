@@ -50,14 +50,15 @@ test("cars mobile results summary stays mounted beneath Edit Search", () => {
   assert.match(summary, /renderMobileControlsRow\(\)/);
 });
 
-test("standalone mobile flight cards are continuous while desktop pagination follows its list", () => {
-  const mobileStart = flights.indexOf("data-mobile-continuous-flight-list");
-  const mobileEnd = flights.indexOf("ref={paginationListRef}", mobileStart);
-  const desktopStart = flights.indexOf('<div data-flight-results-card-list className="space-y-3 sm:space-y-4">');
-  const pagination = flights.indexOf("<FlightResultsPagination", desktopStart);
+test("standalone mobile and desktop flight lists share pagination without sharing layout shells", () => {
+  const mobileStart = flights.indexOf("data-mobile-paginated-flight-results");
+  const desktopStart = flights.indexOf('ref={paginationListRef}');
+  const mobileRegion = flights.slice(mobileStart, desktopStart);
+  const desktopList = flights.indexOf('<div data-flight-results-card-list className="space-y-3 sm:space-y-4">', desktopStart);
+  const desktopPagination = flights.indexOf("<FlightResultsPagination", desktopList);
 
-  assert.ok(mobileStart >= 0 && desktopStart > mobileStart && pagination > desktopStart);
-  assert.match(flights.slice(mobileStart, mobileEnd), /sortedResults\.map/);
-  assert.doesNotMatch(flights.slice(mobileStart, mobileEnd), /<FlightResultsPagination/);
-  assert.match(flights.slice(desktopStart, pagination), /visibleResults\.map/);
+  assert.ok(mobileStart >= 0 && desktopStart > mobileStart && desktopList > desktopStart && desktopPagination > desktopList);
+  assert.match(mobileRegion, /visibleResults\.map/);
+  assert.match(mobileRegion, /<FlightResultsPagination/);
+  assert.match(flights.slice(desktopList, desktopPagination), /visibleResults\.map/);
 });

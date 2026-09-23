@@ -168,6 +168,8 @@ import {
 } from "@/lib/flights/dateFormatting";
 
 const resultStackClass = "w-full min-w-0";
+export const FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
+
 const desktopCompactFilterTopOffset = 116;
 type MobileShortcutSheet = "sort" | "airlines" | "stops" | "airports";
 type DesktopCompactFilterFrame = {
@@ -1024,6 +1026,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const userInitiatedRetryRef = useRef(false);
   const loadingFocusRef = useRef<HTMLDivElement | null>(null);
   const resultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const mobileResultsPageTopRef = useRef<HTMLDivElement | null>(null);
   const paginationListRef = useRef<HTMLDivElement | null>(null);
   const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
   const [paginationCommitting, setPaginationCommitting] = useState(false);
@@ -1433,16 +1436,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   useEffect(() => {
     if (guidedMode || typeof window === "undefined") return undefined;
-    const update = () => {
-      setShowBackToTop(window.scrollY > 600);
-    };
+    const update = () =>
+      setShowBackToTop(window.scrollY >= FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD);
     update();
     window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
+    return () => window.removeEventListener("scroll", update);
   }, [guidedMode]);
 
   useEffect(() => {
@@ -4482,9 +4480,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
     setPaginationPendingPage(page);
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    const target = flightResultsTopRef.current;
+    const mobileViewport = window.matchMedia("(max-width: 639px)").matches;
+    const target = mobileViewport
+      ? mobileResultsPageTopRef.current
+      : flightResultsTopRef.current;
+    const topOffset = mobileViewport ? 76 : desktopCompactFilterTopOffset + 16;
     const top = target
-      ? target.getBoundingClientRect().top + window.scrollY - (desktopCompactFilterTopOffset + 16)
+      ? target.getBoundingClientRect().top + window.scrollY - topOffset
       : 0;
     await scrollToResultsAndWait({ top });
     setPaginationCommitting(true);
@@ -7131,9 +7133,23 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
               <div data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden">
                 {mobileFlightPriceAlertQuery ? <FlightPriceAlertControl query={mobileFlightPriceAlertQuery} results={providerResults} /> : null}
-                <p className="flight-results-count text-[13px] font-bold leading-[17px] tracking-[-0.005em] text-slate-900">
-                  {formatMobileFlightResultsFound(sortedResults.length, t, locale)}
-                </p>
+                <div
+                  ref={mobileResultsPageTopRef}
+                  data-mobile-flight-results-summary-row
+                  className="flex w-full items-center justify-between gap-3"
+                >
+                  <p className="flight-results-count min-w-0 text-[13px] font-bold leading-[17px] tracking-[-0.005em] text-slate-900">
+                    {formatMobileFlightResultsFound(sortedResults.length, t, locale)}
+                  </p>
+                  {resultsDisplayRange ? (
+                    <p
+                      aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${sortedResults.length}`}
+                      className="shrink-0 text-[12px] font-medium leading-4 text-[#536B92]"
+                    >
+                      {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
+                    </p>
+                  ) : null}
+                </div>
               </div>
 
               <div className="hidden w-full items-center justify-between gap-4 pt-2 sm:flex lg:bg-transparent lg:px-0 lg:pb-0.5">
@@ -7237,14 +7253,29 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 ) : sortedResults.length === 0 ? (
                   <MobileFlightResultsState kind="filtered" onPrimary={clearFlightFilters} onSecondary={() => openMobileFiltersDrawer()} />
                 ) : (
-                  <div data-flight-results-card-list data-mobile-continuous-flight-list className="space-y-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-                    {sortedResults.map((flight, index) => {
-                      const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
-                      if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
-                      const detailsQuery = params.toString();
-                      const internalDetailsHref = `/flights/details/${encodeURIComponent(flight.id)}` + (detailsQuery ? `?${detailsQuery}` : "");
-                      return <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={resultActionHref(flight, internalDetailsHref)} providerLabel={isKayakSandboxResult(flight) ? "KAYAK sandbox · Simulated · Not bookable" : undefined} />;
-                    })}
+                  <div
+                    data-mobile-paginated-flight-results
+                    aria-busy={paginationPendingPage !== null}
+                    className={cn(
+                      "pb-[calc(1rem+env(safe-area-inset-bottom))]",
+                      paginationRevealing && "animate-[fadeIn_150ms_ease-out]",
+                    )}
+                  >
+                    <div data-flight-results-card-list className="space-y-3">
+                      {visibleResults.map((flight, index) => {
+                        const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
+                        if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
+                        const detailsQuery = params.toString();
+                        const internalDetailsHref = `/flights/details/${encodeURIComponent(flight.id)}` + (detailsQuery ? `?${detailsQuery}` : "");
+                        return <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={resultActionHref(flight, internalDetailsHref)} providerLabel={isKayakSandboxResult(flight) ? "KAYAK sandbox · Simulated · Not bookable" : undefined} />;
+                      })}
+                    </div>
+                    <FlightResultsPagination
+                      currentPage={validResultsPage}
+                      totalPages={totalResultPages}
+                      onPageChange={changeResultsPage}
+                      disabled={paginationPendingPage !== null}
+                    />
                   </div>
                 )}
               </div>
@@ -7315,25 +7346,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
       {renderMobileFullFiltersSheet()}
     </main>
-    <button
-      type="button"
-      aria-label="Back to top"
-      onClick={() =>
-        window.scrollTo({
-          top: 0,
-          behavior: prefersReducedResultsMotion() ? "auto" : "smooth",
-        })
-      }
-      className={cn(
-        "fixed right-4 z-[800] flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#004BB8] shadow-md transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:hidden",
-        "bottom-[calc(5rem+env(safe-area-inset-bottom))]",
-        showBackToTop
-          ? "translate-y-0 opacity-100"
-          : "pointer-events-none translate-y-2 opacity-0",
-      )}
-    >
-      <ArrowUp className="h-[18px] w-[18px]" aria-hidden="true" />
-    </button>
+    {!guidedMode && showBackToTop && !filtersOpen ? (
+      <button
+        type="button"
+        aria-label="Back to top"
+        onClick={() => {
+          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        }}
+        className="fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] end-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#004BB8] shadow-lg transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
+      >
+        <ArrowUp className="h-5 w-5" aria-hidden="true" />
+      </button>
+    ) : null}
     <Footer variant="brand-legal-only" />
     </>
   );
