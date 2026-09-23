@@ -176,11 +176,12 @@ test("Hotel sticky lifecycle and neighboring search/filter contracts remain inta
   assert.match(source, /desktopCompactFilterTopOffset = 116/);
 });
 
-test("mobile hotel search keeps one flat sticky search summary", () => {
+test("mobile hotel search matches the Cars floating search summary", () => {
   assert.doesNotMatch(source, /mobileResultsSearch=/);
-  assert.match(source, /data-hotel-mobile-sticky-search/);
-  assert.match(source, /h-14[\s\S]*max-w-\[30rem\]/);
+  assert.match(source, /data-hotel-mobile-search-summary/);
+  assert.match(source, /relative translate-y-1\/2/);
+  assert.match(source, /h-\[4\.25rem\][\s\S]*max-w-\[30rem\]/);
   assert.match(source, /<SquarePen size=\{16\} strokeWidth=\{2\.2\}/);
   assert.match(source, /aria-haspopup="dialog"[\s\S]*aria-expanded=\{mobileHotelSearchOpen\}/);
-  assert.doesNotMatch(source, /showMobileCompactHotelSearch/);
+  assert.doesNotMatch(source, /sticky top-0 z-40 bg-white/);
 });
