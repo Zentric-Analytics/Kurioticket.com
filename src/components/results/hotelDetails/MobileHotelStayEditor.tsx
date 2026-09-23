@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronRight, Minus, Plus, X } from "lucide-react";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { acquireMobileResultsScrollLock } from "@/lib/search/mobileResultsScrollLock";
+import { isIosHotelMobileWeb } from "@/lib/hotels/iosHotelMobileWeb";
 import styles from "./MobileHotelStayEditor.module.css";
 
 type Stay = { checkIn: string; checkOut: string; guests: number; rooms: number };
@@ -27,7 +28,10 @@ export function MobileHotelStayEditor({ onClose, onCommit, ...initial }: Props) 
     dialog?.showModal();
     return () => { dialog?.close(); release(); opener?.focus({ preventScroll: true }); };
   }, []);
-  useEffect(() => { closeRef.current?.focus({ preventScroll: true }); }, [view]);
+  useEffect(() => {
+    if (isIosHotelMobileWeb()) dialogRef.current?.focus({ preventScroll: true });
+    else closeRef.current?.focus({ preventScroll: true });
+  }, [view]);
   const back = () => { if (!updating) { if (view === "menu") onClose(); else setView("menu"); } };
   const commit = (next: Stay) => {
     setView("menu");
@@ -38,7 +42,7 @@ export function MobileHotelStayEditor({ onClose, onCommit, ...initial }: Props) 
   };
   const formatDate = (date: string) => date ? new Date(`${date}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "Select date";
   const title = view === "menu" ? "Edit stay" : view === "dates" ? "Travel dates" : "Rooms and guests";
-  return <dialog ref={dialogRef} className={`${styles.dialog} ${view === "dates" ? styles.calendarDialog : ""}`} aria-labelledby="hotel-stay-editor-title" onCancel={event => { event.preventDefault(); back(); }} onClick={event => { if (event.target === event.currentTarget) back(); }}>
+  return <dialog ref={dialogRef} tabIndex={-1} className={`${styles.dialog} ${view === "dates" ? styles.calendarDialog : ""}`} aria-labelledby="hotel-stay-editor-title" onCancel={event => { event.preventDefault(); back(); }} onClick={event => { if (event.target === event.currentTarget) back(); }}>
     <div className={styles.surface} aria-busy={updating}>
       {view !== "dates" ? <header><h2 id="hotel-stay-editor-title">{title}</h2>{view === "menu" ? <button ref={closeRef} disabled={updating} type="button" aria-label="Close stay editor" onClick={back}><X size={20} /></button> : null}</header> : null}
       {updating ? <p role="status" className={styles.updating}>Updating stay…</p> : null}
