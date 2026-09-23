@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Heart, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -14,7 +14,28 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
             <div className="relative min-h-[310px] overflow-hidden px-4 pb-16 pt-[calc(1rem+env(safe-area-inset-top))] sm:min-h-[280px] sm:px-6 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
               <div className="absolute inset-0 bg-slate-950/50" aria-hidden="true" />
-              {resultsHref ? <Link href={resultsHref} className="relative z-10 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/55 bg-white/90 px-4 text-[13px] font-bold text-slate-900"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to results</Link> : null}
+              <div className="relative z-10 flex items-start justify-between gap-3">
+                {resultsHref ? (
+                  <Link
+                    href={resultsHref}
+                    aria-label="Back to results"
+                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/55 bg-white/90 p-0 text-slate-900 shadow-sm"
+                  >
+                    <ArrowLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+                  </Link>
+                ) : <span className="h-11 w-11" aria-hidden="true" />}
+                <div
+                  aria-hidden="true"
+                  className="inline-flex h-11 shrink-0 items-center rounded-full border border-white/55 bg-white/90 p-1 shadow-sm"
+                >
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500">
+                    <Heart className="h-[18px] w-[18px]" strokeWidth={2} />
+                  </span>
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500">
+                    <Share2 className="h-[18px] w-[18px]" strokeWidth={2} />
+                  </span>
+                </div>
+              </div>
               <div className="absolute inset-x-4 bottom-16 z-10 h-8 w-2/5 animate-pulse rounded bg-white/35 sm:inset-x-6" />
             </div>
             <div className="relative z-10 -mt-8 p-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0">
