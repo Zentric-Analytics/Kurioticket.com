@@ -4,6 +4,7 @@ import { providerLocation, type DiscoveryAdapter } from "./discovery";
 import type { CanonicalLocation, TravelProduct } from "./types";
 import { searchDuffelPlaces } from "@/services/travel/providers/duffelProvider";
 import { isKayakSandboxEnabled, KayakSandboxClient, type KayakVertical } from "@/services/travel/kayakSandbox";
+import { getKayakClientIp } from "@/lib/kayak-client-ip";
 
 const emptyCoverage = { flights: "none", hotels: "none", cars: "none", packages: "none" } as const;
 const canonicalFromProvider = (provider: string, value: string, label: string, kind?: string): CanonicalLocation => {
@@ -27,7 +28,8 @@ export function duffelDiscoveryAdapter(): DiscoveryAdapter {
 
 export function kayakDiscoveryAdapter(request: Request): DiscoveryAdapter | null {
   if (!isKayakSandboxEnabled()) return null;
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "127.0.0.1";
+  const ip = getKayakClientIp(request);
+  if (!ip) return null;
   const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined, request.headers.get("user-agent") || "kurioticket-server", ip);
   return { provider: "kayak", products: ["flights", "hotels", "cars"], async discover(query, { product, signal }) {
     const vertical = product as KayakVertical;

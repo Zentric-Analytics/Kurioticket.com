@@ -1,4 +1,4 @@
-import type { CarOffer, CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
+import type { CarOffer, LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 
 export type SelectedCarFilters = Record<string, string[]>;
 export type CarSort = "recommended" | "lowestTotal" | "topRated";
@@ -157,9 +157,33 @@ export function calculateRentalDays(pickupDate: string, dropoffDate: string) {
   return Math.max(Math.ceil((dropoff - pickup) / 86_400_000), 1);
 }
 
-export function buildCarDetailsHref(id: string, search: CarSearchParams) {
+export function carSearchUrlParams(search: LocationBoundCarSearchParams) {
   const params = new URLSearchParams();
-  Object.entries(search).forEach(([key, value]) => value && params.set(key, value));
-  const query = params.toString();
+  const scalarEntries = [
+    ["pickupLocation", search.pickupLocation],
+    ["dropoffLocation", search.dropoffLocation],
+    ["pickupDate", search.pickupDate],
+    ["pickupTime", search.pickupTime],
+    ["dropoffDate", search.dropoffDate],
+    ["dropoffTime", search.dropoffTime],
+    ["driverAge", search.driverAge],
+  ] as const;
+  for (const [key, value] of scalarEntries) {
+    if (value) params.set(key, value);
+  }
+  if (search.pickupLocationTarget) {
+    params.set("pickupLocationTarget", JSON.stringify(search.pickupLocationTarget));
+  }
+  if (search.dropoffLocationTarget) {
+    params.set("dropoffLocationTarget", JSON.stringify(search.dropoffLocationTarget));
+  }
+  return params;
+}
+
+export function buildCarDetailsHref(
+  id: string,
+  search: LocationBoundCarSearchParams,
+) {
+  const query = carSearchUrlParams(search).toString();
   return `/cars/details/${encodeURIComponent(id)}${query ? `?${query}` : ""}`;
 }

@@ -4,7 +4,8 @@ import { cookies, headers } from "next/headers";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { CarsResultsClient } from "@/components/results/CarsResultsClient";
-import type { CarSearchParams } from "@/lib/cars/types";
+import type { LocationBoundCarSearchParams } from "@/lib/cars/types";
+import { parseCarLocationTarget } from "@/lib/cars/carSearchLocationTarget";
 import { hasExplicitDifferentReturnLocation } from "@/lib/cars/carsSearchUtils";
 import { CARS_RESULTS_RELOAD_SCROLL_SCRIPT } from "@/lib/cars/carsResultsReloadScroll";
 import { getTranslations } from "@/lib/i18n";
@@ -74,7 +75,18 @@ export default async function CarsResultsPage({
     dropoffLocation,
     marker: getParamValue(params, "returnToDifferentLocation"),
   });
-  const values: CarSearchParams & { returnToDifferentLocation: boolean } = {
+  const pickupLocationTarget = parseCarLocationTarget(
+    getParamValue(params, "pickupLocationTarget"),
+  );
+  const explicitDropoffLocationTarget = parseCarLocationTarget(
+    getParamValue(params, "dropoffLocationTarget"),
+  );
+  const dropoffLocationTarget = returnToDifferentLocation
+    ? explicitDropoffLocationTarget
+    : pickupLocationTarget;
+  const values: LocationBoundCarSearchParams & {
+    returnToDifferentLocation: boolean;
+  } = {
     pickupLocation,
     dropoffLocation: dropoffLocation || pickupLocation,
     returnToDifferentLocation,
@@ -83,6 +95,8 @@ export default async function CarsResultsPage({
     dropoffDate: getParamValue(params, "dropoffDate"),
     dropoffTime: getParamValue(params, "dropoffTime") || "10:00",
     driverAge: normalizeDriverAge(getParamValue(params, "driverAge")),
+    ...(pickupLocationTarget ? { pickupLocationTarget } : {}),
+    ...(dropoffLocationTarget ? { dropoffLocationTarget } : {}),
   };
   const searchIdentity = JSON.stringify(values);
   const t = getTranslations((await cookies()).get(LOCALE_COOKIE_KEY)?.value);
@@ -134,7 +148,9 @@ async function CarsResultsContent({
   values,
   searchIdentity,
 }: {
-  values: CarSearchParams & { returnToDifferentLocation: boolean };
+  values: LocationBoundCarSearchParams & {
+    returnToDifferentLocation: boolean;
+  };
   searchIdentity: string;
 }) {
   const requestHeaders = await headers();
