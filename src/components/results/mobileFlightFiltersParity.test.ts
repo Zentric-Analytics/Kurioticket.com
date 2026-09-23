@@ -23,11 +23,25 @@ test("journey-aware Flight times provide leg tabs and scoped Takeoff and Landing
   assert.match(client, /matchesMobileJourneyTimes/);
 });
 
-test("native filter controls and footer semantics are retained", () => {
+test("Flight full Filters keeps Flight-specific controls inside the Cars visual system", () => {
   for (const copy of ["Maximum price", "Up to ", "Maximum travel time", "Nonstop", "1 stop", "2+ stops", "Search airlines", "Show more", "Show less", "FROM", "TO", "Baggage included", "Flexible / refundable"]) assert.match(sheet, new RegExp(copy.replace(/[+]/g, "\\+")));
-  assert.match(sheet, /activeFilterCount > 0 \? <button[^>]*>Reset<\/button>/);
-  assert.match(sheet, /disabled=\{matchingCount === 0\}/);
-  assert.match(sheet, /matchingCount === 0 \? "No flights" : `View/);
+  assert.match(sheet, /grid gap-6 bg-transparent/);
+  assert.match(sheet, /text-\[15px\] font-extrabold text-slate-950/);
+  assert.match(sheet, /min-h-\[46px\]/);
+  assert.match(sheet, /border-\[#D8DEE8\] bg-transparent/);
+  assert.match(sheet, /text-xs leading-4 tabular-nums text-slate-500/);
+
+  const full = client.slice(
+    client.indexOf("function renderMobileFullFiltersSheet()"),
+    client.indexOf("function renderDesktopSortControl()"),
+  );
+  assert.match(full, /min-h-\[76px\][^"]*bg-\[#F2F4F8\]/);
+  assert.match(full, /px-6 pb-8 pt-4/);
+  assert.match(full, /gap-3\.5 border-t border-\[#D8DEE8\]/);
+  assert.match(full, /h-\[49px\] min-w-\[116px\]/);
+  assert.match(full, /min-h-\[50px\][^"]*bg-\[#004BB8\][^"]*text-base font-bold leading-\[22px\]/);
+  assert.match(full, /disabled=\{sortedResults\.length === 0\}/);
+  assert.match(full, /`View \$\{sortedResults\.length\}/);
 });
 
 test("mobile endpoint airports exclude layovers while desktop options remain unchanged", () => {

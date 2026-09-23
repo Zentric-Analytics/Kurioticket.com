@@ -258,31 +258,54 @@ textarea {
   to { opacity: 1; }
 }
 
-@keyframes cars-native-quick-scrim-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
 @keyframes cars-native-quick-sheet-in {
   from { transform: translate3d(0, 28px, 0); }
   to { transform: translate3d(0, 0, 0); }
 }
 
-@keyframes cars-native-quick-sheet-out {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(0, 28px, 0); }
-}
-
 .cars-native-quick-scrim { animation: cars-native-quick-scrim-in 160ms ease-out both; }
 .cars-native-quick-sheet { animation: cars-native-quick-sheet-in 220ms ease-out both; }
-.cars-native-quick-scrim--closing { animation: cars-native-quick-scrim-out 160ms ease-in both; }
-.cars-native-quick-sheet--closing { animation: cars-native-quick-sheet-out 220ms ease-in both; }
 
 @media (prefers-reduced-motion: reduce) {
   .cars-native-quick-scrim,
-  .cars-native-quick-sheet,
-  .cars-native-quick-scrim--closing,
-  .cars-native-quick-sheet--closing { animation: none; }
+  .cars-native-quick-sheet { animation: none; }
+}
+
+@keyframes cars-price-alert-snackbar-rise {
+  from { transform: translate3d(0, 10px, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes cars-price-alert-snackbar-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cars-price-alert-snackbar-settle {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, 8px, 0); }
+}
+
+@keyframes cars-price-alert-snackbar-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.cars-price-alert-snackbar-entering {
+  animation:
+    cars-price-alert-snackbar-rise 200ms cubic-bezier(0.33, 1, 0.68, 1) both,
+    cars-price-alert-snackbar-fade-in 160ms ease-out both;
+}
+
+.cars-price-alert-snackbar-leaving {
+  animation:
+    cars-price-alert-snackbar-settle 180ms ease-in both,
+    cars-price-alert-snackbar-fade-out 160ms ease-in both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cars-price-alert-snackbar-entering,
+  .cars-price-alert-snackbar-leaving { animation: none; }
 }
 
 .mobile-results-sheet-backdrop { animation: mobile-results-sheet-backdrop-in 180ms ease-out both; }
