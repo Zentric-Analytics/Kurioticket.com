@@ -13,7 +13,7 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
           <span className="sr-only">Loading flight details</span>
           <div className="overflow-hidden border-y border-slate-200 bg-[#F5F7FB] sm:rounded-[15px] sm:border sm:bg-white">
             {resultsHref ? <MobileFlightDetailsBrandHeader resultsHref={resultsHref} actionsDisabled/> : null}
-            <div className="relative min-h-[318px] overflow-hidden px-4 pb-[122px] pt-4 sm:min-h-[280px] sm:px-6 sm:pb-16 sm:pt-5 lg:min-h-[300px]">
+            <div className="relative min-h-[290px] overflow-hidden px-4 pb-[122px] pt-10 sm:min-h-[280px] sm:px-6 sm:pb-16 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
               <div className="absolute inset-0 bg-slate-950/50" aria-hidden="true" />
               <div className="relative z-10 hidden items-start justify-between gap-3 sm:flex">
@@ -38,7 +38,7 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
                   </span>
                 </div>
               </div>
-              <div className="absolute inset-x-4 bottom-16 z-10 h-8 w-2/5 animate-pulse rounded bg-white/35 sm:inset-x-6" />
+              <div className="absolute inset-x-4 top-10 z-10 h-8 w-2/5 animate-pulse rounded bg-white/35 sm:inset-x-6 sm:top-auto sm:bottom-16" />
             </div>
             <div className="relative z-10 -mt-8 p-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0">
             <div data-mobile-native-itinerary-loading className="-mx-2 -mt-[72px] sm:mx-0 sm:mt-0">
