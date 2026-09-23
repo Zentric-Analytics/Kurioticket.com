@@ -58,7 +58,10 @@ test("mobile Hotel filter controls retain Native row, checkbox, input, and secti
   assert.match(source, /max-sm:text-\[16px\] max-sm:font-bold max-sm:leading-\[22px\]/);
   assert.match(source, /min-h-\[46px\][^"]*text-\[14px\][^"]*font-normal[^"]*leading-5/);
   assert.match(source, /h-5 w-5 rounded-\[4px\]/);
+  assert.match(source, /border-\[#D8DEE8\] bg-transparent/);
   assert.match(source, /border-\[#0754F7\] bg-\[#0754F7\] text-white/);
+  assert.match(source, /strokeWidth=\{layout === "mobile" \? 2\.2 : 3\}/);
+  assert.match(source, /checked && layout !== "mobile" \? "font-semibold text-navy" : undefined/);
   assert.match(source, /h-11 w-full appearance-none rounded-\[10px\] border border-\[#D8DEE8\]/);
   assert.match(source, /space-y-6 bg-transparent/);
   assert.match(source, /gap-\[5px\]/);
