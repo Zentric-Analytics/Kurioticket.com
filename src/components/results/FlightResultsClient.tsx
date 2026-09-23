@@ -6712,30 +6712,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           aria-hidden="true"
         />
       </section>
-      {paginationPendingPage !== null ? (
-        <div
-          data-flight-results-transition-cover
-          className="fixed inset-0 z-[9990] hidden overflow-hidden bg-[#F3F6FA] sm:block"
-          aria-busy="true"
-        >
-          <p className="sr-only" role="status" aria-live="polite">
-            {t("updatingResults")}
-          </p>
-          <div className="h-[72px] border-b border-slate-200 bg-white sm:h-[86px]" />
-          <div className="page-shell py-5 sm:py-8">
-            <div className="h-16 animate-pulse rounded-2xl border border-slate-200 bg-white sm:h-20 motion-reduce:animate-none" />
-            <div className="mt-6 grid gap-6 lg:grid-cols-[288px_minmax(0,1fr)]">
-              <div className="hidden h-[34rem] animate-pulse rounded-2xl border border-slate-200 bg-white lg:block motion-reduce:animate-none" />
-              <div className="space-y-4">
-                <div className="h-7 w-44 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />
-                {Array.from({ length: 3 }, (_, index) => (
-                  <div key={index} className="h-52 animate-pulse rounded-2xl border border-slate-200 bg-white motion-reduce:animate-none" />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {paginationPendingPage !== null && typeof document !== "undefined"
+        ? createPortal(
+            <FlightResultsPageTransitionSkeleton
+              statusText={t("updatingResults")}
+            />,
+            document.body,
+          )
+        : null}
       {renderMobileEditSearchDrawer()}
 
       {renderDesktopMinimizedSearchBar()}
@@ -7360,6 +7344,64 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     ) : null}
     <Footer variant="brand-legal-only" />
     </>
+  );
+}
+
+function FlightResultsPageTransitionSkeleton({
+  statusText,
+}: {
+  statusText: string;
+}) {
+  return (
+    <div
+      data-flight-results-transition-cover
+      className="fixed inset-0 z-[9990] overflow-hidden bg-[#F5F7FB] sm:bg-[#F3F6FA]"
+      aria-busy="true"
+    >
+      <p className="sr-only" role="status" aria-live="polite">
+        {statusText}
+      </p>
+
+      <div className="h-20 border-b border-slate-100 bg-white px-4 sm:h-[86px]">
+        <div className="mx-auto flex h-full max-w-[1400px] items-center justify-between">
+          <div className="h-5 w-28 animate-pulse rounded bg-slate-200 motion-reduce:animate-none sm:h-7 sm:w-40" />
+          <div className="h-8 w-8 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none sm:h-10 sm:w-10" />
+        </div>
+      </div>
+
+      <div className="border-b border-slate-100 bg-white px-4 py-4 sm:hidden">
+        <div className="mx-auto h-[4.25rem] w-full max-w-[30rem] animate-pulse rounded-xl border border-slate-200 bg-white shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] motion-reduce:animate-none" />
+      </div>
+
+      <div className="mx-auto max-w-[1400px] px-[14px] py-4 sm:px-4 sm:py-8">
+        <div className="mb-3 flex gap-1.5 overflow-hidden sm:hidden">
+          {[84, 92, 76, 88].map((width) => (
+            <div
+              key={width}
+              className="h-9 shrink-0 animate-pulse rounded-lg border border-slate-200 bg-white motion-reduce:animate-none"
+              style={{ width }}
+            />
+          ))}
+        </div>
+
+        <div className="mb-3 flex items-center justify-between sm:hidden">
+          <div className="h-4 w-28 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />
+          <div className="h-3 w-10 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />
+        </div>
+
+        <div className="hidden h-20 animate-pulse rounded-2xl border border-slate-200 bg-white motion-reduce:animate-none sm:block" />
+
+        <div className="mt-3 grid gap-6 sm:mt-6 lg:grid-cols-[288px_minmax(0,1fr)]">
+          <div className="hidden h-[34rem] animate-pulse rounded-2xl border border-slate-200 bg-white lg:block motion-reduce:animate-none" />
+          <div className="space-y-3 sm:space-y-4">
+            <div className="hidden h-7 w-44 animate-pulse rounded bg-slate-200 motion-reduce:animate-none sm:block" />
+            {Array.from({ length: 3 }, (_, index) => (
+              <FlightCardSkeleton key={index} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
