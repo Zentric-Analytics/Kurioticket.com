@@ -46,8 +46,8 @@ test("Hotel mobile compact results header matches the Cars three-column toolbar"
 });
 
 test("Hotel mobile filter and quick-filter surfaces match Cars background treatment", () => {
-  assert.match(resultsSource, /data-mobile-hotel-shortcuts className="w-full min-w-0 bg-transparent"/);
-  assert.match(resultsSource, /count > 0 && "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"/);
+  assert.match(resultsSource, /data-mobile-hotel-shortcuts[\s\S]*scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\]/);
+  assert.match(resultsSource, /count > 0[\s\S]*border-\[#075EE8\] bg-\[#EAF2FF\] text-\[#004BB8\]/);
   assert.match(resultsSource, /mobileShortcutMenuContentRef[sS]*rounded-t-[20px] bg-[#F2F4F8]/);
   assert.match(resultsSource, /mobileShortcutMenuContentRef[sS]*header className="[^"]*bg-[#F2F4F8]/);
   assert.match(resultsSource, /max-h-[calc(min(76dvh,620px)-9rem)][^"]*bg-[#F2F4F8]/);
