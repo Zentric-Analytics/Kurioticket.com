@@ -1472,8 +1472,8 @@ export function CarsResultsClient({
         weekdays={getWeekdays(intlLocale)}
         labels={{
           selectDates: t("carsResults.selectDates"),
-          start: t("mobileDatePicker.start"),
-          end: t("mobileDatePicker.end"),
+          start: "Pick-up date",
+          end: "Return date",
           done: t("done"),
           selectDatePrefix: t("carsSearch.selectDateAriaPrefix"),
         }}

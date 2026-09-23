@@ -9,6 +9,7 @@ import {
   searchCarLocationSuggestions,
   type CarLocationSuggestion,
 } from "@/lib/cars/carLocationSuggestions";
+import { hasMinimumCarLocationSearchLetters } from "@/lib/cars/locationSearchQuery";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -41,13 +42,20 @@ function LocationRow({
   item,
   selected = false,
   onSelect,
+  resultsEdit = false,
 }: {
   item: CarLocationSuggestion;
   selected?: boolean;
   onSelect: () => void;
+  resultsEdit?: boolean;
 }) {
-  const primaryText = formatSelectedCarLocation(item);
-  const secondaryText = locationSecondaryText(item);
+  const primaryText = resultsEdit
+    ? item.primaryText
+    : formatSelectedCarLocation(item);
+  const secondaryText =
+    resultsEdit && item.airportCode
+      ? [item.secondaryText, item.airportCode].filter(Boolean).join(" · ")
+      : locationSecondaryText(item);
 
   return (
     <button
@@ -57,6 +65,7 @@ function LocationRow({
       aria-pressed={selected}
       className={cn(
         "focus-ring flex min-h-[80px] w-full items-center gap-3 border-b border-slate-200 px-5 py-3 text-start transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50",
+        resultsEdit && "min-h-[68px] gap-2.5 px-2 py-2.5",
         selected && "bg-blue-50/60",
       )}
     >
@@ -71,7 +80,7 @@ function LocationRow({
           </span>
         ) : null}
       </span>
-      {item.airportCode ? (
+      {item.airportCode && !resultsEdit ? (
         <span className="shrink-0 ps-2 text-[15px] font-medium text-slate-600">
           {item.airportCode}
         </span>
@@ -100,6 +109,7 @@ export function MobileCarLocationPicker({
   const [searchCompleted, setSearchCompleted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const resultsEdit = presentation === "carsResultsEdit";
 
   useEffect(() => {
     if (!open) return;
@@ -109,11 +119,12 @@ export function MobileCarLocationPicker({
       setDraft(null);
       setResults([]);
       setSearchCompleted(false);
-      setLoading(true);
+      setLoading(!resultsEdit);
       setError(false);
       if (inputRef.current && document.activeElement !== inputRef.current) {
         inputRef.current.focus({ preventScroll: true });
       }
+      if (resultsEdit) return;
       void searchCarLocationSuggestions("", { limit: 8 })
         .then((items) => {
           if (requestId !== searchRequestRef.current) return;
@@ -130,40 +141,46 @@ export function MobileCarLocationPicker({
         });
     });
     return () => cancelAnimationFrame(frame);
-  }, [open, value]);
+  }, [open, resultsEdit, value]);
 
   useEffect(() => {
     if (!open || draft) return;
     const trimmedQuery = query.trim();
-    if (!trimmedQuery) return;
+    const eligible = resultsEdit
+      ? hasMinimumCarLocationSearchLetters(query)
+      : Boolean(trimmedQuery);
+    if (!eligible) return;
 
     let active = true;
     const requestId = ++searchRequestRef.current;
-    const timer = window.setTimeout(() => {
-      setLoading(true);
-      setError(false);
-      void searchCarLocationSuggestions(trimmedQuery, { limit: 8 })
-        .then((items) => {
-          if (!active || requestId !== searchRequestRef.current) return;
-          setResults(items);
-          setSearchCompleted(true);
-        })
-        .catch(() => {
-          if (!active || requestId !== searchRequestRef.current) return;
-          setResults([]);
-          setError(true);
-          setSearchCompleted(true);
-        })
-        .finally(() => {
-          if (active && requestId === searchRequestRef.current)
-            setLoading(false);
-        });
-    }, 120);
+    const timer = window.setTimeout(
+      () => {
+        setLoading(true);
+        setError(false);
+        void searchCarLocationSuggestions(trimmedQuery, { limit: 8 })
+          .then((items) => {
+            if (!active || requestId !== searchRequestRef.current) return;
+            setResults(items);
+            setSearchCompleted(true);
+          })
+          .catch(() => {
+            if (!active || requestId !== searchRequestRef.current) return;
+            setResults([]);
+            setError(true);
+            setSearchCompleted(true);
+          })
+          .finally(() => {
+            if (active && requestId === searchRequestRef.current)
+              setLoading(false);
+          });
+      },
+      resultsEdit ? 180 : 120,
+    );
     return () => {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [draft, open, query]);
+  }, [draft, open, query, resultsEdit]);
 
   const select = (item: CarLocationSuggestion, requestClose: () => void) => {
     searchRequestRef.current += 1;
@@ -198,6 +215,7 @@ export function MobileCarLocationPicker({
   };
 
   const trimmedQuery = query.trim();
+  const eligible = hasMinimumCarLocationSearchLetters(query);
   const visibleResults = draft ? [draft] : results;
   const text = (key: string, fallback: string) => t[key] ?? fallback;
   const placeholder = text(
@@ -219,7 +237,10 @@ export function MobileCarLocationPicker({
       presentation={presentation}
       showBackLabel={true}
       showCancelAction={false}
-      contentClassName={cn("bg-[#fcfdff] px-4 py-6", presentation === "carsResultsEdit" && "bg-[#F5F7FB] px-5 py-3")}
+      contentClassName={cn(
+        "bg-[#fcfdff] px-4 py-6",
+        presentation === "carsResultsEdit" && "bg-[#F5F7FB] px-5 py-3",
+      )}
       footer={
         commitOnSelect
           ? undefined
@@ -276,21 +297,21 @@ export function MobileCarLocationPicker({
                 className="px-4 py-8 text-center text-sm font-medium text-slate-500"
                 aria-live="polite"
               >
-                {text("carsSearch.loadingSuggestions", "Loading suggestions…")}
+                {resultsEdit
+                  ? "Finding locations…"
+                  : text(
+                      "carsSearch.loadingSuggestions",
+                      "Loading suggestions…",
+                    )}
               </p>
             ) : error ? (
               <p
                 className="px-4 py-8 text-center text-sm font-medium text-slate-500"
                 aria-live="polite"
               >
-                {text(
-                  "carsSearch.suggestionsUnavailable",
-                  "Suggestions unavailable.",
-                )}{" "}
-                {text(
-                  "carsSearch.continueTypingManually",
-                  "Continue typing manually.",
-                )}
+                {resultsEdit
+                  ? "Couldn’t load locations. Please try again."
+                  : `${text("carsSearch.suggestionsUnavailable", "Suggestions unavailable.")} ${text("carsSearch.continueTypingManually", "Continue typing manually.")}`}
               </p>
             ) : visibleResults.length ? (
               <div className="overflow-hidden rounded-[11px] border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
@@ -299,15 +320,24 @@ export function MobileCarLocationPicker({
                     key={item.id}
                     item={item}
                     selected={draft?.id === item.id}
+                    resultsEdit={resultsEdit}
                     onSelect={() => select(item, requestClose)}
                   />
                 ))}
               </div>
-            ) : searchCompleted && trimmedQuery ? (
+            ) : resultsEdit && !trimmedQuery ? (
+              <p className="px-4 py-7 text-center text-sm font-medium text-slate-500">
+                Start typing to find a location.
+              </p>
+            ) : searchCompleted &&
+              trimmedQuery &&
+              (!resultsEdit || eligible) ? (
               <p className="px-4 py-8 text-center text-sm font-medium text-slate-500">
                 {text(
                   "carsSearch.noMatchingLocations",
-                  "No matching locations found.",
+                  resultsEdit
+                    ? "No matching locations."
+                    : "No matching locations found.",
                 )}
               </p>
             ) : null}

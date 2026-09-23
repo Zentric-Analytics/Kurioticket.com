@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { hasMinimumCarLocationSearchLetters } from "@/lib/cars/locationSearchQuery";
 
 const picker = readFileSync(
   "src/components/search/MobileCarLocationPicker.tsx",
@@ -32,11 +33,14 @@ test("shared Cars picker matches the Flight navigation and input geometry", () =
   assert.doesNotMatch(picker, /\bSearch\b|<Search/);
 });
 
-test("blank queries stay clean and never request generic suggestions", () => {
+test("Cars Results Edit gates searches and keeps a native empty state", () => {
   assert.match(
     picker,
-    /const trimmedQuery = query\.trim\(\);\s*if \(!trimmedQuery\) return;/,
+    /hasMinimumCarLocationSearchLetters\(query\)/,
   );
+  assert.match(picker, /if \(resultsEdit\) return;/);
+  assert.match(picker, /resultsEdit \? 180 : 120/);
+  assert.match(picker, /Start typing to find a location\./);
   assert.match(
     picker,
     /searchCarLocationSuggestions\(trimmedQuery, \{ limit: 8 \}\)/,
@@ -72,7 +76,7 @@ test("airport selection uses its canonical city and code while retaining airport
 test("selection prevents a second search and ignores stale responses", () => {
   assert.match(picker, /if \(!open \|\| draft\) return;/);
   assert.match(picker, /requestId !== searchRequestRef\.current\) return;/);
-  assert.match(picker, /\}, \[draft, open, query\]\);/);
+  assert.match(picker, /\}, \[draft, open, query, resultsEdit\]\);/);
   assert.match(
     picker,
     /const select[\s\S]*searchRequestRef\.current \+= 1;[\s\S]*setDraft\(item\)/,
@@ -147,4 +151,10 @@ test("Pickup and Return share one implementation across every Cars surface", () 
 test("desktop CarLocationAutocomplete remains unchanged and available", () => {
   assert.match(homepage, /hidden sm:block[\s\S]*CarLocationAutocomplete/);
   assert.match(cars, /<CarLocationAutocomplete/);
+});
+
+
+test("minimum query counts alphabetic letters only", () => {
+  for (const query of ["", "L", "1", "L1"]) assert.equal(hasMinimumCarLocationSearchLetters(query), false);
+  for (const query of ["Lo", "NY", "L A", "L1A"]) assert.equal(hasMinimumCarLocationSearchLetters(query), true);
 });
