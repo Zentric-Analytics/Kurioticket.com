@@ -5,11 +5,11 @@ import {
   Award,
   BriefcaseBusiness,
   CarFront,
-  Check,
   ChevronRight,
   DoorOpen,
   Heart,
   MapPin,
+  ShieldCheck,
   Snowflake,
   Share2,
   Star,
@@ -199,11 +199,10 @@ export function CarResultCard({
         aria-label={`${isSaved ? "Unsave" : "Save"} ${car.modelName}`}
         aria-pressed={isSaved}
         onClick={toggleSavedCar}
-        className={`relative flex h-11 w-9 shrink-0 items-start justify-center rounded-full border border-transparent bg-transparent pt-0.5 transition before:absolute before:inset-y-0 before:-start-2 before:end-0 before:content-[''] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 ${isSaved ? "text-rose-600" : "text-slate-700"}`}
+        className={`relative flex h-11 w-7 shrink-0 items-start justify-end rounded-full border border-transparent bg-transparent pe-0.5 pt-0.5 transition before:absolute before:inset-y-0 before:-start-2 before:end-0 before:content-[''] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 ${isSaved ? "text-rose-600" : "text-slate-700"}`}
       >
         <Heart
           size={18}
-          className="translate-x-1"
           fill={isSaved ? "currentColor" : "none"}
           aria-hidden="true"
         />
@@ -212,9 +211,9 @@ export function CarResultCard({
         type="button"
         aria-label={`Share ${car.modelName}`}
         onClick={() => void shareCar()}
-        className="relative flex h-11 w-9 shrink-0 items-start justify-center rounded-full border border-transparent bg-transparent pt-0.5 text-slate-700 transition before:absolute before:inset-y-0 before:start-0 before:-end-2 before:content-[''] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+        className="relative flex h-11 w-7 shrink-0 items-start justify-start rounded-full border border-transparent bg-transparent ps-0.5 pt-0.5 text-slate-700 transition before:absolute before:inset-y-0 before:start-0 before:-end-2 before:content-[''] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
       >
-        <Share2 size={18} className="-translate-x-1" aria-hidden="true" />
+        <Share2 size={18} aria-hidden="true" />
       </button>
     </div>
   );
@@ -241,15 +240,17 @@ export function CarResultCard({
               data-car-card-mobile-image
               className="relative min-h-full overflow-hidden bg-white p-1.5"
             >
-              <CarResultImage
-                imageUrl={car.imageUrl}
-                imageAlt={car.imageAlt}
-                modelName={car.modelName}
-                category={car.category}
-                sizes="(max-width: 767px) 40vw, 250px"
-                fit="cover"
-                position={car.imagePosition}
-              />
+              <div className="relative h-full min-h-[144px] w-full overflow-hidden rounded-[10px]">
+                <CarResultImage
+                  imageUrl={car.imageUrl}
+                  imageAlt={car.imageAlt}
+                  modelName={car.modelName}
+                  category={car.category}
+                  sizes="(max-width: 767px) 40vw, 250px"
+                  fit="cover"
+                  position={car.imagePosition}
+                />
+              </div>
             </div>
 
             <div
@@ -307,7 +308,7 @@ export function CarResultCard({
               </p>
               {offer.freeCancellation && (
                 <span className="mt-1.5 inline-flex max-w-full items-center gap-1 text-[11px] font-semibold leading-[15px] text-black">
-                  <Check size={13} className="shrink-0" aria-hidden="true" />
+                  <ShieldCheck size={13} className="shrink-0" aria-hidden="true" />
                   <span className="min-w-0">Free cancellation</span>
                 </span>
               )}

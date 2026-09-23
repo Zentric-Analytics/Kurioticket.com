@@ -71,6 +71,15 @@ test("mobile result summary hides the desktop Sort by control", () => {
   assert.match(summary, /carsResults\.sortBy/);
 });
 
+test("mobile result rhythm matches the native list while desktop spacing stays responsive", () => {
+  assert.match(resultsSource, /page-shell max-sm:w-\[calc\(100%_-_28px\)\]/);
+  assert.match(resultsSource, /gap-2 pt-1 sm:gap-3 lg:py-1/);
+  assert.equal(
+    (resultsSource.match(/space-y-3\.5 max-sm:!mt-2\.5/g) ?? []).length,
+    2,
+  );
+});
+
 test("mobile car price alert uses the native alert palette and bare bell", () => {
   assert.match(alertSource, /border-\[#C8DFF7\] bg-\[#EDF6FF\]/);
   assert.match(alertSource, /text-\[#1769AA\]/);
