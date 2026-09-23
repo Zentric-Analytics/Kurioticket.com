@@ -32,13 +32,12 @@ test("iOS Hotel dialogs focus the dialog surface instead of the close X", () => 
   assert.match(stayEditorSource, /<dialog ref=\{dialogRef\} tabIndex=\{-1\}/);
 });
 
-test("iOS Hotel quick-filter rail clamps elastic scroll without disabling horizontal swipe", () => {
-  assert.match(resultsSource, /const mobileShortcutRailRef = useRef<HTMLDivElement \| null>\(null\)/);
-  assert.match(resultsSource, /const clampIosHotelShortcutRail = useCallback/);
-  assert.match(resultsSource, /if \(!isIosHotelMobileWeb\(\)\) return/);
-  assert.match(resultsSource, /Math\.max\(0, rail\.scrollWidth - rail\.clientWidth\)/);
-  assert.match(resultsSource, /Math\.min\(maxScrollLeft, Math\.max\(0, rail\.scrollLeft\)\)/);
-  assert.match(resultsSource, /onScroll=\{clampIosHotelShortcutRail\}/);
-  assert.match(resultsSource, /onTouchEnd=\{\(\) => window\.requestAnimationFrame\(clampIosHotelShortcutRail\)\}/);
-  assert.match(resultsSource, /overflow-x-auto overscroll-x-contain/);
+test("iOS Hotel quick-filter row is locked to the results background during touch gestures", () => {
+  assert.match(resultsSource, /const \[lockIosHotelShortcutRow, setLockIosHotelShortcutRow\] = useState\(false\)/);
+  assert.match(resultsSource, /setLockIosHotelShortcutRow\(isIosHotelMobileWeb\(\)\)/);
+  assert.match(resultsSource, /lockIosHotelShortcutRow[\s\S]*?"overflow-x-hidden touch-pan-y"/);
+  assert.match(resultsSource, /lockIosHotelShortcutRow \? "w-full min-w-0" : "min-w-max"/);
+  assert.match(resultsSource, /lockIosHotelShortcutRow[\s\S]*?"min-w-0 flex-1 px-1/);
+  assert.doesNotMatch(resultsSource, /mobileShortcutRailRef|clampIosHotelShortcutRail|rail\.scrollLeft/);
+  assert.doesNotMatch(resultsSource, /onScroll=\{clampIosHotelShortcutRail\}|onTouchEnd=.*clampIosHotelShortcutRail/);
 });
