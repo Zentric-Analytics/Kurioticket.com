@@ -6,7 +6,7 @@ import ts from "typescript";
 
 const details = readFileSync("src/features/search/NativeFlightDetails.tsx", "utf8");
 const loadingStart = details.indexOf("function FlightDetailsLoadingSkeleton");
-const loadingEnd = details.indexOf("function TopBar", loadingStart);
+const loadingEnd = details.indexOf("function HeroCurve", loadingStart);
 const loading = details.slice(loadingStart, loadingEnd);
 
 type Element = { type: string; props: Record<string, any>; children: Element[] };
@@ -18,8 +18,10 @@ function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWi
     typeof type === "function" ? type(props) : { type, props: props ?? {}, children: children.flat(Infinity).filter((child) => child && typeof child === "object") };
   const palette = details.slice(details.indexOf("const FLIGHT_DETAILS_LIGHT_CANVAS"), details.indexOf("type Params"));
   const styles = details.slice(details.indexOf("const s=StyleSheet.create"));
-  const topBar = details.slice(loadingEnd, details.indexOf("function IconButton", loadingEnd));
-  const code = ts.transpileModule(`${palette}\n${loading}\n${topBar}\n${styles}\nFlightDetailsLoadingSkeleton(input);`, {
+  const headerStart = details.indexOf("function FlightDetailsBrandHeader");
+  const headerEnd = details.indexOf("function FareStatusIcon", headerStart);
+  const brandHeader = details.slice(headerStart, headerEnd);
+  const code = ts.transpileModule(`${palette}\n${loading}\n${brandHeader}\n${styles}\nFlightDetailsLoadingSkeleton(input);`, {
     compilerOptions: { jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const theme = { dark, background: "#101114", surface: dark ? "#202126" : "#FFFFFF", border: dark ? "#454650" : "#CBD5E1" };
@@ -29,7 +31,7 @@ function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWi
     Animated: { View: "Animated.View", Value: class { constructor(public value: number) {} } },
     useState: (value: unknown) => [value, () => {}], useRef: (current: unknown) => ({ current }), useEffect: () => {}, useCallback: (callback: unknown) => callback,
     Platform: { OS: platform }, StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1, absoluteFillObject: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 } }, ui: { blue: "#2563EB", green: "#16A34A" }, appFonts: { semibold: "Inter_600SemiBold", bold: "Inter_700Bold" },
-    router: { back: () => { backs += 1; } }, flightDetailsHeaderProtectionGeometry: (top: number) => ({ protectedHeight: top + 64, threshold: Math.max(0, 150 - top) }), FLIGHT_RESULTS_LIGHT_CANVAS: "#F5F7FB",
+    router: { back: () => { backs += 1; } }, androidFavoriteColors: { strokeWidth: 2, savedStroke: "#075EE8", unsavedStroke: "#0F172A", savedFill: "#075EE8", unsavedFill: "transparent", shareStroke: "#0F172A" }, FLIGHT_RESULTS_LIGHT_CANVAS: "#F5F7FB",
     input: { theme, topInset, bottomInset, fareCardWidth, viewportWidth: 390 },
   }) as Element;
   return { root, theme, backCount: () => backs };
