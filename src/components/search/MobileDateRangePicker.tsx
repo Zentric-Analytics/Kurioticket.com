@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { cn } from "@/lib/utils";
@@ -72,17 +71,6 @@ export function MobileDateRangePicker({
   selectedMonthRef,
 }: MobileDateRangePickerProps) {
   const carsResultsEdit = appearance === "carsResultsEdit";
-  const firstMonthTime = startOfMonth(firstMonth).getTime();
-  const [resultsMonthState, setResultsMonthState] = useState(() => ({
-    firstMonthTime,
-    month: startOfMonth(firstMonth),
-  }));
-  if (resultsMonthState.firstMonthTime !== firstMonthTime) {
-    setResultsMonthState({ firstMonthTime, month: startOfMonth(firstMonth) });
-  }
-  const resultsMonth = resultsMonthState.month;
-  const setResultsMonth = (update: (month: Date) => Date) =>
-    setResultsMonthState((state) => ({ ...state, month: update(state.month) }));
   const start = parseIsoDate(startDate);
   const end = parseIsoDate(endDate);
   const todayIso = toIsoDate(new Date());
@@ -102,21 +90,9 @@ export function MobileDateRangePicker({
   const selectedMonthKey = start
     ? `${start.getFullYear()}-${start.getMonth()}`
     : `${firstMonth.getFullYear()}-${firstMonth.getMonth()}`;
-  const months = carsResultsEdit
-    ? [resultsMonth]
-    : Array.from({ length: monthCount }, (_, offset) =>
-        addMonths(firstMonth, offset),
-      );
-  const activePart = startDate && !endDate ? "end" : "start";
-  const formatRangeValue = (date: Date | null) =>
-    date
-      ? new Intl.DateTimeFormat(locale, {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-        }).format(date)
-      : "Select";
-  const canGoPrevious = resultsMonth > startOfMonth(firstMonth);
+  const months = Array.from({ length: monthCount }, (_, offset) =>
+    addMonths(firstMonth, offset),
+  );
 
   return (
     <div className="mx-auto w-full max-w-xl">
@@ -124,42 +100,11 @@ export function MobileDateRangePicker({
         <h3 className="mb-4 text-[18px] font-bold tracking-tight text-slate-950">
           {labels.selectDates}
         </h3>
-      ) : (
-        <div
-          data-cars-results-date-range-header
-          className="mb-3 grid grid-cols-2 gap-3"
-        >
-          {(
-            [
-              [labels.start, formatRangeValue(start), "start"],
-              [labels.end, formatRangeValue(end), "end"],
-            ] as const
-          ).map(([label, value, part], index) => (
-            <div
-              key={part}
-              aria-current={activePart === part ? "true" : undefined}
-              className={cn("min-w-0 px-2.5 py-2", index === 1 && "text-end")}
-            >
-              <span className="block text-[10px] font-semibold leading-[14px] text-slate-500">
-                {label}
-              </span>
-              <span
-                className={cn(
-                  "inline-block border-b pb-0.5 text-[13px] font-medium leading-[18px] text-slate-950",
-                  activePart === part
-                    ? "border-[#075EE8]"
-                    : "border-transparent",
-                )}
-              >
-                {value}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      ) : null}
       <div
         data-mobile-date-calendar-card
         data-month-count={months.length}
+        data-scroll-direction={carsResultsEdit ? "vertical" : undefined}
         className={cn(
           "overflow-hidden rounded-[11px] border border-slate-200 bg-white",
           carsResultsEdit && "rounded-none border-0 bg-transparent",
@@ -178,38 +123,15 @@ export function MobileDateRangePicker({
                 monthIndex > 0 && "border-t border-slate-200/70",
               )}
             >
-              {carsResultsEdit ? (
-                <div className="mb-1 flex min-h-12 items-center gap-1">
-                  <button
-                    type="button"
-                    aria-label="Previous month"
-                    disabled={!canGoPrevious}
-                    onClick={() =>
-                      setResultsMonth((value) => addMonths(value, -1))
-                    }
-                    className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 disabled:opacity-35"
-                  >
-                    <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-                  </button>
-                  <h4 className="flex-1 text-center text-[16px] font-semibold leading-5 text-slate-950">
-                    {monthFormatter.format(month)}
-                  </h4>
-                  <button
-                    type="button"
-                    aria-label="Next month"
-                    onClick={() =>
-                      setResultsMonth((value) => addMonths(value, 1))
-                    }
-                    className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-slate-200"
-                  >
-                    <ChevronRight className="h-5 w-5" aria-hidden="true" />
-                  </button>
-                </div>
-              ) : (
-                <h4 className="mb-3 text-center text-[17px] font-bold tracking-tight text-slate-950">
-                  {monthFormatter.format(month)}
-                </h4>
-              )}
+              <h4
+                className={cn(
+                  "mb-3 text-center text-[17px] font-bold tracking-tight text-slate-950",
+                  carsResultsEdit &&
+                    "text-[16px] font-semibold leading-5 tracking-normal",
+                )}
+              >
+                {monthFormatter.format(month)}
+              </h4>
               <div
                 className={cn(
                   "grid grid-cols-7 text-center text-[12px] font-semibold text-slate-500",
@@ -308,7 +230,7 @@ export function MobileDateRangePicker({
                       >
                         {date.getDate()}
                       </button>
-                      {endpoint ? (
+                      {endpoint && !carsResultsEdit ? (
                         <span className="relative z-10 mt-0.5 block text-center text-[10px] font-semibold leading-3 text-[#075ee8]">
                           {endpoint}
                         </span>
