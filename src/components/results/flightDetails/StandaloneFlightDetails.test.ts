@@ -777,10 +777,12 @@ test("mobile web Fare information deck mirrors native tabs and selection-only de
   assert.match(deck, /role="tablist" aria-label="Fare information"/);
   assert.match(deck, /min-h-12/);
   assert.match(deck, /gap-\[22px\]/);
-  assert.match(deck, /text-\[14px\] leading-5/);
+  assert.match(deck, /px-0/);
+  assert.doesNotMatch(deck, /gap-\[22px\] px-2/);
+  assert.match(deck, /text-\[14px\] leading-5 text-\[#56658E\]/);
   assert.match(deck, /font-extrabold text-\[#1A1A1A\]/);
-  assert.match(deck, /h-\[3px\] rounded-full bg-\[#075EE8\]/);
-  assert.doesNotMatch(deck, /text-\[#075EE8\].*tab\.label/);
+  assert.match(deck, /left-\[2px\] right-\[2px\] h-\[3px\] rounded-full bg-\[#0754F7\]/);
+  assert.doesNotMatch(deck, /text-\[#0754F7\].*tab\.label/);
 
   assert.match(deck, /role="radiogroup" aria-label="Flight deal options"/);
   assert.match(deck, /min-h-24.*rounded-\[14px\]/);
