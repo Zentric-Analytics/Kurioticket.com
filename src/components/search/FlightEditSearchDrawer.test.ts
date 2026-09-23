@@ -9,7 +9,7 @@ const source = readFileSync(
 
 test("shared mobile flight editor retains the approved drawer structure", () => {
   assert.match(source, /id="flight-mobile-search-title"/);
-  assert.match(source, />\s*\{t\("editFlightSearch"\)\}\s*</);
+  assert.match(source, /resultsMode \? "Change your search" : t\("editFlightSearch"\)/);
   assert.match(source, /aria-label=\{t\("closeEditSearch"\)\}/);
   assert.match(source, /data-mobile-trip-type-grid/);
   assert.match(source, /grid-cols-3/);
@@ -32,36 +32,22 @@ test("shared mobile flight editor retains the approved drawer structure", () => 
   assert.match(source, /overflow-x-hidden overflow-y-auto/);
 });
 
-test("shared editor supports a Details-only bottom sheet while fullscreen remains the default", () => {
+test("Results bottom sheet mirrors native floating modal geometry while fullscreen remains the default", () => {
   assert.match(source, /import \{ createPortal \} from "react-dom"/);
   assert.match(source, /createPortal\(overlay, document\.body\)/);
-  assert.match(source, /mobile-results-overlay-root/);
   assert.match(source, /data-mobile-results-overlay-root/);
-  assert.match(source, /fixed inset-0/);
-  assert.match(source, /fixed inset-0[^\n]*?min-h-0/);
-  assert.doesNotMatch(
-    source.match(/bottomSheet \? "([^"]+)/)?.[1] ?? "",
-    /h-\[100dvh\]|min-h-\[100svh\]/,
-  );
-  assert.match(source, /presentation\?: "fullscreen" \| "bottom-sheet"/);
-  assert.match(source, /presentation = "fullscreen"/);
-  assert.match(source, /data-flight-edit-presentation=\{presentation\}/);
-  assert.match(source, /max-h-\[94dvh\]/);
-  assert.doesNotMatch(source, /(?:^|\s)h-\[94dvh\]/);
-  assert.match(source, /flex min-h-0 w-full min-w-0 flex-col/);
-  assert.match(source, /max-h-\[94dvh\]/);
-  assert.match(source, /overflow-hidden rounded-t-\[22px\]/);
-  assert.match(source, /rounded-t-\[22px\]/);
-  assert.match(source, /mobile-results-sheet-backdrop-clean/);
-  assert.match(source, /canvasColor: "#ffffff"/);
-  assert.match(source, /data-flight-edit-bottom-continuation/);
-  assert.match(source, /data-mobile-results-sheet-bottom-continuation/);
-  assert.match(
-    source,
-    /data-flight-edit-bottom-continuation[\s\S]*?mobile-results-sheet-bottom-continuation[\s\S]*?bg-white/,
-  );
+  assert.match(source, /style=\{bottomSheet \? \{ backgroundColor: "rgba\(8, 18, 35, 0\.52\)" \} : undefined\}/);
+  assert.match(source, /mx-3 mb-3/);
+  assert.match(source, /max-h-\[88dvh\]/);
+  assert.match(source, /w-\[calc\(100%_-_1\.5rem\)\]/);
+  assert.match(source, /rounded-\[24px\] bg-\[#F5F7FB\]/);
+  assert.match(source, /resultsMode \? "Change your search" : t\("editFlightSearch"\)/);
+  assert.match(source, /text-\[19px\] font-semibold leading-6/);
+  assert.match(source, /min-h-\[52px\]/);
+  assert.match(source, /h-\[23px\] w-\[23px\]/);
+  assert.doesNotMatch(source, /mobile-results-sheet-backdrop-clean/);
+  assert.doesNotMatch(source, /data-flight-edit-bottom-continuation|data-mobile-results-sheet-bottom-continuation/);
   assert.match(source, /mobile-results-sheet-backdrop/);
-  assert.match(source, /mobile-results-sheet-surface/);
   assert.match(source, /mobile-results-sheet-surface-smooth/);
   assert.match(source, /mobile-results-sheet-backdrop-closing/);
   assert.match(source, /mobile-results-sheet-surface-closing/);
@@ -124,54 +110,43 @@ test("bottom sheet uses the shared no-shake lock and delegates launcher focus", 
   );
 });
 
-test("Results flight fields use compact grouped rows", () => {
-  assert.match(source, /data-mobile-results-edit-group/);
-  assert.match(source, /min-h-\[60px\]/);
-  assert.match(source, /rounded-\[14px\].*border border-slate-200/);
-  assert.doesNotMatch(source, /min-h-\[70px\]/);
-  assert.equal(source.match(/h-5 w-5 text-slate-700/g)?.length, 8);
+test("Results flight fields mirror native results-modal density", () => {
+  assert.match(source, /resultsMode[\s\S]*?min-h-\[72px\]/);
+  assert.match(source, /text-\[11px\] font-bold uppercase leading-\[15px\] tracking-\[0\.1em\] text-\[#56658E\]/);
+  assert.match(source, /grid-cols-\[18px_minmax\(0,1fr\)_16px\]/);
+  assert.match(source, /h-\[18px\] w-\[18px\] text-\[#071A48\]/);
+  assert.match(source, /rounded-\[13px\] border border-\[#E7ECF5\] bg-white/);
+  assert.match(source, /ChevronRight className="h-4 w-4 text-\[#071A48\]"/);
 });
 
-test("Results mode connects all non-multi-city fields while preserving route swap geometry", () => {
+test("Results mode copies native route/date/traveler grouping and trip tabs", () => {
   assert.match(source, /resultsMode\?: boolean/);
   assert.match(source, /resultsMode = false/);
   const groupStart = source.indexOf("data-flight-results-edit-fields");
-  const groupEnd = source.indexOf(
-    "</div>",
-    source.indexOf('data-mobile-field="travelers"', groupStart),
-  );
+  const groupEnd = source.indexOf("            ) : (", groupStart);
   const group = source.slice(groupStart, groupEnd);
-  assert.match(
-    group,
-    /min-w-0 overflow-hidden rounded-\[14px\] border border-slate-200 bg-white/,
-  );
   const fields = ["origin", "destination", "dates", "travelers"].map((field) =>
     group.indexOf(`data-mobile-field="${field}"`),
   );
   assert.ok(fields.every((index) => index >= 0));
-  assert.deepEqual(
-    fields,
-    [...fields].sort((a, b) => a - b),
-  );
+  assert.deepEqual(fields, [...fields].sort((a, b) => a - b));
+
   const routeStart = group.indexOf("data-mobile-route-fields");
-  const routeEnd = group.indexOf("</div>", routeStart);
-  const route = group.slice(routeStart, routeEnd);
-  assert.match(
-    route,
-    /data-mobile-field="origin"[\s\S]*data-mobile-swap-control[\s\S]*data-mobile-field="destination"/,
-  );
-  assert.match(
-    route,
-    /left-1\/2 top-1\/2[\s\S]*-translate-x-1\/2 -translate-y-1\/2/,
-  );
-  assert.doesNotMatch(
-    route,
-    /data-mobile-field="dates"|data-mobile-field="travelers"/,
-  );
-  assert.match(
-    group,
-    /data-mobile-field="dates"[\s\S]*border-t border-slate-200[\s\S]*data-mobile-field="travelers"/,
-  );
+  const dateGroupStart = group.indexOf("data-mobile-results-edit-group", routeStart);
+  const route = group.slice(routeStart, dateGroupStart);
+  assert.match(route, /data-mobile-field="origin"[\s\S]*data-mobile-swap-control[\s\S]*data-mobile-field="destination"/);
+  assert.doesNotMatch(route, /data-mobile-field="dates"|data-mobile-field="travelers"/);
+  assert.match(group, /data-mobile-field="dates"[\s\S]*data-mobile-results-edit-group[\s\S]*data-mobile-field="travelers"/);
+  assert.equal((group.match(/data-mobile-results-edit-group/g) ?? []).length, 2);
+  assert.match(group, /rounded-\[13px\] border border-\[#E7ECF5\]/);
+  assert.match(group, /h-9 w-9[\s\S]*shadow-\[0_2px_4px_rgba\(24,48,91,0\.12\)\]/);
+
+  assert.match(source, /resultsMode \? "grid min-h-\[51px\]/);
+  assert.match(source, /min-h-\[50px\][\s\S]*border-b-2/);
+  assert.match(source, /border-\[#064CF7\] font-extrabold text-\[#064CF7\]/);
+  assert.match(source, /\{!resultsMode \? \([\s\S]*?h-\[18px\] w-\[18px\]/);
+  assert.match(source, /resultsMode \? t\("searchFlights"\) : t\("search"\)/);
+  assert.match(source, /min-h-\[54px\].*rounded-\[9px\].*bg-\[#064CF7\].*font-extrabold/);
 });
 
 test("Results airport pickers opt in without changing the shared default flow", () => {
