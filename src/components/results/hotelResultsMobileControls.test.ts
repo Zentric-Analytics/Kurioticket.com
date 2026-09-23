@@ -38,6 +38,7 @@ test("mobile Hotel search follows the Cars floating summary below the page navba
 
 test("Hotel mobile compact results header matches the Cars three-column toolbar", () => {
   assert.match(resultsSource, /data-hotel-mobile-compact-results-header/);
+  assert.match(resultsSource, /inert=\{!mobileCompactHeaderVisible \? true : undefined\}/);
   assert.match(resultsSource, /grid-cols-\[44px_minmax\(0,1fr\)_82px\]/);
   assert.match(resultsSource, /<ArrowLeft className="h-5 w-5"/);
   assert.match(resultsSource, /<Pencil[\s\S]*className="h-3 w-3 shrink-0 text-\[#536B92\]"/);
@@ -81,8 +82,8 @@ test("mobile Hotel shortcut rail follows the Cars Results toolbar structure", ()
   assert.match(resultsSource, /mobileShortcutDraftFacilities/);
   assert.match(resultsSource, /mobileShortcutDraftRoomTypes/);
   assert.match(toolbar, /scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\] flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain pe-4/);
-  assert.match(toolbar, /group inline-flex min-h-11 min-w-11 shrink-0 items-center/);
-  assert.match(toolbar, /inline-flex h-9 items-center gap-1 rounded-\[9px\]/);
+  assert.match(resultsSource, /group inline-flex min-h-11 min-w-11 shrink-0 items-center/);
+  assert.match(resultsSource, /inline-flex h-9 items-center gap-1 rounded-\[9px\]/);
   assert.doesNotMatch(toolbar, /mobileShortcutRailRef|clampIosHotelShortcutRail|rail\.scrollLeft/);
   assert.doesNotMatch(toolbar, /<select/);
   assert.doesNotMatch(resultsSource, /mobileResultsSearch=/);
