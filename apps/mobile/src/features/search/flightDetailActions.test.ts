@@ -49,7 +49,12 @@ test("available Flight Details uses a universal edge-to-edge hero with safe cont
   const loading = native.slice(native.indexOf("function FlightDetailsLoadingSkeleton"), native.indexOf("function TopBar"));
   const available = native.slice(availableReturn, native.indexOf("function FlightDetailsLoadingSkeleton"));
 
-  assert.match(available, /<StatusBar style=\{headerProtected\?\(theme\.dark\?"light":"dark"\):"light"\} translucent backgroundColor="transparent"\/?>/);
+  const hotelDetails = readFileSync(resolve("src/features/search/HotelDetailsScreen.tsx"), "utf8");
+  assert.doesNotMatch(available, /<StatusBar\b/);
+  assert.doesNotMatch(loading, /<StatusBar\b/);
+  assert.doesNotMatch(hotelDetails, /<StatusBar\b/);
+  assert.match(available, /<SafeAreaView edges=\{\[\]\}/);
+  assert.match(available, /contentInsetAdjustmentBehavior="never"/);
   assert.match(available, /<ImageBackground testID="flight-details-hero"[^\n]*source=\{require\("\.\.\/\.\.\/\.\.\/assets\/heroes\/flight-details-hero\.webp"\)\}/);
   const scrollStart = available.indexOf('<ScrollView testID="flight-details-scroll-content"');
   const controls = available.indexOf('testID="flight-details-back-control"');
