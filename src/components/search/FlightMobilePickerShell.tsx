@@ -386,10 +386,10 @@ export function FlightMobilePickerShell({
       }
       data-closing={isClosing ? "true" : undefined}
       data-cars-results-edit-picker={carsResultsEdit ? "true" : undefined}
-      className={cn("fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden sm:hidden", carsResultsEdit ? "flex items-end bg-[rgba(8,18,35,0.20)]" : "bg-white")}
-      onPointerDown={(event) => {
-        if (carsResultsEdit && event.target === event.currentTarget) requestClose();
-      }}
+      className={cn(
+        "fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden bg-white sm:hidden",
+        carsResultsEdit && "bg-[#F5F7FB]",
+      )}
     >
       <div
         id={dialogId}
@@ -404,9 +404,8 @@ export function FlightMobilePickerShell({
           }
         }}
         className={cn(
-          carsResultsEdit
-            ? "relative flex max-h-[82dvh] min-h-0 w-full flex-col overflow-hidden rounded-t-[24px] bg-[#F5F7FB] shadow-[0_-12px_32px_rgba(8,18,35,0.18)]"
-            : "fixed inset-0 flex h-[100dvh] min-h-0 w-screen max-w-full flex-col overflow-hidden bg-white pt-[env(safe-area-inset-top)]",
+          "fixed inset-0 flex h-[100dvh] min-h-0 w-screen max-w-full flex-col overflow-hidden bg-white pt-[env(safe-area-inset-top)]",
+          carsResultsEdit && "bg-[#F5F7FB]",
           className,
         )}
       >

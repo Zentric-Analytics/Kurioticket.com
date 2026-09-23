@@ -150,7 +150,7 @@ export function MobileResultsEditSheet({
           placement === "top" && "origin-top [animation:none]",
           smoothMotion && "mobile-results-sheet-surface-smooth",
           closing && "mobile-results-sheet-surface-closing",
-          carsResultsEdit && "mobile-results-sheet-cars-edit-surface mx-3 mb-[calc(12px+env(safe-area-inset-bottom))] w-[calc(100%-24px)]",
+          carsResultsEdit && "mobile-results-sheet-cars-edit-surface mx-0 mb-0 w-full",
         )}
         onAnimationEnd={(event) => {
           if (
@@ -168,7 +168,7 @@ export function MobileResultsEditSheet({
           tabIndex={-1}
           aria-modal="true"
           aria-labelledby={titleId}
-          className={cn("relative z-10 flex min-h-0 w-full flex-col overflow-hidden rounded-t-[22px] border border-b-0 border-slate-200/80 bg-white shadow-[0_-12px_36px_rgba(15,23,42,0.18)] outline-none", placement === "top" && "rounded-t-none rounded-b-[22px] border-t-0 border-b pt-[env(safe-area-inset-top)]", carsResultsEdit && "max-h-[88dvh] rounded-[24px] border border-slate-200/80 bg-[#F5F7FB] shadow-[0_12px_36px_rgba(8,18,35,0.22)]", className)}
+          className={cn("relative z-10 flex min-h-0 w-full flex-col overflow-hidden rounded-t-[22px] border border-b-0 border-slate-200/80 bg-white shadow-[0_-12px_36px_rgba(15,23,42,0.18)] outline-none", placement === "top" && "rounded-t-none rounded-b-[22px] border-t-0 border-b pt-[env(safe-area-inset-top)]", carsResultsEdit && "border-slate-200/80 bg-[#F5F7FB]", className)}
         >
           <div className={cn("shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 pt-2", carsResultsEdit && "border-b-0 bg-[#F5F7FB] py-0 ps-4 pe-2")}>
             <div className={cn("mx-auto flex min-h-11 w-full max-w-xl items-center justify-between gap-3", carsResultsEdit && "min-h-[52px]")}>
