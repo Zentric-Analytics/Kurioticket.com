@@ -2,7 +2,7 @@
 
 import { Check, ExternalLink, Leaf } from "lucide-react";
 
-import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { formatDisplayPrice, formatFlightResultCurrency } from "@/lib/currency/formatCurrency";
 import type { ExchangeRates } from "@/lib/currency/exchangeRates";
 import type { FlightDetailsFareChoice, FlightDetailsOffer } from "@/lib/flights/flightDetailsContract";
 import type { FlightProviderCondition } from "@/lib/types";
@@ -113,7 +113,9 @@ function DealsSurface({
           amount: deal.price,
           sourceCurrency: deal.currency,
           displayCurrency: selectedCurrency,
-          convertUsdEstimate: true,
+          convertSourceEstimate: true,
+          useFlightResultSymbols: true,
+          maximumFractionDigits: 0,
           rates: currencyRates,
           isFallbackRate,
         });
@@ -406,9 +408,9 @@ function titleCase(value: string) {
 
 function formatSourceMoney(amount: number, currency: string, locale: string) {
   try {
-    return new Intl.NumberFormat(locale, { style: "currency", currency, currencyDisplay: "code" }).format(amount);
+    return formatFlightResultCurrency(amount, currency, { maximumFractionDigits: 0, locale });
   } catch {
-    return `${currency} ${amount.toFixed(2)}`;
+    return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(amount);
   }
 }
 
