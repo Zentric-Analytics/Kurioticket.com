@@ -186,6 +186,8 @@ export function MobileDateRangePicker({
 }
 
 type MobileDatePickerDialogProps = {
+  showBackAction?: boolean;
+  withinDialog?: boolean;
   presentation?: "default" | "carsResultsEdit";
   open: boolean;
   title: string;
@@ -206,6 +208,8 @@ type MobileDatePickerDialogProps = {
 };
 
 export function MobileDatePickerDialog({
+  showBackAction,
+  withinDialog,
   open,
   title,
   titleId,
@@ -282,6 +286,8 @@ export function MobileDatePickerDialog({
 
   return (
     <FlightMobilePickerShell
+      showBackAction={showBackAction}
+      withinDialog={withinDialog}
       open={open}
       title={title}
       titleId={titleId}
