@@ -40,16 +40,30 @@ test("price filters share the static estimated-total basis", () => {
   assert.match(source, /kind: "priceRange"/);
 });
 
-test("mobile Hotel filter sheet uses the Cars continuous #F2F4F8 surface", () => {
+test("mobile Hotel full filter keeps the Native full-screen shell and control dimensions", () => {
   const sheetStart = source.indexOf('aria-label="Hotel filters"');
   const sheetEnd = source.indexOf("</aside>", sheetStart);
   const sheet = source.slice(sheetStart, sheetEnd);
-  assert.match(sheet, /bg-[#F2F4F8]/);
-  assert.match(sheet, /hotel-filter-scrollbar[^"]*bg-[#F2F4F8]/);
-  assert.match(sheet, /border-t border-[#D8DEE8] bg-[#F2F4F8]/);
-  assert.match(sheet, /Reset hotel filters"[^>]*className="[^"]*bg-[#F2F4F8]/);
-  assert.doesNotMatch(sheet, /bg-[#F1F3F8]|sm:bg-[#F6F8FB]/);
+
+  assert.match(sheet, /fixed inset-0[^"]*h-\[100dvh\][^"]*rounded-none[^"]*bg-\[#F2F4F8\]/);
+  assert.match(sheet, /min-h-\[76px\]/);
+  assert.match(sheet, /text-\[20px\] font-bold leading-\[26px\]/);
+  assert.match(sheet, /px-6 pb-8 pt-4/);
+  assert.match(sheet, /h-\[49px\] min-w-\[116px\]/);
+  assert.match(sheet, /min-h-\[50px\][^"]*bg-\[#0754F7\]/);
+  assert.doesNotMatch(sheet, /h-\[95dvh\]|rounded-t-\[20px\]/);
 });
+
+test("mobile Hotel filter controls retain Native row, checkbox, input, and section geometry", () => {
+  assert.match(source, /max-sm:text-\[16px\] max-sm:font-bold max-sm:leading-\[22px\]/);
+  assert.match(source, /min-h-\[46px\][^"]*text-\[14px\][^"]*font-normal[^"]*leading-5/);
+  assert.match(source, /h-5 w-5 rounded-\[4px\]/);
+  assert.match(source, /border-\[#0754F7\] bg-\[#0754F7\] text-white/);
+  assert.match(source, /h-11 w-full appearance-none rounded-\[10px\] border border-\[#D8DEE8\]/);
+  assert.match(source, /space-y-6 bg-transparent/);
+  assert.match(source, /gap-\[5px\]/);
+});
+
 
 test("filter sheet exposes clear and deterministic result apply feedback", () => {
   assert.match(source, /activeFilterCount > 0 \?\s*\(?\s*<button/);
@@ -93,7 +107,7 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.match(source, /role="dialog"[\s\S]*mobile-hotel-\$\{mobileShortcutMenu\}-title/);
   assert.match(source, /mobileShortcutMenu === "stars"[\s\S]*setSelectedHotelClasses\(mobileShortcutDraftStars\)/);
   assert.match(source, /facilities: mobileShortcutDraftFacilities/);
-  assert.match(source, /fixed inset-y-0 right-0[^\n]*h-\[95dvh\][^\n]*w-full/);
+  assert.match(source, /fixed inset-0[^\n]*h-\[100dvh\][^\n]*w-full/);
   assert.doesNotMatch(source, /mobileResultsSearch=/);
   assert.match(source, /h-\[4\.25rem\][\s\S]*max-w-\[30rem\]/);
   assert.doesNotMatch(source, /trigger\("sort",/);
