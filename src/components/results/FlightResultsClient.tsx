@@ -169,6 +169,7 @@ import {
 
 const resultStackClass = "w-full min-w-0";
 export const FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
+export const FLIGHT_PROVIDER_WARNING_TOAST_MS = 4_000;
 
 const desktopCompactFilterTopOffset = 116;
 type MobileShortcutSheet = "sort" | "airlines" | "stops" | "airports";
@@ -1017,6 +1018,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const activeFlightSearchKeyRef = useRef<string>("");
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [providerWarningVisible, setProviderWarningVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
   const [filtersReadySearchKey, setFiltersReadySearchKey] = useState<
@@ -1037,6 +1039,19 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [mobileShortcutSheet, setMobileShortcutSheet] = useState<MobileShortcutSheet | null>(null);
+
+  useEffect(() => {
+    if (warnings.length === 0) {
+      setProviderWarningVisible(false);
+      return;
+    }
+    setProviderWarningVisible(true);
+    const timer = window.setTimeout(
+      () => setProviderWarningVisible(false),
+      FLIGHT_PROVIDER_WARNING_TOAST_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [warnings]);
   const [mobileDraftSort, setMobileDraftSort] = useState<SortMode>(sortMode);
   const [mobileDraftAirlines, setMobileDraftAirlines] = useState<string[]>([]);
   const [mobileDraftStops, setMobileDraftStops] = useState<string[]>([]);
@@ -7614,8 +7629,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
               {warnings.length > 0 ? (
                 <div
-                  className="w-full rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold leading-6 text-amber-900 shadow-sm"
+                  data-flight-provider-warning-toast
+                  className={`pointer-events-none fixed left-1/2 top-[calc(env(safe-area-inset-top)+5.25rem)] z-[1100] w-[calc(100%_-_2rem)] max-w-md -translate-x-1/2 rounded-xl border border-amber-200/80 bg-white/95 px-3 py-2.5 text-[13px] font-semibold leading-5 text-slate-800 shadow-[0_8px_28px_rgba(15,23,42,0.18)] backdrop-blur transition-all duration-300 sm:top-20 ${providerWarningVisible ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0"}`}
                   role="status"
+                  aria-live="polite"
+                  aria-hidden={!providerWarningVisible}
                 >
                   {t("limitedProviderChecks")}
                 </div>
