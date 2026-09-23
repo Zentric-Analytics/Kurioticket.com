@@ -701,33 +701,44 @@ test("Flight Details web hero reuses the native asset and keeps navigation acces
   assert.match(loadingSource, /<Share2 className="h-\[18px\] w-\[18px\]"/);
 });
 
-test("Flight Details mobile cleanup uses compact hero actions, peek tabs, and fare carousel", async () => {
+test("Flight Details mobile cleanup uses compact hero actions, native fare rail, peek tabs, and fare information", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const fareSource = await readFile(new URL("./MobileNativeFareRail.tsx", import.meta.url), "utf8");
+
   assert.doesNotMatch(source, /FlightEditSearchDrawer|editSearchLauncherRef|setEditSearchOpen|submitEditedSearch/);
   assert.match(source, /data-flight-details-floating-actions/);
   assert.match(source, /aria-label="Back to results"/);
   assert.match(source, /aria-label=\{flightSaved \? "Remove saved flight" : "Save flight"\}/);
   assert.match(source, /aria-label="Share flight"/);
+  assert.match(source, /<MobileNativeFareRail fares=\{fareChoices\}/);
+  assert.doesNotMatch(source, /fareRailRef|initialFareAlignmentRef/);
+
+  assert.match(fareSource, /data-mobile-native-fare-rail/);
+  assert.match(fareSource, /gap-\[10px\].*pb-\[18px\].*pt-3.*pr-\[38px\]/);
+  assert.match(fareSource, /w-\[clamp\(197px,calc\(197px\+\(100vw-320px\)\*0\.27\),217px\)\]/);
+  assert.match(fareSource, /min-h-\[142px\]/);
+  assert.match(fareSource, /rounded-\[15px\] border-\[1\.5px\]/);
+  assert.match(fareSource, /border-\[#075EE8\] bg-\[#F4F8FF\] shadow-\[0_6px_14px_rgba\(7,19,59,0\.18\)\]/);
+  assert.match(fareSource, /border-\[#D7E0EC\] bg-white shadow-\[0_2px_6px_rgba\(7,19,59,0\.06\)\]/);
+  assert.match(fareSource, /h-6 w-6.*rounded-lg.*border-\[#CFE3FA\].*bg-\[#EAF3FF\]/);
+  assert.match(fareSource, /text-\[13px\] font-extrabold leading-\[17px\]/);
+  assert.match(fareSource, /nativeFareBenefitRows\(/);
+  assert.match(fareSource, /ensureStandardRows: true/);
+  assert.match(fareSource, /aria-expanded=\{expanded\}/);
+  assert.match(fareSource, /row\.semantic === "positive"/);
+  assert.match(fareSource, /ChevronDown/);
+  assert.match(fareSource, /absolute inset-x-3 bottom-1\.5/);
+  assert.match(fareSource, /text-\[19px\] font-extrabold leading-\[23px\] tabular-nums text-\[#1A1A1A\]/);
+  assert.doesNotMatch(fareSource, /text-\[#075EE8\].*price/);
+  assert.match(fareSource, /getCenteredFareScrollLeft/);
+  assert.match(fareSource, /rail\.scrollTo\(/);
+
   assert.match(source, /flex-nowrap gap-1 overflow-x-auto/);
   assert.match(source, /w-auto shrink-0 whitespace-nowrap border-b-2/);
   assert.doesNotMatch(source, /w-\[30%\] min-w-\[105px\]/);
   assert.match(source, /Optional extras/);
   assert.match(source, /px-1 text-center text-\[11px\].*min-\[390px\]:text-xs.*sm:text-sm/);
-  assert.match(source, /flex snap-x snap-mandatory gap-3/);
-  assert.match(source, /overflow-x-auto overflow-y-hidden/);
-  const fareRailClasses = source.match(/fareChoices\.length > 1 \? "([^"]+)"/)?.[1] ?? "";
-  assert.doesNotMatch(fareRailClasses, /touch-pan-x|touch-action:\s*(?:pan-x|none)|overscroll-x-contain|overscroll-behavior:\s*none/);
-  assert.match(fareRailClasses, /px-4/);
-  assert.match(fareRailClasses, /scroll-padding-inline:1rem/);
-  assert.match(source, /w-\[min\(78vw,275px\)\]/);
-  assert.match(source, /ref=\{fareRailRef\} role="radiogroup"/);
-  assert.match(source, /initialFareAlignmentRef/);
-  assert.match(source, /rail\.scrollTo\(\{ left: clampedLeft, behavior: "auto" \}\)/);
-  assert.match(source, /const railRect = rail\.getBoundingClientRect\(\)/);
-  assert.match(source, /selectedLeft: selectedRect\.left/);
-  assert.match(source, /fareChoices\.length < 2/);
-  assert.match(source, /selectedFareKey !== initialSelectedFareKey/);
-  assert.match(source, /fareChoices.length === 1 \? "max-w-\[270px\]"/);
+  assert.match(source, /hidden min-w-0 sm:grid sm:gap-3/);
   const emptyBranch = source.split("\n").find((line) => line.includes("if (deals.length === 0)")) ?? "";
   assert.match(emptyBranch, /No live booking deals are available for this fare right now\./);
   assert.doesNotMatch(emptyBranch, /Compare available booking options|deals available/);
