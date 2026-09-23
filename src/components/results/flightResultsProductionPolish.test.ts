@@ -135,24 +135,7 @@ test("mobile Flight Results uses the Cars-style scroll handoff header", async ()
   assert.match(source, /<Pencil[\s\S]*data-flight-compact-edit-icon/);
 });
 
-test("mobile filter sheet has one contextual reset and a result-count action", async () => {
-  const source = await readFile(
-    new URL("./FlightResultsClient.tsx", import.meta.url),
-    "utf8",
-  );
-  const sheet = await readFile(new URL("./MobileFlightFiltersSheet.tsx", import.meta.url), "utf8");
-
-  assert.match(sheet, /activeFilterCount > 0 \? <button[^>]*>Reset<\/button>/);
-  assert.match(sheet, /`View \$\{matchingCount\}/);
-  assert.match(sheet, /disabled=\{matchingCount === 0\}/);
-  assert.match(sheet, /env\(safe-area-inset-bottom\)/);
-  assert.match(source, /overflow-y-auto overscroll-contain/);
-  assert.match(source, /mb-2\.5 text-sm font-bold leading-5/);
-  assert.doesNotMatch(source, /font-extrabold uppercase leading-5 tracking-\[0\.14em\]/);
-  assert.match(source, /min-h-11/);
-});
-
-test("mobile Flight filter and quick-filter surfaces match Cars backgrounds", async () => {
+test("mobile Flight full-filter and quick-filter popups use Cars visual contracts", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
@@ -161,26 +144,43 @@ test("mobile Flight filter and quick-filter surfaces match Cars backgrounds", as
     new URL("./MobileFlightFiltersSheet.tsx", import.meta.url),
     "utf8",
   );
+  const styles = await readFile(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
 
-  const fullFilterStart = source.indexOf("function renderMobileFullFiltersSheet()");
-  const fullFilterEnd = source.indexOf("function renderDesktopSortControl()", fullFilterStart);
-  const fullFilter = source.slice(fullFilterStart, fullFilterEnd);
+  const fullStart = source.indexOf("function renderMobileFullFiltersSheet()");
+  const fullEnd = source.indexOf("function renderDesktopSortControl()", fullStart);
+  const full = source.slice(fullStart, fullEnd);
+  assert.match(full, /bg-\[#F2F4F8\]/);
+  assert.match(full, /min-h-\[76px\]/);
+  assert.match(full, /text-\[18px\] font-bold leading-\[23px\] text-slate-950/);
+  assert.match(full, /h-\[22px\] w-\[22px\]/);
+  assert.match(full, /px-6 pb-8 pt-4/);
+  assert.match(full, /gap-3\.5 border-t border-\[#D8DEE8\]/);
+  assert.match(full, /min-h-\[50px\][^"]*bg-\[#004BB8\][^"]*text-base font-bold leading-\[22px\]/);
 
-  assert.match(fullFilter, /bg-\[#F2F4F8\]/);
-  assert.match(fullFilter, /overflow-y-auto overscroll-contain bg-\[#F2F4F8\]/);
-  assert.doesNotMatch(fullFilter, /overflow-y-auto overscroll-contain bg-white/);
+  assert.match(sheet, /grid gap-6 bg-transparent/);
+  assert.match(sheet, /text-\[15px\] font-extrabold text-slate-950/);
+  assert.match(sheet, /min-h-\[46px\]/);
+  assert.match(sheet, /border-\[#D8DEE8\] bg-transparent/);
+  assert.doesNotMatch(sheet, /data-mobile-flight-filter-footer|border-b border-slate-200 pb-6/);
 
-  const quickStart = source.indexOf("const sheet = mobileShortcutSheet");
-  const quickEnd = source.indexOf("return (", quickStart);
-  const quickSheet = source.slice(quickStart, quickEnd);
-  assert.match(quickSheet, /bg-\[rgba\(15,23,42,0\.35\)\]/);
-  assert.match(quickSheet, /rounded-t-\[24px\][^"]*bg-\[#F2F4F8\]/);
-  assert.match(quickSheet, /overflow-y-auto overscroll-contain bg-\[#F2F4F8\]/);
-  assert.match(quickSheet, /border-t border-\[#D8DEE8\] bg-\[#F2F4F8\]/);
-  assert.match(quickSheet, /border border-\[#D8DEE8\] bg-\[#F2F4F8\]/);
+  const quickStart = source.indexOf("const renderSortChoice =");
+  const quickEnd = source.indexOf("function renderFloatingFilterButton", quickStart);
+  const quick = source.slice(quickStart, quickEnd);
+  assert.match(quick, /cars-native-quick-scrim/);
+  assert.match(quick, /cars-native-quick-sheet/);
+  assert.match(quick, /min-h-\[240px\]/);
+  assert.match(quick, /max-h-\[min\(76dvh,620px\)\]/);
+  assert.match(quick, /grid min-h-\[76px\][^"]*grid-cols-\[44px_minmax\(0,1fr\)_44px\]/);
+  assert.match(quick, /min-h-\[52px\]/);
+  assert.match(quick, /rounded-\[4px\] border-\[1\.5px\]/);
+  assert.match(quick, /bg-\[#004BB8\]/);
+  assert.doesNotMatch(quick, /bg-\[#075EE8\]/);
 
-  assert.match(sheet, /data-mobile-flight-filter-footer[^\n]*border-t border-\[#D8DEE8\] bg-\[#F2F4F8\]/);
-  assert.match(sheet, /rounded-xl border border-\[#D8DEE8\] bg-\[#F2F4F8\]/);
+  assert.match(styles, /cars-native-quick-scrim-in[\s\S]*160ms ease-out/);
+  assert.match(styles, /cars-native-quick-sheet-in[\s\S]*220ms ease-out/);
 });
 
 test("pagination uses an occluding full-page transition with an accessible status on mobile and desktop", async () => {
