@@ -112,6 +112,27 @@ body {
   font-family: var(--font-sans);
 }
 
+/* The Cars Results route paints its own compact presentation-only thumb while
+   retaining the document as the sole mobile scroll owner. */
+@media (max-width: 639px) {
+  html[data-cars-results-scroll-indicator],
+  html[data-cars-results-scroll-indicator] body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html[data-cars-results-scroll-indicator]::-webkit-scrollbar,
+  html[data-cars-results-scroll-indicator] body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  div[data-cars-results-scroll-indicator] {
+    display: block;
+  }
+}
+
 a {
   text-decoration: none;
 }
