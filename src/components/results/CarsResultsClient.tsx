@@ -1805,9 +1805,7 @@ export function CarsResultsExperience({
   const [quickFilterDraft, setQuickFilterDraft] = useState<string[]>([]);
   const [quickSortDraft, setQuickSortDraft] = useState<CarSort>("recommended");
   const [quickFilterUpdating, setQuickFilterUpdating] = useState(false);
-  const [quickSheetClosing, setQuickSheetClosing] = useState(false);
   const quickFilterFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const quickSheetCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mobileFiltersOverlayOpen = filtersOpen || quickFilterGroupId !== null;
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
@@ -2062,23 +2060,17 @@ export function CarsResultsExperience({
     setQuickFilterUpdating(true);
     quickFilterFeedbackTimerRef.current = setTimeout(() => setQuickFilterUpdating(false), 400);
   };
-  const closeQuickFilter = () => {
-    if (quickSheetClosing || quickFilterGroupId === null) return;
-    setQuickSheetClosing(true);
-    quickSheetCloseTimerRef.current = setTimeout(() => {
-      setQuickFilterGroupId(null);
-      setQuickSheetClosing(false);
-      setQuickFilterUpdating(false);
-    }, 220);
-  };
+  const closeQuickFilter = useCallback(() => {
+    if (quickFilterGroupId === null) return;
+    setQuickFilterGroupId(null);
+    setQuickFilterUpdating(false);
+  }, [quickFilterGroupId]);
   const openQuickFilter = (kind: string, launcher: HTMLButtonElement, modality: OverlayActivationModality) => {
-    if (quickSheetCloseTimerRef.current) clearTimeout(quickSheetCloseTimerRef.current);
     mobileFiltersLauncherRef.current = launcher;
     mobileFiltersModalityRef.current = modality;
     setQuickFilterDraft(kind === "sort" ? [] : [...(selectedCarFilters[kind] ?? [])]);
     setQuickSortDraft(sort);
     setQuickFilterUpdating(false);
-    setQuickSheetClosing(false);
     setFiltersOpen(false);
     setQuickFilterGroupId(kind);
   };
@@ -2088,8 +2080,6 @@ export function CarsResultsExperience({
         clearTimeout(resultsTransitionTimerRef.current);
       if (quickFilterFeedbackTimerRef.current)
         clearTimeout(quickFilterFeedbackTimerRef.current);
-      if (quickSheetCloseTimerRef.current)
-        clearTimeout(quickSheetCloseTimerRef.current);
     },
     [],
   );
@@ -2190,7 +2180,7 @@ export function CarsResultsExperience({
       media.removeEventListener("change", closeForDesktop);
       if (shouldRestoreFocus) restoreOverlayLauncherFocus(launcher, mobileFiltersModalityRef.current);
     };
-  }, [filtersOpen, quickFilterGroupId]);
+  }, [closeQuickFilter, filtersOpen, quickFilterGroupId]);
 
   useEffect(() => {
     if (presentation !== "standalone" || typeof window === "undefined")
@@ -2924,7 +2914,7 @@ export function CarsResultsExperience({
           <div
             aria-hidden="true"
             data-cars-quick-sheet-scrim
-            className={cn("cars-native-quick-scrim pointer-events-none absolute inset-0 bg-[rgba(15,23,42,0.35)]", quickSheetClosing && "cars-native-quick-scrim--closing")}
+            className="cars-native-quick-scrim pointer-events-none absolute inset-0 bg-[rgba(15,23,42,0.35)]"
           />
           <section
             data-cars-quick-sheet
@@ -2934,7 +2924,7 @@ export function CarsResultsExperience({
             aria-modal="true"
             aria-labelledby={`cars-quick-${quickFilterGroupId}`}
             onMouseDown={(event) => event.stopPropagation()}
-            className={cn("cars-native-quick-sheet relative z-10 flex min-h-[240px] max-h-[min(76dvh,620px)] w-full flex-col overflow-hidden rounded-t-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]", quickSheetClosing && "cars-native-quick-sheet--closing")}
+            className="cars-native-quick-sheet relative z-10 flex min-h-[240px] max-h-[min(76dvh,620px)] w-full flex-col overflow-hidden rounded-t-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]"
           >
             <header className="grid min-h-[76px] shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-center bg-[#F2F4F8] px-[10px]">
               <span aria-hidden="true" className="h-11 w-11" />
