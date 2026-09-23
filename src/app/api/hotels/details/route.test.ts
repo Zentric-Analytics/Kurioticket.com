@@ -438,3 +438,36 @@ test("KAYAK Hotel details can recommend Kurioticket hotels from the same merged 
   assert.equal(payload.relatedHotels[0]?.provider, "Kurioticket static catalogue");
   assert.equal(Object.hasOwn(payload.relatedHotels[0] ?? {}, "rawProviderReference"), false);
 });
+
+test("KAYAK details without a destination recover related hotels from the original cached search", async () => {
+  const selected = testHotel("kayak-sandbox:original-search-selected", "Selected KAYAK Hotel");
+  selected.provider = "KAYAK sandbox";
+  const alternative = testHotel("kayak-sandbox:original-search-alternative", "Alternative KAYAK Hotel");
+  alternative.provider = "KAYAK sandbox";
+  const unrelated = testHotel("kayak-sandbox:unrelated-search", "Unrelated Hotel");
+  rememberHotels([selected, alternative], {
+    destinationId: "hotel:us-new-york",
+    destination: "New York",
+    checkIn: "2027-10-01",
+    checkOut: "2027-10-08",
+    guests: 1,
+    rooms: 1,
+  });
+  rememberHotels([unrelated], {
+    destination: "London",
+    checkIn: "2027-10-01",
+    checkOut: "2027-10-08",
+    guests: 1,
+    rooms: 1,
+  });
+
+  const response = await GET(new Request(
+    "https://kurioticket.test/api/hotels/details?id=kayak-sandbox%3Aoriginal-search-selected&checkIn=2027-10-01&checkOut=2027-10-08&guests=1&rooms=1&relatedLimit=12",
+  ));
+  const payload = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(payload.hotel.id, selected.id);
+  assert.deepEqual(payload.relatedHotels.map((hotel: { id: string }) => hotel.id), [alternative.id]);
+  assert.equal(Object.hasOwn(payload.relatedHotels[0], "rawProviderReference"), false);
+  assert.equal(payload.relatedHotelsHasMore, false);
+});

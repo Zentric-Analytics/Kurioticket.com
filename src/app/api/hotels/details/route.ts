@@ -114,7 +114,7 @@ export async function GET(request: Request) {
   };
   const memoryContext = search.destination
     ? getHotelDetailsCacheContext(id, search)
-    : null;
+    : getHotelDetailsCacheContext(id);
   const unscopedCached = !record && !memoryContext
     ? getHotelFromCache(id)
     : null;
