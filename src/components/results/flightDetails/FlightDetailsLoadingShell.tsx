@@ -54,8 +54,19 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
                 </div>
               </div>
             </div>
-            <div className="mt-7 h-6 w-36 animate-pulse rounded bg-slate-200" />
-            <div className="mt-3 h-40 w-[min(78vw,275px)] max-w-[275px] animate-pulse rounded-[10px] bg-slate-100" />
+            <div className="mt-7 h-[23px] w-[136px] animate-pulse rounded bg-slate-200" />
+            <div data-mobile-native-fare-loading className="mt-3 flex gap-[10px] overflow-hidden pb-[18px] pr-[38px] sm:hidden">
+              {[0, 1].map((index) => (
+                <div key={index} className="relative h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-1.5 shadow-[0_2px_6px_rgba(7,19,59,0.06)]">
+                  <div className="flex justify-center gap-[7px]"><div className="h-6 w-6 animate-pulse rounded-lg bg-slate-200" /><div className="mt-1.5 h-3 w-[72px] animate-pulse rounded bg-slate-200" /></div>
+                  <div className="mt-[5px] space-y-[5px]">
+                    {[0, 1, 2].map((row) => <div key={row} className="flex items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200" /><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-200" /></div>)}
+                  </div>
+                  <div className="absolute inset-x-3 bottom-1.5 flex justify-center"><div className="h-4 w-[82px] animate-pulse rounded bg-slate-200" /></div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 hidden h-40 w-[275px] animate-pulse rounded-[10px] bg-slate-100 sm:block" />
             <div className="mt-6 h-44 animate-pulse rounded-[10px] bg-slate-100" />
             </div>
           </div>
