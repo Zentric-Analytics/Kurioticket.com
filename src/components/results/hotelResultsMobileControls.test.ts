@@ -59,7 +59,7 @@ test("Hotel mobile filter and quick-filter surfaces match Cars background treatm
   assert.doesNotMatch(resultsSource, /aria-label="Hotel filters"[sS]{0,500}bg-[#F1F3F8]|sm:bg-[#F6F8FB]/);
 });
 
-test("mobile Hotel shortcut rail follows the Cars Results toolbar structure", () => {
+test("mobile Hotel shortcut rail keeps Cars geometry while Sort stays with the results summary", () => {
   const toolbarStart = resultsSource.indexOf(
     "data-mobile-hotel-shortcuts",
   );
@@ -70,7 +70,8 @@ test("mobile Hotel shortcut rail follows the Cars Results toolbar structure", ()
   assert.match(resultsSource, /setFiltersOpen\(true\)/);
   assert.match(resultsSource, /activeFilterCount/);
   assert.match(resultsSource, /type MobileHotelShortcutMenu = "price" \| "stars" \| "amenities" \| "roomTypes" \| "sort"/);
-  assert.match(toolbar, /<span>Filter<\/span>[\s\S]*Sort hotels:[\s\S]*trigger\("price", "Price"[\s\S]*trigger\("stars", "Stars"[\s\S]*trigger\("amenities", "Facilities"[\s\S]*trigger\("roomTypes", "Room & bed"/);
+  assert.match(toolbar, /<span>Filter<\/span>[\s\S]*trigger\("price", "Price"[\s\S]*trigger\("stars", "Stars"[\s\S]*trigger\("amenities", "Facilities"[\s\S]*trigger\("roomTypes", "Room & bed"/);
+  assert.doesNotMatch(toolbar, /Sort hotels:|openMobileShortcutMenu\("sort"/);
   assert.match(resultsSource, /handleMobileSortSelection/);
   assert.match(resultsSource, /aria-pressed=\{hotelSummarySortMode === option.value\}/);
   assert.match(resultsSource, /updateHotelSummarySortMode\(value\)/);
@@ -92,7 +93,7 @@ test("mobile Hotel shortcut rail follows the Cars Results toolbar structure", ()
   assert.match(resultsSource, /data-hotel-results-toolbar/);
 });
 
-test("standalone mobile Hotel summary keeps result count while Sort lives in the Cars-style quick-filter rail", () => {
+test("standalone mobile Hotel summary keeps result count with Sort in its previous position", () => {
   const desktopSummary = resultsSource.indexOf('ref={standaloneResultsHeadingRef}');
   const priceAlert = resultsSource.indexOf("<HotelPriceAlertControl", desktopSummary);
   const mobileSummary = resultsSource.indexOf("data-mobile-hotel-results-summary", priceAlert);
@@ -108,7 +109,8 @@ test("standalone mobile Hotel summary keeps result count while Sort lives in the
   assert.match(mobileMarkup, /className="[^"]*sm:hidden"/);
   assert.doesNotMatch(mobileMarkup, /standaloneResultsHeadingRef|guidedResultsHeadingRef|HotelPriceAlertControl/);
   assert.match(mobileMarkup, /\{resultsHeading\}/);
-  assert.doesNotMatch(mobileMarkup, /<span>Sort:<\/span>|openMobileShortcutMenu\("sort"/);
+  assert.match(mobileMarkup, /<span>Sort:<\/span>[\s\S]*currentSortLabel/);
+  assert.match(mobileMarkup, /openMobileShortcutMenu\("sort", event\.currentTarget\)/);
   assert.match(mobileMarkup, /totalHotelResultPages > 1/);
   assert.equal(resultsSource.match(/data-mobile-hotel-results-summary/g)?.length, 1);
 
