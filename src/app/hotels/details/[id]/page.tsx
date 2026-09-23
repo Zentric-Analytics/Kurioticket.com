@@ -8,6 +8,7 @@ import {
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
+import { decodeHotelRouteId } from "@/lib/hotels/hotelRouteId";
 
 type HotelDetailsPageProps = {
   params: Promise<{ id: string }>;
@@ -34,7 +35,8 @@ export default async function HotelDetailsPage({
   params,
   searchParams,
 }: HotelDetailsPageProps) {
-  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const [{ id: routeId }, query] = await Promise.all([params, searchParams]);
+  const id = decodeHotelRouteId(routeId);
   const searchContext = {
     destinationId: getFirstSearchParam(query.destinationId),
     destination: getFirstSearchParam(query.destination),
