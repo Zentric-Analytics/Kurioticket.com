@@ -729,12 +729,12 @@ test("mobile web Flight Details owns the Kurioticket branded header while deskto
   const header = await readFile(new URL("./MobileFlightDetailsBrandHeader.tsx", import.meta.url), "utf8");
 
   assert.match(source, /<MobileFlightDetailsBrandHeader[\s\S]*resultsHref=\{resultsHref\}[\s\S]*saved=\{flightSaved\}/);
-  assert.match(source, /data-testid="flight-details-hero"[\s\S]*pt-8 sm:min-h-\[280px\][\s\S]*sm:pt-5/);
+  assert.match(source, /data-testid="flight-details-hero"[\s\S]*min-h-\[290px\][\s\S]*pt-10 sm:min-h-\[280px\][\s\S]*sm:pt-5/);
   assert.match(source, /relative z-10 hidden items-start justify-between gap-3 sm:flex/);
   assert.match(source, /function FlightDetailsUnavailable[\s\S]*<MobileFlightDetailsBrandHeader resultsHref=\{resultsHref\} actionsDisabled\/>/);
 
   assert.match(loading, /<MobileFlightDetailsBrandHeader resultsHref=\{resultsHref\} actionsDisabled\/>/);
-  assert.match(loading, /min-h-\[318px\][\s\S]*pt-4 sm:min-h-\[280px\]/);
+  assert.match(loading, /min-h-\[290px\][\s\S]*pt-10 sm:min-h-\[280px\]/);
   assert.match(loading, /relative z-10 hidden items-start justify-between gap-3 sm:flex/);
 
   assert.match(header, /data-mobile-flight-details-brand-header/);
@@ -840,7 +840,7 @@ test("mobile web Fare information surfaces match native information hierarchy", 
   assert.doesNotMatch(deck, /rounded-\[10px\] border border-\[#E2E8F0\] p-4/);
 });
 
-test("mobile selected deal controls phone price and Continue deal while tablet keeps legacy checkout", async () => {
+test("mobile selected deal controls native-sized phone checkout while tablet keeps legacy checkout", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
 
   assert.match(source, /nativeFlightDealSelection\(selectedDealOfferId, selectedFare\)/);
@@ -851,11 +851,19 @@ test("mobile selected deal controls phone price and Continue deal while tablet k
   assert.match(source, /price=\{mobilePrice\}/);
   assert.match(source, /onContinue=\{\(\) => continueToOffer\(selectedDeal\?\.offerId \?\? selectedOffer\.id\)\}/);
   assert.match(source, /label="Continue deal" pendingLabel="Checking offer…"/);
+  assert.match(source, /Total for \$\{travelerCount\} traveler/);
+  assert.match(source, /min-h-\[88px\].*px-\[18px\].*pt-\[11px\]/);
+  assert.match(source, /pb-\[max\(10px,env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(source, /flex min-h-\[48px\] items-center justify-between gap-\[14px\]/);
+  assert.match(source, /text-\[19px\] font-semibold leading-\[22px\] tracking-\[-0\.25px\].*tabular-nums/);
+  assert.match(source, /text-\[11px\] font-semibold leading-4 text-\[#536B92\]/);
+  assert.match(source, /mobileDock \? "inline-flex h-12 min-w-\[140px\] max-w-\[180px\] flex-\[0\.78\]"/);
+  assert.match(source, /mobileDock \? "text-xs font-bold"/);
+  assert.match(source, /\{!mobileDock \? <LockKeyhole/);
   assert.match(source, /shadow-\[0_-4px_12px_rgba\(7,19,59,0\.10\)\] sm:hidden/);
   assert.match(source, /<TabletCheckoutDock travelerCount=\{travelers\.count\} price=\{providerPrice\}/);
   assert.match(source, /hidden border-t.*sm:block lg:hidden/);
 });
-
 test("fare centering is rail-relative and clamps only at real edges", () => {
   const geometry = { railLeft: 16, railScrollLeft: 0, railClientWidth: 358, railScrollWidth: 849, selectedWidth: 275 };
   assert.equal(getCenteredFareScrollLeft({ ...geometry, selectedLeft: 315 }), 257.5);
