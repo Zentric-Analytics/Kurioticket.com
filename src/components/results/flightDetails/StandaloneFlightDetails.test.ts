@@ -723,6 +723,33 @@ test("Flight Details web hero reuses the native asset and keeps navigation acces
   assert.match(loadingSource, /<Share2 className="h-\[18px\] w-\[18px\]"/);
 });
 
+test("mobile web Flight Details owns the Kurioticket branded header while desktop keeps hero controls", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const loading = await readFile(new URL("./FlightDetailsLoadingShell.tsx", import.meta.url), "utf8");
+  const header = await readFile(new URL("./MobileFlightDetailsBrandHeader.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /<MobileFlightDetailsBrandHeader[\s\S]*resultsHref=\{resultsHref\}[\s\S]*saved=\{flightSaved\}/);
+  assert.match(source, /data-testid="flight-details-hero"[\s\S]*pt-4 sm:min-h-\[280px\]/);
+  assert.match(source, /relative z-10 hidden items-start justify-between gap-3 sm:flex/);
+  assert.match(source, /function FlightDetailsUnavailable[\s\S]*<MobileFlightDetailsBrandHeader resultsHref=\{resultsHref\} actionsDisabled\/>/);
+
+  assert.match(loading, /<MobileFlightDetailsBrandHeader resultsHref=\{resultsHref\} actionsDisabled\/>/);
+  assert.match(loading, /min-h-\[318px\][\s\S]*pt-4 sm:min-h-\[280px\]/);
+  assert.match(loading, /relative z-10 hidden items-start justify-between gap-3 sm:flex/);
+
+  assert.match(header, /data-mobile-flight-details-brand-header/);
+  assert.match(header, /bg-white px-4 pt-\[env\(safe-area-inset-top\)\] sm:hidden/);
+  assert.match(header, /src="\/brand\/kurioticket-logo-primary-light-bg\.svg"/);
+  assert.match(header, /alt="Kurioticket"/);
+  assert.match(header, /aria-label="Back to results"/);
+  assert.match(header, /aria-label=\{saved \? "Remove saved flight" : "Save flight"\}/);
+  assert.match(header, /aria-label="Share flight"/);
+  assert.match(header, /h-\[25px\] w-\[25px\]/);
+  assert.match(header, /h-8 w-32/);
+  assert.match(header, /h-\[21px\] w-\[21px\]/);
+  assert.match(header, /h-5 w-5/);
+});
+
 test("Flight Details mobile cleanup uses compact hero actions, native fare rail, peek tabs, and fare information", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   const fareSource = await readFile(new URL("./MobileNativeFareRail.tsx", import.meta.url), "utf8");

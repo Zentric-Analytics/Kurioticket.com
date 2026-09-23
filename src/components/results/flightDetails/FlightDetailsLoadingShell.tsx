@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import flightDetailsHero from "../../../../apps/mobile/assets/heroes/flight-details-hero.webp";
+import { MobileFlightDetailsBrandHeader } from "@/components/results/flightDetails/MobileFlightDetailsBrandHeader";
 
 export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: string }) {
   return (
@@ -11,10 +12,11 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
         <div role="status" aria-label="Loading flight details" className="grid gap-5 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
           <span className="sr-only">Loading flight details</span>
           <div className="overflow-hidden border-y border-slate-200 bg-[#F5F7FB] sm:rounded-[15px] sm:border sm:bg-white">
-            <div className="relative min-h-[318px] overflow-hidden px-4 pb-[122px] pt-[calc(1rem+env(safe-area-inset-top))] sm:min-h-[280px] sm:px-6 sm:pb-16 sm:pt-5 lg:min-h-[300px]">
+            {resultsHref ? <MobileFlightDetailsBrandHeader resultsHref={resultsHref} actionsDisabled/> : null}
+            <div className="relative min-h-[318px] overflow-hidden px-4 pb-[122px] pt-4 sm:min-h-[280px] sm:px-6 sm:pb-16 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
               <div className="absolute inset-0 bg-slate-950/50" aria-hidden="true" />
-              <div className="relative z-10 flex items-start justify-between gap-3">
+              <div className="relative z-10 hidden items-start justify-between gap-3 sm:flex">
                 {resultsHref ? (
                   <Link
                     href={resultsHref}

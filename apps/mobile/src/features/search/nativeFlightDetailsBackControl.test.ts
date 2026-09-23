@@ -10,30 +10,27 @@ const styleBody = (name: string) => {
   return match[1];
 };
 
-test("loaded and loading states share one branded header", () => {
-  assert.match(source, /function FlightDetailsBrandHeader/);
-  assert.equal((source.match(/<FlightDetailsBrandHeader/g) ?? []).length, 3);
-  assert.match(source, /testID="flight-details-brand-header"/);
-  assert.match(source, /accessibilityLabel="Back to results"/);
-  assert.match(source, /accessibilityLabel="Kurioticket"/);
-  assert.match(source, /accessibilityLabel=\{saved\?"Remove saved flight":"Save flight"\}/);
-  assert.match(source, /accessibilityLabel="Share flight"/);
+test("loaded and loading Back controls use the same isolated wrapper", () => {
+  assert.match(source, /testID="flight-details-back-control" style=\{\[s\.heroBackControl,\{top:inset\.top\+8\}\]\}/);
+  assert.match(source, /testID="flight-details-loading-back-control" style=\{\[s\.heroBackControl,\{top:topInset\+8\}\]\}/);
+  assert.match(source, /heroBackControl:\{position:"absolute",left:16,width:44,height:44,zIndex:20\}/);
+  assert.match(source, /heroIconButton:\{width:44,height:44,borderRadius:22/);
 });
 
-test("brand header keeps compact touch targets and one continuous white surface", () => {
-  assert.match(styleBody("brandHeader"), /backgroundColor:"#FFFFFF"/);
-  assert.match(styleBody("brandHeaderRow"), /height:64/);
-  assert.match(styleBody("brandHeaderRow"), /paddingHorizontal:16/);
-  assert.match(styleBody("brandHeaderAction"), /width:44,height:44/);
-  assert.match(styleBody("brandHeaderLogo"), /width:128,height:32/);
-  assert.doesNotMatch(source, /heroBackControl|heroIconGlass|heroActionsGlass|floatingControl/);
+test("Back wrapper cannot become a full-width or flex-stretched surface", () => {
+  const backWrapper = styleBody("heroBackControl");
+
+  assert.doesNotMatch(backWrapper, /width:"100%"/);
+  assert.doesNotMatch(backWrapper, /(?:^|,)flex:1(?:,|$)/);
+  assert.doesNotMatch(backWrapper, /flexGrow:/);
+  assert.doesNotMatch(backWrapper, /alignSelf:"stretch"/);
+  assert.doesNotMatch(backWrapper, /right:/, "an absolute Back wrapper must not anchor both horizontal edges");
+  assert.doesNotMatch(backWrapper, /backgroundColor:|borderRadius:/, "the wrapper must not paint a pill behind the compact glass button");
+  assert.doesNotMatch(source, /heroControls:\{|floatingControls:\{/);
 });
 
-test("hero begins below the branded header instead of carrying navigation controls", () => {
-  const available = source.slice(source.indexOf('return <SafeAreaView edges={[]}'), source.indexOf("function FlightDetailsLoadingSkeleton"));
-  const header = available.indexOf("<FlightDetailsBrandHeader");
-  const scroll = available.indexOf('<ScrollView testID="flight-details-scroll-content"');
-  const hero = available.indexOf('<ImageBackground testID="flight-details-hero"');
-  assert.ok(header > -1 && header < scroll && scroll < hero);
-  assert.doesNotMatch(available.slice(hero, available.indexOf("</ImageBackground>", hero)), /Back to results|Save flight|Share flight/);
+test("Back glass remains local to the compact touch target", () => {
+  const glass = styleBody("heroIconGlass");
+  assert.match(glass, /position:"absolute",left:2,right:2,top:2,bottom:2,borderRadius:20/);
+  assert.doesNotMatch(glass, /width:"100%"|flex(?:Grow)?:1/);
 });

@@ -34,17 +34,14 @@ test("every direct native interactive favorite uses the canonical stroke and fil
   assert.match(carResult, canonicalFlowHeart);
   assert.match(explore, canonicalFlowHeart);
   for (const detail of [hotelResult, hotelDetail, approvedHotelDetail]) assert.match(detail, canonicalHeart);
-  assert.match(flightDetail, /const saveColor=saveDisabled\?"#94A3B8":saved\?androidFavoriteColors\.savedStroke:androidFavoriteColors\.unsavedStroke/);
-  assert.match(flightDetail, /<Heart[^>]*strokeWidth=\{androidFavoriteColors\.strokeWidth\}[^>]*color=\{saveColor\}[^>]*fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}/);
+  assert.match(flightDetail, /<Heart[^>]*strokeWidth=\{androidFavoriteColors\.strokeWidth\}[^>]*color=\{saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\}[^>]*fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}/);
   for (const detail of [carDetail, kayakCarDetail]) assert.match(detail, /<Heart[^>]*strokeWidth=\{androidFavoriteColors\.strokeWidth\}[^>]*color=\{saved\.saved\s*\?\s*androidFavoriteColors\.savedStroke\s*:\s*light\s*\?\s*androidFavoriteColors\.unsavedStroke\s*:\s*theme\.icon\}[^>]*fill=\{saved\.saved\s*\?\s*androidFavoriteColors\.savedFill\s*:\s*androidFavoriteColors\.unsavedFill\}/);
 });
 
 test("interactive share icons use the same subtle stroke contract as unsaved hearts", () => {
-  for (const detail of [carResult, carDetail, kayakCarDetail, hotelResult, hotelDetail, approvedHotelDetail]) {
+  for (const detail of [carResult, carDetail, kayakCarDetail, hotelResult, hotelDetail, approvedHotelDetail, flightDetail]) {
     assert.match(detail, /(?:Share2|FlowIcon name="share")[^>]*strokeWidth=\{androidFavoriteColors\.strokeWidth\}[^>]*(?:androidFavoriteColors\.shareStroke|theme\.dark \? theme\.icon : androidFavoriteColors\.shareStroke)/);
   }
-  assert.match(flightDetail, /const shareColor=shareDisabled\?"#94A3B8":androidFavoriteColors\.shareStroke/);
-  assert.match(flightDetail, /<FlowIcon name="share"[^>]*strokeWidth=\{androidFavoriteColors\.strokeWidth\}[^>]*color=\{shareColor\}/);
 });
 
 test("legacy interactive favorite colors and empty fills cannot return", () => {
@@ -57,6 +54,6 @@ test("legacy interactive favorite colors and empty fills cannot return", () => {
   assert.doesNotMatch(carDetail, /<Heart[^>]*(?:#075EE8|fill="none")/);
   assert.doesNotMatch(hotelResult, /<Heart[^>]*(?:#E11D48|theme\.icon|HOTEL_UTILITY_ICON_COLOR|fill="none")/);
   assert.doesNotMatch(hotelDetail, /<Heart[^>]*(?:hotelIdentityActionColor|fill="transparent")/);
-  assert.match(flightDetail, /<Heart[^>]*color=\{saveColor\}[^>]*fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}/);
+  assert.match(flightDetail, /<Heart[^>]*color=\{saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\}[^>]*fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}/);
   assert.doesNotMatch(flightDetail, /<Heart[^>]*fill="transparent"/);
 });
