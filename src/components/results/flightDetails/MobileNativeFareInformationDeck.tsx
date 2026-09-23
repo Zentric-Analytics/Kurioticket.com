@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ExternalLink, Info, Leaf } from "lucide-react";
+import { Check, ExternalLink, Leaf } from "lucide-react";
 
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { ExchangeRates } from "@/lib/currency/exchangeRates";
