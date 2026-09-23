@@ -66,10 +66,10 @@ test("picker query is isolated until an explicit candidate selection", () => {
     /onChange=\{\(event\) => \{[\s\S]*?setQuery\(event\.target\.value\)[\s\S]*?setDraft\(null\)/,
   );
   assert.doesNotMatch(pickerSource, /onChange=\{[^}]*onCommit/);
-  assert.match(pickerSource, /onCommit\(draft\.value\);\s*requestClose\(\)/);
+  assert.match(pickerSource, /onCommit\(draft\.value, draft\);\s*requestClose\(\)/);
   assert.match(
     pickerSource,
-    /if \(commitOnSelect\) \{\s*onCommit\(item\.value\);\s*requestClose\(\);/,
+    /if \(commitOnSelect\) \{\s*onCommit\(item\.value, item\);\s*requestClose\(\);/,
   );
 });
 
@@ -81,11 +81,11 @@ test("both Results location pickers opt into immediate canonical commit", () => 
   assert.equal((dialogs.match(/commitOnSelect/g) ?? []).length, 2);
   assert.match(
     dialogs,
-    /mode="pickup"[\s\S]*?commitOnSelect[\s\S]*?onCommit=\{setPickupLocation\}/,
+    /mode="pickup"[\s\S]*?commitOnSelect[\s\S]*?onCommit=\{\(nextValue, suggestion\) => \{[\s\S]*?setPickupLocation\(nextValue\)[\s\S]*?serializeSuggestionLocationTarget\(suggestion\)/,
   );
   assert.match(
     dialogs,
-    /mode="return"[\s\S]*?commitOnSelect[\s\S]*?onCommit=\{setDropoffLocation\}/,
+    /mode="return"[\s\S]*?commitOnSelect[\s\S]*?onCommit=\{\(nextValue, suggestion\) => \{[\s\S]*?setDropoffLocation\(nextValue\)[\s\S]*?serializeSuggestionLocationTarget\(suggestion\)/,
   );
 });
 

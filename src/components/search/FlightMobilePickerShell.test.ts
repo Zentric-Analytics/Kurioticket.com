@@ -26,6 +26,16 @@ test("navigation headers use a non-interactive spacer when Cancel is suppressed"
   );
 });
 
+test("white surface is opt-in and preserves the default Cars Results Edit surface", () => {
+  assert.match(source, /surfaceVariant\?: "default" \| "white"/);
+  assert.match(source, /surfaceVariant = "default"/);
+  assert.match(source, /const whiteSurface = surfaceVariant === "white"/);
+  assert.ok(
+    (source.match(/carsResultsEdit && !whiteSurface && "bg-\[#F5F7FB\]"/g) ?? [])
+      .length >= 3,
+  );
+});
+
 test("close restores the page once and instantly before unmounting the shell", () => {
   assert.match(source, /scrollX: number/);
   assert.match(source, /scrollY: number/);
