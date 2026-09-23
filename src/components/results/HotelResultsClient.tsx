@@ -1708,19 +1708,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
               {activeFilterCount > 0 ? <span className="rounded-full bg-[#004BB8] px-1.5 py-0.5 text-[10px] text-white">{activeFilterCount}</span> : null}
             </span>
           </button>
-          <button
-            type="button"
-            aria-haspopup="dialog"
-            aria-expanded={mobileShortcutMenu === "sort"}
-            aria-label={`Sort hotels: ${currentSortLabel}`}
-            onClick={(event) => openMobileShortcutMenu("sort", event.currentTarget)}
-            className={shortcutButtonClass}
-          >
-            <span className={cn(shortcutChipClass, "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50")}>
-              <span>{hotelSummarySortMode === "cheapest" ? "Sort" : currentSortLabel}</span>
-              <ChevronDown className={cn("h-[13px] w-[13px] shrink-0 text-slate-500 transition-transform", mobileShortcutMenu === "sort" && "rotate-180")} aria-hidden="true" />
-            </span>
-          </button>
           {hasPricedResults ? trigger("price", "Price", priceFilterActive ? 1 : 0) : null}
           {trigger("stars", "Stars", selectedHotelClasses.length)}
           {trigger("amenities", "Facilities", selectedFilters.facilities.length)}
@@ -2183,17 +2170,20 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                   {!guided && results.length > 0 ? <div className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)]" data-hotel-price-alert-row><HotelPriceAlertControl search={{ destination: body.destination, checkIn: body.checkIn, checkOut: body.checkOut, guests: body.guests, rooms: body.rooms }} results={results} /></div> : null}
 
                   {!guided ? (
-                    <div data-mobile-hotel-results-summary role="group" aria-label={t("hotelResults.summaryAria")} className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-2 sm:hidden">
-                      <div className="min-w-0 flex-1">
+                    <div data-mobile-hotel-results-summary role="group" aria-label={t("hotelResults.summaryAria")} className="flex items-center justify-between gap-2 sm:hidden">
+                      <div className="min-w-0">
                         <h1 tabIndex={-1} className="scroll-mt-20 truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#071A48]">
                           {resultsHeading}
                         </h1>
+                        {resultsDisplayRange && totalHotelResultPages > 1 ? (
+                          <p aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end}`} className="mt-0.5 text-xs font-medium leading-4 text-slate-500">
+                            Showing {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
+                          </p>
+                        ) : null}
                       </div>
-                      {resultsDisplayRange && totalHotelResultPages > 1 ? (
-                        <p aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end}`} className="shrink-0 whitespace-nowrap text-right text-xs font-medium leading-4 text-slate-500">
-                          {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
-                        </p>
-                      ) : null}
+                      <button type="button" aria-label={`Sort hotels: ${currentSortLabel}`} aria-haspopup="dialog" aria-expanded={mobileShortcutMenu === "sort"} onClick={(event) => openMobileShortcutMenu("sort", event.currentTarget)} className="focus-ring inline-flex min-h-[38px] min-w-[116px] shrink-0 items-center justify-center gap-[5px] rounded-[10px] border border-[#D8E1EC] px-2.5 py-2 text-[13px] font-medium leading-[17px] text-[#56658E]">
+                        <span>Sort:</span><span className="font-semibold text-[#071A48]">{currentSortLabel}</span><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
                     </div>
                   ) : null}
 
