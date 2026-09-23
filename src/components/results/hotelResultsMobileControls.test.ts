@@ -24,10 +24,10 @@ test("Hotel Results hides only the mobile category tabs", () => {
   assert.doesNotMatch(headerCall, /hideTravelNav/);
 });
 
-test("mobile Hotel search uses the Cars floating results summary below the page navbar", () => {
+test("mobile Hotel search keeps a flat sticky summary below the page navbar", () => {
   assert.doesNotMatch(resultsSource, /mobileResultsSearch=\{/);
-  assert.match(resultsSource, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
-  assert.match(resultsSource, /h-\[4\.25rem\][\s\S]*rounded-xl border border-slate-200\/80 bg-white/);
+  assert.match(resultsSource, /sticky top-0 z-40 bg-white pb-px pt-0 sm:hidden/);
+  assert.match(resultsSource, /h-14[\s\S]*rounded-md border border-slate-200\/80 bg-white/);
   assert.match(resultsSource, /max-w-\[30rem\]/);
   assert.match(resultsSource, /text-\[16px\] font-bold leading-5[\s\S]*text-\[#07133B\]/);
   assert.match(resultsSource, /text-\[12\.5px\] font-medium leading-4 text-\[#536B92\]/);
@@ -72,11 +72,11 @@ test("mobile Hotel shortcut rail keeps Filter Price Stars Facilities Room & bed 
   assert.match(resultsSource, /mobileShortcutDraftFacilities/);
   assert.match(resultsSource, /mobileShortcutDraftRoomTypes/);
   assert.match(toolbar, /overflow-x-auto/);
-  assert.match(toolbar, /flex min-w-max items-center gap-2/);
+  assert.match(toolbar, /flex min-w-max items-center gap-\[5px\]/);
   assert.doesNotMatch(toolbar, /<select/);
   assert.doesNotMatch(resultsSource, /mobileResultsSearch=/);
-  assert.match(resultsSource, /relative translate-y-1\/2/);
-  assert.match(resultsSource, /absolute inset-x-0 top-1\/2[\s\S]*?bg-slate-300/);
+  assert.match(resultsSource, /data-hotel-mobile-sticky-search/);
+  assert.doesNotMatch(resultsSource, /relative translate-y-1\/2/);
   assert.match(resultsSource, /hidden shrink-0 flex-nowrap[\s\S]*?sm:flex/);
 });
 
