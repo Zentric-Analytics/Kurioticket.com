@@ -47,21 +47,26 @@ test("mobile Flight Results uses the native horizontal gutter relationship", asy
   assert.match(card, /block w-full rounded-2xl/);
 });
 
-test("mobile Flight Results restores the brand footer and Hotel-style Back to top", async () => {
+test("Flight Results matches the Cars Back-to-top control", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
 
+  assert.match(source, /export const FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD = 320/);
   assert.match(source, /const \[showBackToTop, setShowBackToTop\] = useState\(false\)/);
-  assert.match(source, /setShowBackToTop\(window\.scrollY > 600\)/);
+  assert.match(source, /setShowBackToTop\(window\.scrollY >= FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD\)/);
   assert.match(source, /window\.addEventListener\("scroll", update, \{ passive: true \}\)/);
+  assert.match(source, /!guidedMode && showBackToTop && !filtersOpen/);
   assert.match(source, /aria-label="Back to top"/);
-  assert.match(source, /prefersReducedResultsMotion\(\) \? "auto" : "smooth"/);
-  assert.match(source, /focus-visible:outline-\[#004BB8\] sm:hidden/);
-  assert.match(source, /<ArrowUp className="h-\[18px\] w-\[18px\]"/);
+  assert.match(source, /window\.scrollTo\(\{ top: 0, left: 0, behavior: "auto" \}\)/);
+  assert.match(source, /bottom-\[calc\(3rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(source, /end-4 z-40/);
+  assert.match(source, /rounded-full/);
+  assert.match(source, /sm:bottom-\[calc\(1rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(source, /<ArrowUp className="h-5 w-5" aria-hidden="true"/);
+  assert.doesNotMatch(source, /sm:hidden|window\.scrollY > 600|prefersReducedResultsMotion\(\) \? "auto" : "smooth"/);
   assert.match(source, /<Footer variant="brand-legal-only" \/>/);
-  assert.doesNotMatch(source, /<div className="hidden sm:block"><Footer variant="brand-legal-only" \/><\/div>/);
 });
 
 test("Flight Results uses the normal AppHeader and the Cars summary below it", async () => {
