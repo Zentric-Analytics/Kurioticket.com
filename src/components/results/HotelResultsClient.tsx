@@ -315,7 +315,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const [mobileShortcutDraftMinPrice, setMobileShortcutDraftMinPrice] = useState(0);
   const [mobileShortcutDraftMaxPrice, setMobileShortcutDraftMaxPrice] = useState(1200);
   const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
-  const [lockIosHotelShortcutRow, setLockIosHotelShortcutRow] = useState(false);
   const [mobileHotelSearchClosing, setMobileHotelSearchClosing] = useState(false);
   const [mobileHotelNestedLayerOpen, setMobileHotelNestedLayerOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -346,6 +345,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const hotelSortOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const mobileShortcutMenuContentRef = useRef<HTMLDivElement | null>(null);
   const mobileShortcutTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const mobileShortcutRailRef = useRef<HTMLDivElement | null>(null);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const searchApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
@@ -367,10 +367,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   useEffect(() => {
     currencyRatesRef.current = currencyRates.rates;
   }, [currencyRates.rates]);
-
-  useEffect(() => {
-    setLockIosHotelShortcutRow(isIosHotelMobileWeb());
-  }, []);
 
   const providerMode = searchInput.provider === "kayak-sandbox" ? "kayak-sandbox" : undefined;
   const body = useMemo(
@@ -1464,13 +1460,19 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     closeMobileShortcutMenu(true);
   }
 
+  const clampIosHotelShortcutRail = useCallback(() => {
+    if (!isIosHotelMobileWeb()) return;
+    const rail = mobileShortcutRailRef.current;
+    if (!rail) return;
+    const maxScrollLeft = Math.max(0, rail.scrollWidth - rail.clientWidth);
+    const nextScrollLeft = Math.min(maxScrollLeft, Math.max(0, rail.scrollLeft));
+    if (Math.abs(rail.scrollLeft - nextScrollLeft) > 0.5) {
+      rail.scrollLeft = nextScrollLeft;
+    }
+  }, []);
+
   function renderMobileHotelShortcuts() {
-    const shortcutButtonClass = cn(
-      "focus-ring relative inline-flex h-8 items-center justify-center gap-[3px] whitespace-nowrap rounded-[7px] after:absolute after:-inset-y-1.5 after:inset-x-0 after:content-[''] border border-[#D8E1EC] bg-white text-[12px] font-semibold text-[#142033] transition hover:border-[#B9C8D9] hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
-      lockIosHotelShortcutRow
-        ? "min-w-0 flex-1 px-1 max-[360px]:gap-[2px] max-[360px]:text-[11px]"
-        : "shrink-0 px-1.5",
-    );
+    const shortcutButtonClass = "focus-ring relative inline-flex h-8 shrink-0 items-center justify-center gap-[3px] whitespace-nowrap rounded-[7px] after:absolute after:-inset-y-1.5 after:inset-x-0 after:content-[''] border border-[#D8E1EC] bg-white px-1.5 text-[12px] font-semibold text-[#142033] transition hover:border-[#B9C8D9] hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
     const menuItemClass = "flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-transparent bg-transparent px-0 text-left text-[14px] font-normal text-slate-800 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
     const trigger = (menu: MobileHotelShortcutMenu, label: string, count = 0) => (
       <button
@@ -1483,7 +1485,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           openMobileShortcutMenu(menu, event.currentTarget);
         }}
       >
-        <span className="min-w-0 truncate">{label}</span>
+        <span>{label}</span>
         {count > 0 ? <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#EAF2FB] px-1.5 text-[11px] font-bold text-[#004BB8]">{count}</span> : null}
         <ChevronDown aria-hidden="true" className={cn("h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform", mobileShortcutMenu === menu && "rotate-180")} />
       </button>
@@ -1581,19 +1583,13 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       <>
         <div data-mobile-hotel-shortcuts className="w-full min-w-0 bg-transparent">
           <div
-            className={cn(
-              "px-3",
-              lockIosHotelShortcutRow
-                ? "overflow-x-hidden touch-pan-y"
-                : "overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-            )}
+            ref={mobileShortcutRailRef}
+            className="overflow-x-auto overscroll-x-contain px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            onScroll={clampIosHotelShortcutRail}
+            onTouchEnd={() => window.requestAnimationFrame(clampIosHotelShortcutRail)}
+            onTouchCancel={() => window.requestAnimationFrame(clampIosHotelShortcutRail)}
           >
-            <div
-              className={cn(
-                "flex items-center gap-[5px] py-1",
-                lockIosHotelShortcutRow ? "w-full min-w-0" : "min-w-max",
-              )}
-            >
+            <div className="flex min-w-max items-center gap-[5px] py-1">
               <button
                 type="button"
                 className={cn(shortcutButtonClass, activeFilterCount > 0 && "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]")}
@@ -1604,7 +1600,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                 }}
               >
                 <SlidersHorizontal className="h-4 w-4 text-slate-700" strokeWidth={2.2} aria-hidden="true" />
-                <span className="min-w-0 truncate">Filter</span>
+                <span>Filter</span>
                 {activeFilterCount ? <span className="ms-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] text-[#004BB8]">{activeFilterCount}</span> : null}
               </button>
               {hasPricedResults ? trigger("price", "Price", priceFilterActive ? 1 : 0) : null}
