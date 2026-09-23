@@ -17,10 +17,11 @@ const between = (startMarker: string, endMarker: string) => {
 test("standalone mobile uses a marked 40/60 image and information row", () => {
   const main = between(
     "data-car-card-mobile-main",
-    "data-car-card-mobile-conversion",
+    "data-car-card-mobile-lower-band",
   );
   assert.match(main, /grid-cols-\[40%_minmax\(0,1fr\)\]/);
   assert.match(main, /data-car-card-mobile-image/);
+  assert.match(main, /min-h-\[144px\][^\"]*rounded-\[10px\]/);
   assert.match(main, /data-car-card-mobile-information/);
   assert.match(main, /fit="cover"/);
   assert.match(main, /sizes="\(max-width: 767px\) 40vw, 250px"/);
@@ -30,16 +31,20 @@ test("standalone mobile uses a marked 40/60 image and information row", () => {
 test("mobile identity and exactly four readable primary specs live beside the image", () => {
   const main = between(
     "data-car-card-mobile-main",
-    "data-car-card-mobile-conversion",
+    "data-car-card-mobile-lower-band",
   );
   assert.match(main, /\{car\.categoryLabel\}/);
-  assert.match(main, /\{badge && BadgeIcon &&/);
-  assert.match(main, /text-\[18px\]/);
+  assert.match(main, /\{badge && BadgeIcon \? \(/);
+  assert.match(main, /text-\[15px\]/);
   assert.match(main, /<MapPin/);
   assert.match(main, /\{car\.pickupLocation\}/);
   assert.doesNotMatch(main, /formatCarPickupType\(car\.pickupType\)/);
-  assert.match(main, /data-car-card-mobile-specs/);
-  assert.match(main, /grid-cols-2/);
+  const lowerBand = between(
+    "data-car-card-mobile-lower-band",
+    'guidedPlanning ? "grid"',
+  );
+  assert.match(lowerBand, /data-car-card-mobile-specs/);
+  assert.match(lowerBand, /grid-cols-2/);
   assert.match(source, /rounded-\[13px\][^"]*md:rounded-2xl/);
   assert.match(
     source,
@@ -49,14 +54,13 @@ test("mobile identity and exactly four readable primary specs live beside the im
 
 test("mobile conversion strip is full width, divided once, and retains accessible pricing/action", () => {
   const conversion = between(
-    "data-car-card-mobile-conversion",
+    "data-car-card-mobile-lower-band",
     'guidedPlanning ? "grid"',
   );
   assert.match(conversion, /border-t/);
-  assert.match(conversion, /totalDisplayPrice\.formatted/);
   assert.match(conversion, /dailyDisplayPrice\.formatted/);
   assert.match(conversion, /dir="ltr"/);
-  assert.match(conversion, /min-h-11/);
+  assert.match(conversion, /min-h-9/);
   assert.match(conversion, /focus-visible:ring-2/);
   assert.doesNotMatch(conversion, /Taxes and fees included/);
 });

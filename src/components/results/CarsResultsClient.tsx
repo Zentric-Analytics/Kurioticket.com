@@ -1748,7 +1748,7 @@ export function CarsResultsClient({
         </ol>
       </nav>
 
-      <div ref={resultsGridRef} className="page-shell pb-6 pt-12 sm:pt-6">
+      <div ref={resultsGridRef} className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-12 sm:pt-6">
         <CarsResultsExperience
           results={initialResults}
           search={values}
@@ -2705,7 +2705,7 @@ export function CarsResultsExperience({
                   aria-busy={paginationPendingPage !== null}
                   style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined}
                   className={cn(
-                    "w-full space-y-4",
+                    "w-full space-y-3.5 max-sm:!mt-2.5 sm:space-y-4",
                     !guidedPlanning && "w-full",
                   )}
                 >
@@ -2726,7 +2726,7 @@ export function CarsResultsExperience({
                   data-cars-results-card-list
                   aria-busy="false"
                   className={cn(
-                    "w-full space-y-4",
+                    "w-full space-y-3.5 max-sm:!mt-2.5 sm:space-y-4",
                     !guidedPlanning && "w-full",
                     paginationRevealing && "animate-[fadeIn_150ms_ease-out]",
                   )}
