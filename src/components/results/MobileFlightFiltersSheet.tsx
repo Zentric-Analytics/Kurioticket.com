@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 
 import type { PublicFlightResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -231,7 +231,20 @@ export function MobileFlightFiltersSheet({
       : searchedAirlines.slice(0, 5);
 
   const rangeClass =
-    "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
+    "h-11 w-full cursor-pointer appearance-none bg-transparent outline-none transition focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[linear-gradient(to_right,#004BB8_0_var(--flight-range-progress),#D8DEE8_var(--flight-range-progress)_100%)] [&::-webkit-slider-thumb]:mt-[-7px] [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#004BB8] [&::-webkit-slider-thumb]:shadow-[0_1px_4px_rgba(15,23,42,0.28)] [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-[#D8DEE8] [&::-moz-range-progress]:h-1 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#004BB8] [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-[3px] [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#004BB8] [&::-moz-range-thumb]:shadow-[0_1px_4px_rgba(15,23,42,0.28)]";
+
+  const rangeProgressStyle = (
+    value: number,
+    min: number,
+    max: number,
+  ): CSSProperties => {
+    const span = Math.max(1, max - min);
+    const progress = Math.max(0, Math.min(100, ((value - min) / span) * 100));
+
+    return {
+      "--flight-range-progress": `${progress}%`,
+    } as CSSProperties;
+  };
 
   return (
     <div data-mobile-flight-filter-sections className="grid gap-6 bg-transparent">
@@ -242,7 +255,12 @@ export function MobileFlightFiltersSheet({
           </label>
           <input
             aria-label="Maximum price"
-            className={cn(rangeClass, "mt-3")}
+            className={cn(rangeClass, "mt-1")}
+            style={rangeProgressStyle(
+              Math.min(maxPrice, priceBounds.max),
+              priceBounds.min,
+              priceBounds.max,
+            )}
             type="range"
             min={priceBounds.min}
             max={priceBounds.max}
@@ -329,7 +347,12 @@ export function MobileFlightFiltersSheet({
                     ? `Takeoff: ${leg.originAirport}`
                     : `Landing: ${leg.destinationAirport}`
                 }
-                className={cn(rangeClass, "mt-3")}
+                className={cn(rangeClass, "mt-1")}
+                style={rangeProgressStyle(
+                  selectedTime ?? legTimes.max,
+                  legTimes.min,
+                  legTimes.max,
+                )}
                 type="range"
                 min={legTimes.min}
                 max={legTimes.max}
@@ -356,7 +379,12 @@ export function MobileFlightFiltersSheet({
           </label>
           <input
             aria-label="Maximum travel time"
-            className={cn(rangeClass, "mt-3")}
+            className={cn(rangeClass, "mt-1")}
+            style={rangeProgressStyle(
+              maxDurationMinutes ?? durationBounds.max,
+              durationBounds.min,
+              durationBounds.max,
+            )}
             type="range"
             min={durationBounds.min}
             max={durationBounds.max}
