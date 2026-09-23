@@ -26,7 +26,7 @@ function renderLoading(dark = false, topInset = 47, bottomInset = 34, fareCardWi
   }).outputText;
   const theme = { dark, background: "#101114", surface: dark ? "#202126" : "#FFFFFF", border: dark ? "#454650" : "#CBD5E1" };
   const root = runInNewContext(code, {
-    React: { createElement: host }, View: "View", ScrollView: "ScrollView", SafeAreaView: "SafeAreaView",
+    React: { createElement: host }, require: () => ({}), View: "View", ScrollView: "ScrollView", SafeAreaView: "SafeAreaView",
     Pressable: "Pressable", Text: "Text", Image: "Image", ArrowLeft: "ArrowLeft", Heart: "Heart", FlowIcon: "FlowIcon", StatusBar: "StatusBar", Svg: "Svg", Path: "Path", Defs: "Defs", LinearGradient: "LinearGradient", Stop: "Stop", Rect: "Rect",
     Animated: { View: "Animated.View", Value: class { constructor(public value: number) {} } },
     useState: (value: unknown) => [value, () => {}], useRef: (current: unknown) => ({ current }), useEffect: () => {}, useCallback: (callback: unknown) => callback,
