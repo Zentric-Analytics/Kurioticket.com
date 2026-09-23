@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   ArrowLeft,
   Check,
@@ -11,13 +12,13 @@ import {
   Luggage,
   Leaf,
   Info,
+  Heart,
   MinusCircle,
-  Pencil,
   Plane,
+  Share2,
 } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
-import { FlightEditSearchDrawer, type FlightEditSearchValue } from "@/components/search/FlightEditSearchDrawer";
 import { FlightDetailsLoadingShell } from "@/components/results/flightDetails/FlightDetailsLoadingShell";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
@@ -31,8 +32,8 @@ import type {
   FlightDetailsResponse,
 } from "@/lib/flights/flightDetailsContract";
 import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
-import { appendFlightLegParams, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
 import type { FlightLeg, FlightProviderCondition, FlightSegment } from "@/lib/types";
+import { readSavedItemIds, toggleSavedItemId, writeSavedItemIds } from "@/lib/saved-items-local";
 import flightDetailsHero from "../../../../apps/mobile/assets/heroes/flight-details-hero.webp";
 
 type FareTab = "deals" | "details" | "conditions" | "extras";
@@ -45,7 +46,7 @@ const fareTabs: Array<{ id: FareTab; label: string }> = [
 
 export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resultsHref: string }) {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const { status: sessionStatus } = useSession();
   const detailsQuery = searchParams.toString();
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -58,8 +59,10 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const [selectedFareKey, setSelectedFareKey] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
   const [activeTab, setActiveTab] = useState<FareTab>("deals");
-  const [editSearchOpen, setEditSearchOpen] = useState(false);
-  const editSearchLauncherRef = useRef<HTMLButtonElement>(null);
+  const [localSavedFlightIds, setLocalSavedFlightIds] = useState<string[]>([]);
+  const [savedFlightBackendId, setSavedFlightBackendId] = useState<string | null>(null);
+  const [savedFlightPending, setSavedFlightPending] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
   const fareRailRef = useRef<HTMLDivElement>(null);
   const fareButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -93,12 +96,45 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     return () => controller.abort();
   }, [detailsQuery, id, reloadToken]);
 
+  useEffect(() => {
+    if (sessionStatus === "authenticated" || typeof window === "undefined") return;
+    setLocalSavedFlightIds(readSavedItemIds());
+  }, [sessionStatus]);
+
   const available = response?.status === "available" ? response : null;
   const fareChoices = useMemo(() => available?.fareChoices ?? [], [available]);
   const selectedFare = fareChoices.find((fare) => fare.key === selectedFareKey) ?? fareChoices[0];
   const selectedOffer = selectedFare?.offer ?? available?.flight;
+  const savedFlightKey = selectedOffer?.id ?? id;
   const handoff = selectedFare?.handoff ?? available?.handoff ?? { available: false as const };
   const canContinue = Boolean(selectedOffer && handoff.available);
+
+  useEffect(() => {
+    if (sessionStatus !== "authenticated" || !selectedOffer) {
+      setSavedFlightBackendId(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    fetch("/api/dashboard/saved?type=flight", {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return response.json() as Promise<{ items?: Array<{ id: string; payload?: Record<string, unknown> }> }>;
+      })
+      .then((data) => {
+        if (controller.signal.aborted) return;
+        const matching = data?.items?.find((item) => item.payload?.flightResultId === selectedOffer.id);
+        setSavedFlightBackendId(matching?.id ?? null);
+      })
+      .catch(() => undefined);
+
+    return () => controller.abort();
+  }, [selectedOffer, sessionStatus]);
+
+
 
   useEffect(() => {
     if (fareChoices.length < 2 || window.matchMedia("(min-width: 640px)").matches) return;
@@ -214,14 +250,94 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     tabRefs.current[next]?.focus();
   };
 
-  const submitEditedSearch = (value: FlightEditSearchValue) => {
-    const projected = projectSearchLegs(value.tripType, value.legs);
-    const params = new URLSearchParams({ tripType: value.tripType, origin: projected.origin, destination: projected.destination, departureDate: value.departureDate, adults: String(value.adults), children: String(value.children), infants: String(value.infants), travelers: String(value.adults + value.children + value.infants), cabinClass: value.cabinClass });
-    if (value.tripType === "round-trip" && value.returnDate) params.set("returnDate", value.returnDate);
-    if (value.tripType === "multi-city") appendFlightLegParams(params, value.legs);
-    setEditSearchOpen(false);
-    router.push(`/flights/results?${params.toString()}`);
-  };
+  async function toggleSavedFlight() {
+    if (!selectedOffer || savedFlightPending) return;
+    setSavedFlightPending(true);
+
+    try {
+      if (sessionStatus === "authenticated") {
+        if (savedFlightBackendId) {
+          const response = await fetch("/api/dashboard/saved", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ type: "flight", id: savedFlightBackendId }),
+          });
+          if (response.ok) setSavedFlightBackendId(null);
+          return;
+        }
+
+        const response = await fetch("/api/dashboard/saved", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({
+            type: "flight",
+            provider: selectedOffer.provider,
+            airlineName: selectedOffer.airlineName,
+            flightNumber: selectedOffer.flightNumber ?? null,
+            originAirport: selectedOffer.originAirport,
+            destinationAirport: selectedOffer.destinationAirport,
+            departureTime: selectedOffer.departureTime,
+            arrivalTime: selectedOffer.arrivalTime,
+            price: selectedOffer.price,
+            currency: selectedOffer.currency,
+            payload: {
+              flightResultId: selectedOffer.id,
+              detailsHref: window.location.pathname + window.location.search,
+            },
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json() as { item?: { id?: string } };
+          setSavedFlightBackendId(data.item?.id ?? selectedOffer.id);
+        } else if (response.status === 409) {
+          const existing = await fetch("/api/dashboard/saved?type=flight", {
+            headers: { Accept: "application/json" },
+          });
+          if (existing.ok) {
+            const data = await existing.json() as { items?: Array<{ id: string; payload?: Record<string, unknown> }> };
+            const matching = data.items?.find((item) => item.payload?.flightResultId === selectedOffer.id);
+            if (matching) setSavedFlightBackendId(matching.id);
+          }
+        }
+        return;
+      }
+
+      setLocalSavedFlightIds((current) => {
+        const next = toggleSavedItemId(current, savedFlightKey);
+        writeSavedItemIds(next);
+        return next;
+      });
+    } finally {
+      setSavedFlightPending(false);
+    }
+  }
+
+  async function shareFlight() {
+    const url = window.location.href;
+    const shareData = {
+      title: route,
+      text: `${route} · ${tripLine}`,
+      url,
+    };
+
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else {
+        await navigator.clipboard.writeText(url);
+        setShareFeedback("Flight link copied");
+        window.setTimeout(() => setShareFeedback(""), 1800);
+      }
+    } catch (shareError) {
+      if (shareError instanceof DOMException && shareError.name === "AbortError") return;
+      setShareFeedback("Unable to share this flight");
+      window.setTimeout(() => setShareFeedback(""), 1800);
+    }
+  }
+
+  const flightSaved = sessionStatus === "authenticated"
+    ? Boolean(savedFlightBackendId)
+    : localSavedFlightIds.includes(savedFlightKey);
 
   return (
     <main className="flex-1 bg-white pb-[calc(6.75rem+env(safe-area-inset-bottom))] text-[#142033] sm:bg-[#F7F9FC] sm:pt-4 lg:pb-16 lg:pt-3">
@@ -233,11 +349,37 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               <div className="absolute inset-0 bg-slate-950/35" aria-hidden="true" />
               <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-slate-950/80 via-slate-950/35 to-transparent" aria-hidden="true" />
               <div className="relative z-10 flex items-start justify-between gap-3">
-                <Link href={resultsHref} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/55 bg-white/90 px-4 text-[13px] font-bold text-slate-900 shadow-sm backdrop-blur-md hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/60">
-                  <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to results
+                <Link
+                  href={resultsHref}
+                  aria-label="Back to results"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/55 bg-white/90 p-0 text-slate-900 shadow-sm backdrop-blur-md transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/60"
+                >
+                  <ArrowLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
                 </Link>
-                <button ref={editSearchLauncherRef} type="button" onClick={() => setEditSearchOpen(true)} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full border border-white/55 bg-white/90 px-4 text-xs font-bold text-slate-900 shadow-sm backdrop-blur-md hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/60 sm:hidden"><Pencil className="h-4 w-4" aria-hidden="true" /> {t("editSearch")}</button>
-                <Link href={resultsHref} className="hidden min-h-11 shrink-0 items-center justify-center gap-2 rounded-full border border-white/55 bg-white/90 px-4 text-sm font-bold text-slate-900 shadow-sm backdrop-blur-md hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/60 sm:inline-flex"><Pencil className="h-4 w-4" aria-hidden="true" /> {t("editSearch")}</Link>
+                <div
+                  data-flight-details-floating-actions
+                  className="inline-flex h-11 shrink-0 items-center rounded-full border border-white/55 bg-white/90 p-1 shadow-sm backdrop-blur-md"
+                >
+                  <button
+                    type="button"
+                    aria-label={flightSaved ? "Remove saved flight" : "Save flight"}
+                    aria-pressed={flightSaved}
+                    disabled={savedFlightPending}
+                    onClick={() => void toggleSavedFlight()}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-900 transition hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    <Heart className="h-[18px] w-[18px]" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Share flight"
+                    onClick={() => void shareFlight()}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-900 transition hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                  >
+                    <Share2 className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
+                  </button>
+                </div>
+                <span className="sr-only" role="status" aria-live="polite">{shareFeedback}</span>
               </div>
               <div className="relative z-10 min-w-0 text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.55)]">
                 <h1 ref={headingRef} id="flight-details-heading" tabIndex={-1} className="text-[27px] font-extrabold leading-[1.12] tracking-[-0.025em] outline-none sm:text-[30px]">{route}</h1>
@@ -268,7 +410,6 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
           <TripSidebar tripType={available.search.tripType} legs={legs} route={route} date={date} tripLine={tripLine} travelers={travelers.label} travelerCount={travelers.count} selectedFare={selectedFare?.label || selectedOffer.cabinClass || ""} fareTerms={selectedFare?.distinguishingTerms ?? []} price={providerPrice} locale={locale} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
         </div>
       </div>
-      <FlightEditSearchDrawer open={editSearchOpen} presentation="bottom-sheet" initialValue={{ ...available.search, cabinClass: available.search.cabinClass }} onClose={() => { setEditSearchOpen(false); editSearchLauncherRef.current?.focus({ preventScroll: true }); }} onSearch={submitEditedSearch} />
     </main>
   );
 }

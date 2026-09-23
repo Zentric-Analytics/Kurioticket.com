@@ -685,19 +685,27 @@ test("Flight Details web hero reuses the native asset and keeps navigation acces
   assert.match(source, /bg-gradient-to-t from-slate-950\/80/);
   assert.match(source, /<h1 ref=\{headingRef\} id="flight-details-heading"/);
   assert.match(source, /-mt-8 p-4 pt-0/);
-  assert.match(source, /<Link href=\{resultsHref\}[\s\S]*?Back to results/);
-  assert.match(source, /ref=\{editSearchLauncherRef\}[\s\S]*?sm:hidden/);
+  assert.match(source, /<Link[\s\S]*href=\{resultsHref\}[\s\S]*aria-label="Back to results"[\s\S]*h-11 w-11/);
+  assert.match(source, /data-flight-details-floating-actions/);
+  assert.match(source, /aria-label=\{flightSaved \? "Remove saved flight" : "Save flight"\}/);
+  assert.match(source, /aria-label="Share flight"/);
+  assert.match(source, /<Heart className="h-\[18px\] w-\[18px\]"/);
+  assert.match(source, /<Share2 className="h-\[18px\] w-\[18px\]"/);
+  assert.doesNotMatch(source, /editSearchLauncherRef|FlightEditSearchDrawer|setEditSearchOpen|>\s*\{t\("editSearch"\)\}/);
   assert.match(loadingSource, /import flightDetailsHero from "\.\.\/\.\.\/\.\.\/\.\.\/apps\/mobile\/assets\/heroes\/flight-details-hero\.webp"/);
   assert.match(loadingSource, /src=\{flightDetailsHero\} alt="" fill priority/);
-  assert.match(loadingSource, /Back to results/);
+  assert.match(loadingSource, /aria-label="Back to results"/);
+  assert.match(loadingSource, /<Heart className="h-\[18px\] w-\[18px\]"/);
+  assert.match(loadingSource, /<Share2 className="h-\[18px\] w-\[18px\]"/);
 });
 
-test("Flight Details mobile cleanup uses shared editing, peek tabs, and fare carousel", async () => {
+test("Flight Details mobile cleanup uses compact hero actions, peek tabs, and fare carousel", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
-  assert.match(source, /<FlightEditSearchDrawer/);
-  assert.match(source, /ref=\{editSearchLauncherRef\}[\s\S]*?sm:hidden/);
-  assert.match(source, /setEditSearchOpen\(false\); editSearchLauncherRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
-  assert.match(source, /<Link href=\{resultsHref\}[\s\S]*?Back to results/);
+  assert.doesNotMatch(source, /FlightEditSearchDrawer|editSearchLauncherRef|setEditSearchOpen|submitEditedSearch/);
+  assert.match(source, /data-flight-details-floating-actions/);
+  assert.match(source, /aria-label="Back to results"/);
+  assert.match(source, /aria-label=\{flightSaved \? "Remove saved flight" : "Save flight"\}/);
+  assert.match(source, /aria-label="Share flight"/);
   assert.match(source, /flex-nowrap gap-1 overflow-x-auto/);
   assert.match(source, /w-auto shrink-0 whitespace-nowrap border-b-2/);
   assert.doesNotMatch(source, /w-\[30%\] min-w-\[105px\]/);
