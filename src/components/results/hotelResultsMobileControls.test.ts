@@ -36,6 +36,15 @@ test("mobile Hotel search follows the Cars floating summary below the page navba
   assert.match(searchBarSource, /mobileLayout === "controls"/);
 });
 
+test("Hotel mobile compact results header matches the Cars three-column toolbar", () => {
+  assert.match(resultsSource, /data-hotel-mobile-compact-results-header/);
+  assert.match(resultsSource, /grid-cols-\[44px_minmax\(0,1fr\)_82px\]/);
+  assert.match(resultsSource, /<ArrowLeft className="h-5 w-5"/);
+  assert.match(resultsSource, /<Pencil[\s\S]*className="h-3 w-3 shrink-0 text-\[#536B92\]"/);
+  assert.match(resultsSource, /<SlidersHorizontal className="h-4 w-4 shrink-0 text-\[#004BB8\]"/);
+  assert.match(resultsSource, /mobileSearchSummarySentinelRef/);
+});
+
 test("Hotel mobile filter and quick-filter surfaces match Cars background treatment", () => {
   assert.match(resultsSource, /data-mobile-hotel-shortcuts className="w-full min-w-0 bg-transparent"/);
   assert.match(resultsSource, /count > 0 && "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"/);
