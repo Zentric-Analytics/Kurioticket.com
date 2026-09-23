@@ -92,14 +92,22 @@ test("main desktop Return Time selection updates and stays open", () => {
   assert.doesNotMatch(timeField, /\bonDone\b/);
 });
 
-test("Cars Main mobile time starts at the top while Results Edit still reveals selection", () => {
+test("Cars Main time opens both lists at the top on every open", () => {
   assert.match(
-    pickerContent,
-    /autoRevealSelected=\{presentation !== "carsMain"\}/,
+    page,
+    /<MobileCarTimePickerDialog[\s\S]*?presentation="carsMain"[\s\S]*?open=\{activeMobilePicker === "times"\}/,
   );
+  assert.match(pickerContent, /autoRevealSelected=\{!nativeCarsAppearance\}/);
+  assert.match(pickerContent, /open=\{open\}/);
+  assert.match(pickerContent, /pickupListRef\.current\.scrollTop = 0/);
+  assert.match(pickerContent, /returnListRef\.current\.scrollTop = 0/);
   assert.match(
     pickerContent,
-    /if \(!autoRevealSelected\)[\s\S]*?pickupListRef\.current\.scrollTop = 0[\s\S]*?returnListRef\.current\.scrollTop = 0/,
+    /\}, \[autoRevealSelected, mobileShell, open\]\);/,
+  );
+  assert.doesNotMatch(
+    pickerContent,
+    /\}, \[autoRevealSelected, mobileShell, open, (?:pickupTime|returnTime)/,
   );
   assert.match(pickerContent, /positionSelected\(pickupListRef\.current, pickupTime\)/);
   assert.match(pickerContent, /positionSelected\(returnListRef\.current, returnTime\)/);
