@@ -1512,6 +1512,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             : "pointer-events-none -translate-y-2 opacity-0",
         )}
         aria-hidden={!mobileCompactHeaderVisible}
+        inert={!mobileCompactHeaderVisible ? true : undefined}
         data-hotel-mobile-compact-results-header
       >
         <div className="mx-auto grid h-12 w-full max-w-3xl grid-cols-[44px_minmax(0,1fr)_82px] items-center gap-2">
