@@ -1615,8 +1615,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                 </header>
                 <div className={cn("max-h-[calc(min(76dvh,620px)-9rem)] overflow-y-auto overscroll-contain bg-[#F2F4F8] px-6", mobileShortcutMenu === "sort" ? "space-y-1 py-2" : "space-y-2 py-4")}>
                   {mobileShortcutMenu === "sort" ? hotelSortOptions.map((option) => (
-                    <button key={option.value} type="button" aria-pressed={hotelSummarySortMode === option.value} className={cn(menuItemClass, "min-h-9 text-[13px]")} data-sort={option.value} onClick={handleMobileSortSelection}>
-                      <span>{option.label}</span>
+                    <button key={option.value} type="button" aria-pressed={hotelSummarySortMode === option.value} className={cn(menuItemClass, "min-h-9")} data-sort={option.value} onClick={handleMobileSortSelection}>
+                      <span className="text-[15px] font-bold leading-5">{option.label}</span>
                       {hotelSummarySortMode === option.value ? <Check className="h-4 w-4 text-[#004BB8]" aria-hidden="true" /> : null}
                     </button>
                   )) : null}
