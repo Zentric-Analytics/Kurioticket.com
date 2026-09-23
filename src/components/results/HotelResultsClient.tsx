@@ -1569,7 +1569,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         type="button"
         aria-haspopup="dialog"
         aria-expanded={mobileShortcutMenu === menu}
-        className={cn(shortcutButtonClass, count > 0 && "border-[#004BB8] bg-[#F7FAFF] text-[#004BB8]")}
+        className={cn(shortcutButtonClass, count > 0 && "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]")}
         onClick={(event) => {
           event.stopPropagation();
           openMobileShortcutMenu(menu, event.currentTarget);
@@ -1585,8 +1585,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       mobileShortcutMenu && typeof document !== "undefined"
         ? createPortal(
             <div className="fixed inset-0 z-[10020] flex items-end bg-slate-950/35 backdrop-blur-[1px] sm:hidden" role="presentation" onMouseDown={() => closeMobileShortcutMenu(true)}>
-              <section ref={mobileShortcutMenuContentRef} role="dialog" aria-modal="true" aria-labelledby={`mobile-hotel-${mobileShortcutMenu}-title`} className="max-h-[min(76dvh,620px)] w-full overflow-hidden rounded-t-[20px] bg-[#F1F3F8] shadow-2xl mobile-results-sheet-surface" onMouseDown={(event) => event.stopPropagation()}>
-                <header className="relative flex min-h-16 items-center justify-center px-16 py-3">
+              <section ref={mobileShortcutMenuContentRef} role="dialog" aria-modal="true" aria-labelledby={`mobile-hotel-${mobileShortcutMenu}-title`} className="max-h-[min(76dvh,620px)] w-full overflow-hidden rounded-t-[20px] bg-[#F2F4F8] shadow-2xl mobile-results-sheet-surface" onMouseDown={(event) => event.stopPropagation()}>
+                <header className="relative flex min-h-16 items-center justify-center bg-[#F2F4F8] px-16 py-3">
                   <div>
                     <h2 id={`mobile-hotel-${mobileShortcutMenu}-title`} className="text-base font-semibold text-slate-950">
                       {mobileShortcutMenu === "price" ? "Total price" : mobileShortcutMenu === "stars" ? "Hotel class" : mobileShortcutMenu === "sort" ? "Sort hotels" : mobileShortcutMenu === "roomTypes" ? "Room & bed" : "Facilities"}
@@ -1597,7 +1597,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                     <X className="h-5 w-5" aria-hidden="true" />
                   </button>
                 </header>
-                <div className="max-h-[calc(min(76dvh,620px)-9rem)] space-y-2 overflow-y-auto overscroll-contain px-6 py-4">
+                <div className="max-h-[calc(min(76dvh,620px)-9rem)] space-y-2 overflow-y-auto overscroll-contain bg-[#F2F4F8] px-6 py-4">
                   {mobileShortcutMenu === "sort" ? hotelSortOptions.map((option) => (
                     <button key={option.value} type="button" aria-pressed={hotelSummarySortMode === option.value} className={menuItemClass} data-sort={option.value} onClick={handleMobileSortSelection}>
                       <span>{option.label}</span>
@@ -1640,8 +1640,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                       })
                     : null}
                 </div>
-                {mobileShortcutMenu !== "sort" ? <footer className="flex items-center gap-3 px-6 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
-                    <button type="button" className="h-11 w-[32%] shrink-0 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700" onClick={() => { if (mobileShortcutMenu === "price") { setMobileShortcutDraftMinPrice(0); setMobileShortcutDraftMaxPrice(resultMaxPrice); } else if (mobileShortcutMenu === "stars") setMobileShortcutDraftStars([]); else if (mobileShortcutMenu === "roomTypes") setMobileShortcutDraftRoomTypes([]); else setMobileShortcutDraftFacilities([]); }}>
+                {mobileShortcutMenu !== "sort" ? <footer className="flex items-center gap-3 bg-[#F2F4F8] px-6 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
+                    <button type="button" className="h-11 w-[32%] shrink-0 rounded-lg border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-sm font-semibold text-slate-700" onClick={() => { if (mobileShortcutMenu === "price") { setMobileShortcutDraftMinPrice(0); setMobileShortcutDraftMaxPrice(resultMaxPrice); } else if (mobileShortcutMenu === "stars") setMobileShortcutDraftStars([]); else if (mobileShortcutMenu === "roomTypes") setMobileShortcutDraftRoomTypes([]); else setMobileShortcutDraftFacilities([]); }}>
                       Reset
                     </button>
                     <button
@@ -1676,7 +1676,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             <div className="flex min-w-max items-center gap-2 py-1">
               <button
                 type="button"
-                className={cn(shortcutButtonClass, activeFilterCount > 0 && "border-[#004BB8] bg-[#F7FAFF] text-[#004BB8]")}
+                className={cn(shortcutButtonClass, activeFilterCount > 0 && "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]")}
                 onClick={(event) => {
                   mobileFiltersLauncherRef.current = event.currentTarget;
                   mobileFiltersModalityRef.current = getOverlayActivationModality(event);
@@ -2255,13 +2255,13 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
         {filtersOpen ? <button type="button" aria-label={t("closeFilters")} onClick={() => setFiltersOpen(false)} className="fixed inset-0 z-[9999] bg-slate-950/35 sm:backdrop-blur-[1px] min-[1200px]:hidden" /> : null}
 
-        <aside ref={mobileFiltersDialogRef} role="dialog" aria-modal="true" aria-label="Hotel filters" aria-hidden={!filtersOpen} className={cn("fixed inset-y-0 right-0 z-[10000] flex h-[95dvh] w-full flex-col overflow-clip rounded-t-[20px] bg-[#F1F3F8] shadow-2xl transition-transform duration-200 ease-out motion-reduce:transition-none max-sm:top-auto sm:h-[100dvh] sm:rounded-none sm:bg-[#F6F8FB] sm:w-[420px] min-[1200px]:hidden", filtersOpen ? "translate-y-0 sm:translate-x-0" : "pointer-events-none translate-y-full sm:translate-x-full sm:translate-y-0")}>
-          <div className="relative flex h-16 shrink-0 items-center justify-start bg-[#F1F3F8] px-5 sm:hidden">
+        <aside ref={mobileFiltersDialogRef} role="dialog" aria-modal="true" aria-label="Hotel filters" aria-hidden={!filtersOpen} className={cn("fixed inset-y-0 right-0 z-[10000] flex h-[95dvh] w-full flex-col overflow-clip rounded-t-[20px] bg-[#F2F4F8] shadow-2xl transition-transform duration-200 ease-out motion-reduce:transition-none max-sm:top-auto sm:h-[100dvh] sm:rounded-none sm:w-[420px] min-[1200px]:hidden", filtersOpen ? "translate-y-0 sm:translate-x-0" : "pointer-events-none translate-y-full sm:translate-x-full sm:translate-y-0")}>
+          <div className="relative flex h-16 shrink-0 items-center justify-start bg-[#F2F4F8] px-5 sm:hidden">
             <div><h2 className="text-base font-semibold text-slate-950">Filters</h2>{activeFilterCount > 0 ? <p className="text-xs font-medium text-slate-500">{activeFilterCount} applied</p> : null}</div>
             <button type="button" aria-label={t("closeFilters")} onClick={() => setFiltersOpen(false)} className="focus-ring absolute right-3 flex h-11 w-11 items-center justify-center rounded-lg text-slate-700"><X size={22} /></button>
           </div>
           <div className="hidden sm:contents">
-          <div className="shrink-0 border-b border-slate-200 bg-white px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)] sm:px-5 sm:pb-4 sm:pt-4">
+          <div className="shrink-0 border-b border-slate-200 bg-[#F2F4F8] px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)] sm:px-5 sm:pb-4 sm:pt-4">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
@@ -2288,7 +2288,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           </div>
 
           </div>
-          <div className={cn("hotel-filter-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-6 py-4 sm:px-5", filterScrollbarVisible ? "hotel-filter-scrollbar--visible" : undefined)} onScroll={showFilterScrollbarWhileScrolling}>
+          <div className={cn("hotel-filter-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#F2F4F8] px-6 py-4 sm:px-5", filterScrollbarVisible ? "hotel-filter-scrollbar--visible" : undefined)} onScroll={showFilterScrollbarWhileScrolling}>
             {activeFilterChips.length ? (
               <div className="hidden sm:block mb-3 rounded-xl border border-[#C9D9EA] bg-white p-3 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.5)]">
                 <ActiveHotelFilterChips chips={activeFilterChips} onRemove={removeFilterChip} t={t} />
@@ -2297,8 +2297,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             <HotelFilters key={filtersOpen ? "open" : "closed"} layout="mobile" propertyNameQuery={propertyNameQuery} setPropertyNameQuery={updatePropertyNameQuery} t={t} maxPrice={maxPrice} minPrice={minPrice} setMaxPrice={updateMaxPrice} setMinPrice={updateMinPrice} resultMaxPrice={resultMaxPrice} hasPricedResults={hasPricedResults} formatPrice={formatHotelFilterPrice} locale={locale} stayNights={stayNights} selectedRatings={selectedHotelClasses} toggleRating={toggleHotelClass} starRatingCounts={starRatingCounts} options={{ ...filterOptions, propertyTypes: buildTermOptions(results, PROPERTY_TYPE_FILTERS, (hotel) => hotel.catalogueProfile?.propertyType ?? "", t, true) }} selectedFilters={selectedFilters} toggleFilter={toggleFilter} activeFilterCount={activeFilterCount} onClear={resetFilters} />
           </div>
 
-          <div className="flex shrink-0 items-center gap-3 border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.08)] sm:px-5 sm:pb-4 sm:pt-4">
-            {activeFilterCount > 0 ? <button type="button" aria-label="Reset hotel filters" className="focus-ring h-11 w-[30%] shrink-0 rounded-lg border border-slate-300 px-5 text-sm font-semibold text-slate-700 sm:hidden" onClick={resetFilters}>Reset</button> : null}
+          <div className="flex shrink-0 items-center gap-3 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.08)] sm:px-5 sm:pb-4 sm:pt-4">
+            {activeFilterCount > 0 ? <button type="button" aria-label="Reset hotel filters" className="focus-ring h-11 w-[30%] shrink-0 rounded-lg border border-[#D8DEE8] bg-[#F2F4F8] px-5 text-sm font-semibold text-slate-700 sm:hidden" onClick={resetFilters}>Reset</button> : null}
             <Button
               type="button"
               disabled={filterApplying || sortedVisibleHotels.length === 0}
