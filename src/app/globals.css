@@ -1559,3 +1559,29 @@ textarea {
 @media (max-width: 420px) {
   .flight-results-pagination { gap: 0; padding-inline: 0.25rem; }
 }
+
+
+@keyframes hotel-native-quick-scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes hotel-native-quick-sheet-in {
+  from { transform: translate3d(0, 28px, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+
+.hotel-native-quick-scrim {
+  animation: hotel-native-quick-scrim-in 160ms ease-out both;
+}
+
+.hotel-native-quick-sheet {
+  animation: hotel-native-quick-sheet-in 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hotel-native-quick-scrim,
+  .hotel-native-quick-sheet {
+    animation: none;
+  }
+}
