@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const source = readFileSync("src/features/search/NativeCarPriceAlert.tsx", "utf8");
+const themeSource = readFileSync("src/theme/AppTheme.tsx", "utf8");
 
 test("Cars toggle creates automatic tracking without a target-price sheet", () => {
   assert.match(source, /buildAutomaticCarPriceAlertPayload\(plan, baseline\.totalPrice, baseline\.currency\)/);
@@ -62,4 +63,13 @@ test("Cars snackbar is animated, safe-area aware, manageable, and temporary", ()
   assert.match(source, /if \(finished\) onDismiss\(feedback\)/);
   assert.match(source, /clearTimeout\(dismissTimer\)/);
   assert.match(source, /translateY\.stopAnimation\(\); opacity\.stopAnimation\(\)/);
+});
+
+test("Cars snackbar shares the price-alert palette in light and dark themes", () => {
+  assert.match(source, /styles\.snackbar, \{ backgroundColor: theme\.priceAlertSurface, borderColor: theme\.priceAlertBorder \}/);
+  assert.match(source, /CircleCheck[^\n]*color=\{theme\.priceAlertAccent\}/);
+  assert.match(source, /styles\.manageText, \{ color: theme\.priceAlertAccent \}/);
+  assert.doesNotMatch(source, /styles\.snackbar, \{ backgroundColor: theme\.surface, borderColor: theme\.border \}/);
+  assert.match(themeSource, /priceAlertSurface: "#EDF6FF",[\s\S]*priceAlertBorder: "#C8DFF7",[\s\S]*priceAlertAccent: "#1769AA"/);
+  assert.match(themeSource, /priceAlertSurface: "#122A43",[\s\S]*priceAlertBorder: "#294D70",[\s\S]*priceAlertAccent: "#75BFFF"/);
 });

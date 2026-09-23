@@ -124,7 +124,7 @@ export function CarPriceAlertSnackbar({ feedback, onDismiss }: { feedback: Exclu
   }, [feedback, onDismiss, opacity, translateY]);
   const active = feedback === "active";
   return <Animated.View accessibilityLiveRegion="polite" style={[styles.snackbarPosition, { bottom: Math.max(insets.bottom, 12) + 12, opacity, transform: [{ translateY }] }]}>
-    <View style={[styles.snackbar, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+    <View style={[styles.snackbar, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}>
       <CircleCheck accessible={false} size={20} strokeWidth={2.2} color={theme.priceAlertAccent}/>
       <View style={styles.snackbarCopy}><Text style={[styles.snackbarTitle, { color: theme.textPrimary }]}>{active ? "Price tracking is on" : "Price tracking paused"}</Text>{active ? <Text style={[styles.snackbarBody, { color: theme.textSecondary }]}>We'll notify you if the price drops.</Text> : null}</View>
       {active ? <Pressable accessibilityRole="button" accessibilityLabel="Manage price alerts" onPress={() => router.push("/price-alerts")} style={styles.manage}><Text style={[styles.manageText, { color: theme.priceAlertAccent }]}>Manage</Text></Pressable> : null}
