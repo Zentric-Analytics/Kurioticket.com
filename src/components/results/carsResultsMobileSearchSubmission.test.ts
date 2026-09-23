@@ -69,8 +69,8 @@ test("mobile Search carries canonical location targets into the next Results req
   assert.match(source, /name="dropoffLocationTarget"[\s\S]*value=\{dropoffLocationTarget\}/);
   assert.match(source, /setPickupLocationTarget\([\s\S]*serializeSuggestionLocationTarget\(suggestion\)/);
   assert.match(source, /setDropoffLocationTarget\([\s\S]*serializeSuggestionLocationTarget\(suggestion\)/);
-  assert.match(source, /setPickupLocationTarget\("")/);
-  assert.match(source, /setDropoffLocationTarget\("")/);
+  assert.match(source, /setPickupLocationTarget\(""\)/);
+  assert.match(source, /setDropoffLocationTarget\(""\)/);
 });
 
 test("mobile Search captures the live form before submit-close and router navigation", () => {
