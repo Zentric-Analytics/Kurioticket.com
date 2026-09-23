@@ -32,15 +32,16 @@ test("shared mobile flight editor retains the approved drawer structure", () => 
   assert.match(source, /overflow-x-hidden overflow-y-auto/);
 });
 
-test("Results bottom sheet mirrors native floating modal geometry while fullscreen remains the default", () => {
+test("Results bottom sheet is full-width and anchored to the viewport bottom", () => {
   assert.match(source, /import \{ createPortal \} from "react-dom"/);
   assert.match(source, /createPortal\(overlay, document\.body\)/);
   assert.match(source, /data-mobile-results-overlay-root/);
   assert.match(source, /style=\{bottomSheet \? \{ backgroundColor: "rgba\(8, 18, 35, 0\.52\)" \} : undefined\}/);
-  assert.match(source, /mx-3 mb-3/);
+  assert.match(source, /items-end/);
   assert.match(source, /max-h-\[88dvh\]/);
-  assert.match(source, /w-\[calc\(100%_-_1\.5rem\)\]/);
-  assert.match(source, /rounded-\[24px\] bg-\[#F5F7FB\]/);
+  assert.match(source, /relative flex max-h-\[88dvh\] min-h-0 w-full flex-col/);
+  assert.match(source, /rounded-t-\[24px\] bg-\[#F5F7FB\]/);
+  assert.doesNotMatch(source, /mx-3|mb-3|w-\[calc\(100%_-_1\.5rem\)\]|rounded-\[24px\] bg-\[#F5F7FB\]/);
   assert.match(source, /resultsMode \? "Change your search" : t\("editFlightSearch"\)/);
   assert.match(source, /text-\[19px\] font-semibold leading-6/);
   assert.match(source, /min-h-\[52px\]/);

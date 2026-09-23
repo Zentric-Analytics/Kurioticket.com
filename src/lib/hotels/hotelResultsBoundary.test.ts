@@ -62,6 +62,25 @@ test("complete curated exploration crosses the same strict results boundary", ()
   assert.equal(resolveHotelResultsRoute(search!).resultsReady, true);
 });
 
+test("selected autocomplete destinations pass both the results route and API schema", () => {
+  const base = { destination: "France", checkIn: "2030-10-01", checkOut: "2030-10-08", guests: "1", rooms: "1" };
+  for (const destinationId of ["place:france", "place:paris-ile-de-france-france", "place:東京", "hotel:gb-london", "airport:CDG", "gb-london"]) {
+    const input = { ...base, destinationId };
+    const route = resolveHotelResultsRoute(input);
+    assert.equal(route.resultsReady, true, destinationId);
+    const api = hotelSearchSchema.safeParse({ ...input, guests: 1, rooms: 1 });
+    assert.equal(api.success, true, destinationId);
+    if (api.success) assert.equal(api.data.destinationId, destinationId);
+  }
+});
+
+test("autocomplete ID support does not admit arbitrary or ungated provider IDs", () => {
+  const base = { destination: "France", checkIn: "2030-10-01", checkOut: "2030-10-08", guests: "1", rooms: "1" };
+  for (const destinationId of ["place:", "place:../france", "place:france?x=1", "unknown:france", "kplace:123", "airport:INVALID", `place:${"a".repeat(121)}`]) {
+    assert.equal(resolveHotelResultsRoute({ ...base, destinationId }).resultsReady, false, destinationId);
+  }
+});
+
 test("web Hotel results reject malformed and out-of-range explicit occupancy", () => {
   const base = { destination: "London", checkIn: "2030-04-01", checkOut: "2030-04-03", guests: "2", rooms: "1" };
   for (const occupancy of [

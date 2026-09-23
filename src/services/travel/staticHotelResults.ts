@@ -27,7 +27,7 @@ export function getStaticHotelById(id: string) {
 export function searchStaticHotelCatalogue(destination: string, destinationId?: string) {
   const query = normalize(normalizeHotelDestinationSearchValue(destination));
   if (!query) return [];
-  const canonicalId = destinationId?.trim();
+  const canonicalId = destinationId?.trim().replace(/^hotel:/, "");
   const canonicalDestination = canonicalId
     ? hotelDestinations.find((candidate) => candidate.id === canonicalId)
     : hotelDestinations.find((candidate) =>

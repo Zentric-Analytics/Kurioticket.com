@@ -502,10 +502,10 @@ const fieldInputClass =
 const carsMobileEditFieldShellClass =
   "relative flex min-h-[70px] flex-col justify-center gap-[1px] rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-2.5 shadow-[0_2px_8px_rgba(15,23,42,0.035)] focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25";
 const carsMobileEditFieldLabelClass =
-  "mb-0 text-[10px] font-semibold leading-[14px] tracking-[1px] text-[#64748B]";
+  "mb-0 text-[9.5px] font-semibold leading-[13px] tracking-[0.95px] text-[#64748B]";
 const carsMobileEditValueRowClass = "gap-2.5";
 const carsMobileEditValueClass =
-  "h-auto text-[14px] font-medium leading-[19px]";
+  "h-auto text-[13px] font-medium leading-[18px]";
 
 export function CarsResultsClient({
   values,
@@ -3107,7 +3107,7 @@ function MobileLocationLauncher({
           )}
         >
           <span className="block truncate">{display.primary || placeholder}</span>
-          {display.secondary ? <span className="block truncate text-[11px] font-normal leading-[15px] text-slate-600">{display.secondary}</span> : null}
+          {display.secondary ? <span className="block truncate text-[10px] font-normal leading-[14px] text-slate-600">{display.secondary}</span> : null}
         </button>
         {secondaryAction ? (
           <button
@@ -3384,7 +3384,7 @@ function SearchDateCell({
           <span
             className={cn(
               "block truncate leading-4",
-              groupedMobile && "leading-[19px]",
+              groupedMobile && "leading-[18px]",
               !pickupDate && "text-slate-400",
             )}
           >
