@@ -903,6 +903,7 @@ export function HotelDetailsClient({
                 locationDetails={locationDetails}
                 providerDetails={providerDetails}
                 reviewScore={compactReviewScore}
+                mobileReviewScale={reviewScale}
                 reviewLabel={reviewLabel}
                 reviewCountText={reviewCountText}
                 reviewSource={hotel.reviewSource}
