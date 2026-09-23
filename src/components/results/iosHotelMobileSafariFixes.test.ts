@@ -32,13 +32,8 @@ test("iOS Hotel dialogs focus the dialog surface instead of the close X", () => 
   assert.match(stayEditorSource, /<dialog ref=\{dialogRef\} tabIndex=\{-1\}/);
 });
 
-test("iOS Hotel quick-filter rail clamps elastic scroll without disabling horizontal swipe", () => {
-  assert.match(resultsSource, /const mobileShortcutRailRef = useRef<HTMLDivElement \| null>\(null\)/);
-  assert.match(resultsSource, /const clampIosHotelShortcutRail = useCallback/);
-  assert.match(resultsSource, /if \(!isIosHotelMobileWeb\(\)\) return/);
-  assert.match(resultsSource, /Math\.max\(0, rail\.scrollWidth - rail\.clientWidth\)/);
-  assert.match(resultsSource, /Math\.min\(maxScrollLeft, Math\.max\(0, rail\.scrollLeft\)\)/);
-  assert.match(resultsSource, /onScroll=\{clampIosHotelShortcutRail\}/);
-  assert.match(resultsSource, /onTouchEnd=\{\(\) => window\.requestAnimationFrame\(clampIosHotelShortcutRail\)\}/);
-  assert.match(resultsSource, /overflow-x-auto overscroll-x-contain/);
+test("Hotel Results no longer carries an iOS-only quick-filter rail workaround", () => {
+  assert.doesNotMatch(resultsSource, /mobileShortcutRailRef|clampIosHotelShortcutRail|rail\.scrollLeft/);
+  assert.match(resultsSource, /data-hotel-results-toolbar/);
+  assert.match(resultsSource, /scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\] flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain pe-4/);
 });
