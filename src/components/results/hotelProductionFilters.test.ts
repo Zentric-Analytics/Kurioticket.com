@@ -40,6 +40,17 @@ test("price filters share the static estimated-total basis", () => {
   assert.match(source, /kind: "priceRange"/);
 });
 
+test("mobile Hotel filter sheet uses the Cars continuous #F2F4F8 surface", () => {
+  const sheetStart = source.indexOf('aria-label="Hotel filters"');
+  const sheetEnd = source.indexOf("</aside>", sheetStart);
+  const sheet = source.slice(sheetStart, sheetEnd);
+  assert.match(sheet, /bg-[#F2F4F8]/);
+  assert.match(sheet, /hotel-filter-scrollbar[^"]*bg-[#F2F4F8]/);
+  assert.match(sheet, /border-t border-[#D8DEE8] bg-[#F2F4F8]/);
+  assert.match(sheet, /Reset hotel filters"[^>]*className="[^"]*bg-[#F2F4F8]/);
+  assert.doesNotMatch(sheet, /bg-[#F1F3F8]|sm:bg-[#F6F8FB]/);
+});
+
 test("filter sheet exposes clear and deterministic result apply feedback", () => {
   assert.match(source, /activeFilterCount > 0 \?\s*\(?\s*<button/);
   assert.match(source, /t\("hotelResults.noStaysMatchFiltersTitle"\)/);
