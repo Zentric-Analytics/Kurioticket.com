@@ -12,7 +12,8 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { MobileHotelDetails } from "./MobileHotelDetails";
 
 import type { HotelAmenityPresentationItem } from "@/components/results/hotelAmenityPresentation";
 import { HotelPriceComparisonSection } from "./HotelPriceComparisonSection";
@@ -43,6 +44,8 @@ import {
 } from "./hotelBookingContinuation";
 
 type DisplayPrice = {
+  amount?: number;
+  currency?: string;
   formatted: string;
   title?: string;
   ariaLabel: string;
@@ -69,6 +72,7 @@ export type StandaloneHotelDetailsProps = {
   locationDetails?: PublicHotelPropertyDetails | null;
   providerDetails?: PublicHotelProviderDetails | null;
   reviewScore: string;
+  mobileReviewScale?: number | null;
   reviewLabel: string;
   reviewCountText: string;
   reviewSource?: string | null;
@@ -119,7 +123,18 @@ export type StandaloneHotelDetailsProps = {
   };
 };
 
+function subscribeMobileDetails(callback: () => void) {
+  const query = window.matchMedia("(max-width: 1023px)");
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
 export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
+  const mobile = useSyncExternalStore(subscribeMobileDetails, () => window.matchMedia("(max-width: 1023px)").matches, () => false);
+  return mobile ? <MobileHotelDetails {...props} /> : <DesktopHotelDetails {...props} />;
+}
+
+function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
   const [shareComplete, setShareComplete] = useState(false);
   const [roomsOpen, setRoomsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<HotelDetailsTab>("compare");

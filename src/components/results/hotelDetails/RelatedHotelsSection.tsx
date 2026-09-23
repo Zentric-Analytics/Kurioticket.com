@@ -10,6 +10,7 @@ import { useRegion } from "@/components/region/RegionProvider";
 import type { HotelDetailsSearchContext } from "@/components/results/hotelDetails/hotelDetailsPresentation";
 import { buildHotelDetailsHref } from "@/components/results/hotelDetails/hotelDetailsPresentation";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { formatMobileHotelPrice } from "./mobileHotelDetailsPresentation";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import type { PublicHotelResult } from "@/lib/types";
 
@@ -30,6 +31,7 @@ type RelatedHotelsSectionProps = {
   city: string;
   searchContext?: HotelDetailsSearchContext;
   labels: RelatedHotelLabels;
+  mobilePreview?: boolean;
 };
 
 function RelatedHotelCard({
@@ -37,11 +39,13 @@ function RelatedHotelCard({
   searchContext,
   labels,
   desktopHidden = false,
+  mobilePreview = false,
 }: {
   hotel: PublicHotelResult;
   searchContext?: HotelDetailsSearchContext;
   labels: RelatedHotelLabels;
   desktopHidden?: boolean;
+  mobilePreview?: boolean;
 }) {
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -129,21 +133,21 @@ function RelatedHotelCard({
           {nightly && total ? (
             <div>
               <p className="text-sm font-bold text-slate-950">
-                {labels.pricePerNight.replace("{{price}}", nightly.formatted)}
+                {labels.pricePerNight.replace("{{price}}", mobilePreview ? formatMobileHotelPrice(nightly, nightly.formatted) : nightly.formatted)}
               </p>
-              <p className="mt-1 hidden text-xs text-slate-500 lg:block">
+              {!mobilePreview ? <p className="mt-1 hidden text-xs text-slate-500 lg:block">
                 {total.formatted} {labels.estimatedStayTotal}
-              </p>
+              </p> : null}
             </div>
           ) : (
             <p className="text-sm font-semibold text-slate-600">
               {labels.priceUnavailable}
             </p>
           )}
-          <span className="mt-2 flex min-h-9 items-center justify-between border-t border-slate-200 pt-2 text-[13px] font-bold text-blue lg:mt-2.5 lg:min-h-11 lg:pt-2.5 lg:text-sm">
+          {!mobilePreview ? <span className="mt-2 flex min-h-9 items-center justify-between border-t border-slate-200 pt-2 text-[13px] font-bold text-blue lg:mt-2.5 lg:min-h-11 lg:pt-2.5 lg:text-sm">
             {labels.viewHotel}
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </span>
+          </span> : null}
         </div>
       </div>
     </Link>
@@ -155,6 +159,7 @@ export function RelatedHotelsSection({
   city,
   searchContext,
   labels,
+  mobilePreview = false,
 }: RelatedHotelsSectionProps) {
   const displayedHotels = hotels.slice(0, 12);
   if (!displayedHotels.length) return null;
@@ -182,6 +187,7 @@ export function RelatedHotelsSection({
             searchContext={searchContext}
             labels={labels}
             desktopHidden={index >= 7}
+            mobilePreview={mobilePreview}
           />
         ))}
       </div>

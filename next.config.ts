@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     // Bound page-generation concurrency instead of spawning one worker per CPU.
     cpus: 2,
   },
+  // The floating dev toolbar throws releasePointerCapture errors on touch devices.
+  // Runtime and compile errors remain visible with the indicator disabled.
+  devIndicators: false,
   async redirects() {
     return [
       {
