@@ -41,6 +41,7 @@ import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } f
 import { getOverlayActivationModality, restoreOverlayLauncherFocus, type OverlayActivationModality } from "@/lib/search/mobileResultsOverlayFocus";
 import { buildHotelResultsPaginationItems, clampHotelResultsPage, getHotelResultsPageCount, HOTEL_RESULTS_PAGE_SIZE, paginateHotelResults } from "@/lib/hotels/hotelResultsPagination";
 import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
+import { isIosHotelMobileWeb } from "@/lib/hotels/iosHotelMobileWeb";
 
 const hotelResultStackClass = "w-full max-w-[800px] lg:max-w-[860px]";
 const desktopCompactFilterTopOffset = 116;
@@ -344,6 +345,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const hotelSortOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const mobileShortcutMenuContentRef = useRef<HTMLDivElement | null>(null);
   const mobileShortcutTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const mobileShortcutRailRef = useRef<HTMLDivElement | null>(null);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const searchApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
@@ -1458,6 +1460,17 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     closeMobileShortcutMenu(true);
   }
 
+  const clampIosHotelShortcutRail = useCallback(() => {
+    if (!isIosHotelMobileWeb()) return;
+    const rail = mobileShortcutRailRef.current;
+    if (!rail) return;
+    const maxScrollLeft = Math.max(0, rail.scrollWidth - rail.clientWidth);
+    const nextScrollLeft = Math.min(maxScrollLeft, Math.max(0, rail.scrollLeft));
+    if (Math.abs(rail.scrollLeft - nextScrollLeft) > 0.5) {
+      rail.scrollLeft = nextScrollLeft;
+    }
+  }, []);
+
   function renderMobileHotelShortcuts() {
     const shortcutButtonClass = "focus-ring relative inline-flex h-8 shrink-0 items-center justify-center gap-[3px] whitespace-nowrap rounded-[7px] after:absolute after:-inset-y-1.5 after:inset-x-0 after:content-[''] border border-[#D8E1EC] bg-white px-1.5 text-[12px] font-semibold text-[#142033] transition hover:border-[#B9C8D9] hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
     const menuItemClass = "flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-transparent bg-transparent px-0 text-left text-[14px] font-normal text-slate-800 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
@@ -1569,7 +1582,13 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     return (
       <>
         <div data-mobile-hotel-shortcuts className="w-full min-w-0 bg-transparent">
-          <div className="overflow-x-auto overscroll-x-contain px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div
+            ref={mobileShortcutRailRef}
+            className="overflow-x-auto overscroll-x-contain px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            onScroll={clampIosHotelShortcutRail}
+            onTouchEnd={() => window.requestAnimationFrame(clampIosHotelShortcutRail)}
+            onTouchCancel={() => window.requestAnimationFrame(clampIosHotelShortcutRail)}
+          >
             <div className="flex min-w-max items-center gap-[5px] py-1">
               <button
                 type="button"
