@@ -12,7 +12,7 @@ import {
   sortCarOffers,
   sortCarResults,
 } from "@/lib/cars/carResults";
-import type { CarSearchParams } from "@/lib/cars/types";
+import type { CarSearchParams, LocationBoundCarSearchParams } from "@/lib/cars/types";
 import { buildStaticCarResults } from "@/services/travel/staticCarResults";
 import { staticCarCatalogue } from "@/services/travel/staticCarCatalogue";
 import {
@@ -149,6 +149,38 @@ test("detail href preserves search context", () => {
     );
   assert.match(href, /\/cars\/details\/demo%20car/);
 });
+test("detail href preserves canonical Cars location targets", () => {
+  const target = {
+    id: "airport:LHR",
+    kind: "airport" as const,
+    primaryLabel: "London Heathrow Airport",
+    supportingLabel: "London, United Kingdom",
+    submittedValue: "London Heathrow Airport (LHR)",
+    country: { code: "GB" },
+    codes: { iata: "LHR" },
+    providerBindings: [],
+    verification: "verified" as const,
+    selectionToken: "b".repeat(64),
+  };
+  const boundSearch: LocationBoundCarSearchParams = {
+    ...search,
+    pickupLocationTarget: target,
+    dropoffLocationTarget: target,
+  };
+  const url = new URL(
+    buildCarDetailsHref("kayak-sandbox:opaque:1", boundSearch),
+    "https://example.test",
+  );
+  assert.deepEqual(
+    JSON.parse(url.searchParams.get("pickupLocationTarget") || "null"),
+    target,
+  );
+  assert.deepEqual(
+    JSON.parse(url.searchParams.get("dropoffLocationTarget") || "null"),
+    target,
+  );
+});
+
 test("details offers sort by total then stable id and primary defaults safely", () => {
   const source = [...cars[0].offers].reverse();
   const sorted = sortCarOffers(source);

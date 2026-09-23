@@ -2,15 +2,39 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { CarDetailsClient } from "@/components/results/CarDetailsClient";
-import type { CarSearchParams } from "@/lib/cars/types";
+import type { LocationBoundCarSearchParams } from "@/lib/cars/types";
+import { parseCarLocationTarget } from "@/lib/cars/carSearchLocationTarget";
+import { carSearchUrlParams } from "@/lib/cars/carResults";
 import { getCarDetails } from "@/services/travel/carAggregator";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
 
 const value = (input: string | string[] | undefined) => (Array.isArray(input) ? input[0] : input)?.trim() || "";
 export default async function CarDetailsPage({ params, searchParams }: { params: Promise<{id:string}>; searchParams: Promise<Record<string,string|string[]|undefined>> }) {
   const [{id}, query] = await Promise.all([params, searchParams]);
-  const search: CarSearchParams = { pickupLocation:value(query.pickupLocation), dropoffLocation:value(query.dropoffLocation), pickupDate:value(query.pickupDate), pickupTime:value(query.pickupTime)||"10:00", dropoffDate:value(query.dropoffDate), dropoffTime:value(query.dropoffTime)||"10:00", driverAge:value(query.driverAge)||"18-70" };
-  const qs = new URLSearchParams(); Object.entries(search).forEach(([key,item])=>item&&qs.set(key,item)); const resultsHref=`/cars/results?${qs}`;
+  const pickupLocation = value(query.pickupLocation);
+  const dropoffLocation = value(query.dropoffLocation) || pickupLocation;
+  const pickupLocationTarget = parseCarLocationTarget(
+    value(query.pickupLocationTarget),
+  );
+  const explicitDropoffLocationTarget = parseCarLocationTarget(
+    value(query.dropoffLocationTarget),
+  );
+  const search: LocationBoundCarSearchParams = {
+    pickupLocation,
+    dropoffLocation,
+    pickupDate: value(query.pickupDate),
+    pickupTime: value(query.pickupTime) || "10:00",
+    dropoffDate: value(query.dropoffDate),
+    dropoffTime: value(query.dropoffTime) || "10:00",
+    driverAge: value(query.driverAge) || "18-70",
+    ...(pickupLocationTarget ? { pickupLocationTarget } : {}),
+    ...(explicitDropoffLocationTarget
+      ? { dropoffLocationTarget: explicitDropoffLocationTarget }
+      : pickupLocationTarget && dropoffLocation === pickupLocation
+        ? { dropoffLocationTarget: pickupLocationTarget }
+        : {}),
+  };
+  const resultsHref = `/cars/results?${carSearchUrlParams(search)}`;
   const requestHeaders = await headers();
   const request = new Request("https://kurioticket.invalid/cars/details", { headers: requestHeaders });
   const car = await getCarDetails(id, search, {

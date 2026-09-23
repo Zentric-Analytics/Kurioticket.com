@@ -1,15 +1,49 @@
 import { createHash } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
-import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
+import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 
 export type ProviderDetailsVertical = "hotel" | "car";
 const TTL_MS = 30 * 60 * 1000;
 const HOTEL_SEARCH_COHORT_PREFIX = "__hotel-search-cohort__:";
 const CAR_SEARCH_COHORT_PREFIX = "__car-search-cohort__:";
+const MEMORY_CAR_RESULT_LIMIT = 500;
+const memoryCarResults = new Map<
+  string,
+  { value: unknown; expiresAt: number }
+>();
 
 const cacheKey = (vertical: ProviderDetailsVertical, resultId: string) =>
   `${vertical}:${resultId}`;
+
+function rememberCarInMemory(key: string, value: unknown, expiresAt: number) {
+  const now = Date.now();
+  for (const [candidate, entry] of memoryCarResults) {
+    if (entry.expiresAt <= now) memoryCarResults.delete(candidate);
+  }
+  if (
+    !memoryCarResults.has(key) &&
+    memoryCarResults.size >= MEMORY_CAR_RESULT_LIMIT
+  ) {
+    const oldest = memoryCarResults.keys().next().value;
+    if (oldest) memoryCarResults.delete(oldest);
+  }
+  memoryCarResults.delete(key);
+  memoryCarResults.set(key, {
+    value: structuredClone(value),
+    expiresAt,
+  });
+}
+
+function readCarInMemory<T>(key: string, now: number): T | null {
+  const entry = memoryCarResults.get(key);
+  if (!entry) return null;
+  if (entry.expiresAt <= now) {
+    memoryCarResults.delete(key);
+    return null;
+  }
+  return structuredClone(entry.value) as T;
+}
 
 function hotelSearchCohortId(search: HotelSearchParams) {
   const identity = JSON.stringify([
@@ -23,11 +57,26 @@ function hotelSearchCohortId(search: HotelSearchParams) {
   return `${HOTEL_SEARCH_COHORT_PREFIX}${createHash("sha256").update(identity).digest("hex")}`;
 }
 
-function carSearchCohortId(search: CarSearchParams) {
+function carLocationTargetIdentity(
+  target: LocationBoundCarSearchParams["pickupLocationTarget"],
+) {
+  return target
+    ? [
+        target.id,
+        target.selectionToken ?? "",
+        target.codes?.iata ?? "",
+        target.submittedValue,
+      ]
+    : null;
+}
+
+function carSearchCohortId(search: LocationBoundCarSearchParams) {
   const identity = JSON.stringify([
-    "car-search-cohort-v1",
+    "car-search-cohort-v2",
     search.pickupLocation.trim().toLocaleLowerCase(),
+    carLocationTargetIdentity(search.pickupLocationTarget),
     search.dropoffLocation.trim().toLocaleLowerCase(),
+    carLocationTargetIdentity(search.dropoffLocationTarget),
     search.pickupDate,
     search.pickupTime,
     search.dropoffDate,
@@ -45,6 +94,15 @@ export async function rememberProviderResults<T extends { id: string }>(
 ) {
   if (!results.length) return;
   const expiresAt = new Date(now + TTL_MS);
+  if (vertical === "car") {
+    for (const result of results) {
+      rememberCarInMemory(
+        cacheKey("car", result.id),
+        result,
+        expiresAt.getTime(),
+      );
+    }
+  }
   try {
     await Promise.all(results.map((result) => getPrisma().providerResultCache.upsert({
       where: { cacheKey: cacheKey(vertical, result.id) },
@@ -72,6 +130,10 @@ export async function getProviderResult<T>(
   resultId: string,
   now = Date.now(),
 ): Promise<T | null> {
+  if (vertical === "car") {
+    const memory = readCarInMemory<T>(cacheKey("car", resultId), now);
+    if (memory) return memory;
+  }
   try {
     const row = await getPrisma().providerResultCache.findUnique({
       where: { cacheKey: cacheKey(vertical, resultId) },
@@ -109,11 +171,16 @@ export async function getProviderResultWithContext<T>(
  * by client-supplied result data. */
 export async function rememberCarSearchCohort(
   results: NormalizedCarResult[],
-  search: CarSearchParams,
+  search: LocationBoundCarSearchParams,
   now = Date.now(),
 ) {
   if (!results.length) return;
   const resultId = carSearchCohortId(search);
+  rememberCarInMemory(
+    cacheKey("car", resultId),
+    results,
+    now + TTL_MS,
+  );
   try {
     await getPrisma().providerResultCache.upsert({
       where: { cacheKey: cacheKey("car", resultId) },
@@ -133,10 +200,15 @@ export async function rememberCarSearchCohort(
 }
 
 export async function getCarSearchCohort(
-  search: CarSearchParams,
+  search: LocationBoundCarSearchParams,
   now = Date.now(),
 ): Promise<NormalizedCarResult[]> {
   const resultId = carSearchCohortId(search);
+  const memory = readCarInMemory<NormalizedCarResult[]>(
+    cacheKey("car", resultId),
+    now,
+  );
+  if (memory) return memory;
   try {
     const row = await getPrisma().providerResultCache.findUnique({
       where: { cacheKey: cacheKey("car", resultId) },

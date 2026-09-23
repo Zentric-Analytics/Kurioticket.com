@@ -6,6 +6,7 @@ import { discoverLocations } from "@/lib/locations/discovery";
 import { availableDiscoveryAdapters } from "@/lib/locations/providerDiscoveryAdapters";
 import { getCanonicalCarLocationCatalog } from "@/lib/cars/carLocationSuggestions";
 import type { CanonicalLocation } from "@/lib/locations/types";
+import { publicLocationSelection } from "@/lib/locations/selectionAuthority";
 
 export const dynamic = "force-dynamic";
 
@@ -48,8 +49,24 @@ export async function GET(request: Request) {
         provenance: { source: "owned-catalog", catalogVersion: "legacy-catalog-v1", isLiveAvailability: false }, recovery, source: "local-fallback", isLiveAvailability: false }, { headers: jsonHeaders });
     }
     const result = await searchCanonicalCarCatalog(q, { limit, country });
-    const canonicalLocations = result.suggestions.map((suggestion) => suggestion.canonical ?? fromCarLocation(suggestion));
-    return Response.json({ ...result, canonicalLocations, source: "local-fallback", isLiveAvailability: false }, { headers: jsonHeaders });
+    const suggestions = result.suggestions.map((suggestion) => {
+      const canonical = suggestion.canonical ?? fromCarLocation(suggestion);
+      return {
+        ...suggestion,
+        canonical: publicLocationSelection(canonical, "cars"),
+      };
+    });
+    const canonicalLocations = suggestions.map((suggestion) => suggestion.canonical);
+    return Response.json(
+      {
+        ...result,
+        suggestions,
+        canonicalLocations,
+        source: "local-fallback",
+        isLiveAvailability: false,
+      },
+      { headers: jsonHeaders },
+    );
   } catch {
     return Response.json({ suggestions: [], canonicalLocations: [], source: "local-fallback", isLiveAvailability: false, recovery: resolveStaticSearch({ product: "cars", typedValue: q, allowUnverifiedText: true }) }, { headers: jsonHeaders });
   }

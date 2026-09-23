@@ -1,4 +1,4 @@
-import type { CarInventoryStatus, CarSearchParams, LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
+import type { CarInventoryStatus, LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { buildStaticCarResults } from "@/services/travel/staticCarResults";
 import { searchKayakCars, type KayakRequestContext } from "./kayakMetasearchProvider";
 import { getCarSearchCohort, getProviderResult, rememberCarSearchCohort, rememberProviderResults } from "./providerResultCache";
@@ -72,7 +72,7 @@ const carDetailsDependencies: CarDetailsDependencies = {
  * provider response; the URL supplies only identity and canonical criteria. */
 export async function resolveCarDetails(
   id: string,
-  search?: CarSearchParams,
+  search?: LocationBoundCarSearchParams,
   kayak?: KayakRequestContext,
   dependencies: CarDetailsDependencies = carDetailsDependencies,
 ) {
