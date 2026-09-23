@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { HotelAmenityList } from "../HotelAmenityList";
 import { RelatedHotelsSection } from "./RelatedHotelsSection";
 import { buildHotelMapEmbedUrl, buildGoogleHotelStreetViewEmbedUrl } from "@/lib/hotels/hotelMap";
+import { isIosHotelMobileWeb } from "@/lib/hotels/iosHotelMobileWeb";
 import type { StandaloneHotelDetailsProps } from "./StandaloneHotelDetails";
 import { formatMobileHotelPrice, mobileHotelAbout, mobileHotelAmenityGroups, mobileHotelStay } from "./mobileHotelDetailsPresentation";
 import { MobileHotelStayEditor } from "./MobileHotelStayEditor";
@@ -23,9 +24,10 @@ function DetailsDialog({ title, onClose, children, full = false, back }: { title
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     dialog?.showModal();
+    if (isIosHotelMobileWeb()) dialog?.focus({ preventScroll: true });
     return () => { dialog?.close(); document.body.style.overflow = overflow; opener?.focus({ preventScroll: true }); };
   }, []);
-  return <dialog ref={ref} className={`${styles.dialog} ${full ? styles.fullDialog : ""}`} aria-label={title} onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
+  return <dialog ref={ref} tabIndex={-1} className={`${styles.dialog} ${full ? styles.fullDialog : ""}`} aria-label={title} onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
     <div className={styles.dialogSurface}>
       <header className={styles.dialogHeader}>
         {back ? <button type="button" aria-label="Back to all photos" onClick={back}><ArrowLeft size={24} /></button> : null}
