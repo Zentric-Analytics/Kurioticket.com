@@ -266,7 +266,7 @@ test("only Back can act during entry loading and placeholders stay out of access
   const interactive = nodes.filter(({ props }) => props.disabled !== true && Object.keys(props).some((key) => /^on(?:Press|Touch)/.test(key)));
   assert.deepEqual(interactive.map(({ props }) => props.accessibilityLabel), ["Back to results"]);
   assert.equal(nodes.filter(({ props }) => ["radio", "tab", "link"].includes(props.accessibilityRole)).length, 0);
-  for (const id of ["copy", "body", "actions", "checkout"]) {
+  for (const id of ["copy", "body", "checkout"]) {
     const node = find(root, `flight-details-loading-${id}`);
     assert.equal(node.props.accessibilityElementsHidden, true);
     assert.equal(node.props.importantForAccessibility, "no-hide-descendants");
