@@ -27,6 +27,7 @@ export function MobileNativeFareInformationDeck({
   currencyRates,
   isFallbackRate,
   locale,
+  pricesReady,
 }: {
   activeTab: MobileFareInfoTab;
   onTabChange: (tab: MobileFareInfoTab) => void;
@@ -38,11 +39,12 @@ export function MobileNativeFareInformationDeck({
   currencyRates: ExchangeRates;
   isFallbackRate: boolean;
   locale: string;
+  pricesReady: boolean;
 }) {
   return (
     <section data-mobile-native-fare-information-deck className="mt-3 sm:hidden">
-      <div className="-mx-2 overflow-x-auto border-b border-[#D8E1EC] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div role="tablist" aria-label="Fare information" className="flex w-max min-w-full gap-[28px] px-0">
+      <div className="-mx-[10px] overflow-x-auto border-b border-[#D8E1EC] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div role="tablist" aria-label="Fare information" className="flex w-max min-w-full gap-[22px] px-0">
           {tabs.map((tab) => {
             const selected = activeTab === tab.id;
             return (
@@ -59,10 +61,10 @@ export function MobileNativeFareInformationDeck({
                   fontWeight: selected ? 800 : 600,
                   fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
-                className="relative min-h-[64px] shrink-0 whitespace-nowrap px-0 text-[18px] leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0754F7]/35"
+                className="relative min-h-[48px] shrink-0 whitespace-nowrap px-0 text-[14px] leading-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0754F7]/35"
               >
                 {tab.label}
-                {selected ? <span className="absolute -bottom-px left-[1px] right-[1px] h-[4px] rounded-full bg-[#0754F7]" aria-hidden="true" /> : null}
+                {selected ? <span className="absolute -bottom-px left-0.5 right-0.5 h-[3px] rounded-[2px] bg-[#0754F7]" aria-hidden="true" /> : null}
               </button>
             );
           })}
@@ -78,6 +80,7 @@ export function MobileNativeFareInformationDeck({
             selectedCurrency={selectedCurrency}
             currencyRates={currencyRates}
             isFallbackRate={isFallbackRate}
+            pricesReady={pricesReady}
           />
         ) : null}
         {activeTab === "details" ? <DetailsSurface offer={activeOffer} locale={locale} /> : null}
@@ -95,6 +98,7 @@ function DealsSurface({
   selectedCurrency,
   currencyRates,
   isFallbackRate,
+  pricesReady,
 }: {
   fare?: FlightDetailsFareChoice;
   selectedDealOfferId: string | null;
@@ -102,6 +106,7 @@ function DealsSurface({
   selectedCurrency: string;
   currencyRates: ExchangeRates;
   isFallbackRate: boolean;
+  pricesReady: boolean;
 }) {
   const deals = fare?.deals ?? [];
   if (!deals.length) {
@@ -122,13 +127,17 @@ function DealsSurface({
           rates: currencyRates,
           isFallbackRate,
         });
+        const priceAvailable = pricesReady && (
+          deal.currency.toUpperCase() === selectedCurrency.toUpperCase()
+          || (!isFallbackRate && price.currency.toUpperCase() === selectedCurrency.toUpperCase())
+        );
         return (
           <button
             key={deal.key}
             type="button"
             role="radio"
             aria-checked={selected}
-            aria-label={`${deal.providerName}, ${price.ariaLabel}, ${fare?.label ?? "fare"}`}
+            aria-label={`${deal.providerName}, ${priceAvailable ? price.ariaLabel : "price unavailable"}, ${fare?.label ?? "fare"}`}
             onClick={() => onSelectDeal(deal.offerId)}
             className={`flex min-h-24 w-full flex-col justify-between gap-[14px] rounded-[14px] border px-[15px] py-[13px] text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 ${
               selected
@@ -144,7 +153,7 @@ function DealsSurface({
             </span>
             <span className="flex items-end justify-between gap-3">
               <span className="min-w-0 flex-1 text-[12px] font-medium leading-[17px] text-[#536B92]">{fare?.label}</span>
-              <span className="max-w-[60%] shrink-0 text-right text-[18px] font-extrabold leading-[22px] tabular-nums text-[#1A1A1A]" aria-label={price.ariaLabel}>{price.formatted}</span>
+              <span className="max-w-[60%] shrink-0 text-right text-[18px] font-extrabold leading-[22px] tabular-nums text-[#1A1A1A]" aria-label={price.ariaLabel}>{priceAvailable ? price.formatted : "—"}</span>
             </span>
           </button>
         );
