@@ -1947,6 +1947,11 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           ) : null}
 
           <section className="min-w-0 space-y-2 sm:space-y-4">
+            {!guided && results.length > 0 ? (
+              <div className="flex w-full min-w-0 flex-col items-start gap-2 pt-1 sm:hidden" data-hotel-results-toolbar>
+                {renderMobileHotelShortcuts()}
+              </div>
+            ) : null}
             {error && results.length === 0 ? (
               <div ref={guided ? guidedErrorRef : undefined} tabIndex={guided ? -1 : undefined} className={cn(hotelResultStackClass, "rounded-[13px] border border-danger/20 bg-white p-4 text-slate-950 shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] sm:rounded-md sm:border-danger/30 sm:bg-red-50 sm:text-danger sm:shadow-none")}>
                 <p role="alert" className="text-sm font-semibold leading-5">{error}</p>
@@ -1968,7 +1973,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             ) : (
               <div className={cn(hotelResultStackClass, "space-y-4")}>
                 <div className="space-y-3">
-                  {!guided && results.length > 0 ? renderMobileHotelShortcuts() : null}
                   <ActiveHotelFilterChips chips={activeFilterChips} onRemove={removeFilterChip} t={t} />
 
                   <Button
