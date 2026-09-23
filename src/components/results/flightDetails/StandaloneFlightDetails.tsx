@@ -48,6 +48,62 @@ const fareTabs: Array<{ id: FareTab; label: string }> = [
   { id: "extras", label: "Optional extras" },
 ];
 
+function MobileFlightDetailsBrandHeader({
+  resultsHref,
+  saved,
+  savedPending,
+  onToggleSaved,
+  onShare,
+}: {
+  resultsHref: string;
+  saved: boolean;
+  savedPending: boolean;
+  onToggleSaved: () => void;
+  onShare: () => void;
+}) {
+  return (
+    <div data-mobile-flight-details-brand-header className="flex min-h-[64px] items-center justify-between gap-3 bg-white px-4 sm:hidden">
+      <div className="flex min-w-0 items-center gap-2">
+        <Link
+          href={resultsHref}
+          aria-label="Back to results"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0754F7]/35"
+        >
+          <ArrowLeft className="h-[25px] w-[25px]" strokeWidth={2.2} aria-hidden="true" />
+        </Link>
+        <Image
+          src="/brand/kurioticket-logo-primary-light-bg.svg"
+          alt="Kurioticket"
+          width={128}
+          height={32}
+          className="h-8 w-32 shrink-0 object-contain object-left"
+          priority
+        />
+      </div>
+      <div className="flex shrink-0 items-center">
+        <button
+          type="button"
+          aria-label={saved ? "Remove saved flight" : "Save flight"}
+          aria-pressed={saved}
+          disabled={savedPending}
+          onClick={onToggleSaved}
+          className="inline-flex h-11 w-11 items-center justify-center text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0754F7]/35 disabled:cursor-wait disabled:opacity-50"
+        >
+          <Heart className="h-[21px] w-[21px]" strokeWidth={2} fill={saved ? "currentColor" : "none"} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          aria-label="Share flight"
+          onClick={onShare}
+          className="inline-flex h-11 w-11 items-center justify-center text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0754F7]/35"
+        >
+          <Share2 className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resultsHref: string }) {
   const searchParams = useSearchParams();
   const { status: sessionStatus } = useSession();
@@ -347,11 +403,18 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
       <div className="mx-auto w-full max-w-[1470px] px-0 sm:px-6 lg:px-[34px]">
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
           <section className="min-w-0 overflow-hidden border-y border-[#E2E8F0] bg-[#F5F7FB] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
-            <div data-testid="flight-details-hero" className="relative flex min-h-[318px] flex-col justify-between overflow-hidden px-4 pb-[122px] pt-[calc(1rem+env(safe-area-inset-top))] sm:min-h-[280px] sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
+            <MobileFlightDetailsBrandHeader
+              resultsHref={resultsHref}
+              saved={flightSaved}
+              savedPending={savedFlightPending}
+              onToggleSaved={() => void toggleSavedFlight()}
+              onShare={() => void shareFlight()}
+            />
+            <div data-testid="flight-details-hero" className="relative flex min-h-[318px] flex-col justify-between overflow-hidden px-4 pb-[122px] pt-4 sm:min-h-[280px] sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
               <div className="absolute inset-0 bg-slate-950/35" aria-hidden="true" />
               <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-slate-950/80 via-slate-950/35 to-transparent" aria-hidden="true" />
-              <div className="relative z-10 flex items-start justify-between gap-3">
+              <div className="relative z-10 hidden items-start justify-between gap-3 sm:flex">
                 <Link
                   href={resultsHref}
                   aria-label="Back to results"
