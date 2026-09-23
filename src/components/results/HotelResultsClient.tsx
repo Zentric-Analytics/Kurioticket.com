@@ -14,7 +14,7 @@ import { HotelCardSkeleton } from "@/components/ui/Skeleton";
 import { PAGINATION_MIN_BUSY_MS, PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
-import { isKayakSandboxResult, resultActionHref } from "@/lib/travel/resultAction";
+import { resultActionHref } from "@/lib/travel/resultAction";
 import { HotelPriceAlertControl } from "@/components/results/HotelPriceAlertControl";
 import { buildHotelFacilityFilterOptions, hotelMatchesFacilityFilters } from "@/components/results/hotelFacilityFilter";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
@@ -1615,8 +1615,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                 </header>
                 <div className={cn("max-h-[calc(min(76dvh,620px)-9rem)] overflow-y-auto overscroll-contain bg-[#F2F4F8] px-6", mobileShortcutMenu === "sort" ? "space-y-1 py-2" : "space-y-2 py-4")}>
                   {mobileShortcutMenu === "sort" ? hotelSortOptions.map((option) => (
-                    <button key={option.value} type="button" aria-pressed={hotelSummarySortMode === option.value} className={cn(menuItemClass, "min-h-9 text-[13px]")} data-sort={option.value} onClick={handleMobileSortSelection}>
-                      <span>{option.label}</span>
+                    <button key={option.value} type="button" aria-pressed={hotelSummarySortMode === option.value} className={cn(menuItemClass, "min-h-9")} data-sort={option.value} onClick={handleMobileSortSelection}>
+                      <span className="text-[15px] font-bold leading-5">{option.label}</span>
                       {hotelSummarySortMode === option.value ? <Check className="h-4 w-4 text-[#004BB8]" aria-hidden="true" /> : null}
                     </button>
                   )) : null}
@@ -2211,7 +2211,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                     ) : paginatedVisibleHotels.length ? (
                       paginatedVisibleHotels.map((hotel, index) => {
                         const internalHref = guided ? (buildDetailsHref?.(hotel.id) ?? null) : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`;
-                        return <HotelCard key={hotel.id} hotel={hotel} detailsHref={resultActionHref(hotel, internalHref)} providerLabel={isKayakSandboxResult(hotel) ? "KAYAK sandbox · Not bookable" : undefined} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined} />;
+                        return <HotelCard key={hotel.id} hotel={hotel} detailsHref={resultActionHref(hotel, internalHref)} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined} />;
                       })
                     ) : (
                       <div className="rounded-[13px] border border-slate-200 bg-white p-4 text-[13px] font-semibold leading-5 text-muted shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] sm:rounded-xl sm:p-6 sm:text-sm sm:shadow-sm">
