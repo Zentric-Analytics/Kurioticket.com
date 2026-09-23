@@ -59,14 +59,14 @@ test("Cars Edit children preserve polished Cars content in the full-height mobil
   assert.doesNotMatch(pickerShell, /max-h-\[82dvh\]/);
   assert.doesNotMatch(carsPickerContent, /max-h-\[72dvh\]/);
   assert.match(pickerShell, /presentation = "default"/);
-  assert.match(datePicker, /carsResultsEdit &&[\s\S]*?"h-8 w-8 rounded-lg text-xs/);
+  assert.match(datePicker, /compactCars &&[\s\S]*?"h-8 w-8 rounded-lg text-xs/);
   assert.match(datePicker, /text-\[16px\] font-semibold leading-5/);
-  assert.match(datePicker, /data-scroll-direction=\{carsResultsEdit \? "vertical"/);
+  assert.match(datePicker, /data-scroll-direction=\{compactCars \? "vertical"/);
   assert.match(datePicker, /Array\.from\(\{ length: monthCount \}/);
   assert.doesNotMatch(datePicker, /\[resultsMonth\]/);
   assert.doesNotMatch(datePicker, /Previous month|Next month/);
   assert.doesNotMatch(datePicker, /data-cars-results-date-range-header/);
-  assert.match(datePicker, /endpoint && !carsResultsEdit/);
+  assert.match(datePicker, /endpoint && !compactCars/);
   assert.match(datePicker, /`\$\{fullDate\}, \$\{endpoint\}`/);
   assert.match(locationPicker, /surfaceVariant=\{nativeCarsAppearance \? "white" : "default"\}/);
   assert.match(locationPicker, /contentLayout=\{nativeCarsAppearance \? "contained" : "scroll"\}/);
@@ -193,7 +193,10 @@ test("Results Edit preserves the Any Age sentinel without selecting a numeric ro
     agePicker,
     /nativeCarsAppearance \? driverAgeOptions\.slice\(1\) : driverAgeOptions/,
   );
-  assert.match(agePicker, /const selectedIndex = ageOptions\.indexOf\(selectedAge\)/);
+  assert.match(
+    agePicker,
+    /const selectedIndex = selectedAge \? ageOptions\.indexOf\(selectedAge\) : -1/,
+  );
   assert.match(agePicker, /selectedIndex < 0 \? 0 : selectedIndex/);
   assert.match(agePicker, /const selected = selectedAge === age/);
   assert.match(agePicker, /aria-selected=\{selected\}/);

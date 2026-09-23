@@ -15,6 +15,10 @@ const pickerShell = readFileSync(
   new URL("../../components/search/FlightMobilePickerShell.tsx", import.meta.url),
   "utf8",
 );
+const datePicker = readFileSync(
+  new URL("../../components/search/MobileDateRangePicker.tsx", import.meta.url),
+  "utf8",
+);
 
 const timeField = page.match(
   /function TimeRangeField\([\s\S]*?\n}\n\nfunction SearchCell/,
@@ -136,4 +140,22 @@ test("Cars Main child pickers retain the full-height white mobile-web shell", ()
   assert.match(pickerShell, /fixed inset-0 flex h-\[100dvh\]/);
   assert.doesNotMatch(pickerShell, /max-h-\[(?:72|82)dvh\]/);
   assert.match(pickerContent, /presentation === "carsMain"[\s\S]*?"bg-white px-4 py-3"/);
+});
+
+test("Cars Main mobile fields use the native card hierarchy without changing sm styles", () => {
+  assert.match(page, /grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0/);
+  assert.match(page, /min-h-\[66px\] rounded-\[15px\][\s\S]*?px-3 py-\[9px\][\s\S]*?sm:min-h-\[58px\] sm:rounded-none/);
+  assert.match(page, /text-\[10px\] font-extrabold uppercase leading-\[13px\] tracking-\[0\.5px\][\s\S]*?sm:text-\[0\.66rem\]/);
+  assert.match(page, /text-\[15px\] font-semibold leading-5/);
+  assert.match(page, /text-\[12px\] font-medium leading-4/);
+  assert.match(page, /h-\[18px\] w-\[18px\]/);
+  assert.match(page, /values\.driverAge === defaultDriverAge[\s\S]*?"Select driver age"/);
+});
+
+test("Cars Main dates keep the full-height vertical web flow with compact internals", () => {
+  assert.match(page, /<MobileDatePickerDialog[\s\S]*?presentation="carsMain"/);
+  assert.match(datePicker, /const compactCars = carsResultsEdit \|\| carsMain/);
+  assert.match(datePicker, /data-scroll-direction=\{compactCars \? "vertical"/);
+  assert.match(datePicker, /\{!compactCars \? \([\s\S]*?labels\.selectDates/);
+  assert.match(datePicker, /presentation === "carsMain" && "bg-white px-4 py-3"/);
 });

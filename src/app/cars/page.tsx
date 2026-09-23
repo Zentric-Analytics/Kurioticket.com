@@ -922,18 +922,18 @@ function CarsSearchBar({
               error={errors.pickupLocation || errors.dropoffLocation}
               className="sm:border-e sm:border-b sm:border-slate-200/80 lg:border-b-0"
             >
-              <div className="grid gap-2">
+              <div>
                 <div className="relative">
                   <button
                     ref={pickupLocationLauncherRef}
                     type="button"
                     onClick={() => openMobilePicker("pickupLocation")}
-                    className="flex h-7 w-full items-center border-none bg-transparent py-0 text-start text-[16px] font-semibold focus:outline-none sm:hidden"
+                    className="flex min-h-5 w-full items-center border-none bg-transparent py-0 text-start text-[15px] font-semibold leading-5 focus:outline-none sm:hidden"
                   >
                     <span className="flex min-w-0 items-center gap-2">
                       <MapPin
                         aria-hidden="true"
-                        className="h-4 w-4 shrink-0 text-slate-500"
+                        className="h-[18px] w-[18px] shrink-0 text-slate-500"
                       />
                       <span
                         className={`min-w-0 ${
@@ -943,7 +943,7 @@ function CarsSearchBar({
                         }`}
                       >
                         <span className="block truncate">{pickupDisplay.primary || t("carsSearch.pickupLocationPlaceholder")}</span>
-                        {pickupDisplay.secondary ? <span className="block truncate text-xs font-medium leading-4 text-slate-600">{pickupDisplay.secondary}</span> : null}
+                        {pickupDisplay.secondary ? <span className="block truncate text-[12px] font-medium leading-4 text-slate-600">{pickupDisplay.secondary}</span> : null}
                       </span>
                     </span>
                   </button>
@@ -979,32 +979,6 @@ function CarsSearchBar({
                     </div>
                   </div>
                 </div>
-
-                {values.returnToDifferentLocation ? (
-                  <div className="relative sm:hidden">
-                    <button
-                      ref={dropoffLocationLauncherRef}
-                      type="button"
-                      onClick={() => openMobilePicker("dropoffLocation")}
-                      className={`flex h-7 w-full items-center border-t border-slate-100 bg-transparent py-0 pt-1.5 text-start text-[16px] font-semibold focus:outline-none sm:hidden ${
-                        values.dropoffLocation
-                          ? "text-slate-950"
-                          : "text-slate-400"
-                      }`}
-                    >
-                      <span className="flex min-w-0 items-center gap-2">
-                        <MapPin
-                          aria-hidden="true"
-                          className="h-4 w-4 shrink-0 text-slate-500"
-                        />
-                        <span className="truncate">
-                          {values.dropoffLocation ||
-                            t("carsSearch.returnLocationPlaceholder")}
-                        </span>
-                      </span>
-                    </button>
-                  </div>
-                ) : null}
               </div>
             </SearchCell>
 
@@ -1013,9 +987,26 @@ function CarsSearchBar({
                 divRef={dropoffFieldRef}
                 label={t("carsSearch.returnLocationLabel")}
                 error={errors.dropoffLocation}
-                className="hidden sm:block sm:border-e sm:border-b sm:border-slate-200/80 lg:border-b-0"
+                className="sm:border-e sm:border-b sm:border-slate-200/80 lg:border-b-0"
               >
                 <div className="relative">
+                  <button
+                    ref={dropoffLocationLauncherRef}
+                    type="button"
+                    onClick={() => openMobilePicker("dropoffLocation")}
+                    className={`flex min-h-5 w-full items-center border-none bg-transparent py-0 text-start text-[15px] font-semibold leading-5 focus:outline-none sm:hidden ${
+                      values.dropoffLocation
+                        ? "text-slate-950"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <MapPin aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-slate-500" />
+                      <span className="truncate">
+                        {values.dropoffLocation || t("carsSearch.returnLocationPlaceholder")}
+                      </span>
+                    </span>
+                  </button>
                   <div className="hidden min-w-0 items-center gap-2 sm:flex">
                     <MapPin
                       aria-hidden="true"
@@ -1112,16 +1103,16 @@ function CarsSearchBar({
                   ref={driverAgeLauncherRef}
                   type="button"
                   onClick={() => openMobilePicker("driverAge")}
-                  className="flex h-7 w-full items-center justify-between gap-2 border-none bg-transparent p-0 text-start text-[16px] font-semibold text-slate-950 focus:outline-none sm:hidden"
+                  className="flex min-h-5 w-full items-center justify-between gap-2 border-none bg-transparent p-0 text-start text-[15px] font-semibold leading-5 text-slate-950 focus:outline-none sm:hidden"
                 >
                   <span className="flex min-w-0 flex-1 items-center gap-2">
                     <UserRound
                       aria-hidden="true"
-                      className="h-4 w-4 shrink-0 text-slate-500"
+                      className="h-[18px] w-[18px] shrink-0 text-slate-500 sm:h-4 sm:w-4"
                     />
                     <span className="truncate">
                       {values.driverAge === defaultDriverAge
-                        ? t("carsSearch.driverAgeAnyAgeRange")
+                        ? "Select driver age"
                         : getDriverAgeOptionLabel(values.driverAge)}
                     </span>
                   </span>
@@ -1309,6 +1300,7 @@ function CarsMobilePickerDialogs({
       />
 
       <MobileDatePickerDialog
+        presentation="carsMain"
         open={activeMobilePicker === "dates"}
         title={t("carsSearch.chooseRentalDates")}
         titleId="cars-mobile-rental-dates-title"
@@ -1585,10 +1577,10 @@ function RentalDatesField({
         aria-haspopup="dialog"
         aria-controls="cars-desktop-rental-dates-dialog"
         aria-label={t("carsSearch.chooseRentalDatesAria")}
-        className="focus-ring flex h-7 w-full cursor-pointer items-center justify-start gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors sm:h-10 sm:justify-between md:text-[15px]"
+        className="focus-ring flex min-h-5 w-full cursor-pointer items-center justify-start gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[15px] font-semibold leading-5 text-slate-950 outline-none transition-colors sm:h-10 sm:justify-between sm:text-[16px] sm:leading-normal md:text-[15px]"
       >
         <Calendar
-          className="h-4 w-4 shrink-0 text-slate-500"
+          className="h-[18px] w-[18px] shrink-0 text-slate-500 sm:h-4 sm:w-4"
           aria-hidden="true"
         />
         <span className="min-w-0">
@@ -1701,12 +1693,12 @@ function TimeRangeField({
         aria-haspopup="dialog"
         aria-controls="cars-desktop-time-range-dialog"
         aria-label={t("carsSearch.choosePickupReturnTimesAria")}
-        className="focus-ring flex h-7 w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-8"
+        className="focus-ring flex min-h-5 w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[15px] font-semibold leading-5 text-slate-950 outline-none transition-colors sm:h-7 sm:text-[16px] sm:leading-normal md:text-[15px] lg:h-8"
       >
         <span className="flex min-w-0 items-center gap-2">
           <Clock
             aria-hidden="true"
-            className="h-4 w-4 shrink-0 text-slate-500"
+            className="h-[18px] w-[18px] shrink-0 text-slate-500 sm:h-4 sm:w-4"
           />
           <span className="truncate sm:hidden">{timeSummary}</span>
           <span className="hidden truncate sm:inline">
@@ -1765,9 +1757,9 @@ function SearchCell({
   return (
     <div
       ref={divRef}
-      className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-400 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200/80 sm:focus-within:bg-white sm:focus-within:ring-0 lg:px-4 lg:py-2 ${className}`}
+      className={`min-h-[66px] rounded-[15px] border border-slate-300 bg-white px-3 py-[9px] shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-400 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200/80 sm:focus-within:bg-white sm:focus-within:ring-0 lg:px-4 lg:py-2 ${className}`}
     >
-      <label className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-600 sm:mb-1 sm:text-[0.66rem] sm:text-slate-700 lg:mb-1">
+      <label className="mb-1 flex items-center gap-1.5 text-[10px] font-extrabold uppercase leading-[13px] tracking-[0.5px] text-slate-600 sm:mb-1 sm:text-[0.66rem] sm:font-bold sm:leading-4 sm:tracking-[0.12em] sm:text-slate-700 lg:mb-1">
         <span>{label}</span>
       </label>
       {children}
