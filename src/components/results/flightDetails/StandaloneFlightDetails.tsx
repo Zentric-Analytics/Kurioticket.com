@@ -23,7 +23,6 @@ import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { FlightDetailsLoadingShell } from "@/components/results/flightDetails/FlightDetailsLoadingShell";
 import { MobileNativeFareRail } from "@/components/results/flightDetails/MobileNativeFareRail";
 import { MobileNativeFareInformationDeck, type MobileFareInfoTab } from "@/components/results/flightDetails/MobileNativeFareInformationDeck";
-import { MobileFlightDetailsBrandHeader } from "@/components/results/flightDetails/MobileFlightDetailsBrandHeader";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -72,6 +71,9 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const headingRef = useRef<HTMLHeadingElement>(null);
   const fareButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const mobileHeroRef = useRef<HTMLDivElement>(null);
+  const mobileItineraryRef = useRef<HTMLDivElement>(null);
+  const [mobileHeaderProtected, setMobileHeaderProtected] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -104,6 +106,34 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     if (sessionStatus === "authenticated" || typeof window === "undefined") return;
     setLocalSavedFlightIds(readSavedItemIds());
   }, [sessionStatus]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sync = () => {
+      if (window.matchMedia("(min-width: 640px)").matches) {
+        setMobileHeaderProtected(false);
+        return;
+      }
+      const hero = mobileHeroRef.current;
+      const itinerary = mobileItineraryRef.current;
+      if (!hero || !itinerary) return;
+      const heroTop = hero.getBoundingClientRect().top + window.scrollY;
+      const heroHeight = hero.getBoundingClientRect().height;
+      const itineraryTop = itinerary.getBoundingClientRect().top + window.scrollY;
+      const foregroundOffset = itineraryTop - (heroTop + heroHeight);
+      const safeTop = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sat") || "0") || 0;
+      const protectedHeight = safeTop + 64;
+      const threshold = Math.max(0, heroTop + heroHeight + foregroundOffset - protectedHeight);
+      setMobileHeaderProtected(window.scrollY >= threshold);
+    };
+    sync();
+    window.addEventListener("scroll", sync, { passive: true });
+    window.addEventListener("resize", sync);
+    return () => {
+      window.removeEventListener("scroll", sync);
+      window.removeEventListener("resize", sync);
+    };
+  }, [response]);
 
   const available = response?.status === "available" ? response : null;
   const fareChoices = useMemo(() => available?.fareChoices ?? [], [available]);
@@ -345,17 +375,25 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
 
   return (
     <main className="flex-1 bg-[#F5F7FB] pb-[calc(6.75rem+env(safe-area-inset-bottom))] text-[#142033] sm:bg-[#F7F9FC] sm:pt-4 lg:pb-16 lg:pt-3">
+      <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 top-0 z-[70] h-[calc(env(safe-area-inset-top)+64px)] transition-colors sm:hidden ${mobileHeaderProtected ? "bg-[#F5F7FB]" : "bg-transparent"}`} />
+      <div className="fixed left-4 top-[calc(env(safe-area-inset-top)+8px)] z-[80] sm:hidden">
+        <Link href={resultsHref} aria-label="Back to results" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/55 bg-white/90 text-slate-900 shadow-[0_2px_6px_rgba(15,23,42,0.12)] backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">
+          <ArrowLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+        </Link>
+      </div>
+      <div data-flight-details-mobile-floating-actions className="fixed right-4 top-[calc(env(safe-area-inset-top)+8px)] z-[80] inline-flex h-11 w-[88px] items-center rounded-[20px] border border-white/55 bg-white/90 shadow-[0_2px_6px_rgba(15,23,42,0.12)] backdrop-blur-md sm:hidden">
+        <button type="button" aria-label={flightSaved ? "Remove saved flight" : "Save flight"} aria-pressed={flightSaved} disabled={savedFlightPending} onClick={() => void toggleSavedFlight()} className="inline-flex h-11 w-11 items-center justify-center rounded-l-[20px] text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 disabled:cursor-wait disabled:opacity-60">
+          <Heart className="h-[17px] w-[17px] translate-x-1" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
+        </button>
+        <button type="button" aria-label="Share flight" onClick={() => void shareFlight()} className="inline-flex h-11 w-11 items-center justify-center rounded-r-[20px] text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35">
+          <Share2 className="h-[17px] w-[17px] -translate-x-1" strokeWidth={2} aria-hidden="true" />
+        </button>
+      </div>
+      <span className="sr-only" role="status" aria-live="polite">{shareFeedback}</span>
       <div className="mx-auto w-full max-w-[1470px] px-0 sm:px-6 lg:px-[34px]">
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
           <section className="min-w-0 overflow-hidden border-b border-[#E2E8F0] bg-[#F5F7FB] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
-            <MobileFlightDetailsBrandHeader
-              resultsHref={resultsHref}
-              saved={flightSaved}
-              savedPending={savedFlightPending}
-              onToggleSaved={() => void toggleSavedFlight()}
-              onShare={() => void shareFlight()}
-            />
-            <div data-testid="flight-details-hero" className="relative flex min-h-[290px] flex-col justify-between overflow-hidden px-4 pb-[122px] pt-10 sm:min-h-[280px] sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
+            <div ref={mobileHeroRef} data-testid="flight-details-hero" className="relative flex min-h-[318px] flex-col justify-end overflow-hidden px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:justify-between sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
               <div className="absolute inset-0 bg-slate-950/35" aria-hidden="true" />
               <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-slate-950/80 via-slate-950/35 to-transparent" aria-hidden="true" />
@@ -394,14 +432,14 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               </div>
               <div className="relative z-10 min-w-0 text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.55)]">
                 <h1 ref={headingRef} id="flight-details-heading" tabIndex={-1} className="text-[27px] font-extrabold leading-[1.12] tracking-[-0.025em] outline-none sm:text-[30px]">{route}</h1>
-                <p className="mt-2 text-xs font-bold uppercase tracking-[0.08em] text-white/95 sm:text-[13px]">{tripLine}</p>
+                <p className="mt-[3px] text-[11px] font-bold uppercase leading-4 tracking-[0.55px] text-white/95 sm:mt-2 sm:text-[13px] sm:leading-normal sm:tracking-[0.08em]">{tripLine}</p>
               </div>
             </div>
-            <div className="relative z-10 -mt-8 p-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0 lg:px-6 lg:pb-6">
-            <div data-mobile-native-itinerary-stack className="-mx-2 -mt-[72px] space-y-[14px] sm:mx-0 sm:mt-0 sm:space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
+            <div className="relative z-10 px-[18px] pb-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0 lg:px-6 lg:pb-6">
+            <div ref={mobileItineraryRef} data-mobile-native-itinerary-stack className="-mx-[10px] -mt-[104px] space-y-[14px] sm:mx-0 sm:mt-0 sm:space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
 
             <h2 className="mb-0 mt-6 text-[18px] font-extrabold leading-[23px] tracking-[-0.15px] text-[#1A1A1A] sm:mb-3 sm:font-semibold sm:leading-tight sm:tracking-normal sm:text-slate-950">Pick your fare</h2>
-            <MobileNativeFareRail fares={fareChoices} selectedFareKey={selectedFare?.key ?? ""} tripType={available.search.tripType} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} alignmentKey={`${id}:${reloadToken}`} onSelect={selectFare} />
+            <MobileNativeFareRail fares={fareChoices} selectedFareKey={selectedFare?.key ?? ""} tripType={available.search.tripType} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} onSelect={selectFare} />
             <div role="radiogroup" aria-label="Available fares" className={`hidden min-w-0 sm:grid sm:gap-3 ${fareChoices.length === 1 ? "max-w-[270px]" : fareChoices.length === 2 ? "sm:grid-cols-2 lg:max-w-[632px]" : fareChoices.length === 3 ? "sm:grid-cols-2 md:grid-cols-3 lg:max-w-[954px]" : "sm:grid-cols-2 xl:max-w-[1276px] xl:grid-cols-4"}`}>
               {fareChoices.map((fare, index) => {
                 const selected = fare.key === selectedFare?.key;
@@ -727,7 +765,7 @@ function TripSidebar({ tripType, legs, route, date, tripLine, travelers, travele
 }
 
 function FlightDetailsSkeleton({ resultsHref }: { resultsHref: string }) { return <FlightDetailsLoadingShell resultsHref={resultsHref} />; }
-function FlightDetailsUnavailable({ resultsHref, message }: { resultsHref: string; message: string }) { return <main className="flex-1 bg-white sm:bg-[#F7F9FC] sm:py-10"><MobileFlightDetailsBrandHeader resultsHref={resultsHref} actionsDisabled/><div className="mx-auto max-w-3xl px-0 sm:px-4"><Link href={resultsHref} className="ml-4 hidden items-center gap-2 text-sm font-semibold text-[#075EE8] sm:inline-flex sm:ml-0"><ArrowLeft className="h-4 w-4" /> Back to results</Link><section className="mt-4 border-y border-slate-200 bg-white p-6 sm:rounded-[15px] sm:border sm:p-8"><h1 className="text-xl font-bold">Flight quote unavailable</h1><p className="mt-2 text-sm text-slate-600">{message || "Please return to results and search again for current prices."}</p></section></div></main>; }
+function FlightDetailsUnavailable({ resultsHref, message }: { resultsHref: string; message: string }) { return <main className="flex-1 bg-white sm:bg-[#F7F9FC] sm:py-10"><div className="flex min-h-[52px] items-center px-4 pt-[env(safe-area-inset-top)] sm:hidden"><Link href={resultsHref} aria-label="Back to results" className="inline-flex min-h-11 items-center gap-2 text-sm font-extrabold text-[#075EE8]"><ArrowLeft className="h-[18px] w-[18px]" /><span>Back to results</span></Link></div><div className="mx-auto max-w-3xl px-0 sm:px-4"><Link href={resultsHref} className="ml-4 hidden items-center gap-2 text-sm font-semibold text-[#075EE8] sm:inline-flex sm:ml-0"><ArrowLeft className="h-4 w-4" /> Back to results</Link><section className="mt-4 border-y border-slate-200 bg-white p-6 sm:rounded-[15px] sm:border sm:p-8"><h1 className="text-xl font-bold">Flight quote unavailable</h1><p className="mt-2 text-sm text-slate-600">{message || "Please return to results and search again for current prices."}</p></section></div></main>; }
 
 function readTravelerSummary(search: { adults: number; children: number; infants: number; travelers: number }, locale: string, t: (key: string) => string) {
   const number = new Intl.NumberFormat(locale);
