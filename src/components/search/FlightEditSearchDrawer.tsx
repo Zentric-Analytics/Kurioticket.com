@@ -296,7 +296,7 @@ export function FlightEditSearchDrawer({
       <div
         className={
           bottomSheet
-            ? `mobile-results-sheet-surface mobile-results-sheet-surface-smooth relative mx-3 mb-3 flex max-h-[88dvh] min-h-0 w-[calc(100%_-_1.5rem)] flex-col ${isClosing ? "mobile-results-sheet-surface-closing" : ""}`
+            ? `mobile-results-sheet-surface mobile-results-sheet-surface-smooth relative flex max-h-[88dvh] min-h-0 w-full flex-col ${isClosing ? "mobile-results-sheet-surface-closing" : ""}`
             : "contents"
         }
       >
@@ -316,7 +316,7 @@ export function FlightEditSearchDrawer({
             onSearch(draft);
           }
         }}
-        className={`relative z-10 flex min-h-0 w-full min-w-0 flex-col ${bottomSheet ? "max-h-[88dvh] overflow-hidden rounded-[24px] bg-[#F5F7FB]" : "h-full bg-white"}`}
+        className={`relative z-10 flex min-h-0 w-full min-w-0 flex-col ${bottomSheet ? "max-h-[88dvh] overflow-hidden rounded-t-[24px] bg-[#F5F7FB]" : "h-full bg-white"}`}
       >
         <div
           className={bottomSheet ? "shrink-0 bg-[#F5F7FB] pl-4 pr-2" : "shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))]"}
