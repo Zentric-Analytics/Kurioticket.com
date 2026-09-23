@@ -55,6 +55,12 @@ test("deal comparison presents authoritative provider data as selection-only car
   assert.doesNotMatch(deals,/providerMark|providerMonogram|charAt\(0\)|Best deal|Good value|Recommended|logoUrl|seller ranking/i);
 });
 
+test("provider-authored money uses the same canonical symbols as Flight Results",()=>{
+  assert.match(source,/import \{ formatCurrency, resolveDisplayCurrencyContext/);
+  assert.match(source,/const sourceMoney = \(amount:number,currency:string\) => formatCurrency\(amount,currency\);/);
+  assert.doesNotMatch(source,/currencyDisplay:"code"/);
+});
+
 test("fare details preserve cabin, amenity, source price, emissions, and update facts",()=>{
   const details=between('if(tab==="details")', 'if(tab==="conditions")');
   ["Fare brand","Cabin","Cabin product","Fare basis","Seat","Wi-Fi","Power","Price breakdown","Base fare","Taxes","Trip total"].forEach(label=>assert.match(details,new RegExp(label)));

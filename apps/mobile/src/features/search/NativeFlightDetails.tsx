@@ -18,7 +18,7 @@ import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import { readSession } from "../../storage/sessionStorage";
 import { useSavedFlights } from "../../storage/useSavedFlights";
 import { flightSavedSignature } from "../../storage/savedMapping";
-import { resolveDisplayCurrencyContext, type DisplayPrice, type ExchangeRates } from "../currency/displayCurrency";
+import { formatCurrency, resolveDisplayCurrencyContext, type DisplayPrice, type ExchangeRates } from "../currency/displayCurrency";
 import { createFlightDetailFare } from "./flightDetailCurrency";
 import { flightShareMessage, shareFlightForAuthenticatedSession } from "./flightDetailInteractions";
 import { Button, clock, ui } from "./SearchUi";
@@ -124,7 +124,7 @@ export function nativeCarrierConditionsLinks(offer: FlightDetailsOffer) {
   return [...new Map(entries.map((entry) => [entry.url, entry])).values()];
 }
 const titleCase = (value: string) => value.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-const sourceMoney = (amount:number,currency:string) => { try{return new Intl.NumberFormat(undefined,{style:"currency",currency,currencyDisplay:"code"}).format(amount)}catch{return `${currency} ${amount.toFixed(2)}`} };
+const sourceMoney = (amount:number,currency:string) => formatCurrency(amount,currency);
 const providerTimestamp = (value:string) => {const date=new Date(value);return Number.isNaN(date.getTime())?value:new Intl.DateTimeFormat(undefined,{dateStyle:"medium",timeStyle:"short"}).format(date)};
 const amenityState=(state?:string)=>state==="included"?"Available":state==="not-included"?"Not available":"Not supplied by provider";
 const conditionScope=(condition:FlightProviderCondition)=>condition.scope==="trip"?"Whole trip":condition.legIndex!==undefined?`Flight ${condition.legIndex+1}`:condition.scope==="outbound"?"Outbound only":condition.scope==="return"?"Return only":"Leg";

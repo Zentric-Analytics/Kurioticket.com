@@ -505,7 +505,7 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     "Cabin and fare by flight",
     "segment.originAirport} → {segment.destinationAirport",
     "Provider source price breakdown",
-    'currencyDisplay: "code"',
+    "formatFlightResultCurrency",
     'condition.scope === "trip" ? "Whole trip"',
     'condition.scope === "outbound" ? "Outbound only"',
     'condition.scope === "return" ? "Return only"',
@@ -524,6 +524,28 @@ test("standalone UI renders every leg and segment from selected offer and uses a
   assert.ok(!source.includes("Supported loyalty programmes:"));
   assert.match(source, /Booking currently unavailable/);
   assert.match(source, /disabled=\{!canContinue \|\| redirecting\}/);
+});
+
+test("Flight Details reuses Flight Results selected-currency conversion and symbols", async () => {
+  const files = await Promise.all([
+    readFile(new URL("../FlightDetailsClient.tsx", import.meta.url), "utf8"),
+    readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8"),
+    readFile(new URL("./MobileNativeFareRail.tsx", import.meta.url), "utf8"),
+    readFile(new URL("./MobileNativeFareInformationDeck.tsx", import.meta.url), "utf8"),
+  ]);
+  for (const source of files) {
+    for (const match of source.matchAll(/formatDisplayPrice\\(\\{[\\s\\S]*?\\}\\)/g)) {
+      const call = match[0];
+      if (!/sourceCurrency:/.test(call) || !/displayCurrency:/.test(call)) continue;
+      assert.match(call, /convertSourceEstimate: true/);
+      assert.match(call, /useFlightResultSymbols: true/);
+      assert.match(call, /maximumFractionDigits: 0/);
+      assert.doesNotMatch(call, /convertUsdEstimate: true/);
+    }
+  }
+  const providerMoneySources = files.slice(1).join("\\n");
+  assert.match(providerMoneySources, /formatFlightResultCurrency/);
+  assert.doesNotMatch(providerMoneySources, /currencyDisplay: "code"/);
 });
 
 test("standalone UI preserves the approved desktop and mobile blueprint composition", async () => {
