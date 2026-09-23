@@ -59,9 +59,7 @@ export function MobileNativeFareInformationDeck({
                   fontWeight: selected ? 800 : 600,
                   fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
-                className={`relative min-h-[64px] shrink-0 whitespace-nowrap px-0 text-[18px] leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0754F7]/35 ${
-                  selected ? "" : ""
-                }`}
+                className="relative min-h-[64px] shrink-0 whitespace-nowrap px-0 text-[18px] leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0754F7]/35"
               >
                 {tab.label}
                 {selected ? <span className="absolute -bottom-px left-[1px] right-[1px] h-[4px] rounded-full bg-[#0754F7]" aria-hidden="true" /> : null}
