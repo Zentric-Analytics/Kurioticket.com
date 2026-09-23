@@ -294,7 +294,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const [results, setResults] = useState<PublicHotelResult[]>([]);
   const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>([]);
   const [inventoryLoading, setLoading] = useState(true);
-  const loading = inventoryLoading;
+  const [completedSearchKey, setCompletedSearchKey] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [retryKey, setRetryKey] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -394,6 +394,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     }).toString();
   }, [body.checkIn, body.checkOut, body.destination, body.destinationId, body.guests, body.rooms, providerMode]);
   const bodySearchKey = [body.destinationId, body.destination, body.checkIn, body.checkOut, body.guests, body.rooms, providerMode].join("-");
+  // A changed search must not display cards belonging to the previous request.
+  const loading = inventoryLoading || completedSearchKey !== bodySearchKey;
   const bodyMobileSearchDraft = useMemo<HotelMobileSearchDraft>(
     () => ({
       destinationId: body.destinationId,
@@ -726,6 +728,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       .then((data) => {
         if (!active) return;
 
+        setError("");
         setResults(data.results);
         const restored = !guided && window.matchMedia("(max-width: 639px)").matches
           ? takeMobileHotelResultsState(bodySearchKey) : null;
@@ -762,7 +765,10 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         setError(searchError instanceof Error ? searchError.message : t("hotelResults.unableToSearchHotels"));
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (active) {
+          setCompletedSearchKey(bodySearchKey);
+          setLoading(false);
+        }
       });
 
     return () => {

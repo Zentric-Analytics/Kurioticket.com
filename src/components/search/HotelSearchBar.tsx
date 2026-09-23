@@ -829,6 +829,19 @@ export function HotelSearchBar({
     setRooms(String(normalizedRooms));
     setError("");
     closeHotelSearchPopovers();
+    const currentParams = new URLSearchParams(searchParams.toString());
+    const submittedParams = new URLSearchParams(params);
+    currentParams.sort();
+    submittedParams.sort();
+    if (pathname === "/hotels/results" && currentParams.toString() === submittedParams.toString()) {
+      setIsSubmitting(false);
+      if (mobileLayout === "drawer") {
+        closeMobileSearchPanel();
+      }
+      onSubmitComplete?.();
+      return;
+    }
+
     setIsSubmitting(true);
     onSubmitStart?.();
 
