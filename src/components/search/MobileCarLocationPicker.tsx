@@ -139,6 +139,7 @@ export function MobileCarLocationPicker({
 
   useEffect(() => {
     if (!open) return;
+    const controller = new AbortController();
     const frame = requestAnimationFrame(() => {
       const requestId = ++searchRequestRef.current;
       setQuery("");
@@ -151,7 +152,6 @@ export function MobileCarLocationPicker({
         inputRef.current.focus({ preventScroll: true });
       }
       if (resultsEdit) return;
-      const controller = new AbortController();
       void loadCarLocationSuggestions("", controller.signal, 8)
         .then((items) => {
           if (requestId !== searchRequestRef.current) return;
@@ -167,7 +167,10 @@ export function MobileCarLocationPicker({
           if (requestId === searchRequestRef.current) setLoading(false);
         });
     });
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      controller.abort();
+      cancelAnimationFrame(frame);
+    };
   }, [open, resultsEdit, value]);
 
   useEffect(() => {
@@ -179,6 +182,7 @@ export function MobileCarLocationPicker({
     if (!eligible) return;
 
     let active = true;
+    const controller = new AbortController();
     const requestId = ++searchRequestRef.current;
     const timer = window.setTimeout(
       () => {
@@ -205,6 +209,7 @@ export function MobileCarLocationPicker({
     );
     return () => {
       active = false;
+      controller.abort();
       window.clearTimeout(timer);
     };
   }, [draft, open, query, resultsEdit]);
