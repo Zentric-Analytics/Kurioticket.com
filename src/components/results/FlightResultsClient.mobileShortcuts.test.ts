@@ -48,12 +48,17 @@ test("sort and quick filters open one accessible mobile bottom-sheet system", ()
   for (const kind of ["sort", "airlines", "stops", "airports"]) assert.match(shortcuts, new RegExp(`mobileShortcutSheet === "${kind}"`));
 });
 
-test("sort sheet stages native options and descriptions until Apply", () => {
-  for (const copy of ["Sort flights", "Choose how results are ordered", "Best balance of price and journey time", "Lowest total price", "Shortest journey time"]) assert.match(shortcuts, new RegExp(copy));
+test("sort sheet uses Cars row scale and stages Flight sort options until Apply", () => {
+  for (const copy of ["Best balance of price and journey time", "Lowest total price", "Shortest journey time"]) assert.match(shortcuts, new RegExp(copy));
+  assert.match(shortcuts, /mobileShortcutSheet === "sort" \? "Sort" : sheetTitle/);
+  assert.match(shortcuts, /min-h-\[52px\][^"]*px-\[10px\] py-\[7px\]/);
+  assert.match(shortcuts, /text-sm font-semibold leading-5/);
+  assert.match(shortcuts, /text-\[10\.5px\] font-medium leading-\[14px\] text-slate-500/);
+  assert.match(shortcuts, /h-\[17px\] w-\[17px\][^"]*text-\[#004BB8\]/);
   assert.match(shortcuts, /setMobileDraftSort\(option\.value\)/);
   assert.match(shortcuts, /if \(mobileShortcutSheet === "sort"\) setSortMode\(mobileDraftSort\)/);
   assert.match(shortcuts, /setMobileDraftSort\("best"\)/);
-  assert.match(shortcuts, /\? "Apply" :/);
+  assert.match(shortcuts, /\? "Apply"/);
 });
 
 test("airlines, stops, and airports use staged native quick-sheet controls", () => {
@@ -83,7 +88,7 @@ test("full Filters launcher remains separate and retains its active count", () =
   const filter = source.slice(source.indexOf("function renderFloatingFilterButton"), source.indexOf("function renderMobileRouteSummaryCard"));
   assert.match(filter, /openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/);
   assert.match(filter, /activeFilterCount > 0/);
-  assert.match(filter, /h-5 min-w-5/);
+  assert.match(filter, /t\("filtersWithCount"\)/);
 });
 
 
@@ -103,4 +108,23 @@ test("mobile Flight filter and quick-filter colors mirror Cars", () => {
   assert.match(shortcuts, /renderTrigger\("airlines", "Airlines", selectedAirlines\.length\)/);
   assert.match(shortcuts, /renderTrigger\("stops", "Stops", selectedStops\.length\)/);
   assert.match(shortcuts, /renderTrigger\("airports", "Airports", selectedAirports\.length\)/);
+});
+
+
+test("Flight quick-filter popup mirrors Cars shell, controls, footer, and animation hooks", () => {
+  assert.match(shortcuts, /data-flight-quick-sheet-backdrop/);
+  assert.match(shortcuts, /z-\[10010\][^"]*items-end/);
+  assert.match(shortcuts, /cars-native-quick-scrim[^"]*bg-\[rgba\(15,23,42,0\.35\)\]/);
+  assert.match(shortcuts, /cars-native-quick-sheet[^"]*min-h-\[240px\][^"]*max-h-\[min\(76dvh,620px\)\]/);
+  assert.match(shortcuts, /rounded-t-\[24px\][^"]*bg-\[#F2F4F8\][^"]*shadow-\[0_16px_36px_rgba\(15,23,42,0\.2\)\]/);
+  assert.match(shortcuts, /grid min-h-\[76px\][^"]*grid-cols-\[44px_minmax\(0,1fr\)_44px\]/);
+  assert.match(shortcuts, /text-center text-\[18px\] font-bold leading-\[23px\] text-slate-950/);
+  assert.match(shortcuts, /h-\[22px\] w-\[22px\]/);
+  assert.match(shortcuts, /rounded-\[4px\] border-\[1\.5px\]/);
+  assert.match(shortcuts, /border-\[#004BB8\] bg-\[#004BB8\]/);
+  assert.match(shortcuts, /text-\[13px\] font-medium tabular-nums text-slate-500/);
+  assert.match(shortcuts, /gap-\[10px\] bg-\[#F2F4F8\]/);
+  assert.match(shortcuts, /h-\[49px\] min-w-\[116px\]/);
+  assert.match(shortcuts, /rounded-xl bg-\[#004BB8\][^"]*text-\[15px\] font-bold text-white/);
+  assert.doesNotMatch(shortcuts, /bg-\[#075EE8\]|rounded-full border[^\n]*selected/);
 });
