@@ -152,15 +152,19 @@ test("mobile filter sheet has one contextual reset and a result-count action", a
   assert.match(source, /min-h-11/);
 });
 
-test("pagination uses an occluding full-page transition with an accessible status", async () => {
+test("pagination uses an occluding full-page transition with an accessible status on mobile and desktop", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
 
+  assert.match(source, /createPortal\([\s\S]*<FlightResultsPageTransitionSkeleton/);
   assert.match(source, /data-flight-results-transition-cover/);
   assert.match(source, /fixed inset-0 z-\[9990\]/);
   assert.match(source, /className="sr-only" role="status" aria-live="polite"/);
+  assert.match(source, /px-\[14px\] py-4 sm:px-4 sm:py-8/);
+  assert.match(source, /<FlightCardSkeleton key=\{index\} \/>/);
+  assert.doesNotMatch(source, /data-flight-results-transition-cover[\s\S]{0,220}hidden[\s\S]{0,120}sm:block/);
   assert.match(source, /motion-reduce:animate-none/);
 });
 
