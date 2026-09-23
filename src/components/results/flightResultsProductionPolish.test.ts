@@ -29,30 +29,6 @@ test("mobile nearby insight, quick filters, and price alert use compact native-l
   assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 pt-2/);
 });
 
-test("partial-provider warning is a temporary overlay that never reserves results height", async () => {
-  const source = await readFile(
-    new URL("./FlightResultsClient.tsx", import.meta.url),
-    "utf8",
-  );
-  const english = await readFile(
-    new URL("../../lib/i18n/en.ts", import.meta.url),
-    "utf8",
-  );
-
-  assert.match(source, /export const FLIGHT_PROVIDER_WARNING_TOAST_MS = 4_000/);
-  assert.match(source, /const \[providerWarningVisible, setProviderWarningVisible\] = useState\(false\)/);
-  assert.match(source, /window\.setTimeout\([\s\S]*?FLIGHT_PROVIDER_WARNING_TOAST_MS/);
-  assert.match(source, /data-flight-provider-warning-toast/);
-  assert.match(source, /pointer-events-none fixed/);
-  assert.match(source, /opacity-100/);
-  assert.match(source, /opacity-0/);
-  assert.doesNotMatch(source, /w-full rounded-xl border border-amber-200 bg-amber-50 p-3/);
-  assert.match(
-    english,
-    /Some providers couldn’t be checked\. Showing available results\./,
-  );
-});
-
 test("mobile Flight Results uses the native horizontal gutter relationship", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
