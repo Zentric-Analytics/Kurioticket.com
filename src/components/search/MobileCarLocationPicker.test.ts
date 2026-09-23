@@ -38,8 +38,8 @@ test("Cars Results Edit gates searches and keeps a native empty state", () => {
     picker,
     /hasMinimumCarLocationSearchLetters\(query\)/,
   );
-  assert.match(picker, /if \(resultsEdit\) return;/);
-  assert.match(picker, /resultsEdit \? 180 : 120/);
+  assert.match(picker, /if \(nativeCarsAppearance\) return;/);
+  assert.match(picker, /nativeCarsAppearance \? 180 : 120/);
   assert.match(picker, /Start typing to find a location\./);
   assert.match(
     picker,
@@ -84,7 +84,7 @@ test("airport selection uses its canonical city and code while retaining airport
 test("selection prevents a second search and ignores stale responses", () => {
   assert.match(picker, /if \(!open \|\| draft\) return;/);
   assert.match(picker, /requestId !== searchRequestRef\.current\) return;/);
-  assert.match(picker, /\}, \[draft, open, query, resultsEdit\]\);/);
+  assert.match(picker, /\}, \[draft, open, query, nativeCarsAppearance\]\);/);
   assert.match(
     picker,
     /const select[\s\S]*searchRequestRef\.current \+= 1;[\s\S]*setDraft\(item\)/,
@@ -133,7 +133,7 @@ test("Cars Results Edit rows use the native car hierarchy without chips or chevr
   assert.match(picker, /<CarFront className="h-\[22px\] w-\[22px\] text-\[#071A48\]"/);
   assert.match(picker, /h-\[46px\] w-\[46px\][\s\S]*rounded-xl bg-white/);
   assert.match(picker, /<MapPin[\s\S]*h-\[18px\] w-\[18px\][\s\S]*<input/);
-  assert.match(picker, /selected && resultsEdit && "border-l-\[#064CF7\] bg-\[#F2F6FF\]"/);
+  assert.match(picker, /selected && nativeCarsAppearance && "border-l-\[#064CF7\] bg-\[#F2F6FF\]"/);
   assert.match(picker, /text-\[14px\] font-bold leading-\[19px\] text-\[#071A48\]/);
   assert.match(picker, /text-\[11px\] font-normal leading-4 text-\[#56658E\]/);
   assert.doesNotMatch(
@@ -143,17 +143,17 @@ test("Cars Results Edit rows use the native car hierarchy without chips or chevr
 });
 
 test("Cars Results Edit owns a native white surface and a dedicated results scroller", () => {
-  assert.match(picker, /surfaceVariant=\{resultsEdit \? "white" : "default"\}/);
-  assert.match(picker, /contentLayout=\{resultsEdit \? "contained" : "scroll"\}/);
-  assert.match(picker, /resultsEdit && "bg-white px-5 py-3"/);
-  assert.match(picker, /resultsEdit && "flex h-full min-h-0 flex-col"/);
-  assert.match(picker, /resultsEdit && "shrink-0"/);
+  assert.match(picker, /surfaceVariant=\{nativeCarsAppearance \? "white" : "default"\}/);
+  assert.match(picker, /contentLayout=\{nativeCarsAppearance \? "contained" : "scroll"\}/);
+  assert.match(picker, /nativeCarsAppearance && "bg-white px-5 py-3"/);
+  assert.match(picker, /nativeCarsAppearance && "flex h-full min-h-0 flex-col"/);
+  assert.match(picker, /nativeCarsAppearance && "shrink-0"/);
   assert.match(
     picker,
     /mt-3 min-h-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-contain bg-white \[-webkit-overflow-scrolling:touch\]/,
   );
-  assert.match(picker, /role=\{resultsEdit \? "listbox" : undefined\}/);
-  assert.match(picker, /role=\{resultsEdit \? "option" : undefined\}/);
+  assert.match(picker, /role=\{nativeCarsAppearance \? "listbox" : undefined\}/);
+  assert.match(picker, /role=\{nativeCarsAppearance \? "option" : undefined\}/);
 });
 
 test("Cars Results Edit rows use native geometry without the shared outer card", () => {
@@ -163,7 +163,7 @@ test("Cars Results Edit rows use native geometry without the shared outer card",
   );
   assert.match(
     picker,
-    /!resultsEdit &&[\s\S]*"overflow-hidden rounded-\[11px\] border border-slate-200 bg-white shadow-/,
+    /!nativeCarsAppearance &&[\s\S]*"overflow-hidden rounded-\[11px\] border border-slate-200 bg-white shadow-/,
   );
   assert.doesNotMatch(
     picker,

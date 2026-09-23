@@ -171,3 +171,16 @@ test("homepage Cars SearchTabs remains independently owned", () => {
   assert.match(homepageSource, /<SearchTabs/);
   assert.doesNotMatch(homepageSource, /function CarsSearchBar/);
 });
+
+test("main Cars child editors use an independent native-style mobile presentation", () => {
+  const pickers = carsPageSource.slice(
+    carsPageSource.indexOf("function CarsMobilePickerDialogs"),
+    carsPageSource.indexOf("function CarsPageShell"),
+  );
+  assert.equal((pickers.match(/presentation="carsMain"/g) ?? []).length, 4);
+  assert.match(pickers, /<MobileCarLocationPicker[\s\S]*?mode="pickup"/);
+  assert.match(pickers, /<MobileCarLocationPicker[\s\S]*?mode="return"/);
+  assert.match(pickers, /<MobileCarTimePickerDialog/);
+  assert.match(pickers, /<MobileCarDriverAgePickerDialog/);
+  assert.doesNotMatch(pickers, /presentation="carsResultsEdit"/);
+});

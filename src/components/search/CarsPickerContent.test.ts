@@ -107,3 +107,12 @@ test("mobile shell interactions are not closed by the desktop outside-pointer li
   assert.match(homepage, /document\.addEventListener\("keydown", closeOnEscape\)/);
   assert.match(homepage, /\[isSmViewport, mobilePresentation, onOpenChange, open\]/);
 });
+
+test("Cars Main shares native time and concrete-age internals without changing defaults", () => {
+  assert.match(shared, /presentation\?: "default" \| "carsResultsEdit" \| "carsMain"/);
+  assert.match(shared, /presentation === "carsResultsEdit" \|\| presentation === "carsMain"/);
+  assert.match(shared, /presentation === "carsMain"[\s\S]*?"bg-white px-4 py-3"/);
+  assert.match(shared, /nativeCarsAppearance \? driverAgeOptions\.slice\(1\) : driverAgeOptions/);
+  assert.match(shared, /nativeCarsAppearance && driverAge === defaultDriverAge[\s\S]*?\? "30"/);
+  assert.match(shared, /nativeCarsAppearance \?[\s\S]*?`\$\{age\} years old`/);
+});
