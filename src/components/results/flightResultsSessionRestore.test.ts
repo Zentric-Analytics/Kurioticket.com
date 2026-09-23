@@ -21,14 +21,14 @@ test("FlightResultsClient restores a matching snapshot before its no-cache reque
   );
   assert.match(restoreBlock, /setWarnings\(snapshot\.warnings\)/);
   assert.match(restoreBlock, /setError\(""\)/);
-  assert.match(restoreBlock, /setLoading\(false\)/);
+  assert.match(restoreBlock, /setLoading\(refreshingStaleSnapshot\)/);
   assert.match(restoreBlock, /setBackgroundRefreshing\(refreshingStaleSnapshot\)/);
   assert.match(restoreBlock, /if \(!refreshingStaleSnapshot\) return/);
   assert.match(restoreBlock, /activeFlightSearchKeyRef\.current !== searchKey/);
   assert.match(restoreBlock, /return;/);
 });
 
-test("stale results refresh in place without clearing cards or surfacing a blocking error", async () => {
+test("stale results stay retained but blocked from scrolling until refresh settles", async () => {
   const source = await readFile(resultsClientPath, "utf8");
   const staleIndex = source.indexOf("const refreshingStaleSnapshot");
   const emptySnapshotIndex = source.indexOf("} else {", staleIndex);
@@ -40,8 +40,10 @@ test("stale results refresh in place without clearing cards or surfacing a block
 
   assert.ok(staleIndex >= 0 && staleIndex < emptySnapshotIndex && emptySnapshotIndex < fetchIndex);
   assert.doesNotMatch(staleRestore, /setResults\(\[\]\)/);
-  assert.doesNotMatch(staleRestore, /setLoading\(true\)/);
+  assert.match(staleRestore, /setLoading\(refreshingStaleSnapshot\)/);
+  assert.match(staleRestore, /setBackgroundRefreshing\(refreshingStaleSnapshot\)/);
   assert.match(failure, /if \(!refreshingStaleSnapshot\)/);
+  assert.match(source, /\.finally\(\(\) => \{[\s\S]*setLoading\(false\)[\s\S]*setBackgroundRefreshing\(false\)/);
   assert.match(source, /backgroundRefreshing \? t\("updatingResults"\) : ""/);
 });
 
