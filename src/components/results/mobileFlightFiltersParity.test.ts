@@ -58,3 +58,19 @@ test("mobile results count uses native English capitalization and omits the rang
   assert.match(intro, /text-\[13px\][^\n]*font-bold[^\n]*leading-\[17px\]/);
   assert.match(client, /className="hidden w-full items-center[^\n]*sm:flex/);
 });
+
+
+test("Flight mobile range scales match the polished reference geometry", () => {
+  assert.match(sheet, /\[&::-webkit-slider-runnable-track\]:h-1/);
+  assert.match(sheet, /\[&::-webkit-slider-thumb\]:h-\[18px\]/);
+  assert.match(sheet, /\[&::-webkit-slider-thumb\]:w-\[18px\]/);
+  assert.match(sheet, /\[&::-webkit-slider-thumb\]:border-\[3px\]/);
+  assert.match(sheet, /\[&::-webkit-slider-thumb\]:border-white/);
+  assert.match(sheet, /\[&::-webkit-slider-thumb\]:bg-\[#004BB8\]/);
+  assert.match(sheet, /shadow-\[0_1px_4px_rgba\(15,23,42,0\.28\)\]/);
+  assert.match(sheet, /#D8DEE8_var\(--flight-range-progress\)_100%/);
+  assert.match(sheet, /"--flight-range-progress": `\$\{progress\}%`/);
+  assert.match(sheet, /style=\{rangeProgressStyle\([\s\S]*priceBounds\.min[\s\S]*priceBounds\.max/);
+  assert.match(sheet, /style=\{rangeProgressStyle\([\s\S]*legTimes\.min[\s\S]*legTimes\.max/);
+  assert.match(sheet, /style=\{rangeProgressStyle\([\s\S]*durationBounds\.min[\s\S]*durationBounds\.max/);
+});
