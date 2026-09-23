@@ -744,6 +744,66 @@ test("Flight Details mobile cleanup uses compact hero actions, native fare rail,
   assert.doesNotMatch(emptyBranch, /Compare available booking options|deals available/);
 });
 
+test("mobile web Fare information deck mirrors native tabs and selection-only deal cards", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const deck = await readFile(new URL("./MobileNativeFareInformationDeck.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /<MobileNativeFareInformationDeck/);
+  assert.match(source, /selectedDealOfferId=\{selectedDeal\?\.offerId \?\? null\}/);
+  assert.match(source, /onSelectDeal=\{setSelectedDealOfferId\}/);
+  assert.match(deck, /data-mobile-native-fare-information-deck/);
+  assert.match(deck, /role="tablist" aria-label="Fare information"/);
+  assert.match(deck, /min-h-12/);
+  assert.match(deck, /gap-\[22px\]/);
+  assert.match(deck, /text-\[14px\] leading-5/);
+  assert.match(deck, /font-extrabold text-\[#1A1A1A\]/);
+  assert.match(deck, /h-\[3px\] rounded-full bg-\[#075EE8\]/);
+  assert.doesNotMatch(deck, /text-\[#075EE8\].*tab\.label/);
+
+  assert.match(deck, /role="radiogroup" aria-label="Flight deal options"/);
+  assert.match(deck, /min-h-24.*rounded-\[14px\]/);
+  assert.match(deck, /border-\[#075EE8\] bg-\[#F4F8FF\] shadow-\[0_4px_10px_rgba\(7,19,59,0\.12\)\]/);
+  assert.match(deck, /h-5 w-5.*rounded-full border-\[1\.5px\]/);
+  assert.match(deck, /h-2 w-2 rounded-full bg-\[#075EE8\]/);
+  assert.match(deck, /text-\[18px\] font-extrabold leading-\[22px\] tabular-nums/);
+  assert.doesNotMatch(deck, /View deal|onViewDeal/);
+});
+
+test("mobile web Fare information surfaces match native information hierarchy", async () => {
+  const deck = await readFile(new URL("./MobileNativeFareInformationDeck.tsx", import.meta.url), "utf8");
+
+  assert.match(deck, /<GroupLabel>Cabin<\/GroupLabel>/);
+  assert.match(deck, /<GroupLabel>On board<\/GroupLabel>/);
+  assert.match(deck, /<GroupLabel>Price breakdown<\/GroupLabel>/);
+  assert.match(deck, /Estimated CO₂ emissions/);
+  assert.match(deck, /Provider offer last updated/);
+  assert.match(deck, /Fare conditions unavailable/);
+  assert.match(deck, /<StatusIcon semantic=\{semantic\} \/>/);
+  assert.match(deck, /<GroupLabel>Travel documents<\/GroupLabel>/);
+  assert.match(deck, /<GroupLabel>Airline<\/GroupLabel>/);
+  assert.match(deck, /conditions of carriage/);
+  assert.match(deck, /<GroupLabel>Optional services<\/GroupLabel>/);
+  assert.match(deck, /Maximum quantity per traveler/);
+  assert.match(deck, /<GroupLabel>Loyalty programmes<\/GroupLabel>/);
+  assert.doesNotMatch(deck, /rounded-\[10px\] border border-\[#E2E8F0\] p-4/);
+});
+
+test("mobile selected deal controls phone price and Continue deal while tablet keeps legacy checkout", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /nativeFlightDealSelection\(selectedDealOfferId, selectedFare\)/);
+  assert.match(source, /setSelectedDealOfferId\(\(current\) => nativeFlightDealSelection\(current, selectedFare\)\?\.offerId \?\? null\)/);
+  assert.match(source, /const activeOffer = selectedDeal\?\.offer \?\? selectedOffer/);
+  assert.match(source, /const mobilePrice = selectedDeal/);
+  assert.match(source, /activeOffer=\{activeOffer\}/);
+  assert.match(source, /price=\{mobilePrice\}/);
+  assert.match(source, /onContinue=\{\(\) => continueToOffer\(selectedDeal\?\.offerId \?\? selectedOffer\.id\)\}/);
+  assert.match(source, /label="Continue deal" pendingLabel="Checking offer…"/);
+  assert.match(source, /shadow-\[0_-4px_12px_rgba\(7,19,59,0\.10\)\] sm:hidden/);
+  assert.match(source, /<TabletCheckoutDock travelerCount=\{travelers\.count\} price=\{providerPrice\}/);
+  assert.match(source, /hidden border-t.*sm:block lg:hidden/);
+});
+
 test("fare centering is rail-relative and clamps only at real edges", () => {
   const geometry = { railLeft: 16, railScrollLeft: 0, railClientWidth: 358, railScrollWidth: 849, selectedWidth: 275 };
   assert.equal(getCenteredFareScrollLeft({ ...geometry, selectedLeft: 315 }), 257.5);

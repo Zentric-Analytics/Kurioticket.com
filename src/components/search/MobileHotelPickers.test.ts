@@ -12,6 +12,8 @@ const standalone = read("./HotelSearchBar.tsx");
 const recents = read("../../lib/recent-searches.ts");
 const english = read("../../lib/i18n/en.ts");
 
+const editStyles = read("../results/HotelResultsMobile.module.css");
+
 test("hotel destination preserves its query and applies a suggestion immediately", () => {
   assert.match(
     destination,
@@ -127,13 +129,15 @@ test("Hotel results edit flow uses compact guest spacing and separate rounded fi
   assert.match(standalone, /data-hotel-results-edit-fields=/);
   assert.match(
     standalone,
-    /className=\{mobileResultsSheet \? "flex flex-col gap-3" : "contents"\}/,
+    /className=\{mobileResultsSheet \? "flex flex-col gap-2" : "contents"\}/,
   );
   assert.equal(
-    (standalone.match(/min-h-\[72px\] rounded-2xl border border-slate-200 bg-white px-4 py-3/g) ?? []).length,
+    (standalone.match(/min-h-16 rounded-\[12px\] border border-\[#D8E1EC\] bg-white px-4 py-2/g) ?? []).length,
     3,
   );
-  assert.doesNotMatch(standalone, /mobileResultsEditGroupClass/);
+  assert.match(editStyles, /data-hotel-results-edit-fields[\s\S]*?gap: 10px/);
+  assert.match(editStyles, /data-hotel-mobile-edit-row[\s\S]*?border-radius: 13px/);
+  assert.match(editStyles, /margin: 0 12px 12px/);
 });
 
 test("both mobile Hotel picker shells use the dedicated Guests & Rooms title", () => {

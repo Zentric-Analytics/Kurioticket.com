@@ -1,12 +1,18 @@
-/* Preview hotel-card layout. Desktop card and site chrome retain their styles. */
-.editSheet { border-radius: 10px 10px 0 0; border: 0; background: white; box-shadow: none; }
-.editSheet > div:first-child { padding-block: 4px; }
-.editSheet h2 { font-size: 18px; line-height: 24px; }
-.editSheet [data-hotel-results-edit-fields] { gap: 0; }
-.editSheet [data-hotel-mobile-edit-row] { min-height: 60px; padding: 10px 0; border: 0; border-bottom: 1px solid #e7ecf5; border-radius: 0; box-shadow: none; }
-.editSheet [data-hotel-mobile-edit-row]:focus-within { border-color: #004bb8; box-shadow: none; }
-.editSheet [data-hotel-mobile-edit-search-action] { position: sticky; bottom: 0; padding-top: 12px; background: white; z-index: 1; }
-.editSheet [data-hotel-mobile-edit-search-action] > button { height: 44px; min-height: 44px; margin-top: 0; border-radius: 6px; font-size: 14px; box-shadow: none; }
+.editBackdrop { background: rgb(8 18 35 / 52%); }
+/* Hotel results edit sheet follows Preview's floating search editor. */
+.editSheet { width: calc(100% - 24px); margin: 0 12px 12px; max-height: 88dvh; border-radius: 24px; border: 0; background: #f5f7fb; box-shadow: none; }
+.editSheet > div:first-child { padding: 0 8px 0 16px; border: 0; background: #f5f7fb; }
+.editSheet > div:first-child > div { min-height: 52px; }
+.editSheet h2 { font-size: 19px; line-height: 24px; font-weight: 600; }
+.editSheet > div:nth-child(2) { padding: 10px 12px max(20px, env(safe-area-inset-bottom)); }
+.editSheet [data-hotel-results-edit-fields] { gap: 10px; }
+.editSheet [data-hotel-mobile-edit-row] { min-height: 66px; padding: 10px 12px; border: 1px solid #e7ecf5; border-radius: 13px; box-shadow: none; }
+.editSheet [data-hotel-mobile-edit-row] > span:first-child { margin-bottom: 3px; font-size: 11px; line-height: 14px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.editSheet [data-hotel-mobile-edit-row] button { font-size: 15px; line-height: 20px; font-weight: 600; }
+.editSheet [data-hotel-destination-value] > span > span + span { display: none; }
+.editSheet [data-hotel-mobile-edit-row]:focus-within { border-color: #064cf7; box-shadow: none; }
+.editSheet [data-hotel-mobile-edit-search-action] { padding-top: 12px; background: #f5f7fb; }
+.editSheet [data-hotel-mobile-edit-search-action] > button { height: 52px; min-height: 52px; margin-top: 0; border-radius: 12px; font-size: 16px; font-weight: 600; background: #064cf7; box-shadow: none; }
 
 @media (max-width: 639px) {
   .results { color: #1a1a1a; }

@@ -8,21 +8,25 @@ const search = read("./HotelSearchBar.tsx");
 const sheet = read("./MobileResultsEditSheet.tsx");
 const styles = read("../../app/globals.css");
 
+const editStyles = read("../results/HotelResultsMobile.module.css");
+
 test("mobile hotel results fields use independent rounded cards with only the required chevrons", () => {
   assert.match(
     search,
-    /data-hotel-results-edit-fields=[\s\S]*?className=\{mobileResultsSheet \? "flex flex-col gap-2\.5" : "contents"\}/,
+    /data-hotel-results-edit-fields=[\s\S]*?className=\{mobileResultsSheet \? "flex flex-col gap-2" : "contents"\}/,
   );
   assert.equal(
-    (search.match(/min-h-\[72px\] rounded-\[13px\] border border-\[#D8E1EC\] bg-white px-4 py-3/g) ?? []).length,
+    (search.match(/min-h-16 rounded-\[12px\] border border-\[#D8E1EC\] bg-white px-4 py-2/g) ?? []).length,
     3,
   );
   const fields = search.slice(
     search.indexOf("data-hotel-results-edit-fields"),
     search.indexOf("data-hotel-mobile-edit-search-action"),
   );
-  assert.doesNotMatch(fields, /divide-y divide-slate-200|rounded-none border-0/);
-  assert.doesNotMatch(search, /mobileResultsEditGroupClass/);
+  assert.doesNotMatch(fields.slice(0, fields.indexOf("<label")), /divide-y divide-slate-200|rounded-none border-0/);
+  assert.match(editStyles, /data-hotel-results-edit-fields[\s\S]*?gap: 10px/);
+  assert.match(editStyles, /data-hotel-mobile-edit-row[\s\S]*?border-radius: 13px/);
+  assert.match(editStyles, /margin: 0 12px 12px/);
   assert.match(
     search,
     /dateSummary[\s\S]*?mobileResultsSheet \? <ChevronRight aria-hidden="true"/,

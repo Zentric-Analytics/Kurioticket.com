@@ -1791,8 +1791,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           <MobileResultsEditSheet
             open={mobileHotelSearchOpen}
             browserCanvasColor="#ffffff"
-            cleanBackdrop
-            bottomSurfaceContinuation
+            backdropClassName={mobileStyles.editBackdrop}
             smoothMotion
             isolatedBackdrop
             closing={mobileHotelSearchClosing}
@@ -1801,7 +1800,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             title={t("editHotelSearch") || "Edit hotel search"}
             onClose={closeMobileHotelSearch}
             className={mobileStyles.editSheet}
-            contentClassName="!pt-0 pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
+            contentClassName=""
           >
             <HotelSearchBar
               key={`mobile-drawer-${bodySearchKey}-${body.sort}`}

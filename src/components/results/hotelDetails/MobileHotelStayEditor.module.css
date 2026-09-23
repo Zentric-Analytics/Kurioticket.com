@@ -1,0 +1,26 @@
+.dialog { position: fixed; inset: auto 0 0; width: 100%; max-width: none; max-height: 94dvh; margin: 0; padding: 0; border: 0; border-radius: 20px 20px 0 0; overflow: auto; overscroll-behavior: contain; color: #1a1a1a; font-family: Inter,sans-serif; background: white; }
+.dialog::backdrop { background: rgb(2 6 23 / 42%); }
+.surface { padding: 14px 20px calc(16px + env(safe-area-inset-bottom)); }
+.surface header { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; }
+.surface h2 { font-size: 18px; line-height: 24px; font-weight: 700; }
+.surface header button { width: 44px; height: 44px; display: grid; place-items: center; }
+.surface button:focus-visible { outline: 2px solid #064cf7; outline-offset: 2px; }
+.option { width: 100%; min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 7px; text-align: start; }
+.option span { flex: 1; min-width: 0; }
+.option small { display: block; font-size: 12px; line-height: 17px; font-weight: 500; color: #595959; }
+.option strong { display: block; margin-top: 2px; font-size: 14px; line-height: 20px; font-weight: 600; }
+.surface hr { border: 0; border-top: 1px solid #e7ecf5; }
+.counter { min-height: 70px; display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 15px; line-height: 21px; }
+.counter + .counter { border-top: 1px solid #e7ecf5; }
+.counter strong { font-weight: 600; }
+.counter > div { display: flex; align-items: center; gap: 12px; }
+.counter button { width: 44px; height: 44px; border: 1px solid #e7ecf5; border-radius: 50%; display: grid; place-items: center; }
+.counter button:disabled { opacity: .35; }
+.counter span { min-width: 28px; text-align: center; font-weight: 600; }
+.done { width: 100%; min-height: 48px; margin-top: 12px; border-radius: 8px; background: #004bb8; color: white; font-size: 14px; line-height: 20px; font-weight: 700; }
+
+.updating { font-size: 12px; color: #595959; }
+.option:disabled { opacity: .5; }
+
+.calendarDialog { inset: 0; height: 100dvh; max-height: 100dvh; border-radius: 0; overflow: hidden; }
+.calendarDialog > .surface { padding: 0; }

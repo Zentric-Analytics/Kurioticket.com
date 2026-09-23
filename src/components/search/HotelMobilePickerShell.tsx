@@ -1,11 +1,16 @@
 "use client";
 
+import { ChevronLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
+import styles from "./HotelAppPickers.module.css";
+
 import { type ReactNode, type RefObject } from "react";
 
 import { FlightMobilePickerShell, type FlightMobilePickerRequestClose } from "@/components/search/FlightMobilePickerShell";
 
 type HotelMobilePickerShellProps = {
   open: boolean;
+  appearance?: "default" | "app";
   title: string;
   titleId: string;
   dialogId?: string;
@@ -18,8 +23,10 @@ type HotelMobilePickerShellProps = {
   headerVariant?: "navigation" | "close";
   showCancelAction?: boolean;
   showBackLabel?: boolean;
+  showBackAction?: boolean;
 };
 
 export function HotelMobilePickerShell(props: HotelMobilePickerShellProps) {
-  return <FlightMobilePickerShell {...props} />;
+  const { appearance, ...rest } = props;
+  return <FlightMobilePickerShell {...rest} {...(appearance === "app" ? { className: cn(styles.full, rest.className), showBackLabel: true, showCancelAction: false, backIcon: <ChevronLeft size={20} aria-hidden="true" /> } : {})} />;
 }

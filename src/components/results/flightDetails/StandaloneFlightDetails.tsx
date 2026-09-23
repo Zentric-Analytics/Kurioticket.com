@@ -22,6 +22,7 @@ import {
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { FlightDetailsLoadingShell } from "@/components/results/flightDetails/FlightDetailsLoadingShell";
 import { MobileNativeFareRail } from "@/components/results/flightDetails/MobileNativeFareRail";
+import { MobileNativeFareInformationDeck, type MobileFareInfoTab } from "@/components/results/flightDetails/MobileNativeFareInformationDeck";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -34,11 +35,12 @@ import type {
   FlightDetailsResponse,
 } from "@/lib/flights/flightDetailsContract";
 import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
+import { nativeFlightDealSelection } from "@/lib/flights/nativeFlightDealSelection";
 import type { FlightLeg, FlightProviderCondition, FlightSegment } from "@/lib/types";
 import { readSavedItemIds, toggleSavedItemId, writeSavedItemIds } from "@/lib/saved-items-local";
 import flightDetailsHero from "../../../../apps/mobile/assets/heroes/flight-details-hero.webp";
 
-type FareTab = "deals" | "details" | "conditions" | "extras";
+type FareTab = MobileFareInfoTab;
 const fareTabs: Array<{ id: FareTab; label: string }> = [
   { id: "deals", label: "Compare deals" },
   { id: "details", label: "Fare details" },
@@ -61,6 +63,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const [selectedFareKey, setSelectedFareKey] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
   const [activeTab, setActiveTab] = useState<FareTab>("deals");
+  const [selectedDealOfferId, setSelectedDealOfferId] = useState<string | null>(null);
   const [localSavedFlightIds, setLocalSavedFlightIds] = useState<string[]>([]);
   const [savedFlightBackendId, setSavedFlightBackendId] = useState<string | null>(null);
   const [savedFlightPending, setSavedFlightPending] = useState(false);
@@ -105,9 +108,15 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const fareChoices = useMemo(() => available?.fareChoices ?? [], [available]);
   const selectedFare = fareChoices.find((fare) => fare.key === selectedFareKey) ?? fareChoices[0];
   const selectedOffer = selectedFare?.offer ?? available?.flight;
+  const selectedDeal = selectedFare ? nativeFlightDealSelection(selectedDealOfferId, selectedFare) : null;
+  const activeOffer = selectedDeal?.offer ?? selectedOffer;
   const savedFlightKey = selectedOffer?.id ?? id;
   const handoff = selectedFare?.handoff ?? available?.handoff ?? { available: false as const };
+  const mobileHandoff = selectedDeal
+    ? { available: true as const, providerName: selectedDeal.providerName }
+    : handoff;
   const canContinue = Boolean(selectedOffer && handoff.available);
+  const canContinueMobile = Boolean(activeOffer && (selectedDeal || handoff.available));
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !selectedOffer) {
@@ -133,6 +142,14 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
 
     return () => controller.abort();
   }, [selectedOffer, sessionStatus]);
+
+  useEffect(() => {
+    if (!selectedFare) {
+      setSelectedDealOfferId(null);
+      return;
+    }
+    setSelectedDealOfferId((current) => nativeFlightDealSelection(current, selectedFare)?.offerId ?? null);
+  }, [selectedFare]);
 
 
 
@@ -216,6 +233,16 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         isFallbackRate: currencyRates.isFallback,
       })
     : null;
+  const mobilePrice = selectedDeal
+    ? formatDisplayPrice({
+        amount: selectedDeal.price,
+        sourceCurrency: selectedDeal.currency,
+        displayCurrency: selectedOption.currency,
+        convertUsdEstimate: true,
+        rates: currencyRates.rates,
+        isFallbackRate: currencyRates.isFallback,
+      })
+    : providerPrice;
 
   const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
     const offset = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
@@ -379,9 +406,22 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               })}
             </div>
 
-            <div className="mt-5 flex min-w-0 flex-nowrap gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-0 sm:overflow-visible" role="tablist" aria-label="Fare information">{fareTabs.map((tab, index) => <button key={tab.id} ref={(element) => { tabRefs.current[index] = element; }} id={`fare-tab-${tab.id}`} type="button" role="tab" aria-selected={activeTab === tab.id} aria-controls={`fare-panel-${tab.id}`} tabIndex={activeTab === tab.id ? 0 : -1} onClick={() => setActiveTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)} className={`min-h-11 w-auto shrink-0 whitespace-nowrap border-b-2 px-1 text-center text-[11px] font-semibold min-[390px]:text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 sm:flex-1 sm:text-sm ${activeTab === tab.id ? "border-[#075EE8] text-[#075EE8]" : "border-transparent text-slate-700 hover:text-slate-950"}`}>{tab.label}</button>)}</div>
-            <FarePanel activeTab={activeTab} fare={selectedFare} offer={selectedOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} onViewDeal={continueToOffer} />
-            <MobileCheckoutDock travelerCount={travelers.count} price={providerPrice} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
+            <MobileNativeFareInformationDeck
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              fare={selectedFare}
+              activeOffer={activeOffer}
+              selectedDealOfferId={selectedDeal?.offerId ?? null}
+              onSelectDeal={setSelectedDealOfferId}
+              selectedCurrency={selectedOption.currency}
+              currencyRates={currencyRates.rates}
+              isFallbackRate={currencyRates.isFallback}
+              locale={locale}
+            />
+            <div className="mt-5 hidden min-w-0 flex-nowrap gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex sm:gap-0 sm:overflow-visible" role="tablist" aria-label="Fare information">{fareTabs.map((tab, index) => <button key={tab.id} ref={(element) => { tabRefs.current[index] = element; }} id={`fare-tab-${tab.id}`} type="button" role="tab" aria-selected={activeTab === tab.id} aria-controls={`fare-panel-${tab.id}`} tabIndex={activeTab === tab.id ? 0 : -1} onClick={() => setActiveTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)} className={`min-h-11 w-auto shrink-0 whitespace-nowrap border-b-2 px-1 text-center text-[11px] font-semibold min-[390px]:text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 sm:flex-1 sm:text-sm ${activeTab === tab.id ? "border-[#075EE8] text-[#075EE8]" : "border-transparent text-slate-700 hover:text-slate-950"}`}>{tab.label}</button>)}</div>
+            <div className="hidden sm:block"><FarePanel activeTab={activeTab} fare={selectedFare} offer={selectedOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} onViewDeal={continueToOffer} /></div>
+            <MobileCheckoutDock travelerCount={travelers.count} price={mobilePrice} redirecting={redirecting} handoff={mobileHandoff} canContinue={canContinueMobile} onContinue={() => continueToOffer(selectedDeal?.offerId ?? selectedOffer.id)} error={error || notice} />
+            <TabletCheckoutDock travelerCount={travelers.count} price={providerPrice} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
             </div>
           </section>
           <TripSidebar tripType={available.search.tripType} legs={legs} route={route} date={date} tripLine={tripLine} travelers={travelers.label} travelerCount={travelers.count} selectedFare={selectedFare?.label || selectedOffer.cabinClass || ""} fareTerms={selectedFare?.distinguishingTerms ?? []} price={providerPrice} locale={locale} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
@@ -660,9 +700,11 @@ function carrierConditionsLinks(offer: FlightDetailsOffer) {
 
 function EmissionsRow({ amount, locale }: { amount: number; locale: string }) { return <div className="mt-4 flex min-h-9 items-center justify-between gap-3 rounded-md bg-emerald-50/70 px-3 py-2 text-xs"><span className="inline-flex items-center gap-2 font-medium text-emerald-700"><Leaf className="h-4 w-4" aria-hidden="true" /> Estimated CO₂ emissions</span><span className="inline-flex items-center gap-2 text-right font-medium text-slate-800">{amount.toLocaleString(locale)} kg for this offer <Info className="h-3.5 w-3.5" aria-hidden="true" /></span></div>; }
 
-function CheckoutButton({ redirecting, handoff, canContinue, onContinue, dock = false }: { redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; dock?: boolean }) { return <button type="button" aria-label={handoff.available ? "Continue booking" : "Booking currently unavailable"} aria-disabled={!canContinue || redirecting} disabled={!canContinue || redirecting} onClick={onContinue} className={`${dock ? "inline-flex min-h-[50px] min-w-[168px] flex-1 sm:max-w-[260px]" : "mt-4 inline-flex min-h-[50px] w-full"} items-center justify-center gap-2 whitespace-nowrap rounded-[8px] bg-[#075EE8] px-4 text-sm font-semibold text-white transition hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`}><LockKeyhole className="h-4 w-4" aria-hidden="true" />{redirecting ? "Opening booking…" : "Continue booking"}</button>; }
+function CheckoutButton({ redirecting, handoff, canContinue, onContinue, dock = false, label = "Continue booking", pendingLabel = "Opening booking…" }: { redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; dock?: boolean; label?: string; pendingLabel?: string }) { return <button type="button" aria-label={handoff.available ? label : "Booking currently unavailable"} aria-disabled={!canContinue || redirecting} disabled={!canContinue || redirecting} onClick={onContinue} className={`${dock ? "inline-flex min-h-[50px] min-w-[168px] flex-1 sm:max-w-[260px]" : "mt-4 inline-flex min-h-[50px] w-full"} items-center justify-center gap-2 whitespace-nowrap rounded-[8px] bg-[#075EE8] px-4 text-sm font-semibold text-white transition hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`}><LockKeyhole className="h-4 w-4" aria-hidden="true" />{redirecting ? pendingLabel : label}</button>; }
 
-function MobileCheckoutDock({ travelerCount, price, redirecting, handoff, canContinue, onContinue, error }: { travelerCount: number; price: ReturnType<typeof formatDisplayPrice> | null; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) { return <section className="fixed inset-x-0 bottom-0 z-[90] border-t border-[#E2E8F0] bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.10)] lg:hidden" aria-labelledby="mobile-trip-total-heading"><div className="mx-auto max-w-3xl">{error ? <p role="alert" className="mb-2 line-clamp-2 text-xs font-medium leading-4 text-red-700">{error}</p> : null}<div className="flex items-center gap-3"><div className="min-w-0 flex-1"><h2 id="mobile-trip-total-heading" className="text-[11px] font-semibold leading-4 text-slate-600">{flightDetailsTotalLabel(travelerCount)}</h2>{price ? <p className="truncate text-[22px] font-bold leading-6 text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p> : <p className="text-sm font-semibold text-slate-500">Price unavailable</p>}</div><CheckoutButton dock redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={onContinue} /></div></div></section>; }
+function MobileCheckoutDock({ travelerCount, price, redirecting, handoff, canContinue, onContinue, error }: { travelerCount: number; price: ReturnType<typeof formatDisplayPrice> | null; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) { return <section className="fixed inset-x-0 bottom-0 z-[90] border-t border-[#E2E8F0] bg-white px-[18px] pb-[calc(0.625rem+env(safe-area-inset-bottom))] pt-[11px] shadow-[0_-4px_12px_rgba(7,19,59,0.10)] sm:hidden" aria-labelledby="mobile-trip-total-heading"><div className="mx-auto max-w-3xl">{error ? <p role="alert" className="mb-2 line-clamp-2 text-xs font-medium leading-4 text-red-700">{error}</p> : null}<div className="flex min-h-[66px] items-center justify-between gap-[14px]"><div className="min-w-0 flex-1">{price ? <p className="truncate text-[22px] font-bold leading-6 text-[#1A1A1A]" aria-label={price.ariaLabel}>{price.formatted}</p> : <p className="text-sm font-semibold text-slate-500">Price unavailable</p>}<h2 id="mobile-trip-total-heading" className="mt-0.5 text-[11px] font-semibold leading-4 text-[#536B92]">{flightDetailsTotalLabel(travelerCount)}</h2></div><CheckoutButton dock redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={onContinue} label="Continue deal" pendingLabel="Checking offer…" /></div></div></section>; }
+
+function TabletCheckoutDock({ travelerCount, price, redirecting, handoff, canContinue, onContinue, error }: { travelerCount: number; price: ReturnType<typeof formatDisplayPrice> | null; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) { return <section className="fixed inset-x-0 bottom-0 z-[90] hidden border-t border-[#E2E8F0] bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.10)] sm:block lg:hidden" aria-labelledby="tablet-trip-total-heading"><div className="mx-auto max-w-3xl">{error ? <p role="alert" className="mb-2 line-clamp-2 text-xs font-medium leading-4 text-red-700">{error}</p> : null}<div className="flex items-center gap-3"><div className="min-w-0 flex-1"><h2 id="tablet-trip-total-heading" className="text-[11px] font-semibold leading-4 text-slate-600">{flightDetailsTotalLabel(travelerCount)}</h2>{price ? <p className="truncate text-[22px] font-bold leading-6 text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p> : <p className="text-sm font-semibold text-slate-500">Price unavailable</p>}</div><CheckoutButton dock redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={onContinue} /></div></div></section>; }
 
 function TripSidebar({ tripType, legs, route, date, tripLine, travelers, travelerCount, selectedFare, fareTerms, price, locale, redirecting, handoff, canContinue, onContinue, error }: { tripType: "one-way" | "round-trip" | "multi-city"; legs: FlightLeg[]; route: string; date: string; tripLine: string; travelers: string; travelerCount: number; selectedFare: string; fareTerms: FlightDetailsFareChoice["distinguishingTerms"]; price: ReturnType<typeof formatDisplayPrice> | null; locale: string; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) {
   return <aside className="hidden self-start rounded-[13px] border border-[#E2E8F0] bg-white p-6 shadow-[0_4px_18px_rgba(15,23,42,0.05)] lg:block" aria-labelledby="your-trip-heading">

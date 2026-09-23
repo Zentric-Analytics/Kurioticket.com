@@ -32,6 +32,7 @@ import { HotelDesktopPopover } from "@/components/search/HotelDesktopPopover";
 import { MessageBanner } from "@/components/ui/MessageBanner";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { MobileHotelGuestsRoomsPicker } from "@/components/search/MobileHotelGuestsRoomsPicker";
+import appPickerStyles from "./HotelAppPickers.module.css";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { useRegion } from "@/components/region/RegionProvider";
 import {
@@ -1715,6 +1716,7 @@ export function HotelSearchBar({
       </form>
 
       <HotelDestinationMobilePicker
+        appearance={mobileResultsSheet ? "app" : undefined}
         open={destinationMobilePickerOpen}
         value={destination}
         titleId={`${idPrefix}-mobile-destination-title`}
@@ -1732,6 +1734,7 @@ export function HotelSearchBar({
       />
 
       <MobileDatePickerDialog
+        showBackAction={!mobileResultsSheet}
         open={datesOpen}
         title={t("chooseTravelDates")}
         titleId={`${idPrefix}-mobile-dates-title`}
@@ -1759,6 +1762,8 @@ export function HotelSearchBar({
       />
 
       <HotelMobilePickerShell
+        showBackAction={!mobileResultsSheet}
+        appearance={mobileResultsSheet ? "app" : undefined}
         open={guestsRoomsOpen}
         title={t("hotelGuestsRooms.mobileTitle")}
         titleId={`${idPrefix}-mobile-guests-title`}
@@ -1777,14 +1782,14 @@ export function HotelSearchBar({
               setRooms(String(draftHotelRooms));
               setHotelPetFriendly(draftHotelPetFriendly);
               requestClose();
-            }} className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[17px] font-bold text-white">
+            }} className={mobileResultsSheet ? cn(appPickerStyles.primary, appPickerStyles.guestDone) : "focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[17px] font-bold text-white"}>
               {t("done")}
             </button>
         )}
       >
-        <MobileHotelGuestsRoomsPicker adults={draftHotelAdults} childCount={draftHotelChildren} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} density={mobileLandingPresentation || mobileResultsSheet ? "compact" : undefined}
+        <div className={mobileResultsSheet ? appPickerStyles.guests : undefined}><MobileHotelGuestsRoomsPicker adults={draftHotelAdults} childCount={draftHotelChildren} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} density={mobileLandingPresentation || mobileResultsSheet ? "compact" : undefined}
           onAdultsChange={setDraftHotelAdults} onChildrenChange={setDraftHotelChildren} onRoomsChange={setDraftHotelRooms} onPetFriendlyChange={setDraftHotelPetFriendly}
-          strings={{ guests: t("guests"), adults: t("adults"), adultDescription: t("hotelGuests.adultDescription") || "Ages 18+", children: t("children"), childDescription: t("hotelGuests.childDescription") || "Ages 0–17", rooms: t("rooms"), roomDescription: t("hotelGuests.roomDescription") || "Separate rooms", petFriendly: t("petFriendly"), petDescription: t("onlyShowPetFriendlyStays"), decrease: (label) => `Decrease ${label}`, increase: (label) => `Increase ${label}` }} />
+          strings={{ guests: t("guests"), adults: t("adults"), adultDescription: t("hotelGuests.adultDescription") || "Ages 18+", children: t("children"), childDescription: t("hotelGuests.childDescription") || "Ages 0–17", rooms: t("rooms"), roomDescription: t("hotelGuests.roomDescription") || "Separate rooms", petFriendly: t("petFriendly"), petDescription: t("onlyShowPetFriendlyStays"), decrease: (label) => `Decrease ${label}`, increase: (label) => `Increase ${label}` }} /></div>
       </HotelMobilePickerShell>
     </section>
   );
