@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-} from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Check, Clock3 } from "lucide-react";
 import { MobileDateRangePicker } from "@/components/search/MobileDateRangePicker";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
@@ -37,22 +32,41 @@ type CalendarStrings = {
 };
 
 export function CarsRentalDatePickerContent({
-  dropoffDate, formatFullDate, locale, onClear, onDone, onNextMonth,
-  onPreviousMonth, onSelectDate, pickupDate, strings, visibleMonthDate,
-  weekdays, mobileShell = false, desktopCompact = false,
+  dropoffDate,
+  formatFullDate,
+  locale,
+  onClear,
+  onDone,
+  onNextMonth,
+  onPreviousMonth,
+  onSelectDate,
+  pickupDate,
+  strings,
+  visibleMonthDate,
+  weekdays,
+  mobileShell = false,
+  desktopCompact = false,
 }: {
-  dropoffDate: string; formatFullDate: (date: Date) => string; locale: string;
-  onClear: () => void; onDone: () => void; onNextMonth: () => void;
-  onPreviousMonth: () => void; onSelectDate: (date: Date) => void;
-  pickupDate: string; strings: CalendarStrings; visibleMonthDate: Date;
-  weekdays: string[]; mobileShell?: boolean; desktopCompact?: boolean;
+  dropoffDate: string;
+  formatFullDate: (date: Date) => string;
+  locale: string;
+  onClear: () => void;
+  onDone: () => void;
+  onNextMonth: () => void;
+  onPreviousMonth: () => void;
+  onSelectDate: (date: Date) => void;
+  pickupDate: string;
+  strings: CalendarStrings;
+  visibleMonthDate: Date;
+  weekdays: string[];
+  mobileShell?: boolean;
+  desktopCompact?: boolean;
 }) {
   const pickupParsed = parseIsoDate(pickupDate);
   const dropoffParsed = parseIsoDate(dropoffDate);
   const todayIso = toIsoDate(new Date());
-  const months = Array.from(
-    { length: mobileShell ? 12 : 2 },
-    (_, offset) => addMonths(visibleMonthDate, offset),
+  const months = Array.from({ length: mobileShell ? 12 : 2 }, (_, offset) =>
+    addMonths(visibleMonthDate, offset),
   );
 
   if (mobileShell) {
@@ -76,52 +90,213 @@ export function CarsRentalDatePickerContent({
     );
   }
 
-  return <>
-    {!mobileShell ? <p className={desktopCompact ? "mb-2 text-sm font-semibold text-slate-900" : "mb-3 text-base font-semibold text-slate-900"}>{strings.chooseDates}</p> : null}
-    {!mobileShell ? <div className={desktopCompact ? "mb-2 flex items-center justify-between" : "mb-3 flex items-center justify-between"}>
-      <button type="button" aria-label={strings.previousMonth} onClick={onPreviousMonth} className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700">{strings.previousMonthShort}</button>
-      <button type="button" aria-label={strings.nextMonth} onClick={onNextMonth} className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700">{strings.nextMonthShort}</button>
-    </div> : null}
-    <div className={mobileShell ? "mx-auto w-full max-w-xl space-y-8 pb-2" : "grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4"} data-cars-calendar-months data-month-count={months.length}>
-      {months.map((monthDate) => <section key={toIsoDate(monthDate)} aria-label={monthDate.toLocaleDateString(locale, { month: "long", year: "numeric" })} className={mobileShell ? "space-y-2.5" : undefined} data-cars-calendar-month>
-        <h3 className={mobileShell ? "text-start text-[17px] font-bold tracking-tight text-slate-950" : desktopCompact ? "mb-1 text-center text-[13px] font-semibold text-slate-800" : "mb-1.5 text-center text-sm font-semibold text-slate-800"}>{monthDate.toLocaleDateString(locale, { month: "long", year: "numeric" })}</h3>
-        <div className={mobileShell ? "grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500" : "mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600"}>
-          {weekdays.map((weekday, index) => <span className={mobileShell ? "py-2" : undefined} key={`${weekday}-${index}`}>{weekday}</span>)}
+  return (
+    <>
+      {!mobileShell ? (
+        <p
+          className={
+            desktopCompact
+              ? "mb-2 text-sm font-semibold text-slate-900"
+              : "mb-3 text-base font-semibold text-slate-900"
+          }
+        >
+          {strings.chooseDates}
+        </p>
+      ) : null}
+      {!mobileShell ? (
+        <div
+          className={
+            desktopCompact
+              ? "mb-2 flex items-center justify-between"
+              : "mb-3 flex items-center justify-between"
+          }
+        >
+          <button
+            type="button"
+            aria-label={strings.previousMonth}
+            onClick={onPreviousMonth}
+            className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700"
+          >
+            {strings.previousMonthShort}
+          </button>
+          <button
+            type="button"
+            aria-label={strings.nextMonth}
+            onClick={onNextMonth}
+            className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700"
+          >
+            {strings.nextMonthShort}
+          </button>
         </div>
-        <div className={mobileShell ? "grid grid-cols-7 gap-y-1.5" : "grid grid-cols-7 gap-1"}>
-          {buildMonthCells(monthDate).map((cell) => {
-            const iso = toIsoDate(cell.date);
-            if (!cell.isCurrentMonth) return <span key={`placeholder-${iso}`} aria-hidden="true" className={mobileShell ? "h-11 w-full" : desktopCompact ? "h-7 w-7 justify-self-center" : "h-8 w-8 justify-self-center"} />;
-            const past = isBeforeToday(cell.date);
-            const beforePickup = Boolean(pickupDate && !dropoffDate && iso < pickupDate);
-            const inRange = Boolean(pickupParsed && dropoffParsed && !past && cell.date > pickupParsed && cell.date < dropoffParsed);
-            const selected = iso === pickupDate || iso === dropoffDate;
-            const today = iso === todayIso;
-            return <button key={iso} type="button" aria-label={`${strings.selectDatePrefix} ${formatFullDate(cell.date)}${beforePickup ? `; ${strings.startsNewPickupDate}` : ""}`} aria-pressed={selected} aria-disabled={past} disabled={past} onClick={() => onSelectDate(cell.date)} data-cars-date={iso} data-in-range={inRange || undefined}
-              className={`focus-ring relative mx-auto flex items-center justify-center rounded-full font-semibold transition-colors disabled:cursor-not-allowed ${mobileShell ? "h-11 w-full max-w-11 text-[15px]" : desktopCompact ? "h-7 w-7 text-[13px]" : "h-8 w-8 text-sm"} ${past ? "text-slate-300" : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]"} ${today && !past ? "ring-1 ring-inset ring-[#004BB8]/25" : ""} ${inRange ? "bg-[#004BB8]/10 text-[#021C2B]" : ""} ${selected ? "bg-[#004BB8] text-white shadow-sm ring-0 hover:bg-[#004BB8] hover:text-white" : ""}`}>
-              {cell.date.getDate()}
-            </button>;
-          })}
+      ) : null}
+      <div
+        className={
+          mobileShell
+            ? "mx-auto w-full max-w-xl space-y-8 pb-2"
+            : "grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4"
+        }
+        data-cars-calendar-months
+        data-month-count={months.length}
+      >
+        {months.map((monthDate) => (
+          <section
+            key={toIsoDate(monthDate)}
+            aria-label={monthDate.toLocaleDateString(locale, {
+              month: "long",
+              year: "numeric",
+            })}
+            className={mobileShell ? "space-y-2.5" : undefined}
+            data-cars-calendar-month
+          >
+            <h3
+              className={
+                mobileShell
+                  ? "text-start text-[17px] font-bold tracking-tight text-slate-950"
+                  : desktopCompact
+                    ? "mb-1 text-center text-[13px] font-semibold text-slate-800"
+                    : "mb-1.5 text-center text-sm font-semibold text-slate-800"
+              }
+            >
+              {monthDate.toLocaleDateString(locale, {
+                month: "long",
+                year: "numeric",
+              })}
+            </h3>
+            <div
+              className={
+                mobileShell
+                  ? "grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500"
+                  : "mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600"
+              }
+            >
+              {weekdays.map((weekday, index) => (
+                <span
+                  className={mobileShell ? "py-2" : undefined}
+                  key={`${weekday}-${index}`}
+                >
+                  {weekday}
+                </span>
+              ))}
+            </div>
+            <div
+              className={
+                mobileShell
+                  ? "grid grid-cols-7 gap-y-1.5"
+                  : "grid grid-cols-7 gap-1"
+              }
+            >
+              {buildMonthCells(monthDate).map((cell) => {
+                const iso = toIsoDate(cell.date);
+                if (!cell.isCurrentMonth)
+                  return (
+                    <span
+                      key={`placeholder-${iso}`}
+                      aria-hidden="true"
+                      className={
+                        mobileShell
+                          ? "h-11 w-full"
+                          : desktopCompact
+                            ? "h-7 w-7 justify-self-center"
+                            : "h-8 w-8 justify-self-center"
+                      }
+                    />
+                  );
+                const past = isBeforeToday(cell.date);
+                const beforePickup = Boolean(
+                  pickupDate && !dropoffDate && iso < pickupDate,
+                );
+                const inRange = Boolean(
+                  pickupParsed &&
+                  dropoffParsed &&
+                  !past &&
+                  cell.date > pickupParsed &&
+                  cell.date < dropoffParsed,
+                );
+                const selected = iso === pickupDate || iso === dropoffDate;
+                const today = iso === todayIso;
+                return (
+                  <button
+                    key={iso}
+                    type="button"
+                    aria-label={`${strings.selectDatePrefix} ${formatFullDate(cell.date)}${beforePickup ? `; ${strings.startsNewPickupDate}` : ""}`}
+                    aria-pressed={selected}
+                    aria-disabled={past}
+                    disabled={past}
+                    onClick={() => onSelectDate(cell.date)}
+                    data-cars-date={iso}
+                    data-in-range={inRange || undefined}
+                    className={`focus-ring relative mx-auto flex items-center justify-center rounded-full font-semibold transition-colors disabled:cursor-not-allowed ${mobileShell ? "h-11 w-full max-w-11 text-[15px]" : desktopCompact ? "h-7 w-7 text-[13px]" : "h-8 w-8 text-sm"} ${past ? "text-slate-300" : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]"} ${today && !past ? "ring-1 ring-inset ring-[#004BB8]/25" : ""} ${inRange ? "bg-[#004BB8]/10 text-[#021C2B]" : ""} ${selected ? "bg-[#004BB8] text-white shadow-sm ring-0 hover:bg-[#004BB8] hover:text-white" : ""}`}
+                  >
+                    {cell.date.getDate()}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+      {!mobileShell ? (
+        <div
+          className={
+            desktopCompact
+              ? "mt-2 flex items-center justify-between gap-3 border-t border-slate-200 pt-2"
+              : "mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3"
+          }
+        >
+          <button
+            type="button"
+            onClick={onClear}
+            className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700"
+          >
+            {strings.clear}
+          </button>
+          <button
+            type="button"
+            onClick={onDone}
+            className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-semibold text-white"
+          >
+            {strings.done}
+          </button>
         </div>
-      </section>)}
-    </div>
-    {!mobileShell ? <div className={desktopCompact ? "mt-2 flex items-center justify-between gap-3 border-t border-slate-200 pt-2" : "mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3"}><button type="button" onClick={onClear} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">{strings.clear}</button><button type="button" onClick={onDone} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-semibold text-white">{strings.done}</button></div> : null}
-  </>;
+      ) : null}
+    </>
+  );
 }
 
-export function CarsTimeRangePickerContent({ formatTime, onPickupTimeChange, onReturnTimeChange, pickupLabel, pickupTime, returnLabel, returnTime, mobileShell = false, resultsEdit = false }: {
-  formatTime: (time: string) => string; onPickupTimeChange: (time: string) => void;
-  onReturnTimeChange: (time: string) => void; pickupLabel: string; pickupTime: string;
-  returnLabel: string; returnTime: string; mobileShell?: boolean; resultsEdit?: boolean;
+export function CarsTimeRangePickerContent({
+  formatTime,
+  onPickupTimeChange,
+  onReturnTimeChange,
+  pickupLabel,
+  pickupTime,
+  returnLabel,
+  returnTime,
+  mobileShell = false,
+  resultsEdit = false,
+}: {
+  formatTime: (time: string) => string;
+  onPickupTimeChange: (time: string) => void;
+  onReturnTimeChange: (time: string) => void;
+  pickupLabel: string;
+  pickupTime: string;
+  returnLabel: string;
+  returnTime: string;
+  mobileShell?: boolean;
+  resultsEdit?: boolean;
 }) {
   const pickupListRef = useRef<HTMLDivElement>(null);
   const returnListRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!mobileShell) return;
     const positionSelected = (list: HTMLDivElement | null, value: string) => {
-      const option = list?.querySelector<HTMLElement>(`[data-time-value="${value}"]`);
+      const option = list?.querySelector<HTMLElement>(
+        `[data-time-value="${value}"]`,
+      );
       if (!list || !option) return;
-      list.scrollTop = Math.max(0, option.offsetTop - (list.clientHeight - option.offsetHeight) / 2);
+      list.scrollTop = Math.max(
+        0,
+        option.offsetTop - (list.clientHeight - option.offsetHeight) / 2,
+      );
     };
     const frame = requestAnimationFrame(() => {
       positionSelected(pickupListRef.current, pickupTime);
@@ -130,65 +305,408 @@ export function CarsTimeRangePickerContent({ formatTime, onPickupTimeChange, onR
     return () => cancelAnimationFrame(frame);
   }, [mobileShell, pickupTime, returnTime]);
 
-  return <div className={mobileShell ? "grid min-h-0 flex-1 grid-cols-2 gap-3 overflow-hidden" : "grid grid-cols-2 gap-3"} data-cars-time-columns>
-    {([ ["pickup", pickupLabel, pickupTime, onPickupTimeChange, pickupListRef], ["return", returnLabel, returnTime, onReturnTimeChange, returnListRef] ] as const).map(([kind, label, selectedTime, onChange, listRef]) =>
-      <div key={kind} role="group" aria-label={label} className={mobileShell ? "flex min-h-0 flex-col" : undefined}>
-        <h3 className={resultsEdit ? "mb-2 flex shrink-0 items-center gap-2 text-xs font-semibold text-slate-950" : "mb-3 flex shrink-0 items-center gap-2 text-[15px] font-bold text-slate-950"}>{mobileShell ? <Clock3 aria-hidden="true" className="h-[18px] w-[18px] text-[#075EE8]" /> : null}{label}</h3>
-        <div ref={listRef} role="listbox" aria-label={label} className={mobileShell ? "min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white [-webkit-overflow-scrolling:touch]" : "h-[260px] overflow-y-auto overscroll-contain rounded-lg border border-slate-200"} data-cars-time-list={kind}>
-          {timeOptions.map((time) => <button key={`${kind}-${time}`} data-time-value={time} type="button" role="option" aria-selected={selectedTime === time} onClick={() => onChange(time)} className={`focus-ring flex w-full items-center justify-between border-b border-slate-200 px-3 text-start text-[15px] last:border-b-0 ${mobileShell ? (resultsEdit ? "min-h-[50px]" : "min-h-12") : "h-11"} ${selectedTime === time ? "bg-[#eff6ff] font-bold text-[#075EE8]" : "text-slate-800 hover:bg-slate-50"}`}><span>{formatTime(time)}</span>{mobileShell && selectedTime === time ? <span data-selected-time-indicator className="flex h-6 w-6 items-center justify-center rounded-full bg-[#075EE8]" aria-hidden="true"><Check className="h-4 w-4 text-white" /></span> : null}</button>)}
+  return (
+    <div
+      className={
+        mobileShell
+          ? `grid min-h-0 flex-1 grid-cols-2 overflow-hidden ${resultsEdit ? "gap-2.5" : "gap-3"}`
+          : "grid grid-cols-2 gap-3"
+      }
+      data-cars-time-columns
+    >
+      {(
+        [
+          [
+            "pickup",
+            pickupLabel,
+            pickupTime,
+            onPickupTimeChange,
+            pickupListRef,
+          ],
+          [
+            "return",
+            returnLabel,
+            returnTime,
+            onReturnTimeChange,
+            returnListRef,
+          ],
+        ] as const
+      ).map(([kind, label, selectedTime, onChange, listRef]) => (
+        <div
+          key={kind}
+          role="group"
+          aria-label={label}
+          className={mobileShell ? "flex min-h-0 flex-col" : undefined}
+        >
+          <h3
+            className={
+              resultsEdit
+                ? "shrink-0 py-2 text-xs font-semibold text-slate-950"
+                : "mb-3 flex shrink-0 items-center gap-2 text-[15px] font-bold text-slate-950"
+            }
+          >
+            {mobileShell && !resultsEdit ? (
+              <Clock3
+                aria-hidden="true"
+                className="h-[18px] w-[18px] text-[#075EE8]"
+              />
+            ) : null}
+            {label}
+          </h3>
+          <div
+            ref={listRef}
+            role="listbox"
+            aria-label={label}
+            className={
+              mobileShell
+                ? resultsEdit
+                  ? "min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-transparent [-webkit-overflow-scrolling:touch]"
+                  : "min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white [-webkit-overflow-scrolling:touch]"
+                : "h-[260px] overflow-y-auto overscroll-contain rounded-lg border border-slate-200"
+            }
+            data-cars-time-list={kind}
+          >
+            {timeOptions.map((time) => (
+              <button
+                key={`${kind}-${time}`}
+                data-time-value={time}
+                type="button"
+                role="option"
+                aria-selected={selectedTime === time}
+                onClick={() => onChange(time)}
+                className={`focus-ring flex w-full items-center justify-between border-b border-slate-200 text-start text-[15px] last:border-b-0 ${mobileShell ? (resultsEdit ? "min-h-[50px] px-2" : "min-h-12 px-3") : "h-11 px-3"} ${selectedTime === time ? "bg-[#eff6ff] font-bold text-[#075EE8]" : "text-slate-800 hover:bg-slate-50"}`}
+              >
+                <span>{formatTime(time)}</span>
+                {mobileShell && selectedTime === time ? (
+                  resultsEdit ? (
+                    <Check
+                      data-selected-time-indicator
+                      className="h-[17px] w-[17px] text-[#075EE8]"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <span
+                      data-selected-time-indicator
+                      className="flex h-6 w-6 items-center justify-center rounded-full bg-[#075EE8]"
+                      aria-hidden="true"
+                    >
+                      <Check className="h-4 w-4 text-white" />
+                    </span>
+                  )
+                ) : null}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>)}
-  </div>;
+      ))}
+    </div>
+  );
 }
 
-export function CarsDriverAgePickerContent({ anyAgeLabel, formatAge = (age) => age, onSelect, selectedAge, mobileShell = false }: {
-  anyAgeLabel: string; formatAge?: (age: string) => string; onSelect: (age: string) => void; selectedAge: string; mobileShell?: boolean;
+export function CarsDriverAgePickerContent({
+  anyAgeLabel,
+  formatAge = (age) => age,
+  onSelect,
+  selectedAge,
+  mobileShell = false,
+  resultsEdit = false,
+}: {
+  anyAgeLabel: string;
+  formatAge?: (age: string) => string;
+  onSelect: (age: string) => void;
+  selectedAge: string;
+  mobileShell?: boolean;
+  resultsEdit?: boolean;
 }) {
-  const initialIndex = Math.max(0, driverAgeOptions.indexOf(selectedAge));
+  const ageOptions = useMemo(
+    () => (resultsEdit ? driverAgeOptions.slice(1) : driverAgeOptions),
+    [resultsEdit],
+  );
+  const initialIndex = Math.max(0, ageOptions.indexOf(selectedAge));
   const [focusedIndex, setFocusedIndex] = useState(initialIndex);
   const listRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const reveal = (index: number) => {
-    const list = listRef.current, option = optionRefs.current[index];
+    const list = listRef.current,
+      option = optionRefs.current[index];
     if (!list || !option) return;
     if (option.offsetTop < list.scrollTop) list.scrollTop = option.offsetTop;
-    else if (option.offsetTop + option.offsetHeight > list.scrollTop + list.clientHeight) list.scrollTop = option.offsetTop + option.offsetHeight - list.clientHeight;
+    else if (
+      option.offsetTop + option.offsetHeight >
+      list.scrollTop + list.clientHeight
+    )
+      list.scrollTop =
+        option.offsetTop + option.offsetHeight - list.clientHeight;
   };
   useEffect(() => {
-    const index = Math.max(0, driverAgeOptions.indexOf(selectedAge));
+    const index = Math.max(0, ageOptions.indexOf(selectedAge));
     const frame = requestAnimationFrame(() => reveal(index));
     return () => cancelAnimationFrame(frame);
-  }, [selectedAge]);
+  }, [ageOptions, selectedAge]);
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     let next: number | null = null;
-    if (event.key === "ArrowDown") next = Math.min(driverAgeOptions.length - 1, focusedIndex + 1);
+    if (event.key === "ArrowDown")
+      next = Math.min(ageOptions.length - 1, focusedIndex + 1);
     else if (event.key === "ArrowUp") next = Math.max(0, focusedIndex - 1);
-    else if (event.key === "Home") next = 0; else if (event.key === "End") next = driverAgeOptions.length - 1;
-    else if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(driverAgeOptions[focusedIndex]); return; }
-    if (next === null) return; event.preventDefault(); setFocusedIndex(next); optionRefs.current[next]?.focus({ preventScroll: true }); reveal(next);
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = ageOptions.length - 1;
+    else if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSelect(ageOptions[focusedIndex]);
+      return;
+    }
+    if (next === null) return;
+    event.preventDefault();
+    setFocusedIndex(next);
+    optionRefs.current[next]?.focus({ preventScroll: true });
+    reveal(next);
   };
-  return <div ref={listRef} role="listbox" aria-label={anyAgeLabel} onKeyDown={onKeyDown} className={mobileShell ? "min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white [-webkit-overflow-scrolling:touch]" : "max-h-[320px] overflow-y-auto overscroll-contain p-1.5"} data-cars-age-list>
-    {driverAgeOptions.map((age, index) => { const selected = selectedAge === age; return <button key={age} ref={(node) => { optionRefs.current[index] = node; }} type="button" role="option" aria-selected={selected} tabIndex={index === focusedIndex ? 0 : -1} onFocus={() => setFocusedIndex(index)} onClick={() => onSelect(age)} className={`flex w-full items-center justify-between gap-3 border-b border-slate-200 px-3 text-start text-[15px] font-medium transition-colors last:border-b-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 ${mobileShell ? "min-h-14" : age === defaultDriverAge ? "min-h-14" : "h-11"} ${selected ? (mobileShell ? "font-semibold text-[#142033]" : "bg-[#eff6ff] font-semibold text-[#142033]") : "text-[#263A55] hover:bg-slate-50"}`}><span>{age === defaultDriverAge ? <span><span className="block">{anyAgeLabel}</span><span className="mt-1 block text-xs font-medium text-slate-500">Show all available cars</span></span> : formatAge(age)}</span><span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${selected ? "bg-[#075EE8]" : "border border-slate-400"}`}>{selected ? <Check data-selected-age-indicator className="h-3.5 w-3.5 text-white" aria-hidden="true" /> : null}</span></button>; })}
-  </div>;
+  return (
+    <div
+      ref={listRef}
+      role="listbox"
+      aria-label={anyAgeLabel}
+      onKeyDown={onKeyDown}
+      className={
+        mobileShell
+          ? `min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain border border-slate-200 bg-white [-webkit-overflow-scrolling:touch] ${resultsEdit ? "rounded-xl" : "rounded-xl"}`
+          : "max-h-[320px] overflow-y-auto overscroll-contain p-1.5"
+      }
+      data-cars-age-list
+    >
+      {ageOptions.map((age, index) => {
+        const selected = selectedAge === age;
+        return (
+          <button
+            key={age}
+            ref={(node) => {
+              optionRefs.current[index] = node;
+            }}
+            type="button"
+            role="option"
+            aria-selected={selected}
+            tabIndex={index === focusedIndex ? 0 : -1}
+            onFocus={() => setFocusedIndex(index)}
+            onClick={() => onSelect(age)}
+            className={`flex w-full items-center justify-between gap-3 border-b border-slate-200 px-3.5 text-start text-[15px] font-medium transition-colors last:border-b-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 ${mobileShell ? "min-h-14" : age === defaultDriverAge ? "min-h-14" : "h-11"} ${selected ? "bg-[#eff6ff] font-semibold text-[#142033]" : "text-[#263A55] hover:bg-slate-50"}`}
+          >
+            <span>
+              {!resultsEdit && age === defaultDriverAge ? (
+                <span>
+                  <span className="block">{anyAgeLabel}</span>
+                  <span className="mt-1 block text-xs font-medium text-slate-500">
+                    Show all available cars
+                  </span>
+                </span>
+              ) : resultsEdit ? (
+                `${age} years old`
+              ) : (
+                formatAge(age)
+              )}
+            </span>
+            <span
+              className={`flex shrink-0 items-center justify-center rounded-full ${resultsEdit ? "h-[22px] w-[22px]" : "h-5 w-5"} ${selected ? "bg-[#075EE8]" : "border border-slate-400"}`}
+            >
+              {selected ? (
+                <Check
+                  data-selected-age-indicator
+                  className="h-3.5 w-3.5 text-white"
+                  aria-hidden="true"
+                />
+              ) : null}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
-type MobileDialogBase = { open: boolean; launcherRef?: RefObject<HTMLElement | null>; onClose: () => void; doneLabel: string; presentation?: "default" | "carsResultsEdit" };
-export function MobileCarTimePickerDialog({ open, launcherRef, onClose, pickupTime, returnTime, onCommit, formatTime, title, intro, pickupLabel, returnLabel, doneLabel, presentation = "default" }: MobileDialogBase & { pickupTime: string; returnTime: string; onCommit: (pickup: string, returned: string) => void; formatTime: (time: string) => string; title: string; intro: string; pickupLabel: string; returnLabel: string }) {
-  const [draftPickup, setDraftPickup] = useState(pickupTime), [draftReturn, setDraftReturn] = useState(returnTime);
-  const [draftSource, setDraftSource] = useState({ open, pickupTime, returnTime });
-  if (draftSource.open !== open || draftSource.pickupTime !== pickupTime || draftSource.returnTime !== returnTime) {
+type MobileDialogBase = {
+  open: boolean;
+  launcherRef?: RefObject<HTMLElement | null>;
+  onClose: () => void;
+  doneLabel: string;
+  presentation?: "default" | "carsResultsEdit";
+};
+export function MobileCarTimePickerDialog({
+  open,
+  launcherRef,
+  onClose,
+  pickupTime,
+  returnTime,
+  onCommit,
+  formatTime,
+  title,
+  intro,
+  pickupLabel,
+  returnLabel,
+  doneLabel,
+  presentation = "default",
+}: MobileDialogBase & {
+  pickupTime: string;
+  returnTime: string;
+  onCommit: (pickup: string, returned: string) => void;
+  formatTime: (time: string) => string;
+  title: string;
+  intro: string;
+  pickupLabel: string;
+  returnLabel: string;
+}) {
+  const [draftPickup, setDraftPickup] = useState(pickupTime),
+    [draftReturn, setDraftReturn] = useState(returnTime);
+  const [draftSource, setDraftSource] = useState({
+    open,
+    pickupTime,
+    returnTime,
+  });
+  if (
+    draftSource.open !== open ||
+    draftSource.pickupTime !== pickupTime ||
+    draftSource.returnTime !== returnTime
+  ) {
     setDraftSource({ open, pickupTime, returnTime });
-    if (open) { setDraftPickup(pickupTime); setDraftReturn(returnTime); }
+    if (open) {
+      setDraftPickup(pickupTime);
+      setDraftReturn(returnTime);
+    }
   }
-  return <FlightMobilePickerShell open={open} presentation={presentation} title={title} titleId="cars-mobile-time-title" launcherRef={launcherRef} onClose={onClose} showCancelAction={false} showBackLabel contentLayout="contained" contentClassName={presentation === "carsResultsEdit" ? "bg-[#F5F7FB] px-4 py-3" : "bg-[#FCFDFE] px-4 py-5"} footer={(requestClose) => <button type="button" onClick={() => { onCommit(draftPickup, draftReturn); requestClose(); }} className={presentation === "carsResultsEdit" ? "focus-ring h-12 w-full rounded-[10px] bg-[#004BB8] text-[15px] font-semibold text-white" : "focus-ring h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-bold text-white"}>{doneLabel}</button>}><div className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden"><p className="mb-5 text-center text-sm font-medium text-slate-600">{intro}</p><CarsTimeRangePickerContent mobileShell formatTime={formatTime} pickupLabel={pickupLabel} pickupTime={draftPickup} returnLabel={returnLabel} returnTime={draftReturn} resultsEdit={presentation === "carsResultsEdit"} onPickupTimeChange={setDraftPickup} onReturnTimeChange={setDraftReturn} /></div></FlightMobilePickerShell>;
+  return (
+    <FlightMobilePickerShell
+      open={open}
+      presentation={presentation}
+      title={title}
+      titleId="cars-mobile-time-title"
+      launcherRef={launcherRef}
+      onClose={onClose}
+      showCancelAction={false}
+      showBackLabel
+      contentLayout="contained"
+      contentClassName={
+        presentation === "carsResultsEdit"
+          ? "bg-[#F5F7FB] px-4 py-3"
+          : "bg-[#FCFDFE] px-4 py-5"
+      }
+      footer={(requestClose) => (
+        <button
+          type="button"
+          onClick={() => {
+            onCommit(draftPickup, draftReturn);
+            requestClose();
+          }}
+          className={
+            presentation === "carsResultsEdit"
+              ? "focus-ring h-12 w-full rounded-[10px] bg-[#004BB8] text-[15px] font-semibold text-white"
+              : "focus-ring h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-bold text-white"
+          }
+        >
+          {doneLabel}
+        </button>
+      )}
+    >
+      <div className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden">
+        {presentation !== "carsResultsEdit" ? (
+          <p className="mb-5 text-center text-sm font-medium text-slate-600">
+            {intro}
+          </p>
+        ) : null}
+        <CarsTimeRangePickerContent
+          mobileShell
+          formatTime={formatTime}
+          pickupLabel={pickupLabel}
+          pickupTime={draftPickup}
+          returnLabel={returnLabel}
+          returnTime={draftReturn}
+          resultsEdit={presentation === "carsResultsEdit"}
+          onPickupTimeChange={setDraftPickup}
+          onReturnTimeChange={setDraftReturn}
+        />
+      </div>
+    </FlightMobilePickerShell>
+  );
 }
 
-export function MobileCarDriverAgePickerDialog({ open, launcherRef, onClose, driverAge, onCommit, title, intro, anyAgeLabel, doneLabel, formatAge, presentation = "default" }: MobileDialogBase & { driverAge: string; onCommit: (age: string) => void; title: string; intro: string; anyAgeLabel: string; formatAge?: (age: string) => string }) {
-  const [draftAge, setDraftAge] = useState(driverAge);
+export function MobileCarDriverAgePickerDialog({
+  open,
+  launcherRef,
+  onClose,
+  driverAge,
+  onCommit,
+  title,
+  intro,
+  anyAgeLabel,
+  doneLabel,
+  formatAge,
+  presentation = "default",
+}: MobileDialogBase & {
+  driverAge: string;
+  onCommit: (age: string) => void;
+  title: string;
+  intro: string;
+  anyAgeLabel: string;
+  formatAge?: (age: string) => string;
+}) {
+  const [draftAge, setDraftAge] = useState(
+    presentation === "carsResultsEdit" && driverAge === defaultDriverAge
+      ? "30"
+      : driverAge,
+  );
   const [draftSource, setDraftSource] = useState({ open, driverAge });
   if (draftSource.open !== open || draftSource.driverAge !== driverAge) {
     setDraftSource({ open, driverAge });
-    if (open) setDraftAge(driverAge);
+    if (open)
+      setDraftAge(
+        presentation === "carsResultsEdit" && driverAge === defaultDriverAge
+          ? "30"
+          : driverAge,
+      );
   }
-  return <FlightMobilePickerShell open={open} presentation={presentation} title={title} titleId="cars-mobile-driver-age-title" launcherRef={launcherRef} onClose={onClose} showCancelAction={false} showBackLabel={false} contentLayout="contained" contentClassName={presentation === "carsResultsEdit" ? "bg-[#F5F7FB] px-4 py-3" : "bg-[#FCFDFE] px-4 py-5"} footer={(requestClose) => <button type="button" onClick={() => { onCommit(draftAge); requestClose(); }} className={presentation === "carsResultsEdit" ? "focus-ring h-12 w-full rounded-[10px] bg-[#004BB8] text-[15px] font-semibold text-white" : "focus-ring h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-bold text-white"}>{doneLabel}</button>}><div className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden"><p className="mb-5 text-sm font-medium text-slate-600">{intro}</p><CarsDriverAgePickerContent mobileShell anyAgeLabel={anyAgeLabel} formatAge={formatAge} selectedAge={draftAge} onSelect={setDraftAge} /></div></FlightMobilePickerShell>;
+  return (
+    <FlightMobilePickerShell
+      open={open}
+      presentation={presentation}
+      title={title}
+      titleId="cars-mobile-driver-age-title"
+      launcherRef={launcherRef}
+      onClose={onClose}
+      showCancelAction={false}
+      showBackLabel={false}
+      contentLayout="contained"
+      contentClassName={
+        presentation === "carsResultsEdit"
+          ? "bg-[#F5F7FB] px-4 py-3"
+          : "bg-[#FCFDFE] px-4 py-5"
+      }
+      footer={(requestClose) => (
+        <button
+          type="button"
+          onClick={() => {
+            onCommit(draftAge);
+            requestClose();
+          }}
+          className={
+            presentation === "carsResultsEdit"
+              ? "focus-ring h-12 w-full rounded-[10px] bg-[#004BB8] text-[15px] font-semibold text-white"
+              : "focus-ring h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-bold text-white"
+          }
+        >
+          {doneLabel}
+        </button>
+      )}
+    >
+      <div className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden">
+        {presentation !== "carsResultsEdit" ? (
+          <p className="mb-5 text-sm font-medium text-slate-600">{intro}</p>
+        ) : null}
+        <CarsDriverAgePickerContent
+          mobileShell
+          resultsEdit={presentation === "carsResultsEdit"}
+          anyAgeLabel={anyAgeLabel}
+          formatAge={formatAge}
+          selectedAge={draftAge}
+          onSelect={setDraftAge}
+        />
+      </div>
+    </FlightMobilePickerShell>
+  );
 }

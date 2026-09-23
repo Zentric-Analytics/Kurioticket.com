@@ -22,7 +22,7 @@ test("shared calendar exposes range state and disables past dates", () => {
   assert.match(shared, /length: mobileShell \? 12 : 2/);
   assert.match(
     shared,
-    /!mobileShell \? <div className=\{desktopCompact \? "mb-2 flex items-center justify-between" : "mb-3 flex items-center justify-between"\}/,
+    /!mobileShell \? \([\s\S]*?mb-2 flex items-center justify-between[\s\S]*?mb-3 flex items-center justify-between/,
   );
   assert.match(shared, /desktopCompact \? "h-7 w-7 text-\[13px\]"/);
   assert.match(shared, /desktopCompact\?: boolean/);
@@ -39,7 +39,7 @@ test("shared time content renders two independently scrollable button lists", ()
   assert.match(shared, /data-cars-time-list=\{kind\}/);
   assert.match(shared, /timeOptions\.map/);
   assert.match(shared, /aria-selected=\{selectedTime === time\}/);
-  assert.match(shared, /grid min-h-0 flex-1 grid-cols-2 gap-3 overflow-hidden/);
+  assert.match(shared, /grid min-h-0 flex-1 grid-cols-2 overflow-hidden/);
   assert.match(shared, /min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain/);
   assert.match(shared, /list\.scrollTop = Math\.max/);
   assert.equal(shared.includes("scrollIntoView"), false);
@@ -47,10 +47,10 @@ test("shared time content renders two independently scrollable button lists", ()
 
 test("shared age content provides compact selection and keyboard semantics", () => {
   for (const key of ["ArrowDown", "ArrowUp", "Home", "End", "Enter"]) assert.ok(shared.includes(key));
-  assert.match(shared, /role="option" aria-selected=\{selected\}/);
+  assert.match(shared, /role="option"[\s\S]*?aria-selected=\{selected\}/);
   assert.match(shared, /data-selected-age-indicator/);
   assert.match(shared, /border border-slate-400/);
-  assert.match(shared, /rounded-full bg-\[#075EE8\]/);
+  assert.match(shared, /rounded-full[\s\S]*?bg-\[#075EE8\]/);
 });
 
 test("dedicated Cars desktop time popup has no native selects and stable relationships", () => {
@@ -64,8 +64,8 @@ test("dedicated Cars desktop time popup has no native selects and stable relatio
 
 test("mobile age owns one flex-constrained momentum scroll region", () => {
   assert.match(shared, /min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain/);
-  assert.match(shared, /mobileShell \? "min-h-0 flex-1[^"]+" : "max-h-\[320px\]/);
-  assert.match(shared, /driverAgeOptions\.map/);
+  assert.match(shared, /mobileShell[\s\S]*?min-h-0 flex-1[\s\S]*?max-h-\[320px\]/);
+  assert.match(shared, /ageOptions\.map/);
 });
 
 test("mobile calendar mirrors the twelve-month touch presentation", () => {
@@ -81,8 +81,8 @@ test("homepage mobile time picker drafts both values and commits only from Done"
   assert.match(homepage, /returnTime=\{carsValues\.dropoffTime\}/);
   assert.match(homepage, /onCommit=\{\(pickupTime, dropoffTime\)/);
   assert.match(homepage, /onCommit=\{\(age\) => updateCarsValue\("driverAge", age\)\}/);
-  assert.match(shared, /onCommit\(draftPickup, draftReturn\); requestClose\(\)/);
-  assert.match(shared, /onCommit\(draftAge\); requestClose\(\)/);
+  assert.match(shared, /onCommit\(draftPickup, draftReturn\);[\s\S]*?requestClose\(\)/);
+  assert.match(shared, /onCommit\(draftAge\);[\s\S]*?requestClose\(\)/);
   assert.doesNotMatch(shared, /onCommit\(draft(?:Pickup|Age)[^;]*; onClose\(\)/);
 });
 
