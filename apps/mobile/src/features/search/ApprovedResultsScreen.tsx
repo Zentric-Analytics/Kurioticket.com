@@ -1012,7 +1012,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           onContentSizeChange={handleFlightResultsContentSizeChange}
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: flightResultsScrollY } } }],
-            { useNativeDriver: false },
+            { useNativeDriver: true },
           )}
           alwaysBounceVertical={false}
           bounces={false}
@@ -1056,7 +1056,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               <Animated.View
                 style={[
                   s0.flightResultsScrollIndicatorThumb,
-                  { height: geometry.thumbHeight, transform: [{ translateY }] },
+                  {
+                    height: geometry.thumbHeight,
+                    backgroundColor: theme.dark ? "rgba(226, 232, 240, 0.72)" : "rgba(60, 60, 67, 0.55)",
+                    transform: [{ translateY }],
+                  },
                 ]}
               />
             </View>
@@ -1928,7 +1932,7 @@ const s0 = StyleSheet.create({
   resultsScroll: { flex: 1 },
   flightResultsListContainer: { flex: 1, position: "relative" },
   flightResultsScrollIndicatorTrack: { position: "absolute", width: 4, zIndex: 4 },
-  flightResultsScrollIndicatorThumb: { width: 3, borderRadius: 2, backgroundColor: "rgba(60, 60, 67, 0.55)" },
+  flightResultsScrollIndicatorThumb: { width: 3, borderRadius: 2 },
   flightResultsContent: { flexGrow: 1 },
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
