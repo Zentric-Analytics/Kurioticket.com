@@ -2269,11 +2269,7 @@ export function SearchTabs({
     if (isCarsSubmitting) return;
 
     const now = new Date();
-    const nextErrors = validateCarsForm(
-      carsValues,
-      toCarsIsoDate(now),
-      toCarsTimeValue(now),
-    );
+    const nextErrors = validateCarsForm(carsValues, toCarsIsoDate(now), toCarsTimeValue(now));
     if (mobileCarsDriverAgeMissing) {
       nextErrors.driverAge = "carsSearch.error.driverAgeInvalid";
     }
