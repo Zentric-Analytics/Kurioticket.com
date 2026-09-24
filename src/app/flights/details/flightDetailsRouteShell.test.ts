@@ -36,7 +36,11 @@ test("Flight Details keeps only its global header with desktop display ownership
   assert.doesNotMatch(source, /data-flight-details-desktop-footer/);
   assert.match(
     source,
-    /className="pt-\[env\(safe-area-inset-top\)\] lg:pt-0"[\s\S]*?data-flight-details-mobile-safe-area[\s\S]*?<FlightDetailsClient id=\{id\} \/>[\s\S]*?<\/div>/,
+    /data-flight-details-mobile-edge-to-edge[\s\S]*?<FlightDetailsClient id=\{id\} \/>[\s\S]*?<\/div>/,
+  );
+  assert.doesNotMatch(
+    source,
+    /pt-\[env\(safe-area-inset-top\)\]/,
   );
 
   assert.doesNotMatch(
@@ -69,17 +73,15 @@ test("Flight Details keeps page-owned results navigation for every details state
   assert.match(detailsSource, /href=\{resultsHref\}[\s\S]*?Back to results/);
 });
 
-test("mobile Flight Details owns the top safe area for populated, loading, and unavailable states", async () => {
+test("mobile Flight Details keeps the hero edge-to-edge while controls own the safe area", async () => {
   const [pageSource, detailsSource] = await Promise.all([
     readFile(pagePath, "utf8"),
     readFile(detailsPath, "utf8"),
   ]);
 
-  assert.match(pageSource, /pt-\[env\(safe-area-inset-top\)\] lg:pt-0/);
-  assert.equal(
-    (pageSource.match(/env\(safe-area-inset-top\)/g) ?? []).length,
-    1,
-  );
+  assert.match(pageSource, /data-flight-details-mobile-edge-to-edge/);
+  assert.doesNotMatch(pageSource, /pt-\[env\(safe-area-inset-top\)\]/);
+  assert.doesNotMatch(pageSource, /data-flight-details-mobile-safe-area/);
   assert.doesNotMatch(pageSource, /(?:h-|min-h-|pt-)\[(?:44|47|59|60|64|70)px\]/);
 
   assert.match(detailsSource, /return \(\s*<main[\s\S]*?Back to results/);
