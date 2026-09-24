@@ -30,6 +30,7 @@ import {
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
+import { CarsRouteLoadingOverlay } from "@/components/results/CarsRouteLoadingOverlay";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
 import type { CarLocationSuggestion } from "@/lib/cars/carLocationSuggestions";
 import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
@@ -354,28 +355,31 @@ function CarsSearchPage() {
   if (isSubmitting) {
     return (
       <>
-        <AppHeader
-          flushDesktopBottom
-          flushMobileBottom
-          hideDesktopTravelNav
-          hideMobileCategoryTabs
-        />
-        <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
-          <BrandedLoading
-            variant="fullscreen"
-            visual="logoPulse"
-            showProgress={false}
-            className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
-            contentClassName="max-w-md text-center"
-            title={t("carsResults.loading.title")}
-            messages={[
-              t("carsResults.loading.checkingCarsAndRates"),
-              t("carsResults.loading.comparingVehiclesAndProviders"),
-              t("carsResults.loading.findingBestAvailableOptions"),
-              t("carsResults.loading.preparingResults"),
-            ]}
+        <CarsRouteLoadingOverlay active />
+        <div className="hidden lg:contents">
+          <AppHeader
+            flushDesktopBottom
+            flushMobileBottom
+            hideDesktopTravelNav
+            hideMobileCategoryTabs
           />
-        </main>
+          <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
+            <BrandedLoading
+              variant="fullscreen"
+              visual="logoPulse"
+              showProgress={false}
+              className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
+              contentClassName="max-w-md text-center"
+              title={t("carsResults.loading.title")}
+              messages={[
+                t("carsResults.loading.checkingCarsAndRates"),
+                t("carsResults.loading.comparingVehiclesAndProviders"),
+                t("carsResults.loading.findingBestAvailableOptions"),
+                t("carsResults.loading.preparingResults"),
+              ]}
+            />
+          </main>
+        </div>
       </>
     );
   }
