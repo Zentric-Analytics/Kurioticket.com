@@ -73,11 +73,19 @@ test("normal Cars summary uses the Flights mobile presentation and remains mobil
   assert.doesNotMatch(summary, /font-extrabold/);
 });
 
-test("summary sentinel remains a non-visual one-pixel sticky threshold", () => {
-  assert.match(mobileSummarySection, /mobileSearchSummarySentinelRef/);
+test("compact header handoff is a non-visual one-pixel threshold after the normal results toolbar", () => {
+  assert.doesNotMatch(mobileSummarySection, /mobileCompactHeaderHandoffRef/);
+
+  const toolbarStart = source.indexOf("data-cars-results-toolbar");
+  const handoff = source.indexOf("data-cars-mobile-compact-handoff");
+  const firstCardList = source.indexOf("data-cars-results-card-list", handoff);
+
+  assert.ok(toolbarStart >= 0);
+  assert.ok(handoff > toolbarStart);
+  assert.ok(firstCardList > handoff);
   assert.match(
-    mobileSummarySection,
-    /className="pointer-events-none h-px w-full"/,
+    source.slice(handoff - 160, handoff + 260),
+    /ref=\{mobileCompactHeaderHandoffRef\}[\s\S]*className="pointer-events-none h-px w-full sm:hidden"/,
   );
   assert.match(source, /setMobileCompactHeaderVisible/);
 });
