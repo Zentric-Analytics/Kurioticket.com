@@ -6612,11 +6612,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               </div>
             ) : null}
           </div>
-          <footer className="flex shrink-0 items-center gap-[10px] bg-[#F2F4F8] px-4 pb-[max(12px,calc(env(safe-area-inset-bottom)-12px))] pt-3">
+          <footer
+            data-flight-quick-sheet-footer
+            className="flex shrink-0 items-center justify-between gap-[10px] bg-[#F2F4F8] px-4 pb-[max(12px,calc(env(safe-area-inset-bottom)-12px))] pt-3"
+          >
             <button
               type="button"
               onClick={resetSheet}
-              className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+              className="h-[49px] min-w-[116px] shrink-0 rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
             >
               Reset
             </button>
@@ -6625,10 +6628,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               onClick={applySheet}
               disabled={mobileShortcutSheet !== "sort" && draftMatches === 0}
               aria-disabled={mobileShortcutSheet !== "sort" && draftMatches === 0}
-              className={cn(
-                "flex h-[49px] min-w-0 items-center justify-center whitespace-nowrap rounded-xl bg-[#004BB8] px-5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2",
-                mobileShortcutSheet === "sort" && "flex-1",
-              )}
+              className="flex h-[49px] min-w-0 max-w-[calc(100%_-_126px)] items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap rounded-xl bg-[#004BB8] px-5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
             >
               {mobileShortcutSheet === "sort"
                 ? "Apply"
@@ -6950,12 +6950,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           />
         </div>
 
-        <footer className="flex shrink-0 items-center gap-3.5 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+        <footer
+          data-flight-full-filters-footer
+          className="flex shrink-0 items-center justify-between gap-3.5 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3"
+        >
           {activeFilterCount > 0 ? (
             <button
               type="button"
               onClick={clearFlightFilters}
-              className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+              className="h-[49px] min-w-[116px] shrink-0 rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
             >
               Reset
             </button>
@@ -6968,7 +6971,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               triggerFilterApplying();
               closeMobileFiltersDrawer();
             }}
-            className={cn("min-h-[50px] min-w-0 whitespace-nowrap rounded-[10px] bg-[#004BB8] px-5 text-base font-bold leading-[22px] text-white disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35", activeFilterCount === 0 && "flex-1")}
+            className={cn(
+              "min-h-[50px] min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-[10px] bg-[#004BB8] px-5 text-base font-bold leading-[22px] text-white disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
+              activeFilterCount === 0
+                ? "flex-1"
+                : "max-w-[calc(100%_-_130px)]",
+            )}
           >
             {sortedResults.length === 0
               ? "No flights"

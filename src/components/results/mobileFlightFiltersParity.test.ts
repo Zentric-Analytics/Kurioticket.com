@@ -4,6 +4,10 @@ import test from "node:test";
 
 const client = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
 const sheet = readFileSync("src/components/results/MobileFlightFiltersSheet.tsx", "utf8");
+const quick = client.slice(
+  client.indexOf("function renderMobileSortResultsRow"),
+  client.indexOf("function renderFloatingFilterButton"),
+);
 
 test("mobile full Filters uses the native section hierarchy", () => {
   const order = ["Price", "Flight times", "Duration", "Stops", "Airlines", "Airports", "Fare preferences"].map((title) => sheet.indexOf(`title=\"${title}\"`));
@@ -37,33 +41,42 @@ test("Flight full Filters keeps Flight-specific controls inside the Cars visual 
   );
   assert.match(full, /min-h-\[76px\][^"]*bg-\[#F2F4F8\]/);
   assert.match(full, /px-6 pb-8 pt-4/);
-  assert.match(full, /gap-3\.5 border-t border-\[#D8DEE8\]/);
-  assert.match(full, /h-\[49px\] min-w-\[116px\]/);
+  assert.match(full, /items-center justify-between gap-3\.5 border-t border-\[#D8DEE8\]/);
+  assert.match(full, /h-\[49px\] min-w-\[116px\] shrink-0/);
   assert.match(full, /min-h-\[50px\][^"]*bg-\[#004BB8\][^"]*text-base font-bold leading-\[22px\]/);
-  assert.match(full, /activeFilterCount === 0 && "flex-1"/);
-  assert.match(full, /min-w-0 whitespace-nowrap rounded-\[10px\]/);
+  assert.match(full, /activeFilterCount === 0[\s\S]*\? "flex-1"/);
+  assert.match(full, /min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-\[10px\]/);
   assert.match(full, /disabled=\{sortedResults\.length === 0\}/);
   assert.match(full, /`View \$\{sortedResults\.length\}/);
 });
 
 test("paired mobile filter actions keep View flights compact and on one line", () => {
-  const quick = client.slice(
-    client.indexOf("function renderMobileSortResultsRow"),
-    client.indexOf("function renderFloatingFilterButton"),
-  );
   const full = client.slice(
     client.indexOf("function renderMobileFullFiltersSheet()"),
     client.indexOf("function renderDesktopSortControl()"),
   );
-  assert.match(quick, /whitespace-nowrap rounded-xl/);
-  assert.match(quick, /mobileShortcutSheet === "sort" && "flex-1"/);
-  assert.doesNotMatch(quick, /min-w-0 flex-1 items-center justify-center rounded-xl/);
+  assert.match(quick, /data-flight-quick-sheet-footer[\s\S]*items-center justify-between gap-\[10px\]/);
+  assert.match(quick, /min-w-\[116px\] shrink-0/);
+  assert.match(quick, /max-w-\[calc\(100%_-_126px\)\][^\n]*overflow-hidden text-ellipsis whitespace-nowrap rounded-xl/);
+  assert.doesNotMatch(quick, /mobileShortcutSheet === "sort" && "flex-1"/);
+  assert.doesNotMatch(quick, /className="[^"]*\bflex-1\b[^"]*rounded-xl bg-\[#004BB8\]/);
   assert.match(quick, /draftMatches === 1 \? "flight" : "flights"/);
   assert.match(quick, /disabled=\{mobileShortcutSheet !== "sort" && draftMatches === 0\}/);
-  assert.match(full, /whitespace-nowrap rounded-\[10px\]/);
-  assert.match(full, /activeFilterCount === 0 && "flex-1"/);
+  assert.match(full, /data-flight-full-filters-footer[\s\S]*items-center justify-between gap-3\.5/);
+  assert.match(full, /min-w-\[116px\] shrink-0/);
+  assert.match(full, /overflow-hidden text-ellipsis whitespace-nowrap rounded-\[10px\]/);
+  assert.match(full, /activeFilterCount === 0[\s\S]*\? "flex-1"[\s\S]*: "max-w-\[calc\(100%_-_130px\)\]"/);
   assert.match(full, /sortedResults\.length === 1 \? "flight" : "flights"/);
   assert.match(full, /disabled=\{sortedResults\.length === 0\}/);
+});
+
+test("all mobile quick sheets share compact edge-aligned footer actions", () => {
+  for (const kind of ["airlines", "stops", "airports"]) {
+    assert.match(quick, new RegExp(`mobileShortcutSheet === "${kind}"`));
+  }
+  assert.match(quick, /\? "Apply"[\s\S]*\? "No matching flights"[\s\S]*`View \$\{draftMatches\}/);
+  assert.match(quick, /draftMatches === 1 \? "flight" : "flights"/);
+  assert.match(quick, /disabled=\{mobileShortcutSheet !== "sort" && draftMatches === 0\}/);
 });
 
 test("mobile Quick Filters rail breakout matches the 12px Results gutter", () => {
