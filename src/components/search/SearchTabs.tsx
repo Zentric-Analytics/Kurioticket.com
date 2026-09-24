@@ -2258,6 +2258,9 @@ export function SearchTabs({
       ]),
     ) as CarsFormErrors;
 
+  const carsDriverAgeIsEmpty = carsValues.driverAge === defaultDriverAge;
+  const mobileCarsDriverAgeMissing = mobileHomepage && carsDriverAgeIsEmpty;
+
   const onCarsSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setCarsOpenPicker(null);
@@ -2265,9 +2268,15 @@ export function SearchTabs({
     if (isCarsSubmitting) return;
 
     const nextErrors = validateCarsForm(carsValues, toCarsIsoDate(new Date()));
+    if (mobileCarsDriverAgeMissing) {
+      nextErrors.driverAge = "carsSearch.error.driverAgeInvalid";
+    }
     setCarsErrors(translateCarsFormErrors(nextErrors));
 
     if (Object.values(nextErrors).some(Boolean)) {
+      if (mobileCarsDriverAgeMissing) {
+        setCarsOpenPicker("age");
+      }
       return;
     }
 
@@ -2325,6 +2334,7 @@ export function SearchTabs({
     !carsValues.dropoffDate ||
     !carsValues.pickupTime ||
     !carsValues.dropoffTime ||
+    mobileCarsDriverAgeMissing ||
     (carsValues.returnToDifferentLocation && !carsValues.dropoffLocation.trim());
 
   const carsLocationStrings = {
@@ -2353,7 +2363,6 @@ export function SearchTabs({
     "Return date";
   const carsDateRangeIsEmpty = !carsValues.pickupDate && !carsValues.dropoffDate;
   const carsTimeRangeIsEmpty = !carsValues.pickupTime && !carsValues.dropoffTime;
-  const carsDriverAgeIsEmpty = carsValues.driverAge === defaultDriverAge;
   const carsMobileEmptyValueClassName = mobileHomepage
     ? "text-[15px] font-normal leading-5 text-slate-500"
     : undefined;
