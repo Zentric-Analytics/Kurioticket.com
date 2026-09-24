@@ -1,3 +1,4 @@
+import { decodeProviderRouteId } from "@/lib/travel/providerRouteId";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -10,7 +11,8 @@ import { getKayakClientIp } from "@/lib/kayak-client-ip";
 
 const value = (input: string | string[] | undefined) => (Array.isArray(input) ? input[0] : input)?.trim() || "";
 export default async function CarDetailsPage({ params, searchParams }: { params: Promise<{id:string}>; searchParams: Promise<Record<string,string|string[]|undefined>> }) {
-  const [{id}, query] = await Promise.all([params, searchParams]);
+  const [{ id: routeId }, query] = await Promise.all([params, searchParams]);
+  const id = decodeProviderRouteId(routeId);
   const pickupLocation = value(query.pickupLocation);
   const dropoffLocation = value(query.dropoffLocation) || pickupLocation;
   const pickupLocationTarget = parseCarLocationTarget(

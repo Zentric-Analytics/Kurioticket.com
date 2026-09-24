@@ -1,3 +1,4 @@
+import { decodeProviderRouteId } from "@/lib/travel/providerRouteId";
 import { cookies } from "next/headers";
 
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -16,7 +17,8 @@ export async function generateMetadata() {
 }
 
 export default async function FlightDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+  const { id: routeId } = await params;
+  const id = decodeProviderRouteId(routeId);
   return (
     <>
       <div className="hidden lg:block" data-flight-details-desktop-header>
