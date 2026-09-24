@@ -1,7 +1,7 @@
 export const FLIGHT_RESULTS_SCROLL_INDICATOR_TRACK_TOP = 56;
 export const FLIGHT_RESULTS_SCROLL_INDICATOR_RIGHT = 3;
-export const FLIGHT_RESULTS_SCROLL_THUMB_MIN_HEIGHT = 44;
-export const FLIGHT_RESULTS_SCROLL_THUMB_MAX_HEIGHT = 96;
+export const FLIGHT_RESULTS_SCROLL_THUMB_MIN_HEIGHT = 22;
+export const FLIGHT_RESULTS_SCROLL_THUMB_MAX_HEIGHT = 48;
 
 export type FlightResultsScrollIndicatorGeometry = {
   visible: boolean;
