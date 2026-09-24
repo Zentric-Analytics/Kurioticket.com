@@ -113,19 +113,40 @@ export function CarDetailsHero({
             className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 lg:mt-0 lg:flex lg:flex-wrap lg:gap-2"
             data-car-details-specifications
           >
-            {specs.map(([Icon, label]) => (
-              <li
-                key={label}
-                className="inline-flex min-w-0 items-center gap-2 text-xs font-semibold leading-[18px] text-slate-700 lg:rounded-lg lg:bg-slate-100 lg:px-2.5 lg:py-1.5"
-              >
-                <Icon
-                  size={15}
-                  className="shrink-0 text-slate-600"
-                  aria-hidden="true"
-                />
-                <span className="min-w-0 break-words">{label}</span>
-              </li>
-            ))}
+            {specs.map(([Icon, label]) => {
+              const mobileTransmissionIcon =
+                Icon === AutomaticTransmissionIcon ||
+                Icon === ManualTransmissionIcon;
+
+              return (
+                <li
+                  key={label}
+                  className="inline-flex min-w-0 items-center gap-2 text-xs font-semibold leading-[18px] text-slate-700 lg:rounded-lg lg:bg-slate-100 lg:px-2.5 lg:py-1.5"
+                >
+                  {mobileTransmissionIcon ? (
+                    <>
+                      <Icon
+                        size={15}
+                        className="shrink-0 text-slate-600 lg:hidden"
+                        aria-hidden="true"
+                      />
+                      <CarFront
+                        size={15}
+                        className="hidden shrink-0 text-slate-600 lg:block"
+                        aria-hidden="true"
+                      />
+                    </>
+                  ) : (
+                    <Icon
+                      size={15}
+                      className="shrink-0 text-slate-600"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span className="min-w-0 break-words">{label}</span>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>
