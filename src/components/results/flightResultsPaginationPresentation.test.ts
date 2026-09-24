@@ -70,8 +70,8 @@ test("mobile standalone Results ends after the pagination breathing space withou
   );
   assert.match(
     componentSource,
-    /data-mobile-paginated-flight-results[\s\S]*?"pb-0"[\s\S]*?<FlightResultsPagination/,
-    "the mobile result wrapper does not add safe-area filler below pagination",
+    /data-mobile-paginated-flight-results[\s\S]*?totalResultPages <= 1 \? "pb-6" : "pb-0"[\s\S]*?<FlightResultsPagination/,
+    "the mobile result wrapper keeps 24px breathing room only when pagination is absent",
   );
 
   const pagination = paginationSource();
