@@ -79,7 +79,10 @@ test("mobile result summary hides the desktop Sort by control", () => {
 });
 
 test("mobile result rhythm matches the native list while desktop spacing stays responsive", () => {
-  assert.match(resultsSource, /page-shell max-sm:w-\[calc\(100%_-_28px\)\]/);
+  assert.match(
+    resultsSource,
+    /page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-10 sm:pt-6/,
+  );
   assert.match(resultsSource, /gap-2 pt-1 sm:gap-3 lg:py-1/);
   assert.equal(
     (resultsSource.match(/space-y-3\.5 max-sm:!mt-2\.5/g) ?? []).length,
