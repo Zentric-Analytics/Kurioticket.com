@@ -4575,7 +4575,7 @@ export function SearchTabs({
                     <span className="flex min-w-0 items-center gap-2">
                       <MapPin aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-slate-500" />
                       <span className="min-w-0">
-                        <span className={cn("block truncate", carsValues.pickupLocation ? "text-slate-950" : "text-slate-500")}>
+                        <span className={cn("block truncate", carsValues.pickupLocation ? "font-semibold text-slate-950" : "font-normal text-slate-500")}>
                           {carsPickupDisplay.primary || translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"}
                         </span>
                         {carsPickupDisplay.secondary ? (
@@ -4597,7 +4597,7 @@ export function SearchTabs({
                 {carsErrors.pickupLocation ? <p className="absolute start-3 top-full z-10 mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
               </div>
               {compactHero ? carsReturnLocationField : null}
-              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopWidth={620} desktopPanelClassName="p-4" desktopPlacement="auto" desktopDesiredHeight={430} leadingIcon={<Calendar aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-slate-500 sm:h-4 sm:w-4" />} showChevron={false} valueClassName={mobileHomepage && carsDateRangeIsEmpty ? "text-[15px] leading-5 text-slate-500" : undefined} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
+              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopWidth={620} desktopPanelClassName="p-4" desktopPlacement="auto" desktopDesiredHeight={430} leadingIcon={<Calendar aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-slate-500 sm:h-4 sm:w-4" />} showChevron={false} valueClassName={mobileHomepage && carsDateRangeIsEmpty ? "text-[15px] font-normal leading-5 text-slate-500" : undefined} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
                 <CarsRentalDatePickerContent
                   dropoffDate={carsValues.dropoffDate}
                   formatFullDate={(date) => new Intl.DateTimeFormat(calendarLocale, { dateStyle: "full" }).format(date)}
@@ -4613,7 +4613,7 @@ export function SearchTabs({
                   weekdays={getLocalizedWeekdays(calendarLocale)}
                 />
               </CarsSummaryField>
-              <CarsSummaryField id="homepage-cars-time-range" label={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} value={carsTimeSummary} open={carsOpenPicker === "times"} onOpenChange={(open) => openHomepageCarsPicker("times", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopPlacement="auto" desktopDesiredHeight={350} leadingIcon={<Clock aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-slate-500 sm:h-4 sm:w-4" />} valueClassName={mobileHomepage && carsTimeRangeIsEmpty ? "text-[15px] leading-5 text-slate-500" : undefined} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
+              <CarsSummaryField id="homepage-cars-time-range" label={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} value={carsTimeSummary} open={carsOpenPicker === "times"} onOpenChange={(open) => openHomepageCarsPicker("times", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopPlacement="auto" desktopDesiredHeight={350} leadingIcon={<Clock aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-slate-500 sm:h-4 sm:w-4" />} valueClassName={mobileHomepage && carsTimeRangeIsEmpty ? "text-[15px] font-normal leading-5 text-slate-500" : undefined} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
                 <CarsTimeRangePickerContent formatTime={formatCarsTime} pickupLabel={translate("carsSearch.pickupTimeLabel") || "Pickup time"} pickupTime={carsValues.pickupTime} returnLabel={translate("carsSearch.returnTimeLabel") || "Return time"} returnTime={carsValues.dropoffTime} onPickupTimeChange={(time) => updateCarsValue("pickupTime", time)} onReturnTimeChange={(time) => updateCarsValue("dropoffTime", time)} />
               </CarsSummaryField>
               <CarsSummaryField id="homepage-cars-driver-age" label={translate("carsSearch.driverAgeLabel") || "Driver age"} value={
