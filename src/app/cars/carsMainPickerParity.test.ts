@@ -159,3 +159,16 @@ test("Cars Main dates keep the full-height vertical web flow with compact intern
   assert.match(datePicker, /\{!compactCars \? \([\s\S]*?labels\.selectDates/);
   assert.match(datePicker, /presentation === "carsMain" && "bg-white px-4 py-3"/);
 });
+
+
+test("Cars Main requires explicit pickup and return time choices", () => {
+  assert.match(pickerContent, /disabled=\{!draftPickup \|\| !draftReturn\}/);
+  assert.match(pickerContent, /if \(!draftPickup \|\| !draftReturn\) return/);
+  assert.match(pickerContent, /beginCarLocationPointerIntent/);
+  assert.match(pickerContent, /updateCarLocationPointerIntent/);
+  assert.match(pickerContent, /isIntentionalCarLocationTap/);
+  assert.match(
+    timeField,
+    /hasCompleteTimeRange[\s\S]*?font-normal text-slate-500/,
+  );
+});

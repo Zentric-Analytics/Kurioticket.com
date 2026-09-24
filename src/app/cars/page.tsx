@@ -142,9 +142,20 @@ const formatTimeRangeSummary = (
     .replace("{returnTime}", returnTime);
 
 const formatCarTimeLabel = (time: string, locale: string) => {
+  if (!/^\\d{2}:\\d{2}$/.test(time)) {
+    return time;
+  }
+
   const [hourValue, minuteValue] = time.split(":").map(Number);
 
-  if (Number.isNaN(hourValue) || Number.isNaN(minuteValue)) {
+  if (
+    !Number.isFinite(hourValue) ||
+    !Number.isFinite(minuteValue) ||
+    hourValue < 0 ||
+    hourValue > 23 ||
+    minuteValue < 0 ||
+    minuteValue > 59
+  ) {
     return time;
   }
 
@@ -939,7 +950,7 @@ function CarsSearchBar({
                         className={`min-w-0 ${
                           values.pickupLocation
                             ? "font-semibold text-slate-950"
-                            : "font-medium text-slate-400"
+                            : "font-normal text-slate-500"
                         }`}
                       >
                         <span className="block truncate">{pickupDisplay.primary || t("carsSearch.pickupLocationPlaceholder")}</span>
@@ -1585,7 +1596,7 @@ function RentalDatesField({
         />
         <span className="min-w-0">
           <span
-            className={`block truncate ${pickupDate ? "font-semibold text-slate-950" : "font-medium text-slate-400"}`}
+            className={`block truncate ${pickupDate ? "font-semibold text-slate-950" : "font-normal text-slate-500"}`}
           >
             {dateSummary}
           </span>
@@ -1669,11 +1680,22 @@ function TimeRangeField({
 }) {
   const { locale, t } = useCarsLandingTranslations();
   const intlLocale = getCarsIntlLocale(locale);
-  const timeSummary = formatTimeRangeSummary(
-    t("carsSearch.pickupReturnTimeSummary"),
-    formatCarTimeLabel(pickupTime, intlLocale),
-    formatCarTimeLabel(returnTime, intlLocale),
-  );
+  const hasPickupTime = Boolean(pickupTime);
+  const hasReturnTime = Boolean(returnTime);
+  const hasCompleteTimeRange = hasPickupTime && hasReturnTime;
+  const pickupTimeText = hasPickupTime
+    ? formatCarTimeLabel(pickupTime, intlLocale)
+    : t("carsSearch.pickupTimeLabel");
+  const returnTimeText = hasReturnTime
+    ? formatCarTimeLabel(returnTime, intlLocale)
+    : t("carsSearch.returnTimeLabel");
+  const timeSummary = hasCompleteTimeRange
+    ? formatTimeRangeSummary(
+        t("carsSearch.pickupReturnTimeSummary"),
+        pickupTimeText,
+        returnTimeText,
+      )
+    : `${pickupTimeText} — ${returnTimeText}`;
   const { placement, popoverRef, style } = useCarsDesktopPopover({
     open: isOpen,
     launcherRef,
@@ -1693,16 +1715,22 @@ function TimeRangeField({
         aria-haspopup="dialog"
         aria-controls="cars-desktop-time-range-dialog"
         aria-label={t("carsSearch.choosePickupReturnTimesAria")}
-        className="focus-ring flex min-h-5 w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[15px] font-semibold leading-5 text-slate-950 outline-none transition-colors sm:h-7 sm:text-[16px] sm:leading-normal md:text-[15px] lg:h-8"
+        className="focus-ring flex min-h-5 w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[15px] leading-5 text-slate-950 outline-none transition-colors sm:h-7 sm:text-[16px] sm:font-semibold sm:leading-normal md:text-[15px] lg:h-8"
       >
         <span className="flex min-w-0 items-center gap-2">
           <Clock
             aria-hidden="true"
             className="h-[18px] w-[18px] shrink-0 text-slate-500 sm:h-4 sm:w-4"
           />
-          <span className="truncate sm:hidden">{timeSummary}</span>
+          <span
+            className={`truncate sm:hidden ${hasCompleteTimeRange ? "font-semibold text-slate-950" : "font-normal text-slate-500"}`}
+          >
+            {timeSummary}
+          </span>
           <span className="hidden truncate sm:inline">
-            {formatCarTimeLabel(pickupTime, intlLocale)}
+            {hasPickupTime
+              ? formatCarTimeLabel(pickupTime, intlLocale)
+              : t("carsSearch.pickupTimeLabel")}
           </span>
         </span>
         <ChevronDown

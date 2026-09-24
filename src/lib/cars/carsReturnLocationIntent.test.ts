@@ -34,3 +34,18 @@ test("explicit and legacy different-location URLs preserve different return inte
   assert.equal(values.returnToDifferentLocation, true);
   assert.equal(values.dropoffLocation, "SFO");
 });
+
+
+test("fresh Cars Main intent leaves pickup and return times unselected", () => {
+  const values = getInitialValues(new URLSearchParams());
+  assert.equal(values.pickupTime, "");
+  assert.equal(values.dropoffTime, "");
+});
+
+test("explicit incoming Cars times are preserved", () => {
+  const values = getInitialValues(
+    new URLSearchParams("pickupTime=09%3A30&dropoffTime=14%3A00"),
+  );
+  assert.equal(values.pickupTime, "09:30");
+  assert.equal(values.dropoffTime, "14:00");
+});

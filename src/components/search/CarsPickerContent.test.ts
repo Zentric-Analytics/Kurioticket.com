@@ -141,3 +141,18 @@ test("Cars Main shares native time and concrete-age internals without changing d
   assert.doesNotMatch(shared, /presentation === "carsResultsEdit" && driverAge === defaultDriverAge[\s\S]*?\? "30"/);
   assert.match(shared, /nativeCarsAppearance \?[\s\S]*?`\$\{age\} years old`/);
 });
+
+
+test("mobile Cars time rows distinguish touch scrolling from intentional taps", () => {
+  assert.match(shared, /function CarsTimeOptionButton/);
+  assert.match(shared, /beginCarLocationPointerIntent/);
+  assert.match(shared, /updateCarLocationPointerIntent/);
+  assert.match(shared, /isIntentionalCarLocationTap/);
+  assert.match(shared, /suppressClickRef\.current = true/);
+});
+
+test("mobile Cars time Done stays disabled until both times are chosen", () => {
+  assert.match(shared, /disabled=\{!draftPickup \|\| !draftReturn\}/);
+  assert.match(shared, /aria-disabled=\{!draftPickup \|\| !draftReturn\}/);
+  assert.match(shared, /if \(!draftPickup \|\| !draftReturn\) return/);
+});
