@@ -580,7 +580,7 @@ export function CarsResultsClient({
   const returnLocationLauncherRef = useRef<HTMLButtonElement | null>(null);
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
-  const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
+  const mobileCompactHeaderHandoffRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileSearchModalityRef = useRef<OverlayActivationModality>("programmatic");
@@ -1029,16 +1029,21 @@ export function CarsResultsClient({
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
-    const sentinel = mobileSearchSummarySentinelRef.current;
+    const sentinel = mobileCompactHeaderHandoffRef.current;
+    const hasPassedMobileCompactHandoff = (rect: DOMRectReadOnly) =>
+      rect.bottom < 8 && window.scrollY > 96;
     const updateFromSentinel = () => {
-      const currentSentinel = mobileSearchSummarySentinelRef.current;
+      const currentSentinel = mobileCompactHeaderHandoffRef.current;
       if (!currentSentinel) {
         setMobileCompactHeaderVisible(false);
         return;
       }
 
-      const rect = currentSentinel.getBoundingClientRect();
-      setMobileCompactHeaderVisible(rect.bottom < 8 && window.scrollY > 96);
+      setMobileCompactHeaderVisible(
+        hasPassedMobileCompactHandoff(
+          currentSentinel.getBoundingClientRect(),
+        ),
+      );
     };
 
     updateFromSentinel();
@@ -1054,7 +1059,7 @@ export function CarsResultsClient({
     const observer = new IntersectionObserver(
       ([entry]) => {
         setMobileCompactHeaderVisible(
-          !entry.isIntersecting && window.scrollY > 96,
+          hasPassedMobileCompactHandoff(entry.boundingClientRect),
         );
       },
       { rootMargin: "-8px 0px 0px 0px", threshold: 0 },
@@ -1508,11 +1513,6 @@ export function CarsResultsClient({
           />
           {renderMobileControlsRow()}
         </div>
-        <div
-          ref={mobileSearchSummarySentinelRef}
-          className="pointer-events-none h-px w-full"
-          aria-hidden="true"
-        />
       </section>
 
       <MobileDatePickerDialog
@@ -1825,6 +1825,7 @@ export function CarsResultsClient({
           resultHeadingId="cars-results-heading"
           detailsHrefForCar={(car) => resultActionHref(car, buildCarDetailsHref(car.id, values))}
           mobileCompactToolbarVisible={mobileCompactHeaderVisible}
+          mobileCompactHeaderHandoffRef={mobileCompactHeaderHandoffRef}
           mobileSearchSummary={locationPairSummary}
           onMobileBack={() => router.push("/cars")}
           onMobileModifySearch={openMobileSearchDrawer}
@@ -1853,6 +1854,7 @@ export function CarsResultsExperience({
   presentation = "standalone",
   isCarSelectable,
   mobileCompactToolbarVisible = false,
+  mobileCompactHeaderHandoffRef,
   mobileSearchSummary,
   onMobileBack,
   onMobileModifySearch,
@@ -1868,6 +1870,7 @@ export function CarsResultsExperience({
   presentation?: "standalone" | "guided-planning";
   isCarSelectable?: (car: NormalizedCarResult) => boolean;
   mobileCompactToolbarVisible?: boolean;
+  mobileCompactHeaderHandoffRef?: RefObject<HTMLDivElement | null>;
   mobileSearchSummary?: string;
   onMobileBack?: () => void;
   onMobileModifySearch?: (launcher?: HTMLElement | null) => void;
@@ -2835,6 +2838,14 @@ export function CarsResultsExperience({
                   </div>
                 ) : null}
               </div>
+              {presentation === "standalone" ? (
+                <div
+                  ref={mobileCompactHeaderHandoffRef}
+                  data-cars-mobile-compact-handoff
+                  className="pointer-events-none h-px w-full sm:hidden"
+                  aria-hidden="true"
+                />
+              ) : null}
               {filterTransitionPhase === "covering" || paginationTransitionPhase === "covering" ? (
                 <div
                   ref={paginationListRef}
