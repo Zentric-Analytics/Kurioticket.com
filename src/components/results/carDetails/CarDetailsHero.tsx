@@ -11,6 +11,10 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode, Ref } from "react";
 import { CarResultImage } from "@/components/results/CarResultImage";
+import {
+  AutomaticTransmissionIcon,
+  ManualTransmissionIcon,
+} from "@/components/results/CarTransmissionIcon";
 import type { NormalizedCarResult } from "@/lib/cars/types";
 import {
   fuelPolicyLabels,
@@ -33,11 +37,17 @@ export function CarDetailsHero({
   imageStageRef?: Ref<HTMLElement>;
   guidedMobileActions?: ReactNode;
 }) {
+  const transmissionIcon = /manual/i.test(car.transmission)
+    ? ManualTransmissionIcon
+    : /automatic/i.test(car.transmission)
+      ? AutomaticTransmissionIcon
+      : CarFront;
+
   const normalizedSpecs: Array<[LucideIcon, string]> = [
     [Users, `${car.passengers} ${text.passengers}`],
     [BriefcaseBusiness, `${car.bags} ${text.bags}`],
     [DoorOpen, `${car.doors} ${text.doors}`],
-    [CarFront, transmissionLabels[car.transmission]],
+    [transmissionIcon, transmissionLabels[car.transmission]],
     [
       Gauge,
       car.mileagePolicy === "unlimited"
