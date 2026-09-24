@@ -12,7 +12,8 @@ for (const width of [360, 390, 412]) {
     await expect(page.locator("[data-flight-mobile-results-shortcuts]")).toBeVisible();
     await expect(page.locator('[data-nearby-fare-presentation="mobile"]')).toBeVisible();
     await expect(page.locator("[data-flight-price-alert-row]")).toBeVisible();
-    await expect(page.locator("[data-flight-results-card-list]")).toBeVisible();
+    const mobileResults = page.locator("[data-mobile-paginated-flight-results]");
+    await expect(mobileResults.locator("[data-flight-results-card-list]")).toBeVisible();
 
     const measurements = await page.evaluate(() => {
       const dateRail = document.querySelector<HTMLElement>('[data-nearby-fare-presentation="mobile"] > div');
@@ -20,7 +21,8 @@ for (const width of [360, 390, 412]) {
       const filterChip = quickRail?.querySelector<HTMLElement>("button");
       const priceAlert = document.querySelector<HTMLElement>("[data-flight-price-alert-row]")?.firstElementChild;
       const resultsFound = document.querySelector<HTMLElement>("[data-mobile-flight-results-summary-row]");
-      const flightCard = document.querySelector<HTMLElement>("[data-flight-results-card-list]")?.firstElementChild;
+      const mobileResults = document.querySelector<HTMLElement>("[data-mobile-paginated-flight-results]");
+      const flightCard = mobileResults?.querySelector<HTMLElement>("[data-flight-results-card-list]")?.firstElementChild;
       if (!dateRail || !quickRail || !filterChip || !(priceAlert instanceof HTMLElement) || !resultsFound || !(flightCard instanceof HTMLElement)) {
         throw new Error("Expected mobile Flight Results rails and result geometry");
       }
