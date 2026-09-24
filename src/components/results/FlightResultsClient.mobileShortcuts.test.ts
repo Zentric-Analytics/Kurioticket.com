@@ -16,8 +16,10 @@ test("mobile flight shortcuts remain an ordered single-row scroll rail", () => {
   assert.ok(filter >= 0 && filter < sort && sort < airlines && airlines < stops && stops < airports);
   assert.match(shortcuts, /data-mobile-flight-shortcuts/);
   assert.match(shortcuts, /overflow-x-auto/);
+  assert.match(shortcuts, /data-mobile-flight-shortcuts[^\n]*ps-3 pe-4/);
   assert.match(shortcuts, /flex-nowrap/);
   assert.match(shortcuts, /w-max/);
+  assert.doesNotMatch(shortcuts, /\bsticky\b|top-\[calc\(/);
 });
 
 test("mobile flight shortcut triggers preserve native-scale target and capsule geometry", () => {
