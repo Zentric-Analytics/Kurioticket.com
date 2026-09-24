@@ -85,10 +85,26 @@ test("wide homepage Cars renders one conditional return-location field beside pi
   assert.match(returnLocationField, /sm:!bg-white/);
 });
 
-test("Cars autocomplete uses responsive presentation and input anchoring", () => {
+test("Cars CSS-hidden desktop autocompletes are logically closed on mobile", () => {
   assert.match(carsBranch, /ref=\{carsSearchSurfaceRef\} data-testid="cars-search-surface"/);
   const allCarsFields = carsBranch + returnLocationField;
-  assert.equal((allCarsFields.match(/presentation="responsive"/g) ?? []).length, 2);
+  assert.equal(
+    (allCarsFields.match(/presentation=\{mobileHomepage \? "desktop" : "responsive"\}/g) ?? []).length,
+    2,
+  );
+  assert.match(source, /const isSmCarsHomepageViewport = useSyncExternalStore/);
+  assert.match(allCarsFields, /hidden sm:block[\s\S]*?<CarLocationAutocomplete/);
+  assert.match(
+    allCarsFields,
+    /isOpen=\{\(!mobileHomepage \|\| isSmCarsHomepageViewport\) && carsOpenPicker === "pickup"\}/,
+  );
+  assert.match(
+    allCarsFields,
+    /isOpen=\{\(!mobileHomepage \|\| isSmCarsHomepageViewport\) && carsOpenPicker === "dropoff"\}/,
+  );
+  assert.ok(
+    (allCarsFields.match(/if \(mobileHomepage && !isSmCarsHomepageViewport\) return/g) ?? []).length >= 2,
+  );
   assert.doesNotMatch(allCarsFields, /fieldAnchorRef=|searchCardRef=/);
   assert.match(returnLocationField, /value=\{carsValues\.dropoffLocation\}/);
 });
@@ -132,15 +148,14 @@ test("desktop Cars pickers stay open for selection and use viewport-safe homepag
   assert.doesNotMatch(agePicker, /setCarsOpenPicker\(null\)/);
 });
 
-test("mobile homepage Cars launches every picker in the shared full-screen shell", () => {
+test("mobile homepage Cars launches every picker in the carsMain full-screen shell", () => {
   assert.match(carsBranch, /mobilePresentation=\{mobileHomepage \? "shell" : "inline"\}/);
   assert.match(carsBranch, /mobileHomepage && tab === "cars"/);
-  assert.match(carsBranch, /<MobileCarLocationPicker/);
-  assert.match(carsBranch, /<MobileCarTimePickerDialog/);
-  assert.match(carsBranch, /<MobileCarDriverAgePickerDialog/);
+  assert.match(carsBranch, /<MobileCarLocationPicker[\s\S]*?presentation="carsMain"/);
+  assert.match(carsBranch, /<MobileDatePickerDialog[\s\S]*?presentation="carsMain"/);
+  assert.match(carsBranch, /<MobileCarTimePickerDialog presentation="carsMain"/);
+  assert.match(carsBranch, /<MobileCarDriverAgePickerDialog presentation="carsMain"/);
   assert.match(carsBranch, /\(\["pickup", "dropoff"\] as const\)\.map/);
-  assert.match(carsBranch, /<MobileCarLocationPicker/);
-  assert.match(carsBranch, /<MobileDatePickerDialog/);
 });
 
 test("mobile Cars fields stay launchers without inline panels or persistent open rings", () => {
