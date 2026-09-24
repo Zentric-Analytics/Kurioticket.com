@@ -167,7 +167,7 @@ export function MobileNativeFareRail({
 
             <div className="pointer-events-none absolute inset-x-3 bottom-1.5 z-[1] flex justify-center">
               <p
-                className="max-w-full truncate text-center text-[19px] font-extrabold leading-[23px] tabular-nums text-[#1A1A1A]"
+                className="max-w-full truncate text-center text-[19px] font-semibold leading-[23px] tabular-nums text-[#1A1A1A]"
                 aria-label={price.ariaLabel}
               >
                 {priceAvailable ? price.formatted : "Price unavailable"}
