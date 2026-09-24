@@ -102,6 +102,33 @@ test("date and datetime validation permits only strictly later drop-off", () => 
   assert.equal(validateCarForm({ ...valid(), dropoffDate:"2026-08-13", dropoffTime:"10:30" }, today).dropoffTime, undefined);
   assert.equal(validateCarForm({ ...valid(), dropoffDate:"2026-08-14", dropoffTime:"10:00" }, today).dropoffTime, undefined);
 });
+test("same-day Cars pickup time must not already be past", () => {
+  const morning = new Date(2026, 6, 30, 9, 0);
+  const base = {
+    ...defaultCarForm(morning),
+    pickupLocation: "LAX",
+    separateDropoff: false,
+    dropoffLocation: "",
+    pickupDate: "2026-07-30",
+    dropoffDate: "2026-07-31",
+    dropoffTime: "10:00",
+  };
+  assert.equal(
+    validateCarForm({ ...base, pickupTime: "08:30" }, morning).pickupTime,
+    "Choose a pick-up time that has not passed.",
+  );
+  assert.equal(
+    validateCarForm({ ...base, pickupTime: "09:30" }, morning).pickupTime,
+    undefined,
+  );
+  assert.equal(
+    validateCarForm(
+      { ...base, pickupDate: "2026-07-31", dropoffDate: "2026-08-01", pickupTime: "00:30" },
+      morning,
+    ).pickupTime,
+    undefined,
+  );
+});
 test("calendar helpers handle month, leap year, and local serialization", () => {
   assert.equal(addCalendarDays("2026-12-31", 1), "2027-01-01"); assert.equal(addCalendarDays("2028-02-28", 1), "2028-02-29");
   assert.equal(localIsoDate(new Date(2026, 0, 2, 23, 59)), "2026-01-02"); assert.ok(localDateFromIso("2028-02-29"));
