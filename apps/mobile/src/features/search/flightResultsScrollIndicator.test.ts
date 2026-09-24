@@ -10,7 +10,7 @@ const list = screen.slice(listStart, screen.indexOf("/>", listEnd) + 2);
 test("Flight Results uses the native iOS scroll indicator with safe-area-aware insets", () => {
   assert.ok(listStart >= 0);
   assert.match(screen, /const flightResultsScrollIndicatorInsets = Platform\.OS === "ios"/);
-  assert.match(screen, /\{ top: 4, right: 3, bottom: Math\.max\(insets\.bottom, 8\), left: 0 \}/);
+  assert.match(screen, /\{ top: 56, right: 3, bottom: Math\.max\(insets\.bottom, 8\), left: 0 \}/);
   assert.match(list, /showsVerticalScrollIndicator=\{true\}/);
   assert.match(list, /automaticallyAdjustsScrollIndicatorInsets=\{false\}/);
   assert.match(list, /scrollIndicatorInsets=\{flightResultsScrollIndicatorInsets\}/);
