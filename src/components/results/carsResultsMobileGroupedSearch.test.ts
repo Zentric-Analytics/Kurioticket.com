@@ -64,37 +64,47 @@ test("grouped mobile rows stay compact without sacrificing their touch target", 
   assert.equal(source.match(/groupedMobile \? carsMobileEditFieldShellClass/g)?.length, 4);
 });
 
-test("grouped mobile copy matches the native label and value rhythm", () => {
+test("grouped mobile copy uses one refined label and primary-value hierarchy", () => {
   const label = classConstant("carsMobileEditFieldLabelClass");
   const value = classConstant("carsMobileEditValueClass");
 
   assert.match(label, /mb-0/);
   assert.match(label, /text-\[10px\]/);
   assert.match(label, /leading-\[14px\]/);
-  assert.match(label, /tracking-\[1px\]/);
+  assert.match(label, /tracking-\[0\.08em\]/);
   assert.match(label, /font-semibold/);
+  assert.match(label, /uppercase/);
+  assert.match(label, /text-slate-500/);
   assert.match(value, /h-auto/);
-  assert.match(value, /text-\[14px\]/);
-  assert.match(value, /leading-\[19px\]/);
+  assert.match(value, /text-\[15px\]/);
+  assert.match(value, /leading-5/);
   assert.match(value, /font-medium/);
+  assert.match(value, /tracking-\[-0\.01em\]/);
+  assert.match(value, /text-slate-900/);
   assert.equal(classConstant("carsMobileEditValueRowClass"), "gap-2.5");
 });
 
-test("grouped location values keep natural two-line typography", () => {
+test("grouped location values keep a readable subordinate second line", () => {
   const launcher = source.slice(source.indexOf("function MobileLocationLauncher"), source.indexOf("function SearchInputCell"));
+  const secondary = classConstant("carsMobileEditSecondaryValueClass");
 
   assert.match(launcher, /groupedMobile && carsMobileEditValueClass/);
-  assert.match(launcher, /text-\[11px\] font-normal leading-\[15px\] text-slate-600/);
+  assert.match(launcher, /groupedMobile && carsMobileEditSecondaryValueClass/);
+  assert.match(secondary, /text-\[12px\]/);
+  assert.match(secondary, /font-normal/);
+  assert.match(secondary, /leading-\[17px\]/);
+  assert.match(secondary, /tracking-normal/);
+  assert.match(secondary, /text-slate-500/);
   assert.match(launcher, /block truncate/);
   assert.doesNotMatch(classConstant("carsMobileEditValueClass"), /text-\[16px\]/);
 });
 
-test("grouped date summary uses the native mobile value line height", () => {
+test("grouped date summary uses the shared mobile value line height", () => {
   const start = source.indexOf("function SearchDateCell");
   const end = source.indexOf("function SearchTimeCell", start);
   const cell = source.slice(start, end);
 
-  assert.match(cell, /groupedMobile && "leading-\[19px\]"/);
+  assert.match(cell, /groupedMobile && "leading-5"/);
   assert.match(cell, /groupedMobile \? \[carsMobileEditValueClass, carsMobileEditValueRowClass\] : "h-8 gap-2"/);
 });
 
