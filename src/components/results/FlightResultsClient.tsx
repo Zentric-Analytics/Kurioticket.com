@@ -7322,7 +7322,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         );
                       })}
                     </div>
-                    {cheaperNearbyFare ? <button type="button" onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)} className="focus-ring flex min-h-[28px] max-w-full items-center px-0 text-left text-[9px] font-medium leading-[12px] text-slate-600 hover:text-[#075EE8]">Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}</button> : null}
+                    {cheaperNearbyFare ? <button type="button" onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)} className="focus-ring flex min-h-[28px] max-w-full items-center px-0 text-left text-[8px] font-medium leading-[10px] text-slate-600 hover:text-[#075EE8]">Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}</button> : null}
                   </div>
                   <div
                   className="hidden w-full sm:block"
@@ -7491,7 +7491,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               </section>
 
               <div data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden">
-                {mobileFlightPriceAlertQuery ? <FlightPriceAlertControl query={mobileFlightPriceAlertQuery} results={providerResults} /> : null}
+                {mobileFlightPriceAlertQuery ? <div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)]"><FlightPriceAlertControl query={mobileFlightPriceAlertQuery} results={providerResults} /></div> : null}
                 <div
                   ref={mobileResultsPageTopRef}
                   data-mobile-flight-results-summary-row
@@ -7623,7 +7623,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       paginationRevealing && "animate-[fadeIn_150ms_ease-out]",
                     )}
                   >
-                    <div data-flight-results-card-list className="space-y-3">
+                    <div data-flight-results-card-list className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)] space-y-3">
                       {visibleResults.map((flight, index) => {
                         const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
                         if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
@@ -7751,7 +7751,7 @@ function FlightResultsPageTransitionSkeleton({
         <div className="mx-auto h-[4.25rem] w-full max-w-[30rem] animate-pulse rounded-xl border border-slate-200 bg-white shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] motion-reduce:animate-none" />
       </div>
 
-      <div className="mx-auto max-w-[1400px] px-[14px] py-4 sm:px-4 sm:py-8">
+      <div className="mx-auto max-w-[1400px] px-3 py-4 sm:px-4 sm:py-8">
         <div className="mb-3 flex gap-1.5 overflow-hidden sm:hidden">
           {[84, 92, 76, 88].map((width) => (
             <div
@@ -7771,7 +7771,7 @@ function FlightResultsPageTransitionSkeleton({
 
         <div className="mt-3 grid gap-6 sm:mt-6 lg:grid-cols-[288px_minmax(0,1fr)]">
           <div className="hidden h-[34rem] animate-pulse rounded-2xl border border-slate-200 bg-white lg:block motion-reduce:animate-none" />
-          <div className="space-y-3 sm:space-y-4">
+          <div data-flight-results-skeleton-card-list className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)] space-y-3 sm:space-y-4">
             <div className="hidden h-7 w-44 animate-pulse rounded bg-slate-200 motion-reduce:animate-none sm:block" />
             {Array.from({ length: 3 }, (_, index) => (
               <FlightCardSkeleton key={index} />
