@@ -3,8 +3,23 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import {
   formatCarPickupType,
+  getCarSpecificationIcon,
   getMobileCarPrimarySpecs,
 } from "./carResultCardSpecs";
+import {
+  BriefcaseBusiness,
+  CarFront,
+  DoorOpen,
+  Fuel,
+  Gauge,
+  MapPin,
+  Snowflake,
+  Users,
+} from "lucide-react";
+import {
+  AutomaticTransmissionIcon,
+  ManualTransmissionIcon,
+} from "./CarTransmissionIcon";
 import type { NormalizedCarResult } from "@/lib/cars/types";
 
 const source = readFileSync("src/components/results/CarResultCard.tsx", "utf8");
@@ -297,6 +312,33 @@ test("long mobile model names retain an action-independent identity row", () => 
   );
 });
 
+
+test("provider car specs use the same semantic icons as normalized car cards", () => {
+  assert.equal(getCarSpecificationIcon("4 passengers"), Users);
+  assert.equal(getCarSpecificationIcon("5 seats"), Users);
+  assert.equal(getCarSpecificationIcon("2 bags"), BriefcaseBusiness);
+  assert.equal(getCarSpecificationIcon("Baggage capacity not supplied"), BriefcaseBusiness);
+  assert.equal(getCarSpecificationIcon("5 doors"), DoorOpen);
+  assert.equal(getCarSpecificationIcon("Doors not supplied"), DoorOpen);
+  assert.equal(getCarSpecificationIcon("Automatic"), AutomaticTransmissionIcon);
+  assert.equal(getCarSpecificationIcon("Manual"), ManualTransmissionIcon);
+  assert.equal(getCarSpecificationIcon("Air conditioning"), Snowflake);
+  assert.equal(getCarSpecificationIcon("Unlimited mileage"), Gauge);
+  assert.equal(getCarSpecificationIcon("Fuel policy"), Fuel);
+  assert.equal(getCarSpecificationIcon("Pickup location"), MapPin);
+  assert.equal(getCarSpecificationIcon("Specifications not supplied"), CarFront);
+});
+
+test("KAYAK result cards resolve each provider spec icon instead of forcing CarFront", () => {
+  assert.match(
+    source,
+    /car\.sandboxPresentation\.specs\.map\(\(label\) => \[[\s\S]*?getCarSpecificationIcon\(label\)[\s\S]*?label,[\s\S]*?\]\)/,
+  );
+  assert.doesNotMatch(
+    source,
+    /sandboxPresentation\.specs\.map\([^\n]*\[CarFront,\s*label\]/,
+  );
+});
 
 test("mobile transmission specs use dedicated automatic and manual icons", () => {
   const specsSource = readFileSync(
