@@ -52,3 +52,25 @@
 @media (min-width: 640px) {
   .card [data-hotel-photo-counter][data-single-photo="true"] { display: none; }
 }
+
+@media (max-width: 639px) {
+  .filterPalette { color: #1a1a1a; }
+  .filterPalette [class~="text-slate-950"],
+  .filterPalette [class~="text-slate-900"],
+  .filterPalette [class~="text-slate-800"],
+  .filterPalette [class~="text-slate-700"] { color: #1a1a1a; }
+  .filterPalette [class~="text-slate-600"],
+  .filterPalette [class~="text-slate-500"],
+  .filterPalette [class~="text-slate-400"] { color: #595959; }
+  .filterPalette input::placeholder { color: #595959; }
+}
+
+@media (max-width: 639px) {
+  .results [data-hotel-sort-trigger] {
+    font-size: 13px;
+    line-height: 17px;
+    font-weight: 500;
+  }
+}
+
+.sortOption { min-height: 48px; font-size: 13px; line-height: 18px; }

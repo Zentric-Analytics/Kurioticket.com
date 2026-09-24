@@ -34,7 +34,7 @@ type FlightMobilePickerShellProps = {
   contentClassName?: string;
   contentLayout?: "scroll" | "contained";
   pickerMarker?: "flight-date" | "traveler-cabin";
-  headerVariant?: "navigation" | "close";
+  headerVariant?: "navigation" | "close" | "close-right";
   showCancelAction?: boolean;
   showBackLabel?: boolean;
   showBackAction?: boolean;
@@ -414,7 +414,7 @@ export function FlightMobilePickerShell({
       >
         <div className={cn("shrink-0 border-b border-slate-200/80 bg-white px-4", carsResultsEdit && "border-b-0 px-2", carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]")}>
           <div data-mobile-picker-header={headerVariant} className={cn("mx-auto grid min-h-[62px] w-full max-w-xl grid-cols-[1fr_auto_1fr] items-center gap-2", carsResultsEdit && "min-h-[56px]")}>
-            {!showBackAction ? <span aria-hidden="true" /> : headerVariant === "close" ? (
+            {!showBackAction || headerVariant === "close-right" ? <span aria-hidden="true" /> : headerVariant === "close" ? (
               <button type="button" aria-label={t.cancel} onClick={requestClose} disabled={isClosing} className="focus-ring inline-flex h-11 w-11 items-center justify-center justify-self-start rounded-full text-slate-950 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60">
                 <X className="h-6 w-6" aria-hidden="true" />
               </button>
@@ -436,7 +436,11 @@ export function FlightMobilePickerShell({
             >
               {title}
             </h2>
-            {headerVariant === "close" ? <span aria-hidden="true" /> : showCancelAction ? (
+            {headerVariant === "close-right" ? (
+              <button type="button" aria-label={t.cancel} onClick={requestClose} disabled={isClosing} className="focus-ring inline-flex h-11 w-11 items-center justify-center justify-self-end rounded-full text-slate-950 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60">
+                <X className="h-6 w-6" aria-hidden="true" />
+              </button>
+            ) : headerVariant === "close" ? <span aria-hidden="true" /> : showCancelAction ? (
               <button
                 type="button"
                 onClick={requestClose}
