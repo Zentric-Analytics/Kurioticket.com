@@ -19,12 +19,12 @@ const rentalDatesSource = source.slice(
 test("mobile empty pickup and rental-date typography uses the same placeholder treatment", () => {
   assert.match(
     pickupFieldSource,
-    /className="[^"]*sm:hidden"[\s\S]*?className=\{`min-w-0 \$\{[\s\S]*?values\.pickupLocation[\s\S]*?\? "text-slate-950"[\s\S]*?: "text-slate-400"/,
+    /className="[^"]*sm:hidden"[\s\S]*?className=\{`min-w-0 \$\{[\s\S]*?values\.pickupLocation[\s\S]*?\? "font-semibold text-slate-950"[\s\S]*?: "font-medium text-slate-400"/,
   );
   assert.match(pickupFieldSource, /className="block truncate">\{pickupDisplay\.primary/);
   assert.match(
     rentalDatesSource,
-    /pickupDate \? "text-slate-950" : "text-slate-400"/,
+    /pickupDate \? "font-semibold text-slate-950" : "font-medium text-slate-400"/,
   );
   assert.doesNotMatch(
     pickupFieldSource,
@@ -35,11 +35,11 @@ test("mobile empty pickup and rental-date typography uses the same placeholder t
 test("filled typography and desktop pickup presentation remain unchanged", () => {
   assert.match(
     pickupFieldSource,
-    /values\.pickupLocation[\s\S]*?\? "text-slate-950"[\s\S]*?: "text-slate-400"/,
+    /values\.pickupLocation[\s\S]*?\? "font-semibold text-slate-950"[\s\S]*?: "font-medium text-slate-400"/,
   );
   assert.match(
     rentalDatesSource,
-    /pickupDate \? "text-slate-950" : "text-slate-400"/,
+    /pickupDate \? "font-semibold text-slate-950" : "font-medium text-slate-400"/,
   );
   assert.match(
     pickupFieldSource,
