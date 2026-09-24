@@ -8,6 +8,7 @@ import { isKayakSandboxResult, resultActionHref } from "@/lib/travel/resultActio
 import {
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -44,6 +45,7 @@ import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { formatTravelDateDisplay } from "@/lib/dateFormatting/travelDateDisplay";
 import { cn } from "@/lib/utils";
 import { CarResultCard } from "@/components/results/CarResultCard";
 import { CarsResultsScrollIndicator } from "@/components/results/CarsResultsScrollIndicator";
@@ -504,14 +506,18 @@ const fieldLabelClass =
 const fieldInputClass =
   "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[15px] lg:font-medium lg:leading-6";
 const carsMobileEditFieldShellClass =
-  "relative flex min-h-[70px] flex-col justify-center gap-[1px] rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-2.5 shadow-[0_2px_8px_rgba(15,23,42,0.035)] focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25";
+  "relative flex min-h-[66px] flex-col justify-center rounded-[15px] border border-[#D8E1EC] bg-white px-3 py-[9px] shadow-[0_2px_8px_rgba(15,23,42,0.035)] focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25";
+const carsMobileEditPickupLabelClass =
+  "mb-1 text-[10px] font-extrabold uppercase leading-[13px] tracking-[0.5px] text-slate-600";
 const carsMobileEditFieldLabelClass =
-  "mb-0 text-[10px] font-semibold uppercase leading-[14px] tracking-[0.08em] text-slate-500";
-const carsMobileEditValueRowClass = "gap-2.5";
-const carsMobileEditValueClass =
-  "h-auto text-[15px] font-medium leading-5 tracking-[-0.01em] text-slate-900";
+  "mb-1 text-[10px] font-extrabold uppercase leading-[13px] tracking-[0.5px] text-[#64748B]";
+const carsMobileEditSummaryButtonClass =
+  "focus-ring flex h-8 w-full min-w-0 items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[15px] font-semibold leading-5 text-[#0F172A] outline-none focus-visible:ring-0";
+const carsMobileEditValueGroupClass = "flex min-w-0 flex-1 items-center gap-[10px]";
+const carsMobileEditPickupValueClass =
+  "focus-ring block h-8 min-w-0 w-full flex-1 border-0 bg-transparent p-0 text-start text-[15px] font-semibold leading-5 text-[#0F172A] outline-none focus-visible:ring-0";
 const carsMobileEditSecondaryValueClass =
-  "text-[12px] font-normal leading-[17px] tracking-normal text-slate-500";
+  "text-[12px] font-normal leading-4 tracking-normal text-slate-600";
 
 export function CarsResultsClient({
   values,
@@ -575,7 +581,7 @@ export function CarsResultsClient({
   const returnLocationLauncherRef = useRef<HTMLButtonElement | null>(null);
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
-  const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
+  const mobileCompactHeaderHandoffRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileSearchModalityRef = useRef<OverlayActivationModality>("programmatic");
@@ -1024,16 +1030,21 @@ export function CarsResultsClient({
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
-    const sentinel = mobileSearchSummarySentinelRef.current;
+    const sentinel = mobileCompactHeaderHandoffRef.current;
+    const hasPassedMobileCompactHandoff = (rect: DOMRectReadOnly) =>
+      rect.bottom < 8 && window.scrollY > 96;
     const updateFromSentinel = () => {
-      const currentSentinel = mobileSearchSummarySentinelRef.current;
+      const currentSentinel = mobileCompactHeaderHandoffRef.current;
       if (!currentSentinel) {
         setMobileCompactHeaderVisible(false);
         return;
       }
 
-      const rect = currentSentinel.getBoundingClientRect();
-      setMobileCompactHeaderVisible(rect.bottom < 8 && window.scrollY > 96);
+      setMobileCompactHeaderVisible(
+        hasPassedMobileCompactHandoff(
+          currentSentinel.getBoundingClientRect(),
+        ),
+      );
     };
 
     updateFromSentinel();
@@ -1049,7 +1060,7 @@ export function CarsResultsClient({
     const observer = new IntersectionObserver(
       ([entry]) => {
         setMobileCompactHeaderVisible(
-          !entry.isIntersecting && window.scrollY > 96,
+          hasPassedMobileCompactHandoff(entry.boundingClientRect),
         );
       },
       { rootMargin: "-8px 0px 0px 0px", threshold: 0 },
@@ -1174,7 +1185,7 @@ export function CarsResultsClient({
         >
           <div
             className={cn(
-              placement === "mobile" && "grid grid-cols-1 gap-2.5",
+              placement === "mobile" && "grid grid-cols-1 gap-2",
               placement !== "mobile" && (returnToDifferentLocation
                 ? differentReturnSearchGridClass
                 : sameReturnSearchGridClass),
@@ -1454,7 +1465,7 @@ export function CarsResultsClient({
           <Button
             type="submit"
             data-cars-mobile-search-submit
-            className="mt-[13px] h-12 w-full rounded-[10px] bg-[#004BB8] px-4 text-[14px] font-semibold leading-[18px] text-white shadow-none transition-colors hover:bg-[#021C2B]"
+            className="mt-[13px] h-[54px] w-full rounded-[11px] bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B]"
           >
             {t("search")}
           </Button>
@@ -1503,11 +1514,6 @@ export function CarsResultsClient({
           />
           {renderMobileControlsRow()}
         </div>
-        <div
-          ref={mobileSearchSummarySentinelRef}
-          className="pointer-events-none h-px w-full"
-          aria-hidden="true"
-        />
       </section>
 
       <MobileDatePickerDialog
@@ -1811,7 +1817,7 @@ export function CarsResultsClient({
         </ol>
       </nav>
 
-      <div ref={resultsGridRef} className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-12 sm:pt-6">
+      <div ref={resultsGridRef} className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-10 sm:pt-6">
         <CarsResultsExperience
           results={initialResults}
           search={values}
@@ -1820,6 +1826,7 @@ export function CarsResultsClient({
           resultHeadingId="cars-results-heading"
           detailsHrefForCar={(car) => resultActionHref(car, buildCarDetailsHref(car.id, values))}
           mobileCompactToolbarVisible={mobileCompactHeaderVisible}
+          mobileCompactHeaderHandoffRef={mobileCompactHeaderHandoffRef}
           mobileSearchSummary={locationPairSummary}
           onMobileBack={() => router.push("/cars")}
           onMobileModifySearch={openMobileSearchDrawer}
@@ -1848,6 +1855,7 @@ export function CarsResultsExperience({
   presentation = "standalone",
   isCarSelectable,
   mobileCompactToolbarVisible = false,
+  mobileCompactHeaderHandoffRef,
   mobileSearchSummary,
   onMobileBack,
   onMobileModifySearch,
@@ -1863,6 +1871,7 @@ export function CarsResultsExperience({
   presentation?: "standalone" | "guided-planning";
   isCarSelectable?: (car: NormalizedCarResult) => boolean;
   mobileCompactToolbarVisible?: boolean;
+  mobileCompactHeaderHandoffRef?: RefObject<HTMLDivElement | null>;
   mobileSearchSummary?: string;
   onMobileBack?: () => void;
   onMobileModifySearch?: (launcher?: HTMLElement | null) => void;
@@ -1882,9 +1891,20 @@ export function CarsResultsExperience({
     ...providerResults, ...kayak.offers.map(offer => kayakCarCardModel(offer,Math.max(1,Math.ceil((Date.parse(search.dropoffDate)-Date.parse(search.pickupDate))/86400000)||1),search.pickupLocation)),
   ],[presentation,kayak,providerResults,search.dropoffDate,search.pickupDate,search.pickupLocation]);
   const providersLoading = presentation === "standalone" && kayak?.vertical === "cars" && kayak.status === "loading";
+  const quickFilterBackdropMaskId = useId().replace(/:/g, "");
   const [quickFilterGroupId, setQuickFilterGroupId] = useState<string | null>(null);
   const [quickFilterDraft, setQuickFilterDraft] = useState<string[]>([]);
   const [quickSortDraft, setQuickSortDraft] = useState<CarSort>("recommended");
+  const [quickFilterClosing, setQuickFilterClosing] = useState(false);
+  const [quickFilterCutoutRect, setQuickFilterCutoutRect] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const quickFilterClosingRef = useRef(false);
+  const quickFilterGroupIdRef = useRef<string | null>(null);
+  const quickFilterCloseTimerRef = useRef<number | null>(null);
   const mobileFiltersOverlayOpen = filtersOpen || quickFilterGroupId !== null;
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
@@ -2203,21 +2223,119 @@ export function CarsResultsExperience({
     mobileFiltersModalityRef.current = modality;
     mobileFilterDrawerInitialFiltersRef.current =
       getSelectedCarFiltersSignature(selectedCarFiltersRef.current);
+    if (quickFilterCloseTimerRef.current !== null) {
+      window.clearTimeout(quickFilterCloseTimerRef.current);
+      quickFilterCloseTimerRef.current = null;
+    }
+    quickFilterClosingRef.current = false;
+    quickFilterGroupIdRef.current = null;
+    setQuickFilterClosing(false);
+    setQuickFilterCutoutRect(null);
     setQuickFilterGroupId(null);
     setFiltersOpen(true);
   };
-  const closeQuickFilter = useCallback(() => {
-    if (quickFilterGroupId === null) return;
+  const measureQuickFilterCutout = useCallback((launcher: HTMLButtonElement | null) => {
+    if (!launcher || typeof window === "undefined") return null;
+    const chip =
+      launcher.firstElementChild instanceof HTMLElement
+        ? launcher.firstElementChild
+        : launcher;
+    const chipRect = chip.getBoundingClientRect();
+    const rail = launcher.closest<HTMLElement>("[data-cars-results-quick-filters]");
+    const railRect = rail?.getBoundingClientRect();
+
+    const left = Math.max(0, railRect ? Math.max(chipRect.left, railRect.left) : chipRect.left);
+    const right = Math.min(
+      window.innerWidth,
+      railRect ? Math.min(chipRect.right, railRect.right) : chipRect.right,
+    );
+    const top = Math.max(0, chipRect.top);
+    const bottom = Math.min(window.innerHeight, chipRect.bottom);
+
+    if (right <= left || bottom <= top) return null;
+    return {
+      left,
+      top,
+      width: right - left,
+      height: bottom - top,
+    };
+  }, []);
+  const finishQuickFilterClose = useCallback(() => {
+    if (quickFilterCloseTimerRef.current !== null) {
+      window.clearTimeout(quickFilterCloseTimerRef.current);
+      quickFilterCloseTimerRef.current = null;
+    }
+    quickFilterClosingRef.current = false;
+    quickFilterGroupIdRef.current = null;
+    setQuickFilterClosing(false);
+    setQuickFilterCutoutRect(null);
     setQuickFilterGroupId(null);
-  }, [quickFilterGroupId]);
+  }, []);
+  const closeQuickFilter = useCallback(() => {
+    if (
+      quickFilterGroupIdRef.current === null ||
+      quickFilterClosingRef.current
+    ) {
+      return;
+    }
+
+    if (
+      typeof window === "undefined" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      finishQuickFilterClose();
+      return;
+    }
+
+    quickFilterClosingRef.current = true;
+    setQuickFilterClosing(true);
+    quickFilterCloseTimerRef.current = window.setTimeout(
+      finishQuickFilterClose,
+      340,
+    );
+  }, [finishQuickFilterClose]);
   const openQuickFilter = (kind: string, launcher: HTMLButtonElement, modality: OverlayActivationModality) => {
+    if (quickFilterCloseTimerRef.current !== null) {
+      window.clearTimeout(quickFilterCloseTimerRef.current);
+      quickFilterCloseTimerRef.current = null;
+    }
+    quickFilterClosingRef.current = false;
+    quickFilterGroupIdRef.current = kind;
     mobileFiltersLauncherRef.current = launcher;
     mobileFiltersModalityRef.current = modality;
+    setQuickFilterClosing(false);
+    setQuickFilterCutoutRect(measureQuickFilterCutout(launcher));
     setQuickFilterDraft(kind === "sort" ? [] : [...(selectedCarFilters[kind] ?? [])]);
     setQuickSortDraft(sort);
     setFiltersOpen(false);
     setQuickFilterGroupId(kind);
   };
+  useLayoutEffect(() => {
+    if (!quickFilterGroupId || typeof window === "undefined") return undefined;
+
+    let frameId: number | null = null;
+    const updateCutout = () => {
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        setQuickFilterCutoutRect(
+          measureQuickFilterCutout(mobileFiltersLauncherRef.current),
+        );
+      });
+    };
+
+    updateCutout();
+    window.addEventListener("resize", updateCutout);
+    window.visualViewport?.addEventListener("resize", updateCutout);
+    window.visualViewport?.addEventListener("scroll", updateCutout);
+
+    return () => {
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", updateCutout);
+      window.visualViewport?.removeEventListener("resize", updateCutout);
+      window.visualViewport?.removeEventListener("scroll", updateCutout);
+    };
+  }, [measureQuickFilterCutout, quickFilterGroupId]);
   useEffect(
     () => () => {
       filterTransitionRunRef.current += 1;
@@ -2225,6 +2343,8 @@ export function CarsResultsExperience({
         window.clearTimeout(filterTransitionTimerRef.current);
       if (filterTransitionFrameRef.current !== null)
         window.cancelAnimationFrame(filterTransitionFrameRef.current);
+      if (quickFilterCloseTimerRef.current !== null)
+        window.clearTimeout(quickFilterCloseTimerRef.current);
     },
     [],
   );
@@ -2253,7 +2373,9 @@ export function CarsResultsExperience({
     const media = window.matchMedia("(max-width: 1023px)");
     if (!media.matches) return undefined;
 
-    const releaseScrollLock = acquireMobileResultsScrollLock();
+    const releaseScrollLock = acquireMobileResultsScrollLock({
+      freezeBodyPosition: false,
+    });
     mobileFiltersScrollLockRef.current = releaseScrollLock;
     return () => {
       releaseScrollLock();
@@ -2281,6 +2403,14 @@ export function CarsResultsExperience({
         shouldRestoreFocus = false;
         if (filtersOpen) closeMobileFiltersDrawer();
         else setFiltersOpen(false);
+        if (quickFilterCloseTimerRef.current !== null) {
+          window.clearTimeout(quickFilterCloseTimerRef.current);
+          quickFilterCloseTimerRef.current = null;
+        }
+        quickFilterClosingRef.current = false;
+        quickFilterGroupIdRef.current = null;
+        setQuickFilterClosing(false);
+        setQuickFilterCutoutRect(null);
         setQuickFilterGroupId(null);
       }
     };
@@ -2672,7 +2802,13 @@ export function CarsResultsExperience({
                     >
                       <span className="inline-flex h-9 items-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2.5 text-[13px] font-semibold leading-4 text-[#142033] transition group-hover:bg-slate-50">
                         {sort === "recommended" ? "Sort" : selectedCarSortLabel}
-                        <ChevronDown className="h-[13px] w-[13px] text-slate-500" aria-hidden="true" />
+                        <ChevronDown
+                          className={cn(
+                            "h-[13px] w-[13px] text-slate-500 transition-transform duration-150 motion-reduce:transition-none",
+                            quickFilterGroupId === "sort" && "rotate-180",
+                          )}
+                          aria-hidden="true"
+                        />
                       </span>
                     </button>
                     {quickFilterGroups.map((group) => {
@@ -2698,7 +2834,13 @@ export function CarsResultsExperience({
                           )}>
                             {carFilterGroupLabel(group, t, true)}
                             {count > 0 ? <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8] px-1.5 text-[10px] font-semibold leading-none text-white">{count}</span> : null}
-                            <ChevronDown className="h-[13px] w-[13px] shrink-0 text-slate-500" aria-hidden="true" />
+                            <ChevronDown
+                              className={cn(
+                                "h-[13px] w-[13px] shrink-0 text-slate-500 transition-transform duration-150 motion-reduce:transition-none",
+                                quickFilterGroupId === group.id && "rotate-180",
+                              )}
+                              aria-hidden="true"
+                            />
                           </span>
                         </button>
                       );
@@ -2830,6 +2972,14 @@ export function CarsResultsExperience({
                   </div>
                 ) : null}
               </div>
+              {presentation === "standalone" ? (
+                <div
+                  ref={mobileCompactHeaderHandoffRef}
+                  data-cars-mobile-compact-handoff
+                  className="pointer-events-none h-px w-full sm:hidden"
+                  aria-hidden="true"
+                />
+              ) : null}
               {filterTransitionPhase === "covering" || paginationTransitionPhase === "covering" ? (
                 <div
                   ref={paginationListRef}
@@ -3036,7 +3186,7 @@ export function CarsResultsExperience({
           data-cars-mobile-filter-shell
           className="fixed inset-y-0 right-0 z-[10000] flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2F4F8] sm:w-[420px] lg:hidden"
         >
-          <header className="flex min-h-[76px] shrink-0 items-center bg-[#F2F4F8] pe-[10px] ps-5 pt-[env(safe-area-inset-top)]">
+          <header className="flex min-h-[64px] shrink-0 items-center bg-[#F2F4F8] pe-[10px] ps-5">
             <div className="min-w-0 flex-1">
               <h2 id="cars-guided-filters-title" className="truncate text-[18px] font-bold leading-[23px] text-slate-950">{t("filters")}</h2>
               {activeFilterCount > 0 ? (
@@ -3064,7 +3214,7 @@ export function CarsResultsExperience({
               t={t}
             />
           </div>
-          <footer className="flex shrink-0 items-center gap-3.5 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+          <footer className="flex shrink-0 items-center gap-3.5 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3">
             {activeFilterCount > 0 ? (
               <button type="button" aria-label={t("carsResults.resetFilters")} onClick={clearMobileDrawerCarFilters} className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
                 {t("carsResults.reset")}
@@ -3083,15 +3233,77 @@ export function CarsResultsExperience({
       {quickFilterGroupId && (quickFilterGroupId === "sort" || activeQuickFilterGroup) && typeof document !== "undefined" ? createPortal(
         <div
           data-cars-quick-sheet-backdrop
-          className="fixed inset-0 z-[10010] flex items-end lg:hidden"
+          className={cn(
+            "fixed inset-0 z-[10010] flex items-end lg:hidden",
+            quickFilterClosing && "pointer-events-none",
+          )}
           role="presentation"
           onMouseDown={closeQuickFilter}
         >
-          <div
-            aria-hidden="true"
-            data-cars-quick-sheet-scrim
-            className="cars-native-quick-scrim pointer-events-none absolute inset-0 bg-[rgba(15,23,42,0.35)]"
-          />
+          {quickFilterCutoutRect ? (
+            <>
+              <svg
+                aria-hidden="true"
+                focusable="false"
+                data-cars-quick-sheet-scrim
+                className={cn(
+                  "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 h-full w-full",
+                  quickFilterClosing &&
+                    "mobile-results-sheet-backdrop-layer-closing",
+                )}
+                preserveAspectRatio="none"
+              >
+                <defs>
+                  <mask
+                    id={quickFilterBackdropMaskId}
+                    maskUnits="userSpaceOnUse"
+                    x="0"
+                    y="0"
+                    width="100%"
+                    height="100%"
+                  >
+                    <rect width="100%" height="100%" fill="white" />
+                    <rect
+                      x={quickFilterCutoutRect.left}
+                      y={quickFilterCutoutRect.top}
+                      width={quickFilterCutoutRect.width}
+                      height={quickFilterCutoutRect.height}
+                      rx="9"
+                      ry="9"
+                      fill="black"
+                    />
+                  </mask>
+                </defs>
+                <rect
+                  width="100%"
+                  height="100%"
+                  fill="rgba(15, 23, 42, 0.35)"
+                  mask={`url(#${quickFilterBackdropMaskId})`}
+                />
+              </svg>
+              <div
+                aria-hidden="true"
+                data-cars-quick-sheet-cutout
+                className="pointer-events-none fixed rounded-[9px]"
+                style={{
+                  left: quickFilterCutoutRect.left,
+                  top: quickFilterCutoutRect.top,
+                  width: quickFilterCutoutRect.width,
+                  height: quickFilterCutoutRect.height,
+                }}
+              />
+            </>
+          ) : (
+            <div
+              aria-hidden="true"
+              data-cars-quick-sheet-scrim
+              className={cn(
+                "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 bg-[rgba(15,23,42,0.35)]",
+                quickFilterClosing &&
+                  "mobile-results-sheet-backdrop-layer-closing",
+              )}
+            />
+          )}
           <section
             data-cars-quick-sheet
             ref={quickFiltersDialogRef}
@@ -3099,10 +3311,23 @@ export function CarsResultsExperience({
             role="dialog"
             aria-modal="true"
             aria-labelledby={`cars-quick-${quickFilterGroupId}`}
+            inert={quickFilterClosing ? true : undefined}
             onMouseDown={(event) => event.stopPropagation()}
-            className="cars-native-quick-sheet relative z-10 flex min-h-[240px] max-h-[min(76dvh,620px)] w-full flex-col overflow-hidden rounded-t-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]"
+            onAnimationEnd={(event) => {
+              if (
+                event.currentTarget !== event.target ||
+                !quickFilterClosingRef.current
+              ) {
+                return;
+              }
+              finishQuickFilterClose();
+            }}
+            className={cn(
+              "mobile-results-sheet-surface mobile-results-sheet-surface-smooth relative z-10 mx-3 mb-3 flex min-h-[240px] max-h-[min(76dvh,620px)] w-[calc(100%_-_24px)] flex-col overflow-hidden rounded-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]",
+              quickFilterClosing && "mobile-results-sheet-surface-closing",
+            )}
           >
-            <header className="grid min-h-[76px] shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-center bg-[#F2F4F8] px-[10px]">
+            <header className="grid min-h-[64px] shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-center bg-[#F2F4F8] px-[10px]">
               <span aria-hidden="true" className="h-11 w-11" />
               <h2 id={`cars-quick-${quickFilterGroupId}`} className="text-center text-[18px] font-bold leading-[23px] text-slate-950">
                 {quickFilterGroupId === "sort" ? "Sort" : carFilterGroupLabel(activeQuickFilterGroup!, t, true)}
@@ -3132,7 +3357,10 @@ export function CarsResultsExperience({
                 </label>;
               })}
             </div>
-            <footer className="flex shrink-0 items-center gap-[10px] bg-[#F2F4F8] px-4 pb-[max(12px,calc(env(safe-area-inset-bottom)-12px))] pt-3">
+            <footer
+              className="flex shrink-0 items-center gap-[10px] bg-[#F2F4F8] px-4 pt-3"
+              style={{ paddingBottom: "max(12px, calc(env(safe-area-inset-bottom, 0px) - 12px))" }}
+            >
               <button type="button" onClick={() => { if (quickFilterGroupId === "sort") setQuickSortDraft("recommended"); else setQuickFilterDraft([]); }} className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">Reset</button>
               <button type="button" onClick={() => { startFilterResultsTransition(); setCurrentPage(1); if (quickFilterGroupId === "sort") setSort(quickSortDraft); else setSelectedCarFilters((current) => { const next = { ...current }; if (quickFilterDraft.length) next[quickFilterGroupId] = [...quickFilterDraft]; else delete next[quickFilterGroupId]; return next; }); closeQuickFilter(); }} className="flex h-[49px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-3 text-[15px] font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2">
                 Apply
@@ -3191,29 +3419,27 @@ function MobileLocationLauncher({
   const display = getLocationFieldDisplay(value);
   return (
     <div data-cars-mobile-grouped-row className={cn(groupedMobile ? carsMobileEditFieldShellClass : fieldShellClass, className)}>
-      <div className={cn(fieldLabelClass, groupedMobile && carsMobileEditFieldLabelClass)}>
+      <div className={groupedMobile ? carsMobileEditPickupLabelClass : fieldLabelClass}>
         <span className="truncate">{label}</span>
       </div>
-      <div className={cn("flex min-w-0 items-center", groupedMobile ? carsMobileEditValueRowClass : "gap-2")}>
-        {groupedMobile ? <Icon className="h-4 w-4 shrink-0 text-slate-700" aria-hidden="true" /> : null}
+      <div className={groupedMobile ? "flex min-w-0 items-center gap-[10px]" : "flex min-w-0 items-center gap-2"}>
+        {groupedMobile ? <Icon className="h-[18px] w-[18px] shrink-0 text-[#334155]" aria-hidden="true" /> : null}
         <button
           ref={buttonRef}
           type="button"
           onClick={onClick}
-          className={cn(
-            fieldInputClass,
-            "focus-ring min-w-0 flex-1 text-start",
-            groupedMobile && carsMobileEditValueClass,
-            !value && "text-slate-400",
-          )}
+          className={groupedMobile
+            ? cn(carsMobileEditPickupValueClass, !value && "font-normal text-slate-500")
+            : cn(fieldInputClass, "focus-ring min-w-0 flex-1 text-start", !value && "text-slate-400")
+          }
         >
           <span className="block truncate">{display.primary || placeholder}</span>
           {display.secondary ? (
             <span
-              className={cn(
-                "block truncate text-[11px] font-normal leading-[15px] text-slate-600",
-                groupedMobile && carsMobileEditSecondaryValueClass,
-              )}
+              className={groupedMobile
+                ? `block truncate ${carsMobileEditSecondaryValueClass}`
+                : "block truncate text-[11px] font-normal leading-[15px] text-slate-600"
+              }
             >
               {display.secondary}
             </span>
@@ -3426,16 +3652,22 @@ function SearchDateCell({
   groupedMobile?: boolean;
 }) {
   const dateFormatter = useCompactDateSummary ? formatCompactDate : formatDate;
-  const pickupDisplay = dateFormatter(
-    pickupDate,
-    intlLocale,
-    t("carsResults.selectDate"),
-  );
-  const dropoffDisplay = dateFormatter(
-    dropoffDate,
-    intlLocale,
-    t("carsResults.selectDate"),
-  );
+  const pickupDisplay = groupedMobile
+    ? formatTravelDateDisplay(pickupDate, intlLocale) ??
+      t("carsResults.selectDate")
+    : dateFormatter(
+        pickupDate,
+        intlLocale,
+        t("carsResults.selectDate"),
+      );
+  const dropoffDisplay = groupedMobile
+    ? formatTravelDateDisplay(dropoffDate, intlLocale) ??
+      t("carsResults.selectDate")
+    : dateFormatter(
+        dropoffDate,
+        intlLocale,
+        t("carsResults.selectDate"),
+      );
   const summary = pickupDate
     ? dropoffDate
       ? `${pickupDisplay} — ${dropoffDisplay}`
@@ -3464,7 +3696,7 @@ function SearchDateCell({
       data-cars-mobile-grouped-row={groupedMobile || undefined}
       className={cn(groupedMobile ? carsMobileEditFieldShellClass : fieldShellClass, isCompact && compactFieldShellClass)}
     >
-      <div className={cn(fieldLabelClass, groupedMobile && carsMobileEditFieldLabelClass)}>
+      <div className={groupedMobile ? carsMobileEditFieldLabelClass : fieldLabelClass}>
         <CalendarDays
           className={cn("h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden", groupedMobile && "hidden")}
           aria-hidden="true"
@@ -3478,7 +3710,10 @@ function SearchDateCell({
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
-        className={cn("focus-ring flex min-w-0 w-full items-center justify-between rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6", groupedMobile ? [carsMobileEditValueClass, carsMobileEditValueRowClass] : "h-8 gap-2")}
+        className={groupedMobile
+          ? carsMobileEditSummaryButtonClass
+          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
+        }
       >
         {showRentalDuration ? (
           <Calendar
@@ -3489,30 +3724,34 @@ function SearchDateCell({
         {!showRentalDuration && isCompact ? (
           <Calendar className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
         ) : null}
-        {groupedMobile ? <CalendarDays className="h-4 w-4 shrink-0 text-slate-700" aria-hidden="true" /> : null}
-        <span className="min-w-0 flex-1">
-          <span
-            className={cn(
-              "block truncate leading-4",
-              groupedMobile && "leading-5",
-              !pickupDate && "text-slate-400",
-            )}
-          >
-            {summary}
-          </span>
-          {showRentalDuration && rentalDayCount > 0 ? (
-            <span className="mt-0.5 block text-[11px] font-medium leading-3 text-slate-500">
-              {rentalDaysLabel}
+        {groupedMobile ? (
+          <span className={carsMobileEditValueGroupClass}>
+            <Calendar className="h-[18px] w-[18px] shrink-0 text-[#334155]" aria-hidden="true" />
+            <span className={cn("min-w-0 flex-1 truncate", !pickupDate && "font-normal text-slate-500")}>
+              {summary}
             </span>
-          ) : null}
-        </span>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 shrink-0 text-slate-500 transition-transform",
-            isOpen && "rotate-180",
-          )}
-          aria-hidden="true"
-        />
+          </span>
+        ) : (
+          <span className="min-w-0 flex-1">
+            <span className={cn("block truncate leading-4", !pickupDate && "text-slate-400")}>
+              {summary}
+            </span>
+            {showRentalDuration && rentalDayCount > 0 ? (
+              <span className="mt-0.5 block text-[11px] font-medium leading-3 text-slate-500">
+                {rentalDaysLabel}
+              </span>
+            ) : null}
+          </span>
+        )}
+        {!groupedMobile ? (
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+              isOpen && "rotate-180",
+            )}
+            aria-hidden="true"
+          />
+        ) : null}
       </button>
 
       {isOpen ? (
@@ -3730,7 +3969,7 @@ function SearchTimeCell({
       data-cars-mobile-grouped-row={groupedMobile || undefined}
       className={cn(groupedMobile ? carsMobileEditFieldShellClass : fieldShellClass, isCompact && compactFieldShellClass)}
     >
-      <div className={cn(fieldLabelClass, groupedMobile && carsMobileEditFieldLabelClass)}>
+      <div className={groupedMobile ? carsMobileEditFieldLabelClass : fieldLabelClass}>
         <Clock3
           className={cn("h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden", groupedMobile && "hidden")}
           aria-hidden="true"
@@ -3745,10 +3984,20 @@ function SearchTimeCell({
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className={cn("focus-ring flex min-w-0 w-full items-center justify-between rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6", groupedMobile ? [carsMobileEditValueClass, carsMobileEditValueRowClass] : "h-8 gap-2")}
+        className={groupedMobile
+          ? carsMobileEditSummaryButtonClass
+          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
+        }
       >
-        {groupedMobile ? <Clock3 className="h-4 w-4 shrink-0 text-slate-700" aria-hidden="true" /> : null}
-        {useMainPageDesktopPresentation ? (
+        {groupedMobile ? (
+          <span className={carsMobileEditValueGroupClass}>
+            <Clock className="h-[18px] w-[18px] shrink-0 text-[#334155]" aria-hidden="true" />
+            <span className="min-w-0 flex-1 truncate text-start">
+              {formatTimeLabel(pickupTime, intlLocale)} —{" "}
+              {formatTimeLabel(dropoffTime, intlLocale)}
+            </span>
+          </span>
+        ) : useMainPageDesktopPresentation ? (
           <span className="flex min-w-0 items-center gap-2">
             <Clock
               className="h-4 w-4 shrink-0 text-slate-500"
@@ -3759,12 +4008,7 @@ function SearchTimeCell({
             </span>
           </span>
         ) : (
-          <span
-            className={cn(
-              "truncate",
-              groupedMobile && "min-w-0 flex-1 text-start",
-            )}
-          >
+          <span className="truncate">
             {formatTimeLabel(pickupTime, intlLocale)} —{" "}
             {formatTimeLabel(dropoffTime, intlLocale)}
           </span>
@@ -3772,6 +4016,7 @@ function SearchTimeCell({
         <ChevronDown
           className={cn(
             "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+            groupedMobile && "text-[#334155]",
             isOpen && "rotate-180",
           )}
           aria-hidden="true"
@@ -3876,7 +4121,7 @@ function DriverAgeCell({
       data-cars-mobile-grouped-row={groupedMobile || undefined}
       className={cn(groupedMobile ? carsMobileEditFieldShellClass : fieldShellClass, isCompact && compactFieldShellClass)}
     >
-      <div className={cn(fieldLabelClass, groupedMobile && carsMobileEditFieldLabelClass)}>
+      <div className={groupedMobile ? carsMobileEditFieldLabelClass : fieldLabelClass}>
         <UserRound
           className={cn("h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden", groupedMobile && "hidden")}
           aria-hidden="true"
@@ -3890,10 +4135,19 @@ function DriverAgeCell({
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        className={cn("focus-ring flex min-w-0 w-full items-center justify-between rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6", groupedMobile ? [carsMobileEditValueClass, carsMobileEditValueRowClass] : "h-8 gap-2")}
+        className={groupedMobile
+          ? carsMobileEditSummaryButtonClass
+          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
+        }
       >
-        {groupedMobile ? <UserRound className="h-4 w-4 shrink-0 text-slate-700" aria-hidden="true" /> : null}
-        {useMainPageDesktopPresentation ? (
+        {groupedMobile ? (
+          <span className={carsMobileEditValueGroupClass}>
+            <UserRound className="h-[18px] w-[18px] shrink-0 text-[#334155]" aria-hidden="true" />
+            <span className="min-w-0 flex-1 truncate text-start">
+              {getDriverAgeOptionLabel(driverAge, t)}
+            </span>
+          </span>
+        ) : useMainPageDesktopPresentation ? (
           <span className="flex min-w-0 items-center gap-2">
             <UserRound
               className="h-4 w-4 shrink-0 text-slate-500"
@@ -3906,18 +4160,14 @@ function DriverAgeCell({
             </span>
           </span>
         ) : (
-          <span
-            className={cn(
-              "truncate",
-              groupedMobile && "min-w-0 flex-1 text-start",
-            )}
-          >
+          <span className="truncate">
             {getDriverAgeOptionLabel(driverAge, t)}
           </span>
         )}
         <ChevronDown
           className={cn(
             "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+            groupedMobile && "text-[#334155]",
             isOpen && "rotate-180",
           )}
           aria-hidden="true"

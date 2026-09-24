@@ -84,6 +84,30 @@ test("corrects genuine viewport drift exactly once on final release", () => {
   assert.deepEqual(browser.calls, [[{ left: 12, top: 1800, behavior: "auto" }]]);
 });
 
+test("overflow-only acquisition freezes scrolling without repositioning or scroll restoration", () => {
+  const browser = installBrowser();
+  const originalBody = { ...browser.bodyStyle };
+  const originalRoot = { ...browser.rootStyle };
+  const release = acquireMobileResultsScrollLock({ freezeBodyPosition: false });
+
+  assert.equal(browser.bodyStyle.position, originalBody.position);
+  assert.equal(browser.bodyStyle.top, originalBody.top);
+  assert.equal(browser.bodyStyle.left, originalBody.left);
+  assert.equal(browser.bodyStyle.right, originalBody.right);
+  assert.equal(browser.bodyStyle.width, originalBody.width);
+  assert.equal(browser.bodyStyle.overflow, "hidden");
+  assert.equal(browser.bodyStyle.overscrollBehavior, "none");
+  assert.equal(browser.rootStyle.overflow, "hidden");
+  assert.equal(browser.rootStyle.overscrollBehavior, "none");
+
+  browser.fakeWindow.scrollY = 1800;
+  release();
+
+  assert.deepEqual(browser.bodyStyle, originalBody);
+  assert.deepEqual(browser.rootStyle, originalRoot);
+  assert.deepEqual(browser.calls, []);
+});
+
 test("restoreScroll false survives an earlier nested release and skips final restoration", () => {
   const browser = installBrowser();
   const first = acquireMobileResultsScrollLock();

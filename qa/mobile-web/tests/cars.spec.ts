@@ -26,6 +26,23 @@ test("Cars Edit Search records first-open, reopen, and Safari viewport geometry"
   await modify.click();
   const overlay = page.locator("[data-mobile-results-overlay-root]");
   await expect(overlay).toBeVisible();
+  const editDialog = page.locator("[data-mobile-results-edit-sheet] [role=dialog]");
+  const editGeometry = await editDialog.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return {
+      left: rect.left,
+      rightGap: window.innerWidth - rect.right,
+      bottomGap: window.innerHeight - rect.bottom,
+      topLeftRadius: style.borderTopLeftRadius,
+      bottomLeftRadius: style.borderBottomLeftRadius,
+    };
+  });
+  expect(editGeometry.left).toBeCloseTo(12, 0);
+  expect(editGeometry.rightGap).toBeCloseTo(12, 0);
+  expect(editGeometry.bottomGap).toBeCloseTo(12, 0);
+  expect(editGeometry.topLeftRadius).toBe("24px");
+  expect(editGeometry.bottomLeftRadius).toBe("24px");
   const firstOpen = await collectSafariDiagnostics(page, "first-open");
   expect(firstOpen.viewport.scrollY).toBeCloseTo(beforeFirst.viewport.scrollY, 0);
   const firstScreenshot = testInfo.outputPath("cars-first-open.png");
@@ -106,10 +123,13 @@ test("Cars full Filters and representative quick sheets freeze the document whil
   const originalScrollY = await page.evaluate(() => window.scrollY);
   expect(originalScrollY).toBeGreaterThan(0);
 
+  const resultsMarker = page.locator("[data-cars-results-card-list]").first();
+  const fullBeforeTop = await resultsMarker.evaluate((element) => element.getBoundingClientRect().top);
   await page.getByRole("button", { name: /^filters?$/i }).first().click();
   const fullFilters = page.locator("[data-cars-mobile-filter-shell]");
   await expect(fullFilters).toBeVisible();
   expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
+  expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(fullBeforeTop, 0);
   await expectDocumentFrozen(page, originalScrollY);
   const filterScroller = fullFilters.locator(".overflow-y-auto");
   const fullFilterScroll = await filterScroller.evaluate((element) => {
@@ -123,17 +143,106 @@ test("Cars full Filters and representative quick sheets freeze the document whil
   await fullFilters.getByRole("button", { name: /close filters/i }).click();
   await expect(fullFilters).toBeHidden();
   expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
+  expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(fullBeforeTop, 0);
 
   for (const launcher of [/sort by/i, /^price/i, /^vehicle type/i, /^transmission/i]) {
     const button = page.getByRole("button", { name: launcher }).first();
     await button.scrollIntoViewIfNeeded();
+    const beforeQuickScrollY = await page.evaluate(() => window.scrollY);
+    const beforeQuickTop = await resultsMarker.evaluate((element) => element.getBoundingClientRect().top);
+    const chevron = button.locator("svg").last();
+    await expect(chevron).not.toHaveClass(/rotate-180/);
     await button.click();
     const sheet = page.locator("[data-cars-quick-sheet]");
     await expect(sheet).toBeVisible();
-    expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
-    await expectDocumentFrozen(page, originalScrollY);
+    await expect(sheet).toHaveClass(/mobile-results-sheet-surface-smooth/);
+    await expect(chevron).toHaveClass(/rotate-180/);
+
+    const scrim = page.locator("[data-cars-quick-sheet-scrim]");
+    await expect(scrim).toBeVisible();
+    const scrimGeometry = await scrim.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        left: rect.left,
+        top: rect.top,
+        rightGap: window.innerWidth - rect.right,
+        bottomGap: window.innerHeight - rect.bottom,
+      };
+    });
+    expect(scrimGeometry.left).toBeCloseTo(0, 0);
+    expect(scrimGeometry.top).toBeCloseTo(0, 0);
+    expect(scrimGeometry.rightGap).toBeCloseTo(0, 0);
+    expect(scrimGeometry.bottomGap).toBeCloseTo(0, 0);
+
+    const cutout = page.locator("[data-cars-quick-sheet-cutout]");
+    await expect(cutout).toBeVisible();
+    const [cutoutGeometry, expectedCutoutGeometry] = await Promise.all([
+      cutout.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height,
+        };
+      }),
+      button.evaluate((element) => {
+        const chip =
+          element.firstElementChild instanceof HTMLElement
+            ? element.firstElementChild
+            : element;
+        const chipRect = chip.getBoundingClientRect();
+        const rail = element.closest<HTMLElement>("[data-cars-results-quick-filters]");
+        const railRect = rail?.getBoundingClientRect();
+        const left = Math.max(
+          0,
+          railRect ? Math.max(chipRect.left, railRect.left) : chipRect.left,
+        );
+        const right = Math.min(
+          window.innerWidth,
+          railRect ? Math.min(chipRect.right, railRect.right) : chipRect.right,
+        );
+        const top = Math.max(0, chipRect.top);
+        const bottom = Math.min(window.innerHeight, chipRect.bottom);
+        return {
+          left,
+          top,
+          width: right - left,
+          height: bottom - top,
+        };
+      }),
+    ]);
+    expect(cutoutGeometry.left).toBeCloseTo(expectedCutoutGeometry.left, 0);
+    expect(cutoutGeometry.top).toBeCloseTo(expectedCutoutGeometry.top, 0);
+    expect(cutoutGeometry.width).toBeCloseTo(expectedCutoutGeometry.width, 0);
+    expect(cutoutGeometry.height).toBeCloseTo(expectedCutoutGeometry.height, 0);
+
+    const quickGeometry = await sheet.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return {
+        left: rect.left,
+        rightGap: window.innerWidth - rect.right,
+        bottomGap: window.innerHeight - rect.bottom,
+        topLeftRadius: style.borderTopLeftRadius,
+        bottomLeftRadius: style.borderBottomLeftRadius,
+      };
+    });
+    expect(quickGeometry.left).toBeCloseTo(12, 0);
+    expect(quickGeometry.rightGap).toBeCloseTo(12, 0);
+    expect(quickGeometry.bottomGap).toBeCloseTo(12, 0);
+    expect(quickGeometry.topLeftRadius).toBe("24px");
+    expect(quickGeometry.bottomLeftRadius).toBe("24px");
+    expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(beforeQuickScrollY, 0);
+    expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(beforeQuickTop, 0);
+    await expectDocumentFrozen(page, beforeQuickScrollY);
     await sheet.getByRole("button", { name: "Close" }).click();
+    await expect(sheet).toHaveClass(/mobile-results-sheet-surface-closing/);
+    await expect(scrim).toHaveClass(/mobile-results-sheet-backdrop-layer-closing/);
     await expect(sheet).toBeHidden();
-    expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
+    await expect(cutout).toBeHidden();
+    await expect(chevron).not.toHaveClass(/rotate-180/);
+    expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(beforeQuickScrollY, 0);
+    expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(beforeQuickTop, 0);
   }
 });

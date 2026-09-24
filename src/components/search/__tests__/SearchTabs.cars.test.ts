@@ -231,3 +231,20 @@ test("valid Cars submission signals page pending only after validation and href 
   assert.ok(progressIndex < navigationIndex);
   assert.doesNotMatch(submit, /setTimeout|sleep|delay\(/);
 });
+
+test("homepage Cars mobile-only age guard runs before URL, recent search, and navigation", () => {
+  const submit = source.slice(
+    source.indexOf("const onCarsSubmit"),
+    source.indexOf("const isCarsSearchDisabled"),
+  );
+  const ageGuard = submit.indexOf("mobileCarsDriverAgeMissing");
+  const href = submit.indexOf("const href = `/cars/results?");
+  const recentSearch = submit.indexOf("buildCarRecentSearch");
+  const navigation = submit.indexOf("router.push(href)");
+
+  assert.ok(ageGuard >= 0);
+  assert.ok(ageGuard < href);
+  assert.ok(ageGuard < recentSearch);
+  assert.ok(ageGuard < navigation);
+  assert.match(source, /const mobileCarsDriverAgeMissing = mobileHomepage && carsDriverAgeIsEmpty/);
+});

@@ -213,3 +213,23 @@ test("source contract does not restore removed booking-disabled messaging", () =
     /demo-booking-note|carDetails\.bookingUnavailable|carDetails\.bookingDisabledExplanation/,
   );
 });
+
+
+test("mobile-web car detail transmission uses the dedicated gearbox icon without changing desktop", () => {
+  assert.match(
+    heroSource,
+    /manual[\s\S]*ManualTransmissionIcon[\s\S]*automatic[\s\S]*AutomaticTransmissionIcon[\s\S]*CarFront/,
+  );
+  assert.match(
+    heroSource,
+    /\[transmissionIcon, transmissionLabels\[car\.transmission\]\]/,
+  );
+  assert.doesNotMatch(
+    heroSource,
+    /\[CarFront, transmissionLabels\[car\.transmission\]\]/,
+  );
+  assert.match(
+    heroSource,
+    /mobileTransmissionIcon[\s\S]*?lg:hidden[\s\S]*?<CarFront[\s\S]*?hidden shrink-0 text-slate-600 lg:block/,
+  );
+});

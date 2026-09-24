@@ -6,6 +6,10 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { NormalizedCarResult } from "@/lib/cars/types";
+import {
+  AutomaticTransmissionIcon,
+  ManualTransmissionIcon,
+} from "@/components/results/CarTransmissionIcon";
 
 export const formatCarPickupType = (value: string) => {
   const normalized = value.replaceAll("-", " ").toLowerCase();
@@ -19,9 +23,15 @@ const title = (value: string) =>
 export function getMobileCarPrimarySpecs(
   car: NormalizedCarResult,
 ): Array<[LucideIcon, string]> {
+  const transmissionIcon = /manual/i.test(car.transmission)
+    ? ManualTransmissionIcon
+    : /automatic/i.test(car.transmission)
+      ? AutomaticTransmissionIcon
+      : CarFront;
+
   return [
     [Users, `${car.passengers} passengers`],
-    [CarFront, title(car.transmission)],
+    [transmissionIcon, title(car.transmission)],
     [DoorOpen, `${car.doors} doors`],
     [BriefcaseBusiness, `${car.bags} bags`],
   ];

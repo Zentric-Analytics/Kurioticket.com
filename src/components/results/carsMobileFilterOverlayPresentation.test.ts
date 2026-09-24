@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const cars = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
+const hotels = readFileSync(new URL("./HotelResultsClient.tsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 const presentation = readFileSync(new URL("../../lib/cars/carFilterPresentation.ts", import.meta.url), "utf8");
 
@@ -12,14 +13,14 @@ test("Cars full Filter follows the native Cars filter hierarchy without changing
   const shell = cars.slice(start, end);
   assert.ok(start >= 0 && end > start);
   assert.match(shell, /h-\[100dvh\] w-full.*bg-\[#F2F4F8\].*sm:w-\[420px\] lg:hidden/);
-  assert.match(shell, /min-h-\[76px\].*bg-\[#F2F4F8\].*pe-\[10px\] ps-5/);
+  assert.match(shell, /min-h-\[64px\].*bg-\[#F2F4F8\].*pe-\[10px\] ps-5/);
   assert.doesNotMatch(shell, /SlidersHorizontal|All cars shown|clearAll/);
   assert.match(shell, /activeFilterCount > 0[\s\S]*?activeFilterLabel[\s\S]*?: null/);
   assert.match(shell, /h-11 w-11[\s\S]*?<X className="h-\[22px\] w-\[22px\]"/);
   assert.match(shell, /overflow-y-auto overflow-x-hidden overscroll-contain/);
   assert.match(shell, /bg-\[#F2F4F8\] px-6 pb-8 pt-4/);
   assert.match(shell, /border-t border-\[#D8DEE8\] bg-\[#F2F4F8\]/);
-  assert.match(shell, /max\(0\.75rem,env\(safe-area-inset-bottom\)\)/);
+  assert.match(shell, /max\(20px,env\(safe-area-inset-bottom\)\)/);
   assert.match(shell, /activeFilterCount > 0[\s\S]*?min-w-\[116px\][\s\S]*?carsResults\.reset/);
   assert.match(shell, /Show \{visibleResults\.length\}/);
   assert.match(cars, /desktop-filter-sidebar/);
@@ -42,13 +43,19 @@ test("Cars mobile filter sections remain expanded with native row and checkbox g
   assert.match(cars, /layout === "mobile"\s*\? "grid gap-6 bg-transparent"/);
 });
 
-test("Cars shortcuts keep the mobile-web attached bottom-sheet presentation with native internal polishing", () => {
-  const sheets = cars.slice(cars.indexOf("data-cars-quick-sheet-backdrop"), cars.indexOf("!guidedPlanning && showBackToTop"));
+test("Cars shortcuts keep the floating cutout while using the Hotels sheet motion system", () => {
+  const sheets = cars.slice(
+    cars.indexOf("data-cars-quick-sheet-backdrop"),
+    cars.indexOf("!guidedPlanning && showBackToTop"),
+  );
   for (const contract of [
     /fixed inset-0.*items-end.*lg:hidden/,
-    /cars-native-quick-scrim.*absolute inset-0.*bg-\[rgba\(15,23,42,0\.35\)\]/,
-    /cars-native-quick-sheet relative z-10.*flex min-h-\[240px\].*max-h-\[min\(76dvh,620px\)\].*w-full.*rounded-t-\[24px\].*bg-\[#F2F4F8\]/,
-    /grid min-h-\[76px\].*grid-cols-\[44px_minmax\(0,1fr\)_44px\].*bg-\[#F2F4F8\].*px-\[10px\]/,
+    /data-cars-quick-sheet-scrim[\s\S]*?mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 h-full w-full/,
+    /maskUnits="userSpaceOnUse"[\s\S]*?<rect width="100%" height="100%" fill="white" \/>[\s\S]*?rx="9"[\s\S]*?fill="black"/,
+    /fill="rgba\(15, 23, 42, 0\.35\)"[\s\S]*?mask=\{\`url\(#\$\{quickFilterBackdropMaskId\}\)\`\}/,
+    /data-cars-quick-sheet-cutout[\s\S]*?pointer-events-none fixed rounded-\[9px\][\s\S]*?left: quickFilterCutoutRect\.left/,
+    /mobile-results-sheet-surface mobile-results-sheet-surface-smooth relative z-10 mx-3 mb-3.*flex min-h-\[240px\].*max-h-\[min\(76dvh,620px\)\].*w-\[calc\(100%_-_24px\)\].*rounded-\[24px\].*bg-\[#F2F4F8\]/,
+    /grid min-h-\[64px\].*grid-cols-\[44px_minmax\(0,1fr\)_44px\].*bg-\[#F2F4F8\].*px-\[10px\]/,
     /text-center text-\[18px\] font-bold leading-\[23px\]/,
     /<X className="h-\[22px\] w-\[22px\]"/,
     /overflow-y-auto overscroll-contain bg-\[#F2F4F8\] p-4/,
@@ -60,31 +67,45 @@ test("Cars shortcuts keep the mobile-web attached bottom-sheet presentation with
     /h-\[49px\] min-w-\[116px\].*rounded-xl.*border.*border-\[#D8DEE8\]/,
     /h-\[49px\].*flex-1.*rounded-xl.*bg-\[#004BB8\]/,
     /gap-\[10px\] bg-\[#F2F4F8\]/,
+    /paddingBottom: "max\(12px, calc\(env\(safe-area-inset-bottom, 0px\) - 12px\)\)"/,
   ]) assert.match(sheets, contract);
-  assert.doesNotMatch(sheets, /\bmx-3\b|\bmb-3\b|w-\[calc\(100%-24px\)\]|rounded-\[24px\]/);
-  assert.doesNotMatch(sheets, /backdrop-blur|bg-\[#F6F8FB\]|bg-white|Choose one option|selected<\/p>/);
-  assert.match(styles, /cars-native-quick-scrim-in[\s\S]*?opacity: 0[\s\S]*?opacity: 1/);
-  assert.match(styles, /cars-native-quick-sheet-in[\s\S]*?28px[\s\S]*?translate3d\(0, 0, 0\)/);
-  assert.match(styles, /cars-native-quick-scrim-in 160ms/);
-  assert.match(styles, /cars-native-quick-sheet-in 220ms/);
-  const sheetKeyframes = styles.slice(styles.indexOf("@keyframes cars-native-quick-sheet-in"), styles.indexOf(".cars-native-quick-scrim"));
-  assert.doesNotMatch(sheetKeyframes, /opacity\s*:/);
-  assert.doesNotMatch(styles, /cars-native-quick-(?:scrim|sheet)-out|cars-native-quick-(?:scrim|sheet)--closing/);
-  assert.match(styles, /prefers-reduced-motion: reduce/);
-  assert.match(styles, /prefers-reduced-motion: reduce[\s\S]*?\.cars-native-quick-scrim,[\s\S]*?\.cars-native-quick-sheet \{ animation: none; \}/);
+
+  assert.doesNotMatch(sheets, /boxShadow: "0 0 0 9999px/);
+  assert.doesNotMatch(sheets, /cars-native-quick-scrim|cars-native-quick-sheet/);
+  assert.match(styles, /mobile-results-sheet-surface-in[\s\S]*?translate3d\(0, 100%, 0\)[\s\S]*?translate3d\(0, 0, 0\)/);
+  assert.match(styles, /\.mobile-results-sheet-surface-smooth \{ animation-duration: 320ms; \}/);
+  assert.match(
+    hotels,
+    /mobile-results-sheet-backdrop-layer[\s\S]*?mobile-results-sheet-surface mobile-results-sheet-surface-smooth/,
+  );
 });
 
-test("Cars shortcut backdrop and inside-click dismissal boundaries remain explicit", () => {
+test("Cars shortcut backdrop covers the full viewport without a giant-shadow compositing barrier", () => {
   assert.equal((cars.match(/data-cars-quick-sheet-backdrop/g) ?? []).length, 1);
-  const wrapperTag = cars.match(/<div\s+data-cars-quick-sheet-backdrop[\s\S]*?onMouseDown=\{closeQuickFilter\}\s*>/)?.[0] ?? "";
-  assert.match(wrapperTag, /className="fixed inset-0 z-\[10010\] flex items-end lg:hidden"/);
-  assert.doesNotMatch(wrapperTag, /cars-native-quick-(?:backdrop|scrim|sheet)|bg-\[rgba|opacity/);
-  assert.match(cars, /data-cars-quick-sheet-scrim[\s\S]{0,250}cars-native-quick-scrim pointer-events-none absolute inset-0 bg-\[rgba\(15,23,42,0\.35\)\]/);
-  assert.match(cars, /data-cars-quick-sheet[\s\S]{0,350}onMouseDown=\{\(event\) => event\.stopPropagation\(\)\}/);
+  assert.match(
+    cars,
+    /data-cars-quick-sheet-backdrop[\s\S]*?fixed inset-0 z-\[10010\] flex items-end lg:hidden/,
+  );
+  assert.match(
+    cars,
+    /data-cars-quick-sheet-scrim[\s\S]*?fixed inset-0 h-full w-full/,
+  );
+  assert.match(cars, /<mask[\s\S]*?quickFilterBackdropMaskId/);
+  assert.match(
+    cars,
+    /data-cars-quick-sheet-cutout[\s\S]*?left: quickFilterCutoutRect\.left[\s\S]*?top: quickFilterCutoutRect\.top/,
+  );
+  assert.doesNotMatch(cars, /9999px rgba\(15, 23, 42, 0\.35\)/);
+  assert.match(
+    cars,
+    /data-cars-quick-sheet[\s\S]{0,900}onMouseDown=\{\(event\) => event\.stopPropagation\(\)\}/,
+  );
   assert.match(cars, /window\.addEventListener\("keydown", handleKeyDown\)/);
   assert.match(cars, /const mobileFiltersOverlayOpen = filtersOpen \|\| quickFilterGroupId !== null/);
-  assert.match(cars, /const releaseScrollLock = acquireMobileResultsScrollLock\(\)/);
-  assert.match(cars, /\}, \[mobileFiltersOverlayOpen\]\)/);
+  assert.match(
+    cars,
+    /const releaseScrollLock = acquireMobileResultsScrollLock\(\{\s*freezeBodyPosition: false,\s*\}\)/,
+  );
   assert.match(cars, /restoreOverlayLauncherFocus\(launcher, mobileFiltersModalityRef\.current\)/);
 });
 
@@ -96,7 +117,61 @@ test("every canonical Cars shortcut shares the one stable mobile overlay lock", 
   }
   assert.match(cars, /quickFilterGroupId === "sort" \|\| activeQuickFilterGroup/);
   assert.equal((cars.match(/data-cars-quick-sheet(?:-backdrop|-scrim)?/g) ?? []).length, 3);
-  assert.equal((cars.match(/acquireMobileResultsScrollLock\(\)/g) ?? []).length, 3);
+  assert.equal((cars.match(/acquireMobileResultsScrollLock\(/g) ?? []).length, 3);
+});
+
+test("Cars quick sheet keeps only the active shortcut outside the shared full-viewport scrim", () => {
+  assert.match(
+    cars,
+    /const \[quickFilterCutoutRect, setQuickFilterCutoutRect\] = useState/,
+  );
+  assert.match(
+    cars,
+    /launcher\.firstElementChild instanceof HTMLElement[\s\S]*?chip\.getBoundingClientRect\(\)/,
+  );
+  assert.match(
+    cars,
+    /launcher\.closest<HTMLElement>\("\[data-cars-results-quick-filters\]"\)/,
+  );
+  assert.match(cars, /Math\.max\(chipRect\.left, railRect\.left\)/);
+  assert.match(cars, /Math\.min\(chipRect\.right, railRect\.right\)/);
+  assert.match(
+    cars,
+    /setQuickFilterCutoutRect\(measureQuickFilterCutout\(launcher\)\)/,
+  );
+  assert.match(
+    cars,
+    /<mask[\s\S]*?id=\{quickFilterBackdropMaskId\}[\s\S]*?<rect[\s\S]*?x=\{quickFilterCutoutRect\.left\}[\s\S]*?y=\{quickFilterCutoutRect\.top\}[\s\S]*?rx="9"/,
+  );
+  assert.doesNotMatch(cars, /boxShadow: "0 0 0 9999px/);
+  assert.match(
+    cars,
+    /window\.visualViewport\?\.addEventListener\("resize", updateCutout\)/,
+  );
+  assert.match(
+    cars,
+    /window\.visualViewport\?\.addEventListener\("scroll", updateCutout\)/,
+  );
+});
+
+test("Cars shortcut chevrons mirror native expanded state", () => {
+  assert.match(
+    cars,
+    /quickFilterGroupId === "sort" && "rotate-180"/,
+  );
+  assert.match(
+    cars,
+    /quickFilterGroupId === group\.id && "rotate-180"/,
+  );
+  assert.match(
+    cars,
+    /transition-transform duration-150 motion-reduce:transition-none/,
+  );
+  const filterButton = cars.slice(
+    cars.indexOf("ref={filtersButtonRef}"),
+    cars.indexOf('aria-expanded={quickFilterGroupId === "sort"}'),
+  );
+  assert.doesNotMatch(filterButton, /ChevronDown/);
 });
 
 test("Cars-specific Sort and filter option data remain wired into shortcut sheets", () => {
@@ -124,9 +199,44 @@ test("Cars quick sheets keep changes local until Apply and discard them when clo
   assert.doesNotMatch(cars, /quickFilterFeedbackTimerRef|setTimeout\([^)]*400/);
 });
 
-test("Cars quick sheets dismiss promptly without a web-only closing lifecycle", () => {
-  assert.doesNotMatch(cars, /quickSheetClosing|quickSheetCloseTimerRef/);
-  assert.doesNotMatch(cars, /cars-native-quick-(?:scrim|sheet)--closing/);
-  assert.doesNotMatch(cars, /setTimeout\([\s\S]{0,250}setQuickFilterGroupId\(null\)[\s\S]{0,80}220/);
-  assert.match(cars, /const closeQuickFilter = useCallback\(\(\) => \{\s*if \(quickFilterGroupId === null\) return;\s*setQuickFilterGroupId\(null\);\s*\}, \[quickFilterGroupId\]\)/);
+test("Cars quick-sheet dismissal keeps the shared surface and backdrop mounted through exit motion", () => {
+  assert.match(cars, /const \[quickFilterClosing, setQuickFilterClosing\] = useState\(false\)/);
+  assert.match(cars, /quickFilterClosingRef = useRef\(false\)/);
+  assert.match(cars, /setQuickFilterClosing\(true\)/);
+  assert.match(cars, /window\.setTimeout\(\s*finishQuickFilterClose,\s*340,/);
+  assert.match(
+    cars,
+    /quickFilterClosing &&\s*"mobile-results-sheet-backdrop-layer-closing"/,
+  );
+  assert.match(
+    cars,
+    /quickFilterClosing && "mobile-results-sheet-surface-closing"/,
+  );
+  assert.match(cars, /onAnimationEnd=\{\(event\) =>/);
+  assert.match(cars, /finishQuickFilterClose\(\)/);
+  assert.match(styles, /mobile-results-sheet-backdrop-layer-closing[\s\S]*?280ms ease-out/);
+  assert.match(styles, /mobile-results-sheet-surface-closing[\s\S]*?280ms cubic-bezier/);
+  assert.match(styles, /prefers-reduced-motion: reduce/);
+});
+
+
+test("Cars mobile filter overlays avoid duplicate top safe-area padding and keep footer actions above browser chrome", () => {
+  const fullStart = cars.indexOf("data-cars-mobile-filter-shell");
+  const fullEnd = cars.indexOf('quickFilterGroupId === "sort"', fullStart);
+  const full = cars.slice(fullStart, fullEnd);
+  assert.doesNotMatch(full, /pt-\[env\(safe-area-inset-top\)\]/);
+  assert.match(full, /min-h-\[64px\]/);
+  assert.match(full, /pb-\[max\(20px,env\(safe-area-inset-bottom\)\)\]/);
+
+  const quickStart = cars.indexOf("data-cars-quick-sheet-backdrop");
+  const quickEnd = cars.indexOf("!guidedPlanning && showBackToTop", quickStart);
+  const quick = cars.slice(quickStart, quickEnd);
+  assert.match(quick, /min-h-\[64px\]/);
+  assert.match(
+    quick,
+    /paddingBottom: "max\(12px, calc\(env\(safe-area-inset-bottom, 0px\) - 12px\)\)"/,
+  );
+  assert.match(quick, /mx-3 mb-3/);
+  assert.match(quick, /w-\[calc\(100%_-_24px\)\]/);
+  assert.match(quick, /rounded-\[24px\]/);
 });
