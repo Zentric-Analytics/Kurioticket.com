@@ -7,14 +7,18 @@ const listStart = screen.indexOf("<Animated.SectionList");
 const listEnd = screen.indexOf("windowSize=", listStart);
 const list = screen.slice(listStart, screen.indexOf("/>", listEnd) + 2);
 
-test("Flight Results uses the native iOS scroll indicator with safe-area-aware insets", () => {
+test("Flight Results uses a capped decorative scroll thumb instead of the native iOS thumb", () => {
   assert.ok(listStart >= 0);
-  assert.match(screen, /const flightResultsScrollIndicatorInsets = Platform\.OS === "ios"/);
-  assert.match(screen, /\{ top: 56, right: 3, bottom: Math\.max\(insets\.bottom, 8\), left: 0 \}/);
-  assert.match(list, /showsVerticalScrollIndicator=\{true\}/);
-  assert.match(list, /automaticallyAdjustsScrollIndicatorInsets=\{false\}/);
-  assert.match(list, /scrollIndicatorInsets=\{flightResultsScrollIndicatorInsets\}/);
-  assert.doesNotMatch(screen, /Animated[^\n]*(?:scrollbar|scrollIndicator)|customThumb|PanResponder|thumbHeight/i);
+  assert.match(list, /showsVerticalScrollIndicator=\{false\}/);
+  assert.match(list, /onContentSizeChange=\{handleFlightResultsContentSizeChange\}/);
+  assert.match(list, /onScroll=\{Animated\.event/);
+  assert.match(screen, /flightResultsScrollIndicatorGeometry/);
+  assert.match(screen, /pointerEvents="none"/);
+  assert.match(screen, /s0\.flightResultsScrollIndicatorTrack/);
+  assert.match(screen, /s0\.flightResultsScrollIndicatorThumb/);
+  assert.match(screen, /height: geometry\.thumbHeight/);
+  assert.match(screen, /translateY/);
+  assert.doesNotMatch(screen, /PanResponder/);
 });
 
 test("Flight Results settles a representative virtualized window before traversal", () => {
@@ -30,7 +34,7 @@ test("Flight Results settles a representative virtualized window before traversa
   assert.doesNotMatch(list, /maxToRenderPerBatch=\{(?:sorted|results)\.length\}/);
 });
 
-test("Flight Results keeps virtualization rather than replacing the native scrollbar", () => {
+test("Flight Results keeps virtualization with the decorative scrollbar", () => {
   assert.doesNotMatch(list, /disableVirtualization|getItemLayout/);
   assert.doesNotMatch(screen, /getItemLayout=/);
 });
