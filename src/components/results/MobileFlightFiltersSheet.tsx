@@ -131,8 +131,10 @@ export function MobileFlightFiltersSheet({
   onToggleAirline,
   fromAirportOptions,
   toAirportOptions,
-  selectedAirports,
-  onToggleAirport,
+  selectedFromAirports,
+  selectedToAirports,
+  onToggleFromAirport,
+  onToggleToAirport,
   baggageSupported,
   refundableSupported,
   baggageIncludedOnly,
@@ -158,8 +160,10 @@ export function MobileFlightFiltersSheet({
   onToggleAirline: (value: string) => void;
   fromAirportOptions: FilterOption[];
   toAirportOptions: FilterOption[];
-  selectedAirports: string[];
-  onToggleAirport: (value: string) => void;
+  selectedFromAirports: string[];
+  selectedToAirports: string[];
+  onToggleFromAirport: (value: string) => void;
+  onToggleToAirport: (value: string) => void;
   baggageSupported: boolean;
   refundableSupported: boolean;
   baggageIncludedOnly: boolean;
@@ -465,8 +469,8 @@ export function MobileFlightFiltersSheet({
                   key={`from-${option.value}`}
                   label={option.label}
                   count={option.count}
-                  checked={selectedAirports.includes(option.value)}
-                  onChange={() => onToggleAirport(option.value)}
+                  checked={selectedFromAirports.includes(option.value)}
+                  onChange={() => onToggleFromAirport(option.value)}
                 />
               ))}
             </>
@@ -481,8 +485,8 @@ export function MobileFlightFiltersSheet({
                   key={`to-${option.value}`}
                   label={option.label}
                   count={option.count}
-                  checked={selectedAirports.includes(option.value)}
-                  onChange={() => onToggleAirport(option.value)}
+                  checked={selectedToAirports.includes(option.value)}
+                  onChange={() => onToggleToAirport(option.value)}
                 />
               ))}
             </>
