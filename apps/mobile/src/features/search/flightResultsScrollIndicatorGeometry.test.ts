@@ -6,6 +6,11 @@ import {
   flightResultsScrollIndicatorGeometry,
 } from "./flightResultsScrollIndicator";
 
+test("Flight Results custom thumb uses the requested half-height bounds", () => {
+  assert.equal(FLIGHT_RESULTS_SCROLL_THUMB_MIN_HEIGHT, 22);
+  assert.equal(FLIGHT_RESULTS_SCROLL_THUMB_MAX_HEIGHT, 48);
+});
+
 test("Flight Results custom thumb is capped shorter than the available track", () => {
   const geometry = flightResultsScrollIndicatorGeometry({
     viewportHeight: 780,
