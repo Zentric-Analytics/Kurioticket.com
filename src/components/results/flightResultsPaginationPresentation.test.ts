@@ -57,6 +57,31 @@ test("pagination nav sits directly on the Results background", () => {
   assert.doesNotMatch(navClass ?? "", /bg-white|border-slate|rounded-xl|shadow-sm|\bp-\d/);
 });
 
+test("mobile standalone Results ends after the pagination breathing space without viewport filler", () => {
+  assert.match(
+    componentSource,
+    /<main data-flight-results-main className="bg-\[#F5F7FB\] pb-0 sm:flex-1 sm:bg-\[#F3F6FA\] sm:pb-8">/,
+    "the mobile main does not flex-grow or add page-bottom padding, while desktop keeps both",
+  );
+  assert.match(
+    componentSource,
+    /className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-0 pt-8 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-6"/,
+    "the mobile grid does not add another gap below pagination, while desktop keeps its padding",
+  );
+  assert.match(
+    componentSource,
+    /data-mobile-paginated-flight-results[\s\S]*?totalResultPages <= 1 \? "pb-6" : "pb-0"[\s\S]*?<FlightResultsPagination/,
+    "the mobile result wrapper keeps 24px breathing room only when pagination is absent",
+  );
+
+  const pagination = paginationSource();
+  assert.match(
+    pagination,
+    /className="flight-results-pagination mb-6 mt-6 flex min-w-0 items-center justify-center"/,
+    "pagination retains a deliberate 24px bottom margin before the footer",
+  );
+});
+
 test("page controls are borderless, accessible touch targets with current-only blue", () => {
   const control = ruleBody(".flight-pagination-control {");
   const current = ruleBody('.flight-pagination-control[aria-current="page"]');

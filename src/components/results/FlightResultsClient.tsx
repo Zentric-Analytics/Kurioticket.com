@@ -7064,7 +7064,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs />
     <FlightResultsScrollIndicator />
     {renderMobileCompactResultsHeader()}
-    <main data-flight-results-main className="flex-1 bg-[#F5F7FB] pb-8 sm:bg-[#F3F6FA]">
+    <main data-flight-results-main className="bg-[#F5F7FB] pb-0 sm:flex-1 sm:bg-[#F3F6FA] sm:pb-8">
       <section
         inert={mobileSearchOpen ? true : undefined}
         aria-hidden={mobileSearchOpen ? true : undefined}
@@ -7162,7 +7162,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
       <div
         ref={resultsGridRef}
-        className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-5 pt-8 sm:pt-5 lg:gap-x-9 lg:pt-6"
+        className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-0 pt-8 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-6"
       >
         <aside
           ref={desktopFilterSidebarRef}
@@ -7619,7 +7619,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     data-mobile-paginated-flight-results
                     aria-busy={paginationPendingPage !== null}
                     className={cn(
-                      "pb-[calc(1rem+env(safe-area-inset-bottom))]",
+                      totalResultPages <= 1 ? "pb-6" : "pb-0",
                       paginationRevealing && "animate-[fadeIn_150ms_ease-out]",
                     )}
                   >
