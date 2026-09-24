@@ -73,6 +73,7 @@ const emptyFilters = (): FlightFilterState => ({
   maximumDuration: null,
   stops: [],
   airlines: [],
+  airports: [],
   fromAirports: [],
   toAirports: [],
   journeyTimeMaximums: {},
@@ -112,6 +113,18 @@ test("FROM and TO are independent multi-city endpoints and exclude layovers", ()
   assert.equal(flightMatchesFilters(multi, { ...emptyFilters(), fromAirports: ["LOS"] }), true);
   assert.equal(flightMatchesFilters(multi, { ...emptyFilters(), toAirports: ["LOS"] }), false);
   assert.equal(flightMatchesFilters(multi, { ...emptyFilters(), fromAirports: ["ACC"] }), false);
+});
+
+test("legacy desktop airport filter matches either authoritative endpoint", () => {
+  const multi = flight("multi", {
+    legs: [
+      leg("leg", 0, "LOS", "ABV"),
+      leg("leg", 1, "ABV", "LHR"),
+    ],
+  });
+  assert.equal(flightMatchesFilters(multi, { ...emptyFilters(), airports: ["LOS"] }), true);
+  assert.equal(flightMatchesFilters(multi, { ...emptyFilters(), airports: ["LHR"] }), true);
+  assert.equal(flightMatchesFilters(multi, { ...emptyFilters(), airports: ["ACC"] }), false);
 });
 
 test("round-trip and multi-city stops use the worst authoritative journey leg", () => {
@@ -160,8 +173,9 @@ test("active count follows the same directional and journey state", () => {
     ...emptyFilters(),
     stops: ["0", "1"],
     airlines: ["A", "B"],
+    airports: ["LHR"],
     fromAirports: ["LOS"],
     toAirports: ["ABV"],
     journeyTimeMaximums: { outbound: { takeoff: 600, landing: 900 } },
-  }), 7);
+  }), 8);
 });
