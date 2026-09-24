@@ -12,14 +12,14 @@ test("Cars full Filter follows the native Cars filter hierarchy without changing
   const shell = cars.slice(start, end);
   assert.ok(start >= 0 && end > start);
   assert.match(shell, /h-\[100dvh\] w-full.*bg-\[#F2F4F8\].*sm:w-\[420px\] lg:hidden/);
-  assert.match(shell, /min-h-\[76px\].*bg-\[#F2F4F8\].*pe-\[10px\] ps-5/);
+  assert.match(shell, /min-h-\[64px\].*bg-\[#F2F4F8\].*pe-\[10px\] ps-5/);
   assert.doesNotMatch(shell, /SlidersHorizontal|All cars shown|clearAll/);
   assert.match(shell, /activeFilterCount > 0[\s\S]*?activeFilterLabel[\s\S]*?: null/);
   assert.match(shell, /h-11 w-11[\s\S]*?<X className="h-\[22px\] w-\[22px\]"/);
   assert.match(shell, /overflow-y-auto overflow-x-hidden overscroll-contain/);
   assert.match(shell, /bg-\[#F2F4F8\] px-6 pb-8 pt-4/);
   assert.match(shell, /border-t border-\[#D8DEE8\] bg-\[#F2F4F8\]/);
-  assert.match(shell, /max\(0\.75rem,env\(safe-area-inset-bottom\)\)/);
+  assert.match(shell, /max\(20px,env\(safe-area-inset-bottom\)\)/);
   assert.match(shell, /activeFilterCount > 0[\s\S]*?min-w-\[116px\][\s\S]*?carsResults\.reset/);
   assert.match(shell, /Show \{visibleResults\.length\}/);
   assert.match(cars, /desktop-filter-sidebar/);
@@ -48,7 +48,7 @@ test("Cars shortcuts keep the mobile-web attached bottom-sheet presentation with
     /fixed inset-0.*items-end.*lg:hidden/,
     /cars-native-quick-scrim.*absolute inset-0.*bg-\[rgba\(15,23,42,0\.35\)\]/,
     /cars-native-quick-sheet relative z-10.*flex min-h-\[240px\].*max-h-\[min\(76dvh,620px\)\].*w-full.*rounded-t-\[24px\].*bg-\[#F2F4F8\]/,
-    /grid min-h-\[76px\].*grid-cols-\[44px_minmax\(0,1fr\)_44px\].*bg-\[#F2F4F8\].*px-\[10px\]/,
+    /grid min-h-\[64px\].*grid-cols-\[44px_minmax\(0,1fr\)_44px\].*bg-\[#F2F4F8\].*px-\[10px\]/,
     /text-center text-\[18px\] font-bold leading-\[23px\]/,
     /<X className="h-\[22px\] w-\[22px\]"/,
     /overflow-y-auto overscroll-contain bg-\[#F2F4F8\] p-4/,
@@ -60,6 +60,7 @@ test("Cars shortcuts keep the mobile-web attached bottom-sheet presentation with
     /h-\[49px\] min-w-\[116px\].*rounded-xl.*border.*border-\[#D8DEE8\]/,
     /h-\[49px\].*flex-1.*rounded-xl.*bg-\[#004BB8\]/,
     /gap-\[10px\] bg-\[#F2F4F8\]/,
+    /pb-\[max\(20px,env\(safe-area-inset-bottom\)\)\]/,
   ]) assert.match(sheets, contract);
   assert.doesNotMatch(sheets, /\bmx-3\b|\bmb-3\b|w-\[calc\(100%-24px\)\]|rounded-\[24px\]/);
   assert.doesNotMatch(sheets, /backdrop-blur|bg-\[#F6F8FB\]|bg-white|Choose one option|selected<\/p>/);
@@ -129,4 +130,21 @@ test("Cars quick sheets dismiss promptly without a web-only closing lifecycle", 
   assert.doesNotMatch(cars, /cars-native-quick-(?:scrim|sheet)--closing/);
   assert.doesNotMatch(cars, /setTimeout\([\s\S]{0,250}setQuickFilterGroupId\(null\)[\s\S]{0,80}220/);
   assert.match(cars, /const closeQuickFilter = useCallback\(\(\) => \{\s*if \(quickFilterGroupId === null\) return;\s*setQuickFilterGroupId\(null\);\s*\}, \[quickFilterGroupId\]\)/);
+});
+
+
+test("Cars mobile filter overlays avoid duplicate top safe-area padding and keep footer actions above browser chrome", () => {
+  const fullStart = cars.indexOf("data-cars-mobile-filter-shell");
+  const fullEnd = cars.indexOf('quickFilterGroupId === "sort"', fullStart);
+  const full = cars.slice(fullStart, fullEnd);
+  assert.doesNotMatch(full, /pt-\[env\(safe-area-inset-top\)\]/);
+  assert.match(full, /min-h-\[64px\]/);
+  assert.match(full, /pb-\[max\(20px,env\(safe-area-inset-bottom\)\)\]/);
+
+  const quickStart = cars.indexOf("data-cars-quick-sheet-backdrop");
+  const quickEnd = cars.indexOf("!guidedPlanning && showBackToTop", quickStart);
+  const quick = cars.slice(quickStart, quickEnd);
+  assert.match(quick, /min-h-\[64px\]/);
+  assert.match(quick, /pb-\[max\(20px,env\(safe-area-inset-bottom\)\)\]/);
+  assert.doesNotMatch(quick, /calc\(env\(safe-area-inset-bottom\)-12px\)/);
 });

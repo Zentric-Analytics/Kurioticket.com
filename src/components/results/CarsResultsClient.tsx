@@ -3037,7 +3037,7 @@ export function CarsResultsExperience({
           data-cars-mobile-filter-shell
           className="fixed inset-y-0 right-0 z-[10000] flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2F4F8] sm:w-[420px] lg:hidden"
         >
-          <header className="flex min-h-[76px] shrink-0 items-center bg-[#F2F4F8] pe-[10px] ps-5 pt-[env(safe-area-inset-top)]">
+          <header className="flex min-h-[64px] shrink-0 items-center bg-[#F2F4F8] pe-[10px] ps-5">
             <div className="min-w-0 flex-1">
               <h2 id="cars-guided-filters-title" className="truncate text-[18px] font-bold leading-[23px] text-slate-950">{t("filters")}</h2>
               {activeFilterCount > 0 ? (
@@ -3065,7 +3065,7 @@ export function CarsResultsExperience({
               t={t}
             />
           </div>
-          <footer className="flex shrink-0 items-center gap-3.5 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+          <footer className="flex shrink-0 items-center gap-3.5 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3">
             {activeFilterCount > 0 ? (
               <button type="button" aria-label={t("carsResults.resetFilters")} onClick={clearMobileDrawerCarFilters} className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
                 {t("carsResults.reset")}
@@ -3103,7 +3103,7 @@ export function CarsResultsExperience({
             onMouseDown={(event) => event.stopPropagation()}
             className="cars-native-quick-sheet relative z-10 flex min-h-[240px] max-h-[min(76dvh,620px)] w-full flex-col overflow-hidden rounded-t-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]"
           >
-            <header className="grid min-h-[76px] shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-center bg-[#F2F4F8] px-[10px]">
+            <header className="grid min-h-[64px] shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-center bg-[#F2F4F8] px-[10px]">
               <span aria-hidden="true" className="h-11 w-11" />
               <h2 id={`cars-quick-${quickFilterGroupId}`} className="text-center text-[18px] font-bold leading-[23px] text-slate-950">
                 {quickFilterGroupId === "sort" ? "Sort" : carFilterGroupLabel(activeQuickFilterGroup!, t, true)}
@@ -3133,7 +3133,7 @@ export function CarsResultsExperience({
                 </label>;
               })}
             </div>
-            <footer className="flex shrink-0 items-center gap-[10px] bg-[#F2F4F8] px-4 pb-[max(12px,calc(env(safe-area-inset-bottom)-12px))] pt-3">
+            <footer className="flex shrink-0 items-center gap-[10px] bg-[#F2F4F8] px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3">
               <button type="button" onClick={() => { if (quickFilterGroupId === "sort") setQuickSortDraft("recommended"); else setQuickFilterDraft([]); }} className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">Reset</button>
               <button type="button" onClick={() => { startFilterResultsTransition(); setCurrentPage(1); if (quickFilterGroupId === "sort") setSort(quickSortDraft); else setSelectedCarFilters((current) => { const next = { ...current }; if (quickFilterDraft.length) next[quickFilterGroupId] = [...quickFilterDraft]; else delete next[quickFilterGroupId]; return next; }); closeQuickFilter(); }} className="flex h-[49px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-3 text-[15px] font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2">
                 Apply
