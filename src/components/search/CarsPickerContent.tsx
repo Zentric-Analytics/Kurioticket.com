@@ -4,6 +4,12 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import { Check, Clock3 } from "lucide-react";
 import { MobileDateRangePicker } from "@/components/search/MobileDateRangePicker";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import {
+  beginCarLocationPointerIntent,
+  isIntentionalCarLocationTap,
+  updateCarLocationPointerIntent,
+  type CarLocationPointerSession,
+} from "@/components/search/carLocationPointerIntent";
 import type { RefObject } from "react";
 
 import {
@@ -263,6 +269,95 @@ export function CarsRentalDatePickerContent({
   );
 }
 
+function CarsTimeOptionButton({
+  time,
+  selected,
+  onSelect,
+  formatTime,
+  mobileShell,
+  nativeCarsAppearance,
+}: {
+  time: string;
+  selected: boolean;
+  onSelect: () => void;
+  formatTime: (time: string) => string;
+  mobileShell: boolean;
+  nativeCarsAppearance: boolean;
+}) {
+  const pointerSessionRef = useRef<CarLocationPointerSession | null>(null);
+  const suppressClickRef = useRef(false);
+  const guardTouchSelection = mobileShell;
+
+  return (
+    <button
+      data-time-value={time}
+      type="button"
+      role="option"
+      aria-selected={selected}
+      onPointerDown={(event) => {
+        if (!guardTouchSelection || event.pointerType === "mouse") return;
+        pointerSessionRef.current = beginCarLocationPointerIntent(
+          event.pointerId,
+          event.clientX,
+          event.clientY,
+        );
+      }}
+      onPointerMove={(event) => {
+        const session = pointerSessionRef.current;
+        if (!guardTouchSelection || !session) return;
+        pointerSessionRef.current = updateCarLocationPointerIntent(
+          session,
+          event.pointerId,
+          event.clientX,
+          event.clientY,
+        );
+      }}
+      onPointerCancel={() => {
+        pointerSessionRef.current = null;
+        suppressClickRef.current = false;
+      }}
+      onPointerUp={(event) => {
+        if (!guardTouchSelection || event.pointerType === "mouse") return;
+        const intentional = isIntentionalCarLocationTap(
+          pointerSessionRef.current,
+          event.pointerId,
+        );
+        pointerSessionRef.current = null;
+        suppressClickRef.current = true;
+        if (intentional) onSelect();
+      }}
+      onClick={(event) => {
+        if (guardTouchSelection && suppressClickRef.current) {
+          suppressClickRef.current = false;
+          event.preventDefault();
+          return;
+        }
+        onSelect();
+      }}
+      className={`focus-ring flex w-full items-center justify-between border-b border-slate-200 text-start text-[15px] last:border-b-0 ${mobileShell ? (nativeCarsAppearance ? "min-h-[50px] px-2" : "min-h-12 px-3") : "h-11 px-3"} ${selected ? "bg-[#eff6ff] font-bold text-[#075EE8]" : "text-slate-800 hover:bg-slate-50"}`}
+    >
+      <span>{formatTime(time)}</span>
+      {mobileShell && selected ? (
+        nativeCarsAppearance ? (
+          <Check
+            data-selected-time-indicator
+            className="h-[17px] w-[17px] text-[#075EE8]"
+            aria-hidden="true"
+          />
+        ) : (
+          <span
+            data-selected-time-indicator
+            className="flex h-6 w-6 items-center justify-center rounded-full bg-[#075EE8]"
+            aria-hidden="true"
+          >
+            <Check className="h-4 w-4 text-white" />
+          </span>
+        )
+      ) : null}
+    </button>
+  );
+}
+
 export function CarsTimeRangePickerContent({
   formatTime,
   onPickupTimeChange,
@@ -382,34 +477,15 @@ export function CarsTimeRangePickerContent({
             data-cars-time-list={kind}
           >
             {timeOptions.map((time) => (
-              <button
+              <CarsTimeOptionButton
                 key={`${kind}-${time}`}
-                data-time-value={time}
-                type="button"
-                role="option"
-                aria-selected={selectedTime === time}
-                onClick={() => onChange(time)}
-                className={`focus-ring flex w-full items-center justify-between border-b border-slate-200 text-start text-[15px] last:border-b-0 ${mobileShell ? (nativeCarsAppearance ? "min-h-[50px] px-2" : "min-h-12 px-3") : "h-11 px-3"} ${selectedTime === time ? "bg-[#eff6ff] font-bold text-[#075EE8]" : "text-slate-800 hover:bg-slate-50"}`}
-              >
-                <span>{formatTime(time)}</span>
-                {mobileShell && selectedTime === time ? (
-                  nativeCarsAppearance ? (
-                    <Check
-                      data-selected-time-indicator
-                      className="h-[17px] w-[17px] text-[#075EE8]"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <span
-                      data-selected-time-indicator
-                      className="flex h-6 w-6 items-center justify-center rounded-full bg-[#075EE8]"
-                      aria-hidden="true"
-                    >
-                      <Check className="h-4 w-4 text-white" />
-                    </span>
-                  )
-                ) : null}
-              </button>
+                time={time}
+                selected={selectedTime === time}
+                onSelect={() => onChange(time)}
+                formatTime={formatTime}
+                mobileShell={mobileShell}
+                nativeCarsAppearance={nativeCarsAppearance}
+              />
             ))}
           </div>
         </div>
