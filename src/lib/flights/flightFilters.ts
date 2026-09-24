@@ -13,6 +13,7 @@ export type FlightFilterState = {
   maximumDuration: number | null;
   stops: string[];
   airlines: string[];
+  airports: string[];
   fromAirports: string[];
   toAirports: string[];
   journeyTimeMaximums: JourneyTimeMaximums;
@@ -161,6 +162,10 @@ export function flightMatchesFilters(
       (duration !== null && duration <= filters.maximumDuration)) &&
     (!filters.stops.length || filters.stops.includes(flightStopBucket(flight))) &&
     (!filters.airlines.length || filters.airlines.includes(flight.airlineName)) &&
+    (!filters.airports.length ||
+      filters.airports.some((airport) =>
+        endpoints.fromAirports.includes(airport) || endpoints.toAirports.includes(airport),
+      )) &&
     (!filters.fromAirports.length ||
       filters.fromAirports.some((airport) => endpoints.fromAirports.includes(airport))) &&
     (!filters.toAirports.length ||
@@ -187,6 +192,7 @@ export function activeFlightFilterCount(filters: FlightFilterState) {
     Number(filters.maximumDuration !== null) +
     filters.stops.length +
     Number(filters.airlines.length > 0) +
+    filters.airports.length +
     filters.fromAirports.length +
     filters.toAirports.length +
     Object.values(filters.journeyTimeMaximums).reduce(
