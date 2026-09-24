@@ -32,6 +32,7 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { useSavedCar } from "@/components/results/useSavedCar";
 import {
   formatCarPickupType,
+  getCarSpecificationIcon,
   getMobileCarPrimarySpecs,
 } from "@/components/results/carResultCardSpecs";
 import type { CarResultBadge } from "@/lib/cars/carResults";
@@ -120,8 +121,11 @@ export function CarResultCard({
     [CarFront, title(car.transmission)],
   ];
   const specifications: Array<[LucideIcon, string]> = car.sandboxPresentation
-    ? car.sandboxPresentation.specs.map(label => [CarFront, label]) :
-    guidedPlanning && car.airConditioning
+    ? car.sandboxPresentation.specs.map((label) => [
+        getCarSpecificationIcon(label),
+        label,
+      ])
+    : guidedPlanning && car.airConditioning
       ? [...primarySpecifications, [Snowflake, "Air conditioning"]]
       : primarySpecifications;
   const mobilePrimarySpecs = car.sandboxPresentation ? specifications : getMobileCarPrimarySpecs(car);
