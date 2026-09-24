@@ -137,6 +137,16 @@ a {
   text-decoration: none;
 }
 
+/* Cars Details mobile-web typography is dimensioned to the native Inter scale.
+   Disable Safari text inflation on this surface so 10/11/12/13/14/15/19/22px
+   tokens render at their authored sizes instead of being enlarged heuristically. */
+@media (max-width: 1023px) {
+  [data-car-details-experience] {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+}
+
 button,
 input,
 select,
