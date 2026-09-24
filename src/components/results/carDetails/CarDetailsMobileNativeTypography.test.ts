@@ -20,7 +20,7 @@ const css = readFileSync(
 );
 const native = readFileSync(
   new URL(
-    "../../../../../apps/mobile/src/features/search/ApprovedCarDetailScreen.tsx",
+    "../../../../apps/mobile/src/features/search/ApprovedCarDetailScreen.tsx",
     import.meta.url,
   ),
   "utf8",
