@@ -65,7 +65,7 @@ test("mobile Flight Results uses the native horizontal gutter relationship", asy
 
   assert.match(styles, /@media \(max-width: 639px\)[\s\S]*\.flight-results-grid \{\s*width: calc\(100% - 28px\);/);
   assert.match(source, /min-h-\[28px\][^\n]*max-w-full[^\n]*px-0[^\n]*>Cheaper nearby:/);
-  assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,500}-mx-\[14px\][\s\S]{0,120}px-0/);
+  assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,500}-mx-3[\s\S]{0,120}px-0/);
   assert.match(source, /data-mobile-flight-shortcuts[^\n]*ps-3 pe-4/);
   assert.match(source, /flex w-max flex-nowrap items-center gap-1\.5/);
   assert.match(source, /data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden"/);

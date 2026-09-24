@@ -250,6 +250,7 @@ export function MobileDateRangePicker({
 }
 
 type MobileDatePickerDialogProps = {
+  headerVariant?: "navigation" | "close" | "close-right";
   showBackAction?: boolean;
   withinDialog?: boolean;
   presentation?: "default" | "carsResultsEdit" | "carsMain";
@@ -272,6 +273,7 @@ type MobileDatePickerDialogProps = {
 };
 
 export function MobileDatePickerDialog({
+  headerVariant,
   showBackAction,
   withinDialog,
   open,
@@ -350,6 +352,7 @@ export function MobileDatePickerDialog({
 
   return (
     <FlightMobilePickerShell
+      headerVariant={headerVariant}
       showBackAction={showBackAction}
       withinDialog={withinDialog}
       open={open}

@@ -20,7 +20,7 @@ type HotelMobilePickerShellProps = {
   onClose: () => void;
   className?: string;
   contentClassName?: string;
-  headerVariant?: "navigation" | "close";
+  headerVariant?: "navigation" | "close" | "close-right";
   showCancelAction?: boolean;
   showBackLabel?: boolean;
   showBackAction?: boolean;

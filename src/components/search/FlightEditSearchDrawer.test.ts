@@ -13,8 +13,8 @@ test("shared mobile flight editor retains the approved drawer structure", () => 
   assert.match(source, /aria-label=\{t\("closeEditSearch"\)\}/);
   assert.match(source, /data-mobile-trip-type-grid/);
   assert.match(source, /grid-cols-3/);
-  assert.match(source, /role="radiogroup"[\s\S]*?aria-label=\{t\("tripType"\)\}/);
-  assert.match(source, /role="radio"[\s\S]*?aria-checked=/);
+  assert.match(source, /role=\{resultsMode \? "tablist" : "radiogroup"\}[\s\S]*?aria-label=\{t\("tripType"\)\}/);
+  assert.match(source, /role=\{resultsMode \? "tab" : "radio"\}[\s\S]*?aria-checked=/);
   assert.match(source, /whitespace-nowrap/);
   for (const key of ["roundTrip", "oneWay", "multiCity"])
     assert.ok(source.includes(`t("${key}")`));
@@ -32,16 +32,17 @@ test("shared mobile flight editor retains the approved drawer structure", () => 
   assert.match(source, /overflow-x-hidden overflow-y-auto/);
 });
 
-test("Results bottom sheet is full-width and anchored to the viewport bottom", () => {
+test("Results bottom sheet matches the native floating-sheet geometry", () => {
   assert.match(source, /import \{ createPortal \} from "react-dom"/);
   assert.match(source, /createPortal\(overlay, document\.body\)/);
   assert.match(source, /data-mobile-results-overlay-root/);
   assert.match(source, /style=\{bottomSheet \? \{ backgroundColor: "rgba\(8, 18, 35, 0\.52\)" \} : undefined\}/);
   assert.match(source, /items-end/);
   assert.match(source, /max-h-\[88dvh\]/);
-  assert.match(source, /relative flex max-h-\[88dvh\] min-h-0 w-full flex-col/);
-  assert.match(source, /rounded-t-\[24px\] bg-\[#F5F7FB\]/);
-  assert.doesNotMatch(source, /mx-3|mb-3|w-\[calc\(100%_-_1\.5rem\)\]|rounded-\[24px\] bg-\[#F5F7FB\]/);
+  assert.match(source, /mb-3 ml-3 mr-3 flex max-h-\[88dvh\]/);
+  assert.match(source, /w-\[calc\(100%_-_24px\)\]/);
+  assert.match(source, /overflow-hidden rounded-\[24px\]/);
+  assert.match(source, /rounded-\[24px\] bg-\[#F5F7FB\]/);
   assert.match(source, /resultsMode \? "Change your search" : t\("editFlightSearch"\)/);
   assert.match(source, /text-\[19px\] font-semibold leading-6/);
   assert.match(source, /min-h-\[52px\]/);
@@ -112,8 +113,10 @@ test("bottom sheet uses the shared no-shake lock and delegates launcher focus", 
 });
 
 test("Results flight fields mirror native results-modal density", () => {
-  assert.match(source, /resultsMode[\s\S]*?min-h-\[72px\]/);
-  assert.match(source, /text-\[11px\] font-bold uppercase leading-\[15px\] tracking-\[0\.1em\] text-\[#56658E\]/);
+  assert.match(source, /resultsMode[\s\S]*?min-h-\[66px\]/);
+  assert.match(source, /px-3 py-\[9px\]/);
+  assert.match(source, /text-\[10px\] font-extrabold uppercase leading-\[14px\] tracking-\[0\.5px\] text-\[#56658E\]/);
+  assert.match(source, /text-\[15px\] font-semibold leading-5/);
   assert.match(source, /grid-cols-\[18px_minmax\(0,1fr\)_16px\]/);
   assert.match(source, /h-\[18px\] w-\[18px\] text-\[#071A48\]/);
   assert.match(source, /rounded-\[13px\] border border-\[#E7ECF5\] bg-white/);
@@ -144,10 +147,14 @@ test("Results mode copies native route/date/traveler grouping and trip tabs", ()
 
   assert.match(source, /resultsMode \? "grid min-h-\[51px\]/);
   assert.match(source, /min-h-\[50px\][\s\S]*border-b-2/);
+  assert.match(source, /role=\{resultsMode \? "tablist" : "radiogroup"\}/);
+  assert.match(source, /role=\{resultsMode \? "tab" : "radio"\}/);
+  assert.match(source, /aria-selected=\{resultsMode \? draft\.tripType === value : undefined\}/);
   assert.match(source, /border-\[#064CF7\] font-extrabold text-\[#064CF7\]/);
   assert.match(source, /\{!resultsMode \? \([\s\S]*?h-\[18px\] w-\[18px\]/);
   assert.match(source, /resultsMode \? t\("searchFlights"\) : t\("search"\)/);
   assert.match(source, /min-h-\[54px\].*rounded-\[9px\].*bg-\[#064CF7\].*font-extrabold/);
+  assert.match(source, /className=\{resultsMode \? "p-2 pt-4" : undefined\}/);
 });
 
 test("Results airport pickers opt in without changing the shared default flow", () => {
@@ -162,6 +169,13 @@ test("shared editor uses canonical mobile pickers and multi-city editor", () => 
   assert.match(source, /<MultiCityFlightEditor/);
   assert.match(source, /MULTI_CITY_MIN_LEGS/);
   assert.match(source, /MULTI_CITY_MAX_LEGS/);
+});
+
+test("temporary trip-type changes preserve an existing multi-city itinerary", () => {
+  assert.match(source, /preservedMultiCityLegsRef = useRef<FlightSearchLeg\[]>/);
+  assert.match(source, /preservedMultiCityLegsRef\.current = current\.legs/);
+  assert.match(source, /hasPreservedMultiCityJourney/);
+  assert.match(source, /\? preservedLegs/);
 });
 
 test("traveler picker uses the canonical density and Done uses the local Kurioticket blue treatment", () => {
