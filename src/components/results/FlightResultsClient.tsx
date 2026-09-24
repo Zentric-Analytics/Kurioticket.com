@@ -69,6 +69,17 @@ import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerS
 import { FlightEditSearchDrawer, type FlightEditSearchValue } from "@/components/search/FlightEditSearchDrawer";
 import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } from "@/lib/search/mobileResultsScrollLock";
 import { getOverlayActivationModality, restoreOverlayLauncherFocus, type OverlayActivationModality } from "@/lib/search/mobileResultsOverlayFocus";
+import {
+  activeFlightFilterCount as countAuthoritativeFlightFilters,
+  flightAirportEndpoints,
+  flightJourneyDurationMinutes,
+  flightMatchesFilters,
+  flightStopBucket,
+  hasStructuredBaggage,
+  hasStructuredFlexibility,
+  matchingFlightCount,
+  type FlightFilterState,
+} from "@/lib/flights/flightFilters";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
 import { Button } from "@/components/ui/Button";
@@ -247,6 +258,8 @@ const filterQueryParamKeys = [
   "fStop",
   "fAirline",
   "fAirport",
+  "fFromAirport",
+  "fToAirport",
   "fQuality",
   "fBaggage",
   "fFlexible",
@@ -1055,7 +1068,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [mobileDraftSort, setMobileDraftSort] = useState<SortMode>(sortMode);
   const [mobileDraftAirlines, setMobileDraftAirlines] = useState<string[]>([]);
   const [mobileDraftStops, setMobileDraftStops] = useState<string[]>([]);
-  const [mobileDraftAirports, setMobileDraftAirports] = useState<string[]>([]);
+  const [mobileDraftFromAirports, setMobileDraftFromAirports] = useState<string[]>([]);
+  const [mobileDraftToAirports, setMobileDraftToAirports] = useState<string[]>([]);
   const [mobileAirlineSearch, setMobileAirlineSearch] = useState("");
   const [mobileShowAllAirlines, setMobileShowAllAirlines] = useState(false);
   const mobileShortcutLauncherRef = useRef<HTMLButtonElement | null>(null);
@@ -1081,6 +1095,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [selectedStops, setSelectedStops] = useState<string[]>([]);
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
   const [selectedAirports, setSelectedAirports] = useState<string[]>([]);
+  const [selectedFromAirports, setSelectedFromAirports] = useState<string[]>([]);
+  const [selectedToAirports, setSelectedToAirports] = useState<string[]>([]);
   const [selectedFlightQuality, setSelectedFlightQuality] = useState<string[]>(
     [],
   );
@@ -2265,10 +2281,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }
 
   function openMobileSearchDrawer(launcher?: HTMLElement | null, modality: OverlayActivationModality = "programmatic") {
-    if (tripTypeInput === "multi-city") {
-      router.push(`/flights?${searchQueryString}`);
-      return;
-    }
     mobileSearchLauncherRef.current = launcher ?? null;
     mobileSearchModalityRef.current = modality;
     closeMobileFiltersDrawer({ restoreFocus: false });
@@ -3478,7 +3490,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     >();
 
     results.forEach((flight) => {
-      const bucket = getStopBucket(flight.stops);
+      const bucket = flightStopBucket(flight);
       const current = buckets.get(bucket) ?? {
         count: 0,
         minPrice: Number.POSITIVE_INFINITY,
@@ -3561,11 +3573,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }, [results]);
 
   const mobileFromAirportOptions = useMemo(
-    () => buildCountOptions(results.map((flight) => flight.legs?.[0]?.originAirport ?? flight.originAirport)),
+    () => buildCountOptions(results.flatMap((flight) => flightAirportEndpoints(flight).fromAirports)),
     [results],
   );
   const mobileToAirportOptions = useMemo(
-    () => buildCountOptions(results.map((flight) => flight.legs?.at(-1)?.destinationAirport ?? flight.destinationAirport)),
+    () => buildCountOptions(results.flatMap((flight) => flightAirportEndpoints(flight).toAirports)),
     [results],
   );
 
@@ -3675,8 +3687,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   const durationBounds = useMemo(() => {
     const durations = results
-      .map((flight) => flight.durationMinutes)
-      .filter((duration) => Number.isFinite(duration) && duration > 0);
+      .map(flightJourneyDurationMinutes)
+      .filter((duration): duration is number => duration !== null && duration > 0);
 
     if (!durations.length) {
       return null;
@@ -3763,6 +3775,20 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       "fAirport",
       allowedAirports,
     );
+    const allowedFromAirports = new Set(mobileFromAirportOptions.map((option) => option.value));
+    const allowedToAirports = new Set(mobileToAirportOptions.map((option) => option.value));
+    const nextSelectedFromAirports = readFilterList(
+      filterParams,
+      "fFromAirport",
+      allowedFromAirports,
+    );
+    const nextSelectedToAirports = readFilterList(
+      filterParams,
+      "fToAirport",
+      allowedToAirports,
+    );
+    // Keep legacy/desktop fAirport as an undirected endpoint restriction.
+    // Directional mobile filters use only fFromAirport / fToAirport.
     const nextSelectedFlightQuality = readFilterList(
       filterParams,
       "fQuality",
@@ -3798,6 +3824,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         ? current
         : nextSelectedAirports,
     );
+    setSelectedFromAirports((current) =>
+      areStringArraysEqual(current, nextSelectedFromAirports)
+        ? current
+        : nextSelectedFromAirports,
+    );
+    setSelectedToAirports((current) =>
+      areStringArraysEqual(current, nextSelectedToAirports)
+        ? current
+        : nextSelectedToAirports,
+    );
     setSelectedFlightQuality((current) =>
       areStringArraysEqual(current, nextSelectedFlightQuality)
         ? current
@@ -3815,6 +3851,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }, [
     airlineOptions,
     airportOptions,
+    mobileFromAirportOptions,
+    mobileToAirportOptions,
     durationBounds?.max,
     durationBounds?.min,
     flightQualityOptions,
@@ -3921,6 +3959,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     appendFilterList(nextParams, "fStop", selectedStops);
     appendFilterList(nextParams, "fAirline", selectedAirlines);
     appendFilterList(nextParams, "fAirport", selectedAirports);
+    appendFilterList(nextParams, "fFromAirport", selectedFromAirports);
+    appendFilterList(nextParams, "fToAirport", selectedToAirports);
     if (renderFlightQualityFilter) {
       appendFilterList(nextParams, "fQuality", selectedFlightQuality);
     }
@@ -3956,65 +3996,29 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     router,
     selectedAirlines,
     selectedAirports,
+    selectedFromAirports,
+    selectedToAirports,
     selectedFlightQuality,
     selectedStops,
     timeBounds.landing,
     timeBounds.takeoff,
   ]);
 
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-
-    if (priceBounds.max > 0 && maxPrice > 0 && maxPrice < priceBounds.max) {
-      count += 1;
-    }
-
-    if (
-      timeBounds.takeoff &&
-      maxTakeoffMinutes !== null &&
-      maxTakeoffMinutes < timeBounds.takeoff.max
-    ) {
-      count += 1;
-    }
-
-    if (
-      timeBounds.landing &&
-      maxLandingMinutes !== null &&
-      maxLandingMinutes < timeBounds.landing.max
-    ) {
-      count += 1;
-    }
-
-    if (
-      durationBounds &&
-      maxDurationMinutes !== null &&
-      maxDurationMinutes < durationBounds.max
-    ) {
-      count += 1;
-    }
-
-    count += selectedStops.length;
-    count += selectedAirlines.length;
-    count += selectedAirports.length;
-    if (renderFlightQualityFilter) {
-      count += selectedFlightQuality.length;
-    }
-
-    if (baggageIncludedOnly) {
-      count += 1;
-    }
-
-    if (flexibleOnly) {
-      count += 1;
-    }
-
-    count += Object.values(mobileJourneyTimeMaximums).reduce(
-      (total, values) => total + (values.takeoff !== null ? 1 : 0) + (values.landing !== null ? 1 : 0),
-      0,
-    );
-
-    return count;
-  }, [
+  const authoritativeFilterState = useMemo<FlightFilterState>(() => ({
+    maximumPrice: priceBounds.max > 0 && maxPrice > 0 && maxPrice < priceBounds.max ? maxPrice : null,
+    maximumTakeoff: timeBounds.takeoff && maxTakeoffMinutes !== null && maxTakeoffMinutes < timeBounds.takeoff.max ? maxTakeoffMinutes : null,
+    maximumLanding: timeBounds.landing && maxLandingMinutes !== null && maxLandingMinutes < timeBounds.landing.max ? maxLandingMinutes : null,
+    maximumDuration: durationBounds && maxDurationMinutes !== null && maxDurationMinutes < durationBounds.max ? maxDurationMinutes : null,
+    stops: selectedStops,
+    airlines: selectedAirlines,
+    airports: selectedAirports,
+    fromAirports: selectedFromAirports,
+    toAirports: selectedToAirports,
+    journeyTimeMaximums: mobileJourneyTimeMaximums,
+    baggageIncluded: baggageIncludedOnly,
+    flexible: flexibleOnly,
+    quality: renderFlightQualityFilter ? selectedFlightQuality : [],
+  }), [
     baggageIncludedOnly,
     durationBounds,
     flexibleOnly,
@@ -4025,13 +4029,19 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     mobileJourneyTimeMaximums,
     priceBounds.max,
     renderFlightQualityFilter,
-    selectedAirlines.length,
-    selectedAirports.length,
-    selectedFlightQuality.length,
-    selectedStops.length,
+    selectedAirlines,
+    selectedAirports,
+    selectedFromAirports,
+    selectedToAirports,
+    selectedFlightQuality,
+    selectedStops,
     timeBounds.landing,
     timeBounds.takeoff,
   ]);
+  const activeFilterCount = useMemo(
+    () => countAuthoritativeFlightFilters(authoritativeFilterState),
+    [authoritativeFilterState],
+  );
 
   const activeFilterLabel = t("activeFilterCount").replace(
     "{{count}}",
@@ -4262,100 +4272,25 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setSelectedStops([]);
     setSelectedAirlines([]);
     setSelectedAirports([]);
+    setSelectedFromAirports([]);
+    setSelectedToAirports([]);
     setSelectedFlightQuality([]);
     setBaggageIncludedOnly(false);
     setFlexibleOnly(false);
     setMobileJourneyTimeMaximums({});
   };
 
-  const filtered = useMemo(
-    () =>
-      results.filter((flight) => {
-        const comparablePrice = getComparableFlightPrice(
-          flight,
-          selectedCurrency,
-          currencyRates.rates,
-        );
-        const matchesPrice = comparablePrice === null || comparablePrice.amount <= maxPrice;
-        const matchesSelectedStops =
-          selectedStops.length === 0 ||
-          selectedStops.includes(getStopBucket(flight.stops));
-        const matchesAirline =
-          selectedAirlines.length === 0 ||
-          selectedAirlines.includes(flight.airlineName);
-        const matchesAirport =
-          selectedAirports.length === 0 ||
-          selectedAirports.some((airport) =>
-            flightMatchesAirport(flight, airport),
-          );
-        const matchesBaggage =
-          !baggageIncludedOnly || hasBaggageIncluded(flight);
-        const matchesFlexibility = !flexibleOnly || hasFlexibleTerms(flight);
-        const matchesFlightQuality =
-          !renderFlightQualityFilter ||
-          selectedFlightQuality.length === 0 ||
-          selectedFlightQuality.every((option) =>
-            flightHasQualityOption(flight, option),
-          );
-        const departureMinutes = getTimeMinutes(flight.departureTime);
-        const arrivalMinutes = getTimeMinutes(flight.arrivalTime);
-        const matchesTakeoffTime =
-          maxTakeoffMinutes === null ||
-          departureMinutes === null ||
-          departureMinutes <= maxTakeoffMinutes;
-        const matchesLandingTime =
-          maxLandingMinutes === null ||
-          arrivalMinutes === null ||
-          arrivalMinutes <= maxLandingMinutes;
-        const matchesDuration =
-          maxDurationMinutes === null ||
-          !durationBounds ||
-          maxDurationMinutes >= durationBounds.max ||
-          flight.durationMinutes <= maxDurationMinutes;
-        const matchesMobileJourneyTimes = Object.entries(mobileJourneyTimeMaximums).every(
-          ([key, maximums]) => {
-            const candidates = flight.legs?.filter((leg) => ["outbound", "return", "leg"].includes(leg.direction)) ?? [];
-            const leg = candidates.find((candidate, index) => mobileFlightLegKey(candidate, index) === key);
-            if (!leg) return true;
-            const takeoff = getTimeMinutes(leg.departureTime);
-            const landing = getTimeMinutes(leg.arrivalTime);
-            return (maximums.takeoff === null || takeoff === null || takeoff <= maximums.takeoff)
-              && (maximums.landing === null || landing === null || landing <= maximums.landing);
-          },
-        );
-
-        return (
-          matchesPrice &&
-          matchesSelectedStops &&
-          matchesAirline &&
-          matchesAirport &&
-          matchesBaggage &&
-          matchesFlexibility &&
-          matchesFlightQuality &&
-          matchesTakeoffTime &&
-          matchesLandingTime &&
-          matchesMobileJourneyTimes &&
-          matchesDuration
-        );
-      }),
-    [
-      baggageIncludedOnly,
-      flexibleOnly,
-      durationBounds,
-      maxDurationMinutes,
-      maxLandingMinutes,
-      maxPrice,
-      maxTakeoffMinutes,
-      mobileJourneyTimeMaximums,
-      renderFlightQualityFilter,
-      results,
+  const flightMatchContext = useMemo(() => ({
+    priceValue: (flight: PublicFlightResult) => getComparableFlightPrice(
+      flight,
       selectedCurrency,
       currencyRates.rates,
-      selectedAirlines,
-      selectedAirports,
-      selectedFlightQuality,
-      selectedStops,
-    ],
+    )?.amount ?? null,
+    qualityMatches: flightHasQualityOption,
+  }), [currencyRates.rates, selectedCurrency]);
+  const filtered = useMemo(
+    () => results.filter((flight) => flightMatchesFilters(flight, authoritativeFilterState, flightMatchContext)),
+    [authoritativeFilterState, flightMatchContext, results],
   );
 
   const sortedResults = useMemo(() => {
@@ -4367,7 +4302,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       }
 
       if (sortMode === "fastest") {
-        return first.durationMinutes - second.durationMinutes;
+        return (flightJourneyDurationMinutes(first) ?? Number.POSITIVE_INFINITY) -
+          (flightJourneyDurationMinutes(second) ?? Number.POSITIVE_INFINITY);
       }
 
       if (sortMode === "stops") {
@@ -6370,7 +6306,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setMobileDraftSort(sortMode);
       setMobileDraftAirlines(selectedAirlines);
       setMobileDraftStops(selectedStops);
-      setMobileDraftAirports(selectedAirports);
+      setMobileDraftFromAirports(selectedFromAirports);
+      setMobileDraftToAirports(selectedToAirports);
       setMobileAirlineSearch("");
       setMobileShowAllAirlines(false);
       setMobileShortcutSheet(sheet);
@@ -6418,17 +6355,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     };
     const toggleDraft = (value: string, values: string[], setValues: Dispatch<SetStateAction<string[]>>) =>
       setValues(values.includes(value) ? values.filter((entry) => entry !== value) : [...values, value]);
-    const draftMatches = results.filter((flight) => {
-      if (mobileShortcutSheet === "airlines") return mobileDraftAirlines.length === 0 || mobileDraftAirlines.includes(flight.airlineName);
-      if (mobileShortcutSheet === "stops") return mobileDraftStops.length === 0 || mobileDraftStops.includes(getStopBucket(flight.stops));
-      if (mobileShortcutSheet === "airports") return mobileDraftAirports.length === 0 || mobileDraftAirports.some((airport) => flightMatchesAirport(flight, airport));
-      return true;
-    }).length;
+    const draftFilterState: FlightFilterState = {
+      ...authoritativeFilterState,
+      airlines: mobileShortcutSheet === "airlines" ? mobileDraftAirlines : authoritativeFilterState.airlines,
+      stops: mobileShortcutSheet === "stops" ? mobileDraftStops : authoritativeFilterState.stops,
+      fromAirports: mobileShortcutSheet === "airports" ? mobileDraftFromAirports : authoritativeFilterState.fromAirports,
+      toAirports: mobileShortcutSheet === "airports" ? mobileDraftToAirports : authoritativeFilterState.toAirports,
+    };
+    const draftMatches = matchingFlightCount(results, draftFilterState, flightMatchContext);
     const applySheet = () => {
       if (mobileShortcutSheet === "sort") setSortMode(mobileDraftSort);
       if (mobileShortcutSheet === "airlines") setSelectedAirlines(mobileDraftAirlines);
       if (mobileShortcutSheet === "stops") setSelectedStops(mobileDraftStops);
-      if (mobileShortcutSheet === "airports") setSelectedAirports(mobileDraftAirports);
+      if (mobileShortcutSheet === "airports") {
+        setSelectedFromAirports(mobileDraftFromAirports);
+        setSelectedToAirports(mobileDraftToAirports);
+      }
       triggerFilterApplying();
       handleUserFilterCommit();
       closeMobileShortcutSheet();
@@ -6437,12 +6379,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       if (mobileShortcutSheet === "sort") setMobileDraftSort("best");
       if (mobileShortcutSheet === "airlines") setMobileDraftAirlines([]);
       if (mobileShortcutSheet === "stops") setMobileDraftStops([]);
-      if (mobileShortcutSheet === "airports") setMobileDraftAirports([]);
+      if (mobileShortcutSheet === "airports") {
+        setMobileDraftFromAirports([]);
+        setMobileDraftToAirports([]);
+      }
     };
     const filteredAirlines = airlineOptions.filter((option) => !mobileAirlineSearch.trim() || option.label.toLowerCase().includes(mobileAirlineSearch.trim().toLowerCase()) || mobileDraftAirlines.includes(option.value));
     const visibleAirlines = mobileAirlineSearch.trim() || mobileShowAllAirlines ? filteredAirlines : filteredAirlines.slice(0, 5);
-    const fromAirportOptions = buildCountOptions(results.map((flight) => flight.originAirport));
-    const toAirportOptions = buildCountOptions(results.map((flight) => flight.destinationAirport));
+    const fromAirportOptions = mobileFromAirportOptions;
+    const toAirportOptions = mobileToAirportOptions;
     const sheetTitle = mobileShortcutSheet === "sort" ? "Sort flights" : mobileShortcutSheet === "airlines" ? "Airlines" : mobileShortcutSheet === "stops" ? "Stops" : "Airports";
     const renderSortChoice = (
       label: string,
@@ -6515,7 +6460,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const sheet = mobileShortcutSheet && typeof document !== "undefined" ? createPortal(
       <div
         data-flight-quick-sheet-backdrop
-        className="fixed inset-0 z-[10010] flex items-end sm:hidden"
+        className="fixed inset-0 z-[10010] flex items-end p-3 sm:hidden"
         role="presentation"
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) closeMobileShortcutSheet();
@@ -6532,7 +6477,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           role="dialog"
           aria-modal="true"
           aria-labelledby="mobile-flight-quick-sheet-title"
-          className="cars-native-quick-sheet relative z-10 flex min-h-[240px] max-h-[min(76dvh,620px)] w-full flex-col overflow-hidden rounded-t-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]"
+          className="cars-native-quick-sheet relative z-10 flex min-h-[240px] max-h-[min(76dvh,620px)] w-full flex-col overflow-hidden rounded-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]"
           onMouseDown={(event) => event.stopPropagation()}
         >
           <header className="grid min-h-[76px] shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-center bg-[#F2F4F8] px-[10px]">
@@ -6585,7 +6530,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   <div key={option.value}>
                     {renderFilterChoice(
                       option.label,
-                      option.count,
+                      matchingFlightCount(results, { ...draftFilterState, airlines: [option.value] }, flightMatchContext),
                       mobileDraftAirlines.includes(option.value),
                       () =>
                         toggleDraft(
@@ -6613,7 +6558,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   <div key={option.value}>
                     {renderFilterChoice(
                       option.label,
-                      option.count,
+                      matchingFlightCount(results, { ...draftFilterState, stops: [option.value] }, flightMatchContext),
                       mobileDraftStops.includes(option.value),
                       () =>
                         toggleDraft(
@@ -6635,13 +6580,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   <div key={`from-${option.value}`}>
                     {renderFilterChoice(
                       option.label,
-                      option.count,
-                      mobileDraftAirports.includes(option.value),
+                      matchingFlightCount(results, { ...draftFilterState, fromAirports: [option.value] }, flightMatchContext),
+                      mobileDraftFromAirports.includes(option.value),
                       () =>
                         toggleDraft(
                           option.value,
-                          mobileDraftAirports,
-                          setMobileDraftAirports,
+                          mobileDraftFromAirports,
+                          setMobileDraftFromAirports,
                         ),
                     )}
                   </div>
@@ -6653,13 +6598,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   <div key={`to-${option.value}`}>
                     {renderFilterChoice(
                       option.label,
-                      option.count,
-                      mobileDraftAirports.includes(option.value),
+                      matchingFlightCount(results, { ...draftFilterState, toAirports: [option.value] }, flightMatchContext),
+                      mobileDraftToAirports.includes(option.value),
                       () =>
                         toggleDraft(
                           option.value,
-                          mobileDraftAirports,
-                          setMobileDraftAirports,
+                          mobileDraftToAirports,
+                          setMobileDraftToAirports,
                         ),
                     )}
                   </div>
@@ -6678,11 +6623,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             <button
               type="button"
               onClick={applySheet}
-              className="flex h-[49px] min-w-0 flex-1 items-center justify-center rounded-xl bg-[#004BB8] px-3 text-[15px] font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+              disabled={mobileShortcutSheet !== "sort" && draftMatches === 0}
+              aria-disabled={mobileShortcutSheet !== "sort" && draftMatches === 0}
+              className="flex h-[49px] min-w-0 flex-1 items-center justify-center rounded-xl bg-[#004BB8] px-3 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
             >
               {mobileShortcutSheet === "sort"
                 ? "Apply"
-                : `View ${draftMatches} ${draftMatches === 1 ? "flight" : "flights"}`}
+                : draftMatches === 0
+                  ? "No matching flights"
+                  : `View ${draftMatches} ${draftMatches === 1 ? "flight" : "flights"}`}
             </button>
           </footer>
         </section>
@@ -6697,7 +6646,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             {renderTrigger("sort", activeSortOption.label)}
             {renderTrigger("airlines", "Airlines", selectedAirlines.length)}
             {renderTrigger("stops", "Stops", selectedStops.length)}
-            {renderTrigger("airports", "Airports", selectedAirports.length)}
+            {renderTrigger("airports", "Airports", selectedFromAirports.length + selectedToAirports.length)}
           </div>
         </div>
         {sheet}
@@ -6855,7 +6804,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         onClose={() => closeMobileSearchDrawer()}
         onSearch={(value: FlightEditSearchValue) => {
           const projection = projectSearchLegs(value.tripType, value.legs);
-          const nextParams = new URLSearchParams({ tripType: value.tripType, origin: projection.origin, destination: projection.destination, departureDate: value.departureDate, adults: String(value.adults), children: String(value.children), infants: String(value.infants), travelers: String(value.adults + value.children + value.infants), cabinClass: value.cabinClass });
+          const nextParams = new URLSearchParams({ tripType: value.tripType, origin: projection.origin, destination: projection.destination, departureDate: projection.departureDate, adults: String(value.adults), children: String(value.children), infants: String(value.infants), travelers: String(value.adults + value.children + value.infants), cabinClass: value.cabinClass });
           if (value.tripType === "round-trip" && value.returnDate) nextParams.set("returnDate", value.returnDate);
           if (value.tripType === "multi-city") { nextParams.set("currency", selectedCurrency); appendFlightLegParams(nextParams, value.legs); }
           closeMobileSearchDrawer({ restoreFocus: false });
@@ -6950,13 +6899,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             }}
             fromAirportOptions={mobileFromAirportOptions}
             toAirportOptions={mobileToAirportOptions}
-            selectedAirports={selectedAirports}
-            onToggleAirport={(value) => {
+            selectedFromAirports={selectedFromAirports}
+            selectedToAirports={selectedToAirports}
+            onToggleFromAirport={(value) => {
               triggerFilterApplying();
-              toggleFilterValue(value, setSelectedAirports);
+              toggleFilterValue(value, setSelectedFromAirports);
             }}
-            baggageSupported={results.some(hasBaggageIncluded)}
-            refundableSupported={results.some(hasFlexibleTerms)}
+            onToggleToAirport={(value) => {
+              triggerFilterApplying();
+              toggleFilterValue(value, setSelectedToAirports);
+            }}
+            baggageSupported={results.some(hasStructuredBaggage)}
+            refundableSupported={results.some(hasStructuredFlexibility)}
             baggageIncludedOnly={baggageIncludedOnly}
             flexibleOnly={flexibleOnly}
             onBaggage={() => {
@@ -7355,7 +7309,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         );
                       })}
                     </div>
-                    {cheaperNearbyFare ? <button type="button" onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)} className="focus-ring flex min-h-[28px] max-w-full items-center px-0 text-left text-[10px] font-semibold leading-[14px] text-slate-600 hover:text-[#075EE8]">Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}</button> : null}
+                    {cheaperNearbyFare ? <button type="button" onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)} className="focus-ring flex min-h-[28px] max-w-full items-center px-0 text-left text-[9px] font-medium leading-[12px] text-slate-600 hover:text-[#075EE8]">Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}</button> : null}
                   </div>
                   <div
                   className="hidden w-full sm:block"

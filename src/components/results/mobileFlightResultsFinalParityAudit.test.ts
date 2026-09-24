@@ -19,8 +19,8 @@ test("final mobile Flight Results order and controls remain intact", () => {
   assert.match(results, /data-flight-results-compact-header/);
   assert.match(results, /aria-label=\{t\("editFlightSearch"\)\}/);
   assert.ok(nearby >= 0 && nearby < shortcuts && shortcuts < alert && alert < count && count < cards);
-  assert.match(results, /<span>Filters<\/span>/);
-  for (const trigger of ['renderTrigger("sort", activeSortOption.label)', 'renderTrigger("airlines", "Airlines")', 'renderTrigger("stops", "Stops")', 'renderTrigger("airports", "Airports")']) assert.ok(results.includes(trigger));
+  assert.match(results, /\? t\("filtersWithCount"\)[\s\S]*: "Filters"/);
+  for (const trigger of ['renderTrigger("sort", activeSortOption.label)', 'renderTrigger("airlines", "Airlines", selectedAirlines.length)', 'renderTrigger("stops", "Stops", selectedStops.length)', 'renderTrigger("airports", "Airports", selectedFromAirports.length + selectedToAirports.length)']) assert.ok(results.includes(trigger));
 });
 
 test("mobile list uses the shared twenty-result pagination and keeps website footer controls", () => {
