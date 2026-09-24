@@ -49,3 +49,65 @@ test("quick-sheet drafts are immediate and Apply owns the results commit", () =>
   assert.match(sheet, /startFilterResultsTransition\(\); setCurrentPage\(1\)/);
   assert.match(sheet, /closeQuickFilter\(\)/);
 });
+
+test("the full mobile drawer defers its transition until changed filters become visible", () => {
+  const handlers = cars.slice(
+    cars.indexOf("const toggleMobileDrawerCarFilter"),
+    cars.indexOf("const closeQuickFilter"),
+  );
+  const drawer = cars.slice(
+    cars.indexOf("data-cars-mobile-filter-shell"),
+    cars.indexOf("data-cars-quick-sheet-backdrop"),
+  );
+
+  assert.match(handlers, /const toggleMobileDrawerCarFilter[\s\S]*setCurrentPage\(1\)[\s\S]*setSelectedCarFilters/);
+  assert.match(handlers, /const clearMobileDrawerCarFilters[\s\S]*setCurrentPage\(1\)[\s\S]*setSelectedCarFilters\(\{\}\)/);
+  assert.doesNotMatch(
+    handlers.slice(0, handlers.indexOf("const closeMobileFiltersDrawer")),
+    /startFilterResultsTransition/,
+  );
+  assert.match(drawer, /onClear=\{clearMobileDrawerCarFilters\}/);
+  assert.match(drawer, /onToggle=\{toggleMobileDrawerCarFilter\}/);
+  assert.match(drawer, /onClick=\{clearMobileDrawerCarFilters\}/);
+  assert.doesNotMatch(drawer, /onToggle=\{toggleCarFilter\}|onClick=\{clearCarFilters\}/);
+});
+
+test("every full mobile drawer exit compares its opening snapshot before closing", () => {
+  const closeHandler = cars.slice(
+    cars.indexOf("const closeMobileFiltersDrawer"),
+    cars.indexOf("const openMobileFiltersDrawer"),
+  );
+  const openHandler = cars.slice(
+    cars.indexOf("const openMobileFiltersDrawer"),
+    cars.indexOf("const closeQuickFilter"),
+  );
+  const drawer = cars.slice(
+    cars.indexOf("data-cars-mobile-filter-shell"),
+    cars.indexOf("data-cars-quick-sheet-backdrop"),
+  );
+
+  assert.match(openHandler, /mobileFilterDrawerInitialFiltersRef\.current =[\s\S]*getSelectedCarFiltersSignature/);
+  assert.match(closeHandler, /mobileFilterDrawerInitialFiltersRef\.current !==[\s\S]*getSelectedCarFiltersSignature\(selectedCarFiltersRef\.current\)/);
+  assert.match(closeHandler, /if \(filtersChanged\) startFilterResultsTransition\(\);[\s\S]*setFiltersOpen\(false\)/);
+  assert.equal((drawer.match(/onClick=\{closeMobileFiltersDrawer\}/g) ?? []).length, 2);
+  assert.match(cars, /else closeMobileFiltersDrawer\(\)/);
+  assert.match(cars, /onClick=\{closeMobileFiltersDrawer\}[\s\S]*Show \{visibleResults\.length\}/);
+  assert.doesNotMatch(drawer, /onClick=\{\(\) => setFiltersOpen\(false\)\}/);
+});
+
+test("the drawer filter signature treats reordered and reverted selections as unchanged", async () => {
+  const { getSelectedCarFiltersSignature } = await import("../../lib/cars/carFilterSelection");
+  const opening = getSelectedCarFiltersSignature({
+    vehicleType: ["suv", "small"],
+    transmission: ["automatic"],
+  });
+
+  assert.equal(
+    opening,
+    getSelectedCarFiltersSignature({
+      transmission: ["automatic"],
+      vehicleType: ["small", "suv"],
+    }),
+  );
+  assert.notEqual(opening, getSelectedCarFiltersSignature({ vehicleType: ["suv"] }));
+});

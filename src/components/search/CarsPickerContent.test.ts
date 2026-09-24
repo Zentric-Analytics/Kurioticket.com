@@ -42,7 +42,28 @@ test("shared time content renders two independently scrollable button lists", ()
   assert.match(shared, /grid min-h-0 flex-1 grid-cols-2 overflow-hidden/);
   assert.match(shared, /min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain/);
   assert.match(shared, /list\.scrollTop = Math\.max/);
+  assert.match(shared, /if \(!mobileShell \|\| autoRevealSelected \|\| !open\) return/);
+  assert.match(shared, /pickupListRef\.current\.scrollTop = 0/);
+  assert.match(shared, /returnListRef\.current\.scrollTop = 0/);
+  assert.match(shared, /open=\{open\}/);
+  assert.match(shared, /autoRevealSelected=\{!nativeCarsAppearance\}/);
   assert.equal(shared.includes("scrollIntoView"), false);
+});
+
+test("native Cars time dialogs reset both lists only when the picker opens", () => {
+  assert.match(shared, /autoRevealSelected=\{!nativeCarsAppearance\}/);
+  assert.match(shared, /open=\{open\}/);
+  assert.match(shared, /if \(!mobileShell \|\| autoRevealSelected \|\| !open\) return/);
+  assert.match(shared, /pickupListRef\.current\.scrollTop = 0/);
+  assert.match(shared, /returnListRef\.current\.scrollTop = 0/);
+  assert.match(
+    shared,
+    /\}, \[autoRevealSelected, mobileShell, open\]\);/,
+  );
+  assert.doesNotMatch(
+    shared,
+    /\}, \[autoRevealSelected, mobileShell, open, (?:pickupTime|returnTime)/,
+  );
 });
 
 test("shared age content provides compact selection and keyboard semantics", () => {
@@ -106,4 +127,32 @@ test("mobile shell interactions are not closed by the desktop outside-pointer li
   assert.match(homepage, /if \(listenForOutsidePointer\) \{\s*document\.addEventListener\("pointerdown"/);
   assert.match(homepage, /document\.addEventListener\("keydown", closeOnEscape\)/);
   assert.match(homepage, /\[isSmViewport, mobilePresentation, onOpenChange, open\]/);
+});
+
+test("Cars Main shares native time and concrete-age internals without changing defaults", () => {
+  assert.match(shared, /presentation\?: "default" \| "carsResultsEdit" \| "carsMain"/);
+  assert.match(shared, /presentation === "carsResultsEdit" \|\| presentation === "carsMain"/);
+  assert.match(shared, /presentation === "carsMain"[\s\S]*?"bg-white px-4 py-3"/);
+  assert.match(shared, /nativeCarsAppearance \? driverAgeOptions\.slice\(1\) : driverAgeOptions/);
+  assert.match(shared, /presentation === "carsMain" && driverAge === defaultDriverAge[\s\S]*?\? undefined/);
+  assert.doesNotMatch(shared, /driverAge === defaultDriverAge[\s\S]*?\? "30"/);
+  assert.match(shared, /disabled=\{presentation === "carsMain" && draftAge === undefined\}/);
+  assert.match(shared, /if \(draftAge === undefined\) return;[\s\S]*?onCommit\(draftAge\)/);
+  assert.doesNotMatch(shared, /presentation === "carsResultsEdit" && driverAge === defaultDriverAge[\s\S]*?\? "30"/);
+  assert.match(shared, /nativeCarsAppearance \?[\s\S]*?`\$\{age\} years old`/);
+});
+
+
+test("mobile Cars time rows distinguish touch scrolling from intentional taps", () => {
+  assert.match(shared, /function CarsTimeOptionButton/);
+  assert.match(shared, /beginCarLocationPointerIntent/);
+  assert.match(shared, /updateCarLocationPointerIntent/);
+  assert.match(shared, /isIntentionalCarLocationTap/);
+  assert.match(shared, /suppressClickRef\.current = true/);
+});
+
+test("mobile Cars time Done stays disabled until both times are chosen", () => {
+  assert.match(shared, /disabled=\{!draftPickup \|\| !draftReturn\}/);
+  assert.match(shared, /aria-disabled=\{!draftPickup \|\| !draftReturn\}/);
+  assert.match(shared, /if \(!draftPickup \|\| !draftReturn\) return/);
 });

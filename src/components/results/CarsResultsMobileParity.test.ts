@@ -31,7 +31,15 @@ test("mobile Cars Results keeps its summary band white above the native canvas",
   assert.match(mobileSummarySection, /bg-white pb-0 pt-0 sm:hidden/);
   assert.doesNotMatch(mobileSummarySection, /bg-\[#F5F7FB\]/);
   assert.match(mobileSummarySection, /relative translate-y-1\/2/);
-  assert.match(mobileSummaryControls, /rounded-xl border border-slate-200\/80 bg-white/);
+  assert.match(mobileSummaryControls, /rounded-\[13px\] border border-\[#D8E1EC\] bg-white/);
+});
+
+test("mobile search summary translates the native compact hierarchy without shrinking its touch target", () => {
+  assert.match(mobileSummaryControls, /min-h-\[62px\]/);
+  assert.match(mobileSummaryControls, /rounded-\[13px\] border border-\[#D8E1EC\]/);
+  assert.match(mobileSummaryControls, /text-\[14px\] font-bold leading-\[18px\]/);
+  assert.match(mobileSummaryControls, /mt-\[3px\][^\"]*text-\[10\.5px\] font-medium leading-\[14px\]/);
+  assert.match(mobileSummaryControls, /h-11 w-11[\s\S]*SquarePen size=\{16\}/);
 });
 
 test("mobile shortcuts are compact, scrollable touch targets in canonical order", () => {
@@ -45,8 +53,7 @@ test("mobile shortcuts are compact, scrollable touch targets in canonical order"
   assert.match(rail, /\[scrollbar-width:none\][^\"]*\[&::-webkit-scrollbar\]:hidden/);
   assert.match(rail, /-me-4[^\"]*w-\[calc\(100%\+1rem\)\][^\"]*pe-4/);
   assert.match(rail, /min-h-11 min-w-11 shrink-0/);
-  assert.match(rail, /h-9[^\"]*rounded-\[9px\][^\"]*border-\[#D8E1EC\][^\"]*bg-white px-2/);
-  assert.doesNotMatch(rail, /px-2\.5/);
+  assert.match(rail, /h-9[^\"]*rounded-\[9px\][^\"]*border[^\"]*px-2\.5[^\"]*text-\[13px\][^\"]*leading-4/);
   assert.doesNotMatch(rail, /style=\{\{\s*width|basis-/);
   assert.match(rail, /locale\.startsWith\("en"\) \? "Filter" : t\("filters"\)/);
   assert.doesNotMatch(rail, /Swipe for more/i);
@@ -84,4 +91,5 @@ test("mobile car price alert uses the native alert palette and bare bell", () =>
   assert.match(alertSource, /border-\[#C8DFF7\] bg-\[#EDF6FF\]/);
   assert.match(alertSource, /text-\[#1769AA\]/);
   assert.match(alertSource, /sm:rounded-full sm:bg-blue-50/);
+  assert.match(alertSource, /text-\[12\.5px\] font-bold leading-4/);
 });

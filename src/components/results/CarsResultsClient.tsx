@@ -75,6 +75,7 @@ import type {
 import type { CarLocationSuggestion } from "@/lib/cars/carLocationSuggestions";
 import { serializeCarLocationTarget } from "@/lib/cars/carSearchLocationTarget";
 import { carFilterGroups, carQuickFilterGroupIds, type CarFilterGroup } from "@/lib/cars/carFilterPresentation";
+import { getSelectedCarFiltersSignature } from "@/lib/cars/carFilterSelection";
 import { formatCarResultsScheduleSummary } from "@/lib/cars/carResultsSummary";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -505,10 +506,12 @@ const fieldInputClass =
 const carsMobileEditFieldShellClass =
   "relative flex min-h-[70px] flex-col justify-center gap-[1px] rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-2.5 shadow-[0_2px_8px_rgba(15,23,42,0.035)] focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25";
 const carsMobileEditFieldLabelClass =
-  "mb-0 text-[9.5px] font-semibold leading-[13px] tracking-[0.95px] text-[#64748B]";
+  "mb-0 text-[10px] font-semibold uppercase leading-[14px] tracking-[0.08em] text-slate-500";
 const carsMobileEditValueRowClass = "gap-2.5";
 const carsMobileEditValueClass =
-  "h-auto text-[13px] font-medium leading-[18px]";
+  "h-auto text-[15px] font-medium leading-5 tracking-[-0.01em] text-slate-900";
+const carsMobileEditSecondaryValueClass =
+  "text-[12px] font-normal leading-[17px] tracking-normal text-slate-500";
 
 export function CarsResultsClient({
   values,
@@ -1064,19 +1067,19 @@ export function CarsResultsClient({
       <button
         type="button"
         onClick={(event) => openMobileSearchDrawer(event.currentTarget, getOverlayActivationModality(event))}
-        className="group relative z-10 flex h-[4.25rem] min-w-0 w-full max-w-[30rem] touch-manipulation items-center justify-between gap-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-4 py-0 text-start shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] transition [-webkit-tap-highlight-color:transparent] hover:border-slate-300 hover:bg-white hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.62)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+        className="group relative z-10 flex min-h-[62px] min-w-0 w-full max-w-[30rem] touch-manipulation items-center justify-between gap-2 overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white py-0 ps-3.5 pe-1.5 text-start shadow-[0_2px_10px_rgba(24,48,91,0.08)] transition [-webkit-tap-highlight-color:transparent] hover:border-slate-300 hover:bg-white hover:shadow-[0_3px_12px_rgba(24,48,91,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
       >
         <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
-          <span className="block truncate text-[16px] font-bold leading-5 tracking-[-0.015em] text-[#07133B]">
+          <span className="block truncate text-[14px] font-bold leading-[18px] tracking-[-0.01em] text-[#07133B]">
             {locationPairSummary}
           </span>
-          <span className="mt-1.5 block truncate text-[12.5px] font-medium leading-4 text-[#536B92]">
+          <span className="mt-[3px] block truncate text-[10.5px] font-medium leading-[14px] text-[#536B92]">
             {rentalScheduleSummary}
           </span>
         </span>
         <span
           aria-hidden="true"
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-[#142033] transition group-hover:bg-slate-100"
         >
           <SquarePen size={16} strokeWidth={2.2} />
         </span>
@@ -1894,6 +1897,10 @@ export function CarsResultsExperience({
     null,
   );
   const [selectedCarFilters, setSelectedCarFilters] = useState<SelectedCarFilters>({});
+  const selectedCarFiltersRef = useRef(selectedCarFilters);
+  const mobileFilterDrawerInitialFiltersRef = useRef(
+    getSelectedCarFiltersSignature(selectedCarFilters),
+  );
   const filterUrlReadyRef = useRef(false);
   const [sort, setSort] = useState<CarSort>(
     presentation === "guided-planning" ? "lowestTotal" : "recommended",
@@ -1928,6 +1935,10 @@ export function CarsResultsExperience({
     useState<DesktopCompactFilterFrame | null>(null);
   const [desktopCompactFilterPlacement, setDesktopCompactFilterPlacement] =
     useState<DesktopCompactFilterPlacementState>("hidden");
+
+  useLayoutEffect(() => {
+    selectedCarFiltersRef.current = selectedCarFilters;
+  }, [selectedCarFilters]);
   const desktopCompactFilterVisibilityRef = useRef(false);
   const desktopCompactFilterPlacementRef =
     useRef<DesktopCompactFilterPlacementState>("hidden");
@@ -2101,7 +2112,7 @@ export function CarsResultsExperience({
       window.setTimeout(() => setPaginationRevealing(false), PAGINATION_REVEAL_MS);
     }
   };
-  const startFilterResultsTransition = () => {
+  const startFilterResultsTransition = useCallback(() => {
     const run = ++filterTransitionRunRef.current;
     const mobile = window.innerWidth < 1024;
     filterTransitionMobileRef.current = mobile;
@@ -2141,7 +2152,7 @@ export function CarsResultsExperience({
         }, remaining);
       });
     });
-  };
+  }, []);
   const toggleCarFilter = (groupId: string, option: string) => {
     startFilterResultsTransition();
     setCurrentPage(1);
@@ -2162,9 +2173,36 @@ export function CarsResultsExperience({
     setCurrentPage(1);
     setSelectedCarFilters({});
   };
+  const toggleMobileDrawerCarFilter = (groupId: string, option: string) => {
+    setCurrentPage(1);
+    setSelectedCarFilters((current) => {
+      const currentGroupSelections = current[groupId] ?? [];
+      const nextGroupSelections = currentGroupSelections.includes(option)
+        ? currentGroupSelections.filter((selected) => selected !== option)
+        : [...currentGroupSelections, option];
+      const nextFilters = { ...current };
+      if (nextGroupSelections.length > 0)
+        nextFilters[groupId] = nextGroupSelections;
+      else delete nextFilters[groupId];
+      return nextFilters;
+    });
+  };
+  const clearMobileDrawerCarFilters = () => {
+    setCurrentPage(1);
+    setSelectedCarFilters({});
+  };
+  const closeMobileFiltersDrawer = useCallback(() => {
+    const filtersChanged =
+      mobileFilterDrawerInitialFiltersRef.current !==
+      getSelectedCarFiltersSignature(selectedCarFiltersRef.current);
+    if (filtersChanged) startFilterResultsTransition();
+    setFiltersOpen(false);
+  }, [startFilterResultsTransition]);
   const openMobileFiltersDrawer = (launcher: HTMLButtonElement, modality: OverlayActivationModality) => {
     mobileFiltersLauncherRef.current = launcher;
     mobileFiltersModalityRef.current = modality;
+    mobileFilterDrawerInitialFiltersRef.current =
+      getSelectedCarFiltersSignature(selectedCarFiltersRef.current);
     setQuickFilterGroupId(null);
     setFiltersOpen(true);
   };
@@ -2241,7 +2279,8 @@ export function CarsResultsExperience({
     const closeForDesktop = () => {
       if (!media.matches) {
         shouldRestoreFocus = false;
-        setFiltersOpen(false);
+        if (filtersOpen) closeMobileFiltersDrawer();
+        else setFiltersOpen(false);
         setQuickFilterGroupId(null);
       }
     };
@@ -2249,7 +2288,7 @@ export function CarsResultsExperience({
       if (event.key === "Escape") {
         event.preventDefault();
         if (quickFilterGroupId) closeQuickFilter();
-        else setFiltersOpen(false);
+        else closeMobileFiltersDrawer();
       }
       const dialog = activeDialogRef.current;
       if (event.key === "Tab" && dialog) {
@@ -2287,7 +2326,7 @@ export function CarsResultsExperience({
       media.removeEventListener("change", closeForDesktop);
       if (shouldRestoreFocus) restoreOverlayLauncherFocus(launcher, mobileFiltersModalityRef.current);
     };
-  }, [closeQuickFilter, filtersOpen, quickFilterGroupId]);
+  }, [closeMobileFiltersDrawer, closeQuickFilter, filtersOpen, quickFilterGroupId]);
 
   useEffect(() => {
     if (presentation !== "standalone" || typeof window === "undefined")
@@ -2610,11 +2649,15 @@ export function CarsResultsExperience({
                       className="group inline-flex min-h-11 min-w-11 shrink-0 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
                       onClick={(event) => openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))}
                     >
-                      <span className="inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2 text-[13px] font-semibold text-[#142033] transition group-hover:bg-slate-50">
+                      <span className={cn(
+                        "inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border px-2.5 text-[13px] font-semibold leading-4 transition",
+                        activeFilterCount > 0
+                          ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
+                          : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
+                      )}>
                         <SlidersHorizontal className="h-4 w-4 shrink-0" aria-hidden="true" />
-                        {activeFilterCount > 0
-                          ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount))
-                          : locale.startsWith("en") ? "Filter" : t("filters")}
+                        {locale.startsWith("en") ? "Filter" : t("filters")}
+                        {activeFilterCount > 0 ? <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8] px-1.5 text-[10px] font-semibold leading-none text-white">{activeFilterCount}</span> : null}
                       </span>
                     </button>
                     <button
@@ -2627,7 +2670,7 @@ export function CarsResultsExperience({
                       }}
                       className="group inline-flex min-h-11 min-w-11 shrink-0 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
                     >
-                      <span className="inline-flex h-9 items-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2 text-[13px] font-semibold text-[#142033] transition group-hover:bg-slate-50">
+                      <span className="inline-flex h-9 items-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2.5 text-[13px] font-semibold leading-4 text-[#142033] transition group-hover:bg-slate-50">
                         {sort === "recommended" ? "Sort" : selectedCarSortLabel}
                         <ChevronDown className="h-[13px] w-[13px] text-slate-500" aria-hidden="true" />
                       </span>
@@ -2648,14 +2691,14 @@ export function CarsResultsExperience({
                           )}
                         >
                           <span className={cn(
-                            "inline-flex h-9 items-center gap-1 rounded-[9px] border px-2 text-[13px] font-semibold transition",
+                            "inline-flex h-9 items-center gap-1 rounded-[9px] border px-2.5 text-[13px] font-semibold leading-4 transition",
                             count > 0
                               ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
                               : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
                           )}>
                             {carFilterGroupLabel(group, t, true)}
-                            {count > 0 ? <span className="rounded-full bg-[#004BB8] px-1.5 py-0.5 text-[10px] text-white">{count}</span> : null}
-                            <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                            {count > 0 ? <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8] px-1.5 text-[10px] font-semibold leading-none text-white">{count}</span> : null}
+                            <ChevronDown className="h-[13px] w-[13px] shrink-0 text-slate-500" aria-hidden="true" />
                           </span>
                         </button>
                       );
@@ -2778,10 +2821,10 @@ export function CarsResultsExperience({
                   </div>
                 </div>
                 {appliedCarFilters.length > 0 ? (
-                  <div className="flex w-full flex-wrap gap-2" aria-label="Applied car filters">
+                  <div className="flex w-full flex-wrap gap-1.5" aria-label="Applied car filters">
                     {appliedCarFilters.map((filter) => (
-                      <button key={`${filter.groupId}-${filter.optionId}`} type="button" onClick={() => toggleCarFilter(filter.groupId, filter.optionId)} className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[#B8CDED] bg-[#EEF5FF] px-3 text-xs font-semibold text-[#064A9B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35" aria-label={`Remove ${filter.label} filter`}>
-                        {filter.label}<X className="h-3.5 w-3.5" aria-hidden="true" />
+                      <button key={`${filter.groupId}-${filter.optionId}`} type="button" onClick={() => toggleCarFilter(filter.groupId, filter.optionId)} className="inline-flex min-h-11 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35" aria-label={`Remove ${filter.label} filter`}>
+                        <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#B8CDED] bg-[#EEF5FF] px-2.5 text-[11px] font-semibold leading-[14px] text-[#064A9B]">{filter.label}<X className="h-[13px] w-[13px] shrink-0" aria-hidden="true" /></span>
                       </button>
                     ))}
                   </div>
@@ -2979,7 +3022,7 @@ export function CarsResultsExperience({
         <button
           type="button"
           aria-label={t("carsResults.closeFilters")}
-          onClick={() => setFiltersOpen(false)}
+          onClick={closeMobileFiltersDrawer}
           className="fixed inset-0 z-[9999] hidden bg-slate-950/35 backdrop-blur-[1px] sm:block lg:hidden"
         />
       ) : null}
@@ -3000,7 +3043,7 @@ export function CarsResultsExperience({
                 <p className="text-xs font-medium leading-4 text-slate-500">{activeFilterLabel}</p>
               ) : null}
             </div>
-            <button ref={filtersCloseButtonRef} type="button" className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-700 transition hover:text-slate-950 focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35" aria-label={t("carsResults.closeFilters")} onClick={() => setFiltersOpen(false)}>
+            <button ref={filtersCloseButtonRef} type="button" className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-700 transition hover:text-slate-950 focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35" aria-label={t("carsResults.closeFilters")} onClick={closeMobileFiltersDrawer}>
               <X className="h-[22px] w-[22px]" aria-hidden="true" />
             </button>
           </header>
@@ -3015,22 +3058,22 @@ export function CarsResultsExperience({
               }
               activeFilterCount={activeFilterCount}
               layout="mobile"
-              onClear={clearCarFilters}
-              onToggle={toggleCarFilter}
+              onClear={clearMobileDrawerCarFilters}
+              onToggle={toggleMobileDrawerCarFilter}
               selectedFilters={selectedCarFilters}
               t={t}
             />
           </div>
           <footer className="flex shrink-0 items-center gap-3.5 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
             {activeFilterCount > 0 ? (
-              <button type="button" aria-label={t("carsResults.resetFilters")} onClick={clearCarFilters} className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
+              <button type="button" aria-label={t("carsResults.resetFilters")} onClick={clearMobileDrawerCarFilters} className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
                 {t("carsResults.reset")}
               </button>
             ) : null}
             <Button
               type="button"
               className="min-h-[50px] min-w-0 flex-1 rounded-[10px] bg-[#004BB8] px-5 text-base font-bold leading-[22px] text-white shadow-none"
-              onClick={() => setFiltersOpen(false)}
+              onClick={closeMobileFiltersDrawer}
             >
               Show {visibleResults.length} {visibleResults.length === 1 ? "car" : "cars"}
             </Button>
@@ -3165,7 +3208,16 @@ function MobileLocationLauncher({
           )}
         >
           <span className="block truncate">{display.primary || placeholder}</span>
-          {display.secondary ? <span className="block truncate text-[10px] font-normal leading-[14px] text-slate-600">{display.secondary}</span> : null}
+          {display.secondary ? (
+            <span
+              className={cn(
+                "block truncate text-[11px] font-normal leading-[15px] text-slate-600",
+                groupedMobile && carsMobileEditSecondaryValueClass,
+              )}
+            >
+              {display.secondary}
+            </span>
+          ) : null}
         </button>
         {secondaryAction ? (
           <button
@@ -3442,7 +3494,7 @@ function SearchDateCell({
           <span
             className={cn(
               "block truncate leading-4",
-              groupedMobile && "leading-[18px]",
+              groupedMobile && "leading-5",
               !pickupDate && "text-slate-400",
             )}
           >

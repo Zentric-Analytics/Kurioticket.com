@@ -12,7 +12,7 @@ test("shared mobile calendar renders one card with localized stacked months and 
   assert.match(source, /data-adjacent-month-placeholder/);
   assert.match(source, /border-t border-slate-200\/70/);
   assert.match(source, /Array\.from\(\{ length: monthCount \}/);
-  assert.match(source, /data-scroll-direction=\{carsResultsEdit \? "vertical"/);
+  assert.match(source, /data-scroll-direction=\{compactCars \? "vertical"/);
   assert.doesNotMatch(source, /resultsMonth|ChevronLeft|ChevronRight/);
 });
 
@@ -74,5 +74,12 @@ test("Cars Results Edit uses native compact date hierarchy", () => {
   assert.doesNotMatch(source, /Previous month|Next month/);
   assert.match(source, /text-\[16px\] font-semibold leading-5/);
   assert.match(source, /h-8 w-8 rounded-lg text-xs/);
-  assert.match(source, /endpoint && !carsResultsEdit/);
+  assert.match(source, /endpoint && !compactCars/);
+});
+
+test("Cars Main uses the compact vertical calendar without a duplicate heading", () => {
+  assert.match(source, /appearance\?: "default" \| "carsResultsEdit" \| "carsMain"/);
+  assert.match(source, /const compactCars = carsResultsEdit \|\| carsMain/);
+  assert.match(source, /\{!compactCars \? \([\s\S]*?\{labels\.selectDates\}/);
+  assert.match(source, /presentation === "carsMain" && "bg-white px-4 py-3"/);
 });

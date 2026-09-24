@@ -59,30 +59,38 @@ test("Cars Edit children preserve polished Cars content in the full-height mobil
   assert.doesNotMatch(pickerShell, /max-h-\[82dvh\]/);
   assert.doesNotMatch(carsPickerContent, /max-h-\[72dvh\]/);
   assert.match(pickerShell, /presentation = "default"/);
-  assert.match(datePicker, /carsResultsEdit &&[\s\S]*?"h-8 w-8 rounded-lg text-xs/);
+  assert.match(datePicker, /compactCars &&[\s\S]*?"h-8 w-8 rounded-lg text-xs/);
   assert.match(datePicker, /text-\[16px\] font-semibold leading-5/);
-  assert.match(datePicker, /data-scroll-direction=\{carsResultsEdit \? "vertical"/);
+  assert.match(datePicker, /data-scroll-direction=\{compactCars \? "vertical"/);
   assert.match(datePicker, /Array\.from\(\{ length: monthCount \}/);
   assert.doesNotMatch(datePicker, /\[resultsMonth\]/);
   assert.doesNotMatch(datePicker, /Previous month|Next month/);
   assert.doesNotMatch(datePicker, /data-cars-results-date-range-header/);
-  assert.match(datePicker, /endpoint && !carsResultsEdit/);
+  assert.match(datePicker, /endpoint && !compactCars/);
   assert.match(datePicker, /`\$\{fullDate\}, \$\{endpoint\}`/);
-  assert.match(locationPicker, /surfaceVariant=\{resultsEdit \? "white" : "default"\}/);
-  assert.match(locationPicker, /contentLayout=\{resultsEdit \? "contained" : "scroll"\}/);
-  assert.match(locationPicker, /resultsEdit && "bg-white px-5 py-3"/);
+  assert.match(locationPicker, /surfaceVariant=\{nativeCarsAppearance \? "white" : "default"\}/);
+  assert.match(locationPicker, /contentLayout=\{nativeCarsAppearance \? "contained" : "scroll"\}/);
+  assert.match(locationPicker, /nativeCarsAppearance && "bg-white px-5 py-3"/);
   assert.match(locationPicker, /h-\[50px\].*rounded-\[10px\]/);
   assert.match(carsPickerContent, /min-h-14/);
   assert.match(
     carsPickerContent,
-    /resultsEdit \? driverAgeOptions\.slice\(1\)/,
+    /nativeCarsAppearance \? driverAgeOptions\.slice\(1\)/,
+  );
+  const resultsAgeDialog = carsPickerContent.slice(
+    carsPickerContent.indexOf("export function MobileCarDriverAgePickerDialog"),
   );
   assert.match(
-    carsPickerContent,
-    /driverAge === defaultDriverAge[\s\S]*?\? "30"/,
+    resultsAgeDialog,
+    /presentation === "carsMain" && driverAge === defaultDriverAge/,
   );
+  assert.doesNotMatch(
+    resultsAgeDialog,
+    /presentation === "carsResultsEdit" && driverAge === defaultDriverAge[\s\S]*?\? "30"/,
+  );
+  assert.match(resultsAgeDialog, /\? undefined\s*: driverAge;/);
   assert.match(carsPickerContent, /`\$\{age\} years old`/);
-  assert.match(carsPickerContent, /presentation !== "carsResultsEdit" \? \(/);
+  assert.match(carsPickerContent, /!nativeCarsAppearance \? \(/);
   assert.doesNotMatch(
     carsPickerContent.slice(
       carsPickerContent.indexOf("export function MobileCarDriverAgePickerDialog"),
@@ -146,4 +154,57 @@ test("mobile Driver Age delegates numeric formatting to the shared picker", () =
     source.match(/<MobileCarDriverAgePickerDialog[\s\S]*?\/>/)?.[0] ?? "",
     /years old/,
   );
+});
+
+test("Results Edit time opens at the top without discarding selected draft values", () => {
+  assert.match(
+    source,
+    /<MobileCarTimePickerDialog[\s\S]*?presentation="carsResultsEdit"[\s\S]*?pickupTime=\{pickupTime\}[\s\S]*?returnTime=\{dropoffTime\}/,
+  );
+  assert.match(carsPickerContent, /autoRevealSelected=\{!nativeCarsAppearance\}/);
+  assert.match(
+    carsPickerContent,
+    /presentation === "carsResultsEdit" \|\| presentation === "carsMain"/,
+  );
+  assert.match(carsPickerContent, /open=\{open\}/);
+  assert.match(carsPickerContent, /pickupListRef\.current\.scrollTop = 0/);
+  assert.match(carsPickerContent, /returnListRef\.current\.scrollTop = 0/);
+  assert.match(carsPickerContent, /aria-selected=\{selectedTime === time\}/);
+  assert.match(
+    carsPickerContent,
+    /mobileShell && selectedTime === time[\s\S]*?data-selected-time-indicator/,
+  );
+  assert.match(
+    carsPickerContent,
+    /\}, \[autoRevealSelected, mobileShell, open\]\);/,
+  );
+});
+
+test("Results Edit preserves the Any Age sentinel without selecting a numeric row", () => {
+  const agePicker = carsPickerContent.slice(
+    carsPickerContent.indexOf("export function CarsDriverAgePickerContent"),
+    carsPickerContent.indexOf("export function MobileCarTimePickerDialog"),
+  );
+  const ageDialog = carsPickerContent.slice(
+    carsPickerContent.indexOf("export function MobileCarDriverAgePickerDialog"),
+  );
+
+  assert.match(
+    agePicker,
+    /nativeCarsAppearance \? driverAgeOptions\.slice\(1\) : driverAgeOptions/,
+  );
+  assert.match(
+    agePicker,
+    /const selectedIndex = selectedAge \? ageOptions\.indexOf\(selectedAge\) : -1/,
+  );
+  assert.match(agePicker, /selectedIndex < 0 \? 0 : selectedIndex/);
+  assert.match(agePicker, /const selected = selectedAge === age/);
+  assert.match(agePicker, /aria-selected=\{selected\}/);
+
+  assert.match(
+    ageDialog,
+    /presentation === "carsMain" && driverAge === defaultDriverAge[\s\S]*?\? undefined[\s\S]*?: driverAge/,
+  );
+  assert.match(ageDialog, /onCommit\(draftAge\)/);
+  assert.match(ageDialog, /onClose=\{onClose\}/);
 });
