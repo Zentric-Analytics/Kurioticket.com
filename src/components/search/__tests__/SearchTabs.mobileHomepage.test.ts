@@ -239,16 +239,36 @@ test("mobile homepage Cars aligns a decorative MapPin before the dynamic pickup 
   assert.match(carsPickupField, /hidden sm:block[\s\S]*?<CarLocationAutocomplete/);
 });
 
-test("mobile Cars exactly swaps empty placeholder typography without changing selected values", () => {
+test("mobile Cars empty placeholders share one light typography treatment", () => {
   assert.match(carsPickupField, /text-\[15px\] font-semibold leading-5 sm:hidden/);
+  assert.match(
+    carsPickupField,
+    /carsValues\.pickupLocation \? "font-semibold text-slate-950" : "font-normal text-slate-500"/,
+  );
   assert.match(carsPickupField, /hidden sm:block[\s\S]*?inputClassName=\{cn\(hotelFieldValueClassName, "h-8 w-full ps-6"\)\}/);
+
   assert.match(source, /const carsDateRangeIsEmpty = !carsValues\.pickupDate && !carsValues\.dropoffDate/);
-  assert.match(carsRentalDatesField, /valueClassName=\{mobileHomepage && carsDateRangeIsEmpty \? "text-\[15px\] font-semibold leading-5 text-slate-950" : undefined\}/);
-  assert.match(source, /carsEmptyDateTextClassName = mobileHomepage && carsDateRangeIsEmpty \? "text-slate-950" : undefined/);
-  assert.match(source, /carsEmptyDateTextClassName \?\? \(carsValues\.pickupDate \? "text-slate-900" : "text-slate-500"\)/);
-  assert.match(source, /carsEmptyDateTextClassName \?\? "text-slate-400"/);
-  assert.match(source, /carsEmptyDateTextClassName \?\? \(carsValues\.dropoffDate \? "text-slate-900" : "text-slate-500"\)/);
-  assert.doesNotMatch(carsTimeField, /valueClassName=/);
+  assert.match(
+    carsRentalDatesField,
+    /valueClassName=\{mobileHomepage && carsDateRangeIsEmpty \? "text-\[15px\] font-normal leading-5 text-slate-500" : undefined\}/,
+  );
+  assert.match(
+    source,
+    /carsEmptyDateTextClassName = mobileHomepage && carsDateRangeIsEmpty \? "text-slate-500" : undefined/,
+  );
+
+  assert.match(source, /const carsTimeRangeIsEmpty = !carsValues\.pickupTime && !carsValues\.dropoffTime/);
+  assert.match(
+    carsTimeField,
+    /valueClassName=\{mobileHomepage && carsTimeRangeIsEmpty \? "text-\[15px\] font-normal leading-5 text-slate-500" : undefined\}/,
+  );
+  assert.match(
+    source,
+    /pickupTime: mobileHomepage \? "" : "10:00"[\s\S]*?dropoffTime: mobileHomepage \? "" : "10:00"/,
+  );
+  assert.doesNotMatch(source, /const \[carsDraftTimes, setCarsDraftTimes\]/);
+  assert.doesNotMatch(source, /setCarsDraftTimes\(/);
+
   assert.doesNotMatch(carsDriverAgeField, /valueClassName=/);
 
   const summaryField = source.slice(source.indexOf("function CarsSummaryField"), source.indexOf("export function SearchTabs"));
@@ -256,7 +276,6 @@ test("mobile Cars exactly swaps empty placeholder typography without changing se
   assert.match(summaryField, /nativeMobileCarsField && "text-\[10px\] font-extrabold leading-\[13px\] tracking-\[0\.5px\]/);
   assert.match(summaryField, /nativeMobileCarsField && "text-\[15px\] font-semibold leading-5"/);
   assert.match(summaryField, /className=\{cn\("flex min-w-0 items-center gap-2 truncate", valueClassName\)\}/);
-  assert.doesNotMatch(summaryField, /text-\[17px\] font-normal leading-6 text-slate-950/);
 });
 
 test("mobile homepage Cars isolates CSS-hidden desktop location autocompletes", () => {
