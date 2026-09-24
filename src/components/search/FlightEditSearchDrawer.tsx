@@ -250,8 +250,60 @@ export function FlightEditSearchDrawer({
           (draft.tripType !== "round-trip" ||
             (draft.returnDate && draft.returnDate >= draft.departureDate)),
         );
+  const changeTripType = (tripType: TripType) => {
+    setDraft((current) => {
+      const currentFirst = current.legs[0] ?? {
+        origin: "",
+        destination: "",
+        departureDate: current.departureDate,
+      };
+      if (tripType === "multi-city") {
+        const hasMultiCityJourney = current.legs.length >= MULTI_CITY_MIN_LEGS;
+        return {
+          ...current,
+          tripType,
+          legs: hasMultiCityJourney
+            ? current.legs
+            : [
+                currentFirst,
+                {
+                  origin: currentFirst.destination,
+                  destination:
+                    current.tripType === "round-trip"
+                      ? currentFirst.origin
+                      : "",
+                  departureDate:
+                    current.tripType === "round-trip"
+                      ? current.returnDate ?? current.departureDate
+                      : current.departureDate,
+                },
+              ],
+        };
+      }
+      if (current.tripType === "multi-city") {
+        const second = current.legs[1];
+        const returnDate =
+          tripType === "round-trip" &&
+          currentFirst.origin &&
+          currentFirst.destination &&
+          second?.origin === currentFirst.destination &&
+          second.destination === currentFirst.origin &&
+          second.departureDate > currentFirst.departureDate
+            ? second.departureDate
+            : "";
+        return {
+          ...current,
+          tripType,
+          legs: [currentFirst],
+          departureDate: currentFirst.departureDate,
+          returnDate,
+        };
+      }
+      return { ...current, tripType };
+    });
+  };
   const fieldClass = resultsMode
-    ? "min-h-[72px] w-full min-w-0 bg-white px-4 py-3 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#064CF7]/25"
+    ? "min-h-[66px] w-full min-w-0 bg-white px-3 py-[9px] text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#064CF7]/25"
     : "min-h-[60px] w-full min-w-0 bg-white px-4 py-2.5 text-start transition-colors hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25";
   const field = (
     label: string,
@@ -263,7 +315,7 @@ export function FlightEditSearchDrawer({
     const display = location ? getLocationFieldDisplay(value) : { primary: value };
     return (
     <span className="block min-w-0">
-      <span className={resultsMode ? "mb-1 block text-[11px] font-bold uppercase leading-[15px] tracking-[0.1em] text-[#56658E]" : "mb-1.5 block text-[11px] font-semibold uppercase leading-3 tracking-[0.08em] text-slate-500"}>
+      <span className={resultsMode ? "mb-1 block text-[10px] font-extrabold uppercase leading-[14px] tracking-[0.5px] text-[#56658E]" : "mb-1.5 block text-[11px] font-semibold uppercase leading-3 tracking-[0.08em] text-slate-500"}>
         {label}
       </span>
       <span
@@ -272,7 +324,7 @@ export function FlightEditSearchDrawer({
       >
         {icon}
         <span className="min-w-0 text-slate-950">
-          <span className="block truncate text-[16px] font-semibold leading-5">{display.primary}</span>
+          <span className={resultsMode ? "block truncate text-[15px] font-semibold leading-5" : "block truncate text-[16px] font-semibold leading-5"}>{display.primary}</span>
           {display.secondary ? <span className="block truncate text-xs font-medium leading-4 text-slate-600">{display.secondary}</span> : null}
         </span>
         {trailing ?? <span aria-hidden="true" />}
@@ -296,7 +348,7 @@ export function FlightEditSearchDrawer({
       <div
         className={
           bottomSheet
-            ? `mobile-results-sheet-surface mobile-results-sheet-surface-smooth relative flex max-h-[88dvh] min-h-0 w-full flex-col ${isClosing ? "mobile-results-sheet-surface-closing" : ""}`
+            ? `mobile-results-sheet-surface mobile-results-sheet-surface-smooth relative mb-3 ml-3 mr-3 flex max-h-[88dvh] min-h-0 w-[calc(100%_-_24px)] flex-col overflow-hidden rounded-[24px] ${isClosing ? "mobile-results-sheet-surface-closing" : ""}`
             : "contents"
         }
       >
@@ -316,7 +368,7 @@ export function FlightEditSearchDrawer({
             onSearch(draft);
           }
         }}
-        className={`relative z-10 flex min-h-0 w-full min-w-0 flex-col ${bottomSheet ? "max-h-[88dvh] overflow-hidden rounded-t-[24px] bg-[#F5F7FB]" : "h-full bg-white"}`}
+        className={`relative z-10 flex min-h-0 w-full min-w-0 flex-col ${bottomSheet ? "max-h-[88dvh] overflow-hidden rounded-[24px] bg-[#F5F7FB]" : "h-full bg-white"}`}
       >
         <div
           className={bottomSheet ? "shrink-0 bg-[#F5F7FB] pl-4 pr-2" : "shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))]"}
@@ -339,9 +391,9 @@ export function FlightEditSearchDrawer({
           </div>
         </div>
         <div className={bottomSheet ? "min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-[#F5F7FB] px-3 pb-[max(20px,calc(env(safe-area-inset-bottom)-12px))] pt-2.5" : "min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3"}>
-          <div className={bottomSheet && resultsMode ? "mx-auto flex w-full min-w-0 max-w-xl flex-col gap-2.5" : "mx-auto flex w-full min-w-0 max-w-xl flex-col gap-3.5"}>
+          <div className={bottomSheet && resultsMode ? "mx-auto flex w-full min-w-0 max-w-xl flex-col p-2" : "mx-auto flex w-full min-w-0 max-w-xl flex-col gap-3.5"}>
             <div
-              role="radiogroup"
+              role={resultsMode ? "tablist" : "radiogroup"}
               aria-label={t("tripType")}
               data-mobile-trip-type-grid
               className={resultsMode ? "grid min-h-[51px] w-full min-w-0 grid-cols-3 items-stretch" : "grid min-h-11 w-full min-w-0 grid-cols-3 items-stretch gap-1 rounded-[13px] bg-slate-100/75 p-1"}
@@ -356,25 +408,10 @@ export function FlightEditSearchDrawer({
                 <button
                   key={value}
                   type="button"
-                  role="radio"
-                  aria-checked={draft.tripType === value}
-                  onClick={() =>
-                    setDraft((current) => ({
-                      ...current,
-                      tripType: value,
-                      legs:
-                        value === "multi-city" && current.legs.length < 2
-                          ? [
-                              firstLeg,
-                              {
-                                origin: firstLeg.destination,
-                                destination: "",
-                                departureDate: firstLeg.departureDate,
-                              },
-                            ]
-                          : current.legs,
-                    }))
-                  }
+                  role={resultsMode ? "tab" : "radio"}
+                  aria-selected={resultsMode ? draft.tripType === value : undefined}
+                  aria-checked={!resultsMode ? draft.tripType === value : undefined}
+                  onClick={() => changeTripType(value)}
                   className={resultsMode ? `inline-flex min-h-[50px] min-w-0 items-center justify-center whitespace-nowrap border-b-2 px-1 text-[11px] font-semibold ${draft.tripType === value ? "border-[#064CF7] font-extrabold text-[#064CF7]" : "border-transparent text-[#071A48]"}` : `inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-1 text-[13px] font-semibold min-[360px]:text-sm ${draft.tripType === value ? "bg-white text-slate-950 shadow-sm" : "text-slate-600"}`}
                 >
                   {!resultsMode ? (
@@ -404,11 +441,11 @@ export function FlightEditSearchDrawer({
             ) : resultsMode ? (
               <div
                 data-flight-results-edit-fields
-                className="flex min-w-0 flex-col gap-2.5"
+                className="flex min-w-0 flex-col"
               >
                 <div
                   data-mobile-route-fields
-                  className="relative grid min-w-0 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white divide-y divide-[#E7ECF5]"
+                  className="relative mt-2.5 grid min-w-0 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white divide-y divide-[#E7ECF5]"
                 >
                   <button
                     ref={originRef}
@@ -478,7 +515,7 @@ export function FlightEditSearchDrawer({
                 </div>
                 <div
                   data-mobile-results-edit-group
-                  className="overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white"
+                  className="mt-2.5 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white"
                 >
                   <button
                     ref={datesRef}
@@ -499,7 +536,7 @@ export function FlightEditSearchDrawer({
                 </div>
                 <div
                   data-mobile-results-edit-group
-                  className="overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white"
+                  className="mt-2.5 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white"
                 >
                   <button
                     ref={travelersRef}
@@ -639,13 +676,36 @@ export function FlightEditSearchDrawer({
                 </div>
               </>
             )}
-            <Button
-              type="submit"
-              disabled={!canSearch}
-              className={resultsMode ? "mt-1.5 min-h-[54px] w-full rounded-[9px] bg-[#064CF7] text-[15px] font-extrabold text-white" : "mt-1 h-12 w-full rounded-[11px] bg-[#004BB8] text-[15px] font-semibold text-white shadow-sm"}
-            >
-              {resultsMode ? t("searchFlights") : t("search")}
-            </Button>
+            {resultsMode && draft.tripType === "multi-city" ? (
+              <div
+                data-mobile-results-edit-group
+                className="mt-2.5 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white"
+              >
+                <button
+                  ref={travelersRef}
+                  type="button"
+                  onClick={() => setTravelerPickerOpen(true)}
+                  className={fieldClass}
+                  data-mobile-field="travelers"
+                >
+                  {field(
+                    t("travelersAndCabinClass"),
+                    travelerSummary,
+                    <UserRound className="h-[18px] w-[18px] text-[#071A48]" aria-hidden="true" />,
+                    <ChevronRight className="h-4 w-4 text-[#071A48]" aria-hidden="true" />,
+                  )}
+                </button>
+              </div>
+            ) : null}
+            <div className={resultsMode ? "p-2 pt-4" : undefined}>
+              <Button
+                type="submit"
+                disabled={!canSearch}
+                className={resultsMode ? "min-h-[54px] w-full rounded-[9px] bg-[#064CF7] text-[15px] font-extrabold text-white" : "mt-1 h-12 w-full rounded-[11px] bg-[#004BB8] text-[15px] font-semibold text-white shadow-sm"}
+              >
+                {resultsMode ? t("searchFlights") : t("search")}
+              </Button>
+            </div>
           </div>
         </div>
       </form>

@@ -40,8 +40,36 @@ test("Flight full Filters keeps Flight-specific controls inside the Cars visual 
   assert.match(full, /gap-3\.5 border-t border-\[#D8DEE8\]/);
   assert.match(full, /h-\[49px\] min-w-\[116px\]/);
   assert.match(full, /min-h-\[50px\][^"]*bg-\[#004BB8\][^"]*text-base font-bold leading-\[22px\]/);
+  assert.match(full, /activeFilterCount === 0 && "flex-1"/);
+  assert.match(full, /min-w-0 whitespace-nowrap rounded-\[10px\]/);
   assert.match(full, /disabled=\{sortedResults\.length === 0\}/);
   assert.match(full, /`View \$\{sortedResults\.length\}/);
+});
+
+test("paired mobile filter actions keep View flights compact and on one line", () => {
+  const quick = client.slice(
+    client.indexOf("function renderMobileSortResultsRow"),
+    client.indexOf("function renderFloatingFilterButton"),
+  );
+  const full = client.slice(
+    client.indexOf("function renderMobileFullFiltersSheet()"),
+    client.indexOf("function renderDesktopSortControl()"),
+  );
+  assert.match(quick, /whitespace-nowrap rounded-xl/);
+  assert.match(quick, /mobileShortcutSheet === "sort" && "flex-1"/);
+  assert.doesNotMatch(quick, /min-w-0 flex-1 items-center justify-center rounded-xl/);
+  assert.match(quick, /draftMatches === 1 \? "flight" : "flights"/);
+  assert.match(quick, /disabled=\{mobileShortcutSheet !== "sort" && draftMatches === 0\}/);
+  assert.match(full, /whitespace-nowrap rounded-\[10px\]/);
+  assert.match(full, /activeFilterCount === 0 && "flex-1"/);
+  assert.match(full, /sortedResults\.length === 1 \? "flight" : "flights"/);
+  assert.match(full, /disabled=\{sortedResults\.length === 0\}/);
+});
+
+test("mobile Quick Filters rail breakout matches the 12px Results gutter", () => {
+  assert.match(client, /data-flight-mobile-results-shortcuts[\s\S]*"-mx-3 px-0 py-1 sm:hidden"/);
+  assert.doesNotMatch(client, /data-flight-mobile-results-shortcuts[\s\S]{0,300}-mx-\[14px\]/);
+  assert.match(client, /data-mobile-flight-shortcuts className="w-full min-w-0 overflow-x-auto/);
 });
 
 test("mobile endpoint airports use authoritative directional endpoints while desktop options remain unchanged", () => {
