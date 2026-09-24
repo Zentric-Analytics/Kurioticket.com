@@ -18,6 +18,7 @@ type BrandedLoadingProps = {
   contentClassName?: string;
   showLogo?: boolean;
   showProgress?: boolean;
+  showActivityDots?: boolean;
   accessibleProgress?: boolean;
   visual?: "default" | "logoPulse";
 };
@@ -63,6 +64,7 @@ export function BrandedLoading({
   contentClassName,
   showLogo = true,
   showProgress = true,
+  showActivityDots = true,
   accessibleProgress = false,
   visual = "default",
 }: BrandedLoadingProps) {
@@ -193,7 +195,7 @@ export function BrandedLoading({
           ) : null}
         </div>
 
-        {showProgress ? (
+        {showProgress && showActivityDots ? (
           <div className="mt-5 flex gap-2" aria-hidden="true">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#004BB8]/80 motion-reduce:animate-none" />
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#5CB6B2]/80 delay-150 motion-reduce:animate-none" />
