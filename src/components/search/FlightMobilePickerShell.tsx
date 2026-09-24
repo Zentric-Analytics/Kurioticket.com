@@ -5,6 +5,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
   type RefObject,
 } from "react";
@@ -173,6 +174,8 @@ export function FlightMobilePickerShell({
   const whiteSurface = surfaceVariant === "white";
   const { t } = useLocale();
   const [isClosing, setIsClosing] = useState(false);
+  const [carsMainViewportStyle, setCarsMainViewportStyle] =
+    useState<CSSProperties>();
   const closeInteractionRef = useRef<"keyboard" | "pointer">("pointer");
   const closePromiseRef = useRef<Promise<void> | null>(null);
   const shellRef = useRef<HTMLDivElement>(null);
@@ -268,6 +271,34 @@ export function FlightMobilePickerShell({
       closePromiseRef.current = null;
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !carsMain || typeof window === "undefined") return;
+
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    let frame = 0;
+    const syncViewport = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        setCarsMainViewportStyle({
+          top: `${viewport.offsetTop}px`,
+          bottom: "auto",
+          height: `${viewport.height}px`,
+        });
+      });
+    };
+
+    syncViewport();
+    viewport.addEventListener("resize", syncViewport, { passive: true });
+    viewport.addEventListener("scroll", syncViewport, { passive: true });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      viewport.removeEventListener("resize", syncViewport);
+      viewport.removeEventListener("scroll", syncViewport);
+    };
+  }, [carsMain, open]);
 
   useEffect(() => {
     if (!open || withinDialog || typeof window === "undefined") return;
@@ -391,6 +422,7 @@ export function FlightMobilePickerShell({
       data-closing={isClosing ? "true" : undefined}
       data-cars-results-edit-picker={carsResultsEdit ? "true" : undefined}
       data-cars-main-picker={carsMain ? "true" : undefined}
+      style={carsMain ? carsMainViewportStyle : undefined}
       className={cn(
         "fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden bg-white sm:hidden",
         carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]",
@@ -410,6 +442,7 @@ export function FlightMobilePickerShell({
         }}
         className={cn(
           "fixed inset-0 flex h-[100dvh] min-h-0 w-screen max-w-full flex-col overflow-hidden bg-white pt-[env(safe-area-inset-top)]",
+          carsMain && "absolute h-full",
           carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]",
           className,
         )}
