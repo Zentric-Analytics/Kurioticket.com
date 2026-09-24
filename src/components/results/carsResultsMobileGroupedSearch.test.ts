@@ -38,18 +38,27 @@ test("mobile pickup uses the Cars Main leading MapPin without a disclosure arrow
 });
 
 test("grouped mobile leading field icons match the Cars Main neutral tone", () => {
-  const groupedLeadingIcons = [
-    /groupedMobile \? <Icon className="h-\[18px\] w-\[18px\] shrink-0 ([^"]+)"/,
-    /groupedMobile \? <Calendar className="h-\[18px\] w-\[18px\] shrink-0 ([^"]+)"/,
-    /groupedMobile \? <Clock className="h-\[18px\] w-\[18px\] shrink-0 ([^"]+)"/,
-    /groupedMobile \? <UserRound className="h-\[18px\] w-\[18px\] shrink-0 ([^"]+)"/,
-  ];
+  const pickup = source.slice(
+    source.indexOf("function MobileLocationLauncher"),
+    source.indexOf("function SearchInputCell"),
+  );
+  const dates = source.slice(
+    source.indexOf("function SearchDateCell"),
+    source.indexOf("function SearchTimeCell"),
+  );
+  const times = source.slice(
+    source.indexOf("function SearchTimeCell"),
+    source.indexOf("function DriverAgeCell"),
+  );
+  const age = source.slice(
+    source.indexOf("function DriverAgeCell"),
+    source.indexOf("\nfunction ", source.indexOf("function DriverAgeCell") + 10),
+  );
 
-  for (const iconPattern of groupedLeadingIcons) {
-    const classes = source.match(iconPattern)?.[1];
-    assert.equal(classes, "text-[#334155]");
-    assert.doesNotMatch(classes, /#004BB8/);
-  }
+  assert.match(pickup, /h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\]/);
+  assert.match(dates, /h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\]/);
+  assert.match(times, /h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\]/);
+  assert.match(age, /h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\]/);
 });
 
 test("grouped mobile rows match Cars Main compact geometry", () => {
@@ -64,53 +73,86 @@ test("grouped mobile rows match Cars Main compact geometry", () => {
   assert.equal(source.match(/groupedMobile \? carsMobileEditFieldShellClass/g)?.length, 4);
 });
 
-test("grouped mobile copy matches the polished Cars Main hierarchy", () => {
-  const label = classConstant("carsMobileEditFieldLabelClass");
-  const value = classConstant("carsMobileEditValueClass");
+test("Edit Search grouped mobile copy uses the exact Cars Main final text classes", () => {
+  const pickupLabel = classConstant("carsMobileEditPickupLabelClass");
+  const summaryLabel = classConstant("carsMobileEditFieldLabelClass");
+  const summaryButton = classConstant("carsMobileEditSummaryButtonClass");
+  const pickupValue = classConstant("carsMobileEditPickupValueClass");
+  const valueGroup = classConstant("carsMobileEditValueGroupClass");
 
-  assert.match(label, /mb-0/);
-  assert.match(label, /text-\[10px\]/);
-  assert.match(label, /leading-\[13px\]/);
-  assert.match(label, /tracking-\[0\.5px\]/);
-  assert.match(label, /font-extrabold/);
-  assert.match(label, /uppercase/);
-  assert.match(label, /text-\[#64748B\]/);
+  assert.match(pickupLabel, /mb-1/);
+  assert.match(pickupLabel, /text-\[10px\]/);
+  assert.match(pickupLabel, /font-extrabold/);
+  assert.match(pickupLabel, /leading-\[13px\]/);
+  assert.match(pickupLabel, /tracking-\[0\.5px\]/);
+  assert.match(pickupLabel, /text-slate-600/);
 
-  assert.match(value, /h-auto/);
-  assert.match(value, /text-\[15px\]/);
-  assert.match(value, /leading-5/);
-  assert.match(value, /font-semibold/);
-  assert.match(value, /text-\[#0F172A\]/);
-  assert.doesNotMatch(value, /font-medium|tracking-\[-0\.01em\]/);
+  assert.match(summaryLabel, /mb-1/);
+  assert.match(summaryLabel, /text-\[10px\]/);
+  assert.match(summaryLabel, /font-extrabold/);
+  assert.match(summaryLabel, /leading-\[13px\]/);
+  assert.match(summaryLabel, /tracking-\[0\.5px\]/);
+  assert.match(summaryLabel, /text-\[#64748B\]/);
 
-  assert.equal(classConstant("carsMobileEditValueRowClass"), "gap-[10px]");
+  for (const value of [summaryButton, pickupValue]) {
+    assert.match(value, /h-8/);
+    assert.match(value, /text-\[15px\]/);
+    assert.match(value, /font-semibold/);
+    assert.match(value, /leading-5/);
+    assert.match(value, /text-\[#0F172A\]/);
+    assert.doesNotMatch(value, /text-\[14px\]|font-medium|leading-\[19px\]/);
+  }
+
+  assert.match(valueGroup, /gap-\[10px\]/);
 });
 
-test("grouped location values match the Cars Main supporting-text hierarchy", () => {
-  const launcher = source.slice(source.indexOf("function MobileLocationLauncher"), source.indexOf("function SearchInputCell"));
+test("grouped Pickup Location uses Cars Main primary and supporting text directly", () => {
+  const launcher = source.slice(
+    source.indexOf("function MobileLocationLauncher"),
+    source.indexOf("function SearchInputCell"),
+  );
   const secondary = classConstant("carsMobileEditSecondaryValueClass");
 
-  assert.match(launcher, /groupedMobile && carsMobileEditValueClass/);
-  assert.match(launcher, /groupedMobile && carsMobileEditSecondaryValueClass/);
+  assert.match(launcher, /groupedMobile \? carsMobileEditPickupLabelClass : fieldLabelClass/);
+  assert.match(launcher, /carsMobileEditPickupValueClass/);
+  assert.match(launcher, /font-normal text-slate-500/);
+  assert.match(launcher, /carsMobileEditSecondaryValueClass/);
+
   assert.match(secondary, /text-\[12px\]/);
   assert.match(secondary, /font-normal/);
   assert.match(secondary, /leading-4/);
-  assert.match(secondary, /tracking-normal/);
   assert.match(secondary, /text-slate-600/);
-  assert.match(launcher, /block truncate/);
-  assert.doesNotMatch(classConstant("carsMobileEditValueClass"), /text-\[16px\]/);
 });
 
-test("grouped Rental Dates uses Cars Main weekday-inclusive display and value hierarchy", () => {
+test("grouped Rental Dates uses Cars Main weekday-inclusive text and direct value classes", () => {
   const start = source.indexOf("function SearchDateCell");
   const end = source.indexOf("function SearchTimeCell", start);
   const cell = source.slice(start, end);
 
-  assert.match(cell, /groupedMobile[\s\S]*?formatTravelDateDisplay\(pickupDate, intlLocale\)/);
-  assert.match(cell, /groupedMobile[\s\S]*?formatTravelDateDisplay\(dropoffDate, intlLocale\)/);
-  assert.match(cell, /groupedMobile && "leading-5"/);
-  assert.match(cell, /groupedMobile \? \[carsMobileEditValueClass, carsMobileEditValueRowClass\] : "h-8 gap-2"/);
+  assert.match(cell, /formatTravelDateDisplay\(pickupDate, intlLocale\)/);
+  assert.match(cell, /formatTravelDateDisplay\(dropoffDate, intlLocale\)/);
+  assert.match(cell, /groupedMobile \? carsMobileEditFieldLabelClass : fieldLabelClass/);
+  assert.match(cell, /\? carsMobileEditSummaryButtonClass/);
+  assert.match(cell, /className=\{carsMobileEditValueGroupClass\}/);
+  assert.match(cell, /font-normal text-slate-500/);
   assert.match(cell, /!groupedMobile \? \([\s\S]*?<ChevronDown/);
+});
+
+test("grouped Time and Driver Age use Cars Main selected-value structure directly", () => {
+  for (const name of ["SearchTimeCell", "DriverAgeCell"]) {
+    const start = source.indexOf(`function ${name}`);
+    const next = source.indexOf("\nfunction ", start + 10);
+    const cell = source.slice(start, next < 0 ? undefined : next);
+
+    assert.match(cell, /groupedMobile \? carsMobileEditFieldLabelClass : fieldLabelClass/);
+    assert.match(cell, /\? carsMobileEditSummaryButtonClass/);
+    assert.match(cell, /className=\{carsMobileEditValueGroupClass\}/);
+    assert.match(cell, /min-w-0 flex-1 truncate text-start/);
+    assert.doesNotMatch(
+      cell,
+      /groupedMobile \? \[carsMobileEditValueClass, carsMobileEditValueRowClass\]/,
+    );
+  }
 });
 
 test("mobile Search CTA matches Cars Main height, radius, and weight", () => {
@@ -137,13 +179,13 @@ test("time and driver age retain Cars Main disclosure chevrons while Rental Date
   assert.match(datesCell, /!groupedMobile \? \([\s\S]*?<ChevronDown/);
 });
 
-test("grouped time and driver age values own the left-aligned flexible column", () => {
+test("grouped time and driver age values remain left aligned without centering overrides", () => {
   for (const name of ["SearchTimeCell", "DriverAgeCell"]) {
     const start = source.indexOf(`function ${name}`);
     const next = source.indexOf("\nfunction ", start + 10);
     const cell = source.slice(start, next < 0 ? undefined : next);
 
-    assert.match(cell, /groupedMobile && "min-w-0 flex-1 text-start"/);
-    assert.doesNotMatch(cell, /groupedMobile && "[^"]*(?:text-center|justify-center|mx-auto)/);
+    assert.match(cell, /min-w-0 flex-1 truncate text-start/);
+    assert.doesNotMatch(cell, /text-center|justify-center|mx-auto/);
   }
 });
