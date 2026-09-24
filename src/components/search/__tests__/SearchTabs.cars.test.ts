@@ -85,12 +85,26 @@ test("wide homepage Cars renders one conditional return-location field beside pi
   assert.match(returnLocationField, /sm:!bg-white/);
 });
 
-test("Cars CSS-hidden desktop autocompletes stay desktop-only and input-anchored", () => {
+test("Cars CSS-hidden desktop autocompletes are logically closed on mobile", () => {
   assert.match(carsBranch, /ref=\{carsSearchSurfaceRef\} data-testid="cars-search-surface"/);
   const allCarsFields = carsBranch + returnLocationField;
-  assert.equal((allCarsFields.match(/presentation="desktop"/g) ?? []).length, 2);
-  assert.equal((allCarsFields.match(/presentation="responsive"/g) ?? []).length, 0);
+  assert.equal(
+    (allCarsFields.match(/presentation=\{mobileHomepage \? "desktop" : "responsive"\}/g) ?? []).length,
+    2,
+  );
+  assert.match(source, /const isSmCarsHomepageViewport = useSyncExternalStore/);
   assert.match(allCarsFields, /hidden sm:block[\s\S]*?<CarLocationAutocomplete/);
+  assert.match(
+    allCarsFields,
+    /isOpen=\{\(!mobileHomepage \|\| isSmCarsHomepageViewport\) && carsOpenPicker === "pickup"\}/,
+  );
+  assert.match(
+    allCarsFields,
+    /isOpen=\{\(!mobileHomepage \|\| isSmCarsHomepageViewport\) && carsOpenPicker === "dropoff"\}/,
+  );
+  assert.ok(
+    (allCarsFields.match(/if \(mobileHomepage && !isSmCarsHomepageViewport\) return/g) ?? []).length >= 2,
+  );
   assert.doesNotMatch(allCarsFields, /fieldAnchorRef=|searchCardRef=/);
   assert.match(returnLocationField, /value=\{carsValues\.dropoffLocation\}/);
 });
