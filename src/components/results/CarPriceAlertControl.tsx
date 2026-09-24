@@ -121,7 +121,7 @@ export function CarPriceAlertControl({ search, results }: { search: CarSearchPar
     >
       <div className="flex min-h-[52px] min-w-0 items-center gap-2 sm:gap-2.5">
         <span className="inline-flex shrink-0 items-center justify-center text-[#1769AA] sm:h-8 sm:w-8 sm:rounded-full sm:bg-blue-50 sm:text-[#004BB8]"><Bell className="h-[17px] w-[17px]" aria-hidden="true" /></span>
-        <h2 className="min-w-0 flex-1 [overflow-wrap:anywhere] text-[13px] font-bold leading-4 text-slate-950 sm:text-sm">{t("carsResults.priceTracking.title")}</h2>
+        <h2 className="min-w-0 flex-1 [overflow-wrap:anywhere] text-[12.5px] font-bold leading-4 text-slate-950 sm:text-sm">{t("carsResults.priceTracking.title")}</h2>
         <span className="flex h-11 w-[51px] shrink-0 items-center justify-end"><button ref={switchRef} type="button" role="switch" aria-checked={tracking} aria-busy={pending} disabled={disabled} aria-label={t("carsResults.priceTracking.title")} onClick={() => void toggle(!tracking)} className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 ${tracking ? "border-[#004BB8] bg-[#004BB8]" : "border-slate-300 bg-slate-200"}`}><span className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${tracking ? "translate-x-[22px] rtl:-translate-x-[22px]" : "translate-x-[3px] rtl:-translate-x-[3px]"}`} /></button></span>
       </div>
     </section>

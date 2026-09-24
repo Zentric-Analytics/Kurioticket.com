@@ -70,8 +70,8 @@ test("source-contract: mobile Cars typography uses a restrained primary-secondar
     source.indexOf("data-cars-results-quick-filters"),
     source.indexOf("data-cars-results-summary-row"),
   );
-  assert.match(quickFilters, /text-\[13px\] font-semibold text-\[#142033\]/);
-  assert.match(quickFilters, /text-\[13px\] font-semibold transition/);
+  assert.match(quickFilters, /text-\[13px\] font-semibold leading-4 text-\[#142033\]/);
+  assert.match(quickFilters, /text-\[13px\] font-semibold leading-4 transition/);
 });
 
 test("source-contract: mobile Cars range is end-aligned on the count row while desktop stays stacked", () => {
