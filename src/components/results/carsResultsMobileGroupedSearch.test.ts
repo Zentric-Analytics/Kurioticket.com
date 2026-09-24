@@ -14,10 +14,10 @@ function classConstant(name: string) {
   return value;
 }
 
-test("Cars mobile edit search uses independent cards with an external CTA", () => {
-  assert.match(source, /placement === "mobile" && "grid grid-cols-1 gap-2.5"/);
+test("Cars mobile edit search uses Cars Main card geometry with an external CTA", () => {
+  assert.match(source, /placement === "mobile" && "grid grid-cols-1 gap-2"/);
   assert.doesNotMatch(source, /placement === "mobile"[^\n]*divide-y/);
-  assert.match(source, /rounded-\[13px\] border border-\[#D8E1EC\] bg-white/);
+  assert.match(source, /min-h-\[66px\][^"]*rounded-\[15px\][^"]*border border-\[#D8E1EC\] bg-white[^"]*px-3[^"]*py-\[9px\]/);
   assert.match(source, /data-cars-mobile-grouped-row/);
   assert.match(source, /data-cars-mobile-search-submit/);
   assert.match(source, /placement === "mobile"[\s\S]*border-0 bg-transparent p-0 shadow-none ring-0/);
@@ -30,19 +30,19 @@ test("Cars mobile Edit Search title keeps a restrained native-like hierarchy", (
   );
 });
 
-test("mobile pickup uses a leading MapPin without a disclosure arrow", () => {
+test("mobile pickup uses the Cars Main leading MapPin without a disclosure arrow", () => {
   const launcher = source.slice(source.indexOf("function MobileLocationLauncher"), source.indexOf("function SearchInputCell"));
-  assert.match(launcher, /<Icon className="h-4 w-4 shrink-0 text-slate-700"/);
+  assert.match(launcher, /<Icon className="h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\]"/);
   assert.doesNotMatch(launcher, /Chevron(?:Down|Right)/);
   assert.match(launcher, /onClick=\{onClick\}/);
 });
 
 test("grouped mobile leading field icons match the Cars Main neutral tone", () => {
   const groupedLeadingIcons = [
-    /groupedMobile \? <Icon className="h-4 w-4 shrink-0 ([^"]+)"/,
-    /groupedMobile \? <CalendarDays className="h-4 w-4 shrink-0 ([^"]+)"/,
-    /groupedMobile \? <Clock3 className="h-4 w-4 shrink-0 ([^"]+)"/,
-    /groupedMobile \? <UserRound className="h-4 w-4 shrink-0 ([^"]+)"/,
+    /groupedMobile \? <Icon className="h-\[18px\] w-\[18px\] shrink-0 ([^"]+)"/,
+    /groupedMobile \? <Calendar className="h-\[18px\] w-\[18px\] shrink-0 ([^"]+)"/,
+    /groupedMobile \? <Clock className="h-\[18px\] w-\[18px\] shrink-0 ([^"]+)"/,
+    /groupedMobile \? <UserRound className="h-\[18px\] w-\[18px\] shrink-0 ([^"]+)"/,
   ];
 
   for (const iconPattern of groupedLeadingIcons) {
@@ -52,15 +52,15 @@ test("grouped mobile leading field icons match the Cars Main neutral tone", () =
   }
 });
 
-test("grouped mobile rows stay compact without sacrificing their touch target", () => {
+test("grouped mobile rows match Cars Main compact geometry", () => {
   const shell = classConstant("carsMobileEditFieldShellClass");
 
-  assert.match(shell, /min-h-\[70px\]/);
+  assert.match(shell, /min-h-\[66px\]/);
   assert.match(shell, /justify-center/);
-  assert.match(shell, /rounded-\[13px\]/);
-  assert.match(shell, /px-4/);
-  assert.match(shell, /py-2\.5/);
-  assert.match(shell, /gap-\[1px\]/);
+  assert.match(shell, /rounded-\[15px\]/);
+  assert.match(shell, /px-3/);
+  assert.match(shell, /py-\[9px\]/);
+  assert.doesNotMatch(shell, /gap-\[1px\]/);
   assert.equal(source.match(/groupedMobile \? carsMobileEditFieldShellClass/g)?.length, 4);
 });
 
@@ -83,7 +83,7 @@ test("grouped mobile copy matches the polished Cars Main hierarchy", () => {
   assert.match(value, /text-\[#0F172A\]/);
   assert.doesNotMatch(value, /font-medium|tracking-\[-0\.01em\]/);
 
-  assert.equal(classConstant("carsMobileEditValueRowClass"), "gap-2.5");
+  assert.equal(classConstant("carsMobileEditValueRowClass"), "gap-[10px]");
 });
 
 test("grouped location values match the Cars Main supporting-text hierarchy", () => {
@@ -96,29 +96,32 @@ test("grouped location values match the Cars Main supporting-text hierarchy", ()
   assert.match(secondary, /font-normal/);
   assert.match(secondary, /leading-4/);
   assert.match(secondary, /tracking-normal/);
-  assert.match(secondary, /text-\[#56658E\]/);
+  assert.match(secondary, /text-slate-600/);
   assert.match(launcher, /block truncate/);
   assert.doesNotMatch(classConstant("carsMobileEditValueClass"), /text-\[16px\]/);
 });
 
-test("grouped date summary uses the shared mobile value line height", () => {
+test("grouped Rental Dates uses Cars Main weekday-inclusive display and value hierarchy", () => {
   const start = source.indexOf("function SearchDateCell");
   const end = source.indexOf("function SearchTimeCell", start);
   const cell = source.slice(start, end);
 
+  assert.match(cell, /groupedMobile[\s\S]*?formatTravelDateDisplay\(pickupDate, intlLocale\)/);
+  assert.match(cell, /groupedMobile[\s\S]*?formatTravelDateDisplay\(dropoffDate, intlLocale\)/);
   assert.match(cell, /groupedMobile && "leading-5"/);
   assert.match(cell, /groupedMobile \? \[carsMobileEditValueClass, carsMobileEditValueRowClass\] : "h-8 gap-2"/);
+  assert.match(cell, /!groupedMobile \? \([\s\S]*?<ChevronDown/);
 });
 
-test("mobile Search keeps its full touch target with restrained copy", () => {
+test("mobile Search CTA matches Cars Main height, radius, and weight", () => {
   assert.match(
     source,
-    /data-cars-mobile-search-submit[\s\S]*?h-12 w-full rounded-\[10px\][^\"]*text-\[14px\][^\"]*font-semibold[^\"]*leading-\[18px\]/,
+    /data-cars-mobile-search-submit[\s\S]*?h-\[54px\] w-full rounded-\[11px\][^\"]*text-sm[^\"]*font-bold/,
   );
 });
 
-test("dates, time, and driver age retain disclosure behavior with Cars Main mobile tone", () => {
-  for (const name of ["SearchDateCell", "SearchTimeCell", "DriverAgeCell"]) {
+test("time and driver age retain Cars Main disclosure chevrons while Rental Dates does not", () => {
+  for (const name of ["SearchTimeCell", "DriverAgeCell"]) {
     const start = source.indexOf(`function ${name}`);
     const next = source.indexOf("\nfunction ", start + 10);
     const cell = source.slice(start, next < 0 ? undefined : next);
@@ -127,6 +130,11 @@ test("dates, time, and driver age retain disclosure behavior with Cars Main mobi
       /<ChevronDown[\s\S]*?text-slate-500[\s\S]*?groupedMobile && "text-\[#334155\]"[\s\S]*?aria-hidden="true"/,
     );
   }
+
+  const datesStart = source.indexOf("function SearchDateCell");
+  const datesEnd = source.indexOf("function SearchTimeCell", datesStart);
+  const datesCell = source.slice(datesStart, datesEnd);
+  assert.match(datesCell, /!groupedMobile \? \([\s\S]*?<ChevronDown/);
 });
 
 test("grouped time and driver age values own the left-aligned flexible column", () => {
