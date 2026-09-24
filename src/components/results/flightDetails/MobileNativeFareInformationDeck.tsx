@@ -43,7 +43,7 @@ export function MobileNativeFareInformationDeck({
 }) {
   return (
     <section data-mobile-native-fare-information-deck className="mt-3 sm:hidden">
-      <div className="-mx-[10px] overflow-x-auto border-b border-[#D8E1EC] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="-mx-[10px] touch-pan-x overflow-x-auto border-b border-[#D8E1EC] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div role="tablist" aria-label="Fare information" className="flex w-max min-w-full gap-[22px] px-0">
           {tabs.map((tab) => {
             const selected = activeTab === tab.id;

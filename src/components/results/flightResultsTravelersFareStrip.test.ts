@@ -63,8 +63,8 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.match(mobileStrip, /min-w-0/);
   assert.match(mobileStrip, /max-w-full/);
   assert.match(mobileStrip, /overflow-hidden/);
+  assert.match(mobileStrip, /ref=\{mobileNearbyFareRailRef\} className="[^"]*touch-pan-x[^"]*overflow-x-auto/);
   assert.match(mobileStrip, /overflow-x-auto/);
-  assert.doesNotMatch(mobileStrip, /touch-pan-x/);
   assert.doesNotMatch(mobileStrip, /overscroll-x-contain/);
   assert.match(mobileStrip, /snap-center/);
   assert.doesNotMatch(mobileStrip, /snap-start/);

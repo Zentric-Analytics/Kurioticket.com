@@ -766,6 +766,7 @@ test("mobile web Fare information deck mirrors native tabs and selection-only de
   assert.match(source, /<MobileNativeFareInformationDeck/);
   assert.match(source, /pricesReady=\{mobilePricesReady\}/);
   assert.match(deck, /data-mobile-native-fare-information-deck/);
+  assert.match(deck, /<div className="[^"]*touch-pan-x[^"]*overflow-x-auto[^"]*">\s*<div role="tablist" aria-label="Fare information"/);
   assert.match(deck, /role="tablist" aria-label="Fare information"/);
   assert.match(deck, /min-h-\[48px\]/);
   assert.match(deck, /gap-\[22px\]/);
