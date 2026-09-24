@@ -752,6 +752,7 @@ test("Flight Details mobile cleanup uses native fare rail behavior and fare info
   assert.match(fareSource, /w-\[clamp\(197px,calc\(197px\+\(100vw-320px\)\*0\.27\),217px\)\]/);
   assert.match(fareSource, /min-h-\[142px\]/);
   assert.match(fareSource, /rounded-\[15px\] border-\[1\.5px\]/);
+  assert.match(fareSource, /text-\[19px\] font-semibold leading-\[23px\] tabular-nums/);
   assert.match(fareSource, /nativeFareBenefitRows\(/);
   assert.match(fareSource, /aria-expanded=\{expanded\}/);
   assert.match(fareSource, /Price unavailable/);
@@ -769,7 +770,10 @@ test("mobile web Fare information deck mirrors native tabs and selection-only de
   assert.match(deck, /min-h-\[48px\]/);
   assert.match(deck, /gap-\[22px\]/);
   assert.match(deck, /text-\[14px\] leading-5/);
-  assert.match(deck, /fontWeight: selected \? 800 : 600/);
+  assert.match(deck, /color: "#536B92",\s+fontWeight: 600/);
+  assert.doesNotMatch(deck, /color: selected \?/);
+  assert.doesNotMatch(deck, /fontWeight: selected \?/);
+  assert.match(deck, /selected \? <span className="absolute -bottom-px left-0\.5 right-0\.5 h-\[3px\] rounded-\[2px\] bg-\[#0754F7\]"/);
   assert.match(deck, /left-0\.5 right-0\.5 h-\[3px\] rounded-\[2px\]/);
 
   assert.match(deck, /role="radiogroup" aria-label="Flight deal options"/);
@@ -821,6 +825,17 @@ test("mobile fare rail starts naturally and preserves manual horizontal scrollin
   assert.match(fareSource, /overflow-x-auto/);
   assert.match(fareSource, /scrollIntoView\(\{ behavior: "smooth", block: "nearest", inline: "nearest" \}\)/);
   assert.doesNotMatch(fareSource, /useEffect\(|scrollTo\(|getCenteredFareScrollLeft|snap-mandatory|snap-start/);
+});
+
+test("mobile web Flight Details uses the refined fare typography without changing fare geometry", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const fareSource = await readFile(new URL("./MobileNativeFareRail.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /text-\[18px\] font-semibold leading-\[23px\][^\"]*">Pick your fare<\/h2>/);
+  assert.match(fareSource, /text-\[19px\] font-semibold leading-\[23px\] tabular-nums/);
+  assert.match(fareSource, /gap-\[10px\].*overflow-x-auto.*pb-\[18px\].*pt-3.*pr-\[38px\]/);
+  assert.match(fareSource, /min-h-\[142px\] w-\[clamp\(197px,calc\(197px\+\(100vw-320px\)\*0\.27\),217px\)\]/);
+  assert.doesNotMatch(fareSource, /text-\[19px\] font-extrabold leading-\[23px\] tabular-nums/);
 });
 
 test("itinerary headers use authoritative per-leg dates with a localized year", async () => {
