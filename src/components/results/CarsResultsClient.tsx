@@ -8,6 +8,7 @@ import { isKayakSandboxResult, resultActionHref } from "@/lib/travel/resultActio
 import {
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -1890,15 +1891,20 @@ export function CarsResultsExperience({
     ...providerResults, ...kayak.offers.map(offer => kayakCarCardModel(offer,Math.max(1,Math.ceil((Date.parse(search.dropoffDate)-Date.parse(search.pickupDate))/86400000)||1),search.pickupLocation)),
   ],[presentation,kayak,providerResults,search.dropoffDate,search.pickupDate,search.pickupLocation]);
   const providersLoading = presentation === "standalone" && kayak?.vertical === "cars" && kayak.status === "loading";
+  const quickFilterBackdropMaskId = useId().replace(/:/g, "");
   const [quickFilterGroupId, setQuickFilterGroupId] = useState<string | null>(null);
   const [quickFilterDraft, setQuickFilterDraft] = useState<string[]>([]);
   const [quickSortDraft, setQuickSortDraft] = useState<CarSort>("recommended");
+  const [quickFilterClosing, setQuickFilterClosing] = useState(false);
   const [quickFilterCutoutRect, setQuickFilterCutoutRect] = useState<{
     left: number;
     top: number;
     width: number;
     height: number;
   } | null>(null);
+  const quickFilterClosingRef = useRef(false);
+  const quickFilterGroupIdRef = useRef<string | null>(null);
+  const quickFilterCloseTimerRef = useRef<number | null>(null);
   const mobileFiltersOverlayOpen = filtersOpen || quickFilterGroupId !== null;
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
@@ -2217,6 +2223,13 @@ export function CarsResultsExperience({
     mobileFiltersModalityRef.current = modality;
     mobileFilterDrawerInitialFiltersRef.current =
       getSelectedCarFiltersSignature(selectedCarFiltersRef.current);
+    if (quickFilterCloseTimerRef.current !== null) {
+      window.clearTimeout(quickFilterCloseTimerRef.current);
+      quickFilterCloseTimerRef.current = null;
+    }
+    quickFilterClosingRef.current = false;
+    quickFilterGroupIdRef.current = null;
+    setQuickFilterClosing(false);
     setQuickFilterCutoutRect(null);
     setQuickFilterGroupId(null);
     setFiltersOpen(true);
@@ -2247,14 +2260,50 @@ export function CarsResultsExperience({
       height: bottom - top,
     };
   }, []);
-  const closeQuickFilter = useCallback(() => {
-    if (quickFilterGroupId === null) return;
+  const finishQuickFilterClose = useCallback(() => {
+    if (quickFilterCloseTimerRef.current !== null) {
+      window.clearTimeout(quickFilterCloseTimerRef.current);
+      quickFilterCloseTimerRef.current = null;
+    }
+    quickFilterClosingRef.current = false;
+    quickFilterGroupIdRef.current = null;
+    setQuickFilterClosing(false);
     setQuickFilterCutoutRect(null);
     setQuickFilterGroupId(null);
-  }, [quickFilterGroupId]);
+  }, []);
+  const closeQuickFilter = useCallback(() => {
+    if (
+      quickFilterGroupIdRef.current === null ||
+      quickFilterClosingRef.current
+    ) {
+      return;
+    }
+
+    if (
+      typeof window === "undefined" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      finishQuickFilterClose();
+      return;
+    }
+
+    quickFilterClosingRef.current = true;
+    setQuickFilterClosing(true);
+    quickFilterCloseTimerRef.current = window.setTimeout(
+      finishQuickFilterClose,
+      340,
+    );
+  }, [finishQuickFilterClose]);
   const openQuickFilter = (kind: string, launcher: HTMLButtonElement, modality: OverlayActivationModality) => {
+    if (quickFilterCloseTimerRef.current !== null) {
+      window.clearTimeout(quickFilterCloseTimerRef.current);
+      quickFilterCloseTimerRef.current = null;
+    }
+    quickFilterClosingRef.current = false;
+    quickFilterGroupIdRef.current = kind;
     mobileFiltersLauncherRef.current = launcher;
     mobileFiltersModalityRef.current = modality;
+    setQuickFilterClosing(false);
     setQuickFilterCutoutRect(measureQuickFilterCutout(launcher));
     setQuickFilterDraft(kind === "sort" ? [] : [...(selectedCarFilters[kind] ?? [])]);
     setQuickSortDraft(sort);
@@ -2294,6 +2343,8 @@ export function CarsResultsExperience({
         window.clearTimeout(filterTransitionTimerRef.current);
       if (filterTransitionFrameRef.current !== null)
         window.cancelAnimationFrame(filterTransitionFrameRef.current);
+      if (quickFilterCloseTimerRef.current !== null)
+        window.clearTimeout(quickFilterCloseTimerRef.current);
     },
     [],
   );
@@ -2352,6 +2403,13 @@ export function CarsResultsExperience({
         shouldRestoreFocus = false;
         if (filtersOpen) closeMobileFiltersDrawer();
         else setFiltersOpen(false);
+        if (quickFilterCloseTimerRef.current !== null) {
+          window.clearTimeout(quickFilterCloseTimerRef.current);
+          quickFilterCloseTimerRef.current = null;
+        }
+        quickFilterClosingRef.current = false;
+        quickFilterGroupIdRef.current = null;
+        setQuickFilterClosing(false);
         setQuickFilterCutoutRect(null);
         setQuickFilterGroupId(null);
       }
@@ -3175,29 +3233,75 @@ export function CarsResultsExperience({
       {quickFilterGroupId && (quickFilterGroupId === "sort" || activeQuickFilterGroup) && typeof document !== "undefined" ? createPortal(
         <div
           data-cars-quick-sheet-backdrop
-          className="fixed inset-0 z-[10010] flex items-end lg:hidden"
+          className={cn(
+            "fixed inset-0 z-[10010] flex items-end lg:hidden",
+            quickFilterClosing && "pointer-events-none",
+          )}
           role="presentation"
           onMouseDown={closeQuickFilter}
         >
           {quickFilterCutoutRect ? (
-            <div
-              aria-hidden="true"
-              data-cars-quick-sheet-scrim
-              data-cars-quick-sheet-cutout
-              className="cars-native-quick-scrim pointer-events-none absolute rounded-[9px]"
-              style={{
-                left: quickFilterCutoutRect.left,
-                top: quickFilterCutoutRect.top,
-                width: quickFilterCutoutRect.width,
-                height: quickFilterCutoutRect.height,
-                boxShadow: "0 0 0 9999px rgba(15, 23, 42, 0.35)",
-              }}
-            />
+            <>
+              <svg
+                aria-hidden="true"
+                focusable="false"
+                data-cars-quick-sheet-scrim
+                className={cn(
+                  "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 h-full w-full",
+                  quickFilterClosing &&
+                    "mobile-results-sheet-backdrop-layer-closing",
+                )}
+                preserveAspectRatio="none"
+              >
+                <defs>
+                  <mask
+                    id={quickFilterBackdropMaskId}
+                    maskUnits="userSpaceOnUse"
+                    x="0"
+                    y="0"
+                    width="100%"
+                    height="100%"
+                  >
+                    <rect width="100%" height="100%" fill="white" />
+                    <rect
+                      x={quickFilterCutoutRect.left}
+                      y={quickFilterCutoutRect.top}
+                      width={quickFilterCutoutRect.width}
+                      height={quickFilterCutoutRect.height}
+                      rx="9"
+                      ry="9"
+                      fill="black"
+                    />
+                  </mask>
+                </defs>
+                <rect
+                  width="100%"
+                  height="100%"
+                  fill="rgba(15, 23, 42, 0.35)"
+                  mask={`url(#${quickFilterBackdropMaskId})`}
+                />
+              </svg>
+              <div
+                aria-hidden="true"
+                data-cars-quick-sheet-cutout
+                className="pointer-events-none fixed rounded-[9px]"
+                style={{
+                  left: quickFilterCutoutRect.left,
+                  top: quickFilterCutoutRect.top,
+                  width: quickFilterCutoutRect.width,
+                  height: quickFilterCutoutRect.height,
+                }}
+              />
+            </>
           ) : (
             <div
               aria-hidden="true"
               data-cars-quick-sheet-scrim
-              className="cars-native-quick-scrim pointer-events-none absolute inset-0 bg-[rgba(15,23,42,0.35)]"
+              className={cn(
+                "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 bg-[rgba(15,23,42,0.35)]",
+                quickFilterClosing &&
+                  "mobile-results-sheet-backdrop-layer-closing",
+              )}
             />
           )}
           <section
@@ -3207,8 +3311,21 @@ export function CarsResultsExperience({
             role="dialog"
             aria-modal="true"
             aria-labelledby={`cars-quick-${quickFilterGroupId}`}
+            inert={quickFilterClosing ? true : undefined}
             onMouseDown={(event) => event.stopPropagation()}
-            className="cars-native-quick-sheet relative z-10 mx-3 mb-3 flex min-h-[240px] max-h-[min(76dvh,620px)] w-[calc(100%_-_24px)] flex-col overflow-hidden rounded-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]"
+            onAnimationEnd={(event) => {
+              if (
+                event.currentTarget !== event.target ||
+                !quickFilterClosingRef.current
+              ) {
+                return;
+              }
+              finishQuickFilterClose();
+            }}
+            className={cn(
+              "mobile-results-sheet-surface mobile-results-sheet-surface-smooth relative z-10 mx-3 mb-3 flex min-h-[240px] max-h-[min(76dvh,620px)] w-[calc(100%_-_24px)] flex-col overflow-hidden rounded-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]",
+              quickFilterClosing && "mobile-results-sheet-surface-closing",
+            )}
           >
             <header className="grid min-h-[64px] shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-center bg-[#F2F4F8] px-[10px]">
               <span aria-hidden="true" className="h-11 w-11" />
