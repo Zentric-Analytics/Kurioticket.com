@@ -252,9 +252,19 @@ test("mobile Cars exactly swaps empty placeholder typography without changing se
   assert.doesNotMatch(carsDriverAgeField, /valueClassName=/);
 
   const summaryField = source.slice(source.indexOf("function CarsSummaryField"), source.indexOf("export function SearchTabs"));
-  assert.match(summaryField, /text-\[15px\] font-semibold leading-5 text-slate-900/);
+  assert.match(summaryField, /const nativeMobileCarsField = mobilePresentation === "shell" && !isSmViewport/);
+  assert.match(summaryField, /nativeMobileCarsField && "text-\[10px\] font-extrabold leading-\[13px\] tracking-\[0\.5px\]/);
+  assert.match(summaryField, /nativeMobileCarsField && "text-\[15px\] font-semibold leading-5"/);
   assert.match(summaryField, /className=\{cn\("flex min-w-0 items-center gap-2 truncate", valueClassName\)\}/);
   assert.doesNotMatch(summaryField, /text-\[17px\] font-normal leading-6 text-slate-950/);
+});
+
+test("mobile homepage Cars isolates CSS-hidden desktop location autocompletes", () => {
+  assert.match(source, /const isSmCarsHomepageViewport = useSyncExternalStore/);
+  assert.match(carsPickupField, /presentation=\{mobileHomepage \? "desktop" : "responsive"\}/);
+  assert.match(carsPickupField, /isOpen=\{\(!mobileHomepage \|\| isSmCarsHomepageViewport\) && carsOpenPicker === "pickup"\}/);
+  assert.match(carsPickupField, /if \(mobileHomepage && !isSmCarsHomepageViewport\) return/);
+  assert.match(source, /carsOpenPicker === "dropoff"[\s\S]*?presentation=\{mobileHomepage \? "desktop" : "responsive"\}[\s\S]*?isOpen=\{\(!mobileHomepage \|\| isSmCarsHomepageViewport\) && carsOpenPicker === "dropoff"\}/);
 });
 
 test("Cars adds neutral value icons without changing summaries or chevrons", () => {
