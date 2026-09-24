@@ -44,6 +44,7 @@ import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { formatTravelDateDisplay } from "@/lib/dateFormatting/travelDateDisplay";
 import { cn } from "@/lib/utils";
 import { CarResultCard } from "@/components/results/CarResultCard";
 import { CarsResultsScrollIndicator } from "@/components/results/CarsResultsScrollIndicator";
@@ -504,14 +505,14 @@ const fieldLabelClass =
 const fieldInputClass =
   "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[15px] lg:font-medium lg:leading-6";
 const carsMobileEditFieldShellClass =
-  "relative flex min-h-[70px] flex-col justify-center gap-[1px] rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-2.5 shadow-[0_2px_8px_rgba(15,23,42,0.035)] focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25";
+  "relative flex min-h-[66px] flex-col justify-center rounded-[15px] border border-[#D8E1EC] bg-white px-3 py-[9px] shadow-[0_2px_8px_rgba(15,23,42,0.035)] focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25";
 const carsMobileEditFieldLabelClass =
-  "mb-0 text-[10px] font-extrabold uppercase leading-[13px] tracking-[0.5px] text-[#64748B]";
-const carsMobileEditValueRowClass = "gap-2.5";
+  "mb-1 text-[10px] font-extrabold uppercase leading-[13px] tracking-[0.5px] text-[#64748B]";
+const carsMobileEditValueRowClass = "gap-[10px]";
 const carsMobileEditValueClass =
-  "h-auto text-[15px] font-semibold leading-5 text-[#0F172A]";
+  "h-8 text-[15px] font-semibold leading-5 text-[#0F172A]";
 const carsMobileEditSecondaryValueClass =
-  "text-[12px] font-normal leading-4 tracking-normal text-[#56658E]";
+  "text-[12px] font-normal leading-4 tracking-normal text-slate-600";
 
 export function CarsResultsClient({
   values,
@@ -1174,7 +1175,7 @@ export function CarsResultsClient({
         >
           <div
             className={cn(
-              placement === "mobile" && "grid grid-cols-1 gap-2.5",
+              placement === "mobile" && "grid grid-cols-1 gap-2",
               placement !== "mobile" && (returnToDifferentLocation
                 ? differentReturnSearchGridClass
                 : sameReturnSearchGridClass),
@@ -1454,7 +1455,7 @@ export function CarsResultsClient({
           <Button
             type="submit"
             data-cars-mobile-search-submit
-            className="mt-[13px] h-12 w-full rounded-[10px] bg-[#004BB8] px-4 text-[14px] font-semibold leading-[18px] text-white shadow-none transition-colors hover:bg-[#021C2B]"
+            className="mt-[13px] h-[54px] w-full rounded-[11px] bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B]"
           >
             {t("search")}
           </Button>
@@ -3195,7 +3196,7 @@ function MobileLocationLauncher({
         <span className="truncate">{label}</span>
       </div>
       <div className={cn("flex min-w-0 items-center", groupedMobile ? carsMobileEditValueRowClass : "gap-2")}>
-        {groupedMobile ? <Icon className="h-4 w-4 shrink-0 text-[#334155]" aria-hidden="true" /> : null}
+        {groupedMobile ? <Icon className="h-[18px] w-[18px] shrink-0 text-[#334155]" aria-hidden="true" /> : null}
         <button
           ref={buttonRef}
           type="button"
@@ -3426,16 +3427,22 @@ function SearchDateCell({
   groupedMobile?: boolean;
 }) {
   const dateFormatter = useCompactDateSummary ? formatCompactDate : formatDate;
-  const pickupDisplay = dateFormatter(
-    pickupDate,
-    intlLocale,
-    t("carsResults.selectDate"),
-  );
-  const dropoffDisplay = dateFormatter(
-    dropoffDate,
-    intlLocale,
-    t("carsResults.selectDate"),
-  );
+  const pickupDisplay = groupedMobile
+    ? formatTravelDateDisplay(pickupDate, intlLocale) ??
+      t("carsResults.selectDate")
+    : dateFormatter(
+        pickupDate,
+        intlLocale,
+        t("carsResults.selectDate"),
+      );
+  const dropoffDisplay = groupedMobile
+    ? formatTravelDateDisplay(dropoffDate, intlLocale) ??
+      t("carsResults.selectDate")
+    : dateFormatter(
+        dropoffDate,
+        intlLocale,
+        t("carsResults.selectDate"),
+      );
   const summary = pickupDate
     ? dropoffDate
       ? `${pickupDisplay} — ${dropoffDisplay}`
@@ -3489,7 +3496,7 @@ function SearchDateCell({
         {!showRentalDuration && isCompact ? (
           <Calendar className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
         ) : null}
-        {groupedMobile ? <CalendarDays className="h-4 w-4 shrink-0 text-[#334155]" aria-hidden="true" /> : null}
+        {groupedMobile ? <Calendar className="h-[18px] w-[18px] shrink-0 text-[#334155]" aria-hidden="true" /> : null}
         <span className="min-w-0 flex-1">
           <span
             className={cn(
@@ -3506,14 +3513,15 @@ function SearchDateCell({
             </span>
           ) : null}
         </span>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 shrink-0 text-slate-500 transition-transform",
-            groupedMobile && "text-[#334155]",
-            isOpen && "rotate-180",
-          )}
-          aria-hidden="true"
-        />
+        {!groupedMobile ? (
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+              isOpen && "rotate-180",
+            )}
+            aria-hidden="true"
+          />
+        ) : null}
       </button>
 
       {isOpen ? (
@@ -3748,7 +3756,7 @@ function SearchTimeCell({
         aria-haspopup="menu"
         className={cn("focus-ring flex min-w-0 w-full items-center justify-between rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6", groupedMobile ? [carsMobileEditValueClass, carsMobileEditValueRowClass] : "h-8 gap-2")}
       >
-        {groupedMobile ? <Clock3 className="h-4 w-4 shrink-0 text-[#334155]" aria-hidden="true" /> : null}
+        {groupedMobile ? <Clock className="h-[18px] w-[18px] shrink-0 text-[#334155]" aria-hidden="true" /> : null}
         {useMainPageDesktopPresentation ? (
           <span className="flex min-w-0 items-center gap-2">
             <Clock
@@ -3894,7 +3902,7 @@ function DriverAgeCell({
         aria-haspopup="listbox"
         className={cn("focus-ring flex min-w-0 w-full items-center justify-between rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6", groupedMobile ? [carsMobileEditValueClass, carsMobileEditValueRowClass] : "h-8 gap-2")}
       >
-        {groupedMobile ? <UserRound className="h-4 w-4 shrink-0 text-[#334155]" aria-hidden="true" /> : null}
+        {groupedMobile ? <UserRound className="h-[18px] w-[18px] shrink-0 text-[#334155]" aria-hidden="true" /> : null}
         {useMainPageDesktopPresentation ? (
           <span className="flex min-w-0 items-center gap-2">
             <UserRound
