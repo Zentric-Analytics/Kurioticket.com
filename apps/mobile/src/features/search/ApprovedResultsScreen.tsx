@@ -194,7 +194,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const flightResults = product === "flight";
   const flightCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
   const flightResultsScrollIndicatorInsets = Platform.OS === "ios"
-    ? { top: 4, right: 3, bottom: Math.max(insets.bottom, 8), left: 0 }
+    ? { top: 56, right: 3, bottom: Math.max(insets.bottom, 8), left: 0 }
     : undefined;
   const hotelCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
   const { availability } = useFeatureAvailability();
