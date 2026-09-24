@@ -3787,10 +3787,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       "fToAirport",
       allowedToAirports,
     );
-    // Old fAirport links represented an undirected endpoint restriction. Keep
-    // accepting them, while all newly written mobile state is directional.
-    const legacyFromAirports = nextSelectedAirports.filter((value) => allowedFromAirports.has(value));
-    const legacyToAirports = nextSelectedAirports.filter((value) => allowedToAirports.has(value));
+    // Keep legacy/desktop fAirport as an undirected endpoint restriction.
+    // Directional mobile filters use only fFromAirport / fToAirport.
     const nextSelectedFlightQuality = readFilterList(
       filterParams,
       "fQuality",
@@ -3826,14 +3824,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         ? current
         : nextSelectedAirports,
     );
-    setSelectedFromAirports((current) => {
-      const next = nextSelectedFromAirports.length ? nextSelectedFromAirports : legacyFromAirports;
-      return areStringArraysEqual(current, next) ? current : next;
-    });
-    setSelectedToAirports((current) => {
-      const next = nextSelectedToAirports.length ? nextSelectedToAirports : legacyToAirports;
-      return areStringArraysEqual(current, next) ? current : next;
-    });
+    setSelectedFromAirports((current) =>
+      areStringArraysEqual(current, nextSelectedFromAirports)
+        ? current
+        : nextSelectedFromAirports,
+    );
+    setSelectedToAirports((current) =>
+      areStringArraysEqual(current, nextSelectedToAirports)
+        ? current
+        : nextSelectedToAirports,
+    );
     setSelectedFlightQuality((current) =>
       areStringArraysEqual(current, nextSelectedFlightQuality)
         ? current
@@ -4011,6 +4011,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     maximumDuration: durationBounds && maxDurationMinutes !== null && maxDurationMinutes < durationBounds.max ? maxDurationMinutes : null,
     stops: selectedStops,
     airlines: selectedAirlines,
+    airports: selectedAirports,
     fromAirports: selectedFromAirports,
     toAirports: selectedToAirports,
     journeyTimeMaximums: mobileJourneyTimeMaximums,
@@ -4028,11 +4029,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     mobileJourneyTimeMaximums,
     priceBounds.max,
     renderFlightQualityFilter,
-    selectedAirlines.length,
+    selectedAirlines,
+    selectedAirports,
     selectedFromAirports,
     selectedToAirports,
-    selectedFlightQuality.length,
-    selectedStops.length,
+    selectedFlightQuality,
+    selectedStops,
     timeBounds.landing,
     timeBounds.takeoff,
   ]);
@@ -6802,7 +6804,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         onClose={() => closeMobileSearchDrawer()}
         onSearch={(value: FlightEditSearchValue) => {
           const projection = projectSearchLegs(value.tripType, value.legs);
-          const nextParams = new URLSearchParams({ tripType: value.tripType, origin: projection.origin, destination: projection.destination, departureDate: value.departureDate, adults: String(value.adults), children: String(value.children), infants: String(value.infants), travelers: String(value.adults + value.children + value.infants), cabinClass: value.cabinClass });
+          const nextParams = new URLSearchParams({ tripType: value.tripType, origin: projection.origin, destination: projection.destination, departureDate: projection.departureDate, adults: String(value.adults), children: String(value.children), infants: String(value.infants), travelers: String(value.adults + value.children + value.infants), cabinClass: value.cabinClass });
           if (value.tripType === "round-trip" && value.returnDate) nextParams.set("returnDate", value.returnDate);
           if (value.tripType === "multi-city") { nextParams.set("currency", selectedCurrency); appendFlightLegParams(nextParams, value.legs); }
           closeMobileSearchDrawer({ restoreFocus: false });
