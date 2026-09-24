@@ -119,6 +119,7 @@ import {
   isBeforeToday as isCarsDateBeforeToday,
   parseIsoDate as parseCarsIsoDate,
   toIsoDate as toCarsIsoDate,
+  toTimeValue as toCarsTimeValue,
   validateCarsForm,
   type CarsFormErrors,
   type CarsFormValues,
@@ -2267,7 +2268,12 @@ export function SearchTabs({
 
     if (isCarsSubmitting) return;
 
-    const nextErrors = validateCarsForm(carsValues, toCarsIsoDate(new Date()));
+    const now = new Date();
+    const nextErrors = validateCarsForm(
+      carsValues,
+      toCarsIsoDate(now),
+      toCarsTimeValue(now),
+    );
     if (mobileCarsDriverAgeMissing) {
       nextErrors.driverAge = "carsSearch.error.driverAgeInvalid";
     }
