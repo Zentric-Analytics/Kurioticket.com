@@ -440,3 +440,45 @@ test("mobile Deals outer surface uses the refined radius without changing shared
   assert.match(source, /mobile-homepage-deals-surface[^\n]*rounded-\[14px\]/);
   assert.doesNotMatch(source, /mobile-homepage-deals-surface[^\n]*rounded-\[19px\]/);
 });
+
+test("mobile Cars requires an explicit driver age before Search can navigate", () => {
+  assert.match(
+    source,
+    /const carsDriverAgeIsEmpty = carsValues\.driverAge === defaultDriverAge;[\s\S]*?const mobileCarsDriverAgeMissing = mobileHomepage && carsDriverAgeIsEmpty;/,
+  );
+
+  const submit = source.slice(
+    source.indexOf("const onCarsSubmit"),
+    source.indexOf("const isCarsSearchDisabled"),
+  );
+  assert.match(
+    submit,
+    /if \(mobileCarsDriverAgeMissing\) \{[\s\S]*?nextErrors\.driverAge = "carsSearch\.error\.driverAgeInvalid";[\s\S]*?\}/,
+  );
+  assert.match(
+    submit,
+    /if \(Object\.values\(nextErrors\)\.some\(Boolean\)\) \{[\s\S]*?if \(mobileCarsDriverAgeMissing\) \{[\s\S]*?setCarsOpenPicker\("age"\);[\s\S]*?\}[\s\S]*?return;/,
+  );
+
+  const disabled = source.slice(
+    source.indexOf("const isCarsSearchDisabled"),
+    source.indexOf("const carsLocationStrings"),
+  );
+  assert.match(disabled, /mobileCarsDriverAgeMissing/);
+
+  const invalidGuard = submit.indexOf("mobileCarsDriverAgeMissing");
+  const href = submit.indexOf("const href = `/cars/results?");
+  const recentSearch = submit.indexOf("buildCarRecentSearch");
+  const navigation = submit.indexOf("router.push(href)");
+  assert.ok(invalidGuard >= 0);
+  assert.ok(invalidGuard < href);
+  assert.ok(invalidGuard < recentSearch);
+  assert.ok(invalidGuard < navigation);
+});
+
+test("mobile Cars driver-age requirement stays scoped away from desktop homepage Cars", () => {
+  assert.match(
+    source,
+    /const mobileCarsDriverAgeMissing = mobileHomepage && carsDriverAgeIsEmpty;/,
+  );
+});
