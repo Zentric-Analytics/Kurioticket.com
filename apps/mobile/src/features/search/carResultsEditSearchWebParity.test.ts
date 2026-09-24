@@ -16,7 +16,9 @@ test("native Results edit uses the web title and retained sheet contract", () =>
   assert.doesNotMatch(modal, />\s*Edit car search\s*</);
   for (const token of ["maxHeight: \"88%\"", "FLIGHT_QUICK_SHEET_HORIZONTAL_INSET", "FLIGHT_FLOATING_SHEET_BOTTOM_GAP", "borderTopLeftRadius: 24", "borderBottomLeftRadius: 24", "minHeight: 52", "KeyboardAvoidingView", "onRequestClose={onClose}", "submitNavigation=\"replace\"", "onBeforeNavigate={onClose}"]) assert.ok(modal.includes(token), token);
   assert.doesNotMatch(modal, /maxHeight: \"94%\"|borderTopLeftRadius: 22|minHeight: 60/);
-  assert.match(webSheet, /rounded-t-\[22px\]/);
+  assert.match(webSheet, /mobile-results-sheet-cars-edit-surface mx-3 mb-3 max-h-\[88dvh\] w-\[calc\(100%_-_24px\)\]/);
+  assert.match(webSheet, /rounded-\[24px\] border border-slate-200\/80 bg-\[#F5F7FB\] shadow-none/);
+  assert.match(webSheet, /max\(20px, calc\(env\(safe-area-inset-bottom, 0px\) - 12px\)\)/);
 });
 
 test("Cars edit uses a neutral stack of independent cards with polished typography", () => {

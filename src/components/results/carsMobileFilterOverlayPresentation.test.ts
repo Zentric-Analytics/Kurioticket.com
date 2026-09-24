@@ -42,12 +42,12 @@ test("Cars mobile filter sections remain expanded with native row and checkbox g
   assert.match(cars, /layout === "mobile"\s*\? "grid gap-6 bg-transparent"/);
 });
 
-test("Cars shortcuts keep the mobile-web attached bottom-sheet presentation with native internal polishing", () => {
+test("Cars shortcuts use the native floating cutout footprint and internal polishing", () => {
   const sheets = cars.slice(cars.indexOf("data-cars-quick-sheet-backdrop"), cars.indexOf("!guidedPlanning && showBackToTop"));
   for (const contract of [
     /fixed inset-0.*items-end.*lg:hidden/,
     /cars-native-quick-scrim.*absolute inset-0.*bg-\[rgba\(15,23,42,0\.35\)\]/,
-    /cars-native-quick-sheet relative z-10.*flex min-h-\[240px\].*max-h-\[min\(76dvh,620px\)\].*w-full.*rounded-t-\[24px\].*bg-\[#F2F4F8\]/,
+    /cars-native-quick-sheet relative z-10 mx-3 mb-3.*flex min-h-\[240px\].*max-h-\[min\(76dvh,620px\)\].*w-\[calc\(100%_-_24px\)\].*rounded-\[24px\].*bg-\[#F2F4F8\]/,
     /grid min-h-\[64px\].*grid-cols-\[44px_minmax\(0,1fr\)_44px\].*bg-\[#F2F4F8\].*px-\[10px\]/,
     /text-center text-\[18px\] font-bold leading-\[23px\]/,
     /<X className="h-\[22px\] w-\[22px\]"/,
@@ -60,9 +60,9 @@ test("Cars shortcuts keep the mobile-web attached bottom-sheet presentation with
     /h-\[49px\] min-w-\[116px\].*rounded-xl.*border.*border-\[#D8DEE8\]/,
     /h-\[49px\].*flex-1.*rounded-xl.*bg-\[#004BB8\]/,
     /gap-\[10px\] bg-\[#F2F4F8\]/,
-    /pb-\[max\(20px,env\(safe-area-inset-bottom\)\)\]/,
+    /paddingBottom: "max\(12px, calc\(env\(safe-area-inset-bottom, 0px\) - 12px\)\)"/,
   ]) assert.match(sheets, contract);
-  assert.doesNotMatch(sheets, /\bmx-3\b|\bmb-3\b|w-\[calc\(100%-24px\)\]|rounded-\[24px\]/);
+  assert.doesNotMatch(sheets, /\bw-full\b[^"]*rounded-t-\[24px\]/);
   assert.doesNotMatch(sheets, /backdrop-blur|bg-\[#F6F8FB\]|bg-white|Choose one option|selected<\/p>/);
   assert.match(styles, /cars-native-quick-scrim-in[\s\S]*?opacity: 0[\s\S]*?opacity: 1/);
   assert.match(styles, /cars-native-quick-sheet-in[\s\S]*?28px[\s\S]*?translate3d\(0, 0, 0\)/);
@@ -79,6 +79,7 @@ test("Cars shortcut backdrop and inside-click dismissal boundaries remain explic
   assert.equal((cars.match(/data-cars-quick-sheet-backdrop/g) ?? []).length, 1);
   const wrapperTag = cars.match(/<div\s+data-cars-quick-sheet-backdrop[\s\S]*?onMouseDown=\{closeQuickFilter\}\s*>/)?.[0] ?? "";
   assert.match(wrapperTag, /className="fixed inset-0 z-\[10010\] flex items-end lg:hidden"/);
+  assert.match(cars, /data-cars-quick-sheet[\s\S]{0,450}mx-3 mb-3[\s\S]{0,220}w-\[calc\(100%_-_24px\)\][\s\S]{0,180}rounded-\[24px\]/);
   assert.doesNotMatch(wrapperTag, /cars-native-quick-(?:backdrop|scrim|sheet)|bg-\[rgba|opacity/);
   assert.match(cars, /data-cars-quick-sheet-scrim[\s\S]{0,250}cars-native-quick-scrim pointer-events-none absolute inset-0 bg-\[rgba\(15,23,42,0\.35\)\]/);
   assert.match(cars, /data-cars-quick-sheet[\s\S]{0,350}onMouseDown=\{\(event\) => event\.stopPropagation\(\)\}/);
@@ -145,6 +146,11 @@ test("Cars mobile filter overlays avoid duplicate top safe-area padding and keep
   const quickEnd = cars.indexOf("!guidedPlanning && showBackToTop", quickStart);
   const quick = cars.slice(quickStart, quickEnd);
   assert.match(quick, /min-h-\[64px\]/);
-  assert.match(quick, /pb-\[max\(20px,env\(safe-area-inset-bottom\)\)\]/);
-  assert.doesNotMatch(quick, /calc\(env\(safe-area-inset-bottom\)-12px\)/);
+  assert.match(
+    quick,
+    /paddingBottom: "max\(12px, calc\(env\(safe-area-inset-bottom, 0px\) - 12px\)\)"/,
+  );
+  assert.match(quick, /mx-3 mb-3/);
+  assert.match(quick, /w-\[calc\(100%_-_24px\)\]/);
+  assert.match(quick, /rounded-\[24px\]/);
 });
