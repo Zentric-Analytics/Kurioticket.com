@@ -60,6 +60,7 @@ import { nearbyFarePrice } from "@/components/results/nearbyFarePrice";
 import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters";
 import { FlightPriceAlertControl } from "@/components/results/FlightPriceAlertControl";
 import { FlightResultsScrollIndicator } from "@/components/results/FlightResultsScrollIndicator";
+import { useHorizontalRailAxisLockRef } from "@/components/ui/useHorizontalRailAxisLock";
 import { MobileFlightResultsState } from "@/components/results/MobileFlightResultsState";
 import {
   MobileFlightFiltersSheet,
@@ -1122,6 +1123,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const nearbyFareRequestsRef = useRef(new Map<string, NearbyFareRequest>());
   const nearbyFareGenerationRef = useRef(0);
   const mobileNearbyFareRailRef = useRef<HTMLDivElement>(null);
+  const mobileNearbyFareAxisLockRef = useHorizontalRailAxisLockRef(mobileNearbyFareRailRef);
+  const mobileShortcutAxisLockRef = useHorizontalRailAxisLockRef<HTMLDivElement>();
   const mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>(null);
   const alignedMobileNearbyFareSearchRef = useRef<string | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
@@ -6644,7 +6647,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     ) : null;
     return (
       <>
-        <div data-mobile-flight-shortcuts className="w-full min-w-0 overflow-x-auto ps-3 pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+        <div ref={mobileShortcutAxisLockRef} data-mobile-flight-shortcuts className="w-full min-w-0 touch-pan-y overflow-x-auto ps-3 pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
           <div className="flex w-max flex-nowrap items-center gap-1.5">
             {renderFloatingFilterButton(shortcutButtonClass)}
             {renderTrigger("sort", activeSortOption.label)}
@@ -7301,7 +7304,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               {body?.tripType !== "multi-city" ? (
                 <>
                   <div className="w-full min-w-0 max-w-full overflow-hidden sm:hidden" aria-label="Nearby departure fares" data-nearby-fare-presentation="mobile">
-                    <div ref={mobileNearbyFareRailRef} className="flex h-[80px] w-full min-w-0 max-w-full snap-x snap-proximity items-center gap-2 overflow-x-auto overflow-y-hidden px-3 py-[5px] [scroll-padding-inline:0.75rem] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div ref={mobileNearbyFareAxisLockRef} className="flex h-[80px] w-full min-w-0 max-w-full touch-pan-y snap-x snap-proximity items-center gap-2 overflow-x-auto overflow-y-hidden px-3 py-[5px] [scroll-padding-inline:0.75rem] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       {(nearbyFares.length ? nearbyFares : Array.from({ length: nearbyFareRangeSize }, (_, index) => ({ date: `loading-mobile-${index}`, status: "loading" as const }))).map((fare) => {
                         const selected = fare.date === body?.departureDate;
                         const displayPrice = fare.status === "success" ? formatDisplayPrice({ amount: fare.amount, sourceCurrency: fare.currency, displayCurrency: selectedCurrency, convertSourceEstimate: true, useFlightResultSymbols: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback }).formatted : null;
