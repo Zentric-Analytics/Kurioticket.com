@@ -12,11 +12,13 @@ test("Flight Results uses a capped decorative scroll thumb instead of the native
   assert.match(list, /showsVerticalScrollIndicator=\{false\}/);
   assert.match(list, /onContentSizeChange=\{handleFlightResultsContentSizeChange\}/);
   assert.match(list, /onScroll=\{Animated\.event/);
+  assert.match(list, /useNativeDriver: true/);
   assert.match(screen, /flightResultsScrollIndicatorGeometry/);
   assert.match(screen, /pointerEvents="none"/);
   assert.match(screen, /s0\.flightResultsScrollIndicatorTrack/);
   assert.match(screen, /s0\.flightResultsScrollIndicatorThumb/);
   assert.match(screen, /height: geometry\.thumbHeight/);
+  assert.match(screen, /backgroundColor: theme\.dark \? "rgba\(226, 232, 240, 0\.72\)" : "rgba\(60, 60, 67, 0\.55\)"/);
   assert.match(screen, /translateY/);
   assert.doesNotMatch(screen, /PanResponder/);
 });
