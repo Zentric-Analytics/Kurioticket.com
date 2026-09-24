@@ -296,3 +296,32 @@ test("long mobile model names retain an action-independent identity row", () => 
     /data-car-card-mobile-actions|p[er]-\d+|w-\[(?:80|88)px\]/,
   );
 });
+
+
+test("mobile transmission specs use dedicated automatic and manual icons", () => {
+  const specsSource = readFileSync(
+    "src/components/results/carResultCardSpecs.ts",
+    "utf8",
+  );
+  const iconSource = readFileSync(
+    "src/components/results/CarTransmissionIcon.tsx",
+    "utf8",
+  );
+
+  assert.match(
+    specsSource,
+    /\/manual\/i\.test\(car\.transmission\)[\s\S]*?ManualTransmissionIcon/,
+  );
+  assert.match(
+    specsSource,
+    /\/automatic\/i\.test\(car\.transmission\)[\s\S]*?AutomaticTransmissionIcon/,
+  );
+  assert.match(specsSource, /: CarFront;/);
+
+  assert.match(iconSource, /M7 4\.5h5\.5v15H7zM9\.75 6\.5v10/);
+  assert.match(iconSource, />P<\/text>/);
+  assert.match(iconSource, />R<\/text>/);
+  assert.match(iconSource, />N<\/text>/);
+  assert.match(iconSource, />D<\/text>/);
+  assert.match(iconSource, /M6 8v8M12 8v8M18 8v8M6 12h12/);
+});

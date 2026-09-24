@@ -238,3 +238,20 @@ test("Hotel Rates no longer expose native room-option cards or a room modal", ()
   assert.doesNotMatch(gallery, /Intl\.NumberFormat/);
 });
 
+
+
+test("native Car details use automatic and manual transmission FlowIcons", () => {
+  assert.match(car, /import \{ FlowIcon \} from "\.\.\/flow\/FlowIcon"/);
+  assert.match(
+    car,
+    /function TransmissionSpec[\s\S]*?"transmissionManual"[\s\S]*?"transmissionAutomatic"/,
+  );
+  assert.match(
+    car,
+    /<TransmissionSpec transmission=\{result\.transmission\}/,
+  );
+  assert.doesNotMatch(
+    car,
+    /<Spec Icon=\{CarFront\} text=\{result\.transmission===/,
+  );
+});
