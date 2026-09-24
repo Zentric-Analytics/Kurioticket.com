@@ -5,6 +5,9 @@ import {
   formatCarPickupType,
   getCarSpecificationIcon,
   getMobileCarPrimarySpecs,
+  getMobileCarResultIdentity,
+  getMobileCarSpecColumns,
+  getMobileProviderCarSpecSlots,
 } from "./carResultCardSpecs";
 import {
   BriefcaseBusiness,
@@ -81,32 +84,30 @@ test("desktop save and share glyphs sit closer within independent targets", () =
   assert.match(actions, /-translate-x-1\.5/);
 });
 
-test("standalone mobile keeps the conditional qualifier with the semantic model heading", () => {
+test("standalone mobile follows the native two-line car identity structure", () => {
   const mobile = source.slice(
     source.indexOf("data-car-card-mobile-information"),
     source.indexOf("data-car-card-mobile-specs"),
   );
+  assert.match(source, /const mobileIdentity = getMobileCarResultIdentity\(car\.modelName\)/);
   assert.equal(
-    (mobile.match(/\{car\.orSimilar \? \(/g) ?? []).length,
+    (mobile.match(/\{mobileIdentity\.primaryName\}/g) ?? []).length,
     2,
-    "both supported heading levels conditionally render the qualifier",
+    "both supported heading levels render the native-style primary name line",
   );
-  assert.doesNotMatch(mobile, /<h[23][^>]*>\s*\{vehicleName\}\s*<\/h[23]>/);
-  assert.match(
-    mobile,
-    /<h3[\s\S]*?\{car\.modelName\}[\s\S]*?\{car\.orSimilar \? \([\s\S]*?<span className="whitespace-nowrap text-\[11px\] font-medium text-\[#536B92\]">[\s\S]*?\{"\\u00A0"\}\{orSimilarLabel\}[\s\S]*?<\/h3>/,
+  assert.equal(
+    (mobile.match(/mobileIdentity\.secondaryModel \|\| car\.orSimilar/g) ?? []).length,
+    2,
+    "both supported heading levels conditionally render the secondary identity line",
   );
-  assert.match(mobile, /<h2[\s\S]*?\{car\.modelName\}[\s\S]*?\{car\.orSimilar \? \([\s\S]*?<\/h2>/);
-  assert.match(
-    mobile,
-    /text-\[15px\] font-bold leading-\[18px\]/,
-  );
+  assert.match(mobile, /\{mobileIdentity\.secondaryModel\}/);
+  assert.match(mobile, /\{orSimilarLabel\}/);
+  assert.match(mobile, /block min-w-0 truncate text-\[15px\] font-bold leading-\[18px\]/);
   assert.doesNotMatch(
     mobile,
-    /<\/h[23]>\s*\{car\.orSimilar/,
-    "the qualifier must not be a sibling block beneath the heading",
+    /<h3[^>]*>\s*\{car\.modelName\}|<h2[^>]*>\s*\{car\.modelName\}/,
+    "mobile headings must not hand the full provider model string directly to browser line wrapping",
   );
-  assert.doesNotMatch(mobile, /aria-hidden[^>]*>\s*or similar/);
 });
 
 test("guided planning retains its localized combined vehicle-name contract", () => {
@@ -150,15 +151,12 @@ test("mobile primary specs are deterministic and capped at four", () => {
   );
   assert.equal(getMobileCarPrimarySpecs(limited).length, 4);
 });
-test("mobile card matches native compact height, spec columns, and top-aligned actions", () => {
+test("mobile card matches native compact height, semantic spec columns, and top-aligned actions", () => {
   assert.match(source, /data-car-card-mobile-main[\s\S]*?min-h-\[156px\]/);
   assert.doesNotMatch(source, /data-car-card-mobile-main[\s\S]*?min-h-\[168px\]/);
-  assert.match(source, /const mobileSpecColumns = \(/);
-  assert.match(source, /car\.sandboxPresentation/);
-  assert.match(source, /index % 2 === 0/);
-  assert.match(source, /index % 2 === 1/);
-  assert.match(source, /mobilePrimarySpecs\.slice\(0, 2\)/);
-  assert.match(source, /mobilePrimarySpecs\.slice\(2, 4\)/);
+  assert.match(source, /getMobileProviderCarSpecSlots\(car\.sandboxPresentation\.specs\)/);
+  assert.match(source, /getMobileCarSpecColumns\(mobilePrimarySpecs\)/);
+  assert.doesNotMatch(source, /index % 2 === 0|index % 2 === 1/);
   const specs = source.slice(
     source.indexOf("data-car-card-mobile-specs"),
     source.indexOf('className="flex min-w-0 flex-[1.35]', source.indexOf("data-car-card-mobile-specs")),
@@ -292,26 +290,89 @@ test("every supported mobile badge keeps its full single-line label", () => {
   assert.match(source, /shrink-0[^\"]*whitespace-nowrap/);
 });
 
-test("long mobile model names retain an action-independent identity row", () => {
-  for (const modelName of [
-    "Citroën Grand C4 SpaceTourer",
-    "Mercedes-Benz E-Class",
-    "Mercedes-Benz V-Class",
-  ]) {
-    assert.ok(modelName.length > 20);
+test("mobile car names use the same deliberate Mercedes-Benz identity split as native", () => {
+  for (const model of ["E-Class", "V-Class", "C-Class"]) {
+    assert.deepEqual(getMobileCarResultIdentity(`Mercedes-Benz ${model}`), {
+      primaryName: "Mercedes-Benz",
+      secondaryModel: model,
+    });
   }
+  assert.deepEqual(getMobileCarResultIdentity("Toyota Corolla"), {
+    primaryName: "Toyota Corolla",
+    secondaryModel: null,
+  });
+  assert.deepEqual(getMobileCarResultIdentity("  Mercedes-Benz   E-Class  "), {
+    primaryName: "Mercedes-Benz",
+    secondaryModel: "E-Class",
+  });
+
   const identity = source.slice(
     source.indexOf("data-car-card-mobile-identity"),
     source.indexOf("data-car-card-mobile-specs"),
   );
-  assert.match(identity, /\{car\.modelName\}/);
-  assert.match(identity, /min-w-0 break-words text-\[15px\]/);
+  assert.match(identity, /\{mobileIdentity\.primaryName\}/);
+  assert.match(identity, /\{mobileIdentity\.secondaryModel\}/);
   assert.doesNotMatch(
     identity,
     /data-car-card-mobile-actions|p[er]-\d+|w-\[(?:80|88)px\]/,
   );
 });
 
+
+test("KAYAK provider specs occupy the same semantic slots and columns as Kurioticket cars", () => {
+  const slots = getMobileProviderCarSpecSlots([
+    "4 passengers",
+    "1 bags",
+    "5 doors",
+    "Automatic",
+  ]);
+  assert.deepEqual(
+    slots.map((entry) => entry?.[1] ?? null),
+    ["4 passengers", "Automatic", "5 doors", "1 bags"],
+  );
+  assert.deepEqual(
+    getMobileCarSpecColumns(slots).map((column) =>
+      column.map(([, label]) => label),
+    ),
+    [
+      ["4 passengers", "Automatic"],
+      ["5 doors", "1 bags"],
+    ],
+  );
+});
+
+test("KAYAK fixed provider slots preserve an unusual transmission label", () => {
+  const slots = getMobileProviderCarSpecSlots([
+    "4 passengers",
+    "1 bags",
+    "5 doors",
+    "CVT",
+  ]);
+  assert.deepEqual(
+    slots.map((entry) => entry?.[1] ?? null),
+    ["4 passengers", "CVT", "5 doors", "1 bags"],
+  );
+  assert.equal(slots[1]?.[0], CarFront);
+});
+
+test("missing KAYAK specs stay absent without shifting another fact into the wrong column", () => {
+  const slots = getMobileProviderCarSpecSlots([
+    "4 passengers",
+    "Baggage capacity not supplied",
+    "5 doors",
+    "Transmission not supplied",
+  ]);
+  assert.deepEqual(
+    slots.map((entry) => entry?.[1] ?? null),
+    ["4 passengers", null, "5 doors", null],
+  );
+  assert.deepEqual(
+    getMobileCarSpecColumns(slots).map((column) =>
+      column.map(([, label]) => label),
+    ),
+    [["4 passengers"], ["5 doors"]],
+  );
+});
 
 test("provider car specs use the same semantic icons as normalized car cards", () => {
   assert.equal(getCarSpecificationIcon("4 passengers"), Users);
