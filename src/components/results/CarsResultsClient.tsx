@@ -79,6 +79,7 @@ import { serializeCarLocationTarget } from "@/lib/cars/carSearchLocationTarget";
 import { carFilterGroups, carQuickFilterGroupIds, type CarFilterGroup } from "@/lib/cars/carFilterPresentation";
 import { getSelectedCarFiltersSignature } from "@/lib/cars/carFilterSelection";
 import { formatCarResultsScheduleSummary } from "@/lib/cars/carResultsSummary";
+import { toTimeValue, validateCarsForm } from "@/lib/cars/carsSearchUtils";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
@@ -536,6 +537,7 @@ export function CarsResultsClient({
   const [mobileSearchClosing, setMobileSearchClosing] = useState(false);
   const mobileSearchCloseTimerRef = useRef<number | null>(null);
   const [isSearchSubmitting, setIsSearchSubmitting] = useState(false);
+  const [searchValidationError, setSearchValidationError] = useState("");
   const isSearchSubmittingRef = useRef(false);
   const [mobileCompactHeaderVisible, setMobileCompactHeaderVisible] =
     useState(false);
@@ -973,13 +975,60 @@ export function CarsResultsClient({
     );
   }, [cancelMobileSearchDrawer, mobileSearchClosing]);
 
+  const validateCurrentPickupTime = useCallback(() => {
+    const now = new Date();
+    const validation = validateCarsForm(
+      {
+        pickupLocation,
+        pickupDate,
+        pickupTime,
+        dropoffDate,
+        dropoffTime,
+        driverAge,
+        returnToDifferentLocation,
+        dropoffLocation: returnToDifferentLocation
+          ? dropoffLocation
+          : pickupLocation,
+      },
+      toIsoDate(now),
+      toTimeValue(now),
+    );
+    const pickupTimeExpired =
+      validation.pickupTime === "carsSearch.error.pickupTimePast";
+
+    setSearchValidationError(
+      pickupTimeExpired ? t("carsSearch.error.pickupTimePast") : "",
+    );
+
+    return !pickupTimeExpired;
+  }, [
+    driverAge,
+    dropoffDate,
+    dropoffLocation,
+    dropoffTime,
+    pickupDate,
+    pickupLocation,
+    pickupTime,
+    returnToDifferentLocation,
+    t,
+  ]);
+
+  useEffect(() => {
+    setSearchValidationError("");
+  }, [pickupDate, pickupTime]);
+
   const submitMobileSearch = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      const formData = new FormData(event.currentTarget);
-      const href = buildCarsResultsHref(formData);
 
       if (isSearchSubmittingRef.current) return;
+      if (!validateCurrentPickupTime()) {
+        setMobilePicker("times");
+        return;
+      }
+
+      const formData = new FormData(event.currentTarget);
+      const href = buildCarsResultsHref(formData);
 
       // Submission commits the live form. It must not run the cancel
       // snapshot or restore focus to the outgoing Results set.
@@ -1006,7 +1055,7 @@ export function CarsResultsClient({
 
       router.push(href, { scroll: true });
     },
-    [releaseMobileSearchScrollLock, router],
+    [releaseMobileSearchScrollLock, router, validateCurrentPickupTime],
   );
 
   useLayoutEffect(() => {
@@ -1145,6 +1194,15 @@ export function CarsResultsClient({
         onSubmit={(event) => {
           if (placement === "mobile") {
             submitMobileSearch(event);
+            return;
+          }
+
+          if (!validateCurrentPickupTime()) {
+            event.preventDefault();
+            if (placement === "desktop-sticky") {
+              setDesktopStickySearchSection("times");
+            }
+            setTimesOpen(true);
             return;
           }
 
@@ -1461,6 +1519,17 @@ export function CarsResultsClient({
             </Button>
           </div>
         </div>
+        {searchValidationError ? (
+          <p
+            role="alert"
+            className={cn(
+              "mt-2 text-sm font-semibold text-rose-600",
+              placement === "mobile" && "px-1",
+            )}
+          >
+            {searchValidationError}
+          </p>
+        ) : null}
         {placement === "mobile" ? (
           <Button
             type="submit"

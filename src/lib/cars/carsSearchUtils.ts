@@ -60,6 +60,9 @@ export const toIsoDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
+export const toTimeValue = (date: Date) =>
+  `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+
 export const formatDisplayDate = (isoDate: string, locale?: string) => {
   if (!isoDate) {
     return "";
@@ -216,6 +219,7 @@ export const getInitialValues = (
 export const validateCarsForm = (
   values: CarsFormValues,
   todayIso: string,
+  currentLocalTime?: string,
 ): CarsFormErrors => {
   const errors: CarsFormErrors = {};
   const pickupLocation = values.pickupLocation.trim();
@@ -235,6 +239,13 @@ export const validateCarsForm = (
 
   if (!values.pickupTime) {
     errors.pickupTime = "carsSearch.error.pickupTimeRequired";
+  } else if (
+    currentLocalTime &&
+    /^\d{2}:\d{2}$/.test(currentLocalTime) &&
+    values.pickupDate === todayIso &&
+    values.pickupTime <= currentLocalTime
+  ) {
+    errors.pickupTime = "carsSearch.error.pickupTimePast";
   }
 
   if (!values.dropoffDate) {

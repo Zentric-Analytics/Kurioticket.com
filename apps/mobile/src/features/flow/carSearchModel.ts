@@ -100,11 +100,13 @@ export function selectCarsPickupTime(form: CarForm, pickupTime: string): CarForm
 
 export function validateCarForm(form: CarForm, today = new Date()): CarFormErrors {
   const errors: CarFormErrors = {}; const todayIso = localIsoDate(today);
+  const currentLocalTime = `${String(today.getHours()).padStart(2, "0")}:${String(today.getMinutes()).padStart(2, "0")}`;
   if (!form.pickupLocation.trim()) errors.pickupLocation = "Enter a pick-up location.";
   if (form.separateDropoff && !form.dropoffLocation.trim()) errors.dropoffLocation = "Enter a drop-off location.";
   if (!localDateFromIso(form.pickupDate) || form.pickupDate < todayIso) errors.pickupDate = "Choose a current or future pick-up date.";
   if (!localDateFromIso(form.dropoffDate) || form.dropoffDate < form.pickupDate || form.dropoffDate < todayIso) errors.dropoffDate = "Choose a return date on or after pick-up.";
   if (!validTime(form.pickupTime)) errors.pickupTime = "Choose a valid pick-up time.";
+  else if (!errors.pickupDate && form.pickupDate === todayIso && form.pickupTime <= currentLocalTime) errors.pickupTime = "Choose a pick-up time that has not passed.";
   if (!validTime(form.dropoffTime)) errors.dropoffTime = "Choose a valid return time.";
   if (!errors.pickupDate && !errors.dropoffDate && !errors.pickupTime && !errors.dropoffTime && compareLocalDateTimes(form.dropoffDate, form.dropoffTime, form.pickupDate, form.pickupTime) <= 0) errors.dropoffTime = "Return must be later than pick-up.";
   if (form.driverAge === undefined || !Number.isInteger(form.driverAge) || form.driverAge < CAR_AGE.min || form.driverAge > CAR_AGE.max) errors.driverAge = "Driver age must be a whole number from 18 to 70.";
