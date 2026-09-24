@@ -213,3 +213,19 @@ test("source contract does not restore removed booking-disabled messaging", () =
     /demo-booking-note|carDetails\.bookingUnavailable|carDetails\.bookingDisabledExplanation/,
   );
 });
+
+
+test("car detail transmission uses the dedicated gearbox icon", () => {
+  assert.match(
+    heroSource,
+    /manual.*ManualTransmissionIcon.*automatic.*AutomaticTransmissionIcon.*CarFront/s,
+  );
+  assert.match(
+    heroSource,
+    /\[transmissionIcon, transmissionLabels\[car\.transmission\]\]/,
+  );
+  assert.doesNotMatch(
+    heroSource,
+    /\[CarFront, transmissionLabels\[car\.transmission\]\]/,
+  );
+});
