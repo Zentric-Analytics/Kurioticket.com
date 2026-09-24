@@ -110,6 +110,9 @@ export function FlightEditSearchDrawer({
   const openingScrollPositionRef = useRef<{ x: number; y: number } | null>(
     null,
   );
+  const preservedMultiCityLegsRef = useRef<FlightSearchLeg[]>(
+    initialValue.tripType === "multi-city" ? initialValue.legs : [],
+  );
 
   const correctUnderlyingResultsScroll = useCallback(() => {
     const openingPosition = openingScrollPositionRef.current;
@@ -128,6 +131,8 @@ export function FlightEditSearchDrawer({
 
   const finishClose = useCallback(() => {
     setDraft(initialValue);
+    preservedMultiCityLegsRef.current =
+      initialValue.tripType === "multi-city" ? initialValue.legs : [];
     // Reset before the parent unmounts the portal so the next open owns its
     // final geometry on the first committed frame.
     setIsClosing(false);
@@ -258,12 +263,16 @@ export function FlightEditSearchDrawer({
         departureDate: current.departureDate,
       };
       if (tripType === "multi-city") {
-        const hasMultiCityJourney = current.legs.length >= MULTI_CITY_MIN_LEGS;
-        return {
-          ...current,
-          tripType,
-          legs: hasMultiCityJourney
-            ? current.legs
+        const preservedLegs = preservedMultiCityLegsRef.current;
+        const hasPreservedMultiCityJourney =
+          preservedLegs.length >= MULTI_CITY_MIN_LEGS;
+        const hasCurrentMultiCityJourney =
+          current.tripType === "multi-city" &&
+          current.legs.length >= MULTI_CITY_MIN_LEGS;
+        const legs = hasCurrentMultiCityJourney
+          ? current.legs
+          : hasPreservedMultiCityJourney
+            ? preservedLegs
             : [
                 currentFirst,
                 {
@@ -277,10 +286,17 @@ export function FlightEditSearchDrawer({
                       ? current.returnDate ?? current.departureDate
                       : current.departureDate,
                 },
-              ],
+              ];
+        preservedMultiCityLegsRef.current = legs;
+        return {
+          ...current,
+          tripType,
+          legs,
+          departureDate: legs[0]?.departureDate ?? current.departureDate,
         };
       }
       if (current.tripType === "multi-city") {
+        preservedMultiCityLegsRef.current = current.legs;
         const second = current.legs[1];
         const returnDate =
           tripType === "round-trip" &&
