@@ -44,6 +44,12 @@ type FlightMobilePickerShellProps = {
   withinDialog?: boolean;
   presentation?: "default" | "carsResultsEdit" | "carsMain";
   surfaceVariant?: "default" | "white";
+  /**
+   * Cars Main keyboard pickers can size their inner interactive viewport to
+   * iOS Safari's visual viewport. The outer opaque shell intentionally stays
+   * full-screen so browser-chrome/keyboard transitions never expose the page.
+   */
+  followVisualViewport?: boolean;
 };
 
 type ScrollLockSnapshot = {
@@ -168,9 +174,11 @@ export function FlightMobilePickerShell({
   withinDialog = false,
   presentation = "default",
   surfaceVariant = "default",
+  followVisualViewport = false,
 }: FlightMobilePickerShellProps) {
   const carsResultsEdit = presentation === "carsResultsEdit";
   const carsMain = presentation === "carsMain";
+  const carsMainVisualViewport = carsMain && followVisualViewport;
   const whiteSurface = surfaceVariant === "white";
   const { t } = useLocale();
   const [isClosing, setIsClosing] = useState(false);
@@ -273,7 +281,13 @@ export function FlightMobilePickerShell({
   }, [open]);
 
   useEffect(() => {
-    if (!open || !carsMain || typeof window === "undefined") return;
+    if (
+      !open ||
+      !carsMainVisualViewport ||
+      typeof window === "undefined"
+    ) {
+      return;
+    }
 
     const viewport = window.visualViewport;
     if (!viewport) return;
@@ -298,7 +312,7 @@ export function FlightMobilePickerShell({
       viewport.removeEventListener("resize", syncViewport);
       viewport.removeEventListener("scroll", syncViewport);
     };
-  }, [carsMain, open]);
+  }, [carsMainVisualViewport, open]);
 
   useEffect(() => {
     if (!open || withinDialog || typeof window === "undefined") return;
@@ -422,9 +436,8 @@ export function FlightMobilePickerShell({
       data-closing={isClosing ? "true" : undefined}
       data-cars-results-edit-picker={carsResultsEdit ? "true" : undefined}
       data-cars-main-picker={carsMain ? "true" : undefined}
-      style={carsMain ? carsMainViewportStyle : undefined}
       className={cn(
-        "fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden bg-white sm:hidden",
+        "fixed inset-0 z-[2147483647] w-screen max-w-full overflow-hidden bg-white sm:hidden",
         carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]",
       )}
     >
@@ -440,9 +453,11 @@ export function FlightMobilePickerShell({
             requestClose();
           }
         }}
+        style={carsMainVisualViewport ? carsMainViewportStyle : undefined}
         className={cn(
           "fixed inset-0 flex h-[100dvh] min-h-0 w-screen max-w-full flex-col overflow-hidden bg-white pt-[env(safe-area-inset-top)]",
           carsMain && "absolute h-full",
+          carsMainVisualViewport && "bottom-auto",
           carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]",
           className,
         )}

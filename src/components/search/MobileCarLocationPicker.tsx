@@ -351,6 +351,7 @@ export function MobileCarLocationPicker({
       launcherRef={launcherRef}
       onClose={onClose}
       presentation={presentation}
+      followVisualViewport={presentation === "carsMain"}
       surfaceVariant={nativeCarsAppearance ? "white" : "default"}
       contentLayout={nativeCarsAppearance ? "contained" : "scroll"}
       showBackLabel={true}

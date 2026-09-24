@@ -249,3 +249,11 @@ test("minimum query counts alphabetic letters only", () => {
   for (const query of ["", "L", "1", "L1"]) assert.equal(hasMinimumCarLocationSearchLetters(query), false);
   for (const query of ["Lo", "NY", "L A", "L1A"]) assert.equal(hasMinimumCarLocationSearchLetters(query), true);
 });
+
+
+test("Cars Main location keeps the outer shell opaque while only its inner viewport follows the keyboard", () => {
+  assert.match(
+    picker,
+    /presentation=\{presentation\}[\s\S]*?followVisualViewport=\{presentation === "carsMain"\}/,
+  );
+});
