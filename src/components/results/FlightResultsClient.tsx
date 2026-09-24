@@ -59,6 +59,7 @@ import { KayakResultCard } from "./KayakResultCard";
 import { nearbyFarePrice } from "@/components/results/nearbyFarePrice";
 import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters";
 import { FlightPriceAlertControl } from "@/components/results/FlightPriceAlertControl";
+import { FlightResultsScrollIndicator } from "@/components/results/FlightResultsScrollIndicator";
 import { MobileFlightResultsState } from "@/components/results/MobileFlightResultsState";
 import {
   MobileFlightFiltersSheet,
@@ -7061,6 +7062,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   return (
     <>
     <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs />
+    <FlightResultsScrollIndicator />
     {renderMobileCompactResultsHeader()}
     <main data-flight-results-main className="flex-1 bg-[#F5F7FB] pb-8 sm:bg-[#F3F6FA]">
       <section
