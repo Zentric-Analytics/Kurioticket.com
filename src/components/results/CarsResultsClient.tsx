@@ -1893,6 +1893,12 @@ export function CarsResultsExperience({
   const [quickFilterGroupId, setQuickFilterGroupId] = useState<string | null>(null);
   const [quickFilterDraft, setQuickFilterDraft] = useState<string[]>([]);
   const [quickSortDraft, setQuickSortDraft] = useState<CarSort>("recommended");
+  const [quickFilterCutoutRect, setQuickFilterCutoutRect] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
   const mobileFiltersOverlayOpen = filtersOpen || quickFilterGroupId !== null;
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
@@ -2211,21 +2217,76 @@ export function CarsResultsExperience({
     mobileFiltersModalityRef.current = modality;
     mobileFilterDrawerInitialFiltersRef.current =
       getSelectedCarFiltersSignature(selectedCarFiltersRef.current);
+    setQuickFilterCutoutRect(null);
     setQuickFilterGroupId(null);
     setFiltersOpen(true);
   };
+  const measureQuickFilterCutout = useCallback((launcher: HTMLButtonElement | null) => {
+    if (!launcher || typeof window === "undefined") return null;
+    const chip =
+      launcher.firstElementChild instanceof HTMLElement
+        ? launcher.firstElementChild
+        : launcher;
+    const chipRect = chip.getBoundingClientRect();
+    const rail = launcher.closest<HTMLElement>("[data-cars-results-quick-filters]");
+    const railRect = rail?.getBoundingClientRect();
+
+    const left = Math.max(0, railRect ? Math.max(chipRect.left, railRect.left) : chipRect.left);
+    const right = Math.min(
+      window.innerWidth,
+      railRect ? Math.min(chipRect.right, railRect.right) : chipRect.right,
+    );
+    const top = Math.max(0, chipRect.top);
+    const bottom = Math.min(window.innerHeight, chipRect.bottom);
+
+    if (right <= left || bottom <= top) return null;
+    return {
+      left,
+      top,
+      width: right - left,
+      height: bottom - top,
+    };
+  }, []);
   const closeQuickFilter = useCallback(() => {
     if (quickFilterGroupId === null) return;
+    setQuickFilterCutoutRect(null);
     setQuickFilterGroupId(null);
   }, [quickFilterGroupId]);
   const openQuickFilter = (kind: string, launcher: HTMLButtonElement, modality: OverlayActivationModality) => {
     mobileFiltersLauncherRef.current = launcher;
     mobileFiltersModalityRef.current = modality;
+    setQuickFilterCutoutRect(measureQuickFilterCutout(launcher));
     setQuickFilterDraft(kind === "sort" ? [] : [...(selectedCarFilters[kind] ?? [])]);
     setQuickSortDraft(sort);
     setFiltersOpen(false);
     setQuickFilterGroupId(kind);
   };
+  useLayoutEffect(() => {
+    if (!quickFilterGroupId || typeof window === "undefined") return undefined;
+
+    let frameId: number | null = null;
+    const updateCutout = () => {
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        setQuickFilterCutoutRect(
+          measureQuickFilterCutout(mobileFiltersLauncherRef.current),
+        );
+      });
+    };
+
+    updateCutout();
+    window.addEventListener("resize", updateCutout);
+    window.visualViewport?.addEventListener("resize", updateCutout);
+    window.visualViewport?.addEventListener("scroll", updateCutout);
+
+    return () => {
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", updateCutout);
+      window.visualViewport?.removeEventListener("resize", updateCutout);
+      window.visualViewport?.removeEventListener("scroll", updateCutout);
+    };
+  }, [measureQuickFilterCutout, quickFilterGroupId]);
   useEffect(
     () => () => {
       filterTransitionRunRef.current += 1;
@@ -2291,6 +2352,7 @@ export function CarsResultsExperience({
         shouldRestoreFocus = false;
         if (filtersOpen) closeMobileFiltersDrawer();
         else setFiltersOpen(false);
+        setQuickFilterCutoutRect(null);
         setQuickFilterGroupId(null);
       }
     };
@@ -3117,11 +3179,27 @@ export function CarsResultsExperience({
           role="presentation"
           onMouseDown={closeQuickFilter}
         >
-          <div
-            aria-hidden="true"
-            data-cars-quick-sheet-scrim
-            className="cars-native-quick-scrim pointer-events-none absolute inset-0 bg-[rgba(15,23,42,0.35)]"
-          />
+          {quickFilterCutoutRect ? (
+            <div
+              aria-hidden="true"
+              data-cars-quick-sheet-scrim
+              data-cars-quick-sheet-cutout
+              className="cars-native-quick-scrim pointer-events-none absolute rounded-[9px]"
+              style={{
+                left: quickFilterCutoutRect.left,
+                top: quickFilterCutoutRect.top,
+                width: quickFilterCutoutRect.width,
+                height: quickFilterCutoutRect.height,
+                boxShadow: "0 0 0 9999px rgba(15, 23, 42, 0.35)",
+              }}
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              data-cars-quick-sheet-scrim
+              className="cars-native-quick-scrim pointer-events-none absolute inset-0 bg-[rgba(15,23,42,0.35)]"
+            />
+          )}
           <section
             data-cars-quick-sheet
             ref={quickFiltersDialogRef}

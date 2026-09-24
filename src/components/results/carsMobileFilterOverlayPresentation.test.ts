@@ -46,7 +46,7 @@ test("Cars shortcuts use the native floating cutout footprint and internal polis
   const sheets = cars.slice(cars.indexOf("data-cars-quick-sheet-backdrop"), cars.indexOf("!guidedPlanning && showBackToTop"));
   for (const contract of [
     /fixed inset-0.*items-end.*lg:hidden/,
-    /cars-native-quick-scrim.*absolute inset-0.*bg-\[rgba\(15,23,42,0\.35\)\]/,
+    /data-cars-quick-sheet-cutout[\s\S]*?cars-native-quick-scrim pointer-events-none absolute rounded-\[9px\][\s\S]*?boxShadow: "0 0 0 9999px rgba\(15, 23, 42, 0\.35\)"/,
     /cars-native-quick-sheet relative z-10 mx-3 mb-3.*flex min-h-\[240px\].*max-h-\[min\(76dvh,620px\)\].*w-\[calc\(100%_-_24px\)\].*rounded-\[24px\].*bg-\[#F2F4F8\]/,
     /grid min-h-\[64px\].*grid-cols-\[44px_minmax\(0,1fr\)_44px\].*bg-\[#F2F4F8\].*px-\[10px\]/,
     /text-center text-\[18px\] font-bold leading-\[23px\]/,
@@ -81,7 +81,14 @@ test("Cars shortcut backdrop and inside-click dismissal boundaries remain explic
   assert.match(wrapperTag, /className="fixed inset-0 z-\[10010\] flex items-end lg:hidden"/);
   assert.match(cars, /data-cars-quick-sheet[\s\S]{0,450}mx-3 mb-3[\s\S]{0,220}w-\[calc\(100%_-_24px\)\][\s\S]{0,180}rounded-\[24px\]/);
   assert.doesNotMatch(wrapperTag, /cars-native-quick-(?:backdrop|scrim|sheet)|bg-\[rgba|opacity/);
-  assert.match(cars, /data-cars-quick-sheet-scrim[\s\S]{0,250}cars-native-quick-scrim pointer-events-none absolute inset-0 bg-\[rgba\(15,23,42,0\.35\)\]/);
+  assert.match(
+    cars,
+    /data-cars-quick-sheet-cutout[\s\S]{0,500}boxShadow: "0 0 0 9999px rgba\(15, 23, 42, 0\.35\)"/,
+  );
+  assert.match(
+    cars,
+    /data-cars-quick-sheet-scrim[\s\S]{0,250}cars-native-quick-scrim pointer-events-none absolute inset-0 bg-\[rgba\(15,23,42,0\.35\)\]/,
+  );
   assert.match(cars, /data-cars-quick-sheet[\s\S]{0,350}onMouseDown=\{\(event\) => event\.stopPropagation\(\)\}/);
   assert.match(cars, /window\.addEventListener\("keydown", handleKeyDown\)/);
   assert.match(cars, /const mobileFiltersOverlayOpen = filtersOpen \|\| quickFilterGroupId !== null/);
@@ -99,6 +106,47 @@ test("every canonical Cars shortcut shares the one stable mobile overlay lock", 
   assert.match(cars, /quickFilterGroupId === "sort" \|\| activeQuickFilterGroup/);
   assert.equal((cars.match(/data-cars-quick-sheet(?:-backdrop|-scrim)?/g) ?? []).length, 3);
   assert.equal((cars.match(/acquireMobileResultsScrollLock\(/g) ?? []).length, 3);
+});
+
+test("Cars quick sheet keeps only the active shortcut outside the scrim", () => {
+  assert.match(
+    cars,
+    /const \[quickFilterCutoutRect, setQuickFilterCutoutRect\] = useState/,
+  );
+  assert.match(
+    cars,
+    /launcher\.firstElementChild instanceof HTMLElement[\s\S]*?chip\.getBoundingClientRect\(\)/,
+  );
+  assert.match(
+    cars,
+    /launcher\.closest<HTMLElement>\("\[data-cars-results-quick-filters\]"\)/,
+  );
+  assert.match(cars, /Math\.max\(chipRect\.left, railRect\.left\)/);
+  assert.match(cars, /Math\.min\(chipRect\.right, railRect\.right\)/);
+  assert.match(
+    cars,
+    /setQuickFilterCutoutRect\(measureQuickFilterCutout\(launcher\)\)/,
+  );
+  assert.match(
+    cars,
+    /data-cars-quick-sheet-cutout[\s\S]*?rounded-\[9px\][\s\S]*?left: quickFilterCutoutRect\.left[\s\S]*?top: quickFilterCutoutRect\.top[\s\S]*?width: quickFilterCutoutRect\.width[\s\S]*?height: quickFilterCutoutRect\.height/,
+  );
+  assert.match(
+    cars,
+    /boxShadow: "0 0 0 9999px rgba\(15, 23, 42, 0\.35\)"/,
+  );
+  assert.match(
+    cars,
+    /window\.visualViewport\?\.addEventListener\("resize", updateCutout\)/,
+  );
+  assert.match(
+    cars,
+    /window\.visualViewport\?\.addEventListener\("scroll", updateCutout\)/,
+  );
+  assert.match(
+    cars,
+    /setQuickFilterCutoutRect\(null\);\s*setQuickFilterGroupId\(null\);/,
+  );
 });
 
 test("Cars shortcut chevrons mirror native expanded state", () => {
@@ -150,7 +198,10 @@ test("Cars quick sheets dismiss promptly without a web-only closing lifecycle", 
   assert.doesNotMatch(cars, /quickSheetClosing|quickSheetCloseTimerRef/);
   assert.doesNotMatch(cars, /cars-native-quick-(?:scrim|sheet)--closing/);
   assert.doesNotMatch(cars, /setTimeout\([\s\S]{0,250}setQuickFilterGroupId\(null\)[\s\S]{0,80}220/);
-  assert.match(cars, /const closeQuickFilter = useCallback\(\(\) => \{\s*if \(quickFilterGroupId === null\) return;\s*setQuickFilterGroupId\(null\);\s*\}, \[quickFilterGroupId\]\)/);
+  assert.match(
+    cars,
+    /const closeQuickFilter = useCallback\(\(\) => \{\s*if \(quickFilterGroupId === null\) return;\s*setQuickFilterCutoutRect\(null\);\s*setQuickFilterGroupId\(null\);\s*\}, \[quickFilterGroupId\]\)/,
+  );
 });
 
 
