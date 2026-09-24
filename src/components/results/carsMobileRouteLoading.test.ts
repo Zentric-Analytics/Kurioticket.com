@@ -16,6 +16,10 @@ const searchTabs = readFileSync(
   "src/components/search/SearchTabs.tsx",
   "utf8",
 );
+const carsResults = readFileSync(
+  "src/components/results/CarsResultsClient.tsx",
+  "utf8",
+);
 const card = readFileSync(
   "src/components/results/CarResultCard.tsx",
   "utf8",
@@ -75,6 +79,25 @@ test("valid Cars main searches enter mobile pending only after validation", () =
     standalone + homepageSubmit,
     /setTimeout|sleep|delay\(/,
   );
+});
+
+test("Cars Results edit search blocks expired pickup times before navigation", () => {
+  const mobileSubmit = carsResults.slice(
+    carsResults.indexOf("const submitMobileSearch"),
+    carsResults.indexOf("useLayoutEffect", carsResults.indexOf("const submitMobileSearch")),
+  );
+  assert.ok(
+    mobileSubmit.indexOf("validateCurrentPickupTime") <
+      mobileSubmit.indexOf("setIsSearchSubmitting(true)"),
+  );
+
+  const resultsForm = carsResults.slice(
+    carsResults.indexOf("const renderCarsSearchForm"),
+    carsResults.indexOf("if (isSearchSubmitting)", carsResults.indexOf("const renderCarsSearchForm")),
+  );
+  assert.match(resultsForm, /if \(!validateCurrentPickupTime\(\)\)/);
+  assert.match(resultsForm, /setTimesOpen\(true\)/);
+  assert.match(resultsForm, /role="alert"[\s\S]*?searchValidationError/);
 });
 
 test("mobile View deal starts Cars loading without changing the destination href", () => {
