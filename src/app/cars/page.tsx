@@ -928,7 +928,7 @@ function CarsSearchBar({
                     ref={pickupLocationLauncherRef}
                     type="button"
                     onClick={() => openMobilePicker("pickupLocation")}
-                    className="flex min-h-5 w-full items-center border-none bg-transparent py-0 text-start text-[15px] font-semibold leading-5 focus:outline-none sm:hidden"
+                    className="flex min-h-5 w-full items-center border-none bg-transparent py-0 text-start text-[15px] leading-5 focus:outline-none sm:hidden"
                   >
                     <span className="flex min-w-0 items-center gap-2">
                       <MapPin
@@ -938,8 +938,8 @@ function CarsSearchBar({
                       <span
                         className={`min-w-0 ${
                           values.pickupLocation
-                            ? "text-slate-950"
-                            : "text-slate-400"
+                            ? "font-semibold text-slate-950"
+                            : "font-medium text-slate-400"
                         }`}
                       >
                         <span className="block truncate">{pickupDisplay.primary || t("carsSearch.pickupLocationPlaceholder")}</span>
@@ -994,10 +994,10 @@ function CarsSearchBar({
                     ref={dropoffLocationLauncherRef}
                     type="button"
                     onClick={() => openMobilePicker("dropoffLocation")}
-                    className={`flex min-h-5 w-full items-center border-none bg-transparent py-0 text-start text-[15px] font-semibold leading-5 focus:outline-none sm:hidden ${
+                    className={`flex min-h-5 w-full items-center border-none bg-transparent py-0 text-start text-[15px] leading-5 focus:outline-none sm:hidden ${
                       values.dropoffLocation
-                        ? "text-slate-950"
-                        : "text-slate-400"
+                        ? "font-semibold text-slate-950"
+                        : "font-medium text-slate-400"
                     }`}
                   >
                     <span className="flex min-w-0 items-center gap-2">
@@ -1577,7 +1577,7 @@ function RentalDatesField({
         aria-haspopup="dialog"
         aria-controls="cars-desktop-rental-dates-dialog"
         aria-label={t("carsSearch.chooseRentalDatesAria")}
-        className="focus-ring flex min-h-5 w-full cursor-pointer items-center justify-start gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[15px] font-semibold leading-5 text-slate-950 outline-none transition-colors sm:h-10 sm:justify-between sm:text-[16px] sm:leading-normal md:text-[15px]"
+        className="focus-ring flex min-h-5 w-full cursor-pointer items-center justify-start gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[15px] leading-5 text-slate-950 outline-none transition-colors sm:h-10 sm:justify-between sm:text-[16px] sm:font-semibold sm:leading-normal md:text-[15px]"
       >
         <Calendar
           className="h-[18px] w-[18px] shrink-0 text-slate-500 sm:h-4 sm:w-4"
@@ -1585,7 +1585,7 @@ function RentalDatesField({
         />
         <span className="min-w-0">
           <span
-            className={`block truncate ${pickupDate ? "text-slate-950" : "text-slate-400"}`}
+            className={`block truncate ${pickupDate ? "font-semibold text-slate-950" : "font-medium text-slate-400"}`}
           >
             {dateSummary}
           </span>
