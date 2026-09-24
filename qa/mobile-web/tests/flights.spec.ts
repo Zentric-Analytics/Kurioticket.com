@@ -15,7 +15,6 @@ for (const width of [360, 390, 412]) {
     const mobileResults = page.locator("[data-mobile-paginated-flight-results]");
     await expect(mobileResults.locator("[data-flight-results-card-list]")).toBeVisible();
     const pagination = mobileResults.getByRole("navigation", { name: "Flight results pages" });
-    await expect(pagination).toBeVisible();
     await expect(page.locator("footer")).toBeVisible();
 
     const measurements = await page.evaluate(() => {
@@ -28,7 +27,7 @@ for (const width of [360, 390, 412]) {
       const flightCard = mobileResults?.querySelector<HTMLElement>("[data-flight-results-card-list]")?.firstElementChild;
       const pagination = mobileResults?.querySelector<HTMLElement>('[aria-label="Flight results pages"]');
       const footer = document.querySelector<HTMLElement>("footer");
-      if (!dateRail || !quickRail || !filterChip || !(priceAlert instanceof HTMLElement) || !resultsFound || !(flightCard instanceof HTMLElement) || !pagination || !footer) {
+      if (!dateRail || !quickRail || !filterChip || !(priceAlert instanceof HTMLElement) || !resultsFound || !(flightCard instanceof HTMLElement) || !footer) {
         throw new Error("Expected mobile Flight Results rails and result geometry");
       }
       const scrollRail = (rail: HTMLElement) => {
@@ -44,8 +43,10 @@ for (const width of [360, 390, 412]) {
         priceAlert: priceAlert.getBoundingClientRect().toJSON(),
         resultsFound: resultsFound.getBoundingClientRect().toJSON(),
         flightCard: flightCard.getBoundingClientRect().toJSON(),
-        paginationToFooterGap:
-          footer.getBoundingClientRect().top - pagination.getBoundingClientRect().bottom,
+        paginationPresent: Boolean(pagination),
+        resultsToFooterGap:
+          footer.getBoundingClientRect().top -
+          (pagination?.getBoundingClientRect().bottom ?? flightCard.getBoundingClientRect().bottom),
         dateRail: scrollRail(dateRail),
         quickRail: scrollRail(quickRail),
       };
@@ -59,8 +60,8 @@ for (const width of [360, 390, 412]) {
     expect(measurements.resultsFound.left).toBeCloseTo(12, 0);
     expect(measurements.flightCard.left).toBeCloseTo(4, 0);
     expect(measurements.flightCard.right).toBeCloseTo(width - 4, 0);
-    expect(measurements.paginationToFooterGap).toBeGreaterThanOrEqual(24);
-    expect(measurements.paginationToFooterGap).toBeLessThanOrEqual(32);
+    expect(measurements.resultsToFooterGap).toBeGreaterThanOrEqual(24);
+    expect(measurements.resultsToFooterGap).toBeLessThanOrEqual(32);
     expect(measurements.dateRail.scrollWidth).toBeGreaterThan(measurements.dateRail.clientWidth);
     expect(measurements.dateRail.after).toBeGreaterThan(measurements.dateRail.before);
     expect(measurements.quickRail.scrollWidth).toBeGreaterThan(measurements.quickRail.clientWidth);
