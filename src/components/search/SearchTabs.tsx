@@ -3128,7 +3128,7 @@ export function SearchTabs({
             <span className="min-w-0">
               <span className="block truncate text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{mobileTravelersCabinLabel}</span>
               <span data-testid="mobile-homepage-travelers-value" className="mt-1.5 flex min-w-0 items-center gap-2 text-[16px] font-medium leading-5 text-slate-950">
-                <UserRound aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-slate-500 sm:h-4 sm:w-4" />
+                <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
                 <span className="truncate">{travelerSummary}</span>
               </span>
             </span>
@@ -4603,7 +4603,7 @@ export function SearchTabs({
                   : mobileHomepage
                     ? `${carsValues.driverAge} years old`
                     : carsValues.driverAge
-              } open={carsOpenPicker === "age"} onOpenChange={(open) => openHomepageCarsPicker("age", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} popupRole="listbox" desktopAlign="right" desktopWidth={248} desktopPanelClassName="p-0" desktopPlacement="auto" desktopDesiredHeight={340} leadingIcon={<UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
+              } open={carsOpenPicker === "age"} onOpenChange={(open) => openHomepageCarsPicker("age", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} popupRole="listbox" desktopAlign="right" desktopWidth={248} desktopPanelClassName="p-0" desktopPlacement="auto" desktopDesiredHeight={340} leadingIcon={<UserRound aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-slate-500 sm:h-4 sm:w-4" />} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
                 <CarsDriverAgePickerContent anyAgeLabel={translate("carsSearch.driverAgeAnyAgeRange") || "Any age"} selectedAge={carsValues.driverAge} onSelect={(age) => updateCarsValue("driverAge", age)} />
               </CarsSummaryField>
               <div className={hotelSubmitWrapClassName}>
