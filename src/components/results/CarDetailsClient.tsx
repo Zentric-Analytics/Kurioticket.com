@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft,
+  CarFront,
   Clock3,
   ExternalLink,
   Fuel,
@@ -66,6 +67,13 @@ type PriceFn = (
   amount: number,
   currency: string,
 ) => ReturnType<typeof formatDisplayPrice>;
+
+const providerValue = (value?: string) => {
+  const trimmed = value?.trim() || "";
+  return trimmed === "Supplier not supplied" || trimmed === "KAYAK sandbox"
+    ? ""
+    : trimmed;
+};
 
 const Heading = ({
   level,
@@ -664,6 +672,15 @@ function CarPriceComparisonSection({
           const selected = offer.id === selectedOffer?.id;
           const daily = price(offer.pricePerDay, offer.currency);
           const facts = factsForOffer(offer);
+          const sandboxProvider = car.sandboxPresentation
+            ? providerValue(offer.bookingProviderName) ||
+              providerValue(offer.rentalCompanyName) ||
+              providerValue(car.rentalCompanyName)
+            : "";
+          const sandboxSupplier = car.sandboxPresentation
+            ? providerValue(offer.rentalCompanyName) ||
+              providerValue(car.rentalCompanyName)
+            : "";
           return (
             <button
               key={offer.id}
@@ -675,13 +692,19 @@ function CarPriceComparisonSection({
               className={`block w-full rounded-[14px] border bg-white px-2 py-3 text-start transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 ${selected ? "border-[#075EE8] ring-1 ring-[#075EE8]/10" : "border-slate-200"}`}
             >
               <span className="flex min-w-0 items-center justify-between gap-3">
-                <Image
-                  src="/brand/kurioticket-logo-primary-light-bg.svg"
-                  alt="Kurioticket"
-                  width={108}
-                  height={24}
-                  className="h-6 w-[108px] shrink-0 object-contain object-left"
-                />
+                {car.sandboxPresentation ? (
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-bold leading-[18px] text-[#071A48]">
+                    {sandboxProvider}
+                  </span>
+                ) : (
+                  <Image
+                    src="/brand/kurioticket-logo-primary-light-bg.svg"
+                    alt="Kurioticket"
+                    width={108}
+                    height={24}
+                    className="h-6 w-[108px] shrink-0 object-contain object-left"
+                  />
+                )}
                 <span
                   className={`flex size-4 shrink-0 items-center justify-center rounded-full border-[1.5px] bg-white ${selected ? "border-[#075EE8]" : "border-slate-400"}`}
                   aria-hidden="true"
@@ -691,20 +714,36 @@ function CarPriceComparisonSection({
               </span>
               <span className="mt-3 flex min-w-0 items-end gap-2.5">
                 <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-[7px]">
-                  {facts.map(({ label, Icon }) => (
-                    <span
-                      key={label}
-                      className="inline-flex shrink-0 items-center gap-[3px] whitespace-nowrap text-[10.5px] font-semibold leading-[15px] text-slate-700"
-                    >
-                      <Icon
-                        size={14}
-                        strokeWidth={2}
-                        className="shrink-0 text-slate-600"
-                        aria-hidden="true"
-                      />
-                      {label}
-                    </span>
-                  ))}
+                  {car.sandboxPresentation ? (
+                    sandboxSupplier ? (
+                      <span className="inline-flex min-w-0 shrink items-center gap-[3px] text-[10.5px] font-semibold leading-[15px] text-slate-700">
+                        <CarFront
+                          size={14}
+                          strokeWidth={2}
+                          className="shrink-0 text-slate-600"
+                          aria-hidden="true"
+                        />
+                        <span className="max-w-[150px] truncate">
+                          {sandboxSupplier}
+                        </span>
+                      </span>
+                    ) : null
+                  ) : (
+                    facts.map(({ label, Icon }) => (
+                      <span
+                        key={label}
+                        className="inline-flex shrink-0 items-center gap-[3px] whitespace-nowrap text-[10.5px] font-semibold leading-[15px] text-slate-700"
+                      >
+                        <Icon
+                          size={14}
+                          strokeWidth={2}
+                          className="shrink-0 text-slate-600"
+                          aria-hidden="true"
+                        />
+                        {label}
+                      </span>
+                    ))
+                  )}
                 </span>
                 <span className="flex min-w-[72px] max-w-[42%] shrink flex-col items-end">
                   <strong
@@ -1124,8 +1163,8 @@ function MobileBookingDock({
       aria-labelledby="mobile-car-rental-total-heading"
       data-mobile-car-booking-dock
     >
-      <div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_minmax(132px,0.9fr)] items-center gap-3">
-        <div className="min-w-0">
+      <div className="mx-auto flex max-w-3xl items-center gap-3">
+        <div className="min-w-0 flex-1">
           <p
             className="truncate text-[19px] font-semibold leading-[22px] tracking-[-0.25px] text-[#071A48] tabular-nums"
             dir="ltr"
@@ -1142,22 +1181,29 @@ function MobileBookingDock({
           </h2>
         </div>
         {action.kind === "sandbox-handoff" ? (
-          <a
-            href={action.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            referrerPolicy="no-referrer"
-            className="focus-ring inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-blue px-3 text-center text-xs font-bold leading-4 text-white"
+          <div
+            className="min-w-[140px] max-w-[180px] flex-[0.78]"
+            data-mobile-car-dock-action
           >
-            {action.label}
-          </a>
+            <button
+              disabled
+              className="focus-ring min-h-12 w-full rounded-lg bg-blue px-3 text-xs font-bold leading-4 text-white disabled:cursor-not-allowed disabled:opacity-100"
+            >
+              {copy("carDetails.continueDeal")}
+            </button>
+          </div>
         ) : action.kind === "standalone-disabled-provider" ? (
-          <button
-            disabled
-            className="focus-ring min-h-12 w-full rounded-lg bg-blue px-3 text-xs font-bold leading-4 text-white disabled:cursor-not-allowed disabled:opacity-100"
+          <div
+            className="min-w-[140px] max-w-[180px] flex-[0.78]"
+            data-mobile-car-dock-action
           >
-            {action.label}
-          </button>
+            <button
+              disabled
+              className="focus-ring min-h-12 w-full rounded-lg bg-blue px-3 text-xs font-bold leading-4 text-white disabled:cursor-not-allowed disabled:opacity-100"
+            >
+              {action.label}
+            </button>
+          </div>
         ) : null}
       </div>
     </section>
