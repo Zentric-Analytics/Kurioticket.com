@@ -3513,13 +3513,13 @@ function SearchDateCell({
             <span className={cn("block truncate leading-4", !pickupDate && "text-slate-400")}>
               {summary}
             </span>
+            {showRentalDuration && rentalDayCount > 0 ? (
+              <span className="mt-0.5 block text-[11px] font-medium leading-3 text-slate-500">
+                {rentalDaysLabel}
+              </span>
+            ) : null}
+          </span>
         )}
-          {showRentalDuration && rentalDayCount > 0 ? (
-            <span className="mt-0.5 block text-[11px] font-medium leading-3 text-slate-500">
-              {rentalDaysLabel}
-            </span>
-          ) : null}
-        </span>
         {!groupedMobile ? (
           <ChevronDown
             className={cn(
