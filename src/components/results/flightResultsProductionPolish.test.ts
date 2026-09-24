@@ -12,7 +12,7 @@ test("mobile results rhythm has no decorative divider or oversized spacer", asyn
   assert.match(source, /h-\[4\.25rem\][\s\S]{0,260}rounded-xl/);
   assert.match(source, /relative translate-y-1\/2/);
   assert.match(source, /bg-white pb-0 pt-0 sm:hidden/);
-  assert.match(source, /flight-results-grid page-shell grid[^\n]*pb-5 pt-8 sm:pt-5 lg:gap-x-9 lg:pt-6/);
+  assert.match(source, /flight-results-grid page-shell grid[^\n]*pb-0 pt-8 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-6/);
   assert.doesNotMatch(source, /flight-results-grid page-shell grid[^\n]*pt-12/);
   assert.match(source, /data-flight-mobile-results-shortcuts/);
   assert.match(source, /pt-2/);
