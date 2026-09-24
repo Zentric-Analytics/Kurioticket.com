@@ -26,6 +26,23 @@ test("Cars Edit Search records first-open, reopen, and Safari viewport geometry"
   await modify.click();
   const overlay = page.locator("[data-mobile-results-overlay-root]");
   await expect(overlay).toBeVisible();
+  const editDialog = page.locator("[data-mobile-results-edit-sheet] [role=dialog]");
+  const editGeometry = await editDialog.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return {
+      left: rect.left,
+      rightGap: window.innerWidth - rect.right,
+      bottomGap: window.innerHeight - rect.bottom,
+      topLeftRadius: style.borderTopLeftRadius,
+      bottomLeftRadius: style.borderBottomLeftRadius,
+    };
+  });
+  expect(editGeometry.left).toBeCloseTo(12, 0);
+  expect(editGeometry.rightGap).toBeCloseTo(12, 0);
+  expect(editGeometry.bottomGap).toBeCloseTo(12, 0);
+  expect(editGeometry.topLeftRadius).toBe("24px");
+  expect(editGeometry.bottomLeftRadius).toBe("24px");
   const firstOpen = await collectSafariDiagnostics(page, "first-open");
   expect(firstOpen.viewport.scrollY).toBeCloseTo(beforeFirst.viewport.scrollY, 0);
   const firstScreenshot = testInfo.outputPath("cars-first-open.png");
@@ -130,6 +147,22 @@ test("Cars full Filters and representative quick sheets freeze the document whil
     await button.click();
     const sheet = page.locator("[data-cars-quick-sheet]");
     await expect(sheet).toBeVisible();
+    const quickGeometry = await sheet.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return {
+        left: rect.left,
+        rightGap: window.innerWidth - rect.right,
+        bottomGap: window.innerHeight - rect.bottom,
+        topLeftRadius: style.borderTopLeftRadius,
+        bottomLeftRadius: style.borderBottomLeftRadius,
+      };
+    });
+    expect(quickGeometry.left).toBeCloseTo(12, 0);
+    expect(quickGeometry.rightGap).toBeCloseTo(12, 0);
+    expect(quickGeometry.bottomGap).toBeCloseTo(12, 0);
+    expect(quickGeometry.topLeftRadius).toBe("24px");
+    expect(quickGeometry.bottomLeftRadius).toBe("24px");
     expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
     await expectDocumentFrozen(page, originalScrollY);
     await sheet.getByRole("button", { name: "Close" }).click();
