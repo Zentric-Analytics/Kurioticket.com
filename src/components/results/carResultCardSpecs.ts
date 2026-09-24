@@ -84,46 +84,29 @@ const authoredMissingProviderSpecs = new Set([
   "Specifications not supplied",
 ]);
 
+const providerCarSpec = (label: string | undefined): MobileCarSpec | null => {
+  const trimmed = label?.trim() ?? "";
+  if (!trimmed || authoredMissingProviderSpecs.has(trimmed)) return null;
+  return [getCarSpecificationIcon(trimmed), trimmed];
+};
+
 /**
- * Provider specs can arrive in provider order, but the mobile result card has
- * fixed semantic slots matching native/Kurioticket:
- * passengers -> transmission | doors -> bags.
- * Missing provider-owned values remain empty instead of shifting another fact
- * into the wrong visual position.
+ * KAYAK carSpecs are normalized in provider order:
+ * passengers, bags, doors, transmission.
+ * Reorder those fixed provider-owned slots into the same mobile columns used
+ * by native/Kurioticket: passengers -> transmission | doors -> bags.
+ * Missing values remain absent rather than shifting another fact into the
+ * wrong visual position.
  */
 export function getMobileProviderCarSpecSlots(
   labels: string[],
 ): MobileCarSpecSlots {
-  const slots: MobileCarSpecSlots = [null, null, null, null];
-
-  for (const rawLabel of labels) {
-    const label = rawLabel.trim();
-    if (!label || authoredMissingProviderSpecs.has(label)) continue;
-
-    const normalized = label.toLowerCase();
-    const spec: MobileCarSpec = [getCarSpecificationIcon(label), label];
-
-    if (!slots[0] && /\b(passengers?|seats?)\b/.test(normalized)) {
-      slots[0] = spec;
-      continue;
-    }
-    if (
-      !slots[1] &&
-      /\b(automatic|manual|transmission)\b/.test(normalized)
-    ) {
-      slots[1] = spec;
-      continue;
-    }
-    if (!slots[2] && /\bdoors?\b/.test(normalized)) {
-      slots[2] = spec;
-      continue;
-    }
-    if (!slots[3] && /\b(bags?|baggage|luggage)\b/.test(normalized)) {
-      slots[3] = spec;
-    }
-  }
-
-  return slots;
+  return [
+    providerCarSpec(labels[0]),
+    providerCarSpec(labels[3]),
+    providerCarSpec(labels[2]),
+    providerCarSpec(labels[1]),
+  ];
 }
 
 export function getMobileCarSpecColumns(
