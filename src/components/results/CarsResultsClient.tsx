@@ -2222,17 +2222,29 @@ export function CarsResultsExperience({
     setFiltersOpen(true);
   };
   const measureQuickFilterCutout = useCallback((launcher: HTMLButtonElement | null) => {
-    if (!launcher) return null;
+    if (!launcher || typeof window === "undefined") return null;
     const chip =
       launcher.firstElementChild instanceof HTMLElement
         ? launcher.firstElementChild
         : launcher;
-    const rect = chip.getBoundingClientRect();
+    const chipRect = chip.getBoundingClientRect();
+    const rail = launcher.closest<HTMLElement>("[data-cars-results-quick-filters]");
+    const railRect = rail?.getBoundingClientRect();
+
+    const left = Math.max(0, railRect ? Math.max(chipRect.left, railRect.left) : chipRect.left);
+    const right = Math.min(
+      window.innerWidth,
+      railRect ? Math.min(chipRect.right, railRect.right) : chipRect.right,
+    );
+    const top = Math.max(0, chipRect.top);
+    const bottom = Math.min(window.innerHeight, chipRect.bottom);
+
+    if (right <= left || bottom <= top) return null;
     return {
-      left: rect.left,
-      top: rect.top,
-      width: rect.width,
-      height: rect.height,
+      left,
+      top,
+      width: right - left,
+      height: bottom - top,
     };
   }, []);
   const closeQuickFilter = useCallback(() => {
@@ -2340,6 +2352,7 @@ export function CarsResultsExperience({
         shouldRestoreFocus = false;
         if (filtersOpen) closeMobileFiltersDrawer();
         else setFiltersOpen(false);
+        setQuickFilterCutoutRect(null);
         setQuickFilterGroupId(null);
       }
     };
