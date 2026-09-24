@@ -26,7 +26,7 @@ test("mobile nearby insight, quick filters, and price alert use compact native-l
   );
 
   assert.match(source, /cn\(resultStackClass, "space-y-1 sm:space-y-4"\)/);
-  assert.match(source, /min-h-\[28px\][^"]*text-\[10px\][^"]*font-semibold[^"]*leading-\[14px\][^"]*">Cheaper nearby:/);
+  assert.match(source, /min-h-\[28px\][^"]*text-\[9px\][^"]*font-medium[^"]*leading-\[12px\][^"]*">Cheaper nearby:/);
   assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,350}py-1/);
   assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 pt-2/);
 });

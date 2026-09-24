@@ -84,7 +84,7 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.match(mobileStrip, /aria-pressed=\{selected\}/);
   assert.match(mobileStrip, /disabled=\{selected \|\| loading \|\| fare\.status === "loading"\}/);
   assert.doesNotMatch(mobileStrip, /onPointer|onTouch|preventDefault\(\)/);
-  assert.match(mobileStrip, /min-h-\[28px\][^"]*text-\[10px\][^"]*font-semibold[^"]*leading-\[14px\][^"]*">Cheaper nearby:/);
+  assert.match(mobileStrip, /min-h-\[28px\][^"]*text-\[9px\][^"]*font-medium[^"]*leading-\[12px\][^"]*">Cheaper nearby:/);
   assert.match(mobileStrip, /onClick=\{\(\) => handleNearbyFareDateSelect\(cheaperNearbyFare\.date\)\}/);
 });
 
