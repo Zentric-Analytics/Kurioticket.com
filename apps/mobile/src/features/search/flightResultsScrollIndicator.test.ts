@@ -18,12 +18,12 @@ test("Flight Results uses the native iOS scroll indicator with safe-area-aware i
 });
 
 test("Flight Results settles a representative virtualized window before traversal", () => {
-  assert.match(screen, /const FLIGHT_RESULT_INITIAL_RENDER_COUNT = 10/);
-  assert.match(screen, /const FLIGHT_RESULT_RENDER_BATCH_SIZE = 10/);
-  assert.match(screen, /const FLIGHT_RESULT_WINDOW_SIZE = 21/);
-  assert.match(screen, /const FLIGHT_RESULT_BATCHING_PERIOD_MS = 16/);
-  assert.match(list, /initialNumToRender=\{FLIGHT_RESULT_INITIAL_RENDER_COUNT\}/);
-  assert.match(list, /maxToRenderPerBatch=\{FLIGHT_RESULT_RENDER_BATCH_SIZE\}/);
+  assert.match(screen, /flightResultInitialRenderCount/);
+  assert.match(screen, /flightResultRenderBatchSize/);
+  assert.match(screen, /FLIGHT_RESULT_WINDOW_SIZE/);
+  assert.match(screen, /FLIGHT_RESULT_BATCHING_PERIOD_MS/);
+  assert.match(list, /initialNumToRender=\{flightResultInitialRenderCount\(sorted\.length\)\}/);
+  assert.match(list, /maxToRenderPerBatch=\{flightResultRenderBatchSize\(sorted\.length\)\}/);
   assert.match(list, /windowSize=\{FLIGHT_RESULT_WINDOW_SIZE\}/);
   assert.match(list, /updateCellsBatchingPeriod=\{FLIGHT_RESULT_BATCHING_PERIOD_MS\}/);
   assert.doesNotMatch(list, /initialNumToRender=\{(?:sorted|results)\.length\}/);

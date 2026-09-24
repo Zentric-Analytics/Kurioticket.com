@@ -88,6 +88,7 @@ import {
 import { FlightFilterSheet, type FlightFilterSectionName } from "./FlightFilterSheet";
 import { FlightResultsQuickControls } from "./FlightResultsQuickControls";
 import { DetailGlassSurface } from "./DetailGlassSurface";
+import { flightResultInitialRenderCount, flightResultRenderBatchSize, FLIGHT_RESULT_BATCHING_PERIOD_MS, FLIGHT_RESULT_WINDOW_SIZE } from "./flightResultsVirtualization";
 import { FlightSortSheet } from "./FlightSortSheet";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import {
@@ -178,14 +179,6 @@ const flightSupportText = {
   dark: "#B8C3D8",
 } as const;
 const flightResultsLightCanvas = "#F5F7FB";
-const FLIGHT_RESULT_INITIAL_RENDER_COUNT = 10;
-// RN 0.81 constrains an unmeasured VirtualizedList tail spacer to the highest
-// measured row. Keep a normal, bounded render-ahead window so the native
-// content extent settles before traversal instead of growing one small window
-// at a time. Virtualization remains enabled.
-const FLIGHT_RESULT_RENDER_BATCH_SIZE = 10;
-const FLIGHT_RESULT_WINDOW_SIZE = 21;
-const FLIGHT_RESULT_BATCHING_PERIOD_MS = 16;
 const HOTEL_UTILITY_ICON_COLOR = "#334155";
 const HOTEL_GALLERY_CHEVRON_CONTRAST = "rgba(0,0,0,0.85)";
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -1016,8 +1009,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             s0.flightResultsContent,
             { paddingBottom: Math.max(insets.bottom + 16, 16) },
           ]}
-          initialNumToRender={FLIGHT_RESULT_INITIAL_RENDER_COUNT}
-          maxToRenderPerBatch={FLIGHT_RESULT_RENDER_BATCH_SIZE}
+          initialNumToRender={flightResultInitialRenderCount(sorted.length)}
+          maxToRenderPerBatch={flightResultRenderBatchSize(sorted.length)}
           updateCellsBatchingPeriod={FLIGHT_RESULT_BATCHING_PERIOD_MS}
           windowSize={FLIGHT_RESULT_WINDOW_SIZE}
         />
