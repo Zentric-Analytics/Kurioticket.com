@@ -6,6 +6,7 @@ import { formatDisplayPrice, formatFlightResultCurrency } from "@/lib/currency/f
 import type { ExchangeRates } from "@/lib/currency/exchangeRates";
 import type { FlightDetailsFareChoice, FlightDetailsOffer } from "@/lib/flights/flightDetailsContract";
 import type { FlightProviderCondition } from "@/lib/types";
+import { useHorizontalRailAxisLockRef } from "@/components/ui/useHorizontalRailAxisLock";
 
 export type MobileFareInfoTab = "deals" | "details" | "conditions" | "extras";
 
@@ -41,9 +42,10 @@ export function MobileNativeFareInformationDeck({
   locale: string;
   pricesReady: boolean;
 }) {
+  const fareInformationAxisLockRef = useHorizontalRailAxisLockRef<HTMLDivElement>();
   return (
     <section data-mobile-native-fare-information-deck className="mt-3 sm:hidden">
-      <div className="-mx-[10px] touch-pan-x overflow-x-auto border-b border-[#D8E1EC] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div ref={fareInformationAxisLockRef} className="-mx-[10px] touch-pan-y overflow-x-auto border-b border-[#D8E1EC] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div role="tablist" aria-label="Fare information" className="flex w-max min-w-full gap-[22px] px-0">
           {tabs.map((tab) => {
             const selected = activeTab === tab.id;
