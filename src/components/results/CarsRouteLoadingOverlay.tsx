@@ -11,7 +11,7 @@ export function CarsRouteLoadingOverlay({
 
   return (
     <div
-      className="fixed inset-0 z-[12050] hidden bg-[#F5F7FB] lg:block lg:hidden max-lg:block"
+      className="fixed inset-0 z-[12050] bg-[#F5F7FB] lg:hidden"
       data-cars-route-loading
     >
       <BrandedLoading
