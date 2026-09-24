@@ -10,17 +10,17 @@ test("mobile full Filters uses the native section hierarchy", () => {
   assert.ok(order.every((position, index) => position >= 0 && (index === 0 || position > order[index - 1])));
   assert.doesNotMatch(sheet, /title="Flight Quality"|title="Amenities"/);
   assert.match(client, /<MobileFlightFiltersSheet/);
-  assert.match(client, /role="dialog" aria-modal="true" aria-labelledby="flight-mobile-filters-title"/);
+  assert.match(client, /role="dialog"[\s\S]*aria-modal="true"[\s\S]*aria-labelledby="flight-mobile-filters-title"/);
 });
 
 test("journey-aware Flight times provide leg tabs and scoped Takeoff and Landing controls", () => {
-  assert.match(sheet, /role="tablist" aria-label="Flight leg"/);
+  assert.match(sheet, /role="tablist"[\s\S]*aria-label="Flight leg"/);
   assert.match(sheet, /Departing flight/);
   assert.match(sheet, /Return flight/);
   assert.match(sheet, /`Flight \$\{\(item\.legIndex \?\? index\) \+ 1\}`/);
   assert.match(sheet, /Takeoff: \$\{leg\.originAirport\}/);
   assert.match(sheet, /Landing: \$\{leg\.destinationAirport\}/);
-  assert.match(client, /matchesMobileJourneyTimes/);
+  assert.match(client, /flightMatchesFilters\(flight, authoritativeFilterState/);
 });
 
 test("Flight full Filters keeps Flight-specific controls inside the Cars visual system", () => {
@@ -44,11 +44,23 @@ test("Flight full Filters keeps Flight-specific controls inside the Cars visual 
   assert.match(full, /`View \$\{sortedResults\.length\}/);
 });
 
-test("mobile endpoint airports exclude layovers while desktop options remain unchanged", () => {
-  assert.match(client, /mobileFromAirportOptions[\s\S]*legs\?\.\[0\]\?\.originAirport/);
-  assert.match(client, /mobileToAirportOptions[\s\S]*legs\?\.at\(-1\)\?\.destinationAirport/);
+test("mobile endpoint airports use authoritative directional endpoints while desktop options remain unchanged", () => {
+  assert.match(client, /mobileFromAirportOptions[\s\S]*flightAirportEndpoints\(flight\)\.fromAirports/);
+  assert.match(client, /mobileToAirportOptions[\s\S]*flightAirportEndpoints\(flight\)\.toAirports/);
   assert.match(client, /const airportOptions = useMemo[\s\S]*flight\.layovers/);
   assert.match(client, /<DesktopFlightFilters/);
+});
+
+test("desktop airport state remains authoritative and memo dependencies track selection values", () => {
+  assert.match(client, /airports: selectedAirports/);
+  assert.match(client, /selectedAirlines,[\s\S]*selectedAirports,[\s\S]*selectedFromAirports,[\s\S]*selectedToAirports,[\s\S]*selectedFlightQuality,[\s\S]*selectedStops/);
+  assert.doesNotMatch(client, /selectedAirlines\.length[\s\S]*selectedFlightQuality\.length[\s\S]*selectedStops\.length/);
+});
+
+test("multi-city Edit Search uses the projected first-leg departure date", () => {
+  assert.match(client, /const projection = projectSearchLegs\(value\.tripType, value\.legs\)/);
+  assert.match(client, /departureDate: projection\.departureDate/);
+  assert.doesNotMatch(client, /departureDate: value\.departureDate/);
 });
 
 test("mobile results count uses native English capitalization and omits the range", () => {
