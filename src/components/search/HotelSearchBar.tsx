@@ -1747,7 +1747,8 @@ export function HotelSearchBar({
       />
 
       <MobileDatePickerDialog
-        showBackAction={!mobileResultsSheet}
+        showBackAction
+        headerVariant={mobileResultsSheet ? "close-right" : undefined}
         open={datesOpen}
         title={t("chooseTravelDates")}
         titleId={`${idPrefix}-mobile-dates-title`}
@@ -1775,7 +1776,8 @@ export function HotelSearchBar({
       />
 
       <HotelMobilePickerShell
-        showBackAction={!mobileResultsSheet}
+        showBackAction
+        headerVariant={mobileResultsSheet ? "close-right" : undefined}
         appearance={mobileResultsSheet ? "app" : undefined}
         open={guestsRoomsOpen}
         title={t("hotelGuestsRooms.mobileTitle")}
