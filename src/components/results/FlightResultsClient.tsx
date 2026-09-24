@@ -7619,7 +7619,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     data-mobile-paginated-flight-results
                     aria-busy={paginationPendingPage !== null}
                     className={cn(
-                      "pb-0",
+                      totalResultPages <= 1 ? "pb-6" : "pb-0",
                       paginationRevealing && "animate-[fadeIn_150ms_ease-out]",
                     )}
                   >
