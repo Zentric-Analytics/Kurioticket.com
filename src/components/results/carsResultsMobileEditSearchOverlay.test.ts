@@ -34,7 +34,7 @@ test("Cars Edit Search keeps polished Cars content in an attached mobile-web bot
   assert.match(shellSource, /pb-\[max\(20px,env\(safe-area-inset-bottom\)\)\]/);
   assert.match(
     shellSource,
-    /text-\[18px\] font-semibold leading-\[23px\]/,
+    /text-\[19px\] font-semibold leading-\[24px\] tracking-normal/,
   );
   assert.match(shellSource, /min-h-\[52px\]/);
   assert.match(cssSource, /rgba\(8, 18, 35, 0\.52\)/);
