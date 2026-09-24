@@ -171,6 +171,13 @@ test("shared editor uses canonical mobile pickers and multi-city editor", () => 
   assert.match(source, /MULTI_CITY_MAX_LEGS/);
 });
 
+test("temporary trip-type changes preserve an existing multi-city itinerary", () => {
+  assert.match(source, /preservedMultiCityLegsRef = useRef<FlightSearchLeg\[]>/);
+  assert.match(source, /preservedMultiCityLegsRef\.current = current\.legs/);
+  assert.match(source, /hasPreservedMultiCityJourney/);
+  assert.match(source, /\? preservedLegs/);
+});
+
 test("traveler picker uses the canonical density and Done uses the local Kurioticket blue treatment", () => {
   assert.doesNotMatch(source, /travelerPickerDensity|density=/);
   assert.match(
