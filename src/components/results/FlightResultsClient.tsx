@@ -6691,7 +6691,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     ) : null;
     return (
       <>
-        <div data-mobile-flight-shortcuts className="w-full min-w-0 overflow-x-auto ps-2 pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+        <div data-mobile-flight-shortcuts className="w-full min-w-0 overflow-x-auto ps-3 pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
           <div className="flex w-max flex-nowrap items-center gap-1.5">
             {renderFloatingFilterButton(shortcutButtonClass)}
             {renderTrigger("sort", activeSortOption.label)}
@@ -7195,7 +7195,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
       <div
         ref={resultsGridRef}
-        className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-5 pt-12 sm:pt-5 lg:gap-x-9 lg:pt-6"
+        className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-5 pt-8 sm:pt-5 lg:gap-x-9 lg:pt-6"
       >
         <aside
           ref={desktopFilterSidebarRef}
@@ -7355,7 +7355,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         );
                       })}
                     </div>
-                    {cheaperNearbyFare ? <button type="button" onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)} className="focus-ring flex min-h-[28px] max-w-full items-center px-0 text-left text-[11px] font-semibold leading-[15px] text-slate-600 hover:text-[#075EE8]">Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}</button> : null}
+                    {cheaperNearbyFare ? <button type="button" onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)} className="focus-ring flex min-h-[28px] max-w-full items-center px-0 text-left text-[10px] font-semibold leading-[14px] text-slate-600 hover:text-[#075EE8]">Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}</button> : null}
                   </div>
                   <div
                   className="hidden w-full sm:block"
