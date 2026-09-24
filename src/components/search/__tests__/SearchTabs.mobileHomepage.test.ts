@@ -278,6 +278,52 @@ test("mobile Cars empty placeholders share one light typography treatment", () =
   assert.match(summaryField, /className=\{cn\("flex min-w-0 items-center gap-2 truncate", valueClassName\)\}/);
 });
 
+
+test("mobile Cars filled fields share the native selected-value hierarchy", () => {
+  assert.match(
+    source,
+    /const carsMobileSelectedValueClassName = mobileHomepage[\s\S]*?text-\[15px\] font-semibold leading-5 text-\[#0F172A\]/,
+  );
+  assert.match(
+    source,
+    /const carsMobileEmptyValueClassName = mobileHomepage[\s\S]*?text-\[15px\] font-normal leading-5 text-slate-500/,
+  );
+
+  assert.match(
+    carsPickupField,
+    /carsValues\.pickupLocation \? "font-semibold text-\[#0F172A\]" : "font-normal text-slate-500"/,
+  );
+  assert.match(
+    carsPickupField,
+    /gap-\[10px\][\s\S]*?<MapPin[^>]*text-\[#334155\]/,
+  );
+  assert.match(
+    carsPickupField,
+    /text-\[12px\] font-normal leading-4 text-\[#56658E\]/,
+  );
+
+  assert.match(
+    carsRentalDatesField,
+    /valueClassName=\{mobileHomepage \? \(carsDateRangeIsEmpty \? carsMobileEmptyValueClassName : carsMobileSelectedValueClassName\) : undefined\}/,
+  );
+  assert.match(
+    carsTimeField,
+    /valueClassName=\{mobileHomepage \? \(carsTimeRangeIsEmpty \? carsMobileEmptyValueClassName : carsMobileSelectedValueClassName\) : undefined\}/,
+  );
+  assert.match(
+    carsDriverAgeField,
+    /valueClassName=\{mobileHomepage \? \(carsDriverAgeIsEmpty \? carsMobileEmptyValueClassName : carsMobileSelectedValueClassName\) : undefined\}/,
+  );
+
+  const summaryField = source.slice(
+    source.indexOf("function CarsSummaryField"),
+    source.indexOf("export function SearchTabs"),
+  );
+  assert.match(summaryField, /nativeMobileCarsField && "text-\[15px\] font-semibold leading-5 text-\[#0F172A\]"/);
+  assert.match(summaryField, /nativeMobileCarsField && "gap-\[10px\]"/);
+  assert.match(summaryField, /nativeMobileCarsField && "text-\[#334155\]"/);
+});
+
 test("mobile homepage Cars isolates CSS-hidden desktop location autocompletes", () => {
   assert.match(source, /const isSmCarsHomepageViewport = useSyncExternalStore/);
   assert.match(carsPickupField, /presentation=\{mobileHomepage \? "desktop" : "responsive"\}/);
@@ -287,20 +333,20 @@ test("mobile homepage Cars isolates CSS-hidden desktop location autocompletes", 
 });
 
 test("Cars adds neutral value icons without changing summaries or chevrons", () => {
-  assert.match(carsTimeField, /leadingIcon=\{<Clock aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-slate-500 sm:h-4 sm:w-4" \/>\}/);
+  assert.match(carsTimeField, /leadingIcon=\{<Clock aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\] sm:h-4 sm:w-4 sm:text-slate-500" \/>\}/);
   assert.match(carsTimeField, /value=\{carsTimeSummary\}/);
 
-  assert.match(carsDriverAgeField, /leadingIcon=\{<UserRound aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-slate-500 sm:h-4 sm:w-4" \/>\}/);
+  assert.match(carsDriverAgeField, /leadingIcon=\{<UserRound aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\] sm:h-4 sm:w-4 sm:text-slate-500" \/>\}/);
   assert.match(carsDriverAgeField, /"Select driver age"/);
   assert.match(carsDriverAgeField, /years old/);
 
   assert.match(source.slice(source.indexOf("function CarsSummaryField"), rendererStart), /\{leadingIcon\}[\s\S]*?\{value\}[\s\S]*?showChevron \? <ChevronDown/);
-  assert.match(carsRentalDatesField, /leadingIcon=\{<Calendar aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-slate-500 sm:h-4 sm:w-4" \/>\} showChevron=\{false\}/);
+  assert.match(carsRentalDatesField, /leadingIcon=\{<Calendar aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\] sm:h-4 sm:w-4 sm:text-slate-500" \/>\} showChevron=\{false\}/);
 });
 
 test("Cars value icons span homepage breakpoints and picker implementations stay untouched", () => {
-  assert.match(carsTimeField, /leadingIcon=\{<Clock aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-slate-500 sm:h-4 sm:w-4" \/>\}/);
-  assert.match(carsDriverAgeField, /leadingIcon=\{<UserRound aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-slate-500 sm:h-4 sm:w-4" \/>\}/);
+  assert.match(carsTimeField, /leadingIcon=\{<Clock aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\] sm:h-4 sm:w-4 sm:text-slate-500" \/>\}/);
+  assert.match(carsDriverAgeField, /leadingIcon=\{<UserRound aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\] sm:h-4 sm:w-4 sm:text-slate-500" \/>\}/);
   assert.match(carsTimeField, /<CarsTimeRangePickerContent/);
   assert.match(carsDriverAgeField, /<CarsDriverAgePickerContent/);
   assert.match(carsTimeField, /sm:h-4 sm:w-4/);
