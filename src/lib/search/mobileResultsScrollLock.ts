@@ -19,9 +19,14 @@ export type MobileResultsScrollLockRelease = (options?: {
   restoreScroll?: boolean;
 }) => void;
 
+export type MobileResultsScrollLockOptions = {
+  freezeBodyPosition?: boolean;
+};
+
 const activeLocks = new Set<symbol>();
 let snapshot: InlineSnapshot | null = null;
 let restoreScrollOnFinalRelease = true;
+let fixedBodyPositionForActiveLock = true;
 
 function captureSnapshot(): InlineSnapshot {
   const body = document.body.style;
@@ -45,7 +50,9 @@ function captureSnapshot(): InlineSnapshot {
   };
 }
 
-export function acquireMobileResultsScrollLock(): MobileResultsScrollLockRelease {
+export function acquireMobileResultsScrollLock(
+  { freezeBodyPosition = true }: MobileResultsScrollLockOptions = {},
+): MobileResultsScrollLockRelease {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return () => undefined;
   }
@@ -56,21 +63,24 @@ export function acquireMobileResultsScrollLock(): MobileResultsScrollLockRelease
   if (activeLocks.size === 1) {
     snapshot = captureSnapshot();
     restoreScrollOnFinalRelease = true;
+    fixedBodyPositionForActiveLock = freezeBodyPosition;
 
     const body = document.body;
     const root = document.documentElement;
-    // Fixing the body at the inverse scroll offset freezes the rendered page on
-    // iOS Safari without fighting scroll events. The root overflow lock closes
-    // the remaining document scroller, while descendants such as the Edit
-    // Search sheet retain their own overflow scrolling. Do not set touch-action
-    // on body/root: an ancestor value of `none` also disables sheet panning.
-    body.style.left = `${-snapshot.scrollX}px`;
+    // Most mobile Results overlays still use the fixed-body strategy because
+    // it is the broadest iOS Safari fallback. Cars filter/shortcut overlays can
+    // opt out of body repositioning: their full-viewport scrim already owns
+    // pointer input, so locking root/body overflow is sufficient and avoids the
+    // visible jump caused by moving the body to -scrollY and restoring it.
+    if (freezeBodyPosition) {
+      body.style.left = `${-snapshot.scrollX}px`;
+      body.style.position = "fixed";
+      body.style.right = "0";
+      body.style.top = `${-snapshot.scrollY}px`;
+      body.style.width = "100%";
+    }
     body.style.overflow = "hidden";
     body.style.overscrollBehavior = "none";
-    body.style.position = "fixed";
-    body.style.right = "0";
-    body.style.top = `${-snapshot.scrollY}px`;
-    body.style.width = "100%";
     root.style.overflow = "hidden";
     root.style.overscrollBehavior = "none";
   }
@@ -84,9 +94,11 @@ export function acquireMobileResultsScrollLock(): MobileResultsScrollLockRelease
     if (activeLocks.size !== 0 || !snapshot) return;
 
     const original = snapshot;
-    const shouldRestoreScroll = restoreScrollOnFinalRelease;
+    const shouldRestoreScroll =
+      restoreScrollOnFinalRelease && fixedBodyPositionForActiveLock;
     snapshot = null;
     restoreScrollOnFinalRelease = true;
+    fixedBodyPositionForActiveLock = true;
     Object.assign(document.body.style, original.body);
     Object.assign(document.documentElement.style, original.root);
 
