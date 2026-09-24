@@ -239,29 +239,39 @@ test("mobile homepage Cars aligns a decorative MapPin before the dynamic pickup 
   assert.match(carsPickupField, /hidden sm:block[\s\S]*?<CarLocationAutocomplete/);
 });
 
-test("mobile Cars empty placeholders share one light typography treatment", () => {
+test("mobile Cars empty placeholders retain the light treatment while filled values use native weight", () => {
   assert.match(carsPickupField, /text-\[15px\] font-semibold leading-5 sm:hidden/);
   assert.match(
     carsPickupField,
-    /carsValues\.pickupLocation \? "font-semibold text-slate-950" : "font-normal text-slate-500"/,
+    /carsValues\.pickupLocation \? "font-semibold text-\[#0F172A\]" : "font-normal text-slate-500"/,
   );
   assert.match(carsPickupField, /hidden sm:block[\s\S]*?inputClassName=\{cn\(hotelFieldValueClassName, "h-8 w-full ps-6"\)\}/);
 
   assert.match(source, /const carsDateRangeIsEmpty = !carsValues\.pickupDate && !carsValues\.dropoffDate/);
+  assert.match(source, /const carsTimeRangeIsEmpty = !carsValues\.pickupTime && !carsValues\.dropoffTime/);
+  assert.match(source, /const carsDriverAgeIsEmpty = carsValues\.driverAge === defaultDriverAge/);
   assert.match(
-    carsRentalDatesField,
-    /valueClassName=\{mobileHomepage && carsDateRangeIsEmpty \? "text-\[15px\] font-normal leading-5 text-slate-500" : undefined\}/,
+    source,
+    /const carsMobileEmptyValueClassName = mobileHomepage[\s\S]*?text-\[15px\] font-normal leading-5 text-slate-500/,
   );
   assert.match(
     source,
-    /carsEmptyDateTextClassName = mobileHomepage && carsDateRangeIsEmpty \? "text-slate-500" : undefined/,
+    /const carsMobileSelectedValueClassName = mobileHomepage[\s\S]*?text-\[15px\] font-semibold leading-5 text-\[#0F172A\]/,
   );
 
-  assert.match(source, /const carsTimeRangeIsEmpty = !carsValues\.pickupTime && !carsValues\.dropoffTime/);
+  assert.match(
+    carsRentalDatesField,
+    /valueClassName=\{mobileHomepage \? \(carsDateRangeIsEmpty \? carsMobileEmptyValueClassName : carsMobileSelectedValueClassName\) : undefined\}/,
+  );
   assert.match(
     carsTimeField,
-    /valueClassName=\{mobileHomepage && carsTimeRangeIsEmpty \? "text-\[15px\] font-normal leading-5 text-slate-500" : undefined\}/,
+    /valueClassName=\{mobileHomepage \? \(carsTimeRangeIsEmpty \? carsMobileEmptyValueClassName : carsMobileSelectedValueClassName\) : undefined\}/,
   );
+  assert.match(
+    carsDriverAgeField,
+    /valueClassName=\{mobileHomepage \? \(carsDriverAgeIsEmpty \? carsMobileEmptyValueClassName : carsMobileSelectedValueClassName\) : undefined\}/,
+  );
+
   assert.match(
     source,
     /pickupTime: mobileHomepage \? "" : "10:00"[\s\S]*?dropoffTime: mobileHomepage \? "" : "10:00"/,
@@ -269,15 +279,11 @@ test("mobile Cars empty placeholders share one light typography treatment", () =
   assert.doesNotMatch(source, /const \[carsDraftTimes, setCarsDraftTimes\]/);
   assert.doesNotMatch(source, /setCarsDraftTimes\(/);
 
-  assert.doesNotMatch(carsDriverAgeField, /valueClassName=/);
-
   const summaryField = source.slice(source.indexOf("function CarsSummaryField"), source.indexOf("export function SearchTabs"));
   assert.match(summaryField, /const nativeMobileCarsField = mobilePresentation === "shell" && !isSmViewport/);
-  assert.match(summaryField, /nativeMobileCarsField && "text-\[10px\] font-extrabold leading-\[13px\] tracking-\[0\.5px\]/);
-  assert.match(summaryField, /nativeMobileCarsField && "text-\[15px\] font-semibold leading-5"/);
-  assert.match(summaryField, /className=\{cn\("flex min-w-0 items-center gap-2 truncate", valueClassName\)\}/);
+  assert.match(summaryField, /nativeMobileCarsField && "text-\[10px\] font-extrabold leading-\[13px\] tracking-\[0\.5px\] text-\[#64748B\]"/);
+  assert.match(summaryField, /nativeMobileCarsField && "text-\[15px\] font-semibold leading-5 text-\[#0F172A\]"/);
 });
-
 
 test("mobile Cars filled fields share the native selected-value hierarchy", () => {
   assert.match(
