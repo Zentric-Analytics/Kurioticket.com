@@ -15,6 +15,7 @@ import {
   AutomaticTransmissionIcon,
   ManualTransmissionIcon,
 } from "@/components/results/CarTransmissionIcon";
+import { getCarSpecificationIcon } from "@/components/results/carResultCardSpecs";
 import type { NormalizedCarResult } from "@/lib/cars/types";
 import {
   fuelPolicyLabels,
@@ -61,7 +62,10 @@ export function CarDetailsHero({
     normalizedSpecs.splice(4, 0, [Snowflake, text.airConditioning]);
   // Zero/default normalized fields are not provider claims.
   const specs: Array<[LucideIcon, string]> = car.sandboxPresentation
-    ? car.sandboxPresentation.specs.map((label) => [CarFront, label])
+    ? car.sandboxPresentation.specs.map((label) => [
+        getCarSpecificationIcon(label),
+        label,
+      ])
     : normalizedSpecs;
 
   return (

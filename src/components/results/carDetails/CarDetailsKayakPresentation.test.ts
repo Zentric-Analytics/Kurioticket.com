@@ -11,10 +11,15 @@ const details = readFileSync(
   "utf8",
 );
 
-test("KAYAK details use provider specifications instead of normalized placeholders", () => {
+test("KAYAK details use provider specifications with semantic car icons instead of normalized placeholders", () => {
   assert.match(
     hero,
     /car\.sandboxPresentation\s*\? car\.sandboxPresentation\.specs\.map/,
+  );
+  assert.match(hero, /getCarSpecificationIcon\(label\)/);
+  assert.doesNotMatch(
+    hero,
+    /sandboxPresentation\.specs\.map\([^\n]*\[CarFront,\s*label\]/,
   );
   assert.match(details, /car\.sandboxPresentation\s*\?\s*\[/);
   assert.match(details, /Simulated inventory — no real booking/);
