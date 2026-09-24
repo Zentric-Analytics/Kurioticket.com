@@ -295,7 +295,7 @@ export function CarDetailsExperience({
                 <Heading
                   level={modelHeadingLevel}
                   headingRef={modelHeadingRef}
-                  className="scroll-mt-24 text-[22px] font-extrabold leading-7 tracking-[-0.5px] text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]"
+                  className="scroll-mt-24 text-[22px] font-extrabold leading-7 tracking-[-0.5px] text-[#071A48] outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8] lg:text-slate-950"
                 >
                   {car.modelName}
                   {car.orSimilar ? (
