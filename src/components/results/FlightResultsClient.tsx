@@ -6625,7 +6625,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               onClick={applySheet}
               disabled={mobileShortcutSheet !== "sort" && draftMatches === 0}
               aria-disabled={mobileShortcutSheet !== "sort" && draftMatches === 0}
-              className="flex h-[49px] min-w-0 flex-1 items-center justify-center rounded-xl bg-[#004BB8] px-3 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+              className={cn(
+                "flex h-[49px] min-w-0 items-center justify-center whitespace-nowrap rounded-xl bg-[#004BB8] px-5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2",
+                mobileShortcutSheet === "sort" && "flex-1",
+              )}
             >
               {mobileShortcutSheet === "sort"
                 ? "Apply"
@@ -6965,7 +6968,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               triggerFilterApplying();
               closeMobileFiltersDrawer();
             }}
-            className="min-h-[50px] min-w-0 flex-1 rounded-[10px] bg-[#004BB8] px-5 text-base font-bold leading-[22px] text-white disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+            className={cn("min-h-[50px] min-w-0 whitespace-nowrap rounded-[10px] bg-[#004BB8] px-5 text-base font-bold leading-[22px] text-white disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35", activeFilterCount === 0 && "flex-1")}
           >
             {sortedResults.length === 0
               ? "No flights"
@@ -7469,7 +7472,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 inert={mobileSearchOpen ? true : undefined}
                 aria-hidden={mobileSearchOpen ? true : undefined}
                 className={cn(
-                  "-mx-[14px] px-0 py-1 sm:hidden",
+                  "-mx-3 px-0 py-1 sm:hidden",
                   mobileSearchOpen && "pointer-events-none",
                 )}
                 aria-label="Flight result filters"
