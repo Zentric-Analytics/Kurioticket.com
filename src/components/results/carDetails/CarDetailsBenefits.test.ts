@@ -215,7 +215,7 @@ test("source contract does not restore removed booking-disabled messaging", () =
 });
 
 
-test("car detail transmission uses the dedicated gearbox icon", () => {
+test("mobile-web car detail transmission uses the dedicated gearbox icon without changing desktop", () => {
   assert.match(
     heroSource,
     /manual.*ManualTransmissionIcon.*automatic.*AutomaticTransmissionIcon.*CarFront/s,
@@ -227,5 +227,9 @@ test("car detail transmission uses the dedicated gearbox icon", () => {
   assert.doesNotMatch(
     heroSource,
     /\[CarFront, transmissionLabels\[car\.transmission\]\]/,
+  );
+  assert.match(
+    heroSource,
+    /mobileTransmissionIcon[\s\S]*?lg:hidden[\s\S]*?<CarFront[\s\S]*?hidden shrink-0 text-slate-600 lg:block/,
   );
 });
