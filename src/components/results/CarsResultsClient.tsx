@@ -506,12 +506,12 @@ const fieldInputClass =
 const carsMobileEditFieldShellClass =
   "relative flex min-h-[70px] flex-col justify-center gap-[1px] rounded-[13px] border border-[#D8E1EC] bg-white px-4 py-2.5 shadow-[0_2px_8px_rgba(15,23,42,0.035)] focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25";
 const carsMobileEditFieldLabelClass =
-  "mb-0 text-[10px] font-semibold uppercase leading-[14px] tracking-[0.08em] text-slate-500";
+  "mb-0 text-[10px] font-extrabold uppercase leading-[13px] tracking-[0.5px] text-[#64748B]";
 const carsMobileEditValueRowClass = "gap-2.5";
 const carsMobileEditValueClass =
-  "h-auto text-[15px] font-medium leading-5 tracking-[-0.01em] text-slate-900";
+  "h-auto text-[15px] font-semibold leading-5 text-[#0F172A]";
 const carsMobileEditSecondaryValueClass =
-  "text-[12px] font-normal leading-[17px] tracking-normal text-slate-500";
+  "text-[12px] font-normal leading-4 tracking-normal text-[#56658E]";
 
 export function CarsResultsClient({
   values,
@@ -3195,7 +3195,7 @@ function MobileLocationLauncher({
         <span className="truncate">{label}</span>
       </div>
       <div className={cn("flex min-w-0 items-center", groupedMobile ? carsMobileEditValueRowClass : "gap-2")}>
-        {groupedMobile ? <Icon className="h-4 w-4 shrink-0 text-slate-700" aria-hidden="true" /> : null}
+        {groupedMobile ? <Icon className="h-4 w-4 shrink-0 text-[#334155]" aria-hidden="true" /> : null}
         <button
           ref={buttonRef}
           type="button"
@@ -3489,7 +3489,7 @@ function SearchDateCell({
         {!showRentalDuration && isCompact ? (
           <Calendar className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
         ) : null}
-        {groupedMobile ? <CalendarDays className="h-4 w-4 shrink-0 text-slate-700" aria-hidden="true" /> : null}
+        {groupedMobile ? <CalendarDays className="h-4 w-4 shrink-0 text-[#334155]" aria-hidden="true" /> : null}
         <span className="min-w-0 flex-1">
           <span
             className={cn(
@@ -3509,6 +3509,7 @@ function SearchDateCell({
         <ChevronDown
           className={cn(
             "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+            groupedMobile && "text-[#334155]",
             isOpen && "rotate-180",
           )}
           aria-hidden="true"
@@ -3747,7 +3748,7 @@ function SearchTimeCell({
         aria-haspopup="menu"
         className={cn("focus-ring flex min-w-0 w-full items-center justify-between rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6", groupedMobile ? [carsMobileEditValueClass, carsMobileEditValueRowClass] : "h-8 gap-2")}
       >
-        {groupedMobile ? <Clock3 className="h-4 w-4 shrink-0 text-slate-700" aria-hidden="true" /> : null}
+        {groupedMobile ? <Clock3 className="h-4 w-4 shrink-0 text-[#334155]" aria-hidden="true" /> : null}
         {useMainPageDesktopPresentation ? (
           <span className="flex min-w-0 items-center gap-2">
             <Clock
@@ -3772,6 +3773,7 @@ function SearchTimeCell({
         <ChevronDown
           className={cn(
             "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+            groupedMobile && "text-[#334155]",
             isOpen && "rotate-180",
           )}
           aria-hidden="true"
@@ -3892,7 +3894,7 @@ function DriverAgeCell({
         aria-haspopup="listbox"
         className={cn("focus-ring flex min-w-0 w-full items-center justify-between rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6", groupedMobile ? [carsMobileEditValueClass, carsMobileEditValueRowClass] : "h-8 gap-2")}
       >
-        {groupedMobile ? <UserRound className="h-4 w-4 shrink-0 text-slate-700" aria-hidden="true" /> : null}
+        {groupedMobile ? <UserRound className="h-4 w-4 shrink-0 text-[#334155]" aria-hidden="true" /> : null}
         {useMainPageDesktopPresentation ? (
           <span className="flex min-w-0 items-center gap-2">
             <UserRound
@@ -3918,6 +3920,7 @@ function DriverAgeCell({
         <ChevronDown
           className={cn(
             "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+            groupedMobile && "text-[#334155]",
             isOpen && "rotate-180",
           )}
           aria-hidden="true"
