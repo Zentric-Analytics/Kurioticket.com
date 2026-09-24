@@ -1812,7 +1812,7 @@ export function CarsResultsClient({
         </ol>
       </nav>
 
-      <div ref={resultsGridRef} className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-12 sm:pt-6">
+      <div ref={resultsGridRef} className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-10 sm:pt-6">
         <CarsResultsExperience
           results={initialResults}
           search={values}
