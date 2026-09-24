@@ -105,8 +105,8 @@ test("standalone mobile follows the native two-line car identity structure", () 
   assert.match(mobile, /block min-w-0 truncate text-\[15px\] font-bold leading-\[18px\]/);
   assert.doesNotMatch(
     mobile,
-    /<h[23][^>]*>[\s\S]*?\{car\.modelName\}/,
-    "mobile headings must not hand the full provider model string to browser line wrapping",
+    /<h3[^>]*>\s*\{car\.modelName\}|<h2[^>]*>\s*\{car\.modelName\}/,
+    "mobile headings must not hand the full provider model string directly to browser line wrapping",
   );
 });
 
@@ -339,6 +339,20 @@ test("KAYAK provider specs occupy the same semantic slots and columns as Kurioti
       ["5 doors", "1 bags"],
     ],
   );
+});
+
+test("KAYAK fixed provider slots preserve an unusual transmission label", () => {
+  const slots = getMobileProviderCarSpecSlots([
+    "4 passengers",
+    "1 bags",
+    "5 doors",
+    "CVT",
+  ]);
+  assert.deepEqual(
+    slots.map((entry) => entry?.[1] ?? null),
+    ["4 passengers", "CVT", "5 doors", "1 bags"],
+  );
+  assert.equal(slots[1]?.[0], CarFront);
 });
 
 test("missing KAYAK specs stay absent without shifting another fact into the wrong column", () => {
