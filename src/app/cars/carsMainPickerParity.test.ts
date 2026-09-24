@@ -134,10 +134,16 @@ test("Cars Main default driver age requires an explicit numeric selection", () =
   assert.match(pickerContent, /h-\[22px\] w-\[22px\]/);
 });
 
-test("Cars Main child pickers retain the full-height white mobile-web shell", () => {
+test("Cars Main child pickers keep a stable opaque full-screen mobile-web shell", () => {
   assert.match(pickerShell, /data-cars-main-picker/);
-  assert.match(pickerShell, /fixed inset-0 z-\[2147483647\] h-\[100dvh\]/);
+  assert.match(pickerShell, /fixed inset-0 z-\[2147483647\]/);
   assert.match(pickerShell, /fixed inset-0 flex h-\[100dvh\]/);
+  assert.match(pickerShell, /const carsMainVisualViewport = carsMain && followVisualViewport/);
+  assert.match(
+    pickerShell,
+    /style=\{carsMainVisualViewport \? carsMainViewportStyle : undefined\}/,
+  );
+  assert.doesNotMatch(pickerShell, /style=\{carsMain \? carsMainViewportStyle/);
   assert.doesNotMatch(pickerShell, /max-h-\[(?:72|82)dvh\]/);
   assert.match(pickerContent, /presentation === "carsMain"[\s\S]*?"bg-white px-4 py-3"/);
 });
