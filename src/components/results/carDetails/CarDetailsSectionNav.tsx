@@ -59,7 +59,7 @@ export function CarDetailsSectionNav({
             tabIndex={selected ? 0 : -1}
             onClick={() => onTabChange(tab.id)}
             onKeyDown={(event) => handleKeyDown(event, index)}
-            className={`focus-ring relative inline-flex min-h-12 min-w-0 items-center justify-center whitespace-nowrap px-0.5 text-[12px] font-semibold leading-[18px] transition-colors min-[390px]:text-[13px] lg:w-auto lg:flex-1 lg:px-2 lg:text-sm lg:font-bold lg:leading-normal ${tab.id === "compare" ? "w-[32%]" : tab.id === "pickup" ? "w-[43%]" : "w-[25%]"} ${selected ? "text-blue" : "text-slate-600 hover:text-slate-950"}`}
+            className={`focus-ring relative inline-flex min-h-12 min-w-0 items-center justify-center whitespace-nowrap px-0.5 text-[12px] font-semibold leading-[18px] transition-colors min-[390px]:text-[13px] lg:w-auto lg:flex-1 lg:px-2 lg:text-sm lg:font-bold lg:leading-normal ${tab.id === "compare" ? "w-[32%]" : tab.id === "pickup" ? "w-[43%]" : "w-[25%]"} ${selected ? "text-[#075EE8] lg:text-blue" : "text-slate-600 hover:text-slate-950"}`}
           >
             {tab.id === "compare" && labels.mobileCompare ? (
               <>
@@ -70,7 +70,7 @@ export function CarDetailsSectionNav({
               tab.label
             )}
             <span
-              className={`absolute inset-x-2 bottom-0 h-0.5 bg-blue transition-opacity ${selected ? "opacity-100" : "opacity-0"}`}
+              className={`absolute inset-x-2 bottom-0 h-0.5 bg-[#075EE8] transition-opacity lg:bg-blue ${selected ? "opacity-100" : "opacity-0"}`}
               aria-hidden="true"
             />
           </button>
