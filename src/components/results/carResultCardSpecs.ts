@@ -126,7 +126,19 @@ export function getMobileProviderCarSpecSlots(
   return slots;
 }
 
-/** Mobile card grid: transmission and luggage share the right-hand column. */
+export function getMobileCarSpecColumns(
+  slots: readonly (MobileCarSpec | null)[],
+): MobileCarSpec[][] {
+  const present = (spec: MobileCarSpec | null): spec is MobileCarSpec =>
+    spec !== null;
+
+  return [
+    slots.slice(0, 2).filter(present),
+    slots.slice(2, 4).filter(present),
+  ].filter((column) => column.length > 0);
+}
+
+/** Mobile card grid: passengers/transmission left, doors/bags right. */
 export function getMobileCarPrimarySpecs(
   car: NormalizedCarResult,
 ): Array<[LucideIcon, string]> {
