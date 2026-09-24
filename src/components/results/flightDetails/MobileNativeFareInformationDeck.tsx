@@ -57,8 +57,8 @@ export function MobileNativeFareInformationDeck({
                 aria-controls={`mobile-fare-panel-${tab.id}`}
                 onClick={() => onTabChange(tab.id)}
                 style={{
-                  color: selected ? "#1A1A1A" : "#536B92",
-                  fontWeight: selected ? 800 : 600,
+                  color: "#536B92",
+                  fontWeight: 600,
                   fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
                 className="relative min-h-[48px] shrink-0 whitespace-nowrap px-0 text-[14px] leading-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0754F7]/35"
