@@ -218,7 +218,7 @@ test("source contract does not restore removed booking-disabled messaging", () =
 test("mobile-web car detail transmission uses the dedicated gearbox icon without changing desktop", () => {
   assert.match(
     heroSource,
-    /manual.*ManualTransmissionIcon.*automatic.*AutomaticTransmissionIcon.*CarFront/s,
+    /manual[\s\S]*ManualTransmissionIcon[\s\S]*automatic[\s\S]*AutomaticTransmissionIcon[\s\S]*CarFront/,
   );
   assert.match(
     heroSource,
