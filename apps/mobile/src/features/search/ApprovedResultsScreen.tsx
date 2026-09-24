@@ -236,6 +236,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const flightResultsScrollY = useRef(new Animated.Value(0)).current;
   const [flightResultsViewportHeight, setFlightResultsViewportHeight] = useState(0);
   const [flightResultsContentHeight, setFlightResultsContentHeight] = useState(0);
+  const handleFlightResultsLayout = useCallback(({ nativeEvent }: { nativeEvent: { layout: { height: number } } }) => {
+    setFlightResultsViewportHeight(nativeEvent.layout.height);
+  }, []);
+  const handleFlightResultsContentSizeChange = useCallback((_width: number, height: number) => {
+    setFlightResultsContentHeight(height);
+  }, []);
   const windowDimensions = useWindowDimensions();
   const previousHotelSearchKey = useRef<string | undefined>(undefined);
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
@@ -955,7 +961,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       {product === "flight" ? (
         <View
           style={s0.flightResultsListContainer}
-          onLayout={({ nativeEvent }) => setFlightResultsViewportHeight(nativeEvent.layout.height)}
+          onLayout={handleFlightResultsLayout}
         >
         <Animated.SectionList
           ref={flightResultsListRef}
@@ -1003,7 +1009,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             </View>
           ) : null}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={(_width, height) => setFlightResultsContentHeight(height)}
+          onContentSizeChange={handleFlightResultsContentSizeChange}
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: flightResultsScrollY } } }],
             { useNativeDriver: false },
