@@ -146,11 +146,13 @@ export function MobileResultsEditSheet({
       ) : null}
       <div
         className={cn(
-          "mobile-results-sheet-surface relative flex max-h-[94dvh] min-h-0 w-full flex-col",
+          "mobile-results-sheet-surface relative flex min-h-0 flex-col",
+          carsResultsEdit
+            ? "mobile-results-sheet-cars-edit-surface mx-3 mb-3 max-h-[88dvh] w-[calc(100%_-_24px)]"
+            : "max-h-[94dvh] w-full",
           placement === "top" && "origin-top [animation:none]",
           smoothMotion && "mobile-results-sheet-surface-smooth",
           closing && "mobile-results-sheet-surface-closing",
-          carsResultsEdit && "mobile-results-sheet-cars-edit-surface mx-0 mb-0 w-full",
         )}
         onAnimationEnd={(event) => {
           if (
@@ -168,7 +170,14 @@ export function MobileResultsEditSheet({
           tabIndex={-1}
           aria-modal="true"
           aria-labelledby={titleId}
-          className={cn("relative z-10 flex min-h-0 w-full flex-col overflow-hidden rounded-t-[22px] border border-b-0 border-slate-200/80 bg-white shadow-[0_-12px_36px_rgba(15,23,42,0.18)] outline-none", placement === "top" && "rounded-t-none rounded-b-[22px] border-t-0 border-b pt-[env(safe-area-inset-top)]", carsResultsEdit && "border-slate-200/80 bg-[#F5F7FB]", className)}
+          className={cn(
+            "relative z-10 flex min-h-0 w-full flex-col overflow-hidden outline-none",
+            carsResultsEdit
+              ? "rounded-[24px] border border-slate-200/80 bg-[#F5F7FB] shadow-none"
+              : "rounded-t-[22px] border border-b-0 border-slate-200/80 bg-white shadow-[0_-12px_36px_rgba(15,23,42,0.18)]",
+            placement === "top" && !carsResultsEdit && "rounded-t-none rounded-b-[22px] border-t-0 border-b pt-[env(safe-area-inset-top)]",
+            className,
+          )}
         >
           <div className={cn("shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 pt-2", carsResultsEdit && "border-b-0 bg-[#F5F7FB] py-0 ps-4 pe-2")}>
             <div className={cn("mx-auto flex min-h-11 w-full max-w-xl items-center justify-between gap-3", carsResultsEdit && "min-h-[52px]")}>
@@ -178,7 +187,20 @@ export function MobileResultsEditSheet({
               </button>
             </div>
           </div>
-          <div className={cn("mobile-results-sheet-content min-h-0 flex-1 overflow-y-auto overscroll-contain bg-inherit px-4 py-4", carsResultsEdit && "px-3 pb-[max(20px,env(safe-area-inset-bottom))] pt-2.5", footer && "pb-2", contentClassName)}>{children}</div>
+          <div
+            className={cn(
+              "mobile-results-sheet-content min-h-0 flex-1 overflow-y-auto overscroll-contain bg-inherit px-4 py-4",
+              carsResultsEdit && "px-3 pt-2.5",
+              footer && "pb-2",
+              contentClassName,
+            )}
+            style={carsResultsEdit
+              ? { paddingBottom: "max(20px, calc(env(safe-area-inset-bottom, 0px) - 12px))" }
+              : undefined
+            }
+          >
+            {children}
+          </div>
           {footer ? <div className="shrink-0 border-t border-slate-200 bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">{footer}</div> : null}
         </div>
       </div>
