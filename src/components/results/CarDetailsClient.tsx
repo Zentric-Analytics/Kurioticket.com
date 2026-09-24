@@ -249,7 +249,7 @@ export function CarDetailsExperience({
   );
   return (
     <div
-      className={`${presentation === "guided-content" ? "mt-6" : ""} [--car-details-mobile-header-boundary:calc(env(safe-area-inset-top)+4.375rem)]`}
+      className={`${presentation === "guided-content" ? "mt-6" : ""} font-sans [--car-details-mobile-header-boundary:calc(env(safe-area-inset-top)+4.375rem)]`}
       data-car-details-experience
     >
       {shareConfirmation ? (
@@ -295,11 +295,11 @@ export function CarDetailsExperience({
                 <Heading
                   level={modelHeadingLevel}
                   headingRef={modelHeadingRef}
-                  className="scroll-mt-24 text-[22px] font-extrabold leading-7 tracking-[-0.5px] text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]"
+                  className="scroll-mt-24 text-[22px] font-extrabold leading-7 tracking-[-0.5px] text-[#071A48] outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8] lg:text-slate-950"
                 >
                   {car.modelName}
                   {car.orSimilar ? (
-                    <span className="ms-1.5 inline text-sm font-semibold leading-5 tracking-normal text-slate-500">
+                    <span className="ms-1.5 inline text-sm font-semibold leading-5 tracking-normal text-[#56658E] lg:text-slate-500">
                       or similar
                     </span>
                   ) : null}
@@ -678,7 +678,7 @@ function CarPriceComparisonSection({
                 </span>
                 <span className="flex min-w-[72px] max-w-[42%] shrink flex-col items-end">
                   <strong
-                    className="max-w-full whitespace-nowrap text-[19px] font-semibold leading-[22px] tracking-[-0.015em] text-slate-950 tabular-nums"
+                    className="max-w-full whitespace-nowrap text-[19px] font-semibold leading-[22px] tracking-[-0.015em] text-[#071A48] tabular-nums lg:text-slate-950"
                     dir="ltr"
                     title={daily.title}
                     aria-label={daily.ariaLabel}
@@ -818,7 +818,7 @@ function CarLocationSection({
               href={directionsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="focus-ring flex min-h-11 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold text-blue hover:bg-slate-50"
+              className="focus-ring flex min-h-11 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold text-[#075EE8] hover:bg-slate-50 lg:text-blue"
             >
               {copy("carDetails.getDirections")}
               <ExternalLink size={16} aria-hidden="true" />
@@ -830,18 +830,20 @@ function CarLocationSection({
         <div className="p-4">
           {[
             [
+              "Pick-up",
               copy("carDetails.pickup"),
               pickupLocation,
               search.pickupDate,
               search.pickupTime,
             ],
             [
+              "Return",
               copy("carDetails.return"),
               returnLocation,
               search.dropoffDate,
               search.dropoffTime,
             ],
-          ].map(([label, location, date, time], index) => (
+          ].map(([mobileLabel, label, location, date, time], index) => (
             <div
               key={label}
               className={`relative flex gap-3 ${index === 0 ? "pb-6" : ""}`}
@@ -853,11 +855,12 @@ function CarLocationSection({
                 ) : null}
               </div>
               <div>
-                <p className="text-[15px] font-bold leading-[22px] text-slate-900 lg:text-xs lg:uppercase lg:leading-normal lg:tracking-wide lg:text-slate-500">
-                  {label}
+                <p className="text-[15px] font-bold leading-[22px] text-[#071A48] lg:text-xs lg:uppercase lg:leading-normal lg:tracking-wide lg:text-slate-500">
+                  <span className="lg:hidden">{mobileLabel}</span>
+                  <span className="hidden lg:inline">{label}</span>
                 </p>
-                <p className="mt-1 text-[14px] font-medium leading-5 text-slate-900 lg:text-base lg:font-semibold lg:leading-normal">{location}</p>
-                <p className="mt-1 text-[13px] font-normal leading-5 text-slate-600 lg:text-xs lg:leading-normal">
+                <p className="mt-1 text-[14px] font-medium leading-5 text-[#071A48] lg:text-base lg:font-semibold lg:leading-normal lg:text-slate-900">{location}</p>
+                <p className="mt-1 text-[13px] font-normal leading-5 text-[#56658E] lg:text-xs lg:leading-normal lg:text-slate-600">
                   {formatCarDate(date, locale)}
                   {time ? ` · ${time}` : ""}
                 </p>
@@ -870,7 +873,7 @@ function CarLocationSection({
             href={directionsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="focus-ring flex min-h-11 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold text-blue hover:bg-slate-50"
+            className="focus-ring flex min-h-11 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold text-[#075EE8] hover:bg-slate-50 lg:text-blue"
           >
             {copy("carDetails.getDirections")}
             <ExternalLink size={16} aria-hidden="true" />
@@ -878,10 +881,10 @@ function CarLocationSection({
         ) : null}
       </div>
       <div className="mt-7">
-        <h3 className="text-[14px] font-bold leading-5 text-slate-950 lg:text-base lg:leading-normal">
+        <h3 className="text-[14px] font-bold leading-5 text-[#071A48] lg:text-base lg:leading-normal lg:text-slate-950">
           {copy("carDetails.pickupLocationDetails")}
         </h3>
-        <ul className="mt-3 list-disc space-y-2 ps-5 text-sm leading-5 text-slate-700 lg:leading-6">
+        <ul className="mt-3 list-disc space-y-2 ps-5 text-[14px] font-normal leading-5 text-[#334155] marker:text-[#075EE8] lg:leading-6 lg:text-slate-700 lg:marker:text-current">
           {car.pickupInstructions ? <li>{car.pickupInstructions}</li> : null}
           <li>{copy("carDetails.confirmPickupDetails")}</li>
         </ul>
@@ -998,35 +1001,38 @@ function PickupReturnSection({
     <section className="-mx-4 border-y border-slate-200 bg-[#F5F7FB] px-4 py-5 lg:mx-0 lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
       <Heading
         level={sectionHeadingLevel}
-        className="text-xs font-bold leading-[18px] tracking-[-0.2px] text-[#102A43] lg:text-xl lg:leading-normal lg:tracking-[-0.015em]"
+        className="text-xs font-bold leading-[18px] tracking-[-0.2px] text-[#020617] lg:text-xl lg:leading-normal lg:tracking-[-0.015em] lg:text-[#102A43]"
       >
         {copy("carDetails.pickupReturn")}
       </Heading>
       <div className="relative mt-4 grid gap-5 md:grid-cols-2 md:gap-6">
         {[
           [
+            "Pick-up",
             copy("carDetails.pickup"),
             car.pickupLocation,
             search.pickupDate,
             search.pickupTime,
           ],
           [
+            "Return",
             copy("carDetails.return"),
             car.returnLocation,
             search.dropoffDate,
             search.dropoffTime,
           ],
-        ].map(([label, location, date, time]) => (
+        ].map(([mobileLabel, label, location, date, time]) => (
           <div key={label} className="relative border-s-2 border-blue-200 ps-5">
             <span className="absolute -start-[7px] top-1 size-3 rounded-full bg-[#004BB8]" />
-            <Heading level={itemHeadingLevel} className="text-[15px] font-bold leading-[22px] lg:text-base lg:leading-normal">
-              {label}
+            <Heading level={itemHeadingLevel} className="text-[15px] font-bold leading-[22px] text-[#071A48] lg:text-base lg:leading-normal lg:text-inherit">
+              <span className="lg:hidden">{mobileLabel}</span>
+              <span className="hidden lg:inline">{label}</span>
             </Heading>
-            <p className="mt-1 flex gap-2 text-[14px] font-medium leading-5 lg:text-sm lg:font-normal lg:leading-normal">
+            <p className="mt-1 flex gap-2 text-[14px] font-medium leading-5 text-[#071A48] lg:text-sm lg:font-normal lg:leading-normal lg:text-inherit">
               <MapPin size={16} className="shrink-0 text-[#004BB8]" />
               {location || copy("carDetails.locationUnavailable")}
             </p>
-            <p className="mt-1 flex gap-2 text-[13px] font-normal leading-5 text-slate-600 lg:text-sm lg:leading-normal">
+            <p className="mt-1 flex gap-2 text-[13px] font-normal leading-5 text-[#56658E] lg:text-sm lg:leading-normal lg:text-slate-600">
               <Clock3 size={16} />
               <time dateTime={`${date}T${time}`}>
                 {formatCarDate(date, locale)}
@@ -1036,13 +1042,13 @@ function PickupReturnSection({
           </div>
         ))}
       </div>
-      <p className="mt-4 text-sm font-medium leading-5 lg:leading-normal">
+      <p className="mt-4 hidden text-sm font-medium leading-5 lg:block lg:leading-normal">
         {car.sandboxPresentation?.pickupLabel ??
           pickupTypeLabels[car.pickupType]}
         {car.shuttleRequired ? ` · ${copy("carDetails.shuttleRequired")}` : ""}
       </p>
       {car.pickupInstructions && (
-        <p className="mt-2 text-sm font-normal leading-5 lg:leading-normal">
+        <p className="mt-2 hidden text-sm font-normal leading-5 lg:block lg:leading-normal">
           <strong>{copy("carDetails.pickupInstructions")}:</strong>{" "}
           {car.pickupInstructions}
         </p>
@@ -1051,11 +1057,11 @@ function PickupReturnSection({
         <div className="mt-5">
           <Heading
             level={itemHeadingLevel}
-            className="text-[14px] font-bold leading-5 lg:text-base lg:leading-normal"
+            className="text-[14px] font-bold leading-5 text-[#071A48] lg:text-base lg:leading-normal lg:text-inherit"
           >
             Pickup requirements
           </Heading>
-          <p className="mt-2.5 flex items-start gap-2.5 text-[14px] font-medium leading-5 lg:text-sm lg:leading-normal">
+          <p className="mt-2.5 flex items-start gap-2.5 text-[14px] font-medium leading-5 text-[#071A48] lg:text-sm lg:leading-normal lg:text-inherit">
             <IdCard
               size={19}
               className="mt-px shrink-0 text-slate-600"
@@ -1091,7 +1097,7 @@ function MobileBookingDock({
       <div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_minmax(132px,0.9fr)] items-center gap-3">
         <div className="min-w-0">
           <p
-            className="truncate text-[19px] font-semibold leading-[22px] tracking-[-0.25px] text-slate-950 tabular-nums"
+            className="truncate text-[19px] font-semibold leading-[22px] tracking-[-0.25px] text-[#071A48] tabular-nums"
             dir="ltr"
             title={total.title}
             aria-label={total.ariaLabel}
@@ -1100,9 +1106,9 @@ function MobileBookingDock({
           </p>
           <h2
             id="mobile-car-rental-total-heading"
-            className="truncate text-[11px] font-semibold leading-4 text-slate-600"
+            className="truncate text-[11px] font-semibold leading-4 text-[#56658E]"
           >
-            {copy("carDetails.bookingSummary")}
+            Estimated rental total
           </h2>
         </div>
         {action.kind === "sandbox-handoff" ? (
