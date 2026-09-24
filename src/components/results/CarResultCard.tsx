@@ -16,7 +16,7 @@ import {
   Tag,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type MouseEvent as ReactMouseEvent } from "react";
 import type { LucideIcon } from "lucide-react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -26,6 +26,8 @@ import {
   type CarComparisonSource,
 } from "@/components/results/CarPriceComparison";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { useRouteProgress } from "@/components/layout/RouteProgress";
+import { CarsRouteLoadingOverlay } from "@/components/results/CarsRouteLoadingOverlay";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useSavedCar } from "@/components/results/useSavedCar";
 import {
@@ -80,7 +82,9 @@ export function CarResultCard({
   const { isSaved, toggleSavedCar } = useSavedCar(car, search);
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? key;
+  const { start: startRouteProgress } = useRouteProgress();
   const [shareConfirmation, setShareConfirmation] = useState("");
+  const [mobileDetailsPending, setMobileDetailsPending] = useState(false);
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const offer = getPrimaryCarOffer(car);
@@ -144,6 +148,29 @@ export function CarResultCard({
       disclosure: car.sandboxPresentation ? "Simulated KAYAK price. No real booking." : t("carsResults.comparison.planningPriceNotLive"),
     },
   ];
+
+  const handleMobileDetailsNavigation = (
+    event: ReactMouseEvent<HTMLAnchorElement>,
+  ) => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    if (mobileDetailsPending) {
+      event.preventDefault();
+      return;
+    }
+
+    setMobileDetailsPending(true);
+    startRouteProgress();
+  };
 
   async function shareCar() {
     const relativeUrl = detailsHref ?? window.location.href;
@@ -220,6 +247,7 @@ export function CarResultCard({
 
   return (
     <article className="relative w-full overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-[#E7EBF1] shadow-[0_2px_10px_rgba(24,48,91,0.08)] md:rounded-2xl md:bg-white md:shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] md:transition md:duration-200 md:hover:-translate-y-0.5 md:hover:border-[#CBD6E2] md:hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]">
+      <CarsRouteLoadingOverlay active={mobileDetailsPending} />
       {providerLabel && <p className="px-4 pt-3 text-xs font-semibold text-amber-800">{providerLabel}</p>}
       {shareConfirmation ? (
         <span
@@ -358,6 +386,8 @@ export function CarResultCard({
                 href={detailsHref}
                 prefetch={car.inventorySource === "kayak-sandbox" ? false : undefined}
                 aria-label={actionAriaLabel}
+                aria-disabled={mobileDetailsPending}
+                onClick={handleMobileDetailsNavigation}
                 className="inline-flex min-h-9 shrink-0 items-center justify-end gap-1 text-[13px] font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
               >
                 View deal <ChevronRight size={16} aria-hidden="true" />
