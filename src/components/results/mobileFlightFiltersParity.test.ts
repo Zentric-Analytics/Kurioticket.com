@@ -51,6 +51,18 @@ test("mobile endpoint airports use authoritative directional endpoints while des
   assert.match(client, /<DesktopFlightFilters/);
 });
 
+test("desktop airport state remains authoritative and memo dependencies track selection values", () => {
+  assert.match(client, /airports: selectedAirports/);
+  assert.match(client, /selectedAirlines,[\s\S]*selectedAirports,[\s\S]*selectedFromAirports,[\s\S]*selectedToAirports,[\s\S]*selectedFlightQuality,[\s\S]*selectedStops/);
+  assert.doesNotMatch(client, /selectedAirlines\.length[\s\S]*selectedFlightQuality\.length[\s\S]*selectedStops\.length/);
+});
+
+test("multi-city Edit Search uses the projected first-leg departure date", () => {
+  assert.match(client, /const projection = projectSearchLegs\(value\.tripType, value\.legs\)/);
+  assert.match(client, /departureDate: projection\.departureDate/);
+  assert.doesNotMatch(client, /departureDate: value\.departureDate/);
+});
+
 test("mobile results count uses native English capitalization and omits the range", () => {
   assert.match(client, /`\$\{count\} \$\{count === 1 \? "Result" : "Results"\} found`/);
   const intro = client.slice(client.indexOf("data-flight-mobile-results-intro"), client.indexOf("data-flight-mobile-results-intro") + 700);
