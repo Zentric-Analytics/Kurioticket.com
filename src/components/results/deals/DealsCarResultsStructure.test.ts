@@ -89,7 +89,10 @@ test("source-contract: mobile drawer is conditional, focus trapped, restores saf
   assert.match(experience, /event\.shiftKey && document\.activeElement === first/);
   assert.match(experience, /!event\.shiftKey && document\.activeElement === last/);
   assert.match(experience, /event\.key === "Escape"[\s\S]*?setFiltersOpen\(false\);\s*setQuickFilterGroupId\(null\)/);
-  assert.match(experience, /mobileFiltersScrollLockRef\.current = acquireMobileResultsScrollLock\(\)/);
+  assert.match(
+    experience,
+    /const releaseScrollLock = acquireMobileResultsScrollLock\(\{\s*freezeBodyPosition: false,\s*\}\)[\s\S]*mobileFiltersScrollLockRef\.current = releaseScrollLock/,
+  );
   assert.match(experience, /releaseExistingLock\(\)/);
   assert.match(experience, /restoreOverlayLauncherFocus\(launcher, mobileFiltersModalityRef\.current\)/);
   assert.match(experience, /shouldRestoreFocus = false;\s*setFiltersOpen\(false\)/);

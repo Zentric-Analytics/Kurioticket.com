@@ -123,10 +123,13 @@ test("Cars full Filters and representative quick sheets freeze the document whil
   const originalScrollY = await page.evaluate(() => window.scrollY);
   expect(originalScrollY).toBeGreaterThan(0);
 
+  const resultsMarker = page.locator("[data-cars-results-card-list]").first();
+  const fullBeforeTop = await resultsMarker.evaluate((element) => element.getBoundingClientRect().top);
   await page.getByRole("button", { name: /^filters?$/i }).first().click();
   const fullFilters = page.locator("[data-cars-mobile-filter-shell]");
   await expect(fullFilters).toBeVisible();
   expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
+  expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(fullBeforeTop, 0);
   await expectDocumentFrozen(page, originalScrollY);
   const filterScroller = fullFilters.locator(".overflow-y-auto");
   const fullFilterScroll = await filterScroller.evaluate((element) => {
@@ -140,13 +143,19 @@ test("Cars full Filters and representative quick sheets freeze the document whil
   await fullFilters.getByRole("button", { name: /close filters/i }).click();
   await expect(fullFilters).toBeHidden();
   expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
+  expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(fullBeforeTop, 0);
 
   for (const launcher of [/sort by/i, /^price/i, /^vehicle type/i, /^transmission/i]) {
     const button = page.getByRole("button", { name: launcher }).first();
     await button.scrollIntoViewIfNeeded();
+    const beforeQuickScrollY = await page.evaluate(() => window.scrollY);
+    const beforeQuickTop = await resultsMarker.evaluate((element) => element.getBoundingClientRect().top);
+    const chevron = button.locator("svg").last();
+    await expect(chevron).not.toHaveClass(/rotate-180/);
     await button.click();
     const sheet = page.locator("[data-cars-quick-sheet]");
     await expect(sheet).toBeVisible();
+    await expect(chevron).toHaveClass(/rotate-180/);
     const quickGeometry = await sheet.evaluate((element) => {
       const rect = element.getBoundingClientRect();
       const style = getComputedStyle(element);
@@ -163,10 +172,13 @@ test("Cars full Filters and representative quick sheets freeze the document whil
     expect(quickGeometry.bottomGap).toBeCloseTo(12, 0);
     expect(quickGeometry.topLeftRadius).toBe("24px");
     expect(quickGeometry.bottomLeftRadius).toBe("24px");
-    expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
-    await expectDocumentFrozen(page, originalScrollY);
+    expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(beforeQuickScrollY, 0);
+    expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(beforeQuickTop, 0);
+    await expectDocumentFrozen(page, beforeQuickScrollY);
     await sheet.getByRole("button", { name: "Close" }).click();
     await expect(sheet).toBeHidden();
-    expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
+    await expect(chevron).not.toHaveClass(/rotate-180/);
+    expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(beforeQuickScrollY, 0);
+    expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(beforeQuickTop, 0);
   }
 });

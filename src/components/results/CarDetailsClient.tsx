@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode, Ref } from "react";
+import type { MouseEvent as ReactMouseEvent, ReactNode, Ref } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -18,8 +18,10 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useRegion } from "@/components/region/RegionProvider";
 import { DetailsBackLink } from "@/components/results/DetailsBackLink";
+import { CarsRouteLoadingOverlay } from "@/components/results/CarsRouteLoadingOverlay";
 import { CarDetailsHero } from "@/components/results/carDetails/CarDetailsHero";
 import {
   CarDetailsSectionNav,
@@ -500,11 +502,36 @@ export function CarDetailsClient({
   resultsHref: string;
 }) {
   const { t } = useLocale();
+  const { start: startRouteProgress } = useRouteProgress();
+  const [mobileResultsPending, setMobileResultsPending] = useState(false);
   const copy = (key: string) => t[key] || enTranslations[key] || key;
   const sandboxHref =
     car.inventorySource === "kayak-sandbox"
       ? sandboxBookingUrl(getPrimaryCarOffer(car)?.bookingUrl)
       : null;
+  const handleMobileResultsNavigation = (
+    event: ReactMouseEvent<HTMLAnchorElement>,
+  ) => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    if (mobileResultsPending) {
+      event.preventDefault();
+      return;
+    }
+
+    setMobileResultsPending(true);
+    startRouteProgress();
+  };
+
   const primaryAction: CarDetailsPrimaryAction = sandboxHref
     ? {
         kind: "sandbox-handoff",
@@ -517,6 +544,7 @@ export function CarDetailsClient({
       };
   return (
     <main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:bg-surface-muted/40 lg:pb-0">
+      <CarsRouteLoadingOverlay active={mobileResultsPending} />
       <section className="bg-transparent lg:bg-white lg:border-b lg:border-border lg:pb-14">
         <div className="page-shell py-0 lg:py-7">
           <DetailsBackLink
@@ -535,6 +563,8 @@ export function CarDetailsClient({
                 <Link
                   href={resultsHref}
                   aria-label="Back to Cars results"
+                  aria-disabled={mobileResultsPending}
+                  onClick={handleMobileResultsNavigation}
                   className="focus-ring flex size-11 shrink-0 items-center justify-center rounded-full border border-white/70 bg-white/85 text-slate-900 shadow-[0_2px_7px_rgba(15,23,42,0.08)] backdrop-blur-md"
                   data-car-details-mobile-back
                 >

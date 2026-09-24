@@ -2261,7 +2261,9 @@ export function CarsResultsExperience({
     const media = window.matchMedia("(max-width: 1023px)");
     if (!media.matches) return undefined;
 
-    const releaseScrollLock = acquireMobileResultsScrollLock();
+    const releaseScrollLock = acquireMobileResultsScrollLock({
+      freezeBodyPosition: false,
+    });
     mobileFiltersScrollLockRef.current = releaseScrollLock;
     return () => {
       releaseScrollLock();
@@ -2680,7 +2682,13 @@ export function CarsResultsExperience({
                     >
                       <span className="inline-flex h-9 items-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2.5 text-[13px] font-semibold leading-4 text-[#142033] transition group-hover:bg-slate-50">
                         {sort === "recommended" ? "Sort" : selectedCarSortLabel}
-                        <ChevronDown className="h-[13px] w-[13px] text-slate-500" aria-hidden="true" />
+                        <ChevronDown
+                          className={cn(
+                            "h-[13px] w-[13px] text-slate-500 transition-transform duration-150 motion-reduce:transition-none",
+                            quickFilterGroupId === "sort" && "rotate-180",
+                          )}
+                          aria-hidden="true"
+                        />
                       </span>
                     </button>
                     {quickFilterGroups.map((group) => {
@@ -2706,7 +2714,13 @@ export function CarsResultsExperience({
                           )}>
                             {carFilterGroupLabel(group, t, true)}
                             {count > 0 ? <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8] px-1.5 text-[10px] font-semibold leading-none text-white">{count}</span> : null}
-                            <ChevronDown className="h-[13px] w-[13px] shrink-0 text-slate-500" aria-hidden="true" />
+                            <ChevronDown
+                              className={cn(
+                                "h-[13px] w-[13px] shrink-0 text-slate-500 transition-transform duration-150 motion-reduce:transition-none",
+                                quickFilterGroupId === group.id && "rotate-180",
+                              )}
+                              aria-hidden="true"
+                            />
                           </span>
                         </button>
                       );

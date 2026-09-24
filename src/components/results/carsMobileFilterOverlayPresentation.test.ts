@@ -85,7 +85,7 @@ test("Cars shortcut backdrop and inside-click dismissal boundaries remain explic
   assert.match(cars, /data-cars-quick-sheet[\s\S]{0,350}onMouseDown=\{\(event\) => event\.stopPropagation\(\)\}/);
   assert.match(cars, /window\.addEventListener\("keydown", handleKeyDown\)/);
   assert.match(cars, /const mobileFiltersOverlayOpen = filtersOpen \|\| quickFilterGroupId !== null/);
-  assert.match(cars, /const releaseScrollLock = acquireMobileResultsScrollLock\(\)/);
+  assert.match(cars, /const releaseScrollLock = acquireMobileResultsScrollLock\(\{\s*freezeBodyPosition: false,\s*\}\)/);
   assert.match(cars, /\}, \[mobileFiltersOverlayOpen\]\)/);
   assert.match(cars, /restoreOverlayLauncherFocus\(launcher, mobileFiltersModalityRef\.current\)/);
 });
@@ -98,7 +98,27 @@ test("every canonical Cars shortcut shares the one stable mobile overlay lock", 
   }
   assert.match(cars, /quickFilterGroupId === "sort" \|\| activeQuickFilterGroup/);
   assert.equal((cars.match(/data-cars-quick-sheet(?:-backdrop|-scrim)?/g) ?? []).length, 3);
-  assert.equal((cars.match(/acquireMobileResultsScrollLock\(\)/g) ?? []).length, 3);
+  assert.equal((cars.match(/acquireMobileResultsScrollLock\(/g) ?? []).length, 3);
+});
+
+test("Cars shortcut chevrons mirror native expanded state", () => {
+  assert.match(
+    cars,
+    /quickFilterGroupId === "sort" && "rotate-180"/,
+  );
+  assert.match(
+    cars,
+    /quickFilterGroupId === group\.id && "rotate-180"/,
+  );
+  assert.match(
+    cars,
+    /transition-transform duration-150 motion-reduce:transition-none/,
+  );
+  const filterButton = cars.slice(
+    cars.indexOf("ref={filtersButtonRef}"),
+    cars.indexOf('aria-expanded={quickFilterGroupId === "sort"}'),
+  );
+  assert.doesNotMatch(filterButton, /ChevronDown/);
 });
 
 test("Cars-specific Sort and filter option data remain wired into shortcut sheets", () => {
