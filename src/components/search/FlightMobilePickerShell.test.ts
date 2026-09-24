@@ -50,3 +50,14 @@ test("close restores the page once and instantly before unmounting the shell", (
   assert.match(source, /scrollLockSnapshotRef\.current = null/);
   assert.match(source, /launcherElement\?\.focus\(\{ preventScroll: true \}\)/);
 });
+
+test("Cars Main alone follows the live visual viewport above the keyboard", () => {
+  assert.match(source, /if \(!open \|\| !carsMain/);
+  assert.match(source, /const viewport = window\.visualViewport/);
+  assert.match(source, /top: `\$\{viewport\.offsetTop\}px`/);
+  assert.match(source, /height: `\$\{viewport\.height\}px`/);
+  assert.match(source, /viewport\.addEventListener\("resize", syncViewport/);
+  assert.match(source, /viewport\.addEventListener\("scroll", syncViewport/);
+  assert.match(source, /style=\{carsMain \? carsMainViewportStyle : undefined\}/);
+  assert.match(source, /carsMain && "absolute h-full"/);
+});

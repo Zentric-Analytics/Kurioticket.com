@@ -163,6 +163,21 @@ test("commitOnSelect immediately commits the canonical row and closes without Do
   assert.equal((picker.match(/onCommit\(/g) ?? []).length, 2);
 });
 
+test("Cars Main alone requires an intentional row tap and consumes touch compatibility clicks", () => {
+  assert.match(
+    picker,
+    /guardTouchSelection=\{presentation === "carsMain"\}/,
+  );
+  assert.match(picker, /onPointerDown=\{\(event\) => \{/);
+  assert.match(picker, /updateCarLocationPointerIntent/);
+  assert.match(picker, /isIntentionalCarLocationTap/);
+  assert.match(picker, /if \(intentional\) onSelect\(\)/);
+  assert.match(
+    picker,
+    /if \(guardTouchSelection && suppressClickRef\.current\)[\s\S]*?return;[\s\S]*?onSelect\(\)/,
+  );
+});
+
 test("Cars Results Edit rows use the native car hierarchy without chips or chevrons", () => {
   assert.match(picker, /<CarFront className="h-\[22px\] w-\[22px\] text-\[#071A48\]"/);
   assert.match(picker, /h-\[46px\] w-\[46px\][\s\S]*rounded-xl bg-white/);

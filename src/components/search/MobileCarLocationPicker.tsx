@@ -4,6 +4,12 @@ import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "re
 import { CarFront, MapPin, X } from "lucide-react";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
+import {
+  beginCarLocationPointerIntent,
+  isIntentionalCarLocationTap,
+  updateCarLocationPointerIntent,
+  type CarLocationPointerSession,
+} from "@/components/search/carLocationPointerIntent";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import {
   searchCarLocationSuggestions,
@@ -69,12 +75,16 @@ function LocationRow({
   selected = false,
   onSelect,
   nativeCarsAppearance = false,
+  guardTouchSelection = false,
 }: {
   item: CarLocationSuggestion;
   selected?: boolean;
   onSelect: () => void;
   nativeCarsAppearance?: boolean;
+  guardTouchSelection?: boolean;
 }) {
+  const pointerSessionRef = useRef<CarLocationPointerSession | null>(null);
+  const suppressClickRef = useRef(false);
   const primaryText = nativeCarsAppearance
     ? item.primaryText
     : formatSelectedCarLocation(item);
@@ -86,7 +96,48 @@ function LocationRow({
   return (
     <button
       type="button"
-      onClick={onSelect}
+      onPointerDown={(event) => {
+        if (!guardTouchSelection || event.pointerType === "mouse") return;
+        pointerSessionRef.current = beginCarLocationPointerIntent(
+          event.pointerId,
+          event.clientX,
+          event.clientY,
+        );
+      }}
+      onPointerMove={(event) => {
+        const session = pointerSessionRef.current;
+        if (!guardTouchSelection || !session) return;
+        pointerSessionRef.current = updateCarLocationPointerIntent(
+          session,
+          event.pointerId,
+          event.clientX,
+          event.clientY,
+        );
+      }}
+      onPointerCancel={() => {
+        pointerSessionRef.current = null;
+        suppressClickRef.current = false;
+      }}
+      onPointerUp={(event) => {
+        if (!guardTouchSelection || event.pointerType === "mouse") return;
+        const intentional = isIntentionalCarLocationTap(
+          pointerSessionRef.current,
+          event.pointerId,
+        );
+        pointerSessionRef.current = null;
+        // Every touch/pen sequence produces a compatibility click in some
+        // browsers. Consume that click whether this was a tap or a pan.
+        suppressClickRef.current = true;
+        if (intentional) onSelect();
+      }}
+      onClick={(event) => {
+        if (guardTouchSelection && suppressClickRef.current) {
+          suppressClickRef.current = false;
+          event.preventDefault();
+          return;
+        }
+        onSelect();
+      }}
       aria-label={`${primaryText}, ${secondaryText}`}
       role={nativeCarsAppearance ? "option" : undefined}
       aria-selected={nativeCarsAppearance ? selected : undefined}
@@ -410,6 +461,7 @@ export function MobileCarLocationPicker({
                     item={item}
                     selected={draft?.id === item.id}
                     nativeCarsAppearance={nativeCarsAppearance}
+                    guardTouchSelection={presentation === "carsMain"}
                     onSelect={() => select(item, requestClose)}
                   />
                 ))}

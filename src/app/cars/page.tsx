@@ -1585,7 +1585,7 @@ function RentalDatesField({
         />
         <span className="min-w-0">
           <span
-            className={`block truncate ${pickupDate ? "text-slate-950" : "text-slate-950 sm:text-slate-400"}`}
+            className={`block truncate ${pickupDate ? "text-slate-950" : "text-slate-400"}`}
           >
             {dateSummary}
           </span>
