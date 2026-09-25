@@ -98,7 +98,7 @@ export type StandaloneHotelDetailsProps = {
   roomChoices: RoomChoice[];
   galleryProps: GalleryProps;
   providerOffers?: HotelDetailsProviderOffer[];
-  onProviderOfferHandoff?: (providerOfferId: string) => void | Promise<void>;
+  onProviderOfferHandoff?: (providerOfferId: string, targetWindow?: Window | null) => void | Promise<void>;
   labels: {
     share: string;
     shared: string;
