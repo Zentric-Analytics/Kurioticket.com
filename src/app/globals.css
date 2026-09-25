@@ -142,6 +142,15 @@ a {
   text-decoration: none;
 }
 
+/* Flight Results uses compact authored type on mobile. Keep Safari from
+   heuristically inflating those values beyond their CSS dimensions. */
+@media (max-width: 639px) {
+  [data-flight-results-main] {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+}
+
 /* Cars Details mobile-web typography is dimensioned to the native Inter scale.
    Disable Safari text inflation on this surface so 10/11/12/13/14/15/19/22px
    tokens render at their authored sizes instead of being enlarged heuristically. */

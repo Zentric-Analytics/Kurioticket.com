@@ -3,9 +3,36 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const css = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
+const resultsSource = readFileSync(
+  new URL("./FlightResultsClient.tsx", import.meta.url),
+  "utf8",
+);
 const mobileMarker = "/* The approved desktop FlightCard hierarchy compresses";
 const mobile = css.split(mobileMarker)[1].split("@media (max-width: 359px)")[0];
 const desktop = css.split(mobileMarker)[0];
+
+test("mobile Flight Results disables text inflation within its existing page scope", () => {
+  const textAdjustRule = css.match(
+    /@media \(max-width: 639px\) \{\s*\[data-flight-results-main\] \{\s*-webkit-text-size-adjust: 100%;\s*text-size-adjust: 100%;\s*\}\s*\}/,
+  )?.[0];
+
+  assert.ok(textAdjustRule);
+  assert.equal(css.match(/\[data-flight-results-main\]/g)?.length, 1);
+  assert.match(resultsSource, /<main data-flight-results-main[^>]*>/);
+  assert.match(
+    resultsSource,
+    /<main data-flight-results-main[\s\S]*data-nearby-fare-presentation="mobile"[\s\S]*>Cheaper nearby:/,
+  );
+});
+
+test("nearby insight retains its authored mobile typography", () => {
+  const nearbyInsight =
+    resultsSource.match(/className="([^"]*)">Cheaper nearby:/)?.[1] ?? "";
+
+  assert.match(nearbyInsight, /text-\[8px\]/);
+  assert.match(nearbyInsight, /leading-\[10px\]/);
+  assert.match(nearbyInsight, /font-medium/);
+});
 
 test("mobile Flight Results uses the native compact hierarchy without changing desktop rules", () => {
   assert.match(css, /font-family: "Inter"/);
