@@ -20,8 +20,8 @@ test("Cars mobile indicator reflects document scrolling without a nested owner",
     /max-sm:h-\[calc\(100dvh[^\n]*max-sm:overflow-y-auto/,
   );
   assert.match(indicatorSource, /window\.scrollY/);
-  assert.match(indicatorSource, /document\.documentElement\.scrollHeight/);
-  assert.match(indicatorSource, /document\.body\.scrollHeight/);
+  assert.doesNotMatch(indicatorSource, /document\.documentElement\.scrollHeight/);
+  assert.doesNotMatch(indicatorSource, /document\.body\.scrollHeight/);
   assert.doesNotMatch(indicatorSource, /overflow-y-auto|setInterval/);
 });
 
@@ -35,10 +35,18 @@ test("native scrollbar suppression is route-owned and mobile-only", () => {
   assert.doesNotMatch(globalCss, /\*::-webkit-scrollbar/);
 });
 
-test("custom indicator is passive and bounded away from viewport edges", () => {
+test("Cars indicator starts at the Track prices bar and measures the results region", () => {
+  assert.match(resultsSource, /data-cars-results-scroll-region/);
+  assert.match(indicatorSource, /data-cars-price-alert/);
+  assert.match(indicatorSource, /data-cars-results-scroll-region/);
+  assert.match(indicatorSource, /regionBottom - viewportHeight/);
+});
+
+test("custom indicator is passive and uses dynamic Track-prices top geometry", () => {
   assert.match(indicatorSource, /pointer-events-none fixed/);
-  assert.match(indicatorSource, /safe-area-inset-top/);
   assert.match(indicatorSource, /safe-area-inset-right/);
   assert.match(indicatorSource, /safe-area-inset-bottom/);
-  assert.match(indicatorSource, /minThumbHeight = 32|calculateCarResultsScrollIndicatorGeometry/);
+  assert.match(indicatorSource, /track\.style\.top/);
+  assert.match(indicatorSource, /calculateCarResultsScrollIndicatorGeometry/);
+  assert.doesNotMatch(indicatorSource, /top-\[calc\(env\(safe-area-inset-top\)/);
 });
