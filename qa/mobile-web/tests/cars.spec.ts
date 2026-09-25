@@ -156,6 +156,7 @@ test("Cars full Filters and representative quick sheets freeze the document whil
     const sheet = page.locator("[data-cars-quick-sheet]");
     await expect(sheet).toBeVisible();
     await expect(sheet).toHaveClass(/mobile-results-sheet-surface-smooth/);
+    await expect(sheet).toHaveClass(/cars-results-quick-sheet-surface/);
     await expect(chevron).toHaveClass(/rotate-180/);
 
     const scrim = page.locator("[data-cars-quick-sheet-scrim]");
