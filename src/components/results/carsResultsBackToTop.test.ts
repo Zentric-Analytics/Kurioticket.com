@@ -26,6 +26,7 @@ test("standalone Cars Back-to-top matches Hotels appearance and behavior", () =>
   );
   assert.match(source, /fixed right-4 z-\[800\] flex h-11 w-11/);
   assert.match(source, /rounded-xl/);
+  assert.match(source, /bg-\[#F8FAFC\]/);
   assert.match(source, /shadow-md transition-all/);
   assert.match(
     source,
@@ -44,6 +45,8 @@ test("standalone Cars Back-to-top matches Hotels appearance and behavior", () =>
   const backToTopStart = source.indexOf('aria-label="Back to top"');
   const backToTopEnd = source.indexOf("</button>", backToTopStart);
   const backToTop = source.slice(backToTopStart, backToTopEnd);
+  assert.match(backToTop, /bg-\[#F8FAFC\]/);
+  assert.doesNotMatch(backToTop, /bg-white/);
   assert.doesNotMatch(backToTop, /rounded-full|shadow-lg|end-4 z-40|h-5 w-5/);
   assert.doesNotMatch(
     backToTop,
