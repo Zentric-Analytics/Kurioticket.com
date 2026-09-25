@@ -785,9 +785,14 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         if (!active || controller.signal.aborted) return;
 
         setSearchApplying(false);
+        setFilterApplying(false);
         if (searchApplyingTimeoutRef.current !== null) {
           window.clearTimeout(searchApplyingTimeoutRef.current);
           searchApplyingTimeoutRef.current = null;
+        }
+        if (filterApplyingTimeoutRef.current !== null) {
+          window.clearTimeout(filterApplyingTimeoutRef.current);
+          filterApplyingTimeoutRef.current = null;
         }
         setResults([]);
         setError(searchError instanceof Error ? searchError.message : t("hotelResults.unableToSearchHotels"));
@@ -1686,9 +1691,9 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         <span
           className={cn(
             shortcutChipClass,
-            "overflow-hidden p-0",
+            "relative overflow-hidden p-0",
             active
-              ? "border-[#142033] bg-white text-[#142033]"
+              ? "border-[#142033] bg-[#142033] text-white"
               : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
           )}
         >
@@ -1697,7 +1702,10 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             aria-haspopup="dialog"
             aria-expanded={mobileShortcutMenu === menu}
             aria-pressed={active}
-            className="focus-ring inline-flex h-full min-w-0 items-center gap-1 px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
+            className={cn(
+              "focus-ring inline-flex h-full min-w-0 items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35",
+              active ? "pl-2 pr-6" : "px-2",
+            )}
             onClick={(event) => {
               event.stopPropagation();
               openMobileShortcutMenu(menu, event.currentTarget);
@@ -1710,13 +1718,13 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             <button
               type="button"
               aria-label={`Clear ${label} filter`}
-              className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
+              className="focus-ring absolute right-0.5 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/70"
               onClick={(event) => {
                 event.stopPropagation();
                 clearMobileShortcutFilter(menu);
               }}
             >
-              <X className="h-3.5 w-3.5" strokeWidth={2.1} aria-hidden="true" />
+              <X className="h-3 w-3" strokeWidth={2.1} aria-hidden="true" />
             </button>
           ) : null}
         </span>
@@ -1935,7 +1943,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }
 
   let loadingContent = null;
-  if (loading) {
+  if (loading || filterApplying) {
     if (guided) {
       return (
         <section aria-labelledby="deals-guided-hotel-results-status" aria-busy="true" className="mt-6 space-y-4">
@@ -2320,15 +2328,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                     </div>
                   ) : null}
 
-                  <div ref={paginationListRef} aria-busy={filterApplying || paginationPendingPage !== null} style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined} className={cn("relative max-sm:-mx-2 max-sm:w-[calc(100%+16px)] space-y-2 sm:space-y-4", paginationRevealing && "animate-[fadeIn_150ms_ease-out]")}>
-                    {filterApplying ? (
-                      <div role="status" aria-live="polite" className="pointer-events-none absolute left-1/2 -top-2 z-20 -translate-x-1/2 sm:hidden">
-                        <span className="sr-only">{t("updatingResults")}</span>
-                        <div data-hotel-filter-refresh-progress className="h-1 w-24 overflow-hidden rounded-full bg-[#004BB8]/[0.08] shadow-[0_1px_2px_rgba(15,23,42,0.08)]">
-                          <div className="h-full w-1/2 animate-[loading-line_1.4s_ease-in-out_infinite] rounded-full bg-[linear-gradient(90deg,rgba(0,75,184,0.82),rgba(92,182,178,0.78))] motion-reduce:animate-none" />
-                        </div>
-                      </div>
-                    ) : null}
+                  <div ref={paginationListRef} aria-busy={paginationPendingPage !== null} style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined} className={cn("relative max-sm:-mx-2 max-sm:w-[calc(100%+16px)] space-y-2 sm:space-y-4", paginationRevealing && "animate-[fadeIn_150ms_ease-out]")}>
                     {paginationTransitionPhase === "covering" ? (
                       <div className="space-y-4">
                         <div role="status" aria-live="polite" className="sr-only">
