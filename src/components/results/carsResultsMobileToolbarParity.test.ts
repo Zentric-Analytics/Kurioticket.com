@@ -29,23 +29,31 @@ test("standalone Cars compact header follows the Flights mobile interaction mode
   assert.match(toolbar, /activeFilterCount/);
 });
 
-test("compact toolbar keeps the white header surface and restrained dark controls", () => {
+test("compact toolbar matches the Hotels surface and text treatment", () => {
   assert.match(
     toolbar,
-    /fixed inset-x-0 top-0 z-\[90\] bg-white/,
+    /fixed inset-x-0 top-0 z-\[90\] bg-\[#F2F4F8\]/,
   );
-  assert.doesNotMatch(toolbar, /bg-\[#F5F7FB\]/);
+  assert.doesNotMatch(toolbar, /bg-white|bg-\[#F5F7FB\]/);
   assert.match(
     toolbar,
-    /text-\[11px\] font-semibold leading-4 text-\[#536B92\]/,
-  );
-  assert.match(
-    toolbar,
-    /data-cars-compact-edit-icon[\s\S]*?strokeWidth=\{2\.4\}/,
+    /text-\[15px\] font-bold leading-5 tracking-\[-0\.015em\] text-\[#07133B\]/,
   );
   assert.match(
     toolbar,
-    /<SlidersHorizontal[\s\S]*?className="h-4 w-4 shrink-0 text-black"/,
+    /text-\[11px\] font-medium leading-4 text-\[#536B92\]/,
+  );
+  assert.match(
+    toolbar,
+    /data-cars-compact-edit-icon[\s\S]*?strokeWidth=\{2\}/,
+  );
+  assert.match(
+    toolbar,
+    /<SlidersHorizontal[\s\S]*?className="h-4 w-4 shrink-0 text-\[#1a1a1a\]"/,
+  );
+  assert.match(
+    toolbar,
+    /px-2 text-\[14px\] font-semibold text-\[#07133B\]/,
   );
   assert.doesNotMatch(
     toolbar,
