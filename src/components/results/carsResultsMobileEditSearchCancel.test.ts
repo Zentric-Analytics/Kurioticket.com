@@ -28,9 +28,16 @@ const closeDrawer = source.slice(
   source.indexOf("const cancelMobileSearchDrawer"),
   source.indexOf("const requestMobileSearchDrawerClose"),
 );
-const postCloseLifecycle = source.slice(
-  source.indexOf("const requestMobileSearchDrawerClose"),
-  source.indexOf("const renderMobileControlsRow"),
+const focusLifecycleStart = source.indexOf(
+  'useEffect(() => {\n    if (mobileSearchOpen) return;',
+  source.indexOf("const submitMobileSearch"),
+);
+const focusLifecycle = source.slice(
+  focusLifecycleStart,
+  source.indexOf(
+    '  useEffect(() => {\n    if (typeof window === "undefined")',
+    focusLifecycleStart,
+  ),
 );
 
 test("opening mobile Edit Search snapshots every mutable Cars search value", () => {
@@ -107,11 +114,11 @@ test("mobile Edit Search has one overflow-only sheet lock and never repositions 
 
 test("closing Edit Search restores keyboard launcher focus without owning scroll restoration", () => {
   assert.match(
-    postCloseLifecycle,
+    focusLifecycle,
     /if \(mobileSearchOpen\) return;[\s\S]*?restoreOverlayLauncherFocus\([\s\S]*?mobileSearchLauncherRef\.current,[\s\S]*?mobileSearchModalityRef\.current/,
   );
   assert.doesNotMatch(
-    postCloseLifecycle,
+    focusLifecycle,
     /acquireMobileResultsScrollLock|window\.scrollTo/,
   );
 });
@@ -125,7 +132,7 @@ test("cancel restores draft state without imperatively changing Results scroll",
   assert.ok(restoreSnapshotIndex >= 0);
   assert.ok(restoreSnapshotIndex < closeIndex);
   assert.doesNotMatch(closeDrawer, /window\.scrollTo|scrollTop|scrollIntoView/);
-  assert.doesNotMatch(postCloseLifecycle, /mobileSearchScrollLockRef/);
+  assert.doesNotMatch(focusLifecycle, /mobileSearchScrollLockRef/);
 });
 
 test("nested picker Done remains draft state", () => {
