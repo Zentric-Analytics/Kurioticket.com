@@ -51,7 +51,7 @@ test("Cars shortcuts use the Hotels continuous overlay and sheet motion system",
   for (const contract of [
     /fixed inset-0.*items-end.*lg:hidden/,
     /data-cars-quick-sheet-scrim[\s\S]*?mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 h-full w-full bg-\[rgba\(15,23,42,0\.35\)\]/,
-    /mobile-results-sheet-surface mobile-results-sheet-surface-smooth relative z-10 mx-3 mb-3.*flex min-h-\[240px\].*max-h-\[min\(76dvh,620px\)\].*w-\[calc\(100%_-_24px\)\].*rounded-\[24px\].*bg-\[#F2F4F8\]/,
+    /mobile-results-sheet-surface mobile-results-sheet-surface-smooth cars-results-quick-sheet-surface relative z-10 mx-3 mb-3.*flex min-h-\[240px\].*max-h-\[min\(76dvh,620px\)\].*w-\[calc\(100%_-_24px\)\].*rounded-\[24px\].*bg-\[#F2F4F8\]/,
     /grid min-h-\[64px\].*grid-cols-\[44px_minmax\(0,1fr\)_44px\].*bg-\[#F2F4F8\].*px-\[10px\]/,
     /text-center text-\[18px\] font-bold leading-\[23px\]/,
     /<X className="h-\[22px\] w-\[22px\]"/,
@@ -71,6 +71,8 @@ test("Cars shortcuts use the Hotels continuous overlay and sheet motion system",
   assert.doesNotMatch(sheets, /cars-native-quick-scrim|cars-native-quick-sheet/);
   assert.match(styles, /mobile-results-sheet-surface-in[\s\S]*?translate3d\(0, 100%, 0\)[\s\S]*?translate3d\(0, 0, 0\)/);
   assert.match(styles, /\.mobile-results-sheet-surface-smooth \{ animation-duration: 320ms; \}/);
+  assert.match(styles, /cars-results-quick-sheet-surface-in[\s\S]*?translate3d\(0, 28px, 0\)[\s\S]*?translate3d\(0, 0, 0\)/);
+  assert.match(styles, /\.cars-results-quick-sheet-surface \{[\s\S]*?animation: cars-results-quick-sheet-surface-in 220ms/);
   assert.match(
     hotels,
     /mobile-results-sheet-backdrop-layer[\s\S]*?mobile-results-sheet-surface mobile-results-sheet-surface-smooth/,
