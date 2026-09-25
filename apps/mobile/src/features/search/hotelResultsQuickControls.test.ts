@@ -73,12 +73,18 @@ test("Hotel controls use the measured reference capsule geometry while keeping s
   assert.match(flight, /capsule: \{[\s\S]*?paddingHorizontal: 10/);
 });
 
-test("Hotel controls use Flight light tokens and semantic dark tokens", () => {
+test("Hotel controls use the normal neutral filter tokens in light and dark themes", () => {
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
-  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F1F5F9", "#FFFFFF"]) assert.match(component, new RegExp(token.replace(/[().]/g, "\\  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F8FAFC", "#F1F5F9", "#FFFFFF"]) assert.match(component, new RegExp(token.replace(/[().]/g, "\\$&")));")));
-  for (const semantic of ["theme.surface", "theme.border", "theme.textPrimary", "theme.textSecondary", "theme.background"]) assert.match(component, new RegExp(semantic.replace(".", "\\.")));
-  assert.doesNotMatch(component, /#004BB8|#8FB5FF|rgba\(0,75,184,0\.08\)/);
-  assert.match(component, /color=\{active && !theme\.dark \? ui\.blue : foreground\}/);
+  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F1F5F9", "#FFFFFF"]) {
+    assert.match(component, new RegExp(token.replace(/[().]/g, "\\$&")));
+  }
+  for (const semantic of ["theme.surface", "theme.border", "theme.textPrimary", "theme.textSecondary", "theme.background"]) {
+    assert.match(component, new RegExp(semantic.replace(".", "\\.")));
+  }
+  assert.match(component, /borderColor: border/);
+  assert.match(component, /backgroundColor: surface/);
+  assert.match(component, /color: foreground/);
+  assert.doesNotMatch(component, /#EAF2FF|active && !theme\.dark \? ui\.blue/);
 });
 
 test("Hotel Filter launcher has sliders without a chevron while quick filters keep rotating chevrons", () => {
@@ -119,17 +125,18 @@ test("Hotel quick shortcuts show selected values without a duplicate applied-fil
 });
 
 
-test("selected Hotel quick shortcuts get immediate active styling while Filter keeps the aggregate count", () => {
+test("selected Hotel quick shortcuts keep the normal font and box while Filter keeps the aggregate count", () => {
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
   assert.match(component, /const active = selected \?\? Boolean\(count\)/);
-  assert.match(component, /borderColor: active && !theme\.dark \? ui\.blue : border/);
-  assert.match(component, /backgroundColor: active && !theme\.dark[\s\S]*"#EAF2FF"/);
-  assert.match(component, /color: active && !theme\.dark \? ui\.blue : foreground/);
+  assert.match(component, /borderColor: border/);
+  assert.match(component, /backgroundColor: surface/);
+  assert.match(component, /style=\{\[s0\.hotelShortcutLabel, \{ color: foreground \}\]\}/);
+  assert.doesNotMatch(component, /borderColor: active && !theme\.dark \? ui\.blue : border/);
+  assert.doesNotMatch(component, /backgroundColor: active && !theme\.dark[\s\S]*"#EAF2FF"/);
   const rail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const hotelIntroContent"));
   assert.match(rail, /label="Filter"[\s\S]*count=\{activeHotelFilters \|\| undefined\}/);
   assert.doesNotMatch(rail, /label=\{hotelPriceShortcutLabel\}[^>]*count=/);
 });
-
 
 test("active Hotel quick shortcuts expose an X clear action instead of a chevron", () => {
   const rail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const hotelIntroContent"));
@@ -139,5 +146,6 @@ test("active Hotel quick shortcuts expose an X clear action instead of a chevron
   assert.match(component, /onClear\?: \(\) => void/);
   assert.match(component, /Clear \$\{label\} filter/);
   assert.match(component, /<X accessible=\{false\} size=\{14\}/);
+  assert.match(component, /color=\{theme\.dark \? theme\.textPrimary : "#64748B"\}/);
   assert.match(component, /showChevron && !onClear/);
 });
