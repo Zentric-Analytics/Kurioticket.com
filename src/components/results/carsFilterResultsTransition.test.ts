@@ -41,7 +41,7 @@ test("the mobile filter skeleton shimmer is surface-only and reduced-motion safe
 });
 
 test("quick-sheet drafts are immediate and Apply owns the results commit", () => {
-  const sheet = cars.slice(cars.indexOf("data-cars-quick-sheet-backdrop"), cars.indexOf("!guidedPlanning && showBackToTop"));
+  const sheet = cars.slice(cars.indexOf("data-cars-quick-sheet-backdrop"), cars.indexOf('aria-label="Back to top"'));
   assert.doesNotMatch(sheet, /setTimeout|Updating filters|disabled=/);
   assert.doesNotMatch(cars, /markQuickFilterUpdating|quickFilterFeedbackTimerRef/);
   assert.match(sheet, /onClick=\{\(\) => setQuickSortDraft\(option\.value\)\}/);
