@@ -61,9 +61,10 @@ test("Hotel controls use the measured reference capsule geometry while keeping s
   assert.match(styles, /hotelFilterContent: \{ paddingLeft: 12, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" \}/);
   assert.doesNotMatch(block(styles, "hotelFilterContent", "hotelFilterSectionHeader"), /paddingBottom/);
   assert.match(styles, /hotelShortcutTouchTarget: \{ minWidth: 44, minHeight: 44, justifyContent: "center" \}/);
-  assert.match(styles, /hotelShortcut: \{ height: 40,[^}]*gap: 2,[^}]*borderWidth: 1, borderRadius: 10, paddingHorizontal: 6 \}/);
+  assert.match(styles, /hotelShortcut: \{ position: "relative", height: 40,[^}]*borderWidth: 1, borderRadius: 10, paddingHorizontal: 6 \}/);
   assert.match(styles, /hotelShortcutMainAction: \{ minHeight: 38,[^}]*gap: 4/);
-  assert.match(styles, /hotelShortcutClear: \{ width: 28, height: 28/);
+  assert.match(styles, /hotelShortcutMainActionWithClear: \{ paddingRight: 20 \}/);
+  assert.match(styles, /hotelShortcutClear: \{ position: "absolute", right: 3, top: 9, width: 20, height: 20/);
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
   assert.match(component, /<View style=\{s0\.hotelShortcutTouchTarget\}>[\s\S]*?<Pressable[\s\S]*?s0\.hotelShortcutMainAction/);
   assert.match(styles, /hotelShortcutLabel: \{ fontSize: 13, lineHeight: 16, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
@@ -73,7 +74,10 @@ test("Hotel controls use the measured reference capsule geometry while keeping s
   assert.match(flight, /capsule: \{[\s\S]*?paddingHorizontal: 10/);
 });
 
-test("Hotel controls use the normal neutral filter tokens in light and dark themes", () => {
+test("Hotel controls use normal tokens when idle and font-color fill when a quick filter is selected", () => {
+  const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
+  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F1F5F9", "#FFFFFF"]) {
+    assert.match(component, new RegExp(token.replace(/[().]/g, "\\test("Hotel controls use the normal neutral filter tokens in light and dark themes", () => {
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
   for (const token of ["#D8E1EC", "#142033", "#64748B", "#F1F5F9", "#FFFFFF"]) {
     assert.match(component, new RegExp(token.replace(/[().]/g, "\\$&")));
@@ -84,6 +88,15 @@ test("Hotel controls use the normal neutral filter tokens in light and dark them
   assert.match(component, /borderColor: active \? foreground : border/);
   assert.match(component, /backgroundColor: surface/);
   assert.match(component, /color: foreground/);
+  assert.doesNotMatch(component, /#EAF2FF|active && !theme\.dark \? ui\.blue/);
+});")));
+  }
+  assert.match(component, /const selectedVisual = Boolean\(selected\)/);
+  assert.match(component, /const selectedForeground = "#FFFFFF"/);
+  assert.match(component, /const selectedSurface = theme\.dark \? theme\.textPrimary : "#142033"/);
+  assert.match(component, /borderColor: selectedVisual \? selectedSurface : border/);
+  assert.match(component, /backgroundColor: selectedVisual \? selectedSurface : surface/);
+  assert.match(component, /color: selectedVisual \? selectedForeground : foreground/);
   assert.doesNotMatch(component, /#EAF2FF|active && !theme\.dark \? ui\.blue/);
 });
 
@@ -125,14 +138,13 @@ test("Hotel quick shortcuts show selected values without a duplicate applied-fil
 });
 
 
-test("selected Hotel quick shortcuts keep the normal font and box while Filter keeps the aggregate count", () => {
+test("selected Hotel quick shortcuts use the font-color box with white copy while Filter keeps its aggregate count", () => {
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
   assert.match(component, /const active = selected \?\? Boolean\(count\)/);
-  assert.match(component, /borderColor: active \? foreground : border/);
-  assert.match(component, /backgroundColor: surface/);
-  assert.match(component, /style=\{\[s0\.hotelShortcutLabel, \{ color: foreground \}\]\}/);
-  assert.doesNotMatch(component, /borderColor: active && !theme\.dark \? ui\.blue : border/);
-  assert.doesNotMatch(component, /backgroundColor: active && !theme\.dark[\s\S]*"#EAF2FF"/);
+  assert.match(component, /const selectedVisual = Boolean\(selected\)/);
+  assert.match(component, /borderColor: selectedVisual \? selectedSurface : border/);
+  assert.match(component, /backgroundColor: selectedVisual \? selectedSurface : surface/);
+  assert.match(component, /color: selectedVisual \? selectedForeground : foreground/);
   const rail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const hotelIntroContent"));
   assert.match(rail, /label="Filter"[\s\S]*count=\{activeHotelFilters \|\| undefined\}/);
   assert.doesNotMatch(rail, /label=\{hotelPriceShortcutLabel\}[^>]*count=/);
@@ -145,7 +157,8 @@ test("active Hotel quick shortcuts expose an X clear action instead of a chevron
   assert.match(rail, /onClear=\{hotelFilters\.facilities\.length \? \(\) => clearHotelQuickFilter\("facilities"\) : undefined\}/);
   assert.match(component, /onClear\?: \(\) => void/);
   assert.match(component, /Clear \$\{label\} filter/);
-  assert.match(component, /<X accessible=\{false\} size=\{14\}/);
-  assert.match(component, /<X accessible=\{false\} size=\{14\} strokeWidth=\{2\} color=\{foreground\}/);
+  assert.match(component, /<X accessible=\{false\} size=\{13\}/);
+  assert.match(component, /<X accessible=\{false\} size=\{13\} strokeWidth=\{2\} color=\{selectedForeground\}/);
+  assert.match(component, /hotelShortcutMainActionWithClear/);
   assert.match(component, /showChevron && !onClear/);
 });
