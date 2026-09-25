@@ -7,40 +7,50 @@ const source = readFileSync(
   "utf8",
 );
 
-test("standalone Cars owns one accessible immediate Back-to-top control", () => {
+test("standalone Cars Back-to-top matches Hotels appearance and behavior", () => {
   assert.equal(source.match(/aria-label="Back to top"/g)?.length, 1);
-  assert.match(source, /!guidedPlanning && showBackToTop && !filtersOpen/);
-  assert.match(source, /CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 320/);
+  assert.match(source, /CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 600/);
   assert.match(
     source,
-    /window\.scrollY >= CAR_BACK_TO_TOP_SCROLL_THRESHOLD/,
+    /setShowBackToTop\(window\.scrollY > CAR_BACK_TO_TOP_SCROLL_THRESHOLD\)/,
   );
-  assert.doesNotMatch(source, /window\.scrollY >= 600/);
   assert.match(
     source,
+    /window\.addEventListener\("scroll", update, \{ passive: true \}\)/,
+  );
+  assert.match(source, /window\.addEventListener\("resize", update\)/);
+  assert.match(source, /\{!guidedPlanning \? \(/);
+  assert.match(
+    source,
+    /behavior: prefersReducedResultsMotion\(\) \? "auto" : "smooth"/,
+  );
+  assert.match(source, /fixed right-4 z-\[800\] flex h-11 w-11/);
+  assert.match(source, /rounded-xl/);
+  assert.match(source, /shadow-md transition-all/);
+  assert.match(
+    source,
+    /bottom-\[calc\(1rem\+env\(safe-area-inset-bottom\)\)\]/,
+  );
+  assert.match(source, /sm:bottom-6 sm:right-6/);
+  assert.match(
+    source,
+    /showBackToTop[\s\S]*?"translate-y-0 opacity-100"[\s\S]*?"pointer-events-none translate-y-2 opacity-0"/,
+  );
+  assert.match(
+    source,
+    /<ArrowUp className="h-\[18px\] w-\[18px\]" aria-hidden="true"/,
+  );
+
+  const backToTopStart = source.indexOf('aria-label="Back to top"');
+  const backToTopEnd = source.indexOf("</button>", backToTopStart);
+  const backToTop = source.slice(backToTopStart, backToTopEnd);
+  assert.doesNotMatch(backToTop, /rounded-full|shadow-lg|end-4 z-40|h-5 w-5/);
+  assert.doesNotMatch(
+    backToTop,
+    /bottom-\[calc\((?:3|5|6)rem\+env\(safe-area-inset-bottom\)\)\]/,
+  );
+  assert.doesNotMatch(
+    backToTop,
     /window\.scrollTo\(\{ top: 0, left: 0, behavior: "auto" \}\)/,
-  );
-  assert.match(source, /h-11 w-11/);
-  assert.match(source, /end-4 z-40/);
-  assert.match(
-    source,
-    /bottom-\[calc\(5rem\+env\(safe-area-inset-bottom\)\)\]/,
-  );
-  assert.doesNotMatch(
-    source,
-    /bottom-\[calc\(3rem\+env\(safe-area-inset-bottom\)\)\]/,
-  );
-  assert.doesNotMatch(
-    source,
-    /bottom-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/,
-  );
-  assert.match(
-    source,
-    /sm:bottom-\[calc\(1rem\+env\(safe-area-inset-bottom\)\)\]/,
-  );
-  assert.match(source, /<ArrowUp className="h-5 w-5" aria-hidden="true"/);
-  assert.doesNotMatch(
-    source,
-    /aria-label="Back to top"[\s\S]{0,220}motionBehavior\(\)/,
   );
 });
