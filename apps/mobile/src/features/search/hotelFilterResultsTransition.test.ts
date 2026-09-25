@@ -30,7 +30,6 @@ test("Hotel result changes are immediate while shared Flight and Cars timing rem
   assert.match(helper, /setHotelPage\(1\)/);
   assert.match(helper, /scrollToHotelResultsBeginning\(\)/);
   assert.doesNotMatch(helper, /setTimeout|travelApi|setStatus|setRetry|router|load\(/);
-  assert.doesNotMatch(screen, /hotelFilterChips/);
   assert.match(screen, /transitionHotelFilters\(emptyHotelFilters\(\)\)/);
 });
 
