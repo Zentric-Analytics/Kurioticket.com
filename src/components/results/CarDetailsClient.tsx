@@ -300,6 +300,7 @@ export function CarDetailsExperience({
             car={car}
             text={text}
             imageStageRef={heroImageStageRef}
+            reserveMobileControlSafeZone={presentation === "standalone-content"}
             identity={
               <div className="min-w-0">
                 <Heading
