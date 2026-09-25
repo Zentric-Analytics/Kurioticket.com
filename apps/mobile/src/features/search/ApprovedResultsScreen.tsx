@@ -1436,7 +1436,7 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
       <View style={[
         s0.hotelShortcut,
         {
-          borderColor: border,
+          borderColor: active ? foreground : border,
           backgroundColor: surface,
         },
       ]}>
@@ -1460,7 +1460,7 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
             onPress={onClear}
             style={({ pressed }) => [s0.hotelShortcutClear, pressed ? s0.hotelShortcutClearPressed : null]}
           >
-            <X accessible={false} size={14} strokeWidth={2} color={theme.dark ? theme.textPrimary : "#64748B"} />
+            <X accessible={false} size={14} strokeWidth={2} color={foreground} />
           </Pressable>
         ) : null}
       </View>
