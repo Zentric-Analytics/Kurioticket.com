@@ -182,6 +182,19 @@ export function CarDetailsExperience({
       ? comparisonOffers.find((candidate) => candidate.id === selectedOfferId) ??
         canonicalPrimaryOffer
       : canonicalPrimaryOffer;
+  const selectedSandboxHref =
+    primaryAction.kind === "sandbox-handoff"
+      ? sandboxBookingUrl(primaryOffer?.bookingUrl)
+      : null;
+  const effectivePrimaryAction: CarDetailsPrimaryAction =
+    primaryAction.kind === "sandbox-handoff"
+      ? selectedSandboxHref
+        ? { ...primaryAction, href: selectedSandboxHref }
+        : {
+            kind: "standalone-disabled-provider",
+            label: copy("carDetails.continueDeal"),
+          }
+      : primaryAction;
   const days = calculateRentalDays(search.pickupDate, search.dropoffDate);
   const price = (amount: number, currency: string) =>
     formatDisplayPrice({
@@ -434,7 +447,7 @@ export function CarDetailsExperience({
               days={days}
               price={price}
               copy={copy}
-              action={primaryAction}
+              action={effectivePrimaryAction}
             />
           </aside>
         )}
@@ -445,7 +458,7 @@ export function CarDetailsExperience({
           days={days}
           price={price}
           copy={copy}
-          action={primaryAction}
+          action={effectivePrimaryAction}
         />
       ) : null}
     </div>
@@ -1186,12 +1199,15 @@ function MobileBookingDock({
             className="min-w-[140px] max-w-[180px] flex-[0.78]"
             data-mobile-car-dock-action
           >
-            <button
-              disabled
-              className="focus-ring min-h-12 w-full rounded-lg bg-blue px-3 text-xs font-bold leading-4 text-white disabled:cursor-not-allowed disabled:opacity-100"
+            <a
+              href={action.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              referrerPolicy="no-referrer"
+              className="focus-ring flex min-h-12 w-full items-center justify-center rounded-lg bg-blue px-3 text-xs font-bold leading-4 text-white"
             >
               {copy("carDetails.continueDeal")}
-            </button>
+            </a>
           </div>
         ) : action.kind === "standalone-disabled-provider" ? (
           <div
