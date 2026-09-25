@@ -3239,7 +3239,7 @@ export function CarsResultsExperience({
             aria-hidden="true"
             data-cars-quick-sheet-scrim
             className={cn(
-              "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 bg-[rgba(15,23,42,0.35)]",
+              "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 bg-[rgba(8,18,35,0.52)]",
               quickFilterClosing &&
                 "mobile-results-sheet-backdrop-layer-closing",
             )}
