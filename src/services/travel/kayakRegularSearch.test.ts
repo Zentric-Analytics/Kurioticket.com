@@ -82,3 +82,90 @@ test("car transport sends actual selected hours and minutes", async () => {
   };
   await new KayakSandboxClient("test-key", fetcher).search({ vertical: "cars", origin: "BOS", departure: "2099-10-12", returnDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45" }, "test-track");
 });
+
+
+test("JFK same-day pickup is rejected after the rental-local time has passed", async () => {
+  const result = await resolveRegularKayakSearch(
+    "cars",
+    {
+      pickupLocation: "JFK",
+      pickupDate: "2026-09-25",
+      dropoffDate: "2026-09-27",
+      pickupTime: "04:30",
+      dropoffTime: "09:30",
+    },
+    async () => [],
+    { now: new Date("2026-09-25T08:33:00Z") },
+  );
+  assert.equal(result.supported, false);
+  if (!result.supported) {
+    assert.equal(result.reasonCode, "pickup_time_past");
+    assert.match(result.reason, /already passed at the rental location/i);
+  }
+});
+
+test("PAE same-day pickup remains valid while it is still future in Washington", async () => {
+  const result = await resolveRegularKayakSearch(
+    "cars",
+    {
+      pickupLocation: "Paine Field (PAE)",
+      pickupDate: "2026-09-25",
+      dropoffDate: "2026-09-27",
+      pickupTime: "02:00",
+      dropoffTime: "04:00",
+    },
+    async () => [],
+    { now: new Date("2026-09-25T07:22:00Z") },
+  );
+  assert.equal(result.supported, true);
+  if (result.supported && result.search.vertical === "cars") {
+    assert.equal(result.search.origin, "PAE");
+    assert.equal(result.search.pickupTime, "02:00");
+  }
+});
+
+test("provider-resolved London city uses the resolved LHR rental timezone", async () => {
+  const result = await resolveRegularKayakSearch(
+    "cars",
+    {
+      pickupLocation: "London, United Kingdom",
+      pickupDate: "2026-09-25",
+      dropoffDate: "2026-09-27",
+      pickupTime: "02:30",
+      dropoffTime: "05:00",
+    },
+    async (_term, vertical) => {
+      assert.equal(vertical, "cars");
+      return [
+        {
+          label: "London Heathrow Airport (LHR)",
+          value: "LHR",
+          kind: "airport",
+        },
+      ];
+    },
+    { now: new Date("2026-09-25T08:32:00Z") },
+  );
+  assert.equal(result.supported, false);
+  if (!result.supported) assert.equal(result.reasonCode, "pickup_time_past");
+});
+
+test("future rental-local pickup preserves the exact user-selected time", async () => {
+  const result = await resolveRegularKayakSearch(
+    "cars",
+    {
+      pickupLocation: "JFK",
+      pickupDate: "2026-09-26",
+      dropoffDate: "2026-09-28",
+      pickupTime: "00:30",
+      dropoffTime: "09:30",
+    },
+    async () => [],
+    { now: new Date("2026-09-25T08:33:00Z") },
+  );
+  assert.equal(result.supported, true);
+  if (result.supported && result.search.vertical === "cars") {
+    assert.equal(result.search.departure, "2026-09-26");
+    assert.equal(result.search.pickupTime, "00:30");
+  }
+});
