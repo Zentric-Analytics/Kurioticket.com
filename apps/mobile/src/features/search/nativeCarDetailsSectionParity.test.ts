@@ -66,8 +66,9 @@ test("the live route owns one sticky shell and one deterministic horizontal tab 
 });
 
 test("the web tab reference remains the mobile parity contract", () => {
-  for (const contract of ["flex", "min-h-12", "whitespace-nowrap", "font-sans", "font-semibold", "leading-[normal]", "inset-x-2", "h-0.5", "text-[#475569]", "text-[#075EE8]", "[-webkit-text-size-adjust:none]", "[text-size-adjust:none]"])
+  for (const contract of ["flex", "min-h-12", "whitespace-nowrap", "car-details-native-tab-label", "font-sans", "font-semibold", "leading-[normal]", "inset-x-2", "h-0.5", "text-[#475569]", "text-[#075EE8]"])
     assert.ok(webNav.includes(contract), contract);
+  assert.doesNotMatch(webNav, /\[-webkit-text-size-adjust:none\]|\[text-size-adjust:none\]/);
   assert.match(webNav, /text-\[12px\][^"]*min-\[390px\]:text-\[13px\]/);
   assert.match(web, /searchedPickupLocation/);
 });

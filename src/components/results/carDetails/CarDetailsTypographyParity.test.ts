@@ -41,7 +41,7 @@ test("mobile vehicle identity and specification typography mirrors native", () =
 test("mobile tabs use native responsive sizes and native selected color", () => {
   assert.match(
     nav,
-    /font-sans text-\[12px\] font-semibold leading-\[normal\] tracking-normal[^"]*min-\[390px\]:text-\[13px\][^"]*lg:text-sm lg:font-bold lg:leading-normal/,
+    /car-details-native-tab-label[^"]*font-sans text-\[12px\] font-semibold leading-\[normal\] tracking-normal[^"]*min-\[390px\]:text-\[13px\][^"]*lg:text-sm lg:font-bold lg:leading-normal/,
   );
   assert.match(nav, /whitespace-nowrap/);
   assert.match(nav, /text-\[#075EE8\] lg:text-blue/);
@@ -49,10 +49,13 @@ test("mobile tabs use native responsive sizes and native selected color", () => 
   assert.match(nav, /bg-\[#075EE8\][^"]*lg:bg-blue/);
 });
 
-test("mobile tab strip uses authored Inter pixel sizes without Safari autosizing", () => {
-  assert.match(nav, /\[-webkit-text-size-adjust:none\] \[text-size-adjust:none\]/);
+test("mobile tab strip binds the native static semibold face instead of the variable web face", () => {
+  assert.match(nav, /car-details-native-tab-label/);
+  assert.doesNotMatch(nav, /\[-webkit-text-size-adjust:none\]|\[text-size-adjust:none\]/);
   assert.match(nav, /text-\[12px\][^"]*min-\[390px\]:text-\[13px\]/);
-  assert.match(nav, /font-semibold/);
+  assert.match(css, /Kurioticket Inter Native Semibold/);
+  assert.match(css, /Inter_600SemiBold\.ttf/);
+  assert.match(css, /\.car-details-native-tab-label \{[^}]*font-synthesis: none;/);
   assert.match(nav, /text-\[#075EE8\]/);
   assert.match(nav, /text-\[#475569\]/);
 });
