@@ -584,7 +584,6 @@ export function CarsResultsClient({
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
   const mobileCompactHeaderHandoffRef = useRef<HTMLDivElement | null>(null);
-  const mobileSearchScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileSearchModalityRef = useRef<OverlayActivationModality>("programmatic");
   const mobileSearchSnapshotRef = useRef<CarsResultsSearchSnapshot | null>(
@@ -890,7 +889,6 @@ export function CarsResultsClient({
         dropoffTime,
         driverAge,
       };
-      mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock();
       setMobileSearchClosing(false);
       setMobileSearchOpen(true);
       setMobilePicker(null);
@@ -918,14 +916,6 @@ export function CarsResultsClient({
     ],
   );
 
-  const releaseMobileSearchScrollLock = useCallback(
-    ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
-      mobileSearchScrollLockRef.current?.({ restoreScroll });
-      mobileSearchScrollLockRef.current = null;
-    },
-    [],
-  );
-
   const cancelMobileSearchDrawer = useCallback(() => {
     if (mobileSearchCloseTimerRef.current !== null) {
       window.clearTimeout(mobileSearchCloseTimerRef.current);
@@ -945,9 +935,8 @@ export function CarsResultsClient({
       setDriverAge(snapshot.driverAge);
     }
     mobileSearchSnapshotRef.current = null;
-    // Stabilize the uncovered Results document while the overlay still masks
-    // this synchronous commit, then let the layout effect restore focus.
-    releaseMobileSearchScrollLock();
+    // Keep the Results document untouched. The shared sheet owns the only
+    // search scroll lock and releases it after the close animation completes.
     setMobileSearchOpen(false);
     setMobilePicker(null);
     setDatesOpen(false);
@@ -955,7 +944,6 @@ export function CarsResultsClient({
     setDriverAgeOpen(false);
     setMobileSearchClosing(false);
   }, [
-    releaseMobileSearchScrollLock,
     setMobileSearchOpen,
     setDatesOpen,
     setTimesOpen,
@@ -1041,7 +1029,6 @@ export function CarsResultsClient({
       if (!isSameSearch) {
         isSearchSubmittingRef.current = true;
         setIsSearchSubmitting(true);
-        releaseMobileSearchScrollLock({ restoreScroll: false });
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       }
 
@@ -1055,26 +1042,8 @@ export function CarsResultsClient({
 
       router.push(href, { scroll: true });
     },
-    [releaseMobileSearchScrollLock, router, validateCurrentPickupTime],
+    [router, validateCurrentPickupTime],
   );
-
-  useLayoutEffect(() => {
-    const releaseSearchOverlay = () => {
-      mobileSearchScrollLockRef.current?.();
-      mobileSearchScrollLockRef.current = null;
-
-      const launcher = mobileSearchLauncherRef.current;
-      restoreOverlayLauncherFocus(launcher, mobileSearchModalityRef.current);
-    };
-
-    if (!mobileSearchOpen) {
-      releaseSearchOverlay();
-      return releaseSearchOverlay;
-    }
-
-    mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock();
-    return releaseSearchOverlay;
-  }, [mobileSearchOpen]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -1684,6 +1653,7 @@ export function CarsResultsClient({
         appearance="carsResultsEdit"
         open={mobileSearchOpen}
         browserCanvasColor="#F5F7FB"
+        freezeBodyPosition={false}
         isolatedBackdrop
         closing={mobileSearchClosing}
         onCloseAnimationComplete={cancelMobileSearchDrawer}
