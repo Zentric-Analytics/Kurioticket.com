@@ -506,18 +506,18 @@ const fieldLabelClass =
 const fieldInputClass =
   "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[15px] lg:font-medium lg:leading-6";
 const carsMobileEditFieldShellClass =
-  "relative flex min-h-[66px] flex-col justify-center rounded-[13px] border border-[#E7ECF5] bg-white px-3 py-[10px] shadow-none focus-within:border-[#064CF7] focus-within:ring-2 focus-within:ring-[#064CF7]/25";
+  "cars-results-edit-field relative flex min-h-[66px] flex-col justify-center rounded-[13px] border border-[#E7ECF5] bg-white px-3 py-[10px] shadow-none focus-within:border-[#064CF7] focus-within:ring-2 focus-within:ring-[#064CF7]/25";
 const carsMobileEditPickupLabelClass =
-  "mb-[3px] text-[11px] font-medium normal-case leading-[14px] tracking-normal text-[#595959]";
+  "cars-results-edit-label mb-[3px] text-[11px] font-medium normal-case leading-[14px] tracking-normal text-[#595959]";
 const carsMobileEditFieldLabelClass =
-  "mb-[3px] text-[11px] font-medium normal-case leading-[14px] tracking-normal text-[#595959]";
+  "cars-results-edit-label mb-[3px] text-[11px] font-medium normal-case leading-[14px] tracking-normal text-[#595959]";
 const carsMobileEditSummaryButtonClass =
-  "focus-ring flex h-auto min-h-6 w-full min-w-0 items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[15px] font-semibold leading-5 text-[#1A1A1A] outline-none focus-visible:ring-0";
+  "cars-results-edit-value focus-ring flex h-auto min-h-6 w-full min-w-0 items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[15px] font-semibold leading-5 text-[#1A1A1A] outline-none focus-visible:ring-0";
 const carsMobileEditValueGroupClass = "flex min-w-0 flex-1 items-center gap-[10px]";
 const carsMobileEditPickupValueClass =
-  "focus-ring block h-auto min-h-6 min-w-0 w-full flex-1 border-0 bg-transparent p-0 text-start text-[15px] font-semibold leading-5 text-[#1A1A1A] outline-none focus-visible:ring-0";
+  "cars-results-edit-value focus-ring block h-auto min-h-6 min-w-0 w-full flex-1 border-0 bg-transparent p-0 text-start text-[15px] font-semibold leading-5 text-[#1A1A1A] outline-none focus-visible:ring-0";
 const carsMobileEditSecondaryValueClass =
-  "text-[12px] font-normal leading-4 tracking-normal text-[#595959]";
+  "cars-results-edit-secondary text-[12px] font-normal leading-4 tracking-normal text-[#595959]";
 
 export function CarsResultsClient({
   values,
@@ -1510,7 +1510,7 @@ export function CarsResultsClient({
           <Button
             type="submit"
             data-cars-mobile-search-submit
-            className="mt-3 h-[52px] w-full rounded-[12px] bg-[#064CF7] px-4 text-[16px] font-semibold text-white shadow-none transition-colors hover:bg-[#004BB8]"
+            className="cars-results-edit-submit mt-3 h-[52px] w-full rounded-[12px] bg-[#064CF7] px-4 text-[16px] font-semibold text-white shadow-none transition-colors hover:bg-[#004BB8]"
           >
             {t("search")}
           </Button>
