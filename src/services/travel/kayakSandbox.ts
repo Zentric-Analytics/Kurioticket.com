@@ -36,7 +36,10 @@ export const kayakSearchSchema = z
     }),
   ])
   .superRefine((value, ctx) => {
-    if (value.departure < new Date().toISOString().slice(0, 10))
+    if (
+      value.vertical !== "cars" &&
+      value.departure < new Date().toISOString().slice(0, 10)
+    )
       ctx.addIssue({ code: "custom", message: "Choose a future date." });
     if (value.returnDate && value.returnDate <= value.departure)
       ctx.addIssue({
