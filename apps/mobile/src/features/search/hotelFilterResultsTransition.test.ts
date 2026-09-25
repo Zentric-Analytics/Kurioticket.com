@@ -30,7 +30,7 @@ test("Hotel result changes are immediate while shared Flight and Cars timing rem
   assert.match(helper, /setHotelPage\(1\)/);
   assert.match(helper, /scrollToHotelResultsBeginning\(\)/);
   assert.doesNotMatch(helper, /setTimeout|travelApi|setStatus|setRetry|router|load\(/);
-  assert.match(screen, /transitionHotelFilters\(chip\.remove/);
+  assert.doesNotMatch(screen, /hotelFilterChips/);
   assert.match(screen, /transitionHotelFilters\(emptyHotelFilters\(\)\)/);
 });
 
@@ -38,4 +38,12 @@ test("changed Hotel Sort Apply updates ordering immediately and resets paginatio
   const sheet = screen.slice(screen.indexOf("<HotelResultsQuickFilterSheet"), screen.indexOf("/> : null", screen.indexOf("<HotelResultsQuickFilterSheet")));
   assert.match(sheet, /onSortChange=\{\(next\) => \{ if\(next===hotelSort\)return;setHotelSort\(next\);startHotelResultsTransition\(\); \}\}/);
   assert.doesNotMatch(sheet, /setHotelFilters|travelApi|setStatus|setRetry|router|load\(/);
+});
+
+
+test("Hotel result chrome stays vertically stable after filter Apply", () => {
+  assert.doesNotMatch(screen, /contentContainerStyle=\{s0\.hotelFilterChips\}/);
+  assert.match(screen, /HotelResultsShortcut label=\{hotelPriceShortcutLabel\}/);
+  assert.match(screen, /HotelResultsShortcut label=\{hotelFacilitiesShortcutLabel\}/);
+  assert.doesNotMatch(screen, /hotelResultsApplying|Updating hotel results|HotelCardSkeleton/);
 });
