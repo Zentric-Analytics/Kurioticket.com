@@ -196,7 +196,7 @@ export function MultiCityFlightEditor({
                 <div
                   className={cn(
                     "relative grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0",
-                    resultsPresentation && "gap-0 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white",
+                    resultsPresentation && "flight-results-edit-surface gap-0 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white",
                   )}
                   data-multi-city-route-pair
                   data-multi-city-results-route-card={resultsPresentation ? true : undefined}
@@ -257,7 +257,7 @@ export function MultiCityFlightEditor({
                   data-multi-city-swap-control
                   className={cn(
                     "focus-ring absolute left-1/2 top-1/2 z-10 inline-flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#D8E1EC] bg-white text-[#004BB8]",
-                    resultsPresentation && "border-0 bg-transparent text-[#064CF7]",
+                    resultsPresentation && "border-0 bg-white text-[#064CF7]",
                   )}
                 >
                   {resultsPresentation ? (
@@ -490,7 +490,7 @@ function MultiCityAirportField({
         desktopSuggestions={desktopSuggestions}
         className={cn(
           "sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-white sm:shadow-none sm:focus-within:ring-0",
-          resultsPresentation && "min-h-[66px] rounded-none border-0 bg-white px-3 py-[9px] shadow-none hover:border-0 [&_label]:mb-1 [&_label]:text-[10px] [&_label]:font-extrabold [&_label]:leading-[14px] [&_label]:tracking-[0.5px] [&_label]:text-[#56658E]",
+          resultsPresentation && "flight-results-edit-field-surface min-h-[66px] rounded-none border-0 bg-white px-3 py-[9px] shadow-none hover:border-0 [&_label]:mb-1 [&_label]:text-[10px] [&_label]:font-extrabold [&_label]:leading-[14px] [&_label]:tracking-[0.5px] [&_label]:text-[#56658E]",
         )}
       />
       <MobileAirportPicker
@@ -559,7 +559,7 @@ function MultiCityDateField({
         className={cn(
           flightSearchFieldShellClassName,
           "sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-white sm:shadow-none sm:focus-within:ring-0",
-          resultsPresentation && "min-h-[66px] rounded-[13px] border border-[#E7ECF5] bg-white px-3 py-[9px] shadow-none hover:border-[#E7ECF5]",
+          resultsPresentation && "flight-results-edit-surface min-h-[66px] rounded-[13px] border border-[#E7ECF5] bg-white px-3 py-[9px] shadow-none hover:border-[#E7ECF5]",
         )}
       >
         <label className={cn(flightSearchFieldLabelClassName, resultsPresentation && "mb-1 text-[10px] font-extrabold leading-[14px] tracking-[0.5px] text-[#56658E]")}>{fieldLabel}</label>
