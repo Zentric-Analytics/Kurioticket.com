@@ -40,7 +40,7 @@ export function CarDetailsSectionNav({
     <div
       role="tablist"
       aria-label={labels.navigation}
-      className="sticky top-[var(--car-details-mobile-header-boundary)] z-30 mt-0 flex w-full items-stretch border-b border-slate-200 bg-[#F5F7FB] [-webkit-text-size-adjust:none] [text-size-adjust:none] lg:top-0 lg:mt-1 lg:justify-between lg:gap-2 lg:bg-white lg:[-webkit-text-size-adjust:100%] lg:[text-size-adjust:100%]"
+      className="sticky top-[var(--car-details-mobile-header-boundary)] z-30 mt-0 flex w-full items-stretch border-b border-slate-200 bg-[#F5F7FB] lg:top-0 lg:mt-1 lg:justify-between lg:gap-2 lg:bg-white"
       data-car-details-section-nav
     >
       {tabs.map((tab, index) => {
@@ -59,7 +59,7 @@ export function CarDetailsSectionNav({
             tabIndex={selected ? 0 : -1}
             onClick={() => onTabChange(tab.id)}
             onKeyDown={(event) => handleKeyDown(event, index)}
-            className={`focus-ring relative inline-flex min-h-12 min-w-0 items-center justify-center whitespace-nowrap px-0.5 font-sans text-[12px] font-semibold leading-[normal] tracking-normal transition-colors min-[390px]:text-[13px] lg:w-auto lg:flex-1 lg:px-2 lg:text-sm lg:font-bold lg:leading-normal ${tab.id === "compare" ? "w-[32%]" : tab.id === "pickup" ? "w-[43%]" : "w-[25%]"} ${selected ? "text-[#075EE8] lg:text-blue" : "text-[#475569] lg:hover:text-slate-950"}`}
+            className={`car-details-native-tab-label focus-ring relative inline-flex min-h-12 min-w-0 items-center justify-center whitespace-nowrap px-0.5 font-sans text-[12px] font-semibold leading-[normal] tracking-normal transition-colors min-[390px]:text-[13px] lg:w-auto lg:flex-1 lg:px-2 lg:text-sm lg:font-bold lg:leading-normal ${tab.id === "compare" ? "w-[32%]" : tab.id === "pickup" ? "w-[43%]" : "w-[25%]"} ${selected ? "text-[#075EE8] lg:text-blue" : "text-[#475569] lg:hover:text-slate-950"}`}
           >
             {tab.id === "compare" && labels.mobileCompare ? (
               <>
