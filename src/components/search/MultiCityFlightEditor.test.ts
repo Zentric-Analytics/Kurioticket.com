@@ -80,11 +80,13 @@ test("results presentation uses grouped Results route, date, and swap geometry",
   assert.match(editor, /presentation\?: "standalone" \| "homepage" \| "results"/);
   assert.match(editor, /data-multi-city-presentation=\{presentation\}/);
   assert.match(editor, /data-multi-city-results-route-card/);
-  assert.match(editor, /gap-0 overflow-hidden rounded-\[13px\] border border-\[#E7ECF5\] bg-white/);
+  assert.match(editor, /flight-results-edit-surface gap-0 overflow-hidden rounded-\[13px\] border border-\[#E7ECF5\] bg-white/);
   assert.match(editor, /data-multi-city-results-route-divider/);
   assert.match(editor, /absolute inset-x-0 top-1\/2 h-px -translate-y-1\/2 bg-\[#E7ECF5\]/);
   assert.match(editor, /min-h-\[66px\][^\n]*px-3 py-\[9px\]/);
   assert.match(editor, /data-multi-city-results-date-card/);
+  assert.match(editor, /flight-results-edit-field-surface min-h-\[66px\]/);
+  assert.match(editor, /flight-results-edit-surface min-h-\[66px\] rounded-\[13px\]/);
   assert.match(editor, /h-9 w-9[^\n]*rounded-full border border-\[#E7ECF5\][^\n]*shadow-\[0_2px_4px_rgba\(24,48,91,0\.12\)\]/);
   assert.match(editor, /h-\[17px\] w-\[17px\]/);
 });
@@ -97,6 +99,8 @@ test("results multi-city values share the exact one-way rendered typography cont
   assert.match(editor, /mobileButtonClassName=\{resultsPresentation \? flightResultsEditValueClassName : undefined\}/);
   assert.match(editor, /resultsPresentation && flightResultsEditValueClassName/);
   assert.match(styles, /\.flight-results-edit-value \{[\s\S]*?font-family: inherit;[\s\S]*?font-size: 15px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?line-height: 20px !important;[\s\S]*?color: rgb\(2 6 23\) !important;[\s\S]*?text-size-adjust: none;/);
+  assert.match(styles, /\.flight-results-edit-surface \{[\s\S]*?background-color: #ffffff !important;[\s\S]*?border-color: #e7ecf5 !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(styles, /\.flight-results-edit-field-surface \{[\s\S]*?background-color: #ffffff !important;[\s\S]*?border-color: transparent !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(editor, /data-multi-city-results-route-card/);
   assert.match(editor, /data-multi-city-results-date-card/);
 });
