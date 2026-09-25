@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
-const INTENT_THRESHOLD_PX = 2;
+const AXIS_LOCK_THRESHOLD_PX = 6;
+const CLICK_SUPPRESSION_THRESHOLD_PX = 6;
 const MAX_MOMENTUM_VELOCITY_PX_MS = 1.5;
 const MIN_MOMENTUM_VELOCITY_PX_MS = 0.02;
 const MOMENTUM_DECELERATION = 0.95;
@@ -13,7 +14,7 @@ export function fareInformationGestureAxis(
   currentAxis: FareInformationGestureAxis,
   deltaX: number,
   deltaY: number,
-  threshold = INTENT_THRESHOLD_PX,
+  threshold = AXIS_LOCK_THRESHOLD_PX,
 ): FareInformationGestureAxis {
   if (currentAxis !== "pending") return currentAxis;
 
@@ -89,8 +90,10 @@ export function attachFareInformationTouchRail(element: HTMLElement) {
     axis = fareInformationGestureAxis(axis, deltaX, deltaY);
     if (axis === "pending") return;
 
-    // A meaningful pan in either direction must not become a tab activation.
-    suppressNextClick = true;
+    const dragDistance = Math.hypot(deltaX, deltaY);
+    // Keep normal tap jitter clickable. Only a deliberate drag should suppress
+    // the browser's synthesized click after the gesture finishes.
+    if (dragDistance >= CLICK_SUPPRESSION_THRESHOLD_PX) suppressNextClick = true;
     if (axis === "vertical") return;
 
     event.preventDefault();
