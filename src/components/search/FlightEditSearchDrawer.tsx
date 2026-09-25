@@ -47,6 +47,7 @@ import {
 } from "@/lib/search/mobileResultsOverlayCanvas";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import { beginFlightEditSearchClose } from "@/components/search/flightEditSearchCloseLifecycle";
+import { flightResultsEditValueClassName } from "@/components/search/FlightSearchFieldPrimitives";
 
 export type FlightEditSearchInitialValue = {
   tripType: TripType;
@@ -304,7 +305,7 @@ export function FlightEditSearchDrawer({
       >
         {icon}
         <span className="min-w-0 text-slate-950">
-          <span className={resultsMode ? "block truncate text-[15px] font-semibold leading-5" : "block truncate text-[16px] font-semibold leading-5"}>{display.primary}</span>
+          <span className={resultsMode ? `block truncate ${flightResultsEditValueClassName}` : "block truncate text-[16px] font-semibold leading-5"}>{display.primary}</span>
           {display.secondary ? <span className="block truncate text-xs font-medium leading-4 text-slate-600">{display.secondary}</span> : null}
         </span>
         {trailing ?? <span aria-hidden="true" />}
@@ -353,10 +354,11 @@ export function FlightEditSearchDrawer({
         <div
           className={bottomSheet ? "shrink-0 bg-[#F5F7FB] pl-4 pr-2" : "shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))]"}
         >
-          <div className={bottomSheet ? "flex min-h-[52px] items-center justify-between gap-3" : "flex min-h-11 items-center justify-between gap-3"}>
+          <div className={bottomSheet ? "relative flex min-h-[52px] items-center justify-end" : "flex min-h-11 items-center justify-between gap-3"}>
             <h2
               id="flight-mobile-search-title"
-              className={bottomSheet ? "text-[19px] font-semibold leading-6 text-slate-950" : "text-xl font-bold leading-6 tracking-[-0.01em] text-slate-950"}
+              data-flight-results-edit-title={bottomSheet ? true : undefined}
+              className={bottomSheet ? "flight-results-edit-title pointer-events-none absolute inset-x-12 text-center text-slate-950" : "text-xl font-bold leading-6 tracking-[-0.01em] text-slate-950"}
             >
               {resultsMode ? "Change your search" : t("editFlightSearch")}
             </h2>
@@ -392,7 +394,7 @@ export function FlightEditSearchDrawer({
                   aria-selected={resultsMode ? draft.tripType === value : undefined}
                   aria-checked={!resultsMode ? draft.tripType === value : undefined}
                   onClick={() => changeTripType(value)}
-                  className={resultsMode ? `inline-flex min-h-[50px] min-w-0 items-center justify-center whitespace-nowrap border-b-2 px-1 text-[11px] font-semibold ${draft.tripType === value ? "border-[#064CF7] font-extrabold text-[#064CF7]" : "border-transparent text-[#071A48]"}` : `inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-1 text-[13px] font-semibold min-[360px]:text-sm ${draft.tripType === value ? "bg-white text-slate-950 shadow-sm" : "text-slate-600"}`}
+                  className={resultsMode ? `flight-results-trip-tab inline-flex min-h-[50px] min-w-0 items-center justify-center whitespace-nowrap border-b-2 px-1 ${draft.tripType === value ? "border-[#064CF7] text-[#064CF7]" : "border-transparent text-[#071A48]"}` : `inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-1 text-[13px] font-semibold min-[360px]:text-sm ${draft.tripType === value ? "bg-white text-slate-950 shadow-sm" : "text-slate-600"}`}
                 >
                   {!resultsMode ? (
                     <span

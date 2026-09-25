@@ -43,28 +43,29 @@ test("mobile nearby insight, quick filters, and price alert use compact native-l
   assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 pt-2/);
 });
 
-test("partial-provider warning is a temporary overlay that never reserves results height", async () => {
+test("partial-provider warnings stay internal while genuine result failures remain visible", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
-  const english = await readFile(
-    new URL("../../lib/i18n/en.ts", import.meta.url),
-    "utf8",
-  );
+  assert.doesNotMatch(source, /FLIGHT_PROVIDER_WARNING_TOAST_MS/);
+  assert.doesNotMatch(source, /providerWarningVisible|setProviderWarningVisible/);
+  assert.doesNotMatch(source, /data-flight-provider-warning-toast/);
+  assert.doesNotMatch(source, /t\("limitedProviderChecks"\)/);
+  assert.match(source, /error && results\.length === 0/);
+  assert.match(source, /MobileFlightResultsState kind="error"/);
+  assert.match(source, /results\.length === 0[\s\S]*?MobileFlightResultsState kind="empty"/);
+});
 
-  assert.match(source, /export const FLIGHT_PROVIDER_WARNING_TOAST_MS = 4_000/);
-  assert.match(source, /const \[providerWarningVisible, setProviderWarningVisible\] = useState\(false\)/);
-  assert.match(source, /window\.setTimeout\([\s\S]*?FLIGHT_PROVIDER_WARNING_TOAST_MS/);
-  assert.match(source, /data-flight-provider-warning-toast/);
-  assert.match(source, /pointer-events-none fixed/);
-  assert.match(source, /opacity-100/);
-  assert.match(source, /opacity-0/);
-  assert.doesNotMatch(source, /w-full rounded-xl border border-amber-200 bg-amber-50 p-3/);
-  assert.match(
-    english,
-    /Some providers couldn’t be checked\. Showing available results\./,
-  );
+test("Flight compact header uses the Hotel compact-header visual contract", async () => {
+  const source = await readFile(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("function renderMobileCompactResultsHeader()");
+  const compactHeader = source.slice(start, source.indexOf("\n  function ", start + 10));
+  assert.match(compactHeader, /bg-\[#F2F4F8\]/);
+  assert.match(compactHeader, /text-\[15px\] font-bold leading-5 tracking-\[-0\.015em\] text-\[#07133B\]/);
+  assert.match(compactHeader, /text-\[11px\] font-medium leading-4 text-\[#536B92\]/);
+  assert.match(compactHeader, /data-flight-compact-edit-icon[\s\S]*?text-\[#536B92\]/);
+  assert.match(compactHeader, /SlidersHorizontal[\s\S]*?text-\[#1a1a1a\]/);
 });
 
 test("mobile Flight Results uses the native horizontal gutter relationship", async () => {
@@ -173,7 +174,7 @@ test("mobile Flight Results uses the Cars-style scroll handoff header", async ()
   assert.match(source, /relative translate-y-1\/2/);
   assert.match(source, /ref=\{mobileSearchSummarySentinelRef\}/);
   assert.match(source, /\{renderMobileCompactResultsHeader\(\)\}/);
-  assert.match(source, /fixed inset-x-0 top-0 z-\[90\] bg-white px-3 pb-2/);
+  assert.match(source, /fixed inset-x-0 top-0 z-\[90\] bg-\[#F2F4F8\] px-3 pb-2/);
   assert.match(source, /<ArrowLeft className="h-5 w-5" aria-hidden="true" \/>/);
   assert.match(source, /<Pencil[\s\S]*data-flight-compact-edit-icon/);
 });

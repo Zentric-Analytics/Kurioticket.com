@@ -6,6 +6,7 @@ const source = readFileSync(
   new URL("./FlightEditSearchDrawer.tsx", import.meta.url),
   "utf8",
 );
+const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 
 test("shared mobile flight editor retains the approved drawer structure", () => {
   assert.match(source, /id="flight-mobile-search-title"/);
@@ -44,7 +45,8 @@ test("Results bottom sheet matches the native floating-sheet geometry", () => {
   assert.match(source, /overflow-hidden rounded-\[24px\]/);
   assert.match(source, /rounded-\[24px\] bg-\[#F5F7FB\]/);
   assert.match(source, /resultsMode \? "Change your search" : t\("editFlightSearch"\)/);
-  assert.match(source, /text-\[19px\] font-semibold leading-6/);
+  assert.match(source, /data-flight-results-edit-title/);
+  assert.match(source, /flight-results-edit-title pointer-events-none absolute inset-x-12 text-center/);
   assert.match(source, /min-h-\[52px\]/);
   assert.match(source, /h-\[23px\] w-\[23px\]/);
   assert.doesNotMatch(source, /mobile-results-sheet-backdrop-clean/);
@@ -96,7 +98,7 @@ test("Results flight fields mirror native results-modal density", () => {
   assert.match(source, /resultsMode[\s\S]*?min-h-\[66px\]/);
   assert.match(source, /px-3 py-\[9px\]/);
   assert.match(source, /text-\[10px\] font-extrabold uppercase leading-\[14px\] tracking-\[0\.5px\] text-\[#56658E\]/);
-  assert.match(source, /text-\[15px\] font-semibold leading-5/);
+  assert.match(source, /flightResultsEditValueClassName/);
   assert.match(source, /grid-cols-\[18px_minmax\(0,1fr\)_16px\]/);
   assert.match(source, /h-\[18px\] w-\[18px\] text-\[#071A48\]/);
   assert.match(source, /rounded-\[13px\] border border-\[#E7ECF5\] bg-white/);
@@ -130,11 +132,15 @@ test("Results mode copies native route/date/traveler grouping and trip tabs", ()
   assert.match(source, /role=\{resultsMode \? "tablist" : "radiogroup"\}/);
   assert.match(source, /role=\{resultsMode \? "tab" : "radio"\}/);
   assert.match(source, /aria-selected=\{resultsMode \? draft\.tripType === value : undefined\}/);
-  assert.match(source, /border-\[#064CF7\] font-extrabold text-\[#064CF7\]/);
+  assert.match(source, /flight-results-trip-tab inline-flex min-h-\[50px\]/);
+  assert.match(source, /border-\[#064CF7\] text-\[#064CF7\]/);
+  assert.doesNotMatch(source, /border-\[#064CF7\] font-(?:bold|extrabold)/);
   assert.match(source, /\{!resultsMode \? \([\s\S]*?h-\[18px\] w-\[18px\]/);
   assert.match(source, /resultsMode \? t\("searchFlights"\) : t\("search"\)/);
   assert.match(source, /min-h-\[54px\].*rounded-\[9px\].*bg-\[#064CF7\].*font-extrabold/);
   assert.match(source, /className=\{resultsMode \? "p-2 pt-4" : undefined\}/);
+  assert.match(styles, /\.flight-results-trip-tab \{[\s\S]*?font-size: 10px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?text-size-adjust: none;/);
+  assert.match(styles, /\.flight-results-edit-title \{[\s\S]*?font-size: 17px !important;[\s\S]*?line-height: 22px !important;[\s\S]*?text-size-adjust: none;/);
 });
 
 test("Results airport pickers opt in without changing the shared default flow", () => {

@@ -217,6 +217,16 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
 
   async function continueToOffer(offerId: string) {
     if (redirecting) return;
+    const providerWindow = window.open("about:blank", "_blank");
+    if (!providerWindow) {
+      setError("Allow pop-ups to open this provider link in a new tab.");
+      return;
+    }
+    providerWindow.opener = null;
+    const referrerPolicy = providerWindow.document.createElement("meta");
+    referrerPolicy.name = "referrer";
+    referrerPolicy.content = "no-referrer";
+    providerWindow.document.head.append(referrerPolicy);
     setRedirecting(true);
     setError("");
     try {
@@ -227,14 +237,16 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
       });
       const data = (await result.json()) as { url?: string; error?: string; code?: string };
       if (result.status === 409 && data.code === "offer_changed") {
+        if (!providerWindow.closed) providerWindow.close();
         setNotice("The provider updated this offer. Review the refreshed price and fare terms before continuing.");
         setReloadToken((value) => value + 1);
         setRedirecting(false);
         return;
       }
       if (!result.ok || !data.url) throw new Error(data.error || "This provider link is unavailable.");
-      window.location.href = data.url;
+      providerWindow.location.replace(data.url);
     } catch (redirectError) {
+      if (!providerWindow.closed) providerWindow.close();
       setError(redirectError instanceof Error ? redirectError.message : "This provider link is unavailable.");
       setRedirecting(false);
     }

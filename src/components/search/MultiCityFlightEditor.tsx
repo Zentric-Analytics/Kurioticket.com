@@ -11,6 +11,7 @@ import {
   flightSearchFieldLabelClassName,
   flightSearchFieldShellClassName,
   flightSearchFieldValueButtonClassName,
+  flightResultsEditValueClassName,
 } from "@/components/search/FlightSearchFieldPrimitives";
 import {
   FlightSingleDateCalendar,
@@ -476,6 +477,7 @@ function MultiCityAirportField({
         useMainFlightLandingMobilePresentation
         mobileLeadingIconClassName={resultsPresentation ? "h-[18px] w-[18px] shrink-0 text-[#071A48] sm:hidden" : "h-5 w-5 shrink-0 text-slate-500 sm:hidden"}
         mobileValueRowClassName={resultsPresentation ? "grid grid-cols-[18px_minmax(0,1fr)] items-center gap-2.5 sm:contents" : "grid grid-cols-[22px_minmax(0,1fr)] items-center gap-2.5 sm:contents"}
+        mobileButtonClassName={resultsPresentation ? flightResultsEditValueClassName : undefined}
         open={open}
         onMobileOpen={openPicker}
         onDesktopFocus={() => onOpen({ legIndex, field, mode: "desktop" })}
@@ -488,7 +490,7 @@ function MultiCityAirportField({
         desktopSuggestions={desktopSuggestions}
         className={cn(
           "sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-white sm:shadow-none sm:focus-within:ring-0",
-          resultsPresentation && "min-h-[66px] rounded-none border-0 bg-white px-3 py-[9px] shadow-none hover:border-0 [&_label]:mb-1 [&_label]:text-[10px] [&_label]:font-extrabold [&_label]:leading-[14px] [&_label]:tracking-[0.5px] [&_label]:text-[#56658E] [&_button]:text-[15px] [&_button]:font-semibold [&_button]:leading-5",
+          resultsPresentation && "min-h-[66px] rounded-none border-0 bg-white px-3 py-[9px] shadow-none hover:border-0 [&_label]:mb-1 [&_label]:text-[10px] [&_label]:font-extrabold [&_label]:leading-[14px] [&_label]:tracking-[0.5px] [&_label]:text-[#56658E]",
         )}
       />
       <MobileAirportPicker
@@ -568,7 +570,7 @@ function MultiCityDateField({
           aria-expanded={open}
           aria-haspopup="dialog"
           onClick={openPicker}
-          className={cn(flightSearchFieldValueButtonClassName, resultsPresentation && "text-[15px] font-semibold leading-5")}
+          className={cn(flightSearchFieldValueButtonClassName, resultsPresentation && flightResultsEditValueClassName)}
         >
           <span className={cn("grid min-w-0 flex-1 grid-cols-[22px_minmax(0,1fr)] items-center gap-2.5 sm:flex sm:gap-2", resultsPresentation && "grid-cols-[18px_minmax(0,1fr)]")}>
             <Calendar className={cn("h-5 w-5 shrink-0 text-slate-500 sm:h-4 sm:w-4", resultsPresentation && "h-[18px] w-[18px] text-[#071A48]")} aria-hidden="true" />

@@ -526,6 +526,22 @@ test("standalone UI renders every leg and segment from selected offer and uses a
   assert.match(source, /disabled=\{!canContinue \|\| redirecting\}/);
 });
 
+test("all Flight Details deal paths reserve and safely navigate a provider tab", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("async function continueToOffer");
+  const handoff = source.slice(start, source.indexOf("\n  if (!response", start));
+  assert.match(handoff, /window\.open\("about:blank", "_blank"\)/);
+  assert.match(handoff, /providerWindow\.opener = null/);
+  assert.match(handoff, /referrerPolicy\.content = "no-referrer"/);
+  assert.match(handoff, /fetch\("\/api\/redirect"/);
+  assert.match(handoff, /providerWindow\.location\.replace\(data\.url\)/);
+  assert.doesNotMatch(handoff, /window\.location\.href\s*=/);
+  assert.equal((handoff.match(/providerWindow\.close\(\)/g) ?? []).length, 2);
+  assert.match(handoff, /result\.status === 409 && data\.code === "offer_changed"[\s\S]*?providerWindow\.close\(\)/);
+  assert.match(source, /onContinue=\{\(\) => continueToOffer\(selectedDeal\?\.offerId \?\? selectedOffer\.id\)\}/);
+  assert.match(source, /onViewDeal=\{continueToOffer\}/);
+});
+
 test("Flight Details reuses Flight Results selected-currency conversion and symbols", async () => {
   const files = await Promise.all([
     readFile(new URL("../FlightDetailsClient.tsx", import.meta.url), "utf8"),
