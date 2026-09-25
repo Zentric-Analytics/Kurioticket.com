@@ -2,9 +2,9 @@
 .dialog:focus, .dialog:focus-visible { outline: none; }
 .dialog::backdrop { background: rgb(2 6 23 / 42%); }
 .surface { padding: 14px 20px calc(16px + env(safe-area-inset-bottom)); }
-.surface header { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; }
-.surface h2 { font-size: 18px; line-height: 24px; font-weight: 700; }
-.surface header button { width: 44px; height: 44px; display: grid; place-items: center; }
+.surface header { position: relative; display: flex; align-items: center; justify-content: center; padding-inline: 44px; gap: 12px; min-height: 48px; }
+.surface h2 { text-align: center; font-size: 18px; line-height: 24px; font-weight: 700; }
+.surface header button { position: absolute; right: 0; top: 2px; width: 44px; height: 44px; display: grid; place-items: center; }
 .surface button:focus-visible { outline: 2px solid #064cf7; outline-offset: 2px; }
 .option { width: 100%; min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 7px; text-align: start; }
 .option span { flex: 1; min-width: 0; }

@@ -31,7 +31,7 @@
 .tabs button[aria-selected="true"] { color: var(--accent); border-color: var(--accent); }
 .panel { padding: 4px 16px 6px; }
 .rates { padding-bottom: 12px; }
-.rates > p { font-size: 12px; line-height: 18px; color: var(--muted); padding-bottom: 2px; }
+.rates > p { font-size: 14px; line-height: 20px; font-weight: 600; letter-spacing: -.25px; font-variant-numeric: tabular-nums; color: #1a1a1a; padding-block: 8px; }
 .rateList { display: grid; gap: 8px; padding-block: 6px; }
 .rate { position: relative; min-height: 80px; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(112px, 36%); column-gap: 12px; row-gap: 8px; align-items: center; }
 .rate[data-selected="true"] { background: #f5f8ff; border-color: var(--accent); box-shadow: 0 4px 10px rgb(15 23 42 / 12%); }

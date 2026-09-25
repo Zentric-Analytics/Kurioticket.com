@@ -1782,6 +1782,7 @@ export function HotelSearchBar({
         open={guestsRoomsOpen}
         title={t("hotelGuestsRooms.mobileTitle")}
         titleId={`${idPrefix}-mobile-guests-title`}
+        className={mobileResultsSheet ? appPickerStyles.guestShell : undefined}
         launcherRef={guestsRoomsMobileLauncherRef}
         onClose={() => setGuestsRoomsOpen(false)}
         showCancelAction={false}
