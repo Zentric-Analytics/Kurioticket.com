@@ -46,6 +46,7 @@ import {
   type MobileResultsOverlayCanvasRelease,
 } from "@/lib/search/mobileResultsOverlayCanvas";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
+import { beginFlightEditSearchClose } from "@/components/search/flightEditSearchCloseLifecycle";
 
 export type FlightEditSearchInitialValue = {
   tripType: TripType;
@@ -100,34 +101,15 @@ export function FlightEditSearchDrawer({
   const travelersRef = useRef<HTMLButtonElement>(null);
   const [isClosing, setIsClosing] = useState(false);
   const closeTimerRef = useRef<number | null>(null);
-  const closePreparationFrameRef = useRef<number | null>(null);
-  const isPreparingCloseRef = useRef(false);
+  const closeStartedRef = useRef(false);
   const scrollLockReleaseRef = useRef<MobileResultsScrollLockRelease | null>(
     null,
   );
   const overlayCanvasReleaseRef =
     useRef<MobileResultsOverlayCanvasRelease | null>(null);
-  const openingScrollPositionRef = useRef<{ x: number; y: number } | null>(
-    null,
-  );
   const preservedMultiCityLegsRef = useRef<FlightSearchLeg[]>(
     initialValue.tripType === "multi-city" ? initialValue.legs : [],
   );
-
-  const correctUnderlyingResultsScroll = useCallback(() => {
-    const openingPosition = openingScrollPositionRef.current;
-    if (
-      openingPosition &&
-      (Math.abs(window.scrollX - openingPosition.x) > 1 ||
-        Math.abs(window.scrollY - openingPosition.y) > 1)
-    ) {
-      window.scrollTo({
-        left: openingPosition.x,
-        top: openingPosition.y,
-        behavior: "auto",
-      });
-    }
-  }, []);
 
   const finishClose = useCallback(() => {
     setDraft(initialValue);
@@ -140,35 +122,21 @@ export function FlightEditSearchDrawer({
   }, [initialValue, onClose]);
 
   const closeDrawer = useCallback(() => {
-    if (isClosing || isPreparingCloseRef.current) return;
+    if (isClosing || closeStartedRef.current) return;
     if (presentation === "bottom-sheet") {
-      isPreparingCloseRef.current = true;
-      scrollLockReleaseRef.current?.({ restoreScroll: false });
-      scrollLockReleaseRef.current = null;
-
-      closePreparationFrameRef.current = window.requestAnimationFrame(() => {
-        correctUnderlyingResultsScroll();
-        closePreparationFrameRef.current = window.requestAnimationFrame(() => {
-          correctUnderlyingResultsScroll();
-          closePreparationFrameRef.current = window.requestAnimationFrame(
-            () => {
-              closePreparationFrameRef.current = null;
-              correctUnderlyingResultsScroll();
-              setIsClosing(true);
-              closeTimerRef.current = window.setTimeout(finishClose, 280);
-            },
-          );
-        });
+      closeStartedRef.current = true;
+      closeTimerRef.current = beginFlightEditSearchClose({
+        beginClosing: () => setIsClosing(true),
+        finishClose,
       });
       return;
     }
     finishClose();
-  }, [correctUnderlyingResultsScroll, finishClose, isClosing, presentation]);
+  }, [finishClose, isClosing, presentation]);
 
   useLayoutEffect(() => {
     if (!open || presentation !== "bottom-sheet") return;
-    openingScrollPositionRef.current = { x: window.scrollX, y: window.scrollY };
-    isPreparingCloseRef.current = false;
+    closeStartedRef.current = false;
     overlayCanvasReleaseRef.current = acquireMobileResultsOverlayCanvas({
       canvasColor: "#ffffff",
     });
@@ -178,16 +146,12 @@ export function FlightEditSearchDrawer({
       scrollLockReleaseRef.current = null;
       overlayCanvasReleaseRef.current?.();
       overlayCanvasReleaseRef.current = null;
-      openingScrollPositionRef.current = null;
-      isPreparingCloseRef.current = false;
+      closeStartedRef.current = false;
     };
   }, [open, presentation]);
 
   useEffect(() => {
     return () => {
-      if (closePreparationFrameRef.current !== null) {
-        window.cancelAnimationFrame(closePreparationFrameRef.current);
-      }
       if (closeTimerRef.current !== null)
         window.clearTimeout(closeTimerRef.current);
     };
