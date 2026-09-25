@@ -11,7 +11,13 @@ test("Hotel rail keeps Filter Price Stars Facilities Room & bed while Sort lives
   const wholeRail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const hotelIntroContent"));
   const rail = wholeRail.slice(wholeRail.indexOf(") : ("));
   const railOpeningTag = rail.slice(rail.indexOf("<ScrollView"), rail.indexOf(">", rail.indexOf("<ScrollView")) + 1);
-  const labels = ["Filter", "Price", "Stars", "Facilities", "Room & bed"].map((label) => rail.indexOf(`label="${label}"`));
+  const labels = [
+    rail.indexOf('label="Filter"'),
+    rail.indexOf("label={hotelPriceShortcutLabel}"),
+    rail.indexOf("label={hotelStarsShortcutLabel}"),
+    rail.indexOf("label={hotelFacilitiesShortcutLabel}"),
+    rail.indexOf("label={hotelRoomTypesShortcutLabel}"),
+  ];
   assert.ok(labels.every((index) => index >= 0) && labels.every((index, i) => i === 0 || labels[i - 1] < index));
   assert.doesNotMatch(rail, /label=\{hotelSort === defaultHotelSort \? "Sort"/);
   assert.match(rail, /hotelOptions\.price \?/);
@@ -67,7 +73,7 @@ test("Hotel controls use the measured reference capsule geometry while keeping s
 
 test("Hotel controls use Flight light tokens and semantic dark tokens", () => {
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
-  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F8FAFC", "#F1F5F9", "#FFFFFF"]) assert.match(component, new RegExp(token.replace(/[().]/g, "\\  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F8FAFC", "#F1F5F9", "#FFFFFF"]) assert.match(component, new RegExp(token.replace(/[().]/g, "\\$&")));")));
+  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F8FAFC", "#F1F5F9", "#FFFFFF"]) assert.match(component, new RegExp(token.replace(/[().]/g, "\\$&")));
   for (const semantic of ["theme.surface", "theme.border", "theme.textPrimary", "theme.textSecondary", "theme.background"]) assert.match(component, new RegExp(semantic.replace(".", "\\.")));
   assert.doesNotMatch(component, /#004BB8|#8FB5FF|rgba\(0,75,184,0\.08\)/);
   assert.match(component, /color=\{foreground\}/);
@@ -108,4 +114,16 @@ test("Hotel quick shortcuts show selected values without a duplicate applied-fil
   assert.doesNotMatch(screen, /const hotelFilterChips =/);
   assert.doesNotMatch(screen, /contentContainerStyle=\{s0\.hotelFilterChips\}/);
   assert.doesNotMatch(screen, /Remove \$\{chip\.label\} filter/);
+});
+
+
+test("selected Hotel quick shortcuts get immediate active styling while Filter keeps the aggregate count", () => {
+  const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
+  assert.match(component, /const active = selected \?\? Boolean\(count\)/);
+  assert.match(component, /borderColor: active && !theme\.dark \? ui\.blue : border/);
+  assert.match(component, /backgroundColor: active && !theme\.dark[\s\S]*"#EAF2FF"/);
+  assert.match(component, /color: active && !theme\.dark \? ui\.blue : foreground/);
+  const rail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const hotelIntroContent"));
+  assert.match(rail, /label="Filter"[\s\S]*count=\{activeHotelFilters \|\| undefined\}/);
+  assert.doesNotMatch(rail, /label=\{hotelPriceShortcutLabel\}[^>]*count=/);
 });
