@@ -51,7 +51,7 @@ test("mobile Hotel filter sheet uses the Cars continuous #F2F4F8 surface", () =>
   assert.doesNotMatch(sheet, /bg-[#F1F3F8]|sm:bg-[#F6F8FB]/);
 });
 
-test("filter sheet applies local filters with compact page-style feedback while keeping Hotel cards mounted", () => {
+test("filter sheet applies local filters through the normal Hotel results loading branch", () => {
   assert.match(source, /activeFilterCount > 0 \?\s*\(?\s*<button/);
   assert.match(source, /t\("hotelResults.noStaysMatchFiltersTitle"\)/);
   assert.match(source, /t\("deals.results.package.view.hotel"\)/);
@@ -70,6 +70,8 @@ test("filter sheet applies local filters with compact page-style feedback while 
   assert.match(source, /mobileFacilitiesShortcutLabel/);
   assert.match(source, /mobileRoomTypesShortcutLabel/);
   assert.match(source, /bg-slate-950\/35 backdrop-blur-\[1px\]/);
+  assert.match(source, /if \(loading \|\| filterApplying\)/);
+  assert.match(source, /<BrandedLoading variant="fullscreen"[\s\S]*searchType="hotel"/);
 });
 
 test("mobile results expose one filter toolbar and one in-sheet clear action", () => {
@@ -123,18 +125,18 @@ test("property search is shared, normalized and represented as an active filter"
 });
 
 
-test("mobile Hotel filter apply keeps cards visible and uses selected values in the shortcut rail", () => {
+test("mobile Hotel filter apply uses the normal page loader and compact selected-value chips", () => {
   const cardRegion = source.slice(source.indexOf("ref={paginationListRef}"), source.indexOf("</section>", source.indexOf("ref={paginationListRef}")));
-  assert.match(cardRegion, /data-hotel-filter-refresh-progress/);
-  assert.match(cardRegion, /animate-\[loading-line_1\.4s_ease-in-out_infinite\]/);
+  assert.doesNotMatch(cardRegion, /data-hotel-filter-refresh-progress/);
   assert.match(cardRegion, /paginationTransitionPhase === "covering"/);
-  assert.doesNotMatch(cardRegion, /filterApplying \|\| paginationTransitionPhase === "covering"/);
   const quickApply = source.slice(source.indexOf('className="h-11 w-\[32%\] shrink-0 rounded-lg bg-[#004BB8]'), source.indexOf("</footer>", source.indexOf('className="h-11 w-\[32%\] shrink-0 rounded-lg bg-[#004BB8]')));
   assert.match(quickApply, /triggerFilterApplying\(\)/);
+  assert.match(source, /if \(loading \|\| filterApplying\)/);
+  assert.match(source, /<BrandedLoading variant="fullscreen"[\s\S]*searchType="hotel"/);
+  assert.match(source, /active[\s\S]{0,160}border-\[#142033\] bg-\[#142033\] text-white/);
+  assert.match(source, /active \? "pl-2 pr-6" : "px-2"/);
+  assert.match(source, /absolute right-0\.5 top-1\/2 inline-flex h-6 w-6/);
   assert.match(source, /notation: "compact"/);
   assert.match(source, /Under \$\{formatCompactHotelFilterPrice\(maxPrice\)\}/);
-  assert.doesNotMatch(source, /\{count > 0 \? <span className="rounded-full bg-\[#004BB8\]/);
   assert.match(source, /clearMobileShortcutFilter/);
-  assert.match(source, /Clear \$\{label\} filter/);
-  assert.match(source, /<X className="h-3\.5 w-3\.5"/);
 });
