@@ -34,7 +34,12 @@ export async function searchCars(search:LocationBoundCarSearchParams,options:{ka
     dependencies.rememberResults("car", kayak.results, search),
     dependencies.rememberCohort(kayak.results, search),
   ]);
-  return{results:[...catalogue,...kayak.results],status:"available",warnings:kayak.status==="failed"?["KAYAK is temporarily unavailable. Other provider results are shown."]:[]};
+  const warnings = kayak.errorReason === "pickup_time_past"
+    ? ["KAYAK could not search this pick-up time because it has already passed at the rental location. Choose a later pick-up time or date."]
+    : kayak.status === "failed"
+      ? ["KAYAK is temporarily unavailable. Other provider results are shown."]
+      : [];
+  return{results:[...catalogue,...kayak.results],status:"available",warnings};
 }
 const KAYAK_CAR_ID_PREFIX = "kayak-sandbox:";
 
