@@ -17,10 +17,11 @@ test("flight, hotel, and car compact location controls render explanatory second
   assert.match(cars, /MobileLocationLauncher[\s\S]*?display\.secondary/);
 });
 
-test("mobile car compact results header is fully opaque without backdrop reflection", () => {
+test("mobile car compact results header keeps the safe-area and toolbar surface fully white", () => {
   const cars = read("./CarsResultsClient.tsx");
   const start = cars.indexOf("const renderMobileCompactResultsHeader");
   const header = cars.slice(start, cars.indexOf("\n  return (", start + 200));
-  assert.match(header, /bg-\[#F2F4F8\] px-3/);
-  assert.doesNotMatch(header, /bg-white(?:\/95)?|bg-\[#F5F7FB\]|backdrop-blur/);
+  assert.match(header, /bg-white px-3/);
+  assert.match(header, /pt-\[calc\(0\.5rem\+env\(safe-area-inset-top\)\)\]/);
+  assert.doesNotMatch(header, /bg-\[#F2F4F8\]|bg-\[#F5F7FB\]|backdrop-blur/);
 });

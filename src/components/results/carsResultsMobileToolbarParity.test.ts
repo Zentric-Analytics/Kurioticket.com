@@ -29,12 +29,12 @@ test("standalone Cars compact header follows the Flights mobile interaction mode
   assert.match(toolbar, /activeFilterCount/);
 });
 
-test("compact toolbar matches the Hotels surface and text treatment", () => {
+test("compact toolbar keeps the full mobile top surface white while preserving Hotels text treatment", () => {
   assert.match(
     toolbar,
-    /fixed inset-x-0 top-0 z-\[90\] bg-\[#F2F4F8\]/,
+    /fixed inset-x-0 top-0 z-\[90\] bg-white/,
   );
-  assert.doesNotMatch(toolbar, /bg-white|bg-\[#F5F7FB\]/);
+  assert.doesNotMatch(toolbar, /bg-\[#F2F4F8\]|bg-\[#F5F7FB\]/);
   assert.match(
     toolbar,
     /text-\[15px\] font-bold leading-5 tracking-\[-0\.015em\] text-\[#07133B\]/,

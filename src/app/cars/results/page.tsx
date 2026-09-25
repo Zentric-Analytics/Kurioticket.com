@@ -112,7 +112,6 @@ export default async function CarsResultsPage({
         flushMobileBottom
         hideDesktopTravelNav
         hideMobileCategoryTabs
-        mobileSurface="muted"
       />
       <Suspense
         key={searchIdentity}
