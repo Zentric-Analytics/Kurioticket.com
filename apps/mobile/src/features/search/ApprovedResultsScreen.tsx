@@ -1072,7 +1072,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     && status === "ready"
     && (results as HotelResult[]).some(hasHotelPrice)
     && !currencyState;
-  if (status === "loading" || hotelCurrencyPending || hotelFilterApplying) return <NativeBrandedSearchLoading product={product} />;
+  if (status === "loading" || hotelCurrencyPending) return <NativeBrandedSearchLoading product={product} />;
+  if (product === "hotel" && hotelFilterApplying) return <NativeBrandedSearchLoading product="hotel" />;
   return (
     <SafeAreaView style={[s0.safe, { backgroundColor: flightResults ? flightCanvasColor : hotelCanvasColor }]} edges={["top"]}>
       {flightResults ? (
