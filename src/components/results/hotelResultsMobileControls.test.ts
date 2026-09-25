@@ -49,6 +49,7 @@ test("Hotel mobile compact results header matches the Cars three-column toolbar"
 test("Hotel mobile filter and quick-filter surfaces match Cars background treatment", () => {
   assert.match(resultsSource, /data-mobile-hotel-shortcuts[\s\S]*scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\]/);
   assert.match(resultsSource, /border-\[#D8E1EC\] bg-white text-\[#142033\] group-hover:bg-slate-50/);
+  assert.match(resultsSource, /active[\s\S]{0,180}border-\[#142033\] bg-white text-\[#142033\]/);
   assert.doesNotMatch(resultsSource, /active[\s\S]{0,180}border-\[#075EE8\] bg-\[#EAF2FF\] text-\[#004BB8\]/);
   assert.match(resultsSource, /mobileShortcutMenuContentRef[sS]*rounded-t-[20px] bg-[#F2F4F8]/);
   assert.match(resultsSource, /mobileShortcutMenuContentRef[sS]*header className="[^"]*bg-[#F2F4F8]/);
@@ -150,7 +151,7 @@ test("active Hotel mobile shortcuts keep the normal neutral chip style, add an X
   assert.match(resultsSource, /clearMobileShortcutFilter/);
   assert.match(resultsSource, /Clear \$\{label\} filter/);
   assert.match(resultsSource, /<X className="h-3\.5 w-3\.5"/);
-  assert.match(resultsSource, /text-\[#64748B\]/);
+  assert.match(resultsSource, /text-\[#142033\]/);
   assert.match(resultsSource, /bg-\[#F1F5F9\][^"]*text-\[#142033\]/);
   assert.doesNotMatch(resultsSource, /border-\[#075EE8\] bg-\[#EAF2FF\] text-\[#004BB8\]/);
   assert.match(resultsSource, /data-hotel-filter-refresh-progress/);
