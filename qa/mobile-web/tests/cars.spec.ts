@@ -157,6 +157,10 @@ test("Cars full Filters and representative quick sheets freeze the document whil
     await expect(sheet).toBeVisible();
     await expect(sheet).toHaveClass(/mobile-results-sheet-surface-smooth/);
     await expect(sheet).toHaveClass(/cars-results-quick-sheet-surface/);
+    await expect(sheet).toHaveClass(/shadow-none/);
+    await expect(sheet).toBeFocused();
+    const closeButton = sheet.getByRole("button", { name: "Close" });
+    await expect(closeButton).not.toBeFocused();
     await expect(chevron).toHaveClass(/rotate-180/);
 
     const scrim = page.locator("[data-cars-quick-sheet-scrim]");
@@ -191,12 +195,20 @@ test("Cars full Filters and representative quick sheets freeze the document whil
     const quickGeometry = await sheet.evaluate((element) => {
       const rect = element.getBoundingClientRect();
       const style = getComputedStyle(element);
+      const header = element.querySelector("header");
+      const content = header?.nextElementSibling;
+      const close = element.querySelector<HTMLButtonElement>('button[aria-label="Close"]');
       return {
         left: rect.left,
         rightGap: window.innerWidth - rect.right,
         bottomGap: window.innerHeight - rect.bottom,
         topLeftRadius: style.borderTopLeftRadius,
         bottomLeftRadius: style.borderBottomLeftRadius,
+        boxShadow: style.boxShadow,
+        backgroundColor: style.backgroundColor,
+        headerBackgroundColor: header ? getComputedStyle(header).backgroundColor : "",
+        contentBackgroundColor: content ? getComputedStyle(content).backgroundColor : "",
+        closeBoxShadow: close ? getComputedStyle(close).boxShadow : "",
       };
     });
     expect(quickGeometry.left).toBeCloseTo(12, 0);
@@ -204,10 +216,15 @@ test("Cars full Filters and representative quick sheets freeze the document whil
     expect(quickGeometry.bottomGap).toBeCloseTo(12, 0);
     expect(quickGeometry.topLeftRadius).toBe("24px");
     expect(quickGeometry.bottomLeftRadius).toBe("24px");
+    expect(quickGeometry.boxShadow).toBe("none");
+    expect(quickGeometry.backgroundColor).toBe("rgb(242, 244, 248)");
+    expect(quickGeometry.headerBackgroundColor).toBe(quickGeometry.backgroundColor);
+    expect(quickGeometry.contentBackgroundColor).toBe(quickGeometry.backgroundColor);
+    expect(quickGeometry.closeBoxShadow).toBe("none");
     expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(beforeQuickScrollY, 0);
     expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(beforeQuickTop, 0);
     await expectDocumentFrozen(page, beforeQuickScrollY);
-    await sheet.getByRole("button", { name: "Close" }).click();
+    await closeButton.click();
     await expect(sheet).toHaveClass(/mobile-results-sheet-surface-closing/);
     await expect(scrim).toHaveClass(/mobile-results-sheet-backdrop-layer-closing/);
     await expect(sheet).toBeHidden();

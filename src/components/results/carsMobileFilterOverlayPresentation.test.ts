@@ -51,10 +51,11 @@ test("Cars shortcuts use the Hotels continuous overlay and sheet motion system",
   for (const contract of [
     /fixed inset-0.*items-end.*lg:hidden/,
     /data-cars-quick-sheet-scrim[\s\S]*?mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 h-full w-full bg-\[rgba\(15,23,42,0\.35\)\]/,
-    /mobile-results-sheet-surface mobile-results-sheet-surface-smooth cars-results-quick-sheet-surface relative z-10 mx-3 mb-3.*flex min-h-\[240px\].*max-h-\[min\(76dvh,620px\)\].*w-\[calc\(100%_-_24px\)\].*rounded-\[24px\].*bg-\[#F2F4F8\]/,
-    /grid min-h-\[64px\].*grid-cols-\[44px_minmax\(0,1fr\)_44px\].*bg-\[#F2F4F8\].*px-\[10px\]/,
-    /text-center text-\[18px\] font-bold leading-\[23px\]/,
-    /<X className="h-\[22px\] w-\[22px\]"/,
+    /mobile-results-sheet-surface mobile-results-sheet-surface-smooth cars-results-quick-sheet-surface relative z-10 mx-3 mb-3.*flex min-h-\[240px\].*max-h-\[min\(76dvh,620px\)\].*w-\[calc\(100%_-_24px\)\].*rounded-\[24px\].*bg-\[#F2F4F8\].*outline-none shadow-none/,
+    /relative flex min-h-16.*items-center justify-center bg-\[#F2F4F8\] px-16 py-3/,
+    /text-center text-base font-semibold text-slate-950/,
+    /absolute right-3 inline-flex h-11 w-11.*rounded-xl text-slate-700/,
+    /<X className="h-5 w-5"/,
     /overflow-y-auto overscroll-contain bg-\[#F2F4F8\] p-4/,
     /min-h-\[52px\].*gap-\[10px\].*px-\[10px\]/,
     /h-5 w-5.*rounded-\[4px\].*border-\[1\.5px\]/,
@@ -73,9 +74,29 @@ test("Cars shortcuts use the Hotels continuous overlay and sheet motion system",
   assert.match(styles, /\.mobile-results-sheet-surface-smooth \{ animation-duration: 320ms; \}/);
   assert.match(styles, /cars-results-quick-sheet-surface-in[\s\S]*?translate3d\(0, 28px, 0\)[\s\S]*?translate3d\(0, 0, 0\)/);
   assert.match(styles, /\.cars-results-quick-sheet-surface \{[\s\S]*?animation: cars-results-quick-sheet-surface-in 220ms/);
+  assert.doesNotMatch(styles, /\.cars-results-quick-sheet-surface \{[^}]*backface-visibility/);
   assert.match(
     hotels,
     /mobile-results-sheet-backdrop-layer[\s\S]*?mobile-results-sheet-surface mobile-results-sheet-surface-smooth/,
+  );
+});
+
+test("Cars pointer-opened quick sheets avoid the blue close-button focus container", () => {
+  assert.match(
+    cars,
+    /const shouldFocusCloseButton =\s*!quickFilterGroupId \|\| mobileFiltersModalityRef\.current === "keyboard"/,
+  );
+  assert.match(
+    cars,
+    /activeDialogRef\.current\?\.focus\(\{ preventScroll: true \}\)/,
+  );
+  assert.match(
+    cars,
+    /quickFiltersCloseButtonRef[\s\S]*?focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/35/,
+  );
+  assert.match(
+    cars,
+    /data-cars-quick-sheet[\s\S]*?outline-none shadow-none/,
   );
 });
 
