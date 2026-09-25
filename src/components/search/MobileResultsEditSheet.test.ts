@@ -56,7 +56,7 @@ test("Cars Edit Search keeps its bottom-sheet placement while centering only the
   );
   assert.match(
     source,
-    /carsResultsEdit && "pointer-events-none absolute inset-x-12 text-center text-\[19px\] font-semibold leading-\[24px\] tracking-normal"/,
+    /carsResultsEdit && "pointer-events-none absolute inset-x-12 top-1\/2 -translate-y-1\/2 text-center text-\[19px\] font-semibold leading-\[24px\] tracking-normal"/,
   );
   assert.match(source, /carsResultsEdit && "absolute right-0"/);
 });
