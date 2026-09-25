@@ -1730,6 +1730,18 @@ textarea {
   animation-duration: 240ms;
 }
 @media (max-width: 639px) {
+  .flight-results-edit-surface {
+    background-color: #ffffff !important;
+    border-color: #e7ecf5 !important;
+    box-shadow: none !important;
+  }
+
+  .flight-results-edit-field-surface {
+    background-color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
+
   .flight-results-edit-value {
     font-family: inherit;
     font-size: 15px !important;
