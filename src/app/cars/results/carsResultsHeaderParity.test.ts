@@ -30,7 +30,7 @@ test("Cars Results preserves AppHeader while matching Flights mobile header prop
     assert.match(flightsHeader, new RegExp(`\\b${mobileProp}\\b`));
     assert.match(carsHeader, new RegExp(`\\b${mobileProp}\\b`));
   }
-  assert.match(carsHeader, /mobileSurface="muted"/);
+  assert.doesNotMatch(carsHeader, /mobileSurface="muted"/);
 });
 
 test("Cars Results does not independently render product category tabs", () => {
