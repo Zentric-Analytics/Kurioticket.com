@@ -89,7 +89,7 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.doesNotMatch(source, /mobileQuickFacilities = \["wifi", "breakfast", "pool"\]/);
   assert.match(source, /overflow-x-auto overscroll-x-contain/);
   assert.match(source, /\[&::-webkit-scrollbar\]:hidden/);
-  assert.match(source, /<span>Filter<\/span>[\s\S]*trigger\("price", "Price"[\s\S]*trigger\(\s*"stars",\s*"Stars"[\s\S]*trigger\(\s*"amenities",\s*"Facilities"/);
+  assert.match(source, /<span>Filter<\/span>[\s\S]*trigger\("price", mobilePriceShortcutLabel[\s\S]*trigger\("stars", mobileStarsShortcutLabel[\s\S]*trigger\("amenities", mobileFacilitiesShortcutLabel/);
   assert.match(source, /type MobileHotelShortcutMenu = "price" \| "stars" \| "amenities"/);
   assert.match(source, /trigger\("price", mobilePriceShortcutLabel, priceFilterActive\)/);
   assert.match(source, /trigger\("stars", mobileStarsShortcutLabel, selectedHotelClasses\.length > 0\)/);
