@@ -118,3 +118,15 @@ test("standalone mobile Hotel summary keeps result count with Sort in its previo
   assert.ok(guidedHeading >= 0 && guidedHeading < desktopSummary);
   assert.match(resultsSource.slice(guidedHeading - 200, desktopSummary), /guided \? \([\s\S]*?deals-guided-hotel-results-heading/);
 });
+
+
+test("Hotel mobile Back-to-top sits near the bottom edge while desktop spacing stays unchanged", () => {
+  const start = resultsSource.indexOf('aria-label="Back to top"');
+  const end = resultsSource.indexOf("</button>", start);
+  const control = resultsSource.slice(start, end);
+
+  assert.notEqual(start, -1);
+  assert.match(control, /bottom-\[calc\(1rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(control, /sm:bottom-6 sm:right-6/);
+  assert.doesNotMatch(control, /bottom-\[calc\(5rem\+env\(safe-area-inset-bottom\)\)\]/);
+});
