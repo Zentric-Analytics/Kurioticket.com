@@ -785,9 +785,14 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         if (!active || controller.signal.aborted) return;
 
         setSearchApplying(false);
+        setFilterApplying(false);
         if (searchApplyingTimeoutRef.current !== null) {
           window.clearTimeout(searchApplyingTimeoutRef.current);
           searchApplyingTimeoutRef.current = null;
+        }
+        if (filterApplyingTimeoutRef.current !== null) {
+          window.clearTimeout(filterApplyingTimeoutRef.current);
+          filterApplyingTimeoutRef.current = null;
         }
         setResults([]);
         setError(searchError instanceof Error ? searchError.message : t("hotelResults.unableToSearchHotels"));
