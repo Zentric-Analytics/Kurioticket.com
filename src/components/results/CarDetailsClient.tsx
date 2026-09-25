@@ -910,7 +910,7 @@ function CarLocationSection({
         </div>
       ) : null}
       <div className="mt-4 overflow-hidden rounded-[14px] border border-slate-200 bg-white">
-        <div className="p-4">
+        <div className="p-4" data-car-location-timeline>
           {[
             [
               "Pick-up",
@@ -929,25 +929,28 @@ function CarLocationSection({
           ].map(([mobileLabel, label, location, date, time], index) => (
             <div
               key={label}
-              className={`relative flex gap-3 ${index === 0 ? "pb-6" : ""}`}
+              className={`relative border-s-2 border-blue-200 ps-5 ${index === 0 ? "pb-6" : ""}`}
             >
-              <div className="relative flex w-9 shrink-0 justify-center">
-                <span className="mt-1.5 size-3 rounded-full bg-[#075EE8]" />
-                {index === 0 ? (
-                  <span className="absolute bottom-[-6px] top-4 w-px bg-blue-200" />
-                ) : null}
-              </div>
-              <div>
-                <p className="text-[15px] font-bold leading-[22px] text-[#071A48] lg:text-xs lg:uppercase lg:leading-normal lg:tracking-wide lg:text-slate-500">
-                  <span className="lg:hidden">{mobileLabel}</span>
-                  <span className="hidden lg:inline">{label}</span>
-                </p>
-                <p className="mt-1 text-[14px] font-medium leading-5 text-[#071A48] lg:text-base lg:font-semibold lg:leading-normal lg:text-slate-900">{location}</p>
-                <p className="mt-1 text-[13px] font-normal leading-5 text-[#56658E] lg:text-xs lg:leading-normal lg:text-slate-600">
+              <span className="absolute -start-[7px] top-1 size-3 rounded-full bg-[#004BB8]" />
+              <p className="text-[15px] font-bold leading-[22px] text-[#071A48] lg:text-xs lg:uppercase lg:leading-normal lg:tracking-wide lg:text-slate-500">
+                <span className="lg:hidden">{mobileLabel}</span>
+                <span className="hidden lg:inline">{label}</span>
+              </p>
+              <p className="mt-1 flex gap-2 text-[14px] font-medium leading-5 text-[#071A48] lg:text-base lg:font-semibold lg:leading-normal lg:text-slate-900">
+                <MapPin
+                  size={16}
+                  className="shrink-0 text-[#004BB8]"
+                  aria-hidden="true"
+                />
+                {location}
+              </p>
+              <p className="mt-1 flex gap-2 text-[13px] font-normal leading-5 text-[#56658E] lg:text-xs lg:leading-normal lg:text-slate-600">
+                <Clock3 size={16} className="shrink-0" aria-hidden="true" />
+                <time dateTime={`${date}T${time}`}>
                   {formatCarDate(date, locale)}
                   {time ? ` · ${time}` : ""}
-                </p>
-              </div>
+                </time>
+              </p>
             </div>
           ))}
         </div>

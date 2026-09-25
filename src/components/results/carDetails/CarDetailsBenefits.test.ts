@@ -158,6 +158,36 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-car-location-section/);
 });
 
+test("Location tab timeline mirrors Pickup and return pins and icons", () => {
+  const location = sourceBetween(
+    clientSource,
+    "function CarLocationSection",
+    "function BookingSummary",
+  );
+  const timeline = sourceBetween(
+    location,
+    "data-car-location-timeline",
+    "carDetails.pickupLocationDetails",
+  );
+
+  assert.match(timeline, /relative border-s-2 border-blue-200 ps-5/);
+  assert.match(
+    timeline,
+    /absolute -start-\[7px\] top-1 size-3 rounded-full bg-\[#004BB8\]/,
+  );
+  assert.match(
+    timeline,
+    /<MapPin size={16} className="shrink-0 text-\[#004BB8\]" aria-hidden="true" \/>/,
+  );
+  assert.match(
+    timeline,
+    /<Clock3 size={16} className="shrink-0" aria-hidden="true" \/>/,
+  );
+  assert.match(timeline, /<time dateTime={`\$\{date\}T\$\{time\}`}>/);
+  assert.doesNotMatch(timeline, /relative flex w-9 shrink-0 justify-center/);
+  assert.doesNotMatch(timeline, /bg-\[#075EE8\]/);
+});
+
 test("price comparison aligns icon benefits and the per-day price on one row", () => {
   const comparison = sourceBetween(
     clientSource,
