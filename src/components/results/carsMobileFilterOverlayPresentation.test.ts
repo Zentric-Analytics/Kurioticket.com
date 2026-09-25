@@ -47,7 +47,7 @@ test("Cars mobile filter sections remain expanded with native row and checkbox g
 test("Cars shortcuts use the Hotels continuous overlay and sheet motion system", () => {
   const sheets = cars.slice(
     cars.indexOf("data-cars-quick-sheet-backdrop"),
-    cars.indexOf("!guidedPlanning && showBackToTop"),
+    cars.indexOf('aria-label="Back to top"'),
   );
   for (const contract of [
     /fixed inset-0.*items-end.*lg:hidden/,
@@ -244,7 +244,7 @@ test("Cars mobile filter overlays avoid duplicate top safe-area padding and keep
   assert.match(full, /pb-\[max\(20px,env\(safe-area-inset-bottom\)\)\]/);
 
   const quickStart = cars.indexOf("data-cars-quick-sheet-backdrop");
-  const quickEnd = cars.indexOf("!guidedPlanning && showBackToTop", quickStart);
+  const quickEnd = cars.indexOf('aria-label="Back to top"', quickStart);
   const quick = cars.slice(quickStart, quickEnd);
   assert.match(quick, /min-h-\[64px\]/);
   assert.match(
