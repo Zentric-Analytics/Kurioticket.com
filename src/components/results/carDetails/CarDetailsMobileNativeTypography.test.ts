@@ -75,6 +75,17 @@ test("Cars mobile web hero typography matches the native Inter hierarchy", () =>
   );
 });
 
+test("Cars mobile tab strip disables Safari text inflation so authored native sizes render literally", () => {
+  assert.match(
+    nav,
+    /\[-webkit-text-size-adjust:none\] \[text-size-adjust:none\]/,
+  );
+  assert.match(
+    nav,
+    /lg:\[-webkit-text-size-adjust:100%\] lg:\[text-size-adjust:100%\]/,
+  );
+});
+
 test("Cars mobile web keeps the main tabs while hiding redundant panel headings", () => {
   assert.match(
     native,
