@@ -649,21 +649,21 @@ function CarPriceComparisonSection({
     >
       <Heading
         level={headingLevel}
-        className="text-xs font-bold leading-[18px] tracking-[-0.2px] text-slate-950 lg:text-xl lg:font-extrabold lg:leading-normal lg:tracking-tight"
+        className="hidden text-xs font-bold leading-[18px] tracking-[-0.2px] text-slate-950 lg:block lg:text-xl lg:font-extrabold lg:leading-normal lg:tracking-tight"
       >
         <span className="lg:hidden">Compare deals</span>
         <span className="hidden lg:inline">
           {copy("carDetails.comparePrices")}
         </span>
       </Heading>
-      <p className="mt-1 text-[11px] font-medium leading-4 text-slate-600 lg:text-sm lg:leading-normal">
+      <p className="hidden mt-1 text-[11px] font-medium leading-4 text-slate-600 lg:block lg:text-sm lg:leading-normal">
         {formatCarDate(search.pickupDate, locale)} –{" "}
         {formatCarDate(search.dropoffDate, locale)} · {days}{" "}
         {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
       </p>
 
       <div
-        className="mt-5 space-y-2.5 lg:hidden"
+        className="mt-3 space-y-2.5 lg:hidden"
         role="radiogroup"
         aria-label="Car deal options"
         data-mobile-car-deal-list
@@ -855,11 +855,11 @@ function CarLocationSection({
     >
       <Heading
         level={headingLevel}
-        className="text-xs font-bold leading-[18px] tracking-[-0.2px] text-slate-950 lg:text-xl lg:font-extrabold lg:leading-normal lg:tracking-tight"
+        className="hidden text-xs font-bold leading-[18px] tracking-[-0.2px] text-slate-950 lg:block lg:text-xl lg:font-extrabold lg:leading-normal lg:tracking-tight"
       >
         {copy("carDetails.location")}
       </Heading>
-      <div className="mt-3 flex items-start gap-3">
+      <div className="mt-0 flex items-start gap-3 lg:mt-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue">
           <MapPin size={18} aria-hidden="true" />
         </span>
@@ -1070,11 +1070,11 @@ function PickupReturnSection({
     <section className="-mx-4 border-y border-slate-200 bg-[#F5F7FB] px-4 py-5 lg:mx-0 lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
       <Heading
         level={sectionHeadingLevel}
-        className="text-xs font-bold leading-[18px] tracking-[-0.2px] text-[#020617] lg:text-xl lg:leading-normal lg:tracking-[-0.015em] lg:text-[#102A43]"
+        className="hidden text-xs font-bold leading-[18px] tracking-[-0.2px] text-[#020617] lg:block lg:text-xl lg:leading-normal lg:tracking-[-0.015em] lg:text-[#102A43]"
       >
         {copy("carDetails.pickupReturn")}
       </Heading>
-      <div className="relative mt-4 grid gap-5 md:grid-cols-2 md:gap-6">
+      <div className="relative mt-0 grid gap-5 md:grid-cols-2 md:gap-6 lg:mt-4">
         {[
           [
             "Pick-up",
