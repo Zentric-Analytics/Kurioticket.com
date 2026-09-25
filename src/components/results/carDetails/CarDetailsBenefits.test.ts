@@ -202,25 +202,34 @@ test("price comparison aligns icon benefits and the per-day price on one row", (
   assert.doesNotMatch(comparison, /row-start-4/);
 });
 
-test("source contract keeps mobile deal CTAs disabled, inert, blue, and localized", () => {
+test("source contract keeps unsupported mobile deals inert while KAYAK opens securely in a new tab", () => {
   const mobileDock = clientSource.slice(
     clientSource.indexOf("function MobileBookingDock"),
   );
-  const buttons =
-    mobileDock.match(
-      /<button disabled className="[^"]+" > [\s\S]*?<\/button>/g,
-    ) ?? [];
-  assert.equal(buttons.length, 2);
-  for (const button of buttons) {
-    assert.match(button, /bg-blue/);
-    assert.match(button, /text-white/);
-    assert.match(button, /disabled:opacity-100/);
-    assert.doesNotMatch(button, /bg-slate-200|text-slate-600/);
-    assert.doesNotMatch(button, /href|onClick|bookingUrl/);
-  }
+  const sandboxStart = mobileDock.indexOf('action.kind === "sandbox-handoff"');
+  const unsupportedStart = mobileDock.indexOf(
+    'action.kind === "standalone-disabled-provider"',
+  );
+  assert.ok(sandboxStart >= 0 && unsupportedStart > sandboxStart);
+
+  const sandboxMobile = mobileDock.slice(sandboxStart, unsupportedStart);
+  assert.match(sandboxMobile, /<a href={action\.href}/);
+  assert.match(sandboxMobile, /target="_blank"/);
+  assert.match(sandboxMobile, /rel="noopener noreferrer"/);
+  assert.match(sandboxMobile, /referrerPolicy="no-referrer"/);
+  assert.match(sandboxMobile, /bg-blue/);
+  assert.match(sandboxMobile, /text-white/);
+  assert.match(sandboxMobile, /copy\("carDetails\.continueDeal"\)/);
+  assert.doesNotMatch(sandboxMobile, /<button| disabled/);
+
+  const unsupportedMobile = mobileDock.slice(unsupportedStart);
   assert.match(
-    mobileDock,
-    /action\.kind === "sandbox-handoff"[\s\S]*?copy\("carDetails\.continueDeal"\)/,
+    unsupportedMobile,
+    /<button disabled className="[^"]*bg-blue[^"]*text-white[^"]*disabled:opacity-100[^"]*" > [\s\S]*?<\/button>/,
+  );
+  assert.doesNotMatch(
+    unsupportedMobile.slice(0, unsupportedMobile.indexOf("</button>")),
+    /href|onClick|bookingUrl/,
   );
   assert.match(clientSource, /label: copy\("carDetails\.continueDeal"\)/);
   assert.doesNotMatch(clientSource, /label: copy\("continueToProvider"\)/);
