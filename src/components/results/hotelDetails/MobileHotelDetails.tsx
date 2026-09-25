@@ -12,24 +12,26 @@ import type { StandaloneHotelDetailsProps } from "./StandaloneHotelDetails";
 import { formatMobileHotelPrice, mobileHotelAbout, mobileHotelAmenityGroups, mobileHotelStay } from "./mobileHotelDetailsPresentation";
 import { MobileHotelStayEditor } from "./MobileHotelStayEditor";
 import type { HotelDetailsProviderOffer } from "./hotelDetailsPresentation";
+import { acquireMobileResultsScrollLock } from "@/lib/search/mobileResultsScrollLock";
 import styles from "./HotelDetailsMobile.module.css";
 
 type Tab = "rates" | "overview" | "reviews";
 type Overlay = "gallery" | "photo" | "amenities" | "stay" | "rooms" | "map" | null;
 
-function DetailsDialog({ title, onClose, children, full = false, back }: { title: string; onClose: () => void; children: ReactNode; full?: boolean; back?: () => void }) {
+function DetailsDialog({ title, onClose, children, full = false, back, compact = false }: { title: string; onClose: () => void; children: ReactNode; full?: boolean; back?: () => void; compact?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current;
     const opener = document.activeElement as HTMLElement | null;
     const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const releaseScroll = compact ? acquireMobileResultsScrollLock() : null;
+    if (!compact) document.body.style.overflow = "hidden";
     dialog?.showModal();
     if (isIosHotelMobileWeb()) dialog?.focus({ preventScroll: true });
-    return () => { dialog?.close(); document.body.style.overflow = overflow; opener?.focus({ preventScroll: true }); };
-  }, []);
-  return <dialog ref={ref} tabIndex={-1} className={`${styles.dialog} ${full ? styles.fullDialog : ""}`} aria-label={title} onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
-    <div className={styles.dialogSurface}>
+    return () => { dialog?.close(); if (releaseScroll) releaseScroll(); else document.body.style.overflow = overflow; opener?.focus({ preventScroll: true }); };
+  }, [compact]);
+  return <dialog ref={ref} tabIndex={-1} className={`${styles.dialog} ${full ? styles.fullDialog : ""} ${compact ? styles.amenitiesDialog : ""}`} aria-label={title} onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
+    <div className={`${styles.dialogSurface} ${compact ? "mobile-results-sheet-surface mobile-results-sheet-surface-smooth" : ""}`}>
       <header className={styles.dialogHeader}>
         {back ? <button type="button" aria-label="Back to all photos" onClick={back}><ArrowLeft size={24} /></button> : null}
         <h2>{title}</h2><button type="button" aria-label={`Close ${title}`} onClick={onClose}><X size={22} /></button>
@@ -168,10 +170,9 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
         <p>{[stay.dates, stay.nights].filter(Boolean).join(" · ")}</p>
         <div aria-label="Hotel rates" className={styles.rateList}>
           {offers.map(offer => <article key={offer.id} className={styles.rate} data-selected={selected?.id === offer.id}>
-            <label className={styles.rateChoice}>
-              <input type="radio" name="mobile-hotel-rate" aria-label={`Select ${offer.providerName} offer`} checked={selected?.id === offer.id} onChange={() => setSelectedId(offer.id)} />
-              <span className={styles.rateTop}>{offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={`${offer.providerName} logo`} width={132} height={30} /> : <strong>{offer.providerName}</strong>}<span className={styles.radio} aria-hidden="true">{selected?.id === offer.id ? <i /> : null}</span></span>
-            </label>
+            <div className={styles.rateChoice}>
+              <span className={styles.rateTop}>{offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={`${offer.providerName} logo`} width={132} height={30} /> : <strong>{offer.providerName}</strong>}</span>
+            </div>
             <div className={styles.rateAction}><div><strong>{offer.action.kind === "internal-room-flow" ? total : offer.totalPrice || props.labels.priceUnavailable}</strong><span>Stay total</span></div><button type="button" aria-label={`View deal from ${offer.providerName}`} onClick={() => void viewDeal(offer)} disabled={pending}>{pending && selected?.id === offer.id ? "Opening…" : "View deal"}</button></div>
           </article>)}
           {!offers.length ? <div className={styles.noRates}><h2>No rates available</h2><p>Refresh your search for current prices and availability.</p><a href={props.resultsHref}>Back to hotel results</a></div> : null}
@@ -198,7 +199,7 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
     </div>
     <span role="status" className="sr-only">{shareStatus}</span>
 
-    {overlay && overlay !== "stay" ? <DetailsDialog title={overlay === "gallery" ? "Photos" : overlay === "photo" ? `${gallery.activePosition} / ${gallery.usableIndices.length}` : overlay === "amenities" ? "All amenities" : overlay === "map" ? "Location" : "Room options"} full={overlay === "gallery" || overlay === "photo" || overlay === "map"} back={overlay === "photo" ? () => setOverlay("gallery") : undefined} onClose={() => setOverlay(null)}>
+    {overlay && overlay !== "stay" ? <DetailsDialog compact={overlay === "amenities"} title={overlay === "gallery" ? "Photos" : overlay === "photo" ? `${gallery.activePosition} / ${gallery.usableIndices.length}` : overlay === "amenities" ? "All amenities" : overlay === "map" ? "Location" : "Room options"} full={overlay === "gallery" || overlay === "photo" || overlay === "map"} back={overlay === "photo" ? () => setOverlay("gallery") : undefined} onClose={() => setOverlay(null)}>
       {overlay === "gallery" ? <div className={styles.galleryGrid}>{gallery.usableIndices.map((index, position) => <button type="button" key={index} onClick={() => { gallery.onSelectImage(index); setOverlay("photo"); }} aria-label={`View photo ${position + 1}`}><Image src={gallery.displayCandidates[index]} alt={`${props.hotelName} photo ${position + 1}`} fill sizes={position % 3 === 0 ? "100vw" : "50vw"} className={styles.cover} onError={() => gallery.onImageError(gallery.displayCandidates[index])} /></button>)}</div> : null}
       {overlay === "photo" ? <div className={styles.viewer} onTouchStart={event => { touchStart.current = {x:event.touches[0].clientX,y:event.touches[0].clientY}; }} onTouchEnd={event => { const start = touchStart.current; const touch = event.changedTouches[0]; if (start && Math.abs(touch.clientX-start.x)>40 && Math.abs(touch.clientY-start.y)<80) { if(touch.clientX>start.x) gallery.onPrevious(); else gallery.onNext(); } touchStart.current=null; }}><Image src={gallery.activeUrl} alt={gallery.imageAlt} fill sizes="100vw" style={{ objectFit: "contain" }} /><button type="button" aria-label="Previous photo" onClick={gallery.onPrevious}><ChevronLeft /></button><button type="button" aria-label="Next photo" onClick={gallery.onNext}><ChevronRight /></button></div> : null}
       {overlay === "amenities" ? <div className={styles.sheetBody}><>{mobileHotelAmenityGroups(props.amenityItems).map(group => <section key={group.title} className={styles.amenityGroup}><h3>{group.title}</h3><HotelAmenityList items={group.items} t={() => ""} className={styles.amenities} /></section>)}</></div> : null}
