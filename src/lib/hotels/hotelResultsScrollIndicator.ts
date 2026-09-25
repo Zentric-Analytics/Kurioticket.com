@@ -1,11 +1,12 @@
-export type FlightResultsScrollIndicatorGeometryInput = {
+export type HotelResultsScrollIndicatorGeometryInput = {
   scrollTop: number;
   scrollStart: number;
   scrollEnd: number;
   trackHeight: number;
+  minThumbHeight?: number;
 };
 
-export type FlightResultsScrollIndicatorGeometry = {
+export type HotelResultsScrollIndicatorGeometry = {
   thumbHeight: number;
   thumbOffset: number;
   scrollProgress: number;
@@ -13,21 +14,22 @@ export type FlightResultsScrollIndicatorGeometry = {
   isScrollable: boolean;
 };
 
-export const FLIGHT_RESULTS_WEB_SCROLL_THUMB_MIN_HEIGHT = 22;
-export const FLIGHT_RESULTS_WEB_SCROLL_THUMB_MAX_HEIGHT = 48;
-
 const finiteNonNegative = (value: number) =>
   Number.isFinite(value) ? Math.max(0, value) : 0;
 
-export function calculateFlightResultsScrollIndicatorGeometry({
+export function calculateHotelResultsScrollIndicatorGeometry({
   scrollTop,
   scrollStart,
   scrollEnd,
   trackHeight,
-}: FlightResultsScrollIndicatorGeometryInput): FlightResultsScrollIndicatorGeometry {
+  minThumbHeight = 24,
+}: HotelResultsScrollIndicatorGeometryInput): HotelResultsScrollIndicatorGeometry {
   const safeScrollTop = finiteNonNegative(scrollTop);
   const safeScrollStart = finiteNonNegative(scrollStart);
-  const safeScrollEnd = Math.max(safeScrollStart, finiteNonNegative(scrollEnd));
+  const safeScrollEnd = Math.max(
+    safeScrollStart,
+    finiteNonNegative(scrollEnd),
+  );
   const safeTrackHeight = finiteNonNegative(trackHeight);
   const maxScroll = Math.max(0, safeScrollEnd - safeScrollStart);
   const isScrollable = maxScroll > 0 && safeTrackHeight > 0;
@@ -44,18 +46,15 @@ export function calculateFlightResultsScrollIndicatorGeometry({
 
   const lowerBound = Math.min(
     safeTrackHeight,
-    FLIGHT_RESULTS_WEB_SCROLL_THUMB_MIN_HEIGHT,
-  );
-  const upperBound = Math.min(
-    safeTrackHeight,
-    Math.max(lowerBound, FLIGHT_RESULTS_WEB_SCROLL_THUMB_MAX_HEIGHT),
+    finiteNonNegative(minThumbHeight),
   );
   const representedContentHeight = safeTrackHeight + maxScroll;
-  const proportionalHeight = representedContentHeight > 0
-    ? safeTrackHeight * (safeTrackHeight / representedContentHeight)
-    : 0;
+  const proportionalHeight =
+    representedContentHeight > 0
+      ? safeTrackHeight * (safeTrackHeight / representedContentHeight)
+      : 0;
   const thumbHeight = Math.min(
-    upperBound,
+    safeTrackHeight,
     Math.max(lowerBound, finiteNonNegative(proportionalHeight)),
   );
   const relativeScrollTop = Math.max(0, safeScrollTop - safeScrollStart);

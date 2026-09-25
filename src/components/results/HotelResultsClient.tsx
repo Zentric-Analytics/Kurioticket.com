@@ -16,6 +16,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
 import { resultActionHref } from "@/lib/travel/resultAction";
 import { HotelPriceAlertControl } from "@/components/results/HotelPriceAlertControl";
+import { HotelResultsScrollIndicator } from "@/components/results/HotelResultsScrollIndicator";
 import { buildHotelFacilityFilterOptions, hotelMatchesFacilityFilters } from "@/components/results/hotelFacilityFilter";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { MobileResultsEditSheet } from "@/components/search/MobileResultsEditSheet";
@@ -2026,7 +2027,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           </nav>
         ) : null}
 
-        <div ref={resultsGridRef} className={cn(guided ? "grid gap-y-5 pb-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8" : "page-shell grid gap-y-3 pb-2 pt-12 max-sm:w-[calc(100%-24px)] sm:gap-y-5 sm:pb-6 sm:pt-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8")}>
+        <div ref={resultsGridRef} data-hotel-results-scroll-region className={cn(guided ? "grid gap-y-5 pb-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8" : "page-shell grid gap-y-3 pb-2 pt-12 max-sm:w-[calc(100%-24px)] sm:gap-y-5 sm:pb-6 sm:pt-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8")}>
           <aside ref={desktopFilterSidebarRef} className="relative hidden w-[288px] self-stretch min-[1200px]:block min-[1200px]:justify-self-end">
             <div>
               <HotelFilters layout="desktop" propertyNameQuery={propertyNameQuery} setPropertyNameQuery={updatePropertyNameQuery} t={t} maxPrice={maxPrice} minPrice={minPrice} setMaxPrice={updateMaxPrice} setMinPrice={updateMinPrice} resultMaxPrice={resultMaxPrice} hasPricedResults={hasPricedResults} formatPrice={formatHotelFilterPrice} locale={locale} stayNights={stayNights} selectedRatings={selectedHotelClasses} toggleRating={toggleHotelClass} starRatingCounts={starRatingCounts} options={filterOptions} selectedFilters={selectedFilters} toggleFilter={toggleFilter} activeFilterCount={activeFilterCount} onClear={resetFilters} />
@@ -2337,6 +2338,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         </aside>
       </ResultsRoot>
       {!guided ? <Footer variant="brand-legal-only" /> : null}
+      {!guided ? <HotelResultsScrollIndicator /> : null}
       </>}
     </>
   );

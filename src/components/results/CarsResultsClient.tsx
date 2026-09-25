@@ -1659,9 +1659,10 @@ export function CarsResultsClient({
       <MobileResultsEditSheet
         appearance="carsResultsEdit"
         open={mobileSearchOpen}
-        browserCanvasColor="#F5F7FB"
+        browserCanvasColor="#ffffff"
         freezeBodyPosition={false}
         isolatedBackdrop
+        backdropClassName="[top:env(safe-area-inset-top)]"
         closing={mobileSearchClosing}
         onCloseAnimationComplete={cancelMobileSearchDrawer}
         title={t("carsResults.editSearch")}
@@ -2383,9 +2384,15 @@ export function CarsResultsExperience({
     let shouldRestoreFocus = true;
     const activeDialogRef = quickFilterGroupId ? quickFiltersDialogRef : filtersDialogRef;
     const activeCloseButtonRef = quickFilterGroupId ? quickFiltersCloseButtonRef : filtersCloseButtonRef;
-    const focusDrawer = requestAnimationFrame(() =>
-      activeCloseButtonRef.current?.focus({ preventScroll: true }),
-    );
+    const focusDrawer = requestAnimationFrame(() => {
+      const shouldFocusCloseButton =
+        !quickFilterGroupId || mobileFiltersModalityRef.current === "keyboard";
+      if (shouldFocusCloseButton) {
+        activeCloseButtonRef.current?.focus({ preventScroll: true });
+        return;
+      }
+      activeDialogRef.current?.focus({ preventScroll: true });
+    });
     const closeForDesktop = () => {
       if (!media.matches) {
         shouldRestoreFocus = false;
@@ -3231,10 +3238,11 @@ export function CarsResultsExperience({
             aria-hidden="true"
             data-cars-quick-sheet-scrim
             className={cn(
-              "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 h-full w-full bg-[rgba(15,23,42,0.35)]",
+              "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-x-0 bottom-0 w-full bg-[rgba(15,23,42,0.35)]",
               quickFilterClosing &&
                 "mobile-results-sheet-backdrop-layer-closing",
             )}
+            style={{ top: "env(safe-area-inset-top)" }}
           />
           <section
             data-cars-quick-sheet
@@ -3255,17 +3263,16 @@ export function CarsResultsExperience({
               finishQuickFilterClose();
             }}
             className={cn(
-              "mobile-results-sheet-surface mobile-results-sheet-surface-smooth relative z-10 mx-3 mb-3 flex min-h-[240px] max-h-[min(76dvh,620px)] w-[calc(100%_-_24px)] flex-col overflow-hidden rounded-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]",
+              "mobile-results-sheet-surface mobile-results-sheet-surface-smooth cars-results-quick-sheet-surface relative z-10 mx-3 mb-3 flex min-h-[240px] max-h-[min(76dvh,620px)] w-[calc(100%_-_24px)] flex-col overflow-hidden rounded-[24px] bg-[#F2F4F8] outline-none shadow-none",
               quickFilterClosing && "mobile-results-sheet-surface-closing",
             )}
           >
-            <header className="grid min-h-[64px] shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-center bg-[#F2F4F8] px-[10px]">
-              <span aria-hidden="true" className="h-11 w-11" />
-              <h2 id={`cars-quick-${quickFilterGroupId}`} className="text-center text-[18px] font-bold leading-[23px] text-slate-950">
+            <header className="relative flex min-h-16 shrink-0 items-center justify-center bg-[#F2F4F8] px-16 py-3">
+              <h2 id={`cars-quick-${quickFilterGroupId}`} className="text-center text-base font-semibold text-slate-950">
                 {quickFilterGroupId === "sort" ? "Sort" : carFilterGroupLabel(activeQuickFilterGroup!, t, true)}
               </h2>
-              <button ref={quickFiltersCloseButtonRef} type="button" aria-label="Close" onClick={closeQuickFilter} className="inline-flex h-11 w-11 items-center justify-center text-slate-700 focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
-                <X className="h-[22px] w-[22px]" aria-hidden="true" />
+              <button ref={quickFiltersCloseButtonRef} type="button" aria-label="Close" onClick={closeQuickFilter} className="absolute right-3 inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </header>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#F2F4F8] p-4">

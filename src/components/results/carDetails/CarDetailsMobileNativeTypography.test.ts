@@ -75,16 +75,28 @@ test("Cars mobile web hero typography matches the native Inter hierarchy", () =>
   );
 });
 
-test("Cars mobile web tabs and Compare deals text match native", () => {
+test("Cars mobile tab strip disables Safari text inflation so authored native sizes render literally", () => {
+  assert.match(
+    nav,
+    /\[-webkit-text-size-adjust:none\] \[text-size-adjust:none\]/,
+  );
+  assert.match(
+    nav,
+    /lg:\[-webkit-text-size-adjust:100%\] lg:\[text-size-adjust:100%\]/,
+  );
+});
+
+test("Cars mobile web keeps the main tabs while hiding redundant panel headings", () => {
   assert.match(
     native,
     /tabText:\{fontWeight:"600",fontFamily:appFonts\.semibold\}/,
   );
   assert.match(
     nav,
-    /text-\[12px\] font-semibold leading-\[18px\][\s\S]*?min-\[390px\]:text-\[13px\]/,
+    /font-sans text-\[12px\] font-semibold leading-\[normal\] tracking-normal[\s\S]*?min-\[390px\]:text-\[13px\]/,
   );
   assert.match(nav, /text-\[#075EE8\] lg:text-blue/);
+  assert.match(nav, /text-\[#475569\] lg:hover:text-slate-950/);
   assert.match(nav, /bg-\[#075EE8\][^"]*lg:bg-blue/);
 
   assert.match(
@@ -93,7 +105,7 @@ test("Cars mobile web tabs and Compare deals text match native", () => {
   );
   assert.match(
     web,
-    /text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-slate-950/,
+    /hidden text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-slate-950 lg:block/,
   );
 
   assert.match(
@@ -140,7 +152,7 @@ test("Cars mobile web Pickup and return text and copy match native", () => {
   );
   assert.match(
     web,
-    /text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-\[#020617\]/,
+    /hidden text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-\[#020617\] lg:block/,
   );
 
   assert.match(
@@ -205,7 +217,7 @@ test("Cars mobile web Location and booking-dock text match native", () => {
   );
   assert.match(
     web,
-    /text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-slate-950/,
+    /hidden text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-slate-950 lg:block/,
   );
 
   assert.match(

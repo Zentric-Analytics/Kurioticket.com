@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { formatDisplayPrice, formatFlightResultCurrency } from "./formatCurrency";
+import { formatCurrency, formatDisplayPrice, formatFlightResultCurrency } from "./formatCurrency";
 import type { ExchangeRates } from "./exchangeRates";
 
 const rates: ExchangeRates = {
@@ -9,6 +9,12 @@ const rates: ExchangeRates = {
   EUR: 0.8,
   NGN: 1500,
 };
+
+test("web currency formatting keeps the canonical naira symbol", () => {
+  const formatted = formatCurrency(1281596.79, "NGN");
+  assert.match(formatted, /^₦/);
+  assert.doesNotMatch(formatted, /\bNGN\b/);
+});
 
 test("formatDisplayPrice preserves existing convertUsdEstimate behavior", () => {
   const price = formatDisplayPrice({
@@ -21,7 +27,8 @@ test("formatDisplayPrice preserves existing convertUsdEstimate behavior", () => 
   });
 
   assert.equal(price.amount, 15000);
-  assert.equal(price.formatted, new Intl.NumberFormat(undefined, { style: "currency", currency: "NGN", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(15000));
+  assert.match(price.formatted, /^₦/);
+  assert.doesNotMatch(price.formatted, /\bNGN\b/);
   assert.equal(price.currency, "NGN");
   assert.equal(price.isConvertedEstimate, true);
 });
@@ -47,7 +54,8 @@ test("formatDisplayPrice converts non-USD sources only when explicitly requested
   assert.equal(unchanged.currency, "EUR");
   assert.equal(unchanged.isConvertedEstimate, false);
   assert.equal(converted.amount, 15000);
-  assert.equal(converted.formatted, new Intl.NumberFormat(undefined, { style: "currency", currency: "NGN", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(15000));
+  assert.match(converted.formatted, /^₦/);
+  assert.doesNotMatch(converted.formatted, /\bNGN\b/);
   assert.equal(converted.currency, "NGN");
   assert.equal(converted.isConvertedEstimate, true);
 });
