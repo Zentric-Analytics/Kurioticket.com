@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import test from "node:test";
 
 const web = readFileSync(
@@ -75,14 +75,26 @@ test("Cars mobile web hero typography matches the native Inter hierarchy", () =>
   );
 });
 
-test("Cars mobile tab strip disables Safari text inflation so authored native sizes render literally", () => {
+test("Cars mobile tabs use the same static Inter 600 face as native", () => {
+  assert.match(native, /tabText:\{fontWeight:"600",fontFamily:appFonts\.semibold\}/);
+  assert.match(nav, /car-details-native-tab-label/);
+  assert.doesNotMatch(nav, /\[-webkit-text-size-adjust:none\]|\[text-size-adjust:none\]/);
   assert.match(
-    nav,
-    /\[-webkit-text-size-adjust:none\] \[text-size-adjust:none\]/,
+    css,
+    /font-family: "Kurioticket Inter Native Semibold";[\s\S]*?Inter_600SemiBold\.ttf[\s\S]*?font-weight: 600;/,
   );
   assert.match(
-    nav,
-    /lg:\[-webkit-text-size-adjust:100%\] lg:\[text-size-adjust:100%\]/,
+    css,
+    /\.car-details-native-tab-label \{[\s\S]*?font-family:[\s\S]*?"Kurioticket Inter Native Semibold"[\s\S]*?font-weight: 600;[\s\S]*?font-synthesis: none;/,
+  );
+  assert.equal(
+    statSync(
+      new URL(
+        "../../../../public/brand/fonts/inter/Inter_600SemiBold.ttf",
+        import.meta.url,
+      ),
+    ).size,
+    343632,
   );
 });
 

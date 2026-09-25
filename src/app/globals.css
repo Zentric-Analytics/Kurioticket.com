@@ -8,6 +8,16 @@
   font-weight: 100 900;
 }
 
+/* Exact static semibold face used by the native app through
+   @expo-google-fonts/inter@0.4.2. Keep this scoped to parity-critical labels. */
+@font-face {
+  font-family: "Kurioticket Inter Native Semibold";
+  src: url("/brand/fonts/inter/Inter_600SemiBold.ttf") format("truetype");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 600;
+}
+
 @font-face {
   font-family: "Inter";
   src: url("/brand/fonts/inter/Inter-Italic-VariableFont.ttf")
@@ -157,12 +167,24 @@ a {
 }
 
 /* Cars Details mobile-web typography is dimensioned to the native Inter scale.
-   Disable Safari text inflation on this surface so 10/11/12/13/14/15/19/22px
-   tokens render at their authored sizes instead of being enlarged heuristically. */
+   Keep Safari at the authored CSS scale for the overall details surface. */
 @media (max-width: 1023px) {
   [data-car-details-experience] {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+  }
+
+  .car-details-native-tab-label {
+    font-family:
+      "Kurioticket Inter Native Semibold",
+      "Inter",
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
+      sans-serif;
+    font-weight: 600;
+    font-synthesis: none;
   }
 }
 
