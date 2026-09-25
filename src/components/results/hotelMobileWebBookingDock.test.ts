@@ -40,8 +40,10 @@ test("standalone provider handoff remains server-authoritative", () => {
   assert.match(client, /fetch\("\/api\/redirect"/);
   assert.match(client, /type: "hotel"/);
   assert.match(client, /sourcePage: "hotel_details"/);
-  assert.match(client, /targetWindow\.location\.replace\(data\.url\)/);
-  assert.match(client, /else window\.location\.href = data\.url/);
+  assert.match(
+    client,
+    /if \(targetWindow && !targetWindow\.closed\) \{[\s\S]*?targetWindow\.location\.replace\(data\.url\);[\s\S]*?setRedirecting\(false\);[\s\S]*?\} else \{[\s\S]*?window\.location\.href = data\.url;[\s\S]*?\}/,
+  );
   const offerBlock = client.slice(
     client.indexOf("const standaloneProviderOffers"),
     client.indexOf("const guidedSelection"),
@@ -91,8 +93,10 @@ test("web Hotel provider action stays live-price gated and server-authoritative"
     /mode === "standalone" &&[\s\S]*?providerEnabled &&[\s\S]*?nightlyDisplayPrice &&/,
   );
   assert.match(client, /fetch\("\/api\/redirect"/);
-  assert.match(client, /targetWindow\.location\.replace\(data\.url\)/);
-  assert.match(client, /else window\.location\.href = data\.url/);
+  assert.match(
+    client,
+    /if \(targetWindow && !targetWindow\.closed\) \{[\s\S]*?targetWindow\.location\.replace\(data\.url\);[\s\S]*?setRedirecting\(false\);[\s\S]*?\} else \{[\s\S]*?window\.location\.href = data\.url;[\s\S]*?\}/,
+  );
 });
 
 test("mobile Hotel booking dock remains usable on narrow phones and respects the safe area", () => {
