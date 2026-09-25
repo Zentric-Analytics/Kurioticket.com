@@ -65,7 +65,8 @@ test("source-contract: mobile Cars typography uses a restrained primary-secondar
   assert.match(compactHeader, /text-\[11px\] font-semibold[^\"]*text-\[#536B92\]/);
   assert.match(compactHeader, /text-\[14px\] font-semibold text-\[#07133B\]/);
   assert.doesNotMatch(compactHeader, /font-extrabold/);
-  assert.match(compactHeader, /bg-\[#F5F7FB\]/);
+  assert.match(compactHeader, /bg-white/);
+  assert.doesNotMatch(compactHeader, /bg-\[#F5F7FB\]/);
   assert.match(compactHeader, /data-cars-compact-edit-icon[\s\S]*?strokeWidth=\{2\.4\}/);
   assert.match(compactHeader, /<SlidersHorizontal[\s\S]*?text-black/);
 
