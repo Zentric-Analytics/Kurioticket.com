@@ -74,7 +74,7 @@ test("Cars shortcuts use the Hotels continuous overlay and sheet motion system",
   assert.match(styles, /\.mobile-results-sheet-surface-smooth \{ animation-duration: 320ms; \}/);
   assert.match(styles, /cars-results-quick-sheet-surface-in[\s\S]*?translate3d\(0, 28px, 0\)[\s\S]*?translate3d\(0, 0, 0\)/);
   assert.match(styles, /\.cars-results-quick-sheet-surface \{[\s\S]*?animation: cars-results-quick-sheet-surface-in 220ms/);
-  assert.doesNotMatch(styles, /\.cars-results-quick-sheet-surface \{[\s\S]*?backface-visibility/);
+  assert.doesNotMatch(styles, /\.cars-results-quick-sheet-surface \{[^}]*backface-visibility/);
   assert.match(
     hotels,
     /mobile-results-sheet-backdrop-layer[\s\S]*?mobile-results-sheet-surface mobile-results-sheet-surface-smooth/,
