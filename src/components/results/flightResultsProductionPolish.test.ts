@@ -40,7 +40,7 @@ test("mobile nearby insight, quick filters, and price alert use compact native-l
     /@media \(max-width: 639px\) \{[\s\S]*?\.flight-mobile-cheaper-nearby \{[\s\S]*?font-size: 11px !important;[\s\S]*?line-height: 15px !important;[\s\S]*?-webkit-text-size-adjust: none;[\s\S]*?text-size-adjust: none;[\s\S]*?\}/,
   );
   assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,350}py-1/);
-  assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 pt-2/);
+  assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 pt-2/);\n  assert.match(source, /data-mobile-flight-results-summary-row\\s*className="mb-2 flex w-full/);
 });
 
 test("partial-provider warnings stay internal while genuine result failures remain visible", async () => {
@@ -104,7 +104,7 @@ test("Flight Results matches the Cars Back-to-top control", async () => {
   assert.match(source, /!guidedMode && showBackToTop && !filtersOpen/);
   assert.match(source, /aria-label="Back to top"/);
   assert.match(source, /window\.scrollTo\(\{ top: 0, left: 0, behavior: "auto" \}\)/);
-  assert.match(source, /bottom-\[calc\(3rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(source, /bottom-\[calc\(2rem\+env\(safe-area-inset-bottom\)\)\]/);
   assert.match(source, /end-4 z-40/);
   assert.match(source, /rounded-full/);
   assert.match(source, /sm:bottom-\[calc\(1rem\+env\(safe-area-inset-bottom\)\)\]/);
@@ -174,7 +174,7 @@ test("mobile Flight Results uses the Cars-style scroll handoff header", async ()
   assert.match(source, /relative translate-y-1\/2/);
   assert.match(source, /ref=\{mobileSearchSummarySentinelRef\}/);
   assert.match(source, /\{renderMobileCompactResultsHeader\(\)\}/);
-  assert.match(source, /fixed inset-x-0 top-0 z-\[90\] bg-\[#F2F4F8\] px-3 pb-2/);
+  assert.match(source, /fixed inset-x-0 top-0 z-\[90\] bg-\[#F2F4F8\] px-3 pb-2/);\n  assert.match(source, /visible pointer-events-auto translate-y-0 opacity-100/);\n  assert.match(source, /invisible pointer-events-none -translate-y-full opacity-0/);
   assert.match(source, /<ArrowLeft className="h-5 w-5" aria-hidden="true" \/>/);
   assert.match(source, /<Pencil[\s\S]*data-flight-compact-edit-icon/);
 });
