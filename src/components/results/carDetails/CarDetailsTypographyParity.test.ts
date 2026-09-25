@@ -49,6 +49,19 @@ test("mobile tabs use native responsive sizes and native selected color", () => 
   assert.match(nav, /bg-\[#075EE8\][^"]*lg:bg-blue/);
 });
 
+test("mobile tab labels own rendered size outside Tailwind so browser button font inheritance cannot enlarge them", () => {
+  assert.match(
+    css,
+    /\.car-details-native-tab-label \{[^}]*font-size: 12px;[^}]*line-height: normal;[^}]*font-weight: 600;/,
+  );
+  assert.match(
+    css,
+    /@media \(min-width: 390px\) and \(max-width: 1023px\) \{ \.car-details-native-tab-label \{ font-size: 13px; \} \}/,
+  );
+  assert.match(css, /button, input, select, textarea \{ font: inherit; \}/);
+  assert.match(nav, /text-\[12px\][^"]*min-\[390px\]:text-\[13px\]/);
+});
+
 test("mobile tab strip binds the native static semibold face instead of the variable web face", () => {
   assert.match(nav, /car-details-native-tab-label/);
   assert.doesNotMatch(nav, /\[-webkit-text-size-adjust:none\]|\[text-size-adjust:none\]/);
