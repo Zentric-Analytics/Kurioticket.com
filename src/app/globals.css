@@ -177,8 +177,8 @@ textarea {
    browser button typography and mobile text inflation cannot override it. */
 @media (max-width: 639px) {
   .flight-mobile-cheaper-nearby {
-    font-size: 5px !important;
-    line-height: 8px !important;
+    font-size: 8px !important;
+    line-height: 11px !important;
     -webkit-text-size-adjust: none;
     text-size-adjust: none;
   }
