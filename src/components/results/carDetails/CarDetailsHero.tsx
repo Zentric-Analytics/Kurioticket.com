@@ -30,6 +30,7 @@ export function CarDetailsHero({
   desktopOverlay,
   imageStageRef,
   guidedMobileActions,
+  reserveMobileControlSafeZone = false,
 }: {
   car: NormalizedCarResult;
   text: Record<string, string>;
@@ -37,6 +38,7 @@ export function CarDetailsHero({
   desktopOverlay: ReactNode;
   imageStageRef?: Ref<HTMLElement>;
   guidedMobileActions?: ReactNode;
+  reserveMobileControlSafeZone?: boolean;
 }) {
   const transmissionIcon = /manual/i.test(car.transmission)
     ? ManualTransmissionIcon
@@ -73,21 +75,49 @@ export function CarDetailsHero({
       <div className="grid gap-0 lg:grid-cols-2 lg:items-start lg:gap-6">
         <figure
           ref={imageStageRef}
-          className="relative min-w-0 bg-white pt-5 lg:pt-0"
+          className={`relative min-w-0 bg-white ${reserveMobileControlSafeZone ? "" : "pt-5"} lg:pt-0`}
           data-car-details-image-stage
         >
-          <div className="relative h-[clamp(13.75rem,58vw,16rem)] w-full overflow-hidden bg-white lg:aspect-[4/3] lg:h-auto lg:rounded-xl lg:bg-slate-100">
-            <div className="absolute inset-0 lg:hidden">
-              <CarResultImage
-                imageUrl={car.imageUrl}
-                imageAlt={car.imageAlt}
-                modelName={car.modelName}
-                category={car.category}
-                sizes="100vw"
-                fit="contain"
-                priority
-              />
-            </div>
+          <div
+            className={`relative w-full overflow-hidden bg-white ${reserveMobileControlSafeZone ? "" : "h-[clamp(13.75rem,58vw,16rem)]"} lg:aspect-[4/3] lg:h-auto lg:rounded-xl lg:bg-slate-100`}
+          >
+            {reserveMobileControlSafeZone ? (
+              <div className="lg:hidden" data-car-details-mobile-native-image-stage>
+                <div
+                  className="h-[var(--car-details-mobile-header-boundary)]"
+                  aria-hidden="true"
+                  data-car-details-mobile-control-safe-zone
+                />
+                <div
+                  className="h-[clamp(11rem,50vw,14rem)] pb-3"
+                  data-car-details-mobile-vehicle-stage
+                >
+                  <div className="relative h-full w-full">
+                    <CarResultImage
+                      imageUrl={car.imageUrl}
+                      imageAlt={car.imageAlt}
+                      modelName={car.modelName}
+                      category={car.category}
+                      sizes="100vw"
+                      fit="contain"
+                      priority
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="absolute inset-0 lg:hidden">
+                <CarResultImage
+                  imageUrl={car.imageUrl}
+                  imageAlt={car.imageAlt}
+                  modelName={car.modelName}
+                  category={car.category}
+                  sizes="100vw"
+                  fit="contain"
+                  priority
+                />
+              </div>
+            )}
             <div className="absolute inset-0 hidden lg:block">
               <CarResultImage
                 imageUrl={car.imageUrl}

@@ -41,10 +41,11 @@ test("mobile vehicle identity and specification typography mirrors native", () =
 test("mobile tabs use native responsive sizes and native selected color", () => {
   assert.match(
     nav,
-    /text-\[12px\] font-semibold leading-\[18px\][^"]*min-\[390px\]:text-\[13px\][^"]*lg:text-sm lg:font-bold lg:leading-normal/,
+    /font-sans text-\[12px\] font-semibold leading-\[normal\] tracking-normal[^"]*min-\[390px\]:text-\[13px\][^"]*lg:text-sm lg:font-bold lg:leading-normal/,
   );
   assert.match(nav, /whitespace-nowrap/);
   assert.match(nav, /text-\[#075EE8\] lg:text-blue/);
+  assert.match(nav, /text-\[#475569\] lg:hover:text-slate-950/);
   assert.match(nav, /bg-\[#075EE8\][^"]*lg:bg-blue/);
 });
 

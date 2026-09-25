@@ -82,9 +82,10 @@ test("Cars mobile web keeps the main tabs while hiding redundant panel headings"
   );
   assert.match(
     nav,
-    /text-\[12px\] font-semibold leading-\[18px\][\s\S]*?min-\[390px\]:text-\[13px\]/,
+    /font-sans text-\[12px\] font-semibold leading-\[normal\] tracking-normal[\s\S]*?min-\[390px\]:text-\[13px\]/,
   );
   assert.match(nav, /text-\[#075EE8\] lg:text-blue/);
+  assert.match(nav, /text-\[#475569\] lg:hover:text-slate-950/);
   assert.match(nav, /bg-\[#075EE8\][^"]*lg:bg-blue/);
 
   assert.match(
