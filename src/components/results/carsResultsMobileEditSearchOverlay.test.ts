@@ -14,7 +14,9 @@ test("Cars mobile Edit Search isolates backdrop motion and closes on animation c
   assert.ok(start >= 0 && end > start);
   assert.match(sheet, /isolatedBackdrop/);
   assert.match(sheet, /appearance="carsResultsEdit"/);
-  assert.match(sheet, /browserCanvasColor="#F5F7FB"/);
+  assert.match(sheet, /browserCanvasColor="#ffffff"/);
+  assert.match(sheet, /\n\s*freezeBodyPosition\n/);
+  assert.doesNotMatch(sheet, /freezeBodyPosition=\{false\}|backdropClassName|safe-area-inset-top/);
   assert.doesNotMatch(sheet, /bottomSurfaceContinuation/);
   assert.match(sheet, /closing=\{mobileSearchClosing\}/);
   assert.match(sheet, /onCloseAnimationComplete=\{cancelMobileSearchDrawer\}/);
@@ -46,9 +48,10 @@ test("Cars Edit Search uses the native floating cutout footprint", () => {
   assert.match(shellSource, /bg-\[#F5F7FB\]/);
   assert.match(
     shellSource,
-    /text-\[19px\] font-semibold leading-\[24px\] tracking-normal/,
+    /pointer-events-none absolute inset-x-12 top-1\/2 -translate-y-1\/2 text-center text-\[19px\] font-semibold leading-\[24px\] tracking-normal/,
   );
-  assert.match(shellSource, /min-h-\[52px\]/);
+  assert.match(shellSource, /relative min-h-\[52px\] justify-center/);
+  assert.match(shellSource, /carsResultsEdit && "absolute right-0"/);
   assert.match(cssSource, /rgba\(8, 18, 35, 0\.52\)/);
   assert.match(cssSource, /animation-duration: 280ms/);
   assert.match(cssSource, /animation-duration: 240ms/);
