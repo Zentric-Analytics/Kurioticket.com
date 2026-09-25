@@ -106,7 +106,8 @@ export function acquireMobileResultsScrollLock(
       window.scrollTo({
         left: original.scrollX,
         top: original.scrollY,
-        behavior: "auto",
+        // Do not inherit the page-wide smooth scrolling during overlay cleanup.
+        behavior: "instant",
       });
     }
   };
