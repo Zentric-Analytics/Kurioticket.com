@@ -60,12 +60,8 @@ export function MobileNativeFareInformationDeck({
                 aria-selected={selected}
                 aria-controls={`mobile-fare-panel-${tab.id}`}
                 onClick={() => onTabChange(tab.id)}
-                style={{
-                  color: "#536B92",
-                  fontWeight: 600,
-                  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-                className="relative min-h-[48px] shrink-0 whitespace-nowrap px-0 text-[12px] leading-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0754F7]/35"
+                style={{ color: "#536B92" }}
+                className="flight-mobile-fare-info-tab-label relative min-h-[48px] shrink-0 whitespace-nowrap px-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0754F7]/35"
               >
                 {tab.label}
                 {selected ? <span className="absolute -bottom-px left-0.5 right-0.5 h-[3px] rounded-[2px] bg-[#0754F7]" aria-hidden="true" /> : null}

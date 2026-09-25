@@ -19,6 +19,15 @@ const iosGuardSource = readFileSync(
   "utf8",
 );
 
+const mobileDetailsCssSource = readFileSync(
+  new URL("./hotelDetails/HotelDetailsMobile.module.css", import.meta.url),
+  "utf8",
+);
+const stayEditorCssSource = readFileSync(
+  new URL("./hotelDetails/MobileHotelStayEditor.module.css", import.meta.url),
+  "utf8",
+);
+
 test("iOS Hotel dialogs focus the dialog surface instead of the close X", () => {
   assert.match(iosGuardSource, /iPad\|iPhone\|iPod/);
   assert.match(iosGuardSource, /MacIntel/);
@@ -30,6 +39,11 @@ test("iOS Hotel dialogs focus the dialog surface instead of the close X", () => 
   assert.match(stayEditorSource, /if \(isIosHotelMobileWeb\(\)\) dialogRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
   assert.match(stayEditorSource, /else closeRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
   assert.match(stayEditorSource, /<dialog ref=\{dialogRef\} tabIndex=\{-1\}/);
+
+  assert.match(mobileDetailsCssSource, /\.dialog:focus, \.dialog:focus-visible \{ outline: none; \}/);
+  assert.match(stayEditorCssSource, /\.dialog:focus, \.dialog:focus-visible \{ outline: none; \}/);
+  assert.match(mobileDetailsCssSource, /\.details button:focus-visible, \.details a:focus-visible \{ outline: 2px solid var\(--accent\)/);
+  assert.match(stayEditorCssSource, /\.surface button:focus-visible \{ outline: 2px solid #064cf7/);
 });
 
 test("Hotel Results no longer carries an iOS-only quick-filter rail workaround", () => {

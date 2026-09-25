@@ -1660,9 +1660,8 @@ export function CarsResultsClient({
         appearance="carsResultsEdit"
         open={mobileSearchOpen}
         browserCanvasColor="#ffffff"
-        freezeBodyPosition={false}
+        freezeBodyPosition
         isolatedBackdrop
-        backdropClassName="[top:env(safe-area-inset-top)]"
         closing={mobileSearchClosing}
         onCloseAnimationComplete={cancelMobileSearchDrawer}
         title={t("carsResults.editSearch")}
@@ -1949,7 +1948,8 @@ export function CarsResultsExperience({
   const quickFilterClosingRef = useRef(false);
   const quickFilterGroupIdRef = useRef<string | null>(null);
   const quickFilterCloseTimerRef = useRef<number | null>(null);
-  const mobileFiltersOverlayOpen = filtersOpen || quickFilterGroupId !== null;
+  const quickFilterOverlayOpen = quickFilterGroupId !== null;
+  const mobileFiltersOverlayOpen = filtersOpen || quickFilterOverlayOpen;
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
@@ -2362,9 +2362,9 @@ export function CarsResultsExperience({
     const media = window.matchMedia("(max-width: 1023px)");
     if (!media.matches) return undefined;
 
-    const releaseScrollLock = acquireMobileResultsScrollLock({
-      freezeBodyPosition: false,
-    });
+    const releaseScrollLock = quickFilterOverlayOpen
+      ? acquireMobileResultsScrollLock()
+      : acquireMobileResultsScrollLock({ freezeBodyPosition: false });
     mobileFiltersScrollLockRef.current = releaseScrollLock;
     return () => {
       releaseScrollLock();
@@ -2372,7 +2372,7 @@ export function CarsResultsExperience({
         mobileFiltersScrollLockRef.current = null;
       }
     };
-  }, [mobileFiltersOverlayOpen]);
+  }, [mobileFiltersOverlayOpen, quickFilterOverlayOpen]);
   useEffect(() => {
     if ((!filtersOpen && !quickFilterGroupId) || typeof window === "undefined") {
       return undefined;
@@ -3238,11 +3238,10 @@ export function CarsResultsExperience({
             aria-hidden="true"
             data-cars-quick-sheet-scrim
             className={cn(
-              "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-x-0 bottom-0 w-full bg-[rgba(15,23,42,0.35)]",
+              "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 bg-[rgba(8,18,35,0.52)]",
               quickFilterClosing &&
                 "mobile-results-sheet-backdrop-layer-closing",
             )}
-            style={{ top: "env(safe-area-inset-top)" }}
           />
           <section
             data-cars-quick-sheet

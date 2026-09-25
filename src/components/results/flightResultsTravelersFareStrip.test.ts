@@ -87,10 +87,13 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.doesNotMatch(mobileStrip, /onTouch|preventDefault\(\)/);
   const nearbyInsight = mobileStrip.match(/className="([^"]*)">Cheaper nearby:/)?.[1] ?? "";
   assert.match(nearbyInsight, /min-h-\[28px\]/);
-  assert.match(nearbyInsight, /text-\[5px\]/);
-  assert.match(nearbyInsight, /leading-\[8px\]/);
+  assert.match(nearbyInsight, /flight-mobile-cheaper-nearby/);
   assert.match(nearbyInsight, /font-medium/);
-  assert.doesNotMatch(nearbyInsight, /text-\[8px\]|leading-\[10px\]|text-\[9px\]|leading-\[12px\]/);
+  assert.doesNotMatch(nearbyInsight, /text-\[\d+px\]|leading-\[\d+px\]/);
+  assert.match(
+    styles,
+    /@media \(max-width: 639px\) \{[\s\S]*?\.flight-mobile-cheaper-nearby \{[\s\S]*?font-size: 11px !important;[\s\S]*?line-height: 15px !important;[\s\S]*?-webkit-text-size-adjust: none;[\s\S]*?text-size-adjust: none;[\s\S]*?\}/,
+  );
   assert.match(mobileStrip, /onClick=\{\(\) => handleNearbyFareDateSelect\(cheaperNearbyFare\.date\)\}/);
 });
 

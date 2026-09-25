@@ -86,12 +86,14 @@ test("a committed Results navigation remounts client state for the new search", 
   );
 });
 
-test("mobile Edit Search has one overflow-only sheet lock and never repositions the Results document", () => {
+test("mobile Edit Search delegates one fixed-body lock to the shared sheet without manual scroll ownership", () => {
   assert.doesNotMatch(source, /mobileSearchScrollLockRef/);
-  assert.match(
-    source,
-    /<MobileResultsEditSheet[\s\S]*?freezeBodyPosition=\{false\}[\s\S]*?appearance="carsResultsEdit"|<MobileResultsEditSheet[\s\S]*?appearance="carsResultsEdit"[\s\S]*?freezeBodyPosition=\{false\}/,
-  );
+  const start = source.indexOf('<MobileResultsEditSheet\n        appearance="carsResultsEdit"');
+  const end = source.indexOf("</MobileResultsEditSheet>", start);
+  const sheet = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.match(sheet, /\n\s*freezeBodyPosition\n/);
+  assert.doesNotMatch(sheet, /freezeBodyPosition=\{false\}|backdropClassName|safe-area-inset-top/);
   assert.match(
     sheetSource,
     /acquireMobileResultsScrollLock\(\{\s*freezeBodyPosition,\s*\}\)/,

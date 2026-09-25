@@ -25,13 +25,17 @@ test("mobile Flight Results disables text inflation within its existing page sco
   );
 });
 
-test("nearby insight retains its authored mobile typography", () => {
+test("nearby insight locks its rendered mobile typography through a dedicated rule", () => {
   const nearbyInsight =
     resultsSource.match(/className="([^"]*)">Cheaper nearby:/)?.[1] ?? "";
 
-  assert.match(nearbyInsight, /text-\[5px\]/);
-  assert.match(nearbyInsight, /leading-\[8px\]/);
+  assert.match(nearbyInsight, /flight-mobile-cheaper-nearby/);
   assert.match(nearbyInsight, /font-medium/);
+  assert.doesNotMatch(nearbyInsight, /text-\[\d+px\]|leading-\[\d+px\]/);
+  assert.match(
+    css,
+    /@media \(max-width: 639px\) \{[\s\S]*?\.flight-mobile-cheaper-nearby \{[\s\S]*?font-size: 11px !important;[\s\S]*?line-height: 15px !important;[\s\S]*?-webkit-text-size-adjust: none;[\s\S]*?text-size-adjust: none;[\s\S]*?\}/,
+  );
 });
 
 test("mobile Flight Results uses the native compact hierarchy without changing desktop rules", () => {
