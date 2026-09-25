@@ -63,18 +63,24 @@ test("mobile web KAYAK Compare deals mirrors native provider-owned identity", ()
   );
 });
 
-test("mobile web KAYAK dock uses native Continue deal semantics and compact action width", () => {
+test("mobile web KAYAK dock opens the selected sandbox deal in a secure new tab", () => {
   const dock = details.slice(details.indexOf("function MobileBookingDock"));
+  assert.match(
+    details,
+    /primaryAction\.kind === "sandbox-handoff"[\s\S]*?sandboxBookingUrl\(primaryOffer\?\.bookingUrl\)/,
+  );
+  assert.match(details, /action=\{effectivePrimaryAction\}/);
   assert.match(dock, /action\.kind === "sandbox-handoff"/);
   assert.match(dock, /data-mobile-car-dock-action/);
   assert.match(dock, /min-w-\[140px\] max-w-\[180px\] flex-\[0\.78\]/);
-  assert.match(
-    dock,
-    /action\.kind === "sandbox-handoff"[\s\S]*?<button[\s\S]*?disabled[\s\S]*?copy\("carDetails\.continueDeal"\)/,
-  );
   const sandboxMobile = dock.slice(
     dock.indexOf('action.kind === "sandbox-handoff"'),
     dock.indexOf('action.kind === "standalone-disabled-provider"'),
   );
-  assert.doesNotMatch(sandboxMobile, /<a\b|href=|target=|Open KAYAK test page/);
+  assert.match(sandboxMobile, /<a[\s\S]*?href=\{action\.href\}/);
+  assert.match(sandboxMobile, /target="_blank"/);
+  assert.match(sandboxMobile, /rel="noopener noreferrer"/);
+  assert.match(sandboxMobile, /referrerPolicy="no-referrer"/);
+  assert.match(sandboxMobile, /copy\("carDetails\.continueDeal"\)/);
+  assert.doesNotMatch(sandboxMobile, /<button[\s\S]*?disabled/);
 });
