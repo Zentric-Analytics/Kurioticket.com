@@ -48,7 +48,7 @@ test("Hotel mobile compact results header matches the Cars three-column toolbar"
 
 test("Hotel mobile filter and quick-filter surfaces match Cars background treatment", () => {
   assert.match(resultsSource, /data-mobile-hotel-shortcuts[\s\S]*scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\]/);
-  assert.match(resultsSource, /count > 0[\s\S]*border-\[#075EE8\] bg-\[#EAF2FF\] text-\[#004BB8\]/);
+  assert.match(resultsSource, /active[\s\S]*border-\[#075EE8\] bg-\[#EAF2FF\] text-\[#004BB8\]/);
   assert.match(resultsSource, /mobileShortcutMenuContentRef[sS]*rounded-t-[20px] bg-[#F2F4F8]/);
   assert.match(resultsSource, /mobileShortcutMenuContentRef[sS]*header className="[^"]*bg-[#F2F4F8]/);
   assert.match(resultsSource, /max-h-[calc(min(76dvh,620px)-9rem)][^"]*bg-[#F2F4F8]/);
@@ -70,7 +70,7 @@ test("mobile Hotel shortcut rail keeps Cars geometry while Sort stays with the r
   assert.match(resultsSource, /setFiltersOpen\(true\)/);
   assert.match(resultsSource, /activeFilterCount/);
   assert.match(resultsSource, /type MobileHotelShortcutMenu = "price" \| "stars" \| "amenities" \| "roomTypes" \| "sort"/);
-  assert.match(toolbar, /<span>Filter<\/span>[\s\S]*trigger\("price", "Price"[\s\S]*trigger\("stars", "Stars"[\s\S]*trigger\("amenities", "Facilities"[\s\S]*trigger\("roomTypes", "Room & bed"/);
+  assert.match(toolbar, /<span>Filter<\/span>[\s\S]*trigger\("price", mobilePriceShortcutLabel[\s\S]*trigger\("stars", mobileStarsShortcutLabel[\s\S]*trigger\("amenities", mobileFacilitiesShortcutLabel[\s\S]*trigger\("roomTypes", mobileRoomTypesShortcutLabel/);
   assert.doesNotMatch(toolbar, /Sort hotels:|openMobileShortcutMenu\("sort"/);
   assert.match(resultsSource, /handleMobileSortSelection/);
   assert.match(resultsSource, /aria-pressed=\{hotelSummarySortMode === option.value\}/);
@@ -129,4 +129,16 @@ test("Hotel mobile Back-to-top sits near the bottom edge while desktop spacing s
   assert.match(control, /bottom-\[calc\(1rem\+env\(safe-area-inset-bottom\)\)\]/);
   assert.match(control, /sm:bottom-6 sm:right-6/);
   assert.doesNotMatch(control, /bottom-\[calc\(5rem\+env\(safe-area-inset-bottom\)\)\]/);
+});
+
+
+test("Hotel mobile shortcut labels replace per-chip count badges with the selected values", () => {
+  assert.match(resultsSource, /mobilePriceShortcutLabel/);
+  assert.match(resultsSource, /mobileStarsShortcutLabel/);
+  assert.match(resultsSource, /mobileFacilitiesShortcutLabel/);
+  assert.match(resultsSource, /mobileRoomTypesShortcutLabel/);
+  assert.match(resultsSource, /notation: "compact"/);
+  assert.match(resultsSource, /aria-pressed=\{active\}/);
+  assert.doesNotMatch(resultsSource, /\{count > 0 \? <span className="rounded-full bg-\[#004BB8\]/);
+  assert.match(resultsSource, /hidden max-w-full space-y-2 overflow-x-clip sm:block/);
 });

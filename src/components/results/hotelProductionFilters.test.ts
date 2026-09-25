@@ -51,12 +51,13 @@ test("mobile Hotel filter sheet uses the Cars continuous #F2F4F8 surface", () =>
   assert.doesNotMatch(sheet, /bg-[#F1F3F8]|sm:bg-[#F6F8FB]/);
 });
 
-test("filter sheet exposes clear and deterministic result apply feedback", () => {
+test("filter sheet applies local filters without replacing Hotel cards with timed feedback", () => {
   assert.match(source, /activeFilterCount > 0 \?\s*\(?\s*<button/);
   assert.match(source, /t\("hotelResults.noStaysMatchFiltersTitle"\)/);
   assert.match(source, /t\("deals.results.package.view.hotel"\)/);
   assert.match(source, /Intl.NumberFormat\(locale\).format\(sortedVisibleHotels.length\)/);
-  assert.match(source, /disabled=\{filterApplying \|\| sortedVisibleHotels\.length === 0\}/);
+  assert.match(source, /disabled=\{sortedVisibleHotels\.length === 0\}/);
+  assert.doesNotMatch(source, /disabled=\{filterApplying \|\| sortedVisibleHotels\.length === 0\}/);
   assert.match(source, /event\.key === "Escape"/);
   assert.match(source, /event\.key === "Tab"/);
   assert.match(source, /kurioticketHotelFiltersOpen/);
@@ -64,7 +65,10 @@ test("filter sheet exposes clear and deterministic result apply feedback", () =>
   assert.match(source, /env\(safe-area-inset-top\)/);
   assert.match(source, /env\(safe-area-inset-bottom\)/);
   assert.match(source, /overflow-y-auto overflow-x-hidden overscroll-contain/);
-  assert.match(source, /filters"\} applied/);
+  assert.match(source, /hidden max-w-full space-y-2 overflow-x-clip sm:block/);
+  assert.match(source, /mobilePriceShortcutLabel/);
+  assert.match(source, /mobileFacilitiesShortcutLabel/);
+  assert.match(source, /mobileRoomTypesShortcutLabel/);
   assert.match(source, /bg-slate-950\/35 backdrop-blur-\[1px\]/);
 });
 
@@ -85,9 +89,11 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.doesNotMatch(source, /mobileQuickFacilities = \["wifi", "breakfast", "pool"\]/);
   assert.match(source, /overflow-x-auto overscroll-x-contain/);
   assert.match(source, /\[&::-webkit-scrollbar\]:hidden/);
-  assert.match(source, /<span>Filter<\/span>[\s\S]*trigger\("price", "Price"[\s\S]*trigger\(\s*"stars",\s*"Stars"[\s\S]*trigger\(\s*"amenities",\s*"Facilities"/);
+  assert.match(source, /<span>Filter<\/span>[\s\S]*trigger\("price", mobilePriceShortcutLabel[\s\S]*trigger\("stars", mobileStarsShortcutLabel[\s\S]*trigger\("amenities", mobileFacilitiesShortcutLabel/);
   assert.match(source, /type MobileHotelShortcutMenu = "price" \| "stars" \| "amenities"/);
-  assert.match(source, /trigger\("price", "Price", priceFilterActive \? 1 : 0\)/);
+  assert.match(source, /trigger\("price", mobilePriceShortcutLabel, priceFilterActive\)/);
+  assert.match(source, /trigger\("stars", mobileStarsShortcutLabel, selectedHotelClasses\.length > 0\)/);
+  assert.match(source, /trigger\("amenities", mobileFacilitiesShortcutLabel, selectedFilters\.facilities\.length > 0\)/);
   assert.match(source, /mobileShortcutDraftMinPrice/);
   assert.match(source, /setMinPrice\(mobileShortcutDraftMinPrice\)/);
   assert.match(source, /role="dialog"[\s\S]*mobile-hotel-\$\{mobileShortcutMenu\}-title/);
@@ -114,4 +120,16 @@ test("property search is shared, normalized and represented as an active filter"
   assert.match(source, /Clear property search/);
   assert.match(source, /title="Good for your trip"/);
   assert.doesNotMatch(source, /title="Popular"/);
+});
+
+
+test("mobile Hotel filter apply keeps cards visible and uses selected values in the shortcut rail", () => {
+  const cardRegion = source.slice(source.indexOf("ref={paginationListRef}"), source.indexOf("</section>", source.indexOf("ref={paginationListRef}")));
+  assert.match(cardRegion, /filterApplying \|\| paginationTransitionPhase === "covering"/);
+  const quickApply = source.slice(source.indexOf('className="h-11 w-\[32%\] shrink-0 rounded-lg bg-[#004BB8]'), source.indexOf("</footer>", source.indexOf('className="h-11 w-\[32%\] shrink-0 rounded-lg bg-[#004BB8]')));
+  assert.match(quickApply, /setCurrentResultsPage\(1\)/);
+  assert.doesNotMatch(quickApply, /triggerFilterApplying\(\)/);
+  assert.match(source, /notation: "compact"/);
+  assert.match(source, /Under \$\{formatCompactHotelFilterPrice\(maxPrice\)\}/);
+  assert.doesNotMatch(source, /\{count > 0 \? <span className="rounded-full bg-\[#004BB8\]/);
 });

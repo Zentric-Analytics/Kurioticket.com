@@ -60,13 +60,14 @@ test("hotel star filters use the active locale in compact, full, and accessible 
   assert.doesNotMatch(source, /title(?:=|:)\s*"Hotel class"|>Hotel class</);
 });
 
-test("mobile filter completion localizes every state and formats its result count", () => {
-  assert.match(source, /filterApplying \? t\("updatingResults"\) : sortedVisibleHotels.length === 0 \? t\("hotelResults.noStaysMatchFiltersTitle"\)/);
+test("mobile filter completion localizes result states without an artificial updating phase", () => {
+  assert.doesNotMatch(source, /filterApplying \? t\("updatingResults"\)/);
+  assert.match(source, /sortedVisibleHotels.length === 0 \? t\("hotelResults.noStaysMatchFiltersTitle"\)/);
   assert.match(source, /t\("deals.results.package.view.hotel"\)[\s\S]*new Intl.NumberFormat\(locale\).format\(sortedVisibleHotels.length\)/);
   assert.match(source, /locale.startsWith\("en"\)/);
   for (const locale of ["th", "vi", "pl", "sv", "id"]) {
     const dictionary = getTranslations(locale);
-    for (const key of ["updatingResults", "hotelResults.noStaysMatchFiltersTitle", "deals.results.package.view.hotel"]) {
+    for (const key of ["hotelResults.noStaysMatchFiltersTitle", "deals.results.package.view.hotel"]) {
       assert.ok(dictionary[key]);
       assert.notEqual(dictionary[key], getTranslations("en")[key]);
     }
