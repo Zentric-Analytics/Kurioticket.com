@@ -494,7 +494,7 @@ export function FlightLandingClient() {
     "/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg";
 
   return (
-    <main className="flex-1 bg-slate-50 pb-12">
+    <main className="flex-1 bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-12 sm:bg-slate-50">
       <section className="relative isolate z-20 min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden">
         <div className="absolute inset-0 overflow-hidden">
           <Image
