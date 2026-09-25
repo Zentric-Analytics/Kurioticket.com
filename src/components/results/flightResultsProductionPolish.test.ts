@@ -37,7 +37,7 @@ test("mobile nearby insight, quick filters, and price alert use compact native-l
   assert.doesNotMatch(nearbyInsight, /text-\[\d+px\]|leading-\[\d+px\]/);
   assert.match(
     styles,
-    /@media \(max-width: 639px\) \{[\s\S]*?\.flight-mobile-cheaper-nearby \{[\s\S]*?font-size: 8px !important;[\s\S]*?line-height: 11px !important;[\s\S]*?-webkit-text-size-adjust: none;[\s\S]*?text-size-adjust: none;[\s\S]*?\}/,
+    /@media \(max-width: 639px\) \{[\s\S]*?\.flight-mobile-cheaper-nearby \{[\s\S]*?font-size: 11px !important;[\s\S]*?line-height: 15px !important;[\s\S]*?-webkit-text-size-adjust: none;[\s\S]*?text-size-adjust: none;[\s\S]*?\}/,
   );
   assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,350}py-1/);
   assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 pt-2/);
