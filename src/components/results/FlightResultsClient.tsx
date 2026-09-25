@@ -7065,7 +7065,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   return (
     <>
     <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs />
-    <FlightResultsScrollIndicator />
+    <FlightResultsScrollIndicator compactHeaderVisible={mobileCompactHeaderVisible} />
     {renderMobileCompactResultsHeader()}
     <main data-flight-results-main className="bg-[#F5F7FB] pb-0 sm:flex-1 sm:bg-[#F3F6FA] sm:pb-8">
       <section

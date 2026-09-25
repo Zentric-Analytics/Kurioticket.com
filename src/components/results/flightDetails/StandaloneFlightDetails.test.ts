@@ -557,7 +557,7 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.doesNotMatch(source, /function MobileTripTotal/);
   assert.match(source, /fixed inset-x-0 bottom-0 z-\[90px\]|fixed inset-x-0 bottom-0 z-\[90\]/);
   assert.match(source, /pb-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\]/);
-  assert.match(source, /pb-\[calc\(6\.75rem\+env\(safe-area-inset-bottom\)\)\][\s\S]*lg:pb-16/);
+  assert.match(source, /pb-\[calc\(7\.5rem\+env\(safe-area-inset-bottom\)\)\][\s\S]*lg:pb-16/);
   assert.match(source, /role="tablist"/);
   assert.equal((source.match(/role="tab"/g) || []).length, 1);
   assert.deepEqual(["Compare deals", "Fare details", "Fare conditions", "Optional extras"].map((label) => source.includes(`label: "${label}"`)), [true, true, true, true]);
@@ -771,8 +771,8 @@ test("mobile web Fare information deck mirrors native tabs and selection-only de
   assert.doesNotMatch(deck, /useHorizontalRailAxisLockRef/);
   assert.match(deck, /role="tablist" aria-label="Fare information"/);
   assert.match(deck, /min-h-\[48px\]/);
-  assert.match(deck, /gap-\[22px\]/);
-  assert.match(deck, /text-\[14px\] leading-5/);
+  assert.match(deck, /gap-\[14px\]/);
+  assert.match(deck, /text-\[12px\] leading-4/);
   assert.match(deck, /color: "#536B92",\s+fontWeight: 600/);
   assert.doesNotMatch(deck, /color: selected \?/);
   assert.doesNotMatch(deck, /fontWeight: selected \?/);
@@ -805,7 +805,7 @@ test("mobile web Fare information surfaces match native information hierarchy", 
   assert.doesNotMatch(deck, /rounded-\[10px\] border border-\[#E2E8F0\] p-4/);
 });
 
-test("mobile selected deal controls native-sized phone checkout while tablet keeps legacy checkout", async () => {
+test("mobile selected deal controls one Cars-style checkout dock below lg", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
 
   assert.match(source, /nativeFlightDealSelection\(selectedDealOfferId, selectedFare\)/);
@@ -818,9 +818,14 @@ test("mobile selected deal controls native-sized phone checkout while tablet kee
   assert.match(source, /onContinue=\{\(\) => continueToOffer\(selectedDeal\?\.offerId \?\? selectedOffer\.id\)\}/);
   assert.match(source, /label="Continue deal" pendingLabel="Checking offer…"/);
   assert.match(source, /Total for \$\{travelerCount\} traveler/);
-  assert.match(source, /min-h-\[88px\].*px-\[18px\].*pt-\[11px\]/);
+  assert.match(source, /rounded-t-\[22px\].*border-t border-slate-200.*px-4.*pb-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\].*pt-3.*shadow-\[0_-8px_28px_rgba\(15,23,42,0\.14\)\].*lg:hidden/);
   assert.match(source, /Loading price…/);
-  assert.match(source, /<TabletCheckoutDock travelerCount=\{travelers\.count\} price=\{providerPrice\}/);
+  assert.doesNotMatch(source, /TabletCheckoutDock/);
+  assert.equal((source.match(/<MobileCheckoutDock\b/g) ?? []).length, 1);
+
+  const loading = await readFile(new URL("./FlightDetailsLoadingShell.tsx", import.meta.url), "utf8");
+  assert.match(loading, /rounded-t-\[22px\].*border-t border-slate-200.*px-4.*pb-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\].*pt-3.*shadow-\[0_-8px_28px_rgba\(15,23,42,0\.14\)\].*lg:hidden/);
+  assert.match(loading, /pb-\[calc\(7\.5rem\+env\(safe-area-inset-bottom\)\)\]/);
 });
 
 test("mobile fare rail starts naturally and preserves manual horizontal scrolling", async () => {
@@ -834,7 +839,7 @@ test("mobile web Flight Details uses the refined fare typography without changin
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   const fareSource = await readFile(new URL("./MobileNativeFareRail.tsx", import.meta.url), "utf8");
 
-  assert.match(source, /text-\[18px\] font-semibold leading-\[23px\][^\"]*">Pick your fare<\/h2>/);
+  assert.match(source, /text-\[16px\] font-medium leading-\[21px\][^\"]*sm:text-\[18px\] sm:font-semibold sm:leading-tight[^\"]*">Pick your fare<\/h2>/);
   assert.match(fareSource, /text-\[19px\] font-semibold leading-\[23px\] tabular-nums/);
   assert.match(fareSource, /gap-\[10px\].*overflow-x-auto.*pb-\[18px\].*pt-3.*pr-\[38px\]/);
   assert.match(fareSource, /min-h-\[142px\] w-\[clamp\(197px,calc\(197px\+\(100vw-320px\)\*0\.27\),217px\)\]/);

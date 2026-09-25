@@ -80,7 +80,9 @@ test("results presentation uses grouped Results route, date, and swap geometry",
   assert.match(editor, /presentation\?: "standalone" \| "homepage" \| "results"/);
   assert.match(editor, /data-multi-city-presentation=\{presentation\}/);
   assert.match(editor, /data-multi-city-results-route-card/);
-  assert.match(editor, /rounded-\[13px\] border border-\[#E7ECF5\] bg-white divide-y divide-\[#E7ECF5\]/);
+  assert.match(editor, /gap-0 overflow-hidden rounded-\[13px\] border border-\[#E7ECF5\] bg-white/);
+  assert.match(editor, /data-multi-city-results-route-divider/);
+  assert.match(editor, /absolute inset-x-0 top-1\/2 h-px -translate-y-1\/2 bg-\[#E7ECF5\]/);
   assert.match(editor, /min-h-\[66px\][^\n]*px-3 py-\[9px\]/);
   assert.match(editor, /data-multi-city-results-date-card/);
   assert.match(editor, /h-9 w-9[^\n]*rounded-full border border-\[#E7ECF5\][^\n]*shadow-\[0_2px_4px_rgba\(24,48,91,0\.12\)\]/);
@@ -116,4 +118,5 @@ test("homepage and standalone retain their existing presentation path", () => {
   assert.match(editor, /const resultsPresentation = presentation === "results"/);
   assert.match(editor, /resultsPresentation &&/);
   assert.match(editor, /sm:min-h-\[58px\] sm:rounded-none sm:border-0/);
+  assert.match(editor, /\{resultsPresentation \? \([\s\S]*?data-multi-city-results-route-divider[\s\S]*?\) : null\}/);
 });

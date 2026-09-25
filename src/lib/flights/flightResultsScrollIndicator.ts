@@ -1,7 +1,7 @@
 export type FlightResultsScrollIndicatorGeometryInput = {
   scrollTop: number;
-  scrollHeight: number;
-  viewportHeight: number;
+  scrollStart: number;
+  scrollEnd: number;
   trackHeight: number;
 };
 
@@ -21,14 +21,15 @@ const finiteNonNegative = (value: number) =>
 
 export function calculateFlightResultsScrollIndicatorGeometry({
   scrollTop,
-  scrollHeight,
-  viewportHeight,
+  scrollStart,
+  scrollEnd,
   trackHeight,
 }: FlightResultsScrollIndicatorGeometryInput): FlightResultsScrollIndicatorGeometry {
-  const safeScrollHeight = finiteNonNegative(scrollHeight);
-  const safeViewportHeight = finiteNonNegative(viewportHeight);
+  const safeScrollTop = finiteNonNegative(scrollTop);
+  const safeScrollStart = finiteNonNegative(scrollStart);
+  const safeScrollEnd = Math.max(safeScrollStart, finiteNonNegative(scrollEnd));
   const safeTrackHeight = finiteNonNegative(trackHeight);
-  const maxScroll = Math.max(0, safeScrollHeight - safeViewportHeight);
+  const maxScroll = Math.max(0, safeScrollEnd - safeScrollStart);
   const isScrollable = maxScroll > 0 && safeTrackHeight > 0;
 
   if (!isScrollable) {
@@ -49,15 +50,16 @@ export function calculateFlightResultsScrollIndicatorGeometry({
     safeTrackHeight,
     Math.max(lowerBound, FLIGHT_RESULTS_WEB_SCROLL_THUMB_MAX_HEIGHT),
   );
-  const proportionalHeight =
-    safeScrollHeight > 0
-      ? safeTrackHeight * (safeViewportHeight / safeScrollHeight)
-      : 0;
+  const representedContentHeight = safeTrackHeight + maxScroll;
+  const proportionalHeight = representedContentHeight > 0
+    ? safeTrackHeight * (safeTrackHeight / representedContentHeight)
+    : 0;
   const thumbHeight = Math.min(
     upperBound,
     Math.max(lowerBound, finiteNonNegative(proportionalHeight)),
   );
-  const clampedScrollTop = Math.min(maxScroll, finiteNonNegative(scrollTop));
+  const relativeScrollTop = Math.max(0, safeScrollTop - safeScrollStart);
+  const clampedScrollTop = Math.min(maxScroll, relativeScrollTop);
   const scrollProgress = clampedScrollTop / maxScroll;
   const thumbOffset =
     scrollProgress * Math.max(0, safeTrackHeight - thumbHeight);
