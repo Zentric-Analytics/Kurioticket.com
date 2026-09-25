@@ -75,7 +75,7 @@ test("Cars mobile web hero typography matches the native Inter hierarchy", () =>
   );
 });
 
-test("Cars mobile web tabs and Compare deals text match native", () => {
+test("Cars mobile web keeps the main tabs while hiding redundant panel headings", () => {
   assert.match(
     native,
     /tabText:\{fontWeight:"600",fontFamily:appFonts\.semibold\}/,
@@ -93,7 +93,7 @@ test("Cars mobile web tabs and Compare deals text match native", () => {
   );
   assert.match(
     web,
-    /text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-slate-950/,
+    /hidden text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-slate-950 lg:block/,
   );
 
   assert.match(
@@ -140,7 +140,7 @@ test("Cars mobile web Pickup and return text and copy match native", () => {
   );
   assert.match(
     web,
-    /text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-\[#020617\]/,
+    /hidden text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-\[#020617\] lg:block/,
   );
 
   assert.match(
@@ -205,7 +205,7 @@ test("Cars mobile web Location and booking-dock text match native", () => {
   );
   assert.match(
     web,
-    /text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-slate-950/,
+    /hidden text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-slate-950 lg:block/,
   );
 
   assert.match(
