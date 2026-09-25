@@ -121,11 +121,18 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
     if (pending) return;
     setSelectedId(offer.id);
     if (offer.action.kind === "internal-room-flow") { setOverlay("rooms"); return; }
+
+    const providerWindow = window.open("about:blank", "_blank");
+    if (providerWindow) providerWindow.opener = null;
+
     setPending(true); setHandoffError("");
     try {
-      await props.onProviderOfferHandoff?.(offer.action.providerOfferId);
+      await props.onProviderOfferHandoff?.(offer.action.providerOfferId, providerWindow);
     }
-    catch { setHandoffError("Unable to open provider. Please refresh and try again."); }
+    catch {
+      if (providerWindow && !providerWindow.closed) providerWindow.close();
+      setHandoffError("Unable to open provider. Please refresh and try again.");
+    }
     finally { setPending(false); }
   }
 
