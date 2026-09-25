@@ -21,6 +21,6 @@ test("mobile car compact results header is fully opaque without backdrop reflect
   const cars = read("./CarsResultsClient.tsx");
   const start = cars.indexOf("const renderMobileCompactResultsHeader");
   const header = cars.slice(start, cars.indexOf("\n  return (", start + 200));
-  assert.match(header, /bg-white px-3/);
-  assert.doesNotMatch(header, /bg-white\/95|backdrop-blur/);
+  assert.match(header, /bg-\[#F2F4F8\] px-3/);
+  assert.doesNotMatch(header, /bg-white(?:\/95)?|bg-\[#F5F7FB\]|backdrop-blur/);
 });
