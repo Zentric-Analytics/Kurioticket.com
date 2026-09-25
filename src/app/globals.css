@@ -387,8 +387,6 @@ textarea {
 
 .cars-results-quick-sheet-surface {
   animation: cars-results-quick-sheet-surface-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
 }
 
 .mobile-results-sheet-backdrop-closing { animation: mobile-results-sheet-backdrop-out 200ms ease-out both; }
