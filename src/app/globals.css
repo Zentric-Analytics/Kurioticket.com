@@ -374,6 +374,18 @@ textarea {
   will-change: transform;
 }
 .mobile-results-sheet-surface-smooth { animation-duration: 320ms; }
+
+@keyframes cars-results-quick-sheet-surface-in {
+  from { transform: translate3d(0, 28px, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+
+.cars-results-quick-sheet-surface {
+  animation: cars-results-quick-sheet-surface-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
 .mobile-results-sheet-backdrop-closing { animation: mobile-results-sheet-backdrop-out 200ms ease-out both; }
 .mobile-results-sheet-backdrop-layer-closing {
   animation: mobile-results-sheet-backdrop-out 280ms ease-out both;
