@@ -19,6 +19,7 @@ export type SearchLocation = {
   country?: { code?: string; name?: string };
   region?: string;
   coordinates?: { latitude: number; longitude: number };
+  timeZone?: string;
   codes?: { iata?: string; icao?: string };
   providerBindings: SearchLocationProviderBinding[];
   verification: "verified" | "catalogue-only";
@@ -35,6 +36,7 @@ export const searchLocationSchema: z.ZodType<SearchLocation> = z.object({
   country: z.object({ code: z.string().trim().max(3).optional(), name: z.string().trim().max(100).optional() }).optional(),
   region: z.string().trim().max(100).optional(),
   coordinates: z.object({ latitude: z.number().min(-90).max(90), longitude: z.number().min(-180).max(180) }).optional(),
+  timeZone: z.string().trim().min(1).max(80).optional(),
   codes: z.object({ iata: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3}$/).optional(), icao: z.string().trim().toUpperCase().max(4).optional() }).optional(),
   providerBindings: z.array(z.object({
     provider: z.string().trim().min(1).max(40), value: z.string().trim().min(1).max(180), kind: z.string().trim().max(40).optional(),

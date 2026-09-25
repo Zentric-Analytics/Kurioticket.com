@@ -79,6 +79,7 @@ import { serializeCarLocationTarget } from "@/lib/cars/carSearchLocationTarget";
 import { carFilterGroups, carQuickFilterGroupIds, type CarFilterGroup } from "@/lib/cars/carFilterPresentation";
 import { getSelectedCarFiltersSignature } from "@/lib/cars/carFilterSelection";
 import { formatCarResultsScheduleSummary } from "@/lib/cars/carResultsSummary";
+import { toTimeValue, validateCarsForm } from "@/lib/cars/carsSearchUtils";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
@@ -536,6 +537,7 @@ export function CarsResultsClient({
   const [mobileSearchClosing, setMobileSearchClosing] = useState(false);
   const mobileSearchCloseTimerRef = useRef<number | null>(null);
   const [isSearchSubmitting, setIsSearchSubmitting] = useState(false);
+  const [searchValidationError, setSearchValidationError] = useState("");
   const isSearchSubmittingRef = useRef(false);
   const [mobileCompactHeaderVisible, setMobileCompactHeaderVisible] =
     useState(false);
@@ -582,7 +584,6 @@ export function CarsResultsClient({
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
   const mobileCompactHeaderHandoffRef = useRef<HTMLDivElement | null>(null);
-  const mobileSearchScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileSearchModalityRef = useRef<OverlayActivationModality>("programmatic");
   const mobileSearchSnapshotRef = useRef<CarsResultsSearchSnapshot | null>(
@@ -888,7 +889,6 @@ export function CarsResultsClient({
         dropoffTime,
         driverAge,
       };
-      mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock();
       setMobileSearchClosing(false);
       setMobileSearchOpen(true);
       setMobilePicker(null);
@@ -916,14 +916,6 @@ export function CarsResultsClient({
     ],
   );
 
-  const releaseMobileSearchScrollLock = useCallback(
-    ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
-      mobileSearchScrollLockRef.current?.({ restoreScroll });
-      mobileSearchScrollLockRef.current = null;
-    },
-    [],
-  );
-
   const cancelMobileSearchDrawer = useCallback(() => {
     if (mobileSearchCloseTimerRef.current !== null) {
       window.clearTimeout(mobileSearchCloseTimerRef.current);
@@ -943,9 +935,8 @@ export function CarsResultsClient({
       setDriverAge(snapshot.driverAge);
     }
     mobileSearchSnapshotRef.current = null;
-    // Stabilize the uncovered Results document while the overlay still masks
-    // this synchronous commit, then let the layout effect restore focus.
-    releaseMobileSearchScrollLock();
+    // Keep the Results document untouched. The shared sheet owns the only
+    // search scroll lock and releases it after the close animation completes.
     setMobileSearchOpen(false);
     setMobilePicker(null);
     setDatesOpen(false);
@@ -953,7 +944,6 @@ export function CarsResultsClient({
     setDriverAgeOpen(false);
     setMobileSearchClosing(false);
   }, [
-    releaseMobileSearchScrollLock,
     setMobileSearchOpen,
     setDatesOpen,
     setTimesOpen,
@@ -973,13 +963,60 @@ export function CarsResultsClient({
     );
   }, [cancelMobileSearchDrawer, mobileSearchClosing]);
 
+  const validateCurrentPickupTime = useCallback(() => {
+    const now = new Date();
+    const validation = validateCarsForm(
+      {
+        pickupLocation,
+        pickupDate,
+        pickupTime,
+        dropoffDate,
+        dropoffTime,
+        driverAge,
+        returnToDifferentLocation,
+        dropoffLocation: returnToDifferentLocation
+          ? dropoffLocation
+          : pickupLocation,
+      },
+      toIsoDate(now),
+      toTimeValue(now),
+    );
+    const pickupTimeExpired =
+      validation.pickupTime === "carsSearch.error.pickupTimePast";
+
+    setSearchValidationError(
+      pickupTimeExpired ? t("carsSearch.error.pickupTimePast") : "",
+    );
+
+    return !pickupTimeExpired;
+  }, [
+    driverAge,
+    dropoffDate,
+    dropoffLocation,
+    dropoffTime,
+    pickupDate,
+    pickupLocation,
+    pickupTime,
+    returnToDifferentLocation,
+    t,
+  ]);
+
+  useEffect(() => {
+    setSearchValidationError("");
+  }, [pickupDate, pickupTime]);
+
   const submitMobileSearch = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      const formData = new FormData(event.currentTarget);
-      const href = buildCarsResultsHref(formData);
 
       if (isSearchSubmittingRef.current) return;
+      if (!validateCurrentPickupTime()) {
+        setMobilePicker("times");
+        return;
+      }
+
+      const formData = new FormData(event.currentTarget);
+      const href = buildCarsResultsHref(formData);
 
       // Submission commits the live form. It must not run the cancel
       // snapshot or restore focus to the outgoing Results set.
@@ -992,7 +1029,6 @@ export function CarsResultsClient({
       if (!isSameSearch) {
         isSearchSubmittingRef.current = true;
         setIsSearchSubmitting(true);
-        releaseMobileSearchScrollLock({ restoreScroll: false });
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       }
 
@@ -1006,25 +1042,15 @@ export function CarsResultsClient({
 
       router.push(href, { scroll: true });
     },
-    [releaseMobileSearchScrollLock, router],
+    [router, validateCurrentPickupTime],
   );
 
-  useLayoutEffect(() => {
-    const releaseSearchOverlay = () => {
-      mobileSearchScrollLockRef.current?.();
-      mobileSearchScrollLockRef.current = null;
-
-      const launcher = mobileSearchLauncherRef.current;
-      restoreOverlayLauncherFocus(launcher, mobileSearchModalityRef.current);
-    };
-
-    if (!mobileSearchOpen) {
-      releaseSearchOverlay();
-      return releaseSearchOverlay;
-    }
-
-    mobileSearchScrollLockRef.current ??= acquireMobileResultsScrollLock();
-    return releaseSearchOverlay;
+  useEffect(() => {
+    if (mobileSearchOpen) return;
+    restoreOverlayLauncherFocus(
+      mobileSearchLauncherRef.current,
+      mobileSearchModalityRef.current,
+    );
   }, [mobileSearchOpen]);
 
   useEffect(() => {
@@ -1145,6 +1171,15 @@ export function CarsResultsClient({
         onSubmit={(event) => {
           if (placement === "mobile") {
             submitMobileSearch(event);
+            return;
+          }
+
+          if (!validateCurrentPickupTime()) {
+            event.preventDefault();
+            if (placement === "desktop-sticky") {
+              setDesktopStickySearchSection("times");
+            }
+            setTimesOpen(true);
             return;
           }
 
@@ -1461,6 +1496,17 @@ export function CarsResultsClient({
             </Button>
           </div>
         </div>
+        {searchValidationError ? (
+          <p
+            role="alert"
+            className={cn(
+              "mt-2 text-sm font-semibold text-rose-600",
+              placement === "mobile" && "px-1",
+            )}
+          >
+            {searchValidationError}
+          </p>
+        ) : null}
         {placement === "mobile" ? (
           <Button
             type="submit"
@@ -1615,6 +1661,7 @@ export function CarsResultsClient({
         appearance="carsResultsEdit"
         open={mobileSearchOpen}
         browserCanvasColor="#F5F7FB"
+        freezeBodyPosition={false}
         isolatedBackdrop
         closing={mobileSearchClosing}
         onCloseAnimationComplete={cancelMobileSearchDrawer}

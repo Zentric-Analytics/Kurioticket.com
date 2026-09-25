@@ -14,7 +14,18 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
   try {
     const trackId = context.trackId || crypto.randomUUID();
     const resolved = await resolveRegularKayakSearch(vertical, criteria, (term, requested = "hotels") => client.places(requested, term, trackId, context.signal));
-    if (!resolved.supported) return { provider: "KAYAK sandbox", results: [], status: "skipped", latencyMs: Date.now() - startedAt, error: resolved.reason, errorCategory: "unsupported_location", errorReason: "unsupported_location" };
+    if (!resolved.supported) {
+      const pickupTimePast = resolved.reasonCode === "pickup_time_past";
+      return {
+        provider: "KAYAK sandbox",
+        results: [],
+        status: "skipped",
+        latencyMs: Date.now() - startedAt,
+        error: resolved.reason,
+        errorCategory: pickupTimePast ? "invalid_search" : "unsupported_location",
+        errorReason: pickupTimePast ? "pickup_time_past" : "unsupported_location",
+      };
+    }
     const offers = await client.search(resolved.search, trackId, context.signal);
     return { provider: "KAYAK sandbox", results: offers.flatMap(offer => { const value = map?.(offer); return value ? [value] : []; }), status: "success", latencyMs: Date.now() - startedAt };
   } catch (error) {

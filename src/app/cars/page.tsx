@@ -68,6 +68,7 @@ import {
   parseIsoDate,
   timeOptions,
   toIsoDate,
+  toTimeValue,
   validateCarsForm,
   type CarsFormErrors,
   type CarsFormValues,
@@ -258,7 +259,6 @@ function CarsSearchPage() {
     () => getInitialValues(searchParams),
     [searchParams],
   );
-  const todayIso = useMemo(() => toIsoDate(new Date()), []);
   const [values, setValues] = useState<CarsFormValues>(initialValues);
   const [errors, setErrors] = useState<CarsFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -300,7 +300,12 @@ function CarsSearchPage() {
       return;
     }
 
-    const nextErrors = validateCarsForm(values, todayIso);
+    const now = new Date();
+    const nextErrors = validateCarsForm(
+      values,
+      toIsoDate(now),
+      toTimeValue(now),
+    );
     setErrors(translateCarsFormErrors(nextErrors, t));
 
     if (Object.values(nextErrors).some(Boolean)) {

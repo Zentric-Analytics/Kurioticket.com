@@ -56,46 +56,26 @@ test("Results bottom sheet matches the native floating-sheet geometry", () => {
   assert.doesNotMatch(source, /!hasEntered/);
 });
 
-test("bottom sheet uses the shared no-shake lock and delegates launcher focus", () => {
+test("bottom sheet keeps the shared lock through its closing animation", () => {
   assert.match(
     source,
     /useLayoutEffect\(\(\) => \{[\s\S]*?acquireMobileResultsScrollLock\(\)/,
-  );
-  assert.match(
-    source,
-    /openingScrollPositionRef\.current = \{ x: window\.scrollX, y: window\.scrollY \}/,
   );
   const closeHelper = source.slice(
     source.indexOf("const closeDrawer"),
     source.indexOf("useLayoutEffect", source.indexOf("const closeDrawer")),
   );
-  const releaseIndex = closeHelper.indexOf(
-    "scrollLockReleaseRef.current?.({ restoreScroll: false })",
-  );
-  const firstFrameIndex = closeHelper.indexOf("requestAnimationFrame");
-  const correctionIndex = closeHelper.indexOf(
-    "correctUnderlyingResultsScroll()",
-    firstFrameIndex,
-  );
   const closingIndex = closeHelper.indexOf("setIsClosing(true)");
-  const timerIndex = closeHelper.indexOf("window.setTimeout(finishClose, 280)");
-  assert.ok(releaseIndex >= 0 && releaseIndex < firstFrameIndex);
-  assert.ok(
-    firstFrameIndex < correctionIndex && correctionIndex < closingIndex,
-  );
-  assert.ok(closingIndex < timerIndex);
-  assert.equal(closeHelper.match(/restoreScroll: false/g)?.length, 1);
-  assert.match(
-    closeHelper,
-    /requestAnimationFrame\([\s\S]*?requestAnimationFrame\([\s\S]*?requestAnimationFrame\([\s\S]*?setIsClosing\(true\)/,
-  );
+  const timerIndex = closeHelper.indexOf("beginFlightEditSearchClose");
+  assert.ok(timerIndex >= 0 && closingIndex > timerIndex);
+  assert.doesNotMatch(closeHelper, /scrollLockReleaseRef|requestAnimationFrame|window\.scrollTo/);
   assert.match(
     source,
     /scrollLockReleaseRef\.current\?\.\(\{ restoreScroll: true \}\)/,
   );
-  assert.match(source, /isPreparingCloseRef\.current/);
+  assert.match(source, /closeStartedRef\.current/);
   assert.doesNotMatch(source, /position: "fixed"/);
-  assert.match(source, /window\.scrollTo\(\{[\s\S]*?behavior: "auto"/);
+  assert.doesNotMatch(source, /correctUnderlyingResultsScroll|openingScrollPositionRef/);
   assert.doesNotMatch(source, /touchAction:\s*"none"/);
   assert.match(source, /event\.target === event\.currentTarget/);
   assert.match(source, /event\.key === "Escape"/);

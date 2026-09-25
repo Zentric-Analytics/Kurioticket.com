@@ -54,7 +54,12 @@ test("sheet owns internal focus but leaves launcher restoration to Results", () 
   assert.match(source, /nestedLayerOpen/);
   assert.doesNotMatch(source, /launcherRef/);
   assert.doesNotMatch(source, /launcher\?\.focus/);
-  assert.match(source, /acquireMobileResultsScrollLock\(\)/);
+  assert.match(source, /freezeBodyPosition\?: boolean/);
+  assert.match(source, /freezeBodyPosition = true/);
+  assert.match(
+    source,
+    /acquireMobileResultsScrollLock\(\{\s*freezeBodyPosition,\s*\}\)/,
+  );
   assert.match(source, /browserCanvasColor\?: string/);
   assert.match(source, /cleanBackdrop\?: boolean/);
   assert.match(
@@ -67,7 +72,7 @@ test("sheet owns internal focus but leaves launcher restoration to Results", () 
     source,
     /acquireMobileResultsOverlayCanvas\(\{\s*canvasColor: browserCanvasColor,\s*\}\)/,
   );
-  assert.match(source, /\[browserCanvasColor, open\]/);
+  assert.match(source, /\[browserCanvasColor, freezeBodyPosition, open\]/);
   assert.doesNotMatch(source, /style\.position/);
   assert.doesNotMatch(source, /window\.scrollTo/);
   assert.match(source, /motion-reduce:transition-none/);

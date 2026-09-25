@@ -32,7 +32,11 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { useSavedCar } from "@/components/results/useSavedCar";
 import {
   formatCarPickupType,
+  getCarSpecificationIcon,
   getMobileCarPrimarySpecs,
+  getMobileCarResultIdentity,
+  getMobileCarSpecColumns,
+  getMobileProviderCarSpecSlots,
 } from "@/components/results/carResultCardSpecs";
 import type { CarResultBadge } from "@/lib/cars/carResults";
 import { getPrimaryCarOffer } from "@/lib/cars/carResults";
@@ -120,19 +124,18 @@ export function CarResultCard({
     [CarFront, title(car.transmission)],
   ];
   const specifications: Array<[LucideIcon, string]> = car.sandboxPresentation
-    ? car.sandboxPresentation.specs.map(label => [CarFront, label]) :
-    guidedPlanning && car.airConditioning
+    ? car.sandboxPresentation.specs.map((label) => [
+        getCarSpecificationIcon(label),
+        label,
+      ])
+    : guidedPlanning && car.airConditioning
       ? [...primarySpecifications, [Snowflake, "Air conditioning"]]
       : primarySpecifications;
-  const mobilePrimarySpecs = car.sandboxPresentation ? specifications : getMobileCarPrimarySpecs(car);
-  const mobileSpecColumns = (
-    car.sandboxPresentation
-      ? [
-          mobilePrimarySpecs.filter((_, index) => index % 2 === 0),
-          mobilePrimarySpecs.filter((_, index) => index % 2 === 1),
-        ]
-      : [mobilePrimarySpecs.slice(0, 2), mobilePrimarySpecs.slice(2, 4)]
-  ).filter((column) => column.length);
+  const mobileIdentity = getMobileCarResultIdentity(car.modelName);
+  const mobilePrimarySpecs = car.sandboxPresentation
+    ? getMobileProviderCarSpecSlots(car.sandboxPresentation.specs)
+    : getMobileCarPrimarySpecs(car);
+  const mobileSpecColumns = getMobileCarSpecColumns(mobilePrimarySpecs);
   const comparisonSources: CarComparisonSource[] = [
     {
       id: `${car.id}-kurioticket-estimate`,
@@ -304,20 +307,44 @@ export function CarResultCard({
                 >
                   <div data-car-card-mobile-identity className="min-w-0">
                     {headingLevel === "h3" ? (
-                      <h3 className="min-w-0 break-words text-[15px] font-bold leading-[18px] tracking-[-0.01em] text-[#07133B]">
-                        {car.modelName}
-                        {car.orSimilar ? (
-                          <span className="whitespace-nowrap text-[11px] font-medium text-[#536B92]">
-                            {"\u00A0"}{orSimilarLabel}
+                      <h3 className="min-w-0 text-[#07133B]">
+                        <span className="block min-w-0 truncate text-[15px] font-bold leading-[18px] tracking-[-0.01em]">
+                          {mobileIdentity.primaryName}
+                        </span>
+                        {mobileIdentity.secondaryModel || car.orSimilar ? (
+                          <span className="block min-w-0 truncate leading-[18px]">
+                            {mobileIdentity.secondaryModel ? (
+                              <span className="text-[15px] font-bold tracking-[-0.01em] text-[#07133B]">
+                                {mobileIdentity.secondaryModel}
+                              </span>
+                            ) : null}
+                            {mobileIdentity.secondaryModel && car.orSimilar ? " " : null}
+                            {car.orSimilar ? (
+                              <span className="whitespace-nowrap text-[11px] font-medium text-[#536B92]">
+                                {orSimilarLabel}
+                              </span>
+                            ) : null}
                           </span>
                         ) : null}
                       </h3>
                     ) : (
-                      <h2 className="min-w-0 break-words text-[15px] font-bold leading-[18px] tracking-[-0.01em] text-[#07133B]">
-                        {car.modelName}
-                        {car.orSimilar ? (
-                          <span className="whitespace-nowrap text-[11px] font-medium text-[#536B92]">
-                            {"\u00A0"}{orSimilarLabel}
+                      <h2 className="min-w-0 text-[#07133B]">
+                        <span className="block min-w-0 truncate text-[15px] font-bold leading-[18px] tracking-[-0.01em]">
+                          {mobileIdentity.primaryName}
+                        </span>
+                        {mobileIdentity.secondaryModel || car.orSimilar ? (
+                          <span className="block min-w-0 truncate leading-[18px]">
+                            {mobileIdentity.secondaryModel ? (
+                              <span className="text-[15px] font-bold tracking-[-0.01em] text-[#07133B]">
+                                {mobileIdentity.secondaryModel}
+                              </span>
+                            ) : null}
+                            {mobileIdentity.secondaryModel && car.orSimilar ? " " : null}
+                            {car.orSimilar ? (
+                              <span className="whitespace-nowrap text-[11px] font-medium text-[#536B92]">
+                                {orSimilarLabel}
+                              </span>
+                            ) : null}
                           </span>
                         ) : null}
                       </h2>

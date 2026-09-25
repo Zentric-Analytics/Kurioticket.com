@@ -63,8 +63,9 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.match(mobileStrip, /min-w-0/);
   assert.match(mobileStrip, /max-w-full/);
   assert.match(mobileStrip, /overflow-hidden/);
-  assert.match(mobileStrip, /overflow-x-auto/);
+  assert.match(mobileStrip, /ref=\{mobileNearbyFareAxisLockRef\} className="[^"]*touch-pan-y[^"]*overflow-x-auto/);
   assert.doesNotMatch(mobileStrip, /touch-pan-x/);
+  assert.match(mobileStrip, /overflow-x-auto/);
   assert.doesNotMatch(mobileStrip, /overscroll-x-contain/);
   assert.match(mobileStrip, /snap-center/);
   assert.doesNotMatch(mobileStrip, /snap-start/);
@@ -83,8 +84,12 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.match(mobileStrip, /aria-current=\{selected \? "date"/);
   assert.match(mobileStrip, /aria-pressed=\{selected\}/);
   assert.match(mobileStrip, /disabled=\{selected \|\| loading \|\| fare\.status === "loading"\}/);
-  assert.doesNotMatch(mobileStrip, /onPointer|onTouch|preventDefault\(\)/);
-  assert.match(mobileStrip, /min-h-\[28px\][^"]*text-\[9px\][^"]*font-medium[^"]*leading-\[12px\][^"]*">Cheaper nearby:/);
+  assert.doesNotMatch(mobileStrip, /onTouch|preventDefault\(\)/);
+  const nearbyInsight = mobileStrip.match(/className="([^"]*)">Cheaper nearby:/)?.[1] ?? "";
+  assert.match(nearbyInsight, /min-h-\[28px\]/);
+  assert.match(nearbyInsight, /text-\[8px\]/);
+  assert.match(nearbyInsight, /leading-\[10px\]/);
+  assert.doesNotMatch(nearbyInsight, /text-\[9px\]|leading-\[12px\]/);
   assert.match(mobileStrip, /onClick=\{\(\) => handleNearbyFareDateSelect\(cheaperNearbyFare\.date\)\}/);
 });
 

@@ -190,10 +190,13 @@ test("price comparison aligns icon benefits and the per-day price on one row", (
   assert.doesNotMatch(comparison, /row-start-4/);
 });
 
-test("source contract keeps desktop and mobile deal CTAs disabled, inert, blue, and localized", () => {
+test("source contract keeps mobile deal CTAs disabled, inert, blue, and localized", () => {
+  const mobileDock = clientSource.slice(
+    clientSource.indexOf("function MobileBookingDock"),
+  );
   const buttons =
-    clientSource.match(
-      /<button disabled className="[^"]+" > {action.label} <\/button>/g,
+    mobileDock.match(
+      /<button disabled className="[^"]+" > [\s\S]*?<\/button>/g,
     ) ?? [];
   assert.equal(buttons.length, 2);
   for (const button of buttons) {
@@ -203,6 +206,10 @@ test("source contract keeps desktop and mobile deal CTAs disabled, inert, blue, 
     assert.doesNotMatch(button, /bg-slate-200|text-slate-600/);
     assert.doesNotMatch(button, /href|onClick|bookingUrl/);
   }
+  assert.match(
+    mobileDock,
+    /action\.kind === "sandbox-handoff"[\s\S]*?copy\("carDetails\.continueDeal"\)/,
+  );
   assert.match(clientSource, /label: copy\("carDetails\.continueDeal"\)/);
   assert.doesNotMatch(clientSource, /label: copy\("continueToProvider"\)/);
 });

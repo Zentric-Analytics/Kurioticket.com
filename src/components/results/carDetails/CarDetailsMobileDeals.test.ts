@@ -35,3 +35,46 @@ test("selected mobile deal drives the booking offer used by the dock", () => {
     /<MobileBookingDock[\s\S]*?offer=\{primaryOffer\}/,
   );
 });
+
+
+test("mobile web KAYAK Compare deals mirrors native provider-owned identity", () => {
+  assert.match(
+    details,
+    /const providerValue = \(value\?: string\) =>[\s\S]*?Supplier not supplied[\s\S]*?KAYAK sandbox/,
+  );
+  assert.match(
+    details,
+    /providerValue\(offer\.bookingProviderName\)[\s\S]*?providerValue\(offer\.rentalCompanyName\)[\s\S]*?providerValue\(car\.rentalCompanyName\)/,
+  );
+  assert.match(
+    details,
+    /car\.sandboxPresentation \? \([\s\S]*?\{sandboxProvider\}[\s\S]*?\) : \([\s\S]*?kurioticket-logo-primary-light-bg\.svg/,
+  );
+  assert.match(
+    details,
+    /sandboxSupplier \? \([\s\S]*?<CarFront[\s\S]*?\{sandboxSupplier\}/,
+  );
+  assert.doesNotMatch(
+    details.slice(
+      details.indexOf('className="mt-5 space-y-2.5 lg:hidden"'),
+      details.indexOf("{selectedOffer ? ("),
+    ),
+    />KAYAK sandbox<|>Simulated inventory — no real booking</,
+  );
+});
+
+test("mobile web KAYAK dock uses native Continue deal semantics and compact action width", () => {
+  const dock = details.slice(details.indexOf("function MobileBookingDock"));
+  assert.match(dock, /action\.kind === "sandbox-handoff"/);
+  assert.match(dock, /data-mobile-car-dock-action/);
+  assert.match(dock, /min-w-\[140px\] max-w-\[180px\] flex-\[0\.78\]/);
+  assert.match(
+    dock,
+    /action\.kind === "sandbox-handoff"[\s\S]*?<button[\s\S]*?disabled[\s\S]*?copy\("carDetails\.continueDeal"\)/,
+  );
+  const sandboxMobile = dock.slice(
+    dock.indexOf('action.kind === "sandbox-handoff"'),
+    dock.indexOf('action.kind === "standalone-disabled-provider"'),
+  );
+  assert.doesNotMatch(sandboxMobile, /<a\b|href=|target=|Open KAYAK test page/);
+});

@@ -29,10 +29,7 @@ export default async function FlightDetailsPage({ params }: { params: Promise<{ 
           hideMobileCategoryTabs
         />
       </div>
-      <div
-        className="pt-[env(safe-area-inset-top)] lg:pt-0"
-        data-flight-details-mobile-safe-area
-      >
+      <div data-flight-details-mobile-edge-to-edge>
         <FlightDetailsClient id={id} />
       </div>
     </>

@@ -1771,6 +1771,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.error.pickupDateRequired": "Select a pickup date.",
   "carsSearch.error.pickupDatePast": "Pickup date cannot be in the past.",
   "carsSearch.error.pickupTimeRequired": "Select a pickup time.",
+  "carsSearch.error.pickupTimePast": "Pickup time has already passed. Choose a later pickup time or date.",
   "carsSearch.error.dropoffDateRequired": "Select a drop-off date.",
   "carsSearch.error.dropoffDatePast": "Drop-off date cannot be in the past.",
   "carsSearch.error.dropoffTimeRequired": "Select a drop-off time.",

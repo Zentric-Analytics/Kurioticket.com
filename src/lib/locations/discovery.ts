@@ -19,7 +19,7 @@ function merge(left: CanonicalLocation, right: CanonicalLocation): CanonicalLoca
     all.findIndex((item) => item.provider === binding.provider && item.value === binding.value) === index,
   );
   return { ...left, country: left.country?.code ? left.country : right.country, region: left.region ?? right.region,
-    coordinates: left.coordinates ?? right.coordinates, codes: { ...right.codes, ...left.codes },
+    coordinates: left.coordinates ?? right.coordinates, timeZone: left.timeZone ?? right.timeZone, codes: { ...right.codes, ...left.codes },
     aliases: [...new Set([...(left.aliases ?? []), ...(right.aliases ?? [])])], providerBindings: bindings,
     verification: bindings.some((binding) => binding.verification === "verified") ? "verified" : left.verification };
 }

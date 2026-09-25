@@ -20,6 +20,7 @@ export type SearchLocation = {
   submittedValue: string;
   selectionToken?: string;
   country?: { code?: string; name?: string };
+  timeZone?: string;
   codes?: { iata?: string; icao?: string };
 };
 

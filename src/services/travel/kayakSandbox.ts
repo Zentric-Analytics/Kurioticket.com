@@ -36,7 +36,14 @@ export const kayakSearchSchema = z
     }),
   ])
   .superRefine((value, ctx) => {
-    if (value.departure < new Date().toISOString().slice(0, 10))
+    const utcNow = new Date();
+    const utcToday = utcNow.toISOString().slice(0, 10);
+    const utcYesterday = new Date(
+      utcNow.getTime() - 86_400_000,
+    ).toISOString().slice(0, 10);
+    if (
+      value.departure < (value.vertical === "cars" ? utcYesterday : utcToday)
+    )
       ctx.addIssue({ code: "custom", message: "Choose a future date." });
     if (value.returnDate && value.returnDate <= value.departure)
       ctx.addIssue({

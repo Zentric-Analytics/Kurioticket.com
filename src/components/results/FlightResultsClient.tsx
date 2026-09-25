@@ -60,6 +60,7 @@ import { nearbyFarePrice } from "@/components/results/nearbyFarePrice";
 import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters";
 import { FlightPriceAlertControl } from "@/components/results/FlightPriceAlertControl";
 import { FlightResultsScrollIndicator } from "@/components/results/FlightResultsScrollIndicator";
+import { useHorizontalRailAxisLockRef } from "@/components/ui/useHorizontalRailAxisLock";
 import { MobileFlightResultsState } from "@/components/results/MobileFlightResultsState";
 import {
   MobileFlightFiltersSheet,
@@ -1122,6 +1123,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const nearbyFareRequestsRef = useRef(new Map<string, NearbyFareRequest>());
   const nearbyFareGenerationRef = useRef(0);
   const mobileNearbyFareRailRef = useRef<HTMLDivElement>(null);
+  const mobileNearbyFareAxisLockRef = useHorizontalRailAxisLockRef(mobileNearbyFareRailRef);
+  const mobileShortcutAxisLockRef = useHorizontalRailAxisLockRef<HTMLDivElement>();
   const mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>(null);
   const alignedMobileNearbyFareSearchRef = useRef<string | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
@@ -6644,7 +6647,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     ) : null;
     return (
       <>
-        <div data-mobile-flight-shortcuts className="w-full min-w-0 overflow-x-auto ps-3 pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+        <div ref={mobileShortcutAxisLockRef} data-mobile-flight-shortcuts className="w-full min-w-0 touch-pan-y overflow-x-auto ps-3 pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
           <div className="flex w-max flex-nowrap items-center gap-1.5">
             {renderFloatingFilterButton(shortcutButtonClass)}
             {renderTrigger("sort", activeSortOption.label)}
@@ -7064,7 +7067,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs />
     <FlightResultsScrollIndicator />
     {renderMobileCompactResultsHeader()}
-    <main data-flight-results-main className="flex-1 bg-[#F5F7FB] pb-8 sm:bg-[#F3F6FA]">
+    <main data-flight-results-main className="bg-[#F5F7FB] pb-0 sm:flex-1 sm:bg-[#F3F6FA] sm:pb-8">
       <section
         inert={mobileSearchOpen ? true : undefined}
         aria-hidden={mobileSearchOpen ? true : undefined}
@@ -7162,7 +7165,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
       <div
         ref={resultsGridRef}
-        className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-5 pt-8 sm:pt-5 lg:gap-x-9 lg:pt-6"
+        className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-0 pt-8 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-6"
       >
         <aside
           ref={desktopFilterSidebarRef}
@@ -7301,7 +7304,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               {body?.tripType !== "multi-city" ? (
                 <>
                   <div className="w-full min-w-0 max-w-full overflow-hidden sm:hidden" aria-label="Nearby departure fares" data-nearby-fare-presentation="mobile">
-                    <div ref={mobileNearbyFareRailRef} className="flex h-[80px] w-full min-w-0 max-w-full snap-x snap-proximity items-center gap-2 overflow-x-auto overflow-y-hidden px-3 py-[5px] [scroll-padding-inline:0.75rem] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div ref={mobileNearbyFareAxisLockRef} className="flex h-[80px] w-full min-w-0 max-w-full touch-pan-y snap-x snap-proximity items-center gap-2 overflow-x-auto overflow-y-hidden px-3 py-[5px] [scroll-padding-inline:0.75rem] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       {(nearbyFares.length ? nearbyFares : Array.from({ length: nearbyFareRangeSize }, (_, index) => ({ date: `loading-mobile-${index}`, status: "loading" as const }))).map((fare) => {
                         const selected = fare.date === body?.departureDate;
                         const displayPrice = fare.status === "success" ? formatDisplayPrice({ amount: fare.amount, sourceCurrency: fare.currency, displayCurrency: selectedCurrency, convertSourceEstimate: true, useFlightResultSymbols: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback }).formatted : null;
@@ -7322,7 +7325,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         );
                       })}
                     </div>
-                    {cheaperNearbyFare ? <button type="button" onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)} className="focus-ring flex min-h-[28px] max-w-full items-center px-0 text-left text-[9px] font-medium leading-[12px] text-slate-600 hover:text-[#075EE8]">Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}</button> : null}
+                    {cheaperNearbyFare ? <button type="button" onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)} className="focus-ring flex min-h-[28px] max-w-full items-center px-0 text-left text-[8px] font-medium leading-[10px] text-slate-600 hover:text-[#075EE8]">Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}</button> : null}
                   </div>
                   <div
                   className="hidden w-full sm:block"
@@ -7491,7 +7494,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               </section>
 
               <div data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden">
-                {mobileFlightPriceAlertQuery ? <FlightPriceAlertControl query={mobileFlightPriceAlertQuery} results={providerResults} /> : null}
+                {mobileFlightPriceAlertQuery ? <div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)]"><FlightPriceAlertControl query={mobileFlightPriceAlertQuery} results={providerResults} /></div> : null}
                 <div
                   ref={mobileResultsPageTopRef}
                   data-mobile-flight-results-summary-row
@@ -7619,11 +7622,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     data-mobile-paginated-flight-results
                     aria-busy={paginationPendingPage !== null}
                     className={cn(
-                      "pb-[calc(1rem+env(safe-area-inset-bottom))]",
+                      totalResultPages <= 1 ? "pb-6" : "pb-0",
                       paginationRevealing && "animate-[fadeIn_150ms_ease-out]",
                     )}
                   >
-                    <div data-flight-results-card-list className="space-y-3">
+                    <div data-flight-results-card-list className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)] space-y-3">
                       {visibleResults.map((flight, index) => {
                         const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
                         if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
@@ -7751,7 +7754,7 @@ function FlightResultsPageTransitionSkeleton({
         <div className="mx-auto h-[4.25rem] w-full max-w-[30rem] animate-pulse rounded-xl border border-slate-200 bg-white shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] motion-reduce:animate-none" />
       </div>
 
-      <div className="mx-auto max-w-[1400px] px-[14px] py-4 sm:px-4 sm:py-8">
+      <div className="mx-auto max-w-[1400px] px-3 py-4 sm:px-4 sm:py-8">
         <div className="mb-3 flex gap-1.5 overflow-hidden sm:hidden">
           {[84, 92, 76, 88].map((width) => (
             <div
@@ -7771,7 +7774,7 @@ function FlightResultsPageTransitionSkeleton({
 
         <div className="mt-3 grid gap-6 sm:mt-6 lg:grid-cols-[288px_minmax(0,1fr)]">
           <div className="hidden h-[34rem] animate-pulse rounded-2xl border border-slate-200 bg-white lg:block motion-reduce:animate-none" />
-          <div className="space-y-3 sm:space-y-4">
+          <div data-flight-results-skeleton-card-list className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)] space-y-3 sm:space-y-4">
             <div className="hidden h-7 w-44 animate-pulse rounded bg-slate-200 motion-reduce:animate-none sm:block" />
             {Array.from({ length: 3 }, (_, index) => (
               <FlightCardSkeleton key={index} />

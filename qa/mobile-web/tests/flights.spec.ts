@@ -11,11 +11,25 @@ for (const width of [360, 390, 412]) {
     await expect(page.locator("[data-flight-results-main]")).toBeVisible();
     await expect(page.locator("[data-flight-mobile-results-shortcuts]")).toBeVisible();
     await expect(page.locator('[data-nearby-fare-presentation="mobile"]')).toBeVisible();
+    await expect(page.locator("[data-flight-price-alert-row]")).toBeVisible();
+    const mobileResults = page.locator("[data-mobile-paginated-flight-results]");
+    await expect(mobileResults.locator("[data-flight-results-card-list]")).toBeVisible();
+    const pagination = mobileResults.getByRole("navigation", { name: "Flight results pages" });
+    await expect(page.locator("footer")).toBeVisible();
 
     const measurements = await page.evaluate(() => {
       const dateRail = document.querySelector<HTMLElement>('[data-nearby-fare-presentation="mobile"] > div');
       const quickRail = document.querySelector<HTMLElement>("[data-mobile-flight-shortcuts]");
-      if (!dateRail || !quickRail) throw new Error("Expected both mobile Flight Results rails");
+      const filterChip = quickRail?.querySelector<HTMLElement>("button");
+      const priceAlert = document.querySelector<HTMLElement>("[data-flight-price-alert-row]")?.firstElementChild;
+      const resultsFound = document.querySelector<HTMLElement>("[data-mobile-flight-results-summary-row]");
+      const mobileResults = document.querySelector<HTMLElement>("[data-mobile-paginated-flight-results]");
+      const flightCard = mobileResults?.querySelector<HTMLElement>("[data-flight-results-card-list]")?.firstElementChild;
+      const pagination = mobileResults?.querySelector<HTMLElement>('[aria-label="Flight results pages"]');
+      const footer = document.querySelector<HTMLElement>("footer");
+      if (!dateRail || !quickRail || !filterChip || !(priceAlert instanceof HTMLElement) || !resultsFound || !(flightCard instanceof HTMLElement) || !footer) {
+        throw new Error("Expected mobile Flight Results rails and result geometry");
+      }
       const scrollRail = (rail: HTMLElement) => {
         const before = rail.scrollLeft;
         rail.scrollLeft = Math.min(40, rail.scrollWidth - rail.clientWidth);
@@ -25,6 +39,14 @@ for (const width of [360, 390, 412]) {
         viewport: window.innerWidth,
         document: document.documentElement.scrollWidth,
         body: document.body.scrollWidth,
+        filterChip: filterChip.getBoundingClientRect().toJSON(),
+        priceAlert: priceAlert.getBoundingClientRect().toJSON(),
+        resultsFound: resultsFound.getBoundingClientRect().toJSON(),
+        flightCard: flightCard.getBoundingClientRect().toJSON(),
+        paginationPresent: Boolean(pagination),
+        resultsToFooterGap:
+          footer.getBoundingClientRect().top -
+          (pagination?.getBoundingClientRect().bottom ?? flightCard.getBoundingClientRect().bottom),
         dateRail: scrollRail(dateRail),
         quickRail: scrollRail(quickRail),
       };
@@ -32,6 +54,14 @@ for (const width of [360, 390, 412]) {
 
     expect(measurements.document).toBeLessThanOrEqual(measurements.viewport);
     expect(measurements.body).toBeLessThanOrEqual(measurements.viewport);
+    expect(measurements.filterChip.left).toBeCloseTo(12, 0);
+    expect(measurements.priceAlert.left).toBeCloseTo(4, 0);
+    expect(measurements.priceAlert.right).toBeCloseTo(width - 4, 0);
+    expect(measurements.resultsFound.left).toBeCloseTo(12, 0);
+    expect(measurements.flightCard.left).toBeCloseTo(4, 0);
+    expect(measurements.flightCard.right).toBeCloseTo(width - 4, 0);
+    expect(measurements.resultsToFooterGap).toBeGreaterThanOrEqual(24);
+    expect(measurements.resultsToFooterGap).toBeLessThanOrEqual(32);
     expect(measurements.dateRail.scrollWidth).toBeGreaterThan(measurements.dateRail.clientWidth);
     expect(measurements.dateRail.after).toBeGreaterThan(measurements.dateRail.before);
     expect(measurements.quickRail.scrollWidth).toBeGreaterThan(measurements.quickRail.clientWidth);
