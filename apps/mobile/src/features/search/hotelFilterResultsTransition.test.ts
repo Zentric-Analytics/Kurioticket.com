@@ -22,23 +22,22 @@ test("Hotel quick filters retain functional draft apply semantics", () => {
   assert.match(quick, /case "roomTypes":return/);
 });
 
-test("Hotel result changes keep cards mounted and use compact page-loading progress", () => {
+test("Hotel filter changes reuse the app's normal branded loading state", () => {
   assert.equal(NATIVE_FILTER_RESULTS_TRANSITION_MS, 700);
   const helper = screen.match(/const startHotelResultsTransition[\s\S]*?\n  };/)?.[0] ?? "";
-  const feedback = screen.match(/const startHotelFilterFeedback[\s\S]*?\n  }, \[hotelFilterProgress\]\);/)?.[0] ?? "";
+  const feedback = screen.match(/const startHotelFilterFeedback[\s\S]*?\n  }, \[\]\);/)?.[0] ?? "";
   assert.match(screen, /hotelFilterSessionDirtyRef/);
   assert.match(feedback, /setHotelFilterApplying\(true\)/);
-  assert.match(feedback, /Animated\.timing\(hotelFilterProgress/);
-  assert.match(feedback, /duration: NATIVE_FILTER_RESULTS_TRANSITION_MS/);
+  assert.match(feedback, /setTimeout\(\(\) => \{/);
   assert.match(feedback, /setHotelFilterApplying\(false\)/);
+  assert.match(feedback, /NATIVE_FILTER_RESULTS_TRANSITION_MS/);
+  assert.doesNotMatch(feedback, /Animated\.timing|hotelFilterProgress/);
   assert.match(helper, /setHotelPage\(1\)/);
   assert.match(helper, /scrollToHotelResultsBeginning\(\)/);
   assert.match(helper, /startHotelFilterFeedback\(\)/);
-  assert.doesNotMatch(helper, /travelApi|setStatus|setRetry|router|load\(/);
-  assert.match(screen, /transitionHotelFilters\(emptyHotelFilters\(\)\)/);
-  assert.match(screen, /accessibilityLabel="Updating hotel results"/);
-  assert.match(screen, /backgroundColor: "rgba\(0,75,184,0\.10\)"/);
-  assert.match(screen, /backgroundColor: "#2B8FCB"/);
+  assert.match(screen, /status === "loading" \|\| hotelCurrencyPending \|\| hotelFilterApplying/);
+  assert.match(screen, /return <NativeBrandedSearchLoading product=\{product\} \/>/);
+  assert.doesNotMatch(screen, /hotelFilterRefreshSlot|hotelFilterRefreshTrack|hotelFilterRefreshProgress/);
 });
 
 test("changed Hotel Sort Apply updates ordering immediately and resets pagination", () => {
@@ -52,6 +51,6 @@ test("Hotel result chrome stays vertically stable after filter Apply", () => {
   assert.doesNotMatch(screen, /contentContainerStyle=\{s0\.hotelFilterChips\}/);
   assert.match(screen, /HotelResultsShortcut label=\{hotelPriceShortcutLabel\}/);
   assert.match(screen, /HotelResultsShortcut label=\{hotelFacilitiesShortcutLabel\}/);
-  assert.match(screen, /hotelFilterRefreshSlot: \{ height: 5/);
+  assert.doesNotMatch(screen, /hotelFilterRefreshSlot|hotelFilterRefreshTrack|hotelFilterRefreshProgress/);
   assert.doesNotMatch(screen, /hotelResultsApplying|HotelCardSkeleton/);
 });
