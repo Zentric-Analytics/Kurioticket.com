@@ -1660,9 +1660,8 @@ export function CarsResultsClient({
         appearance="carsResultsEdit"
         open={mobileSearchOpen}
         browserCanvasColor="#ffffff"
-        freezeBodyPosition={false}
+        freezeBodyPosition
         isolatedBackdrop
-        backdropClassName="[top:env(safe-area-inset-top)]"
         closing={mobileSearchClosing}
         onCloseAnimationComplete={cancelMobileSearchDrawer}
         title={t("carsResults.editSearch")}
