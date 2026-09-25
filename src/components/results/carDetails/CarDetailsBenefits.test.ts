@@ -109,7 +109,13 @@ test("source contract uses a desktop summary and a mobile safe-area booking dock
 
 test("standalone details use persistent mobile controls with native-ordered hero content", () => {
   assert.match(heroSource, /data-car-details-image-stage/);
-  assert.match(heroSource, /relative min-w-0 bg-white pt-5 lg:pt-0/);
+  assert.match(clientSource, /reserveMobileControlSafeZone={presentation === "standalone-content"}/);
+  assert.match(heroSource, /data-car-details-mobile-native-image-stage/);
+  assert.match(heroSource, /data-car-details-mobile-control-safe-zone/);
+  assert.match(heroSource, /h-\[var\(--car-details-mobile-header-boundary\)\]/);
+  assert.match(heroSource, /data-car-details-mobile-vehicle-stage/);
+  assert.match(heroSource, /h-\[clamp\(11rem,50vw,14rem\)\] pb-3/);
+  assert.doesNotMatch(heroSource, /scrollTo\(|scrollIntoView\(/);
   assert.doesNotMatch(heroSource, /data-car-details-mobile-controls/);
   assert.match(clientSource, /data-car-details-mobile-controls/);
   assert.match(clientSource, /pointer-events-none fixed inset-x-0 top-0/);
