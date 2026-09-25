@@ -10,6 +10,10 @@ const client = readFileSync(
   new URL("./HotelDetailsClient.tsx", import.meta.url),
   "utf8",
 );
+const mobileDetails = readFileSync(
+  new URL("./hotelDetails/MobileHotelDetails.tsx", import.meta.url),
+  "utf8",
+);
 const continuation = readFileSync(
   new URL("./hotelDetails/hotelBookingContinuation.ts", import.meta.url),
   "utf8",
@@ -29,14 +33,15 @@ test("standalone web Hotel Rates receive the current actionable external provide
   assert.match(client, /providerOfferId: "current-provider"/);
   assert.match(client, /providerOffers=\{standaloneProviderOffers\}/);
   assert.match(client, /onProviderOfferHandoff=/);
-  assert.match(client, /await runProviderRedirect\(\)/);
+  assert.match(client, /await runProviderRedirect\(targetWindow\)/);
 });
 
 test("standalone provider handoff remains server-authoritative", () => {
   assert.match(client, /fetch\("\/api\/redirect"/);
   assert.match(client, /type: "hotel"/);
   assert.match(client, /sourcePage: "hotel_details"/);
-  assert.match(client, /window\.location\.href = data\.url/);
+  assert.match(client, /targetWindow\.location\.replace\(data\.url\)/);
+  assert.match(client, /else window\.location\.href = data\.url/);
   const offerBlock = client.slice(
     client.indexOf("const standaloneProviderOffers"),
     client.indexOf("const guidedSelection"),
@@ -86,7 +91,8 @@ test("web Hotel provider action stays live-price gated and server-authoritative"
     /mode === "standalone" &&[\s\S]*?providerEnabled &&[\s\S]*?nightlyDisplayPrice &&/,
   );
   assert.match(client, /fetch\("\/api\/redirect"/);
-  assert.match(client, /window\.location\.href = data\.url/);
+  assert.match(client, /targetWindow\.location\.replace\(data\.url\)/);
+  assert.match(client, /else window\.location\.href = data\.url/);
 });
 
 test("mobile Hotel booking dock remains usable on narrow phones and respects the safe area", () => {
@@ -104,4 +110,23 @@ test("Hotel Details loading dock uses the same narrow-phone geometry", () => {
   assert.match(loading, /grid-cols-\[minmax\(0,1fr\)_minmax\(124px,42%\)\]/);
   assert.match(loading, /min-\[390px\]:grid-cols-\[minmax\(0,1fr\)_minmax\(140px,0\.82fr\)\]/);
   assert.match(loading, /env\(safe-area-inset-bottom\)/);
+});
+
+
+test("mobile web external Hotel View deal reserves a new tab before the async redirect", () => {
+  assert.match(mobileDetails, /window\.open\("about:blank", "_blank"\)/);
+  assert.match(mobileDetails, /providerWindow\.opener = null/);
+  assert.match(
+    mobileDetails,
+    /onProviderOfferHandoff\?\.\(offer\.action\.providerOfferId, providerWindow\)/,
+  );
+  assert.match(mobileDetails, /providerWindow && !providerWindow\.closed/);
+  assert.match(mobileDetails, /providerWindow\.close\(\)/);
+  assert.doesNotMatch(
+    mobileDetails.slice(
+      mobileDetails.indexOf("async function viewDeal"),
+      mobileDetails.indexOf("const facts"),
+    ),
+    /window\.location\.href/,
+  );
 });
