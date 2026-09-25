@@ -7477,7 +7477,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 <div
                   ref={mobileResultsPageTopRef}
                   data-mobile-flight-results-summary-row
-                  className="mb-2 flex w-full items-center justify-between gap-3"
+                  className="flex w-full items-center justify-between gap-3"
                 >
                   <p className="flight-results-count min-w-0 text-[13px] font-bold leading-[17px] tracking-[-0.005em] text-slate-900">
                     {formatMobileFlightResultsFound(sortedResults.length, t, locale)}
@@ -7589,6 +7589,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     data-mobile-paginated-flight-results
                     aria-busy={paginationPendingPage !== null}
                     className={cn(
+                      "pt-3",
                       totalResultPages <= 1 ? "pb-6" : "pb-0",
                       paginationRevealing && "animate-[fadeIn_150ms_ease-out]",
                     )}
