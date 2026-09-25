@@ -245,6 +245,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
       }
       if (!result.ok || !data.url) throw new Error(data.error || "This provider link is unavailable.");
       providerWindow.location.replace(data.url);
+      setRedirecting(false);
     } catch (redirectError) {
       if (!providerWindow.closed) providerWindow.close();
       setError(redirectError instanceof Error ? redirectError.message : "This provider link is unavailable.");
