@@ -108,7 +108,7 @@ import {
 } from "@/components/search/CarsPickerContent";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { MobileResultsEditSheet } from "@/components/search/MobileResultsEditSheet";
-import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } from "@/lib/search/mobileResultsScrollLock";
+import { acquireMobileResultsScrollLock } from "@/lib/search/mobileResultsScrollLock";
 import { getOverlayActivationModality, restoreOverlayLauncherFocus, type OverlayActivationModality } from "@/lib/search/mobileResultsOverlayFocus";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import {
