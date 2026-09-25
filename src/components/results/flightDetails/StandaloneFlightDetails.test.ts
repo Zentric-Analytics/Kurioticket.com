@@ -780,7 +780,7 @@ test("mobile web Fare information deck mirrors native tabs and selection-only de
   const styles = await readFile(new URL("../../../app/globals.css", import.meta.url), "utf8");
   assert.match(
     styles,
-    /@media \(max-width: 639px\) \{[\s\S]*?\.flight-mobile-fare-info-tab-label \{[\s\S]*?font-size: 10px !important;[\s\S]*?line-height: 14px !important;[\s\S]*?font-weight: 500 !important;[\s\S]*?-webkit-text-size-adjust: none;[\s\S]*?text-size-adjust: none;[\s\S]*?\}/,
+    /@media \(max-width: 639px\) \{[\s\S]*?\.flight-mobile-fare-info-tab-label \{[\s\S]*?font-size: 14px !important;[\s\S]*?line-height: 20px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?-webkit-text-size-adjust: none;[\s\S]*?text-size-adjust: none;[\s\S]*?\}/,
   );
   assert.match(deck, /selected \? <span className="absolute -bottom-px left-0\.5 right-0\.5 h-\[3px\] rounded-\[2px\] bg-\[#0754F7\]"/);
   assert.match(deck, /left-0\.5 right-0\.5 h-\[3px\] rounded-\[2px\]/);
