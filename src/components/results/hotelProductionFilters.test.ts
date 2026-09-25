@@ -51,7 +51,7 @@ test("mobile Hotel filter sheet uses the Cars continuous #F2F4F8 surface", () =>
   assert.doesNotMatch(sheet, /bg-[#F1F3F8]|sm:bg-[#F6F8FB]/);
 });
 
-test("filter sheet applies local filters without replacing Hotel cards with timed feedback", () => {
+test("filter sheet applies local filters with compact page-style feedback while keeping Hotel cards mounted", () => {
   assert.match(source, /activeFilterCount > 0 \?\s*\(?\s*<button/);
   assert.match(source, /t\("hotelResults.noStaysMatchFiltersTitle"\)/);
   assert.match(source, /t\("deals.results.package.view.hotel"\)/);
@@ -125,11 +125,16 @@ test("property search is shared, normalized and represented as an active filter"
 
 test("mobile Hotel filter apply keeps cards visible and uses selected values in the shortcut rail", () => {
   const cardRegion = source.slice(source.indexOf("ref={paginationListRef}"), source.indexOf("</section>", source.indexOf("ref={paginationListRef}")));
-  assert.match(cardRegion, /filterApplying \|\| paginationTransitionPhase === "covering"/);
+  assert.match(cardRegion, /data-hotel-filter-refresh-progress/);
+  assert.match(cardRegion, /animate-\[loading-line_1\.4s_ease-in-out_infinite\]/);
+  assert.match(cardRegion, /paginationTransitionPhase === "covering"/);
+  assert.doesNotMatch(cardRegion, /filterApplying \|\| paginationTransitionPhase === "covering"/);
   const quickApply = source.slice(source.indexOf('className="h-11 w-\[32%\] shrink-0 rounded-lg bg-[#004BB8]'), source.indexOf("</footer>", source.indexOf('className="h-11 w-\[32%\] shrink-0 rounded-lg bg-[#004BB8]')));
-  assert.match(quickApply, /setCurrentResultsPage\(1\)/);
-  assert.doesNotMatch(quickApply, /triggerFilterApplying\(\)/);
+  assert.match(quickApply, /triggerFilterApplying\(\)/);
   assert.match(source, /notation: "compact"/);
   assert.match(source, /Under \$\{formatCompactHotelFilterPrice\(maxPrice\)\}/);
   assert.doesNotMatch(source, /\{count > 0 \? <span className="rounded-full bg-\[#004BB8\]/);
+  assert.match(source, /clearMobileShortcutFilter/);
+  assert.match(source, /Clear \$\{label\} filter/);
+  assert.match(source, /<X className="h-3\.5 w-3\.5"/);
 });
