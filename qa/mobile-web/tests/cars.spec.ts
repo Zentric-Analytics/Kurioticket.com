@@ -23,19 +23,65 @@ test("Cars Edit Search records first-open, reopen, and Safari viewport geometry"
   const modify = page.getByRole("button", { name: /modify search/i }).first();
   await expect(modify).toBeVisible();
   const beforeFirst = await collectSafariDiagnostics(page, "before-first-open");
+  const beforeFirstBodyStyles = await page.evaluate(() => ({
+    position: document.body.style.position,
+    top: document.body.style.top,
+    left: document.body.style.left,
+    right: document.body.style.right,
+    width: document.body.style.width,
+  }));
+  const editResultsMarker = page.locator("[data-cars-results-card-list]").first();
+  const beforeFirstResultsTop = await editResultsMarker.evaluate(
+    (element) => element.getBoundingClientRect().top,
+  );
   await modify.click();
   const overlay = page.locator("[data-mobile-results-overlay-root]");
   await expect(overlay).toBeVisible();
   const editDialog = page.locator("[data-mobile-results-edit-sheet] [role=dialog]");
+  const editTitle = editDialog.getByRole("heading", { name: /edit search/i });
+  await expect(editTitle).toBeVisible();
+  const editBackdrop = page.locator(".mobile-results-sheet-cars-edit-backdrop");
+  await expect(editBackdrop).toBeVisible();
+  const lockedBody = await page.evaluate(() => ({
+    position: document.body.style.position,
+    top: document.body.style.top,
+    left: document.body.style.left,
+    right: document.body.style.right,
+    width: document.body.style.width,
+  }));
+  expect(lockedBody.position).toBe("fixed");
+  expect(Number.parseFloat(lockedBody.top || "0")).toBeCloseTo(-beforeFirst.viewport.scrollY, 0);
+  expect(lockedBody.left).toBe("0px");
+  expect(lockedBody.right).toBe("0px");
+  expect(lockedBody.width).toBe("100%");
+  const backdropGeometry = await editBackdrop.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return {
+      left: rect.left,
+      top: rect.top,
+      rightGap: window.innerWidth - rect.right,
+      bottomGap: window.innerHeight - rect.bottom,
+      backgroundColor: style.backgroundColor,
+    };
+  });
+  expect(backdropGeometry.left).toBeCloseTo(0, 0);
+  expect(backdropGeometry.top).toBeCloseTo(0, 0);
+  expect(backdropGeometry.rightGap).toBeCloseTo(0, 0);
+  expect(backdropGeometry.bottomGap).toBeCloseTo(0, 0);
+  expect(backdropGeometry.backgroundColor).toBe("rgba(8, 18, 35, 0.52)");
   const editGeometry = await editDialog.evaluate((element) => {
     const rect = element.getBoundingClientRect();
     const style = getComputedStyle(element);
+    const title = element.querySelector("h2")?.getBoundingClientRect();
     return {
       left: rect.left,
       rightGap: window.innerWidth - rect.right,
       bottomGap: window.innerHeight - rect.bottom,
       topLeftRadius: style.borderTopLeftRadius,
       bottomLeftRadius: style.borderBottomLeftRadius,
+      dialogCenterX: rect.left + rect.width / 2,
+      titleCenterX: title ? title.left + title.width / 2 : null,
     };
   });
   expect(editGeometry.left).toBeCloseTo(12, 0);
@@ -43,6 +89,8 @@ test("Cars Edit Search records first-open, reopen, and Safari viewport geometry"
   expect(editGeometry.bottomGap).toBeCloseTo(12, 0);
   expect(editGeometry.topLeftRadius).toBe("24px");
   expect(editGeometry.bottomLeftRadius).toBe("24px");
+  expect(editGeometry.titleCenterX).not.toBeNull();
+  expect(editGeometry.titleCenterX!).toBeCloseTo(editGeometry.dialogCenterX, 0);
   const firstOpen = await collectSafariDiagnostics(page, "first-open");
   expect(firstOpen.viewport.scrollY).toBeCloseTo(beforeFirst.viewport.scrollY, 0);
   const firstScreenshot = testInfo.outputPath("cars-first-open.png");
@@ -50,10 +98,35 @@ test("Cars Edit Search records first-open, reopen, and Safari viewport geometry"
   await testInfo.attach("Cars first open", { path: firstScreenshot, contentType: "image/png" });
 
   await page.getByRole("button", { name: /close edit search/i }).click();
+  await expect(page.locator(".mobile-results-sheet-cars-edit-surface")).toHaveClass(/mobile-results-sheet-surface-closing/);
+  expect(await page.evaluate(() => document.body.style.position)).toBe("fixed");
   await expect(overlay).toBeHidden();
+  expect(
+    await page.evaluate(() => ({
+      position: document.body.style.position,
+      top: document.body.style.top,
+      left: document.body.style.left,
+      right: document.body.style.right,
+      width: document.body.style.width,
+    })),
+  ).toEqual(beforeFirstBodyStyles);
+  expect(
+    await editResultsMarker.evaluate((element) => element.getBoundingClientRect().top),
+  ).toBeCloseTo(beforeFirstResultsTop, 0);
   const afterFirstClose = await collectSafariDiagnostics(page, "after-first-close");
   await modify.click();
   await expect(overlay).toBeVisible();
+  expect(await page.evaluate(() => document.body.style.position)).toBe("fixed");
+  const secondTitleCenter = await editDialog.evaluate((element) => {
+    const dialog = element.getBoundingClientRect();
+    const title = element.querySelector("h2")?.getBoundingClientRect();
+    return {
+      dialog: dialog.left + dialog.width / 2,
+      title: title ? title.left + title.width / 2 : null,
+    };
+  });
+  expect(secondTitleCenter.title).not.toBeNull();
+  expect(secondTitleCenter.title!).toBeCloseTo(secondTitleCenter.dialog, 0);
   const secondOpen = await collectSafariDiagnostics(page, "second-open");
   const secondScreenshot = testInfo.outputPath("cars-second-open.png");
   await page.screenshot({ path: secondScreenshot, fullPage: false });
@@ -98,6 +171,19 @@ test("Cars Edit Search records first-open, reopen, and Safari viewport geometry"
   expect(afterInternalScroll.viewport.scrollY).toBeCloseTo(secondOpen.viewport.scrollY, 0);
 
   await page.getByRole("button", { name: /close edit search/i }).click();
+  await expect(overlay).toBeHidden();
+  expect(
+    await page.evaluate(() => ({
+      position: document.body.style.position,
+      top: document.body.style.top,
+      left: document.body.style.left,
+      right: document.body.style.right,
+      width: document.body.style.width,
+    })),
+  ).toEqual(beforeFirstBodyStyles);
+  expect(
+    await editResultsMarker.evaluate((element) => element.getBoundingClientRect().top),
+  ).toBeCloseTo(beforeFirstResultsTop, 0);
   const afterSecondClose = await collectSafariDiagnostics(page, "after-second-close");
   const events = await readViewportEvents(page);
   await writeArtifact("cars-investigation.json", {

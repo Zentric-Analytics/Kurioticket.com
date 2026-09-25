@@ -37,6 +37,30 @@ test("mobile Results editor is an accessible rounded bottom sheet", () => {
   );
 });
 
+test("Cars Edit Search keeps its bottom-sheet placement while centering only the title", () => {
+  assert.match(
+    source,
+    /mobile-results-overlay-root fixed inset-0[^"]*items-end/,
+  );
+  assert.match(
+    source,
+    /mobile-results-sheet-cars-edit-surface mx-3 mb-3 max-h-\[88dvh\] w-\[calc\(100%_-_24px\)\]/,
+  );
+  assert.match(
+    source,
+    /carsResultsEdit && "border-b-0 bg-\[#F5F7FB\] px-2 py-0"/,
+  );
+  assert.match(
+    source,
+    /carsResultsEdit && "relative min-h-\[52px\] justify-center"/,
+  );
+  assert.match(
+    source,
+    /carsResultsEdit && "w-full px-12 text-center text-\[19px\] font-semibold leading-\[24px\] tracking-normal"/,
+  );
+  assert.match(source, /carsResultsEdit && "absolute right-0"/);
+});
+
 test("isolated backdrop animation never changes the sheet surface opacity", () => {
   assert.match(
     source,
