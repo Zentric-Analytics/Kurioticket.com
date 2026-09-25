@@ -19,11 +19,23 @@ export function FlightIdentityMarkContent({ logoUrl, logoFailed, decorative, mob
   );
 }
 
-export function FlightIdentityMark({ logoUrl, label, decorative = false, mobile = false }: { logoUrl?: string | null; label?: string; decorative?: boolean; mobile?: boolean }) {
+function FlightIdentityMarkState({ logoUrl, decorative, mobile }: { logoUrl?: string | null; decorative: boolean; mobile: boolean }) {
   const [logoFailed, setLogoFailed] = useState(false);
   return (
+    <FlightIdentityMarkContent
+      logoUrl={logoUrl}
+      logoFailed={logoFailed}
+      decorative={decorative}
+      mobile={mobile}
+      onLogoError={() => setLogoFailed(true)}
+    />
+  );
+}
+
+export function FlightIdentityMark({ logoUrl, label, decorative = false, mobile = false }: { logoUrl?: string | null; label?: string; decorative?: boolean; mobile?: boolean }) {
+  return (
     <span className="shrink-0" aria-label={!decorative ? label : undefined}>
-      <FlightIdentityMarkContent logoUrl={logoUrl} logoFailed={logoFailed} decorative={decorative} mobile={mobile} onLogoError={() => setLogoFailed(true)} />
+      <FlightIdentityMarkState key={logoUrl ?? "__no-logo__"} logoUrl={logoUrl} decorative={decorative} mobile={mobile} />
     </span>
   );
 }
