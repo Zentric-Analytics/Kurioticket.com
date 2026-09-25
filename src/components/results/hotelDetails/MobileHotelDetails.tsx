@@ -11,6 +11,7 @@ import { isIosHotelMobileWeb } from "@/lib/hotels/iosHotelMobileWeb";
 import type { StandaloneHotelDetailsProps } from "./StandaloneHotelDetails";
 import { formatMobileHotelPrice, mobileHotelAbout, mobileHotelAmenityGroups, mobileHotelStay } from "./mobileHotelDetailsPresentation";
 import { MobileHotelStayEditor } from "./MobileHotelStayEditor";
+import type { HotelDetailsProviderOffer } from "./hotelDetailsPresentation";
 import styles from "./HotelDetailsMobile.module.css";
 
 type Tab = "rates" | "overview" | "reviews";
@@ -71,13 +72,12 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
   const mapOptions = location ? { hotelName: props.hotelName, propertyDetails: location, googleMapsEmbedApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY } : null;
   const mapUrl = mapOptions ? buildHotelMapEmbedUrl(mapOptions) : null;
   const streetUrl = mapOptions ? buildGoogleHotelStreetViewEmbedUrl(mapOptions) : null;
-  const offers = [
+  const offers: HotelDetailsProviderOffer[] = [
     ...(props.roomChoices.length ? [{ id: "kurioticket", providerName: "Kurioticket", providerLogoUrl: "/brand/kurioticket-logo-primary-light-bg.svg", nightlyPrice: props.nightlyDisplayPrice?.formatted ?? props.labels.priceUnavailable, action: { kind: "internal-room-flow" as const } }] : []),
     ...(props.onProviderOfferHandoff ? props.providerOffers ?? [] : []),
   ];
   const selected = offers.find(offer => offer.id === selectedId) ?? offers[0];
   const total = formatMobileHotelPrice(props.totalDisplayPrice, props.labels.priceUnavailable);
-  const nightly = formatMobileHotelPrice(props.nightlyDisplayPrice, props.labels.priceUnavailable);
 
   useEffect(() => {
     // Preview reserves a separate 72px row for the fixed hero actions when tabs pin.
@@ -115,12 +115,13 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
     }
   }
 
-  async function viewDeal() {
-    if (!selected || pending) return;
-    if (selected.action.kind === "internal-room-flow") { setOverlay("rooms"); return; }
+  async function viewDeal(offer: HotelDetailsProviderOffer) {
+    if (pending) return;
+    setSelectedId(offer.id);
+    if (offer.action.kind === "internal-room-flow") { setOverlay("rooms"); return; }
     setPending(true); setHandoffError("");
     try {
-      await props.onProviderOfferHandoff?.(selected.action.providerOfferId);
+      await props.onProviderOfferHandoff?.(offer.action.providerOfferId);
     }
     catch { setHandoffError("Unable to open provider. Please refresh and try again."); }
     finally { setPending(false); }
@@ -165,12 +166,14 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
     <div id={`mobile-hotel-${tab}-panel`} role="tabpanel" aria-labelledby={`mobile-hotel-${tab}-tab`} className={styles.panel}>
       {tab === "rates" ? <section className={styles.rates}>
         <p>{[stay.dates, stay.nights].filter(Boolean).join(" · ")}</p>
-        <div role="radiogroup" aria-label="Hotel rates" className={styles.rateList}>
-          {offers.map(offer => <label key={offer.id} className={styles.rate} data-selected={selected?.id === offer.id}>
-            <input type="radio" name="mobile-hotel-rate" aria-label={`Select ${offer.providerName} offer`} checked={selected?.id === offer.id} onChange={() => setSelectedId(offer.id)} />
-            <span className={styles.rateTop}>{offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={`${offer.providerName} logo`} width={132} height={30} /> : <strong>{offer.providerName}</strong>}<span className={styles.radio} aria-hidden="true">{selected?.id === offer.id ? <i /> : null}</span></span>
-            <span className={styles.rateBottom}><span>per night</span><strong title={props.nightlyDisplayPrice?.ariaLabel}>{offer.id === "kurioticket" ? nightly : offer.nightlyPrice}</strong></span>
-          </label>)}
+        <div aria-label="Hotel rates" className={styles.rateList}>
+          {offers.map(offer => <article key={offer.id} className={styles.rate} data-selected={selected?.id === offer.id}>
+            <label className={styles.rateChoice}>
+              <input type="radio" name="mobile-hotel-rate" aria-label={`Select ${offer.providerName} offer`} checked={selected?.id === offer.id} onChange={() => setSelectedId(offer.id)} />
+              <span className={styles.rateTop}>{offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={`${offer.providerName} logo`} width={132} height={30} /> : <strong>{offer.providerName}</strong>}<span className={styles.radio} aria-hidden="true">{selected?.id === offer.id ? <i /> : null}</span></span>
+            </label>
+            <div className={styles.rateAction}><div><strong>{offer.action.kind === "internal-room-flow" ? total : offer.totalPrice || props.labels.priceUnavailable}</strong><span>Stay total</span></div><button type="button" aria-label={`View deal from ${offer.providerName}`} onClick={() => void viewDeal(offer)} disabled={pending}>{pending && selected?.id === offer.id ? "Opening…" : "View deal"}</button></div>
+          </article>)}
           {!offers.length ? <div className={styles.noRates}><h2>No rates available</h2><p>Refresh your search for current prices and availability.</p><a href={props.resultsHref}>Back to hotel results</a></div> : null}
         </div>
         {handoffError ? <p role="alert">{handoffError}</p> : null}
@@ -193,7 +196,6 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
       </> : null}
       {tab === "reviews" ? <section className={styles.reviews} aria-label="Guest reviews" data-hotel-reviews-section>{props.reviewScore && props.reviewCountText ? <div className={styles.reviewCard}><div className={styles.reviewScore}><strong>{props.reviewScore.split("/")[0].trim()}</strong><span>/{props.mobileReviewScale ?? 10}</span></div><div className={styles.reviewMeta}><h2>{props.reviewLabel}</h2><p>{props.reviewCountText}</p>{props.reviewSource ? <small>Source: {props.reviewSource}</small> : null}</div></div> : <><h2>Guest reviews</h2><p>Verified guest reviews are not connected for this property yet.</p></>}</section> : null}
     </div>
-    {selected ? <section className={styles.dock} data-mobile-hotel-stay-dock><div><strong title={props.totalDisplayPrice?.ariaLabel}>{total}</strong><span>Stay total</span></div><button type="button" onClick={() => void viewDeal()} disabled={pending}>{pending ? "Opening…" : "View deal"}</button></section> : null}
     <span role="status" className="sr-only">{shareStatus}</span>
 
     {overlay && overlay !== "stay" ? <DetailsDialog title={overlay === "gallery" ? "Photos" : overlay === "photo" ? `${gallery.activePosition} / ${gallery.usableIndices.length}` : overlay === "amenities" ? "All amenities" : overlay === "map" ? "Location" : "Room options"} full={overlay === "gallery" || overlay === "photo" || overlay === "map"} back={overlay === "photo" ? () => setOverlay("gallery") : undefined} onClose={() => setOverlay(null)}>
