@@ -41,3 +41,11 @@ test("following landing content uses normal spacing instead of a fixed form-heig
   );
   assert.doesNotMatch(followingContent, /pt-\[28rem\]/);
 });
+
+
+test("mobile Flight landing uses the same light canvas gradient as Hotels", () => {
+  assert.match(
+    source,
+    /<main className="flex-1 bg-\[linear-gradient\(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%\)\] pb-12 sm:bg-slate-50">/,
+  );
+});
