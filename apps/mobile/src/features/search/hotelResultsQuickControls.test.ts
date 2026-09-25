@@ -77,19 +77,7 @@ test("Hotel controls use the measured reference capsule geometry while keeping s
 test("Hotel controls use normal tokens when idle and font-color fill when a quick filter is selected", () => {
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
   for (const token of ["#D8E1EC", "#142033", "#64748B", "#F1F5F9", "#FFFFFF"]) {
-    assert.match(component, new RegExp(token.replace(/[().]/g, "\\test("Hotel controls use the normal neutral filter tokens in light and dark themes", () => {
-  const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
-  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F1F5F9", "#FFFFFF"]) {
     assert.match(component, new RegExp(token.replace(/[().]/g, "\\$&")));
-  }
-  for (const semantic of ["theme.surface", "theme.border", "theme.textPrimary", "theme.textSecondary", "theme.background"]) {
-    assert.match(component, new RegExp(semantic.replace(".", "\\.")));
-  }
-  assert.match(component, /borderColor: active \? foreground : border/);
-  assert.match(component, /backgroundColor: surface/);
-  assert.match(component, /color: foreground/);
-  assert.doesNotMatch(component, /#EAF2FF|active && !theme\.dark \? ui\.blue/);
-});")));
   }
   assert.match(component, /const selectedVisual = Boolean\(selected\)/);
   assert.match(component, /const selectedForeground = "#FFFFFF"/);
