@@ -5,6 +5,7 @@ import type { CanonicalLocation, TravelProduct } from "./types";
 import { searchDuffelPlaces } from "@/services/travel/providers/duffelProvider";
 import { isKayakSandboxEnabled, KayakSandboxClient, type KayakVertical } from "@/services/travel/kayakSandbox";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
+import { timezones as airportTimeZones } from "@/services/travel/airportTimeZones";
 
 const emptyCoverage = { flights: "none", hotels: "none", cars: "none", packages: "none" } as const;
 const canonicalFromProvider = (provider: string, value: string, label: string, kind?: string): CanonicalLocation => {
@@ -13,7 +14,8 @@ const canonicalFromProvider = (provider: string, value: string, label: string, k
   const parts = label.split(",").map((part) => part.trim());
   const base: CanonicalLocation = { id: iata ? `airport:${iata}` : `place:${normalizeLocationText(label).replaceAll(" ", "-").slice(0, 120)}`,
     kind: normalizedKind, primaryLabel: parts[0] || label, supportingLabel: parts.slice(1).join(", "), submittedValue: label,
-    codes: iata ? { iata } : undefined, staticCoverage: emptyCoverage, source: { catalog: "kurioticket", datasetVersion: "provider-discovery-v1" } };
+    codes: iata ? { iata } : undefined, timeZone: iata ? airportTimeZones[iata] : undefined,
+    staticCoverage: emptyCoverage, source: { catalog: "kurioticket", datasetVersion: "provider-discovery-v1" } };
   return providerLocation(provider, value, base);
 };
 
