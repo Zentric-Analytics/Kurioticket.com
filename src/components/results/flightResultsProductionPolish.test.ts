@@ -84,8 +84,9 @@ test("mobile Flight Results uses the native horizontal gutter relationship", asy
   assert.match(source, /data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden"/);
   assert.doesNotMatch(source, /data-flight-mobile-results-intro[^\n]*px-3/);
   assert.match(source, /data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
-  assert.match(source, /data-mobile-flight-results-summary-row\s*className="mb-2 flex w-full/);
+  assert.match(source, /data-mobile-flight-results-summary-row\s*className="flex w-full/);
   assert.match(source, /data-flight-results-card-list className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\] space-y-3"/);
+  assert.match(source, /data-mobile-paginated-flight-results[\s\S]{0,220}"pt-3"/);
   assert.match(source, /data-flight-results-skeleton-card-list className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\][^"]*sm:space-y-4"/);
   assert.match(source, /className=\{cn\("hidden sm:block", paginationRevealing/);
   assert.match(card, /block w-full rounded-2xl/);
