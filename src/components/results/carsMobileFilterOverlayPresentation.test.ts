@@ -4,6 +4,7 @@ import test from "node:test";
 
 const cars = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
 const hotels = readFileSync(new URL("./HotelResultsClient.tsx", import.meta.url), "utf8");
+const hotelMobileStyles = readFileSync(new URL("./HotelResultsMobile.module.css", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 const presentation = readFileSync(new URL("../../lib/cars/carFilterPresentation.ts", import.meta.url), "utf8");
 
@@ -50,7 +51,7 @@ test("Cars shortcuts use the Hotels continuous overlay and sheet motion system",
   );
   for (const contract of [
     /fixed inset-0.*items-end.*lg:hidden/,
-    /data-cars-quick-sheet-scrim[\s\S]*?mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-x-0 bottom-0 w-full bg-\[rgba\(15,23,42,0\.35\)\][\s\S]*?top: "env\(safe-area-inset-top\)"/,
+    /data-cars-quick-sheet-scrim[\s\S]*?mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 bg-\[rgba\(8,18,35,0\.52\)\]/,
     /mobile-results-sheet-surface mobile-results-sheet-surface-smooth cars-results-quick-sheet-surface relative z-10 mx-3 mb-3.*flex min-h-\[240px\].*max-h-\[min\(76dvh,620px\)\].*w-\[calc\(100%_-_24px\)\].*rounded-\[24px\].*bg-\[#F2F4F8\].*outline-none shadow-none/,
     /relative flex min-h-16.*items-center justify-center bg-\[#F2F4F8\] px-16 py-3/,
     /text-center text-base font-semibold text-slate-950/,
@@ -107,7 +108,7 @@ test("Cars pointer-opened quick sheets avoid the blue close-button focus contain
   );
 });
 
-test("Cars shortcut backdrop preserves the white top safe area without a giant-shadow compositing barrier", () => {
+test("Cars quick popup uses the Hotels full-viewport scrim and fixed-body lock", () => {
   assert.equal((cars.match(/data-cars-quick-sheet-backdrop/g) ?? []).length, 1);
   assert.match(
     cars,
@@ -115,8 +116,9 @@ test("Cars shortcut backdrop preserves the white top safe area without a giant-s
   );
   assert.match(
     cars,
-    /data-cars-quick-sheet-scrim[\s\S]*?fixed inset-x-0 bottom-0 w-full[\s\S]*?top: "env\(safe-area-inset-top\)"/,
+    /data-cars-quick-sheet-scrim[\s\S]*?mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 bg-\[rgba\(8,18,35,0\.52\)\]/,
   );
+  assert.doesNotMatch(cars, /data-cars-quick-sheet-scrim[\s\S]{0,500}safe-area-inset-top/);
   assert.doesNotMatch(cars, /quickFilterBackdropMaskId|data-cars-quick-sheet-cutout|quickFilterCutoutRect|<mask/);
   assert.doesNotMatch(cars, /9999px rgba\(15, 23, 42, 0\.35\)/);
   assert.match(
@@ -124,10 +126,11 @@ test("Cars shortcut backdrop preserves the white top safe area without a giant-s
     /data-cars-quick-sheet[\s\S]{0,900}onMouseDown=\{\(event\) => event\.stopPropagation\(\)\}/,
   );
   assert.match(cars, /window\.addEventListener\("keydown", handleKeyDown\)/);
-  assert.match(cars, /const mobileFiltersOverlayOpen = filtersOpen \|\| quickFilterGroupId !== null/);
+  assert.match(cars, /const quickFilterOverlayOpen = quickFilterGroupId !== null/);
+  assert.match(cars, /const mobileFiltersOverlayOpen = filtersOpen \|\| quickFilterOverlayOpen/);
   assert.match(
     cars,
-    /const releaseScrollLock = acquireMobileResultsScrollLock\(\{\s*freezeBodyPosition: false,\s*\}\)/,
+    /const releaseScrollLock = quickFilterOverlayOpen\s*\? acquireMobileResultsScrollLock\(\)\s*:\s*acquireMobileResultsScrollLock\(\{ freezeBodyPosition: false \}\)/,
   );
   assert.match(cars, /restoreOverlayLauncherFocus\(launcher, mobileFiltersModalityRef\.current\)/);
 });
@@ -140,19 +143,22 @@ test("every canonical Cars shortcut shares the one stable mobile overlay lock", 
   }
   assert.match(cars, /quickFilterGroupId === "sort" \|\| activeQuickFilterGroup/);
   assert.equal((cars.match(/data-cars-quick-sheet(?:-backdrop|-scrim)?/g) ?? []).length, 3);
-  assert.equal((cars.match(/acquireMobileResultsScrollLock\(/g) ?? []).length, 3);
+  assert.equal((cars.match(/acquireMobileResultsScrollLock\(/g) ?? []).length, 2);
 });
 
-test("Cars quick sheet dims the page below the stable top safe area", () => {
+test("Cars quick sheet scrim geometry now matches Hotels exactly", () => {
   assert.match(
     cars,
-    /data-cars-quick-sheet-scrim[\s\S]*?fixed inset-x-0 bottom-0 w-full bg-\[rgba\(15,23,42,0\.35\)\][\s\S]*?top: "env\(safe-area-inset-top\)"/,
+    /data-cars-quick-sheet-scrim[\s\S]*?mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 bg-\[rgba\(8,18,35,0\.52\)\]/,
   );
+  assert.doesNotMatch(cars, /data-cars-quick-sheet-scrim[\s\S]{0,500}safe-area-inset-top/);
   assert.doesNotMatch(cars, /quickFilterCutoutRect|measureQuickFilterCutout|quickFilterBackdropMaskId|data-cars-quick-sheet-cutout|<mask/);
   assert.match(
     hotels,
     /mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0/,
   );
+  assert.match(hotelMobileStyles, /\.editBackdrop \{ background: rgb\(8 18 35 \/ 52%\); \}/);
+  assert.match(cars, /bg-\[rgba\(8,18,35,0\.52\)\]/);
 });
 
 test("Cars shortcut chevrons mirror native expanded state", () => {

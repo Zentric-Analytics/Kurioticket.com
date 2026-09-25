@@ -125,9 +125,19 @@ test("Cars full Filters and representative quick sheets freeze the document whil
 
   const resultsMarker = page.locator("[data-cars-results-card-list]").first();
   const fullBeforeTop = await resultsMarker.evaluate((element) => element.getBoundingClientRect().top);
+  const fullBeforeBodyStyles = await page.evaluate(() => ({
+    position: document.body.style.position,
+    top: document.body.style.top,
+  }));
   await page.getByRole("button", { name: /^filters?$/i }).first().click();
   const fullFilters = page.locator("[data-cars-mobile-filter-shell]");
   await expect(fullFilters).toBeVisible();
+  expect(
+    await page.evaluate(() => ({
+      position: document.body.style.position,
+      top: document.body.style.top,
+    })),
+  ).toEqual(fullBeforeBodyStyles);
   expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
   expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(fullBeforeTop, 0);
   await expectDocumentFrozen(page, originalScrollY);
@@ -150,6 +160,13 @@ test("Cars full Filters and representative quick sheets freeze the document whil
     await button.scrollIntoViewIfNeeded();
     const beforeQuickScrollY = await page.evaluate(() => window.scrollY);
     const beforeQuickTop = await resultsMarker.evaluate((element) => element.getBoundingClientRect().top);
+    const beforeQuickBodyStyles = await page.evaluate(() => ({
+      position: document.body.style.position,
+      top: document.body.style.top,
+      left: document.body.style.left,
+      right: document.body.style.right,
+      width: document.body.style.width,
+    }));
     const chevron = button.locator("svg").last();
     await expect(chevron).not.toHaveClass(/rotate-180/);
     await button.click();
@@ -159,6 +176,18 @@ test("Cars full Filters and representative quick sheets freeze the document whil
     await expect(sheet).toHaveClass(/cars-results-quick-sheet-surface/);
     await expect(sheet).toHaveClass(/shadow-none/);
     await expect(sheet).toBeFocused();
+    const lockedBody = await page.evaluate(() => ({
+      position: document.body.style.position,
+      top: document.body.style.top,
+      left: document.body.style.left,
+      right: document.body.style.right,
+      width: document.body.style.width,
+    }));
+    expect(lockedBody.position).toBe("fixed");
+    expect(Number.parseFloat(lockedBody.top || "0")).toBeCloseTo(-beforeQuickScrollY, 0);
+    expect(lockedBody.left).toBe("0px");
+    expect(lockedBody.right).toBe("0px");
+    expect(lockedBody.width).toBe("100%");
     const closeButton = sheet.getByRole("button", { name: "Close" });
     await expect(closeButton).not.toBeFocused();
     await expect(chevron).toHaveClass(/rotate-180/);
@@ -167,17 +196,20 @@ test("Cars full Filters and representative quick sheets freeze the document whil
     await expect(scrim).toBeVisible();
     const scrimGeometry = await scrim.evaluate((element) => {
       const rect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
       return {
         left: rect.left,
         top: rect.top,
         rightGap: window.innerWidth - rect.right,
         bottomGap: window.innerHeight - rect.bottom,
-        authoredTop: element.getAttribute("style") ?? "",
+        computedTop: style.top,
+        backgroundColor: style.backgroundColor,
       };
     });
     expect(scrimGeometry.left).toBeCloseTo(0, 0);
-    expect(scrimGeometry.top).toBeGreaterThanOrEqual(0);
-    expect(scrimGeometry.authoredTop).toContain("env(safe-area-inset-top)");
+    expect(scrimGeometry.top).toBeCloseTo(0, 0);
+    expect(scrimGeometry.computedTop).toBe("0px");
+    expect(scrimGeometry.backgroundColor).toBe("rgba(8, 18, 35, 0.52)");
     expect(scrimGeometry.rightGap).toBeCloseTo(0, 0);
     expect(scrimGeometry.bottomGap).toBeCloseTo(0, 0);
 
@@ -229,8 +261,18 @@ test("Cars full Filters and representative quick sheets freeze the document whil
     await closeButton.click();
     await expect(sheet).toHaveClass(/mobile-results-sheet-surface-closing/);
     await expect(scrim).toHaveClass(/mobile-results-sheet-backdrop-layer-closing/);
+    expect(await page.evaluate(() => document.body.style.position)).toBe("fixed");
     await expect(sheet).toBeHidden();
     await expect(chevron).not.toHaveClass(/rotate-180/);
+    expect(
+      await page.evaluate(() => ({
+        position: document.body.style.position,
+        top: document.body.style.top,
+        left: document.body.style.left,
+        right: document.body.style.right,
+        width: document.body.style.width,
+      })),
+    ).toEqual(beforeQuickBodyStyles);
     expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(beforeQuickScrollY, 0);
     expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(beforeQuickTop, 0);
   }

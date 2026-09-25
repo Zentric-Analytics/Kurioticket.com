@@ -91,7 +91,7 @@ test("source-contract: mobile drawer is conditional, focus trapped, restores saf
   assert.match(experience, /event\.key === "Escape"[\s\S]*?setFiltersOpen\(false\);\s*setQuickFilterGroupId\(null\)/);
   assert.match(
     experience,
-    /const releaseScrollLock = acquireMobileResultsScrollLock\(\{\s*freezeBodyPosition: false,\s*\}\)[\s\S]*mobileFiltersScrollLockRef\.current = releaseScrollLock/,
+    /const releaseScrollLock = quickFilterOverlayOpen\s*\? acquireMobileResultsScrollLock\(\)\s*:\s*acquireMobileResultsScrollLock\(\{ freezeBodyPosition: false \}\)[\s\S]*mobileFiltersScrollLockRef\.current = releaseScrollLock/,
   );
   assert.match(experience, /releaseExistingLock\(\)/);
   assert.match(experience, /restoreOverlayLauncherFocus\(launcher, mobileFiltersModalityRef\.current\)/);
