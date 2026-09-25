@@ -82,10 +82,18 @@ test("Cars shortcuts use the Hotels continuous overlay and sheet motion system",
   );
 });
 
-test("Cars edit search uses a white browser canvas and starts its isolated backdrop below the top safe area", () => {
+test("Cars edit search uses the same full-viewport overlay lock as quick filters", () => {
+  const editStart = cars.indexOf('<MobileResultsEditSheet\n        appearance="carsResultsEdit"');
+  const editEnd = cars.indexOf("</MobileResultsEditSheet>", editStart);
+  const edit = cars.slice(editStart, editEnd);
+  assert.ok(editStart >= 0 && editEnd > editStart);
+  assert.match(edit, /browserCanvasColor="#ffffff"/);
+  assert.match(edit, /\n\s*freezeBodyPosition\n/);
+  assert.match(edit, /isolatedBackdrop/);
+  assert.doesNotMatch(edit, /freezeBodyPosition=\{false\}|backdropClassName|safe-area-inset-top/);
   assert.match(
-    cars,
-    /appearance="carsResultsEdit"[\s\S]*?browserCanvasColor="#ffffff"[\s\S]*?freezeBodyPosition=\{false\}[\s\S]*?isolatedBackdrop[\s\S]*?backdropClassName="\[top:env\(safe-area-inset-top\)\]"/,
+    styles,
+    /\.mobile-results-sheet-cars-edit-backdrop \{[\s\S]*?background-color: rgba\(8, 18, 35, 0\.52\)/,
   );
 });
 
