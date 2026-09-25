@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
+import { CarsResultsMobileSafeArea } from "@/components/results/CarsResultsMobileSafeArea";
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
@@ -11,6 +12,7 @@ export default async function Loading() {
 
   return (
     <>
+      <CarsResultsMobileSafeArea />
       <AppHeader
         flushDesktopBottom
         flushMobileBottom
