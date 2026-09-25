@@ -29,6 +29,29 @@ test("standalone Cars compact header follows the Flights mobile interaction mode
   assert.match(toolbar, /activeFilterCount/);
 });
 
+test("compact toolbar uses the Edit Search surface and restrained dark controls", () => {
+  assert.match(
+    toolbar,
+    /fixed inset-x-0 top-0 z-\[90\] bg-\[#F5F7FB\]/,
+  );
+  assert.match(
+    toolbar,
+    /text-\[11px\] font-semibold leading-4 text-\[#536B92\]/,
+  );
+  assert.match(
+    toolbar,
+    /data-cars-compact-edit-icon[\s\S]*?strokeWidth=\{2\.4\}/,
+  );
+  assert.match(
+    toolbar,
+    /<SlidersHorizontal[\s\S]*?className="h-4 w-4 shrink-0 text-black"/,
+  );
+  assert.doesNotMatch(
+    toolbar,
+    /<SlidersHorizontal[\s\S]*?text-\[#004BB8\]/,
+  );
+});
+
 test("compact toolbar opens the existing filter drawer without duplicate state", () => {
   assert.match(source, /openMobileFiltersDrawer[\s\S]*setFiltersOpen\(true\)/);
   assert.match(source, /\{filtersOpen \? \([\s\S]*?<CarFilters/);
