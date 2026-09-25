@@ -75,8 +75,9 @@ test("Cars mobile web hero typography matches the native Inter hierarchy", () =>
   );
 });
 
-test("Cars mobile tabs use the same static Inter 600 face as native", () => {
+test("Cars mobile tabs use the same static Inter 600 face and rendered size as native", () => {
   assert.match(native, /tabText:\{fontWeight:"600",fontFamily:appFonts\.semibold\}/);
+  assert.match(native, /fontSize:width>=390\?13:12/);
   assert.match(nav, /car-details-native-tab-label/);
   assert.doesNotMatch(nav, /\[-webkit-text-size-adjust:none\]|\[text-size-adjust:none\]/);
   assert.match(
@@ -85,8 +86,13 @@ test("Cars mobile tabs use the same static Inter 600 face as native", () => {
   );
   assert.match(
     css,
-    /\.car-details-native-tab-label \{[\s\S]*?font-family:[\s\S]*?"Kurioticket Inter Native Semibold"[\s\S]*?font-weight: 600;[\s\S]*?font-synthesis: none;/,
+    /\.car-details-native-tab-label \{[\s\S]*?font-family:[\s\S]*?"Kurioticket Inter Native Semibold"[\s\S]*?font-size: 12px;[\s\S]*?line-height: normal;[\s\S]*?font-weight: 600;[\s\S]*?font-synthesis: none;/,
   );
+  assert.match(
+    css,
+    /@media \(min-width: 390px\) and \(max-width: 1023px\) \{[\s\S]*?\.car-details-native-tab-label \{[\s\S]*?font-size: 13px;/,
+  );
+  assert.match(css, /button,[\s\S]*?font: inherit;/);
   assert.equal(
     statSync(
       new URL(

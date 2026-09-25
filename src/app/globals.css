@@ -167,7 +167,10 @@ a {
 }
 
 /* Cars Details mobile-web typography is dimensioned to the native Inter scale.
-   Keep Safari at the authored CSS scale for the overall details surface. */
+   Keep Safari at the authored CSS scale for the overall details surface.
+   The tab labels own explicit rendered font metrics here because the global
+   unlayered button { font: inherit } rule otherwise wins over Tailwind's
+   layered text-size and line-height utilities on real browser buttons. */
 @media (max-width: 1023px) {
   [data-car-details-experience] {
     -webkit-text-size-adjust: 100%;
@@ -183,8 +186,16 @@ a {
       "Helvetica Neue",
       Arial,
       sans-serif;
+    font-size: 12px;
+    line-height: normal;
     font-weight: 600;
     font-synthesis: none;
+  }
+}
+
+@media (min-width: 390px) and (max-width: 1023px) {
+  .car-details-native-tab-label {
+    font-size: 13px;
   }
 }
 
