@@ -140,3 +140,17 @@ test("mobile Hotel filter apply uses the normal page loader and compact selected
   assert.match(source, /Under \$\{formatCompactHotelFilterPrice\(maxPrice\)\}/);
   assert.match(source, /clearMobileShortcutFilter/);
 });
+
+
+test("failed edited Hotel searches clear filter loading before exposing the error state", () => {
+  const catchStart = source.indexOf(".catch((searchError) => {");
+  const catchEnd = source.indexOf("})", source.indexOf("setError(", catchStart));
+  const catchBlock = source.slice(catchStart, catchEnd);
+
+  assert.notEqual(catchStart, -1);
+  assert.match(catchBlock, /setSearchApplying\(false\)/);
+  assert.match(catchBlock, /setFilterApplying\(false\)/);
+  assert.match(catchBlock, /filterApplyingTimeoutRef\.current !== null/);
+  assert.match(catchBlock, /window\.clearTimeout\(filterApplyingTimeoutRef\.current\)/);
+  assert.match(catchBlock, /setError\(/);
+});
