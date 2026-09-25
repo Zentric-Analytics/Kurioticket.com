@@ -1659,7 +1659,7 @@ export function CarsResultsClient({
       <MobileResultsEditSheet
         appearance="carsResultsEdit"
         open={mobileSearchOpen}
-        browserCanvasColor="#F5F7FB"
+        browserCanvasColor="#ffffff"
         freezeBodyPosition={false}
         isolatedBackdrop
         closing={mobileSearchClosing}
@@ -3237,10 +3237,11 @@ export function CarsResultsExperience({
             aria-hidden="true"
             data-cars-quick-sheet-scrim
             className={cn(
-              "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 h-full w-full bg-[rgba(15,23,42,0.35)]",
+              "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-x-0 bottom-0 w-full bg-[rgba(15,23,42,0.35)]",
               quickFilterClosing &&
                 "mobile-results-sheet-backdrop-layer-closing",
             )}
+            style={{ top: "env(safe-area-inset-top)" }}
           />
           <section
             data-cars-quick-sheet
