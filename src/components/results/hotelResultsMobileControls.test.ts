@@ -131,6 +131,8 @@ test("Hotel mobile Back-to-top sits near the bottom edge while desktop spacing s
   assert.notEqual(start, -1);
   assert.match(control, /bottom-\[calc\(1rem\+env\(safe-area-inset-bottom\)\)\]/);
   assert.match(control, /sm:bottom-6 sm:right-6/);
+  assert.match(control, /bg-\[#F8FAFC\]/);
+  assert.doesNotMatch(control, /bg-white/);
   assert.doesNotMatch(control, /bottom-\[calc\(5rem\+env\(safe-area-inset-bottom\)\)\]/);
 });
 
