@@ -15,9 +15,10 @@ test("mobile flight shortcuts remain an ordered single-row scroll rail", () => {
   const airports = shortcuts.indexOf('renderTrigger("airports"');
   assert.ok(filter >= 0 && filter < sort && sort < airlines && airlines < stops && stops < airports);
   assert.match(shortcuts, /data-mobile-flight-shortcuts/);
-  assert.match(shortcuts, /ref=\{mobileShortcutAxisLockRef\} data-mobile-flight-shortcuts className="[^"]*touch-pan-y[^"]*overflow-x-auto/);
-  assert.doesNotMatch(shortcuts, /touch-pan-x/);
+  assert.doesNotMatch(shortcuts, /mobileShortcutAxisLockRef|touch-pan-y|touch-pan-x/);
   assert.match(shortcuts, /overflow-x-auto/);
+  assert.match(shortcuts, /overscroll-x-contain/);
+  assert.match(shortcuts, /-webkit-overflow-scrolling:touch/);
   assert.match(shortcuts, /data-mobile-flight-shortcuts[^\n]*ps-3 pe-4/);
   assert.match(shortcuts, /flex-nowrap/);
   assert.match(shortcuts, /w-max/);

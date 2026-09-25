@@ -427,7 +427,7 @@ export function FlightEditSearchDrawer({
               >
                 <div
                   data-mobile-route-fields
-                  className="relative mt-2.5 grid min-w-0 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white divide-y divide-[#E7ECF5]"
+                  className="flight-results-edit-surface relative mt-2.5 grid min-w-0 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white divide-y divide-[#E7ECF5]"
                 >
                   <button
                     ref={originRef}
@@ -467,7 +467,7 @@ export function FlightEditSearchDrawer({
                       }))
                     }
                     data-mobile-swap-control
-                    className="absolute left-1/2 top-1/2 z-10 inline-flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+                    className="absolute left-1/2 top-1/2 z-10 inline-flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white"
                   >
                     <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#E7ECF5] bg-white text-[#064CF7] shadow-[0_2px_4px_rgba(24,48,91,0.12)]">
                       <ArrowRightLeft className="h-[17px] w-[17px]" aria-hidden="true" />
@@ -497,7 +497,7 @@ export function FlightEditSearchDrawer({
                 </div>
                 <div
                   data-mobile-results-edit-group
-                  className="mt-2.5 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white"
+                  className="flight-results-edit-surface mt-2.5 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white"
                 >
                   <button
                     ref={datesRef}
@@ -518,7 +518,7 @@ export function FlightEditSearchDrawer({
                 </div>
                 <div
                   data-mobile-results-edit-group
-                  className="mt-2.5 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white"
+                  className="flight-results-edit-surface mt-2.5 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white"
                 >
                   <button
                     ref={travelersRef}
@@ -661,7 +661,7 @@ export function FlightEditSearchDrawer({
             {resultsMode && draft.tripType === "multi-city" ? (
               <div
                 data-mobile-results-edit-group
-                className="mt-2.5 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white"
+                className="flight-results-edit-surface mt-2.5 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white"
               >
                 <button
                   ref={travelersRef}
