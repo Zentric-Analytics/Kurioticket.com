@@ -184,6 +184,19 @@ textarea {
   }
 }
 
+/* Mobile Flight Details fare-information tabs use a dedicated rendered scale.
+   Keep the blue underline as the only selected-state emphasis. */
+@media (max-width: 639px) {
+  .flight-mobile-fare-info-tab-label {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 10px !important;
+    line-height: 14px !important;
+    font-weight: 500 !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+}
+
 ::selection {
   background: rgba(0, 75, 184, 0.22);
 }
