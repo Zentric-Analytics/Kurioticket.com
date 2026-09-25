@@ -199,8 +199,18 @@ textarea {
    browser button typography and mobile text inflation cannot override it. */
 @media (max-width: 639px) {
   .flight-mobile-cheaper-nearby {
-    font-size: 8px !important;
-    line-height: 11px !important;
+    font-family:
+      "Kurioticket Inter Native Semibold",
+      "Inter",
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
+      sans-serif;
+    font-size: 11px !important;
+    line-height: 15px !important;
+    font-weight: 600 !important;
+    font-synthesis: none;
     -webkit-text-size-adjust: none;
     text-size-adjust: none;
   }
