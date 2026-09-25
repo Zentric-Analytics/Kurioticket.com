@@ -1730,6 +1730,64 @@ textarea {
   animation-duration: 240ms;
 }
 @media (max-width: 639px) {
+  .cars-results-edit-field {
+    background-color: #ffffff !important;
+    border-color: #e7ecf5 !important;
+    box-shadow: none !important;
+  }
+
+  .cars-results-edit-title {
+    font-family: inherit;
+    font-size: 19px !important;
+    font-weight: 600 !important;
+    line-height: 24px !important;
+    color: #1a1a1a !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  .cars-results-edit-label {
+    font-family: inherit;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    line-height: 14px !important;
+    color: #595959 !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  .cars-results-edit-value {
+    font-family: inherit;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    line-height: 20px !important;
+    color: #1a1a1a !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  .cars-results-edit-secondary {
+    display: none !important;
+    font-family: inherit;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    line-height: 16px !important;
+    color: #595959 !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  .cars-results-edit-submit {
+    font-family: inherit;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
   .flight-results-edit-surface {
     background-color: #ffffff !important;
     border-color: #e7ecf5 !important;

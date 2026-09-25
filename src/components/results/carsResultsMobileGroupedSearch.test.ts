@@ -7,6 +7,10 @@ const editSheet = fs.readFileSync(
   new URL("../search/MobileResultsEditSheet.tsx", import.meta.url),
   "utf8",
 );
+const globals = fs.readFileSync(
+  new URL("../../app/globals.css", import.meta.url),
+  "utf8",
+);
 
 function classConstant(name: string) {
   const value = source.match(new RegExp(`const ${name} =\\s*\\n?\\s*"([^"]+)";`))?.[1];
@@ -27,7 +31,7 @@ test("Cars mobile Edit car search title keeps the Hotels 19px semibold hierarchy
   assert.match(source, /title=\{t\("carsResults\.editCarSearch"\)\}/);
   assert.match(
     editSheet,
-    /carsResultsEdit && "pointer-events-none absolute inset-x-12 top-1\/2 -translate-y-1\/2 text-center text-\[19px\] font-semibold leading-\[24px\] tracking-normal"/,
+    /carsResultsEdit && "cars-results-edit-title pointer-events-none absolute inset-x-12 top-1\/2 -translate-y-1\/2 text-center text-\[19px\] font-semibold leading-\[24px\] tracking-normal"/,
   );
 });
 
@@ -106,7 +110,7 @@ test("Edit car search labels and values use the Hotels typography hierarchy", ()
   assert.match(valueGroup, /gap-\[10px\]/);
 });
 
-test("grouped Pickup Location preserves car-specific primary and supporting text", () => {
+test("grouped Pickup Location matches Hotels by suppressing the supporting destination line", () => {
   const launcher = source.slice(
     source.indexOf("function MobileLocationLauncher"),
     source.indexOf("function SearchInputCell"),
@@ -116,11 +120,43 @@ test("grouped Pickup Location preserves car-specific primary and supporting text
   assert.match(launcher, /groupedMobile \? carsMobileEditPickupLabelClass : fieldLabelClass/);
   assert.match(launcher, /carsMobileEditPickupValueClass/);
   assert.match(launcher, /carsMobileEditSecondaryValueClass/);
+  assert.match(secondary, /cars-results-edit-secondary/);
+  assert.match(
+    globals,
+    /\.cars-results-edit-secondary \{[\s\S]*?display: none !important;/,
+  );
+});
 
-  assert.match(secondary, /text-\[12px\]/);
-  assert.match(secondary, /font-normal/);
-  assert.match(secondary, /leading-4/);
-  assert.match(secondary, /text-\[#595959\]/);
+test("Cars Results edit owns the same rendered font metrics as Hotels on mobile Safari", () => {
+  for (const selector of [
+    ".cars-results-edit-title",
+    ".cars-results-edit-label",
+    ".cars-results-edit-value",
+    ".cars-results-edit-submit",
+  ]) {
+    assert.match(globals, new RegExp(selector.replace(".", "\\.") + " \\{"));
+  }
+
+  assert.match(
+    globals,
+    /\.cars-results-edit-title \{[\s\S]*?font-size: 19px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?line-height: 24px !important;[\s\S]*?text-size-adjust: none;/,
+  );
+  assert.match(
+    globals,
+    /\.cars-results-edit-label \{[\s\S]*?font-size: 11px !important;[\s\S]*?font-weight: 500 !important;[\s\S]*?line-height: 14px !important;[\s\S]*?text-transform: none !important;[\s\S]*?letter-spacing: 0 !important;[\s\S]*?text-size-adjust: none;/,
+  );
+  assert.match(
+    globals,
+    /\.cars-results-edit-value \{[\s\S]*?font-size: 15px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?line-height: 20px !important;[\s\S]*?text-size-adjust: none;/,
+  );
+  assert.match(
+    globals,
+    /\.cars-results-edit-submit \{[\s\S]*?font-size: 16px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?text-size-adjust: none;/,
+  );
+  assert.match(source, /cars-results-edit-label/);
+  assert.match(source, /cars-results-edit-value/);
+  assert.match(source, /cars-results-edit-submit/);
+  assert.match(editSheet, /cars-results-edit-title/);
 });
 
 test("grouped Rental Dates retains the current Cars date value and Hotels text classes", () => {
