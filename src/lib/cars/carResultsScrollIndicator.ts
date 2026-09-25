@@ -1,10 +1,9 @@
 export type CarResultsScrollIndicatorGeometryInput = {
   scrollTop: number;
-  scrollHeight: number;
-  viewportHeight: number;
+  scrollStart: number;
+  scrollEnd: number;
   trackHeight: number;
   minThumbHeight?: number;
-  maxThumbHeight?: number;
 };
 
 export type CarResultsScrollIndicatorGeometry = {
@@ -20,16 +19,19 @@ const finiteNonNegative = (value: number) =>
 
 export function calculateCarResultsScrollIndicatorGeometry({
   scrollTop,
-  scrollHeight,
-  viewportHeight,
+  scrollStart,
+  scrollEnd,
   trackHeight,
-  minThumbHeight = 32,
-  maxThumbHeight = 56,
+  minThumbHeight = 24,
 }: CarResultsScrollIndicatorGeometryInput): CarResultsScrollIndicatorGeometry {
-  const safeScrollHeight = finiteNonNegative(scrollHeight);
-  const safeViewportHeight = finiteNonNegative(viewportHeight);
+  const safeScrollTop = finiteNonNegative(scrollTop);
+  const safeScrollStart = finiteNonNegative(scrollStart);
+  const safeScrollEnd = Math.max(
+    safeScrollStart,
+    finiteNonNegative(scrollEnd),
+  );
   const safeTrackHeight = finiteNonNegative(trackHeight);
-  const maxScroll = Math.max(0, safeScrollHeight - safeViewportHeight);
+  const maxScroll = Math.max(0, safeScrollEnd - safeScrollStart);
   const isScrollable = maxScroll > 0 && safeTrackHeight > 0;
 
   if (!isScrollable) {
@@ -44,23 +46,22 @@ export function calculateCarResultsScrollIndicatorGeometry({
 
   const lowerBound = Math.min(
     safeTrackHeight,
-    finiteNonNegative(Math.min(minThumbHeight, maxThumbHeight)),
+    finiteNonNegative(minThumbHeight),
   );
-  const upperBound = Math.min(
-    safeTrackHeight,
-    Math.max(lowerBound, finiteNonNegative(maxThumbHeight)),
-  );
+  const representedContentHeight = safeTrackHeight + maxScroll;
   const proportionalHeight =
-    safeScrollHeight > 0
-      ? safeTrackHeight * (safeViewportHeight / safeScrollHeight)
+    representedContentHeight > 0
+      ? safeTrackHeight * (safeTrackHeight / representedContentHeight)
       : 0;
   const thumbHeight = Math.min(
-    upperBound,
+    safeTrackHeight,
     Math.max(lowerBound, finiteNonNegative(proportionalHeight)),
   );
-  const clampedScrollTop = Math.min(maxScroll, finiteNonNegative(scrollTop));
+  const relativeScrollTop = Math.max(0, safeScrollTop - safeScrollStart);
+  const clampedScrollTop = Math.min(maxScroll, relativeScrollTop);
   const scrollProgress = clampedScrollTop / maxScroll;
-  const thumbOffset = scrollProgress * Math.max(0, safeTrackHeight - thumbHeight);
+  const thumbOffset =
+    scrollProgress * Math.max(0, safeTrackHeight - thumbHeight);
 
   return {
     thumbHeight,
