@@ -29,8 +29,8 @@ test("nearby insight retains its authored mobile typography", () => {
   const nearbyInsight =
     resultsSource.match(/className="([^"]*)">Cheaper nearby:/)?.[1] ?? "";
 
-  assert.match(nearbyInsight, /text-\[8px\]/);
-  assert.match(nearbyInsight, /leading-\[10px\]/);
+  assert.match(nearbyInsight, /text-\[5px\]/);
+  assert.match(nearbyInsight, /leading-\[8px\]/);
   assert.match(nearbyInsight, /font-medium/);
 });
 
