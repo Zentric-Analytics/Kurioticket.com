@@ -656,14 +656,14 @@ function CarPriceComparisonSection({
           {copy("carDetails.comparePrices")}
         </span>
       </Heading>
-      <p className="hidden mt-1 text-[11px] font-medium leading-4 text-slate-600 lg:block lg:text-sm lg:leading-normal">
+      <p className="mt-1 text-[11px] font-medium leading-4 text-slate-600 lg:text-sm lg:leading-normal">
         {formatCarDate(search.pickupDate, locale)} –{" "}
         {formatCarDate(search.dropoffDate, locale)} · {days}{" "}
         {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
       </p>
 
       <div
-        className="mt-3 space-y-2.5 lg:hidden"
+        className="mt-5 space-y-2.5 lg:hidden"
         role="radiogroup"
         aria-label="Car deal options"
         data-mobile-car-deal-list
