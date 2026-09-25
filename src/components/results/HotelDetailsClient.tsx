@@ -275,8 +275,12 @@ export function HotelDetailsClient({
       };
       if (!response.ok || !data.url)
         throw new Error(data.error || t("hotelDetails.redirectError"));
-      if (targetWindow && !targetWindow.closed) targetWindow.location.replace(data.url);
-      else window.location.href = data.url;
+      if (targetWindow && !targetWindow.closed) {
+        targetWindow.location.replace(data.url);
+        setRedirecting(false);
+      } else {
+        window.location.href = data.url;
+      }
     } catch (error) {
       if (targetWindow && !targetWindow.closed) targetWindow.close();
       const message =
