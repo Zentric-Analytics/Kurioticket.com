@@ -1,4 +1,5 @@
 import type { FlightFareTerm, FlightSegment, TripType } from "../types";
+import type { FlightDetailsDeal } from "./flightDetailsContract";
 
 export function getCenteredFareScrollLeft({
   railLeft, railScrollLeft, railClientWidth, railScrollWidth, selectedLeft, selectedWidth,
@@ -43,6 +44,18 @@ export function canUseOfferAirlineLogo(
       resolveSegmentCarrierName(segment, offerAirlineName),
     ) === normalizeCarrierIdentity(offerAirlineName)
   );
+}
+
+export function resolveDealIdentityMark(
+  deal: Pick<FlightDetailsDeal, "providerName"> & {
+    offer: Pick<FlightDetailsDeal["offer"], "airlineName" | "airlineLogo">;
+  },
+) {
+  const isAirline = normalizeCarrierIdentity(deal.providerName)
+    === normalizeCarrierIdentity(deal.offer.airlineName);
+  return isAirline
+    ? { kind: "airline" as const, logoUrl: deal.offer.airlineLogo ?? null }
+    : { kind: "provider" as const, logoUrl: null };
 }
 
 export function compactFareTerms(
@@ -211,7 +224,7 @@ export function buildFareDisplayRows(
 }
 
 function normalizeCarrierIdentity(value: string) {
-  return value.trim().toLocaleLowerCase("en-US");
+  return value.normalize("NFKC").toLocaleLowerCase("en-US").replace(/[\p{P}\p{S}]+/gu, " ").replace(/\s+/g, " ").trim();
 }
 
 function fareTermSelectionPriority(term: FlightFareTerm) {
