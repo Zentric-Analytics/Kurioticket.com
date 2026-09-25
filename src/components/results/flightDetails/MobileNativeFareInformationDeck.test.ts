@@ -35,6 +35,8 @@ test("mobile deal cards keep resilient mark geometry, truncation, radio semantic
   assert.match(mark, /object-contain/);
   assert.match(mark, /onError=\{onLogoError\}/);
   assert.match(mark, /logoUrl && !logoFailed/);
+  assert.match(mark, /FlightIdentityMarkState key=\{logoUrl \?\? "__no-logo__"\}/);
+  assert.match(mark, /const \[logoFailed, setLogoFailed\] = useState\(false\)/);
   assert.match(mark, /aria-hidden=\{decorative \|\| undefined\}/);
   assert.match(deck, /FlightIdentityMark logoUrl=\{identityMark\.logoUrl\} decorative mobile/);
   assert.match(deck, /min-w-0 flex-1 truncate/);
