@@ -112,11 +112,13 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Cars and Flight Results paint compact presentation-only thumbs while
+/* Cars, Hotels, and Flight Results paint compact presentation-only thumbs while
    retaining the document as the sole mobile scroll owner. */
 @media (max-width: 639px) {
   html[data-cars-results-scroll-indicator],
   html[data-cars-results-scroll-indicator] body,
+  html[data-hotel-results-scroll-indicator],
+  html[data-hotel-results-scroll-indicator] body,
   html[data-flight-results-scroll-indicator],
   html[data-flight-results-scroll-indicator] body {
     scrollbar-width: none;
@@ -125,6 +127,8 @@ body {
 
   html[data-cars-results-scroll-indicator]::-webkit-scrollbar,
   html[data-cars-results-scroll-indicator] body::-webkit-scrollbar,
+  html[data-hotel-results-scroll-indicator]::-webkit-scrollbar,
+  html[data-hotel-results-scroll-indicator] body::-webkit-scrollbar,
   html[data-flight-results-scroll-indicator]::-webkit-scrollbar,
   html[data-flight-results-scroll-indicator] body::-webkit-scrollbar {
     display: none;
@@ -133,6 +137,7 @@ body {
   }
 
   div[data-cars-results-scroll-indicator],
+  div[data-hotel-results-scroll-indicator],
   div[data-flight-results-scroll-indicator] {
     display: block;
   }
