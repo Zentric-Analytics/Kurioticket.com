@@ -166,14 +166,17 @@ export function MultiCityFlightEditor({
 
   return (
     <section
-      aria-labelledby="multi-city-flights-heading"
+      aria-label={resultsPresentation ? t("multiCity") : undefined}
+      aria-labelledby={resultsPresentation ? undefined : "multi-city-flights-heading"}
       data-multi-city-presentation={presentation}
       className={cn("mt-1", resultsPresentation && "min-w-0")}
     >
-      <div className="flex items-center justify-between gap-3">
-        <h3 id="multi-city-flights-heading" className="text-sm font-bold text-slate-950">
-          {t("flightMultiCity.title")}
-        </h3>
+      <div className={cn("flex items-center justify-between gap-3", resultsPresentation && "justify-end")}>
+        {!resultsPresentation ? (
+          <h3 id="multi-city-flights-heading" className="text-sm font-bold text-slate-950">
+            {t("flightMultiCity.title")}
+          </h3>
+        ) : null}
         <span className="text-xs font-medium text-slate-500">
           {legs.length} of {MULTI_CITY_MAX_LEGS}
         </span>
@@ -460,7 +463,7 @@ function MultiCityAirportField({
         mobileLauncherRef={mobileLauncherRef}
         label={label}
         inputLabel={inputLabel}
-        value={query}
+        value={resultsPresentation && draftQuery === null ? code : query}
         placeholder={t("cityOrAirport")}
         mobilePlaceholder={t("cityOrAirport")}
         useMainFlightLandingMobilePresentation
@@ -527,7 +530,8 @@ function MultiCityDateField({
   const open = activePicker?.legIndex === legIndex && activePicker.field === "date";
   const desktopOpen = open && activePicker.mode === "desktop";
   const mobileOpen = open && activePicker.mode === "mobile";
-  const summary = formatTravelDateDisplay(value, locale) ?? t("flightMultiCity.departureDate");
+  const fieldLabel = t(resultsPresentation ? "travelDates" : "flightMultiCity.departureDate");
+  const summary = formatTravelDateDisplay(value, locale) ?? fieldLabel;
   const openPicker = () => {
     const mode = window.matchMedia("(max-width: 639px)").matches ? "mobile" : "desktop";
     onOpen(open ? null : { legIndex, field: "date", mode });
@@ -549,11 +553,11 @@ function MultiCityDateField({
           resultsPresentation && "min-h-[66px] rounded-[13px] border border-[#E7ECF5] bg-white px-3 py-[9px] shadow-none hover:border-[#E7ECF5]",
         )}
       >
-        <label className={cn(flightSearchFieldLabelClassName, resultsPresentation && "mb-1 text-[10px] font-extrabold leading-[14px] tracking-[0.5px] text-[#56658E]")}>{t("flightMultiCity.departureDate")}</label>
+        <label className={cn(flightSearchFieldLabelClassName, resultsPresentation && "mb-1 text-[10px] font-extrabold leading-[14px] tracking-[0.5px] text-[#56658E]")}>{fieldLabel}</label>
         <button
           ref={launcherRef}
           type="button"
-          aria-label={`${t("flightMultiCity.departureDate")} ${legIndex + 1}: ${summary}`}
+          aria-label={`${fieldLabel} ${legIndex + 1}: ${summary}`}
           aria-expanded={open}
           aria-haspopup="dialog"
           onClick={openPicker}
@@ -588,7 +592,7 @@ function MultiCityDateField({
       </div>
       <MobileDatePickerDialog
         open={mobileOpen}
-        title={t("flightMultiCity.departureDate")}
+        title={fieldLabel}
         titleId={`multi-city-${legIndex}-date-title`}
         dialogId={`multi-city-${legIndex}-date-dialog`}
         launcherRef={launcherRef}
@@ -598,7 +602,7 @@ function MultiCityDateField({
         locale={locale}
         weekdays={formatFlightsWeekdays(locale)}
         labels={{
-          selectDates: t("flightMultiCity.departureDate"),
+          selectDates: fieldLabel,
           start: t("mobileDatePicker.start") || "Start",
           end: t("mobileDatePicker.end") || "End",
           done: t("done") || "Done",

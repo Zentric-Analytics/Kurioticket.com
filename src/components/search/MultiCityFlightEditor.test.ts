@@ -87,6 +87,30 @@ test("results presentation uses grouped Results route, date, and swap geometry",
   assert.match(editor, /h-\[17px\] w-\[17px\]/);
 });
 
+test("results presentation removes the duplicate title while retaining an accessible name and leg count", () => {
+  assert.match(editor, /aria-label=\{resultsPresentation \? t\("multiCity"\) : undefined\}/);
+  assert.match(editor, /aria-labelledby=\{resultsPresentation \? undefined : "multi-city-flights-heading"\}/);
+  assert.match(editor, /\{!resultsPresentation \? \([\s\S]*?t\("flightMultiCity\.title"\)/);
+  assert.match(editor, /\{legs\.length\} of \{MULTI_CITY_MAX_LEGS\}/);
+});
+
+test("results airport values are code-only while placeholders and rich picker context remain", () => {
+  assert.match(editor, /value=\{resultsPresentation && draftQuery === null \? code : query\}/);
+  assert.match(editor, /placeholder=\{t\("cityOrAirport"\)\}/);
+  assert.match(editor, /mobilePlaceholder=\{t\("cityOrAirport"\)\}/);
+  assert.match(editor, /<MobileAirportPicker[\s\S]*?value=\{query\}/);
+  assert.match(editor, /getLocalizedCityName\(option\.city, locale\)/);
+  assert.match(editor, /\{option\.airport\}/);
+  assert.match(editor, /\{option\.code\}/);
+});
+
+test("results dates use canonical travel wording without changing standalone wording", () => {
+  assert.match(editor, /t\(resultsPresentation \? "travelDates" : "flightMultiCity\.departureDate"\)/);
+  assert.match(editor, /aria-label=\{`\$\{fieldLabel\}/);
+  assert.match(editor, /title=\{fieldLabel\}/);
+  assert.match(editor, /selectDates: fieldLabel/);
+});
+
 test("homepage and standalone retain their existing presentation path", () => {
   assert.match(editor, /presentation = "standalone"/);
   assert.match(editor, /const resultsPresentation = presentation === "results"/);
