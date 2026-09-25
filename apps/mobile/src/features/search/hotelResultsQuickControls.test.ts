@@ -81,7 +81,7 @@ test("Hotel controls use normal tokens when idle and font-color fill when a quic
   }
   assert.match(component, /const selectedVisual = Boolean\(selected\)/);
   assert.match(component, /const selectedForeground = "#FFFFFF"/);
-  assert.match(component, /const selectedSurface = theme\.dark \? theme\.textPrimary : "#142033"/);
+  assert.match(component, /const selectedSurface = "#142033"/);
   assert.match(component, /borderColor: selectedVisual \? selectedSurface : border/);
   assert.match(component, /backgroundColor: selectedVisual \? selectedSurface : surface/);
   assert.match(component, /color: selectedVisual \? selectedForeground : foreground/);
@@ -149,4 +149,14 @@ test("active Hotel quick shortcuts expose an X clear action instead of a chevron
   assert.match(component, /<X accessible=\{false\} size=\{13\} strokeWidth=\{2\} color=\{selectedForeground\}/);
   assert.match(component, /hotelShortcutMainActionWithClear/);
   assert.match(component, /showChevron && !onClear/);
+});
+
+
+test("selected Hotel quick-filter chips keep white copy on a dark selected surface in dark mode", () => {
+  const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
+  assert.match(component, /const selectedForeground = "#FFFFFF"/);
+  assert.match(component, /const selectedSurface = "#142033"/);
+  assert.doesNotMatch(component, /selectedSurface = theme\.dark \? theme\.textPrimary/);
+  assert.match(component, /backgroundColor: selectedVisual \? selectedSurface : surface/);
+  assert.match(component, /color: selectedVisual \? selectedForeground : foreground/);
 });
