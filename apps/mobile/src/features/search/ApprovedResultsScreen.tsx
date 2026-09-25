@@ -291,7 +291,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [hotelPage, setHotelPage] = useState(1);
   const [hotelPageChanging, setHotelPageChanging] = useState(false);
   const [hotelFilterApplying, setHotelFilterApplying] = useState(false);
-  const hotelFilterProgress = useRef(new Animated.Value(0.08)).current;
   const hotelFilterFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const hotelFilterSessionDirtyRef = useRef(false);
   const hotelResultsListRef = useRef<SectionList<HotelResultsListItem>>(null);
@@ -771,24 +770,15 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   }, []);
   const startHotelFilterFeedback = useCallback(() => {
     if (hotelFilterFeedbackTimerRef.current) clearTimeout(hotelFilterFeedbackTimerRef.current);
-    hotelFilterProgress.stopAnimation();
-    hotelFilterProgress.setValue(0.08);
     setHotelFilterApplying(true);
-    Animated.timing(hotelFilterProgress, {
-      toValue: 0.92,
-      duration: NATIVE_FILTER_RESULTS_TRANSITION_MS,
-      useNativeDriver: false,
-    }).start();
     hotelFilterFeedbackTimerRef.current = setTimeout(() => {
       setHotelFilterApplying(false);
-      hotelFilterProgress.setValue(0.08);
       hotelFilterFeedbackTimerRef.current = undefined;
     }, NATIVE_FILTER_RESULTS_TRANSITION_MS);
-  }, [hotelFilterProgress]);
+  }, []);
   useEffect(() => () => {
     if (hotelFilterFeedbackTimerRef.current) clearTimeout(hotelFilterFeedbackTimerRef.current);
-    hotelFilterProgress.stopAnimation();
-  }, [hotelFilterProgress]);
+  }, []);
   const startHotelResultsTransition = (withFilterFeedback = false) => {
     setHotelPage(1);
     scrollToHotelResultsBeginning();
@@ -1082,7 +1072,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     && status === "ready"
     && (results as HotelResult[]).some(hasHotelPrice)
     && !currencyState;
-  if (status === "loading" || hotelCurrencyPending) return <NativeBrandedSearchLoading product={product} />;
+  if (status === "loading" || hotelCurrencyPending || hotelFilterApplying) return <NativeBrandedSearchLoading product={product} />;
   return (
     <SafeAreaView style={[s0.safe, { backgroundColor: flightResults ? flightCanvasColor : hotelCanvasColor }]} edges={["top"]}>
       {flightResults ? (
@@ -1185,28 +1175,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                       expanded={hotelQuickFilter === "sort"}
                       onSort={() => openHotelQuickFilter("sort")}
                     />
-                    <View style={s0.hotelFilterRefreshSlot}>
-                      {hotelFilterApplying ? (
-                        <View
-                          accessibilityRole="progressbar"
-                          accessibilityLabel="Updating hotel results"
-                          accessibilityState={{ busy: true }}
-                          style={s0.hotelFilterRefreshTrack}
-                        >
-                          <Animated.View
-                            style={[
-                              s0.hotelFilterRefreshProgress,
-                              {
-                                width: hotelFilterProgress.interpolate({
-                                  inputRange: [0, 1],
-                                  outputRange: ["0%", "100%"],
-                                }),
-                              },
-                            ]}
-                          />
-                        </View>
-                      ) : null}
-                    </View>
                   </View>
                 );
               }
@@ -1425,10 +1393,13 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
 }) => {
   const { theme } = useAppTheme();
   const active = selected ?? Boolean(count);
+  const selectedVisual = Boolean(selected);
   const foreground = theme.dark ? theme.textPrimary : "#142033";
+  const selectedForeground = "#FFFFFF";
   const chevron = theme.dark ? theme.textSecondary : "#64748B";
   const border = theme.dark ? theme.border : "#D8E1EC";
   const surface = theme.dark ? theme.surface : "#FFFFFF";
+  const selectedSurface = theme.dark ? theme.textPrimary : "#142033";
   const countBackground = theme.dark ? theme.background : "#F1F5F9";
   const controlAccessibilityLabel = `${accessibilityLabel ?? label}${active ? ", selected" : ""}${count ? `, ${count} active` : ""}`;
   return (
@@ -1436,8 +1407,8 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
       <View style={[
         s0.hotelShortcut,
         {
-          borderColor: active ? foreground : border,
-          backgroundColor: surface,
+          borderColor: selectedVisual ? selectedSurface : border,
+          backgroundColor: selectedVisual ? selectedSurface : surface,
         },
       ]}>
         <Pressable
@@ -1445,22 +1416,26 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
           accessibilityLabel={controlAccessibilityLabel}
           accessibilityState={{ expanded, selected: active }}
           onPress={onPress}
-          style={({ pressed }) => [s0.hotelShortcutMainAction, pressed && !theme.dark ? s0.hotelShortcutPressed : null]}
+          style={({ pressed }) => [
+            s0.hotelShortcutMainAction,
+            onClear ? s0.hotelShortcutMainActionWithClear : null,
+            pressed && !theme.dark ? s0.hotelShortcutPressed : null,
+          ]}
         >
-          {icon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={foreground} /> : null}
-          <Text numberOfLines={1} style={[s0.hotelShortcutLabel, { color: foreground }]}>{label}</Text>
+          {icon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={selectedVisual ? selectedForeground : foreground} /> : null}
+          <Text numberOfLines={1} style={[s0.hotelShortcutLabel, { color: selectedVisual ? selectedForeground : foreground }]}>{label}</Text>
           {count ? <View style={[s0.hotelShortcutCount, { backgroundColor: countBackground }]}><Text style={[s0.hotelShortcutCountText, { color: foreground }]}>{count}</Text></View> : null}
           {showChevron && !onClear ? <ChevronDown accessible={false} size={13} strokeWidth={1.9} color={chevron} style={expanded ? s0.hotelShortcutChevronExpanded : undefined} /> : null}
         </Pressable>
-        {active && onClear ? (
+        {selectedVisual && onClear ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Clear ${label} filter`}
-            hitSlop={6}
+            hitSlop={8}
             onPress={onClear}
             style={({ pressed }) => [s0.hotelShortcutClear, pressed ? s0.hotelShortcutClearPressed : null]}
           >
-            <X accessible={false} size={14} strokeWidth={2} color={foreground} />
+            <X accessible={false} size={13} strokeWidth={2} color={selectedForeground} />
           </Pressable>
         ) : null}
       </View>
@@ -2064,10 +2039,11 @@ const s0 = StyleSheet.create({
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 14, paddingVertical: 3, gap: 8, alignItems: "center" },
   hotelShortcutTouchTarget: { minWidth: 44, minHeight: 44, justifyContent: "center" },
-  hotelShortcut: { height: 40, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 2, borderWidth: 1, borderRadius: 10, paddingHorizontal: 6 },
+  hotelShortcut: { position: "relative", height: 40, flexDirection: "row", alignItems: "center", justifyContent: "center", borderWidth: 1, borderRadius: 10, paddingHorizontal: 6 },
   hotelShortcutMainAction: { minHeight: 38, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 2 },
+  hotelShortcutMainActionWithClear: { paddingRight: 20 },
   hotelShortcutPressed: { opacity: 0.72 },
-  hotelShortcutClear: { width: 28, height: 28, flexShrink: 0, alignItems: "center", justifyContent: "center", borderRadius: 7 },
+  hotelShortcutClear: { position: "absolute", right: 3, top: 9, width: 20, height: 20, alignItems: "center", justifyContent: "center", borderRadius: 6 },
   hotelShortcutClearPressed: { opacity: 0.55 },
   hotelShortcutLabel: { fontSize: 13, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
   hotelShortcutCount: { minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6, alignItems: "center", justifyContent: "center" },
@@ -2113,9 +2089,6 @@ const s0 = StyleSheet.create({
   notice: { backgroundColor: "#F2F6FF", color: ui.navy, padding: 10, borderRadius: 8 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
   hotelResultsSummaryRow: { minHeight: 38, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  hotelFilterRefreshSlot: { height: 5, alignItems: "center", justifyContent: "center" },
-  hotelFilterRefreshTrack: { width: 112, height: 3, overflow: "hidden", borderRadius: 2, backgroundColor: "rgba(0,75,184,0.10)" },
-  hotelFilterRefreshProgress: { height: "100%", borderRadius: 2, backgroundColor: "#2B8FCB" },
   hotelResultsCountColumn: { flex: 1, minWidth: 0, justifyContent: "center" },
   hotelResultsSortButton: { minWidth: 116, height: 38, flexShrink: 0, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5 },
   hotelResultsSortText: { fontSize: 13, lineHeight: 17, fontWeight: "600", fontFamily: appFonts.semibold },
