@@ -92,7 +92,9 @@ import { FlightSortSheet } from "./FlightSortSheet";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import {
   convertAmount,
+  currencyMarketSymbol,
   displayPrice,
+  formatMarketCurrency,
   resolveDisplayCurrencyContext,
   type DisplayCurrencyResolution,
   type DisplayPrice,
@@ -156,7 +158,7 @@ import { defaultHotelSort, hotelSortLabel, sortHotelsForResults, type HotelSortM
 import { HotelResultsQuickFilterSheet, type HotelResultsQuickFilterKind } from "./HotelResultsQuickFilterSheet";
 import { getLowestPricedHotelId, hasHotelPrice } from "@/lib/hotels/hotelResultAvailability";
 import { clampHotelResultsPage, getHotelResultsPageCount, paginateHotelResults } from "@/lib/hotels/hotelResultsPagination";
-import { buildHotelFilterChips, hasGoogleMapsDiscovery } from "./hotelResultsPresentation";
+import { hasGoogleMapsDiscovery } from "./hotelResultsPresentation";
 import { HotelResultsPagination } from "./HotelResultsPagination";
 import { HotelPriceAlert } from "./HotelPriceAlert";
 import { PriceTrackingSnackbar, type CarPriceAlertFeedback } from "./NativeCarPriceAlert";
@@ -193,6 +195,54 @@ const hotelStayNightCount = (checkIn?: string, checkOut?: string) => {
   const start = Date.parse(`${checkIn ?? ""}T00:00:00Z`);
   const end = Date.parse(`${checkOut ?? ""}T00:00:00Z`);
   return Number.isFinite(start) && Number.isFinite(end) ? Math.max(1, Math.round((end - start) / 86_400_000)) : 1;
+};
+
+const nativeHotelShortcutOptionLabel = (
+  fallback: string,
+  selected: string[],
+  options: Array<{ value: string; label: string }>,
+) => {
+  if (!selected.length) return fallback;
+  const labels = selected
+    .map((value) => options.find((option) => option.value === value)?.label)
+    .filter((label): label is string => Boolean(label));
+  if (!labels.length) return fallback;
+  return labels.length === 1 ? labels[0] : `${labels[0]} +${labels.length - 1}`;
+};
+
+const nativeHotelShortcutStarsLabel = (ratings: number[]) => {
+  if (!ratings.length) return "Stars";
+  const sorted = [...ratings].sort((a, b) => b - a);
+  if (sorted.length === 1) return `${sorted[0]}-star`;
+  const minimum = Math.min(...sorted);
+  const contiguousThroughFive =
+    sorted.length === 6 - minimum &&
+    sorted.every((rating, index) => rating === 5 - index);
+  return contiguousThroughFive
+    ? `${minimum}+ stars`
+    : `${sorted[0]}★ +${sorted.length - 1}`;
+};
+
+const nativeHotelShortcutPrice = (
+  amountUsd: number,
+  displayCurrency: string,
+  rates: ExchangeRates,
+) => {
+  const converted = convertAmount(amountUsd, "USD", displayCurrency, rates);
+  const currency = converted === null ? "USD" : displayCurrency.toUpperCase();
+  const amount = converted ?? amountUsd;
+  try {
+    const compact = new Intl.NumberFormat("en-US", {
+      notation: "compact",
+      compactDisplay: "short",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1,
+    }).format(amount);
+    const symbol = currencyMarketSymbol(currency);
+    return symbol ? `${symbol}${compact}` : `${compact} ${currency}`;
+  } catch {
+    return formatMarketCurrency(amount, currency);
+  }
 };
 export function ApprovedResultsScreen({ product }: { product: Product }) {
   const { theme } = useAppTheme();
@@ -623,7 +673,54 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     }));
   }, [activeFilterCount, filters, flightResults, results.length, serverFlightResultCount, sorted.length, status]);
   const activeHotelFilters = activeHotelFilterCount(hotelFilters, hotelOptions);
-  const hotelFilterChips = useMemo(() => buildHotelFilterChips(hotelFilters, hotelOptions), [hotelFilters, hotelOptions]);
+  const hotelDisplayCurrency = currencyState?.resolution.resolvedCurrency ?? "USD";
+  const hotelDisplayRates = currencyState?.rates ?? {};
+  const hotelPriceFilterActive = Boolean(
+    hotelOptions.price &&
+      ((hotelFilters.minimumPrice !== null &&
+        hotelFilters.minimumPrice > hotelOptions.price.minimum) ||
+        (hotelFilters.maximumPrice !== null &&
+          hotelFilters.maximumPrice < hotelOptions.price.maximum)),
+  );
+  const hotelPriceShortcutLabel =
+    hotelOptions.price && hotelPriceFilterActive
+      ? hotelFilters.minimumPrice === null ||
+        hotelFilters.minimumPrice <= hotelOptions.price.minimum
+        ? `Under ${nativeHotelShortcutPrice(
+            hotelFilters.maximumPrice ?? hotelOptions.price.maximum,
+            hotelDisplayCurrency,
+            hotelDisplayRates,
+          )}`
+        : hotelFilters.maximumPrice === null ||
+            hotelFilters.maximumPrice >= hotelOptions.price.maximum
+          ? `${nativeHotelShortcutPrice(
+              hotelFilters.minimumPrice,
+              hotelDisplayCurrency,
+              hotelDisplayRates,
+            )}+`
+          : `${nativeHotelShortcutPrice(
+              hotelFilters.minimumPrice,
+              hotelDisplayCurrency,
+              hotelDisplayRates,
+            )}–${nativeHotelShortcutPrice(
+              hotelFilters.maximumPrice,
+              hotelDisplayCurrency,
+              hotelDisplayRates,
+            )}`
+      : "Price";
+  const hotelStarsShortcutLabel = nativeHotelShortcutStarsLabel(
+    hotelFilters.starRatings,
+  );
+  const hotelFacilitiesShortcutLabel = nativeHotelShortcutOptionLabel(
+    "Facilities",
+    hotelFilters.facilities,
+    hotelOptions.facilities,
+  );
+  const hotelRoomTypesShortcutLabel = nativeHotelShortcutOptionLabel(
+    "Room & bed",
+    hotelFilters.roomTypes,
+    hotelOptions.roomTypes,
+  );
   const hotelPageCount = getHotelResultsPageCount(product === "hotel" ? sorted.length : 0);
   const clampedHotelPage = clampHotelResultsPage(hotelPage, hotelPageCount);
   const hotelPageResults = product === "hotel" ? paginateHotelResults(sorted as HotelResult[], clampedHotelPage) : [];
@@ -893,10 +990,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     <ScrollView horizontal style={s0.hotelFilterRail} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false} bounces={false} overScrollMode="never" contentContainerStyle={s0.hotelFilterContent}>
             <>
               <HotelResultsShortcut label="Filter" accessibilityLabel="Filters" count={activeHotelFilters || undefined} icon showChevron={false} expanded={hotelFilterOpen} onPress={() => openHotelFilters("all")} />
-              {hotelOptions.price ? <HotelResultsShortcut label="Price" count={((hotelFilters.minimumPrice !== null && hotelFilters.minimumPrice > hotelOptions.price.minimum) || (hotelFilters.maximumPrice !== null && hotelFilters.maximumPrice < hotelOptions.price.maximum)) ? 1 : undefined} expanded={hotelQuickFilter === "price"} onPress={() => openHotelQuickFilter("price")} /> : null}
-              <HotelResultsShortcut label="Stars" count={hotelFilters.starRatings.length || undefined} expanded={hotelQuickFilter === "stars"} onPress={() => openHotelQuickFilter("stars")} />
-              <HotelResultsShortcut label="Facilities" count={hotelFilters.facilities.length || undefined} expanded={hotelQuickFilter === "facilities"} onPress={() => openHotelQuickFilter("facilities")} />
-              {showRoomAndBedShortcut ? <HotelResultsShortcut label="Room & bed" count={hotelFilters.roomTypes.length || undefined} expanded={hotelQuickFilter === "roomTypes"} onPress={() => openHotelQuickFilter("roomTypes")} /> : null}
+              {hotelOptions.price ? <HotelResultsShortcut label={hotelPriceShortcutLabel} selected={hotelPriceFilterActive} expanded={hotelQuickFilter === "price"} onPress={() => openHotelQuickFilter("price")} /> : null}
+              <HotelResultsShortcut label={hotelStarsShortcutLabel} selected={hotelFilters.starRatings.length > 0} expanded={hotelQuickFilter === "stars"} onPress={() => openHotelQuickFilter("stars")} />
+              <HotelResultsShortcut label={hotelFacilitiesShortcutLabel} selected={hotelFilters.facilities.length > 0} expanded={hotelQuickFilter === "facilities"} onPress={() => openHotelQuickFilter("facilities")} />
+              {showRoomAndBedShortcut ? <HotelResultsShortcut label={hotelRoomTypesShortcutLabel} selected={hotelFilters.roomTypes.length > 0} expanded={hotelQuickFilter === "roomTypes"} onPress={() => openHotelQuickFilter("roomTypes")} /> : null}
             </>
     </ScrollView>
   ));
@@ -927,13 +1024,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       ) : null}
       {status === "ready" && product === "hotel" && sorted.length > 0 ? (
         <>
-          {hotelFilterChips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s0.hotelFilterChips}>{hotelFilterChips.map(chip=><Pressable key={chip.key} accessibilityRole="button" accessibilityLabel={`Remove ${chip.label} filter`} onPress={()=>transitionHotelFilters(chip.remove(hotelFilters))} style={[s0.hotelFilterChip,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textPrimary}}>{chip.label} ×</Text></Pressable>)}</ScrollView> : null}
           {hasGoogleMapsDiscovery(results as HotelResult[]) ? <View style={[s0.hotelAttribution,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textSecondary}}>Hotel discovery data provided by Google Maps</Text></View> : null}
           {plan.plan && currencyState ? <HotelPriceAlert plan={plan.plan} hotelResults={results as HotelResult[]} available={availability.priceAlerts} displayCurrency={currencyState.resolution.resolvedCurrency} rates={currencyState.rates} /> : null}
         </>
       ) : null}
       {status === "ready" && product === "hotel" && results.length > 0 && sorted.length === 0 ? (
-        <View>{hotelFilterChips.length ? <ScrollView horizontal contentContainerStyle={s0.hotelFilterChips}>{hotelFilterChips.map(chip=><Pressable key={chip.key} accessibilityRole="button" accessibilityLabel={`Remove ${chip.label} filter`} onPress={()=>transitionHotelFilters(chip.remove(hotelFilters))} style={[s0.hotelFilterChip,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textPrimary}}>{chip.label} ×</Text></Pressable>)}</ScrollView>:null}<View style={s0.hotelFilteredEmpty}><Text accessibilityRole="header" style={[s0.foundTitle,{color:theme.textPrimary}]}>No stays match these filters.</Text><Pressable accessibilityRole="button" onPress={()=>transitionHotelFilters(emptyHotelFilters())}><Text style={s0.hotelClearFilters}>Clear filters</Text></Pressable></View></View>
+        <View><View style={s0.hotelFilteredEmpty}><Text accessibilityRole="header" style={[s0.foundTitle,{color:theme.textPrimary}]}>No stays match these filters.</Text><Pressable accessibilityRole="button" onPress={()=>transitionHotelFilters(emptyHotelFilters())}><Text style={s0.hotelClearFilters}>Clear filters</Text></Pressable></View></View>
       ) : null}
     </>
   );
@@ -1263,11 +1359,11 @@ function HotelResultsHeader({
     </View>
   );
 }
-const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChevron = true, count, expanded = false, onPress }: {
-  label: string; accessibilityLabel?: string; icon?: boolean; showChevron?: boolean; count?: number; expanded?: boolean; onPress: () => void;
+const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChevron = true, count, selected, expanded = false, onPress }: {
+  label: string; accessibilityLabel?: string; icon?: boolean; showChevron?: boolean; count?: number; selected?: boolean; expanded?: boolean; onPress: () => void;
 }) => {
   const { theme } = useAppTheme();
-  const active = Boolean(count);
+  const active = selected ?? Boolean(count);
   const foreground = theme.dark ? theme.textPrimary : "#142033";
   const chevron = theme.dark ? theme.textSecondary : "#64748B";
   const border = theme.dark ? theme.border : "#D8E1EC";
