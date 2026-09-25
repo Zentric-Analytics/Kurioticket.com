@@ -534,7 +534,7 @@ test("all Flight Details deal paths reserve and safely navigate a provider tab",
   assert.match(handoff, /providerWindow\.opener = null/);
   assert.match(handoff, /referrerPolicy\.content = "no-referrer"/);
   assert.match(handoff, /fetch\("\/api\/redirect"/);
-  assert.match(handoff, /providerWindow\.location\.replace\(data\.url\)/);
+  assert.match(handoff, /providerWindow\.location\.replace\(data\.url\)[\s\S]*?setRedirecting\(false\)/);
   assert.doesNotMatch(handoff, /window\.location\.href\s*=/);
   assert.equal((handoff.match(/providerWindow\.close\(\)/g) ?? []).length, 2);
   assert.match(handoff, /result\.status === 409 && data\.code === "offer_changed"[\s\S]*?providerWindow\.close\(\)/);
