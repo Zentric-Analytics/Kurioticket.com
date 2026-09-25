@@ -109,6 +109,7 @@ test("source contract uses a desktop summary and a mobile safe-area booking dock
 
 test("standalone details use persistent mobile controls with native-ordered hero content", () => {
   assert.match(heroSource, /data-car-details-image-stage/);
+  assert.match(heroSource, /relative min-w-0 bg-white pt-5 lg:pt-0/);
   assert.doesNotMatch(heroSource, /data-car-details-mobile-controls/);
   assert.match(clientSource, /data-car-details-mobile-controls/);
   assert.match(clientSource, /pointer-events-none fixed inset-x-0 top-0/);
@@ -144,6 +145,11 @@ test("standalone details use persistent mobile controls with native-ordered hero
     assert.match(clientSource, new RegExp(`id="car-${panel}-panel"`));
     assert.match(clientSource, new RegExp(`hidden={activeTab !== "${panel}"}`));
   }
+  assert.match(clientSource, /hidden text-xs font-bold leading-\[18px\][^"]*lg:block/);
+  assert.match(clientSource, /formatCarDate\(search\.pickupDate, locale\)/);
+  assert.match(clientSource, /data-mobile-car-deal-list/);
+  assert.match(clientSource, /Pickup requirements/);
+  assert.match(clientSource, /data-car-location-section/);
 });
 
 test("price comparison aligns icon benefits and the per-day price on one row", () => {

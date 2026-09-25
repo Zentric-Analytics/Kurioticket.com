@@ -73,7 +73,7 @@ export function CarDetailsHero({
       <div className="grid gap-0 lg:grid-cols-2 lg:items-start lg:gap-6">
         <figure
           ref={imageStageRef}
-          className="relative min-w-0 bg-white"
+          className="relative min-w-0 bg-white pt-5 lg:pt-0"
           data-car-details-image-stage
         >
           <div className="relative h-[clamp(13.75rem,58vw,16rem)] w-full overflow-hidden bg-white lg:aspect-[4/3] lg:h-auto lg:rounded-xl lg:bg-slate-100">
