@@ -167,14 +167,14 @@ test("native Cars preserves a same-day pickup that is still future at PAE", () =
 });
 
 test("native Cars route initialization honors the rental-local calendar day", () => {
-  const now = new Date("2026-09-25T06:30:00Z");
+  const now = new Date("2026-09-25T06:00:00Z");
   const target = JSON.stringify({ timeZone: "America/Los_Angeles" });
   const form = initializeCarsPageForm(
     {
       pickupLocation: "LAX",
       pickupLocationTarget: target,
       pickupDate: "2026-09-24",
-      pickupTime: "23:45",
+      pickupTime: "23:30",
       dropoffDate: "2026-09-25",
       dropoffTime: "10:00",
       driverAge: "30",
@@ -182,7 +182,7 @@ test("native Cars route initialization honors the rental-local calendar day", ()
     now,
   ).form;
   assert.equal(form.pickupDate, "2026-09-24");
-  assert.equal(form.pickupTime, "23:45");
+  assert.equal(form.pickupTime, "23:30");
 });
 
 test("calendar helpers handle month, leap year, and local serialization", () => {
