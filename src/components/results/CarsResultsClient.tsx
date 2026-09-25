@@ -1106,10 +1106,10 @@ export function CarsResultsClient({
         className="group relative z-10 flex min-h-[62px] min-w-0 w-full max-w-[30rem] touch-manipulation items-center justify-between gap-2 overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white py-0 ps-3.5 pe-1.5 text-start shadow-[0_2px_10px_rgba(24,48,91,0.08)] transition [-webkit-tap-highlight-color:transparent] hover:border-slate-300 hover:bg-white hover:shadow-[0_3px_12px_rgba(24,48,91,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
       >
         <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
-          <span className="block truncate text-[14px] font-bold leading-[18px] tracking-[-0.01em] text-[#07133B]">
+          <span className="block truncate text-[15px] font-semibold leading-[19px] tracking-[-0.01em] text-[#07133B]">
             {locationPairSummary}
           </span>
-          <span className="mt-[3px] block truncate text-[10.5px] font-medium leading-[14px] text-[#536B92]">
+          <span className="mt-[2px] block truncate text-[12px] font-medium leading-[16px] text-[#536B92]">
             {rentalScheduleSummary}
           </span>
         </span>
@@ -2744,7 +2744,7 @@ export function CarsResultsExperience({
             ) : null}
           </aside>
         ) : null}
-        <div className="min-w-0 space-y-4">
+        <div className="min-w-0 space-y-0 sm:space-y-4">
           {results.length > 0 ? (
             <>
               <div
