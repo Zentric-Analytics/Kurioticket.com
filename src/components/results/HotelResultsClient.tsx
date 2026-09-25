@@ -1687,7 +1687,9 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           className={cn(
             shortcutChipClass,
             "overflow-hidden p-0",
-            "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
+            active
+              ? "border-[#142033] bg-white text-[#142033]"
+              : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
           )}
         >
           <button
@@ -1708,7 +1710,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             <button
               type="button"
               aria-label={`Clear ${label} filter`}
-              className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#64748B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
+              className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
               onClick={(event) => {
                 event.stopPropagation();
                 clearMobileShortcutFilter(menu);
@@ -1829,7 +1831,9 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             <span
               className={cn(
                 shortcutChipClass,
-                "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
+                activeFilterCount > 0
+                  ? "border-[#142033] bg-white text-[#142033]"
+                  : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
               )}
             >
               <SlidersHorizontal className="h-4 w-4 shrink-0" strokeWidth={2.2} aria-hidden="true" />
