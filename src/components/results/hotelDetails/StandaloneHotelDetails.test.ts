@@ -389,7 +389,7 @@ test("standalone pricing and search context are supplied by existing client pipe
     "providerOffers={standaloneProviderOffers}",
     "onProviderOfferHandoff=",
     'providerOfferId: "current-provider"',
-    "await runProviderRedirect()",
+    "await runProviderRedirect(targetWindow)",
   ])
     assert.ok(clientSource.includes(contract), contract);
 });

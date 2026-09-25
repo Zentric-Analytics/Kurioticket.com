@@ -255,7 +255,7 @@ export function HotelDetailsClient({
     mode,
   ]);
 
-  async function runProviderRedirect() {
+  async function runProviderRedirect(targetWindow?: Window | null) {
     if (!hotel || redirecting || !canUseHotelDetailsProviderLink(hotel)) return;
     setRedirecting(true);
     setRedirectError("");
@@ -275,8 +275,14 @@ export function HotelDetailsClient({
       };
       if (!response.ok || !data.url)
         throw new Error(data.error || t("hotelDetails.redirectError"));
-      window.location.href = data.url;
+      if (targetWindow && !targetWindow.closed) {
+        targetWindow.location.replace(data.url);
+        setRedirecting(false);
+      } else {
+        window.location.href = data.url;
+      }
     } catch (error) {
+      if (targetWindow && !targetWindow.closed) targetWindow.close();
       const message =
         error instanceof Error
           ? error.message
@@ -934,8 +940,8 @@ export function HotelDetailsClient({
                 providerOffers={standaloneProviderOffers}
                 onProviderOfferHandoff={
                   standaloneProviderOffers.length
-                    ? async () => {
-                        await runProviderRedirect();
+                    ? async (_providerOfferId, targetWindow) => {
+                        await runProviderRedirect(targetWindow);
                       }
                     : undefined
                 }
