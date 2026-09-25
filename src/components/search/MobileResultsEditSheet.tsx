@@ -35,6 +35,7 @@ type Props = {
   closing?: boolean;
   isolatedBackdrop?: boolean;
   onCloseAnimationComplete?: () => void;
+  freezeBodyPosition?: boolean;
 };
 
 /** Presentation-only shell used by mobile search editors on Results pages. */
@@ -58,6 +59,7 @@ export function MobileResultsEditSheet({
   closing = false,
   isolatedBackdrop = false,
   onCloseAnimationComplete,
+  freezeBodyPosition = true,
 }: Props) {
   const carsResultsEdit = appearance === "carsResultsEdit";
   const titleId = useId();
@@ -110,12 +112,14 @@ export function MobileResultsEditSheet({
     const releaseCanvas = acquireMobileResultsOverlayCanvas({
       canvasColor: browserCanvasColor,
     });
-    const releaseScrollLock = acquireMobileResultsScrollLock();
+    const releaseScrollLock = acquireMobileResultsScrollLock({
+      freezeBodyPosition,
+    });
     return () => {
       releaseScrollLock();
       releaseCanvas();
     };
-  }, [browserCanvasColor, open]);
+  }, [browserCanvasColor, freezeBodyPosition, open]);
 
   if (!open || typeof document === "undefined") return null;
   return createPortal(
