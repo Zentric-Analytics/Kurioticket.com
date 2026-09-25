@@ -203,11 +203,13 @@ test("Cars full Filters and representative quick sheets freeze the document whil
         rightGap: window.innerWidth - rect.right,
         bottomGap: window.innerHeight - rect.bottom,
         computedTop: style.top,
+        backgroundColor: style.backgroundColor,
       };
     });
     expect(scrimGeometry.left).toBeCloseTo(0, 0);
     expect(scrimGeometry.top).toBeCloseTo(0, 0);
     expect(scrimGeometry.computedTop).toBe("0px");
+    expect(scrimGeometry.backgroundColor).toBe("rgba(8, 18, 35, 0.52)");
     expect(scrimGeometry.rightGap).toBeCloseTo(0, 0);
     expect(scrimGeometry.bottomGap).toBeCloseTo(0, 0);
 
