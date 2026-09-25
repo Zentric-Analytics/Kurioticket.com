@@ -6,6 +6,10 @@ import {
   type ExchangeRates,
 } from "@/lib/currency/exchangeRates";
 
+const canonicalCurrencySymbols: Readonly<Record<string, string>> = {
+  NGN: "₦",
+};
+
 const zeroDecimalCurrencies = new Set([
   "BIF",
   "CLP",
@@ -40,12 +44,26 @@ export function formatCurrency(
   const maximumFractionDigits = options.maximumFractionDigits ?? defaultFractionDigits;
   const minimumFractionDigits = options.minimumFractionDigits ?? maximumFractionDigits;
 
-  return new Intl.NumberFormat(undefined, {
+  const formatter = new Intl.NumberFormat(undefined, {
     style: "currency",
     currency: normalizedCurrency,
     maximumFractionDigits,
     minimumFractionDigits,
-  }).format(amount);
+  });
+  const formatted = formatter.format(amount);
+  const canonicalSymbol = canonicalCurrencySymbols[normalizedCurrency];
+  if (!canonicalSymbol) return formatted;
+
+  try {
+    const currencyToken = formatter
+      .formatToParts(amount)
+      .find((part) => part.type === "currency")?.value;
+    return currencyToken
+      ? formatted.replace(currencyToken, canonicalSymbol)
+      : formatted.replace(normalizedCurrency, canonicalSymbol);
+  } catch {
+    return formatted.replace(normalizedCurrency, canonicalSymbol);
+  }
 }
 
 const flightResultCurrencySymbols: Record<string, string> = {
