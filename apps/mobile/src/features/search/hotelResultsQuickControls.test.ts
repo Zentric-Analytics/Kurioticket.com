@@ -76,7 +76,7 @@ test("Hotel controls use Flight light tokens and semantic dark tokens", () => {
   for (const token of ["#D8E1EC", "#142033", "#64748B", "#F8FAFC", "#F1F5F9", "#FFFFFF"]) assert.match(component, new RegExp(token.replace(/[().]/g, "\\$&")));
   for (const semantic of ["theme.surface", "theme.border", "theme.textPrimary", "theme.textSecondary", "theme.background"]) assert.match(component, new RegExp(semantic.replace(".", "\\.")));
   assert.doesNotMatch(component, /#004BB8|#8FB5FF|rgba\(0,75,184,0\.08\)/);
-  assert.match(component, /color=\{foreground\}/);
+  assert.match(component, /color=\{active && !theme\.dark \? ui\.blue : foreground\}/);
 });
 
 test("Hotel Filter launcher has sliders without a chevron while quick filters keep rotating chevrons", () => {
