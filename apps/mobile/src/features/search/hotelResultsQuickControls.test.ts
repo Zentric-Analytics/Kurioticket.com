@@ -16,15 +16,15 @@ test("Hotel rail keeps Filter Price Stars Facilities Room & bed while Sort lives
   assert.doesNotMatch(rail, /label=\{hotelSort === defaultHotelSort \? "Sort"/);
   assert.match(rail, /hotelOptions\.price \?/);
   assert.match(rail, /openHotelQuickFilter\("price"\)/);
-  assert.match(rail, /starRatings\.length \|\| undefined/);
-  assert.match(rail, /facilities\.length \|\| undefined/);
-  assert.match(rail, /roomTypes\.length \|\| undefined/);
+  assert.match(rail, /label=\{hotelStarsShortcutLabel\} selected=\{hotelFilters\.starRatings\.length > 0\}/);
+  assert.match(rail, /label=\{hotelFacilitiesShortcutLabel\} selected=\{hotelFilters\.facilities\.length > 0\}/);
+  assert.match(rail, /label=\{hotelRoomTypesShortcutLabel\} selected=\{hotelFilters\.roomTypes\.length > 0\}/);
   assert.match(rail, /hotelQuickFilter === "facilities"/);
   assert.match(rail, /openHotelQuickFilter\("facilities"\)/);
   assert.match(rail, /hotelQuickFilter === "roomTypes"/);
   assert.match(rail, /openHotelQuickFilter\("roomTypes"\)/);
   assert.match(screen, /const showRoomAndBedShortcut = hotelOptions\.roomTypes\.length > 0 \|\| hotelFilters\.roomTypes\.length > 0/);
-  assert.match(rail, /showRoomAndBedShortcut \? <HotelResultsShortcut label="Room & bed"/);
+  assert.match(rail, /showRoomAndBedShortcut \? <HotelResultsShortcut label=\{hotelRoomTypesShortcutLabel\}/);
   assert.doesNotMatch(screen, /hotelOptions\.roomTypes\.length\s*(?:>=\s*2|>\s*1)/);
   for (const contract of [
     /<ScrollView\s+horizontal/,
@@ -67,7 +67,7 @@ test("Hotel controls use the measured reference capsule geometry while keeping s
 
 test("Hotel controls use Flight light tokens and semantic dark tokens", () => {
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
-  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F8FAFC", "#F1F5F9", "#FFFFFF"]) assert.match(component, new RegExp(token.replace(/[().]/g, "\\$&")));
+  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F8FAFC", "#F1F5F9", "#FFFFFF"]) assert.match(component, new RegExp(token.replace(/[().]/g, "\\  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F8FAFC", "#F1F5F9", "#FFFFFF"]) assert.match(component, new RegExp(token.replace(/[().]/g, "\\$&")));")));
   for (const semantic of ["theme.surface", "theme.border", "theme.textPrimary", "theme.textSecondary", "theme.background"]) assert.match(component, new RegExp(semantic.replace(".", "\\.")));
   assert.doesNotMatch(component, /#004BB8|#8FB5FF|rgba\(0,75,184,0\.08\)/);
   assert.match(component, /color=\{foreground\}/);
@@ -84,11 +84,28 @@ test("Hotel Filter launcher has sliders without a chevron while quick filters ke
   assert.match(filter, /showChevron=\{false\}/);
   assert.match(filter, /expanded=\{hotelFilterOpen\}/);
   assert.match(filter, /onPress=\{\(\) => openHotelFilters\("all"\)\}/);
-  for (const label of ["Price", "Stars", "Facilities", "Room & bed"]) assert.doesNotMatch(shortcut(label), /showChevron=\{false\}/);
+  assert.match(rail, /label=\{hotelPriceShortcutLabel\}/);
+  assert.match(rail, /label=\{hotelStarsShortcutLabel\}/);
+  assert.match(rail, /label=\{hotelFacilitiesShortcutLabel\}/);
+  assert.match(rail, /label=\{hotelRoomTypesShortcutLabel\}/);
   assert.match(component, /showChevron = true/);
   assert.match(component, /<SlidersHorizontal accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\}/);
   assert.match(component, /\{showChevron \? <ChevronDown accessible=\{false\} size=\{13\} strokeWidth=\{1\.9\}/);
   assert.match(component, /style=\{expanded \? s0\.hotelShortcutChevronExpanded : undefined\}/);
   assert.match(screen, /hotelShortcutChevronExpanded: \{ transform: \[\{ rotate: "180deg" \}\] \}/);
   assert.doesNotMatch(component, /ChevronRight|measureInWindow|Anchor/);
+});
+
+
+test("Hotel quick shortcuts show selected values without a duplicate applied-filter row", () => {
+  assert.match(screen, /nativeHotelShortcutPrice/);
+  assert.match(screen, /hotelPriceShortcutLabel/);
+  assert.match(screen, /hotelStarsShortcutLabel/);
+  assert.match(screen, /hotelFacilitiesShortcutLabel/);
+  assert.match(screen, /hotelRoomTypesShortcutLabel/);
+  assert.match(screen, /selected=\{hotelPriceFilterActive\}/);
+  assert.match(screen, /selected=\{hotelFilters\.facilities\.length > 0\}/);
+  assert.doesNotMatch(screen, /const hotelFilterChips =/);
+  assert.doesNotMatch(screen, /contentContainerStyle=\{s0\.hotelFilterChips\}/);
+  assert.doesNotMatch(screen, /Remove \$\{chip\.label\} filter/);
 });
