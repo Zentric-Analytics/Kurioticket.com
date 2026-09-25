@@ -49,6 +49,14 @@ test("mobile tabs use native responsive sizes and native selected color", () => 
   assert.match(nav, /bg-\[#075EE8\][^"]*lg:bg-blue/);
 });
 
+test("mobile tab strip uses authored Inter pixel sizes without Safari autosizing", () => {
+  assert.match(nav, /\[-webkit-text-size-adjust:none\] \[text-size-adjust:none\]/);
+  assert.match(nav, /text-\[12px\][^"]*min-\[390px\]:text-\[13px\]/);
+  assert.match(nav, /font-semibold/);
+  assert.match(nav, /text-\[#075EE8\]/);
+  assert.match(nav, /text-\[#475569\]/);
+});
+
 test("mobile comparison typography retains the native compact hierarchy", () => {
   assert.match(
     client,
