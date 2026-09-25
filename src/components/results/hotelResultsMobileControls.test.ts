@@ -48,7 +48,8 @@ test("Hotel mobile compact results header matches the Cars three-column toolbar"
 
 test("Hotel mobile filter and quick-filter surfaces match Cars background treatment", () => {
   assert.match(resultsSource, /data-mobile-hotel-shortcuts[\s\S]*scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\]/);
-  assert.match(resultsSource, /active[\s\S]*border-\[#075EE8\] bg-\[#EAF2FF\] text-\[#004BB8\]/);
+  assert.match(resultsSource, /border-\[#D8E1EC\] bg-white text-\[#142033\] group-hover:bg-slate-50/);
+  assert.doesNotMatch(resultsSource, /active[\s\S]{0,180}border-\[#075EE8\] bg-\[#EAF2FF\] text-\[#004BB8\]/);
   assert.match(resultsSource, /mobileShortcutMenuContentRef[sS]*rounded-t-[20px] bg-[#F2F4F8]/);
   assert.match(resultsSource, /mobileShortcutMenuContentRef[sS]*header className="[^"]*bg-[#F2F4F8]/);
   assert.match(resultsSource, /max-h-[calc(min(76dvh,620px)-9rem)][^"]*bg-[#F2F4F8]/);
@@ -145,10 +146,13 @@ test("Hotel mobile shortcut labels replace per-chip count badges with the select
 });
 
 
-test("active Hotel mobile shortcuts use an X clear action and compact normal-loading progress", () => {
+test("active Hotel mobile shortcuts keep the normal neutral chip style, add an X clear action, and show compact loading progress", () => {
   assert.match(resultsSource, /clearMobileShortcutFilter/);
   assert.match(resultsSource, /Clear \$\{label\} filter/);
   assert.match(resultsSource, /<X className="h-3\.5 w-3\.5"/);
+  assert.match(resultsSource, /text-\[#64748B\]/);
+  assert.match(resultsSource, /bg-\[#F1F5F9\][^"]*text-\[#142033\]/);
+  assert.doesNotMatch(resultsSource, /border-\[#075EE8\] bg-\[#EAF2FF\] text-\[#004BB8\]/);
   assert.match(resultsSource, /data-hotel-filter-refresh-progress/);
   assert.match(resultsSource, /animate-\[loading-line_1\.4s_ease-in-out_infinite\]/);
   assert.match(resultsSource, /bg-\[linear-gradient\(90deg,rgba\(0,75,184,0\.82\),rgba\(92,182,178,0\.78\)\)\]/);
