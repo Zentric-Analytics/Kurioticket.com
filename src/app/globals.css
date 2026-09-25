@@ -1769,6 +1769,7 @@ textarea {
   }
 
   .cars-results-edit-secondary {
+    display: none !important;
     font-family: inherit;
     font-size: 12px !important;
     font-weight: 400 !important;
