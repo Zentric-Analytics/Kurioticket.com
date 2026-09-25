@@ -3,64 +3,75 @@ import test from "node:test";
 
 import { calculateCarResultsScrollIndicatorGeometry } from "./carResultsScrollIndicator";
 
-const page = {
-  scrollHeight: 5200,
-  viewportHeight: 780,
-  trackHeight: 760,
+const region = {
+  scrollStart: 420,
+  scrollEnd: 4620,
+  trackHeight: 340,
 };
 
-test("positions the Cars indicator at the exact top, middle, and bottom", () => {
-  const top = calculateCarResultsScrollIndicatorGeometry({ ...page, scrollTop: 0 });
+test("positions the Cars indicator at the exact top, middle, and bottom of the results region", () => {
+  const top = calculateCarResultsScrollIndicatorGeometry({
+    ...region,
+    scrollTop: region.scrollStart,
+  });
   const middle = calculateCarResultsScrollIndicatorGeometry({
-    ...page,
-    scrollTop: (page.scrollHeight - page.viewportHeight) / 2,
+    ...region,
+    scrollTop: (region.scrollStart + region.scrollEnd) / 2,
   });
   const bottom = calculateCarResultsScrollIndicatorGeometry({
-    ...page,
-    scrollTop: page.scrollHeight - page.viewportHeight,
+    ...region,
+    scrollTop: region.scrollEnd,
   });
 
   assert.equal(top.thumbOffset, 0);
-  assert.equal(middle.thumbOffset, (page.trackHeight - middle.thumbHeight) / 2);
-  assert.equal(bottom.thumbOffset, page.trackHeight - bottom.thumbHeight);
+  assert.equal(middle.thumbOffset, (region.trackHeight - middle.thumbHeight) / 2);
+  assert.equal(bottom.thumbOffset, region.trackHeight - bottom.thumbHeight);
+});
+
+test("does not advance the Cars indicator before the Track prices region begins", () => {
+  const beforeStart = calculateCarResultsScrollIndicatorGeometry({
+    ...region,
+    scrollTop: 0,
+  });
+  const atStart = calculateCarResultsScrollIndicatorGeometry({
+    ...region,
+    scrollTop: region.scrollStart,
+  });
+
+  assert.equal(beforeStart.thumbOffset, 0);
+  assert.equal(beforeStart.scrollProgress, 0);
+  assert.deepEqual(beforeStart, atStart);
 });
 
 test("keeps thumb length stable when only scroll position changes", () => {
-  const heights = [0, 1105, 2210, 3315, 4420].map((scrollTop) =>
-    calculateCarResultsScrollIndicatorGeometry({ ...page, scrollTop }).thumbHeight,
+  const heights = [0, 420, 1470, 2520, 3570, 4620].map((scrollTop) =>
+    calculateCarResultsScrollIndicatorGeometry({ ...region, scrollTop }).thumbHeight,
   );
-  assert.deepEqual(new Set(heights), new Set([56]));
+  assert.equal(new Set(heights).size, 1);
 });
 
-test("bounds compact thumbs for long, narrow, and tall result pages", () => {
-  const longPage = calculateCarResultsScrollIndicatorGeometry({
-    scrollTop: 50_000,
-    scrollHeight: 100_000,
-    viewportHeight: 568,
-    trackHeight: 548,
+test("uses the proportional results-region thumb instead of the old 56px cap", () => {
+  const geometry = calculateCarResultsScrollIndicatorGeometry({
+    ...region,
+    scrollTop: region.scrollStart,
   });
-  const tallViewport = calculateCarResultsScrollIndicatorGeometry({
-    scrollTop: 0,
-    scrollHeight: 2400,
-    viewportHeight: 932,
-    trackHeight: 912,
-  });
+  const expected = region.trackHeight * (region.trackHeight / (region.trackHeight + (region.scrollEnd - region.scrollStart)));
 
-  assert.equal(longPage.thumbHeight, 32);
-  assert.equal(tallViewport.thumbHeight, 56);
-  assert.ok(longPage.thumbOffset >= 0);
+  assert.ok(geometry.thumbHeight >= 24);
+  assert.ok(geometry.thumbHeight < 56);
+  assert.equal(geometry.thumbHeight, Math.max(24, expected));
 });
 
 test("returns finite, non-negative geometry for invalid and clamped inputs", () => {
   const notScrollable = calculateCarResultsScrollIndicatorGeometry({
     scrollTop: Number.NaN,
-    scrollHeight: 600,
-    viewportHeight: 700,
-    trackHeight: 680,
+    scrollStart: 600,
+    scrollEnd: 600,
+    trackHeight: 340,
   });
   const clamped = calculateCarResultsScrollIndicatorGeometry({
     scrollTop: Number.POSITIVE_INFINITY,
-    ...page,
+    ...region,
   });
 
   assert.deepEqual(notScrollable, {
