@@ -152,6 +152,7 @@ import { flightResultsOwnedBy, resolveFlightResultsState, resolveFlightSearchFai
 import { signInHref } from "../auth/signInIntent";
 import { flightInventoryCounts } from "./flightInventoryDiagnostics";
 import { HotelFilterSheet, type HotelFilterSectionName } from "./HotelFilterSheet";
+import { NATIVE_FILTER_RESULTS_TRANSITION_MS } from "./filterResultsTransition";
 import { activeHotelFilterCount, buildHotelFilterOptions, emptyHotelFilters, filterHotels, type HotelFilters } from "./hotelFilters";
 import { HotelCardAmenityList } from "./HotelCardAmenityList";
 import { defaultHotelSort, hotelSortLabel, sortHotelsForResults, type HotelSortMode } from "./hotelSort";
@@ -289,6 +290,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [hotelQuickFilter, setHotelQuickFilter] = useState<HotelResultsQuickFilterKind | null>(null);
   const [hotelPage, setHotelPage] = useState(1);
   const [hotelPageChanging, setHotelPageChanging] = useState(false);
+  const [hotelFilterApplying, setHotelFilterApplying] = useState(false);
+  const hotelFilterProgress = useRef(new Animated.Value(0.08)).current;
+  const hotelFilterFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const hotelFilterSessionDirtyRef = useRef(false);
   const hotelResultsListRef = useRef<SectionList<HotelResultsListItem>>(null);
   const flightResultsListRef = useRef<SectionList<FlightResult | null>>(null);
@@ -765,20 +769,55 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       }
     });
   }, []);
-  const startHotelResultsTransition = () => {
+  const startHotelFilterFeedback = useCallback(() => {
+    if (hotelFilterFeedbackTimerRef.current) clearTimeout(hotelFilterFeedbackTimerRef.current);
+    hotelFilterProgress.stopAnimation();
+    hotelFilterProgress.setValue(0.08);
+    setHotelFilterApplying(true);
+    Animated.timing(hotelFilterProgress, {
+      toValue: 0.92,
+      duration: NATIVE_FILTER_RESULTS_TRANSITION_MS,
+      useNativeDriver: false,
+    }).start();
+    hotelFilterFeedbackTimerRef.current = setTimeout(() => {
+      setHotelFilterApplying(false);
+      hotelFilterProgress.setValue(0.08);
+      hotelFilterFeedbackTimerRef.current = undefined;
+    }, NATIVE_FILTER_RESULTS_TRANSITION_MS);
+  }, [hotelFilterProgress]);
+  useEffect(() => () => {
+    if (hotelFilterFeedbackTimerRef.current) clearTimeout(hotelFilterFeedbackTimerRef.current);
+    hotelFilterProgress.stopAnimation();
+  }, [hotelFilterProgress]);
+  const startHotelResultsTransition = (withFilterFeedback = false) => {
     setHotelPage(1);
     scrollToHotelResultsBeginning();
+    if (withFilterFeedback) startHotelFilterFeedback();
   };
   const changeHotelFilters = (next: SetStateAction<HotelFilters>) => { hotelFilterSessionDirtyRef.current=true; setHotelFilters(next); };
-  const transitionHotelFilters = (next: HotelFilters) => { setHotelFilters(next); startHotelResultsTransition(); };
-  const completeHotelFilterSession = () => { setHotelFilterOpen(false); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;startHotelResultsTransition();} };
+  const transitionHotelFilters = (next: HotelFilters) => { setHotelFilters(next); startHotelResultsTransition(true); };
+  const completeHotelFilterSession = () => { setHotelFilterOpen(false); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;startHotelResultsTransition(true);} };
   const openHotelFilters = (section: HotelFilterSectionName) => {
     hotelFilterSessionDirtyRef.current=false;
     setHotelFilterSection(section);
     setHotelFilterOpen(true);
   };
   const openHotelQuickFilter = (kind: HotelResultsQuickFilterKind) => { hotelFilterSessionDirtyRef.current=false; setHotelQuickFilter(kind); };
-  const closeHotelQuickFilter = () => { setHotelQuickFilter(null); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;startHotelResultsTransition();} };
+  const closeHotelQuickFilter = () => { setHotelQuickFilter(null); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;startHotelResultsTransition(true);} };
+  const clearHotelQuickFilter = (kind: Exclude<HotelResultsQuickFilterKind, "sort">) => {
+    const next = { ...hotelFilters };
+    if (kind === "price") {
+      next.minimumPrice = null;
+      next.maximumPrice = null;
+    } else if (kind === "stars") {
+      next.starRatings = [];
+    } else if (kind === "facilities") {
+      next.facilities = [];
+    } else {
+      next.roomTypes = [];
+    }
+    transitionHotelFilters(next);
+  };
   const changeHotelPage = (page: number) => {
     if (hotelPageChanging || page === clampedHotelPage) return;
     setHotelPageChanging(true);
@@ -990,10 +1029,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     <ScrollView horizontal style={s0.hotelFilterRail} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false} bounces={false} overScrollMode="never" contentContainerStyle={s0.hotelFilterContent}>
             <>
               <HotelResultsShortcut label="Filter" accessibilityLabel="Filters" count={activeHotelFilters || undefined} icon showChevron={false} expanded={hotelFilterOpen} onPress={() => openHotelFilters("all")} />
-              {hotelOptions.price ? <HotelResultsShortcut label={hotelPriceShortcutLabel} selected={hotelPriceFilterActive} expanded={hotelQuickFilter === "price"} onPress={() => openHotelQuickFilter("price")} /> : null}
-              <HotelResultsShortcut label={hotelStarsShortcutLabel} selected={hotelFilters.starRatings.length > 0} expanded={hotelQuickFilter === "stars"} onPress={() => openHotelQuickFilter("stars")} />
-              <HotelResultsShortcut label={hotelFacilitiesShortcutLabel} selected={hotelFilters.facilities.length > 0} expanded={hotelQuickFilter === "facilities"} onPress={() => openHotelQuickFilter("facilities")} />
-              {showRoomAndBedShortcut ? <HotelResultsShortcut label={hotelRoomTypesShortcutLabel} selected={hotelFilters.roomTypes.length > 0} expanded={hotelQuickFilter === "roomTypes"} onPress={() => openHotelQuickFilter("roomTypes")} /> : null}
+              {hotelOptions.price ? <HotelResultsShortcut label={hotelPriceShortcutLabel} selected={hotelPriceFilterActive} expanded={hotelQuickFilter === "price"} onPress={() => openHotelQuickFilter("price")} onClear={hotelPriceFilterActive ? () => clearHotelQuickFilter("price") : undefined} /> : null}
+              <HotelResultsShortcut label={hotelStarsShortcutLabel} selected={hotelFilters.starRatings.length > 0} expanded={hotelQuickFilter === "stars"} onPress={() => openHotelQuickFilter("stars")} onClear={hotelFilters.starRatings.length ? () => clearHotelQuickFilter("stars") : undefined} />
+              <HotelResultsShortcut label={hotelFacilitiesShortcutLabel} selected={hotelFilters.facilities.length > 0} expanded={hotelQuickFilter === "facilities"} onPress={() => openHotelQuickFilter("facilities")} onClear={hotelFilters.facilities.length ? () => clearHotelQuickFilter("facilities") : undefined} />
+              {showRoomAndBedShortcut ? <HotelResultsShortcut label={hotelRoomTypesShortcutLabel} selected={hotelFilters.roomTypes.length > 0} expanded={hotelQuickFilter === "roomTypes"} onPress={() => openHotelQuickFilter("roomTypes")} onClear={hotelFilters.roomTypes.length ? () => clearHotelQuickFilter("roomTypes") : undefined} /> : null}
             </>
     </ScrollView>
   ));
@@ -1146,6 +1185,28 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                       expanded={hotelQuickFilter === "sort"}
                       onSort={() => openHotelQuickFilter("sort")}
                     />
+                    <View style={s0.hotelFilterRefreshSlot}>
+                      {hotelFilterApplying ? (
+                        <View
+                          accessibilityRole="progressbar"
+                          accessibilityLabel="Updating hotel results"
+                          accessibilityState={{ busy: true }}
+                          style={s0.hotelFilterRefreshTrack}
+                        >
+                          <Animated.View
+                            style={[
+                              s0.hotelFilterRefreshProgress,
+                              {
+                                width: hotelFilterProgress.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: ["0%", "100%"],
+                                }),
+                              },
+                            ]}
+                          />
+                        </View>
+                      ) : null}
+                    </View>
                   </View>
                 );
               }
@@ -1359,8 +1420,8 @@ function HotelResultsHeader({
     </View>
   );
 }
-const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChevron = true, count, selected, expanded = false, onPress }: {
-  label: string; accessibilityLabel?: string; icon?: boolean; showChevron?: boolean; count?: number; selected?: boolean; expanded?: boolean; onPress: () => void;
+const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChevron = true, count, selected, expanded = false, onPress, onClear }: {
+  label: string; accessibilityLabel?: string; icon?: boolean; showChevron?: boolean; count?: number; selected?: boolean; expanded?: boolean; onPress: () => void; onClear?: () => void;
 }) => {
   const { theme } = useAppTheme();
   const active = selected ?? Boolean(count);
@@ -1371,30 +1432,39 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
   const countBackground = theme.dark ? theme.background : "#F1F5F9";
   const controlAccessibilityLabel = `${accessibilityLabel ?? label}${active ? ", selected" : ""}${count ? `, ${count} active` : ""}`;
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={controlAccessibilityLabel}
-      accessibilityState={{ expanded, selected: active }}
-      onPress={onPress}
-      style={s0.hotelShortcutTouchTarget}
-    >
-      {({ pressed }) => <View style={[
+    <View style={s0.hotelShortcutTouchTarget}>
+      <View style={[
         s0.hotelShortcut,
         {
-          borderColor: active && !theme.dark ? ui.blue : border,
-          backgroundColor: active && !theme.dark
-            ? "#EAF2FF"
-            : pressed && !theme.dark
-              ? "#F8FAFC"
-              : surface,
+          borderColor: active ? foreground : border,
+          backgroundColor: surface,
         },
       ]}>
-        {icon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={active && !theme.dark ? ui.blue : foreground} /> : null}
-        <Text numberOfLines={1} style={[s0.hotelShortcutLabel, { color: active && !theme.dark ? ui.blue : foreground }]}>{label}</Text>
-        {count ? <View style={[s0.hotelShortcutCount, { backgroundColor: countBackground }]}><Text style={[s0.hotelShortcutCountText, { color: foreground }]}>{count}</Text></View> : null}
-        {showChevron ? <ChevronDown accessible={false} size={13} strokeWidth={1.9} color={active && !theme.dark ? ui.blue : chevron} style={expanded ? s0.hotelShortcutChevronExpanded : undefined} /> : null}
-      </View>}
-    </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={controlAccessibilityLabel}
+          accessibilityState={{ expanded, selected: active }}
+          onPress={onPress}
+          style={({ pressed }) => [s0.hotelShortcutMainAction, pressed && !theme.dark ? s0.hotelShortcutPressed : null]}
+        >
+          {icon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={foreground} /> : null}
+          <Text numberOfLines={1} style={[s0.hotelShortcutLabel, { color: foreground }]}>{label}</Text>
+          {count ? <View style={[s0.hotelShortcutCount, { backgroundColor: countBackground }]}><Text style={[s0.hotelShortcutCountText, { color: foreground }]}>{count}</Text></View> : null}
+          {showChevron && !onClear ? <ChevronDown accessible={false} size={13} strokeWidth={1.9} color={chevron} style={expanded ? s0.hotelShortcutChevronExpanded : undefined} /> : null}
+        </Pressable>
+        {active && onClear ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Clear ${label} filter`}
+            hitSlop={6}
+            onPress={onClear}
+            style={({ pressed }) => [s0.hotelShortcutClear, pressed ? s0.hotelShortcutClearPressed : null]}
+          >
+            <X accessible={false} size={14} strokeWidth={2} color={foreground} />
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
   );
 };
 
@@ -1994,7 +2064,11 @@ const s0 = StyleSheet.create({
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 14, paddingVertical: 3, gap: 8, alignItems: "center" },
   hotelShortcutTouchTarget: { minWidth: 44, minHeight: 44, justifyContent: "center" },
-  hotelShortcut: { height: 40, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, borderWidth: 1, borderRadius: 10, paddingHorizontal: 8 },
+  hotelShortcut: { height: 40, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 2, borderWidth: 1, borderRadius: 10, paddingHorizontal: 6 },
+  hotelShortcutMainAction: { minHeight: 38, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 2 },
+  hotelShortcutPressed: { opacity: 0.72 },
+  hotelShortcutClear: { width: 28, height: 28, flexShrink: 0, alignItems: "center", justifyContent: "center", borderRadius: 7 },
+  hotelShortcutClearPressed: { opacity: 0.55 },
   hotelShortcutLabel: { fontSize: 13, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
   hotelShortcutCount: { minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6, alignItems: "center", justifyContent: "center" },
   hotelShortcutCountText: { fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts.semibold },
@@ -2039,6 +2113,9 @@ const s0 = StyleSheet.create({
   notice: { backgroundColor: "#F2F6FF", color: ui.navy, padding: 10, borderRadius: 8 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
   hotelResultsSummaryRow: { minHeight: 38, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  hotelFilterRefreshSlot: { height: 5, alignItems: "center", justifyContent: "center" },
+  hotelFilterRefreshTrack: { width: 112, height: 3, overflow: "hidden", borderRadius: 2, backgroundColor: "rgba(0,75,184,0.10)" },
+  hotelFilterRefreshProgress: { height: "100%", borderRadius: 2, backgroundColor: "#2B8FCB" },
   hotelResultsCountColumn: { flex: 1, minWidth: 0, justifyContent: "center" },
   hotelResultsSortButton: { minWidth: 116, height: 38, flexShrink: 0, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5 },
   hotelResultsSortText: { fontSize: 13, lineHeight: 17, fontWeight: "600", fontFamily: appFonts.semibold },
