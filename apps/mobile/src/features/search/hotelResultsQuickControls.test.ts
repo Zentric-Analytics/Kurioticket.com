@@ -128,7 +128,7 @@ test("Hotel quick shortcuts show selected values without a duplicate applied-fil
 test("selected Hotel quick shortcuts keep the normal font and box while Filter keeps the aggregate count", () => {
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
   assert.match(component, /const active = selected \?\? Boolean\(count\)/);
-  assert.match(component, /borderColor: border/);
+  assert.match(component, /borderColor: active \? foreground : border/);
   assert.match(component, /backgroundColor: surface/);
   assert.match(component, /style=\{\[s0\.hotelShortcutLabel, \{ color: foreground \}\]\}/);
   assert.doesNotMatch(component, /borderColor: active && !theme\.dark \? ui\.blue : border/);
