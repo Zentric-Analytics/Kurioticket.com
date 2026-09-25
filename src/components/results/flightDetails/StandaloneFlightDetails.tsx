@@ -21,6 +21,7 @@ import {
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { FlightDetailsLoadingShell } from "@/components/results/flightDetails/FlightDetailsLoadingShell";
+import { FlightIdentityMark } from "@/components/results/flightDetails/FlightIdentityMark";
 import { MobileNativeFareRail } from "@/components/results/flightDetails/MobileNativeFareRail";
 import { MobileNativeFareInformationDeck, type MobileFareInfoTab } from "@/components/results/flightDetails/MobileNativeFareInformationDeck";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -694,11 +695,10 @@ function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, of
 function AirportTime({ time, airport, city, name, terminal, timeZone, locale }: { time: string; airport: string; city: string; name?: string; terminal?: string; timeZone?: string; locale: string }) { return <div className="min-w-0"><p className="text-[17px] font-bold">{formatTime(time, locale)}</p><p className="mt-1 text-sm font-bold">{airport}</p>{name ? <p className="mt-1 break-words text-xs leading-4 text-slate-600">{name}</p> : null}{city && city !== airport ? <p className="mt-1 break-words text-xs leading-4 text-slate-600">{city}</p> : null}{terminal ? <p className="mt-1 text-xs font-medium leading-4 text-slate-600">Terminal {terminal}</p> : null}{timeZone ? <p className="mt-1 break-words text-xs leading-4 text-slate-600">Time zone: {timeZone}</p> : null}</div>; }
 
 function SegmentAirlineMark({ segment, offerAirlineName, offerAirlineLogo, preferSegmentLogo = false }: { segment: FlightSegment; offerAirlineName: string; offerAirlineLogo?: string | null; preferSegmentLogo?: boolean }) {
-  const [logoFailed, setLogoFailed] = useState(false);
   const carrierName = resolveSegmentCarrierName(segment, offerAirlineName);
   const canUseOfferLogo = canUseOfferAirlineLogo(segment, offerAirlineName, offerAirlineLogo);
   const logoUrl = preferSegmentLogo ? segment.airlineLogo ?? (canUseOfferLogo ? offerAirlineLogo : null) : canUseOfferLogo ? offerAirlineLogo : null;
-  return <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#075EE8]" aria-label={`${carrierName} airline mark`}>{logoUrl && !logoFailed ? <Image src={logoUrl} alt="" width={24} height={24} className="h-6 w-6 object-contain" onError={() => setLogoFailed(true)} /> : <Plane className="h-4 w-4 rotate-45" aria-hidden="true" />}</span>;
+  return <FlightIdentityMark logoUrl={logoUrl} label={`${carrierName} airline mark`} />;
 }
 
 function FareTerm({ term, text = term.text, compact = false }: { term: FlightDetailsFareChoice["distinguishingTerms"][number]; text?: string; compact?: boolean }) {

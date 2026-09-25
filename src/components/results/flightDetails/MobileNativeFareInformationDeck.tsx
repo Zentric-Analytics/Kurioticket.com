@@ -6,6 +6,8 @@ import { formatDisplayPrice, formatFlightResultCurrency } from "@/lib/currency/f
 import type { ExchangeRates } from "@/lib/currency/exchangeRates";
 import type { FlightDetailsFareChoice, FlightDetailsOffer } from "@/lib/flights/flightDetailsContract";
 import type { FlightProviderCondition } from "@/lib/types";
+import { FlightIdentityMark } from "./FlightIdentityMark";
+import { resolveDealIdentityMark } from "./flightDetailsPresentation";
 import { useFareInformationTouchRailRef } from "./useFareInformationTouchRail";
 
 export type MobileFareInfoTab = "deals" | "details" | "conditions" | "extras";
@@ -119,6 +121,7 @@ function DealsSurface({
     <div role="radiogroup" aria-label="Flight deal options" className="space-y-[10px] py-3">
       {deals.map((deal) => {
         const selected = deal.offerId === selectedDealOfferId;
+        const identityMark = resolveDealIdentityMark(deal);
         const price = formatDisplayPrice({
           amount: deal.price,
           sourceCurrency: deal.currency,
@@ -147,8 +150,11 @@ function DealsSurface({
                 : "border-[#D8E1EC] bg-white"
             }`}
           >
-            <span className="flex items-start justify-between gap-3">
-              <span className="min-w-0 flex-1 text-[15px] font-bold leading-5 text-[#1A1A1A]">{deal.providerName}</span>
+            <span className="flex min-w-0 items-start justify-between gap-3">
+              <span className="flex min-w-0 flex-1 items-center gap-2">
+                {identityMark.kind === "airline" ? <FlightIdentityMark logoUrl={identityMark.logoUrl} decorative mobile /> : null}
+                <span className="min-w-0 flex-1 truncate text-[15px] font-bold leading-5 text-[#1A1A1A]">{deal.providerName}</span>
+              </span>
               <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-[1.5px] ${selected ? "border-[#075EE8]" : "border-[#64748B]"}`}>
                 {selected ? <span className="h-2 w-2 rounded-full bg-[#075EE8]" aria-hidden="true" /> : null}
               </span>

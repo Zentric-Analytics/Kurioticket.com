@@ -6,4 +6,5 @@ export {
   formatItineraryDepartureDate,
   getCenteredFareScrollLeft,
   resolveSegmentCarrierName,
+  resolveDealIdentityMark,
 } from "@/lib/flights/flightDetailsPresentation";
