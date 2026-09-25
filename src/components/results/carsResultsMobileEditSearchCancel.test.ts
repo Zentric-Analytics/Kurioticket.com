@@ -105,6 +105,17 @@ test("mobile Edit Search has one overflow-only sheet lock and never repositions 
   );
 });
 
+test("closing Edit Search restores keyboard launcher focus without owning scroll restoration", () => {
+  assert.match(
+    postCloseLifecycle,
+    /if \(mobileSearchOpen\) return;[\s\S]*?restoreOverlayLauncherFocus\([\s\S]*?mobileSearchLauncherRef\.current,[\s\S]*?mobileSearchModalityRef\.current/,
+  );
+  assert.doesNotMatch(
+    postCloseLifecycle,
+    /acquireMobileResultsScrollLock|window\.scrollTo/,
+  );
+});
+
 test("cancel restores draft state without imperatively changing Results scroll", () => {
   const restoreSnapshotIndex = closeDrawer.indexOf(
     "setDriverAge(snapshot.driverAge)",
