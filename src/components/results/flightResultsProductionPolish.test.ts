@@ -24,13 +24,21 @@ test("mobile nearby insight, quick filters, and price alert use compact native-l
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
+  const styles = await readFile(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
 
   assert.match(source, /cn\(resultStackClass, "space-y-1 sm:space-y-4"\)/);
   const nearbyInsight = source.match(/className="([^"]*)">Cheaper nearby:/)?.[1] ?? "";
   assert.match(nearbyInsight, /min-h-\[28px\]/);
-  assert.match(nearbyInsight, /text-\[5px\]/);
-  assert.match(nearbyInsight, /leading-\[8px\]/);
-  assert.doesNotMatch(nearbyInsight, /text-\[8px\]|leading-\[10px\]|text-\[9px\]|leading-\[12px\]/);
+  assert.match(nearbyInsight, /flight-mobile-cheaper-nearby/);
+  assert.match(nearbyInsight, /font-medium/);
+  assert.doesNotMatch(nearbyInsight, /text-\[\d+px\]|leading-\[\d+px\]/);
+  assert.match(
+    styles,
+    /@media \(max-width: 639px\) \{[\s\S]*?\.flight-mobile-cheaper-nearby \{[\s\S]*?font-size: 5px !important;[\s\S]*?line-height: 8px !important;[\s\S]*?-webkit-text-size-adjust: none;[\s\S]*?text-size-adjust: none;[\s\S]*?\}/,
+  );
   assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,350}py-1/);
   assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 pt-2/);
 });
