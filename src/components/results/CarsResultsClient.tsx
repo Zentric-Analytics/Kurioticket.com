@@ -3255,7 +3255,7 @@ export function CarsResultsExperience({
               finishQuickFilterClose();
             }}
             className={cn(
-              "mobile-results-sheet-surface mobile-results-sheet-surface-smooth relative z-10 mx-3 mb-3 flex min-h-[240px] max-h-[min(76dvh,620px)] w-[calc(100%_-_24px)] flex-col overflow-hidden rounded-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]",
+              "mobile-results-sheet-surface mobile-results-sheet-surface-smooth cars-results-quick-sheet-surface relative z-10 mx-3 mb-3 flex min-h-[240px] max-h-[min(76dvh,620px)] w-[calc(100%_-_24px)] flex-col overflow-hidden rounded-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]",
               quickFilterClosing && "mobile-results-sheet-surface-closing",
             )}
           >
