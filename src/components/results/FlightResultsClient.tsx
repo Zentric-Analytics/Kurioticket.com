@@ -1109,7 +1109,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const nearbyFareGenerationRef = useRef(0);
   const mobileNearbyFareRailRef = useRef<HTMLDivElement>(null);
   const mobileNearbyFareAxisLockRef = useHorizontalRailAxisLockRef(mobileNearbyFareRailRef);
-  const mobileShortcutAxisLockRef = useHorizontalRailAxisLockRef<HTMLDivElement>();
   const mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>(null);
   const alignedMobileNearbyFareSearchRef = useRef<string | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
@@ -6627,7 +6626,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     ) : null;
     return (
       <>
-        <div ref={mobileShortcutAxisLockRef} data-mobile-flight-shortcuts className="w-full min-w-0 touch-pan-y overflow-x-auto ps-3 pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+        <div data-mobile-flight-shortcuts className="w-full min-w-0 overflow-x-auto overscroll-x-contain ps-3 pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
           <div className="flex w-max flex-nowrap items-center gap-1.5">
             {renderFloatingFilterButton(shortcutButtonClass)}
             {renderTrigger("sort", activeSortOption.label)}
@@ -6716,8 +6715,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         className={cn(
           "fixed inset-x-0 top-0 z-[90] bg-[#F2F4F8] px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)] transition-[transform,opacity] duration-200 ease-out sm:hidden",
           mobileCompactHeaderVisible
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none -translate-y-2 opacity-0",
+            ? "visible pointer-events-auto translate-y-0 opacity-100"
+            : "invisible pointer-events-none -translate-y-full opacity-0",
         )}
         aria-hidden={!mobileCompactHeaderVisible}
       >
@@ -7478,7 +7477,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 <div
                   ref={mobileResultsPageTopRef}
                   data-mobile-flight-results-summary-row
-                  className="flex w-full items-center justify-between gap-3"
+                  className="mb-2 flex w-full items-center justify-between gap-3"
                 >
                   <p className="flight-results-count min-w-0 text-[13px] font-bold leading-[17px] tracking-[-0.005em] text-slate-900">
                     {formatMobileFlightResultsFound(sortedResults.length, t, locale)}
@@ -7686,7 +7685,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         onClick={() => {
           window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         }}
-        className="fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] end-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#004BB8] shadow-lg transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
+        className="fixed bottom-[calc(2rem+env(safe-area-inset-bottom))] end-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#004BB8] shadow-lg transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
       >
         <ArrowUp className="h-5 w-5" aria-hidden="true" />
       </button>
