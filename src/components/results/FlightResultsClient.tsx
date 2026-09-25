@@ -182,7 +182,6 @@ import {
 
 const resultStackClass = "w-full min-w-0";
 export const FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
-export const FLIGHT_PROVIDER_WARNING_TOAST_MS = 4_000;
 
 const desktopCompactFilterTopOffset = 116;
 type MobileShortcutSheet = "sort" | "airlines" | "stops" | "airports";
@@ -1032,8 +1031,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   ],[guidedMode,kayak,providerResults]);
   const activeFlightSearchKeyRef = useRef<string>("");
   const [error, setError] = useState("");
-  const [warnings, setWarnings] = useState<string[]>([]);
-  const [providerWarningVisible, setProviderWarningVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
   const [filtersReadySearchKey, setFiltersReadySearchKey] = useState<
@@ -1055,18 +1052,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [mobileShortcutSheet, setMobileShortcutSheet] = useState<MobileShortcutSheet | null>(null);
 
-  useEffect(() => {
-    if (warnings.length === 0) {
-      setProviderWarningVisible(false);
-      return;
-    }
-    setProviderWarningVisible(true);
-    const timer = window.setTimeout(
-      () => setProviderWarningVisible(false),
-      FLIGHT_PROVIDER_WARNING_TOAST_MS,
-    );
-    return () => window.clearTimeout(timer);
-  }, [warnings]);
   const [mobileDraftSort, setMobileDraftSort] = useState<SortMode>(sortMode);
   const [mobileDraftAirlines, setMobileDraftAirlines] = useState<string[]>([]);
   const [mobileDraftStops, setMobileDraftStops] = useState<string[]>([]);
@@ -2607,7 +2592,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       activeFlightSearchKeyRef.current = "";
       const resetTimer = window.setTimeout(() => {
         setResults([]);
-        setWarnings([]);
         setBackgroundRefreshing(false);
       }, 0);
       return () => window.clearTimeout(resetTimer);
@@ -2636,7 +2620,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             body.departureDate,
           ),
         );
-        setWarnings(snapshot.warnings);
         setError("");
         // Fresh snapshots can render immediately. A stale snapshot is retained
         // as a fallback, but keep the blocking Results loader visible until the
@@ -2652,7 +2635,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           window.setTimeout(() => loadingFocusRef.current?.focus({ preventScroll: true }), 0);
         }
         setError("");
-        setWarnings([]);
       }
 
       controller = new AbortController();
@@ -2693,7 +2675,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             );
           }
           setResults(filteredResults);
-          setWarnings(warnings);
         })
         .catch((searchError) => {
           if (controller?.signal.aborted || !active || activeFlightSearchKeyRef.current !== searchKey) return;
@@ -2726,7 +2707,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const retryMainInventorySearch = useCallback(() => {
     userInitiatedRetryRef.current = true;
     setError("");
-    setWarnings([]);
     setResults([]);
     setLoading(true);
     setBackgroundRefreshing(false);
@@ -6734,7 +6714,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <header
         data-flight-results-compact-header
         className={cn(
-          "fixed inset-x-0 top-0 z-[90] bg-white px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)] transition-[transform,opacity] duration-200 ease-out sm:hidden",
+          "fixed inset-x-0 top-0 z-[90] bg-[#F2F4F8] px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)] transition-[transform,opacity] duration-200 ease-out sm:hidden",
           mobileCompactHeaderVisible
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-2 opacity-0",
@@ -6787,7 +6767,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             className="focus-ring inline-flex h-11 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-[14px] font-semibold text-[#07133B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
             <SlidersHorizontal
-              className="h-4 w-4 shrink-0 text-[#004BB8]"
+              className="h-4 w-4 shrink-0 text-[#1a1a1a]"
               strokeWidth={2.2}
               aria-hidden="true"
             />
@@ -7596,18 +7576,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     : t("filters")}
                 </Button>
               </div>
-
-              {warnings.length > 0 ? (
-                <div
-                  data-flight-provider-warning-toast
-                  className={`pointer-events-none fixed left-1/2 top-[calc(env(safe-area-inset-top)+5.25rem)] z-[1100] w-[calc(100%_-_2rem)] max-w-md -translate-x-1/2 rounded-xl border border-amber-200/80 bg-white/95 px-3 py-2.5 text-[13px] font-semibold leading-5 text-slate-800 shadow-[0_8px_28px_rgba(15,23,42,0.18)] backdrop-blur transition-all duration-300 sm:top-20 ${providerWarningVisible ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0"}`}
-                  role="status"
-                  aria-live="polite"
-                  aria-hidden={!providerWarningVisible}
-                >
-                  {t("limitedProviderChecks")}
-                </div>
-              ) : null}
 
               <div className="sm:hidden">
                 <p role="status" aria-live="polite" className="sr-only">{filterApplying ? t("updatingResults") : ""}</p>

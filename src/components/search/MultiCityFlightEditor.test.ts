@@ -89,6 +89,18 @@ test("results presentation uses grouped Results route, date, and swap geometry",
   assert.match(editor, /h-\[17px\] w-\[17px\]/);
 });
 
+test("results multi-city values share the exact one-way rendered typography contract", () => {
+  const drawer = readFileSync("src/components/search/FlightEditSearchDrawer.tsx", "utf8");
+  const styles = readFileSync("src/app/globals.css", "utf8");
+  assert.match(primitives, /flightResultsEditValueClassName = "flight-results-edit-value"/);
+  assert.match(drawer, /`block truncate \$\{flightResultsEditValueClassName\}`/);
+  assert.match(editor, /mobileButtonClassName=\{resultsPresentation \? flightResultsEditValueClassName : undefined\}/);
+  assert.match(editor, /resultsPresentation && flightResultsEditValueClassName/);
+  assert.match(styles, /\.flight-results-edit-value \{[\s\S]*?font-family: inherit;[\s\S]*?font-size: 15px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?line-height: 20px !important;[\s\S]*?color: rgb\(2 6 23\) !important;[\s\S]*?text-size-adjust: none;/);
+  assert.match(editor, /data-multi-city-results-route-card/);
+  assert.match(editor, /data-multi-city-results-date-card/);
+});
+
 test("results presentation removes the duplicate title while retaining an accessible name and leg count", () => {
   assert.match(editor, /aria-label=\{resultsPresentation \? t\("multiCity"\) : undefined\}/);
   assert.match(editor, /aria-labelledby=\{resultsPresentation \? undefined : "multi-city-flights-heading"\}/);

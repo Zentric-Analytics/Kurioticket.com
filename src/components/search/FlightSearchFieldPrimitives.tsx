@@ -13,6 +13,7 @@ export const flightSearchFieldLabelClassName =
   "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 sm:text-[10px] sm:font-semibold sm:tracking-[0.10em] sm:text-slate-700";
 export const flightSearchFieldValueButtonClassName =
   "focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md text-start text-[16px] font-medium text-slate-900 outline-none transition-colors sm:h-auto sm:min-h-7 sm:rounded-none sm:text-[15px] sm:font-medium sm:tracking-[-0.01em] sm:text-slate-950 sm:focus-visible:shadow-none";
+export const flightResultsEditValueClassName = "flight-results-edit-value";
 export const flightDesktopPopoverSelector =
   "[data-standalone-flight-desktop-popover]";
 
@@ -24,6 +25,7 @@ type FlightAirportFieldControlProps = {
   useMainFlightLandingMobilePresentation?: boolean;
   mobileLeadingIconClassName?: string;
   mobileValueRowClassName?: string;
+  mobileButtonClassName?: string;
   open: boolean;
   inputRef: React.RefObject<HTMLInputElement | null>;
   mobileLauncherRef: React.RefObject<HTMLButtonElement | null>;
@@ -48,6 +50,7 @@ export const FlightAirportFieldControl = React.forwardRef<
     useMainFlightLandingMobilePresentation = false,
     mobileLeadingIconClassName,
     mobileValueRowClassName,
+    mobileButtonClassName,
     open,
     inputRef,
     mobileLauncherRef,
@@ -73,7 +76,7 @@ export const FlightAirportFieldControl = React.forwardRef<
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={onMobileOpen}
-        className={cn(flightSearchFieldValueButtonClassName, "sm:hidden")}
+        className={cn(flightSearchFieldValueButtonClassName, "sm:hidden", mobileButtonClassName)}
       >
         {useMainFlightLandingMobilePresentation ? (
           <span className={cn("flex min-w-0 flex-1 items-center gap-2 sm:contents", mobileValueRowClassName)}>

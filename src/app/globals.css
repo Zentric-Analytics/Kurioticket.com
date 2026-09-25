@@ -1729,3 +1729,30 @@ textarea {
 .mobile-results-sheet-cars-edit-backdrop.mobile-results-sheet-backdrop-layer-closing {
   animation-duration: 240ms;
 }
+@media (max-width: 639px) {
+  .flight-results-edit-value {
+    font-family: inherit;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    line-height: 20px !important;
+    color: rgb(2 6 23) !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  .flight-results-trip-tab {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    line-height: 14px !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  .flight-results-edit-title {
+    font-size: 17px !important;
+    font-weight: 600 !important;
+    line-height: 22px !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+}
