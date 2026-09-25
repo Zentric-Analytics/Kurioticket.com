@@ -1594,6 +1594,24 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     setMobileDraftSort(value);
   }
 
+  function clearMobileShortcutFilter(menu: Exclude<MobileHotelShortcutMenu, "sort">) {
+    triggerFilterApplying();
+    if (menu === "price") {
+      setMinPrice(0);
+      setMaxPrice(resultMaxPrice);
+      return;
+    }
+    if (menu === "stars") {
+      setSelectedHotelClasses([]);
+      return;
+    }
+    if (menu === "roomTypes") {
+      setSelectedFilters((current) => ({ ...current, roomTypes: [] }));
+      return;
+    }
+    setSelectedFilters((current) => ({ ...current, facilities: [] }));
+  }
+
   function renderMobileCompactResultsHeader() {
     const modifySearchLabel = `${t("editHotelSearch")}: ${body.destination}`;
 
@@ -1660,33 +1678,49 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     const shortcutChipClass = "inline-flex h-9 items-center gap-1 rounded-[9px] border px-2 text-[13px] font-semibold transition";
     const menuItemClass = "flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-transparent bg-transparent px-0 text-left text-[14px] font-normal text-slate-800 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
     const trigger = (
-      menu: MobileHotelShortcutMenu,
+      menu: Exclude<MobileHotelShortcutMenu, "sort">,
       label: string,
       active = false,
     ) => (
-      <button
-        type="button"
-        aria-haspopup="dialog"
-        aria-expanded={mobileShortcutMenu === menu}
-        aria-pressed={active}
-        className={shortcutButtonClass}
-        onClick={(event) => {
-          event.stopPropagation();
-          openMobileShortcutMenu(menu, event.currentTarget);
-        }}
-      >
+      <div className="group inline-flex min-h-11 min-w-11 shrink-0 items-center">
         <span
           className={cn(
             shortcutChipClass,
+            "overflow-hidden p-0",
             active
               ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
               : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
           )}
         >
-          <span className="max-w-[11rem] truncate">{label}</span>
-          <ChevronDown aria-hidden="true" className={cn("h-3.5 w-3.5 shrink-0 transition-transform", mobileShortcutMenu === menu && "rotate-180")} />
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={mobileShortcutMenu === menu}
+            aria-pressed={active}
+            className="focus-ring inline-flex h-full min-w-0 items-center gap-1 px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
+            onClick={(event) => {
+              event.stopPropagation();
+              openMobileShortcutMenu(menu, event.currentTarget);
+            }}
+          >
+            <span className="max-w-[11rem] truncate">{label}</span>
+            {!active ? <ChevronDown aria-hidden="true" className={cn("h-3.5 w-3.5 shrink-0 transition-transform", mobileShortcutMenu === menu && "rotate-180")} /> : null}
+          </button>
+          {active ? (
+            <button
+              type="button"
+              aria-label={`Clear ${label} filter`}
+              className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
+              onClick={(event) => {
+                event.stopPropagation();
+                clearMobileShortcutFilter(menu);
+              }}
+            >
+              <X className="h-3.5 w-3.5" strokeWidth={2.1} aria-hidden="true" />
+            </button>
+          ) : null}
         </span>
-      </button>
+      </div>
     );
 
     const menu =
@@ -1757,7 +1791,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                       className="h-11 w-[32%] shrink-0 rounded-lg bg-[#004BB8] px-4 text-sm font-semibold text-white"
                       onClick={() => {
                         if (mobileShortcutMenu === "sort") { updateHotelSummarySortMode(mobileDraftSort); closeMobileShortcutMenu(true); return; }
-                        setCurrentResultsPage(1);
+                        triggerFilterApplying();
                         if (mobileShortcutMenu === "price") { setMinPrice(mobileShortcutDraftMinPrice); setMaxPrice(mobileShortcutDraftMaxPrice); }
                         else if (mobileShortcutMenu === "stars") setSelectedHotelClasses(mobileShortcutDraftStars);
                         else if (mobileShortcutMenu === "roomTypes") setSelectedFilters((current) => ({ ...current, roomTypes: mobileShortcutDraftRoomTypes }));
@@ -2286,15 +2320,23 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                     </div>
                   ) : null}
 
-                  <div ref={paginationListRef} aria-busy={paginationPendingPage !== null} style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined} className={cn("max-sm:-mx-2 max-sm:w-[calc(100%+16px)] space-y-2 sm:space-y-4", paginationRevealing && "animate-[fadeIn_150ms_ease-out]")}>
-                    {filterApplying || paginationTransitionPhase === "covering" ? (
+                  <div ref={paginationListRef} aria-busy={filterApplying || paginationPendingPage !== null} style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined} className={cn("relative max-sm:-mx-2 max-sm:w-[calc(100%+16px)] space-y-2 sm:space-y-4", paginationRevealing && "animate-[fadeIn_150ms_ease-out]")}>
+                    {filterApplying ? (
+                      <div role="status" aria-live="polite" className="pointer-events-none absolute left-1/2 -top-2 z-20 -translate-x-1/2 sm:hidden">
+                        <span className="sr-only">{t("updatingResults")}</span>
+                        <div data-hotel-filter-refresh-progress className="h-1 w-24 overflow-hidden rounded-full bg-[#004BB8]/[0.08] shadow-[0_1px_2px_rgba(15,23,42,0.08)]">
+                          <div className="h-full w-1/2 animate-[loading-line_1.4s_ease-in-out_infinite] rounded-full bg-[linear-gradient(90deg,rgba(0,75,184,0.82),rgba(92,182,178,0.78))] motion-reduce:animate-none" />
+                        </div>
+                      </div>
+                    ) : null}
+                    {paginationTransitionPhase === "covering" ? (
                       <div className="space-y-4">
-                        <div role="status" aria-live="polite" className={cn(paginationPendingPage !== null ? "sr-only" : "rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-700 shadow-sm")}>
+                        <div role="status" aria-live="polite" className="sr-only">
                           {t("updatingResults")}
                         </div>
                         {Array.from(
                           {
-                            length: paginationPendingPage !== null ? paginatedVisibleHotels.length : 2,
+                            length: paginatedVisibleHotels.length,
                           },
                           (_, index) => (
                             <HotelCardSkeleton key={index} />
@@ -2417,6 +2459,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
               aria-live="polite"
               className="h-11 flex-1 min-w-0 rounded-lg sm:h-12 sm:rounded-xl bg-[#004BB8] px-5 text-sm font-semibold sm:text-base sm:font-bold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
               onClick={() => {
+                triggerFilterApplying();
                 setFiltersOpen(false);
               }}
             >
