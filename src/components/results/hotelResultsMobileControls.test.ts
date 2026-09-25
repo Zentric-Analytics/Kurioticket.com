@@ -85,6 +85,7 @@ test("mobile Hotel shortcut rail keeps Cars geometry while Sort stays with the r
   assert.match(toolbar, /scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\] flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain pe-4/);
   assert.match(resultsSource, /group inline-flex min-h-11 min-w-11 shrink-0 items-center/);
   assert.match(resultsSource, /inline-flex h-9 items-center gap-1 rounded-\[9px\]/);
+  assert.match(resultsSource, /overflow-hidden p-0/);
   assert.doesNotMatch(toolbar, /mobileShortcutRailRef|clampIosHotelShortcutRail|rail\.scrollLeft/);
   assert.doesNotMatch(toolbar, /<select/);
   assert.doesNotMatch(resultsSource, /mobileResultsSearch=/);
@@ -141,4 +142,14 @@ test("Hotel mobile shortcut labels replace per-chip count badges with the select
   assert.match(resultsSource, /aria-pressed=\{active\}/);
   assert.doesNotMatch(resultsSource, /\{count > 0 \? <span className="rounded-full bg-\[#004BB8\]/);
   assert.match(resultsSource, /hidden max-w-full space-y-2 overflow-x-clip sm:block/);
+});
+
+
+test("active Hotel mobile shortcuts use an X clear action and compact normal-loading progress", () => {
+  assert.match(resultsSource, /clearMobileShortcutFilter/);
+  assert.match(resultsSource, /Clear \$\{label\} filter/);
+  assert.match(resultsSource, /<X className="h-3\.5 w-3\.5"/);
+  assert.match(resultsSource, /data-hotel-filter-refresh-progress/);
+  assert.match(resultsSource, /animate-\[loading-line_1\.4s_ease-in-out_infinite\]/);
+  assert.match(resultsSource, /bg-\[linear-gradient\(90deg,rgba\(0,75,184,0\.82\),rgba\(92,182,178,0\.78\)\)\]/);
 });
