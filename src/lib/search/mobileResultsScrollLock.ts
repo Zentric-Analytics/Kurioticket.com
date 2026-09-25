@@ -69,9 +69,9 @@ export function acquireMobileResultsScrollLock(
     const root = document.documentElement;
     // Most mobile Results overlays, including the Cars quick-filter sheets,
     // use the fixed-body strategy because it matches the proven Hotels behavior
-    // on iOS Safari. Cars full-filter/edit surfaces can opt out when they need
-    // overflow-only locking; those callers preserve their existing no-reposition
-    // behavior independently of the quick-sheet presentation.
+    // on iOS Safari. The Cars full-filter surface can opt out when it needs
+    // overflow-only locking; Edit Search and quick sheets use this fixed-body
+    // path so their overlay presentation shares the same stable viewport model.
     if (freezeBodyPosition) {
       body.style.left = `${-snapshot.scrollX}px`;
       body.style.position = "fixed";
