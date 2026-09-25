@@ -129,6 +129,62 @@ test("same-day Cars pickup time must not already be past", () => {
     undefined,
   );
 });
+test("native Cars validation uses the rental timezone instead of the device clock", () => {
+  const now = new Date("2026-09-25T08:33:00Z");
+  const base = {
+    ...defaultCarForm(now),
+    pickupLocation: "JFK",
+    pickupLocationTarget: JSON.stringify({ timeZone: "America/New_York" }),
+    separateDropoff: false,
+    dropoffLocation: "",
+    pickupDate: "2026-09-25",
+    pickupTime: "04:30",
+    dropoffDate: "2026-09-27",
+    dropoffTime: "09:30",
+    driverAge: 30,
+  };
+  assert.equal(
+    validateCarForm(base, now).pickupTime,
+    "Choose a pick-up time that has not passed.",
+  );
+});
+
+test("native Cars preserves a same-day pickup that is still future at PAE", () => {
+  const now = new Date("2026-09-25T07:22:00Z");
+  const form = {
+    ...defaultCarForm(now),
+    pickupLocation: "PAE",
+    pickupLocationTarget: JSON.stringify({ timeZone: "America/Los_Angeles" }),
+    separateDropoff: false,
+    dropoffLocation: "",
+    pickupDate: "2026-09-25",
+    pickupTime: "02:00",
+    dropoffDate: "2026-09-27",
+    dropoffTime: "04:00",
+    driverAge: 30,
+  };
+  assert.equal(validateCarForm(form, now).pickupTime, undefined);
+});
+
+test("native Cars route initialization honors the rental-local calendar day", () => {
+  const now = new Date("2026-09-25T06:00:00Z");
+  const target = JSON.stringify({ timeZone: "America/Los_Angeles" });
+  const form = initializeCarsPageForm(
+    {
+      pickupLocation: "LAX",
+      pickupLocationTarget: target,
+      pickupDate: "2026-09-24",
+      pickupTime: "23:30",
+      dropoffDate: "2026-09-25",
+      dropoffTime: "10:00",
+      driverAge: "30",
+    },
+    now,
+  ).form;
+  assert.equal(form.pickupDate, "2026-09-24");
+  assert.equal(form.pickupTime, "23:30");
+});
+
 test("calendar helpers handle month, leap year, and local serialization", () => {
   assert.equal(addCalendarDays("2026-12-31", 1), "2027-01-01"); assert.equal(addCalendarDays("2028-02-28", 1), "2028-02-29");
   assert.equal(localIsoDate(new Date(2026, 0, 2, 23, 59)), "2026-01-02"); assert.ok(localDateFromIso("2028-02-29"));

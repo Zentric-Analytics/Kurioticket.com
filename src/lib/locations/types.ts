@@ -31,6 +31,8 @@ export type CanonicalLocation = {
   country?: { code?: string; name?: string };
   region?: string;
   coordinates?: { latitude: number; longitude: number };
+  /** IANA time zone for the selected place when server discovery can resolve it. */
+  timeZone?: string;
   codes?: { iata?: string; icao?: string };
   aliases?: readonly string[];
   localizedSearchTerms?: Readonly<Record<string, readonly string[]>>;

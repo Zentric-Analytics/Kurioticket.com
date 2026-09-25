@@ -5,13 +5,26 @@ import type { KayakSearch, KayakVertical, SandboxPlace } from "./kayakSandbox";
 import { searchLocationSchema } from "@/lib/locations/searchTarget";
 import { resolveProviderSelection } from "@/lib/locations/selectionAuthority";
 import { hotelDestinations } from "@/data/hotelDestinations";
+import { timezones as airportTimeZones } from "./airportTimeZones";
+import {
+  getRentalLocationClock,
+  pickupHasPassedAtClock,
+} from "@/shared/cars/rentalLocationClock";
 
 export const regularKayakRequest = z.object({
   action: z.literal("regular-search"),
   vertical: z.enum(["flights", "hotels", "cars"]),
   criteria: z.record(z.string().max(80), z.string().max(250)).refine(value => Object.keys(value).length <= 35),
 });
-type Resolution = { supported: true; search: KayakSearch } | { supported: false; reason: string; choices?: SandboxPlace[] };
+type Resolution =
+  | { supported: true; search: KayakSearch }
+  | {
+      supported: false;
+      reason: string;
+      choices?: SandboxPlace[];
+      reasonCode?: "pickup_time_past";
+    };
+type ResolveRegularKayakSearchOptions = { now?: Date };
 const airportCode = (value = "") => /^[A-Z]{3}$/.test(value) ? value : value.match(/\(([A-Z]{3})\)$/)?.[1] || value;
 const parseTarget = (value?: string) => {
   if (!value) return undefined;
@@ -62,6 +75,7 @@ export async function resolveRegularKayakSearch(
   vertical: KayakVertical,
   criteria: Record<string, string>,
   places: (term: string, vertical?: KayakVertical) => Promise<SandboxPlace[]>,
+  options: ResolveRegularKayakSearchOptions = {},
 ): Promise<Resolution> {
   // Sandbox prices remain explicitly USD, not a fabricated currency conversion.
   const input = { ...criteria, currency: "USD" };
@@ -88,9 +102,29 @@ export async function resolveRegularKayakSearch(
     else dropoff ||= /^[A-Z]{3}$/.test(airportCode(dropoffInput)) ? airportCode(dropoffInput) : undefined;
     if (!dropoff) dropoff = providerPlaceMatch(dropoffInput, await places(dropoffInput, "cars"))?.value;
     if (!dropoff) return { supported: false, reason: "KAYAK does not support the selected drop-off location. Other providers are unaffected." };
+
+    const pickupTime = criteria.pickupTime || "10:00";
+    const rentalClock = getRentalLocationClock(
+      options.now ?? new Date(),
+      airportTimeZones[pickup],
+    );
+    if (
+      rentalClock &&
+      /^\d{4}-\d{2}-\d{2}$/.test(criteria.pickupDate || "") &&
+      /^([01]\d|2[0-3]):[0-5]\d$/.test(pickupTime) &&
+      pickupHasPassedAtClock(criteria.pickupDate, pickupTime, rentalClock)
+    ) {
+      return {
+        supported: false,
+        reason:
+          "The selected pick-up time has already passed at the rental location. Choose a later pick-up time or date.",
+        reasonCode: "pickup_time_past",
+      };
+    }
+
     return adaptKayakCarSearch({ ...input, pickupLocation: pickup,
       dropoffLocation: dropoff,
-      pickupTime: criteria.pickupTime || "10:00", dropoffTime: criteria.dropoffTime || "10:00" });
+      pickupTime, dropoffTime: criteria.dropoffTime || "10:00" });
   }
   const hotelTarget = parseTarget(criteria.destinationLocation);
   const boundDestination = hotelTarget?.success ? (() => { const value = resolveProviderSelection(hotelTarget.data, "hotels", "kayak"); return value.ok ? value.value : undefined; })() : undefined;

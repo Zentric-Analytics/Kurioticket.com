@@ -1,3 +1,8 @@
+import {
+  getRentalLocationClock,
+  locationTargetTimeZone,
+} from "@/shared/cars/rentalLocationClock";
+
 export type CarsFormValues = {
   pickupLocation: string;
   /** Serialized canonical location selected from Cars discovery. */
@@ -220,8 +225,15 @@ export const validateCarsForm = (
   values: CarsFormValues,
   todayIso: string,
   currentLocalTime?: string,
+  now = new Date(),
 ): CarsFormErrors => {
   const errors: CarsFormErrors = {};
+  const rentalClock = getRentalLocationClock(
+    now,
+    locationTargetTimeZone(values.pickupLocationTarget),
+  );
+  const effectiveTodayIso = rentalClock?.date ?? todayIso;
+  const effectiveCurrentTime = rentalClock?.time ?? currentLocalTime;
   const pickupLocation = values.pickupLocation.trim();
   const dropoffLocation = values.dropoffLocation.trim();
   const driverAge = Number.parseInt(values.driverAge, 10);
@@ -233,24 +245,24 @@ export const validateCarsForm = (
 
   if (!values.pickupDate) {
     errors.pickupDate = "carsSearch.error.pickupDateRequired";
-  } else if (values.pickupDate < todayIso) {
+  } else if (values.pickupDate < effectiveTodayIso) {
     errors.pickupDate = "carsSearch.error.pickupDatePast";
   }
 
   if (!values.pickupTime) {
     errors.pickupTime = "carsSearch.error.pickupTimeRequired";
   } else if (
-    currentLocalTime &&
-    /^\d{2}:\d{2}$/.test(currentLocalTime) &&
-    values.pickupDate === todayIso &&
-    values.pickupTime <= currentLocalTime
+    effectiveCurrentTime &&
+    /^\d{2}:\d{2}$/.test(effectiveCurrentTime) &&
+    values.pickupDate === effectiveTodayIso &&
+    values.pickupTime <= effectiveCurrentTime
   ) {
     errors.pickupTime = "carsSearch.error.pickupTimePast";
   }
 
   if (!values.dropoffDate) {
     errors.dropoffDate = "carsSearch.error.dropoffDateRequired";
-  } else if (values.dropoffDate < todayIso) {
+  } else if (values.dropoffDate < effectiveTodayIso) {
     errors.dropoffDate = "carsSearch.error.dropoffDatePast";
   }
 

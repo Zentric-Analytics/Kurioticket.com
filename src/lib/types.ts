@@ -372,7 +372,8 @@ export type ProviderErrorCategory =
   | "invalid_response"
   | "failed"
   | "skipped"
-  | "unsupported_location";
+  | "unsupported_location"
+  | "invalid_search";
 
 export type ProviderErrorReason =
   | "provider_no_inventory"
@@ -384,7 +385,8 @@ export type ProviderErrorReason =
   | "provider_invalid_response"
   | "provider_failed"
   | "provider_skipped"
-  | "unsupported_location";
+  | "unsupported_location"
+  | "pickup_time_past";
 
 export type ProviderResult<T> = {
   provider: string;
