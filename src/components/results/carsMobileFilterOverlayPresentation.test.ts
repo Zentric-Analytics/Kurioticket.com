@@ -143,7 +143,7 @@ test("every canonical Cars shortcut shares the one stable mobile overlay lock", 
   }
   assert.match(cars, /quickFilterGroupId === "sort" \|\| activeQuickFilterGroup/);
   assert.equal((cars.match(/data-cars-quick-sheet(?:-backdrop|-scrim)?/g) ?? []).length, 3);
-  assert.equal((cars.match(/acquireMobileResultsScrollLock\(/g) ?? []).length, 4);
+  assert.equal((cars.match(/acquireMobileResultsScrollLock\(/g) ?? []).length, 2);
 });
 
 test("Cars quick sheet scrim geometry now matches Hotels exactly", () => {
