@@ -28,9 +28,9 @@ test("mobile nearby insight, quick filters, and price alert use compact native-l
   assert.match(source, /cn\(resultStackClass, "space-y-1 sm:space-y-4"\)/);
   const nearbyInsight = source.match(/className="([^"]*)">Cheaper nearby:/)?.[1] ?? "";
   assert.match(nearbyInsight, /min-h-\[28px\]/);
-  assert.match(nearbyInsight, /text-\[8px\]/);
-  assert.match(nearbyInsight, /leading-\[10px\]/);
-  assert.doesNotMatch(nearbyInsight, /text-\[9px\]|leading-\[12px\]/);
+  assert.match(nearbyInsight, /text-\[5px\]/);
+  assert.match(nearbyInsight, /leading-\[8px\]/);
+  assert.doesNotMatch(nearbyInsight, /text-\[8px\]|leading-\[10px\]|text-\[9px\]|leading-\[12px\]/);
   assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,350}py-1/);
   assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 pt-2/);
 });
