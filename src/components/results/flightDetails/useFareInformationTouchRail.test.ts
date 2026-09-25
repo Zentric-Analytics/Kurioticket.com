@@ -28,9 +28,18 @@ function touchRailHarness() {
   return { element, dispatch };
 }
 
-test("Fare information touch intent remains pending for sub-threshold movement", () => {
+test("Fare information touch intent remains pending through ordinary tap jitter", () => {
   assert.equal(fareInformationGestureAxis("pending", 1, 0), "pending");
   assert.equal(fareInformationGestureAxis("pending", 1, 1), "pending");
+  assert.equal(fareInformationGestureAxis("pending", 0, 2), "pending");
+  assert.equal(fareInformationGestureAxis("pending", 2, 0), "pending");
+  assert.equal(fareInformationGestureAxis("pending", 4, 3), "pending");
+});
+
+test("tiny initial vertical jitter does not permanently steal an intended horizontal swipe", () => {
+  const afterJitter = fareInformationGestureAxis("pending", 1, 2);
+  assert.equal(afterJitter, "pending");
+  assert.equal(fareInformationGestureAxis(afterJitter, 12, 3), "horizontal");
 });
 
 test("Fare information touch intent resolves horizontal-dominant movement", () => {
@@ -49,6 +58,38 @@ test("Fare information touch intent stays locked after horizontal wins", () => {
 
 test("Fare information touch intent stays locked after vertical wins", () => {
   assert.equal(fareInformationGestureAxis("vertical", 12, 3), "vertical");
+});
+
+
+test("tiny touch drift keeps the following fare-tab click active", () => {
+  const originalWindow = globalThis.window;
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: { scrollY: 100, scrollX: 0, scrollTo() {}, matchMedia: () => ({ matches: true }) },
+  });
+  const { element, dispatch } = touchRailHarness();
+  const cleanup = attachFareInformationTouchRail(element as unknown as HTMLElement);
+  let clickPrevented = false;
+
+  dispatch("touchstart", { touches: touchList(1, 100, 20), timeStamp: 0 });
+  dispatch("touchmove", {
+    touches: touchList(1, 100, 22),
+    timeStamp: 16,
+    preventDefault() {},
+  });
+  dispatch("touchend", {
+    changedTouches: touchList(1, 100, 22),
+    timeStamp: 20,
+  });
+  dispatch("click", {
+    preventDefault: () => { clickPrevented = true; },
+    stopPropagation() {},
+  });
+
+  assert.equal(clickPrevented, false);
+  assert.equal(element.scrollLeft, 40);
+  cleanup();
+  Object.defineProperty(globalThis, "window", { configurable: true, value: originalWindow });
 });
 
 test("horizontal Fare information drag owns movement and suppresses its following click", () => {
