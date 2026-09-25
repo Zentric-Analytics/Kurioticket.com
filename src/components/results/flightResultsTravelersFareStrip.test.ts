@@ -89,6 +89,7 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.match(nearbyInsight, /min-h-\[28px\]/);
   assert.match(nearbyInsight, /text-\[8px\]/);
   assert.match(nearbyInsight, /leading-\[10px\]/);
+  assert.match(nearbyInsight, /font-medium/);
   assert.doesNotMatch(nearbyInsight, /text-\[9px\]|leading-\[12px\]/);
   assert.match(mobileStrip, /onClick=\{\(\) => handleNearbyFareDateSelect\(cheaperNearbyFare\.date\)\}/);
 });
