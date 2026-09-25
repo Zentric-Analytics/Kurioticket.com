@@ -198,6 +198,32 @@ type FilterOption = {
   count: number;
 };
 
+function mobileHotelOptionShortcutLabel(
+  fallback: string,
+  selected: string[],
+  options: FilterOption[],
+) {
+  if (!selected.length) return fallback;
+  const labels = selected
+    .map((value) => options.find((option) => option.value === value)?.label)
+    .filter((label): label is string => Boolean(label));
+  if (!labels.length) return fallback;
+  return labels.length === 1 ? labels[0] : `${labels[0]} +${labels.length - 1}`;
+}
+
+function mobileHotelStarShortcutLabel(selected: number[]) {
+  if (!selected.length) return "Stars";
+  const ratings = [...selected].sort((a, b) => b - a);
+  if (ratings.length === 1) return `${ratings[0]}-star`;
+  const minimum = Math.min(...ratings);
+  const contiguousThroughFive =
+    ratings.length === 6 - minimum &&
+    ratings.every((rating, index) => rating === 5 - index);
+  return contiguousThroughFive
+    ? `${minimum}+ stars`
+    : `${ratings[0]}★ +${ratings.length - 1}`;
+}
+
 type TermFilter = {
   value: string;
   labelKey: string;
@@ -841,6 +867,66 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     [currencyRates.isFallback, currencyRates.rates, selectedOption.currency],
   );
 
+  const formatCompactHotelFilterPrice = useCallback(
+    (amountUsd: number) => {
+      const display = formatDisplayPrice({
+        amount: amountUsd,
+        sourceCurrency: "USD",
+        displayCurrency: selectedOption.currency,
+        convertUsdEstimate: true,
+        rates: currencyRates.rates,
+        isFallbackRate: currencyRates.isFallback,
+      });
+
+      try {
+        const formatter = new Intl.NumberFormat(locale, {
+          style: "currency",
+          currency: display.currency,
+          notation: "compact",
+          compactDisplay: "short",
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 1,
+        });
+        const formatted = formatter.format(display.amount);
+        if (display.currency !== "NGN") return formatted;
+        const currencyToken = formatter
+          .formatToParts(display.amount)
+          .find((part) => part.type === "currency")?.value;
+        return currencyToken
+          ? formatted.replace(currencyToken, "₦")
+          : formatted.replace("NGN", "₦");
+      } catch {
+        return display.formatted;
+      }
+    },
+    [
+      currencyRates.isFallback,
+      currencyRates.rates,
+      locale,
+      selectedOption.currency,
+    ],
+  );
+
+  const mobilePriceShortcutLabel = priceFilterActive
+    ? minPrice <= 0
+      ? `Under ${formatCompactHotelFilterPrice(maxPrice)}`
+      : maxPrice >= resultMaxPrice
+        ? `${formatCompactHotelFilterPrice(minPrice)}+`
+        : `${formatCompactHotelFilterPrice(minPrice)}–${formatCompactHotelFilterPrice(maxPrice)}`
+    : "Price";
+  const mobileStarsShortcutLabel =
+    mobileHotelStarShortcutLabel(selectedHotelClasses);
+  const mobileFacilitiesShortcutLabel = mobileHotelOptionShortcutLabel(
+    "Facilities",
+    selectedFilters.facilities,
+    filterOptions.facilities,
+  );
+  const mobileRoomTypesShortcutLabel = mobileHotelOptionShortcutLabel(
+    "Room & bed",
+    selectedFilters.roomTypes,
+    filterOptions.roomTypes,
+  );
+
   const activeFilterChips = useMemo(() => buildActiveFilterChips(selectedFilters, propertyNameQuery, minPrice, maxPrice, resultMaxPrice, priceFilterActive, selectedHotelClasses, formatHotelFilterPrice, t, locale, filterOptions.facilities, filterOptions.locations), [formatHotelFilterPrice, locale, maxPrice, minPrice, selectedHotelClasses, resultMaxPrice, priceFilterActive, selectedFilters, propertyNameQuery, t, filterOptions.facilities, filterOptions.locations]);
 
   const resultsApplying = filterApplying || searchApplying;
@@ -1277,22 +1363,22 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }, [triggerFilterApplying]);
 
   const updateMaxPrice = (value: number) => {
-    triggerFilterApplying();
+    setCurrentResultsPage(1);
     setMaxPrice(Math.max(value, minPrice));
   };
 
   const updateMinPrice = (value: number) => {
-    triggerFilterApplying();
+    setCurrentResultsPage(1);
     setMinPrice(Math.min(value, maxPrice));
   };
 
   const updatePropertyNameQuery = (value: string) => {
-    triggerFilterApplying();
+    setCurrentResultsPage(1);
     setPropertyNameQuery(value);
   };
 
   const toggleHotelClass = (rating: number) => {
-    triggerFilterApplying();
+    setCurrentResultsPage(1);
     setSelectedHotelClasses((current) => (current.includes(rating) ? current.filter((item) => item !== rating) : [...current, rating].sort((a, b) => b - a)));
   };
 
@@ -1301,7 +1387,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }
 
   const resetFilters = () => {
-    triggerFilterApplying();
+    setCurrentResultsPage(1);
     setMinPrice(0);
     setMaxPrice(resultMaxPrice);
     setSelectedHotelClasses([]);
@@ -1310,7 +1396,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   };
 
   const toggleFilter = (group: keyof HotelFilterSelections, value?: string) => {
-    triggerFilterApplying();
+    setCurrentResultsPage(1);
     setSelectedFilters((current) => ({
       ...current,
       [group]: value === undefined ? [] : current[group].includes(value) ? current[group].filter((item) => item !== value) : [...current[group], value],
@@ -1318,7 +1404,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   };
 
   const removeFilterChip = (chip: ActiveHotelFilterChip) => {
-    triggerFilterApplying();
+    setCurrentResultsPage(1);
 
     if (chip.kind === "priceRange") {
       setMinPrice(0);
@@ -1347,7 +1433,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   };
 
   const updateHotelSummarySortMode = (sortMode: HotelSummarySortMode) => {
-    triggerFilterApplying();
+    setCurrentResultsPage(1);
     setHotelSummarySortMode(sortMode);
   };
 
@@ -1573,11 +1659,16 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     const shortcutButtonClass = "group inline-flex min-h-11 min-w-11 shrink-0 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35";
     const shortcutChipClass = "inline-flex h-9 items-center gap-1 rounded-[9px] border px-2 text-[13px] font-semibold transition";
     const menuItemClass = "flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-transparent bg-transparent px-0 text-left text-[14px] font-normal text-slate-800 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
-    const trigger = (menu: MobileHotelShortcutMenu, label: string, count = 0) => (
+    const trigger = (
+      menu: MobileHotelShortcutMenu,
+      label: string,
+      active = false,
+    ) => (
       <button
         type="button"
         aria-haspopup="dialog"
         aria-expanded={mobileShortcutMenu === menu}
+        aria-pressed={active}
         className={shortcutButtonClass}
         onClick={(event) => {
           event.stopPropagation();
@@ -1587,13 +1678,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         <span
           className={cn(
             shortcutChipClass,
-            count > 0
+            active
               ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
               : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
           )}
         >
-          <span>{label}</span>
-          {count > 0 ? <span className="rounded-full bg-[#004BB8] px-1.5 py-0.5 text-[10px] text-white">{count}</span> : null}
+          <span className="max-w-[11rem] truncate">{label}</span>
           <ChevronDown aria-hidden="true" className={cn("h-3.5 w-3.5 shrink-0 transition-transform", mobileShortcutMenu === menu && "rotate-180")} />
         </span>
       </button>
@@ -1667,7 +1757,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                       className="h-11 w-[32%] shrink-0 rounded-lg bg-[#004BB8] px-4 text-sm font-semibold text-white"
                       onClick={() => {
                         if (mobileShortcutMenu === "sort") { updateHotelSummarySortMode(mobileDraftSort); closeMobileShortcutMenu(true); return; }
-                        triggerFilterApplying();
+                        setCurrentResultsPage(1);
                         if (mobileShortcutMenu === "price") { setMinPrice(mobileShortcutDraftMinPrice); setMaxPrice(mobileShortcutDraftMaxPrice); }
                         else if (mobileShortcutMenu === "stars") setSelectedHotelClasses(mobileShortcutDraftStars);
                         else if (mobileShortcutMenu === "roomTypes") setSelectedFilters((current) => ({ ...current, roomTypes: mobileShortcutDraftRoomTypes }));
@@ -1717,10 +1807,10 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
               {activeFilterCount > 0 ? <span className="rounded-full bg-[#004BB8] px-1.5 py-0.5 text-[10px] text-white">{activeFilterCount}</span> : null}
             </span>
           </button>
-          {hasPricedResults ? trigger("price", "Price", priceFilterActive ? 1 : 0) : null}
-          {trigger("stars", "Stars", selectedHotelClasses.length)}
-          {trigger("amenities", "Facilities", selectedFilters.facilities.length)}
-          {filterOptions.roomTypes.length > 1 ? trigger("roomTypes", "Room & bed", selectedFilters.roomTypes.length) : null}
+          {hasPricedResults ? trigger("price", mobilePriceShortcutLabel, priceFilterActive) : null}
+          {trigger("stars", mobileStarsShortcutLabel, selectedHotelClasses.length > 0)}
+          {trigger("amenities", mobileFacilitiesShortcutLabel, selectedFilters.facilities.length > 0)}
+          {filterOptions.roomTypes.length > 1 ? trigger("roomTypes", mobileRoomTypesShortcutLabel, selectedFilters.roomTypes.length > 0) : null}
         </div>
         {menu}
       </>
@@ -2323,16 +2413,15 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             {activeFilterCount > 0 ? <button type="button" aria-label="Reset hotel filters" className="focus-ring h-11 w-[30%] shrink-0 rounded-lg border border-[#D8DEE8] bg-[#F2F4F8] px-5 text-sm font-semibold text-slate-700 sm:hidden" onClick={resetFilters}>Reset</button> : null}
             <Button
               type="button"
-              disabled={filterApplying || sortedVisibleHotels.length === 0}
+              disabled={sortedVisibleHotels.length === 0}
               aria-live="polite"
               className="h-11 flex-1 min-w-0 rounded-lg sm:h-12 sm:rounded-xl bg-[#004BB8] px-5 text-sm font-semibold sm:text-base sm:font-bold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
               onClick={() => {
-                triggerFilterApplying();
                 setFiltersOpen(false);
               }}
             >
-              <span className={locale.startsWith("en") ? "hidden sm:inline" : undefined}>{filterApplying ? t("updatingResults") : sortedVisibleHotels.length === 0 ? t("hotelResults.noStaysMatchFiltersTitle") : `${t("deals.results.package.view.hotel")} (${new Intl.NumberFormat(locale).format(sortedVisibleHotels.length)})`}</span>
-              {locale.startsWith("en") ? <span className="sm:hidden">{filterApplying ? "Updating results…" : sortedVisibleHotels.length === 0 ? "No matching stays" : activeFilterCount > 0 ? `View ${sortedVisibleHotels.length} matching ${sortedVisibleHotels.length === 1 ? "stay" : "stays"}` : `View all ${sortedVisibleHotels.length} stays`}</span> : null}
+              <span className={locale.startsWith("en") ? "hidden sm:inline" : undefined}>{sortedVisibleHotels.length === 0 ? t("hotelResults.noStaysMatchFiltersTitle") : `${t("deals.results.package.view.hotel")} (${new Intl.NumberFormat(locale).format(sortedVisibleHotels.length)})`}</span>
+              {locale.startsWith("en") ? <span className="sm:hidden">{sortedVisibleHotels.length === 0 ? "No matching stays" : activeFilterCount > 0 ? `View ${sortedVisibleHotels.length} matching ${sortedVisibleHotels.length === 1 ? "stay" : "stays"}` : `View all ${sortedVisibleHotels.length} stays`}</span> : null}
             </Button>
           </div>
         </aside>
@@ -2422,7 +2511,7 @@ function ActiveHotelFilterChips({ chips, onRemove, t }: { chips: ActiveHotelFilt
   if (!chips.length) return null;
 
   return (
-    <div className="max-w-full space-y-2 overflow-x-clip">
+    <div className="hidden max-w-full space-y-2 overflow-x-clip sm:block">
       <p className="text-xs font-semibold text-slate-500">
         {chips.length} {chips.length === 1 ? "filter" : "filters"} applied
       </p>
