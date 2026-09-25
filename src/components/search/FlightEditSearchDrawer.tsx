@@ -415,7 +415,7 @@ export function FlightEditSearchDrawer({
                   setDraft((current) => ({ ...current, legs }))
                 }
                 minimumDate={today().toISOString().slice(0, 10)}
-                presentation="homepage"
+                presentation={resultsMode ? "results" : "homepage"}
                 onAirportValidityChange={setMultiCityAirportsValid}
               />
             ) : resultsMode ? (
