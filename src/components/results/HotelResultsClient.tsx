@@ -1687,9 +1687,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           className={cn(
             shortcutChipClass,
             "overflow-hidden p-0",
-            active
-              ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
-              : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
+            "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
           )}
         >
           <button
@@ -1710,7 +1708,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             <button
               type="button"
               aria-label={`Clear ${label} filter`}
-              className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
+              className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#64748B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
               onClick={(event) => {
                 event.stopPropagation();
                 clearMobileShortcutFilter(menu);
@@ -1831,14 +1829,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             <span
               className={cn(
                 shortcutChipClass,
-                activeFilterCount > 0
-                  ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
-                  : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
+                "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
               )}
             >
               <SlidersHorizontal className="h-4 w-4 shrink-0" strokeWidth={2.2} aria-hidden="true" />
               <span>Filter</span>
-              {activeFilterCount > 0 ? <span className="rounded-full bg-[#004BB8] px-1.5 py-0.5 text-[10px] text-white">{activeFilterCount}</span> : null}
+              {activeFilterCount > 0 ? <span className="rounded-full bg-[#F1F5F9] px-1.5 py-0.5 text-[10px] font-semibold text-[#142033]">{activeFilterCount}</span> : null}
             </span>
           </button>
           {hasPricedResults ? trigger("price", mobilePriceShortcutLabel, priceFilterActive) : null}
