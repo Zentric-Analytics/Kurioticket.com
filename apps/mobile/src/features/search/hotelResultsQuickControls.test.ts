@@ -81,7 +81,7 @@ test("Hotel controls use the normal neutral filter tokens in light and dark them
   for (const semantic of ["theme.surface", "theme.border", "theme.textPrimary", "theme.textSecondary", "theme.background"]) {
     assert.match(component, new RegExp(semantic.replace(".", "\\.")));
   }
-  assert.match(component, /borderColor: border/);
+  assert.match(component, /borderColor: active \? foreground : border/);
   assert.match(component, /backgroundColor: surface/);
   assert.match(component, /color: foreground/);
   assert.doesNotMatch(component, /#EAF2FF|active && !theme\.dark \? ui\.blue/);
@@ -146,6 +146,6 @@ test("active Hotel quick shortcuts expose an X clear action instead of a chevron
   assert.match(component, /onClear\?: \(\) => void/);
   assert.match(component, /Clear \$\{label\} filter/);
   assert.match(component, /<X accessible=\{false\} size=\{14\}/);
-  assert.match(component, /color=\{theme\.dark \? theme\.textPrimary : "#64748B"\}/);
+  assert.match(component, /<X accessible=\{false\} size=\{14\} strokeWidth=\{2\} color=\{foreground\}/);
   assert.match(component, /showChevron && !onClear/);
 });
