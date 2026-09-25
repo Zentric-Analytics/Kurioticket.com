@@ -1400,7 +1400,7 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
   const chevron = theme.dark ? theme.textSecondary : "#64748B";
   const border = theme.dark ? theme.border : "#D8E1EC";
   const surface = theme.dark ? theme.surface : "#FFFFFF";
-  const selectedSurface = theme.dark ? theme.textPrimary : "#142033";
+  const selectedSurface = "#142033";
   const countBackground = theme.dark ? theme.background : "#F1F5F9";
   const controlAccessibilityLabel = `${accessibilityLabel ?? label}${active ? ", selected" : ""}${count ? `, ${count} active` : ""}`;
   return (
