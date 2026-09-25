@@ -23,7 +23,7 @@ test("Cars mobile Edit Search isolates backdrop motion and closes on animation c
   assert.match(source, /mobileSearchCloseTimerRef/);
 });
 
-test("Cars Edit Search uses the native floating cutout footprint", () => {
+test("Cars Edit car search keeps the floating footprint with the Hotels flat surface", () => {
   assert.match(shellSource, /appearance\?: "default" \| "carsResultsEdit"/);
   assert.match(
     shellSource,
@@ -31,7 +31,7 @@ test("Cars Edit Search uses the native floating cutout footprint", () => {
   );
   assert.match(
     shellSource,
-    /carsResultsEdit[\s\S]*?rounded-\[24px\] border border-slate-200\/80 bg-\[#F5F7FB\] shadow-none/,
+    /carsResultsEdit[\s\S]*?rounded-\[24px\] border-0 bg-\[#F5F7FB\] shadow-none/,
   );
   assert.doesNotMatch(
     shellSource,
@@ -43,7 +43,7 @@ test("Cars Edit Search uses the native floating cutout footprint", () => {
   );
   assert.match(
     shellSource,
-    /paddingBottom: "max\(20px, calc\(env\(safe-area-inset-bottom, 0px\) - 12px\)\)"/,
+    /paddingBottom: "max\(20px, env\(safe-area-inset-bottom, 0px\)\)"/,
   );
   assert.match(shellSource, /bg-\[#F5F7FB\]/);
   assert.match(

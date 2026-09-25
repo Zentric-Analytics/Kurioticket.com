@@ -177,7 +177,7 @@ export function MobileResultsEditSheet({
           className={cn(
             "relative z-10 flex min-h-0 w-full flex-col overflow-hidden outline-none",
             carsResultsEdit
-              ? "rounded-[24px] border border-slate-200/80 bg-[#F5F7FB] shadow-none"
+              ? "rounded-[24px] border-0 bg-[#F5F7FB] shadow-none"
               : "rounded-t-[22px] border border-b-0 border-slate-200/80 bg-white shadow-[0_-12px_36px_rgba(15,23,42,0.18)]",
             placement === "top" && !carsResultsEdit && "rounded-t-none rounded-b-[22px] border-t-0 border-b pt-[env(safe-area-inset-top)]",
             className,
@@ -199,7 +199,7 @@ export function MobileResultsEditSheet({
               contentClassName,
             )}
             style={carsResultsEdit
-              ? { paddingBottom: "max(20px, calc(env(safe-area-inset-bottom, 0px) - 12px))" }
+              ? { paddingBottom: "max(20px, env(safe-area-inset-bottom, 0px))" }
               : undefined
             }
           >

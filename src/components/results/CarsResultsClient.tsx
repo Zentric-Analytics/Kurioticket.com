@@ -506,18 +506,18 @@ const fieldLabelClass =
 const fieldInputClass =
   "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[15px] lg:font-medium lg:leading-6";
 const carsMobileEditFieldShellClass =
-  "relative flex min-h-[66px] flex-col justify-center rounded-[15px] border border-[#D8E1EC] bg-white px-3 py-[9px] shadow-[0_2px_8px_rgba(15,23,42,0.035)] focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25";
+  "relative flex min-h-[66px] flex-col justify-center rounded-[13px] border border-[#E7ECF5] bg-white px-3 py-[10px] shadow-none focus-within:border-[#064CF7] focus-within:ring-2 focus-within:ring-[#064CF7]/25";
 const carsMobileEditPickupLabelClass =
-  "mb-1 text-[10px] font-extrabold uppercase leading-[13px] tracking-[0.5px] text-slate-600";
+  "mb-[3px] text-[11px] font-medium normal-case leading-[14px] tracking-normal text-[#595959]";
 const carsMobileEditFieldLabelClass =
-  "mb-1 text-[10px] font-extrabold uppercase leading-[13px] tracking-[0.5px] text-[#64748B]";
+  "mb-[3px] text-[11px] font-medium normal-case leading-[14px] tracking-normal text-[#595959]";
 const carsMobileEditSummaryButtonClass =
-  "focus-ring flex h-8 w-full min-w-0 items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[15px] font-semibold leading-5 text-[#0F172A] outline-none focus-visible:ring-0";
+  "focus-ring flex h-auto min-h-6 w-full min-w-0 items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[15px] font-semibold leading-5 text-[#1A1A1A] outline-none focus-visible:ring-0";
 const carsMobileEditValueGroupClass = "flex min-w-0 flex-1 items-center gap-[10px]";
 const carsMobileEditPickupValueClass =
-  "focus-ring block h-8 min-w-0 w-full flex-1 border-0 bg-transparent p-0 text-start text-[15px] font-semibold leading-5 text-[#0F172A] outline-none focus-visible:ring-0";
+  "focus-ring block h-auto min-h-6 min-w-0 w-full flex-1 border-0 bg-transparent p-0 text-start text-[15px] font-semibold leading-5 text-[#1A1A1A] outline-none focus-visible:ring-0";
 const carsMobileEditSecondaryValueClass =
-  "text-[12px] font-normal leading-4 tracking-normal text-slate-600";
+  "text-[12px] font-normal leading-4 tracking-normal text-[#595959]";
 
 export function CarsResultsClient({
   values,
@@ -1219,7 +1219,7 @@ export function CarsResultsClient({
         >
           <div
             className={cn(
-              placement === "mobile" && "grid grid-cols-1 gap-2",
+              placement === "mobile" && "grid grid-cols-1 gap-[10px]",
               placement !== "mobile" && (returnToDifferentLocation
                 ? differentReturnSearchGridClass
                 : sameReturnSearchGridClass),
@@ -1510,7 +1510,7 @@ export function CarsResultsClient({
           <Button
             type="submit"
             data-cars-mobile-search-submit
-            className="mt-[13px] h-[54px] w-full rounded-[11px] bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B]"
+            className="mt-3 h-[52px] w-full rounded-[12px] bg-[#064CF7] px-4 text-[16px] font-semibold text-white shadow-none transition-colors hover:bg-[#004BB8]"
           >
             {t("search")}
           </Button>
@@ -1664,7 +1664,7 @@ export function CarsResultsClient({
         isolatedBackdrop
         closing={mobileSearchClosing}
         onCloseAnimationComplete={cancelMobileSearchDrawer}
-        title={t("carsResults.editSearch")}
+        title={t("carsResults.editCarSearch")}
         nestedLayerOpen={mobilePicker !== null}
         onClose={requestMobileSearchDrawerClose}
       >
