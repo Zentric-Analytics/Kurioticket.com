@@ -1560,7 +1560,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             }}
             className="focus-ring inline-flex h-11 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-[14px] font-semibold text-[#07133B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
-            <SlidersHorizontal className="h-4 w-4 shrink-0 text-[#004BB8]" strokeWidth={2.2} aria-hidden="true" />
+            <SlidersHorizontal className="h-4 w-4 shrink-0 text-[#1a1a1a]" strokeWidth={2.2} aria-hidden="true" />
             <span className="truncate">{t("filters")}</span>
             {activeFilterCount > 0 ? <span className="sr-only"> ({activeFilterCount})</span> : null}
           </button>
