@@ -1046,6 +1046,14 @@ export function CarsResultsClient({
   );
 
   useEffect(() => {
+    if (mobileSearchOpen) return;
+    restoreOverlayLauncherFocus(
+      mobileSearchLauncherRef.current,
+      mobileSearchModalityRef.current,
+    );
+  }, [mobileSearchOpen]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
     const sentinel = mobileCompactHeaderHandoffRef.current;
