@@ -51,6 +51,15 @@ test("mobile header uses safe areas and protects controls with the Cars canvas",
   );
 });
 
+test("standalone hero reserves the native control safe zone without owning scroll", () => {
+  assert.match(client, /reserveMobileControlSafeZone={presentation === "standalone-content"}/);
+  assert.match(hero, /data-car-details-mobile-control-safe-zone/);
+  assert.match(hero, /h-\[var\(--car-details-mobile-header-boundary\)\]/);
+  assert.match(hero, /data-car-details-mobile-vehicle-stage/);
+  assert.match(hero, /h-\[clamp\(11rem,50vw,14rem\)\] pb-3/);
+  assert.doesNotMatch(hero, /position:\s*fixed|sticky|scrollTo\(|scrollIntoView\(|addEventListener\("scroll"/);
+});
+
 test("mobile tabs pin below the control zone while desktop keeps top zero", () => {
   assert.match(
     client,
