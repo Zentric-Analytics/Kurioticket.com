@@ -61,9 +61,11 @@ test("Hotel controls use the measured reference capsule geometry while keeping s
   assert.match(styles, /hotelFilterContent: \{ paddingLeft: 12, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" \}/);
   assert.doesNotMatch(block(styles, "hotelFilterContent", "hotelFilterSectionHeader"), /paddingBottom/);
   assert.match(styles, /hotelShortcutTouchTarget: \{ minWidth: 44, minHeight: 44, justifyContent: "center" \}/);
-  assert.match(styles, /hotelShortcut: \{ height: 40,[^}]*gap: 4,[^}]*borderWidth: 1, borderRadius: 10, paddingHorizontal: 8 \}/);
+  assert.match(styles, /hotelShortcut: \{ height: 40,[^}]*gap: 2,[^}]*borderWidth: 1, borderRadius: 10, paddingHorizontal: 6 \}/);
+  assert.match(styles, /hotelShortcutMainAction: \{ minHeight: 38,[^}]*gap: 4/);
+  assert.match(styles, /hotelShortcutClear: \{ width: 28, height: 28/);
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
-  assert.match(component, /<Pressable[\s\S]*?style=\{s0\.hotelShortcutTouchTarget\}[\s\S]*?\{\(\{ pressed \}\) => <View style=\{\[[\s\S]*?s0\.hotelShortcut,/);
+  assert.match(component, /<View style=\{s0\.hotelShortcutTouchTarget\}>[\s\S]*?<Pressable[\s\S]*?s0\.hotelShortcutMainAction/);
   assert.match(styles, /hotelShortcutLabel: \{ fontSize: 13, lineHeight: 16, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
   assert.match(styles, /hotelShortcutCount: \{ minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6/);
   assert.match(styles, /hotelShortcutCountText: \{ fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
@@ -73,7 +75,7 @@ test("Hotel controls use the measured reference capsule geometry while keeping s
 
 test("Hotel controls use Flight light tokens and semantic dark tokens", () => {
   const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
-  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F8FAFC", "#F1F5F9", "#FFFFFF"]) assert.match(component, new RegExp(token.replace(/[().]/g, "\\$&")));
+  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F1F5F9", "#FFFFFF"]) assert.match(component, new RegExp(token.replace(/[().]/g, "\\  for (const token of ["#D8E1EC", "#142033", "#64748B", "#F8FAFC", "#F1F5F9", "#FFFFFF"]) assert.match(component, new RegExp(token.replace(/[().]/g, "\\$&")));")));
   for (const semantic of ["theme.surface", "theme.border", "theme.textPrimary", "theme.textSecondary", "theme.background"]) assert.match(component, new RegExp(semantic.replace(".", "\\.")));
   assert.doesNotMatch(component, /#004BB8|#8FB5FF|rgba\(0,75,184,0\.08\)/);
   assert.match(component, /color=\{active && !theme\.dark \? ui\.blue : foreground\}/);
@@ -96,7 +98,7 @@ test("Hotel Filter launcher has sliders without a chevron while quick filters ke
   assert.match(rail, /label=\{hotelRoomTypesShortcutLabel\}/);
   assert.match(component, /showChevron = true/);
   assert.match(component, /<SlidersHorizontal accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\}/);
-  assert.match(component, /\{showChevron \? <ChevronDown accessible=\{false\} size=\{13\} strokeWidth=\{1\.9\}/);
+  assert.match(component, /\{showChevron && !onClear \? <ChevronDown accessible=\{false\} size=\{13\} strokeWidth=\{1\.9\}/);
   assert.match(component, /style=\{expanded \? s0\.hotelShortcutChevronExpanded : undefined\}/);
   assert.match(screen, /hotelShortcutChevronExpanded: \{ transform: \[\{ rotate: "180deg" \}\] \}/);
   assert.doesNotMatch(component, /ChevronRight|measureInWindow|Anchor/);
@@ -126,4 +128,16 @@ test("selected Hotel quick shortcuts get immediate active styling while Filter k
   const rail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const hotelIntroContent"));
   assert.match(rail, /label="Filter"[\s\S]*count=\{activeHotelFilters \|\| undefined\}/);
   assert.doesNotMatch(rail, /label=\{hotelPriceShortcutLabel\}[^>]*count=/);
+});
+
+
+test("active Hotel quick shortcuts expose an X clear action instead of a chevron", () => {
+  const rail = screen.slice(screen.indexOf("const filterRail"), screen.indexOf("const hotelIntroContent"));
+  const component = screen.slice(screen.indexOf("const HotelResultsShortcut"), screen.indexOf("function FlightCard"));
+  assert.match(rail, /onClear=\{hotelPriceFilterActive \? \(\) => clearHotelQuickFilter\("price"\) : undefined\}/);
+  assert.match(rail, /onClear=\{hotelFilters\.facilities\.length \? \(\) => clearHotelQuickFilter\("facilities"\) : undefined\}/);
+  assert.match(component, /onClear\?: \(\) => void/);
+  assert.match(component, /Clear \$\{label\} filter/);
+  assert.match(component, /<X accessible=\{false\} size=\{14\}/);
+  assert.match(component, /showChevron && !onClear/);
 });
