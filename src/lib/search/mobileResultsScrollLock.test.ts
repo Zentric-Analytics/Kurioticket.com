@@ -71,7 +71,7 @@ test("first acquisition fixes the document, nesting preserves the snapshot, and 
   first();
   assert.deepEqual(browser.bodyStyle, originalBody);
   assert.deepEqual(browser.rootStyle, originalRoot);
-  assert.deepEqual(browser.calls, [[{ left: 12, top: 1800, behavior: "auto" }]]);
+  assert.deepEqual(browser.calls, [[{ left: 12, top: 1800, behavior: "instant" }]]);
 });
 
 test("corrects genuine viewport drift exactly once on final release", () => {
@@ -81,7 +81,7 @@ test("corrects genuine viewport drift exactly once on final release", () => {
   browser.fakeWindow.scrollY = 1803;
   release();
   release();
-  assert.deepEqual(browser.calls, [[{ left: 12, top: 1800, behavior: "auto" }]]);
+  assert.deepEqual(browser.calls, [[{ left: 12, top: 1800, behavior: "instant" }]]);
 });
 
 test("overflow-only acquisition freezes scrolling without repositioning or scroll restoration", () => {
