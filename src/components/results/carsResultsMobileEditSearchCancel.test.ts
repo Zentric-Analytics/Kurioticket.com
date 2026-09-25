@@ -26,16 +26,10 @@ const openDrawer = source.slice(
 );
 const closeDrawer = source.slice(
   source.indexOf("const cancelMobileSearchDrawer"),
-  source.indexOf(
-    "useLayoutEffect",
-    source.indexOf("const cancelMobileSearchDrawer"),
-  ),
+  source.indexOf("const requestMobileSearchDrawerClose"),
 );
-const scrollLifecycle = source.slice(
-  source.indexOf(
-    "useLayoutEffect",
-    source.indexOf("const cancelMobileSearchDrawer"),
-  ),
+const postCloseLifecycle = source.slice(
+  source.indexOf("const requestMobileSearchDrawerClose"),
   source.indexOf("const renderMobileControlsRow"),
 );
 
@@ -120,7 +114,7 @@ test("cancel restores draft state without imperatively changing Results scroll",
   assert.ok(restoreSnapshotIndex >= 0);
   assert.ok(restoreSnapshotIndex < closeIndex);
   assert.doesNotMatch(closeDrawer, /window\.scrollTo|scrollTop|scrollIntoView/);
-  assert.doesNotMatch(scrollLifecycle, /mobileSearchScrollLockRef/);
+  assert.doesNotMatch(postCloseLifecycle, /mobileSearchScrollLockRef/);
 });
 
 test("nested picker Done remains draft state", () => {
