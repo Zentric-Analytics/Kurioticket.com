@@ -1380,12 +1380,19 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
     >
       {({ pressed }) => <View style={[
         s0.hotelShortcut,
-        { borderColor: border, backgroundColor: pressed && !theme.dark ? "#F8FAFC" : surface },
+        {
+          borderColor: active && !theme.dark ? ui.blue : border,
+          backgroundColor: active && !theme.dark
+            ? "#EAF2FF"
+            : pressed && !theme.dark
+              ? "#F8FAFC"
+              : surface,
+        },
       ]}>
-        {icon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={foreground} /> : null}
-        <Text numberOfLines={1} style={[s0.hotelShortcutLabel, { color: foreground }]}>{label}</Text>
+        {icon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={active && !theme.dark ? ui.blue : foreground} /> : null}
+        <Text numberOfLines={1} style={[s0.hotelShortcutLabel, { color: active && !theme.dark ? ui.blue : foreground }]}>{label}</Text>
         {count ? <View style={[s0.hotelShortcutCount, { backgroundColor: countBackground }]}><Text style={[s0.hotelShortcutCountText, { color: foreground }]}>{count}</Text></View> : null}
-        {showChevron ? <ChevronDown accessible={false} size={13} strokeWidth={1.9} color={chevron} style={expanded ? s0.hotelShortcutChevronExpanded : undefined} /> : null}
+        {showChevron ? <ChevronDown accessible={false} size={13} strokeWidth={1.9} color={active && !theme.dark ? ui.blue : chevron} style={expanded ? s0.hotelShortcutChevronExpanded : undefined} /> : null}
       </View>}
     </Pressable>
   );
