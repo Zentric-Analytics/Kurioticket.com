@@ -35,8 +35,8 @@ test("Hotel filter changes reuse the app's normal branded loading state", () => 
   assert.match(helper, /setHotelPage\(1\)/);
   assert.match(helper, /scrollToHotelResultsBeginning\(\)/);
   assert.match(helper, /startHotelFilterFeedback\(\)/);
-  assert.match(screen, /status === "loading" \|\| hotelCurrencyPending \|\| hotelFilterApplying/);
-  assert.match(screen, /return <NativeBrandedSearchLoading product=\{product\} \/>/);
+  assert.match(screen, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\} \/>/);
+  assert.match(screen, /if \(product === "hotel" && hotelFilterApplying\) return <NativeBrandedSearchLoading product="hotel" \/>/);
   assert.doesNotMatch(screen, /hotelFilterRefreshSlot|hotelFilterRefreshTrack|hotelFilterRefreshProgress/);
 });
 
