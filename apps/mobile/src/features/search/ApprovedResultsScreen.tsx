@@ -1436,8 +1436,8 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
       <View style={[
         s0.hotelShortcut,
         {
-          borderColor: active && !theme.dark ? ui.blue : border,
-          backgroundColor: active && !theme.dark ? "#EAF2FF" : surface,
+          borderColor: border,
+          backgroundColor: surface,
         },
       ]}>
         <Pressable
@@ -1447,10 +1447,10 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
           onPress={onPress}
           style={({ pressed }) => [s0.hotelShortcutMainAction, pressed && !theme.dark ? s0.hotelShortcutPressed : null]}
         >
-          {icon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={active && !theme.dark ? ui.blue : foreground} /> : null}
-          <Text numberOfLines={1} style={[s0.hotelShortcutLabel, { color: active && !theme.dark ? ui.blue : foreground }]}>{label}</Text>
+          {icon ? <SlidersHorizontal accessible={false} size={16} strokeWidth={2.2} color={foreground} /> : null}
+          <Text numberOfLines={1} style={[s0.hotelShortcutLabel, { color: foreground }]}>{label}</Text>
           {count ? <View style={[s0.hotelShortcutCount, { backgroundColor: countBackground }]}><Text style={[s0.hotelShortcutCountText, { color: foreground }]}>{count}</Text></View> : null}
-          {showChevron && !onClear ? <ChevronDown accessible={false} size={13} strokeWidth={1.9} color={active && !theme.dark ? ui.blue : chevron} style={expanded ? s0.hotelShortcutChevronExpanded : undefined} /> : null}
+          {showChevron && !onClear ? <ChevronDown accessible={false} size={13} strokeWidth={1.9} color={chevron} style={expanded ? s0.hotelShortcutChevronExpanded : undefined} /> : null}
         </Pressable>
         {active && onClear ? (
           <Pressable
@@ -1460,7 +1460,7 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
             onPress={onClear}
             style={({ pressed }) => [s0.hotelShortcutClear, pressed ? s0.hotelShortcutClearPressed : null]}
           >
-            <X accessible={false} size={14} strokeWidth={2} color={theme.dark ? theme.textPrimary : ui.blue} />
+            <X accessible={false} size={14} strokeWidth={2} color={theme.dark ? theme.textPrimary : "#64748B"} />
           </Pressable>
         ) : null}
       </View>
