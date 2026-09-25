@@ -195,7 +195,7 @@ export function MultiCityFlightEditor({
                 <div
                   className={cn(
                     "relative grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0",
-                    resultsPresentation && "overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white divide-y divide-[#E7ECF5]",
+                    resultsPresentation && "gap-0 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white",
                   )}
                   data-multi-city-route-pair
                   data-multi-city-results-route-card={resultsPresentation ? true : undefined}
@@ -221,6 +221,13 @@ export function MultiCityFlightEditor({
                   t={t}
                   resultsPresentation={resultsPresentation}
                 />
+                {resultsPresentation ? (
+                  <span
+                    data-multi-city-results-route-divider
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[#E7ECF5]"
+                  />
+                ) : null}
                 <MultiCityAirportField
                   legIndex={index}
                   field="destination"

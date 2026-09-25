@@ -10,11 +10,12 @@ import {
 
 const MOBILE_RESULTS_QUERY = "(max-width: 639px)";
 const IDLE_FADE_DELAY_MS = 650;
+const MIN_TRACK_HEIGHT_PX = 96;
 
-export function FlightResultsScrollIndicator() {
+export function FlightResultsScrollIndicator({ compactHeaderVisible }: { compactHeaderVisible: boolean }) {
   const trackRef = useRef<HTMLDivElement | null>(null);
   const thumbRef = useRef<HTMLDivElement | null>(null);
-  const geometryRef = useRef({ maxScroll: 0, thumbTravel: 0 });
+  const geometryRef = useRef({ scrollStart: 0, maxScroll: 0, thumbTravel: 0 });
   const animationFrameRef = useRef<number | null>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [thumbHeight, setThumbHeight] = useState(0);
@@ -53,8 +54,9 @@ export function FlightResultsScrollIndicator() {
 
     const updateThumbPosition = () => {
       animationFrameRef.current = null;
-      const { maxScroll, thumbTravel } = geometryRef.current;
-      const scrollTop = Math.min(maxScroll, Math.max(0, window.scrollY));
+      const { scrollStart, maxScroll, thumbTravel } = geometryRef.current;
+      const relativeScrollTop = Math.max(0, window.scrollY - scrollStart);
+      const scrollTop = Math.min(maxScroll, relativeScrollTop);
       const progress = maxScroll > 0 ? scrollTop / maxScroll : 0;
       if (thumbRef.current)
         thumbRef.current.style.transform = `translate3d(0, ${progress * thumbTravel}px, 0)`;
@@ -67,24 +69,42 @@ export function FlightResultsScrollIndicator() {
 
     const measureGeometry = () => {
       if (!media.matches || !trackRef.current) {
-        geometryRef.current = { maxScroll: 0, thumbTravel: 0 };
+        geometryRef.current = { scrollStart: 0, maxScroll: 0, thumbTravel: 0 };
         setThumbHeight(0);
         setIsScrollable(false);
+        setIsActive(false);
         return;
       }
 
+      const resultsList = document.querySelector<HTMLElement>("[data-mobile-paginated-flight-results] [data-flight-results-card-list]");
+      const resultsRegion = document.querySelector<HTMLElement>("[data-mobile-paginated-flight-results]");
+      const compactHeader = document.querySelector<HTMLElement>("[data-flight-results-compact-header]");
+      if (!resultsList || !resultsRegion || !compactHeader) {
+        geometryRef.current = { scrollStart: 0, maxScroll: 0, thumbTravel: 0 };
+        setThumbHeight(0);
+        setIsScrollable(false);
+        setIsActive(false);
+        return;
+      }
+      resizeObserver?.observe(resultsList);
+      resizeObserver?.observe(resultsRegion);
+      resizeObserver?.observe(compactHeader);
+
       const viewportHeight = visualViewport?.height ?? window.innerHeight;
-      const scrollHeight = Math.max(
-        document.documentElement.scrollHeight,
-        document.body.scrollHeight,
-      );
+      const scrollY = window.scrollY;
+      const scrollStart = Math.max(0, resultsList.getBoundingClientRect().top + scrollY);
+      const regionBottom = Math.max(scrollStart, resultsRegion.getBoundingClientRect().bottom + scrollY);
+      const scrollEnd = Math.max(scrollStart, regionBottom - viewportHeight);
+      const compactHeaderBottom = Math.max(0, compactHeader.getBoundingClientRect().bottom);
+      trackRef.current.style.top = `${Math.min(compactHeaderBottom + 4, Math.max(0, viewportHeight - MIN_TRACK_HEIGHT_PX))}px`;
       const geometry = calculateFlightResultsScrollIndicatorGeometry({
-        scrollTop: window.scrollY,
-        scrollHeight,
-        viewportHeight,
+        scrollTop: scrollY,
+        scrollStart,
+        scrollEnd,
         trackHeight: trackRef.current.clientHeight,
       });
       geometryRef.current = {
+        scrollStart,
         maxScroll: geometry.maxScroll,
         thumbTravel: Math.max(
           0,
@@ -97,7 +117,11 @@ export function FlightResultsScrollIndicator() {
     };
 
     const showForScroll = () => {
-      if (!media.matches || geometryRef.current.maxScroll <= 0) return;
+      if (!media.matches || !compactHeaderVisible || geometryRef.current.maxScroll <= 0) {
+        setIsActive(false);
+        scheduleThumbPosition();
+        return;
+      }
       setIsActive(true);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       idleTimerRef.current = setTimeout(
@@ -116,6 +140,7 @@ export function FlightResultsScrollIndicator() {
     visualViewport?.addEventListener("resize", measureGeometry);
     media.addEventListener("change", measureGeometry);
     measureGeometry();
+    if (compactHeaderVisible) showForScroll();
 
     return () => {
       resizeObserver?.disconnect();
@@ -127,7 +152,7 @@ export function FlightResultsScrollIndicator() {
         window.cancelAnimationFrame(animationFrameRef.current);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
-  }, []);
+  }, [compactHeaderVisible]);
 
   return (
     <div
@@ -136,12 +161,12 @@ export function FlightResultsScrollIndicator() {
       aria-hidden="true"
       data-thumb-min-height={FLIGHT_RESULTS_WEB_SCROLL_THUMB_MIN_HEIGHT}
       data-thumb-max-height={FLIGHT_RESULTS_WEB_SCROLL_THUMB_MAX_HEIGHT}
-      className="pointer-events-none fixed bottom-[max(calc(env(safe-area-inset-bottom)+8px),8px)] end-[max(calc(env(safe-area-inset-right)+3px),3px)] top-[calc(env(safe-area-inset-top)+4px)] z-[95] w-[3px] sm:hidden"
+      className="pointer-events-none fixed bottom-[max(calc(env(safe-area-inset-bottom)+8px),8px)] end-[max(calc(env(safe-area-inset-right)+3px),3px)] z-[95] w-[3px] sm:hidden"
     >
       <div
         ref={thumbRef}
         data-flight-results-scroll-thumb
-        className={`w-full rounded-full bg-slate-700/55 opacity-0 shadow-[0_0_1px_rgba(255,255,255,0.55)] transition-opacity duration-200 motion-reduce:transition-none ${isScrollable && isActive ? "opacity-100" : ""}`}
+        className={`w-full rounded-full bg-slate-700/55 opacity-0 shadow-[0_0_1px_rgba(255,255,255,0.55)] transition-opacity duration-200 motion-reduce:transition-none ${compactHeaderVisible && isScrollable && isActive ? "opacity-100" : ""}`}
         style={{ height: `${thumbHeight}px` }}
       />
     </div>
