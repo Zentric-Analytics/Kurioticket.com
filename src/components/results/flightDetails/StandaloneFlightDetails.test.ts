@@ -777,7 +777,7 @@ test("mobile web Fare information deck mirrors native tabs and selection-only de
   assert.match(deck, /style=\{\{ color: "#536B92" \}\}/);
   assert.doesNotMatch(deck, /color: selected \?/);
   assert.doesNotMatch(deck, /fontWeight: selected \?/);
-  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../../../app/globals.css", import.meta.url), "utf8");
   assert.match(
     styles,
     /@media \(max-width: 639px\) \{[\s\S]*?\.flight-mobile-fare-info-tab-label \{[\s\S]*?font-size: 10px !important;[\s\S]*?line-height: 14px !important;[\s\S]*?font-weight: 500 !important;[\s\S]*?-webkit-text-size-adjust: none;[\s\S]*?text-size-adjust: none;[\s\S]*?\}/,
