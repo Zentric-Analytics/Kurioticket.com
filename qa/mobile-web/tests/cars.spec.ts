@@ -91,6 +91,9 @@ test("Cars Edit Search records first-open, reopen, and Safari viewport geometry"
   expect(editGeometry.bottomLeftRadius).toBe("24px");
   expect(editGeometry.titleCenterX).not.toBeNull();
   expect(editGeometry.titleCenterX!).toBeCloseTo(editGeometry.dialogCenterX, 0);
+  expect(
+    await editResultsMarker.evaluate((element) => element.getBoundingClientRect().top),
+  ).toBeCloseTo(beforeFirstResultsTop, 0);
   const firstOpen = await collectSafariDiagnostics(page, "first-open");
   expect(firstOpen.viewport.scrollY).toBeCloseTo(beforeFirst.viewport.scrollY, 0);
   const firstScreenshot = testInfo.outputPath("cars-first-open.png");
@@ -171,6 +174,8 @@ test("Cars Edit Search records first-open, reopen, and Safari viewport geometry"
   expect(afterInternalScroll.viewport.scrollY).toBeCloseTo(secondOpen.viewport.scrollY, 0);
 
   await page.getByRole("button", { name: /close edit search/i }).click();
+  await expect(page.locator(".mobile-results-sheet-cars-edit-surface")).toHaveClass(/mobile-results-sheet-surface-closing/);
+  expect(await page.evaluate(() => document.body.style.position)).toBe("fixed");
   await expect(overlay).toBeHidden();
   expect(
     await page.evaluate(() => ({
