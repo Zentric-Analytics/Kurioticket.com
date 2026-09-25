@@ -174,48 +174,18 @@ test("Cars full Filters and representative quick sheets freeze the document whil
     expect(scrimGeometry.rightGap).toBeCloseTo(0, 0);
     expect(scrimGeometry.bottomGap).toBeCloseTo(0, 0);
 
-    const cutout = page.locator("[data-cars-quick-sheet-cutout]");
-    await expect(cutout).toBeVisible();
-    const [cutoutGeometry, expectedCutoutGeometry] = await Promise.all([
-      cutout.evaluate((element) => {
-        const rect = element.getBoundingClientRect();
-        return {
-          left: rect.left,
-          top: rect.top,
-          width: rect.width,
-          height: rect.height,
-        };
-      }),
-      button.evaluate((element) => {
-        const chip =
-          element.firstElementChild instanceof HTMLElement
-            ? element.firstElementChild
-            : element;
-        const chipRect = chip.getBoundingClientRect();
-        const rail = element.closest<HTMLElement>("[data-cars-results-quick-filters]");
-        const railRect = rail?.getBoundingClientRect();
-        const left = Math.max(
-          0,
-          railRect ? Math.max(chipRect.left, railRect.left) : chipRect.left,
-        );
-        const right = Math.min(
-          window.innerWidth,
-          railRect ? Math.min(chipRect.right, railRect.right) : chipRect.right,
-        );
-        const top = Math.max(0, chipRect.top);
-        const bottom = Math.min(window.innerHeight, chipRect.bottom);
-        return {
-          left,
-          top,
-          width: right - left,
-          height: bottom - top,
-        };
-      }),
-    ]);
-    expect(cutoutGeometry.left).toBeCloseTo(expectedCutoutGeometry.left, 0);
-    expect(cutoutGeometry.top).toBeCloseTo(expectedCutoutGeometry.top, 0);
-    expect(cutoutGeometry.width).toBeCloseTo(expectedCutoutGeometry.width, 0);
-    expect(cutoutGeometry.height).toBeCloseTo(expectedCutoutGeometry.height, 0);
+    await expect(page.locator("[data-cars-quick-sheet-cutout]")).toHaveCount(0);
+    const activeShortcutOpacity = await button.evaluate((element) => {
+      const point = element.firstElementChild instanceof HTMLElement
+        ? element.firstElementChild.getBoundingClientRect()
+        : element.getBoundingClientRect();
+      const hit = document.elementFromPoint(
+        point.left + Math.min(8, Math.max(1, point.width / 2)),
+        point.top + Math.min(8, Math.max(1, point.height / 2)),
+      );
+      return hit?.closest("[data-cars-quick-sheet-backdrop]") !== null;
+    });
+    expect(activeShortcutOpacity).toBe(true);
 
     const quickGeometry = await sheet.evaluate((element) => {
       const rect = element.getBoundingClientRect();
@@ -240,7 +210,6 @@ test("Cars full Filters and representative quick sheets freeze the document whil
     await expect(sheet).toHaveClass(/mobile-results-sheet-surface-closing/);
     await expect(scrim).toHaveClass(/mobile-results-sheet-backdrop-layer-closing/);
     await expect(sheet).toBeHidden();
-    await expect(cutout).toBeHidden();
     await expect(chevron).not.toHaveClass(/rotate-180/);
     expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(beforeQuickScrollY, 0);
     expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(beforeQuickTop, 0);

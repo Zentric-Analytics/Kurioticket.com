@@ -6,11 +6,16 @@ import { calculateCarResultsScrollIndicatorGeometry } from "@/lib/cars/carResult
 
 const MOBILE_RESULTS_QUERY = "(max-width: 639px)";
 const IDLE_FADE_DELAY_MS = 650;
+const MIN_TRACK_HEIGHT_PX = 96;
 
 export function CarsResultsScrollIndicator() {
   const trackRef = useRef<HTMLDivElement | null>(null);
   const thumbRef = useRef<HTMLDivElement | null>(null);
-  const geometryRef = useRef({ maxScroll: 0, thumbTravel: 0 });
+  const geometryRef = useRef({
+    scrollStart: 0,
+    maxScroll: 0,
+    thumbTravel: 0,
+  });
   const animationFrameRef = useRef<number | null>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [thumbHeight, setThumbHeight] = useState(0);
@@ -46,12 +51,14 @@ export function CarsResultsScrollIndicator() {
   useEffect(() => {
     const media = window.matchMedia(MOBILE_RESULTS_QUERY);
     const visualViewport = window.visualViewport;
+    let resizeObserver: ResizeObserver | null = null;
 
     const updateThumbPosition = () => {
       animationFrameRef.current = null;
-      const { maxScroll, thumbTravel } = geometryRef.current;
-      const scrollTop = Math.min(maxScroll, Math.max(0, window.scrollY));
-      const progress = maxScroll > 0 ? scrollTop / maxScroll : 0;
+      const { scrollStart, maxScroll, thumbTravel } = geometryRef.current;
+      const relativeScrollTop = Math.max(0, window.scrollY - scrollStart);
+      const clampedScrollTop = Math.min(maxScroll, relativeScrollTop);
+      const progress = maxScroll > 0 ? clampedScrollTop / maxScroll : 0;
       if (thumbRef.current)
         thumbRef.current.style.transform = `translate3d(0, ${progress * thumbTravel}px, 0)`;
     };
@@ -61,28 +68,67 @@ export function CarsResultsScrollIndicator() {
         animationFrameRef.current = window.requestAnimationFrame(updateThumbPosition);
     };
 
+    const resetGeometry = () => {
+      geometryRef.current = {
+        scrollStart: 0,
+        maxScroll: 0,
+        thumbTravel: 0,
+      };
+      setThumbHeight(0);
+      setIsScrollable(false);
+      setIsActive(false);
+    };
+
     const measureGeometry = () => {
-      if (!media.matches || !trackRef.current) {
-        geometryRef.current = { maxScroll: 0, thumbTravel: 0 };
-        setThumbHeight(0);
-        setIsScrollable(false);
+      const track = trackRef.current;
+      if (!media.matches || !track) {
+        resetGeometry();
         return;
       }
 
-      const viewportHeight = visualViewport?.height ?? window.innerHeight;
-      const scrollHeight = Math.max(
-        document.documentElement.scrollHeight,
-        document.body.scrollHeight,
+      const priceAlert = document.querySelector<HTMLElement>(
+        "[data-cars-price-alert]",
       );
+      const resultsRegion = document.querySelector<HTMLElement>(
+        "[data-cars-results-scroll-region]",
+      );
+      if (!priceAlert || !resultsRegion) {
+        resetGeometry();
+        return;
+      }
+
+      resizeObserver?.observe(priceAlert);
+      resizeObserver?.observe(resultsRegion);
+
+      const viewportHeight = visualViewport?.height ?? window.innerHeight;
+      const scrollY = window.scrollY;
+      const scrollStart = Math.max(
+        0,
+        priceAlert.getBoundingClientRect().top + scrollY,
+      );
+      const regionBottom = Math.max(
+        scrollStart,
+        resultsRegion.getBoundingClientRect().bottom + scrollY,
+      );
+      const scrollEnd = Math.max(
+        scrollStart,
+        regionBottom - viewportHeight,
+      );
+
+      const maxTrackTop = Math.max(0, viewportHeight - MIN_TRACK_HEIGHT_PX);
+      const trackTop = Math.min(scrollStart, maxTrackTop);
+      track.style.top = `${trackTop}px`;
+
       const geometry = calculateCarResultsScrollIndicatorGeometry({
-        scrollTop: window.scrollY,
-        scrollHeight,
-        viewportHeight,
-        trackHeight: trackRef.current.clientHeight,
+        scrollTop: scrollY,
+        scrollStart,
+        scrollEnd,
+        trackHeight: track.clientHeight,
       });
       geometryRef.current = {
+        scrollStart,
         maxScroll: geometry.maxScroll,
-        thumbTravel: Math.max(0, trackRef.current.clientHeight - geometry.thumbHeight),
+        thumbTravel: Math.max(0, track.clientHeight - geometry.thumbHeight),
       };
       setThumbHeight(geometry.thumbHeight);
       setIsScrollable(geometry.isScrollable);
@@ -97,7 +143,7 @@ export function CarsResultsScrollIndicator() {
       scheduleThumbPosition();
     };
 
-    const resizeObserver =
+    resizeObserver =
       "ResizeObserver" in window ? new ResizeObserver(measureGeometry) : null;
     resizeObserver?.observe(document.body);
     resizeObserver?.observe(document.documentElement);
@@ -124,7 +170,7 @@ export function CarsResultsScrollIndicator() {
       ref={trackRef}
       data-cars-results-scroll-indicator
       aria-hidden="true"
-      className="pointer-events-none fixed bottom-[max(calc(env(safe-area-inset-bottom)+8px),8px)] end-[max(calc(env(safe-area-inset-right)+3px),3px)] top-[calc(env(safe-area-inset-top)+4px)] z-[95] w-[3px] sm:hidden"
+      className="pointer-events-none fixed bottom-[max(calc(env(safe-area-inset-bottom)+8px),8px)] end-[max(calc(env(safe-area-inset-right)+3px),3px)] z-[95] w-[3px] sm:hidden"
     >
       <div
         ref={thumbRef}

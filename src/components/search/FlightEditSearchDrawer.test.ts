@@ -151,6 +151,17 @@ test("shared editor uses canonical mobile pickers and multi-city editor", () => 
   assert.match(source, /MULTI_CITY_MAX_LEGS/);
 });
 
+test("Results Multi-city opts into its dedicated presentation inside the shared drawer", () => {
+  const multiCityBranch = source.slice(
+    source.indexOf('{draft.tripType === "multi-city" ? ('),
+    source.indexOf(") : resultsMode ? (", source.indexOf('{draft.tripType === "multi-city" ? (')),
+  );
+  assert.match(multiCityBranch, /<MultiCityFlightEditor/);
+  assert.match(multiCityBranch, /presentation=\{resultsMode \? "results" : "homepage"\}/);
+  assert.doesNotMatch(multiCityBranch, /presentation="homepage"/);
+  assert.match(source, /overflow-x-hidden overflow-y-auto/);
+});
+
 test("temporary trip-type changes preserve an existing multi-city itinerary", () => {
   assert.match(source, /preservedMultiCityLegsRef = useRef<FlightSearchLeg\[]>/);
   assert.match(source, /preservedMultiCityLegsRef\.current = current\.legs/);

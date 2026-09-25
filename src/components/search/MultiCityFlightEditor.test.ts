@@ -24,8 +24,8 @@ test("normal and multi-city flight searches share the production field primitive
 
 test("multi-city airport fields opt into the clean mobile value row with 20px MapPins", () => {
   assert.match(editor, /useMainFlightLandingMobilePresentation/);
-  assert.match(editor, /mobileLeadingIconClassName="h-5 w-5 shrink-0 text-slate-500 sm:hidden"/);
-  assert.match(editor, /mobileValueRowClassName="grid grid-cols-\[22px_minmax\(0,1fr\)\] items-center gap-2\.5 sm:contents"/);
+  assert.match(editor, /: "h-5 w-5 shrink-0 text-slate-500 sm:hidden"/);
+  assert.match(editor, /: "grid grid-cols-\[22px_minmax\(0,1fr\)\] items-center gap-2\.5 sm:contents"/);
 
   const cleanMobileBranch = primitives.slice(
     primitives.indexOf("{useMainFlightLandingMobilePresentation ? ("),
@@ -38,7 +38,7 @@ test("multi-city airport fields opt into the clean mobile value row with 20px Ma
 
 test("multi-city date fields use the aligned 20px mobile icon value row and shared picker", () => {
   assert.match(editor, /grid-cols-\[22px_minmax\(0,1fr\)\] items-center gap-2\.5 sm:flex sm:gap-2/);
-  assert.match(editor, /<Calendar className="h-5 w-5 shrink-0 text-slate-500 sm:h-4 sm:w-4"/);
+  assert.match(editor, /"h-5 w-5 shrink-0 text-slate-500 sm:h-4 sm:w-4"/);
   assert.match(editor, /<MobileDatePickerDialog/);
 });
 
@@ -74,4 +74,22 @@ test("each leg has an accessible route-boundary swap and canonical displayed dat
   );
   assert.doesNotMatch(editor, /inset-inline-start-1\/2|rtl:translate-x-1\/2/);
   assert.match(editor, /formatTravelDateDisplay\(value, locale\)/);
+});
+
+test("results presentation uses grouped Results route, date, and swap geometry", () => {
+  assert.match(editor, /presentation\?: "standalone" \| "homepage" \| "results"/);
+  assert.match(editor, /data-multi-city-presentation=\{presentation\}/);
+  assert.match(editor, /data-multi-city-results-route-card/);
+  assert.match(editor, /rounded-\[13px\] border border-\[#E7ECF5\] bg-white divide-y divide-\[#E7ECF5\]/);
+  assert.match(editor, /min-h-\[66px\][^\n]*px-3 py-\[9px\]/);
+  assert.match(editor, /data-multi-city-results-date-card/);
+  assert.match(editor, /h-9 w-9[^\n]*rounded-full border border-\[#E7ECF5\][^\n]*shadow-\[0_2px_4px_rgba\(24,48,91,0\.12\)\]/);
+  assert.match(editor, /h-\[17px\] w-\[17px\]/);
+});
+
+test("homepage and standalone retain their existing presentation path", () => {
+  assert.match(editor, /presentation = "standalone"/);
+  assert.match(editor, /const resultsPresentation = presentation === "results"/);
+  assert.match(editor, /resultsPresentation &&/);
+  assert.match(editor, /sm:min-h-\[58px\] sm:rounded-none sm:border-0/);
 });

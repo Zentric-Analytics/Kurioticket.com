@@ -37,8 +37,8 @@ test("mobile Cars Results keeps its summary band white above the native canvas",
 test("mobile search summary translates the native compact hierarchy without shrinking its touch target", () => {
   assert.match(mobileSummaryControls, /min-h-\[62px\]/);
   assert.match(mobileSummaryControls, /rounded-\[13px\] border border-\[#D8E1EC\]/);
-  assert.match(mobileSummaryControls, /text-\[14px\] font-bold leading-\[18px\]/);
-  assert.match(mobileSummaryControls, /mt-\[3px\][^\"]*text-\[10\.5px\] font-medium leading-\[14px\]/);
+  assert.match(mobileSummaryControls, /text-\[15px\] font-semibold leading-\[19px\]/);
+  assert.match(mobileSummaryControls, /mt-\[2px\][^\"]*text-\[12px\] font-medium leading-\[16px\]/);
   assert.match(mobileSummaryControls, /h-11 w-11[\s\S]*SquarePen size=\{16\}/);
 });
 
@@ -84,6 +84,7 @@ test("mobile result rhythm matches the native list while desktop spacing stays r
     /page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-10 sm:pt-6/,
   );
   assert.match(resultsSource, /gap-2 pt-1 sm:gap-3 lg:py-1/);
+  assert.match(resultsSource, /min-w-0 space-y-0 sm:space-y-4/);
   assert.equal(
     (resultsSource.match(/space-y-3\.5 max-sm:!mt-2\.5/g) ?? []).length,
     2,
