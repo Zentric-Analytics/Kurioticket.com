@@ -29,11 +29,12 @@ test("standalone Cars compact header follows the Flights mobile interaction mode
   assert.match(toolbar, /activeFilterCount/);
 });
 
-test("compact toolbar uses the Edit Search surface and restrained dark controls", () => {
+test("compact toolbar keeps the white header surface and restrained dark controls", () => {
   assert.match(
     toolbar,
-    /fixed inset-x-0 top-0 z-\[90\] bg-\[#F5F7FB\]/,
+    /fixed inset-x-0 top-0 z-\[90\] bg-white/,
   );
+  assert.doesNotMatch(toolbar, /bg-\[#F5F7FB\]/);
   assert.match(
     toolbar,
     /text-\[11px\] font-semibold leading-4 text-\[#536B92\]/,
