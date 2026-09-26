@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const cars = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
+const carsSafeArea = readFileSync(
+  new URL("./CarsResultsMobileSafeArea.tsx", import.meta.url),
+  "utf8",
+);
 const hotels = readFileSync(new URL("./HotelResultsClient.tsx", import.meta.url), "utf8");
 const hotelMobileStyles = readFileSync(new URL("./HotelResultsMobile.module.css", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
@@ -27,18 +31,27 @@ test("Cars full Filter follows the native Cars filter hierarchy without changing
   assert.match(cars, /desktop-filter-sidebar/);
 });
 
-test("Cars full Filter matches the browser-owned status-bar canvas to the filter surface", () => {
+test("Cars full Filter matches both the browser-owned canvas and permanent safe-area guard to the filter surface", () => {
   assert.match(
     cars,
     /import \{ acquireMobileResultsOverlayCanvas \} from "@\/lib\/search\/mobileResultsOverlayCanvas";/,
   );
   assert.match(
+    carsSafeArea,
+    /backgroundColor: "var\(--cars-results-safe-area-surface, #ffffff\)"/,
+  );
+  assert.match(
     cars,
-    /useLayoutEffect\(\(\) => \{\s*if \(!filtersOpen \|\| typeof window === "undefined"\) return undefined;[\s\S]*?window\.matchMedia\("\(max-width: 1023px\)"\)[\s\S]*?acquireMobileResultsOverlayCanvas\(\{\s*canvasColor: "#F2F4F8",\s*\}\);[\s\S]*?\}, \[filtersOpen\]\);/,
+    /if \(!filtersOpen \|\| typeof window === "undefined"\) return undefined;[\s\S]*?safeAreaSurfaceProperty = "--cars-results-safe-area-surface";[\s\S]*?root\.style\.setProperty\(safeAreaSurfaceProperty, "#F2F4F8"\);[\s\S]*?acquireMobileResultsOverlayCanvas\(\{\s*canvasColor: "#F2F4F8",\s*\}\)/,
+  );
+  assert.match(cars, /releaseOverlayCanvas\(\)/);
+  assert.match(
+    cars,
+    /root\.style\.removeProperty\(safeAreaSurfaceProperty\)/,
   );
   assert.doesNotMatch(
     cars,
-    /if \(!quickFilterOverlayOpen[\s\S]*?acquireMobileResultsOverlayCanvas/,
+    /if \(!quickFilterOverlayOpen[\s\S]*?safeAreaSurfaceProperty/,
   );
 });
 
@@ -145,14 +158,18 @@ test("Cars edit search uses the same full-viewport overlay lock as quick filters
   );
 });
 
-test("Cars pointer-opened quick sheets avoid the blue close-button focus container", () => {
+test("Cars pointer-opened filter overlays avoid the blue close-button focus container", () => {
   assert.match(
     cars,
-    /const shouldFocusCloseButton =\s*!quickFilterGroupId \|\| mobileFiltersModalityRef\.current === "keyboard"/,
+    /const shouldFocusCloseButton =\s*mobileFiltersModalityRef\.current === "keyboard"/,
   );
   assert.match(
     cars,
     /activeDialogRef\.current\?\.focus\(\{ preventScroll: true \}\)/,
+  );
+  assert.match(
+    cars,
+    /filtersCloseButtonRef[\s\S]*?focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/35/,
   );
   assert.match(
     cars,

@@ -2386,9 +2386,27 @@ export function CarsResultsExperience({
     const media = window.matchMedia("(max-width: 1023px)");
     if (!media.matches) return undefined;
 
-    return acquireMobileResultsOverlayCanvas({
+    const root = document.documentElement;
+    const safeAreaSurfaceProperty = "--cars-results-safe-area-surface";
+    const previousSafeAreaSurface = root.style.getPropertyValue(
+      safeAreaSurfaceProperty,
+    );
+    root.style.setProperty(safeAreaSurfaceProperty, "#F2F4F8");
+    const releaseOverlayCanvas = acquireMobileResultsOverlayCanvas({
       canvasColor: "#F2F4F8",
     });
+
+    return () => {
+      releaseOverlayCanvas();
+      if (previousSafeAreaSurface) {
+        root.style.setProperty(
+          safeAreaSurfaceProperty,
+          previousSafeAreaSurface,
+        );
+      } else {
+        root.style.removeProperty(safeAreaSurfaceProperty);
+      }
+    };
   }, [filtersOpen]);
   useEffect(() => {
     if ((!filtersOpen && !quickFilterGroupId) || typeof window === "undefined") {
@@ -2403,7 +2421,7 @@ export function CarsResultsExperience({
     const activeCloseButtonRef = quickFilterGroupId ? quickFiltersCloseButtonRef : filtersCloseButtonRef;
     const focusDrawer = requestAnimationFrame(() => {
       const shouldFocusCloseButton =
-        !quickFilterGroupId || mobileFiltersModalityRef.current === "keyboard";
+        mobileFiltersModalityRef.current === "keyboard";
       if (shouldFocusCloseButton) {
         activeCloseButtonRef.current?.focus({ preventScroll: true });
         return;
