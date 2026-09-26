@@ -888,23 +888,26 @@ function CarLocationSection({
         </div>
       </div>
       {mapUrl ? (
-        <div className="mt-4 overflow-hidden rounded-[14px] border border-slate-200 bg-white">
+        <div
+          className="mt-4 flex flex-col overflow-hidden rounded-[14px] border border-slate-200 bg-white"
+          data-car-location-map-card
+        >
           <iframe
             title={`${copy("carDetails.mapShowingPickup")} ${pickupLocation}`}
             src={mapUrl}
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
-            className="h-[200px] w-full border-0 sm:h-[220px] lg:h-[240px]"
+            className="block h-[216px] w-full shrink-0 border-0 sm:h-[220px] lg:h-[240px]"
           />
           {directionsUrl ? (
             <a
               href={directionsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="focus-ring flex min-h-11 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold text-[#075EE8] hover:bg-slate-50 lg:text-blue"
+              className="focus-ring flex h-11 shrink-0 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold leading-5 text-[#075EE8] hover:bg-slate-50 lg:text-blue"
             >
               {copy("carDetails.getDirections")}
-              <ExternalLink size={16} aria-hidden="true" />
+              <ExternalLink size={16} className="shrink-0" aria-hidden="true" />
             </a>
           ) : null}
         </div>
