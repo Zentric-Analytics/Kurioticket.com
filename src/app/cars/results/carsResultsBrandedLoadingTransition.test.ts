@@ -67,6 +67,8 @@ test("Cars loading uses localized rotating copy without an artificial delay", ()
   assert.doesNotMatch(loadingSource, /setTimeout|delay\s*\(/);
   assert.match(pageSource, /<CarsResultsMobileSafeArea \/>/);
   assert.match(loadingSource, /<CarsResultsMobileSafeArea \/>/);
+  assert.match(pageSource, /<AppHeader[\s\S]*stableMobileSafeAreaTop[\s\S]*\/>/);
+  assert.match(loadingSource, /<AppHeader[\s\S]*stableMobileSafeAreaTop[\s\S]*\/>/);
   assert.doesNotMatch(loadingSource, /<AppHeader[\s\S]*mobileSurface="muted"[\s\S]*\/>/);
   assert.doesNotMatch(pageSource, /<AppHeader[\s\S]*mobileSurface="muted"[\s\S]*\/>/);
   assert.match(loadingSource, /min-h-\[calc\(100svh-5rem\)\]/);
