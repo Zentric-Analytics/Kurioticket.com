@@ -60,7 +60,6 @@ import { nearbyFarePrice } from "@/components/results/nearbyFarePrice";
 import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters";
 import { FlightPriceAlertControl } from "@/components/results/FlightPriceAlertControl";
 import { FlightResultsScrollIndicator } from "@/components/results/FlightResultsScrollIndicator";
-import { useHorizontalRailAxisLockRef } from "@/components/ui/useHorizontalRailAxisLock";
 import { MobileFlightResultsState } from "@/components/results/MobileFlightResultsState";
 import {
   MobileFlightFiltersSheet,
@@ -1108,7 +1107,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const nearbyFareRequestsRef = useRef(new Map<string, NearbyFareRequest>());
   const nearbyFareGenerationRef = useRef(0);
   const mobileNearbyFareRailRef = useRef<HTMLDivElement>(null);
-  const mobileNearbyFareAxisLockRef = useHorizontalRailAxisLockRef(mobileNearbyFareRailRef);
   const mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>(null);
   const alignedMobileNearbyFareSearchRef = useRef<string | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
@@ -7323,7 +7321,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               {body?.tripType !== "multi-city" ? (
                 <>
                   <div className="w-full min-w-0 max-w-full overflow-hidden sm:hidden" aria-label="Nearby departure fares" data-nearby-fare-presentation="mobile">
-                    <div ref={mobileNearbyFareAxisLockRef} className="flex h-[80px] w-full min-w-0 max-w-full touch-pan-y snap-x snap-proximity items-center gap-2 overflow-x-auto overflow-y-hidden px-3 py-[5px] [scroll-padding-inline:0.75rem] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div ref={mobileNearbyFareRailRef} className="flex h-[80px] w-full min-w-0 max-w-full items-center gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-3 py-[5px] [scroll-padding-inline:0.75rem] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       {(nearbyFares.length ? nearbyFares : Array.from({ length: nearbyFareRangeSize }, (_, index) => ({ date: `loading-mobile-${index}`, status: "loading" as const }))).map((fare) => {
                         const selected = fare.date === body?.departureDate;
                         const displayPrice = fare.status === "success" ? formatDisplayPrice({ amount: fare.amount, sourceCurrency: fare.currency, displayCurrency: selectedCurrency, convertSourceEstimate: true, useFlightResultSymbols: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback }).formatted : null;
@@ -7331,7 +7329,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         const accessibleFare = displayPrice ?? (fare.status === "loading" ? "Fare loading" : fare.status === "unavailable" ? "Fare unavailable" : fare.status === "error" ? "Fare could not be checked" : "Fare not checked");
                         const accessibleDate = fare.date.startsWith("loading-") ? "Loading date" : `${formatFareStripWeekdayLabel(fare.date, calendarLocale)}, ${formatFareStripDateLabel(fare.date, calendarLocale)}`;
                         return (
-                          <button ref={selected ? mobileSelectedNearbyFareRef : undefined} key={fare.date} type="button" data-fare-date-cell aria-label={`${accessibleDate}: ${accessibleFare}`} aria-current={selected ? "date" : undefined} aria-pressed={selected} disabled={selected || loading || fare.status === "loading"} onClick={() => handleNearbyFareDateSelect(fare.date)} className={cn("focus-ring relative flex h-[70px] w-[clamp(76px,calc(27.4vw_-_11.8px),96px)] shrink-0 snap-center flex-col items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white px-1.5 py-2 text-center shadow-sm transition hover:border-[#075EE8]/40 hover:bg-slate-50", selected && "border-[#075EE8] bg-blue-50/60")}>
+                          <button ref={selected ? mobileSelectedNearbyFareRef : undefined} key={fare.date} type="button" data-fare-date-cell aria-label={`${accessibleDate}: ${accessibleFare}`} aria-current={selected ? "date" : undefined} aria-pressed={selected} disabled={selected || loading || fare.status === "loading"} onClick={() => handleNearbyFareDateSelect(fare.date)} className={cn("focus-ring relative flex h-[70px] w-[clamp(76px,calc(27.4vw_-_11.8px),96px)] shrink-0 flex-col items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white px-1.5 py-2 text-center shadow-sm transition hover:border-[#075EE8]/40 hover:bg-slate-50", selected && "border-[#075EE8] bg-blue-50/60")}>
                             {selected ? <span className="absolute inset-x-1.5 top-0 h-0.5 rounded-b bg-[#075EE8]" aria-hidden="true" /> : null}
                             {fare.date.startsWith("loading-mobile-") ? (<>
                               <span className="h-3 w-12 animate-pulse rounded bg-slate-200" /><span className="mt-1.5 h-3 w-8 animate-pulse rounded bg-slate-200" /><span className="mt-1.5 h-3 w-14 animate-pulse rounded bg-slate-200" />
