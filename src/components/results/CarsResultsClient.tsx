@@ -108,6 +108,7 @@ import {
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { MobileResultsEditSheet } from "@/components/search/MobileResultsEditSheet";
 import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } from "@/lib/search/mobileResultsScrollLock";
+import { acquireMobileResultsOverlayCanvas } from "@/lib/search/mobileResultsOverlayCanvas";
 import { getOverlayActivationModality, restoreOverlayLauncherFocus, type OverlayActivationModality } from "@/lib/search/mobileResultsOverlayFocus";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import {
@@ -2378,6 +2379,17 @@ export function CarsResultsExperience({
       }
     };
   }, [mobileFiltersOverlayOpen, quickFilterOverlayOpen]);
+
+  useLayoutEffect(() => {
+    if (!filtersOpen || typeof window === "undefined") return undefined;
+
+    const media = window.matchMedia("(max-width: 1023px)");
+    if (!media.matches) return undefined;
+
+    return acquireMobileResultsOverlayCanvas({
+      canvasColor: "#F2F4F8",
+    });
+  }, [filtersOpen]);
   useEffect(() => {
     if ((!filtersOpen && !quickFilterGroupId) || typeof window === "undefined") {
       return undefined;
