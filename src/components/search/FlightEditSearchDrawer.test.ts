@@ -131,6 +131,7 @@ test("Results mode copies native route/date/traveler grouping and trip tabs", ()
     group,
     /data-mobile-swap-control[\s\S]*?rounded-full bg-white[\s\S]*?h-9 w-9/,
   );
+  assert.match(group, /data-mobile-swap-control[\s\S]*?!border-t-0/);
 
   assert.match(source, /resultsMode \? "grid min-h-\[51px\]/);
   assert.match(source, /min-h-\[50px\][\s\S]*border-b-2/);
