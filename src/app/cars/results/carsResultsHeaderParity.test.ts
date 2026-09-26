@@ -43,12 +43,16 @@ test("Cars Results preserves AppHeader while matching Flights mobile header prop
   assert.doesNotMatch(flightsHeader, /stableMobileSafeAreaTop/);
 });
 
-test("Cars Results owns a permanent non-interactive white mobile safe-area layer", () => {
+test("Cars Results owns a permanent non-interactive mobile safe-area guard that is white by default", () => {
   assert.match(carsSource, /<CarsResultsMobileSafeArea \/>/);
   assert.match(safeAreaSource, /data-cars-results-mobile-safe-area/);
   assert.match(
     safeAreaSource,
-    /pointer-events-none fixed inset-x-0 top-0 z-\[100\] h-\[var\(--cars-results-safe-area-top\)\] bg-white sm:hidden/,
+    /pointer-events-none fixed inset-x-0 top-0 z-\[100\] h-\[var\(--cars-results-safe-area-top\)\] sm:hidden/,
+  );
+  assert.match(
+    safeAreaSource,
+    /backgroundColor: "var\(--cars-results-safe-area-surface, #ffffff\)"/,
   );
   assert.doesNotMatch(safeAreaSource, /useLayoutEffect|ResizeObserver|requestAnimationFrame|addEventListener/);
 });
