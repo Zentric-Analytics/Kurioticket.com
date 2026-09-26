@@ -7,6 +7,14 @@ const safeAreaSource = readFileSync(
   new URL("../../../components/results/CarsResultsMobileSafeArea.tsx", import.meta.url),
   "utf8",
 );
+const carsClientSource = readFileSync(
+  new URL("../../../components/results/CarsResultsClient.tsx", import.meta.url),
+  "utf8",
+);
+const flightResultsSource = readFileSync(
+  new URL("../../../components/results/FlightResultsClient.tsx", import.meta.url),
+  "utf8",
+);
 const globalStyles = readFileSync(
   new URL("../../globals.css", import.meta.url),
   "utf8",
@@ -55,6 +63,25 @@ test("Cars Results owns a permanent non-interactive mobile safe-area guard that 
     /backgroundColor: "var\(--cars-results-safe-area-surface, #ffffff\)"/,
   );
   assert.doesNotMatch(safeAreaSource, /useLayoutEffect|ResizeObserver|requestAnimationFrame|addEventListener/);
+});
+
+test("Cars compact mobile header shares the Flights muted surface while preserving normal white and Filters override states", () => {
+  assert.match(
+    flightResultsSource,
+    /data-flight-results-compact-header[\s\S]*?bg-\[#F2F4F8\]/,
+  );
+  assert.match(
+    safeAreaSource,
+    /\[data-cars-results-experience\] > header\[class\*="--cars-results-safe-area-top"\][\s\S]*?background-color: var\(--cars-results-safe-area-surface, #ffffff\);/,
+  );
+  assert.match(
+    safeAreaSource,
+    /html:has\([\s\S]*?header\[class\*="--cars-results-safe-area-top"\]\.translate-y-0[\s\S]*?--cars-results-safe-area-surface: #F2F4F8;/,
+  );
+  assert.match(
+    carsClientSource,
+    /if \(!filtersOpen \|\| typeof window === "undefined"\) return undefined;[\s\S]*?safeAreaSurfaceProperty = "--cars-results-safe-area-surface";[\s\S]*?root\.style\.setProperty\(safeAreaSurfaceProperty, "#F2F4F8"\);/,
+  );
 });
 
 test("Cars Results uses the browser static max top inset so Safari scroll chrome cannot collapse the protected region", () => {
