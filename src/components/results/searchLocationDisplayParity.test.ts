@@ -22,6 +22,6 @@ test("mobile car compact results header keeps the safe-area and toolbar surface 
   const start = cars.indexOf("const renderMobileCompactResultsHeader");
   const header = cars.slice(start, cars.indexOf("\n  return (", start + 200));
   assert.match(header, /bg-white px-3/);
-  assert.match(header, /pt-\[calc\(0\.5rem\+env\(safe-area-inset-top\)\)\]/);
+  assert.match(header, /pt-\[calc\(0\.5rem\+var\(--cars-results-safe-area-top\)\)\]/);
   assert.doesNotMatch(header, /bg-\[#F2F4F8\]|bg-\[#F5F7FB\]|backdrop-blur/);
 });
