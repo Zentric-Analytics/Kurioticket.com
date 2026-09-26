@@ -467,7 +467,7 @@ export function FlightEditSearchDrawer({
                       }))
                     }
                     data-mobile-swap-control
-                    className="absolute left-1/2 top-1/2 z-10 inline-flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white"
+                    className="absolute left-1/2 top-1/2 z-10 inline-flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full !border-t-0 bg-white"
                   >
                     <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#E7ECF5] bg-white text-[#064CF7] shadow-[0_2px_4px_rgba(24,48,91,0.12)]">
                       <ArrowRightLeft className="h-[17px] w-[17px]" aria-hidden="true" />
