@@ -19,17 +19,17 @@ test("mobile flight shortcuts remain an ordered single-row scroll rail", () => {
   assert.match(shortcuts, /overflow-x-auto/);
   assert.match(shortcuts, /overscroll-x-contain/);
   assert.match(shortcuts, /-webkit-overflow-scrolling:touch/);
-  assert.match(shortcuts, /data-mobile-flight-shortcuts[^\n]*ps-3 pe-4/);
+  assert.match(shortcuts, /data-mobile-flight-shortcuts[^\n]*-me-4[^\n]*w-\[calc\(100%\+1rem\)\][^\n]*flex-nowrap[^\n]*gap-1\.5[^\n]*pe-4/);
   assert.match(shortcuts, /flex-nowrap/);
-  assert.match(shortcuts, /w-max/);
+  assert.doesNotMatch(shortcuts, /w-max|ps-3/);
   assert.doesNotMatch(shortcuts, /\bsticky\b|top-\[calc\(/);
 });
 
 test("mobile flight shortcut triggers preserve native-scale target and capsule geometry", () => {
-  assert.match(shortcuts, /inline-flex h-11 min-w-11 shrink-0/);
-  assert.match(shortcuts, /inline-flex h-9 items-center justify-center gap-1 rounded-\[9px\]/);
-  assert.match(shortcuts, /text-\[13px\][^"]*leading-4/);
-  assert.match(shortcuts, /h-\[13px\] w-\[13px\]/);
+  assert.match(shortcuts, /inline-flex min-h-11 min-w-11 shrink-0/);
+  assert.match(shortcuts, /inline-flex h-9 items-center gap-1 rounded-\[9px\]/);
+  assert.match(shortcuts, /text-\[13px\]/);
+  assert.match(shortcuts, /h-3\.5 w-3\.5/);
   assert.match(shortcuts, /aria-haspopup="dialog"/);
 });
 
@@ -39,7 +39,7 @@ test("mobile shortcut copy matches native without changing desktop copy", () => 
   assert.match(shortcuts, /label: "Fastest"/);
   assert.doesNotMatch(shortcuts, /Quickest|t\("quickest"\)/);
   const filter = source.slice(source.indexOf("function renderFloatingFilterButton"), source.indexOf("function renderMobileRouteSummaryCard"));
-  assert.match(filter, /<span>Filters<\/span>/);
+  assert.match(filter, /<span>Filter<\/span>/);
   const desktop = source.slice(source.indexOf("function renderDesktopSortControl"), source.indexOf("function renderGuidedRetryButton"));
   assert.match(desktop, /selectedSortLabel/);
 });
@@ -47,7 +47,7 @@ test("mobile shortcut copy matches native without changing desktop copy", () => 
 test("sort and quick filters open one accessible mobile bottom-sheet system", () => {
   assert.match(shortcuts, /role="dialog"/);
   assert.match(shortcuts, /aria-modal="true"/);
-  assert.match(shortcuts, /rounded-t-\[24px\]/);
+  assert.match(shortcuts, /rounded-\[24px\]/);
   assert.match(shortcuts, /safe-area-inset-bottom/);
   assert.doesNotMatch(shortcuts, /role="menu"|position:\s*"fixed"|mobileShortcutMenuPosition/);
   for (const kind of ["sort", "airlines", "stops", "airports"]) assert.match(shortcuts, new RegExp(`mobileShortcutSheet === "${kind}"`));
@@ -55,11 +55,10 @@ test("sort and quick filters open one accessible mobile bottom-sheet system", ()
 
 test("sort sheet uses Cars row scale and stages Flight sort options until Apply", () => {
   for (const copy of ["Best balance of price and journey time", "Lowest total price", "Shortest journey time"]) assert.match(shortcuts, new RegExp(copy));
-  assert.match(shortcuts, /mobileShortcutSheet === "sort" \? "Sort" : sheetTitle/);
-  assert.match(shortcuts, /min-h-\[52px\][^"]*px-\[10px\] py-\[7px\]/);
-  assert.match(shortcuts, /text-sm font-semibold leading-5/);
-  assert.match(shortcuts, /text-\[10\.5px\] font-medium leading-\[14px\] text-slate-500/);
-  assert.match(shortcuts, /h-\[17px\] w-\[17px\][^"]*text-\[#004BB8\]/);
+  assert.match(shortcuts, /const sheetTitle = mobileShortcutSheet === "sort" \? "Sort"/);
+  assert.match(shortcuts, /min-h-12 text-\[13px\] leading-\[18px\]/);
+  assert.match(shortcuts, /text-xs text-slate-500/);
+  assert.match(shortcuts, /h-4 w-4 text-\[#004BB8\]/);
   assert.match(shortcuts, /setMobileDraftSort\(option\.value\)/);
   assert.match(shortcuts, /if \(mobileShortcutSheet === "sort"\) setSortMode\(mobileDraftSort\)/);
   assert.match(shortcuts, /setMobileDraftSort\("best"\)/);
@@ -76,8 +75,9 @@ test("airlines, stops, and airports use staged native quick-sheet controls", () 
   assert.match(shortcuts, />To</);
   assert.match(shortcuts, /setSelectedAirlines\(mobileDraftAirlines\)/);
   assert.match(shortcuts, /setSelectedStops\(mobileDraftStops\)/);
-  assert.match(shortcuts, /setSelectedAirports\(mobileDraftAirports\)/);
-  assert.match(shortcuts, /View \$\{draftMatches\}/);
+  assert.match(shortcuts, /setSelectedFromAirports\(mobileDraftFromAirports\)/);
+  assert.match(shortcuts, /setSelectedToAirports\(mobileDraftToAirports\)/);
+  assert.match(shortcuts, />Apply<\/button>/);
 });
 
 test("sheet lifecycle traps focus, closes with Escape, locks scroll, and restores launcher focus", () => {
@@ -86,7 +86,7 @@ test("sheet lifecycle traps focus, closes with Escape, locks scroll, and restore
   assert.match(source, /event\.key !== "Tab"/);
   assert.match(source, /mobileShortcutLauncherRef\.current\?\.focus/);
   assert.match(source, /mobileShortcutSheetCloseRef\.current\?\.focus/);
-  assert.match(shortcuts, /event\.target === event\.currentTarget/);
+  assert.match(shortcuts, /onMouseDown=\{\(\) => closeMobileShortcutSheet\(\)\}/);
 });
 
 test("full Filters launcher remains separate and retains its active count", () => {
@@ -97,39 +97,39 @@ test("full Filters launcher remains separate and retains its active count", () =
 });
 
 
-test("mobile Flight filter and quick-filter colors mirror Cars", () => {
+test("mobile Flight filter and quick-filter colors mirror Hotel", () => {
   const filter = source.slice(
     source.indexOf("function renderFloatingFilterButton"),
     source.indexOf("function renderMobileRouteSummaryCard"),
   );
 
-  assert.match(filter, /border border-\[#D8E1EC\] bg-white[^"]*text-\[#142033\]/);
-  assert.match(filter, /<SlidersHorizontal[\s\S]*className="h-4 w-4 shrink-0"/);
-  assert.doesNotMatch(filter, /SlidersHorizontal[\s\S]*text-\[#004BB8\]/);
+  assert.match(filter, /border-\[#142033\] bg-white text-\[#142033\]/);
+  assert.match(filter, /rounded-full bg-\[#F1F5F9\][^"]*text-\[#142033\]/);
+  assert.match(filter, /<SlidersHorizontal className="h-4 w-4 shrink-0" strokeWidth=\{2\.2\}/);
 
-  assert.match(shortcuts, /selected \? "border-\[#075EE8\] bg-\[#EAF2FF\] text-\[#004BB8\]"/);
+  assert.match(shortcuts, /selected\s*\? "border-\[#142033\] bg-\[#142033\] text-white"/);
   assert.match(shortcuts, /"border-\[#D8E1EC\] bg-white text-\[#142033\] group-hover:bg-slate-50"/);
-  assert.match(shortcuts, /rounded-full bg-\[#004BB8\][^"]*text-\[10px\] text-white/);
+  assert.match(shortcuts, /aria-label=\{\`Clear \$\{label\} filter\`\}/);
+  assert.match(shortcuts, /<X className="h-3 w-3" strokeWidth=\{2\.1\}/);
   assert.match(shortcuts, /renderTrigger\("airlines", "Airlines", selectedAirlines\.length\)/);
   assert.match(shortcuts, /renderTrigger\("stops", "Stops", selectedStops\.length\)/);
-  assert.match(shortcuts, /renderTrigger\("airports", "Airports", selectedAirports\.length\)/);
+  assert.match(shortcuts, /renderTrigger\("airports", "Airports", selectedFromAirports\.length \+ selectedToAirports\.length\)/);
 });
 
 
-test("Flight quick-filter popup mirrors Cars shell, controls, footer, and animation hooks", () => {
+test("Flight quick-filter popup mirrors Hotel shell, controls, footer, and animation hooks", () => {
   assert.match(shortcuts, /data-flight-quick-sheet-backdrop/);
-  assert.match(shortcuts, /z-\[10010\][^"]*items-end/);
-  assert.match(shortcuts, /cars-native-quick-scrim[^"]*bg-\[rgba\(15,23,42,0\.35\)\]/);
-  assert.match(shortcuts, /cars-native-quick-sheet[^"]*min-h-\[240px\][^"]*max-h-\[min\(76dvh,620px\)\]/);
-  assert.match(shortcuts, /rounded-t-\[24px\][^"]*bg-\[#F2F4F8\][^"]*shadow-\[0_16px_36px_rgba\(15,23,42,0\.2\)\]/);
-  assert.match(shortcuts, /grid min-h-\[76px\][^"]*grid-cols-\[44px_minmax\(0,1fr\)_44px\]/);
-  assert.match(shortcuts, /text-center text-\[18px\] font-bold leading-\[23px\] text-slate-950/);
-  assert.match(shortcuts, /h-\[22px\] w-\[22px\]/);
-  assert.match(shortcuts, /rounded-\[4px\] border-\[1\.5px\]/);
-  assert.match(shortcuts, /border-\[#004BB8\] bg-\[#004BB8\]/);
-  assert.match(shortcuts, /text-\[13px\] font-medium tabular-nums text-slate-500/);
-  assert.match(shortcuts, /gap-\[10px\] bg-\[#F2F4F8\]/);
-  assert.match(shortcuts, /h-\[49px\] min-w-\[116px\]/);
-  assert.match(shortcuts, /rounded-xl bg-\[#004BB8\][^"]*text-\[15px\] font-bold text-white/);
-  assert.doesNotMatch(shortcuts, /bg-\[#075EE8\]|rounded-full border[^\n]*selected/);
+  assert.match(shortcuts, /z-\[10020\][^"]*items-end/);
+  assert.match(shortcuts, /mobile-results-sheet-backdrop-layer[^"]*bg-\[rgba\(8,18,35,0\.52\)\]/);
+  assert.match(shortcuts, /max-h-\[min\(76dvh,620px\)\][^"]*mx-3 mb-3 w-\[calc\(100%-24px\)\]/);
+  assert.match(shortcuts, /rounded-\[24px\] bg-\[#F2F4F8\] shadow-none mobile-results-sheet-surface mobile-results-sheet-surface-smooth/);
+  assert.match(shortcuts, /relative flex min-h-16 items-center justify-center bg-\[#F2F4F8\] px-16 py-3/);
+  assert.match(shortcuts, /text-base font-semibold text-slate-950/);
+  assert.match(shortcuts, /h-5 w-5/);
+  assert.match(shortcuts, /rounded border border-slate-300/);
+  assert.match(shortcuts, /h-4 w-4 text-\[#004BB8\]/);
+  assert.match(shortcuts, /gap-3 bg-\[#F2F4F8\] px-6/);
+  assert.match(shortcuts, /h-11 w-\[32%\][^"]*rounded-lg/);
+  assert.match(shortcuts, /rounded-lg bg-\[#004BB8\][^"]*text-sm font-semibold text-white/);
+  assert.doesNotMatch(shortcuts, /bg-\[#075EE8\]|bg-\[#EAF2FF\]/);
 });
