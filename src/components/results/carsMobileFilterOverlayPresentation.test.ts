@@ -63,9 +63,9 @@ test("Cars shortcuts use the Hotels continuous overlay and sheet motion system",
     /border-\[#D8DEE8\]/,
     /text-sm font-semibold leading-5/,
     /text-\[13px\] font-medium tabular-nums/,
-    /h-\[49px\] min-w-\[116px\].*rounded-xl.*border.*border-\[#D8DEE8\]/,
-    /h-\[49px\].*flex-1.*rounded-xl.*bg-\[#004BB8\]/,
-    /gap-\[10px\] bg-\[#F2F4F8\]/,
+    /h-11 w-\[32%\] shrink-0.*rounded-lg.*border.*border-\[#D8DEE8\].*text-sm font-semibold text-slate-700/,
+    /h-11 w-\[32%\] shrink-0.*rounded-lg.*bg-\[#004BB8\].*text-sm font-semibold text-white/,
+    /justify-between gap-3 bg-\[#F2F4F8\] px-6/,
     /paddingBottom: "max\(12px, calc\(env\(safe-area-inset-bottom, 0px\) - 12px\)\)"/,
   ]) assert.match(sheets, contract);
 
@@ -80,6 +80,39 @@ test("Cars shortcuts use the Hotels continuous overlay and sheet motion system",
     hotels,
     /mobile-results-sheet-backdrop-layer[\s\S]*?mobile-results-sheet-surface mobile-results-sheet-surface-smooth/,
   );
+});
+
+test("every Cars shortcut uses the compact Hotels Reset and Apply action geometry", () => {
+  const start = cars.indexOf("data-cars-quick-sheet-backdrop");
+  const end = cars.indexOf('aria-label="Back to top"', start);
+  const quickSheet = cars.slice(start, end);
+
+  assert.match(
+    quickSheet,
+    /<footer[\s\S]*?justify-between gap-3 bg-\[#F2F4F8\] px-6 pt-3/,
+  );
+  assert.match(
+    quickSheet,
+    />Reset<\/button>[\s\S]*?h-11 w-\[32%\] shrink-0 rounded-lg/,
+  );
+  assert.match(
+    quickSheet,
+    /className="h-11 w-\[32%\] shrink-0 rounded-lg bg-\[#004BB8\][^"]*text-sm font-semibold text-white[^"]*">[\s\S]*?Apply/,
+  );
+  assert.doesNotMatch(
+    quickSheet,
+    /h-\[49px\]|min-w-\[116px\]|flex-1 items-center justify-center gap-2 rounded-xl/,
+  );
+  for (const groupId of [
+    "pricePerDay",
+    "vehicleType",
+    "transmission",
+    "seats",
+    "cancellation",
+    "pickupLocationType",
+  ]) {
+    assert.match(presentation, new RegExp(`"${groupId}"`));
+  }
 });
 
 test("Cars edit search uses the same full-viewport overlay lock as quick filters", () => {

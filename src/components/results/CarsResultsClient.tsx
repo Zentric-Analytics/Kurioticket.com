@@ -3301,11 +3301,11 @@ export function CarsResultsExperience({
               })}
             </div>
             <footer
-              className="flex shrink-0 items-center gap-[10px] bg-[#F2F4F8] px-4 pt-3"
+              className="flex shrink-0 items-center justify-between gap-3 bg-[#F2F4F8] px-6 pt-3"
               style={{ paddingBottom: "max(12px, calc(env(safe-area-inset-bottom, 0px) - 12px))" }}
             >
-              <button type="button" onClick={() => { if (quickFilterGroupId === "sort") setQuickSortDraft("recommended"); else setQuickFilterDraft([]); }} className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">Reset</button>
-              <button type="button" onClick={() => { startFilterResultsTransition(); setCurrentPage(1); if (quickFilterGroupId === "sort") setSort(quickSortDraft); else setSelectedCarFilters((current) => { const next = { ...current }; if (quickFilterDraft.length) next[quickFilterGroupId] = [...quickFilterDraft]; else delete next[quickFilterGroupId]; return next; }); closeQuickFilter(); }} className="flex h-[49px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-3 text-[15px] font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2">
+              <button type="button" onClick={() => { if (quickFilterGroupId === "sort") setQuickSortDraft("recommended"); else setQuickFilterDraft([]); }} className="h-11 w-[32%] shrink-0 rounded-lg border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-sm font-semibold text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">Reset</button>
+              <button type="button" onClick={() => { startFilterResultsTransition(); setCurrentPage(1); if (quickFilterGroupId === "sort") setSort(quickSortDraft); else setSelectedCarFilters((current) => { const next = { ...current }; if (quickFilterDraft.length) next[quickFilterGroupId] = [...quickFilterDraft]; else delete next[quickFilterGroupId]; return next; }); closeQuickFilter(); }} className="h-11 w-[32%] shrink-0 rounded-lg bg-[#004BB8] px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2">
                 Apply
               </button>
             </footer>
