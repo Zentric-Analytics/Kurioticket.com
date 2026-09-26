@@ -158,6 +158,31 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-car-location-section/);
 });
 
+test("Location map card keeps a balanced mobile viewport and fixed directions row", () => {
+  const location = sourceBetween(
+    clientSource,
+    "function CarLocationSection",
+    "function BookingSummary",
+  );
+
+  assert.match(location, /data-car-location-map-card/);
+  assert.match(
+    location,
+    /mt-4 flex flex-col overflow-hidden rounded-\[14px\] border border-slate-200 bg-white/,
+  );
+  assert.match(
+    location,
+    /className="block h-\[216px\] w-full shrink-0 border-0 sm:h-\[220px\] lg:h-\[240px\]"/,
+  );
+  assert.match(
+    location,
+    /className="focus-ring flex h-11 shrink-0 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold leading-5 text-\[#075EE8\]/,
+  );
+  assert.match(location, /<ExternalLink size={16} className="shrink-0"/);
+  assert.doesNotMatch(location, /h-\[200px\] w-full border-0/);
+  assert.doesNotMatch(location, /flex min-h-11 items-center justify-between/);
+});
+
 test("Location tab timeline mirrors Pickup and return pins and icons", () => {
   const location = sourceBetween(
     clientSource,
