@@ -80,8 +80,8 @@ test("mobile Flight Results uses Hotel rail gutters and keeps result-card rhythm
   assert.match(source, /min-h-\[28px\][^\n]*max-w-full[^\n]*px-0[^\n]*>Cheaper nearby:/);
   assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,500}px-0 py-1 sm:hidden/);
   assert.doesNotMatch(source, /data-flight-mobile-results-shortcuts[\s\S]{0,350}-mx-3/);
-  assert.match(source, /data-mobile-flight-shortcuts[^\n]*scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\] flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain pe-4/);
-  assert.doesNotMatch(source, /data-mobile-flight-shortcuts[^\n]*ps-3|flex w-max flex-nowrap/);
+  assert.match(source, /data-mobile-flight-shortcuts[\s\S]{0,180}className="scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\] flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain pe-4/);
+  assert.doesNotMatch(source, /data-mobile-flight-shortcuts[\s\S]{0,180}className="[^"]*ps-3|flex w-max flex-nowrap/);
   assert.match(source, /data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden"/);
   assert.doesNotMatch(source, /data-flight-mobile-results-intro[^\n]*px-3/);
   assert.match(source, /data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
@@ -213,7 +213,10 @@ test("mobile Flight filter surfaces use Hotel visual contracts", async () => {
   assert.match(sheet, /border-slate-300 bg-white/);
   assert.match(sheet, /#2F73C8/);
 
-  const quickStart = source.indexOf("const renderSortChoice =");
+  const filterSystemStart = source.indexOf("function renderMobileSortResultsRow()");
+  const filterSystemEnd = source.indexOf("function renderMobileRouteSummaryCard()", filterSystemStart);
+  const mobileFilterSystem = source.slice(filterSystemStart, filterSystemEnd);
+  const quickStart = source.indexOf("const renderSortChoice =", filterSystemStart);
   const quickEnd = source.indexOf("function renderFloatingFilterButton", quickStart);
   const quick = source.slice(quickStart, quickEnd);
   assert.match(quick, /mobile-results-sheet-backdrop-layer/);
@@ -223,7 +226,7 @@ test("mobile Flight filter surfaces use Hotel visual contracts", async () => {
   assert.match(quick, /relative flex min-h-16 items-center justify-center bg-\[#F2F4F8\] px-16 py-3/);
   assert.match(quick, /text-base font-semibold text-slate-950/);
   assert.match(quick, /h-11 w-\[32%\][^"]*rounded-lg/);
-  assert.match(quick, /border-\[#142033\] bg-\[#142033\] text-white/);
+  assert.match(mobileFilterSystem, /border-\[#142033\] bg-\[#142033\] text-white/);
   assert.doesNotMatch(quick, /bg-\[#075EE8\]|bg-\[#EAF2FF\]/);
 });
 
