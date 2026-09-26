@@ -6300,6 +6300,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     };
 
     const clearShortcutFilter = (sheet: Exclude<MobileShortcutSheet, "sort">) => {
+      triggerFilterApplying();
       if (sheet === "airlines") setSelectedAirlines([]);
       if (sheet === "stops") setSelectedStops([]);
       if (sheet === "airports") {
