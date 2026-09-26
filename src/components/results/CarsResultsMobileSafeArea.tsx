@@ -2,15 +2,19 @@
 
 import { useLayoutEffect, useRef } from "react";
 
+const CARS_RESULTS_SAFE_AREA_PROPERTY = "--cars-results-safe-area-top";
+
 export function CarsResultsMobileSafeArea() {
-  const surfaceRef = useRef<HTMLDivElement>(null);
   const probeRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    const surface = surfaceRef.current;
     const probe = probeRef.current;
-    if (!surface || !probe) return undefined;
+    if (!probe) return undefined;
 
+    const root = document.documentElement;
+    const previousInlineValue = root.style.getPropertyValue(
+      CARS_RESULTS_SAFE_AREA_PROPERTY,
+    );
     let frozenHeight = 0;
     let animationFrame = 0;
 
@@ -22,7 +26,10 @@ export function CarsResultsMobileSafeArea() {
       }
 
       frozenHeight = measuredHeight;
-      surface.style.height = `${measuredHeight}px`;
+      root.style.setProperty(
+        CARS_RESULTS_SAFE_AREA_PROPERTY,
+        `${measuredHeight}px`,
+      );
     };
 
     const scheduleCapture = () => {
@@ -32,7 +39,7 @@ export function CarsResultsMobileSafeArea() {
 
     const resetForOrientation = () => {
       frozenHeight = 0;
-      surface.style.removeProperty("height");
+      root.style.removeProperty(CARS_RESULTS_SAFE_AREA_PROPERTY);
       if (animationFrame) window.cancelAnimationFrame(animationFrame);
       animationFrame = window.requestAnimationFrame(() => {
         animationFrame = window.requestAnimationFrame(captureLargestInset);
@@ -56,6 +63,14 @@ export function CarsResultsMobileSafeArea() {
       window.removeEventListener("resize", scheduleCapture);
       window.removeEventListener("orientationchange", resetForOrientation);
       if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      if (previousInlineValue) {
+        root.style.setProperty(
+          CARS_RESULTS_SAFE_AREA_PROPERTY,
+          previousInlineValue,
+        );
+      } else {
+        root.style.removeProperty(CARS_RESULTS_SAFE_AREA_PROPERTY);
+      }
     };
   }, []);
 
@@ -68,10 +83,9 @@ export function CarsResultsMobileSafeArea() {
         className="pointer-events-none fixed inset-x-0 top-0 h-[env(safe-area-inset-top)] opacity-0 sm:hidden"
       />
       <div
-        ref={surfaceRef}
         data-cars-results-mobile-safe-area
         aria-hidden="true"
-        className="pointer-events-none fixed inset-x-0 top-0 z-[100] h-[env(safe-area-inset-top)] bg-white sm:hidden"
+        className="pointer-events-none fixed inset-x-0 top-0 z-[100] h-[var(--cars-results-safe-area-top)] bg-white sm:hidden"
       />
     </>
   );
