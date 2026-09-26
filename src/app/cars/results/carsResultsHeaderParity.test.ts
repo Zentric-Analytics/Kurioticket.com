@@ -35,6 +35,7 @@ test("Cars Results preserves AppHeader while matching Flights mobile header prop
     assert.match(carsHeader, new RegExp(`\\b${mobileProp}\\b`));
   }
   assert.doesNotMatch(carsHeader, /mobileSurface="muted"/);
+  assert.match(carsHeader, /stableMobileSafeAreaTop/);
 });
 
 test("Cars Results owns a permanent non-interactive white mobile safe-area layer", () => {
@@ -44,20 +45,34 @@ test("Cars Results owns a permanent non-interactive white mobile safe-area layer
   assert.match(safeAreaSource, /data-cars-results-mobile-safe-area/);
   assert.match(
     safeAreaSource,
-    /pointer-events-none fixed inset-x-0 top-0 z-\[100\] h-\[env\(safe-area-inset-top\)\] bg-white sm:hidden/,
+    /pointer-events-none fixed inset-x-0 top-0 z-\[100\] h-\[var\(--cars-results-safe-area-top\)\] bg-white sm:hidden/,
   );
 });
 
 test("Cars Results freezes the largest observed iOS safe-area inset instead of letting scroll chrome collapse it", () => {
+  assert.match(
+    safeAreaSource,
+    /CARS_RESULTS_SAFE_AREA_PROPERTY = "--cars-results-safe-area-top"/,
+  );
   assert.match(safeAreaSource, /useLayoutEffect/);
   assert.match(safeAreaSource, /probe\.getBoundingClientRect\(\)\.height/);
   assert.match(safeAreaSource, /Math\.ceil/);
   assert.match(safeAreaSource, /measuredHeight <= frozenHeight/);
-  assert.match(safeAreaSource, /surface\.style\.height = `\$\{measuredHeight\}px`/);
+  assert.match(safeAreaSource, /root\.style\.setProperty/);
+  assert.match(safeAreaSource, /\$\{measuredHeight\}px/);
   assert.match(safeAreaSource, /new ResizeObserver\(captureLargestInset\)/);
-  assert.match(safeAreaSource, /window\.addEventListener\("resize", scheduleCapture\)/);
-  assert.match(safeAreaSource, /window\.addEventListener\("orientationchange", resetForOrientation\)/);
-  assert.match(safeAreaSource, /surface\.style\.removeProperty\("height"\)/);
+  assert.match(
+    safeAreaSource,
+    /window\.addEventListener\("resize", scheduleCapture\)/,
+  );
+  assert.match(
+    safeAreaSource,
+    /window\.addEventListener\("orientationchange", resetForOrientation\)/,
+  );
+  assert.match(
+    safeAreaSource,
+    /root\.style\.removeProperty\(CARS_RESULTS_SAFE_AREA_PROPERTY\)/,
+  );
   assert.doesNotMatch(safeAreaSource, /addEventListener\("scroll"/);
   assert.doesNotMatch(safeAreaSource, /44px|47px|50px/);
 });
