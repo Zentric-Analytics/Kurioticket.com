@@ -17,13 +17,14 @@ const geometrySource = readFileSync(
 );
 const globalCss = readFileSync("src/app/globals.css", "utf8");
 
-test("Flight mobile web uses a compact-header-gated results-region scrollbar", () => {
-  assert.match(resultsSource, /<FlightResultsScrollIndicator compactHeaderVisible=\{mobileCompactHeaderVisible\} \/>/);
+test("Flight mobile web uses the stable Hotel/Cars-style results-region scrollbar model", () => {
+  assert.match(resultsSource, /<FlightResultsScrollIndicator \/>/);
   assert.match(indicatorSource, /window\.scrollY/);
-  assert.match(indicatorSource, /\[data-mobile-paginated-flight-results\] \[data-flight-results-card-list\]/);
+  assert.match(indicatorSource, /\[data-flight-mobile-results-intro\]/);
   assert.match(indicatorSource, /\[data-mobile-paginated-flight-results\]/);
   assert.match(indicatorSource, /regionBottom - viewportHeight/);
-  assert.match(indicatorSource, /!compactHeaderVisible/);
+  assert.match(indicatorSource, /const trackTop = Math\.min\(scrollStart, maxTrackTop\)/);
+  assert.doesNotMatch(indicatorSource, /compactHeaderVisible|data-flight-results-compact-header/);
   assert.doesNotMatch(indicatorSource, /document\.documentElement\.scrollHeight|document\.body\.scrollHeight/);
   assert.match(indicatorSource, /requestAnimationFrame/);
   assert.doesNotMatch(indicatorSource, /overflow-y-auto|setInterval/);
@@ -52,8 +53,6 @@ test("Flight mobile web thumb is exactly half of the previous 44-96px bounds", (
 
 test("Flight mobile web indicator remains passive and respects safe areas", () => {
   assert.match(indicatorSource, /pointer-events-none fixed/);
-  assert.match(indicatorSource, /data-flight-results-compact-header/);
-  assert.match(indicatorSource, /compactHeaderBottom \+ 4/);
   assert.match(indicatorSource, /safe-area-inset-right/);
   assert.match(indicatorSource, /safe-area-inset-bottom/);
 });

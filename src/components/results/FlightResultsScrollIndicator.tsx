@@ -12,7 +12,7 @@ const MOBILE_RESULTS_QUERY = "(max-width: 639px)";
 const IDLE_FADE_DELAY_MS = 650;
 const MIN_TRACK_HEIGHT_PX = 96;
 
-export function FlightResultsScrollIndicator({ compactHeaderVisible }: { compactHeaderVisible: boolean }) {
+export function FlightResultsScrollIndicator() {
   const trackRef = useRef<HTMLDivElement | null>(null);
   const thumbRef = useRef<HTMLDivElement | null>(null);
   const geometryRef = useRef({ scrollStart: 0, maxScroll: 0, thumbTravel: 0 });
@@ -51,6 +51,7 @@ export function FlightResultsScrollIndicator({ compactHeaderVisible }: { compact
   useEffect(() => {
     const media = window.matchMedia(MOBILE_RESULTS_QUERY);
     const visualViewport = window.visualViewport;
+    let resizeObserver: ResizeObserver | null = null;
 
     const updateThumbPosition = () => {
       animationFrameRef.current = null;
@@ -76,27 +77,26 @@ export function FlightResultsScrollIndicator({ compactHeaderVisible }: { compact
         return;
       }
 
-      const resultsList = document.querySelector<HTMLElement>("[data-mobile-paginated-flight-results] [data-flight-results-card-list]");
+      const resultsIntro = document.querySelector<HTMLElement>("[data-flight-mobile-results-intro]");
       const resultsRegion = document.querySelector<HTMLElement>("[data-mobile-paginated-flight-results]");
-      const compactHeader = document.querySelector<HTMLElement>("[data-flight-results-compact-header]");
-      if (!resultsList || !resultsRegion || !compactHeader) {
+      if (!resultsIntro || !resultsRegion) {
         geometryRef.current = { scrollStart: 0, maxScroll: 0, thumbTravel: 0 };
         setThumbHeight(0);
         setIsScrollable(false);
         setIsActive(false);
         return;
       }
-      resizeObserver?.observe(resultsList);
+      resizeObserver?.observe(resultsIntro);
       resizeObserver?.observe(resultsRegion);
-      resizeObserver?.observe(compactHeader);
 
       const viewportHeight = visualViewport?.height ?? window.innerHeight;
       const scrollY = window.scrollY;
-      const scrollStart = Math.max(0, resultsList.getBoundingClientRect().top + scrollY);
+      const scrollStart = Math.max(0, resultsIntro.getBoundingClientRect().top + scrollY);
       const regionBottom = Math.max(scrollStart, resultsRegion.getBoundingClientRect().bottom + scrollY);
       const scrollEnd = Math.max(scrollStart, regionBottom - viewportHeight);
-      const compactHeaderBottom = Math.max(0, compactHeader.getBoundingClientRect().bottom);
-      trackRef.current.style.top = `${Math.min(compactHeaderBottom + 4, Math.max(0, viewportHeight - MIN_TRACK_HEIGHT_PX))}px`;
+      const maxTrackTop = Math.max(0, viewportHeight - MIN_TRACK_HEIGHT_PX);
+      const trackTop = Math.min(scrollStart, maxTrackTop);
+      trackRef.current.style.top = `${trackTop}px`;
       const geometry = calculateFlightResultsScrollIndicatorGeometry({
         scrollTop: scrollY,
         scrollStart,
@@ -117,11 +117,7 @@ export function FlightResultsScrollIndicator({ compactHeaderVisible }: { compact
     };
 
     const showForScroll = () => {
-      if (!media.matches || !compactHeaderVisible || geometryRef.current.maxScroll <= 0) {
-        setIsActive(false);
-        scheduleThumbPosition();
-        return;
-      }
+      if (!media.matches || geometryRef.current.maxScroll <= 0) return;
       setIsActive(true);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       idleTimerRef.current = setTimeout(
@@ -131,7 +127,7 @@ export function FlightResultsScrollIndicator({ compactHeaderVisible }: { compact
       scheduleThumbPosition();
     };
 
-    const resizeObserver =
+    resizeObserver =
       "ResizeObserver" in window ? new ResizeObserver(measureGeometry) : null;
     resizeObserver?.observe(document.body);
     resizeObserver?.observe(document.documentElement);
@@ -140,7 +136,6 @@ export function FlightResultsScrollIndicator({ compactHeaderVisible }: { compact
     visualViewport?.addEventListener("resize", measureGeometry);
     media.addEventListener("change", measureGeometry);
     measureGeometry();
-    if (compactHeaderVisible) showForScroll();
 
     return () => {
       resizeObserver?.disconnect();
@@ -152,7 +147,7 @@ export function FlightResultsScrollIndicator({ compactHeaderVisible }: { compact
         window.cancelAnimationFrame(animationFrameRef.current);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
-  }, [compactHeaderVisible]);
+  }, []);
 
   return (
     <div
@@ -166,7 +161,7 @@ export function FlightResultsScrollIndicator({ compactHeaderVisible }: { compact
       <div
         ref={thumbRef}
         data-flight-results-scroll-thumb
-        className={`w-full rounded-full bg-slate-700/55 opacity-0 shadow-[0_0_1px_rgba(255,255,255,0.55)] transition-opacity duration-200 motion-reduce:transition-none ${compactHeaderVisible && isScrollable && isActive ? "opacity-100" : ""}`}
+        className={`w-full rounded-full bg-slate-700/55 opacity-0 shadow-[0_0_1px_rgba(255,255,255,0.55)] transition-opacity duration-200 motion-reduce:transition-none ${isScrollable && isActive ? "opacity-100" : ""}`}
         style={{ height: `${thumbHeight}px` }}
       />
     </div>
