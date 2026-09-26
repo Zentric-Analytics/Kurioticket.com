@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type CSSProperties } from "react";
+import { Check } from "lucide-react";
 
 import type { PublicFlightResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
