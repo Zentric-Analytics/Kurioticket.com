@@ -86,18 +86,18 @@ function CheckRow({
       role="checkbox"
       aria-checked={checked}
       onClick={onChange}
-      className="flex min-h-[46px] w-full items-center gap-2.5 text-left text-[13px] font-medium text-slate-950 transition-opacity active:opacity-70 focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
+      className="flex min-h-11 w-full items-center gap-[10px] rounded-lg py-1.5 text-left text-sm font-normal text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
     >
       <span
         aria-hidden="true"
         className={cn(
           "flex h-5 w-5 shrink-0 items-center justify-center rounded border-[1.5px] transition-colors",
           checked
-            ? "border-[#004BB8] bg-[#004BB8] text-white"
+            ? "border-[#004BB8] bg-[#2F73C8] text-white"
             : "border-[#D8DEE8] bg-transparent",
         )}
       >
-        {checked ? <span className="text-[13px] font-bold leading-none">✓</span> : null}
+        {checked ? <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" /> : null}
       </span>
       <span className="min-w-0 flex-1 break-words">{label}</span>
       {count !== undefined ? (
@@ -235,7 +235,7 @@ export function MobileFlightFiltersSheet({
       : searchedAirlines.slice(0, 5);
 
   const rangeClass =
-    "h-11 w-full cursor-pointer appearance-none bg-transparent outline-none transition focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[linear-gradient(to_right,#004BB8_0_var(--flight-range-progress),#D8DEE8_var(--flight-range-progress)_100%)] [&::-webkit-slider-thumb]:mt-[-7px] [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#004BB8] [&::-webkit-slider-thumb]:shadow-[0_1px_4px_rgba(15,23,42,0.28)] [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-[#D8DEE8] [&::-moz-range-progress]:h-1 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#004BB8] [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-[3px] [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#004BB8] [&::-moz-range-thumb]:shadow-[0_1px_4px_rgba(15,23,42,0.28)]";
+    "h-11 w-full cursor-pointer appearance-none bg-transparent outline-none transition focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[linear-gradient(to_right,#004BB8_0_var(--flight-range-progress),#D8DEE8_var(--flight-range-progress)_100%)] [&::-webkit-slider-thumb]:mt-[-7px] [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#2F73C8] [&::-webkit-slider-thumb]:shadow-[0_1px_4px_rgba(15,23,42,0.28)] [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border [&::-moz-range-progress]:h-1 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#2F73C8] [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-[3px] [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#2F73C8] [&::-moz-range-thumb]:shadow-[0_1px_4px_rgba(15,23,42,0.28)]";
 
   const rangeProgressStyle = (
     value: number,
