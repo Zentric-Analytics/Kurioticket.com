@@ -63,12 +63,12 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.match(mobileStrip, /min-w-0/);
   assert.match(mobileStrip, /max-w-full/);
   assert.match(mobileStrip, /overflow-hidden/);
-  assert.match(mobileStrip, /ref=\{mobileNearbyFareAxisLockRef\} className="[^"]*touch-pan-y[^"]*overflow-x-auto/);
-  assert.doesNotMatch(mobileStrip, /touch-pan-x/);
+  assert.match(mobileStrip, /ref=\{mobileNearbyFareRailRef\} className="[^"]*overflow-x-auto[^"]*overscroll-x-contain/);
+  assert.doesNotMatch(mobileStrip, /mobileNearbyFareAxisLockRef|touch-pan-x|touch-pan-y/);
   assert.match(mobileStrip, /overflow-x-auto/);
-  assert.doesNotMatch(mobileStrip, /overscroll-x-contain/);
-  assert.match(mobileStrip, /snap-center/);
-  assert.doesNotMatch(mobileStrip, /snap-start/);
+  assert.match(mobileStrip, /overscroll-x-contain/);
+  assert.match(mobileStrip, /-webkit-overflow-scrolling:touch/);
+  assert.doesNotMatch(mobileStrip, /snap-x|snap-proximity|snap-center|snap-start/);
   assert.match(mobileStrip, /px-3/);
   assert.match(mobileStrip, /scroll-padding-inline:0\.75rem/);
   assert.match(mobileStrip, /scrollbar-width:none/);
@@ -85,6 +85,7 @@ test("mobile nearby fares scroll horizontally without widening the page", () => 
   assert.match(mobileStrip, /aria-pressed=\{selected\}/);
   assert.match(mobileStrip, /disabled=\{selected \|\| loading \|\| fare\.status === "loading"\}/);
   assert.doesNotMatch(mobileStrip, /onTouch|preventDefault\(\)/);
+  assert.doesNotMatch(source, /useHorizontalRailAxisLockRef/);
   const nearbyInsight = mobileStrip.match(/className="([^"]*)">Cheaper nearby:/)?.[1] ?? "";
   assert.match(nearbyInsight, /min-h-\[28px\]/);
   assert.match(nearbyInsight, /flight-mobile-cheaper-nearby/);
