@@ -7,7 +7,7 @@ const source = readFileSync(
   "utf8",
 );
 
-test("standalone Cars Back-to-top matches Hotels appearance and behavior", () => {
+test("standalone Cars Back-to-top keeps Hotels behavior with a Cars-specific balanced surface", () => {
   assert.equal(source.match(/aria-label="Back to top"/g)?.length, 1);
   assert.match(source, /CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 600/);
   assert.match(
@@ -26,7 +26,7 @@ test("standalone Cars Back-to-top matches Hotels appearance and behavior", () =>
   );
   assert.match(source, /fixed right-4 z-\[800\] flex h-11 w-11/);
   assert.match(source, /rounded-xl/);
-  assert.match(source, /bg-\[#F8FAFC\]/);
+  assert.match(source, /bg-\[#EEF2F6\]/);
   assert.match(source, /shadow-md transition-all/);
   assert.match(
     source,
@@ -45,7 +45,7 @@ test("standalone Cars Back-to-top matches Hotels appearance and behavior", () =>
   const backToTopStart = source.indexOf('aria-label="Back to top"');
   const backToTopEnd = source.indexOf("</button>", backToTopStart);
   const backToTop = source.slice(backToTopStart, backToTopEnd);
-  assert.match(backToTop, /bg-\[#F8FAFC\]/);
+  assert.match(backToTop, /bg-\[#EEF2F6\]/);
   assert.doesNotMatch(backToTop, /bg-white/);
   assert.doesNotMatch(backToTop, /rounded-full|shadow-lg|end-4 z-40|h-5 w-5/);
   assert.doesNotMatch(
