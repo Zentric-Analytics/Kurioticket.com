@@ -6851,155 +6851,161 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     };
 
     return (
-      <aside
-        ref={mobileFiltersDialogRef}
-        id="flight-mobile-filters-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="flight-mobile-filters-title"
-        className="fixed inset-0 z-[10000] flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2F4F8] sm:hidden"
-      >
-        <header className="flex min-h-[76px] shrink-0 items-center bg-[#F2F4F8] pe-[10px] ps-5 pt-[env(safe-area-inset-top)]">
-          <div className="min-w-0 flex-1">
-            <h2
-              id="flight-mobile-filters-title"
-              className="truncate text-[18px] font-bold leading-[23px] text-slate-950"
-            >
-              Filters
-            </h2>
-            {activeFilterCount > 0 ? (
-              <p className="text-xs font-medium leading-4 text-slate-500">
-                {activeFilterCount} {activeFilterCount === 1 ? "filter" : "filters"} applied
-              </p>
-            ) : null}
-          </div>
-          <button
-            ref={mobileFiltersCloseButtonRef}
-            type="button"
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-700 transition hover:text-slate-950 focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-            aria-label="Close filters"
-            onClick={() => closeMobileFiltersDrawer()}
-          >
-            <X className="h-[22px] w-[22px]" aria-hidden="true" />
-          </button>
-        </header>
-
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#F2F4F8] px-6 pb-8 pt-4">
-          <MobileFlightFiltersSheet
-            results={results}
-            priceBounds={priceBounds}
-            maxPrice={maxPrice}
-            formatPrice={(value) =>
-              priceLabelCurrency
-                ? formatResultPriceLabel(value, selectedCurrency)
-                : "—"
-            }
-            onMaxPrice={(value) => {
-              triggerFilterApplying();
-              setMaxPrice(value);
-            }}
-            durationBounds={durationBounds}
-            maxDurationMinutes={maxDurationMinutes}
-            onMaxDuration={(value) => {
-              triggerFilterApplying();
-              setMaxDurationMinutes(value);
-            }}
-            stopOptions={stopOptions}
-            selectedStops={selectedStops}
-            onToggleStop={(value) => {
-              triggerFilterApplying();
-              toggleFilterValue(value, setSelectedStops);
-            }}
-            airlineOptions={mobileAirlineOptions}
-            selectedAirlines={selectedAirlines}
-            onToggleAirline={(value) => {
-              triggerFilterApplying();
-              toggleFilterValue(value, setSelectedAirlines);
-            }}
-            fromAirportOptions={mobileFromAirportOptions}
-            toAirportOptions={mobileToAirportOptions}
-            selectedFromAirports={selectedFromAirports}
-            selectedToAirports={selectedToAirports}
-            onToggleFromAirport={(value) => {
-              triggerFilterApplying();
-              toggleFilterValue(value, setSelectedFromAirports);
-            }}
-            onToggleToAirport={(value) => {
-              triggerFilterApplying();
-              toggleFilterValue(value, setSelectedToAirports);
-            }}
-            baggageSupported={results.some(hasStructuredBaggage)}
-            refundableSupported={results.some(hasStructuredFlexibility)}
-            baggageIncludedOnly={baggageIncludedOnly}
-            flexibleOnly={flexibleOnly}
-            onBaggage={() => {
-              triggerFilterApplying();
-              setBaggageIncludedOnly(!baggageIncludedOnly);
-            }}
-            onFlexible={() => {
-              triggerFilterApplying();
-              setFlexibleOnly(!flexibleOnly);
-            }}
-            journeyTimeMaximums={{
-              ...mobileJourneyTimeMaximums,
-              outbound: outboundTimes,
-            }}
-            onJourneyTimeChange={(key, mode, value) => {
-              triggerFilterApplying();
-              if (key === "outbound") {
-                if (mode === "takeoff") {
-                  setMaxTakeoffMinutes(value ?? timeBounds.takeoff?.max ?? null);
-                } else {
-                  setMaxLandingMinutes(value ?? timeBounds.landing?.max ?? null);
-                }
-                return;
-              }
-              setMobileJourneyTimeMaximums((current) => ({
-                ...current,
-                [key]: {
-                  takeoff: current[key]?.takeoff ?? null,
-                  landing: current[key]?.landing ?? null,
-                  [mode]: value,
-                },
-              }));
-            }}
-          />
-        </div>
-
-        <footer
-          data-flight-full-filters-footer
-          className="flex shrink-0 items-center justify-between gap-3.5 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3"
+      <>
+        <button
+          type="button"
+          aria-label="Close filters"
+          onClick={() => closeMobileFiltersDrawer()}
+          className="fixed inset-0 z-[9999] bg-slate-950/35 sm:hidden"
+        />
+        <aside
+          ref={mobileFiltersDialogRef}
+          id="flight-mobile-filters-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="flight-mobile-filters-title"
+          className="fixed inset-x-0 bottom-0 z-[10000] flex h-[95dvh] w-full flex-col overflow-clip rounded-t-[20px] bg-[#F2F4F8] shadow-2xl sm:hidden"
         >
-          {activeFilterCount > 0 ? (
+          <header className="relative flex h-16 shrink-0 items-center justify-start bg-[#F2F4F8] px-5">
+            <div>
+              <h2
+                id="flight-mobile-filters-title"
+                className="text-base font-semibold text-slate-950"
+              >
+                Filters
+              </h2>
+              {activeFilterCount > 0 ? (
+                <p className="text-xs font-medium text-slate-500">
+                  {activeFilterCount} applied
+                </p>
+              ) : null}
+            </div>
+            <button
+              ref={mobileFiltersCloseButtonRef}
+              type="button"
+              className="focus-ring absolute right-3 flex h-11 w-11 items-center justify-center rounded-lg text-slate-700"
+              aria-label="Close filters"
+              onClick={() => closeMobileFiltersDrawer()}
+            >
+              <X size={22} aria-hidden="true" />
+            </button>
+          </header>
+
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#F2F4F8] px-6 py-4">
+            <MobileFlightFiltersSheet
+              results={results}
+              priceBounds={priceBounds}
+              maxPrice={maxPrice}
+              formatPrice={(value) =>
+                priceLabelCurrency
+                  ? formatResultPriceLabel(value, selectedCurrency)
+                  : "—"
+              }
+              onMaxPrice={(value) => {
+                triggerFilterApplying();
+                setMaxPrice(value);
+              }}
+              durationBounds={durationBounds}
+              maxDurationMinutes={maxDurationMinutes}
+              onMaxDuration={(value) => {
+                triggerFilterApplying();
+                setMaxDurationMinutes(value);
+              }}
+              stopOptions={stopOptions}
+              selectedStops={selectedStops}
+              onToggleStop={(value) => {
+                triggerFilterApplying();
+                toggleFilterValue(value, setSelectedStops);
+              }}
+              airlineOptions={mobileAirlineOptions}
+              selectedAirlines={selectedAirlines}
+              onToggleAirline={(value) => {
+                triggerFilterApplying();
+                toggleFilterValue(value, setSelectedAirlines);
+              }}
+              fromAirportOptions={mobileFromAirportOptions}
+              toAirportOptions={mobileToAirportOptions}
+              selectedFromAirports={selectedFromAirports}
+              selectedToAirports={selectedToAirports}
+              onToggleFromAirport={(value) => {
+                triggerFilterApplying();
+                toggleFilterValue(value, setSelectedFromAirports);
+              }}
+              onToggleToAirport={(value) => {
+                triggerFilterApplying();
+                toggleFilterValue(value, setSelectedToAirports);
+              }}
+              baggageSupported={results.some(hasStructuredBaggage)}
+              refundableSupported={results.some(hasStructuredFlexibility)}
+              baggageIncludedOnly={baggageIncludedOnly}
+              flexibleOnly={flexibleOnly}
+              onBaggage={() => {
+                triggerFilterApplying();
+                setBaggageIncludedOnly(!baggageIncludedOnly);
+              }}
+              onFlexible={() => {
+                triggerFilterApplying();
+                setFlexibleOnly(!flexibleOnly);
+              }}
+              journeyTimeMaximums={{
+                ...mobileJourneyTimeMaximums,
+                outbound: outboundTimes,
+              }}
+              onJourneyTimeChange={(key, mode, value) => {
+                triggerFilterApplying();
+                if (key === "outbound") {
+                  if (mode === "takeoff") {
+                    setMaxTakeoffMinutes(value ?? timeBounds.takeoff?.max ?? null);
+                  } else {
+                    setMaxLandingMinutes(value ?? timeBounds.landing?.max ?? null);
+                  }
+                  return;
+                }
+                setMobileJourneyTimeMaximums((current) => ({
+                  ...current,
+                  [key]: {
+                    takeoff: current[key]?.takeoff ?? null,
+                    landing: current[key]?.landing ?? null,
+                    [mode]: value,
+                  },
+                }));
+              }}
+            />
+          </div>
+
+          <footer
+            data-flight-full-filters-footer
+            className="flex shrink-0 items-center gap-3 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.08)]"
+          >
+            {activeFilterCount > 0 ? (
+              <button
+                type="button"
+                aria-label="Reset flight filters"
+                onClick={clearFlightFilters}
+                className="focus-ring h-11 w-[30%] shrink-0 rounded-lg border border-[#D8DEE8] bg-[#F2F4F8] px-5 text-sm font-semibold text-slate-700"
+              >
+                Reset
+              </button>
+            ) : null}
             <button
               type="button"
-              onClick={clearFlightFilters}
-              className="h-[49px] min-w-[116px] shrink-0 rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+              disabled={sortedResults.length === 0}
+              onClick={() => {
+                shouldScrollToTopAfterFilterApplyRef.current = true;
+                triggerFilterApplying();
+                closeMobileFiltersDrawer();
+              }}
+              className="h-11 min-w-0 flex-1 rounded-lg bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
             >
-              Reset
+              {sortedResults.length === 0
+                ? "No matching flights"
+                : activeFilterCount > 0
+                  ? `View ${sortedResults.length} matching ${sortedResults.length === 1 ? "flight" : "flights"}`
+                  : `View all ${sortedResults.length} flights`}
             </button>
-          ) : null}
-          <button
-            type="button"
-            disabled={sortedResults.length === 0}
-            onClick={() => {
-              shouldScrollToTopAfterFilterApplyRef.current = true;
-              triggerFilterApplying();
-              closeMobileFiltersDrawer();
-            }}
-            className={cn(
-              "min-h-[50px] min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-[10px] bg-[#004BB8] px-5 text-base font-bold leading-[22px] text-white disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
-              activeFilterCount === 0
-                ? "flex-1"
-                : "max-w-[calc(100%_-_130px)]",
-            )}
-          >
-            {sortedResults.length === 0
-              ? "No flights"
-              : `View ${sortedResults.length} ${sortedResults.length === 1 ? "flight" : "flights"}`}
-          </button>
-        </footer>
-      </aside>
+          </footer>
+        </aside>
+      </>
     );
   }
 
