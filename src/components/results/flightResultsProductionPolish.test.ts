@@ -68,7 +68,7 @@ test("Flight compact header uses the Hotel compact-header visual contract", asyn
   assert.match(compactHeader, /SlidersHorizontal[\s\S]*?text-\[#1a1a1a\]/);
 });
 
-test("mobile Flight Results uses the native horizontal gutter relationship", async () => {
+test("mobile Flight Results uses Hotel rail gutters and keeps result-card rhythm", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
@@ -78,9 +78,10 @@ test("mobile Flight Results uses the native horizontal gutter relationship", asy
 
   assert.match(styles, /@media \(max-width: 639px\) \{\s*\.flight-results-grid \{\s*width: min\(100% - 24px, 1560px\);/);
   assert.match(source, /min-h-\[28px\][^\n]*max-w-full[^\n]*px-0[^\n]*>Cheaper nearby:/);
-  assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,500}-mx-3[\s\S]{0,120}px-0/);
-  assert.match(source, /data-mobile-flight-shortcuts[^\n]*ps-3 pe-4/);
-  assert.match(source, /flex w-max flex-nowrap items-center gap-1\.5/);
+  assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,500}px-0 py-1 sm:hidden/);
+  assert.doesNotMatch(source, /data-flight-mobile-results-shortcuts[\s\S]{0,350}-mx-3/);
+  assert.match(source, /data-mobile-flight-shortcuts[^\n]*scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\] flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain pe-4/);
+  assert.doesNotMatch(source, /data-mobile-flight-shortcuts[^\n]*ps-3|flex w-max flex-nowrap/);
   assert.match(source, /data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden"/);
   assert.doesNotMatch(source, /data-flight-mobile-results-intro[^\n]*px-3/);
   assert.match(source, /data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
@@ -182,7 +183,7 @@ test("mobile Flight Results uses the Cars-style scroll handoff header", async ()
   assert.match(source, /<Pencil[\s\S]*data-flight-compact-edit-icon/);
 });
 
-test("mobile Flight full-filter and quick-filter popups use Cars visual contracts", async () => {
+test("mobile Flight filter surfaces use Hotel visual contracts", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
@@ -191,43 +192,39 @@ test("mobile Flight full-filter and quick-filter popups use Cars visual contract
     new URL("./MobileFlightFiltersSheet.tsx", import.meta.url),
     "utf8",
   );
-  const styles = await readFile(
-    new URL("../../app/globals.css", import.meta.url),
-    "utf8",
-  );
 
   const fullStart = source.indexOf("function renderMobileFullFiltersSheet()");
   const fullEnd = source.indexOf("function renderDesktopSortControl()", fullStart);
   const full = source.slice(fullStart, fullEnd);
-  assert.match(full, /bg-\[#F2F4F8\]/);
-  assert.match(full, /min-h-\[76px\]/);
-  assert.match(full, /text-\[18px\] font-bold leading-\[23px\] text-slate-950/);
-  assert.match(full, /h-\[22px\] w-\[22px\]/);
-  assert.match(full, /px-6 pb-8 pt-4/);
-  assert.match(full, /gap-3\.5 border-t border-\[#D8DEE8\]/);
-  assert.match(full, /min-h-\[50px\][^"]*bg-\[#004BB8\][^"]*text-base font-bold leading-\[22px\]/);
+  assert.match(full, /fixed inset-0 z-\[9999\] bg-slate-950\/35/);
+  assert.match(full, /h-\[95dvh\][^"]*rounded-t-\[20px\][^"]*bg-\[#F2F4F8\]/);
+  assert.match(full, /relative flex h-16[^"]*bg-\[#F2F4F8\] px-5/);
+  assert.match(full, /text-base font-semibold text-slate-950/);
+  assert.match(full, /absolute right-3[^"]*h-11 w-11[^"]*rounded-lg text-slate-700/);
+  assert.match(full, /overflow-y-auto[^"]*bg-\[#F2F4F8\] px-6 py-4/);
+  assert.match(full, /gap-3 border-t border-\[#D8DEE8\][^"]*shadow-\[0_-10px_24px_rgba\(15,23,42,0\.08\)\]/);
+  assert.match(full, /h-11 w-\[30%\][^"]*rounded-lg[^"]*text-sm font-semibold text-slate-700/);
+  assert.match(full, /h-11 min-w-0 flex-1 rounded-lg bg-\[#004BB8\][^"]*text-sm font-semibold text-white/);
 
   assert.match(sheet, /grid gap-6 bg-transparent/);
-  assert.match(sheet, /text-\[15px\] font-extrabold text-slate-950/);
-  assert.match(sheet, /min-h-\[46px\]/);
-  assert.match(sheet, /border-\[#D8DEE8\] bg-transparent/);
-  assert.doesNotMatch(sheet, /data-mobile-flight-filter-footer|border-b border-slate-200 pb-6/);
+  assert.match(sheet, /text-lg font-semibold leading-6 text-slate-950/);
+  assert.match(sheet, /min-h-11 w-full[^"]*text-sm font-normal text-slate-700/);
+  assert.match(sheet, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
+  assert.match(sheet, /border-slate-300 bg-white/);
+  assert.match(sheet, /#2F73C8/);
 
   const quickStart = source.indexOf("const renderSortChoice =");
   const quickEnd = source.indexOf("function renderFloatingFilterButton", quickStart);
   const quick = source.slice(quickStart, quickEnd);
-  assert.match(quick, /cars-native-quick-scrim/);
-  assert.match(quick, /cars-native-quick-sheet/);
-  assert.match(quick, /min-h-\[240px\]/);
-  assert.match(quick, /max-h-\[min\(76dvh,620px\)\]/);
-  assert.match(quick, /grid min-h-\[76px\][^"]*grid-cols-\[44px_minmax\(0,1fr\)_44px\]/);
-  assert.match(quick, /min-h-\[52px\]/);
-  assert.match(quick, /rounded-\[4px\] border-\[1\.5px\]/);
-  assert.match(quick, /bg-\[#004BB8\]/);
-  assert.doesNotMatch(quick, /bg-\[#075EE8\]/);
-
-  assert.match(styles, /cars-native-quick-scrim-in[\s\S]*160ms ease-out/);
-  assert.match(styles, /cars-native-quick-sheet-in[\s\S]*220ms ease-out/);
+  assert.match(quick, /mobile-results-sheet-backdrop-layer/);
+  assert.match(quick, /bg-\[rgba\(8,18,35,0\.52\)\]/);
+  assert.match(quick, /max-h-\[min\(76dvh,620px\)\] mx-3 mb-3 w-\[calc\(100%-24px\)\]/);
+  assert.match(quick, /rounded-\[24px\] bg-\[#F2F4F8\] shadow-none mobile-results-sheet-surface mobile-results-sheet-surface-smooth/);
+  assert.match(quick, /relative flex min-h-16 items-center justify-center bg-\[#F2F4F8\] px-16 py-3/);
+  assert.match(quick, /text-base font-semibold text-slate-950/);
+  assert.match(quick, /h-11 w-\[32%\][^"]*rounded-lg/);
+  assert.match(quick, /border-\[#142033\] bg-\[#142033\] text-white/);
+  assert.doesNotMatch(quick, /bg-\[#075EE8\]|bg-\[#EAF2FF\]/);
 });
 
 test("pagination uses an occluding full-page transition with an accessible status on mobile and desktop", async () => {

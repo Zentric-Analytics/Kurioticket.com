@@ -58,9 +58,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="grid gap-[5px]">
-      <div className="flex min-h-7 items-center">
-        <h3 className="text-[15px] font-extrabold text-slate-950">{title}</h3>
+    <section className="grid gap-0.5 border-t-0 bg-transparent py-0">
+      <div className="flex min-h-11 items-center">
+        <h3 className="text-lg font-semibold leading-6 text-slate-950">{title}</h3>
       </div>
       <div>{children}</div>
     </section>
@@ -86,22 +86,24 @@ function CheckRow({
       role="checkbox"
       aria-checked={checked}
       onClick={onChange}
-      className="flex min-h-[46px] w-full items-center gap-2.5 text-left text-[13px] font-medium text-slate-950 transition-opacity active:opacity-70 focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
+      className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg bg-transparent px-0 py-1.5 text-left text-sm font-normal text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30"
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "flex h-5 w-5 shrink-0 items-center justify-center rounded border-[1.5px] transition-colors",
-          checked
-            ? "border-[#004BB8] bg-[#004BB8] text-white"
-            : "border-[#D8DEE8] bg-transparent",
-        )}
-      >
-        {checked ? <span className="text-[13px] font-bold leading-none">✓</span> : null}
+      <span className="flex min-w-0 flex-1 items-center gap-[10px]">
+        <span
+          aria-hidden="true"
+          className={cn(
+            "flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors",
+            checked
+              ? "border-[#0067DB] bg-[#0067DB] text-white"
+              : "border-slate-300 bg-white",
+          )}
+        >
+          {checked ? <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" /> : null}
+        </span>
+        <span className={cn("min-w-0 flex-1 break-words", checked && "font-semibold text-[#07133B]")}>{label}</span>
       </span>
-      <span className="min-w-0 flex-1 break-words">{label}</span>
       {count !== undefined ? (
-        <span className="ms-0.5 shrink-0 text-right text-xs leading-4 tabular-nums text-slate-500">
+        <span className="min-w-6 shrink-0 text-right text-xs font-medium tabular-nums text-slate-500">
           {count}
         </span>
       ) : null}
@@ -235,7 +237,7 @@ export function MobileFlightFiltersSheet({
       : searchedAirlines.slice(0, 5);
 
   const rangeClass =
-    "h-11 w-full cursor-pointer appearance-none bg-transparent outline-none transition focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[linear-gradient(to_right,#004BB8_0_var(--flight-range-progress),#D8DEE8_var(--flight-range-progress)_100%)] [&::-webkit-slider-thumb]:mt-[-7px] [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#004BB8] [&::-webkit-slider-thumb]:shadow-[0_1px_4px_rgba(15,23,42,0.28)] [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-[#D8DEE8] [&::-moz-range-progress]:h-1 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#004BB8] [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-[3px] [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#004BB8] [&::-moz-range-thumb]:shadow-[0_1px_4px_rgba(15,23,42,0.28)]";
+    "h-11 w-full cursor-pointer appearance-none bg-transparent outline-none transition focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[linear-gradient(to_right,#2F73C8_0_var(--flight-range-progress),#D8DEE8_var(--flight-range-progress)_100%)] [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#2F73C8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-[#D8DEE8] [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#2F73C8] [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#2F73C8] [&::-moz-range-thumb]:shadow-md";
 
   const rangeProgressStyle = (
     value: number,

@@ -6281,9 +6281,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     ];
     const activeSortOption = mobileSortOptions.find((option) => option.value === sortMode) ?? mobileSortOptions[0];
     const shortcutButtonClass =
-      "focus-ring group inline-flex h-11 min-w-11 shrink-0 items-center justify-center whitespace-nowrap rounded-[9px] p-0 text-[13px] font-semibold leading-4 text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
-    const shortcutCapsuleClass =
-      "inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border px-2 text-[13px] font-semibold transition";
+      "group inline-flex min-h-11 min-w-11 shrink-0 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35";
+    const shortcutChipClass =
+      "inline-flex h-9 items-center gap-1 rounded-[9px] border px-2 text-[13px] font-semibold transition";
+    const menuItemClass =
+      "flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-transparent bg-transparent px-0 text-left text-[14px] font-normal text-slate-800 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
+
     const openSheet = (sheet: MobileShortcutSheet, launcher: HTMLButtonElement) => {
       mobileShortcutLauncherRef.current = launcher;
       setMobileDraftSort(sortMode);
@@ -6295,6 +6298,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setMobileShowAllAirlines(false);
       setMobileShortcutSheet(sheet);
     };
+
+    const clearShortcutFilter = (sheet: Exclude<MobileShortcutSheet, "sort">) => {
+      triggerFilterApplying();
+      if (sheet === "airlines") setSelectedAirlines([]);
+      if (sheet === "stops") setSelectedStops([]);
+      if (sheet === "airports") {
+        setSelectedFromAirports([]);
+        setSelectedToAirports([]);
+      }
+      handleUserFilterCommit();
+    };
+
     const renderTrigger = (
       sheet: MobileShortcutSheet,
       label: string,
@@ -6303,41 +6318,62 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       const selected = sheet !== "sort" && selectedCount > 0;
 
       return (
-        <button
-          type="button"
-          aria-haspopup="dialog"
-          aria-expanded={mobileShortcutSheet === sheet}
-          onClick={(event) => openSheet(sheet, event.currentTarget)}
-          className={shortcutButtonClass}
-        >
+        <div className="group inline-flex min-h-11 min-w-11 shrink-0 items-center">
           <span
             className={cn(
-              shortcutCapsuleClass,
+              shortcutChipClass,
+              "relative overflow-hidden p-0",
               selected
-                ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
+                ? "border-[#142033] bg-[#142033] text-white"
                 : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
             )}
           >
-            <span className="whitespace-nowrap">{label}</span>
-            {selected ? (
-              <span className="rounded-full bg-[#004BB8] px-1.5 py-0.5 text-[10px] text-white">
-                {selectedCount}
-              </span>
-            ) : null}
-            <ChevronDown
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={mobileShortcutSheet === sheet}
+              aria-pressed={selected}
               className={cn(
-                "shrink-0 transition-transform",
-                sheet === "sort" ? "h-[13px] w-[13px] text-slate-500" : "h-3.5 w-3.5",
-                mobileShortcutSheet === sheet && "rotate-180",
+                "focus-ring inline-flex h-full min-w-0 items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35",
+                selected ? "pl-2 pr-6" : "px-2",
               )}
-              aria-hidden="true"
-            />
+              onClick={(event) => {
+                event.stopPropagation();
+                openSheet(sheet, event.currentTarget);
+              }}
+            >
+              <span className="max-w-[11rem] truncate">{label}</span>
+              {!selected ? (
+                <ChevronDown
+                  aria-hidden="true"
+                  className={cn(
+                    "h-3.5 w-3.5 shrink-0 transition-transform",
+                    mobileShortcutSheet === sheet && "rotate-180",
+                  )}
+                />
+              ) : null}
+            </button>
+            {selected ? (
+              <button
+                type="button"
+                aria-label={`Clear ${label} filter`}
+                className="focus-ring absolute right-0.5 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/70"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  clearShortcutFilter(sheet as Exclude<MobileShortcutSheet, "sort">);
+                }}
+              >
+                <X className="h-3 w-3" strokeWidth={2.1} aria-hidden="true" />
+              </button>
+            ) : null}
           </span>
-        </button>
+        </div>
       );
     };
+
     const toggleDraft = (value: string, values: string[], setValues: Dispatch<SetStateAction<string[]>>) =>
       setValues(values.includes(value) ? values.filter((entry) => entry !== value) : [...values, value]);
+
     const draftFilterState: FlightFilterState = {
       ...authoritativeFilterState,
       airlines: mobileShortcutSheet === "airlines" ? mobileDraftAirlines : authoritativeFilterState.airlines,
@@ -6346,6 +6382,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       toAirports: mobileShortcutSheet === "airports" ? mobileDraftToAirports : authoritativeFilterState.toAirports,
     };
     const draftMatches = matchingFlightCount(results, draftFilterState, flightMatchContext);
+
     const applySheet = () => {
       if (mobileShortcutSheet === "sort") setSortMode(mobileDraftSort);
       if (mobileShortcutSheet === "airlines") setSelectedAirlines(mobileDraftAirlines);
@@ -6358,6 +6395,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       handleUserFilterCommit();
       closeMobileShortcutSheet();
     };
+
     const resetSheet = () => {
       if (mobileShortcutSheet === "sort") setMobileDraftSort("best");
       if (mobileShortcutSheet === "airlines") setMobileDraftAirlines([]);
@@ -6367,11 +6405,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         setMobileDraftToAirports([]);
       }
     };
+
     const filteredAirlines = airlineOptions.filter((option) => !mobileAirlineSearch.trim() || option.label.toLowerCase().includes(mobileAirlineSearch.trim().toLowerCase()) || mobileDraftAirlines.includes(option.value));
     const visibleAirlines = mobileAirlineSearch.trim() || mobileShowAllAirlines ? filteredAirlines : filteredAirlines.slice(0, 5);
     const fromAirportOptions = mobileFromAirportOptions;
     const toAirportOptions = mobileToAirportOptions;
-    const sheetTitle = mobileShortcutSheet === "sort" ? "Sort flights" : mobileShortcutSheet === "airlines" ? "Airlines" : mobileShortcutSheet === "stops" ? "Stops" : "Airports";
+    const sheetTitle = mobileShortcutSheet === "sort" ? "Sort" : mobileShortcutSheet === "airlines" ? "Airlines" : mobileShortcutSheet === "stops" ? "Stops" : "Airports";
+
     const renderSortChoice = (
       label: string,
       description: string,
@@ -6380,23 +6420,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     ) => (
       <button
         type="button"
-        role="radio"
-        aria-checked={selected}
+        aria-pressed={selected}
         onClick={onClick}
-        className="flex min-h-[52px] w-full items-center px-[10px] py-[7px] text-start text-slate-950 focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
+        className={cn(menuItemClass, "min-h-12 text-[13px] leading-[18px]")}
       >
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold leading-5">{label}</span>
-          <span className="block text-[10.5px] font-medium leading-[14px] text-slate-500">
-            {description}
-          </span>
+        <span className="flex min-w-0 flex-col gap-1">
+          <span className="font-semibold">{label}</span>
+          <span className="text-xs text-slate-500">{description}</span>
         </span>
-        {selected ? (
-          <Check
-            className="h-[17px] w-[17px] shrink-0 text-[#004BB8]"
-            aria-hidden="true"
-          />
-        ) : null}
+        {selected ? <Check className="h-4 w-4 text-[#004BB8]" aria-hidden="true" /> : null}
       </button>
     );
 
@@ -6406,53 +6438,41 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       selected: boolean,
       onClick: () => void,
     ) => (
-      <label className="flex min-h-[52px] cursor-pointer items-center gap-[10px] px-[10px] focus-within:rounded-lg focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/35">
-        <input
-          type="checkbox"
-          checked={selected}
-          onChange={onClick}
-          className="peer sr-only"
-        />
-        <span
-          aria-hidden="true"
-          className={cn(
-            "flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border-[1.5px]",
-            selected
-              ? "border-[#004BB8] bg-[#004BB8]"
-              : "border-[#D8DEE8]",
-          )}
-        >
-          {selected ? (
-            <Check
-              className="h-3.5 w-3.5 text-white"
-              strokeWidth={3}
-              aria-hidden="true"
-            />
-          ) : null}
-        </span>
-        <span className="min-w-0 flex-1 text-start text-sm font-semibold leading-5 text-slate-950">
-          {label}
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={selected}
+        className={menuItemClass}
+        onClick={onClick}
+      >
+        <span className="flex min-w-0 items-center gap-[10px]">
+          <span
+            aria-hidden="true"
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-slate-300"
+          >
+            {selected ? <Check className="h-4 w-4 text-[#004BB8]" aria-hidden="true" /> : null}
+          </span>
+          <span className={cn("min-w-0 truncate", selected && "font-semibold text-[#07133B]")}>{label}</span>
         </span>
         {count !== undefined ? (
-          <span className="shrink-0 text-end text-[13px] font-medium tabular-nums text-slate-500">
-            {count}
+          <span className="flex items-center gap-2 text-sm font-medium text-slate-500">
+            <span>{count}</span>
           </span>
         ) : null}
-      </label>
+      </button>
     );
+
     const sheet = mobileShortcutSheet && typeof document !== "undefined" ? createPortal(
       <div
         data-flight-quick-sheet-backdrop
-        className="fixed inset-0 z-[10010] flex items-end p-3 sm:hidden"
+        className="fixed inset-0 z-[10020] flex items-end sm:hidden"
         role="presentation"
-        onMouseDown={(event) => {
-          if (event.target === event.currentTarget) closeMobileShortcutSheet();
-        }}
+        onMouseDown={() => closeMobileShortcutSheet()}
       >
         <div
           aria-hidden="true"
           data-flight-quick-sheet-scrim
-          className="cars-native-quick-scrim pointer-events-none absolute inset-0 bg-[rgba(15,23,42,0.35)]"
+          className="mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 bg-[rgba(8,18,35,0.52)]"
         />
         <section
           data-flight-quick-sheet
@@ -6460,31 +6480,35 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           role="dialog"
           aria-modal="true"
           aria-labelledby="mobile-flight-quick-sheet-title"
-          className="cars-native-quick-sheet relative z-10 flex min-h-[240px] max-h-[min(76dvh,620px)] w-full flex-col overflow-hidden rounded-[24px] bg-[#F2F4F8] shadow-[0_16px_36px_rgba(15,23,42,0.2)]"
+          className="max-h-[min(76dvh,620px)] mx-3 mb-3 w-[calc(100%-24px)] overflow-hidden rounded-[24px] bg-[#F2F4F8] shadow-none mobile-results-sheet-surface mobile-results-sheet-surface-smooth"
           onMouseDown={(event) => event.stopPropagation()}
         >
-          <header className="grid min-h-[76px] shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-center bg-[#F2F4F8] px-[10px]">
-            <span aria-hidden="true" className="h-11 w-11" />
+          <header className="relative flex min-h-16 items-center justify-center bg-[#F2F4F8] px-16 py-3">
             <h2
               id="mobile-flight-quick-sheet-title"
-              className="text-center text-[18px] font-bold leading-[23px] text-slate-950"
+              className="text-base font-semibold text-slate-950"
             >
-              {mobileShortcutSheet === "sort" ? "Sort" : sheetTitle}
+              {sheetTitle}
             </h2>
             <button
               ref={mobileShortcutSheetCloseRef}
               type="button"
-              aria-label={`Close ${sheetTitle.toLowerCase()}`}
+              aria-label={`Close ${sheetTitle.toLowerCase()} selector`}
               onClick={() => closeMobileShortcutSheet()}
-              className="inline-flex h-11 w-11 items-center justify-center text-slate-700 focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+              className="absolute right-3 inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
             >
-              <X className="h-[22px] w-[22px]" aria-hidden="true" />
+              <X className="h-5 w-5" aria-hidden="true" />
             </button>
           </header>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#F2F4F8] p-4">
-            {mobileShortcutSheet === "sort" ? (
-              <div role="radiogroup">
-                {mobileSortOptions.map((option) => (
+
+          <div
+            className={cn(
+              "max-h-[calc(min(76dvh,620px)-9rem)] overflow-y-auto overscroll-contain bg-[#F2F4F8] px-6",
+              mobileShortcutSheet === "sort" ? "space-y-1 px-10 py-6" : "space-y-2 py-4",
+            )}
+          >
+            {mobileShortcutSheet === "sort"
+              ? mobileSortOptions.map((option) => (
                   <div key={option.value}>
                     {renderSortChoice(
                       option.label,
@@ -6493,9 +6517,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       () => setMobileDraftSort(option.value),
                     )}
                   </div>
-                ))}
-              </div>
-            ) : null}
+                ))
+              : null}
+
             {mobileShortcutSheet === "airlines" ? (
               <div>
                 <label className="sr-only" htmlFor="mobile-flight-airline-search">
@@ -6507,36 +6531,39 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   value={mobileAirlineSearch}
                   onChange={(event) => setMobileAirlineSearch(event.target.value)}
                   placeholder="Search airlines"
-                  className="mb-2 h-11 w-full rounded-[10px] border border-slate-300 bg-white px-3 text-[13px] font-medium text-slate-950 outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/25"
+                  className="mb-2 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none placeholder:text-slate-500 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20"
                 />
-                {visibleAirlines.map((option) => (
-                  <div key={option.value}>
-                    {renderFilterChoice(
-                      option.label,
-                      matchingFlightCount(results, { ...draftFilterState, airlines: [option.value] }, flightMatchContext),
-                      mobileDraftAirlines.includes(option.value),
-                      () =>
-                        toggleDraft(
-                          option.value,
-                          mobileDraftAirlines,
-                          setMobileDraftAirlines,
-                        ),
-                    )}
-                  </div>
-                ))}
+                <div className="space-y-0.5">
+                  {visibleAirlines.map((option) => (
+                    <div key={option.value}>
+                      {renderFilterChoice(
+                        option.label,
+                        matchingFlightCount(results, { ...draftFilterState, airlines: [option.value] }, flightMatchContext),
+                        mobileDraftAirlines.includes(option.value),
+                        () =>
+                          toggleDraft(
+                            option.value,
+                            mobileDraftAirlines,
+                            setMobileDraftAirlines,
+                          ),
+                      )}
+                    </div>
+                  ))}
+                </div>
                 {!mobileAirlineSearch.trim() && airlineOptions.length > 5 ? (
                   <button
                     type="button"
                     onClick={() => setMobileShowAllAirlines((current) => !current)}
-                    className="focus-ring mt-1 min-h-11 px-2 text-[13px] font-semibold text-[#004BB8]"
+                    className="mt-2 text-xs font-semibold text-[#004BB8] transition-colors hover:text-[#021C2B]"
                   >
-                    {mobileShowAllAirlines ? "Show less" : "Show more"}
+                    {mobileShowAllAirlines ? "Show less" : `Show more (${Math.max(0, airlineOptions.length - 5)})`}
                   </button>
                 ) : null}
               </div>
             ) : null}
+
             {mobileShortcutSheet === "stops" ? (
-              <div>
+              <div className="space-y-0.5">
                 {stopOptions.map((option) => (
                   <div key={option.value}>
                     {renderFilterChoice(
@@ -6554,55 +6581,61 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 ))}
               </div>
             ) : null}
+
             {mobileShortcutSheet === "airports" ? (
               <div>
-                <h3 className="px-2 pb-1 pt-1 text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">
+                <h3 className="flex min-h-11 items-center text-lg font-semibold leading-6 text-slate-950">
                   From
                 </h3>
-                {fromAirportOptions.map((option) => (
-                  <div key={`from-${option.value}`}>
-                    {renderFilterChoice(
-                      option.label,
-                      matchingFlightCount(results, { ...draftFilterState, fromAirports: [option.value] }, flightMatchContext),
-                      mobileDraftFromAirports.includes(option.value),
-                      () =>
-                        toggleDraft(
-                          option.value,
-                          mobileDraftFromAirports,
-                          setMobileDraftFromAirports,
-                        ),
-                    )}
-                  </div>
-                ))}
-                <h3 className="mt-3 px-2 pb-1 text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">
+                <div className="space-y-0.5">
+                  {fromAirportOptions.map((option) => (
+                    <div key={`from-${option.value}`}>
+                      {renderFilterChoice(
+                        option.label,
+                        matchingFlightCount(results, { ...draftFilterState, fromAirports: [option.value] }, flightMatchContext),
+                        mobileDraftFromAirports.includes(option.value),
+                        () =>
+                          toggleDraft(
+                            option.value,
+                            mobileDraftFromAirports,
+                            setMobileDraftFromAirports,
+                          ),
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <h3 className="mt-3 flex min-h-11 items-center text-lg font-semibold leading-6 text-slate-950">
                   To
                 </h3>
-                {toAirportOptions.map((option) => (
-                  <div key={`to-${option.value}`}>
-                    {renderFilterChoice(
-                      option.label,
-                      matchingFlightCount(results, { ...draftFilterState, toAirports: [option.value] }, flightMatchContext),
-                      mobileDraftToAirports.includes(option.value),
-                      () =>
-                        toggleDraft(
-                          option.value,
-                          mobileDraftToAirports,
-                          setMobileDraftToAirports,
-                        ),
-                    )}
-                  </div>
-                ))}
+                <div className="space-y-0.5">
+                  {toAirportOptions.map((option) => (
+                    <div key={`to-${option.value}`}>
+                      {renderFilterChoice(
+                        option.label,
+                        matchingFlightCount(results, { ...draftFilterState, toAirports: [option.value] }, flightMatchContext),
+                        mobileDraftToAirports.includes(option.value),
+                        () =>
+                          toggleDraft(
+                            option.value,
+                            mobileDraftToAirports,
+                            setMobileDraftToAirports,
+                          ),
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : null}
           </div>
+
           <footer
             data-flight-quick-sheet-footer
-            className="flex shrink-0 items-center justify-between gap-[10px] bg-[#F2F4F8] px-4 pb-[max(12px,calc(env(safe-area-inset-bottom)-12px))] pt-3"
+            className="flex items-center justify-between gap-3 bg-[#F2F4F8] px-6 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3"
           >
             <button
               type="button"
               onClick={resetSheet}
-              className="h-[49px] min-w-[116px] shrink-0 rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+              className="h-11 w-[32%] shrink-0 rounded-lg border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-sm font-semibold text-slate-700"
             >
               Reset
             </button>
@@ -6611,34 +6644,33 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               onClick={applySheet}
               disabled={mobileShortcutSheet !== "sort" && draftMatches === 0}
               aria-disabled={mobileShortcutSheet !== "sort" && draftMatches === 0}
-              className="flex h-[49px] min-w-0 max-w-[calc(100%_-_126px)] items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap rounded-xl bg-[#004BB8] px-5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+              className="h-11 w-[32%] shrink-0 rounded-lg bg-[#004BB8] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
             >
-              {mobileShortcutSheet === "sort"
-                ? "Apply"
-                : draftMatches === 0
-                  ? "No matching flights"
-                  : `View ${draftMatches} ${draftMatches === 1 ? "flight" : "flights"}`}
+              Apply
             </button>
           </footer>
         </section>
       </div>,
       document.body,
     ) : null;
+
     return (
       <>
-        <div data-mobile-flight-shortcuts className="w-full min-w-0 overflow-x-auto overscroll-x-contain ps-3 pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
-          <div className="flex w-max flex-nowrap items-center gap-1.5">
-            {renderFloatingFilterButton(shortcutButtonClass)}
-            {renderTrigger("sort", activeSortOption.label)}
-            {renderTrigger("airlines", "Airlines", selectedAirlines.length)}
-            {renderTrigger("stops", "Stops", selectedStops.length)}
-            {renderTrigger("airports", "Airports", selectedFromAirports.length + selectedToAirports.length)}
-          </div>
+        <div
+          data-mobile-flight-shortcuts
+          className="scrollbar-hide -me-4 flex w-[calc(100%+1rem)] flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
+        >
+          {renderFloatingFilterButton(shortcutButtonClass)}
+          {renderTrigger("sort", activeSortOption.label)}
+          {renderTrigger("airlines", "Airlines", selectedAirlines.length)}
+          {renderTrigger("stops", "Stops", selectedStops.length)}
+          {renderTrigger("airports", "Airports", selectedFromAirports.length + selectedToAirports.length)}
         </div>
         {sheet}
       </>
     );
   }
+
   function renderFloatingFilterButton(className?: string) {
     const label =
       activeFilterCount > 0
@@ -6653,22 +6685,24 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <button
         type="button"
         aria-label={label}
-        className={cn(
-          "focus-ring group relative inline-flex h-11 min-w-11 shrink-0 items-center justify-center whitespace-nowrap rounded-[9px] p-0 text-[13px] font-semibold leading-4 text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
-          className,
-        )}
+        className={className}
         onClick={handleClick}
       >
-        <span className="inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2 text-[13px] font-semibold text-[#142033] transition group-hover:bg-slate-50">
-          <SlidersHorizontal
-            className="h-4 w-4 shrink-0"
-            aria-hidden="true"
-          />
-          <span>
-            {activeFilterCount > 0
-              ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount))
-              : "Filters"}
-          </span>
+        <span
+          className={cn(
+            "inline-flex h-9 items-center gap-1 rounded-[9px] border px-2 text-[13px] font-semibold transition",
+            activeFilterCount > 0
+              ? "border-[#142033] bg-white text-[#142033]"
+              : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
+          )}
+        >
+          <SlidersHorizontal className="h-4 w-4 shrink-0" strokeWidth={2.2} aria-hidden="true" />
+          <span>Filter</span>
+          {activeFilterCount > 0 ? (
+            <span className="rounded-full bg-[#F1F5F9] px-1.5 py-0.5 text-[10px] font-semibold text-[#142033]">
+              {activeFilterCount}
+            </span>
+          ) : null}
         </span>
       </button>
     );
@@ -6818,155 +6852,161 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     };
 
     return (
-      <aside
-        ref={mobileFiltersDialogRef}
-        id="flight-mobile-filters-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="flight-mobile-filters-title"
-        className="fixed inset-0 z-[10000] flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2F4F8] sm:hidden"
-      >
-        <header className="flex min-h-[76px] shrink-0 items-center bg-[#F2F4F8] pe-[10px] ps-5 pt-[env(safe-area-inset-top)]">
-          <div className="min-w-0 flex-1">
-            <h2
-              id="flight-mobile-filters-title"
-              className="truncate text-[18px] font-bold leading-[23px] text-slate-950"
-            >
-              Filters
-            </h2>
-            {activeFilterCount > 0 ? (
-              <p className="text-xs font-medium leading-4 text-slate-500">
-                {activeFilterCount} {activeFilterCount === 1 ? "filter" : "filters"} applied
-              </p>
-            ) : null}
-          </div>
-          <button
-            ref={mobileFiltersCloseButtonRef}
-            type="button"
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-700 transition hover:text-slate-950 focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-            aria-label="Close filters"
-            onClick={() => closeMobileFiltersDrawer()}
-          >
-            <X className="h-[22px] w-[22px]" aria-hidden="true" />
-          </button>
-        </header>
-
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#F2F4F8] px-6 pb-8 pt-4">
-          <MobileFlightFiltersSheet
-            results={results}
-            priceBounds={priceBounds}
-            maxPrice={maxPrice}
-            formatPrice={(value) =>
-              priceLabelCurrency
-                ? formatResultPriceLabel(value, selectedCurrency)
-                : "—"
-            }
-            onMaxPrice={(value) => {
-              triggerFilterApplying();
-              setMaxPrice(value);
-            }}
-            durationBounds={durationBounds}
-            maxDurationMinutes={maxDurationMinutes}
-            onMaxDuration={(value) => {
-              triggerFilterApplying();
-              setMaxDurationMinutes(value);
-            }}
-            stopOptions={stopOptions}
-            selectedStops={selectedStops}
-            onToggleStop={(value) => {
-              triggerFilterApplying();
-              toggleFilterValue(value, setSelectedStops);
-            }}
-            airlineOptions={mobileAirlineOptions}
-            selectedAirlines={selectedAirlines}
-            onToggleAirline={(value) => {
-              triggerFilterApplying();
-              toggleFilterValue(value, setSelectedAirlines);
-            }}
-            fromAirportOptions={mobileFromAirportOptions}
-            toAirportOptions={mobileToAirportOptions}
-            selectedFromAirports={selectedFromAirports}
-            selectedToAirports={selectedToAirports}
-            onToggleFromAirport={(value) => {
-              triggerFilterApplying();
-              toggleFilterValue(value, setSelectedFromAirports);
-            }}
-            onToggleToAirport={(value) => {
-              triggerFilterApplying();
-              toggleFilterValue(value, setSelectedToAirports);
-            }}
-            baggageSupported={results.some(hasStructuredBaggage)}
-            refundableSupported={results.some(hasStructuredFlexibility)}
-            baggageIncludedOnly={baggageIncludedOnly}
-            flexibleOnly={flexibleOnly}
-            onBaggage={() => {
-              triggerFilterApplying();
-              setBaggageIncludedOnly(!baggageIncludedOnly);
-            }}
-            onFlexible={() => {
-              triggerFilterApplying();
-              setFlexibleOnly(!flexibleOnly);
-            }}
-            journeyTimeMaximums={{
-              ...mobileJourneyTimeMaximums,
-              outbound: outboundTimes,
-            }}
-            onJourneyTimeChange={(key, mode, value) => {
-              triggerFilterApplying();
-              if (key === "outbound") {
-                if (mode === "takeoff") {
-                  setMaxTakeoffMinutes(value ?? timeBounds.takeoff?.max ?? null);
-                } else {
-                  setMaxLandingMinutes(value ?? timeBounds.landing?.max ?? null);
-                }
-                return;
-              }
-              setMobileJourneyTimeMaximums((current) => ({
-                ...current,
-                [key]: {
-                  takeoff: current[key]?.takeoff ?? null,
-                  landing: current[key]?.landing ?? null,
-                  [mode]: value,
-                },
-              }));
-            }}
-          />
-        </div>
-
-        <footer
-          data-flight-full-filters-footer
-          className="flex shrink-0 items-center justify-between gap-3.5 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3"
+      <>
+        <button
+          type="button"
+          aria-label="Close filters"
+          onClick={() => closeMobileFiltersDrawer()}
+          className="fixed inset-0 z-[9999] bg-slate-950/35 sm:hidden"
+        />
+        <aside
+          ref={mobileFiltersDialogRef}
+          id="flight-mobile-filters-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="flight-mobile-filters-title"
+          className="fixed inset-x-0 bottom-0 z-[10000] flex h-[95dvh] w-full flex-col overflow-clip rounded-t-[20px] bg-[#F2F4F8] shadow-2xl sm:hidden"
         >
-          {activeFilterCount > 0 ? (
+          <header className="relative flex h-16 shrink-0 items-center justify-start bg-[#F2F4F8] px-5">
+            <div>
+              <h2
+                id="flight-mobile-filters-title"
+                className="text-base font-semibold text-slate-950"
+              >
+                Filters
+              </h2>
+              {activeFilterCount > 0 ? (
+                <p className="text-xs font-medium text-slate-500">
+                  {activeFilterCount} applied
+                </p>
+              ) : null}
+            </div>
+            <button
+              ref={mobileFiltersCloseButtonRef}
+              type="button"
+              className="focus-ring absolute right-3 flex h-11 w-11 items-center justify-center rounded-lg text-slate-700"
+              aria-label="Close filters"
+              onClick={() => closeMobileFiltersDrawer()}
+            >
+              <X size={22} aria-hidden="true" />
+            </button>
+          </header>
+
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#F2F4F8] px-6 py-4">
+            <MobileFlightFiltersSheet
+              results={results}
+              priceBounds={priceBounds}
+              maxPrice={maxPrice}
+              formatPrice={(value) =>
+                priceLabelCurrency
+                  ? formatResultPriceLabel(value, selectedCurrency)
+                  : "—"
+              }
+              onMaxPrice={(value) => {
+                triggerFilterApplying();
+                setMaxPrice(value);
+              }}
+              durationBounds={durationBounds}
+              maxDurationMinutes={maxDurationMinutes}
+              onMaxDuration={(value) => {
+                triggerFilterApplying();
+                setMaxDurationMinutes(value);
+              }}
+              stopOptions={stopOptions}
+              selectedStops={selectedStops}
+              onToggleStop={(value) => {
+                triggerFilterApplying();
+                toggleFilterValue(value, setSelectedStops);
+              }}
+              airlineOptions={mobileAirlineOptions}
+              selectedAirlines={selectedAirlines}
+              onToggleAirline={(value) => {
+                triggerFilterApplying();
+                toggleFilterValue(value, setSelectedAirlines);
+              }}
+              fromAirportOptions={mobileFromAirportOptions}
+              toAirportOptions={mobileToAirportOptions}
+              selectedFromAirports={selectedFromAirports}
+              selectedToAirports={selectedToAirports}
+              onToggleFromAirport={(value) => {
+                triggerFilterApplying();
+                toggleFilterValue(value, setSelectedFromAirports);
+              }}
+              onToggleToAirport={(value) => {
+                triggerFilterApplying();
+                toggleFilterValue(value, setSelectedToAirports);
+              }}
+              baggageSupported={results.some(hasStructuredBaggage)}
+              refundableSupported={results.some(hasStructuredFlexibility)}
+              baggageIncludedOnly={baggageIncludedOnly}
+              flexibleOnly={flexibleOnly}
+              onBaggage={() => {
+                triggerFilterApplying();
+                setBaggageIncludedOnly(!baggageIncludedOnly);
+              }}
+              onFlexible={() => {
+                triggerFilterApplying();
+                setFlexibleOnly(!flexibleOnly);
+              }}
+              journeyTimeMaximums={{
+                ...mobileJourneyTimeMaximums,
+                outbound: outboundTimes,
+              }}
+              onJourneyTimeChange={(key, mode, value) => {
+                triggerFilterApplying();
+                if (key === "outbound") {
+                  if (mode === "takeoff") {
+                    setMaxTakeoffMinutes(value ?? timeBounds.takeoff?.max ?? null);
+                  } else {
+                    setMaxLandingMinutes(value ?? timeBounds.landing?.max ?? null);
+                  }
+                  return;
+                }
+                setMobileJourneyTimeMaximums((current) => ({
+                  ...current,
+                  [key]: {
+                    takeoff: current[key]?.takeoff ?? null,
+                    landing: current[key]?.landing ?? null,
+                    [mode]: value,
+                  },
+                }));
+              }}
+            />
+          </div>
+
+          <footer
+            data-flight-full-filters-footer
+            className="flex shrink-0 items-center gap-3 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.08)]"
+          >
+            {activeFilterCount > 0 ? (
+              <button
+                type="button"
+                aria-label="Reset flight filters"
+                onClick={clearFlightFilters}
+                className="focus-ring h-11 w-[30%] shrink-0 rounded-lg border border-[#D8DEE8] bg-[#F2F4F8] px-5 text-sm font-semibold text-slate-700"
+              >
+                Reset
+              </button>
+            ) : null}
             <button
               type="button"
-              onClick={clearFlightFilters}
-              className="h-[49px] min-w-[116px] shrink-0 rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+              disabled={sortedResults.length === 0}
+              onClick={() => {
+                shouldScrollToTopAfterFilterApplyRef.current = true;
+                triggerFilterApplying();
+                closeMobileFiltersDrawer();
+              }}
+              className="h-11 min-w-0 flex-1 rounded-lg bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
             >
-              Reset
+              {sortedResults.length === 0
+                ? "No matching flights"
+                : activeFilterCount > 0
+                  ? `View ${sortedResults.length} matching ${sortedResults.length === 1 ? "flight" : "flights"}`
+                  : `View all ${sortedResults.length} flights`}
             </button>
-          ) : null}
-          <button
-            type="button"
-            disabled={sortedResults.length === 0}
-            onClick={() => {
-              shouldScrollToTopAfterFilterApplyRef.current = true;
-              triggerFilterApplying();
-              closeMobileFiltersDrawer();
-            }}
-            className={cn(
-              "min-h-[50px] min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-[10px] bg-[#004BB8] px-5 text-base font-bold leading-[22px] text-white disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
-              activeFilterCount === 0
-                ? "flex-1"
-                : "max-w-[calc(100%_-_130px)]",
-            )}
-          >
-            {sortedResults.length === 0
-              ? "No flights"
-              : `View ${sortedResults.length} ${sortedResults.length === 1 ? "flight" : "flights"}`}
-          </button>
-        </footer>
-      </aside>
+          </footer>
+        </aside>
+      </>
     );
   }
 
@@ -7464,7 +7504,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 inert={mobileSearchOpen ? true : undefined}
                 aria-hidden={mobileSearchOpen ? true : undefined}
                 className={cn(
-                  "-mx-3 px-0 py-1 sm:hidden",
+                  "px-0 py-1 sm:hidden",
                   mobileSearchOpen && "pointer-events-none",
                 )}
                 aria-label="Flight result filters"
