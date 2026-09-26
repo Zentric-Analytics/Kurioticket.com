@@ -39,11 +39,27 @@ test("Cars Results preserves AppHeader while matching Flights mobile header prop
 
 test("Cars Results owns a permanent non-interactive white mobile safe-area layer", () => {
   assert.match(carsSource, /<CarsResultsMobileSafeArea \/>/);
+  assert.match(safeAreaSource, /^"use client";/);
+  assert.match(safeAreaSource, /data-cars-results-mobile-safe-area-probe/);
   assert.match(safeAreaSource, /data-cars-results-mobile-safe-area/);
   assert.match(
     safeAreaSource,
     /pointer-events-none fixed inset-x-0 top-0 z-\[100\] h-\[env\(safe-area-inset-top\)\] bg-white sm:hidden/,
   );
+});
+
+test("Cars Results freezes the largest observed iOS safe-area inset instead of letting scroll chrome collapse it", () => {
+  assert.match(safeAreaSource, /useLayoutEffect/);
+  assert.match(safeAreaSource, /probe\.getBoundingClientRect\(\)\.height/);
+  assert.match(safeAreaSource, /Math\.ceil/);
+  assert.match(safeAreaSource, /measuredHeight <= frozenHeight/);
+  assert.match(safeAreaSource, /surface\.style\.height = `\$\{measuredHeight\}px`/);
+  assert.match(safeAreaSource, /new ResizeObserver\(captureLargestInset\)/);
+  assert.match(safeAreaSource, /window\.addEventListener\("resize", scheduleCapture\)/);
+  assert.match(safeAreaSource, /window\.addEventListener\("orientationchange", resetForOrientation\)/);
+  assert.match(safeAreaSource, /surface\.style\.removeProperty\("height"\)/);
+  assert.doesNotMatch(safeAreaSource, /addEventListener\("scroll"/);
+  assert.doesNotMatch(safeAreaSource, /44px|47px|50px/);
 });
 
 test("Cars Results does not independently render product category tabs", () => {
