@@ -27,6 +27,21 @@ test("Cars full Filter follows the native Cars filter hierarchy without changing
   assert.match(cars, /desktop-filter-sidebar/);
 });
 
+test("Cars full Filter matches the browser-owned status-bar canvas to the filter surface", () => {
+  assert.match(
+    cars,
+    /import \{ acquireMobileResultsOverlayCanvas \} from "@\/lib\/search\/mobileResultsOverlayCanvas";/,
+  );
+  assert.match(
+    cars,
+    /useLayoutEffect\(\(\) => \{\s*if \(!filtersOpen \|\| typeof window === "undefined"\) return undefined;[\s\S]*?window\.matchMedia\("\(max-width: 1023px\)"\)[\s\S]*?acquireMobileResultsOverlayCanvas\(\{\s*canvasColor: "#F2F4F8",\s*\}\);[\s\S]*?\}, \[filtersOpen\]\);/,
+  );
+  assert.doesNotMatch(
+    cars,
+    /if \(!quickFilterOverlayOpen[\s\S]*?acquireMobileResultsOverlayCanvas/,
+  );
+});
+
 test("Cars mobile filter sections remain expanded with native row and checkbox geometry", () => {
   const start = cars.indexOf('if (layout === "mobile")');
   const end = cars.indexOf("\n  return (\n    <section\n      className={cn(", start);
