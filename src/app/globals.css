@@ -28,6 +28,7 @@
 }
 
 :root {
+  --cars-results-safe-area-top: env(safe-area-inset-top);
   --mobile-results-overlay-canvas: #a6a8ae;
   --background: #f2f6fa;
   --foreground: #021c2b;

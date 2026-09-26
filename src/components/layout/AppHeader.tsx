@@ -88,6 +88,7 @@ type AppHeaderProps = {
   flushDesktopBottom?: boolean;
   flushMobileBottom?: boolean;
   mobileSurface?: "white" | "muted";
+  stableMobileSafeAreaTop?: boolean;
 };
 
 const signedInAccountMenuItems = [
@@ -146,6 +147,7 @@ export function AppHeader({
   flushDesktopBottom = false,
   flushMobileBottom = false,
   mobileSurface = "white",
+  stableMobileSafeAreaTop = false,
 }: AppHeaderProps = {}) {
   const { data: session } = useSession();
 
@@ -720,7 +722,10 @@ export function AppHeader({
       <header
         data-app-header
         className={cn(
-          "relative z-50 border-b border-[#D8E1EC] bg-white pt-[env(safe-area-inset-top)] text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
+          "relative z-50 border-b border-[#D8E1EC] bg-white text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
+          stableMobileSafeAreaTop
+            ? "pt-[var(--cars-results-safe-area-top)] sm:pt-[env(safe-area-inset-top)]"
+            : "pt-[env(safe-area-inset-top)]",
           mobileSurface === "muted" && "max-sm:bg-[#F2F4F8]",
           mobileResultsSearch && mobileResultsSticky && "max-sm:sticky max-sm:top-0 max-sm:z-[950]",
           flushMobileBottom &&
