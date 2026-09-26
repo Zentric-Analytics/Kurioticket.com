@@ -7,6 +7,10 @@ const safeAreaSource = readFileSync(
   new URL("../../../components/results/CarsResultsMobileSafeArea.tsx", import.meta.url),
   "utf8",
 );
+const globalStyles = readFileSync(
+  new URL("../../globals.css", import.meta.url),
+  "utf8",
+);
 const flightsSource = readFileSync(
   new URL("../../flights/results/page.tsx", import.meta.url),
   "utf8",
@@ -36,45 +40,26 @@ test("Cars Results preserves AppHeader while matching Flights mobile header prop
   }
   assert.doesNotMatch(carsHeader, /mobileSurface="muted"/);
   assert.match(carsHeader, /stableMobileSafeAreaTop/);
+  assert.doesNotMatch(flightsHeader, /stableMobileSafeAreaTop/);
 });
 
 test("Cars Results owns a permanent non-interactive white mobile safe-area layer", () => {
   assert.match(carsSource, /<CarsResultsMobileSafeArea \/>/);
-  assert.match(safeAreaSource, /^"use client";/);
-  assert.match(safeAreaSource, /data-cars-results-mobile-safe-area-probe/);
   assert.match(safeAreaSource, /data-cars-results-mobile-safe-area/);
   assert.match(
     safeAreaSource,
     /pointer-events-none fixed inset-x-0 top-0 z-\[100\] h-\[var\(--cars-results-safe-area-top\)\] bg-white sm:hidden/,
   );
+  assert.doesNotMatch(safeAreaSource, /useLayoutEffect|ResizeObserver|requestAnimationFrame|addEventListener/);
 });
 
-test("Cars Results freezes the largest observed iOS safe-area inset instead of letting scroll chrome collapse it", () => {
+test("Cars Results uses the browser static max top inset so Safari scroll chrome cannot collapse the protected region", () => {
   assert.match(
-    safeAreaSource,
-    /CARS_RESULTS_SAFE_AREA_PROPERTY = "--cars-results-safe-area-top"/,
+    globalStyles,
+    /--cars-results-safe-area-top:\s*max\(\s*env\(safe-area-inset-top\),\s*env\(safe-area-max-inset-top, 0px\)\s*\);/,
   );
-  assert.match(safeAreaSource, /useLayoutEffect/);
-  assert.match(safeAreaSource, /probe\.getBoundingClientRect\(\)\.height/);
-  assert.match(safeAreaSource, /Math\.ceil/);
-  assert.match(safeAreaSource, /measuredHeight <= frozenHeight/);
-  assert.match(safeAreaSource, /root\.style\.setProperty/);
-  assert.match(safeAreaSource, /\$\{measuredHeight\}px/);
-  assert.match(safeAreaSource, /new ResizeObserver\(captureLargestInset\)/);
-  assert.match(
-    safeAreaSource,
-    /window\.addEventListener\("resize", scheduleCapture\)/,
-  );
-  assert.match(
-    safeAreaSource,
-    /window\.addEventListener\("orientationchange", resetForOrientation\)/,
-  );
-  assert.match(
-    safeAreaSource,
-    /root\.style\.removeProperty\(CARS_RESULTS_SAFE_AREA_PROPERTY\)/,
-  );
-  assert.doesNotMatch(safeAreaSource, /addEventListener\("scroll"/);
-  assert.doesNotMatch(safeAreaSource, /44px|47px|50px/);
+  assert.doesNotMatch(safeAreaSource, /safe-area-inset-top|safe-area-max-inset-top/);
+  assert.doesNotMatch(safeAreaSource, /44px|47px|50px|59px/);
 });
 
 test("Cars Results does not independently render product category tabs", () => {

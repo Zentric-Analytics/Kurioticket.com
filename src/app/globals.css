@@ -28,7 +28,10 @@
 }
 
 :root {
-  --cars-results-safe-area-top: env(safe-area-inset-top);
+  --cars-results-safe-area-top: max(
+    env(safe-area-inset-top),
+    env(safe-area-max-inset-top, 0px)
+  );
   --mobile-results-overlay-canvas: #a6a8ae;
   --background: #f2f6fa;
   --foreground: #021c2b;
