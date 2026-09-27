@@ -11,7 +11,7 @@ const details = readFileSync(new URL("./flightDetails/StandaloneFlightDetails.ts
 test("desktop Flight Results adopts approved mobile-web visual rules without replacing mobile contracts", () => {
   assert.match(results, /data-flight-results-main className="bg-\[#F5F7FB\][^"]*sm:bg-\[#F3F6FA\][^"]*lg:bg-\[#F5F7FB\]"/);
   assert.match(results, /data-desktop-cheaper-nearby/);
-  assert.match(results, /data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\][^"]*sm:mb-4"/);
+  assert.match(results, /className="max-sm:pt-2 max-sm:pb-1 sm:mb-4"><div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
   assert.match(results, /data-flight-results-card-list className="space-y-3 sm:space-y-4 sm:pt-2 lg:pt-3"/);
   assert.match(alert, /data-flight-price-alert[^\n]*className="block"/);
   assert.match(alert, /sm:min-h-\[56px\]/);
