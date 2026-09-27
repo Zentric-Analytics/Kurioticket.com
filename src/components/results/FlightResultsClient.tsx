@@ -7511,7 +7511,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 {renderMobileSortResultsRow()}
               </section>
 
-              {mobileFlightPriceAlertQuery ? <div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)] max-sm:mt-2 max-sm:mb-1 sm:mb-4"><FlightPriceAlertControl query={mobileFlightPriceAlertQuery} results={providerResults} /></div> : null}
+              {mobileFlightPriceAlertQuery ? <div className="max-sm:pt-2 max-sm:pb-1 sm:mb-4"><div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)]"><FlightPriceAlertControl query={mobileFlightPriceAlertQuery} results={providerResults} /></div></div> : null}
 
               <div data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden">
                 <div
