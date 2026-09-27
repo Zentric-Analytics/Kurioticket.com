@@ -2,7 +2,7 @@
 
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { useMemo, useState } from "react";
-import { ChevronDown, SlidersHorizontal } from "lucide-react";
+import { Check, ChevronDown, SlidersHorizontal } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -221,44 +221,57 @@ export function DesktopFlightFilters({
             <span className="min-w-0 text-right">{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.max) : "—"}</span>
           </div>
           <input aria-label={t("price")} className={rangeClass} type="range" min={priceBounds.min || 0} max={priceBounds.max || 0} step={25} value={priceBounds.max ? Math.min(maxPrice, priceBounds.max) : 0} disabled={!priceBounds.max} onPointerUp={onFilterCommit} onMouseUp={onFilterCommit} onTouchEnd={onFilterCommit} onKeyUp={onFilterCommit} onBlur={onFilterCommit} onChange={(event) => { onFilterChange(); setMaxPrice(Number(event.target.value)); }} />
+          {priceBounds.max && priceLabelCurrency ? <p className="mt-2 text-[12px] font-semibold leading-5 text-slate-950">{t("price")}: {formatFilterPrice(Math.min(maxPrice, priceBounds.max))}</p> : null}
         </section>
 
-        <OptionSection title={t("stops")} emptyText={t("stopsAppearAfterResultsLoad")}>{stopOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} secondaryLabel={option.rightLabel ? `${t("from").toLowerCase()} ${option.rightLabel}` : option.secondaryLabel} checked={selectedStops.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedStops); onFilterCommit(); }} />)}</OptionSection>
-
         <section>
-          <SectionTitle>{timeFilterMode === "takeoff" ? `${t("takeoffTimeFromOrigin")} (${airportCode || "—"})` : `${t("landingTimeAtDestination")} (${airportCode || "—"})`}</SectionTitle>
-          <div className="mb-2.5 grid grid-cols-2 rounded-md border border-slate-200 bg-slate-50 p-0.5">
-            {["takeoff", "landing"].map((mode) => <button key={mode} type="button" onClick={() => { onFilterChange(); setTimeFilterMode(mode as TimeFilterMode); onFilterCommit(); }} className={cn("rounded px-2 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30", isGuidedComfortable && "min-h-8 text-[13px]", timeFilterMode === mode ? "bg-white text-[#004BB8] shadow-sm" : "text-slate-600 hover:text-slate-950")}>{mode === "takeoff" ? t("takeoff") : t("landing")}</button>)}
+          <SectionTitle>{t("takeoff")} / {t("landing")}</SectionTitle>
+          <div className="mb-2.5 grid grid-cols-2 rounded-[10px] bg-slate-100 p-1">
+            {["takeoff", "landing"].map((mode) => <button key={mode} type="button" onClick={() => { onFilterChange(); setTimeFilterMode(mode as TimeFilterMode); onFilterCommit(); }} className={cn("min-h-9 rounded-lg px-2 py-1.5 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30", isGuidedComfortable && "min-h-10", timeFilterMode === mode ? "bg-white text-[#004BB8] shadow-sm" : "text-slate-600 hover:text-slate-950")}>{mode === "takeoff" ? t("takeoff") : t("landing")}</button>)}
           </div>
-          <div className={cn("mb-2.5 grid grid-cols-2 gap-4 text-[12px] font-medium leading-5 tabular-nums text-slate-700", isGuidedComfortable && "text-[13px]")}><span className="min-w-0">{timeBoundsForMode ? formatTimeFromMinutes(timeBoundsForMode.min, calendarLocale) : "—"}</span><span className="min-w-0 text-right">{timeBoundsForMode ? formatTimeFromMinutes(timeBoundsForMode.max, calendarLocale) : "—"}</span></div>
+          <div className={cn("mb-2.5 flex items-center justify-between gap-3 text-[12px] leading-5", isGuidedComfortable && "text-[13px]")}>
+            <span className="min-w-0 font-medium text-slate-600">{timeFilterMode === "takeoff" ? `${t("takeoffTimeFromOrigin")} (${airportCode || "—"})` : `${t("landingTimeAtDestination")} (${airportCode || "—"})`}</span>
+            <span className="shrink-0 font-semibold tabular-nums text-slate-950">{timeBoundsForMode ? formatTimeFromMinutes(maxTimeForMode ?? timeBoundsForMode.max, calendarLocale) : "—"}</span>
+          </div>
           <input aria-label={timeFilterMode === "takeoff" ? t("takeoff") : t("landing")} className={rangeClass} type="range" min={timeBoundsForMode?.min ?? 0} max={timeBoundsForMode?.max ?? 0} step={15} value={maxTimeForMode ?? timeBoundsForMode?.max ?? 0} disabled={!timeBoundsForMode} onPointerUp={onFilterCommit} onMouseUp={onFilterCommit} onTouchEnd={onFilterCommit} onKeyUp={onFilterCommit} onBlur={onFilterCommit} onChange={(event) => { onFilterChange(); setMaxTimeForMode(Number(event.target.value)); }} />
-          <button type="button" className={cn("mt-2.5 min-h-7 w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold leading-5 text-[#004BB8] transition hover:border-[#9EC5FE] hover:bg-[#F4F8FF]", isGuidedComfortable && "min-h-9 text-[13px]")} onClick={() => { onFilterChange(); setTimeFilterMode(timeFilterMode === "takeoff" ? "landing" : "takeoff"); onFilterCommit(); }}>{t(timeFilterMode === "takeoff" ? "landingTimeAtDestination" : "takeoffTimeFromOrigin")}</button>
         </section>
 
         <section>
           <SectionTitle>{t("duration")}</SectionTitle>
-          <div className={cn("mb-2.5 grid grid-cols-2 gap-4 text-[12px] font-medium leading-5 tabular-nums text-slate-700", isGuidedComfortable && "text-[13px]")}><span className="min-w-0">{durationBounds ? formatDurationFromMinutes(durationBounds.min, t) : "—"}</span><span className="min-w-0 text-right">{durationBounds ? formatDurationFromMinutes(durationBounds.max, t) : "—"}</span></div>
+          <div className={cn("mb-2.5 flex items-center justify-between gap-3 text-[12px] leading-5", isGuidedComfortable && "text-[13px]")}>
+            <span className="font-medium text-slate-600">{t("duration")}</span>
+            <span className="shrink-0 font-semibold tabular-nums text-slate-950">{durationBounds ? formatDurationFromMinutes(maxDurationMinutes ?? durationBounds.max, t) : "—"}</span>
+          </div>
           <input aria-label={t("duration")} className={rangeClass} type="range" min={durationBounds?.min ?? 0} max={durationBounds?.max ?? 0} step={15} value={maxDurationMinutes ?? durationBounds?.max ?? 0} disabled={!durationBounds} onPointerUp={onFilterCommit} onMouseUp={onFilterCommit} onTouchEnd={onFilterCommit} onKeyUp={onFilterCommit} onBlur={onFilterCommit} onChange={(event) => { onFilterChange(); setMaxDurationMinutes(Number(event.target.value)); }} />
         </section>
 
+        <OptionSection title={t("stops")} emptyText={t("stopsAppearAfterResultsLoad")}>{stopOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} secondaryLabel={option.rightLabel ? `${t("from").toLowerCase()} ${option.rightLabel}` : option.secondaryLabel} checked={selectedStops.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedStops); onFilterCommit(); }} />)}</OptionSection>
+
         <OptionSection title={t("airlines")} emptyText={t("airlinesAppearAfterResultsLoad")}>
           <label className="sr-only" htmlFor="desktop-airline-filter-search">{t("accountDashboard.preferences.booking.searchAirlines")}</label>
-          <input id="desktop-airline-filter-search" className="mb-2.5 h-8 w-full rounded-md border border-slate-200 bg-white px-3 text-[12px] font-medium text-slate-800 placeholder:text-slate-400 focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/20" placeholder={t("accountDashboard.preferences.booking.searchAirlines")} type="search" value={airlineSearch} onChange={(event) => setAirlineSearch(event.target.value)} />
+          <input id="desktop-airline-filter-search" className="mb-2.5 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-medium text-slate-800 placeholder:text-slate-400 focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/20" placeholder={t("accountDashboard.preferences.booking.searchAirlines")} type="search" value={airlineSearch} onChange={(event) => setAirlineSearch(event.target.value)} />
           {visibleAirlines.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} secondaryLabel={option.rightLabel ? `${t("from").toLowerCase()} ${option.rightLabel}` : undefined} checked={selectedAirlines.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedAirlines); onFilterCommit(); }} />)}
-          {!airlineSearch.trim() && airlineOptions.length > 5 ? <button type="button" className="mx-auto mt-2 flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB]" onClick={() => setShowAllAirlines((current) => !current)}>{showAllAirlines ? t("hotelResults.showLess") : t("showMoreResults")}<ChevronDown aria-hidden="true" className={cn("h-3.5 w-3.5 transition", showAllAirlines && "rotate-180")} /></button> : null}
+          {!airlineSearch.trim() && airlineOptions.length > 5 ? <button type="button" className="mx-auto mt-2 flex min-h-9 items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB]" onClick={() => setShowAllAirlines((current) => !current)}>{showAllAirlines ? t("hotelResults.showLess") : t("showMoreResults")}<ChevronDown aria-hidden="true" className={cn("h-3.5 w-3.5 transition", showAllAirlines && "rotate-180")} /></button> : null}
         </OptionSection>
 
-        <Accordion title={t("baggage") || t("amenities")}><FacetRow label={t("baggageIncluded")} checked={baggageIncludedOnly} onChange={() => { onFilterChange(); setBaggageIncludedOnly(!baggageIncludedOnly); onFilterCommit(); }} /></Accordion>
+        <OptionSection title={t("airports")} emptyText={t("airportsAppearAfterResultsLoad")}>{airportOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} checked={selectedAirports.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedAirports); onFilterCommit(); }} />)}</OptionSection>
+
+        <section>
+          <SectionTitle>{t("baggage")} / {t("flexibleRefundable")}</SectionTitle>
+          <div className="grid gap-0.5">
+            <FacetRow label={t("baggageIncluded")} checked={baggageIncludedOnly} onChange={() => { onFilterChange(); setBaggageIncludedOnly(!baggageIncludedOnly); onFilterCommit(); }} />
+            <FacetRow label={t("flexibleRefundable")} checked={flexibleOnly} onChange={() => { onFilterChange(); setFlexibleOnly(!flexibleOnly); onFilterCommit(); }} />
+          </div>
+        </section>
+
         {renderQualitySection ? <Accordion title={t("flightQuality")}>{flightQualityOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} checked={selectedFlightQuality.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedFlightQuality); onFilterCommit(); }} />)}</Accordion> : null}
-        <Accordion title={t("flexibleRefundable")}><FacetRow label={t("flexibleRefundable")} checked={flexibleOnly} onChange={() => { onFilterChange(); setFlexibleOnly(!flexibleOnly); onFilterCommit(); }} /></Accordion>
-        <Accordion title={t("airports")} emptyText={t("airportsAppearAfterResultsLoad")}>{airportOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} checked={selectedAirports.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedAirports); onFilterCommit(); }} />)}</Accordion>
       </div>
     </div>
   );
 }
 
 function SectionTitle({ children }: { children: ReactNode }) {
-  return <h3 className="mb-3 text-sm font-bold leading-5 tracking-[-0.005em] text-slate-950">{children}</h3>;
+  return <h3 className="mb-3 text-[15px] font-semibold leading-5 tracking-[-0.005em] text-slate-950">{children}</h3>;
 }
 
 function OptionSection({ title, emptyText, children }: { title: string; emptyText?: string; children: ReactNode }) {
@@ -277,5 +290,5 @@ function Accordion({ title, emptyText, children }: { title: string; emptyText?: 
 function FacetRow({ label, count, secondaryLabel, rightLabel, checked, onChange }: { label: string; count?: number; secondaryLabel?: string; rightLabel?: string; checked: boolean; onChange: () => void }) {
   const trailingLabel = rightLabel ?? (typeof count === "number" ? String(count) : null);
 
-  return <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-1.5 py-1.5 text-[13px] font-medium leading-5 text-slate-700 transition hover:bg-[#F5F8FC] hover:text-slate-950"><span className="flex min-w-0 flex-1 items-center gap-2.5"><input type="checkbox" className="h-4 w-4 shrink-0 rounded border-slate-300 accent-[#0067DB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2" checked={checked} onChange={onChange} /><span className="min-w-0 flex-1"><span className="block break-words">{label}</span>{secondaryLabel ? <span className="block break-words text-xs font-medium leading-4 text-slate-500">{secondaryLabel}</span> : null}</span></span>{trailingLabel ? <span className="shrink-0 text-xs font-medium leading-5 text-slate-500">{trailingLabel}</span> : null}</label>;
+  return <label className={cn("flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-1.5 py-1.5 text-[13px] font-normal leading-5 text-slate-700 transition hover:bg-[#F5F8FC] hover:text-slate-950", checked && "font-semibold text-[#07133B]")}><span className="flex min-w-0 flex-1 items-center gap-2.5"><input type="checkbox" className="peer sr-only" checked={checked} onChange={onChange} /><span aria-hidden="true" className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/35 peer-focus-visible:ring-offset-2", checked ? "border-[#0067DB] bg-[#0067DB] text-white" : "border-slate-300 bg-white")}>{checked ? <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" /> : null}</span><span className="min-w-0 flex-1"><span className="block break-words">{label}</span>{secondaryLabel ? <span className="block break-words text-xs font-medium leading-4 text-slate-500">{secondaryLabel}</span> : null}</span></span>{trailingLabel ? <span className="shrink-0 text-xs font-medium leading-5 text-slate-500">{trailingLabel}</span> : null}</label>;
 }

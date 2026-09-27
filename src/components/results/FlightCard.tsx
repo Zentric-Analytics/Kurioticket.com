@@ -230,7 +230,7 @@ function ResponsiveFlightLegRow({
 
   return (
     <section aria-label={legTitle} className="min-w-0">
-      <p className="flight-card-leg-label font-bold uppercase text-[#0057E7]">
+      <p className="flight-card-leg-label font-semibold uppercase text-[#0057E7]">
         {legTitle}
       </p>
       <div className="flight-card-leg-grid grid min-w-0">
@@ -244,7 +244,7 @@ function ResponsiveFlightLegRow({
             </div>
           </div>
           <div
-            className="flight-card-airport font-bold text-[#07133B]"
+            className="flight-card-airport font-semibold text-[#07133B]"
             dir="ltr"
           >
             {leg.originAirport}
@@ -295,7 +295,7 @@ function ResponsiveFlightLegRow({
             {formatTime(leg.arrivalTime, locale)}
           </div>
           <div
-            className="flight-card-airport truncate font-bold text-[#07133B]"
+            className="flight-card-airport truncate font-semibold text-[#07133B]"
             dir="ltr"
           >
             {leg.destinationAirport}
@@ -453,7 +453,7 @@ function FlightDetailLines({
   return (
     <div
       className={cn(
-        "flight-card-details mt-4 grid min-w-0 flex-1 grid-cols-3 items-center border-t border-[#D8E1EC] pt-3 text-xs leading-5 text-slate-600",
+        "flight-card-details mt-3 grid min-w-0 flex-1 grid-cols-3 items-center gap-3 rounded-lg bg-slate-50/70 px-3 py-2.5 text-xs leading-5 text-slate-600",
       )}
     >
       {details.map((detail) => {
@@ -464,7 +464,7 @@ function FlightDetailLines({
             key={detail.label}
             className={cn(
               "flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5",
-              "flight-card-detail-item flex-nowrap whitespace-nowrap border-r border-[#EEF2F7] last:border-r-0 last:pr-0",
+              "flight-card-detail-item flex-nowrap whitespace-nowrap",
             )}
           >
             <Icon

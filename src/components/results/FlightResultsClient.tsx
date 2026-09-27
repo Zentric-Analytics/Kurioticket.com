@@ -7084,7 +7084,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs />
     <FlightResultsScrollIndicator />
     {renderMobileCompactResultsHeader()}
-    <main data-flight-results-main className="bg-[#F5F7FB] pb-0 sm:flex-1 sm:bg-[#F3F6FA] sm:pb-8">
+    <main data-flight-results-main className="bg-[#F5F7FB] pb-0 sm:flex-1 sm:bg-[#F3F6FA] sm:pb-8 lg:bg-[#F5F7FB]">
       <section
         inert={mobileSearchOpen ? true : undefined}
         aria-hidden={mobileSearchOpen ? true : undefined}
@@ -7493,6 +7493,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       <ChevronRight className="h-5 w-5" aria-hidden="true" />
                     </button>
                   </div>
+                  {cheaperNearbyFare ? <button type="button" data-desktop-cheaper-nearby onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)} className="focus-ring mx-auto mt-2 flex min-h-8 w-full max-w-[980px] items-center px-1 text-left text-[12px] font-medium leading-4 text-slate-600 transition hover:text-[#075EE8]">Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}</button> : null}
                 </div>
                 </>
               ) : null}
@@ -7510,8 +7511,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 {renderMobileSortResultsRow()}
               </section>
 
+              {mobileFlightPriceAlertQuery ? <div className="max-sm:pt-2 max-sm:pb-1 sm:mb-4"><div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)]"><FlightPriceAlertControl query={mobileFlightPriceAlertQuery} results={providerResults} /></div></div> : null}
+
               <div data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden">
-                {mobileFlightPriceAlertQuery ? <div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)]"><FlightPriceAlertControl query={mobileFlightPriceAlertQuery} results={providerResults} /></div> : null}
                 <div
                   ref={mobileResultsPageTopRef}
                   data-mobile-flight-results-summary-row
@@ -7531,7 +7533,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 </div>
               </div>
 
-              <div className="hidden w-full items-center justify-between gap-4 pt-2 sm:flex lg:bg-transparent lg:px-0 lg:pb-0.5">
+              <div className="hidden w-full items-center justify-between gap-4 pt-2 sm:flex sm:pb-1 lg:bg-transparent lg:px-0 lg:pb-1">
                 <div>
                   <p className="text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
                     {formatResultsFound(sortedResults.length, t)}
@@ -7671,7 +7673,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 </div>
               ) : sortedResults.length ? (
                 <>
-                  <div data-flight-results-card-list className="space-y-3 sm:space-y-4">
+                  <div data-flight-results-card-list className="space-y-3 sm:space-y-4 sm:pt-2 lg:pt-3">
                     {visibleResults.map((flight, index) => {
                       const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
                       if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
@@ -7742,7 +7744,7 @@ function FlightResultsPageTransitionSkeleton({
   return (
     <div
       data-flight-results-transition-cover
-      className="fixed inset-0 z-[9990] overflow-hidden bg-[#F5F7FB] sm:bg-[#F3F6FA]"
+      className="fixed inset-0 z-[9990] overflow-hidden bg-[#F5F7FB] sm:bg-[#F3F6FA] lg:bg-[#F5F7FB]"
       aria-busy="true"
     >
       <p className="sr-only" role="status" aria-live="polite">
