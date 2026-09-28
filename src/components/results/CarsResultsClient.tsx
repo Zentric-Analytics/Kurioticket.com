@@ -78,7 +78,7 @@ import { serializeCarLocationTarget } from "@/lib/cars/carSearchLocationTarget";
 import { carFilterGroups, carQuickFilterGroupIds, type CarFilterGroup } from "@/lib/cars/carFilterPresentation";
 import { getSelectedCarFiltersSignature } from "@/lib/cars/carFilterSelection";
 import { formatCarResultsScheduleSummary } from "@/lib/cars/carResultsSummary";
-import { toTimeValue, validateCarsForm } from "@/lib/cars/carsSearchUtils";
+import { formatCarsCompactTimeRange, toTimeValue, validateCarsForm } from "@/lib/cars/carsSearchUtils";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
@@ -637,7 +637,7 @@ export function CarsResultsClient({
       : formatCompactDate(pickupDate, intlLocale, t("carsResults.selectDates"))
     : t("carsResults.selectRentalDates");
   const driverAgeSummary = getDriverAgeOptionLabel(driverAge, t);
-  const timeSummary = `${formatTimeLabel(pickupTime, intlLocale)} → ${formatTimeLabel(dropoffTime, intlLocale)}`;
+  const timeSummary = formatCarsCompactTimeRange(pickupTime, dropoffTime);
   const rentalScheduleSummary = formatCarResultsScheduleSummary({ pickupDate, pickupTime, dropoffDate, dropoffTime, locale: intlLocale });
   const locationPairSummary = returnToDifferentLocation
     ? `${pickupSummary} → ${returnSummary}`
@@ -3986,7 +3986,7 @@ function SearchTimeCell({
               aria-hidden="true"
             />
             <span className="truncate">
-              {formatTimeLabel(pickupTime, intlLocale)}
+              {formatCarsCompactTimeRange(pickupTime, dropoffTime)}
             </span>
           </span>
         ) : (
