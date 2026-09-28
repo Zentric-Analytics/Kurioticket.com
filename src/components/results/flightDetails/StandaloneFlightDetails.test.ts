@@ -487,27 +487,25 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     "Optional extra",
     "Estimated CO₂ emissions",
     "Base fare",
-    "Fare basis:",
+    'label="Fare basis"',
     "Departure time zone",
     "Provider offer last updated",
-    "Supported identity documents:",
-    "Supported loyalty airline codes:",
-    "Airline conditions",
+    'label="Supported documents"',
+    'label="Loyalty programmes"',
+    'label="Airline"',
     "conditions of carriage",
-    "Offer airline:",
-    'permission ? "Allowed" : "Included"',
+    "provider.offerOwner.name",
+    "conditionState(condition)",
     'service.pricedPerTraveler ? " each" : ""',
     "Maximum quantity per traveler",
-    'condition.category === "change" ? "Changes"',
+    "conditionCategory(group.conditions[0])",
     "Flight distance:",
     "formatDistanceKm(segment.distanceKm, locale)",
-    "Cabin and fare by flight",
+    'label="Cabin"',
     "segment.originAirport} → {segment.destinationAirport",
-    "Provider source price breakdown",
+    'label="Price breakdown"',
     "formatFlightResultCurrency",
-    'condition.scope === "trip" ? "Whole trip"',
-    'condition.scope === "outbound" ? "Outbound only"',
-    'condition.scope === "return" ? "Return only"',
+    "conditionScope(condition)",
     "carrierConditionsLinks(offer)",
     "new Map(entries.map((entry) => [entry.url, entry]))",
   ]) assert.ok(source.includes(contract), contract);
@@ -661,14 +659,16 @@ test("desktop Fare information uses underline-only tabs and unframed panels", as
   assert.match(tabs, /activeTab === tab\.id \? "border-\[#075EE8\]" : "border-transparent"/);
   assert.doesNotMatch(tabs, /font-bold|font-extrabold|text-slate-950|overflow-x-auto/);
 
-  for (const panel of ["deals", "details", "conditions", "extras"]) {
-    const pattern = new RegExp(`data-desktop-fare-panel id="fare-panel-${panel}" role="tabpanel" aria-labelledby="fare-tab-${panel}" className="py-4 sm:py-5"`);
-    assert.match(source, pattern);
-  }
-  assert.doesNotMatch(source, /id="fare-panel-(?:deals|details|conditions|extras)"[^>]*className="[^"]*(?:rounded|border|bg-white)/);
-  assert.match(source, /No live booking deals are available for this fare right now\./);
-  assert.match(source, /key=\{deal\.key\} className="[^"]*rounded-\[10px\] border border-\[#E2E8F0\]/);
-  assert.match(source, /lg:divide-x lg:divide-\[#E2E8F0\]/);
+  assert.match(source, /function DesktopFarePanel/);
+  assert.match(source, /data-desktop-fare-panel/);
+  assert.match(source, /id=\{`fare-panel-\$\{id\}`\}/);
+  assert.match(source, /role="tabpanel"/);
+  assert.match(source, /aria-labelledby=\{`fare-tab-\$\{id\}`\}/);
+  assert.match(source, /className="py-4 sm:py-5"/);
+  assert.doesNotMatch(source, /data-desktop-fare-panel[^>]*className="[^"]*(?:rounded|border|bg-white)/);
+  assert.match(source, /No booking deals available/);
+  assert.match(source, /No additional live provider deals were supplied for this fare\./);
+  assert.match(source, /divide-y divide-\[#D8E1EC\]/);
 });
 
 test("desktop checkout summary is compact and contains no repeated itinerary details", async () => {
@@ -1073,4 +1073,59 @@ test("mobile web Flight Details loading itinerary matches native-parity geometry
   assert.match(source, /\{\[0, 1\]\.map/);
   assert.match(source, /data-flight-details-loading-hero-curve/);
   assert.match(source, /fixed inset-x-0 bottom-0 z-\[90\].*min-h-\[88px\]/);
+});
+
+
+test("desktop Fare information uses the native semantic hierarchy without changing the reference surfaces", async () => {
+  const [source, mobileWeb, native] = await Promise.all([
+    readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8"),
+    readFile(new URL("./MobileNativeFareInformationDeck.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../../../../apps/mobile/src/features/search/NativeFlightDetails.tsx", import.meta.url), "utf8"),
+  ]);
+  const desktop = source.slice(source.indexOf("function FarePanel("), source.indexOf("function formatProviderTimestamp"));
+
+  for (const label of ["Cabin", "On board", "Price breakdown", "Travel documents", "Airline", "Optional services", "Loyalty programmes"]) {
+    assert.match(desktop, new RegExp(`(?:label=\\"${label}\\"|>${label}<)`));
+  }
+  for (const fact of ["Fare brand", "Cabin product", "Fare basis", "Seat", "Wi-Fi", "Power", "Base fare", "Taxes", "Trip total"]) assert.match(desktop, new RegExp(fact));
+  assert.match(desktop, /segment\.originAirport} → \{segment\.destinationAirport/);
+  assert.match(desktop, /cabins\.map/);
+  assert.match(desktop, /strong(?:\s|\n)*\/>/);
+  assert.match(desktop, /<EmissionsRow/);
+  assert.match(source, /Estimated CO₂ emissions/);
+  assert.match(desktop, /Provider offer last updated/);
+  assert.match(desktop, /divide-y divide-\[#D8E1EC\]/);
+  assert.match(desktop, /<dl/);
+  assert.match(desktop, /<dt/);
+  assert.match(desktop, /<dd/);
+
+  assert.match(desktop, /new Set\(conditions\.map/);
+  assert.match(desktop, /conditionState\(condition\)/);
+  assert.match(desktop, /conditionScope\(condition\)/);
+  assert.match(desktop, /penaltyAmount/);
+  assert.match(desktop, /Passport or identity information is required to complete\s+booking/);
+  assert.match(desktop, /target="_blank"/);
+  assert.match(desktop, /rel="noopener noreferrer"/);
+
+  assert.match(desktop, /service\.description/);
+  assert.match(desktop, /formatSourceMoney\(\s*service\.price,\s*service\.currency,\s*locale,?\s*\)/);
+  assert.match(desktop, /Available for \{service\.travelerCount\}/);
+  assert.match(desktop, /Maximum quantity per traveler/);
+  assert.match(desktop, /service\.journeyContext/);
+
+  assert.match(desktop, /role="radiogroup"/);
+  assert.match(desktop, /aria-label="Flight deal options"/);
+  assert.match(desktop, /role="radio"/);
+  assert.match(desktop, /aria-checked=\{selected\}/);
+  assert.match(desktop, /resolveDealIdentityMark\(deal\)/);
+  assert.match(desktop, /fare\?\.label/);
+  assert.match(desktop, /price\.formatted/);
+  assert.match(desktop, /No booking deals available/);
+  assert.match(desktop, /No additional live provider deals were supplied for this fare/);
+  assert.match(desktop, /data-desktop-fare-panel/);
+  assert.doesNotMatch(desktop, /rounded-\[10px\] border border-\[#E2E8F0\] p-4/);
+  assert.match(desktop, /role="tabpanel"/);
+
+  assert.match(mobileWeb, /function DetailsSurface/);
+  assert.match(native, /groupLabel\("Optional services"\)/);
 });
