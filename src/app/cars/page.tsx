@@ -62,6 +62,7 @@ import {
   buildPickupHref,
   defaultDriverAge,
   driverAgeOptions,
+  formatCarsCompactTimeRange,
   getDriverAgeOptionLabel,
   getInitialValues,
   isBeforeToday,
@@ -1705,6 +1706,9 @@ function TimeRangeField({
         returnTimeText,
       )
     : `${pickupTimeText} — ${returnTimeText}`;
+  const desktopTimeSummary = hasCompleteTimeRange
+    ? formatCarsCompactTimeRange(pickupTime, returnTime)
+    : timeSummary;
   const { placement, popoverRef, style } = useCarsDesktopPopover({
     open: isOpen,
     launcherRef,
@@ -1737,7 +1741,7 @@ function TimeRangeField({
             {timeSummary}
           </span>
           <span className="hidden truncate sm:inline">
-            {timeSummary}
+            {desktopTimeSummary}
           </span>
         </span>
         <ChevronDown

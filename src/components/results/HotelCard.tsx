@@ -470,7 +470,7 @@ export function HotelCard({
       {providerLabel ? <p className="hidden px-4 pt-3 text-xs font-semibold text-amber-800 sm:block">{providerLabel}</p> : null}
       <div
         data-hotel-card-mobile-grid
-        className="grid min-h-[calc((100vw-2rem)*0.7)] grid-cols-[38%_minmax(0,1fr)] min-[430px]:min-h-[260px] min-[430px]:grid-cols-[39%_minmax(0,1fr)] sm:min-h-[260px] sm:grid-cols-[39%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[clamp(280px,36%,340px)_minmax(0,1fr)]"
+        className="grid min-h-[calc((100vw-2rem)*0.7)] grid-cols-[38%_minmax(0,1fr)] min-[430px]:min-h-[260px] min-[430px]:grid-cols-[39%_minmax(0,1fr)] sm:min-h-[260px] sm:grid-cols-[39%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[50%_minmax(0,1fr)]"
       >
         <div
           data-hotel-card-image
@@ -494,7 +494,7 @@ export function HotelCard({
                   )}
                 fill
                 className="bg-slate-200 object-cover"
-                sizes="(min-width: 768px) 320px, 38vw"
+                sizes="(min-width: 1024px) 50vw, (min-width: 768px) 40vw, 38vw"
                 onError={() => markImageFailed(displayImageUrl)}
               />
               {showGalleryControls ? (
