@@ -10,11 +10,15 @@ const presentation = readFileSync(new URL("../../lib/cars/carFilterPresentation.
 test("source-contract: Cars compact shell and header match Flights styling", () => {
   assert.match(
     source,
-    /desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-\[#D8E1EC\] bg-\[#EEF3F8\] p-0 shadow-\[0_14px_30px_-26px_rgba\(15,23,42,0\.42\)\]/,
+    /desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-\[#D8E1EC\] p-0 shadow-\[0_14px_30px_-26px_rgba\(15,23,42,0\.42\)\]/,
   );
   assert.match(
     source,
-    /desktop-filter-sidebar__header shrink-0 border-b border-\[#D8E1EC\]\/80 bg-\[#EEF3F8\] px-3\.5 py-2\.5/,
+    /desktopSurfaceParity \? "bg-\[#F2F4F8\]" : "bg-\[#EEF3F8\]"/,
+  );
+  assert.match(
+    source,
+    /desktop-filter-sidebar__header shrink-0 border-b border-\[#D8E1EC\]\/80 px-3\.5 py-2\.5/,
   );
   assert.match(
     source,
@@ -75,7 +79,11 @@ test("source-contract: Cars compact sections match Flights density", () => {
 test("source-contract: compact body is the only vertical scroll owner and header does not scroll", () => {
   assert.match(
     source,
-    /min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-\[#EEF3F8\] px-2 py-1/,
+    /min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-2 py-1/,
+  );
+  assert.match(
+    source,
+    /desktopSurfaceParity \? "bg-\[#F2F4F8\]" : "bg-\[#EEF3F8\]"/,
   );
   assert.match(
     source,
@@ -92,7 +100,7 @@ test("source-contract: compact body is the only vertical scroll owner and header
 test("source-contract: full desktop and mobile filter styling remain separate", () => {
   assert.match(
     source,
-    /layout === "desktop"\s*\? "desktop-filter-sidebar border border-slate-200\/80 bg-transparent p-0 shadow-none rounded-none"/,
+    /layout === "desktop"[\s\S]*?desktop-filter-sidebar border border-slate-200\/80 p-0 shadow-none rounded-none[\s\S]*?desktopSurfaceParity \? "bg-\[#F2F4F8\]" : "bg-transparent"/,
   );
   assert.match(source, /if \(layout === "mobile"\) \{[\s\S]*?grid gap-\[5px\][\s\S]*?min-h-\[46px\]/);
   assert.doesNotMatch(source, /layout === "mobile"\s*\? "mb-2 overflow-hidden rounded-xl/);
