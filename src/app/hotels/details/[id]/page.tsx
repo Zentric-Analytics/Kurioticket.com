@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 
 import { AppHeader } from "@/components/layout/AppHeader";
+import { Footer } from "@/components/layout/Footer";
 import {
   HotelDetailsClient,
   type HotelDetailsSearchContext,
@@ -68,6 +69,9 @@ export default async function HotelDetailsPage({
           id={id}
           searchContext={searchContext}
         />
+      </div>
+      <div className="hidden lg:block" data-hotel-details-desktop-footer>
+        <Footer className="bg-[#f5f5f5]" />
       </div>
     </>
   );

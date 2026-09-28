@@ -1,0 +1,42 @@
+.editor { width: 100%; min-width: 0; margin-top: 12px; color: #192024; font-family: Inter, sans-serif; }
+.controls { display: inline-flex; max-width: 100%; min-height: 56px; align-items: center; border: 1px solid #d9dfe2; border-radius: 10px; background: #fff; box-shadow: 0 2px 6px rgb(25 32 36 / 4%); }
+.dates { display: flex; width: 386px; flex-shrink: 0; height: 54px; align-items: center; }
+.control { display: inline-flex; height: 54px; width: 171.4px; flex-shrink: 0; align-items: center; justify-content: flex-start; gap: 8px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: #192024; font-size: 15px; line-height: 22px; font-weight: 500; white-space: nowrap; cursor: pointer; }
+.control:hover { background: #f5f8fa; }
+.dateSeparator { flex: 1; height: 24px; border-left: 1px solid #e4e9ed; font-size: 0; }
+.control svg { flex-shrink: 0; }
+.guestsControl { width: 182px; border-left: 1px solid #e4e9ed; border-radius: 0; font-weight: 600; }
+.search { display: inline-flex; height: 42px; width: 42px; flex: 0 0 42px; align-items: center; justify-content: center; margin: 0 6px; border-radius: 7px; background: #eaf2ff; color: #004bb8; cursor: pointer; }
+.search:hover { background: #dceaff; }
+.editor button:focus-visible, .popover button:focus-visible { outline: 2px solid #004bb8; outline-offset: 3px; }
+.error { margin: 8px 0 0; color: #b91c1c; font-size: 12px; line-height: 18px; }
+.popover { color: #192024; font-family: Inter, sans-serif; border: 0; border-radius: 12px; box-shadow: 0 10px 20px rgb(25 32 36 / 10%), 0 3px 6px rgb(25 32 36 / 4%), 0 -3px 6px rgb(25 32 36 / 4%); }
+.calendar { position: relative; padding: 24px; }
+.monthNavigation { position: absolute; left: 24px; right: 24px; top: 24px; display: flex; justify-content: space-between; pointer-events: none; }
+.monthNavigation button { display: grid; place-items: center; height: 44px; width: 36px; border-radius: 4px; pointer-events: auto; cursor: pointer; }
+.monthNavigation button:hover { background: #f0f3f5; }
+.monthNavigation button:disabled { color: #bdc5cb; cursor: default; background: transparent; }
+.months { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.month h3 { height: 44px; margin: 0; display: flex; justify-content: center; align-items: center; font-size: 16px; line-height: 24px; font-weight: 600; }
+.weekdays, .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.weekdays { font-size: 12px; line-height: 22px; text-align: center; color: #687680; }
+.week { height: 46px; }
+.dayCell { position: relative; display: grid; place-items: center; min-width: 0; }
+.dayCell[data-range="true"]::before { position: absolute; content: ""; inset: 0; background: #eaf2ff; }
+.dayCell[data-start="true"]::before { left: 50%; }
+.dayCell[data-end="true"]::before { right: 50%; }
+.dayCell button { position: relative; z-index: 1; display: grid; place-items: center; width: 46px; max-width: 100%; height: 46px; border-radius: 4px; font-size: 16px; line-height: 24px; font-weight: 400; cursor: pointer; }
+.dayCell button:hover { background: #eef3f7; }
+.dayCell button[aria-current="date"] { font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.dayCell button[aria-pressed="true"] { background: #004bb8; color: white; }
+.dayCell button:disabled { color: #bac2c8; cursor: default; background: transparent; }
+.keyboardHint { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.occupancy { padding: 16px; }
+.counter { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; }
+.counter strong { font-size: 14px; font-weight: 600; }
+.counter > div { display: flex; align-items: center; gap: 12px; }
+.counter span { min-width: 16px; font-size: 14px; text-align: center; font-variant-numeric: tabular-nums; }
+.counter button { display: grid; place-items: center; height: 30px; width: 30px; border: 1px solid #b9c2c9; border-radius: 50%; cursor: pointer; }
+.counter button:hover { background: #f0f3f5; }
+.counter button:disabled { border-color: #e2e6e9; color: #b7c0c6; cursor: default; background: transparent; }
+.doneButton { display: block; min-height: 32px; margin: 8px 0 0 auto; padding: 0 12px; border-radius: 4px; background: #004bb8; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }

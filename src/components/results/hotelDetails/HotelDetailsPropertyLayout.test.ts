@@ -18,6 +18,10 @@ const standaloneSource = readFileSync(
   new URL("./StandaloneHotelDetails.tsx", import.meta.url),
   "utf8",
 );
+const desktopSource = readFileSync(
+  new URL("./DesktopHotelDetails.tsx", import.meta.url),
+  "utf8",
+);
 const locationSource = readFileSync(
   new URL("./HotelLocationSection.tsx", import.meta.url),
   "utf8",
@@ -29,22 +33,24 @@ test("isolates the approved standalone property composition from guided mode", (
   assert.equal(clientSource.match(/<HotelDetailsBookingPanel\b/g)?.length, 1);
   assert.equal(clientSource.match(/<StandaloneHotelDetails\b/g)?.length, 1);
   assert.match(clientSource, /if \(mode === "standalone"\)/);
-  assert.match(standaloneSource, /data-standalone-hotel-details/);
-  assert.match(standaloneSource, /lg:grid-cols-\[minmax\(0,1fr\)_334px\]/);
-  assert.match(standaloneSource, /<HotelDetailsGallery[\s\S]*layout="mosaic"/);
+  assert.match(standaloneSource, /<MobileHotelDetails \{\.\.\.props\}/);
+  assert.match(standaloneSource, /<DesktopHotelDetails \{\.\.\.props\}/);
+  assert.match(desktopSource, /data-standalone-hotel-details/);
+  assert.match(desktopSource, /<HotelDetailsGallery[\s\S]*layout="desktop"/);
   for (const contract of [
-    "HotelAboutSection",
+    "hotel-overview",
     "HotelReviewsSection",
-    "HotelDetailsSectionNav",
-    "propertyDetails?.description",
+    "HotelPriceComparisonSection",
+    "mobileHotelAbout(props.hotelName, property, props.starRating)",
     "HotelLocationSection",
-    "Your stay",
-    "Continue booking",
-    'role="dialog"',
-  ]) assert.ok(clientSource.includes(contract) || standaloneSource.includes(contract), contract);
+    "DesktopHotelStayEditor",
+    "props.labels.continueBooking",
+    "<dialog",
+  ]) assert.ok(desktopSource.includes(contract), contract);
   assert.match(locationSource, /buildGoogleHotelMapEmbedUrl/);
-  assert.doesNotMatch(locationSource, /buildHotelMapEmbedUrl|openstreetmap/i);
-  assert.doesNotMatch(locationSource, /buildHotelDirectionsUrl|directionsUrl/);
+  assert.match(locationSource, /buildHotelMapEmbedUrl/);
+  assert.match(locationSource, /buildGoogleHotelStreetViewEmbedUrl/);
+  assert.doesNotMatch(desktopSource, /<HotelDetailsBookingPanel|<GuidedHotelRoomCard/);
 
   const guidedStart = clientSource.indexOf("const detailsContent = (");
   const guidedContent = clientSource.slice(guidedStart);
@@ -179,7 +185,7 @@ test("gallery embedded mode shares one JSX body and preserves interactions", () 
   assert.match(gallerySource, /const content = \(/);
   assert.match(gallerySource, /if \(embedded\)/);
   assert.equal(gallerySource.match(/<Card\b/g)?.length, 1);
-  assert.doesNotMatch(gallerySource, /data-hotel-mobile-thumbnail-strip|mobileThumbnailIndices/);
+  assert.equal(gallerySource.match(/aspect-\[4\/3\]/g)?.length, 1);
   for (const contract of [
     "onKeyDown={handleGalleryKeyDown}",
     "border-t border-border",

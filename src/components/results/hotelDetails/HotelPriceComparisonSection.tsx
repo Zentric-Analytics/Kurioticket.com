@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { ReactNode } from "react";
 
 import type { HotelDetailsProviderOffer } from "./hotelDetailsPresentation";
 
@@ -94,6 +95,58 @@ function ProviderOffer({
   );
 }
 
+type ContinueOffer = (offerId: string, trigger: HTMLButtonElement) => void;
+type DesktopOfferProps = {
+  offer: HotelDetailsProviderOffer;
+  perNightText: string;
+  totalLabel: string;
+  selected: boolean;
+  selectable: boolean;
+  pendingOfferId: string | null;
+  continueLabel: string;
+  onSelect: (offerId: string) => void;
+  onContinue?: ContinueOffer;
+};
+
+function DesktopProviderOffer({
+  offer,
+  perNightText,
+  selected,
+  selectable,
+  pendingOfferId,
+  onSelect,
+  onContinue,
+}: DesktopOfferProps) {
+  const totalPrice = offer.totalPrice?.trim();
+  const pending = pendingOfferId === offer.id;
+  const disabled = !selectable || pendingOfferId !== null;
+  const selectorId = `desktop-hotel-provider-${encodeURIComponent(offer.id)}`;
+
+  return (
+    <article
+      className="relative flex min-h-[108px] min-w-0 items-center justify-between gap-4 rounded-xl border-[1.5px] border-[#d9dfe2] bg-white px-4 py-3 shadow-[0_5px_12px_rgba(25,32,36,0.08)]"
+      data-provider-offer
+      data-provider-offer-id={offer.id}
+      data-provider-selected={selected || undefined}
+      data-desktop-provider-offer
+      aria-busy={pending || undefined}
+    >
+      <input id={selectorId} type="radio" name="hotel-provider-offer" value={offer.id} checked={selected} disabled={disabled} onChange={() => onSelect(offer.id)} className="peer sr-only" aria-label={`Select ${offer.providerName} offer`} />
+      <span className="pointer-events-none absolute inset-0 rounded-xl peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8] peer-focus-visible:ring-offset-2" aria-hidden="true" />
+      <label htmlFor={selectorId} className={`min-w-0 flex-1 ${disabled ? "cursor-default" : "cursor-pointer"}`}>
+        <span className="block min-w-0" data-provider-brand>
+          {offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={offer.providerName} width={132} height={30} className="h-[30px] w-auto max-w-full object-contain object-left" /> : <strong className="text-base font-semibold leading-6 text-[#004BB8]">{offer.providerName}</strong>}
+        </span>
+        <span className="mt-2 block min-w-0" data-provider-price>
+          <strong className="block break-words text-[22px] font-bold leading-7 tracking-[-0.02em] text-[#192024] tabular-nums" title={totalPrice ? undefined : offer.nightlyPriceTitle} aria-label={totalPrice ? undefined : offer.nightlyPriceAriaLabel} data-nightly-amount={!totalPrice || undefined}>{totalPrice || offer.nightlyPrice}</strong>
+          <span className="block text-[13px] font-semibold leading-[18px] text-[#59636a]" data-nightly-supporting-label={!totalPrice || undefined}>{totalPrice ? "Stay total" : perNightText.replace("{{price}}", "").trim()}</span>
+        </span>
+      </label>
+      <button type="button" className="focus-ring inline-flex h-11 w-[150px] shrink-0 items-center justify-center rounded-lg bg-[#004BB8] px-3 text-white transition-colors hover:bg-[#003B91] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500" style={{ fontSize: 14, fontWeight: 600, lineHeight: "20px" }} disabled={disabled || !onContinue} aria-label={pending ? `Opening ${offer.providerName} offer` : `View deal with ${offer.providerName}`} onClick={event => { onSelect(offer.id); onContinue?.(offer.id, event.currentTarget); }} data-provider-action>{pending ? "Opening…" : "View deal"}</button>
+    </article>
+  );
+}
+
 export function HotelPriceComparisonSection({
   stayContext,
   perNightText,
@@ -102,6 +155,12 @@ export function HotelPriceComparisonSection({
   selectableOfferIds,
   providerHandoffError,
   onSelectOffer,
+  variant = "default",
+  onContinueOffer,
+  pendingOfferId = null,
+  totalLabel = "Stay total",
+  continueLabel = "View deal",
+  stayEditor,
 }: {
   stayContext?: string;
   perNightText: string;
@@ -110,23 +169,31 @@ export function HotelPriceComparisonSection({
   selectableOfferIds: ReadonlySet<string>;
   providerHandoffError: string | null;
   onSelectOffer: (offerId: string) => void;
+  variant?: "default" | "desktop";
+  onContinueOffer?: ContinueOffer;
+  pendingOfferId?: string | null;
+  totalLabel?: string;
+  continueLabel?: string;
+  stayEditor?: ReactNode;
 }) {
+  const desktop = variant === "desktop";
   return (
     <section
       id="hotel-compare-prices"
-      className="scroll-mt-16 border-b border-slate-200 px-4 py-5 lg:px-0 lg:py-8"
+      className={desktop ? "min-w-0 scroll-mt-[84px] py-5" : "scroll-mt-16 border-b border-slate-200 px-4 py-5 lg:px-0 lg:py-8"}
       aria-labelledby="hotel-compare-heading"
       data-hotel-compare-prices
     >
       <h2
         id="hotel-compare-heading"
         tabIndex={-1}
-        className="text-[18px] font-extrabold tracking-tight text-slate-950 sm:text-xl"
+        className={desktop ? "text-xl font-semibold leading-7 text-[#192024]" : "text-[18px] font-extrabold tracking-tight text-slate-950 sm:text-xl"}
       >
-Rates
+        {desktop ? "Compare prices" : "Rates"}
       </h2>
-      {stayContext ? (
-        <p className="mt-1 text-[13px] font-medium leading-5 text-slate-600 sm:text-sm">{stayContext}</p>
+      {desktop && stayEditor ? stayEditor : null}
+      {stayContext && !(desktop && stayEditor) ? (
+        <p className={desktop ? "mt-1 text-sm font-normal leading-5 text-slate-600" : "mt-1 text-[13px] font-medium leading-5 text-slate-600 sm:text-sm"}>{stayContext}</p>
       ) : null}
       {providerHandoffError ? (
         <p
@@ -138,37 +205,46 @@ Rates
           {providerHandoffError}
         </p>
       ) : null}
-      {offers.length ? (
-        <div
-          role="radiogroup"
-          aria-label="Hotel provider offers"
-          className="mt-4 space-y-2.5 sm:-mx-1 sm:mt-5 sm:space-y-3 lg:mx-0"
-          data-comparison-offers
-        >
-          {offers.map((offer) => (
-            <ProviderOffer
-              key={offer.id}
-              offer={offer}
-              perNightText={perNightText}
-              selected={offer.id === selectedOfferId}
-              selectable={selectableOfferIds.has(offer.id)}
-              onSelect={onSelectOffer}
-            />
-          ))}
+      {desktop && offers.length === 0 ? (
+        <p className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-5 text-sm font-normal leading-6 text-slate-600" role="status">
+          No offers are currently available for this stay. Try different dates or another hotel.
+        </p>
+      ) : null}
+      {offers.length ? <div
+        role="radiogroup"
+        aria-label="Hotel provider offers"
+        className={desktop ? "mt-4 space-y-3" : "mt-4 space-y-2.5 sm:-mx-1 sm:mt-5 sm:space-y-3 lg:mx-0"}
+        data-comparison-offers
+      >
+        {offers.map((offer) => desktop ? (
+          <DesktopProviderOffer
+            key={offer.id}
+            offer={offer}
+            perNightText={perNightText}
+            totalLabel={totalLabel}
+            selected={offer.id === selectedOfferId}
+            selectable={selectableOfferIds.has(offer.id)}
+            pendingOfferId={pendingOfferId}
+            continueLabel={continueLabel}
+            onSelect={onSelectOffer}
+            onContinue={onContinueOffer}
+          />
+        ) : (
+          <ProviderOffer
+            key={offer.id}
+            offer={offer}
+            perNightText={perNightText}
+            selected={offer.id === selectedOfferId}
+            selectable={selectableOfferIds.has(offer.id)}
+            onSelect={onSelectOffer}
+          />
+        ))}
+      </div> : !desktop ? (
+        <div className="mt-4 rounded-[14px] border border-slate-200 bg-white px-4 py-4" data-hotel-rates-empty>
+          <p className="text-[15px] font-bold leading-5 text-slate-950">No reservable rates available</p>
+          <p className="mt-1 text-[13px] leading-5 text-slate-600">Try updating your stay or check again later.</p>
         </div>
-      ) : (
-        <div
-          className="mt-4 rounded-[14px] border border-slate-200 bg-white px-4 py-4"
-          data-hotel-rates-empty
-        >
-          <p className="text-[15px] font-bold leading-5 text-slate-950">
-            No reservable rates available
-          </p>
-          <p className="mt-1 text-[13px] leading-5 text-slate-600">
-            Try updating your stay or check again later.
-          </p>
-        </div>
-      )}
+      ) : null}
     </section>
   );
 }

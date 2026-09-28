@@ -3,13 +3,21 @@ export function HotelReviewsSection({
   label,
   countText,
   source,
+  variant,
 }: {
   score?: string;
   label?: string;
   countText?: string;
   source?: string | null;
+  variant?: "desktop";
 }) {
   const hasVerifiedReview = Boolean(score && countText);
+  if (variant === "desktop") return (
+    <section id="hotel-reviews" className="scroll-mt-[84px] border-b border-[#d9dfe2] py-5 text-[#192024]" aria-labelledby="hotel-reviews-heading" data-hotel-reviews-section>
+      <h2 id="hotel-reviews-heading" tabIndex={-1} className="text-xl font-semibold leading-6">Guest reviews</h2>
+      {hasVerifiedReview ? <div className="mt-3 flex items-center gap-4"><strong className="inline-flex min-h-14 items-center justify-center rounded-lg bg-[#192024] px-4 text-2xl font-semibold text-white">{score}</strong><div><p className="text-base font-semibold">{label}</p><p className="text-sm text-[#59636a]">{countText}</p>{source ? <p className="mt-1 text-xs text-[#59636a]">Source: {source}</p> : null}</div></div> : <p className="mt-3 text-sm leading-6 text-[#59636a]">Verified guest reviews are not connected for this property yet.</p>}
+    </section>
+  );
   const scoreParts = score?.split("/").map((part) => part.trim()) ?? [];
   const displayScore = scoreParts[0] ?? "";
   const scale = scoreParts[1] ?? "";

@@ -1,0 +1,68 @@
+.desktop { color: #192024; background: #fff; min-width: 0; font-size: 14px; line-height: 1.5; padding-bottom: 28px; }
+.desktop button, .desktop a { -webkit-tap-highlight-color: transparent; }
+.desktop button { cursor: pointer; }
+.desktop button:disabled { cursor: default; opacity: .55; }
+.desktop button:focus-visible, .desktop a:focus-visible, .dialog button:focus-visible, .dialog input:focus-visible { outline: 2px solid #004bb8; outline-offset: 3px; }
+.identity { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 4px 0 16px; }
+.identityText { min-width: 0; flex: 1; }
+.titleRow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.titleRow h1 { font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -.4px; overflow-wrap: anywhere; }
+.stars { font-size: 14px; letter-spacing: 1px; white-space: nowrap; }
+.address { display: flex; align-items: flex-start; gap: 5px; text-align: left; margin: 2px 0 4px; font-size: 14px; color: #192024; }
+.address svg { margin-top: 3px; flex-shrink: 0; }
+.address:hover, .textButton:hover { text-decoration: underline; }
+.reviewIdentity { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 14px; }
+.reviewIdentity > strong { background: #192024; color: white; border-radius: 4px; padding: 1px 4px; font-weight: 600; }
+.reviewIdentity b { font-weight: 600; }
+.utilityActions { display: flex; flex-shrink: 0; justify-content: flex-end; gap: 8px; }
+.utilityActions[hidden] { display: none; }
+.gallery { position: relative; }
+.galleryBack { position: absolute; top: 16px; left: 16px; z-index: 2; display: inline-flex; width: 40px; height: 40px; align-items: center; justify-content: center; border: 1px solid #d9dfe2; border-radius: 50%; background: #fff; color: #192024; box-shadow: 0 2px 8px rgb(25 32 36 / 16%); }
+.galleryBack:hover { background: #f3f5f6; }
+.galleryActions { position: absolute; top: 16px; right: 16px; z-index: 1; }
+.galleryActions .iconButton { width: 40px; height: 40px; border-radius: 50%; box-shadow: 0 2px 8px rgb(25 32 36 / 16%); }
+.iconButton { width: 36px; height: 36px; display: inline-flex; justify-content: center; align-items: center; border: 1px solid #d9dfe2; border-radius: 5px; background: #fff; color: #192024; }
+.iconButton:hover, .secondaryButton:hover { background: #f3f5f6; }
+.iconButton[aria-pressed=true] { color: #e92d55; }
+.sectionBar { position: sticky; top: 0; z-index: 35; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; border-bottom: 1px solid #d9dfe2; background: #fff; margin-top: 8px; }
+.sectionBar .utilityActions .iconButton { border: 0; background: transparent; }
+.tabs { display: flex; align-self: stretch; flex-shrink: 0; gap: 4px; }
+.tabs a { display: inline-flex; align-items: center; padding: 0 14px; border-bottom: 2px solid transparent; color: #59636a; font-weight: 600; text-decoration: none; }
+.tabs a:first-child { padding-left: 0; }
+.tabs a[aria-current=location] { color: #192024; border-color: #192024; }
+.tabs a:hover { color: #004bb8; }
+.section { padding: 20px 0 22px; border-bottom: 1px solid #d9dfe2; scroll-margin-top: 84px; }
+.section h2 { font-size: 20px; line-height: 26px; font-weight: 600; margin: 0 0 12px; letter-spacing: -.2px; }
+.section h3 { font-size: 16px; line-height: 24px; font-weight: 600; margin: 0 0 6px; }
+.section p { font-size: 14px; line-height: 22px; color: #303b42; }
+.textButton { color: #004bb8; font-size: 14px; font-weight: 500; padding: 4px 0; }
+.amenities { display: grid; grid-template-columns: minmax(0,1fr); gap: 8px; margin: 14px 0; }
+.amenities li, .amenityList li { font-size: 14px; line-height: 22px; font-weight: 400; color: #192024; gap: 10px; }
+.amenities svg, .amenityList svg { width: 18px; height: 18px; color: #59636a; margin-top: 2px; }
+.secondaryButton { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 7px 14px; border: 1px solid #a0a8ad; border-radius: 5px; font-weight: 600; font-size: 14px; }
+.amenityGroups { display: grid; grid-template-columns: minmax(0,1fr); gap: 16px; margin-top: 18px; }
+.amenityList { display: grid; gap: 8px; }
+.propertyInfo { display: grid; grid-template-columns: minmax(0,1fr); gap: 16px; margin: 20px 0; }
+.accessibility { list-style: none; padding: 0; font-size: 14px; line-height: 24px; color: #303b42; }
+.related { padding: 0 0 20px; scroll-margin-top: 84px; }
+.related h2 { font-size: 20px; font-weight: 600; color: #192024; }
+.related [data-related-hotels-section] { margin-top: 16px; }
+.related [data-related-hotels-grid] { margin-top: 12px; gap: 12px; }
+.related [data-related-hotels-grid] > a { display: flex; flex-direction: column; }
+.related [data-related-hotels-grid] > a > div:last-child { flex: 1; min-height: 158px; padding: 10px; }
+.status { margin-bottom: 12px; font-size: 13px; color: #004bb8; }
+.dialog { margin: auto; padding: 24px; width: min(640px,calc(100vw - 48px)); max-height: 85dvh; overflow: auto; border: 1px solid #d9dfe2; border-radius: 12px; background: white; color: #192024; font-family: Inter,sans-serif; }
+.dialog::backdrop { background: rgb(25 32 36 / 48%); }
+.dialogHeader { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.dialogHeader h2 { font-size: 20px; font-weight: 600; }
+.dialogNote { font-size: 14px; line-height: 22px; margin-top: 12px; color: #59636a; }
+.roomOptions { display: grid; gap: 12px; margin-top: 20px; }
+.roomOptions article { display: flex; justify-content: space-between; gap: 24px; padding: 16px; border: 1px solid #d9dfe2; border-radius: 8px; }
+.roomOptions h3 { font-size: 16px; font-weight: 600; }
+.roomOptions p { color: #59636a; font-size: 13px; margin-top: 5px; }
+.roomPrice { text-align: right; flex-shrink: 0; }
+.roomPrice strong, .roomPrice span { display: block; }
+.roomPrice strong { font-size: 18px; font-weight: 600; }
+.roomPrice span { font-size: 12px; color: #59636a; margin-top: 4px; }
+@media (max-width:1100px) { .tabs a { padding-inline: 10px; } }
+@media (prefers-reduced-motion:reduce) { .desktop { scroll-behavior: auto; } }
