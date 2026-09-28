@@ -219,7 +219,7 @@ test("outside pointer handling includes each launcher and its exact portal", () 
   assert.doesNotMatch(source, /closest\(['"](?:\.popover|\[data-popover)/);
 });
 
-test("desktop time cell matches the main search while retaining the full range wiring", () => {
+test("desktop time cell matches the main compact range while retaining full picker wiring", () => {
   const searchTimeCell = source.match(
     /function SearchTimeCell\([\s\S]*?\n}\n\nfunction DriverAgeCell/,
   )?.[0];
@@ -228,12 +228,16 @@ test("desktop time cell matches the main search while retaining the full range w
   assert.match(searchTimeCell, /useMainPageDesktopPresentation: boolean/);
   assert.match(
     searchTimeCell,
-    /<Clock[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"[\s\S]*?formatTimeLabel\(pickupTime, intlLocale\)/,
+    /<Clock[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"[\s\S]*?formatCarsCompactTimeRange\(pickupTime, dropoffTime\)/,
   );
   assert.match(searchTimeCell, /<ChevronDown/);
   assert.match(
     searchTimeCell,
-    /useMainPageDesktopPresentation \? \([\s\S]*?formatTimeLabel\(pickupTime, intlLocale\)[\s\S]*?\) : \([\s\S]*?formatTimeLabel\(pickupTime, intlLocale\)[\s\S]*?formatTimeLabel\(dropoffTime, intlLocale\)/,
+    /useMainPageDesktopPresentation \? \([\s\S]*?formatCarsCompactTimeRange\(pickupTime, dropoffTime\)/,
+  );
+  assert.match(
+    source,
+    /const timeSummary = formatCarsCompactTimeRange\(pickupTime, dropoffTime\);/,
   );
   assert.match(
     searchTimeCell,
