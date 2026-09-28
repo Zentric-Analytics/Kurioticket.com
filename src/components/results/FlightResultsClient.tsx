@@ -7423,7 +7423,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                             <>
                               <span
                                 className={cn(
-                                  "text-[12px] font-bold uppercase leading-4 tracking-[0.04em]",
+                                  "text-[12px] font-medium uppercase leading-[15px] tracking-[0.04em]",
                                   selected
                                     ? "text-[#075EE8]"
                                     : "text-slate-800",
@@ -7436,7 +7436,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                               </span>
                               <span
                                 className={cn(
-                                  "mt-0.5 text-[10px] font-semibold uppercase leading-4 tracking-[0.12em]",
+                                  "text-[10px] font-medium uppercase leading-[14px] tracking-[0.10em]",
                                   selected
                                     ? "text-[#075EE8]"
                                     : "text-slate-500",
@@ -7449,9 +7449,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                               </span>
                               <span
                                 className={cn(
-                                  "flight-fare-strip-price mt-2 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-bold leading-5 lg:hidden",
+                                  "flight-fare-strip-price mt-1 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium leading-5 lg:hidden",
                                   selected
-                                    ? "font-semibold text-[#075EE8]"
+                                    ? "text-[#075EE8]"
                                     : "text-slate-900",
                                 )}
                                 data-price-size={

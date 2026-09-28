@@ -44,6 +44,31 @@ test("long nearby-fare currency values use adaptive sizing without wrapping", ()
   assert.match(source, /overflow-hidden text-ellipsis whitespace-nowrap/);
 });
 
+test("desktop nearby fares use a lighter hierarchy independently of mobile", () => {
+  const desktopStart = source.indexOf("data-desktop-nearby-fare-rail");
+  const desktopEnd = source.indexOf('className="hidden w-full items-center', desktopStart);
+  const desktopStrip = source.slice(desktopStart, desktopEnd);
+
+  assert.match(
+    desktopStrip,
+    /text-\[12px\] font-medium uppercase leading-\[15px\] tracking-\[0\.04em\]/,
+  );
+  assert.match(
+    desktopStrip,
+    /text-\[10px\] font-medium uppercase leading-\[14px\] tracking-\[0\.10em\]/,
+  );
+  assert.match(desktopStrip, /flight-fare-strip-price mt-1[^"]*font-medium/);
+  assert.doesNotMatch(desktopStrip, /text-\[12px\] font-bold|mt-2[^"]*font-bold/);
+  assert.match(
+    styles,
+    /\.desktop-flight-fare-price \{[\s\S]*?margin-top: 0\.1875rem;[\s\S]*?font-weight: 500;/,
+  );
+  assert.match(
+    styles,
+    /\[data-nearby-fare-presentation="mobile"\] \.flight-fare-strip-price \{[\s\S]*?font-weight: 600;/,
+  );
+});
+
 test("mobile and desktop nearby fares share one truthful fare state and selection handler", () => {
   assert.equal(source.match(/const \[nearbyFares, setNearbyFares\]/g)?.length, 1);
   assert.equal(source.match(/nearbyFareCacheRef = useRef/g)?.length, 1);
