@@ -596,8 +596,7 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /: "w-\[min\(100%,270px\)\] max-w-\[270px\]"/);
   assert.doesNotMatch(source, /: "w-full"/);
   const fareRailMarkup = source.slice(source.indexOf(`role="radiogroup"`), source.indexOf(`role="tablist"`));
-  assert.doesNotMatch(fareRailMarkup, /min-h-\[126px\]/);
-  assert.doesNotMatch(fareRailMarkup, /min-h-\[(?:1[2-9]\d|[2-9]\d\d)px\]/);
+  assert.match(fareRailMarkup, /min-h-\[154px\]/);
   assert.match(source, /w-\[min\(78vw,275px\)\] max-w-\[275px\] shrink-0 snap-center/);
   assert.doesNotMatch(source, /310px\)\] max-w-\[310px\]/);
   assert.match(source, /min-w-0 rounded-\[10px\]/);
@@ -615,6 +614,34 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.doesNotMatch(source, /pl-6/);
   assert.doesNotMatch(source, /bg-slate-50 px-5 py-3 lg:px-6/);
   assert.doesNotMatch(source, /providerOfferId|rawProviderReference/);
+});
+
+test("desktop Pick your fare cards mirror the native hierarchy without changing the mobile rail", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const desktopStart = source.indexOf('role="radiogroup" aria-label="Available fares"');
+  const loadingStart = source.indexOf("data-desktop-fare-price-loading", desktopStart);
+  const desktop = source.slice(desktopStart, loadingStart);
+  const loadingEnd = source.indexOf("<MobileNativeFareInformationDeck", loadingStart);
+  const loading = source.slice(loadingStart, loadingEnd);
+
+  assert.ok(desktopStart > source.indexOf("<MobileNativeFareRail fares={fareChoices}"));
+  assert.match(desktop, /className=\{`hidden min-w-0 sm:grid/);
+  assert.match(desktop, /data-desktop-fare-card[^>]*[\s\S]*?relative min-h-\[154px\][\s\S]*?rounded-\[15px\] border-\[1\.5px\]/);
+  assert.match(desktop, /border-\[#075EE8\][\s\S]*?shadow-\[0_6px_16px/);
+  assert.match(desktop, /border-\[#D7E0EC\][\s\S]*?shadow-\[0_2px_7px/);
+  assert.doesNotMatch(desktop, /selected \? "[^"]*border-(?:2|\[2px\])/);
+  assert.match(desktop, /data-desktop-fare-content className="min-w-0 pb-10"/);
+  assert.match(desktop, /data-desktop-fare-identity className="mx-auto flex max-w-full items-center justify-center gap-\[7px\]"/);
+  assert.match(desktop, /h-6 w-6 shrink-0[^"]*rounded-lg border/);
+  assert.match(desktop, /line-clamp-2/);
+  assert.match(desktop, /data-desktop-fare-benefits[\s\S]*?<FareTerm[\s\S]*?data-desktop-fare-price/);
+  assert.match(desktop, /data-desktop-fare-price className="absolute inset-x-3 bottom-2/);
+  assert.match(desktop, /tabular-nums[^"]*\[overflow-wrap:anywhere\]" aria-label=\{price\.ariaLabel\}>\{price\.formatted\}/);
+  assert.match(desktop, /role="radio" aria-checked=\{selected\} tabIndex=\{selected \? 0 : -1\}/);
+  assert.match(desktop, /onKeyDown=\{\(event\) => handleFareKeyDown\(event, index\)\}/);
+
+  assert.match(loading, /data-desktop-fare-loading-card[\s\S]*?relative min-h-\[154px\][\s\S]*?rounded-\[15px\] border-\[1\.5px\]/);
+  assert.match(loading, /justify-center gap-\[7px\][\s\S]*?space-y-\[5px\][\s\S]*?data-desktop-fare-loading-price className="absolute inset-x-3 bottom-2/);
 });
 
 test("flight details entry keeps the opaque canonical route and results query", async () => {
