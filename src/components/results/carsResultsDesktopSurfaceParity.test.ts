@@ -22,6 +22,10 @@ const route = readFileSync(
   new URL("../../app/cars/results/page.tsx", import.meta.url),
   "utf8",
 );
+const skeleton = readFileSync(
+  new URL("../ui/Skeleton.tsx", import.meta.url),
+  "utf8",
+);
 
 test("standalone Cars Results carries the mobile canvas surface through desktop", () => {
   assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] pb-8">/);
@@ -36,8 +40,8 @@ test("standalone Cars Results carries the mobile canvas surface through desktop"
         /desktopSurfaceParity=\{!embedded && presentation === "standalone"\}/g,
       ) ?? []
     ).length,
-    3,
-    "full filter, compact filter, and car card all receive the standalone desktop surface contract",
+    4,
+    "full filter, compact filter, car card, and transition skeleton all receive the standalone desktop surface contract",
   );
 });
 
@@ -101,5 +105,15 @@ test("KAYAK car cards and loading canvases stay inside the same standalone deskt
   assert.match(
     route,
     /<main className="flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\]">/,
+  );
+  assert.match(skeleton, /desktopSurfaceParity = false/);
+  assert.match(skeleton, /desktopSurfaceParity && "md:bg-\[#E7EBF1\]"/);
+  assert.match(
+    skeleton,
+    /desktopSurfaceParity \? "md:bg-\[#E7EBF1\] lg:bg-\[#E7EBF1\]" : "lg:bg-white"/,
+  );
+  assert.equal(
+    (results.match(/<CarCardSkeleton desktopSurfaceParity \/>/g) ?? []).length,
+    3,
   );
 });
