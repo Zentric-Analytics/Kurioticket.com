@@ -145,7 +145,7 @@ test("desktop date, time, and age summaries match the approved hierarchy", () =>
   assert.match(searchBar, /carsSearch\.differentReturnLocation/);
 });
 
-test("desktop Cars pickup / return time field renders the complete selected range", () => {
+test("desktop Cars pickup / return time field renders a compact 24-hour range", () => {
   const timeField = source.slice(
     source.indexOf("function TimeRangeField"),
     source.indexOf("function SearchCell"),
@@ -153,11 +153,11 @@ test("desktop Cars pickup / return time field renders the complete selected rang
 
   assert.match(
     timeField,
-    /const timeSummary = hasCompleteTimeRange[\s\S]*?pickupTimeText,[\s\S]*?returnTimeText/,
+    /const desktopTimeSummary = hasCompleteTimeRange[\s\S]*?formatCarsCompactTimeRange\(pickupTime, returnTime\)[\s\S]*?: timeSummary/,
   );
   assert.match(
     timeField,
-    /<span className="hidden truncate sm:inline">\s*\{timeSummary\}\s*<\/span>/,
+    /<span className="hidden truncate sm:inline">\s*\{desktopTimeSummary\}\s*<\/span>/,
   );
   assert.match(
     timeField,
@@ -167,19 +167,7 @@ test("desktop Cars pickup / return time field renders the complete selected rang
     timeField,
     /onReturnTimeChange=\{\(time\) => \{\s*updateValue\("dropoffTime", time\);\s*\}\}/,
   );
-
-  const desktopSummaryStart = timeField.indexOf(
-    '<span className="hidden truncate sm:inline">',
-  );
-  const desktopSummaryEnd = timeField.indexOf("</span>", desktopSummaryStart);
-  const desktopSummary = timeField.slice(
-    desktopSummaryStart,
-    desktopSummaryEnd,
-  );
-  assert.doesNotMatch(
-    desktopSummary,
-    /hasPickupTime[\s\S]*?formatCarTimeLabel\(pickupTime, intlLocale\)/,
-  );
+  assert.match(source, /formatCarsCompactTimeRange/);
 });
 
 test("desktop field labels are text-only and neutral icons lead every value", () => {
