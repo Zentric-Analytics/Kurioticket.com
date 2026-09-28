@@ -147,7 +147,7 @@ test("desktop standalone keeps Best value above the shared action row and pricin
   );
   assert.match(
     pricing,
-    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-\[#E2E8F0\] lg:pb-3 lg:text-right"/,
+    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-\[#CBD5E1\] lg:pb-3 lg:text-right"/,
   );
   assert.match(
     pricing,
@@ -181,11 +181,11 @@ test("standalone desktop uses only the approved subtle T divider", () => {
   );
   assert.match(
     details,
-    /\$\{!guidedPlanning \? "lg:border-t lg:border-\[#E2E8F0\]" : ""\}/,
+    /\$\{!guidedPlanning \? "lg:border-t lg:border-\[#CBD5E1\]" : ""\}/,
   );
   assert.match(
     pricing,
-    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-\[#E2E8F0\] lg:pb-3 lg:text-right"/,
+    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-\[#CBD5E1\] lg:pb-3 lg:text-right"/,
   );
 });
 
