@@ -49,7 +49,8 @@ test("clean static summary hides source, estimate, total, and coming-soon chrome
     comparison,
     /!cleanStaticSummary \? <p[^>]*>\{labels\.liveDealsComingSoon\}<\/p> : null/,
   );
-  assert.match(card, /cleanStaticSummary=\{!car\.sandboxPresentation\}/);
+  assert.match(card, /<CarPriceComparison[\s\S]*?\n\s+cleanStaticSummary\n/);
+  assert.doesNotMatch(desktop, /"KAYAK"|"Sandbox"|Simulated inventory — no real booking/);
 });
 
 test("standalone desktop uses the mobile-style View deal label with a right arrow", () => {
