@@ -4373,10 +4373,10 @@ function CarFilters({
 function carFilterGroupLabel(
   group: CarFilterGroup,
   t: (key: string) => string,
-  mobile = false,
+  _mobile = false,
 ) {
   if (group.id === "pricePerDay") {
-    return mobile ? group.title ?? "Price" : t("carsResults.pricePerDay");
+    return group.title ?? "Price";
   }
 
   return group.titleKey ? t(group.titleKey) : group.title ?? "";
