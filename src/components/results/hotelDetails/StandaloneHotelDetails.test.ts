@@ -18,10 +18,6 @@ const gallerySource = readFileSync(
   new URL("./HotelDetailsGallery.tsx", import.meta.url),
   "utf8",
 );
-const mapSource = readFileSync(
-  new URL("./HotelDetailsGoogleMap.tsx", import.meta.url),
-  "utf8",
-);
 
 test("mobile gallery uses a full-bleed hero with controls and counter while desktop keeps its mosaic", () => {
   for (const contract of [
@@ -307,7 +303,7 @@ test("stay summary retains all functional data and pricing contracts", () => {
     assert.ok(source.includes(contract), contract);
 });
 
-test("mobile Overview owns Location while desktop compare keeps its side-column map", () => {
+test("desktop Rates stays rate-only and Overview owns Location plus related stays", () => {
   const comparePanel = source.slice(
     source.indexOf('{activeTab === "compare" ? ('),
     source.indexOf('{activeTab === "about" ? ('),
@@ -322,18 +318,11 @@ test("mobile Overview owns Location while desktop compare keeps its side-column 
   );
 
   assert.match(comparePanel, /<HotelPriceComparisonSection/);
-  assert.doesNotMatch(comparePanel, /data-hotel-mobile-map|<HotelLocationSection/);
-  assert.match(comparePanel, /hidden lg:block[\s\S]*?<RelatedHotelsSection/);
-
+  assert.doesNotMatch(comparePanel, /<RelatedHotelsSection|<HotelLocationSection/);
   assert.match(aboutPanel, /mobileAfterDescription=[\s\S]*?<HotelLocationSection/);
   assert.match(aboutPanel, /data-hotel-mobile-overview-related[\s\S]*?<RelatedHotelsSection/);
-
-  assert.match(stayAside, /data-hotel-desktop-map/);
-  assert.match(stayAside, /className="min-h-0 flex-1 pt-6"/);
-  assert.match(stayAside, /fillHeight/);
-  assert.match(stayAside, /activeTab === "compare"/);
-  assert.equal(source.match(/<HotelDetailsGoogleMap/g)?.length, 1);
-  assert.match(mapSource, /lg:h-\[320px\]/);
+  assert.doesNotMatch(stayAside, /data-hotel-desktop-map|<HotelDetailsGoogleMap/);
+  assert.doesNotMatch(source, /activeTab === "location"/);
   assert.doesNotMatch(source, /Show directions|href=\{directionsUrl\}/);
 });
 

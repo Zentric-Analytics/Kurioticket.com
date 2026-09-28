@@ -31,7 +31,6 @@ import type { PublicHotelProviderDetails } from "@/lib/hotels/hotelProviderDetai
 import { buildHotelAddress } from "@/lib/hotels/hotelMap";
 import { HotelDetailsGallery } from "@/components/results/hotelDetails/HotelDetailsGallery";
 import { HotelLocationSection } from "@/components/results/hotelDetails/HotelLocationSection";
-import { HotelDetailsGoogleMap } from "@/components/results/hotelDetails/HotelDetailsGoogleMap";
 import { RelatedHotelsSection } from "@/components/results/hotelDetails/RelatedHotelsSection";
 import type { HotelDetailsSearchContext } from "@/components/results/hotelDetails/hotelDetailsPresentation";
 import type { HotelDetailsProviderOffer } from "@/components/results/hotelDetails/hotelDetailsPresentation";
@@ -148,24 +147,6 @@ function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
   const canonicalAddress = locationProperty
     ? buildHotelAddress(locationProperty)
     : "";
-  const providerFacts: ReadonlyArray<readonly [string, string]> = props.providerDetails?.source === "KAYAK"
-    ? ([
-        props.providerDetails.overview?.address ? ["Address", props.providerDetails.overview.address] : null,
-        props.providerDetails.overview?.countryCode ? ["Country code", props.providerDetails.overview.countryCode] : null,
-        props.providerDetails.overview?.selfRated !== undefined ? ["Provider self-rated", props.providerDetails.overview.selfRated ? "Yes" : "No"] : null,
-        ...(props.providerDetails.overview?.place ?? []).map((fact) => [fact.label, fact.value] as const),
-        ...(props.providerDetails.overview?.policies ?? []).map((fact) => [fact.label, fact.value] as const),
-        props.providerDetails.reviews?.sentiment ? ["Guest rating sentiment", props.providerDetails.reviews.sentiment] : null,
-        ...(props.providerDetails.reviews?.quotes ?? []).map((fact) => [fact.label, fact.value] as const),
-        props.providerDetails.rate?.roomName ? ["Room", props.providerDetails.rate.roomName] : null,
-        props.providerDetails.rate?.freeCancellation !== undefined ? ["Free cancellation", props.providerDetails.rate.freeCancellation ? "Yes" : "No"] : null,
-        props.providerDetails.rate?.payLater !== undefined ? ["Pay later", props.providerDetails.rate.payLater ? "Yes" : "No"] : null,
-        props.providerDetails.rate?.bundledRate !== undefined ? ["Bundled rate", props.providerDetails.rate.bundledRate ? "Yes" : "No"] : null,
-        ...(props.providerDetails.rate?.rateBreakdown ?? []).map((fact) => [fact.label, fact.value] as const),
-        ...(props.providerDetails.rate?.conditions ?? []).map((fact) => [fact.label, fact.value] as const),
-      ] as Array<readonly [string, string] | null>).filter((fact): fact is readonly [string, string] => fact !== null && Boolean(fact[1].trim()))
-    : [];
-
   const mobileProviderPolicies = [...new Set(
     (props.providerDetails?.overview?.policies ?? [])
       .map(({ value }) => value.trim())
@@ -562,35 +543,15 @@ function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
               data-hotel-details-active-panel={activeTab}
             >
               {activeTab === "compare" ? (
-                <>
-                  <HotelPriceComparisonSection
-                    stayContext={props.staySummary ? `${props.staySummary.dateText} · ${props.staySummary.nightText}` : undefined}
-                    perNightText={props.perNightText}
-                    offers={providerOffers}
-                    selectedOfferId={selectedProviderOfferId}
-                    selectableOfferIds={selectableProviderOfferIds}
-                    providerHandoffError={providerHandoffError}
-                    onSelectOffer={selectProviderOffer}
-                  />
-                  <div className="hidden lg:block">
-                    <RelatedHotelsSection
-                      hotels={props.relatedHotels}
-                      city={props.propertyDetails?.city || locationProperty?.city || ""}
-                      searchContext={props.relatedSearchContext}
-                      labels={{
-                      heading: props.labels.moreHotelsIn,
-                      viewHotel: props.labels.viewHotel,
-                      pricePerNight: props.labels.pricePerNight,
-                      estimatedStayTotal: props.labels.estimatedStayTotal,
-                      priceUnavailable: props.labels.priceUnavailable,
-                      imageUnavailable: props.labels.imageUnavailable,
-                      imageAlt: props.labels.imageAlt,
-                      nearLocation: props.labels.nearLocation,
-                      starHotelAria: props.labels.starHotelAria,
-                    }}
-                    />
-                  </div>
-                </>
+                <HotelPriceComparisonSection
+                  stayContext={props.staySummary ? `${props.staySummary.dateText} · ${props.staySummary.nightText}` : undefined}
+                  perNightText={props.perNightText}
+                  offers={providerOffers}
+                  selectedOfferId={selectedProviderOfferId}
+                  selectableOfferIds={selectableProviderOfferIds}
+                  providerHandoffError={providerHandoffError}
+                  onSelectOffer={selectProviderOffer}
+                />
               ) : null}
 
               {activeTab === "about" ? (
@@ -598,8 +559,6 @@ function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
                   <HotelAboutSection
                     description={description}
                     amenities={props.amenityItems}
-                    starRating={props.starRating}
-                    propertyType={props.propertyDetails?.propertyType}
                     roomSummary={props.propertyDetails?.roomSummary}
                     bedSummary={props.propertyDetails?.bedSummary}
                     accessibility={props.propertyDetails?.accessibility}
@@ -630,22 +589,7 @@ function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
                       )
                     }
                   />
-                  {providerFacts.length ? (
-                    <section className="hidden border-b border-slate-200 px-4 py-8 lg:block lg:px-0 lg:py-10" aria-labelledby="provider-details-heading" data-provider-hotel-details>
-                      <h2 id="provider-details-heading" className="text-xl font-extrabold text-slate-950">KAYAK-provided details</h2>
-                      <p className="mt-2 text-sm text-slate-600">Information supplied for this exact sandbox offer.</p>
-                      <dl className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
-                        {providerFacts.map(([label, value], index) => (
-                          <div key={`${label}-${value}-${index}`} className="min-w-0">
-                            <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</dt>
-                            <dd className="mt-1 break-words text-sm font-medium leading-6 text-slate-900">{value}</dd>
-                          </div>
-                        ))}
-                      </dl>
-                    </section>
-                  ) : null}
-
-                  <div className="lg:hidden" data-hotel-mobile-overview-related>
+                  <div data-hotel-mobile-overview-related>
                     <RelatedHotelsSection
                       hotels={props.relatedHotels}
                       city={props.propertyDetails?.city || locationProperty?.city || ""}
@@ -675,25 +619,6 @@ function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
                 />
               ) : null}
 
-              {activeTab === "location" ? locationProperty ? (
-                <HotelLocationSection
-                  hotelName={props.hotelName}
-                  propertyDetails={locationProperty}
-                  locationLabel="Location & stay fit"
-                  mapLabel={props.labels.map}
-                  streetViewLabel={props.labels.streetView}
-                  stayFitFacts={[
-                    locationProperty.neighbourhood ? `${locationProperty.neighbourhood} neighborhood` : "",
-                    locationProperty.businessSuitable ? "Work-friendly property" : "",
-                    locationProperty.familySuitable ? "Family-friendly" : "",
-                    locationProperty.interestTags?.some((tag) => /sightseeing|culture|history|art|theatre/i.test(tag)) ? "Good for sightseeing" : "",
-                    locationProperty.accessibility?.length ? "Accessibility details available" : "",
-                  ].filter(Boolean)}
-                  accessibilityDetails={locationProperty.accessibility}
-                />
-              ) : (
-                <section className="border-b border-slate-200 px-4 py-8 lg:px-0 lg:py-10" aria-labelledby="hotel-location-heading"><h2 id="hotel-location-heading" className="text-xl font-extrabold text-slate-950">Location &amp; stay fit</h2><p className="mt-3 text-sm text-slate-600">Verified location details are not available for this property yet.</p></section>
-              ) : null}
             </div>
           </article>
         </div>
@@ -787,15 +712,6 @@ function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
               {bookingActionLabel}
             </button>
           </section>
-          {activeTab === "compare" && props.propertyDetails ? (
-            <div className="min-h-0 flex-1 pt-6" data-hotel-desktop-map>
-              <HotelDetailsGoogleMap
-                hotelName={props.hotelName}
-                propertyDetails={props.propertyDetails}
-                fillHeight
-              />
-            </div>
-          ) : null}
         </aside>
       </div>
 

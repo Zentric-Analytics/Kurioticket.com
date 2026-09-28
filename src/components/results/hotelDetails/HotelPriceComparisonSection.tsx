@@ -1,6 +1,5 @@
 import Image from "next/image";
 
-import { HotelAmenityList } from "@/components/results/HotelAmenityList";
 import type { HotelDetailsProviderOffer } from "./hotelDetailsPresentation";
 
 function ProviderOffer({
@@ -83,13 +82,6 @@ function ProviderOffer({
           className="col-span-2 row-start-3 mt-1 flex min-w-0 items-center justify-between gap-3"
           data-provider-bottom-row
         >
-          <span className="hidden min-w-0 lg:block" data-provider-amenities>
-            <HotelAmenityList
-              items={offer.amenities ?? []}
-              t={() => ""}
-              className="flex min-w-0 flex-nowrap items-center gap-x-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>li]:shrink-0 [&>li>span]:whitespace-nowrap"
-            />
-          </span>
           <span
             className="ms-auto shrink-0 whitespace-nowrap text-right text-[12px] font-medium leading-4 text-slate-600 sm:text-[#075EE8]"
             data-nightly-supporting-label
@@ -131,8 +123,7 @@ export function HotelPriceComparisonSection({
         tabIndex={-1}
         className="text-[18px] font-extrabold tracking-tight text-slate-950 sm:text-xl"
       >
-        <span className="lg:hidden">Rates</span>
-        <span className="hidden lg:inline">Compare prices</span>
+Rates
       </h2>
       {stayContext ? (
         <p className="mt-1 text-[13px] font-medium leading-5 text-slate-600 sm:text-sm">{stayContext}</p>

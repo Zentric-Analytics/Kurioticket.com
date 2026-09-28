@@ -28,7 +28,7 @@ test("active native Details derives the same semantic amenity presentation as we
     assert.match(web, new RegExp(`\\b${icon}\\b`));
   }
   assert.doesNotMatch(details, /\bAward\b/);
-  assert.match(web, /\bAward\b/);
+  assert.doesNotMatch(web, /\bAward\b/);
 
   const items = buildHotelAmenityPresentation(["Wi-Fi", "Restaurant", "Bar", "Workspaces"], 4)
     .map((item) => ({ ...item, label: nativeHotelAmenityLabel(item) }));
