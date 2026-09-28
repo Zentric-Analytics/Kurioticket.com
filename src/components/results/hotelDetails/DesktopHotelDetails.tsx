@@ -182,10 +182,10 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
 
     <section id="hotel-amenities" className={styles.section} aria-labelledby="hotel-amenities-heading">
       <h2 id="hotel-amenities-heading" tabIndex={-1}>Amenities at {props.hotelName}</h2>
-      <HotelAmenityList items={props.amenityItems.slice(0, 10)} t={() => ""} className={styles.amenities} />
+      <HotelAmenityList items={props.amenityItems.slice(0, 10)} t={() => ""} className={`${styles.amenities} ${props.amenityItems.length <= 5 ? styles.amenitiesSingle : ""}`} />
       {!props.amenityItems.length ? <p>Amenity details are not available yet.</p> : null}
+      {allAmenities ? <div className={styles.amenityGroups}>{mobileHotelAmenityGroups(props.amenityItems.slice(10)).map(group => <div key={group.title}><h3>{group.title}</h3><HotelAmenityList items={group.items} t={() => ""} className={styles.amenityList} /></div>)}</div> : null}
       {props.amenityItems.length > 10 ? <button type="button" className={styles.secondaryButton} aria-expanded={allAmenities} onClick={() => setAllAmenities(value => !value)}>{allAmenities ? "Show fewer amenities" : `Show all ${props.amenityItems.length} amenities`}</button> : null}
-      {allAmenities ? <div className={styles.amenityGroups}>{mobileHotelAmenityGroups(props.amenityItems).map(group => <div key={group.title}><h3>{group.title}</h3><HotelAmenityList items={group.items} t={() => ""} className={styles.amenityList} /></div>)}</div> : null}
       <div className={styles.propertyInfo}>
         <div>
           <h3>Room &amp; comfort</h3>
