@@ -52,7 +52,27 @@ test("clean static summary hides source, estimate, total, and coming-soon chrome
   assert.match(card, /cleanStaticSummary=\{!car\.sandboxPresentation\}/);
 });
 
-test("standalone desktop Compare deals follows the result card details route instead of expanding inline", () => {
+test("standalone desktop uses the mobile-style View deal label with a right arrow", () => {
+  const mobile = card.slice(
+    card.indexOf("data-car-card-mobile-main"),
+    card.indexOf("data-region=\"heading\""),
+  );
+
+  assert.match(
+    desktop,
+    /<CarPriceComparison[\s\S]*?comparePrices: "View deal"/,
+  );
+  assert.match(
+    comparison,
+    /\{labels\.comparePrices\}[\s\S]*?<ChevronRight className="h-4 w-4"/,
+  );
+  assert.match(
+    mobile,
+    /View deal <ChevronRight size=\{16\} aria-hidden="true" \/>/,
+  );
+});
+
+test("standalone desktop View deal follows the result card details route instead of expanding inline", () => {
   assert.match(comparison, /desktopDetailsSelector/);
   assert.match(comparison, /a\[href\^=\"\/cars\/details\/\"\]/);
   assert.match(comparison, /a\[href\^=\"\/sandbox\/kayak\/details\"\]/);
