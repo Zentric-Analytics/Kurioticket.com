@@ -1737,9 +1737,7 @@ function TimeRangeField({
             {timeSummary}
           </span>
           <span className="hidden truncate sm:inline">
-            {hasPickupTime
-              ? formatCarTimeLabel(pickupTime, intlLocale)
-              : t("carsSearch.pickupTimeLabel")}
+            {timeSummary}
           </span>
         </span>
         <ChevronDown
