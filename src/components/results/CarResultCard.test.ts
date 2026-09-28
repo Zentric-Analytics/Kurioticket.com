@@ -113,19 +113,29 @@ test("standalone desktop mirrors the requested result-card hierarchy without cha
   assert.match(mobile, /mobileSpecColumns\.map/);
 });
 
-test("desktop standalone title aligns with save/share while Best value stays above actions", () => {
+test("desktop standalone title shares the exact row with save/share while Best value stays above", () => {
   const desktop = source.slice(source.indexOf('data-region="heading"'));
   const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
 
+  assert.doesNotMatch(heading, /pt-\[26px\]/);
   assert.match(
     heading,
-    /data-car-card-desktop-identity[\s\S]*?!guidedPlanning && badge \? "pt-\[26px\]" : ""/,
+    /data-car-card-desktop-badge[\s\S]*?col-start-2 row-start-1/,
   );
   assert.match(
     heading,
-    /data-car-card-desktop-actions[\s\S]*?\{badge && BadgeIcon && \([\s\S]*?\{cardActions\}/,
+    /data-car-card-desktop-title-row[\s\S]*?\$\{badge \? "row-start-2" : "row-start-1"\}[\s\S]*?self-center/,
+  );
+  assert.match(
+    heading,
+    /data-car-card-desktop-actions[\s\S]*?\$\{badge \? "row-start-2" : "row-start-1"\}[\s\S]*?self-center/,
+  );
+  assert.match(
+    heading,
+    /\$\{badge \? "row-start-3" : "row-start-2"\}[\s\S]*?\{car\.categoryLabel\}/,
   );
 });
+
 
 test("desktop save and share glyphs sit closer within independent targets", () => {
   const actions = source.slice(
