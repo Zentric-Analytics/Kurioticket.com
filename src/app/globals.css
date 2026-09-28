@@ -940,7 +940,13 @@ textarea {
 }
 
 .flight-card-detail-item {
+  min-width: 0;
   padding-right: 1rem;
+}
+
+.flight-card-detail-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 @container (max-width: 759px) {

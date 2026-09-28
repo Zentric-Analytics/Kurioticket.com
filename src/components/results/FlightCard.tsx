@@ -463,8 +463,7 @@ function FlightDetailLines({
           <p
             key={detail.label}
             className={cn(
-              "flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5",
-              "flight-card-detail-item flex-nowrap whitespace-nowrap",
+              "flight-card-detail-item grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] items-start gap-x-1.5 gap-y-0.5 whitespace-normal",
             )}
           >
             <Icon
@@ -474,7 +473,10 @@ function FlightDetailLines({
             <span className="shrink-0 font-medium text-slate-700">
               {detail.label}:
             </span>
-            <span className="min-w-0 text-slate-600" title={detail.value}>
+            <span
+              className="flight-card-detail-value min-w-0 text-slate-600"
+              title={detail.value}
+            >
               {detail.value}
             </span>
           </p>
