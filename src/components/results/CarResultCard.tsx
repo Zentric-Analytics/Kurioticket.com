@@ -478,7 +478,7 @@ export function CarResultCard({
             className={
               guidedPlanning
                 ? "flex flex-wrap items-start justify-between gap-2"
-                : "grid grid-cols-1 items-start gap-y-0.5"
+                : `grid grid-cols-1 items-start gap-y-0 ${badge && BadgeIcon ? "lg:pt-6" : "lg:pt-0"}`
             }
           >
             {guidedPlanning ? (
@@ -533,7 +533,7 @@ export function CarResultCard({
 
                 {car.categoryLabel ? (
                   <p
-                    className="row-start-2 mt-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]"
+                    className="row-start-2 mt-0.5 text-[10px] font-bold uppercase leading-none tracking-[0.14em] text-[#004BB8]"
                   >
                     {car.categoryLabel}
                   </p>
@@ -542,7 +542,7 @@ export function CarResultCard({
             )}
           </header>
 
-          <p className="mt-1 flex min-w-0 items-center gap-1.5 text-[12px] font-medium text-[#536B92]">
+          <p className={`${guidedPlanning ? "mt-1" : "mt-0.5"} flex min-w-0 items-center gap-1.5 text-[12px] font-medium text-[#536B92]`}>
             <MapPin
               size={16}
               className="shrink-0 text-[#004BB8]"
