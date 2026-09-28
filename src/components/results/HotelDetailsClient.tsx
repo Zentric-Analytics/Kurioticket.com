@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import type { SavedHotelSnapshot } from "@/components/results/hotelSavedStorage";
 import { useSavedHotel } from "@/components/results/useSavedHotel";
@@ -883,19 +881,9 @@ export function HotelDetailsClient({
     });
 
     return (
-      <main className="flex-1 bg-white sm:bg-[#f8fafc]">
+      <main className="flex-1 bg-white sm:bg-[#f8fafc] lg:bg-white">
         <section className="py-0 lg:py-2">
-          <div className="mx-auto w-full max-w-[1400px] px-0 lg:px-7" data-hotel-details-page-shell>
-            <div className="hidden lg:block lg:px-0">
-              <Link
-                href={resultsHref}
-                className="mb-3 inline-flex min-h-10 items-center gap-2 text-[13px] font-semibold text-[#075EE8] hover:text-[#004BB8] focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35"
-                data-standalone-hotel-back-link
-              >
-                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                {t("hotelDetails.backToHotelResults") || "Back to hotel results"}
-              </Link>
-            </div>
+          <div className="mx-auto w-full max-w-[1400px] px-0 lg:max-w-[1080px] lg:px-[30px]" data-hotel-details-page-shell>
             <div>
               <StandaloneHotelDetails
                 hotelName={hotel.name}
@@ -971,6 +959,7 @@ export function HotelDetailsClient({
                   onImageError: markImageFailed,
                 }}
                 labels={{
+                  backToResults: t("hotelDetails.backToHotelResults") || "Back to hotel results",
                   share: t("hotelDetails.share") || "Share",
                   shared: t("hotelDetails.shared") || "Copied",
                   map: t("hotelDetails.map") || "Map",

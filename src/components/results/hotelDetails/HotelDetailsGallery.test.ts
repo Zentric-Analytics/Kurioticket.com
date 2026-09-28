@@ -6,6 +6,10 @@ const gallerySource = readFileSync(
   new URL("./HotelDetailsGallery.tsx", import.meta.url),
   "utf8",
 );
+const mobileDetailsSource = readFileSync(
+  new URL("./MobileHotelDetails.tsx", import.meta.url),
+  "utf8",
+);
 
 test("mobile hero uses small visible arrows inside accessible targets without changing the desktop mosaic", () => {
   for (const contract of [
@@ -27,7 +31,7 @@ test("mobile hero uses small visible arrows inside accessible targets without ch
     "pe-2",
     "bg-transparent",
     "text-white",
-    "aspect-[6/5]",
+    "aspect-[2.32/1]",
     "aspect-[16/10]",
   ])
     assert.ok(gallerySource.includes(contract), contract);
@@ -37,16 +41,15 @@ test("mobile hero uses small visible arrows inside accessible targets without ch
 });
 
 test("standalone mobile mosaic uses one full-bleed hero without an inline thumbnail strip", () => {
-  const unitStart = gallerySource.indexOf('className="lg:hidden" data-hotel-mobile-gallery-unit');
-  const unit = gallerySource.slice(
-    unitStart,
-    gallerySource.indexOf("{mosaic}", unitStart),
-  );
-  assert.ok(unitStart >= 0);
-  assert.ok(unit.includes("{hero}"));
-  assert.doesNotMatch(unit, /mobileThumbnails|data-hotel-mobile-thumbnail-strip|mx-3/);
-  assert.doesNotMatch(gallerySource, /mobileThumbnailIndices|mobileRemainingCount|<Images/);
-  assert.equal(gallerySource.match(/data-hotel-mobile-gallery-unit/g)?.length, 1);
+  for (const contract of [
+    "data-mobile-hotel-hero",
+    "className={styles.hero}",
+    "gallery.usableIndices.map",
+    "gallery.onSelectImage(index)",
+    'setOverlay("gallery")',
+  ])
+    assert.ok(mobileDetailsSource.includes(contract), contract);
+  assert.doesNotMatch(mobileDetailsSource, /data-hotel-mobile-thumbnail-strip/);
 });
 
 test("preserves pointer swipe and keyboard gallery navigation", () => {

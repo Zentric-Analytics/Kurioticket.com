@@ -10,12 +10,19 @@ import {
   getCaliforniaSellerOfTravelNotice,
   legalProfile,
 } from "@/data/legalProfile";
+import { cn } from "@/lib/utils";
 
 export type FooterVariant = "full" | "brand-legal-only";
 
 type FooterSectionId = "contact" | "discover" | "terms-settings" | "about";
 
-export function Footer({ variant = "full" }: { variant?: FooterVariant }) {
+export function Footer({
+  variant = "full",
+  className,
+}: {
+  variant?: FooterVariant;
+  className?: string;
+}) {
   const { t } = useLocale();
   const currentYear = new Date().getFullYear();
   const [openMobileSection, setOpenMobileSection] =
@@ -112,7 +119,12 @@ export function Footer({ variant = "full" }: { variant?: FooterVariant }) {
   ];
 
   return (
-    <footer className="border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] text-slate-700">
+    <footer
+      className={cn(
+        "border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] text-slate-700",
+        className,
+      )}
+    >
       <div
         className={
           variant === "full"

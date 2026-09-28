@@ -6,6 +6,9 @@ const source = readFileSync(
   new URL("./HotelLocationSection.tsx", import.meta.url),
   "utf8",
 );
+const defaultView = source.slice(
+  source.indexOf('\n  return (', source.indexOf('if (variant === "desktop")')),
+);
 
 test("renders a factual responsive hotel location card", () => {
   for (const contract of [
@@ -28,17 +31,18 @@ test("renders a factual responsive hotel location card", () => {
     assert.ok(source.includes(contract), contract);
 });
 
-test("keeps the stable in-page location anchor without an external directions link", () => {
-  assert.match(source, /id="hotel-location"/);
-  assert.doesNotMatch(source, /directionsUrl|Show directions|maps\/dir/);
+test("keeps the default anchor while adding directions only to desktop", () => {
+  assert.match(defaultView, /id="hotel-location"/);
+  assert.doesNotMatch(defaultView, /directionsUrl|Open in Maps|maps\/dir/);
+  assert.match(source, /if \(variant === "desktop"\) \{\s*const directionsUrl = buildHotelDirectionsUrl/);
 });
-test("never substitutes a non-Google map when Google configuration is absent", () => {
-  assert.doesNotMatch(source, /buildHotelMapEmbedUrl|OpenStreetMap|openstreetmap/i);
+test("enables the fallback map only for the desktop variant", () => {
+  assert.match(source, /variant = "default"/);
+  assert.match(source, /const mapUrl = variant === "desktop"\s*\? buildHotelMapEmbedUrl\([^;]+:\s*buildGoogleHotelMapEmbedUrl\(/);
 });
-test("keeps location-fit visible while mobile Overview avoids duplicate accessibility copy", () => {
+test("keeps location-fit and accessibility details visibly expanded", () => {
   assert.match(source, /stayFitFacts\.map/);
   assert.match(source, /Accessibility and location details/);
-  assert.match(source, /hidden lg:block[\s\S]*?Accessibility and location details/);
   assert.doesNotMatch(source, /stayFitFacts\.slice|<details|<summary/);
 });
 test("keys the iframe to stable property coordinates", () => {

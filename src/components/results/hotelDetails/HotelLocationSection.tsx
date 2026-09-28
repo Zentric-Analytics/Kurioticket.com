@@ -1,15 +1,18 @@
 "use client";
 
-import { MapPin } from "lucide-react";
+import { ArrowUpRight, MapPin } from "lucide-react";
 import { useState } from "react";
 
 import type { PublicHotelPropertyDetails } from "@/lib/types";
 import {
   buildGoogleHotelMapEmbedUrl,
   buildGoogleHotelStreetViewEmbedUrl,
+  buildHotelDirectionsUrl,
+  buildHotelMapEmbedUrl,
 } from "@/lib/hotels/hotelMap";
 
 type HotelLocationSectionProps = {
+  variant?: "default" | "desktop";
   hotelName: string;
   propertyDetails: PublicHotelPropertyDetails;
   locationLabel: string;
@@ -36,6 +39,7 @@ function getSecondaryLocation(details: PublicHotelPropertyDetails): string {
 }
 
 export function HotelLocationSection({
+  variant = "default",
   hotelName,
   propertyDetails,
   locationLabel,
@@ -47,11 +51,9 @@ export function HotelLocationSection({
   const [view, setView] = useState<"map" | "streetview">("map");
   const googleMapsEmbedApiKey =
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY;
-  const mapUrl = buildGoogleHotelMapEmbedUrl({
-    hotelName,
-    propertyDetails,
-    googleMapsEmbedApiKey,
-  });
+  const mapUrl = variant === "desktop"
+    ? buildHotelMapEmbedUrl({ hotelName, propertyDetails, googleMapsEmbedApiKey })
+    : buildGoogleHotelMapEmbedUrl({ hotelName, propertyDetails, googleMapsEmbedApiKey });
   const streetViewUrl = buildGoogleHotelStreetViewEmbedUrl({
     hotelName,
     propertyDetails,
@@ -61,6 +63,93 @@ export function HotelLocationSection({
   const streetAddress = propertyDetails.streetAddress.trim();
   const secondaryLocation = getSecondaryLocation(propertyDetails);
   const hasAddress = Boolean(streetAddress || secondaryLocation);
+
+  if (variant === "desktop") {
+    const directionsUrl = buildHotelDirectionsUrl({ hotelName, propertyDetails });
+
+    return (
+      <section
+        id="hotel-location"
+        className="scroll-mt-[84px] border-b border-[#d9e2e8] py-6 text-[#192024]"
+        aria-labelledby="hotel-location-heading"
+        data-hotel-location-section
+        data-hotel-desktop-location
+      >
+        <h2 id="hotel-location-heading" tabIndex={-1} className="text-xl font-semibold leading-7">
+          {locationLabel}
+        </h2>
+        <div className="mt-3 flex flex-wrap items-start justify-between gap-x-8 gap-y-3 text-sm leading-6">
+          {hasAddress ? (
+            <div className="flex min-w-0 items-start gap-2">
+              <MapPin className="mt-1 h-4 w-4 shrink-0" aria-hidden="true" />
+              <address className="min-w-0 break-words not-italic">
+                {[streetAddress, secondaryLocation].filter(Boolean).join(", ")}
+              </address>
+            </div>
+          ) : null}
+          {directionsUrl ? (
+            <a href={directionsUrl} target="_blank" rel="noopener noreferrer" className="focus-ring inline-flex shrink-0 items-center gap-1 rounded-sm font-semibold text-blue hover:underline">
+              Open in Maps
+              <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+            </a>
+          ) : null}
+        </div>
+        <div className="mt-4 flex min-h-11 items-center gap-1 border-b border-[#d9e2e8]" role="tablist" aria-label="Location views">
+          {(["map", "streetview"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              id={`hotel-desktop-location-${option}-tab`}
+              role="tab"
+              aria-selected={view === option}
+              aria-controls="hotel-desktop-location-panel"
+              onClick={() => setView(option)}
+              className={`focus-ring min-h-11 border-b-2 px-4 text-sm font-semibold transition-colors ${view === option ? "border-[#004bb8] text-[#004bb8]" : "border-transparent text-[#59636a] hover:text-[#192024]"}`}
+            >
+              {option === "map" ? mapLabel : streetViewLabel}
+            </button>
+          ))}
+        </div>
+        <div id="hotel-desktop-location-panel" role="tabpanel" aria-labelledby={`hotel-desktop-location-${view}-tab`} className="mt-3 overflow-hidden rounded-xl border border-[#d9e2e8] bg-[#f3f5f7]">
+          {activeEmbedUrl ? (
+            <iframe
+              key={`${hotelName}:${propertyDetails.latitude}:${propertyDetails.longitude}:${view}`}
+              title={view === "streetview" ? `Street View near ${hotelName}` : `Map showing the location of ${hotelName}`}
+              src={activeEmbedUrl}
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              className="h-[280px] w-full border-0"
+            />
+          ) : (
+            <div className="flex h-[280px] flex-col items-center justify-center gap-3 text-sm">
+              <MapPin className="h-6 w-6" aria-hidden="true" />
+              <p>{view === "streetview" ? "Street View unavailable" : "Map preview unavailable"}</p>
+            </div>
+          )}
+        </div>
+        {stayFitFacts.length || accessibilityDetails.length ? (
+          <div className="mt-5 grid grid-cols-1 gap-5" data-hotel-stay-fit-facts>
+            {stayFitFacts.length ? (
+              <div>
+                <h3 className="text-base font-semibold">Why this location works</h3>
+                <ul className="mt-2 list-none p-0 text-sm leading-6 text-[#303b42]">
+                  {stayFitFacts.map((fact) => <li key={fact}>{fact}</li>)}
+                </ul>
+              </div>
+            ) : null}
+            {accessibilityDetails.length ? (
+              <div>
+                <h3 className="text-base font-semibold">Accessibility and location details</h3>
+                <ul className="mt-2 list-none p-0 text-sm leading-6 text-[#303b42]">
+                  {accessibilityDetails.map((detail) => <li key={detail}>{detail}</li>)}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </section>
+    );
+  }
 
   return (
     <section

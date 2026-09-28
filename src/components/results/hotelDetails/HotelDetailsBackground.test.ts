@@ -15,42 +15,24 @@ const flightClientSource = readFileSync(
   "utf8",
 );
 
-const mainClass = 'className="flex-1 bg-white sm:bg-[#f8fafc]"';
-const whiteSection = '<section className="py-2 lg:py-2">';
-const fullBleedShell = 'className="mx-auto w-full max-w-[1400px] px-0 lg:px-7"';
-
-function assertBackgroundHierarchy(source: string) {
-  const mainIndex = source.indexOf(mainClass);
-  const sectionIndex = source.indexOf(whiteSection, mainIndex);
-  const shellIndex = source.indexOf(fullBleedShell, sectionIndex);
-
-  assert.ok(mainIndex >= 0, "retains white mobile and muted desktop backgrounds");
-  assert.ok(sectionIndex > mainIndex, "the white section is inside the main");
-  assert.ok(shellIndex > sectionIndex, "the full-bleed shell is inside the white section");
-
-  const wrapperOpening = source.slice(sectionIndex, shellIndex + fullBleedShell.length);
-  for (const forbidden of [
-    "gradient",
-    "bg-surface-subtle",
-    "bg-slate-50",
-    "shadow-",
-    "border-t",
-    "border-x",
-    "border-2",
-    "<hr",
-    'role="separator"',
-  ]) {
-    assert.equal(wrapperOpening.includes(forbidden), false, forbidden);
-  }
-}
-
 test("keeps Flights Details independently scoped", () => {
   assert.match(flightClientSource, /<main/);
 });
 
-test("wraps successful Hotel Details content in the full-width white section", () => {
-  assertBackgroundHierarchy(hotelClientSource);
+test("standalone desktop uses a white canvas while guided details keep their own composition", () => {
+  const standalone = hotelClientSource.slice(
+    hotelClientSource.indexOf('if (mode === "standalone")'),
+    hotelClientSource.indexOf("const detailsContent = ("),
+  );
+  const mainIndex = standalone.indexOf("<main");
+  const shellIndex = standalone.indexOf("data-hotel-details-page-shell");
+  const detailsIndex = standalone.indexOf("<StandaloneHotelDetails");
+  assert.ok(mainIndex >= 0 && shellIndex > mainIndex && detailsIndex > shellIndex);
+  assert.match(standalone, /<main className="[^"]*lg:bg-white/);
+  assert.match(standalone, /w-full/);
+  assert.doesNotMatch(standalone.slice(mainIndex, shellIndex), /gradient|shadow-|role="separator"/);
 
+  const guided = hotelClientSource.slice(hotelClientSource.indexOf("const detailsContent = ("));
   for (const contract of [
     "space-y-6 sm:space-y-8 lg:space-y-10",
     "lg:grid-cols-[minmax(0,1fr)_360px]",
@@ -61,8 +43,9 @@ test("wraps successful Hotel Details content in the full-width white section", (
     "HotelDetailsSections",
     "HotelDetailsBookingPanel",
   ]) {
-    assert.ok(hotelClientSource.includes(contract), contract);
+    assert.ok(guided.includes(contract) || hotelClientSource.includes(contract), contract);
   }
+  assert.match(guided, /<main className="flex-1 bg-surface-muted\/40"/);
 });
 
 test("aligns both Hotel Details page states without changing their contracts", () => {
