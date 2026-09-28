@@ -132,7 +132,7 @@ test("desktop standalone title and save/share occupy the exact same grid row bel
   );
   assert.match(
     heading,
-    /\$\{badge && BadgeIcon \? "row-start-4" : "row-start-3"\} mt-0\.5 flex/,
+    /\$\{badge && BadgeIcon \? "row-start-4" : "row-start-3"\} mt-1 flex/,
   );
 });
 
@@ -186,6 +186,51 @@ test("standalone desktop uses only the approved subtle T divider", () => {
   assert.match(
     pricing,
     /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-\[#CBD5E1\] lg:pb-3 lg:text-right"/,
+  );
+});
+
+test("Kayak standalone desktop reuses Kurioticket save/share controls while mobile stays unchanged", () => {
+  const desktopActions = source.slice(
+    source.indexOf("const cardActions"),
+    source.indexOf("const mobileCardActions"),
+  );
+  const mobileActions = source.slice(
+    source.indexOf("const mobileCardActions"),
+    source.indexOf("return ("),
+  );
+
+  assert.match(
+    desktopActions,
+    /const cardActions = car\.sandboxPresentation && guidedPlanning \? null : \(/,
+  );
+  assert.match(desktopActions, /data-car-card-actions/);
+  assert.match(desktopActions, /toggleSavedCar/);
+  assert.match(desktopActions, /void shareCar\(\)/);
+  assert.match(
+    mobileActions,
+    /const mobileCardActions = car\.sandboxPresentation \? null : \(/,
+  );
+});
+
+test("standalone desktop identity stack keeps compact but visible breathing room", () => {
+  const desktop = source.slice(source.indexOf('data-region="heading"'));
+  const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
+
+  assert.match(
+    heading,
+    /row-start-2 mt-1 text-\[10px\] font-bold uppercase leading-none/,
+  );
+  assert.match(
+    heading,
+    /\$\{badge && BadgeIcon \? "row-start-3" : "row-start-2"\} mt-1 px-4/,
+  );
+  assert.match(
+    heading,
+    /\$\{badge && BadgeIcon \? "row-start-4" : "row-start-3"\} mt-1 flex/,
+  );
+  assert.match(
+    heading,
+    /\$\{badge && BadgeIcon \? "row-start-5" : "row-start-4"\} mt-1\.5 flex/,
   );
 });
 
@@ -282,7 +327,7 @@ test("standalone desktop shows localized data-driven Free cancellation directly 
   );
   assert.match(
     heading,
-    /\$\{badge && BadgeIcon \? "row-start-5" : "row-start-4"\} mt-1 flex/,
+    /\$\{badge && BadgeIcon \? "row-start-5" : "row-start-4"\} mt-1\.5 flex/,
   );
 });
 
