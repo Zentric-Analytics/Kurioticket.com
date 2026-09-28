@@ -49,15 +49,15 @@ test("standalone desktop uses a white canvas while guided details keep their own
 });
 
 test("aligns both Hotel Details page states without changing their contracts", () => {
-  assert.equal(hotelStatesSource.match(/flex-1 bg-surface-muted\/40/g)?.length, 2);
+  assert.equal(hotelStatesSource.match(/flex-1 bg-surface-muted\/40/g)?.length, 1);
   assert.equal(hotelStatesSource.match(/data-hotel-details-state-shell/g)?.length, 2);
-  assert.equal(hotelStatesSource.match(/max-w-\[1400px\] px-0/g)?.length, 2);
 
   const loadingSource = hotelStatesSource.slice(
     hotelStatesSource.indexOf("export function HotelDetailsLoadingState"),
     hotelStatesSource.indexOf("type HotelDetailsUnavailableStateProps"),
   );
-  assert.match(loadingSource, /px-0[^"]*lg:px-7/);
+  assert.match(loadingSource, /lg:max-w-\[1080px\] lg:px-\[30px\]/);
+  assert.match(loadingSource, /flex-1 bg-white sm:bg-\[#f8fafc\] lg:bg-white/);
 
   const unavailableSource = hotelStatesSource.slice(
     hotelStatesSource.indexOf("export function HotelDetailsUnavailableState"),
