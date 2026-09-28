@@ -41,6 +41,22 @@ test("Cars adds spacing only below the mobile price alert", () => {
   assert.doesNotMatch(cars, /data-cars-results-summary-row[^>]*className="[^"]*mt-/);
 });
 
+test("desktop Cars price alert spans the available results column", () => {
+  const alertStart = alert.indexOf("data-cars-price-alert");
+  const alertEnd = alert.indexOf("</section>", alertStart);
+  const alertMarkup = alert.slice(alertStart, alertEnd);
+
+  assert.match(
+    alertMarkup,
+    /className="[^"]*\bw-full\b[^"]*\bmax-w-full\b[^"]*"/,
+  );
+  assert.doesNotMatch(alertMarkup, /\blg:w-auto\b/);
+  assert.match(
+    cars,
+    /data-cars-results-toolbar[\s\S]*?<CarPriceAlertControl search=\{search\} results=\{providerResults\} \/>[\s\S]*?data-cars-results-summary-row/,
+  );
+});
+
 test("Cars alert preserves its existing switch presentation", () => {
   assert.match(alert, /<h2 className="[^"]*flex-1[^>]*>\{t\("carsResults\.priceTracking\.title"\)\}<\/h2>/);
   assert.match(alert, /role="switch"/);
