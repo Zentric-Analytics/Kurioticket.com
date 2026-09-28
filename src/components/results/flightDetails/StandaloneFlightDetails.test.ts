@@ -630,18 +630,18 @@ test("desktop Pick your fare cards mirror the native hierarchy without changing 
   assert.match(desktop, /border-\[#075EE8\][\s\S]*?shadow-\[0_6px_16px/);
   assert.match(desktop, /border-\[#D7E0EC\][\s\S]*?shadow-\[0_2px_7px/);
   assert.doesNotMatch(desktop, /selected \? "[^"]*border-(?:2|\[2px\])/);
-  assert.match(desktop, /data-desktop-fare-content className="min-w-0 pb-10"/);
+  assert.match(desktop, /data-desktop-fare-content className="min-w-0 pb-14"/);
   assert.match(desktop, /data-desktop-fare-identity className="mx-auto flex max-w-full items-center justify-center gap-\[7px\]"/);
   assert.match(desktop, /h-6 w-6 shrink-0[^"]*rounded-lg border/);
   assert.match(desktop, /line-clamp-2/);
   assert.match(desktop, /data-desktop-fare-benefits[\s\S]*?<FareTerm[\s\S]*?data-desktop-fare-price/);
-  assert.match(desktop, /data-desktop-fare-price className="absolute inset-x-3 bottom-2/);
+  assert.match(desktop, /data-desktop-fare-price className="absolute inset-x-3 bottom-2 flex min-h-12 min-w-0 items-end justify-center"/);
   assert.match(desktop, /tabular-nums[^"]*\[overflow-wrap:anywhere\]" aria-label=\{price\.ariaLabel\}>\{price\.formatted\}/);
   assert.match(desktop, /role="radio" aria-checked=\{selected\} tabIndex=\{selected \? 0 : -1\}/);
   assert.match(desktop, /onKeyDown=\{\(event\) => handleFareKeyDown\(event, index\)\}/);
 
   assert.match(loading, /data-desktop-fare-loading-card[\s\S]*?relative min-h-\[154px\][\s\S]*?rounded-\[15px\] border-\[1\.5px\]/);
-  assert.match(loading, /justify-center gap-\[7px\][\s\S]*?space-y-\[5px\][\s\S]*?data-desktop-fare-loading-price className="absolute inset-x-3 bottom-2/);
+  assert.match(loading, /pb-14[\s\S]*?justify-center gap-\[7px\][\s\S]*?space-y-\[5px\][\s\S]*?data-desktop-fare-loading-price className="absolute inset-x-3 bottom-2 flex min-h-12 items-end justify-center"/);
 });
 
 test("flight details entry keeps the opaque canonical route and results query", async () => {
