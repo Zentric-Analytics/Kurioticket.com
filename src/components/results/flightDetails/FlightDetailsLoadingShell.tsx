@@ -118,7 +118,7 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
             <div className="mt-6 hidden h-44 animate-pulse rounded-[10px] bg-slate-100 sm:block" />
             </div>
           </div>
-          <div className="hidden h-[620px] animate-pulse rounded-[15px] border border-slate-200 bg-white lg:block" />
+          <div data-desktop-checkout-summary-loading className="hidden h-[142px] animate-pulse rounded-[13px] border border-slate-200 bg-white lg:block" />
         </div>
       </div>
       <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-[90] flex min-h-[88px] items-center justify-between gap-[14px] rounded-t-[22px] border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_28px_rgba(15,23,42,0.14)] lg:hidden">
