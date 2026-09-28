@@ -614,7 +614,7 @@ export function CarResultCard({
               labels={{
                 source: car.sandboxPresentation ? "KAYAK" : t("carsResults.comparison.source"),
                 estimate: car.sandboxPresentation ? "Sandbox" : t("carsResults.comparison.estimate"),
-                comparePrices: t("carsResults.comparison.comparePrices"),
+                comparePrices: "View deal",
                 hidePrices: t("carsResults.comparison.hidePrices"),
                 liveDealsComingSoon: car.sandboxPresentation ? "Simulated inventory — no real booking" : t("carsResults.comparison.liveDealsComingSoon"),
                 notBookable: t("carsResults.comparison.notBookable"),
