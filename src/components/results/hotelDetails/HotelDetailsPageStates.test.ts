@@ -33,7 +33,26 @@ test("mobile hotel loading geometry matches the full-bleed hero-first property s
   assert.match(source, /order-1 lg:order-none/);
   assert.match(source, /order-2[\s\S]*data-hotel-loading-property-identity/);
   assert.match(source, /hidden gap-3 lg:flex[\s\S]*data-hotel-loading-actions/);
-  assert.doesNotMatch(source, /data-hotel-loading-thumbnails|Array\.from\(\{ length: 5 \}/);
+  assert.doesNotMatch(source, /data-hotel-loading-thumbnails/);
+  assert.match(source, /Array\.from\(\{ length: 5 \}/);
+});
+
+test("desktop loading matches the current details layout and uses the gallery back arrow", () => {
+  const loading = source.slice(source.indexOf("function DesktopHotelDetailsLoading"), source.indexOf("type HotelDetailsUnavailableStateProps"));
+  for (const contract of [
+    "data-hotel-loading-desktop-identity",
+    "data-hotel-loading-desktop-gallery",
+    "aspect-[2.32/1]",
+    "data-standalone-hotel-back-link",
+    "data-hotel-loading-desktop-tabs",
+    "data-hotel-loading-desktop-overview",
+    "data-hotel-loading-desktop-amenities",
+    "data-hotel-loading-desktop-location",
+    "data-hotel-loading-desktop-rates",
+    "lg:max-w-[1080px]",
+  ]) assert.ok(loading.includes(contract), contract);
+  assert.doesNotMatch(loading, /<DetailsBackLink/);
+  assert.match(loading, /lg:hidden/);
 });
 
 test("the destination route owns the branded first loading paint", () => {
