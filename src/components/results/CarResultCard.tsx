@@ -64,6 +64,7 @@ export function CarResultCard({
   headingLevel = "h2",
   presentation = "standalone",
   planningLabels,
+  desktopSurfaceParity = false,
 }: {
   car: NormalizedCarResult;
   badge?: CarResultBadge;
@@ -75,6 +76,7 @@ export function CarResultCard({
   actionAriaLabel?: string;
   headingLevel?: "h2" | "h3";
   presentation?: "standalone" | "guided-planning";
+  desktopSurfaceParity?: boolean;
   planningLabels?: {
     estimatedTotal: string;
     estimatedPerDay: string;
@@ -264,7 +266,9 @@ export function CarResultCard({
   );
 
   return (
-    <article className="relative w-full overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-[#E7EBF1] shadow-[0_2px_10px_rgba(24,48,91,0.08)] md:rounded-2xl md:bg-white md:shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] md:transition md:duration-200 md:hover:-translate-y-0.5 md:hover:border-[#CBD6E2] md:hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]">
+    <article
+      className={`relative w-full overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-[#E7EBF1] shadow-[0_2px_10px_rgba(24,48,91,0.08)] md:rounded-2xl ${desktopSurfaceParity ? "md:bg-[#E7EBF1]" : "md:bg-white"} md:shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] md:transition md:duration-200 md:hover:-translate-y-0.5 md:hover:border-[#CBD6E2] md:hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]`}
+    >
       <CarsRouteLoadingOverlay active={mobileDetailsPending} />
       {providerLabel && <p className="px-4 pt-3 text-xs font-semibold text-amber-800">{providerLabel}</p>}
       {shareConfirmation ? (
@@ -454,9 +458,9 @@ export function CarResultCard({
       >
         <div
           data-region="image"
-          className="col-span-2 row-start-1 flex items-stretch border-b border-[#E2E8F0] bg-slate-50 md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 md:border-b-0 md:border-e"
+          className="col-span-2 row-start-1 flex items-stretch border-b border-[#E2E8F0] bg-white md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 md:border-b-0 md:border-e"
         >
-          <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 md:aspect-auto md:h-full md:min-h-[220px]">
+          <div className="relative aspect-[4/3] w-full overflow-hidden bg-white md:aspect-auto md:h-full md:min-h-[220px]">
             <CarResultImage
               imageUrl={car.imageUrl}
               imageAlt={car.imageAlt}
@@ -584,7 +588,7 @@ export function CarResultCard({
 
         <div
           data-region="pricing"
-          className="col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] bg-slate-50/45 px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:justify-center lg:border-s lg:border-t-0 lg:bg-white"
+          className={`col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:justify-center lg:border-s lg:border-t-0 ${desktopSurfaceParity ? "bg-[#E7EBF1]" : "bg-slate-50/45 lg:bg-white"}`}
         >
           {!guidedPlanning ? (
             <CarPriceComparison
