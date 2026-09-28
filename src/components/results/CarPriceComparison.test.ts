@@ -37,7 +37,7 @@ test("clean static summary hides source, estimate, total, and coming-soon chrome
   );
   assert.match(
     comparison,
-    /data-car-price-comparison-summary[\s\S]*?items-end text-right[\s\S]*?text-\[19px\] font-bold leading-none text-\[#07133B\] tabular-nums[\s\S]*?\{estimate\.perDayDisplay\}[\s\S]*?mt-1 text-\[11px\] font-medium leading-none text-slate-600[\s\S]*?\{labels\.perDay\}/,
+    /data-car-price-comparison-summary[\s\S]*?items-end text-right[\s\S]*?text-\[20px\] font-bold leading-\[23px\] tracking-\[-0\.015em\] text-\[#07133B\] tabular-nums[\s\S]*?\{estimate\.perDayDisplay\}[\s\S]*?mt-1 text-\[11\.5px\] font-medium leading-\[14px\] text-\[#536B92\][\s\S]*?\{labels\.perDay\}/,
   );
   assert.match(
     comparison,
