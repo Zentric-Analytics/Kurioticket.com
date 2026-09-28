@@ -31,7 +31,6 @@ import { CarsRouteLoadingOverlay } from "@/components/results/CarsRouteLoadingOv
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useSavedCar } from "@/components/results/useSavedCar";
 import {
-  formatCarPickupType,
   getCarSpecificationIcon,
   getMobileCarPrimarySpecs,
   getMobileCarResultIdentity,
@@ -508,10 +507,14 @@ export function CarResultCard({
               aria-hidden="true"
             />
             <span className="min-w-0 whitespace-normal md:whitespace-nowrap">
-              <strong className="font-semibold text-[#536B92]">
-                {car.sandboxPresentation?.pickupLabel ?? formatCarPickupType(car.pickupType)}
-              </strong>
-              {" · "}
+              {car.sandboxPresentation?.pickupLabel ? (
+                <>
+                  <strong className="font-semibold text-[#536B92]">
+                    {car.sandboxPresentation.pickupLabel}
+                  </strong>
+                  {" · "}
+                </>
+              ) : null}
               {car.pickupLocation}
               {car.shuttleRequired ? " · Shuttle required" : ""}
             </span>
@@ -545,6 +548,7 @@ export function CarResultCard({
             <CarPriceComparison
               resultId={car.id}
               sources={comparisonSources}
+              cleanStaticSummary={!car.sandboxPresentation}
               labels={{
                 source: car.sandboxPresentation ? "KAYAK" : t("carsResults.comparison.source"),
                 estimate: car.sandboxPresentation ? "Sandbox" : t("carsResults.comparison.estimate"),
