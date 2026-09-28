@@ -419,43 +419,38 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
       <div className="mx-auto w-full max-w-[1470px] px-0 sm:px-6 lg:px-[34px]">
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
           <section className="min-w-0 overflow-hidden border-b border-[#E2E8F0] bg-[#F3F6FA] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
-            <div ref={mobileHeroRef} data-testid="flight-details-hero" className="relative flex min-h-[318px] flex-col justify-end overflow-hidden px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:justify-between sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
+            <div data-flight-details-desktop-navigation className="hidden min-h-[52px] items-center justify-between gap-4 border-b border-[#E2E8F0] bg-white px-4 sm:flex lg:px-5">
+              <Link href={resultsHref} className="inline-flex min-h-11 items-center gap-2 rounded-lg px-1 text-sm font-semibold text-[#075EE8] transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">
+                <ArrowLeft className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                <span>Back to flight results</span>
+              </Link>
+              <div data-flight-details-desktop-actions className="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  aria-label={flightSaved ? "Remove saved flight" : "Save flight"}
+                  aria-pressed={flightSaved}
+                  disabled={savedFlightPending}
+                  onClick={() => void toggleSavedFlight()}
+                  className={`inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 disabled:cursor-wait disabled:opacity-60 ${flightSaved ? "text-[#075EE8]" : "text-slate-700"}`}
+                >
+                  <Heart className="h-[18px] w-[18px]" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
+                  <span>{flightSaved ? "Saved" : "Save"}</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Share flight"
+                  onClick={() => void shareFlight()}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35"
+                >
+                  <Share2 className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
+                  <span>Share</span>
+                </button>
+              </div>
+            </div>
+            <div ref={mobileHeroRef} data-testid="flight-details-hero" className="relative flex min-h-[318px] flex-col justify-end overflow-hidden px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:justify-end sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
               <div className="absolute inset-0 bg-[rgba(5,13,26,0.30)]" aria-hidden="true" />
               <div className="absolute inset-x-0 bottom-[66px] h-[150px] bg-gradient-to-b from-transparent via-[rgba(5,13,26,0.18)] to-[rgba(5,13,26,0.42)] sm:bottom-0 sm:h-3/4 sm:bg-gradient-to-t sm:from-slate-950/80 sm:via-slate-950/35 sm:to-transparent" aria-hidden="true" />
-              <div className="relative z-10 hidden items-start justify-between gap-3 sm:flex">
-                <Link
-                  href={resultsHref}
-                  aria-label="Back to results"
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/55 bg-white/90 p-0 text-slate-900 shadow-sm backdrop-blur-md transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/60"
-                >
-                  <ArrowLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
-                </Link>
-                <div
-                  data-flight-details-floating-actions
-                  className="inline-flex h-11 shrink-0 items-center rounded-full border border-white/55 bg-white/90 p-1 shadow-sm backdrop-blur-md"
-                >
-                  <button
-                    type="button"
-                    aria-label={flightSaved ? "Remove saved flight" : "Save flight"}
-                    aria-pressed={flightSaved}
-                    disabled={savedFlightPending}
-                    onClick={() => void toggleSavedFlight()}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-900 transition hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-wait disabled:opacity-60"
-                  >
-                    <Heart className="h-[18px] w-[18px]" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Share flight"
-                    onClick={() => void shareFlight()}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-900 transition hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-                  >
-                    <Share2 className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
-                  </button>
-                </div>
-                <span className="sr-only" role="status" aria-live="polite">{shareFeedback}</span>
-              </div>
               <div className="relative z-10 min-w-0 text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.55)]">
                 <h1 ref={headingRef} id="flight-details-heading" tabIndex={-1} className="text-[27px] font-extrabold leading-[1.12] tracking-[-0.025em] outline-none sm:text-[30px]">{route}</h1>
                 <p className="mt-[3px] text-[11px] font-bold uppercase leading-4 tracking-[0.55px] text-white/95 sm:mt-2 sm:text-[13px] sm:leading-normal sm:tracking-[0.08em]"><span className="sm:hidden">{nativeTripLine}</span><span className="hidden sm:inline">{tripLine}</span></p>

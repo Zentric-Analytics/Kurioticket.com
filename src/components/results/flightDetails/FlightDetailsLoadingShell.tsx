@@ -57,31 +57,19 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
         <div role="status" aria-label="Loading flight details" className="grid gap-5 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
           <span className="sr-only">Loading flight details</span>
           <div className="overflow-hidden border-b border-slate-200 bg-[#F3F6FA] sm:rounded-[15px] sm:border sm:bg-white">
+            <div data-flight-details-loading-desktop-navigation className="hidden min-h-[52px] items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 sm:flex lg:px-5">
+              <div className="flex min-h-11 items-center gap-2">
+                <div className="h-4 w-4 animate-pulse rounded bg-slate-200" />
+                <div className="h-3 w-36 animate-pulse rounded bg-slate-200" />
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
+                <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
+              </div>
+            </div>
             <div ref={heroRef} className="relative flex min-h-[318px] flex-col justify-end overflow-hidden bg-[#E2E8F0] px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:block sm:bg-transparent sm:px-6 sm:pb-16 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="hidden object-cover sm:block" />
               <div className="absolute inset-0 hidden bg-slate-950/50 sm:block" aria-hidden="true" />
-              <div className="relative z-10 hidden items-start justify-between gap-3 sm:flex">
-                {resultsHref ? (
-                  <Link
-                    href={resultsHref}
-                    aria-label="Back to results"
-                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/55 bg-white/90 p-0 text-slate-900 shadow-sm"
-                  >
-                    <ArrowLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
-                  </Link>
-                ) : <span className="h-11 w-11" aria-hidden="true" />}
-                <div
-                  aria-hidden="true"
-                  className="inline-flex h-11 shrink-0 items-center rounded-full border border-white/55 bg-white/90 p-1 shadow-sm"
-                >
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500">
-                    <Heart className="h-[18px] w-[18px]" strokeWidth={2} />
-                  </span>
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500">
-                    <Share2 className="h-[18px] w-[18px]" strokeWidth={2} />
-                  </span>
-                </div>
-              </div>
               <div className="relative z-10 flex w-full flex-col gap-[3px] sm:absolute sm:inset-x-6 sm:bottom-16 sm:w-2/5">
                 <div className="h-8 w-[62%] animate-pulse rounded-lg bg-slate-300 sm:w-full sm:bg-white/35" />
                 <div className="h-4 w-[58%] animate-pulse rounded bg-slate-300 sm:hidden" />
