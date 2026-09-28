@@ -1,4 +1,4 @@
-import { Award, Bed, Laptop, Sparkles, UtensilsCrossed, Wifi, Wine, type LucideIcon } from "lucide-react";
+import { Bed, Laptop, Sparkles, UtensilsCrossed, Wifi, Wine, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import type { HotelAmenityPresentationItem } from "@/components/results/hotelAmenityPresentation";
 
@@ -14,8 +14,6 @@ function iconFor(item: HotelAmenityPresentationItem): LucideIcon {
 export function HotelAboutSection({
   description,
   amenities,
-  starRating,
-  propertyType,
   roomSummary,
   bedSummary,
   accessibility = [],
@@ -25,8 +23,6 @@ export function HotelAboutSection({
 }: {
   description: string;
   amenities: HotelAmenityPresentationItem[];
-  starRating: number | null;
-  propertyType?: string;
   roomSummary?: string;
   bedSummary?: string;
   accessibility?: string[];
@@ -36,8 +32,6 @@ export function HotelAboutSection({
 }) {
   const mobilePopularAmenities = amenities.slice(0, 4);
   const mobileRemainingAmenities = amenities.slice(4);
-  const desktopHighlights = amenities.slice(0, 6);
-  const desktopRemainingAmenities = amenities.slice(6);
 
   return (
     <section
@@ -63,7 +57,7 @@ export function HotelAboutSection({
       )}
 
       {mobilePolicies.length ? (
-        <ul className="mt-3 space-y-1.5 text-[14px] leading-5 text-slate-600 lg:hidden" data-mobile-hotel-provider-policies>
+        <ul className="mt-3 space-y-1.5 text-[14px] leading-5 text-slate-600 lg:text-sm lg:leading-6" data-mobile-hotel-provider-policies>
           {mobilePolicies.map((policy) => (
             <li key={policy} className="flex items-start gap-2">
               <span aria-hidden="true" className="w-3 shrink-0">•</span>
@@ -74,7 +68,7 @@ export function HotelAboutSection({
       ) : null}
 
       {mobileAfterDescription ? (
-        <div className="-mx-4 mt-5 lg:hidden" data-mobile-hotel-overview-location-slot>
+        <div className="-mx-4 mt-5 lg:mx-0 lg:mt-7" data-mobile-hotel-overview-location-slot>
           {mobileAfterDescription}
         </div>
       ) : null}
@@ -167,10 +161,10 @@ export function HotelAboutSection({
       </div>
 
       <div className="hidden lg:block" data-desktop-hotel-about-details>
-        <h3 className="mt-7 text-base font-bold text-slate-950">Property highlights</h3>
-        {desktopHighlights.length ? (
+        <h3 className="mt-7 text-base font-bold text-slate-950">Popular amenities</h3>
+        {mobilePopularAmenities.length ? (
           <div className="mt-3 grid grid-cols-2 gap-2.5 lg:grid-cols-3" data-property-highlights>
-            {desktopHighlights.map((item) => {
+            {mobilePopularAmenities.map((item) => {
               const Icon = iconFor(item);
               return (
                 <div key={item.key} className="flex min-h-14 min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
@@ -184,31 +178,28 @@ export function HotelAboutSection({
           <p className="mt-2 text-sm text-slate-600">Property highlights are not available yet.</p>
         )}
 
-        <h3 className="mt-7 text-base font-bold text-slate-950">All amenities</h3>
-        {desktopRemainingAmenities.length ? (
-          <ul className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 text-sm text-slate-700 lg:grid-cols-3">
-            {desktopRemainingAmenities.map((item) => (
-              <li key={item.key} className="flex items-start gap-2">
-                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-blue" aria-hidden="true" />
-                {item.label}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-2 text-sm text-slate-600">All available amenities are shown in Property highlights.</p>
-        )}
+        {mobileRemainingAmenities.length ? (
+          <details className="mt-7" data-desktop-all-amenities>
+            <summary className="focus-ring cursor-pointer text-base font-bold text-slate-950">
+              See all amenities
+            </summary>
+            <ul className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 text-sm text-slate-700 lg:grid-cols-3">
+              {mobileRemainingAmenities.map((item) => (
+                <li key={item.key} className="flex items-start gap-2">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-blue" aria-hidden="true" />
+                  {item.label}
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : null}
 
         <h3 className="mt-7 text-base font-bold text-slate-950">Room &amp; comfort</h3>
         <div className="mt-3 space-y-3 text-sm text-slate-700">
           {roomSummary ? <p className="flex items-start gap-3"><Bed className="mt-0.5 h-[18px] w-[18px] shrink-0 text-slate-500" aria-hidden="true" /><span>{roomSummary}</span></p> : null}
           {bedSummary ? <p className="flex items-start gap-3"><Bed className="mt-0.5 h-[18px] w-[18px] shrink-0 text-slate-500" aria-hidden="true" /><span>{bedSummary}</span></p> : null}
-          {!roomSummary && !bedSummary ? <p>Room details are confirmed when you choose a room.</p> : null}
-        </div>
-
-        <h3 className="mt-7 text-base font-bold text-slate-950">Hotel information</h3>
-        <div className="mt-3 space-y-3 text-sm text-slate-700">
-          {propertyType ? <p className="flex items-center gap-3"><Award className="h-[18px] w-[18px] shrink-0 text-slate-500" aria-hidden="true" />{propertyType}</p> : null}
-          <p className="flex items-center gap-3"><Award className="h-[18px] w-[18px] shrink-0 text-slate-500" aria-hidden="true" />{starRating ? `${starRating}-star classification` : "Hotel classification is not available."}</p>
+          {providerRoomName && providerRoomName !== roomSummary && providerRoomName !== bedSummary ? <p className="flex items-start gap-3"><Bed className="mt-0.5 h-[18px] w-[18px] shrink-0 text-slate-500" aria-hidden="true" /><span>{providerRoomName}</span></p> : null}
+          {!roomSummary && !bedSummary && !providerRoomName ? <p>Room details are confirmed when you choose a room.</p> : null}
         </div>
 
         <h3 className="mt-7 text-base font-bold text-slate-950">Accessibility</h3>
