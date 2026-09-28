@@ -3064,7 +3064,7 @@ export function CarsResultsExperience({
                       "cars-filter-results-reveal",
                   )}
                 >
-                  {pageResults.map((car) => car.inventorySource === "kayak-sandbox" && kayak?.offers.some(offer => `kayak-sandbox:${offer.id}` === car.id) ? <KayakResultCard key={car.id} offer={kayak.offers.find(offer => `kayak-sandbox:${offer.id}` === car.id)!} vertical="cars" criteria={kayak.criteria} /> : (
+                  {pageResults.map((car) => car.inventorySource === "kayak-sandbox" && kayak?.offers.some(offer => `kayak-sandbox:${offer.id}` === car.id) ? <KayakResultCard key={car.id} offer={kayak.offers.find(offer => `kayak-sandbox:${offer.id}` === car.id)!} vertical="cars" criteria={kayak.criteria} desktopCarSurfaceParity={!embedded && presentation === "standalone"} /> : (
                     <CarResultCard
                       key={car.id}
                       car={car}
@@ -3081,6 +3081,7 @@ export function CarsResultsExperience({
                       actionAriaLabel={actionAriaLabelForCar?.(car)}
                       headingLevel={embedded ? "h3" : "h2"}
                       presentation={presentation}
+                      desktopSurfaceParity={!embedded && presentation === "standalone"}
                       planningLabels={
                         guidedPlanning
                           ? {
