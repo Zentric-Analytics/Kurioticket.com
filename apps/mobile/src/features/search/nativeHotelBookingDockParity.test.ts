@@ -4,13 +4,13 @@ import test from "node:test";
 
 const detailSource = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
 const ratesSource = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
-const webSource = readFileSync(
-  "../../src/components/results/hotelDetails/StandaloneHotelDetails.tsx",
+const webMobileDetails = readFileSync(
+  "../../src/components/results/hotelDetails/MobileHotelDetails.tsx",
   "utf8",
 );
-const webDock = webSource.slice(
-  webSource.lastIndexOf("<section", webSource.indexOf("data-mobile-hotel-stay-dock")),
-  webSource.indexOf("</section>", webSource.indexOf("data-mobile-hotel-stay-dock")),
+const webMobileCss = readFileSync(
+  "../../src/components/results/hotelDetails/HotelDetailsMobile.module.css",
+  "utf8",
 );
 
 function rateStyle(name: string, nextName?: string) {
@@ -23,15 +23,13 @@ function rateStyle(name: string, nextName?: string) {
   return ratesSource.slice(start, end);
 }
 
-test("mobile web reference retains its independent Hotel stay dock contract", () => {
-  for (const token of [
-    "border-t",
-    "px-4",
-    "safe-area-inset-bottom",
-    "min-h-12",
-    "rounded-lg",
-    "font-bold",
-  ]) assert.ok(webDock.includes(token), `mobile web dock must retain ${token}`);
+test("mobile web reference retains its independent Hotel rate action contract", () => {
+  assert.match(webMobileDetails, /className=\{styles\.rateAction\}/);
+  assert.match(webMobileDetails, />Stay total<\/span>/);
+  assert.match(webMobileDetails, /aria-label=\{`View deal from \$\{offer\.providerName\}`\}/);
+  assert.match(webMobileCss, /\.rate \{[^}]*grid-template-columns: minmax\(0, 1fr\) minmax\(112px, 36%\)/);
+  assert.match(webMobileCss, /\.rateAction \{[^}]*display: contents/);
+  assert.match(webMobileCss, /\.rateAction > button \{[^}]*min-height: 44px[^}]*border-radius: 8px[^}]*font-weight: 700[^}]*color: white/);
 });
 
 test("native Hotel keeps one selected-provider dock visible across Rates, Overview, and Reviews", () => {

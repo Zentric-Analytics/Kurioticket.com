@@ -3,6 +3,9 @@ import { z } from "zod";
 import { supportedCurrencies } from "@/lib/region/supportedRegions";
 
 export const MAX_PRICE_ALERT_TARGET = 9999999999.99;
+export const FLIGHT_ALERT_MIN_DROP_PERCENT = 1;
+export const FLIGHT_ALERT_MAX_DROP_PERCENT = 50;
+export const FLIGHT_ALERT_DEFAULT_DROP_PERCENT = 10;
 
 const supportedCurrencyCodes = new Set(supportedCurrencies.map((currency) => currency.code));
 const airportCodeSchema = z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3,8}$/);
@@ -188,6 +191,40 @@ export function selectAutomaticFlightBaseline<T extends FlightBaselineResult>(re
     .reduce<T | null>((lowest, result) => !lowest || result.price < lowest.price ? result : lowest, null);
 }
 
+/** Currency-aware target math for the fare selected by the Flight alert baseline rules. */
+export function roundFlightAlertCurrencyAmount(amount: number, currency: string) {
+  const digits = Math.min(2, new Intl.NumberFormat("en", {
+    style: "currency",
+    currency: normalizeCurrency(currency),
+  }).resolvedOptions().maximumFractionDigits ?? 2);
+  const factor = 10 ** digits;
+  return Math.round(amount * factor) / factor;
+}
+
+export function clampFlightAlertDropPercent(value: number) {
+  if (!Number.isFinite(value)) return FLIGHT_ALERT_DEFAULT_DROP_PERCENT;
+  return Math.min(FLIGHT_ALERT_MAX_DROP_PERCENT, Math.max(FLIGHT_ALERT_MIN_DROP_PERCENT, Math.round(value)));
+}
+
+export function flightAlertDesiredPrice(currentPrice: number, dropPercent: number, currency: string) {
+  if (!Number.isFinite(currentPrice) || currentPrice <= 0) return null;
+  const digits = Math.min(2, new Intl.NumberFormat("en", {
+    style: "currency",
+    currency: normalizeCurrency(currency),
+  }).resolvedOptions().maximumFractionDigits ?? 2);
+  return Math.max(
+    1 / 10 ** digits,
+    roundFlightAlertCurrencyAmount(currentPrice * (1 - clampFlightAlertDropPercent(dropPercent) / 100), currency),
+  );
+}
+
+export function flightAlertDropPercentForTarget(currentPrice: number, targetPrice: number) {
+  if (!Number.isFinite(currentPrice) || currentPrice <= 0 || !Number.isFinite(targetPrice) || targetPrice <= 0) {
+    return FLIGHT_ALERT_DEFAULT_DROP_PERCENT;
+  }
+  return clampFlightAlertDropPercent((1 - targetPrice / currentPrice) * 100);
+}
+
 export type MatchableFlightPriceAlert = {
   type: string;
   mode?: "AUTOMATIC" | "TARGET";
@@ -203,6 +240,32 @@ export function automaticFlightPriceAlertMatchesQuery(alert: MatchableFlightPric
   const actual = canonicalFlightPriceAlertQuerySchema.safeParse(alert.query);
   return expected.success && actual.success && flightSearchIdentityFields.every((field) =>
     String(actual.data[field] ?? "").toLowerCase() === String(expected.data[field] ?? "").toLowerCase());
+}
+
+export function flightPriceAlertMatchesSearchIdentity(alert: MatchableFlightPriceAlert, query: unknown) {
+  if (alert.type !== "FLIGHT") return false;
+  const expected = canonicalFlightPriceAlertQuerySchema.safeParse(query);
+  const actual = canonicalFlightPriceAlertQuerySchema.safeParse(alert.query);
+  return expected.success && actual.success && flightSearchIdentityFields.every((field) =>
+    String(actual.data[field] ?? "").toLowerCase() === String(expected.data[field] ?? "").toLowerCase());
+}
+
+export function targetFlightPriceAlertMatchesQuery(alert: MatchableFlightPriceAlert, query: unknown) {
+  return alert.mode === "TARGET" && flightPriceAlertMatchesSearchIdentity(alert, query);
+}
+
+export function matchingTargetFlightPriceAlert<T extends MatchableFlightPriceAlert>(alerts: T[], query: unknown) {
+  const matches = alerts.filter((alert) => targetFlightPriceAlertMatchesQuery(alert, query));
+  return matches.find(({ status }) => status === "ACTIVE") ?? matches.find(({ status }) => status === "PAUSED");
+}
+
+/** TARGET records drive the new editor; a legacy active AUTOMATIC record remains controllable as a fallback. */
+export function matchingFlightPriceAlertForControl<T extends MatchableFlightPriceAlert>(alerts: T[], query: unknown) {
+  const identityMatches = alerts.filter((alert) => flightPriceAlertMatchesSearchIdentity(alert, query));
+  return identityMatches.find((alert) => alert.mode === "TARGET" && alert.status === "ACTIVE")
+    ?? identityMatches.find((alert) => alert.mode === "AUTOMATIC" && alert.status === "ACTIVE")
+    ?? identityMatches.find((alert) => alert.mode === "TARGET" && alert.status === "PAUSED")
+    ?? identityMatches.find((alert) => alert.mode === "AUTOMATIC" && alert.status === "PAUSED");
 }
 
 export function matchingAutomaticFlightPriceAlert<T extends MatchableFlightPriceAlert>(alerts: T[], query: unknown) {

@@ -15,6 +15,14 @@ const webHotelDetails = readFileSync(
   "../../src/components/results/hotelDetails/StandaloneHotelDetails.tsx",
   "utf8",
 );
+const webMobileHotelDetails = readFileSync(
+  "../../src/components/results/hotelDetails/MobileHotelDetails.tsx",
+  "utf8",
+);
+const webMobileHotelDetailsCss = readFileSync(
+  "../../src/components/results/hotelDetails/HotelDetailsMobile.module.css",
+  "utf8",
+);
 const webSectionNav = readFileSync(
   "../../src/components/results/hotelDetails/HotelDetailsSectionNav.tsx",
   "utf8",
@@ -78,7 +86,9 @@ test("active Hotel Details keeps fixed icon-only controls and stack-aware Result
 
 test("active Hotel light canvas matches the web white article while allowing a full-bleed hero", () => {
   assert.match(appTheme, /lightTheme = \{[\s\S]*?background: "#FAFBFF",[\s\S]*?surface: "#FFFFFF",/);
-  assert.match(webHotelDetails, /<article className="[^"]*\bbg-white\b[^"]*">/);
+  assert.match(webHotelDetails, /<MobileHotelDetails \{\.\.\.props\} \/>/);
+  assert.match(webMobileHotelDetails, /className=\{styles\.details\} data-mobile-hotel-details/);
+  assert.match(webMobileHotelDetailsCss, /\.details \{[^}]*background: white;/);
   assert.match(hotel, /const hotelCanvasColor = theme\.dark \? theme\.background : theme\.surface;/);
   assert.match(hotel, /<SafeAreaView[\s\S]*?backgroundColor: hotelCanvasColor[\s\S]*?edges=\{\[\]\}/);
   assert.match(hotel, /<ScrollView[\s\S]*?stickyHeaderIndices=\{\[2\]\}[\s\S]*?contentInsetAdjustmentBehavior="never"[\s\S]*?backgroundColor: hotelCanvasColor/);
