@@ -158,6 +158,21 @@ test("all three detail lines share the left-side details region", () => {
   assert.match(ruleBody(globalsCss, ".flight-card-details"), /grid-area:\s*details/);
 });
 
+test("desktop detail values wrap inside their three allocated columns", () => {
+  const detailsStart = flightCardSource.indexOf("function FlightDetailLines");
+  const details = flightCardSource.slice(detailsStart);
+
+  assert.match(details, /grid-cols-\[auto_auto_minmax\(0,1fr\)\]/);
+  assert.match(details, /flight-card-detail-item[^"\n]*min-w-0/);
+  assert.match(details, /flight-card-detail-value min-w-0/);
+  assert.match(details, /whitespace-normal/);
+  assert.doesNotMatch(details, /flex-nowrap|whitespace-nowrap/);
+  assert.match(
+    ruleBody(globalsCss, ".flight-card-detail-value"),
+    /overflow-wrap:\s*anywhere/,
+  );
+});
+
 test("result-card fare rule stays concise and leaves provider terms to details", () => {
   assert.match(
     flightCardSource,
