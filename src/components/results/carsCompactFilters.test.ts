@@ -111,11 +111,12 @@ test("source-contract: full desktop and mobile filter styling remain separate", 
   );
 });
 
-test("source-contract: mobile price filters omit the per-day qualifier without changing desktop copy", () => {
+test("source-contract: Cars price filters use the short Price label on mobile and desktop", () => {
   assert.match(
     source,
-    /return mobile \? group\.title \?\? "Price" : t\("carsResults\.pricePerDay"\)/,
+    /if \(group\.id === "pricePerDay"\) \{\s*return group\.title \?\? "Price";\s*\}/,
   );
+  assert.doesNotMatch(source, /t\("carsResults\.pricePerDay"\)/);
   assert.equal(
     (source.match(/carFilterGroupLabel\([^\n]+, t, true\)/g) ?? []).length,
     3,
@@ -127,7 +128,7 @@ test("source-contract: mobile price filters omit the per-day qualifier without c
   assert.match(presentation, /id: "pricePerDay", titleKey: "", title: "Price"/);
   assert.doesNotMatch(
     presentation,
-    /label: "[^"]*(?:\(|\[)per day(?:\)|\])"/i,
+    /label: "[^"]*(?:\(|\[)per day(?:\)|\])/i,
   );
 });
 

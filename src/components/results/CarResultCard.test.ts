@@ -113,6 +113,20 @@ test("standalone desktop mirrors the requested result-card hierarchy without cha
   assert.match(mobile, /mobileSpecColumns\.map/);
 });
 
+test("desktop standalone title aligns with save/share while Best value stays above actions", () => {
+  const desktop = source.slice(source.indexOf('data-region="heading"'));
+  const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
+
+  assert.match(
+    heading,
+    /data-car-card-desktop-identity[\s\S]*?!guidedPlanning && badge \? "pt-\[26px\]" : ""/,
+  );
+  assert.match(
+    heading,
+    /data-car-card-desktop-actions[\s\S]*?\{badge && BadgeIcon && \([\s\S]*?\{cardActions\}/,
+  );
+});
+
 test("desktop save and share glyphs sit closer within independent targets", () => {
   const actions = source.slice(
     source.indexOf("const cardActions"),
