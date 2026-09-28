@@ -111,6 +111,28 @@ test("standalone desktop keeps identity in the content column and actions in the
   assert.match(mobile, /mobileSpecColumns\.map/);
 });
 
+test("desktop standalone title aligns with the save/share row below Best value and keeps identity spacing tight", () => {
+  const desktop = source.slice(source.indexOf('data-region="heading"'));
+  const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
+
+  assert.match(
+    heading,
+    /grid grid-cols-1 items-start gap-y-0 \$\{badge && BadgeIcon \? "lg:pt-6" : "lg:pt-0"\}/,
+  );
+  assert.match(
+    heading,
+    /data-car-card-desktop-title-row[\s\S]*?row-start-1 flex min-w-0 items-center self-center/,
+  );
+  assert.match(
+    heading,
+    /row-start-2 mt-0\.5 text-\[10px\] font-bold uppercase leading-none/,
+  );
+  assert.match(
+    heading,
+    /\$\{guidedPlanning \? "mt-1" : "mt-0\.5"\} flex min-w-0 items-center/,
+  );
+});
+
 test("desktop standalone right rail keeps Best value above save/share and pricing at the bottom", () => {
   const desktop = source.slice(source.indexOf('data-region="heading"'));
   const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
