@@ -116,7 +116,7 @@ test("desktop standalone title and save/share occupy the exact same grid row bel
   assert.doesNotMatch(heading, /lg:pt-6/);
   assert.match(
     heading,
-    /badge && BadgeIcon \? "lg:grid-rows-\[24px_44px_auto_auto\]" : "lg:grid-rows-\[44px_auto_auto\]"/,
+    /badge && BadgeIcon \? "lg:grid-rows-\[24px_44px_auto_auto_auto\]" : "lg:grid-rows-\[44px_auto_auto_auto\]"/,
   );
   assert.match(
     heading,
@@ -246,6 +246,28 @@ test("desktop standalone cards omit static pickup-type copy while preserving the
   assert.match(desktop, /\{car\.pickupLocation\}/);
 });
 
+test("standalone desktop shows data-driven Free cancellation directly below the location", () => {
+  const desktop = source.slice(source.indexOf('data-region="heading"'));
+  const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
+
+  const locationIndex = heading.indexOf("{car.pickupLocation}");
+  const cancellationIndex = heading.indexOf("data-car-card-desktop-free-cancellation");
+
+  assert.ok(locationIndex >= 0, "desktop location must be present");
+  assert.ok(
+    cancellationIndex > locationIndex,
+    "Free cancellation must render after the desktop location",
+  );
+  assert.match(
+    heading,
+    /\{offer\.freeCancellation \? \([\s\S]*?data-car-card-desktop-free-cancellation[\s\S]*?<ShieldCheck[\s\S]*?<span>Free cancellation<\/span>/,
+  );
+  assert.match(
+    heading,
+    /\$\{badge && BadgeIcon \? "row-start-5" : "row-start-4"\} mt-1 flex/,
+  );
+});
+
 test("mobile primary specs are deterministic and capped at four", () => {
   const first = getMobileCarPrimarySpecs(car).map(([, label]) => label);
   assert.deepEqual(
@@ -333,8 +355,9 @@ test("desktop and guided contracts retain their responsive grid and owned disclo
   assert.match(source, /lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\]/);
   assert.match(source, /xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]/);
   const desktop = source.slice(source.indexOf('data-region="heading"'));
-  assert.doesNotMatch(desktop, /offer\.freeCancellation|offer\.payAtPickup/);
-  assert.doesNotMatch(desktop, /Free cancellation|Pay at pickup/);
+  assert.match(desktop, /offer\.freeCancellation/);
+  assert.match(desktop, /Free cancellation/);
+  assert.doesNotMatch(desktop, /offer\.payAtPickup|Pay at pickup/);
   assert.doesNotMatch(source, /Unlimited mileage|car\.limitedMileageKm/);
   assert.doesNotMatch(source, /<Fuel|title\(car\.fuelPolicy\)/);
   assert.doesNotMatch(source, /offer\.taxesAndFeesIncluded|Taxes and fees included/);
