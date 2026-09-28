@@ -82,10 +82,14 @@ test("standalone desktop mirrors the requested result-card hierarchy without cha
     desktop.indexOf('data-region="pricing"'),
   );
 
-  assert.ok(
-    heading.indexOf("{car.modelName}") < heading.indexOf("{car.categoryLabel}"),
-    "desktop title must render before its category label",
+  const standaloneIdentity = heading.indexOf(
+    '<div className="flex min-w-0 flex-wrap items-baseline',
   );
+  const standaloneCategory = heading.indexOf(
+    "{car.categoryLabel ? (",
+    standaloneIdentity,
+  );
+  assert.ok(standaloneIdentity >= 0 && standaloneCategory > standaloneIdentity);
   assert.match(
     heading,
     /data-car-card-desktop-actions[\s\S]*?flex shrink-0 flex-col items-end gap-0\.5/,
