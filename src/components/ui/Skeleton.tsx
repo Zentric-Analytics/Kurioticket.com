@@ -131,8 +131,10 @@ export function HotelCardSkeleton() {
 
 export function CarCardSkeleton({
   transitionMotion = "pulse",
+  desktopSurfaceParity = false,
 }: {
   transitionMotion?: "pulse" | "shimmer";
+  desktopSurfaceParity?: boolean;
 } = {}) {
   return (
     <div
@@ -140,6 +142,7 @@ export function CarCardSkeleton({
       aria-label="Loading car result"
       className={cn(
         "overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white md:rounded-2xl",
+        desktopSurfaceParity && "md:bg-[#E7EBF1]",
         transitionMotion === "shimmer" && "cars-filter-card-skeleton",
       )}
     >
@@ -174,7 +177,7 @@ export function CarCardSkeleton({
         data-car-card-skeleton-desktop
         className="hidden md:grid md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]"
       >
-        <div className="flex items-center border-b border-[#E2E8F0] bg-slate-50 p-2.5 md:border-b-0 md:border-e">
+        <div className={cn("flex items-center border-b border-[#E2E8F0] bg-slate-50 p-2.5 md:border-b-0 md:border-e", desktopSurfaceParity && "md:bg-white")}>
           <Skeleton className="aspect-[4/3] w-full rounded-xl" />
         </div>
         <div className="space-y-2.5 px-4 py-3">
@@ -192,7 +195,7 @@ export function CarCardSkeleton({
             <Skeleton className="h-6 w-32" />
           </div>
         </div>
-        <div className="col-span-full flex min-w-0 flex-col border-t border-slate-200 bg-slate-50/45 px-4 py-3 lg:col-span-1 lg:border-s lg:border-t-0 lg:bg-white">
+        <div className={cn("col-span-full flex min-w-0 flex-col border-t border-slate-200 bg-slate-50/45 px-4 py-3 lg:col-span-1 lg:border-s lg:border-t-0", desktopSurfaceParity ? "md:bg-[#E7EBF1] lg:bg-[#E7EBF1]" : "lg:bg-white")}>
           <div className="space-y-2">
             <div className="space-y-1">
               <Skeleton className="h-3 w-20" />
