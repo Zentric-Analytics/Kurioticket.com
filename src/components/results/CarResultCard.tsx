@@ -475,7 +475,10 @@ export function CarResultCard({
           className="col-span-2 row-start-2 min-w-0 px-3.5 py-2.5 md:col-span-1 md:col-start-2 md:row-start-1 md:px-4 md:pb-1 md:pt-3"
         >
           <header className="flex flex-wrap items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
+            <div
+              data-car-card-desktop-identity
+              className={`min-w-0 flex-1 ${!guidedPlanning && badge ? "pt-[26px]" : ""}`}
+            >
               {guidedPlanning ? (
                 <>
                   <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]">
