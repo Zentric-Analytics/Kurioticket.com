@@ -489,7 +489,7 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     "Estimated CO₂ emissions",
     "Base fare",
     "Fare basis:",
-    "Time zone:",
+    "Departure time zone",
     "Provider offer last updated",
     "Supported identity documents:",
     "Supported loyalty airline codes:",
@@ -584,7 +584,7 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /min-h-11 w-auto shrink-0 whitespace-nowrap border-b-2/);
   assert.match(source, /\[scrollbar-width:none\]/);
   assert.doesNotMatch(source, />Selected<\/span>/);
-  assert.match(source, /grid-cols-\[minmax\(0,1fr\)_minmax\(82px,1\.1fr\)_minmax\(0,1fr\)\]/);
+  assert.match(source, /grid-cols-\[minmax\(0,1fr\)_minmax\(120px,180px\)_minmax\(0,1fr\)\]/);
   assert.match(source, /border-dashed border-\[#075EE8\]/);
   assert.match(source, /offerAirlineLogo=\{flight\.airlineLogo\}/);
   assert.match(source, /<SegmentAirlineMark segment=\{segment\}/);
@@ -872,8 +872,8 @@ test("itinerary headers use authoritative per-leg dates with a localized year", 
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   assert.equal(formatItineraryDepartureDate("2026-10-16", "en-US"), "Oct 16, 2026");
   assert.match(source, /departureDate=\{available\.search\.legs\[index\]\?\.departureDate \?\? leg\.departureTime\.slice\(0, 10\)\}/);
-  assert.match(source, /<time dateTime=\{departureDate\}/);
-  assert.match(source, /formatItineraryDepartureDate\(departureDate, locale\)/);
+  assert.match(source, /<time dateTime=\{leg\.departureTime\}/);
+  assert.match(source, /const departureLongDate = providerLocalFlightDateLong\(leg\.departureTime, locale\) \?\? formatItineraryDepartureDate\(departureDate, locale\)/);
   assert.match(source, /available\.search\.tripType === "multi-city" \? `FLIGHT \$\{index \+ 1\}`/);
 });
 
@@ -900,8 +900,47 @@ test("mobile web Flight Details itinerary mirrors the native card hierarchy and 
   assert.match(itinerary, /Aircraft: \{aircraftName\}/);
   assert.match(itinerary, /Flight distance: \{formatDistanceKm\(segment\.distanceKm, locale\)\}/);
   assert.match(itinerary, />Flight info<\/p>/);
-  assert.doesNotMatch(itinerary.slice(0, itinerary.indexOf('<section className="hidden')), /Technical stop at/);
-  assert.match(itinerary, /<section className="hidden[^"]*sm:block"/);
+  assert.doesNotMatch(itinerary.slice(0, itinerary.indexOf("data-desktop-itinerary-card")), /Technical stop at/);
+  assert.match(itinerary, /data-desktop-itinerary-card[^>]*className="hidden[^"]*sm:block"/);
+});
+
+test("desktop Flight Details uses a compact endpoint hierarchy and reserves time zones for Flight info", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const itineraryStart = source.indexOf("function ItineraryCard(");
+  const desktopStart = source.indexOf("data-desktop-itinerary-card", itineraryStart);
+  const desktopEnd = source.indexOf("</section>", desktopStart);
+  const desktop = source.slice(desktopStart, desktopEnd);
+  const journeyStart = desktop.indexOf("data-desktop-journey-summary");
+  const airportStart = desktop.indexOf("data-desktop-airport-details");
+  const segmentsStart = desktop.indexOf("data-desktop-segment-list");
+  const flightInfoStart = desktop.indexOf("data-desktop-flight-info");
+  const endpoints = desktop.slice(journeyStart, airportStart);
+  const airportDetails = desktop.slice(airportStart, segmentsStart);
+  const flightInfo = desktop.slice(flightInfoStart);
+
+  assert.ok(desktopStart > itineraryStart);
+  assert.deepEqual(
+    [journeyStart, airportStart, segmentsStart, flightInfoStart].sort((a, b) => a - b),
+    [journeyStart, airportStart, segmentsStart, flightInfoStart],
+  );
+  assert.match(endpoints, /<AirportTime time=\{leg\.departureTime\} airport=\{leg\.originAirport\} date=\{departureShortDate\}/);
+  assert.match(endpoints, /<AirportTime time=\{leg\.arrivalTime\} airport=\{leg\.destinationAirport\} date=\{arrivalShortDate\}/);
+  assert.doesNotMatch(endpoints + airportDetails, /timeZone=|Time zone:/);
+  assert.match(airportDetails, /airportName\(departurePoint, leg\.originAirport\)/);
+  assert.match(airportDetails, /airportName\(arrivalPoint, leg\.destinationAirport\)/);
+  assert.match(desktop, /preferSegmentLogo/);
+  assert.match(desktop, /Flight distance: \{formatDistanceKm\(segment\.distanceKm, locale\)\}/);
+  assert.match(desktop, /Operated by \{segment\.operatingCarrier\.name\}/);
+  assert.match(desktop, /Aircraft:/);
+  assert.match(desktop, /segment\.technicalStops\?\.map/);
+  assert.match(flightInfo, />Flight info<\/h3>/);
+  assert.match(flightInfo, /departureTimeZone === arrivalTimeZone/);
+  assert.match(flightInfo, />Time zone<\/dt>/);
+  assert.match(flightInfo, />Departure time zone<\/dt>/);
+  assert.match(flightInfo, />Arrival time zone<\/dt>/);
+  assert.match(flightInfo, /\{departureTimeZone\}<\/dd>/);
+  assert.match(flightInfo, /\{arrivalTimeZone\}<\/dd>/);
+  assert.match(source, /legs\.map\(\(leg, index\) => <ItineraryCard/);
 });
 
 test("mobile web Flight Details loading itinerary matches native-parity geometry", async () => {
