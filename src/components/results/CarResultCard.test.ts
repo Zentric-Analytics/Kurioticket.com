@@ -254,14 +254,15 @@ test("Free cancellation is data-driven in mobile and secondary benefits stay des
   );
 });
 
-test("desktop static pricing removes estimate chrome but keeps daily price and compare action", () => {
+test("desktop static pricing removes estimate chrome but keeps daily price and View deal action", () => {
   const desktop = source.slice(source.indexOf('data-region="pricing"'));
 
   assert.match(
     desktop,
     /<CarPriceComparison[\s\S]*?cleanStaticSummary=\{!car\.sandboxPresentation\}/,
   );
-  assert.match(desktop, /carsResults\.comparison\.comparePrices/);
+  assert.match(desktop, /comparePrices: "View deal"/);
+  assert.doesNotMatch(desktop, /carsResults\.comparison\.comparePrices/);
   assert.match(desktop, /carsResults\.comparison\.perDay/);
 });
 
