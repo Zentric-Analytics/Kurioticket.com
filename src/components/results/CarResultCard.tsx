@@ -472,17 +472,15 @@ export function CarResultCard({
 
         <div
           data-region="heading"
-          className="col-span-2 row-start-2 min-w-0 px-3.5 py-2.5 md:col-span-1 md:col-start-2 md:row-start-1 md:px-4 md:pb-1 md:pt-3"
+          className={
+            guidedPlanning
+              ? "col-span-2 row-start-2 min-w-0 px-3.5 py-2.5 md:col-span-1 md:col-start-2 md:row-start-1 md:px-4 md:pb-1 md:pt-3"
+              : "col-span-2 row-start-2 min-w-0 px-3.5 py-2.5 md:col-span-1 md:col-start-2 md:row-start-1 md:px-4 md:pb-1 md:pt-3 lg:col-span-2 lg:col-start-2 lg:px-0 lg:pb-1 lg:pt-0"
+          }
         >
-          <header
-            className={
-              guidedPlanning
-                ? "flex flex-wrap items-start justify-between gap-2"
-                : `grid grid-cols-1 items-start gap-y-0 ${badge && BadgeIcon ? "lg:pt-6" : "lg:pt-0"}`
-            }
-          >
-            {guidedPlanning ? (
-              <>
+          {guidedPlanning ? (
+            <>
+              <header className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]">
                     {car.categoryLabel}
@@ -506,12 +504,107 @@ export function CarResultCard({
                   )}
                   {cardActions}
                 </div>
-              </>
-            ) : (
-              <>
+              </header>
+
+              <p className="mt-1 flex min-w-0 items-center gap-1.5 text-[12px] font-medium text-[#536B92]">
+                <MapPin
+                  size={16}
+                  className="shrink-0 text-[#004BB8]"
+                  aria-hidden="true"
+                />
+                <span className="min-w-0 whitespace-normal md:whitespace-nowrap">
+                  {car.sandboxPresentation?.pickupLabel ? (
+                    <>
+                      <strong className="font-semibold text-[#536B92]">
+                        {car.sandboxPresentation.pickupLabel}
+                      </strong>
+                      {" · "}
+                    </>
+                  ) : null}
+                  {car.pickupLocation}
+                  {car.shuttleRequired ? " · Shuttle required" : ""}
+                </span>
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="lg:hidden">
+                <header className="grid grid-cols-1 items-start gap-y-0">
+                  <div
+                    data-car-card-desktop-title-row
+                    className="row-start-1 flex min-w-0 items-center self-center"
+                  >
+                    <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0">
+                      {headingLevel === "h3" ? (
+                        <h3 className="min-w-0 break-words text-[18px] font-bold leading-tight text-[#07133B]">
+                          {car.modelName}
+                        </h3>
+                      ) : (
+                        <h2 className="min-w-0 break-words text-[18px] font-bold leading-tight text-[#07133B]">
+                          {car.modelName}
+                        </h2>
+                      )}
+                      {car.orSimilar ? (
+                        <span className="text-[11px] font-medium leading-4 text-[#536B92]">
+                          or similar
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {car.categoryLabel ? (
+                    <p className="row-start-2 mt-0.5 text-[10px] font-bold uppercase leading-none tracking-[0.14em] text-[#004BB8]">
+                      {car.categoryLabel}
+                    </p>
+                  ) : null}
+                </header>
+
+                <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[12px] font-medium text-[#536B92]">
+                  <MapPin
+                    size={16}
+                    className="shrink-0 text-[#004BB8]"
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0 whitespace-normal md:whitespace-nowrap">
+                    {car.sandboxPresentation?.pickupLabel ? (
+                      <>
+                        <strong className="font-semibold text-[#536B92]">
+                          {car.sandboxPresentation.pickupLabel}
+                        </strong>
+                        {" · "}
+                      </>
+                    ) : null}
+                    {car.pickupLocation}
+                    {car.shuttleRequired ? " · Shuttle required" : ""}
+                  </span>
+                </p>
+              </div>
+
+              <div
+                data-car-card-desktop-shared-header
+                className={`hidden lg:grid lg:grid-cols-[minmax(0,1fr)_205px] lg:gap-y-0 ${badge && BadgeIcon ? "lg:grid-rows-[24px_44px_auto_auto]" : "lg:grid-rows-[44px_auto_auto]"}`}
+              >
+                <div
+                  data-car-card-desktop-header-rail
+                  className={`pointer-events-none z-0 col-start-2 row-start-1 row-span-full border-s border-[#E2E8F0] ${desktopSurfaceParity ? "bg-[#E7EBF1]" : "bg-white"}`}
+                  aria-hidden="true"
+                />
+
+                {badge && BadgeIcon ? (
+                  <div className="z-10 col-start-2 row-start-1 flex h-6 items-start justify-end px-3">
+                    <span
+                      data-car-card-desktop-badge
+                      className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]"
+                    >
+                      <BadgeIcon size={13} aria-hidden="true" />
+                      {badge}
+                    </span>
+                  </div>
+                ) : null}
+
                 <div
                   data-car-card-desktop-title-row
-                  className="row-start-1 flex min-w-0 items-center self-center"
+                  className={`col-start-1 ${badge && BadgeIcon ? "row-start-2" : "row-start-1"} flex h-11 min-w-0 items-center px-4`}
                 >
                   <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0">
                     {headingLevel === "h3" ? (
@@ -531,36 +624,45 @@ export function CarResultCard({
                   </div>
                 </div>
 
+                <div
+                  data-car-card-desktop-actions
+                  className={`z-10 col-start-2 ${badge && BadgeIcon ? "row-start-2" : "row-start-1"} flex h-11 items-center justify-end px-3`}
+                >
+                  {cardActions}
+                </div>
+
                 {car.categoryLabel ? (
                   <p
-                    className="row-start-2 mt-0.5 text-[10px] font-bold uppercase leading-none tracking-[0.14em] text-[#004BB8]"
+                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-3" : "row-start-2"} px-4 text-[10px] font-bold uppercase leading-none tracking-[0.14em] text-[#004BB8]`}
                   >
                     {car.categoryLabel}
                   </p>
                 ) : null}
-              </>
-            )}
-          </header>
 
-          <p className={`${guidedPlanning ? "mt-1" : "mt-0.5"} flex min-w-0 items-center gap-1.5 text-[12px] font-medium text-[#536B92]`}>
-            <MapPin
-              size={16}
-              className="shrink-0 text-[#004BB8]"
-              aria-hidden="true"
-            />
-            <span className="min-w-0 whitespace-normal md:whitespace-nowrap">
-              {car.sandboxPresentation?.pickupLabel ? (
-                <>
-                  <strong className="font-semibold text-[#536B92]">
-                    {car.sandboxPresentation.pickupLabel}
-                  </strong>
-                  {" · "}
-                </>
-              ) : null}
-              {car.pickupLocation}
-              {car.shuttleRequired ? " · Shuttle required" : ""}
-            </span>
-          </p>
+                <p
+                  className={`col-start-1 ${badge && BadgeIcon ? "row-start-4" : "row-start-3"} mt-0.5 flex min-w-0 items-center gap-1.5 px-4 text-[12px] font-medium text-[#536B92]`}
+                >
+                  <MapPin
+                    size={16}
+                    className="shrink-0 text-[#004BB8]"
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0 whitespace-nowrap">
+                    {car.sandboxPresentation?.pickupLabel ? (
+                      <>
+                        <strong className="font-semibold text-[#536B92]">
+                          {car.sandboxPresentation.pickupLabel}
+                        </strong>
+                        {" · "}
+                      </>
+                    ) : null}
+                    {car.pickupLocation}
+                    {car.shuttleRequired ? " · Shuttle required" : ""}
+                  </span>
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
         <div
@@ -587,7 +689,7 @@ export function CarResultCard({
 
         <div
           data-region="pricing"
-          className={`col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:border-s lg:border-t-0 ${!guidedPlanning ? "lg:items-stretch lg:pb-3 lg:text-right" : "lg:items-center lg:justify-center lg:text-center"} ${desktopSurfaceParity ? "bg-[#E7EBF1]" : "bg-slate-50/45 lg:bg-white"}`}
+          className={`col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 lg:border-s lg:border-t-0 ${!guidedPlanning ? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:pb-3 lg:text-right" : "lg:row-span-2 lg:row-start-1 lg:items-center lg:justify-center lg:text-center"} ${desktopSurfaceParity ? "bg-[#E7EBF1]" : "bg-slate-50/45 lg:bg-white"}`}
         >
           {!guidedPlanning ? (
             <div
@@ -596,7 +698,7 @@ export function CarResultCard({
             >
               <div
                 data-car-card-desktop-actions
-                className="flex w-full shrink-0 flex-col items-end"
+                className="flex w-full shrink-0 flex-col items-end lg:hidden"
               >
                 {badge && BadgeIcon ? (
                   <span

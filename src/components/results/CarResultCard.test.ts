@@ -74,27 +74,25 @@ test("desktop media fills its column and unsupported tax copy stays hidden", () 
   assert.doesNotMatch(source, /Taxes and fees included/);
 });
 
-test("standalone desktop keeps identity in the content column and actions in the right rail without changing mobile", () => {
+test("standalone desktop uses a shared header row for identity and actions without changing mobile", () => {
   const desktop = source.slice(source.indexOf('data-region="heading"'));
   const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
   const details = desktop.slice(
     desktop.indexOf('data-region="details"'),
     desktop.indexOf('data-region="pricing"'),
   );
-  const pricing = desktop.slice(desktop.indexOf('data-region="pricing"'));
 
-  const standaloneIdentity = heading.indexOf(
-    'data-car-card-desktop-title-row',
-  );
-  const standaloneCategory = heading.indexOf(
-    "{car.categoryLabel ? (",
-    standaloneIdentity,
-  );
-  assert.ok(standaloneIdentity >= 0 && standaloneCategory > standaloneIdentity);
-  assert.doesNotMatch(heading, /data-car-card-desktop-actions|data-car-card-desktop-badge/);
   assert.match(
-    pricing,
-    /data-car-card-desktop-right-rail[\s\S]*?data-car-card-desktop-actions[\s\S]*?data-car-card-desktop-badge[\s\S]*?\{cardActions\}/,
+    heading,
+    /data-car-card-desktop-shared-header[\s\S]*?lg:grid-cols-\[minmax\(0,1fr\)_205px\]/,
+  );
+  assert.match(
+    heading,
+    /data-car-card-desktop-title-row[\s\S]*?h-11[\s\S]*?data-car-card-desktop-actions[\s\S]*?h-11/,
+  );
+  assert.match(
+    heading,
+    /data-car-card-desktop-badge[\s\S]*?\{badge\}/,
   );
   assert.match(details, /desktopStandaloneSpecifications/);
   assert.match(
@@ -111,45 +109,49 @@ test("standalone desktop keeps identity in the content column and actions in the
   assert.match(mobile, /mobileSpecColumns\.map/);
 });
 
-test("desktop standalone title aligns with the save/share row below Best value and keeps identity spacing tight", () => {
+test("desktop standalone title and save/share occupy the exact same grid row below Best value", () => {
   const desktop = source.slice(source.indexOf('data-region="heading"'));
   const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
 
+  assert.doesNotMatch(heading, /lg:pt-6/);
   assert.match(
     heading,
-    /grid grid-cols-1 items-start gap-y-0 \$\{badge && BadgeIcon \? "lg:pt-6" : "lg:pt-0"\}/,
+    /badge && BadgeIcon \? "lg:grid-rows-\[24px_44px_auto_auto\]" : "lg:grid-rows-\[44px_auto_auto\]"/,
   );
   assert.match(
     heading,
-    /data-car-card-desktop-title-row[\s\S]*?row-start-1 flex min-w-0 items-center self-center/,
+    /data-car-card-desktop-title-row[\s\S]*?\$\{badge && BadgeIcon \? "row-start-2" : "row-start-1"\}[\s\S]*?h-11/,
   );
   assert.match(
     heading,
-    /row-start-2 mt-0\.5 text-\[10px\] font-bold uppercase leading-none/,
+    /data-car-card-desktop-actions[\s\S]*?\$\{badge && BadgeIcon \? "row-start-2" : "row-start-1"\}[\s\S]*?h-11/,
   );
   assert.match(
     heading,
-    /\$\{guidedPlanning \? "mt-1" : "mt-0\.5"\} flex min-w-0 items-center/,
+    /\$\{badge && BadgeIcon \? "row-start-3" : "row-start-2"\}[\s\S]*?leading-none/,
+  );
+  assert.match(
+    heading,
+    /\$\{badge && BadgeIcon \? "row-start-4" : "row-start-3"\} mt-0\.5 flex/,
   );
 });
 
-test("desktop standalone right rail keeps Best value above save/share and pricing at the bottom", () => {
+test("desktop standalone keeps Best value above the shared action row and pricing below it", () => {
   const desktop = source.slice(source.indexOf('data-region="heading"'));
   const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
   const pricing = desktop.slice(desktop.indexOf('data-region="pricing"'));
 
-  assert.doesNotMatch(heading, /data-car-card-desktop-badge|data-car-card-desktop-actions/);
   assert.match(
-    pricing,
-    /data-car-card-desktop-right-rail[\s\S]*?className="flex h-full w-full flex-col items-end"/,
+    heading,
+    /data-car-card-desktop-badge[\s\S]*?row-start-1[\s\S]*?data-car-card-desktop-actions/,
   );
   assert.match(
     pricing,
-    /data-car-card-desktop-actions[\s\S]*?className="flex w-full shrink-0 flex-col items-end"/,
+    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:pb-3 lg:text-right"/,
   );
   assert.match(
     pricing,
-    /data-car-card-desktop-badge[\s\S]*?\{badge\}[\s\S]*?\{cardActions\}/,
+    /data-car-card-desktop-actions[\s\S]*?lg:hidden/,
   );
   assert.match(
     pricing,
