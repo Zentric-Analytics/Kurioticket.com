@@ -25,8 +25,8 @@ test("static comparison is truthful, local, and capability driven", () => {
   assert.match(card, /bookable: false/);
   assert.match(card, /handoffAvailable: false/);
   assert.doesNotMatch(card, /approvedUrl:|bookingUrl/);
-  assert.doesNotMatch(comparison, /href=|<Link|window\.open|router\./);
-  assert.doesNotMatch(comparison, /Kurioticket static fixture|>Provider<|>Book<|>Reserve<|>View deal</);
+  assert.doesNotMatch(comparison, /window\.open|router\./);
+  assert.doesNotMatch(comparison, /Kurioticket static fixture|>Provider<|>Book<|>Reserve<|>View deal/);
 });
 
 test("clean static summary hides source, estimate, total, and coming-soon chrome", () => {
@@ -43,7 +43,8 @@ test("clean static summary hides source, estimate, total, and coming-soon chrome
     comparison,
     /<p className="mt-1 text-\[11px\] font-medium text-slate-600" dir="ltr">[\s\S]*?\{estimate\.perDayDisplay\} \{labels\.perDay\}/,
   );
-  assert.match(comparison, /\{expanded \? labels\.hidePrices : labels\.comparePrices\}/);
+  assert.match(comparison, /\{labels\.comparePrices\}/);
+  assert.doesNotMatch(comparison, /labels\.hidePrices/);
   assert.match(
     comparison,
     /!cleanStaticSummary \? <p[^>]*>\{labels\.liveDealsComingSoon\}<\/p> : null/,
@@ -51,24 +52,21 @@ test("clean static summary hides source, estimate, total, and coming-soon chrome
   assert.match(card, /cleanStaticSummary=\{!car\.sandboxPresentation\}/);
 });
 
-test("desktop comparison toggles one stable result-owned panel accessibly", () => {
-  assert.match(comparison, /useState\(false\)/);
-  assert.match(comparison, /aria-expanded=\{expanded\}/);
-  assert.match(comparison, /aria-controls=\{panelId\}/);
-  assert.match(comparison, /id=\{panelId\}/);
-  assert.match(comparison, /resultId\.replace/);
-  assert.match(comparison, /setExpanded\(\(current\) => !current\)/);
-  assert.match(comparison, /disabled aria-label=\{labels\.notBookable\}/);
+test("standalone desktop Compare deals follows the result card details route instead of expanding inline", () => {
+  assert.match(comparison, /desktopDetailsSelector/);
+  assert.match(comparison, /a\[href\^=\"\/cars\/details\/\"\]/);
+  assert.match(comparison, /a\[href\^=\"\/sandbox\/kayak\/details\"\]/);
+  assert.match(comparison, /closest\("article"\)/);
+  assert.match(comparison, /querySelector<HTMLAnchorElement>\(desktopDetailsSelector\)/);
+  assert.match(comparison, /detailsLink\?\.click\(\)/);
+  assert.match(comparison, /onClick=\{\(event\) => openDesktopDetails\(event\.currentTarget\)\}/);
+  assert.doesNotMatch(comparison, /useState\(false\)|aria-expanded|aria-controls|setExpanded|data-car-price-comparison-panel/);
 });
 
-test("standalone desktop no longer exposes its details CTA while guided selection remains", () => {
+test("desktop-only navigation reuses existing card detail links while guided selection remains unchanged", () => {
   assert.match(desktop, /!guidedPlanning \? \(/);
   assert.match(desktop, /<CarPriceComparison/);
-  const standaloneComparison = desktop.slice(
-    desktop.indexOf("!guidedPlanning ? ("),
-    desktop.indexOf(") : (", desktop.indexOf("!guidedPlanning ? (")),
-  );
-  assert.doesNotMatch(standaloneComparison, /detailsHref|<Link|onSelect/);
+  assert.match(card, /href=\{detailsHref\}/);
+  assert.match(card, /onClick=\{handleMobileDetailsNavigation\}/);
   assert.match(desktop, /onClick=\{\(\) => onSelect\(car\)\}/);
-  assert.match(desktop, /href=\{detailsHref\}/);
 });
