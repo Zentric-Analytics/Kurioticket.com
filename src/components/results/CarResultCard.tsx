@@ -474,13 +474,16 @@ export function CarResultCard({
           data-region="heading"
           className="col-span-2 row-start-2 min-w-0 px-3.5 py-2.5 md:col-span-1 md:col-start-2 md:row-start-1 md:px-4 md:pb-1 md:pt-3"
         >
-          <header className="flex flex-wrap items-start justify-between gap-2">
-            <div
-              data-car-card-desktop-identity
-              className={`min-w-0 flex-1 ${!guidedPlanning && badge ? "pt-[26px]" : ""}`}
-            >
-              {guidedPlanning ? (
-                <>
+          <header
+            className={
+              guidedPlanning
+                ? "flex flex-wrap items-start justify-between gap-2"
+                : "grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-0.5"
+            }
+          >
+            {guidedPlanning ? (
+              <>
+                <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]">
                     {car.categoryLabel}
                   </p>
@@ -493,9 +496,33 @@ export function CarResultCard({
                       {vehicleName}
                     </h2>
                   )}
-                </>
-              ) : (
-                <>
+                </div>
+                <div className="flex shrink-0 items-start gap-1">
+                  {badge && BadgeIcon && (
+                    <span className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]">
+                      <BadgeIcon size={13} aria-hidden="true" />
+                      {badge}
+                    </span>
+                  )}
+                  {cardActions}
+                </div>
+              </>
+            ) : (
+              <>
+                {badge && BadgeIcon ? (
+                  <span
+                    data-car-card-desktop-badge
+                    className="col-start-2 row-start-1 inline-flex min-h-6 shrink-0 items-center gap-1 justify-self-end rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]"
+                  >
+                    <BadgeIcon size={13} aria-hidden="true" />
+                    {badge}
+                  </span>
+                ) : null}
+
+                <div
+                  data-car-card-desktop-title-row
+                  className={`col-start-1 ${badge ? "row-start-2" : "row-start-1"} flex min-w-0 items-center self-center`}
+                >
                   <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0">
                     {headingLevel === "h3" ? (
                       <h3 className="min-w-0 break-words text-[18px] font-bold leading-tight text-[#07133B]">
@@ -512,37 +539,23 @@ export function CarResultCard({
                       </span>
                     ) : null}
                   </div>
-                  {car.categoryLabel ? (
-                    <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]">
-                      {car.categoryLabel}
-                    </p>
-                  ) : null}
-                </>
-              )}
-            </div>
-            {guidedPlanning ? (
-              <div className="flex shrink-0 items-start gap-1">
-                {badge && BadgeIcon && (
-                  <span className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]">
-                    <BadgeIcon size={13} aria-hidden="true" />
-                    {badge}
-                  </span>
-                )}
-                {cardActions}
-              </div>
-            ) : (
-              <div
-                data-car-card-desktop-actions
-                className="flex shrink-0 flex-col items-end gap-0.5"
-              >
-                {badge && BadgeIcon && (
-                  <span className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]">
-                    <BadgeIcon size={13} aria-hidden="true" />
-                    {badge}
-                  </span>
-                )}
-                {cardActions}
-              </div>
+                </div>
+
+                <div
+                  data-car-card-desktop-actions
+                  className={`col-start-2 ${badge ? "row-start-2" : "row-start-1"} flex shrink-0 items-center self-center`}
+                >
+                  {cardActions}
+                </div>
+
+                {car.categoryLabel ? (
+                  <p
+                    className={`col-start-1 ${badge ? "row-start-3" : "row-start-2"} mt-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]`}
+                  >
+                    {car.categoryLabel}
+                  </p>
+                ) : null}
+              </>
             )}
           </header>
 
