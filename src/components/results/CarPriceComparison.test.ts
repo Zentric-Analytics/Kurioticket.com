@@ -29,6 +29,24 @@ test("static comparison is truthful, local, and capability driven", () => {
   assert.doesNotMatch(comparison, /Kurioticket static fixture|>Provider<|>Book<|>Reserve<|>View deal</);
 });
 
+test("clean static summary hides source, estimate, total, and coming-soon chrome", () => {
+  assert.match(comparison, /cleanStaticSummary = false/);
+  assert.match(
+    comparison,
+    /!cleanStaticSummary \? \([\s\S]*?\{labels\.source\}[\s\S]*?\{labels\.estimate\}[\s\S]*?\{estimate\.totalDisplay\}[\s\S]*?\{labels\.total\}/,
+  );
+  assert.match(
+    comparison,
+    /\{estimate\.perDayDisplay\} \{labels\.perDay\}/,
+  );
+  assert.match(comparison, /\{expanded \? labels\.hidePrices : labels\.comparePrices\}/);
+  assert.match(
+    comparison,
+    /!cleanStaticSummary \? <p[^>]*>\{labels\.liveDealsComingSoon\}<\/p> : null/,
+  );
+  assert.match(card, /cleanStaticSummary=\{!car\.sandboxPresentation\}/);
+});
+
 test("desktop comparison toggles one stable result-owned panel accessibly", () => {
   assert.match(comparison, /useState\(false\)/);
   assert.match(comparison, /aria-expanded=\{expanded\}/);
