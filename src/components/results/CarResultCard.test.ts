@@ -266,6 +266,15 @@ test("desktop static pricing removes estimate chrome but keeps daily price and V
   assert.match(desktop, /carsResults\.comparison\.perDay/);
 });
 
+test("standalone desktop pricing is anchored to the card bottom-right while guided pricing stays centered", () => {
+  const desktop = source.slice(source.indexOf('data-region="pricing"'));
+
+  assert.match(
+    desktop,
+    /!guidedPlanning \? "lg:items-end lg:justify-end lg:pb-3 lg:text-right" : "lg:items-center lg:justify-center lg:text-center"/,
+  );
+});
+
 test("desktop and guided contracts retain their responsive grid and owned disclosures", () => {
   assert.match(source, /guidedPlanning \? "grid" : "hidden md:grid"/);
   assert.match(source, /md:grid-cols-\[250px_minmax\(0,1fr\)\]/);
