@@ -772,12 +772,36 @@ test("mobile web Flight Details removes the branded header and uses the native e
   assert.match(source, /bg-\[#F3F6FA\]/);
   assert.match(source, /px-\[18px\] pb-4 pt-0/);
   assert.match(source, /data-mobile-native-itinerary-stack[\s\S]*-mx-\[10px\] -mt-\[104px\]/);
-  assert.match(source, /relative z-10 hidden items-start justify-between gap-3 sm:flex/);
+  assert.match(source, /data-flight-details-desktop-navigation/);
+  assert.match(source, />Back to flight results<\/span>/);
+  assert.match(source, /data-flight-details-desktop-actions/);
+  assert.doesNotMatch(source, /data-flight-details-floating-actions/);
+  assert.match(loading, /data-flight-details-loading-desktop-navigation/);
   assert.match(source, /function FlightDetailsUnavailable[\s\S]*Back to results/);
   assert.match(source, /const nativeTripLine = `[\\s\\S]*titleCase\(available\.search\.cabinClass\)/);
   assert.match(loading, /bg-\[#F3F6FA\]/);
   assert.match(loading, /data-mobile-native-itinerary-loading[\s\S]*-mx-\[10px\] -mt-\[104px\]/);
   assert.match(loading, /h-\[226px\]/);
+});
+
+test("desktop Flight Details uses a page utility row instead of hero-overlay navigation", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const loading = await readFile(new URL("./FlightDetailsLoadingShell.tsx", import.meta.url), "utf8");
+  const navStart = source.indexOf("data-flight-details-desktop-navigation");
+  const heroStart = source.indexOf('data-testid="flight-details-hero"');
+  const heroEnd = source.indexOf("data-flight-details-hero-curve", heroStart);
+  const hero = source.slice(heroStart, heroEnd);
+
+  assert.ok(navStart >= 0 && navStart < heroStart);
+  assert.match(source, /data-flight-details-desktop-navigation[^>]*className="hidden[^"]*sm:flex/);
+  assert.match(source, /Back to flight results/);
+  assert.match(source, /data-flight-details-desktop-actions/);
+  assert.match(source, /<span>\{flightSaved \? "Saved" : "Save"\}<\/span>/);
+  assert.match(source, /<span>Share<\/span>/);
+  assert.match(source, /aria-pressed=\{flightSaved\}/);
+  assert.doesNotMatch(hero, /Back to results|data-flight-details-floating-actions|aria-label="Share flight"/);
+  assert.match(loading, /data-flight-details-loading-desktop-navigation[^>]*className="hidden[^"]*sm:flex/);
+  assert.doesNotMatch(loading.slice(loading.indexOf("<div ref={heroRef}")), /relative z-10 hidden items-start justify-between gap-3 sm:flex/);
 });
 
 test("Flight Details mobile cleanup uses native fare rail behavior and fare information", async () => {
