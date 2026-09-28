@@ -6,9 +6,11 @@ import { readKayakOffer, saveKayakOffer } from "./kayakOfferStorage";
 const clickout = "https://affiliates.kayak.com/sandbox-clickout";
 const offer = {id:"safe-offer",title:"Test offer",description:"Supplied by KAYAK",details:["Detail"],price:100,currency:"USD",priceBasis:"total",testUrl:clickout};
 
-test("normal KAYAK results use regular cards with compact labels and details actions", () => {
+test("normal KAYAK results use regular cards without a visible Flight sandbox label", () => {
   const source = readFileSync("src/components/results/KayakResultCard.tsx", "utf8");
-  assert.match(source, /providerLabel="KAYAK sandbox · Simulated · Not bookable"/);
+  assert.doesNotMatch(source, /KAYAK sandbox · Simulated · Not bookable/);
+  assert.match(source, /detailsHref=`\/sandbox\/kayak\/details\?id=\$\{encodeURIComponent\(offer\.id\)\}`/);
+  assert.match(source, /saveKayakOffer\(sessionStorage,\{offer,vertical,criteria\}\)/);
   assert.match(source, /actionLabel="View flight"/);
   assert.match(source, /actionLabel="View hotel"/);
   assert.match(source, /actionLabel="View car"/);

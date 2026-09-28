@@ -52,7 +52,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { FlightCard } from "@/components/results/FlightCard";
 import { useKayakResults } from "./KayakResultsContext";
-import { isKayakSandboxResult, resultActionHref } from "@/lib/travel/resultAction";
+import { resultActionHref } from "@/lib/travel/resultAction";
 import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
 import { kayakFlightCardModel } from "./kayakCardModels";
 import { KayakResultCard } from "./KayakResultCard";
@@ -7640,7 +7640,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
                         const detailsQuery = params.toString();
                         const internalDetailsHref = `/flights/details/${encodeURIComponent(flight.id)}` + (detailsQuery ? `?${detailsQuery}` : "");
-                        return <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={resultActionHref(flight, internalDetailsHref)} providerLabel={isKayakSandboxResult(flight) ? "KAYAK sandbox · Simulated · Not bookable" : undefined} />;
+                        return <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={resultActionHref(flight, internalDetailsHref)} />;
                       })}
                     </div>
                     <FlightResultsPagination
@@ -7690,7 +7690,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                           isAccented={index % 2 === 0}
                           resultBadge={resultBadgeByFlightId.get(flight.id)}
                           detailsHref={detailsHref}
-                          providerLabel={isKayakSandboxResult(flight) ? "KAYAK sandbox · Simulated · Not bookable" : undefined}
                         />
                       );
                     })}
