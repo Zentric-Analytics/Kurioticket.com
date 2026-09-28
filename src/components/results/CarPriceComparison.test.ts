@@ -14,7 +14,7 @@ test("standalone desktop owns exactly four required primary specifications", () 
   for (const value of ["car.passengers", "car.bags", "car.doors", "car.transmission"]) {
     assert.match(card, new RegExp(value.replace(".", "\\.")));
   }
-  assert.match(specs, /specifications\.map/);
+  assert.match(specs, /guidedPlanning \? specifications : desktopStandaloneSpecifications/);
   assert.match(card, /guidedPlanning && car\.airConditioning/);
   assert.doesNotMatch(specs, /Air conditioning|Snowflake/);
 });
@@ -37,7 +37,11 @@ test("clean static summary hides source, estimate, total, and coming-soon chrome
   );
   assert.match(
     comparison,
-    /\{estimate\.perDayDisplay\} \{labels\.perDay\}/,
+    /cleanStaticSummary \? \([\s\S]*?text-\[19px\] font-bold leading-none tabular-nums[\s\S]*?\{estimate\.perDayDisplay\}[\s\S]*?\{labels\.perDay\}/,
+  );
+  assert.match(
+    comparison,
+    /<p className="mt-1 text-\[11px\] font-medium text-slate-600" dir="ltr">[\s\S]*?\{estimate\.perDayDisplay\} \{labels\.perDay\}/,
   );
   assert.match(comparison, /\{expanded \? labels\.hidePrices : labels\.comparePrices\}/);
   assert.match(
