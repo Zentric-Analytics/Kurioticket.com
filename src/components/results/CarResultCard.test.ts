@@ -74,6 +74,41 @@ test("desktop media fills its column and unsupported tax copy stays hidden", () 
   assert.doesNotMatch(source, /Taxes and fees included/);
 });
 
+test("standalone desktop mirrors the requested result-card hierarchy without changing mobile", () => {
+  const desktop = source.slice(source.indexOf('data-region="heading"'));
+  const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
+  const details = desktop.slice(
+    desktop.indexOf('data-region="details"'),
+    desktop.indexOf('data-region="pricing"'),
+  );
+
+  assert.ok(
+    heading.indexOf("{car.modelName}") < heading.indexOf("{car.categoryLabel}"),
+    "desktop title must render before its category label",
+  );
+  assert.match(
+    heading,
+    /data-car-card-desktop-actions[\s\S]*?flex shrink-0 flex-col items-end gap-0\.5/,
+  );
+  assert.match(
+    heading,
+    /data-car-card-desktop-actions[\s\S]*?\{badge && BadgeIcon && \([\s\S]*?\{cardActions\}/,
+  );
+  assert.match(details, /desktopStandaloneSpecifications/);
+  assert.match(
+    details,
+    /guidedPlanning \? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2"/,
+  );
+  assert.match(source, /getCarSpecificationIcon\(title\(car\.transmission\)\)/);
+
+  const mobile = source.slice(
+    source.indexOf("data-car-card-mobile-main"),
+    source.indexOf("grid-cols-[minmax(0,1.1fr)"),
+  );
+  assert.match(mobile, /data-car-card-mobile-specs/);
+  assert.match(mobile, /mobileSpecColumns\.map/);
+});
+
 test("desktop save and share glyphs sit closer within independent targets", () => {
   const actions = source.slice(
     source.indexOf("const cardActions"),
