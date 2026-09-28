@@ -23,8 +23,9 @@ const mobileSummaryControls = resultsSource.slice(
   resultsSource.indexOf("const renderCarsSearchForm"),
 );
 
-test("mobile Cars Results owns the native canvas without changing the desktop canvas", () => {
-  assert.match(resultsSource, /bg-\[#F5F7FB\] pb-8 sm:bg-\[#f6f8fb\]/);
+test("Cars Results keeps the mobile canvas surface through desktop", () => {
+  assert.match(resultsSource, /<main className="flex-1 bg-\[#F5F7FB\] pb-8">/);
+  assert.doesNotMatch(resultsSource, /bg-\[#F5F7FB\] pb-8 sm:bg-/);
 });
 
 test("mobile Cars Results keeps its summary band white above the native canvas", () => {
@@ -91,8 +92,9 @@ test("mobile result rhythm matches the native list while desktop spacing stays r
   );
 });
 
-test("mobile car price alert uses the native alert palette and bare bell", () => {
+test("car price alert keeps the mobile surface on desktop without changing its controls", () => {
   assert.match(alertSource, /border-\[#C8DFF7\] bg-\[#EDF6FF\]/);
+  assert.match(alertSource, /sm:border-blue-100 sm:bg-\[#EDF6FF\]/);
   assert.match(alertSource, /text-\[#1769AA\]/);
   assert.match(alertSource, /sm:rounded-full sm:bg-blue-50/);
   assert.match(alertSource, /text-\[12\.5px\] font-bold leading-4/);
