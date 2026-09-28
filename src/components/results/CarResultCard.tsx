@@ -614,16 +614,16 @@ export function CarResultCard({
                 >
                   <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0">
                     {headingLevel === "h3" ? (
-                      <h3 className="min-w-0 break-words text-[18px] font-bold leading-tight text-[#07133B]">
+                      <h3 className="min-w-0 break-words text-[19px] font-bold leading-[24px] tracking-[-0.015em] text-[#07133B]">
                         {car.modelName}
                       </h3>
                     ) : (
-                      <h2 className="min-w-0 break-words text-[18px] font-bold leading-tight text-[#07133B]">
+                      <h2 className="min-w-0 break-words text-[19px] font-bold leading-[24px] tracking-[-0.015em] text-[#07133B]">
                         {car.modelName}
                       </h2>
                     )}
                     {car.orSimilar ? (
-                      <span className="text-[11px] font-medium leading-4 text-[#536B92]">
+                      <span className="text-[12px] font-medium leading-4 text-[#536B92]">
                         or similar
                       </span>
                     ) : null}
@@ -639,14 +639,14 @@ export function CarResultCard({
 
                 {car.categoryLabel ? (
                   <p
-                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-3" : "row-start-2"} mt-0.5 px-4 text-[10px] font-bold uppercase leading-none tracking-[0.14em] text-[#004BB8]`}
+                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-3" : "row-start-2"} mt-0.5 px-4 text-[10px] font-bold uppercase leading-[14px] tracking-[0.12em] text-[#004BB8]`}
                   >
                     {car.categoryLabel}
                   </p>
                 ) : null}
 
                 <p
-                  className={`col-start-1 ${badge && BadgeIcon ? "row-start-4" : "row-start-3"} mt-1 flex min-w-0 items-center gap-1.5 px-4 text-[12px] font-medium text-[#536B92]`}
+                  className={`col-start-1 ${badge && BadgeIcon ? "row-start-4" : "row-start-3"} mt-1 flex min-w-0 items-center gap-1.5 px-4 text-[12.5px] font-medium leading-[18px] text-[#536B92]`}
                 >
                   <MapPin
                     size={16}
@@ -662,7 +662,7 @@ export function CarResultCard({
                 {offer.freeCancellation ? (
                   <div
                     data-car-card-desktop-free-cancellation
-                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-5" : "row-start-4"} mt-1.5 flex min-w-0 items-center gap-1.5 px-4 text-[12px] font-semibold leading-4 text-black`}
+                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-5" : "row-start-4"} mt-1.5 flex min-w-0 items-center gap-1.5 px-4 text-[12.5px] font-semibold leading-[18px] text-[#142033]`}
                   >
                     <ShieldCheck
                       size={14}
@@ -683,7 +683,7 @@ export function CarResultCard({
         >
           <ul
             data-car-card-desktop-primary-specs
-            className={`grid gap-x-5 gap-y-2 text-[12px] font-medium leading-4 text-[#536B92] ${guidedPlanning ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2"}`}
+            className={`grid gap-x-5 gap-y-2 text-[12px] font-medium leading-4 text-[#536B92] ${guidedPlanning ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 lg:text-[12.5px] lg:leading-[17px]"}`}
           >
             {(guidedPlanning ? specifications : desktopStandaloneSpecifications).map(([Icon, label]) => (
               <li key={label} className="flex min-w-0 items-center gap-1.5">
