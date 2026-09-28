@@ -218,11 +218,11 @@ test("standalone desktop identity stack keeps compact but visible breathing room
 
   assert.match(
     heading,
-    /row-start-2 mt-1 text-\[10px\] font-bold uppercase leading-none/,
+    /row-start-2 mt-0\.5 text-\[10px\] font-bold uppercase leading-none/,
   );
   assert.match(
     heading,
-    /\$\{badge && BadgeIcon \? "row-start-3" : "row-start-2"\} mt-1 px-4/,
+    /\$\{badge && BadgeIcon \? "row-start-3" : "row-start-2"\} mt-0\.5 px-4/,
   );
   assert.match(
     heading,

@@ -553,7 +553,7 @@ export function CarResultCard({
                   </div>
 
                   {car.categoryLabel ? (
-                    <p className="row-start-2 mt-1 text-[10px] font-bold uppercase leading-none tracking-[0.14em] text-[#004BB8]">
+                    <p className="row-start-2 mt-0.5 text-[10px] font-bold uppercase leading-none tracking-[0.14em] text-[#004BB8]">
                       {car.categoryLabel}
                     </p>
                   ) : null}
@@ -639,7 +639,7 @@ export function CarResultCard({
 
                 {car.categoryLabel ? (
                   <p
-                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-3" : "row-start-2"} mt-1 px-4 text-[10px] font-bold uppercase leading-none tracking-[0.14em] text-[#004BB8]`}
+                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-3" : "row-start-2"} mt-0.5 px-4 text-[10px] font-bold uppercase leading-none tracking-[0.14em] text-[#004BB8]`}
                   >
                     {car.categoryLabel}
                   </p>
