@@ -118,13 +118,17 @@ test("guided planning retains its localized combined vehicle-name contract", () 
   assert.match(source, /guidedPlanning \? \([\s\S]*?\{vehicleName\}/);
 });
 
-test("pickup types use display-only sentence casing", () => {
+test("desktop standalone cards omit static pickup-type copy while preserving the location", () => {
   assert.equal(formatCarPickupType("meet-and-greet"), "Meet and greet");
   assert.equal(formatCarPickupType("airport-counter"), "Airport counter");
   assert.equal(formatCarPickupType("city-location"), "City location");
   assert.equal(formatCarPickupType("shuttle"), "Shuttle");
   assert.equal(car.transmission, "automatic");
-  assert.match(source, /formatCarPickupType\(car\.pickupType\)/);
+
+  const desktop = source.slice(source.indexOf('data-region="heading"'));
+  assert.doesNotMatch(desktop, /formatCarPickupType\(car\.pickupType\)/);
+  assert.match(desktop, /car\.sandboxPresentation\?\.pickupLabel/);
+  assert.match(desktop, /\{car\.pickupLocation\}/);
 });
 
 test("mobile primary specs are deterministic and capped at four", () => {
@@ -185,6 +189,17 @@ test("Free cancellation is data-driven in mobile and secondary benefits stay des
     mobileMain,
     /offer\.payAtPickup|car\.fuelPolicy|Taxes and fees included/,
   );
+});
+
+test("desktop static pricing removes estimate chrome but keeps daily price and compare action", () => {
+  const desktop = source.slice(source.indexOf('data-region="pricing"'));
+
+  assert.match(
+    desktop,
+    /<CarPriceComparison[\s\S]*?cleanStaticSummary=\{!car\.sandboxPresentation\}/,
+  );
+  assert.match(desktop, /carsResults\.comparison\.comparePrices/);
+  assert.match(desktop, /carsResults\.comparison\.perDay/);
 });
 
 test("desktop and guided contracts retain their responsive grid and owned disclosures", () => {
