@@ -480,7 +480,6 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     "term.semantic === \"positive\" ? Check",
     'event.key === "ArrowRight" || event.key === "ArrowDown"',
     'tabIndex={selected ? 0 : -1}',
-    "selectedFare?.label",
     "selectedOffer.price",
     "<FarePanel activeTab={activeTab} fare={selectedFare} offer={selectedOffer}",
     "Operated by {segment.operatingCarrier.name}",
@@ -567,7 +566,7 @@ test("Flight Details reuses Flight Results selected-currency conversion and symb
 test("standalone UI preserves the approved desktop and mobile blueprint composition", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   assert.match(source, /lg:grid-cols-\[minmax\(0,2\.45fr\)_minmax\(310px,0\.95fr\)\]/);
-  assert.match(source, /className="hidden self-start rounded-\[13px\][\s\S]*lg:block"/);
+  assert.match(source, /data-desktop-checkout-summary className="hidden min-w-0 self-start rounded-\[13px\][\s\S]*lg:block"/);
   assert.doesNotMatch(source, /<aside className="[^"]*(?:sticky|fixed)|top-24/);
   assert.match(source, /function MobileCheckoutDock/);
   assert.doesNotMatch(source, /function MobileTripTotal/);
@@ -672,23 +671,39 @@ test("desktop Fare information uses underline-only tabs and unframed panels", as
   assert.match(source, /lg:divide-x lg:divide-\[#E2E8F0\]/);
 });
 
-test("desktop trip summary stays in normal document flow", async () => {
+test("desktop checkout summary is compact and contains no repeated itinerary details", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   const layoutStart = source.indexOf('className="grid items-start gap-6');
   const layoutEnd = source.indexOf("const PROVIDER_LOCAL_ISO_DATETIME", layoutStart);
   const layout = source.slice(layoutStart, layoutEnd);
-  const sidebarStart = source.indexOf("function TripSidebar");
-  const sidebarEnd = source.indexOf("function FlightDetailsSkeleton", sidebarStart);
-  const sidebar = source.slice(sidebarStart, sidebarEnd);
+  const summaryStart = source.indexOf("function DesktopCheckoutSummary");
+  const summaryEnd = source.indexOf("function FlightDetailsSkeleton", summaryStart);
+  const summary = source.slice(summaryStart, summaryEnd);
 
   assert.ok(layoutStart >= 0);
-  assert.match(layout, /<TripSidebar/);
+  assert.match(layout, /<DesktopCheckoutSummary/);
   assert.match(layout, /^className="grid items-start gap-6 lg:grid-cols-/);
-  assert.match(sidebar, /<aside className="hidden self-start[^"]*lg:block"/);
-  assert.match(sidebar, /<CheckoutButton/);
+  assert.match(summary, /data-desktop-checkout-summary/);
+  assert.match(summary, /className="hidden min-w-0 self-start[^"]*lg:block"/);
+  assert.match(summary, /flightDetailsTotalLabel\(travelerCount\)/);
+  assert.match(summary, /aria-label=\{price\.ariaLabel\}>\{price\.formatted\}/);
+  assert.match(summary, /data-desktop-trip-price-loading role="status"/);
+  assert.match(summary, /<CheckoutButton/);
+  assert.match(summary, /role="alert"/);
+  assert.doesNotMatch(summary, /Your trip|route|tripType|\blegs\b|departureTime|arrivalTime|duration|formatStops|fareTerms|Fare terms|travelers|Handoff provider|providerName/);
   assert.doesNotMatch(layout.slice(0, layout.indexOf(">") + 1), /(?:sticky|fixed|top-|overflow-y|max-h-screen)/);
-  assert.doesNotMatch(sidebar, /className="[^"]*(?:sticky|fixed|\btop-|overflow-y|max-h-screen)/);
+  assert.doesNotMatch(summary, /className="[^"]*(?:sticky|fixed|\btop-|overflow-y|max-h-screen)/);
   assert.match(source, /function MobileCheckoutDock[\s\S]*?fixed inset-x-0 bottom-0[\s\S]*?lg:hidden/);
+});
+
+test("desktop checkout loading shell mirrors the compact normal-flow card", async () => {
+  const source = await readFile(new URL("./FlightDetailsLoadingShell.tsx", import.meta.url), "utf8");
+  const marker = source.indexOf("data-desktop-checkout-summary-loading");
+  const summary = source.slice(marker, source.indexOf("</div>", marker) + 6);
+
+  assert.ok(marker >= 0);
+  assert.match(summary, /hidden h-\[142px\][^"]*lg:block/);
+  assert.doesNotMatch(summary, /h-\[620px\]|sticky|fixed|\btop-|overflow-y|max-h-screen/);
 });
 
 test("flight details entry keeps the opaque canonical route and results query", async () => {
