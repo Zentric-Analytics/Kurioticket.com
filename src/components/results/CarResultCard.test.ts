@@ -233,17 +233,25 @@ test("guided planning retains its localized combined vehicle-name contract", () 
   assert.match(source, /guidedPlanning \? \([\s\S]*?\{vehicleName\}/);
 });
 
-test("desktop standalone cards omit static pickup-type copy while preserving the location", () => {
+test("standalone desktop hides sandbox pickup-label chrome while preserving the actual location", () => {
   assert.equal(formatCarPickupType("meet-and-greet"), "Meet and greet");
   assert.equal(formatCarPickupType("airport-counter"), "Airport counter");
   assert.equal(formatCarPickupType("city-location"), "City location");
   assert.equal(formatCarPickupType("shuttle"), "Shuttle");
   assert.equal(car.transmission, "automatic");
 
-  const desktop = source.slice(source.indexOf('data-region="heading"'));
-  assert.doesNotMatch(desktop, /formatCarPickupType\(car\.pickupType\)/);
-  assert.match(desktop, /car\.sandboxPresentation\?\.pickupLabel/);
-  assert.match(desktop, /\{car\.pickupLocation\}/);
+  const headingStart = source.indexOf('data-region="heading"');
+  const standaloneStart = source.indexOf('<div className="lg:hidden">', headingStart);
+  const detailsStart = source.indexOf('data-region="details"', standaloneStart);
+  const standaloneDesktop = source.slice(standaloneStart, detailsStart);
+
+  assert.doesNotMatch(standaloneDesktop, /formatCarPickupType\(car\.pickupType\)/);
+  assert.doesNotMatch(standaloneDesktop, /car\.sandboxPresentation\?\.pickupLabel/);
+  assert.equal(
+    (standaloneDesktop.match(/\{car\.pickupLocation\}/g) ?? []).length,
+    2,
+    "both supported desktop heading variants keep the actual pickup location",
+  );
 });
 
 test("standalone desktop shows localized data-driven Free cancellation directly below the location at md and lg", () => {
@@ -338,13 +346,15 @@ test("Free cancellation is data-driven in mobile and secondary benefits stay des
   );
 });
 
-test("desktop static pricing removes estimate chrome but keeps daily price and View deal action", () => {
+test("desktop static pricing removes provider, sandbox, total, and disclosure chrome while keeping daily price and View deal", () => {
   const desktop = source.slice(source.indexOf('data-region="pricing"'));
 
   assert.match(
     desktop,
-    /<CarPriceComparison[\s\S]*?cleanStaticSummary=\{!car\.sandboxPresentation\}/,
+    /<CarPriceComparison[\s\S]*?\n\s+cleanStaticSummary\n/,
   );
+  assert.doesNotMatch(desktop, /cleanStaticSummary=\{!car\.sandboxPresentation\}/);
+  assert.doesNotMatch(desktop, /"KAYAK"|"Sandbox"|Simulated inventory — no real booking/);
   assert.match(desktop, /comparePrices: "View deal"/);
   assert.doesNotMatch(desktop, /carsResults\.comparison\.comparePrices/);
   assert.match(desktop, /carsResults\.comparison\.perDay/);
