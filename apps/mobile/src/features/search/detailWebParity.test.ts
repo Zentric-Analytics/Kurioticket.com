@@ -129,10 +129,14 @@ test("active Hotel tab text keeps uniform semibold weight while selected text an
   assert.match(webSectionNav, /font-bold/);
 });
 
-test("web Hotel section navigation remains protected independently", () => {
-  for (const tab of ["compare", "about", "location", "reviews"]) {
+test("web Hotel section navigation now mirrors the native three-tab decision structure", () => {
+  for (const tab of ["compare", "about", "reviews"]) {
     assert.match(webSectionNav, new RegExp(`id: "${tab}"`));
   }
+  for (const label of ["Rates", "Overview", "Reviews"]) {
+    assert.match(webSectionNav, new RegExp(`label: "${label}"`));
+  }
+  assert.doesNotMatch(webSectionNav, /id: "location"|Compare prices|desktopOnly|mobileLabel/);
   assert.match(webSectionNav, /\bsticky\b/);
   assert.match(webSectionNav, /\bgrid\b/);
   assert.match(webSectionNav, /\bmin-w-0\b/);
