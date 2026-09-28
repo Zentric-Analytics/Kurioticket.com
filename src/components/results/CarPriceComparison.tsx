@@ -39,7 +39,7 @@ export function CarPriceComparison({
     detailsLink?.click();
   };
 
-  return <div data-car-price-comparison data-result-id={resultId} className="w-full">
+  return <div data-car-price-comparison data-result-id={resultId} className="w-full lg:translate-y-2">
     {!cleanStaticSummary ? (
       <>
         <div className="flex items-center justify-between gap-2">
@@ -50,26 +50,33 @@ export function CarPriceComparison({
       </>
     ) : null}
     {cleanStaticSummary ? (
-      <p
-        className="text-[#07133B]"
+      <div
+        data-car-price-comparison-summary
+        className="flex flex-col items-center text-center"
         dir="ltr"
       >
-        <span className="text-[19px] font-bold leading-none tabular-nums">
+        <p className="text-[19px] font-bold leading-none text-[#07133B] tabular-nums">
           {estimate.perDayDisplay}
-        </span>{" "}
-        <span className="text-[11px] font-medium text-slate-600">
+        </p>
+        <p className="mt-1 text-[11px] font-medium leading-none text-slate-600">
           {labels.perDay}
-        </span>
-      </p>
+        </p>
+      </div>
     ) : (
-      <p className="mt-1 text-[11px] font-medium text-slate-600" dir="ltr">
-        {estimate.perDayDisplay} {labels.perDay}
-      </p>
+      <div className="mt-1 flex flex-col items-center text-center" dir="ltr">
+        <p className="text-[11px] font-semibold text-[#07133B] tabular-nums">
+          {estimate.perDayDisplay}
+        </p>
+        <p className="mt-1 text-[11px] font-medium leading-none text-slate-600">
+          {labels.perDay}
+        </p>
+      </div>
     )}
     <button
+      data-car-price-comparison-action
       type="button"
       onClick={(event) => openDesktopDetails(event.currentTarget)}
-      className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-[#004BB8] px-3 text-[13px] font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
+      className="mt-4 inline-flex min-h-9 items-center justify-center gap-1 text-[13px] font-semibold text-[#004BB8] transition-colors hover:text-[#003A8C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
     >
       {labels.comparePrices}
       <ChevronRight className="h-4 w-4" aria-hidden="true" />
