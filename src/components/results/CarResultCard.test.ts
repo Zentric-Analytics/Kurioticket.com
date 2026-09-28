@@ -147,7 +147,7 @@ test("desktop standalone keeps Best value above the shared action row and pricin
   );
   assert.match(
     pricing,
-    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:pb-3 lg:text-right"/,
+    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-\[#E2E8F0\] lg:pb-3 lg:text-right"/,
   );
   assert.match(
     pricing,
@@ -156,6 +156,36 @@ test("desktop standalone keeps Best value above the shared action row and pricin
   assert.match(
     pricing,
     /<div className="mt-auto w-full">[\s\S]*?<CarPriceComparison/,
+  );
+});
+
+test("standalone desktop uses only the approved subtle T divider", () => {
+  const desktop = source.slice(source.indexOf('data-region="image"'));
+  const heading = desktop.slice(
+    desktop.indexOf('data-region="heading"'),
+    desktop.indexOf('data-region="details"'),
+  );
+  const details = desktop.slice(
+    desktop.indexOf('data-region="details"'),
+    desktop.indexOf('data-region="pricing"'),
+  );
+  const pricing = desktop.slice(desktop.indexOf('data-region="pricing"'));
+
+  assert.match(
+    desktop,
+    /data-region="image"[\s\S]*?\$\{!guidedPlanning \? "lg:border-e-0" : ""\}/,
+  );
+  assert.doesNotMatch(
+    heading,
+    /data-car-card-desktop-header-rail[\s\S]*?border-s/,
+  );
+  assert.match(
+    details,
+    /\$\{!guidedPlanning \? "lg:border-t lg:border-\[#E2E8F0\]" : ""\}/,
+  );
+  assert.match(
+    pricing,
+    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-\[#E2E8F0\] lg:pb-3 lg:text-right"/,
   );
 });
 
