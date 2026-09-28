@@ -678,7 +678,6 @@ function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, of
       <div data-desktop-journey-summary className="grid grid-cols-[minmax(0,1fr)_minmax(120px,180px)_minmax(0,1fr)] items-center gap-6 px-4 pt-3 lg:px-5">
         <AirportTime time={leg.departureTime} airport={leg.originAirport} date={departureShortDate} locale={locale} />
         <div className="min-w-0 text-center">
-          <span className="sr-only">{leg.duration}, {formatStops(leg.stops, technicalStopCount(leg))}</span>
           <p className="text-[11px] font-semibold leading-4 text-slate-600">{leg.duration}</p>
           <div className="mt-1 flex items-center text-[#075EE8]" aria-hidden="true"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" /><span className="min-w-2 flex-1 border-t border-dashed border-[#075EE8]" /><Plane className="h-4 w-4 shrink-0 rotate-45" /><span className="min-w-2 flex-1 border-t border-dashed border-[#075EE8]" /><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" /></div>
           <p className="mt-1 text-[10px] font-medium leading-[14px] text-slate-600">{formatStops(leg.stops, technicalStopCount(leg))}</p>
