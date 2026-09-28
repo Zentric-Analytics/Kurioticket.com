@@ -130,6 +130,21 @@ export function CarResultCard({
     : guidedPlanning && car.airConditioning
       ? [...primarySpecifications, [Snowflake, "Air conditioning"]]
       : primarySpecifications;
+  const desktopStandaloneSpecifications: Array<[LucideIcon, string]> =
+    car.sandboxPresentation
+      ? car.sandboxPresentation.specs.map((label) => [
+          getCarSpecificationIcon(label),
+          label,
+        ])
+      : [
+          [Users, `${car.passengers} passengers`],
+          [BriefcaseBusiness, `${car.bags} bags`],
+          [DoorOpen, `${car.doors} doors`],
+          [
+            getCarSpecificationIcon(title(car.transmission)),
+            title(car.transmission),
+          ],
+        ];
   const mobileIdentity = getMobileCarResultIdentity(car.modelName);
   const mobilePrimarySpecs = car.sandboxPresentation
     ? getMobileProviderCarSpecSlots(car.sandboxPresentation.specs)
@@ -457,47 +472,71 @@ export function CarResultCard({
         >
           <header className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]">
-                {car.categoryLabel}
-              </p>
               {guidedPlanning ? (
-                headingLevel === "h3" ? (
-                  <h3 className="mt-0.5 break-words text-[22px] font-extrabold leading-tight text-[#102A43]">
-                    {vehicleName}
-                  </h3>
-                ) : (
-                  <h2 className="mt-0.5 break-words text-[22px] font-extrabold leading-tight text-[#102A43]">
-                    {vehicleName}
-                  </h2>
-                )
-              ) : (
-                <div className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0">
+                <>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]">
+                    {car.categoryLabel}
+                  </p>
                   {headingLevel === "h3" ? (
-                    <h3 className="min-w-0 break-words text-[18px] font-bold leading-tight text-[#07133B]">
-                      {car.modelName}
+                    <h3 className="mt-0.5 break-words text-[22px] font-extrabold leading-tight text-[#102A43]">
+                      {vehicleName}
                     </h3>
                   ) : (
-                    <h2 className="min-w-0 break-words text-[18px] font-bold leading-tight text-[#07133B]">
-                      {car.modelName}
+                    <h2 className="mt-0.5 break-words text-[22px] font-extrabold leading-tight text-[#102A43]">
+                      {vehicleName}
                     </h2>
                   )}
-                  {car.orSimilar ? (
-                    <span className="text-[11px] font-medium leading-4 text-[#536B92]">
-                      or similar
-                    </span>
+                </>
+              ) : (
+                <>
+                  <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0">
+                    {headingLevel === "h3" ? (
+                      <h3 className="min-w-0 break-words text-[18px] font-bold leading-tight text-[#07133B]">
+                        {car.modelName}
+                      </h3>
+                    ) : (
+                      <h2 className="min-w-0 break-words text-[18px] font-bold leading-tight text-[#07133B]">
+                        {car.modelName}
+                      </h2>
+                    )}
+                    {car.orSimilar ? (
+                      <span className="text-[11px] font-medium leading-4 text-[#536B92]">
+                        or similar
+                      </span>
+                    ) : null}
+                  </div>
+                  {car.categoryLabel ? (
+                    <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]">
+                      {car.categoryLabel}
+                    </p>
                   ) : null}
-                </div>
+                </>
               )}
             </div>
-            <div className="flex shrink-0 items-start gap-1">
-              {badge && BadgeIcon && (
-                <span className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]">
-                  <BadgeIcon size={13} aria-hidden="true" />
-                  {badge}
-                </span>
-              )}
-              {cardActions}
-            </div>
+            {guidedPlanning ? (
+              <div className="flex shrink-0 items-start gap-1">
+                {badge && BadgeIcon && (
+                  <span className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]">
+                    <BadgeIcon size={13} aria-hidden="true" />
+                    {badge}
+                  </span>
+                )}
+                {cardActions}
+              </div>
+            ) : (
+              <div
+                data-car-card-desktop-actions
+                className="flex shrink-0 flex-col items-end gap-0.5"
+              >
+                {badge && BadgeIcon && (
+                  <span className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]">
+                    <BadgeIcon size={13} aria-hidden="true" />
+                    {badge}
+                  </span>
+                )}
+                {cardActions}
+              </div>
+            )}
           </header>
 
           <p className="mt-1 flex min-w-0 items-center gap-1.5 text-[12px] font-medium text-[#536B92]">
@@ -525,8 +564,11 @@ export function CarResultCard({
           data-region="details"
           className="col-start-1 row-start-3 min-w-0 border-t border-[#E2E8F0] px-3 py-3 md:col-start-2 md:row-start-2 md:border-t-0 md:px-4 md:pb-3 md:pt-1"
         >
-          <ul data-car-card-desktop-primary-specs className="grid grid-cols-2 gap-2 text-[12px] font-medium leading-4 text-[#536B92] lg:grid-cols-4">
-            {specifications.map(([Icon, label]) => (
+          <ul
+            data-car-card-desktop-primary-specs
+            className={`grid gap-x-5 gap-y-2 text-[12px] font-medium leading-4 text-[#536B92] ${guidedPlanning ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2"}`}
+          >
+            {(guidedPlanning ? specifications : desktopStandaloneSpecifications).map(([Icon, label]) => (
               <li key={label} className="flex min-w-0 items-center gap-1.5">
                 <Icon
                   size={16}
