@@ -478,7 +478,7 @@ export function CarResultCard({
             className={
               guidedPlanning
                 ? "flex flex-wrap items-start justify-between gap-2"
-                : "grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-0.5"
+                : "grid grid-cols-1 items-start gap-y-0.5"
             }
           >
             {guidedPlanning ? (
@@ -509,19 +509,9 @@ export function CarResultCard({
               </>
             ) : (
               <>
-                {badge && BadgeIcon ? (
-                  <span
-                    data-car-card-desktop-badge
-                    className="col-start-2 row-start-1 inline-flex min-h-6 shrink-0 items-center gap-1 justify-self-end rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]"
-                  >
-                    <BadgeIcon size={13} aria-hidden="true" />
-                    {badge}
-                  </span>
-                ) : null}
-
                 <div
                   data-car-card-desktop-title-row
-                  className={`col-start-1 ${badge ? "row-start-2" : "row-start-1"} flex min-w-0 items-center self-center`}
+                  className="row-start-1 flex min-w-0 items-center self-center"
                 >
                   <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0">
                     {headingLevel === "h3" ? (
@@ -541,16 +531,9 @@ export function CarResultCard({
                   </div>
                 </div>
 
-                <div
-                  data-car-card-desktop-actions
-                  className={`col-start-2 ${badge ? "row-start-2" : "row-start-1"} flex shrink-0 items-center self-center`}
-                >
-                  {cardActions}
-                </div>
-
                 {car.categoryLabel ? (
                   <p
-                    className={`col-start-1 ${badge ? "row-start-3" : "row-start-2"} mt-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]`}
+                    className="row-start-2 mt-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#004BB8]"
                   >
                     {car.categoryLabel}
                   </p>
@@ -604,24 +587,47 @@ export function CarResultCard({
 
         <div
           data-region="pricing"
-          className={`col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:border-s lg:border-t-0 ${!guidedPlanning ? "lg:items-end lg:justify-end lg:pb-3 lg:text-right" : "lg:items-center lg:justify-center lg:text-center"} ${desktopSurfaceParity ? "bg-[#E7EBF1]" : "bg-slate-50/45 lg:bg-white"}`}
+          className={`col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:border-s lg:border-t-0 ${!guidedPlanning ? "lg:items-stretch lg:pb-3 lg:text-right" : "lg:items-center lg:justify-center lg:text-center"} ${desktopSurfaceParity ? "bg-[#E7EBF1]" : "bg-slate-50/45 lg:bg-white"}`}
         >
           {!guidedPlanning ? (
-            <CarPriceComparison
-              resultId={car.id}
-              sources={comparisonSources}
-              cleanStaticSummary={!car.sandboxPresentation}
-              labels={{
-                source: car.sandboxPresentation ? "KAYAK" : t("carsResults.comparison.source"),
-                estimate: car.sandboxPresentation ? "Sandbox" : t("carsResults.comparison.estimate"),
-                comparePrices: "View deal",
-                hidePrices: t("carsResults.comparison.hidePrices"),
-                liveDealsComingSoon: car.sandboxPresentation ? "Simulated inventory — no real booking" : t("carsResults.comparison.liveDealsComingSoon"),
-                notBookable: t("carsResults.comparison.notBookable"),
-                total: t("carsResults.comparison.total"),
-                perDay: t("carsResults.comparison.perDay"),
-              }}
-            />
+            <div
+              data-car-card-desktop-right-rail
+              className="flex h-full w-full flex-col items-end"
+            >
+              <div
+                data-car-card-desktop-actions
+                className="flex w-full shrink-0 flex-col items-end"
+              >
+                {badge && BadgeIcon ? (
+                  <span
+                    data-car-card-desktop-badge
+                    className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]"
+                  >
+                    <BadgeIcon size={13} aria-hidden="true" />
+                    {badge}
+                  </span>
+                ) : null}
+                {cardActions}
+              </div>
+
+              <div className="mt-auto w-full">
+                <CarPriceComparison
+                  resultId={car.id}
+                  sources={comparisonSources}
+                  cleanStaticSummary={!car.sandboxPresentation}
+                  labels={{
+                    source: car.sandboxPresentation ? "KAYAK" : t("carsResults.comparison.source"),
+                    estimate: car.sandboxPresentation ? "Sandbox" : t("carsResults.comparison.estimate"),
+                    comparePrices: "View deal",
+                    hidePrices: t("carsResults.comparison.hidePrices"),
+                    liveDealsComingSoon: car.sandboxPresentation ? "Simulated inventory — no real booking" : t("carsResults.comparison.liveDealsComingSoon"),
+                    notBookable: t("carsResults.comparison.notBookable"),
+                    total: t("carsResults.comparison.total"),
+                    perDay: t("carsResults.comparison.perDay"),
+                  }}
+                />
+              </div>
+            </div>
           ) : (
             <>
           <div className="flex min-w-0 w-full flex-col items-center text-center">
