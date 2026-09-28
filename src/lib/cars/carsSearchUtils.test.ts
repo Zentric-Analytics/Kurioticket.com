@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { validateCarsForm, type CarsFormValues } from "./carsSearchUtils";
+import { formatCarsCompactTimeRange, validateCarsForm, type CarsFormValues } from "./carsSearchUtils";
+
+test("formats the compact desktop Cars time range as zero-padded 24-hour values", () => {
+  assert.equal(formatCarsCompactTimeRange("02:30", "10:00"), "02:30 - 10:00");
+  assert.equal(formatCarsCompactTimeRange("2:30", "9:00"), "02:30 - 09:00");
+});
 
 const values = (overrides: Partial<CarsFormValues> = {}): CarsFormValues => ({
   pickupLocation: "JFK",
