@@ -578,6 +578,20 @@ export function CarResultCard({
                     {car.shuttleRequired ? " · Shuttle required" : ""}
                   </span>
                 </p>
+
+                {offer.freeCancellation ? (
+                  <div
+                    data-car-card-desktop-free-cancellation
+                    className="mt-1 flex min-w-0 items-center gap-1.5 text-[12px] font-semibold leading-4 text-black"
+                  >
+                    <ShieldCheck
+                      size={14}
+                      className="shrink-0 text-black"
+                      aria-hidden="true"
+                    />
+                    <span>{t("carsResults.freeCancellation")}</span>
+                  </div>
+                ) : null}
               </div>
 
               <div
@@ -671,7 +685,7 @@ export function CarResultCard({
                       className="shrink-0 text-black"
                       aria-hidden="true"
                     />
-                    <span>Free cancellation</span>
+                    <span>{t("carsResults.freeCancellation")}</span>
                   </div>
                 ) : null}
               </div>
