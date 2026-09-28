@@ -566,14 +566,6 @@ export function CarResultCard({
                     aria-hidden="true"
                   />
                   <span className="min-w-0 whitespace-normal md:whitespace-nowrap">
-                    {car.sandboxPresentation?.pickupLabel ? (
-                      <>
-                        <strong className="font-semibold text-[#536B92]">
-                          {car.sandboxPresentation.pickupLabel}
-                        </strong>
-                        {" · "}
-                      </>
-                    ) : null}
                     {car.pickupLocation}
                     {car.shuttleRequired ? " · Shuttle required" : ""}
                   </span>
@@ -662,14 +654,6 @@ export function CarResultCard({
                     aria-hidden="true"
                   />
                   <span className="min-w-0 whitespace-nowrap">
-                    {car.sandboxPresentation?.pickupLabel ? (
-                      <>
-                        <strong className="font-semibold text-[#536B92]">
-                          {car.sandboxPresentation.pickupLabel}
-                        </strong>
-                        {" · "}
-                      </>
-                    ) : null}
                     {car.pickupLocation}
                     {car.shuttleRequired ? " · Shuttle required" : ""}
                   </span>
@@ -744,13 +728,13 @@ export function CarResultCard({
                 <CarPriceComparison
                   resultId={car.id}
                   sources={comparisonSources}
-                  cleanStaticSummary={!car.sandboxPresentation}
+                  cleanStaticSummary
                   labels={{
-                    source: car.sandboxPresentation ? "KAYAK" : t("carsResults.comparison.source"),
-                    estimate: car.sandboxPresentation ? "Sandbox" : t("carsResults.comparison.estimate"),
+                    source: t("carsResults.comparison.source"),
+                    estimate: t("carsResults.comparison.estimate"),
                     comparePrices: "View deal",
                     hidePrices: t("carsResults.comparison.hidePrices"),
-                    liveDealsComingSoon: car.sandboxPresentation ? "Simulated inventory — no real booking" : t("carsResults.comparison.liveDealsComingSoon"),
+                    liveDealsComingSoon: t("carsResults.comparison.liveDealsComingSoon"),
                     notBookable: t("carsResults.comparison.notBookable"),
                     total: t("carsResults.comparison.total"),
                     perDay: t("carsResults.comparison.perDay"),
