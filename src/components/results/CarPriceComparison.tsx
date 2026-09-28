@@ -41,7 +41,23 @@ export function CarPriceComparison({
         <p className="mt-2 text-[19px] font-bold leading-none text-[#07133B] tabular-nums" dir="ltr">{estimate.totalDisplay} <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">{labels.total}</span></p>
       </>
     ) : null}
-    <p className={cleanStaticSummary ? "text-[11px] font-medium text-slate-600" : "mt-1 text-[11px] font-medium text-slate-600"} dir="ltr">{estimate.perDayDisplay} {labels.perDay}</p>
+    {cleanStaticSummary ? (
+      <p
+        className="text-[#07133B]"
+        dir="ltr"
+      >
+        <span className="text-[19px] font-bold leading-none tabular-nums">
+          {estimate.perDayDisplay}
+        </span>{" "}
+        <span className="text-[11px] font-medium text-slate-600">
+          {labels.perDay}
+        </span>
+      </p>
+    ) : (
+      <p className="mt-1 text-[11px] font-medium text-slate-600" dir="ltr">
+        {estimate.perDayDisplay} {labels.perDay}
+      </p>
+    )}
     <button type="button" aria-expanded={expanded} aria-controls={panelId} onClick={() => setExpanded((current) => !current)} className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-[#004BB8] px-3 text-[13px] font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2">
       {expanded ? labels.hidePrices : labels.comparePrices}
       <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} aria-hidden="true" />
