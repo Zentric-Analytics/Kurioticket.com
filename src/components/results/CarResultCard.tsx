@@ -582,7 +582,7 @@ export function CarResultCard({
 
               <div
                 data-car-card-desktop-shared-header
-                className={`hidden lg:grid lg:grid-cols-[minmax(0,1fr)_205px] lg:gap-y-0 ${badge && BadgeIcon ? "lg:grid-rows-[24px_44px_auto_auto]" : "lg:grid-rows-[44px_auto_auto]"}`}
+                className={`hidden lg:grid lg:grid-cols-[minmax(0,1fr)_205px] lg:gap-y-0 ${badge && BadgeIcon ? "lg:grid-rows-[24px_44px_auto_auto_auto]" : "lg:grid-rows-[44px_auto_auto_auto]"}`}
               >
                 <div
                   data-car-card-desktop-header-rail
@@ -660,6 +660,20 @@ export function CarResultCard({
                     {car.shuttleRequired ? " · Shuttle required" : ""}
                   </span>
                 </p>
+
+                {offer.freeCancellation ? (
+                  <div
+                    data-car-card-desktop-free-cancellation
+                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-5" : "row-start-4"} mt-1 flex min-w-0 items-center gap-1.5 px-4 text-[12px] font-semibold leading-4 text-black`}
+                  >
+                    <ShieldCheck
+                      size={14}
+                      className="shrink-0 text-black"
+                      aria-hidden="true"
+                    />
+                    <span>Free cancellation</span>
+                  </div>
+                ) : null}
               </div>
             </>
           )}
