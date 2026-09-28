@@ -580,9 +580,8 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /useState<FareTab>\("deals"\)/);
   assert.match(source, /role="tabpanel"/);
   assert.match(source, /ArrowRight[\s\S]*ArrowLeft/);
-  assert.match(source, /flex min-w-0 flex-nowrap gap-1 overflow-x-auto/);
-  assert.match(source, /min-h-11 w-auto shrink-0 whitespace-nowrap border-b-2/);
-  assert.match(source, /\[scrollbar-width:none\]/);
+  assert.match(source, /data-desktop-fare-information-tabs[^>]*className="mt-5 hidden min-w-0 sm:flex"/);
+  assert.match(source, /min-h-11 flex-1 whitespace-nowrap border-b-\[3px\]/);
   assert.doesNotMatch(source, />Selected<\/span>/);
   assert.match(source, /grid-cols-\[minmax\(0,1fr\)_minmax\(120px,180px\)_minmax\(0,1fr\)\]/);
   assert.match(source, /border-dashed border-\[#075EE8\]/);
@@ -636,12 +635,60 @@ test("desktop Pick your fare cards mirror the native hierarchy without changing 
   assert.match(desktop, /line-clamp-2/);
   assert.match(desktop, /data-desktop-fare-benefits[\s\S]*?<FareTerm[\s\S]*?data-desktop-fare-price/);
   assert.match(desktop, /data-desktop-fare-price className="absolute inset-x-3 bottom-2 flex min-h-12 min-w-0 items-end justify-center"/);
+  assert.match(desktop, /text-\[19px\] font-semibold[^"\n]*text-slate-950/);
+  assert.doesNotMatch(desktop, /data-desktop-fare-price[\s\S]*?font-extrabold/);
+  assert.doesNotMatch(desktop, /data-desktop-fare-price[\s\S]*?text-\[#075EE8\]/);
   assert.match(desktop, /tabular-nums[^"]*\[overflow-wrap:anywhere\]" aria-label=\{price\.ariaLabel\}>\{price\.formatted\}/);
   assert.match(desktop, /role="radio" aria-checked=\{selected\} tabIndex=\{selected \? 0 : -1\}/);
   assert.match(desktop, /onKeyDown=\{\(event\) => handleFareKeyDown\(event, index\)\}/);
 
   assert.match(loading, /data-desktop-fare-loading-card[\s\S]*?relative min-h-\[154px\][\s\S]*?rounded-\[15px\] border-\[1\.5px\]/);
   assert.match(loading, /pb-14[\s\S]*?justify-center gap-\[7px\][\s\S]*?space-y-\[5px\][\s\S]*?data-desktop-fare-loading-price className="absolute inset-x-3 bottom-2 flex min-h-12 items-end justify-center"/);
+});
+
+test("desktop Fare information uses underline-only tabs and unframed panels", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const tabsStart = source.indexOf("data-desktop-fare-information-tabs");
+  const tabsEnd = source.indexOf('<div className="hidden sm:block">', tabsStart);
+  const tabs = source.slice(tabsStart, tabsEnd);
+
+  assert.match(tabs, /role="tablist" aria-label="Fare information"/);
+  assert.match(tabs, /role="tab"/);
+  assert.match(tabs, /aria-selected=\{activeTab === tab\.id\}/);
+  assert.match(tabs, /aria-controls=\{`fare-panel-\$\{tab\.id\}`\}/);
+  assert.match(tabs, /tabIndex=\{activeTab === tab\.id \? 0 : -1\}/);
+  assert.match(tabs, /onKeyDown=\{\(event\) => handleTabKeyDown\(event, index\)\}/);
+  assert.match(tabs, /font-semibold text-\[#536B92\]/);
+  assert.match(tabs, /activeTab === tab\.id \? "border-\[#075EE8\]" : "border-transparent"/);
+  assert.doesNotMatch(tabs, /font-bold|font-extrabold|text-slate-950|overflow-x-auto/);
+
+  for (const panel of ["deals", "details", "conditions", "extras"]) {
+    const pattern = new RegExp(`data-desktop-fare-panel id="fare-panel-${panel}" role="tabpanel" aria-labelledby="fare-tab-${panel}" className="py-4 sm:py-5"`);
+    assert.match(source, pattern);
+  }
+  assert.doesNotMatch(source, /id="fare-panel-(?:deals|details|conditions|extras)"[^>]*className="[^"]*(?:rounded|border|bg-white)/);
+  assert.match(source, /No live booking deals are available for this fare right now\./);
+  assert.match(source, /key=\{deal\.key\} className="[^"]*rounded-\[10px\] border border-\[#E2E8F0\]/);
+  assert.match(source, /lg:divide-x lg:divide-\[#E2E8F0\]/);
+});
+
+test("desktop trip summary stays in normal document flow", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const layoutStart = source.indexOf('className="grid items-start gap-6');
+  const layoutEnd = source.indexOf("const PROVIDER_LOCAL_ISO_DATETIME", layoutStart);
+  const layout = source.slice(layoutStart, layoutEnd);
+  const sidebarStart = source.indexOf("function TripSidebar");
+  const sidebarEnd = source.indexOf("function FlightDetailsSkeleton", sidebarStart);
+  const sidebar = source.slice(sidebarStart, sidebarEnd);
+
+  assert.ok(layoutStart >= 0);
+  assert.match(layout, /<TripSidebar/);
+  assert.match(layout, /^className="grid items-start gap-6 lg:grid-cols-/);
+  assert.match(sidebar, /<aside className="hidden self-start[^"]*lg:block"/);
+  assert.match(sidebar, /<CheckoutButton/);
+  assert.doesNotMatch(layout.slice(0, layout.indexOf(">") + 1), /(?:sticky|fixed|top-|overflow-y|max-h-screen)/);
+  assert.doesNotMatch(sidebar, /className="[^"]*(?:sticky|fixed|\btop-|overflow-y|max-h-screen)/);
+  assert.match(source, /function MobileCheckoutDock[\s\S]*?fixed inset-x-0 bottom-0[\s\S]*?lg:hidden/);
 });
 
 test("flight details entry keeps the opaque canonical route and results query", async () => {
