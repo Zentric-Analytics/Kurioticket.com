@@ -77,7 +77,7 @@ test("mobile-web Hotel details use a phone-readable identity scale while desktop
   );
 });
 
-test("mobile-web Hotel details navigation remains web-native but legible", () => {
+test("desktop Hotel details navigation keeps its existing web typography while using the shared three labels", () => {
   assert.match(
     detailsClient,
     /hidden lg:block lg:px-0[\s\S]*?min-h-10 items-center gap-2 text-\[13px\] font-semibold/,
@@ -86,8 +86,9 @@ test("mobile-web Hotel details navigation remains web-native but legible", () =>
     detailsNav,
     /grid-cols-3[\s\S]*?min-h-11[\s\S]*?text-\[13px\] font-bold[\s\S]*?sm:text-sm/,
   );
-  assert.match(detailsNav, /mobileLabel: "Rates"/);
-  assert.match(detailsNav, /mobileLabel: "Overview"/);
-  assert.match(detailsNav, /desktopOnly: true/);
+  for (const label of ["Rates", "Overview", "Reviews"]) {
+    assert.match(detailsNav, new RegExp(`label: "${label}"`));
+  }
+  assert.doesNotMatch(detailsNav, /mobileLabel|desktopOnly|id: "location"/);
   assert.doesNotMatch(detailsNav, /min-\[390px\]:text-\[13px\]/);
 });
