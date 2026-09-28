@@ -998,15 +998,15 @@ export function SearchTabs({
     : "";
   const flightFieldLabelClassName = cn(
     "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600",
-    compactHero && "lg:text-[10px] lg:font-semibold lg:tracking-[0.10em] lg:text-slate-600"
+    compactHero && "lg:text-[10px] lg:font-medium lg:leading-4 lg:tracking-[0.10em] lg:text-slate-600"
   );
   const flightFieldValueClassName = cn(
     "hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 ps-0 pe-11 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block sm:focus-visible:ring-0 sm:focus-visible:shadow-none md:text-sm lg:placeholder:text-slate-500",
-    compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-900"
+    compactHero && "lg:text-[16px] lg:font-medium lg:leading-5 lg:tracking-normal lg:text-slate-900"
   );
   const flightFieldButtonClassName = cn(
     "focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pe-8 text-start text-[16px] font-medium text-slate-900 outline-none transition-colors sm:focus-visible:shadow-none md:text-sm",
-    compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-900"
+    compactHero && "lg:text-[16px] lg:font-medium lg:leading-5 lg:tracking-normal lg:text-slate-900"
   );
   const hotelFieldLabelClassName = cn(
     "mb-1 block text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-600 sm:font-semibold sm:text-slate-500",
@@ -1031,7 +1031,7 @@ export function SearchTabs({
     compactHero ? "lg:min-h-[58px]" : "lg:min-h-[58px]"
   );
   const submitButtonClassName = cn(
-    "w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(2,28,43,0.14)] lg:disabled:shadow-[0_10px_22px_rgba(2,28,43,0.14)]",
+    "w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:text-[16px] lg:font-semibold lg:leading-5 lg:shadow-[0_10px_22px_rgba(2,28,43,0.14)] lg:disabled:shadow-[0_10px_22px_rgba(2,28,43,0.14)]",
     compactHero ? "h-12 lg:min-h-[58px]" : "h-12 lg:min-h-[58px]"
   );
   const hotelSubmitWrapClassName = cn(
