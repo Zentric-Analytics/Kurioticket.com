@@ -7,6 +7,7 @@ const filters = readFileSync(new URL("./DesktopFlightFilters.tsx", import.meta.u
 const alert = readFileSync(new URL("./FlightPriceAlertControl.tsx", import.meta.url), "utf8");
 const card = readFileSync(new URL("./FlightCard.tsx", import.meta.url), "utf8");
 const details = readFileSync(new URL("./flightDetails/StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+const searchFields = readFileSync(new URL("../search/FlightSearchFieldPrimitives.tsx", import.meta.url), "utf8");
 
 test("desktop Flight Results adopts approved mobile-web visual rules without replacing mobile contracts", () => {
   assert.match(results, /data-flight-results-main className="bg-\[#F5F7FB\][^"]*sm:bg-\[#F3F6FA\][^"]*lg:bg-\[#F5F7FB\]"/);
@@ -24,6 +25,27 @@ test("desktop Flight filters follow the approved section hierarchy and selected-
   assert.match(filters, /<Check className="h-3 w-3"/);
   assert.match(filters, /\{t\("price"\)\}: \{formatFilterPrice/);
   assert.match(filters, /peer-focus-visible:ring-2/);
+});
+
+test("desktop Flight search airport values use the same medium typography as the unboxed date and traveler values", () => {
+  assert.match(searchFields, /flightSearchFieldValueButtonClassName[\s\S]*?sm:text-\[15px\] sm:font-medium/);
+  assert.match(searchFields, /className="h-6 w-full[^"]*text-\[15px\] font-medium/);
+  assert.doesNotMatch(searchFields, /className="h-6 w-full[^"]*text-\[15px\] font-semibold/);
+});
+
+test("standalone desktop Flight Results renders only the primary desktop filter sidebar", () => {
+  assert.match(results, /<DesktopFlightFilters/);
+  assert.doesNotMatch(results, /layout="compact"/);
+  assert.doesNotMatch(results, /showDesktopFilterShortcut|desktopCompactFilterRef|desktopFilterSentinelRef/);
+});
+
+test("desktop nearby fares keep seven dates and arrows but use mobile-like individual tiles", () => {
+  assert.match(results, /const nearbyFareVisibleCount = 7;/);
+  assert.match(results, /data-desktop-nearby-fare-rail[^\n]*grid-cols-\[42px_repeat\(7,minmax\(0,1fr\)\)_42px\]/);
+  assert.match(results, /rounded-lg border border-slate-200 bg-white[^"]*shadow-sm/);
+  assert.match(results, /text-\[11px\] font-medium uppercase leading-\[14px\]/);
+  assert.match(results, /text-\[10px\] font-medium uppercase leading-\[13px\] tracking-\[0\.05em\]/);
+  assert.match(results, /data-desktop-cheaper-nearby/);
 });
 
 test("desktop Flight result cards use the lighter hierarchy without changing MobileFlightCard", () => {

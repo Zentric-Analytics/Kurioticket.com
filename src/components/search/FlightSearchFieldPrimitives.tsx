@@ -116,7 +116,7 @@ export const FlightAirportFieldControl = React.forwardRef<
             onKeyDown={onKeyDown}
             placeholder={placeholder}
             autoComplete="off"
-            className="h-6 w-full min-w-0 rounded-none border-0 bg-transparent pe-0 text-[15px] font-semibold tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
+            className="h-6 w-full min-w-0 rounded-none border-0 bg-transparent pe-0 text-[15px] font-medium tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
           />
           {display.secondary ? <span className="block truncate text-[10px] font-medium leading-3 text-slate-600">{display.secondary}</span> : null}
         </span>

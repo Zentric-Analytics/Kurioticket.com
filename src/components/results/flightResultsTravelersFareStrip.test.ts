@@ -51,17 +51,20 @@ test("desktop nearby fares use a lighter hierarchy independently of mobile", () 
 
   assert.match(
     desktopStrip,
-    /text-\[12px\] font-medium uppercase leading-\[15px\] tracking-\[0\.04em\]/,
+    /text-\[11px\] font-medium uppercase leading-\[14px\]/,
   );
   assert.match(
     desktopStrip,
-    /text-\[10px\] font-medium uppercase leading-\[14px\] tracking-\[0\.10em\]/,
+    /text-\[10px\] font-medium uppercase leading-\[13px\] tracking-\[0\.05em\]/,
   );
+  assert.match(desktopStrip, /rounded-lg border border-slate-200 bg-white/);
+  assert.match(desktopStrip, /selected && "border-\[#075EE8\] bg-blue-50\/60"/);
+  assert.match(desktopStrip, /absolute inset-x-2 top-0 h-0\.5 rounded-b bg-\[#075EE8\]/);
   assert.match(desktopStrip, /flight-fare-strip-price mt-1[^"]*font-medium/);
   assert.doesNotMatch(desktopStrip, /text-\[12px\] font-bold|mt-2[^"]*font-bold/);
   assert.match(
     styles,
-    /\.desktop-flight-fare-price \{[\s\S]*?margin-top: 0\.1875rem;[\s\S]*?font-weight: 500;/,
+    /\.desktop-flight-fare-price \{[\s\S]*?margin-top: 0\.1875rem;[\s\S]*?font-size: clamp\(0\.6875rem, 15cqi, 0\.75rem\);[\s\S]*?font-weight: 500;/,
   );
   assert.match(
     styles,
