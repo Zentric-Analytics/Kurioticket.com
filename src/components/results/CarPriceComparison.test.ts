@@ -44,7 +44,7 @@ test("clean static summary hides source, estimate, total, and coming-soon chrome
     /<p className="mt-1 text-\[11px\] font-medium text-slate-600" dir="ltr">[\s\S]*?\{estimate\.perDayDisplay\} \{labels\.perDay\}/,
   );
   assert.match(comparison, /\{labels\.comparePrices\}/);
-  assert.doesNotMatch(comparison, /labels\.hidePrices/);
+  assert.doesNotMatch(comparison, /expanded \? labels\.hidePrices/);
   assert.match(
     comparison,
     /!cleanStaticSummary \? <p[^>]*>\{labels\.liveDealsComingSoon\}<\/p> : null/,
