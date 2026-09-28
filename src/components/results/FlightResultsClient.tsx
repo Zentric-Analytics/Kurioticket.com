@@ -166,11 +166,7 @@ import {
   projectSearchLegs,
 } from "@/lib/flights/flightSearchJourney";
 import { cn, getItineraryDateKey } from "@/lib/utils";
-import {
-  calculateCompactFilterPlacement,
-  shouldRenderFlightQualityFilter,
-  shouldShowDesktopCompactFilter,
-} from "@/lib/flights/desktopCompactFilter";
+import { shouldRenderFlightQualityFilter } from "@/lib/flights/desktopCompactFilter";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   formatFlightsDateSummary,
@@ -184,10 +180,6 @@ export const FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
 
 const desktopCompactFilterTopOffset = 116;
 type MobileShortcutSheet = "sort" | "airlines" | "stops" | "airports";
-type DesktopCompactFilterFrame = {
-  left: number;
-  width: number;
-};
 type NearbyFareState =
   | { date: string; status: "idle" }
   | { date: string; status: "loading" }
@@ -219,7 +211,6 @@ const nearbyFareCenteredVisibleStart = Math.max(
 const nearbyFareRequestConcurrency = 4;
 const nearbyFareCacheTtlMs = 10 * 60 * 1000;
 
-type DesktopCompactFilterPlacementState = "hidden" | "fixed" | "docked";
 
 type BodyScrollLock = {
   restore: (options?: { restoreScroll?: boolean }) => void;
@@ -4029,27 +4020,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     String(activeFilterCount),
   );
   const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
-  const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
   const flightResultsTopRef = useRef<HTMLDivElement | null>(null);
-  const desktopCompactFilterRef = useRef<HTMLDivElement | null>(null);
-  const [showDesktopFilterShortcut, setShowDesktopFilterShortcut] =
-    useState(false);
-  const [desktopCompactFilterFrame, setDesktopCompactFilterFrame] =
-    useState<DesktopCompactFilterFrame | null>(null);
-  const [desktopCompactFilterPlacement, setDesktopCompactFilterPlacement] =
-    useState<DesktopCompactFilterPlacementState>("hidden");
-  const desktopFilterShortcutVisibilityRef = useRef(false);
-  const desktopCompactFilterPlacementRef =
-    useRef<DesktopCompactFilterPlacementState>("hidden");
-  const desktopCompactFilterFrameRef = useRef<DesktopCompactFilterFrame | null>(
-    null,
-  );
-  const desktopCompactFilterHeightRef = useRef(1);
-  const scheduleDesktopCompactFilterMeasurementRef = useRef<
-    (() => void) | null
-  >(null);
-
   const scrollToFlightResultsTop = useCallback(() => {
     if (typeof window === "undefined") return;
 
@@ -4084,165 +4056,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     triggerFilterApplying();
     scrollToFlightResultsTop();
   }, [guidedMode, scrollToFlightResultsTop, triggerFilterApplying, urlParams]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-
-    let animationFrameId: number | null = null;
-
-    const applyPlacement = (
-      placement: DesktopCompactFilterPlacementState,
-      frame: DesktopCompactFilterFrame | null,
-    ) => {
-      if (placement !== desktopCompactFilterPlacementRef.current) {
-        desktopCompactFilterPlacementRef.current = placement;
-        setDesktopCompactFilterPlacement(placement);
-      }
-
-      const currentFrame = desktopCompactFilterFrameRef.current;
-      const frameChanged =
-        (frame === null) !== (currentFrame === null) ||
-        (frame !== null &&
-          currentFrame !== null &&
-          (Math.abs(frame.left - currentFrame.left) >= 0.5 ||
-            Math.abs(frame.width - currentFrame.width) >= 0.5));
-
-      if (frameChanged) {
-        desktopCompactFilterFrameRef.current = frame;
-        setDesktopCompactFilterFrame(frame);
-      }
-    };
-
-    const measureDesktopCompactFilter = () => {
-      const sentinel = desktopFilterSentinelRef.current;
-      const sidebar = desktopFilterSidebarRef.current;
-      const compactPanel = desktopCompactFilterRef.current;
-      const resultsBody = resultsGridRef.current;
-      const viewportWidth = window.innerWidth;
-      const scrollY = window.scrollY;
-      const sentinelTop =
-        sentinel?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
-      const nextVisibility = shouldShowDesktopCompactFilter({
-        viewportWidth,
-        sentinelTop,
-        topOffset: desktopCompactFilterTopOffset,
-      });
-
-      if (nextVisibility !== desktopFilterShortcutVisibilityRef.current) {
-        desktopFilterShortcutVisibilityRef.current = nextVisibility;
-        setShowDesktopFilterShortcut(nextVisibility);
-      }
-
-      if (!nextVisibility || !sidebar || !resultsBody) {
-        applyPlacement("hidden", null);
-        return;
-      }
-
-      const sidebarRect = sidebar.getBoundingClientRect();
-      const panelRect = compactPanel?.getBoundingClientRect();
-      const bodyRect = resultsBody.getBoundingClientRect();
-      const panelHeight =
-        panelRect?.height ?? desktopCompactFilterHeightRef.current;
-
-      if (Number.isFinite(panelHeight) && panelHeight > 0) {
-        desktopCompactFilterHeightRef.current = panelHeight;
-      }
-
-      const placement = calculateCompactFilterPlacement({
-        enabled: nextVisibility,
-        scrollY,
-        desiredTop: desktopCompactFilterTopOffset,
-        panelHeight,
-        bodyBottomDocument: bodyRect.bottom + scrollY,
-        currentState: desktopCompactFilterPlacementRef.current,
-      });
-
-      if (placement.state === "hidden") {
-        applyPlacement("hidden", null);
-        return;
-      }
-
-      applyPlacement(placement.state, {
-        left: sidebarRect.left,
-        width: sidebarRect.width,
-      });
-    };
-
-    const scheduleMeasurement = () => {
-      if (animationFrameId !== null) return;
-
-      animationFrameId = window.requestAnimationFrame(() => {
-        animationFrameId = null;
-        measureDesktopCompactFilter();
-      });
-    };
-
-    scheduleDesktopCompactFilterMeasurementRef.current = scheduleMeasurement;
-
-    const resizeObserver =
-      "ResizeObserver" in window
-        ? new ResizeObserver(scheduleMeasurement)
-        : null;
-
-    if (resizeObserver) {
-      if (desktopFilterSidebarRef.current) {
-        resizeObserver.observe(desktopFilterSidebarRef.current);
-      }
-      if (resultsGridRef.current) {
-        resizeObserver.observe(resultsGridRef.current);
-      }
-    }
-
-    measureDesktopCompactFilter();
-    window.addEventListener("scroll", scheduleMeasurement, { passive: true });
-    window.addEventListener("resize", scheduleMeasurement);
-
-    return () => {
-      if (animationFrameId !== null) {
-        window.cancelAnimationFrame(animationFrameId);
-      }
-      scheduleDesktopCompactFilterMeasurementRef.current = null;
-      resizeObserver?.disconnect();
-      window.removeEventListener("scroll", scheduleMeasurement);
-      window.removeEventListener("resize", scheduleMeasurement);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (
-      typeof window === "undefined" ||
-      !("ResizeObserver" in window) ||
-      desktopCompactFilterPlacement === "hidden" ||
-      !desktopCompactFilterRef.current
-    ) {
-      return undefined;
-    }
-
-    const resizeObserver = new ResizeObserver(() => {
-      scheduleDesktopCompactFilterMeasurementRef.current?.();
-    });
-
-    resizeObserver.observe(desktopCompactFilterRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [desktopCompactFilterPlacement]);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !showDesktopFilterShortcut) return;
-
-    const animationFrameId = window.requestAnimationFrame(() => {
-      window.dispatchEvent(new Event("resize"));
-    });
-
-    return () => window.cancelAnimationFrame(animationFrameId);
-  }, [
-    activeFilterCount,
-    results.length,
-    renderFlightQualityFilter,
-    showDesktopFilterShortcut,
-  ]);
 
   const clearFlightFilters = () => {
     handleUserFilterCommit();
@@ -7229,79 +7042,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               originCode={originCode}
               destinationCode={destinationCode}
             />
-            <div
-              ref={desktopFilterSentinelRef}
-              className="h-px w-full"
-              aria-hidden="true"
-            />
-            {showDesktopFilterShortcut &&
-            desktopCompactFilterFrame &&
-            desktopCompactFilterPlacement !== "hidden" ? (
-              <div
-                ref={desktopCompactFilterRef}
-                className={cn(
-                  "z-30 overflow-visible",
-                  desktopCompactFilterPlacement === "fixed" && "fixed",
-                  desktopCompactFilterPlacement === "docked" &&
-                    "absolute inset-x-0 bottom-0",
-                )}
-                style={
-                  desktopCompactFilterPlacement === "fixed"
-                    ? {
-                        top: desktopCompactFilterTopOffset,
-                        left: desktopCompactFilterFrame.left,
-                        width: desktopCompactFilterFrame.width,
-                        height: "auto",
-                        overflow: "visible",
-                      }
-                    : {
-                        width: "100%",
-                        height: "auto",
-                        overflow: "visible",
-                      }
-                }
-              >
-                <Filters
-                  layout="compact"
-                  activeFilterCount={activeFilterCount}
-                  maxPrice={maxPrice}
-                  setMaxPrice={setMaxPrice}
-                  priceBounds={priceBounds}
-                  priceLabelCurrency={priceLabelCurrency}
-                  selectedCurrency={selectedCurrency}
-                  timeFilterMode={timeFilterMode}
-                  setTimeFilterMode={setTimeFilterMode}
-                  timeBounds={timeBounds}
-                  maxTakeoffMinutes={maxTakeoffMinutes}
-                  setMaxTakeoffMinutes={setMaxTakeoffMinutes}
-                  maxLandingMinutes={maxLandingMinutes}
-                  setMaxLandingMinutes={setMaxLandingMinutes}
-                  durationBounds={durationBounds}
-                  maxDurationMinutes={maxDurationMinutes}
-                  setMaxDurationMinutes={setMaxDurationMinutes}
-                  stopOptions={stopOptions}
-                  selectedStops={selectedStops}
-                  setSelectedStops={setSelectedStops}
-                  airlineOptions={airlineOptions}
-                  selectedAirlines={selectedAirlines}
-                  setSelectedAirlines={setSelectedAirlines}
-                  airportOptions={airportOptions}
-                  selectedAirports={selectedAirports}
-                  setSelectedAirports={setSelectedAirports}
-                  flightQualityOptions={flightQualityOptions}
-                  renderFlightQualityFilter={renderFlightQualityFilter}
-                  selectedFlightQuality={selectedFlightQuality}
-                  setSelectedFlightQuality={setSelectedFlightQuality}
-                  baggageIncludedOnly={baggageIncludedOnly}
-                  setBaggageIncludedOnly={setBaggageIncludedOnly}
-                  flexibleOnly={flexibleOnly}
-                  setFlexibleOnly={setFlexibleOnly}
-                  onFilterChange={triggerFilterApplying}
-                  onFilterCommit={handleUserFilterCommit}
-                  onClear={clearFlightFilters}
-                />
-              </div>
-            ) : null}
           </div>
         </aside>
 
@@ -7348,7 +7088,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className="hidden w-full sm:block"
                   aria-label="Nearby departure fares"
                 >
-                  <div data-desktop-nearby-fare-rail className="mx-auto grid w-full max-w-[980px] grid-cols-[42px_repeat(7,minmax(0,1fr))_42px] items-stretch overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-1.5 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.42)]">
+                  <div data-desktop-nearby-fare-rail className="mx-auto grid w-full max-w-[980px] grid-cols-[42px_repeat(7,minmax(0,1fr))_42px] items-stretch gap-2 overflow-visible rounded-2xl bg-transparent p-0">
                     <button
                       type="button"
                       aria-label="Previous nearby fare date"
@@ -7409,8 +7149,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                           }
                           onClick={() => handleNearbyFareDateSelect(fare.date)}
                           className={cn(
-                            "focus-ring relative flex min-h-[76px] min-w-0 flex-col items-center justify-center border-l border-slate-100 bg-white px-2 py-2 text-center transition duration-200 first:border-l-0 after:absolute after:inset-x-4 after:bottom-0 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-[#075EE8] after:transition-transform hover:bg-slate-50/80 hover:text-[#075EE8] hover:after:scale-x-50",
-                            selected && "bg-blue-50/55 after:scale-x-100",
+                            "focus-ring relative flex min-h-[74px] min-w-0 flex-col items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white px-1.5 py-2 text-center shadow-sm transition duration-200 hover:border-[#075EE8]/40 hover:bg-slate-50",
+                            selected && "border-[#075EE8] bg-blue-50/60",
                           )}
                         >
                           {fare.status === "loading" ? (
@@ -7421,9 +7161,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                             </>
                           ) : (
                             <>
+                              {selected ? <span className="absolute inset-x-2 top-0 h-0.5 rounded-b bg-[#075EE8]" aria-hidden="true" /> : null}
                               <span
                                 className={cn(
-                                  "text-[12px] font-medium uppercase leading-[15px] tracking-[0.04em]",
+                                  "text-[11px] font-medium uppercase leading-[14px]",
                                   selected
                                     ? "text-[#075EE8]"
                                     : "text-slate-800",
@@ -7436,7 +7177,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                               </span>
                               <span
                                 className={cn(
-                                  "text-[10px] font-medium uppercase leading-[14px] tracking-[0.10em]",
+                                  "text-[10px] font-medium uppercase leading-[13px] tracking-[0.05em]",
                                   selected
                                     ? "text-[#075EE8]"
                                     : "text-slate-500",
