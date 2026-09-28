@@ -37,11 +37,11 @@ test("clean static summary hides source, estimate, total, and coming-soon chrome
   );
   assert.match(
     comparison,
-    /data-car-price-comparison-summary[\s\S]*?text-\[19px\] font-bold leading-none text-\[#07133B\] tabular-nums[\s\S]*?\{estimate\.perDayDisplay\}[\s\S]*?mt-1 text-\[11px\] font-medium leading-none text-slate-600[\s\S]*?\{labels\.perDay\}/,
+    /data-car-price-comparison-summary[\s\S]*?items-end text-right[\s\S]*?text-\[19px\] font-bold leading-none text-\[#07133B\] tabular-nums[\s\S]*?\{estimate\.perDayDisplay\}[\s\S]*?mt-1 text-\[11px\] font-medium leading-none text-slate-600[\s\S]*?\{labels\.perDay\}/,
   );
   assert.match(
     comparison,
-    /mt-1 flex flex-col items-center text-center[\s\S]*?\{estimate\.perDayDisplay\}[\s\S]*?\{labels\.perDay\}/,
+    /mt-1 flex flex-col items-end text-right[\s\S]*?\{estimate\.perDayDisplay\}[\s\S]*?\{labels\.perDay\}/,
   );
   assert.match(comparison, /\{labels\.comparePrices\}/);
   assert.doesNotMatch(comparison, /expanded \? labels\.hidePrices/);
@@ -70,7 +70,12 @@ test("standalone desktop uses the mobile-style View deal label with a right arro
     comparison,
     /data-car-price-comparison-action[\s\S]*?bg-\[#004BB8\]|rounded-lg bg-\[#004BB8\]/,
   );
-  assert.match(comparison, /className="w-full lg:translate-y-2"/);
+  assert.match(comparison, /data-car-price-comparison[^>]*className="w-full"/);
+  assert.doesNotMatch(comparison, /translate-y/);
+  assert.match(
+    comparison,
+    /data-car-price-comparison-action[\s\S]*?className="mt-2 ml-auto inline-flex min-h-9 items-center justify-end/,
+  );
   assert.match(
     mobile,
     /View deal <ChevronRight size=\{16\} aria-hidden="true" \/>/,
