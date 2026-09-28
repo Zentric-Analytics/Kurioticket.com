@@ -246,7 +246,7 @@ test("desktop standalone cards omit static pickup-type copy while preserving the
   assert.match(desktop, /\{car\.pickupLocation\}/);
 });
 
-test("standalone desktop shows data-driven Free cancellation directly below the location", () => {
+test("standalone desktop shows localized data-driven Free cancellation directly below the location at md and lg", () => {
   const desktop = source.slice(source.indexOf('data-region="heading"'));
   const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
 
@@ -258,9 +258,19 @@ test("standalone desktop shows data-driven Free cancellation directly below the 
     cancellationIndex > locationIndex,
     "Free cancellation must render after the desktop location",
   );
+  assert.equal(
+    (heading.match(/data-car-card-desktop-free-cancellation/g) ?? []).length,
+    2,
+    "both the md desktop fallback and lg shared header render the benefit",
+  );
+  assert.equal(
+    (heading.match(/t\("carsResults\.freeCancellation"\)/g) ?? []).length,
+    2,
+    "both desktop variants use the localized cancellation label",
+  );
   assert.match(
     heading,
-    /\{offer\.freeCancellation \? \([\s\S]*?data-car-card-desktop-free-cancellation[\s\S]*?<ShieldCheck[\s\S]*?<span>Free cancellation<\/span>/,
+    /\{offer\.freeCancellation \? \([\s\S]*?data-car-card-desktop-free-cancellation[\s\S]*?<ShieldCheck/,
   );
   assert.match(
     heading,
@@ -356,7 +366,7 @@ test("desktop and guided contracts retain their responsive grid and owned disclo
   assert.match(source, /xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]/);
   const desktop = source.slice(source.indexOf('data-region="heading"'));
   assert.match(desktop, /offer\.freeCancellation/);
-  assert.match(desktop, /Free cancellation/);
+  assert.match(desktop, /carsResults\.freeCancellation/);
   assert.doesNotMatch(desktop, /offer\.payAtPickup|Pay at pickup/);
   assert.doesNotMatch(source, /Unlimited mileage|car\.limitedMileageKm/);
   assert.doesNotMatch(source, /<Fuel|title\(car\.fuelPolicy\)/);
