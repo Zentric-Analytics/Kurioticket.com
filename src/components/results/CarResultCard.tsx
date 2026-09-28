@@ -458,7 +458,7 @@ export function CarResultCard({
       >
         <div
           data-region="image"
-          className="col-span-2 row-start-1 flex items-stretch border-b border-[#E2E8F0] bg-white md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 md:border-b-0 md:border-e"
+          className={`col-span-2 row-start-1 flex items-stretch border-b border-[#E2E8F0] bg-white md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 md:border-b-0 md:border-e ${!guidedPlanning ? "lg:border-e-0" : ""}`}
         >
           <div className="relative aspect-[4/3] w-full overflow-hidden bg-white md:aspect-auto md:h-full md:min-h-[220px]">
             <CarResultImage
@@ -586,7 +586,7 @@ export function CarResultCard({
               >
                 <div
                   data-car-card-desktop-header-rail
-                  className={`pointer-events-none z-0 col-start-2 row-start-1 row-span-full border-s border-[#E2E8F0] ${desktopSurfaceParity ? "bg-[#E7EBF1]" : "bg-white"}`}
+                  className={`pointer-events-none z-0 col-start-2 row-start-1 row-span-full ${desktopSurfaceParity ? "bg-[#E7EBF1]" : "bg-white"}`}
                   aria-hidden="true"
                 />
 
@@ -667,7 +667,7 @@ export function CarResultCard({
 
         <div
           data-region="details"
-          className="col-start-1 row-start-3 min-w-0 border-t border-[#E2E8F0] px-3 py-3 md:col-start-2 md:row-start-2 md:border-t-0 md:px-4 md:pb-3 md:pt-1"
+          className={`col-start-1 row-start-3 min-w-0 border-t border-[#E2E8F0] px-3 py-3 md:col-start-2 md:row-start-2 md:border-t-0 md:px-4 md:pb-3 md:pt-1 ${!guidedPlanning ? "lg:border-t lg:border-[#E2E8F0]" : ""}`}
         >
           <ul
             data-car-card-desktop-primary-specs
@@ -689,7 +689,7 @@ export function CarResultCard({
 
         <div
           data-region="pricing"
-          className={`col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 lg:border-s lg:border-t-0 ${!guidedPlanning ? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:pb-3 lg:text-right" : "lg:row-span-2 lg:row-start-1 lg:items-center lg:justify-center lg:text-center"} ${desktopSurfaceParity ? "bg-[#E7EBF1]" : "bg-slate-50/45 lg:bg-white"}`}
+          className={`col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 ${!guidedPlanning ? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-[#E2E8F0] lg:pb-3 lg:text-right" : "lg:row-span-2 lg:row-start-1 lg:items-center lg:justify-center lg:border-s lg:border-t-0 lg:text-center"} ${desktopSurfaceParity ? "bg-[#E7EBF1]" : "bg-slate-50/45 lg:bg-white"}`}
         >
           {!guidedPlanning ? (
             <div

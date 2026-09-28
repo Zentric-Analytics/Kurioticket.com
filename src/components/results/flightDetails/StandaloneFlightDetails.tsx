@@ -419,43 +419,38 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
       <div className="mx-auto w-full max-w-[1470px] px-0 sm:px-6 lg:px-[34px]">
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
           <section className="min-w-0 overflow-hidden border-b border-[#E2E8F0] bg-[#F3F6FA] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
-            <div ref={mobileHeroRef} data-testid="flight-details-hero" className="relative flex min-h-[318px] flex-col justify-end overflow-hidden px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:justify-between sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
+            <div data-flight-details-desktop-navigation className="hidden min-h-[52px] items-center justify-between gap-4 border-b border-[#E2E8F0] bg-white px-4 sm:flex lg:px-5">
+              <Link href={resultsHref} className="inline-flex min-h-11 items-center gap-2 rounded-lg px-1 text-sm font-semibold text-[#075EE8] transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">
+                <ArrowLeft className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                <span>Back to flight results</span>
+              </Link>
+              <div data-flight-details-desktop-actions className="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  aria-label={flightSaved ? "Remove saved flight" : "Save flight"}
+                  aria-pressed={flightSaved}
+                  disabled={savedFlightPending}
+                  onClick={() => void toggleSavedFlight()}
+                  className={`inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 disabled:cursor-wait disabled:opacity-60 ${flightSaved ? "text-[#075EE8]" : "text-slate-700"}`}
+                >
+                  <Heart className="h-[18px] w-[18px]" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
+                  <span>{flightSaved ? "Saved" : "Save"}</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Share flight"
+                  onClick={() => void shareFlight()}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35"
+                >
+                  <Share2 className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
+                  <span>Share</span>
+                </button>
+              </div>
+            </div>
+            <div ref={mobileHeroRef} data-testid="flight-details-hero" className="relative flex min-h-[318px] flex-col justify-end overflow-hidden px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:justify-end sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
               <div className="absolute inset-0 bg-[rgba(5,13,26,0.30)]" aria-hidden="true" />
               <div className="absolute inset-x-0 bottom-[66px] h-[150px] bg-gradient-to-b from-transparent via-[rgba(5,13,26,0.18)] to-[rgba(5,13,26,0.42)] sm:bottom-0 sm:h-3/4 sm:bg-gradient-to-t sm:from-slate-950/80 sm:via-slate-950/35 sm:to-transparent" aria-hidden="true" />
-              <div className="relative z-10 hidden items-start justify-between gap-3 sm:flex">
-                <Link
-                  href={resultsHref}
-                  aria-label="Back to results"
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/55 bg-white/90 p-0 text-slate-900 shadow-sm backdrop-blur-md transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/60"
-                >
-                  <ArrowLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
-                </Link>
-                <div
-                  data-flight-details-floating-actions
-                  className="inline-flex h-11 shrink-0 items-center rounded-full border border-white/55 bg-white/90 p-1 shadow-sm backdrop-blur-md"
-                >
-                  <button
-                    type="button"
-                    aria-label={flightSaved ? "Remove saved flight" : "Save flight"}
-                    aria-pressed={flightSaved}
-                    disabled={savedFlightPending}
-                    onClick={() => void toggleSavedFlight()}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-900 transition hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-wait disabled:opacity-60"
-                  >
-                    <Heart className="h-[18px] w-[18px]" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Share flight"
-                    onClick={() => void shareFlight()}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-900 transition hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-                  >
-                    <Share2 className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
-                  </button>
-                </div>
-                <span className="sr-only" role="status" aria-live="polite">{shareFeedback}</span>
-              </div>
               <div className="relative z-10 min-w-0 text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.55)]">
                 <h1 ref={headingRef} id="flight-details-heading" tabIndex={-1} className="text-[27px] font-extrabold leading-[1.12] tracking-[-0.025em] outline-none sm:text-[30px]">{route}</h1>
                 <p className="mt-[3px] text-[11px] font-bold uppercase leading-4 tracking-[0.55px] text-white/95 sm:mt-2 sm:text-[13px] sm:leading-normal sm:tracking-[0.08em]"><span className="sm:hidden">{nativeTripLine}</span><span className="hidden sm:inline">{tripLine}</span></p>
@@ -473,14 +468,14 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                 const price = formatDisplayPrice({ amount: fare.offer.price, sourceCurrency: fare.offer.currency, displayCurrency: selectedOption.currency, convertSourceEstimate: true, useFlightResultSymbols: true, maximumFractionDigits: 0, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
                 const compactTerms = compactFareTerms(fare.distinguishingTerms, available.search.tripType);
                 return <button data-desktop-fare-card key={fare.key} ref={(element) => { fareButtonRefs.current[index] = element; }} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} onClick={() => selectFare(index)} onKeyDown={(event) => handleFareKeyDown(event, index)} className={`relative min-h-[154px] min-w-0 w-full rounded-[15px] border-[1.5px] px-3 pb-2 pt-2 text-left transition-[border-color,background-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 ${selected ? "border-[#075EE8] bg-[#075EE8]/[0.025] shadow-[0_6px_16px_rgba(7,19,59,0.16)]" : "border-[#D7E0EC] bg-white shadow-[0_2px_7px_rgba(7,19,59,0.07)] hover:border-[#B9C8DA] hover:shadow-[0_4px_11px_rgba(7,19,59,0.11)]"}`}>
-                  <div data-desktop-fare-content className="min-w-0 pb-10">
+                  <div data-desktop-fare-content className="min-w-0 pb-14">
                     <div data-desktop-fare-identity className="mx-auto flex max-w-full items-center justify-center gap-[7px]"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-[#CFE3FA] bg-[#EAF3FF] text-[#075EE8]"><Luggage className="h-3.5 w-3.5" aria-hidden="true" /></span><p className="min-w-0 max-w-full line-clamp-2 text-[13px] font-bold leading-[17px] tracking-[0.1px] text-slate-950">{fare.label}</p></div>
                     {compactTerms.length ? <ul data-desktop-fare-benefits className="mt-[5px] space-y-[5px]">{compactTerms.map(({ term, text }, termIndex) => <FareTerm key={`${term.category}-${term.legDirection || "trip"}-${term.text}-${termIndex}`} term={term} text={text} compact />)}</ul> : null}
                   </div>
-                  <div data-desktop-fare-price className="absolute inset-x-3 bottom-2 flex min-w-0 justify-center"><p className="max-w-full break-words text-center text-[19px] font-extrabold leading-6 tabular-nums text-[#075EE8] [overflow-wrap:anywhere]" aria-label={price.ariaLabel}>{price.formatted}</p></div>
+                  <div data-desktop-fare-price className="absolute inset-x-3 bottom-2 flex min-h-12 min-w-0 items-end justify-center"><p className="max-w-full break-words text-center text-[19px] font-extrabold leading-6 tabular-nums text-[#075EE8] [overflow-wrap:anywhere]" aria-label={price.ariaLabel}>{price.formatted}</p></div>
                 </button>;
               })}
-            </div> : <div data-desktop-fare-price-loading role="status" aria-label="Loading fare prices" aria-busy="true" className={`hidden min-w-0 sm:grid sm:gap-3 ${fareChoices.length === 1 ? "max-w-[270px]" : fareChoices.length === 2 ? "sm:grid-cols-2 lg:max-w-[632px]" : fareChoices.length === 3 ? "sm:grid-cols-2 md:grid-cols-3 lg:max-w-[954px]" : "sm:grid-cols-2 xl:max-w-[1276px] xl:grid-cols-4"}`}>{fareChoices.map((fare)=><div data-desktop-fare-loading-card key={fare.key} className="relative min-h-[154px] min-w-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-2 shadow-[0_2px_7px_rgba(7,19,59,0.07)]"><div className="min-w-0 pb-10"><div className="flex max-w-full items-center justify-center gap-[7px]"><div className="h-6 w-6 shrink-0 animate-pulse rounded-lg bg-slate-200 motion-reduce:animate-none" /><div className="h-3 w-[72px] max-w-[60%] animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /></div><div className="mt-[5px] space-y-[5px]">{[0,1,2].map((row)=><div key={row} className="flex min-w-0 items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none" /><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div>)}</div></div><div data-desktop-fare-loading-price className="absolute inset-x-3 bottom-2 flex justify-center"><div className="h-5 w-[82px] animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /></div></div>)}</div>}
+            </div> : <div data-desktop-fare-price-loading role="status" aria-label="Loading fare prices" aria-busy="true" className={`hidden min-w-0 sm:grid sm:gap-3 ${fareChoices.length === 1 ? "max-w-[270px]" : fareChoices.length === 2 ? "sm:grid-cols-2 lg:max-w-[632px]" : fareChoices.length === 3 ? "sm:grid-cols-2 md:grid-cols-3 lg:max-w-[954px]" : "sm:grid-cols-2 xl:max-w-[1276px] xl:grid-cols-4"}`}>{fareChoices.map((fare)=><div data-desktop-fare-loading-card key={fare.key} className="relative min-h-[154px] min-w-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-2 shadow-[0_2px_7px_rgba(7,19,59,0.07)]"><div className="min-w-0 pb-14"><div className="flex max-w-full items-center justify-center gap-[7px]"><div className="h-6 w-6 shrink-0 animate-pulse rounded-lg bg-slate-200 motion-reduce:animate-none" /><div className="h-3 w-[72px] max-w-[60%] animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /></div><div className="mt-[5px] space-y-[5px]">{[0,1,2].map((row)=><div key={row} className="flex min-w-0 items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none" /><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div>)}</div></div><div data-desktop-fare-loading-price className="absolute inset-x-3 bottom-2 flex min-h-12 items-end justify-center"><div className="h-5 w-[82px] animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /></div></div>)}</div>}
 
             <MobileNativeFareInformationDeck
               activeTab={activeTab}
