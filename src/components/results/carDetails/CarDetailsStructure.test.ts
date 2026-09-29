@@ -23,7 +23,7 @@ const standaloneSource = clientSource.slice(
   clientSource.indexOf("export function CarDetailsClient"),
 );
 
-test("standalone Car details owns exactly one page wrapper and external desktop controls", () => {
+test("standalone Car details owns exactly one page wrapper and passes the desktop back control into the sticky experience toolbar", () => {
   assert.equal(standaloneSource.match(/<main\b/g)?.length, 1);
   assert.equal(standaloneSource.match(/page-shell py-0 lg:py-7/g)?.length, 1);
   assert.equal(
@@ -37,16 +37,25 @@ test("standalone Car details owns exactly one page wrapper and external desktop 
     1,
   );
   assert.match(standaloneSource, /presentation="standalone-content"/);
-  assert.match(standaloneSource, /data-car-details-desktop-controls/);
-  assert.doesNotMatch(standaloneSource, /desktopBackControl={/);
+  assert.match(standaloneSource, /desktopBackControl={/);
+  assert.doesNotMatch(standaloneSource, /data-car-details-desktop-controls/);
   assert.match(standaloneSource, /standalone-disabled-provider/);
 });
 
-test("CarDetailsExperience is content-only for standalone and guided callers", () => {
+test("CarDetailsExperience is content-only and owns the standalone sticky desktop toolbar", () => {
   assert.doesNotMatch(experienceSource, /<main\b/);
   assert.doesNotMatch(experienceSource, /page-shell/);
-  assert.doesNotMatch(experienceSource, /data-car-details-desktop-back-link/);
   assert.match(experienceSource, /data-car-details-experience/);
+  assert.match(experienceSource, /data-car-details-desktop-sticky-controls/);
+  assert.match(
+    experienceSource,
+    /hidden h-16 w-full items-center border-b border-slate-200 bg-\[#F5F7FB\] lg:sticky lg:top-0 lg:z-40 lg:flex/,
+  );
+  assert.match(experienceSource, /\{desktopBackControl\}/);
+  assert.match(
+    experienceSource,
+    /<CarHeroActions[\s\S]*?desktop/,
+  );
   assert.match(
     experienceSource,
     /presentation === "guided-content" \? "mt-6" : ""/,
@@ -65,6 +74,15 @@ test("standalone desktop tabs place panel content in the former heading position
   assert.match(
     layoutSource,
     /#car-pickup-panel > section[\s\S]*?padding: 0\.75rem 0 1\.75rem !important;/,
+  );
+  const navSource = readFileSync(
+    new URL("./CarDetailsSectionNav.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(navSource, /lg:top-16/);
+  assert.doesNotMatch(
+    layoutSource,
+    /data-car-details-desktop-actions[\s\S]*?position:\s*absolute/,
   );
 });
 
