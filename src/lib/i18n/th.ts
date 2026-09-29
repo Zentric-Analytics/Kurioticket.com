@@ -1680,6 +1680,7 @@ export const translations: TranslationDictionary = {
   providerNormalizedItineraryPrefix:
     "รายละเอียดขาไปและขากลับแสดงจากข้อมูลกำหนดการเดินทางที่ผู้ให้บริการส่งมา",
   checkProvider: "ตรวจสอบกับผู้ให้บริการ",
+  notSuppliedByProvider: "ผู้ให้บริการไม่ได้ให้ข้อมูล",
   carryOnIncluded: "รวมกระเป๋าถือขึ้นเครื่อง",
   flightLeg: "ช่วงเที่ยวบิน",
   layover: "แวะพัก",
