@@ -96,6 +96,10 @@ export default function CarDetailsLayout({
             background: #F5F7FB !important;
           }
 
+          [data-car-details-section-panels] {
+            margin-top: 0 !important;
+          }
+
           [data-car-price-comparison],
           [data-car-location-section] {
             background: #F5F7FB !important;
