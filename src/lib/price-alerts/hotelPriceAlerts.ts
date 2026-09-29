@@ -5,7 +5,7 @@ import { supportedCurrencies } from "@/lib/region/supportedRegions";
 import type { HotelSearchParams, PublicHotelResult } from "@/lib/types";
 
 export const HOTEL_ALERT_MIN_DROP_PERCENT = 1;
-export const HOTEL_ALERT_MAX_DROP_PERCENT = 50;
+export const HOTEL_ALERT_MAX_DROP_PERCENT = 15;
 export const HOTEL_ALERT_DEFAULT_DROP_PERCENT = 10;
 
 const supportedCurrencyCodes = new Set(

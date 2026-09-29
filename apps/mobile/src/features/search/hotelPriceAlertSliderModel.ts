@@ -3,7 +3,7 @@ import { supportedCurrencies } from "../../config/supportedCurrencies";
 import { displayPrice, type ExchangeRates } from "../currency/displayCurrency";
 
 export const HOTEL_ALERT_MIN_DROP_PERCENT = 1;
-export const HOTEL_ALERT_MAX_DROP_PERCENT = 50;
+export const HOTEL_ALERT_MAX_DROP_PERCENT = 15;
 export const HOTEL_ALERT_DEFAULT_DROP_PERCENT = 10;
 
 const supported = new Set(supportedCurrencies.map(({ code }) => code.toUpperCase()));
