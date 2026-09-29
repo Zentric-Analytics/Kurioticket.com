@@ -1763,7 +1763,7 @@ export const translations: TranslationDictionary = {
   flightCardProviderHandoffConverted: "最终价格、可订情况、预订和票价规则由服务提供商确认。最终服务提供商货币可能与你选择的显示货币不同。",
   providerNormalizedItineraryPrefix: "去程和返程详情来自服务提供商标准化后的行程数据。",
   checkProvider: "查看服务提供商",
-  notSuppliedByProvider: "不包含",
+  notSuppliedByProvider: "服务提供商未提供",
   carryOnIncluded: "包含随身行李",
   flightLeg: "航段",
   layover: "中转",

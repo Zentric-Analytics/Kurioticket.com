@@ -1705,7 +1705,7 @@ export const translations: TranslationDictionary = {
   flightCardProviderHandoffConverted: "Harga akhir, ketersediaan, pemesanan, dan aturan tarif dikonfirmasi oleh penyedia. Mata uang akhir penyedia dapat berbeda dari mata uang tampilan pilihan Anda.",
   providerNormalizedItineraryPrefix: "Detail pergi dan pulang ditampilkan dari data rencana perjalanan yang dinormalisasi penyedia.",
   checkProvider: "Periksa penyedia",
-  notSuppliedByProvider: "Tidak termasuk",
+  notSuppliedByProvider: "Tidak disediakan oleh penyedia",
   carryOnIncluded: "kabin termasuk",
   flightLeg: "Segmen penerbangan",
   layover: "Transit",

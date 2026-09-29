@@ -19,9 +19,9 @@ test("desktop Flight Results adopts approved mobile-web visual rules without rep
 });
 
 test("desktop Flight filters follow the approved section hierarchy and selected-state language", () => {
-  const order = ['t("price")', 't("takeoff")} / {t("landing")', 't("duration")', 't("stops")', 't("airlines")', 't("airports")', 't("baggage")} / {t("flexibleRefundable")'].map((marker) => filters.indexOf(marker));
+  const order = ['t("price")', 't("takeoff") / {t("landing")}', 't("duration")', 't("stops")', 't("airlines")', 't("airports")', 't("baggage") / {t("flexibleRefundable")}'].map((marker) => filters.indexOf(marker));
   assert.ok(order.every((position, index) => position >= 0 && (index === 0 || position > order[index - 1])));
-  assert.match(filters, /border-\[#004BB8\] bg-\[#004BB8\] text-white/);
+  assert.match(filters, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
   assert.match(filters, /<Check className="h-3 w-3"/);
   assert.match(filters, /\{t\("price"\)\}: \{formatFilterPrice/);
   assert.match(filters, /peer-focus-visible:ring-2/);
@@ -60,7 +60,7 @@ test("desktop Flight Details carries fare typography, underline-only tabs, and p
   assert.match(details, /data-desktop-fare-price-loading/);
   assert.match(details, /data-desktop-trip-price-loading/);
   assert.match(details, /sm:text-\[18px\] sm:font-medium/);
-  assert.match(details, /text-\[24px\] font-semibold leading-7 tabular-nums text-\[#075EE8\]/);
-  assert.match(details, /activeTab === tab.id \? "border-\[#075EE8\]"/);
+  assert.match(details, /text-\[20px\] font-semibold leading-5 text-\[#075EE8\]/);
+  assert.match(details, /activeTab === tab.id \? "border-\[#075EE8\] text-slate-700"/);
   assert.match(details, /priceLoading=\{!mobilePricesReady\}/);
 });

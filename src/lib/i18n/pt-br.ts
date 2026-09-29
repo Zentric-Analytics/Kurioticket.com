@@ -1015,7 +1015,7 @@ export const translations: TranslationDictionary = {
   providerNormalizedItineraryPrefix:
     "Os detalhes de ida e volta são exibidos a partir dos dados de itinerário normalizados pelo provedor.",
   checkProvider: "Verificar com o provedor",
-  notSuppliedByProvider: "Não incluído",
+  notSuppliedByProvider: "Não fornecido pelo provedor",
   carryOnIncluded: "bagagem de mão incluída",
   flightLeg: "Trecho do voo",
   layover: "Escala",
