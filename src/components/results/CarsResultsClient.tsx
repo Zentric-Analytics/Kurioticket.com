@@ -4274,6 +4274,9 @@ function CarFilters({
                 desktopSurfaceParity ? "bg-[#F2F4F8]" : "bg-transparent",
               )
             : "bg-transparent",
+        desktopSurfaceParity &&
+          layout !== "mobile" &&
+          "cars-desktop-filter-surface",
       )}
     >
       {layout === "compact" ? (
@@ -4291,7 +4294,7 @@ function CarFilters({
                 strokeWidth={2.25}
                 aria-hidden="true"
               />
-              <span className="truncate">{t("carsResults.filterBy")}</span>
+              <span className="truncate">{t("filters")}</span>
             </h2>
           </div>
           {activeFilterCount > 0 ? (
@@ -4313,7 +4316,7 @@ function CarFilters({
         <div className="desktop-filter-sidebar__header shrink-0 border-b border-slate-200/70 px-3 py-3">
           <div className="flex items-center justify-between gap-3">
             <h2 className="truncate text-[16px] font-bold leading-5 tracking-[-0.01em] text-[#07133B]">
-              {t("carsResults.filterBy")}
+              {t("filters")}
               {activeFilterCount > 0 ? (
                 <span className="ms-2 rounded-full bg-[#004BB8] px-2 py-0.5 text-xs text-white">
                   {activeFilterCount}
