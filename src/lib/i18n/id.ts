@@ -1701,6 +1701,7 @@ export const translations: TranslationDictionary = {
   displayEstimateConvertedFromProviderPrice: "{{formatted}}. Perkiraan tampilan dikonversi dari {{providerPrice}}. Harga akhir penyedia dapat berbeda.",
   convertedDisplayEstimateProviderPrice: "Perkiraan tampilan dikonversi. Harga penyedia: {{providerPrice}}. Harga akhir penyedia dapat berbeda.",
   viewFlight: "Lihat penerbangan",
+  viewDeal: "Lihat penawaran",
   flightCardProviderHandoff: "Harga akhir, ketersediaan, pemesanan, dan aturan tarif dikonfirmasi oleh penyedia.",
   flightCardProviderHandoffConverted: "Harga akhir, ketersediaan, pemesanan, dan aturan tarif dikonfirmasi oleh penyedia. Mata uang akhir penyedia dapat berbeda dari mata uang tampilan pilihan Anda.",
   providerNormalizedItineraryPrefix: "Detail pergi dan pulang ditampilkan dari data rencana perjalanan yang dinormalisasi penyedia.",
