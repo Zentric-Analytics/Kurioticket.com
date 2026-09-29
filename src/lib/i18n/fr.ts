@@ -1779,6 +1779,7 @@ flightLandingRouteAriaLabel:
   displayEstimateConvertedFromProviderPrice: "{{formatted}}. Estimation affichée convertie depuis {{providerPrice}}. Le prix final du fournisseur peut varier.",
   convertedDisplayEstimateProviderPrice: "Estimation affichée convertie. Prix du fournisseur : {{providerPrice}}. Le prix final du fournisseur peut varier.",
   viewFlight: "Voir le vol",
+  viewDeal: "Voir l’offre",
   flightCardProviderHandoff: "Le prix final, la disponibilité, la réservation et les règles tarifaires sont confirmés par le fournisseur.",
   flightCardProviderHandoffConverted: "Le prix final, la disponibilité, la réservation et les règles tarifaires sont confirmés par le fournisseur. La devise finale du fournisseur peut différer de votre devise d’affichage sélectionnée.",
   flightDetailsLoading: "Chargement des détails du vol...",
