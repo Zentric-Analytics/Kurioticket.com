@@ -178,7 +178,10 @@ test("desktop car details use hotel-style hero controls for Kurioticket and KAYA
     clientSource,
     /desktop \? "size-10 rounded-full border border-slate-300 bg-\[#E7EBF1\]/,
   );
-  assert.match(clientSource, /desktopImageActions={ <CarHeroActions/);
+  assert.match(
+    clientSource,
+    /desktopImageActions={ presentation === "standalone-content" \? \( <CarHeroActions/,
+  );
   assert.doesNotMatch(clientSource, /<DetailsBackLink/);
   assert.doesNotMatch(
     clientSource,
