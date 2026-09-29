@@ -121,3 +121,20 @@ test("desktop rate continuation retains translated copy and the clicked offer", 
   assert.match(desktop, /onContinueOffer=\{\(id, trigger\) => void continueOffer\(id, trigger\)\}/);
   assert.doesNotMatch(desktop, /data-standalone-stay-summary|HotelDetailsGoogleMap|fillHeight/);
 });
+
+
+test("desktop external Hotel View deal reserves a new tab before the async provider redirect", () => {
+  const continueStart = desktop.indexOf("async function continueOffer");
+  const continueEnd = desktop.indexOf("const utilityActions", continueStart);
+  const continueOffer = desktop.slice(continueStart, continueEnd);
+
+  assert.match(continueOffer, /window\.open\("about:blank", "_blank"\)/);
+  assert.match(continueOffer, /providerWindow\.opener = null/);
+  assert.match(
+    continueOffer,
+    /onProviderOfferHandoff\(decision\.providerOfferId, providerWindow\)/,
+  );
+  assert.match(continueOffer, /providerWindow && !providerWindow\.closed/);
+  assert.match(continueOffer, /providerWindow\.close\(\)/);
+  assert.doesNotMatch(continueOffer, /window\.location\.href/);
+});
