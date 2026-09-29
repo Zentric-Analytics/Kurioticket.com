@@ -506,7 +506,7 @@ export function CarResultCard({
                 </div>
               </header>
 
-              <p className="mt-1 flex min-w-0 items-center gap-1.5 text-[12px] font-medium text-[#536B92]">
+              <p className="mt-2 flex min-w-0 items-center gap-1.5 text-[12px] font-medium text-[#536B92]">
                 <MapPin
                   size={16}
                   className="shrink-0 text-[#07133B]"
@@ -553,7 +553,7 @@ export function CarResultCard({
                   </div>
 
                   {car.categoryLabel ? (
-                    <p className="row-start-2 mt-0.5 text-[10px] font-bold uppercase leading-none tracking-[0.14em] text-[#004BB8]">
+                    <p className="row-start-2 mt-2 text-[10px] font-bold uppercase leading-none tracking-[0.14em] text-[#004BB8]">
                       {car.categoryLabel}
                     </p>
                   ) : null}
@@ -574,7 +574,7 @@ export function CarResultCard({
                 {offer.freeCancellation ? (
                   <div
                     data-car-card-desktop-free-cancellation
-                    className="mt-1.5 flex min-w-0 items-center gap-1.5 text-[12px] font-semibold leading-4 text-black"
+                    className="mt-2 flex min-w-0 items-center gap-1.5 text-[12px] font-semibold leading-4 text-black"
                   >
                     <ShieldCheck
                       size={14}
@@ -588,7 +588,7 @@ export function CarResultCard({
 
               <div
                 data-car-card-desktop-shared-header
-                className={`hidden lg:grid lg:grid-cols-[minmax(0,1fr)_205px] lg:gap-y-0 ${badge && BadgeIcon ? "lg:grid-rows-[24px_44px_auto_auto]" : "lg:grid-rows-[44px_auto_auto]"}`}
+                className={`hidden lg:grid lg:grid-cols-[minmax(0,1fr)_205px] lg:gap-y-0 ${badge && BadgeIcon ? "lg:grid-rows-[24px_44px_auto_auto_auto]" : "lg:grid-rows-[44px_auto_auto_auto]"}`}
               >
                 <div
                   data-car-card-desktop-header-rail
@@ -610,7 +610,7 @@ export function CarResultCard({
 
                 <div
                   data-car-card-desktop-title-row
-                  className={`relative col-start-1 ${badge && BadgeIcon ? "row-start-2" : "row-start-1"} flex h-11 min-w-0 items-center px-4`}
+                  className={`col-start-1 ${badge && BadgeIcon ? "row-start-2" : "row-start-1"} flex h-11 min-w-0 items-center px-4`}
                 >
                   <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0">
                     {headingLevel === "h3" ? (
@@ -628,12 +628,15 @@ export function CarResultCard({
                       </span>
                     ) : null}
                   </div>
-                  {car.categoryLabel ? (
-                    <p className="pointer-events-none absolute inset-x-4 -bottom-1 whitespace-nowrap text-[10px] font-bold uppercase leading-[14px] tracking-[0.12em] text-[#004BB8]">
-                      {car.categoryLabel}
-                    </p>
-                  ) : null}
                 </div>
+
+                {car.categoryLabel ? (
+                  <p
+                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-3" : "row-start-2"} mt-1 whitespace-nowrap px-4 text-[10px] font-bold uppercase leading-[14px] tracking-[0.12em] text-[#004BB8]`}
+                  >
+                    {car.categoryLabel}
+                  </p>
+                ) : null}
 
                 <div
                   data-car-card-desktop-actions
@@ -643,7 +646,7 @@ export function CarResultCard({
                 </div>
 
                 <p
-                  className={`col-start-1 ${badge && BadgeIcon ? "row-start-3" : "row-start-2"} mt-1 flex min-w-0 items-center gap-1.5 px-4 text-[12.5px] font-medium leading-[18px] text-[#536B92]`}
+                  className={`col-start-1 ${badge && BadgeIcon ? "row-start-4" : "row-start-3"} mt-2 flex min-w-0 items-center gap-1.5 px-4 text-[12.5px] font-medium leading-[18px] text-[#536B92]`}
                 >
                   <MapPin
                     size={16}
@@ -659,7 +662,7 @@ export function CarResultCard({
                 {offer.freeCancellation ? (
                   <div
                     data-car-card-desktop-free-cancellation
-                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-4" : "row-start-3"} mt-1.5 flex min-w-0 items-center gap-1.5 px-4 text-[12.5px] font-semibold leading-[18px] text-[#142033]`}
+                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-5" : "row-start-4"} mt-2 flex min-w-0 items-center gap-1.5 px-4 text-[12.5px] font-semibold leading-[18px] text-[#142033]`}
                   >
                     <ShieldCheck
                       size={14}
