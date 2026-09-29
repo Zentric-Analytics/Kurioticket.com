@@ -479,9 +479,9 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     'role="radio"',
     "term.semantic === \"positive\" ? Check",
     'event.key === "ArrowRight" || event.key === "ArrowDown"',
-    'tabIndex={selected ? 0 : -1}',
-    "selectedOffer.price",
-    "<FarePanel activeTab={activeTab} fare={selectedFare} offer={selectedOffer}",
+    'tabIndex={selected || (!selectedDealOfferId && index === 0) ? 0 : -1}',
+    "activeOffer.price",
+    "<FarePanel activeTab={activeTab} fare={selectedFare} offer={activeOffer}",
     "Operated by {segment.operatingCarrier.name}",
     "Technical stop at {stop.airport.iataCode}",
     "Optional extra",
@@ -1128,4 +1128,15 @@ test("desktop Fare information uses the native semantic hierarchy without changi
 
   assert.match(mobileWeb, /function DetailsSurface/);
   assert.match(native, /groupLabel\("Optional services"\)/);
+});
+
+
+test("desktop selected deal drives fare information and checkout while the radiogroup stays keyboard reachable", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  assert.match(source, /const activeOffer = selectedDeal\?\.offer \?\? selectedOffer/);
+  assert.match(source, /const activeHandoff = selectedDeal[\s\S]*?providerName: selectedDeal\.providerName[\s\S]*?: handoff/);
+  assert.match(source, /const providerPrice = activeOffer[\s\S]*?amount: activeOffer\.price[\s\S]*?sourceCurrency: activeOffer\.currency/);
+  assert.match(source, /<FarePanel activeTab=\{activeTab\} fare=\{selectedFare\} offer=\{activeOffer\}[\s\S]*?selectedDealOfferId=\{selectedDeal\?\.offerId \?\? null\}[\s\S]*?onSelectDeal=\{setSelectedDealOfferId\}/);
+  assert.match(source, /<DesktopCheckoutSummary[\s\S]*?handoff=\{activeHandoff\}[\s\S]*?onContinue=\{\(\) => continueToOffer\(selectedDeal\?\.offerId \?\? selectedOffer\.id\)\}/);
+  assert.match(source, /tabIndex=\{selected \|\| \(!selectedDealOfferId && index === 0\) \? 0 : -1\}/);
 });
