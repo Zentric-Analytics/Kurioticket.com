@@ -177,6 +177,7 @@ export const translations: TranslationDictionary = {
   continue: "Doorgaan",
   continueToProvider: "Doorgaan naar provider",
   viewFlight: "Vlucht bekijken",
+  viewDeal: "Bekijk deal",
   estimatedPrice: "Geschatte prijs",
   finalPrice: "Eindprijs",
   fromPrice: "Vanaf",
