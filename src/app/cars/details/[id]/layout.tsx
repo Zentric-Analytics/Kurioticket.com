@@ -122,13 +122,6 @@ export default function CarDetailsLayout({
             box-shadow: none !important;
           }
 
-          [data-car-details-experience] [data-car-details-desktop-actions] {
-            position: absolute;
-            top: 1.5rem;
-            right: 0;
-            z-index: 20;
-            margin: 0;
-          }
         }
       `}</style>
       {children}
