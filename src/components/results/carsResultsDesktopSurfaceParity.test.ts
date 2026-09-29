@@ -75,6 +75,10 @@ test("desktop Cars filters inherit the mobile F2F4F8 section surface without cha
     styles,
     /\.desktop-filter-sidebar\.cars-desktop-filter-surface\s*\.desktop-filter-sidebar__header \{\s*background: #F2F4F8 !important;\s*\}/,
   );
+  assert.match(
+    styles,
+    /\.cars-desktop-filter-icon \{\s*color: #07133b !important;\s*\}/,
+  );
   assert.match(results, /layout === "mobile"[\s\S]*?"grid gap-6 bg-transparent"/);
   assert.match(results, /data-cars-mobile-filter-shell[\s\S]*?bg-\[#F2F4F8\]/);
 });

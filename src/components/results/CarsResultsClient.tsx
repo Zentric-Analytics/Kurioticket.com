@@ -4289,7 +4289,7 @@ function CarFilters({
           <div className="flex items-center justify-between gap-3">
             <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[15px] font-semibold leading-5 tracking-[-0.01em] text-slate-950">
               <SlidersHorizontal
-                className="desktop-filter-sidebar__icon shrink-0 text-[#004BB8]"
+                className="desktop-filter-sidebar__icon cars-desktop-filter-icon shrink-0 text-[#07133B]"
                 size={15}
                 strokeWidth={2.25}
                 aria-hidden="true"
@@ -4324,7 +4324,7 @@ function CarFilters({
               ) : null}
             </h2>
             <SlidersHorizontal
-              className="shrink-0 text-[#004BB8]"
+              className="cars-desktop-filter-icon shrink-0 text-[#07133B]"
               size={18}
               aria-hidden="true"
             />

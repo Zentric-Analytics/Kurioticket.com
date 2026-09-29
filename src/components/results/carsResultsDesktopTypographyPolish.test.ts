@@ -45,7 +45,7 @@ test("standalone desktop search surfaces use one restrained label and value hier
 test("desktop filter, result-count, and sort typography share a consistent hierarchy", () => {
   assert.match(
     results,
-    /truncate text-\[16px\] font-bold leading-5 tracking-\[-0\.01em\] text-\[#07133B\][\s\S]*?carsResults\.filterBy/,
+    /truncate text-\[16px\] font-bold leading-5 tracking-\[-0\.01em\] text-\[#07133B\][\s\S]*?\{t\("filters"\)\}/,
   );
   assert.match(
     results,
@@ -86,6 +86,14 @@ test("standalone desktop result cards use a polished identity, details, and pric
   assert.match(
     standalone,
     /text-\[10px\] font-bold uppercase leading-\[14px\] tracking-\[0\.12em\] text-\[#004BB8\]/,
+  );
+  assert.match(
+    standalone,
+    /<MapPin[\s\S]{0,100}?text-\[#07133B\]/,
+  );
+  assert.doesNotMatch(
+    standalone,
+    /<MapPin[\s\S]{0,100}?text-\[#004BB8\]/,
   );
   assert.match(
     standalone,

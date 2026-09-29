@@ -763,6 +763,10 @@ textarea {
     color: #64748b !important;
   }
 
+  .cars-desktop-filter-icon {
+    color: #07133b !important;
+  }
+
   .desktop-filter-sidebar__count {
     border: 1px solid rgba(0, 75, 184, 0.12);
     background: rgba(0, 75, 184, 0.06) !important;

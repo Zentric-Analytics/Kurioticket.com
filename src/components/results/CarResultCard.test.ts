@@ -92,6 +92,19 @@ test("standalone desktop uses a shared header row for identity and actions witho
   );
   assert.match(
     heading,
+    /data-car-card-desktop-title-row[\s\S]*?relative[\s\S]*?-bottom-1[\s\S]*?\{car\.categoryLabel\}/,
+  );
+  assert.doesNotMatch(
+    heading,
+    /\$\{badge && BadgeIcon \? "row-start-3" : "row-start-2"\}[\s\S]{0,180}\{car\.categoryLabel\}/,
+  );
+  assert.equal(
+    (heading.match(/<MapPin[\s\S]{0,100}?text-\[#07133B\]/g) ?? []).length,
+    3,
+    "all desktop result-card location pins use the polished dark treatment",
+  );
+  assert.match(
+    heading,
     /data-car-card-desktop-badge[\s\S]*?\{badge\}/,
   );
   assert.match(details, /desktopStandaloneSpecifications/);
@@ -116,7 +129,7 @@ test("desktop standalone title and save/share occupy the exact same grid row bel
   assert.doesNotMatch(heading, /lg:pt-6/);
   assert.match(
     heading,
-    /badge && BadgeIcon \? "lg:grid-rows-\[24px_44px_auto_auto_auto\]" : "lg:grid-rows-\[44px_auto_auto_auto\]"/,
+    /badge && BadgeIcon \? "lg:grid-rows-\[24px_44px_auto_auto\]" : "lg:grid-rows-\[44px_auto_auto\]"/,
   );
   assert.match(
     heading,
@@ -128,11 +141,11 @@ test("desktop standalone title and save/share occupy the exact same grid row bel
   );
   assert.match(
     heading,
-    /\$\{badge && BadgeIcon \? "row-start-3" : "row-start-2"\}[\s\S]*?leading-none/,
+    /data-car-card-desktop-title-row[\s\S]*?absolute inset-x-4 -bottom-1[\s\S]*?\{car\.categoryLabel\}/,
   );
   assert.match(
     heading,
-    /\$\{badge && BadgeIcon \? "row-start-4" : "row-start-3"\} mt-1 flex/,
+    /\$\{badge && BadgeIcon \? "row-start-3" : "row-start-2"\} mt-1 flex/,
   );
 });
 
@@ -226,11 +239,11 @@ test("standalone desktop identity stack keeps compact but visible breathing room
   );
   assert.match(
     heading,
-    /\$\{badge && BadgeIcon \? "row-start-4" : "row-start-3"\} mt-1 flex/,
+    /\$\{badge && BadgeIcon \? "row-start-3" : "row-start-2"\} mt-1 flex/,
   );
   assert.match(
     heading,
-    /\$\{badge && BadgeIcon \? "row-start-5" : "row-start-4"\} mt-1\.5 flex/,
+    /\$\{badge && BadgeIcon \? "row-start-4" : "row-start-3"\} mt-1\.5 flex/,
   );
 });
 
@@ -327,7 +340,7 @@ test("standalone desktop shows localized data-driven Free cancellation directly 
   );
   assert.match(
     heading,
-    /\$\{badge && BadgeIcon \? "row-start-5" : "row-start-4"\} mt-1\.5 flex/,
+    /\$\{badge && BadgeIcon \? "row-start-4" : "row-start-3"\} mt-1\.5 flex/,
   );
 });
 
