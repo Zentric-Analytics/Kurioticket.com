@@ -565,9 +565,6 @@ export function HotelPriceAlertControl({
               <h2 className="truncate text-base font-bold text-[#192024]">
                 {t("travel.account.hotelAlert.title")}
               </h2>
-              <p className="mt-1 text-sm text-[#59636a]">
-                {t("travel.account.hotelAlert.body")}
-              </p>
             </div>
           </div>
           <button
