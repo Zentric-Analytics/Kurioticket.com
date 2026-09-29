@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 import {
   buildHotelPriceAlertPayload,
   HOTEL_ALERT_DEFAULT_DROP_PERCENT,
@@ -83,8 +84,8 @@ test("Hotel alert search matching ignores target but keeps the exact stay contex
 
 
 test("Hotel web price-alert UI labels the slider ceiling as 15%", () => {
-  const control = require("node:fs").readFileSync(
-    require("node:path").join(process.cwd(), "src/components/results/HotelPriceAlertControl.tsx"),
+  const control = readFileSync(
+    new URL("../../components/results/HotelPriceAlertControl.tsx", import.meta.url),
     "utf8",
   );
   assert.match(control, /max=\{HOTEL_ALERT_MAX_DROP_PERCENT\}/);
