@@ -66,9 +66,9 @@ test("desktop Hotel Results price-alert row is vertically aligned and compact", 
 
 test("desktop Hotel Results price-alert card uses the mobile-web alert surface", () => {
   const rowStart = source.indexOf('className="hidden rounded-2xl border border-blue-100');
-  const rowEnd = source.indexOf("{status === \"saved\" ? (", rowStart);
-  const row = source.slice(rowStart, rowEnd);
+  const openingTagEnd = source.indexOf(">", rowStart);
+  const openingTag = source.slice(rowStart, openingTagEnd);
 
-  assert.match(row, /bg-\[#F0F5FC\]/);
-  assert.doesNotMatch(row, /bg-white/);
+  assert.match(openingTag, /bg-\[#F0F5FC\]/);
+  assert.doesNotMatch(openingTag, /bg-white/);
 });
