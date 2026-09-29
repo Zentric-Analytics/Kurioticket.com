@@ -393,7 +393,7 @@ export function CarDetailsExperience({
                   location: copy("carDetails.location"),
                 }}
               />
-              <div className="min-h-[240px]">
+              <div className="min-h-[240px]" data-car-details-section-panels>
                 <section
                   id="car-compare-panel"
                   role="tabpanel"
