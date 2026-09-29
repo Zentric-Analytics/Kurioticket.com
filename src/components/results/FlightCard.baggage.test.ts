@@ -7,17 +7,17 @@ const t = (key: string) =>
   ({
     carryOnIncluded: "Carry-on included",
     checkProvider: "Check provider",
-    notSuppliedByProvider: "Not supplied by provider",
+    notSuppliedByProvider: "Not provided",
   })[key] ?? key;
 
 test("desktop baggage fallback uses compact localized result-card copy", () => {
   assert.equal(
     formatBaggageValue("Baggage details not supplied by the provider", t),
-    "Not supplied by provider",
+    "Not provided",
   );
   assert.equal(
     formatBaggageValue("  BAGGAGE DETAILS NOT SUPPLIED BY THE PROVIDER  ", t),
-    "Not supplied by provider",
+    "Not provided",
   );
 });
 
