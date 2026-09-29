@@ -502,10 +502,10 @@ const sameReturnSearchGridClass =
 const compactFieldShellClass = "min-h-[46px] py-1 lg:min-h-[54px] lg:py-1.5";
 
 const fieldLabelClass =
-  "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:text-[0.66rem] lg:leading-3 lg:tracking-[0.13em] lg:text-slate-500";
+  "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:text-[10px] lg:font-semibold lg:leading-[14px] lg:tracking-[0.10em] lg:text-[#536B92]";
 
 const fieldInputClass =
-  "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[15px] lg:font-medium lg:leading-6";
+  "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[14px] lg:font-medium lg:leading-5 lg:tracking-[-0.005em] lg:text-[#142033]";
 const carsMobileEditFieldShellClass =
   "cars-results-edit-field relative flex min-h-[66px] flex-col justify-center rounded-[13px] border border-[#E7ECF5] bg-white px-3 py-[10px] shadow-none focus-within:border-[#064CF7] focus-within:ring-2 focus-within:ring-[#064CF7]/25";
 const carsMobileEditPickupLabelClass =
@@ -1487,7 +1487,7 @@ export function CarsResultsClient({
             <Button
               type="submit"
               className={cn(
-                "h-12 w-full rounded-[10px] bg-[#004BB8] px-4 text-[15px] font-semibold text-white shadow-none transition-colors duration-200 hover:bg-[#021C2B] lg:m-[4px] lg:h-auto lg:w-[calc(100%-8px)] lg:self-stretch lg:rounded-[9px] lg:ring-1 lg:ring-[#075EE8]/12",
+                "h-12 w-full rounded-[10px] bg-[#004BB8] px-4 text-[15px] font-semibold text-white shadow-none transition-colors duration-200 hover:bg-[#021C2B] lg:m-[4px] lg:h-auto lg:w-[calc(100%-8px)] lg:self-stretch lg:rounded-[9px] lg:text-[14px] lg:tracking-[-0.005em] lg:ring-1 lg:ring-[#075EE8]/12",
                 placement === "mobile" && "hidden",
                 isCompactSearch ? "lg:min-h-[54px]" : "lg:min-h-[58px]",
               )}
@@ -1732,7 +1732,7 @@ export function CarsResultsClient({
               />
               <span
                 title={summary}
-                className="min-w-0 truncate whitespace-nowrap text-[0.86rem] font-medium leading-5 text-slate-800"
+                className="min-w-0 truncate whitespace-nowrap text-[14px] font-medium leading-5 tracking-[-0.005em] text-[#142033]"
               >
                 {summary}
               </span>
@@ -1751,7 +1751,7 @@ export function CarsResultsClient({
                   );
                 }
               }}
-              className="focus-ring h-10 w-24 rounded-lg bg-[#004BB8] text-sm font-semibold text-white transition hover:bg-[#021C2B]"
+              className="focus-ring h-10 w-24 rounded-lg bg-[#004BB8] text-[14px] font-semibold tracking-[-0.005em] text-white transition hover:bg-[#021C2B]"
             >
               {t("search")}
             </button>
@@ -1788,16 +1788,16 @@ export function CarsResultsClient({
             >
               <div className="mb-4 flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
+                  <p className="text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-[#004BB8]">
                     {t("carsResults.searchCars")}
                   </p>
                   <h2
                     id="sticky-cars-search-title"
-                    className="mt-1 truncate text-xl font-bold tracking-tight text-slate-950"
+                    className="mt-1 truncate text-[20px] font-bold leading-6 tracking-[-0.015em] text-[#07133B]"
                   >
                     {locationPairSummary}
                   </h2>
-                  <p className="mt-1 truncate text-sm font-medium text-slate-600">
+                  <p className="mt-1 truncate text-[13px] font-medium leading-5 text-[#536B92]">
                     {rentalDateSummary} · {timeSummary} · {driverAgeSummary}
                   </p>
                 </div>
@@ -2898,7 +2898,7 @@ export function CarsResultsExperience({
                       ref={resultHeadingRef}
                       id={resultHeadingId}
                       tabIndex={-1}
-                      className="truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[17px] sm:leading-6 sm:tracking-[-0.005em]"
+                      className="truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[17px] sm:leading-6 sm:tracking-[-0.005em] lg:text-[18px] lg:leading-6 lg:tracking-[-0.01em]"
                     >
                       {resultHeading ??
                         t(
@@ -2915,7 +2915,7 @@ export function CarsResultsExperience({
                     {resultsDisplayRange ? (
                       <p
                         aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${visibleResults.length}`}
-                        className="mt-0.5 hidden text-xs font-medium leading-4 text-slate-500 sm:block"
+                        className="mt-0.5 hidden text-xs font-medium leading-4 text-slate-500 sm:block lg:text-[12px] lg:text-[#64748B]"
                       >
                         {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
                       </p>
@@ -2930,7 +2930,7 @@ export function CarsResultsExperience({
                     </p>
                   ) : null}
                   <div className="hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
-                    <span className="shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
+                    <span className="shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm lg:text-[13px] lg:leading-5">
                       {t("carsResults.sortBy")}:
                     </span>
                     <div
@@ -2943,7 +2943,7 @@ export function CarsResultsExperience({
                         aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
                         aria-haspopup="menu"
                         aria-expanded={carsSortOpen}
-                        className="inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#07133B] sm:gap-2 sm:px-2 sm:text-[16px]"
+                        className="inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#07133B] sm:gap-2 sm:px-2 sm:text-[16px] lg:text-[15px] lg:leading-5 lg:tracking-[-0.005em]"
                         onClick={() => setCarsSortOpen((open) => !open)}
                       >
                         <span className="min-w-0 truncate whitespace-nowrap">
@@ -2975,7 +2975,7 @@ export function CarsResultsExperience({
                             role="menuitemradio"
                             aria-checked={sort === option.value}
                             tabIndex={carsSortOpen ? 0 : -1}
-                            className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold"
+                            className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold lg:text-[13px] lg:font-medium lg:leading-5 lg:text-[#142033]"
                             onClick={() => {
                               startFilterResultsTransition();
                               setCurrentPage(1);
@@ -2997,7 +2997,7 @@ export function CarsResultsExperience({
                   <div className="flex w-full flex-wrap gap-1.5" aria-label="Applied car filters">
                     {appliedCarFilters.map((filter) => (
                       <button key={`${filter.groupId}-${filter.optionId}`} type="button" onClick={() => toggleCarFilter(filter.groupId, filter.optionId)} className="inline-flex min-h-11 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35" aria-label={`Remove ${filter.label} filter`}>
-                        <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#B8CDED] bg-[#EEF5FF] px-2.5 text-[11px] font-semibold leading-[14px] text-[#064A9B]">{filter.label}<X className="h-[13px] w-[13px] shrink-0" aria-hidden="true" /></span>
+                        <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#B8CDED] bg-[#EEF5FF] px-2.5 text-[11px] font-semibold leading-[14px] text-[#064A9B] lg:text-[12px] lg:leading-4">{filter.label}<X className="h-[13px] w-[13px] shrink-0" aria-hidden="true" /></span>
                       </button>
                     ))}
                   </div>
@@ -3698,7 +3698,7 @@ function SearchDateCell({
         aria-haspopup="dialog"
         className={groupedMobile
           ? carsMobileEditSummaryButtonClass
-          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
+          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-[14px] lg:font-medium lg:leading-5 lg:tracking-[-0.005em] lg:text-[#142033]"
         }
       >
         {showRentalDuration ? (
@@ -3723,7 +3723,7 @@ function SearchDateCell({
               {summary}
             </span>
             {showRentalDuration && rentalDayCount > 0 ? (
-              <span className="mt-0.5 block text-[11px] font-medium leading-3 text-slate-500">
+              <span className="mt-0.5 block text-[11px] font-medium leading-3 text-slate-500 lg:text-[10px] lg:leading-[13px] lg:text-[#64748B]">
                 {rentalDaysLabel}
               </span>
             ) : null}
@@ -3972,7 +3972,7 @@ function SearchTimeCell({
         aria-haspopup="menu"
         className={groupedMobile
           ? carsMobileEditSummaryButtonClass
-          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
+          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-[14px] lg:font-medium lg:leading-5 lg:tracking-[-0.005em] lg:text-[#142033]"
         }
       >
         {groupedMobile ? (
@@ -4123,7 +4123,7 @@ function DriverAgeCell({
         aria-haspopup="listbox"
         className={groupedMobile
           ? carsMobileEditSummaryButtonClass
-          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
+          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-[14px] lg:font-medium lg:leading-5 lg:tracking-[-0.005em] lg:text-[#142033]"
         }
       >
         {groupedMobile ? (
@@ -4274,6 +4274,9 @@ function CarFilters({
                 desktopSurfaceParity ? "bg-[#F2F4F8]" : "bg-transparent",
               )
             : "bg-transparent",
+        desktopSurfaceParity &&
+          layout !== "mobile" &&
+          "cars-desktop-filter-surface",
       )}
     >
       {layout === "compact" ? (
@@ -4291,7 +4294,7 @@ function CarFilters({
                 strokeWidth={2.25}
                 aria-hidden="true"
               />
-              <span className="truncate">{t("carsResults.filterBy")}</span>
+              <span className="truncate">{t("filters")}</span>
             </h2>
           </div>
           {activeFilterCount > 0 ? (
@@ -4312,8 +4315,8 @@ function CarFilters({
       ) : layout === "desktop" ? (
         <div className="desktop-filter-sidebar__header shrink-0 border-b border-slate-200/70 px-3 py-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="truncate text-base font-bold text-slate-950">
-              {t("carsResults.filterBy")}
+            <h2 className="truncate text-[16px] font-bold leading-5 tracking-[-0.01em] text-[#07133B]">
+              {t("filters")}
               {activeFilterCount > 0 ? (
                 <span className="ms-2 rounded-full bg-[#004BB8] px-2 py-0.5 text-xs text-white">
                   {activeFilterCount}
@@ -4329,7 +4332,7 @@ function CarFilters({
           {activeFilterCount > 0 ? (
             <button
               type="button"
-              className="focus-ring mt-2 text-xs font-semibold text-[#004BB8]"
+              className="focus-ring mt-2 text-[12px] font-semibold leading-4 text-[#004BB8]"
               onClick={onClear}
             >
               {t("clearAll")}
@@ -4486,7 +4489,7 @@ function FilterSection({
           </span>
         </button>
       ) : (
-        <h3 className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950">
+        <h3 className="text-[12px] font-bold uppercase leading-4 tracking-[0.11em] text-[#142033]">
           {carFilterGroupLabel(group, t)}
         </h3>
       )}
@@ -4527,12 +4530,12 @@ function FilterSection({
               className={cn(
                 layout === "compact"
                   ? "flex min-h-8 cursor-pointer items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-[13px] font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
-                  : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm font-medium transition-all",
+                  : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-[13px] font-medium leading-5 transition-all",
                 selected
                   ? "font-semibold text-[#021C2B]"
                   : layout === "compact"
                     ? null
-                    : "text-slate-600 hover:bg-slate-50",
+                    : "text-[#536B92] hover:bg-slate-50 hover:text-[#142033]",
               )}
             >
               {layout === "compact" ? (

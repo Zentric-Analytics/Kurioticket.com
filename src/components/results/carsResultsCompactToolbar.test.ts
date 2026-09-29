@@ -24,7 +24,7 @@ test("source-contract: Cars compact toolbar is transparent, shrink-safe, and fiv
   assert.match(source, /driverAgeSummary/);
   assert.match(
     source,
-    /<span\s+title=\{summary\}\s+className="min-w-0 truncate whitespace-nowrap text-\[0\.86rem\] font-medium leading-5 text-slate-800"\s*>\s*\{summary\}\s*<\/span>/,
+    /<span\s+title=\{summary\}\s+className="min-w-0 truncate whitespace-nowrap text-\[14px\] font-medium leading-5 tracking-\[-0\.005em\] text-\[#142033\]"\s*>\s*\{summary\}\s*<\/span>/,
   );
 });
 

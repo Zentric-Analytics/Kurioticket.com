@@ -140,12 +140,22 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
     setSelectedOfferId(offerId);
     if (decision.kind === "internal-room-flow") { trigger.focus(); setOverlay("rooms"); return; }
     if (decision.kind !== "provider-handoff" || !props.onProviderOfferHandoff) return;
+    const providerWindow = window.open("about:blank", "_blank");
+    if (providerWindow) providerWindow.opener = null;
+
     handoffPending.current = true;
     setPendingProviderOfferId(offerId);
     setProviderHandoffError(null);
-    try { await props.onProviderOfferHandoff(decision.providerOfferId); }
-    catch { setProviderHandoffError("We couldn't open this provider offer. Please try again."); goToSection("hotel-compare-prices"); }
-    finally { handoffPending.current = false; setPendingProviderOfferId(null); }
+    try {
+      await props.onProviderOfferHandoff(decision.providerOfferId, providerWindow);
+    } catch {
+      if (providerWindow && !providerWindow.closed) providerWindow.close();
+      setProviderHandoffError("We couldn't open this provider offer. Please try again.");
+      goToSection("hotel-compare-prices");
+    } finally {
+      handoffPending.current = false;
+      setPendingProviderOfferId(null);
+    }
   }
 
   const utilityActions = (placement: "gallery" | "tabs") => <div className={`${styles.utilityActions} ${placement === "gallery" ? styles.galleryActions : ""}`} data-utility-placement={placement} hidden={placement === "gallery" ? sectionBarStuck : !sectionBarStuck}>

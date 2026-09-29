@@ -6,8 +6,13 @@ import {
   buildAutomaticFlightPriceAlertPayload,
   buildFlightPriceAlertPayload,
   flightPriceAlertDuplicateKey,
+  flightAlertDesiredPrice,
+  flightAlertDropPercentForTarget,
   MAX_PRICE_ALERT_TARGET,
   matchingAutomaticFlightPriceAlert,
+  matchingFlightPriceAlertForControl,
+  matchingTargetFlightPriceAlert,
+  roundFlightAlertCurrencyAmount,
   selectAutomaticFlightBaseline,
 } from "./flightPriceAlerts";
 
@@ -125,4 +130,26 @@ test("baseline selection uses live provider inventory and never compares unlike 
   ];
   assert.equal(selectAutomaticFlightBaseline(fares, "USD")?.price, 90);
   assert.equal(selectAutomaticFlightBaseline(fares, "NGN")?.currency, "EUR");
+});
+
+test("flight target math applies bounded percentages and currency fraction digits", () => {
+  assert.equal(flightAlertDesiredPrice(350, 10, "USD"), 315);
+  assert.equal(flightAlertDesiredPrice(999, 10, "JPY"), 899);
+  assert.equal(roundFlightAlertCurrencyAmount(12.345, "USD"), 12.35);
+  assert.equal(roundFlightAlertCurrencyAmount(12.5, "JPY"), 13);
+  assert.equal(flightAlertDesiredPrice(100, 0, "USD"), 99);
+  assert.equal(flightAlertDesiredPrice(100, 80, "USD"), 50);
+  assert.equal(flightAlertDropPercentForTarget(350, 315), 10);
+});
+
+test("target matching uses the complete search identity and deterministically preserves legacy automatic alerts", () => {
+  const pausedTarget = { id: "target-paused", type: "FLIGHT", mode: "TARGET" as const, status: "PAUSED", query };
+  const activeTarget = { ...pausedTarget, id: "target-active", status: "ACTIVE" };
+  const activeAutomatic = { ...pausedTarget, id: "automatic-active", mode: "AUTOMATIC" as const, status: "ACTIVE" };
+  assert.equal(matchingTargetFlightPriceAlert([pausedTarget, activeTarget], query)?.id, "target-active");
+  assert.equal(matchingFlightPriceAlertForControl([activeAutomatic, activeTarget], query)?.id, "target-active");
+  assert.equal(matchingFlightPriceAlertForControl([pausedTarget, activeAutomatic], query)?.id, "automatic-active");
+  assert.equal(matchingTargetFlightPriceAlert([pausedTarget], { ...query, adults: 1, travelers: 2 }), undefined);
+  assert.equal(matchingTargetFlightPriceAlert([pausedTarget], { ...query, cabinClass: "business" }), undefined);
+  assert.equal(matchingTargetFlightPriceAlert([pausedTarget], { ...query, departureDate: "2026-08-11" }), undefined);
 });

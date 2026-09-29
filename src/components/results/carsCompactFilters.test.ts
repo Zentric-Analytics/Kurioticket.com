@@ -26,7 +26,7 @@ test("source-contract: Cars compact shell and header match Flights styling", () 
   );
   assert.match(
     source,
-    /<SlidersHorizontal\s+className="desktop-filter-sidebar__icon shrink-0 text-\[#004BB8\]"\s+size=\{15\}\s+strokeWidth=\{2\.25\}\s+aria-hidden="true"\s*\/>\s*<span className="truncate">\{t\("carsResults\.filterBy"\)\}<\/span>/,
+    /<SlidersHorizontal\s+className="desktop-filter-sidebar__icon shrink-0 text-\[#004BB8\]"\s+size=\{15\}\s+strokeWidth=\{2\.25\}\s+aria-hidden="true"\s*\/>\s*<span className="truncate">\{t\("filters"\)\}<\/span>/,
   );
   assert.match(
     source,
@@ -101,6 +101,10 @@ test("source-contract: full desktop and mobile filter styling remain separate", 
   assert.match(
     source,
     /layout === "desktop"[\s\S]*?desktop-filter-sidebar border border-slate-200\/80 p-0 shadow-none rounded-none[\s\S]*?desktopSurfaceParity \? "bg-\[#F2F4F8\]" : "bg-transparent"/,
+  );
+  assert.match(
+    source,
+    /desktopSurfaceParity &&\s*layout !== "mobile" &&\s*"cars-desktop-filter-surface"/,
   );
   assert.match(source, /if \(layout === "mobile"\) \{[\s\S]*?grid gap-\[5px\][\s\S]*?min-h-\[46px\]/);
   assert.doesNotMatch(source, /layout === "mobile"\s*\? "mb-2 overflow-hidden rounded-xl/);
