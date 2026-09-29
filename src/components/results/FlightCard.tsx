@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Armchair,
   Award,
+  ChevronRight,
   Luggage,
   PlaneTakeoff,
   ShieldCheck,
@@ -12,7 +13,6 @@ import {
   Zap,
 } from "lucide-react";
 import type { FlightLeg, PublicFlightResult } from "@/lib/types";
-import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -88,7 +88,7 @@ export function FlightCard({
     detailsHref === undefined
       ? `/flights/details/${encodeURIComponent(flight.id)}`
       : detailsHref;
-  const resolvedActionLabel = actionLabel ?? t("viewFlight");
+  const resolvedActionLabel = actionLabel ?? t("hotelDetails.viewDeal") || "View deal";
 
   return (
     <>
@@ -380,14 +380,14 @@ function FlightFareAction({
   return (
     <div
       className={cn(
-        "flight-card-fare-action flex flex-col items-center justify-center border-l border-[#D8E1EC] text-center",
+        "flight-card-fare-action flex flex-col items-end justify-center border-l border-[#D8E1EC] text-right",
         className,
       )}
     >
       <div
         className={cn(
-          "flight-card-price-frame min-w-0 text-center",
-          "flex flex-col items-center justify-center",
+          "flight-card-price-frame min-w-0 text-right",
+          "flex flex-col items-end justify-center",
         )}
       >
         <div
@@ -408,38 +408,30 @@ function FlightFareAction({
           type="button"
           onClick={onAction}
           aria-label={viewFlightAriaLabel}
-          className={cn(
-            "inline-flex min-h-11 w-auto shrink-0 items-center justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold text-white hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35",
-            "flight-card-view-button rounded-md px-3.5 py-2.5",
-          )}
+          className="flight-card-view-button inline-flex min-h-9 shrink-0 items-center justify-end gap-1 whitespace-nowrap text-sm font-semibold text-[#004BB8] transition hover:text-[#064CF7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
         >
-          {viewFlightLabel}
+          <span>{viewFlightLabel}</span>
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
         </button>
       ) : detailsHref ? (
-        <LinkButton
+        <a
           href={detailsHref}
           aria-label={viewFlightAriaLabel}
-          variant="primary"
-          size="sm"
-          className={cn(
-            "w-auto shrink-0 justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35",
-            "flight-card-view-button rounded-md py-2.5",
-          )}
+          className="flight-card-view-button inline-flex min-h-9 shrink-0 items-center justify-end gap-1 whitespace-nowrap text-sm font-semibold text-[#004BB8] transition hover:text-[#064CF7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
         >
-          {viewFlightLabel}
-        </LinkButton>
+          <span>{viewFlightLabel}</span>
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        </a>
       ) : (
         <button
           type="button"
           disabled
           aria-disabled="true"
           aria-label={viewFlightAriaLabel}
-          className={cn(
-            "inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-full bg-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-500",
-            "flight-card-view-button rounded-md",
-          )}
+          className="flight-card-view-button inline-flex min-h-9 cursor-not-allowed items-center justify-end gap-1 whitespace-nowrap text-sm font-semibold text-slate-400"
         >
-          {viewFlightLabel}
+          <span>{viewFlightLabel}</span>
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
         </button>
       )}
     </div>
