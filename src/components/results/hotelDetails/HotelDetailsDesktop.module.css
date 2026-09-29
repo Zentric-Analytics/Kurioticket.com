@@ -38,6 +38,7 @@
 .textButton { color: #004bb8; font-size: 14px; font-weight: 500; padding: 4px 0; }
 .amenities { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: repeat(5,auto); grid-auto-flow: column; gap: 8px 24px; margin: 14px 0; }
 .amenitiesSingle { grid-template-columns: minmax(0,1fr); grid-template-rows: none; grid-auto-flow: row; }
+.amenitiesExpanded { grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: none; grid-auto-flow: row; }
 .amenities li, .amenityList li { font-size: 14px; line-height: 22px; font-weight: 400; color: #192024; gap: 10px; }
 .amenities svg, .amenityList svg { width: 18px; height: 18px; color: #59636a; margin-top: 2px; }
 .secondaryButton { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 7px 14px; border: 1px solid #a0a8ad; border-radius: 5px; font-weight: 600; font-size: 14px; }

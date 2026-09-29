@@ -134,19 +134,19 @@ test("desktop overview and expanded amenities retain complete public property co
   assert.match(desktop, /<p>\{description\}<\/p>/);
   assert.doesNotMatch(desktop, /descriptionExpanded|line-clamp/);
   assert.match(desktop, /aria-expanded=\{allAmenities\}/);
-  assert.match(desktop, /mobileHotelAmenityGroups\(props\.amenityItems\.slice\(10\)\)/);
   assert.match(mobile, /mobileHotelAmenityGroups\(props\.amenityItems\)/);
-  assert.match(desktop, /items=\{group\.items\}/);
   assert.match(desktop, /Amenity details are not available yet/);
   assert.match(desktop, /hotels=\{props\.relatedHotels\}/);
   assert.match(desktop, /searchContext=\{props\.relatedSearchContext\}/);
 });
 
-test("desktop amenities show a short summary and keep the disclosure below expanded details", () => {
-  const summary = desktop.indexOf("props.amenityItems.slice(0, 10)");
-  const expanded = desktop.indexOf("mobileHotelAmenityGroups(props.amenityItems.slice(10))");
+test("desktop amenities expand as one continuous two-column list without changing the disclosure button", () => {
+  const amenityList = desktop.indexOf("items={allAmenities ? props.amenityItems : props.amenityItems.slice(0, 10)}");
   const toggle = desktop.indexOf('Show fewer amenities');
-  assert.ok(summary >= 0 && expanded > summary && toggle > expanded);
+  assert.ok(amenityList >= 0 && toggle > amenityList);
+  assert.match(desktop, /allAmenities \? styles\.amenitiesExpanded/);
+  assert.doesNotMatch(desktop, /mobileHotelAmenityGroups\(props\.amenityItems\.slice\(10\)\)|group\.title|items=\{group\.items\}/);
+  assert.match(desktop, /className=\{styles\.secondaryButton\}/);
   assert.match(desktop, /aria-expanded=\{allAmenities\}/);
   assert.match(desktop, /props\.amenityItems\.length > 10/);
 });
