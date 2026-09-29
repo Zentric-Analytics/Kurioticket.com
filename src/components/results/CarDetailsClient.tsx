@@ -21,7 +21,6 @@ import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useRegion } from "@/components/region/RegionProvider";
-import { DetailsBackLink } from "@/components/results/DetailsBackLink";
 import { CarsRouteLoadingOverlay } from "@/components/results/CarsRouteLoadingOverlay";
 import { CarDetailsHero } from "@/components/results/carDetails/CarDetailsHero";
 import {
@@ -333,29 +332,26 @@ export function CarDetailsExperience({
                 </p>
               </div>
             }
-            desktopOverlay={
-              <div className="flex min-w-0 items-start justify-between gap-3 text-white">
-                <div className="min-w-0 pt-0.5">
-                  <p className="text-[10px] font-bold uppercase tracking-[.14em] text-white/85">
-                    {car.categoryLabel}
-                  </p>
-                  <Heading
-                    level={modelHeadingLevel}
-                    headingRef={modelHeadingRef}
-                    className="mt-0.5 scroll-mt-24 text-3xl font-extrabold leading-tight tracking-[-0.025em] text-white outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  >
-                    {car.modelName}
-                  </Heading>
-                </div>
-                <CarHeroActions
-                  car={car}
-                  isSaved={isSaved}
-                  toggleSavedCar={toggleSavedCar}
-                  shareCar={shareCar}
-                  copy={copy}
-                  desktop
-                />
-              </div>
+            desktopBackControl={
+              <Link
+                href={resultsHref}
+                aria-label={copy("carDetails.backToResults")}
+                title={copy("carDetails.backToResults")}
+                className="focus-ring flex size-10 items-center justify-center rounded-full border border-slate-300 bg-[#E7EBF1] text-[#07133B] shadow-[0_2px_8px_rgba(15,23,42,0.14)] transition hover:bg-[#DDE3EB]"
+                data-car-details-desktop-back-link
+              >
+                <ArrowLeft size={20} aria-hidden="true" />
+              </Link>
+            }
+            desktopImageActions={
+              <CarHeroActions
+                car={car}
+                isSaved={isSaved}
+                toggleSavedCar={toggleSavedCar}
+                shareCar={shareCar}
+                copy={copy}
+                desktop
+              />
             }
             guidedMobileActions={
               presentation === "guided-content" ? (
@@ -484,7 +480,7 @@ function CarHeroActions({
     <div
       className={
         desktop
-          ? "flex shrink-0 items-center gap-1"
+          ? "flex shrink-0 items-center gap-2"
           : "flex h-11 shrink-0 items-center overflow-hidden rounded-full border border-white/70 bg-white/85 shadow-[0_2px_7px_rgba(15,23,42,0.08)] backdrop-blur-md"
       }
       data-car-details-actions
@@ -494,7 +490,7 @@ function CarHeroActions({
         aria-label={`${isSaved ? copy("carDetails.unsave") : copy("carDetails.save")} ${car.modelName}`}
         aria-pressed={isSaved}
         onClick={toggleSavedCar}
-        className={`focus-ring flex size-11 items-center justify-center transition ${desktop ? "rounded-full border border-white/35 bg-slate-950/35 hover:bg-slate-950/55" : "bg-transparent hover:bg-white/70"} ${isSaved ? "text-rose-500" : desktop ? "text-white" : "text-slate-700"}`}
+        className={`focus-ring flex items-center justify-center transition ${desktop ? "size-10 rounded-full border border-slate-300 bg-[#E7EBF1] shadow-[0_2px_8px_rgba(15,23,42,0.14)] hover:bg-[#DDE3EB]" : "size-11 bg-transparent hover:bg-white/70"} ${isSaved ? "text-rose-500" : desktop ? "text-[#07133B]" : "text-slate-700"}`}
       >
         <Heart
           size={desktop ? 20 : 22}
@@ -506,7 +502,7 @@ function CarHeroActions({
         type="button"
         aria-label={`${copy("carDetails.share")} ${car.modelName}`}
         onClick={() => void shareCar()}
-        className={`focus-ring flex size-11 items-center justify-center transition ${desktop ? "rounded-full border border-white/35 bg-slate-950/35 text-white hover:bg-slate-950/55" : "bg-transparent text-slate-700 hover:bg-white/70"}`}
+        className={`focus-ring flex items-center justify-center transition ${desktop ? "size-10 rounded-full border border-slate-300 bg-[#E7EBF1] text-[#07133B] shadow-[0_2px_8px_rgba(15,23,42,0.14)] hover:bg-[#DDE3EB]" : "size-11 bg-transparent text-slate-700 hover:bg-white/70"}`}
       >
         <Share2 size={desktop ? 19 : 21} aria-hidden="true" />
       </button>
@@ -569,13 +565,7 @@ export function CarDetailsClient({
       <CarsRouteLoadingOverlay active={mobileResultsPending} />
       <section className="bg-transparent lg:bg-white lg:border-b lg:border-border lg:pb-14">
         <div className="page-shell py-0 lg:py-7">
-          <DetailsBackLink
-            href={resultsHref}
-            className="hidden text-[#075EE8] hover:text-[#004BB8] lg:inline-flex"
-          >
-            {copy("carDetails.backToResults")}
-          </DetailsBackLink>
-          <div className="lg:mt-5">
+          <div>
             <CarDetailsExperience
               car={car}
               search={search}
