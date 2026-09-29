@@ -23,13 +23,13 @@ test("results desktop search typography mirrors the polished mobile-web hierarch
   assert.ok(valueClass, "fieldInputClass should remain defined");
 
   for (const token of [
-    "lg:mb-[3px]",
-    "lg:text-[11px]",
-    "lg:font-medium",
-    "lg:normal-case",
-    "lg:leading-[14px]",
-    "lg:tracking-normal",
-    "lg:text-[#595959]",
+    "lg:mb-1",
+    "lg:text-[10px]",
+    "lg:font-bold",
+    "lg:uppercase",
+    "lg:leading-4",
+    "lg:tracking-[0.11em]",
+    "lg:text-slate-500",
   ])
     assert.ok(labelClass.includes(token), `missing desktop label token: ${token}`);
 
@@ -42,7 +42,10 @@ test("results desktop search typography mirrors the polished mobile-web hierarch
   ])
     assert.ok(valueClass.includes(token), `missing desktop value token: ${token}`);
 
-  assert.doesNotMatch(labelClass, /lg:uppercase|lg:tracking-\[0\.10em\]/);
+  assert.doesNotMatch(
+    labelClass,
+    /lg:normal-case|lg:tracking-normal|lg:text-\[#595959\]/,
+  );
   assert.equal(
     (
       source.match(
