@@ -658,6 +658,7 @@ export const translations: TranslationDictionary = {
   'estimatedPrice': 'Uppskattat pris',
   'providerPrice': 'Leverantörspris',
   'viewFlight': 'Visa flyg',
+  'viewDeal': "Visa erbjudande",
   'flightCardProviderHandoff': 'Slutpris, tillgänglighet, bokning och prisregler bekräftas av leverantören.',
   'flightCardProviderHandoffConverted': 'Slutpris, tillgänglighet, bokning och prisregler bekräftas av leverantören. Slutlig leverantörsvaluta kan skilja sig från vald visningsvaluta.',
   'providerNormalizedItineraryPrefix': 'Ut- och returinformation visas från leverantörsnormaliserade resplansdata.',

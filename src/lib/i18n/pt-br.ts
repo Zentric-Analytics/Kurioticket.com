@@ -972,6 +972,7 @@ export const translations: TranslationDictionary = {
   convertedDisplayEstimateProviderPrice:
     "Estimativa exibida convertida. Preço do provedor: {{providerPrice}}. O preço final do provedor pode ser diferente.",
   viewFlight: "Ver voo",
+  viewDeal: "Ver oferta",
   flightCardProviderHandoff:
     "Preço final, disponibilidade, reserva e regras da tarifa são confirmados pelo provedor.",
   flightCardProviderHandoffConverted:

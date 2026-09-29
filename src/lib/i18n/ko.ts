@@ -1831,6 +1831,7 @@ export const translations: TranslationDictionary = {
   convertedDisplayEstimateProviderPrice:
     "변환된 표시 예상 금액입니다. 제공업체 요금: {{providerPrice}}. 최종 제공업체 요금은 다를 수 있습니다.",
   viewFlight: "항공편 보기",
+  viewDeal: "상품 보기",
   flightCardProviderHandoff:
     "최종 요금, 이용 가능 여부, 예약 및 운임 규정은 제공업체에서 확인합니다.",
   flightCardProviderHandoffConverted:

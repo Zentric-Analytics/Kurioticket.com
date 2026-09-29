@@ -1031,6 +1031,7 @@ export const translations: TranslationDictionary = {
   "homePopularDestinationCountry.unitedStates": "Vereinigte Staaten",
   searchFlights: "Flüge suchen",
   viewFlight: "Flug ansehen",
+  viewDeal: "Angebot ansehen",
   continueToProvider: "Weiter zum Anbieter",
   selectedFlights: "Ausgewählte Flüge",
   compareMoreProviders: "Weitere Anbieter vergleichen",

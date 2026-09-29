@@ -1673,6 +1673,7 @@ export const translations: TranslationDictionary = {
   convertedDisplayEstimateProviderPrice:
     "ราคาแสดงผลโดยประมาณที่แปลงแล้ว ราคาจากผู้ให้บริการ: {{providerPrice}} ราคาผู้ให้บริการขั้นสุดท้ายอาจแตกต่างออกไป",
   viewFlight: "ดูเที่ยวบิน",
+  viewDeal: "ดูข้อเสนอ",
   flightCardProviderHandoff:
     "รายละเอียดขาไปและขากลับแสดงจากข้อมูลกำหนดการเดินทางที่ผู้ให้บริการส่งมา ราคา ความพร้อมให้บริการ การจอง และกฎค่าโดยสารขั้นสุดท้ายได้รับการยืนยันโดยผู้ให้บริการ",
   flightCardProviderHandoffConverted:

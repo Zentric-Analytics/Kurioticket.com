@@ -739,6 +739,7 @@ export const translations: TranslationDictionary = {
   displayEstimateConvertedFromProviderPrice: "{{formatted}}。{{providerPrice}} から換算した表示見積もりです。最終的なプロバイダー料金は異なる場合があります。",
   convertedDisplayEstimateProviderPrice: "換算された表示見積もりです。プロバイダー料金：{{providerPrice}}。最終的なプロバイダー料金は異なる場合があります。",
   viewFlight: "航空券を見る",
+  viewDeal: "オファーを見る",
   flightCardProviderHandoff: "最終的な料金、空席状況、予約、運賃規則はプロバイダーで確認されます。",
   flightCardProviderHandoffConverted: "最終的な料金、空席状況、予約、運賃規則はプロバイダーで確認されます。最終的なプロバイダー通貨は選択した表示通貨と異なる場合があります。",
   providerNormalizedItineraryPrefix: "往路と復路の詳細は、プロバイダーで正規化された旅程データから表示されています。",

@@ -1853,6 +1853,7 @@ export const translations: TranslationDictionary = {
   convertedDisplayEstimateProviderPrice:
     "Stima visualizzata convertita. Prezzo del fornitore: {{providerPrice}}. Il prezzo finale del fornitore può variare.",
   viewFlight: "Vedi volo",
+  viewDeal: "Vedi offerta",
   flightCardProviderHandoff:
     "Prezzo finale, disponibilità, prenotazione e regole tariffarie sono confermati dal fornitore.",
   flightCardProviderHandoffConverted:

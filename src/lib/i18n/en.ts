@@ -3693,6 +3693,7 @@ export const translations: TranslationDictionary = {
   convertedDisplayEstimateProviderPrice:
     "Converted display estimate. Provider price: {{providerPrice}}. Final provider price may differ.",
   viewFlight: "View Flight",
+  viewDeal: "View deal",
   flightCardProviderHandoff:
     "Final price, availability, booking, and fare rules are confirmed by the provider.",
   flightCardProviderHandoffConverted:

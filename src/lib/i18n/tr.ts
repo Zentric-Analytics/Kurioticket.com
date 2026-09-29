@@ -2081,6 +2081,7 @@ export const translations: TranslationDictionary = {
   displayEstimateConvertedFromProviderPrice: "{{formatted}}. Görüntülenen tahmin {{providerPrice}} sağlayıcı fiyatından dönüştürüldü. Nihai sağlayıcı fiyatı farklı olabilir.",
   convertedDisplayEstimateProviderPrice: "Dönüştürülmüş görüntüleme tahmini. Sağlayıcı fiyatı: {{providerPrice}}. Nihai sağlayıcı fiyatı farklı olabilir.",
   viewFlight: "Uçuşu görüntüle",
+  viewDeal: "Fırsatı görüntüle",
   flightCardProviderHandoff: "Son fiyat, uygunluk, rezervasyon ve ücret kuralları sağlayıcı tarafından onaylanır.",
   flightCardProviderHandoffConverted: "Son fiyat, uygunluk, rezervasyon ve ücret kuralları sağlayıcı tarafından onaylanır. Nihai sağlayıcı para birimi seçtiğiniz görüntüleme para biriminden farklı olabilir.",
   providerNormalizedItineraryPrefix: "Gidiş ve dönüş ayrıntıları sağlayıcı tarafından normalize edilen güzergâh verilerinden gösterilir.",

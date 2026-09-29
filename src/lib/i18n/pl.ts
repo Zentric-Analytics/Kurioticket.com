@@ -1685,6 +1685,7 @@ export const translations: TranslationDictionary = {
   displayEstimateConvertedFromProviderPrice: "{{formatted}}. Szacunkowa cena wyświetlania przeliczona z {{providerPrice}}. Ostateczna cena dostawcy może się różnić.",
   convertedDisplayEstimateProviderPrice: "Szacunkowa cena wyświetlania po przeliczeniu. Cena u dostawcy: {{providerPrice}}. Ostateczna cena dostawcy może się różnić.",
   viewFlight: "Zobacz lot",
+  viewDeal: "Zobacz ofertę",
   flightCardProviderHandoff: "Ostateczna cena, dostępność, rezerwacja i zasady taryfy są potwierdzane przez dostawcę.",
   flightCardProviderHandoffConverted: "Ostateczna cena, dostępność, rezerwacja i zasady taryfy są potwierdzane przez dostawcę. Ostateczna waluta dostawcy może różnić się od wybranej waluty wyświetlania.",
   flightDetailsLoading: "Ładowanie szczegółów lotu...",

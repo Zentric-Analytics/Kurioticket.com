@@ -55,6 +55,12 @@ test("desktop Flight result cards use the lighter hierarchy without changing Mob
   assert.match(card, /flight-card-details mt-3[^\n]*rounded-lg bg-slate-50\/70/);
   assert.match(card, /className="h-3\.5 w-3\.5 shrink-0 text-black"/);
   assert.match(globals, /grid-template-areas: "legs fare" "details fare";/);
+  assert.match(card, /actionLabel \?\? t\("viewDeal"\)/);
+  assert.match(card, /flight-card-fare-action flex flex-col items-end/);
+  assert.match(card, /<ChevronRight className="h-4 w-4"/);
+  assert.doesNotMatch(card, /flight-card-view-button[^\n]*bg-\[#004BB8\]/);
+  assert.match(globals, /\.flight-card-fare-action \{[\s\S]*padding-right: 0\.125rem;/);
+  assert.match(globals, /\.flight-card-view-button \{[\s\S]*min-width: 0;[\s\S]*padding-left: 0;[\s\S]*padding-right: 0;/);
   assert.doesNotMatch(card, /flight-card-detail-item flex-nowrap whitespace-nowrap border-r/);
   assert.match(card, /<MobileFlightCard/);
 });
