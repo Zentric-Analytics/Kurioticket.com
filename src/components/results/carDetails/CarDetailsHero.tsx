@@ -72,6 +72,98 @@ export function CarDetailsHero({
 
   return (
     <section className="-mx-4 border-b border-slate-200 bg-[#F5F7FB] pb-4 sm:mx-0 lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
+      {reserveMobileControlSafeZone ? (
+        <style>{`
+          @media (min-width: 1024px) {
+            [data-car-details-experience] {
+              padding-bottom: 7rem;
+            }
+
+            [data-car-details-experience] > div.grid {
+              display: block;
+            }
+
+            [data-car-details-experience] > div.grid > aside {
+              display: block !important;
+              position: fixed !important;
+              inset-inline: 0;
+              bottom: 0;
+              top: auto !important;
+              z-index: 90;
+              width: 100%;
+              padding: 0.75rem 1.5rem;
+              border-top: 1px solid #e2e8f0;
+              background: rgba(255, 255, 255, 0.98);
+              box-shadow: 0 -8px 28px rgba(15, 23, 42, 0.12);
+              backdrop-filter: blur(14px);
+            }
+
+            [data-car-details-experience] > div.grid > aside > div {
+              display: grid;
+              grid-template-columns: minmax(180px, auto) minmax(0, 1fr) minmax(180px, 240px);
+              grid-template-rows: auto auto;
+              column-gap: 2rem;
+              align-items: center;
+              width: 100%;
+              max-width: 1180px;
+              margin: 0 auto;
+              padding: 0;
+              border: 0;
+              border-radius: 0;
+              background: transparent;
+              box-shadow: none;
+            }
+
+            [data-car-details-experience] > div.grid > aside > div > p:nth-child(1) {
+              grid-column: 1;
+              grid-row: 2;
+              margin: 0;
+              font-size: 0.75rem;
+              line-height: 1rem;
+              color: #56658e;
+            }
+
+            [data-car-details-experience] > div.grid > aside > div > p:nth-child(2) {
+              grid-column: 1;
+              grid-row: 1;
+              margin: 0;
+              font-size: 1.25rem;
+              line-height: 1.5rem;
+              color: #071a48;
+            }
+
+            [data-car-details-experience] > div.grid > aside > div > p:nth-child(3) {
+              grid-column: 2;
+              grid-row: 1;
+              margin: 0;
+              align-self: end;
+              font-size: 0.8125rem;
+              line-height: 1.125rem;
+              color: #475569;
+            }
+
+            [data-car-details-experience] > div.grid > aside > div > p:nth-child(4) {
+              grid-column: 2;
+              grid-row: 2;
+              margin: 0;
+              align-self: start;
+              font-size: 0.75rem;
+              line-height: 1rem;
+              color: #56658e;
+            }
+
+            [data-car-details-experience] > div.grid > aside > div > a,
+            [data-car-details-experience] > div.grid > aside > div > button,
+            [data-car-details-experience] > div.grid > aside > div > div {
+              grid-column: 3;
+              grid-row: 1 / span 2;
+              width: 100%;
+              margin-top: 0 !important;
+              align-self: center;
+            }
+          }
+        `}</style>
+      ) : null}
       <div className="min-w-0">
         <figure
           ref={imageStageRef}
