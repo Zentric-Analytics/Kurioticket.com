@@ -26,6 +26,10 @@ const skeleton = readFileSync(
   new URL("../ui/Skeleton.tsx", import.meta.url),
   "utf8",
 );
+const styles = readFileSync(
+  new URL("../../app/globals.css", import.meta.url),
+  "utf8",
+);
 
 test("standalone Cars Results carries the mobile canvas surface through desktop", () => {
   assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] pb-8">/);
@@ -53,6 +57,23 @@ test("desktop Cars filters inherit the mobile F2F4F8 section surface without cha
   assert.match(
     results,
     /desktopSurfaceParity \? "bg-\[#F2F4F8\]" : "bg-\[#EEF3F8\]"/,
+  );
+  assert.match(
+    results,
+    /desktopSurfaceParity &&\s*layout !== "mobile" &&\s*"cars-desktop-filter-surface"/,
+  );
+  assert.doesNotMatch(results, /t\("carsResults\.filterBy"\)/);
+  assert.match(
+    results,
+    /layout === "desktop"[\s\S]*?<h2 className="truncate[^"]*"[\s\S]*?\{t\("filters"\)\}/,
+  );
+  assert.match(
+    styles,
+    /\.desktop-filter-sidebar\.cars-desktop-filter-surface \{\s*background: #F2F4F8 !important;\s*\}/,
+  );
+  assert.match(
+    styles,
+    /\.desktop-filter-sidebar\.cars-desktop-filter-surface\s*\.desktop-filter-sidebar__header \{\s*background: #F2F4F8 !important;\s*\}/,
   );
   assert.match(results, /layout === "mobile"[\s\S]*?"grid gap-6 bg-transparent"/);
   assert.match(results, /data-cars-mobile-filter-shell[\s\S]*?bg-\[#F2F4F8\]/);
