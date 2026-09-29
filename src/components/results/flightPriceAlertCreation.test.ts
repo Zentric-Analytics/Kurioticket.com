@@ -70,6 +70,12 @@ test("Flight feedback is accessible and never claims tracking before save", () =
   assert.doesNotMatch(control, /Price tracking is on/);
 });
 
+test("desktop Flight alert restores the compact original blue treatment without helper copy", () => {
+  assert.match(control, /hidden rounded-2xl border border-\[#CFE0F8\] bg-\[#EEF6FF\] px-4 py-2/);
+  assert.match(control, /flex min-h-10 items-center justify-between gap-2/);
+  assert.equal(control.match(/Choose a target and we’ll notify you if the price drops\./g)?.length, 1);
+});
+
 test("Hotel alert implementation remains isolated from Flight target work", () => {
   assert.doesNotMatch(hotel, /FLIGHT_ALERT_|matchingTargetFlightPriceAlert|flightAlertDesiredPrice/);
 });
