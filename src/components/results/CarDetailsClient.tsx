@@ -267,6 +267,7 @@ export function CarDetailsExperience({
       copy={copy}
       sectionHeadingLevel={sectionHeadingLevel}
       itemHeadingLevel={itemHeadingLevel}
+      showSectionHeading={presentation !== "standalone-content"}
     />
   );
   return (
@@ -412,6 +413,7 @@ export function CarDetailsExperience({
                       copy={copy}
                       locale={locale}
                       headingLevel={sectionHeadingLevel}
+                      showSectionHeading={false}
                     />
                   ) : null}
                 </section>
@@ -436,6 +438,7 @@ export function CarDetailsExperience({
                     locale={locale}
                     copy={copy}
                     headingLevel={sectionHeadingLevel}
+                    showSectionHeading={false}
                   />
                 </section>
               </div>
@@ -628,6 +631,7 @@ function CarPriceComparisonSection({
   copy,
   locale,
   headingLevel,
+  showSectionHeading = true,
 }: {
   car: NormalizedCarResult;
   search: CarSearchParams;
@@ -639,6 +643,7 @@ function CarPriceComparisonSection({
   copy: (key: string) => string;
   locale: string;
   headingLevel: HeadingLevel;
+  showSectionHeading?: boolean;
 }) {
   const selectedOffer =
     offers.find((candidate) => candidate.id === selectedOfferId) ?? offers[0];
@@ -677,16 +682,18 @@ function CarPriceComparisonSection({
       className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:bg-transparent"
       data-car-price-comparison
     >
-      <Heading
-        level={headingLevel}
-        className="hidden text-xs font-bold leading-[18px] tracking-[-0.2px] text-slate-950 lg:block lg:text-xl lg:font-extrabold lg:leading-normal lg:tracking-tight"
-      >
-        <span className="lg:hidden">Compare deals</span>
-        <span className="hidden lg:inline">
-          {copy("carDetails.comparePrices")}
-        </span>
-      </Heading>
-      <p className="mt-1 text-[11px] font-medium leading-4 text-slate-600 lg:text-sm lg:leading-normal">
+      {showSectionHeading ? (
+        <Heading
+          level={headingLevel}
+          className="hidden text-xs font-bold leading-[18px] tracking-[-0.2px] text-slate-950 lg:block lg:text-xl lg:font-extrabold lg:leading-normal lg:tracking-tight"
+        >
+          <span className="lg:hidden">Compare deals</span>
+          <span className="hidden lg:inline">
+            {copy("carDetails.comparePrices")}
+          </span>
+        </Heading>
+      ) : null}
+      <p className={`mt-1 text-[11px] font-medium leading-4 text-slate-600 lg:text-sm lg:leading-normal ${showSectionHeading ? "" : "lg:mt-0"}`}>
         {formatCarDate(search.pickupDate, locale)} –{" "}
         {formatCarDate(search.dropoffDate, locale)} · {days}{" "}
         {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
@@ -854,12 +861,14 @@ function CarLocationSection({
   locale,
   copy,
   headingLevel,
+  showSectionHeading = true,
 }: {
   car: NormalizedCarResult;
   search: CarSearchParams;
   locale: string;
   copy: (key: string) => string;
   headingLevel: HeadingLevel;
+  showSectionHeading?: boolean;
 }) {
   const searchedPickupLocation = search.pickupLocation.trim();
   const searchedReturnLocation = search.dropoffLocation.trim();
@@ -883,13 +892,15 @@ function CarLocationSection({
       className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:bg-transparent"
       data-car-location-section
     >
-      <Heading
-        level={headingLevel}
-        className="hidden text-xs font-bold leading-[18px] tracking-[-0.2px] text-slate-950 lg:block lg:text-xl lg:font-extrabold lg:leading-normal lg:tracking-tight"
-      >
-        {copy("carDetails.location")}
-      </Heading>
-      <div className="mt-0 flex items-start gap-3 lg:mt-3">
+      {showSectionHeading ? (
+        <Heading
+          level={headingLevel}
+          className="hidden text-xs font-bold leading-[18px] tracking-[-0.2px] text-slate-950 lg:block lg:text-xl lg:font-extrabold lg:leading-normal lg:tracking-tight"
+        >
+          {copy("carDetails.location")}
+        </Heading>
+      ) : null}
+      <div className={`mt-0 flex items-start gap-3 ${showSectionHeading ? "lg:mt-3" : "lg:mt-0"}`}>
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue">
           <MapPin size={18} aria-hidden="true" />
         </span>
@@ -1099,6 +1110,7 @@ function PickupReturnSection({
   copy,
   sectionHeadingLevel,
   itemHeadingLevel,
+  showSectionHeading = true,
 }: {
   car: NormalizedCarResult;
   search: CarSearchParams;
@@ -1106,19 +1118,24 @@ function PickupReturnSection({
   copy: (key: string) => string;
   sectionHeadingLevel: HeadingLevel;
   itemHeadingLevel: HeadingLevel;
+  showSectionHeading?: boolean;
 }) {
   const hasDriverLicenseRequirement = car.requiredDocuments.some((document) =>
     /driv(?:ing|er'?s?)\s+licen[cs]e/i.test(document),
   );
   return (
     <section className="-mx-4 border-y border-slate-200 bg-[#F5F7FB] px-4 py-5 lg:mx-0 lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
-      <Heading
-        level={sectionHeadingLevel}
-        className="hidden text-xs font-bold leading-[18px] tracking-[-0.2px] text-[#020617] lg:block lg:text-xl lg:leading-normal lg:tracking-[-0.015em] lg:text-[#102A43]"
+      {showSectionHeading ? (
+        <Heading
+          level={sectionHeadingLevel}
+          className="hidden text-xs font-bold leading-[18px] tracking-[-0.2px] text-[#020617] lg:block lg:text-xl lg:leading-normal lg:tracking-[-0.015em] lg:text-[#102A43]"
+        >
+          {copy("carDetails.pickupReturn")}
+        </Heading>
+      ) : null}
+      <div
+        className={`relative mt-0 grid gap-5 md:grid-cols-2 md:gap-6 ${showSectionHeading ? "lg:mt-4" : "lg:mt-0"}`}
       >
-        {copy("carDetails.pickupReturn")}
-      </Heading>
-      <div className="relative mt-0 grid gap-5 md:grid-cols-2 md:gap-6 lg:mt-4">
         {[
           [
             "Pick-up",

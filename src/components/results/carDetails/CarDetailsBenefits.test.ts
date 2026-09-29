@@ -160,6 +160,43 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-car-location-section/);
 });
 
+test("standalone car details keep the tabs but hide duplicate desktop section headings", () => {
+  assert.match(clientSource, /<CarDetailsSectionNav activeTab={activeTab}/);
+  assert.match(clientSource, /compare: copy\("carDetails\.comparePrices"\)/);
+  assert.match(clientSource, /pickup: copy\("carDetails\.pickupReturn"\)/);
+  assert.match(clientSource, /location: copy\("carDetails\.location"\)/);
+
+  assert.match(clientSource, /showSectionHeading={false}/);
+  assert.match(
+    clientSource,
+    /showSectionHeading={presentation !== "standalone-content"}/,
+  );
+
+  const comparison = sourceBetween(
+    clientSource,
+    "function CarPriceComparisonSection",
+    "function CarLocationSection",
+  );
+  assert.match(comparison, /showSectionHeading \? \(/);
+  assert.match(comparison, /carDetails\.comparePrices/);
+
+  const location = sourceBetween(
+    clientSource,
+    "function CarLocationSection",
+    "function BookingSummary",
+  );
+  assert.match(location, /showSectionHeading \? \(/);
+  assert.match(location, /carDetails\.location/);
+
+  const pickup = sourceBetween(
+    clientSource,
+    "function PickupReturnSection",
+    "function MobileBookingDock",
+  );
+  assert.match(pickup, /showSectionHeading \? \(/);
+  assert.match(pickup, /carDetails\.pickupReturn/);
+});
+
 test("desktop car details keep controls outside the image and rebalance amenities", () => {
   assert.match(heroSource, /data-car-details-desktop-centered-image/);
   assert.match(heroSource, /lg:max-w-\[760px\]/);
