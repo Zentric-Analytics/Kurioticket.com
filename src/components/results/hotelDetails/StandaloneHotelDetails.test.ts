@@ -96,10 +96,11 @@ test("desktop stay editing validates dates and retains the current hotel route",
   assert.match(stayEditor, /parseHotelDetailsSearchCount\(context\?\.rooms, 1, 6\)/);
 });
 
-test("route chrome and results links preserve navigation with one desktop footer", () => {
+test("route chrome and results links preserve navigation with the Results-style desktop footer", () => {
   assert.match(page, /<AppHeader[\s\S]*?hideDesktopTravelNav[\s\S]*?hideMobileCategoryTabs/);
   assert.match(page, /data-hotel-details-desktop-header/);
-  assert.match(page, /data-hotel-details-desktop-footer>[\s\S]*?<Footer className="bg-\[#f5f5f5\]"\s*\/>/);
+  assert.match(page, /data-hotel-details-desktop-footer>[\s\S]*?<Footer variant="brand-legal-only"\s*\/>/);
+  assert.doesNotMatch(page, /<Footer className="bg-\[#f5f5f5\]"/);
   assert.equal(page.match(/<Footer\b/g)?.length, 1);
   assert.match(desktop, /href=\{props\.resultsHref\}[\s\S]*?data-standalone-hotel-back-link/);
   assert.doesNotMatch(client, /data-standalone-hotel-back-link/);
@@ -137,4 +138,9 @@ test("desktop external Hotel View deal reserves a new tab before the async provi
   assert.match(continueOffer, /providerWindow && !providerWindow\.closed/);
   assert.match(continueOffer, /providerWindow\.close\(\)/);
   assert.doesNotMatch(continueOffer, /window\.location\.href/);
+});
+
+
+test("standalone Hotel Details keeps the mobile-web white page canvas on desktop", () => {
+  assert.match(client, /<main className="flex-1 bg-white sm:bg-\[#f8fafc\] lg:bg-white">/);
 });
