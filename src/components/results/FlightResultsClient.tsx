@@ -4796,7 +4796,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             <section className="mx-auto mt-5 w-full max-w-6xl px-1">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#064CF7]">
                     {t("quickResumeLatestSearches")}
                   </p>
                   <h2 className="mt-0.5 text-base font-bold tracking-tight text-slate-950 sm:text-lg">
@@ -5139,11 +5139,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   function renderStickySearchPopoutOverlay() {
     const stickyLabelClass =
-      "text-[0.62rem] font-semibold uppercase leading-3 tracking-[0.12em] text-slate-500";
+      "text-[0.62rem] font-semibold uppercase leading-3 tracking-[0.12em] text-[#56658E]";
     const stickyValueClass =
       "mt-0.5 block min-w-0 truncate text-sm font-semibold leading-5 text-slate-950";
     const panelFieldClass =
-      "group relative flex min-h-[58px] min-w-0 flex-col justify-center border-r border-slate-200/80 bg-white/90 px-3 py-1.5 text-start outline-none transition-colors hover:bg-white focus-within:z-10 focus-within:bg-white focus-within:outline-none";
+      "group relative flex min-h-[58px] min-w-0 flex-col justify-center border-r border-slate-200/80 bg-white px-3 py-1.5 text-start outline-none transition-colors hover:bg-white focus-within:z-10 focus-within:bg-white focus-within:outline-none";
     const stickyDateSummary = departureDateInput
       ? tripTypeInput === "round-trip" && returnDateInput
         ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
@@ -5180,11 +5180,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 onChangeCapture={markExpandedSearchInteraction}
                 onMouseDown={(event) => event.stopPropagation()}
                 onClick={(event) => event.stopPropagation()}
-                className="w-full max-w-4xl rounded-2xl border border-slate-200/90 bg-[#fbfaf7]/95 p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80 backdrop-blur-md"
+                className="w-full max-w-4xl rounded-2xl border border-slate-200/90 bg-[#F5F7FB] p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80"
               >
                 <div className="mb-4 flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#064CF7]">
                       {t("searchFlights")}
                     </p>
                     <h2
@@ -5202,7 +5202,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     type="button"
                     aria-label={t("close")}
                     onClick={() => collapseStickySearch()}
-                    className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-950"
+                    className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-950"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -5226,15 +5226,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         className={cn(
                           "focus-ring inline-flex min-h-6 items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-colors",
                           selected
-                            ? "bg-[#004BB8]/10 text-[#004BB8]"
-                            : "text-slate-500 hover:bg-white hover:text-slate-800",
+                            ? "bg-[#064CF7]/10 text-[#064CF7]"
+                            : "text-[#071A48] hover:bg-white hover:text-slate-950",
                         )}
                       >
                         <span
                           aria-hidden="true"
                           className={cn(
                             "h-1.5 w-1.5 rounded-full",
-                            selected ? "bg-[#004BB8]" : "bg-slate-300",
+                            selected ? "bg-[#064CF7]" : "bg-slate-300",
                           )}
                         />
                         {option.label}
@@ -5243,7 +5243,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   })}
                 </div>
 
-                <div className="grid min-h-[58px] grid-cols-[minmax(0,1.05fr)_44px_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1fr)_112px] items-stretch overflow-visible rounded-xl border border-slate-200/85 bg-white/90 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]">
+                <div className="grid min-h-[58px] grid-cols-[minmax(0,1.05fr)_44px_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1fr)_112px] items-stretch overflow-visible rounded-xl border border-slate-200/85 bg-white shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]">
                   <div ref={stickyOriginWrapRef} className={panelFieldClass}>
                     <label
                       className={stickyLabelClass}
@@ -5252,7 +5252,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       {t("origin")}
                     </label>
                     <div className="mt-0.5 flex min-w-0 items-center gap-2">
-                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
                       <input
                         id="sticky-results-origin"
                         name="origin"
@@ -5313,7 +5313,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       event.stopPropagation();
                       handleSwapLocations();
                     }}
-                    className="focus-ring flex min-h-[58px] cursor-pointer items-center justify-center border-r border-slate-200/80 bg-white/90 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800"
+                    className="focus-ring flex min-h-[58px] cursor-pointer items-center justify-center border-r border-slate-200/80 bg-white text-[#004BB8] transition-colors hover:bg-slate-50 hover:text-[#064CF7]"
                   >
                     <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -5329,7 +5329,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       {t("destination")}
                     </label>
                     <div className="mt-0.5 flex min-w-0 items-center gap-2">
-                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
                       <input
                         id="sticky-results-destination"
                         name="destination"
@@ -5403,7 +5403,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         {t("travelDates")}
                       </span>
                       <span className={cn(stickyValueClass, "flex items-center gap-2")}>
-                        <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                        <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
                         <span className="min-w-0 truncate">{stickyDateSummary}</span>
                       </span>
                     </button>
@@ -5461,7 +5461,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       <span className={stickyLabelClass}>{t("travelers")}</span>
                       <span className="mt-0.5 flex min-w-0 items-center justify-between gap-2 text-sm font-medium leading-5 text-slate-950">
                         <span className="flex min-w-0 items-center gap-2">
-                          <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                          <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
                           <span className="truncate">{travelerCabinSummary}</span>
                         </span>
                         <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" />
@@ -5535,7 +5535,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
                   <Button
                     type="submit"
-                    className="h-full min-h-[58px] rounded-none rounded-r-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-none ring-0 hover:bg-[#021C2B]"
+                    className="h-full min-h-[58px] rounded-none rounded-r-xl bg-[#064CF7] px-4 text-sm font-bold text-white shadow-none ring-0 hover:bg-[#004BB8]"
                   >
                     {t("search")}
                   </Button>
@@ -5720,7 +5720,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       {t("origin")}
                     </label>
                     <div className="flex min-w-0 items-center gap-2">
-                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
                       <input
                       id="results-origin"
                       ref={originInputRef}
@@ -5814,7 +5814,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       {t("destination")}
                     </label>
                     <div className="flex min-w-0 items-center gap-2">
-                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
                       <input
                       id="results-destination"
                       ref={destinationInputRef}
@@ -5989,7 +5989,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         </span>
                       </span>
                     </span>
-                    <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
+                    <ChevronDown className="h-4 w-4 shrink-0 text-slate-700" />
                   </button>
 
                   {travelerPopoverOpen &&

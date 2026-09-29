@@ -837,7 +837,7 @@ textarea {
 
 .flight-card-body {
   grid-template-columns: minmax(0, 1fr) 196px;
-  grid-template-areas: "legs fare" "details details";
+  grid-template-areas: "legs fare" "details fare";
   column-gap: 1rem;
   row-gap: 0.75rem;
   margin-top: 0;

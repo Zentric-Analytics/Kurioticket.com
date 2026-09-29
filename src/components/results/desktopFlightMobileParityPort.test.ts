@@ -8,6 +8,7 @@ const alert = readFileSync(new URL("./FlightPriceAlertControl.tsx", import.meta.
 const card = readFileSync(new URL("./FlightCard.tsx", import.meta.url), "utf8");
 const details = readFileSync(new URL("./flightDetails/StandaloneFlightDetails.tsx", import.meta.url), "utf8");
 const searchFields = readFileSync(new URL("../search/FlightSearchFieldPrimitives.tsx", import.meta.url), "utf8");
+const globals = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 
 test("desktop Flight Results adopts approved mobile-web visual rules without replacing mobile contracts", () => {
   assert.match(results, /data-flight-results-main className="bg-\[#F5F7FB\][^"]*sm:bg-\[#F3F6FA\][^"]*lg:bg-\[#F5F7FB\]"/);
@@ -53,6 +54,7 @@ test("desktop Flight result cards use the lighter hierarchy without changing Mob
   assert.match(card, /flight-card-airport font-semibold/);
   assert.match(card, /flight-card-details mt-3[^\n]*rounded-lg bg-slate-50\/70/);
   assert.match(card, /className="h-3\.5 w-3\.5 shrink-0 text-black"/);
+  assert.match(globals, /grid-template-areas: "legs fare" "details fare";/);
   assert.doesNotMatch(card, /flight-card-detail-item flex-nowrap whitespace-nowrap border-r/);
   assert.match(card, /<MobileFlightCard/);
 });
