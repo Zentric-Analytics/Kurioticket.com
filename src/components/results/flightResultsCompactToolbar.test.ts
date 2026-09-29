@@ -107,6 +107,20 @@ test("sticky search popout uses neutral dialog focus and returns focus to trigge
   assert.match(source, /stickySearchLauncherRef\.current\?\.focus\(\)/);
 });
 
+test("sticky search popout matches mobile edit-search color language", () => {
+  const start = source.indexOf("function renderStickySearchPopoutOverlay()");
+  const end = source.indexOf("function renderCompactSearchForm", start);
+  assert.ok(start >= 0 && end > start);
+  const popout = source.slice(start, end);
+
+  assert.match(popout, /bg-\[#F5F7FB\]/);
+  assert.match(popout, /text-\[#56658E\]/);
+  assert.match(popout, /bg-\[#064CF7\]\/10 text-\[#064CF7\]/);
+  assert.match(popout, /text-\[#071A48\]/);
+  assert.match(popout, /bg-white text-\[#004BB8\]/);
+  assert.match(popout, /bg-\[#064CF7\][^\n]*text-white/);
+});
+
 test("sticky search popout uses neutral field icons and keeps the calendar controls in view", () => {
   const start = source.indexOf("function renderStickySearchPopoutOverlay()");
   const end = source.indexOf("function renderCompactSearchForm", start);
@@ -114,9 +128,9 @@ test("sticky search popout uses neutral field icons and keeps the calendar contr
   const popout = source.slice(start, end);
 
   assert.equal(popout.match(/<MapPin aria-hidden="true"/g)?.length, 2);
-  assert.match(popout, /<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500"/);
-  assert.match(popout, /<UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500"/);
-  assert.match(popout, /text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800/);
+  assert.match(popout, /<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700"/);
+  assert.match(popout, /<UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700"/);
+  assert.match(popout, /text-\[#004BB8\] transition-colors hover:bg-slate-50 hover:text-\[#064CF7\]/);
   assert.doesNotMatch(popout, /text-\[#5CB6B2\]|text-\[#39948F\]/);
   assert.match(popout, /pb-8 pt-12 xl:pt-16/);
 });
