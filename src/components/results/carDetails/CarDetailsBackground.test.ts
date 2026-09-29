@@ -78,7 +78,7 @@ test("successful Cars Details uses a soft mobile canvas and restores the white s
 
 test("successful Cars Details retains layout, content, and price contracts", () => {
   for (const contract of [
-    "DetailsBackLink",
+    "data-car-details-desktop-back-link",
     "resultsHref",
     "CarDetailsHero",
     "BookingSummary",
