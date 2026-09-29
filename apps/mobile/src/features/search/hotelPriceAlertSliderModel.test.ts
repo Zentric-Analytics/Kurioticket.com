@@ -12,15 +12,16 @@ import {
 
 test("hotel price alert percentage stays within the supported slider range", () => {
   assert.equal(clampHotelAlertDropPercent(-10), 1);
-  assert.equal(clampHotelAlertDropPercent(18.6), 19);
-  assert.equal(clampHotelAlertDropPercent(90), 50);
+  assert.equal(clampHotelAlertDropPercent(12.6), 13);
+  assert.equal(clampHotelAlertDropPercent(18.6), 15);
+  assert.equal(clampHotelAlertDropPercent(90), 15);
   assert.equal(clampHotelAlertDropPercent(Number.NaN), HOTEL_ALERT_DEFAULT_DROP_PERCENT);
 });
 
 test("hotel price alert derives desired total and percentage from current price", () => {
   assert.equal(hotelAlertDesiredTotal(1000, 10, "USD"), 900);
-  assert.equal(hotelAlertDesiredTotal(1000, 35, "USD"), 650);
-  assert.equal(hotelAlertDropPercentForTarget(1000, 650), 35);
+  assert.equal(hotelAlertDesiredTotal(1000, 35, "USD"), 850);
+  assert.equal(hotelAlertDropPercentForTarget(1000, 650), 15);
 });
 
 test("hotel alert targets use the selected currency precision", () => {
@@ -90,4 +91,12 @@ test("hotel result price alert keeps the polished compact sheet geometry", () =>
   assert.match(component, /summary: \{ minHeight: 58[\s\S]*paddingVertical: 8/);
   assert.match(component, /metricValue: \{ marginTop: 1, fontSize: 15, lineHeight: 20/);
   assert.match(component, /create: \{ minHeight: 46/);
+});
+
+
+test("native Hotel price-alert UI labels the slider ceiling as 15%", () => {
+  const component = readFileSync("src/features/search/HotelPriceAlert.tsx", "utf8");
+  assert.match(component, /max: HOTEL_ALERT_MAX_DROP_PERCENT/);
+  assert.match(component, />15%<\/Text>/);
+  assert.doesNotMatch(component, />50%<\/Text>/);
 });
