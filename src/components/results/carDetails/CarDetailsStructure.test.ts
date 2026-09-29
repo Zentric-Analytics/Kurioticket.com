@@ -10,6 +10,10 @@ const guidedSource = readFileSync(
   new URL("../deals/DealsCarDetailsStage.tsx", import.meta.url),
   "utf8",
 );
+const layoutSource = readFileSync(
+  new URL("../../../app/cars/details/[id]/layout.tsx", import.meta.url),
+  "utf8",
+);
 
 const experienceSource = clientSource.slice(
   clientSource.indexOf("export function CarDetailsExperience"),
@@ -46,6 +50,21 @@ test("CarDetailsExperience is content-only for standalone and guided callers", (
   assert.match(
     experienceSource,
     /presentation === "guided-content" \? "mt-6" : ""/,
+  );
+});
+
+test("standalone desktop tabs place panel content in the former heading position", () => {
+  assert.match(
+    experienceSource,
+    /<div className="min-h-\[240px\]" data-car-details-section-panels>/,
+  );
+  assert.match(
+    layoutSource,
+    /\[data-car-details-section-panels\] \{\s*margin-top: 0 !important;/,
+  );
+  assert.match(
+    layoutSource,
+    /#car-pickup-panel > section[\s\S]*?padding: 0\.75rem 0 1\.75rem !important;/,
   );
 });
 
