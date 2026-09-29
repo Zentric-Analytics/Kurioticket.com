@@ -36,3 +36,17 @@ test("web Hotel Price Alert compact row matches the native 48px toggle presentat
   assert.match(source, /text-\[12\.5px\] font-bold leading-4/);
   assert.match(source, /role="switch"/);
 });
+
+
+test("desktop Hotel Results price-alert row omits only the subtitle", () => {
+  const rowStart = source.indexOf('className="hidden rounded-2xl border border-blue-100');
+  const rowEnd = source.indexOf("{status === \"saved\" ? (", rowStart);
+  const row = source.slice(rowStart, rowEnd);
+  const dialogStart = source.indexOf("<dialog", rowEnd);
+  const dialogEnd = source.indexOf("</dialog>", dialogStart);
+  const dialog = source.slice(dialogStart, dialogEnd);
+
+  assert.match(row, /travel\.account\.hotelAlert\.title/);
+  assert.doesNotMatch(row, /travel\.account\.hotelAlert\.body/);
+  assert.match(dialog, /travel\.account\.hotelAlert\.body/);
+});
