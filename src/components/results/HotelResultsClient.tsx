@@ -2734,7 +2734,7 @@ function HotelFilters({ layout = "desktop", propertyNameQuery, setPropertyNameQu
         <div className="sticky top-0 z-10 mb-2 border-b border-slate-200 bg-white pb-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <SlidersHorizontal aria-hidden="true" className="h-4 w-4 text-[#004BB8]" strokeWidth={2.2} />
+              <SlidersHorizontal aria-hidden="true" className="h-4 w-4 text-[#192024]" strokeWidth={2.2} />
               <h2 className="truncate text-[16px] font-semibold tracking-[-0.01em] text-slate-950">{t("hotelResults.filterBy")}</h2>
             </div>
             {activeFilterCount > 0 ? (
