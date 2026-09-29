@@ -1063,6 +1063,7 @@ export const translations: TranslationDictionary = {
   convertedDisplayEstimateProviderPrice:
     "बदला हुआ प्रदर्शन अनुमान। प्रदाता कीमत: {{providerPrice}}. अंतिम प्रदाता कीमत अलग हो सकती है।",
   viewFlight: "उड़ान देखें",
+  viewDeal: "ऑफ़र देखें",
   flightCardProviderHandoff:
     "अंतिम कीमत, उपलब्धता, बुकिंग और किराया नियम प्रदाता द्वारा पुष्टि किए जाते हैं।",
   flightCardProviderHandoffConverted:
