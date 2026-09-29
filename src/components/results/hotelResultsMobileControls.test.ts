@@ -96,17 +96,17 @@ test("mobile Hotel shortcut rail keeps Cars geometry while Sort stays with the r
   assert.match(resultsSource, /data-hotel-results-toolbar/);
 });
 
-test("standalone mobile Hotel summary keeps result count with Sort in its previous position", () => {
-  const desktopSummary = resultsSource.indexOf('ref={standaloneResultsHeadingRef}');
-  const priceAlert = resultsSource.indexOf("<HotelPriceAlertControl", desktopSummary);
-  const mobileSummary = resultsSource.indexOf("data-mobile-hotel-results-summary", priceAlert);
+test("standalone Hotel price alert comes before the desktop result summary while mobile summary stays in place", () => {
+  const priceAlert = resultsSource.indexOf("<HotelPriceAlertControl");
+  const desktopSummary = resultsSource.indexOf('ref={standaloneResultsHeadingRef}', priceAlert);
+  const mobileSummary = resultsSource.indexOf("data-mobile-hotel-results-summary", desktopSummary);
   const cardList = resultsSource.indexOf("ref={paginationListRef}", mobileSummary);
   const mobileMarkup = resultsSource.slice(mobileSummary, cardList);
   const desktopGroupStart = resultsSource.lastIndexOf('<div role="group"', desktopSummary);
-  const desktopMarkup = resultsSource.slice(desktopGroupStart, priceAlert);
+  const desktopMarkup = resultsSource.slice(desktopGroupStart, mobileSummary);
 
-  assert.ok(desktopSummary >= 0 && desktopSummary < priceAlert);
-  assert.ok(priceAlert < mobileSummary && mobileSummary < cardList);
+  assert.ok(priceAlert >= 0 && priceAlert < desktopSummary);
+  assert.ok(desktopSummary < mobileSummary && mobileSummary < cardList);
   assert.match(desktopMarkup, /!guided && "hidden sm:flex"/);
   assert.equal(resultsSource.match(/ref=\{standaloneResultsHeadingRef\}/g)?.length, 1);
   assert.match(mobileMarkup, /className="[^"]*sm:hidden"/);
