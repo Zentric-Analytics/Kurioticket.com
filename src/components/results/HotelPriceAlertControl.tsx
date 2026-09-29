@@ -555,7 +555,7 @@ export function HotelPriceAlertControl({
         </button>
       </div>
 
-      <div className="hidden rounded-2xl border border-blue-100 bg-[#F0F5FC] px-4 py-2.5 shadow-sm sm:block">
+      <div className="hidden rounded-2xl border border-blue-100 bg-white px-4 py-2.5 shadow-sm sm:block">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8]">
