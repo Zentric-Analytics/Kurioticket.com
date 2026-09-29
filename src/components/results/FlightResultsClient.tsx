@@ -3493,38 +3493,20 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }, [currencyRates.rates, formatResultPriceLabel, results, selectedCurrency, t]);
 
   const airlineOptions = useMemo(() => {
-    const buckets = new Map<
-      string,
-      { count: number; minPrice: number }
-    >();
+    const counts = new Map<string, number>();
 
     results.forEach((flight) => {
       const airlineName = flight.airlineName.trim();
 
       if (!airlineName) return;
 
-      const current = buckets.get(airlineName) ?? {
-        count: 0,
-        minPrice: Number.POSITIVE_INFINITY,
-      };
-      const comparablePrice = getComparableFlightPrice(flight, selectedCurrency, currencyRates.rates);
-
-      buckets.set(airlineName, {
-        count: current.count + 1,
-        minPrice:
-          comparablePrice && comparablePrice.amount > 0
-            ? Math.min(current.minPrice, comparablePrice.amount)
-            : current.minPrice,
-      });
+      counts.set(airlineName, (counts.get(airlineName) ?? 0) + 1);
     });
 
-    return Array.from(buckets, ([value, data]) => ({
+    return Array.from(counts, ([value, count]) => ({
       value,
       label: value,
-      count: data.count,
-      rightLabel: Number.isFinite(data.minPrice)
-        ? formatResultPriceLabel(data.minPrice, selectedCurrency)
-        : undefined,
+      count,
     }))
       .sort((first, second) => {
         if (second.count !== first.count) return second.count - first.count;
@@ -3532,7 +3514,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         return first.label.localeCompare(second.label);
       })
       .slice(0, 8);
-  }, [currencyRates.rates, formatResultPriceLabel, results, selectedCurrency]);
+  }, [results]);
 
   const mobileAirlineOptions = useMemo(() => {
     const counts = new Map<string, number>();

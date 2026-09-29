@@ -66,3 +66,41 @@ test("alternate time mode control remains full width with comfortable guided siz
     /setTimeFilterMode\([\s\S]*?timeFilterMode === "takeoff"[\s\S]*?\? "landing"[\s\S]*?: "takeoff"[\s\S]*?\)/,
   );
 });
+
+test("desktop airline facets show counts without prices while retaining filter controls", async () => {
+  const filters = await readFile(
+    new URL("./DesktopFlightFilters.tsx", import.meta.url),
+    "utf8",
+  );
+  const results = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const stops = filters.slice(
+    filters.indexOf('<OptionSection title={t("stops")}'),
+    filters.indexOf('<OptionSection title={t("airlines")}'),
+  );
+  const airlines = filters.slice(
+    filters.indexOf('<OptionSection title={t("airlines")}'),
+    filters.indexOf('<OptionSection title={t("airports")}'),
+  );
+  const airlineOptions = results.slice(
+    results.indexOf("const airlineOptions = useMemo"),
+    results.indexOf("const mobileAirlineOptions = useMemo"),
+  );
+  const mobileAirlineOptions = results.slice(
+    results.indexOf("const mobileAirlineOptions = useMemo"),
+    results.indexOf("const mobileFromAirportOptions = useMemo"),
+  );
+
+  assert.match(airlines, /count=\{option\.count\}/);
+  assert.doesNotMatch(airlines, /secondaryLabel|rightLabel|t\("from"\)/);
+  assert.match(airlines, /type="search"[\s\S]*setAirlineSearch/);
+  assert.match(airlines, /showAllAirlines \? t\("hotelResults\.showLess"\) : t\("showMoreResults"\)/);
+  assert.match(stops, /t\("from"\)\.toLowerCase\(\)[\s\S]*option\.rightLabel/);
+  assert.match(airlineOptions, /const counts = new Map<string, number>\(\)/);
+  assert.match(airlineOptions, /count,[\s\S]*\.sort\([\s\S]*\.slice\(0, 8\)/);
+  assert.doesNotMatch(airlineOptions, /minPrice|rightLabel|getComparableFlightPrice/);
+  assert.match(mobileAirlineOptions, /\(\{ value, label: value, count \}\)/);
+  assert.doesNotMatch(mobileAirlineOptions, /rightLabel|minPrice/);
+});

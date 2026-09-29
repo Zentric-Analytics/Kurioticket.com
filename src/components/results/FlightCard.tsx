@@ -22,6 +22,7 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn, formatItineraryShortDate, formatTime } from "@/lib/utils";
 import { formatFlightCardPrice } from "@/components/results/flightCardPrice";
 import { MobileFlightCard } from "@/components/results/MobileFlightCard";
+import { formatBaggageValue } from "@/components/results/flightCardBaggage";
 
 type DetailItem = {
   label: string;
@@ -558,22 +559,6 @@ function formatCabinClass(
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-function formatBaggageValue(
-  value: string | undefined,
-  t: (key: string) => string,
-) {
-  if (
-    !value ||
-    isProviderReviewCopy(value) ||
-    /rules vary|vary by fare/i.test(value)
-  ) {
-    return t("checkProvider");
-  }
-
-  if (/carry-on included/i.test(value)) return t("carryOnIncluded");
-  return value;
-}
-
 function formatLayoverText(leg: FlightLeg, t: (key: string) => string) {
   const firstLayover = leg.layovers[0];
   const firstConnection = `${firstLayover.airport} ${firstLayover.duration}`;
@@ -588,15 +573,4 @@ function formatLayoverText(leg: FlightLeg, t: (key: string) => string) {
         .replace("{{duration}}", firstLayover.duration)
     : `${t("layover")}: ${firstConnection}`;
   return `${baseText}${extraConnections}`;
-}
-
-function isProviderReviewCopy(value: string) {
-  const normalized = value.toLowerCase();
-  return (
-    normalized.includes("reviewed on the external provider") ||
-    normalized.includes("shown by the external provider") ||
-    normalized.includes("reviewed externally") ||
-    normalized.includes("rules vary") ||
-    normalized.includes("vary by fare")
-  );
 }
