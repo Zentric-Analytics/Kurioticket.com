@@ -468,7 +468,7 @@ function FlightDetailLines({
             )}
           >
             <Icon
-              className="h-3.5 w-3.5 shrink-0 text-[#004BB8]"
+              className="h-3.5 w-3.5 shrink-0 text-black"
               aria-hidden="true"
             />
             <span className="shrink-0 font-medium text-slate-700">
