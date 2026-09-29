@@ -288,7 +288,7 @@ export function CarDetailsExperience({
       ) : null}
       {presentation === "standalone-content" ? (
         <div
-          className="hidden h-16 w-full items-center border-b border-transparent bg-white lg:sticky lg:top-0 lg:z-40 lg:flex"
+          className="hidden h-16 w-full items-center border-b border-transparent bg-[#F5F7FB] lg:sticky lg:top-0 lg:z-40 lg:flex"
           data-car-details-desktop-sticky-controls
         >
           <div className="flex w-full items-center justify-between">
