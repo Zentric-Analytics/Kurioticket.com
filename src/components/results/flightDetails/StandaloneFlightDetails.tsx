@@ -145,10 +145,11 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const activeOffer = selectedDeal?.offer ?? selectedOffer;
   const savedFlightKey = selectedOffer?.id ?? id;
   const handoff = selectedFare?.handoff ?? available?.handoff ?? { available: false as const };
-  const mobileHandoff = selectedDeal
+  const activeHandoff = selectedDeal
     ? { available: true as const, providerName: selectedDeal.providerName }
     : handoff;
-  const canContinue = Boolean(selectedOffer && handoff.available);
+  const mobileHandoff = activeHandoff;
+  const canContinue = Boolean(activeOffer && activeHandoff.available);
   const mobilePricesReady = !currencyRates.isLoading;
   const canUseMobilePrice = (price: ReturnType<typeof formatDisplayPrice> | null, sourceCurrency: string) =>
     Boolean(price && (
@@ -272,10 +273,10 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const tripLine = `${tripType} • ${new Intl.NumberFormat(locale).format(travelers.count)} ${t(travelers.count === 1 ? "deals.travelerSingular" : "deals.travelerPlural")}`;
   const nativeTripType = available.search.tripType === "round-trip" ? "Round-trip" : available.search.tripType === "multi-city" ? "Multi-city" : "One-way";
   const nativeTripLine = `${nativeTripType} · ${available.search.travelers} traveler${available.search.travelers === 1 ? "" : "s"} · ${titleCase(available.search.cabinClass)}`;
-  const providerPrice = selectedOffer
+  const providerPrice = activeOffer
     ? formatDisplayPrice({
-        amount: selectedOffer.price,
-        sourceCurrency: selectedOffer.currency,
+        amount: activeOffer.price,
+        sourceCurrency: activeOffer.currency,
         displayCurrency: selectedOption.currency,
         convertSourceEstimate: true, useFlightResultSymbols: true, maximumFractionDigits: 0,
         rates: currencyRates.rates,
@@ -292,7 +293,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         isFallbackRate: currencyRates.isFallback,
       })
     : providerPrice;
-  const mobilePriceSourceCurrency = selectedDeal?.currency ?? selectedOffer.currency;
+  const mobilePriceSourceCurrency = selectedDeal?.currency ?? activeOffer.currency;
   const mobilePrice = mobilePricesReady && canUseMobilePrice(mobilePriceCandidate, mobilePriceSourceCurrency)
     ? mobilePriceCandidate
     : null;
@@ -487,11 +488,11 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               pricesReady={mobilePricesReady}
             />
             <div data-desktop-fare-information-tabs className="mt-5 hidden min-w-0 sm:flex" role="tablist" aria-label="Fare information">{fareTabs.map((tab, index) => <button key={tab.id} ref={(element) => { tabRefs.current[index] = element; }} id={`fare-tab-${tab.id}`} type="button" role="tab" aria-selected={activeTab === tab.id} aria-controls={`fare-panel-${tab.id}`} tabIndex={activeTab === tab.id ? 0 : -1} onClick={() => setActiveTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)} className={`min-h-11 flex-1 whitespace-nowrap border-b-[3px] px-1 text-center text-sm font-semibold text-[#536B92] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 ${activeTab === tab.id ? "border-[#075EE8]" : "border-transparent"}`}>{tab.label}</button>)}</div>
-            <div className="hidden sm:block"><FarePanel activeTab={activeTab} fare={selectedFare} offer={selectedOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} selectedDealOfferId={selectedDealOfferId} onSelectDeal={setSelectedDealOfferId} onViewDeal={continueToOffer} /></div>
+            <div className="hidden sm:block"><FarePanel activeTab={activeTab} fare={selectedFare} offer={activeOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} selectedDealOfferId={selectedDeal?.offerId ?? null} onSelectDeal={setSelectedDealOfferId} onViewDeal={continueToOffer} /></div>
             <MobileCheckoutDock travelerCount={travelers.count} price={mobilePrice} redirecting={redirecting} handoff={mobileHandoff} canContinue={canContinueMobile && Boolean(mobilePrice)} onContinue={() => continueToOffer(selectedDeal?.offerId ?? selectedOffer.id)} error={error || notice} priceLoading={!mobilePricesReady} />
             </div>
           </section>
-          <DesktopCheckoutSummary travelerCount={travelers.count} price={providerPrice} priceLoading={!mobilePricesReady} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
+          <DesktopCheckoutSummary travelerCount={travelers.count} price={providerPrice} priceLoading={!mobilePricesReady} redirecting={redirecting} handoff={activeHandoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedDeal?.offerId ?? selectedOffer.id)} error={error || notice} />
         </div>
       </div>
     </main>
@@ -839,7 +840,7 @@ function CompareDealsPanel({
                 type="button"
                 role="radio"
                 aria-checked={selected}
-                tabIndex={selected ? 0 : -1}
+                tabIndex={selected || (!selectedDealOfferId && index === 0) ? 0 : -1}
                 onClick={() => onSelectDeal(deal.offerId)}
                 onKeyDown={(event) => {
                   const direction = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 0;
@@ -1467,7 +1468,7 @@ function carrierConditionsLinks(offer: FlightDetailsOffer) {
   return [...new Map(entries.map((entry) => [entry.url, entry])).values()];
 }
 
-function EmissionsRow({ amount, locale }: { amount: number; locale: string }) { return <div className="flex min-h-9 items-center justify-between gap-3 rounded-lg bg-emerald-50 px-3 py-2"><span className="inline-flex min-w-0 items-center gap-2 text-[13px] font-semibold text-emerald-700"><Leaf className="h-4 w-4 shrink-0" aria-hidden="true" /> Estimated CO₂ emissions</span><span className="text-right"><span className="block text-sm font-semibold text-slate-950">{amount.toLocaleString(locale)} kg</span><span className="block text-[11px] leading-4 text-[#536B92]">for this offer</span></span></div>; }
+function EmissionsRow({ amount, locale }: { amount: number; locale: string }) { return <div className="mt-4 flex min-h-9 items-center justify-between gap-3 rounded-md bg-emerald-50/70 px-3 py-2 text-xs"><span className="inline-flex items-center gap-2 font-medium text-emerald-700"><Leaf className="h-4 w-4" aria-hidden="true" /> Estimated CO₂ emissions</span><span className="inline-flex items-center gap-2 text-right font-medium text-slate-800">{amount.toLocaleString(locale)} kg for this offer <Info className="h-3.5 w-3.5" aria-hidden="true" /></span></div>; }
 
 function CheckoutButton({ redirecting, handoff, canContinue, onContinue, dock = false, mobileDock = false, label = "Continue booking", pendingLabel = "Opening booking…" }: { redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; dock?: boolean; mobileDock?: boolean; label?: string; pendingLabel?: string }) { return <button type="button" aria-label={handoff.available ? label : "Booking currently unavailable"} aria-disabled={!canContinue || redirecting} disabled={!canContinue || redirecting} onClick={onContinue} className={`${mobileDock ? "inline-flex h-12 min-w-[140px] max-w-[180px] flex-[0.78]" : dock ? "inline-flex min-h-[50px] min-w-[168px] flex-1 sm:max-w-[260px]" : "mt-4 inline-flex min-h-[50px] w-full"} items-center justify-center whitespace-nowrap rounded-[8px] bg-[#075EE8] px-3 ${mobileDock ? "text-xs font-bold" : "gap-2 text-sm font-semibold"} text-white transition hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`}>{!mobileDock ? <LockKeyhole className="h-4 w-4" aria-hidden="true" /> : null}{redirecting ? pendingLabel : label}</button>; }
 
