@@ -938,12 +938,13 @@ textarea {
   min-width: 0;
   gap: 0.75rem;
   padding-left: 0.75rem;
+  padding-right: 0.125rem;
 }
 
 .flight-card-view-button {
-  min-width: 114px;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  min-width: 0;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .flight-card-details {
