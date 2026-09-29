@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Armchair,
@@ -88,7 +89,7 @@ export function FlightCard({
     detailsHref === undefined
       ? `/flights/details/${encodeURIComponent(flight.id)}`
       : detailsHref;
-  const resolvedActionLabel = actionLabel ?? (t("hotelDetails.viewDeal") || "View deal");
+  const resolvedActionLabel = actionLabel ?? t("viewDeal");
 
   return (
     <>
@@ -414,14 +415,14 @@ function FlightFareAction({
           <ChevronRight className="h-4 w-4" aria-hidden="true" />
         </button>
       ) : detailsHref ? (
-        <a
+        <Link
           href={detailsHref}
           aria-label={viewFlightAriaLabel}
           className="flight-card-view-button inline-flex min-h-9 shrink-0 items-center justify-end gap-1 whitespace-nowrap text-sm font-semibold text-[#004BB8] transition hover:text-[#064CF7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
         >
           <span>{viewFlightLabel}</span>
           <ChevronRight className="h-4 w-4" aria-hidden="true" />
-        </a>
+        </Link>
       ) : (
         <button
           type="button"
