@@ -1261,6 +1261,7 @@ export const translations: TranslationDictionary = {
   displayEstimateConvertedFromProviderPrice: "{{formatted}}. تقدير عرض محوّل من {{providerPrice}}. قد يختلف السعر النهائي لدى المزوّد.",
   convertedDisplayEstimateProviderPrice: "تقدير عرض محوّل. سعر المزوّد: {{providerPrice}}. قد يختلف السعر النهائي لدى المزوّد.",
   viewFlight: "عرض الرحلة",
+  viewDeal: "عرض العرض",
   flightCardProviderHandoff: "يتم تأكيد السعر النهائي والتوافر وتفاصيل الحجز وقواعد السعر على موقع المزوّد.",
   flightCardProviderHandoffConverted: "يتم تأكيد السعر النهائي والتوافر وتفاصيل الحجز وقواعد السعر على موقع المزوّد. قد تختلف عملة المزوّد النهائية عن عملة العرض التي اخترتها.",
   providerNormalizedItineraryPrefix: "تُعرض تفاصيل رحلة الذهاب والعودة من بيانات خط السير التي وحّدها المزوّد.",
