@@ -108,6 +108,7 @@ export function CarDetailsExperience({
   itemHeadingLevel = 3,
   modelHeadingRef,
   mobileBackControl,
+  desktopBackControl,
 }: {
   car: NormalizedCarResult;
   search: CarSearchParams;
@@ -119,6 +120,7 @@ export function CarDetailsExperience({
   itemHeadingLevel?: HeadingLevel;
   modelHeadingRef?: Ref<HTMLHeadingElement>;
   mobileBackControl?: ReactNode;
+  desktopBackControl?: ReactNode;
 }) {
   const { locale, t } = useLocale();
   const { selectedOption } = useRegion();
@@ -332,26 +334,46 @@ export function CarDetailsExperience({
                 </p>
               </div>
             }
+            desktopOverlay={
+              presentation === "guided-content" ? (
+                <div className="flex min-w-0 items-start justify-between gap-3 text-white">
+                  <div className="min-w-0 pt-0.5">
+                    <p className="text-[10px] font-bold uppercase tracking-[.14em] text-white/85">
+                      {car.categoryLabel}
+                    </p>
+                    <Heading
+                      level={modelHeadingLevel}
+                      headingRef={modelHeadingRef}
+                      className="mt-0.5 scroll-mt-24 text-3xl font-extrabold leading-tight tracking-[-0.025em] text-white outline-none focus-visible:ring-2 focus-visible:ring-white"
+                    >
+                      {car.modelName}
+                    </Heading>
+                  </div>
+                  <CarHeroActions
+                    car={car}
+                    isSaved={isSaved}
+                    toggleSavedCar={toggleSavedCar}
+                    shareCar={shareCar}
+                    copy={copy}
+                    desktop
+                  />
+                </div>
+              ) : undefined
+            }
             desktopBackControl={
-              <Link
-                href={resultsHref}
-                aria-label={copy("carDetails.backToResults")}
-                title={copy("carDetails.backToResults")}
-                className="focus-ring flex size-10 items-center justify-center rounded-full border border-slate-300 bg-[#E7EBF1] text-[#07133B] shadow-[0_2px_8px_rgba(15,23,42,0.14)] transition hover:bg-[#DDE3EB]"
-                data-car-details-desktop-back-link
-              >
-                <ArrowLeft size={20} aria-hidden="true" />
-              </Link>
+              presentation === "standalone-content" ? desktopBackControl : undefined
             }
             desktopImageActions={
-              <CarHeroActions
-                car={car}
-                isSaved={isSaved}
-                toggleSavedCar={toggleSavedCar}
-                shareCar={shareCar}
-                copy={copy}
-                desktop
-              />
+              presentation === "standalone-content" ? (
+                <CarHeroActions
+                  car={car}
+                  isSaved={isSaved}
+                  toggleSavedCar={toggleSavedCar}
+                  shareCar={shareCar}
+                  copy={copy}
+                  desktop
+                />
+              ) : undefined
             }
             guidedMobileActions={
               presentation === "guided-content" ? (
@@ -581,6 +603,17 @@ export function CarDetailsClient({
                   data-car-details-mobile-back
                 >
                   <ArrowLeft size={25} strokeWidth={2.2} aria-hidden="true" />
+                </Link>
+              }
+              desktopBackControl={
+                <Link
+                  href={resultsHref}
+                  aria-label={copy("carDetails.backToResults")}
+                  title={copy("carDetails.backToResults")}
+                  className="focus-ring flex size-10 items-center justify-center rounded-full border border-slate-300 bg-[#E7EBF1] text-[#07133B] shadow-[0_2px_8px_rgba(15,23,42,0.14)] transition hover:bg-[#DDE3EB]"
+                  data-car-details-desktop-back-link
+                >
+                  <ArrowLeft size={20} aria-hidden="true" />
                 </Link>
               }
             />
