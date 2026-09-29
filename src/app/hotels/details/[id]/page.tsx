@@ -71,7 +71,7 @@ export default async function HotelDetailsPage({
         />
       </div>
       <div className="hidden lg:block" data-hotel-details-desktop-footer>
-        <Footer className="bg-[#f5f5f5]" />
+        <Footer variant="brand-legal-only" />
       </div>
     </>
   );
