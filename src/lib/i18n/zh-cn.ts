@@ -1759,6 +1759,7 @@ export const translations: TranslationDictionary = {
   displayEstimateConvertedFromProviderPrice: "{{formatted}}。由 {{providerPrice}} 换算的显示预估价。最终服务提供商价格可能不同。",
   convertedDisplayEstimateProviderPrice: "换算后的显示预估价。服务提供商价格：{{providerPrice}}。最终服务提供商价格可能不同。",
   viewFlight: "查看航班",
+  viewDeal: "查看优惠",
   flightCardProviderHandoff: "最终价格、可订情况、预订和票价规则由服务提供商确认。",
   flightCardProviderHandoffConverted: "最终价格、可订情况、预订和票价规则由服务提供商确认。最终服务提供商货币可能与你选择的显示货币不同。",
   providerNormalizedItineraryPrefix: "去程和返程详情来自服务提供商标准化后的行程数据。",
