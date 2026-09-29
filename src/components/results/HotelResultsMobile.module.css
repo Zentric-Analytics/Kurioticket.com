@@ -1,3 +1,6 @@
+.results button:not(:disabled),
+.results a[href] { cursor: pointer; }
+
 .editBackdrop { background: rgb(8 18 35 / 52%); }
 /* Hotel results edit sheet follows Preview's floating search editor. */
 .editSheet { width: calc(100% - 24px); margin: 0 12px 12px; max-height: 88dvh; border-radius: 24px; border: 0; background: #f5f7fb; box-shadow: none; }
@@ -51,6 +54,10 @@
 }
 
 @media (min-width: 640px) {
+  .results { color: #192024; }
+  .results :where([class~="text-[#071A48]"], [class~="text-[#07133B]"], [class~="text-[#142033]"], [class~="text-[#021C2B]"], [class~="text-slate-950"], [class~="text-slate-900"], [class~="text-slate-800"], [class~="text-navy"]) { color: #192024; }
+  .results :where([class~="text-[#56658E]"], [class~="text-[#536B92]"], [class~="text-[#64748B]"], [class~="text-slate-600"], [class~="text-slate-500"], [class~="text-muted"]) { color: #59636a; }
+  .results :where([class~="text-slate-700"]) { color: #303b42; }
   .card [data-hotel-photo-counter][data-single-photo="true"] { display: none; }
 }
 

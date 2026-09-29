@@ -43,7 +43,7 @@ import { getOverlayActivationModality, restoreOverlayLauncherFocus, type Overlay
 import { buildHotelResultsPaginationItems, clampHotelResultsPage, getHotelResultsPageCount, HOTEL_RESULTS_PAGE_SIZE, paginateHotelResults } from "@/lib/hotels/hotelResultsPagination";
 import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 
-const hotelResultStackClass = "w-full max-w-[800px] lg:max-w-[860px]";
+const hotelResultStackClass = "w-full max-w-[800px] lg:max-w-[756px]";
 const desktopCompactFilterTopOffset = 116;
 const desktopCompactFilterBottomGap = 16;
 
