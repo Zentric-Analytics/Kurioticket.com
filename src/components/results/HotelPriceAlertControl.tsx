@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, X } from "lucide-react";
 
@@ -79,6 +79,13 @@ export function HotelPriceAlertControl({
     useState<PreservedPausedTarget | null>(null);
   const [pending, setPending] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
+  const desktopDialogRef = useRef<HTMLDialogElement>(null);
+  const desktopTriggerRef = useRef<HTMLButtonElement>(null);
+  const desktopDialogVisible =
+    desktopOpen &&
+    currentTotal !== null &&
+    providerCurrentTotal !== null &&
+    Boolean(providerCurrency);
 
   const matchingAlert = useMemo(
     () => matchingHotelPriceAlert(alerts, search),
@@ -123,6 +130,21 @@ export function HotelPriceAlertControl({
     search.guests,
     search.rooms,
   ]);
+
+  useEffect(() => {
+    if (!desktopDialogVisible) return;
+    const dialog = desktopDialogRef.current;
+    if (!dialog) return;
+    const trigger = desktopTriggerRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog.showModal();
+    return () => {
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+      trigger?.focus({ preventScroll: true });
+    };
+  }, [desktopDialogVisible]);
 
   if (
     currentTotal === null ||
@@ -363,17 +385,17 @@ export function HotelPriceAlertControl({
   const editor = (surface: "mobile" | "desktop") => (
     <>
       <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2">
-        <p className="text-[12px] font-medium leading-4 text-slate-500">
+        <p className={cn("text-[12px] font-medium leading-4", surface === "desktop" ? "text-[#59636a]" : "text-slate-500")}>
           Current total
         </p>
-        <p className="mt-0.5 text-[21px] font-bold leading-[26px] text-slate-950 tabular-nums">
+        <p className={cn("mt-0.5 text-[21px] font-bold leading-[26px] tabular-nums", surface === "desktop" ? "text-[#192024]" : "text-slate-950")}>
           {formatTotal(currentTotal)}
         </p>
       </div>
 
       <div>
         <div className="flex items-center justify-between gap-3">
-          <span className="text-[15px] font-semibold leading-5 text-slate-950">
+          <span className={cn("text-[15px] font-semibold leading-5", surface === "desktop" ? "text-[#192024]" : "text-slate-950")}>
             Price drop
           </span>
           <strong className="text-[15px] font-bold leading-5 text-[#004BB8]">
@@ -394,7 +416,7 @@ export function HotelPriceAlertControl({
           }}
           className="mt-2 h-2 w-full cursor-pointer accent-[#004BB8]"
         />
-        <div className="mt-1 flex justify-between text-[11px] leading-[15px] text-slate-500">
+        <div className={cn("mt-1 flex justify-between text-[11px] leading-[15px]", surface === "desktop" ? "text-[#59636a]" : "text-slate-500")}>
           <span>1%</span>
           <span>50%</span>
         </div>
@@ -402,18 +424,18 @@ export function HotelPriceAlertControl({
 
       <div className="grid min-h-[58px] grid-cols-2 gap-3 border-y border-slate-200 py-2">
         <div>
-          <p className="text-[12px] font-medium leading-4 text-slate-500">
+          <p className={cn("text-[12px] font-medium leading-4", surface === "desktop" ? "text-[#59636a]" : "text-slate-500")}>
             Drops by
           </p>
-          <p className="mt-0.5 text-[15px] font-bold leading-5 text-slate-950 tabular-nums">
+          <p className={cn("mt-0.5 text-[15px] font-bold leading-5 tabular-nums", surface === "desktop" ? "text-[#192024]" : "text-slate-950")}>
             {formatTotal(dropAmount)}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-[12px] font-medium leading-4 text-slate-500">
+          <p className={cn("text-[12px] font-medium leading-4", surface === "desktop" ? "text-[#59636a]" : "text-slate-500")}>
             Target total
           </p>
-          <p className="mt-0.5 text-[15px] font-bold leading-5 text-slate-950 tabular-nums">
+          <p className={cn("mt-0.5 text-[15px] font-bold leading-5 tabular-nums", surface === "desktop" ? "text-[#192024]" : "text-slate-950")}>
             {desiredTotal === null ? "—" : formatTotal(desiredTotal)}
           </p>
         </div>
@@ -436,7 +458,7 @@ export function HotelPriceAlertControl({
         onClick={() =>
           void saveTarget(() => closeEditor(surface))
         }
-        className="min-h-[46px] w-full rounded-[10px] bg-[#004BB8] px-4 text-[15px] font-bold leading-5 text-white transition hover:bg-[#003B91] disabled:opacity-45"
+        className="min-h-[46px] w-full cursor-pointer rounded-[10px] bg-[#004BB8] px-4 text-[15px] font-bold leading-5 text-white transition hover:bg-[#003B91] disabled:cursor-default disabled:opacity-45"
       >
         {pending ? "Creating…" : "Create alert"}
       </button>
@@ -540,15 +562,16 @@ export function HotelPriceAlertControl({
               <Bell className="h-4 w-4" aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <h2 className="truncate text-base font-bold text-slate-950">
+              <h2 className="truncate text-base font-bold text-[#192024]">
                 {t("travel.account.hotelAlert.title")}
               </h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-[#59636a]">
                 {t("travel.account.hotelAlert.body")}
               </p>
             </div>
           </div>
           <button
+            ref={desktopTriggerRef}
             type="button"
             role="switch"
             aria-checked={Boolean(isTracking)}
@@ -557,7 +580,7 @@ export function HotelPriceAlertControl({
               void handleToggle(!isTracking, "desktop")
             }
             className={cn(
-              "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors",
+              "relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border transition-colors disabled:cursor-default",
               isTracking
                 ? "border-[#004BB8] bg-[#004BB8]"
                 : "border-slate-300 bg-slate-200",
@@ -572,19 +595,6 @@ export function HotelPriceAlertControl({
           </button>
         </div>
 
-        {desktopOpen ? (
-          <div className="mt-4 grid max-w-xl gap-[13px] border-t border-slate-100 pt-4">
-            {editor("desktop")}
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => closeEditor("desktop")}
-              className="min-h-10 justify-self-start px-2 text-sm font-semibold text-slate-700"
-            >
-              {t("cancel")}
-            </button>
-          </div>
-        ) : null}
         {status === "saved" ? (
           <p role="status" className="mt-3 text-sm font-semibold text-emerald-700">
             {t("travel.account.hotelAlert.saved")}
@@ -593,6 +603,53 @@ export function HotelPriceAlertControl({
       </div>
 
       {mobileEditor}
+      {desktopOpen && typeof document !== "undefined"
+        ? createPortal(
+            <dialog
+              ref={desktopDialogRef}
+              aria-modal="true"
+              aria-label={t("travel.account.hotelAlert.title")}
+              onCancel={(event) => {
+                event.preventDefault();
+                closeEditor("desktop");
+              }}
+              onMouseDown={(event) => {
+                const bounds = event.currentTarget.getBoundingClientRect();
+                if (
+                  event.clientX < bounds.left ||
+                  event.clientX > bounds.right ||
+                  event.clientY < bounds.top ||
+                  event.clientY > bounds.bottom
+                ) closeEditor("desktop");
+              }}
+              className="fixed inset-0 m-auto w-[min(29rem,calc(100vw-2rem))] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-lg border border-slate-200 bg-white p-5 text-[#192024] shadow-2xl backdrop:bg-slate-950/50"
+            >
+              <header className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-bold text-[#192024]">
+                    {t("travel.account.hotelAlert.title")}
+                  </h2>
+                  <p className="mt-0.5 text-xs font-medium leading-4 text-[#59636a]">
+                    {t("travel.account.hotelAlert.body")}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Close price alert"
+                  disabled={pending}
+                  onClick={() => closeEditor("desktop")}
+                  className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-[#59636a] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 disabled:cursor-default disabled:opacity-50"
+                >
+                  <X className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </header>
+              <div className="grid gap-[13px]">
+                {editor("desktop")}
+              </div>
+            </dialog>,
+            document.body,
+          )
+        : null}
     </section>
   );
 }

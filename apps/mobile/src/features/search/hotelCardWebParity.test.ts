@@ -164,7 +164,8 @@ test("View hotel uses the lighter result-card action pattern", () => {
   assert.match(card, /<ChevronRight accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\} color=\{theme\.dark \? "#8FB5FF" : ui\.blue\} \/>/);
   assert.match(source, /hotelDealButtonPressed: \{ opacity: 0\.7 \}/);
   assert.match(searchUi, /blue:\s*"#0754F7"/);
-  assert.match(webHotelCard, /bg-\[#004BB8\]/);
+  assert.match(webHotelCard, /sm:gap-1 sm:active:opacity-70/);
+  assert.doesNotMatch(webHotelCard, /sm:bg-\[#004BB8\]/);
 });
 
 test("Hotel cards preserve truthful price and use View hotel", () => {

@@ -70,10 +70,10 @@ export function HotelCardSkeleton() {
       <div
         aria-hidden="true"
         data-hotel-card-skeleton-desktop
-        className="mx-auto hidden w-full max-w-[800px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] sm:block"
+        className="mx-auto hidden w-full max-w-[800px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] sm:block lg:max-w-[756px]"
       >
-        <div className="grid min-h-[260px] grid-cols-[41%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)]">
-          <Skeleton className="h-full min-h-[260px] rounded-none bg-slate-200 md:min-h-[230px] lg:min-h-[240px]" />
+        <div className="grid min-h-[260px] grid-cols-[41%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[33.333%_minmax(0,1fr)]">
+          <Skeleton className="h-full min-h-[260px] rounded-none bg-slate-200 md:min-h-[230px] lg:min-h-[210px]" />
 
           <div className="flex min-h-[200px] flex-col px-3.5 py-3.5 md:min-h-0 md:px-3 md:py-3">
             <div className="flex flex-1 flex-col">

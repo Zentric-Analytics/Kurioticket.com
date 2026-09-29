@@ -70,7 +70,7 @@ test("hotel result cards use a horizontal image and details grid on mobile", () 
   assert.ok(!source.includes("h-[clamp(220px,58vw,250px)]"));
   assert.ok(!source.includes("h-[clamp(280px,78vw,340px)]"));
   assert.match(source, /md:grid-cols-\[40%_minmax\(0,1fr\)\]/);
-  assert.match(source, /lg:grid-cols-\[50%_minmax\(0,1fr\)\]/);
+  assert.match(source, /lg:grid-cols-\[33\.333%_minmax\(0,1fr\)\]/);
   assert.match(source, /lg:max-w-none/);
 });
 
@@ -85,18 +85,18 @@ test("mobile Hotel cards use the native Hotel result size, surface, type and col
   assert.match(source, /h-9 min-h-9[\s\S]*text-\[13px\] font-semibold leading-4 text-\[#0754F7\]/);
 });
 
-test("desktop Hotel cards split image and content evenly", () => {
+test("desktop Hotel cards give the image one-third of the card", () => {
   assert.match(
     source,
     /max-w-\[800px\][\s\S]*lg:mx-0 lg:max-w-none/,
   );
   assert.match(
     source,
-    /md:grid-cols-\[40%_minmax\(0,1fr\)\][\s\S]*lg:grid-cols-\[50%_minmax\(0,1fr\)\]/,
+    /md:grid-cols-\[40%_minmax\(0,1fr\)\][\s\S]*lg:grid-cols-\[33\.333%_minmax\(0,1fr\)\]/,
   );
   assert.match(
     source,
-    /sizes="\(min-width: 1024px\) 50vw, \(min-width: 768px\) 40vw, 38vw"/,
+    /sizes="\(min-width: 1024px\) 252px, \(min-width: 768px\) 40vw, 38vw"/,
   );
   assert.match(source, /className="bg-slate-200 object-cover"/);
 });
@@ -284,5 +284,7 @@ test("mobile Hotel cards keep provider provenance quiet and the View hotel actio
   assert.match(source, /data-hotel-provider-label[\s\S]*?sm:hidden/);
   assert.match(source, /Source:[\s\S]*?sm:hidden/);
   assert.match(source, /relative z-20 h-9 min-h-9[\s\S]*?text-\[#0754F7\]/);
-  assert.match(source, /sm:h-10 sm:min-h-10[\s\S]*?sm:bg-\[#004BB8\]/);
+  assert.doesNotMatch(source, /sm:bg-\[#004BB8\]/);
+  assert.match(source, /sm:gap-1 sm:active:opacity-70/);
+  assert.match(source, /<ChevronRight className="h-4 w-4" strokeWidth=\{2\.2\}/);
 });
