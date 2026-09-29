@@ -458,6 +458,7 @@ export function CarDetailsExperience({
               price={price}
               copy={copy}
               action={effectivePrimaryAction}
+              showRentalBreakdown={presentation !== "standalone-content"}
             />
           </aside>
         )}
@@ -1003,15 +1004,19 @@ function BookingSummary({
   price,
   copy,
   action,
+  showRentalBreakdown = true,
 }: {
   offer: CarOffer;
   days: number;
   price: PriceFn;
   copy: (k: string) => string;
   action: CarDetailsPrimaryAction;
+  showRentalBreakdown?: boolean;
 }) {
-  const daily = price(offer.pricePerDay, offer.currency),
-    total = price(offer.totalPrice, offer.currency);
+  const total = price(offer.totalPrice, offer.currency);
+  const daily = showRentalBreakdown
+    ? price(offer.pricePerDay, offer.currency)
+    : null;
   return (
     <div className="w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <p className="text-sm font-semibold text-slate-500">
@@ -1025,17 +1030,21 @@ function BookingSummary({
       >
         {total.formatted}
       </p>
-      <p className="text-sm text-slate-500">
-        {days} {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
-      </p>
-      <p
-        className="mt-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm tabular-nums text-slate-600"
-        dir="ltr"
-        title={daily.title}
-        aria-label={daily.ariaLabel}
-      >
-        {daily.formatted} {copy("carsResults.perDay")}
-      </p>
+      {showRentalBreakdown && daily ? (
+        <>
+          <p className="text-sm text-slate-500">
+            {days} {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
+          </p>
+          <p
+            className="mt-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm tabular-nums text-slate-600"
+            dir="ltr"
+            title={daily.title}
+            aria-label={daily.ariaLabel}
+          >
+            {daily.formatted} {copy("carsResults.perDay")}
+          </p>
+        </>
+      ) : null}
       {action.kind === "sandbox-handoff" ? (
         <a
           href={action.href}

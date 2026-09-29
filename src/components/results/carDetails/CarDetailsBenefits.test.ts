@@ -47,7 +47,7 @@ test("hero omits the duplicate cancellation and taxes benefit cards", () => {
   }
 });
 
-test("source contract keeps only pricing and the provider CTA in BookingSummary", () => {
+test("source contract keeps total pricing and hides the standalone rental breakdown", () => {
   const summary = clientSource.slice(
     clientSource.indexOf("function BookingSummary"),
   );
@@ -62,7 +62,9 @@ test("source contract keeps only pricing and the provider CTA in BookingSummary"
   }
   assert.doesNotMatch(summary, /<Term|<dl/);
   assert.match(summary, /offer\.totalPrice/);
-  assert.match(summary, /offer\.pricePerDay/);
+  assert.match(summary, /showRentalBreakdown \? price\(offer\.pricePerDay, offer\.currency\) : null/);
+  assert.match(summary, /showRentalBreakdown && daily \? \(/);
+  assert.match(clientSource, /showRentalBreakdown={presentation !== "standalone-content"}/);
   assert.match(summary, /carDetails\.bookingSummary/);
   assert.match(summary, /carDetails\.day/);
   assert.match(summary, /carsResults\.perDay/);
