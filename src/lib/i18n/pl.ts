@@ -1715,6 +1715,7 @@ export const translations: TranslationDictionary = {
   providerComparisonIntro: "Kurioticket może porównać oferty różnych dostawców.",
   providerNormalizedItineraryPrefix: "Szczegóły wylotu i powrotu są wyświetlane na podstawie danych planu podróży ujednoliconych przez dostawcę.",
   checkProvider: "Sprawdź u dostawcy",
+  notSuppliedByProvider: "Nie podano przez dostawcę",
   carryOnIncluded: "bagaż podręczny w cenie",
   flightLeg: "Odcinek lotu",
   layover: "Przesiadka",

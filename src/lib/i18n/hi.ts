@@ -1070,6 +1070,7 @@ export const translations: TranslationDictionary = {
   providerNormalizedItineraryPrefix:
     "प्रस्थान और वापसी विवरण प्रदाता द्वारा सामान्यीकृत यात्रा कार्यक्रम डेटा से दिखाए जाते हैं।",
   checkProvider: "प्रदाता जाँचें",
+  notSuppliedByProvider: "प्रदाता द्वारा उपलब्ध नहीं कराया गया",
   carryOnIncluded: "कैरी-ऑन शामिल",
   flightLeg: "उड़ान लेग",
   layover: "लेओवर",
