@@ -71,11 +71,14 @@ export function CarDetailsHero({
     : normalizedSpecs;
 
   return (
-    <section className="-mx-4 border-b border-slate-200 bg-[#F5F7FB] pb-4 sm:mx-0 lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
+    <section
+      className="-mx-4 border-b border-slate-200 bg-[#F5F7FB] pb-4 sm:mx-0 lg:rounded-none lg:border-0 lg:bg-[#F5F7FB] lg:p-0 lg:shadow-none"
+      data-car-details-hero
+    >
       <div className="min-w-0">
         <figure
           ref={imageStageRef}
-          className={`relative min-w-0 bg-white ${reserveMobileControlSafeZone ? "" : "pt-5"} lg:mx-auto lg:w-full lg:max-w-[760px] lg:pt-0`}
+          className={`relative min-w-0 bg-white ${reserveMobileControlSafeZone ? "" : "pt-5"} lg:mx-auto lg:w-full lg:max-w-[760px] lg:overflow-hidden lg:rounded-[13px] lg:border lg:border-slate-200 lg:bg-white lg:p-5 lg:pt-5 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]`}
           data-car-details-image-stage
         >
           <div
@@ -170,7 +173,7 @@ export function CarDetailsHero({
               return (
                 <li
                   key={label}
-                  className="inline-flex min-w-0 items-center gap-2 text-xs font-semibold leading-[18px] text-slate-700 lg:rounded-lg lg:bg-slate-100 lg:px-2.5 lg:py-1.5"
+                  className="inline-flex min-w-0 items-center gap-2 text-xs font-semibold leading-[18px] text-slate-700 lg:rounded-lg lg:bg-white lg:px-2.5 lg:py-1.5 lg:ring-1 lg:ring-slate-200"
                 >
                   {mobileTransmissionIcon ? (
                     <>
