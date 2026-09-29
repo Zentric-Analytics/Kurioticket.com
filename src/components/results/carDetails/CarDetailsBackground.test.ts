@@ -145,7 +145,13 @@ test("unavailable content and route behavior contracts remain present", () => {
   ]) {
     assert.ok(routeSource.includes(contract), `${contract} remains present`);
   }
-  assert.doesNotMatch(routeSource, /Footer|data-mobile-car-footer-clearance/);
+  assert.match(routeSource, /import \{ Footer \} from "@\/components\/layout\/Footer";/);
+  assert.match(
+    routeSource,
+    /data-car-details-desktop-footer>[\s\S]*?<Footer variant="brand-legal-only" \/>/,
+  );
+  assert.equal(routeSource.match(/<Footer\b/g)?.length, 1);
+  assert.doesNotMatch(routeSource, /data-mobile-car-footer-clearance/);
   assert.match(routeSource, /hidden lg:block/);
   assert.match(routeSource, /pt-\[env\(safe-area-inset-top\)\] lg:pt-0/);
 });
