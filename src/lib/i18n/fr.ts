@@ -1820,6 +1820,7 @@ flightLandingRouteAriaLabel:
   changesNotAllowedBeforeDeparture: "Modifications non autorisées avant le départ",
   providerNormalizedItineraryPrefix: "Les détails de l’aller et du retour sont affichés à partir des données d’itinéraire normalisées par le fournisseur.",
   checkProvider: "Vérifier auprès du fournisseur",
+  notSuppliedByProvider: "Non fourni par le fournisseur",
   carryOnIncluded: "bagage cabine inclus",
   baggage: "Bagages",
   cabin: "Cabine",
