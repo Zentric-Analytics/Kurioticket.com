@@ -92,6 +92,23 @@ export default function CarDetailsLayout({
             justify-content: center !important;
           }
 
+          [data-car-details-desktop-sticky-controls] {
+            isolation: isolate;
+          }
+
+          [data-car-details-desktop-sticky-controls]::before {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            top: -1.75rem;
+            bottom: 0;
+            left: 50%;
+            width: 100vw;
+            transform: translateX(-50%);
+            background: #FFFFFF;
+            pointer-events: none;
+          }
+
           [data-car-details-section-nav] {
             background: #F5F7FB !important;
           }

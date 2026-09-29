@@ -49,9 +49,13 @@ test("CarDetailsExperience is content-only and owns the standalone sticky deskto
   assert.match(experienceSource, /data-car-details-desktop-sticky-controls/);
   assert.match(
     experienceSource,
-    /hidden h-16 w-full items-center border-b border-\[#D8E1EC\] bg-white lg:sticky lg:top-0 lg:z-40 lg:flex/,
+    /hidden h-16 w-full items-center border-b border-transparent bg-white lg:sticky lg:top-0 lg:z-40 lg:flex/,
   );
   assert.match(experienceSource, /\{desktopBackControl\}/);
+  assert.match(
+    layoutSource,
+    /\[data-car-details-desktop-sticky-controls\]::before[\s\S]*?top: -1\.75rem;[\s\S]*?width: 100vw;[\s\S]*?background: #FFFFFF;/,
+  );
   assert.match(
     experienceSource,
     /<CarHeroActions[\s\S]*?desktop/,
