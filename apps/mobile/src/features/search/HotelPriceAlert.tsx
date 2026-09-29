@@ -381,7 +381,7 @@ export function HotelPriceAlert({
                 />
                 <View style={styles.sliderEnds}>
                   <Text style={[styles.sliderEnd, { color: theme.textSecondary }]}>1%</Text>
-                  <Text style={[styles.sliderEnd, { color: theme.textSecondary }]}>50%</Text>
+                  <Text style={[styles.sliderEnd, { color: theme.textSecondary }]}>15%</Text>
                 </View>
               </View>
 
