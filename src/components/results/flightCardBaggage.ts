@@ -3,7 +3,7 @@ export function formatBaggageValue(
   t: (key: string) => string,
 ) {
   if (/^baggage details not supplied by the provider$/i.test(value?.trim() ?? "")) {
-    return "Not supplied by provider";
+    return t("notSuppliedByProvider");
   }
 
   if (
