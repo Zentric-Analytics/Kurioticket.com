@@ -215,7 +215,7 @@ test("desktop car details keep controls outside the image and rebalance amenitie
     /\[&_button\]:!bg-\[#E7EBF1\]/,
   );
 
-  assert.match(clientSource, /data-car-details-desktop-controls/);
+  assert.match(clientSource, /data-car-details-desktop-sticky-controls/);
   assert.match(clientSource, /data-car-details-desktop-back-link/);
   assert.match(
     clientSource,
@@ -227,10 +227,13 @@ test("desktop car details keep controls outside the image and rebalance amenitie
   );
   assert.match(
     clientSource,
-    /presentation === "guided-content"[\s\S]*?: \( <CarHeroActions[\s\S]*?desktop/,
+    /data-car-details-desktop-sticky-controls[\s\S]*?<CarHeroActions[\s\S]*?desktop/,
+  );
+  assert.match(
+    clientSource,
+    /presentation === "guided-content"[\s\S]*?<CarHeroActions[\s\S]*?desktop/,
   );
   assert.doesNotMatch(clientSource, /desktopImageActions=/);
-  assert.doesNotMatch(clientSource, /desktopBackControl=/);
 
   const sandboxStart = clientSource.indexOf(
     'car.inventorySource === "kayak-sandbox"',
