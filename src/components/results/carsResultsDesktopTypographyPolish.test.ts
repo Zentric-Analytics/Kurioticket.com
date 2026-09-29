@@ -22,11 +22,11 @@ const alert = readFileSync(
 test("standalone desktop search surfaces use one restrained label and value hierarchy", () => {
   assert.match(
     results,
-    /const fieldLabelClass =[\s\S]*?lg:mb-1 lg:text-\[10px\] lg:font-bold lg:uppercase lg:leading-4 lg:tracking-\[0\.11em\] lg:text-slate-500/,
+    /const fieldLabelClass =[\s\S]*?lg:mb-1 lg:text-xs lg:font-semibold lg:uppercase lg:leading-4 lg:tracking-wide lg:text-slate-600/,
   );
   assert.match(
     results,
-    /const fieldInputClass =[\s\S]*?lg:text-\[15px\] lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-\[#1A1A1A\]/,
+    /const fieldInputClass =[\s\S]*?lg:text-sm lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-slate-950/,
   );
   assert.match(
     results,
@@ -43,7 +43,7 @@ test("standalone desktop search surfaces use one restrained label and value hier
   assert.equal(
     (
       results.match(
-        /lg:text-\[15px\] lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-\[#1A1A1A\]/g,
+        /lg:text-sm lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-slate-950/g,
       ) ?? []
     ).length,
     4,
