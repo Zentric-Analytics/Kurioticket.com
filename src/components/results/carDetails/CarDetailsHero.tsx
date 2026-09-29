@@ -72,14 +72,14 @@ export function CarDetailsHero({
 
   return (
     <section className="-mx-4 border-b border-slate-200 bg-[#F5F7FB] pb-4 sm:mx-0 lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
-      <div className="grid gap-0 lg:grid-cols-2 lg:items-start lg:gap-6">
+      <div className="min-w-0">
         <figure
           ref={imageStageRef}
-          className={`relative min-w-0 bg-white ${reserveMobileControlSafeZone ? "" : "pt-5"} lg:pt-0`}
+          className={`relative min-w-0 bg-white ${reserveMobileControlSafeZone ? "" : "pt-5"} lg:mx-auto lg:w-full lg:max-w-[760px] lg:pt-0`}
           data-car-details-image-stage
         >
           <div
-            className={`relative w-full overflow-hidden bg-white ${reserveMobileControlSafeZone ? "" : "h-[clamp(13.75rem,58vw,16rem)]"} lg:aspect-[4/3] lg:h-auto lg:rounded-xl lg:bg-slate-100`}
+            className={`relative w-full overflow-hidden bg-white ${reserveMobileControlSafeZone ? "" : "h-[clamp(13.75rem,58vw,16rem)]"} lg:h-[clamp(20rem,32vw,27rem)] lg:rounded-xl lg:bg-white`}
           >
             {reserveMobileControlSafeZone ? (
               <div className="lg:hidden" data-car-details-mobile-native-image-stage>
@@ -118,19 +118,19 @@ export function CarDetailsHero({
                 />
               </div>
             )}
-            <div className="absolute inset-0 hidden lg:block">
+            <div
+              className="absolute inset-0 hidden lg:block"
+              data-car-details-desktop-centered-image
+            >
               <CarResultImage
                 imageUrl={car.imageUrl}
                 imageAlt={car.imageAlt}
                 modelName={car.modelName}
                 category={car.category}
-                sizes="420px"
-                fit="cover"
+                sizes="760px"
+                fit="contain"
                 priority
               />
-            </div>
-            <div className="absolute inset-x-0 top-0 z-10 hidden bg-gradient-to-b from-slate-950/80 via-slate-950/35 to-transparent px-5 pb-12 pt-4 lg:block">
-              {desktopOverlay}
             </div>
           </div>
           {guidedMobileActions ? (
@@ -139,12 +139,27 @@ export function CarDetailsHero({
             </div>
           ) : null}
         </figure>
-        <div className="min-w-0 px-4 pt-3.5 lg:px-0 lg:pt-0">
+
+        <div className="min-w-0 px-4 pt-3.5 lg:px-0 lg:pt-5">
           <div className="lg:hidden" data-car-details-mobile-identity>
             {identity}
           </div>
+          <div
+            className="hidden min-w-0 items-start justify-between gap-5 lg:flex"
+            data-car-details-desktop-identity-row
+          >
+            <div className="min-w-0 flex-1 [&_h1]:truncate [&_h2]:truncate [&_h3]:truncate [&_h4]:truncate">
+              {identity}
+            </div>
+            <div
+              className="shrink-0 [&>div>div:first-child]:hidden [&_button]:!border-slate-200 [&_button]:!bg-white [&_button]:!text-[#07133B] [&_button]:shadow-sm [&_button:hover]:!bg-slate-50 [&_button[aria-pressed=true]]:!text-rose-500"
+              data-car-details-desktop-actions
+            >
+              {desktopOverlay}
+            </div>
+          </div>
           <ul
-            className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 lg:mt-0 lg:flex lg:flex-wrap lg:gap-2"
+            className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 lg:flex lg:flex-wrap lg:gap-2"
             data-car-details-specifications
           >
             {specs.map(([Icon, label]) => {
