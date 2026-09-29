@@ -159,7 +159,7 @@ export function CarDetailsHero({
             </div>
           </div>
           <ul
-            className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 lg:flex lg:flex-wrap lg:gap-2"
+            className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 lg:mx-auto lg:max-w-[760px] lg:grid-cols-2 lg:gap-x-10 lg:gap-y-3"
             data-car-details-specifications
           >
             {specs.map(([Icon, label]) => {
