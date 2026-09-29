@@ -418,7 +418,7 @@ export function HotelPriceAlertControl({
         />
         <div className={cn("mt-1 flex justify-between text-[11px] leading-[15px]", surface === "desktop" ? "text-[#59636a]" : "text-slate-500")}>
           <span>1%</span>
-          <span>50%</span>
+          <span>15%</span>
         </div>
       </div>
 
