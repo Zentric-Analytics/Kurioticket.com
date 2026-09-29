@@ -88,7 +88,7 @@ export function FlightCard({
     detailsHref === undefined
       ? `/flights/details/${encodeURIComponent(flight.id)}`
       : detailsHref;
-  const resolvedActionLabel = actionLabel ?? t("hotelDetails.viewDeal") || "View deal";
+  const resolvedActionLabel = actionLabel ?? (t("hotelDetails.viewDeal") || "View deal");
 
   return (
     <>
