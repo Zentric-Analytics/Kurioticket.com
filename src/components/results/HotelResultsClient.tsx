@@ -2227,7 +2227,9 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                     {activeFilterCount ? ` (${activeFilterCount})` : ""}
                   </Button>
 
-                  <div role="group" aria-label={t("hotelResults.summaryAria")} className={cn("flex w-full flex-nowrap items-center justify-between gap-2 py-0 sm:py-1", !guided && "hidden sm:flex")}>
+                                    {!guided && results.length > 0 ? <div className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)]" data-hotel-price-alert-row><HotelPriceAlertControl search={{ destination: body.destination, checkIn: body.checkIn, checkOut: body.checkOut, guests: body.guests, rooms: body.rooms }} results={results} /></div> : null}
+
+<div role="group" aria-label={t("hotelResults.summaryAria")} className={cn("flex w-full flex-nowrap items-center justify-between gap-2 py-0 sm:py-1", !guided && "hidden sm:flex")}>
                     <div>
                       {guided ? (
                         <h2 ref={guidedResultsHeadingRef} id="deals-guided-hotel-results-heading" tabIndex={-1} className="text-xl font-bold leading-7 tracking-[-0.015em] text-[#142033] sm:text-2xl">
@@ -2307,8 +2309,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                       </span>
                     </p>
                   ) : null}
-
-                  {!guided && results.length > 0 ? <div className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)]" data-hotel-price-alert-row><HotelPriceAlertControl search={{ destination: body.destination, checkIn: body.checkIn, checkOut: body.checkOut, guests: body.guests, rooms: body.rooms }} results={results} /></div> : null}
 
                   {!guided ? (
                     <div data-mobile-hotel-results-summary role="group" aria-label={t("hotelResults.summaryAria")} className="flex items-center justify-between gap-2 sm:hidden">
