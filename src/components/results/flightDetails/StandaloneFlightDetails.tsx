@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import {
   ArrowLeft,
   Check,
+  ExternalLink,
   Clock3,
   LockKeyhole,
   Luggage,
@@ -27,7 +28,7 @@ import { MobileNativeFareInformationDeck, type MobileFareInfoTab } from "@/compo
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useRegion } from "@/components/region/RegionProvider";
-import { canUseOfferAirlineLogo, compactFareTerms, formatItineraryDepartureDate, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
+import { canUseOfferAirlineLogo, compactFareTerms, formatItineraryDepartureDate, resolveDealIdentityMark, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
 import { formatDisplayPrice, formatFlightResultCurrency } from "@/lib/currency/formatCurrency";
 import type { ExchangeRates } from "@/lib/currency/exchangeRates";
 import type {
@@ -144,10 +145,11 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const activeOffer = selectedDeal?.offer ?? selectedOffer;
   const savedFlightKey = selectedOffer?.id ?? id;
   const handoff = selectedFare?.handoff ?? available?.handoff ?? { available: false as const };
-  const mobileHandoff = selectedDeal
+  const activeHandoff = selectedDeal
     ? { available: true as const, providerName: selectedDeal.providerName }
     : handoff;
-  const canContinue = Boolean(selectedOffer && handoff.available);
+  const mobileHandoff = activeHandoff;
+  const canContinue = Boolean(activeOffer && activeHandoff.available);
   const mobilePricesReady = !currencyRates.isLoading;
   const canUseMobilePrice = (price: ReturnType<typeof formatDisplayPrice> | null, sourceCurrency: string) =>
     Boolean(price && (
@@ -271,10 +273,10 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const tripLine = `${tripType} • ${new Intl.NumberFormat(locale).format(travelers.count)} ${t(travelers.count === 1 ? "deals.travelerSingular" : "deals.travelerPlural")}`;
   const nativeTripType = available.search.tripType === "round-trip" ? "Round-trip" : available.search.tripType === "multi-city" ? "Multi-city" : "One-way";
   const nativeTripLine = `${nativeTripType} · ${available.search.travelers} traveler${available.search.travelers === 1 ? "" : "s"} · ${titleCase(available.search.cabinClass)}`;
-  const providerPrice = selectedOffer
+  const providerPrice = activeOffer
     ? formatDisplayPrice({
-        amount: selectedOffer.price,
-        sourceCurrency: selectedOffer.currency,
+        amount: activeOffer.price,
+        sourceCurrency: activeOffer.currency,
         displayCurrency: selectedOption.currency,
         convertSourceEstimate: true, useFlightResultSymbols: true, maximumFractionDigits: 0,
         rates: currencyRates.rates,
@@ -291,7 +293,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         isFallbackRate: currencyRates.isFallback,
       })
     : providerPrice;
-  const mobilePriceSourceCurrency = selectedDeal?.currency ?? selectedOffer.currency;
+  const mobilePriceSourceCurrency = selectedDeal?.currency ?? activeOffer.currency;
   const mobilePrice = mobilePricesReady && canUseMobilePrice(mobilePriceCandidate, mobilePriceSourceCurrency)
     ? mobilePriceCandidate
     : null;
@@ -486,11 +488,11 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               pricesReady={mobilePricesReady}
             />
             <div data-desktop-fare-information-tabs className="mt-5 hidden min-w-0 sm:flex" role="tablist" aria-label="Fare information">{fareTabs.map((tab, index) => <button key={tab.id} ref={(element) => { tabRefs.current[index] = element; }} id={`fare-tab-${tab.id}`} type="button" role="tab" aria-selected={activeTab === tab.id} aria-controls={`fare-panel-${tab.id}`} tabIndex={activeTab === tab.id ? 0 : -1} onClick={() => setActiveTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)} className={`min-h-11 flex-1 whitespace-nowrap border-b-[3px] px-1 text-center text-sm font-semibold text-[#536B92] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 ${activeTab === tab.id ? "border-[#075EE8]" : "border-transparent"}`}>{tab.label}</button>)}</div>
-            <div className="hidden sm:block"><FarePanel activeTab={activeTab} fare={selectedFare} offer={selectedOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} onViewDeal={continueToOffer} /></div>
+            <div className="hidden sm:block"><FarePanel activeTab={activeTab} fare={selectedFare} offer={activeOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} selectedDealOfferId={selectedDeal?.offerId ?? null} onSelectDeal={setSelectedDealOfferId} onViewDeal={continueToOffer} /></div>
             <MobileCheckoutDock travelerCount={travelers.count} price={mobilePrice} redirecting={redirecting} handoff={mobileHandoff} canContinue={canContinueMobile && Boolean(mobilePrice)} onContinue={() => continueToOffer(selectedDeal?.offerId ?? selectedOffer.id)} error={error || notice} priceLoading={!mobilePricesReady} />
             </div>
           </section>
-          <DesktopCheckoutSummary travelerCount={travelers.count} price={providerPrice} priceLoading={!mobilePricesReady} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
+          <DesktopCheckoutSummary travelerCount={travelers.count} price={providerPrice} priceLoading={!mobilePricesReady} redirecting={redirecting} handoff={activeHandoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedDeal?.offerId ?? selectedOffer.id)} error={error || notice} />
         </div>
       </div>
     </main>
@@ -735,53 +737,729 @@ function FareTerm({ term, text = term.text, compact = false }: { term: FlightDet
   return <li className={`flex min-w-0 items-start text-slate-700 ${compact ? "gap-1.5 text-[12px] leading-4" : "gap-2 text-[13px] leading-5"}`}><span className={`mt-0.5 flex shrink-0 items-center justify-center rounded-full border ${compact ? "h-4 w-4" : "h-4 w-4"} ${iconClass}`}><Icon className="h-2.5 w-2.5" aria-hidden="true" /></span><span className="min-w-0 whitespace-normal break-words [overflow-wrap:anywhere] [text-wrap:pretty] [word-break:normal]">{text}</span></li>;
 }
 
-function FarePanel({ activeTab, fare, offer, locale, selectedCurrency, currencyRates, isFallbackRate, redirecting, onViewDeal }: { activeTab: FareTab; fare?: FlightDetailsFareChoice; offer: FlightDetailsOffer; locale: string; selectedCurrency: string; currencyRates: ExchangeRates; isFallbackRate: boolean; redirecting: boolean; onViewDeal: (offerId: string) => void }) {
-  const details = offer.providerDetails;
-  const conditions = details?.conditions ?? [];
-  const optionalServices = details?.optionalServices ?? [];
-  const legalLinks = carrierConditionsLinks(offer);
-  if (activeTab === "deals") return <CompareDealsPanel fare={fare} selectedCurrency={selectedCurrency} currencyRates={currencyRates} isFallbackRate={isFallbackRate} redirecting={redirecting} onViewDeal={onViewDeal} />;
-  if (activeTab === "conditions") return <section data-desktop-fare-panel id="fare-panel-conditions" role="tabpanel" aria-labelledby="fare-tab-conditions" className="py-4 sm:py-5"><h2 className="text-sm font-semibold text-slate-950">Fare conditions</h2>{conditions.length ? <ul className="mt-3 space-y-3">{conditions.map((condition, index) => <li key={`${condition.scope}-${condition.category}-${index}`} className="text-sm text-slate-700"><p>{conditionLabel(condition)}</p>{condition.penaltyAmount !== undefined && condition.penaltyCurrency ? <p className="mt-1 text-xs text-slate-500">Penalty: {formatSourceMoney(condition.penaltyAmount, condition.penaltyCurrency, locale)}</p> : null}</li>)}</ul> : <p className="mt-3 text-sm text-slate-600">Conditions not supplied by the provider.</p>}{details?.passengerIdentityDocumentsRequired ? <p className="mt-4 rounded-lg bg-blue-50 px-4 py-3 text-sm text-slate-700">Passport information is required by the airline to complete booking.</p> : null}{details?.supportedIdentityDocumentTypes?.length ? <p className="mt-4 text-sm text-slate-700"><span className="font-semibold">Supported identity documents:</span> {details.supportedIdentityDocumentTypes.map(titleCase).join(", ")}</p> : null}{details?.offerOwner ? <p className="mt-4 text-sm text-slate-700"><span className="font-semibold">Offer airline:</span> {details.offerOwner.name}{details.offerOwner.iataCode ? ` (${details.offerOwner.iataCode})` : ""}</p> : null}{legalLinks.length ? <div className="mt-4 text-sm"><p className="font-semibold text-slate-900">Airline conditions</p><ul className="mt-1 space-y-1">{legalLinks.map((link) => <li key={link.url}><a href={link.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#075EE8] hover:underline">{link.name} conditions of carriage</a></li>)}</ul></div> : null}{details?.updatedAt ? <p className="mt-4 text-xs text-slate-500">Provider offer last updated {formatProviderTimestamp(details.updatedAt, locale)}</p> : null}</section>;
-  if (activeTab === "extras") return <section data-desktop-fare-panel id="fare-panel-extras" role="tabpanel" aria-labelledby="fare-tab-extras" className="py-4 sm:py-5"><h2 className="text-sm font-semibold text-slate-950">Optional extras</h2>{optionalServices.length ? <ul className="mt-3 space-y-3">{optionalServices.map((service, index) => <li key={`${service.type}-${service.journeyContext || index}`} className="text-sm text-slate-700"><p className="font-medium">{service.description}</p><p>{formatSourceMoney(service.price, service.currency, locale)}{service.pricedPerTraveler ? " each" : ""}</p>{service.travelerCount ? <p className="text-xs text-slate-500">Available for {service.travelerCount} {service.travelerCount === 1 ? "traveler" : "travelers"}</p> : null}{service.maximumQuantity !== undefined ? <p className="text-xs text-slate-500">{service.pricedPerTraveler ? "Maximum quantity per traveler" : "Maximum quantity"}: {service.maximumQuantity}</p> : null}{service.journeyContext ? <p className="text-xs text-slate-500">{service.journeyContext}</p> : null}</li>)}</ul> : <p className="mt-3 text-sm text-slate-600">No optional services supplied by the provider.</p>}{details?.supportedLoyaltyProgrammes?.length ? <p className="mt-4 text-sm text-slate-700"><span className="font-semibold">Supported loyalty airline codes:</span> {details.supportedLoyaltyProgrammes.join(", ")}</p> : null}</section>;
+function FarePanel({
+  activeTab,
+  fare,
+  offer,
+  locale,
+  selectedCurrency,
+  currencyRates,
+  isFallbackRate,
+  redirecting,
+  selectedDealOfferId,
+  onSelectDeal,
+  onViewDeal,
+}: {
+  activeTab: FareTab;
+  fare?: FlightDetailsFareChoice;
+  offer: FlightDetailsOffer;
+  locale: string;
+  selectedCurrency: string;
+  currencyRates: ExchangeRates;
+  isFallbackRate: boolean;
+  redirecting: boolean;
+  selectedDealOfferId: string | null;
+  onSelectDeal: (offerId: string) => void;
+  onViewDeal: (offerId: string) => void;
+}) {
+  if (activeTab === "deals")
+    return (
+      <CompareDealsPanel
+        fare={fare}
+        selectedCurrency={selectedCurrency}
+        currencyRates={currencyRates}
+        isFallbackRate={isFallbackRate}
+        redirecting={redirecting}
+        selectedDealOfferId={selectedDealOfferId}
+        onSelectDeal={onSelectDeal}
+        onViewDeal={onViewDeal}
+      />
+    );
+  if (activeTab === "conditions")
+    return <FareConditions offer={offer} locale={locale} />;
+  if (activeTab === "extras")
+    return <OptionalExtras offer={offer} locale={locale} />;
   return <FareDetails offer={offer} locale={locale} />;
 }
 
-function CompareDealsPanel({ fare, selectedCurrency, currencyRates, isFallbackRate, redirecting, onViewDeal }: { fare?: FlightDetailsFareChoice; selectedCurrency: string; currencyRates: ExchangeRates; isFallbackRate: boolean; redirecting: boolean; onViewDeal: (offerId: string) => void }) {
+function CompareDealsPanel({
+  fare,
+  selectedCurrency,
+  currencyRates,
+  isFallbackRate,
+  redirecting,
+  selectedDealOfferId,
+  onSelectDeal,
+  onViewDeal,
+}: {
+  fare?: FlightDetailsFareChoice;
+  selectedCurrency: string;
+  currencyRates: ExchangeRates;
+  isFallbackRate: boolean;
+  redirecting: boolean;
+  selectedDealOfferId: string | null;
+  onSelectDeal: (offerId: string) => void;
+  onViewDeal: (offerId: string) => void;
+}) {
   const deals = fare?.deals ?? [];
-  if (deals.length === 0) return <section data-desktop-fare-panel id="fare-panel-deals" role="tabpanel" aria-labelledby="fare-tab-deals" className="py-4 sm:py-5"><p className="text-sm text-slate-700">No live booking deals are available for this fare right now.</p></section>;
-  return <section data-desktop-fare-panel id="fare-panel-deals" role="tabpanel" aria-labelledby="fare-tab-deals" className="py-4 sm:py-5">
-    <h2 className="text-sm font-semibold text-slate-950">Compare deals</h2>
-    <p className="mt-1 text-sm text-slate-600">Compare available booking options for this selected fare.</p>
-    <><p className="mt-3 text-xs font-medium text-slate-600">{deals.length} {deals.length === 1 ? "deal" : "deals"} available</p><ul className="mt-2 space-y-2">{deals.map((deal) => {
-      const price = formatDisplayPrice({ amount: deal.price, sourceCurrency: deal.currency, displayCurrency: selectedCurrency, convertSourceEstimate: true, useFlightResultSymbols: true, maximumFractionDigits: 0, rates: currencyRates, isFallbackRate });
-      return <li key={deal.key} className="flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-[10px] border border-[#E2E8F0] bg-white px-3 py-2.5 sm:px-4"><p className="min-w-0 break-words text-sm font-semibold text-slate-950">{deal.providerName}</p><div className="flex shrink-0 items-center gap-2"><p className="text-sm font-bold text-slate-950" aria-label={price.ariaLabel}>{price.formatted}</p><button type="button" disabled={redirecting} onClick={() => onViewDeal(deal.offerId)} className="inline-flex min-h-11 items-center justify-center rounded-lg px-2 text-sm font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 disabled:opacity-50">View deal</button></div></li>;
-    })}</ul></>
-  </section>;
+  if (!deals.length)
+    return (
+      <DesktopFarePanel id="deals">
+        <DesktopEmptyState
+          title="No booking deals available"
+          description="No additional live provider deals were supplied for this fare."
+        />
+      </DesktopFarePanel>
+    );
+  return (
+    <DesktopFarePanel id="deals">
+      <div
+        role="radiogroup"
+        aria-label="Flight deal options"
+        className="grid gap-3 py-1 lg:grid-cols-2"
+      >
+        {deals.map((deal, index) => {
+          const selected = deal.offerId === selectedDealOfferId;
+          const identityMark = resolveDealIdentityMark(deal);
+          const price = formatDisplayPrice({
+            amount: deal.price,
+            sourceCurrency: deal.currency,
+            displayCurrency: selectedCurrency,
+            convertSourceEstimate: true,
+            useFlightResultSymbols: true,
+            maximumFractionDigits: 0,
+            rates: currencyRates,
+            isFallbackRate,
+          });
+          return (
+            <div
+              key={deal.key}
+              className={`min-w-0 rounded-[12px] border px-4 py-3 transition ${selected ? "border-[#075EE8] bg-[#F4F8FF]" : "border-[#D8E1EC] bg-white"}`}
+            >
+              <button
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                tabIndex={selected || (!selectedDealOfferId && index === 0) ? 0 : -1}
+                onClick={() => onSelectDeal(deal.offerId)}
+                onKeyDown={(event) => {
+                  const direction = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 0;
+                  const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? deals.length - 1 : direction ? (index + direction + deals.length) % deals.length : -1;
+                  if (nextIndex < 0) return;
+                  event.preventDefault();
+                  onSelectDeal(deals[nextIndex].offerId);
+                  event.currentTarget.parentElement?.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[nextIndex]?.focus();
+                }}
+                className="w-full min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35"
+              >
+                <span className="flex min-w-0 items-start justify-between gap-3">
+                  <span className="flex min-w-0 flex-1 items-center gap-2">
+                    {identityMark.kind === "airline" ? (
+                      <FlightIdentityMark
+                        logoUrl={identityMark.logoUrl}
+                        decorative
+                      />
+                    ) : null}
+                    <span className="min-w-0 break-words text-[15px] font-bold leading-5 text-slate-950">
+                      {deal.providerName}
+                    </span>
+                  </span>
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-[1.5px] ${selected ? "border-[#075EE8]" : "border-slate-500"}`}
+                  >
+                    {selected ? (
+                      <span
+                        className="h-2 w-2 rounded-full bg-[#075EE8]"
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                  </span>
+                </span>
+                <span className="mt-3 flex items-end justify-between gap-3">
+                  <span className="min-w-0 flex-1 text-xs font-medium leading-[17px] text-[#536B92]">
+                    {fare?.label}
+                  </span>
+                  <span
+                    className="max-w-[60%] shrink-0 text-right text-lg font-extrabold leading-[22px] tabular-nums text-slate-950"
+                    aria-label={price.ariaLabel}
+                  >
+                    {price.formatted}
+                  </span>
+                </span>
+              </button>
+              <button
+                type="button"
+                disabled={redirecting}
+                onClick={() => onViewDeal(deal.offerId)}
+                className="mt-3 min-h-11 w-full rounded-lg text-sm font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 disabled:opacity-50"
+              >
+                View deal
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </DesktopFarePanel>
+  );
 }
 
-function FareDetails({ offer, locale }: { offer: FlightDetailsOffer; locale: string }) {
-  const details = offer.providerDetails;
-  const segmentCabins = (offer.legs ?? []).flatMap((leg) => leg.segments.flatMap((segment) =>
-    (segment.cabinDetails ?? []).map((cabin) => ({ segment, cabin })),
-  ));
-  return <section data-desktop-fare-panel id="fare-panel-details" role="tabpanel" aria-labelledby="fare-tab-details" className="py-4 sm:py-5">
-    <div className="grid gap-6 lg:grid-cols-2 lg:divide-x lg:divide-[#E2E8F0]">
-      <DetailGroup title="Cabin and fare by flight">{segmentCabins.length ? <div className="space-y-4">{segmentCabins.map(({ segment, cabin }, index) => <div key={`${segment.departureTime}-${JSON.stringify(cabin)}-${index}`} className="space-y-1 text-sm text-slate-700"><p className="font-semibold text-slate-900">{segment.originAirport} → {segment.destinationAirport}{segment.marketingFlightNumber || segment.flightNumber ? ` • ${segment.marketingFlightNumber || segment.flightNumber}` : ""}</p><p>{[cabin.fareBrandName && `Fare: ${cabin.fareBrandName}`, cabin.cabinClass && `Cabin: ${titleCase(cabin.cabinClass)}`, cabin.cabinMarketingName && `Cabin product: ${cabin.cabinMarketingName}`, cabin.fareBasisCode && `Fare basis: ${cabin.fareBasisCode}`].filter(Boolean).join(" • ")}</p>{amenityLines(cabin).map((line) => <p key={line}>{line}</p>)}</div>)}</div> : <p className="text-sm text-slate-600">Additional cabin details not supplied by the provider.</p>}</DetailGroup>
-      <DetailGroup title="Provider source price breakdown">{details?.price ? <dl className="space-y-2 text-sm">{details.price.baseAmount !== undefined && details.price.baseCurrency ? <PriceRow label="Base fare" amount={details.price.baseAmount} currency={details.price.baseCurrency} locale={locale} /> : null}{details.price.taxAmount !== undefined && details.price.taxCurrency ? <PriceRow label="Taxes" amount={details.price.taxAmount} currency={details.price.taxCurrency} locale={locale} /> : null}<PriceRow label="Trip total" amount={details.price.totalAmount} currency={details.price.totalCurrency} locale={locale} /></dl> : <p className="text-sm text-slate-600">Price breakdown not supplied by the provider.</p>}</DetailGroup>
+function FareDetails({
+  offer,
+  locale,
+}: {
+  offer: FlightDetailsOffer;
+  locale: string;
+}) {
+  const provider = offer.providerDetails;
+  const cabins = (offer.legs ?? []).flatMap((leg) =>
+    leg.segments.flatMap((segment) =>
+      (segment.cabinDetails ?? []).map((cabin) => ({ segment, cabin })),
+    ),
+  );
+  return (
+    <DesktopFarePanel id="details">
+      <div className="divide-y divide-[#D8E1EC]">
+        <section className="py-4">
+          {cabins.length ? (
+            cabins.map(({ segment, cabin }, index) => {
+              const seat = [
+                cabin.amenities?.seat?.type &&
+                  titleCase(cabin.amenities.seat.type),
+                cabin.amenities?.seat?.pitch &&
+                  `${cabin.amenities.seat.pitch} in pitch`,
+                cabin.amenities?.seat?.legroom &&
+                  `${cabin.amenities.seat.legroom.toUpperCase() === "N/A" ? "N/A" : titleCase(cabin.amenities.seat.legroom)} legroom`,
+              ]
+                .filter(Boolean)
+                .join(" · ");
+              const wifi = cabin.amenities?.wifi;
+              const wifiValue = wifi
+                ? `${amenityState(wifi.state)}${wifi.state === "included" && wifi.cost ? ` (${titleCase(wifi.cost)})` : ""}`
+                : undefined;
+              const hasCabin = Boolean(
+                cabin.fareBrandName ||
+                cabin.cabinClass ||
+                cabin.cabinMarketingName ||
+                cabin.fareBasisCode,
+              );
+              const hasOnBoard = Boolean(
+                seat || cabin.amenities?.wifi || cabin.amenities?.power,
+              );
+              return (
+                <div
+                  key={`${segment.departureTime}-${JSON.stringify(cabin)}-${index}`}
+                  className={index ? "border-t border-[#D8E1EC] py-4" : "pb-1"}
+                >
+                  <p className="mb-3 break-words text-sm font-semibold leading-5 text-slate-950">
+                    {segment.originAirport} → {segment.destinationAirport}
+                    {segment.marketingFlightNumber || segment.flightNumber
+                      ? ` · ${segment.marketingFlightNumber || segment.flightNumber}`
+                      : ""}
+                  </p>
+                  {hasCabin ? (
+                    <DesktopFareGroup label="Cabin">
+                      <dl className="grid gap-2 md:max-w-3xl">
+                        <DesktopDetailRow
+                          label="Fare brand"
+                          value={cabin.fareBrandName}
+                        />
+                        <DesktopDetailRow
+                          label="Cabin"
+                          value={
+                            cabin.cabinClass && titleCase(cabin.cabinClass)
+                          }
+                        />
+                        <DesktopDetailRow
+                          label="Cabin product"
+                          value={cabin.cabinMarketingName}
+                        />
+                        <DesktopDetailRow
+                          label="Fare basis"
+                          value={cabin.fareBasisCode}
+                        />
+                      </dl>
+                    </DesktopFareGroup>
+                  ) : null}
+                  {hasCabin && hasOnBoard ? (
+                    <div className="my-4 h-px bg-[#D8E1EC]" />
+                  ) : null}
+                  {hasOnBoard ? (
+                    <DesktopFareGroup label="On board">
+                      <dl className="grid gap-2 md:max-w-3xl">
+                        <DesktopDetailRow
+                          label="Seat"
+                          value={seat || undefined}
+                        />
+                        <DesktopDetailRow label="Wi-Fi" value={wifiValue} />
+                        <DesktopDetailRow
+                          label="Power"
+                          value={
+                            cabin.amenities?.power
+                              ? amenityState(cabin.amenities.power.state)
+                              : undefined
+                          }
+                        />
+                      </dl>
+                    </DesktopFareGroup>
+                  ) : null}
+                </div>
+              );
+            })
+          ) : (
+            <DesktopQuietText>
+              Additional cabin details not supplied by the provider.
+            </DesktopQuietText>
+          )}
+        </section>
+        <section className="py-4">
+          <DesktopFareGroup label="Price breakdown">
+            {provider?.price ? (
+              <dl className="grid gap-2 md:max-w-3xl">
+                {provider.price.baseAmount !== undefined &&
+                provider.price.baseCurrency ? (
+                  <DesktopDetailRow
+                    label="Base fare"
+                    value={formatSourceMoney(
+                      provider.price.baseAmount,
+                      provider.price.baseCurrency,
+                      locale,
+                    )}
+                  />
+                ) : null}
+                {provider.price.taxAmount !== undefined &&
+                provider.price.taxCurrency ? (
+                  <DesktopDetailRow
+                    label="Taxes"
+                    value={formatSourceMoney(
+                      provider.price.taxAmount,
+                      provider.price.taxCurrency,
+                      locale,
+                    )}
+                  />
+                ) : null}
+                <DesktopDetailRow
+                  label="Trip total"
+                  value={formatSourceMoney(
+                    provider.price.totalAmount,
+                    provider.price.totalCurrency,
+                    locale,
+                  )}
+                  strong
+                />
+              </dl>
+            ) : (
+              <DesktopQuietText>
+                Price breakdown not supplied by the provider.
+              </DesktopQuietText>
+            )}
+          </DesktopFareGroup>
+        </section>
+        {provider?.totalEmissionsKg !== undefined ? (
+          <section className="py-4">
+            <EmissionsRow amount={provider.totalEmissionsKg} locale={locale} />
+          </section>
+        ) : null}
+        {provider?.updatedAt ? (
+          <DesktopProviderFreshness
+            value={provider.updatedAt}
+            locale={locale}
+          />
+        ) : null}
+      </div>
+    </DesktopFarePanel>
+  );
+}
+
+function FareConditions({
+  offer,
+  locale,
+}: {
+  offer: FlightDetailsOffer;
+  locale: string;
+}) {
+  const provider = offer.providerDetails;
+  const conditions = provider?.conditions ?? [];
+  const groups = [
+    ...new Set(conditions.map((condition) => condition.category)),
+  ].map((category) => ({
+    category,
+    conditions: conditions.filter(
+      (condition) => condition.category === category,
+    ),
+  }));
+  const links = carrierConditionsLinks(offer);
+  return (
+    <DesktopFarePanel id="conditions">
+      <div className="divide-y divide-[#D8E1EC]">
+        <section>
+          {groups.length ? (
+            groups.map((group, groupIndex) => (
+              <div
+                key={group.category}
+                className={`py-4 ${groupIndex ? "border-t border-[#D8E1EC]" : ""}`}
+              >
+                <DesktopGroupLabel>
+                  {conditionCategory(group.conditions[0])}
+                </DesktopGroupLabel>
+                <div className="grid gap-0 md:max-w-3xl">
+                  {group.conditions.map((condition, index) => {
+                    const semantic =
+                      condition.state === "allowed"
+                        ? "positive"
+                        : condition.state === "not-allowed"
+                          ? "negative"
+                          : "informational";
+                    const penalty =
+                      condition.penaltyAmount !== undefined &&
+                      condition.penaltyCurrency
+                        ? `${formatSourceMoney(condition.penaltyAmount, condition.penaltyCurrency, locale)} penalty`
+                        : null;
+                    return (
+                      <div
+                        key={`${condition.scope}-${condition.category}-${index}`}
+                        className={`flex items-start gap-3 py-2.5 ${index ? "border-t border-[#D8E1EC]" : ""}`}
+                      >
+                        <DesktopStatusIcon semantic={semantic} />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-semibold leading-[18px] text-slate-950">
+                            {conditionState(condition)}
+                          </p>
+                          <p className="mt-0.5 text-xs leading-4 text-[#536B92]">
+                            {conditionScope(condition)}
+                          </p>
+                          {penalty ? (
+                            <p className="mt-0.5 text-xs font-medium leading-4 text-[#536B92]">
+                              {penalty}
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          ) : (
+            <DesktopEmptyState
+              title="Fare conditions unavailable"
+              description="Conditions were not supplied by the provider."
+            />
+          )}
+        </section>
+        {provider?.passengerIdentityDocumentsRequired ||
+        provider?.supportedIdentityDocumentTypes?.length ? (
+          <section className="py-4">
+            <DesktopFareGroup label="Travel documents">
+              {provider.passengerIdentityDocumentsRequired ? (
+                <p className="mb-2 text-[13px] leading-[19px] text-slate-800">
+                  Passport or identity information is required to complete
+                  booking.
+                </p>
+              ) : null}
+              {provider.supportedIdentityDocumentTypes?.length ? (
+                <dl className="md:max-w-3xl">
+                  <DesktopDetailRow
+                    label="Supported documents"
+                    value={provider.supportedIdentityDocumentTypes
+                      .map(titleCase)
+                      .join(", ")}
+                  />
+                </dl>
+              ) : null}
+            </DesktopFareGroup>
+          </section>
+        ) : null}
+        {provider?.offerOwner || links.length ? (
+          <section className="py-4">
+            <DesktopFareGroup label="Airline">
+              {provider?.offerOwner ? (
+                <p className="mb-1 text-[13px] font-medium leading-[19px] text-slate-950">
+                  {provider.offerOwner.name}
+                  {provider.offerOwner.iataCode
+                    ? ` · ${provider.offerOwner.iataCode}`
+                    : ""}
+                </p>
+              ) : null}
+              <ul className="md:max-w-3xl">
+                {links.map((link) => (
+                  <li key={link.url}>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex min-h-11 items-center justify-between gap-3 text-[13px] font-semibold leading-[18px] text-[#075EE8] hover:underline"
+                    >
+                      <span className="min-w-0 flex-1 break-words">
+                        {link.name} conditions of carriage
+                      </span>
+                      <ExternalLink
+                        className="h-[17px] w-[17px] shrink-0"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </DesktopFareGroup>
+          </section>
+        ) : null}
+        {provider?.updatedAt ? (
+          <DesktopProviderFreshness
+            value={provider.updatedAt}
+            locale={locale}
+          />
+        ) : null}
+      </div>
+    </DesktopFarePanel>
+  );
+}
+
+function OptionalExtras({
+  offer,
+  locale,
+}: {
+  offer: FlightDetailsOffer;
+  locale: string;
+}) {
+  const provider = offer.providerDetails;
+  const services = provider?.optionalServices ?? [];
+  return (
+    <DesktopFarePanel id="extras">
+      <div className="divide-y divide-[#D8E1EC]">
+        <section className="py-4">
+          <DesktopGroupLabel>Optional services</DesktopGroupLabel>
+          {services.length ? (
+            <ul className="md:max-w-4xl">
+              {services.map((service, index) => (
+                <li
+                  key={`${service.type}-${service.description}-${index}`}
+                  className={`py-3 ${index ? "border-t border-[#D8E1EC]" : ""}`}
+                >
+                  <div className="flex items-start justify-between gap-5">
+                    <p className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-[19px] text-slate-950">
+                      {service.description}
+                    </p>
+                    <p className="max-w-[42%] shrink-0 break-words text-right text-[13px] font-bold leading-[19px] tabular-nums text-slate-950">
+                      {formatSourceMoney(
+                        service.price,
+                        service.currency,
+                        locale,
+                      )}
+                      {service.pricedPerTraveler ? " each" : ""}
+                    </p>
+                  </div>
+                  {service.travelerCount ? (
+                    <p className="mt-1 text-xs leading-[17px] text-[#536B92]">
+                      Available for {service.travelerCount} traveler
+                      {service.travelerCount === 1 ? "" : "s"}
+                    </p>
+                  ) : null}
+                  {service.maximumQuantity !== undefined ? (
+                    <p className="mt-1 text-xs leading-[17px] text-[#536B92]">
+                      {service.pricedPerTraveler
+                        ? "Maximum quantity per traveler"
+                        : "Maximum quantity"}
+                      : {service.maximumQuantity}
+                    </p>
+                  ) : null}
+                  {service.journeyContext ? (
+                    <p className="mt-1 text-xs leading-[17px] text-[#536B92]">
+                      {service.journeyContext}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <DesktopQuietText>
+              No optional services were supplied by this provider.
+            </DesktopQuietText>
+          )}
+        </section>
+        {provider?.supportedLoyaltyProgrammes?.length ? (
+          <section className="py-4">
+            <DesktopFareGroup label="Loyalty programmes">
+              <p className="text-[13px] font-medium leading-[19px] text-slate-950">
+                {provider.supportedLoyaltyProgrammes.join(", ")}
+              </p>
+            </DesktopFareGroup>
+          </section>
+        ) : null}
+      </div>
+    </DesktopFarePanel>
+  );
+}
+
+function DesktopFarePanel({
+  id,
+  children,
+}: {
+  id: FareTab;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      data-desktop-fare-panel
+      id={`fare-panel-${id}`}
+      role="tabpanel"
+      aria-labelledby={`fare-tab-${id}`}
+      className="py-4 sm:py-5"
+    >
+      {children}
+    </section>
+  );
+}
+function DesktopGroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="mb-[9px] text-[11px] font-bold uppercase leading-[15px] tracking-[0.08em] text-[#536B92]">
+      {children}
+    </h3>
+  );
+}
+function DesktopFareGroup({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <DesktopGroupLabel>{label}</DesktopGroupLabel>
+      {children}
     </div>
-    {details?.totalEmissionsKg !== undefined ? <EmissionsRow amount={details.totalEmissionsKg} locale={locale} /> : null}
-    {details?.updatedAt ? <p className="mt-4 text-xs text-slate-500">Provider offer last updated {formatProviderTimestamp(details.updatedAt, locale)}</p> : null}
-  </section>;
+  );
 }
-
-function DetailGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  const displayTitle = title === "Cabin and fare by flight" ? "Cabin & Flight" : title === "Provider source price breakdown" ? "Price breakdown" : title;
-  return <div className="lg:px-1"><h3 className="mb-2 text-sm font-semibold text-slate-950">{displayTitle}</h3>{children}</div>;
+function DesktopDetailRow({
+  label,
+  value,
+  strong = false,
+}: {
+  label: string;
+  value?: string | null;
+  strong?: boolean;
+}) {
+  if (!value) return null;
+  return (
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] items-start gap-6">
+      <dt
+        className={`min-w-0 break-words text-[13px] leading-[19px] text-[#536B92] ${strong ? "font-bold" : "font-normal"}`}
+      >
+        {label}
+      </dt>
+      <dd
+        className={`min-w-0 break-words text-right text-[13px] leading-[19px] text-slate-950 [overflow-wrap:anywhere] ${strong ? "font-bold" : "font-medium"}`}
+      >
+        {value}
+      </dd>
+    </div>
+  );
 }
-function PriceRow({ label, amount, currency, locale }: { label: string; amount: number; currency: string; locale: string }) { return <div className="flex justify-between gap-3"><dt className="text-slate-600">{label}</dt><dd className="font-medium">{formatSourceMoney(amount, currency, locale)}</dd></div>; }
+function DesktopQuietText({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="py-3 text-[13px] leading-[19px] text-[#536B92]">{children}</p>
+  );
+}
+function DesktopEmptyState({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="px-3 py-6 text-center">
+      <p className="text-sm font-semibold leading-5 text-slate-950">{title}</p>
+      <p className="mt-1 text-[13px] leading-[19px] text-[#536B92]">
+        {description}
+      </p>
+    </div>
+  );
+}
+function DesktopProviderFreshness({
+  value,
+  locale,
+}: {
+  value: string;
+  locale: string;
+}) {
+  return (
+    <section className="py-3">
+      <p className="text-[11px] font-medium leading-4 text-[#536B92]">
+        Provider offer last updated
+      </p>
+      <p className="text-[11px] leading-4 text-[#536B92]">
+        {formatProviderTimestamp(value, locale)}
+      </p>
+    </section>
+  );
+}
+function DesktopStatusIcon({
+  semantic,
+}: {
+  semantic: "positive" | "negative" | "informational";
+}) {
+  return (
+    <span
+      className={`mt-0.5 flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full border ${semantic === "positive" ? "border-emerald-500" : "border-slate-400"}`}
+    >
+      {semantic === "positive" ? (
+        <Check
+          className="h-2.5 w-2.5 text-emerald-600"
+          strokeWidth={2.2}
+          aria-hidden="true"
+        />
+      ) : semantic === "negative" ? (
+        <span
+          className="h-[1.5px] w-[7px] rounded bg-slate-500"
+          aria-hidden="true"
+        />
+      ) : (
+        <span
+          className="h-[3px] w-[3px] rounded-full bg-slate-500"
+          aria-hidden="true"
+        />
+      )}
+    </span>
+  );
+}
+function amenityState(value: "included" | "not-included" | "unknown") {
+  return value === "included"
+    ? "Available"
+    : value === "not-included"
+      ? "Not available"
+      : "Not supplied by provider";
+}
+function conditionScope(condition: FlightProviderCondition) {
+  return condition.scope === "trip"
+    ? "Whole trip"
+    : condition.legIndex !== undefined
+      ? `Flight ${condition.legIndex + 1}`
+      : condition.scope === "outbound"
+        ? "Outbound only"
+        : condition.scope === "return"
+          ? "Return only"
+          : "Leg";
+}
+function conditionCategory(condition: FlightProviderCondition) {
+  return condition.category === "change"
+    ? "Changes"
+    : titleCase(condition.category);
+}
+function conditionState(condition: FlightProviderCondition) {
+  const permission =
+    condition.category === "change" || condition.category === "refund";
+  return condition.state === "allowed"
+    ? permission
+      ? "Allowed"
+      : "Included"
+    : condition.state === "not-allowed"
+      ? permission
+        ? "Not allowed"
+        : "Not included"
+      : "Not supplied by provider";
+}
 function formatSourceMoney(amount: number, currency: string, locale: string) { try { return formatFlightResultCurrency(amount, currency, { maximumFractionDigits: 0, locale }); } catch { return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(amount); } }
-function amenityLines(cabin: NonNullable<FlightLeg["segments"][number]["cabinDetails"]>[number]) { const lines: string[] = []; if (cabin.amenities?.wifi) lines.push(`Wi-Fi: ${cabin.amenities.wifi.state === "included" ? cabin.amenities.wifi.cost ? `Available (${titleCase(cabin.amenities.wifi.cost)})` : "Available" : cabin.amenities.wifi.state === "not-included" ? "Not available" : "Not supplied by provider"}`); if (cabin.amenities?.power) lines.push(`Power: ${cabin.amenities.power.state === "included" ? "Available" : cabin.amenities.power.state === "not-included" ? "Not available" : "Not supplied by provider"}`); if (cabin.amenities?.seat) lines.push(`Seat: ${[cabin.amenities.seat.type && titleCase(cabin.amenities.seat.type), cabin.amenities.seat.pitch && `${cabin.amenities.seat.pitch} in pitch`, cabin.amenities.seat.legroom && `${cabin.amenities.seat.legroom.toUpperCase() === "N/A" ? "N/A" : titleCase(cabin.amenities.seat.legroom)} legroom`].filter(Boolean).join(", ")}`); return lines; }
-function conditionLabel(condition: FlightProviderCondition) { const scope = condition.scope === "trip" ? "Whole trip" : condition.legIndex !== undefined ? `Flight ${condition.legIndex + 1}` : condition.scope === "outbound" ? "Outbound only" : condition.scope === "return" ? "Return only" : "Leg"; const category = condition.category === "change" ? "Changes" : titleCase(condition.category); const permission = condition.category === "change" || condition.category === "refund"; const state = condition.state === "allowed" ? permission ? "Allowed" : "Included" : condition.state === "not-allowed" ? permission ? "Not allowed" : "Not included" : "Not supplied by provider"; return `${scope} • ${category}: ${state}`; }
 function formatProviderTimestamp(value: string, locale: string) { const timestamp = new Date(value); return Number.isNaN(timestamp.getTime()) ? value : new Intl.DateTimeFormat(locale, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(timestamp); }
 function formatDistanceKm(distanceKm: number, locale: string) { return `${new Intl.NumberFormat(locale, { maximumFractionDigits: distanceKm >= 100 ? 0 : 1 }).format(distanceKm)} km`; }
 function carrierConditionsLinks(offer: FlightDetailsOffer) {
