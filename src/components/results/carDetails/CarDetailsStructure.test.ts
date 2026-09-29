@@ -19,7 +19,7 @@ const standaloneSource = clientSource.slice(
   clientSource.indexOf("export function CarDetailsClient"),
 );
 
-test("standalone Car details owns exactly one page wrapper and desktop hero back control", () => {
+test("standalone Car details owns exactly one page wrapper and external desktop controls", () => {
   assert.equal(standaloneSource.match(/<main\b/g)?.length, 1);
   assert.equal(standaloneSource.match(/page-shell py-0 lg:py-7/g)?.length, 1);
   assert.equal(
@@ -33,7 +33,8 @@ test("standalone Car details owns exactly one page wrapper and desktop hero back
     1,
   );
   assert.match(standaloneSource, /presentation="standalone-content"/);
-  assert.match(standaloneSource, /desktopBackControl={/);
+  assert.match(standaloneSource, /data-car-details-desktop-controls/);
+  assert.doesNotMatch(standaloneSource, /desktopBackControl={/);
   assert.match(standaloneSource, /standalone-disabled-provider/);
 });
 
