@@ -502,7 +502,7 @@ const sameReturnSearchGridClass =
 const compactFieldShellClass = "min-h-[46px] py-1 lg:min-h-[54px] lg:py-1.5";
 
 const fieldLabelClass =
-  "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:mb-[3px] lg:text-[11px] lg:font-medium lg:normal-case lg:leading-[14px] lg:tracking-normal lg:text-[#595959]";
+  "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:mb-1 lg:text-[10px] lg:font-bold lg:uppercase lg:leading-4 lg:tracking-[0.11em] lg:text-slate-500";
 
 const fieldInputClass =
   "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[15px] lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-[#1A1A1A]";
