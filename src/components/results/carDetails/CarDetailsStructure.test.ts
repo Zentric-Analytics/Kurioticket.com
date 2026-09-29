@@ -19,10 +19,13 @@ const standaloneSource = clientSource.slice(
   clientSource.indexOf("export function CarDetailsClient"),
 );
 
-test("standalone Car details owns exactly one page wrapper and back link", () => {
+test("standalone Car details owns exactly one page wrapper and desktop hero back control", () => {
   assert.equal(standaloneSource.match(/<main\b/g)?.length, 1);
   assert.equal(standaloneSource.match(/page-shell py-0 lg:py-7/g)?.length, 1);
-  assert.equal(standaloneSource.match(/<DetailsBackLink\b/g)?.length, 1);
+  assert.equal(
+    standaloneSource.match(/data-car-details-desktop-back-link/g)?.length,
+    1,
+  );
   assert.equal(
     standaloneSource.match(
       /bg-transparent lg:bg-white lg:border-b lg:border-border lg:pb-14/g,
@@ -30,13 +33,14 @@ test("standalone Car details owns exactly one page wrapper and back link", () =>
     1,
   );
   assert.match(standaloneSource, /presentation="standalone-content"/);
+  assert.match(standaloneSource, /desktopBackControl={/);
   assert.match(standaloneSource, /standalone-disabled-provider/);
 });
 
 test("CarDetailsExperience is content-only for standalone and guided callers", () => {
   assert.doesNotMatch(experienceSource, /<main\b/);
   assert.doesNotMatch(experienceSource, /page-shell/);
-  assert.doesNotMatch(experienceSource, /DetailsBackLink/);
+  assert.doesNotMatch(experienceSource, /data-car-details-desktop-back-link/);
   assert.match(experienceSource, /data-car-details-experience/);
   assert.match(
     experienceSource,

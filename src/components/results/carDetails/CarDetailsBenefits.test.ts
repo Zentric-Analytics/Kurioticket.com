@@ -158,15 +158,44 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-car-location-section/);
 });
 
-test("desktop car details use a centered contained hero with identity and actions below it", () => {
+test("desktop car details use hotel-style hero controls for Kurioticket and KAYAK", () => {
   assert.match(heroSource, /data-car-details-desktop-centered-image/);
   assert.match(heroSource, /lg:max-w-\[760px\]/);
   assert.match(heroSource, /sizes="760px" fit="contain"/);
   assert.match(heroSource, /data-car-details-desktop-identity-row/);
-  assert.match(heroSource, /data-car-details-desktop-actions/);
+  assert.match(heroSource, /data-car-details-desktop-back/);
+  assert.match(heroSource, /data-car-details-desktop-hero-actions/);
+  assert.match(heroSource, /left-4 top-4/);
+  assert.match(heroSource, /right-4 top-4/);
   assert.match(heroSource, /\[&_h1\]:truncate/);
-  assert.match(heroSource, /\[&_button\]:!bg-white/);
-  assert.match(heroSource, /\[&_button\]:!text-\[#07133B\]/);
+
+  assert.match(clientSource, /data-car-details-desktop-back-link/);
+  assert.match(
+    clientSource,
+    /size-10 items-center justify-center rounded-full border border-slate-300 bg-\[#E7EBF1\]/,
+  );
+  assert.match(
+    clientSource,
+    /desktop \? "size-10 rounded-full border border-slate-300 bg-\[#E7EBF1\]/,
+  );
+  assert.match(
+    clientSource,
+    /desktopImageActions={ presentation === "standalone-content" \? \( <CarHeroActions/,
+  );
+  assert.doesNotMatch(clientSource, /<DetailsBackLink/);
+  assert.doesNotMatch(
+    clientSource,
+    /hidden text-\[#075EE8\] hover:text-\[#004BB8\] lg:inline-flex/,
+  );
+
+  const sandboxStart = clientSource.indexOf(
+    'car.inventorySource === "kayak-sandbox"',
+  );
+  const heroStart = clientSource.indexOf("<CarDetailsHero");
+  assert.ok(
+    sandboxStart >= 0 && heroStart > sandboxStart,
+    "KAYAK and Kurioticket flow through the same standalone hero controls",
+  );
 });
 
 test("Location map card keeps a balanced mobile viewport and fixed directions row", () => {

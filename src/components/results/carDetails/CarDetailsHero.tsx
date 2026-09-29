@@ -28,6 +28,8 @@ export function CarDetailsHero({
   text,
   identity,
   desktopOverlay,
+  desktopBackControl,
+  desktopImageActions,
   imageStageRef,
   guidedMobileActions,
   reserveMobileControlSafeZone = false,
@@ -35,7 +37,9 @@ export function CarDetailsHero({
   car: NormalizedCarResult;
   text: Record<string, string>;
   identity: ReactNode;
-  desktopOverlay: ReactNode;
+  desktopOverlay?: ReactNode;
+  desktopBackControl?: ReactNode;
+  desktopImageActions?: ReactNode;
   imageStageRef?: Ref<HTMLElement>;
   guidedMobileActions?: ReactNode;
   reserveMobileControlSafeZone?: boolean;
@@ -225,6 +229,22 @@ export function CarDetailsHero({
               />
             </div>
           </div>
+          {desktopBackControl ? (
+            <div
+              className="absolute left-4 top-4 z-30 hidden lg:block"
+              data-car-details-desktop-back
+            >
+              {desktopBackControl}
+            </div>
+          ) : null}
+          {desktopImageActions ? (
+            <div
+              className="absolute right-4 top-4 z-30 hidden lg:block"
+              data-car-details-desktop-hero-actions
+            >
+              {desktopImageActions}
+            </div>
+          ) : null}
           {guidedMobileActions ? (
             <div className="absolute right-[max(1rem,env(safe-area-inset-right))] top-3 z-20 lg:hidden">
               {guidedMobileActions}
@@ -243,12 +263,14 @@ export function CarDetailsHero({
             <div className="min-w-0 flex-1 [&_h1]:truncate [&_h2]:truncate [&_h3]:truncate [&_h4]:truncate">
               {identity}
             </div>
-            <div
-              className="shrink-0 [&>div>div:first-child]:hidden [&_button]:!border-slate-200 [&_button]:!bg-white [&_button]:!text-[#07133B] [&_button]:shadow-sm [&_button:hover]:!bg-slate-50 [&_button[aria-pressed=true]]:!text-rose-500"
-              data-car-details-desktop-actions
-            >
-              {desktopOverlay}
-            </div>
+            {desktopOverlay ? (
+              <div
+                className="shrink-0 [&>div>div:first-child]:hidden [&_button]:!border-slate-200 [&_button]:!bg-white [&_button]:!text-[#07133B] [&_button]:shadow-sm [&_button:hover]:!bg-slate-50 [&_button[aria-pressed=true]]:!text-rose-500"
+                data-car-details-desktop-actions
+              >
+                {desktopOverlay}
+              </div>
+            ) : null}
           </div>
           <ul
             className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 lg:mx-auto lg:max-w-[760px] lg:grid-cols-2 lg:gap-x-10 lg:gap-y-3"
