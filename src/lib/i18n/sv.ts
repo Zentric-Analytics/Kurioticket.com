@@ -662,7 +662,7 @@ export const translations: TranslationDictionary = {
   'flightCardProviderHandoffConverted': 'Slutpris, tillgänglighet, bokning och prisregler bekräftas av leverantören. Slutlig leverantörsvaluta kan skilja sig från vald visningsvaluta.',
   'providerNormalizedItineraryPrefix': 'Ut- och returinformation visas från leverantörsnormaliserade resplansdata.',
   'checkProvider': 'Kontrollera leverantör',
-  notSuppliedByProvider: "Inte tillhandahållet av leverantören",
+  notSuppliedByProvider: "Ingår inte",
   'carryOnIncluded': 'handbagage ingår',
   'flightDetailsLoading': 'Laddar flyginformation...',
   flightQuoteUnavailable: 'Flygpriset är inte tillgängligt',

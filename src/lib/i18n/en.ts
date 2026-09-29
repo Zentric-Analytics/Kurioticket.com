@@ -3700,7 +3700,7 @@ export const translations: TranslationDictionary = {
   providerNormalizedItineraryPrefix:
     "Outbound and return details are shown from provider-normalized itinerary data.",
   checkProvider: "Check provider",
-  notSuppliedByProvider: "Not supplied by provider",
+  notSuppliedByProvider: "Not included",
   carryOnIncluded: "carry-on included",
   flightLeg: "Flight leg",
   layover: "Layover",

@@ -1902,7 +1902,7 @@ export const translations: TranslationDictionary = {
   itinerary: "Itinerario",
   leg: "Tratta",
   checkProvider: "Verifica con il fornitore",
-  notSuppliedByProvider: "Non fornito dal fornitore",
+  notSuppliedByProvider: "Non incluso",
   carryOnIncluded: "bagaglio a mano incluso",
   flightLeg: "Tratta del volo",
   layover: "Scalo",

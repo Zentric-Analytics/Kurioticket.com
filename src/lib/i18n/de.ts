@@ -2538,7 +2538,7 @@ flightLandingRouteAriaLabel:
   changesNotAllowedBeforeDeparture: "Änderungen vor Abflug nicht möglich",
   providerNormalizedItineraryPrefix: "Hin- und Rückflugdetails werden aus vom Anbieter normalisierten Reisedaten angezeigt.",
   checkProvider: "Beim Anbieter prüfen",
-  notSuppliedByProvider: "Nicht vom Anbieter angegeben",
+  notSuppliedByProvider: "Nicht inbegriffen",
   carryOnIncluded: "Handgepäck inbegriffen",
   flightLeg: "Flugabschnitt",
   layover: "Zwischenstopp",
