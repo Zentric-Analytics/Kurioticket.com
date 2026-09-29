@@ -28,8 +28,6 @@ export function CarDetailsHero({
   text,
   identity,
   desktopOverlay,
-  desktopBackControl,
-  desktopImageActions,
   imageStageRef,
   guidedMobileActions,
   reserveMobileControlSafeZone = false,
@@ -38,8 +36,6 @@ export function CarDetailsHero({
   text: Record<string, string>;
   identity: ReactNode;
   desktopOverlay?: ReactNode;
-  desktopBackControl?: ReactNode;
-  desktopImageActions?: ReactNode;
   imageStageRef?: Ref<HTMLElement>;
   guidedMobileActions?: ReactNode;
   reserveMobileControlSafeZone?: boolean;
@@ -229,22 +225,6 @@ export function CarDetailsHero({
               />
             </div>
           </div>
-          {desktopBackControl ? (
-            <div
-              className="absolute left-4 top-4 z-30 hidden lg:block"
-              data-car-details-desktop-back
-            >
-              {desktopBackControl}
-            </div>
-          ) : null}
-          {desktopImageActions ? (
-            <div
-              className="absolute right-4 top-4 z-30 hidden lg:block"
-              data-car-details-desktop-hero-actions
-            >
-              {desktopImageActions}
-            </div>
-          ) : null}
           {guidedMobileActions ? (
             <div className="absolute right-[max(1rem,env(safe-area-inset-right))] top-3 z-20 lg:hidden">
               {guidedMobileActions}
@@ -273,7 +253,7 @@ export function CarDetailsHero({
             ) : null}
           </div>
           <ul
-            className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 lg:mx-auto lg:max-w-[760px] lg:grid-cols-2 lg:gap-x-10 lg:gap-y-3"
+            className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 lg:mx-auto lg:max-w-[760px] lg:grid-cols-[minmax(0,320px)_minmax(0,320px)] lg:gap-x-[120px] lg:gap-y-3"
             data-car-details-specifications
           >
             {specs.map(([Icon, label]) => {
