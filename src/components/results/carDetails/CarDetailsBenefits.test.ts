@@ -158,17 +158,25 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-car-location-section/);
 });
 
-test("desktop car details use hotel-style hero controls for Kurioticket and KAYAK", () => {
+test("desktop car details keep controls outside the image and rebalance amenities", () => {
   assert.match(heroSource, /data-car-details-desktop-centered-image/);
   assert.match(heroSource, /lg:max-w-\[760px\]/);
   assert.match(heroSource, /sizes="760px" fit="contain"/);
   assert.match(heroSource, /data-car-details-desktop-identity-row/);
-  assert.match(heroSource, /data-car-details-desktop-back/);
-  assert.match(heroSource, /data-car-details-desktop-hero-actions/);
-  assert.match(heroSource, /left-4 top-4/);
-  assert.match(heroSource, /right-4 top-4/);
+  assert.match(heroSource, /data-car-details-desktop-actions/);
+  assert.doesNotMatch(heroSource, /data-car-details-desktop-back/);
+  assert.doesNotMatch(heroSource, /data-car-details-desktop-hero-actions/);
   assert.match(heroSource, /\[&_h1\]:truncate/);
+  assert.match(
+    heroSource,
+    /data-car-details-specifications[\s\S]*?lg:grid-cols-\[minmax\(0,320px\)_minmax\(0,320px\)\][\s\S]*?lg:gap-x-\[120px\]/,
+  );
+  assert.match(
+    heroSource,
+    /\[&_button\]:!bg-\[#E7EBF1\]/,
+  );
 
+  assert.match(clientSource, /data-car-details-desktop-controls/);
   assert.match(clientSource, /data-car-details-desktop-back-link/);
   assert.match(
     clientSource,
@@ -180,13 +188,10 @@ test("desktop car details use hotel-style hero controls for Kurioticket and KAYA
   );
   assert.match(
     clientSource,
-    /desktopImageActions={ presentation === "standalone-content" \? \( <CarHeroActions/,
+    /presentation === "guided-content"[\s\S]*?: \( <CarHeroActions[\s\S]*?desktop/,
   );
-  assert.doesNotMatch(clientSource, /<DetailsBackLink/);
-  assert.doesNotMatch(
-    clientSource,
-    /hidden text-\[#075EE8\] hover:text-\[#004BB8\] lg:inline-flex/,
-  );
+  assert.doesNotMatch(clientSource, /desktopImageActions=/);
+  assert.doesNotMatch(clientSource, /desktopBackControl=/);
 
   const sandboxStart = clientSource.indexOf(
     'car.inventorySource === "kayak-sandbox"',
@@ -194,7 +199,7 @@ test("desktop car details use hotel-style hero controls for Kurioticket and KAYA
   const heroStart = clientSource.indexOf("<CarDetailsHero");
   assert.ok(
     sandboxStart >= 0 && heroStart > sandboxStart,
-    "KAYAK and Kurioticket flow through the same standalone hero controls",
+    "KAYAK and Kurioticket continue through the same standalone desktop controls",
   );
 });
 

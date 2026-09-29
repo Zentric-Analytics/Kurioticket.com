@@ -28,8 +28,6 @@ export function CarDetailsHero({
   text,
   identity,
   desktopOverlay,
-  desktopBackControl,
-  desktopImageActions,
   imageStageRef,
   guidedMobileActions,
   reserveMobileControlSafeZone = false,
@@ -38,8 +36,6 @@ export function CarDetailsHero({
   text: Record<string, string>;
   identity: ReactNode;
   desktopOverlay?: ReactNode;
-  desktopBackControl?: ReactNode;
-  desktopImageActions?: ReactNode;
   imageStageRef?: Ref<HTMLElement>;
   guidedMobileActions?: ReactNode;
   reserveMobileControlSafeZone?: boolean;
@@ -229,22 +225,6 @@ export function CarDetailsHero({
               />
             </div>
           </div>
-          {desktopBackControl ? (
-            <div
-              className="absolute left-4 top-4 z-30 hidden lg:block"
-              data-car-details-desktop-back
-            >
-              {desktopBackControl}
-            </div>
-          ) : null}
-          {desktopImageActions ? (
-            <div
-              className="absolute right-4 top-4 z-30 hidden lg:block"
-              data-car-details-desktop-hero-actions
-            >
-              {desktopImageActions}
-            </div>
-          ) : null}
           {guidedMobileActions ? (
             <div className="absolute right-[max(1rem,env(safe-area-inset-right))] top-3 z-20 lg:hidden">
               {guidedMobileActions}
@@ -265,7 +245,7 @@ export function CarDetailsHero({
             </div>
             {desktopOverlay ? (
               <div
-                className="shrink-0 [&>div>div:first-child]:hidden [&_button]:!border-slate-200 [&_button]:!bg-white [&_button]:!text-[#07133B] [&_button]:shadow-sm [&_button:hover]:!bg-slate-50 [&_button[aria-pressed=true]]:!text-rose-500"
+                className="shrink-0 [&>div>div:first-child]:hidden [&_button]:!border-slate-300 [&_button]:!bg-[#E7EBF1] [&_button]:!text-[#07133B] [&_button]:shadow-[0_2px_8px_rgba(15,23,42,0.14)] [&_button:hover]:!bg-[#DDE3EB] [&_button[aria-pressed=true]]:!text-rose-500"
                 data-car-details-desktop-actions
               >
                 {desktopOverlay}
@@ -273,7 +253,7 @@ export function CarDetailsHero({
             ) : null}
           </div>
           <ul
-            className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 lg:mx-auto lg:max-w-[760px] lg:grid-cols-2 lg:gap-x-10 lg:gap-y-3"
+            className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 lg:mx-auto lg:max-w-[760px] lg:grid-cols-[minmax(0,320px)_minmax(0,320px)] lg:gap-x-[120px] lg:gap-y-3"
             data-car-details-specifications
           >
             {specs.map(([Icon, label]) => {
