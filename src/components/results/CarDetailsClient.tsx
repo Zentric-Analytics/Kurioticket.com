@@ -108,6 +108,7 @@ export function CarDetailsExperience({
   itemHeadingLevel = 3,
   modelHeadingRef,
   mobileBackControl,
+  desktopBackControl,
 }: {
   car: NormalizedCarResult;
   search: CarSearchParams;
@@ -119,6 +120,7 @@ export function CarDetailsExperience({
   itemHeadingLevel?: HeadingLevel;
   modelHeadingRef?: Ref<HTMLHeadingElement>;
   mobileBackControl?: ReactNode;
+  desktopBackControl?: ReactNode;
 }) {
   const { locale, t } = useLocale();
   const { selectedOption } = useRegion();
@@ -286,6 +288,24 @@ export function CarDetailsExperience({
       ) : null}
       {presentation === "standalone-content" ? (
         <div
+          className="hidden h-16 w-full items-center border-b border-slate-200 bg-[#F5F7FB] lg:sticky lg:top-0 lg:z-40 lg:flex"
+          data-car-details-desktop-sticky-controls
+        >
+          <div className="flex w-full items-center justify-between">
+            <div>{desktopBackControl}</div>
+            <CarHeroActions
+              car={car}
+              isSaved={isSaved}
+              toggleSavedCar={toggleSavedCar}
+              shareCar={shareCar}
+              copy={copy}
+              desktop
+            />
+          </div>
+        </div>
+      ) : null}
+      {presentation === "standalone-content" ? (
+        <div
           ref={mobileHeaderRef}
           className={`pointer-events-none fixed inset-x-0 top-0 z-40 h-[var(--car-details-mobile-header-boundary)] transition-colors duration-150 lg:hidden ${mobileHeaderProtected ? "bg-[#F5F7FB]" : "bg-transparent"}`}
           data-car-details-mobile-controls
@@ -357,16 +377,7 @@ export function CarDetailsExperience({
                     desktop
                   />
                 </div>
-              ) : (
-                <CarHeroActions
-                  car={car}
-                  isSaved={isSaved}
-                  toggleSavedCar={toggleSavedCar}
-                  shareCar={shareCar}
-                  copy={copy}
-                  desktop
-                />
-              )
+              ) : undefined
             }
             guidedMobileActions={
               presentation === "guided-content" ? (
@@ -583,18 +594,7 @@ export function CarDetailsClient({
       <CarsRouteLoadingOverlay active={mobileResultsPending} />
       <section className="bg-transparent lg:bg-white lg:border-b lg:border-border lg:pb-14">
         <div className="page-shell py-0 lg:py-7">
-          <div className="hidden items-center justify-between lg:flex" data-car-details-desktop-controls>
-            <Link
-              href={resultsHref}
-              aria-label={copy("carDetails.backToResults")}
-              title={copy("carDetails.backToResults")}
-              className="focus-ring flex size-10 items-center justify-center rounded-full border border-slate-300 bg-[#E7EBF1] text-[#07133B] shadow-[0_2px_8px_rgba(15,23,42,0.14)] transition hover:bg-[#DDE3EB]"
-              data-car-details-desktop-back-link
-            >
-              <ArrowLeft size={20} aria-hidden="true" />
-            </Link>
-          </div>
-          <div className="lg:mt-4">
+          <div>
             <CarDetailsExperience
               car={car}
               search={search}
@@ -610,6 +610,17 @@ export function CarDetailsClient({
                   data-car-details-mobile-back
                 >
                   <ArrowLeft size={25} strokeWidth={2.2} aria-hidden="true" />
+                </Link>
+              }
+              desktopBackControl={
+                <Link
+                  href={resultsHref}
+                  aria-label={copy("carDetails.backToResults")}
+                  title={copy("carDetails.backToResults")}
+                  className="focus-ring flex size-10 items-center justify-center rounded-full border border-slate-300 bg-[#E7EBF1] text-[#07133B] shadow-[0_2px_8px_rgba(15,23,42,0.14)] transition hover:bg-[#DDE3EB]"
+                  data-car-details-desktop-back-link
+                >
+                  <ArrowLeft size={20} aria-hidden="true" />
                 </Link>
               }
             />
