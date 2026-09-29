@@ -2085,6 +2085,7 @@ export const translations: TranslationDictionary = {
   flightCardProviderHandoffConverted: "Son fiyat, uygunluk, rezervasyon ve ücret kuralları sağlayıcı tarafından onaylanır. Nihai sağlayıcı para birimi seçtiğiniz görüntüleme para biriminden farklı olabilir.",
   providerNormalizedItineraryPrefix: "Gidiş ve dönüş ayrıntıları sağlayıcı tarafından normalize edilen güzergâh verilerinden gösterilir.",
   checkProvider: "Sağlayıcıyı kontrol et",
+  notSuppliedByProvider: "Sağlayıcı tarafından sunulmadı",
   carryOnIncluded: "el bagajı dahil",
   flightLeg: "Uçuş ayağı",
   layover: "Aktarma",
