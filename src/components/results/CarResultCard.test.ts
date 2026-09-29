@@ -92,11 +92,15 @@ test("standalone desktop uses a shared header row for identity and actions witho
   );
   assert.match(
     heading,
-    /data-car-card-desktop-title-row[\s\S]*?relative[\s\S]*?-bottom-1[\s\S]*?\{car\.categoryLabel\}/,
+    /data-car-card-desktop-title-row[\s\S]*?h-11[\s\S]*?\{car\.modelName\}/,
+  );
+  assert.match(
+    heading,
+    /\$\{badge && BadgeIcon \? "row-start-3" : "row-start-2"\}[\s\S]{0,220}mt-1[\s\S]{0,220}\{car\.categoryLabel\}/,
   );
   assert.doesNotMatch(
     heading,
-    /\$\{badge && BadgeIcon \? "row-start-3" : "row-start-2"\}[\s\S]{0,180}\{car\.categoryLabel\}/,
+    /absolute inset-x-4 -bottom-1/,
   );
   assert.equal(
     (heading.match(/<MapPin[\s\S]{0,100}?text-\[#07133B\]/g) ?? []).length,
@@ -129,7 +133,7 @@ test("desktop standalone title and save/share occupy the exact same grid row bel
   assert.doesNotMatch(heading, /lg:pt-6/);
   assert.match(
     heading,
-    /badge && BadgeIcon \? "lg:grid-rows-\[24px_44px_auto_auto\]" : "lg:grid-rows-\[44px_auto_auto\]"/,
+    /badge && BadgeIcon \? "lg:grid-rows-\[24px_44px_auto_auto_auto\]" : "lg:grid-rows-\[44px_auto_auto_auto\]"/,
   );
   assert.match(
     heading,
@@ -141,11 +145,15 @@ test("desktop standalone title and save/share occupy the exact same grid row bel
   );
   assert.match(
     heading,
-    /data-car-card-desktop-title-row[\s\S]*?absolute inset-x-4 -bottom-1[\s\S]*?\{car\.categoryLabel\}/,
+    /\$\{badge && BadgeIcon \? "row-start-3" : "row-start-2"\}[\s\S]{0,220}mt-1[\s\S]{0,220}\{car\.categoryLabel\}/,
   );
   assert.match(
     heading,
-    /\$\{badge && BadgeIcon \? "row-start-3" : "row-start-2"\} mt-1 flex/,
+    /\$\{badge && BadgeIcon \? "row-start-4" : "row-start-3"\} mt-2 flex/,
+  );
+  assert.match(
+    heading,
+    /\$\{badge && BadgeIcon \? "row-start-5" : "row-start-4"\} mt-2 flex/,
   );
 });
 
