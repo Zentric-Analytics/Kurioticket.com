@@ -26,14 +26,14 @@ test("Hotel duplicate identity includes dates occupancy currency and target", ()
 });
 
 
-test("Hotel alert percentage model matches native 1-50% drop behavior", () => {
+test("Hotel alert percentage model matches native 1-15% drop behavior", () => {
   assert.equal(HOTEL_ALERT_MIN_DROP_PERCENT, 1);
-  assert.equal(HOTEL_ALERT_MAX_DROP_PERCENT, 50);
+  assert.equal(HOTEL_ALERT_MAX_DROP_PERCENT, 15);
   assert.equal(HOTEL_ALERT_DEFAULT_DROP_PERCENT, 10);
   assert.equal(hotelAlertDesiredTotal(1000, 10, "USD"), 900);
   assert.equal(hotelAlertDropPercentForTarget(1000, 900), 10);
   assert.equal(hotelAlertDesiredTotal(1000, 0, "USD"), 990);
-  assert.equal(hotelAlertDesiredTotal(1000, 80, "USD"), 500);
+  assert.equal(hotelAlertDesiredTotal(1000, 80, "USD"), 850);
 });
 
 test("Hotel alert basis uses the lowest valid stay total and preserves provider currency", () => {
@@ -79,4 +79,15 @@ test("Hotel alert search matching ignores target but keeps the exact stay contex
   };
   assert.equal(hotelPriceAlertMatchesSearch(alert, search), true);
   assert.equal(hotelPriceAlertMatchesSearch(alert, { ...search, rooms: 2 }), false);
+});
+
+
+test("Hotel web price-alert UI labels the slider ceiling as 15%", () => {
+  const control = require("node:fs").readFileSync(
+    require("node:path").join(process.cwd(), "src/components/results/HotelPriceAlertControl.tsx"),
+    "utf8",
+  );
+  assert.match(control, /max=\{HOTEL_ALERT_MAX_DROP_PERCENT\}/);
+  assert.match(control, /<span>15%<\/span>/);
+  assert.doesNotMatch(control, /<span>50%<\/span>/);
 });
