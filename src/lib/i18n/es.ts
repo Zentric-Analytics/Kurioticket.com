@@ -2910,6 +2910,7 @@ export const translations: TranslationDictionary = {
   displayEstimateConvertedFromProviderPrice: "{{formatted}}. Estimación de visualización convertida desde {{providerPrice}}. El precio final del proveedor puede variar.",
   convertedDisplayEstimateProviderPrice: "Estimación de visualización convertida. Precio del proveedor: {{providerPrice}}. El precio final del proveedor puede variar.",
   viewFlight: "Ver vuelo",
+  viewDeal: "Ver oferta",
   flightCardProviderHandoff: "El precio final, la disponibilidad, la reserva y las reglas de tarifa se confirman con el proveedor.",
   flightCardProviderHandoffConverted: "El precio final, la disponibilidad, la reserva y las reglas de tarifa se confirman con el proveedor. La moneda final del proveedor puede diferir de tu moneda de visualización seleccionada.",
   providerNormalizedItineraryPrefix: "Los detalles de ida y regreso se muestran con datos de itinerario normalizados por el proveedor.",
