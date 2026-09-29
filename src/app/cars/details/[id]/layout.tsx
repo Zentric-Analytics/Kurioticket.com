@@ -32,11 +32,17 @@ export default function CarDetailsLayout({
           }
 
           [data-car-details-image-stage] {
-            overflow: hidden;
-            border: 1px solid rgb(226 232 240);
-            border-radius: 13px;
-            background: #ffffff;
-            padding: 1.5rem;
+            overflow: visible !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+          }
+
+          [data-car-details-image-stage] > div {
+            border-radius: 0 !important;
+            background: transparent !important;
           }
 
           [data-car-details-section-nav] {
