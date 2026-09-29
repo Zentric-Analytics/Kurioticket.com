@@ -1963,6 +1963,7 @@ export const translations: TranslationDictionary = {
   convertedDisplayEstimateProviderPrice:
     "Giá ước tính hiển thị đã quy đổi. Giá từ nhà cung cấp: {{providerPrice}}. Giá cuối cùng của nhà cung cấp có thể khác.",
   viewFlight: "Xem chuyến bay",
+  viewDeal: "Xem ưu đãi",
   flightCardProviderHandoff:
     "Giá cuối cùng, tình trạng còn chỗ, đặt chỗ và quy định giá vé được xác nhận bởi nhà cung cấp.",
   flightCardProviderHandoffConverted:
