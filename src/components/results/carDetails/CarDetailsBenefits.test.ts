@@ -124,7 +124,7 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(heroSource, /bg-\[#F5F7FB\]/);
   assert.match(heroSource, /bg-white/);
   assert.match(heroSource, /fit="contain"/);
-  assert.match(heroSource, /fit="cover"/);
+  assert.doesNotMatch(heroSource, /fit="cover"/);
   assert.match(heroSource, /grid-cols-2/);
   assert.match(clientSource, /data-car-details-mobile-back/);
   assert.match(clientSource, /aria-label="Back to Cars results"/);
@@ -156,6 +156,17 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-mobile-car-deal-list/);
   assert.match(clientSource, /Pickup requirements/);
   assert.match(clientSource, /data-car-location-section/);
+});
+
+test("desktop car details use a centered contained hero with identity and actions below it", () => {
+  assert.match(heroSource, /data-car-details-desktop-centered-image/);
+  assert.match(heroSource, /lg:max-w-\[760px\]/);
+  assert.match(heroSource, /sizes="760px" fit="contain"/);
+  assert.match(heroSource, /data-car-details-desktop-identity-row/);
+  assert.match(heroSource, /data-car-details-desktop-actions/);
+  assert.match(heroSource, /\[&_h1\]:truncate/);
+  assert.match(heroSource, /\[&_button\]:!bg-white/);
+  assert.match(heroSource, /\[&_button\]:!text-\[#07133B\]/);
 });
 
 test("Location map card keeps a balanced mobile viewport and fixed directions row", () => {
