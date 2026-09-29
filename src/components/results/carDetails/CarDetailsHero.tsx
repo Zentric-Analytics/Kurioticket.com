@@ -245,7 +245,7 @@ export function CarDetailsHero({
             </div>
             {desktopOverlay ? (
               <div
-                className="shrink-0 [&>div>div:first-child]:hidden [&_button]:!border-slate-200 [&_button]:!bg-white [&_button]:!text-[#07133B] [&_button]:shadow-sm [&_button:hover]:!bg-slate-50 [&_button[aria-pressed=true]]:!text-rose-500"
+                className="shrink-0 [&>div>div:first-child]:hidden [&_button]:!border-slate-300 [&_button]:!bg-[#E7EBF1] [&_button]:!text-[#07133B] [&_button]:shadow-[0_2px_8px_rgba(15,23,42,0.14)] [&_button:hover]:!bg-[#DDE3EB] [&_button[aria-pressed=true]]:!text-rose-500"
                 data-car-details-desktop-actions
               >
                 {desktopOverlay}
