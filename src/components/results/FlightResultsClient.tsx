@@ -5086,7 +5086,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 {mobileOriginSummary}
               </span>
               <ArrowRightLeft
-                className="h-4 w-4 shrink-0 text-slate-700"
+                className="h-4 w-4 shrink-0 text-slate-500"
                 aria-hidden="true"
               />
               <span className="min-w-0 truncate text-[0.92rem] font-semibold leading-5 text-slate-950">
@@ -5102,7 +5102,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               className={cn(compactSectionClass, "border-r border-slate-200/85")}
             >
               <Calendar
-                className="h-4 w-4 shrink-0 text-slate-700"
+                className="h-4 w-4 shrink-0 text-slate-500"
                 aria-hidden="true"
               />
               <span className={compactValueClass}>{compactDateSummary}</span>
@@ -5116,7 +5116,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               className={cn(compactSectionClass, "border-r border-slate-200/85")}
             >
               <Users
-                className="h-4 w-4 shrink-0 text-slate-700"
+                className="h-4 w-4 shrink-0 text-slate-500"
                 aria-hidden="true"
               />
               <span className={compactValueClass}>{travelerCabinSummary}</span>
@@ -5184,7 +5184,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               >
                 <div className="mb-4 flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#064CF7]">
                       {t("searchFlights")}
                     </p>
                     <h2
@@ -5535,7 +5535,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
                   <Button
                     type="submit"
-                    className="h-full min-h-[58px] rounded-none rounded-r-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-none ring-0 hover:bg-[#021C2B]"
+                    className="h-full min-h-[58px] rounded-none rounded-r-xl bg-[#064CF7] px-4 text-sm font-bold text-white shadow-none ring-0 hover:bg-[#004BB8]"
                   >
                     {t("search")}
                   </Button>
