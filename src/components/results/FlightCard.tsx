@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   Armchair,
   Award,
-  ChevronRight,
   Luggage,
   PlaneTakeoff,
   ShieldCheck,
@@ -103,7 +102,7 @@ export function FlightCard({
     <Card
       data-flight-result-card
       className={cn(
-        "relative hidden w-full overflow-hidden rounded-[14px] border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.32)] transition duration-200 hover:-translate-y-0.5 hover:border-[#BFCEDF] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.3)] sm:block lg:rounded-2xl",
+        "relative hidden w-full overflow-hidden rounded-[14px] border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.5)] transition duration-200 hover:-translate-y-0.5 hover:border-[#BFCEDF] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.4)] sm:block lg:rounded-2xl lg:border-[#CDD8E5] lg:bg-[#FEFFFF]",
         isAccented && "ring-1 ring-slate-950/[0.03]",
       )}
       onClick={(event) => {
@@ -232,7 +231,7 @@ function ResponsiveFlightLegRow({
 
   return (
     <section aria-label={legTitle} className="min-w-0">
-      <p className="flight-card-leg-label font-semibold uppercase text-[#004BB8]">
+      <p className="flight-card-leg-label font-semibold uppercase text-[#0057E7]">
         {legTitle}
       </p>
       <div className="flight-card-leg-grid grid min-w-0">
@@ -252,7 +251,7 @@ function ResponsiveFlightLegRow({
             {leg.originAirport}
           </div>
           <div
-            className="flight-card-departure-date flight-card-leg-meta font-medium text-[#536B92]"
+            className="flight-card-departure-date flight-card-leg-meta font-medium text-[#07133B]"
             dir="auto"
           >
             {formatItineraryShortDate({ value: leg.departureTime, locale })}
@@ -271,7 +270,7 @@ function ResponsiveFlightLegRow({
           <div className="flight-card-path flex items-center text-[#7890B8]" aria-hidden="true">
             <span className="h-2 w-2 rounded-full bg-[#7890B8]" />
             <span className="h-px flex-1 bg-[#B9C5D8]" />
-            <PlaneTakeoff className="mx-2 h-3.5 w-3.5 text-[#004BB8]" />
+            <PlaneTakeoff className="mx-2 h-3.5 w-3.5 text-[#0057E7]" />
             <span className="h-px flex-1 bg-[#B9C5D8]" />
             <span className="h-2 w-2 rounded-full bg-[#7890B8]" />
           </div>
@@ -303,7 +302,7 @@ function ResponsiveFlightLegRow({
             {leg.destinationAirport}
           </div>
           <div
-            className="flight-card-arrival-date flight-card-leg-meta font-medium text-[#536B92]"
+            className="flight-card-arrival-date flight-card-leg-meta font-medium text-[#07133B]"
             dir="auto"
           >
             {formatItineraryShortDate({ value: leg.arrivalTime, locale })}
@@ -410,24 +409,24 @@ function FlightFareAction({
           onClick={onAction}
           aria-label={viewFlightAriaLabel}
           className={cn(
-            "inline-flex min-h-11 w-auto shrink-0 items-center justify-center gap-0.5 whitespace-nowrap rounded-md px-3.5 py-2.5 text-sm font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB] hover:text-[#003B91] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
-            "flight-card-view-button",
+            "inline-flex min-h-11 w-auto shrink-0 items-center justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold text-white hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35",
+            "flight-card-view-button rounded-md px-3.5 py-2.5",
           )}
         >
-          {viewFlightLabel}<ChevronRight className="h-4 w-4" aria-hidden="true" />
+          {viewFlightLabel}
         </button>
       ) : detailsHref ? (
         <LinkButton
           href={detailsHref}
           aria-label={viewFlightAriaLabel}
-          variant="ghost"
+          variant="primary"
           size="sm"
           className={cn(
-            "w-auto shrink-0 justify-center gap-0.5 whitespace-nowrap rounded-md bg-transparent py-2.5 text-sm font-semibold text-[#004BB8] hover:bg-[#EAF2FB] hover:text-[#003B91] focus-visible:ring-[#004BB8]/35",
-            "flight-card-view-button",
+            "w-auto shrink-0 justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35",
+            "flight-card-view-button rounded-md py-2.5",
           )}
         >
-          {viewFlightLabel}<ChevronRight className="h-4 w-4" aria-hidden="true" />
+          {viewFlightLabel}
         </LinkButton>
       ) : (
         <button

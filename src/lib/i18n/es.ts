@@ -2914,7 +2914,7 @@ export const translations: TranslationDictionary = {
   flightCardProviderHandoffConverted: "El precio final, la disponibilidad, la reserva y las reglas de tarifa se confirman con el proveedor. La moneda final del proveedor puede diferir de tu moneda de visualización seleccionada.",
   providerNormalizedItineraryPrefix: "Los detalles de ida y regreso se muestran con datos de itinerario normalizados por el proveedor.",
   checkProvider: "Consultar proveedor",
-  notSuppliedByProvider: "No incluido",
+  notSuppliedByProvider: "No proporcionado por el proveedor",
   carryOnIncluded: "equipaje de mano incluido",
   flightLeg: "Tramo de vuelo",
   layover: "Escala",

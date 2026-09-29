@@ -1970,7 +1970,7 @@ export const translations: TranslationDictionary = {
   providerNormalizedItineraryPrefix:
     "Chi tiết chuyến đi và chuyến về được hiển thị từ dữ liệu hành trình đã được nhà cung cấp chuẩn hóa.",
   checkProvider: "Kiểm tra với nhà cung cấp",
-  notSuppliedByProvider: "Không bao gồm",
+  notSuppliedByProvider: "Nhà cung cấp không cung cấp",
   carryOnIncluded: "bao gồm hành lý xách tay",
   flightLeg: "Chặng bay",
   layover: "Quá cảnh",

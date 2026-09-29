@@ -743,7 +743,7 @@ export const translations: TranslationDictionary = {
   flightCardProviderHandoffConverted: "最終的な料金、空席状況、予約、運賃規則はプロバイダーで確認されます。最終的なプロバイダー通貨は選択した表示通貨と異なる場合があります。",
   providerNormalizedItineraryPrefix: "往路と復路の詳細は、プロバイダーで正規化された旅程データから表示されています。",
   checkProvider: "プロバイダーで確認",
-  notSuppliedByProvider: "含まれていません",
+  notSuppliedByProvider: "プロバイダーから提供されていません",
   carryOnIncluded: "機内持ち込み手荷物込み",
   providerRulesApply: "プロバイダー規則が適用されます",
   fareRules: "運賃規則",
