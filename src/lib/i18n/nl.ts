@@ -906,7 +906,7 @@ export const translations: TranslationDictionary = {
   providerNormalizedItineraryPrefix:
     "Heen- en terugreisdetails worden getoond op basis van door de provider genormaliseerde reisroutegegevens.",
   checkProvider: "Controleer bij provider",
-  notSuppliedByProvider: "Niet door provider verstrekt",
+  notSuppliedByProvider: "Niet inbegrepen",
   carryOnIncluded: "handbagage inbegrepen",
   flightLeg: "Vluchttraject",
   layover: "Tussenstop",

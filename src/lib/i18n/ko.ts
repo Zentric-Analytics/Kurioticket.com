@@ -1838,7 +1838,7 @@ export const translations: TranslationDictionary = {
   providerNormalizedItineraryPrefix:
     "가는 편과 오는 편 세부 정보는 제공업체에서 정규화한 여정 데이터로 표시됩니다.",
   checkProvider: "제공업체 확인",
-  notSuppliedByProvider: "제공업체에서 제공하지 않음",
+  notSuppliedByProvider: "포함되지 않음",
   carryOnIncluded: "기내 수하물 포함",
   flightLeg: "항공편 구간",
   layover: "환승",

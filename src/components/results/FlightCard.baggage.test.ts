@@ -7,17 +7,17 @@ const t = (key: string) =>
   ({
     carryOnIncluded: "Carry-on included",
     checkProvider: "Check provider",
-    notSuppliedByProvider: "Not supplied by provider",
+    notSuppliedByProvider: "Not included",
   })[key] ?? key;
 
 test("desktop baggage fallback uses compact localized result-card copy", () => {
   assert.equal(
     formatBaggageValue("Baggage details not supplied by the provider", t),
-    "Not supplied by provider",
+    "Not included",
   );
   assert.equal(
     formatBaggageValue("  BAGGAGE DETAILS NOT SUPPLIED BY THE PROVIDER  ", t),
-    "Not supplied by provider",
+    "Not included",
   );
 });
 
@@ -33,11 +33,11 @@ test("desktop baggage fallback uses the active locale dictionary", () => {
     ({
       carryOnIncluded: "Equipaje de mano incluido",
       checkProvider: "Consultar proveedor",
-      notSuppliedByProvider: "No proporcionado por el proveedor",
+      notSuppliedByProvider: "No incluido",
     })[key] ?? key;
 
   assert.equal(
     formatBaggageValue("Baggage details not supplied by the provider", localized),
-    "No proporcionado por el proveedor",
+    "No incluido",
   );
 });

@@ -1265,7 +1265,7 @@ export const translations: TranslationDictionary = {
   flightCardProviderHandoffConverted: "يتم تأكيد السعر النهائي والتوافر وتفاصيل الحجز وقواعد السعر على موقع المزوّد. قد تختلف عملة المزوّد النهائية عن عملة العرض التي اخترتها.",
   providerNormalizedItineraryPrefix: "تُعرض تفاصيل رحلة الذهاب والعودة من بيانات خط السير التي وحّدها المزوّد.",
   checkProvider: "تحقق لدى المزوّد",
-  notSuppliedByProvider: "غير مقدم من المزوّد",
+  notSuppliedByProvider: "غير مشمول",
   carryOnIncluded: "تشمل حقيبة يد",
   flightLeg: "مقطع الرحلة",
   layover: "توقف انتظار",

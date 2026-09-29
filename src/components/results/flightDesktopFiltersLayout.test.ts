@@ -32,7 +32,7 @@ test("facet rows reserve flexible copy space and a fixed count column", async ()
   );
   const facetRow = source.slice(source.indexOf("function FacetRow"));
 
-  assert.match(facetRow, /min-h-11/);
+  assert.match(facetRow, /min-h-8/);
   assert.match(facetRow, /flex min-w-0 flex-1 items-center/);
   assert.match(facetRow, /className="min-w-0 flex-1"/);
   assert.match(facetRow, /h-4 w-4 shrink-0/);
@@ -41,16 +41,16 @@ test("facet rows reserve flexible copy space and a fixed count column", async ()
   assert.doesNotMatch(facetRow, /block truncate/);
 });
 
-test("desktop filter groups use sentence-case headings and accessible rows", async () => {
+test("desktop filter groups use the Cars uppercase hierarchy and accessible rows", async () => {
   const source = await readFile(
     new URL("./DesktopFlightFilters.tsx", import.meta.url),
     "utf8",
   );
 
-  assert.match(source, /rounded-2xl border border-\[#D8E1EC\] bg-white/);
-  assert.match(source, /text-sm font-bold leading-5/);
-  assert.doesNotMatch(source, /uppercase tracking-\[0\.12em\]/);
-  assert.match(source, /min-h-11 w-full/);
+  assert.match(source, /desktop-filter-sidebar cars-desktop-filter-surface/);
+  assert.match(source, /bg-\[#F2F4F8\] p-0 shadow-none/);
+  assert.match(source, /text-\[12px\] font-bold uppercase leading-4 tracking-\[0\.11em\]/);
+  assert.match(source, /min-h-9 w-full/);
 });
 
 test("alternate time mode control remains full width with comfortable guided sizing", async () => {
@@ -59,12 +59,10 @@ test("alternate time mode control remains full width with comfortable guided siz
     "utf8",
   );
 
-  assert.match(source, /min-h-7 w-full/);
-  assert.match(source, /isGuidedComfortable && "min-h-9 text-\[13px\]"/);
-  assert.match(
-    source,
-    /setTimeFilterMode\([\s\S]*?timeFilterMode === "takeoff"[\s\S]*?\? "landing"[\s\S]*?: "takeoff"[\s\S]*?\)/,
-  );
+  assert.match(source, /grid grid-cols-2 rounded-\[10px\]/);
+  assert.match(source, /isGuidedComfortable && "min-h-10"/);
+  assert.match(source, /\["takeoff", "landing"\]\.map/);
+  assert.match(source, /setTimeFilterMode\(mode as TimeFilterMode\)/);
 });
 
 test("desktop airline facets show counts without prices while retaining filter controls", async () => {
