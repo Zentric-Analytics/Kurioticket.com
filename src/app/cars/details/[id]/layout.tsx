@@ -52,7 +52,7 @@ export default function CarDetailsLayout({
             margin: 0 !important;
             border: 0 !important;
             border-radius: 0 !important;
-            background: transparent !important;
+            background: #F5F7FB !important;
             padding: 0 !important;
             box-shadow: none !important;
           }
@@ -61,14 +61,14 @@ export default function CarDetailsLayout({
             overflow: visible !important;
             border: 0 !important;
             border-radius: 0 !important;
-            background: transparent !important;
+            background: #FFFFFF !important;
             padding: 0 !important;
             box-shadow: none !important;
           }
 
           [data-car-details-image-stage] > div {
             border-radius: 0 !important;
-            background: transparent !important;
+            background: #FFFFFF !important;
           }
 
           [data-car-details-experience] [data-car-details-desktop-identity-row] {
@@ -98,7 +98,7 @@ export default function CarDetailsLayout({
 
           [data-car-price-comparison],
           [data-car-location-section] {
-            background: transparent !important;
+            background: #F5F7FB !important;
           }
 
           [data-car-price-comparison] [data-mobile-car-deal-list] {
@@ -113,7 +113,7 @@ export default function CarDetailsLayout({
             margin: 0 !important;
             border: 0 !important;
             border-radius: 0 !important;
-            background: transparent !important;
+            background: #F5F7FB !important;
             padding: 0.75rem 0 1.75rem !important;
             box-shadow: none !important;
           }
