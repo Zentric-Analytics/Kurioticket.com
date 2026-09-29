@@ -11,6 +11,48 @@ const carsPageSource = readFileSync(
   "utf8",
 );
 
+test("results desktop search typography mirrors the polished mobile-web hierarchy", () => {
+  const labelClass = source.match(
+    /const fieldLabelClass =\s*\n\s*"([^"]+)";/,
+  )?.[1];
+  const valueClass = source.match(
+    /const fieldInputClass =\s*\n\s*"([^"]+)";/,
+  )?.[1];
+
+  assert.ok(labelClass, "fieldLabelClass should remain defined");
+  assert.ok(valueClass, "fieldInputClass should remain defined");
+
+  for (const token of [
+    "lg:mb-[3px]",
+    "lg:text-[11px]",
+    "lg:font-medium",
+    "lg:normal-case",
+    "lg:leading-[14px]",
+    "lg:tracking-normal",
+    "lg:text-[#595959]",
+  ])
+    assert.ok(labelClass.includes(token), `missing desktop label token: ${token}`);
+
+  for (const token of [
+    "lg:text-[15px]",
+    "lg:font-semibold",
+    "lg:leading-5",
+    "lg:tracking-normal",
+    "lg:text-[#1A1A1A]",
+  ])
+    assert.ok(valueClass.includes(token), `missing desktop value token: ${token}`);
+
+  assert.doesNotMatch(labelClass, /lg:uppercase|lg:tracking-\[0\.10em\]/);
+  assert.equal(
+    (
+      source.match(
+        /lg:text-\[15px\] lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-\[#1A1A1A\]/g,
+      ) ?? []
+    ).length,
+    4,
+  );
+});
+
 test("results search preserves both desktop grid geometries and outer footprint", () => {
   assert.match(source, /mx-auto w-full min-w-0 max-w-5xl/);
   assert.match(source, /lg:min-h-\[58px\]/);

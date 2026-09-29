@@ -22,15 +22,15 @@ const alert = readFileSync(
 test("standalone desktop search surfaces use one restrained label and value hierarchy", () => {
   assert.match(
     results,
-    /const fieldLabelClass =[\s\S]*?lg:text-\[10px\] lg:font-semibold lg:leading-\[14px\] lg:tracking-\[0\.10em\] lg:text-\[#536B92\]/,
+    /const fieldLabelClass =[\s\S]*?lg:mb-\[3px\] lg:text-\[11px\] lg:font-medium lg:normal-case lg:leading-\[14px\] lg:tracking-normal lg:text-\[#595959\]/,
   );
   assert.match(
     results,
-    /const fieldInputClass =[\s\S]*?lg:text-\[14px\] lg:font-medium lg:leading-5 lg:tracking-\[-0\.005em\] lg:text-\[#142033\]/,
+    /const fieldInputClass =[\s\S]*?lg:text-\[15px\] lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-\[#1A1A1A\]/,
   );
   assert.match(
     results,
-    /title=\{summary\}[\s\S]*?text-\[14px\] font-medium leading-5 tracking-\[-0\.005em\] text-\[#142033\]/,
+    /title=\{summary\}[\s\S]*?text-\[15px\] font-semibold leading-5 tracking-normal text-\[#1A1A1A\]/,
   );
   assert.match(
     results,
@@ -39,6 +39,19 @@ test("standalone desktop search surfaces use one restrained label and value hier
   assert.match(
     results,
     /rentalDateSummary\} · \{timeSummary\} · \{driverAgeSummary\}[\s\S]*?text-\[13px\] font-medium leading-5 text-\[#536B92\]|text-\[13px\] font-medium leading-5 text-\[#536B92\][\s\S]*?rentalDateSummary\} · \{timeSummary\} · \{driverAgeSummary\}/,
+  );
+  assert.equal(
+    (
+      results.match(
+        /lg:text-\[15px\] lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-\[#1A1A1A\]/g,
+      ) ?? []
+    ).length,
+    4,
+    "pickup, rental dates, time, and driver age share the same desktop value hierarchy",
+  );
+  assert.match(
+    results,
+    /lg:text-\[10px\] lg:font-normal lg:leading-\[13px\] lg:tracking-normal lg:text-\[#595959\]/,
   );
 });
 

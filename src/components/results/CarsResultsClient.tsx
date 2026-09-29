@@ -502,10 +502,10 @@ const sameReturnSearchGridClass =
 const compactFieldShellClass = "min-h-[46px] py-1 lg:min-h-[54px] lg:py-1.5";
 
 const fieldLabelClass =
-  "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:text-[10px] lg:font-semibold lg:leading-[14px] lg:tracking-[0.10em] lg:text-[#536B92]";
+  "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:mb-[3px] lg:text-[11px] lg:font-medium lg:normal-case lg:leading-[14px] lg:tracking-normal lg:text-[#595959]";
 
 const fieldInputClass =
-  "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[14px] lg:font-medium lg:leading-5 lg:tracking-[-0.005em] lg:text-[#142033]";
+  "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[15px] lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-[#1A1A1A]";
 const carsMobileEditFieldShellClass =
   "cars-results-edit-field relative flex min-h-[66px] flex-col justify-center rounded-[13px] border border-[#E7ECF5] bg-white px-3 py-[10px] shadow-none focus-within:border-[#064CF7] focus-within:ring-2 focus-within:ring-[#064CF7]/25";
 const carsMobileEditPickupLabelClass =
@@ -1487,7 +1487,7 @@ export function CarsResultsClient({
             <Button
               type="submit"
               className={cn(
-                "h-12 w-full rounded-[10px] bg-[#004BB8] px-4 text-[15px] font-semibold text-white shadow-none transition-colors duration-200 hover:bg-[#021C2B] lg:m-[4px] lg:h-auto lg:w-[calc(100%-8px)] lg:self-stretch lg:rounded-[9px] lg:text-[14px] lg:tracking-[-0.005em] lg:ring-1 lg:ring-[#075EE8]/12",
+                "h-12 w-full rounded-[10px] bg-[#004BB8] px-4 text-[15px] font-semibold text-white shadow-none transition-colors duration-200 hover:bg-[#021C2B] lg:m-[4px] lg:h-auto lg:w-[calc(100%-8px)] lg:self-stretch lg:rounded-[9px] lg:text-[15px] lg:tracking-normal lg:ring-1 lg:ring-[#075EE8]/12",
                 placement === "mobile" && "hidden",
                 isCompactSearch ? "lg:min-h-[54px]" : "lg:min-h-[58px]",
               )}
@@ -1732,7 +1732,7 @@ export function CarsResultsClient({
               />
               <span
                 title={summary}
-                className="min-w-0 truncate whitespace-nowrap text-[14px] font-medium leading-5 tracking-[-0.005em] text-[#142033]"
+                className="min-w-0 truncate whitespace-nowrap text-[15px] font-semibold leading-5 tracking-normal text-[#1A1A1A]"
               >
                 {summary}
               </span>
@@ -3698,7 +3698,7 @@ function SearchDateCell({
         aria-haspopup="dialog"
         className={groupedMobile
           ? carsMobileEditSummaryButtonClass
-          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-[14px] lg:font-medium lg:leading-5 lg:tracking-[-0.005em] lg:text-[#142033]"
+          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-[15px] lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-[#1A1A1A]"
         }
       >
         {showRentalDuration ? (
@@ -3719,11 +3719,11 @@ function SearchDateCell({
           </span>
         ) : (
           <span className="min-w-0 flex-1">
-            <span className={cn("block truncate leading-4", !pickupDate && "text-slate-400")}>
+            <span className={cn("block truncate leading-4 lg:leading-5", !pickupDate && "text-slate-400")}>
               {summary}
             </span>
             {showRentalDuration && rentalDayCount > 0 ? (
-              <span className="mt-0.5 block text-[11px] font-medium leading-3 text-slate-500 lg:text-[10px] lg:leading-[13px] lg:text-[#64748B]">
+              <span className="mt-0.5 block text-[11px] font-medium leading-3 text-slate-500 lg:text-[10px] lg:font-normal lg:leading-[13px] lg:tracking-normal lg:text-[#595959]">
                 {rentalDaysLabel}
               </span>
             ) : null}
@@ -3972,7 +3972,7 @@ function SearchTimeCell({
         aria-haspopup="menu"
         className={groupedMobile
           ? carsMobileEditSummaryButtonClass
-          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-[14px] lg:font-medium lg:leading-5 lg:tracking-[-0.005em] lg:text-[#142033]"
+          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-[15px] lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-[#1A1A1A]"
         }
       >
         {groupedMobile ? (
@@ -4123,7 +4123,7 @@ function DriverAgeCell({
         aria-haspopup="listbox"
         className={groupedMobile
           ? carsMobileEditSummaryButtonClass
-          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-[14px] lg:font-medium lg:leading-5 lg:tracking-[-0.005em] lg:text-[#142033]"
+          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-[15px] lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-[#1A1A1A]"
         }
       >
         {groupedMobile ? (
