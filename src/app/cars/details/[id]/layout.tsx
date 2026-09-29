@@ -13,6 +13,14 @@ export default function CarDetailsLayout({
             position: relative;
           }
 
+          main:has([data-car-details-experience]) {
+            background-color: #F5F7FB !important;
+          }
+
+          main:has([data-car-details-experience]) > section {
+            background-color: #F5F7FB !important;
+          }
+
           [data-car-details-experience] [data-car-details-desktop-actions] {
             position: absolute;
             top: 1.5rem;
@@ -23,6 +31,15 @@ export default function CarDetailsLayout({
 
           [data-car-details-experience] [data-car-details-desktop-identity-row] {
             display: block;
+          }
+
+          [data-car-details-experience] #car-pickup-panel > section {
+            background-color: transparent !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
           }
         }
       `}</style>
