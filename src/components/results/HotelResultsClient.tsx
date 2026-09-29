@@ -1986,7 +1986,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             scrollY: window.scrollY, savedAt: Date.now(),
           });
         }}
-        className={cn(!guided && mobileStyles.results, guided ? "mt-6 min-w-0" : "flex-1 overflow-x-clip bg-[#F5F7FB] pb-2 sm:pb-8")}
+        className={cn(!guided && mobileStyles.results, guided ? "mt-6 min-w-0" : "flex-1 overflow-x-clip bg-[#F5F7FB] pb-2 sm:pb-8 sm:bg-[#f6f8fb]")}
         {...(!guided ? { "data-mobile-web-hotel-results": "" } : {})}
         {...(guided && !error
           ? {
