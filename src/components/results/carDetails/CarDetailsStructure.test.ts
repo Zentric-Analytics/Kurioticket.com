@@ -42,19 +42,29 @@ test("standalone Car details owns exactly one page wrapper and passes the deskto
   assert.match(standaloneSource, /standalone-disabled-provider/);
 });
 
-test("CarDetailsExperience is content-only and owns the standalone sticky desktop toolbar", () => {
+test("CarDetailsExperience uses one Hotels-style sticky desktop section handoff", () => {
   assert.doesNotMatch(experienceSource, /<main\b/);
   assert.doesNotMatch(experienceSource, /page-shell/);
   assert.match(experienceSource, /data-car-details-experience/);
-  assert.match(experienceSource, /data-car-details-desktop-sticky-controls/);
+  assert.match(experienceSource, /data-car-details-desktop-controls/);
+  assert.doesNotMatch(experienceSource, /data-car-details-desktop-sticky-controls/);
   assert.match(
     experienceSource,
-    /hidden h-16 w-full items-center border-b border-transparent bg-\[#F5F7FB\] lg:sticky lg:top-0 lg:z-40 lg:flex/,
+    /hidden h-16 w-full items-center border-b border-transparent bg-\[#F5F7FB\] lg:flex/,
   );
   assert.match(experienceSource, /\{desktopBackControl\}/);
-  assert.doesNotMatch(
-    layoutSource,
-    /\[data-car-details-desktop-sticky-controls\]::before/,
+  assert.match(experienceSource, /desktopSectionBarStuck/);
+  assert.match(experienceSource, /new ResizeObserver\(scheduleDesktopScrollState\)/);
+  assert.match(experienceSource, /window\.addEventListener\("scroll", scheduleDesktopScrollState/);
+  assert.match(experienceSource, /data-car-details-scroll-section="compare"/);
+  assert.match(experienceSource, /data-car-details-scroll-section="pickup"/);
+  assert.match(experienceSource, /data-car-details-scroll-section="location"/);
+  assert.match(experienceSource, /data-car-details-utility-placement="hero"/);
+  assert.match(experienceSource, /data-car-details-utility-placement="tabs"/);
+  assert.match(experienceSource, /data-car-details-desktop-context/);
+  assert.match(
+    experienceSource,
+    /pointer-events-none absolute left-1\/2 top-1\/2 hidden w-\[52%\] max-w-\[34rem\]/,
   );
   assert.doesNotMatch(
     layoutSource,
@@ -68,22 +78,7 @@ test("CarDetailsExperience is content-only and owns the standalone sticky deskto
     layoutSource,
     /\[data-car-details-bottom-booking-bar\][\s\S]*?position:\s*(?:sticky|fixed)/,
   );
-  assert.match(
-    experienceSource,
-    /data-car-details-bottom-booking-bar/,
-  );
-  assert.match(
-    experienceSource,
-    /data-car-details-desktop-sticky-context/,
-  );
-  assert.match(
-    experienceSource,
-    /pointer-events-none absolute left-1\/2 top-1\/2 hidden w-\[52%\] max-w-\[34rem\]/,
-  );
-  assert.match(
-    experienceSource,
-    /<CarHeroActions[\s\S]*?desktop/,
-  );
+  assert.match(layoutSource, /\[data-car-details-scroll-section\] \{\s*scroll-margin-top: 5\.5rem;/);
   assert.match(
     experienceSource,
     /presentation === "guided-content" \? "mt-6" : ""/,
@@ -107,7 +102,9 @@ test("standalone desktop tabs place panel content in the former heading position
     new URL("./CarDetailsSectionNav.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(navSource, /lg:top-16/);
+  assert.match(navSource, /lg:sticky lg:top-0/);
+  assert.match(navSource, /max-w-\[640px\]/);
+  assert.match(navSource, /data-car-details-desktop-sticky-actions/);
   assert.doesNotMatch(
     layoutSource,
     /data-car-details-desktop-actions[\s\S]*?position:\s*absolute/,
