@@ -142,7 +142,10 @@ test("sticky change-flight overlay centers a black title", () => {
   assert.ok(start >= 0 && end > start);
   const popout = source.slice(start, end);
 
-  assert.match(popout, />\s*Change your flight\s*<\/h2>/);
+  assert.match(
+    popout,
+    /locale\?\.startsWith\("en"\) \? "Change your flight" : t\("editFlightSearch"\)/,
+  );
   assert.match(
     popout,
     /id="sticky-flight-search-title"[\s\S]*text-xl font-bold tracking-tight text-black/,
@@ -176,5 +179,28 @@ test("sticky multi-city selection renders the real multi-city editor", () => {
   assert.match(
     popout,
     /data-sticky-multicity-editor[\s\S]*<Button[\s\S]*type="submit"[\s\S]*\{t\("search"\)\}/,
+  );
+});
+
+
+test("sticky multi-city overlay is the sole validator and stays reachable on short viewports", () => {
+  const popoutStart = source.indexOf("function renderStickySearchPopoutOverlay()");
+  const popoutEnd = source.indexOf("function renderCompactSearchForm", popoutStart);
+  const popout = source.slice(popoutStart, popoutEnd);
+  const compactStart = source.indexOf('if (placement === "desktop" && tripTypeInput === "multi-city")');
+  const compactEnd = source.indexOf('if (tripTypeInput === "multi-city")', compactStart + 1);
+  const compactMultiCity = source.slice(compactStart, compactEnd);
+
+  assert.match(
+    popout,
+    /max-h-\[calc\(100dvh-6rem\)\][^"]*overflow-y-auto[^"]*overscroll-contain/,
+  );
+  assert.match(
+    compactMultiCity,
+    /if \(isStickySearchPanelOpen\) return null;/,
+  );
+  assert.equal(
+    popout.match(/onAirportValidityChange=\{setMultiCityAirportsValid\}/g)?.length,
+    1,
   );
 });
