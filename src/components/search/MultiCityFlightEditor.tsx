@@ -196,7 +196,8 @@ export function MultiCityFlightEditor({
                 <div
                   className={cn(
                     "relative grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0",
-                    resultsPresentation && "flight-results-edit-surface gap-0 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white",
+                    resultsPresentation &&
+                      "flight-results-edit-surface gap-0 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white sm:grid-cols-[minmax(0,1fr)_56px_minmax(0,1fr)]",
                   )}
                   data-multi-city-route-pair
                   data-multi-city-results-route-card={resultsPresentation ? true : undefined}
@@ -226,7 +227,7 @@ export function MultiCityFlightEditor({
                   <span
                     data-multi-city-results-route-divider
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[#E7ECF5]"
+                    className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[#E7ECF5] sm:hidden"
                   />
                 ) : null}
                 <MultiCityAirportField
@@ -257,7 +258,8 @@ export function MultiCityFlightEditor({
                   data-multi-city-swap-control
                   className={cn(
                     "focus-ring absolute left-1/2 top-1/2 z-10 inline-flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#D8E1EC] bg-white text-[#004BB8]",
-                    resultsPresentation && "border-0 bg-white text-[#064CF7]",
+                    resultsPresentation &&
+                      "border-0 bg-white text-[#064CF7] sm:static sm:col-start-2 sm:row-start-1 sm:self-center sm:justify-self-center sm:translate-x-0 sm:translate-y-0",
                   )}
                 >
                   {resultsPresentation ? (
@@ -490,7 +492,11 @@ function MultiCityAirportField({
         desktopSuggestions={desktopSuggestions}
         className={cn(
           "sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-white sm:shadow-none sm:focus-within:ring-0",
-          resultsPresentation && "flight-results-edit-field-surface min-h-[66px] rounded-none border-0 bg-white px-3 py-[9px] shadow-none hover:border-0 [&_label]:mb-1 [&_label]:text-[10px] [&_label]:font-extrabold [&_label]:leading-[14px] [&_label]:tracking-[0.5px] [&_label]:text-[#56658E]",
+          resultsPresentation &&
+            cn(
+              "flight-results-edit-field-surface min-h-[66px] rounded-none border-0 bg-white px-3 py-[9px] shadow-none hover:border-0 [&_label]:mb-1 [&_label]:text-[10px] [&_label]:font-extrabold [&_label]:leading-[14px] [&_label]:tracking-[0.5px] [&_label]:text-[#56658E] sm:[&_svg]:text-[#071A48] sm:[&_input]:font-semibold",
+              field === "origin" ? "sm:col-start-1" : "sm:col-start-3",
+            ),
         )}
       />
       <MobileAirportPicker
