@@ -85,10 +85,15 @@ export function CarDetailsSectionNav({
 
       <div
         ref={desktopBarRef}
-        className={`relative hidden min-h-16 w-full border-b border-slate-200 bg-[#F5F7FB] transition-[background-color,box-shadow] duration-200 ease-out lg:sticky lg:top-0 lg:z-40 lg:mt-3 lg:block ${desktopStuck ? "lg:bg-[#F5F7FB]/95 lg:shadow-[0_6px_20px_rgba(15,23,42,0.07)] lg:backdrop-blur-xl" : ""}`}
+        className={`relative hidden min-h-16 w-full transition-[background-color,border-color] duration-200 ease-out lg:sticky lg:top-0 lg:z-40 lg:mt-3 lg:block ${desktopStuck ? "lg:border-b lg:border-transparent lg:bg-transparent" : "lg:border-b lg:border-slate-200 lg:bg-[#F5F7FB]"}`}
         data-car-details-section-nav
         data-stuck={desktopStuck ? "true" : "false"}
       >
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none fixed inset-x-0 top-0 z-0 hidden h-16 border-b border-slate-200 bg-[#F5F7FB]/95 transition-[opacity,box-shadow] duration-200 ease-out lg:block ${desktopStuck ? "opacity-100 shadow-[0_6px_20px_rgba(15,23,42,0.07)] backdrop-blur-xl" : "opacity-0"}`}
+          data-car-details-desktop-sticky-backdrop
+        />
         <div
           className={`absolute left-0 top-1/2 z-10 -translate-y-1/2 transition-[opacity,transform] duration-200 ease-out ${desktopStuck ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-1 opacity-0"}`}
           data-car-details-desktop-sticky-back
@@ -98,7 +103,7 @@ export function CarDetailsSectionNav({
         </div>
         <nav
           aria-label={labels.navigation}
-          className={`absolute top-0 flex min-h-16 shrink-0 items-stretch gap-1 transition-[left,transform] duration-200 ease-out ${desktopStuck ? "left-1/2 -translate-x-1/2" : "left-0 translate-x-0"}`}
+          className={`absolute top-0 z-10 flex min-h-16 shrink-0 items-stretch gap-1 transition-[left,transform] duration-200 ease-out ${desktopStuck ? "left-1/2 -translate-x-1/2" : "left-0 translate-x-0"}`}
           data-car-details-desktop-tabs
           data-centered={desktopStuck ? "true" : "false"}
         >

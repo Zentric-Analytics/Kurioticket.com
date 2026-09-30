@@ -293,7 +293,7 @@ test("desktop car details place the polished identity below the hero and keep co
   assert.match(heroSource, /\[&_h1\]:truncate/);
   assert.match(
     heroSource,
-    /data-car-details-specifications[\s\S]*?lg:max-w-\[900px\][\s\S]*?lg:grid-cols-2[\s\S]*?lg:gap-x-16/,
+    /data-car-details-specifications[\s\S]*?lg:max-w-\[900px\][\s\S]*?lg:grid-cols-2[\s\S]*?lg:gap-x-24/,
   );
   assert.doesNotMatch(heroSource, /position: fixed !important/);
 
