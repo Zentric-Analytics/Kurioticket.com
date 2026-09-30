@@ -83,9 +83,10 @@ test("source contract uses a desktop summary and a mobile safe-area booking dock
   assert.match(clientSource, /<main className="flex-1 bg-\[#F5F7FB\] pb-/);
 
   const summaryRenders = clientSource.match(/<BookingSummary\b/g) ?? [];
-  assert.equal(summaryRenders.length, 1);
+  assert.equal(summaryRenders.length, 2);
   assert.match(clientSource, /data-car-details-booking-rail/);
-  assert.match(clientSource, /"hidden self-start lg:block"/);
+  assert.match(clientSource, /data-car-details-bottom-booking-bar/);
+  assert.match(clientSource, /className="hidden lg:block"[\s\S]*?data-car-details-bottom-booking-bar/);
   assert.match(
     clientSource,
     /grid items-start gap-5 lg:grid-cols-\[minmax\(0,1fr\)_320px\].*xl:grid-cols-\[minmax\(0,1fr\)_340px\]/,
@@ -104,9 +105,13 @@ test("source contract uses a desktop summary and a mobile safe-area booking dock
 
   const hero = clientSource.indexOf("<CarDetailsHero");
   const pickupReturn = clientSource.indexOf("pickupSection", hero);
-  const responsiveSummary = clientSource.indexOf("<BookingSummary");
+  const sectionPanels = clientSource.indexOf("data-car-details-section-panels", hero);
+  const bottomBar = clientSource.indexOf("data-car-details-bottom-booking-bar", sectionPanels);
   assert.ok(
-    hero >= 0 && pickupReturn > hero && responsiveSummary > pickupReturn,
+    hero >= 0 &&
+      pickupReturn > hero &&
+      sectionPanels > pickupReturn &&
+      bottomBar > sectionPanels,
   );
 });
 

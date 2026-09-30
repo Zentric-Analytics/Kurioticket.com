@@ -56,9 +56,21 @@ test("CarDetailsExperience is content-only and owns the standalone sticky deskto
     layoutSource,
     /\[data-car-details-desktop-sticky-controls\]::before/,
   );
+  assert.doesNotMatch(
+    layoutSource,
+    /\[data-car-details-booking-rail\][\s\S]*?position: sticky/,
+  );
   assert.match(
     layoutSource,
-    /\[data-car-details-booking-rail\][\s\S]*?position: sticky !important;[\s\S]*?bottom: 0;/,
+    /\[data-car-details-bottom-booking-bar\][\s\S]*?margin-top: 3rem;[\s\S]*?background: #FFFFFF;/,
+  );
+  assert.doesNotMatch(
+    layoutSource,
+    /\[data-car-details-bottom-booking-bar\][\s\S]*?position:\s*(?:sticky|fixed)/,
+  );
+  assert.match(
+    experienceSource,
+    /data-car-details-bottom-booking-bar/,
   );
   assert.match(
     experienceSource,
