@@ -162,12 +162,12 @@ test("price and View Flight retain their semantic order without provider-price c
   assert.ok(price >= 0 && price < button);
   assert.doesNotMatch(action, /\{priceLabel\}/);
   assert.doesNotMatch(action, /flight-card-provider-price/);
-  assert.match(action, /min-h-11/);
+  assert.match(action, /min-h-9/);
   const priceRule = ruleBody(
     globalsCss,
     '.flight-card-price-value.flight-card-price[data-price-size="normal"]',
   );
-  assert.match(priceRule, /font-size:\s*1\.25rem/);
+  assert.match(priceRule, /font-size:\s*1\.1875rem/);
   assert.match(
     ruleBody(globalsCss, ".flight-card-price-value.flight-card-price"),
     /white-space:\s*nowrap/,
@@ -189,7 +189,7 @@ test("all three detail lines share the left-side details region", () => {
   assert.match(ruleBody(globalsCss, ".flight-card-details"), /grid-area:\s*details/);
 });
 
-test("desktop detail items wrap without clipping or breaking words", () => {
+test("desktop detail items stay in one readable three-section panel", () => {
   const detailsStart = flightCardSource.indexOf("function FlightDetailLines");
   const details = flightCardSource.slice(detailsStart);
   const desktopStart = globalsCss.indexOf(
@@ -208,7 +208,7 @@ test("desktop detail items wrap without clipping or breaking words", () => {
   );
   const desktopValueRule = ruleBody(
     globalsCss,
-    ".flight-card-detail-value",
+    ".flight-card-detail-value {\n    grid-row: 2;",
     desktopStart,
   );
 
@@ -216,13 +216,28 @@ test("desktop detail items wrap without clipping or breaking words", () => {
   assert.match(details, /flight-card-detail-value min-w-0/);
   assert.match(details, /whitespace-normal/);
   assert.doesNotMatch(details, /truncate|line-clamp|overflow-hidden|whitespace-nowrap/);
-  assert.match(desktopDetailsRule, /display:\s*flex/);
-  assert.match(desktopDetailsRule, /flex-wrap:\s*wrap/);
-  assert.match(desktopItemRule, /flex:\s*1 1 12rem/);
-  assert.match(desktopItemRule, /min-width:\s*12rem/);
-  assert.match(desktopItemRule, /minmax\(min-content, 1fr\)/);
+  assert.match(desktopDetailsRule, /display:\s*grid/);
+  assert.match(desktopDetailsRule, /grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(desktopDetailsRule, /border:\s*1px solid #e5ebf3/);
+  assert.doesNotMatch(desktopDetailsRule, /flex-wrap/);
+  assert.match(desktopItemRule, /grid-template-columns:\s*2rem minmax\(0, 1fr\)/);
+  assert.match(desktopItemRule, /grid-template-rows:\s*auto auto/);
+  assert.match(desktopItemRule, /min-width:\s*0/);
+  assert.match(
+    ruleBody(globalsCss, ".flight-card-detail-item + .flight-card-detail-item", desktopStart),
+    /border-left:\s*1px solid #d8e1ec/,
+  );
+  const desktopIconRule = ruleBody(
+    globalsCss,
+    ".flight-card-detail-icon",
+    desktopStart,
+  );
+  assert.match(desktopIconRule, /border-radius:\s*9999px/);
+  assert.match(desktopIconRule, /background:\s*#eaf2ff/);
   assert.match(desktopValueRule, /overflow-wrap:\s*normal/);
   assert.match(desktopValueRule, /word-break:\s*normal/);
+  assert.match(desktopValueRule, /white-space:\s*normal/);
+  assert.match(desktopValueRule, /overflow:\s*visible/);
 });
 
 test("result-card fare rule stays concise and leaves provider terms to details", () => {
@@ -234,14 +249,14 @@ test("result-card fare rule stays concise and leaves provider terms to details",
   assert.doesNotMatch(flightCardSource, /getFlightResultFareRule/);
 });
 
-test("FlightCard retains fare pricing inputs and LinkButton behavior", () => {
+test("FlightCard retains fare pricing inputs and Next Link behavior", () => {
   assert.match(flightCardSource, /FlightFareAction/);
   assert.match(flightCardSource, /detailsHref/);
   assert.match(flightCardSource, /viewFlightLabel/);
   assert.match(flightCardSource, /viewFlightAriaLabel/);
   assert.match(flightCardSource, /formattedPrice/);
   assert.match(flightCardSource, /providerPrice/);
-  assert.match(flightCardSource, /<LinkButton/);
+  assert.match(flightCardSource, /<Link[\s\S]*href=\{detailsHref\}/);
 });
 
 test("desktop fare action omits the visible provider price label", () => {

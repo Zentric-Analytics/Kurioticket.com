@@ -536,10 +536,10 @@ function FlightDetailLines({
             )}
           >
             <Icon
-              className="h-3.5 w-3.5 shrink-0 text-black"
+              className="flight-card-detail-icon h-3.5 w-3.5 shrink-0 text-black"
               aria-hidden="true"
             />
-            <span className="shrink-0 font-semibold text-[#07133B]">
+            <span className="flight-card-detail-label shrink-0 font-semibold text-[#07133B]">
               {detail.label}:
             </span>
             <span
