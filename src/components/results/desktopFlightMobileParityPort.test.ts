@@ -50,8 +50,23 @@ test("desktop nearby fares keep seven dates and arrows but use mobile-like indiv
 });
 
 test("desktop Flight result cards use the lighter hierarchy without changing MobileFlightCard", () => {
-  assert.match(card, /flight-card-leg-label font-semibold/);
-  assert.match(card, /flight-card-airport font-semibold/);
+  assert.match(card, /flight-card-airline-name[^\n]*font-bold text-slate-900/);
+  assert.match(card, /flight-card-leg-label font-bold uppercase text-\[#0057E7\]/);
+  assert.match(card, /flight-card-time[^\n]*font-extrabold[^\n]*text-slate-950/);
+  assert.match(card, /flight-card-airport[^\n]*font-semibold text-slate-900/);
+  assert.match(card, /flight-card-leg-meta font-medium text-\[#536B92\]/);
+  assert.match(card, /flight-card-duration[^\n]*font-semibold text-slate-600/);
+  assert.match(card, /flight-card-price-value font-bold/);
+  assert.match(card, /flight-card-detail-value[^\n]*font-medium text-\[#536B92\]/);
+  assert.match(card, /shrink-0 font-semibold text-\[#07133B\]/);
+  assert.match(card, /PlaneTakeoff className="mx-2 h-3\.5 w-3\.5 text-\[#004BB8\]"/);
+  assert.match(globals, /\.flight-card-airline-name \{[\s\S]*font-size: 0\.875rem;[\s\S]*line-height: 1\.0625rem;/);
+  assert.match(globals, /\.flight-card-flight-number \{[\s\S]*font-size: 0\.6875rem;[\s\S]*line-height: 0\.875rem;/);
+  assert.match(globals, /\.flight-card-time \{[\s\S]*font-size: 1rem;[\s\S]*line-height: 1\.125rem;/);
+  assert.match(globals, /\.flight-card-airport \{[\s\S]*font-size: 0\.75rem;/);
+  assert.match(globals, /\.flight-card-leg-meta \{[\s\S]*font-size: 0\.6875rem;/);
+  assert.match(globals, /\.flight-card-duration \{[\s\S]*font-size: 0\.6875rem;/);
+  assert.match(globals, /\.flight-card-fare-action \.flight-card-price-value \{[\s\S]*font-size: 1\.1875rem;[\s\S]*text-align: right;/);
   assert.match(card, /flight-card-details mt-3[^\n]*rounded-lg bg-slate-50\/70/);
   assert.match(card, /className="h-3\.5 w-3\.5 shrink-0 text-black"/);
   assert.match(globals, /grid-template-areas: "legs fare" "details fare";/);
