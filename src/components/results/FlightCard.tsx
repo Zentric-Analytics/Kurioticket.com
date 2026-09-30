@@ -519,7 +519,7 @@ function FlightDetailLines({
   return (
     <div
       className={cn(
-        "flight-card-details mt-3 grid min-w-0 flex-1 grid-cols-3 items-center gap-3 rounded-lg bg-slate-50/70 px-3 py-2.5 text-[10.5px] leading-[15px] text-slate-600",
+        "flight-card-details mt-3 grid min-w-0 flex-1 items-start gap-3 rounded-lg bg-slate-50/70 px-3 py-2.5 text-[10.5px] leading-[15px] text-slate-600",
       )}
     >
       {details.map((detail) => {
