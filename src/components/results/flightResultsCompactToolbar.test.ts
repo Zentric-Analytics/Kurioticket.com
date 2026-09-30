@@ -152,6 +152,11 @@ test("sticky change-flight overlay centers a black title", () => {
   );
   assert.match(popout, /mx-auto max-w-2xl text-center/);
   assert.doesNotMatch(popout, /t\("searchFlights"\)/);
+  assert.doesNotMatch(popout, /\{mobileRouteSummary\}/);
+  assert.doesNotMatch(
+    popout,
+    /\{stickyDateSummary\}\s*·\s*\{travelerCabinSummary\}/,
+  );
 });
 
 test("sticky multi-city selection renders the real multi-city editor", () => {
