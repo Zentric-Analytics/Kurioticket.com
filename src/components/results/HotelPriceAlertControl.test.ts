@@ -53,7 +53,7 @@ test("desktop Hotel Results price-alert row omits only the subtitle", () => {
 
 
 test("desktop Hotel Results price-alert row is vertically aligned and compact", () => {
-  const rowStart = source.indexOf('className="hidden rounded-2xl border border-blue-100');
+  const rowStart = source.indexOf('className="hidden rounded-2xl border border-[#CFE0F8] bg-[#EEF6FF]');
   const rowEnd = source.indexOf("{status === \"saved\" ? (", rowStart);
   const row = source.slice(rowStart, rowEnd);
 
