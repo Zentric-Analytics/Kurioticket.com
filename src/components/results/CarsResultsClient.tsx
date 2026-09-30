@@ -1684,7 +1684,10 @@ export function CarsResultsClient({
         aria-hidden={!showCompactSearchSummary}
         inert={!showCompactSearchSummary ? true : undefined}
       >
-        <div className="mx-auto grid h-[58px] w-full max-w-[920px] grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,0.85fr)_104px] overflow-hidden rounded-lg border border-slate-200/95 bg-white shadow-[0_12px_30px_-18px_rgba(15,23,42,0.38)] ring-1 ring-slate-950/[0.03] pointer-events-auto">
+        <div
+          className="mx-auto grid h-[58px] w-full max-w-[920px] grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,0.85fr)_104px] overflow-hidden rounded-lg border border-slate-200/95 bg-[#EEF1F5] shadow-[0_12px_30px_-18px_rgba(15,23,42,0.38)] ring-1 ring-slate-950/[0.03] pointer-events-auto"
+          data-cars-results-compact-search-summary
+        >
           {(
             [
               [
@@ -1724,7 +1727,7 @@ export function CarsResultsClient({
               onClick={(event) => {
                 openDesktopStickySearch(section, event.currentTarget);
               }}
-              className="focus-ring flex h-[56px] min-w-0 items-center gap-2.5 border-e border-slate-200/85 px-3 text-start transition-colors hover:bg-slate-50/80 focus-visible:bg-slate-50/90"
+              className="focus-ring flex h-[56px] min-w-0 items-center gap-2.5 border-e border-slate-200/85 px-3 text-start transition-colors hover:bg-[#E7EBF1] focus-visible:bg-[#E7EBF1]"
             >
               <Icon
                 className="h-4 w-4 shrink-0 text-slate-500"
