@@ -89,11 +89,21 @@ test("mobile Reviews make the verified score a primary decision signal without i
   assert.doesNotMatch(reviews, /8\.6|1,246|Excellent/);
 });
 
-test("mobile related Hotels can use twelve API results while desktop remains capped to the prior seven visible cards", () => {
+test("mobile related Hotels can use twelve API results while desktop can request its own visible-card cap", () => {
   assert.match(client, /mode === "standalone"\) detailsParams\.set\("relatedLimit", "12"\)/);
   assert.match(related, /hotels\.slice\(0, 12\)/);
-  assert.match(related, /desktopHidden=\{index >= 7\}/);
+  assert.match(related, /desktopLimit = 7/);
+  assert.match(related, /desktopHidden=\{index >= desktopLimit\}/);
   assert.match(related, /w-\[241px\]/);
   assert.match(related, /h-\[150px\]/);
   assert.match(related, /hidden text-xs text-slate-500 lg:block/);
+});
+
+
+test("desktop Hotel Details requests eight related Hotel cards", () => {
+  const desktop = readFileSync(
+    new URL("./hotelDetails/DesktopHotelDetails.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(desktop, /<RelatedHotelsSection[\s\S]*?desktopLimit=\{8\}/);
 });
