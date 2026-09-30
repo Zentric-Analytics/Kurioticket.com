@@ -847,7 +847,7 @@ function CarPriceComparisonSection({
         ];
   return (
     <div
-      className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:bg-transparent"
+      className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:bg-transparent lg:pb-[22px] lg:pt-5"
       data-car-price-comparison
     >
       {showSectionHeading ? (
@@ -855,10 +855,7 @@ function CarPriceComparisonSection({
           level={headingLevel}
           className="hidden lg:block lg:text-[20px] lg:font-semibold lg:leading-[26px] lg:tracking-[-0.2px] lg:text-[#192024]"
         >
-          <span className="lg:hidden">Compare deals</span>
-          <span className="hidden lg:inline">
-            {copy("carDetails.comparePrices")}
-          </span>
+          {copy("carDetails.comparePrices")}
         </Heading>
       ) : null}
       <p className={`mt-1 text-[11px] font-medium leading-4 text-slate-600 lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42] ${showSectionHeading ? "lg:mt-3" : "lg:mt-0"}`}>
@@ -921,7 +918,7 @@ function CarPriceComparisonSection({
                 <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-[7px]">
                   {car.sandboxPresentation ? (
                     sandboxSupplier ? (
-                      <span className="inline-flex min-w-0 shrink items-center gap-[3px] text-[10.5px] font-semibold leading-[15px] text-slate-700">
+                      <span className="inline-flex min-w-0 shrink items-center gap-[3px] text-[10.5px] font-semibold leading-[15px] text-slate-700 lg:gap-1.5 lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
                         <CarFront
                           size={14}
                           strokeWidth={2}
@@ -1057,7 +1054,7 @@ function CarLocationSection({
   );
   return (
     <div
-      className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:bg-transparent"
+      className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:bg-transparent lg:pb-[22px] lg:pt-5"
       data-car-location-section
     >
       {showSectionHeading ? (
@@ -1358,11 +1355,11 @@ function PickupReturnSection({
         <div className="mt-5">
           <Heading
             level={itemHeadingLevel}
-            className="text-[14px] font-bold leading-5 text-[#071A48] lg:text-base lg:leading-normal lg:text-inherit"
+            className="text-[14px] font-bold leading-5 text-[#071A48] lg:text-[16px] lg:font-semibold lg:leading-[24px] lg:text-[#192024]"
           >
             Pickup requirements
           </Heading>
-          <p className="mt-2.5 flex items-start gap-2.5 text-[14px] font-medium leading-5 text-[#071A48] lg:text-sm lg:leading-normal lg:text-inherit">
+          <p className="mt-2.5 flex items-start gap-2.5 text-[14px] font-medium leading-5 text-[#071A48] lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
             <IdCard
               size={19}
               className="mt-px shrink-0 text-slate-600"
