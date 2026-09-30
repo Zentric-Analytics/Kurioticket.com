@@ -221,7 +221,7 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
 
     </div>
     <div data-desktop-section="review">
-    <HotelReviewsSection variant="desktop" score={reviewScore} label={props.reviewLabel} countText={props.reviewCountText} source={props.reviewSource} hotelName={props.hotelName} sentiment={props.providerDetails?.reviews?.sentiment} quotes={props.providerDetails?.reviews?.quotes} />
+    <HotelReviewsSection variant="desktop" score={reviewScore} label={props.reviewLabel} countText={props.reviewCountText} source={props.reviewSource} />
     </div>
     {props.relatedHotels.length ? <div id="hotel-related-hotels" className={styles.related}>
       <RelatedHotelsSection hotels={props.relatedHotels} city={relatedCity} searchContext={props.relatedSearchContext} desktopLimit={8} limit={8} labels={{ heading: props.labels.moreHotelsIn, viewHotel: props.labels.viewHotel, pricePerNight: props.labels.pricePerNight, estimatedStayTotal: props.labels.estimatedStayTotal, priceUnavailable: props.labels.priceUnavailable, imageUnavailable: props.labels.imageUnavailable, imageAlt: props.labels.imageAlt, nearLocation: props.labels.nearLocation, starHotelAria: props.labels.starHotelAria }} />
