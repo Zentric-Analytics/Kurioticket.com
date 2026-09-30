@@ -136,3 +136,23 @@ test("homepage and standalone retain their existing presentation path", () => {
   assert.match(editor, /sm:min-h-\[58px\] sm:rounded-none sm:border-0/);
   assert.match(editor, /\{resultsPresentation \? \([\s\S]*?data-multi-city-results-route-divider[\s\S]*?\) : null\}/);
 });
+
+
+test("results desktop multi-city reserves a dedicated swap column", () => {
+  assert.match(
+    editor,
+    /sm:grid-cols-\[minmax\(0,1fr\)_56px_minmax\(0,1fr\)\]/,
+  );
+  assert.match(
+    editor,
+    /field === "origin" \? "sm:col-start-1" : "sm:col-start-3"/,
+  );
+  assert.match(
+    editor,
+    /sm:static sm:col-start-2 sm:row-start-1 sm:self-center sm:justify-self-center sm:translate-x-0 sm:translate-y-0/,
+  );
+  assert.match(
+    editor,
+    /data-multi-city-results-route-divider[\s\S]*sm:hidden/,
+  );
+});
