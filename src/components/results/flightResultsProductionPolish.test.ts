@@ -294,7 +294,7 @@ test("desktop departure metadata aligns directly beneath time with generous card
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date \{\s*margin-inline-start: 0;/);
 });
 
-test("desktop detail rows wrap whole items and preserve whole words", async () => {
+test("desktop detail panel stays horizontal and preserves whole words", async () => {
   const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
   const desktopDetailRules = styles.slice(
     styles.indexOf(
@@ -306,19 +306,19 @@ test("desktop detail rows wrap whole items and preserve whole words", async () =
 
   assert.match(
     desktopDetailRules,
-    /\.flight-card-details \{\s*display: flex;\s*flex-wrap: wrap;/,
+    /\.flight-card-details \{\s*display: grid;[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/,
   );
   assert.match(
     desktopDetailRules,
-    /\.flight-card-detail-item \{[\s\S]*flex: 1 1 12rem;[\s\S]*min-width: 12rem;/,
+    /\.flight-card-detail-item \{[\s\S]*grid-template-columns: 2rem minmax\(0, 1fr\);[\s\S]*grid-template-rows: auto auto;/,
   );
   assert.match(
     desktopDetailRules,
-    /grid-template-columns: auto auto minmax\(min-content, 1fr\)/,
+    /\.flight-card-detail-item \+ \.flight-card-detail-item \{\s*border-inline-start: 1px solid #d8e1ec;/,
   );
   assert.match(
     desktopDetailRules,
-    /\.flight-card-detail-value \{\s*overflow-wrap: normal;\s*word-break: normal;/,
+    /\.flight-card-detail-value \{[\s\S]*overflow-wrap: normal;[\s\S]*word-break: normal;/,
   );
   assert.doesNotMatch(
     desktopDetailRules,
