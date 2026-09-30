@@ -136,9 +136,18 @@ test("standalone desktop tabs place panel content in the former heading position
   );
   assert.match(navSource, /desktopStuck \? desktopBackControl : null/);
   assert.match(navSource, /desktopStuck \? desktopUtilityActions : null/);
+  assert.match(navSource, /data-car-details-desktop-sticky-backdrop/);
   assert.match(
     navSource,
-    /lg:bg-\[#F5F7FB\]\/95 lg:shadow-\[0_6px_20px_rgba\(15,23,42,0\.07\)\] lg:backdrop-blur-xl/,
+    /fixed inset-x-0 top-0 z-0 hidden h-16 border-b border-slate-200 bg-\[#F5F7FB\]\/95/,
+  );
+  assert.match(
+    navSource,
+    /desktopStuck \? "opacity-100 shadow-\[0_6px_20px_rgba\(15,23,42,0\.07\)\] backdrop-blur-xl" : "opacity-0"/,
+  );
+  assert.match(
+    navSource,
+    /desktopStuck \? "lg:border-b lg:border-transparent lg:bg-transparent" : "lg:border-b lg:border-slate-200 lg:bg-\[#F5F7FB\]"/,
   );
   assert.doesNotMatch(
     layoutSource,
