@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import type { PublicFlightResult } from "@/lib/types";
 import { readSavedItemIds, toggleSavedItemId, writeSavedItemIds } from "@/lib/saved-items-local";
+import { SAVED_FLIGHTS_INVALIDATED_EVENT } from "@/lib/saved-flight-events";
 
 type SavedFlightItem = {
   id: string;
@@ -68,7 +69,9 @@ export function useSavedFlightResult(
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    if (status !== "authenticated") {
+    if (status === "loading") return;
+
+    if (status === "unauthenticated") {
       clearSavedFlightsCache();
       const syncLocal = () => setLocalSaved(readSavedItemIds().includes(flight.id));
       syncLocal();
@@ -77,13 +80,21 @@ export function useSavedFlightResult(
     }
 
     const update = () => setSavedItem(matchingSavedFlight(savedFlightsCache, flight.id));
+    const invalidate = () => {
+      clearSavedFlightsCache(owner);
+      void loadSavedFlights(owner).then(() => update()).catch(() => undefined);
+    };
     void loadSavedFlights(owner).then(() => update()).catch(() => undefined);
     window.addEventListener(SAVED_FLIGHTS_CHANGED_EVENT, update);
-    return () => window.removeEventListener(SAVED_FLIGHTS_CHANGED_EVENT, update);
+    window.addEventListener(SAVED_FLIGHTS_INVALIDATED_EVENT, invalidate);
+    return () => {
+      window.removeEventListener(SAVED_FLIGHTS_CHANGED_EVENT, update);
+      window.removeEventListener(SAVED_FLIGHTS_INVALIDATED_EVENT, invalidate);
+    };
   }, [flight.id, owner, status]);
 
   async function toggleSavedFlight() {
-    if (pending) return;
+    if (pending || status === "loading") return;
     setPending(true);
     try {
       if (status === "authenticated") {
@@ -145,8 +156,8 @@ export function useSavedFlightResult(
   }
 
   return {
-    isSaved: status === "authenticated" ? Boolean(savedItem) : localSaved,
-    pending,
+    isSaved: status === "authenticated" ? Boolean(savedItem) : status === "unauthenticated" ? localSaved : false,
+    pending: pending || status === "loading",
     toggleSavedFlight,
   };
 }
