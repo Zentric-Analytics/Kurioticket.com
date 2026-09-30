@@ -195,7 +195,11 @@ export function CarDetailsExperience({
   const effectivePrimaryAction: CarDetailsPrimaryAction =
     primaryAction.kind === "sandbox-handoff"
       ? selectedSandboxHref
-        ? { ...primaryAction, href: selectedSandboxHref }
+        ? {
+            ...primaryAction,
+            label: copy("carDetails.continueDeal"),
+            href: selectedSandboxHref,
+          }
         : {
             kind: "standalone-disabled-provider",
             label: copy("carDetails.continueDeal"),

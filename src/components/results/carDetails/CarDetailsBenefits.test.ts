@@ -447,6 +447,31 @@ test("price comparison aligns icon benefits and the per-day price on one row", (
   assert.doesNotMatch(comparison, /row-start-4/);
 });
 
+test("desktop KAYAK booking summary keeps the secure handoff and Continue deal label", () => {
+  const summary = clientSource.slice(
+    clientSource.indexOf("function BookingSummary"),
+    clientSource.indexOf("function MobileBookingDock"),
+  );
+  const sandboxStart = summary.indexOf('action.kind === "sandbox-handoff"');
+  const unsupportedStart = summary.indexOf(
+    'action.kind === "standalone-disabled-provider"',
+  );
+  assert.ok(sandboxStart >= 0 && unsupportedStart > sandboxStart);
+
+  const sandboxDesktop = summary.slice(sandboxStart, unsupportedStart);
+  assert.match(sandboxDesktop, /<a[\s\S]*?href={action\.href}/);
+  assert.match(sandboxDesktop, /target="_blank"/);
+  assert.match(sandboxDesktop, /rel="noopener noreferrer"/);
+  assert.match(sandboxDesktop, /referrerPolicy="no-referrer"/);
+  assert.match(sandboxDesktop, /\{action\.label\}/);
+  assert.doesNotMatch(sandboxDesktop, /<button|disabled/);
+
+  assert.match(
+    clientSource,
+    /selectedSandboxHref[\s\S]*?label: copy\("carDetails\.continueDeal"\),[\s\S]*?href: selectedSandboxHref/,
+  );
+});
+
 test("source contract keeps unsupported mobile deals inert while KAYAK opens securely in a new tab", () => {
   const mobileDock = clientSource.slice(
     clientSource.indexOf("function MobileBookingDock"),
@@ -477,6 +502,10 @@ test("source contract keeps unsupported mobile deals inert while KAYAK opens sec
     /href|onClick|bookingUrl/,
   );
   assert.match(clientSource, /label: copy\("carDetails\.continueDeal"\)/);
+  assert.match(
+    clientSource,
+    /selectedSandboxHref[\s\S]*?\.\.\.primaryAction,[\s\S]*?label: copy\("carDetails\.continueDeal"\),[\s\S]*?href: selectedSandboxHref/,
+  );
   assert.doesNotMatch(clientSource, /label: copy\("continueToProvider"\)/);
 });
 
@@ -487,6 +516,17 @@ test("source contract does not restore removed booking-disabled messaging", () =
   );
 });
 
+
+test("standalone desktop amenities sit directly on the Cars Details page surface", () => {
+  assert.match(
+    heroSource,
+    /reserveMobileControlSafeZone \? "lg:min-h-8 lg:rounded-none lg:bg-transparent lg:px-0 lg:py-1\.5 lg:text-\[13px\]"/,
+  );
+  assert.doesNotMatch(
+    heroSource,
+    /reserveMobileControlSafeZone \? "lg:min-h-10 lg:rounded-\[10px\] lg:bg-\[#EEF3F8\]/,
+  );
+});
 
 test("mobile-web car detail transmission uses the dedicated gearbox icon without changing desktop", () => {
   assert.match(

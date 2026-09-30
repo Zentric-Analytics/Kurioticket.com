@@ -36,22 +36,23 @@ export default function CarDetailsLayout({
           }
 
           [data-car-details-bottom-booking-bar] {
-            width: 100vw;
-            margin-top: 3rem;
-            margin-left: calc(50% - 50vw);
-            padding: 0.85rem 1.5rem;
-            border-top: 1px solid rgba(216, 225, 236, 0.92);
+            width: min(700px, calc(100% - 48px));
+            margin: 3rem auto 0;
+            padding: 0.9rem 1.25rem;
+            border: 1px solid rgba(216, 225, 236, 0.96);
+            border-radius: 16px;
             background: #FFFFFF;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
           }
 
           [data-car-details-bottom-booking-bar] > div {
             display: grid;
-            grid-template-columns: minmax(180px, auto) minmax(0, 1fr) minmax(220px, 280px);
+            grid-template-columns: minmax(180px, 1fr) minmax(220px, 240px);
             grid-template-rows: auto auto;
-            column-gap: 2rem;
+            column-gap: 1.5rem;
             align-items: center;
-            width: min(1180px, calc(100% - 32px));
-            margin: 0 auto;
+            width: 100%;
+            margin: 0;
             padding: 0;
             border: 0;
             border-radius: 0;
@@ -80,7 +81,7 @@ export default function CarDetailsLayout({
           [data-car-details-bottom-booking-bar] > div > a,
           [data-car-details-bottom-booking-bar] > div > button,
           [data-car-details-bottom-booking-bar] > div > div {
-            grid-column: 3;
+            grid-column: 2;
             grid-row: 1 / span 2;
             width: 100%;
             margin-top: 0 !important;
