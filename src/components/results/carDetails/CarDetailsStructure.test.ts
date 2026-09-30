@@ -116,10 +116,12 @@ test("standalone desktop tabs place panel content in the former heading position
   assert.doesNotMatch(navSource, /bg-\[#075EE8\].*lg:h-\[3px\]/);
   assert.match(navSource, /data-car-details-desktop-sticky-actions/);
   assert.match(navSource, /desktopBackControl\?: ReactNode/);
+  assert.match(navSource, /data-car-details-desktop-sticky-back/);
   assert.match(
     navSource,
-    /desktopStuck && desktopBackControl \? \([\s\S]*?data-car-details-desktop-sticky-back/,
+    /transition-\[width,margin,opacity\] duration-200 ease-out[\s\S]*?desktopStuck \? "me-2 w-10 opacity-100" : "me-0 w-0 opacity-0"/,
   );
+  assert.match(navSource, /desktopStuck \? desktopBackControl : null/);
   assert.doesNotMatch(
     layoutSource,
     /data-car-details-desktop-actions[\s\S]*?position:\s*absolute/,
