@@ -89,14 +89,13 @@ export function CarDetailsSectionNav({
         data-car-details-section-nav
         data-stuck={desktopStuck ? "true" : "false"}
       >
-        {desktopStuck && desktopBackControl ? (
-          <div
-            className="me-2 flex shrink-0 items-center"
-            data-car-details-desktop-sticky-back
-          >
-            {desktopBackControl}
-          </div>
-        ) : null}
+        <div
+          className={`flex shrink-0 items-center overflow-hidden transition-[width,margin,opacity] duration-200 ease-out ${desktopStuck ? "me-2 w-10 opacity-100" : "me-0 w-0 opacity-0"}`}
+          data-car-details-desktop-sticky-back
+          aria-hidden={desktopStuck ? undefined : true}
+        >
+          {desktopStuck ? desktopBackControl : null}
+        </div>
         <nav
           aria-label={labels.navigation}
           className="flex min-h-16 shrink-0 items-stretch gap-1"
