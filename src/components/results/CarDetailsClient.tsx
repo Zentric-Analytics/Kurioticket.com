@@ -127,11 +127,16 @@ export function CarDetailsExperience({
   const rates = useCurrencyRates();
   const { isSaved, toggleSavedCar } = useSavedCar(car, search);
   const [activeTab, setActiveTab] = useState<CarDetailsTab>("compare");
+  const [desktopSectionBarStuck, setDesktopSectionBarStuck] = useState(false);
   const [shareConfirmation, setShareConfirmation] = useState("");
-  const [mobileHeaderProtected, setMobileHeaderProtected] = useState(false);
   const mobileHeaderProtectedRef = useRef(false);
   const mobileHeaderRef = useRef<HTMLDivElement>(null);
   const heroImageStageRef = useRef<HTMLElement>(null);
+  const desktopSectionBarRef = useRef<HTMLDivElement>(null);
+  const compareSectionRef = useRef<HTMLElement>(null);
+  const pickupSectionRef = useRef<HTMLDivElement>(null);
+  const locationSectionRef = useRef<HTMLElement>(null);
+  const [mobileHeaderProtected, setMobileHeaderProtected] = useState(false);
   const copy = (key: string) => t[key] || enTranslations[key] || key;
   const text = {
     passengers: copy("carsResults.passengers").toLowerCase(),
@@ -261,6 +266,98 @@ export function CarDetailsExperience({
       if (animationFrame) window.cancelAnimationFrame(animationFrame);
     };
   }, [presentation]);
+
+  useEffect(() => {
+    if (presentation !== "standalone-content") return;
+
+    let animationFrame = 0;
+    const desktopQuery = window.matchMedia("(min-width: 1024px)");
+
+    const updateDesktopScrollState = () => {
+      animationFrame = 0;
+      if (!desktopQuery.matches) {
+        setDesktopSectionBarStuck(false);
+        return;
+      }
+
+      const barBounds = desktopSectionBarRef.current?.getBoundingClientRect();
+      const stuck = Boolean(barBounds && barBounds.top <= 0);
+      setDesktopSectionBarStuck(stuck);
+
+      const threshold = (barBounds?.height ?? 64) + 24;
+      const sections: Array<{ id: CarDetailsTab; element: HTMLElement | null }> = [
+        { id: "compare", element: compareSectionRef.current },
+        { id: "pickup", element: pickupSectionRef.current },
+        { id: "location", element: locationSectionRef.current },
+      ];
+      let current: CarDetailsTab = "compare";
+      for (const section of sections) {
+        if ((section.element?.getBoundingClientRect().top ?? Infinity) <= threshold) {
+          current = section.id;
+        }
+      }
+      if (
+        window.scrollY > 0 &&
+        Math.ceil(window.scrollY + window.innerHeight) >=
+          document.documentElement.scrollHeight - 2
+      ) {
+        current = "location";
+      }
+      setActiveTab(current);
+    };
+
+    const scheduleDesktopScrollState = () => {
+      if (animationFrame) return;
+      animationFrame = window.requestAnimationFrame(updateDesktopScrollState);
+    };
+
+    scheduleDesktopScrollState();
+    window.addEventListener("scroll", scheduleDesktopScrollState, { passive: true });
+    window.addEventListener("resize", scheduleDesktopScrollState);
+    desktopQuery.addEventListener("change", scheduleDesktopScrollState);
+
+    const observer = new ResizeObserver(scheduleDesktopScrollState);
+    for (const target of [
+      desktopSectionBarRef.current,
+      compareSectionRef.current,
+      pickupSectionRef.current,
+      locationSectionRef.current,
+    ]) {
+      if (target) observer.observe(target);
+    }
+
+    return () => {
+      window.removeEventListener("scroll", scheduleDesktopScrollState);
+      window.removeEventListener("resize", scheduleDesktopScrollState);
+      desktopQuery.removeEventListener("change", scheduleDesktopScrollState);
+      observer.disconnect();
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+    };
+  }, [presentation]);
+
+  function handleSectionChange(tab: CarDetailsTab) {
+    setActiveTab(tab);
+    if (
+      presentation !== "standalone-content" ||
+      !window.matchMedia("(min-width: 1024px)").matches
+    ) {
+      return;
+    }
+
+    const target =
+      tab === "compare"
+        ? compareSectionRef.current
+        : tab === "pickup"
+          ? pickupSectionRef.current
+          : locationSectionRef.current;
+    target?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+      block: "start",
+    });
+  }
+
   const pickupSection = (
     <PickupReturnSection
       car={car}
@@ -288,8 +385,8 @@ export function CarDetailsExperience({
       ) : null}
       {presentation === "standalone-content" ? (
         <div
-          className="hidden h-16 w-full items-center border-b border-transparent bg-[#F5F7FB] lg:sticky lg:top-0 lg:z-40 lg:flex"
-          data-car-details-desktop-sticky-controls
+          className="hidden h-16 w-full items-center border-b border-transparent bg-[#F5F7FB] lg:flex"
+          data-car-details-desktop-controls
         >
           <div className="relative flex w-full items-center justify-between">
             <div className="relative z-10">{desktopBackControl}</div>
@@ -309,7 +406,10 @@ export function CarDetailsExperience({
                 {car.categoryLabel}
               </p>
             </div>
-            <div className="relative z-10">
+            <div
+              className="relative z-10"
+              data-car-details-utility-placement="hero"
+            >
               <CarHeroActions
                 car={car}
                 isSaved={isSaved}
@@ -417,7 +517,21 @@ export function CarDetailsExperience({
             <>
               <CarDetailsSectionNav
                 activeTab={activeTab}
-                onTabChange={setActiveTab}
+                onTabChange={handleSectionChange}
+                desktopBarRef={desktopSectionBarRef}
+                desktopStuck={desktopSectionBarStuck}
+                desktopUtilityActions={
+                  <div data-car-details-utility-placement="tabs">
+                    <CarHeroActions
+                      car={car}
+                      isSaved={isSaved}
+                      toggleSavedCar={toggleSavedCar}
+                      shareCar={shareCar}
+                      copy={copy}
+                      desktop
+                    />
+                  </div>
+                }
                 labels={{
                   navigation: copy("carDetails.title"),
                   compare: copy("carDetails.comparePrices"),
@@ -428,11 +542,12 @@ export function CarDetailsExperience({
               />
               <div className="min-h-[240px]" data-car-details-section-panels>
                 <section
+                  ref={compareSectionRef}
                   id="car-compare-panel"
                   role="tabpanel"
                   aria-labelledby="car-compare-tab"
-                  hidden={activeTab !== "compare"}
-                  className=""
+                  className={activeTab !== "compare" ? "hidden lg:block" : ""}
+                  data-car-details-scroll-section="compare"
                 >
                   {primaryOffer ? (
                     <CarPriceComparisonSection
@@ -451,19 +566,22 @@ export function CarDetailsExperience({
                   ) : null}
                 </section>
                 <div
+                  ref={pickupSectionRef}
                   id="car-pickup-panel"
                   role="tabpanel"
                   aria-labelledby="car-pickup-tab"
-                  hidden={activeTab !== "pickup"}
+                  className={activeTab !== "pickup" ? "hidden lg:block" : ""}
+                  data-car-details-scroll-section="pickup"
                 >
                   {pickupSection}
                 </div>
                 <section
+                  ref={locationSectionRef}
                   id="car-location-panel"
                   role="tabpanel"
                   aria-labelledby="car-location-tab"
-                  hidden={activeTab !== "location"}
-                  className=""
+                  className={activeTab !== "location" ? "hidden lg:block" : ""}
+                  data-car-details-scroll-section="location"
                 >
                   <CarLocationSection
                     car={car}
@@ -552,6 +670,7 @@ function CarHeroActions({
         type="button"
         aria-label={`${isSaved ? copy("carDetails.unsave") : copy("carDetails.save")} ${car.modelName}`}
         aria-pressed={isSaved}
+        data-car-details-utility-action="save"
         onClick={toggleSavedCar}
         className={`focus-ring flex items-center justify-center transition ${desktop ? "size-10 rounded-full border border-slate-300 bg-[#E7EBF1] shadow-[0_2px_8px_rgba(15,23,42,0.14)] hover:bg-[#DDE3EB]" : "size-11 bg-transparent hover:bg-white/70"} ${isSaved ? "text-rose-500" : desktop ? "text-[#07133B]" : "text-slate-700"}`}
       >
@@ -564,6 +683,7 @@ function CarHeroActions({
       <button
         type="button"
         aria-label={`${copy("carDetails.share")} ${car.modelName}`}
+        data-car-details-utility-action="share"
         onClick={() => void shareCar()}
         className={`focus-ring flex items-center justify-center transition ${desktop ? "size-10 rounded-full border border-slate-300 bg-[#E7EBF1] text-[#07133B] shadow-[0_2px_8px_rgba(15,23,42,0.14)] hover:bg-[#DDE3EB]" : "size-11 bg-transparent text-slate-700 hover:bg-white/70"}`}
       >
