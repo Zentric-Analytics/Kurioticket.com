@@ -7,7 +7,7 @@ const source = readFileSync(
   "utf8",
 );
 
-test("renders up to twelve mobile related Hotels while preserving seven desktop cards", () => {
+test("renders up to twelve mobile related Hotels with a configurable desktop cap", () => {
   for (const contract of [
     "hotels.slice(0, 12)",
     "buildHotelDetailsHref(hotel.id, searchContext)",
@@ -35,7 +35,8 @@ test("renders up to twelve mobile related Hotels while preserving seven desktop 
     "(max-width: 1023px) min(78vw, 241px), 25vw",
     "estimatedStayTotal",
     "priceUnavailable",
-    "desktopHidden={index >= 7}",
+    "desktopLimit = 7",
+    "desktopHidden={index >= desktopLimit}",
     "lg:hidden",
   ])
     assert.ok(source.includes(contract), contract);
