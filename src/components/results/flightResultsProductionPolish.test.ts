@@ -254,7 +254,7 @@ test("desktop cards use one prominent stacked airline identity", async () => {
   assert.match(source, /flight-card-flight-number[\s\S]*flight\.flightNumber/);
   assert.doesNotMatch(source, /flight-card-leg-logo|<AirlineLogo flight=\{flight\} inline/);
   assert.match(styles, /\.flight-card-header-logo \{\s*display: block;/);
-  assert.match(styles, /\.flight-card-time \{\s*font-size: 1\.125rem;[\s\S]*white-space: nowrap;/);
+  assert.match(styles, /\.flight-card-time \{\s*font-size: 1rem;[\s\S]*line-height: 1\.125rem;[\s\S]*white-space: nowrap;/);
 });
 
 test("desktop legs place factual departure and arrival dates beneath their airport codes", async () => {
