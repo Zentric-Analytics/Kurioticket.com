@@ -289,9 +289,41 @@ test("desktop departure metadata aligns directly beneath time with generous card
   assert.match(styles, /\.flight-card-legs \{\s*grid-area: legs;\s*gap: 0\.75rem;/);
   assert.match(
     styles,
-    /\.flight-card-details \{[\s\S]*grid-template-columns:[\s\S]*minmax\(0, 1\.3fr\)[\s\S]*minmax\(0, 0\.9fr\)[\s\S]*minmax\(0, 1\.2fr\)[\s\S]*align-items: start;[\s\S]*margin-top: 0\.5rem;[\s\S]*padding-top: 0\.5rem;/,
+    /\.flight-card-details \{[\s\S]*align-items: start;[\s\S]*margin-top: 0\.5rem;[\s\S]*padding-top: 0\.5rem;/,
   );
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date \{\s*margin-inline-start: 0;/);
+});
+
+test("desktop detail rows wrap whole items and preserve whole words", async () => {
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+  const desktopDetailRules = styles.slice(
+    styles.indexOf(
+      "@media (min-width: 1024px)",
+      styles.indexOf(".flight-card-detail-value"),
+    ),
+    styles.indexOf("@container (max-width: 759px)"),
+  );
+
+  assert.match(
+    desktopDetailRules,
+    /\.flight-card-details \{\s*display: flex;\s*flex-wrap: wrap;/,
+  );
+  assert.match(
+    desktopDetailRules,
+    /\.flight-card-detail-item \{[\s\S]*flex: 1 1 12rem;[\s\S]*min-width: 12rem;/,
+  );
+  assert.match(
+    desktopDetailRules,
+    /grid-template-columns: auto auto minmax\(min-content, 1fr\)/,
+  );
+  assert.match(
+    desktopDetailRules,
+    /\.flight-card-detail-value \{\s*overflow-wrap: normal;\s*word-break: normal;/,
+  );
+  assert.doesNotMatch(
+    desktopDetailRules,
+    /overflow:\s*hidden|text-overflow:\s*ellipsis|overflow-wrap:\s*(?:anywhere|break-word)|word-break:\s*break-all/,
+  );
 });
 
 test("desktop nearby fares use a contained mobile-like hierarchy", async () => {
