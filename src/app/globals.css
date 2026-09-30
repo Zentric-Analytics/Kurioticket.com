@@ -936,9 +936,9 @@ textarea {
 
 .flight-card-fare-action {
   min-width: 0;
-  gap: 0.75rem;
   padding-left: 0.75rem;
   padding-right: 0.125rem;
+  padding-bottom: 0.25rem;
 }
 
 .flight-card-view-button {
@@ -1017,8 +1017,8 @@ textarea {
   }
 
   .flight-card-fare-action {
-    gap: 0.625rem;
     padding-left: 0.625rem;
+    padding-bottom: 0.25rem;
   }
 
   .flight-card-view-button {
