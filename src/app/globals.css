@@ -946,7 +946,9 @@ textarea {
 }
 
 .flight-card-view-button {
+  width: 100%;
   min-width: 0;
+  justify-content: flex-end;
   padding-left: 0;
   padding-right: 0;
 }
