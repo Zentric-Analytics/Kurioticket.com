@@ -208,20 +208,24 @@ test("desktop detail items stay in one readable three-section panel", () => {
   );
   const desktopValueRule = ruleBody(
     globalsCss,
-    ".flight-card-detail-value {\n    grid-row: 2;",
+    ".flight-card-detail-value",
     desktopStart,
   );
 
   assert.match(details, /flight-card-detail-item[^"\n]*min-w-0/);
   assert.match(details, /flight-card-detail-value min-w-0/);
   assert.match(details, /whitespace-normal/);
-  assert.doesNotMatch(details, /truncate|line-clamp|overflow-hidden|whitespace-nowrap/);
+  assert.doesNotMatch(details, /truncate|line-clamp|overflow-hidden/);
   assert.match(desktopDetailsRule, /display:\s*grid/);
-  assert.match(desktopDetailsRule, /grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(
+    desktopDetailsRule,
+    /grid-template-columns:\s*minmax\(0, 1\.35fr\) minmax\(0, 0\.9fr\) minmax\(0, 1\.25fr\)/,
+  );
   assert.match(desktopDetailsRule, /border:\s*1px solid #e5ebf3/);
   assert.doesNotMatch(desktopDetailsRule, /flex-wrap/);
-  assert.match(desktopItemRule, /grid-template-columns:\s*2rem minmax\(0, 1fr\)/);
-  assert.match(desktopItemRule, /grid-template-rows:\s*auto auto/);
+  assert.match(desktopItemRule, /grid-template-columns:\s*2rem max-content minmax\(0, 1fr\)/);
+  assert.match(desktopItemRule, /grid-template-rows:\s*auto/);
+  assert.match(desktopItemRule, /align-items:\s*center/);
   assert.match(desktopItemRule, /min-width:\s*0/);
   assert.match(
     ruleBody(globalsCss, ".flight-card-detail-item + .flight-card-detail-item", desktopStart),
@@ -236,7 +240,9 @@ test("desktop detail items stay in one readable three-section panel", () => {
   assert.match(desktopIconRule, /background:\s*#eaf2ff/);
   assert.match(desktopValueRule, /overflow-wrap:\s*normal/);
   assert.match(desktopValueRule, /word-break:\s*normal/);
-  assert.match(desktopValueRule, /white-space:\s*normal/);
+  assert.match(desktopValueRule, /grid-column:\s*3/);
+  assert.match(desktopValueRule, /grid-row:\s*1/);
+  assert.match(desktopValueRule, /white-space:\s*nowrap/);
   assert.match(desktopValueRule, /overflow:\s*visible/);
 });
 
