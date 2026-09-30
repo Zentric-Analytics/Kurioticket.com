@@ -1140,3 +1140,9 @@ test("desktop selected deal drives fare information and checkout while the radio
   assert.match(source, /<DesktopCheckoutSummary[\s\S]*?handoff=\{activeHandoff\}[\s\S]*?onContinue=\{\(\) => continueToOffer\(selectedDeal\?\.offerId \?\? selectedOffer\.id\)\}/);
   assert.match(source, /tabIndex=\{selected \|\| \(!selectedDealOfferId && index === 0\) \? 0 : -1\}/);
 });
+
+
+test("Flight Details invalidates shared saved-flight result state after account mutations", () => {
+  assert.match(client, /invalidateSavedFlightsClientCache/);
+  assert.match(client, /setSavedFlightBackendId\(null\); invalidateSavedFlightsClientCache\(\)/);
+});
