@@ -1171,7 +1171,7 @@ textarea {
   .flight-card-view-button {
     min-width: 108px;
     padding-left: 0.875rem;
-    padding-right: 0.875rem;
+    padding-right: 0;
   }
 
   .flight-card-details {
