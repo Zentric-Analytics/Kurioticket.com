@@ -11,6 +11,7 @@ export function CarDetailsSectionNav({
   labels,
   desktopBarRef,
   desktopStuck = false,
+  desktopBackControl,
   desktopUtilityActions,
 }: {
   activeTab: CarDetailsTab;
@@ -21,6 +22,7 @@ export function CarDetailsSectionNav({
   };
   desktopBarRef?: Ref<HTMLDivElement>;
   desktopStuck?: boolean;
+  desktopBackControl?: ReactNode;
   desktopUtilityActions?: ReactNode;
 }) {
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -87,6 +89,14 @@ export function CarDetailsSectionNav({
         data-car-details-section-nav
         data-stuck={desktopStuck ? "true" : "false"}
       >
+        {desktopStuck && desktopBackControl ? (
+          <div
+            className="me-2 flex shrink-0 items-center"
+            data-car-details-desktop-sticky-back
+          >
+            {desktopBackControl}
+          </div>
+        ) : null}
         <nav
           aria-label={labels.navigation}
           className="flex min-h-16 shrink-0 items-stretch gap-1"
