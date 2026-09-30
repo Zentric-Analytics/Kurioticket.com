@@ -5200,17 +5200,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 onClick={(event) => event.stopPropagation()}
                 className="w-full max-w-4xl rounded-2xl border border-slate-200/90 bg-[#F5F7FB] p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80"
               >
-                <div className="mb-4 flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#064CF7]">
-                      {t("searchFlights")}
-                    </p>
+                <div className="relative mb-4 border-b border-slate-200/80 pb-3">
+                  <div className="mx-auto max-w-2xl text-center">
                     <h2
                       id="sticky-flight-search-title"
-                      className="mt-1 text-xl font-bold tracking-tight text-slate-950"
+                      className="text-xl font-bold tracking-tight text-black"
                     >
-                      {mobileRouteSummary}
+                      Change your flight
                     </h2>
+                    <p className="mt-1 text-base font-semibold text-slate-950">
+                      {mobileRouteSummary}
+                    </p>
                     <p className="mt-1 text-sm font-medium text-slate-600">
                       {stickyDateSummary} · {travelerCabinSummary}
                     </p>
@@ -5220,7 +5220,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     type="button"
                     aria-label={t("close")}
                     onClick={() => collapseStickySearch()}
-                    className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-950"
+                    className="focus-ring absolute right-0 top-0 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-950"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -5261,303 +5261,417 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   })}
                 </div>
 
-                <div className="grid min-h-[58px] grid-cols-[minmax(0,1.05fr)_44px_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1fr)_112px] items-stretch overflow-visible rounded-xl border border-slate-200/85 bg-white shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]">
-                  <div ref={stickyOriginWrapRef} className={panelFieldClass}>
-                    <label
-                      className={stickyLabelClass}
-                      htmlFor="sticky-results-origin"
-                    >
-                      {t("origin")}
-                    </label>
-                    <div className="mt-0.5 flex min-w-0 items-center gap-2">
-                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
-                      <input
-                        id="sticky-results-origin"
-                        name="origin"
-                        required
-                        value={originInput}
-                      onFocus={() => {
-                        setActiveDesktopSearchSurface("sticky");
-                        setTripTypeMenuOpen(false);
-                        setActiveDatePicker(null);
-                        setDatePickerPosition(null);
-                        setTravelerPopoverOpen(false);
-                        setTravelerPopoverPosition(null);
-                        if (originInput.trim().length >= 2)
-                          setActiveSuggest("origin");
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === "Escape") {
-                          setActiveSuggest(null);
-                          setDropdownPosition(null);
-                        }
-                      }}
-                      onChange={(event) => {
-                        setOriginInput(event.target.value);
-                        setOriginCode("");
-                        setActiveSuggest(
-                          event.target.value.trim().length >= 2
-                            ? "origin"
-                            : null,
-                        );
-                      }}
-                        placeholder={t("fromPlaceholder")}
-                        autoComplete="off"
-                        className="h-5 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
-                      />
-                    </div>
-                    {activeSuggest === "origin" &&
-                    activeDesktopSearchSurface === "sticky" ? (
-                      <SuggestionList
-                        id="sticky-flight-origin-suggestions"
-                        alignToField
-                        suggestions={resolvedOriginSuggestions}
-                        locale={locale}
-                        onSelect={(value) => {
-                          markExpandedSearchInteraction();
-                          setOriginInput(value);
-                          setOriginCode(value);
-                          setActiveSuggest(null);
-                          setDropdownPosition(null);
-                        }}
-                      />
-                    ) : null}
-                  </div>
-
-                  <button
-                    type="button"
-                    aria-label={t("swapOriginDestination")}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleSwapLocations();
-                    }}
-                    className="focus-ring flex min-h-[58px] cursor-pointer items-center justify-center border-r border-slate-200/80 bg-white text-[#004BB8] transition-colors hover:bg-slate-50 hover:text-[#064CF7]"
-                  >
-                    <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
-                  </button>
-
+                {tripTypeInput === "multi-city" ? (
                   <div
-                    ref={stickyDestinationWrapRef}
-                    className={panelFieldClass}
+                    data-sticky-multicity-editor
+                    className="rounded-xl border border-slate-200/85 bg-white p-4 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]"
                   >
-                    <label
-                      className={stickyLabelClass}
-                      htmlFor="sticky-results-destination"
-                    >
-                      {t("destination")}
-                    </label>
-                    <div className="mt-0.5 flex min-w-0 items-center gap-2">
-                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
-                      <input
-                        id="sticky-results-destination"
-                        name="destination"
-                        required
-                        value={destinationInput}
-                      onFocus={() => {
-                        setActiveDesktopSearchSurface("sticky");
-                        setTripTypeMenuOpen(false);
-                        setActiveDatePicker(null);
-                        setDatePickerPosition(null);
-                        setTravelerPopoverOpen(false);
-                        setTravelerPopoverPosition(null);
-                        if (destinationInput.trim().length >= 2)
-                          setActiveSuggest("destination");
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === "Escape") {
-                          setActiveSuggest(null);
-                          setDropdownPosition(null);
-                        }
-                      }}
-                      onChange={(event) => {
-                        setDestinationInput(event.target.value);
-                        setDestinationCode("");
-                        setActiveSuggest(
-                          event.target.value.trim().length >= 2
-                            ? "destination"
-                            : null,
-                        );
-                      }}
-                        placeholder={t("toPlaceholder")}
-                        autoComplete="off"
-                        className="h-5 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
-                      />
+                    <MultiCityFlightEditor
+                      legs={multiCityLegs}
+                      onChange={setMultiCityLegs}
+                      minimumDate={formatDateValue(new Date())}
+                      presentation="results"
+                      onAirportValidityChange={setMultiCityAirportsValid}
+                    />
+                    <div className="mt-4 flex items-end justify-between gap-4 border-t border-slate-200 pt-4">
+                      <div className="relative min-w-0 flex-1">
+                        <button
+                          ref={stickyTravelerButtonRef}
+                          type="button"
+                          aria-label={t("travelersAndCabinClass")}
+                          aria-expanded={travelerPopoverOpen}
+                          onClick={() => {
+                            setActiveDesktopSearchSurface("sticky");
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                            setActiveDatePicker(null);
+                            setDatePickerPosition(null);
+                            setTravelerPopoverOpen(true);
+                            setTravelerPopoverPosition(null);
+                          }}
+                          className="focus-ring flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 text-start text-sm font-medium text-slate-900 transition hover:border-slate-300"
+                        >
+                          <span className="min-w-0 truncate">{travelerCabinSummary}</span>
+                          <ChevronDown
+                            className={cn(
+                              "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+                              travelerPopoverOpen && "rotate-180",
+                            )}
+                            aria-hidden="true"
+                          />
+                        </button>
+                        {travelerPopoverOpen &&
+                        activeDesktopSearchSurface === "sticky" ? (
+                          <TravelerCabinPopover
+                            alignToField="right"
+                            position={
+                              travelerPopoverPosition ?? {
+                                top: 0,
+                                left: 0,
+                                width: 0,
+                              }
+                            }
+                            onClose={() => {
+                              setTravelerPopoverOpen(false);
+                              setTravelerPopoverPosition(null);
+                            }}
+                            adultCount={adultCount}
+                            childCount={childCount}
+                            infantCount={infantCount}
+                            cabinClass={cabinClassInput}
+                            onAdultChange={(nextValue) => {
+                              markExpandedSearchInteraction();
+                              const nextAdultCount = Math.min(
+                                9,
+                                Math.max(1, nextValue),
+                              );
+                              setAdultCount(nextAdultCount);
+                              setChildCount((current) =>
+                                Math.min(current, 9 - nextAdultCount),
+                              );
+                              setInfantCount((current) =>
+                                Math.min(
+                                  current,
+                                  nextAdultCount,
+                                  9 - nextAdultCount,
+                                ),
+                              );
+                            }}
+                            onChildChange={(nextValue) => {
+                              markExpandedSearchInteraction();
+                              const nextChildCount = Math.min(
+                                9 - adultCount,
+                                Math.max(0, nextValue),
+                              );
+                              setChildCount(nextChildCount);
+                              setInfantCount((current) =>
+                                Math.min(current, 9 - adultCount - nextChildCount),
+                              );
+                            }}
+                            onInfantChange={(nextValue) => {
+                              markExpandedSearchInteraction();
+                              setInfantCount(
+                                Math.min(
+                                  adultCount,
+                                  9 - adultCount - childCount,
+                                  Math.max(0, nextValue),
+                                ),
+                              );
+                            }}
+                            onCabinClassChange={(nextValue) => {
+                              markExpandedSearchInteraction();
+                              setCabinClassInput(nextValue);
+                            }}
+                          />
+                        ) : null}
+                      </div>
+                      <Button
+                        type="submit"
+                        className="min-h-11 shrink-0 rounded-xl bg-[#064CF7] px-6 text-sm font-bold text-white hover:bg-[#004BB8]"
+                      >
+                        {t("search")}
+                      </Button>
                     </div>
-                    {activeSuggest === "destination" &&
-                    activeDesktopSearchSurface === "sticky" ? (
-                      <SuggestionList
-                        id="sticky-flight-destination-suggestions"
-                        alignToField
-                        suggestions={resolvedDestinationSuggestions}
-                        locale={locale}
-                        onSelect={(value) => {
-                          markExpandedSearchInteraction();
-                          setDestinationInput(value);
-                          setDestinationCode(value);
-                          setActiveSuggest(null);
-                          setDropdownPosition(null);
-                        }}
-                      />
-                    ) : null}
                   </div>
-
-                  <div className="relative">
-                    <button
-                      ref={stickyDateButtonRef}
-                      type="button"
-                      onClick={() => {
-                        setActiveDesktopSearchSurface("sticky");
-                        setTripTypeMenuOpen(false);
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                        setTravelerPopoverOpen(false);
-                        setTravelerPopoverPosition(null);
-                        setActiveDatePicker("departure");
-                        setDatePickerPosition(null);
-                      }}
-                      className={cn(panelFieldClass, "h-full w-full")}
-                    >
-                      <span className={stickyLabelClass}>
-                        {t("travelDates")}
-                      </span>
-                      <span className={cn(stickyValueClass, "flex items-center gap-2")}>
-                        <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
-                        <span className="min-w-0 truncate">{stickyDateSummary}</span>
-                      </span>
-                    </button>
-                    {activeDatePicker &&
-                    activeDesktopSearchSurface === "sticky" ? (
-                      <DatePickerPopover
-                        alignToField="right"
-                        position={
-                          datePickerPosition ?? { top: 0, left: 0, width: 0 }
-                        }
-                        onClose={() => {
+                ) : (
+                  <div className="grid min-h-[58px] grid-cols-[minmax(0,1.05fr)_44px_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1fr)_112px] items-stretch overflow-visible rounded-xl border border-slate-200/85 bg-white shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]">
+                    <div ref={stickyOriginWrapRef} className={panelFieldClass}>
+                      <label
+                        className={stickyLabelClass}
+                        htmlFor="sticky-results-origin"
+                      >
+                        {t("origin")}
+                      </label>
+                      <div className="mt-0.5 flex min-w-0 items-center gap-2">
+                        <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
+                        <input
+                          id="sticky-results-origin"
+                          name="origin"
+                          required
+                          value={originInput}
+                        onFocus={() => {
+                          setActiveDesktopSearchSurface("sticky");
+                          setTripTypeMenuOpen(false);
                           setActiveDatePicker(null);
                           setDatePickerPosition(null);
-                        }}
-                        month={calendarMonth}
-                        departureValue={departureDateInput}
-                        returnValue={returnDateInput}
-                        activePicker={activeDatePicker}
-                        tripType={tripTypeInput}
-                        onMonthChange={setCalendarMonth}
-                        onSelect={applyFlightDateSelection}
-                        onClear={() => {
-                          markExpandedSearchInteraction();
-                          if (activeDatePicker === "departure") {
-                            setDepartureDateInput("");
-                            setReturnDateInput("");
-                          }
-                          if (activeDatePicker === "return")
-                            setReturnDateInput("");
-                        }}
-                        onToday={() => {
-                          setActiveDatePicker(null);
-                          setDatePickerPosition(null);
-                        }}
-                      />
-                    ) : null}
-                  </div>
-
-                  <div className="relative">
-                    <button
-                      ref={stickyTravelerButtonRef}
-                      type="button"
-                      onClick={() => {
-                        setActiveDesktopSearchSurface("sticky");
-                        setTripTypeMenuOpen(false);
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                        setActiveDatePicker(null);
-                        setDatePickerPosition(null);
-                        setTravelerPopoverOpen(true);
-                        setTravelerPopoverPosition(null);
-                      }}
-                      className={cn(panelFieldClass, "h-full w-full")}
-                    >
-                      <span className={stickyLabelClass}>{t("travelers")}</span>
-                      <span className="mt-0.5 flex min-w-0 items-center justify-between gap-2 text-sm font-medium leading-5 text-slate-950">
-                        <span className="flex min-w-0 items-center gap-2">
-                          <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
-                          <span className="truncate">{travelerCabinSummary}</span>
-                        </span>
-                        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" />
-                      </span>
-                    </button>
-                    {travelerPopoverOpen &&
-                    activeDesktopSearchSurface === "sticky" ? (
-                      <TravelerCabinPopover
-                        alignToField="right"
-                        position={
-                          travelerPopoverPosition ?? {
-                            top: 0,
-                            left: 0,
-                            width: 0,
-                          }
-                        }
-                        onClose={() => {
                           setTravelerPopoverOpen(false);
                           setTravelerPopoverPosition(null);
+                          if (originInput.trim().length >= 2)
+                            setActiveSuggest("origin");
                         }}
-                        adultCount={adultCount}
-                        childCount={childCount}
-                        infantCount={infantCount}
-                        cabinClass={cabinClassInput}
-                        onAdultChange={(nextValue) => {
-                          markExpandedSearchInteraction();
-                          const nextAdultCount = Math.min(
-                            9,
-                            Math.max(1, nextValue),
-                          );
-                          setAdultCount(nextAdultCount);
-                          setChildCount((current) =>
-                            Math.min(current, 9 - nextAdultCount),
-                          );
-                          setInfantCount((current) =>
-                            Math.min(
-                              current,
-                              nextAdultCount,
-                              9 - nextAdultCount,
-                            ),
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape") {
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }
+                        }}
+                        onChange={(event) => {
+                          setOriginInput(event.target.value);
+                          setOriginCode("");
+                          setActiveSuggest(
+                            event.target.value.trim().length >= 2
+                              ? "origin"
+                              : null,
                           );
                         }}
-                        onChildChange={(nextValue) => {
-                          markExpandedSearchInteraction();
-                          const nextChildCount = Math.min(
-                            9 - adultCount,
-                            Math.max(0, nextValue),
-                          );
-                          setChildCount(nextChildCount);
-                          setInfantCount((current) =>
-                            Math.min(current, 9 - adultCount - nextChildCount),
+                          placeholder={t("fromPlaceholder")}
+                          autoComplete="off"
+                          className="h-5 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
+                        />
+                      </div>
+                      {activeSuggest === "origin" &&
+                      activeDesktopSearchSurface === "sticky" ? (
+                        <SuggestionList
+                          id="sticky-flight-origin-suggestions"
+                          alignToField
+                          suggestions={resolvedOriginSuggestions}
+                          locale={locale}
+                          onSelect={(value) => {
+                            markExpandedSearchInteraction();
+                            setOriginInput(value);
+                            setOriginCode(value);
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }}
+                        />
+                      ) : null}
+                    </div>
+  
+                    <button
+                      type="button"
+                      aria-label={t("swapOriginDestination")}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleSwapLocations();
+                      }}
+                      className="focus-ring flex min-h-[58px] cursor-pointer items-center justify-center border-r border-slate-200/80 bg-white text-[#004BB8] transition-colors hover:bg-slate-50 hover:text-[#064CF7]"
+                    >
+                      <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
+                    </button>
+  
+                    <div
+                      ref={stickyDestinationWrapRef}
+                      className={panelFieldClass}
+                    >
+                      <label
+                        className={stickyLabelClass}
+                        htmlFor="sticky-results-destination"
+                      >
+                        {t("destination")}
+                      </label>
+                      <div className="mt-0.5 flex min-w-0 items-center gap-2">
+                        <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
+                        <input
+                          id="sticky-results-destination"
+                          name="destination"
+                          required
+                          value={destinationInput}
+                        onFocus={() => {
+                          setActiveDesktopSearchSurface("sticky");
+                          setTripTypeMenuOpen(false);
+                          setActiveDatePicker(null);
+                          setDatePickerPosition(null);
+                          setTravelerPopoverOpen(false);
+                          setTravelerPopoverPosition(null);
+                          if (destinationInput.trim().length >= 2)
+                            setActiveSuggest("destination");
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape") {
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }
+                        }}
+                        onChange={(event) => {
+                          setDestinationInput(event.target.value);
+                          setDestinationCode("");
+                          setActiveSuggest(
+                            event.target.value.trim().length >= 2
+                              ? "destination"
+                              : null,
                           );
                         }}
-                        onInfantChange={(nextValue) => {
-                          markExpandedSearchInteraction();
-                          setInfantCount(
-                            Math.min(
-                              adultCount,
-                              9 - adultCount - childCount,
+                          placeholder={t("toPlaceholder")}
+                          autoComplete="off"
+                          className="h-5 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
+                        />
+                      </div>
+                      {activeSuggest === "destination" &&
+                      activeDesktopSearchSurface === "sticky" ? (
+                        <SuggestionList
+                          id="sticky-flight-destination-suggestions"
+                          alignToField
+                          suggestions={resolvedDestinationSuggestions}
+                          locale={locale}
+                          onSelect={(value) => {
+                            markExpandedSearchInteraction();
+                            setDestinationInput(value);
+                            setDestinationCode(value);
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }}
+                        />
+                      ) : null}
+                    </div>
+  
+                    <div className="relative">
+                      <button
+                        ref={stickyDateButtonRef}
+                        type="button"
+                        onClick={() => {
+                          setActiveDesktopSearchSurface("sticky");
+                          setTripTypeMenuOpen(false);
+                          setActiveSuggest(null);
+                          setDropdownPosition(null);
+                          setTravelerPopoverOpen(false);
+                          setTravelerPopoverPosition(null);
+                          setActiveDatePicker("departure");
+                          setDatePickerPosition(null);
+                        }}
+                        className={cn(panelFieldClass, "h-full w-full")}
+                      >
+                        <span className={stickyLabelClass}>
+                          {t("travelDates")}
+                        </span>
+                        <span className={cn(stickyValueClass, "flex items-center gap-2")}>
+                          <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
+                          <span className="min-w-0 truncate">{stickyDateSummary}</span>
+                        </span>
+                      </button>
+                      {activeDatePicker &&
+                      activeDesktopSearchSurface === "sticky" ? (
+                        <DatePickerPopover
+                          alignToField="right"
+                          position={
+                            datePickerPosition ?? { top: 0, left: 0, width: 0 }
+                          }
+                          onClose={() => {
+                            setActiveDatePicker(null);
+                            setDatePickerPosition(null);
+                          }}
+                          month={calendarMonth}
+                          departureValue={departureDateInput}
+                          returnValue={returnDateInput}
+                          activePicker={activeDatePicker}
+                          tripType={tripTypeInput}
+                          onMonthChange={setCalendarMonth}
+                          onSelect={applyFlightDateSelection}
+                          onClear={() => {
+                            markExpandedSearchInteraction();
+                            if (activeDatePicker === "departure") {
+                              setDepartureDateInput("");
+                              setReturnDateInput("");
+                            }
+                            if (activeDatePicker === "return")
+                              setReturnDateInput("");
+                          }}
+                          onToday={() => {
+                            setActiveDatePicker(null);
+                            setDatePickerPosition(null);
+                          }}
+                        />
+                      ) : null}
+                    </div>
+  
+                    <div className="relative">
+                      <button
+                        ref={stickyTravelerButtonRef}
+                        type="button"
+                        onClick={() => {
+                          setActiveDesktopSearchSurface("sticky");
+                          setTripTypeMenuOpen(false);
+                          setActiveSuggest(null);
+                          setDropdownPosition(null);
+                          setActiveDatePicker(null);
+                          setDatePickerPosition(null);
+                          setTravelerPopoverOpen(true);
+                          setTravelerPopoverPosition(null);
+                        }}
+                        className={cn(panelFieldClass, "h-full w-full")}
+                      >
+                        <span className={stickyLabelClass}>{t("travelers")}</span>
+                        <span className="mt-0.5 flex min-w-0 items-center justify-between gap-2 text-sm font-medium leading-5 text-slate-950">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
+                            <span className="truncate">{travelerCabinSummary}</span>
+                          </span>
+                          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                        </span>
+                      </button>
+                      {travelerPopoverOpen &&
+                      activeDesktopSearchSurface === "sticky" ? (
+                        <TravelerCabinPopover
+                          alignToField="right"
+                          position={
+                            travelerPopoverPosition ?? {
+                              top: 0,
+                              left: 0,
+                              width: 0,
+                            }
+                          }
+                          onClose={() => {
+                            setTravelerPopoverOpen(false);
+                            setTravelerPopoverPosition(null);
+                          }}
+                          adultCount={adultCount}
+                          childCount={childCount}
+                          infantCount={infantCount}
+                          cabinClass={cabinClassInput}
+                          onAdultChange={(nextValue) => {
+                            markExpandedSearchInteraction();
+                            const nextAdultCount = Math.min(
+                              9,
+                              Math.max(1, nextValue),
+                            );
+                            setAdultCount(nextAdultCount);
+                            setChildCount((current) =>
+                              Math.min(current, 9 - nextAdultCount),
+                            );
+                            setInfantCount((current) =>
+                              Math.min(
+                                current,
+                                nextAdultCount,
+                                9 - nextAdultCount,
+                              ),
+                            );
+                          }}
+                          onChildChange={(nextValue) => {
+                            markExpandedSearchInteraction();
+                            const nextChildCount = Math.min(
+                              9 - adultCount,
                               Math.max(0, nextValue),
-                            ),
-                          );
-                        }}
-                        onCabinClassChange={(nextValue) => {
-                          markExpandedSearchInteraction();
-                          setCabinClassInput(nextValue);
-                        }}
-                      />
-                    ) : null}
+                            );
+                            setChildCount(nextChildCount);
+                            setInfantCount((current) =>
+                              Math.min(current, 9 - adultCount - nextChildCount),
+                            );
+                          }}
+                          onInfantChange={(nextValue) => {
+                            markExpandedSearchInteraction();
+                            setInfantCount(
+                              Math.min(
+                                adultCount,
+                                9 - adultCount - childCount,
+                                Math.max(0, nextValue),
+                              ),
+                            );
+                          }}
+                          onCabinClassChange={(nextValue) => {
+                            markExpandedSearchInteraction();
+                            setCabinClassInput(nextValue);
+                          }}
+                        />
+                      ) : null}
+                    </div>
+  
+                    <Button
+                      type="submit"
+                      className="h-full min-h-[58px] rounded-none rounded-r-xl bg-[#064CF7] px-4 text-sm font-bold text-white shadow-none ring-0 hover:bg-[#004BB8]"
+                    >
+                      {t("search")}
+                    </Button>
                   </div>
-
-                  <Button
-                    type="submit"
-                    className="h-full min-h-[58px] rounded-none rounded-r-xl bg-[#064CF7] px-4 text-sm font-bold text-white shadow-none ring-0 hover:bg-[#004BB8]"
-                  >
-                    {t("search")}
-                  </Button>
-                </div>
+                )}
               </form>
             </div>
           </div>
