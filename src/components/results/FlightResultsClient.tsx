@@ -1348,13 +1348,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   const expandStickySearch = useCallback(() => {
     if (tripTypeInput === "multi-city") {
-      router.push(`/flights?${searchQueryString}`);
+      searchFormRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
       return;
     }
     const currentScrollY = window.scrollY;
     expandedSearchScrollYRef.current = currentScrollY;
     setIsSearchExpandedWhileSticky(true);
-  }, [router, searchQueryString, tripTypeInput]);
+  }, [tripTypeInput]);
 
   const openStickySearchEditor = useCallback(
     (
@@ -1362,7 +1365,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       target: "route" | "dates" | "travelers",
     ) => {
       if (tripTypeInput === "multi-city") {
-        router.push(`/flights?${searchQueryString}`);
+        stickySearchLauncherRef.current = event.currentTarget;
+        searchFormRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
         return;
       }
       stickySearchLauncherRef.current = event.currentTarget;
@@ -1385,8 +1392,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     },
     [
       originInput,
-      router,
-      searchQueryString,
       setActiveDatePicker,
       setActiveSuggest,
       setDatePickerPosition,
@@ -5675,6 +5680,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           </div>
 
           <form
+            ref={searchFormRef}
             className="mt-3 rounded-[1.15rem] border border-slate-200/90 bg-white p-4 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-950/[0.025]"
             onSubmit={handleCompactSearchSubmit}
             onChangeCapture={markExpandedSearchInteraction}
@@ -5682,14 +5688,41 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             <MultiCityFlightEditor
               legs={multiCityLegs}
               onChange={setMultiCityLegs}
-              minimumDate={toDateValue(new Date())}
+              minimumDate={formatDateValue(new Date())}
               presentation="results"
               onAirportValidityChange={setMultiCityAirportsValid}
             />
-            <div className="mt-4 flex items-center justify-between gap-4 border-t border-slate-200 pt-4">
-              <span className="min-w-0 truncate text-sm font-medium text-slate-600">
-                {travelerCabinSummary}
-              </span>
+            <div className="mt-4 flex items-end justify-between gap-4 border-t border-slate-200 pt-4">
+              <div
+                ref={travelerCabinWrapRef}
+                className="relative min-w-0 flex-1"
+              >
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                  {t("travelers")}
+                </label>
+                <button
+                  type="button"
+                  aria-label={t("travelersAndCabinClass")}
+                  aria-expanded={travelerPopoverOpen}
+                  onClick={() => {
+                    setTravelerPopoverOpen((current) => {
+                      const next = !current;
+                      if (!next) setTravelerPopoverPosition(null);
+                      return next;
+                    });
+                  }}
+                  className="focus-ring flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 text-start text-sm font-medium text-slate-900 transition hover:border-slate-300"
+                >
+                  <span className="min-w-0 truncate">{travelerCabinSummary}</span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+                      travelerPopoverOpen && "rotate-180",
+                    )}
+                    aria-hidden="true"
+                  />
+                </button>
+              </div>
               <Button
                 type="submit"
                 className="min-h-11 shrink-0 px-6"
@@ -5698,6 +5731,32 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               </Button>
             </div>
           </form>
+
+          {travelerPopoverOpen && travelerPopoverPosition ? (
+            <TravelerCabinPopover
+              position={travelerPopoverPosition}
+              onClose={() => {
+                setTravelerPopoverOpen(false);
+                setTravelerPopoverPosition(null);
+              }}
+              adultCount={adultCount}
+              childCount={childCount}
+              infantCount={infantCount}
+              cabinClass={cabinClassInput}
+              onAdultChange={(nextValue) => {
+                const nextAdultCount = Math.min(9, Math.max(1, nextValue));
+                setAdultCount(nextAdultCount);
+                setInfantCount((current) => Math.min(current, nextAdultCount));
+              }}
+              onChildChange={(nextValue) => {
+                setChildCount(Math.min(9, Math.max(0, nextValue)));
+              }}
+              onInfantChange={(nextValue) => {
+                setInfantCount(Math.min(adultCount, Math.max(0, nextValue)));
+              }}
+              onCabinClassChange={setCabinClassInput}
+            />
+          ) : null}
         </div>
       );
     }
