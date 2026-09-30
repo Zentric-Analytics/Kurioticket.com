@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode, Ref } from "react";
 import { useRef } from "react";
 
 export type CarDetailsTab = "compare" | "pickup" | "location";
@@ -8,6 +9,9 @@ export function CarDetailsSectionNav({
   activeTab,
   onTabChange,
   labels,
+  desktopBarRef,
+  desktopStuck = false,
+  desktopUtilityActions,
 }: {
   activeTab: CarDetailsTab;
   onTabChange: (tab: CarDetailsTab) => void;
@@ -15,6 +19,9 @@ export function CarDetailsSectionNav({
     navigation: string;
     mobileCompare?: string;
   };
+  desktopBarRef?: Ref<HTMLDivElement>;
+  desktopStuck?: boolean;
+  desktopUtilityActions?: ReactNode;
 }) {
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const tabs: ReadonlyArray<{ id: CarDetailsTab; label: string }> = [
@@ -37,45 +44,81 @@ export function CarDetailsSectionNav({
   }
 
   return (
-    <div
-      role="tablist"
-      aria-label={labels.navigation}
-      className="sticky top-[var(--car-details-mobile-header-boundary)] z-30 mt-0 flex w-full items-stretch border-b border-slate-200 bg-[#F5F7FB] lg:top-16 lg:mt-3 lg:min-h-14 lg:justify-between lg:gap-2 lg:bg-[#F5F7FB]"
-      data-car-details-section-nav
-    >
-      {tabs.map((tab, index) => {
-        const selected = activeTab === tab.id;
-        return (
-          <button
-            key={tab.id}
-            ref={(element) => {
-              tabRefs.current[index] = element;
-            }}
-            id={`car-${tab.id}-tab`}
-            type="button"
-            role="tab"
-            aria-selected={selected}
-            aria-controls={`car-${tab.id}-panel`}
-            tabIndex={selected ? 0 : -1}
-            onClick={() => onTabChange(tab.id)}
-            onKeyDown={(event) => handleKeyDown(event, index)}
-            className={`car-details-native-tab-label focus-ring relative inline-flex min-h-12 min-w-0 items-center justify-center whitespace-nowrap px-0.5 font-sans text-[12px] font-semibold leading-[normal] tracking-normal transition-colors min-[390px]:text-[13px] lg:min-h-14 lg:w-auto lg:flex-1 lg:px-3 lg:text-[15px] lg:font-semibold lg:leading-normal ${tab.id === "compare" ? "w-[32%]" : tab.id === "pickup" ? "w-[43%]" : "w-[25%]"} ${selected ? "text-[#075EE8] lg:text-[#075EE8]" : "text-[#475569] lg:text-[#475569] lg:hover:text-[#071A48]"}`}
-          >
-            {tab.id === "compare" && labels.mobileCompare ? (
-              <>
-                <span className="lg:hidden">{labels.mobileCompare}</span>
-                <span className="hidden lg:inline">{tab.label}</span>
-              </>
-            ) : (
-              tab.label
-            )}
-            <span
-              className={`absolute inset-x-2 bottom-0 h-0.5 bg-[#075EE8] transition-opacity lg:inset-x-6 lg:h-[3px] lg:rounded-full ${selected ? "opacity-100" : "opacity-0"}`}
-              aria-hidden="true"
-            />
-          </button>
-        );
-      })}
-    </div>
+    <>
+      <div
+        role="tablist"
+        aria-label={labels.navigation}
+        className="sticky top-[var(--car-details-mobile-header-boundary)] z-30 mt-0 flex w-full items-stretch border-b border-slate-200 bg-[#F5F7FB] lg:hidden"
+        data-car-details-mobile-section-nav
+      >
+        {tabs.map((tab, index) => {
+          const selected = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              ref={(element) => {
+                tabRefs.current[index] = element;
+              }}
+              id={`car-${tab.id}-tab`}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              aria-controls={`car-${tab.id}-panel`}
+              tabIndex={selected ? 0 : -1}
+              onClick={() => onTabChange(tab.id)}
+              onKeyDown={(event) => handleKeyDown(event, index)}
+              className={`car-details-native-tab-label focus-ring relative inline-flex min-h-12 min-w-0 items-center justify-center whitespace-nowrap px-0.5 font-sans text-[12px] font-semibold leading-[normal] tracking-normal transition-colors min-[390px]:text-[13px] ${tab.id === "compare" ? "w-[32%]" : tab.id === "pickup" ? "w-[43%]" : "w-[25%]"} ${selected ? "text-[#075EE8]" : "text-[#475569]"}`}
+            >
+              {tab.id === "compare" && labels.mobileCompare
+                ? labels.mobileCompare
+                : tab.label}
+              <span
+                className={`absolute inset-x-2 bottom-0 h-0.5 bg-[#075EE8] transition-opacity ${selected ? "opacity-100" : "opacity-0"}`}
+                aria-hidden="true"
+              />
+            </button>
+          );
+        })}
+      </div>
+
+      <div
+        ref={desktopBarRef}
+        className={`relative hidden min-h-16 w-full items-center justify-center border-b border-slate-200 bg-[#F5F7FB] lg:sticky lg:top-0 lg:z-40 lg:mt-3 lg:flex ${desktopStuck ? "lg:shadow-[0_5px_16px_rgba(15,23,42,0.06)]" : ""}`}
+        data-car-details-section-nav
+        data-stuck={desktopStuck ? "true" : "false"}
+      >
+        <nav
+          aria-label={labels.navigation}
+          className="flex min-h-16 w-fit max-w-[640px] items-stretch justify-center gap-1"
+          data-car-details-desktop-tabs
+        >
+          {tabs.map((tab) => {
+            const selected = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                aria-current={selected ? "location" : undefined}
+                onClick={() => onTabChange(tab.id)}
+                className={`focus-ring relative inline-flex min-h-16 items-center justify-center whitespace-nowrap px-4 font-sans text-[15px] font-semibold leading-normal transition-colors ${selected ? "text-[#075EE8]" : "text-[#475569] hover:text-[#071A48]"}`}
+              >
+                {tab.label}
+                <span
+                  className={`absolute inset-x-4 bottom-0 h-[3px] rounded-full bg-[#075EE8] transition-opacity ${selected ? "opacity-100" : "opacity-0"}`}
+                  aria-hidden="true"
+                />
+              </button>
+            );
+          })}
+        </nav>
+        <div
+          className="absolute right-0 top-1/2 -translate-y-1/2"
+          data-car-details-desktop-sticky-actions
+          hidden={!desktopStuck}
+        >
+          {desktopUtilityActions}
+        </div>
+      </div>
+    </>
   );
 }
