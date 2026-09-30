@@ -103,7 +103,20 @@ test("standalone desktop tabs place panel content in the former heading position
     "utf8",
   );
   assert.match(navSource, /lg:sticky lg:top-0/);
-  assert.match(navSource, /max-w-\[640px\]/);
+  assert.match(
+    navSource,
+    /className="flex min-h-16 shrink-0 items-stretch gap-1"/,
+  );
+  assert.match(
+    navSource,
+    /border-\[#192024\] text-\[#192024\]/,
+  );
+  assert.match(
+    navSource,
+    /border-transparent text-\[#59636A\] hover:text-\[#004BB8\]/,
+  );
+  assert.doesNotMatch(navSource, /max-w-\[640px\]/);
+  assert.doesNotMatch(navSource, /bg-\[#075EE8\].*lg:h-\[3px\]/);
   assert.match(navSource, /data-car-details-desktop-sticky-actions/);
   assert.doesNotMatch(
     layoutSource,
