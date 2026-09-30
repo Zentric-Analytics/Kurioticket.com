@@ -40,6 +40,7 @@ import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/
 import { nativeFlightDealSelection } from "@/lib/flights/nativeFlightDealSelection";
 import type { FlightLeg, FlightProviderCondition, FlightSegment } from "@/lib/types";
 import { readSavedItemIds, toggleSavedItemId, writeSavedItemIds } from "@/lib/saved-items-local";
+import { invalidateSavedFlightsClientCache } from "@/lib/saved-flight-events";
 import flightDetailsHero from "../../../../apps/mobile/assets/heroes/flight-details-hero.webp";
 
 type FareTab = MobileFareInfoTab;
@@ -319,7 +320,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify({ type: "flight", id: savedFlightBackendId }),
           });
-          if (response.ok) setSavedFlightBackendId(null);
+          if (response.ok) { setSavedFlightBackendId(null); invalidateSavedFlightsClientCache(); }
           return;
         }
 
@@ -347,6 +348,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         if (response.ok) {
           const data = await response.json() as { item?: { id?: string } };
           setSavedFlightBackendId(data.item?.id ?? selectedOffer.id);
+          invalidateSavedFlightsClientCache();
         } else if (response.status === 409) {
           const existing = await fetch("/api/dashboard/saved?type=flight", {
             headers: { Accept: "application/json" },
@@ -354,7 +356,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
           if (existing.ok) {
             const data = await existing.json() as { items?: Array<{ id: string; payload?: Record<string, unknown> }> };
             const matching = data.items?.find((item) => item.payload?.flightResultId === selectedOffer.id);
-            if (matching) setSavedFlightBackendId(matching.id);
+            if (matching) { setSavedFlightBackendId(matching.id); invalidateSavedFlightsClientCache(); }
           }
         }
         return;
