@@ -1348,13 +1348,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   const expandStickySearch = useCallback(() => {
     if (tripTypeInput === "multi-city") {
-      router.push(`/flights?${searchQueryString}`);
+      searchFormRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
       return;
     }
     const currentScrollY = window.scrollY;
     expandedSearchScrollYRef.current = currentScrollY;
     setIsSearchExpandedWhileSticky(true);
-  }, [router, searchQueryString, tripTypeInput]);
+  }, [tripTypeInput]);
 
   const openStickySearchEditor = useCallback(
     (
@@ -1362,7 +1365,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       target: "route" | "dates" | "travelers",
     ) => {
       if (tripTypeInput === "multi-city") {
-        router.push(`/flights?${searchQueryString}`);
+        stickySearchLauncherRef.current = event.currentTarget;
+        searchFormRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
         return;
       }
       stickySearchLauncherRef.current = event.currentTarget;
@@ -1385,8 +1392,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     },
     [
       originInput,
-      router,
-      searchQueryString,
       setActiveDatePicker,
       setActiveSuggest,
       setDatePickerPosition,
@@ -2001,44 +2006,57 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     markExpandedSearchInteraction();
 
     if (nextTripType === "multi-city") {
-      const firstLeg = { origin: originCode || originInput.trim().toUpperCase(), destination: destinationCode || destinationInput.trim().toUpperCase(), departureDate: departureDateInput };
-      const secondLeg = tripTypeInput === "round-trip" && returnDateInput
-        ? { origin: firstLeg.destination, destination: firstLeg.origin, departureDate: returnDateInput }
-        : { origin: firstLeg.destination, destination: "", departureDate: departureDateInput };
-      const legs = [firstLeg, secondLeg];
-      const projection = projectSearchLegs("multi-city", legs);
-      const params = new URLSearchParams({
-        tripType: "multi-city",
-        origin: projection.origin,
-        destination: projection.destination,
-        departureDate: projection.departureDate,
-        adults: String(adultCount),
-        children: String(childCount),
-        infants: String(infantCount),
-        travelers: String(adultCount + childCount + infantCount),
-        cabinClass: cabinClassInput,
-        currency: selectedCurrency,
-      });
-      appendFlightLegParams(params, legs);
-      setTripTypeMenuOpen(false);
-      router.push(`/flights?${params.toString()}`);
+      if (multiCityLegs.length === 0) {
+        const firstLeg = {
+          origin: originCode || originInput.trim().toUpperCase(),
+          destination: destinationCode || destinationInput.trim().toUpperCase(),
+          departureDate: departureDateInput,
+        };
+        const projectedLegs = [
+          firstLeg,
+          tripTypeInput === "round-trip" && returnDateInput
+            ? {
+                origin: firstLeg.destination,
+                destination: firstLeg.origin,
+                departureDate: returnDateInput,
+              }
+            : {
+                origin: firstLeg.destination,
+                destination: "",
+                departureDate: departureDateInput,
+              },
+        ];
+        const projection = projectSearchLegs("multi-city", projectedLegs);
+        setMultiCityLegs(projection.legs);
+      }
+      setTripTypeInput("multi-city");
+      closeFlightSearchPopovers();
       return;
     }
 
     const normalizedTripType =
       nextTripType === "one-way" ? "one-way" : "round-trip";
 
+    if (tripTypeInput === "multi-city" && multiCityLegs.length > 0) {
+      const projection = projectSearchLegs(normalizedTripType, multiCityLegs);
+      setOriginInput(projection.origin);
+      setOriginCode(projection.origin);
+      setDestinationInput(projection.destination);
+      setDestinationCode(projection.destination);
+      setDepartureDateInput(projection.departureDate);
+      setReturnDateInput(projection.returnDate ?? "");
+    } else if (normalizedTripType === "one-way") {
+      setReturnDateInput("");
+    }
+
     setTripTypeInput(normalizedTripType);
     setTripTypeMenuOpen(false);
 
     if (normalizedTripType === "one-way") {
-      setReturnDateInput("");
-
       if (activeDatePicker === "return") {
         setActiveDatePicker(null);
         setDatePickerPosition(null);
       }
-
       return;
     }
 
@@ -5617,9 +5635,135 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       return null;
     }
 
+    if (placement === "desktop" && tripTypeInput === "multi-city") {
+      return (
+        <div className="mx-auto hidden w-full min-w-0 max-w-5xl sm:block">
+          <div
+            data-desktop-trip-selector
+            role="radiogroup"
+            aria-label={t("tripType")}
+            className="hidden min-h-9 items-center gap-7 px-2 sm:flex lg:gap-10"
+          >
+            {[
+              { label: t("roundTrip"), value: "round-trip" },
+              { label: t("oneWay"), value: "one-way" },
+              { label: t("multiCity"), value: "multi-city" },
+            ].map((option) => {
+              const selected = tripTypeInput === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => handleTripTypeChange(option.value)}
+                  className="focus-ring inline-flex min-h-9 items-center gap-2 rounded-md px-1 text-sm font-medium text-slate-800 transition-colors hover:text-[#075EE8] focus-visible:ring-2 focus-visible:ring-[#075EE8]/30"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px]",
+                      selected ? "border-[#075EE8]" : "border-slate-300",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "h-2 w-2 rounded-full",
+                        selected ? "bg-[#075EE8]" : "bg-transparent",
+                      )}
+                    />
+                  </span>
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <form
+            ref={searchFormRef}
+            className="mt-3 rounded-[1.15rem] border border-slate-200/90 bg-white p-4 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-950/[0.025]"
+            onSubmit={handleCompactSearchSubmit}
+            onChangeCapture={markExpandedSearchInteraction}
+          >
+            <MultiCityFlightEditor
+              legs={multiCityLegs}
+              onChange={setMultiCityLegs}
+              minimumDate={formatDateValue(new Date())}
+              presentation="results"
+              onAirportValidityChange={setMultiCityAirportsValid}
+            />
+            <div className="mt-4 flex items-end justify-between gap-4 border-t border-slate-200 pt-4">
+              <div
+                ref={travelerCabinWrapRef}
+                className="relative min-w-0 flex-1"
+              >
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                  {t("travelers")}
+                </label>
+                <button
+                  type="button"
+                  aria-label={t("travelersAndCabinClass")}
+                  aria-expanded={travelerPopoverOpen}
+                  onClick={() => {
+                    setTravelerPopoverOpen((current) => {
+                      const next = !current;
+                      if (!next) setTravelerPopoverPosition(null);
+                      return next;
+                    });
+                  }}
+                  className="focus-ring flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 text-start text-sm font-medium text-slate-900 transition hover:border-slate-300"
+                >
+                  <span className="min-w-0 truncate">{travelerCabinSummary}</span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+                      travelerPopoverOpen && "rotate-180",
+                    )}
+                    aria-hidden="true"
+                  />
+                </button>
+              </div>
+              <Button
+                type="submit"
+                className="min-h-11 shrink-0 px-6"
+              >
+                {t("search")}
+              </Button>
+            </div>
+          </form>
+
+          {travelerPopoverOpen && travelerPopoverPosition ? (
+            <TravelerCabinPopover
+              position={travelerPopoverPosition}
+              onClose={() => {
+                setTravelerPopoverOpen(false);
+                setTravelerPopoverPosition(null);
+              }}
+              adultCount={adultCount}
+              childCount={childCount}
+              infantCount={infantCount}
+              cabinClass={cabinClassInput}
+              onAdultChange={(nextValue) => {
+                const nextAdultCount = Math.min(9, Math.max(1, nextValue));
+                setAdultCount(nextAdultCount);
+                setInfantCount((current) => Math.min(current, nextAdultCount));
+              }}
+              onChildChange={(nextValue) => {
+                setChildCount(Math.min(9, Math.max(0, nextValue)));
+              }}
+              onInfantChange={(nextValue) => {
+                setInfantCount(Math.min(adultCount, Math.max(0, nextValue)));
+              }}
+              onCabinClassChange={setCabinClassInput}
+            />
+          ) : null}
+        </div>
+      );
+    }
+
     if (tripTypeInput === "multi-city") {
       return (
-        <div className={cn("mx-auto w-full min-w-0 max-w-5xl", placement === "desktop" && "hidden sm:block")}>
+        <div className="mx-auto w-full min-w-0 max-w-5xl">
           <button
             type="button"
             onClick={() => router.push(`/flights?${searchQueryString}`)}
