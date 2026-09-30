@@ -67,6 +67,9 @@ test("desktop Flight result cards use the lighter hierarchy without changing Mob
   assert.match(globals, /\.flight-card-leg-meta \{[\s\S]*font-size: 0\.6875rem;/);
   assert.match(globals, /\.flight-card-duration \{[\s\S]*font-size: 0\.6875rem;/);
   assert.match(globals, /\.flight-card-fare-action \.flight-card-price-value \{[\s\S]*font-size: 1\.1875rem;[\s\S]*text-align: right;/);
+  assert.match(globals, /\.flight-card-price-value\.flight-card-price\[data-price-size="normal"\] \{[\s\S]*font-size: 1\.1875rem;/);
+  assert.match(globals, /\.flight-results-grid \.flight-card-flight-number \{ font-size: 0\.6875rem; line-height: 0\.875rem; \}/);
+  assert.match(globals, /\.flight-results-grid \.flight-card-time \{ font-size: 1rem; line-height: 1\.125rem; \}/);
   assert.match(card, /flight-card-details mt-3[^\n]*rounded-lg bg-slate-50\/70/);
   assert.match(card, /className="h-3\.5 w-3\.5 shrink-0 text-black"/);
   assert.match(globals, /grid-template-areas: "legs fare" "details fare";/);
