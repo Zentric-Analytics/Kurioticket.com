@@ -280,3 +280,21 @@ test("desktop fare action omits the visible provider price label", () => {
   assert.doesNotMatch(fareAction, /priceLabel|providerPriceLabel|showConvertedProviderPrice/);
   assert.doesNotMatch(fareAction, /<p[^>]*>\s*\{priceLabel\}\s*<\/p>/);
 });
+
+
+test("narrow desktop fare price and View deal share the same right edge", () => {
+  const narrowContainerStart = globalsCss.indexOf("@container (max-width: 759px)");
+  const viewButtonRule = ruleBody(
+    globalsCss,
+    ".flight-card-view-button",
+    narrowContainerStart,
+  );
+  const farePriceRule = ruleBody(
+    globalsCss,
+    ".flight-card-fare-action .flight-card-price-value",
+  );
+
+  assert.match(viewButtonRule, /padding-right:\s*0/);
+  assert.match(viewButtonRule, /min-width:\s*108px/);
+  assert.match(farePriceRule, /text-align:\s*right/);
+});
