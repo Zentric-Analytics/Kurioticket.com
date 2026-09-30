@@ -287,7 +287,10 @@ test("desktop departure metadata aligns directly beneath time with generous card
   assert.match(styles, /\.flight-card-leg-time-row \{\s*gap: 0\.5rem;/);
   assert.match(styles, /\.flight-card-desktop-header \{[\s\S]*padding-bottom: 0\.75rem;/);
   assert.match(styles, /\.flight-card-legs \{\s*grid-area: legs;\s*gap: 0\.75rem;/);
-  assert.match(styles, /\.flight-card-details \{\s*column-gap: 1rem;\s*margin-top: 0\.5rem;\s*padding-top: 0\.5rem;/);
+  assert.match(
+    styles,
+    /\.flight-card-details \{[\s\S]*grid-template-columns:[\s\S]*minmax\(0, 1\.3fr\)[\s\S]*minmax\(0, 0\.9fr\)[\s\S]*minmax\(0, 1\.2fr\)[\s\S]*align-items: start;[\s\S]*margin-top: 0\.5rem;[\s\S]*padding-top: 0\.5rem;/,
+  );
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date \{\s*margin-inline-start: 0;/);
 });
 
