@@ -87,12 +87,16 @@ export default function CarDetailsLayout({
             align-self: center;
           }
 
-          [data-car-details-desktop-sticky-controls] {
+          [data-car-details-desktop-controls] {
             min-height: 4rem;
           }
 
           [data-car-details-section-nav] {
             background: #F5F7FB !important;
+          }
+
+          [data-car-details-scroll-section] {
+            scroll-margin-top: 5.5rem;
           }
 
           [data-car-details-section-panels] {
