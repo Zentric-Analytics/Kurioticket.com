@@ -1174,6 +1174,12 @@ textarea {
     padding-right: 0.875rem;
   }
 
+  @media (min-width: 1024px) {
+    .flight-card-view-button {
+      padding-right: 0;
+    }
+  }
+
   .flight-card-details {
     column-gap: 0.75rem;
   }
