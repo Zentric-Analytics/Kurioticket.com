@@ -947,6 +947,10 @@ textarea {
   padding-right: 0;
 }
 
+.flight-card-fare-action .flight-card-price-value {
+  text-align: right;
+}
+
 .flight-card-details {
   column-gap: 1rem;
   margin-top: 0.5rem;
