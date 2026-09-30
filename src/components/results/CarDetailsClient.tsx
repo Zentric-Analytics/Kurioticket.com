@@ -392,7 +392,7 @@ export function CarDetailsExperience({
             <div className="relative z-10">{desktopBackControl}</div>
             <div
               className="pointer-events-none absolute left-1/2 top-1/2 hidden w-[52%] max-w-[34rem] -translate-x-1/2 -translate-y-1/2 text-center lg:block"
-              data-car-details-desktop-sticky-context
+              data-car-details-desktop-context
             >
               <p className="truncate text-[15px] font-extrabold leading-[19px] tracking-[-0.18px] text-[#071A48]">
                 {car.modelName}
