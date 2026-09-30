@@ -120,3 +120,23 @@ test("fare windows are bounded and hidden for multi-city", () => {
   assert.match(source, /setNearbyFareVisibleStart\(nearbyFareCenteredVisibleStart\)/);
   assert.match(source, /body\?\.tripType !== "multi-city"/);
 });
+
+
+test("desktop Multi-city stays on Results and renders the shared multi-city editor", () => {
+  assert.doesNotMatch(
+    source,
+    /handleTripTypeChange[\s\S]*router\.push\(\`\/flights\?/,
+  );
+  assert.match(
+    source,
+    /placement === "desktop" && tripTypeInput === "multi-city"[\s\S]*<MultiCityFlightEditor/,
+  );
+  assert.match(
+    source,
+    /<MultiCityFlightEditor[\s\S]*presentation="results"[\s\S]*onAirportValidityChange=\{setMultiCityAirportsValid\}/,
+  );
+  assert.match(
+    source,
+    /handleCompactSearchSubmit[\s\S]*appendFlightLegParams\(nextParams, multiCityLegs\)[\s\S]*router\.push\(\`\/flights\/results\?/,
+  );
+});
