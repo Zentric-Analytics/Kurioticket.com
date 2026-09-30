@@ -70,8 +70,13 @@ test("wide and medium desktop cards retain their side fare columns", () => {
     ruleBody(globalsCss, ".flight-card-body", mediumQueryStart),
     /grid-template-columns:\s*minmax\(0, 1fr\) 180px/,
   );
-  assert.match(globalsCss, /\.flight-card-details \{\r?\n  column-gap:\s*1rem/);
-  assert.match(flightCardSource, /flight-card-details[^\n]*grid-cols-3/);
+  const desktopDetailsRule = ruleBody(globalsCss, ".flight-card-details", globalsCss.indexOf(".flight-card-details {", globalsCss.indexOf(".flight-card-price")));
+  assert.match(
+    desktopDetailsRule,
+    /grid-template-columns:\s*minmax\(0, 1\.3fr\)\s*minmax\(0, 0\.9fr\)\s*minmax\(0, 1\.2fr\)/,
+  );
+  assert.match(desktopDetailsRule, /align-items:\s*start/);
+  assert.doesNotMatch(flightCardSource, /flight-card-details[^\n]*grid-cols-3/);
 });
 
 test("phone and tablet lower card is a two-column decision area", () => {
@@ -158,19 +163,19 @@ test("all three detail lines share the left-side details region", () => {
   assert.match(ruleBody(globalsCss, ".flight-card-details"), /grid-area:\s*details/);
 });
 
-test("desktop detail values wrap inside their three allocated columns", () => {
+test("desktop detail values remain fully readable without clipping or line clamps", () => {
   const detailsStart = flightCardSource.indexOf("function FlightDetailLines");
   const details = flightCardSource.slice(detailsStart);
+  const detailValueRule = ruleBody(globalsCss, ".flight-card-detail-value");
 
-  assert.match(details, /grid-cols-\[auto_auto_minmax\(0,1fr\)\]/);
   assert.match(details, /flight-card-detail-item[^"\n]*min-w-0/);
   assert.match(details, /flight-card-detail-value min-w-0/);
   assert.match(details, /whitespace-normal/);
-  assert.doesNotMatch(details, /flex-nowrap|whitespace-nowrap/);
-  assert.match(
-    ruleBody(globalsCss, ".flight-card-detail-value"),
-    /overflow-wrap:\s*anywhere/,
-  );
+  assert.doesNotMatch(details, /truncate|line-clamp|overflow-hidden|whitespace-nowrap/);
+  assert.match(detailValueRule, /white-space:\s*normal/);
+  assert.match(detailValueRule, /overflow:\s*visible/);
+  assert.match(detailValueRule, /overflow-wrap:\s*break-word/);
+  assert.match(detailValueRule, /word-break:\s*normal/);
 });
 
 test("result-card fare rule stays concise and leaves provider terms to details", () => {
