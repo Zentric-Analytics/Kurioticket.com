@@ -134,3 +134,47 @@ test("sticky search popout uses neutral field icons and keeps the calendar contr
   assert.doesNotMatch(popout, /text-\[#5CB6B2\]|text-\[#39948F\]/);
   assert.match(popout, /pb-8 pt-12 xl:pt-16/);
 });
+
+
+test("sticky change-flight overlay centers a black title", () => {
+  const start = source.indexOf("function renderStickySearchPopoutOverlay()");
+  const end = source.indexOf("function renderCompactSearchForm", start);
+  assert.ok(start >= 0 && end > start);
+  const popout = source.slice(start, end);
+
+  assert.match(popout, />\s*Change your flight\s*<\/h2>/);
+  assert.match(
+    popout,
+    /id="sticky-flight-search-title"[\s\S]*text-xl font-bold tracking-tight text-black/,
+  );
+  assert.match(popout, /mx-auto max-w-2xl text-center/);
+  assert.doesNotMatch(popout, /t\("searchFlights"\)/);
+});
+
+test("sticky multi-city selection renders the real multi-city editor", () => {
+  const start = source.indexOf("function renderStickySearchPopoutOverlay()");
+  const end = source.indexOf("function renderCompactSearchForm", start);
+  assert.ok(start >= 0 && end > start);
+  const popout = source.slice(start, end);
+
+  assert.match(
+    popout,
+    /tripTypeInput === "multi-city"[\s\S]*data-sticky-multicity-editor/,
+  );
+  assert.match(
+    popout,
+    /<MultiCityFlightEditor[\s\S]*legs=\{multiCityLegs\}[\s\S]*onChange=\{setMultiCityLegs\}[\s\S]*presentation="results"/,
+  );
+  assert.match(
+    popout,
+    /minimumDate=\{formatDateValue\(new Date\(\)\)\}/,
+  );
+  assert.match(
+    popout,
+    /data-sticky-multicity-editor[\s\S]*travelerCabinSummary[\s\S]*<TravelerCabinPopover/,
+  );
+  assert.match(
+    popout,
+    /data-sticky-multicity-editor[\s\S]*<Button[\s\S]*type="submit"[\s\S]*\{t\("search"\)\}/,
+  );
+});
