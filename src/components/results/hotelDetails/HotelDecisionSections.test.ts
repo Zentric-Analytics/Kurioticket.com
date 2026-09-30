@@ -11,10 +11,10 @@ const reviews = read("./HotelReviewsSection.tsx");
 const presentation = read("./hotelDetailsPresentation.ts");
 const continuation = read("./hotelBookingContinuation.ts");
 
-test("desktop has exactly Overview, Rate and Review anchor links for continuous navigation", () => {
+test("desktop has exactly Rate, Overview and Review anchor links for continuous navigation", () => {
   const declaration = desktop.slice(desktop.indexOf("const sections = ["), desktop.indexOf("] as const;"));
   const sections = [...declaration.matchAll(/\{ id: "([^"]+)", label: "([^"]+)" \}/g)].map(([, id, label]) => ({ id, label }));
-  assert.deepEqual(sections, [{ id: "hotel-overview", label: "Overview" }, { id: "hotel-compare-prices", label: "Rate" }, { id: "hotel-reviews", label: "Review" }]);
+  assert.deepEqual(sections, [{ id: "hotel-compare-prices", label: "Rate" }, { id: "hotel-overview", label: "Overview" }, { id: "hotel-reviews", label: "Review" }]);
   const navigation = desktop.slice(desktop.indexOf("<nav"), desktop.indexOf("</nav>"));
   assert.match(navigation, /aria-label="Hotel details sections"/);
   assert.match(navigation, /<a\b[^>]*href=\{`#\$\{section\.id\}`\}/);
@@ -25,14 +25,14 @@ test("desktop has exactly Overview, Rate and Review anchor links for continuous 
   for (const component of ["HotelPriceComparisonSection", "HotelReviewsSection", "HotelLocationSection", "RelatedHotelsSection"]) assert.equal(desktop.match(new RegExp(`<${component}\\b`, "g"))?.length, 1, component);
 });
 
-test("desktop keeps complete Overview, Rate and Review visible before standalone recommendations", () => {
-  const overviewStart = desktop.indexOf('<div data-desktop-section="overview">');
+test("desktop keeps complete Rate, Overview and Review visible before standalone recommendations", () => {
   const rateStart = desktop.indexOf('<div data-desktop-section="rate">');
+  const overviewStart = desktop.indexOf('<div data-desktop-section="overview">');
   const reviewStart = desktop.indexOf('data-desktop-section="review"');
   const relatedStart = desktop.indexOf('id="hotel-related-hotels"');
-  assert.ok(overviewStart >= 0 && rateStart > overviewStart && reviewStart > rateStart && relatedStart > reviewStart);
-  const overview = desktop.slice(overviewStart, rateStart);
-  const rate = desktop.slice(rateStart, reviewStart);
+  assert.ok(rateStart >= 0 && overviewStart > rateStart && reviewStart > overviewStart && relatedStart > reviewStart);
+  const rate = desktop.slice(rateStart, overviewStart);
+  const overview = desktop.slice(overviewStart, reviewStart);
   const review = desktop.slice(reviewStart, relatedStart);
   const related = desktop.slice(relatedStart, desktop.indexOf('{overlay === "rooms" ?'));
   assert.doesNotMatch(overview + rate + review + related, /\bhidden(?:=|\s|>)|aria-hidden=|display:\s*"none"|activeSection\s*===/);
