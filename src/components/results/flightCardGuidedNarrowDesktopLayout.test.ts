@@ -225,7 +225,7 @@ test("desktop detail items stay in one readable three-section panel", () => {
   assert.match(desktopItemRule, /min-width:\s*0/);
   assert.match(
     ruleBody(globalsCss, ".flight-card-detail-item + .flight-card-detail-item", desktopStart),
-    /border-left:\s*1px solid #d8e1ec/,
+    /border-inline-start:\s*1px solid #d8e1ec/,
   );
   const desktopIconRule = ruleBody(
     globalsCss,
