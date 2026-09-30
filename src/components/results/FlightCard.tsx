@@ -128,7 +128,7 @@ export function FlightCard({
               </div>
               <div className="min-w-0">
                 <p
-                  className="flight-card-airline-name truncate whitespace-nowrap font-semibold text-slate-800"
+                  className="flight-card-airline-name truncate whitespace-nowrap font-bold text-slate-900"
                   dir="auto"
                 >
                   <span>{flight.airlineName}</span>
@@ -209,7 +209,7 @@ function ResultBadgePill({ badge }: { badge?: ResultBadge }) {
   return (
     <div
       className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold leading-5",
+        "inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[10px] font-extrabold leading-[13px]",
         className,
       )}
     >
@@ -232,27 +232,27 @@ function ResponsiveFlightLegRow({
 
   return (
     <section aria-label={legTitle} className="min-w-0">
-      <p className="flight-card-leg-label font-semibold uppercase text-[#0057E7]">
+      <p className="flight-card-leg-label font-bold uppercase text-[#0057E7]">
         {legTitle}
       </p>
       <div className="flight-card-leg-grid grid min-w-0">
           <div className="flight-card-leg-endpoint min-w-0">
           <div className="flight-card-leg-time-row flex min-w-0 items-center">
             <div
-              className="flight-card-time min-w-0 font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
+              className="flight-card-time min-w-0 font-extrabold tracking-[-0.025em] text-slate-950"
               dir="ltr"
             >
               {formatTime(leg.departureTime, locale)}
             </div>
           </div>
           <div
-            className="flight-card-airport font-semibold text-[#07133B]"
+            className="flight-card-airport font-semibold text-slate-900"
             dir="ltr"
           >
             {leg.originAirport}
           </div>
           <div
-            className="flight-card-departure-date flight-card-leg-meta font-medium text-[#07133B]"
+            className="flight-card-departure-date flight-card-leg-meta font-medium text-[#536B92]"
             dir="auto"
           >
             {formatItineraryShortDate({ value: leg.departureTime, locale })}
@@ -260,20 +260,20 @@ function ResponsiveFlightLegRow({
         </div>
 
         <div className="flight-card-leg-center min-w-0 text-center">
-          <div className="flight-card-duration flex items-center justify-center font-semibold text-[#07133B]">
+          <div className="flight-card-duration flex items-center justify-center font-semibold text-slate-600">
             <span dir="auto">{leg.duration}</span>
             <span
-              className="h-1 w-1 rounded-full bg-[#07133B]"
+              className="h-1 w-1 rounded-full bg-slate-500"
               aria-hidden="true"
             />
             <span>{formatStopsLabel(leg.stops, t)}</span>
           </div>
-          <div className="flight-card-path flex items-center text-[#7890B8]" aria-hidden="true">
-            <span className="h-2 w-2 rounded-full bg-[#7890B8]" />
-            <span className="h-px flex-1 bg-[#B9C5D8]" />
-            <PlaneTakeoff className="mx-2 h-3.5 w-3.5 text-[#0057E7]" />
-            <span className="h-px flex-1 bg-[#B9C5D8]" />
-            <span className="h-2 w-2 rounded-full bg-[#7890B8]" />
+          <div className="flight-card-path flex items-center text-slate-400" aria-hidden="true">
+            <span className="h-2 w-2 rounded-full bg-slate-400" />
+            <span className="h-px flex-1 bg-slate-300" />
+            <PlaneTakeoff className="mx-2 h-3.5 w-3.5 text-[#004BB8]" />
+            <span className="h-px flex-1 bg-slate-300" />
+            <span className="h-2 w-2 rounded-full bg-slate-400" />
           </div>
           {leg.layovers.length ? (
             <p
@@ -291,19 +291,19 @@ function ResponsiveFlightLegRow({
 
         <div className="flight-card-leg-endpoint min-w-0 text-right">
           <div
-            className="flight-card-time font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
+            className="flight-card-time font-extrabold tracking-[-0.025em] text-slate-950"
             dir="ltr"
           >
             {formatTime(leg.arrivalTime, locale)}
           </div>
           <div
-            className="flight-card-airport truncate font-semibold text-[#07133B]"
+            className="flight-card-airport truncate font-semibold text-slate-900"
             dir="ltr"
           >
             {leg.destinationAirport}
           </div>
           <div
-            className="flight-card-arrival-date flight-card-leg-meta font-medium text-[#07133B]"
+            className="flight-card-arrival-date flight-card-leg-meta font-medium text-[#536B92]"
             dir="auto"
           >
             {formatItineraryShortDate({ value: leg.arrivalTime, locale })}
@@ -394,7 +394,7 @@ function FlightFareAction({
         >
           <div
             className={cn(
-              "flight-card-price-value font-semibold leading-tight tracking-[-0.025em] text-slate-950",
+              "flight-card-price-value font-bold leading-tight tracking-[-0.025em] text-slate-950",
               "flight-card-price",
             )}
             aria-label={priceAriaLabel}
@@ -449,7 +449,7 @@ function FlightDetailLines({
   return (
     <div
       className={cn(
-        "flight-card-details mt-3 grid min-w-0 flex-1 grid-cols-3 items-center gap-3 rounded-lg bg-slate-50/70 px-3 py-2.5 text-xs leading-5 text-slate-600",
+        "flight-card-details mt-3 grid min-w-0 flex-1 grid-cols-3 items-center gap-3 rounded-lg bg-slate-50/70 px-3 py-2.5 text-[10.5px] leading-[15px] text-slate-600",
       )}
     >
       {details.map((detail) => {
@@ -466,11 +466,11 @@ function FlightDetailLines({
               className="h-3.5 w-3.5 shrink-0 text-black"
               aria-hidden="true"
             />
-            <span className="shrink-0 font-medium text-slate-700">
+            <span className="shrink-0 font-semibold text-[#07133B]">
               {detail.label}:
             </span>
             <span
-              className="flight-card-detail-value min-w-0 text-slate-600"
+              className="flight-card-detail-value min-w-0 font-medium text-[#536B92]"
               title={detail.value}
             >
               {detail.value}
