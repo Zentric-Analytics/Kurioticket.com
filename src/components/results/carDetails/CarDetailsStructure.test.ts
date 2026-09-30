@@ -61,11 +61,8 @@ test("CarDetailsExperience uses one Hotels-style sticky desktop section handoff"
   assert.match(experienceSource, /data-car-details-scroll-section="location"/);
   assert.match(experienceSource, /data-car-details-utility-placement="hero"/);
   assert.match(experienceSource, /data-car-details-utility-placement="tabs"/);
-  assert.match(experienceSource, /data-car-details-desktop-context/);
-  assert.match(
-    experienceSource,
-    /pointer-events-none absolute left-1\/2 top-1\/2 hidden w-\[52%\] max-w-\[34rem\]/,
-  );
+  assert.doesNotMatch(experienceSource, /data-car-details-desktop-context/);
+  assert.match(experienceSource, /desktopBackControl={desktopBackControl}/);
   assert.doesNotMatch(
     layoutSource,
     /\[data-car-details-booking-rail\][\s\S]*?position: sticky/,
@@ -118,6 +115,11 @@ test("standalone desktop tabs place panel content in the former heading position
   assert.doesNotMatch(navSource, /max-w-\[640px\]/);
   assert.doesNotMatch(navSource, /bg-\[#075EE8\].*lg:h-\[3px\]/);
   assert.match(navSource, /data-car-details-desktop-sticky-actions/);
+  assert.match(navSource, /desktopBackControl\?: ReactNode/);
+  assert.match(
+    navSource,
+    /desktopStuck && desktopBackControl \? \([\s\S]*?data-car-details-desktop-sticky-back/,
+  );
   assert.doesNotMatch(
     layoutSource,
     /data-car-details-desktop-actions[\s\S]*?position:\s*absolute/,
