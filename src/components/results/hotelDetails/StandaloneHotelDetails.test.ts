@@ -91,7 +91,8 @@ test("desktop stay editing validates dates and retains the current hotel route",
   assert.match(stayEditor, /!end \|\| end <= start/);
   assert.match(stayEditor, /new URL\(window\.location\.href\)/);
   for (const field of ["checkIn", "checkOut", "guests", "rooms"]) assert.ok(stayEditor.includes(`url.searchParams.set("${field}"`), field);
-  assert.match(stayEditor, /router\.push\(`\$\{url\.pathname\}\$\{url\.search\}\$\{url\.hash\}`/);
+  assert.match(stayEditor, /window\.location\.assign\(`\$\{url\.pathname\}\$\{url\.search\}\$\{url\.hash\}`\)/);
+  assert.doesNotMatch(stayEditor, /useRouter|router\.push/);
   assert.match(stayEditor, /parseHotelDetailsSearchCount\(context\?\.guests, 1, 12\)/);
   assert.match(stayEditor, /parseHotelDetailsSearchCount\(context\?\.rooms, 1, 6\)/);
 });

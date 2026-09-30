@@ -32,6 +32,7 @@ type RelatedHotelsSectionProps = {
   searchContext?: HotelDetailsSearchContext;
   labels: RelatedHotelLabels;
   mobilePreview?: boolean;
+  desktopLimit?: number;
 };
 
 function RelatedHotelCard({
@@ -160,6 +161,7 @@ export function RelatedHotelsSection({
   searchContext,
   labels,
   mobilePreview = false,
+  desktopLimit = 7,
 }: RelatedHotelsSectionProps) {
   const displayedHotels = hotels.slice(0, 12);
   if (!displayedHotels.length) return null;
@@ -186,7 +188,7 @@ export function RelatedHotelsSection({
             hotel={hotel}
             searchContext={searchContext}
             labels={labels}
-            desktopHidden={index >= 7}
+            desktopHidden={index >= desktopLimit}
             mobilePreview={mobilePreview}
           />
         ))}

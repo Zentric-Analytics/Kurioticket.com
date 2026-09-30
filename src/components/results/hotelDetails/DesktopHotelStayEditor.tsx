@@ -2,7 +2,6 @@
 
 import { CalendarDays, ChevronLeft, ChevronRight, Minus, Plus, Search, UserRound } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
-import { useRouter } from "next/navigation";
 import { HotelDesktopPopover } from "@/components/search/HotelDesktopPopover";
 import { parseHotelDetailsSearchCount, parseHotelDetailsSearchDate, type HotelDetailsSearchContext } from "./hotelDetailsPresentation";
 import styles from "./DesktopHotelStayEditor.module.css";
@@ -126,7 +125,6 @@ function OccupancyPopup({ draft, onChange, onClose }: { draft: Draft; onChange: 
 }
 
 function StayEditor({ context }: { context?: HotelDetailsSearchContext }) {
-  const router = useRouter();
   const id = useId();
   const [draft, setDraft] = useState<Draft>(() => ({ checkIn: context?.checkIn ?? "", checkOut: context?.checkOut ?? "", guests: parseHotelDetailsSearchCount(context?.guests, 1, 12) ?? 1, rooms: parseHotelDetailsSearchCount(context?.rooms, 1, 6) ?? 1 }));
   const [popup, setPopup] = useState<Popup>(null);
@@ -169,7 +167,7 @@ function StayEditor({ context }: { context?: HotelDetailsSearchContext }) {
     url.searchParams.set("checkOut", draft.checkOut);
     url.searchParams.set("guests", String(draft.guests));
     url.searchParams.set("rooms", String(draft.rooms));
-    router.push(`${url.pathname}${url.search}${url.hash}`, { scroll: false });
+    window.location.assign(`${url.pathname}${url.search}${url.hash}`);
   }
 
   return <div className={styles.editor} data-desktop-hotel-stay-editor>

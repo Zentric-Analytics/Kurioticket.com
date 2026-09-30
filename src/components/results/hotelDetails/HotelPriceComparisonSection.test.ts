@@ -113,3 +113,13 @@ test("desktop stay controls follow the heading without duplicating the stay summ
   assert.ok(html.indexOf("Edit dates and guests") < html.indexOf("data-comparison-offers"));
   assert.doesNotMatch(html, /Duplicated stay summary/);
 });
+
+
+test("desktop rate cards match the existing stay editor width", () => {
+  const html = renderToStaticMarkup(createElement(HotelPriceComparisonSection, {
+    ...baseProps,
+    variant: "desktop",
+    onContinueOffer: () => {},
+  }));
+  assert.match(html, /data-comparison-offers[^>]*class="[^"]*max-w-\[622px\]/);
+});
