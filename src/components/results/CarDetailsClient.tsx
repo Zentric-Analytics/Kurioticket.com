@@ -603,7 +603,7 @@ export function CarDetailsClient({
   const primaryAction: CarDetailsPrimaryAction = sandboxHref
     ? {
         kind: "sandbox-handoff",
-        label: "Open KAYAK test page",
+        label: copy("carDetails.continueDeal"),
         href: sandboxHref,
       }
     : {
