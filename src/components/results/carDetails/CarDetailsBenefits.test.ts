@@ -183,17 +183,13 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-car-location-section/);
 });
 
-test("standalone car details keep the tabs but hide duplicate desktop section headings", () => {
+test("standalone car details restore polished Hotels-style section headings", () => {
   assert.match(clientSource, /<CarDetailsSectionNav activeTab={activeTab}/);
   assert.match(clientSource, /compare: copy\("carDetails\.comparePrices"\)/);
   assert.match(clientSource, /pickup: copy\("carDetails\.pickupReturn"\)/);
   assert.match(clientSource, /location: copy\("carDetails\.location"\)/);
-
-  assert.match(clientSource, /showSectionHeading={false}/);
-  assert.match(
-    clientSource,
-    /showSectionHeading={presentation !== "standalone-content"}/,
-  );
+  assert.doesNotMatch(clientSource, /showSectionHeading={false}/);
+  assert.match(clientSource, /showDesktopOfferList/);
 
   const comparison = sourceBetween(
     clientSource,
@@ -202,6 +198,14 @@ test("standalone car details keep the tabs but hide duplicate desktop section he
   );
   assert.match(comparison, /showSectionHeading \? \(/);
   assert.match(comparison, /carDetails\.comparePrices/);
+  assert.match(
+    comparison,
+    /lg:text-\[20px\] lg:font-semibold lg:leading-\[26px\] lg:tracking-\[-0\.2px\] lg:text-\[#192024\]/,
+  );
+  assert.match(
+    comparison,
+    /lg:text-\[14px\] lg:font-normal lg:leading-\[22px\] lg:text-\[#303B42\]/,
+  );
 
   const location = sourceBetween(
     clientSource,
@@ -210,6 +214,10 @@ test("standalone car details keep the tabs but hide duplicate desktop section he
   );
   assert.match(location, /showSectionHeading \? \(/);
   assert.match(location, /carDetails\.location/);
+  assert.match(
+    location,
+    /lg:text-\[20px\] lg:font-semibold lg:leading-\[26px\] lg:tracking-\[-0\.2px\] lg:text-\[#192024\]/,
+  );
 
   const pickup = sourceBetween(
     clientSource,
@@ -218,6 +226,14 @@ test("standalone car details keep the tabs but hide duplicate desktop section he
   );
   assert.match(pickup, /showSectionHeading \? \(/);
   assert.match(pickup, /carDetails\.pickupReturn/);
+  assert.match(
+    pickup,
+    /lg:text-\[20px\] lg:font-semibold lg:leading-\[26px\] lg:tracking-\[-0\.2px\] lg:text-\[#192024\]/,
+  );
+  assert.match(
+    pickup,
+    /lg:text-\[16px\] lg:font-semibold lg:leading-\[24px\] lg:text-\[#192024\]/,
+  );
 });
 
 test("desktop car details use the production hero, toolbar context, and balanced amenities", () => {
