@@ -291,7 +291,7 @@ test("narrow desktop fare price and View deal share the same right edge", () => 
   );
   const desktopOverrideStart = globalsCss.indexOf(
     "@media (min-width: 1024px)",
-    baseViewButtonRule.end,
+    globalsCss.indexOf(".flight-card-view-button", narrowContainerStart),
   );
   const desktopViewButtonRule = ruleBody(
     globalsCss,
@@ -303,8 +303,8 @@ test("narrow desktop fare price and View deal share the same right edge", () => 
     ".flight-card-fare-action .flight-card-price-value",
   );
 
-  assert.match(baseViewButtonRule.body, /padding-right:\s*0\.875rem/);
-  assert.match(baseViewButtonRule.body, /min-width:\s*108px/);
-  assert.match(desktopViewButtonRule.body, /padding-right:\s*0/);
+  assert.match(baseViewButtonRule, /padding-right:\s*0\.875rem/);
+  assert.match(baseViewButtonRule, /min-width:\s*108px/);
+  assert.match(desktopViewButtonRule, /padding-right:\s*0/);
   assert.match(farePriceRule, /text-align:\s*right/);
 });
