@@ -291,8 +291,24 @@ export function CarDetailsExperience({
           className="hidden h-16 w-full items-center border-b border-transparent bg-[#F5F7FB] lg:sticky lg:top-0 lg:z-40 lg:flex"
           data-car-details-desktop-sticky-controls
         >
-          <div className="flex w-full items-center justify-between">
+          <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-5">
             <div>{desktopBackControl}</div>
+            <div
+              className="hidden min-w-0 text-center lg:block"
+              data-car-details-desktop-sticky-context
+            >
+              <p className="truncate text-[14px] font-bold leading-5 text-[#071A48]">
+                {car.modelName}
+                {car.orSimilar ? (
+                  <span className="ms-1.5 font-medium text-[#56658E]">
+                    or similar
+                  </span>
+                ) : null}
+              </p>
+              <p className="mt-0.5 truncate text-[10px] font-bold uppercase leading-[14px] tracking-[0.12em] text-[#075EE8]">
+                {car.categoryLabel}
+              </p>
+            </div>
             <CarHeroActions
               car={car}
               isSaved={isSaved}
@@ -325,9 +341,13 @@ export function CarDetailsExperience({
           </div>
         </div>
       ) : null}
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div
+        className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_340px]"
+        data-car-details-content-grid
+      >
         <div
           className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:space-y-5" : "space-y-4 lg:space-y-5"}`}
+          data-car-details-primary-column
         >
           <CarDetailsHero
             car={car}
@@ -462,9 +482,10 @@ export function CarDetailsExperience({
           <aside
             className={
               presentation === "standalone-content"
-                ? "hidden self-start lg:sticky lg:top-24 lg:block"
+                ? "hidden self-start lg:block"
                 : "self-start lg:sticky lg:top-24"
             }
+            data-car-details-booking-rail
           >
             <BookingSummary
               offer={primaryOffer}
@@ -582,7 +603,7 @@ export function CarDetailsClient({
   const primaryAction: CarDetailsPrimaryAction = sandboxHref
     ? {
         kind: "sandbox-handoff",
-        label: "Open KAYAK test page",
+        label: copy("carDetails.continueDeal"),
         href: sandboxHref,
       }
     : {
@@ -590,10 +611,10 @@ export function CarDetailsClient({
         label: copy("carDetails.continueDeal"),
       };
   return (
-    <main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:bg-surface-muted/40 lg:pb-0">
+    <main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:pb-0">
       <CarsRouteLoadingOverlay active={mobileResultsPending} />
-      <section className="bg-transparent lg:bg-white lg:border-b lg:border-border lg:pb-14">
-        <div className="page-shell py-0 lg:py-7">
+      <section className="bg-transparent lg:pb-16" data-car-details-desktop-surface>
+        <div className="page-shell py-0 lg:py-6">
           <div>
             <CarDetailsExperience
               car={car}
@@ -711,7 +732,7 @@ function CarPriceComparisonSection({
       </p>
 
       <div
-        className="mt-5 space-y-2.5 lg:hidden"
+        className={`mt-5 space-y-2.5 ${showSectionHeading ? "lg:hidden" : "lg:space-y-3"}`}
         role="radiogroup"
         aria-label="Car deal options"
         data-mobile-car-deal-list
@@ -737,7 +758,7 @@ function CarPriceComparisonSection({
               aria-checked={selected}
               aria-label={`${daily.ariaLabel} ${copy("carsResults.perDay")}`}
               onClick={() => onSelectOffer(offer.id)}
-              className={`block w-full rounded-[14px] border bg-white px-2 py-3 text-start transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 ${selected ? "border-[#075EE8] ring-1 ring-[#075EE8]/10" : "border-slate-200"}`}
+              className={`block w-full rounded-[14px] border bg-white px-2 py-3 text-start transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 lg:rounded-2xl lg:px-5 lg:py-4 lg:shadow-[0_2px_10px_rgba(15,23,42,0.025)] ${selected ? "border-[#075EE8] ring-1 ring-[#075EE8]/10 lg:shadow-[0_6px_18px_rgba(7,94,232,0.08)]" : "border-slate-200 lg:hover:border-slate-300"}`}
             >
               <span className="flex min-w-0 items-center justify-between gap-3">
                 {car.sandboxPresentation ? (
@@ -750,7 +771,7 @@ function CarPriceComparisonSection({
                     alt="Kurioticket"
                     width={108}
                     height={24}
-                    className="h-6 w-[108px] shrink-0 object-contain object-left"
+                    className="h-6 w-[108px] shrink-0 object-contain object-left lg:h-7 lg:w-[126px]"
                   />
                 )}
                 <span
@@ -760,7 +781,7 @@ function CarPriceComparisonSection({
                   {selected ? <span className="size-1.5 rounded-full bg-[#075EE8]" /> : null}
                 </span>
               </span>
-              <span className="mt-3 flex min-w-0 items-end gap-2.5">
+              <span className="mt-3 flex min-w-0 items-end gap-2.5 lg:mt-4 lg:gap-5">
                 <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-[7px]">
                   {car.sandboxPresentation ? (
                     sandboxSupplier ? (
@@ -780,7 +801,7 @@ function CarPriceComparisonSection({
                     facts.map(({ label, Icon }) => (
                       <span
                         key={label}
-                        className="inline-flex shrink-0 items-center gap-[3px] whitespace-nowrap text-[10.5px] font-semibold leading-[15px] text-slate-700"
+                        className="inline-flex shrink-0 items-center gap-[3px] whitespace-nowrap text-[10.5px] font-semibold leading-[15px] text-slate-700 lg:gap-1.5 lg:text-xs"
                       >
                         <Icon
                           size={14}
@@ -813,7 +834,7 @@ function CarPriceComparisonSection({
       </div>
 
       {selectedOffer ? (
-        <div className="mt-5 hidden rounded-[14px] border border-[#075EE8] bg-white px-4 py-4 ring-1 ring-[#075EE8]/10 lg:block">
+        <div className={`mt-5 hidden rounded-[14px] border border-[#075EE8] bg-white px-4 py-4 ring-1 ring-[#075EE8]/10 ${showSectionHeading ? "lg:block" : "lg:hidden"}`}>
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-6">
             <Image
               src="/brand/kurioticket-logo-primary-light-bg.svg"
@@ -927,7 +948,7 @@ function CarLocationSection({
       </div>
       {mapUrl ? (
         <div
-          className="mt-4 flex flex-col overflow-hidden rounded-[14px] border border-slate-200 bg-white"
+          className="mt-4 flex flex-col overflow-hidden rounded-[14px] border border-slate-200 bg-white lg:rounded-2xl lg:shadow-[0_4px_18px_rgba(15,23,42,0.04)]"
           data-car-location-map-card
         >
           <iframe
@@ -935,7 +956,7 @@ function CarLocationSection({
             src={mapUrl}
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
-            className="block h-[216px] w-full shrink-0 border-0 sm:h-[220px] lg:h-[240px]"
+            className="block h-[216px] w-full shrink-0 border-0 sm:h-[220px] lg:h-[320px]"
           />
           {directionsUrl ? (
             <a
@@ -1135,7 +1156,10 @@ function PickupReturnSection({
     /driv(?:ing|er'?s?)\s+licen[cs]e/i.test(document),
   );
   return (
-    <section className="-mx-4 border-y border-slate-200 bg-[#F5F7FB] px-4 py-5 lg:mx-0 lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
+    <section
+      className="-mx-4 border-y border-slate-200 bg-[#F5F7FB] px-4 py-5 lg:mx-0 lg:rounded-2xl lg:border lg:bg-white lg:p-7 lg:shadow-[0_4px_18px_rgba(15,23,42,0.045)]"
+      data-car-pickup-return-section
+    >
       {showSectionHeading ? (
         <Heading
           level={sectionHeadingLevel}

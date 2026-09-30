@@ -25,14 +25,14 @@ const standaloneSource = clientSource.slice(
 
 test("standalone Car details owns exactly one page wrapper and passes the desktop back control into the sticky experience toolbar", () => {
   assert.equal(standaloneSource.match(/<main\b/g)?.length, 1);
-  assert.equal(standaloneSource.match(/page-shell py-0 lg:py-7/g)?.length, 1);
+  assert.equal(standaloneSource.match(/page-shell py-0 lg:py-6/g)?.length, 1);
   assert.equal(
     standaloneSource.match(/data-car-details-desktop-back-link/g)?.length,
     1,
   );
   assert.equal(
     standaloneSource.match(
-      /bg-transparent lg:bg-white lg:border-b lg:border-border lg:pb-14/g,
+      /bg-transparent lg:pb-16/g,
     )?.length,
     1,
   );
@@ -58,7 +58,11 @@ test("CarDetailsExperience is content-only and owns the standalone sticky deskto
   );
   assert.match(
     layoutSource,
-    /\[data-car-details-image-stage\][\s\S]*?background: #F5F7FB !important;/,
+    /\[data-car-details-booking-rail\][\s\S]*?position: sticky !important;[\s\S]*?bottom: 0;/,
+  );
+  assert.match(
+    experienceSource,
+    /data-car-details-desktop-sticky-context/,
   );
   assert.match(
     experienceSource,
@@ -81,7 +85,7 @@ test("standalone desktop tabs place panel content in the former heading position
   );
   assert.match(
     layoutSource,
-    /#car-pickup-panel > section[\s\S]*?padding: 0\.75rem 0 1\.75rem !important;/,
+    /#car-pickup-panel \{\s*padding-top: 0\.75rem;/,
   );
   const navSource = readFileSync(
     new URL("./CarDetailsSectionNav.tsx", import.meta.url),

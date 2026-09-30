@@ -71,107 +71,18 @@ export function CarDetailsHero({
     : normalizedSpecs;
 
   return (
-    <section className="-mx-4 border-b border-slate-200 bg-[#F5F7FB] pb-4 sm:mx-0 lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
-      {reserveMobileControlSafeZone ? (
-        <style>{`
-          @media (min-width: 1024px) {
-            [data-car-details-experience] {
-              padding-bottom: 7rem;
-            }
-
-            [data-car-details-experience] > div.grid {
-              display: block;
-            }
-
-            [data-car-details-experience] > div.grid > aside {
-              display: block !important;
-              position: fixed !important;
-              inset-inline: 0;
-              bottom: 0;
-              top: auto !important;
-              z-index: 90;
-              width: 100%;
-              padding: 0.75rem 1.5rem;
-              border-top: 1px solid #e2e8f0;
-              background: rgba(255, 255, 255, 0.98);
-              box-shadow: 0 -8px 28px rgba(15, 23, 42, 0.12);
-              backdrop-filter: blur(14px);
-            }
-
-            [data-car-details-experience] > div.grid > aside > div {
-              display: grid;
-              grid-template-columns: minmax(180px, auto) minmax(0, 1fr) minmax(180px, 240px);
-              grid-template-rows: auto auto;
-              column-gap: 2rem;
-              align-items: center;
-              width: 100%;
-              max-width: 1180px;
-              margin: 0 auto;
-              padding: 0;
-              border: 0;
-              border-radius: 0;
-              background: transparent;
-              box-shadow: none;
-            }
-
-            [data-car-details-experience] > div.grid > aside > div > p:nth-child(1) {
-              grid-column: 1;
-              grid-row: 2;
-              margin: 0;
-              font-size: 0.75rem;
-              line-height: 1rem;
-              color: #56658e;
-            }
-
-            [data-car-details-experience] > div.grid > aside > div > p:nth-child(2) {
-              grid-column: 1;
-              grid-row: 1;
-              margin: 0;
-              font-size: 1.25rem;
-              line-height: 1.5rem;
-              color: #071a48;
-            }
-
-            [data-car-details-experience] > div.grid > aside > div > p:nth-child(3) {
-              grid-column: 2;
-              grid-row: 1;
-              margin: 0;
-              align-self: end;
-              font-size: 0.8125rem;
-              line-height: 1.125rem;
-              color: #475569;
-            }
-
-            [data-car-details-experience] > div.grid > aside > div > p:nth-child(4) {
-              grid-column: 2;
-              grid-row: 2;
-              margin: 0;
-              align-self: start;
-              font-size: 0.75rem;
-              line-height: 1rem;
-              color: #56658e;
-            }
-
-            [data-car-details-experience] > div.grid > aside > div > a,
-            [data-car-details-experience] > div.grid > aside > div > button,
-            [data-car-details-experience] > div.grid > aside > div > div {
-              grid-column: 3;
-              grid-row: 1 / span 2;
-              width: 100%;
-              margin-top: 0 !important;
-              align-self: center;
-            }
-          }
-        `}</style>
-      ) : null}
+    <section
+      className={`-mx-4 border-b border-slate-200 bg-[#F5F7FB] pb-4 sm:mx-0 ${reserveMobileControlSafeZone ? "lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none" : "lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]"}`}
+      data-car-details-hero
+    >
       <div className="min-w-0">
         <figure
           ref={imageStageRef}
-          className={`relative min-w-0 bg-white ${reserveMobileControlSafeZone ? "" : "pt-5"} lg:mx-auto lg:w-full lg:max-w-[760px] lg:pt-0`}
+          className={`relative min-w-0 bg-white ${reserveMobileControlSafeZone ? "" : "pt-5"} lg:mx-auto lg:w-full ${reserveMobileControlSafeZone ? "lg:max-w-[900px] lg:bg-[#F5F7FB]" : "lg:max-w-[760px]"} lg:pt-0`}
           data-car-details-image-stage
         >
           <div
-            className={`relative w-full overflow-hidden bg-white ${reserveMobileControlSafeZone ? "" : "h-[clamp(13.75rem,58vw,16rem)]"} lg:h-[clamp(20rem,32vw,27rem)] lg:rounded-xl lg:bg-white`}
+            className={`relative w-full overflow-hidden bg-white ${reserveMobileControlSafeZone ? "" : "h-[clamp(13.75rem,58vw,16rem)]"} ${reserveMobileControlSafeZone ? "lg:h-[clamp(22rem,34vw,29rem)] lg:bg-[#F5F7FB]" : "lg:h-[clamp(20rem,32vw,27rem)] lg:rounded-xl lg:bg-white"}`}
           >
             {reserveMobileControlSafeZone ? (
               <div className="lg:hidden" data-car-details-mobile-native-image-stage>
@@ -219,7 +130,7 @@ export function CarDetailsHero({
                 imageAlt={car.imageAlt}
                 modelName={car.modelName}
                 category={car.category}
-                sizes="760px"
+                sizes={reserveMobileControlSafeZone ? "900px" : "760px"}
                 fit="contain"
                 priority
               />
@@ -232,15 +143,15 @@ export function CarDetailsHero({
           ) : null}
         </figure>
 
-        <div className="min-w-0 px-4 pt-3.5 lg:px-0 lg:pt-5">
+        <div className={`min-w-0 px-4 pt-3.5 lg:px-0 ${reserveMobileControlSafeZone ? "lg:pt-4" : "lg:pt-5"}`}>
           <div className="lg:hidden" data-car-details-mobile-identity>
             {identity}
           </div>
           <div
-            className="hidden min-w-0 items-start justify-between gap-5 lg:flex"
+            className={`hidden min-w-0 items-start justify-between gap-5 lg:flex ${reserveMobileControlSafeZone ? "lg:mx-auto lg:max-w-[900px] lg:justify-center lg:text-center" : ""}`}
             data-car-details-desktop-identity-row
           >
-            <div className="min-w-0 flex-1 [&_h1]:truncate [&_h2]:truncate [&_h3]:truncate [&_h4]:truncate">
+            <div className={`min-w-0 flex-1 [&_h1]:truncate [&_h2]:truncate [&_h3]:truncate [&_h4]:truncate ${reserveMobileControlSafeZone ? "lg:w-full" : ""}`}>
               {identity}
             </div>
             {desktopOverlay ? (
@@ -253,7 +164,7 @@ export function CarDetailsHero({
             ) : null}
           </div>
           <ul
-            className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 lg:mx-auto lg:max-w-[760px] lg:grid-cols-[minmax(0,320px)_minmax(0,320px)] lg:gap-x-[120px] lg:gap-y-3"
+            className={`mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 lg:mx-auto ${reserveMobileControlSafeZone ? "lg:max-w-[900px] lg:grid-cols-2 lg:gap-x-16 lg:gap-y-2.5" : "lg:max-w-[760px] lg:grid-cols-[minmax(0,320px)_minmax(0,320px)] lg:gap-x-[120px] lg:gap-y-3"}`}
             data-car-details-specifications
           >
             {specs.map(([Icon, label]) => {
@@ -264,7 +175,7 @@ export function CarDetailsHero({
               return (
                 <li
                   key={label}
-                  className="inline-flex min-w-0 items-center gap-2 text-xs font-semibold leading-[18px] text-slate-700 lg:rounded-lg lg:bg-slate-100 lg:px-2.5 lg:py-1.5"
+                  className={`inline-flex min-w-0 items-center gap-2 text-xs font-semibold leading-[18px] text-slate-700 ${reserveMobileControlSafeZone ? "lg:min-h-10 lg:rounded-[10px] lg:bg-[#EEF3F8] lg:px-3 lg:py-2 lg:text-[13px]" : "lg:rounded-lg lg:bg-slate-100 lg:px-2.5 lg:py-1.5"}`}
                 >
                   {mobileTransmissionIcon ? (
                     <>
