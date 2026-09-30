@@ -5208,12 +5208,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     >
                       {locale?.startsWith("en") ? "Change your flight" : t("editFlightSearch")}
                     </h2>
-                    <p className="mt-1 text-base font-semibold text-slate-950">
-                      {mobileRouteSummary}
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-slate-600">
-                      {stickyDateSummary} · {travelerCabinSummary}
-                    </p>
                   </div>
                   <button
                     ref={stickySearchCloseButtonRef}
