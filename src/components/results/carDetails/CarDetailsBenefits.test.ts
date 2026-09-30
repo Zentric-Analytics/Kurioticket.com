@@ -178,7 +178,7 @@ test("standalone details use persistent mobile controls with native-ordered hero
   );
   assert.match(
     clientSource,
-    /hidden lg:block lg:text-\[20px\] lg:font-semibold lg:leading-\[26px\]/,
+    /hidden lg:block lg:text-\[16px\] lg:font-semibold lg:leading-6/,
   );
   assert.match(clientSource, /formatCarDate\(search\.pickupDate, locale\)/);
   assert.match(clientSource, /data-mobile-car-deal-list/);
@@ -204,11 +204,23 @@ test("standalone car details restore polished Hotels-style section headings", ()
   assert.doesNotMatch(comparison, /carDetails\.comparePrices/);
   assert.match(
     comparison,
-    /lg:text-\[20px\] lg:font-semibold lg:leading-\[26px\] lg:tracking-\[-0\.2px\] lg:text-\[#192024\]/,
+    /lg:text-\[16px\] lg:font-semibold lg:leading-6 lg:tracking-\[-0\.1px\] lg:text-\[#192024\]/,
   );
   assert.match(
     comparison,
     /lg:text-\[14px\] lg:font-normal lg:leading-\[22px\] lg:text-\[#303B42\]/,
+  );
+  assert.match(
+    comparison,
+    /showDesktopOfferList \? "lg:mt-4 lg:space-y-2" : "lg:hidden"/,
+  );
+  assert.match(
+    comparison,
+    /lg:rounded-\[14px\] lg:px-4 lg:py-3/,
+  );
+  assert.match(
+    comparison,
+    /lg:mt-3 lg:gap-4/,
   );
 
   const location = sourceBetween(
@@ -220,7 +232,7 @@ test("standalone car details restore polished Hotels-style section headings", ()
   assert.match(location, /carDetails\.location/);
   assert.match(
     location,
-    /lg:text-\[20px\] lg:font-semibold lg:leading-\[26px\] lg:tracking-\[-0\.2px\] lg:text-\[#192024\]/,
+    /lg:text-\[16px\] lg:font-semibold lg:leading-6 lg:tracking-\[-0\.1px\] lg:text-\[#192024\]/,
   );
 
   const pickup = sourceBetween(
@@ -232,12 +244,26 @@ test("standalone car details restore polished Hotels-style section headings", ()
   assert.match(pickup, /carDetails\.pickupReturn/);
   assert.match(
     pickup,
-    /lg:text-\[20px\] lg:font-semibold lg:leading-\[26px\] lg:tracking-\[-0\.2px\] lg:text-\[#192024\]/,
+    /lg:text-\[16px\] lg:font-semibold lg:leading-6 lg:tracking-\[-0\.1px\] lg:text-\[#192024\]/,
   );
   assert.match(
     pickup,
     /lg:text-\[16px\] lg:font-semibold lg:leading-\[24px\] lg:text-\[#192024\]/,
   );
+  assert.match(
+    pickup,
+    /lg:rounded-none lg:border-x-0 lg:border-t-0 lg:border-b lg:border-slate-200 lg:bg-transparent lg:px-0 lg:pb-\[22px\] lg:pt-5 lg:shadow-none/,
+  );
+  assert.doesNotMatch(
+    pickup,
+    /lg:rounded-2xl lg:border lg:bg-white lg:p-7 lg:shadow-/,
+  );
+
+  assert.match(
+    location,
+    /lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent/,
+  );
+  assert.match(location, /className="p-4 lg:p-0" data-car-location-timeline/);
 });
 
 test("desktop car details place the polished identity below the hero and keep compact controls balanced", () => {
