@@ -33,6 +33,7 @@ type RelatedHotelsSectionProps = {
   labels: RelatedHotelLabels;
   mobilePreview?: boolean;
   desktopLimit?: number;
+  limit?: number;
 };
 
 function RelatedHotelCard({
@@ -162,8 +163,9 @@ export function RelatedHotelsSection({
   labels,
   mobilePreview = false,
   desktopLimit = 7,
+  limit = 12,
 }: RelatedHotelsSectionProps) {
-  const displayedHotels = hotels.slice(0, 12);
+  const displayedHotels = hotels.slice(0, limit);
   if (!displayedHotels.length) return null;
 
   return (
