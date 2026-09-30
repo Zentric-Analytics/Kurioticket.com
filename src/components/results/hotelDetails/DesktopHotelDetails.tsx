@@ -18,8 +18,8 @@ import { mobileHotelAbout } from "./mobileHotelDetailsPresentation";
 import styles from "./HotelDetailsDesktop.module.css";
 
 const sections = [
-  { id: "hotel-overview", label: "Overview" },
   { id: "hotel-compare-prices", label: "Rate" },
+  { id: "hotel-overview", label: "Overview" },
   { id: "hotel-reviews", label: "Review" },
 ] as const;
 type DesktopHotelSection = typeof sections[number]["id"];
@@ -45,7 +45,7 @@ function DesktopDialog({ title, close, children }: { title: string; close: () =>
 }
 
 export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
-  const [activeSection, setActiveSection] = useState<DesktopHotelSection | null>("hotel-overview");
+  const [activeSection, setActiveSection] = useState<DesktopHotelSection | null>("hotel-compare-prices");
   const detailsRef = useRef<HTMLDivElement>(null);
   const sectionBarRef = useRef<HTMLDivElement>(null);
   const [sectionBarStuck, setSectionBarStuck] = useState(false);
@@ -118,7 +118,7 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
   }, [sectionBarStuck]);
 
   function goToSection(id: string) {
-    setActiveSection(sections.find(section => section.id === id)?.id ?? "hotel-overview");
+    setActiveSection(sections.find(section => section.id === id)?.id ?? "hotel-compare-prices");
     const target = document.getElementById(id);
     target?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
     const heading = target?.querySelector<HTMLElement>("h2");
@@ -184,6 +184,15 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
       {utilityActions("tabs")}
     </div>
 
+    <div data-desktop-section="rate">
+    <HotelPriceComparisonSection variant="desktop" stayEditor={<DesktopHotelStayEditor context={context} />}
+      stayContext={props.staySummary ? `${props.staySummary.dateText} · ${props.staySummary.occupancyText}` : undefined}
+      perNightText={props.perNightText} offers={offers} selectedOfferId={selectedId}
+      selectableOfferIds={new Set(offers.map(offer => offer.id))} providerHandoffError={providerHandoffError}
+      onSelectOffer={setSelectedOfferId} onContinueOffer={(id, trigger) => void continueOffer(id, trigger)}
+      pendingOfferId={pendingProviderOfferId} totalLabel={props.estimatedTotalText} continueLabel={props.labels.continueBooking} />
+    </div>
+
     <div data-desktop-section="overview">
     <section id="hotel-overview" className={styles.section} aria-labelledby="hotel-overview-heading">
       <h2 id="hotel-overview-heading" tabIndex={-1}>About this hotel</h2>
@@ -211,15 +220,6 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
 
 
     </div>
-    <div data-desktop-section="rate">
-    <HotelPriceComparisonSection variant="desktop" stayEditor={<DesktopHotelStayEditor context={context} />}
-      stayContext={props.staySummary ? `${props.staySummary.dateText} · ${props.staySummary.occupancyText}` : undefined}
-      perNightText={props.perNightText} offers={offers} selectedOfferId={selectedId}
-      selectableOfferIds={new Set(offers.map(offer => offer.id))} providerHandoffError={providerHandoffError}
-      onSelectOffer={setSelectedOfferId} onContinueOffer={(id, trigger) => void continueOffer(id, trigger)}
-      pendingOfferId={pendingProviderOfferId} totalLabel={props.estimatedTotalText} continueLabel={props.labels.continueBooking} />
-    </div>
-
     <div data-desktop-section="review">
     <HotelReviewsSection variant="desktop" score={reviewScore} label={props.reviewLabel} countText={props.reviewCountText} source={props.reviewSource} />
     </div>
