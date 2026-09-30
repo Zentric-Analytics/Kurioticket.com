@@ -176,7 +176,10 @@ test("standalone details use persistent mobile controls with native-ordered hero
     clientSource,
     /className={activeTab !== "location" \? "hidden lg:block" : ""}/,
   );
-  assert.match(clientSource, /hidden text-xs font-bold leading-\[18px\][^"]*lg:block/);
+  assert.match(
+    clientSource,
+    /hidden lg:block lg:text-\[20px\] lg:font-semibold lg:leading-\[26px\]/,
+  );
   assert.match(clientSource, /formatCarDate\(search\.pickupDate, locale\)/);
   assert.match(clientSource, /data-mobile-car-deal-list/);
   assert.match(clientSource, /Pickup requirements/);
