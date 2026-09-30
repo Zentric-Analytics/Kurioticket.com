@@ -102,8 +102,9 @@ test("standalone desktop tabs place panel content in the former heading position
   assert.match(navSource, /lg:sticky lg:top-0/);
   assert.match(
     navSource,
-    /className="flex min-h-16 shrink-0 items-stretch gap-1"/,
+    /desktopStuck \? "left-1\/2 -translate-x-1\/2" : "left-0 translate-x-0"/,
   );
+  assert.match(navSource, /data-centered={desktopStuck \? "true" : "false"}/);
   assert.match(
     navSource,
     /border-\[#192024\] text-\[#192024\]/,
@@ -116,9 +117,20 @@ test("standalone desktop tabs place panel content in the former heading position
   assert.doesNotMatch(navSource, /bg-\[#075EE8\].*lg:h-\[3px\]/);
   assert.match(navSource, /data-car-details-desktop-sticky-actions/);
   assert.match(navSource, /desktopBackControl\?: ReactNode/);
+  assert.match(navSource, /data-car-details-desktop-sticky-back/);
   assert.match(
     navSource,
-    /desktopStuck && desktopBackControl \? \([\s\S]*?data-car-details-desktop-sticky-back/,
+    /desktopStuck \? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-1 opacity-0"/,
+  );
+  assert.match(
+    navSource,
+    /desktopStuck \? "translate-x-0 opacity-100" : "pointer-events-none translate-x-1 opacity-0"/,
+  );
+  assert.match(navSource, /desktopStuck \? desktopBackControl : null/);
+  assert.match(navSource, /desktopStuck \? desktopUtilityActions : null/);
+  assert.match(
+    navSource,
+    /lg:bg-\[#F5F7FB\]\/95 lg:shadow-\[0_6px_20px_rgba\(15,23,42,0\.07\)\] lg:backdrop-blur-xl/,
   );
   assert.doesNotMatch(
     layoutSource,
