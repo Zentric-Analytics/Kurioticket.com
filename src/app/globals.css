@@ -1012,7 +1012,7 @@ textarea {
 @media (min-width: 1024px) {
   .flight-card-details {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr) minmax(0, 1.25fr);
     align-items: stretch;
     column-gap: 0;
     overflow: visible;
@@ -1023,14 +1023,14 @@ textarea {
   }
 
   .flight-card-detail-item {
-    grid-template-columns: 2rem minmax(0, 1fr);
-    grid-template-rows: auto auto;
+    grid-template-columns: 2rem max-content minmax(0, 1fr);
+    grid-template-rows: auto;
+    align-items: center;
     align-content: center;
-    column-gap: 0.625rem;
-    row-gap: 0.0625rem;
+    column-gap: 0.5rem;
     min-width: 0;
     min-height: 2rem;
-    padding: 0 0.875rem;
+    padding: 0 0.75rem;
   }
 
   .flight-card-detail-item + .flight-card-detail-item {
@@ -1039,7 +1039,7 @@ textarea {
 
   .flight-card-detail-icon {
     grid-column: 1;
-    grid-row: 1 / span 2;
+    grid-row: 1;
     align-self: center;
     box-sizing: border-box;
     width: 2rem;
@@ -1050,20 +1050,18 @@ textarea {
     color: #004bb8;
   }
 
-  .flight-card-detail-label,
-  .flight-card-detail-value {
-    grid-column: 2;
-  }
-
   .flight-card-detail-label {
+    grid-column: 2;
     grid-row: 1;
-    line-height: 0.875rem;
+    line-height: 1rem;
+    white-space: nowrap;
   }
 
   .flight-card-detail-value {
-    grid-row: 2;
+    grid-column: 3;
+    grid-row: 1;
     line-height: 1rem;
-    white-space: normal;
+    white-space: nowrap;
     overflow: visible;
     overflow-wrap: normal;
     word-break: normal;
