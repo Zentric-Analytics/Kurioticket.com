@@ -29,3 +29,24 @@ test("saved Flight loading is shared across visible result cards", () => {
   assert.match(source, /savedFlightsRevision === revision/);
   assert.match(source, /publishSavedFlights/);
 });
+
+
+test("saved Flight result state waits for session resolution before guest persistence", () => {
+  assert.match(source, /if \(status === "loading"\) return;/);
+  assert.match(source, /if \(pending \|\| status === "loading"\) return;/);
+  assert.match(source, /pending: pending \|\| status === "loading"/);
+  assert.match(source, /status === "unauthenticated"/);
+});
+
+test("saved Flight result state revalidates after cross-surface invalidation", () => {
+  assert.match(source, /SAVED_FLIGHTS_INVALIDATED_EVENT/);
+  assert.match(source, /clearSavedFlightsCache\(owner\)/);
+  assert.match(source, /loadSavedFlights\(owner\)/);
+});
+
+
+test("saved Flight cache invalidation survives unmounted result cards", () => {
+  assert.match(source, /getSavedFlightsInvalidationRevision/);
+  assert.match(source, /savedFlightsLoadedInvalidationRevision/);
+  assert.match(source, /savedFlightsLoadedInvalidationRevision !== invalidationRevision/);
+});

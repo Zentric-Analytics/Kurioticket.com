@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import type { PublicFlightResult } from "@/lib/types";
 import { readSavedItemIds, toggleSavedItemId, writeSavedItemIds } from "@/lib/saved-items-local";
+import { getSavedFlightsInvalidationRevision, SAVED_FLIGHTS_INVALIDATED_EVENT } from "@/lib/saved-flight-events";
 
 type SavedFlightItem = {
   id: string;
@@ -17,17 +18,31 @@ let savedFlightsOwner = "";
 let savedFlightsCache: SavedFlightItem[] | null = null;
 let savedFlightsRequest: Promise<SavedFlightItem[]> | null = null;
 let savedFlightsRevision = 0;
+let savedFlightsLoadedInvalidationRevision = -1;
 
 function clearSavedFlightsCache(owner = "") {
   savedFlightsRevision += 1;
   savedFlightsOwner = owner;
   savedFlightsCache = null;
   savedFlightsRequest = null;
+  savedFlightsLoadedInvalidationRevision = -1;
 }
 
 function loadSavedFlights(owner: string) {
   if (savedFlightsOwner !== owner) clearSavedFlightsCache(owner);
-  if (savedFlightsCache) return Promise.resolve(savedFlightsCache);
+  const invalidationRevision = getSavedFlightsInvalidationRevision();
+  if (
+    savedFlightsCache &&
+    savedFlightsLoadedInvalidationRevision === invalidationRevision
+  ) {
+    return Promise.resolve(savedFlightsCache);
+  }
+  if (
+    savedFlightsCache &&
+    savedFlightsLoadedInvalidationRevision !== invalidationRevision
+  ) {
+    clearSavedFlightsCache(owner);
+  }
   if (savedFlightsRequest) return savedFlightsRequest;
   const revision = savedFlightsRevision;
   const request = fetch("/api/dashboard/saved?type=flight", {
@@ -37,7 +52,10 @@ function loadSavedFlights(owner: string) {
       if (!response.ok) return [];
       const data = await response.json() as { items?: SavedFlightItem[] };
       const items = Array.isArray(data.items) ? data.items : [];
-      if (savedFlightsRevision === revision) savedFlightsCache = items;
+      if (savedFlightsRevision === revision) {
+        savedFlightsCache = items;
+        savedFlightsLoadedInvalidationRevision = invalidationRevision;
+      }
       return items;
     })
     .finally(() => {
@@ -50,6 +68,7 @@ function loadSavedFlights(owner: string) {
 function publishSavedFlights(items: SavedFlightItem[]) {
   savedFlightsRevision += 1;
   savedFlightsCache = items;
+  savedFlightsLoadedInvalidationRevision = getSavedFlightsInvalidationRevision();
   window.dispatchEvent(new Event(SAVED_FLIGHTS_CHANGED_EVENT));
 }
 
@@ -68,7 +87,9 @@ export function useSavedFlightResult(
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    if (status !== "authenticated") {
+    if (status === "loading") return;
+
+    if (status === "unauthenticated") {
       clearSavedFlightsCache();
       const syncLocal = () => setLocalSaved(readSavedItemIds().includes(flight.id));
       syncLocal();
@@ -77,13 +98,21 @@ export function useSavedFlightResult(
     }
 
     const update = () => setSavedItem(matchingSavedFlight(savedFlightsCache, flight.id));
+    const invalidate = () => {
+      clearSavedFlightsCache(owner);
+      void loadSavedFlights(owner).then(() => update()).catch(() => undefined);
+    };
     void loadSavedFlights(owner).then(() => update()).catch(() => undefined);
     window.addEventListener(SAVED_FLIGHTS_CHANGED_EVENT, update);
-    return () => window.removeEventListener(SAVED_FLIGHTS_CHANGED_EVENT, update);
+    window.addEventListener(SAVED_FLIGHTS_INVALIDATED_EVENT, invalidate);
+    return () => {
+      window.removeEventListener(SAVED_FLIGHTS_CHANGED_EVENT, update);
+      window.removeEventListener(SAVED_FLIGHTS_INVALIDATED_EVENT, invalidate);
+    };
   }, [flight.id, owner, status]);
 
   async function toggleSavedFlight() {
-    if (pending) return;
+    if (pending || status === "loading") return;
     setPending(true);
     try {
       if (status === "authenticated") {
@@ -145,8 +174,8 @@ export function useSavedFlightResult(
   }
 
   return {
-    isSaved: status === "authenticated" ? Boolean(savedItem) : localSaved,
-    pending,
+    isSaved: status === "authenticated" ? Boolean(savedItem) : status === "unauthenticated" ? localSaved : false,
+    pending: pending || status === "loading",
     toggleSavedFlight,
   };
 }
