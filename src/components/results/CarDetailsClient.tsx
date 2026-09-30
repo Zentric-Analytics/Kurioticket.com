@@ -388,24 +388,8 @@ export function CarDetailsExperience({
           className="hidden h-16 w-full items-center border-b border-transparent bg-[#F5F7FB] lg:flex"
           data-car-details-desktop-controls
         >
-          <div className="relative flex w-full items-center justify-between">
+          <div className="flex w-full items-center justify-between">
             <div className="relative z-10">{desktopBackControl}</div>
-            <div
-              className="pointer-events-none absolute left-1/2 top-1/2 hidden w-[52%] max-w-[34rem] -translate-x-1/2 -translate-y-1/2 text-center lg:block"
-              data-car-details-desktop-context
-            >
-              <p className="truncate text-[15px] font-extrabold leading-[19px] tracking-[-0.18px] text-[#071A48]">
-                {car.modelName}
-                {car.orSimilar ? (
-                  <span className="ms-1.5 text-[12px] font-medium leading-4 tracking-normal text-[#56658E]">
-                    or similar
-                  </span>
-                ) : null}
-              </p>
-              <p className="mt-1 truncate text-[10px] font-bold uppercase leading-3 tracking-[0.14em] text-[#075EE8]">
-                {car.categoryLabel}
-              </p>
-            </div>
             <div
               className="relative z-10"
               data-car-details-utility-placement="hero"
@@ -461,16 +445,16 @@ export function CarDetailsExperience({
                 <Heading
                   level={modelHeadingLevel}
                   headingRef={modelHeadingRef}
-                  className="scroll-mt-24 text-[22px] font-extrabold leading-7 tracking-[-0.5px] text-[#071A48] outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8] lg:text-slate-950"
+                  className={`scroll-mt-24 text-[22px] font-extrabold leading-7 tracking-[-0.5px] text-[#071A48] outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8] ${presentation === "standalone-content" ? "lg:text-[24px] lg:font-bold lg:leading-[30px] lg:tracking-[-0.35px] lg:text-[#192024]" : "lg:text-slate-950"}`}
                 >
                   {car.modelName}
                   {car.orSimilar ? (
-                    <span className="ms-1.5 inline text-sm font-semibold leading-5 tracking-normal text-[#56658E] lg:text-slate-500">
+                    <span className={`ms-1.5 inline text-sm font-semibold leading-5 tracking-normal text-[#56658E] ${presentation === "standalone-content" ? "lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#59636A]" : "lg:text-slate-500"}`}>
                       or similar
                     </span>
                   ) : null}
                 </Heading>
-                <p className="mt-0.5 text-[10px] font-bold uppercase leading-[14px] tracking-[.14em] text-[#075EE8]">
+                <p className={`mt-0.5 text-[10px] font-bold uppercase leading-[14px] tracking-[.14em] text-[#075EE8] ${presentation === "standalone-content" ? "lg:mt-1.5 lg:text-[11px] lg:leading-4 lg:tracking-[0.14em]" : ""}`}>
                   {car.categoryLabel}
                 </p>
               </div>
@@ -520,6 +504,7 @@ export function CarDetailsExperience({
                 onTabChange={handleSectionChange}
                 desktopBarRef={desktopSectionBarRef}
                 desktopStuck={desktopSectionBarStuck}
+                desktopBackControl={desktopBackControl}
                 desktopUtilityActions={
                   <div data-car-details-utility-placement="tabs">
                     <CarHeroActions
@@ -534,7 +519,7 @@ export function CarDetailsExperience({
                 }
                 labels={{
                   navigation: copy("carDetails.title"),
-                  compare: copy("carDetails.comparePrices"),
+                  compare: "Compare deals",
                   mobileCompare: "Compare deals",
                   pickup: copy("carDetails.pickupReturn"),
                   location: copy("carDetails.location"),
@@ -855,7 +840,7 @@ function CarPriceComparisonSection({
           level={headingLevel}
           className="hidden lg:block lg:text-[20px] lg:font-semibold lg:leading-[26px] lg:tracking-[-0.2px] lg:text-[#192024]"
         >
-          {copy("carDetails.comparePrices")}
+          Compare deals
         </Heading>
       ) : null}
       <p className={`mt-1 text-[11px] font-medium leading-4 text-slate-600 lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42] ${showSectionHeading ? "lg:mt-3" : "lg:mt-0"}`}>
