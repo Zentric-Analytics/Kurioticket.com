@@ -213,7 +213,7 @@ export function HotelPriceComparisonSection({
       {offers.length ? <div
         role="radiogroup"
         aria-label="Hotel provider offers"
-        className={desktop ? "mt-4 space-y-3" : "mt-4 space-y-2.5 sm:-mx-1 sm:mt-5 sm:space-y-3 lg:mx-0"}
+        className={desktop ? "mt-4 w-full max-w-[622px] space-y-3" : "mt-4 space-y-2.5 sm:-mx-1 sm:mt-5 sm:space-y-3 lg:mx-0"}
         data-comparison-offers
       >
         {offers.map((offer) => desktop ? (
