@@ -8,6 +8,7 @@ const mobile = read("./MobileHotelDetails.tsx");
 const compare = read("./HotelPriceComparisonSection.tsx");
 const location = read("./HotelLocationSection.tsx");
 const reviews = read("./HotelReviewsSection.tsx");
+const relatedHotels = read("./RelatedHotelsSection.tsx");
 const presentation = read("./hotelDetailsPresentation.ts");
 const continuation = read("./hotelBookingContinuation.ts");
 
@@ -171,4 +172,17 @@ test("location and stay-fit facts use metadata without invented distances", () =
   assert.match(location, /accessibilityDetails\.map/);
   assert.match(location, /rel="noopener noreferrer"/);
   assert.doesNotMatch(desktop + location, /\b\d+ min(?:ute)?s?\b|\b\d+ min walk\b/i);
+});
+
+
+test("desktop guest reviews use the polished compact review card", () => {
+  assert.match(reviews, /data-desktop-hotel-review-card/);
+  assert.match(reviews, /max-w-\[520px\]/);
+  assert.match(reviews, /rounded-xl border border-\[#d9dfe2\] bg-white p-4/);
+  assert.match(reviews, /h-16 min-w-20/);
+});
+
+test("desktop related hotels are capped at eight actual cards", () => {
+  assert.match(desktop, /desktopLimit=\{8\} limit=\{8\}/);
+  assert.match(relatedHotels, /const displayedHotels = hotels\.slice\(0, limit\)/);
 });
