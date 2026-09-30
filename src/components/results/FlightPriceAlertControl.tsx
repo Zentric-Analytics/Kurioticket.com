@@ -70,6 +70,7 @@ export function FlightPriceAlertControl({ query: queryInput, results }: { query:
   const mutationRef = useRef(0);
   const mobileSwitchRef = useRef<HTMLButtonElement>(null);
   const desktopSwitchRef = useRef<HTMLButtonElement>(null);
+  const desktopDialogRef = useRef<HTMLDialogElement>(null);
 
   const targetAlert = useMemo(
     () => alertQuery ? matchingTargetFlightPriceAlert(alerts, alertQuery) : undefined,
@@ -137,6 +138,20 @@ export function FlightPriceAlertControl({ query: queryInput, results }: { query:
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", dismiss);
+    };
+  }, [openSurface]);
+
+  useEffect(() => {
+    if (openSurface !== "desktop") return;
+    const dialog = desktopDialogRef.current;
+    if (!dialog) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog.showModal();
+    return () => {
+      if (dialog.open) dialog.close();
+      document.body.style.overflow = previousOverflow;
+      window.setTimeout(() => desktopSwitchRef.current?.focus({ preventScroll: true }), 0);
     };
   }, [openSurface]);
 
@@ -270,7 +285,6 @@ export function FlightPriceAlertControl({ query: queryInput, results }: { query:
       </div>
       {feedback === "error-save" ? <p role="alert" aria-live="assertive" className="text-xs font-medium text-red-700">Couldn&apos;t save price alert. Please try again.</p> : null}
       <button type="button" disabled={pending || alertTarget === null} onClick={() => void saveTarget()} className="min-h-[46px] w-full rounded-[10px] bg-[#004BB8] px-4 text-[15px] font-bold text-white hover:bg-[#003B91] disabled:opacity-45">{pending ? "Saving…" : "Save price alert"}</button>
-      {surface === "desktop" ? <button type="button" disabled={pending} onClick={() => closeEditor()} className="min-h-10 justify-self-start px-2 text-sm font-semibold text-slate-700">Cancel</button> : null}
     </>
   );
 
@@ -289,15 +303,59 @@ export function FlightPriceAlertControl({ query: queryInput, results }: { query:
       </section>
     </div>, document.body) : null;
 
+  const desktopEditor = openSurface === "desktop" && typeof document !== "undefined" ? createPortal(
+    <dialog
+      ref={desktopDialogRef}
+      aria-modal="true"
+      aria-label="Track this flight price"
+      onCancel={(event) => {
+        event.preventDefault();
+        closeEditor();
+      }}
+      onMouseDown={(event) => {
+        const bounds = event.currentTarget.getBoundingClientRect();
+        if (
+          event.clientX < bounds.left ||
+          event.clientX > bounds.right ||
+          event.clientY < bounds.top ||
+          event.clientY > bounds.bottom
+        ) {
+          closeEditor();
+        }
+      }}
+      className="fixed inset-0 m-auto w-[min(29rem,calc(100vw-2rem))] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-lg border border-slate-200 bg-white p-5 text-slate-950 shadow-2xl backdrop:bg-slate-950/50"
+    >
+      <header className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-bold text-slate-950">Track this flight price</h2>
+          <p className="mt-0.5 text-xs font-medium leading-4 text-slate-600">
+            Choose a target and we’ll notify you if the price drops.
+          </p>
+        </div>
+        <button
+          type="button"
+          aria-label="Close price alert"
+          disabled={pending}
+          onClick={() => closeEditor()}
+          className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 disabled:cursor-default disabled:opacity-50"
+        >
+          <X className="h-5 w-5" aria-hidden="true" />
+        </button>
+      </header>
+      <div className="grid gap-[13px]">{editor("desktop")}</div>
+    </dialog>,
+    document.body,
+  ) : null;
+
   return <>
     <section data-flight-price-alert className="block" aria-label="Flight price alert">
       <div className="flex min-h-[52px] items-center gap-2 rounded-xl border border-[#CFE0F8] bg-[#EEF6FF] px-3 sm:hidden"><Bell className="h-[17px] w-[17px] shrink-0 text-[#004BB8]" aria-hidden="true" /><h2 className="min-w-0 flex-1 truncate text-[13px] font-bold text-slate-950">Track this flight price</h2>{pending ? <LoaderCircle className="h-4 w-4 animate-spin text-[#004BB8]" aria-hidden="true" /> : null}{switchButton("mobile")}</div>
       <div className="hidden rounded-2xl border border-[#CFE0F8] bg-[#EEF6FF] px-4 py-2 shadow-[0_10px_26px_-24px_rgba(15,23,42,0.45)] sm:block sm:min-h-[56px]">
         <div className="flex min-h-10 items-center justify-between gap-2"><div className="flex min-w-0 items-center gap-2"><Bell className="h-[18px] w-[18px] shrink-0 text-[#004BB8]" strokeWidth={2} aria-hidden="true" /><h2 className="truncate text-sm font-semibold leading-5 text-slate-950">Track this flight price</h2></div><span className="flex items-center gap-1.5">{pending ? <LoaderCircle className="h-4 w-4 animate-spin text-[#004BB8]" aria-hidden="true" /> : null}{switchButton("desktop")}</span></div>
-        {openSurface === "desktop" ? <div className="mt-4 grid max-w-xl gap-[13px] border-t border-slate-100 pt-4">{editor("desktop")}</div> : null}
       </div>
     </section>
     {mobileEditor}
+    {desktopEditor}
     {feedback && feedback !== "error-save" ? <div role={feedback.startsWith("error") ? "alert" : "status"} aria-live="polite" className={cn("fixed inset-x-3 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-[110] mx-auto flex max-w-md items-center gap-2.5 rounded-[14px] border border-slate-200 bg-white px-3 py-2.5 shadow-[0_12px_34px_rgba(15,23,42,0.2)] transition duration-200", snackbarLeaving ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100")}><CheckCircle2 className={cn("h-5 w-5", feedback.startsWith("error") ? "text-rose-600" : "text-[#004BB8]")} aria-hidden="true" /><strong className="text-sm text-slate-950">{feedback === "saved" ? "Price alert saved" : feedback === "paused" ? "Price alert paused" : "Couldn't pause price alert"}</strong></div> : null}
   </>;
 }
