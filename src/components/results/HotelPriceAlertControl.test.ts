@@ -39,7 +39,7 @@ test("web Hotel Price Alert compact row matches the native 48px toggle presentat
 
 
 test("desktop Hotel Results price-alert row omits only the subtitle", () => {
-  const rowStart = source.indexOf('className="hidden rounded-2xl border border-blue-100');
+  const rowStart = source.indexOf('className="hidden rounded-2xl border border-[#CFE0F8] bg-[#EEF6FF]');
   const rowEnd = source.indexOf("{status === \"saved\" ? (", rowStart);
   const row = source.slice(rowStart, rowEnd);
   const dialogStart = source.indexOf("<dialog", rowEnd);
@@ -63,3 +63,20 @@ test("desktop Hotel Results price-alert row is vertically aligned and compact", 
   assert.match(row, /relative inline-flex h-7 w-12/);
 });
 
+
+
+test("desktop Hotel Track Price surface matches Flight alert colors", () => {
+  const rowStart = source.indexOf(
+    'className="hidden rounded-2xl border border-[#CFE0F8] bg-[#EEF6FF]',
+  );
+  const rowEnd = source.indexOf("{status === \"saved\" ? (", rowStart);
+  const row = source.slice(rowStart, rowEnd);
+
+  assert.notEqual(rowStart, -1);
+  assert.match(row, /border-\[#CFE0F8\]/);
+  assert.match(row, /bg-\[#EEF6FF\]/);
+  assert.match(
+    row,
+    /shadow-\[0_10px_26px_-24px_rgba\(15,23,42,0\.45\)\]/,
+  );
+});
