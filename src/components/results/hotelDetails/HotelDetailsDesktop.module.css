@@ -1,4 +1,4 @@
-.desktop { color: #192024; background: #fff; min-width: 0; font-size: 14px; line-height: 1.5; padding-bottom: 28px; }
+.desktop { color: #192024; background: #F7F9FC; min-width: 0; font-size: 14px; line-height: 1.5; padding-bottom: 28px; }
 .desktop button, .desktop a { -webkit-tap-highlight-color: transparent; }
 .desktop button { cursor: pointer; }
 .desktop button:disabled { cursor: default; opacity: .55; }
