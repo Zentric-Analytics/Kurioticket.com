@@ -150,15 +150,32 @@ test("standalone details use persistent mobile controls with native-ordered hero
     new URL("./CarDetailsSectionNav.tsx", import.meta.url),
     "utf8",
   ).replace(/\s+/g, " ");
-  assert.match(navSource, /bg-\[#F5F7FB\].*lg:bg-\[#F5F7FB\]/);
+  assert.match(navSource, /data-car-details-mobile-section-nav/);
+  assert.match(navSource, /data-car-details-section-nav/);
+  assert.match(navSource, /lg:sticky lg:top-0/);
   assert.match(navSource, /mobileCompare/);
   assert.match(navSource, /role="tablist"/);
   assert.match(navSource, /ArrowLeft/);
   assert.match(navSource, /ArrowRight/);
   for (const panel of ["compare", "pickup", "location"]) {
     assert.match(clientSource, new RegExp(`id="car-${panel}-panel"`));
-    assert.match(clientSource, new RegExp(`hidden={activeTab !== "${panel}"}`));
+    assert.match(
+      clientSource,
+      new RegExp(`data-car-details-scroll-section="${panel}"`),
+    );
   }
+  assert.match(
+    clientSource,
+    /className={activeTab !== "compare" \? "hidden lg:block" : ""}/,
+  );
+  assert.match(
+    clientSource,
+    /className={activeTab !== "pickup" \? "hidden lg:block" : ""}/,
+  );
+  assert.match(
+    clientSource,
+    /className={activeTab !== "location" \? "hidden lg:block" : ""}/,
+  );
   assert.match(clientSource, /hidden text-xs font-bold leading-\[18px\][^"]*lg:block/);
   assert.match(clientSource, /formatCarDate\(search\.pickupDate, locale\)/);
   assert.match(clientSource, /data-mobile-car-deal-list/);
@@ -222,8 +239,11 @@ test("desktop car details use the production hero, toolbar context, and balanced
   );
   assert.doesNotMatch(heroSource, /position: fixed !important/);
 
-  assert.match(clientSource, /data-car-details-desktop-sticky-controls/);
-  assert.match(clientSource, /data-car-details-desktop-sticky-context/);
+  assert.match(clientSource, /data-car-details-desktop-controls/);
+  assert.doesNotMatch(clientSource, /data-car-details-desktop-sticky-controls/);
+  assert.match(clientSource, /data-car-details-desktop-context/);
+  assert.match(clientSource, /desktopSectionBarStuck/);
+  assert.match(clientSource, /data-car-details-utility-placement="tabs"/);
   assert.match(
     clientSource,
     /pointer-events-none absolute left-1\/2 top-1\/2 hidden w-\[52%\] max-w-\[34rem\] -translate-x-1\/2 -translate-y-1\/2 text-center lg:block/,
@@ -247,7 +267,11 @@ test("desktop car details use the production hero, toolbar context, and balanced
   );
   assert.match(
     clientSource,
-    /data-car-details-desktop-sticky-controls[\s\S]*?<CarHeroActions[\s\S]*?desktop/,
+    /data-car-details-utility-placement="hero"[\s\S]*?<CarHeroActions[\s\S]*?desktop/,
+  );
+  assert.match(
+    clientSource,
+    /data-car-details-utility-placement="tabs"[\s\S]*?<CarHeroActions[\s\S]*?desktop/,
   );
   assert.match(
     clientSource,
