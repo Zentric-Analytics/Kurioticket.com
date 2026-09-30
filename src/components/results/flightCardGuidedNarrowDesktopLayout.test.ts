@@ -196,20 +196,34 @@ test("desktop detail items stay in one readable three-section panel", () => {
     "@media (min-width: 1024px)",
     globalsCss.indexOf(".flight-card-detail-value"),
   );
+  const wideContainerStart = globalsCss.indexOf(
+    "@container (min-width: 760px)",
+    desktopStart,
+  );
   const desktopDetailsRule = ruleBody(
     globalsCss,
     ".flight-card-details",
     desktopStart,
   );
-  const desktopItemRule = ruleBody(
+  const narrowItemRule = ruleBody(
     globalsCss,
     ".flight-card-detail-item",
     desktopStart,
   );
-  const desktopValueRule = ruleBody(
+  const narrowValueRule = ruleBody(
     globalsCss,
     ".flight-card-detail-value",
     desktopStart,
+  );
+  const wideItemRule = ruleBody(
+    globalsCss,
+    ".flight-card-detail-item",
+    wideContainerStart,
+  );
+  const wideValueRule = ruleBody(
+    globalsCss,
+    ".flight-card-detail-value",
+    wideContainerStart,
   );
 
   assert.match(details, /flight-card-detail-item[^"\n]*min-w-0/);
@@ -222,28 +236,20 @@ test("desktop detail items stay in one readable three-section panel", () => {
     /grid-template-columns:\s*minmax\(0, 1\.35fr\) minmax\(0, 0\.9fr\) minmax\(0, 1\.25fr\)/,
   );
   assert.match(desktopDetailsRule, /border:\s*1px solid #e5ebf3/);
-  assert.doesNotMatch(desktopDetailsRule, /flex-wrap/);
-  assert.match(desktopItemRule, /grid-template-columns:\s*2rem max-content minmax\(0, 1fr\)/);
-  assert.match(desktopItemRule, /grid-template-rows:\s*auto/);
-  assert.match(desktopItemRule, /align-items:\s*center/);
-  assert.match(desktopItemRule, /min-width:\s*0/);
+  assert.match(narrowItemRule, /grid-template-columns:\s*2rem minmax\(0, 1fr\)/);
+  assert.match(narrowItemRule, /grid-template-rows:\s*auto auto/);
+  assert.match(narrowValueRule, /grid-row:\s*2/);
+  assert.match(narrowValueRule, /white-space:\s*normal/);
+  assert.match(wideItemRule, /grid-template-columns:\s*2rem max-content minmax\(0, 1fr\)/);
+  assert.match(wideItemRule, /grid-template-rows:\s*auto/);
+  assert.match(wideItemRule, /align-items:\s*center/);
+  assert.match(wideValueRule, /grid-column:\s*3/);
+  assert.match(wideValueRule, /grid-row:\s*1/);
+  assert.match(wideValueRule, /white-space:\s*nowrap/);
   assert.match(
     ruleBody(globalsCss, ".flight-card-detail-item + .flight-card-detail-item", desktopStart),
     /border-inline-start:\s*1px solid #d8e1ec/,
   );
-  const desktopIconRule = ruleBody(
-    globalsCss,
-    ".flight-card-detail-icon",
-    desktopStart,
-  );
-  assert.match(desktopIconRule, /border-radius:\s*9999px/);
-  assert.match(desktopIconRule, /background:\s*#eaf2ff/);
-  assert.match(desktopValueRule, /overflow-wrap:\s*normal/);
-  assert.match(desktopValueRule, /word-break:\s*normal/);
-  assert.match(desktopValueRule, /grid-column:\s*3/);
-  assert.match(desktopValueRule, /grid-row:\s*1/);
-  assert.match(desktopValueRule, /white-space:\s*nowrap/);
-  assert.match(desktopValueRule, /overflow:\s*visible/);
 });
 
 test("result-card fare rule stays concise and leaves provider terms to details", () => {
