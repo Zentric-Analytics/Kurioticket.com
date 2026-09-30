@@ -136,6 +136,14 @@ test("standalone desktop tabs place panel content in the former heading position
     layoutSource,
     /data-car-details-desktop-actions[\s\S]*?position:\s*absolute/,
   );
+  assert.match(
+    experienceSource,
+    /data-car-pickup-return-section[\s\S]*?lg:rounded-none[\s\S]*?lg:bg-transparent[\s\S]*?lg:shadow-none/,
+  );
+  assert.match(
+    experienceSource,
+    /lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent[\s\S]*?data-car-location-timeline/,
+  );
 });
 
 test("guided Car details renders content-only experience with guided headings", () => {
