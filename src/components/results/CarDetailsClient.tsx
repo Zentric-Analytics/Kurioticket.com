@@ -838,7 +838,7 @@ function CarPriceComparisonSection({
       {showSectionHeading ? (
         <Heading
           level={headingLevel}
-          className="hidden lg:block lg:text-[20px] lg:font-semibold lg:leading-[26px] lg:tracking-[-0.2px] lg:text-[#192024]"
+          className="hidden lg:block lg:text-[16px] lg:font-semibold lg:leading-6 lg:tracking-[-0.1px] lg:text-[#192024]"
         >
           Compare deals
         </Heading>
@@ -850,7 +850,7 @@ function CarPriceComparisonSection({
       </p>
 
       <div
-        className={`mt-5 space-y-2.5 ${showDesktopOfferList ? "lg:space-y-3" : "lg:hidden"}`}
+        className={`mt-5 space-y-2.5 ${showDesktopOfferList ? "lg:mt-4 lg:space-y-2" : "lg:hidden"}`}
         role="radiogroup"
         aria-label="Car deal options"
         data-mobile-car-deal-list
@@ -876,7 +876,7 @@ function CarPriceComparisonSection({
               aria-checked={selected}
               aria-label={`${daily.ariaLabel} ${copy("carsResults.perDay")}`}
               onClick={() => onSelectOffer(offer.id)}
-              className={`block w-full rounded-[14px] border bg-white px-2 py-3 text-start transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 lg:rounded-2xl lg:px-5 lg:py-4 lg:shadow-[0_2px_10px_rgba(15,23,42,0.025)] ${selected ? "border-[#075EE8] ring-1 ring-[#075EE8]/10 lg:shadow-[0_6px_18px_rgba(7,94,232,0.08)]" : "border-slate-200 lg:hover:border-slate-300"}`}
+              className={`block w-full rounded-[14px] border bg-white px-2 py-3 text-start transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 lg:rounded-[14px] lg:px-4 lg:py-3 lg:shadow-[0_2px_10px_rgba(15,23,42,0.025)] ${selected ? "border-[#075EE8] ring-1 ring-[#075EE8]/10 lg:shadow-[0_6px_18px_rgba(7,94,232,0.08)]" : "border-slate-200 lg:hover:border-slate-300"}`}
             >
               <span className="flex min-w-0 items-center justify-between gap-3">
                 {car.sandboxPresentation ? (
@@ -899,7 +899,7 @@ function CarPriceComparisonSection({
                   {selected ? <span className="size-1.5 rounded-full bg-[#075EE8]" /> : null}
                 </span>
               </span>
-              <span className="mt-3 flex min-w-0 items-end gap-2.5 lg:mt-4 lg:gap-5">
+              <span className="mt-3 flex min-w-0 items-end gap-2.5 lg:mt-3 lg:gap-4">
                 <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-[7px]">
                   {car.sandboxPresentation ? (
                     sandboxSupplier ? (
@@ -1045,7 +1045,7 @@ function CarLocationSection({
       {showSectionHeading ? (
         <Heading
           level={headingLevel}
-          className="hidden lg:block lg:text-[20px] lg:font-semibold lg:leading-[26px] lg:tracking-[-0.2px] lg:text-[#192024]"
+          className="hidden lg:block lg:text-[16px] lg:font-semibold lg:leading-6 lg:tracking-[-0.1px] lg:text-[#192024]"
         >
           {copy("carDetails.location")}
         </Heading>
@@ -1089,8 +1089,8 @@ function CarLocationSection({
           ) : null}
         </div>
       ) : null}
-      <div className="mt-4 overflow-hidden rounded-[14px] border border-slate-200 bg-white">
-        <div className="p-4" data-car-location-timeline>
+      <div className="mt-4 overflow-hidden rounded-[14px] border border-slate-200 bg-white lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent">
+        <div className="p-4 lg:p-0" data-car-location-timeline>
           {[
             [
               "Pick-up",
@@ -1139,7 +1139,7 @@ function CarLocationSection({
             href={directionsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="focus-ring flex min-h-11 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold text-[#075EE8] hover:bg-slate-50 lg:text-blue"
+            className="focus-ring flex min-h-11 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold text-[#075EE8] hover:bg-slate-50 lg:border-0 lg:px-0 lg:text-blue"
           >
             {copy("carDetails.getDirections")}
             <ExternalLink size={16} aria-hidden="true" />
@@ -1275,13 +1275,13 @@ function PickupReturnSection({
   );
   return (
     <section
-      className="-mx-4 border-y border-slate-200 bg-[#F5F7FB] px-4 py-5 lg:mx-0 lg:rounded-2xl lg:border lg:bg-white lg:p-7 lg:shadow-[0_4px_18px_rgba(15,23,42,0.045)]"
+      className="-mx-4 border-y border-slate-200 bg-[#F5F7FB] px-4 py-5 lg:mx-0 lg:rounded-none lg:border-x-0 lg:border-t-0 lg:border-b lg:border-slate-200 lg:bg-transparent lg:px-0 lg:pb-[22px] lg:pt-5 lg:shadow-none"
       data-car-pickup-return-section
     >
       {showSectionHeading ? (
         <Heading
           level={sectionHeadingLevel}
-          className="hidden lg:block lg:text-[20px] lg:font-semibold lg:leading-[26px] lg:tracking-[-0.2px] lg:text-[#192024]"
+          className="hidden lg:block lg:text-[16px] lg:font-semibold lg:leading-6 lg:tracking-[-0.1px] lg:text-[#192024]"
         >
           {copy("carDetails.pickupReturn")}
         </Heading>
