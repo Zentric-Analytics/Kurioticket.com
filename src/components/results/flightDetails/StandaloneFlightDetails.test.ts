@@ -1142,7 +1142,8 @@ test("desktop selected deal drives fare information and checkout while the radio
 });
 
 
-test("Flight Details invalidates shared saved-flight result state after account mutations", () => {
-  assert.match(client, /invalidateSavedFlightsClientCache/);
-  assert.match(client, /setSavedFlightBackendId\(null\); invalidateSavedFlightsClientCache\(\)/);
+test("Flight Details invalidates shared saved-flight result state after account mutations", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  assert.match(source, /invalidateSavedFlightsClientCache/);
+  assert.match(source, /setSavedFlightBackendId\(null\); invalidateSavedFlightsClientCache\(\)/);
 });
