@@ -203,7 +203,10 @@ test("desktop car details use the production hero, toolbar context, and balanced
   assert.match(heroSource, /lg:max-w-\[900px\] lg:bg-\[#F5F7FB\]/);
   assert.match(heroSource, /sizes={reserveMobileControlSafeZone \? "900px" : "760px"}/);
   assert.match(heroSource, /data-car-details-desktop-identity-row/);
-  assert.match(heroSource, /lg:max-w-\[900px\] lg:justify-center lg:text-center/);
+  assert.match(
+    heroSource,
+    /!reserveMobileControlSafeZone \? \([\s\S]*?data-car-details-desktop-identity-row/,
+  );
   assert.match(heroSource, /data-car-details-desktop-actions/);
   assert.doesNotMatch(heroSource, /data-car-details-desktop-back/);
   assert.doesNotMatch(heroSource, /data-car-details-desktop-hero-actions/);
@@ -216,6 +219,18 @@ test("desktop car details use the production hero, toolbar context, and balanced
 
   assert.match(clientSource, /data-car-details-desktop-sticky-controls/);
   assert.match(clientSource, /data-car-details-desktop-sticky-context/);
+  assert.match(
+    clientSource,
+    /pointer-events-none absolute left-1\/2 top-1\/2 hidden w-\[52%\] max-w-\[34rem\] -translate-x-1\/2 -translate-y-1\/2 text-center lg:block/,
+  );
+  assert.match(
+    clientSource,
+    /text-\[15px\] font-extrabold leading-\[19px\] tracking-\[-0\.18px\]/,
+  );
+  assert.match(
+    clientSource,
+    /mt-1 truncate text-\[10px\] font-bold uppercase leading-3 tracking-\[0\.14em\]/,
+  );
   assert.match(clientSource, /data-car-details-desktop-back-link/);
   assert.match(
     clientSource,
