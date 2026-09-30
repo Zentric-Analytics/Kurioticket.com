@@ -40,7 +40,7 @@ export function CarDetailsSectionNav({
     <div
       role="tablist"
       aria-label={labels.navigation}
-      className="sticky top-[var(--car-details-mobile-header-boundary)] z-30 mt-0 flex w-full items-stretch border-b border-slate-200 bg-[#F5F7FB] lg:top-16 lg:mt-1 lg:justify-between lg:gap-2 lg:bg-white"
+      className="sticky top-[var(--car-details-mobile-header-boundary)] z-30 mt-0 flex w-full items-stretch border-b border-slate-200 bg-[#F5F7FB] lg:top-16 lg:mt-3 lg:min-h-14 lg:justify-between lg:gap-2 lg:bg-[#F5F7FB]"
       data-car-details-section-nav
     >
       {tabs.map((tab, index) => {
@@ -59,7 +59,7 @@ export function CarDetailsSectionNav({
             tabIndex={selected ? 0 : -1}
             onClick={() => onTabChange(tab.id)}
             onKeyDown={(event) => handleKeyDown(event, index)}
-            className={`car-details-native-tab-label focus-ring relative inline-flex min-h-12 min-w-0 items-center justify-center whitespace-nowrap px-0.5 font-sans text-[12px] font-semibold leading-[normal] tracking-normal transition-colors min-[390px]:text-[13px] lg:w-auto lg:flex-1 lg:px-2 lg:text-sm lg:font-bold lg:leading-normal ${tab.id === "compare" ? "w-[32%]" : tab.id === "pickup" ? "w-[43%]" : "w-[25%]"} ${selected ? "text-[#075EE8] lg:text-blue" : "text-[#475569] lg:hover:text-slate-950"}`}
+            className={`car-details-native-tab-label focus-ring relative inline-flex min-h-12 min-w-0 items-center justify-center whitespace-nowrap px-0.5 font-sans text-[12px] font-semibold leading-[normal] tracking-normal transition-colors min-[390px]:text-[13px] lg:min-h-14 lg:w-auto lg:flex-1 lg:px-3 lg:text-[15px] lg:font-semibold lg:leading-normal ${tab.id === "compare" ? "w-[32%]" : tab.id === "pickup" ? "w-[43%]" : "w-[25%]"} ${selected ? "text-[#075EE8] lg:text-[#075EE8]" : "text-[#475569] lg:text-[#475569] lg:hover:text-[#071A48]"}`}
           >
             {tab.id === "compare" && labels.mobileCompare ? (
               <>
@@ -70,7 +70,7 @@ export function CarDetailsSectionNav({
               tab.label
             )}
             <span
-              className={`absolute inset-x-2 bottom-0 h-0.5 bg-[#075EE8] transition-opacity lg:bg-blue ${selected ? "opacity-100" : "opacity-0"}`}
+              className={`absolute inset-x-2 bottom-0 h-0.5 bg-[#075EE8] transition-opacity lg:inset-x-6 lg:h-[3px] lg:rounded-full ${selected ? "opacity-100" : "opacity-0"}`}
               aria-hidden="true"
             />
           </button>

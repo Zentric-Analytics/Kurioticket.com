@@ -84,7 +84,8 @@ test("source contract uses a desktop summary and a mobile safe-area booking dock
 
   const summaryRenders = clientSource.match(/<BookingSummary\b/g) ?? [];
   assert.equal(summaryRenders.length, 1);
-  assert.match(clientSource, /hidden self-start lg:sticky lg:top-24 lg:block/);
+  assert.match(clientSource, /data-car-details-booking-rail/);
+  assert.match(clientSource, /"hidden self-start lg:block"/);
   assert.match(
     clientSource,
     /grid items-start gap-5 lg:grid-cols-\[minmax\(0,1fr\)_320px\].*xl:grid-cols-\[minmax\(0,1fr\)_340px\]/,
@@ -144,7 +145,7 @@ test("standalone details use persistent mobile controls with native-ordered hero
     new URL("./CarDetailsSectionNav.tsx", import.meta.url),
     "utf8",
   ).replace(/\s+/g, " ");
-  assert.match(navSource, /bg-\[#F5F7FB\].*lg:bg-white/);
+  assert.match(navSource, /bg-\[#F5F7FB\].*lg:bg-\[#F5F7FB\]/);
   assert.match(navSource, /mobileCompare/);
   assert.match(navSource, /role="tablist"/);
   assert.match(navSource, /ArrowLeft/);
@@ -197,25 +198,24 @@ test("standalone car details keep the tabs but hide duplicate desktop section he
   assert.match(pickup, /carDetails\.pickupReturn/);
 });
 
-test("desktop car details keep controls outside the image and rebalance amenities", () => {
+test("desktop car details use the production hero, toolbar context, and balanced amenities", () => {
   assert.match(heroSource, /data-car-details-desktop-centered-image/);
-  assert.match(heroSource, /lg:max-w-\[760px\]/);
-  assert.match(heroSource, /sizes="760px" fit="contain"/);
+  assert.match(heroSource, /lg:max-w-\[900px\] lg:bg-\[#F5F7FB\]/);
+  assert.match(heroSource, /sizes={reserveMobileControlSafeZone \? "900px" : "760px"}/);
   assert.match(heroSource, /data-car-details-desktop-identity-row/);
+  assert.match(heroSource, /lg:max-w-\[900px\] lg:justify-center lg:text-center/);
   assert.match(heroSource, /data-car-details-desktop-actions/);
   assert.doesNotMatch(heroSource, /data-car-details-desktop-back/);
   assert.doesNotMatch(heroSource, /data-car-details-desktop-hero-actions/);
   assert.match(heroSource, /\[&_h1\]:truncate/);
   assert.match(
     heroSource,
-    /data-car-details-specifications[\s\S]*?lg:grid-cols-\[minmax\(0,320px\)_minmax\(0,320px\)\][\s\S]*?lg:gap-x-\[120px\]/,
+    /data-car-details-specifications[\s\S]*?lg:max-w-\[900px\][\s\S]*?lg:grid-cols-2[\s\S]*?lg:gap-x-16/,
   );
-  assert.match(
-    heroSource,
-    /\[&_button\]:!bg-\[#E7EBF1\]/,
-  );
+  assert.doesNotMatch(heroSource, /position: fixed !important/);
 
   assert.match(clientSource, /data-car-details-desktop-sticky-controls/);
+  assert.match(clientSource, /data-car-details-desktop-sticky-context/);
   assert.match(clientSource, /data-car-details-desktop-back-link/);
   assert.match(
     clientSource,
@@ -259,7 +259,7 @@ test("Location map card keeps a balanced mobile viewport and fixed directions ro
   );
   assert.match(
     location,
-    /className="block h-\[216px\] w-full shrink-0 border-0 sm:h-\[220px\] lg:h-\[240px\]"/,
+    /className="block h-\[216px\] w-full shrink-0 border-0 sm:h-\[220px\] lg:h-\[320px\]"/,
   );
   assert.match(
     location,
