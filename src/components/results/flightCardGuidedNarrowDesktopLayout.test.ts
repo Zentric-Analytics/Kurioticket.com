@@ -70,7 +70,15 @@ test("wide and medium desktop cards retain their side fare columns", () => {
     ruleBody(globalsCss, ".flight-card-body", mediumQueryStart),
     /grid-template-columns:\s*minmax\(0, 1fr\) 180px/,
   );
-  const desktopDetailsRule = ruleBody(globalsCss, ".flight-card-details", globalsCss.indexOf(".flight-card-details {", globalsCss.indexOf(".flight-card-price")));
+  const desktopDetailsLayoutStart = globalsCss.indexOf(
+    ".flight-card-details {",
+    globalsCss.indexOf(".flight-card-provider-price,\n.flight-card-details"),
+  );
+  const desktopDetailsRule = ruleBody(
+    globalsCss,
+    ".flight-card-details",
+    desktopDetailsLayoutStart,
+  );
   assert.match(
     desktopDetailsRule,
     /grid-template-columns:\s*minmax\(0, 1\.3fr\)\s*minmax\(0, 0\.9fr\)\s*minmax\(0, 1\.2fr\)/,
