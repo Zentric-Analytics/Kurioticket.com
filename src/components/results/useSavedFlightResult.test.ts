@@ -43,3 +43,10 @@ test("saved Flight result state revalidates after cross-surface invalidation", (
   assert.match(source, /clearSavedFlightsCache\(owner\)/);
   assert.match(source, /loadSavedFlights\(owner\)/);
 });
+
+
+test("saved Flight cache invalidation survives unmounted result cards", () => {
+  assert.match(source, /getSavedFlightsInvalidationRevision/);
+  assert.match(source, /savedFlightsLoadedInvalidationRevision/);
+  assert.match(source, /savedFlightsLoadedInvalidationRevision !== invalidationRevision/);
+});
