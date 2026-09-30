@@ -66,6 +66,10 @@ test("CarDetailsExperience is content-only and owns the standalone sticky deskto
   );
   assert.match(
     experienceSource,
+    /pointer-events-none absolute left-1\/2 top-1\/2 hidden w-\[52%\] max-w-\[34rem\]/,
+  );
+  assert.match(
+    experienceSource,
     /<CarHeroActions[\s\S]*?desktop/,
   );
   assert.match(

@@ -291,32 +291,34 @@ export function CarDetailsExperience({
           className="hidden h-16 w-full items-center border-b border-transparent bg-[#F5F7FB] lg:sticky lg:top-0 lg:z-40 lg:flex"
           data-car-details-desktop-sticky-controls
         >
-          <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-5">
-            <div>{desktopBackControl}</div>
+          <div className="relative flex w-full items-center justify-between">
+            <div className="relative z-10">{desktopBackControl}</div>
             <div
-              className="hidden min-w-0 text-center lg:block"
+              className="pointer-events-none absolute left-1/2 top-1/2 hidden w-[52%] max-w-[34rem] -translate-x-1/2 -translate-y-1/2 text-center lg:block"
               data-car-details-desktop-sticky-context
             >
-              <p className="truncate text-[14px] font-bold leading-5 text-[#071A48]">
+              <p className="truncate text-[15px] font-extrabold leading-[19px] tracking-[-0.18px] text-[#071A48]">
                 {car.modelName}
                 {car.orSimilar ? (
-                  <span className="ms-1.5 font-medium text-[#56658E]">
+                  <span className="ms-1.5 text-[12px] font-medium leading-4 tracking-normal text-[#56658E]">
                     or similar
                   </span>
                 ) : null}
               </p>
-              <p className="mt-0.5 truncate text-[10px] font-bold uppercase leading-[14px] tracking-[0.12em] text-[#075EE8]">
+              <p className="mt-1 truncate text-[10px] font-bold uppercase leading-3 tracking-[0.14em] text-[#075EE8]">
                 {car.categoryLabel}
               </p>
             </div>
-            <CarHeroActions
-              car={car}
-              isSaved={isSaved}
-              toggleSavedCar={toggleSavedCar}
-              shareCar={shareCar}
-              copy={copy}
-              desktop
-            />
+            <div className="relative z-10">
+              <CarHeroActions
+                car={car}
+                isSaved={isSaved}
+                toggleSavedCar={toggleSavedCar}
+                shareCar={shareCar}
+                copy={copy}
+                desktop
+              />
+            </div>
           </div>
         </div>
       ) : null}
