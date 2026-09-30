@@ -15,7 +15,16 @@ export function HotelReviewsSection({
   if (variant === "desktop") return (
     <section id="hotel-reviews" className="scroll-mt-[84px] border-b border-[#d9dfe2] py-5 text-[#192024]" aria-labelledby="hotel-reviews-heading" data-hotel-reviews-section>
       <h2 id="hotel-reviews-heading" tabIndex={-1} className="text-xl font-semibold leading-6">Guest reviews</h2>
-      {hasVerifiedReview ? <div className="mt-3 flex items-center gap-4"><strong className="inline-flex min-h-14 items-center justify-center rounded-lg bg-[#192024] px-4 text-2xl font-semibold text-white">{score}</strong><div><p className="text-base font-semibold">{label}</p><p className="text-sm text-[#59636a]">{countText}</p>{source ? <p className="mt-1 text-xs text-[#59636a]">Source: {source}</p> : null}</div></div> : <p className="mt-3 text-sm leading-6 text-[#59636a]">Verified guest reviews are not connected for this property yet.</p>}
+      {hasVerifiedReview ? (
+        <div className="mt-3 flex max-w-[520px] items-center gap-4 rounded-xl border border-[#d9dfe2] bg-white p-4 shadow-[0_2px_10px_rgba(25,32,36,0.05)]" data-desktop-hotel-review-card>
+          <strong className="inline-flex h-16 min-w-20 items-center justify-center rounded-lg bg-[#192024] px-3 text-[22px] font-semibold leading-none text-white tabular-nums">{score}</strong>
+          <div className="min-w-0">
+            <p className="text-[16px] font-semibold leading-5 text-[#192024]">{label}</p>
+            <p className="mt-1 text-[13px] leading-5 text-[#59636a]">{countText}</p>
+            {source ? <p className="mt-1 text-[12px] leading-4 text-[#78838a]">Source: {source}</p> : null}
+          </div>
+        </div>
+      ) : <p className="mt-3 text-sm leading-6 text-[#59636a]">Verified guest reviews are not connected for this property yet.</p>}
     </section>
   );
   const scoreParts = score?.split("/").map((part) => part.trim()) ?? [];
