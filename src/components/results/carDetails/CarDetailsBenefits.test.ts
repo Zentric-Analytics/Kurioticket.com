@@ -188,7 +188,7 @@ test("standalone details use persistent mobile controls with native-ordered hero
 
 test("standalone car details restore polished Hotels-style section headings", () => {
   assert.match(clientSource, /<CarDetailsSectionNav activeTab={activeTab}/);
-  assert.match(clientSource, /compare: copy\("carDetails\.comparePrices"\)/);
+  assert.match(clientSource, /compare: "Compare deals"/);
   assert.match(clientSource, /pickup: copy\("carDetails\.pickupReturn"\)/);
   assert.match(clientSource, /location: copy\("carDetails\.location"\)/);
   assert.doesNotMatch(clientSource, /showSectionHeading={false}/);
@@ -200,7 +200,8 @@ test("standalone car details restore polished Hotels-style section headings", ()
     "function CarLocationSection",
   );
   assert.match(comparison, /showSectionHeading \? \(/);
-  assert.match(comparison, /carDetails\.comparePrices/);
+  assert.match(comparison, /Compare deals/);
+  assert.doesNotMatch(comparison, /carDetails\.comparePrices/);
   assert.match(
     comparison,
     /lg:text-\[20px\] lg:font-semibold lg:leading-\[26px\] lg:tracking-\[-0\.2px\] lg:text-\[#192024\]/,
@@ -239,14 +240,22 @@ test("standalone car details restore polished Hotels-style section headings", ()
   );
 });
 
-test("desktop car details use the production hero, toolbar context, and balanced amenities", () => {
+test("desktop car details place the polished identity below the hero and keep compact controls balanced", () => {
   assert.match(heroSource, /data-car-details-desktop-centered-image/);
   assert.match(heroSource, /lg:max-w-\[900px\] lg:bg-\[#F5F7FB\]/);
   assert.match(heroSource, /sizes={reserveMobileControlSafeZone \? "900px" : "760px"}/);
   assert.match(heroSource, /data-car-details-desktop-identity-row/);
   assert.match(
     heroSource,
-    /!reserveMobileControlSafeZone \? \([\s\S]*?data-car-details-desktop-identity-row/,
+    /data-standalone={reserveMobileControlSafeZone \? "true" : "false"}/,
+  );
+  assert.match(
+    heroSource,
+    /reserveMobileControlSafeZone \? "lg:mx-auto lg:max-w-\[900px\] lg:justify-center lg:text-center" : "lg:justify-between"/,
+  );
+  assert.match(
+    heroSource,
+    /!reserveMobileControlSafeZone && desktopOverlay \? \(/,
   );
   assert.match(heroSource, /data-car-details-desktop-actions/);
   assert.doesNotMatch(heroSource, /data-car-details-desktop-back/);
@@ -260,20 +269,21 @@ test("desktop car details use the production hero, toolbar context, and balanced
 
   assert.match(clientSource, /data-car-details-desktop-controls/);
   assert.doesNotMatch(clientSource, /data-car-details-desktop-sticky-controls/);
-  assert.match(clientSource, /data-car-details-desktop-context/);
+  assert.doesNotMatch(clientSource, /data-car-details-desktop-context/);
   assert.match(clientSource, /desktopSectionBarStuck/);
+  assert.match(clientSource, /desktopBackControl={desktopBackControl}/);
   assert.match(clientSource, /data-car-details-utility-placement="tabs"/);
   assert.match(
     clientSource,
-    /pointer-events-none absolute left-1\/2 top-1\/2 hidden w-\[52%\] max-w-\[34rem\] -translate-x-1\/2 -translate-y-1\/2 text-center lg:block/,
+    /lg:text-\[24px\] lg:font-bold lg:leading-\[30px\] lg:tracking-\[-0\.35px\] lg:text-\[#192024\]/,
   );
   assert.match(
     clientSource,
-    /text-\[15px\] font-extrabold leading-\[19px\] tracking-\[-0\.18px\]/,
+    /lg:text-\[14px\] lg:font-normal lg:leading-\[22px\] lg:text-\[#59636A\]/,
   );
   assert.match(
     clientSource,
-    /mt-1 truncate text-\[10px\] font-bold uppercase leading-3 tracking-\[0\.14em\]/,
+    /lg:mt-1\.5 lg:text-\[11px\] lg:leading-4 lg:tracking-\[0\.14em\]/,
   );
   assert.match(clientSource, /data-car-details-desktop-back-link/);
   assert.match(
