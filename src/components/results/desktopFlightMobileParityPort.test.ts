@@ -86,6 +86,12 @@ test("desktop Flight result cards use the lighter hierarchy without changing Mob
   assert.match(globals, /\.flight-card-view-button \{[\s\S]*width: 100%;[\s\S]*min-width: 0;[\s\S]*justify-content: flex-end;[\s\S]*padding-left: 0;[\s\S]*padding-right: 0;/);
   assert.doesNotMatch(card, /flight-card-detail-item flex-nowrap whitespace-nowrap border-r/);
   assert.match(card, /<MobileFlightCard/);
+  assert.match(card, /data-flight-card-actions/);
+  assert.match(card, /aria-pressed=\{isSaved\}/);
+  assert.match(card, /<Heart[\s\S]*fill=\{isSaved \? "currentColor" : "none"\}/);
+  assert.match(card, /<Share2 size=\{18\}/);
+  assert.match(card, /navigator\.share/);
+  assert.match(card, /navigator\.clipboard\.writeText/);
 });
 
 test("desktop Flight Details carries fare typography, underline-only tabs, and price readiness", () => {
