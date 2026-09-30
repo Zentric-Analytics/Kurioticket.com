@@ -480,13 +480,9 @@ export function CarDetailsExperience({
             pickupSection
           )}
         </div>
-        {primaryOffer && (
+        {primaryOffer && presentation !== "standalone-content" ? (
           <aside
-            className={
-              presentation === "standalone-content"
-                ? "hidden self-start lg:block"
-                : "self-start lg:sticky lg:top-24"
-            }
+            className="self-start lg:sticky lg:top-24"
             data-car-details-booking-rail
           >
             <BookingSummary
@@ -495,11 +491,26 @@ export function CarDetailsExperience({
               price={price}
               copy={copy}
               action={effectivePrimaryAction}
-              showRentalBreakdown={presentation !== "standalone-content"}
+              showRentalBreakdown
             />
           </aside>
-        )}
+        ) : null}
       </div>
+      {presentation === "standalone-content" && primaryOffer ? (
+        <aside
+          className="hidden lg:block"
+          data-car-details-bottom-booking-bar
+        >
+          <BookingSummary
+            offer={primaryOffer}
+            days={days}
+            price={price}
+            copy={copy}
+            action={effectivePrimaryAction}
+            showRentalBreakdown={false}
+          />
+        </aside>
+      ) : null}
       {presentation === "standalone-content" && primaryOffer ? (
         <MobileBookingDock
           offer={primaryOffer}
@@ -615,7 +626,7 @@ export function CarDetailsClient({
   return (
     <main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:pb-0">
       <CarsRouteLoadingOverlay active={mobileResultsPending} />
-      <section className="bg-transparent lg:pb-16" data-car-details-desktop-surface>
+      <section className="bg-transparent lg:pb-0" data-car-details-desktop-surface>
         <div className="page-shell py-0 lg:py-6">
           <div>
             <CarDetailsExperience

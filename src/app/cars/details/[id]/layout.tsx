@@ -35,21 +35,16 @@ export default function CarDetailsLayout({
             order: 1;
           }
 
-          [data-car-details-booking-rail] {
-            order: 2;
-            position: sticky !important;
-            bottom: 0;
-            z-index: 36;
+          [data-car-details-bottom-booking-bar] {
             width: 100vw;
+            margin-top: 3rem;
             margin-left: calc(50% - 50vw);
-            padding: 0.75rem 1.5rem;
+            padding: 0.85rem 1.5rem;
             border-top: 1px solid rgba(216, 225, 236, 0.92);
-            background: rgba(255, 255, 255, 0.97);
-            box-shadow: 0 -8px 26px rgba(15, 23, 42, 0.08);
-            backdrop-filter: blur(14px);
+            background: #FFFFFF;
           }
 
-          [data-car-details-booking-rail] > div {
+          [data-car-details-bottom-booking-bar] > div {
             display: grid;
             grid-template-columns: minmax(180px, auto) minmax(0, 1fr) minmax(220px, 280px);
             grid-template-rows: auto auto;
@@ -64,7 +59,7 @@ export default function CarDetailsLayout({
             box-shadow: none;
           }
 
-          [data-car-details-booking-rail] > div > p:nth-child(1) {
+          [data-car-details-bottom-booking-bar] > div > p:nth-child(1) {
             grid-column: 1;
             grid-row: 2;
             margin: 0;
@@ -73,7 +68,7 @@ export default function CarDetailsLayout({
             color: #56658E;
           }
 
-          [data-car-details-booking-rail] > div > p:nth-child(2) {
+          [data-car-details-bottom-booking-bar] > div > p:nth-child(2) {
             grid-column: 1;
             grid-row: 1;
             margin: 0;
@@ -82,9 +77,9 @@ export default function CarDetailsLayout({
             color: #071A48;
           }
 
-          [data-car-details-booking-rail] > div > a,
-          [data-car-details-booking-rail] > div > button,
-          [data-car-details-booking-rail] > div > div {
+          [data-car-details-bottom-booking-bar] > div > a,
+          [data-car-details-bottom-booking-bar] > div > button,
+          [data-car-details-bottom-booking-bar] > div > div {
             grid-column: 3;
             grid-row: 1 / span 2;
             width: 100%;

@@ -24,7 +24,7 @@ const successfulMainWrapper =
   '<main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:pb-0">';
 const whiteSection = '<section className="border-b border-border bg-white">';
 const successfulSection =
-  '<section className="bg-transparent lg:pb-16" data-car-details-desktop-surface>';
+  '<section className="bg-transparent lg:pb-0" data-car-details-desktop-surface>';
 
 function assertOrdered(source: string, parts: string[]) {
   let previous = -1;
