@@ -175,11 +175,19 @@ test("location and stay-fit facts use metadata without invented distances", () =
 });
 
 
-test("desktop guest reviews use the polished compact review card", () => {
-  assert.match(reviews, /data-desktop-hotel-review-card/);
-  assert.match(reviews, /max-w-\[520px\]/);
-  assert.match(reviews, /rounded-xl border border-\[#d9dfe2\] bg-white p-4/);
-  assert.match(reviews, /h-16 min-w-20/);
+test("desktop guest reviews use a desktop review layout with provider-supplied guest details", () => {
+  assert.match(desktop, /hotelName=\{props\.hotelName\}/);
+  assert.match(desktop, /sentiment=\{props\.providerDetails\?\.reviews\?\.sentiment\}/);
+  assert.match(desktop, /quotes=\{props\.providerDetails\?\.reviews\?\.quotes\}/);
+  assert.match(reviews, /Reviews of \$\{hotelName\}/);
+  assert.match(reviews, /data-desktop-hotel-reviews-layout/);
+  assert.match(reviews, /data-desktop-hotel-review-overview/);
+  assert.match(reviews, /data-desktop-hotel-guests-say/);
+  assert.match(reviews, />Guests say</);
+  assert.match(reviews, /hasProviderReviewDetails \? "grid-cols-\[minmax\(220px,0\.8fr\)_minmax\(0,1\.35fr\)\]" : "grid-cols-1"/);
+  assert.match(reviews, /suppliedQuotes\.map/);
+  assert.doesNotMatch(reviews, /Wonderful|Mediocre|Poor|3650 verified ratings|Guests consistently praised/);
+  assert.doesNotMatch(reviews, /data-desktop-hotel-review-card/);
 });
 
 test("desktop related hotels are capped at eight actual cards", () => {
