@@ -381,60 +381,62 @@ function FlightFareAction({
   return (
     <div
       className={cn(
-        "flight-card-fare-action flex flex-col items-end justify-center border-l border-[#D8E1EC] text-right",
+        "flight-card-fare-action flex flex-col items-end justify-end border-l border-[#D8E1EC] text-right",
         className,
       )}
     >
-      <div
-        className={cn(
-          "flight-card-price-frame min-w-0 text-right",
-          "flex flex-col items-end justify-center",
-        )}
-      >
+      <div className="flight-card-fare-commerce mt-auto flex w-full flex-col items-end">
         <div
           className={cn(
-            "flight-card-price-value font-semibold leading-tight tracking-[-0.025em] text-slate-950",
-            "flight-card-price",
+            "flight-card-price-frame min-w-0 text-right",
+            "flex flex-col items-end justify-center",
           )}
-          aria-label={priceAriaLabel}
-          title={priceTitle}
-          data-price-size={priceSize}
-          dir="ltr"
         >
-          {formattedPrice}
+          <div
+            className={cn(
+              "flight-card-price-value font-semibold leading-tight tracking-[-0.025em] text-slate-950",
+              "flight-card-price",
+            )}
+            aria-label={priceAriaLabel}
+            title={priceTitle}
+            data-price-size={priceSize}
+            dir="ltr"
+          >
+            {formattedPrice}
+          </div>
         </div>
+        {onAction ? (
+          <button
+            type="button"
+            onClick={onAction}
+            aria-label={viewFlightAriaLabel}
+            className="flight-card-view-button mt-2 inline-flex min-h-9 shrink-0 items-center justify-end gap-1 whitespace-nowrap text-sm font-semibold text-[#004BB8] transition hover:text-[#064CF7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+          >
+            <span>{viewFlightLabel}</span>
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </button>
+        ) : detailsHref ? (
+          <Link
+            href={detailsHref}
+            aria-label={viewFlightAriaLabel}
+            className="flight-card-view-button mt-2 inline-flex min-h-9 shrink-0 items-center justify-end gap-1 whitespace-nowrap text-sm font-semibold text-[#004BB8] transition hover:text-[#064CF7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+          >
+            <span>{viewFlightLabel}</span>
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+            aria-label={viewFlightAriaLabel}
+            className="flight-card-view-button mt-2 inline-flex min-h-9 cursor-not-allowed items-center justify-end gap-1 whitespace-nowrap text-sm font-semibold text-slate-400"
+          >
+            <span>{viewFlightLabel}</span>
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </button>
+        )}
       </div>
-      {onAction ? (
-        <button
-          type="button"
-          onClick={onAction}
-          aria-label={viewFlightAriaLabel}
-          className="flight-card-view-button inline-flex min-h-9 shrink-0 items-center justify-end gap-1 whitespace-nowrap text-sm font-semibold text-[#004BB8] transition hover:text-[#064CF7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
-        >
-          <span>{viewFlightLabel}</span>
-          <ChevronRight className="h-4 w-4" aria-hidden="true" />
-        </button>
-      ) : detailsHref ? (
-        <Link
-          href={detailsHref}
-          aria-label={viewFlightAriaLabel}
-          className="flight-card-view-button inline-flex min-h-9 shrink-0 items-center justify-end gap-1 whitespace-nowrap text-sm font-semibold text-[#004BB8] transition hover:text-[#064CF7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
-        >
-          <span>{viewFlightLabel}</span>
-          <ChevronRight className="h-4 w-4" aria-hidden="true" />
-        </Link>
-      ) : (
-        <button
-          type="button"
-          disabled
-          aria-disabled="true"
-          aria-label={viewFlightAriaLabel}
-          className="flight-card-view-button inline-flex min-h-9 cursor-not-allowed items-center justify-end gap-1 whitespace-nowrap text-sm font-semibold text-slate-400"
-        >
-          <span>{viewFlightLabel}</span>
-          <ChevronRight className="h-4 w-4" aria-hidden="true" />
-        </button>
-      )}
     </div>
   );
 }
