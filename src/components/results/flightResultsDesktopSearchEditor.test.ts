@@ -123,17 +123,27 @@ test("fare windows are bounded and hidden for multi-city", () => {
 
 
 test("desktop Multi-city stays on Results and renders the shared multi-city editor", () => {
-  assert.doesNotMatch(
-    source,
-    /handleTripTypeChange[\s\S]*router\.push\(\`\/flights\?/,
+  const tripTypeStart = source.indexOf("function handleTripTypeChange");
+  const stickyStart = source.indexOf("const expandStickySearch");
+  const submitStart = source.indexOf("function handleCompactSearchSubmit");
+  const renderStart = source.indexOf('placement === "desktop" && tripTypeInput === "multi-city"');
+  const tripTypeHandler = source.slice(tripTypeStart, stickyStart);
+  const stickyHandlers = source.slice(stickyStart, submitStart);
+  const multiCityEditor = source.slice(renderStart);
+
+  assert.doesNotMatch(tripTypeHandler, /router\.push\(\`\/flights\?/);
+  assert.doesNotMatch(stickyHandlers, /router\.push\(\`\/flights\?/);
+  assert.match(
+    stickyHandlers,
+    /tripTypeInput === "multi-city"[\s\S]*searchFormRef\.current\?\.scrollIntoView/,
   );
   assert.match(
-    source,
-    /placement === "desktop" && tripTypeInput === "multi-city"[\s\S]*<MultiCityFlightEditor/,
+    multiCityEditor,
+    /<MultiCityFlightEditor[\s\S]*minimumDate=\{formatDateValue\(new Date\(\)\)\}[\s\S]*presentation="results"[\s\S]*onAirportValidityChange=\{setMultiCityAirportsValid\}/,
   );
   assert.match(
-    source,
-    /<MultiCityFlightEditor[\s\S]*presentation="results"[\s\S]*onAirportValidityChange=\{setMultiCityAirportsValid\}/,
+    multiCityEditor,
+    /ref=\{travelerCabinWrapRef\}[\s\S]*aria-label=\{t\("travelersAndCabinClass"\)\}[\s\S]*<TravelerCabinPopover/,
   );
   assert.match(
     source,
