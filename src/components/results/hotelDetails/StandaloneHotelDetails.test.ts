@@ -142,6 +142,8 @@ test("desktop external Hotel View deal reserves a new tab before the async provi
 });
 
 
-test("standalone Hotel Details keeps the mobile-web white page canvas on desktop", () => {
-  assert.match(client, /<main className="flex-1 bg-white sm:bg-\[#f8fafc\] lg:bg-white">/);
+test("standalone Hotel Details matches the Flight Details desktop page canvas", () => {
+  assert.match(client, /<main className="flex-1 bg-white sm:bg-\[#f8fafc\] lg:bg-\[#F7F9FC\]">/);
+  assert.match(desktopStyles, /\.desktop \{ color: #192024; background: #F7F9FC;/);
+  assert.match(pageStates, /lg:bg-\[#F7F9FC\]/);
 });
