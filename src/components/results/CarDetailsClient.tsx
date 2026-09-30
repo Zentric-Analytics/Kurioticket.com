@@ -366,7 +366,7 @@ export function CarDetailsExperience({
       copy={copy}
       sectionHeadingLevel={sectionHeadingLevel}
       itemHeadingLevel={itemHeadingLevel}
-      showSectionHeading={presentation !== "standalone-content"}
+      showSectionHeading
     />
   );
   return (
@@ -561,7 +561,8 @@ export function CarDetailsExperience({
                       copy={copy}
                       locale={locale}
                       headingLevel={sectionHeadingLevel}
-                      showSectionHeading={false}
+                      showSectionHeading
+                      showDesktopOfferList
                     />
                   ) : null}
                 </section>
@@ -589,7 +590,7 @@ export function CarDetailsExperience({
                     locale={locale}
                     copy={copy}
                     headingLevel={sectionHeadingLevel}
-                    showSectionHeading={false}
+                    showSectionHeading
                   />
                 </section>
               </div>
@@ -797,6 +798,7 @@ function CarPriceComparisonSection({
   locale,
   headingLevel,
   showSectionHeading = true,
+  showDesktopOfferList = false,
 }: {
   car: NormalizedCarResult;
   search: CarSearchParams;
@@ -809,6 +811,7 @@ function CarPriceComparisonSection({
   locale: string;
   headingLevel: HeadingLevel;
   showSectionHeading?: boolean;
+  showDesktopOfferList?: boolean;
 }) {
   const selectedOffer =
     offers.find((candidate) => candidate.id === selectedOfferId) ?? offers[0];
@@ -850,7 +853,7 @@ function CarPriceComparisonSection({
       {showSectionHeading ? (
         <Heading
           level={headingLevel}
-          className="hidden text-xs font-bold leading-[18px] tracking-[-0.2px] text-slate-950 lg:block lg:text-xl lg:font-extrabold lg:leading-normal lg:tracking-tight"
+          className="hidden lg:block lg:text-[20px] lg:font-semibold lg:leading-[26px] lg:tracking-[-0.2px] lg:text-[#192024]"
         >
           <span className="lg:hidden">Compare deals</span>
           <span className="hidden lg:inline">
@@ -858,14 +861,14 @@ function CarPriceComparisonSection({
           </span>
         </Heading>
       ) : null}
-      <p className={`mt-1 text-[11px] font-medium leading-4 text-slate-600 lg:text-sm lg:leading-normal ${showSectionHeading ? "" : "lg:mt-0"}`}>
+      <p className={`mt-1 text-[11px] font-medium leading-4 text-slate-600 lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42] ${showSectionHeading ? "lg:mt-3" : "lg:mt-0"}`}>
         {formatCarDate(search.pickupDate, locale)} –{" "}
         {formatCarDate(search.dropoffDate, locale)} · {days}{" "}
         {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
       </p>
 
       <div
-        className={`mt-5 space-y-2.5 ${showSectionHeading ? "lg:hidden" : "lg:space-y-3"}`}
+        className={`mt-5 space-y-2.5 ${showDesktopOfferList ? "lg:space-y-3" : "lg:hidden"}`}
         role="radiogroup"
         aria-label="Car deal options"
         data-mobile-car-deal-list
@@ -895,7 +898,7 @@ function CarPriceComparisonSection({
             >
               <span className="flex min-w-0 items-center justify-between gap-3">
                 {car.sandboxPresentation ? (
-                  <span className="min-w-0 flex-1 truncate text-[13px] font-bold leading-[18px] text-[#071A48]">
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-bold leading-[18px] text-[#071A48] lg:text-[14px] lg:font-semibold lg:leading-[22px] lg:text-[#192024]">
                     {sandboxProvider}
                   </span>
                 ) : (
@@ -934,7 +937,7 @@ function CarPriceComparisonSection({
                     facts.map(({ label, Icon }) => (
                       <span
                         key={label}
-                        className="inline-flex shrink-0 items-center gap-[3px] whitespace-nowrap text-[10.5px] font-semibold leading-[15px] text-slate-700 lg:gap-1.5 lg:text-xs"
+                        className="inline-flex shrink-0 items-center gap-[3px] whitespace-nowrap text-[10.5px] font-semibold leading-[15px] text-slate-700 lg:gap-1.5 lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]"
                       >
                         <Icon
                           size={14}
@@ -967,7 +970,7 @@ function CarPriceComparisonSection({
       </div>
 
       {selectedOffer ? (
-        <div className={`mt-5 hidden rounded-[14px] border border-[#075EE8] bg-white px-4 py-4 ring-1 ring-[#075EE8]/10 ${showSectionHeading ? "lg:block" : "lg:hidden"}`}>
+        <div className={`mt-5 hidden rounded-[14px] border border-[#075EE8] bg-white px-4 py-4 ring-1 ring-[#075EE8]/10 ${showDesktopOfferList ? "lg:hidden" : "lg:block"}`}>
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-6">
             <Image
               src="/brand/kurioticket-logo-primary-light-bg.svg"
@@ -1060,7 +1063,7 @@ function CarLocationSection({
       {showSectionHeading ? (
         <Heading
           level={headingLevel}
-          className="hidden text-xs font-bold leading-[18px] tracking-[-0.2px] text-slate-950 lg:block lg:text-xl lg:font-extrabold lg:leading-normal lg:tracking-tight"
+          className="hidden lg:block lg:text-[20px] lg:font-semibold lg:leading-[26px] lg:tracking-[-0.2px] lg:text-[#192024]"
         >
           {copy("carDetails.location")}
         </Heading>
@@ -1070,10 +1073,10 @@ function CarLocationSection({
           <MapPin size={18} aria-hidden="true" />
         </span>
         <div className="min-w-0 pt-0.5">
-          <p className="text-[13px] font-semibold leading-5 text-slate-800">
+          <p className="text-[13px] font-semibold leading-5 text-slate-800 lg:text-[14px] lg:font-semibold lg:leading-[22px] lg:text-[#192024]">
             {pickupLocation}
           </p>
-          <p className="text-xs leading-5 text-slate-500">
+          <p className="text-xs leading-5 text-slate-500 lg:text-[14px] lg:leading-[22px] lg:text-[#59636A]">
             {car.sandboxPresentation?.pickupLabel ??
               pickupTypeLabels[car.pickupType]}
           </p>
@@ -1127,11 +1130,11 @@ function CarLocationSection({
               className={`relative border-s-2 border-blue-200 ps-5 ${index === 0 ? "pb-6" : ""}`}
             >
               <span className="absolute -start-[7px] top-1 size-3 rounded-full bg-[#004BB8]" />
-              <p className="text-[15px] font-bold leading-[22px] text-[#071A48] lg:text-xs lg:uppercase lg:leading-normal lg:tracking-wide lg:text-slate-500">
+              <p className="text-[15px] font-bold leading-[22px] text-[#071A48] lg:text-[14px] lg:font-semibold lg:leading-[22px] lg:tracking-normal lg:text-[#192024]">
                 <span className="lg:hidden">{mobileLabel}</span>
                 <span className="hidden lg:inline">{label}</span>
               </p>
-              <p className="mt-1 flex gap-2 text-[14px] font-medium leading-5 text-[#071A48] lg:text-base lg:font-semibold lg:leading-normal lg:text-slate-900">
+              <p className="mt-1 flex gap-2 text-[14px] font-medium leading-5 text-[#071A48] lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
                 <MapPin
                   size={16}
                   className="shrink-0 text-[#004BB8]"
@@ -1139,7 +1142,7 @@ function CarLocationSection({
                 />
                 {location}
               </p>
-              <p className="mt-1 flex gap-2 text-[13px] font-normal leading-5 text-[#56658E] lg:text-xs lg:leading-normal lg:text-slate-600">
+              <p className="mt-1 flex gap-2 text-[13px] font-normal leading-5 text-[#56658E] lg:text-[14px] lg:leading-[22px] lg:text-[#59636A]">
                 <Clock3 size={16} className="shrink-0" aria-hidden="true" />
                 <time dateTime={`${date}T${time}`}>
                   {formatCarDate(date, locale)}
@@ -1162,10 +1165,10 @@ function CarLocationSection({
         ) : null}
       </div>
       <div className="mt-7">
-        <h3 className="text-[14px] font-bold leading-5 text-[#071A48] lg:text-base lg:leading-normal lg:text-slate-950">
+        <h3 className="text-[14px] font-bold leading-5 text-[#071A48] lg:text-[16px] lg:font-semibold lg:leading-[24px] lg:text-[#192024]">
           {copy("carDetails.pickupLocationDetails")}
         </h3>
-        <ul className="mt-3 list-disc space-y-2 ps-5 text-[14px] font-normal leading-5 text-[#334155] marker:text-[#075EE8] lg:leading-6 lg:text-slate-700 lg:marker:text-current">
+        <ul className="mt-3 list-disc space-y-2 ps-5 text-[14px] font-normal leading-5 text-[#334155] marker:text-[#075EE8] lg:text-[14px] lg:leading-[22px] lg:text-[#303B42] lg:marker:text-current">
           {car.pickupInstructions ? <li>{car.pickupInstructions}</li> : null}
           <li>{copy("carDetails.confirmPickupDetails")}</li>
         </ul>
@@ -1296,7 +1299,7 @@ function PickupReturnSection({
       {showSectionHeading ? (
         <Heading
           level={sectionHeadingLevel}
-          className="hidden text-xs font-bold leading-[18px] tracking-[-0.2px] text-[#020617] lg:block lg:text-xl lg:leading-normal lg:tracking-[-0.015em] lg:text-[#102A43]"
+          className="hidden lg:block lg:text-[20px] lg:font-semibold lg:leading-[26px] lg:tracking-[-0.2px] lg:text-[#192024]"
         >
           {copy("carDetails.pickupReturn")}
         </Heading>
@@ -1322,15 +1325,15 @@ function PickupReturnSection({
         ].map(([mobileLabel, label, location, date, time]) => (
           <div key={label} className="relative border-s-2 border-blue-200 ps-5">
             <span className="absolute -start-[7px] top-1 size-3 rounded-full bg-[#004BB8]" />
-            <Heading level={itemHeadingLevel} className="text-[15px] font-bold leading-[22px] text-[#071A48] lg:text-base lg:leading-normal lg:text-inherit">
+            <Heading level={itemHeadingLevel} className="text-[15px] font-bold leading-[22px] text-[#071A48] lg:text-[16px] lg:font-semibold lg:leading-[24px] lg:text-[#192024]">
               <span className="lg:hidden">{mobileLabel}</span>
               <span className="hidden lg:inline">{label}</span>
             </Heading>
-            <p className="mt-1 flex gap-2 text-[14px] font-medium leading-5 text-[#071A48] lg:text-sm lg:font-normal lg:leading-normal lg:text-inherit">
+            <p className="mt-1 flex gap-2 text-[14px] font-medium leading-5 text-[#071A48] lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
               <MapPin size={16} className="shrink-0 text-[#004BB8]" />
               {location || copy("carDetails.locationUnavailable")}
             </p>
-            <p className="mt-1 flex gap-2 text-[13px] font-normal leading-5 text-[#56658E] lg:text-sm lg:leading-normal lg:text-slate-600">
+            <p className="mt-1 flex gap-2 text-[13px] font-normal leading-5 text-[#56658E] lg:text-[14px] lg:leading-[22px] lg:text-[#59636A]">
               <Clock3 size={16} />
               <time dateTime={`${date}T${time}`}>
                 {formatCarDate(date, locale)}
@@ -1340,13 +1343,13 @@ function PickupReturnSection({
           </div>
         ))}
       </div>
-      <p className="mt-4 hidden text-sm font-medium leading-5 lg:block lg:leading-normal">
+      <p className="mt-4 hidden text-sm font-medium leading-5 lg:block lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
         {car.sandboxPresentation?.pickupLabel ??
           pickupTypeLabels[car.pickupType]}
         {car.shuttleRequired ? ` · ${copy("carDetails.shuttleRequired")}` : ""}
       </p>
       {car.pickupInstructions && (
-        <p className="mt-2 hidden text-sm font-normal leading-5 lg:block lg:leading-normal">
+        <p className="mt-2 hidden text-sm font-normal leading-5 lg:block lg:text-[14px] lg:leading-[22px] lg:text-[#303B42]">
           <strong>{copy("carDetails.pickupInstructions")}:</strong>{" "}
           {car.pickupInstructions}
         </p>
