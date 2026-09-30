@@ -732,7 +732,7 @@ function CarPriceComparisonSection({
       </p>
 
       <div
-        className="mt-5 space-y-2.5 lg:space-y-3"
+        className={`mt-5 space-y-2.5 ${showSectionHeading ? "lg:hidden" : "lg:space-y-3"}`}
         role="radiogroup"
         aria-label="Car deal options"
         data-mobile-car-deal-list
@@ -834,7 +834,7 @@ function CarPriceComparisonSection({
       </div>
 
       {selectedOffer ? (
-        <div className="mt-5 hidden rounded-[14px] border border-[#075EE8] bg-white px-4 py-4 ring-1 ring-[#075EE8]/10 lg:block">
+        <div className={`mt-5 hidden rounded-[14px] border border-[#075EE8] bg-white px-4 py-4 ring-1 ring-[#075EE8]/10 ${showSectionHeading ? "lg:block" : "lg:hidden"}`}>
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-6">
             <Image
               src="/brand/kurioticket-logo-primary-light-bg.svg"
