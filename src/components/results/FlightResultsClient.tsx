@@ -5198,7 +5198,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 onChangeCapture={markExpandedSearchInteraction}
                 onMouseDown={(event) => event.stopPropagation()}
                 onClick={(event) => event.stopPropagation()}
-                className="w-full max-w-4xl rounded-2xl border border-slate-200/90 bg-[#F5F7FB] p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80"
+                className="max-h-[calc(100dvh-6rem)] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/90 bg-[#F5F7FB] p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80"
               >
                 <div className="relative mb-4 border-b border-slate-200/80 pb-3">
                   <div className="mx-auto max-w-2xl text-center">
@@ -5206,7 +5206,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       id="sticky-flight-search-title"
                       className="text-xl font-bold tracking-tight text-black"
                     >
-                      Change your flight
+                      {locale?.startsWith("en") ? "Change your flight" : t("editFlightSearch")}
                     </h2>
                     <p className="mt-1 text-base font-semibold text-slate-950">
                       {mobileRouteSummary}
@@ -5750,6 +5750,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }
 
     if (placement === "desktop" && tripTypeInput === "multi-city") {
+      if (isStickySearchPanelOpen) return null;
+
       return (
         <div className="mx-auto hidden w-full min-w-0 max-w-5xl sm:block">
           <div
