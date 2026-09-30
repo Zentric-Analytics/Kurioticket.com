@@ -77,7 +77,7 @@ export function HotelDetailsLoadingState({
   statusRef?: React.RefObject<HTMLDivElement | null>;
 }) {
   const content = (
-    <section className="border-b border-border bg-white lg:border-0">
+    <section className="border-b border-border bg-white lg:border-0 lg:bg-[#F7F9FC]">
       <div
         className={embedded ? "mx-auto w-full max-w-[1400px] px-0 py-6 lg:px-7 lg:py-10" : "mx-auto w-full max-w-[1400px] px-0 py-6 lg:max-w-[1080px] lg:px-[30px] lg:py-2"}
         data-hotel-details-state-shell
@@ -180,7 +180,7 @@ export function HotelDetailsLoadingState({
   return embedded ? (
     content
   ) : (
-    <main className="flex-1 bg-white sm:bg-[#f8fafc] lg:bg-white" aria-busy="true">
+    <main className="flex-1 bg-white sm:bg-[#f8fafc] lg:bg-[#F7F9FC]" aria-busy="true">
       {content}
     </main>
   );
@@ -213,7 +213,7 @@ export function HotelDetailsUnavailableState({
 }: HotelDetailsUnavailableStateProps) {
   const Heading = headingLevel;
   const content = (
-    <section className="border-b border-border bg-white">
+    <section className="border-b border-border bg-white lg:bg-[#F7F9FC]">
       <div
         className="mx-auto w-full max-w-[1400px] px-0 py-6 sm:py-8 lg:px-7 lg:py-10"
         data-hotel-details-state-shell
