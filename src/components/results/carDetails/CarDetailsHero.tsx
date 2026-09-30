@@ -148,10 +148,10 @@ export function CarDetailsHero({
             {identity}
           </div>
           <div
-            className="hidden min-w-0 items-start justify-between gap-5 lg:flex"
+            className={`hidden min-w-0 items-start justify-between gap-5 lg:flex ${reserveMobileControlSafeZone ? "lg:mx-auto lg:max-w-[900px] lg:justify-center lg:text-center" : ""}`}
             data-car-details-desktop-identity-row
           >
-            <div className="min-w-0 flex-1 [&_h1]:truncate [&_h2]:truncate [&_h3]:truncate [&_h4]:truncate">
+            <div className={`min-w-0 flex-1 [&_h1]:truncate [&_h2]:truncate [&_h3]:truncate [&_h4]:truncate ${reserveMobileControlSafeZone ? "lg:w-full" : ""}`}>
               {identity}
             </div>
             {desktopOverlay ? (
