@@ -176,7 +176,7 @@ export function CarDetailsHero({
               return (
                 <li
                   key={label}
-                  className={`inline-flex min-w-0 items-center gap-2 text-xs font-semibold leading-[18px] text-slate-700 ${reserveMobileControlSafeZone ? "lg:min-h-10 lg:rounded-[10px] lg:bg-[#EEF3F8] lg:px-3 lg:py-2 lg:text-[13px]" : "lg:rounded-lg lg:bg-slate-100 lg:px-2.5 lg:py-1.5"}`}
+                  className={`inline-flex min-w-0 items-center gap-2 text-xs font-semibold leading-[18px] text-slate-700 ${reserveMobileControlSafeZone ? "lg:min-h-8 lg:rounded-none lg:bg-transparent lg:px-0 lg:py-1.5 lg:text-[13px]" : "lg:rounded-lg lg:bg-slate-100 lg:px-2.5 lg:py-1.5"}`}
                 >
                   {mobileTransmissionIcon ? (
                     <>
