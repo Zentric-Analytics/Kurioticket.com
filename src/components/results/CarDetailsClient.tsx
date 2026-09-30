@@ -832,7 +832,7 @@ function CarPriceComparisonSection({
         ];
   return (
     <div
-      className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:bg-transparent lg:pb-[22px] lg:pt-5"
+      className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:bg-transparent lg:pb-[22px] lg:pt-2"
       data-car-price-comparison
     >
       {showSectionHeading ? (
@@ -850,7 +850,7 @@ function CarPriceComparisonSection({
       </p>
 
       <div
-        className={`mt-5 space-y-2.5 ${showDesktopOfferList ? "lg:mt-4 lg:space-y-2" : "lg:hidden"}`}
+        className={`mt-5 space-y-2.5 ${showDesktopOfferList ? "lg:mt-3 lg:w-[calc(100%-24rem)] lg:min-w-[640px] lg:max-w-[820px] lg:space-y-2" : "lg:hidden"}`}
         role="radiogroup"
         aria-label="Car deal options"
         data-mobile-car-deal-list

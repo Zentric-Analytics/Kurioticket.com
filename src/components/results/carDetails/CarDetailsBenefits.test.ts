@@ -212,11 +212,15 @@ test("standalone car details restore polished Hotels-style section headings", ()
   );
   assert.match(
     comparison,
-    /showDesktopOfferList \? "lg:mt-4 lg:space-y-2" : "lg:hidden"/,
+    /showDesktopOfferList \? "lg:mt-3 lg:w-\[calc\(100%-24rem\)\] lg:min-w-\[640px\] lg:max-w-\[820px\] lg:space-y-2" : "lg:hidden"/,
   );
   assert.match(
     comparison,
     /lg:rounded-\[14px\] lg:px-4 lg:py-3/,
+  );
+  assert.match(
+    comparison,
+    /data-car-price-comparison[\s\S]*?lg:pt-2/,
   );
   assert.match(
     comparison,
