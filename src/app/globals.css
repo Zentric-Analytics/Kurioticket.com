@@ -1034,7 +1034,7 @@ textarea {
   }
 
   .flight-card-detail-item + .flight-card-detail-item {
-    border-left: 1px solid #d8e1ec;
+    border-inline-start: 1px solid #d8e1ec;
   }
 
   .flight-card-detail-icon {
