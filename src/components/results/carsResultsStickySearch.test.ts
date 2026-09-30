@@ -207,6 +207,30 @@ test("source-contract: collapsed Cars search icons use neutral slate styling", (
   assert.doesNotMatch(compactToolbar, /className="h-4 w-4 shrink-0 text-\[#004BB8\]"/);
 });
 
+test("source-contract: collapsed Cars search uses the lighter result-card surface family", () => {
+  const compactStart = source.indexOf(
+    '"pointer-events-none fixed inset-x-0 top-0 z-[1000]',
+  );
+  const compactEnd = source.indexOf(
+    "{desktopStickySearchSection ? (",
+    compactStart,
+  );
+  const compactToolbar = source.slice(compactStart, compactEnd);
+
+  assert.notEqual(compactStart, -1);
+  assert.notEqual(compactEnd, -1);
+  assert.match(compactToolbar, /data-cars-results-compact-search-summary/);
+  assert.match(compactToolbar, /bg-\[#EEF1F5\]/);
+  assert.match(
+    compactToolbar,
+    /hover:bg-\[#E7EBF1\] focus-visible:bg-\[#E7EBF1\]/,
+  );
+  assert.doesNotMatch(
+    compactToolbar,
+    /max-w-\[920px\][^"]*bg-white/,
+  );
+});
+
 test("source-contract: the full expanded backdrop closes while dialog clicks stay inside", () => {
   const overlayStart = source.indexOf("{desktopStickySearchSection ? (");
   const overlayEnd = source.indexOf(

@@ -69,7 +69,15 @@ test("CarDetailsExperience uses one Hotels-style sticky desktop section handoff"
   );
   assert.match(
     layoutSource,
-    /\[data-car-details-bottom-booking-bar\][\s\S]*?margin-top: 3rem;[\s\S]*?background: #FFFFFF;/,
+    /\[data-car-details-bottom-booking-bar\][\s\S]*?width: min\(700px, calc\(100% - 48px\)\);[\s\S]*?margin: 3rem auto 0;[\s\S]*?border-radius: 16px;[\s\S]*?background: #FFFFFF;/,
+  );
+  assert.match(
+    layoutSource,
+    /\[data-car-details-bottom-booking-bar\] > div \{[\s\S]*?grid-template-columns: minmax\(180px, 1fr\) minmax\(220px, 240px\);/,
+  );
+  assert.match(
+    layoutSource,
+    /\[data-car-details-bottom-booking-bar\] > div > a,[\s\S]*?grid-column: 2;/,
   );
   assert.doesNotMatch(
     layoutSource,
