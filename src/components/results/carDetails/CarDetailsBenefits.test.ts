@@ -477,6 +477,10 @@ test("source contract keeps unsupported mobile deals inert while KAYAK opens sec
     /href|onClick|bookingUrl/,
   );
   assert.match(clientSource, /label: copy\("carDetails\.continueDeal"\)/);
+  assert.match(
+    clientSource,
+    /selectedSandboxHref[\s\S]*?\.\.\.primaryAction,[\s\S]*?label: copy\("carDetails\.continueDeal"\),[\s\S]*?href: selectedSandboxHref/,
+  );
   assert.doesNotMatch(clientSource, /label: copy\("continueToProvider"\)/);
 });
 
@@ -487,6 +491,17 @@ test("source contract does not restore removed booking-disabled messaging", () =
   );
 });
 
+
+test("standalone desktop amenities sit directly on the Cars Details page surface", () => {
+  assert.match(
+    heroSource,
+    /reserveMobileControlSafeZone \? "lg:min-h-8 lg:rounded-none lg:bg-transparent lg:px-0 lg:py-1\.5 lg:text-\[13px\]"/,
+  );
+  assert.doesNotMatch(
+    heroSource,
+    /reserveMobileControlSafeZone \? "lg:min-h-10 lg:rounded-\[10px\] lg:bg-\[#EEF3F8\]/,
+  );
+});
 
 test("mobile-web car detail transmission uses the dedicated gearbox icon without changing desktop", () => {
   assert.match(
