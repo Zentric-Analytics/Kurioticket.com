@@ -881,7 +881,7 @@ export function HotelDetailsClient({
     });
 
     return (
-      <main className="flex-1 bg-white sm:bg-[#f8fafc] lg:bg-white">
+      <main className="flex-1 bg-white sm:bg-[#f8fafc] lg:bg-[#F7F9FC]">
         <section className="py-0 lg:py-2">
           <div className="mx-auto w-full max-w-[1400px] px-0 lg:max-w-[1080px] lg:px-[30px]" data-hotel-details-page-shell>
             <div>
