@@ -40,6 +40,38 @@ test("FlightCard shares one container-responsive hierarchy at every width", () =
   assert.notEqual(narrowQueryStart, -1, "narrow container query exists");
 });
 
+test("desktop badge actions do not increase the itinerary header height", () => {
+  assert.match(
+    flightCardSource,
+    /data-flight-card-header-actions[\s\S]*flight-card-header-actions/,
+  );
+  const flightCardDesktopMediaStart = globalsCss.indexOf(
+    "@media (min-width: 1024px)",
+    globalsCss.indexOf(".flight-card-desktop-brand"),
+  );
+  assert.notEqual(
+    flightCardDesktopMediaStart,
+    -1,
+    "desktop Flight card media block exists",
+  );
+  assert.match(
+    ruleBody(
+      globalsCss,
+      ".flight-card-header-actions",
+      flightCardDesktopMediaStart,
+    ),
+    /position:\s*absolute[\s\S]*top:\s*0[\s\S]*right:\s*0[\s\S]*width:\s*196px/,
+  );
+  assert.match(
+    ruleBody(
+      globalsCss,
+      ".flight-card-desktop-header",
+      flightCardDesktopMediaStart,
+    ),
+    /padding-right:\s*196px/,
+  );
+});
+
 test("shared card keeps airline, badge, itinerary, details, price, and action", () => {
   assert.match(flightCardSource, /<AirlineLogo flight={flight}/);
   assert.match(flightCardSource, /<ResultBadgePill badge={resultBadge}/);

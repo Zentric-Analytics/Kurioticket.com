@@ -158,7 +158,7 @@ export function FlightCard({
       ) : null}
       <div className="flight-card-desktop-shell">
         <div className="flight-card-desktop">
-          <div className="flight-card-desktop-header flex min-w-0 items-start justify-between pb-2">
+          <div className="flight-card-desktop-header relative flex min-w-0 items-start justify-between pb-2">
             <div className="flight-card-desktop-brand flex min-w-0 items-center">
               <div className="flight-card-header-logo">
                 <AirlineLogo flight={flight} />
@@ -177,7 +177,10 @@ export function FlightCard({
                 ) : null}
               </div>
             </div>
-            <div className="flex shrink-0 flex-col items-end">
+            <div
+              data-flight-card-header-actions
+              className="flight-card-header-actions flex shrink-0 flex-col items-end"
+            >
               <ResultBadgePill badge={resultBadge} />
               <div
                 data-flight-card-actions

@@ -805,6 +805,19 @@ textarea {
   gap: 0.75rem;
 }
 
+@media (min-width: 1024px) {
+  .flight-card-desktop-header {
+    padding-right: 196px;
+  }
+
+  .flight-card-header-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 196px;
+  }
+}
+
 .flight-card-airline-name {
   font-size: 0.875rem;
   line-height: 1.0625rem;
@@ -999,6 +1012,16 @@ textarea {
 @container (max-width: 759px) {
   .flight-card-desktop {
     padding: 0.875rem 1rem;
+  }
+
+  @media (min-width: 1024px) {
+    .flight-card-desktop-header {
+      padding-right: 180px;
+    }
+
+    .flight-card-header-actions {
+      width: 180px;
+    }
   }
 
   .flight-card-desktop-header {
