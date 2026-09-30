@@ -294,34 +294,40 @@ test("desktop departure metadata aligns directly beneath time with generous card
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date \{\s*margin-inline-start: 0;/);
 });
 
-test("desktop detail panel stays horizontal and preserves whole words", async () => {
+test("desktop detail panel keeps wide values inline with a narrow-card fallback", async () => {
   const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
-  const desktopDetailRules = styles.slice(
-    styles.indexOf(
-      "@media (min-width: 1024px)",
-      styles.indexOf(".flight-card-detail-value"),
-    ),
-    styles.indexOf("@container (max-width: 759px)"),
+  const desktopStart = styles.indexOf(
+    "@media (min-width: 1024px)",
+    styles.indexOf(".flight-card-detail-value"),
+  );
+  const wideContainerStart = styles.indexOf(
+    "@container (min-width: 760px)",
+    desktopStart,
+  );
+  const narrowRules = styles.slice(desktopStart, wideContainerStart);
+  const wideRules = styles.slice(
+    wideContainerStart,
+    styles.indexOf("@container (max-width: 759px)", wideContainerStart),
   );
 
   assert.match(
-    desktopDetailRules,
-    /\.flight-card-details \{\s*display: grid;[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/,
-  );
-  assert.match(
-    desktopDetailRules,
+    narrowRules,
     /\.flight-card-detail-item \{[\s\S]*grid-template-columns: 2rem minmax\(0, 1fr\);[\s\S]*grid-template-rows: auto auto;/,
   );
   assert.match(
-    desktopDetailRules,
-    /\.flight-card-detail-item \+ \.flight-card-detail-item \{\s*border-inline-start: 1px solid #d8e1ec;/,
+    narrowRules,
+    /\.flight-card-detail-value \{[\s\S]*grid-row: 2;[\s\S]*white-space: normal;[\s\S]*overflow-wrap: normal;[\s\S]*word-break: normal;/,
   );
   assert.match(
-    desktopDetailRules,
-    /\.flight-card-detail-value \{[\s\S]*overflow-wrap: normal;[\s\S]*word-break: normal;/,
+    wideRules,
+    /\.flight-card-detail-item \{[\s\S]*grid-template-columns: 2rem max-content minmax\(0, 1fr\);[\s\S]*grid-template-rows: auto;/,
+  );
+  assert.match(
+    wideRules,
+    /\.flight-card-detail-value \{[\s\S]*grid-column: 3;[\s\S]*grid-row: 1;[\s\S]*white-space: nowrap;/,
   );
   assert.doesNotMatch(
-    desktopDetailRules,
+    narrowRules + wideRules,
     /overflow:\s*hidden|text-overflow:\s*ellipsis|overflow-wrap:\s*(?:anywhere|break-word)|word-break:\s*break-all/,
   );
 });
