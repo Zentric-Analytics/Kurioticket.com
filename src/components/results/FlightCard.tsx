@@ -2,13 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Armchair,
   Award,
   ChevronRight,
+  Heart,
   Luggage,
   PlaneTakeoff,
+  Share2,
   ShieldCheck,
   Tag,
   Zap,
@@ -24,6 +27,7 @@ import { cn, formatItineraryShortDate, formatTime } from "@/lib/utils";
 import { formatFlightCardPrice } from "@/components/results/flightCardPrice";
 import { MobileFlightCard } from "@/components/results/MobileFlightCard";
 import { formatBaggageValue } from "@/components/results/flightCardBaggage";
+import { useSavedFlightResult } from "@/components/results/useSavedFlightResult";
 
 type DetailItem = {
   label: string;
@@ -90,6 +94,30 @@ export function FlightCard({
       ? `/flights/details/${encodeURIComponent(flight.id)}`
       : detailsHref;
   const resolvedActionLabel = actionLabel ?? t("viewDeal");
+  const { isSaved, pending: savedFlightPending, toggleSavedFlight } = useSavedFlightResult(
+    flight,
+    resolvedDetailsHref,
+  );
+  const [shareConfirmation, setShareConfirmation] = useState("");
+
+  async function shareFlight() {
+    const relativeUrl = resolvedDetailsHref ?? window.location.href;
+    const url = new URL(relativeUrl, window.location.origin).toString();
+    const route = `${flight.originAirport} → ${flight.destinationAirport}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: route, text: flight.airlineName, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setShareConfirmation(t("linkCopied") || "Flight link copied");
+      window.setTimeout(() => setShareConfirmation(""), 2200);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setShareConfirmation(t("unableToShare") || "Unable to share this flight");
+      window.setTimeout(() => setShareConfirmation(""), 2200);
+    }
+  }
 
   return (
     <>
@@ -119,6 +147,15 @@ export function FlightCard({
       }}
     >
       {providerLabel && <p className="px-4 pt-3 text-xs font-semibold text-amber-800">{providerLabel}</p>}
+      {shareConfirmation ? (
+        <span
+          role="status"
+          aria-live="polite"
+          className="fixed inset-x-4 bottom-4 z-[100] mx-auto w-fit max-w-[calc(100%-2rem)] rounded-full bg-[#07133B] px-4 py-2 text-center text-sm font-semibold text-white shadow-lg"
+        >
+          {shareConfirmation}
+        </span>
+      ) : null}
       <div className="flight-card-desktop-shell">
         <div className="flight-card-desktop">
           <div className="flight-card-desktop-header flex min-w-0 items-start justify-between pb-2">
@@ -140,7 +177,40 @@ export function FlightCard({
                 ) : null}
               </div>
             </div>
-            <ResultBadgePill badge={resultBadge} />
+            <div className="flex shrink-0 flex-col items-end">
+              <ResultBadgePill badge={resultBadge} />
+              <div
+                data-flight-card-actions
+                className={cn("flex shrink-0 items-center", resultBadge && "mt-1")}
+              >
+                <button
+                  type="button"
+                  aria-label={`${isSaved ? "Unsave" : "Save"} ${flight.airlineName} flight`}
+                  aria-pressed={isSaved}
+                  disabled={savedFlightPending}
+                  onClick={() => void toggleSavedFlight()}
+                  className={cn(
+                    "inline-flex h-11 w-11 items-center justify-center rounded-full bg-transparent transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 disabled:cursor-wait disabled:opacity-60",
+                    isSaved ? "text-rose-600" : "text-slate-600",
+                  )}
+                >
+                  <Heart
+                    size={18}
+                    className="translate-x-1.5"
+                    fill={isSaved ? "currentColor" : "none"}
+                    aria-hidden="true"
+                  />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Share ${flight.airlineName} flight`}
+                  onClick={() => void shareFlight()}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+                >
+                  <Share2 size={18} className="-translate-x-1.5" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="flight-card-body mt-2 grid min-w-0 items-stretch gap-y-4">
