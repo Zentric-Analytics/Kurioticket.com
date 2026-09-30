@@ -1009,6 +1009,24 @@ textarea {
   word-break: normal;
 }
 
+@media (min-width: 1024px) {
+  .flight-card-details {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .flight-card-detail-item {
+    flex: 1 1 12rem;
+    min-width: 12rem;
+    grid-template-columns: auto auto minmax(min-content, 1fr);
+  }
+
+  .flight-card-detail-value {
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+}
+
 @container (max-width: 759px) {
   .flight-card-desktop {
     padding: 0.875rem 1rem;
