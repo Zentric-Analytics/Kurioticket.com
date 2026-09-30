@@ -447,6 +447,31 @@ test("price comparison aligns icon benefits and the per-day price on one row", (
   assert.doesNotMatch(comparison, /row-start-4/);
 });
 
+test("desktop KAYAK booking summary keeps the secure handoff and Continue deal label", () => {
+  const summary = clientSource.slice(
+    clientSource.indexOf("function BookingSummary"),
+    clientSource.indexOf("function MobileBookingDock"),
+  );
+  const sandboxStart = summary.indexOf('action.kind === "sandbox-handoff"');
+  const unsupportedStart = summary.indexOf(
+    'action.kind === "standalone-disabled-provider"',
+  );
+  assert.ok(sandboxStart >= 0 && unsupportedStart > sandboxStart);
+
+  const sandboxDesktop = summary.slice(sandboxStart, unsupportedStart);
+  assert.match(sandboxDesktop, /<a[\s\S]*?href={action\.href}/);
+  assert.match(sandboxDesktop, /target="_blank"/);
+  assert.match(sandboxDesktop, /rel="noopener noreferrer"/);
+  assert.match(sandboxDesktop, /referrerPolicy="no-referrer"/);
+  assert.match(sandboxDesktop, /\{action\.label\}/);
+  assert.doesNotMatch(sandboxDesktop, /<button|disabled/);
+
+  assert.match(
+    clientSource,
+    /selectedSandboxHref[\s\S]*?label: copy\("carDetails\.continueDeal"\),[\s\S]*?href: selectedSandboxHref/,
+  );
+});
+
 test("source contract keeps unsupported mobile deals inert while KAYAK opens securely in a new tab", () => {
   const mobileDock = clientSource.slice(
     clientSource.indexOf("function MobileBookingDock"),
