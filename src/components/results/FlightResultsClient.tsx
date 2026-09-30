@@ -5157,11 +5157,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   function renderStickySearchPopoutOverlay() {
     const stickyLabelClass =
-      "text-[0.62rem] font-semibold uppercase leading-3 tracking-[0.12em] text-[#56658E]";
+      "mb-1 block text-[10px] font-extrabold uppercase leading-[14px] tracking-[0.5px] text-[#56658E]";
     const stickyValueClass =
-      "mt-0.5 block min-w-0 truncate text-sm font-semibold leading-5 text-slate-950";
+      "flight-results-edit-value mt-0.5 block min-w-0 truncate";
     const panelFieldClass =
-      "group relative flex min-h-[58px] min-w-0 flex-col justify-center border-r border-slate-200/80 bg-white px-3 py-1.5 text-start outline-none transition-colors hover:bg-white focus-within:z-10 focus-within:bg-white focus-within:outline-none";
+      "group relative flex min-h-[66px] min-w-0 flex-col justify-center border-r border-[#E7ECF5] bg-white px-3 py-[9px] text-start outline-none transition-colors hover:bg-white focus-within:z-10 focus-within:bg-white focus-within:outline-none";
     const stickyDateSummary = departureDateInput
       ? tripTypeInput === "round-trip" && returnDateInput
         ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
@@ -5223,7 +5223,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 <div
                   role="radiogroup"
                   aria-label={t("tripType")}
-                  className="mb-3 flex items-center gap-2 px-0.5"
+                  className="mb-3 grid min-h-[51px] w-full grid-cols-3 items-stretch"
                 >
                   {tripTypeOptions.map((option) => {
                     const selected = tripTypeInput === option.value;
@@ -5236,19 +5236,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         aria-checked={selected}
                         onClick={() => handleTripTypeChange(option.value)}
                         className={cn(
-                          "focus-ring inline-flex min-h-6 items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-colors",
+                          "flight-results-trip-tab focus-ring inline-flex min-h-[50px] min-w-0 items-center justify-center whitespace-nowrap border-b-2 px-2 transition-colors",
                           selected
-                            ? "bg-[#064CF7]/10 text-[#064CF7]"
-                            : "text-[#071A48] hover:bg-white hover:text-slate-950",
+                            ? "border-[#064CF7] text-[#064CF7]"
+                            : "border-transparent text-[#071A48] hover:text-slate-950",
                         )}
                       >
-                        <span
-                          aria-hidden="true"
-                          className={cn(
-                            "h-1.5 w-1.5 rounded-full",
-                            selected ? "bg-[#064CF7]" : "bg-slate-300",
-                          )}
-                        />
                         {option.label}
                       </button>
                     );
@@ -5258,7 +5251,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 {tripTypeInput === "multi-city" ? (
                   <div
                     data-sticky-multicity-editor
-                    className="rounded-xl border border-slate-200/85 bg-white p-4 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]"
+                    className="rounded-none border-0 bg-transparent p-0 shadow-none"
                   >
                     <MultiCityFlightEditor
                       legs={multiCityLegs}
@@ -5368,7 +5361,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     </div>
                   </div>
                 ) : (
-                  <div className="grid min-h-[58px] grid-cols-[minmax(0,1.05fr)_44px_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1fr)_112px] items-stretch overflow-visible rounded-xl border border-slate-200/85 bg-white shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]">
+                  <div className="grid min-h-[66px] grid-cols-[minmax(0,1.05fr)_44px_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1fr)_112px] items-stretch overflow-visible rounded-[13px] border border-[#E7ECF5] bg-white shadow-none">
                     <div ref={stickyOriginWrapRef} className={panelFieldClass}>
                       <label
                         className={stickyLabelClass}
@@ -5377,7 +5370,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         {t("origin")}
                       </label>
                       <div className="mt-0.5 flex min-w-0 items-center gap-2">
-                        <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
+                        <MapPin aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[#071A48]" />
                         <input
                           id="sticky-results-origin"
                           name="origin"
@@ -5438,9 +5431,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         event.stopPropagation();
                         handleSwapLocations();
                       }}
-                      className="focus-ring flex min-h-[58px] cursor-pointer items-center justify-center border-r border-slate-200/80 bg-white text-[#004BB8] transition-colors hover:bg-slate-50 hover:text-[#064CF7]"
+                      className="focus-ring flex min-h-[66px] cursor-pointer items-center justify-center border-r border-[#E7ECF5] bg-white text-[#064CF7] transition-colors hover:bg-white"
                     >
-                      <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
+                      <ArrowRightLeft className="h-[17px] w-[17px]" aria-hidden="true" />
                     </button>
   
                     <div
@@ -5454,7 +5447,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         {t("destination")}
                       </label>
                       <div className="mt-0.5 flex min-w-0 items-center gap-2">
-                        <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
+                        <MapPin aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[#071A48]" />
                         <input
                           id="sticky-results-destination"
                           name="destination"
@@ -5528,7 +5521,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                           {t("travelDates")}
                         </span>
                         <span className={cn(stickyValueClass, "flex items-center gap-2")}>
-                          <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
+                          <Calendar aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[#071A48]" />
                           <span className="min-w-0 truncate">{stickyDateSummary}</span>
                         </span>
                       </button>
@@ -5586,7 +5579,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         <span className={stickyLabelClass}>{t("travelers")}</span>
                         <span className="mt-0.5 flex min-w-0 items-center justify-between gap-2 text-sm font-medium leading-5 text-slate-950">
                           <span className="flex min-w-0 items-center gap-2">
-                            <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
+                            <UserRound aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[#071A48]" />
                             <span className="truncate">{travelerCabinSummary}</span>
                           </span>
                           <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" />
