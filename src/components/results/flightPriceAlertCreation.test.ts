@@ -79,3 +79,18 @@ test("desktop Flight alert restores the compact original blue treatment without 
 test("Hotel alert implementation remains isolated from Flight target work", () => {
   assert.doesNotMatch(hotel, /FLIGHT_ALERT_|matchingTargetFlightPriceAlert|flightAlertDesiredPrice/);
 });
+
+
+test("desktop Flight Track Price uses the Hotel-style modal interaction", () => {
+  assert.match(control, /const desktopDialogRef = useRef<HTMLDialogElement>\(null\)/);
+  assert.match(control, /if \(openSurface !== "desktop"\) return;[\s\S]*dialog\.showModal\(\)/);
+  assert.match(control, /document\.body\.style\.overflow = "hidden"/);
+  assert.match(control, /desktopSwitchRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(control, /onCancel=\{\(event\) => \{[\s\S]*event\.preventDefault\(\);[\s\S]*closeEditor\(\)/);
+  assert.match(control, /getBoundingClientRect\(\)[\s\S]*closeEditor\(\)/);
+  assert.match(control, /backdrop:bg-slate-950\/50/);
+  assert.doesNotMatch(
+    control,
+    /openSurface === "desktop" \? <div className="mt-4 grid max-w-xl/,
+  );
+});
