@@ -4737,7 +4737,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     </span>
                     <ChevronDown
                       className={cn(
-                        "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+                        "h-4 w-4 shrink-0 text-[#071A48] transition-transform",
                         travelerPopoverOpen && "rotate-180",
                       )}
                     />
@@ -5276,12 +5276,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                             setTravelerPopoverOpen(true);
                             setTravelerPopoverPosition(null);
                           }}
-                          className="focus-ring flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 text-start text-sm font-medium text-slate-900 transition hover:border-slate-300"
+                          className="flight-results-edit-value focus-ring flex min-h-[66px] w-full items-center justify-between gap-2 rounded-[13px] border border-[#E7ECF5] bg-white px-3 text-start transition hover:border-[#E7ECF5]"
                         >
                           <span className="min-w-0 truncate">{travelerCabinSummary}</span>
                           <ChevronDown
                             className={cn(
-                              "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+                              "h-4 w-4 shrink-0 text-[#071A48] transition-transform",
                               travelerPopoverOpen && "rotate-180",
                             )}
                             aria-hidden="true"
@@ -5354,7 +5354,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       </div>
                       <Button
                         type="submit"
-                        className="min-h-11 shrink-0 rounded-xl bg-[#064CF7] px-6 text-sm font-bold text-white hover:bg-[#004BB8]"
+                        className="min-h-[46px] shrink-0 rounded-[10px] bg-[#064CF7] px-6 text-[15px] font-bold text-white hover:bg-[#004BB8]"
                       >
                         {t("search")}
                       </Button>
@@ -5403,7 +5403,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         }}
                           placeholder={t("fromPlaceholder")}
                           autoComplete="off"
-                          className="h-5 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
+                          className="flight-results-edit-value h-5 min-w-0 flex-1 border-0 bg-transparent p-0 outline-none placeholder:text-slate-400"
                         />
                       </div>
                       {activeSuggest === "origin" &&
@@ -5480,7 +5480,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         }}
                           placeholder={t("toPlaceholder")}
                           autoComplete="off"
-                          className="h-5 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
+                          className="flight-results-edit-value h-5 min-w-0 flex-1 border-0 bg-transparent p-0 outline-none placeholder:text-slate-400"
                         />
                       </div>
                       {activeSuggest === "destination" &&
@@ -5577,12 +5577,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         className={cn(panelFieldClass, "h-full w-full")}
                       >
                         <span className={stickyLabelClass}>{t("travelers")}</span>
-                        <span className="mt-0.5 flex min-w-0 items-center justify-between gap-2 text-sm font-medium leading-5 text-slate-950">
+                        <span className="flight-results-edit-value mt-0.5 flex min-w-0 items-center justify-between gap-2">
                           <span className="flex min-w-0 items-center gap-2">
                             <UserRound aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[#071A48]" />
                             <span className="truncate">{travelerCabinSummary}</span>
                           </span>
-                          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                          <ChevronDown className="h-4 w-4 shrink-0 text-[#071A48]" />
                         </span>
                       </button>
                       {travelerPopoverOpen &&
@@ -5653,7 +5653,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   
                     <Button
                       type="submit"
-                      className="h-full min-h-[58px] rounded-none rounded-r-xl bg-[#064CF7] px-4 text-sm font-bold text-white shadow-none ring-0 hover:bg-[#004BB8]"
+                      className="h-full min-h-[66px] rounded-none rounded-r-[13px] bg-[#064CF7] px-4 text-[15px] font-bold text-white shadow-none ring-0 hover:bg-[#004BB8]"
                     >
                       {t("search")}
                     </Button>
@@ -5814,12 +5814,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       return next;
                     });
                   }}
-                  className="focus-ring flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 text-start text-sm font-medium text-slate-900 transition hover:border-slate-300"
+                  className="flight-results-edit-value focus-ring flex min-h-[66px] w-full items-center justify-between gap-2 rounded-[13px] border border-[#E7ECF5] bg-white px-3 text-start transition hover:border-[#E7ECF5]"
                 >
                   <span className="min-w-0 truncate">{travelerCabinSummary}</span>
                   <ChevronDown
                     className={cn(
-                      "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+                      "h-4 w-4 shrink-0 text-[#071A48] transition-transform",
                       travelerPopoverOpen && "rotate-180",
                     )}
                     aria-hidden="true"
