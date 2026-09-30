@@ -143,28 +143,27 @@ export function CarDetailsHero({
           ) : null}
         </figure>
 
-        <div className={`min-w-0 px-4 pt-3.5 lg:px-0 ${reserveMobileControlSafeZone ? "lg:pt-0" : "lg:pt-5"}`}>
+        <div className={`min-w-0 px-4 pt-3.5 lg:px-0 ${reserveMobileControlSafeZone ? "lg:pt-3" : "lg:pt-5"}`}>
           <div className="lg:hidden" data-car-details-mobile-identity>
             {identity}
           </div>
-          {!reserveMobileControlSafeZone ? (
-            <div
-              className="hidden min-w-0 items-start justify-between gap-5 lg:flex"
-              data-car-details-desktop-identity-row
-            >
-              <div className="min-w-0 flex-1 [&_h1]:truncate [&_h2]:truncate [&_h3]:truncate [&_h4]:truncate">
-                {identity}
-              </div>
-              {desktopOverlay ? (
-                <div
-                  className="shrink-0 [&>div>div:first-child]:hidden [&_button]:!border-slate-300 [&_button]:!bg-[#E7EBF1] [&_button]:!text-[#07133B] [&_button]:shadow-[0_2px_8px_rgba(15,23,42,0.14)] [&_button:hover]:!bg-[#DDE3EB] [&_button[aria-pressed=true]]:!text-rose-500"
-                  data-car-details-desktop-actions
-                >
-                  {desktopOverlay}
-                </div>
-              ) : null}
+          <div
+            className={`hidden min-w-0 items-start gap-5 lg:flex ${reserveMobileControlSafeZone ? "lg:mx-auto lg:max-w-[900px] lg:justify-center lg:text-center" : "lg:justify-between"}`}
+            data-car-details-desktop-identity-row
+            data-standalone={reserveMobileControlSafeZone ? "true" : "false"}
+          >
+            <div className={`min-w-0 [&_h1]:truncate [&_h2]:truncate [&_h3]:truncate [&_h4]:truncate ${reserveMobileControlSafeZone ? "w-full" : "flex-1"}`}>
+              {identity}
             </div>
-          ) : null}
+            {!reserveMobileControlSafeZone && desktopOverlay ? (
+              <div
+                className="shrink-0 [&>div>div:first-child]:hidden [&_button]:!border-slate-300 [&_button]:!bg-[#E7EBF1] [&_button]:!text-[#07133B] [&_button]:shadow-[0_2px_8px_rgba(15,23,42,0.14)] [&_button:hover]:!bg-[#DDE3EB] [&_button[aria-pressed=true]]:!text-rose-500"
+                data-car-details-desktop-actions
+              >
+                {desktopOverlay}
+              </div>
+            ) : null}
+          </div>
           <ul
             className={`mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 lg:mx-auto ${reserveMobileControlSafeZone ? "lg:mt-3 lg:max-w-[900px] lg:grid-cols-2 lg:gap-x-16 lg:gap-y-2.5" : "lg:max-w-[760px] lg:grid-cols-[minmax(0,320px)_minmax(0,320px)] lg:gap-x-[120px] lg:gap-y-3"}`}
             data-car-details-specifications
