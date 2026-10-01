@@ -50,7 +50,7 @@ test("CarDetailsExperience uses one Hotels-style sticky desktop section handoff"
   assert.doesNotMatch(experienceSource, /data-car-details-desktop-sticky-controls/);
   assert.match(
     experienceSource,
-    /hidden h-16 w-full items-center border-b border-transparent bg-\[#F5F7FB\] lg:flex/,
+    /hidden h-16 w-full items-center border-b border-transparent bg-\[#F5F7FB\] lg:flex lg:bg-\[#F8FAFC\]/,
   );
   assert.match(experienceSource, /\{desktopBackControl\}/);
   assert.match(experienceSource, /desktopSectionBarStuck/);
@@ -78,6 +78,18 @@ test("CarDetailsExperience uses one Hotels-style sticky desktop section handoff"
     /data-car-details-utility-placement="tabs"[\s\S]*?<DesktopCompactBookingAction/,
   );
   assert.match(layoutSource, /\[data-car-details-scroll-section\] \{\s*scroll-margin-top: 5\.5rem;/);
+  assert.match(
+    layoutSource,
+    /main:has\(\[data-car-details-experience\]\) \{\s*background: #F8FAFC !important;/,
+  );
+  assert.match(
+    layoutSource,
+    /\[data-car-details-section-nav\] \{\s*background: #F8FAFC !important;/,
+  );
+  assert.match(
+    layoutSource,
+    /\[data-car-price-comparison\],[\s\S]*?\[data-car-location-section\] \{\s*background: #F8FAFC !important;/,
+  );
   assert.match(
     experienceSource,
     /presentation === "guided-content" \? "mt-6" : ""/,
@@ -138,7 +150,7 @@ test("standalone desktop tabs place panel content in the former heading position
   assert.match(navSource, /data-car-details-desktop-sticky-backdrop/);
   assert.match(
     navSource,
-    /fixed inset-x-0 top-0 z-0 hidden h-16 border-b border-slate-200 bg-\[#F5F7FB\]\/95/,
+    /fixed inset-x-0 top-0 z-0 hidden h-16 border-b border-slate-200 bg-\[#F8FAFC\]\/95/,
   );
   assert.match(
     navSource,
@@ -146,7 +158,7 @@ test("standalone desktop tabs place panel content in the former heading position
   );
   assert.match(
     navSource,
-    /desktopStuck \? "lg:border-b lg:border-transparent lg:bg-transparent" : "lg:border-b lg:border-slate-200 lg:bg-\[#F5F7FB\]"/,
+    /desktopStuck \? "lg:border-b lg:border-transparent lg:bg-transparent" : "lg:border-b lg:border-slate-200 lg:bg-\[#F8FAFC\]"/,
   );
   assert.doesNotMatch(
     layoutSource,

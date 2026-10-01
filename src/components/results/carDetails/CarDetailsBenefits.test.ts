@@ -280,7 +280,7 @@ test("standalone car details restore polished Hotels-style section headings", ()
 
 test("desktop car details place the polished identity below the hero and keep compact controls balanced", () => {
   assert.match(heroSource, /data-car-details-desktop-centered-image/);
-  assert.match(heroSource, /lg:max-w-\[900px\] lg:bg-\[#F5F7FB\]/);
+  assert.match(heroSource, /lg:max-w-\[900px\] lg:bg-\[#F8FAFC\]/);
   assert.match(heroSource, /sizes={reserveMobileControlSafeZone \? "900px" : "760px"}/);
   assert.match(heroSource, /data-car-details-desktop-identity-row/);
   assert.match(

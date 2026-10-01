@@ -85,13 +85,13 @@ export function CarDetailsSectionNav({
 
       <div
         ref={desktopBarRef}
-        className={`relative hidden min-h-16 w-full transition-[background-color,border-color] duration-200 ease-out lg:sticky lg:top-0 lg:z-40 lg:mt-3 ${desktopStuck ? "lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-stretch lg:gap-4 lg:border-b lg:border-transparent lg:bg-transparent" : "lg:block lg:border-b lg:border-slate-200 lg:bg-[#F5F7FB]"}`}
+        className={`relative hidden min-h-16 w-full transition-[background-color,border-color] duration-200 ease-out lg:sticky lg:top-0 lg:z-40 lg:mt-3 ${desktopStuck ? "lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-stretch lg:gap-4 lg:border-b lg:border-transparent lg:bg-transparent" : "lg:block lg:border-b lg:border-slate-200 lg:bg-[#F8FAFC]"}`}
         data-car-details-section-nav
         data-stuck={desktopStuck ? "true" : "false"}
       >
         <div
           aria-hidden="true"
-          className={`pointer-events-none fixed inset-x-0 top-0 z-0 hidden h-16 border-b border-slate-200 bg-[#F5F7FB]/95 transition-[opacity,box-shadow] duration-200 ease-out lg:block ${desktopStuck ? "opacity-100 shadow-[0_6px_20px_rgba(15,23,42,0.07)] backdrop-blur-xl" : "opacity-0"}`}
+          className={`pointer-events-none fixed inset-x-0 top-0 z-0 hidden h-16 border-b border-slate-200 bg-[#F8FAFC]/95 transition-[opacity,box-shadow] duration-200 ease-out lg:block ${desktopStuck ? "opacity-100 shadow-[0_6px_20px_rgba(15,23,42,0.07)] backdrop-blur-xl" : "opacity-0"}`}
           data-car-details-desktop-sticky-backdrop
         />
         <div
