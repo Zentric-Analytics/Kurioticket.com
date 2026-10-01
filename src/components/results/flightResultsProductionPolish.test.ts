@@ -307,7 +307,7 @@ test("desktop detail panel keeps all values inline at every desktop card width",
 
   assert.match(
     desktopRules,
-    /\.flight-card-detail-item \{[\s\S]*grid-template-columns: 2rem max-content minmax\(0, 1fr\);[\s\S]*grid-template-rows: auto;/,
+    /\.flight-card-detail-item \{[\s\S]*grid-template-columns: 1rem max-content minmax\(0, 1fr\);[\s\S]*grid-template-rows: auto;/,
   );
   assert.match(
     desktopRules,
