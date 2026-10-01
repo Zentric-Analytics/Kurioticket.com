@@ -202,6 +202,31 @@ test("phone and tablet lower card is a two-column decision area", () => {
   );
 });
 
+test("badge cards stack controls, price, and deal action without overlap", () => {
+  const headerStart = flightCardSource.indexOf("data-flight-card-header-actions");
+  const bodyStart = flightCardSource.indexOf("flight-card-body", headerStart);
+  const header = flightCardSource.slice(headerStart, bodyStart);
+  const fareCallStart = flightCardSource.indexOf("<FlightFareAction", bodyStart);
+  const fareCallEnd = flightCardSource.indexOf("/>", fareCallStart);
+  const fareCall = flightCardSource.slice(fareCallStart, fareCallEnd);
+  const actionStart = flightCardSource.indexOf("function FlightFareAction");
+  const actionEnd = flightCardSource.indexOf("function FlightDetailLines", actionStart);
+  const fareAction = flightCardSource.slice(actionStart, actionEnd);
+
+  assert.match(header, /<ResultBadgePill badge=\{resultBadge\}/);
+  assert.doesNotMatch(header, /data-flight-card-actions/);
+
+  assert.match(fareCall, /data-flight-card-actions/);
+  assert.match(fareAction, /data-flight-card-fare-actions/);
+  assert.match(fareAction, /justify-start/);
+
+  const controls = fareAction.indexOf("{actions}");
+  const price = fareAction.indexOf("{formattedPrice}");
+  const viewDeal = fareAction.indexOf("{viewFlightLabel}");
+  assert.ok(controls >= 0 && controls < price, "Heart and Share render before the fare price");
+  assert.ok(price >= 0 && price < viewDeal, "Fare price renders before View deal");
+});
+
 test("price and View Flight retain their semantic order without provider-price clutter", () => {
   const actionStart = flightCardSource.indexOf("function FlightFareAction");
   const action = flightCardSource.slice(actionStart, flightCardSource.indexOf("function FlightDetailLines", actionStart));
