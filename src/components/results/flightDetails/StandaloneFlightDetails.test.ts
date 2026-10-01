@@ -717,6 +717,31 @@ test("flight details entry keeps the opaque canonical route and results query", 
   assert.ok(!client.includes("rawProviderReference"));
 });
 
+
+
+test("desktop checkout summary uses compact left-aligned price hierarchy", async () => {
+  const source = await readFile(
+    new URL("./StandaloneFlightDetails.tsx", import.meta.url),
+    "utf8",
+  );
+  const start = source.indexOf("function DesktopCheckoutSummary");
+  const end = source.indexOf("function FlightDetailsSkeleton", start);
+  assert.ok(start >= 0 && end > start);
+  const summary = source.slice(start, end);
+
+  assert.match(
+    summary,
+    /whitespace-nowrap text-left text-\[24px\] font-semibold leading-7 tabular-nums text-slate-950/,
+  );
+  assert.match(
+    summary,
+    /id="desktop-trip-total-heading" className="mt-1 text-\[12px\] font-medium leading-4 text-\[#536B92\]"/,
+  );
+  assert.match(summary, /\{flightDetailsTotalLabel\(travelerCount\)\}/);
+  assert.doesNotMatch(summary, /text-right text-\[24px\]/);
+  assert.doesNotMatch(summary, /text-\[#075EE8\]/);
+  assert.doesNotMatch(summary, /Total trip cost/);
+});
 test("trip totals use canonical traveler count without changing provider amounts", () => {
   assert.equal(flightDetailsTotalLabel(1), "Trip total");
   assert.equal(flightDetailsTotalLabel(6), "Total for 6 travelers");
