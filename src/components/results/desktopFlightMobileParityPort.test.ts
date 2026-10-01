@@ -14,13 +14,18 @@ test("desktop Flight Results adopts approved mobile-web visual rules without rep
   assert.match(results, /data-flight-results-main className="bg-\[#F5F7FB\][^"]*sm:bg-\[#F3F6FA\][^"]*lg:bg-\[#F5F7FB\]"/);
   assert.match(results, /data-desktop-cheaper-nearby/);
   assert.match(results, /className="max-sm:pt-2 max-sm:pb-1 sm:mb-4"><div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
-  assert.match(results, /data-flight-results-card-list className="space-y-3 sm:space-y-4 sm:pt-2 lg:pt-3"/);
+  assert.match(results, /data-flight-results-card-list className="space-y-3 sm:space-y-4"/);
   assert.match(alert, /data-flight-price-alert[^\n]*className="block"/);
   assert.match(alert, /sm:min-h-\[56px\]/);
 });
 
 test("desktop Flight filters follow the approved section hierarchy and selected-state language", () => {
-  const order = ['t("price")', 't("takeoff") / {t("landing")}', 't("duration")', 't("stops")', 't("airlines")', 't("airports")', 't("baggage") / {t("flexibleRefundable")}'].map((marker) => filters.indexOf(marker));
+  const primaryStart = filters.indexOf(
+    '"desktop-filter-sidebar cars-desktop-filter-surface border border-slate-200/80 bg-[#F2F4F8] p-0 shadow-none"',
+  );
+  assert.ok(primaryStart >= 0);
+  const primaryFilters = filters.slice(primaryStart);
+  const order = ['t("price")', 't("takeoff") / {t("landing")}', 't("duration")', 't("stops")', 't("airlines")', 't("airports")', 't("baggage") / {t("flexibleRefundable")}'].map((marker) => primaryFilters.indexOf(marker));
   assert.ok(order.every((position, index) => position >= 0 && (index === 0 || position > order[index - 1])));
   assert.match(filters, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
   assert.match(filters, /<Check className="h-3 w-3"/);
@@ -34,10 +39,32 @@ test("desktop Flight search airport values use the same medium typography as the
   assert.doesNotMatch(searchFields, /className="h-6 w-full[^"]*text-\[15px\] font-semibold/);
 });
 
-test("standalone desktop Flight Results renders only the primary desktop filter sidebar", () => {
-  assert.match(results, /<DesktopFlightFilters/);
-  assert.doesNotMatch(results, /layout="compact"/);
-  assert.doesNotMatch(results, /showDesktopFilterShortcut|desktopCompactFilterRef|desktopFilterSentinelRef/);
+test("compact Flight time-mode switch stays in the compact panel until the slider changes", () => {
+  const compactStart = filters.indexOf("data-flight-desktop-compact-filter-surface");
+  const primaryStart = filters.indexOf(
+    '"desktop-filter-sidebar cars-desktop-filter-surface border border-slate-200/80 bg-[#F2F4F8] p-0 shadow-none"',
+  );
+  assert.ok(compactStart >= 0 && primaryStart > compactStart);
+  const compactFilters = filters.slice(compactStart, primaryStart);
+  const selectorStart = compactFilters.indexOf('{["takeoff", "landing"].map');
+  const selectorEnd = compactFilters.indexOf("</div>", selectorStart);
+  assert.ok(selectorStart >= 0 && selectorEnd > selectorStart);
+  const selector = compactFilters.slice(selectorStart, selectorEnd);
+  assert.match(selector, /onClick=\{\(\) => setTimeFilterMode\(mode as TimeFilterMode\)\}/);
+  assert.doesNotMatch(selector, /onFilterChange|onFilterCommit/);
+});
+
+test("standalone desktop Flight Results uses Cars-style compact filter parity after the primary sidebar scrolls away", () => {
+  assert.match(results, /renderDesktopFlightFilters\(true\)/);
+  assert.match(results, /desktopCompactFilterRef/);
+  assert.match(results, /desktopFilterSentinelRef/);
+  assert.match(filters, /data-flight-desktop-compact-filter-surface/);
+  assert.match(filters, /openCompactSection/);
+  assert.match(filters, /setOpenCompactSection\(\(current\) => \(current === section \? null : section\)\)/);
+  assert.match(filters, /desktop-filter-sidebar__title[\s\S]*?SlidersHorizontal[\s\S]*?size=\{15\}/);
+  assert.match(filters, /min-h-9 w-full[\s\S]*?text-\[14px\][\s\S]*?ChevronDown/);
+  assert.match(filters, /min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain/);
+  assert.match(results, /idPrefix=\{compact \? "desktop-flight-filter-compact" : "desktop-flight-filter-primary"\}/);
 });
 
 test("desktop nearby fares keep seven dates and arrows but use mobile-like individual tiles", () => {
@@ -47,6 +74,11 @@ test("desktop nearby fares keep seven dates and arrows but use mobile-like indiv
   assert.match(results, /text-\[11px\] font-medium uppercase leading-\[14px\]/);
   assert.match(results, /text-\[10px\] font-medium uppercase leading-\[13px\] tracking-\[0\.05em\]/);
   assert.match(results, /data-desktop-cheaper-nearby/);
+  const desktopNearby = results.match(/data-desktop-cheaper-nearby[\s\S]*?className="([^"]*)"[\s\S]*?>\s*Cheaper nearby:/)?.[1] ?? "";
+  assert.match(desktopNearby, /px-0/);
+  assert.match(desktopNearby, /text-\[13px\] font-medium/);
+  assert.doesNotMatch(desktopNearby, /rounded-full|bg-white|ring-slate-200/);
+  assert.match(results, /Cheaper nearby: \{formatFareStripDateLabel\(cheaperNearbyFare\.date, calendarLocale\)\} · Save \{cheaperNearbyFare\.savings\}/);
 });
 
 test("desktop Flight result cards use the lighter hierarchy without changing MobileFlightCard", () => {

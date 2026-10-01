@@ -382,16 +382,14 @@ test("desktop Flight result meta typography uses the premium hierarchy", async (
     "utf8",
   );
   const cheaperStart = source.indexOf("data-desktop-cheaper-nearby");
-  const cheaper = source.slice(cheaperStart, cheaperStart + 1800);
-  assert.match(cheaper, /rounded-full bg-white\/70 px-3 py-1\.5/);
-  assert.match(cheaper, />Cheaper nearby<\/span>/);
-  assert.match(cheaper, /font-semibold text-\[#142033\]/);
-  assert.match(cheaper, /font-semibold text-\[#047857\]/);
-  assert.match(cheaper, /hover:bg-slate-100\/80/);
-  assert.doesNotMatch(cheaper, /hover:text-\[#075EE8\]/);
+  const cheaper = source.slice(cheaperStart, cheaperStart + 1200);
+  assert.match(cheaper, /px-0 text-left text-\[13px\] font-medium leading-5 text-slate-600/);
+  assert.match(cheaper, /Cheaper nearby: \{formatFareStripDateLabel\(cheaperNearbyFare\.date, calendarLocale\)\} · Save \{cheaperNearbyFare\.savings\}/);
+  assert.match(cheaper, /hover:text-\[#075EE8\]/);
+  assert.doesNotMatch(cheaper, /rounded-full|bg-white\/70|ring-slate-200\/70/);
 
   const summaryStart = source.indexOf(
-    'className="hidden w-full items-center justify-between gap-4 border-b border-slate-200/80 px-1 py-3 sm:flex',
+    'className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-1 lg:bg-transparent"',
   );
   const summary = source.slice(summaryStart, summaryStart + 4200);
   assert.match(summary, /text-\[15px\] font-semibold leading-5 tracking-\[-0\.006em\] text-\[#0F172A\]/);
@@ -402,4 +400,7 @@ test("desktop Flight result meta typography uses the premium hierarchy", async (
   assert.match(summary, /hover:text-\[#142033\]/);
   assert.doesNotMatch(summary, /hover:text-\[#004BB8\]/);
   assert.match(summary, /<ChevronDown size=\{14\}/);
+  assert.doesNotMatch(summary, /border-b|border-slate-200\/80/);
+  assert.match(source, /data-flight-results-card-list className="space-y-3 sm:space-y-4"/);
+  assert.doesNotMatch(source, /data-flight-results-card-list className="space-y-3 sm:space-y-4 sm:pt-2 lg:pt-3"/);
 });
