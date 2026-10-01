@@ -395,7 +395,7 @@ export function CarDetailsExperience({
           <div className="flex w-full items-center justify-between">
             <div className="relative z-10">{desktopBackControl}</div>
             <div
-              className="relative z-10"
+              className="relative z-10 flex items-center gap-2"
               data-car-details-utility-placement="hero"
             >
               <CarHeroActions
@@ -406,6 +406,14 @@ export function CarDetailsExperience({
                 copy={copy}
                 desktop
               />
+              {primaryOffer ? (
+                <DesktopCompactBookingAction
+                  offer={primaryOffer}
+                  price={price}
+                  copy={copy}
+                  action={effectivePrimaryAction}
+                />
+              ) : null}
             </div>
           </div>
         </div>
@@ -523,7 +531,7 @@ export function CarDetailsExperience({
                       desktop
                     />
                     {primaryOffer ? (
-                      <DesktopStickyBookingAction
+                      <DesktopCompactBookingAction
                         offer={primaryOffer}
                         price={price}
                         copy={copy}
@@ -616,21 +624,6 @@ export function CarDetailsExperience({
         ) : null}
       </div>
       {presentation === "standalone-content" && primaryOffer ? (
-        <aside
-          className="hidden lg:block"
-          data-car-details-bottom-booking-bar
-        >
-          <BookingSummary
-            offer={primaryOffer}
-            days={days}
-            price={price}
-            copy={copy}
-            action={effectivePrimaryAction}
-            showRentalBreakdown={false}
-          />
-        </aside>
-      ) : null}
-      {presentation === "standalone-content" && primaryOffer ? (
         <MobileBookingDock
           offer={primaryOffer}
           days={days}
@@ -694,7 +687,7 @@ function CarHeroActions({
   );
 }
 
-function DesktopStickyBookingAction({
+function DesktopCompactBookingAction({
   offer,
   price,
   copy,
@@ -712,14 +705,14 @@ function DesktopStickyBookingAction({
   return (
     <div
       className="flex shrink-0 items-center gap-2 border-s border-slate-300 ps-3"
-      data-car-details-desktop-sticky-booking
+      data-car-details-desktop-compact-booking
     >
       <p
         className="max-w-[104px] overflow-hidden text-ellipsis whitespace-nowrap text-right text-[14px] font-extrabold leading-5 tabular-nums text-[#102A43] xl:text-[15px]"
         dir="ltr"
         title={total.title}
         aria-label={total.ariaLabel}
-        data-car-details-desktop-sticky-price
+        data-car-details-desktop-compact-price
       >
         {total.formatted}
       </p>
@@ -730,7 +723,7 @@ function DesktopStickyBookingAction({
           rel="noopener noreferrer"
           referrerPolicy="no-referrer"
           className={actionClassName}
-          data-car-details-desktop-sticky-cta
+          data-car-details-desktop-compact-cta
         >
           {action.label}
         </a>
@@ -738,7 +731,7 @@ function DesktopStickyBookingAction({
         <button
           disabled
           className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-100`}
-          data-car-details-desktop-sticky-cta
+          data-car-details-desktop-compact-cta
         >
           {action.label}
         </button>
@@ -749,7 +742,7 @@ function DesktopStickyBookingAction({
           aria-label={action.accessibleLabel}
           onClick={action.onActivate}
           className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-60`}
-          data-car-details-desktop-sticky-cta
+          data-car-details-desktop-compact-cta
         >
           {action.pending
             ? copy("deals.guided.carDetails.saving")
