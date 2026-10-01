@@ -4055,6 +4055,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const renderDesktopFlightFilters = (compact = false) => (
     <DesktopFlightFilters
       compact={compact}
+      idPrefix={compact ? "desktop-flight-filter-compact" : "desktop-flight-filter-primary"}
       activeFilterCount={activeFilterCount}
       maxPrice={maxPrice}
       setMaxPrice={setMaxPrice}
