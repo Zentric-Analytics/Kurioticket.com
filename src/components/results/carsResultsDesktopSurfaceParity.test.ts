@@ -31,18 +31,18 @@ const styles = readFileSync(
   "utf8",
 );
 
-test("standalone Cars Results follows the Hotels Results body palette while keeping the header white", () => {
+test("standalone Cars Results keeps a soft off-white desktop body distinct from the white header", () => {
   assert.match(
     results,
-    /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white pb-8">/,
+    /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-\[#F8FAFC\] pb-8">/,
   );
   assert.match(
     results,
-    /flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white/,
+    /flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-\[#F8FAFC\]/,
   );
   assert.match(
     results,
-    /fixed inset-0 z-\[1200\] overflow-hidden bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white/,
+    /fixed inset-0 z-\[1200\] overflow-hidden bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-\[#F8FAFC\]/,
   );
   assert.doesNotMatch(
     results,
@@ -51,6 +51,10 @@ test("standalone Cars Results follows the Hotels Results body palette while keep
   assert.match(
     results,
     /<section[\s\S]*?className="hidden bg-white pb-0 pt-7 sm:block"/,
+  );
+  assert.doesNotMatch(
+    results,
+    /<main className="flex-1[^"]*lg:bg-white[^"]*pb-8">/,
   );
   assert.match(
     route,
@@ -174,7 +178,7 @@ test("KAYAK car cards and loading canvases stay inside the same standalone deskt
   );
   assert.match(
     route,
-    /<main className="flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white">/,
+    /<main className="flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-\[#F8FAFC\]">/,
   );
   assert.match(skeleton, /desktopSurfaceParity = false/);
   assert.match(skeleton, /desktopSurfaceParity && "md:bg-\[#E7EBF1\]"/);
