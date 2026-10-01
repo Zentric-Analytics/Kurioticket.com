@@ -78,7 +78,7 @@ test("standalone Cars Results keeps a soft off-white desktop body distinct from 
 test("desktop Cars results body is compact, centered, and keeps shared surfaces aligned", () => {
   assert.match(
     results,
-    /data-cars-results-scroll-region[\s\S]*?className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-10 sm:pt-6 lg:max-w-\[1080px\]"/,
+    /data-cars-results-scroll-region[\s\S]*?className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-10 sm:pt-6 lg:max-w-\[1020px\]"/,
   );
   assert.match(
     results,
@@ -86,11 +86,19 @@ test("desktop Cars results body is compact, centered, and keeps shared surfaces 
   );
   assert.match(
     results,
-    /mx-auto max-w-\[1080px\] px-4 py-5 sm:py-6[\s\S]*?lg:grid-cols-\[232px_minmax\(0,1fr\)\] xl:grid-cols-\[236px_minmax\(0,1fr\)\]/,
+    /mx-auto max-w-\[1020px\] px-4 py-5 sm:py-6[\s\S]*?lg:grid-cols-\[232px_minmax\(0,1fr\)\] xl:grid-cols-\[236px_minmax\(0,1fr\)\]/,
   );
   assert.match(
     alert,
     /data-cars-price-alert[\s\S]*?className="mb-1 w-full min-w-0 max-w-full/,
+  );
+  assert.match(
+    card,
+    /hidden md:grid lg:grid-cols-\[220px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[228px_minmax\(0,1fr\)_152px\]/,
+  );
+  assert.match(
+    skeleton,
+    /lg:grid-cols-\[220px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[228px_minmax\(0,1fr\)_152px\]/,
   );
   assert.match(
     card,

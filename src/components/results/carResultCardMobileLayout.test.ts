@@ -66,10 +66,10 @@ test("mobile conversion strip is full width, divided once, and retains accessibl
 });
 
 test("legacy composition is hidden only for standalone mobile while compact desktop rails stay explicit", () => {
-  assert.match(source, /guidedPlanning \? "grid lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\] xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]" : "hidden md:grid lg:grid-cols-\[250px_minmax\(0,1fr\)_180px\] xl:grid-cols-\[270px_minmax\(0,1fr\)_180px\]"/);
+  assert.match(source, /guidedPlanning \? "grid lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\] xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]" : "hidden md:grid lg:grid-cols-\[220px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[228px_minmax\(0,1fr\)_152px\]"/);
   assert.match(source, /md:grid-cols-\[250px_minmax\(0,1fr\)\]/);
-  assert.match(source, /lg:grid-cols-\[250px_minmax\(0,1fr\)_180px\]/);
-  assert.match(source, /xl:grid-cols-\[270px_minmax\(0,1fr\)_180px\]/);
+  assert.match(source, /lg:grid-cols-\[220px_minmax\(0,1fr\)_152px\]/);
+  assert.match(source, /xl:grid-cols-\[228px_minmax\(0,1fr\)_152px\]/);
   const desktopImage = between('data-region="image"', 'data-region="heading"');
   assert.match(desktopImage, /md:col-span-1 md:col-start-1 md:row-span-2/);
 });
