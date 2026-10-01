@@ -84,7 +84,7 @@ test("standalone desktop uses a shared header row for identity and actions witho
 
   assert.match(
     heading,
-    /data-car-card-desktop-shared-header[\s\S]*?lg:grid-cols-\[minmax\(0,1fr\)_205px\]/,
+    /data-car-card-desktop-shared-header[\s\S]*?lg:grid-cols-\[minmax\(0,1fr\)_180px\]/,
   );
   assert.match(
     heading,
@@ -320,6 +320,28 @@ test("standalone desktop hides sandbox pickup-label chrome while preserving the 
   );
 });
 
+test("standalone desktop location stays flat and gains width from the compact right rail", () => {
+  const desktop = source.slice(source.indexOf('data-region="heading"'));
+  const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
+
+  assert.match(
+    heading,
+    /data-car-card-desktop-shared-header[\s\S]*?lg:grid-cols-\[minmax\(0,1fr\)_180px\]/,
+  );
+  assert.match(
+    heading,
+    /row-start-4" : "row-start-3"\} mt-2 flex min-w-0 items-center gap-1\.5 ps-4 pe-2/,
+  );
+  assert.match(
+    heading,
+    /<span className="min-w-0 whitespace-nowrap">[\s\S]*?\{car\.pickupLocation\}/,
+  );
+  assert.doesNotMatch(
+    heading,
+    /<span className="min-w-0 whitespace-normal">[\s\S]*?\{car\.pickupLocation\}/,
+  );
+});
+
 test("standalone desktop shows localized data-driven Free cancellation directly below the location at md and lg", () => {
   const desktop = source.slice(source.indexOf('data-region="heading"'));
   const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
@@ -436,8 +458,10 @@ test("standalone desktop pricing is anchored to the card bottom-right while guid
 });
 
 test("desktop and guided contracts retain their responsive grid and owned disclosures", () => {
-  assert.match(source, /guidedPlanning \? "grid" : "hidden md:grid"/);
+  assert.match(source, /guidedPlanning \? "grid lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\] xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]" : "hidden md:grid lg:grid-cols-\[250px_minmax\(0,1fr\)_180px\] xl:grid-cols-\[270px_minmax\(0,1fr\)_180px\]"/);
   assert.match(source, /md:grid-cols-\[250px_minmax\(0,1fr\)\]/);
+  assert.match(source, /lg:grid-cols-\[250px_minmax\(0,1fr\)_180px\]/);
+  assert.match(source, /xl:grid-cols-\[270px_minmax\(0,1fr\)_180px\]/);
   assert.match(source, /lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\]/);
   assert.match(source, /xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]/);
   const desktop = source.slice(source.indexOf('data-region="heading"'));

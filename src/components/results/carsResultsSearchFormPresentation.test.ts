@@ -154,25 +154,16 @@ test("pickup and return omit redundant clear buttons and reclaim the input width
   );
 });
 
-test("desktop-full rental dates use compact dates and localized duration", () => {
+test("desktop-full rental dates show only the selected date range, without a visible duration line", () => {
   assert.match(source, /useCompactDateSummary=\{placement !== "mobile"\}/);
   assert.match(source, /showRentalDuration=\{placement === "desktop-full"\}/);
   assert.match(
     source,
     /dateFormatter = useCompactDateSummary \? formatCompactDate : formatDate/,
   );
-  assert.match(
-    source,
-    /const rentalDayCount =[\s\S]*?Math\.max\([\s\S]*?0,[\s\S]*?Math\.round\([\s\S]*?dropoffParsed\.getTime\(\) - pickupParsed\.getTime\(\)[\s\S]*?86_400_000/,
-  );
-  assert.match(
-    source,
-    /t\("carsSearch\.rentalDays"\)\.replace\([\s\S]*?"\{count\}"[\s\S]*?String\(rentalDayCount\)/,
-  );
-  assert.match(
-    source,
-    /showRentalDuration && rentalDayCount > 0[\s\S]*?\{rentalDaysLabel\}/,
-  );
+  assert.doesNotMatch(source, /const rentalDayCount =/);
+  assert.doesNotMatch(source, /const rentalDaysLabel =/);
+  assert.doesNotMatch(source, /showRentalDuration && rentalDayCount > 0/);
   assert.match(source, /name="pickupDate" value=\{pickupDate\}/);
   assert.match(source, /name="dropoffDate" value=\{dropoffDate\}/);
 });
@@ -191,7 +182,7 @@ test("desktop-sticky compact date summary is independent from rental duration", 
   );
 });
 
-test("desktop-full rental dates compose calendar, value stack, then chevron", () => {
+test("desktop-full rental dates compose calendar, date value, then chevron without duration copy", () => {
   const searchDateCell = source.match(
     /function SearchDateCell\([\s\S]*?\n}\n\nfunction SearchTimeCell/,
   )?.[0];
@@ -199,8 +190,9 @@ test("desktop-full rental dates compose calendar, value stack, then chevron", ()
   assert.ok(searchDateCell, "SearchDateCell should remain defined");
   assert.match(
     searchDateCell,
-    /\{showRentalDuration \? \(\s*<Calendar[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"[\s\S]*?<span className="min-w-0 flex-1">[\s\S]*?\{summary\}[\s\S]*?showRentalDuration && rentalDayCount > 0[\s\S]*?\{rentalDaysLabel\}[\s\S]*?<ChevronDown/,
+    /\{showRentalDuration \? \(\s*<Calendar[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"[\s\S]*?<span className="min-w-0 flex-1">[\s\S]*?\{summary\}[\s\S]*?<ChevronDown/,
   );
+  assert.doesNotMatch(searchDateCell, /rentalDaysLabel|rentalDayCount/);
   const labelRow = searchDateCell.match(
     /<div className=\{cn\(fieldLabelClass,[^\n]*\)\}>[\s\S]*?<\/div>/,
   )?.[0];

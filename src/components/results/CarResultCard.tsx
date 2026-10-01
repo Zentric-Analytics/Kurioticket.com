@@ -454,7 +454,7 @@ export function CarResultCard({
       )}
 
       <div
-        className={`${guidedPlanning ? "grid" : "hidden md:grid"} grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]`}
+        className={`${guidedPlanning ? "grid lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]" : "hidden md:grid lg:grid-cols-[250px_minmax(0,1fr)_180px] xl:grid-cols-[270px_minmax(0,1fr)_180px]"} grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:grid-cols-[250px_minmax(0,1fr)]`}
       >
         <div
           data-region="image"
@@ -588,7 +588,7 @@ export function CarResultCard({
 
               <div
                 data-car-card-desktop-shared-header
-                className={`hidden lg:grid lg:grid-cols-[minmax(0,1fr)_205px] lg:gap-y-0 ${badge && BadgeIcon ? "lg:grid-rows-[24px_44px_auto_auto_auto]" : "lg:grid-rows-[44px_auto_auto_auto]"}`}
+                className={`hidden lg:grid lg:grid-cols-[minmax(0,1fr)_180px] lg:gap-y-0 ${badge && BadgeIcon ? "lg:grid-rows-[24px_44px_auto_auto_auto]" : "lg:grid-rows-[44px_auto_auto_auto]"}`}
               >
                 <div
                   data-car-card-desktop-header-rail
@@ -646,7 +646,7 @@ export function CarResultCard({
                 </div>
 
                 <p
-                  className={`col-start-1 ${badge && BadgeIcon ? "row-start-4" : "row-start-3"} mt-2 flex min-w-0 items-center gap-1.5 px-4 text-[13px] font-normal leading-[18px] text-[#475569]`}
+                  className={`col-start-1 ${badge && BadgeIcon ? "row-start-4" : "row-start-3"} mt-2 flex min-w-0 items-center gap-1.5 ps-4 pe-2 text-[13px] font-normal leading-[18px] text-[#475569]`}
                 >
                   <MapPin
                     size={16}
