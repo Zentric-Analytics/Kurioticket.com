@@ -419,9 +419,8 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
           <section className="min-w-0 overflow-hidden border-b border-[#E2E8F0] bg-[#F3F6FA] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
             <div data-flight-details-desktop-navigation className="hidden min-h-[52px] items-center justify-between gap-4 border-b border-[#E2E8F0] bg-white px-4 sm:flex lg:px-5">
-              <Link href={resultsHref} className="inline-flex min-h-11 items-center gap-2 rounded-lg px-1 text-sm font-semibold text-[#075EE8] transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">
-                <ArrowLeft className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-                <span>Back to flight results</span>
+              <Link href={resultsHref} aria-label="Back to flight results" className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#075EE8] transition hover:bg-slate-50 hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">
+                <ArrowLeft className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
               </Link>
               <div data-flight-details-desktop-actions className="flex shrink-0 items-center gap-1">
                 <button
@@ -430,19 +429,17 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                   aria-pressed={flightSaved}
                   disabled={savedFlightPending}
                   onClick={() => void toggleSavedFlight()}
-                  className={`inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 disabled:cursor-wait disabled:opacity-60 ${flightSaved ? "text-[#075EE8]" : "text-slate-700"}`}
+                  className={`inline-flex h-11 w-11 items-center justify-center rounded-lg transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 disabled:cursor-wait disabled:opacity-60 ${flightSaved ? "text-[#075EE8]" : "text-slate-700"}`}
                 >
                   <Heart className="h-[18px] w-[18px]" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
-                  <span>{flightSaved ? "Saved" : "Save"}</span>
                 </button>
                 <button
                   type="button"
                   aria-label="Share flight"
                   onClick={() => void shareFlight()}
-                  className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35"
                 >
                   <Share2 className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
-                  <span>Share</span>
                 </button>
               </div>
             </div>
