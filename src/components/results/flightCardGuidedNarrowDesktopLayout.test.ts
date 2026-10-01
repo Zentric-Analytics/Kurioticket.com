@@ -93,25 +93,62 @@ test("mobile card navigation ignores nested controls and keeps canonical href", 
 });
 
 test("desktop fare stays beside the itinerary while details span beneath both columns", () => {
+  const baseBodyStart = globalsCss.indexOf(".flight-card-body {");
   assert.match(
-    ruleBody(globalsCss, ".flight-card-body"),
+    ruleBody(globalsCss, ".flight-card-body", baseBodyStart),
     /grid-template-columns:\s*minmax\(0, 1fr\) 196px/,
   );
-  const desktopStart = globalsCss.indexOf("@media (min-width: 1024px)");
-  const desktopBodyRule = ruleBody(globalsCss, ".flight-card-body", desktopStart);
-  const desktopFareRule = ruleBody(globalsCss, ".flight-card-fare-action", desktopStart);
+
+  const finalDesktopStart = globalsCss.indexOf(
+    "@media (min-width: 1024px)",
+    globalsCss.indexOf("Keep the desktop fare column beside the itinerary"),
+  );
+  assert.ok(finalDesktopStart > baseBodyStart);
+
+  const desktopBodyRule = ruleBody(
+    globalsCss,
+    ".flight-card-body",
+    finalDesktopStart,
+  );
+  const desktopFareRule = ruleBody(
+    globalsCss,
+    ".flight-card-fare-action",
+    finalDesktopStart,
+  );
   assert.match(
     desktopBodyRule,
     /grid-template-areas:\s*"legs fare"\s*"details details"/,
   );
+  assert.match(
+    desktopBodyRule,
+    /grid-template-columns:\s*minmax\(0, 1fr\) 196px/,
+  );
   assert.match(desktopBodyRule, /row-gap:\s*0\.5rem/);
   assert.match(desktopFareRule, /border-left:\s*0/);
+  assert.match(desktopFareRule, /border-top:\s*0/);
   assert.match(desktopFareRule, /padding-left:\s*0/);
+  assert.match(desktopFareRule, /padding-top:\s*0/);
 
-  const mediumQueryStart = globalsCss.indexOf("@container (max-width: 759px)");
+  const mediumQueryStart = globalsCss.indexOf(
+    "@container (max-width: 759px)",
+    finalDesktopStart,
+  );
+  const mediumDesktopStart = globalsCss.indexOf(
+    "@media (min-width: 1024px)",
+    mediumQueryStart,
+  );
+  const mediumBodyRule = ruleBody(
+    globalsCss,
+    ".flight-card-body",
+    mediumDesktopStart,
+  );
   assert.match(
-    ruleBody(globalsCss, ".flight-card-body", mediumQueryStart),
+    mediumBodyRule,
     /grid-template-columns:\s*minmax\(0, 1fr\) 180px/,
+  );
+  assert.match(
+    mediumBodyRule,
+    /grid-template-areas:\s*"legs fare"\s*"details details"/,
   );
   assert.doesNotMatch(flightCardSource, /flight-card-details[^\n]*grid-cols-3/);
 });
