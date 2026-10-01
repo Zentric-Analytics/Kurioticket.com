@@ -526,7 +526,7 @@ export function CarDetailsExperience({
                 desktopBackControl={desktopBackControl}
                 desktopUtilityActions={
                   <div
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-4 xl:gap-5"
                     data-car-details-utility-placement="tabs"
                   >
                     <CarHeroActions
