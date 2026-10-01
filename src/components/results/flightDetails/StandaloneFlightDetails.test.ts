@@ -719,7 +719,11 @@ test("flight details entry keeps the opaque canonical route and results query", 
 
 
 
-test("desktop checkout summary uses compact left-aligned price hierarchy", () => {
+test("desktop checkout summary uses compact left-aligned price hierarchy", async () => {
+  const source = await readFile(
+    new URL("./StandaloneFlightDetails.tsx", import.meta.url),
+    "utf8",
+  );
   const start = source.indexOf("function DesktopCheckoutSummary");
   const end = source.indexOf("function FlightDetailsSkeleton", start);
   assert.ok(start >= 0 && end > start);
