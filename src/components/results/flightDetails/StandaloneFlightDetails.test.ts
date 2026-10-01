@@ -1172,3 +1172,21 @@ test("Flight Details invalidates shared saved-flight result state after account 
   assert.match(source, /invalidateSavedFlightsClientCache/);
   assert.match(source, /setSavedFlightBackendId\(null\); invalidateSavedFlightsClientCache\(\)/);
 });
+
+
+test("desktop checkout summary stays visible while the details page scrolls", async () => {
+  const source = await readFile(
+    new URL("./StandaloneFlightDetails.tsx", import.meta.url),
+    "utf8",
+  );
+  const start = source.indexOf("function DesktopCheckoutSummary");
+  const end = source.indexOf("function FlightDetailsSkeleton", start);
+  assert.ok(start >= 0 && end > start);
+  const summary = source.slice(start, end);
+
+  assert.match(
+    summary,
+    /data-desktop-checkout-summary className="[^"]*lg:sticky[^"]*lg:top-6[^"]*lg:block/,
+  );
+  assert.doesNotMatch(summary, /\bfixed\b/);
+});
