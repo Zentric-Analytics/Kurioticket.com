@@ -42,7 +42,7 @@ test("standalone Car details owns exactly one page wrapper and passes the deskto
   assert.match(standaloneSource, /standalone-disabled-provider/);
 });
 
-test("CarDetailsExperience uses one Hotels-style sticky desktop section handoff", () => {
+test("CarDetailsExperience uses one Hotels-style sticky desktop section handoff without duplicate booking controls", () => {
   assert.doesNotMatch(experienceSource, /<main\b/);
   assert.doesNotMatch(experienceSource, /page-shell/);
   assert.match(experienceSource, /data-car-details-experience/);
@@ -61,6 +61,16 @@ test("CarDetailsExperience uses one Hotels-style sticky desktop section handoff"
   assert.match(experienceSource, /data-car-details-scroll-section="location"/);
   assert.match(experienceSource, /data-car-details-utility-placement="hero"/);
   assert.match(experienceSource, /data-car-details-utility-placement="tabs"/);
+  assert.match(
+    experienceSource,
+    /data-car-details-utility-placement="hero"[\s\S]*?<CarHeroActions[\s\S]*?desktop/,
+  );
+  assert.match(
+    experienceSource,
+    /data-car-details-utility-placement="tabs"[\s\S]*?<CarHeroActions[\s\S]*?desktop/,
+  );
+  assert.doesNotMatch(experienceSource, /DesktopCompactBookingAction/);
+  assert.doesNotMatch(experienceSource, /data-car-details-desktop-compact-/);
   assert.doesNotMatch(experienceSource, /data-car-details-desktop-context/);
   assert.match(experienceSource, /desktopBackControl={desktopBackControl}/);
   assert.doesNotMatch(
@@ -69,14 +79,6 @@ test("CarDetailsExperience uses one Hotels-style sticky desktop section handoff"
   );
   assert.doesNotMatch(experienceSource, /data-car-details-bottom-booking-bar/);
   assert.doesNotMatch(layoutSource, /data-car-details-bottom-booking-bar/);
-  assert.match(
-    experienceSource,
-    /data-car-details-utility-placement="hero"[\s\S]*?<DesktopCompactBookingAction/,
-  );
-  assert.match(
-    experienceSource,
-    /data-car-details-utility-placement="tabs"[\s\S]*?<DesktopCompactBookingAction/,
-  );
   assert.match(layoutSource, /\[data-car-details-scroll-section\] \{\s*scroll-margin-top: 5\.5rem;/);
   assert.match(
     layoutSource,
