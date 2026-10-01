@@ -31,22 +31,30 @@ const styles = readFileSync(
   "utf8",
 );
 
-test("standalone Cars Results keeps the mobile canvas but uses the homepage-like white desktop body", () => {
+test("standalone Cars Results follows the Hotels Results body palette while keeping the header white", () => {
   assert.match(
     results,
-    /<main className="flex-1 bg-\[#F5F7FB\] lg:bg-white pb-8">/,
+    /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white pb-8">/,
   );
   assert.match(
     results,
-    /flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] lg:bg-white/,
+    /flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white/,
   );
   assert.match(
     results,
-    /fixed inset-0 z-\[1200\] overflow-hidden bg-\[#F5F7FB\] lg:bg-white/,
+    /fixed inset-0 z-\[1200\] overflow-hidden bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white/,
   );
   assert.doesNotMatch(
     results,
     /<main className="flex-1 bg-\[#F5F7FB\] pb-8">/,
+  );
+  assert.match(
+    results,
+    /<section[\s\S]*?className="hidden bg-white pb-0 pt-7 sm:block"/,
+  );
+  assert.match(
+    route,
+    /<AppHeader[\s\S]*?flushDesktopBottom[\s\S]*?stableMobileSafeAreaTop/,
   );
   assert.match(
     results,
@@ -166,7 +174,7 @@ test("KAYAK car cards and loading canvases stay inside the same standalone deskt
   );
   assert.match(
     route,
-    /<main className="flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] lg:bg-white">/,
+    /<main className="flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white">/,
   );
   assert.match(skeleton, /desktopSurfaceParity = false/);
   assert.match(skeleton, /desktopSurfaceParity && "md:bg-\[#E7EBF1\]"/);
