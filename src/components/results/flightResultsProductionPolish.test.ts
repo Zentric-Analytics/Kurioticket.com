@@ -384,6 +384,9 @@ test("desktop Flight result meta typography uses the refined hierarchy", async (
   const cheaperStart = source.indexOf("data-desktop-cheaper-nearby");
   const cheaper = source.slice(cheaperStart, cheaperStart + 900);
   assert.match(cheaper, /text-\[13px\] font-normal leading-5 tracking-\[-0\.002em\] text-\[#536B92\]/);
+  assert.match(cheaper, /hover:bg-slate-100\/70/);
+  assert.match(cheaper, /hover:text-\[#334155\]/);
+  assert.doesNotMatch(cheaper, /hover:text-\[#075EE8\]/);
 
   const summaryStart = source.indexOf('className="hidden w-full items-center justify-between gap-4 pt-2 sm:flex');
   const summary = source.slice(summaryStart, summaryStart + 3600);
@@ -391,4 +394,7 @@ test("desktop Flight result meta typography uses the refined hierarchy", async (
   assert.match(summary, /text-\[12px\] font-medium leading-4 text-\[#64748B\]/);
   assert.match(summary, /text-\[14px\] font-medium leading-5 text-\[#64748B\]">\s*Sort by:/);
   assert.match(summary, /text-\[14px\] font-semibold leading-5 text-\[#142033\]/);
+  assert.match(summary, /hover:bg-slate-100\/70/);
+  assert.match(summary, /hover:text-\[#142033\]/);
+  assert.doesNotMatch(summary, /hover:text-\[#004BB8\]/);
 });
