@@ -911,6 +911,16 @@ export function HotelDetailsClient({
                   rooms: requestRooms,
                   provider: searchContext?.provider,
                 }}
+                priceAlert={staySummary && hasValidPrice && searchContext?.destination?.trim() ? {
+                  hotel,
+                  search: {
+                    destination: searchContext.destination.trim(),
+                    checkIn: requestCheckIn,
+                    checkOut: requestCheckOut,
+                    guests: Number(requestGuests),
+                    rooms: Number(requestRooms),
+                  },
+                } : undefined}
                 amenityItems={amenityItems}
                 isSaved={isSaved}
                 savedHotelLabel={savedHotelLabel}

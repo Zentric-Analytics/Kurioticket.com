@@ -86,6 +86,7 @@ type AppHeaderProps = {
   hideDesktopTravelNav?: boolean;
   simpleHeader?: boolean;
   flushDesktopBottom?: boolean;
+  hotelDesktopBoundary?: boolean;
   flushMobileBottom?: boolean;
   mobileSurface?: "white" | "muted";
   stableMobileSafeAreaTop?: boolean;
@@ -145,6 +146,7 @@ export function AppHeader({
   hideDesktopTravelNav = false,
   simpleHeader = false,
   flushDesktopBottom = false,
+  hotelDesktopBoundary = false,
   flushMobileBottom = false,
   mobileSurface = "white",
   stableMobileSafeAreaTop = false,
@@ -731,6 +733,7 @@ export function AppHeader({
           flushMobileBottom &&
             "border-b-0 shadow-none sm:border-b sm:shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
           flushDesktopBottom && "sm:border-b-0 sm:shadow-none",
+          hotelDesktopBoundary && "lg:shadow-[0_2px_12px_rgba(12,14,28,0.08)]",
         )}
       >
         {mobileResultsSearch ? <div data-mobile-results-navbar className="flex h-[72px] items-center gap-2 border-b border-slate-200 px-2 sm:hidden">

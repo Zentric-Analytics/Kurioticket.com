@@ -111,8 +111,8 @@ test("desktop rate actions route the clicked offer and guard duplicate handoffs"
   assert.match(desktop, /if \(handoffPending\.current\) return/);
   assert.match(desktop, /decision\.kind === "internal-room-flow"/);
   assert.match(desktop, /decision\.kind !== "provider-handoff"/);
-  assert.match(desktop, /await props\.onProviderOfferHandoff\(decision\.providerOfferId\)/);
-  assert.match(desktop, /finally \{ handoffPending\.current = false; setPendingProviderOfferId\(null\); \}/);
+  assert.match(desktop, /await props\.onProviderOfferHandoff\(decision\.providerOfferId, providerWindow\)/);
+  assert.match(desktop, /finally \{[\s\S]*?handoffPending\.current = false;[\s\S]*?setPendingProviderOfferId\(null\);[\s\S]*?\}/);
   assert.match(desktop, /setProviderHandoffError/);
   assert.match(compare, /role="alert"/);
   assert.doesNotMatch(compare, /href=\{offer\.|window\.location/);
@@ -181,7 +181,8 @@ test("desktop guest reviews stay compact without an empty guest-summary column",
   assert.match(reviews, /max-w-\[520px\] items-center gap-5/);
   assert.match(reviews, /h-12 w-px shrink-0 bg-\[#d9dfe2\]/);
   assert.doesNotMatch(reviews, /Guests say|data-desktop-hotel-guests-say|Reviews of \$\{hotelName\}/);
-  assert.doesNotMatch(desktop, /sentiment=|quotes=|hotelName=\{props\.hotelName\}/);
+  const reviewSection = desktop.slice(desktop.indexOf("<HotelReviewsSection"), desktop.indexOf("/>", desktop.indexOf("<HotelReviewsSection")) + 2);
+  assert.doesNotMatch(reviewSection, /sentiment=|quotes=|hotelName=/);
 });
 
 test("desktop related hotels are capped at eight actual cards", () => {

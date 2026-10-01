@@ -101,13 +101,13 @@ test("desktop Hotel cards give the image one-third of the card", () => {
   assert.match(source, /className="bg-slate-200 object-cover"/);
 });
 
-test("desktop hotel headings reserve two-line space for card-edge actions", () => {
-  assert.match(source, /lg:pe-\[88px\]/);
+test("desktop hotel headings keep save and share beside the name", () => {
   assert.match(source, /lg:line-clamp-2/);
   assert.match(
     source,
-    /data-hotel-desktop-utility-actions[\s\S]*absolute -end-3 -top-2[\s\S]*lg:flex/,
+    /data-hotel-card-details[\s\S]*data-hotel-desktop-utility-actions[\s\S]*absolute -end-3 -top-2 z-20[\s\S]*lg:flex/,
   );
+  assert.match(source, /lg:pe-\[88px\]/);
 });
 
 test("hotel result cards retain saved-hotel controls", () => {
@@ -193,7 +193,8 @@ test("hotel result cards keep mobile amenities compact while desktop retains the
     source,
     /data-hotel-card-amenities[\s\S]*grid-cols-1[\s\S]*md:grid-cols-2[\s\S]*data-hotel-card-price[\s\S]*data-hotel-card-action[\s\S]*href=\{resolvedDetailsHref\}/,
   );
-  assert.match(source, /className="mt-auto pt-2 md:pt-3"/);
+  assert.match(source, /className="mt-auto pt-2 md:pt-3 lg:flex lg:items-end lg:justify-between/);
+  assert.match(source, /lg:grid-cols-\[33\.333%_minmax\(0,1fr\)\]/);
 
   for (const layoutHack of [
     "self-center -translate-y",
@@ -219,7 +220,7 @@ test("hotel result cards expose compact save and share actions with feedback", (
 test("mobile hotel utility actions sit at the card edge without entering the hotel name", () => {
   assert.match(
     source,
-    /className="relative min-w-0"[\s\S]*?pe-\[88px\][\s\S]*?data-hotel-utility-actions[\s\S]*?absolute -end-3 -top-2/,
+    /className="relative min-w-0"[\s\S]*?sm:pe-\[88px\][\s\S]*?data-hotel-utility-actions[\s\S]*?absolute -end-2\.5 -top-2/,
   );
   assert.match(
     source,
@@ -264,18 +265,19 @@ test("hotel galleries keep imagery edge-to-edge with unobtrusive edge controls",
   assert.match(source, /className="bg-slate-200 object-cover"/);
   assert.match(source, /Previous photo[\s\S]*absolute left-0[\s\S]*h-11 w-11[\s\S]*bg-transparent text-white/);
   assert.match(source, /Next photo[\s\S]*absolute right-0[\s\S]*h-11 w-11[\s\S]*bg-transparent text-white/);
-  assert.match(source, /ChevronLeft className="h-5 w-5 -translate-x-2\.5"/);
-  assert.match(source, /ChevronRight className="h-5 w-5 translate-x-2\.5"/);
-  assert.doesNotMatch(source, /bg-(?:white\/95|slate-950\/55)|rounded-full[^\n]*Previous photo/);
+  assert.match(source, /ChevronLeft className="h-5 w-5 -translate-x-2\.5 lg:translate-x-0"/);
+  assert.match(source, /ChevronRight className="h-5 w-5 translate-x-2\.5 lg:translate-x-0"/);
+  assert.match(source, /lg:rounded-full lg:bg-slate-950\/65/);
 });
 
 
-test("mobile Hotel result cards use a full-card destination with independent utilities", () => {
+test("Hotel result cards use a full-card destination with independent utilities", () => {
   assert.match(
     source,
-    /<Link[\s\S]*?aria-hidden="true"[\s\S]*?tabIndex=\{-1\}[\s\S]*?absolute inset-0 z-10 sm:hidden/,
+    /<Link[\s\S]*?aria-hidden="true"[\s\S]*?tabIndex=\{-1\}[\s\S]*?absolute inset-0 z-10 cursor-pointer/,
   );
   assert.match(source, /data-hotel-utility-actions[\s\S]*?z-20/);
+  assert.match(source, /data-hotel-desktop-utility-actions[\s\S]*?z-20/);
   assert.match(source, /Previous photo[\s\S]*?z-30/);
   assert.match(source, /Next photo[\s\S]*?z-30/);
 });

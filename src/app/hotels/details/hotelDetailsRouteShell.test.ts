@@ -21,7 +21,6 @@ test("Hotel Details owns an immersive mobile shell while preserving its desktop 
       /className="pt-\[env\(safe-area-inset-top\)\] lg:pt-0"[\s\S]*?data-hotel-details-mobile-safe-area/,
     );
     assert.equal((source.match(/env\(safe-area-inset-top\)/g) ?? []).length, 1);
-    assert.doesNotMatch(source, /import\s+\{\s*Footer\s*\}|<Footer\b/);
     assert.doesNotMatch(
       source,
       /window\.innerWidth|matchMedia|navigator\.userAgent|["']use client["']/,
@@ -33,6 +32,11 @@ test("Hotel Details owns an immersive mobile shell while preserving its desktop 
     /<HotelDetailsClient\s+id=\{id\}\s+searchContext=\{searchContext\}\s+\/>/,
   );
   assert.match(loadingSource, /<HotelDetailsLoadingState/);
+  assert.match(
+    pageSource,
+    /data-hotel-details-desktop-footer>[\s\S]*?<Footer variant="brand-legal-only" className="lg:bg-\[#EFF3F7\]" \/>/,
+  );
+  assert.doesNotMatch(loadingSource, /import\s+\{\s*Footer\s*\}|<Footer\b/);
 });
 
 test("Hotel Details preserves the complete results search context", async () => {

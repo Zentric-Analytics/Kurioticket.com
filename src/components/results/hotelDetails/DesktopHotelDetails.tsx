@@ -11,6 +11,7 @@ import { HotelLocationSection } from "./HotelLocationSection";
 import { HotelReviewsSection } from "./HotelReviewsSection";
 import { RelatedHotelsSection } from "./RelatedHotelsSection";
 import { HotelAmenityList } from "../HotelAmenityList";
+import { HotelPriceAlertControl } from "../HotelPriceAlertControl";
 import { buildHotelAddress } from "@/lib/hotels/hotelMap";
 import { buildKurioticketHotelDetailsProviderOffer, isActionableExternalHotelProviderOffer, resolveHotelBookingContinuation, resolveSelectedHotelProviderOfferId } from "./hotelBookingContinuation";
 import { desktopHotelReviewScore } from "./desktopHotelDetailsModel";
@@ -181,7 +182,10 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
       <nav className={styles.tabs} aria-label="Hotel details sections">
         {sections.map(section => <a key={section.id} href={`#${section.id}`} aria-current={activeSection === section.id ? "location" : undefined} onClick={event => { event.preventDefault(); goToSection(section.id); }}>{section.label}</a>)}
       </nav>
-      {utilityActions("tabs")}
+      <div className={styles.sectionActions}>
+        {props.priceAlert ? <HotelPriceAlertControl compactDesktop search={props.priceAlert.search} hotel={props.priceAlert.hotel} /> : null}
+        {utilityActions("tabs")}
+      </div>
     </div>
 
     <div data-desktop-section="rate">

@@ -14,16 +14,17 @@ import {
 } from "./hotelPriceAlerts";
 import type { PublicHotelResult } from "@/lib/types";
 
-test("Hotel alert payload preserves complete comparable stay context", () => {
-  const payload = buildHotelPriceAlertPayload({ destination: "Paris", checkIn: "2030-04-01", checkOut: "2030-04-03", guests: 2, rooms: 1 }, 450, "usd");
-  assert.deepEqual(payload.query, { destination: "Paris", checkIn: "2030-04-01", checkOut: "2030-04-03", guests: 2, rooms: 1 });
+test("Hotel alert payload preserves the chosen property and complete stay context", () => {
+  const payload = buildHotelPriceAlertPayload({ destination: "Paris", checkIn: "2030-04-01", checkOut: "2030-04-03", guests: 2, rooms: 1 }, 450, "usd", { id: "hotel-42", name: "Hotel Paris" });
+  assert.deepEqual(payload.query, { destination: "Paris", checkIn: "2030-04-01", checkOut: "2030-04-03", guests: 2, rooms: 1, hotelId: "hotel-42", hotelName: "Hotel Paris" });
   assert.equal(payload.currency, "USD");
 });
 
-test("Hotel duplicate identity includes dates occupancy currency and target", () => {
-  const base = { destination: "Paris", targetPrice: 450, currency: "USD", query: { checkIn: "2030-04-01", checkOut: "2030-04-03", guests: 2, rooms: 1 } };
+test("Hotel duplicate identity distinguishes hotels at the same destination and dates", () => {
+  const base = { destination: "Paris", targetPrice: 450, currency: "USD", query: { hotelId: "hotel-42", checkIn: "2030-04-01", checkOut: "2030-04-03", guests: 2, rooms: 1 } };
   assert.equal(hotelPriceAlertDuplicateKey(base), hotelPriceAlertDuplicateKey({ ...base, destination: " paris " }));
   assert.notEqual(hotelPriceAlertDuplicateKey(base), hotelPriceAlertDuplicateKey({ ...base, query: { ...base.query, rooms: 2 } }));
+  assert.notEqual(hotelPriceAlertDuplicateKey(base), hotelPriceAlertDuplicateKey({ ...base, query: { ...base.query, hotelId: "hotel-99" } }));
 });
 
 
@@ -61,7 +62,7 @@ test("Hotel alert basis uses the lowest valid stay total and preserves provider 
   });
 });
 
-test("Hotel alert search matching ignores target but keeps the exact stay context", () => {
+test("Hotel alert search matching requires the same hotel and stay", () => {
   const search = {
     destination: "Paris",
     checkIn: "2030-04-01",
@@ -76,10 +77,12 @@ test("Hotel alert search matching ignores target but keeps the exact stay contex
     targetPrice: "600",
     currency: "USD",
     status: "PAUSED" as const,
-    query: { ...search },
+    query: { ...search, hotelId: "hotel-42", hotelName: "Hotel Paris" },
   };
-  assert.equal(hotelPriceAlertMatchesSearch(alert, search), true);
-  assert.equal(hotelPriceAlertMatchesSearch(alert, { ...search, rooms: 2 }), false);
+  assert.equal(hotelPriceAlertMatchesSearch(alert, search, "hotel-42"), true);
+  assert.equal(hotelPriceAlertMatchesSearch(alert, search, "hotel-99"), false);
+  assert.equal(hotelPriceAlertMatchesSearch(alert, { ...search, rooms: 2 }, "hotel-42"), false);
+  assert.equal(hotelPriceAlertMatchesSearch({ ...alert, query: search }, search, "hotel-42"), false);
 });
 
 

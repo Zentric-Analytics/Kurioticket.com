@@ -142,7 +142,7 @@ test("Flight Results explicitly selects the brand/legal-only Footer", () => {
 });
 
 test("Hotel Results explicitly selects the brand/legal-only Footer", () => {
-  assert.match(hotelResultsPage, /<Footer variant="brand-legal-only" \/>/);
+  assert.match(hotelResultsPage, /<Footer variant="brand-legal-only" className="lg:bg-\[#EFF3F7\]" \/>/);
   assert.equal(hotelResultsPage.match(/<Footer/g)?.length, 1);
 });
 
