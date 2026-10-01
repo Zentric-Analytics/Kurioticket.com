@@ -389,9 +389,22 @@ test("desktop Cars details keep the compact selected price and Continue deal bes
   assert.match(compactBooking, /data-car-details-desktop-compact-summary/);
   assert.match(compactBooking, /data-car-details-desktop-compact-price/);
   assert.match(compactBooking, /data-car-details-desktop-compact-total-label/);
+  assert.match(compactBooking, /data-car-details-desktop-compact-action-stack/);
   assert.match(compactBooking, /data-car-details-desktop-compact-provider/);
   assert.match(compactBooking, /copy\("carDetails\.bookingSummary"\)/);
   assert.match(compactBooking, /data-car-details-desktop-compact-cta/);
+  assert.match(
+    compactBooking,
+    /text-\[18px\] font-extrabold leading-\[22px\][\s\S]*?xl:text-\[20px\] xl:leading-6/,
+  );
+  assert.match(
+    compactBooking,
+    /data-car-details-desktop-compact-action-stack[\s\S]*?data-car-details-desktop-compact-provider[\s\S]*?data-car-details-desktop-compact-cta/,
+  );
+  assert.match(
+    compactBooking,
+    /text-\[11px\] font-semibold leading-\[13px\][\s\S]*?xl:text-\[12px\] xl:leading-\[14px\]/,
+  );
   assert.match(
     compactBooking,
     /flex shrink-0 items-center gap-2 border-s border-slate-300 ps-3/,

@@ -716,11 +716,11 @@ function DesktopCompactBookingAction({
       data-car-details-desktop-compact-booking
     >
       <div
-        className="min-w-0 max-w-[132px] text-right"
+        className="min-w-0 max-w-[144px] text-right"
         data-car-details-desktop-compact-summary
       >
         <p
-          className="overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-extrabold leading-[18px] tabular-nums text-[#102A43] xl:text-[15px]"
+          className="overflow-hidden text-ellipsis whitespace-nowrap text-[18px] font-extrabold leading-[22px] tabular-nums text-[#102A43] xl:text-[20px] xl:leading-6"
           dir="ltr"
           title={total.title}
           aria-label={total.ariaLabel}
@@ -729,54 +729,59 @@ function DesktopCompactBookingAction({
           {total.formatted}
         </p>
         <p
-          className="overflow-hidden text-ellipsis whitespace-nowrap text-[9px] font-medium leading-[11px] text-[#56658E] xl:text-[10px]"
+          className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] font-medium leading-3 text-[#56658E] xl:text-[11px] xl:leading-[13px]"
           data-car-details-desktop-compact-total-label
         >
           {copy("carDetails.bookingSummary")}
         </p>
+      </div>
+      <div
+        className="flex shrink-0 flex-col items-end justify-center gap-0.5"
+        data-car-details-desktop-compact-action-stack
+      >
         {providerName ? (
           <p
-            className="overflow-hidden text-ellipsis whitespace-nowrap text-[9px] font-medium leading-[11px] text-[#59636A] xl:text-[10px]"
+            className="max-w-[128px] overflow-hidden text-ellipsis whitespace-nowrap text-[11px] font-semibold leading-[13px] text-[#59636A] xl:text-[12px] xl:leading-[14px]"
             title={providerName}
             data-car-details-desktop-compact-provider
           >
             {providerName}
           </p>
         ) : null}
+        {action.kind === "sandbox-handoff" ? (
+          <a
+            href={action.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            referrerPolicy="no-referrer"
+            className={actionClassName}
+            data-car-details-desktop-compact-cta
+          >
+            {action.label}
+          </a>
+        ) : action.kind === "standalone-disabled-provider" ? (
+          <button
+            disabled
+            className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-100`}
+            data-car-details-desktop-compact-cta
+          >
+            {action.label}
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={!action.enabled || action.pending}
+            aria-label={action.accessibleLabel}
+            onClick={action.onActivate}
+            className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-60`}
+            data-car-details-desktop-compact-cta
+          >
+            {action.pending
+              ? copy("deals.guided.carDetails.saving")
+              : action.label}
+          </button>
+        )}
       </div>
-      {action.kind === "sandbox-handoff" ? (
-        <a
-          href={action.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          referrerPolicy="no-referrer"
-          className={actionClassName}
-          data-car-details-desktop-compact-cta
-        >
-          {action.label}
-        </a>
-      ) : action.kind === "standalone-disabled-provider" ? (
-        <button
-          disabled
-          className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-100`}
-          data-car-details-desktop-compact-cta
-        >
-          {action.label}
-        </button>
-      ) : (
-        <button
-          type="button"
-          disabled={!action.enabled || action.pending}
-          aria-label={action.accessibleLabel}
-          onClick={action.onActivate}
-          className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-60`}
-          data-car-details-desktop-compact-cta
-        >
-          {action.pending
-            ? copy("deals.guided.carDetails.saving")
-            : action.label}
-        </button>
-      )}
     </div>
   );
 }
