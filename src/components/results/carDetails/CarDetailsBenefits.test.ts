@@ -47,7 +47,7 @@ test("hero omits the duplicate cancellation and taxes benefit cards", () => {
   }
 });
 
-test("source contract keeps total pricing and hides the standalone rental breakdown", () => {
+test("source contract keeps guided summary pricing and a compact standalone selected total", () => {
   const summary = clientSource.slice(
     clientSource.indexOf("function BookingSummary"),
   );
@@ -64,7 +64,6 @@ test("source contract keeps total pricing and hides the standalone rental breakd
   assert.match(summary, /offer\.totalPrice/);
   assert.match(summary, /showRentalBreakdown \? price\(offer\.pricePerDay, offer\.currency\) : null/);
   assert.match(summary, /showRentalBreakdown && daily \? \(/);
-  assert.match(clientSource, /showRentalBreakdown={presentation !== "standalone-content"}/);
   assert.match(summary, /carDetails\.bookingSummary/);
   assert.match(summary, /carDetails\.day/);
   assert.match(summary, /carsResults\.perDay/);
@@ -72,10 +71,18 @@ test("source contract keeps total pricing and hides the standalone rental breakd
     summary,
     /<button disabled className="mt-5 w-full rounded-lg bg-blue px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-100" > {action.label} <\/button>/,
   );
+
+  const compact = sourceBetween(
+    clientSource,
+    "function DesktopCompactBookingAction",
+    "export function CarDetailsClient",
+  );
+  assert.match(compact, /offer\.totalPrice/);
+  assert.doesNotMatch(compact, /offer\.pricePerDay/);
   assert.doesNotMatch(clientSource, /function Term|<Term|<dl/);
 });
 
-test("source contract uses a desktop summary and a mobile safe-area booking dock", () => {
+test("source contract keeps the guided desktop summary and mobile safe-area booking dock without a duplicate standalone bottom bar", () => {
   assert.match(clientSource, /function MobileBookingDock|<MobileBookingDock/);
   assert.match(clientSource, /fixed inset-x-0 bottom-0/);
   assert.match(clientSource, /safe-area-inset-bottom/);
@@ -83,10 +90,9 @@ test("source contract uses a desktop summary and a mobile safe-area booking dock
   assert.match(clientSource, /<main className="flex-1 bg-\[#F5F7FB\] pb-/);
 
   const summaryRenders = clientSource.match(/<BookingSummary\b/g) ?? [];
-  assert.equal(summaryRenders.length, 2);
+  assert.equal(summaryRenders.length, 1);
   assert.match(clientSource, /data-car-details-booking-rail/);
-  assert.match(clientSource, /data-car-details-bottom-booking-bar/);
-  assert.match(clientSource, /className="hidden lg:block"[\s\S]*?data-car-details-bottom-booking-bar/);
+  assert.doesNotMatch(clientSource, /data-car-details-bottom-booking-bar/);
   assert.match(
     clientSource,
     /grid items-start gap-5 lg:grid-cols-\[minmax\(0,1fr\)_320px\].*xl:grid-cols-\[minmax\(0,1fr\)_340px\]/,
@@ -106,12 +112,10 @@ test("source contract uses a desktop summary and a mobile safe-area booking dock
   const hero = clientSource.indexOf("<CarDetailsHero");
   const pickupReturn = clientSource.indexOf("pickupSection", hero);
   const sectionPanels = clientSource.indexOf("data-car-details-section-panels", hero);
-  const bottomBar = clientSource.indexOf("data-car-details-bottom-booking-bar", sectionPanels);
   assert.ok(
     hero >= 0 &&
       pickupReturn > hero &&
-      sectionPanels > pickupReturn &&
-      bottomBar > sectionPanels,
+      sectionPanels > pickupReturn
   );
 });
 
@@ -348,7 +352,18 @@ test("desktop car details place the polished identity below the hero and keep co
   );
 });
 
-test("desktop sticky Cars rail adds a compact selected price and Continue deal beside Save and Share without replacing existing booking surfaces", () => {
+test("desktop Cars details keep the compact selected price and Continue deal beside Save and Share at the top and in the sticky rail", () => {
+  const heroPlacement = sourceBetween(
+    clientSource,
+    'data-car-details-utility-placement="hero"',
+    "data-car-details-mobile-controls",
+  );
+  assert.match(heroPlacement, /<CarHeroActions[\s\S]*?desktop/);
+  assert.match(
+    heroPlacement,
+    /primaryOffer \? \( <DesktopCompactBookingAction offer={primaryOffer} price={price} copy={copy} action={effectivePrimaryAction} \/> \) : null/,
+  );
+
   const stickyPlacement = sourceBetween(
     clientSource,
     'data-car-details-utility-placement="tabs"',
@@ -357,45 +372,45 @@ test("desktop sticky Cars rail adds a compact selected price and Continue deal b
   assert.match(stickyPlacement, /<CarHeroActions[\s\S]*?desktop/);
   assert.match(
     stickyPlacement,
-    /primaryOffer \? \( <DesktopStickyBookingAction offer={primaryOffer} price={price} copy={copy} action={effectivePrimaryAction} \/> \) : null/,
+    /primaryOffer \? \( <DesktopCompactBookingAction offer={primaryOffer} price={price} copy={copy} action={effectivePrimaryAction} \/> \) : null/,
   );
 
-  const stickyBooking = sourceBetween(
+  const compactBooking = sourceBetween(
     clientSource,
-    "function DesktopStickyBookingAction",
+    "function DesktopCompactBookingAction",
     "export function CarDetailsClient",
   );
-  assert.match(stickyBooking, /offer\.totalPrice/);
-  assert.match(stickyBooking, /data-car-details-desktop-sticky-booking/);
-  assert.match(stickyBooking, /data-car-details-desktop-sticky-price/);
-  assert.match(stickyBooking, /data-car-details-desktop-sticky-cta/);
+  assert.match(compactBooking, /offer\.totalPrice/);
+  assert.match(compactBooking, /data-car-details-desktop-compact-booking/);
+  assert.match(compactBooking, /data-car-details-desktop-compact-price/);
+  assert.match(compactBooking, /data-car-details-desktop-compact-cta/);
   assert.match(
-    stickyBooking,
+    compactBooking,
     /flex shrink-0 items-center gap-2 border-s border-slate-300 ps-3/,
   );
   assert.match(
-    stickyBooking,
+    compactBooking,
     /inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-blue px-3 text-\[12px\]/,
   );
-  assert.doesNotMatch(stickyBooking, /\b(?:fixed|sticky)\b/);
+  assert.doesNotMatch(compactBooking, /\b(?:fixed|sticky)\b/);
 
-  const sandboxStart = stickyBooking.indexOf('action.kind === "sandbox-handoff"');
-  const unsupportedStart = stickyBooking.indexOf(
+  const sandboxStart = compactBooking.indexOf('action.kind === "sandbox-handoff"');
+  const unsupportedStart = compactBooking.indexOf(
     'action.kind === "standalone-disabled-provider"',
   );
   assert.ok(sandboxStart >= 0 && unsupportedStart > sandboxStart);
-  const sandbox = stickyBooking.slice(sandboxStart, unsupportedStart);
+  const sandbox = compactBooking.slice(sandboxStart, unsupportedStart);
   assert.match(sandbox, /href={action\.href}/);
   assert.match(sandbox, /target="_blank"/);
   assert.match(sandbox, /rel="noopener noreferrer"/);
   assert.match(sandbox, /referrerPolicy="no-referrer"/);
 
-  const unsupported = stickyBooking.slice(unsupportedStart);
+  const unsupported = compactBooking.slice(unsupportedStart);
   assert.match(unsupported, /<button disabled/);
 
-  assert.match(clientSource, /data-car-details-bottom-booking-bar/);
+  assert.doesNotMatch(clientSource, /data-car-details-bottom-booking-bar/);
   assert.match(clientSource, /data-mobile-car-booking-dock/);
-  assert.equal(clientSource.match(/<BookingSummary\b/g)?.length, 2);
+  assert.equal(clientSource.match(/<BookingSummary\b/g)?.length, 1);
 });
 
 test("Location map card keeps a balanced mobile viewport and fixed directions row", () => {
