@@ -45,7 +45,7 @@ test("desktop Cars Results uses a readable, professional typography hierarchy", 
   assert.match(results, /lg:text-\[14px\] lg:font-semibold lg:leading-5 lg:tracking-\[-0\.003em\]/);
 });
 
-test("desktop Cars filters use sentence-case headings and regular-weight options", () => {
+test("desktop Cars filters use sentence-case headings and readable medium-weight options", () => {
   assert.match(results, /truncate text-\[16px\] font-semibold leading-6 tracking-\[-0\.006em\] text-\[#07133B\]/);
   assert.match(results, /text-\[14px\] font-semibold normal-case leading-5 tracking-\[-0\.002em\] text-\[#334155\]/);
   assert.match(results, /text-\[14px\] font-medium leading-5 transition-all/);
@@ -62,6 +62,7 @@ test("desktop Cars result cards use one primary title and one supporting metadat
   assert.match(card, /lg:text-\[14px\] lg:font-medium lg:leading-5 lg:text-\[#3F4D63\]/);
   assert.doesNotMatch(card, /text-\[19px\] font-bold leading-\[24px\]/);
   assert.doesNotMatch(card, /text-\[10px\] font-bold uppercase leading-\[14px\] tracking-\[0\.12em\]/);
+  assert.match(card, /desktopSurfaceParity \? "lg:text-\[13px\] lg:leading-5" : ""/);
 });
 
 test("desktop Cars pricing and price tracking keep price emphasis without over-weighting metadata", () => {

@@ -270,7 +270,7 @@ export function CarResultCard({
       className={`relative w-full overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-[#E7EBF1] shadow-[0_2px_10px_rgba(24,48,91,0.08)] md:rounded-2xl ${desktopSurfaceParity ? "md:bg-[#E7EBF1]" : "md:bg-white"} md:shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] md:transition md:duration-200 md:hover:-translate-y-0.5 md:hover:border-[#CBD6E2] md:hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]`}
     >
       <CarsRouteLoadingOverlay active={mobileDetailsPending} />
-      {providerLabel && <p className="px-4 pt-3 text-xs font-semibold text-amber-800 lg:text-[13px] lg:leading-5">{providerLabel}</p>}
+      {providerLabel && <p className={`px-4 pt-3 text-xs font-semibold text-amber-800 ${desktopSurfaceParity ? "lg:text-[13px] lg:leading-5" : ""}`}>{providerLabel}</p>}
       {shareConfirmation ? (
         <span
           role="status"
@@ -497,7 +497,7 @@ export function CarResultCard({
                 </div>
                 <div className="flex shrink-0 items-start gap-1">
                   {badge && BadgeIcon && (
-                    <span className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8] lg:text-[13px] lg:leading-5">
+                    <span className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]">
                       <BadgeIcon size={13} aria-hidden="true" />
                       {badge}
                     </span>
