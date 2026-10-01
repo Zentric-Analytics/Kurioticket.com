@@ -888,8 +888,10 @@ test("desktop Flight Details uses a page utility row instead of hero-overlay nav
   assert.match(source, /data-flight-details-desktop-navigation[^>]*className="hidden[^"]*sm:flex/);
   assert.match(source, /aria-label="Back to flight results"/);
   assert.match(source, /data-flight-details-desktop-actions/);
-  assert.match(source, /<span>\{flightSaved \? "Saved" : "Save"\}<\/span>/);
-  assert.match(source, /<span>Share<\/span>/);
+  assert.match(source, /aria-label=\{flightSaved \? "Remove saved flight" : "Save flight"\}/);
+  assert.match(source, /aria-label="Share flight"/);
+  assert.doesNotMatch(source, /<span>\{flightSaved \? "Saved" : "Save"\}<\/span>/);
+  assert.doesNotMatch(source, /<span>Share<\/span>/);
   assert.match(source, /aria-pressed=\{flightSaved\}/);
   assert.doesNotMatch(hero, /Back to results|data-flight-details-floating-actions|aria-label="Share flight"/);
   assert.match(loading, /data-flight-details-loading-desktop-navigation[^>]*className="hidden[^"]*sm:flex/);
@@ -1215,7 +1217,7 @@ test("desktop Flight Details navigation uses icon-only visible actions", async (
   assert.match(nav, /data-flight-details-desktop-compact-total-label/);
   assert.match(nav, /flightDetailsTotalLabel\(travelers\.count\)/);
   assert.match(nav, /data-flight-details-desktop-compact-cta/);
-  assert.match(nav, />Continue booking<\/);
+  assert.match(nav, />Continue booking<\/button>/);
   assert.match(nav, /onClick=\{\(\) => continueToOffer\(selectedDeal\?\.offerId \?\? selectedOffer\.id\)\}/);
   assert.doesNotMatch(nav, />Back to flight results<\/span>/);
   assert.doesNotMatch(nav, /<span>\{flightSaved \? "Saved" : "Save"\}<\/span>/);
