@@ -187,7 +187,7 @@ export const FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
 const desktopCompactFilterTopOffset = 116;
 const desktopCompactFilterBottomGap = 12;
 
-type DesktopPopularFilterFrame = {
+type DesktopCompactFilterFrame = {
   left: number;
   width: number;
   maxHeight: number;
@@ -4035,22 +4035,66 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   );
   const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
   const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
-  const desktopPopularFilterRef = useRef<HTMLDivElement | null>(null);
-  const desktopPopularFilterVisibilityRef = useRef(false);
-  const desktopPopularFilterPlacementRef =
+  const desktopCompactFilterRef = useRef<HTMLDivElement | null>(null);
+  const desktopCompactFilterVisibilityRef = useRef(false);
+  const desktopCompactFilterPlacementRef =
     useRef<DesktopCompactFilterPlacementState>("hidden");
-  const desktopPopularFilterFrameRef = useRef<DesktopPopularFilterFrame | null>(null);
-  const desktopPopularFilterHeightRef = useRef(1);
-  const scheduleDesktopPopularFilterMeasurementRef = useRef<
+  const desktopCompactFilterFrameRef = useRef<DesktopCompactFilterFrame | null>(null);
+  const desktopCompactFilterHeightRef = useRef(1);
+  const scheduleDesktopCompactFilterMeasurementRef = useRef<
     (() => void) | null
   >(null);
-  const [showDesktopPopularFilter, setShowDesktopPopularFilter] = useState(false);
-  const [desktopPopularFilterFrame, setDesktopPopularFilterFrame] =
-    useState<DesktopPopularFilterFrame | null>(null);
-  const [desktopPopularFilterPlacement, setDesktopPopularFilterPlacement] =
+  const [showDesktopCompactFilter, setShowDesktopCompactFilter] = useState(false);
+  const [desktopCompactFilterFrame, setDesktopCompactFilterFrame] =
+    useState<DesktopCompactFilterFrame | null>(null);
+  const [desktopCompactFilterPlacement, setDesktopCompactFilterPlacement] =
     useState<DesktopCompactFilterPlacementState>("hidden");
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
   const flightResultsTopRef = useRef<HTMLDivElement | null>(null);
+
+  const renderDesktopFlightFilters = (compact = false) => (
+    <DesktopFlightFilters
+      compact={compact}
+      activeFilterCount={activeFilterCount}
+      maxPrice={maxPrice}
+      setMaxPrice={setMaxPrice}
+      priceBounds={priceBounds}
+      priceLabelCurrency={priceLabelCurrency}
+      selectedCurrency={selectedCurrency}
+      timeFilterMode={timeFilterMode}
+      setTimeFilterMode={setTimeFilterMode}
+      timeBounds={timeBounds}
+      maxTakeoffMinutes={maxTakeoffMinutes}
+      setMaxTakeoffMinutes={setMaxTakeoffMinutes}
+      maxLandingMinutes={maxLandingMinutes}
+      setMaxLandingMinutes={setMaxLandingMinutes}
+      durationBounds={durationBounds}
+      maxDurationMinutes={maxDurationMinutes}
+      setMaxDurationMinutes={setMaxDurationMinutes}
+      stopOptions={stopOptions}
+      selectedStops={selectedStops}
+      setSelectedStops={setSelectedStops}
+      airlineOptions={airlineOptions}
+      selectedAirlines={selectedAirlines}
+      setSelectedAirlines={setSelectedAirlines}
+      airportOptions={airportOptions}
+      selectedAirports={selectedAirports}
+      setSelectedAirports={setSelectedAirports}
+      flightQualityOptions={flightQualityOptions}
+      renderFlightQualityFilter={renderFlightQualityFilter}
+      selectedFlightQuality={selectedFlightQuality}
+      setSelectedFlightQuality={setSelectedFlightQuality}
+      baggageIncludedOnly={baggageIncludedOnly}
+      setBaggageIncludedOnly={setBaggageIncludedOnly}
+      flexibleOnly={flexibleOnly}
+      setFlexibleOnly={setFlexibleOnly}
+      onFilterChange={triggerFilterApplying}
+      onFilterCommit={handleUserFilterCommit}
+      onClear={clearFlightFilters}
+      originCode={originCode}
+      destinationCode={destinationCode}
+    />
+  );
   useEffect(() => {
     if (guidedMode || typeof window === "undefined") return undefined;
 
@@ -4058,14 +4102,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     const applyPlacement = (
       placement: DesktopCompactFilterPlacementState,
-      frame: DesktopPopularFilterFrame | null,
+      frame: DesktopCompactFilterFrame | null,
     ) => {
-      if (placement !== desktopPopularFilterPlacementRef.current) {
-        desktopPopularFilterPlacementRef.current = placement;
-        setDesktopPopularFilterPlacement(placement);
+      if (placement !== desktopCompactFilterPlacementRef.current) {
+        desktopCompactFilterPlacementRef.current = placement;
+        setDesktopCompactFilterPlacement(placement);
       }
 
-      const currentFrame = desktopPopularFilterFrameRef.current;
+      const currentFrame = desktopCompactFilterFrameRef.current;
       const frameChanged =
         (frame === null) !== (currentFrame === null) ||
         (frame !== null &&
@@ -4075,15 +4119,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             Math.abs(frame.maxHeight - currentFrame.maxHeight) >= 0.5));
 
       if (frameChanged) {
-        desktopPopularFilterFrameRef.current = frame;
-        setDesktopPopularFilterFrame(frame);
+        desktopCompactFilterFrameRef.current = frame;
+        setDesktopCompactFilterFrame(frame);
       }
     };
 
-    const measureDesktopPopularFilter = () => {
+    const measureDesktopCompactFilter = () => {
       const sentinel = desktopFilterSentinelRef.current;
       const sidebar = desktopFilterSidebarRef.current;
-      const compactPanel = desktopPopularFilterRef.current;
+      const compactPanel = desktopCompactFilterRef.current;
       const resultsBody = resultsGridRef.current;
       const scrollY = window.scrollY;
       const nextVisibility = shouldShowDesktopCompactFilter({
@@ -4093,9 +4137,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         topOffset: desktopCompactFilterTopOffset,
       });
 
-      if (nextVisibility !== desktopPopularFilterVisibilityRef.current) {
-        desktopPopularFilterVisibilityRef.current = nextVisibility;
-        setShowDesktopPopularFilter(nextVisibility);
+      if (nextVisibility !== desktopCompactFilterVisibilityRef.current) {
+        desktopCompactFilterVisibilityRef.current = nextVisibility;
+        setShowDesktopCompactFilter(nextVisibility);
       }
 
       if (!nextVisibility || !sidebar || !resultsBody) {
@@ -4106,9 +4150,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       const sidebarRect = sidebar.getBoundingClientRect();
       const panelHeight =
         compactPanel?.getBoundingClientRect().height ??
-        desktopPopularFilterHeightRef.current;
+        desktopCompactFilterHeightRef.current;
       if (Number.isFinite(panelHeight) && panelHeight > 0) {
-        desktopPopularFilterHeightRef.current = panelHeight;
+        desktopCompactFilterHeightRef.current = panelHeight;
       }
 
       const placement = calculateCompactFilterPlacement({
@@ -4118,7 +4162,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         panelHeight,
         bodyBottomDocument:
           resultsBody.getBoundingClientRect().bottom + scrollY,
-        currentState: desktopPopularFilterPlacementRef.current,
+        currentState: desktopCompactFilterPlacementRef.current,
         bottomGap: desktopCompactFilterBottomGap,
       });
 
@@ -4142,11 +4186,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       if (animationFrameId !== null) return;
       animationFrameId = window.requestAnimationFrame(() => {
         animationFrameId = null;
-        measureDesktopPopularFilter();
+        measureDesktopCompactFilter();
       });
     };
 
-    scheduleDesktopPopularFilterMeasurementRef.current = scheduleMeasurement;
+    scheduleDesktopCompactFilterMeasurementRef.current = scheduleMeasurement;
     const resizeObserver =
       "ResizeObserver" in window ? new ResizeObserver(scheduleMeasurement) : null;
     if (resizeObserver) {
@@ -4158,13 +4202,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       }
     }
 
-    measureDesktopPopularFilter();
+    measureDesktopCompactFilter();
     window.addEventListener("scroll", scheduleMeasurement, { passive: true });
     window.addEventListener("resize", scheduleMeasurement);
 
     return () => {
       if (animationFrameId !== null) window.cancelAnimationFrame(animationFrameId);
-      scheduleDesktopPopularFilterMeasurementRef.current = null;
+      scheduleDesktopCompactFilterMeasurementRef.current = null;
       resizeObserver?.disconnect();
       window.removeEventListener("scroll", scheduleMeasurement);
       window.removeEventListener("resize", scheduleMeasurement);
@@ -4175,18 +4219,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     if (
       typeof window === "undefined" ||
       !("ResizeObserver" in window) ||
-      desktopPopularFilterPlacement === "hidden" ||
-      !desktopPopularFilterRef.current
+      desktopCompactFilterPlacement === "hidden" ||
+      !desktopCompactFilterRef.current
     ) {
       return undefined;
     }
 
     const resizeObserver = new ResizeObserver(() =>
-      scheduleDesktopPopularFilterMeasurementRef.current?.(),
+      scheduleDesktopCompactFilterMeasurementRef.current?.(),
     );
-    resizeObserver.observe(desktopPopularFilterRef.current);
+    resizeObserver.observe(desktopCompactFilterRef.current);
     return () => resizeObserver.disconnect();
-  }, [desktopPopularFilterPlacement]);
+  }, [desktopCompactFilterPlacement]);
 
   const scrollToFlightResultsTop = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -4302,113 +4346,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     pageSize: FLIGHT_RESULTS_PAGE_SIZE,
     totalResults: sortedResults.length,
   });
-
-  const baggageIncludedCount = useMemo(
-    () => results.filter((flight) => hasStructuredBaggage(flight)).length,
-    [results],
-  );
-  const flexibleFareCount = useMemo(
-    () => results.filter((flight) => hasStructuredFlexibility(flight)).length,
-    [results],
-  );
-
-  const popularFlightFilters = [
-    ...stopOptions
-      .filter((option) => option.value === "0")
-      .map((option) => ({
-        id: "nonstop",
-        label: option.label,
-        count: option.count,
-        checked: selectedStops.includes(option.value),
-        onChange: () => {
-          setSelectedStops((current) =>
-            current.includes(option.value)
-              ? current.filter((value) => value !== option.value)
-              : [...current, option.value],
-          );
-          handleUserFilterCommit();
-        },
-      })),
-    {
-      id: "baggage",
-      label: t("baggageIncluded"),
-      count: baggageIncludedCount,
-      checked: baggageIncludedOnly,
-      onChange: () => {
-        setBaggageIncludedOnly(!baggageIncludedOnly);
-        handleUserFilterCommit();
-      },
-    },
-    {
-      id: "flexible",
-      label: t("flexibleRefundable"),
-      count: flexibleFareCount,
-      checked: flexibleOnly,
-      onChange: () => {
-        setFlexibleOnly(!flexibleOnly);
-        handleUserFilterCommit();
-      },
-    },
-    ...airlineOptions.slice(0, 2).map((option) => ({
-      id: `airline-${option.value}`,
-      label: option.label,
-      count: option.count,
-      checked: selectedAirlines.includes(option.value),
-      onChange: () => {
-        setSelectedAirlines((current) =>
-          current.includes(option.value)
-            ? current.filter((value) => value !== option.value)
-            : [...current, option.value],
-        );
-        handleUserFilterCommit();
-      },
-    })),
-  ];
-
-  function renderDesktopPopularFilters(compact = false) {
-    return (
-      <section
-        data-flight-popular-filters
-        data-compact={compact ? "true" : "false"}
-        className={cn(
-          "overflow-hidden border border-slate-200/80 bg-[#F2F4F8]",
-          compact
-            ? "w-full rounded-2xl shadow-[0_14px_30px_-26px_rgba(15,23,42,0.42)]"
-            : "mt-4",
-        )}
-      >
-        <div className="border-b border-slate-200/70 px-3 py-3">
-          <h2 className="text-[16px] font-semibold leading-6 tracking-[-0.006em] text-[#07133B]">
-            Popular filters
-          </h2>
-        </div>
-        <div className="px-3 py-2">
-          {popularFlightFilters.map((option) => (
-            <label
-              key={option.id}
-              className={cn(
-                "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-[14px] font-medium leading-5 transition-all",
-                option.checked
-                  ? "font-semibold text-[#142033]"
-                  : "text-[#475569] hover:bg-slate-50 hover:text-[#142033]",
-              )}
-            >
-              <input
-                type="checkbox"
-                checked={option.checked}
-                onChange={option.onChange}
-                className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue"
-              />
-              <span className="min-w-0 flex-1 truncate">{option.label}</span>
-              <span className="ms-auto shrink-0 text-[13px] font-medium leading-5 tabular-nums text-[#64748B]">
-                {option.count}
-              </span>
-            </label>
-          ))}
-        </div>
-      </section>
-    );
-  }
 
   useEffect(() => {
     if (guidedMode) return;
@@ -7503,76 +7440,35 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           ref={desktopFilterSidebarRef}
           className="relative hidden self-stretch lg:block"
         >
-          <div>
-            <DesktopFlightFilters
-              activeFilterCount={activeFilterCount}
-              maxPrice={maxPrice}
-              setMaxPrice={setMaxPrice}
-              priceBounds={priceBounds}
-              priceLabelCurrency={priceLabelCurrency}
-              selectedCurrency={selectedCurrency}
-              timeFilterMode={timeFilterMode}
-              setTimeFilterMode={setTimeFilterMode}
-              timeBounds={timeBounds}
-              maxTakeoffMinutes={maxTakeoffMinutes}
-              setMaxTakeoffMinutes={setMaxTakeoffMinutes}
-              maxLandingMinutes={maxLandingMinutes}
-              setMaxLandingMinutes={setMaxLandingMinutes}
-              durationBounds={durationBounds}
-              maxDurationMinutes={maxDurationMinutes}
-              setMaxDurationMinutes={setMaxDurationMinutes}
-              stopOptions={stopOptions}
-              selectedStops={selectedStops}
-              setSelectedStops={setSelectedStops}
-              airlineOptions={airlineOptions}
-              selectedAirlines={selectedAirlines}
-              setSelectedAirlines={setSelectedAirlines}
-              airportOptions={airportOptions}
-              selectedAirports={selectedAirports}
-              setSelectedAirports={setSelectedAirports}
-              flightQualityOptions={flightQualityOptions}
-              renderFlightQualityFilter={renderFlightQualityFilter}
-              selectedFlightQuality={selectedFlightQuality}
-              setSelectedFlightQuality={setSelectedFlightQuality}
-              baggageIncludedOnly={baggageIncludedOnly}
-              setBaggageIncludedOnly={setBaggageIncludedOnly}
-              flexibleOnly={flexibleOnly}
-              setFlexibleOnly={setFlexibleOnly}
-              onFilterChange={triggerFilterApplying}
-              onFilterCommit={handleUserFilterCommit}
-              onClear={clearFlightFilters}
-              originCode={originCode}
-              destinationCode={destinationCode}
-            />
-          </div>
-          {renderDesktopPopularFilters()}
+          {renderDesktopFlightFilters()}
           <div ref={desktopFilterSentinelRef} className="h-px w-full" aria-hidden="true" />
-          {showDesktopPopularFilter &&
-          desktopPopularFilterFrame &&
-          desktopPopularFilterPlacement !== "hidden" ? (
+          {showDesktopCompactFilter &&
+          desktopCompactFilterFrame &&
+          desktopCompactFilterPlacement !== "hidden" ? (
             <div
-              ref={desktopPopularFilterRef}
+              ref={desktopCompactFilterRef}
+              data-flight-desktop-compact-filter
               className={cn(
                 "z-30 flex overflow-visible",
-                desktopPopularFilterPlacement === "fixed" && "fixed",
-                desktopPopularFilterPlacement === "docked" &&
+                desktopCompactFilterPlacement === "fixed" && "fixed",
+                desktopCompactFilterPlacement === "docked" &&
                   "absolute inset-x-0 bottom-0",
               )}
               style={
-                desktopPopularFilterPlacement === "fixed"
+                desktopCompactFilterPlacement === "fixed"
                   ? {
                       top: desktopCompactFilterTopOffset,
-                      left: desktopPopularFilterFrame.left,
-                      width: desktopPopularFilterFrame.width,
-                      maxHeight: desktopPopularFilterFrame.maxHeight,
+                      left: desktopCompactFilterFrame.left,
+                      width: desktopCompactFilterFrame.width,
+                      maxHeight: desktopCompactFilterFrame.maxHeight,
                     }
                   : {
                       width: "100%",
-                      maxHeight: desktopPopularFilterFrame.maxHeight,
+                      maxHeight: desktopCompactFilterFrame.maxHeight,
                     }
               }
             >
-              {renderDesktopPopularFilters(true)}
+              {renderDesktopFlightFilters(true)}
             </div>
           ) : null}
         </aside>
