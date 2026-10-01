@@ -493,7 +493,7 @@ const getDriverAgeOptionLabel = (age: string, t: (key: string) => string) => {
 };
 
 const fieldShellClass =
-  "relative min-h-[50px] rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm shadow-slate-900/[0.025] transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:flex lg:min-h-[58px] lg:min-w-0 lg:flex-col lg:justify-center lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:bg-transparent lg:px-4 lg:py-2.5 lg:shadow-none lg:hover:border-slate-200/80 lg:focus-within:border-slate-200/80 lg:focus-within:ring-0";
+  "relative min-h-[50px] rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm shadow-slate-900/[0.025] transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:flex lg:min-h-[54px] lg:min-w-0 lg:flex-col lg:justify-center lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:bg-transparent lg:px-4 lg:py-2 lg:shadow-none lg:hover:border-slate-200/80 lg:focus-within:border-slate-200/80 lg:focus-within:ring-0";
 
 const differentReturnSearchGridClass =
   "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,1.08fr)_minmax(0,1.48fr)_minmax(0,1.06fr)_118px_116px] lg:items-stretch lg:gap-0";
@@ -1215,7 +1215,7 @@ export function CarsResultsClient({
               ? "border-0 bg-transparent p-0 shadow-none ring-0"
               : isCompactSearch
               ? "rounded-xl border border-slate-200 bg-white p-0 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]"
-              : "rounded-[1.15rem] border border-slate-200 bg-white p-1.5 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-white",
+              : "rounded-[1.15rem] border border-slate-200 bg-[#F8FAFC] p-1 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-200/50",
           )}
         >
           <div
@@ -1487,9 +1487,8 @@ export function CarsResultsClient({
             <Button
               type="submit"
               className={cn(
-                "h-12 w-full rounded-[10px] bg-[#004BB8] px-4 text-[15px] font-semibold text-white shadow-none transition-colors duration-200 hover:bg-[#021C2B] lg:m-[4px] lg:h-auto lg:w-[calc(100%-8px)] lg:self-stretch lg:rounded-[9px] lg:text-[15px] lg:tracking-normal lg:ring-1 lg:ring-[#075EE8]/12",
+                "h-12 w-full rounded-[10px] bg-[#004BB8] px-4 text-[15px] font-semibold text-white shadow-none transition-colors duration-200 hover:bg-[#021C2B] lg:m-[4px] lg:h-auto lg:min-h-[54px] lg:w-[calc(100%-8px)] lg:self-stretch lg:rounded-[9px] lg:text-[15px] lg:tracking-normal lg:ring-1 lg:ring-[#075EE8]/12",
                 placement === "mobile" && "hidden",
-                isCompactSearch ? "lg:min-h-[54px]" : "lg:min-h-[58px]",
               )}
             >
               {t("search")}
