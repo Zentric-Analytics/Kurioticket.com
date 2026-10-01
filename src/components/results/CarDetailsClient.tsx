@@ -430,14 +430,6 @@ export function CarDetailsExperience({
                 copy={copy}
                 desktop
               />
-              {primaryOffer ? (
-                <DesktopCompactBookingAction
-                  offer={primaryOffer}
-                  price={price}
-                  copy={copy}
-                  action={effectivePrimaryAction}
-                />
-              ) : null}
             </div>
           </div>
         </div>
@@ -554,14 +546,6 @@ export function CarDetailsExperience({
                       copy={copy}
                       desktop
                     />
-                    {primaryOffer ? (
-                      <DesktopCompactBookingAction
-                        offer={primaryOffer}
-                        price={price}
-                        copy={copy}
-                        action={effectivePrimaryAction}
-                      />
-                    ) : null}
                   </div>
                 }
                 labels={{
@@ -708,98 +692,6 @@ function CarHeroActions({
       >
         <Share2 size={desktop ? 19 : 21} aria-hidden="true" />
       </button>
-    </div>
-  );
-}
-
-function DesktopCompactBookingAction({
-  offer,
-  price,
-  copy,
-  action,
-}: {
-  offer: CarOffer;
-  price: PriceFn;
-  copy: (key: string) => string;
-  action: CarDetailsPrimaryAction;
-}) {
-  const total = price(offer.totalPrice, offer.currency);
-  const providerName = compactBookingProviderName(offer);
-  const actionClassName =
-    "focus-ring inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-blue px-3 text-[12px] font-bold leading-5 text-white shadow-[0_2px_8px_rgba(7,94,232,0.18)] xl:text-[13px]";
-
-  return (
-    <div
-      className="flex shrink-0 items-center gap-2 border-s border-slate-300 ps-3"
-      data-car-details-desktop-compact-booking
-    >
-      <div
-        className="min-w-0 max-w-[144px] text-right"
-        data-car-details-desktop-compact-summary
-      >
-        <p
-          className="overflow-hidden text-ellipsis whitespace-nowrap text-[18px] font-extrabold leading-[22px] tabular-nums text-[#102A43] xl:text-[20px] xl:leading-6"
-          dir="ltr"
-          title={total.title}
-          aria-label={total.ariaLabel}
-          data-car-details-desktop-compact-price
-        >
-          {total.formatted}
-        </p>
-        <p
-          className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] font-medium leading-3 text-[#56658E] xl:text-[11px] xl:leading-[13px]"
-          data-car-details-desktop-compact-total-label
-        >
-          {copy("carDetails.bookingSummary")}
-        </p>
-      </div>
-      <div
-        className="flex shrink-0 flex-col items-end justify-center gap-0.5"
-        data-car-details-desktop-compact-action-stack
-      >
-        {providerName ? (
-          <p
-            className="max-w-[128px] overflow-hidden text-ellipsis whitespace-nowrap text-[11px] font-semibold leading-[13px] text-[#59636A] xl:text-[12px] xl:leading-[14px]"
-            title={providerName}
-            data-car-details-desktop-compact-provider
-          >
-            {providerName}
-          </p>
-        ) : null}
-        {action.kind === "sandbox-handoff" ? (
-          <a
-            href={action.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            referrerPolicy="no-referrer"
-            className={actionClassName}
-            data-car-details-desktop-compact-cta
-          >
-            {action.label}
-          </a>
-        ) : action.kind === "standalone-disabled-provider" ? (
-          <button
-            disabled
-            className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-100`}
-            data-car-details-desktop-compact-cta
-          >
-            {action.label}
-          </button>
-        ) : (
-          <button
-            type="button"
-            disabled={!action.enabled || action.pending}
-            aria-label={action.accessibleLabel}
-            onClick={action.onActivate}
-            className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-60`}
-            data-car-details-desktop-compact-cta
-          >
-            {action.pending
-              ? copy("deals.guided.carDetails.saving")
-              : action.label}
-          </button>
-        )}
-      </div>
     </div>
   );
 }
