@@ -510,7 +510,10 @@ export function CarDetailsExperience({
                 desktopStuck={desktopSectionBarStuck}
                 desktopBackControl={desktopBackControl}
                 desktopUtilityActions={
-                  <div data-car-details-utility-placement="tabs">
+                  <div
+                    className="flex items-center gap-2"
+                    data-car-details-utility-placement="tabs"
+                  >
                     <CarHeroActions
                       car={car}
                       isSaved={isSaved}
@@ -519,6 +522,14 @@ export function CarDetailsExperience({
                       copy={copy}
                       desktop
                     />
+                    {primaryOffer ? (
+                      <DesktopStickyBookingAction
+                        offer={primaryOffer}
+                        price={price}
+                        copy={copy}
+                        action={effectivePrimaryAction}
+                      />
+                    ) : null}
                   </div>
                 }
                 labels={{
@@ -679,6 +690,72 @@ function CarHeroActions({
       >
         <Share2 size={desktop ? 19 : 21} aria-hidden="true" />
       </button>
+    </div>
+  );
+}
+
+function DesktopStickyBookingAction({
+  offer,
+  price,
+  copy,
+  action,
+}: {
+  offer: CarOffer;
+  price: PriceFn;
+  copy: (key: string) => string;
+  action: CarDetailsPrimaryAction;
+}) {
+  const total = price(offer.totalPrice, offer.currency);
+  const actionClassName =
+    "focus-ring inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-blue px-3 text-[12px] font-bold leading-5 text-white shadow-[0_2px_8px_rgba(7,94,232,0.18)] xl:text-[13px]";
+
+  return (
+    <div
+      className="flex shrink-0 items-center gap-2 border-s border-slate-300 ps-3"
+      data-car-details-desktop-sticky-booking
+    >
+      <p
+        className="max-w-[104px] overflow-hidden text-ellipsis whitespace-nowrap text-right text-[14px] font-extrabold leading-5 tabular-nums text-[#102A43] xl:text-[15px]"
+        dir="ltr"
+        title={total.title}
+        aria-label={total.ariaLabel}
+        data-car-details-desktop-sticky-price
+      >
+        {total.formatted}
+      </p>
+      {action.kind === "sandbox-handoff" ? (
+        <a
+          href={action.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          referrerPolicy="no-referrer"
+          className={actionClassName}
+          data-car-details-desktop-sticky-cta
+        >
+          {action.label}
+        </a>
+      ) : action.kind === "standalone-disabled-provider" ? (
+        <button
+          disabled
+          className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-100`}
+          data-car-details-desktop-sticky-cta
+        >
+          {action.label}
+        </button>
+      ) : (
+        <button
+          type="button"
+          disabled={!action.enabled || action.pending}
+          aria-label={action.accessibleLabel}
+          onClick={action.onActivate}
+          className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-60`}
+          data-car-details-desktop-sticky-cta
+        >
+          {action.pending
+            ? copy("deals.guided.carDetails.saving")
+            : action.label}
+        </button>
+      )}
     </div>
   );
 }
