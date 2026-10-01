@@ -374,10 +374,17 @@ test("desktop Cars details keep the compact selected price and Continue deal bes
     "labels={{",
   );
   assert.match(stickyPlacement, /<CarHeroActions[\s\S]*?desktop/);
+  assert.match(stickyPlacement, /className="flex items-center gap-4 xl:gap-5"/);
+  assert.match(
+    stickyPlacement,
+    /<CarHeroActions[\s\S]*?<DesktopCompactBookingAction/,
+  );
   assert.match(
     stickyPlacement,
     /primaryOffer \? \( <DesktopCompactBookingAction offer={primaryOffer} price={price} copy={copy} action={effectivePrimaryAction} \/> \) : null/,
   );
+  assert.match(heroPlacement, /className="relative z-10 flex items-center gap-2"/);
+  assert.doesNotMatch(heroPlacement, /gap-4 xl:gap-5/);
 
   const compactBooking = sourceBetween(
     clientSource,
