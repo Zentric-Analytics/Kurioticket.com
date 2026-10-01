@@ -153,6 +153,24 @@ body {
     font-kerning: normal;
     text-rendering: optimizeLegibility;
   }
+
+  .cars-results-footer-typography .cars-footer-confidence-tagline,
+  .cars-results-footer-typography .cars-footer-seller-notice,
+  .cars-results-footer-typography .cars-footer-legal-row {
+    font-size: 13px;
+    line-height: 20px;
+    font-weight: 500;
+    letter-spacing: -0.002em;
+  }
+
+  .cars-results-footer-typography .cars-footer-confidence-tagline {
+    color: #475569;
+  }
+
+  .cars-results-footer-typography .cars-footer-seller-notice,
+  .cars-results-footer-typography .cars-footer-legal-row {
+    color: #526174;
+  }
 }
 
 /* Cars, Hotels, and Flight Results paint compact presentation-only thumbs while

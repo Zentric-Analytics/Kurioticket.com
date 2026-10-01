@@ -229,19 +229,19 @@ export function Footer({
                 className="h-7 w-auto lg:h-8"
               />
 
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="cars-footer-confidence-tagline mt-1 text-xs text-slate-500">
                 {t.footerConfidenceTagline}
               </p>
 
               <Link
                 href="/legal"
-                className="mt-2.5 block max-w-3xl text-xs leading-5 text-slate-500 transition-colors hover:text-[#004BB8] focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+                className="cars-footer-seller-notice mt-2.5 block max-w-3xl text-xs leading-5 text-slate-500 transition-colors hover:text-[#004BB8] focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
               >
                 {sellerOfTravelNotice}
               </Link>
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs leading-5">
+            <div className="cars-footer-legal-row flex flex-wrap items-center gap-x-4 gap-y-2 text-xs leading-5">
               <p className="basis-full md:basis-auto">
                 © {currentYear} Kurioticket LLC. {t.footerAllRightsReserved}
               </p>

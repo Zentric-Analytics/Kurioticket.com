@@ -502,10 +502,10 @@ const sameReturnSearchGridClass =
 const compactFieldShellClass = "min-h-[46px] py-1 lg:min-h-[54px] lg:py-1.5";
 
 const fieldLabelClass =
-  "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:mb-1 lg:text-[11px] lg:font-medium lg:uppercase lg:leading-4 lg:tracking-[0.06em] lg:text-[#536B92]";
+  "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:mb-1 lg:text-[12px] lg:font-semibold lg:uppercase lg:leading-4 lg:tracking-[0.045em] lg:text-[#4E6385]";
 
 const fieldInputClass =
-  "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[14px] lg:font-medium lg:leading-5 lg:tracking-[-0.005em] lg:text-[#142033]";
+  "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[15px] lg:font-semibold lg:leading-5 lg:tracking-[-0.005em] lg:text-[#142033]";
 const carsMobileEditFieldShellClass =
   "cars-results-edit-field relative flex min-h-[66px] flex-col justify-center rounded-[13px] border border-[#E7ECF5] bg-white px-3 py-[10px] shadow-none focus-within:border-[#064CF7] focus-within:ring-2 focus-within:ring-[#064CF7]/25";
 const carsMobileEditPickupLabelClass =
@@ -1734,7 +1734,7 @@ export function CarsResultsClient({
               />
               <span
                 title={summary}
-                className="min-w-0 truncate whitespace-nowrap text-[14px] font-medium leading-5 tracking-[-0.005em] text-[#142033]"
+                className="min-w-0 truncate whitespace-nowrap text-[15px] font-semibold leading-5 tracking-[-0.005em] text-[#142033]"
               >
                 {summary}
               </span>
@@ -1753,7 +1753,7 @@ export function CarsResultsClient({
                   );
                 }
               }}
-              className="focus-ring h-10 w-24 rounded-lg bg-[#004BB8] text-[14px] font-semibold tracking-[-0.005em] text-white transition hover:bg-[#021C2B]"
+              className="focus-ring h-10 w-24 rounded-lg bg-[#004BB8] text-[15px] font-semibold tracking-[-0.005em] text-white transition hover:bg-[#021C2B]"
             >
               {t("search")}
             </button>
@@ -1790,16 +1790,16 @@ export function CarsResultsClient({
             >
               <div className="mb-4 flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-medium uppercase leading-4 tracking-[0.06em] text-[#004BB8]">
+                  <p className="text-[12px] font-semibold uppercase leading-4 tracking-[0.05em] text-[#004BB8]">
                     {t("carsResults.searchCars")}
                   </p>
                   <h2
                     id="sticky-cars-search-title"
-                    className="mt-1 truncate text-[18px] font-semibold leading-6 tracking-[-0.01em] text-[#07133B]"
+                    className="mt-1 truncate text-[19px] font-semibold leading-6 tracking-[-0.012em] text-[#07133B]"
                   >
                     {locationPairSummary}
                   </h2>
-                  <p className="mt-1 truncate text-[13px] font-normal leading-5 text-[#64748B]">
+                  <p className="mt-1 truncate text-[14px] font-medium leading-5 text-[#526174]">
                     {rentalDateSummary} · {timeSummary} · {driverAgeSummary}
                   </p>
                 </div>
@@ -1833,7 +1833,7 @@ export function CarsResultsClient({
         aria-label="Breadcrumb"
         className="page-shell hidden pt-12 sm:block lg:pt-14"
       >
-        <ol className="flex flex-wrap items-center gap-2 text-[12px] font-medium leading-5 text-[#64748B]">
+        <ol className="flex flex-wrap items-center gap-2 text-[13px] font-medium leading-5 text-[#526174]">
           <li>
             <Link
               href="/"
@@ -1886,7 +1886,7 @@ export function CarsResultsClient({
         />
       </div>
     </main>
-    <Footer variant="brand-legal-only" />
+    <Footer variant="brand-legal-only" className="cars-results-footer-typography" />
     <CarsResultsScrollIndicator />
     </>
   );
@@ -2900,7 +2900,7 @@ export function CarsResultsExperience({
                       ref={resultHeadingRef}
                       id={resultHeadingId}
                       tabIndex={-1}
-                      className="truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[17px] sm:leading-6 sm:tracking-[-0.005em] lg:text-[16px] lg:font-semibold lg:leading-5 lg:tracking-[-0.005em]"
+                      className="truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[17px] sm:leading-6 sm:tracking-[-0.005em] lg:text-[17px] lg:font-semibold lg:leading-6 lg:tracking-[-0.008em]"
                     >
                       {resultHeading ??
                         t(
@@ -2917,7 +2917,7 @@ export function CarsResultsExperience({
                     {resultsDisplayRange ? (
                       <p
                         aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${visibleResults.length}`}
-                        className="mt-0.5 hidden text-xs font-medium leading-4 text-slate-500 sm:block lg:text-[12px] lg:text-[#64748B]"
+                        className="mt-0.5 hidden text-xs font-medium leading-4 text-slate-500 sm:block lg:text-[13px] lg:font-medium lg:leading-5 lg:text-[#526174]"
                       >
                         {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
                       </p>
@@ -2932,7 +2932,7 @@ export function CarsResultsExperience({
                     </p>
                   ) : null}
                   <div className="hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
-                    <span className="shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm lg:text-[13px] lg:leading-5">
+                    <span className="shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm lg:text-[14px] lg:font-medium lg:leading-5">
                       {t("carsResults.sortBy")}:
                     </span>
                     <div
@@ -2945,7 +2945,7 @@ export function CarsResultsExperience({
                         aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
                         aria-haspopup="menu"
                         aria-expanded={carsSortOpen}
-                        className="inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#07133B] sm:gap-2 sm:px-2 sm:text-[16px] lg:text-[14px] lg:font-medium lg:leading-5 lg:tracking-normal"
+                        className="inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#07133B] sm:gap-2 sm:px-2 sm:text-[16px] lg:text-[14px] lg:font-semibold lg:leading-5 lg:tracking-[-0.003em]"
                         onClick={() => setCarsSortOpen((open) => !open)}
                       >
                         <span className="min-w-0 truncate whitespace-nowrap">
@@ -2977,7 +2977,7 @@ export function CarsResultsExperience({
                             role="menuitemradio"
                             aria-checked={sort === option.value}
                             tabIndex={carsSortOpen ? 0 : -1}
-                            className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold lg:text-[13px] lg:font-medium lg:leading-5 lg:text-[#142033]"
+                            className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold lg:text-[14px] lg:font-medium lg:leading-5 lg:text-[#142033]"
                             onClick={() => {
                               startFilterResultsTransition();
                               setCurrentPage(1);
@@ -2999,7 +2999,7 @@ export function CarsResultsExperience({
                   <div className="flex w-full flex-wrap gap-1.5" aria-label="Applied car filters">
                     {appliedCarFilters.map((filter) => (
                       <button key={`${filter.groupId}-${filter.optionId}`} type="button" onClick={() => toggleCarFilter(filter.groupId, filter.optionId)} className="inline-flex min-h-11 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35" aria-label={`Remove ${filter.label} filter`}>
-                        <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#B8CDED] bg-[#EEF5FF] px-2.5 text-[11px] font-semibold leading-[14px] text-[#064A9B] lg:text-[12px] lg:leading-4">{filter.label}<X className="h-[13px] w-[13px] shrink-0" aria-hidden="true" /></span>
+                        <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#B8CDED] bg-[#EEF5FF] px-2.5 text-[11px] font-semibold leading-[14px] text-[#064A9B] lg:text-[13px] lg:font-semibold lg:leading-5">{filter.label}<X className="h-[13px] w-[13px] shrink-0" aria-hidden="true" /></span>
                       </button>
                     ))}
                   </div>
@@ -3687,7 +3687,7 @@ function SearchDateCell({
         aria-haspopup="dialog"
         className={groupedMobile
           ? carsMobileEditSummaryButtonClass
-          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-sm lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-slate-950"
+          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-[15px] lg:font-semibold lg:leading-5 lg:tracking-[-0.005em] lg:text-[#142033]"
         }
       >
         {showRentalDuration ? (
@@ -3956,7 +3956,7 @@ function SearchTimeCell({
         aria-haspopup="menu"
         className={groupedMobile
           ? carsMobileEditSummaryButtonClass
-          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-sm lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-slate-950"
+          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-[15px] lg:font-semibold lg:leading-5 lg:tracking-[-0.005em] lg:text-[#142033]"
         }
       >
         {groupedMobile ? (
@@ -4107,7 +4107,7 @@ function DriverAgeCell({
         aria-haspopup="listbox"
         className={groupedMobile
           ? carsMobileEditSummaryButtonClass
-          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-sm lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-slate-950"
+          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-[15px] lg:font-semibold lg:leading-5 lg:tracking-[-0.005em] lg:text-[#142033]"
         }
       >
         {groupedMobile ? (
@@ -4271,7 +4271,7 @@ function CarFilters({
           )}
         >
           <div className="flex items-center justify-between gap-3">
-            <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[14px] font-semibold leading-5 tracking-normal text-slate-950">
+            <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[15px] font-semibold leading-5 tracking-[-0.004em] text-[#07133B]">
               <SlidersHorizontal
                 className="desktop-filter-sidebar__icon cars-desktop-filter-icon shrink-0 text-[#07133B]"
                 size={15}
@@ -4283,12 +4283,12 @@ function CarFilters({
           </div>
           {activeFilterCount > 0 ? (
             <div className="mt-2 flex items-center justify-between gap-3">
-              <span className="desktop-filter-sidebar__count rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold text-[#235A9F] ring-1 ring-[#004BB8]/8">
+              <span className="desktop-filter-sidebar__count rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[12px] font-semibold leading-4 text-[#235A9F] ring-1 ring-[#004BB8]/8">
                 {activeFilterLabel}
               </span>
               <button
                 type="button"
-                className="rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                className="rounded-full px-1.5 py-0.5 text-[12px] font-semibold leading-4 text-[#526174] transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                 onClick={onClear}
               >
                 {t("clearAll")}
@@ -4299,10 +4299,10 @@ function CarFilters({
       ) : layout === "desktop" ? (
         <div className="desktop-filter-sidebar__header shrink-0 border-b border-slate-200/70 px-3 py-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="truncate text-[15px] font-semibold leading-5 tracking-[-0.005em] text-[#07133B]">
+            <h2 className="truncate text-[16px] font-semibold leading-6 tracking-[-0.006em] text-[#07133B]">
               {t("filters")}
               {activeFilterCount > 0 ? (
-                <span className="ms-2 rounded-full bg-[#004BB8] px-2 py-0.5 text-xs text-white">
+                <span className="ms-2 rounded-full bg-[#004BB8] px-2 py-0.5 text-[12px] font-semibold leading-4 text-white">
                   {activeFilterCount}
                 </span>
               ) : null}
@@ -4316,7 +4316,7 @@ function CarFilters({
           {activeFilterCount > 0 ? (
             <button
               type="button"
-              className="focus-ring mt-2 text-[12px] font-semibold leading-4 text-[#004BB8]"
+              className="focus-ring mt-2 text-[13px] font-semibold leading-5 text-[#004BB8]"
               onClick={onClear}
             >
               {t("clearAll")}
@@ -4450,15 +4450,15 @@ function FilterSection({
           aria-controls={panelId}
           onClick={onCompactOpen}
           className={cn(
-            "group flex w-full items-center justify-between gap-3 text-start font-medium text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
-            "min-h-9 rounded-md px-2.5 py-2 text-[13px] leading-5 tracking-[-0.005em] hover:bg-[#E5ECF4]",
+            "group flex w-full items-center justify-between gap-3 text-start font-semibold text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
+            "min-h-9 rounded-md px-2.5 py-2 text-[14px] leading-5 tracking-[-0.004em] hover:bg-[#E5ECF4]",
             compactOpen && "text-[#004BB8]",
           )}
         >
           <span className="min-w-0 truncate">{carFilterGroupLabel(group, t)}</span>
           <span className="flex shrink-0 items-center gap-2">
             {selectedOptions.length ? (
-              <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[11px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">
+              <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[12px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">
                 {selectedOptions.length}
               </span>
             ) : null}
@@ -4473,7 +4473,7 @@ function FilterSection({
           </span>
         </button>
       ) : (
-        <h3 className="text-[13px] font-semibold normal-case leading-5 tracking-normal text-[#334155]">
+        <h3 className="text-[14px] font-semibold normal-case leading-5 tracking-[-0.002em] text-[#334155]">
           {carFilterGroupLabel(group, t)}
         </h3>
       )}
@@ -4505,7 +4505,7 @@ function FilterSection({
           const label = (
             <span className="flex min-w-0 flex-1 items-center gap-2">
               <span className="min-w-0 flex-1 truncate">{option.label ?? t(option.labelKey)}</span>
-              {typeof option.count === "number" ? <span className="ms-auto text-xs font-medium tabular-nums text-slate-500">{option.count}</span> : null}
+              {typeof option.count === "number" ? <span className="ms-auto text-[13px] font-medium leading-5 tabular-nums text-[#64748B]">{option.count}</span> : null}
             </span>
           );
           return (
@@ -4513,10 +4513,10 @@ function FilterSection({
               key={option.id}
               className={cn(
                 layout === "compact"
-                  ? "flex min-h-8 cursor-pointer items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-[13px] font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
-                  : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-[13px] font-normal leading-5 transition-all",
+                  ? "flex min-h-8 cursor-pointer items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-[14px] font-medium leading-5 text-[#526174] transition hover:bg-slate-50 hover:text-slate-950"
+                  : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-[14px] font-medium leading-5 transition-all",
                 selected
-                  ? "font-medium text-[#142033]"
+                  ? "font-semibold text-[#142033]"
                   : layout === "compact"
                     ? null
                     : "text-[#475569] hover:bg-slate-50 hover:text-[#142033]",
