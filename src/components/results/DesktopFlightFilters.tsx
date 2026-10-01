@@ -199,9 +199,11 @@ export function DesktopFlightFilters({
 
   if (compact) {
     const compactSections = {
-      price: maxPrice < priceBounds.max ? 1 : 0,
-      time: maxTakeoffMinutes !== null || maxLandingMinutes !== null ? 1 : 0,
-      duration: maxDurationMinutes !== null ? 1 : 0,
+      price: priceBounds.max > 0 && maxPrice > 0 && maxPrice < priceBounds.max ? 1 : 0,
+      time:
+        Number(Boolean(timeBounds.takeoff && maxTakeoffMinutes !== null && maxTakeoffMinutes < timeBounds.takeoff.max)) +
+        Number(Boolean(timeBounds.landing && maxLandingMinutes !== null && maxLandingMinutes < timeBounds.landing.max)),
+      duration: durationBounds && maxDurationMinutes !== null && maxDurationMinutes < durationBounds.max ? 1 : 0,
       stops: selectedStops.length,
       airlines: selectedAirlines.length,
       airports: selectedAirports.length,
