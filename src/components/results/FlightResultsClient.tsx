@@ -7264,7 +7264,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     return (
       <div ref={desktopSortRef} className="relative hidden items-center gap-2 lg:flex">
         <span className="text-[14px] font-medium leading-5 text-[#64748B]">Sort by:</span>
-        <button ref={desktopSortButtonRef} type="button" aria-label="Sort flight results" aria-haspopup="menu" aria-expanded={desktopSortOpen} className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-transparent px-2 text-[14px] font-semibold leading-5 text-[#142033] transition hover:bg-[#004BB8]/5 hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25" onClick={() => setDesktopSortOpen((open) => !open)}>
+        <button ref={desktopSortButtonRef} type="button" aria-label="Sort flight results" aria-haspopup="menu" aria-expanded={desktopSortOpen} className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-transparent px-2 text-[14px] font-semibold leading-5 text-[#142033] transition-colors hover:bg-slate-100/70 hover:text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25" onClick={() => setDesktopSortOpen((open) => !open)}>
           {selectedSortLabel}<ChevronDown size={16} aria-hidden="true" />
         </button>
         <div role="menu" className={cn("absolute right-0 top-11 z-30 w-44 origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_14px_32px_-18px_rgba(15,23,42,0.45)] transition duration-150", desktopSortOpen ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none -translate-y-1 scale-95 opacity-0")}>
@@ -7662,7 +7662,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       <ChevronRight className="h-5 w-5" aria-hidden="true" />
                     </button>
                   </div>
-                  {cheaperNearbyFare ? <button type="button" data-desktop-cheaper-nearby onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)} className="focus-ring mx-auto mt-2 flex min-h-8 w-full max-w-[980px] items-center px-1 text-left text-[13px] font-normal leading-5 tracking-[-0.002em] text-[#536B92] transition hover:text-[#075EE8]">Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}</button> : null}
+                  {cheaperNearbyFare ? <button type="button" data-desktop-cheaper-nearby onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)} className="focus-ring mx-auto mt-2 flex min-h-8 w-full max-w-[980px] items-center rounded-md px-2 text-left text-[13px] font-normal leading-5 tracking-[-0.002em] text-[#536B92] transition-colors hover:bg-slate-100/70 hover:text-[#334155]">Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}</button> : null}
                 </div>
                 </>
               ) : null}
