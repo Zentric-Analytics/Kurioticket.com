@@ -5,29 +5,18 @@ import test from "node:test";
 const hotel = readFileSync(new URL("./HotelResultsClient.tsx", import.meta.url), "utf8");
 const cars = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
 
-test("Hotels keep responsive pagination while desktop Cars show the full result set", () => {
+test("Hotel and Cars keep one responsive pagination nav with compact mobile items", () => {
   assert.equal(hotel.match(/aria-label="Hotel results pages"/g)?.length, 1);
   assert.match(hotel, /buildHotelResultsPaginationItems\(currentResultsPage, totalHotelResultPages\)/);
   assert.match(hotel, /buildHotelResultsPaginationItems\(currentResultsPage, totalHotelResultPages, true\)/);
+  assert.match(hotel, /hidden items-center gap-1\.5 sm:flex/);
+  assert.match(hotel, /flex items-center sm:hidden/);
 
   const finalCarsPagination = cars.slice(cars.lastIndexOf('aria-label="Car results pagination"'));
-  assert.match(finalCarsPagination, /lg:hidden/);
   assert.match(finalCarsPagination, /getCarPaginationItems\(pagination\.currentPage, pagination\.totalPages\)/);
   assert.match(finalCarsPagination, /getCarPaginationItems\(pagination\.currentPage, pagination\.totalPages, true\)/);
-  assert.match(cars, /visibleResults\.map\(\(car, index\) =>/);
-  assert.match(
-    cars,
-    /!visibleOnPaginatedViewport && "hidden lg:block"/,
-  );
-  assert.match(cars, /data-cars-results-result-item/);
-  assert.match(
-    cars,
-    /const mobilePageStart = \(pagination\.currentPage - 1\) \* CAR_RESULTS_PAGE_SIZE;/,
-  );
-  assert.match(
-    cars,
-    /const mobilePageEnd = mobilePageStart \+ CAR_RESULTS_PAGE_SIZE;/,
-  );
+  assert.match(finalCarsPagination, /hidden items-center gap-1\.5 sm:flex/);
+  assert.match(finalCarsPagination, /flex items-center sm:hidden/);
 });
 
 test("mobile controls are accessible, touch-sized, and current-page text is unboxed", () => {
@@ -46,13 +35,12 @@ test("mobile controls are accessible, touch-sized, and current-page text is unbo
   assert.match(cars, /border-\[#004BB8\] bg-\[#004BB8\] text-white/);
 });
 
-test("pending Cars pagination remains mobile/tablet-only", () => {
+test("pending Cars pagination matches mobile final styling while preserving desktop boxes", () => {
   const pending = cars.slice(
     cars.indexOf('paginationPendingPage !== null && pagination.totalPages > 1'),
     cars.indexOf("</nav>", cars.indexOf('paginationPendingPage !== null && pagination.totalPages > 1')),
   );
   assert.match(pending, /aria-current="page"/);
-  assert.match(pending, /lg:hidden/);
   assert.match(pending, /border border-transparent bg-transparent font-bold text-\[#004BB8\]/);
   assert.match(pending, /sm:border-\[#004BB8\] sm:bg-\[#004BB8\] sm:text-white/);
   assert.doesNotMatch(pending, />Next</);
