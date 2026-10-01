@@ -1051,7 +1051,10 @@ test("mobile web Flight Details itinerary mirrors the native card hierarchy and 
   assert.match(itinerary, /Flight distance: \{formatDistanceKm\(segment\.distanceKm, locale\)\}/);
   assert.match(itinerary, />Flight info<\/p>/);
   assert.doesNotMatch(itinerary.slice(0, itinerary.indexOf("data-desktop-itinerary-card")), /Technical stop at/);
-  assert.match(itinerary, /data-desktop-itinerary-card[^>]*className="hidden[^"]*sm:block"/);
+  assert.match(
+    itinerary,
+    /data-desktop-itinerary-card[^>]*className="hidden[^"]*sm:block[^"]*sm:shadow-\[0_6px_18px_rgba\(7,19,59,0\.10\)\]/,
+  );
 });
 
 test("desktop Flight Details uses a compact endpoint hierarchy and reserves time zones for Flight info", async () => {
