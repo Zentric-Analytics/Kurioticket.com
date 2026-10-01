@@ -348,6 +348,56 @@ test("desktop car details place the polished identity below the hero and keep co
   );
 });
 
+test("desktop sticky Cars rail adds a compact selected price and Continue deal beside Save and Share without replacing existing booking surfaces", () => {
+  const stickyPlacement = sourceBetween(
+    clientSource,
+    'data-car-details-utility-placement="tabs"',
+    "labels={{",
+  );
+  assert.match(stickyPlacement, /<CarHeroActions[\s\S]*?desktop/);
+  assert.match(
+    stickyPlacement,
+    /primaryOffer \? \( <DesktopStickyBookingAction offer={primaryOffer} price={price} copy={copy} action={effectivePrimaryAction} \/> \) : null/,
+  );
+
+  const stickyBooking = sourceBetween(
+    clientSource,
+    "function DesktopStickyBookingAction",
+    "export function CarDetailsClient",
+  );
+  assert.match(stickyBooking, /offer\.totalPrice/);
+  assert.match(stickyBooking, /data-car-details-desktop-sticky-booking/);
+  assert.match(stickyBooking, /data-car-details-desktop-sticky-price/);
+  assert.match(stickyBooking, /data-car-details-desktop-sticky-cta/);
+  assert.match(
+    stickyBooking,
+    /flex shrink-0 items-center gap-2 border-s border-slate-300 ps-3/,
+  );
+  assert.match(
+    stickyBooking,
+    /inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-blue px-3 text-\[12px\]/,
+  );
+  assert.doesNotMatch(stickyBooking, /\b(?:fixed|sticky)\b/);
+
+  const sandboxStart = stickyBooking.indexOf('action.kind === "sandbox-handoff"');
+  const unsupportedStart = stickyBooking.indexOf(
+    'action.kind === "standalone-disabled-provider"',
+  );
+  assert.ok(sandboxStart >= 0 && unsupportedStart > sandboxStart);
+  const sandbox = stickyBooking.slice(sandboxStart, unsupportedStart);
+  assert.match(sandbox, /href={action\.href}/);
+  assert.match(sandbox, /target="_blank"/);
+  assert.match(sandbox, /rel="noopener noreferrer"/);
+  assert.match(sandbox, /referrerPolicy="no-referrer"/);
+
+  const unsupported = stickyBooking.slice(unsupportedStart);
+  assert.match(unsupported, /<button disabled/);
+
+  assert.match(clientSource, /data-car-details-bottom-booking-bar/);
+  assert.match(clientSource, /data-mobile-car-booking-dock/);
+  assert.equal(clientSource.match(/<BookingSummary\b/g)?.length, 2);
+});
+
 test("Location map card keeps a balanced mobile viewport and fixed directions row", () => {
   const location = sourceBetween(
     clientSource,
