@@ -275,11 +275,13 @@ const hotelPriceAlertSchema = z.object({
 }).transform((value, context) => {
   const search = hotelSearchSchema.safeParse(value.query);
   const explicitOccupancy = Number.isInteger(value.query.guests) && Number.isInteger(value.query.rooms);
-  if (!search.success || !explicitOccupancy || value.mode !== "TARGET" || value.targetPrice === undefined || search.data.destination.toLowerCase() !== value.destination.toLowerCase()) {
+  const hotelId = typeof value.query.hotelId === "string" ? value.query.hotelId.trim() : "";
+  const hotelName = typeof value.query.hotelName === "string" ? value.query.hotelName.trim() : "";
+  if (!search.success || !explicitOccupancy || !hotelId || hotelId.length > 240 || !hotelName || hotelName.length > 200 || value.mode !== "TARGET" || value.targetPrice === undefined || search.data.destination.toLowerCase() !== value.destination.toLowerCase()) {
     context.addIssue({ code: "custom", path: ["query"], message: "A complete matching Hotel search and target price are required." });
     return z.NEVER;
   }
-  return buildHotelPriceAlertPayload(search.data, value.targetPrice, value.currency);
+  return buildHotelPriceAlertPayload(search.data, value.targetPrice, value.currency, { id: hotelId, name: hotelName });
 });
 
 const flightPriceAlertSchema = z.object({

@@ -21,7 +21,8 @@ test("facets follow the production hierarchy and omit cancellation claims", () =
   const amenities = source.indexOf('title={t("hotelResults.facilities")}', property);
   const room = source.indexOf('title="Room & bed"', amenities);
   assert.ok(price < hotelClass && hotelClass < area && area < property && property < amenities && amenities < room);
-  assert.match(source, /section\.id !== "cancellationPolicies"/);
+  const compactSections = source.slice(source.indexOf("const compactSections = ("), source.indexOf('if (layout === "compact")'));
+  assert.doesNotMatch(compactSections, /id: "cancellationPolicies"/);
 });
 
 test("hotel class is multi-select and empty selection means all", () => {
@@ -82,11 +83,8 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.doesNotMatch(sheet, /disabled=\{activeFilterCount === 0\}/);
   assert.match(sheet, /bg-transparent px-0 text-slate-700/);
   assert.match(sheet, /items-center justify-center text-slate-700/);
-  assert.match(source, /desktopCompactFilterPlacement === "fixed"/);
-  assert.match(source, /Refine results[\s\S]*id="desktop-compact-hotel-filters"[\s\S]*aria-label="Refine hotel results"[\s\S]*<HotelFilters layout="compact"/);
-  assert.match(source, /role="region" aria-label="Refine hotel results"/);
-  assert.doesNotMatch(source, /aria-label="Close desktop filters"|aria-modal="true" aria-label="Desktop hotel filters"/);
-  assert.match(source, /document\.addEventListener\("pointerdown", handlePointerDown\)/);
+  assert.match(source, /<HotelFilters layout="desktop"/);
+  assert.doesNotMatch(source, /desktop-compact-hotel-filters/);
   assert.doesNotMatch(source, /onClearAll=\{resetFilters\}/);
   assert.doesNotMatch(source, /mobileQuickFacilities = \["wifi", "breakfast", "pool"\]/);
   assert.match(source, /overflow-x-auto overscroll-x-contain/);

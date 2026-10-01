@@ -115,11 +115,11 @@ test("desktop stay controls follow the heading without duplicating the stay summ
 });
 
 
-test("desktop rate cards match the existing stay editor width", () => {
+test("desktop rate cards extend slightly beyond the stay editor", () => {
   const html = renderToStaticMarkup(createElement(HotelPriceComparisonSection, {
     ...baseProps,
     variant: "desktop",
     onContinueOffer: () => {},
   }));
-  assert.match(html, /data-comparison-offers[^>]*class="[^"]*max-w-\[622px\]/);
+  assert.match(html, /class="[^"]*max-w-\[680px\][^"]*" data-comparison-offers/);
 });

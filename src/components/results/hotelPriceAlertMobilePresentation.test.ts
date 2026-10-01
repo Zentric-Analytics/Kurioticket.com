@@ -11,24 +11,26 @@ const webStatusRoute = readFileSync(
   "utf8",
 );
 
-test("mobile web Hotel price tracking uses a compact real switch with web-native target setup", () => {
+test("mobile web hotel tracking opens its target editor for the selected property", () => {
   assert.match(control, /role="switch"/);
   assert.match(control, /aria-checked=\{Boolean\(isTracking\)\}/);
   assert.match(control, /travel\.account\.hotelAlert\.title/);
-  assert.match(control, /handleMobileToggle\(!isTracking\)/);
+  assert.match(control, /handleToggle\(!isTracking, "mobile"\)/);
   assert.match(control, /setMobileOpen\(true\)/);
   assert.match(control, /createPortal/);
   assert.match(control, /role="dialog"/);
-  assert.match(control, /buildHotelPriceAlertPayload\(search, value, currency\)/);
-  assert.match(control, /inputMode="decimal"/);
+  assert.match(control, /buildHotelPriceAlertPayload\(/);
+  assert.match(control, /hotel\.id/);
+  assert.match(control, /hotel\.name/);
+  assert.match(control, /type="range"/);
   assert.match(control, /sm:hidden/);
   assert.match(control, /hidden rounded-2xl[^"]*sm:block/);
 });
 
-test("mobile web Hotel price tracking reconciles, pauses, and can reactivate the matching search", () => {
-  assert.match(control, /fetch\("\/api\/price-alerts", \{ cache: "no-store"/);
-  assert.match(control, /matchesHotelSearch/);
-  assert.match(control, /alert\.status === "ACTIVE"/);
+test("mobile web hotel tracking reconciles, pauses, and reactivates the selected property's alert", () => {
+  assert.match(control, /fetch\("\/api\/price-alerts", \{/);
+  assert.match(control, /matchingHotelPriceAlert\(alerts, search, hotel\.id\)/);
+  assert.match(control, /matchingAlert\?\.status === "ACTIVE"/);
   assert.match(control, /alert\.status === "PAUSED"/);
   assert.match(control, /method: "PATCH"/);
   assert.match(control, /body: JSON\.stringify\(\{ status: nextStatus \}\)/);

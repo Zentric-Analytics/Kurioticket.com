@@ -39,10 +39,12 @@ function formatDropPercent(value: number) {
 
 export function HotelPriceAlertControl({
   search,
-  results,
+  hotel,
+  compactDesktop = false,
 }: {
   search: HotelSearchParams;
-  results: PublicHotelResult[];
+  hotel: PublicHotelResult;
+  compactDesktop?: boolean;
 }) {
   const router = useRouter();
   const { t: dictionary } = useLocale();
@@ -56,12 +58,12 @@ export function HotelPriceAlertControl({
   const priceBasis = useMemo(
     () =>
       hotelAlertPriceBasis(
-        results,
+        [hotel],
         selectedOption.currency,
         currencyRates.rates,
         currencyRates.isFallback,
       ),
-    [currencyRates.isFallback, currencyRates.rates, results, selectedOption.currency],
+    [currencyRates.isFallback, currencyRates.rates, hotel, selectedOption.currency],
   );
 
   const currentTotal = priceBasis?.amount ?? null;
@@ -88,8 +90,8 @@ export function HotelPriceAlertControl({
     Boolean(providerCurrency);
 
   const matchingAlert = useMemo(
-    () => matchingHotelPriceAlert(alerts, search),
-    [alerts, search],
+    () => matchingHotelPriceAlert(alerts, search, hotel.id),
+    [alerts, search, hotel.id],
   );
   const isTracking = matchingAlert?.status === "ACTIVE";
 
@@ -124,6 +126,7 @@ export function HotelPriceAlertControl({
       });
     return () => controller.abort();
   }, [
+    hotel.id,
     search.checkIn,
     search.checkOut,
     search.destination,
@@ -295,7 +298,7 @@ export function HotelPriceAlertControl({
               (alert) =>
                 alert.id === preservedPausedTarget.id &&
                 alert.status === "PAUSED" &&
-                hotelPriceAlertMatchesSearch(alert, search) &&
+                hotelPriceAlertMatchesSearch(alert, search, hotel.id) &&
                 alert.currency?.toUpperCase() ===
                   preservedPausedTarget.currency,
             )
@@ -303,7 +306,7 @@ export function HotelPriceAlertControl({
         alerts.find(
           (alert) =>
             alert.status === "PAUSED" &&
-            hotelPriceAlertMatchesSearch(alert, search) &&
+            hotelPriceAlertMatchesSearch(alert, search, hotel.id) &&
             Number(alert.targetPrice) === alertTarget &&
             alert.currency?.toUpperCase() === providerCurrency,
         );
@@ -324,6 +327,7 @@ export function HotelPriceAlertControl({
             search,
             alertTarget,
             providerCurrency,
+            { id: hotel.id, name: hotel.name },
           ),
         ),
       });
@@ -518,7 +522,7 @@ export function HotelPriceAlertControl({
   return (
     <section
       aria-label={t("travel.account.hotelAlert.title")}
-      className="mb-3 sm:mb-5"
+      className={cn("mb-3 sm:mb-5", compactDesktop && "sm:mb-0")}
     >
       <div className="flex min-h-12 items-center gap-2 rounded-xl border border-[#D8E1EC] bg-[#F0F5FC] px-3 sm:hidden">
         <Bell
@@ -555,14 +559,14 @@ export function HotelPriceAlertControl({
         </button>
       </div>
 
-      <div className="hidden rounded-2xl border border-[#CFE0F8] bg-[#EEF6FF] px-4 py-2.5 shadow-[0_10px_26px_-24px_rgba(15,23,42,0.45)] sm:block">
+      <div className={cn("hidden rounded-2xl border border-[#CFE0F8] bg-[#EEF6FF] px-4 py-2.5 shadow-[0_10px_26px_-24px_rgba(15,23,42,0.45)] sm:block", compactDesktop && "sm:rounded-lg sm:bg-white sm:px-3 sm:py-1.5 sm:shadow-none")}>
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8]">
+            <span className={cn("inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8]", compactDesktop && "sm:h-7 sm:w-7")}>
               <Bell className="h-4 w-4" aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <h2 className="truncate text-base font-bold text-[#192024]">
+              <h2 className={cn("truncate text-base font-bold text-[#192024]", compactDesktop && "sm:text-sm")}>
                 {t("travel.account.hotelAlert.title")}
               </h2>
             </div>

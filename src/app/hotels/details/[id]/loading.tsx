@@ -7,6 +7,7 @@ export default function LoadingHotelDetailsRoute() {
       <div className="hidden lg:block" data-hotel-details-desktop-header>
         <AppHeader
           flushDesktopBottom
+          hotelDesktopBoundary
           flushMobileBottom
           hideDesktopTravelNav
           hideMobileCategoryTabs

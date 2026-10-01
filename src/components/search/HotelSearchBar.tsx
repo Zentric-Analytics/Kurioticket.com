@@ -166,7 +166,7 @@ type HotelSearchDraft = {
 };
 
 export type HotelSearchBarProps = {
-  desktopPresentation?: "inline" | "sticky-dialog";
+  desktopPresentation?: "inline" | "sticky-dialog" | "results-flat";
   initialDesktopSection?: "destination" | "dates" | "guests" | null;
   submitOnDesktopOpen?: boolean;
   idPrefix?: string;
@@ -880,6 +880,7 @@ export function HotelSearchBar({
   };
 
   const isStickyDialog = desktopPresentation === "sticky-dialog";
+  const isResultsFlat = desktopPresentation === "results-flat";
   const fieldClassName = cn(
     "relative rounded-xl border border-slate-300 bg-white transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25",
     isStickyDialog
@@ -894,6 +895,7 @@ export function HotelSearchBar({
               ),
           )
         : "min-h-[54px] px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
+    isResultsFlat && "lg:bg-white",
   );
   const valueControlClassName = cn(
     "focus-ring w-full rounded-md border-0 bg-transparent px-0 outline-none transition-colors",
@@ -1048,6 +1050,7 @@ export function HotelSearchBar({
                       cn("min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-none border-0 bg-slate-50 px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-none", mobileResultsSheet && "overflow-visible bg-transparent p-0 pb-0"),
                   )
                 : "rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
+            isResultsFlat && "lg:border-[#CFD9E5] lg:bg-white lg:p-0 lg:shadow-[0_2px_12px_rgba(12,14,28,0.08)] lg:ring-0",
           )}
         >
           {!compact && desktopIdentityLabel ? (
@@ -1338,7 +1341,7 @@ export function HotelSearchBar({
                     mobileResultsSheet && "h-[18px] w-[18px]",
                   )}
                 />
-                <span className="truncate">{mobileResultsSheet ? formatCompactHotelDateRange(checkIn, checkOut, calendarLocale) ?? dateSummary : dateSummary}</span>
+                <span className="truncate">{mobileResultsSheet || isResultsFlat ? formatCompactHotelDateRange(checkIn, checkOut, calendarLocale) ?? dateSummary : dateSummary}</span>
                 {mobileResultsSheet ? <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" /> : null}
               </button>
               {datesOpen ? (

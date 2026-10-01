@@ -71,6 +71,7 @@ export default async function HotelResultsPage({
     <>
       <AppHeader
         flushDesktopBottom
+        hotelDesktopBoundary
         flushMobileBottom
         hideDesktopTravelNav
         hideMobileCategoryTabs

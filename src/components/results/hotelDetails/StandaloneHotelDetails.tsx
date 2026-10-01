@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import { MobileHotelDetails } from "./MobileHotelDetails";
 import { DesktopHotelDetails } from "./DesktopHotelDetails";
 import type { HotelAmenityPresentationItem } from "@/components/results/hotelAmenityPresentation";
-import type { PublicHotelPropertyDetails, PublicHotelResult } from "@/lib/types";
+import type { HotelSearchParams, PublicHotelPropertyDetails, PublicHotelResult } from "@/lib/types";
 import type { PublicHotelProviderDetails } from "@/lib/hotels/hotelProviderDetails";
 import type { HotelDetailsGallery } from "./HotelDetailsGallery";
 import type { HotelDetailsSearchContext, HotelDetailsProviderOffer } from "./hotelDetailsPresentation";
@@ -44,6 +44,7 @@ export type StandaloneHotelDetailsProps = {
   reviewSource?: string | null;
   relatedHotels: PublicHotelResult[];
   relatedSearchContext?: HotelDetailsSearchContext;
+  priceAlert?: { search: HotelSearchParams; hotel: PublicHotelResult };
   amenityItems: HotelAmenityPresentationItem[];
   isSaved: boolean;
   savedHotelLabel: string;

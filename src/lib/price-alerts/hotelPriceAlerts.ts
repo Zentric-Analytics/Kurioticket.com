@@ -34,6 +34,8 @@ export type HotelAlertPriceBasis = {
   providerCurrency: string;
 };
 
+export type HotelAlertProperty = { id: string; name: string };
+
 export function hotelPriceAlertDuplicateKey(input: {
   destination: string;
   targetPrice?: { toString(): string } | number | string | null;
@@ -56,6 +58,7 @@ export function hotelPriceAlertDuplicateKey(input: {
   ) return null;
   return JSON.stringify([
     canonical(input.destination),
+    canonical(query.hotelId),
     query.checkIn,
     query.checkOut,
     guests,
@@ -69,6 +72,7 @@ export function buildHotelPriceAlertPayload(
   search: HotelSearchParams,
   targetPrice: number,
   currency: string,
+  hotel: HotelAlertProperty,
 ) {
   return {
     type: "HOTEL" as const,
@@ -82,6 +86,8 @@ export function buildHotelPriceAlertPayload(
       checkOut: search.checkOut,
       guests: search.guests,
       rooms: search.rooms,
+      hotelId: hotel.id.trim(),
+      hotelName: hotel.name.trim(),
     },
   };
 }
@@ -89,11 +95,13 @@ export function buildHotelPriceAlertPayload(
 export function hotelPriceAlertMatchesSearch(
   alert: HotelPriceAlertRecord,
   search: HotelSearchParams,
+  hotelId: string,
 ) {
   if (alert.type !== "HOTEL") return false;
   const query = alert.query ?? {};
   const destination = canonical(query.destination || alert.destination);
   return destination === canonical(search.destination)
+    && canonical(query.hotelId) === canonical(hotelId)
     && String(query.checkIn ?? "") === search.checkIn
     && String(query.checkOut ?? "") === search.checkOut
     && Number(query.guests) === Number(search.guests)
@@ -103,8 +111,9 @@ export function hotelPriceAlertMatchesSearch(
 export function matchingHotelPriceAlert(
   alerts: HotelPriceAlertRecord[],
   search: HotelSearchParams,
+  hotelId: string,
 ) {
-  const matches = alerts.filter((alert) => hotelPriceAlertMatchesSearch(alert, search));
+  const matches = alerts.filter((alert) => hotelPriceAlertMatchesSearch(alert, search, hotelId));
   return matches.find((alert) => alert.status === "ACTIVE")
     ?? matches.find((alert) => alert.status === "PAUSED");
 }

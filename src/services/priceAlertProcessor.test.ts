@@ -442,6 +442,15 @@ test("hotel alert selection preserves supplied order when multiple priced hotels
   assert.deepEqual(selected?.payload, { resultId: "first-priced" });
 });
 
+test("hotel-specific alerts never use another property's cheaper price", () => {
+  const hotels = [
+    bookableHotel({ id: "other-hotel", totalPrice: 100 }),
+    bookableHotel({ id: "selected-hotel", totalPrice: 500 }),
+  ];
+  assert.equal(selectHotelPriceAlertResult(hotels, "USD", "selected-hotel")?.price, 500);
+  assert.equal(selectHotelPriceAlertResult(hotels, "USD", "missing-hotel"), null);
+});
+
 test("cron route authorization fails closed", () => {
   assert.equal(isAuthorizedCronRequest(new Request("https://example.com"), ""), false);
   assert.equal(isAuthorizedCronRequest(new Request("https://example.com", { headers: { authorization: "Bearer nope" } }), "secret"), false);

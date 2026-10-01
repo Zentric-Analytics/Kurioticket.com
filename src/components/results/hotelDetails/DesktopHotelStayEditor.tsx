@@ -20,7 +20,7 @@ const dateLabel = (value: string, fallback: string) => {
   return date ? new Intl.DateTimeFormat("en-US", { weekday: "short", day: "numeric", month: "numeric" }).format(date).replace(",", "") : fallback;
 };
 
-function DateRangePopup({ start, end, initialPart, onChange, onClose }: { start: string; end: string; initialPart: DatePart; onChange: (start: string, end: string) => void; onClose: () => void }) {
+function DateRangePopup({ start, end, initialPart, onChange, onComplete }: { start: string; end: string; initialPart: DatePart; onChange: (start: string, end: string) => void; onComplete: () => void }) {
   const today = localToday();
   const startDate = parseHotelDetailsSearchDate(start);
   const initialMode = initialPart === "checkOut" && startDate && startDate >= today ? "checkOut" : "checkIn";
@@ -57,7 +57,7 @@ function DateRangePopup({ start, end, initialPart, onChange, onClose }: { start:
       setFocusedDate(isoDate(nextFocus));
     } else {
       onChange(start, value);
-      onClose();
+      onComplete();
     }
   }
 
@@ -115,12 +115,11 @@ function DateRangePopup({ start, end, initialPart, onChange, onClose }: { start:
   </div>;
 }
 
-function OccupancyPopup({ draft, onChange, onClose }: { draft: Draft; onChange: (field: "guests" | "rooms", value: number) => void; onClose: () => void }) {
+function OccupancyPopup({ draft, onChange }: { draft: Draft; onChange: (field: "guests" | "rooms", value: number) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => { ref.current?.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus({ preventScroll: true }); }, []);
   return <div ref={ref} className={styles.occupancy}>
     {([{ field: "guests", label: "Guests", maximum: 12 }, { field: "rooms", label: "Rooms", maximum: 6 }] as const).map(({ field, label, maximum }) => <div className={styles.counter} key={field}><strong>{label}</strong><div><button type="button" disabled={draft[field] <= 1} aria-label={`Decrease ${label.toLowerCase()}`} onClick={() => onChange(field, draft[field] - 1)}><Minus size={16} /></button><span aria-live="polite" aria-label={`${draft[field]} ${label.toLowerCase()}`}>{draft[field]}</span><button type="button" disabled={draft[field] >= maximum} aria-label={`Increase ${label.toLowerCase()}`} onClick={() => onChange(field, draft[field] + 1)}><Plus size={16} /></button></div></div>)}
-    <button type="button" className={styles.doneButton} onClick={onClose}>Done</button>
   </div>;
 }
 
@@ -139,6 +138,11 @@ function StayEditor({ context }: { context?: HotelDetailsSearchContext }) {
     setPopup(null);
     const trigger = opener.current;
     if (wasOpen) requestAnimationFrame(() => { if (openPopup.current === null) trigger?.focus({ preventScroll: true }); });
+  }, []);
+  const advanceToGuests = useCallback(() => {
+    opener.current = guestsRef.current;
+    openPopup.current = "guests";
+    setPopup("guests");
   }, []);
 
   useEffect(() => {
@@ -182,10 +186,10 @@ function StayEditor({ context }: { context?: HotelDetailsSearchContext }) {
     </div>
     {error ? <p className={styles.error} role="alert">{error}</p> : null}
     <HotelDesktopPopover open={popup === "checkIn" || popup === "checkOut"} launcherRef={datesRef} preferredWidth={732} desiredHeight={390} onClose={closePopup} className={styles.popover} id={`${id}-dates`} ariaLabel="Choose stay dates">
-      {popup === "checkIn" || popup === "checkOut" ? <DateRangePopup key={popup} initialPart={popup} start={draft.checkIn} end={draft.checkOut} onChange={(checkIn, checkOut) => { setDraft(current => ({ ...current, checkIn, checkOut })); setError(""); }} onClose={closePopup} /> : null}
+      {popup === "checkIn" || popup === "checkOut" ? <DateRangePopup key={popup} initialPart={popup} start={draft.checkIn} end={draft.checkOut} onChange={(checkIn, checkOut) => { setDraft(current => ({ ...current, checkIn, checkOut })); setError(""); }} onComplete={advanceToGuests} /> : null}
     </HotelDesktopPopover>
-    <HotelDesktopPopover open={popup === "guests"} launcherRef={guestsRef} preferredWidth={310} desiredHeight={190} onClose={closePopup} className={styles.popover} id={`${id}-guests`} ariaLabel="Guests and rooms">
-      <OccupancyPopup draft={draft} onChange={(field, value) => setDraft(current => ({ ...current, [field]: value }))} onClose={closePopup} />
+    <HotelDesktopPopover open={popup === "guests"} launcherRef={guestsRef} preferredWidth={310} desiredHeight={144} onClose={closePopup} className={styles.popover} id={`${id}-guests`} ariaLabel="Guests and rooms">
+      <OccupancyPopup draft={draft} onChange={(field, value) => setDraft(current => ({ ...current, [field]: value }))} />
     </HotelDesktopPopover>
   </div>;
 }

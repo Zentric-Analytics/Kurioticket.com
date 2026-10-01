@@ -71,9 +71,11 @@ export type OptionalEmailSender = typeof sendOptionalEmail;
 export function selectHotelPriceAlertResult(
   hotels: readonly NormalizedHotelResult[],
   requestedCurrency?: string,
+  hotelId?: string,
 ): ResolvedPrice | null {
   const currency = requestedCurrency?.trim().toUpperCase();
   for (const hotel of hotels) {
+    if (hotelId && hotel.id !== hotelId) continue;
     if (hotel.inventoryKind === "discovery") continue;
 
     const priceDetails = getHotelPriceDetails(hotel);
@@ -171,7 +173,8 @@ export async function processDuePriceAlerts(options: {
         continue;
       }
 
-      const route = alert.type !== "HOTEL" && alert.origin && alert.origin.toLowerCase() !== alert.destination.toLowerCase() ? `${alert.origin} to ${alert.destination}` : alert.destination;
+      const hotelName = alert.type === "HOTEL" && alert.query && typeof alert.query === "object" && "hotelName" in alert.query && typeof alert.query.hotelName === "string" ? alert.query.hotelName.trim() : "";
+      const route = hotelName ? `${hotelName} in ${alert.destination}` : alert.type !== "HOTEL" && alert.origin && alert.origin.toLowerCase() !== alert.destination.toLowerCase() ? `${alert.origin} to ${alert.destination}` : alert.destination;
       const dropPercent = Math.max(0, automaticDropRatio * 100);
       const automaticTitle = alert.type === "CAR" ? `Rental price dropped ${formatPercent(dropPercent)}` : `Price drop detected for ${route}`;
       const automaticBody = alert.type === "CAR" && baseline !== null
@@ -237,10 +240,11 @@ export async function resolveAlertPrice(alert: PriceAlertRecord): Promise<Resolv
     if (!selected) throw new Error("live_car_price_unavailable");
     return selected;
   }
-  const search = alert.query as Partial<HotelSearchParams>;
+  const search = alert.query as Partial<HotelSearchParams> & { hotelId?: unknown };
   const result = await searchHotels(search as HotelSearchParams);
   if (result.results.length === 0) throw new Error("live_hotel_price_unavailable");
-  const selected = selectHotelPriceAlertResult(result.results, alert.currency);
+  const hotelId = typeof search.hotelId === "string" ? search.hotelId.trim() : "";
+  const selected = selectHotelPriceAlertResult(result.results, alert.currency, hotelId || undefined);
   if (selected === null) throw new Error("live_hotel_price_unavailable");
   return selected;
 }

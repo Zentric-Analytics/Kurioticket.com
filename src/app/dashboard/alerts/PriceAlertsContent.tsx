@@ -63,7 +63,11 @@ function EmptyStateIllustration() {
 
 const text = (t: Record<string, string>, key: string, fallback: string) => t[key] ?? fallback;
 const dateValue = (alert: AccountPriceAlert, key: string) => typeof alert.query?.[key] === "string" ? alert.query[key] as string : null;
-const routeLabel = (alert: AccountPriceAlert) => alert.origin && alert.origin.toLowerCase() !== alert.destination.toLowerCase() ? `${alert.origin} → ${alert.destination}` : alert.destination;
+const routeLabel = (alert: AccountPriceAlert) => {
+  const hotelName = alert.type === "HOTEL" ? dateValue(alert, "hotelName")?.trim() : null;
+  if (hotelName) return hotelName;
+  return alert.origin && alert.origin.toLowerCase() !== alert.destination.toLowerCase() ? `${alert.origin} → ${alert.destination}` : alert.destination;
+};
 const formatDate = (value: string | null) => value ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(new Date(value)) : "Not available";
 const formatMoney = (value: string | null, currency: string | null) => value ? new Intl.NumberFormat(undefined, { style: "currency", currency: currency || "USD" }).format(Number(value)) : "Not available";
 
@@ -74,12 +78,13 @@ function AlertCard({ alert, t }: { alert: AccountPriceAlert; t: Record<string, s
         <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#004BB8]">{text(t, `accountDashboard.priceAlerts.alertType.${alert.type.toLowerCase()}`, alert.type)}</p>
           <h2 className="mt-2 break-words text-xl font-semibold tracking-tight text-slate-950">{routeLabel(alert)}</h2>
-          <p className="mt-1 text-sm text-slate-600">{routeLabel(alert)}</p>
+          <p className="mt-1 text-sm text-slate-600">{alert.type === "HOTEL" && dateValue(alert, "hotelName") ? alert.destination : routeLabel(alert)}</p>
         </div>
         <span className="rounded-full bg-[#004BB8]/10 px-3 py-1 text-xs font-bold text-[#004BB8]">{alert.status}</span>
       </div>
       <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-        <div><dt className="font-semibold text-slate-500">{alert.type === "CAR" ? "Pickup" : "Departure date"}</dt><dd className="mt-1 text-slate-950">{formatDate(dateValue(alert, alert.type === "CAR" ? "pickupDate" : "departureDate"))}{alert.type === "CAR" && dateValue(alert, "pickupTime") ? ` · ${dateValue(alert, "pickupTime")}` : ""}</dd></div>
+        <div><dt className="font-semibold text-slate-500">{alert.type === "CAR" ? "Pickup" : alert.type === "HOTEL" ? "Check-in" : "Departure date"}</dt><dd className="mt-1 text-slate-950">{formatDate(dateValue(alert, alert.type === "CAR" ? "pickupDate" : alert.type === "HOTEL" ? "checkIn" : "departureDate"))}{alert.type === "CAR" && dateValue(alert, "pickupTime") ? ` · ${dateValue(alert, "pickupTime")}` : ""}</dd></div>
+        {alert.type === "HOTEL" && <div><dt className="font-semibold text-slate-500">Check-out</dt><dd className="mt-1 text-slate-950">{formatDate(dateValue(alert, "checkOut"))}</dd></div>}
         {alert.type === "CAR" && <div><dt className="font-semibold text-slate-500">Drop-off</dt><dd className="mt-1 text-slate-950">{formatDate(dateValue(alert, "dropoffDate"))}{dateValue(alert, "dropoffTime") ? ` · ${dateValue(alert, "dropoffTime")}` : ""}</dd></div>}
         {alert.type === "CAR" && dateValue(alert, "driverAge") && <div><dt className="font-semibold text-slate-500">Driver age</dt><dd className="mt-1 text-slate-950">{dateValue(alert, "driverAge")}</dd></div>}
         {dateValue(alert, "returnDate") && <div><dt className="font-semibold text-slate-500">Return date</dt><dd className="mt-1 text-slate-950">{formatDate(dateValue(alert, "returnDate"))}</dd></div>}

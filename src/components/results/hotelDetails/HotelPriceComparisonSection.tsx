@@ -161,6 +161,7 @@ export function HotelPriceComparisonSection({
   totalLabel = "Stay total",
   continueLabel = "View deal",
   stayEditor,
+  alertControl,
 }: {
   stayContext?: string;
   perNightText: string;
@@ -175,6 +176,7 @@ export function HotelPriceComparisonSection({
   totalLabel?: string;
   continueLabel?: string;
   stayEditor?: ReactNode;
+  alertControl?: ReactNode;
 }) {
   const desktop = variant === "desktop";
   return (
@@ -184,13 +186,16 @@ export function HotelPriceComparisonSection({
       aria-labelledby="hotel-compare-heading"
       data-hotel-compare-prices
     >
-      <h2
-        id="hotel-compare-heading"
-        tabIndex={-1}
-        className={desktop ? "text-xl font-semibold leading-7 text-[#192024]" : "text-[18px] font-extrabold tracking-tight text-slate-950 sm:text-xl"}
-      >
-        {desktop ? "Compare prices" : "Rates"}
-      </h2>
+      <div className={desktop ? "flex flex-wrap items-center justify-between gap-3" : undefined}>
+        <h2
+          id="hotel-compare-heading"
+          tabIndex={-1}
+          className={desktop ? "text-xl font-semibold leading-7 text-[#192024]" : "text-[18px] font-extrabold tracking-tight text-slate-950 sm:text-xl"}
+        >
+          {desktop ? "Compare prices" : "Rates"}
+        </h2>
+        {desktop ? alertControl : null}
+      </div>
       {desktop && stayEditor ? stayEditor : null}
       {stayContext && !(desktop && stayEditor) ? (
         <p className={desktop ? "mt-1 text-sm font-normal leading-5 text-slate-600" : "mt-1 text-[13px] font-medium leading-5 text-slate-600 sm:text-sm"}>{stayContext}</p>
@@ -213,7 +218,7 @@ export function HotelPriceComparisonSection({
       {offers.length ? <div
         role="radiogroup"
         aria-label="Hotel provider offers"
-        className={desktop ? "mt-4 w-full max-w-[622px] space-y-3" : "mt-4 space-y-2.5 sm:-mx-1 sm:mt-5 sm:space-y-3 lg:mx-0"}
+        className={desktop ? "mt-4 w-full max-w-[680px] space-y-3" : "mt-4 space-y-2.5 sm:-mx-1 sm:mt-5 sm:space-y-3 lg:mx-0"}
         data-comparison-offers
       >
         {offers.map((offer) => desktop ? (

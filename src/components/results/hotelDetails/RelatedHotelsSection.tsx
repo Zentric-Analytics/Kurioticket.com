@@ -83,7 +83,7 @@ function RelatedHotelCard({
     <Link
       href={href}
       aria-label={`${labels.viewHotel}: ${hotel.name}`}
-      className={`group focus-ring block w-[241px] max-w-[78vw] shrink-0 snap-start overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.05)] transition-shadow hover:shadow-[0_8px_24px_rgba(15,23,42,0.09)] lg:w-full lg:max-w-none lg:min-w-0 ${desktopHidden ? "lg:hidden" : ""}`}
+      className={`group focus-ring block w-[241px] max-w-[78vw] shrink-0 snap-start overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.05)] transition-shadow hover:shadow-[0_8px_24px_rgba(15,23,42,0.09)] lg:w-full lg:max-w-none lg:min-w-0 lg:bg-white ${desktopHidden ? "lg:hidden" : ""}`}
     >
       <div className="relative h-[150px] overflow-hidden bg-slate-100 lg:aspect-video lg:h-auto">
         {hotel.imageUrl && !imageFailed ? (
