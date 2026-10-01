@@ -22,5 +22,11 @@ for (const [product, file, pageSize] of [
       assert.match(source, /Showing results \$\{resultsDisplayRange\.start\} through \$\{resultsDisplayRange\.end\} of/);
     }
     assert.match(source, /\{resultsDisplayRange \? \(/);
+    if (product === "Cars") {
+      assert.match(
+        source,
+        /mt-0\.5 hidden text-xs font-medium leading-4 text-slate-500 sm:block lg:hidden/,
+      );
+    }
   });
 }
