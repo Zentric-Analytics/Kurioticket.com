@@ -65,9 +65,9 @@ export default async function CarsResultsPage({
   if (getParamValue(params, "provider") === "kayak-sandbox") {
     if (!isKayakSandboxEnabled()) notFound();
     const adapted = adaptKayakCarSearch(Object.fromEntries(Object.keys(params).map((key) => [key, getParamValue(params, key)])));
-    return <><AppHeader />{adapted.supported
+    return <div className="contents cars-results-desktop-typeface"><AppHeader />{adapted.supported
       ? <KayakSandboxResults key={JSON.stringify(adapted.search)} search={adapted.search} />
-      : <main className="page-shell py-6"><h1>KAYAK sandbox search unavailable</h1><p>{adapted.reason}</p><a href="/sandbox/kayak">Edit sandbox search</a></main>}</>;
+      : <main className="page-shell py-6"><h1>KAYAK sandbox search unavailable</h1><p>{adapted.reason}</p><a href="/sandbox/kayak">Edit sandbox search</a></main>}</div>;
   }
   const pickupLocation = getParamValue(params, "pickupLocation");
   const dropoffLocation = getParamValue(params, "dropoffLocation");
@@ -103,7 +103,7 @@ export default async function CarsResultsPage({
   const t = getTranslations((await cookies()).get(LOCALE_COOKIE_KEY)?.value);
 
   return (
-    <>
+    <div className="contents cars-results-desktop-typeface">
       <script
         data-cars-results-reload-scroll-policy
         dangerouslySetInnerHTML={{ __html: CARS_RESULTS_RELOAD_SCROLL_SCRIPT }}
@@ -143,7 +143,7 @@ export default async function CarsResultsPage({
       >
         <CarsResultsContent values={values} searchIdentity={searchIdentity} />
       </Suspense>
-    </>
+    </div>
   );
 }
 

@@ -8,6 +8,14 @@
   font-weight: 100 900;
 }
 
+@font-face {
+  font-family: "Kurioticket Cars Sans";
+  src: url("/brand/fonts/manrope/Manrope-VariableFont.ttf") format("truetype");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 200 800;
+}
+
 /* Exact static semibold face used by the native app through
    @expo-google-fonts/inter@0.4.2. Keep this scoped to parity-critical labels. */
 @font-face {
@@ -124,6 +132,27 @@ body {
   background: #ffffff;
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+/* Desktop Cars Results uses a route-scoped geometric grotesk so the alphabet,
+   numerals, and word shapes read with a more polished travel-marketplace feel.
+   Mobile/native and the rest of the site remain on the Kurioticket Inter system. */
+@media (min-width: 1024px) {
+  .cars-results-desktop-typeface,
+  .cars-results-desktop-typeface button,
+  .cars-results-desktop-typeface input,
+  .cars-results-desktop-typeface select,
+  .cars-results-desktop-typeface textarea {
+    font-family:
+      "Kurioticket Cars Sans",
+      "Inter",
+      "Segoe UI",
+      Arial,
+      sans-serif;
+    font-synthesis: none;
+    font-kerning: normal;
+    text-rendering: optimizeLegibility;
+  }
 }
 
 /* Cars, Hotels, and Flight Results paint compact presentation-only thumbs while
