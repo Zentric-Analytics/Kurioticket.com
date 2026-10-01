@@ -104,9 +104,14 @@ test("standalone desktop tabs place panel content in the former heading position
   assert.match(navSource, /lg:sticky lg:top-0/);
   assert.match(
     navSource,
-    /desktopStuck \? "left-1\/2 -translate-x-1\/2" : "left-0 translate-x-0"/,
+    /desktopStuck \? "lg:grid lg:grid-cols-\[auto_minmax\(0,1fr\)_auto\] lg:items-stretch lg:gap-4/,
   );
-  assert.match(navSource, /data-centered={desktopStuck \? "true" : "false"}/);
+  assert.match(
+    navSource,
+    /desktopStuck \? "relative col-start-2 row-start-1 justify-self-center translate-x-0" : "absolute left-0 top-0 translate-x-0"/,
+  );
+  assert.match(navSource, /data-balanced={desktopStuck \? "true" : "false"}/);
+  assert.doesNotMatch(navSource, /left-1\/2 -translate-x-1\/2/);
   assert.match(
     navSource,
     /border-\[#192024\] text-\[#192024\]/,
@@ -122,11 +127,11 @@ test("standalone desktop tabs place panel content in the former heading position
   assert.match(navSource, /data-car-details-desktop-sticky-back/);
   assert.match(
     navSource,
-    /desktopStuck \? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-1 opacity-0"/,
+    /desktopStuck \? "relative col-start-1 row-start-1 flex min-h-16 items-center self-stretch translate-x-0 translate-y-0 opacity-100" : "pointer-events-none absolute left-0 top-1\/2 -translate-x-1 -translate-y-1\/2 opacity-0"/,
   );
   assert.match(
     navSource,
-    /desktopStuck \? "translate-x-0 opacity-100" : "pointer-events-none translate-x-1 opacity-0"/,
+    /desktopStuck \? "relative col-start-3 row-start-1 flex min-h-16 items-center self-stretch justify-self-end translate-x-0 translate-y-0 opacity-100" : "pointer-events-none absolute right-0 top-1\/2 translate-x-1 -translate-y-1\/2 opacity-0"/,
   );
   assert.match(navSource, /desktopStuck \? desktopBackControl : null/);
   assert.match(navSource, /desktopStuck \? desktopUtilityActions : null/);
