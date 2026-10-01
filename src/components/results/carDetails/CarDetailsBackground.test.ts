@@ -62,7 +62,7 @@ test("successful Cars Details uses one continuous production surface", () => {
   assertOrdered(clientSource, [
     successfulMainWrapper,
     successfulSection,
-    '<div className="page-shell py-0 lg:py-6">',
+    '<div className="page-shell py-0 lg:py-6 lg:max-w-[1080px]" data-car-details-body-shell>',
   ]);
   assert.doesNotMatch(clientSource, /<main className="[^"]*lg:pb-14[^"]*">/);
   assert.doesNotMatch(clientSource, /flex-1 bg-\[#f6f8fb\] lg:pb-14/);
@@ -72,11 +72,11 @@ test("successful Cars Details uses one continuous production surface", () => {
     clientSource,
     /hidden h-16 w-full items-center border-b border-transparent bg-\[#F5F7FB\] lg:flex lg:bg-\[#F8FAFC\]/,
   );
-  assert.match(clientSource, /page-shell py-0 lg:py-6/);
+  assert.match(clientSource, /page-shell py-0 lg:py-6 lg:max-w-\[1080px\]/);
   assertNoForbiddenBackgroundTreatments(
     clientSource.slice(
       clientSource.indexOf(successfulMainWrapper),
-      clientSource.indexOf('<div className="page-shell py-0 lg:py-6">'),
+      clientSource.indexOf('<div className="page-shell py-0 lg:py-6 lg:max-w-[1080px]" data-car-details-body-shell>'),
     ),
   );
 });
