@@ -178,7 +178,7 @@ function CarsResultsFallback({
   messages: string[];
 }) {
   return (
-    <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-white">
+    <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-[#F8FAFC]">
       <BrandedLoading
         variant="fullscreen"
         visual="logoPulse"
