@@ -57,18 +57,19 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
         <div role="status" aria-label="Loading flight details" className="grid gap-5 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
           <span className="sr-only">Loading flight details</span>
           <div className="overflow-hidden border-b border-slate-200 bg-[#F3F6FA] sm:rounded-[15px] sm:border sm:bg-white">
-            <div data-flight-details-loading-desktop-navigation className="hidden min-h-[52px] items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 sm:flex lg:px-5">
-              <div className="flex min-h-11 items-center gap-2">
-                <div className="h-4 w-4 animate-pulse rounded bg-slate-200" />
-                <div className="h-3 w-36 animate-pulse rounded bg-slate-200" />
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
-                <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
-              </div>
-            </div>
             <div ref={heroRef} className="relative flex min-h-[318px] flex-col justify-end overflow-hidden bg-[#E2E8F0] px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:block sm:bg-transparent sm:px-6 sm:pb-16 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="hidden object-cover sm:block" />
+              <div
+                data-flight-details-loading-desktop-navigation
+                className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden items-start justify-between p-4 sm:flex lg:p-5"
+                aria-hidden="true"
+              >
+                <div className="size-11 rounded-full border border-white/55 bg-white/85 shadow-[0_2px_8px_rgba(15,23,42,0.12)] backdrop-blur-md" />
+                <div className="flex items-center gap-2">
+                  <div className="size-11 rounded-full border border-white/55 bg-white/85 shadow-[0_2px_8px_rgba(15,23,42,0.12)] backdrop-blur-md" />
+                  <div className="size-11 rounded-full border border-white/55 bg-white/85 shadow-[0_2px_8px_rgba(15,23,42,0.12)] backdrop-blur-md" />
+                </div>
+              </div>
               <div className="absolute inset-0 hidden bg-slate-950/50 sm:block" aria-hidden="true" />
               <div className="relative z-10 flex w-full flex-col gap-[3px] sm:absolute sm:inset-x-6 sm:bottom-16 sm:w-2/5">
                 <div className="h-8 w-[62%] animate-pulse rounded-lg bg-slate-300 sm:w-full sm:bg-white/35" />
