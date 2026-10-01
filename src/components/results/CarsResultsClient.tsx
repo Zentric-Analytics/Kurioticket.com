@@ -502,10 +502,10 @@ const sameReturnSearchGridClass =
 const compactFieldShellClass = "min-h-[46px] py-1 lg:min-h-[54px] lg:py-1.5";
 
 const fieldLabelClass =
-  "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:mb-1 lg:text-xs lg:font-semibold lg:uppercase lg:leading-4 lg:tracking-wide lg:text-slate-600";
+  "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:mb-1 lg:text-[11px] lg:font-medium lg:uppercase lg:leading-4 lg:tracking-[0.06em] lg:text-[#536B92]";
 
 const fieldInputClass =
-  "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-sm lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-slate-950";
+  "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[14px] lg:font-medium lg:leading-5 lg:tracking-[-0.005em] lg:text-[#142033]";
 const carsMobileEditFieldShellClass =
   "cars-results-edit-field relative flex min-h-[66px] flex-col justify-center rounded-[13px] border border-[#E7ECF5] bg-white px-3 py-[10px] shadow-none focus-within:border-[#064CF7] focus-within:ring-2 focus-within:ring-[#064CF7]/25";
 const carsMobileEditPickupLabelClass =
@@ -1734,7 +1734,7 @@ export function CarsResultsClient({
               />
               <span
                 title={summary}
-                className="min-w-0 truncate whitespace-nowrap text-[15px] font-semibold leading-5 tracking-normal text-[#1A1A1A]"
+                className="min-w-0 truncate whitespace-nowrap text-[14px] font-medium leading-5 tracking-[-0.005em] text-[#142033]"
               >
                 {summary}
               </span>
@@ -1790,16 +1790,16 @@ export function CarsResultsClient({
             >
               <div className="mb-4 flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-[#004BB8]">
+                  <p className="text-[11px] font-medium uppercase leading-4 tracking-[0.06em] text-[#004BB8]">
                     {t("carsResults.searchCars")}
                   </p>
                   <h2
                     id="sticky-cars-search-title"
-                    className="mt-1 truncate text-[20px] font-bold leading-6 tracking-[-0.015em] text-[#07133B]"
+                    className="mt-1 truncate text-[18px] font-semibold leading-6 tracking-[-0.01em] text-[#07133B]"
                   >
                     {locationPairSummary}
                   </h2>
-                  <p className="mt-1 truncate text-[13px] font-medium leading-5 text-[#536B92]">
+                  <p className="mt-1 truncate text-[13px] font-normal leading-5 text-[#64748B]">
                     {rentalDateSummary} · {timeSummary} · {driverAgeSummary}
                   </p>
                 </div>
@@ -1833,7 +1833,7 @@ export function CarsResultsClient({
         aria-label="Breadcrumb"
         className="page-shell hidden pt-12 sm:block lg:pt-14"
       >
-        <ol className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+        <ol className="flex flex-wrap items-center gap-2 text-[12px] font-medium leading-5 text-[#64748B]">
           <li>
             <Link
               href="/"
@@ -2900,7 +2900,7 @@ export function CarsResultsExperience({
                       ref={resultHeadingRef}
                       id={resultHeadingId}
                       tabIndex={-1}
-                      className="truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[17px] sm:leading-6 sm:tracking-[-0.005em] lg:text-[18px] lg:leading-6 lg:tracking-[-0.01em]"
+                      className="truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[17px] sm:leading-6 sm:tracking-[-0.005em] lg:text-[16px] lg:font-semibold lg:leading-5 lg:tracking-[-0.005em]"
                     >
                       {resultHeading ??
                         t(
@@ -2945,7 +2945,7 @@ export function CarsResultsExperience({
                         aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
                         aria-haspopup="menu"
                         aria-expanded={carsSortOpen}
-                        className="inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#07133B] sm:gap-2 sm:px-2 sm:text-[16px] lg:text-[15px] lg:leading-5 lg:tracking-[-0.005em]"
+                        className="inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#07133B] sm:gap-2 sm:px-2 sm:text-[16px] lg:text-[14px] lg:font-medium lg:leading-5 lg:tracking-normal"
                         onClick={() => setCarsSortOpen((open) => !open)}
                       >
                         <span className="min-w-0 truncate whitespace-nowrap">
@@ -4290,7 +4290,7 @@ function CarFilters({
           )}
         >
           <div className="flex items-center justify-between gap-3">
-            <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[15px] font-semibold leading-5 tracking-[-0.01em] text-slate-950">
+            <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[14px] font-semibold leading-5 tracking-normal text-slate-950">
               <SlidersHorizontal
                 className="desktop-filter-sidebar__icon cars-desktop-filter-icon shrink-0 text-[#07133B]"
                 size={15}
@@ -4318,7 +4318,7 @@ function CarFilters({
       ) : layout === "desktop" ? (
         <div className="desktop-filter-sidebar__header shrink-0 border-b border-slate-200/70 px-3 py-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="truncate text-[16px] font-bold leading-5 tracking-[-0.01em] text-[#07133B]">
+            <h2 className="truncate text-[15px] font-semibold leading-5 tracking-[-0.005em] text-[#07133B]">
               {t("filters")}
               {activeFilterCount > 0 ? (
                 <span className="ms-2 rounded-full bg-[#004BB8] px-2 py-0.5 text-xs text-white">
@@ -4469,7 +4469,7 @@ function FilterSection({
           aria-controls={panelId}
           onClick={onCompactOpen}
           className={cn(
-            "group flex w-full items-center justify-between gap-3 text-start font-semibold text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
+            "group flex w-full items-center justify-between gap-3 text-start font-medium text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
             "min-h-9 rounded-md px-2.5 py-2 text-[13px] leading-5 tracking-[-0.005em] hover:bg-[#E5ECF4]",
             compactOpen && "text-[#004BB8]",
           )}
@@ -4492,7 +4492,7 @@ function FilterSection({
           </span>
         </button>
       ) : (
-        <h3 className="text-[12px] font-bold uppercase leading-4 tracking-[0.11em] text-[#142033]">
+        <h3 className="text-[13px] font-semibold normal-case leading-5 tracking-normal text-[#334155]">
           {carFilterGroupLabel(group, t)}
         </h3>
       )}
@@ -4533,12 +4533,12 @@ function FilterSection({
               className={cn(
                 layout === "compact"
                   ? "flex min-h-8 cursor-pointer items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-[13px] font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
-                  : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-[13px] font-medium leading-5 transition-all",
+                  : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-[13px] font-normal leading-5 transition-all",
                 selected
-                  ? "font-semibold text-[#021C2B]"
+                  ? "font-medium text-[#142033]"
                   : layout === "compact"
                     ? null
-                    : "text-[#536B92] hover:bg-slate-50 hover:text-[#142033]",
+                    : "text-[#475569] hover:bg-slate-50 hover:text-[#142033]",
               )}
             >
               {layout === "compact" ? (

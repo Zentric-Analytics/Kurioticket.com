@@ -55,10 +55,10 @@ export function CarPriceComparison({
         className="flex flex-col items-end text-right"
         dir="ltr"
       >
-        <p className="text-[20px] font-bold leading-[23px] tracking-[-0.015em] text-[#07133B] tabular-nums">
+        <p className="text-[20px] font-semibold leading-[24px] tracking-[-0.01em] text-[#07133B] tabular-nums">
           {estimate.perDayDisplay}
         </p>
-        <p className="mt-1 text-[11.5px] font-medium leading-[14px] text-[#536B92]">
+        <p className="mt-1 text-[12px] font-normal leading-4 text-[#64748B]">
           {labels.perDay}
         </p>
       </div>
@@ -76,7 +76,7 @@ export function CarPriceComparison({
       data-car-price-comparison-action
       type="button"
       onClick={(event) => openDesktopDetails(event.currentTarget)}
-      className="mt-2 ml-auto inline-flex min-h-9 items-center justify-end gap-1 text-[14px] font-semibold leading-5 tracking-[-0.005em] text-[#004BB8] transition-colors hover:text-[#003A8C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
+      className={`mt-2 ml-auto inline-flex min-h-9 items-center justify-end gap-1 font-semibold leading-5 text-[#004BB8] transition-colors hover:text-[#003A8C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 ${cleanStaticSummary ? "text-[13px] tracking-normal" : "text-[14px] tracking-[-0.005em]"}`}
     >
       {labels.comparePrices}
       <ChevronRight className="h-4 w-4" aria-hidden="true" />
