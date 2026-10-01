@@ -294,41 +294,28 @@ test("desktop departure metadata aligns directly beneath time with generous card
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date \{\s*margin-inline-start: 0;/);
 });
 
-test("desktop detail panel keeps wide values inline with a narrow-card fallback", async () => {
+test("desktop detail panel keeps all values inline at every desktop card width", async () => {
   const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
   const desktopStart = styles.indexOf(
     "@media (min-width: 1024px)",
     styles.indexOf(".flight-card-detail-value"),
   );
-  const wideContainerStart = styles.indexOf(
-    "@container (min-width: 760px)",
+  const desktopRules = styles.slice(
     desktopStart,
-  );
-  const narrowRules = styles.slice(desktopStart, wideContainerStart);
-  const wideRules = styles.slice(
-    wideContainerStart,
-    styles.indexOf("@container (max-width: 759px)", wideContainerStart),
+    styles.indexOf("@container (max-width: 759px)", desktopStart),
   );
 
   assert.match(
-    narrowRules,
-    /\.flight-card-detail-item \{[\s\S]*grid-template-columns: 2rem minmax\(0, 1fr\);[\s\S]*grid-template-rows: auto auto;/,
-  );
-  assert.match(
-    narrowRules,
-    /\.flight-card-detail-value \{[\s\S]*grid-row: 2;[\s\S]*white-space: normal;[\s\S]*overflow-wrap: normal;[\s\S]*word-break: normal;/,
-  );
-  assert.match(
-    wideRules,
+    desktopRules,
     /\.flight-card-detail-item \{[\s\S]*grid-template-columns: 2rem max-content minmax\(0, 1fr\);[\s\S]*grid-template-rows: auto;/,
   );
   assert.match(
-    wideRules,
+    desktopRules,
     /\.flight-card-detail-value \{[\s\S]*grid-column: 3;[\s\S]*grid-row: 1;[\s\S]*white-space: nowrap;/,
   );
   assert.doesNotMatch(
-    narrowRules + wideRules,
-    /overflow:\s*hidden|text-overflow:\s*ellipsis|overflow-wrap:\s*(?:anywhere|break-word)|word-break:\s*break-all/,
+    desktopRules,
+    /grid-template-rows:\s*auto auto|overflow:\s*hidden|text-overflow:\s*ellipsis|overflow-wrap:\s*(?:anywhere|break-word)|word-break:\s*break-all/,
   );
 });
 
