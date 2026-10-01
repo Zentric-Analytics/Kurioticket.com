@@ -79,6 +79,10 @@ test("source contract keeps guided summary pricing and a compact standalone sele
   );
   assert.match(compact, /offer\.totalPrice/);
   assert.doesNotMatch(compact, /offer\.pricePerDay/);
+  assert.match(compact, /copy\("carDetails\.bookingSummary"\)/);
+  assert.match(compact, /const providerName = compactBookingProviderName\(offer\);/);
+  assert.match(compact, /data-car-details-desktop-compact-total-label/);
+  assert.match(compact, /data-car-details-desktop-compact-provider/);
   assert.doesNotMatch(clientSource, /function Term|<Term|<dl/);
 });
 
@@ -382,7 +386,11 @@ test("desktop Cars details keep the compact selected price and Continue deal bes
   );
   assert.match(compactBooking, /offer\.totalPrice/);
   assert.match(compactBooking, /data-car-details-desktop-compact-booking/);
+  assert.match(compactBooking, /data-car-details-desktop-compact-summary/);
   assert.match(compactBooking, /data-car-details-desktop-compact-price/);
+  assert.match(compactBooking, /data-car-details-desktop-compact-total-label/);
+  assert.match(compactBooking, /data-car-details-desktop-compact-provider/);
+  assert.match(compactBooking, /copy\("carDetails\.bookingSummary"\)/);
   assert.match(compactBooking, /data-car-details-desktop-compact-cta/);
   assert.match(
     compactBooking,
@@ -393,6 +401,10 @@ test("desktop Cars details keep the compact selected price and Continue deal bes
     /inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-blue px-3 text-\[12px\]/,
   );
   assert.doesNotMatch(compactBooking, /\b(?:fixed|sticky)\b/);
+  assert.match(
+    clientSource,
+    /const compactBookingProviderName = \(offer: CarOffer\) =>[\s\S]*?providerValue\(offer\.bookingProviderName\)[\s\S]*?providerValue\(offer\.rentalCompanyName\)[\s\S]*?provider === "Kurioticket static fixture" \? "Kurioticket" : provider;/,
+  );
 
   const sandboxStart = compactBooking.indexOf('action.kind === "sandbox-handoff"');
   const unsupportedStart = compactBooking.indexOf(
