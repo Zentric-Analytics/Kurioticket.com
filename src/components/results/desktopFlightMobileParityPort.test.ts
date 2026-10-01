@@ -44,7 +44,7 @@ test("standalone desktop Flight Results uses Cars-style compact filter parity af
   assert.match(filters, /desktop-filter-sidebar__title[\s\S]*?SlidersHorizontal[\s\S]*?size=\{15\}/);
   assert.match(filters, /min-h-9 w-full[\s\S]*?text-\[14px\][\s\S]*?ChevronDown/);
   assert.match(filters, /min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain/);
-  assert.match(filters, /idPrefix \? "desktop-flight-filter-compact"/);
+  assert.match(results, /idPrefix=\{compact \? "desktop-flight-filter-compact" : "desktop-flight-filter-primary"\}/);
 });
 
 test("desktop nearby fares keep seven dates and arrows but use mobile-like individual tiles", () => {
