@@ -864,17 +864,6 @@ textarea {
     width: 196px;
   }
 
-  .flight-card-body {
-    grid-template-areas:
-      "legs fare"
-      "details details";
-    row-gap: 0.5rem;
-  }
-
-  .flight-card-fare-action {
-    border-left: 0;
-    padding-left: 0;
-  }
 }
 
 .flight-card-airline-name {
@@ -1302,6 +1291,46 @@ textarea {
     border-inline-end-width: 0;
     padding-top: 0.75rem;
     padding-inline-end: 0;
+  }
+}
+
+/* Keep the desktop fare column beside the itinerary while letting the
+   detail strip use the full card width. This override intentionally lives
+   after the base and container-width card rules so the cascade cannot
+   restore the old details-in-left-column layout. */
+@media (min-width: 1024px) {
+  .flight-card-body {
+    grid-template-columns: minmax(0, 1fr) 196px;
+    grid-template-areas:
+      "legs fare"
+      "details details";
+    row-gap: 0.5rem;
+  }
+
+  .flight-card-fare-action {
+    border-left: 0;
+    border-top: 0;
+    padding-left: 0;
+    padding-top: 0;
+  }
+}
+
+@container (max-width: 759px) {
+  @media (min-width: 1024px) {
+    .flight-card-body {
+      grid-template-columns: minmax(0, 1fr) 180px;
+      grid-template-areas:
+        "legs fare"
+        "details details";
+      row-gap: 0.5rem;
+    }
+
+    .flight-card-fare-action {
+      border-left: 0;
+      border-top: 0;
+      padding-left: 0;
+      padding-top: 0;
+    }
   }
 }
 
