@@ -7738,7 +7738,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   ref={desktopSortRef}
                   className="relative hidden items-center gap-2 lg:flex"
                 >
-                  <span className="text-[14px] font-medium leading-5 text-[#64748B]">
+                  <span className="text-[13px] font-medium leading-5 text-[#64748B]">
                     Sort by:
                   </span>
                   <button
