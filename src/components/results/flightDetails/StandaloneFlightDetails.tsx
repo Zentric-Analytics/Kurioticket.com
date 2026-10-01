@@ -671,7 +671,7 @@ function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, of
       </div>
     </section>
 
-    <section data-desktop-itinerary-card className="hidden overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-white sm:block" aria-labelledby={`${label.toLowerCase()}-heading`}>
+    <section data-desktop-itinerary-card className="hidden overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-white sm:block sm:shadow-[0_6px_18px_rgba(7,19,59,0.10)]" aria-labelledby={`${label.toLowerCase()}-heading`}>
       <div className="flex items-start justify-between gap-3 px-4 pt-4 lg:px-5">
         <h2 id={`${label.toLowerCase()}-heading`} className="min-w-0 text-[11px] font-bold uppercase leading-4 tracking-[0.05em] text-[#075EE8]">{label}</h2>
         <time dateTime={leg.departureTime} className="shrink-0 whitespace-nowrap text-right text-[11px] font-medium leading-4 text-slate-600">{departureLongDate}</time>
