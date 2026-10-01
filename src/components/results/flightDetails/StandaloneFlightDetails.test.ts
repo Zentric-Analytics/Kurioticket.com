@@ -684,7 +684,10 @@ test("desktop checkout summary is compact and contains no repeated itinerary det
   assert.match(layout, /<DesktopCheckoutSummary/);
   assert.match(layout, /^className="grid items-start gap-6 lg:grid-cols-/);
   assert.match(summary, /data-desktop-checkout-summary/);
-  assert.match(summary, /className="hidden min-w-0 self-start[^"]*lg:block"/);
+  assert.match(
+    summary,
+    /className="hidden min-w-0 self-start[^"]*lg:sticky[^"]*lg:top-6[^"]*lg:block"/,
+  );
   assert.match(summary, /flightDetailsTotalLabel\(travelerCount\)/);
   assert.match(summary, /aria-label=\{price\.ariaLabel\}>\{price\.formatted\}/);
   assert.match(summary, /data-desktop-trip-price-loading role="status"/);
@@ -692,7 +695,8 @@ test("desktop checkout summary is compact and contains no repeated itinerary det
   assert.match(summary, /role="alert"/);
   assert.doesNotMatch(summary, /Your trip|route|tripType|\blegs\b|departureTime|arrivalTime|duration|formatStops|fareTerms|Fare terms|travelers|Handoff provider|providerName/);
   assert.doesNotMatch(layout.slice(0, layout.indexOf(">") + 1), /(?:sticky|fixed|top-|overflow-y|max-h-screen)/);
-  assert.doesNotMatch(summary, /className="[^"]*(?:sticky|fixed|\btop-|overflow-y|max-h-screen)/);
+  assert.doesNotMatch(summary, /className="[^"]*\bfixed\b/);
+  assert.doesNotMatch(summary, /className="[^"]*(?:overflow-y|max-h-screen)/);
   assert.match(source, /function MobileCheckoutDock[\s\S]*?fixed inset-x-0 bottom-0[\s\S]*?lg:hidden/);
 });
 
