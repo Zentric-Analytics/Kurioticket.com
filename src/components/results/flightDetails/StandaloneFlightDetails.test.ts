@@ -1210,7 +1210,33 @@ test("desktop Flight Details navigation uses icon-only visible actions", async (
   assert.match(nav, /aria-label="Back to flight results"/);
   assert.match(nav, /aria-label=\{flightSaved \? "Remove saved flight" : "Save flight"\}/);
   assert.match(nav, /aria-label="Share flight"/);
+  assert.match(nav, /data-flight-details-desktop-compact-booking/);
+  assert.match(nav, /data-flight-details-desktop-compact-price/);
+  assert.match(nav, /data-flight-details-desktop-compact-total-label/);
+  assert.match(nav, /flightDetailsTotalLabel\(travelers\.count\)/);
+  assert.match(nav, /data-flight-details-desktop-compact-cta/);
+  assert.match(nav, />Continue booking<\/);
+  assert.match(nav, /onClick=\{\(\) => continueToOffer\(selectedDeal\?\.offerId \?\? selectedOffer\.id\)\}/);
   assert.doesNotMatch(nav, />Back to flight results<\/span>/);
   assert.doesNotMatch(nav, /<span>\{flightSaved \? "Saved" : "Save"\}<\/span>/);
   assert.doesNotMatch(nav, /<span>Share<\/span>/);
+});
+
+
+test("desktop Flight Details compact booking cluster follows the Cars header pattern", async () => {
+  const source = await readFile(
+    new URL("./StandaloneFlightDetails.tsx", import.meta.url),
+    "utf8",
+  );
+  const start = source.indexOf("data-flight-details-desktop-actions");
+  const end = source.indexOf("data-testid=\"flight-details-hero\"", start);
+  assert.ok(start >= 0 && end > start);
+  const actions = source.slice(start, end);
+
+  assert.match(actions, /rounded-full border border-slate-300 bg-\[#E7EBF1\]/);
+  assert.match(actions, /border-s border-slate-300 ps-3 lg:flex/);
+  assert.match(actions, /text-\[18px\] font-semibold[^"]*text-\[#102A43\]/);
+  assert.match(actions, /text-\[10px\] font-medium[^"]*text-\[#56658E\]/);
+  assert.match(actions, /h-10[^"]*rounded-lg bg-\[#075EE8\][^"]*text-\[13px\] font-semibold/);
+  assert.doesNotMatch(actions, /data-flight-details-desktop-compact-booking[^>]*sm:flex/);
 });
