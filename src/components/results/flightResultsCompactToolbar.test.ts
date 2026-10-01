@@ -6,6 +6,10 @@ const source = readFileSync(
   new URL("./FlightResultsClient.tsx", import.meta.url),
   "utf8",
 );
+const styles = readFileSync(
+  new URL("../../app/globals.css", import.meta.url),
+  "utf8",
+);
 
 function desktopMinimizedSearchBarSource() {
   const start = source.indexOf("function renderDesktopMinimizedSearchBar()");
@@ -228,4 +232,30 @@ test("desktop change-flight fields reuse mobile Results typography and card toke
     2,
   );
   assert.match(popout, /rounded-\[13px\] border border-\[#E7ECF5\] bg-white shadow-none/);
+});
+
+
+test("desktop Flight edit-search values keep the shared 15px typography contract", () => {
+  const desktopStart = styles.indexOf("@media (min-width: 640px)");
+  assert.notEqual(desktopStart, -1);
+
+  const desktopStyles = styles.slice(desktopStart);
+  assert.match(
+    desktopStyles,
+    /\.flight-results-edit-value \{[\s\S]*?font-family: inherit;[\s\S]*?font-size: 15px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?line-height: 20px !important;[\s\S]*?color: rgb\(2 6 23\) !important;/,
+  );
+
+  const start = source.indexOf("function renderStickySearchPopoutOverlay()");
+  const end = source.indexOf("function renderCompactSearchForm", start);
+  const popout = source.slice(start, end);
+
+  assert.match(
+    popout,
+    /id="sticky-results-origin"[\s\S]*?className="flight-results-edit-value h-5/,
+  );
+  assert.match(
+    popout,
+    /id="sticky-results-destination"[\s\S]*?className="flight-results-edit-value h-5/,
+  );
+  assert.match(popout, /flight-results-edit-value mt-0\.5/);
 });
