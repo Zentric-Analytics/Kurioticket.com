@@ -1193,6 +1193,12 @@ textarea {
   .flight-card-detail-item {
     padding-right: 0.75rem;
   }
+
+  @media (min-width: 1024px) {
+    .flight-card-detail-item {
+      padding-inline: 0.375rem;
+    }
+  }
 }
 
 @container (max-width: 639px) {
