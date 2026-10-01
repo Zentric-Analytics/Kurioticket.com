@@ -84,7 +84,7 @@ test("standalone desktop uses a shared header row for identity and actions witho
 
   assert.match(
     heading,
-    /data-car-card-desktop-shared-header[\s\S]*?lg:grid-cols-\[minmax\(0,1fr\)_180px\]/,
+    /data-car-card-desktop-shared-header[\s\S]*?lg:grid-cols-\[minmax\(0,1fr\)_152px\]/,
   );
   assert.match(
     heading,
@@ -326,7 +326,7 @@ test("standalone desktop location stays flat and gains width from the compact ri
 
   assert.match(
     heading,
-    /data-car-card-desktop-shared-header[\s\S]*?lg:grid-cols-\[minmax\(0,1fr\)_180px\]/,
+    /data-car-card-desktop-shared-header[\s\S]*?lg:grid-cols-\[minmax\(0,1fr\)_152px\]/,
   );
   assert.match(
     heading,
@@ -700,4 +700,37 @@ test("mobile transmission specs use dedicated automatic and manual icons", () =>
   assert.match(iconSource, />N<\/text>/);
   assert.match(iconSource, />D<\/text>/);
   assert.match(iconSource, /M6 8v8M12 8v8M18 8v8M6 12h12/);
+});
+
+test("standalone desktop narrows the card without wrapping identity or metadata", () => {
+  const desktop = source.slice(source.indexOf('data-region="heading"'));
+  assert.match(
+    source,
+    /hidden md:grid lg:grid-cols-\[220px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[228px_minmax\(0,1fr\)_152px\]/,
+  );
+  assert.match(
+    desktop,
+    /data-car-card-desktop-shared-header[\s\S]*?lg:grid-cols-\[minmax\(0,1fr\)_152px\]/,
+  );
+  assert.match(desktop, /flex min-w-0 flex-nowrap items-baseline/);
+  assert.equal(
+    (desktop.match(/whitespace-nowrap text-\[19px\] font-semibold/g) ?? []).length,
+    2,
+  );
+  assert.match(
+    desktop,
+    /shrink-0 whitespace-nowrap text-\[13px\][\s\S]*?or similar/,
+  );
+  assert.match(
+    desktop,
+    /z-10 col-start-1 col-span-2[\s\S]*?whitespace-nowrap[\s\S]*?\{car\.pickupLocation\}/,
+  );
+  assert.match(
+    desktop,
+    /z-10 col-start-1 col-span-2[\s\S]*?whitespace-nowrap">\{t\("carsResults\.freeCancellation"\)\}/,
+  );
+  assert.match(
+    desktop,
+    /data-car-card-desktop-primary-specs[\s\S]*?<span className="min-w-0 whitespace-nowrap">\{label\}<\/span>/,
+  );
 });

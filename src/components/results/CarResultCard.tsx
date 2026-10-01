@@ -454,7 +454,7 @@ export function CarResultCard({
       )}
 
       <div
-        className={`${guidedPlanning ? "grid lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]" : "hidden md:grid lg:grid-cols-[250px_minmax(0,1fr)_180px] xl:grid-cols-[270px_minmax(0,1fr)_180px]"} grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:grid-cols-[250px_minmax(0,1fr)]`}
+        className={`${guidedPlanning ? "grid lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]" : "hidden md:grid lg:grid-cols-[220px_minmax(0,1fr)_152px] xl:grid-cols-[228px_minmax(0,1fr)_152px]"} grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:grid-cols-[250px_minmax(0,1fr)]`}
       >
         <div
           data-region="image"
@@ -588,7 +588,7 @@ export function CarResultCard({
 
               <div
                 data-car-card-desktop-shared-header
-                className={`hidden lg:grid lg:grid-cols-[minmax(0,1fr)_180px] lg:gap-y-0 ${badge && BadgeIcon ? "lg:grid-rows-[24px_44px_auto_auto_auto]" : "lg:grid-rows-[44px_auto_auto_auto]"}`}
+                className={`hidden lg:grid lg:grid-cols-[minmax(0,1fr)_152px] lg:gap-y-0 ${badge && BadgeIcon ? "lg:grid-rows-[24px_44px_auto_auto_auto]" : "lg:grid-rows-[44px_auto_auto_auto]"}`}
               >
                 <div
                   data-car-card-desktop-header-rail
@@ -612,18 +612,18 @@ export function CarResultCard({
                   data-car-card-desktop-title-row
                   className={`col-start-1 ${badge && BadgeIcon ? "row-start-2" : "row-start-1"} flex h-11 min-w-0 items-center px-4`}
                 >
-                  <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0">
+                  <div className="flex min-w-0 flex-nowrap items-baseline gap-x-2 gap-y-0">
                     {headingLevel === "h3" ? (
-                      <h3 className="min-w-0 break-words text-[19px] font-semibold leading-[24px] tracking-[-0.012em] text-[#07133B]">
+                      <h3 className="min-w-0 whitespace-nowrap text-[19px] font-semibold leading-[24px] tracking-[-0.012em] text-[#07133B]">
                         {car.modelName}
                       </h3>
                     ) : (
-                      <h2 className="min-w-0 break-words text-[19px] font-semibold leading-[24px] tracking-[-0.012em] text-[#07133B]">
+                      <h2 className="min-w-0 whitespace-nowrap text-[19px] font-semibold leading-[24px] tracking-[-0.012em] text-[#07133B]">
                         {car.modelName}
                       </h2>
                     )}
                     {car.orSimilar ? (
-                      <span className="text-[13px] font-medium leading-5 text-[#526174]">
+                      <span className="shrink-0 whitespace-nowrap text-[13px] font-medium leading-5 text-[#526174]">
                         or similar
                       </span>
                     ) : null}
@@ -646,7 +646,7 @@ export function CarResultCard({
                 </div>
 
                 <p
-                  className={`col-start-1 ${badge && BadgeIcon ? "row-start-4" : "row-start-3"} mt-2 flex min-w-0 items-center gap-1.5 ps-4 pe-2 text-[14px] font-medium leading-5 text-[#3F4D63]`}
+                  className={`z-10 col-start-1 col-span-2 ${badge && BadgeIcon ? "row-start-4" : "row-start-3"} mt-2 flex min-w-0 items-center gap-1.5 px-4 text-[14px] font-medium leading-5 text-[#3F4D63]`}
                 >
                   <MapPin
                     size={16}
@@ -662,14 +662,14 @@ export function CarResultCard({
                 {offer.freeCancellation ? (
                   <div
                     data-car-card-desktop-free-cancellation
-                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-5" : "row-start-4"} mt-2 flex min-w-0 items-center gap-1.5 px-4 text-[14px] font-semibold leading-5 text-[#334155]`}
+                    className={`z-10 col-start-1 col-span-2 ${badge && BadgeIcon ? "row-start-5" : "row-start-4"} mt-2 flex min-w-0 items-center gap-1.5 px-4 text-[14px] font-semibold leading-5 text-[#334155]`}
                   >
                     <ShieldCheck
                       size={14}
                       className="shrink-0 text-black"
                       aria-hidden="true"
                     />
-                    <span>{t("carsResults.freeCancellation")}</span>
+                    <span className="whitespace-nowrap">{t("carsResults.freeCancellation")}</span>
                   </div>
                 ) : null}
               </div>
@@ -692,7 +692,7 @@ export function CarResultCard({
                   className="shrink-0 text-slate-500"
                   aria-hidden="true"
                 />
-                <span className="min-w-0">{label}</span>
+                <span className="min-w-0 whitespace-nowrap">{label}</span>
               </li>
             ))}
           </ul>
