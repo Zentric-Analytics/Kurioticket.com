@@ -85,7 +85,7 @@ export function CarDetailsSectionNav({
 
       <div
         ref={desktopBarRef}
-        className={`relative hidden min-h-16 w-full transition-[background-color,border-color] duration-200 ease-out lg:sticky lg:top-0 lg:z-40 lg:mt-3 lg:block ${desktopStuck ? "lg:border-b lg:border-transparent lg:bg-transparent" : "lg:border-b lg:border-slate-200 lg:bg-[#F5F7FB]"}`}
+        className={`relative hidden min-h-16 w-full transition-[background-color,border-color] duration-200 ease-out lg:sticky lg:top-0 lg:z-40 lg:mt-3 ${desktopStuck ? "lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-stretch lg:gap-4 lg:border-b lg:border-transparent lg:bg-transparent" : "lg:block lg:border-b lg:border-slate-200 lg:bg-[#F5F7FB]"}`}
         data-car-details-section-nav
         data-stuck={desktopStuck ? "true" : "false"}
       >
@@ -95,7 +95,7 @@ export function CarDetailsSectionNav({
           data-car-details-desktop-sticky-backdrop
         />
         <div
-          className={`absolute left-0 top-1/2 z-10 -translate-y-1/2 transition-[opacity,transform] duration-200 ease-out ${desktopStuck ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-1 opacity-0"}`}
+          className={`z-10 transition-[opacity,transform] duration-200 ease-out ${desktopStuck ? "relative col-start-1 row-start-1 flex min-h-16 items-center self-stretch translate-x-0 translate-y-0 opacity-100" : "pointer-events-none absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 opacity-0"}`}
           data-car-details-desktop-sticky-back
           aria-hidden={desktopStuck ? undefined : true}
         >
@@ -103,9 +103,9 @@ export function CarDetailsSectionNav({
         </div>
         <nav
           aria-label={labels.navigation}
-          className={`absolute top-0 z-10 flex min-h-16 shrink-0 items-stretch gap-1 transition-[left,transform] duration-200 ease-out ${desktopStuck ? "left-1/2 -translate-x-1/2" : "left-0 translate-x-0"}`}
+          className={`z-10 flex min-h-16 shrink-0 items-stretch gap-1 transition-[transform] duration-200 ease-out ${desktopStuck ? "relative col-start-2 row-start-1 justify-self-center translate-x-0" : "absolute left-0 top-0 translate-x-0"}`}
           data-car-details-desktop-tabs
-          data-centered={desktopStuck ? "true" : "false"}
+          data-balanced={desktopStuck ? "true" : "false"}
         >
           {tabs.map((tab) => {
             const selected = activeTab === tab.id;
@@ -123,7 +123,7 @@ export function CarDetailsSectionNav({
           })}
         </nav>
         <div
-          className={`absolute right-0 top-1/2 z-10 -translate-y-1/2 transition-[opacity,transform] duration-200 ease-out ${desktopStuck ? "translate-x-0 opacity-100" : "pointer-events-none translate-x-1 opacity-0"}`}
+          className={`z-10 transition-[opacity,transform] duration-200 ease-out ${desktopStuck ? "relative col-start-3 row-start-1 flex min-h-16 items-center self-stretch justify-self-end translate-x-0 translate-y-0 opacity-100" : "pointer-events-none absolute right-0 top-1/2 translate-x-1 -translate-y-1/2 opacity-0"}`}
           data-car-details-desktop-sticky-actions
           aria-hidden={desktopStuck ? undefined : true}
         >
