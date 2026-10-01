@@ -27,6 +27,8 @@ type TimeBounds = {
 
 export type DesktopFlightFiltersProps = {
   presentationMode?: "default" | "deals-guided";
+  compact?: boolean;
+  idPrefix?: string;
   activeFilterCount: number;
   maxPrice: number;
   setMaxPrice: (value: number) => void;
@@ -111,6 +113,8 @@ function toggleFilterValue(value: string, setter: Dispatch<SetStateAction<string
 
 export function DesktopFlightFilters({
   presentationMode = "default",
+  compact = false,
+  idPrefix = "desktop-flight-filter",
   activeFilterCount,
   maxPrice,
   setMaxPrice,
@@ -196,7 +200,10 @@ export function DesktopFlightFilters({
     <div
       data-flight-desktop-filter-surface
       className={cn(
-        "desktop-filter-sidebar cars-desktop-filter-surface border border-slate-200/80 bg-[#F2F4F8] p-0 shadow-none rounded-none",
+        "desktop-filter-sidebar cars-desktop-filter-surface border border-slate-200/80 bg-[#F2F4F8] p-0 shadow-none",
+        compact
+          ? "max-h-full w-full overflow-y-auto rounded-2xl overscroll-contain"
+          : "rounded-none",
         isGuidedComfortable && "bg-[#F2F4F8]",
       )}
     >
@@ -231,7 +238,7 @@ export function DesktopFlightFilters({
       <div className="space-y-0 bg-transparent px-3 py-1">
         <section className="border-t border-slate-200/75 py-3 first:border-t-0">
           <SectionTitle>{t("price")}</SectionTitle>
-          <div className={cn("mb-2.5 grid grid-cols-2 gap-4 text-[12px] font-semibold leading-5 tabular-nums text-slate-950", isGuidedComfortable && "text-[13px]")}>
+          <div className={cn("mb-2.5 grid grid-cols-2 gap-4 text-[12px] font-medium leading-5 tabular-nums text-[#475569]", isGuidedComfortable && "text-[13px]")}>
             <span className="min-w-0">{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.min) : "—"}</span>
             <span className="min-w-0 text-right">{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.max) : "—"}</span>
           </div>
@@ -263,8 +270,8 @@ export function DesktopFlightFilters({
         <OptionSection title={t("stops")} emptyText={t("stopsAppearAfterResultsLoad")}>{stopOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} secondaryLabel={option.rightLabel ? `${t("from").toLowerCase()} ${option.rightLabel}` : option.secondaryLabel} checked={selectedStops.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedStops); onFilterCommit(); }} />)}</OptionSection>
 
         <OptionSection title={t("airlines")} emptyText={t("airlinesAppearAfterResultsLoad")}>
-          <label className="sr-only" htmlFor="desktop-airline-filter-search">{t("accountDashboard.preferences.booking.searchAirlines")}</label>
-          <input id="desktop-airline-filter-search" className="mb-2.5 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-medium text-slate-800 placeholder:text-slate-400 focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/20" placeholder={t("accountDashboard.preferences.booking.searchAirlines")} type="search" value={airlineSearch} onChange={(event) => setAirlineSearch(event.target.value)} />
+          <label className="sr-only" htmlFor={`${idPrefix}-airline-search`}>{t("accountDashboard.preferences.booking.searchAirlines")}</label>
+          <input id={`${idPrefix}-airline-search`} className="mb-2.5 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-medium text-slate-800 placeholder:text-slate-400 focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/20" placeholder={t("accountDashboard.preferences.booking.searchAirlines")} type="search" value={airlineSearch} onChange={(event) => setAirlineSearch(event.target.value)} />
           {visibleAirlines.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} checked={selectedAirlines.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedAirlines); onFilterCommit(); }} />)}
           {!airlineSearch.trim() && airlineOptions.length > 5 ? <button type="button" className="mx-auto mt-2 flex min-h-9 items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB]" onClick={() => setShowAllAirlines((current) => !current)}>{showAllAirlines ? t("hotelResults.showLess") : t("showMoreResults")}<ChevronDown aria-hidden="true" className={cn("h-3.5 w-3.5 transition", showAllAirlines && "rotate-180")} /></button> : null}
         </OptionSection>
@@ -279,7 +286,7 @@ export function DesktopFlightFilters({
           </div>
         </section>
 
-        {renderQualitySection ? <Accordion title={t("flightQuality")}>{flightQualityOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} checked={selectedFlightQuality.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedFlightQuality); onFilterCommit(); }} />)}</Accordion> : null}
+        {renderQualitySection ? <Accordion idPrefix={idPrefix} title={t("flightQuality")}>{flightQualityOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} checked={selectedFlightQuality.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedFlightQuality); onFilterCommit(); }} />)}</Accordion> : null}
       </div>
     </div>
   );
@@ -294,16 +301,16 @@ function OptionSection({ title, emptyText, children }: { title: string; emptyTex
   return <section className="border-t border-slate-200/75 py-3 first:border-t-0"><SectionTitle>{title}</SectionTitle><div className="grid gap-0.5">{hasOptions ? children : <p className="py-1 text-xs text-slate-500">{emptyText}</p>}</div></section>;
 }
 
-function Accordion({ title, emptyText, children }: { title: string; emptyText?: string; children: ReactNode }) {
+function Accordion({ idPrefix, title, emptyText, children }: { idPrefix: string; title: string; emptyText?: string; children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
-  const panelId = `desktop-flight-filter-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-panel`;
+  const panelId = `${idPrefix}-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-panel`;
   const hasOptions = Boolean(children) && (!Array.isArray(children) || children.length > 0);
 
-  return <section className="border-t border-slate-200"><button type="button" aria-expanded={isOpen} aria-controls={panelId} className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-[#F5F8FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30" onClick={() => setIsOpen((current) => !current)}><span>{title}</span><ChevronDown aria-hidden="true" className={cn("h-4 w-4 text-slate-500 transition", isOpen && "rotate-180 text-[#004BB8]")} /></button><div id={panelId} className={cn("grid gap-0.5 pb-3", !isOpen && "hidden")}>{hasOptions ? children : <p className="py-1 text-xs text-slate-500">{emptyText}</p>}</div></section>;
+  return <section className="border-t border-slate-200"><button type="button" aria-expanded={isOpen} aria-controls={panelId} className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg py-2.5 text-left text-sm font-semibold text-[#334155] transition hover:bg-slate-100/70 hover:text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30" onClick={() => setIsOpen((current) => !current)}><span>{title}</span><ChevronDown aria-hidden="true" className={cn("h-4 w-4 text-slate-500 transition", isOpen && "rotate-180 text-[#004BB8]")} /></button><div id={panelId} className={cn("grid gap-0.5 pb-3", !isOpen && "hidden")}>{hasOptions ? children : <p className="py-1 text-xs text-slate-500">{emptyText}</p>}</div></section>;
 }
 
 function FacetRow({ label, count, secondaryLabel, rightLabel, checked, onChange }: { label: string; count?: number; secondaryLabel?: string; rightLabel?: string; checked: boolean; onChange: () => void }) {
   const trailingLabel = rightLabel ?? (typeof count === "number" ? String(count) : null);
 
-  return <label className={cn("flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-[14px] font-medium leading-5 transition-all", checked ? "font-semibold text-[#142033]" : "text-[#475569] hover:bg-slate-50 hover:text-[#142033]")}><input type="checkbox" className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue" checked={checked} onChange={onChange} /><span className="min-w-0 flex-1"><span className="block break-words">{label}</span>{secondaryLabel ? <span className="block break-words text-[12px] font-medium leading-4 text-[#64748B]">{secondaryLabel}</span> : null}</span>{trailingLabel ? <span className="ms-auto shrink-0 text-[13px] font-medium leading-5 tabular-nums text-[#64748B]">{trailingLabel}</span> : null}</label>;
+  return <label className={cn("flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-[14px] font-medium leading-5 transition-all", checked ? "font-semibold text-[#142033]" : "text-[#64748B] hover:bg-slate-100/70 hover:text-[#334155]")}><input type="checkbox" className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue" checked={checked} onChange={onChange} /><span className="min-w-0 flex-1"><span className="block break-words">{label}</span>{secondaryLabel ? <span className="block break-words text-[12px] font-medium leading-4 text-[#64748B]">{secondaryLabel}</span> : null}</span>{trailingLabel ? <span className="ms-auto shrink-0 text-[13px] font-medium leading-5 tabular-nums text-[#64748B]">{trailingLabel}</span> : null}</label>;
 }

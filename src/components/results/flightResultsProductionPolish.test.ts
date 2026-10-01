@@ -307,7 +307,7 @@ test("desktop detail panel keeps all values inline at every desktop card width",
 
   assert.match(
     desktopRules,
-    /\.flight-card-detail-item \{[\s\S]*grid-template-columns: 2rem max-content minmax\(0, 1fr\);[\s\S]*grid-template-rows: auto;/,
+    /\.flight-card-detail-item \{[\s\S]*grid-template-columns: 1rem max-content minmax\(0, 1fr\);[\s\S]*grid-template-rows: auto;/,
   );
   assert.match(
     desktopRules,
@@ -348,9 +348,13 @@ test("desktop Flight filters mirror the Cars surface typography and checkbox rhy
   assert.match(filters, /text-\[13px\] font-medium leading-5 tabular-nums text-\[#64748B\]/);
 });
 
-test("desktop Flight Popular filters reuse the Cars compact placement behavior", async () => {
+test("desktop Flight compact filters reuse the same full filter surface as Cars", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const filters = await readFile(
+    new URL("./DesktopFlightFilters.tsx", import.meta.url),
     "utf8",
   );
 
@@ -360,30 +364,42 @@ test("desktop Flight Popular filters reuse the Cars compact placement behavior",
   assert.match(source, /desktopCompactFilterTopOffset = 116/);
   assert.match(source, /desktopCompactFilterBottomGap = 12/);
   assert.match(source, /ref=\{desktopFilterSentinelRef\}/);
-  assert.match(source, /ref=\{desktopPopularFilterRef\}/);
-  assert.match(source, /data-flight-popular-filters/);
-  assert.match(source, />\s*Popular filters\s*</);
-  assert.match(source, /desktopPopularFilterPlacement === "fixed"/);
-  assert.match(source, /desktopPopularFilterPlacement === "docked"/);
-  assert.match(source, /results\.filter\(\(flight\) => hasStructuredBaggage\(flight\)\)/);
-  assert.match(source, /results\.filter\(\(flight\) => hasStructuredFlexibility\(flight\)\)/);
-  assert.match(source, /stopOptions[\s\S]*option\.value === "0"/);
-  assert.match(source, /airlineOptions\.slice\(0, 2\)/);
+  assert.match(source, /ref=\{desktopCompactFilterRef\}/);
+  assert.match(source, /data-flight-desktop-compact-filter/);
+  assert.match(source, /renderDesktopFlightFilters\(true\)/);
+  assert.match(source, /desktopCompactFilterPlacement === "fixed"/);
+  assert.match(source, /desktopCompactFilterPlacement === "docked"/);
+  assert.doesNotMatch(source, /Popular filters|data-flight-popular-filters|popularFlightFilters/);
+
+  assert.match(filters, /compact\?: boolean/);
+  assert.match(filters, /compact = false/);
+  assert.match(filters, /max-h-full w-full overflow-y-auto rounded-2xl overscroll-contain/);
 });
 
-test("desktop Flight result meta typography uses the refined hierarchy", async () => {
+test("desktop Flight result meta typography uses the premium hierarchy", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
   const cheaperStart = source.indexOf("data-desktop-cheaper-nearby");
-  const cheaper = source.slice(cheaperStart, cheaperStart + 900);
-  assert.match(cheaper, /text-\[13px\] font-normal leading-5 tracking-\[-0\.002em\] text-\[#536B92\]/);
+  const cheaper = source.slice(cheaperStart, cheaperStart + 1800);
+  assert.match(cheaper, /rounded-full bg-white\/70 px-3 py-1\.5/);
+  assert.match(cheaper, />Cheaper nearby<\/span>/);
+  assert.match(cheaper, /font-semibold text-\[#142033\]/);
+  assert.match(cheaper, /font-semibold text-\[#047857\]/);
+  assert.match(cheaper, /hover:bg-slate-100\/80/);
+  assert.doesNotMatch(cheaper, /hover:text-\[#075EE8\]/);
 
-  const summaryStart = source.indexOf('className="hidden w-full items-center justify-between gap-4 pt-2 sm:flex');
-  const summary = source.slice(summaryStart, summaryStart + 3600);
-  assert.match(summary, /text-\[15px\] font-semibold leading-5 tracking-\[-0\.006em\] text-\[#07133B\]/);
-  assert.match(summary, /text-\[12px\] font-medium leading-4 text-\[#64748B\]/);
-  assert.match(summary, /text-\[14px\] font-medium leading-5 text-\[#64748B\]">\s*Sort by:/);
-  assert.match(summary, /text-\[14px\] font-semibold leading-5 text-\[#142033\]/);
+  const summaryStart = source.indexOf(
+    'className="hidden w-full items-center justify-between gap-4 border-b border-slate-200/80 px-1 py-3 sm:flex',
+  );
+  const summary = source.slice(summaryStart, summaryStart + 4200);
+  assert.match(summary, /text-\[15px\] font-semibold leading-5 tracking-\[-0\.006em\] text-\[#0F172A\]/);
+  assert.match(summary, /mt-1 text-\[12px\] font-normal leading-4 text-\[#64748B\]/);
+  assert.match(summary, /text-\[13px\] font-medium leading-5 text-\[#64748B\]">\s*Sort by:/);
+  assert.match(summary, /h-8[^"]*text-\[14px\] font-semibold leading-5 text-\[#142033\]/);
+  assert.match(summary, /hover:bg-slate-100\/70/);
+  assert.match(summary, /hover:text-\[#142033\]/);
+  assert.doesNotMatch(summary, /hover:text-\[#004BB8\]/);
+  assert.match(summary, /<ChevronDown size=\{14\}/);
 });

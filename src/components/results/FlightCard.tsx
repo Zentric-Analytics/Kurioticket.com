@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   Armchair,
@@ -177,43 +177,14 @@ export function FlightCard({
                 ) : null}
               </div>
             </div>
-            <div
-              data-flight-card-header-actions
-              className="flight-card-header-actions flex shrink-0 flex-col items-end"
-            >
-              <ResultBadgePill badge={resultBadge} />
+            {resultBadge ? (
               <div
-                data-flight-card-actions
-                className={cn("flex shrink-0 items-center", resultBadge && "mt-1")}
+                data-flight-card-header-actions
+                className="flight-card-header-actions flex shrink-0 flex-col items-end"
               >
-                <button
-                  type="button"
-                  aria-label={`${isSaved ? "Unsave" : "Save"} ${flight.airlineName} flight`}
-                  aria-pressed={isSaved}
-                  disabled={savedFlightPending}
-                  onClick={() => void toggleSavedFlight()}
-                  className={cn(
-                    "inline-flex h-11 w-11 items-center justify-center rounded-full bg-transparent transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 disabled:cursor-wait disabled:opacity-60",
-                    isSaved ? "text-rose-600" : "text-slate-600",
-                  )}
-                >
-                  <Heart
-                    size={18}
-                    className="translate-x-1.5"
-                    fill={isSaved ? "currentColor" : "none"}
-                    aria-hidden="true"
-                  />
-                </button>
-                <button
-                  type="button"
-                  aria-label={`Share ${flight.airlineName} flight`}
-                  onClick={() => void shareFlight()}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
-                >
-                  <Share2 size={18} className="-translate-x-1.5" aria-hidden="true" />
-                </button>
+                <ResultBadgePill badge={resultBadge} />
               </div>
-            </div>
+            ) : null}
           </div>
 
           <div className="flight-card-body mt-2 grid min-w-0 items-stretch gap-y-4">
@@ -237,6 +208,35 @@ export function FlightCard({
               viewFlightLabel={resolvedActionLabel}
               viewFlightAriaLabel={actionAriaLabel}
               onAction={onAction ? () => onAction(flight) : undefined}
+              actions={
+                <div data-flight-card-actions className="flex shrink-0 items-center">
+                  <button
+                    type="button"
+                    aria-label={`${isSaved ? "Unsave" : "Save"} ${flight.airlineName} flight`}
+                    aria-pressed={isSaved}
+                    disabled={savedFlightPending}
+                    onClick={() => void toggleSavedFlight()}
+                    className={cn(
+                      "inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 disabled:cursor-wait disabled:opacity-60",
+                      isSaved ? "text-rose-600" : "text-slate-600",
+                    )}
+                  >
+                    <Heart
+                      size={18}
+                      fill={isSaved ? "currentColor" : "none"}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Share ${flight.airlineName} flight`}
+                    onClick={() => void shareFlight()}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+                  >
+                    <Share2 size={18} aria-hidden="true" />
+                  </button>
+                </div>
+              }
             />
           </div>
         </div>
@@ -439,6 +439,7 @@ function FlightFareAction({
   viewFlightLabel,
   viewFlightAriaLabel,
   onAction,
+  actions,
   className,
 }: {
   detailsHref: string | null;
@@ -449,16 +450,25 @@ function FlightFareAction({
   viewFlightLabel: string;
   viewFlightAriaLabel?: string;
   onAction?: () => void;
+  actions?: ReactNode;
   className?: string;
 }) {
   return (
     <div
       className={cn(
-        "flight-card-fare-action flex flex-col items-end justify-end border-l border-[#D8E1EC] text-right",
+        "flight-card-fare-action flex flex-col items-end justify-start border-l border-[#D8E1EC] text-right",
         className,
       )}
     >
-      <div className="flight-card-fare-commerce mt-auto flex w-full flex-col items-end">
+      {actions ? (
+        <div
+          data-flight-card-fare-actions
+          className="mb-1 flex w-full justify-end"
+        >
+          {actions}
+        </div>
+      ) : null}
+      <div className="flight-card-fare-commerce flex w-full flex-col items-end">
         <div
           className={cn(
             "flight-card-price-frame min-w-0 text-right",
