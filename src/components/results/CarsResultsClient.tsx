@@ -2125,8 +2125,6 @@ export function CarsResultsExperience({
     [currentPage, guidedPlanning, visibleResults],
   );
   const pageResults = guidedPlanning ? visibleResults : pagination.pageResults;
-  const mobilePageStart = (pagination.currentPage - 1) * CAR_RESULTS_PAGE_SIZE;
-  const mobilePageEnd = mobilePageStart + CAR_RESULTS_PAGE_SIZE;
   const resultsDisplayRange = guidedPlanning
     ? null
     : getResultsDisplayRange({
@@ -2919,7 +2917,7 @@ export function CarsResultsExperience({
                     {resultsDisplayRange ? (
                       <p
                         aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${visibleResults.length}`}
-                        className="mt-0.5 hidden text-xs font-medium leading-4 text-slate-500 sm:block lg:hidden"
+                        className="mt-0.5 hidden text-xs font-medium leading-4 text-slate-500 sm:block lg:text-[12px] lg:text-[#64748B]"
                       >
                         {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
                       </p>
@@ -3048,7 +3046,7 @@ export function CarsResultsExperience({
                     </div>
                   ))}
                   {paginationPendingPage !== null && pagination.totalPages > 1 ? (
-                    <nav aria-label="Car results pagination" className="flex flex-wrap items-center justify-center gap-1.5 pt-4 lg:hidden">
+                    <nav aria-label="Car results pagination" className="flex flex-wrap items-center justify-center gap-1.5 pt-4">
                       <button type="button" aria-label="Previous page" disabled className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-transparent bg-transparent text-slate-400 sm:border-slate-300 sm:opacity-40"><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
                       <button type="button" aria-label={`Page ${pagination.currentPage}`} aria-current="page" disabled className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-transparent bg-transparent font-bold text-[#004BB8] sm:border-[#004BB8] sm:bg-[#004BB8] sm:text-white">{pagination.currentPage}</button>
                       <button type="button" aria-label="Next page" disabled className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-transparent bg-transparent text-slate-400 sm:border-slate-300 sm:opacity-40"><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
@@ -3069,75 +3067,46 @@ export function CarsResultsExperience({
                       "cars-filter-results-reveal",
                   )}
                 >
-                  {visibleResults.map((car, index) => {
-                    const visibleOnPaginatedViewport =
-                      guidedPlanning ||
-                      (index >= mobilePageStart && index < mobilePageEnd);
-                    const resultCard =
-                      car.inventorySource === "kayak-sandbox" &&
-                      kayak?.offers.some(
-                        (offer) => `kayak-sandbox:${offer.id}` === car.id,
-                      ) ? (
-                        <KayakResultCard
-                          offer={kayak.offers.find(
-                            (offer) => `kayak-sandbox:${offer.id}` === car.id,
-                          )!}
-                          vertical="cars"
-                          criteria={kayak.criteria}
-                          desktopCarSurfaceParity={!embedded && presentation === "standalone"}
-                        />
-                      ) : (
-                        <CarResultCard
-                          car={car}
-                          search={search}
-                          badge={badges.get(car.id)}
-                          detailsHref={detailsHrefForCar(car)}
-                          providerLabel={isKayakSandboxResult(car) ? "KAYAK sandbox · Not bookable" : undefined}
-                          onSelect={
-                            onSelectCar && (isCarSelectable?.(car) ?? true)
-                              ? onSelectCar
-                              : undefined
-                          }
-                          actionLabel={actionLabel}
-                          actionAriaLabel={actionAriaLabelForCar?.(car)}
-                          headingLevel={embedded ? "h3" : "h2"}
-                          presentation={presentation}
-                          desktopSurfaceParity={!embedded && presentation === "standalone"}
-                          planningLabels={
-                            guidedPlanning
-                              ? {
-                                  estimatedTotal: t(
-                                    "deals.guided.carResults.estimatedTotal",
-                                  ),
-                                  estimatedPerDay: t(
-                                    "deals.guided.carResults.estimatedPerDay",
-                                  ),
-                                  disclosure: t(
-                                    "deals.guided.carResults.disclosure",
-                                  ),
-                                  orSimilar: t("deals.guided.carResults.orSimilar"),
-                                }
-                              : undefined
-                          }
-                        />
-                      );
-
-                    return (
-                      <div
-                        key={car.id}
-                        className={cn(
-                          !visibleOnPaginatedViewport && "hidden lg:block",
-                        )}
-                        data-cars-results-result-item
-                      >
-                        {resultCard}
-                      </div>
-                    );
-                  })}
+                  {pageResults.map((car) => car.inventorySource === "kayak-sandbox" && kayak?.offers.some(offer => `kayak-sandbox:${offer.id}` === car.id) ? <KayakResultCard key={car.id} offer={kayak.offers.find(offer => `kayak-sandbox:${offer.id}` === car.id)!} vertical="cars" criteria={kayak.criteria} desktopCarSurfaceParity={!embedded && presentation === "standalone"} /> : (
+                    <CarResultCard
+                      key={car.id}
+                      car={car}
+                      search={search}
+                      badge={badges.get(car.id)}
+                      detailsHref={detailsHrefForCar(car)}
+                      providerLabel={isKayakSandboxResult(car) ? "KAYAK sandbox · Not bookable" : undefined}
+                      onSelect={
+                        onSelectCar && (isCarSelectable?.(car) ?? true)
+                          ? onSelectCar
+                          : undefined
+                      }
+                      actionLabel={actionLabel}
+                      actionAriaLabel={actionAriaLabelForCar?.(car)}
+                      headingLevel={embedded ? "h3" : "h2"}
+                      presentation={presentation}
+                      desktopSurfaceParity={!embedded && presentation === "standalone"}
+                      planningLabels={
+                        guidedPlanning
+                          ? {
+                              estimatedTotal: t(
+                                "deals.guided.carResults.estimatedTotal",
+                              ),
+                              estimatedPerDay: t(
+                                "deals.guided.carResults.estimatedPerDay",
+                              ),
+                              disclosure: t(
+                                "deals.guided.carResults.disclosure",
+                              ),
+                              orSimilar: t("deals.guided.carResults.orSimilar"),
+                            }
+                          : undefined
+                      }
+                    />
+                  ))}
                   {!guidedPlanning && pagination.totalPages > 1 ? (
                     <nav
                       aria-label="Car results pagination"
-                      className="flex flex-wrap items-center justify-center gap-1.5 pt-4 lg:hidden"
+                      className="flex flex-wrap items-center justify-center gap-1.5 pt-4"
                     >
                       <button
                         type="button"
