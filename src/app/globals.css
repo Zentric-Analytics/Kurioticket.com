@@ -863,6 +863,7 @@ textarea {
     right: 0;
     width: 196px;
   }
+
 }
 
 .flight-card-airline-name {
@@ -1060,22 +1061,22 @@ textarea {
   .flight-card-details {
     display: grid;
     grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr) minmax(0, 1.25fr);
-    align-items: stretch;
+    align-items: center;
     column-gap: 0.75rem;
     overflow: visible;
     border: 1px solid #e5ebf3;
     border-radius: 0.75rem;
     background: #f8fafc;
-    padding: 0.75rem;
+    margin-top: 0;
+    padding: 0.625rem 0.75rem;
   }
 
   .flight-card-detail-item {
     position: relative;
-    grid-template-columns: 2rem minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    align-content: center;
-    column-gap: 0.625rem;
-    row-gap: 0.0625rem;
+    grid-template-columns: 2rem max-content minmax(0, 1fr);
+    grid-template-rows: auto;
+    align-items: center;
+    column-gap: 0.5rem;
     min-width: 0;
     min-height: 2rem;
     padding: 0 0.375rem;
@@ -1092,7 +1093,7 @@ textarea {
 
   .flight-card-detail-icon {
     grid-column: 1;
-    grid-row: 1 / span 2;
+    grid-row: 1;
     align-self: center;
     box-sizing: border-box;
     width: 2rem;
@@ -1103,51 +1104,21 @@ textarea {
     color: #004bb8;
   }
 
-  .flight-card-detail-label,
-  .flight-card-detail-value {
-    grid-column: 2;
-  }
-
   .flight-card-detail-label {
+    grid-column: 2;
     grid-row: 1;
-    line-height: 0.875rem;
+    line-height: 1rem;
     white-space: nowrap;
   }
 
   .flight-card-detail-value {
-    grid-row: 2;
+    grid-column: 3;
+    grid-row: 1;
     line-height: 1rem;
-    white-space: normal;
+    white-space: nowrap;
     overflow: visible;
     overflow-wrap: normal;
     word-break: normal;
-  }
-}
-
-@container (min-width: 760px) {
-  @media (min-width: 1024px) {
-    .flight-card-detail-item {
-      grid-template-columns: 2rem max-content minmax(0, 1fr);
-      grid-template-rows: auto;
-      align-items: center;
-      column-gap: 0.5rem;
-    }
-
-    .flight-card-detail-icon {
-      grid-row: 1;
-    }
-
-    .flight-card-detail-label {
-      grid-column: 2;
-      grid-row: 1;
-      line-height: 1rem;
-    }
-
-    .flight-card-detail-value {
-      grid-column: 3;
-      grid-row: 1;
-      white-space: nowrap;
-    }
   }
 }
 
@@ -1320,6 +1291,46 @@ textarea {
     border-inline-end-width: 0;
     padding-top: 0.75rem;
     padding-inline-end: 0;
+  }
+}
+
+/* Keep the desktop fare column beside the itinerary while letting the
+   detail strip use the full card width. This override intentionally lives
+   after the base and container-width card rules so the cascade cannot
+   restore the old details-in-left-column layout. */
+@media (min-width: 1024px) {
+  .flight-card-body {
+    grid-template-columns: minmax(0, 1fr) 196px;
+    grid-template-areas:
+      "legs fare"
+      "details details";
+    row-gap: 0.5rem;
+  }
+
+  .flight-card-fare-action {
+    border-left: 0;
+    border-top: 0;
+    padding-left: 0;
+    padding-top: 0;
+  }
+}
+
+@container (max-width: 759px) {
+  @media (min-width: 1024px) {
+    .flight-card-body {
+      grid-template-columns: minmax(0, 1fr) 180px;
+      grid-template-areas:
+        "legs fare"
+        "details details";
+      row-gap: 0.5rem;
+    }
+
+    .flight-card-fare-action {
+      border-left: 0;
+      border-top: 0;
+      padding-left: 0;
+      padding-top: 0;
+    }
   }
 }
 

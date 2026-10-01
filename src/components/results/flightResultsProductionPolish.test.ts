@@ -294,41 +294,28 @@ test("desktop departure metadata aligns directly beneath time with generous card
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date \{\s*margin-inline-start: 0;/);
 });
 
-test("desktop detail panel keeps wide values inline with a narrow-card fallback", async () => {
+test("desktop detail panel keeps all values inline at every desktop card width", async () => {
   const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
   const desktopStart = styles.indexOf(
     "@media (min-width: 1024px)",
     styles.indexOf(".flight-card-detail-value"),
   );
-  const wideContainerStart = styles.indexOf(
-    "@container (min-width: 760px)",
+  const desktopRules = styles.slice(
     desktopStart,
-  );
-  const narrowRules = styles.slice(desktopStart, wideContainerStart);
-  const wideRules = styles.slice(
-    wideContainerStart,
-    styles.indexOf("@container (max-width: 759px)", wideContainerStart),
+    styles.indexOf("@container (max-width: 759px)", desktopStart),
   );
 
   assert.match(
-    narrowRules,
-    /\.flight-card-detail-item \{[\s\S]*grid-template-columns: 2rem minmax\(0, 1fr\);[\s\S]*grid-template-rows: auto auto;/,
-  );
-  assert.match(
-    narrowRules,
-    /\.flight-card-detail-value \{[\s\S]*grid-row: 2;[\s\S]*white-space: normal;[\s\S]*overflow-wrap: normal;[\s\S]*word-break: normal;/,
-  );
-  assert.match(
-    wideRules,
+    desktopRules,
     /\.flight-card-detail-item \{[\s\S]*grid-template-columns: 2rem max-content minmax\(0, 1fr\);[\s\S]*grid-template-rows: auto;/,
   );
   assert.match(
-    wideRules,
+    desktopRules,
     /\.flight-card-detail-value \{[\s\S]*grid-column: 3;[\s\S]*grid-row: 1;[\s\S]*white-space: nowrap;/,
   );
   assert.doesNotMatch(
-    narrowRules + wideRules,
-    /overflow:\s*hidden|text-overflow:\s*ellipsis|overflow-wrap:\s*(?:anywhere|break-word)|word-break:\s*break-all/,
+    desktopRules,
+    /grid-template-rows:\s*auto auto|overflow:\s*hidden|text-overflow:\s*ellipsis|overflow-wrap:\s*(?:anywhere|break-word)|word-break:\s*break-all/,
   );
 });
 
@@ -342,4 +329,61 @@ test("desktop nearby fares use a contained mobile-like hierarchy", async () => {
   assert.match(strip, /rounded-lg border border-slate-200 bg-white/);
   assert.match(strip, /selected && "border-\[#075EE8\] bg-blue-50\/60"/);
   assert.match(strip, /absolute inset-x-2 top-0 h-0\.5 rounded-b bg-\[#075EE8\]/);
+});
+
+
+test("desktop Flight filters mirror the Cars surface typography and checkbox rhythm", async () => {
+  const filters = await readFile(
+    new URL("./DesktopFlightFilters.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(filters, /data-flight-desktop-filter-surface/);
+  assert.match(filters, /desktop-filter-sidebar cars-desktop-filter-surface/);
+  assert.match(filters, /bg-\[#F2F4F8\]/);
+  assert.match(filters, /text-\[16px\] font-semibold leading-6 tracking-\[-0\.006em\] text-\[#07133B\]/);
+  assert.match(filters, /text-\[14px\] font-semibold normal-case leading-5 tracking-\[-0\.002em\] text-\[#334155\]/);
+  assert.match(filters, /text-\[14px\] font-medium leading-5/);
+  assert.match(filters, /h-4 w-4 shrink-0 rounded border-slate-300 accent-blue/);
+  assert.match(filters, /text-\[13px\] font-medium leading-5 tabular-nums text-\[#64748B\]/);
+});
+
+test("desktop Flight Popular filters reuse the Cars compact placement behavior", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /calculateCompactFilterPlacement/);
+  assert.match(source, /shouldShowDesktopCompactFilter/);
+  assert.match(source, /calculateCompactFilterMaxHeight/);
+  assert.match(source, /desktopCompactFilterTopOffset = 116/);
+  assert.match(source, /desktopCompactFilterBottomGap = 12/);
+  assert.match(source, /ref=\{desktopFilterSentinelRef\}/);
+  assert.match(source, /ref=\{desktopPopularFilterRef\}/);
+  assert.match(source, /data-flight-popular-filters/);
+  assert.match(source, />\s*Popular filters\s*</);
+  assert.match(source, /desktopPopularFilterPlacement === "fixed"/);
+  assert.match(source, /desktopPopularFilterPlacement === "docked"/);
+  assert.match(source, /results\.filter\(\(flight\) => hasStructuredBaggage\(flight\)\)/);
+  assert.match(source, /results\.filter\(\(flight\) => hasStructuredFlexibility\(flight\)\)/);
+  assert.match(source, /stopOptions[\s\S]*option\.value === "0"/);
+  assert.match(source, /airlineOptions\.slice\(0, 2\)/);
+});
+
+test("desktop Flight result meta typography uses the refined hierarchy", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const cheaperStart = source.indexOf("data-desktop-cheaper-nearby");
+  const cheaper = source.slice(cheaperStart, cheaperStart + 900);
+  assert.match(cheaper, /text-\[13px\] font-normal leading-5 tracking-\[-0\.002em\] text-\[#536B92\]/);
+
+  const summaryStart = source.indexOf('className="hidden w-full items-center justify-between gap-4 pt-2 sm:flex');
+  const summary = source.slice(summaryStart, summaryStart + 3600);
+  assert.match(summary, /text-\[15px\] font-semibold leading-5 tracking-\[-0\.006em\] text-\[#07133B\]/);
+  assert.match(summary, /text-\[12px\] font-medium leading-4 text-\[#64748B\]/);
+  assert.match(summary, /text-\[14px\] font-medium leading-5 text-\[#64748B\]">\s*Sort by:/);
+  assert.match(summary, /text-\[14px\] font-semibold leading-5 text-\[#142033\]/);
 });
