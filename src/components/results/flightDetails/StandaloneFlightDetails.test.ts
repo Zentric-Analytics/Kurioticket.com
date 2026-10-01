@@ -684,7 +684,10 @@ test("desktop checkout summary is compact and contains no repeated itinerary det
   assert.match(layout, /<DesktopCheckoutSummary/);
   assert.match(layout, /^className="grid items-start gap-6 lg:grid-cols-/);
   assert.match(summary, /data-desktop-checkout-summary/);
-  assert.match(summary, /className="hidden min-w-0 self-start[^"]*lg:block"/);
+  assert.match(
+    summary,
+    /className="hidden min-w-0 self-start[^"]*lg:sticky[^"]*lg:top-6[^"]*lg:block"/,
+  );
   assert.match(summary, /flightDetailsTotalLabel\(travelerCount\)/);
   assert.match(summary, /aria-label=\{price\.ariaLabel\}>\{price\.formatted\}/);
   assert.match(summary, /data-desktop-trip-price-loading role="status"/);
@@ -692,7 +695,8 @@ test("desktop checkout summary is compact and contains no repeated itinerary det
   assert.match(summary, /role="alert"/);
   assert.doesNotMatch(summary, /Your trip|route|tripType|\blegs\b|departureTime|arrivalTime|duration|formatStops|fareTerms|Fare terms|travelers|Handoff provider|providerName/);
   assert.doesNotMatch(layout.slice(0, layout.indexOf(">") + 1), /(?:sticky|fixed|top-|overflow-y|max-h-screen)/);
-  assert.doesNotMatch(summary, /className="[^"]*(?:sticky|fixed|\btop-|overflow-y|max-h-screen)/);
+  assert.doesNotMatch(summary, /className="[^"]*\bfixed\b/);
+  assert.doesNotMatch(summary, /className="[^"]*(?:overflow-y|max-h-screen)/);
   assert.match(source, /function MobileCheckoutDock[\s\S]*?fixed inset-x-0 bottom-0[\s\S]*?lg:hidden/);
 });
 
@@ -1171,4 +1175,22 @@ test("Flight Details invalidates shared saved-flight result state after account 
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   assert.match(source, /invalidateSavedFlightsClientCache/);
   assert.match(source, /setSavedFlightBackendId\(null\); invalidateSavedFlightsClientCache\(\)/);
+});
+
+
+test("desktop checkout summary stays visible while the details page scrolls", async () => {
+  const source = await readFile(
+    new URL("./StandaloneFlightDetails.tsx", import.meta.url),
+    "utf8",
+  );
+  const start = source.indexOf("function DesktopCheckoutSummary");
+  const end = source.indexOf("function FlightDetailsSkeleton", start);
+  assert.ok(start >= 0 && end > start);
+  const summary = source.slice(start, end);
+
+  assert.match(
+    summary,
+    /data-desktop-checkout-summary className="[^"]*lg:sticky[^"]*lg:top-6[^"]*lg:block/,
+  );
+  assert.doesNotMatch(summary, /\bfixed\b/);
 });
