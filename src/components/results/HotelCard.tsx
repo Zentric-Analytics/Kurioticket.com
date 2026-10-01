@@ -459,8 +459,36 @@ export function HotelCard({
 
   function renderReviewSummary(className: string, desktop = false) {
     if (!reviewBand && !reviewCountText) return null;
+
+    if (desktop) {
+      return (
+        <div
+          data-hotel-card-reviews-desktop
+          className={`items-center gap-2 ${className}`}
+        >
+          {reviewBand ? (
+            <span className="inline-flex min-h-7 min-w-8 shrink-0 items-center justify-center rounded-md bg-slate-900 px-2 text-[12px] font-semibold leading-4 text-white tabular-nums">
+              {formattedReviewScore}
+            </span>
+          ) : null}
+          <div className="min-w-0 text-left">
+            {reviewBand ? (
+              <p className="text-[13px] font-semibold leading-4 text-slate-800">
+                {reviewLabel}
+              </p>
+            ) : null}
+            {reviewCountText ? (
+              <p className="mt-0.5 text-[12px] font-normal leading-4 text-slate-500">
+                {reviewCountText}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div data-hotel-card-reviews={desktop ? undefined : ""} data-hotel-card-reviews-desktop={desktop ? "" : undefined} className={`flex-wrap items-center gap-1 text-[11px] font-normal leading-[15px] text-[#071A48] sm:text-[12px] sm:font-semibold sm:leading-4 sm:text-slate-600 md:gap-1.5 ${className}`}>
+      <div data-hotel-card-reviews className={`flex-wrap items-center gap-1 text-[11px] font-normal leading-[15px] text-[#071A48] sm:text-[12px] sm:font-semibold sm:leading-4 sm:text-slate-600 md:gap-1.5 ${className}`}>
         {reviewBand ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-[#0754F7] px-2 py-0.5 text-white sm:bg-slate-900 lg:rounded-md">
             <span>{formattedReviewScore} / {reviewScale}</span>
