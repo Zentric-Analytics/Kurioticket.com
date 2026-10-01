@@ -348,9 +348,13 @@ test("desktop Flight filters mirror the Cars surface typography and checkbox rhy
   assert.match(filters, /text-\[13px\] font-medium leading-5 tabular-nums text-\[#64748B\]/);
 });
 
-test("desktop Flight Popular filters reuse the Cars compact placement behavior", async () => {
+test("desktop Flight compact filters reuse the same full filter surface as Cars", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const filters = await readFile(
+    new URL("./DesktopFlightFilters.tsx", import.meta.url),
     "utf8",
   );
 
@@ -360,15 +364,16 @@ test("desktop Flight Popular filters reuse the Cars compact placement behavior",
   assert.match(source, /desktopCompactFilterTopOffset = 116/);
   assert.match(source, /desktopCompactFilterBottomGap = 12/);
   assert.match(source, /ref=\{desktopFilterSentinelRef\}/);
-  assert.match(source, /ref=\{desktopPopularFilterRef\}/);
-  assert.match(source, /data-flight-popular-filters/);
-  assert.match(source, />\s*Popular filters\s*</);
-  assert.match(source, /desktopPopularFilterPlacement === "fixed"/);
-  assert.match(source, /desktopPopularFilterPlacement === "docked"/);
-  assert.match(source, /results\.filter\(\(flight\) => hasStructuredBaggage\(flight\)\)/);
-  assert.match(source, /results\.filter\(\(flight\) => hasStructuredFlexibility\(flight\)\)/);
-  assert.match(source, /stopOptions[\s\S]*option\.value === "0"/);
-  assert.match(source, /airlineOptions\.slice\(0, 2\)/);
+  assert.match(source, /ref=\{desktopCompactFilterRef\}/);
+  assert.match(source, /data-flight-desktop-compact-filter/);
+  assert.match(source, /renderDesktopFlightFilters\(true\)/);
+  assert.match(source, /desktopCompactFilterPlacement === "fixed"/);
+  assert.match(source, /desktopCompactFilterPlacement === "docked"/);
+  assert.doesNotMatch(source, /Popular filters|data-flight-popular-filters|popularFlightFilters/);
+
+  assert.match(filters, /compact\?: boolean/);
+  assert.match(filters, /compact = false/);
+  assert.match(filters, /max-h-full w-full overflow-y-auto rounded-2xl overscroll-contain/);
 });
 
 test("desktop Flight result meta typography uses the refined hierarchy", async () => {
