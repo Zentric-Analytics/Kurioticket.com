@@ -67,21 +67,15 @@ test("CarDetailsExperience uses one Hotels-style sticky desktop section handoff"
     layoutSource,
     /\[data-car-details-booking-rail\][\s\S]*?position: sticky/,
   );
+  assert.doesNotMatch(experienceSource, /data-car-details-bottom-booking-bar/);
+  assert.doesNotMatch(layoutSource, /data-car-details-bottom-booking-bar/);
   assert.match(
-    layoutSource,
-    /\[data-car-details-bottom-booking-bar\][\s\S]*?width: min\(700px, calc\(100% - 48px\)\);[\s\S]*?margin: 3rem auto 0;[\s\S]*?border-radius: 16px;[\s\S]*?background: #FFFFFF;/,
+    experienceSource,
+    /data-car-details-utility-placement="hero"[\s\S]*?<DesktopCompactBookingAction/,
   );
   assert.match(
-    layoutSource,
-    /\[data-car-details-bottom-booking-bar\] > div \{[\s\S]*?grid-template-columns: minmax\(180px, 1fr\) minmax\(220px, 240px\);/,
-  );
-  assert.match(
-    layoutSource,
-    /\[data-car-details-bottom-booking-bar\] > div > a,[\s\S]*?grid-column: 2;/,
-  );
-  assert.doesNotMatch(
-    layoutSource,
-    /\[data-car-details-bottom-booking-bar\][\s\S]*?position:\s*(?:sticky|fixed)/,
+    experienceSource,
+    /data-car-details-utility-placement="tabs"[\s\S]*?<DesktopCompactBookingAction/,
   );
   assert.match(layoutSource, /\[data-car-details-scroll-section\] \{\s*scroll-margin-top: 5\.5rem;/);
   assert.match(
