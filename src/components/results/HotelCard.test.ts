@@ -290,3 +290,23 @@ test("mobile Hotel cards keep provider provenance quiet and the View hotel actio
   assert.match(source, /sm:gap-1 sm:active:opacity-70/);
   assert.match(source, /<ChevronRight className="h-4 w-4" strokeWidth=\{2\.2\}/);
 });
+
+
+test("desktop Hotel result reviews use Expedia-style score badge with stacked label and count", () => {
+  const desktopReviewStart = source.indexOf("if (desktop) {");
+  const desktopReviewEnd = source.indexOf("return (", desktopReviewStart + 20);
+  const desktopReview = source.slice(desktopReviewStart, source.indexOf("    return (", desktopReviewEnd + 10));
+
+  assert.match(source, /data-hotel-card-reviews-desktop/);
+  assert.match(source, /min-h-7 min-w-8 shrink-0 items-center justify-center rounded-md bg-slate-900/);
+  assert.match(source, /\{formattedReviewScore\}<\/span>/);
+  assert.match(source, /text-\[13px\] font-semibold leading-4 text-slate-800[\s\S]*\{reviewLabel\}/);
+  assert.match(source, /mt-0\.5 text-\[12px\] font-normal leading-4 text-slate-500[\s\S]*\{reviewCountText\}/);
+  assert.doesNotMatch(desktopReview, /formattedReviewScore\} \/ \{reviewScale\}/);
+  assert.doesNotMatch(desktopReview, /rounded-full/);
+});
+
+test("mobile Hotel result review treatment remains unchanged", () => {
+  assert.match(source, /data-hotel-card-reviews className=/);
+  assert.match(source, /rounded-full bg-\[#0754F7\][\s\S]*\{formattedReviewScore\} \/ \{reviewScale\}[\s\S]*\{reviewLabel\}/);
+});
