@@ -3521,6 +3521,7 @@ function SearchInputCell({
         <div className="min-w-0 flex-1">
           <CarLocationAutocomplete
             inputRef={inputRef}
+            desktopResultsPresentation
             id={`${idPrefix}-${name}`}
             name={name}
             value={value}

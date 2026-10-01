@@ -224,6 +224,27 @@ test("Cars main search retains its location-width and rental-date references", (
   );
 });
 
+test("desktop-full and compact sticky Edit cars search share the same polished location autocomplete", () => {
+  assert.match(
+    source,
+    /const isCompactSearch = placement === "desktop-sticky"/,
+  );
+  const searchInputCell = source.match(
+    /function SearchInputCell\([\s\S]*?\n}\n\nfunction ResultsDesktopPopover/,
+  )?.[0];
+  assert.ok(searchInputCell, "SearchInputCell should remain shared");
+  assert.match(
+    searchInputCell,
+    /<CarLocationAutocomplete[\s\S]*?desktopResultsPresentation/,
+  );
+  assert.match(
+    source,
+    /placement === "mobile" \? \([\s\S]*?\) : \([\s\S]*?<SearchInputCell/,
+  );
+  assert.match(source, /renderCarsSearchForm\("desktop-sticky"\)/);
+  assert.match(source, /renderCarsSearchForm\("desktop-full"\)/);
+});
+
 test("desktop controls reuse Cars autocomplete, picker content, and fixed popovers", () => {
   for (const primitive of [
     "CarLocationAutocomplete",
