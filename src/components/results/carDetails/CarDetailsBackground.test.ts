@@ -21,7 +21,7 @@ const hotelSource = readFileSync(
 
 const mainWrapper = '<main className="flex-1 bg-surface-muted/40">';
 const successfulMainWrapper =
-  '<main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:pb-0">';
+  '<main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:bg-[#F8FAFC] lg:pb-0">';
 const whiteSection = '<section className="border-b border-border bg-white">';
 const successfulSection =
   '<section className="bg-transparent lg:pb-0" data-car-details-desktop-surface>';
@@ -67,6 +67,11 @@ test("successful Cars Details uses one continuous production surface", () => {
   assert.doesNotMatch(clientSource, /<main className="[^"]*lg:pb-14[^"]*">/);
   assert.doesNotMatch(clientSource, /flex-1 bg-\[#f6f8fb\] lg:pb-14/);
   assert.match(clientSource, /bg-\[#F5F7FB\]/);
+  assert.match(clientSource, /lg:bg-\[#F8FAFC\]/);
+  assert.match(
+    clientSource,
+    /hidden h-16 w-full items-center border-b border-transparent bg-\[#F5F7FB\] lg:flex lg:bg-\[#F8FAFC\]/,
+  );
   assert.match(clientSource, /page-shell py-0 lg:py-6/);
   assertNoForbiddenBackgroundTreatments(
     clientSource.slice(
