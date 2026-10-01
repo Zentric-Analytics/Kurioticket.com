@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import test from "node:test";
 
 const results = readFileSync(
@@ -16,6 +16,18 @@ const alert = readFileSync(
 );
 const comparison = readFileSync(
   new URL("./CarPriceComparison.tsx", import.meta.url),
+  "utf8",
+);
+const css = readFileSync(
+  new URL("../../app/globals.css", import.meta.url),
+  "utf8",
+);
+const route = readFileSync(
+  new URL("../../app/cars/results/page.tsx", import.meta.url),
+  "utf8",
+);
+const manropeLicense = readFileSync(
+  new URL("../../../public/brand/fonts/manrope/OFL.txt", import.meta.url),
   "utf8",
 );
 
@@ -59,4 +71,35 @@ test("mobile typography remains intact while desktop is refined", () => {
   assert.match(card, /text-\[15px\] font-bold leading-\[18px\]/);
   assert.match(results, /text-\[15px\] font-extrabold text-slate-950/);
   assert.match(alert, /text-\[12\.5px\] font-bold leading-4 text-slate-950/);
+});
+
+test("desktop Cars Results uses the licensed route-scoped Manrope letterform system", () => {
+  assert.match(
+    css,
+    /font-family: "Kurioticket Cars Sans";[\s\S]*?Manrope-VariableFont\.ttf[\s\S]*?font-weight: 200 800;/,
+  );
+  assert.match(
+    css,
+    /@media \(min-width: 1024px\)[\s\S]*?\.cars-results-desktop-typeface[\s\S]*?font-family:[\s\S]*?"Kurioticket Cars Sans"/,
+  );
+  assert.match(css, /font-synthesis: none;/);
+  assert.match(css, /font-kerning: normal;/);
+  assert.match(
+    route,
+    /className="contents cars-results-desktop-typeface"/,
+  );
+  assert.match(
+    results,
+    /cars-results-desktop-typeface fixed inset-0 z-\[1200\]/,
+  );
+  assert.match(
+    results,
+    /cn\("cars-results-desktop-typeface", carsDesktopPopoverClassName, shellClassName\)/,
+  );
+  assert.ok(
+    statSync(
+      new URL("../../../public/brand/fonts/manrope/Manrope-VariableFont.ttf", import.meta.url),
+    ).size > 100_000,
+  );
+  assert.match(manropeLicense, /SIL OPEN FONT LICENSE Version 1\.1/i);
 });
