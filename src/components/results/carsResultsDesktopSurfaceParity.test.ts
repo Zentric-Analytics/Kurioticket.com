@@ -31,9 +31,23 @@ const styles = readFileSync(
   "utf8",
 );
 
-test("standalone Cars Results carries the mobile canvas surface through desktop", () => {
-  assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] pb-8">/);
-  assert.doesNotMatch(results, /bg-\[#F5F7FB\] pb-8 sm:bg-/);
+test("standalone Cars Results keeps the mobile canvas but uses the homepage-like white desktop body", () => {
+  assert.match(
+    results,
+    /<main className="flex-1 bg-\[#F5F7FB\] lg:bg-white pb-8">/,
+  );
+  assert.match(
+    results,
+    /flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] lg:bg-white/,
+  );
+  assert.match(
+    results,
+    /fixed inset-0 z-\[1200\] overflow-hidden bg-\[#F5F7FB\] lg:bg-white/,
+  );
+  assert.doesNotMatch(
+    results,
+    /<main className="flex-1 bg-\[#F5F7FB\] pb-8">/,
+  );
   assert.match(
     results,
     /desktopSurfaceParity=\{!embedded && presentation === "standalone"\}/,
@@ -129,7 +143,7 @@ test("KAYAK car cards and loading canvases stay inside the same standalone deskt
   );
   assert.match(
     route,
-    /<main className="flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\]">/,
+    /<main className="flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] lg:bg-white">/,
   );
   assert.match(skeleton, /desktopSurfaceParity = false/);
   assert.match(skeleton, /desktopSurfaceParity && "md:bg-\[#E7EBF1\]"/);
