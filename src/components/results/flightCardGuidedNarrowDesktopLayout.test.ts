@@ -92,11 +92,22 @@ test("mobile card navigation ignores nested controls and keeps canonical href", 
   );
 });
 
-test("wide and medium desktop cards retain their side fare columns", () => {
+test("desktop fare stays beside the itinerary while details span beneath both columns", () => {
   assert.match(
     ruleBody(globalsCss, ".flight-card-body"),
     /grid-template-columns:\s*minmax\(0, 1fr\) 196px/,
   );
+  const desktopStart = globalsCss.indexOf("@media (min-width: 1024px)");
+  const desktopBodyRule = ruleBody(globalsCss, ".flight-card-body", desktopStart);
+  const desktopFareRule = ruleBody(globalsCss, ".flight-card-fare-action", desktopStart);
+  assert.match(
+    desktopBodyRule,
+    /grid-template-areas:\s*"legs fare"\s*"details details"/,
+  );
+  assert.match(desktopBodyRule, /row-gap:\s*0\.5rem/);
+  assert.match(desktopFareRule, /border-left:\s*0/);
+  assert.match(desktopFareRule, /padding-left:\s*0/);
+
   const mediumQueryStart = globalsCss.indexOf("@container (max-width: 759px)");
   assert.match(
     ruleBody(globalsCss, ".flight-card-body", mediumQueryStart),
@@ -189,66 +200,47 @@ test("all three detail lines share the left-side details region", () => {
   assert.match(ruleBody(globalsCss, ".flight-card-details"), /grid-area:\s*details/);
 });
 
-test("desktop detail items stay in one readable three-section panel", () => {
+test("desktop detail items stay on one straight line across the full card width", () => {
   const detailsStart = flightCardSource.indexOf("function FlightDetailLines");
   const details = flightCardSource.slice(detailsStart);
   const desktopStart = globalsCss.indexOf(
     "@media (min-width: 1024px)",
     globalsCss.indexOf(".flight-card-detail-value"),
   );
-  const wideContainerStart = globalsCss.indexOf(
-    "@container (min-width: 760px)",
-    desktopStart,
-  );
   const desktopDetailsRule = ruleBody(
     globalsCss,
     ".flight-card-details",
     desktopStart,
   );
-  const narrowItemRule = ruleBody(
+  const desktopItemRule = ruleBody(
     globalsCss,
     ".flight-card-detail-item",
     desktopStart,
   );
-  const narrowValueRule = ruleBody(
+  const desktopValueRule = ruleBody(
     globalsCss,
     ".flight-card-detail-value",
     desktopStart,
-  );
-  const wideItemRule = ruleBody(
-    globalsCss,
-    ".flight-card-detail-item",
-    wideContainerStart,
-  );
-  const wideValueRule = ruleBody(
-    globalsCss,
-    ".flight-card-detail-value",
-    wideContainerStart,
   );
 
   assert.match(details, /flight-card-detail-item[^"\n]*min-w-0/);
   assert.match(details, /flight-card-detail-value min-w-0/);
-  assert.match(details, /whitespace-normal/);
   assert.doesNotMatch(details, /truncate|line-clamp|overflow-hidden/);
   assert.match(desktopDetailsRule, /display:\s*grid/);
   assert.match(
     desktopDetailsRule,
     /grid-template-columns:\s*minmax\(0, 1\.35fr\) minmax\(0, 0\.9fr\) minmax\(0, 1\.25fr\)/,
   );
-  assert.match(desktopDetailsRule, /border:\s*1px solid #e5ebf3/);
-  assert.match(narrowItemRule, /grid-template-columns:\s*2rem minmax\(0, 1fr\)/);
-  assert.match(narrowItemRule, /grid-template-rows:\s*auto auto/);
-  assert.match(narrowValueRule, /grid-row:\s*2/);
-  assert.match(narrowValueRule, /white-space:\s*normal/);
-  assert.match(wideItemRule, /grid-template-columns:\s*2rem max-content minmax\(0, 1fr\)/);
-  assert.match(wideItemRule, /grid-template-rows:\s*auto/);
-  assert.match(wideItemRule, /align-items:\s*center/);
-  assert.match(wideValueRule, /grid-column:\s*3/);
-  assert.match(wideValueRule, /grid-row:\s*1/);
-  assert.match(wideValueRule, /white-space:\s*nowrap/);
-  assert.match(desktopDetailsRule, /column-gap:\s*0\.75rem/);
-  assert.match(desktopDetailsRule, /padding:\s*0\.75rem/);
-  assert.match(narrowItemRule, /position:\s*relative/);
+  assert.match(desktopDetailsRule, /align-items:\s*center/);
+  assert.match(desktopDetailsRule, /margin-top:\s*0/);
+  assert.match(desktopDetailsRule, /padding:\s*0\.625rem 0\.75rem/);
+  assert.match(desktopItemRule, /grid-template-columns:\s*2rem max-content minmax\(0, 1fr\)/);
+  assert.match(desktopItemRule, /grid-template-rows:\s*auto/);
+  assert.match(desktopItemRule, /align-items:\s*center/);
+  assert.match(desktopValueRule, /grid-column:\s*3/);
+  assert.match(desktopValueRule, /grid-row:\s*1/);
+  assert.match(desktopValueRule, /white-space:\s*nowrap/);
+
   const dividerRule = ruleBody(
     globalsCss,
     ".flight-card-detail-item + .flight-card-detail-item::before",
