@@ -864,7 +864,8 @@ test("mobile web Flight Details removes the branded header and uses the native e
   assert.match(source, /px-\[18px\] pb-4 pt-0/);
   assert.match(source, /data-mobile-native-itinerary-stack[\s\S]*-mx-\[10px\] -mt-\[104px\]/);
   assert.match(source, /data-flight-details-desktop-navigation/);
-  assert.match(source, />Back to flight results<\/span>/);
+  assert.match(source, /aria-label="Back to flight results"/);
+  assert.doesNotMatch(source, />Back to flight results<\/span>/);
   assert.match(source, /data-flight-details-desktop-actions/);
   assert.doesNotMatch(source, /data-flight-details-floating-actions/);
   assert.match(loading, /data-flight-details-loading-desktop-navigation/);
@@ -885,10 +886,12 @@ test("desktop Flight Details uses a page utility row instead of hero-overlay nav
 
   assert.ok(navStart >= 0 && navStart < heroStart);
   assert.match(source, /data-flight-details-desktop-navigation[^>]*className="hidden[^"]*sm:flex/);
-  assert.match(source, /Back to flight results/);
+  assert.match(source, /aria-label="Back to flight results"/);
   assert.match(source, /data-flight-details-desktop-actions/);
-  assert.match(source, /<span>\{flightSaved \? "Saved" : "Save"\}<\/span>/);
-  assert.match(source, /<span>Share<\/span>/);
+  assert.match(source, /aria-label=\{flightSaved \? "Remove saved flight" : "Save flight"\}/);
+  assert.match(source, /aria-label="Share flight"/);
+  assert.doesNotMatch(source, /<span>\{flightSaved \? "Saved" : "Save"\}<\/span>/);
+  assert.doesNotMatch(source, /<span>Share<\/span>/);
   assert.match(source, /aria-pressed=\{flightSaved\}/);
   assert.doesNotMatch(hero, /Back to results|data-flight-details-floating-actions|aria-label="Share flight"/);
   assert.match(loading, /data-flight-details-loading-desktop-navigation[^>]*className="hidden[^"]*sm:flex/);
@@ -1193,4 +1196,49 @@ test("desktop checkout summary stays visible while the details page scrolls", as
     /data-desktop-checkout-summary className="[^"]*lg:sticky[^"]*lg:top-6[^"]*lg:block/,
   );
   assert.doesNotMatch(summary, /\bfixed\b/);
+});
+
+
+test("desktop Flight Details navigation uses icon-only visible actions", async () => {
+  const source = await readFile(
+    new URL("./StandaloneFlightDetails.tsx", import.meta.url),
+    "utf8",
+  );
+  const start = source.indexOf("data-flight-details-desktop-navigation");
+  const end = source.indexOf("data-testid=\"flight-details-hero\"", start);
+  assert.ok(start >= 0 && end > start);
+  const nav = source.slice(start, end);
+
+  assert.match(nav, /aria-label="Back to flight results"/);
+  assert.match(nav, /aria-label=\{flightSaved \? "Remove saved flight" : "Save flight"\}/);
+  assert.match(nav, /aria-label="Share flight"/);
+  assert.match(nav, /data-flight-details-desktop-compact-booking/);
+  assert.match(nav, /data-flight-details-desktop-compact-price/);
+  assert.match(nav, /data-flight-details-desktop-compact-total-label/);
+  assert.match(nav, /flightDetailsTotalLabel\(travelers\.count\)/);
+  assert.match(nav, /data-flight-details-desktop-compact-cta/);
+  assert.match(nav, />Continue booking<\/button>/);
+  assert.match(nav, /onClick=\{\(\) => continueToOffer\(selectedDeal\?\.offerId \?\? selectedOffer\.id\)\}/);
+  assert.doesNotMatch(nav, />Back to flight results<\/span>/);
+  assert.doesNotMatch(nav, /<span>\{flightSaved \? "Saved" : "Save"\}<\/span>/);
+  assert.doesNotMatch(nav, /<span>Share<\/span>/);
+});
+
+
+test("desktop Flight Details compact booking cluster follows the Cars header pattern", async () => {
+  const source = await readFile(
+    new URL("./StandaloneFlightDetails.tsx", import.meta.url),
+    "utf8",
+  );
+  const start = source.indexOf("data-flight-details-desktop-actions");
+  const end = source.indexOf("data-testid=\"flight-details-hero\"", start);
+  assert.ok(start >= 0 && end > start);
+  const actions = source.slice(start, end);
+
+  assert.match(actions, /rounded-full border border-slate-300 bg-\[#E7EBF1\]/);
+  assert.match(actions, /border-s border-slate-300 ps-3 lg:flex/);
+  assert.match(actions, /text-\[18px\] font-semibold[^"]*text-\[#102A43\]/);
+  assert.match(actions, /text-\[10px\] font-medium[^"]*text-\[#56658E\]/);
+  assert.match(actions, /h-10[^"]*rounded-lg bg-\[#075EE8\][^"]*text-\[13px\] font-semibold/);
+  assert.doesNotMatch(actions, /data-flight-details-desktop-compact-booking[^>]*sm:flex/);
 });

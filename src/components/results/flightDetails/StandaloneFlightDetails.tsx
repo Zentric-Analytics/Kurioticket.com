@@ -419,31 +419,66 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
           <section className="min-w-0 overflow-hidden border-b border-[#E2E8F0] bg-[#F3F6FA] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
             <div data-flight-details-desktop-navigation className="hidden min-h-[52px] items-center justify-between gap-4 border-b border-[#E2E8F0] bg-white px-4 sm:flex lg:px-5">
-              <Link href={resultsHref} className="inline-flex min-h-11 items-center gap-2 rounded-lg px-1 text-sm font-semibold text-[#075EE8] transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">
-                <ArrowLeft className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-                <span>Back to flight results</span>
+              <Link href={resultsHref} aria-label="Back to flight results" className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#075EE8] transition hover:bg-slate-50 hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">
+                <ArrowLeft className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
               </Link>
-              <div data-flight-details-desktop-actions className="flex shrink-0 items-center gap-1">
+              <div data-flight-details-desktop-actions className="flex shrink-0 items-center gap-2">
                 <button
                   type="button"
                   aria-label={flightSaved ? "Remove saved flight" : "Save flight"}
                   aria-pressed={flightSaved}
                   disabled={savedFlightPending}
                   onClick={() => void toggleSavedFlight()}
-                  className={`inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 disabled:cursor-wait disabled:opacity-60 ${flightSaved ? "text-[#075EE8]" : "text-slate-700"}`}
+                  className={`inline-flex size-10 items-center justify-center rounded-full border border-slate-300 bg-[#E7EBF1] shadow-[0_2px_8px_rgba(15,23,42,0.14)] transition hover:bg-[#DDE3EB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 disabled:cursor-wait disabled:opacity-60 ${flightSaved ? "text-[#075EE8]" : "text-[#07133B]"}`}
                 >
-                  <Heart className="h-[18px] w-[18px]" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
-                  <span>{flightSaved ? "Saved" : "Save"}</span>
+                  <Heart className="h-5 w-5" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
                   aria-label="Share flight"
                   onClick={() => void shareFlight()}
-                  className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35"
+                  className="inline-flex size-10 items-center justify-center rounded-full border border-slate-300 bg-[#E7EBF1] text-[#07133B] shadow-[0_2px_8px_rgba(15,23,42,0.14)] transition hover:bg-[#DDE3EB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35"
                 >
-                  <Share2 className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
-                  <span>Share</span>
+                  <Share2 className="h-[19px] w-[19px]" strokeWidth={2} aria-hidden="true" />
                 </button>
+                <div
+                  className="hidden shrink-0 items-center gap-2 border-s border-slate-300 ps-3 lg:flex"
+                  data-flight-details-desktop-compact-booking
+                >
+                  <div className="min-w-0 max-w-[170px] text-right">
+                    {providerPrice ? (
+                      <p
+                        className="overflow-hidden text-ellipsis whitespace-nowrap text-[18px] font-semibold leading-[22px] tabular-nums text-[#102A43] xl:text-[20px] xl:leading-6"
+                        dir="ltr"
+                        aria-label={providerPrice.ariaLabel}
+                        title={providerPrice.title}
+                        data-flight-details-desktop-compact-price
+                      >
+                        {providerPrice.formatted}
+                      </p>
+                    ) : (
+                      <p className="whitespace-nowrap text-[13px] font-semibold text-slate-500">Price unavailable</p>
+                    )}
+                    <p
+                      className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] font-medium leading-3 text-[#56658E] xl:text-[11px] xl:leading-[13px]"
+                      data-flight-details-desktop-compact-total-label
+                    >
+                      {flightDetailsTotalLabel(travelers.count)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={activeHandoff.available ? "Continue booking" : "Booking currently unavailable"}
+                    aria-disabled={!canContinue || redirecting}
+                    disabled={!canContinue || redirecting}
+                    onClick={() => continueToOffer(selectedDeal?.offerId ?? selectedOffer.id)}
+                    className="inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#075EE8] px-4 text-[13px] font-semibold leading-5 text-white shadow-[0_2px_8px_rgba(7,94,232,0.18)] transition hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    data-flight-details-desktop-compact-cta
+                  >
+                    <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+                    {redirecting ? "Opening booking…" : "Continue booking"}
+                  </button>
+                </div>
               </div>
             </div>
             <div ref={mobileHeroRef} data-testid="flight-details-hero" className="relative flex min-h-[318px] flex-col justify-end overflow-hidden px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:justify-end sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
