@@ -236,7 +236,7 @@ export function DesktopFlightFilters({
       <div className="space-y-0 bg-transparent px-3 py-1">
         <section className="border-t border-slate-200/75 py-3 first:border-t-0">
           <SectionTitle>{t("price")}</SectionTitle>
-          <div className={cn("mb-2.5 grid grid-cols-2 gap-4 text-[12px] font-semibold leading-5 tabular-nums text-slate-950", isGuidedComfortable && "text-[13px]")}>
+          <div className={cn("mb-2.5 grid grid-cols-2 gap-4 text-[12px] font-medium leading-5 tabular-nums text-[#475569]", isGuidedComfortable && "text-[13px]")}>
             <span className="min-w-0">{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.min) : "—"}</span>
             <span className="min-w-0 text-right">{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.max) : "—"}</span>
           </div>
@@ -304,11 +304,11 @@ function Accordion({ title, emptyText, children }: { title: string; emptyText?: 
   const panelId = `desktop-flight-filter-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-panel`;
   const hasOptions = Boolean(children) && (!Array.isArray(children) || children.length > 0);
 
-  return <section className="border-t border-slate-200"><button type="button" aria-expanded={isOpen} aria-controls={panelId} className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-[#F5F8FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30" onClick={() => setIsOpen((current) => !current)}><span>{title}</span><ChevronDown aria-hidden="true" className={cn("h-4 w-4 text-slate-500 transition", isOpen && "rotate-180 text-[#004BB8]")} /></button><div id={panelId} className={cn("grid gap-0.5 pb-3", !isOpen && "hidden")}>{hasOptions ? children : <p className="py-1 text-xs text-slate-500">{emptyText}</p>}</div></section>;
+  return <section className="border-t border-slate-200"><button type="button" aria-expanded={isOpen} aria-controls={panelId} className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg py-2.5 text-left text-sm font-semibold text-[#334155] transition hover:bg-slate-100/70 hover:text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30" onClick={() => setIsOpen((current) => !current)}><span>{title}</span><ChevronDown aria-hidden="true" className={cn("h-4 w-4 text-slate-500 transition", isOpen && "rotate-180 text-[#004BB8]")} /></button><div id={panelId} className={cn("grid gap-0.5 pb-3", !isOpen && "hidden")}>{hasOptions ? children : <p className="py-1 text-xs text-slate-500">{emptyText}</p>}</div></section>;
 }
 
 function FacetRow({ label, count, secondaryLabel, rightLabel, checked, onChange }: { label: string; count?: number; secondaryLabel?: string; rightLabel?: string; checked: boolean; onChange: () => void }) {
   const trailingLabel = rightLabel ?? (typeof count === "number" ? String(count) : null);
 
-  return <label className={cn("flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-[14px] font-medium leading-5 transition-all", checked ? "font-semibold text-[#142033]" : "text-[#475569] hover:bg-slate-50 hover:text-[#142033]")}><input type="checkbox" className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue" checked={checked} onChange={onChange} /><span className="min-w-0 flex-1"><span className="block break-words">{label}</span>{secondaryLabel ? <span className="block break-words text-[12px] font-medium leading-4 text-[#64748B]">{secondaryLabel}</span> : null}</span>{trailingLabel ? <span className="ms-auto shrink-0 text-[13px] font-medium leading-5 tabular-nums text-[#64748B]">{trailingLabel}</span> : null}</label>;
+  return <label className={cn("flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-[14px] font-medium leading-5 transition-all", checked ? "font-semibold text-[#142033]" : "text-[#64748B] hover:bg-slate-100/70 hover:text-[#334155]")}><input type="checkbox" className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue" checked={checked} onChange={onChange} /><span className="min-w-0 flex-1"><span className="block break-words">{label}</span>{secondaryLabel ? <span className="block break-words text-[12px] font-medium leading-4 text-[#64748B]">{secondaryLabel}</span> : null}</span>{trailingLabel ? <span className="ms-auto shrink-0 text-[13px] font-medium leading-5 tabular-nums text-[#64748B]">{trailingLabel}</span> : null}</label>;
 }
