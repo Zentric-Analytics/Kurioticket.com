@@ -2006,3 +2006,15 @@ textarea {
     text-size-adjust: none;
   }
 }
+
+@media (min-width: 640px) {
+  .flight-results-edit-value {
+    font-family: inherit;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    line-height: 20px !important;
+    color: rgb(2 6 23) !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+}
