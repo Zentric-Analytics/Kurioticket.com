@@ -236,14 +236,20 @@ test("desktop change-flight fields reuse mobile Results typography and card toke
 
 
 test("desktop Flight edit-search values keep the shared 15px typography contract", () => {
-  const desktopStart = styles.indexOf("@media (min-width: 640px)");
+  const desktopRuleNeedle = `@media (min-width: 640px) {
+  .flight-results-edit-value {`;
+  const desktopStart = styles.indexOf(desktopRuleNeedle);
   assert.notEqual(desktopStart, -1);
 
-  const desktopStyles = styles.slice(desktopStart);
+  const desktopEnd = styles.indexOf("\n}\n", desktopStart);
+  assert.notEqual(desktopEnd, -1);
+
+  const desktopStyles = styles.slice(desktopStart, desktopEnd + 3);
   assert.match(
     desktopStyles,
     /\.flight-results-edit-value \{[\s\S]*?font-family: inherit;[\s\S]*?font-size: 15px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?line-height: 20px !important;[\s\S]*?color: rgb\(2 6 23\) !important;/,
   );
+  assert.doesNotMatch(desktopStyles, /@media \(max-width: 639px\)/);
 
   const start = source.indexOf("function renderStickySearchPopoutOverlay()");
   const end = source.indexOf("function renderCompactSearchForm", start);
