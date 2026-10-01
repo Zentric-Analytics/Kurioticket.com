@@ -3665,20 +3665,6 @@ function SearchDateCell({
   const weekdays = getWeekdays(intlLocale);
   const pickupParsed = parseIsoDate(pickupDate);
   const dropoffParsed = parseIsoDate(dropoffDate);
-  const rentalDayCount =
-    pickupParsed && dropoffParsed
-      ? Math.max(
-          0,
-          Math.round(
-            (dropoffParsed.getTime() - pickupParsed.getTime()) / 86_400_000,
-          ),
-        )
-      : 0;
-  const rentalDaysLabel = t("carsSearch.rentalDays").replace(
-    "{count}",
-    String(rentalDayCount),
-  );
-
   return (
     <div
       ref={wrapRef}
@@ -3725,11 +3711,6 @@ function SearchDateCell({
             <span className={cn("block truncate leading-4 lg:leading-5", !pickupDate && "text-slate-400")}>
               {summary}
             </span>
-            {showRentalDuration && rentalDayCount > 0 ? (
-              <span className="mt-0.5 block text-[11px] font-medium leading-3 text-slate-500 lg:text-[10px] lg:font-normal lg:leading-[13px] lg:tracking-normal lg:text-[#595959]">
-                {rentalDaysLabel}
-              </span>
-            ) : null}
           </span>
         )}
         {!groupedMobile ? (

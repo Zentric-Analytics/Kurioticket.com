@@ -12,10 +12,10 @@ test("CarCardSkeleton mirrors the compact mobile 40/60 card and conversion row",
   assert.match(carSkeleton, /h-11 w-24 rounded-\[10px\]/);
 });
 
-test("CarCardSkeleton preserves the existing desktop column contract", () => {
+test("CarCardSkeleton mirrors the compact standalone desktop price rail", () => {
   assert.match(carSkeleton, /data-car-card-skeleton-desktop/);
   assert.match(carSkeleton, /hidden md:grid/);
   assert.match(carSkeleton, /md:grid-cols-\[250px_minmax\(0,1fr\)\]/);
-  assert.match(carSkeleton, /lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\]/);
-  assert.match(carSkeleton, /xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]/);
+  assert.match(carSkeleton, /lg:grid-cols-\[250px_minmax\(0,1fr\)_180px\]/);
+  assert.match(carSkeleton, /xl:grid-cols-\[270px_minmax\(0,1fr\)_180px\]/);
 });
