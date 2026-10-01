@@ -20,7 +20,12 @@ test("desktop Flight Results adopts approved mobile-web visual rules without rep
 });
 
 test("desktop Flight filters follow the approved section hierarchy and selected-state language", () => {
-  const order = ['t("price")', 't("takeoff") / {t("landing")}', 't("duration")', 't("stops")', 't("airlines")', 't("airports")', 't("baggage") / {t("flexibleRefundable")}'].map((marker) => filters.indexOf(marker));
+  const primaryStart = filters.indexOf(
+    '"desktop-filter-sidebar cars-desktop-filter-surface border border-slate-200/80 bg-[#F2F4F8] p-0 shadow-none"',
+  );
+  assert.ok(primaryStart >= 0);
+  const primaryFilters = filters.slice(primaryStart);
+  const order = ['t("price")', 't("takeoff") / {t("landing")}', 't("duration")', 't("stops")', 't("airlines")', 't("airports")', 't("baggage") / {t("flexibleRefundable")}'].map((marker) => primaryFilters.indexOf(marker));
   assert.ok(order.every((position, index) => position >= 0 && (index === 0 || position > order[index - 1])));
   assert.match(filters, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
   assert.match(filters, /<Check className="h-3 w-3"/);
@@ -32,6 +37,21 @@ test("desktop Flight search airport values use the same medium typography as the
   assert.match(searchFields, /flightSearchFieldValueButtonClassName[\s\S]*?sm:text-\[15px\] sm:font-medium/);
   assert.match(searchFields, /className="h-6 w-full[^"]*text-\[15px\] font-medium/);
   assert.doesNotMatch(searchFields, /className="h-6 w-full[^"]*text-\[15px\] font-semibold/);
+});
+
+test("compact Flight time-mode switch stays in the compact panel until the slider changes", () => {
+  const compactStart = filters.indexOf("data-flight-desktop-compact-filter-surface");
+  const primaryStart = filters.indexOf(
+    '"desktop-filter-sidebar cars-desktop-filter-surface border border-slate-200/80 bg-[#F2F4F8] p-0 shadow-none"',
+  );
+  assert.ok(compactStart >= 0 && primaryStart > compactStart);
+  const compactFilters = filters.slice(compactStart, primaryStart);
+  const selectorStart = compactFilters.indexOf('{["takeoff", "landing"].map');
+  const selectorEnd = compactFilters.indexOf("</div>", selectorStart);
+  assert.ok(selectorStart >= 0 && selectorEnd > selectorStart);
+  const selector = compactFilters.slice(selectorStart, selectorEnd);
+  assert.match(selector, /onClick=\{\(\) => setTimeFilterMode\(mode as TimeFilterMode\)\}/);
+  assert.doesNotMatch(selector, /onFilterChange|onFilterCommit/);
 });
 
 test("standalone desktop Flight Results uses Cars-style compact filter parity after the primary sidebar scrolls away", () => {
