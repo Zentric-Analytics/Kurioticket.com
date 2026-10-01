@@ -16,6 +16,7 @@ test("Hotel alert UI requires a comparable canonical result", () => {
 test("Hotel alert reconciliation is bound to the complete search identity", () => {
   const alert = { id: "a", type: "HOTEL", status: "ACTIVE", query: plan.payload };
   assert.equal(matchingHotelPriceAlert([alert as never], plan), alert);
+  assert.equal(matchingHotelPriceAlert([{ ...alert, query: { ...plan.payload, hotelId: "hotel-42", hotelName: "Hotel Paris" } } as never], plan), undefined);
   assert.equal(matchingHotelPriceAlert([{ ...alert, query: { ...plan.payload, rooms: 2 } } as never], plan), undefined);
 });
 

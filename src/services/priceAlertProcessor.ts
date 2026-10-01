@@ -5,6 +5,7 @@ import { getPrisma } from "@/lib/prisma";
 import type { FlightSearchParams, HotelSearchParams, NormalizedFlightResult, NormalizedHotelResult } from "@/lib/types";
 import { searchFlights } from "@/services/travel/flightAggregator";
 import { searchHotels } from "@/services/travel/hotelAggregator";
+import type { KayakRequestContext } from "@/services/travel/kayakMetasearchProvider";
 import { searchCars } from "@/services/travel/carAggregator";
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { priceAlertEmail, sendOptionalEmail } from "@/services/emailService";
@@ -122,6 +123,7 @@ export async function processDuePriceAlerts(options: {
   checkDelayMs?: number;
   retryDelayMs?: number;
   featureEnabled?: () => Promise<boolean>;
+  kayak?: KayakRequestContext;
 } = {}): Promise<PriceAlertProcessingCounts> {
   if (!(await (options.featureEnabled ?? (() => isFeatureEnabled("PRICE_ALERT_PROCESSING_ENABLED")))())) {
     console.info("[feature-controls:processor-disabled]", { processor: "price-alerts" });
@@ -129,7 +131,7 @@ export async function processDuePriceAlerts(options: {
   }
   const now = options.now ?? new Date();
   const db = options.db ?? (getPrisma() as unknown as PriceAlertDb);
-  const resolvePrice = options.resolvePrice ?? resolveAlertPrice;
+  const resolvePrice = options.resolvePrice ?? ((alert: PriceAlertRecord) => resolveAlertPrice(alert, { kayak: options.kayak }));
   const sendEmail = options.sendEmail ?? sendOptionalEmail;
   const checkDelayMs = options.checkDelayMs ?? DEFAULT_CHECK_DELAY_MS;
   const retryDelayMs = options.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS;
@@ -225,7 +227,7 @@ export async function processDuePriceAlerts(options: {
   return counts;
 }
 
-export async function resolveAlertPrice(alert: PriceAlertRecord): Promise<ResolvedPrice> {
+export async function resolveAlertPrice(alert: PriceAlertRecord, options: { kayak?: KayakRequestContext } = {}): Promise<ResolvedPrice> {
   if (alert.type === "FLIGHT") {
     const search = alert.query as Partial<FlightSearchParams>;
     const result = await searchFlights(search as FlightSearchParams);
@@ -241,9 +243,11 @@ export async function resolveAlertPrice(alert: PriceAlertRecord): Promise<Resolv
     return selected;
   }
   const search = alert.query as Partial<HotelSearchParams> & { hotelId?: unknown };
-  const result = await searchHotels(search as HotelSearchParams);
-  if (result.results.length === 0) throw new Error("live_hotel_price_unavailable");
   const hotelId = typeof search.hotelId === "string" ? search.hotelId.trim() : "";
+  const result = await searchHotels(search as HotelSearchParams, {
+    kayak: hotelId.startsWith("kayak-sandbox:") ? options.kayak : undefined,
+  });
+  if (result.results.length === 0) throw new Error("live_hotel_price_unavailable");
   const selected = selectHotelPriceAlertResult(result.results, alert.currency, hotelId || undefined);
   if (selected === null) throw new Error("live_hotel_price_unavailable");
   return selected;

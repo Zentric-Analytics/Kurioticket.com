@@ -1,4 +1,5 @@
 import { processDuePriceAlerts, isAuthorizedCronRequest } from "@/services/priceAlertProcessor";
+import { getKayakClientIp } from "@/lib/kayak-client-ip";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,7 +10,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const counts = await processDuePriceAlerts();
+    const counts = await processDuePriceAlerts({ kayak: {
+      clientIp: getKayakClientIp(request),
+      userAgent: request.headers.get("user-agent") || undefined,
+    } });
     return Response.json(counts);
   } catch (error) {
     console.error("[price-alerts:cron-failed]", error instanceof Error ? { message: error.message } : { message: "Unknown cron failure" });

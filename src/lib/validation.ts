@@ -277,11 +277,12 @@ const hotelPriceAlertSchema = z.object({
   const explicitOccupancy = Number.isInteger(value.query.guests) && Number.isInteger(value.query.rooms);
   const hotelId = typeof value.query.hotelId === "string" ? value.query.hotelId.trim() : "";
   const hotelName = typeof value.query.hotelName === "string" ? value.query.hotelName.trim() : "";
-  if (!search.success || !explicitOccupancy || !hotelId || hotelId.length > 240 || !hotelName || hotelName.length > 200 || value.mode !== "TARGET" || value.targetPrice === undefined || search.data.destination.toLowerCase() !== value.destination.toLowerCase()) {
+  const validHotel = (!hotelId && !hotelName) || (Boolean(hotelId) && Boolean(hotelName) && hotelId.length <= 240 && hotelName.length <= 200);
+  if (!search.success || !explicitOccupancy || !validHotel || value.mode !== "TARGET" || value.targetPrice === undefined || search.data.destination.toLowerCase() !== value.destination.toLowerCase()) {
     context.addIssue({ code: "custom", path: ["query"], message: "A complete matching Hotel search and target price are required." });
     return z.NEVER;
   }
-  return buildHotelPriceAlertPayload(search.data, value.targetPrice, value.currency, { id: hotelId, name: hotelName });
+  return buildHotelPriceAlertPayload(search.data, value.targetPrice, value.currency, hotelId ? { id: hotelId, name: hotelName } : undefined);
 });
 
 const flightPriceAlertSchema = z.object({

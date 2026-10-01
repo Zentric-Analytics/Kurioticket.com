@@ -27,6 +27,7 @@ export function buildHotelPriceAlertPayload(plan: SearchPlan, targetPrice: numbe
 
 export function hotelPriceAlertMatchesPlan(alert: MobilePriceAlert, plan: SearchPlan) {
   if (alert.type !== "HOTEL") return false;
+  if (text(alert.query.hotelId)) return false;
   const expected = buildHotelPriceAlertPayload(plan, 1, "USD").query;
   const textFields = ["destination", "checkIn", "checkOut"] as const;
   const countFields = ["guests", "rooms"] as const;

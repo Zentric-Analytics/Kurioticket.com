@@ -71,7 +71,7 @@ const routeLabel = (alert: AccountPriceAlert) => {
 const formatDate = (value: string | null) => value ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(new Date(value)) : "Not available";
 const formatMoney = (value: string | null, currency: string | null) => value ? new Intl.NumberFormat(undefined, { style: "currency", currency: currency || "USD" }).format(Number(value)) : "Not available";
 
-function AlertCard({ alert, t }: { alert: AccountPriceAlert; t: Record<string, string> }) {
+function AlertCard({ alert, t, onToggle, isUpdating, updateFailed }: { alert: AccountPriceAlert; t: Record<string, string>; onToggle: (alert: AccountPriceAlert) => void; isUpdating: boolean; updateFailed: boolean }) {
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-5 text-start shadow-sm sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -93,6 +93,14 @@ function AlertCard({ alert, t }: { alert: AccountPriceAlert; t: Record<string, s
         <div><dt className="font-semibold text-slate-500">{text(t, "accountDashboard.priceAlerts.alert.created", "Created")}</dt><dd className="mt-1 text-slate-950">{formatDate(alert.createdAt)}</dd></div>
         <div><dt className="font-semibold text-slate-500">Last checked</dt><dd className="mt-1 text-slate-950">{formatDate(alert.lastCheckedAt)}</dd></div>
       </dl>
+      {(alert.status === "ACTIVE" || alert.status === "PAUSED") && (
+        <div className="mt-5 border-t border-slate-200 pt-4">
+          <button type="button" disabled={isUpdating} onClick={() => onToggle(alert)} className="focus-ring inline-flex min-h-10 items-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 transition hover:border-[#004BB8] hover:text-[#004BB8] disabled:cursor-wait disabled:opacity-60">
+            {isUpdating ? "Updating…" : alert.status === "ACTIVE" ? "Pause alert" : "Resume alert"}
+          </button>
+          {updateFailed && <p role="alert" className="mt-2 text-sm text-red-700">Could not update this alert. Try again.</p>}
+        </div>
+      )}
     </article>
   );
 }
@@ -106,6 +114,8 @@ export function PriceAlertsContent({ showAccountLink = false }: PriceAlertsConte
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [alerts, setAlerts] = useState<AccountPriceAlert[]>([]);
+  const [updatingAlertId, setUpdatingAlertId] = useState<string | null>(null);
+  const [failedAlertId, setFailedAlertId] = useState<string | null>(null);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
 
   async function loadAlerts(signal?: AbortSignal, showLoading = true) {
@@ -119,6 +129,28 @@ export function PriceAlertsContent({ showAccountLink = false }: PriceAlertsConte
       setLoadState("success");
     } catch (error) {
       if ((error as Error).name !== "AbortError") setLoadState("error");
+    }
+  }
+
+  async function toggleAlert(alert: AccountPriceAlert) {
+    if (updatingAlertId || (alert.status !== "ACTIVE" && alert.status !== "PAUSED")) return;
+    setUpdatingAlertId(alert.id);
+    setFailedAlertId(null);
+    try {
+      const response = await fetch(`/api/price-alerts/${encodeURIComponent(alert.id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: alert.status === "ACTIVE" ? "PAUSED" : "ACTIVE" }),
+      });
+      if (!response.ok) throw new Error("Alert update failed");
+      const body = await response.json() as { alert?: AccountPriceAlert };
+      const updatedAlert = body.alert;
+      if (!updatedAlert) throw new Error("Missing updated alert");
+      setAlerts((current) => current.map((item) => item.id === alert.id ? updatedAlert : item));
+    } catch {
+      setFailedAlertId(alert.id);
+    } finally {
+      setUpdatingAlertId(null);
     }
   }
 
@@ -172,7 +204,7 @@ export function PriceAlertsContent({ showAccountLink = false }: PriceAlertsConte
             {loadState === "loading" && <section className="px-2 py-10 text-center sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:px-8 sm:py-16 sm:shadow-sm lg:min-h-[34rem] lg:py-20" role="status"><p className="text-sm font-semibold text-slate-600">Loading price alerts…</p></section>}
             {(loadState === "error" || loadState === "unauthorized") && <section className="px-2 py-10 text-center sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:px-8 sm:py-16 sm:shadow-sm lg:min-h-[34rem] lg:py-20" role="alert"><h2 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.6rem]">{text(t, "accountDashboard.priceAlerts.error.title", "We could not load your alerts. Please try again.")}</h2><p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600 sm:text-base">{loadState === "unauthorized" ? "Please sign in to view your price alerts." : text(t, "accountDashboard.priceAlerts.error.body", "Refresh the page and try again.")}</p><button type="button" className="focus-ring mt-8 inline-flex min-h-12 items-center justify-center rounded-lg bg-[#004BB8] px-6 text-sm font-bold text-white shadow-sm transition hover:bg-[#021C2B]" onClick={() => loadAlerts()}>Retry</button></section>}
             {loadState === "success" && alerts.length === 0 && <section className="px-2 py-10 text-center sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:px-8 sm:py-16 sm:shadow-sm lg:min-h-[34rem] lg:py-20" aria-labelledby="empty-alerts-title"><EmptyStateIllustration /><h2 id="empty-alerts-title" className="mt-6 text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.6rem]">{t["accountDashboard.priceAlerts.empty.title"]}</h2><p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600 sm:text-base">{t["accountDashboard.priceAlerts.empty.body"]}</p><Link href="/flights" className="focus-ring mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#004BB8] px-6 text-sm font-bold text-white shadow-sm transition hover:bg-[#021C2B]"><Search className="h-5 w-5" aria-hidden="true" />{t["accountDashboard.priceAlerts.cta.flights"]}</Link></section>}
-            {loadState === "success" && alerts.length > 0 && <section className="space-y-4" aria-label="Saved price alerts">{visibleAlerts.length > 0 ? visibleAlerts.map((alert) => <AlertCard key={alert.id} alert={alert} t={t} />) : <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm font-semibold text-slate-600 shadow-sm">No alerts match this tab.</div>}</section>}
+            {loadState === "success" && alerts.length > 0 && <section className="space-y-4" aria-label="Saved price alerts">{visibleAlerts.length > 0 ? visibleAlerts.map((alert) => <AlertCard key={alert.id} alert={alert} t={t} onToggle={toggleAlert} isUpdating={updatingAlertId === alert.id} updateFailed={failedAlertId === alert.id} />) : <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm font-semibold text-slate-600 shadow-sm">No alerts match this tab.</div>}</section>}
             <aside className="hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:block" aria-label={t["accountDashboard.priceAlerts.featuresAriaLabel"]}><div className="space-y-7">{infoItems.map((item) => { const Icon = item.icon; return <div key={item.titleKey} className="flex gap-4"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#5CB6B2]/12 text-[#004BB8]"><Icon className="h-6 w-6" aria-hidden="true" /></div><div><h3 className="text-base font-semibold text-slate-900">{t[item.titleKey]}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{t[item.textKey]}</p></div></div>; })}</div></aside>
           </div>
         </div>

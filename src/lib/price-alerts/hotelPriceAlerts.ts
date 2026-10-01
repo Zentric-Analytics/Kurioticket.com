@@ -72,7 +72,7 @@ export function buildHotelPriceAlertPayload(
   search: HotelSearchParams,
   targetPrice: number,
   currency: string,
-  hotel: HotelAlertProperty,
+  hotel?: HotelAlertProperty,
 ) {
   return {
     type: "HOTEL" as const,
@@ -86,8 +86,7 @@ export function buildHotelPriceAlertPayload(
       checkOut: search.checkOut,
       guests: search.guests,
       rooms: search.rooms,
-      hotelId: hotel.id.trim(),
-      hotelName: hotel.name.trim(),
+      ...(hotel ? { hotelId: hotel.id.trim(), hotelName: hotel.name.trim() } : {}),
     },
   };
 }

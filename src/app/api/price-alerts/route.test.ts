@@ -88,6 +88,9 @@ test("Hotel price alert schema requires and preserves complete matching stay con
   assert.equal(priceAlertSchema.safeParse({ ...input, query: { ...input.query, rooms: undefined } }).success, false);
   assert.equal(priceAlertSchema.safeParse({ ...input, destination: "London" }).success, false);
   assert.equal(priceAlertSchema.safeParse({ ...input, query: { ...input.query, hotelId: undefined } }).success, false);
+  const native = priceAlertSchema.safeParse({ ...input, query: { destination: "Paris", checkIn: "2099-04-01", checkOut: "2099-04-03", guests: 2, rooms: 1 } });
+  assert.equal(native.success, true);
+  if (native.success) assert.deepEqual(native.data.query, { destination: "Paris", checkIn: "2099-04-01", checkOut: "2099-04-03", guests: 2, rooms: 1 });
 });
 
 

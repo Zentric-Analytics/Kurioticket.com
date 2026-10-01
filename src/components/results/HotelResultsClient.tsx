@@ -1670,12 +1670,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                 <div className="relative z-10 min-w-0 overflow-visible">
                   <HotelSearchBar
                     key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
-                    initialDestination={body.destination}
-                    initialDestinationId={body.destinationId}
-                    initialCheckIn={body.checkIn}
-                    initialCheckOut={body.checkOut}
-                    initialGuests={body.guests}
-                    initialRooms={body.rooms}
+                    initialDestination={activeDesktopHotelSearchDraft.destination}
+                    initialDestinationId={activeDesktopHotelSearchDraft.destinationId}
+                    initialCheckIn={activeDesktopHotelSearchDraft.checkIn}
+                    initialCheckOut={activeDesktopHotelSearchDraft.checkOut}
+                    initialGuests={activeDesktopHotelSearchDraft.guests}
+                    initialRooms={activeDesktopHotelSearchDraft.rooms}
                     initialSort={body.sort}
                     errorRole="alert"
                     compact
