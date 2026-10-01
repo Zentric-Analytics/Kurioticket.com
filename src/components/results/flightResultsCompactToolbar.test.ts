@@ -265,3 +265,28 @@ test("desktop Flight edit-search values keep the shared 15px typography contract
   );
   assert.match(popout, /flight-results-edit-value mt-0\.5/);
 });
+
+
+test("main desktop Results search uses one shared value typography contract", () => {
+  const start = source.indexOf('function renderCompactSearchForm(placement: "mobile" | "desktop")');
+  const end = source.indexOf("\n  function ", start + 1);
+  assert.ok(start >= 0 && end > start);
+  const compact = source.slice(start, end);
+
+  assert.match(
+    compact,
+    /id="results-origin"[\s\S]*?className="flight-results-edit-value h-6/,
+  );
+  assert.match(
+    compact,
+    /id="results-destination"[\s\S]*?className="flight-results-edit-value h-6/,
+  );
+  assert.equal(
+    compact.match(/className="flight-results-edit-value flex min-w-0 items-center gap-2"/g)?.length,
+    2,
+  );
+  assert.doesNotMatch(
+    compact,
+    /id="results-(?:origin|destination)"[\s\S]*?text-\[16px\][\s\S]*?md:text-sm/,
+  );
+});
