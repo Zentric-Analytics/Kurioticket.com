@@ -27,6 +27,7 @@ type TimeBounds = {
 
 export type DesktopFlightFiltersProps = {
   presentationMode?: "default" | "deals-guided";
+  compact?: boolean;
   activeFilterCount: number;
   maxPrice: number;
   setMaxPrice: (value: number) => void;
@@ -111,6 +112,7 @@ function toggleFilterValue(value: string, setter: Dispatch<SetStateAction<string
 
 export function DesktopFlightFilters({
   presentationMode = "default",
+  compact = false,
   activeFilterCount,
   maxPrice,
   setMaxPrice,
@@ -196,7 +198,10 @@ export function DesktopFlightFilters({
     <div
       data-flight-desktop-filter-surface
       className={cn(
-        "desktop-filter-sidebar cars-desktop-filter-surface border border-slate-200/80 bg-[#F2F4F8] p-0 shadow-none rounded-none",
+        "desktop-filter-sidebar cars-desktop-filter-surface border border-slate-200/80 bg-[#F2F4F8] p-0 shadow-none",
+        compact
+          ? "max-h-full w-full overflow-y-auto rounded-2xl overscroll-contain"
+          : "rounded-none",
         isGuidedComfortable && "bg-[#F2F4F8]",
       )}
     >
