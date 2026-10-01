@@ -257,6 +257,18 @@ test("desktop detail items stay in one readable three-section panel", () => {
   assert.match(dividerRule, /inset-inline-start:\s*-0\.375rem/);
   assert.match(dividerRule, /width:\s*1px/);
   assert.match(dividerRule, /background:\s*#d8e1ec/);
+
+  const narrowContainerStart = globalsCss.indexOf("@container (max-width: 759px)");
+  const narrowDesktopStart = globalsCss.indexOf(
+    "@media (min-width: 1024px)",
+    globalsCss.indexOf(".flight-card-detail-item", narrowContainerStart),
+  );
+  const narrowDesktopItemRule = ruleBody(
+    globalsCss,
+    ".flight-card-detail-item",
+    narrowDesktopStart,
+  );
+  assert.match(narrowDesktopItemRule, /padding-inline:\s*0\.375rem/);
 });
 
 test("result-card fare rule stays concise and leaves provider terms to details", () => {
