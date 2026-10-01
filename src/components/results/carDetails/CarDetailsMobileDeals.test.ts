@@ -69,7 +69,7 @@ test("mobile web KAYAK dock opens the selected sandbox deal in a secure new tab"
   const dock = details.slice(details.indexOf("function MobileBookingDock"));
   assert.match(
     details,
-    /primaryAction\.kind === "sandbox-handoff"[\s\S]*?sandboxBookingUrl\(primaryOffer\?\.bookingUrl\)/,
+    /presentation === "standalone-content"[\s\S]*?car\.inventorySource === "kayak-sandbox"[\s\S]*?sandboxBookingUrl\(primaryOffer\?\.bookingUrl\)/,
   );
   assert.match(details, /action=\{effectivePrimaryAction\}/);
   assert.match(dock, /action\.kind === "sandbox-handoff"/);

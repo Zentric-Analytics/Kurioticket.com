@@ -610,7 +610,11 @@ test("desktop KAYAK booking summary keeps the secure handoff and Continue deal l
 
   assert.match(
     clientSource,
-    /selectedSandboxHref[\s\S]*?label: copy\("carDetails\.continueDeal"\),[\s\S]*?href: selectedSandboxHref/,
+    /const standaloneSandbox =[\s\S]*?presentation === "standalone-content"[\s\S]*?car\.inventorySource === "kayak-sandbox"/,
+  );
+  assert.match(
+    clientSource,
+    /selectedSandboxHref[\s\S]*?kind: "sandbox-handoff"[\s\S]*?label: copy\("carDetails\.continueDeal"\),[\s\S]*?href: selectedSandboxHref/,
   );
 });
 
@@ -646,7 +650,11 @@ test("source contract keeps unsupported mobile deals inert while KAYAK opens sec
   assert.match(clientSource, /label: copy\("carDetails\.continueDeal"\)/);
   assert.match(
     clientSource,
-    /selectedSandboxHref[\s\S]*?\.\.\.primaryAction,[\s\S]*?label: copy\("carDetails\.continueDeal"\),[\s\S]*?href: selectedSandboxHref/,
+    /selectedSandboxHref[\s\S]*?kind: "sandbox-handoff"[\s\S]*?label: copy\("carDetails\.continueDeal"\),[\s\S]*?href: selectedSandboxHref/,
+  );
+  assert.match(
+    clientSource,
+    /const actionForOffer = \(offer: CarOffer\): CarDetailsPrimaryAction =>[\s\S]*?sandboxBookingUrl\(offer\.bookingUrl\)/,
   );
   assert.doesNotMatch(clientSource, /label: copy\("continueToProvider"\)/);
 });

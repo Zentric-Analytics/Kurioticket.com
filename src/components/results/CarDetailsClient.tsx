@@ -195,31 +195,32 @@ export function CarDetailsExperience({
       ? comparisonOffers.find((candidate) => candidate.id === selectedOfferId) ??
         canonicalPrimaryOffer
       : canonicalPrimaryOffer;
-  const selectedSandboxHref =
-    primaryAction.kind === "sandbox-handoff"
-      ? sandboxBookingUrl(primaryOffer?.bookingUrl)
-      : null;
-  const effectivePrimaryAction: CarDetailsPrimaryAction =
-    primaryAction.kind === "sandbox-handoff"
-      ? selectedSandboxHref
-        ? {
-            ...primaryAction,
-            label: copy("carDetails.continueDeal"),
-            href: selectedSandboxHref,
-          }
-        : {
-            kind: "standalone-disabled-provider",
-            label: copy("carDetails.continueDeal"),
-          }
-      : primaryAction;
+  const standaloneSandbox =
+    presentation === "standalone-content" &&
+    car.inventorySource === "kayak-sandbox";
+  const selectedSandboxHref = standaloneSandbox
+    ? sandboxBookingUrl(primaryOffer?.bookingUrl)
+    : null;
+  const effectivePrimaryAction: CarDetailsPrimaryAction = standaloneSandbox
+    ? selectedSandboxHref
+      ? {
+          kind: "sandbox-handoff",
+          label: copy("carDetails.continueDeal"),
+          href: selectedSandboxHref,
+        }
+      : {
+          kind: "standalone-disabled-provider",
+          label: copy("carDetails.continueDeal"),
+        }
+    : primaryAction;
   const actionForOffer = (offer: CarOffer): CarDetailsPrimaryAction => {
-    if (primaryAction.kind !== "sandbox-handoff") {
+    if (!standaloneSandbox) {
       return effectivePrimaryAction;
     }
     const href = sandboxBookingUrl(offer.bookingUrl);
     return href
       ? {
-          ...primaryAction,
+          kind: "sandbox-handoff",
           label: copy("carDetails.continueDeal"),
           href,
         }
