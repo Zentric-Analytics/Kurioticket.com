@@ -63,6 +63,29 @@ test("standalone Cars Results keeps the mobile canvas but uses the homepage-like
   );
 });
 
+test("desktop Cars results body is compact, centered, and keeps shared surfaces aligned", () => {
+  assert.match(
+    results,
+    /data-cars-results-scroll-region[\s\S]*?className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-10 sm:pt-6 lg:max-w-\[1080px\]"/,
+  );
+  assert.match(
+    results,
+    /className="grid gap-5 lg:grid-cols-\[232px_minmax\(0,1fr\)\] xl:grid-cols-\[236px_minmax\(0,1fr\)\]"/,
+  );
+  assert.match(
+    results,
+    /mx-auto max-w-\[1080px\] px-4 py-5 sm:py-6[\s\S]*?lg:grid-cols-\[232px_minmax\(0,1fr\)\] xl:grid-cols-\[236px_minmax\(0,1fr\)\]/,
+  );
+  assert.match(
+    alert,
+    /data-cars-price-alert[\s\S]*?className="mb-1 w-full min-w-0 max-w-full/,
+  );
+  assert.match(
+    card,
+    /<article[\s\S]*?relative w-full overflow-hidden/,
+  );
+});
+
 test("desktop Cars filters inherit the mobile F2F4F8 section surface without changing mobile filters", () => {
   assert.match(
     results,
