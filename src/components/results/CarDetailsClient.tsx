@@ -74,6 +74,13 @@ const providerValue = (value?: string) => {
     : trimmed;
 };
 
+const compactBookingProviderName = (offer: CarOffer) => {
+  const provider =
+    providerValue(offer.bookingProviderName) ||
+    providerValue(offer.rentalCompanyName);
+  return provider === "Kurioticket static fixture" ? "Kurioticket" : provider;
+};
+
 const Heading = ({
   level,
   className,
@@ -699,6 +706,7 @@ function DesktopCompactBookingAction({
   action: CarDetailsPrimaryAction;
 }) {
   const total = price(offer.totalPrice, offer.currency);
+  const providerName = compactBookingProviderName(offer);
   const actionClassName =
     "focus-ring inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-blue px-3 text-[12px] font-bold leading-5 text-white shadow-[0_2px_8px_rgba(7,94,232,0.18)] xl:text-[13px]";
 
@@ -707,15 +715,35 @@ function DesktopCompactBookingAction({
       className="flex shrink-0 items-center gap-2 border-s border-slate-300 ps-3"
       data-car-details-desktop-compact-booking
     >
-      <p
-        className="max-w-[104px] overflow-hidden text-ellipsis whitespace-nowrap text-right text-[14px] font-extrabold leading-5 tabular-nums text-[#102A43] xl:text-[15px]"
-        dir="ltr"
-        title={total.title}
-        aria-label={total.ariaLabel}
-        data-car-details-desktop-compact-price
+      <div
+        className="min-w-0 max-w-[132px] text-right"
+        data-car-details-desktop-compact-summary
       >
-        {total.formatted}
-      </p>
+        <p
+          className="overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-extrabold leading-[18px] tabular-nums text-[#102A43] xl:text-[15px]"
+          dir="ltr"
+          title={total.title}
+          aria-label={total.ariaLabel}
+          data-car-details-desktop-compact-price
+        >
+          {total.formatted}
+        </p>
+        <p
+          className="overflow-hidden text-ellipsis whitespace-nowrap text-[9px] font-medium leading-[11px] text-[#56658E] xl:text-[10px]"
+          data-car-details-desktop-compact-total-label
+        >
+          {copy("carDetails.bookingSummary")}
+        </p>
+        {providerName ? (
+          <p
+            className="overflow-hidden text-ellipsis whitespace-nowrap text-[9px] font-medium leading-[11px] text-[#59636A] xl:text-[10px]"
+            title={providerName}
+            data-car-details-desktop-compact-provider
+          >
+            {providerName}
+          </p>
+        ) : null}
+      </div>
       {action.kind === "sandbox-handoff" ? (
         <a
           href={action.href}
