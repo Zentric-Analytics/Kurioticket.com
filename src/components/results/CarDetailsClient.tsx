@@ -840,7 +840,7 @@ export function CarDetailsClient({
     <main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:bg-[#F8FAFC] lg:pb-0">
       <CarsRouteLoadingOverlay active={mobileResultsPending} />
       <section className="bg-transparent lg:pb-0" data-car-details-desktop-surface>
-        <div className="page-shell py-0 lg:py-6">
+        <div className="page-shell py-0 lg:py-6 lg:max-w-[1080px]" data-car-details-body-shell>
           <div>
             <CarDetailsExperience
               car={car}
