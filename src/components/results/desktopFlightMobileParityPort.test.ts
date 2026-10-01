@@ -34,10 +34,17 @@ test("desktop Flight search airport values use the same medium typography as the
   assert.doesNotMatch(searchFields, /className="h-6 w-full[^"]*text-\[15px\] font-semibold/);
 });
 
-test("standalone desktop Flight Results renders only the primary desktop filter sidebar", () => {
-  assert.match(results, /<DesktopFlightFilters/);
-  assert.doesNotMatch(results, /layout="compact"/);
-  assert.doesNotMatch(results, /showDesktopFilterShortcut|desktopCompactFilterRef|desktopFilterSentinelRef/);
+test("standalone desktop Flight Results uses Cars-style compact filter parity after the primary sidebar scrolls away", () => {
+  assert.match(results, /renderDesktopFlightFilters\(true\)/);
+  assert.match(results, /desktopCompactFilterRef/);
+  assert.match(results, /desktopFilterSentinelRef/);
+  assert.match(filters, /data-flight-desktop-compact-filter-surface/);
+  assert.match(filters, /openCompactSection/);
+  assert.match(filters, /setOpenCompactSection\(\(current\) => \(current === section \? null : section\)\)/);
+  assert.match(filters, /desktop-filter-sidebar__title[\s\S]*?SlidersHorizontal[\s\S]*?size=\{15\}/);
+  assert.match(filters, /min-h-9 w-full[\s\S]*?text-\[14px\][\s\S]*?ChevronDown/);
+  assert.match(filters, /min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain/);
+  assert.match(filters, /idPrefix \? "desktop-flight-filter-compact"/);
 });
 
 test("desktop nearby fares keep seven dates and arrows but use mobile-like individual tiles", () => {
@@ -47,6 +54,11 @@ test("desktop nearby fares keep seven dates and arrows but use mobile-like indiv
   assert.match(results, /text-\[11px\] font-medium uppercase leading-\[14px\]/);
   assert.match(results, /text-\[10px\] font-medium uppercase leading-\[13px\] tracking-\[0\.05em\]/);
   assert.match(results, /data-desktop-cheaper-nearby/);
+  const desktopNearby = results.match(/data-desktop-cheaper-nearby[\s\S]*?className="([^"]*)"[\s\S]*?>\s*Cheaper nearby:/)?.[1] ?? "";
+  assert.match(desktopNearby, /px-0/);
+  assert.match(desktopNearby, /text-\[13px\] font-medium/);
+  assert.doesNotMatch(desktopNearby, /rounded-full|bg-white|ring-slate-200/);
+  assert.match(results, /Cheaper nearby: \{formatFareStripDateLabel\(cheaperNearbyFare\.date, calendarLocale\)\} · Save \{cheaperNearbyFare\.savings\}/);
 });
 
 test("desktop Flight result cards use the lighter hierarchy without changing MobileFlightCard", () => {
