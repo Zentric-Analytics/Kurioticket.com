@@ -56,9 +56,14 @@ test("results desktop search typography mirrors the polished mobile-web hierarch
   );
 });
 
-test("results search preserves both desktop grid geometries and outer footprint", () => {
+test("results search preserves both desktop grid geometries with the refined compact height", () => {
   assert.match(source, /mx-auto w-full min-w-0 max-w-5xl/);
-  assert.match(source, /lg:min-h-\[58px\]/);
+  const fieldShellClass = source.match(
+    /const fieldShellClass =\s*\n\s*"([^"]+)";/,
+  )?.[1];
+  assert.ok(fieldShellClass, "fieldShellClass should remain defined");
+  assert.match(fieldShellClass, /lg:min-h-\[54px\]/);
+  assert.doesNotMatch(fieldShellClass, /lg:min-h-\[58px\]/);
   assert.match(
     source,
     /minmax\(0,1\.18fr\).*minmax\(0,1\.08fr\).*_118px_116px/,
@@ -67,6 +72,21 @@ test("results search preserves both desktop grid geometries and outer footprint"
   assert.match(
     source,
     /returnToDifferentLocation\s*\? differentReturnSearchGridClass/,
+  );
+});
+
+test("desktop-full Cars Results search uses a softer off-white surface and tighter outer padding", () => {
+  assert.match(
+    source,
+    /rounded-\[1\.15rem\] border border-slate-200 bg-\[#F8FAFC\] p-1 shadow-\[0_18px_42px_-30px_rgba\(15,23,42,0\.58\)\] ring-1 ring-slate-200\/50/,
+  );
+  assert.match(
+    source,
+    /lg:h-auto lg:min-h-\[54px\] lg:w-\[calc\(100%-8px\)\]/,
+  );
+  assert.doesNotMatch(
+    source,
+    /rounded-\[1\.15rem\] border border-slate-200 bg-white p-1\.5/,
   );
 });
 

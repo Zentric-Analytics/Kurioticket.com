@@ -31,30 +31,26 @@ test("location combobox retains keyboard selection semantics", () => {
   assert.match(source, /aria-activedescendant=\{activeId\}/);
 });
 
-test("desktop location suggestions require a user-edited non-empty query", () => {
-  assert.match(source, /open && hasUserEditedQuery && trimmedQuery\.length > 0/);
-  assert.match(source, /if \(usesDesktopPanel && \(!hasUserEditedQuery \|\| !trimmedQuery\)\)/);
-  assert.match(source, /if \(!usesDesktopPanel\) setOpen\(true\)/);
-  assert.doesNotMatch(source, /onFocus=\{\(\) => setOpen\(true\)\}/);
+test("desktop Cars location dropdown opens immediately on focus or click like Hotels", () => {
+  assert.match(source, /const showPanel = open;/);
+  assert.match(source, /onFocus=\{\(\) => setOpen\(true\)\}/);
+  assert.match(source, /onClick=\{\(\) => setOpen\(true\)\}/);
+  assert.doesNotMatch(source, /hasUserEditedQuery/);
   assert.match(source, /new URLSearchParams\(\{ q: trimmedQuery, limit: "8" \}\)/);
 });
 
-test("clearing a desktop location query immediately removes stale search state", () => {
-  const emptyQueryBranch = source.slice(
-    source.indexOf("if (!nextQuery)"),
-    source.indexOf("return;", source.indexOf("if (!nextQuery)")) + "return;".length,
+test("desktop Cars location dropdown keeps working for existing, edited, and empty values", () => {
+  assert.doesNotMatch(
+    source,
+    /usesDesktopPanel && \(!hasUserEditedQuery \|\| !trimmedQuery\)/,
   );
-  assert.match(emptyQueryBranch, /requestIdRef\.current \+= 1/);
-  assert.match(emptyQueryBranch, /abortRef\.current\?\.abort\(\)/);
-  assert.match(emptyQueryBranch, /setSuggestions\(\[\]\)/);
-  assert.match(emptyQueryBranch, /setLoading\(false\)/);
-  assert.match(emptyQueryBranch, /setError\(false\)/);
-  assert.match(emptyQueryBranch, /setOpen\(false\)/);
-});
-
-test("desktop empty focus never renders the Popular Locations experience", () => {
-  assert.match(source, /const label = usesDesktopPanel\s*\? strings\.locationSuggestions/);
+  assert.match(
+    source,
+    /const onChange = \(event: ChangeEvent<HTMLInputElement>\) => \{[\s\S]*?onValueChange\(event\.target\.value\);[\s\S]*?setOpen\(true\);/,
+  );
+  assert.doesNotMatch(source, /setOpen\(false\)[\s\S]*?if \(!nextQuery\)/);
   assert.match(source, /aria-expanded=\{showPanel\}/);
+  assert.match(source, /const label = usesDesktopPanel\s*\? strings\.locationSuggestions/);
 });
 
 test("desktop pickup and return use one input-anchored request and selection lifecycle", () => {
@@ -67,7 +63,7 @@ test("desktop pickup and return use one input-anchored request and selection lif
   );
   assert.match(
     source,
-    /const selectSuggestion = \(suggestion: CarLocationSuggestion\) => \{[\s\S]*?onValueChange\(suggestion\.value\);[\s\S]*?setHasUserEditedQuery\(false\);[\s\S]*?close\(\);/,
+    /const selectSuggestion = \(suggestion: CarLocationSuggestion\) => \{[\s\S]*?onValueChange\(suggestion\.value\);[\s\S]*?onSelect\?\.\(suggestion\);[\s\S]*?close\(\);/,
   );
   assert.match(source, /onClick=\{\(\) => selectSuggestion\(suggestion\)\}/);
 });
