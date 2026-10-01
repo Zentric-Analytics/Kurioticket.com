@@ -89,7 +89,7 @@ test("source contract keeps the guided desktop summary and mobile safe-area book
   assert.doesNotMatch(clientSource, /data-car-details-bottom-booking-bar/);
   assert.match(
     clientSource,
-    /grid items-start gap-5 lg:grid-cols-\[minmax\(0,1fr\)_320px\].*xl:grid-cols-\[minmax\(0,1fr\)_340px\]/,
+    /presentation === "standalone-content" \? "lg:grid-cols-1 lg:gap-0" : "lg:grid-cols-\[minmax\(0,1fr\)_320px\] lg:gap-6 xl:grid-cols-\[minmax\(0,1fr\)_340px\]"/,
   );
 
   const summary = clientSource.slice(
@@ -211,7 +211,7 @@ test("standalone car details restore polished Hotels-style section headings", ()
   assert.match(comparison, /data-desktop-car-deal-list/);
   assert.match(
     comparison,
-    /mt-3 hidden w-\[calc\(100%-24rem\)\] min-w-\[640px\] max-w-\[820px\] space-y-2 lg:block/,
+    /mt-3 hidden w-full space-y-2 lg:mx-auto lg:block lg:max-w-\[820px\]/,
   );
   assert.match(
     comparison,
@@ -266,13 +266,13 @@ test("standalone car details restore polished Hotels-style section headings", ()
     location,
     /lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent/,
   );
-  assert.match(location, /className="p-4 lg:p-0" data-car-location-timeline/);
+  assert.match(location, /className="p-4 lg:p-0 lg:text-center" data-car-location-timeline/);
 });
 
 test("desktop car details place the polished identity below the hero and keep compact controls balanced", () => {
   assert.match(heroSource, /data-car-details-desktop-centered-image/);
-  assert.match(heroSource, /lg:max-w-\[900px\] lg:bg-\[#F8FAFC\]/);
-  assert.match(heroSource, /sizes={reserveMobileControlSafeZone \? "900px" : "760px"}/);
+  assert.match(heroSource, /lg:max-w-\[700px\] lg:bg-\[#F8FAFC\]/);
+  assert.match(heroSource, /sizes={reserveMobileControlSafeZone \? "700px" : "760px"}/);
   assert.match(heroSource, /data-car-details-desktop-identity-row/);
   assert.match(
     heroSource,
@@ -280,7 +280,7 @@ test("desktop car details place the polished identity below the hero and keep co
   );
   assert.match(
     heroSource,
-    /reserveMobileControlSafeZone \? "lg:mx-auto lg:max-w-\[900px\] lg:justify-center lg:text-center" : "lg:justify-between"/,
+    /reserveMobileControlSafeZone \? "lg:mx-auto lg:max-w-\[820px\] lg:justify-center lg:text-center" : "lg:justify-between"/,
   );
   assert.match(
     heroSource,
@@ -292,7 +292,7 @@ test("desktop car details place the polished identity below the hero and keep co
   assert.match(heroSource, /\[&_h1\]:truncate/);
   assert.match(
     heroSource,
-    /data-car-details-specifications[\s\S]*?lg:max-w-\[900px\][\s\S]*?lg:grid-cols-2[\s\S]*?lg:gap-x-24/,
+    /data-car-details-specifications[\s\S]*?lg:max-w-\[820px\][\s\S]*?lg:grid-cols-2[\s\S]*?lg:gap-x-24/,
   );
   assert.doesNotMatch(heroSource, /position: fixed !important/);
 
@@ -645,4 +645,52 @@ test("mobile-web car detail transmission uses the dedicated gearbox icon without
     heroSource,
     /mobileTransmissionIcon[\s\S]*?lg:hidden[\s\S]*?<CarFront[\s\S]*?hidden shrink-0 text-slate-600 lg:block/,
   );
+});
+
+test("desktop standalone section headings and supporting copy are centered", () => {
+  const comparison = sourceBetween(
+    clientSource,
+    "function CarPriceComparisonSection",
+    "function CarLocationSection",
+  );
+  assert.match(
+    comparison,
+    /lg:mx-auto lg:w-full lg:max-w-\[820px\][\s\S]*?lg:text-center/,
+  );
+  assert.match(comparison, /lg:text-center lg:text-\[16px\]/);
+  assert.match(comparison, /lg:text-center lg:text-\[14px\]/);
+  assert.match(comparison, /mt-3 hidden w-full space-y-2 lg:mx-auto lg:block lg:max-w-\[820px\]/);
+  assert.match(comparison, /data-car-details-desktop-deal-summary[\s\S]*?lg:text-center/);
+  assert.match(comparison, /data-car-details-desktop-deal-benefits[\s\S]*?lg:justify-center/);
+
+  const pickup = sourceBetween(
+    clientSource,
+    "function PickupReturnSection",
+    "function MobileBookingDock",
+  );
+  assert.match(
+    pickup,
+    /lg:mx-auto lg:w-full lg:max-w-\[820px\][\s\S]*?lg:text-center/,
+  );
+  assert.match(pickup, /lg:justify-center lg:text-\[14px\]/);
+
+  const location = sourceBetween(
+    clientSource,
+    "function CarLocationSection",
+    "function BookingSummary",
+  );
+  assert.match(
+    location,
+    /lg:mx-auto lg:w-full lg:max-w-\[820px\][\s\S]*?lg:text-center/,
+  );
+  assert.match(location, /lg:justify-center/);
+  assert.match(location, /data-car-location-timeline[\s\S]*?lg:text-center/);
+  assert.match(location, /lg:max-w-\[720px\] lg:list-none lg:ps-0 lg:text-center/);
+});
+
+test("standalone desktop car image is smaller than the centered content rail", () => {
+  assert.match(heroSource, /lg:max-w-\[700px\] lg:bg-\[#F8FAFC\]/);
+  assert.match(heroSource, /lg:h-\[clamp\(17rem,24vw,21rem\)\]/);
+  assert.match(heroSource, /sizes={reserveMobileControlSafeZone \? "700px" : "760px"}/);
+  assert.match(heroSource, /lg:max-w-\[820px\] lg:justify-center lg:text-center/);
 });

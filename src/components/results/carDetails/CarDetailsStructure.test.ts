@@ -118,14 +118,14 @@ test("standalone desktop tabs place panel content in the former heading position
   assert.match(navSource, /lg:sticky lg:top-0/);
   assert.match(
     navSource,
-    /desktopStuck \? "lg:grid lg:grid-cols-\[auto_minmax\(0,1fr\)_auto\] lg:items-stretch lg:gap-4/,
+    /desktopStuck \? "lg:grid lg:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\] lg:items-stretch lg:gap-4/,
   );
   assert.match(
     navSource,
-    /desktopStuck \? "relative col-start-2 row-start-1 justify-self-center translate-x-0" : "absolute left-0 top-0 translate-x-0"/,
+    /desktopStuck \? "relative col-start-2 row-start-1 justify-self-center translate-x-0" : "absolute left-1\/2 top-0 -translate-x-1\/2"/,
   );
   assert.match(navSource, /data-balanced={desktopStuck \? "true" : "false"}/);
-  assert.doesNotMatch(navSource, /left-1\/2 -translate-x-1\/2/);
+  assert.match(navSource, /left-1\/2 top-0 -translate-x-1\/2/);
   assert.match(
     navSource,
     /border-\[#192024\] text-\[#192024\]/,
@@ -141,7 +141,7 @@ test("standalone desktop tabs place panel content in the former heading position
   assert.match(navSource, /data-car-details-desktop-sticky-back/);
   assert.match(
     navSource,
-    /desktopStuck \? "relative col-start-1 row-start-1 flex min-h-16 items-center self-stretch translate-x-0 translate-y-0 opacity-100" : "pointer-events-none absolute left-0 top-1\/2 -translate-x-1 -translate-y-1\/2 opacity-0"/,
+    /desktopStuck \? "relative col-start-1 row-start-1 flex min-h-16 items-center self-stretch justify-self-start translate-x-0 translate-y-0 opacity-100" : "pointer-events-none absolute left-0 top-1\/2 -translate-x-1 -translate-y-1\/2 opacity-0"/,
   );
   assert.match(
     navSource,
@@ -152,7 +152,7 @@ test("standalone desktop tabs place panel content in the former heading position
   assert.match(navSource, /data-car-details-desktop-sticky-backdrop/);
   assert.match(
     navSource,
-    /fixed inset-x-0 top-0 z-0 hidden h-16 border-b border-slate-200 bg-\[#F8FAFC\]\/95/,
+    /fixed inset-x-0 top-0 z-0 hidden h-16 bg-\[#F8FAFC\]\/95/,
   );
   assert.match(
     navSource,
@@ -160,7 +160,7 @@ test("standalone desktop tabs place panel content in the former heading position
   );
   assert.match(
     navSource,
-    /desktopStuck \? "lg:border-b lg:border-transparent lg:bg-transparent" : "lg:border-b lg:border-slate-200 lg:bg-\[#F8FAFC\]"/,
+    /desktopStuck \? "lg:grid[\s\S]*?lg:bg-transparent" : "lg:block lg:bg-\[#F8FAFC\]"/,
   );
   assert.doesNotMatch(
     layoutSource,
@@ -184,4 +184,30 @@ test("guided Car details renders content-only experience with guided headings", 
   assert.match(guidedSource, /modelHeadingLevel=\{2\}/);
   assert.match(guidedSource, /sectionHeadingLevel=\{3\}/);
   assert.match(guidedSource, /itemHeadingLevel=\{4\}/);
+});
+
+test("standalone desktop Cars details use a centered single-column composition", () => {
+  assert.match(
+    experienceSource,
+    /presentation === "standalone-content" \? "lg:grid-cols-1 lg:gap-0" : "lg:grid-cols-\[minmax\(0,1fr\)_320px\]/,
+  );
+  assert.match(
+    experienceSource,
+    /presentation === "standalone-content" \? "space-y-0 lg:mx-auto lg:w-full lg:max-w-\[900px\] lg:space-y-5"/,
+  );
+  assert.match(
+    experienceSource,
+    /mx-auto flex w-full max-w-\[820px\] items-center justify-between px-2/,
+  );
+
+  const navSource = readFileSync(
+    new URL("./CarDetailsSectionNav.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(navSource, /lg:mx-auto lg:mt-3 lg:max-w-\[820px\]/);
+  assert.match(navSource, /lg:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/);
+  assert.match(navSource, /absolute left-1\/2 top-0 -translate-x-1\/2/);
+  assert.match(navSource, /data-car-details-desktop-nav-rule/);
+  assert.match(navSource, /w-\[620px\]/);
+  assert.doesNotMatch(navSource, /lg:border-b lg:border-slate-200/);
 });
