@@ -6008,7 +6008,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       }}
                       placeholder={t("fromPlaceholder")}
                       autoComplete="off"
-                      className="h-6 min-w-0 flex-1 border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
+                      className="flight-results-edit-value h-6 min-w-0 flex-1 border-0 bg-transparent p-0 pe-7 outline-none placeholder:font-medium placeholder:text-slate-400"
                       />
                     </div>
                     {getLocationFieldDisplay(originInput).secondary ? (
@@ -6103,7 +6103,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       }}
                       placeholder={t("toPlaceholder")}
                       autoComplete="off"
-                      className="h-6 min-w-0 flex-1 border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
+                      className="flight-results-edit-value h-6 min-w-0 flex-1 border-0 bg-transparent p-0 pe-7 outline-none placeholder:font-medium placeholder:text-slate-400"
                       />
                     </div>
                     {getLocationFieldDisplay(destinationInput).secondary ? (
@@ -6150,7 +6150,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       <span className="mb-1.5 block text-[0.66rem] font-semibold uppercase leading-3 tracking-[0.13em] text-slate-500">
                         {t("travelDates")}
                       </span>
-                      <span className="flex min-w-0 items-center gap-2 text-sm font-semibold leading-6 text-slate-950">
+                      <span className="flight-results-edit-value flex min-w-0 items-center gap-2">
                         <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-600" />
                         <span className="truncate">
                           {departureDateInput
@@ -6222,7 +6222,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       <span className="mb-1.5 block text-[0.66rem] font-semibold uppercase leading-3 tracking-[0.13em] text-slate-500">
                         {t("travelers")}
                       </span>
-                      <span className="flex min-w-0 items-center gap-2 text-sm font-semibold leading-6 text-slate-950">
+                      <span className="flight-results-edit-value flex min-w-0 items-center gap-2">
                         <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-600" />
                         <span className="truncate">
                           {buildTravelerCabinSummary(

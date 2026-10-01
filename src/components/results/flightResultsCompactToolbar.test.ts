@@ -265,3 +265,34 @@ test("desktop Flight edit-search values keep the shared 15px typography contract
   );
   assert.match(popout, /flight-results-edit-value mt-0\.5/);
 });
+
+
+test("main desktop Results search uses one shared value typography contract", () => {
+  const start = source.indexOf('function renderCompactSearchForm(placement: "mobile" | "desktop")');
+  const end = source.indexOf("\n  function ", start + 1);
+  assert.ok(start >= 0 && end > start);
+  const compact = source.slice(start, end);
+
+  const originStart = compact.indexOf('id="results-origin"');
+  const destinationStart = compact.indexOf('id="results-destination"');
+  const datesStart = compact.indexOf('{t("travelDates")}', destinationStart);
+  const travelersStart = compact.indexOf('{t("travelers")}', datesStart);
+
+  const originField = compact.slice(originStart, destinationStart);
+  const destinationField = compact.slice(destinationStart, datesStart);
+  const datesField = compact.slice(datesStart, travelersStart);
+  const travelersField = compact.slice(travelersStart);
+
+  assert.match(originField, /className="flight-results-edit-value h-6/);
+  assert.match(destinationField, /className="flight-results-edit-value h-6/);
+  assert.match(
+    datesField,
+    /className="flight-results-edit-value flex min-w-0 items-center gap-2"/,
+  );
+  assert.match(
+    travelersField,
+    /className="flight-results-edit-value flex min-w-0 items-center gap-2"/,
+  );
+  assert.doesNotMatch(originField, /text-\[16px\]|md:text-sm/);
+  assert.doesNotMatch(destinationField, /text-\[16px\]|md:text-sm/);
+});
