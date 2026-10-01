@@ -4149,8 +4149,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     scheduleDesktopPopularFilterMeasurementRef.current = scheduleMeasurement;
     const resizeObserver =
       "ResizeObserver" in window ? new ResizeObserver(scheduleMeasurement) : null;
-    resizeObserver?.observe(desktopFilterSidebarRef.current as Element);
-    resizeObserver?.observe(resultsGridRef.current as Element);
+    if (resizeObserver) {
+      if (desktopFilterSidebarRef.current) {
+        resizeObserver.observe(desktopFilterSidebarRef.current);
+      }
+      if (resultsGridRef.current) {
+        resizeObserver.observe(resultsGridRef.current);
+      }
+    }
 
     measureDesktopPopularFilter();
     window.addEventListener("scroll", scheduleMeasurement, { passive: true });
@@ -7819,7 +7825,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   ref={desktopSortRef}
                   className="relative hidden items-center gap-2 lg:flex"
                 >
-                  <span className="text-[16px] font-medium text-[#142033]">
+                  <span className="text-[14px] font-medium leading-5 text-[#64748B]">
                     Sort by:
                   </span>
                   <button
