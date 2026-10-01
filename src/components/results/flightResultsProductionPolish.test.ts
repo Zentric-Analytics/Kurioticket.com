@@ -376,25 +376,30 @@ test("desktop Flight compact filters reuse the same full filter surface as Cars"
   assert.match(filters, /max-h-full w-full overflow-y-auto rounded-2xl overscroll-contain/);
 });
 
-test("desktop Flight result meta typography uses the refined hierarchy", async () => {
+test("desktop Flight result meta typography uses the premium hierarchy", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
   const cheaperStart = source.indexOf("data-desktop-cheaper-nearby");
-  const cheaper = source.slice(cheaperStart, cheaperStart + 900);
-  assert.match(cheaper, /text-\[13px\] font-normal leading-5 tracking-\[-0\.002em\] text-\[#536B92\]/);
-  assert.match(cheaper, /hover:bg-slate-100\/70/);
-  assert.match(cheaper, /hover:text-\[#334155\]/);
+  const cheaper = source.slice(cheaperStart, cheaperStart + 1800);
+  assert.match(cheaper, /rounded-full bg-white\/70 px-3 py-1\.5/);
+  assert.match(cheaper, />Cheaper nearby<\/span>/);
+  assert.match(cheaper, /font-semibold text-\[#142033\]/);
+  assert.match(cheaper, /font-semibold text-\[#047857\]/);
+  assert.match(cheaper, /hover:bg-slate-100\/80/);
   assert.doesNotMatch(cheaper, /hover:text-\[#075EE8\]/);
 
-  const summaryStart = source.indexOf('className="hidden w-full items-center justify-between gap-4 pt-2 sm:flex');
-  const summary = source.slice(summaryStart, summaryStart + 3600);
-  assert.match(summary, /text-\[15px\] font-semibold leading-5 tracking-\[-0\.006em\] text-\[#07133B\]/);
-  assert.match(summary, /text-\[12px\] font-medium leading-4 text-\[#64748B\]/);
-  assert.match(summary, /text-\[14px\] font-medium leading-5 text-\[#64748B\]">\s*Sort by:/);
-  assert.match(summary, /text-\[14px\] font-semibold leading-5 text-\[#142033\]/);
+  const summaryStart = source.indexOf(
+    'className="hidden w-full items-center justify-between gap-4 border-b border-slate-200/80 px-1 py-3 sm:flex',
+  );
+  const summary = source.slice(summaryStart, summaryStart + 4200);
+  assert.match(summary, /text-\[15px\] font-semibold leading-5 tracking-\[-0\.006em\] text-\[#0F172A\]/);
+  assert.match(summary, /mt-1 text-\[12px\] font-normal leading-4 text-\[#64748B\]/);
+  assert.match(summary, /text-\[13px\] font-medium leading-5 text-\[#64748B\]">\s*Sort by:/);
+  assert.match(summary, /h-8[^"]*text-\[14px\] font-semibold leading-5 text-\[#142033\]/);
   assert.match(summary, /hover:bg-slate-100\/70/);
   assert.match(summary, /hover:text-\[#142033\]/);
   assert.doesNotMatch(summary, /hover:text-\[#004BB8\]/);
+  assert.match(summary, /<ChevronDown size=\{14\}/);
 });
