@@ -273,7 +273,7 @@ export function DesktopFlightFilters({
             onToggle={() => toggleCompactSection("time")}
           >
             <div className="mb-2.5 grid grid-cols-2 rounded-[10px] bg-slate-100 p-1">
-              {["takeoff", "landing"].map((mode) => <button key={mode} type="button" onClick={() => { onFilterChange(); setTimeFilterMode(mode as TimeFilterMode); onFilterCommit(); }} className={cn("min-h-9 rounded-lg px-2 py-1.5 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30", isGuidedComfortable && "min-h-10", timeFilterMode === mode ? "bg-white text-[#004BB8] shadow-sm" : "text-slate-600 hover:text-slate-950")}>{mode === "takeoff" ? t("takeoff") : t("landing")}</button>)}
+              {["takeoff", "landing"].map((mode) => <button key={mode} type="button" onClick={() => setTimeFilterMode(mode as TimeFilterMode)} className={cn("min-h-9 rounded-lg px-2 py-1.5 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30", isGuidedComfortable && "min-h-10", timeFilterMode === mode ? "bg-white text-[#004BB8] shadow-sm" : "text-slate-600 hover:text-slate-950")}>{mode === "takeoff" ? t("takeoff") : t("landing")}</button>)}
             </div>
             <div className={cn("mb-2.5 flex items-center justify-between gap-3 text-[12px] leading-5", isGuidedComfortable && "text-[13px]")}>
               <span className="min-w-0 font-medium text-slate-600">{timeFilterMode === "takeoff" ? `${t("takeoffTimeFromOrigin")} (${airportCode || "—"})` : `${t("landingTimeAtDestination")} (${airportCode || "—"})`}</span>
