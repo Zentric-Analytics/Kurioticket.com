@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { MapPin, X } from "lucide-react";
 
 function googleMapUrl(destination: string) {
@@ -9,7 +9,69 @@ function googleMapUrl(destination: string) {
 
 export function HotelResultsMapPreview({ destination }: { destination: string }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const lockedScrollYRef = useRef(0);
+  const previousBodyStyleRef = useRef<{
+    overflow: string;
+    position: string;
+    top: string;
+    width: string;
+  } | null>(null);
+  const previousRootOverflowRef = useRef<string | null>(null);
   const place = destination.trim();
+
+  const unlockBackgroundScroll = () => {
+    const previousBodyStyle = previousBodyStyleRef.current;
+    if (!previousBodyStyle) return;
+
+    document.body.style.overflow = previousBodyStyle.overflow;
+    document.body.style.position = previousBodyStyle.position;
+    document.body.style.top = previousBodyStyle.top;
+    document.body.style.width = previousBodyStyle.width;
+    document.documentElement.style.overflow = previousRootOverflowRef.current ?? "";
+    previousBodyStyleRef.current = null;
+    previousRootOverflowRef.current = null;
+    window.scrollTo(0, lockedScrollYRef.current);
+  };
+
+  const lockBackgroundScroll = () => {
+    if (previousBodyStyleRef.current) return;
+
+    lockedScrollYRef.current = window.scrollY;
+    previousBodyStyleRef.current = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
+    };
+    previousRootOverflowRef.current = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${lockedScrollYRef.current}px`;
+    document.body.style.width = "100%";
+  };
+
+  const openMap = () => {
+    lockBackgroundScroll();
+    dialogRef.current?.showModal();
+  };
+
+  const closeMap = () => {
+    dialogRef.current?.close();
+  };
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const handleClose = () => unlockBackgroundScroll();
+    dialog.addEventListener("close", handleClose);
+
+    return () => {
+      dialog.removeEventListener("close", handleClose);
+      unlockBackgroundScroll();
+    };
+  }, []);
 
   if (!place) return null;
 
@@ -27,7 +89,7 @@ export function HotelResultsMapPreview({ destination }: { destination: string })
         <button
           type="button"
           aria-label={`Show hotels in ${place} on map`}
-          onClick={() => dialogRef.current?.showModal()}
+          onClick={openMap}
           className="absolute inset-0 flex cursor-pointer items-end justify-center bg-black/[0.03] pb-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0057b8]"
         >
           <span className="inline-flex min-h-9 items-center gap-2 rounded-md bg-[#0057b8] px-3 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(15,23,42,0.22)] transition-colors hover:bg-[#004a9e]">
@@ -48,7 +110,7 @@ export function HotelResultsMapPreview({ destination }: { destination: string })
             <button
               type="button"
               aria-label="Close map"
-              onClick={() => dialogRef.current?.close()}
+              onClick={closeMap}
               className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0057b8]"
             >
               <X size={20} aria-hidden="true" />
