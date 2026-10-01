@@ -9,6 +9,7 @@ const details = readFileSync(
 
 test("mobile web Compare deals mirrors the compact real-offer contract", () => {
   assert.match(details, /getComparisonCarOffers\(car\.offers\)/);
+  assert.match(details, /className="mt-5 space-y-2\.5 lg:hidden"/);
   assert.match(details, /role="radiogroup"/);
   assert.match(details, /role="radio"/);
   assert.match(details, /aria-checked=\{selected\}/);
@@ -29,6 +30,7 @@ test("selected mobile deal drives the booking offer used by the dock", () => {
     /comparisonOffers\.find\(\(candidate\) => candidate\.id === selectedOfferId\)[\s\S]*?canonicalPrimaryOffer/,
   );
   assert.match(details, /selectedOfferId=\{primaryOffer\.id\}/);
+  assert.match(details, /actionForOffer=\{actionForOffer\}/);
   assert.match(details, /onSelectOffer=\{setSelectedOfferId\}/);
   assert.match(
     details,

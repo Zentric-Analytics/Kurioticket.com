@@ -212,6 +212,22 @@ export function CarDetailsExperience({
             label: copy("carDetails.continueDeal"),
           }
       : primaryAction;
+  const actionForOffer = (offer: CarOffer): CarDetailsPrimaryAction => {
+    if (primaryAction.kind !== "sandbox-handoff") {
+      return effectivePrimaryAction;
+    }
+    const href = sandboxBookingUrl(offer.bookingUrl);
+    return href
+      ? {
+          ...primaryAction,
+          label: copy("carDetails.continueDeal"),
+          href,
+        }
+      : {
+          kind: "standalone-disabled-provider",
+          label: copy("carDetails.continueDeal"),
+        };
+  };
   const days = calculateRentalDays(search.pickupDate, search.dropoffDate);
   const price = (amount: number, currency: string) =>
     formatDisplayPrice({
@@ -578,6 +594,7 @@ export function CarDetailsExperience({
                       headingLevel={sectionHeadingLevel}
                       showSectionHeading
                       showDesktopOfferList
+                      actionForOffer={actionForOffer}
                     />
                   ) : null}
                 </section>
@@ -891,6 +908,7 @@ function CarPriceComparisonSection({
   headingLevel,
   showSectionHeading = true,
   showDesktopOfferList = false,
+  actionForOffer,
 }: {
   car: NormalizedCarResult;
   search: CarSearchParams;
@@ -904,6 +922,7 @@ function CarPriceComparisonSection({
   headingLevel: HeadingLevel;
   showSectionHeading?: boolean;
   showDesktopOfferList?: boolean;
+  actionForOffer: (offer: CarOffer) => CarDetailsPrimaryAction;
 }) {
   const selectedOffer =
     offers.find((candidate) => candidate.id === selectedOfferId) ?? offers[0];
@@ -937,6 +956,28 @@ function CarPriceComparisonSection({
             Icon: Gauge,
           },
         ];
+  const providerFactsForOffer = (offer: CarOffer) => {
+    const facts: Array<{ label: string; Icon: typeof ShieldCheck }> = [];
+    if (offer.freeCancellation) {
+      facts.push({
+        label: copy("carDetails.freeCancellation"),
+        Icon: ShieldCheck,
+      });
+    }
+    if (offer.payAtPickup) {
+      facts.push({
+        label: copy("carsResults.payAtPickup"),
+        Icon: CarFront,
+      });
+    }
+    if (offer.taxesAndFeesIncluded) {
+      facts.push({
+        label: copy("carDetails.feesIncludedShort"),
+        Icon: ShieldCheck,
+      });
+    }
+    return facts.slice(0, 3);
+  };
   return (
     <div
       className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:bg-transparent lg:pb-[22px] lg:pt-2"
@@ -957,7 +998,7 @@ function CarPriceComparisonSection({
       </p>
 
       <div
-        className={`mt-5 space-y-2.5 ${showDesktopOfferList ? "lg:mt-3 lg:w-[calc(100%-24rem)] lg:min-w-[640px] lg:max-w-[820px] lg:space-y-2" : "lg:hidden"}`}
+        className="mt-5 space-y-2.5 lg:hidden"
         role="radiogroup"
         aria-label="Car deal options"
         data-mobile-car-deal-list
@@ -1057,6 +1098,120 @@ function CarPriceComparisonSection({
           );
         })}
       </div>
+
+      {showDesktopOfferList ? (
+        <div
+          className="mt-3 hidden w-[calc(100%-24rem)] min-w-[640px] max-w-[820px] space-y-2 lg:block"
+          data-desktop-car-deal-list
+        >
+          {offers.map((offer) => {
+            const selected = offer.id === selectedOffer?.id;
+            const total = price(offer.totalPrice, offer.currency);
+            const providerName =
+              compactBookingProviderName(offer) ||
+              providerValue(car.rentalCompanyName) ||
+              copy("carsResults.bookingProvider");
+            const providerFacts = providerFactsForOffer(offer);
+            const offerAction = actionForOffer(offer);
+            const actionClassName =
+              "focus-ring inline-flex min-h-10 min-w-[116px] shrink-0 items-center justify-center rounded-lg bg-[#075EE8] px-4 text-[13px] font-bold leading-5 text-white shadow-[0_2px_8px_rgba(7,94,232,0.16)] transition hover:bg-[#004BB8]";
+            return (
+              <div
+                key={offer.id}
+                className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-5 rounded-[14px] border bg-white px-4 py-3 transition ${selected ? "border-[#075EE8] shadow-[0_5px_16px_rgba(7,94,232,0.07)] ring-1 ring-[#075EE8]/10" : "border-slate-200 hover:border-slate-300"}`}
+                data-car-details-desktop-deal-row
+                data-selected={selected ? "true" : "false"}
+              >
+                <button
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => onSelectOffer(offer.id)}
+                  className="focus-ring min-w-0 text-start"
+                  data-car-details-desktop-deal-summary
+                >
+                  <span
+                    className="block truncate text-[15px] font-semibold leading-5 text-[#192024]"
+                    title={providerName}
+                    data-car-details-desktop-deal-provider
+                  >
+                    {providerName}
+                  </span>
+                  <strong
+                    className="mt-0.5 block whitespace-nowrap text-[20px] font-bold leading-6 tracking-[-0.015em] text-[#07133B] tabular-nums"
+                    dir="ltr"
+                    title={total.title}
+                    aria-label={total.ariaLabel}
+                    data-car-details-desktop-deal-total
+                  >
+                    {total.formatted}
+                  </strong>
+                  {providerFacts.length ? (
+                    <span
+                      className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5"
+                      data-car-details-desktop-deal-benefits
+                    >
+                      {providerFacts.map(({ label, Icon }) => (
+                        <span
+                          key={label}
+                          className="inline-flex min-w-0 items-center gap-1.5 whitespace-nowrap text-[12px] font-medium leading-4 text-[#526174]"
+                        >
+                          <Icon
+                            size={13}
+                            strokeWidth={2}
+                            className="shrink-0 text-[#59636A]"
+                            aria-hidden="true"
+                          />
+                          {label}
+                        </span>
+                      ))}
+                    </span>
+                  ) : null}
+                </button>
+                <div className="flex shrink-0 items-center justify-end">
+                  {offerAction.kind === "sandbox-handoff" ? (
+                    <a
+                      href={offerAction.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      referrerPolicy="no-referrer"
+                      onClick={() => onSelectOffer(offer.id)}
+                      className={actionClassName}
+                      data-car-details-desktop-deal-cta
+                    >
+                      {copy("carDetails.continueDeal")}
+                    </a>
+                  ) : offerAction.kind === "standalone-disabled-provider" ? (
+                    <button
+                      type="button"
+                      disabled
+                      className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-100`}
+                      data-car-details-desktop-deal-cta
+                    >
+                      {copy("carDetails.continueDeal")}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={!offerAction.enabled || offerAction.pending}
+                      aria-label={offerAction.accessibleLabel}
+                      onClick={() => {
+                        onSelectOffer(offer.id);
+                        offerAction.onActivate();
+                      }}
+                      className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-60`}
+                      data-car-details-desktop-deal-cta
+                    >
+                      {offerAction.pending
+                        ? copy("deals.guided.carDetails.saving")
+                        : copy("carDetails.continueDeal")}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
 
       {selectedOffer ? (
         <div className={`mt-5 hidden rounded-[14px] border border-[#075EE8] bg-white px-4 py-4 ring-1 ring-[#075EE8]/10 ${showDesktopOfferList ? "lg:hidden" : "lg:block"}`}>

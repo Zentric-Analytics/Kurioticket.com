@@ -218,9 +218,10 @@ test("standalone car details restore polished Hotels-style section headings", ()
     comparison,
     /lg:text-\[14px\] lg:font-normal lg:leading-\[22px\] lg:text-\[#303B42\]/,
   );
+  assert.match(comparison, /data-desktop-car-deal-list/);
   assert.match(
     comparison,
-    /showDesktopOfferList \? "lg:mt-3 lg:w-\[calc\(100%-24rem\)\] lg:min-w-\[640px\] lg:max-w-\[820px\] lg:space-y-2" : "lg:hidden"/,
+    /mt-3 hidden w-\[calc\(100%-24rem\)\] min-w-\[640px\] max-w-\[820px\] space-y-2 lg:block/,
   );
   assert.match(
     comparison,
@@ -500,7 +501,7 @@ test("Location tab timeline mirrors Pickup and return pins and icons", () => {
   assert.doesNotMatch(timeline, /bg-\[#075EE8\]/);
 });
 
-test("price comparison aligns icon benefits and the per-day price on one row", () => {
+test("mobile price comparison retains the existing per-day selection card", () => {
   const comparison = sourceBetween(
     clientSource,
     "function CarPriceComparison",
@@ -542,6 +543,50 @@ test("price comparison aligns icon benefits and the per-day price on one row", (
   assert.doesNotMatch(comparison, /border-t border-slate-100/);
   assert.doesNotMatch(comparison, /feesIncludedShort/);
   assert.doesNotMatch(comparison, /row-start-4/);
+});
+
+
+test("desktop Compare deals wires each provider row to its own total, benefits, and Continue deal action", () => {
+  const comparison = sourceBetween(
+    clientSource,
+    "function CarPriceComparisonSection",
+    "function CarLocationSection",
+  );
+  const desktop = sourceBetween(
+    comparison,
+    "data-desktop-car-deal-list",
+    "{selectedOffer ? (",
+  );
+
+  assert.match(desktop, /data-car-details-desktop-deal-row/);
+  assert.match(desktop, /data-car-details-desktop-deal-provider/);
+  assert.match(desktop, /data-car-details-desktop-deal-total/);
+  assert.match(desktop, /data-car-details-desktop-deal-benefits/);
+  assert.match(desktop, /data-car-details-desktop-deal-cta/);
+  assert.match(desktop, /offer\.totalPrice/);
+  assert.match(desktop, /compactBookingProviderName\(offer\)/);
+  assert.match(desktop, /offer\.freeCancellation/);
+  assert.match(desktop, /offer\.payAtPickup/);
+  assert.match(desktop, /offer\.taxesAndFeesIncluded/);
+  assert.match(desktop, /carsResults\.payAtPickup/);
+  assert.match(desktop, /carDetails\.feesIncludedShort/);
+  assert.match(desktop, /onClick=\{\(\) => onSelectOffer\(offer\.id\)\}/);
+  assert.match(desktop, /href=\{offerAction\.href\}/);
+  assert.match(desktop, /target="_blank"/);
+  assert.match(desktop, /rel="noopener noreferrer"/);
+  assert.match(desktop, /referrerPolicy="no-referrer"/);
+  assert.match(desktop, /copy\("carDetails\.continueDeal"\)/);
+  assert.doesNotMatch(desktop, /role="radio"|aria-checked|size-1\.5 rounded-full/);
+  assert.doesNotMatch(desktop, /offer\.pricePerDay|carsResults\.perDay/);
+
+  assert.match(
+    clientSource,
+    /const actionForOffer = \(offer: CarOffer\): CarDetailsPrimaryAction =>[\s\S]*?sandboxBookingUrl\(offer\.bookingUrl\)/,
+  );
+  assert.match(
+    clientSource,
+    /<CarPriceComparisonSection[\s\S]*?actionForOffer=\{actionForOffer\}/,
+  );
 });
 
 test("desktop KAYAK booking summary keeps the secure handoff and Continue deal label", () => {
