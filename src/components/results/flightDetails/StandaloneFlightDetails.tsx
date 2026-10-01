@@ -1478,7 +1478,16 @@ function MobileCheckoutDock({ travelerCount, price, redirecting, handoff, canCon
 
 function DesktopCheckoutSummary({ travelerCount, price, priceLoading, redirecting, handoff, canContinue, onContinue, error }: { travelerCount: number; price: ReturnType<typeof formatDisplayPrice> | null; priceLoading: boolean; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) {
   return <aside data-desktop-checkout-summary className="hidden min-w-0 self-start rounded-[13px] border border-[#E2E8F0] bg-white p-5 shadow-[0_4px_18px_rgba(15,23,42,0.05)] lg:block" aria-labelledby="desktop-trip-total-heading">
-    <div className="flex min-w-0 items-start justify-between gap-4"><h2 id="desktop-trip-total-heading" className="pt-1 text-sm font-semibold text-slate-800">{flightDetailsTotalLabel(travelerCount)}</h2>{priceLoading ? <p data-desktop-trip-price-loading role="status" className="text-right text-sm font-semibold text-slate-500">Loading price…</p> : price ? <p className="min-w-0 break-words text-right text-[24px] font-semibold leading-7 tabular-nums text-[#075EE8] [overflow-wrap:anywhere]" aria-label={price.ariaLabel}>{price.formatted}</p> : <p className="text-right text-sm font-semibold text-slate-500">Price unavailable</p>}</div>
+    <div className="min-w-0">
+      {priceLoading ? (
+        <p data-desktop-trip-price-loading role="status" className="text-left text-sm font-semibold text-slate-500">Loading price…</p>
+      ) : price ? (
+        <p className="min-w-0 whitespace-nowrap text-left text-[24px] font-semibold leading-7 tabular-nums text-slate-950" aria-label={price.ariaLabel}>{price.formatted}</p>
+      ) : (
+        <p className="text-left text-sm font-semibold text-slate-500">Price unavailable</p>
+      )}
+      <h2 id="desktop-trip-total-heading" className="mt-1 text-[12px] font-medium leading-4 text-[#536B92]">{flightDetailsTotalLabel(travelerCount)}</h2>
+    </div>
     <CheckoutButton redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={onContinue} />
     {error ? <p role="alert" className="mt-3 break-words text-sm font-medium text-red-700">{error}</p> : null}
   </aside>;
