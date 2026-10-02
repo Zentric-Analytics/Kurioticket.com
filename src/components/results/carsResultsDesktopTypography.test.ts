@@ -101,6 +101,20 @@ test("desktop Cars result cards mirror the mobile weight and category hierarchy"
   assert.match(card, /desktopSurfaceParity \? "lg:text-\[13px\] lg:leading-5" : ""/);
 });
 
+test("desktop Cars sort control has a clear polished label/value hierarchy", () => {
+  assert.match(
+    results,
+    /className="shrink-0 whitespace-nowrap text-xs font-medium text-\[#536B92\] sm:text-sm lg:text-\[14px\] lg:font-bold lg:leading-5 lg:tracking-\[-0\.002em\] lg:text-\[#334155\]"[\s\S]*?\{t\("carsResults\.sortBy"\)\}:/,
+  );
+  assert.match(
+    results,
+    /className="cars-results-desktop-filter-heading-type inline-flex h-9[\s\S]*?selectedCarSortLabel/,
+  );
+  assert.match(
+    results,
+    /<ChevronDown[\s\S]*?"shrink-0 text-current transition-transform duration-150"/,
+  );
+});
 test("desktop Cars pricing and price tracking keep price emphasis without over-weighting metadata", () => {
   assert.match(comparison, /text-\[21px\] font-bold leading-\[25px\] tracking-\[-0\.012em\]/);
   assert.match(comparison, /text-\[13px\] font-medium leading-5 text-\[#475569\]/);
