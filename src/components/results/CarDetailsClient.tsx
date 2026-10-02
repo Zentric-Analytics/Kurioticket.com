@@ -309,7 +309,6 @@ export function CarDetailsExperience({
       animationFrame = 0;
       if (!desktopQuery.matches) {
         setDesktopSectionBarStuck(false);
-        setActiveTab((current) => (current === "rental" ? "compare" : current));
         return;
       }
 
