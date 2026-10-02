@@ -2381,7 +2381,7 @@ function StickyHotelPopularFilters({ t, locale, options, selectedFilters, select
   if (!popularFilters.length) return null;
 
   return (
-    <section aria-label={t("hotelResults.popularFilters")} className="sticky top-[170px] z-10 mt-3 max-h-[calc(100vh-180px)] overflow-y-auto rounded-lg border border-[#CFD9E5] bg-white px-3 py-3 shadow-[0_4px_16px_-12px_rgba(15,23,42,0.35)]">
+    <section aria-label={t("hotelResults.popularFilters")} className="sticky top-[88px] z-10 mt-3 max-h-[calc(100vh-100px)] overflow-y-auto rounded-lg border border-[#CFD9E5] bg-white px-3 py-3 shadow-[0_4px_16px_-12px_rgba(15,23,42,0.35)]">
       <h2 className="mb-1.5 text-[13px] font-bold leading-5 text-[#142033]">{t("hotelResults.popularFilters")}</h2>
       <div className="space-y-0.5">
         {popularFilters.map((filter) => (
