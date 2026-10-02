@@ -881,21 +881,21 @@ function StandaloneDesktopDealSummary({
         offer.payAtPickup ? copy("carsResults.payAtPickup") : null,
       ].filter((value): value is string => Boolean(value));
   const actionClassName =
-    "focus-ring mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#075EE8] px-4 text-[14px] font-bold leading-5 text-white shadow-[0_3px_10px_rgba(7,94,232,0.18)] transition hover:bg-[#004BB8]";
+    "focus-ring mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-[#075EE8] px-4 text-[14px] font-bold leading-5 text-white shadow-[0_3px_10px_rgba(7,94,232,0.16)] transition hover:bg-[#004BB8]";
 
   return (
     <aside
-      className="flex h-full min-h-[330px] flex-col rounded-[14px] border border-slate-200 bg-[#F8FAFC] p-5"
+      className="flex flex-col rounded-[14px] border border-slate-200 bg-[#F8FAFC] p-4"
       data-car-details-desktop-selected-deal
     >
       <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#536B92]">
         Selected deal
       </p>
-      <p className="mt-3 text-[15px] font-bold leading-5 text-slate-950">
+      <p className="mt-2.5 text-[15px] font-bold leading-5 text-slate-950">
         {providerName}
       </p>
       <strong
-        className="mt-2 block text-[28px] font-extrabold leading-8 tracking-[-0.025em] text-[#07133B] tabular-nums"
+        className="mt-1.5 block text-[28px] font-extrabold leading-8 tracking-[-0.025em] text-[#07133B] tabular-nums"
         dir="ltr"
         title={total.title}
         aria-label={total.ariaLabel}
@@ -906,7 +906,7 @@ function StandaloneDesktopDealSummary({
         {days} {days === 1 ? copy("carDetails.day") : copy("carDetails.days")} total
       </p>
       {facts.length ? (
-        <div className="mt-5 space-y-2.5" data-car-details-desktop-selected-deal-facts>
+        <div className="mt-4 space-y-2" data-car-details-desktop-selected-deal-facts>
           {facts.map((fact) => (
             <p
               key={fact}
@@ -923,7 +923,7 @@ function StandaloneDesktopDealSummary({
           ))}
         </div>
       ) : null}
-      <div className="mt-auto">
+      <div className="mt-4">
         {action.kind === "sandbox-handoff" ? (
           <a
             href={action.href}
