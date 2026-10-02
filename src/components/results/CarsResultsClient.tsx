@@ -507,7 +507,7 @@ const fieldLabelClass =
 const fieldInputClass =
   "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:placeholder:font-medium lg:placeholder:text-slate-400";
 const desktopFullSelectedValueClass =
-  "lg:text-[14px] lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-[#142033]";
+  "lg:text-[14px] lg:font-medium lg:leading-5 lg:tracking-normal lg:text-[#334155]";
 const desktopCompactSelectedValueClass =
   "lg:text-[15px] lg:font-bold lg:leading-5 lg:tracking-[-0.005em] lg:text-[#07133B]";
 const carsMobileEditFieldShellClass =

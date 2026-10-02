@@ -49,10 +49,10 @@ test("results desktop search typography mirrors the polished mobile-web hierarch
 
   for (const token of [
     "lg:text-[14px]",
-    "lg:font-semibold",
+    "lg:font-medium",
     "lg:leading-5",
     "lg:tracking-normal",
-    "lg:text-[#142033]",
+    "lg:text-[#334155]",
   ])
     assert.ok(fullValueClass.includes(token), `missing full-search value token: ${token}`);
 
