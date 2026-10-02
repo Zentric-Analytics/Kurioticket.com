@@ -44,6 +44,10 @@ test("desktop Cars Results reuses the Hotels sticky header composition", () => {
     cars,
     /createPortal\(\s*renderCarsSearchForm\("desktop-navbar"\),\s*desktopNavSearchTarget,\s*\)/,
   );
+  assert.match(
+    cars,
+    /const showCompactSearchSummary =\s*!desktopNavSearchTarget &&\s*isSearchBarCompact &&\s*desktopStickySearchSection === null;/,
+  );
 });
 
 test("desktop Cars navbar search uses the approved flat Hotels-style shell", () => {

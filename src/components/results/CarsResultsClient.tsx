@@ -630,7 +630,9 @@ export function CarsResultsClient({
   const pickupSummaryDisplay = getLocationFieldDisplay(pickupLocationLabel).primary;
   const returnSummaryDisplay = getLocationFieldDisplay(dropoffLocationLabel).primary;
   const showCompactSearchSummary =
-    isSearchBarCompact && desktopStickySearchSection === null;
+    !desktopNavSearchTarget &&
+    isSearchBarCompact &&
+    desktopStickySearchSection === null;
   const desktopStickySearchOpen = desktopStickySearchSection !== null;
   const pickupSummary = pickupSummaryDisplay || t("carsResults.pickupLocation");
   const returnSummary =
