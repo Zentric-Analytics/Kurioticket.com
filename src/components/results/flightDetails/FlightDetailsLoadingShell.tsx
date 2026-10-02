@@ -53,8 +53,8 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
         <span className="inline-flex h-11 w-11 translate-x-1 items-center justify-center text-slate-400"><Heart className="h-[17px] w-[17px]" strokeWidth={2} /></span>
         <span className="inline-flex h-11 w-11 -translate-x-1 items-center justify-center text-slate-400"><Share2 className="h-[17px] w-[17px]" strokeWidth={2} /></span>
       </div>
-      <div className="mx-auto w-full max-w-[1500px] px-0 sm:px-6 lg:px-8">
-        <div role="status" aria-label="Loading flight details" className="grid gap-5 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
+      <div className="mx-auto w-full max-w-[1080px] px-0 sm:px-6 lg:px-[30px]">
+        <div role="status" aria-label="Loading flight details" className="min-w-0">
           <span className="sr-only">Loading flight details</span>
           <div className="overflow-hidden border-b border-slate-200 bg-[#F3F6FA] sm:rounded-[15px] sm:border sm:bg-white">
             <div ref={heroRef} className="relative flex min-h-[318px] flex-col justify-end overflow-hidden bg-[#E2E8F0] px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:block sm:bg-transparent sm:px-6 sm:pb-16 sm:pt-5 lg:min-h-[300px]">
@@ -119,7 +119,6 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
             <div className="mt-6 hidden h-44 animate-pulse rounded-[10px] bg-slate-100 sm:block" />
             </div>
           </div>
-          <div data-desktop-checkout-summary-loading className="hidden h-[142px] animate-pulse rounded-[13px] border border-slate-200 bg-white lg:block" />
         </div>
       </div>
       <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-[90] flex min-h-[88px] items-center justify-between gap-[14px] rounded-t-[22px] border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_28px_rgba(15,23,42,0.14)] lg:hidden">

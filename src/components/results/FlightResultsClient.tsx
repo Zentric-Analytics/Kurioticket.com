@@ -1340,16 +1340,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     cabinClassInput,
     t,
   );
-  const shouldRenderDesktopFullSearchForm = true;
-  const shouldShowDesktopCompactSummary = false;
-  const showFullSearchForm =
-    shouldRenderDesktopFullSearchForm ||
-    !isSearchCollapsed ||
-    isSearchExpandedWhileSticky;
-  const showCompactSearchSummary =
-    !shouldRenderDesktopFullSearchForm &&
-    isSearchCollapsed &&
-    !isSearchExpandedWhileSticky;
+  const shouldRenderDesktopFullSearchForm = false;
+  const shouldShowDesktopCompactSummary = true;
+  const showFullSearchForm = isSearchExpandedWhileSticky;
+  const showCompactSearchSummary = !isSearchExpandedWhileSticky;
   const savedRoutes = useMemo(
     () =>
       savedItemIds
@@ -7383,7 +7377,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           "relative z-40 hidden border-b border-transparent transition-[padding,background-color] duration-200 sm:block",
           isSearchCollapsed
             ? "border-transparent bg-white/95 py-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur"
-            : "border-transparent bg-white pb-0 pt-7",
+            : "border-transparent bg-white pb-5 pt-7",
         )}
       >
         <div className="page-shell">
