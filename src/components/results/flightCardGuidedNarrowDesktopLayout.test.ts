@@ -344,8 +344,9 @@ test("desktop detail strip uses balanced transparent metadata columns with mobil
   assert.match(desktopDetailsRule, /align-items:\s*center/);
   assert.match(desktopDetailsRule, /border:\s*0/);
   assert.match(desktopDetailsRule, /border-radius:\s*0/);
-  assert.match(desktopDetailsRule, /justify-content:\s*space-between/);
+  assert.match(desktopDetailsRule, /justify-content:\s*start/);
   assert.match(desktopDetailsRule, /column-gap:\s*1\.5rem/);
+  assert.doesNotMatch(desktopDetailsRule, /space-between/);
   assert.match(desktopDetailsRule, /background:\s*transparent/);
   assert.match(desktopDetailsRule, /margin-top:\s*0/);
   assert.match(desktopDetailsRule, /padding:\s*0\.5rem 0/);
