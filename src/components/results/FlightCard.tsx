@@ -119,6 +119,38 @@ export function FlightCard({
     }
   }
 
+  function renderFlightUtilityActions(className?: string) {
+    return (
+      <div data-flight-card-actions className={cn("flex shrink-0 items-center", className)}>
+        <button
+          type="button"
+          aria-label={`${isSaved ? "Unsave" : "Save"} ${flight.airlineName} flight`}
+          aria-pressed={isSaved}
+          disabled={savedFlightPending}
+          onClick={() => void toggleSavedFlight()}
+          className={cn(
+            "inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 disabled:cursor-wait disabled:opacity-60",
+            isSaved ? "text-rose-600" : "text-slate-600",
+          )}
+        >
+          <Heart
+            size={18}
+            fill={isSaved ? "currentColor" : "none"}
+            aria-hidden="true"
+          />
+        </button>
+        <button
+          type="button"
+          aria-label={`Share ${flight.airlineName} flight`}
+          onClick={() => void shareFlight()}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+        >
+          <Share2 size={18} aria-hidden="true" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <>
       <MobileFlightCard
@@ -177,14 +209,13 @@ export function FlightCard({
                 ) : null}
               </div>
             </div>
-            {resultBadge ? (
-              <div
-                data-flight-card-header-actions
-                className="flight-card-header-actions flex shrink-0 flex-col items-end"
-              >
-                <ResultBadgePill badge={resultBadge} />
-              </div>
-            ) : null}
+            <div
+              data-flight-card-header-actions
+              className="flight-card-header-actions flex shrink-0 flex-col items-end gap-1"
+            >
+              {resultBadge ? <ResultBadgePill badge={resultBadge} /> : null}
+              {renderFlightUtilityActions("hidden lg:flex")}
+            </div>
           </div>
 
           <div className="flight-card-body mt-2 grid min-w-0 items-stretch gap-y-4">
@@ -208,35 +239,7 @@ export function FlightCard({
               viewFlightLabel={resolvedActionLabel}
               viewFlightAriaLabel={actionAriaLabel}
               onAction={onAction ? () => onAction(flight) : undefined}
-              actions={
-                <div data-flight-card-actions className="flex shrink-0 items-center">
-                  <button
-                    type="button"
-                    aria-label={`${isSaved ? "Unsave" : "Save"} ${flight.airlineName} flight`}
-                    aria-pressed={isSaved}
-                    disabled={savedFlightPending}
-                    onClick={() => void toggleSavedFlight()}
-                    className={cn(
-                      "inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 disabled:cursor-wait disabled:opacity-60",
-                      isSaved ? "text-rose-600" : "text-slate-600",
-                    )}
-                  >
-                    <Heart
-                      size={18}
-                      fill={isSaved ? "currentColor" : "none"}
-                      aria-hidden="true"
-                    />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={`Share ${flight.airlineName} flight`}
-                    onClick={() => void shareFlight()}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
-                  >
-                    <Share2 size={18} aria-hidden="true" />
-                  </button>
-                </div>
-              }
+              actions={renderFlightUtilityActions("lg:hidden")}
             />
           </div>
         </div>
