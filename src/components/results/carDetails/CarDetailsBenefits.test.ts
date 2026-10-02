@@ -404,7 +404,7 @@ test("desktop car details center the overview while keeping controls balanced", 
   assert.match(heroSource, /className="block min-w-0 max-w-full truncate" title={label}/);
   assert.match(heroSource, /data-car-details-desktop-overview-image/);
   assert.match(heroSource, /max-w-\[680px\]/);
-  assert.match(heroSource, /data-car-details-desktop-overview-identity[\s\S]*?text-center/);
+  assert.match(heroSource, /max-w-\[820px\] text-center[\s\S]*?data-car-details-desktop-overview-identity/);
   assert.ok(
     heroSource.indexOf("data-car-details-desktop-overview-image") <
       heroSource.indexOf("data-car-details-desktop-overview-specifications"),
