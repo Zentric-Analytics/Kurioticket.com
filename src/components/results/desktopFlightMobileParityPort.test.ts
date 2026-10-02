@@ -85,11 +85,11 @@ test("desktop nearby fares keep seven dates and arrows but use mobile-like indiv
 test("desktop Flight result cards use the lighter hierarchy without changing MobileFlightCard", () => {
   assert.match(card, /flight-card-airline-name[^\n]*font-bold text-slate-900/);
   assert.match(card, /flight-card-leg-label font-bold uppercase text-\[#0057E7\]/);
-  assert.match(card, /flight-card-time[^\n]*font-extrabold[^\n]*text-slate-950/);
+  assert.match(card, /flight-card-time[^\n]*font-semibold[^\n]*tracking-\[-0\.02em\][^\n]*text-slate-950/);
   assert.match(card, /flight-card-airport[^\n]*font-semibold text-slate-900/);
   assert.match(card, /flight-card-leg-meta font-medium text-\[#536B92\]/);
   assert.match(card, /flight-card-duration[^\n]*font-semibold text-slate-600/);
-  assert.match(card, /flight-card-price-value font-bold/);
+  assert.match(card, /flight-card-price-value font-semibold[^\n]*tracking-\[-0\.02em\]/);
   assert.match(card, /flight-card-detail-value[^\n]*font-medium text-\[#536B92\]/);
   assert.match(card, /shrink-0 font-semibold text-\[#07133B\]/);
   assert.match(card, /PlaneTakeoff className="mx-2 h-3\.5 w-3\.5 text-\[#004BB8\]"/);
