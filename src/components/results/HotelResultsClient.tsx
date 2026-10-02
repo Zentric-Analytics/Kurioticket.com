@@ -334,6 +334,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showStickyHotelFilters, setShowStickyHotelFilters] = useState(false);
   const [desktopNavSearchTarget, setDesktopNavSearchTarget] = useState<HTMLElement | null>(null);
+  const [desktopSearchPlacement, setDesktopSearchPlacement] = useState<"navbar" | "page" | null>(null);
   const [currentResultsPage, setCurrentResultsPage] = useState(1);
   const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
   const [paginationTransitionPhase, setPaginationTransitionPhase] = useState<PaginationTransitionPhase>("idle");
@@ -901,10 +902,19 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
   useEffect(() => {
     if (guided) return undefined;
+    const desktopQuery = window.matchMedia("(min-width: 1024px)");
+    const updatePlacement = () => {
+      setDesktopSearchPlacement(desktopQuery.matches ? "navbar" : "page");
+    };
     const frame = window.requestAnimationFrame(() => {
       setDesktopNavSearchTarget(document.querySelector<HTMLElement>("[data-hotel-results-nav-search]"));
+      updatePlacement();
     });
-    return () => window.cancelAnimationFrame(frame);
+    desktopQuery.addEventListener("change", updatePlacement);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      desktopQuery.removeEventListener("change", updatePlacement);
+    };
   }, [guided]);
 
   useEffect(() => {
@@ -1601,7 +1611,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
   return (
     <>
-      {!guided && !loadingContent && desktopNavSearchTarget
+      {!guided && !loadingContent && desktopSearchPlacement === "navbar" && desktopNavSearchTarget
         ? createPortal(renderDesktopHotelSearch("hotel-results-nav-search"), desktopNavSearchTarget)
         : null}
       {!guided && paginationTransitionPhase !== "idle" && typeof document !== "undefined"
@@ -1732,7 +1742,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             <div className="page-shell">
               <div className="relative z-40 min-w-0 overflow-visible">
                 <div className="relative z-10 min-w-0 overflow-visible">
-                  {renderDesktopHotelSearch("hotel-results-full-search")}
+                  {desktopSearchPlacement === "page" ? renderDesktopHotelSearch("hotel-results-full-search") : null}
                 </div>
               </div>
             </div>
