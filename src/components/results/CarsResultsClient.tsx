@@ -1843,9 +1843,20 @@ export function CarsResultsClient({
         </div>
       ) : null}
 
+      <section
+        className="hidden bg-white pb-0 pt-7 sm:block lg:hidden"
+        aria-labelledby="cars-results-heading"
+      >
+        <div className="page-shell">
+          <div className="relative z-10 min-w-0 translate-y-5">
+            {!mobileSearchOpen ? renderCarsSearchForm("desktop-full") : null}
+          </div>
+        </div>
+      </section>
+
       <nav
         aria-label="Breadcrumb"
-        className="page-shell hidden pt-6 sm:block lg:pt-7"
+        className="page-shell hidden pt-12 sm:block lg:pt-7"
       >
         <ol className="flex flex-wrap items-center gap-2 text-[13px] font-medium leading-5 text-[#526174]">
           <li>
