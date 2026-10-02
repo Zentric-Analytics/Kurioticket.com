@@ -22,7 +22,9 @@ test("KAYAK details use provider specifications with semantic car icons instead 
     /sandboxPresentation\.specs\.map\([^\n]*\[CarFront,\s*label\]/,
   );
   assert.match(details, /car\.sandboxPresentation\s*\?\s*\[/);
-  assert.match(details, /Simulated inventory — no real booking/);
+  assert.match(details, /Offer currently unavailable/);
+  assert.match(details, /This offer is not currently available to book/);
+  assert.doesNotMatch(details, /Simulated inventory — no real booking/);
 });
 
 test("KAYAK pickup presentation does not claim the normalized fallback pickup type", () => {

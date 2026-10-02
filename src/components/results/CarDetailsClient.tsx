@@ -83,6 +83,10 @@ const compactBookingProviderName = (offer: CarOffer) => {
   return provider === "Kurioticket static fixture" ? "Kurioticket" : provider;
 };
 
+const unavailableOfferLabel = "Offer currently unavailable";
+const unavailableBookingMessage =
+  "This offer is not currently available to book";
+
 const Heading = ({
   level,
   className,
@@ -882,8 +886,8 @@ function DesktopRentalDetails({
 
   if (car.sandboxPresentation) {
     details.push(
-      { label: "Inventory", value: "KAYAK sandbox" },
-      { label: "Booking", value: "Simulated inventory — no real booking" },
+      { label: "Availability", value: unavailableOfferLabel },
+      { label: "Booking", value: unavailableBookingMessage },
     );
   } else {
     details.push(
@@ -969,7 +973,7 @@ function StandaloneDesktopDealSummary({
     providerValue(car.rentalCompanyName) ||
     copy("carsResults.bookingProvider");
   const facts = car.sandboxPresentation
-    ? ["KAYAK sandbox", "Simulated inventory — no real booking"]
+    ? [unavailableOfferLabel, unavailableBookingMessage]
     : [
         offer.freeCancellation ? copy("carDetails.freeCancellation") : null,
         offer.taxesAndFeesIncluded ? copy("carDetails.feesIncludedShort") : null,
@@ -1236,8 +1240,8 @@ function CarPriceComparisonSection({
   const factsForOffer = (offer: CarOffer) =>
     car.sandboxPresentation
       ? [
-          { label: "KAYAK sandbox", Icon: ShieldCheck },
-          { label: "Simulated inventory — no real booking", Icon: Gauge },
+          { label: unavailableOfferLabel, Icon: ShieldCheck },
+          { label: unavailableBookingMessage, Icon: Gauge },
         ]
       : [
           {
