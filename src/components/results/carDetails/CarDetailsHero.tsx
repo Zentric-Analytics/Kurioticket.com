@@ -188,52 +188,53 @@ export function CarDetailsHero({
 
         {reserveMobileControlSafeZone ? (
           <div
-            className="hidden lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-5 lg:p-5"
+            className="hidden lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:grid-rows-[auto_auto_auto] lg:gap-x-5 lg:gap-y-4 lg:p-5"
             data-car-details-desktop-overview
           >
-            <div className="min-w-0">
-              <div
-                className="min-w-0 text-left [&_h1]:truncate [&_h2]:truncate [&_h3]:truncate [&_h4]:truncate"
-                data-car-details-desktop-overview-identity
-              >
-                {identity}
-              </div>
-              <div
-                className="relative mt-4 h-[250px] w-full overflow-hidden rounded-[12px] bg-white"
-                data-car-details-desktop-overview-image
-              >
-                <CarResultImage
-                  imageUrl={car.imageUrl}
-                  imageAlt={car.imageAlt}
-                  modelName={car.modelName}
-                  category={car.category}
-                  sizes="680px"
-                  fit="contain"
-                  priority
-                />
-              </div>
-              <ul
-                className="mt-4 grid min-w-0 grid-cols-4 gap-x-4 gap-y-2"
-                data-car-details-desktop-overview-specifications
-              >
-                {specs.map(([Icon, label]) => (
-                  <li
-                    key={label}
-                    className="car-details-desktop-amenity-type inline-flex min-w-0 items-center gap-2 text-[13px] font-semibold leading-[18px] text-slate-700"
-                  >
-                    <Icon
-                      size={15}
-                      className="shrink-0 text-slate-600"
-                      aria-hidden="true"
-                    />
-                    <span className="block min-w-0 truncate" title={label}>
-                      {label}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+            <div
+              className="min-w-0 text-left [&_h1]:truncate [&_h2]:truncate [&_h3]:truncate [&_h4]:truncate lg:col-start-1 lg:row-start-1"
+              data-car-details-desktop-overview-identity
+            >
+              {identity}
             </div>
-            <div className="min-w-0 self-start" data-car-details-desktop-overview-summary>
+            <div
+              className="relative h-[250px] w-full overflow-hidden rounded-[12px] bg-white lg:col-start-1 lg:row-start-2"
+              data-car-details-desktop-overview-image
+            >
+              <CarResultImage
+                imageUrl={car.imageUrl}
+                imageAlt={car.imageAlt}
+                modelName={car.modelName}
+                category={car.category}
+                sizes="680px"
+                fit="contain"
+                priority
+              />
+            </div>
+            <ul
+              className="grid min-w-0 grid-cols-4 gap-x-4 gap-y-2 lg:col-start-1 lg:row-start-3"
+              data-car-details-desktop-overview-specifications
+            >
+              {specs.map(([Icon, label]) => (
+                <li
+                  key={label}
+                  className="car-details-desktop-amenity-type inline-flex min-w-0 items-center gap-2 text-[13px] font-semibold leading-[18px] text-slate-700"
+                >
+                  <Icon
+                    size={15}
+                    className="shrink-0 text-slate-600"
+                    aria-hidden="true"
+                  />
+                  <span className="block min-w-0 truncate" title={label}>
+                    {label}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div
+              className="min-w-0 self-start lg:col-start-2 lg:row-start-2"
+              data-car-details-desktop-overview-summary
+            >
               {desktopSummary}
             </div>
           </div>
