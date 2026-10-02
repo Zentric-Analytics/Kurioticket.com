@@ -479,7 +479,7 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     'role="radio"',
     "term.semantic === \"positive\" ? Check",
     'event.key === "ArrowRight" || event.key === "ArrowDown"',
-    'tabIndex={selected || (!selectedDealOfferId && index === 0) ? 0 : -1}',
+    'tabIndex={selected ? 0 : -1}',
     "activeOffer.price",
     "<FarePanel activeTab={activeTab} fare={selectedFare} offer={activeOffer}",
     "Operated by {segment.operatingCarrier.name}",
@@ -1157,8 +1157,10 @@ test("desktop Fare information uses the native semantic hierarchy without changi
   assert.match(desktop, /resolveDealIdentityMark\(deal\)/);
   assert.match(desktop, /fare\?\.label/);
   assert.match(desktop, /price\.formatted/);
-  assert.match(desktop, /No booking deals available/);
-  assert.match(desktop, /No additional live provider deals were supplied for this fare/);
+  assert.doesNotMatch(desktop, /No booking deals available/);
+  assert.doesNotMatch(desktop, /No additional live provider deals were supplied for this fare/);
+  assert.match(desktop, /No fare price available/);
+  assert.match(desktop, /The provider did not supply a usable price for this fare/);
   assert.match(desktop, /data-desktop-fare-panel/);
   assert.doesNotMatch(desktop, /rounded-\[10px\] border border-\[#E2E8F0\] p-4/);
   assert.match(desktop, /role="tabpanel"/);
@@ -1175,7 +1177,7 @@ test("desktop selected deal drives fare information and the Compare deals action
   assert.match(source, /const providerPrice = activeOffer[\s\S]*?amount: activeOffer\.price[\s\S]*?sourceCurrency: activeOffer\.currency/);
   assert.match(source, /<FarePanel activeTab=\{activeTab\} fare=\{selectedFare\} offer=\{activeOffer\}[\s\S]*?selectedDealOfferId=\{selectedDeal\?\.offerId \?\? null\}[\s\S]*?onSelectDeal=\{setSelectedDealOfferId\}/);
   assert.match(source, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
-  assert.match(source, /tabIndex=\{selected \|\| \(!selectedDealOfferId && index === 0\) \? 0 : -1\}/);
+  assert.match(source, /tabIndex=\{selected \? 0 : -1\}/);
   assert.doesNotMatch(source, /DesktopCheckoutSummary|data-desktop-checkout-summary/);
 });
 
