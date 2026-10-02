@@ -470,12 +470,21 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                 const price = formatDisplayPrice({ amount: fare.offer.price, sourceCurrency: fare.offer.currency, displayCurrency: selectedOption.currency, convertSourceEstimate: true, useFlightResultSymbols: true, maximumFractionDigits: 0, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
                 const compactTerms = compactFareTerms(fare.distinguishingTerms, available.search.tripType)
                   .filter(({ text }) => !/^(?:base|total)\s+price\s*·\s*(?:display\s+)?price\s*:/i.test(text.trim()));
-                return <button data-desktop-fare-card key={fare.key} ref={(element) => { fareButtonRefs.current[index] = element; }} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} onClick={() => selectFare(index)} onKeyDown={(event) => handleFareKeyDown(event, index)} className={`relative h-[150px] w-[250px] min-w-[250px] shrink-0 snap-start rounded-[15px] border-[1.5px] px-3 pb-2 pt-2 text-left transition-[border-color,background-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 ${selected ? "border-[#075EE8] bg-[#075EE8]/[0.025] shadow-[0_6px_16px_rgba(7,19,59,0.16)]" : "border-[#D7E0EC] bg-white shadow-[0_2px_7px_rgba(7,19,59,0.07)] hover:border-[#B9C8DA] hover:shadow-[0_4px_11px_rgba(7,19,59,0.11)]"}`}>
-                  <div data-desktop-fare-content className="min-w-0 pb-14">
-                    <div data-desktop-fare-identity className="mx-auto flex max-w-full items-center justify-center gap-[7px]"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-[#CFE3FA] bg-[#EAF3FF] text-[#075EE8]"><Luggage className="h-3.5 w-3.5" aria-hidden="true" /></span><p className="min-w-0 max-w-full line-clamp-2 text-[13px] font-bold leading-[17px] tracking-[0.1px] text-slate-950">{fare.label}</p></div>
-                    {compactTerms.length ? <ul data-desktop-fare-benefits className="mt-[5px] space-y-[5px]">{compactTerms.map(({ term, text }, termIndex) => <FareTerm key={`${term.category}-${term.legDirection || "trip"}-${term.text}-${termIndex}`} term={term} text={text} compact />)}</ul> : null}
-                  </div>
-                  <div data-desktop-fare-price className="absolute inset-x-3 bottom-2 flex min-h-12 min-w-0 items-end justify-center"><p className="max-w-full break-words text-center text-[19px] font-semibold leading-6 tabular-nums text-slate-950 [overflow-wrap:anywhere]" aria-label={price.ariaLabel}>{price.formatted}</p></div>
+                return <button data-desktop-fare-card data-empty-benefits={!compactTerms.length || undefined} key={fare.key} ref={(element) => { fareButtonRefs.current[index] = element; }} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} onClick={() => selectFare(index)} onKeyDown={(event) => handleFareKeyDown(event, index)} className={`relative h-[150px] w-[250px] min-w-[250px] shrink-0 snap-start rounded-[15px] border-[1.5px] px-3 pb-2 pt-2 text-left transition-[border-color,background-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 ${selected ? "border-[#075EE8] bg-[#075EE8]/[0.025] shadow-[0_6px_16px_rgba(7,19,59,0.16)]" : "border-[#D7E0EC] bg-white shadow-[0_2px_7px_rgba(7,19,59,0.07)] hover:border-[#B9C8DA] hover:shadow-[0_4px_11px_rgba(7,19,59,0.11)]"}`}>
+                  {compactTerms.length ? (
+                    <>
+                      <div data-desktop-fare-content className="min-w-0 pb-14">
+                        <div data-desktop-fare-identity className="mx-auto flex max-w-full items-center justify-center gap-[7px]"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-[#CFE3FA] bg-[#EAF3FF] text-[#075EE8]"><Luggage className="h-3.5 w-3.5" aria-hidden="true" /></span><p className="min-w-0 max-w-full line-clamp-2 text-[13px] font-bold leading-[17px] tracking-[0.1px] text-slate-950">{fare.label}</p></div>
+                        <ul data-desktop-fare-benefits className="mt-[5px] space-y-[5px]">{compactTerms.map(({ term, text }, termIndex) => <FareTerm key={`${term.category}-${term.legDirection || "trip"}-${term.text}-${termIndex}`} term={term} text={text} compact />)}</ul>
+                      </div>
+                      <div data-desktop-fare-price className="absolute inset-x-3 bottom-2 flex min-h-12 min-w-0 items-end justify-center"><p className="max-w-full break-words text-center text-[19px] font-semibold leading-6 tabular-nums text-slate-950 [overflow-wrap:anywhere]" aria-label={price.ariaLabel}>{price.formatted}</p></div>
+                    </>
+                  ) : (
+                    <div data-desktop-fare-empty-benefits className="flex h-full min-w-0 flex-col items-center justify-center gap-5 pb-1">
+                      <div data-desktop-fare-identity className="flex max-w-full items-center justify-center gap-[7px]"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-[#CFE3FA] bg-[#EAF3FF] text-[#075EE8]"><Luggage className="h-3.5 w-3.5" aria-hidden="true" /></span><p className="min-w-0 max-w-full line-clamp-2 text-[13px] font-bold leading-[17px] tracking-[0.1px] text-slate-950">{fare.label}</p></div>
+                      <div data-desktop-fare-price className="flex min-w-0 justify-center"><p className="max-w-full break-words text-center text-[19px] font-semibold leading-6 tabular-nums text-slate-950 [overflow-wrap:anywhere]" aria-label={price.ariaLabel}>{price.formatted}</p></div>
+                    </div>
+                  )}
                 </button>;
               })}
             </div> : <div data-desktop-fare-price-loading role="status" aria-label="Loading fare prices" aria-busy="true" className="hidden min-w-0 gap-3 overflow-hidden pb-3 pr-6 sm:flex">{fareChoices.map((fare)=><div data-desktop-fare-loading-card key={fare.key} className="relative h-[150px] w-[250px] min-w-[250px] shrink-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-2 shadow-[0_2px_7px_rgba(7,19,59,0.07)]"><div className="min-w-0 pb-14"><div className="flex max-w-full items-center justify-center gap-[7px]"><div className="h-6 w-6 shrink-0 animate-pulse rounded-lg bg-slate-200 motion-reduce:animate-none" /><div className="h-3 w-[72px] max-w-[60%] animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /></div><div className="mt-[5px] space-y-[5px]">{[0,1,2].map((row)=><div key={row} className="flex min-w-0 items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none" /><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div>)}</div></div><div data-desktop-fare-loading-price className="absolute inset-x-3 bottom-2 flex min-h-12 items-end justify-center"><div className="h-5 w-[82px] animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /></div></div>)}</div>}
@@ -860,7 +869,7 @@ function CompareDealsPanel({
       <div
         role="radiogroup"
         aria-label="Flight deal options"
-        className="max-w-[820px] space-y-2 py-1"
+        className="max-w-[640px] space-y-2 py-1"
         data-desktop-flight-deal-list
       >
         {displayedDeals.map(({ deal, canContinue }, index) => {
@@ -884,7 +893,7 @@ function CompareDealsPanel({
               data-desktop-flight-deal-card
               data-selected={selected || undefined}
               data-provider-handoff-unavailable={!canContinue || undefined}
-              className={`relative flex min-h-[80px] min-w-0 items-center justify-between gap-4 rounded-xl border bg-white px-4 py-3 transition ${selected ? "border-[#075EE8] shadow-[0_3px_10px_rgba(7,94,232,0.08)]" : "border-[#D9E2E8]"}`}
+              className={`relative grid min-h-[92px] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-xl border bg-white px-4 py-3 transition ${selected ? "border-[#075EE8] shadow-[0_3px_10px_rgba(7,94,232,0.08)]" : "border-[#D9E2E8]"}`}
             >
               <button
                 type="button"
@@ -915,19 +924,24 @@ function CompareDealsPanel({
                     ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
                     [nextIndex]?.focus();
                 }}
-                className="grid min-w-0 flex-1 grid-cols-[132px_minmax(0,1fr)] items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2"
+                className="min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2"
               >
-                <span className="flex min-w-0 items-center" data-desktop-flight-deal-provider>
+                <span className="block min-w-0" data-desktop-flight-deal-provider>
                   {deal.providerLogoUrl ? (
                     <BookingProviderLogo
                       providerName={deal.providerName}
                       logoUrl={deal.providerLogoUrl}
                     />
                   ) : identityMark.kind === "airline" ? (
-                    <FlightIdentityMark
-                      logoUrl={identityMark.logoUrl}
-                      decorative
-                    />
+                    <span className="inline-flex items-center gap-2">
+                      <FlightIdentityMark
+                        logoUrl={identityMark.logoUrl}
+                        decorative
+                      />
+                      <strong className="truncate text-[15px] font-semibold leading-5 text-[#192024]">
+                        {deal.providerName}
+                      </strong>
+                    </span>
                   ) : (
                     <strong className="truncate text-[15px] font-semibold leading-5 text-[#004BB8]">
                       {deal.providerName}
@@ -935,7 +949,7 @@ function CompareDealsPanel({
                   )}
                 </span>
 
-                <span className="min-w-0 text-center" data-desktop-flight-deal-price>
+                <span className="mt-2 block min-w-0" data-desktop-flight-deal-price>
                   <strong
                     className="block break-words text-[20px] font-semibold leading-6 tracking-[-0.02em] tabular-nums text-[#192024]"
                     aria-label={price.ariaLabel}
