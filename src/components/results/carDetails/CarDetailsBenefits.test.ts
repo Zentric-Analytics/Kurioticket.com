@@ -617,6 +617,28 @@ test("source contract does not restore removed booking-disabled messaging", () =
 });
 
 
+test("standalone desktop amenities pull the left column inward without wrapping or moving the right column", () => {
+  assert.match(
+    heroSource,
+    /specs\.map\(\(\[Icon, label\], index\) => \{/,
+  );
+  assert.match(
+    heroSource,
+    /index % 2 === 0 \? "lg:justify-self-end" : "lg:justify-self-start"/,
+  );
+  assert.match(
+    heroSource,
+    /lg:w-max lg:max-w-full[\s\S]*?lg:whitespace-nowrap/,
+  );
+  assert.match(
+    heroSource,
+    /lg:break-normal lg:whitespace-nowrap/,
+  );
+  assert.match(
+    heroSource,
+    /lg:max-w-\[820px\][\s\S]*?lg:grid-cols-2[\s\S]*?lg:gap-x-24/,
+  );
+});
 test("standalone desktop amenities sit directly on the Cars Details page surface", () => {
   assert.match(
     heroSource,
