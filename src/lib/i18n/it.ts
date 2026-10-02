@@ -153,6 +153,7 @@ export const translations: TranslationDictionary = {
   mobileTravelHeading: "Viaggi",
   mobilePreferencesHeading: "Preferenze",
   viewDetails: "Vedi dettagli",
+  seeDetails: "Vedi dettagli",
   tryAgain: "Riprova",
   manage: "Gestisci",
   deleteAccount: "Elimina account",
