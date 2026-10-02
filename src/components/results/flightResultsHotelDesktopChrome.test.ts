@@ -102,30 +102,27 @@ test("desktop navbar search opens the Change your flight editor on every click s
   assert.match(callback, /setActiveDesktopSearchSurface\("sticky"\)/);
 });
 
-test("desktop Flight Results puts the Hotels-style summary before nearby fares", () => {
-  const summary = flight.indexOf("data-flight-results-desktop-summary");
+test("desktop Flight Results puts the Hotels-style summary directly above result cards", () => {
   const nearby = flight.indexOf("data-desktop-nearby-fare-rail");
+  const priceAlert = flight.indexOf("data-flight-price-alert-row");
+  const summary = flight.indexOf("data-flight-results-desktop-summary");
+  const desktopResults = flight.indexOf("ref={paginationListRef}");
 
-  assert.ok(summary >= 0);
-  assert.ok(nearby > summary);
+  assert.ok(nearby >= 0);
+  assert.ok(priceAlert > nearby);
+  assert.ok(summary > priceAlert);
+  assert.ok(desktopResults > summary);
+
+  const summarySource = flight.slice(summary, desktopResults);
   assert.match(
-    flight.slice(summary, nearby),
+    summarySource,
     /text-\[12px\] font-normal leading-4 text-\[#191E3B\]/,
   );
+  assert.match(summarySource, /hotel-results-sort-trigger/);
   assert.match(
-    flight.slice(summary, nearby),
-    /flight-results-hotel-sort-trigger/,
+    summarySource,
+    /rounded-full border border-\[#9299A9\] bg-white px-3 text-\[#191E3B\]/,
   );
-  assert.match(
-    flight.slice(summary, nearby),
-    /rounded-full border border-\[#9299A9\]/,
-  );
-  assert.match(
-    flight.slice(summary, nearby),
-    /Sort by \{selectedSortLabel\}/,
-  );
-  assert.match(
-    flight.slice(summary, nearby),
-    /role="listbox"/,
-  );
+  assert.match(summarySource, /Sort by \{selectedSortLabel\}/);
+  assert.doesNotMatch(summarySource, /flight-results-hotel-sort-trigger/);
 });
