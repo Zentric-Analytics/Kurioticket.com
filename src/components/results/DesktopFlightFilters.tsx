@@ -297,7 +297,7 @@ export function DesktopFlightFilters({
           </CompactFilterSection>
 
           <CompactFilterSection id={`${idPrefix}-stops-panel`} title={t("stops")} open={openCompactSection === "stops"} selectedCount={compactSections.stops} onToggle={() => toggleCompactSection("stops")}>
-            <div className="grid gap-0.5">{stopOptions.length ? stopOptions.map((option) => <FacetRow compact key={option.value} label={option.label} count={option.count} secondaryLabel={option.rightLabel ? `${t("from").toLowerCase()} ${option.rightLabel}` : option.secondaryLabel} checked={selectedStops.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedStops); onFilterCommit(); }} />) : <p className="py-1 text-xs text-slate-500">{t("stopsAppearAfterResultsLoad")}</p>}</div>
+            <div className="grid gap-0.5">{stopOptions.length ? stopOptions.map((option) => <FacetRow compact key={option.value} label={option.label} count={option.count} checked={selectedStops.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedStops); onFilterCommit(); }} />) : <p className="py-1 text-xs text-slate-500">{t("stopsAppearAfterResultsLoad")}</p>}</div>
           </CompactFilterSection>
 
           <CompactFilterSection id={`${idPrefix}-airlines-panel`} title={t("airlines")} open={openCompactSection === "airlines"} selectedCount={compactSections.airlines} onToggle={() => toggleCompactSection("airlines")}>
@@ -399,7 +399,7 @@ export function DesktopFlightFilters({
           <input aria-label={t("duration")} className={rangeClass} type="range" min={durationBounds?.min ?? 0} max={durationBounds?.max ?? 0} step={15} value={maxDurationMinutes ?? durationBounds?.max ?? 0} disabled={!durationBounds} onPointerUp={onFilterCommit} onMouseUp={onFilterCommit} onTouchEnd={onFilterCommit} onKeyUp={onFilterCommit} onBlur={onFilterCommit} onChange={(event) => { onFilterChange(); setMaxDurationMinutes(Number(event.target.value)); }} />
         </section>
 
-        <OptionSection title={t("stops")} emptyText={t("stopsAppearAfterResultsLoad")}>{stopOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} secondaryLabel={option.rightLabel ? `${t("from").toLowerCase()} ${option.rightLabel}` : option.secondaryLabel} checked={selectedStops.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedStops); onFilterCommit(); }} />)}</OptionSection>
+        <OptionSection title={t("stops")} emptyText={t("stopsAppearAfterResultsLoad")}>{stopOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} checked={selectedStops.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedStops); onFilterCommit(); }} />)}</OptionSection>
 
         <OptionSection title={t("airlines")} emptyText={t("airlinesAppearAfterResultsLoad")}>
           <label className="sr-only" htmlFor={`${idPrefix}-airline-search`}>{t("accountDashboard.preferences.booking.searchAirlines")}</label>
