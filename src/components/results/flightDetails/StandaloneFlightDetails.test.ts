@@ -622,8 +622,10 @@ test("desktop Pick your fare cards mirror the native hierarchy without changing 
   const loading = source.slice(loadingStart, loadingEnd);
 
   assert.ok(desktopStart > source.indexOf("<MobileNativeFareRail fares={fareChoices}"));
-  assert.match(desktop, /className=\{`hidden min-w-0 sm:grid/);
-  assert.match(desktop, /data-desktop-fare-card[^>]*[\s\S]*?relative min-h-\[154px\][\s\S]*?rounded-\[15px\] border-\[1\.5px\]/);
+  assert.match(desktop, /data-desktop-fare-rail/);
+  assert.match(desktop, /overflow-x-auto overscroll-x-contain/);
+  assert.match(desktop, /sm:flex sm:snap-x sm:snap-mandatory/);
+  assert.match(desktop, /data-desktop-fare-card[^>]*[\\s\\S]*?h-\\[150px\\] w-\\[250px\\] min-w-\\[250px\\] shrink-0 snap-start[\\s\\S]*?rounded-\\[15px\\] border-\\[1\\.5px\\]/);
   assert.match(desktop, /border-\[#075EE8\][\s\S]*?shadow-\[0_6px_16px/);
   assert.match(desktop, /border-\[#D7E0EC\][\s\S]*?shadow-\[0_2px_7px/);
   assert.doesNotMatch(desktop, /selected \? "[^"]*border-(?:2|\[2px\])/);
@@ -632,6 +634,7 @@ test("desktop Pick your fare cards mirror the native hierarchy without changing 
   assert.match(desktop, /h-6 w-6 shrink-0[^"]*rounded-lg border/);
   assert.match(desktop, /line-clamp-2/);
   assert.match(desktop, /data-desktop-fare-benefits[\s\S]*?<FareTerm[\s\S]*?data-desktop-fare-price/);
+  assert.match(desktop, /\(\?:base\|total\)\\s\+price/);
   assert.match(desktop, /data-desktop-fare-price className="absolute inset-x-3 bottom-2 flex min-h-12 min-w-0 items-end justify-center"/);
   assert.match(desktop, /text-\[19px\] font-semibold[^"\n]*text-slate-950/);
   assert.doesNotMatch(desktop, /data-desktop-fare-price[\s\S]*?font-extrabold/);
@@ -640,7 +643,7 @@ test("desktop Pick your fare cards mirror the native hierarchy without changing 
   assert.match(desktop, /role="radio" aria-checked=\{selected\} tabIndex=\{selected \? 0 : -1\}/);
   assert.match(desktop, /onKeyDown=\{\(event\) => handleFareKeyDown\(event, index\)\}/);
 
-  assert.match(loading, /data-desktop-fare-loading-card[\s\S]*?relative min-h-\[154px\][\s\S]*?rounded-\[15px\] border-\[1\.5px\]/);
+  assert.match(loading, /data-desktop-fare-loading-card[\s\S]*?h-\[150px\] w-\[250px\] min-w-\[250px\] shrink-0[\s\S]*?rounded-\[15px\] border-\[1\.5px\]/);
   assert.match(loading, /pb-14[\s\S]*?justify-center gap-\[7px\][\s\S]*?space-y-\[5px\][\s\S]*?data-desktop-fare-loading-price className="absolute inset-x-3 bottom-2 flex min-h-12 items-end justify-center"/);
 });
 
@@ -684,18 +687,18 @@ test("desktop Flight Details keeps price and booking action inside Compare deals
   assert.match(panel, /data-desktop-flight-deal-list/);
   assert.match(panel, /data-desktop-flight-deal-card/);
   assert.match(panel, /data-desktop-flight-deal-action/);
-  assert.match(panel, /className="max-w-\[820px\] space-y-3 py-1"/);
+  assert.match(panel, /className="max-w-\\[820px\\] space-y-2 py-1"/);
   assert.match(panel, /fallbackOffer\?\.bookingProviderName\?\.trim\(\)/);
   assert.match(panel, /fallbackOffer\?\.provider\?\.trim\(\)/);
   assert.match(panel, /displayedDeals = deals\.length/);
   assert.match(panel, /text-\[20px\] font-semibold leading-6/);
   assert.match(panel, /fare\?\.label \? `\$\{fare\.label\} · Trip total` : "Trip total"/);
-  assert.match(panel, /data-desktop-flight-deal-benefits/);
-  assert.match(panel, /"Continue deal"/);
+  assert.doesNotMatch(panel, /data-desktop-flight-deal-benefits/);
+  assert.match(panel, /"View deal"/);
   assert.match(panel, /"Unavailable"/);
-  assert.match(panel, /w-\[140px\]/);
+  assert.match(panel, /h-9 w-\\[112px\\]/);
   assert.match(panel, /data-desktop-flight-provider-logo/);
-  assert.match(panel, /min-h-\[92px\]/);
+  assert.match(panel, /min-h-\\[80px\\]/);
   assert.match(panel, /disabled=\{redirecting \|\| !canContinue\}/);
   assert.match(panel, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.doesNotMatch(source, /DesktopCheckoutSummary|data-desktop-checkout-summary/);
@@ -737,18 +740,17 @@ test("desktop Compare deals uses the shared Cars and Hotels price hierarchy", as
   assert.match(panel, /deal\.providerName/);
   assert.match(panel, /price\.formatted/);
   assert.match(panel, /Trip total/);
-  assert.match(panel, /Continue deal/);
+  assert.match(panel, /View deal/);
   assert.match(panel, /rounded-xl border bg-white px-4 py-3/);
-  assert.match(panel, /data-desktop-flight-deal-benefits/);
-  assert.match(panel, /inline-flex h-11 w-\[140px\]/);
+  assert.match(panel, /grid-cols-\\[132px_minmax\\(0,1fr\\)\\]/);
+  assert.match(panel, /inline-flex h-9 w-\\[112px\\]/);
   assert.match(panel, /data-provider-handoff-unavailable/);
-  assert.match(panel, /disabled:bg-\[#075EE8\]/);
-  assert.match(panel, /border-r border-\[#D9E2E8\] pr-4/);
-  assert.match(panel, /deal\.providerLogoUrl/);
+  assert.match(panel, /disabled:bg-\\[#004BB8\\]/);
+  assert.match(panel, /data-desktop-flight-deal-provider/);
+  assert.match(panel, /deal\\.providerLogoUrl/);
   assert.match(panel, /BookingProviderLogo/);
   assert.doesNotMatch(source, /DUFFEL_PROVIDER_LOGO_URL/);
-  assert.match(panel, /grid-cols-2 items-start gap-x-4/);
-  assert.doesNotMatch(panel, /View deal/);
+  assert.doesNotMatch(panel, /data-desktop-flight-deal-benefits/);
 });
 
 test("trip totals use canonical traveler count without changing provider amounts", () => {

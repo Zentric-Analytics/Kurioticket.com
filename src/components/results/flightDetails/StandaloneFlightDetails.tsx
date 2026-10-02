@@ -464,12 +464,13 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
 
             <h2 className="mb-0 mt-6 text-[16px] font-medium leading-[21px] tracking-[-0.15px] text-[#1A1A1A] sm:mb-3 sm:text-[18px] sm:font-medium sm:leading-tight sm:tracking-normal sm:text-slate-950">Pick your fare</h2>
             {mobilePricesReady ? <MobileNativeFareRail fares={fareChoices} selectedFareKey={selectedFare?.key ?? ""} tripType={available.search.tripType} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} onSelect={selectFare} /> : <div data-mobile-native-fare-price-loading role="progressbar" aria-label="Loading fare prices" aria-busy="true" className="flex gap-[10px] overflow-hidden pb-[18px] pt-3 pr-[38px] sm:hidden">{fareChoices.slice(0,2).map((fare)=><div key={fare.key} className="relative h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-1.5 shadow-[0_2px_6px_rgba(7,19,59,0.06)]"><div className="flex justify-center gap-[7px]"><div className="h-6 w-6 animate-pulse rounded-lg bg-slate-200"/><div className="mt-1.5 h-3 w-[72px] animate-pulse rounded bg-slate-200"/></div><div className="mt-[5px] space-y-[5px]">{[0,1,2].map((row)=><div key={row} className="flex items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200"/><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-200"/></div>)}</div><div className="absolute inset-x-3 bottom-1.5 flex justify-center"><div className="h-4 w-[82px] animate-pulse rounded bg-slate-200"/></div></div>)}</div>}
-            {mobilePricesReady ? <div role="radiogroup" aria-label="Available fares" className={`hidden min-w-0 sm:grid sm:gap-3 ${fareChoices.length === 1 ? "max-w-[270px]" : fareChoices.length === 2 ? "sm:grid-cols-2 lg:max-w-[632px]" : fareChoices.length === 3 ? "sm:grid-cols-2 md:grid-cols-3 lg:max-w-[954px]" : "sm:grid-cols-2 xl:max-w-[1276px] xl:grid-cols-4"}`}>
+            {mobilePricesReady ? <div role="radiogroup" aria-label="Available fares" data-desktop-fare-rail className="hidden min-w-0 gap-3 overflow-x-auto overscroll-x-contain pb-3 pr-6 sm:flex sm:snap-x sm:snap-mandatory [scrollbar-width:thin]">
               {fareChoices.map((fare, index) => {
                 const selected = fare.key === selectedFare?.key;
                 const price = formatDisplayPrice({ amount: fare.offer.price, sourceCurrency: fare.offer.currency, displayCurrency: selectedOption.currency, convertSourceEstimate: true, useFlightResultSymbols: true, maximumFractionDigits: 0, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
-                const compactTerms = compactFareTerms(fare.distinguishingTerms, available.search.tripType);
-                return <button data-desktop-fare-card key={fare.key} ref={(element) => { fareButtonRefs.current[index] = element; }} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} onClick={() => selectFare(index)} onKeyDown={(event) => handleFareKeyDown(event, index)} className={`relative min-h-[154px] min-w-0 w-full rounded-[15px] border-[1.5px] px-3 pb-2 pt-2 text-left transition-[border-color,background-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 ${selected ? "border-[#075EE8] bg-[#075EE8]/[0.025] shadow-[0_6px_16px_rgba(7,19,59,0.16)]" : "border-[#D7E0EC] bg-white shadow-[0_2px_7px_rgba(7,19,59,0.07)] hover:border-[#B9C8DA] hover:shadow-[0_4px_11px_rgba(7,19,59,0.11)]"}`}>
+                const compactTerms = compactFareTerms(fare.distinguishingTerms, available.search.tripType)
+                  .filter(({ text }) => !/^(?:base|total)\s+price\s*·\s*(?:display\s+)?price\s*:/i.test(text.trim()));
+                return <button data-desktop-fare-card key={fare.key} ref={(element) => { fareButtonRefs.current[index] = element; }} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} onClick={() => selectFare(index)} onKeyDown={(event) => handleFareKeyDown(event, index)} className={`relative h-[150px] w-[250px] min-w-[250px] shrink-0 snap-start rounded-[15px] border-[1.5px] px-3 pb-2 pt-2 text-left transition-[border-color,background-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 ${selected ? "border-[#075EE8] bg-[#075EE8]/[0.025] shadow-[0_6px_16px_rgba(7,19,59,0.16)]" : "border-[#D7E0EC] bg-white shadow-[0_2px_7px_rgba(7,19,59,0.07)] hover:border-[#B9C8DA] hover:shadow-[0_4px_11px_rgba(7,19,59,0.11)]"}`}>
                   <div data-desktop-fare-content className="min-w-0 pb-14">
                     <div data-desktop-fare-identity className="mx-auto flex max-w-full items-center justify-center gap-[7px]"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-[#CFE3FA] bg-[#EAF3FF] text-[#075EE8]"><Luggage className="h-3.5 w-3.5" aria-hidden="true" /></span><p className="min-w-0 max-w-full line-clamp-2 text-[13px] font-bold leading-[17px] tracking-[0.1px] text-slate-950">{fare.label}</p></div>
                     {compactTerms.length ? <ul data-desktop-fare-benefits className="mt-[5px] space-y-[5px]">{compactTerms.map(({ term, text }, termIndex) => <FareTerm key={`${term.category}-${term.legDirection || "trip"}-${term.text}-${termIndex}`} term={term} text={text} compact />)}</ul> : null}
@@ -477,7 +478,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                   <div data-desktop-fare-price className="absolute inset-x-3 bottom-2 flex min-h-12 min-w-0 items-end justify-center"><p className="max-w-full break-words text-center text-[19px] font-semibold leading-6 tabular-nums text-slate-950 [overflow-wrap:anywhere]" aria-label={price.ariaLabel}>{price.formatted}</p></div>
                 </button>;
               })}
-            </div> : <div data-desktop-fare-price-loading role="status" aria-label="Loading fare prices" aria-busy="true" className={`hidden min-w-0 sm:grid sm:gap-3 ${fareChoices.length === 1 ? "max-w-[270px]" : fareChoices.length === 2 ? "sm:grid-cols-2 lg:max-w-[632px]" : fareChoices.length === 3 ? "sm:grid-cols-2 md:grid-cols-3 lg:max-w-[954px]" : "sm:grid-cols-2 xl:max-w-[1276px] xl:grid-cols-4"}`}>{fareChoices.map((fare)=><div data-desktop-fare-loading-card key={fare.key} className="relative min-h-[154px] min-w-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-2 shadow-[0_2px_7px_rgba(7,19,59,0.07)]"><div className="min-w-0 pb-14"><div className="flex max-w-full items-center justify-center gap-[7px]"><div className="h-6 w-6 shrink-0 animate-pulse rounded-lg bg-slate-200 motion-reduce:animate-none" /><div className="h-3 w-[72px] max-w-[60%] animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /></div><div className="mt-[5px] space-y-[5px]">{[0,1,2].map((row)=><div key={row} className="flex min-w-0 items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none" /><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div>)}</div></div><div data-desktop-fare-loading-price className="absolute inset-x-3 bottom-2 flex min-h-12 items-end justify-center"><div className="h-5 w-[82px] animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /></div></div>)}</div>}
+            </div> : <div data-desktop-fare-price-loading role="status" aria-label="Loading fare prices" aria-busy="true" className="hidden min-w-0 gap-3 overflow-hidden pb-3 pr-6 sm:flex">{fareChoices.map((fare)=><div data-desktop-fare-loading-card key={fare.key} className="relative h-[150px] w-[250px] min-w-[250px] shrink-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-2 shadow-[0_2px_7px_rgba(7,19,59,0.07)]"><div className="min-w-0 pb-14"><div className="flex max-w-full items-center justify-center gap-[7px]"><div className="h-6 w-6 shrink-0 animate-pulse rounded-lg bg-slate-200 motion-reduce:animate-none" /><div className="h-3 w-[72px] max-w-[60%] animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /></div><div className="mt-[5px] space-y-[5px]">{[0,1,2].map((row)=><div key={row} className="flex min-w-0 items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none" /><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div>)}</div></div><div data-desktop-fare-loading-price className="absolute inset-x-3 bottom-2 flex min-h-12 items-end justify-center"><div className="h-5 w-[82px] animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /></div></div>)}</div>}
 
             <MobileNativeFareInformationDeck
               activeTab={activeTab}
@@ -843,9 +844,6 @@ function CompareDealsPanel({
     : fallbackDeal
       ? [{ deal: fallbackDeal, canContinue: Boolean(fare?.handoff.available) }]
       : [];
-  const supportingFacts = (fare?.distinguishingTerms ?? [])
-    .filter(({ text }) => text.trim())
-    .slice(0, 2);
 
   if (!displayedDeals.length)
     return (
@@ -862,7 +860,7 @@ function CompareDealsPanel({
       <div
         role="radiogroup"
         aria-label="Flight deal options"
-        className="max-w-[820px] space-y-3 py-1"
+        className="max-w-[820px] space-y-2 py-1"
         data-desktop-flight-deal-list
       >
         {displayedDeals.map(({ deal, canContinue }, index) => {
@@ -886,7 +884,7 @@ function CompareDealsPanel({
               data-desktop-flight-deal-card
               data-selected={selected || undefined}
               data-provider-handoff-unavailable={!canContinue || undefined}
-              className={`grid min-h-[92px] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 rounded-xl border bg-white px-4 py-3 transition ${selected ? "border-[#075EE8] shadow-[0_4px_14px_rgba(7,94,232,0.08)]" : "border-[#D9E2E8]"}`}
+              className={`relative flex min-h-[80px] min-w-0 items-center justify-between gap-4 rounded-xl border bg-white px-4 py-3 transition ${selected ? "border-[#075EE8] shadow-[0_3px_10px_rgba(7,94,232,0.08)]" : "border-[#D9E2E8]"}`}
             >
               <button
                 type="button"
@@ -917,70 +915,37 @@ function CompareDealsPanel({
                     ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
                     [nextIndex]?.focus();
                 }}
-                className="min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2"
+                className="grid min-w-0 flex-1 grid-cols-[132px_minmax(0,1fr)] items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2"
               >
-                <span className="flex min-w-0 items-center gap-4">
-                  <span className="flex shrink-0 items-center gap-2.5 border-r border-[#D9E2E8] pr-4">
-                    {deal.providerLogoUrl ? (
-                      <BookingProviderLogo
-                        providerName={deal.providerName}
-                        logoUrl={deal.providerLogoUrl}
-                      />
-                    ) : identityMark.kind === "airline" ? (
-                      <FlightIdentityMark
-                        logoUrl={identityMark.logoUrl}
-                        decorative
-                      />
-                    ) : null}
-                    <span className="max-w-[150px] truncate text-[15px] font-semibold leading-5 text-[#192024]">
+                <span className="flex min-w-0 items-center" data-desktop-flight-deal-provider>
+                  {deal.providerLogoUrl ? (
+                    <BookingProviderLogo
+                      providerName={deal.providerName}
+                      logoUrl={deal.providerLogoUrl}
+                    />
+                  ) : identityMark.kind === "airline" ? (
+                    <FlightIdentityMark
+                      logoUrl={identityMark.logoUrl}
+                      decorative
+                    />
+                  ) : (
+                    <strong className="truncate text-[15px] font-semibold leading-5 text-[#004BB8]">
                       {deal.providerName}
-                    </span>
-                  </span>
-
-                  <span className="min-w-0">
-                    <strong
-                      className="block break-words text-[20px] font-semibold leading-6 tracking-[-0.02em] tabular-nums text-[#192024]"
-                      aria-label={price.ariaLabel}
-                    >
-                      {price.formatted}
                     </strong>
-                    <span className="block text-[12px] font-normal leading-[16px] text-[#59636a]">
-                      {fare?.label ? `${fare.label} · Trip total` : "Trip total"}
-                    </span>
-                  </span>
+                  )}
                 </span>
 
-                {supportingFacts.length ? (
-                  <span
-                    className="mt-2.5 grid min-w-0 grid-cols-2 items-start gap-x-4 text-[12px] font-normal leading-4 text-[#59636a]"
-                    data-desktop-flight-deal-benefits
+                <span className="min-w-0 text-center" data-desktop-flight-deal-price>
+                  <strong
+                    className="block break-words text-[20px] font-semibold leading-6 tracking-[-0.02em] tabular-nums text-[#192024]"
+                    aria-label={price.ariaLabel}
                   >
-                    {supportingFacts.map((term, factIndex) => (
-                      <span
-                        key={`${term.category}-${term.text}-${factIndex}`}
-                        className={`inline-flex min-w-0 items-start gap-1.5 ${factIndex ? "border-l border-[#D9E2E8] pl-4" : ""}`}
-                      >
-                        {term.semantic === "positive" ? (
-                          <Check
-                            aria-hidden
-                            className="h-3.5 w-3.5 shrink-0 text-emerald-600"
-                          />
-                        ) : term.semantic === "negative" ? (
-                          <MinusCircle
-                            aria-hidden
-                            className="h-3.5 w-3.5 shrink-0 text-slate-500"
-                          />
-                        ) : (
-                          <Info
-                            aria-hidden
-                            className="h-3.5 w-3.5 shrink-0 text-slate-500"
-                          />
-                        )}
-                        <span className="line-clamp-1">{term.text}</span>
-                      </span>
-                    ))}
+                    {price.formatted}
+                  </strong>
+                  <span className="block text-[12px] font-normal leading-[14px] text-[#59636a]">
+                    {fare?.label ? `${fare.label} · Trip total` : "Trip total"}
                   </span>
-                ) : null}
+                </span>
               </button>
 
               <button
@@ -995,13 +960,13 @@ function CompareDealsPanel({
                   onSelectDeal(deal.offerId);
                   onViewDeal(deal.offerId);
                 }}
-                className="inline-flex h-11 w-[140px] shrink-0 items-center justify-center rounded-lg bg-[#075EE8] px-3 text-sm font-semibold text-white shadow-[0_3px_10px_rgba(7,94,232,0.16)] transition-colors hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[#075EE8] disabled:text-white disabled:opacity-100"
+                className="inline-flex h-9 w-[112px] shrink-0 items-center justify-center rounded-lg bg-[#004BB8] px-3 text-[13px] font-semibold leading-5 text-white transition-colors hover:bg-[#003B91] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[#004BB8] disabled:text-white disabled:opacity-100"
                 data-desktop-flight-deal-action
               >
                 {canContinue
                   ? redirecting
                     ? "Opening…"
-                    : "Continue deal"
+                    : "View deal"
                   : "Unavailable"}
               </button>
             </article>
