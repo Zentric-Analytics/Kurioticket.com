@@ -426,9 +426,15 @@ test("desktop Flight result meta typography uses the premium hierarchy", async (
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
+  const styles = await readFile(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
   const cheaperStart = source.indexOf("data-desktop-cheaper-nearby");
   const cheaper = source.slice(cheaperStart, cheaperStart + 1200);
-  assert.match(cheaper, /px-0 text-left text-\[13px\] font-medium leading-5 text-slate-600/);
+  assert.match(cheaper, /desktop-flight-cheaper-nearby/);
+  assert.doesNotMatch(cheaper, /text-\[13px\]|font-medium leading-5/);
+  assert.match(styles, /\.desktop-flight-cheaper-nearby \{[\s\S]*?font-size: 11px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?line-height: 16px !important;[\s\S]*?font-variation-settings: "wght" 600;/);
   assert.match(cheaper, /Cheaper nearby: \{formatFareStripDateLabel\(cheaperNearbyFare\.date, calendarLocale\)\} · Save \{cheaperNearbyFare\.savings\}/);
   assert.match(cheaper, /hover:text-\[#075EE8\]/);
   assert.doesNotMatch(cheaper, /rounded-full|bg-white\/70|ring-slate-200\/70/);
@@ -439,8 +445,9 @@ test("desktop Flight result meta typography uses the premium hierarchy", async (
   const summary = source.slice(summaryStart, summaryStart + 4200);
   assert.match(summary, /text-\[12px\] font-normal leading-4 text-\[#191E3B\]/);
   assert.match(summary, /mt-0\.5 text-xs font-medium leading-4 text-slate-500/);
-  assert.match(summary, /flight-results-hotel-sort-trigger/);
-  assert.match(summary, /rounded-full border border-\[#9299A9\] bg-white px-3 text-\[12px\] font-medium leading-4 text-\[#191E3B\]/);
+  assert.match(summary, /hotel-results-sort-trigger/);
+  assert.match(summary, /rounded-full border border-\[#9299A9\] bg-white px-3 text-\[#191E3B\]/);
+  assert.match(styles, /\.hotel-results-sort-trigger \{[\s\S]*?font-size: 12px;[\s\S]*?font-weight: 500;[\s\S]*?line-height: 16px;/);
   assert.match(summary, /Sort by \{selectedSortLabel\}/);
   assert.match(summary, /role="listbox"/);
   assert.match(summary, /role="option"/);
