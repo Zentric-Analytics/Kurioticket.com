@@ -136,14 +136,19 @@ test("Flight Results matches the Cars Back-to-top control", async () => {
   assert.match(source, /<Footer variant="brand-legal-only" \/>/);
 });
 
-test("Flight Results uses the normal AppHeader and the Cars summary below it", async () => {
+test("Flight Results keeps the normal mobile header while desktop adopts the Hotels results header", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
 
-  assert.ok(
-    (source.match(/<AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs \/>/g) ?? []).length >= 2,
+  assert.match(
+    source,
+    /<AppHeader[\s\S]*?flushDesktopBottom[\s\S]*?hideDesktopTravelNav[\s\S]*?hotelDesktopBoundary[\s\S]*?flightResultsDesktopSticky/,
+  );
+  assert.match(
+    source,
+    /<AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs \/>/,
   );
   assert.doesNotMatch(source, /mobileResultsSearch=|mobileResultsLeadingAction=|mobileResultsSticky=/);
   assert.match(source, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
@@ -432,15 +437,15 @@ test("desktop Flight result meta typography uses the premium hierarchy", async (
     'className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-1 lg:bg-transparent"',
   );
   const summary = source.slice(summaryStart, summaryStart + 4200);
-  assert.match(summary, /text-\[15px\] font-semibold leading-5 tracking-\[-0\.006em\] text-\[#0F172A\]/);
-  assert.match(summary, /mt-1 text-\[12px\] font-normal leading-4 text-\[#64748B\]/);
-  assert.match(summary, /text-\[13px\] font-medium leading-5 text-\[#64748B\]">\s*Sort by:/);
-  assert.match(summary, /h-8[^"]*text-\[14px\] font-semibold leading-5 text-\[#142033\]/);
-  assert.match(summary, /hover:bg-slate-100\/70/);
-  assert.match(summary, /hover:text-\[#142033\]/);
-  assert.doesNotMatch(summary, /hover:text-\[#004BB8\]/);
-  assert.match(summary, /<ChevronDown size=\{14\}/);
-  assert.doesNotMatch(summary, /border-b|border-slate-200\/80/);
+  assert.match(summary, /text-\[12px\] font-normal leading-4 text-\[#191E3B\]/);
+  assert.match(summary, /mt-0\.5 text-xs font-medium leading-4 text-slate-500/);
+  assert.match(summary, /flight-results-hotel-sort-trigger/);
+  assert.match(summary, /rounded-full border border-\[#9299A9\] bg-white px-3 text-\[12px\] font-medium leading-4 text-\[#191E3B\]/);
+  assert.match(summary, /Sort by \{selectedSortLabel\}/);
+  assert.match(summary, /role="listbox"/);
+  assert.match(summary, /role="option"/);
+  assert.match(summary, /<ChevronDown[\s\S]*h-3\.5 w-3\.5 transition-transform/);
+  assert.doesNotMatch(summary, /text-\[15px\] font-semibold leading-5 tracking-\[-0\.006em\]/);
   assert.match(source, /data-flight-results-card-list className="space-y-3 sm:space-y-4"/);
   assert.doesNotMatch(source, /data-flight-results-card-list className="space-y-3 sm:space-y-4 sm:pt-2 lg:pt-3"/);
 });

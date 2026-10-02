@@ -11,35 +11,32 @@ const styles = readFileSync(
   "utf8",
 );
 
-function desktopMinimizedSearchBarSource() {
-  const start = source.indexOf("function renderDesktopMinimizedSearchBar()");
+function desktopHeaderSearchBarSource() {
+  const start = source.indexOf("function renderDesktopHeaderSearchBar()");
   const end = source.indexOf("function renderStickySearchPopoutOverlay()", start);
 
-  assert.notEqual(start, -1, "desktop minimized search bar renderer exists");
-  assert.notEqual(end, -1, "sticky popout renderer follows minimized bar");
+  assert.notEqual(start, -1, "desktop header search renderer exists");
+  assert.notEqual(end, -1, "sticky popout renderer follows header search");
 
   return source.slice(start, end);
 }
 
-test("desktop sticky compact search is a small four-section toolbar without trip type", () => {
-  const toolbar = desktopMinimizedSearchBarSource();
+test("desktop Flight Results uses the Hotels-style four-section header search", () => {
+  const toolbar = desktopHeaderSearchBarSource();
 
-  assert.match(toolbar, /max-w-\[820px\]/);
+  assert.match(toolbar, /data-flight-results-nav-search-form/);
   assert.match(
     toolbar,
-    /grid-cols-\[minmax\(220px,1\.5fr\)_minmax\(150px,0\.9fr\)_minmax\(160px,1fr\)_92px\]/,
+    /grid-cols-\[minmax\(0,1\.55fr\)_minmax\(0,1\.15fr\)_minmax\(0,1\.2fr\)_46px\]/,
   );
-  assert.match(toolbar, /h-\[58px\]/);
-  assert.match(toolbar, /h-10 w-\[92px\]/);
-  assert.match(toolbar, /top-0/);
-  assert.match(toolbar, /rounded-lg/);
+  assert.match(toolbar, /h-\[44px\]/);
+  assert.match(toolbar, /rounded-\[9px\] border border-\[#D8E1EC\]/);
   assert.match(toolbar, /openStickySearchEditor\(event, "route"\)/);
   assert.match(toolbar, /openStickySearchEditor\(event, "dates"\)/);
   assert.match(toolbar, /openStickySearchEditor\(event, "travelers"\)/);
+  assert.match(toolbar, /<Search className="h-\[18px\] w-\[18px\]"/);
   assert.doesNotMatch(toolbar, /t\("tripType"\)/);
   assert.doesNotMatch(toolbar, /mobileTripTypeSummary/);
-  assert.equal(toolbar.match(/text-slate-500/g)?.length, 3);
-  assert.doesNotMatch(toolbar, /text-\[#004BB8\]/);
 });
 
 
@@ -73,11 +70,10 @@ test("sticky search moves focus directly to the requested expanded control", () 
   assert.match(source, /stickyTravelerButtonRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
 });
 
-test("compact toolbar fields do not add colored focus surrounds", () => {
-  const toolbar = desktopMinimizedSearchBarSource();
+test("header search fields use the shared neutral focus treatment", () => {
+  const toolbar = desktopHeaderSearchBarSource();
 
-  assert.match(toolbar, /focus-visible:outline-none/);
-  assert.doesNotMatch(toolbar, /focus-ring flex h-\[56px\]/);
+  assert.match(toolbar, /focus-ring flex h-\[44px\]/);
   assert.doesNotMatch(toolbar, /focus-visible:bg-slate/);
 });
 
