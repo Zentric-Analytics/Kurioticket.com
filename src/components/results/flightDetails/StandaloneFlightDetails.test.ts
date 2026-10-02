@@ -563,8 +563,9 @@ test("Flight Details reuses Flight Results selected-currency conversion and symb
 
 test("standalone UI preserves the approved desktop and mobile blueprint composition", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
-  assert.match(source, /lg:grid-cols-\[minmax\(0,2\.45fr\)_minmax\(310px,0\.95fr\)\]/);
-  assert.match(source, /data-desktop-checkout-summary className="hidden min-w-0 self-start rounded-\[13px\][\s\S]*lg:block"/);
+  assert.match(source, /max-w-\[1080px\] px-0 sm:px-6 lg:px-\[30px\]/);
+  assert.doesNotMatch(source, /lg:grid-cols-\[minmax\(0,2\.45fr\)_minmax\(310px,0\.95fr\)\]/);
+  assert.doesNotMatch(source, /data-desktop-checkout-summary|DesktopCheckoutSummary/);
   assert.doesNotMatch(source, /<aside className="[^"]*(?:sticky|fixed)|top-24/);
   assert.match(source, /function MobileCheckoutDock/);
   assert.doesNotMatch(source, /function MobileTripTotal/);
@@ -600,7 +601,7 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.doesNotMatch(source, /text-overflow|ellipsis/);
   assert.match(source, /overflow-x-auto[\s\S]*sm:grid/);
   assert.match(source, /scrollIntoView\(\{ behavior: "smooth", block: "nearest", inline: "nearest" \}\)/);
-  assert.match(source, /max-w-\[1470px\] px-0 sm:px-6 lg:px-\[34px\]/);
+  assert.match(source, /max-w-\[1080px\] px-0 sm:px-6 lg:px-\[30px\]/);
   assert.match(source, /border-y border-\[#E2E8F0\][\s\S]*sm:rounded-\[13px\] sm:border[\s\S]*sm:shadow-/);
   assert.match(source, /ml-4.*sm:ml-0/);
   assert.match(source, /function FlightDetailsSkeleton[\s\S]*?<FlightDetailsLoadingShell/);
@@ -671,43 +672,33 @@ test("desktop Fare information uses underline-only tabs and unframed panels", as
   assert.match(source, /divide-y divide-\[#D8E1EC\]/);
 });
 
-test("desktop checkout summary is compact and contains no repeated itinerary details", async () => {
+test("desktop Flight Details keeps price and booking action inside Compare deals", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
-  const layoutStart = source.indexOf('className="grid items-start gap-6');
-  const layoutEnd = source.indexOf("const PROVIDER_LOCAL_ISO_DATETIME", layoutStart);
-  const layout = source.slice(layoutStart, layoutEnd);
-  const summaryStart = source.indexOf("function DesktopCheckoutSummary");
-  const summaryEnd = source.indexOf("function FlightDetailsSkeleton", summaryStart);
-  const summary = source.slice(summaryStart, summaryEnd);
+  const panelStart = source.indexOf("function CompareDealsPanel");
+  const panelEnd = source.indexOf("function FareDetails", panelStart);
+  const panel = source.slice(panelStart, panelEnd);
 
-  assert.ok(layoutStart >= 0);
-  assert.match(layout, /<DesktopCheckoutSummary/);
-  assert.match(layout, /^className="grid items-start gap-6 lg:grid-cols-/);
-  assert.match(summary, /data-desktop-checkout-summary/);
-  assert.match(
-    summary,
-    /className="hidden min-w-0 self-start[^"]*lg:sticky[^"]*lg:top-6[^"]*lg:block"/,
-  );
-  assert.match(summary, /flightDetailsTotalLabel\(travelerCount\)/);
-  assert.match(summary, /aria-label=\{price\.ariaLabel\}>\{price\.formatted\}/);
-  assert.match(summary, /data-desktop-trip-price-loading role="status"/);
-  assert.match(summary, /<CheckoutButton/);
-  assert.match(summary, /role="alert"/);
-  assert.doesNotMatch(summary, /Your trip|route|tripType|\blegs\b|departureTime|arrivalTime|duration|formatStops|fareTerms|Fare terms|travelers|Handoff provider|providerName/);
-  assert.doesNotMatch(layout.slice(0, layout.indexOf(">") + 1), /(?:sticky|fixed|top-|overflow-y|max-h-screen)/);
-  assert.doesNotMatch(summary, /className="[^"]*\bfixed\b/);
-  assert.doesNotMatch(summary, /className="[^"]*(?:overflow-y|max-h-screen)/);
+  assert.ok(panelStart >= 0 && panelEnd > panelStart);
+  assert.match(panel, /data-desktop-flight-deal-list/);
+  assert.match(panel, /data-desktop-flight-deal-card/);
+  assert.match(panel, /data-desktop-flight-deal-action/);
+  assert.match(panel, /className="max-w-\[820px\] space-y-3 py-1"/);
+  assert.match(panel, /text-\[20px\] font-semibold leading-6/);
+  assert.match(panel, />\s*Trip total\s*</);
+  assert.match(panel, /"Continue deal"/);
+  assert.match(panel, /w-\[150px\]/);
+  assert.match(panel, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
+  assert.doesNotMatch(source, /DesktopCheckoutSummary|data-desktop-checkout-summary/);
   assert.match(source, /function MobileCheckoutDock[\s\S]*?fixed inset-x-0 bottom-0[\s\S]*?lg:hidden/);
 });
 
-test("desktop checkout loading shell mirrors the compact normal-flow card", async () => {
+test("desktop loading shell no longer reserves a checkout sidebar", async () => {
   const source = await readFile(new URL("./FlightDetailsLoadingShell.tsx", import.meta.url), "utf8");
-  const marker = source.indexOf("data-desktop-checkout-summary-loading");
-  const summary = source.slice(marker, source.indexOf("</div>", marker) + 6);
 
-  assert.ok(marker >= 0);
-  assert.match(summary, /hidden h-\[142px\][^"]*lg:block/);
-  assert.doesNotMatch(summary, /h-\[620px\]|sticky|fixed|\btop-|overflow-y|max-h-screen/);
+  assert.match(source, /max-w-\[1080px\] px-0 sm:px-6 lg:px-\[30px\]/);
+  assert.match(source, /aria-label="Loading flight details" className="min-w-0"/);
+  assert.doesNotMatch(source, /data-desktop-checkout-summary-loading/);
+  assert.doesNotMatch(source, /lg:grid-cols-\[minmax\(0,2\.45fr\)_minmax\(310px,0\.95fr\)\]/);
 });
 
 test("flight details entry keeps the opaque canonical route and results query", async () => {
@@ -723,29 +714,25 @@ test("flight details entry keeps the opaque canonical route and results query", 
 
 
 
-test("desktop checkout summary uses compact left-aligned price hierarchy", async () => {
+test("desktop Compare deals uses the shared Cars and Hotels price hierarchy", async () => {
   const source = await readFile(
     new URL("./StandaloneFlightDetails.tsx", import.meta.url),
     "utf8",
   );
-  const start = source.indexOf("function DesktopCheckoutSummary");
-  const end = source.indexOf("function FlightDetailsSkeleton", start);
-  assert.ok(start >= 0 && end > start);
-  const summary = source.slice(start, end);
+  const start = source.indexOf("function CompareDealsPanel");
+  const end = source.indexOf("function FareDetails", start);
+  const panel = source.slice(start, end);
 
-  assert.match(
-    summary,
-    /whitespace-nowrap text-left text-\[24px\] font-semibold leading-7 tabular-nums text-slate-950/,
-  );
-  assert.match(
-    summary,
-    /id="desktop-trip-total-heading" className="mt-1 text-\[12px\] font-medium leading-4 text-\[#536B92\]"/,
-  );
-  assert.match(summary, /\{flightDetailsTotalLabel\(travelerCount\)\}/);
-  assert.doesNotMatch(summary, /text-right text-\[24px\]/);
-  assert.doesNotMatch(summary, /text-\[#075EE8\]/);
-  assert.doesNotMatch(summary, /Total trip cost/);
+  assert.ok(start >= 0 && end > start);
+  assert.match(panel, /deal\.providerName/);
+  assert.match(panel, /price\.formatted/);
+  assert.match(panel, /Trip total/);
+  assert.match(panel, /Continue deal/);
+  assert.match(panel, /rounded-xl border bg-white px-4 py-3/);
+  assert.match(panel, /inline-flex h-11 w-\[150px\]/);
+  assert.doesNotMatch(panel, /View deal/);
 });
+
 test("trip totals use canonical traveler count without changing provider amounts", () => {
   assert.equal(flightDetailsTotalLabel(1), "Trip total");
   assert.equal(flightDetailsTotalLabel(6), "Total for 6 travelers");
@@ -1171,16 +1158,16 @@ test("desktop Fare information uses the native semantic hierarchy without changi
 });
 
 
-test("desktop selected deal drives fare information and checkout while the radiogroup stays keyboard reachable", async () => {
+test("desktop selected deal drives fare information and the Compare deals action", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   assert.match(source, /const activeOffer = selectedDeal\?\.offer \?\? selectedOffer/);
   assert.match(source, /const activeHandoff = selectedDeal[\s\S]*?providerName: selectedDeal\.providerName[\s\S]*?: handoff/);
   assert.match(source, /const providerPrice = activeOffer[\s\S]*?amount: activeOffer\.price[\s\S]*?sourceCurrency: activeOffer\.currency/);
   assert.match(source, /<FarePanel activeTab=\{activeTab\} fare=\{selectedFare\} offer=\{activeOffer\}[\s\S]*?selectedDealOfferId=\{selectedDeal\?\.offerId \?\? null\}[\s\S]*?onSelectDeal=\{setSelectedDealOfferId\}/);
-  assert.match(source, /<DesktopCheckoutSummary[\s\S]*?handoff=\{activeHandoff\}[\s\S]*?onContinue=\{\(\) => continueToOffer\(selectedDeal\?\.offerId \?\? selectedOffer\.id\)\}/);
+  assert.match(source, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.match(source, /tabIndex=\{selected \|\| \(!selectedDealOfferId && index === 0\) \? 0 : -1\}/);
+  assert.doesNotMatch(source, /DesktopCheckoutSummary|data-desktop-checkout-summary/);
 });
-
 
 test("Flight Details invalidates shared saved-flight result state after account mutations", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
@@ -1189,25 +1176,18 @@ test("Flight Details invalidates shared saved-flight result state after account 
 });
 
 
-test("desktop checkout summary stays visible while the details page scrolls", async () => {
+test("desktop Flight Details has no sticky checkout rail", async () => {
   const source = await readFile(
     new URL("./StandaloneFlightDetails.tsx", import.meta.url),
     "utf8",
   );
-  const start = source.indexOf("function DesktopCheckoutSummary");
-  const end = source.indexOf("function FlightDetailsSkeleton", start);
-  assert.ok(start >= 0 && end > start);
-  const summary = source.slice(start, end);
 
-  assert.match(
-    summary,
-    /data-desktop-checkout-summary className="[^"]*lg:sticky[^"]*lg:top-6[^"]*lg:block/,
-  );
-  assert.doesNotMatch(summary, /\bfixed\b/);
+  assert.doesNotMatch(source, /DesktopCheckoutSummary|data-desktop-checkout-summary/);
+  assert.doesNotMatch(source, /lg:sticky lg:top-6 lg:block/);
+  assert.match(source, /data-desktop-flight-deal-action/);
 });
 
-
-test("desktop Flight Details hero actions are icon-only and booking stays in the right rail", async () => {
+test("desktop Flight Details hero actions stay icon-only while booking lives in Compare deals", async () => {
   const source = await readFile(
     new URL("./StandaloneFlightDetails.tsx", import.meta.url),
     "utf8",
@@ -1226,6 +1206,7 @@ test("desktop Flight Details hero actions are icon-only and booking stays in the
   assert.doesNotMatch(hero, /data-flight-details-desktop-compact-booking/);
   assert.doesNotMatch(hero, /data-flight-details-desktop-compact-price/);
   assert.doesNotMatch(hero, /data-flight-details-desktop-compact-cta/);
-  assert.match(source, /data-desktop-checkout-summary/);
-  assert.match(source, /<CheckoutButton redirecting=\{redirecting\}/);
+  assert.doesNotMatch(source, /data-desktop-checkout-summary/);
+  assert.match(source, /data-desktop-flight-deal-action/);
 });
+
