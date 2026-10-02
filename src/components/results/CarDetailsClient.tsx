@@ -29,6 +29,8 @@ import {
 } from "@/components/results/carDetails/CarDetailsSectionNav";
 import {
   formatCarDate,
+  fuelPolicyLabels,
+  mileagePolicyLabels,
   pickupTypeLabels,
 } from "@/components/results/carDetails/helpers";
 import { useSavedCar } from "@/components/results/useSavedCar";
@@ -143,6 +145,7 @@ export function CarDetailsExperience({
   const compareSectionRef = useRef<HTMLElement>(null);
   const pickupSectionRef = useRef<HTMLDivElement>(null);
   const locationSectionRef = useRef<HTMLElement>(null);
+  const rentalSectionRef = useRef<HTMLElement>(null);
   const [mobileHeaderProtected, setMobileHeaderProtected] = useState(false);
   const copy = (key: string) => t[key] || enTranslations[key] || key;
   const text = {
@@ -305,6 +308,7 @@ export function CarDetailsExperience({
       animationFrame = 0;
       if (!desktopQuery.matches) {
         setDesktopSectionBarStuck(false);
+        setActiveTab((current) => (current === "rental" ? "compare" : current));
         return;
       }
 
@@ -317,6 +321,7 @@ export function CarDetailsExperience({
         { id: "compare", element: compareSectionRef.current },
         { id: "pickup", element: pickupSectionRef.current },
         { id: "location", element: locationSectionRef.current },
+        { id: "rental", element: rentalSectionRef.current },
       ];
       let current: CarDetailsTab = "compare";
       for (const section of sections) {
@@ -350,6 +355,7 @@ export function CarDetailsExperience({
       compareSectionRef.current,
       pickupSectionRef.current,
       locationSectionRef.current,
+      rentalSectionRef.current,
     ]) {
       if (target) observer.observe(target);
     }
@@ -377,7 +383,9 @@ export function CarDetailsExperience({
         ? compareSectionRef.current
         : tab === "pickup"
           ? pickupSectionRef.current
-          : locationSectionRef.current;
+          : tab === "location"
+            ? locationSectionRef.current
+            : rentalSectionRef.current;
     target?.scrollIntoView({
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
         ? "auto"
@@ -460,7 +468,7 @@ export function CarDetailsExperience({
         data-car-details-content-grid
       >
         <div
-          className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:mx-auto lg:w-full lg:max-w-[900px] lg:space-y-5" : "space-y-4 lg:space-y-5"}`}
+          className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:mx-auto lg:w-full lg:max-w-[1080px] lg:space-y-5" : "space-y-4 lg:space-y-5"}`}
           data-car-details-primary-column
         >
           <CarDetailsHero
@@ -513,6 +521,18 @@ export function CarDetailsExperience({
                 </div>
               ) : undefined
             }
+            desktopSummary={
+              presentation === "standalone-content" && primaryOffer ? (
+                <StandaloneDesktopDealSummary
+                  car={car}
+                  offer={primaryOffer}
+                  days={days}
+                  price={price}
+                  copy={copy}
+                  action={effectivePrimaryAction}
+                />
+              ) : undefined
+            }
             guidedMobileActions={
               presentation === "guided-content" ? (
                 <CarHeroActions
@@ -554,62 +574,129 @@ export function CarDetailsExperience({
                   mobileCompare: "Compare deals",
                   pickup: copy("carDetails.pickupReturn"),
                   location: copy("carDetails.location"),
+                  rental: "Rental details",
                 }}
               />
               <div className="min-h-[240px]" data-car-details-section-panels>
-                <section
-                  ref={compareSectionRef}
-                  id="car-compare-panel"
-                  role="tabpanel"
-                  aria-labelledby="car-compare-tab"
-                  className={activeTab !== "compare" ? "hidden lg:block" : ""}
-                  data-car-details-scroll-section="compare"
-                >
-                  {primaryOffer ? (
-                    <CarPriceComparisonSection
+                <div className="lg:hidden" data-car-details-mobile-section-panels>
+                  <section
+                    id="car-compare-panel"
+                    role="tabpanel"
+                    aria-labelledby="car-compare-tab"
+                    className={activeTab !== "compare" ? "hidden" : ""}
+                    data-car-details-scroll-section="compare"
+                  >
+                    {primaryOffer ? (
+                      <CarPriceComparisonSection
+                        car={car}
+                        search={search}
+                        offers={comparisonOffers.length ? comparisonOffers : [primaryOffer]}
+                        selectedOfferId={primaryOffer.id}
+                        onSelectOffer={setSelectedOfferId}
+                        days={days}
+                        price={price}
+                        copy={copy}
+                        locale={locale}
+                        headingLevel={sectionHeadingLevel}
+                        showSectionHeading
+                        actionForOffer={actionForOffer}
+                      />
+                    ) : null}
+                  </section>
+                  <div
+                    id="car-pickup-panel"
+                    role="tabpanel"
+                    aria-labelledby="car-pickup-tab"
+                    className={activeTab !== "pickup" ? "hidden" : ""}
+                    data-car-details-scroll-section="pickup"
+                  >
+                    {pickupSection}
+                  </div>
+                  <section
+                    id="car-location-panel"
+                    role="tabpanel"
+                    aria-labelledby="car-location-tab"
+                    className={activeTab !== "location" ? "hidden" : ""}
+                    data-car-details-scroll-section="location"
+                  >
+                    <CarLocationSection
                       car={car}
                       search={search}
-                      offers={comparisonOffers.length ? comparisonOffers : [primaryOffer]}
-                      selectedOfferId={primaryOffer.id}
-                      onSelectOffer={setSelectedOfferId}
-                      days={days}
-                      price={price}
-                      copy={copy}
                       locale={locale}
+                      copy={copy}
                       headingLevel={sectionHeadingLevel}
                       showSectionHeading
-                      showDesktopOfferList
-                      actionForOffer={actionForOffer}
                     />
-                  ) : null}
-                </section>
-                <div
-                  ref={pickupSectionRef}
-                  id="car-pickup-panel"
-                  role="tabpanel"
-                  aria-labelledby="car-pickup-tab"
-                  className={activeTab !== "pickup" ? "hidden lg:block" : ""}
-                  data-car-details-scroll-section="pickup"
-                >
-                  {pickupSection}
+                  </section>
                 </div>
-                <section
-                  ref={locationSectionRef}
-                  id="car-location-panel"
-                  role="tabpanel"
-                  aria-labelledby="car-location-tab"
-                  className={activeTab !== "location" ? "hidden lg:block" : ""}
-                  data-car-details-scroll-section="location"
-                >
-                  <CarLocationSection
-                    car={car}
-                    search={search}
-                    locale={locale}
-                    copy={copy}
-                    headingLevel={sectionHeadingLevel}
-                    showSectionHeading
-                  />
-                </section>
+
+                <div className="hidden lg:block" data-car-details-desktop-linear-sections>
+                  <section
+                    ref={compareSectionRef}
+                    className="pt-2"
+                    data-car-details-scroll-section="compare"
+                    data-car-details-desktop-section="compare"
+                  >
+                    {primaryOffer ? (
+                      <CarPriceComparisonSection
+                        car={car}
+                        search={search}
+                        offers={comparisonOffers.length ? comparisonOffers : [primaryOffer]}
+                        selectedOfferId={primaryOffer.id}
+                        onSelectOffer={setSelectedOfferId}
+                        days={days}
+                        price={price}
+                        copy={copy}
+                        locale={locale}
+                        headingLevel={sectionHeadingLevel}
+                        showSectionHeading
+                        showDesktopOfferList
+                        actionForOffer={actionForOffer}
+                      />
+                    ) : null}
+                  </section>
+
+                  <section
+                    ref={pickupSectionRef}
+                    className="pt-3"
+                    data-car-details-scroll-section="pickup"
+                    data-car-details-desktop-section="pickup"
+                  >
+                    <DesktopPickupReturnOverview
+                      car={car}
+                      search={search}
+                      locale={locale}
+                      copy={copy}
+                    />
+                  </section>
+
+                  <section
+                    ref={locationSectionRef}
+                    className="pt-3"
+                    data-car-details-scroll-section="location"
+                    data-car-details-desktop-section="location"
+                  >
+                    <DesktopCarHireLocationOverview
+                      car={car}
+                      search={search}
+                      locale={locale}
+                      copy={copy}
+                    />
+                  </section>
+
+                  <section
+                    ref={rentalSectionRef}
+                    className="pt-3"
+                    data-car-details-scroll-section="rental"
+                    data-car-details-desktop-section="rental"
+                  >
+                    <DesktopRentalDetails
+                      car={car}
+                      offer={primaryOffer}
+                      price={price}
+                    />
+                  </section>
+                </div>
               </div>
             </>
           ) : (
@@ -642,6 +729,359 @@ export function CarDetailsExperience({
         />
       ) : null}
     </div>
+  );
+}
+
+function DesktopPickupReturnOverview({
+  car,
+  search,
+  locale,
+  copy,
+}: {
+  car: NormalizedCarResult;
+  search: CarSearchParams;
+  locale: string;
+  copy: (key: string) => string;
+}) {
+  const pickupType =
+    car.sandboxPresentation?.pickupLabel ?? pickupTypeLabels[car.pickupType];
+
+  return (
+    <div
+      className="mx-auto w-full max-w-[900px] rounded-[16px] border border-slate-200 bg-white p-5 shadow-[0_3px_16px_rgba(15,23,42,0.035)]"
+      data-car-details-desktop-pickup-overview
+    >
+      <h2 className="car-details-desktop-section-heading-type">Pickup and return</h2>
+      <div className="mt-4 grid grid-cols-2 gap-5">
+        {[
+          [copy("carDetails.pickup"), car.pickupLocation, search.pickupDate, search.pickupTime],
+          [copy("carDetails.return"), car.returnLocation, search.dropoffDate, search.dropoffTime],
+        ].map(([label, location, date, time]) => (
+          <div
+            key={label}
+            className="rounded-[12px] border border-slate-200 bg-[#F8FAFC] p-4"
+          >
+            <p className="car-details-desktop-item-heading-type">{label}</p>
+            <p className="car-details-desktop-primary-copy-type mt-2 flex items-start gap-2">
+              <MapPin size={16} className="mt-0.5 shrink-0 text-[#075EE8]" aria-hidden="true" />
+              <span>{location || copy("carDetails.locationUnavailable")}</span>
+            </p>
+            <p className="car-details-desktop-secondary-copy-type mt-2 flex items-start gap-2">
+              <Clock3 size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+              <time dateTime={`${date}T${time}`}>
+                {formatCarDate(date, locale)}
+                {time ? ` · ${time}` : ""}
+              </time>
+            </p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 border-t border-slate-200 pt-4">
+        <p className="car-details-desktop-strong-copy-type">{pickupType}</p>
+        {car.shuttleRequired ? (
+          <p className="car-details-desktop-primary-copy-type mt-1">
+            {copy("carDetails.shuttleRequired")}
+          </p>
+        ) : null}
+        {car.pickupInstructions ? (
+          <p className="car-details-desktop-primary-copy-type mt-2">
+            <strong>{copy("carDetails.pickupInstructions")}:</strong>{" "}
+            {car.pickupInstructions}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function DesktopCarHireLocationOverview({
+  car,
+  search,
+  copy,
+}: {
+  car: NormalizedCarResult;
+  search: CarSearchParams;
+  locale: string;
+  copy: (key: string) => string;
+}) {
+  const pickupLocation =
+    search.pickupLocation.trim() ||
+    car.pickupLocation ||
+    copy("carDetails.locationUnavailable");
+  const mapUrl = buildGoogleCarMapEmbedUrl({
+    pickupLocation: search.pickupLocation.trim() || car.pickupLocation,
+    googleMapsEmbedApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY,
+  });
+  const directionsUrl = buildCarDirectionsUrl(
+    search.pickupLocation.trim() || car.pickupLocation,
+  );
+  const pickupType =
+    car.sandboxPresentation?.pickupLabel ?? pickupTypeLabels[car.pickupType];
+
+  return (
+    <div
+      className="mx-auto w-full max-w-[900px] rounded-[16px] border border-slate-200 bg-white p-5 shadow-[0_3px_16px_rgba(15,23,42,0.035)]"
+      data-car-details-desktop-location-overview
+    >
+      <h2 className="car-details-desktop-section-heading-type">Car hire location</h2>
+      <div className="mt-3 flex items-start gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue">
+          <MapPin size={18} aria-hidden="true" />
+        </span>
+        <div className="min-w-0">
+          <p className="car-details-desktop-strong-copy-type">{pickupLocation}</p>
+          <p className="car-details-desktop-secondary-copy-type mt-0.5">{pickupType}</p>
+        </div>
+      </div>
+      {mapUrl ? (
+        <div className="mt-4 overflow-hidden rounded-[12px] border border-slate-200">
+          <iframe
+            title={`${copy("carDetails.mapShowingPickup")} ${pickupLocation}`}
+            src={mapUrl}
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+            className="block h-[250px] w-full border-0"
+          />
+          {directionsUrl ? (
+            <a
+              href={directionsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="focus-ring flex h-11 items-center justify-between border-t border-slate-200 px-4 text-[13px] font-bold text-[#075EE8] hover:bg-slate-50"
+            >
+              {copy("carDetails.getDirections")}
+              <ExternalLink size={16} aria-hidden="true" />
+            </a>
+          ) : null}
+        </div>
+      ) : directionsUrl ? (
+        <a
+          href={directionsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="focus-ring mt-4 inline-flex min-h-10 items-center gap-2 text-[13px] font-bold text-[#075EE8]"
+        >
+          {copy("carDetails.getDirections")}
+          <ExternalLink size={16} aria-hidden="true" />
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
+function DesktopRentalDetails({
+  car,
+  offer,
+  price,
+}: {
+  car: NormalizedCarResult;
+  offer: CarOffer | null | undefined;
+  price: PriceFn;
+}) {
+  const details: Array<{ label: string; value: string }> = [];
+
+  if (car.sandboxPresentation) {
+    details.push(
+      { label: "Inventory", value: "KAYAK sandbox" },
+      { label: "Booking", value: "Simulated inventory — no real booking" },
+    );
+  } else {
+    details.push(
+      { label: "Fuel policy", value: fuelPolicyLabels[car.fuelPolicy] },
+      {
+        label: "Mileage",
+        value:
+          car.mileagePolicy === "limited" && car.limitedMileageKm
+            ? `${car.limitedMileageKm} km included`
+            : mileagePolicyLabels[car.mileagePolicy],
+      },
+    );
+    if (car.minimumDriverAge) {
+      details.push({
+        label: "Minimum driver age",
+        value: String(car.minimumDriverAge),
+      });
+    }
+    if (car.requiredDocuments.length) {
+      details.push({
+        label: "Required documents",
+        value: car.requiredDocuments.join(" · "),
+      });
+    }
+    if (offer && typeof car.depositAmount === "number" && car.depositAmount > 0) {
+      details.push({
+        label: "Deposit",
+        value: price(car.depositAmount, offer.currency).formatted,
+      });
+    }
+    if (offer && typeof car.excessAmount === "number" && car.excessAmount > 0) {
+      details.push({
+        label: "Excess",
+        value: price(car.excessAmount, offer.currency).formatted,
+      });
+    }
+  }
+
+  return (
+    <div
+      className="mx-auto w-full max-w-[900px] rounded-[16px] border border-slate-200 bg-white p-5 shadow-[0_3px_16px_rgba(15,23,42,0.035)]"
+      data-car-details-desktop-rental-details
+    >
+      <h2 className="car-details-desktop-section-heading-type">Rental details</h2>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        {details.map((detail) => (
+          <div
+            key={detail.label}
+            className="rounded-[12px] border border-slate-200 bg-[#F8FAFC] p-4"
+          >
+            <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-[#536B92]">
+              {detail.label}
+            </p>
+            <p className="car-details-desktop-primary-copy-type mt-1.5">
+              {detail.value}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {!car.sandboxPresentation && car.includedItems.length ? (
+        <div className="mt-5 border-t border-slate-200 pt-4">
+          <h3 className="car-details-desktop-item-heading-type">Included</h3>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {car.includedItems.map((item) => (
+              <span
+                key={item}
+                className="rounded-full bg-blue-50 px-3 py-1.5 text-[12px] font-semibold text-[#334155]"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {!car.sandboxPresentation && car.importantInformation.length ? (
+        <div className="mt-5 border-t border-slate-200 pt-4">
+          <h3 className="car-details-desktop-item-heading-type">Important information</h3>
+          <ul className="car-details-desktop-primary-copy-type mt-3 space-y-2">
+            {car.importantInformation.map((item) => (
+              <li key={item} className="flex gap-2">
+                <ShieldCheck size={15} className="mt-0.5 shrink-0 text-[#075EE8]" aria-hidden="true" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function StandaloneDesktopDealSummary({
+  car,
+  offer,
+  days,
+  price,
+  copy,
+  action,
+}: {
+  car: NormalizedCarResult;
+  offer: CarOffer;
+  days: number;
+  price: PriceFn;
+  copy: (key: string) => string;
+  action: CarDetailsPrimaryAction;
+}) {
+  const total = price(offer.totalPrice, offer.currency);
+  const providerName =
+    compactBookingProviderName(offer) ||
+    providerValue(car.rentalCompanyName) ||
+    copy("carsResults.bookingProvider");
+  const facts = car.sandboxPresentation
+    ? ["KAYAK sandbox", "Simulated inventory — no real booking"]
+    : [
+        offer.freeCancellation ? copy("carDetails.freeCancellation") : null,
+        offer.taxesAndFeesIncluded ? copy("carDetails.feesIncludedShort") : null,
+        offer.payAtPickup ? copy("carsResults.payAtPickup") : null,
+      ].filter((value): value is string => Boolean(value));
+  const actionClassName =
+    "focus-ring mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#075EE8] px-4 text-[14px] font-bold leading-5 text-white shadow-[0_3px_10px_rgba(7,94,232,0.18)] transition hover:bg-[#004BB8]";
+
+  return (
+    <aside
+      className="flex h-full min-h-[330px] flex-col rounded-[14px] border border-slate-200 bg-[#F8FAFC] p-5"
+      data-car-details-desktop-selected-deal
+    >
+      <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#536B92]">
+        Selected deal
+      </p>
+      <p className="mt-3 text-[15px] font-bold leading-5 text-slate-950">
+        {providerName}
+      </p>
+      <strong
+        className="mt-2 block text-[28px] font-extrabold leading-8 tracking-[-0.025em] text-[#07133B] tabular-nums"
+        dir="ltr"
+        title={total.title}
+        aria-label={total.ariaLabel}
+      >
+        {total.formatted}
+      </strong>
+      <p className="mt-1 text-[13px] font-medium leading-[18px] text-[#475569]">
+        {days} {days === 1 ? copy("carDetails.day") : copy("carDetails.days")} total
+      </p>
+      {facts.length ? (
+        <div className="mt-5 space-y-2.5" data-car-details-desktop-selected-deal-facts>
+          {facts.map((fact) => (
+            <p
+              key={fact}
+              className="flex items-start gap-2 text-[13px] font-semibold leading-[18px] text-[#334155]"
+            >
+              <ShieldCheck
+                size={15}
+                strokeWidth={2}
+                className="mt-px shrink-0 text-[#075EE8]"
+                aria-hidden="true"
+              />
+              {fact}
+            </p>
+          ))}
+        </div>
+      ) : null}
+      <div className="mt-auto">
+        {action.kind === "sandbox-handoff" ? (
+          <a
+            href={action.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            referrerPolicy="no-referrer"
+            className={actionClassName}
+            data-car-details-desktop-overview-cta
+          >
+            {copy("carDetails.continueDeal")}
+          </a>
+        ) : action.kind === "standalone-disabled-provider" ? (
+          <button
+            type="button"
+            disabled
+            className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-100`}
+            data-car-details-desktop-overview-cta
+          >
+            {copy("carDetails.continueDeal")}
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={!action.enabled || action.pending}
+            aria-label={action.accessibleLabel}
+            onClick={action.onActivate}
+            className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-60`}
+            data-car-details-desktop-overview-cta
+          >
+            {action.pending ? copy("deals.guided.carDetails.saving") : action.label}
+          </button>
+        )}
+      </div>
+    </aside>
   );
 }
 
@@ -873,7 +1313,7 @@ function CarPriceComparisonSection({
   };
   return (
     <div
-      className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-2"
+      className={`border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full lg:bg-transparent lg:pb-[22px] lg:pt-2 ${showDesktopOfferList ? "lg:max-w-[720px]" : "lg:max-w-[820px]"}`}
       data-car-price-comparison
     >
       {showSectionHeading ? (
@@ -994,7 +1434,7 @@ function CarPriceComparisonSection({
 
       {showDesktopOfferList ? (
         <div
-          className="mt-3 hidden w-full space-y-2 lg:mx-auto lg:block lg:max-w-[820px]"
+          className="mt-3 hidden w-full space-y-2 lg:mx-auto lg:block lg:max-w-[720px]"
           data-desktop-car-deal-list
         >
           {offers.map((offer) => {
