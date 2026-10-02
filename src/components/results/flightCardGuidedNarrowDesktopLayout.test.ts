@@ -340,11 +340,11 @@ test("desktop detail strip uses balanced transparent metadata columns with mobil
 
   assert.match(details, /flight-card-detail-value min-w-0/);
   assert.doesNotMatch(details, /truncate|line-clamp|overflow-hidden/);
-  assert.match(desktopDetailsRule, /grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(desktopDetailsRule, /grid-template-columns:\s*repeat\(3, max-content\)/);
   assert.match(desktopDetailsRule, /align-items:\s*center/);
   assert.match(desktopDetailsRule, /border:\s*0/);
   assert.match(desktopDetailsRule, /border-radius:\s*0/);
-  assert.match(desktopDetailsRule, /column-gap:\s*2rem/);
+  assert.match(desktopDetailsRule, /justify-content:\s*space-between/);\n  assert.match(desktopDetailsRule, /column-gap:\s*1\.5rem/);
   assert.match(desktopDetailsRule, /background:\s*transparent/);
   assert.match(desktopDetailsRule, /margin-top:\s*0/);
   assert.match(desktopDetailsRule, /padding:\s*0\.5rem 0/);
