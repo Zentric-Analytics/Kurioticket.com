@@ -689,7 +689,7 @@ test("standalone desktop amenities sit directly on the Cars Details page surface
   );
 });
 
-test("mobile-web car detail transmission uses the dedicated gearbox icon without changing desktop", () => {
+test("Cars Details uses the same dedicated transmission icon at mobile and desktop", () => {
   assert.match(
     heroSource,
     /manual[\s\S]*ManualTransmissionIcon[\s\S]*automatic[\s\S]*AutomaticTransmissionIcon[\s\S]*CarFront/,
@@ -704,7 +704,11 @@ test("mobile-web car detail transmission uses the dedicated gearbox icon without
   );
   assert.match(
     heroSource,
-    /mobileTransmissionIcon[\s\S]*?lg:hidden[\s\S]*?<CarFront[\s\S]*?hidden shrink-0 text-slate-600 lg:block/,
+    /specs\.map\(\(\[Icon, label\], index\) => \([\s\S]*?<Icon[\s\S]*?className="shrink-0 text-slate-600"/,
+  );
+  assert.doesNotMatch(
+    heroSource,
+    /mobileTransmissionIcon|lg:hidden[\s\S]*?<CarFront[\s\S]*?lg:block/,
   );
 });
 
