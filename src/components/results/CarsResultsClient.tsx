@@ -1215,7 +1215,7 @@ export function CarsResultsClient({
               ? "border-0 bg-transparent p-0 shadow-none ring-0"
               : isCompactSearch
               ? "rounded-xl border border-slate-200 bg-white p-0 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]"
-              : "rounded-[1.15rem] border border-slate-200 bg-[#F8FAFC] p-1 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-200/50",
+              : "rounded-[1.15rem] border border-slate-200 bg-white/95 p-1 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-200/50",
           )}
         >
           <div

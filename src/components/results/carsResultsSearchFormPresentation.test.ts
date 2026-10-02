@@ -77,10 +77,14 @@ test("results search preserves both desktop grid geometries with the refined com
   );
 });
 
-test("desktop-full Cars Results search uses a softer off-white surface and tighter outer padding", () => {
+test("desktop-full Cars Results search matches the homepage near-white surface without changing compact color", () => {
   assert.match(
     source,
-    /rounded-\[1\.15rem\] border border-slate-200 bg-\[#F8FAFC\] p-1 shadow-\[0_18px_42px_-30px_rgba\(15,23,42,0\.58\)\] ring-1 ring-slate-200\/50/,
+    /rounded-\[1\.15rem\] border border-slate-200 bg-white\/95 p-1 shadow-\[0_18px_42px_-30px_rgba\(15,23,42,0\.58\)\] ring-1 ring-slate-200\/50/,
+  );
+  assert.match(
+    source,
+    /isCompactSearch[\s\S]*?\? "rounded-xl border border-slate-200 bg-white p-0 shadow-\[0_14px_34px_-28px_rgba\(15,23,42,0\.64\)\]"/,
   );
   assert.match(
     source,
@@ -88,7 +92,7 @@ test("desktop-full Cars Results search uses a softer off-white surface and tight
   );
   assert.doesNotMatch(
     source,
-    /rounded-\[1\.15rem\] border border-slate-200 bg-white p-1\.5/,
+    /rounded-xl border border-slate-200 bg-white\/95 p-0/,
   );
 });
 
