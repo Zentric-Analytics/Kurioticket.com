@@ -351,6 +351,26 @@ test("desktop Flight filters use the Hotel typography hierarchy and checkbox rhy
   assert.match(filters, /text-\[13px\] font-semibold leading-5 tracking-\[-0\.005em\] text-slate-800/);
 });
 
+test("desktop Flight Stops filter shows labels and counts without fare hints", async () => {
+  const filters = await readFile(
+    new URL("./DesktopFlightFilters.tsx", import.meta.url),
+    "utf8",
+  );
+
+  const compactStopsStart = filters.indexOf('<CompactFilterSection id={`${idPrefix}-stops-panel`}');
+  const compactStopsEnd = filters.indexOf('<CompactFilterSection id={`${idPrefix}-airlines-panel`}', compactStopsStart);
+  const compactStops = filters.slice(compactStopsStart, compactStopsEnd);
+
+  const desktopStopsStart = filters.indexOf('<OptionSection title={t("stops")}');
+  const desktopStopsEnd = filters.indexOf('<OptionSection title={t("airlines")}', desktopStopsStart);
+  const desktopStops = filters.slice(desktopStopsStart, desktopStopsEnd);
+
+  assert.match(compactStops, /label={option\.label} count={option\.count}/);
+  assert.match(desktopStops, /label={option\.label} count={option\.count}/);
+  assert.doesNotMatch(compactStops, /secondaryLabel|option\.rightLabel|t\("from"\)/);
+  assert.doesNotMatch(desktopStops, /secondaryLabel|option\.rightLabel|t\("from"\)/);
+});
+
 test("desktop Flight compact filters reuse the same full filter surface as Cars", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
