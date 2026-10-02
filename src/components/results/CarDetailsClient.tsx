@@ -848,6 +848,18 @@ function DesktopCarHireLocationOverview({
           <ExternalLink size={16} aria-hidden="true" />
         </a>
       ) : null}
+      <div
+        className="mt-5 border-t border-slate-200 pt-5"
+        data-car-details-desktop-location-details
+      >
+        <h3 className="car-details-desktop-item-heading-type">
+          {copy("carDetails.pickupLocationDetails")}
+        </h3>
+        <ul className="car-details-desktop-primary-copy-type mt-3 list-disc space-y-2 ps-5 marker:text-[#075EE8]">
+          {car.pickupInstructions ? <li>{car.pickupInstructions}</li> : null}
+          <li>{copy("carDetails.confirmPickupDetails")}</li>
+        </ul>
+      </div>
     </div>
   );
 }
@@ -887,10 +899,7 @@ function StandaloneDesktopDealSummary({
       className="flex flex-col rounded-[14px] border border-slate-200 bg-[#F8FAFC] p-4"
       data-car-details-desktop-selected-deal
     >
-      <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#536B92]">
-        Selected deal
-      </p>
-      <p className="mt-2.5 text-[15px] font-bold leading-5 text-slate-950">
+      <p className="text-[15px] font-bold leading-5 text-slate-950">
         {providerName}
       </p>
       <strong
