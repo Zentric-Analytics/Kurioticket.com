@@ -164,18 +164,22 @@ export function FlightCard({
       data-flight-result-card
       className={cn(
         "relative hidden w-full overflow-hidden rounded-[14px] border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.5)] transition duration-200 hover:-translate-y-0.5 hover:border-[#BFCEDF] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.4)] sm:block lg:rounded-2xl lg:border-[#CDD8E5] lg:bg-[#FEFFFF]",
+        (resolvedDetailsHref || onAction) && "cursor-pointer",
         isAccented && "ring-1 ring-slate-950/[0.03]",
       )}
       onClick={(event) => {
         if (
-          !resolvedDetailsHref ||
-          onAction ||
-          !window.matchMedia("(max-width: 1023px)").matches ||
           (event.target as HTMLElement).closest("a, button, input, select, textarea")
         ) {
           return;
         }
-        router.push(resolvedDetailsHref);
+        if (onAction) {
+          onAction(flight);
+          return;
+        }
+        if (resolvedDetailsHref) {
+          router.push(resolvedDetailsHref);
+        }
       }}
     >
       {providerLabel && <p className="px-4 pt-3 text-xs font-semibold text-amber-800">{providerLabel}</p>}
