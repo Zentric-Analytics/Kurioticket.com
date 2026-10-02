@@ -567,14 +567,16 @@ function formatDesktopCompactFareBenefit(text: string) {
     /^(?:(Outbound|Return):\s*)?(Change(?:s)?(?: and refund)?|Refund) rules? not supplied by (?:the )?provider$/i,
   );
   if (unavailableRules) {
-    const scope = unavailableRules[1] ? `${unavailableRules[1]} ` : "";
+    const scope = unavailableRules[1];
     const ruleKind = unavailableRules[2].toLocaleLowerCase("en-US");
     const label = /change(?:s)? and refund/.test(ruleKind)
       ? "change/refund rules unavailable"
       : /refund/.test(ruleKind)
         ? "refund rules unavailable"
         : "change rules unavailable";
-    return `${scope}${label}`;
+    return scope
+      ? `${scope}: ${label}`
+      : `${label.charAt(0).toUpperCase()}${label.slice(1)}`;
   }
 
   const scopedBaggage = normalized.match(
