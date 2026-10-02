@@ -198,6 +198,20 @@ export function CarDetailsHero({
               >
                 {identity}
               </div>
+              <div
+                className="relative mt-4 h-[250px] w-full overflow-hidden rounded-[12px] bg-white"
+                data-car-details-desktop-overview-image
+              >
+                <CarResultImage
+                  imageUrl={car.imageUrl}
+                  imageAlt={car.imageAlt}
+                  modelName={car.modelName}
+                  category={car.category}
+                  sizes="680px"
+                  fit="contain"
+                  priority
+                />
+              </div>
               <ul
                 className="mt-4 grid min-w-0 grid-cols-4 gap-x-4 gap-y-2"
                 data-car-details-desktop-overview-specifications
@@ -218,20 +232,6 @@ export function CarDetailsHero({
                   </li>
                 ))}
               </ul>
-              <div
-                className="relative mt-4 h-[250px] w-full overflow-hidden rounded-[12px] bg-white"
-                data-car-details-desktop-overview-image
-              >
-                <CarResultImage
-                  imageUrl={car.imageUrl}
-                  imageAlt={car.imageAlt}
-                  modelName={car.modelName}
-                  category={car.category}
-                  sizes="680px"
-                  fit="contain"
-                  priority
-                />
-              </div>
             </div>
             <div className="min-w-0 self-stretch" data-car-details-desktop-overview-summary>
               {desktopSummary}
