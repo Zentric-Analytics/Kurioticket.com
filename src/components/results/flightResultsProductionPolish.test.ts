@@ -343,7 +343,7 @@ test("desktop Flight filters use the Hotel typography hierarchy and checkbox rhy
   assert.match(filters, /bg-\[#F2F4F8\]/);
   assert.match(filters, /text-\[14px\] font-bold tracking-\[-0\.01em\] text-slate-950/);
   assert.match(filters, /text-\[13px\] font-bold normal-case leading-5 text-slate-950/);
-  assert.match(filters, /min-h-\[30px\][^"]*text-\[12px\][^"]*font-medium/);
+  assert.match(filters, /font-medium leading-5[^"]*min-h-\[30px\][^"]*text-\[12px\]/);
   assert.match(filters, /compact \? "gap-2 px-1\.5 py-1 text-\[13px\]"/);
   assert.match(filters, /text-\[12px\] font-medium leading-5 tabular-nums text-slate-500/);
   assert.match(filters, /h-4 w-4 shrink-0 rounded border-slate-300 accent-blue/);
