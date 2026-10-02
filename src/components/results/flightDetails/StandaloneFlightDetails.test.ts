@@ -745,7 +745,7 @@ test("desktop Compare deals uses the shared Cars and Hotels price hierarchy", as
   assert.match(panel, /View deal/);
   assert.match(panel, /rounded-xl border bg-white px-4 py-3/);
   assert.match(panel, /grid-cols-\\[minmax\\(0,1fr\\)_auto\\]/);
-  assert.match(panel, /data-desktop-flight-deal-price[\\s\\S]*?mt-2 block min-w-0/);
+  assert.match(panel, /data-desktop-flight-deal-price[\s\S]*?mt-2 block min-w-0/);
   assert.match(panel, /inline-flex h-9 w-\\[112px\\]/);
   assert.match(panel, /data-provider-handoff-unavailable/);
   assert.match(panel, /disabled:bg-\\[#004BB8\\]/);
