@@ -16,7 +16,6 @@ import {
   type RefObject,
   type ReactNode,
 } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import {
@@ -34,6 +33,7 @@ import {
   MapPin,
   Pencil,
   SquarePen,
+  Search,
   SlidersHorizontal,
   UserRound,
   X,
@@ -1186,6 +1186,7 @@ export function CarsResultsClient({
         id={`${idPrefix}-form`}
         action="/cars/results"
         method="get"
+        data-cars-results-navbar-search={isNavbarSearch ? "" : undefined}
         className={cn("mx-auto w-full min-w-0", isNavbarSearch ? "max-w-full" : "max-w-5xl", placement === "mobile" && "bg-transparent")}
         onSubmit={(event) => {
           if (placement === "mobile") {
@@ -1246,6 +1247,7 @@ export function CarsResultsClient({
                 ? differentReturnSearchGridClass
                 : sameReturnSearchGridClass),
             )}
+            data-cars-results-navbar-grid={isNavbarSearch ? "" : undefined}
             data-return-location-mode={
               returnToDifferentLocation ? "different" : "same"
             }
@@ -1483,6 +1485,7 @@ export function CarsResultsClient({
             <DriverAgeCell
               driverAge={driverAge}
               isCompact={isCompactSearch}
+              navbarCompact={isNavbarSearch}
               isOpen={
                 placement !== "mobile" && surfaceOwnsPopovers && driverAgeOpen
               }
@@ -1507,12 +1510,18 @@ export function CarsResultsClient({
             />
             <Button
               type="submit"
+              aria-label={t("search")}
+              data-cars-results-navbar-submit={isNavbarSearch ? "" : undefined}
               className={cn(
                 "h-12 w-full rounded-[10px] bg-[#004BB8] px-4 text-[15px] font-semibold text-white shadow-none transition-colors duration-200 hover:bg-[#021C2B] lg:m-[4px] lg:h-auto lg:min-h-[54px] lg:w-[calc(100%-8px)] lg:self-stretch lg:rounded-[9px] lg:text-[15px] lg:tracking-normal lg:ring-1 lg:ring-[#075EE8]/12",
                 placement === "mobile" && "hidden",
               )}
             >
-              {t("search")}
+              {isNavbarSearch ? (
+                <Search className="h-[18px] w-[18px]" aria-hidden="true" />
+              ) : (
+                t("search")
+              )}
             </Button>
           </div>
         </div>
@@ -1856,47 +1865,10 @@ export function CarsResultsClient({
         </div>
       </section>
 
-      <nav
-        aria-label="Breadcrumb"
-        className="page-shell hidden pt-12 sm:block lg:pt-7"
-      >
-        <ol className="flex flex-wrap items-center gap-2 text-[13px] font-medium leading-5 text-[#526174]">
-          <li>
-            <Link
-              href="/"
-              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
-            >
-              Home
-            </Link>
-          </li>
-
-          <li className="text-slate-300" aria-hidden="true">
-            &gt;
-          </li>
-
-          <li>
-            <Link
-              href="/cars"
-              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
-            >
-              Cars
-            </Link>
-          </li>
-
-          <li className="text-slate-300" aria-hidden="true">
-            &gt;
-          </li>
-
-          <li className="text-slate-700" aria-current="page">
-            Car results
-          </li>
-        </ol>
-      </nav>
-
       <div
         ref={resultsGridRef}
         data-cars-results-scroll-region
-        className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-10 sm:pt-6 lg:max-w-[1020px]"
+        className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-10 sm:pt-6 lg:max-w-[1020px] lg:pt-5"
       >
         <CarsResultsExperience
           results={initialResults}
@@ -3516,13 +3488,14 @@ function SearchInputCell({
 }) {
   return (
     <div
+      data-cars-results-navbar-field
       className={cn(
         fieldShellClass,
         isCompact && compactFieldShellClass,
         className,
       )}
     >
-      <div className={fieldLabelClass}>
+      <div data-cars-results-navbar-label className={fieldLabelClass}>
         <Icon
           className="h-3.5 w-3.5 shrink-0 text-slate-500 lg:hidden"
           aria-hidden="true"
@@ -3556,7 +3529,7 @@ function SearchInputCell({
             onValueChange={onChange}
             onSelect={onSelect}
             placeholder={placeholder}
-            inputClassName={cn(fieldInputClass, isCompact ? desktopCompactSelectedValueClass : desktopFullSelectedValueClass, showClearButton && "pr-8")}
+            inputClassName={cn("cars-results-navbar-location-value", fieldInputClass, isCompact ? desktopCompactSelectedValueClass : desktopFullSelectedValueClass, showClearButton && "pr-8")}
             presentation="desktop"
             strings={strings}
             isOpen={isOpen}
@@ -3697,9 +3670,10 @@ function SearchDateCell({
     <div
       ref={wrapRef}
       data-cars-mobile-grouped-row={groupedMobile || undefined}
+      data-cars-results-navbar-field
       className={cn(groupedMobile ? carsMobileEditFieldShellClass : fieldShellClass, isCompact && compactFieldShellClass)}
     >
-      <div className={groupedMobile ? carsMobileEditFieldLabelClass : fieldLabelClass}>
+      <div data-cars-results-navbar-label className={groupedMobile ? carsMobileEditFieldLabelClass : fieldLabelClass}>
         <CalendarDays
           className={cn("h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden", groupedMobile && "hidden")}
           aria-hidden="true"
@@ -3710,6 +3684,7 @@ function SearchDateCell({
       </div>
       <button
         type="button"
+        data-cars-results-navbar-value
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
@@ -3746,6 +3721,7 @@ function SearchDateCell({
         )}
         {!groupedMobile ? (
           <ChevronDown
+            data-cars-results-navbar-chevron
             className={cn(
               "h-4 w-4 shrink-0 text-slate-500 transition-transform",
               isOpen && "rotate-180",
@@ -3968,9 +3944,10 @@ function SearchTimeCell({
     <div
       ref={wrapRef}
       data-cars-mobile-grouped-row={groupedMobile || undefined}
+      data-cars-results-navbar-field
       className={cn(groupedMobile ? carsMobileEditFieldShellClass : fieldShellClass, isCompact && compactFieldShellClass)}
     >
-      <div className={groupedMobile ? carsMobileEditFieldLabelClass : fieldLabelClass}>
+      <div data-cars-results-navbar-label className={groupedMobile ? carsMobileEditFieldLabelClass : fieldLabelClass}>
         <Clock3
           className={cn("h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden", groupedMobile && "hidden")}
           aria-hidden="true"
@@ -3982,6 +3959,7 @@ function SearchTimeCell({
       </div>
       <button
         type="button"
+        data-cars-results-navbar-value
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="menu"
@@ -4018,6 +3996,7 @@ function SearchTimeCell({
           </span>
         )}
         <ChevronDown
+          data-cars-results-navbar-chevron
           className={cn(
             "h-4 w-4 shrink-0 text-slate-500 transition-transform",
             groupedMobile && "text-[#334155]",
@@ -4097,6 +4076,7 @@ function SearchTimeCell({
 function DriverAgeCell({
   driverAge,
   isCompact,
+  navbarCompact = false,
   isOpen,
   onSelect,
   onToggle,
@@ -4108,6 +4088,7 @@ function DriverAgeCell({
 }: {
   driverAge: string;
   isCompact: boolean;
+  navbarCompact?: boolean;
   isOpen: boolean;
   onSelect: (age: string) => void;
   onToggle: () => void;
@@ -4123,9 +4104,10 @@ function DriverAgeCell({
     <div
       ref={wrapRef}
       data-cars-mobile-grouped-row={groupedMobile || undefined}
+      data-cars-results-navbar-field
       className={cn(groupedMobile ? carsMobileEditFieldShellClass : fieldShellClass, isCompact && compactFieldShellClass)}
     >
-      <div className={groupedMobile ? carsMobileEditFieldLabelClass : fieldLabelClass}>
+      <div data-cars-results-navbar-label className={groupedMobile ? carsMobileEditFieldLabelClass : fieldLabelClass}>
         <UserRound
           className={cn("h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden", groupedMobile && "hidden")}
           aria-hidden="true"
@@ -4136,6 +4118,7 @@ function DriverAgeCell({
       </div>
       <button
         type="button"
+        data-cars-results-navbar-value
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
@@ -4163,7 +4146,9 @@ function DriverAgeCell({
             <span className="truncate">
               {driverAge === defaultDriverAge
                 ? t("carsSearch.driverAgeAnyAge")
-                : getDriverAgeOptionLabel(driverAge, t)}
+                : navbarCompact
+                  ? `${driverAge}+`
+                  : getDriverAgeOptionLabel(driverAge, t)}
             </span>
           </span>
         ) : (
@@ -4172,6 +4157,7 @@ function DriverAgeCell({
           </span>
         )}
         <ChevronDown
+          data-cars-results-navbar-chevron
           className={cn(
             "h-4 w-4 shrink-0 text-slate-500 transition-transform",
             groupedMobile && "text-[#334155]",
