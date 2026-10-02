@@ -178,6 +178,92 @@ body {
     text-rendering: optimizeLegibility;
   }
 
+  .car-details-standalone-typography .car-details-desktop-section-heading-type,
+  .car-details-standalone-typography .car-details-desktop-item-heading-type,
+  .car-details-standalone-typography .car-details-desktop-provider-type,
+  .car-details-standalone-typography .car-details-desktop-primary-copy-type,
+  .car-details-standalone-typography .car-details-desktop-secondary-copy-type,
+  .car-details-standalone-typography .car-details-desktop-strong-copy-type,
+  .car-details-standalone-typography .car-details-desktop-benefit-type,
+  .car-details-standalone-typography .car-details-desktop-amenity-type {
+    font-family: var(--font-sans) !important;
+    font-synthesis: none;
+    font-kerning: normal;
+    text-rendering: optimizeLegibility;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-section-heading-type {
+    font-size: 16px !important;
+    line-height: 24px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.006em !important;
+    color: #0f172a !important;
+    font-variation-settings: "wght" 700;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-item-heading-type {
+    font-size: 15px !important;
+    line-height: 22px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.004em !important;
+    color: #1e293b !important;
+    font-variation-settings: "wght" 700;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-provider-type {
+    font-size: 15px !important;
+    line-height: 20px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.003em !important;
+    color: #0f172a !important;
+    font-variation-settings: "wght" 700;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-primary-copy-type {
+    font-size: 14px !important;
+    line-height: 22px !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.002em !important;
+    color: #334155 !important;
+    font-variation-settings: "wght" 500;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-secondary-copy-type {
+    font-size: 14px !important;
+    line-height: 22px !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.001em !important;
+    color: #475569 !important;
+    font-variation-settings: "wght" 500;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-strong-copy-type {
+    font-size: 14px !important;
+    line-height: 22px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.002em !important;
+    color: #1e293b !important;
+    font-variation-settings: "wght" 600;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-benefit-type {
+    font-size: 13px !important;
+    line-height: 18px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.001em !important;
+    color: #475569 !important;
+    font-variation-settings: "wght" 600;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-amenity-type {
+    font-size: 13px !important;
+    line-height: 18px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.001em !important;
+    color: #334155 !important;
+    font-variation-settings: "wght" 600;
+  }
+
   .cars-results-desktop-sort-label {
     font-family: var(--font-sans) !important;
     font-size: 15px !important;
