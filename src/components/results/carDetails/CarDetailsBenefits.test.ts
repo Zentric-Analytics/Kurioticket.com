@@ -192,6 +192,46 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-car-location-section/);
 });
 
+test("desktop Pickup/Return and Rental details sit directly on the page without card containers", () => {
+  const pickup = sourceBetween(
+    clientSource,
+    "function DesktopPickupReturnOverview",
+    "function DesktopCarHireLocationOverview",
+  );
+  const rental = sourceBetween(
+    clientSource,
+    "function DesktopRentalDetails",
+    "function StandaloneDesktopDealSummary",
+  );
+
+  assert.match(
+    pickup,
+    /className="mx-auto w-full max-w-\[900px\] py-1"[\s\S]*?data-car-details-desktop-pickup-overview/,
+  );
+  assert.match(
+    pickup,
+    /data-car-details-desktop-pickup-columns[\s\S]*?divide-x divide-slate-200/,
+  );
+  assert.match(pickup, /min-w-0 px-6 py-1 first:pl-0 last:pr-0/);
+  assert.doesNotMatch(
+    pickup,
+    /rounded-\[16px\]|rounded-\[12px\]|bg-white p-5 shadow-|bg-\[#F8FAFC\] p-4/,
+  );
+
+  assert.match(
+    rental,
+    /className="mx-auto w-full max-w-\[900px\] py-1"[\s\S]*?data-car-details-desktop-rental-details/,
+  );
+  assert.match(
+    rental,
+    /data-car-details-desktop-rental-grid[\s\S]*?grid-cols-2 gap-x-8/,
+  );
+  assert.match(rental, /min-w-0 border-b border-slate-200 py-4/);
+  assert.doesNotMatch(
+    rental,
+    /rounded-\[16px\]|rounded-\[12px\]|bg-white p-5 shadow-|bg-\[#F8FAFC\] p-4/,
+  );
+});
 test("desktop overview and linear sections use only existing car and offer data", () => {
   assert.match(clientSource, /data-car-details-desktop-selected-deal/);
   assert.match(clientSource, /compactBookingProviderName\(offer\)/);
