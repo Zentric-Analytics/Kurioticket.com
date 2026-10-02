@@ -164,7 +164,7 @@ export function kayakCarCardModel(offer: SandboxOffer, days: number, pickup: str
     pickupType:"city-location",pickupLocation:pickup,returnLocation:pickup,shuttleRequired:false,
     rentalCompanyName:offer.details[1] || "Supplier not supplied",recommendationScore:0,requiredDocuments:[],includedItems:[],importantInformation:[],
     inventorySource:"kayak-sandbox",sandboxPresentation:{specs:offer.carSpecs || ["Specifications not supplied"],pickupLabel:"Search pickup",filterOptions:offer.carFilterOptions},
-    offers:[{id:offer.id,bookingProviderName:offer.description,rentalCompanyName:offer.details[1] || "Supplier not supplied",
+    offers:[{id:offer.id,bookingProviderName:offer.bookingProviderName || offer.description,bookingProviderLogoUrl:offer.bookingProviderLogoUrl,rentalCompanyName:offer.details[1] || "Supplier not supplied",
       currency:offer.currency,totalPrice:offer.priceBasis === "per day" ? offer.price*days : offer.price,
       pricePerDay:offer.priceBasis === "per day" ? offer.price : offer.price/days,
       taxesAndFeesIncluded:false,payAtPickup:false,freeCancellation:false,bookingUrl:offer.testUrl}]};
