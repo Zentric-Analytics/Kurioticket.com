@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { formatBaggageValue } from "./flightCardBaggage";
+import { formatBaggageValue, formatDesktopBaggageValue } from "./flightCardBaggage";
 
 const t = (key: string) =>
   ({
     carryOnIncluded: "Carry-on included",
     checkProvider: "Check provider",
     notSuppliedByProvider: "Not provided",
+    seeDetails: "See details",
   })[key] ?? key;
 
 test("desktop baggage fallback uses compact localized result-card copy", () => {
@@ -39,5 +40,32 @@ test("desktop baggage fallback uses the active locale dictionary", () => {
   assert.equal(
     formatBaggageValue("Baggage details not supplied by the provider", localized),
     "No proporcionado por el proveedor",
+  );
+});
+
+
+test("desktop baggage card shortens supplied-details copy", () => {
+  assert.equal(
+    formatDesktopBaggageValue("See supplied baggage details", t),
+    "See details",
+  );
+  assert.equal(
+    formatDesktopBaggageValue("Carry-on included", t),
+    "Carry-on included",
+  );
+});
+
+test("desktop baggage compact copy stays localized", () => {
+  const localized = (key: string) =>
+    ({
+      carryOnIncluded: "Equipaje de mano incluido",
+      checkProvider: "Consultar proveedor",
+      notSuppliedByProvider: "No proporcionado por el proveedor",
+      seeDetails: "Ver detalles",
+    })[key] ?? key;
+
+  assert.equal(
+    formatDesktopBaggageValue("See supplied baggage details", localized),
+    "Ver detalles",
   );
 });

@@ -1069,6 +1069,7 @@ export const translations: TranslationDictionary = {
   savedTripsCabinFirst: "primera",
   editSearch: "Editar búsqueda",
   viewDetails: "Ver detalles",
+  seeDetails: "Ver detalles",
   searchAgain: "Buscar de nuevo",
   origin: "Origen",
   destination: "Destino",

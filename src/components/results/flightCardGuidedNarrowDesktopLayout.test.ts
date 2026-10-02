@@ -125,6 +125,7 @@ test("desktop fare stays beside the itinerary while details span beneath both co
   );
   assert.match(desktopBodyRule, /row-gap:\s*0\.5rem/);
   assert.match(desktopFareRule, /align-items:\s*flex-end/);
+  assert.match(desktopFareRule, /justify-content:\s*flex-end/);
   assert.match(desktopFareRule, /border-left:\s*1px solid #d8e1ec/);
   assert.match(desktopFareRule, /border-top:\s*0/);
   assert.match(desktopFareRule, /padding-left:\s*1rem/);
@@ -154,8 +155,10 @@ test("desktop fare stays beside the itinerary while details span beneath both co
   assert.match(desktopPriceFrameRule, /text-align:\s*right/);
   assert.match(desktopViewRule, /width:\s*auto/);
   assert.match(desktopViewRule, /min-height:\s*1\.5rem/);
-  assert.match(desktopViewRule, /margin-top:\s*0\.375rem/);
+  assert.match(desktopViewRule, /margin-top:\s*0\.125rem/);
   assert.match(desktopViewRule, /align-self:\s*flex-end/);
+  assert.match(globalsCss, /\.flight-results-grid \.flight-card-view-button \{[\s\S]*?min-height:\s*1\.5rem;[\s\S]*?padding-block:\s*0;[\s\S]*?\}/);
+  assert.doesNotMatch(globalsCss, /\.flight-results-grid \.flight-card-view-button \{[^}]*min-height:\s*44px/);
 
   const mediumQueryStart = globalsCss.indexOf(
     "@container (max-width: 759px)",

@@ -154,6 +154,7 @@ export const translations: TranslationDictionary = {
   "travelersCabinDialogLabel": "Voyageurs et cabine",
   mobilePreferencesHeading: "Préférences",
   viewDetails: "Voir les détails",
+  seeDetails: "Voir les détails",
   tryAgain: "Réessayer",
   edit: "Modifier",
   manage: "Gérer",

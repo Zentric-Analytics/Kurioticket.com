@@ -26,7 +26,7 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn, formatItineraryShortDate, formatTime } from "@/lib/utils";
 import { formatFlightCardPrice } from "@/components/results/flightCardPrice";
 import { MobileFlightCard } from "@/components/results/MobileFlightCard";
-import { formatBaggageValue } from "@/components/results/flightCardBaggage";
+import { formatDesktopBaggageValue } from "@/components/results/flightCardBaggage";
 import { useSavedFlightResult } from "@/components/results/useSavedFlightResult";
 
 type DetailItem = {
@@ -599,7 +599,7 @@ function buildFlightDetails(
   return [
     {
       label: t("baggage"),
-      value: formatBaggageValue(flight.baggageInfo, t),
+      value: formatDesktopBaggageValue(flight.baggageInfo, t),
       icon: Luggage,
     },
     {

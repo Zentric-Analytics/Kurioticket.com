@@ -1411,6 +1411,7 @@ export const translations: TranslationDictionary = {
   savedTripsCabinFirst: "first",
   editSearch: "Edit search",
   viewDetails: "View details",
+  seeDetails: "See details",
   searchAgain: "Search again",
   origin: "Origin",
   destination: "Destination",

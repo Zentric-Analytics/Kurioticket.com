@@ -28,3 +28,14 @@ function isProviderReviewCopy(value: string) {
     normalized.includes("vary by fare")
   );
 }
+
+
+export function formatDesktopBaggageValue(
+  value: string | undefined,
+  t: (key: string) => string,
+) {
+  const formatted = formatBaggageValue(value, t);
+  return /^see supplied baggage details$/i.test(formatted.trim())
+    ? t("seeDetails")
+    : formatted;
+}
