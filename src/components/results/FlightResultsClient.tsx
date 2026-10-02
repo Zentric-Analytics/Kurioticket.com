@@ -3057,8 +3057,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   useEffect(() => {
     function updateDropdownPosition(target: "origin" | "destination") {
       const viewportPadding = 16;
-      const preferredWidth = 380;
       const useStickyWrap = activeDesktopSearchSurface === "sticky";
+      const preferredWidth = useStickyWrap ? 560 : 380;
       const wrap =
         target === "origin"
           ? useStickyWrap
@@ -3157,12 +3157,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   useEffect(() => {
     function updateDatePickerPosition(target: "departure" | "return") {
       const viewportPadding = 16;
-      const preferredWidth = 620;
+      const useStickyTrigger = activeDesktopSearchSurface === "sticky";
+      const preferredWidth = useStickyTrigger ? 920 : 620;
       const wrap =
         target === "departure"
           ? departureWrapRef.current
           : (returnWrapRef.current ?? departureWrapRef.current);
-      const trigger = wrap?.querySelector("button");
+      const trigger = useStickyTrigger
+        ? stickyDateButtonRef.current
+        : wrap?.querySelector("button");
 
       if (!trigger) return;
 
@@ -3171,9 +3174,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         preferredWidth,
         window.innerWidth - viewportPadding * 2,
       );
+      const preferredLeft = useStickyTrigger
+        ? rect.left + rect.width / 2 - width / 2
+        : rect.left;
       const left = Math.max(
         viewportPadding,
-        Math.min(rect.left, window.innerWidth - width - viewportPadding),
+        Math.min(
+          preferredLeft,
+          window.innerWidth - width - viewportPadding,
+        ),
       );
       const top = rect.bottom + 8;
 
@@ -3223,13 +3232,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("scroll", handleViewportChange, true);
     };
-  }, [activeDatePicker]);
+  }, [activeDatePicker, activeDesktopSearchSurface]);
 
   useEffect(() => {
     function updateTravelerPopoverPosition() {
       const viewportPadding = 16;
-      const preferredWidth = 360;
-      const trigger = travelerCabinWrapRef.current?.querySelector("button");
+      const useStickyTrigger = activeDesktopSearchSurface === "sticky";
+      const preferredWidth = useStickyTrigger ? 480 : 360;
+      const trigger = useStickyTrigger
+        ? stickyTravelerButtonRef.current
+        : travelerCabinWrapRef.current?.querySelector("button");
 
       if (!trigger) return;
 
@@ -3238,9 +3250,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         preferredWidth,
         window.innerWidth - viewportPadding * 2,
       );
+      const preferredLeft = useStickyTrigger ? rect.right - width : rect.left;
       const left = Math.max(
         viewportPadding,
-        Math.min(rect.left, window.innerWidth - width - viewportPadding),
+        Math.min(
+          preferredLeft,
+          window.innerWidth - width - viewportPadding,
+        ),
       );
       const top = rect.bottom + 8;
 
@@ -3289,7 +3305,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("scroll", handleViewportChange, true);
     };
-  }, [travelerPopoverOpen]);
+  }, [activeDesktopSearchSurface, travelerPopoverOpen]);
 
   function handleSwapLocations() {
     markExpandedSearchInteraction();
@@ -5579,7 +5595,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         {travelerPopoverOpen &&
                         activeDesktopSearchSurface === "sticky" ? (
                           <TravelerCabinPopover
-                            alignToField="right"
                             position={
                               travelerPopoverPosition ?? {
                                 top: 0,
@@ -5699,7 +5714,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       activeDesktopSearchSurface === "sticky" ? (
                         <SuggestionList
                           id="sticky-flight-origin-suggestions"
-                          alignToField
+                          position={
+                            dropdownPosition ?? { top: 0, left: 0, width: 0 }
+                          }
                           suggestions={resolvedOriginSuggestions}
                           locale={locale}
                           onSelect={(value) => {
@@ -5776,7 +5793,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       activeDesktopSearchSurface === "sticky" ? (
                         <SuggestionList
                           id="sticky-flight-destination-suggestions"
-                          alignToField
+                          position={
+                            dropdownPosition ?? { top: 0, left: 0, width: 0 }
+                          }
                           suggestions={resolvedDestinationSuggestions}
                           locale={locale}
                           onSelect={(value) => {
@@ -5817,7 +5836,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       {activeDatePicker &&
                       activeDesktopSearchSurface === "sticky" ? (
                         <DatePickerPopover
-                          alignToField="right"
                           position={
                             datePickerPosition ?? { top: 0, left: 0, width: 0 }
                           }
@@ -5877,7 +5895,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       {travelerPopoverOpen &&
                       activeDesktopSearchSurface === "sticky" ? (
                         <TravelerCabinPopover
-                          alignToField="right"
                           position={
                             travelerPopoverPosition ?? {
                               top: 0,
