@@ -36,6 +36,6 @@ export function formatDesktopBaggageValue(
 ) {
   const formatted = formatBaggageValue(value, t);
   return /^see supplied baggage details$/i.test(formatted.trim())
-    ? "See details"
+    ? t("seeDetails")
     : formatted;
 }
