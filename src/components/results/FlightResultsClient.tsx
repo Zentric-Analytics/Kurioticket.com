@@ -1198,6 +1198,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     useState(false);
   const [desktopNavSearchTarget, setDesktopNavSearchTarget] =
     useState<HTMLElement | null>(null);
+  const [desktopSearchPopoverFrame, setDesktopSearchPopoverFrame] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
   const [travelerPopoverPosition, setTravelerPopoverPosition] = useState<{
     top: number;
     left: number;
@@ -1369,6 +1374,23 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       target: "route" | "dates" | "travelers",
     ) => {
       stickySearchLauncherRef.current = event.currentTarget;
+      const compactForm = event.currentTarget.closest<HTMLElement>(
+        "[data-flight-results-nav-search-form]",
+      );
+      if (compactForm) {
+        const rect = compactForm.getBoundingClientRect();
+        const viewportGutter = 24;
+        const preferredWidth = Math.min(920, window.innerWidth - viewportGutter * 2);
+        const centeredLeft = rect.left + rect.width / 2 - preferredWidth / 2;
+        setDesktopSearchPopoverFrame({
+          top: rect.bottom + 8,
+          left: Math.max(
+            viewportGutter,
+            Math.min(centeredLeft, window.innerWidth - preferredWidth - viewportGutter),
+          ),
+          width: preferredWidth,
+        });
+      }
       pendingStickySearchTargetRef.current =
         tripTypeInput === "multi-city" ? null : target;
       const currentScrollY = window.scrollY;
@@ -1490,6 +1512,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setTravelerPopoverOpen(false);
       setTravelerPopoverPosition(null);
       setActiveDesktopSearchSurface(null);
+      setDesktopSearchPopoverFrame(null);
 
       window.requestAnimationFrame(() => {
         stickySearchLauncherRef.current?.focus();
@@ -5364,7 +5387,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <>
         {isStickySearchPanelOpen ? (
           <div
-            className="fixed inset-0 z-[110] bg-slate-950/30 backdrop-blur-[2px]"
+            data-flight-search-anchored-backdrop
+            className="fixed inset-0 z-[110] bg-slate-950/10"
             role="presentation"
             onMouseDown={(event) => {
               if (event.target === event.currentTarget) {
@@ -5373,7 +5397,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             }}
           >
             <div
-              className="flex min-h-dvh items-start justify-center px-6 pb-8 pt-12 xl:pt-16"
+              data-flight-search-anchored-popout
+              className="fixed"
+              style={
+                desktopSearchPopoverFrame
+                  ? {
+                      top: desktopSearchPopoverFrame.top,
+                      left: desktopSearchPopoverFrame.left,
+                      width: desktopSearchPopoverFrame.width,
+                    }
+                  : {
+                      top: 88,
+                      left: "50%",
+                      width: "min(920px, calc(100vw - 48px))",
+                      transform: "translateX(-50%)",
+                    }
+              }
               onMouseDown={(event) => event.stopPropagation()}
             >
               <form
@@ -5385,7 +5424,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 onChangeCapture={markExpandedSearchInteraction}
                 onMouseDown={(event) => event.stopPropagation()}
                 onClick={(event) => event.stopPropagation()}
-                className="max-h-[calc(100dvh-6rem)] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/90 bg-[#F5F7FB] p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80"
+                className="max-h-[calc(100dvh-108px)] w-full overflow-y-auto overscroll-contain rounded-[14px] border border-slate-200/90 bg-[#F5F7FB] p-4 text-start shadow-[0_24px_60px_-28px_rgba(15,23,42,0.55)] ring-1 ring-white/80"
               >
                 <div className="relative mb-4 border-b border-slate-200/80 pb-3">
                   <div className="mx-auto max-w-2xl text-center">
