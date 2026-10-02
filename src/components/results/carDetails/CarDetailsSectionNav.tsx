@@ -3,7 +3,7 @@
 import type { ReactNode, Ref } from "react";
 import { useRef } from "react";
 
-export type CarDetailsTab = "compare" | "pickup" | "location" | "rental";
+export type CarDetailsTab = "compare" | "pickup" | "location";
 
 export function CarDetailsSectionNav({
   activeTab,
@@ -30,9 +30,8 @@ export function CarDetailsSectionNav({
     { id: "compare", label: labels.compare },
     { id: "pickup", label: labels.pickup },
     { id: "location", label: labels.location },
-    { id: "rental", label: labels.rental },
   ];
-  const mobileTabs = tabs.filter((tab) => tab.id !== "rental");
+  const mobileTabs = tabs;
 
   function handleKeyDown(
     event: React.KeyboardEvent<HTMLButtonElement>,
