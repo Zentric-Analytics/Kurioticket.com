@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft,
+  ArrowUpRight,
   CarFront,
   Clock3,
   ExternalLink,
@@ -35,11 +36,13 @@ import { useSavedCar } from "@/components/results/useSavedCar";
 import {
   buildCarDirectionsUrl,
   buildGoogleCarMapEmbedUrl,
+  buildGoogleCarStreetViewEmbedUrl,
 } from "@/lib/cars/carMap";
 import { calculateRentalDays, getComparisonCarOffers, getPrimaryCarOffer } from "@/lib/cars/carResults";
 import type {
   CarOffer,
   CarSearchParams,
+  LocationBoundCarSearchParams,
   NormalizedCarResult,
 } from "@/lib/cars/types";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
@@ -163,7 +166,7 @@ export function CarDetailsExperience({
   desktopBackControl,
 }: {
   car: NormalizedCarResult;
-  search: CarSearchParams;
+  search: LocationBoundCarSearchParams;
   primaryAction: CarDetailsPrimaryAction;
   presentation: "standalone-content" | "guided-content";
   primaryOffer?: CarOffer | null;
@@ -800,78 +803,108 @@ function DesktopCarHireLocationOverview({
   copy,
 }: {
   car: NormalizedCarResult;
-  search: CarSearchParams;
+  search: LocationBoundCarSearchParams;
   locale: string;
   copy: (key: string) => string;
 }) {
+  const [view, setView] = useState<"map" | "streetview">("map");
   const pickupLocation =
     search.pickupLocation.trim() ||
     car.pickupLocation ||
     copy("carDetails.locationUnavailable");
+  const googleMapsEmbedApiKey =
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY;
   const mapUrl = buildGoogleCarMapEmbedUrl({
     pickupLocation: search.pickupLocation.trim() || car.pickupLocation,
-    googleMapsEmbedApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY,
+    googleMapsEmbedApiKey,
   });
+  const coordinates = search.pickupLocationTarget?.coordinates;
+  const streetViewUrl = coordinates
+    ? buildGoogleCarStreetViewEmbedUrl({
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        googleMapsEmbedApiKey,
+      })
+    : null;
+  const activeEmbedUrl = view === "streetview" ? streetViewUrl : mapUrl;
   const directionsUrl = buildCarDirectionsUrl(
     search.pickupLocation.trim() || car.pickupLocation,
   );
-  const pickupType =
-    car.sandboxPresentation?.pickupLabel ?? pickupTypeLabels[car.pickupType];
 
   return (
     <div
       className="mx-auto w-full max-w-[900px]"
       data-car-details-desktop-location-overview
     >
-      <div
-        className="rounded-[14px] border border-slate-200 bg-white p-4 shadow-[0_3px_14px_rgba(15,23,42,0.03)]"
-        data-car-details-desktop-location-card
-      >
-        <h2 className="car-details-desktop-section-heading-type">Car hire location</h2>
-        <div className="mt-3 flex items-start gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue">
-            <MapPin size={18} aria-hidden="true" />
+      <h2 className="car-details-desktop-section-heading-type">Location</h2>
+      <div className="mt-3 flex flex-wrap items-start justify-between gap-x-8 gap-y-3 text-sm leading-6">
+        <div className="flex min-w-0 items-start gap-2">
+          <MapPin className="mt-1 h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="car-details-desktop-primary-copy-type min-w-0 break-words">
+            {pickupLocation}
           </span>
-          <div className="min-w-0">
-            <p className="car-details-desktop-strong-copy-type">{pickupLocation}</p>
-            <p className="car-details-desktop-secondary-copy-type mt-0.5">{pickupType}</p>
-          </div>
         </div>
-        {mapUrl ? (
-          <div className="mt-4 overflow-hidden rounded-[12px] border border-slate-200">
-            <iframe
-              title={`${copy("carDetails.mapShowingPickup")} ${pickupLocation}`}
-              src={mapUrl}
-              loading="lazy"
-              referrerPolicy="strict-origin-when-cross-origin"
-              className="block h-[250px] w-full border-0"
-            />
-            {directionsUrl ? (
-              <a
-                href={directionsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="focus-ring flex h-11 items-center justify-between border-t border-slate-200 px-4 text-[13px] font-bold text-[#075EE8] hover:bg-slate-50"
-              >
-                {copy("carDetails.getDirections")}
-                <ExternalLink size={16} aria-hidden="true" />
-              </a>
-            ) : null}
-          </div>
-        ) : directionsUrl ? (
+        {directionsUrl ? (
           <a
             href={directionsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="focus-ring mt-4 inline-flex min-h-10 items-center gap-2 text-[13px] font-bold text-[#075EE8]"
+            className="focus-ring inline-flex shrink-0 items-center gap-1 rounded-sm font-semibold text-blue hover:underline"
           >
-            {copy("carDetails.getDirections")}
-            <ExternalLink size={16} aria-hidden="true" />
+            Open in Maps
+            <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
           </a>
         ) : null}
       </div>
       <div
-        className="mt-4 pb-1"
+        className="mt-4 flex min-h-11 items-center gap-1 border-b border-[#d9e2e8]"
+        role="tablist"
+        aria-label="Location views"
+      >
+        {(["map", "streetview"] as const).map((option) => (
+          <button
+            key={option}
+            type="button"
+            id={`car-desktop-location-${option}-tab`}
+            role="tab"
+            aria-selected={view === option}
+            aria-controls="car-desktop-location-panel"
+            onClick={() => setView(option)}
+            className={`focus-ring min-h-11 border-b-2 px-4 text-sm font-semibold transition-colors ${view === option ? "border-[#004bb8] text-[#004bb8]" : "border-transparent text-[#59636a] hover:text-[#192024]"}`}
+          >
+            {option === "map" ? "Map" : "Street View"}
+          </button>
+        ))}
+      </div>
+      <div
+        id="car-desktop-location-panel"
+        role="tabpanel"
+        aria-labelledby={`car-desktop-location-${view}-tab`}
+        className="mt-3 overflow-hidden rounded-xl border border-[#d9e2e8] bg-[#f3f5f7]"
+        data-car-details-desktop-location-map
+      >
+        {activeEmbedUrl ? (
+          <iframe
+            key={`${pickupLocation}:${view}`}
+            title={
+              view === "streetview"
+                ? `Street View near ${pickupLocation}`
+                : `${copy("carDetails.mapShowingPickup")} ${pickupLocation}`
+            }
+            src={activeEmbedUrl}
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+            className="block h-[250px] w-full border-0"
+          />
+        ) : (
+          <div className="flex h-[250px] flex-col items-center justify-center gap-3 text-sm text-[#59636a]">
+            <MapPin className="h-6 w-6" aria-hidden="true" />
+            <p>{view === "streetview" ? "Street View unavailable" : "Map preview unavailable"}</p>
+          </div>
+        )}
+      </div>
+      <div
+        className="mt-5 pb-1"
         data-car-details-desktop-location-details
       >
         <h3 className="car-details-desktop-item-heading-type">
@@ -885,7 +918,6 @@ function DesktopCarHireLocationOverview({
     </div>
   );
 }
-
 function CarHeroActions({
   car,
   isSaved,
@@ -943,7 +975,7 @@ export function CarDetailsClient({
   resultsHref,
 }: {
   car: NormalizedCarResult;
-  search: CarSearchParams;
+  search: LocationBoundCarSearchParams;
   resultsHref: string;
 }) {
   const { t } = useLocale();

@@ -226,7 +226,8 @@ test("desktop overview and linear sections use only existing car and offer data"
   assert.match(clientSource, /offer\.payAtPickup/);
   assert.match(clientSource, /data-car-details-desktop-pickup-overview/);
   assert.match(clientSource, /data-car-details-desktop-location-overview/);
-  assert.match(clientSource, /data-car-details-desktop-location-card/);
+  assert.doesNotMatch(clientSource, /data-car-details-desktop-location-card/);
+  assert.match(clientSource, /data-car-details-desktop-location-map/);
   assert.match(clientSource, /data-car-details-desktop-location-details/);
   assert.match(clientSource, /carDetails\.pickupLocationDetails/);
   assert.match(clientSource, /carDetails\.confirmPickupDetails/);
@@ -236,13 +237,21 @@ test("desktop overview and linear sections use only existing car and offer data"
     "function DesktopCarHireLocationOverview",
     "function CarHeroActions",
   );
+  assert.match(desktopLocation, />Location<\/h2>/);
+  assert.match(desktopLocation, /Open in Maps/);
+  assert.match(desktopLocation, /\["map", "streetview"\] as const/);
+  assert.match(desktopLocation, /buildGoogleCarStreetViewEmbedUrl/);
+  assert.match(desktopLocation, /search\.pickupLocationTarget\?\.coordinates/);
+  assert.match(desktopLocation, /Street View unavailable/);
+  assert.doesNotMatch(desktopLocation, /Car hire location|pickupTypeLabels\[car\.pickupType\]|car\.sandboxPresentation\?\.pickupLabel/);
+  assert.doesNotMatch(desktopLocation, /carDetails\.getDirections/);
   assert.match(
     desktopLocation,
     /className="mt-5 pb-1" data-car-details-desktop-location-details/,
   );
   assert.doesNotMatch(
     desktopLocation,
-    /className="mt-5 border-t[^"]*" data-car-details-desktop-location-details/,
+    /rounded-\[14px\] border border-slate-200 bg-white p-4 shadow-/,
   );
   assert.doesNotMatch(clientSource, /data-car-details-desktop-rental-details/);
   assert.doesNotMatch(clientSource, /function DesktopRentalDetails/);
