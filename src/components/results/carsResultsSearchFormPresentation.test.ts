@@ -48,11 +48,11 @@ test("results desktop search typography mirrors the polished mobile-web hierarch
     assert.ok(valueClass.includes(token), `missing shared value token: ${token}`);
 
   for (const token of [
-    "lg:text-[14px]",
-    "lg:font-medium",
+    "lg:text-[15px]",
+    "lg:font-bold",
     "lg:leading-5",
-    "lg:tracking-normal",
-    "lg:text-[#334155]",
+    "lg:tracking-[-0.003em]",
+    "lg:text-slate-950",
   ])
     assert.ok(fullValueClass.includes(token), `missing full-search value token: ${token}`);
 
