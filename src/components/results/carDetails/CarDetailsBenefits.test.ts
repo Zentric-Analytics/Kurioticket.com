@@ -386,6 +386,11 @@ test("desktop car details use the approved overview card while keeping controls 
   assert.match(heroSource, /grid min-w-0 grid-cols-4 gap-x-4 gap-y-2/);
   assert.match(heroSource, /className="block min-w-0 truncate" title={label}/);
   assert.match(heroSource, /data-car-details-desktop-overview-image/);
+  assert.ok(
+    heroSource.indexOf("data-car-details-desktop-overview-image") <
+      heroSource.indexOf("data-car-details-desktop-overview-specifications"),
+    "desktop amenities render below the car image",
+  );
   assert.match(heroSource, /data-car-details-desktop-overview-summary/);
   assert.match(clientSource, /data-car-details-desktop-selected-deal/);
   assert.match(clientSource, /data-car-details-desktop-overview-cta/);
@@ -566,6 +571,34 @@ test("mobile price comparison retains the existing per-day selection card", () =
   assert.doesNotMatch(comparison, /row-start-4/);
 });
 
+
+test("desktop Compare deals excludes the active Selected deal while keeping it selectable from alternatives after a change", () => {
+  const comparison = sourceBetween(
+    clientSource,
+    "function CarPriceComparisonSection",
+    "function CarLocationSection",
+  );
+  assert.match(
+    comparison,
+    /const desktopAlternativeOffers = selectedOffer \? offers\.filter\(\(offer\) => offer\.id !== selectedOffer\.id\) : offers;/,
+  );
+  assert.match(
+    comparison,
+    /showDesktopOfferList && desktopAlternativeOffers\.length/,
+  );
+  assert.match(
+    comparison,
+    /desktopAlternativeOffers\.map\(\(offer\) =>/,
+  );
+  assert.match(
+    comparison,
+    /onClick=\{\(\) => onSelectOffer\(offer\.id\)\}/,
+  );
+  assert.doesNotMatch(
+    comparison,
+    /data-desktop-car-deal-list[\s\S]*?\{offers\.map\(\(offer\) =>/,
+  );
+});
 
 test("desktop Compare deals wires each provider row to its own total, benefits, and Continue deal action", () => {
   const comparison = sourceBetween(
