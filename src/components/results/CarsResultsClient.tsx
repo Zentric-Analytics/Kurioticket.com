@@ -502,7 +502,7 @@ const sameReturnSearchGridClass =
 const compactFieldShellClass = "min-h-[46px] py-1 lg:min-h-[54px] lg:py-1.5";
 
 const fieldLabelClass =
-  "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:mb-1 lg:text-[12px] lg:font-semibold lg:uppercase lg:leading-4 lg:tracking-[0.045em] lg:text-[#4E6385]";
+  "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:mb-1 lg:text-[12px] lg:font-bold lg:uppercase lg:leading-4 lg:tracking-[0.05em] lg:text-[#475569]";
 
 const fieldInputClass =
   "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[15px] lg:font-semibold lg:leading-5 lg:tracking-[-0.005em] lg:text-[#142033]";
@@ -1753,7 +1753,7 @@ export function CarsResultsClient({
                   );
                 }
               }}
-              className="focus-ring h-10 w-24 rounded-lg bg-[#004BB8] text-[15px] font-semibold tracking-[-0.005em] text-white transition hover:bg-[#021C2B]"
+              className="focus-ring h-10 w-24 rounded-lg bg-[#004BB8] text-[15px] font-bold tracking-[-0.005em] text-white transition hover:bg-[#021C2B]"
             >
               {t("search")}
             </button>
@@ -1795,7 +1795,7 @@ export function CarsResultsClient({
                   </p>
                   <h2
                     id="sticky-cars-search-title"
-                    className="mt-1 truncate text-[19px] font-semibold leading-6 tracking-[-0.012em] text-[#07133B]"
+                    className="mt-1 truncate text-[19px] font-bold leading-6 tracking-[-0.012em] text-[#07133B]"
                   >
                     {locationPairSummary}
                   </h2>
@@ -2900,7 +2900,7 @@ export function CarsResultsExperience({
                       ref={resultHeadingRef}
                       id={resultHeadingId}
                       tabIndex={-1}
-                      className="truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[17px] sm:leading-6 sm:tracking-[-0.005em] lg:text-[17px] lg:font-semibold lg:leading-6 lg:tracking-[-0.008em]"
+                      className="truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[17px] sm:leading-6 sm:tracking-[-0.005em] lg:text-[17px] lg:font-bold lg:leading-6 lg:tracking-[-0.008em]"
                     >
                       {resultHeading ??
                         t(
@@ -2917,7 +2917,7 @@ export function CarsResultsExperience({
                     {resultsDisplayRange ? (
                       <p
                         aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${visibleResults.length}`}
-                        className="mt-0.5 hidden text-xs font-medium leading-4 text-slate-500 sm:block lg:text-[13px] lg:font-medium lg:leading-5 lg:text-[#526174]"
+                        className="mt-0.5 hidden text-xs font-medium leading-4 text-slate-500 sm:block lg:text-[13px] lg:font-medium lg:leading-5 lg:text-[#475569]"
                       >
                         {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
                       </p>
@@ -2932,7 +2932,7 @@ export function CarsResultsExperience({
                     </p>
                   ) : null}
                   <div className="hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
-                    <span className="shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm lg:text-[14px] lg:font-medium lg:leading-5">
+                    <span className="shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm lg:text-[14px] lg:font-semibold lg:leading-5">
                       {t("carsResults.sortBy")}:
                     </span>
                     <div
@@ -2977,7 +2977,7 @@ export function CarsResultsExperience({
                             role="menuitemradio"
                             aria-checked={sort === option.value}
                             tabIndex={carsSortOpen ? 0 : -1}
-                            className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold lg:text-[14px] lg:font-medium lg:leading-5 lg:text-[#142033]"
+                            className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold lg:text-[14px] lg:font-semibold lg:leading-5 lg:text-[#142033]"
                             onClick={() => {
                               startFilterResultsTransition();
                               setCurrentPage(1);
@@ -4271,7 +4271,7 @@ function CarFilters({
           )}
         >
           <div className="flex items-center justify-between gap-3">
-            <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[15px] font-semibold leading-5 tracking-[-0.004em] text-[#07133B]">
+            <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[15px] font-bold leading-5 tracking-[-0.004em] text-[#07133B]">
               <SlidersHorizontal
                 className="desktop-filter-sidebar__icon cars-desktop-filter-icon shrink-0 text-[#07133B]"
                 size={15}
@@ -4288,7 +4288,7 @@ function CarFilters({
               </span>
               <button
                 type="button"
-                className="rounded-full px-1.5 py-0.5 text-[12px] font-semibold leading-4 text-[#526174] transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                className="rounded-full px-1.5 py-0.5 text-[12px] font-bold leading-4 text-[#475569] transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                 onClick={onClear}
               >
                 {t("clearAll")}
@@ -4299,7 +4299,7 @@ function CarFilters({
       ) : layout === "desktop" ? (
         <div className="desktop-filter-sidebar__header shrink-0 border-b border-slate-200/70 px-3 py-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="truncate text-[16px] font-semibold leading-6 tracking-[-0.006em] text-[#07133B]">
+            <h2 className="truncate text-[16px] font-bold leading-6 tracking-[-0.006em] text-[#07133B]">
               {t("filters")}
               {activeFilterCount > 0 ? (
                 <span className="ms-2 rounded-full bg-[#004BB8] px-2 py-0.5 text-[12px] font-semibold leading-4 text-white">
@@ -4316,7 +4316,7 @@ function CarFilters({
           {activeFilterCount > 0 ? (
             <button
               type="button"
-              className="focus-ring mt-2 text-[13px] font-semibold leading-5 text-[#004BB8]"
+              className="focus-ring mt-2 text-[13px] font-bold leading-5 text-[#004BB8]"
               onClick={onClear}
             >
               {t("clearAll")}
@@ -4450,7 +4450,7 @@ function FilterSection({
           aria-controls={panelId}
           onClick={onCompactOpen}
           className={cn(
-            "group flex w-full items-center justify-between gap-3 text-start font-semibold text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
+            "group flex w-full items-center justify-between gap-3 text-start font-bold text-slate-900 transition-colors duration-200 motion-reduce:transition-none hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
             "min-h-9 rounded-md px-2.5 py-2 text-[14px] leading-5 tracking-[-0.004em] hover:bg-[#E5ECF4]",
             compactOpen && "text-[#004BB8]",
           )}
@@ -4473,7 +4473,7 @@ function FilterSection({
           </span>
         </button>
       ) : (
-        <h3 className="text-[14px] font-semibold normal-case leading-5 tracking-[-0.002em] text-[#334155]">
+        <h3 className="text-[15px] font-bold normal-case leading-5 tracking-[-0.003em] text-slate-950">
           {carFilterGroupLabel(group, t)}
         </h3>
       )}
@@ -4513,13 +4513,13 @@ function FilterSection({
               key={option.id}
               className={cn(
                 layout === "compact"
-                  ? "flex min-h-8 cursor-pointer items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-[14px] font-medium leading-5 text-[#526174] transition hover:bg-slate-50 hover:text-slate-950"
+                  ? "flex min-h-8 cursor-pointer items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-[14px] font-medium leading-5 text-[#334155] transition hover:bg-slate-50 hover:text-slate-950"
                   : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-[14px] font-medium leading-5 transition-all",
                 selected
                   ? "font-semibold text-[#142033]"
                   : layout === "compact"
                     ? null
-                    : "text-[#475569] hover:bg-slate-50 hover:text-[#142033]",
+                    : "text-[#334155] hover:bg-slate-50 hover:text-[#142033]",
               )}
             >
               {layout === "compact" ? (
