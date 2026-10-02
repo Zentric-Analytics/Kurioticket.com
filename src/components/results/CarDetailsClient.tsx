@@ -143,6 +143,7 @@ export function CarDetailsExperience({
   const compareSectionRef = useRef<HTMLElement>(null);
   const pickupSectionRef = useRef<HTMLDivElement>(null);
   const locationSectionRef = useRef<HTMLElement>(null);
+  const rentalSectionRef = useRef<HTMLElement>(null);
   const [mobileHeaderProtected, setMobileHeaderProtected] = useState(false);
   const copy = (key: string) => t[key] || enTranslations[key] || key;
   const text = {
@@ -305,6 +306,7 @@ export function CarDetailsExperience({
       animationFrame = 0;
       if (!desktopQuery.matches) {
         setDesktopSectionBarStuck(false);
+        setActiveTab((current) => (current === "rental" ? "compare" : current));
         return;
       }
 
@@ -317,6 +319,7 @@ export function CarDetailsExperience({
         { id: "compare", element: compareSectionRef.current },
         { id: "pickup", element: pickupSectionRef.current },
         { id: "location", element: locationSectionRef.current },
+        { id: "rental", element: rentalSectionRef.current },
       ];
       let current: CarDetailsTab = "compare";
       for (const section of sections) {
@@ -350,6 +353,7 @@ export function CarDetailsExperience({
       compareSectionRef.current,
       pickupSectionRef.current,
       locationSectionRef.current,
+      rentalSectionRef.current,
     ]) {
       if (target) observer.observe(target);
     }
@@ -377,7 +381,9 @@ export function CarDetailsExperience({
         ? compareSectionRef.current
         : tab === "pickup"
           ? pickupSectionRef.current
-          : locationSectionRef.current;
+          : tab === "location"
+            ? locationSectionRef.current
+            : rentalSectionRef.current;
     target?.scrollIntoView({
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
         ? "auto"
@@ -460,7 +466,7 @@ export function CarDetailsExperience({
         data-car-details-content-grid
       >
         <div
-          className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:mx-auto lg:w-full lg:max-w-[900px] lg:space-y-5" : "space-y-4 lg:space-y-5"}`}
+          className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:mx-auto lg:w-full lg:max-w-[1080px] lg:space-y-5" : "space-y-4 lg:space-y-5"}`}
           data-car-details-primary-column
         >
           <CarDetailsHero
@@ -513,6 +519,18 @@ export function CarDetailsExperience({
                 </div>
               ) : undefined
             }
+            desktopSummary={
+              presentation === "standalone-content" && primaryOffer ? (
+                <StandaloneDesktopDealSummary
+                  car={car}
+                  offer={primaryOffer}
+                  days={days}
+                  price={price}
+                  copy={copy}
+                  action={effectivePrimaryAction}
+                />
+              ) : undefined
+            }
             guidedMobileActions={
               presentation === "guided-content" ? (
                 <CarHeroActions
@@ -554,6 +572,7 @@ export function CarDetailsExperience({
                   mobileCompare: "Compare deals",
                   pickup: copy("carDetails.pickupReturn"),
                   location: copy("carDetails.location"),
+                  rental: "Rental details",
                 }}
               />
               <div className="min-h-[240px]" data-car-details-section-panels>
@@ -642,6 +661,114 @@ export function CarDetailsExperience({
         />
       ) : null}
     </div>
+  );
+}
+
+function StandaloneDesktopDealSummary({
+  car,
+  offer,
+  days,
+  price,
+  copy,
+  action,
+}: {
+  car: NormalizedCarResult;
+  offer: CarOffer;
+  days: number;
+  price: PriceFn;
+  copy: (key: string) => string;
+  action: CarDetailsPrimaryAction;
+}) {
+  const total = price(offer.totalPrice, offer.currency);
+  const providerName =
+    compactBookingProviderName(offer) ||
+    providerValue(car.rentalCompanyName) ||
+    copy("carsResults.bookingProvider");
+  const facts = car.sandboxPresentation
+    ? ["KAYAK sandbox", "Simulated inventory — no real booking"]
+    : [
+        offer.freeCancellation ? copy("carDetails.freeCancellation") : null,
+        offer.taxesAndFeesIncluded ? copy("carDetails.feesIncludedShort") : null,
+        offer.payAtPickup ? copy("carsResults.payAtPickup") : null,
+      ].filter((value): value is string => Boolean(value));
+  const actionClassName =
+    "focus-ring mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#075EE8] px-4 text-[14px] font-bold leading-5 text-white shadow-[0_3px_10px_rgba(7,94,232,0.18)] transition hover:bg-[#004BB8]";
+
+  return (
+    <aside
+      className="flex h-full min-h-[330px] flex-col rounded-[14px] border border-slate-200 bg-[#F8FAFC] p-5"
+      data-car-details-desktop-selected-deal
+    >
+      <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#536B92]">
+        Selected deal
+      </p>
+      <p className="mt-3 text-[15px] font-bold leading-5 text-slate-950">
+        {providerName}
+      </p>
+      <strong
+        className="mt-2 block text-[28px] font-extrabold leading-8 tracking-[-0.025em] text-[#07133B] tabular-nums"
+        dir="ltr"
+        title={total.title}
+        aria-label={total.ariaLabel}
+      >
+        {total.formatted}
+      </strong>
+      <p className="mt-1 text-[13px] font-medium leading-[18px] text-[#475569]">
+        {days} {days === 1 ? copy("carDetails.day") : copy("carDetails.days")} total
+      </p>
+      {facts.length ? (
+        <div className="mt-5 space-y-2.5" data-car-details-desktop-selected-deal-facts>
+          {facts.map((fact) => (
+            <p
+              key={fact}
+              className="flex items-start gap-2 text-[13px] font-semibold leading-[18px] text-[#334155]"
+            >
+              <ShieldCheck
+                size={15}
+                strokeWidth={2}
+                className="mt-px shrink-0 text-[#075EE8]"
+                aria-hidden="true"
+              />
+              {fact}
+            </p>
+          ))}
+        </div>
+      ) : null}
+      <div className="mt-auto">
+        {action.kind === "sandbox-handoff" ? (
+          <a
+            href={action.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            referrerPolicy="no-referrer"
+            className={actionClassName}
+            data-car-details-desktop-overview-cta
+          >
+            {copy("carDetails.continueDeal")}
+          </a>
+        ) : action.kind === "standalone-disabled-provider" ? (
+          <button
+            type="button"
+            disabled
+            className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-100`}
+            data-car-details-desktop-overview-cta
+          >
+            {copy("carDetails.continueDeal")}
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={!action.enabled || action.pending}
+            aria-label={action.accessibleLabel}
+            onClick={action.onActivate}
+            className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-60`}
+            data-car-details-desktop-overview-cta
+          >
+            {action.pending ? copy("deals.guided.carDetails.saving") : action.label}
+          </button>
+        )}
+      </div>
+    </aside>
   );
 }
 
