@@ -1518,7 +1518,7 @@ export function CarsResultsClient({
               )}
             >
               {isNavbarSearch ? (
-                <Search className="h-[18px] w-[18px]" aria-hidden="true" />
+                <Search className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden="true" />
               ) : (
                 t("search")
               )}
@@ -1551,7 +1551,7 @@ export function CarsResultsClient({
 
   if (isSearchSubmitting) {
     return (
-      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-[#F8FAFC]">
+      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-white">
         <BrandedLoading
           variant="fullscreen"
           visual="logoPulse"
@@ -1578,7 +1578,7 @@ export function CarsResultsClient({
           desktopNavSearchTarget,
         )
       : null}
-    <main className="flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-[#F8FAFC] pb-8">
+    <main className="flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-white pb-8">
       <section
         inert={mobileSearchOpen ? true : undefined}
         aria-hidden={mobileSearchOpen ? true : undefined}
@@ -1765,7 +1765,7 @@ export function CarsResultsClient({
               className="focus-ring flex h-[56px] min-w-0 items-center gap-2.5 border-e border-slate-200/85 px-3 text-start transition-colors hover:bg-[#E7EBF1] focus-visible:bg-[#E7EBF1]"
             >
               <Icon
-                className="h-4 w-4 shrink-0 text-slate-500"
+                className="cars-results-navbar-leading-icon h-4 w-4 shrink-0 text-slate-500"
                 aria-hidden="true"
               />
               <span
@@ -3375,7 +3375,7 @@ export function CarsResultsExperience({
 
 function CarsResultsPageTransitionSkeleton() {
   return (
-    <div aria-hidden="true" className="cars-results-desktop-typeface fixed inset-0 z-[1200] overflow-hidden bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-[#F8FAFC]">
+    <div aria-hidden="true" className="cars-results-desktop-typeface fixed inset-0 z-[1200] overflow-hidden bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-white">
       <div className="h-20 border-b border-slate-100 bg-white px-4 sm:h-24"><div className="mx-auto flex h-full max-w-[1400px] items-center justify-between"><div className="h-8 w-40 animate-pulse rounded-md bg-slate-200 motion-reduce:animate-none" /><div className="h-10 w-10 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none" /></div></div>
       <div className="border-b border-slate-100 bg-white px-4 py-5"><div className="mx-auto max-w-[1180px]"><div className="hidden h-[72px] animate-pulse grid-cols-[1.2fr_.9fr_1fr_.7fr_112px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm motion-reduce:animate-none sm:grid">{["pickup", "return", "dates", "age"].map((item) => <div key={item} className="border-r border-slate-200 p-4"><div className="h-4 w-28 rounded bg-slate-200" /><div className="mt-2 h-3 w-20 rounded bg-slate-100" /></div>)}<div className="m-2 rounded-xl bg-[#D9E7F7]" /></div><div className="h-16 animate-pulse rounded-2xl border border-slate-200 bg-white p-4 shadow-sm motion-reduce:animate-none sm:hidden"><div className="h-4 w-52 rounded bg-slate-200" /><div className="mt-2 h-3 w-36 rounded bg-slate-100" /></div></div></div>
       <div className="mx-auto max-w-[1020px] px-4 py-5 sm:py-6"><div className="mb-4 flex gap-2 sm:hidden">{[84, 92, 76, 116].map((width) => <div key={width} className="h-11 shrink-0 animate-pulse rounded-lg border border-slate-200 bg-white motion-reduce:animate-none" style={{ width }} />)}</div><div className="grid min-w-0 gap-5 lg:grid-cols-[232px_minmax(0,1fr)] xl:grid-cols-[236px_minmax(0,1fr)]"><aside className="hidden space-y-5 border-r border-slate-200 pr-5 lg:block"><div className="h-6 w-24 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />{["vehicle", "transmission", "seats", "features"].map((item) => <div key={item} className="border-t border-slate-200 pt-5"><div className="h-4 w-28 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /><div className="mt-4 h-4 w-4/5 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /><div className="mt-3 h-4 w-3/5 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div>)}</aside><section className="min-w-0"><div className="mb-4 flex items-center justify-between"><div><div className="h-6 w-40 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /><div className="mt-2 h-3 w-16 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div><div className="hidden h-9 w-36 animate-pulse rounded bg-slate-200 motion-reduce:animate-none sm:block" /></div><div className="space-y-4"><CarCardSkeleton desktopSurfaceParity /><CarCardSkeleton desktopSurfaceParity /><CarCardSkeleton desktopSurfaceParity /></div></section></div></div>
@@ -3516,7 +3516,7 @@ function SearchInputCell({
       </div>
       <div className="relative flex min-w-0 items-center gap-2">
         <Icon
-          className="hidden h-4 w-4 shrink-0 text-slate-500 lg:block"
+          className="cars-results-navbar-leading-icon hidden h-4 w-4 shrink-0 text-slate-500 lg:block"
           aria-hidden="true"
         />
         <div className="min-w-0 flex-1">
@@ -3698,12 +3698,12 @@ function SearchDateCell({
       >
         {showRentalDuration ? (
           <Calendar
-            className="h-4 w-4 shrink-0 text-slate-500"
+            className="cars-results-navbar-leading-icon h-4 w-4 shrink-0 text-slate-500"
             aria-hidden="true"
           />
         ) : null}
         {!showRentalDuration && isCompact ? (
-          <Calendar className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+          <Calendar className="cars-results-navbar-leading-icon h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
         ) : null}
         {groupedMobile ? (
           <span className={carsMobileEditValueGroupClass}>
@@ -3982,7 +3982,7 @@ function SearchTimeCell({
         ) : useMainPageDesktopPresentation ? (
           <span className="flex min-w-0 items-center gap-2">
             <Clock
-              className="h-4 w-4 shrink-0 text-slate-500"
+              className="cars-results-navbar-leading-icon h-4 w-4 shrink-0 text-slate-500"
               aria-hidden="true"
             />
             <span className="truncate">
@@ -4140,7 +4140,7 @@ function DriverAgeCell({
         ) : useMainPageDesktopPresentation ? (
           <span className="flex min-w-0 items-center gap-2">
             <UserRound
-              className="h-4 w-4 shrink-0 text-slate-500"
+              className="cars-results-navbar-leading-icon h-4 w-4 shrink-0 text-slate-500"
               aria-hidden="true"
             />
             <span className="truncate">
@@ -4273,24 +4273,24 @@ function CarFilters({
         layout === "compact"
           ? cn(
               "desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-[#D8E1EC] p-0 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.42)]",
-              desktopSurfaceParity ? "bg-[#F2F4F8]" : "bg-[#EEF3F8]",
+              desktopSurfaceParity ? "bg-white" : "bg-[#EEF3F8]",
             )
           : layout === "desktop"
             ? cn(
                 "desktop-filter-sidebar border border-slate-200/80 p-0 shadow-none rounded-none",
-                desktopSurfaceParity ? "bg-[#F2F4F8]" : "bg-transparent",
+                desktopSurfaceParity ? "bg-white" : "bg-transparent",
               )
             : "bg-transparent",
         desktopSurfaceParity &&
           layout !== "mobile" &&
-          "cars-desktop-filter-surface",
+          "cars-desktop-filter-surface cars-hotel-filter-surface",
       )}
     >
       {layout === "compact" ? (
         <div
           className={cn(
             "desktop-filter-sidebar__header shrink-0 border-b border-[#D8E1EC]/80 px-3.5 py-2.5",
-            desktopSurfaceParity ? "bg-[#F2F4F8]" : "bg-[#EEF3F8]",
+            desktopSurfaceParity ? "bg-white" : "bg-[#EEF3F8]",
           )}
         >
           <div className="flex items-center justify-between gap-3">
@@ -4352,7 +4352,7 @@ function CarFilters({
           layout === "compact"
             ? cn(
                 "min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-2 py-1",
-                desktopSurfaceParity ? "bg-[#F2F4F8]" : "bg-[#EEF3F8]",
+                desktopSurfaceParity ? "bg-white" : "bg-[#EEF3F8]",
               )
             : layout === "mobile"
               ? "grid gap-6 bg-transparent"
