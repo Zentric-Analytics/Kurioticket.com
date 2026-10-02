@@ -1404,8 +1404,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     ],
   );
 
-  const isStickySearchPanelOpen =
-    isSearchCollapsed && isSearchExpandedWhileSticky;
+  const isStickySearchPanelOpen = isSearchExpandedWhileSticky;
 
   useEffect(() => {
     if (guidedMode || typeof window === "undefined") return undefined;
@@ -7264,7 +7263,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     if (guidedMode) return <section aria-labelledby="deals-guided-flight-results-heading" className="mt-6" data-flight-results-experience="deals-guided"><h2 id="deals-guided-flight-results-heading" tabIndex={-1} className="text-xl font-extrabold text-slate-950">{t("deals.guided.flightResults.loadingTitle")}</h2><div ref={loadingFocusRef} role="status" tabIndex={-1} className="mt-4 space-y-3"><FlightCardSkeleton /><FlightCardSkeleton /></div></section>;
     return (
       <>
-      <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs />
+      <AppHeader
+        flushDesktopBottom
+        flushMobileBottom
+        hideDesktopTravelNav
+        hideMobileCategoryTabs
+        hotelDesktopBoundary
+        flightResultsDesktopSticky
+      />
+      {desktopNavSearchTarget
+        ? createPortal(renderDesktopHeaderSearchBar(), desktopNavSearchTarget)
+        : null}
       {renderMobileEditSearchDrawer()}
       <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
         <BrandedLoading
