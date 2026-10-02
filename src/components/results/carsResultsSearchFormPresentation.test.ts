@@ -18,9 +18,17 @@ test("results desktop search typography mirrors the polished mobile-web hierarch
   const valueClass = source.match(
     /const fieldInputClass =\s*\n\s*"([^"]+)";/,
   )?.[1];
+  const fullValueClass = source.match(
+    /const desktopFullSelectedValueClass =\s*\n\s*"([^"]+)";/,
+  )?.[1];
+  const compactValueClass = source.match(
+    /const desktopCompactSelectedValueClass =\s*\n\s*"([^"]+)";/,
+  )?.[1];
 
   assert.ok(labelClass, "fieldLabelClass should remain defined");
   assert.ok(valueClass, "fieldInputClass should remain defined");
+  assert.ok(fullValueClass, "desktopFullSelectedValueClass should remain defined");
+  assert.ok(compactValueClass, "desktopCompactSelectedValueClass should remain defined");
 
   for (const token of [
     "lg:mb-1",
@@ -34,15 +42,28 @@ test("results desktop search typography mirrors the polished mobile-web hierarch
     assert.ok(labelClass.includes(token), `missing desktop label token: ${token}`);
 
   for (const token of [
+    "lg:placeholder:font-medium",
+    "lg:placeholder:text-slate-400",
+  ])
+    assert.ok(valueClass.includes(token), `missing shared value token: ${token}`);
+
+  for (const token of [
+    "lg:text-[14px]",
+    "lg:font-semibold",
+    "lg:leading-5",
+    "lg:tracking-normal",
+    "lg:text-[#142033]",
+  ])
+    assert.ok(fullValueClass.includes(token), `missing full-search value token: ${token}`);
+
+  for (const token of [
     "lg:text-[15px]",
     "lg:font-bold",
     "lg:leading-5",
     "lg:tracking-[-0.005em]",
     "lg:text-[#07133B]",
-    "lg:placeholder:font-medium",
-    "lg:placeholder:text-slate-400",
   ])
-    assert.ok(valueClass.includes(token), `missing desktop value token: ${token}`);
+    assert.ok(compactValueClass.includes(token), `missing compact-search value token: ${token}`);
 
   assert.doesNotMatch(
     labelClass,
@@ -51,10 +72,11 @@ test("results desktop search typography mirrors the polished mobile-web hierarch
   assert.equal(
     (
       source.match(
-        /lg:text-\[15px\] lg:font-bold lg:leading-5 lg:tracking-\[-0\.005em\] lg:text-\[#07133B\]/g,
+        /isCompact \? desktopCompactSelectedValueClass : desktopFullSelectedValueClass/g,
       ) ?? []
     ).length,
     4,
+    "pickup location, rental dates, time, and driver age must explicitly preserve separate full and compact value tiers",
   );
 });
 
@@ -77,10 +99,14 @@ test("results search preserves both desktop grid geometries with the refined com
   );
 });
 
-test("desktop-full Cars Results search uses a softer off-white surface and tighter outer padding", () => {
+test("desktop-full Cars Results search matches the homepage near-white surface without changing compact color", () => {
   assert.match(
     source,
-    /rounded-\[1\.15rem\] border border-slate-200 bg-\[#F8FAFC\] p-1 shadow-\[0_18px_42px_-30px_rgba\(15,23,42,0\.58\)\] ring-1 ring-slate-200\/50/,
+    /rounded-\[1\.15rem\] border border-slate-200 bg-white\/95 p-1 shadow-\[0_18px_42px_-30px_rgba\(15,23,42,0\.58\)\] ring-1 ring-slate-200\/50/,
+  );
+  assert.match(
+    source,
+    /isCompactSearch[\s\S]*?\? "rounded-xl border border-slate-200 bg-white p-0 shadow-\[0_14px_34px_-28px_rgba\(15,23,42,0\.64\)\]"/,
   );
   assert.match(
     source,
@@ -88,7 +114,7 @@ test("desktop-full Cars Results search uses a softer off-white surface and tight
   );
   assert.doesNotMatch(
     source,
-    /rounded-\[1\.15rem\] border border-slate-200 bg-white p-1\.5/,
+    /rounded-xl border border-slate-200 bg-white\/95 p-0/,
   );
 });
 
