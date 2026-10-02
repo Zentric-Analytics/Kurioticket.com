@@ -10,6 +10,10 @@ const heroSource = readFileSync(
   new URL("./CarDetailsHero.tsx", import.meta.url),
   "utf8",
 ).replace(/\s+/g, " ");
+const cssSource = readFileSync(
+  new URL("../../../app/globals.css", import.meta.url),
+  "utf8",
+).replace(/\s+/g, " ");
 
 function sourceBetween(source: string, startText: string, endText: string) {
   const start = source.indexOf(startText);
@@ -184,6 +188,40 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-car-location-section/);
 });
 
+test("desktop Cars Details uses a deliberate non-faint typography hierarchy", () => {
+  for (const className of [
+    "car-details-desktop-section-heading-type",
+    "car-details-desktop-item-heading-type",
+    "car-details-desktop-provider-type",
+    "car-details-desktop-primary-copy-type",
+    "car-details-desktop-secondary-copy-type",
+    "car-details-desktop-strong-copy-type",
+    "car-details-desktop-benefit-type",
+  ]) {
+    assert.match(clientSource, new RegExp(className));
+  }
+  assert.match(heroSource, /car-details-desktop-amenity-type/);
+  assert.match(
+    cssSource,
+    /\.car-details-desktop-section-heading-type \{[^}]*font-size: 16px !important;[^}]*font-weight: 700 !important;[^}]*color: #0f172a !important;[^}]*font-variation-settings: "wght" 700;/,
+  );
+  assert.match(
+    cssSource,
+    /\.car-details-desktop-primary-copy-type \{[^}]*font-size: 14px !important;[^}]*font-weight: 500 !important;[^}]*color: #334155 !important;[^}]*font-variation-settings: "wght" 500;/,
+  );
+  assert.match(
+    cssSource,
+    /\.car-details-desktop-secondary-copy-type \{[^}]*font-size: 14px !important;[^}]*font-weight: 500 !important;[^}]*color: #475569 !important;[^}]*font-variation-settings: "wght" 500;/,
+  );
+  assert.match(
+    cssSource,
+    /\.car-details-desktop-benefit-type \{[^}]*font-size: 13px !important;[^}]*font-weight: 600 !important;[^}]*color: #475569 !important;[^}]*font-variation-settings: "wght" 600;/,
+  );
+  assert.match(
+    cssSource,
+    /\.car-details-desktop-amenity-type \{[^}]*font-size: 13px !important;[^}]*font-weight: 600 !important;[^}]*color: #334155 !important;[^}]*font-variation-settings: "wght" 600;/,
+  );
+});
 test("standalone car details restore polished Hotels-style section headings", () => {
   assert.match(clientSource, /<CarDetailsSectionNav activeTab={activeTab}/);
   assert.match(clientSource, /compare: "Compare deals"/);

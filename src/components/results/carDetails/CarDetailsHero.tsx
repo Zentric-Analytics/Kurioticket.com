@@ -176,7 +176,7 @@ export function CarDetailsHero({
               return (
                 <li
                   key={label}
-                  className={`inline-flex min-w-0 items-center gap-2 text-xs font-semibold leading-[18px] text-slate-700 ${reserveMobileControlSafeZone ? `lg:w-max lg:max-w-full lg:min-h-8 lg:rounded-none lg:bg-transparent lg:px-0 lg:py-1.5 lg:text-[13px] lg:whitespace-nowrap ${index % 2 === 0 ? "lg:justify-self-end" : "lg:justify-self-start"}` : "lg:rounded-lg lg:bg-slate-100 lg:px-2.5 lg:py-1.5"}`}
+                  className={`car-details-desktop-amenity-type inline-flex min-w-0 items-center gap-2 text-xs font-semibold leading-[18px] text-slate-700 ${reserveMobileControlSafeZone ? `lg:w-max lg:max-w-full lg:min-h-8 lg:rounded-none lg:bg-transparent lg:px-0 lg:py-1.5 lg:text-[13px] lg:whitespace-nowrap ${index % 2 === 0 ? "lg:justify-self-end" : "lg:justify-self-start"}` : "lg:rounded-lg lg:bg-slate-100 lg:px-2.5 lg:py-1.5"}`}
                 >
                   {mobileTransmissionIcon ? (
                     <>
