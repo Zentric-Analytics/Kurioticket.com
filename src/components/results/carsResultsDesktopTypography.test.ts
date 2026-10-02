@@ -32,12 +32,32 @@ const route = readFileSync(
 );
 test("desktop Cars Results uses a readable, professional typography hierarchy", () => {
   assert.match(results, /lg:text-\[12px\] lg:font-bold lg:uppercase lg:leading-4 lg:tracking-\[0\.05em\] lg:text-\[#475569\]/);
-  assert.match(results, /lg:text-\[15px\] lg:font-semibold lg:leading-5 lg:tracking-\[-0\.005em\] lg:text-\[#142033\]/);
+  assert.match(results, /lg:text-\[15px\] lg:font-bold lg:leading-5 lg:tracking-\[-0\.005em\] lg:text-\[#07133B\]/);
   assert.match(results, /data-cars-results-compact-search-summary[\s\S]*?text-\[15px\] font-semibold leading-5 tracking-\[-0\.005em\]/);
   assert.match(results, /sticky-cars-search-title[\s\S]*?text-\[19px\] font-bold leading-6 tracking-\[-0\.012em\]/);
   assert.match(results, /aria-label="Breadcrumb"[\s\S]*?text-\[13px\] font-medium leading-5 text-\[#526174\]/);
   assert.match(results, /lg:text-\[17px\] lg:font-bold lg:leading-6 lg:tracking-\[-0\.008em\]/);
   assert.match(results, /lg:text-\[14px\] lg:font-semibold lg:leading-5 lg:tracking-\[-0\.003em\]/);
+});
+
+
+test("desktop Cars selected search values are strong while empty placeholders stay restrained", () => {
+  const selectedValuePattern =
+    /lg:text-\[15px\] lg:font-bold lg:leading-5 lg:tracking-\[-0\.005em\] lg:text-\[#07133B\]/g;
+
+  assert.equal(
+    (results.match(selectedValuePattern) ?? []).length,
+    4,
+    "pickup location, rental dates, pickup/return time, and driver age share one strong selected-value treatment",
+  );
+  assert.match(
+    results,
+    /lg:placeholder:font-medium lg:placeholder:text-slate-400/,
+  );
+  assert.match(
+    results,
+    /!pickupDate && "lg:font-medium lg:text-slate-400"/,
+  );
 });
 
 test("desktop Cars filters mirror the stronger mobile hierarchy without changing layout", () => {
