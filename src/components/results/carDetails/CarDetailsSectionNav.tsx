@@ -3,7 +3,7 @@
 import type { ReactNode, Ref } from "react";
 import { useRef } from "react";
 
-export type CarDetailsTab = "compare" | "pickup" | "location";
+export type CarDetailsTab = "compare" | "pickup" | "location" | "rental";
 
 export function CarDetailsSectionNav({
   activeTab,
@@ -30,7 +30,9 @@ export function CarDetailsSectionNav({
     { id: "compare", label: labels.compare },
     { id: "pickup", label: labels.pickup },
     { id: "location", label: labels.location },
+    { id: "rental", label: labels.rental },
   ];
+  const mobileTabs = tabs.filter((tab) => tab.id !== "rental");
 
   function handleKeyDown(
     event: React.KeyboardEvent<HTMLButtonElement>,
@@ -39,9 +41,9 @@ export function CarDetailsSectionNav({
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
     const nextIndex =
-      (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) %
-      tabs.length;
-    onTabChange(tabs[nextIndex].id);
+      (index + (event.key === "ArrowRight" ? 1 : -1) + mobileTabs.length) %
+      mobileTabs.length;
+    onTabChange(mobileTabs[nextIndex].id);
     tabRefs.current[nextIndex]?.focus();
   }
 
@@ -53,7 +55,7 @@ export function CarDetailsSectionNav({
         className="sticky top-[var(--car-details-mobile-header-boundary)] z-30 mt-0 flex w-full items-stretch border-b border-slate-200 bg-[#F5F7FB] lg:hidden"
         data-car-details-mobile-section-nav
       >
-        {tabs.map((tab, index) => {
+        {mobileTabs.map((tab, index) => {
           const selected = activeTab === tab.id;
           return (
             <button
