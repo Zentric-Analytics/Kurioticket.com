@@ -3708,7 +3708,7 @@ function SearchDateCell({
           </span>
         ) : (
           <span className="min-w-0 flex-1">
-            <span className={cn("block truncate leading-4 lg:leading-5", !pickupDate && "lg:font-medium lg:text-slate-400")}>
+            <span className={cn("block truncate leading-4 lg:leading-5", !pickupDate && "text-slate-400 lg:font-medium lg:text-slate-400")}>
               {summary}
             </span>
           </span>
