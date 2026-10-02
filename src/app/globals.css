@@ -134,21 +134,16 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Desktop Cars Results uses a route-scoped geometric grotesk so the alphabet,
-   numerals, and word shapes read with a more polished travel-marketplace feel.
-   Mobile/native and the rest of the site remain on the Kurioticket Inter system. */
+/* Desktop Cars Results deliberately reuses the same Inter foundation as mobile.
+   The desktop route keeps its larger spatial scale, but letterforms and weight
+   perception stay consistent with the polished mobile Cars Results hierarchy. */
 @media (min-width: 1024px) {
   .cars-results-desktop-typeface,
   .cars-results-desktop-typeface button,
   .cars-results-desktop-typeface input,
   .cars-results-desktop-typeface select,
   .cars-results-desktop-typeface textarea {
-    font-family:
-      "Kurioticket Cars Sans",
-      "Inter",
-      "Segoe UI",
-      Arial,
-      sans-serif;
+    font-family: var(--font-sans);
     font-synthesis: none;
     font-kerning: normal;
     text-rendering: optimizeLegibility;
