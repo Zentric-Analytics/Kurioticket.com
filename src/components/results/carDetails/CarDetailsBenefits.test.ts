@@ -382,7 +382,20 @@ test("desktop car details use the approved overview card while keeping controls 
     "desktop amenities render below the car image",
   );
   assert.match(heroSource, /data-car-details-desktop-overview-summary/);
+  assert.match(
+    heroSource,
+    /className="min-w-0 self-start" data-car-details-desktop-overview-summary/,
+  );
   assert.match(clientSource, /data-car-details-desktop-selected-deal/);
+  assert.match(
+    clientSource,
+    /className="flex flex-col rounded-\[14px\] border border-slate-200 bg-\[#F8FAFC\] p-4"/,
+  );
+  assert.doesNotMatch(clientSource, /data-car-details-desktop-selected-deal[\s\S]*?min-h-\[330px\]/);
+  assert.match(
+    clientSource,
+    /focus-ring mt-4 inline-flex min-h-10 w-full items-center justify-center/,
+  );
   assert.match(clientSource, /data-car-details-desktop-overview-cta/);
 
   assert.match(clientSource, /data-car-details-desktop-controls/);
