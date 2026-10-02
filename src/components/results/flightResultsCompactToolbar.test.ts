@@ -154,13 +154,34 @@ test("desktop search editor expands from the navbar instead of opening as a cent
   assert.match(callback, /closest<HTMLElement>\("\[data-flight-results-nav-search-form\]"\)/);
   assert.match(callback, /updateDesktopSearchPopoverFrame\(compactForm\)/);
   assert.match(frame, /const rect = resolvedCompactForm\.getBoundingClientRect\(\)/);
-  assert.match(frame, /top: rect\.bottom \+ 8/);
-  assert.match(frame, /preferredWidth = Math\.min\(920, availableWidth\)/);
+  assert.match(frame, /const viewportGutter = 16/);
+  assert.match(frame, /top: rect\.bottom \+ 4/);
+  assert.match(frame, /left: viewportGutter/);
+  assert.match(frame, /width: availableWidth/);
+  assert.doesNotMatch(frame, /Math\.min\(920|centeredLeft/);
   assert.match(popout, /data-flight-search-anchored-backdrop/);
-  assert.match(popout, /bg-slate-950\/10/);
+  assert.match(popout, /bg-slate-950\/\[0\.04\]/);
   assert.match(popout, /data-flight-search-anchored-popout/);
   assert.doesNotMatch(popout, /items-start justify-center px-6 pb-8 pt-12/);
   assert.doesNotMatch(popout, /backdrop-blur-\[2px\]/);
+});
+
+test("desktop Flight search expansion uses the viewport instead of a 920px modal cap", () => {
+  const frameStart = source.indexOf("const updateDesktopSearchPopoverFrame = useCallback(");
+  const frameEnd = source.indexOf("const openStickySearchEditor = useCallback(", frameStart);
+  const frame = source.slice(frameStart, frameEnd);
+  const popoutStart = source.indexOf("function renderStickySearchPopoutOverlay()");
+  const popoutEnd = source.indexOf("function renderCompactSearchForm", popoutStart);
+  const popout = source.slice(popoutStart, popoutEnd);
+
+  assert.match(frame, /window\.innerWidth - viewportGutter \* 2/);
+  assert.match(frame, /left: viewportGutter/);
+  assert.match(frame, /width: availableWidth/);
+  assert.doesNotMatch(frame, /920/);
+  assert.match(popout, /width: "calc\(100vw - 32px\)"/);
+  assert.match(popout, /rounded-\[10px\]/);
+  assert.match(popout, /shadow-\[0_12px_28px_-22px_rgba\(15,23,42,0\.28\)\]/);
+  assert.doesNotMatch(popout, /rounded-\[14px\]|shadow-\[0_24px_60px/);
 });
 
 test("anchored desktop search recomputes on browser resize and closes below desktop", () => {
