@@ -8872,13 +8872,20 @@ function DatePickerPopover({
           ? t("selectDepartureDate")
           : t("selectReturnDate")
       }
-      style={dialogStyle}
+      style={
+        prominentDesktop && !mobileSheet && !alignToField
+          ? {
+              ...dialogStyle,
+              maxHeight: `min(520px, calc(100dvh - ${position.top + 16}px))`,
+            }
+          : dialogStyle
+      }
       className={cn(
         "w-full border border-slate-200 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.14)]",
         mobileSheet
           ? "flex h-[100dvh] min-h-0 max-w-full flex-col overflow-y-auto overscroll-contain rounded-none p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))]"
           : prominentDesktop
-            ? "max-h-[min(520px,calc(100dvh-120px))] max-w-none overflow-y-auto overscroll-contain rounded-xl p-3"
+            ? "max-w-none overflow-y-auto overscroll-contain rounded-xl p-3"
             : "max-w-[min(560px,calc(100vw-2rem))] rounded-2xl p-3",
       )}
     >
