@@ -333,6 +333,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const [mobileHotelNestedLayerOpen, setMobileHotelNestedLayerOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showStickyHotelFilters, setShowStickyHotelFilters] = useState(false);
+  const [desktopNavSearchTarget, setDesktopNavSearchTarget] = useState<HTMLElement | null>(null);
   const [currentResultsPage, setCurrentResultsPage] = useState(1);
   const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
   const [paginationTransitionPhase, setPaginationTransitionPhase] = useState<PaginationTransitionPhase>("idle");
@@ -896,6 +897,14 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
+  }, [guided]);
+
+  useEffect(() => {
+    if (guided) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      setDesktopNavSearchTarget(document.querySelector<HTMLElement>("[data-hotel-results-nav-search]"));
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [guided]);
 
   useEffect(() => {
@@ -1567,9 +1576,34 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
   const ResultsRoot = guided ? "div" : "main";
   const stayNights = Math.max(1, Math.round((new Date(`${body.checkOut}T00:00:00Z`).getTime() - new Date(`${body.checkIn}T00:00:00Z`).getTime()) / 86_400_000));
+  const renderDesktopHotelSearch = (idPrefix: string) => (
+    <HotelSearchBar
+      key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
+      initialDestination={activeDesktopHotelSearchDraft.destination}
+      initialDestinationId={activeDesktopHotelSearchDraft.destinationId}
+      initialCheckIn={activeDesktopHotelSearchDraft.checkIn}
+      initialCheckOut={activeDesktopHotelSearchDraft.checkOut}
+      initialGuests={activeDesktopHotelSearchDraft.guests}
+      initialRooms={activeDesktopHotelSearchDraft.rooms}
+      initialSort={body.sort}
+      errorRole="alert"
+      compact
+      desktopPresentation="results-flat"
+      idPrefix={idPrefix}
+      className="min-w-0"
+      onDesktopDraftChange={updateDesktopHotelSearchDraft}
+      onSubmitStart={() => {
+        mobileHotelSearchModalityRef.current = "programmatic";
+        triggerSearchApplying();
+      }}
+    />
+  );
 
   return (
     <>
+      {!guided && !loadingContent && desktopNavSearchTarget
+        ? createPortal(renderDesktopHotelSearch("hotel-results-nav-search"), desktopNavSearchTarget)
+        : null}
       {!guided && paginationTransitionPhase !== "idle" && typeof document !== "undefined"
         ? createPortal(
             <HotelResultsPageTransitionSkeleton />,
@@ -1694,30 +1728,11 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         ) : null}
 
         {!guided ? (
-          <section data-hotel-results-desktop-search className="hidden bg-[#f6f8fb] pb-1 pt-5 sm:block lg:bg-white">
+          <section data-hotel-results-desktop-search className="hidden bg-[#f6f8fb] pb-1 pt-5 sm:block lg:hidden">
             <div className="page-shell">
               <div className="relative z-40 min-w-0 overflow-visible">
                 <div className="relative z-10 min-w-0 overflow-visible">
-                  <HotelSearchBar
-                    key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
-                    initialDestination={activeDesktopHotelSearchDraft.destination}
-                    initialDestinationId={activeDesktopHotelSearchDraft.destinationId}
-                    initialCheckIn={activeDesktopHotelSearchDraft.checkIn}
-                    initialCheckOut={activeDesktopHotelSearchDraft.checkOut}
-                    initialGuests={activeDesktopHotelSearchDraft.guests}
-                    initialRooms={activeDesktopHotelSearchDraft.rooms}
-                    initialSort={body.sort}
-                    errorRole="alert"
-                    compact
-                    desktopPresentation="results-flat"
-                    idPrefix="hotel-results-full-search"
-                    className="min-w-0"
-                    onDesktopDraftChange={updateDesktopHotelSearchDraft}
-                    onSubmitStart={() => {
-                      mobileHotelSearchModalityRef.current = "programmatic";
-                      triggerSearchApplying();
-                    }}
-                  />
+                  {renderDesktopHotelSearch("hotel-results-full-search")}
                 </div>
               </div>
             </div>
