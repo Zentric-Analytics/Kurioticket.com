@@ -190,7 +190,12 @@ export function FlightCard({
       ) : null}
       <div className="flight-card-desktop-shell">
         <div className="flight-card-desktop">
-          <div className="flight-card-desktop-header relative flex min-w-0 items-start justify-between pb-2">
+          <div
+            className={cn(
+              "flight-card-desktop-header relative flex min-w-0 items-start justify-between pb-2",
+              resultBadge && "lg:min-h-16",
+            )}
+          >
             <div className="flight-card-desktop-brand flex min-w-0 items-center">
               <div className="flight-card-header-logo">
                 <AirlineLogo flight={flight} />
