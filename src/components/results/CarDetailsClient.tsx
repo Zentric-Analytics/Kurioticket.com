@@ -873,18 +873,18 @@ function CarPriceComparisonSection({
   };
   return (
     <div
-      className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-2 lg:text-center"
+      className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-2"
       data-car-price-comparison
     >
       {showSectionHeading ? (
         <Heading
           level={headingLevel}
-          className="hidden lg:block lg:text-center lg:text-[16px] lg:font-semibold lg:leading-6 lg:tracking-[-0.1px] lg:text-[#192024]"
+          className="hidden lg:block lg:text-[16px] lg:font-semibold lg:leading-6 lg:tracking-[-0.1px] lg:text-[#192024]"
         >
           Compare deals
         </Heading>
       ) : null}
-      <p className={`mt-1 text-[11px] font-medium leading-4 text-slate-600 lg:text-center lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42] ${showSectionHeading ? "lg:mt-3" : "lg:mt-0"}`}>
+      <p className={`mt-1 text-[11px] font-medium leading-4 text-slate-600 lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42] ${showSectionHeading ? "lg:mt-3" : "lg:mt-0"}`}>
         {formatCarDate(search.pickupDate, locale)} –{" "}
         {formatCarDate(search.dropoffDate, locale)} · {days}{" "}
         {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
@@ -1019,7 +1019,7 @@ function CarPriceComparisonSection({
                   type="button"
                   aria-pressed={selected}
                   onClick={() => onSelectOffer(offer.id)}
-                  className="focus-ring min-w-0 text-start lg:text-center"
+                  className="focus-ring min-w-0 text-start"
                   data-car-details-desktop-deal-summary
                 >
                   <span
@@ -1040,7 +1040,7 @@ function CarPriceComparisonSection({
                   </strong>
                   {providerFacts.length ? (
                     <span
-                      className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 lg:justify-center"
+                      className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5"
                       data-car-details-desktop-deal-benefits
                     >
                       {providerFacts.map(({ label, Icon }) => (
@@ -1194,7 +1194,7 @@ function CarLocationSection({
   );
   return (
     <div
-      className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-5 lg:text-center"
+      className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-5"
       data-car-location-section
     >
       {showSectionHeading ? (
@@ -1205,11 +1205,11 @@ function CarLocationSection({
           {copy("carDetails.location")}
         </Heading>
       ) : null}
-      <div className={`mt-0 flex items-start gap-3 ${showSectionHeading ? "lg:mt-3" : "lg:mt-0"} lg:justify-center`}>
+      <div className={`mt-0 flex items-start gap-3 ${showSectionHeading ? "lg:mt-3" : "lg:mt-0"}`}>
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue">
           <MapPin size={18} aria-hidden="true" />
         </span>
-        <div className="min-w-0 pt-0.5 lg:text-center">
+        <div className="min-w-0 pt-0.5">
           <p className="text-[13px] font-semibold leading-5 text-slate-800 lg:text-[14px] lg:font-semibold lg:leading-[22px] lg:text-[#192024]">
             {pickupLocation}
           </p>
@@ -1245,7 +1245,7 @@ function CarLocationSection({
         </div>
       ) : null}
       <div className="mt-4 overflow-hidden rounded-[14px] border border-slate-200 bg-white lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent">
-        <div className="p-4 lg:p-0 lg:text-center" data-car-location-timeline>
+        <div className="p-4 lg:p-0" data-car-location-timeline>
           {[
             [
               "Pick-up",
@@ -1264,14 +1264,14 @@ function CarLocationSection({
           ].map(([mobileLabel, label, location, date, time], index) => (
             <div
               key={label}
-              className={`relative border-s-2 border-blue-200 ps-5 lg:text-center ${index === 0 ? "pb-6" : ""}`}
+              className={`relative border-s-2 border-blue-200 ps-5 ${index === 0 ? "pb-6" : ""}`}
             >
               <span className="absolute -start-[7px] top-1 size-3 rounded-full bg-[#004BB8]" />
               <p className="text-[15px] font-bold leading-[22px] text-[#071A48] lg:text-[14px] lg:font-semibold lg:leading-[22px] lg:tracking-normal lg:text-[#192024]">
                 <span className="lg:hidden">{mobileLabel}</span>
                 <span className="hidden lg:inline">{label}</span>
               </p>
-              <p className="mt-1 flex gap-2 text-[14px] font-medium leading-5 text-[#071A48] lg:justify-center lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
+              <p className="mt-1 flex gap-2 text-[14px] font-medium leading-5 text-[#071A48] lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
                 <MapPin
                   size={16}
                   className="shrink-0 text-[#004BB8]"
@@ -1279,7 +1279,7 @@ function CarLocationSection({
                 />
                 {location}
               </p>
-              <p className="mt-1 flex gap-2 text-[13px] font-normal leading-5 text-[#56658E] lg:justify-center lg:text-[14px] lg:leading-[22px] lg:text-[#59636A]">
+              <p className="mt-1 flex gap-2 text-[13px] font-normal leading-5 text-[#56658E] lg:text-[14px] lg:leading-[22px] lg:text-[#59636A]">
                 <Clock3 size={16} className="shrink-0" aria-hidden="true" />
                 <time dateTime={`${date}T${time}`}>
                   {formatCarDate(date, locale)}
@@ -1301,11 +1301,11 @@ function CarLocationSection({
           </a>
         ) : null}
       </div>
-      <div className="mt-7 lg:text-center">
+      <div className="mt-7">
         <h3 className="text-[14px] font-bold leading-5 text-[#071A48] lg:text-[16px] lg:font-semibold lg:leading-[24px] lg:text-[#192024]">
           {copy("carDetails.pickupLocationDetails")}
         </h3>
-        <ul className="mt-3 list-disc space-y-2 ps-5 text-[14px] font-normal leading-5 text-[#334155] marker:text-[#075EE8] lg:mx-auto lg:max-w-[720px] lg:list-none lg:ps-0 lg:text-center lg:text-[14px] lg:leading-[22px] lg:text-[#303B42]">
+        <ul className="mt-3 list-disc space-y-2 ps-5 text-[14px] font-normal leading-5 text-[#334155] marker:text-[#075EE8] lg:list-none lg:ps-0 lg:text-[14px] lg:leading-[22px] lg:text-[#303B42]">
           {car.pickupInstructions ? <li>{car.pickupInstructions}</li> : null}
           <li>{copy("carDetails.confirmPickupDetails")}</li>
         </ul>
@@ -1430,7 +1430,7 @@ function PickupReturnSection({
   );
   return (
     <section
-      className="-mx-4 border-y border-slate-200 bg-[#F5F7FB] px-4 py-5 lg:mx-auto lg:w-full lg:max-w-[820px] lg:rounded-none lg:border-x-0 lg:border-t-0 lg:border-b lg:border-slate-200 lg:bg-transparent lg:px-0 lg:pb-[22px] lg:pt-5 lg:text-center lg:shadow-none"
+      className="-mx-4 border-y border-slate-200 bg-[#F5F7FB] px-4 py-5 lg:mx-auto lg:w-full lg:max-w-[820px] lg:rounded-none lg:border-x-0 lg:border-t-0 lg:border-b lg:border-slate-200 lg:bg-transparent lg:px-0 lg:pb-[22px] lg:pt-5 lg:shadow-none"
       data-car-pickup-return-section
     >
       {showSectionHeading ? (
@@ -1460,17 +1460,17 @@ function PickupReturnSection({
             search.dropoffTime,
           ],
         ].map(([mobileLabel, label, location, date, time]) => (
-          <div key={label} className="relative border-s-2 border-blue-200 ps-5 lg:text-center">
+          <div key={label} className="relative border-s-2 border-blue-200 ps-5">
             <span className="absolute -start-[7px] top-1 size-3 rounded-full bg-[#004BB8]" />
             <Heading level={itemHeadingLevel} className="text-[15px] font-bold leading-[22px] text-[#071A48] lg:text-[16px] lg:font-semibold lg:leading-[24px] lg:text-[#192024]">
               <span className="lg:hidden">{mobileLabel}</span>
               <span className="hidden lg:inline">{label}</span>
             </Heading>
-            <p className="mt-1 flex gap-2 text-[14px] font-medium leading-5 text-[#071A48] lg:justify-center lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
+            <p className="mt-1 flex gap-2 text-[14px] font-medium leading-5 text-[#071A48] lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
               <MapPin size={16} className="shrink-0 text-[#004BB8]" />
               {location || copy("carDetails.locationUnavailable")}
             </p>
-            <p className="mt-1 flex gap-2 text-[13px] font-normal leading-5 text-[#56658E] lg:justify-center lg:text-[14px] lg:leading-[22px] lg:text-[#59636A]">
+            <p className="mt-1 flex gap-2 text-[13px] font-normal leading-5 text-[#56658E] lg:text-[14px] lg:leading-[22px] lg:text-[#59636A]">
               <Clock3 size={16} />
               <time dateTime={`${date}T${time}`}>
                 {formatCarDate(date, locale)}
@@ -1492,14 +1492,14 @@ function PickupReturnSection({
         </p>
       )}
       {hasDriverLicenseRequirement ? (
-        <div className="mt-5 lg:text-center">
+        <div className="mt-5">
           <Heading
             level={itemHeadingLevel}
             className="text-[14px] font-bold leading-5 text-[#071A48] lg:text-[16px] lg:font-semibold lg:leading-[24px] lg:text-[#192024]"
           >
             Pickup requirements
           </Heading>
-          <p className="mt-2.5 flex items-start gap-2.5 text-[14px] font-medium leading-5 text-[#071A48] lg:justify-center lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
+          <p className="mt-2.5 flex items-start gap-2.5 text-[14px] font-medium leading-5 text-[#071A48] lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
             <IdCard
               size={19}
               className="mt-px shrink-0 text-slate-600"
