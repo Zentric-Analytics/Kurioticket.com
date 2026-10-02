@@ -287,6 +287,29 @@ test("expanded Flight search gives airport, date, and traveler controls prominen
   );
 });
 
+test("prominent desktop calendar stays compact and keeps its footer visible", () => {
+  const dateStart = source.indexOf("function DatePickerPopover");
+  const dateEnd = source.indexOf("function TravelerCabinPopover", dateStart);
+  const datePicker = source.slice(dateStart, dateEnd);
+
+  assert.match(source, /preferredWidth = useStickyTrigger \? 780 : 620/);
+  assert.match(
+    datePicker,
+    /maxHeight: `min\(520px, calc\(100dvh - \$\{position\.top \+ 16\}px\)\)`/,
+  );
+  assert.match(
+    datePicker,
+    /prominentDesktop[\s\S]*?"max-w-none overflow-y-auto overscroll-contain rounded-xl p-3"/,
+  );
+  assert.match(datePicker, /prominentDesktop \? "mb-1 text-\[13px\]" : "mb-2 text-sm"/);
+  assert.match(datePicker, /prominentDesktop \? "mb-1 text-\[11px\]" : "mb-2 text-xs"/);
+  assert.match(datePicker, /prominentDesktop \? "h-7" : "h-8"/);
+  assert.match(datePicker, /prominentDesktop[\s\S]*?"h-7 rounded-md text-\[11px\]/);
+  assert.match(datePicker, /prominentDesktop \? "gap-2" : "gap-3"/);
+  assert.match(datePicker, /prominentDesktop \? "sticky bottom-0 mt-2 pt-2" : "mt-4 pt-3"/);
+  assert.match(datePicker, /prominentDesktop[\s\S]*?"min-h-9 px-3 py-1\.5 text-xs"/);
+});
+
 test("sticky multi-city selection renders the real multi-city editor", () => {
   const start = source.indexOf("function renderStickySearchPopoutOverlay()");
   const end = source.indexOf("function renderCompactSearchForm", start);

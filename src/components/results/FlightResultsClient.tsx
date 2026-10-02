@@ -3184,7 +3184,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     function updateDatePickerPosition(target: "departure" | "return") {
       const viewportPadding = 16;
       const useStickyTrigger = activeDesktopSearchSurface === "sticky";
-      const preferredWidth = useStickyTrigger ? 920 : 620;
+      const preferredWidth = useStickyTrigger ? 780 : 620;
       const wrap =
         target === "departure"
           ? departureWrapRef.current
@@ -8712,11 +8712,21 @@ function DatePickerPopover({
 
   const renderMonth = (renderedMonth: Date) => (
     <div className="min-w-0">
-      <p className="mb-2 text-center text-sm font-bold text-slate-900">
+      <p
+        className={cn(
+          "text-center font-bold text-slate-900",
+          prominentDesktop ? "mb-1 text-[13px]" : "mb-2 text-sm",
+        )}
+      >
         {formatFlightsMonthHeading(renderedMonth, calendarLocale)}
       </p>
 
-      <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+      <div
+        className={cn(
+          "grid grid-cols-7 gap-1 text-center font-semibold text-slate-500",
+          prominentDesktop ? "mb-1 text-[11px]" : "mb-2 text-xs",
+        )}
+      >
         {weekdays.map((day) => (
           <span key={`${renderedMonth.toISOString()}-${day}`}>{day}</span>
         ))}
@@ -8728,7 +8738,9 @@ function DatePickerPopover({
             return (
               <span
                 key={`${renderedMonth.toISOString()}-blank-${index}`}
-                className={mobileSheet ? "h-9" : "h-8"}
+                className={
+                  mobileSheet ? "h-9" : prominentDesktop ? "h-7" : "h-8"
+                }
               />
             );
           }
@@ -8764,7 +8776,9 @@ function DatePickerPopover({
               className={cn(
                 mobileSheet
                   ? "relative mx-auto flex h-11 w-full max-w-11 items-center justify-center rounded-full text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]"
-                  : "h-8 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]",
+                  : prominentDesktop
+                    ? "h-7 rounded-md text-[11px] font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]"
+                    : "h-8 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]",
                 selectedDeparture || selectedReturn
                   ? "bg-[#004BB8] text-white hover:bg-[#004BB8] focus:bg-[#004BB8]"
                   : disabledDate
@@ -8802,7 +8816,12 @@ function DatePickerPopover({
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
-              className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] sm:text-sm"
+              className={cn(
+            "rounded-lg border border-slate-300 font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]",
+            prominentDesktop
+              ? "min-h-8 px-2.5 py-1 text-xs"
+              : "min-h-9 px-3 py-1.5 text-xs sm:text-sm",
+          )}
               onClick={onClear}
             >
               {t("clear")}
@@ -8853,13 +8872,20 @@ function DatePickerPopover({
           ? t("selectDepartureDate")
           : t("selectReturnDate")
       }
-      style={dialogStyle}
+      style={
+        prominentDesktop && !mobileSheet && !alignToField
+          ? {
+              ...dialogStyle,
+              maxHeight: `min(520px, calc(100dvh - ${position.top + 16}px))`,
+            }
+          : dialogStyle
+      }
       className={cn(
         "w-full border border-slate-200 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.14)]",
         mobileSheet
           ? "flex h-[100dvh] min-h-0 max-w-full flex-col overflow-y-auto overscroll-contain rounded-none p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))]"
           : prominentDesktop
-            ? "max-w-none rounded-xl p-4"
+            ? "max-w-none overflow-y-auto overscroll-contain rounded-xl p-3"
             : "max-w-[min(560px,calc(100vw-2rem))] rounded-2xl p-3",
       )}
     >
@@ -8886,11 +8912,21 @@ function DatePickerPopover({
         </div>
       ) : null}
 
-      <div className="mb-3 flex shrink-0 items-center justify-between">
+      <div
+        className={cn(
+          "flex shrink-0 items-center justify-between",
+          prominentDesktop ? "mb-2" : "mb-3",
+        )}
+      >
         <button
           type="button"
           aria-label={t("previousMonth")}
-          className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] sm:text-sm"
+          className={cn(
+            "rounded-lg border border-slate-300 font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]",
+            prominentDesktop
+              ? "min-h-8 px-2.5 py-1 text-xs"
+              : "min-h-9 px-3 py-1.5 text-xs sm:text-sm",
+          )}
           onClick={() => onMonthChange(addMonths(leftMonth, -1))}
         >
           {t("previousShort")}
@@ -8899,7 +8935,12 @@ function DatePickerPopover({
         <button
           type="button"
           aria-label={t("nextMonth")}
-          className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] sm:text-sm"
+          className={cn(
+            "rounded-lg border border-slate-300 font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]",
+            prominentDesktop
+              ? "min-h-8 px-2.5 py-1 text-xs"
+              : "min-h-9 px-3 py-1.5 text-xs sm:text-sm",
+          )}
           onClick={() => onMonthChange(addMonths(leftMonth, 1))}
         >
           {t("nextShort")}
@@ -8908,7 +8949,8 @@ function DatePickerPopover({
 
       <div
         className={cn(
-          "min-h-0 flex-1 grid gap-3",
+          "min-h-0 flex-1 grid",
+          prominentDesktop ? "gap-2" : "gap-3",
           mobileSheet ? "overflow-visible md:grid-cols-2" : "md:grid-cols-2",
         )}
       >
@@ -8918,7 +8960,12 @@ function DatePickerPopover({
         </div>
       </div>
 
-      <div className="mt-4 flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-white pt-3">
+      <div
+        className={cn(
+          "flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-white",
+          prominentDesktop ? "sticky bottom-0 mt-2 pt-2" : "mt-4 pt-3",
+        )}
+      >
         <button
           type="button"
           className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] sm:text-sm"
@@ -8929,7 +8976,12 @@ function DatePickerPopover({
 
         <button
           type="button"
-          className="min-h-11 rounded-xl bg-[#004BB8] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1"
+          className={cn(
+            "rounded-xl bg-[#004BB8] font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1",
+            prominentDesktop
+              ? "min-h-9 px-3 py-1.5 text-xs"
+              : "min-h-11 px-4 py-2 text-sm",
+          )}
           onClick={onToday}
           disabled={doneDisabled}
         >
