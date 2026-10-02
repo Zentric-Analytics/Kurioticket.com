@@ -399,7 +399,7 @@ export function CarDetailsExperience({
   );
   return (
     <div
-      className={`${presentation === "guided-content" ? "mt-6" : ""} font-sans [--car-details-mobile-header-boundary:calc(env(safe-area-inset-top)+4.375rem)]`}
+      className={`${presentation === "guided-content" ? "mt-6" : "car-details-standalone-typography"} font-sans [--car-details-mobile-header-boundary:calc(env(safe-area-inset-top)+4.375rem)]`}
       data-car-details-experience
     >
       {shareConfirmation ? (

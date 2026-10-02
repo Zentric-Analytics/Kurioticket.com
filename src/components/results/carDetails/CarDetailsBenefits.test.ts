@@ -188,7 +188,8 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-car-location-section/);
 });
 
-test("desktop Cars Details uses a deliberate non-faint typography hierarchy", () => {
+test("standalone desktop Cars Details uses a deliberate non-faint typography hierarchy", () => {
+  assert.match(clientSource, /presentation === "guided-content" \? "mt-6" : "car-details-standalone-typography"/);
   for (const className of [
     "car-details-desktop-section-heading-type",
     "car-details-desktop-item-heading-type",
@@ -203,23 +204,23 @@ test("desktop Cars Details uses a deliberate non-faint typography hierarchy", ()
   assert.match(heroSource, /car-details-desktop-amenity-type/);
   assert.match(
     cssSource,
-    /\.car-details-desktop-section-heading-type \{[^}]*font-size: 16px !important;[^}]*font-weight: 700 !important;[^}]*color: #0f172a !important;[^}]*font-variation-settings: "wght" 700;/,
+    /\.car-details-standalone-typography \.car-details-desktop-section-heading-type \{[^}]*font-size: 16px !important;[^}]*font-weight: 700 !important;[^}]*color: #0f172a !important;[^}]*font-variation-settings: "wght" 700;/,
   );
   assert.match(
     cssSource,
-    /\.car-details-desktop-primary-copy-type \{[^}]*font-size: 14px !important;[^}]*font-weight: 500 !important;[^}]*color: #334155 !important;[^}]*font-variation-settings: "wght" 500;/,
+    /\.car-details-standalone-typography \.car-details-desktop-primary-copy-type \{[^}]*font-size: 14px !important;[^}]*font-weight: 500 !important;[^}]*color: #334155 !important;[^}]*font-variation-settings: "wght" 500;/,
   );
   assert.match(
     cssSource,
-    /\.car-details-desktop-secondary-copy-type \{[^}]*font-size: 14px !important;[^}]*font-weight: 500 !important;[^}]*color: #475569 !important;[^}]*font-variation-settings: "wght" 500;/,
+    /\.car-details-standalone-typography \.car-details-desktop-secondary-copy-type \{[^}]*font-size: 14px !important;[^}]*font-weight: 500 !important;[^}]*color: #475569 !important;[^}]*font-variation-settings: "wght" 500;/,
   );
   assert.match(
     cssSource,
-    /\.car-details-desktop-benefit-type \{[^}]*font-size: 13px !important;[^}]*font-weight: 600 !important;[^}]*color: #475569 !important;[^}]*font-variation-settings: "wght" 600;/,
+    /\.car-details-standalone-typography \.car-details-desktop-benefit-type \{[^}]*font-size: 13px !important;[^}]*font-weight: 600 !important;[^}]*color: #475569 !important;[^}]*font-variation-settings: "wght" 600;/,
   );
   assert.match(
     cssSource,
-    /\.car-details-desktop-amenity-type \{[^}]*font-size: 13px !important;[^}]*font-weight: 600 !important;[^}]*color: #334155 !important;[^}]*font-variation-settings: "wght" 600;/,
+    /\.car-details-standalone-typography \.car-details-desktop-amenity-type \{[^}]*font-size: 13px !important;[^}]*font-weight: 600 !important;[^}]*color: #334155 !important;[^}]*font-variation-settings: "wght" 600;/,
   );
 });
 test("standalone car details restore polished Hotels-style section headings", () => {
