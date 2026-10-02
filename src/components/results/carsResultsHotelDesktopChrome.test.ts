@@ -50,35 +50,59 @@ test("desktop Cars Results reuses the Hotels sticky header composition", () => {
   );
 });
 
-test("desktop Cars navbar search uses the approved flat Hotels-style shell", () => {
+test("desktop Cars navbar search uses the approved compact Hotels-style one-line treatment", () => {
   assert.match(
     cars,
     /placement: "desktop-full" \| "desktop-navbar" \| "desktop-sticky" \| "mobile"/,
   );
   assert.match(cars, /const isNavbarSearch = placement === "desktop-navbar"/);
+  assert.match(cars, /data-cars-results-navbar-search=\{isNavbarSearch \? "" : undefined\}/);
+  assert.match(cars, /data-cars-results-navbar-grid=\{isNavbarSearch \? "" : undefined\}/);
+  assert.match(cars, /data-cars-results-navbar-field/);
+  assert.match(cars, /data-cars-results-navbar-label/);
+  assert.match(cars, /data-cars-results-navbar-value/);
+  assert.match(cars, /data-cars-results-navbar-chevron/);
+  assert.match(cars, /data-cars-results-navbar-submit=\{isNavbarSearch \? "" : undefined\}/);
+  assert.match(cars, /navbarCompact=\{isNavbarSearch\}/);
+  assert.match(cars, /navbarCompact[\s\S]*?\? `\$\{driverAge\}\+`/);
+  assert.match(cars, /<Search className="h-\[18px\] w-\[18px\]"/);
+
   assert.match(
-    cars,
-    /isNavbarSearch[\s\S]*?"rounded-xl border border-\[#CFD9E5\] bg-white p-0 shadow-\[0_6px_20px_-13px_rgba\(20,32,51,0\.28\)\] ring-0"/,
+    styles,
+    /\[data-cars-results-navbar-grid\] \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 150px 140px 86px 46px !important;/,
   );
   assert.match(
-    cars,
-    /const isCompactSearch = placement === "desktop-sticky" \|\| isNavbarSearch/,
+    styles,
+    /\[data-cars-results-navbar-search\] \[data-cars-results-navbar-field\] \{[\s\S]*?min-height: 44px !important;/,
   );
   assert.match(
-    cars,
-    /className=\{cn\("mx-auto w-full min-w-0", isNavbarSearch \? "max-w-full" : "max-w-5xl"/,
+    styles,
+    /\[data-cars-results-navbar-search\] \[data-cars-results-navbar-label\] \{[\s\S]*?clip: rect\(0, 0, 0, 0\) !important;/,
   );
-  assert.match(cars, /\{t\("search"\)\}/);
+  assert.match(
+    styles,
+    /\[data-cars-results-navbar-search\] \.cars-results-navbar-location-value,[\s\S]*?font-size: 12px !important;[\s\S]*?font-weight: 600 !important;/,
+  );
+  assert.match(
+    styles,
+    /\[data-cars-results-navbar-search\] \[data-cars-results-navbar-chevron\] \{\s*display: none !important;/,
+  );
+  assert.match(
+    styles,
+    /\[data-cars-results-navbar-submit\] \{[\s\S]*?width: 38px !important;[\s\S]*?height: 36px !important;/,
+  );
 });
 
-test("Cars keeps tablet search but removes the duplicate desktop page search band", () => {
+test("Cars keeps tablet search and removes the Cars breadcrumb/navigation completely", () => {
   assert.match(
     cars,
     /className="hidden bg-white pb-0 pt-7 sm:block lg:hidden"[\s\S]*?renderCarsSearchForm\("desktop-full"\)/,
   );
+  assert.doesNotMatch(cars, /aria-label="Breadcrumb"/);
+  assert.doesNotMatch(cars, />Home<|>Cars<|>Car results</);
   assert.match(
     cars,
-    /aria-label="Breadcrumb"[\s\S]*?className="page-shell hidden pt-12 sm:block lg:pt-7"/,
+    /data-cars-results-scroll-region[\s\S]*?lg:max-w-\[1020px\] lg:pt-5/,
   );
   assert.equal(
     (cars.match(/renderCarsSearchForm\("desktop-full"\)/g) ?? []).length,
