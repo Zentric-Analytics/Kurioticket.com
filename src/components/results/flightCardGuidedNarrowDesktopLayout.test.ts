@@ -154,7 +154,7 @@ test("desktop fare stays beside the itinerary while details span beneath both co
   assert.match(desktopPriceFrameRule, /text-align:\s*right/);
   assert.match(desktopViewRule, /width:\s*auto/);
   assert.match(desktopViewRule, /min-height:\s*1\.5rem/);
-  assert.match(desktopViewRule, /margin-top:\s*0\.375rem/);
+  assert.match(desktopViewRule, /margin-top:\s*0\.125rem/);
   assert.match(desktopViewRule, /align-self:\s*flex-end/);
 
   const mediumQueryStart = globalsCss.indexOf(
