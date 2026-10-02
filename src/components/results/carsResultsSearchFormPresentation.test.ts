@@ -18,9 +18,17 @@ test("results desktop search typography mirrors the polished mobile-web hierarch
   const valueClass = source.match(
     /const fieldInputClass =\s*\n\s*"([^"]+)";/,
   )?.[1];
+  const fullValueClass = source.match(
+    /const desktopFullSelectedValueClass =\s*\n\s*"([^"]+)";/,
+  )?.[1];
+  const compactValueClass = source.match(
+    /const desktopCompactSelectedValueClass =\s*\n\s*"([^"]+)";/,
+  )?.[1];
 
   assert.ok(labelClass, "fieldLabelClass should remain defined");
   assert.ok(valueClass, "fieldInputClass should remain defined");
+  assert.ok(fullValueClass, "desktopFullSelectedValueClass should remain defined");
+  assert.ok(compactValueClass, "desktopCompactSelectedValueClass should remain defined");
 
   for (const token of [
     "lg:mb-1",
@@ -34,15 +42,28 @@ test("results desktop search typography mirrors the polished mobile-web hierarch
     assert.ok(labelClass.includes(token), `missing desktop label token: ${token}`);
 
   for (const token of [
+    "lg:placeholder:font-medium",
+    "lg:placeholder:text-slate-400",
+  ])
+    assert.ok(valueClass.includes(token), `missing shared value token: ${token}`);
+
+  for (const token of [
+    "lg:text-[14px]",
+    "lg:font-semibold",
+    "lg:leading-5",
+    "lg:tracking-normal",
+    "lg:text-[#142033]",
+  ])
+    assert.ok(fullValueClass.includes(token), `missing full-search value token: ${token}`);
+
+  for (const token of [
     "lg:text-[15px]",
     "lg:font-bold",
     "lg:leading-5",
     "lg:tracking-[-0.005em]",
     "lg:text-[#07133B]",
-    "lg:placeholder:font-medium",
-    "lg:placeholder:text-slate-400",
   ])
-    assert.ok(valueClass.includes(token), `missing desktop value token: ${token}`);
+    assert.ok(compactValueClass.includes(token), `missing compact-search value token: ${token}`);
 
   assert.doesNotMatch(
     labelClass,
@@ -51,10 +72,11 @@ test("results desktop search typography mirrors the polished mobile-web hierarch
   assert.equal(
     (
       source.match(
-        /lg:text-\[15px\] lg:font-bold lg:leading-5 lg:tracking-\[-0\.005em\] lg:text-\[#07133B\]/g,
+        /isCompact \? desktopCompactSelectedValueClass : desktopFullSelectedValueClass/g,
       ) ?? []
     ).length,
     4,
+    "pickup location, rental dates, time, and driver age must explicitly preserve separate full and compact value tiers",
   );
 });
 
