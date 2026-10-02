@@ -50,7 +50,15 @@ test("standalone Cars Results keeps a soft off-white desktop body distinct from 
   );
   assert.match(
     results,
-    /<section[\s\S]*?className="hidden bg-white pb-0 pt-7 sm:block"/,
+    /<section[\s\S]*?className="hidden bg-white pb-0 pt-7 sm:block lg:hidden"/,
+  );
+  assert.match(
+    results,
+    /createPortal\(\s*renderCarsSearchForm\("desktop-navbar"\),\s*desktopNavSearchTarget,\s*\)/,
+  );
+  assert.match(
+    results,
+    /aria-label="Breadcrumb"[\s\S]*?className="page-shell hidden pt-12 sm:block lg:pt-7"/,
   );
   assert.doesNotMatch(
     results,
@@ -58,7 +66,7 @@ test("standalone Cars Results keeps a soft off-white desktop body distinct from 
   );
   assert.match(
     route,
-    /<AppHeader[\s\S]*?flushDesktopBottom[\s\S]*?stableMobileSafeAreaTop/,
+    /<AppHeader[\s\S]*?flushDesktopBottom[\s\S]*?stableMobileSafeAreaTop[\s\S]*?hotelDesktopBoundary[\s\S]*?carsResultsDesktopSticky/,
   );
   assert.match(
     results,
