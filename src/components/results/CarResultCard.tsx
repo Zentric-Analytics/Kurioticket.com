@@ -623,7 +623,7 @@ export function CarResultCard({
                       </h2>
                     )}
                     {car.orSimilar ? (
-                      <span className="shrink-0 whitespace-nowrap text-[13px] font-medium leading-5 text-[#475569]">
+                      <span className="shrink-0 whitespace-nowrap text-[12px] font-medium leading-4 tracking-[-0.001em] text-[#475569]">
                         or similar
                       </span>
                     ) : null}
@@ -632,7 +632,7 @@ export function CarResultCard({
 
                 {car.categoryLabel ? (
                   <p
-                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-3" : "row-start-2"} mt-1 whitespace-nowrap px-4 text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-[#004BB8]`}
+                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-3" : "row-start-2"} mt-1 whitespace-nowrap px-4 text-[10px] font-bold uppercase leading-[15px] tracking-[0.1em] text-[#004BB8]`}
                   >
                     {car.categoryLabel}
                   </p>
@@ -646,10 +646,10 @@ export function CarResultCard({
                 </div>
 
                 <p
-                  className={`z-10 col-start-1 col-span-2 ${badge && BadgeIcon ? "row-start-4" : "row-start-3"} mt-2 flex min-w-0 items-center gap-1.5 px-4 text-[14px] font-medium leading-5 text-[#334155]`}
+                  className={`z-10 col-start-1 col-span-2 ${badge && BadgeIcon ? "row-start-4" : "row-start-3"} mt-2 flex min-w-0 items-center gap-1.5 px-4 text-[13px] font-medium leading-[18px] tracking-[-0.001em] text-[#334155]`}
                 >
                   <MapPin
-                    size={16}
+                    size={15}
                     className="shrink-0 text-[#07133B]"
                     aria-hidden="true"
                   />
@@ -662,10 +662,10 @@ export function CarResultCard({
                 {offer.freeCancellation ? (
                   <div
                     data-car-card-desktop-free-cancellation
-                    className={`z-10 col-start-1 col-span-2 ${badge && BadgeIcon ? "row-start-5" : "row-start-4"} mt-2 flex min-w-0 items-center gap-1.5 px-4 text-[14px] font-semibold leading-5 text-slate-950`}
+                    className={`z-10 col-start-1 col-span-2 ${badge && BadgeIcon ? "row-start-5" : "row-start-4"} mt-2 flex min-w-0 items-center gap-1.5 px-4 text-[13px] font-semibold leading-[18px] tracking-[-0.001em] text-slate-950`}
                   >
                     <ShieldCheck
-                      size={14}
+                      size={13}
                       className="shrink-0 text-black"
                       aria-hidden="true"
                     />
@@ -683,12 +683,12 @@ export function CarResultCard({
         >
           <ul
             data-car-card-desktop-primary-specs
-            className={`grid gap-x-5 gap-y-2 text-[12px] font-medium leading-4 text-[#536B92] ${guidedPlanning ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 lg:text-[14px] lg:font-medium lg:leading-5 lg:text-[#334155]"}`}
+            className={`grid gap-x-5 gap-y-2 text-[12px] font-medium leading-4 text-[#536B92] ${guidedPlanning ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 lg:text-[13px] lg:font-medium lg:leading-[18px] lg:tracking-[-0.001em] lg:text-[#334155]"}`}
           >
             {(guidedPlanning ? specifications : desktopStandaloneSpecifications).map(([Icon, label]) => (
               <li key={label} className="flex min-w-0 items-center gap-1.5">
                 <Icon
-                  size={16}
+                  size={guidedPlanning ? 16 : 15}
                   className="shrink-0 text-slate-500"
                   aria-hidden="true"
                 />

@@ -702,6 +702,25 @@ test("mobile transmission specs use dedicated automatic and manual icons", () =>
   assert.match(iconSource, /M6 8v8M12 8v8M18 8v8M6 12h12/);
 });
 
+test("standalone large-desktop supporting metadata stays compact, portable, and readable", () => {
+  const desktop = source.slice(source.indexOf('data-car-card-desktop-shared-header'));
+  assert.match(
+    desktop,
+    /text-\[10px\] font-bold uppercase leading-\[15px\] tracking-\[0\.1em\][\s\S]*?\{car\.categoryLabel\}/,
+  );
+  assert.match(
+    desktop,
+    /row-start-4" : "row-start-3"\} mt-2 flex[\s\S]*?text-\[13px\] font-medium leading-\[18px\] tracking-\[-0\.001em\] text-\[#334155\][\s\S]*?<MapPin[\s\S]*?size=\{15\}/,
+  );
+  assert.match(
+    desktop,
+    /data-car-card-desktop-free-cancellation[\s\S]*?text-\[13px\] font-semibold leading-\[18px\] tracking-\[-0\.001em\] text-slate-950[\s\S]*?<ShieldCheck[\s\S]*?size=\{13\}/,
+  );
+  assert.match(
+    desktop,
+    /data-car-card-desktop-primary-specs[\s\S]*?lg:text-\[13px\] lg:font-medium lg:leading-\[18px\] lg:tracking-\[-0\.001em\] lg:text-\[#334155\][\s\S]*?size=\{guidedPlanning \? 16 : 15\}/,
+  );
+});
 test("standalone desktop narrows the card without wrapping identity or metadata", () => {
   const desktop = source.slice(source.indexOf('data-region="heading"'));
   assert.match(
@@ -719,7 +738,7 @@ test("standalone desktop narrows the card without wrapping identity or metadata"
   );
   assert.match(
     desktop,
-    /shrink-0 whitespace-nowrap text-\[13px\][\s\S]*?or similar/,
+    /shrink-0 whitespace-nowrap text-\[12px\] font-medium leading-4 tracking-\[-0\.001em\][\s\S]*?or similar/,
   );
   assert.match(
     desktop,
