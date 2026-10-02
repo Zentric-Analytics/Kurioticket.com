@@ -41,6 +41,26 @@ test("desktop results editor uses one clean accessible trip-type radio row", () 
   assert.match(editor, /rounded-full border-\[1\.5px\]/);
 });
 
+test("desktop results keeps trip type inside the clicked edit-search state", () => {
+  assert.match(source, /const shouldRenderDesktopFullSearchForm = false;/);
+  assert.match(source, /const shouldShowDesktopCompactSummary = true;/);
+  assert.match(source, /const showFullSearchForm = isSearchExpandedWhileSticky;/);
+  assert.match(source, /const showCompactSearchSummary = !isSearchExpandedWhileSticky;/);
+  assert.match(
+    source,
+    /shouldShowDesktopCompactSummary &&\s*showCompactSearchSummary[\s\S]*?onClick=\{expandStickySearch\}/,
+  );
+  assert.match(
+    source,
+    /placement === "desktop"[\s\S]*?!shouldRenderDesktopFullSearchForm[\s\S]*?!showFullSearchForm[\s\S]*?return null;/,
+  );
+  assert.match(
+    source,
+    /showFullSearchForm[\s\S]*?data-desktop-trip-selector/,
+  );
+});
+
+
 test("desktop populated airport inputs remain editable without clear controls", () => {
   assert.match(source, /id="results-origin"[\s\S]*?onChange=\{/);
   assert.match(source, /id="results-destination"[\s\S]*?onChange=\{/);
