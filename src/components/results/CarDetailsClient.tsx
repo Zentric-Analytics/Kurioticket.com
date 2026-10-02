@@ -166,7 +166,7 @@ export function CarDetailsExperience({
   desktopBackControl,
 }: {
   car: NormalizedCarResult;
-  search: CarSearchParams;
+  search: LocationBoundCarSearchParams;
   primaryAction: CarDetailsPrimaryAction;
   presentation: "standalone-content" | "guided-content";
   primaryOffer?: CarOffer | null;
@@ -975,7 +975,7 @@ export function CarDetailsClient({
   resultsHref,
 }: {
   car: NormalizedCarResult;
-  search: CarSearchParams;
+  search: LocationBoundCarSearchParams;
   resultsHref: string;
 }) {
   const { t } = useLocale();
