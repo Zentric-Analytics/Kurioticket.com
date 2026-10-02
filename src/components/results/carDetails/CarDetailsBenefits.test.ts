@@ -505,6 +505,36 @@ test("desktop Cars details keep Save and Share in controls while Compare deals o
   assert.equal(clientSource.match(/<BookingSummary\b/g)?.length, 1);
 });
 
+test("desktop Pickup/Return and Location use balanced spacing with a subtle section divider", () => {
+  assert.match(
+    clientSource,
+    /data-car-details-desktop-section="pickup"[sS]*?className="pt-5"/,
+  );
+  const pickup = sourceBetween(
+    clientSource,
+    "function DesktopPickupReturnOverview",
+    "function DesktopCarHireLocationOverview",
+  );
+  assert.match(
+    pickup,
+    /className="mx-auto w-full max-w-\[900px\] pb-6 pt-2"/,
+  );
+
+  const location = sourceBetween(
+    clientSource,
+    "function DesktopCarHireLocationOverview",
+    "function CarHeroActions",
+  );
+  assert.match(
+    location,
+    /className="mx-auto w-full max-w-\[900px\] border-t border-slate-200 pb-6 pt-6"/,
+  );
+  assert.match(
+    location,
+    /className="mt-6 pb-2" data-car-details-desktop-location-details/,
+  );
+});
+
 test("desktop Pickup and return removes pickup type and duplicated pickup-instructions copy", () => {
   const pickup = sourceBetween(
     clientSource,
