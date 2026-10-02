@@ -25,7 +25,7 @@ test("desktop Flight Results reuses the Hotels header composition", () => {
   assert.match(header, /lg:max-w-\[540px\]/);
   assert.match(
     styles,
-    /\[data-hotel-results-desktop-header\],\s*\[data-flight-results-desktop-header\] \{\s*position: sticky;/,
+    /\[data-hotel-results-desktop-header\],\s*\[data-flight-results-desktop-header\],\s*\[data-cars-results-desktop-header\] \{\s*position: sticky;/,
   );
 
   assert.match(

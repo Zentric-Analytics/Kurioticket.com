@@ -425,7 +425,8 @@ textarea {
 
 @media (min-width: 1024px) {
   [data-hotel-results-desktop-header],
-  [data-flight-results-desktop-header] {
+  [data-flight-results-desktop-header],
+  [data-cars-results-desktop-header] {
     position: sticky;
     top: 0;
     z-index: 60;
