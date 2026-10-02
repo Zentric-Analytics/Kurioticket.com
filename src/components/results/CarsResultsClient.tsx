@@ -2899,7 +2899,7 @@ export function CarsResultsExperience({
                       ref={resultHeadingRef}
                       id={resultHeadingId}
                       tabIndex={-1}
-                      className="truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[17px] sm:leading-6 sm:tracking-[-0.005em] lg:text-[17px] lg:font-bold lg:leading-6 lg:tracking-[-0.008em]"
+                      className="truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[17px] sm:font-semibold sm:leading-6 sm:tracking-[-0.005em] lg:text-[17px] lg:font-semibold lg:leading-6 lg:tracking-[-0.008em]"
                     >
                       {resultHeading ??
                         t(
