@@ -41,10 +41,10 @@ test("desktop Cars Results uses a readable, professional typography hierarchy", 
 });
 
 
-test("desktop Cars full-search values mirror filter polish while compact values stay stronger", () => {
+test("desktop Cars full-search values exactly mirror normal filter-option typography while compact values stay stronger", () => {
   assert.match(
     results,
-    /const desktopFullSelectedValueClass =[\s\S]*?lg:text-\[14px\] lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-\[#142033\]/,
+    /const desktopFullSelectedValueClass =[\s\S]*?lg:text-\[14px\] lg:font-medium lg:leading-5 lg:tracking-normal lg:text-\[#334155\]/,
   );
   assert.match(
     results,
