@@ -59,6 +59,8 @@ test("CarDetailsExperience uses one Hotels-style sticky desktop section handoff 
   assert.match(experienceSource, /data-car-details-scroll-section="compare"/);
   assert.match(experienceSource, /data-car-details-scroll-section="pickup"/);
   assert.match(experienceSource, /data-car-details-scroll-section="location"/);
+  assert.match(experienceSource, /data-car-details-scroll-section="rental"/);
+  assert.match(experienceSource, /data-car-details-desktop-linear-sections/);
   assert.match(experienceSource, /data-car-details-utility-placement="hero"/);
   assert.match(experienceSource, /data-car-details-utility-placement="tabs"/);
   assert.match(
@@ -94,11 +96,11 @@ test("CarDetailsExperience uses one Hotels-style sticky desktop section handoff 
   );
   assert.match(
     experienceSource,
-    /presentation === "guided-content" \? "mt-6" : ""/,
+    /presentation === "guided-content" \? "mt-6" : "car-details-standalone-typography"/,
   );
 });
 
-test("standalone desktop tabs place panel content in the former heading position", () => {
+test("standalone desktop navigation hands off to the Expedia-inspired linear sections", () => {
   assert.match(
     experienceSource,
     /<div className="min-h-\[240px\]" data-car-details-section-panels>/,
@@ -107,10 +109,11 @@ test("standalone desktop tabs place panel content in the former heading position
     layoutSource,
     /\[data-car-details-section-panels\] \{\s*margin-top: 0 !important;/,
   );
-  assert.match(
-    layoutSource,
-    /#car-pickup-panel \{\s*padding-top: 0\.75rem;/,
-  );
+  assert.match(experienceSource, /data-car-details-mobile-section-panels/);
+  assert.match(experienceSource, /data-car-details-desktop-section="compare"/);
+  assert.match(experienceSource, /data-car-details-desktop-section="pickup"/);
+  assert.match(experienceSource, /data-car-details-desktop-section="location"/);
+  assert.match(experienceSource, /data-car-details-desktop-section="rental"/);
   const navSource = readFileSync(
     new URL("./CarDetailsSectionNav.tsx", import.meta.url),
     "utf8",
@@ -145,6 +148,8 @@ test("standalone desktop tabs place panel content in the former heading position
   assert.doesNotMatch(navSource, /max-w-\[640px\]/);
   assert.doesNotMatch(navSource, /bg-\[#075EE8\].*lg:h-\[3px\]/);
   assert.match(navSource, /data-car-details-desktop-sticky-actions/);
+  assert.match(navSource, /export type CarDetailsTab = "compare" \| "pickup" \| "location" \| "rental"/);
+  assert.match(navSource, /mobileTabs = tabs\.filter\(\(tab\) => tab\.id !== "rental"\)/);
   assert.match(navSource, /desktopBackControl\?: ReactNode/);
   assert.match(navSource, /data-car-details-desktop-sticky-back/);
   assert.match(

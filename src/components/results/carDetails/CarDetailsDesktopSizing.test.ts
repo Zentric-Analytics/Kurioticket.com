@@ -31,20 +31,15 @@ test("standalone desktop Cars Details body is centered at a production-ready wid
   assert.doesNotMatch(client, /<AppHeader\b/);
 });
 
-test("standalone desktop hero, identity, and specifications share one compact 820px visual axis", () => {
-  assert.match(
-    hero,
-    /reserveMobileControlSafeZone \? "lg:max-w-\[820px\] lg:bg-\[#F8FAFC\]" : "lg:max-w-\[760px\]"/,
-  );
-  assert.match(
-    hero,
-    /reserveMobileControlSafeZone \? "lg:h-\[clamp\(20rem,30vw,25rem\)\] lg:bg-\[#F8FAFC\]"/,
-  );
-  assert.match(
-    hero,
-    /sizes=\{reserveMobileControlSafeZone \? "820px" : "760px"\}/,
-  );
-  assert.equal((hero.match(/lg:max-w-\[820px\]/g) ?? []).length, 3);
+test("standalone desktop overview uses the approved split-card sizing", () => {
+  assert.match(client, /lg:max-w-\[1080px\] lg:space-y-5/);
+  assert.match(hero, /data-car-details-desktop-overview/);
+  assert.match(hero, /lg:grid-cols-\[minmax\(0,1fr\)_320px\]/);
+  assert.match(hero, /data-car-details-desktop-overview-image/);
+  assert.match(hero, /h-\[250px\]/);
+  assert.match(hero, /sizes="680px"/);
+  assert.match(hero, /data-car-details-desktop-overview-summary/);
+  assert.match(client, /lg:max-w-\[720px\]/);
 });
 
 test("desktop width polish does not rewrite sticky or section-scroll behavior", () => {
