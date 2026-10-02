@@ -134,9 +134,29 @@ test("sticky search popout uses neutral field icons and keeps the calendar contr
   assert.match(popout, /<UserRound aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-\[#071A48\]"/);
   assert.match(popout, /min-h-\[66px\][^"]*border-r border-\[#E7ECF5\][^"]*bg-white px-3 py-\[9px\]/);
   assert.doesNotMatch(popout, /text-\[#5CB6B2\]|text-\[#39948F\]/);
-  assert.match(popout, /pb-8 pt-12 xl:pt-16/);
+  assert.match(popout, /data-flight-search-anchored-popout/);
+  assert.match(popout, /top: desktopSearchPopoverFrame\.top/);
+  assert.match(popout, /left: desktopSearchPopoverFrame\.left/);
+  assert.match(popout, /width: desktopSearchPopoverFrame\.width/);
 });
 
+
+test("desktop search editor expands from the navbar instead of opening as a centered modal", () => {
+  const callback = stickyEditorCallbackSource();
+  const start = source.indexOf("function renderStickySearchPopoutOverlay()");
+  const end = source.indexOf("function renderCompactSearchForm", start);
+  const popout = source.slice(start, end);
+
+  assert.match(callback, /closest<HTMLElement>\("\[data-flight-results-nav-search-form\]"\)/);
+  assert.match(callback, /const rect = compactForm\.getBoundingClientRect\(\)/);
+  assert.match(callback, /top: rect\.bottom \+ 8/);
+  assert.match(callback, /preferredWidth = Math\.min\(920/);
+  assert.match(popout, /data-flight-search-anchored-backdrop/);
+  assert.match(popout, /bg-slate-950\/10/);
+  assert.match(popout, /data-flight-search-anchored-popout/);
+  assert.doesNotMatch(popout, /items-start justify-center px-6 pb-8 pt-12/);
+  assert.doesNotMatch(popout, /backdrop-blur-\[2px\]/);
+});
 
 test("sticky change-flight overlay centers a black title", () => {
   const start = source.indexOf("function renderStickySearchPopoutOverlay()");
