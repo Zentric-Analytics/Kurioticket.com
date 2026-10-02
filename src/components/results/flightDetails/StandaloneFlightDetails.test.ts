@@ -649,6 +649,27 @@ test("desktop Pick your fare cards mirror the native hierarchy without changing 
   assert.match(loading, /pb-14[\s\S]*?justify-center gap-\[7px\][\s\S]*?space-y-\[5px\][\s\S]*?data-desktop-fare-loading-price className="absolute inset-x-3 bottom-2 flex min-h-12 items-end justify-center"/);
 });
 
+test("desktop compact fare cards shorten long provider benefit copy without changing mobile presentation", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const desktopStart = source.indexOf("data-desktop-fare-rail");
+  const desktopEnd = source.indexOf("data-desktop-fare-price-loading", desktopStart);
+  const desktop = source.slice(desktopStart, desktopEnd);
+
+  assert.match(desktop, /formatDesktopCompactFareBenefit\(row\.text\)/);
+  assert.match(source, /return "Carry-on included"/);
+  assert.match(source, /return "Checked bag included"/);
+  assert.match(source, /changes not allowed/);
+  assert.match(source, /changes · .* fee/);
+  assert.match(source, /compactFareFeeAmount/);
+  assert.doesNotMatch(
+    source.slice(
+      source.indexOf("<MobileNativeFareRail fares={fareChoices}"),
+      desktopStart,
+    ),
+    /formatDesktopCompactFareBenefit/,
+  );
+});
+
 test("desktop Fare information uses underline-only tabs and unframed panels", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   const tabsStart = source.indexOf("data-desktop-fare-information-tabs");
