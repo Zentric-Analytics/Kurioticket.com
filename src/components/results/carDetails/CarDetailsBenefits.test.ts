@@ -201,7 +201,7 @@ test("desktop Pickup/Return sits directly on the page and Rental details are rem
 
   assert.match(
     pickup,
-    /className="mx-auto w-full max-w-\[900px\] py-1"[\s\S]*?data-car-details-desktop-pickup-overview/,
+    /className="mx-auto w-full max-w-\[900px\] pb-6 pt-2"[\s\S]*?data-car-details-desktop-pickup-overview/,
   );
   assert.match(
     pickup,
@@ -508,7 +508,7 @@ test("desktop Cars details keep Save and Share in controls while Compare deals o
 test("desktop Pickup/Return and Location use balanced spacing with a subtle section divider", () => {
   assert.match(
     clientSource,
-    /data-car-details-desktop-section="pickup"[sS]*?className="pt-5"/,
+    /className="pt-5"[\s\S]*?data-car-details-desktop-section="pickup"/,
   );
   const pickup = sourceBetween(
     clientSource,
