@@ -34,6 +34,7 @@ export type CarCategory =
 export type CarOffer = {
   id: string;
   bookingProviderName: string;
+  bookingProviderLogoUrl?: string;
   rentalCompanyName: string;
   currency: string;
   pricePerDay: number;
