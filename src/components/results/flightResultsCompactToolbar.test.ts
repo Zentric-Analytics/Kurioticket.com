@@ -211,27 +211,18 @@ test("anchored desktop search recomputes on browser resize and closes below desk
   );
 });
 
-test("sticky change-flight overlay centers a black title", () => {
+test("sticky change-flight overlay removes the title row to preserve vertical space", () => {
   const start = source.indexOf("function renderStickySearchPopoutOverlay()");
   const end = source.indexOf("function renderCompactSearchForm", start);
   assert.ok(start >= 0 && end > start);
   const popout = source.slice(start, end);
 
-  assert.match(
-    popout,
-    /locale\?\.startsWith\("en"\) \? "Change your flight" : t\("editFlightSearch"\)/,
-  );
-  assert.match(
-    popout,
-    /id="sticky-flight-search-title"[\s\S]*text-xl font-bold tracking-tight text-black/,
-  );
-  assert.match(popout, /mx-auto max-w-2xl text-center/);
-  assert.doesNotMatch(popout, /t\("searchFlights"\)/);
-  assert.doesNotMatch(popout, /\{mobileRouteSummary\}/);
-  assert.doesNotMatch(
-    popout,
-    /\{stickyDateSummary\}\s*·\s*\{travelerCabinSummary\}/,
-  );
+  assert.doesNotMatch(popout, /Change your flight/);
+  assert.doesNotMatch(popout, /sticky-flight-search-title/);
+  assert.doesNotMatch(popout, /mx-auto max-w-2xl text-center/);
+  assert.match(popout, /aria-label=\{t\("editFlightSearch"\)\}/);
+  assert.match(popout, /role="radiogroup"[\s\S]*pr-12/);
+  assert.match(popout, /stickySearchCloseButtonRef[\s\S]*absolute right-0 top-0 z-10/);
 });
 
 test("expanded Flight search gives airport, date, and traveler controls prominent desktop surfaces", () => {
