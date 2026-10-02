@@ -59,7 +59,7 @@ test("CarDetailsExperience uses one Hotels-style sticky desktop section handoff 
   assert.match(experienceSource, /data-car-details-scroll-section="compare"/);
   assert.match(experienceSource, /data-car-details-scroll-section="pickup"/);
   assert.match(experienceSource, /data-car-details-scroll-section="location"/);
-  assert.match(experienceSource, /data-car-details-scroll-section="rental"/);
+  assert.doesNotMatch(experienceSource, /data-car-details-scroll-section="rental"/);
   assert.match(experienceSource, /data-car-details-desktop-linear-sections/);
   assert.match(experienceSource, /data-car-details-utility-placement="hero"/);
   assert.match(experienceSource, /data-car-details-utility-placement="tabs"/);
@@ -113,7 +113,7 @@ test("standalone desktop navigation hands off to the Expedia-inspired linear sec
   assert.match(experienceSource, /data-car-details-desktop-section="compare"/);
   assert.match(experienceSource, /data-car-details-desktop-section="pickup"/);
   assert.match(experienceSource, /data-car-details-desktop-section="location"/);
-  assert.match(experienceSource, /data-car-details-desktop-section="rental"/);
+  assert.doesNotMatch(experienceSource, /data-car-details-desktop-section="rental"/);
   const navSource = readFileSync(
     new URL("./CarDetailsSectionNav.tsx", import.meta.url),
     "utf8",
@@ -148,8 +148,9 @@ test("standalone desktop navigation hands off to the Expedia-inspired linear sec
   assert.doesNotMatch(navSource, /max-w-\[640px\]/);
   assert.doesNotMatch(navSource, /bg-\[#075EE8\].*lg:h-\[3px\]/);
   assert.match(navSource, /data-car-details-desktop-sticky-actions/);
-  assert.match(navSource, /export type CarDetailsTab = "compare" \| "pickup" \| "location" \| "rental"/);
-  assert.match(navSource, /mobileTabs = tabs\.filter\(\(tab\) => tab\.id !== "rental"\)/);
+  assert.match(navSource, /export type CarDetailsTab = "compare" \| "pickup" \| "location"/);
+  assert.match(navSource, /const mobileTabs = tabs;/);
+  assert.doesNotMatch(navSource, /id: "rental"|labels\.rental/);
   assert.match(navSource, /desktopBackControl\?: ReactNode/);
   assert.match(navSource, /data-car-details-desktop-sticky-back/);
   assert.match(
