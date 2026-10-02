@@ -422,12 +422,6 @@ textarea {
     z-index: 60;
   }
 
-  [data-hotel-results-desktop-search] {
-    position: sticky;
-    top: 70px;
-    z-index: 45;
-  }
-
   [data-hotel-results-edit-card] {
     max-width: 980px;
   }
@@ -529,6 +523,62 @@ textarea {
   [data-hotel-results-edit-action]:hover {
     background: #003f9c;
     color: #fff;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-card] {
+    max-width: none;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-card] form {
+    margin: 0;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-frame] {
+    border-color: #d8e1ec;
+    border-radius: 9px;
+    box-shadow: none;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-frame] > div {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.15fr) minmax(0, 1.05fr) 46px;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-field] {
+    min-height: 44px;
+    padding: 5px 8px 5px 32px;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-leading-icon] {
+    left: 9px;
+    width: 16px;
+    height: 16px;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-label] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-value] {
+    height: 32px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 18px;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-action-cell] {
+    min-height: 44px;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-action] {
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    border-radius: 8px;
   }
 }
 
