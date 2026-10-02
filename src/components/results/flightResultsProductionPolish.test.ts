@@ -20,6 +20,22 @@ test("mobile results rhythm has no decorative divider or oversized spacer", asyn
   assert.doesNotMatch(source, /data-flight-mobile-results-shortcuts[\s\S]{0,300}pt-12/);
 });
 
+test("desktop search reserves space for its translated card before nearby fares", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    source,
+    /isSearchCollapsed[\s\S]*?bg-white pb-5 pt-7[\s\S]*?!isSearchCollapsed && "translate-y-5"/,
+  );
+  assert.match(
+    source,
+    /flight-results-grid page-shell grid[^\n]*sm:pt-5 lg:gap-x-9 lg:pt-4/,
+  );
+});
+
 test("mobile nearby insight, quick filters, and price alert use compact native-like rhythm", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
