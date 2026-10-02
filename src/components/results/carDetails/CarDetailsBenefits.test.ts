@@ -266,12 +266,12 @@ test("standalone car details restore polished Hotels-style section headings", ()
     location,
     /lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent/,
   );
-  assert.match(location, /className="p-4 lg:p-0 lg:text-center" data-car-location-timeline/);
+  assert.match(location, /className="p-4 lg:p-0" data-car-location-timeline/);
 });
 
 test("desktop car details place the polished identity below the hero and keep compact controls balanced", () => {
   assert.match(heroSource, /data-car-details-desktop-centered-image/);
-  assert.match(heroSource, /lg:max-w-\[700px\] lg:bg-\[#F8FAFC\]/);
+  assert.match(heroSource, /relative min-w-0 bg-white[\s\S]*?lg:max-w-\[700px\]/);
   assert.match(heroSource, /sizes={reserveMobileControlSafeZone \? "700px" : "760px"}/);
   assert.match(heroSource, /data-car-details-desktop-identity-row/);
   assert.match(
@@ -647,50 +647,48 @@ test("mobile-web car detail transmission uses the dedicated gearbox icon without
   );
 });
 
-test("desktop standalone section headings and supporting copy are centered", () => {
+test("desktop standalone duplicate section headings and supporting copy are left aligned", () => {
   const comparison = sourceBetween(
     clientSource,
     "function CarPriceComparisonSection",
     "function CarLocationSection",
   );
+  assert.match(comparison, /lg:mx-auto lg:w-full lg:max-w-\[820px\]/);
   assert.match(
     comparison,
-    /lg:mx-auto lg:w-full lg:max-w-\[820px\][\s\S]*?lg:text-center/,
+    /className="hidden lg:block lg:text-\[16px\] lg:font-semibold/,
   );
-  assert.match(comparison, /lg:text-center lg:text-\[16px\]/);
-  assert.match(comparison, /lg:text-center lg:text-\[14px\]/);
-  assert.match(comparison, /mt-3 hidden w-full space-y-2 lg:mx-auto lg:block lg:max-w-\[820px\]/);
-  assert.match(comparison, /data-car-details-desktop-deal-summary[\s\S]*?lg:text-center/);
-  assert.match(comparison, /data-car-details-desktop-deal-benefits[\s\S]*?lg:justify-center/);
+  assert.match(
+    comparison,
+    /text-slate-600 lg:text-\[14px\] lg:font-normal/,
+  );
+  assert.match(comparison, /data-car-details-desktop-deal-summary/);
+  assert.doesNotMatch(comparison, /lg:text-center|lg:justify-center/);
 
   const pickup = sourceBetween(
     clientSource,
     "function PickupReturnSection",
     "function MobileBookingDock",
   );
-  assert.match(
-    pickup,
-    /lg:mx-auto lg:w-full lg:max-w-\[820px\][\s\S]*?lg:text-center/,
-  );
-  assert.match(pickup, /lg:justify-center lg:text-\[14px\]/);
+  assert.match(pickup, /lg:mx-auto lg:w-full lg:max-w-\[820px\]/);
+  assert.doesNotMatch(pickup, /lg:text-center|lg:justify-center/);
 
   const location = sourceBetween(
     clientSource,
     "function CarLocationSection",
     "function BookingSummary",
   );
-  assert.match(
-    location,
-    /lg:mx-auto lg:w-full lg:max-w-\[820px\][\s\S]*?lg:text-center/,
-  );
-  assert.match(location, /lg:justify-center/);
-  assert.match(location, /data-car-location-timeline[\s\S]*?lg:text-center/);
-  assert.match(location, /lg:max-w-\[720px\] lg:list-none lg:ps-0 lg:text-center/);
+  assert.match(location, /lg:mx-auto lg:w-full lg:max-w-\[820px\]/);
+  assert.match(location, /className="p-4 lg:p-0" data-car-location-timeline/);
+  assert.match(location, /lg:list-none lg:ps-0 lg:text-\[14px\]/);
+  assert.doesNotMatch(location, /lg:text-center|lg:justify-center/);
 });
 
-test("standalone desktop car image is smaller than the centered content rail", () => {
-  assert.match(heroSource, /lg:max-w-\[700px\] lg:bg-\[#F8FAFC\]/);
-  assert.match(heroSource, /lg:h-\[clamp\(17rem,24vw,21rem\)\]/);
+test("standalone desktop car image uses a contained white stage on the off-white page canvas", () => {
+  assert.match(heroSource, /relative min-w-0 bg-white[\s\S]*?lg:max-w-\[700px\]/);
+  assert.match(heroSource, /relative w-full overflow-hidden bg-white[\s\S]*?lg:h-\[clamp\(17rem,24vw,21rem\)\]/);
+  assert.doesNotMatch(heroSource, /lg:max-w-\[700px\] lg:bg-\[#F8FAFC\]/);
+  assert.doesNotMatch(heroSource, /lg:h-\[clamp\(17rem,24vw,21rem\)\] lg:bg-\[#F8FAFC\]/);
   assert.match(heroSource, /sizes={reserveMobileControlSafeZone \? "700px" : "760px"}/);
   assert.match(heroSource, /lg:max-w-\[820px\] lg:justify-center lg:text-center/);
 });
