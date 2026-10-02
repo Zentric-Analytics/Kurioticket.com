@@ -60,6 +60,8 @@ test("CarDetailsExperience uses one Hotels-style sticky desktop section handoff 
   assert.match(experienceSource, /data-car-details-scroll-section="pickup"/);
   assert.match(experienceSource, /data-car-details-scroll-section="location"/);
   assert.doesNotMatch(experienceSource, /data-car-details-scroll-section="rental"/);
+  assert.doesNotMatch(experienceSource, /current === "rental"/);
+  assert.doesNotMatch(experienceSource, /setActiveTab\([^\n]*"rental"/);
   assert.match(experienceSource, /data-car-details-desktop-linear-sections/);
   assert.match(experienceSource, /data-car-details-utility-placement="hero"/);
   assert.match(experienceSource, /data-car-details-utility-placement="tabs"/);
