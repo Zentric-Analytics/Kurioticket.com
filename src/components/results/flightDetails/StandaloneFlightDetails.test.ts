@@ -479,7 +479,7 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     'role="radio"',
     "term.semantic === \"positive\" ? Check",
     'event.key === "ArrowRight" || event.key === "ArrowDown"',
-    'tabIndex={selected || (!selectedDealOfferId && index === 0) ? 0 : -1}',
+    'tabIndex={selected ? 0 : -1}',
     "activeOffer.price",
     "<FarePanel activeTab={activeTab} fare={selectedFare} offer={activeOffer}",
     "Operated by {segment.operatingCarrier.name}",
@@ -667,8 +667,10 @@ test("desktop Fare information uses underline-only tabs and unframed panels", as
   assert.match(source, /aria-labelledby=\{`fare-tab-\$\{id\}`\}/);
   assert.match(source, /className="py-4 sm:py-5"/);
   assert.doesNotMatch(source, /data-desktop-fare-panel[^>]*className="[^"]*(?:rounded|border|bg-white)/);
-  assert.match(source, /No booking deals available/);
-  assert.match(source, /No additional live provider deals were supplied for this fare\./);
+  assert.doesNotMatch(source, /No booking deals available/);
+  assert.doesNotMatch(source, /No additional live provider deals were supplied for this fare\./);
+  assert.match(source, /No fare price available/);
+  assert.match(source, /The provider did not supply a usable price for this fare\./);
   assert.match(source, /divide-y divide-\[#D8E1EC\]/);
 });
 
@@ -683,10 +685,16 @@ test("desktop Flight Details keeps price and booking action inside Compare deals
   assert.match(panel, /data-desktop-flight-deal-card/);
   assert.match(panel, /data-desktop-flight-deal-action/);
   assert.match(panel, /className="max-w-\[820px\] space-y-3 py-1"/);
+  assert.match(panel, /fallbackOffer\?\.bookingProviderName\?\.trim\(\)/);
+  assert.match(panel, /fallbackOffer\?\.provider\?\.trim\(\)/);
+  assert.match(panel, /displayedDeals = deals\.length/);
   assert.match(panel, /text-\[20px\] font-semibold leading-6/);
   assert.match(panel, /fare\?\.label \? `\$\{fare\.label\} · Trip total` : "Trip total"/);
+  assert.match(panel, /data-desktop-flight-deal-benefits/);
   assert.match(panel, /"Continue deal"/);
+  assert.match(panel, /"Unavailable"/);
   assert.match(panel, /w-\[150px\]/);
+  assert.match(panel, /disabled=\{redirecting \|\| !canContinue\}/);
   assert.match(panel, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.doesNotMatch(source, /DesktopCheckoutSummary|data-desktop-checkout-summary/);
   assert.match(source, /function MobileCheckoutDock[\s\S]*?fixed inset-x-0 bottom-0[\s\S]*?lg:hidden/);
@@ -728,8 +736,10 @@ test("desktop Compare deals uses the shared Cars and Hotels price hierarchy", as
   assert.match(panel, /price\.formatted/);
   assert.match(panel, /Trip total/);
   assert.match(panel, /Continue deal/);
-  assert.match(panel, /rounded-xl border bg-white px-4 py-3/);
+  assert.match(panel, /rounded-xl border bg-white px-5 py-4/);
+  assert.match(panel, /data-desktop-flight-deal-benefits/);
   assert.match(panel, /inline-flex h-11 w-\[150px\]/);
+  assert.match(panel, /data-provider-handoff-unavailable/);
   assert.doesNotMatch(panel, /View deal/);
 });
 
@@ -1147,8 +1157,10 @@ test("desktop Fare information uses the native semantic hierarchy without changi
   assert.match(desktop, /resolveDealIdentityMark\(deal\)/);
   assert.match(desktop, /fare\?\.label/);
   assert.match(desktop, /price\.formatted/);
-  assert.match(desktop, /No booking deals available/);
-  assert.match(desktop, /No additional live provider deals were supplied for this fare/);
+  assert.doesNotMatch(desktop, /No booking deals available/);
+  assert.doesNotMatch(desktop, /No additional live provider deals were supplied for this fare/);
+  assert.match(desktop, /No fare price available/);
+  assert.match(desktop, /The provider did not supply a usable price for this fare/);
   assert.match(desktop, /data-desktop-fare-panel/);
   assert.doesNotMatch(desktop, /rounded-\[10px\] border border-\[#E2E8F0\] p-4/);
   assert.match(desktop, /role="tabpanel"/);
@@ -1165,7 +1177,7 @@ test("desktop selected deal drives fare information and the Compare deals action
   assert.match(source, /const providerPrice = activeOffer[\s\S]*?amount: activeOffer\.price[\s\S]*?sourceCurrency: activeOffer\.currency/);
   assert.match(source, /<FarePanel activeTab=\{activeTab\} fare=\{selectedFare\} offer=\{activeOffer\}[\s\S]*?selectedDealOfferId=\{selectedDeal\?\.offerId \?\? null\}[\s\S]*?onSelectDeal=\{setSelectedDealOfferId\}/);
   assert.match(source, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
-  assert.match(source, /tabIndex=\{selected \|\| \(!selectedDealOfferId && index === 0\) \? 0 : -1\}/);
+  assert.match(source, /tabIndex=\{selected \? 0 : -1\}/);
   assert.doesNotMatch(source, /DesktopCheckoutSummary|data-desktop-checkout-summary/);
 });
 
