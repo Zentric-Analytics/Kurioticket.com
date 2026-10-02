@@ -156,6 +156,8 @@ test("desktop fare stays beside the itinerary while details span beneath both co
   assert.match(desktopViewRule, /min-height:\s*1\.5rem/);
   assert.match(desktopViewRule, /margin-top:\s*0\.125rem/);
   assert.match(desktopViewRule, /align-self:\s*flex-end/);
+  assert.match(globalsCss, /\.flight-results-grid \.flight-card-view-button \{[\s\S]*?min-height:\s*1\.5rem;[\s\S]*?padding-block:\s*0;[\s\S]*?\}/);
+  assert.doesNotMatch(globalsCss, /\.flight-results-grid \.flight-card-view-button \{[^}]*min-height:\s*44px/);
 
   const mediumQueryStart = globalsCss.indexOf(
     "@container (max-width: 759px)",
