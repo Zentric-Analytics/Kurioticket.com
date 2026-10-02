@@ -459,7 +459,7 @@ function FlightFareAction({
   return (
     <div
       className={cn(
-        "flight-card-fare-action flex flex-col items-end justify-start border-l border-[#D8E1EC] text-right",
+        "flight-card-fare-action flex flex-col items-end justify-start text-right",
         className,
       )}
     >
