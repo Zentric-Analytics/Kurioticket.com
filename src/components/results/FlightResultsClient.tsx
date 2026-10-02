@@ -7859,7 +7859,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-1 lg:bg-transparent"
               >
                 <div>
-                  <p className="text-[12px] font-normal leading-4 text-[#191E3B]">
+                  <p className="text-[12px] font-semibold leading-4 text-[#191E3B]">
                     {formatResultsFound(sortedResults.length, t)}
                   </p>
                   {resultsDisplayRange ? (

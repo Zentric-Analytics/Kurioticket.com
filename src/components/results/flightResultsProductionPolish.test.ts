@@ -470,7 +470,7 @@ test("desktop Flight result meta typography uses the premium hierarchy", async (
     'className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-1 lg:bg-transparent"',
   );
   const summary = source.slice(summaryStart, summaryStart + 4200);
-  assert.match(summary, /text-\[12px\] font-normal leading-4 text-\[#191E3B\]/);
+  assert.match(summary, /text-\[12px\] font-semibold leading-4 text-\[#191E3B\]/);
   assert.match(summary, /mt-0\.5 text-xs font-medium leading-4 text-slate-500/);
   assert.match(summary, /hotel-results-sort-trigger/);
   assert.match(summary, /rounded-full border border-\[#9299A9\] bg-white px-3 text-\[#191E3B\]/);
