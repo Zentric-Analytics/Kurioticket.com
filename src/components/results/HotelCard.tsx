@@ -585,11 +585,17 @@ export function HotelCard({
             <div className="min-w-0">
               <div>
                 <div className="relative min-w-0">
-                  <div className="min-w-0 sm:pe-[88px] md:pe-0 lg:pe-[88px]">
+                  <div className="min-w-0 sm:pe-[88px] md:pe-0 lg:flex lg:items-start lg:gap-2 lg:pe-[88px]">
                     <h2 className="min-w-0 text-[15px] font-bold leading-5 text-[#071A48] sm:line-clamp-2 sm:text-base sm:font-bold sm:leading-5 lg:line-clamp-2 lg:text-[19px] lg:leading-6 lg:group-hover:underline">
                       <span aria-hidden="true" className="float-end h-9 w-[76px] sm:hidden" />
                       {hotel.name}
                     </h2>
+                    {sortBadgeConfig && SortBadgeIcon ? (
+                      <span className={`mt-0.5 hidden max-w-full shrink-0 items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-semibold leading-4 lg:inline-flex ${sortBadgeConfig.className}`}>
+                        <SortBadgeIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                        {sortBadgeConfig.label}
+                      </span>
+                    ) : null}
                   </div>
                   <div
                     data-hotel-utility-actions
@@ -728,12 +734,6 @@ export function HotelCard({
             <div className="mt-auto pt-2 md:pt-3 lg:flex lg:items-end lg:justify-between lg:gap-3 lg:pt-1">
               {renderReviewSummary("hidden lg:flex lg:max-w-[48%] lg:shrink-0", true)}
               <div className="contents lg:ml-auto lg:flex lg:flex-col lg:items-end">
-              {sortBadgeConfig && SortBadgeIcon ? (
-                <span className={`hidden max-w-full items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-semibold leading-4 lg:inline-flex ${sortBadgeConfig.className}`}>
-                  <SortBadgeIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                  {sortBadgeConfig.label}
-                </span>
-              ) : null}
               <div data-hotel-card-price className="min-w-0 text-end">
                 <div className="min-w-0 text-end">
                   {priceDetails && nightlyDisplayPrice ? (

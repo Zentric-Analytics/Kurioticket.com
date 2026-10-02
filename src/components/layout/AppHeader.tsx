@@ -87,6 +87,7 @@ type AppHeaderProps = {
   simpleHeader?: boolean;
   flushDesktopBottom?: boolean;
   hotelDesktopBoundary?: boolean;
+  hotelResultsDesktopSticky?: boolean;
   flushMobileBottom?: boolean;
   mobileSurface?: "white" | "muted";
   stableMobileSafeAreaTop?: boolean;
@@ -147,6 +148,7 @@ export function AppHeader({
   simpleHeader = false,
   flushDesktopBottom = false,
   hotelDesktopBoundary = false,
+  hotelResultsDesktopSticky = false,
   flushMobileBottom = false,
   mobileSurface = "white",
   stableMobileSafeAreaTop = false,
@@ -723,6 +725,7 @@ export function AppHeader({
       {mobileSigninOpen ? <MobileSigninDialog callbackUrl={`${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`} onClose={closeMobileSignin} /> : null}
       <header
         data-app-header
+        data-hotel-results-desktop-header={hotelResultsDesktopSticky ? "" : undefined}
         className={cn(
           "relative z-50 border-b border-[#D8E1EC] bg-white text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
           stableMobileSafeAreaTop

@@ -15,10 +15,12 @@ import {
   Calendar,
   ChevronDown,
   ChevronRight,
+  LoaderCircle,
   MapPin,
   Minus,
   PencilLine,
   Plus,
+  Search,
   SlidersHorizontal,
   UserRound,
 } from "lucide-react";
@@ -926,6 +928,7 @@ export function HotelSearchBar({
 
   return (
     <section
+      data-hotel-results-edit-card={isResultsFlat ? "" : undefined}
       className={cn(
         "mx-auto w-full",
         compact ? "max-w-full sm:max-w-5xl" : "max-w-[1040px] space-y-3",
@@ -1039,6 +1042,7 @@ export function HotelSearchBar({
         ) : null}
         <div
           ref={mobileSearchContentRef}
+          data-hotel-results-edit-frame={isResultsFlat ? "" : undefined}
           className={cn(
             "overflow-visible",
             isStickyDialog
@@ -1050,7 +1054,7 @@ export function HotelSearchBar({
                       cn("min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-none border-0 bg-slate-50 px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-none", mobileResultsSheet && "overflow-visible bg-transparent p-0 pb-0"),
                   )
                 : "rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
-            isResultsFlat && "lg:border-[#CFD9E5] lg:bg-white lg:p-0 lg:shadow-[0_2px_12px_rgba(12,14,28,0.08)] lg:ring-0",
+            isResultsFlat && "lg:rounded-xl lg:border-[#CFD9E5] lg:bg-white lg:p-0 lg:shadow-[0_6px_20px_-13px_rgba(20,32,51,0.28)] lg:ring-0",
           )}
         >
           {!compact && desktopIdentityLabel ? (
@@ -1094,7 +1098,9 @@ export function HotelSearchBar({
                 : "grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:gap-0",
               !isStickyDialog && compact
                 ? cn(
-                    "lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]",
+                    isResultsFlat
+                      ? "lg:grid-cols-[minmax(0,1fr)_260px_180px_52px]"
+                      : "lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]",
                     mobileSearchOpen &&
                       (mobileResultsSheet
                         ? "mx-auto flex w-full max-w-xl flex-col gap-0 overflow-visible bg-transparent sm:flex sm:max-w-none"
@@ -1113,6 +1119,7 @@ export function HotelSearchBar({
             >
             <label
               ref={destinationWrapperRef}
+              data-hotel-results-edit-field={isResultsFlat ? "destination" : undefined}
               data-hotel-mobile-edit-row={
                 mobileResultsSheet ? "destination" : undefined
               }
@@ -1124,7 +1131,8 @@ export function HotelSearchBar({
                   "min-h-16 rounded-[12px] border border-[#D8E1EC] bg-white px-4 py-2 shadow-[0_2px_8px_rgba(15,23,42,0.035)] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25",
               )}
             >
-              <span className={cn(fieldLabelClassName, mobileResultsSheet && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
+              {isResultsFlat ? <MapPin data-hotel-results-edit-leading-icon="" aria-hidden="true" className="hidden lg:block" /> : null}
+              <span data-hotel-results-edit-label={isResultsFlat ? "" : undefined} className={cn(fieldLabelClassName, mobileResultsSheet && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
                 {t("hotelSearchDestinationLabel")}
               </span>
               <span className="relative block">
@@ -1202,10 +1210,12 @@ export function HotelSearchBar({
                   )}
                 </button>
                 <MapPin
+                  data-hotel-results-edit-inline-icon={isResultsFlat ? "" : undefined}
                   aria-hidden="true"
                   className="pointer-events-none absolute start-0 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-slate-500 sm:block"
                 />
                 <input
+                  data-hotel-results-edit-value={isResultsFlat ? "" : undefined}
                   ref={destinationInputRef}
                   type="text"
                   value={destination}
@@ -1236,6 +1246,7 @@ export function HotelSearchBar({
                   className={cn(
                     valueControlClassName,
                     "placeholder:text-slate-400 max-sm:hidden sm:ps-6 focus:!shadow-none focus-visible:!shadow-none",
+                    isResultsFlat && "lg:ps-0",
                   )}
                   required
                 />
@@ -1304,6 +1315,7 @@ export function HotelSearchBar({
 
             <div
               ref={datesWrapperRef}
+              data-hotel-results-edit-field={isResultsFlat ? "dates" : undefined}
               data-hotel-mobile-edit-row={
                 mobileResultsSheet ? "dates" : undefined
               }
@@ -1314,10 +1326,12 @@ export function HotelSearchBar({
                   "min-h-16 rounded-[12px] border border-[#D8E1EC] bg-white px-4 py-2 shadow-[0_2px_8px_rgba(15,23,42,0.035)] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25",
               )}
             >
-              <span className={cn(fieldLabelClassName, mobileResultsSheet && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
+              {isResultsFlat ? <Calendar data-hotel-results-edit-leading-icon="" aria-hidden="true" className="hidden lg:block" /> : null}
+              <span data-hotel-results-edit-label={isResultsFlat ? "" : undefined} className={cn(fieldLabelClassName, mobileResultsSheet && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
                 {t("hotelSearchTravelDatesLabel")}
               </span>
               <button
+                data-hotel-results-edit-value={isResultsFlat ? "" : undefined}
                 ref={datesMobileLauncherRef}
                 type="button"
                 onClick={handleToggleDates}
@@ -1335,6 +1349,7 @@ export function HotelSearchBar({
                 )}
               >
                 <Calendar
+                  data-hotel-results-edit-inline-icon={isResultsFlat ? "" : undefined}
                   aria-hidden="true"
                   className={cn(
                     "h-4 w-4 shrink-0 text-slate-700",
@@ -1485,6 +1500,7 @@ export function HotelSearchBar({
 
             <div
               ref={guestsRoomsWrapperRef}
+              data-hotel-results-edit-field={isResultsFlat ? "guests" : undefined}
               data-hotel-mobile-edit-row={
                 mobileResultsSheet ? "guests" : undefined
               }
@@ -1495,10 +1511,12 @@ export function HotelSearchBar({
                   "min-h-16 rounded-[12px] border border-[#D8E1EC] bg-white px-4 py-2 shadow-[0_2px_8px_rgba(15,23,42,0.035)] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25",
               )}
             >
-              <span className={cn(fieldLabelClassName, mobileResultsSheet && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
+              {isResultsFlat ? <UserRound data-hotel-results-edit-leading-icon="" aria-hidden="true" className="hidden lg:block" /> : null}
+              <span data-hotel-results-edit-label={isResultsFlat ? "" : undefined} className={cn(fieldLabelClassName, mobileResultsSheet && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
                 {t("hotelSearchGuestsLabel")}
               </span>
               <button
+                data-hotel-results-edit-value={isResultsFlat ? "" : undefined}
                 ref={guestsRoomsMobileLauncherRef}
                 type="button"
                 onClick={handleToggleGuestsRooms}
@@ -1517,6 +1535,7 @@ export function HotelSearchBar({
               >
                 <span className={cn("flex min-w-0 items-center gap-2", mobileResultsSheet && "contents")}>
                   <UserRound
+                    data-hotel-results-edit-inline-icon={isResultsFlat ? "" : undefined}
                     aria-hidden="true"
                     className={cn(
                       "h-4 w-4 shrink-0 text-slate-700",
@@ -1530,6 +1549,7 @@ export function HotelSearchBar({
                   <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />
                 ) : (
                   <ChevronDown
+                    data-hotel-results-edit-chevron={isResultsFlat ? "" : undefined}
                     size={16}
                     className={`shrink-0 text-slate-500 transition-transform ${
                       guestsRoomsOpen ? "rotate-180" : ""
@@ -1682,6 +1702,7 @@ export function HotelSearchBar({
             </div>
 
             <div
+              data-hotel-results-edit-action-cell={isResultsFlat ? "" : undefined}
               data-hotel-mobile-edit-search-action={
                 mobileResultsSheet ? "" : undefined
               }
@@ -1691,6 +1712,7 @@ export function HotelSearchBar({
               )}
             >
               <button
+                data-hotel-results-edit-action={isResultsFlat ? "" : undefined}
                 type="submit"
                 className={cn(
                   isStickyDialog
@@ -1701,6 +1723,7 @@ export function HotelSearchBar({
                   !isStickyDialog && compact
                     ? cn(
                         "h-[54px] shadow-lg sm:min-h-[54px] lg:min-w-[112px] lg:rounded-s-none",
+                        isResultsFlat && "lg:min-w-0 lg:shadow-none",
                         mobileSearchOpen &&
                           cn(
                             "mt-3 h-12 rounded-[11px] text-[15px] sm:mt-0 sm:h-[54px] sm:rounded-xl lg:rounded-s-none",
@@ -1713,12 +1736,14 @@ export function HotelSearchBar({
                 )}
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
+                aria-label={isResultsFlat ? (isSubmitting ? t("searchingHotels") : t("search")) : undefined}
               >
-                {isSubmitting
-                  ? t("searchingHotels")
-                  : compact
-                    ? t("search")
-                    : t("searchHotels")}
+                {isResultsFlat ? (
+                  <>
+                    <span className="lg:hidden">{isSubmitting ? t("searchingHotels") : t("search")}</span>
+                    {isSubmitting ? <LoaderCircle aria-hidden="true" className="mx-auto hidden h-5 w-5 animate-spin lg:block" /> : <Search aria-hidden="true" className="mx-auto hidden h-5 w-5 lg:block" />}
+                  </>
+                ) : isSubmitting ? t("searchingHotels") : compact ? t("search") : t("searchHotels")}
               </button>
             </div>
           </div>
