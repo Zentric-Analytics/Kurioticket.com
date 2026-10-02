@@ -88,6 +88,7 @@ type AppHeaderProps = {
   flushDesktopBottom?: boolean;
   hotelDesktopBoundary?: boolean;
   hotelResultsDesktopSticky?: boolean;
+  flightResultsDesktopSticky?: boolean;
   flushMobileBottom?: boolean;
   mobileSurface?: "white" | "muted";
   stableMobileSafeAreaTop?: boolean;
@@ -149,6 +150,7 @@ export function AppHeader({
   flushDesktopBottom = false,
   hotelDesktopBoundary = false,
   hotelResultsDesktopSticky = false,
+  flightResultsDesktopSticky = false,
   flushMobileBottom = false,
   mobileSurface = "white",
   stableMobileSafeAreaTop = false,
@@ -156,6 +158,8 @@ export function AppHeader({
   const { data: session } = useSession();
 
   const isSignedIn = Boolean(session?.user);
+  const resultsDesktopSticky =
+    hotelResultsDesktopSticky || flightResultsDesktopSticky;
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSigninOpen, setMobileSigninOpen] = useState(false);
@@ -726,6 +730,7 @@ export function AppHeader({
       <header
         data-app-header
         data-hotel-results-desktop-header={hotelResultsDesktopSticky ? "" : undefined}
+        data-flight-results-desktop-header={flightResultsDesktopSticky ? "" : undefined}
         className={cn(
           "relative z-50 border-b border-[#D8E1EC] bg-white text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
           stableMobileSafeAreaTop
@@ -748,8 +753,8 @@ export function AppHeader({
           <div className="min-w-0 flex-1" onClickCapture={() => setMobileMenuOpen(false)}>{mobileResultsSearch}</div>
 
         </div> : null}
-        <div className={cn("page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3", mobileResultsSearch && "max-sm:hidden", hotelResultsDesktopSticky && "lg:py-[14px]")}>
-          <div className={cn("flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8", hotelResultsDesktopSticky && "lg:gap-4")}>
+        <div className={cn("page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3", mobileResultsSearch && "max-sm:hidden", resultsDesktopSticky && "lg:py-[14px]")}>
+          <div className={cn("flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8", resultsDesktopSticky && "lg:gap-4")}>
             <Link
               href="/"
               aria-label="Kurioticket home"
@@ -764,8 +769,9 @@ export function AppHeader({
             </Link>
 
             {hotelResultsDesktopSticky ? <div data-hotel-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[540px]" /> : null}
+            {flightResultsDesktopSticky ? <div data-flight-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[540px]" /> : null}
 
-            <div className={cn("hidden min-w-0 flex-1 items-center justify-end gap-3.5 md:flex lg:gap-4", hotelResultsDesktopSticky && "lg:flex-none")}>
+            <div className={cn("hidden min-w-0 flex-1 items-center justify-end gap-3.5 md:flex lg:gap-4", resultsDesktopSticky && "lg:flex-none")}>
               <div className="[&>button]:!h-10 [&>button]:!gap-1 [&>button]:!rounded-md [&>button]:!border-transparent [&>button]:!bg-transparent [&>button]:!px-2.5 [&>button]:!text-[15px] [&>button]:!font-semibold [&>button]:!text-[#021C2B]/85 [&>button]:!shadow-none [&>button]:!backdrop-blur-0 [&>button]:hover:!bg-[#F2F7FA] [&>button]:hover:!text-[#004BB8] [&>button>svg]:!text-[#334155] [&>button>svg]:!opacity-80">
                 <CountryCurrencySelector variant="header" grouped />
               </div>

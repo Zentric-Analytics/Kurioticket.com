@@ -39,6 +39,7 @@ import {
   UserRound,
   Plus,
   SlidersHorizontal,
+  Search,
   X,
 } from "lucide-react";
 import {
@@ -1195,6 +1196,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [isSearchCollapsed, setIsSearchCollapsed] = useState(false);
   const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
     useState(false);
+  const [desktopNavSearchTarget, setDesktopNavSearchTarget] =
+    useState<HTMLElement | null>(null);
   const [travelerPopoverPosition, setTravelerPopoverPosition] = useState<{
     top: number;
     left: number;
@@ -1355,33 +1358,19 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const markExpandedSearchInteraction = useCallback(() => {}, []);
 
   const expandStickySearch = useCallback(() => {
-    if (tripTypeInput === "multi-city") {
-      searchFormRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-      return;
-    }
     const currentScrollY = window.scrollY;
     expandedSearchScrollYRef.current = currentScrollY;
     setIsSearchExpandedWhileSticky(true);
-  }, [tripTypeInput]);
+  }, []);
 
   const openStickySearchEditor = useCallback(
     (
       event: React.MouseEvent<HTMLButtonElement>,
       target: "route" | "dates" | "travelers",
     ) => {
-      if (tripTypeInput === "multi-city") {
-        stickySearchLauncherRef.current = event.currentTarget;
-        searchFormRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-        return;
-      }
       stickySearchLauncherRef.current = event.currentTarget;
-      pendingStickySearchTargetRef.current = target;
+      pendingStickySearchTargetRef.current =
+        tripTypeInput === "multi-city" ? null : target;
       const currentScrollY = window.scrollY;
       expandedSearchScrollYRef.current = currentScrollY;
       setIsSearchExpandedWhileSticky(true);
@@ -1393,9 +1382,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           : null,
       );
       setDropdownPosition(null);
-      setActiveDatePicker(target === "dates" ? "departure" : null);
+      setActiveDatePicker(
+        tripTypeInput !== "multi-city" && target === "dates" ? "departure" : null,
+      );
       setDatePickerPosition(null);
-      setTravelerPopoverOpen(target === "travelers");
+      setTravelerPopoverOpen(
+        tripTypeInput !== "multi-city" && target === "travelers",
+      );
       setTravelerPopoverPosition(null);
     },
     [
@@ -1463,6 +1456,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
   }, [guidedMode]);
+
+  useEffect(() => {
+    if (guidedMode) return undefined;
+
+    const frame = window.requestAnimationFrame(() => {
+      setDesktopNavSearchTarget(
+        document.querySelector<HTMLElement>("[data-flight-results-nav-search]"),
+      );
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [guidedMode, loading]);
 
   useEffect(() => {
     stickySearchPanelOpenRef.current = isStickySearchPanelOpen;
@@ -5273,90 +5278,68 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     );
   }
 
-  function renderDesktopMinimizedSearchBar() {
-    const compactSectionClass =
-      "flex h-[56px] min-w-0 items-center gap-2.5 px-3 text-start outline-none transition-colors hover:bg-slate-50/80 focus:outline-none focus-visible:outline-none";
-    const compactValueClass = "min-w-0 truncate text-[0.86rem] font-medium leading-5 text-slate-800";
+  function renderDesktopHeaderSearchBar() {
     const compactDateSummary = departureDateInput
       ? tripTypeInput === "round-trip" && returnDateInput
         ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
         : formatCompactDateLabel(departureDateInput, calendarLocale)
       : t("travelDates");
+    const fieldClass =
+      "focus-ring flex h-[44px] min-w-0 items-center gap-2 border-r border-[#D8E1EC] bg-white px-3 text-start text-[#142033] transition-colors hover:bg-slate-50";
+    const valueClass =
+      "min-w-0 truncate text-[12px] font-semibold leading-[18px] text-[#142033]";
 
     return (
-      <div
-        className={cn(
-          "pointer-events-none fixed inset-x-0 top-0 z-[100] hidden px-4 transition-all duration-200 lg:block",
-          isSearchCollapsed && !isStickySearchPanelOpen
-            ? "translate-y-0 opacity-100"
-            : "-translate-y-3 opacity-0",
-        )}
-        aria-hidden={!isSearchCollapsed || isStickySearchPanelOpen}
+      <form
+        onSubmit={handleCompactSearchSubmit}
+        data-flight-results-nav-search-form
+        className="grid h-[44px] w-full grid-cols-[minmax(0,1.55fr)_minmax(0,1.15fr)_minmax(0,1.2fr)_46px] items-center overflow-hidden rounded-[9px] border border-[#D8E1EC] bg-white"
       >
-        <div ref={stickySearchPanelRef} className="page-shell">
-          <form
-            onSubmit={handleCompactSearchSubmit}
-            className="pointer-events-auto mx-auto grid h-[58px] w-full max-w-[820px] grid-cols-[minmax(220px,1.5fr)_minmax(150px,0.9fr)_minmax(160px,1fr)_92px] items-center overflow-hidden rounded-lg border border-slate-200/95 bg-white shadow-[0_12px_28px_-22px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.025]"
+        <button
+          type="button"
+          aria-expanded={isStickySearchPanelOpen}
+          aria-label={`${t("editFlightSearch")}: ${mobileOriginSummary} ${t("to")} ${mobileDestinationSummary}`}
+          onClick={(event) => openStickySearchEditor(event, "route")}
+          className={fieldClass}
+        >
+          <MapPin className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
+          <span className={valueClass}>
+            {mobileOriginSummary} → {mobileDestinationSummary}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          aria-expanded={isStickySearchPanelOpen}
+          aria-label={`${t("editFlightSearch")}: ${compactDateSummary}`}
+          onClick={(event) => openStickySearchEditor(event, "dates")}
+          className={fieldClass}
+        >
+          <Calendar className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
+          <span className={valueClass}>{compactDateSummary}</span>
+        </button>
+
+        <button
+          type="button"
+          aria-expanded={isStickySearchPanelOpen}
+          aria-label={`${t("editFlightSearch")}: ${travelerCabinSummary}`}
+          onClick={(event) => openStickySearchEditor(event, "travelers")}
+          className={fieldClass}
+        >
+          <UserRound className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
+          <span className={valueClass}>{travelerCabinSummary}</span>
+        </button>
+
+        <div className="flex h-[44px] items-center justify-center bg-white">
+          <button
+            type="submit"
+            aria-label={t("search")}
+            className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[#004BB8] text-white transition hover:bg-[#003F9C]"
           >
-            <button
-              type="button"
-              aria-expanded={isStickySearchPanelOpen}
-              aria-label={`${t("editFlightSearch")}: ${mobileOriginSummary} ${t("to")} ${mobileDestinationSummary}`}
-              onClick={(event) => openStickySearchEditor(event, "route")}
-              className={cn(compactSectionClass, "border-r border-slate-200/85")}
-            >
-              <span className="min-w-0 truncate text-[0.92rem] font-semibold leading-5 text-slate-950">
-                {mobileOriginSummary}
-              </span>
-              <ArrowRightLeft
-                className="h-4 w-4 shrink-0 text-slate-500"
-                aria-hidden="true"
-              />
-              <span className="min-w-0 truncate text-[0.92rem] font-semibold leading-5 text-slate-950">
-                {mobileDestinationSummary}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              aria-expanded={isStickySearchPanelOpen}
-              aria-label={`${t("editFlightSearch")}: ${compactDateSummary}`}
-              onClick={(event) => openStickySearchEditor(event, "dates")}
-              className={cn(compactSectionClass, "border-r border-slate-200/85")}
-            >
-              <Calendar
-                className="h-4 w-4 shrink-0 text-slate-500"
-                aria-hidden="true"
-              />
-              <span className={compactValueClass}>{compactDateSummary}</span>
-            </button>
-
-            <button
-              type="button"
-              aria-expanded={isStickySearchPanelOpen}
-              aria-label={`${t("editFlightSearch")}: ${travelerCabinSummary}`}
-              onClick={(event) => openStickySearchEditor(event, "travelers")}
-              className={cn(compactSectionClass, "border-r border-slate-200/85")}
-            >
-              <Users
-                className="h-4 w-4 shrink-0 text-slate-500"
-                aria-hidden="true"
-              />
-              <span className={compactValueClass}>{travelerCabinSummary}</span>
-            </button>
-
-            <div className="flex h-[56px] items-center justify-center px-2">
-              <Button
-                type="submit"
-                className="h-10 w-[92px] rounded-lg bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-none ring-1 ring-[#004BB8]/10 hover:bg-[#021C2B]"
-                onClick={(event) => event.stopPropagation()}
-              >
-                {t("search")}
-              </Button>
-            </div>
-          </form>
+            <Search className="h-[18px] w-[18px]" aria-hidden="true" />
+          </button>
         </div>
-      </div>
+      </form>
     );
   }
 
@@ -7328,7 +7311,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   return (
     <>
-    <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs />
+    <AppHeader
+      flushDesktopBottom
+      flushMobileBottom
+      hideDesktopTravelNav
+      hideMobileCategoryTabs
+      hotelDesktopBoundary
+      flightResultsDesktopSticky
+    />
+    {desktopNavSearchTarget
+      ? createPortal(renderDesktopHeaderSearchBar(), desktopNavSearchTarget)
+      : null}
     <FlightResultsScrollIndicator />
     {renderMobileCompactResultsHeader()}
     <main data-flight-results-main className="bg-[#F5F7FB] pb-0 sm:flex-1 sm:bg-[#F3F6FA] sm:pb-8 lg:bg-[#F5F7FB]">
@@ -7364,7 +7357,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         : null}
       {renderMobileEditSearchDrawer()}
 
-      {renderDesktopMinimizedSearchBar()}
       {renderStickySearchPopoutOverlay()}
 
       <div
@@ -7374,7 +7366,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       />
       <section
         className={cn(
-          "relative z-40 hidden border-b border-transparent transition-[padding,background-color] duration-200 sm:block",
+          "relative z-40 hidden border-b border-transparent transition-[padding,background-color] duration-200 sm:block lg:hidden",
           isSearchCollapsed
             ? "border-transparent bg-white/95 py-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur"
             : "border-transparent bg-white pb-5 pt-7",
@@ -7448,6 +7440,107 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           </h2>
           {!guidedMode && kayak && results.length === 0 ? <CombinedSearchEmpty otherStatus={loading ? "loading" : error ? "error" : "success"} retry={retryMainInventorySearch} /> : (
             <div className={cn(resultStackClass, "space-y-1 sm:space-y-4")}>
+              <div
+                data-flight-results-desktop-summary
+                className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-1 lg:bg-transparent"
+              >
+                <div>
+                  <p className="text-[12px] font-normal leading-4 text-[#191E3B]">
+                    {formatResultsFound(sortedResults.length, t)}
+                  </p>
+                  {resultsDisplayRange ? (
+                    <p
+                      aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${sortedResults.length}`}
+                      className="mt-0.5 text-xs font-medium leading-4 text-slate-500"
+                    >
+                      {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div
+                  ref={desktopSortRef}
+                  className="relative hidden shrink-0 items-center whitespace-nowrap lg:flex"
+                >
+                  <button
+                    ref={desktopSortButtonRef}
+                    type="button"
+                    aria-label={`Sort flight results: ${selectedSortLabel}`}
+                    aria-haspopup="listbox"
+                    aria-expanded={desktopSortOpen}
+                    className="flight-results-hotel-sort-trigger inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-[#9299A9] bg-white px-3 text-[12px] font-medium leading-4 text-[#191E3B] outline-none transition-colors hover:border-[#191E3B] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2"
+                    onClick={() => setDesktopSortOpen((open) => !open)}
+                  >
+                    <span>Sort by {selectedSortLabel}</span>
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={cn(
+                        "h-3.5 w-3.5 transition-transform",
+                        desktopSortOpen && "rotate-180",
+                      )}
+                      strokeWidth={2}
+                    />
+                  </button>
+                  {desktopSortOpen ? (
+                    <div
+                      role="listbox"
+                      aria-label="Sort flight results"
+                      className="absolute right-0 top-[calc(100%+0.5rem)] z-50 min-w-[190px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]"
+                    >
+                      {sortOptions.map((option) => {
+                        const selected = sortMode === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            role="option"
+                            aria-selected={selected}
+                            className={cn(
+                              "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-base font-medium leading-6 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
+                              selected
+                                ? "bg-[#004BB8]/[0.08] text-[#004BB8]"
+                                : "text-slate-800 hover:bg-slate-50 hover:text-slate-950",
+                            )}
+                            onClick={() => {
+                              triggerFilterApplying();
+                              setSortMode(option.value);
+                              setDesktopSortOpen(false);
+                              handleUserFilterCommit();
+                            }}
+                          >
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                              {selected ? (
+                                <Check
+                                  aria-hidden="true"
+                                  className="h-4 w-4"
+                                  strokeWidth={2.25}
+                                />
+                              ) : null}
+                            </span>
+                            <span>{option.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+
+                <Button
+                  variant="secondary"
+                  className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] lg:hidden"
+                  onClick={(event) =>
+                    openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))
+                  }
+                >
+                  <SlidersHorizontal size={17} />
+                  {activeFilterCount > 0
+                    ? t("filtersWithCount").replace(
+                        "{{count}}",
+                        String(activeFilterCount),
+                      )
+                    : t("filters")}
+                </Button>
+              </div>
               {body?.tripType !== "multi-city" ? (
                 <>
                   <div className="w-full min-w-0 max-w-full overflow-hidden sm:hidden" aria-label="Nearby departure fares" data-nearby-fare-presentation="mobile">
@@ -7673,88 +7766,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 </div>
               </div>
 
-              <div className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-1 lg:bg-transparent">
-                <div>
-                  <p className="text-[15px] font-semibold leading-5 tracking-[-0.006em] text-[#0F172A]">
-                    {formatResultsFound(sortedResults.length, t)}
-                  </p>
-                  {resultsDisplayRange ? (
-                    <p
-                      aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${sortedResults.length}`}
-                      className="mt-1 text-[12px] font-normal leading-4 text-[#64748B]"
-                    >
-                      {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
-                    </p>
-                  ) : null}
-                </div>
-
-                <div
-                  ref={desktopSortRef}
-                  className="relative hidden items-center gap-2 lg:flex"
-                >
-                  <span className="text-[13px] font-medium leading-5 text-[#64748B]">
-                    Sort by:
-                  </span>
-                  <button
-                    ref={desktopSortButtonRef}
-                    type="button"
-                    aria-label="Sort flight results"
-                    aria-haspopup="menu"
-                    aria-expanded={desktopSortOpen}
-                    className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-transparent px-2 text-[14px] font-semibold leading-5 text-[#142033] transition-colors hover:bg-slate-100/70 hover:text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-                    onClick={() => setDesktopSortOpen((open) => !open)}
-                  >
-                    {selectedSortLabel}
-                    <ChevronDown size={14} aria-hidden="true" />
-                  </button>
-                  <div
-                    role="menu"
-                    className={cn(
-                      "absolute right-0 top-11 z-30 w-44 origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_14px_32px_-18px_rgba(15,23,42,0.45)] transition duration-150",
-                      desktopSortOpen
-                        ? "translate-y-0 scale-100 opacity-100"
-                        : "pointer-events-none -translate-y-1 scale-95 opacity-0",
-                    )}
-                  >
-                    {sortOptions.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="menuitemradio"
-                        aria-checked={sortMode === option.value}
-                        className={cn("flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25", sortMode === option.value ? "text-[#004BB8]" : "text-slate-700")}
-                        onClick={() => {
-                          triggerFilterApplying();
-                          setSortMode(option.value);
-                          setDesktopSortOpen(false);
-                          handleUserFilterCommit();
-                        }}
-                      >
-                        <span className="w-4 text-[#004BB8]">
-                          {sortMode === option.value ? "✓" : ""}
-                        </span>
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <Button
-                  variant="secondary"
-                  className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] lg:hidden"
-                  onClick={(event) =>
-                    openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))
-                  }
-                >
-                  <SlidersHorizontal size={17} />
-                  {activeFilterCount > 0
-                    ? t("filtersWithCount").replace(
-                        "{{count}}",
-                        String(activeFilterCount),
-                      )
-                    : t("filters")}
-                </Button>
-              </div>
+              
 
               <div className="sm:hidden">
                 <p role="status" aria-live="polite" className="sr-only">{filterApplying ? t("updatingResults") : ""}</p>
