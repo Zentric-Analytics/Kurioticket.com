@@ -120,7 +120,7 @@ export function CarDetailsSectionNav({
                 type="button"
                 aria-current={selected ? "location" : undefined}
                 onClick={() => onTabChange(tab.id)}
-                className={`focus-ring relative inline-flex min-h-16 items-center justify-center whitespace-nowrap border-b-2 px-[14px] font-sans text-sm font-semibold leading-normal transition-colors ${selected ? "border-[#192024] text-[#192024]" : "border-transparent text-[#59636A] hover:text-[#004BB8]"}`}
+                className={`car-details-desktop-selected-info-type focus-ring relative inline-flex min-h-16 items-center justify-center whitespace-nowrap border-b-2 px-[14px] transition-colors ${selected ? "border-[#192024] text-slate-950" : "border-transparent text-[#334155] hover:text-[#142033]"}`}
               >
                 {tab.label}
               </button>
