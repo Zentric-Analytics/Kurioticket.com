@@ -1334,10 +1334,22 @@ textarea {
 }
 
 .flight-card-fare-action {
+  position: relative;
   min-width: 0;
   padding-left: 0.75rem;
   padding-right: 0.125rem;
   padding-bottom: 0.25rem;
+}
+
+.flight-card-fare-action::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 2.75rem;
+  left: 0;
+  width: 1px;
+  background: #d8e1ec;
+  pointer-events: none;
 }
 
 .flight-card-view-button {
