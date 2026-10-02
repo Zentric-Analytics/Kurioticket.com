@@ -328,60 +328,23 @@ test("standalone car details restore polished Hotels-style section headings", ()
   assert.match(location, /className="p-4 lg:p-0" data-car-location-timeline/);
 });
 
-test("desktop car details place the polished identity below the hero and keep compact controls balanced", () => {
-  assert.match(heroSource, /data-car-details-desktop-centered-image/);
-  assert.match(heroSource, /relative min-w-0 bg-white[\s\S]*?lg:max-w-\[700px\]/);
-  assert.match(heroSource, /sizes={reserveMobileControlSafeZone \? "700px" : "760px"}/);
-  assert.match(heroSource, /data-car-details-desktop-identity-row/);
-  assert.match(
-    heroSource,
-    /data-standalone={reserveMobileControlSafeZone \? "true" : "false"}/,
-  );
-  assert.match(
-    heroSource,
-    /reserveMobileControlSafeZone \? "lg:mx-auto lg:max-w-\[820px\] lg:justify-center lg:text-center" : "lg:justify-between"/,
-  );
-  assert.match(
-    heroSource,
-    /!reserveMobileControlSafeZone && desktopOverlay \? \(/,
-  );
-  assert.match(heroSource, /data-car-details-desktop-actions/);
-  assert.doesNotMatch(heroSource, /data-car-details-desktop-back/);
-  assert.doesNotMatch(heroSource, /data-car-details-desktop-hero-actions/);
-  assert.match(heroSource, /\[&_h1\]:truncate/);
-  assert.match(
-    heroSource,
-    /data-car-details-specifications[\s\S]*?lg:max-w-\[820px\][\s\S]*?lg:grid-cols-2[\s\S]*?lg:gap-x-24/,
-  );
-  assert.doesNotMatch(heroSource, /position: fixed !important/);
+test("desktop car details use the approved overview card while keeping controls balanced", () => {
+  assert.match(heroSource, /data-car-details-desktop-overview/);
+  assert.match(heroSource, /data-car-details-desktop-overview-identity/);
+  assert.match(heroSource, /data-car-details-desktop-overview-specifications/);
+  assert.match(heroSource, /grid min-w-0 grid-cols-4 gap-x-4 gap-y-2/);
+  assert.match(heroSource, /className="block min-w-0 truncate" title={label}/);
+  assert.match(heroSource, /data-car-details-desktop-overview-image/);
+  assert.match(heroSource, /data-car-details-desktop-overview-summary/);
+  assert.match(clientSource, /data-car-details-desktop-selected-deal/);
+  assert.match(clientSource, /data-car-details-desktop-overview-cta/);
 
   assert.match(clientSource, /data-car-details-desktop-controls/);
   assert.doesNotMatch(clientSource, /data-car-details-desktop-sticky-controls/);
-  assert.doesNotMatch(clientSource, /data-car-details-desktop-context/);
   assert.match(clientSource, /desktopSectionBarStuck/);
   assert.match(clientSource, /desktopBackControl={desktopBackControl}/);
   assert.match(clientSource, /data-car-details-utility-placement="tabs"/);
-  assert.match(
-    clientSource,
-    /lg:text-\[24px\] lg:font-bold lg:leading-\[30px\] lg:tracking-\[-0\.35px\] lg:text-\[#192024\]/,
-  );
-  assert.match(
-    clientSource,
-    /lg:text-\[14px\] lg:font-normal lg:leading-\[22px\] lg:text-\[#59636A\]/,
-  );
-  assert.match(
-    clientSource,
-    /lg:mt-1\.5 lg:text-\[11px\] lg:leading-4 lg:tracking-\[0\.14em\]/,
-  );
   assert.match(clientSource, /data-car-details-desktop-back-link/);
-  assert.match(
-    clientSource,
-    /size-10 items-center justify-center rounded-full border border-slate-300 bg-\[#E7EBF1\]/,
-  );
-  assert.match(
-    clientSource,
-    /desktop \? "size-10 rounded-full border border-slate-300 bg-\[#E7EBF1\]/,
-  );
   assert.match(
     clientSource,
     /data-car-details-utility-placement="hero"[\s\S]*?<CarHeroActions[\s\S]*?desktop/,
@@ -390,11 +353,6 @@ test("desktop car details place the polished identity below the hero and keep co
     clientSource,
     /data-car-details-utility-placement="tabs"[\s\S]*?<CarHeroActions[\s\S]*?desktop/,
   );
-  assert.match(
-    clientSource,
-    /presentation === "guided-content"[\s\S]*?<CarHeroActions[\s\S]*?desktop/,
-  );
-  assert.doesNotMatch(clientSource, /desktopImageActions=/);
 
   const sandboxStart = clientSource.indexOf(
     'car.inventorySource === "kayak-sandbox"',
@@ -406,7 +364,7 @@ test("desktop car details place the polished identity below the hero and keep co
   );
 });
 
-test("desktop Cars details keep only Save and Share at the top and sticky rail while Compare deals owns price and Continue deal", () => {
+test("desktop Cars details keep Save and Share in controls while the overview and Compare deals share booking information", () => {
   const heroPlacement = sourceBetween(
     clientSource,
     'data-car-details-utility-placement="hero"',
@@ -416,6 +374,9 @@ test("desktop Cars details keep only Save and Share at the top and sticky rail w
   assert.doesNotMatch(heroPlacement, /DesktopCompactBookingAction/);
   assert.doesNotMatch(heroPlacement, /data-car-details-desktop-compact-/);
   assert.doesNotMatch(heroPlacement, /carDetails\.bookingSummary/);
+  assert.match(clientSource, /data-car-details-desktop-selected-deal/);
+  assert.match(clientSource, /offer\.totalPrice/);
+  assert.match(clientSource, /data-car-details-desktop-overview-cta/);
 
   const stickyPlacement = sourceBetween(
     clientSource,
