@@ -2936,7 +2936,7 @@ export function CarsResultsExperience({
                     </p>
                   ) : null}
                   <div className="hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
-                    <span className="shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm lg:text-[14px] lg:font-bold lg:leading-5 lg:tracking-[-0.002em] lg:text-[#334155]">
+                    <span className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
                       {t("carsResults.sortBy")}:
                     </span>
                     <div
@@ -2949,7 +2949,7 @@ export function CarsResultsExperience({
                         aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
                         aria-haspopup="menu"
                         aria-expanded={carsSortOpen}
-                        className="cars-results-desktop-filter-heading-type inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#07133B] sm:gap-2 sm:px-2 sm:text-[16px]"
+                        className="cars-results-desktop-sort-trigger inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#07133B] sm:gap-2 sm:px-2 sm:text-[16px]"
                         onClick={() => setCarsSortOpen((open) => !open)}
                       >
                         <span className="min-w-0 truncate whitespace-nowrap">
@@ -2981,7 +2981,8 @@ export function CarsResultsExperience({
                             role="menuitemradio"
                             aria-checked={sort === option.value}
                             tabIndex={carsSortOpen ? 0 : -1}
-                            className={cn("flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30 lg:text-[15px] lg:leading-5", sort === option.value ? "bg-[#EEF5FF] font-bold text-[#07133B]" : "font-medium text-[#334155] hover:bg-slate-50 hover:text-[#142033]")}
+                            data-selected={sort === option.value ? "true" : "false"}
+                            className="cars-results-desktop-sort-option flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30"
                             onClick={() => {
                               startFilterResultsTransition();
                               setCurrentPage(1);

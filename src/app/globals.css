@@ -178,6 +178,48 @@ body {
     text-rendering: optimizeLegibility;
   }
 
+  .cars-results-desktop-sort-label {
+    font-family: var(--font-sans) !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.002em !important;
+    color: #334155 !important;
+    font-variation-settings: "wght" 700;
+  }
+
+  .cars-results-desktop-sort-trigger {
+    font-family: var(--font-sans) !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.003em !important;
+    color: #020617 !important;
+    font-variation-settings: "wght" 700;
+  }
+
+  .cars-results-desktop-sort-option {
+    font-family: var(--font-sans) !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.002em !important;
+    color: #1e293b !important;
+    font-variation-settings: "wght" 600;
+  }
+
+  .cars-results-desktop-sort-option:hover {
+    background: #f8fafc;
+    color: #0f172a !important;
+  }
+
+  .cars-results-desktop-sort-option[data-selected="true"] {
+    background: #eef5ff;
+    color: #020617 !important;
+    font-weight: 700 !important;
+    font-variation-settings: "wght" 700;
+  }
+
   .cars-results-footer-typography .cars-footer-confidence-tagline,
   .cars-results-footer-typography .cars-footer-seller-notice,
   .cars-results-footer-typography .cars-footer-legal-row {

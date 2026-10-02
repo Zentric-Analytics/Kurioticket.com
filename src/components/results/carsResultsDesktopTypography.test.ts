@@ -101,36 +101,42 @@ test("desktop Cars result cards mirror the mobile weight and category hierarchy"
   assert.match(card, /desktopSurfaceParity \? "lg:text-\[13px\] lg:leading-5" : ""/);
 });
 
-test("desktop Cars sort control has a clear polished label/value hierarchy", () => {
+test("desktop Cars sort trigger and dropdown share enforced rendered typography", () => {
   assert.match(
     results,
-    /className="shrink-0 whitespace-nowrap text-xs font-medium text-\[#536B92\] sm:text-sm lg:text-\[14px\] lg:font-bold lg:leading-5 lg:tracking-\[-0\.002em\] lg:text-\[#334155\]"[\s\S]*?\{t\("carsResults\.sortBy"\)\}:/,
+    /className="cars-results-desktop-sort-label[\s\S]*?\{t\("carsResults\.sortBy"\)\}:/,
   );
   assert.match(
     results,
-    /className="cars-results-desktop-filter-heading-type inline-flex h-9[\s\S]*?selectedCarSortLabel/,
+    /className="cars-results-desktop-sort-trigger inline-flex h-9[\s\S]*?selectedCarSortLabel/,
+  );
+  assert.match(
+    results,
+    /data-selected=\{sort === option\.value \? "true" : "false"\}[\s\S]*?className="cars-results-desktop-sort-option/,
   );
   assert.match(
     results,
     /<ChevronDown[\s\S]*?"shrink-0 text-current transition-transform duration-150"/,
   );
-});
-test("desktop Cars sort dropdown has strong selected and readable unselected states", () => {
-  assert.match(
-    results,
-    /sort === option\.value \? "bg-\[#EEF5FF\] font-bold text-\[#07133B\]" : "font-medium text-\[#334155\] hover:bg-slate-50 hover:text-\[#142033\]"/,
-  );
-  assert.match(
-    results,
-    /lg:text-\[15px\] lg:leading-5/,
-  );
-  assert.match(
-    results,
-    /focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-\[#004BB8\]\/30/,
-  );
   assert.match(
     results,
     /<Check size=\{15\} strokeWidth=\{2\.5\} aria-hidden="true" \/>/,
+  );
+  assert.match(
+    css,
+    /\.cars-results-desktop-sort-label \{[\s\S]*?font-size: 15px !important;[\s\S]*?font-weight: 700 !important;[\s\S]*?color: #334155 !important;[\s\S]*?font-variation-settings: "wght" 700;/,
+  );
+  assert.match(
+    css,
+    /\.cars-results-desktop-sort-trigger \{[\s\S]*?font-size: 15px !important;[\s\S]*?font-weight: 700 !important;[\s\S]*?color: #020617 !important;[\s\S]*?font-variation-settings: "wght" 700;/,
+  );
+  assert.match(
+    css,
+    /\.cars-results-desktop-sort-option \{[\s\S]*?font-size: 15px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?color: #1e293b !important;[\s\S]*?font-variation-settings: "wght" 600;/,
+  );
+  assert.match(
+    css,
+    /\.cars-results-desktop-sort-option\[data-selected="true"\] \{[\s\S]*?background: #eef5ff;[\s\S]*?font-weight: 700 !important;[\s\S]*?font-variation-settings: "wght" 700;/,
   );
 });
 test("desktop Cars pricing and price tracking keep price emphasis without over-weighting metadata", () => {
