@@ -1340,16 +1340,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     cabinClassInput,
     t,
   );
-  const shouldRenderDesktopFullSearchForm = true;
-  const shouldShowDesktopCompactSummary = false;
-  const showFullSearchForm =
-    shouldRenderDesktopFullSearchForm ||
-    !isSearchCollapsed ||
-    isSearchExpandedWhileSticky;
-  const showCompactSearchSummary =
-    !shouldRenderDesktopFullSearchForm &&
-    isSearchCollapsed &&
-    !isSearchExpandedWhileSticky;
+  const shouldRenderDesktopFullSearchForm = false;
+  const shouldShowDesktopCompactSummary = true;
+  const showFullSearchForm = isSearchExpandedWhileSticky;
+  const showCompactSearchSummary = !isSearchExpandedWhileSticky;
   const savedRoutes = useMemo(
     () =>
       savedItemIds
