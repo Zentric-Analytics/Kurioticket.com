@@ -7383,7 +7383,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           "relative z-40 hidden border-b border-transparent transition-[padding,background-color] duration-200 sm:block",
           isSearchCollapsed
             ? "border-transparent bg-white/95 py-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur"
-            : "border-transparent bg-white pb-0 pt-7",
+            : "border-transparent bg-white pb-5 pt-7",
         )}
       >
         <div className="page-shell">
