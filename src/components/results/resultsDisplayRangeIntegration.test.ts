@@ -21,6 +21,8 @@ for (const [product, file, pageSize] of [
     } else {
       assert.match(source, /Showing results \$\{resultsDisplayRange\.start\} through \$\{resultsDisplayRange\.end\} of/);
     }
-    assert.match(source, /\{resultsDisplayRange \? \(/);
+    assert.match(source, product === "Hotels"
+      ? /\{resultsDisplayRange && totalHotelResultPages > 1 \? \(/
+      : /\{resultsDisplayRange \? \(/);
   });
 }

@@ -149,6 +149,23 @@ body {
     text-rendering: optimizeLegibility;
   }
 
+  .cars-results-desktop-filter-heading-type {
+    font-family: var(--font-sans) !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.003em !important;
+    color: #020617 !important;
+    font-variation-settings: "wght" 700;
+  }
+
+  input.cars-results-desktop-filter-heading-type::placeholder {
+    font-weight: 500 !important;
+    color: #94a3b8 !important;
+    font-variation-settings: "wght" 500;
+    opacity: 1;
+  }
+
   .cars-results-footer-typography .cars-footer-confidence-tagline,
   .cars-results-footer-typography .cars-footer-seller-notice,
   .cars-results-footer-typography .cars-footer-legal-row {
@@ -250,6 +267,129 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+.hotel-results-sort-trigger {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+@media (min-width: 1024px) {
+  [data-hotel-results-desktop-header] {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+  }
+
+  [data-hotel-results-desktop-search] {
+    position: sticky;
+    top: 70px;
+    z-index: 45;
+  }
+
+  [data-hotel-results-edit-card] {
+    max-width: 980px;
+  }
+
+  [data-hotel-results-edit-frame] {
+    border: 1px solid #c5cfda;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(20, 32, 51, 0.04);
+  }
+
+  [data-hotel-results-edit-frame] > div {
+    column-gap: 0;
+  }
+
+  [data-hotel-results-edit-field] {
+    min-height: 56px;
+    padding: 7px 12px 7px 48px;
+    border: 0;
+    border-right: 1px solid #d9e1e9;
+    border-radius: 0;
+    background: #ffffff;
+  }
+
+  [data-hotel-results-edit-field="destination"] {
+    border-radius: 9px 0 0 9px;
+  }
+
+  [data-hotel-results-edit-field="guests"] {
+    border-right: 0;
+  }
+
+  [data-hotel-results-edit-leading-icon] {
+    position: absolute;
+    top: 50%;
+    left: 17px;
+    display: block;
+    width: 19px;
+    height: 19px;
+    transform: translateY(-50%);
+    color: #142033;
+  }
+
+  [data-hotel-results-edit-inline-icon] {
+    display: none;
+  }
+
+  [data-hotel-results-edit-chevron] {
+    display: none;
+  }
+
+  [data-hotel-results-edit-field]:hover {
+    background: #f8fafc;
+  }
+
+  [data-hotel-results-edit-field]:focus-within {
+    background: #f8fafc;
+  }
+
+  [data-hotel-results-edit-label] {
+    color: #66758a;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 14px;
+    text-transform: none;
+  }
+
+  [data-hotel-results-edit-value] {
+    color: #142033;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+  }
+
+  [data-hotel-results-edit-action-cell] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  [data-hotel-results-edit-action] {
+    display: flex;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    align-self: center;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 9999px;
+    background: #004bb8;
+    color: #fff;
+    box-shadow: none;
+  }
+
+  [data-hotel-results-edit-action]:hover {
+    background: #003f9c;
+    color: #fff;
+  }
 }
 
 /* Mobile Flight Results nearby insight uses an explicit rendered-size rule so

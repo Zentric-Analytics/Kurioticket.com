@@ -24,12 +24,12 @@
 .iconButton { width: 36px; height: 36px; display: inline-flex; justify-content: center; align-items: center; border: 1px solid #d9dfe2; border-radius: 5px; background: #fff; color: #192024; }
 .iconButton:hover, .secondaryButton:hover { background: #f3f5f6; }
 .iconButton[aria-pressed=true] { color: #e92d55; }
-.sectionBar { position: sticky; top: 0; z-index: 35; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; border-bottom: 1px solid #d9dfe2; background: #fff; margin-top: 8px; }
+.sectionBar { position: sticky; top: 0; z-index: 35; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; border-bottom: 1px solid #d9dfe2; background: #F7F9FC; }
 .sectionActions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; min-width: 0; margin-left: auto; }
-.sectionBar .utilityActions .iconButton { border: 0; background: transparent; }
-.tabs { display: flex; align-self: stretch; flex-shrink: 0; gap: 4px; }
-.tabs a { display: inline-flex; align-items: center; padding: 0 14px; border-bottom: 2px solid transparent; color: #59636a; font-weight: 600; text-decoration: none; }
-.tabs a:first-child { padding-left: 0; }
+.sectionBar .utilityActions { gap: 0; }
+.sectionBar .utilityActions .iconButton { width: 28px; height: 32px; border: 0; background: transparent; }
+.tabs { display: flex; align-self: stretch; flex-shrink: 0; }
+.tabs a { display: inline-flex; align-items: center; padding: 0 16px; border-bottom: 2px solid transparent; color: #59636a; font-weight: 600; text-decoration: none; }
 .tabs a[aria-current=location] { color: #192024; border-color: #192024; }
 .tabs a:hover { color: #004bb8; }
 .section { padding: 20px 0 22px; border-bottom: 1px solid #d9dfe2; scroll-margin-top: 84px; }
