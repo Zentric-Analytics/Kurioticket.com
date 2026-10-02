@@ -124,10 +124,38 @@ test("desktop fare stays beside the itinerary while details span beneath both co
     /grid-template-columns:\s*minmax\(0, 1fr\) 196px/,
   );
   assert.match(desktopBodyRule, /row-gap:\s*0\.5rem/);
-  assert.match(desktopFareRule, /border-left:\s*0/);
+  assert.match(desktopFareRule, /align-items:\s*flex-end/);
+  assert.match(desktopFareRule, /border-left:\s*1px solid #d8e1ec/);
   assert.match(desktopFareRule, /border-top:\s*0/);
-  assert.match(desktopFareRule, /padding-left:\s*0/);
-  assert.match(desktopFareRule, /padding-top:\s*0/);
+  assert.match(desktopFareRule, /padding-left:\s*1rem/);
+  assert.match(desktopFareRule, /padding-bottom:\s*0/);
+  assert.match(desktopFareRule, /text-align:\s*right/);
+
+  const desktopCommerceRule = ruleBody(
+    globalsCss,
+    ".flight-card-fare-commerce",
+    finalDesktopStart,
+  );
+  const desktopPriceFrameRule = ruleBody(
+    globalsCss,
+    ".flight-card-price-frame",
+    finalDesktopStart,
+  );
+  const desktopViewRule = ruleBody(
+    globalsCss,
+    ".flight-card-view-button",
+    finalDesktopStart,
+  );
+  assert.match(desktopCommerceRule, /width:\s*auto/);
+  assert.match(desktopCommerceRule, /margin-left:\s*auto/);
+  assert.match(desktopCommerceRule, /align-items:\s*flex-end/);
+  assert.match(desktopPriceFrameRule, /width:\s*auto/);
+  assert.match(desktopPriceFrameRule, /margin-left:\s*auto/);
+  assert.match(desktopPriceFrameRule, /text-align:\s*right/);
+  assert.match(desktopViewRule, /width:\s*auto/);
+  assert.match(desktopViewRule, /min-height:\s*1\.5rem/);
+  assert.match(desktopViewRule, /margin-top:\s*0\.375rem/);
+  assert.match(desktopViewRule, /align-self:\s*flex-end/);
 
   const mediumQueryStart = globalsCss.indexOf(
     "@container (max-width: 759px)",
@@ -312,30 +340,28 @@ test("desktop detail strip uses balanced transparent metadata columns with mobil
 
   assert.match(details, /flight-card-detail-value min-w-0/);
   assert.doesNotMatch(details, /truncate|line-clamp|overflow-hidden/);
-  assert.match(desktopDetailsRule, /grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(desktopDetailsRule, /grid-template-columns:\s*repeat\(3, max-content\)/);
   assert.match(desktopDetailsRule, /align-items:\s*center/);
   assert.match(desktopDetailsRule, /border:\s*0/);
   assert.match(desktopDetailsRule, /border-radius:\s*0/);
-  assert.match(desktopDetailsRule, /column-gap:\s*0/);
+  assert.match(desktopDetailsRule, /justify-content:\s*space-between/);
+  assert.match(desktopDetailsRule, /column-gap:\s*1\.5rem/);
   assert.match(desktopDetailsRule, /background:\s*transparent/);
   assert.match(desktopDetailsRule, /margin-top:\s*0/);
   assert.match(desktopDetailsRule, /padding:\s*0\.5rem 0/);
 
   assert.match(desktopItemRule, /grid-template-columns:\s*1rem max-content minmax\(0, 1fr\)/);
   assert.match(desktopItemRule, /min-height:\s*1\.5rem/);
-  assert.match(desktopItemRule, /padding:\s*0 1rem/);
-  assert.match(desktopItemRule, /border-inline-end:\s*1px solid #d8e1ec/);
-  assert.match(
-    ruleBody(globalsCss, ".flight-card-detail-item:first-child", desktopStart),
-    /padding-inline-start:\s*0/,
-  );
-  const lastItemRule = ruleBody(
+  assert.match(desktopItemRule, /padding:\s*0/);
+  assert.match(desktopItemRule, /border:\s*0/);
+  assert.doesNotMatch(desktopItemRule, /border-inline-end/);
+  const edgeItemRule = ruleBody(
     globalsCss,
-    ".flight-card-detail-item:last-child",
+    ".flight-card-detail-item:first-child,",
     desktopStart,
   );
-  assert.match(lastItemRule, /padding-inline-end:\s*0/);
-  assert.match(lastItemRule, /border-inline-end:\s*0/);
+  assert.match(edgeItemRule, /padding:\s*0/);
+  assert.match(edgeItemRule, /border:\s*0/);
 
   assert.match(desktopDividerRule, /content:\s*none/);
 
