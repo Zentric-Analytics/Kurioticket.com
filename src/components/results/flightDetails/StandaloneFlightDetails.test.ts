@@ -629,7 +629,7 @@ test("desktop Pick your fare cards mirror the native hierarchy without changing 
   assert.match(desktop, /border-\[#075EE8\][\s\S]*?shadow-\[0_6px_16px/);
   assert.match(desktop, /border-\[#D7E0EC\][\s\S]*?shadow-\[0_2px_7px/);
   assert.doesNotMatch(desktop, /selected \? "[^"]*border-(?:2|\[2px\])/);
-  assert.match(desktop, /data-desktop-fare-content className="min-w-0 pb-14"/);
+  assert.match(desktop, /data-desktop-fare-content className="min-w-0 pb-14"/);\n  assert.match(desktop, /data-empty-benefits=\{!compactTerms\.length \|\| undefined\}/);\n  assert.match(desktop, /data-desktop-fare-empty-content className="flex h-full min-w-0 flex-col items-center justify-center gap-5 px-2 pb-1"/);
   assert.match(desktop, /data-desktop-fare-identity className="mx-auto flex max-w-full items-center justify-center gap-\[7px\]"/);
   assert.match(desktop, /h-6 w-6 shrink-0[^"]*rounded-lg border/);
   assert.match(desktop, /line-clamp-2/);
@@ -687,7 +687,7 @@ test("desktop Flight Details keeps price and booking action inside Compare deals
   assert.match(panel, /data-desktop-flight-deal-list/);
   assert.match(panel, /data-desktop-flight-deal-card/);
   assert.match(panel, /data-desktop-flight-deal-action/);
-  assert.match(panel, /className="max-w-\\[820px\\] space-y-2 py-1"/);
+  assert.match(panel, /className="w-full max-w-\\[680px\\] space-y-2 py-1"/);
   assert.match(panel, /fallbackOffer\?\.bookingProviderName\?\.trim\(\)/);
   assert.match(panel, /fallbackOffer\?\.provider\?\.trim\(\)/);
   assert.match(panel, /displayedDeals = deals\.length/);
@@ -698,7 +698,7 @@ test("desktop Flight Details keeps price and booking action inside Compare deals
   assert.match(panel, /"Unavailable"/);
   assert.match(panel, /h-9 w-\\[112px\\]/);
   assert.match(panel, /data-desktop-flight-provider-logo/);
-  assert.match(panel, /min-h-\\[80px\\]/);
+  assert.match(panel, /min-h-\\[92px\\]/);
   assert.match(panel, /disabled=\{redirecting \|\| !canContinue\}/);
   assert.match(panel, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.doesNotMatch(source, /DesktopCheckoutSummary|data-desktop-checkout-summary/);
@@ -742,7 +742,7 @@ test("desktop Compare deals uses the shared Cars and Hotels price hierarchy", as
   assert.match(panel, /Trip total/);
   assert.match(panel, /View deal/);
   assert.match(panel, /rounded-xl border bg-white px-4 py-3/);
-  assert.match(panel, /grid-cols-\\[132px_minmax\\(0,1fr\\)\\]/);
+  assert.doesNotMatch(panel, /grid-cols-\\[132px_minmax\\(0,1fr\\)\\]/);\n  assert.match(panel, /data-desktop-flight-deal-provider[\\s\\S]*?data-desktop-flight-deal-price/);
   assert.match(panel, /inline-flex h-9 w-\\[112px\\]/);
   assert.match(panel, /data-provider-handoff-unavailable/);
   assert.match(panel, /disabled:bg-\\[#004BB8\\]/);
