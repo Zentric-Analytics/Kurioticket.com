@@ -1859,7 +1859,10 @@ textarea {
   .flight-results-grid .flight-card-duration { font-size: 0.6875rem; line-height: 0.875rem; }
   .flight-results-grid .flight-card-details { margin-top: 0; padding-top: 0.375rem; line-height: 0.9375rem; }
   .flight-results-grid .flight-card-fare-action { gap: 0.5rem; }
-  .flight-results-grid .flight-card-view-button { min-height: 44px; padding-block: 0.5rem; }
+  .flight-results-grid .flight-card-view-button {
+    min-height: 1.5rem;
+    padding-block: 0;
+  }
 
   [data-desktop-nearby-fare-rail] {
     grid-template-columns: 42px repeat(7, minmax(0, 1fr)) 42px;
