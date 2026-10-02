@@ -129,7 +129,7 @@ test("desktop Flight Results puts the Hotels-style summary directly above result
   const summarySource = flight.slice(summary, desktopResults);
   assert.match(
     summarySource,
-    /text-\[12px\] font-normal leading-4 text-\[#191E3B\]/,
+    /text-\[12px\] font-semibold leading-4 text-\[#191E3B\]/,
   );
   assert.match(summarySource, /hotel-results-sort-trigger/);
   assert.match(
