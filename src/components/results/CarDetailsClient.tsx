@@ -748,18 +748,18 @@ function DesktopPickupReturnOverview({
 
   return (
     <div
-      className="mx-auto w-full max-w-[900px] rounded-[16px] border border-slate-200 bg-white p-5 shadow-[0_3px_16px_rgba(15,23,42,0.035)]"
+      className="mx-auto w-full max-w-[900px] py-1"
       data-car-details-desktop-pickup-overview
     >
       <h2 className="car-details-desktop-section-heading-type">Pickup and return</h2>
-      <div className="mt-4 grid grid-cols-2 gap-5">
+      <div className="mt-4 grid grid-cols-2 divide-x divide-slate-200" data-car-details-desktop-pickup-columns>
         {[
           [copy("carDetails.pickup"), car.pickupLocation, search.pickupDate, search.pickupTime],
           [copy("carDetails.return"), car.returnLocation, search.dropoffDate, search.dropoffTime],
         ].map(([label, location, date, time]) => (
           <div
             key={label}
-            className="rounded-[12px] border border-slate-200 bg-[#F8FAFC] p-4"
+            className="min-w-0 px-6 py-1 first:pl-0 last:pr-0"
           >
             <p className="car-details-desktop-item-heading-type">{label}</p>
             <p className="car-details-desktop-primary-copy-type mt-2 flex items-start gap-2">
@@ -924,15 +924,15 @@ function DesktopRentalDetails({
 
   return (
     <div
-      className="mx-auto w-full max-w-[900px] rounded-[16px] border border-slate-200 bg-white p-5 shadow-[0_3px_16px_rgba(15,23,42,0.035)]"
+      className="mx-auto w-full max-w-[900px] py-1"
       data-car-details-desktop-rental-details
     >
       <h2 className="car-details-desktop-section-heading-type">Rental details</h2>
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="mt-4 grid grid-cols-2 gap-x-8" data-car-details-desktop-rental-grid>
         {details.map((detail) => (
           <div
             key={detail.label}
-            className="rounded-[12px] border border-slate-200 bg-[#F8FAFC] p-4"
+            className="min-w-0 border-b border-slate-200 py-4"
           >
             <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-[#536B92]">
               {detail.label}
