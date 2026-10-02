@@ -816,15 +816,46 @@ function CompareDealsPanel({
   onViewDeal: (offerId: string) => void;
 }) {
   const deals = fare?.deals ?? [];
-  if (!deals.length)
+  const fallbackOffer = fare?.offer;
+  const fallbackProviderName =
+    fallbackOffer?.bookingProviderName?.trim() ||
+    fallbackOffer?.provider?.trim() ||
+    fallbackOffer?.airlineName?.trim() ||
+    "";
+  const fallbackDeal =
+    !deals.length &&
+    fallbackOffer &&
+    fallbackProviderName &&
+    Number.isFinite(fallbackOffer.price) &&
+    fallbackOffer.price > 0
+      ? {
+          key: `desktop-source-${fare?.key ?? fallbackOffer.id}`,
+          offerId: fallbackOffer.id,
+          providerName: fallbackProviderName,
+          price: fallbackOffer.price,
+          currency: fallbackOffer.currency,
+          offer: fallbackOffer,
+        }
+      : null;
+  const displayedDeals = deals.length
+    ? deals.map((deal) => ({ deal, canContinue: true }))
+    : fallbackDeal
+      ? [{ deal: fallbackDeal, canContinue: Boolean(fare?.handoff.available) }]
+      : [];
+  const supportingFacts = (fare?.distinguishingTerms ?? [])
+    .filter(({ text }) => text.trim())
+    .slice(0, 2);
+
+  if (!displayedDeals.length)
     return (
       <DesktopFarePanel id="deals">
         <DesktopEmptyState
-          title="No booking deals available"
-          description="No additional live provider deals were supplied for this fare."
+          title="No fare price available"
+          description="The provider did not supply a usable price for this fare."
         />
       </DesktopFarePanel>
     );
+
   return (
     <DesktopFarePanel id="deals">
       <div
@@ -833,8 +864,10 @@ function CompareDealsPanel({
         className="max-w-[820px] space-y-3 py-1"
         data-desktop-flight-deal-list
       >
-        {deals.map((deal, index) => {
-          const selected = deal.offerId === selectedDealOfferId;
+        {displayedDeals.map(({ deal, canContinue }, index) => {
+          const selected =
+            deal.offerId === selectedDealOfferId ||
+            (!selectedDealOfferId && index === 0);
           const identityMark = resolveDealIdentityMark(deal);
           const price = formatDisplayPrice({
             amount: deal.price,
@@ -851,25 +884,41 @@ function CompareDealsPanel({
               key={deal.key}
               data-desktop-flight-deal-card
               data-selected={selected || undefined}
-              className={`flex min-h-[96px] min-w-0 items-center justify-between gap-4 rounded-xl border bg-white px-4 py-3 transition ${selected ? "border-[#075EE8] shadow-[0_4px_14px_rgba(7,94,232,0.08)]" : "border-[#D9E2E8]"}`}
+              data-provider-handoff-unavailable={!canContinue || undefined}
+              className={`flex min-h-[112px] min-w-0 items-center justify-between gap-5 rounded-xl border bg-white px-5 py-4 transition ${selected ? "border-[#075EE8] shadow-[0_4px_14px_rgba(7,94,232,0.08)]" : "border-[#D9E2E8]"}`}
             >
               <button
                 type="button"
                 role="radio"
                 aria-checked={selected}
-                tabIndex={selected || (!selectedDealOfferId && index === 0) ? 0 : -1}
+                tabIndex={selected ? 0 : -1}
                 onClick={() => onSelectDeal(deal.offerId)}
                 onKeyDown={(event) => {
-                  const direction = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 0;
-                  const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? deals.length - 1 : direction ? (index + direction + deals.length) % deals.length : -1;
+                  const direction =
+                    event.key === "ArrowRight" || event.key === "ArrowDown"
+                      ? 1
+                      : event.key === "ArrowLeft" || event.key === "ArrowUp"
+                        ? -1
+                        : 0;
+                  const nextIndex =
+                    event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? displayedDeals.length - 1
+                        : direction
+                          ? (index + direction + displayedDeals.length) %
+                            displayedDeals.length
+                          : -1;
                   if (nextIndex < 0) return;
                   event.preventDefault();
-                  onSelectDeal(deals[nextIndex].offerId);
-                  event.currentTarget.parentElement?.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[nextIndex]?.focus();
+                  onSelectDeal(displayedDeals[nextIndex].deal.offerId);
+                  event.currentTarget.parentElement?.parentElement
+                    ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
+                    [nextIndex]?.focus();
                 }}
                 className="min-w-0 flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2"
               >
-                <span className="flex min-w-0 items-center gap-2">
+                <span className="flex min-w-0 items-center gap-2.5">
                   {identityMark.kind === "airline" ? (
                     <FlightIdentityMark
                       logoUrl={identityMark.logoUrl}
@@ -880,29 +929,72 @@ function CompareDealsPanel({
                     {deal.providerName}
                   </span>
                 </span>
-                <span className="mt-2 block min-w-0">
+
+                <span className="mt-2.5 block min-w-0">
                   <strong
                     className="block break-words text-[20px] font-semibold leading-6 tracking-[-0.02em] tabular-nums text-[#192024]"
                     aria-label={price.ariaLabel}
                   >
                     {price.formatted}
                   </strong>
-                  <span className="block text-[12px] font-normal leading-[14px] text-[#59636a]">
+                  <span className="block text-[12px] font-normal leading-[16px] text-[#59636a]">
                     {fare?.label ? `${fare.label} · Trip total` : "Trip total"}
                   </span>
                 </span>
+
+                {supportingFacts.length ? (
+                  <span
+                    className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5 text-[12px] font-normal leading-4 text-[#59636a]"
+                    data-desktop-flight-deal-benefits
+                  >
+                    {supportingFacts.map((term, factIndex) => (
+                      <span
+                        key={`${term.category}-${term.text}-${factIndex}`}
+                        className="inline-flex min-w-0 items-center gap-1.5"
+                      >
+                        {term.semantic === "positive" ? (
+                          <Check
+                            aria-hidden
+                            className="h-3.5 w-3.5 shrink-0 text-emerald-600"
+                          />
+                        ) : term.semantic === "negative" ? (
+                          <MinusCircle
+                            aria-hidden
+                            className="h-3.5 w-3.5 shrink-0 text-slate-500"
+                          />
+                        ) : (
+                          <Info
+                            aria-hidden
+                            className="h-3.5 w-3.5 shrink-0 text-slate-500"
+                          />
+                        )}
+                        <span className="line-clamp-1">{term.text}</span>
+                      </span>
+                    ))}
+                  </span>
+                ) : null}
               </button>
+
               <button
                 type="button"
-                disabled={redirecting}
+                disabled={redirecting || !canContinue}
+                aria-label={
+                  canContinue
+                    ? `Continue deal with ${deal.providerName}`
+                    : `Provider checkout unavailable for ${deal.providerName}`
+                }
                 onClick={() => {
                   onSelectDeal(deal.offerId);
                   onViewDeal(deal.offerId);
                 }}
-                className="inline-flex h-11 w-[150px] shrink-0 items-center justify-center rounded-lg bg-[#075EE8] px-3 text-sm font-semibold text-white transition-colors hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+                className="inline-flex h-11 w-[150px] shrink-0 items-center justify-center rounded-lg bg-[#075EE8] px-3 text-sm font-semibold text-white shadow-[0_3px_10px_rgba(7,94,232,0.16)] transition-colors hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
                 data-desktop-flight-deal-action
               >
-                {redirecting ? "Opening…" : "Continue deal"}
+                {canContinue
+                  ? redirecting
+                    ? "Opening…"
+                    : "Continue deal"
+                  : "Unavailable"}
               </button>
             </article>
           );
