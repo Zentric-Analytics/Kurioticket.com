@@ -31,15 +31,19 @@ test("standalone desktop Cars Details body is centered at a production-ready wid
   assert.doesNotMatch(client, /<AppHeader\b/);
 });
 
-test("standalone desktop overview uses the approved split-card sizing", () => {
+test("standalone desktop overview uses centered single-column sizing", () => {
   assert.match(client, /lg:max-w-\[1080px\] lg:space-y-5/);
   assert.match(hero, /data-car-details-desktop-overview/);
-  assert.match(hero, /lg:grid-cols-\[minmax\(0,1fr\)_320px\]/);
+  assert.match(hero, /hidden lg:flex lg:flex-col lg:items-center lg:p-5/);
+  assert.doesNotMatch(hero, /lg:grid-cols-\[minmax\(0,1fr\)_320px\]/);
   assert.match(hero, /data-car-details-desktop-overview-image/);
   assert.match(hero, /h-\[250px\]/);
+  assert.match(hero, /max-w-\[680px\]/);
   assert.match(hero, /sizes="680px"/);
-  assert.match(hero, /data-car-details-desktop-overview-summary/);
-  assert.match(client, /lg:max-w-\[720px\]/);
+  assert.match(hero, /max-w-\[820px\] text-center/);
+  assert.doesNotMatch(hero, /data-car-details-desktop-overview-summary/);
+  assert.match(client, /lg:max-w-\[900px\]/);
+  assert.doesNotMatch(client, /lg:max-w-\[720px\]/);
 });
 
 test("desktop width polish does not rewrite sticky or section-scroll behavior", () => {
