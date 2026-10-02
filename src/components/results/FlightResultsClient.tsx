@@ -3057,8 +3057,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   useEffect(() => {
     function updateDropdownPosition(target: "origin" | "destination") {
       const viewportPadding = 16;
-      const preferredWidth = 380;
       const useStickyWrap = activeDesktopSearchSurface === "sticky";
+      const preferredWidth = useStickyWrap ? 560 : 380;
       const wrap =
         target === "origin"
           ? useStickyWrap
@@ -3157,12 +3157,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   useEffect(() => {
     function updateDatePickerPosition(target: "departure" | "return") {
       const viewportPadding = 16;
-      const preferredWidth = 620;
+      const useStickyTrigger = activeDesktopSearchSurface === "sticky";
+      const preferredWidth = useStickyTrigger ? 920 : 620;
       const wrap =
         target === "departure"
           ? departureWrapRef.current
           : (returnWrapRef.current ?? departureWrapRef.current);
-      const trigger = wrap?.querySelector("button");
+      const trigger = useStickyTrigger
+        ? stickyDateButtonRef.current
+        : wrap?.querySelector("button");
 
       if (!trigger) return;
 
@@ -3171,9 +3174,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         preferredWidth,
         window.innerWidth - viewportPadding * 2,
       );
+      const preferredLeft = useStickyTrigger
+        ? rect.left + rect.width / 2 - width / 2
+        : rect.left;
       const left = Math.max(
         viewportPadding,
-        Math.min(rect.left, window.innerWidth - width - viewportPadding),
+        Math.min(
+          preferredLeft,
+          window.innerWidth - width - viewportPadding,
+        ),
       );
       const top = rect.bottom + 8;
 
@@ -3223,13 +3232,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("scroll", handleViewportChange, true);
     };
-  }, [activeDatePicker]);
+  }, [activeDatePicker, activeDesktopSearchSurface]);
 
   useEffect(() => {
     function updateTravelerPopoverPosition() {
       const viewportPadding = 16;
-      const preferredWidth = 360;
-      const trigger = travelerCabinWrapRef.current?.querySelector("button");
+      const useStickyTrigger = activeDesktopSearchSurface === "sticky";
+      const preferredWidth = useStickyTrigger ? 480 : 360;
+      const trigger = useStickyTrigger
+        ? stickyTravelerButtonRef.current
+        : travelerCabinWrapRef.current?.querySelector("button");
 
       if (!trigger) return;
 
@@ -3238,9 +3250,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         preferredWidth,
         window.innerWidth - viewportPadding * 2,
       );
+      const preferredLeft = useStickyTrigger ? rect.right - width : rect.left;
       const left = Math.max(
         viewportPadding,
-        Math.min(rect.left, window.innerWidth - width - viewportPadding),
+        Math.min(
+          preferredLeft,
+          window.innerWidth - width - viewportPadding,
+        ),
       );
       const top = rect.bottom + 8;
 
@@ -3289,7 +3305,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("scroll", handleViewportChange, true);
     };
-  }, [travelerPopoverOpen]);
+  }, [activeDesktopSearchSurface, travelerPopoverOpen]);
 
   function handleSwapLocations() {
     markExpandedSearchInteraction();
@@ -5579,7 +5595,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         {travelerPopoverOpen &&
                         activeDesktopSearchSurface === "sticky" ? (
                           <TravelerCabinPopover
-                            alignToField="right"
+                            prominentDesktop
                             position={
                               travelerPopoverPosition ?? {
                                 top: 0,
@@ -5699,7 +5715,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       activeDesktopSearchSurface === "sticky" ? (
                         <SuggestionList
                           id="sticky-flight-origin-suggestions"
-                          alignToField
+                          position={
+                            dropdownPosition ?? { top: 0, left: 0, width: 0 }
+                          }
                           suggestions={resolvedOriginSuggestions}
                           locale={locale}
                           onSelect={(value) => {
@@ -5776,7 +5794,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       activeDesktopSearchSurface === "sticky" ? (
                         <SuggestionList
                           id="sticky-flight-destination-suggestions"
-                          alignToField
+                          position={
+                            dropdownPosition ?? { top: 0, left: 0, width: 0 }
+                          }
                           suggestions={resolvedDestinationSuggestions}
                           locale={locale}
                           onSelect={(value) => {
@@ -5817,7 +5837,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       {activeDatePicker &&
                       activeDesktopSearchSurface === "sticky" ? (
                         <DatePickerPopover
-                          alignToField="right"
+                          prominentDesktop
                           position={
                             datePickerPosition ?? { top: 0, left: 0, width: 0 }
                           }
@@ -5877,7 +5897,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       {travelerPopoverOpen &&
                       activeDesktopSearchSurface === "sticky" ? (
                         <TravelerCabinPopover
-                          alignToField="right"
+                          prominentDesktop
                           position={
                             travelerPopoverPosition ?? {
                               top: 0,
@@ -8599,6 +8619,7 @@ function DatePickerPopover({
   position,
   mobileSheet = false,
   alignToField,
+  prominentDesktop = false,
   month,
   departureValue,
   returnValue,
@@ -8615,6 +8636,7 @@ function DatePickerPopover({
   position: { top: number; left: number; width: number };
   mobileSheet?: boolean;
   alignToField?: "left" | "right";
+  prominentDesktop?: boolean;
   launcherRef?: RefObject<HTMLElement | null>;
   month: Date;
   departureValue: string;
@@ -8818,7 +8840,9 @@ function DatePickerPopover({
         "w-full border border-slate-200 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.14)]",
         mobileSheet
           ? "flex h-[100dvh] min-h-0 max-w-full flex-col overflow-y-auto overscroll-contain rounded-none p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))]"
-          : "max-w-[min(560px,calc(100vw-2rem))] rounded-2xl p-3",
+          : prominentDesktop
+            ? "max-w-none rounded-xl p-4"
+            : "max-w-[min(560px,calc(100vw-2rem))] rounded-2xl p-3",
       )}
     >
       {mobileSheet ? (
@@ -8902,6 +8926,7 @@ function TravelerCabinPopover({
   position,
   mobileSheet = false,
   alignToField,
+  prominentDesktop = false,
   adultCount,
   childCount,
   infantCount,
@@ -8917,6 +8942,7 @@ function TravelerCabinPopover({
   position: { top: number; left: number; width: number };
   mobileSheet?: boolean;
   alignToField?: "left" | "right";
+  prominentDesktop?: boolean;
   launcherRef?: RefObject<HTMLElement | null>;
   adultCount: number;
   childCount: number;
@@ -9049,7 +9075,9 @@ function TravelerCabinPopover({
         "w-full border border-slate-200 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.14)]",
         mobileSheet
           ? "flex h-[100dvh] min-h-0 max-w-full flex-col overflow-hidden rounded-none pt-[env(safe-area-inset-top)]"
-          : "max-w-[min(320px,calc(100vw-2rem))] rounded-2xl p-3",
+          : prominentDesktop
+            ? "max-w-none rounded-xl p-4"
+            : "max-w-[min(320px,calc(100vw-2rem))] rounded-2xl p-3",
       )}
     >
       {mobileSheet ? (
