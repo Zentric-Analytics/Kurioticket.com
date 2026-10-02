@@ -7449,107 +7449,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           </h2>
           {!guidedMode && kayak && results.length === 0 ? <CombinedSearchEmpty otherStatus={loading ? "loading" : error ? "error" : "success"} retry={retryMainInventorySearch} /> : (
             <div className={cn(resultStackClass, "space-y-1 sm:space-y-4")}>
-              <div
-                data-flight-results-desktop-summary
-                className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-1 lg:bg-transparent"
-              >
-                <div>
-                  <p className="text-[12px] font-normal leading-4 text-[#191E3B]">
-                    {formatResultsFound(sortedResults.length, t)}
-                  </p>
-                  {resultsDisplayRange ? (
-                    <p
-                      aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${sortedResults.length}`}
-                      className="mt-0.5 text-xs font-medium leading-4 text-slate-500"
-                    >
-                      {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
-                    </p>
-                  ) : null}
-                </div>
-
-                <div
-                  ref={desktopSortRef}
-                  className="relative hidden shrink-0 items-center whitespace-nowrap lg:flex"
-                >
-                  <button
-                    ref={desktopSortButtonRef}
-                    type="button"
-                    aria-label={`Sort flight results: ${selectedSortLabel}`}
-                    aria-haspopup="listbox"
-                    aria-expanded={desktopSortOpen}
-                    className="flight-results-hotel-sort-trigger inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-[#9299A9] bg-white px-3 text-[12px] font-medium leading-4 text-[#191E3B] outline-none transition-colors hover:border-[#191E3B] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2"
-                    onClick={() => setDesktopSortOpen((open) => !open)}
-                  >
-                    <span>Sort by {selectedSortLabel}</span>
-                    <ChevronDown
-                      aria-hidden="true"
-                      className={cn(
-                        "h-3.5 w-3.5 transition-transform",
-                        desktopSortOpen && "rotate-180",
-                      )}
-                      strokeWidth={2}
-                    />
-                  </button>
-                  {desktopSortOpen ? (
-                    <div
-                      role="listbox"
-                      aria-label="Sort flight results"
-                      className="absolute right-0 top-[calc(100%+0.5rem)] z-50 min-w-[190px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]"
-                    >
-                      {sortOptions.map((option) => {
-                        const selected = sortMode === option.value;
-                        return (
-                          <button
-                            key={option.value}
-                            type="button"
-                            role="option"
-                            aria-selected={selected}
-                            className={cn(
-                              "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-base font-medium leading-6 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
-                              selected
-                                ? "bg-[#004BB8]/[0.08] text-[#004BB8]"
-                                : "text-slate-800 hover:bg-slate-50 hover:text-slate-950",
-                            )}
-                            onClick={() => {
-                              triggerFilterApplying();
-                              setSortMode(option.value);
-                              setDesktopSortOpen(false);
-                              handleUserFilterCommit();
-                            }}
-                          >
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center">
-                              {selected ? (
-                                <Check
-                                  aria-hidden="true"
-                                  className="h-4 w-4"
-                                  strokeWidth={2.25}
-                                />
-                              ) : null}
-                            </span>
-                            <span>{option.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-                </div>
-
-                <Button
-                  variant="secondary"
-                  className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] lg:hidden"
-                  onClick={(event) =>
-                    openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))
-                  }
-                >
-                  <SlidersHorizontal size={17} />
-                  {activeFilterCount > 0
-                    ? t("filtersWithCount").replace(
-                        "{{count}}",
-                        String(activeFilterCount),
-                      )
-                    : t("filters")}
-                </Button>
-              </div>
               {body?.tripType !== "multi-city" ? (
                 <>
                   <div className="w-full min-w-0 max-w-full overflow-hidden sm:hidden" aria-label="Nearby departure fares" data-nearby-fare-presentation="mobile">
@@ -7814,6 +7713,107 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 )}
               </div>
 
+              <div
+                data-flight-results-desktop-summary
+                className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-1 lg:bg-transparent"
+              >
+                <div>
+                  <p className="text-[12px] font-normal leading-4 text-[#191E3B]">
+                    {formatResultsFound(sortedResults.length, t)}
+                  </p>
+                  {resultsDisplayRange ? (
+                    <p
+                      aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${sortedResults.length}`}
+                      className="mt-0.5 text-xs font-medium leading-4 text-slate-500"
+                    >
+                      {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div
+                  ref={desktopSortRef}
+                  className="relative hidden shrink-0 items-center whitespace-nowrap lg:flex"
+                >
+                  <button
+                    ref={desktopSortButtonRef}
+                    type="button"
+                    aria-label={`Sort flight results: ${selectedSortLabel}`}
+                    aria-haspopup="listbox"
+                    aria-expanded={desktopSortOpen}
+                    className="hotel-results-sort-trigger inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-[#9299A9] bg-white px-3 text-[#191E3B] outline-none transition-colors hover:border-[#191E3B] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2"
+                    onClick={() => setDesktopSortOpen((open) => !open)}
+                  >
+                    <span>Sort by {selectedSortLabel}</span>
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={cn(
+                        "h-3.5 w-3.5 transition-transform",
+                        desktopSortOpen && "rotate-180",
+                      )}
+                      strokeWidth={2}
+                    />
+                  </button>
+                  {desktopSortOpen ? (
+                    <div
+                      role="listbox"
+                      aria-label="Sort flight results"
+                      className="absolute right-0 top-[calc(100%+0.5rem)] z-50 min-w-[190px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]"
+                    >
+                      {sortOptions.map((option) => {
+                        const selected = sortMode === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            role="option"
+                            aria-selected={selected}
+                            className={cn(
+                              "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-base font-medium leading-6 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
+                              selected
+                                ? "bg-[#004BB8]/[0.08] text-[#004BB8]"
+                                : "text-slate-800 hover:bg-slate-50 hover:text-slate-950",
+                            )}
+                            onClick={() => {
+                              triggerFilterApplying();
+                              setSortMode(option.value);
+                              setDesktopSortOpen(false);
+                              handleUserFilterCommit();
+                            }}
+                          >
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                              {selected ? (
+                                <Check
+                                  aria-hidden="true"
+                                  className="h-4 w-4"
+                                  strokeWidth={2.25}
+                                />
+                              ) : null}
+                            </span>
+                            <span>{option.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+
+                <Button
+                  variant="secondary"
+                  className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] lg:hidden"
+                  onClick={(event) =>
+                    openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))
+                  }
+                >
+                  <SlidersHorizontal size={17} />
+                  {activeFilterCount > 0
+                    ? t("filtersWithCount").replace(
+                        "{{count}}",
+                        String(activeFilterCount),
+                      )
+                    : t("filters")}
+                </Button>
+              </div>
               <div
                 ref={paginationListRef}
                 aria-busy={paginationPendingPage !== null}
