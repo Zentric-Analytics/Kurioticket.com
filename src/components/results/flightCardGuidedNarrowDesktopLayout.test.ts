@@ -265,7 +265,7 @@ test("all three detail lines share the left-side details region", () => {
   assert.match(ruleBody(globalsCss, ".flight-card-details"), /grid-area:\s*details/);
 });
 
-test("desktop detail strip matches the compact flat reference", () => {
+test("desktop detail strip uses balanced transparent metadata columns with mobile icon parity", () => {
   const detailsStart = flightCardSource.indexOf("function FlightDetailLines");
   const details = flightCardSource.slice(detailsStart);
   const desktopStart = globalsCss.indexOf(
@@ -304,22 +304,36 @@ test("desktop detail strip matches the compact flat reference", () => {
   assert.match(desktopDetailsRule, /align-items:\s*center/);
   assert.match(desktopDetailsRule, /border:\s*0/);
   assert.match(desktopDetailsRule, /border-radius:\s*0/);
-  assert.match(desktopDetailsRule, /background:\s*#f8fafc/);
+  assert.match(desktopDetailsRule, /column-gap:\s*0/);
+  assert.match(desktopDetailsRule, /background:\s*transparent/);
   assert.match(desktopDetailsRule, /margin-top:\s*0/);
-  assert.match(desktopDetailsRule, /padding:\s*0\.5rem 0\.75rem/);
+  assert.match(desktopDetailsRule, /padding:\s*0\.5rem 0/);
 
   assert.match(desktopItemRule, /grid-template-columns:\s*1rem max-content minmax\(0, 1fr\)/);
   assert.match(desktopItemRule, /min-height:\s*1\.5rem/);
-  assert.match(desktopItemRule, /padding:\s*0/);
+  assert.match(desktopItemRule, /padding:\s*0 1rem/);
+  assert.match(desktopItemRule, /border-inline-end:\s*1px solid #d8e1ec/);
+  assert.match(
+    ruleBody(globalsCss, ".flight-card-detail-item:first-child", desktopStart),
+    /padding-inline-start:\s*0/,
+  );
+  const lastItemRule = ruleBody(
+    globalsCss,
+    ".flight-card-detail-item:last-child",
+    desktopStart,
+  );
+  assert.match(lastItemRule, /padding-inline-end:\s*0/);
+  assert.match(lastItemRule, /border-inline-end:\s*0/);
 
   assert.match(desktopDividerRule, /content:\s*none/);
 
+  assert.match(details, /flight-card-detail-icon h-3\.5 w-3\.5 shrink-0 text-slate-500/);
   assert.match(desktopIconRule, /width:\s*1rem/);
   assert.match(desktopIconRule, /height:\s*1rem/);
   assert.match(desktopIconRule, /padding:\s*0/);
   assert.match(desktopIconRule, /border-radius:\s*0/);
   assert.match(desktopIconRule, /background:\s*transparent/);
-  assert.match(desktopIconRule, /color:\s*#0067db/);
+  assert.match(desktopIconRule, /color:\s*#64748b/);
 
   assert.match(desktopValueRule, /white-space:\s*nowrap/);
 });
