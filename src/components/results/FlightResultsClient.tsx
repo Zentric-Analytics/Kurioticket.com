@@ -1368,6 +1368,48 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setIsSearchExpandedWhileSticky(true);
   }, []);
 
+  const updateDesktopSearchPopoverFrame = useCallback(
+    (compactForm?: HTMLElement | null) => {
+      if (typeof window === "undefined" || window.innerWidth < 1024) {
+        setDesktopSearchPopoverFrame(null);
+        return false;
+      }
+
+      const resolvedCompactForm =
+        compactForm ??
+        document.querySelector<HTMLElement>(
+          "[data-flight-results-nav-search-form]",
+        );
+      if (!resolvedCompactForm) {
+        setDesktopSearchPopoverFrame(null);
+        return false;
+      }
+
+      const rect = resolvedCompactForm.getBoundingClientRect();
+      const viewportGutter = 24;
+      const availableWidth = Math.max(
+        0,
+        window.innerWidth - viewportGutter * 2,
+      );
+      const preferredWidth = Math.min(920, availableWidth);
+      const centeredLeft = rect.left + rect.width / 2 - preferredWidth / 2;
+
+      setDesktopSearchPopoverFrame({
+        top: rect.bottom + 8,
+        left: Math.max(
+          viewportGutter,
+          Math.min(
+            centeredLeft,
+            window.innerWidth - preferredWidth - viewportGutter,
+          ),
+        ),
+        width: preferredWidth,
+      });
+      return true;
+    },
+    [],
+  );
+
   const openStickySearchEditor = useCallback(
     (
       event: React.MouseEvent<HTMLButtonElement>,
@@ -1377,20 +1419,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       const compactForm = event.currentTarget.closest<HTMLElement>(
         "[data-flight-results-nav-search-form]",
       );
-      if (compactForm) {
-        const rect = compactForm.getBoundingClientRect();
-        const viewportGutter = 24;
-        const preferredWidth = Math.min(920, window.innerWidth - viewportGutter * 2);
-        const centeredLeft = rect.left + rect.width / 2 - preferredWidth / 2;
-        setDesktopSearchPopoverFrame({
-          top: rect.bottom + 8,
-          left: Math.max(
-            viewportGutter,
-            Math.min(centeredLeft, window.innerWidth - preferredWidth - viewportGutter),
-          ),
-          width: preferredWidth,
-        });
-      }
+      updateDesktopSearchPopoverFrame(compactForm);
       pendingStickySearchTargetRef.current =
         tripTypeInput === "multi-city" ? null : target;
       const currentScrollY = window.scrollY;
@@ -1423,6 +1452,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setTravelerPopoverPosition,
       setTripTypeMenuOpen,
       tripTypeInput,
+      updateDesktopSearchPopoverFrame,
     ],
   );
 
@@ -1528,6 +1558,48 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setTripTypeMenuOpen,
     ],
   );
+
+  useEffect(() => {
+    if (!isStickySearchPanelOpen || typeof window === "undefined") {
+      return undefined;
+    }
+
+    let animationFrame = 0;
+    const refreshAnchoredFrame = () => {
+      if (animationFrame) return;
+
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
+
+        if (window.innerWidth < 1024) {
+          collapseStickySearch();
+          return;
+        }
+
+        const compactForm = document.querySelector<HTMLElement>(
+          "[data-flight-results-nav-search-form]",
+        );
+        if (!updateDesktopSearchPopoverFrame(compactForm)) {
+          collapseStickySearch();
+        }
+      });
+    };
+
+    window.addEventListener("resize", refreshAnchoredFrame);
+    window.visualViewport?.addEventListener("resize", refreshAnchoredFrame);
+
+    return () => {
+      window.removeEventListener("resize", refreshAnchoredFrame);
+      window.visualViewport?.removeEventListener("resize", refreshAnchoredFrame);
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [
+    collapseStickySearch,
+    isStickySearchPanelOpen,
+    updateDesktopSearchPopoverFrame,
+  ]);
 
   useEffect(() => {
     if (!isStickySearchPanelOpen) {
