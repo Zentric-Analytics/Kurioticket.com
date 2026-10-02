@@ -188,7 +188,7 @@ export function CarDetailsHero({
 
         {reserveMobileControlSafeZone ? (
           <div
-            className="hidden lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-5 lg:rounded-[16px] lg:border lg:border-slate-200 lg:bg-white lg:p-5 lg:shadow-[0_4px_20px_rgba(15,23,42,0.045)]"
+            className="hidden lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-5 lg:p-5"
             data-car-details-desktop-overview
           >
             <div className="min-w-0">

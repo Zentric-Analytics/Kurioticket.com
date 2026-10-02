@@ -328,6 +328,17 @@ test("standalone car details restore polished Hotels-style section headings", ()
   assert.match(location, /className="p-4 lg:p-0" data-car-location-timeline/);
 });
 
+test("standalone desktop overview content sits directly on the page without an outer card shell", () => {
+  assert.match(
+    heroSource,
+    /className="hidden lg:grid lg:grid-cols-\[minmax\(0,1fr\)_320px\] lg:gap-5 lg:p-5"/,
+  );
+  assert.doesNotMatch(
+    heroSource,
+    /data-car-details-desktop-overview[\s\S]*?lg:rounded-\[16px\][\s\S]*?lg:border[\s\S]*?lg:bg-white[\s\S]*?lg:shadow-/,
+  );
+  assert.match(heroSource, /data-car-details-desktop-overview-summary/);
+});
 test("desktop car details use the approved overview card while keeping controls balanced", () => {
   assert.match(heroSource, /data-car-details-desktop-overview/);
   assert.match(heroSource, /data-car-details-desktop-overview-identity/);
