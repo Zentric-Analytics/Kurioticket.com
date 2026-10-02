@@ -7275,6 +7275,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         ? createPortal(renderDesktopHeaderSearchBar(), desktopNavSearchTarget)
         : null}
       {renderMobileEditSearchDrawer()}
+      {renderStickySearchPopoutOverlay()}
       <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
         <BrandedLoading
           variant="fullscreen"
