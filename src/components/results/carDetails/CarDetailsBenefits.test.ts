@@ -242,8 +242,9 @@ test("desktop overview and linear sections use only existing car and offer data"
   assert.match(clientSource, /data-car-details-desktop-location-overview/);
   assert.match(clientSource, /data-car-details-desktop-rental-details/);
   assert.match(clientSource, /car\.requiredDocuments\.join/);
-  assert.match(clientSource, /car\.includedItems\.map/);
-  assert.match(clientSource, /car\.importantInformation\.map/);
+  assert.doesNotMatch(clientSource, /car\.includedItems\.map/);
+  assert.doesNotMatch(clientSource, /car\.importantInformation\.map/);
+  assert.doesNotMatch(clientSource, />Included<|>Important information</);
   assert.match(clientSource, /car\.sandboxPresentation[\s\S]*?"KAYAK sandbox"/);
   assert.doesNotMatch(clientSource, /vehicle condition as expected|recommended by|collision damage protection/i);
 });
