@@ -415,6 +415,14 @@ textarea {
   line-height: 16px;
 }
 
+.desktop-flight-cheaper-nearby {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  line-height: 16px !important;
+  font-synthesis: none;
+  font-variation-settings: "wght" 600;
+}
+
 @media (min-width: 1024px) {
   [data-hotel-results-desktop-header],
   [data-flight-results-desktop-header] {
