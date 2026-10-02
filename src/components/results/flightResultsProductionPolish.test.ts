@@ -332,7 +332,7 @@ test("desktop nearby fares use a contained mobile-like hierarchy", async () => {
 });
 
 
-test("desktop Flight filters mirror the Cars surface typography and checkbox rhythm", async () => {
+test("desktop Flight filters use the Hotel typography hierarchy and checkbox rhythm", async () => {
   const filters = await readFile(
     new URL("./DesktopFlightFilters.tsx", import.meta.url),
     "utf8",
@@ -341,11 +341,14 @@ test("desktop Flight filters mirror the Cars surface typography and checkbox rhy
   assert.match(filters, /data-flight-desktop-filter-surface/);
   assert.match(filters, /desktop-filter-sidebar cars-desktop-filter-surface/);
   assert.match(filters, /bg-\[#F2F4F8\]/);
-  assert.match(filters, /text-\[16px\] font-semibold leading-6 tracking-\[-0\.006em\] text-\[#07133B\]/);
-  assert.match(filters, /text-\[14px\] font-semibold normal-case leading-5 tracking-\[-0\.002em\] text-\[#334155\]/);
-  assert.match(filters, /text-\[14px\] font-medium leading-5/);
+  assert.match(filters, /text-\[14px\] font-bold tracking-\[-0\.01em\] text-slate-950/);
+  assert.match(filters, /text-\[13px\] font-bold normal-case leading-5 text-slate-950/);
+  assert.match(filters, /"flex cursor-pointer items-center rounded-lg font-medium leading-5 transition-all"/);
+  assert.match(filters, /compact \? "gap-2 px-1\.5 py-1 text-\[13px\]" : "min-h-\[30px\] gap-2\.5 px-0\.5 py-1 text-\[12px\]"/);
+  assert.match(filters, /compact \? "gap-2 px-1\.5 py-1 text-\[13px\]"/);
+  assert.match(filters, /text-\[12px\] font-medium leading-5 tabular-nums text-slate-500/);
   assert.match(filters, /h-4 w-4 shrink-0 rounded border-slate-300 accent-blue/);
-  assert.match(filters, /text-\[13px\] font-medium leading-5 tabular-nums text-\[#64748B\]/);
+  assert.match(filters, /text-\[13px\] font-semibold leading-5 tracking-\[-0\.005em\] text-slate-800/);
 });
 
 test("desktop Flight compact filters reuse the same full filter surface as Cars", async () => {
