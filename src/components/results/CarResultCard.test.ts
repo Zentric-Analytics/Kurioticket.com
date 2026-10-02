@@ -702,6 +702,21 @@ test("mobile transmission specs use dedicated automatic and manual icons", () =>
   assert.match(iconSource, /M6 8v8M12 8v8M18 8v8M6 12h12/);
 });
 
+test("standalone large-desktop location and specs share Free cancellation weight", () => {
+  const desktop = source.slice(source.indexOf('data-car-card-desktop-shared-header'));
+  assert.match(
+    desktop,
+    /row-start-4" : "row-start-3"\} mt-2 flex[\s\S]*?text-\[13px\] font-semibold leading-\[18px\] tracking-\[-0\.001em\] text-\[#334155\]/,
+  );
+  assert.match(
+    desktop,
+    /data-car-card-desktop-free-cancellation[\s\S]*?text-\[13px\] font-semibold leading-\[18px\]/,
+  );
+  assert.match(
+    desktop,
+    /data-car-card-desktop-primary-specs[\s\S]*?lg:text-\[13px\] lg:font-semibold lg:leading-\[18px\]/,
+  );
+});
 test("standalone large-desktop supporting metadata stays compact, portable, and readable", () => {
   const desktop = source.slice(source.indexOf('data-car-card-desktop-shared-header'));
   assert.match(
@@ -710,7 +725,7 @@ test("standalone large-desktop supporting metadata stays compact, portable, and 
   );
   assert.match(
     desktop,
-    /row-start-4" : "row-start-3"\} mt-2 flex[\s\S]*?text-\[13px\] font-medium leading-\[18px\] tracking-\[-0\.001em\] text-\[#334155\][\s\S]*?<MapPin[\s\S]*?size=\{15\}/,
+    /row-start-4" : "row-start-3"\} mt-2 flex[\s\S]*?text-\[13px\] font-semibold leading-\[18px\] tracking-\[-0\.001em\] text-\[#334155\][\s\S]*?<MapPin[\s\S]*?size=\{15\}/,
   );
   assert.match(
     desktop,
@@ -718,7 +733,7 @@ test("standalone large-desktop supporting metadata stays compact, portable, and 
   );
   assert.match(
     desktop,
-    /data-car-card-desktop-primary-specs[\s\S]*?lg:text-\[13px\] lg:font-medium lg:leading-\[18px\] lg:tracking-\[-0\.001em\] lg:text-\[#334155\][\s\S]*?size=\{guidedPlanning \? 16 : 15\}/,
+    /data-car-card-desktop-primary-specs[\s\S]*?lg:text-\[13px\] lg:font-semibold lg:leading-\[18px\] lg:tracking-\[-0\.001em\] lg:text-\[#334155\][\s\S]*?size=\{guidedPlanning \? 16 : 15\}/,
   );
 });
 test("standalone desktop narrows the card without wrapping identity or metadata", () => {
