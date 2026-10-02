@@ -128,11 +128,19 @@ test("standalone desktop tabs place panel content in the former heading position
   assert.match(navSource, /left-1\/2 top-0 -translate-x-1\/2/);
   assert.match(
     navSource,
-    /border-\[#192024\] text-\[#192024\]/,
+    /car-details-desktop-selected-info-type[\s\S]*?border-\[#192024\] text-slate-950/,
   );
   assert.match(
     navSource,
-    /border-transparent text-\[#59636A\] hover:text-\[#004BB8\]/,
+    /border-transparent text-\[#334155\] hover:text-\[#142033\]/,
+  );
+  const cssSource = readFileSync(
+    new URL("../../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    cssSource,
+    /\.car-details-desktop-selected-info-type \{[\s\S]*?font-family: var\(--font-sans\);[\s\S]*?font-size: 15px;[\s\S]*?line-height: 20px;[\s\S]*?font-weight: 700;[\s\S]*?letter-spacing: -0\.003em;[\s\S]*?font-variation-settings: "wght" 700;/,
   );
   assert.doesNotMatch(navSource, /max-w-\[640px\]/);
   assert.doesNotMatch(navSource, /bg-\[#075EE8\].*lg:h-\[3px\]/);
