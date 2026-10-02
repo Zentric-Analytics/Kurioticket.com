@@ -36,7 +36,7 @@ import type {
   FlightDetailsOffer,
   FlightDetailsResponse,
 } from "@/lib/flights/flightDetailsContract";
-import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
+import { flightDetailsRouteLabel } from "@/lib/flights/flightDetailsContract";
 import { nativeFlightDealSelection } from "@/lib/flights/nativeFlightDealSelection";
 import type { FlightLeg, FlightProviderCondition, FlightSegment } from "@/lib/types";
 import { readSavedItemIds, toggleSavedItemId, writeSavedItemIds } from "@/lib/saved-items-local";
@@ -150,7 +150,6 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     ? { available: true as const, providerName: selectedDeal.providerName }
     : handoff;
   const mobileHandoff = activeHandoff;
-  const canContinue = Boolean(activeOffer && activeHandoff.available);
   const mobilePricesReady = !currencyRates.isLoading;
   const canUseMobilePrice = (price: ReturnType<typeof formatDisplayPrice> | null, sourceCurrency: string) =>
     Boolean(price && (
@@ -415,8 +414,8 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         </button>
       </div>
       <span className="sr-only" role="status" aria-live="polite">{shareFeedback}</span>
-      <div className="mx-auto w-full max-w-[1470px] px-0 sm:px-6 lg:px-[34px]">
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
+      <div className="mx-auto w-full max-w-[1080px] px-0 sm:px-6 lg:px-[30px]">
+        <div className="min-w-0">
           <section className="min-w-0 overflow-hidden border-b border-[#E2E8F0] bg-[#F3F6FA] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
             <div ref={mobileHeroRef} data-testid="flight-details-hero" className="relative flex min-h-[318px] flex-col justify-end overflow-hidden px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:justify-end sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
@@ -494,11 +493,20 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               pricesReady={mobilePricesReady}
             />
             <div data-desktop-fare-information-tabs className="mt-5 hidden min-w-0 sm:flex" role="tablist" aria-label="Fare information">{fareTabs.map((tab, index) => <button key={tab.id} ref={(element) => { tabRefs.current[index] = element; }} id={`fare-tab-${tab.id}`} type="button" role="tab" aria-selected={activeTab === tab.id} aria-controls={`fare-panel-${tab.id}`} tabIndex={activeTab === tab.id ? 0 : -1} onClick={() => setActiveTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)} className={`min-h-11 flex-1 whitespace-nowrap border-b-[3px] px-1 text-center text-sm font-semibold text-[#536B92] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 ${activeTab === tab.id ? "border-[#075EE8]" : "border-transparent"}`}>{tab.label}</button>)}</div>
-            <div className="hidden sm:block"><FarePanel activeTab={activeTab} fare={selectedFare} offer={activeOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} selectedDealOfferId={selectedDeal?.offerId ?? null} onSelectDeal={setSelectedDealOfferId} onViewDeal={continueToOffer} /></div>
+            <div className="hidden sm:block">
+              {error || notice ? (
+                <p
+                  role={error ? "alert" : "status"}
+                  className={`mt-4 rounded-lg px-3 py-2 text-sm font-medium ${error ? "bg-red-50 text-red-700" : "bg-blue-50 text-[#075EE8]"}`}
+                >
+                  {error || notice}
+                </p>
+              ) : null}
+              <FarePanel activeTab={activeTab} fare={selectedFare} offer={activeOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} selectedDealOfferId={selectedDeal?.offerId ?? null} onSelectDeal={setSelectedDealOfferId} onViewDeal={continueToOffer} />
+            </div>
             <MobileCheckoutDock travelerCount={travelers.count} price={mobilePrice} redirecting={redirecting} handoff={mobileHandoff} canContinue={canContinueMobile && Boolean(mobilePrice)} onContinue={() => continueToOffer(selectedDeal?.offerId ?? selectedOffer.id)} error={error || notice} priceLoading={!mobilePricesReady} />
             </div>
           </section>
-          <DesktopCheckoutSummary travelerCount={travelers.count} price={providerPrice} priceLoading={!mobilePricesReady} redirecting={redirecting} handoff={activeHandoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedDeal?.offerId ?? selectedOffer.id)} error={error || notice} />
         </div>
       </div>
     </main>
@@ -822,7 +830,8 @@ function CompareDealsPanel({
       <div
         role="radiogroup"
         aria-label="Flight deal options"
-        className="grid gap-3 py-1 lg:grid-cols-2"
+        className="max-w-[820px] space-y-3 py-1"
+        data-desktop-flight-deal-list
       >
         {deals.map((deal, index) => {
           const selected = deal.offerId === selectedDealOfferId;
@@ -838,9 +847,11 @@ function CompareDealsPanel({
             isFallbackRate,
           });
           return (
-            <div
+            <article
               key={deal.key}
-              className={`min-w-0 rounded-[12px] border px-4 py-3 transition ${selected ? "border-[#075EE8] bg-[#F4F8FF]" : "border-[#D8E1EC] bg-white"}`}
+              data-desktop-flight-deal-card
+              data-selected={selected || undefined}
+              className={`flex min-h-[96px] min-w-0 items-center justify-between gap-4 rounded-xl border bg-white px-4 py-3 transition ${selected ? "border-[#075EE8] shadow-[0_4px_14px_rgba(7,94,232,0.08)]" : "border-[#D9E2E8]"}`}
             >
               <button
                 type="button"
@@ -856,52 +867,44 @@ function CompareDealsPanel({
                   onSelectDeal(deals[nextIndex].offerId);
                   event.currentTarget.parentElement?.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[nextIndex]?.focus();
                 }}
-                className="w-full min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35"
+                className="min-w-0 flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2"
               >
-                <span className="flex min-w-0 items-start justify-between gap-3">
-                  <span className="flex min-w-0 flex-1 items-center gap-2">
-                    {identityMark.kind === "airline" ? (
-                      <FlightIdentityMark
-                        logoUrl={identityMark.logoUrl}
-                        decorative
-                      />
-                    ) : null}
-                    <span className="min-w-0 break-words text-[15px] font-bold leading-5 text-slate-950">
-                      {deal.providerName}
-                    </span>
-                  </span>
-                  <span
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-[1.5px] ${selected ? "border-[#075EE8]" : "border-slate-500"}`}
-                  >
-                    {selected ? (
-                      <span
-                        className="h-2 w-2 rounded-full bg-[#075EE8]"
-                        aria-hidden="true"
-                      />
-                    ) : null}
+                <span className="flex min-w-0 items-center gap-2">
+                  {identityMark.kind === "airline" ? (
+                    <FlightIdentityMark
+                      logoUrl={identityMark.logoUrl}
+                      decorative
+                    />
+                  ) : null}
+                  <span className="min-w-0 break-words text-[15px] font-semibold leading-5 text-[#192024]">
+                    {deal.providerName}
                   </span>
                 </span>
-                <span className="mt-3 flex items-end justify-between gap-3">
-                  <span className="min-w-0 flex-1 text-xs font-medium leading-[17px] text-[#536B92]">
-                    {fare?.label}
-                  </span>
-                  <span
-                    className="max-w-[60%] shrink-0 text-right text-lg font-extrabold leading-[22px] tabular-nums text-slate-950"
+                <span className="mt-2 block min-w-0">
+                  <strong
+                    className="block break-words text-[20px] font-semibold leading-6 tracking-[-0.02em] tabular-nums text-[#192024]"
                     aria-label={price.ariaLabel}
                   >
                     {price.formatted}
+                  </strong>
+                  <span className="block text-[12px] font-normal leading-[14px] text-[#59636a]">
+                    Trip total
                   </span>
                 </span>
               </button>
               <button
                 type="button"
                 disabled={redirecting}
-                onClick={() => onViewDeal(deal.offerId)}
-                className="mt-3 min-h-11 w-full rounded-lg text-sm font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 disabled:opacity-50"
+                onClick={() => {
+                  onSelectDeal(deal.offerId);
+                  onViewDeal(deal.offerId);
+                }}
+                className="inline-flex h-11 w-[150px] shrink-0 items-center justify-center rounded-lg bg-[#075EE8] px-3 text-sm font-semibold text-white transition-colors hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+                data-desktop-flight-deal-action
               >
-                View deal
+                {redirecting ? "Opening…" : "Continue deal"}
               </button>
-            </div>
+            </article>
           );
         })}
       </div>
@@ -1479,23 +1482,6 @@ function EmissionsRow({ amount, locale }: { amount: number; locale: string }) { 
 function CheckoutButton({ redirecting, handoff, canContinue, onContinue, dock = false, mobileDock = false, label = "Continue booking", pendingLabel = "Opening booking…" }: { redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; dock?: boolean; mobileDock?: boolean; label?: string; pendingLabel?: string }) { return <button type="button" aria-label={handoff.available ? label : "Booking currently unavailable"} aria-disabled={!canContinue || redirecting} disabled={!canContinue || redirecting} onClick={onContinue} className={`${mobileDock ? "inline-flex h-12 min-w-[140px] max-w-[180px] flex-[0.78]" : dock ? "inline-flex min-h-[50px] min-w-[168px] flex-1 sm:max-w-[260px]" : "mt-4 inline-flex min-h-[50px] w-full"} items-center justify-center whitespace-nowrap rounded-[8px] bg-[#075EE8] px-3 ${mobileDock ? "text-xs font-bold" : "gap-2 text-sm font-semibold"} text-white transition hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`}>{!mobileDock ? <LockKeyhole className="h-4 w-4" aria-hidden="true" /> : null}{redirecting ? pendingLabel : label}</button>; }
 
 function MobileCheckoutDock({ travelerCount, price, redirecting, handoff, canContinue, onContinue, error, priceLoading=false }: { travelerCount: number; price: ReturnType<typeof formatDisplayPrice> | null; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string; priceLoading?: boolean }) { const totalLabel=`Total for ${travelerCount} traveler${travelerCount===1?"":"s"}`; return <section className="fixed inset-x-0 bottom-0 z-[90] rounded-t-[22px] border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_28px_rgba(15,23,42,0.14)] lg:hidden" aria-labelledby="mobile-trip-total-heading"><div className="mx-auto max-w-3xl">{error ? <p role="alert" className="mb-2 line-clamp-2 text-xs font-medium leading-4 text-red-700">{error}</p> : null}<div className="flex min-h-[48px] items-center justify-between gap-[14px]"><div className="min-w-0 flex-1">{priceLoading ? <p className="truncate text-[19px] font-semibold leading-[22px] tracking-[-0.25px] text-[#1A1A1A]">Loading price…</p> : price ? <p className="truncate text-[19px] font-semibold leading-[22px] tracking-[-0.25px] text-[#1A1A1A] tabular-nums" aria-label={price.ariaLabel}>{price.formatted}</p> : <p className="text-sm font-semibold text-slate-500">Price unavailable</p>}<h2 id="mobile-trip-total-heading" className="mt-px truncate text-[11px] font-semibold leading-4 text-[#536B92]">{totalLabel}</h2></div><CheckoutButton mobileDock redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={onContinue} label="Continue deal" pendingLabel="Checking offer…" /></div></div></section>; }
-
-function DesktopCheckoutSummary({ travelerCount, price, priceLoading, redirecting, handoff, canContinue, onContinue, error }: { travelerCount: number; price: ReturnType<typeof formatDisplayPrice> | null; priceLoading: boolean; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) {
-  return <aside data-desktop-checkout-summary className="hidden min-w-0 self-start rounded-[13px] border border-[#E2E8F0] bg-white p-5 shadow-[0_4px_18px_rgba(15,23,42,0.05)] lg:sticky lg:top-6 lg:block" aria-labelledby="desktop-trip-total-heading">
-    <div className="min-w-0">
-      {priceLoading ? (
-        <p data-desktop-trip-price-loading role="status" className="text-left text-sm font-semibold text-slate-500">Loading price…</p>
-      ) : price ? (
-        <p className="min-w-0 whitespace-nowrap text-left text-[24px] font-semibold leading-7 tabular-nums text-slate-950" aria-label={price.ariaLabel}>{price.formatted}</p>
-      ) : (
-        <p className="text-left text-sm font-semibold text-slate-500">Price unavailable</p>
-      )}
-      <h2 id="desktop-trip-total-heading" className="mt-1 text-[12px] font-medium leading-4 text-[#536B92]">{flightDetailsTotalLabel(travelerCount)}</h2>
-    </div>
-    <CheckoutButton redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={onContinue} />
-    {error ? <p role="alert" className="mt-3 break-words text-sm font-medium text-red-700">{error}</p> : null}
-  </aside>;
-}
 
 function FlightDetailsSkeleton({ resultsHref }: { resultsHref: string }) { return <FlightDetailsLoadingShell resultsHref={resultsHref} />; }
 function FlightDetailsUnavailable({ resultsHref, message }: { resultsHref: string; message: string }) { return <main className="flex-1 bg-white sm:bg-[#F7F9FC] sm:py-10"><div className="flex min-h-[52px] items-center px-4 pt-[env(safe-area-inset-top)] sm:hidden"><Link href={resultsHref} aria-label="Back to results" className="inline-flex min-h-11 items-center gap-2 text-sm font-extrabold text-[#075EE8]"><ArrowLeft className="h-[18px] w-[18px]" /><span>Back to results</span></Link></div><div className="mx-auto max-w-3xl px-0 sm:px-4"><Link href={resultsHref} className="ml-4 hidden items-center gap-2 text-sm font-semibold text-[#075EE8] sm:inline-flex sm:ml-0"><ArrowLeft className="h-4 w-4" /> Back to results</Link><section className="mt-4 border-y border-slate-200 bg-white p-6 sm:rounded-[15px] sm:border sm:p-8"><h1 className="text-xl font-bold">Flight quote unavailable</h1><p className="mt-2 text-sm text-slate-600">{message || "Please return to results and search again for current prices."}</p></section></div></main>; }
