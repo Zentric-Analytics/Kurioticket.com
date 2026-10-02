@@ -69,6 +69,39 @@ test("desktop Flight Results restores the navbar target after loading and keeps 
   );
 });
 
+
+test("desktop Flight Results keeps the header search mounted through preparation", () => {
+  const preparingStart = flight.indexOf("if (resultsUiPreparing) {");
+  const guidedStart = flight.indexOf("if (guidedMode) return (", preparingStart);
+  const preparing = flight.slice(preparingStart, guidedStart);
+
+  assert.ok(preparingStart >= 0 && guidedStart > preparingStart);
+  assert.match(preparing, /flightResultsDesktopSticky/);
+  assert.match(
+    preparing,
+    /createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/,
+  );
+});
+
+test("desktop navbar search opens the Change your flight editor on every click state", () => {
+  assert.match(
+    flight,
+    /const isStickySearchPanelOpen = isSearchExpandedWhileSticky;/,
+  );
+  assert.doesNotMatch(
+    flight,
+    /const isStickySearchPanelOpen =\s*isSearchCollapsed && isSearchExpandedWhileSticky/,
+  );
+
+  const callbackStart = flight.indexOf("const openStickySearchEditor = useCallback(");
+  const callbackEnd = flight.indexOf("const isStickySearchPanelOpen", callbackStart);
+  const callback = flight.slice(callbackStart, callbackEnd);
+
+  assert.ok(callbackStart >= 0 && callbackEnd > callbackStart);
+  assert.match(callback, /setIsSearchExpandedWhileSticky\(true\)/);
+  assert.match(callback, /setActiveDesktopSearchSurface\("sticky"\)/);
+});
+
 test("desktop Flight Results puts the Hotels-style summary before nearby fares", () => {
   const summary = flight.indexOf("data-flight-results-desktop-summary");
   const nearby = flight.indexOf("data-desktop-nearby-fare-rail");
