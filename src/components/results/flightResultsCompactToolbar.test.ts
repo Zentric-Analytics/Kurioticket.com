@@ -295,7 +295,11 @@ test("prominent desktop calendar stays compact and keeps its footer visible", ()
   assert.match(source, /preferredWidth = useStickyTrigger \? 780 : 620/);
   assert.match(
     datePicker,
-    /max-h-\[min\(520px,calc\(100dvh-120px\)\)\][\s\S]*overflow-y-auto[\s\S]*rounded-xl p-3/,
+    /maxHeight: `min\(520px, calc\(100dvh - \$\{position\.top \+ 16\}px\)\)`/,
+  );
+  assert.match(
+    datePicker,
+    /prominentDesktop[\s\S]*?"max-w-none overflow-y-auto overscroll-contain rounded-xl p-3"/,
   );
   assert.match(datePicker, /prominentDesktop \? "mb-1 text-\[13px\]" : "mb-2 text-sm"/);
   assert.match(datePicker, /prominentDesktop \? "mb-1 text-\[11px\]" : "mb-2 text-xs"/);
