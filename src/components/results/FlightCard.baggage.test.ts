@@ -9,6 +9,8 @@ const t = (key: string) =>
     checkProvider: "Check provider",
     notSuppliedByProvider: "Not provided",
     seeDetails: "See details",
+    "flightCard.compactBagSingular": "bag",
+    "flightCard.compactBagPlural": "bags",
   })[key] ?? key;
 
 test("desktop baggage fallback uses compact localized result-card copy", () => {
@@ -43,6 +45,21 @@ test("desktop baggage fallback uses the active locale dictionary", () => {
   );
 });
 
+
+test("desktop baggage card compacts provider fallback and checked-bag allowance", () => {
+  assert.equal(
+    formatDesktopBaggageValue("Baggage allowance not supplied by provider", t),
+    "Not provided",
+  );
+  assert.equal(
+    formatDesktopBaggageValue("1 checked bag up to 23 kg", t),
+    "1 bag · 23 kg",
+  );
+  assert.equal(
+    formatDesktopBaggageValue("2 checked bags up to 20 kg", t),
+    "2 bags · 20 kg",
+  );
+});
 
 test("desktop baggage card shortens supplied-details copy", () => {
   assert.equal(

@@ -3703,6 +3703,8 @@ export const translations: TranslationDictionary = {
     "Outbound and return details are shown from provider-normalized itinerary data.",
   checkProvider: "Check provider",
   notSuppliedByProvider: "Not provided",
+  "flightCard.compactBagSingular": "bag",
+  "flightCard.compactBagPlural": "bags",
   carryOnIncluded: "carry-on included",
   flightLeg: "Flight leg",
   layover: "Layover",
