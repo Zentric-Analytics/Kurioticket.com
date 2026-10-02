@@ -180,7 +180,7 @@ test("standalone details use persistent mobile controls with native-ordered hero
   );
   assert.match(
     clientSource,
-    /hidden lg:block lg:text-\[16px\] lg:font-semibold lg:leading-6/,
+    /car-details-desktop-section-heading-type hidden lg:block lg:text-\[16px\] lg:font-semibold lg:leading-6/,
   );
   assert.match(clientSource, /formatCarDate\(search\.pickupDate, locale\)/);
   assert.match(clientSource, /data-mobile-car-deal-list/);
@@ -680,7 +680,7 @@ test("standalone desktop amenities pull the left column inward without wrapping 
 test("standalone desktop amenities sit directly on the Cars Details page surface", () => {
   assert.match(
     heroSource,
-    /reserveMobileControlSafeZone \? "lg:min-h-8 lg:rounded-none lg:bg-transparent lg:px-0 lg:py-1\.5 lg:text-\[13px\]"/,
+    /reserveMobileControlSafeZone \? `lg:w-max lg:max-w-full lg:min-h-8 lg:rounded-none lg:bg-transparent lg:px-0 lg:py-1\.5 lg:text-\[13px\] lg:whitespace-nowrap/,
   );
   assert.doesNotMatch(
     heroSource,
@@ -716,7 +716,7 @@ test("desktop standalone duplicate section headings and supporting copy are left
   assert.match(comparison, /lg:mx-auto lg:w-full lg:max-w-\[820px\]/);
   assert.match(
     comparison,
-    /className="hidden lg:block lg:text-\[16px\] lg:font-semibold/,
+    /className="car-details-desktop-section-heading-type hidden lg:block lg:text-\[16px\] lg:font-semibold/,
   );
   assert.match(
     comparison,
