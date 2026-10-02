@@ -944,35 +944,6 @@ function DesktopRentalDetails({
         ))}
       </div>
 
-      {!car.sandboxPresentation && car.includedItems.length ? (
-        <div className="mt-5 border-t border-slate-200 pt-4">
-          <h3 className="car-details-desktop-item-heading-type">Included</h3>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {car.includedItems.map((item) => (
-              <span
-                key={item}
-                className="rounded-full bg-blue-50 px-3 py-1.5 text-[12px] font-semibold text-[#334155]"
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {!car.sandboxPresentation && car.importantInformation.length ? (
-        <div className="mt-5 border-t border-slate-200 pt-4">
-          <h3 className="car-details-desktop-item-heading-type">Important information</h3>
-          <ul className="car-details-desktop-primary-copy-type mt-3 space-y-2">
-            {car.importantInformation.map((item) => (
-              <li key={item} className="flex gap-2">
-                <ShieldCheck size={15} className="mt-0.5 shrink-0 text-[#075EE8]" aria-hidden="true" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
     </div>
   );
 }
