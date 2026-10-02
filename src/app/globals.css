@@ -1057,7 +1057,7 @@ textarea {
     display: grid;
     grid-template-columns: repeat(3, max-content);
     align-items: center;
-    justify-content: space-between;
+    justify-content: start;
     column-gap: 1.5rem;
     overflow: visible;
     border: 0;
