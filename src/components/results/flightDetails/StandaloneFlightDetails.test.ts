@@ -684,7 +684,7 @@ test("desktop Flight Details keeps price and booking action inside Compare deals
   assert.match(panel, /data-desktop-flight-deal-action/);
   assert.match(panel, /className="max-w-\[820px\] space-y-3 py-1"/);
   assert.match(panel, /text-\[20px\] font-semibold leading-6/);
-  assert.match(panel, />\s*Trip total\s*</);
+  assert.match(panel, /fare\?\.label \? `\$\{fare\.label\} · Trip total` : "Trip total"/);
   assert.match(panel, /"Continue deal"/);
   assert.match(panel, /w-\[150px\]/);
   assert.match(panel, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
