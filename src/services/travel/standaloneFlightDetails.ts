@@ -237,6 +237,7 @@ export function buildMaterialFareChoices(
           key: `deal-${createHash("sha256").update(`${key}|${providerIdentity}`).digest("base64url").slice(0, 16)}`,
           offerId: offer.id,
           providerName,
+          ...(offer.bookingProviderLogoUrl ? { providerLogoUrl: offer.bookingProviderLogoUrl } : {}),
           price: offer.price,
           currency: offer.currency,
           offer: toFlightDetailsOffer(offer),

@@ -114,6 +114,35 @@ test("KAYAK equivalent booking sellers become deals under one supplied fare prod
   ]);
 });
 
+test("KAYAK equivalent booking sellers preserve their provider-supplied logos in Compare deals", async () => {
+  const sellers = [
+    kayakOffer("kayak-sandbox:trip", "offer-trip", 543, {
+      bookingProviderName: "Trip.com",
+      bookingProviderLogoUrl: "https://content.r9cdn.net/trip-logo.png",
+    }),
+    kayakOffer("kayak-sandbox:other", "offer-other", 544, {
+      bookingProviderName: "Other Seller",
+      bookingProviderLogoUrl: "https://content.r9cdn.net/other-logo.png",
+    }),
+  ];
+  const details = await buildProviderAwareFlightDetails({
+    cachedSelected: sellers[0],
+    cachedAlternatives: sellers,
+    search,
+    now: 1,
+  });
+
+  assert.equal(details.status, "available");
+  if (details.status !== "available") return;
+  assert.deepEqual(details.fareChoices[0].deals.map(({ providerName, providerLogoUrl }) => [
+    providerName,
+    providerLogoUrl,
+  ]), [
+    ["Trip.com", "https://content.r9cdn.net/trip-logo.png"],
+    ["Other Seller", "https://content.r9cdn.net/other-logo.png"],
+  ]);
+});
+
 test("KAYAK unbranded equivalent sellers group without manufacturing a fare family", async () => {
   const selected = kayakOffer("kayak-sandbox:a", "offer-a", 544, { fareBrandName: undefined, bookingProviderName: "Seller A" });
   const sibling = kayakOffer("kayak-sandbox:b", "offer-b", 544, { fareBrandName: undefined, bookingProviderName: "Seller B" });

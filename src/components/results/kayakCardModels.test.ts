@@ -91,6 +91,34 @@ test("KAYAK flight details use only provider-authored fare facts", () => {
   assert.equal("taxAmount" in (model.providerDetails?.price ?? {}),false);
 });
 
+test("KAYAK flight card model preserves the provider-supplied booking seller logo", () => {
+  const model = kayakFlightCardModel({
+    id: "seller-logo",
+    title: "Trip",
+    description: "Trip.com",
+    details: [],
+    price: 100,
+    currency: "USD",
+    priceBasis: "total",
+    testUrl: "https://affiliates.kayak.com/sandbox-clickout",
+    bookingProviderName: "Trip.com",
+    bookingProviderLogoUrl: "https://content.r9cdn.net/provider-logo.png",
+    flightLegs: [{
+      segments: [{
+        origin: "BOS",
+        destination: "JFK",
+        departure: "2099-10-12T10:00:00",
+        arrival: "2099-10-12T11:00:00",
+        airline: "British Airways",
+        flightNumber: "BA1",
+      }],
+    }],
+  })!;
+
+  assert.equal(model.bookingProviderName, "Trip.com");
+  assert.equal(model.bookingProviderLogoUrl, "https://content.r9cdn.net/provider-logo.png");
+});
+
 test("KAYAK airline policy attributes never become purchased fare terms", () => {
   const model = kayakFlightCardModel({id:"policy",title:"Trip",description:"Seller",details:[],price:100,currency:"USD",priceBasis:"total",testUrl:"https://affiliates.kayak.com/sandbox-clickout",flightLegs:[{segments:[{origin:"BOS",destination:"JFK",departure:"2099-10-12T10:00:00",arrival:"2099-10-12T11:00:00",airline:"Test",flightNumber:"T1"}]}],attributes:[{label:"AA airline policy (not included allowance) · baggage policies",value:"1 checked bag"}]})!;
   assert.deepEqual(model.fareTerms,[]);

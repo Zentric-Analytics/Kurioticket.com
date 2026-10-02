@@ -177,6 +177,8 @@ export type NormalizedFlightResult = {
   provider: string;
   /** Provider-supplied booking seller used only for customer-facing deal presentation. */
   bookingProviderName?: string;
+  /** Provider-supplied booking seller logo. Never synthesize or infer this asset. */
+  bookingProviderLogoUrl?: string;
   airlineName: string;
   airlineLogo?: string | null;
   flightNumber?: string;

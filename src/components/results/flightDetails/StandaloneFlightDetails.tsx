@@ -44,8 +44,6 @@ import { invalidateSavedFlightsClientCache } from "@/lib/saved-flight-events";
 import flightDetailsHero from "../../../../apps/mobile/assets/heroes/flight-details-hero.webp";
 
 type FareTab = MobileFareInfoTab;
-const DUFFEL_PROVIDER_LOGO_URL = "https://assets.duffel.com/img/hq-assets/product-logos/flights-api.svg";
-
 const fareTabs: Array<{ id: FareTab; label: string }> = [
   { id: "deals", label: "Compare deals" },
   { id: "details", label: "Fare details" },
@@ -834,6 +832,7 @@ function CompareDealsPanel({
           key: `desktop-source-${fare?.key ?? fallbackOffer.id}`,
           offerId: fallbackOffer.id,
           providerName: fallbackProviderName,
+          ...(fallbackOffer.bookingProviderLogoUrl ? { providerLogoUrl: fallbackOffer.bookingProviderLogoUrl } : {}),
           price: fallbackOffer.price,
           currency: fallbackOffer.currency,
           offer: fallbackOffer,
@@ -922,14 +921,17 @@ function CompareDealsPanel({
               >
                 <span className="flex min-w-0 items-center gap-4">
                   <span className="flex shrink-0 items-center gap-2.5 border-r border-[#D9E2E8] pr-4">
-                    {identityMark.kind === "airline" ? (
+                    {deal.providerLogoUrl ? (
+                      <BookingProviderLogo
+                        providerName={deal.providerName}
+                        logoUrl={deal.providerLogoUrl}
+                      />
+                    ) : identityMark.kind === "airline" ? (
                       <FlightIdentityMark
                         logoUrl={identityMark.logoUrl}
                         decorative
                       />
-                    ) : (
-                      <OfficialProviderLogo providerName={deal.providerName} />
-                    )}
+                    ) : null}
                     <span className="max-w-[150px] truncate text-[15px] font-semibold leading-5 text-[#192024]">
                       {deal.providerName}
                     </span>
@@ -1010,21 +1012,26 @@ function CompareDealsPanel({
   );
 }
 
-function OfficialProviderLogo({ providerName }: { providerName: string }) {
-  if (providerName.trim().toLocaleLowerCase("en-US") !== "duffel") return null;
-
+function BookingProviderLogo({
+  providerName,
+  logoUrl,
+}: {
+  providerName: string;
+  logoUrl: string;
+}) {
   return (
     <span
-      aria-hidden="true"
       data-desktop-flight-provider-logo
-      className="inline-flex h-8 w-[58px] shrink-0 items-center"
+      className="inline-flex h-9 max-w-[82px] shrink-0 items-center justify-center overflow-hidden"
     >
       <Image
-        src={DUFFEL_PROVIDER_LOGO_URL}
+        src={logoUrl}
         alt=""
-        width={116}
-        height={32}
-        className="h-8 w-[58px] object-contain object-left"
+        aria-hidden="true"
+        width={82}
+        height={36}
+        className="max-h-9 w-auto max-w-[82px] object-contain object-left"
+        title={providerName}
       />
     </span>
   );
