@@ -535,7 +535,7 @@ function FlightDetailLines({
   return (
     <div
       className={cn(
-        "flight-card-details mt-3 grid min-w-0 flex-1 items-start gap-3 rounded-lg bg-slate-50/70 px-3 py-2.5 text-[10.5px] leading-[15px] text-slate-600",
+        "flight-card-details mt-3 grid min-w-0 flex-1 items-start gap-3 px-3 py-2.5 text-[10.5px] leading-[15px] text-slate-600",
       )}
     >
       {details.map((detail) => {
@@ -549,7 +549,7 @@ function FlightDetailLines({
             )}
           >
             <Icon
-              className="flight-card-detail-icon h-3.5 w-3.5 shrink-0 text-black"
+              className="flight-card-detail-icon h-3.5 w-3.5 shrink-0 text-slate-500"
               aria-hidden="true"
             />
             <span className="flight-card-detail-label shrink-0 font-semibold text-[#07133B]">
