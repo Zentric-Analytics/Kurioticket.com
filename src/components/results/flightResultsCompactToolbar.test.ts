@@ -234,6 +234,68 @@ test("sticky change-flight overlay centers a black title", () => {
   );
 });
 
+test("expanded Flight search gives airport, date, and traveler controls prominent desktop surfaces", () => {
+  const dropdownEffectStart = source.indexOf("function updateDropdownPosition");
+  const dateEffectStart = source.indexOf("function updateDatePickerPosition");
+  const travelerEffectStart = source.indexOf("function updateTravelerPopoverPosition");
+  const submitStart = source.indexOf("function handleCompactSearchSubmit");
+  const positioning = source.slice(dropdownEffectStart, submitStart);
+  const popoutStart = source.indexOf("function renderStickySearchPopoutOverlay()");
+  const popoutEnd = source.indexOf("function renderCompactSearchForm", popoutStart);
+  const popout = source.slice(popoutStart, popoutEnd);
+  const datePickerStart = source.indexOf("function DatePickerPopover");
+  const travelerStart = source.indexOf("function TravelerCabinPopover");
+  const suggestionStart = source.indexOf("function SuggestionList");
+  const componentSource = source.slice(datePickerStart, suggestionStart);
+
+  assert.ok(dropdownEffectStart >= 0);
+  assert.ok(dateEffectStart > dropdownEffectStart);
+  assert.ok(travelerEffectStart > dateEffectStart);
+  assert.match(positioning, /preferredWidth = useStickyWrap \? 560 : 380/);
+  assert.match(positioning, /preferredWidth = useStickyTrigger \? 920 : 620/);
+  assert.match(positioning, /stickyDateButtonRef\.current/);
+  assert.match(positioning, /preferredWidth = useStickyTrigger \? 480 : 360/);
+  assert.match(positioning, /stickyTravelerButtonRef\.current/);
+  assert.match(
+    positioning,
+    /\}, \[activeDatePicker, activeDesktopSearchSurface\]\);/,
+  );
+  assert.match(
+    positioning,
+    /\}, \[activeDesktopSearchSurface, travelerPopoverOpen\]\);/,
+  );
+
+  assert.match(
+    popout,
+    /id="sticky-flight-origin-suggestions"[\s\S]*?position=\{[\s\S]*?dropdownPosition/,
+  );
+  assert.match(
+    popout,
+    /id="sticky-flight-destination-suggestions"[\s\S]*?position=\{[\s\S]*?dropdownPosition/,
+  );
+  assert.doesNotMatch(
+    popout,
+    /id="sticky-flight-(?:origin|destination)-suggestions"[\s\S]{0,120}?alignToField/,
+  );
+  assert.match(
+    popout,
+    /<DatePickerPopover[\s\S]*?prominentDesktop[\s\S]*?datePickerPosition/,
+  );
+  assert.match(
+    popout,
+    /<TravelerCabinPopover[\s\S]*?prominentDesktop[\s\S]*?travelerPopoverPosition/,
+  );
+
+  assert.match(
+    componentSource,
+    /prominentDesktop \?\s*"max-w-none rounded-xl p-4"/,
+  );
+  assert.match(
+    componentSource,
+    /prominentDesktop = false/,
+  );
+});
+
 test("sticky multi-city selection renders the real multi-city editor", () => {
   const start = source.indexOf("function renderStickySearchPopoutOverlay()");
   const end = source.indexOf("function renderCompactSearchForm", start);
