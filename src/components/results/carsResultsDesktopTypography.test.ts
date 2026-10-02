@@ -41,14 +41,18 @@ test("desktop Cars Results uses a readable, professional typography hierarchy", 
 });
 
 
-test("desktop Cars full-search values exactly mirror normal filter-option typography while compact values stay stronger", () => {
+test("desktop Cars full-search values mirror the polished filter-heading hierarchy while compact values stay isolated", () => {
   assert.match(
     results,
-    /const desktopFullSelectedValueClass =[\s\S]*?lg:text-\[14px\] lg:font-medium lg:leading-5 lg:tracking-normal lg:text-\[#334155\]/,
+    /const desktopFullSelectedValueClass =[\s\S]*?lg:text-\[15px\] lg:font-bold lg:leading-5 lg:tracking-\[-0\.003em\] lg:text-slate-950/,
   );
   assert.match(
     results,
     /const desktopCompactSelectedValueClass =[\s\S]*?lg:text-\[15px\] lg:font-bold lg:leading-5 lg:tracking-\[-0\.005em\] lg:text-\[#07133B\]/,
+  );
+  assert.match(
+    results,
+    /<h3 className="text-\[15px\] font-bold normal-case leading-5 tracking-\[-0\.003em\] text-slate-950">/,
   );
   assert.equal(
     (
