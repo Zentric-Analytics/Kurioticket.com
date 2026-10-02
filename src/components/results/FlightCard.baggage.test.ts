@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { formatBaggageValue } from "./flightCardBaggage";
+import { formatBaggageValue, formatDesktopBaggageValue } from "./flightCardBaggage";
 
 const t = (key: string) =>
   ({
@@ -39,5 +39,17 @@ test("desktop baggage fallback uses the active locale dictionary", () => {
   assert.equal(
     formatBaggageValue("Baggage details not supplied by the provider", localized),
     "No proporcionado por el proveedor",
+  );
+});
+
+
+test("desktop baggage card shortens supplied-details copy", () => {
+  assert.equal(
+    formatDesktopBaggageValue("See supplied baggage details", t),
+    "See details",
+  );
+  assert.equal(
+    formatDesktopBaggageValue("Carry-on included", t),
+    "Carry-on included",
   );
 });
