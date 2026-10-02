@@ -61,7 +61,8 @@ test("desktop Hotel Results price-alert row is vertically aligned and compact", 
   assert.match(row, /flex min-w-0 items-center gap-3/);
   assert.match(row, /h-8 w-8 shrink-0/);
   assert.match(row, /relative inline-flex h-7 w-12/);
-  assert.match(row, /compactDesktop && "sm:rounded-lg sm:bg-white sm:px-3 sm:py-1\.5 sm:shadow-none"/);
+  assert.match(row, /compactDesktop && "sm:inline-flex sm:h-8 sm:items-center sm:rounded-full sm:border-\[#9299A9\] sm:bg-transparent sm:px-3 sm:py-0 sm:shadow-none"/);
+  assert.match(row, /compactDesktop && "sm:h-\[18px\] sm:w-8"/);
 });
 
 
