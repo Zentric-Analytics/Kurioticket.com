@@ -44,7 +44,9 @@ import { invalidateSavedFlightsClientCache } from "@/lib/saved-flight-events";
 import flightDetailsHero from "../../../../apps/mobile/assets/heroes/flight-details-hero.webp";
 
 type FareTab = MobileFareInfoTab;
-const DUFFEL_PROVIDER_LOGO_URL = "https://assets.duffel.com/img/hq-assets/product-logos/flights-api.svg";\n\nconst fareTabs: Array<{ id: FareTab; label: string }> = [
+const DUFFEL_PROVIDER_LOGO_URL = "https://assets.duffel.com/img/hq-assets/product-logos/flights-api.svg";
+
+const fareTabs: Array<{ id: FareTab; label: string }> = [
   { id: "deals", label: "Compare deals" },
   { id: "details", label: "Fare details" },
   { id: "conditions", label: "Fare conditions" },
