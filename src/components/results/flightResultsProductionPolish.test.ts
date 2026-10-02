@@ -329,9 +329,17 @@ test("desktop fare column has no partition line", async () => {
   assert.ok(fareStart >= 0 && fareEnd > fareStart);
   assert.doesNotMatch(fare, /border-l border-\[#D8E1EC\]/);
   assert.doesNotMatch(styles, /\.flight-card-fare-action::before/);
+  assert.doesNotMatch(
+    styles,
+    /\.flight-card-fare-action\s*\{[^}]*border-left:\s*1px\s+solid\s+#d8e1ec;/,
+  );
   assert.match(
     styles,
-    /\.flight-card-fare-action \{[\s\S]*?padding-left: 0\.75rem;/,
+    /@media \(min-width: 1024px\)[\s\S]*?\.flight-card-fare-action \{[\s\S]*?border-left: 0;/,
+  );
+  assert.match(
+    styles,
+    /@container \(max-width: 759px\)[\s\S]*?@media \(min-width: 1024px\)[\s\S]*?\.flight-card-fare-action \{[\s\S]*?border-left: 0;/,
   );
 });
 

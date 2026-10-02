@@ -50,11 +50,24 @@ test("desktop Flight Results reuses the Hotels header composition", () => {
   );
 });
 
-test("desktop Flight Results restores the navbar target after loading and keeps multi-city editable", () => {
+test("desktop Flight Results keeps the navbar search target synchronized through loading transitions", () => {
   assert.match(
     flight,
-    /document\.querySelector<HTMLElement>\("\[data-flight-results-nav-search\]"\)[\s\S]*?\}, \[guidedMode, loading\]\);/,
+    /const observer = new MutationObserver\(\(\) => \{[\s\S]*?\[data-flight-results-nav-search\][\s\S]*?syncDesktopNavSearchTarget\(\)/,
   );
+  assert.match(
+    flight,
+    /observer\.observe\(document\.body, \{[\s\S]*?childList: true,[\s\S]*?subtree: true/,
+  );
+  assert.match(
+    flight,
+    /setDesktopNavSearchTarget\(\(current\) =>[\s\S]*?current === nextTarget \? current : nextTarget/,
+  );
+  assert.doesNotMatch(
+    flight,
+    /\}, \[guidedMode, loading\]\);/,
+  );
+
   const editorStart = flight.indexOf("const openStickySearchEditor = useCallback(");
   const editorEnd = flight.indexOf("const isStickySearchPanelOpen", editorStart);
   const editor = flight.slice(editorStart, editorEnd);

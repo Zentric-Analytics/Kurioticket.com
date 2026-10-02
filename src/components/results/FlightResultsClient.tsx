@@ -1501,16 +1501,42 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }, [guidedMode]);
 
   useEffect(() => {
-    if (guidedMode) return undefined;
+    if (guidedMode || typeof window === "undefined") return undefined;
 
-    const frame = window.requestAnimationFrame(() => {
-      setDesktopNavSearchTarget(
-        document.querySelector<HTMLElement>("[data-flight-results-nav-search]"),
+    let frame = 0;
+
+    const syncDesktopNavSearchTarget = () => {
+      frame = window.requestAnimationFrame(() => {
+        const nextTarget = document.querySelector<HTMLElement>(
+          "[data-flight-results-nav-search]",
+        );
+        setDesktopNavSearchTarget((current) =>
+          current === nextTarget ? current : nextTarget,
+        );
+      });
+    };
+
+    syncDesktopNavSearchTarget();
+
+    const observer = new MutationObserver(() => {
+      const currentTarget = document.querySelector<HTMLElement>(
+        "[data-flight-results-nav-search]",
       );
+      if (currentTarget !== desktopNavSearchTarget) {
+        syncDesktopNavSearchTarget();
+      }
     });
 
-    return () => window.cancelAnimationFrame(frame);
-  }, [guidedMode, loading]);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => {
+      observer.disconnect();
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [desktopNavSearchTarget, guidedMode]);
 
   useEffect(() => {
     stickySearchPanelOpenRef.current = isStickySearchPanelOpen;

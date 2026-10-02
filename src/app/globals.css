@@ -1721,7 +1721,7 @@ textarea {
   .flight-card-fare-action {
     align-items: flex-end;
     justify-content: flex-end;
-    border-left: 1px solid #d8e1ec;
+    border-left: 0;
     border-top: 0;
     padding-left: 1rem;
     padding-right: 0;
@@ -1761,7 +1761,7 @@ textarea {
     .flight-card-fare-action {
       align-items: flex-end;
       justify-content: flex-end;
-      border-left: 1px solid #d8e1ec;
+      border-left: 0;
       border-top: 0;
       padding-left: 0.875rem;
       padding-right: 0;
