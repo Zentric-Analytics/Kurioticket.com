@@ -81,6 +81,47 @@ const compactBookingProviderName = (offer: CarOffer) => {
   return provider === "Kurioticket static fixture" ? "Kurioticket" : provider;
 };
 
+function CarOfferProviderBrand({
+  car,
+  offer,
+  providerName,
+  compact = false,
+}: {
+  car: NormalizedCarResult;
+  offer: CarOffer;
+  providerName: string;
+  compact?: boolean;
+}) {
+  const logoUrl =
+    car.inventorySource === "kurioticket-static-cars"
+      ? "/brand/kurioticket-logo-primary-light-bg.svg"
+      : offer.bookingProviderLogoUrl;
+  if (logoUrl) {
+    return (
+      <span
+        className={`inline-flex shrink-0 items-center overflow-hidden ${compact ? "h-6 max-w-[108px]" : "h-7 max-w-[132px]"}`}
+        data-car-offer-provider-brand
+      >
+        <Image
+          src={logoUrl}
+          alt={`${providerName || "Booking provider"} logo`}
+          width={compact ? 108 : 132}
+          height={compact ? 24 : 30}
+          className={`w-auto object-contain object-left ${compact ? "max-h-6 max-w-[108px]" : "max-h-7 max-w-[132px]"}`}
+        />
+      </span>
+    );
+  }
+  return (
+    <span
+      className={`min-w-0 truncate font-semibold text-[#192024] ${compact ? "text-[13px] leading-[18px]" : "text-[15px] leading-5"}`}
+      data-car-offer-provider-brand-fallback
+    >
+      {providerName || "Booking provider"}
+    </span>
+  );
+}
+
 const unavailableOfferLabel = "Offer currently unavailable";
 const unavailableBookingMessage =
   "This offer is not currently available to book";
@@ -517,18 +558,6 @@ export function CarDetailsExperience({
                 </div>
               ) : undefined
             }
-            desktopSummary={
-              presentation === "standalone-content" && primaryOffer ? (
-                <StandaloneDesktopDealSummary
-                  car={car}
-                  offer={primaryOffer}
-                  days={days}
-                  price={price}
-                  copy={copy}
-                  action={effectivePrimaryAction}
-                />
-              ) : undefined
-            }
             guidedMobileActions={
               presentation === "guided-content" ? (
                 <CarHeroActions
@@ -803,53 +832,58 @@ function DesktopCarHireLocationOverview({
 
   return (
     <div
-      className="mx-auto w-full max-w-[900px] rounded-[16px] border border-slate-200 bg-white p-5 shadow-[0_3px_16px_rgba(15,23,42,0.035)]"
+      className="mx-auto w-full max-w-[900px]"
       data-car-details-desktop-location-overview
     >
-      <h2 className="car-details-desktop-section-heading-type">Car hire location</h2>
-      <div className="mt-3 flex items-start gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue">
-          <MapPin size={18} aria-hidden="true" />
-        </span>
-        <div className="min-w-0">
-          <p className="car-details-desktop-strong-copy-type">{pickupLocation}</p>
-          <p className="car-details-desktop-secondary-copy-type mt-0.5">{pickupType}</p>
-        </div>
-      </div>
-      {mapUrl ? (
-        <div className="mt-4 overflow-hidden rounded-[12px] border border-slate-200">
-          <iframe
-            title={`${copy("carDetails.mapShowingPickup")} ${pickupLocation}`}
-            src={mapUrl}
-            loading="lazy"
-            referrerPolicy="strict-origin-when-cross-origin"
-            className="block h-[250px] w-full border-0"
-          />
-          {directionsUrl ? (
-            <a
-              href={directionsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="focus-ring flex h-11 items-center justify-between border-t border-slate-200 px-4 text-[13px] font-bold text-[#075EE8] hover:bg-slate-50"
-            >
-              {copy("carDetails.getDirections")}
-              <ExternalLink size={16} aria-hidden="true" />
-            </a>
-          ) : null}
-        </div>
-      ) : directionsUrl ? (
-        <a
-          href={directionsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="focus-ring mt-4 inline-flex min-h-10 items-center gap-2 text-[13px] font-bold text-[#075EE8]"
-        >
-          {copy("carDetails.getDirections")}
-          <ExternalLink size={16} aria-hidden="true" />
-        </a>
-      ) : null}
       <div
-        className="mt-5 border-t border-slate-200 pt-5"
+        className="rounded-[16px] border border-slate-200 bg-white p-5 shadow-[0_3px_16px_rgba(15,23,42,0.035)]"
+        data-car-details-desktop-location-card
+      >
+        <h2 className="car-details-desktop-section-heading-type">Car hire location</h2>
+        <div className="mt-3 flex items-start gap-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue">
+            <MapPin size={18} aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="car-details-desktop-strong-copy-type">{pickupLocation}</p>
+            <p className="car-details-desktop-secondary-copy-type mt-0.5">{pickupType}</p>
+          </div>
+        </div>
+        {mapUrl ? (
+          <div className="mt-4 overflow-hidden rounded-[12px] border border-slate-200">
+            <iframe
+              title={`${copy("carDetails.mapShowingPickup")} ${pickupLocation}`}
+              src={mapUrl}
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              className="block h-[250px] w-full border-0"
+            />
+            {directionsUrl ? (
+              <a
+                href={directionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="focus-ring flex h-11 items-center justify-between border-t border-slate-200 px-4 text-[13px] font-bold text-[#075EE8] hover:bg-slate-50"
+              >
+                {copy("carDetails.getDirections")}
+                <ExternalLink size={16} aria-hidden="true" />
+              </a>
+            ) : null}
+          </div>
+        ) : directionsUrl ? (
+          <a
+            href={directionsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="focus-ring mt-4 inline-flex min-h-10 items-center gap-2 text-[13px] font-bold text-[#075EE8]"
+          >
+            {copy("carDetails.getDirections")}
+            <ExternalLink size={16} aria-hidden="true" />
+          </a>
+        ) : null}
+      </div>
+      <div
+        className="mt-5 pb-1"
         data-car-details-desktop-location-details
       >
         <h3 className="car-details-desktop-item-heading-type">
@@ -861,111 +895,6 @@ function DesktopCarHireLocationOverview({
         </ul>
       </div>
     </div>
-  );
-}
-
-function StandaloneDesktopDealSummary({
-  car,
-  offer,
-  days,
-  price,
-  copy,
-  action,
-}: {
-  car: NormalizedCarResult;
-  offer: CarOffer;
-  days: number;
-  price: PriceFn;
-  copy: (key: string) => string;
-  action: CarDetailsPrimaryAction;
-}) {
-  const total = price(offer.totalPrice, offer.currency);
-  const providerName =
-    compactBookingProviderName(offer) ||
-    providerValue(car.rentalCompanyName) ||
-    copy("carsResults.bookingProvider");
-  const facts = car.sandboxPresentation
-    ? [unavailableOfferLabel, unavailableBookingMessage]
-    : [
-        offer.freeCancellation ? copy("carDetails.freeCancellation") : null,
-        offer.taxesAndFeesIncluded ? copy("carDetails.feesIncludedShort") : null,
-        offer.payAtPickup ? copy("carsResults.payAtPickup") : null,
-      ].filter((value): value is string => Boolean(value));
-  const actionClassName =
-    "focus-ring mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-[#075EE8] px-4 text-[14px] font-bold leading-5 text-white shadow-[0_3px_10px_rgba(7,94,232,0.16)] transition hover:bg-[#004BB8]";
-
-  return (
-    <aside
-      className="flex flex-col rounded-[14px] border border-slate-200 bg-[#F8FAFC] p-4"
-      data-car-details-desktop-selected-deal
-    >
-      <p className="text-[15px] font-bold leading-5 text-slate-950">
-        {providerName}
-      </p>
-      <strong
-        className="mt-1.5 block text-[28px] font-extrabold leading-8 tracking-[-0.025em] text-[#07133B] tabular-nums"
-        dir="ltr"
-        title={total.title}
-        aria-label={total.ariaLabel}
-      >
-        {total.formatted}
-      </strong>
-      <p className="mt-1 text-[13px] font-medium leading-[18px] text-[#475569]">
-        {days} {days === 1 ? copy("carDetails.day") : copy("carDetails.days")} total
-      </p>
-      {facts.length ? (
-        <div className="mt-4 space-y-2" data-car-details-desktop-selected-deal-facts>
-          {facts.map((fact) => (
-            <p
-              key={fact}
-              className="flex items-start gap-2 text-[13px] font-semibold leading-[18px] text-[#334155]"
-            >
-              <ShieldCheck
-                size={15}
-                strokeWidth={2}
-                className="mt-px shrink-0 text-[#075EE8]"
-                aria-hidden="true"
-              />
-              {fact}
-            </p>
-          ))}
-        </div>
-      ) : null}
-      <div className="mt-4">
-        {action.kind === "sandbox-handoff" ? (
-          <a
-            href={action.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            referrerPolicy="no-referrer"
-            className={actionClassName}
-            data-car-details-desktop-overview-cta
-          >
-            {copy("carDetails.continueDeal")}
-          </a>
-        ) : action.kind === "standalone-disabled-provider" ? (
-          <button
-            type="button"
-            disabled
-            className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-100`}
-            data-car-details-desktop-overview-cta
-          >
-            {copy("carDetails.continueDeal")}
-          </button>
-        ) : (
-          <button
-            type="button"
-            disabled={!action.enabled || action.pending}
-            aria-label={action.accessibleLabel}
-            onClick={action.onActivate}
-            className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-60`}
-            data-car-details-desktop-overview-cta
-          >
-            {action.pending ? copy("deals.guided.carDetails.saving") : action.label}
-          </button>
-        )}
-      </div>
-    </aside>
   );
 }
 
@@ -1143,8 +1072,11 @@ function CarPriceComparisonSection({
 }) {
   const selectedOffer =
     offers.find((candidate) => candidate.id === selectedOfferId) ?? offers[0];
-  const desktopAlternativeOffers = selectedOffer
-    ? offers.filter((offer) => offer.id !== selectedOffer.id)
+  const desktopOrderedOffers = selectedOffer
+    ? [
+        selectedOffer,
+        ...offers.filter((offer) => offer.id !== selectedOffer.id),
+      ]
     : offers;
   const factsForOffer = (offer: CarOffer) =>
     car.sandboxPresentation
@@ -1200,7 +1132,7 @@ function CarPriceComparisonSection({
   };
   return (
     <div
-      className={`border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full lg:bg-transparent lg:pb-[22px] lg:pt-2 ${showDesktopOfferList ? "lg:max-w-[720px]" : "lg:max-w-[820px]"}`}
+      className={`border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full lg:bg-transparent lg:pb-[22px] lg:pt-2 ${showDesktopOfferList ? "lg:max-w-[900px]" : "lg:max-w-[820px]"}`}
       data-car-price-comparison
     >
       {showSectionHeading ? (
@@ -1227,11 +1159,10 @@ function CarPriceComparisonSection({
           const selected = offer.id === selectedOffer?.id;
           const daily = price(offer.pricePerDay, offer.currency);
           const facts = factsForOffer(offer);
-          const sandboxProvider = car.sandboxPresentation
-            ? providerValue(offer.bookingProviderName) ||
-              providerValue(offer.rentalCompanyName) ||
-              providerValue(car.rentalCompanyName)
-            : "";
+          const providerName =
+            compactBookingProviderName(offer) ||
+            providerValue(car.rentalCompanyName) ||
+            copy("carsResults.bookingProvider");
           const sandboxSupplier = car.sandboxPresentation
             ? providerValue(offer.rentalCompanyName) ||
               providerValue(car.rentalCompanyName)
@@ -1247,19 +1178,12 @@ function CarPriceComparisonSection({
               className={`block w-full rounded-[14px] border bg-white px-2 py-3 text-start transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 lg:rounded-[14px] lg:px-4 lg:py-3 lg:shadow-[0_2px_10px_rgba(15,23,42,0.025)] ${selected ? "border-[#075EE8] ring-1 ring-[#075EE8]/10 lg:shadow-[0_6px_18px_rgba(7,94,232,0.08)]" : "border-slate-200 lg:hover:border-slate-300"}`}
             >
               <span className="flex min-w-0 items-center justify-between gap-3">
-                {car.sandboxPresentation ? (
-                  <span className="min-w-0 flex-1 truncate text-[13px] font-bold leading-[18px] text-[#071A48] lg:text-[14px] lg:font-semibold lg:leading-[22px] lg:text-[#192024]">
-                    {sandboxProvider}
-                  </span>
-                ) : (
-                  <Image
-                    src="/brand/kurioticket-logo-primary-light-bg.svg"
-                    alt="Kurioticket"
-                    width={108}
-                    height={24}
-                    className="h-6 w-[108px] shrink-0 object-contain object-left lg:h-7 lg:w-[126px]"
-                  />
-                )}
+                <CarOfferProviderBrand
+                  car={car}
+                  offer={offer}
+                  providerName={providerName}
+                  compact
+                />
                 <span
                   className={`flex size-4 shrink-0 items-center justify-center rounded-full border-[1.5px] bg-white ${selected ? "border-[#075EE8]" : "border-slate-400"}`}
                   aria-hidden="true"
@@ -1319,12 +1243,12 @@ function CarPriceComparisonSection({
         })}
       </div>
 
-      {showDesktopOfferList && desktopAlternativeOffers.length ? (
+      {showDesktopOfferList && desktopOrderedOffers.length ? (
         <div
-          className="mt-3 hidden w-full space-y-2 lg:mx-auto lg:block lg:max-w-[720px]"
+          className="mt-3 hidden w-full space-y-2 lg:block"
           data-desktop-car-deal-list
         >
-          {desktopAlternativeOffers.map((offer) => {
+          {desktopOrderedOffers.map((offer) => {
             const selected = offer.id === selectedOffer?.id;
             const total = price(offer.totalPrice, offer.currency);
             const providerName =
@@ -1349,12 +1273,12 @@ function CarPriceComparisonSection({
                   className="focus-ring min-w-0 text-start"
                   data-car-details-desktop-deal-summary
                 >
-                  <span
-                    className="car-details-desktop-provider-type block truncate text-[15px] font-semibold leading-5 text-[#192024]"
-                    title={providerName}
-                    data-car-details-desktop-deal-provider
-                  >
-                    {providerName}
+                  <span data-car-details-desktop-deal-provider>
+                    <CarOfferProviderBrand
+                      car={car}
+                      offer={offer}
+                      providerName={providerName}
+                    />
                   </span>
                   <strong
                     className="mt-0.5 block whitespace-nowrap text-[20px] font-bold leading-6 tracking-[-0.015em] text-[#07133B] tabular-nums"
