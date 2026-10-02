@@ -1386,24 +1386,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       }
 
       const rect = resolvedCompactForm.getBoundingClientRect();
-      const viewportGutter = 24;
+      const viewportGutter = 16;
       const availableWidth = Math.max(
         0,
         window.innerWidth - viewportGutter * 2,
       );
-      const preferredWidth = Math.min(920, availableWidth);
-      const centeredLeft = rect.left + rect.width / 2 - preferredWidth / 2;
 
       setDesktopSearchPopoverFrame({
-        top: rect.bottom + 8,
-        left: Math.max(
-          viewportGutter,
-          Math.min(
-            centeredLeft,
-            window.innerWidth - preferredWidth - viewportGutter,
-          ),
-        ),
-        width: preferredWidth,
+        top: rect.bottom + 4,
+        left: viewportGutter,
+        width: availableWidth,
       });
       return true;
     },
@@ -5460,7 +5452,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         {isStickySearchPanelOpen ? (
           <div
             data-flight-search-anchored-backdrop
-            className="fixed inset-0 z-[110] bg-slate-950/10"
+            className="fixed inset-0 z-[110] bg-slate-950/[0.04]"
             role="presentation"
             onMouseDown={(event) => {
               if (event.target === event.currentTarget) {
@@ -5480,9 +5472,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     }
                   : {
                       top: 88,
-                      left: "50%",
-                      width: "min(920px, calc(100vw - 48px))",
-                      transform: "translateX(-50%)",
+                      left: 16,
+                      width: "calc(100vw - 32px)",
                     }
               }
               onMouseDown={(event) => event.stopPropagation()}
@@ -5496,7 +5487,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 onChangeCapture={markExpandedSearchInteraction}
                 onMouseDown={(event) => event.stopPropagation()}
                 onClick={(event) => event.stopPropagation()}
-                className="max-h-[calc(100dvh-108px)] w-full overflow-y-auto overscroll-contain rounded-[14px] border border-slate-200/90 bg-[#F5F7FB] p-4 text-start shadow-[0_24px_60px_-28px_rgba(15,23,42,0.55)] ring-1 ring-white/80"
+                className="max-h-[calc(100dvh-104px)] w-full overflow-y-auto overscroll-contain rounded-[10px] border border-slate-200/80 bg-[#F5F7FB] p-3 text-start shadow-[0_12px_28px_-22px_rgba(15,23,42,0.28)]"
               >
                 <div className="relative mb-4 border-b border-slate-200/80 pb-3">
                   <div className="mx-auto max-w-2xl text-center">
