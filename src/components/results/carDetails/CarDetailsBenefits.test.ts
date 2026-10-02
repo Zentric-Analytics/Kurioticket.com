@@ -225,6 +225,10 @@ test("desktop overview and linear sections use only existing car and offer data"
   assert.match(clientSource, /offer\.payAtPickup/);
   assert.match(clientSource, /data-car-details-desktop-pickup-overview/);
   assert.match(clientSource, /data-car-details-desktop-location-overview/);
+  assert.match(clientSource, /data-car-details-desktop-location-details/);
+  assert.match(clientSource, /carDetails\.pickupLocationDetails/);
+  assert.match(clientSource, /carDetails\.confirmPickupDetails/);
+  assert.match(clientSource, /car\.pickupInstructions \? <li>\{car\.pickupInstructions\}<\/li> : null/);
   assert.doesNotMatch(clientSource, /data-car-details-desktop-rental-details/);
   assert.doesNotMatch(clientSource, /function DesktopRentalDetails/);
   assert.doesNotMatch(clientSource, /car\.depositAmount|car\.excessAmount/);
@@ -361,7 +365,7 @@ test("standalone car details restore polished Hotels-style section headings", ()
 test("standalone desktop overview content sits directly on the page without an outer card shell", () => {
   assert.match(
     heroSource,
-    /className="hidden lg:grid lg:grid-cols-\[minmax\(0,1fr\)_320px\] lg:gap-5 lg:p-5"/,
+    /className="hidden lg:grid lg:grid-cols-\[minmax\(0,1fr\)_320px\] lg:grid-rows-\[auto_auto_auto\] lg:gap-x-5 lg:gap-y-4 lg:p-5"/,
   );
   assert.doesNotMatch(
     heroSource,
@@ -384,7 +388,11 @@ test("desktop car details use the approved overview card while keeping controls 
   assert.match(heroSource, /data-car-details-desktop-overview-summary/);
   assert.match(
     heroSource,
-    /className="min-w-0 self-start" data-car-details-desktop-overview-summary/,
+    /className="min-w-0 self-start lg:col-start-2 lg:row-start-2" data-car-details-desktop-overview-summary/,
+  );
+  assert.match(
+    heroSource,
+    /data-car-details-desktop-overview-image[\s\S]*?lg:col-start-1 lg:row-start-2/,
   );
   assert.match(clientSource, /data-car-details-desktop-selected-deal/);
   assert.match(
@@ -397,6 +405,16 @@ test("desktop car details use the approved overview card while keeping controls 
     /focus-ring mt-4 inline-flex min-h-10 w-full items-center justify-center/,
   );
   assert.match(clientSource, /data-car-details-desktop-overview-cta/);
+  const desktopSummary = sourceBetween(
+    clientSource,
+    "function StandaloneDesktopDealSummary",
+    "function CarHeroActions",
+  );
+  assert.doesNotMatch(desktopSummary, /Selected deal/);
+  assert.match(
+    desktopSummary,
+    /<p className="text-\[15px\] font-bold leading-5 text-slate-950"> \{providerName\} <\/p>/,
+  );
 
   assert.match(clientSource, /data-car-details-desktop-controls/);
   assert.doesNotMatch(clientSource, /data-car-details-desktop-sticky-controls/);
@@ -817,18 +835,24 @@ test("desktop standalone duplicate section headings and supporting copy are left
   assert.doesNotMatch(location, /lg:text-center|lg:justify-center/);
 });
 
-test("standalone desktop car overview uses the approved Expedia-inspired split card", () => {
+test("standalone desktop car overview keeps the split layout while aligning the deal card to the car image row", () => {
   assert.match(heroSource, /data-car-details-desktop-overview/);
   assert.match(
     heroSource,
-    /lg:grid-cols-\[minmax\(0,1fr\)_320px\][\s\S]*?lg:rounded-\[16px\][\s\S]*?lg:bg-white/,
+    /lg:grid-cols-\[minmax\(0,1fr\)_320px\][\s\S]*?lg:grid-rows-\[auto_auto_auto\]/,
   );
   assert.match(heroSource, /data-car-details-desktop-overview-identity/);
   assert.match(heroSource, /data-car-details-desktop-overview-specifications/);
-  assert.match(heroSource, /data-car-details-desktop-overview-image/);
+  assert.match(
+    heroSource,
+    /data-car-details-desktop-overview-image[\s\S]*?lg:col-start-1 lg:row-start-2/,
+  );
   assert.match(heroSource, /h-\[250px\]/);
   assert.match(heroSource, /sizes="680px"/);
   assert.match(heroSource, /className="block min-w-0 truncate" title={label}/);
-  assert.match(heroSource, /data-car-details-desktop-overview-summary/);
+  assert.match(
+    heroSource,
+    /data-car-details-desktop-overview-summary[\s\S]*?lg:col-start-2 lg:row-start-2/,
+  );
   assert.match(heroSource, /reserveMobileControlSafeZone \? "lg:hidden" : "pt-5"/);
 });
