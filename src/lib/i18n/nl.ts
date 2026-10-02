@@ -166,6 +166,7 @@ export const translations: TranslationDictionary = {
   mobileTravelHeading: "Reizen",
   mobilePreferencesHeading: "Voorkeuren",
   viewDetails: "Details bekijken",
+  seeDetails: "Details bekijken",
   tryAgain: "Opnieuw proberen",
   edit: "Bewerken",
   manage: "Beheren",
