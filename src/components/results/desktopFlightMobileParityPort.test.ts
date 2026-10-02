@@ -76,8 +76,9 @@ test("desktop nearby fares keep seven dates and arrows but use mobile-like indiv
   assert.match(results, /data-desktop-cheaper-nearby/);
   const desktopNearby = results.match(/data-desktop-cheaper-nearby[\s\S]*?className="([^"]*)"[\s\S]*?>\s*Cheaper nearby:/)?.[1] ?? "";
   assert.match(desktopNearby, /px-0/);
+  assert.match(desktopNearby, /w-fit/);
   assert.match(desktopNearby, /text-\[13px\] font-medium/);
-  assert.doesNotMatch(desktopNearby, /rounded-full|bg-white|ring-slate-200/);
+  assert.doesNotMatch(desktopNearby, /mx-auto|rounded-full|bg-white|ring-slate-200/);
   assert.match(results, /Cheaper nearby: \{formatFareStripDateLabel\(cheaperNearbyFare\.date, calendarLocale\)\} · Save \{cheaperNearbyFare\.savings\}/);
 });
 
