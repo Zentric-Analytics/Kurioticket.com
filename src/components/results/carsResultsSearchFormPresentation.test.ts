@@ -24,32 +24,34 @@ test("results desktop search typography mirrors the polished mobile-web hierarch
 
   for (const token of [
     "lg:mb-1",
-    "lg:text-xs",
-    "lg:font-semibold",
+    "lg:text-[12px]",
+    "lg:font-bold",
     "lg:uppercase",
     "lg:leading-4",
-    "lg:tracking-wide",
-    "lg:text-slate-600",
+    "lg:tracking-[0.05em]",
+    "lg:text-[#475569]",
   ])
     assert.ok(labelClass.includes(token), `missing desktop label token: ${token}`);
 
   for (const token of [
-    "lg:text-sm",
-    "lg:font-semibold",
+    "lg:text-[15px]",
+    "lg:font-bold",
     "lg:leading-5",
-    "lg:tracking-normal",
-    "lg:text-slate-950",
+    "lg:tracking-[-0.005em]",
+    "lg:text-[#07133B]",
+    "lg:placeholder:font-medium",
+    "lg:placeholder:text-slate-400",
   ])
     assert.ok(valueClass.includes(token), `missing desktop value token: ${token}`);
 
   assert.doesNotMatch(
     labelClass,
-    /lg:normal-case|lg:font-bold|lg:tracking-\[0\.11em\]|lg:text-slate-500/,
+    /lg:normal-case|lg:font-medium|lg:tracking-wide|lg:text-slate-500/,
   );
   assert.equal(
     (
       source.match(
-        /lg:text-sm lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-slate-950/g,
+        /lg:text-\[15px\] lg:font-bold lg:leading-5 lg:tracking-\[-0\.005em\] lg:text-\[#07133B\]/g,
       ) ?? []
     ).length,
     4,
