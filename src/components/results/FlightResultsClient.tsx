@@ -7400,42 +7400,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         </div>
       </section>
 
-      <nav
-        aria-label="Breadcrumb"
-        className="page-shell hidden pt-12 sm:block lg:pt-14"
-      >
-        <ol className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
-          <li>
-            <Link
-              href="/"
-              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
-            >
-              Home
-            </Link>
-          </li>
-          <li className="text-slate-300" aria-hidden="true">
-            &gt;
-          </li>
-          <li>
-            <Link
-              href="/flights"
-              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
-            >
-              Flights
-            </Link>
-          </li>
-          <li className="text-slate-300" aria-hidden="true">
-            &gt;
-          </li>
-          <li className="text-slate-700" aria-current="page">
-            Flight results
-          </li>
-        </ol>
-      </nav>
-
       <div
         ref={resultsGridRef}
-        className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-0 pt-8 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-6"
+        className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-0 pt-8 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-4"
       >
         <aside
           ref={desktopFilterSidebarRef}

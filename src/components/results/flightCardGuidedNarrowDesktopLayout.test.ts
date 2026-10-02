@@ -92,7 +92,7 @@ test("mobile card navigation ignores nested controls and keeps canonical href", 
   );
 });
 
-test("desktop fare stays beside the itinerary while details span beneath both columns", () => {
+test("desktop fare spans the itinerary and metadata rows like the Hotel action column", () => {
   const baseBodyStart = globalsCss.indexOf(".flight-card-body {");
   assert.match(
     ruleBody(globalsCss, ".flight-card-body", baseBodyStart),
@@ -117,7 +117,7 @@ test("desktop fare stays beside the itinerary while details span beneath both co
   );
   assert.match(
     desktopBodyRule,
-    /grid-template-areas:\s*"legs fare"\s*"details details"/,
+    /grid-template-areas:\s*"legs fare"\s*"details fare"/,
   );
   assert.match(
     desktopBodyRule,
@@ -179,7 +179,7 @@ test("desktop fare stays beside the itinerary while details span beneath both co
   );
   assert.match(
     mediumBodyRule,
-    /grid-template-areas:\s*"legs fare"\s*"details details"/,
+    /grid-template-areas:\s*"legs fare"\s*"details fare"/,
   );
   assert.doesNotMatch(flightCardSource, /flight-card-details[^\n]*grid-cols-3/);
 });
@@ -246,7 +246,7 @@ test("desktop utility actions occupy the top-right header without reserving a mi
 
   assert.match(header, /\{resultBadge \? <ResultBadgePill badge=\{resultBadge\} \/> : null\}/);
   assert.match(header, /renderFlightUtilityActions\("hidden lg:flex"\)/);
-  assert.match(header, /flex shrink-0 flex-col items-end gap-1/);
+  assert.match(header, /flex shrink-0 items-center justify-end gap-1/);
   assert.doesNotMatch(header, /\{resultBadge \? \(\s*<div[\s\S]*data-flight-card-header-actions/);
 
   assert.match(fareCall, /actions=\{renderFlightUtilityActions\("lg:hidden"\)\}/);
@@ -261,15 +261,15 @@ test("desktop utility actions occupy the top-right header without reserving a mi
   assert.ok(price >= 0 && price < viewDeal, "Fare price renders before View deal");
 });
 
-test("desktop badge cards reserve enough header height for stacked badge and utility actions", () => {
-  assert.match(
-    flightCardSource,
-    /resultBadge && "lg:min-h-16"/,
-  );
+test("desktop badge and utility actions share one Hotel-style horizontal row", () => {
   const headerStart = flightCardSource.indexOf("flight-card-desktop-header");
   const bodyStart = flightCardSource.indexOf("flight-card-body", headerStart);
   const header = flightCardSource.slice(headerStart, bodyStart);
-  assert.match(header, /resultBadge && "lg:min-h-16"/);
+
+  assert.match(header, /flight-card-header-actions flex shrink-0 items-center justify-end gap-1/);
+  assert.match(header, /\{resultBadge \? <ResultBadgePill badge=\{resultBadge\} \/> : null\}/);
+  assert.match(header, /renderFlightUtilityActions\("hidden lg:flex"\)/);
+  assert.doesNotMatch(header, /flex-col|lg:min-h-16/);
 });
 
 

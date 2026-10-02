@@ -1486,16 +1486,15 @@ textarea {
   }
 }
 
-/* Keep the desktop fare column beside the itinerary while letting the
-   detail strip use the full card width. This override intentionally lives
-   after the base and container-width card rules so the cascade cannot
-   restore the old details-in-left-column layout. */
+/* Keep the desktop fare column beside the itinerary and let it span the
+   itinerary plus metadata rows, matching the compact Hotel action rhythm.
+   This override intentionally lives after the base and container rules. */
 @media (min-width: 1024px) {
   .flight-card-body {
     grid-template-columns: minmax(0, 1fr) 196px;
     grid-template-areas:
       "legs fare"
-      "details details";
+      "details fare";
     row-gap: 0.5rem;
   }
 
@@ -1535,7 +1534,7 @@ textarea {
       grid-template-columns: minmax(0, 1fr) 180px;
       grid-template-areas:
         "legs fare"
-        "details details";
+        "details fare";
       row-gap: 0.5rem;
     }
 
