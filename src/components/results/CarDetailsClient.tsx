@@ -1259,6 +1259,9 @@ function CarPriceComparisonSection({
 }) {
   const selectedOffer =
     offers.find((candidate) => candidate.id === selectedOfferId) ?? offers[0];
+  const desktopAlternativeOffers = selectedOffer
+    ? offers.filter((offer) => offer.id !== selectedOffer.id)
+    : offers;
   const factsForOffer = (offer: CarOffer) =>
     car.sandboxPresentation
       ? [
@@ -1432,12 +1435,12 @@ function CarPriceComparisonSection({
         })}
       </div>
 
-      {showDesktopOfferList ? (
+      {showDesktopOfferList && desktopAlternativeOffers.length ? (
         <div
           className="mt-3 hidden w-full space-y-2 lg:mx-auto lg:block lg:max-w-[720px]"
           data-desktop-car-deal-list
         >
-          {offers.map((offer) => {
+          {desktopAlternativeOffers.map((offer) => {
             const selected = offer.id === selectedOffer?.id;
             const total = price(offer.totalPrice, offer.currency);
             const providerName =
