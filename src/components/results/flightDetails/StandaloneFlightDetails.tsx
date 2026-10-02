@@ -44,6 +44,8 @@ import { invalidateSavedFlightsClientCache } from "@/lib/saved-flight-events";
 import flightDetailsHero from "../../../../apps/mobile/assets/heroes/flight-details-hero.webp";
 
 type FareTab = MobileFareInfoTab;
+const DUFFEL_PROVIDER_LOGO_URL = "https://assets.duffel.com/img/hq-assets/product-logos/flights-api.svg";
+
 const fareTabs: Array<{ id: FareTab; label: string }> = [
   { id: "deals", label: "Compare deals" },
   { id: "details", label: "Fare details" },
@@ -926,7 +928,7 @@ function CompareDealsPanel({
                         decorative
                       />
                     ) : (
-                      <ProviderDealMark providerName={deal.providerName} />
+                      <OfficialProviderLogo providerName={deal.providerName} />
                     )}
                     <span className="max-w-[150px] truncate text-[15px] font-semibold leading-5 text-[#192024]">
                       {deal.providerName}
@@ -948,13 +950,13 @@ function CompareDealsPanel({
 
                 {supportingFacts.length ? (
                   <span
-                    className="mt-2.5 flex min-w-0 flex-wrap items-center gap-y-1.5 text-[12px] font-normal leading-4 text-[#59636a]"
+                    className="mt-2.5 grid min-w-0 grid-cols-2 items-start gap-x-4 text-[12px] font-normal leading-4 text-[#59636a]"
                     data-desktop-flight-deal-benefits
                   >
                     {supportingFacts.map((term, factIndex) => (
                       <span
                         key={`${term.category}-${term.text}-${factIndex}`}
-                        className={`inline-flex min-w-0 items-center gap-1.5 ${factIndex ? "ml-4 border-l border-[#D9E2E8] pl-4" : ""}`}
+                        className={`inline-flex min-w-0 items-start gap-1.5 ${factIndex ? "border-l border-[#D9E2E8] pl-4" : ""}`}
                       >
                         {term.semantic === "positive" ? (
                           <Check
@@ -1008,26 +1010,22 @@ function CompareDealsPanel({
   );
 }
 
-function ProviderDealMark({ providerName }: { providerName: string }) {
-  const normalized = providerName.trim().toLocaleLowerCase("en-US");
-  const isDuffel = normalized === "duffel";
+function OfficialProviderLogo({ providerName }: { providerName: string }) {
+  if (providerName.trim().toLocaleLowerCase("en-US") !== "duffel") return null;
 
   return (
     <span
       aria-hidden="true"
-      data-desktop-flight-provider-mark
-      className="inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[9px] bg-[#192024] text-white"
+      data-desktop-flight-provider-logo
+      className="inline-flex h-8 w-[58px] shrink-0 items-center"
     >
-      {isDuffel ? (
-        <span className="flex items-center gap-[2px]">
-          <span className="h-4 w-[7px] rounded-r-full bg-white" />
-          <span className="h-4 w-[7px] rounded-r-full bg-white" />
-        </span>
-      ) : (
-        <span className="text-[13px] font-bold leading-none">
-          {providerName.trim().charAt(0).toUpperCase() || "P"}
-        </span>
-      )}
+      <Image
+        src={DUFFEL_PROVIDER_LOGO_URL}
+        alt=""
+        width={116}
+        height={32}
+        className="h-8 w-[58px] object-contain object-left"
+      />
     </span>
   );
 }
