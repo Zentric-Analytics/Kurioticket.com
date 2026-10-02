@@ -1818,7 +1818,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                           {resultsHeading}
                         </h2>
                       ) : (
-                        <h1 ref={standaloneResultsHeadingRef} tabIndex={-1} className="scroll-mt-20 text-[12px] font-normal leading-4 text-[#191E3B]">
+                        <h1 ref={standaloneResultsHeadingRef} tabIndex={-1} className="scroll-mt-20 text-[12px] font-bold leading-4 text-[#071A48]">
                           {resultsHeading}
                         </h1>
                       )}
@@ -1839,13 +1839,13 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                           }
                         }}
                       >
-                        <button ref={hotelSortTriggerRef} type="button" aria-haspopup="listbox" aria-expanded={hotelSortMenuOpen} aria-controls="hotel-results-sort-menu" className="hotel-results-sort-trigger inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-[#9299A9] bg-white px-3 text-[#191E3B] outline-none transition-colors hover:border-[#191E3B] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2" onClick={handleHotelSortTriggerClick}>
+                        <button ref={hotelSortTriggerRef} type="button" aria-haspopup="listbox" aria-expanded={hotelSortMenuOpen} aria-controls="hotel-results-sort-menu" className={cn("hotel-results-sort-trigger inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-[#9299A9] bg-white px-3 text-[#071A48] outline-none transition-colors hover:border-[#191E3B] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2", hotelSortMenuOpen && "border-[#191E3B] bg-[#ECF4FD] ring-1 ring-inset ring-[#191E3B]")} onClick={handleHotelSortTriggerClick}>
                           <span>{t("sortBy") || "Sort by"} {currentSortLabel}</span>
-                          <ChevronDown aria-hidden="true" className={cn("h-3.5 w-3.5 transition-transform", hotelSortMenuOpen && "rotate-180")} strokeWidth={2} />
+                          <ChevronDown aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
                         </button>
 
                         {hotelSortMenuOpen ? (
-                          <div ref={hotelSortMenuRef} id="hotel-results-sort-menu" role="listbox" aria-label={t("sortBy") || "Sort by"} className="absolute right-0 top-[calc(100%+0.5rem)] z-50 min-w-[190px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]">
+                          <div ref={hotelSortMenuRef} id="hotel-results-sort-menu" role="listbox" aria-label={t("sortBy") || "Sort by"} className="absolute right-0 top-[calc(100%+12px)] z-50 w-[270px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg bg-white p-6 shadow-[0_2px_12px_rgba(12,14,28,0.08)]">
                             {hotelSortOptions.map((option, index) => {
                               const selected = option.value === hotelSummarySortMode;
 
@@ -1859,7 +1859,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                                   role="option"
                                   aria-selected={selected}
                                   tabIndex={selected ? 0 : -1}
-                                  className={cn("flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-base font-medium leading-6 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30", selected ? "bg-[#004BB8]/[0.08] text-[#004BB8]" : "text-slate-800 hover:bg-slate-50 hover:text-slate-950")}
+                                  className="hotel-results-sort-option flex h-12 w-full items-center justify-between gap-3 px-3 text-left text-[#191E3B] transition-colors hover:bg-[#F5F7FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30"
                                   onClick={() => {
                                     updateHotelSummarySortMode(option.value);
                                     setHotelSortMenuOpen(false);
@@ -1869,9 +1869,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                                   }}
                                   onKeyDown={(event) => handleHotelSortOptionKeyDown(event, index)}
                                 >
-                                  <span className="flex h-5 w-5 shrink-0 items-center justify-center">{selected ? <Check aria-hidden="true" className="h-4 w-4" strokeWidth={2.25} /> : null}</span>
-
                                   <span>{option.label}</span>
+                                  <span className="flex h-6 w-6 shrink-0 items-center justify-center" aria-hidden="true">{selected ? <Check className="h-6 w-6" strokeWidth={2.25} /> : null}</span>
                                 </button>
                               );
                             })}
@@ -2050,7 +2049,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           </div>
         </aside>
       </ResultsRoot>
-      {!guided ? <Footer variant="brand-legal-only" className="lg:bg-[#EFF3F7]" /> : null}
+      {!guided ? <Footer variant="brand-legal-only" /> : null}
       {!guided ? <HotelResultsScrollIndicator /> : null}
       </>}
     </>

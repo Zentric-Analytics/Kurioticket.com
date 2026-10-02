@@ -40,7 +40,7 @@ function findElement(node: ReactNode, predicate: (element: ReactElement<Record<s
   return undefined;
 }
 
-test("desktop rate card shows only the provider, stay total, and deal action", () => {
+test("desktop rate card shows only the provider, price, and deal action", () => {
   const html = renderToStaticMarkup(createElement(HotelPriceComparisonSection, {
     ...baseProps,
     variant: "desktop",
@@ -48,8 +48,8 @@ test("desktop rate card shows only the provider, stay total, and deal action", (
     offers: [{ ...offer, totalPrice: "NGN 240,000", roomName: "Deluxe room", bedConfiguration: "King bed", mealPlanLabel: "Breakfast included", cancellationLabel: "Non-refundable", paymentLabel: "Pay at property", taxesAndFeesLabel: "Taxes included" }],
     onContinueOffer: () => {},
   }));
-  for (const fact of ["Example stays", "NGN 240,000", "Stay total", "View deal"]) assert.ok(html.includes(fact), fact);
-  for (const extra of ["Estimated stay total", "NGN 80,000 per night", "Deluxe room", "King bed", "Breakfast included", "Non-refundable", "Pay at property", "Taxes included"]) assert.ok(!html.includes(extra), extra);
+  for (const fact of ["Example stays", "NGN 240,000", "View deal"]) assert.ok(html.includes(fact), fact);
+  for (const extra of ["Stay total", "Estimated stay total", "NGN 80,000 per night", "Deluxe room", "King bed", "Breakfast included", "Non-refundable", "Pay at property", "Taxes included"]) assert.ok(!html.includes(extra), extra);
   assert.equal((html.match(/data-desktop-provider-offer/g) ?? []).length, 1);
   assert.match(html, /<article/);
   assert.doesNotMatch(html, /<label[^>]*>[\s\S]*?<button[\s\S]*?<\/label>/);

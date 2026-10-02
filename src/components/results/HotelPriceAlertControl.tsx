@@ -559,10 +559,10 @@ export function HotelPriceAlertControl({
         </button>
       </div>
 
-      <div className={cn("hidden rounded-2xl border border-[#CFE0F8] bg-[#EEF6FF] px-4 py-2.5 shadow-[0_10px_26px_-24px_rgba(15,23,42,0.45)] sm:block", compactDesktop && "sm:inline-flex sm:h-8 sm:items-center sm:rounded-full sm:border-[#9299A9] sm:bg-transparent sm:px-3 sm:py-0 sm:shadow-none")}>
+      <div className={cn("hidden rounded-2xl border border-[#CFE0F8] bg-[#EEF6FF] px-4 py-2.5 shadow-[0_10px_26px_-24px_rgba(15,23,42,0.45)] sm:block", compactDesktop && "sm:inline-flex sm:h-8 sm:items-center sm:rounded-lg sm:border-[#9299A9] sm:bg-transparent sm:px-3 sm:py-0 sm:shadow-none")}>
         <div className={cn("flex items-center justify-between gap-3", compactDesktop && "sm:justify-start sm:gap-1")}>
-          <div className="flex min-w-0 items-center gap-3">
-            <span className={cn("inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8]", compactDesktop && "sm:h-6 sm:w-6 sm:bg-transparent")}>
+          <div className={cn("flex min-w-0 items-center gap-3", compactDesktop && "sm:gap-1")}>
+            <span className={cn("inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8]", compactDesktop && "sm:h-6 sm:w-6 sm:bg-transparent sm:text-[#192024]")}>
               <Bell className="h-4 w-4" aria-hidden="true" />
             </span>
             <div className="min-w-0">

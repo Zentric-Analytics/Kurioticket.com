@@ -1,17 +1,15 @@
 .editor { width: 100%; min-width: 0; margin-top: 12px; color: #192024; font-family: Inter, sans-serif; }
-.controls { display: inline-flex; max-width: 100%; align-items: center; gap: 8px; }
-.dates { display: flex; flex-shrink: 0; align-items: center; gap: 8px; }
-.control { display: inline-flex; height: 46px; width: 174px; flex-shrink: 0; align-items: center; justify-content: flex-start; gap: 8px; padding: 0 14px; border: 1px solid #bfc8d1; border-radius: 8px; background: #fff; color: #192024; font-size: 15px; line-height: 22px; font-weight: 500; white-space: nowrap; cursor: pointer; }
-.dateControl { height: 48px; width: 198px; padding: 0 12px; }
-.dateText { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; text-align: left; }
-.dateFieldLabel { color: #192024; font-size: 12px; line-height: 16px; font-weight: 400; }
-.dateFieldValue { color: #192024; font-size: 16px; line-height: 20px; font-weight: 400; }
-.control:hover { border-color: #87939d; background: #fff; }
-.dateSeparator { display: none; }
+.controls { display: inline-flex; max-width: 100%; align-items: center; gap: 4px; }
+.dates { display: flex; width: 386px; height: 52px; flex-shrink: 0; align-items: center; border-radius: 8px; background: #f0f3f5; overflow: hidden; }
+.control { display: inline-flex; height: 52px; flex-shrink: 0; align-items: center; justify-content: flex-start; gap: 8px; border: 0; border-radius: 8px; color: #192024; font-size: 16px; line-height: 24px; white-space: nowrap; cursor: pointer; }
+.dateControl { min-width: 0; flex: 1 1 0; padding: 0 18px; border-radius: 0; background: transparent; font-weight: 400; }
+.dateText { min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.control:hover { background: #e4e9ed; }
+.dateSeparator { flex: 0 0 6px; color: #192024; font-size: 16px; text-align: center; }
 .control svg { flex-shrink: 0; }
-.guestsControl { width: 190px; font-weight: 600; }
-.search { display: inline-flex; height: 46px; width: 46px; flex: 0 0 46px; align-items: center; justify-content: center; border-radius: 8px; background: #eaf2ff; color: #004bb8; cursor: pointer; }
-.search:hover { background: #dceaff; }
+.guestsControl { width: 182px; padding: 0 16px; background: #f0f3f5; color: #212a30; font-weight: 600; }
+.search { display: inline-flex; height: 52px; width: 54px; flex: 0 0 54px; align-items: center; justify-content: center; border-radius: 8px; background: #004bb8; color: #fff; cursor: pointer; }
+.search:hover { background: #003f9d; }
 .editor button:focus-visible, .popover button:focus-visible { outline: 2px solid #004bb8; outline-offset: 3px; }
 .error { margin: 8px 0 0; color: #b91c1c; font-size: 12px; line-height: 18px; }
 .popover { color: #192024; font-family: Inter, sans-serif; border: 0; border-radius: 12px; box-shadow: 0 10px 20px rgb(25 32 36 / 10%), 0 3px 6px rgb(25 32 36 / 4%), 0 -3px 6px rgb(25 32 36 / 4%); }

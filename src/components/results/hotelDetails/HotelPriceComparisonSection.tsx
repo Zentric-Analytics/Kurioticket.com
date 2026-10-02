@@ -124,7 +124,7 @@ function DesktopProviderOffer({
 
   return (
     <article
-      className="relative flex min-h-[96px] min-w-0 items-center justify-between gap-4 rounded-xl border border-[#D9E2E8] bg-transparent px-4 py-3"
+      className="relative flex min-h-[80px] min-w-0 items-center justify-between gap-4 rounded-xl border border-[#D9E2E8] bg-transparent px-4 py-3"
       data-provider-offer
       data-provider-offer-id={offer.id}
       data-provider-selected={selected || undefined}
@@ -133,16 +133,16 @@ function DesktopProviderOffer({
     >
       <input id={selectorId} type="radio" name="hotel-provider-offer" value={offer.id} checked={selected} disabled={disabled} onChange={() => onSelect(offer.id)} className="peer sr-only" aria-label={`Select ${offer.providerName} offer`} />
       <span className="pointer-events-none absolute inset-0 rounded-xl peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8] peer-focus-visible:ring-offset-2" aria-hidden="true" />
-      <label htmlFor={selectorId} className={`min-w-0 flex-1 ${disabled ? "cursor-default" : "cursor-pointer"}`}>
+      <label htmlFor={selectorId} className={`grid min-w-0 flex-1 grid-cols-[132px_minmax(0,1fr)] items-center ${disabled ? "cursor-default" : "cursor-pointer"}`}>
         <span className="block min-w-0" data-provider-brand>
           {offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={offer.providerName} width={132} height={30} className="h-8 w-[86px] object-contain object-left" /> : <strong className="text-base font-semibold leading-6 text-[#004BB8]">{offer.providerName}</strong>}
         </span>
-        <span className="mt-2 block min-w-0" data-provider-price>
+        <span className="block min-w-0 text-center" data-provider-price>
           <strong className="block break-words text-[20px] font-semibold leading-6 tracking-[-0.02em] text-[#192024] tabular-nums" title={totalPrice ? undefined : offer.nightlyPriceTitle} aria-label={totalPrice ? undefined : offer.nightlyPriceAriaLabel} data-nightly-amount={!totalPrice || undefined}>{totalPrice || offer.nightlyPrice}</strong>
-          <span className="block text-[12px] font-normal leading-[14px] text-[#59636a]" data-nightly-supporting-label={!totalPrice || undefined}>{totalPrice ? "Stay total" : perNightText.replace("{{price}}", "").trim()}</span>
+          {!totalPrice ? <span className="block text-[12px] font-normal leading-[14px] text-[#59636a]" data-nightly-supporting-label>{perNightText.replace("{{price}}", "").trim()}</span> : null}
         </span>
       </label>
-      <button type="button" className="focus-ring inline-flex h-11 w-[150px] shrink-0 items-center justify-center rounded-lg bg-[#004BB8] px-3 text-white transition-colors hover:bg-[#003B91] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500" style={{ fontSize: 14, fontWeight: 600, lineHeight: "20px" }} disabled={disabled || !onContinue} aria-label={pending ? `Opening ${offer.providerName} offer` : `View deal with ${offer.providerName}`} onClick={event => { onSelect(offer.id); onContinue?.(offer.id, event.currentTarget); }} data-provider-action>{pending ? "Opening…" : "View deal"}</button>
+      <button type="button" className="focus-ring inline-flex h-9 w-[112px] shrink-0 items-center justify-center rounded-lg bg-[#004BB8] px-3 text-[13px] font-semibold leading-5 text-white transition-colors hover:bg-[#003B91] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500" disabled={disabled || !onContinue} aria-label={pending ? `Opening ${offer.providerName} offer` : `View deal with ${offer.providerName}`} onClick={event => { onSelect(offer.id); onContinue?.(offer.id, event.currentTarget); }} data-provider-action>{pending ? "Opening…" : "View deal"}</button>
     </article>
   );
 }

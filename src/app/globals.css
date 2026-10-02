@@ -411,7 +411,7 @@ textarea {
 
 .hotel-results-sort-trigger {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 16px;
 }
 
@@ -421,6 +421,12 @@ textarea {
   line-height: 16px !important;
   font-synthesis: none;
   font-variation-settings: "wght" 600;
+}
+
+.hotel-results-sort-option {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18px;
 }
 
 @media (min-width: 1024px) {
@@ -544,24 +550,44 @@ textarea {
   }
 
   [data-hotel-results-nav-search] [data-hotel-results-edit-frame] {
-    border-color: #d8e1ec;
-    border-radius: 9px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     box-shadow: none;
   }
 
   [data-hotel-results-nav-search] [data-hotel-results-edit-frame] > div {
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.15fr) minmax(0, 1.05fr) 46px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.125fr) minmax(0, 1.025fr) 44px;
+    column-gap: 4px;
   }
 
   [data-hotel-results-nav-search] [data-hotel-results-edit-field] {
     min-height: 44px;
-    padding: 5px 8px 5px 32px;
+    padding: 0 10px 0 34px;
+    border: 1px solid #d9e2e8;
+    border-radius: 8px;
+    background: #f0f3f5;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-field]:hover,
+  [data-hotel-results-nav-search] [data-hotel-results-edit-field]:focus-within {
+    border-color: #b9c9d5;
+    background: #e8eef2;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-field="dates"] {
+    padding: 0;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-field="dates"] > [data-hotel-results-edit-leading-icon] {
+    display: none;
   }
 
   [data-hotel-results-nav-search] [data-hotel-results-edit-leading-icon] {
-    left: 9px;
+    left: 11px;
     width: 16px;
     height: 16px;
+    color: #40536a;
   }
 
   [data-hotel-results-nav-search] [data-hotel-results-edit-label] {
@@ -574,10 +600,38 @@ textarea {
   }
 
   [data-hotel-results-nav-search] [data-hotel-results-edit-value] {
-    height: 32px;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 18px;
+    height: 42px;
+    color: #142033;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-nav-date] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0;
+    padding: 0;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-nav-date-part] {
+    display: flex;
+    min-width: 0;
+    height: 100%;
+    align-items: center;
+    gap: 5px;
+    padding: 0 8px;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-nav-date-part]:first-child {
+    border-right: 1px solid #d9e2e8;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-nav-date-part] svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: #40536a;
   }
 
   [data-hotel-results-nav-search] [data-hotel-results-edit-action-cell] {
@@ -585,10 +639,15 @@ textarea {
   }
 
   [data-hotel-results-nav-search] [data-hotel-results-edit-action] {
-    width: 36px;
-    height: 36px;
-    min-height: 36px;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
     border-radius: 8px;
+    box-shadow: none;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-action]:hover {
+    box-shadow: none;
   }
 
   [data-cars-results-navbar-search] {
