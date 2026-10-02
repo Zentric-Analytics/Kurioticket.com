@@ -40,6 +40,45 @@ test("KAYAK Hotel cards preserve booking provider branding for Rates", () => {
   assert.equal(model.providerLogoUrl, "https://content.r9cdn.net/provider-logo.png");
 });
 
+test("KAYAK car cards preserve booking provider branding for Compare deals", () => {
+  const model = kayakCarCardModel({
+    id: "car-brand",
+    title: "Rental car",
+    description: "Fallback seller",
+    details: ["Economy", "Rental supplier"],
+    price: 120,
+    currency: "USD",
+    priceBasis: "total",
+    testUrl: "https://affiliates.kayak.com/sandbox-clickout",
+    bookingProviderName: "Seller Display",
+    bookingProviderLogoUrl: "https://content.r9cdn.net/provider-logo.png",
+  }, 3, "BOS");
+
+  assert.equal(model.offers[0].bookingProviderName, "Seller Display");
+  assert.equal(
+    model.offers[0].bookingProviderLogoUrl,
+    "https://content.r9cdn.net/provider-logo.png",
+  );
+});
+
+test("KAYAK car cards preserve booking provider branding for Compare deals", () => {
+  const model = kayakCarCardModel({
+    id: "car-brand",
+    title: "Test car",
+    description: "Fallback seller",
+    details: ["Economy", "Supplier"],
+    price: 150,
+    currency: "USD",
+    priceBasis: "total",
+    testUrl: "https://affiliates.kayak.com/sandbox-clickout",
+    bookingProviderName: "Seller Display",
+    bookingProviderLogoUrl: "https://content.r9cdn.net/provider-logo.png",
+  }, 3, "BOS");
+
+  assert.equal(model.offers[0].bookingProviderName, "Seller Display");
+  assert.equal(model.offers[0].bookingProviderLogoUrl, "https://content.r9cdn.net/provider-logo.png");
+});
+
 test("hotel and car models preserve images and mark unknown specifications",()=>{
   const offer={id:"1",title:"Test",description:"Supplier",details:[],price:100,currency:"USD",priceBasis:"total",testUrl:"https://affiliates.kayak.com/sandbox-clickout",images:[{url:"https://content.r9cdn.net/image.jpg",alt:"Test"}]};
   assert.equal(kayakHotelCardModel(offer,2).imageUrls?.[0],offer.images[0].url);

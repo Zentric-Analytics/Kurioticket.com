@@ -70,6 +70,26 @@ test("hotel booking options preserve provider-supplied seller branding", () => {
   assert.equal(offer.bookingProviderLogoUrl, logo);
 });
 
+test("car booking options preserve provider-supplied seller branding", () => {
+  const logo = "https://content.r9cdn.net/provider-logo.png";
+  const data = {
+    currency: "USD",
+    priceMode: "perDayTotal",
+    providers: { SELLER: { displayName: "Seller Display", logoUrl: logo } },
+    results: [{
+      bookingOptions: [{
+        providerCode: "SELLER",
+        car: { brand: "Test car" },
+        price: { price: 50 },
+        bookingUrl: click,
+      }],
+    }],
+  };
+  const [offer] = normalizeSandboxOffers("cars", data);
+  assert.equal(offer.bookingProviderName, "Seller Display");
+  assert.equal(offer.bookingProviderLogoUrl, logo);
+});
+
 test("only explicit structured conditions and optional purchasable services are normalized", () => {
   const option={type:"regular",displayPrice:{price:100},bookingUrl:click,conditions:{change:{restriction:"allowed",penalty:{price:40,currency:"USD"}},refund:{restriction:"notAllowed"}},optionalServices:[{type:"seat",displayName:"Preferred seat",optional:true,price:{price:25,currency:"USD"}},{type:"baggage",displayName:"Included bag",optional:false,price:{price:0,currency:"USD"}}]};
   const [offer]=normalizeSandboxOffers("flights",{currency:"USD",priceMode:"total",legs:{l:{segments:[{id:"s"}]}},segments:{s:{origin:"BOS",destination:"JFK",airline:"AA"}},results:[{legs:[{id:"l"}],bookingOptions:[option]}]});

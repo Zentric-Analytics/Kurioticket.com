@@ -379,10 +379,10 @@ export function normalizeSandboxOffers(
             };
           }),
         })) } : {}),
-        ...((vertical === "flights" || vertical === "hotels") && (text(provider.displayName) || text(option.providerCode))
+        ...((vertical === "flights" || vertical === "hotels" || vertical === "cars") && (text(provider.displayName) || text(option.providerCode))
           ? { bookingProviderName: text(provider.displayName) || text(option.providerCode) }
           : {}),
-        ...((vertical === "flights" || vertical === "hotels") && kayakImageUrl(provider.logoUrl)
+        ...((vertical === "flights" || vertical === "hotels" || vertical === "cars") && kayakImageUrl(provider.logoUrl)
           ? { bookingProviderLogoUrl: kayakImageUrl(provider.logoUrl) }
           : {}),
         ...(vertical === "flights" ? {flightCabin} : {}),
