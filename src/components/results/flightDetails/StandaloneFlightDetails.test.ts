@@ -693,7 +693,9 @@ test("desktop Flight Details keeps price and booking action inside Compare deals
   assert.match(panel, /data-desktop-flight-deal-benefits/);
   assert.match(panel, /"Continue deal"/);
   assert.match(panel, /"Unavailable"/);
-  assert.match(panel, /w-\[150px\]/);
+  assert.match(panel, /w-\[140px\]/);
+  assert.match(panel, /data-desktop-flight-provider-mark/);
+  assert.match(panel, /min-h-\[92px\]/);
   assert.match(panel, /disabled=\{redirecting \|\| !canContinue\}/);
   assert.match(panel, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.doesNotMatch(source, /DesktopCheckoutSummary|data-desktop-checkout-summary/);
@@ -736,10 +738,12 @@ test("desktop Compare deals uses the shared Cars and Hotels price hierarchy", as
   assert.match(panel, /price\.formatted/);
   assert.match(panel, /Trip total/);
   assert.match(panel, /Continue deal/);
-  assert.match(panel, /rounded-xl border bg-white px-5 py-4/);
+  assert.match(panel, /rounded-xl border bg-white px-4 py-3/);
   assert.match(panel, /data-desktop-flight-deal-benefits/);
-  assert.match(panel, /inline-flex h-11 w-\[150px\]/);
+  assert.match(panel, /inline-flex h-11 w-\[140px\]/);
   assert.match(panel, /data-provider-handoff-unavailable/);
+  assert.match(panel, /disabled:bg-\[#075EE8\]/);
+  assert.match(panel, /border-r border-\[#D9E2E8\] pr-4/);
   assert.doesNotMatch(panel, /View deal/);
 });
 
