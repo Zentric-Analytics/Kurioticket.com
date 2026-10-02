@@ -28,7 +28,6 @@ export function CarDetailsHero({
   text,
   identity,
   desktopOverlay,
-  desktopSummary,
   imageStageRef,
   guidedMobileActions,
   reserveMobileControlSafeZone = false,
@@ -37,7 +36,6 @@ export function CarDetailsHero({
   text: Record<string, string>;
   identity: ReactNode;
   desktopOverlay?: ReactNode;
-  desktopSummary?: ReactNode;
   imageStageRef?: Ref<HTMLElement>;
   guidedMobileActions?: ReactNode;
   reserveMobileControlSafeZone?: boolean;
@@ -188,17 +186,17 @@ export function CarDetailsHero({
 
         {reserveMobileControlSafeZone ? (
           <div
-            className="hidden lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:grid-rows-[auto_auto_auto] lg:gap-x-5 lg:gap-y-4 lg:p-5"
+            className="hidden lg:flex lg:flex-col lg:items-center lg:p-5"
             data-car-details-desktop-overview
           >
             <div
-              className="min-w-0 text-left [&_h1]:truncate [&_h2]:truncate [&_h3]:truncate [&_h4]:truncate lg:col-start-1 lg:row-start-1"
+              className="min-w-0 w-full max-w-[820px] text-center [&_h1]:truncate [&_h2]:truncate [&_h3]:truncate [&_h4]:truncate"
               data-car-details-desktop-overview-identity
             >
               {identity}
             </div>
             <div
-              className="relative h-[250px] w-full overflow-hidden rounded-[12px] bg-white lg:col-start-1 lg:row-start-2"
+              className="relative mt-4 h-[250px] w-full max-w-[680px] overflow-hidden rounded-[12px] bg-white"
               data-car-details-desktop-overview-image
             >
               <CarResultImage
@@ -212,31 +210,25 @@ export function CarDetailsHero({
               />
             </div>
             <ul
-              className="grid min-w-0 grid-cols-4 gap-x-4 gap-y-2 lg:col-start-1 lg:row-start-3"
+              className="mt-4 grid min-w-0 w-full max-w-[820px] grid-cols-4 gap-x-4 gap-y-2"
               data-car-details-desktop-overview-specifications
             >
               {specs.map(([Icon, label]) => (
                 <li
                   key={label}
-                  className="car-details-desktop-amenity-type inline-flex min-w-0 items-center gap-2 text-[13px] font-semibold leading-[18px] text-slate-700"
+                  className="car-details-desktop-amenity-type inline-flex min-w-0 items-center justify-self-center gap-2 text-center text-[13px] font-semibold leading-[18px] text-slate-700"
                 >
                   <Icon
                     size={15}
                     className="shrink-0 text-slate-600"
                     aria-hidden="true"
                   />
-                  <span className="block min-w-0 truncate" title={label}>
+                  <span className="block min-w-0 max-w-full truncate" title={label}>
                     {label}
                   </span>
                 </li>
               ))}
             </ul>
-            <div
-              className="min-w-0 self-start lg:col-start-2 lg:row-start-2"
-              data-car-details-desktop-overview-summary
-            >
-              {desktopSummary}
-            </div>
           </div>
         ) : null}
       </div>
