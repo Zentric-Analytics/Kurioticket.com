@@ -115,6 +115,8 @@ export default async function CarsResultsPage({
         hideDesktopTravelNav
         hideMobileCategoryTabs
         stableMobileSafeAreaTop
+        hotelDesktopBoundary
+        carsResultsDesktopSticky
       />
       <Suspense
         key={searchIdentity}

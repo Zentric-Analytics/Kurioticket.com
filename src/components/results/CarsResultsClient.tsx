@@ -548,6 +548,7 @@ export function CarsResultsClient({
   const [mobilePicker, setMobilePicker] =
     useState<CarsResultsMobilePicker>(null);
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
+  const [desktopNavSearchTarget, setDesktopNavSearchTarget] = useState<HTMLElement | null>(null);
   const [desktopStickySearchSection, setDesktopStickySearchSection] = useState<
     "locations" | "dates" | "times" | "driverAge" | null
   >(null);
@@ -606,6 +607,15 @@ export function CarsResultsClient({
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setDesktopNavSearchTarget(
+        document.querySelector<HTMLElement>("[data-cars-results-nav-search]"),
+      );
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
   const hasSearchContext = Boolean(pickupLocation || pickupDate || dropoffDate);
   const trimmedPickupLocation = pickupLocation.trim();
   const trimmedDropoffLocation = dropoffLocation.trim();
@@ -1129,21 +1139,24 @@ export function CarsResultsClient({
   );
 
   const renderCarsSearchForm = (
-    placement: "desktop-full" | "desktop-sticky" | "mobile",
+    placement: "desktop-full" | "desktop-navbar" | "desktop-sticky" | "mobile",
   ) => {
     const idPrefix =
-      placement === "desktop-full"
-        ? "cars-results-full-search"
-        : placement === "desktop-sticky"
-          ? "sticky-cars-search"
-          : "cars-results-mobile-search";
+      placement === "desktop-navbar"
+        ? "cars-results-nav-search"
+        : placement === "desktop-full"
+          ? "cars-results-full-search"
+          : placement === "desktop-sticky"
+            ? "sticky-cars-search"
+            : "cars-results-mobile-search";
     const surfaceOwnsPopovers =
       placement === "desktop-sticky"
         ? Boolean(desktopStickySearchSection)
         : placement === "mobile"
           ? mobileSearchOpen
           : !desktopStickySearchSection && !mobileSearchOpen;
-    const isCompactSearch = placement === "desktop-sticky";
+    const isNavbarSearch = placement === "desktop-navbar";
+    const isCompactSearch = placement === "desktop-sticky" || isNavbarSearch;
     const searchSurfaceRefs =
       placement === "desktop-sticky"
         ? desktopStickySearchRefs
@@ -1171,7 +1184,7 @@ export function CarsResultsClient({
         id={`${idPrefix}-form`}
         action="/cars/results"
         method="get"
-        className={cn("mx-auto w-full min-w-0 max-w-5xl", placement === "mobile" && "bg-transparent")}
+        className={cn("mx-auto w-full min-w-0", isNavbarSearch ? "max-w-full" : "max-w-5xl", placement === "mobile" && "bg-transparent")}
         onSubmit={(event) => {
           if (placement === "mobile") {
             submitMobileSearch(event);
@@ -1217,9 +1230,11 @@ export function CarsResultsClient({
             "overflow-visible transition-[padding,border-color,box-shadow,border-radius] duration-200",
             placement === "mobile"
               ? "border-0 bg-transparent p-0 shadow-none ring-0"
-              : isCompactSearch
-              ? "rounded-xl border border-slate-200 bg-white p-0 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]"
-              : "rounded-[1.15rem] border border-slate-200 bg-white/95 p-1 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-200/50",
+              : isNavbarSearch
+                ? "rounded-xl border border-[#CFD9E5] bg-white p-0 shadow-[0_6px_20px_-13px_rgba(20,32,51,0.28)] ring-0"
+                : isCompactSearch
+                  ? "rounded-xl border border-slate-200 bg-white p-0 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]"
+                  : "rounded-[1.15rem] border border-slate-200 bg-white/95 p-1 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-200/50",
           )}
         >
           <div
@@ -1546,6 +1561,12 @@ export function CarsResultsClient({
 
   return (
     <>
+    {desktopNavSearchTarget && !mobileSearchOpen
+      ? createPortal(
+          renderCarsSearchForm("desktop-navbar"),
+          desktopNavSearchTarget,
+        )
+      : null}
     <main className="flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-[#F8FAFC] pb-8">
       <section
         inert={mobileSearchOpen ? true : undefined}
@@ -1822,20 +1843,9 @@ export function CarsResultsClient({
         </div>
       ) : null}
 
-      <section
-        className="hidden bg-white pb-0 pt-7 sm:block"
-        aria-labelledby="cars-results-heading"
-      >
-        <div className="page-shell">
-          <div className="relative z-10 min-w-0 translate-y-5">
-            {!mobileSearchOpen ? renderCarsSearchForm("desktop-full") : null}
-          </div>
-        </div>
-      </section>
-
       <nav
         aria-label="Breadcrumb"
-        className="page-shell hidden pt-12 sm:block lg:pt-14"
+        className="page-shell hidden pt-6 sm:block lg:pt-7"
       >
         <ol className="flex flex-wrap items-center gap-2 text-[13px] font-medium leading-5 text-[#526174]">
           <li>

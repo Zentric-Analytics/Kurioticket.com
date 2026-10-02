@@ -89,6 +89,7 @@ type AppHeaderProps = {
   hotelDesktopBoundary?: boolean;
   hotelResultsDesktopSticky?: boolean;
   flightResultsDesktopSticky?: boolean;
+  carsResultsDesktopSticky?: boolean;
   flushMobileBottom?: boolean;
   mobileSurface?: "white" | "muted";
   stableMobileSafeAreaTop?: boolean;
@@ -151,6 +152,7 @@ export function AppHeader({
   hotelDesktopBoundary = false,
   hotelResultsDesktopSticky = false,
   flightResultsDesktopSticky = false,
+  carsResultsDesktopSticky = false,
   flushMobileBottom = false,
   mobileSurface = "white",
   stableMobileSafeAreaTop = false,
@@ -159,7 +161,7 @@ export function AppHeader({
 
   const isSignedIn = Boolean(session?.user);
   const resultsDesktopSticky =
-    hotelResultsDesktopSticky || flightResultsDesktopSticky;
+    hotelResultsDesktopSticky || flightResultsDesktopSticky || carsResultsDesktopSticky;
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSigninOpen, setMobileSigninOpen] = useState(false);
@@ -731,6 +733,7 @@ export function AppHeader({
         data-app-header
         data-hotel-results-desktop-header={hotelResultsDesktopSticky ? "" : undefined}
         data-flight-results-desktop-header={flightResultsDesktopSticky ? "" : undefined}
+        data-cars-results-desktop-header={carsResultsDesktopSticky ? "" : undefined}
         className={cn(
           "relative z-50 border-b border-[#D8E1EC] bg-white text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
           stableMobileSafeAreaTop
@@ -770,6 +773,7 @@ export function AppHeader({
 
             {hotelResultsDesktopSticky ? <div data-hotel-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[540px]" /> : null}
             {flightResultsDesktopSticky ? <div data-flight-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[540px]" /> : null}
+            {carsResultsDesktopSticky ? <div data-cars-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[720px] xl:max-w-[820px]" /> : null}
 
             <div className={cn("hidden min-w-0 flex-1 items-center justify-end gap-3.5 md:flex lg:gap-4", resultsDesktopSticky && "lg:flex-none")}>
               <div className="[&>button]:!h-10 [&>button]:!gap-1 [&>button]:!rounded-md [&>button]:!border-transparent [&>button]:!bg-transparent [&>button]:!px-2.5 [&>button]:!text-[15px] [&>button]:!font-semibold [&>button]:!text-[#021C2B]/85 [&>button]:!shadow-none [&>button]:!backdrop-blur-0 [&>button]:hover:!bg-[#F2F7FA] [&>button]:hover:!text-[#004BB8] [&>button>svg]:!text-[#334155] [&>button>svg]:!opacity-80">
