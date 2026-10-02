@@ -7668,7 +7668,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       type="button"
                       data-desktop-cheaper-nearby
                       onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)}
-                      className="focus-ring mx-auto mt-2 flex min-h-7 max-w-full items-center px-0 text-left text-[13px] font-medium leading-5 text-slate-600 transition-colors hover:text-[#075EE8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                      className="focus-ring mt-2 flex min-h-7 w-fit max-w-full items-center px-0 text-left text-[13px] font-medium leading-5 text-slate-600 transition-colors hover:text-[#075EE8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                     >
                       Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}
                     </button>

@@ -505,7 +505,11 @@ const fieldLabelClass =
   "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:mb-1 lg:text-[12px] lg:font-bold lg:uppercase lg:leading-4 lg:tracking-[0.05em] lg:text-[#475569]";
 
 const fieldInputClass =
-  "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[15px] lg:font-bold lg:leading-5 lg:tracking-[-0.005em] lg:text-[#07133B] lg:placeholder:font-medium lg:placeholder:text-slate-400";
+  "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:placeholder:font-medium lg:placeholder:text-slate-400";
+const desktopFullSelectedValueClass =
+  "lg:text-[14px] lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-[#142033]";
+const desktopCompactSelectedValueClass =
+  "lg:text-[15px] lg:font-bold lg:leading-5 lg:tracking-[-0.005em] lg:text-[#07133B]";
 const carsMobileEditFieldShellClass =
   "cars-results-edit-field relative flex min-h-[66px] flex-col justify-center rounded-[13px] border border-[#E7ECF5] bg-white px-3 py-[10px] shadow-none focus-within:border-[#064CF7] focus-within:ring-2 focus-within:ring-[#064CF7]/25";
 const carsMobileEditPickupLabelClass =
@@ -1215,7 +1219,7 @@ export function CarsResultsClient({
               ? "border-0 bg-transparent p-0 shadow-none ring-0"
               : isCompactSearch
               ? "rounded-xl border border-slate-200 bg-white p-0 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]"
-              : "rounded-[1.15rem] border border-slate-200 bg-[#F8FAFC] p-1 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-200/50",
+              : "rounded-[1.15rem] border border-slate-200 bg-white/95 p-1 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-200/50",
           )}
         >
           <div
@@ -3528,7 +3532,7 @@ function SearchInputCell({
             onValueChange={onChange}
             onSelect={onSelect}
             placeholder={placeholder}
-            inputClassName={cn(fieldInputClass, showClearButton && "pr-8")}
+            inputClassName={cn(fieldInputClass, isCompact ? desktopCompactSelectedValueClass : desktopFullSelectedValueClass, showClearButton && "pr-8")}
             presentation="desktop"
             strings={strings}
             isOpen={isOpen}
@@ -3687,7 +3691,10 @@ function SearchDateCell({
         aria-haspopup="dialog"
         className={groupedMobile
           ? carsMobileEditSummaryButtonClass
-          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-[15px] lg:font-bold lg:leading-5 lg:tracking-[-0.005em] lg:text-[#07133B]"
+          : cn(
+              "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm",
+              isCompact ? desktopCompactSelectedValueClass : desktopFullSelectedValueClass,
+            )
         }
       >
         {showRentalDuration ? (
@@ -3956,7 +3963,10 @@ function SearchTimeCell({
         aria-haspopup="menu"
         className={groupedMobile
           ? carsMobileEditSummaryButtonClass
-          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-[15px] lg:font-bold lg:leading-5 lg:tracking-[-0.005em] lg:text-[#07133B]"
+          : cn(
+              "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm",
+              isCompact ? desktopCompactSelectedValueClass : desktopFullSelectedValueClass,
+            )
         }
       >
         {groupedMobile ? (
@@ -4107,7 +4117,10 @@ function DriverAgeCell({
         aria-haspopup="listbox"
         className={groupedMobile
           ? carsMobileEditSummaryButtonClass
-          : "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm lg:text-[15px] lg:font-bold lg:leading-5 lg:tracking-[-0.005em] lg:text-[#07133B]"
+          : cn(
+              "focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[14px] font-medium leading-[19px] text-slate-900 outline-none md:text-sm",
+              isCompact ? desktopCompactSelectedValueClass : desktopFullSelectedValueClass,
+            )
         }
       >
         {groupedMobile ? (

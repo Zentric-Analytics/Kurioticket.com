@@ -41,14 +41,23 @@ test("desktop Cars Results uses a readable, professional typography hierarchy", 
 });
 
 
-test("desktop Cars selected search values are strong while empty placeholders stay restrained", () => {
-  const selectedValuePattern =
-    /lg:text-\[15px\] lg:font-bold lg:leading-5 lg:tracking-\[-0\.005em\] lg:text-\[#07133B\]/g;
-
+test("desktop Cars full-search values mirror filter polish while compact values stay stronger", () => {
+  assert.match(
+    results,
+    /const desktopFullSelectedValueClass =[\s\S]*?lg:text-\[14px\] lg:font-semibold lg:leading-5 lg:tracking-normal lg:text-\[#142033\]/,
+  );
+  assert.match(
+    results,
+    /const desktopCompactSelectedValueClass =[\s\S]*?lg:text-\[15px\] lg:font-bold lg:leading-5 lg:tracking-\[-0\.005em\] lg:text-\[#07133B\]/,
+  );
   assert.equal(
-    (results.match(selectedValuePattern) ?? []).length,
+    (
+      results.match(
+        /isCompact \? desktopCompactSelectedValueClass : desktopFullSelectedValueClass/g,
+      ) ?? []
+    ).length,
     4,
-    "pickup location, rental dates, pickup/return time, and driver age share one strong selected-value treatment",
+    "pickup location, rental dates, pickup/return time, and driver age preserve distinct full and compact typography",
   );
   assert.match(
     results,
