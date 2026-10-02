@@ -43,7 +43,7 @@ test("standalone desktop overview uses centered single-column sizing", () => {
   assert.match(hero, /max-w-\[820px\] text-center/);
   assert.doesNotMatch(hero, /data-car-details-desktop-overview-summary/);
   assert.match(client, /lg:max-w-\[900px\]/);
-  assert.doesNotMatch(client, /lg:max-w-\[720px\]/);
+  assert.match(client, /max-w-\[720px\]/);
 });
 
 test("desktop width polish does not rewrite sticky or section-scroll behavior", () => {

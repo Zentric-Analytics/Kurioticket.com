@@ -99,22 +99,22 @@ function CarOfferProviderBrand({
   if (logoUrl) {
     return (
       <span
-        className={`inline-flex shrink-0 items-center overflow-hidden ${compact ? "h-6 max-w-[108px]" : "h-7 max-w-[132px]"}`}
+        className={`inline-flex shrink-0 items-center overflow-hidden ${compact ? "h-5 max-w-[96px]" : "h-6 max-w-[112px]"}`}
         data-car-offer-provider-brand
       >
         <Image
           src={logoUrl}
           alt={`${providerName || "Booking provider"} logo`}
-          width={compact ? 108 : 132}
-          height={compact ? 24 : 30}
-          className={`w-auto object-contain object-left ${compact ? "max-h-6 max-w-[108px]" : "max-h-7 max-w-[132px]"}`}
+          width={compact ? 96 : 112}
+          height={compact ? 20 : 24}
+          className={`w-auto object-contain object-left ${compact ? "max-h-5 max-w-[96px]" : "max-h-6 max-w-[112px]"}`}
         />
       </span>
     );
   }
   return (
     <span
-      className={`min-w-0 truncate font-semibold text-[#192024] ${compact ? "text-[13px] leading-[18px]" : "text-[15px] leading-5"}`}
+      className={`car-details-desktop-provider-type min-w-0 truncate text-[#192024] ${compact ? "text-[12px] leading-4" : "text-[14px] leading-5"}`}
       data-car-offer-provider-brand-fallback
     >
       {providerName || "Booking provider"}
@@ -755,9 +755,6 @@ function DesktopPickupReturnOverview({
   locale: string;
   copy: (key: string) => string;
 }) {
-  const pickupType =
-    car.sandboxPresentation?.pickupLabel ?? pickupTypeLabels[car.pickupType];
-
   return (
     <div
       className="mx-auto w-full max-w-[900px] py-1"
@@ -788,20 +785,11 @@ function DesktopPickupReturnOverview({
           </div>
         ))}
       </div>
-      <div className="mt-4 border-t border-slate-200 pt-4">
-        <p className="car-details-desktop-strong-copy-type">{pickupType}</p>
-        {car.shuttleRequired ? (
-          <p className="car-details-desktop-primary-copy-type mt-1">
-            {copy("carDetails.shuttleRequired")}
-          </p>
-        ) : null}
-        {car.pickupInstructions ? (
-          <p className="car-details-desktop-primary-copy-type mt-2">
-            <strong>{copy("carDetails.pickupInstructions")}:</strong>{" "}
-            {car.pickupInstructions}
-          </p>
-        ) : null}
-      </div>
+      {car.shuttleRequired ? (
+        <p className="car-details-desktop-secondary-copy-type mt-3">
+          {copy("carDetails.shuttleRequired")}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -836,7 +824,7 @@ function DesktopCarHireLocationOverview({
       data-car-details-desktop-location-overview
     >
       <div
-        className="rounded-[16px] border border-slate-200 bg-white p-5 shadow-[0_3px_16px_rgba(15,23,42,0.035)]"
+        className="rounded-[14px] border border-slate-200 bg-white p-4 shadow-[0_3px_14px_rgba(15,23,42,0.03)]"
         data-car-details-desktop-location-card
       >
         <h2 className="car-details-desktop-section-heading-type">Car hire location</h2>
@@ -883,13 +871,13 @@ function DesktopCarHireLocationOverview({
         ) : null}
       </div>
       <div
-        className="mt-5 pb-1"
+        className="mt-4 pb-1"
         data-car-details-desktop-location-details
       >
         <h3 className="car-details-desktop-item-heading-type">
           {copy("carDetails.pickupLocationDetails")}
         </h3>
-        <ul className="car-details-desktop-primary-copy-type mt-3 list-disc space-y-2 ps-5 marker:text-[#075EE8]">
+        <ul className="car-details-desktop-primary-copy-type mt-2 list-disc space-y-1.5 ps-5 marker:text-[#075EE8]">
           {car.pickupInstructions ? <li>{car.pickupInstructions}</li> : null}
           <li>{copy("carDetails.confirmPickupDetails")}</li>
         </ul>
@@ -1245,7 +1233,7 @@ function CarPriceComparisonSection({
 
       {showDesktopOfferList && desktopOrderedOffers.length ? (
         <div
-          className="mt-3 hidden w-full space-y-2 lg:block"
+          className="mt-3 hidden w-full max-w-[720px] space-y-2 lg:block"
           data-desktop-car-deal-list
         >
           {desktopOrderedOffers.map((offer) => {
@@ -1258,11 +1246,11 @@ function CarPriceComparisonSection({
             const providerFacts = providerFactsForOffer(offer);
             const offerAction = actionForOffer(offer);
             const actionClassName =
-              "focus-ring inline-flex min-h-10 min-w-[116px] shrink-0 items-center justify-center rounded-lg bg-[#075EE8] px-4 text-[13px] font-bold leading-5 text-white shadow-[0_2px_8px_rgba(7,94,232,0.16)] transition hover:bg-[#004BB8]";
+              "focus-ring inline-flex min-h-9 min-w-[104px] shrink-0 items-center justify-center rounded-lg bg-[#075EE8] px-3 text-[12px] font-semibold leading-4 text-white shadow-[0_2px_7px_rgba(7,94,232,0.14)] transition hover:bg-[#004BB8]";
             return (
               <div
                 key={offer.id}
-                className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-5 rounded-[14px] border bg-white px-4 py-3 transition ${selected ? "border-[#075EE8] shadow-[0_5px_16px_rgba(7,94,232,0.07)] ring-1 ring-[#075EE8]/10" : "border-slate-200 hover:border-slate-300"}`}
+                className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-[12px] border bg-white px-3.5 py-2.5 transition ${selected ? "border-[#075EE8] shadow-[0_4px_14px_rgba(7,94,232,0.06)] ring-1 ring-[#075EE8]/10" : "border-slate-200 hover:border-slate-300"}`}
                 data-car-details-desktop-deal-row
                 data-selected={selected ? "true" : "false"}
               >
@@ -1281,7 +1269,7 @@ function CarPriceComparisonSection({
                     />
                   </span>
                   <strong
-                    className="mt-0.5 block whitespace-nowrap text-[20px] font-bold leading-6 tracking-[-0.015em] text-[#07133B] tabular-nums"
+                    className="mt-1 block whitespace-nowrap text-[19px] font-bold leading-6 tracking-[-0.012em] text-[#07133B] tabular-nums"
                     dir="ltr"
                     title={total.title}
                     aria-label={total.ariaLabel}
@@ -1291,13 +1279,13 @@ function CarPriceComparisonSection({
                   </strong>
                   {providerFacts.length ? (
                     <span
-                      className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5"
+                      className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1"
                       data-car-details-desktop-deal-benefits
                     >
                       {providerFacts.map(({ label, Icon }) => (
                         <span
                           key={label}
-                          className="car-details-desktop-benefit-type inline-flex min-w-0 items-center gap-1.5 whitespace-nowrap text-[12px] font-medium leading-4 text-[#526174]"
+                          className="car-details-desktop-benefit-type inline-flex min-w-0 items-center gap-1.5 whitespace-nowrap text-[12px] leading-4 text-[#526174]"
                         >
                           <Icon
                             size={13}
