@@ -466,7 +466,7 @@ function FlightFareAction({
       {actions ? (
         <div
           data-flight-card-fare-actions
-          className="mb-1 flex w-full justify-end"
+          className="mb-1 flex w-full justify-end lg:hidden"
         >
           {actions}
         </div>
