@@ -201,7 +201,7 @@ test("desktop Pickup/Return sits directly on the page and Rental details are rem
 
   assert.match(
     pickup,
-    /className="mx-auto w-full max-w-\[900px\] py-1"[\s\S]*?data-car-details-desktop-pickup-overview/,
+    /className="mx-auto w-full max-w-\[900px\] pb-6 pt-2"[\s\S]*?data-car-details-desktop-pickup-overview/,
   );
   assert.match(
     pickup,
@@ -503,6 +503,36 @@ test("desktop Cars details keep Save and Share in controls while Compare deals o
   assert.doesNotMatch(clientSource, /data-car-details-bottom-booking-bar/);
   assert.match(clientSource, /data-mobile-car-booking-dock/);
   assert.equal(clientSource.match(/<BookingSummary\b/g)?.length, 1);
+});
+
+test("desktop Pickup/Return and Location use balanced spacing with a subtle section divider", () => {
+  assert.match(
+    clientSource,
+    /className="pt-5"[\s\S]*?data-car-details-desktop-section="pickup"/,
+  );
+  const pickup = sourceBetween(
+    clientSource,
+    "function DesktopPickupReturnOverview",
+    "function DesktopCarHireLocationOverview",
+  );
+  assert.match(
+    pickup,
+    /className="mx-auto w-full max-w-\[900px\] pb-6 pt-2"/,
+  );
+
+  const location = sourceBetween(
+    clientSource,
+    "function DesktopCarHireLocationOverview",
+    "function CarHeroActions",
+  );
+  assert.match(
+    location,
+    /className="mx-auto w-full max-w-\[900px\] border-t border-slate-200 pb-6 pt-6"/,
+  );
+  assert.match(
+    location,
+    /className="mt-6 pb-2" data-car-details-desktop-location-details/,
+  );
 });
 
 test("desktop Pickup and return removes pickup type and duplicated pickup-instructions copy", () => {
