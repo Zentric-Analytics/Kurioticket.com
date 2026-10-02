@@ -222,7 +222,7 @@ export function DesktopFlightFilters({
       >
         <div className="desktop-filter-sidebar__header shrink-0 border-b border-[#D8E1EC]/80 bg-[#F2F4F8] px-3.5 py-2.5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[15px] font-semibold leading-5 tracking-[-0.004em] text-[#07133B]">
+            <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[14px] font-bold leading-5 tracking-[-0.01em] text-slate-950">
               <SlidersHorizontal
                 className="desktop-filter-sidebar__icon cars-desktop-filter-icon shrink-0 text-[#07133B]"
                 size={15}
@@ -297,30 +297,30 @@ export function DesktopFlightFilters({
           </CompactFilterSection>
 
           <CompactFilterSection id={`${idPrefix}-stops-panel`} title={t("stops")} open={openCompactSection === "stops"} selectedCount={compactSections.stops} onToggle={() => toggleCompactSection("stops")}>
-            <div className="grid gap-0.5">{stopOptions.length ? stopOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} secondaryLabel={option.rightLabel ? `${t("from").toLowerCase()} ${option.rightLabel}` : option.secondaryLabel} checked={selectedStops.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedStops); onFilterCommit(); }} />) : <p className="py-1 text-xs text-slate-500">{t("stopsAppearAfterResultsLoad")}</p>}</div>
+            <div className="grid gap-0.5">{stopOptions.length ? stopOptions.map((option) => <FacetRow compact key={option.value} label={option.label} count={option.count} secondaryLabel={option.rightLabel ? `${t("from").toLowerCase()} ${option.rightLabel}` : option.secondaryLabel} checked={selectedStops.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedStops); onFilterCommit(); }} />) : <p className="py-1 text-xs text-slate-500">{t("stopsAppearAfterResultsLoad")}</p>}</div>
           </CompactFilterSection>
 
           <CompactFilterSection id={`${idPrefix}-airlines-panel`} title={t("airlines")} open={openCompactSection === "airlines"} selectedCount={compactSections.airlines} onToggle={() => toggleCompactSection("airlines")}>
             <label className="sr-only" htmlFor={`${idPrefix}-airline-search`}>{t("accountDashboard.preferences.booking.searchAirlines")}</label>
             <input id={`${idPrefix}-airline-search`} className="mb-2.5 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-medium text-slate-800 placeholder:text-slate-400 focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/20" placeholder={t("accountDashboard.preferences.booking.searchAirlines")} type="search" value={airlineSearch} onChange={(event) => setAirlineSearch(event.target.value)} />
-            {visibleAirlines.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} checked={selectedAirlines.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedAirlines); onFilterCommit(); }} />)}
+            {visibleAirlines.map((option) => <FacetRow compact key={option.value} label={option.label} count={option.count} checked={selectedAirlines.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedAirlines); onFilterCommit(); }} />)}
             {!airlineSearch.trim() && airlineOptions.length > 5 ? <button type="button" className="mx-auto mt-2 flex min-h-9 items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB]" onClick={() => setShowAllAirlines((current) => !current)}>{showAllAirlines ? t("hotelResults.showLess") : t("showMoreResults")}<ChevronDown aria-hidden="true" className={cn("h-3.5 w-3.5 transition", showAllAirlines && "rotate-180")} /></button> : null}
           </CompactFilterSection>
 
           <CompactFilterSection id={`${idPrefix}-airports-panel`} title={t("airports")} open={openCompactSection === "airports"} selectedCount={compactSections.airports} onToggle={() => toggleCompactSection("airports")}>
-            <div className="grid gap-0.5">{airportOptions.length ? airportOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} checked={selectedAirports.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedAirports); onFilterCommit(); }} />) : <p className="py-1 text-xs text-slate-500">{t("airportsAppearAfterResultsLoad")}</p>}</div>
+            <div className="grid gap-0.5">{airportOptions.length ? airportOptions.map((option) => <FacetRow compact key={option.value} label={option.label} count={option.count} checked={selectedAirports.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedAirports); onFilterCommit(); }} />) : <p className="py-1 text-xs text-slate-500">{t("airportsAppearAfterResultsLoad")}</p>}</div>
           </CompactFilterSection>
 
           <CompactFilterSection id={`${idPrefix}-baggage-panel`} title={`${t("baggage")} / ${t("flexibleRefundable")}`} open={openCompactSection === "baggage"} selectedCount={compactSections.baggage} onToggle={() => toggleCompactSection("baggage")}>
             <div className="grid gap-0.5">
-              <FacetRow label={t("baggageIncluded")} checked={baggageIncludedOnly} onChange={() => { onFilterChange(); setBaggageIncludedOnly(!baggageIncludedOnly); onFilterCommit(); }} />
-              <FacetRow label={t("flexibleRefundable")} checked={flexibleOnly} onChange={() => { onFilterChange(); setFlexibleOnly(!flexibleOnly); onFilterCommit(); }} />
+              <FacetRow compact label={t("baggageIncluded")} checked={baggageIncludedOnly} onChange={() => { onFilterChange(); setBaggageIncludedOnly(!baggageIncludedOnly); onFilterCommit(); }} />
+              <FacetRow compact label={t("flexibleRefundable")} checked={flexibleOnly} onChange={() => { onFilterChange(); setFlexibleOnly(!flexibleOnly); onFilterCommit(); }} />
             </div>
           </CompactFilterSection>
 
           {renderQualitySection ? (
             <CompactFilterSection id={`${idPrefix}-quality-panel`} title={t("flightQuality")} open={openCompactSection === "quality"} selectedCount={compactSections.quality} onToggle={() => toggleCompactSection("quality")}>
-              <div className="grid gap-0.5">{flightQualityOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} checked={selectedFlightQuality.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedFlightQuality); onFilterCommit(); }} />)}</div>
+              <div className="grid gap-0.5">{flightQualityOptions.map((option) => <FacetRow compact key={option.value} label={option.label} count={option.count} checked={selectedFlightQuality.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedFlightQuality); onFilterCommit(); }} />)}</div>
             </CompactFilterSection>
           ) : null}
         </div>
@@ -341,7 +341,7 @@ export function DesktopFlightFilters({
     >
       <div className="desktop-filter-sidebar__header shrink-0 border-b border-slate-200/70 px-3 py-3">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="truncate text-[16px] font-semibold leading-6 tracking-[-0.006em] text-[#07133B]">
+          <h2 className="truncate text-[14px] font-bold tracking-[-0.01em] text-slate-950">
             {t("filters")}
             {hasActiveFilters ? (
               <span className="ms-2 rounded-full bg-[#004BB8] px-2 py-0.5 text-[12px] font-semibold leading-4 text-white">
@@ -447,14 +447,14 @@ function CompactFilterSection({
         aria-controls={id}
         onClick={onToggle}
         className={cn(
-          "group flex min-h-9 w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-start text-[14px] font-semibold leading-5 tracking-[-0.004em] text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:bg-[#E5ECF4] hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
+          "group flex min-h-9 w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-start text-[13px] font-semibold leading-5 tracking-[-0.005em] text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:bg-[#E5ECF4] hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
           open && "text-[#004BB8]",
         )}
       >
         <span className="min-w-0 truncate">{title}</span>
         <span className="flex shrink-0 items-center gap-2">
           {selectedCount > 0 ? (
-            <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[12px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">
+            <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[11px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">
               {selectedCount}
             </span>
           ) : null}
@@ -481,7 +481,7 @@ function CompactFilterSection({
 }
 
 function SectionTitle({ children }: { children: ReactNode }) {
-  return <h3 className="mb-2 text-[14px] font-semibold normal-case leading-5 tracking-[-0.002em] text-[#334155]">{children}</h3>;
+  return <h3 className="mb-2 text-[13px] font-bold normal-case leading-5 text-slate-950">{children}</h3>;
 }
 
 function OptionSection({ title, emptyText, children }: { title: string; emptyText?: string; children: ReactNode }) {
@@ -497,8 +497,8 @@ function Accordion({ idPrefix, title, emptyText, children }: { idPrefix: string;
   return <section className="border-t border-slate-200"><button type="button" aria-expanded={isOpen} aria-controls={panelId} className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg py-2.5 text-left text-sm font-semibold text-[#334155] transition hover:bg-slate-100/70 hover:text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30" onClick={() => setIsOpen((current) => !current)}><span>{title}</span><ChevronDown aria-hidden="true" className={cn("h-4 w-4 text-slate-500 transition", isOpen && "rotate-180 text-[#004BB8]")} /></button><div id={panelId} className={cn("grid gap-0.5 pb-3", !isOpen && "hidden")}>{hasOptions ? children : <p className="py-1 text-xs text-slate-500">{emptyText}</p>}</div></section>;
 }
 
-function FacetRow({ label, count, secondaryLabel, rightLabel, checked, onChange }: { label: string; count?: number; secondaryLabel?: string; rightLabel?: string; checked: boolean; onChange: () => void }) {
+function FacetRow({ label, count, secondaryLabel, rightLabel, checked, onChange, compact = false }: { label: string; count?: number; secondaryLabel?: string; rightLabel?: string; checked: boolean; onChange: () => void; compact?: boolean }) {
   const trailingLabel = rightLabel ?? (typeof count === "number" ? String(count) : null);
 
-  return <label className={cn("flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-[14px] font-medium leading-5 transition-all", checked ? "font-semibold text-[#142033]" : "text-[#64748B] hover:bg-slate-100/70 hover:text-[#334155]")}><input type="checkbox" className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue" checked={checked} onChange={onChange} /><span className="min-w-0 flex-1"><span className="block break-words">{label}</span>{secondaryLabel ? <span className="block break-words text-[12px] font-medium leading-4 text-[#64748B]">{secondaryLabel}</span> : null}</span>{trailingLabel ? <span className="ms-auto shrink-0 text-[13px] font-medium leading-5 tabular-nums text-[#64748B]">{trailingLabel}</span> : null}</label>;
+  return <label className={cn("flex cursor-pointer items-center rounded-lg font-medium leading-5 transition-all", compact ? "gap-2 px-1.5 py-1 text-[13px]" : "min-h-[30px] gap-2.5 px-0.5 py-1 text-[12px]", checked ? "font-semibold text-slate-950" : compact ? "text-slate-600 hover:bg-slate-100/70 hover:text-slate-950" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950")}><input type="checkbox" className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue" checked={checked} onChange={onChange} /><span className="min-w-0 flex-1"><span className="block break-words">{label}</span>{secondaryLabel ? <span className="block break-words text-[12px] font-medium leading-4 text-slate-500">{secondaryLabel}</span> : null}</span>{trailingLabel ? <span className="ms-auto min-w-6 shrink-0 text-right text-[12px] font-medium leading-5 tabular-nums text-slate-500">{trailingLabel}</span> : null}</label>;
 }
