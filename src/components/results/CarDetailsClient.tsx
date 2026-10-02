@@ -685,7 +685,7 @@ export function CarDetailsExperience({
 
                   <section
                     ref={pickupSectionRef}
-                    className="pt-3"
+                    className="pt-5"
                     data-car-details-scroll-section="pickup"
                     data-car-details-desktop-section="pickup"
                   >
@@ -699,7 +699,7 @@ export function CarDetailsExperience({
 
                   <section
                     ref={locationSectionRef}
-                    className="pt-3"
+                    className="pt-0"
                     data-car-details-scroll-section="location"
                     data-car-details-desktop-section="location"
                   >
@@ -760,7 +760,7 @@ function DesktopPickupReturnOverview({
 }) {
   return (
     <div
-      className="mx-auto w-full max-w-[900px] py-1"
+      className="mx-auto w-full max-w-[900px] pb-6 pt-2"
       data-car-details-desktop-pickup-overview
     >
       <h2 className="car-details-desktop-section-heading-type">Pickup and return</h2>
@@ -833,7 +833,7 @@ function DesktopCarHireLocationOverview({
 
   return (
     <div
-      className="mx-auto w-full max-w-[900px]"
+      className="mx-auto w-full max-w-[900px] border-t border-slate-200 pb-6 pt-6"
       data-car-details-desktop-location-overview
     >
       <h2 className="car-details-desktop-section-heading-type">Location</h2>
@@ -904,7 +904,7 @@ function DesktopCarHireLocationOverview({
         )}
       </div>
       <div
-        className="mt-5 pb-1"
+        className="mt-6 pb-2"
         data-car-details-desktop-location-details
       >
         <h3 className="car-details-desktop-item-heading-type">
