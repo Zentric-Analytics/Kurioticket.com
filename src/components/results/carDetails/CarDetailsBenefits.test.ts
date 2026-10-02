@@ -496,6 +496,28 @@ test("desktop Cars details keep Save and Share in controls while Compare deals o
   assert.equal(clientSource.match(/<BookingSummary\b/g)?.length, 1);
 });
 
+test("desktop Pickup and return removes pickup type and duplicated pickup-instructions copy", () => {
+  const pickup = sourceBetween(
+    clientSource,
+    "function DesktopPickupReturnOverview",
+    "function DesktopCarHireLocationOverview",
+  );
+  assert.doesNotMatch(pickup, /pickupTypeLabels|sandboxPresentation\?\.pickupLabel/);
+  assert.doesNotMatch(pickup, /carDetails\.pickupInstructions|car\.pickupInstructions/);
+  assert.match(pickup, /carDetails\.pickup/);
+  assert.match(pickup, /carDetails\.return/);
+
+  const location = sourceBetween(
+    clientSource,
+    "function DesktopCarHireLocationOverview",
+    "function CarHeroActions",
+  );
+  assert.match(location, /data-car-details-desktop-location-details/);
+  assert.match(location, /carDetails\.pickupLocationDetails/);
+  assert.match(location, /car\.pickupInstructions/);
+  assert.match(location, /carDetails\.confirmPickupDetails/);
+});
+
 test("Location map card keeps a balanced mobile viewport and fixed directions row", () => {
   const location = sourceBetween(
     clientSource,
@@ -659,6 +681,9 @@ test("desktop Compare deals wires each provider row to its own logo, total, bene
   assert.match(desktop, /copy\("carDetails\.continueDeal"\)/);
   assert.doesNotMatch(desktop, /role="radio"|aria-checked|size-1\.5 rounded-full/);
   assert.doesNotMatch(desktop, /offer\.pricePerDay|carsResults\.perDay/);
+  assert.match(desktop, /rounded-\[12px\][^"]*px-3\.5 py-2\.5/);
+  assert.match(desktop, /min-h-9 min-w-\[104px\][^"]*px-3 text-\[12px\] font-semibold/);
+  assert.match(desktop, /max-w-\[720px\]/);
 
   assert.match(
     clientSource,
@@ -819,8 +844,10 @@ test("desktop standalone duplicate section headings and deal rows share the left
     comparison,
     /text-slate-600 lg:text-\[14px\] lg:font-normal/,
   );
-  assert.match(comparison, /className="mt-3 hidden w-full space-y-2 lg:block"/);
-  assert.doesNotMatch(comparison, /lg:max-w-\[720px\]/);
+  assert.match(
+    comparison,
+    /className="mt-3 hidden w-full max-w-\[720px\] space-y-2 lg:block"/,
+  );
   assert.doesNotMatch(comparison, /lg:text-center|lg:justify-center/);
 
   const pickup = sourceBetween(
