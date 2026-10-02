@@ -168,7 +168,7 @@ export function CarDetailsHero({
             className={`mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 lg:mx-auto ${reserveMobileControlSafeZone ? "lg:mt-3 lg:max-w-[820px] lg:grid-cols-2 lg:gap-x-24 lg:gap-y-2.5" : "lg:max-w-[760px] lg:grid-cols-[minmax(0,320px)_minmax(0,320px)] lg:gap-x-[120px] lg:gap-y-3"}`}
             data-car-details-specifications
           >
-            {specs.map(([Icon, label]) => {
+            {specs.map(([Icon, label], index) => {
               const mobileTransmissionIcon =
                 Icon === AutomaticTransmissionIcon ||
                 Icon === ManualTransmissionIcon;
@@ -176,7 +176,7 @@ export function CarDetailsHero({
               return (
                 <li
                   key={label}
-                  className={`inline-flex min-w-0 items-center gap-2 text-xs font-semibold leading-[18px] text-slate-700 ${reserveMobileControlSafeZone ? "lg:min-h-8 lg:rounded-none lg:bg-transparent lg:px-0 lg:py-1.5 lg:text-[13px]" : "lg:rounded-lg lg:bg-slate-100 lg:px-2.5 lg:py-1.5"}`}
+                  className={`inline-flex min-w-0 items-center gap-2 text-xs font-semibold leading-[18px] text-slate-700 ${reserveMobileControlSafeZone ? `lg:w-max lg:max-w-full lg:min-h-8 lg:rounded-none lg:bg-transparent lg:px-0 lg:py-1.5 lg:text-[13px] lg:whitespace-nowrap ${index % 2 === 0 ? "lg:justify-self-end" : "lg:justify-self-start"}` : "lg:rounded-lg lg:bg-slate-100 lg:px-2.5 lg:py-1.5"}`}
                 >
                   {mobileTransmissionIcon ? (
                     <>
@@ -198,7 +198,7 @@ export function CarDetailsHero({
                       aria-hidden="true"
                     />
                   )}
-                  <span className="min-w-0 break-words">{label}</span>
+                  <span className={`min-w-0 break-words ${reserveMobileControlSafeZone ? "lg:break-normal lg:whitespace-nowrap" : ""}`}>{label}</span>
                 </li>
               );
             })}
