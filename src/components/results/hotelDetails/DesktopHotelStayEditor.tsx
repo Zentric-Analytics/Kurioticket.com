@@ -19,11 +19,6 @@ const dateLabel = (value: string, fallback: string) => {
   const date = parseHotelDetailsSearchDate(value);
   return date ? new Intl.DateTimeFormat("en-US", { weekday: "short", day: "numeric", month: "numeric" }).format(date).replace(",", "") : fallback;
 };
-const dateDisplay = (value: string, fallback: string) => {
-  const date = parseHotelDetailsSearchDate(value);
-  return date ? new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(date) : fallback;
-};
-
 function DateRangePopup({ start, end, initialPart, onChange, onComplete }: { start: string; end: string; initialPart: DatePart; onChange: (start: string, end: string) => void; onComplete: () => void }) {
   const today = localToday();
   const startDate = parseHotelDetailsSearchDate(start);
@@ -181,12 +176,12 @@ function StayEditor({ context }: { context?: HotelDetailsSearchContext }) {
   return <div className={styles.editor} data-desktop-hotel-stay-editor>
     <div className={styles.controls}>
       <div className={styles.dates} ref={datesRef}>
-        <button type="button" className={`${styles.control} ${styles.dateControl}`} aria-label={`Check-in: ${dateLabel(draft.checkIn, "Choose date")}`} aria-haspopup="dialog" aria-expanded={popup === "checkIn"} aria-controls={popup === "checkIn" ? `${id}-dates` : undefined} onClick={event => toggle("checkIn", event.currentTarget)}><CalendarDays size={24} aria-hidden="true" /><span className={styles.dateText}><span className={styles.dateFieldLabel}>Start date</span><span className={styles.dateFieldValue}>{dateDisplay(draft.checkIn, "Choose date")}</span></span></button>
-        <span className={styles.dateSeparator} aria-hidden="true">–</span>
-        <button type="button" className={`${styles.control} ${styles.dateControl}`} aria-label={`Check-out: ${dateLabel(draft.checkOut, "Choose date")}`} aria-haspopup="dialog" aria-expanded={popup === "checkOut"} aria-controls={popup === "checkOut" ? `${id}-dates` : undefined} onClick={event => toggle("checkOut", event.currentTarget)}><CalendarDays size={24} aria-hidden="true" /><span className={styles.dateText}><span className={styles.dateFieldLabel}>End date</span><span className={styles.dateFieldValue}>{dateDisplay(draft.checkOut, "Choose date")}</span></span></button>
+        <button type="button" className={`${styles.control} ${styles.dateControl}`} aria-label={`Check-in: ${dateLabel(draft.checkIn, "Choose date")}`} aria-haspopup="dialog" aria-expanded={popup === "checkIn"} aria-controls={popup === "checkIn" ? `${id}-dates` : undefined} onClick={event => toggle("checkIn", event.currentTarget)}><CalendarDays size={20} aria-hidden="true" /><span className={styles.dateText}>{dateLabel(draft.checkIn, "Choose date")}</span></button>
+        <span className={styles.dateSeparator} aria-hidden="true">-</span>
+        <button type="button" className={`${styles.control} ${styles.dateControl}`} aria-label={`Check-out: ${dateLabel(draft.checkOut, "Choose date")}`} aria-haspopup="dialog" aria-expanded={popup === "checkOut"} aria-controls={popup === "checkOut" ? `${id}-dates` : undefined} onClick={event => toggle("checkOut", event.currentTarget)}><CalendarDays size={20} aria-hidden="true" /><span className={styles.dateText}>{dateLabel(draft.checkOut, "Choose date")}</span></button>
       </div>
-      <button ref={guestsRef} type="button" className={`${styles.control} ${styles.guestsControl}`} aria-label={`${draft.guests} ${draft.guests === 1 ? "guest" : "guests"}, ${draft.rooms} ${draft.rooms === 1 ? "room" : "rooms"}`} aria-haspopup="dialog" aria-expanded={popup === "guests"} aria-controls={popup === "guests" ? `${id}-guests` : undefined} onClick={event => toggle("guests", event.currentTarget)}><UserRound size={18} aria-hidden="true" /><span>{draft.guests} {draft.guests === 1 ? "guest" : "guests"}, {draft.rooms} {draft.rooms === 1 ? "room" : "rooms"}</span></button>
-      <button type="button" className={styles.search} aria-label="Search hotel rates for this stay" onClick={search}><Search size={18} aria-hidden="true" /></button>
+      <button ref={guestsRef} type="button" className={`${styles.control} ${styles.guestsControl}`} aria-label={`${draft.guests} ${draft.guests === 1 ? "guest" : "guests"}, ${draft.rooms} ${draft.rooms === 1 ? "room" : "rooms"}`} aria-haspopup="dialog" aria-expanded={popup === "guests"} aria-controls={popup === "guests" ? `${id}-guests` : undefined} onClick={event => toggle("guests", event.currentTarget)}><UserRound size={20} aria-hidden="true" /><span>{draft.guests} {draft.guests === 1 ? "guest" : "guests"}, {draft.rooms} {draft.rooms === 1 ? "room" : "rooms"}</span></button>
+      <button type="button" className={styles.search} aria-label="Search hotel rates for this stay" onClick={search}><Search size={24} aria-hidden="true" /></button>
     </div>
     {error ? <p className={styles.error} role="alert">{error}</p> : null}
     <HotelDesktopPopover open={popup === "checkIn" || popup === "checkOut"} launcherRef={datesRef} preferredWidth={732} desiredHeight={390} onClose={closePopup} className={styles.popover} id={`${id}-dates`} ariaLabel="Choose stay dates">

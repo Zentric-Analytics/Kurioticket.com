@@ -771,11 +771,11 @@ export function AppHeader({
               />
             </Link>
 
-            {hotelResultsDesktopSticky ? <div data-hotel-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[540px]" /> : null}
+            {hotelResultsDesktopSticky ? <div data-hotel-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[560px]" /> : null}
             {flightResultsDesktopSticky ? <div data-flight-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[540px]" /> : null}
             {carsResultsDesktopSticky ? <div data-cars-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[720px] xl:max-w-[820px]" /> : null}
 
-            <div className={cn("hidden min-w-0 flex-1 items-center justify-end gap-3.5 md:flex lg:gap-4", resultsDesktopSticky && "lg:flex-none")}>
+            <div className={cn("hidden min-w-0 flex-1 items-center justify-end gap-3.5 md:flex lg:gap-4", resultsDesktopSticky && "lg:flex-none", hotelResultsDesktopSticky && "lg:gap-[10px]")}>
               <div className="[&>button]:!h-10 [&>button]:!gap-1 [&>button]:!rounded-md [&>button]:!border-transparent [&>button]:!bg-transparent [&>button]:!px-2.5 [&>button]:!text-[15px] [&>button]:!font-semibold [&>button]:!text-[#021C2B]/85 [&>button]:!shadow-none [&>button]:!backdrop-blur-0 [&>button]:hover:!bg-[#F2F7FA] [&>button]:hover:!text-[#004BB8] [&>button>svg]:!text-[#334155] [&>button>svg]:!opacity-80">
                 <CountryCurrencySelector variant="header" grouped />
               </div>
@@ -805,7 +805,7 @@ export function AppHeader({
                 </button>
               </div>
 
-              <div className="flex shrink-0 items-center justify-end gap-2">
+              <div className={cn("flex shrink-0 items-center justify-end gap-2", hotelResultsDesktopSticky && "lg:gap-[10px]")}>
                 {isSignedIn ? (
                   <div className="relative" ref={accountRef}>
                     <button

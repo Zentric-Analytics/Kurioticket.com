@@ -883,6 +883,8 @@ export function HotelSearchBar({
 
   const isStickyDialog = desktopPresentation === "sticky-dialog";
   const isResultsFlat = desktopPresentation === "results-flat";
+  const isNavbarResultsSearch = isResultsFlat && idPrefix === "hotel-results-nav-search";
+  const ResultsDestinationIcon = isNavbarResultsSearch ? BedDouble : MapPin;
   const fieldClassName = cn(
     "relative rounded-xl border border-slate-300 bg-white transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25",
     isStickyDialog
@@ -1131,7 +1133,7 @@ export function HotelSearchBar({
                   "min-h-16 rounded-[12px] border border-[#D8E1EC] bg-white px-4 py-2 shadow-[0_2px_8px_rgba(15,23,42,0.035)] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25",
               )}
             >
-              {isResultsFlat ? <MapPin data-hotel-results-edit-leading-icon="" aria-hidden="true" className="hidden lg:block" /> : null}
+              {isResultsFlat ? <ResultsDestinationIcon data-hotel-results-edit-leading-icon="" aria-hidden="true" className="hidden lg:block" /> : null}
               <span data-hotel-results-edit-label={isResultsFlat ? "" : undefined} className={cn(fieldLabelClassName, mobileResultsSheet && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
                 {t("hotelSearchDestinationLabel")}
               </span>
@@ -1331,6 +1333,7 @@ export function HotelSearchBar({
                 {t("hotelSearchTravelDatesLabel")}
               </span>
               <button
+                data-hotel-results-nav-date={isNavbarResultsSearch ? "" : undefined}
                 data-hotel-results-edit-value={isResultsFlat ? "" : undefined}
                 ref={datesMobileLauncherRef}
                 type="button"
@@ -1348,15 +1351,30 @@ export function HotelSearchBar({
                     "mt-0.5 grid h-auto min-h-6 grid-cols-[20px_minmax(0,1fr)_16px] items-center gap-2 text-[16px] font-medium leading-5 text-slate-900",
                 )}
               >
-                <Calendar
-                  data-hotel-results-edit-inline-icon={isResultsFlat ? "" : undefined}
-                  aria-hidden="true"
-                  className={cn(
-                    "h-4 w-4 shrink-0 text-slate-700",
-                    mobileResultsSheet && "h-[18px] w-[18px]",
-                  )}
-                />
-                <span className="truncate">{mobileResultsSheet || isResultsFlat ? formatCompactHotelDateRange(checkIn, checkOut, calendarLocale) ?? dateSummary : dateSummary}</span>
+                {isNavbarResultsSearch ? (
+                  <>
+                    <span data-hotel-results-nav-date-part="">
+                      <Calendar aria-hidden="true" />
+                      <span className="truncate">{checkInParsed?.toLocaleDateString(calendarLocale, { month: "short", day: "numeric" }) ?? t("deals.handoff.checkIn")}</span>
+                    </span>
+                    <span data-hotel-results-nav-date-part="">
+                      <Calendar aria-hidden="true" />
+                      <span className="truncate">{checkOutParsed?.toLocaleDateString(calendarLocale, { month: "short", day: "numeric" }) ?? t("deals.handoff.checkOut")}</span>
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Calendar
+                      data-hotel-results-edit-inline-icon={isResultsFlat ? "" : undefined}
+                      aria-hidden="true"
+                      className={cn(
+                        "h-4 w-4 shrink-0 text-slate-700",
+                        mobileResultsSheet && "h-[18px] w-[18px]",
+                      )}
+                    />
+                    <span className="truncate">{mobileResultsSheet || isResultsFlat ? formatCompactHotelDateRange(checkIn, checkOut, calendarLocale) ?? dateSummary : dateSummary}</span>
+                  </>
+                )}
                 {mobileResultsSheet ? <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" /> : null}
               </button>
               {datesOpen ? (
