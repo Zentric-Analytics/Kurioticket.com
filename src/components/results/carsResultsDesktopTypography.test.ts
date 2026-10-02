@@ -37,7 +37,7 @@ test("desktop Cars Results uses a readable, professional typography hierarchy", 
   assert.match(results, /sticky-cars-search-title[\s\S]*?text-\[19px\] font-bold leading-6 tracking-\[-0\.012em\]/);
   assert.match(results, /aria-label="Breadcrumb"[\s\S]*?text-\[13px\] font-medium leading-5 text-\[#526174\]/);
   assert.match(results, /lg:text-\[17px\] lg:font-bold lg:leading-6 lg:tracking-\[-0\.008em\]/);
-  assert.match(results, /lg:text-\[14px\] lg:font-semibold lg:leading-5 lg:tracking-\[-0\.003em\]/);
+  assert.match(results, /cars-results-desktop-filter-heading-type inline-flex h-9/);
 });
 
 
@@ -113,6 +113,24 @@ test("desktop Cars sort control has a clear polished label/value hierarchy", () 
   assert.match(
     results,
     /<ChevronDown[\s\S]*?"shrink-0 text-current transition-transform duration-150"/,
+  );
+});
+test("desktop Cars sort dropdown has strong selected and readable unselected states", () => {
+  assert.match(
+    results,
+    /sort === option\.value \? "bg-\[#EEF5FF\] font-bold text-\[#07133B\]" : "font-medium text-\[#334155\] hover:bg-slate-50 hover:text-\[#142033\]"/,
+  );
+  assert.match(
+    results,
+    /lg:text-\[15px\] lg:leading-5/,
+  );
+  assert.match(
+    results,
+    /focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-\[#004BB8\]\/30/,
+  );
+  assert.match(
+    results,
+    /<Check size=\{15\} strokeWidth=\{2\.5\} aria-hidden="true" \/>/,
   );
 });
 test("desktop Cars pricing and price tracking keep price emphasis without over-weighting metadata", () => {

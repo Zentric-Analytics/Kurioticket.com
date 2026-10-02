@@ -2981,7 +2981,7 @@ export function CarsResultsExperience({
                             role="menuitemradio"
                             aria-checked={sort === option.value}
                             tabIndex={carsSortOpen ? 0 : -1}
-                            className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold lg:text-[14px] lg:font-semibold lg:leading-5 lg:text-[#142033]"
+                            className={cn("flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30 lg:text-[15px] lg:leading-5", sort === option.value ? "bg-[#EEF5FF] font-bold text-[#07133B]" : "font-medium text-[#334155] hover:bg-slate-50 hover:text-[#142033]")}
                             onClick={() => {
                               startFilterResultsTransition();
                               setCurrentPage(1);
@@ -2989,8 +2989,8 @@ export function CarsResultsExperience({
                               setCarsSortOpen(false);
                             }}
                           >
-                            <span className="w-4 shrink-0 text-[#004BB8]">
-                              {sort === option.value ? "✓" : ""}
+                            <span className="flex w-4 shrink-0 items-center justify-center text-[#004BB8]">
+                              {sort === option.value ? <Check size={15} strokeWidth={2.5} aria-hidden="true" /> : null}
                             </span>
                             <span>{option.label}</span>
                           </button>
