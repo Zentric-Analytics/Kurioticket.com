@@ -629,7 +629,9 @@ test("desktop Pick your fare cards mirror the native hierarchy without changing 
   assert.match(desktop, /border-\[#075EE8\][\s\S]*?shadow-\[0_6px_16px/);
   assert.match(desktop, /border-\[#D7E0EC\][\s\S]*?shadow-\[0_2px_7px/);
   assert.doesNotMatch(desktop, /selected \? "[^"]*border-(?:2|\[2px\])/);
-  assert.match(desktop, /data-desktop-fare-content className="min-w-0 pb-14"/);\n  assert.match(desktop, /data-empty-benefits=\{!compactTerms\.length \|\| undefined\}/);\n  assert.match(desktop, /data-desktop-fare-empty-benefits className="flex h-full min-w-0 flex-col items-center justify-center gap-5 pb-1"/);
+  assert.match(desktop, /data-desktop-fare-content className="min-w-0 pb-14"/);
+  assert.match(desktop, /data-empty-benefits=\{!compactTerms\.length \|\| undefined\}/);
+  assert.match(desktop, /data-desktop-fare-empty-benefits className="flex h-full min-w-0 flex-col items-center justify-center gap-5 pb-1"/);
   assert.match(desktop, /data-desktop-fare-identity className="mx-auto flex max-w-full items-center justify-center gap-\[7px\]"/);
   assert.match(desktop, /h-6 w-6 shrink-0[^"]*rounded-lg border/);
   assert.match(desktop, /line-clamp-2/);
@@ -742,7 +744,8 @@ test("desktop Compare deals uses the shared Cars and Hotels price hierarchy", as
   assert.match(panel, /Trip total/);
   assert.match(panel, /View deal/);
   assert.match(panel, /rounded-xl border bg-white px-4 py-3/);
-  assert.match(panel, /grid-cols-\\[minmax\\(0,1fr\\)_auto\\]/);\n  assert.match(panel, /data-desktop-flight-deal-price[\\s\\S]*?mt-2 block min-w-0/);
+  assert.match(panel, /grid-cols-\\[minmax\\(0,1fr\\)_auto\\]/);
+  assert.match(panel, /data-desktop-flight-deal-price[\\s\\S]*?mt-2 block min-w-0/);
   assert.match(panel, /inline-flex h-9 w-\\[112px\\]/);
   assert.match(panel, /data-provider-handoff-unavailable/);
   assert.match(panel, /disabled:bg-\\[#004BB8\\]/);
