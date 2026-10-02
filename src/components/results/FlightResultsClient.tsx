@@ -5498,38 +5498,29 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 ref={stickySearchPopoutRef}
                 role="dialog"
                 aria-modal="true"
-                aria-labelledby="sticky-flight-search-title"
+                aria-label={t("editFlightSearch")}
                 onSubmit={handleCompactSearchSubmit}
                 onChangeCapture={markExpandedSearchInteraction}
                 onMouseDown={(event) => event.stopPropagation()}
                 onClick={(event) => event.stopPropagation()}
                 className="max-h-[calc(100dvh-104px)] w-full overflow-y-auto overscroll-contain rounded-[10px] border border-slate-200/80 bg-[#F5F7FB] p-3 text-start shadow-[0_12px_28px_-22px_rgba(15,23,42,0.28)]"
               >
-                <div className="relative mb-4 border-b border-slate-200/80 pb-3">
-                  <div className="mx-auto max-w-2xl text-center">
-                    <h2
-                      id="sticky-flight-search-title"
-                      className="text-xl font-bold tracking-tight text-black"
-                    >
-                      {locale?.startsWith("en") ? "Change your flight" : t("editFlightSearch")}
-                    </h2>
-                  </div>
+                <div className="relative">
                   <button
                     ref={stickySearchCloseButtonRef}
                     type="button"
                     aria-label={t("close")}
                     onClick={() => collapseStickySearch()}
-                    className="focus-ring absolute right-0 top-0 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-950"
+                    className="focus-ring absolute right-0 top-0 z-10 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-950"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
                   </button>
-                </div>
 
-                <div
-                  role="radiogroup"
-                  aria-label={t("tripType")}
-                  className="mb-3 grid min-h-[51px] w-full grid-cols-3 items-stretch"
-                >
+                  <div
+                    role="radiogroup"
+                    aria-label={t("tripType")}
+                    className="mb-3 grid min-h-[51px] w-full grid-cols-3 items-stretch pr-12"
+                  >
                   {tripTypeOptions.map((option) => {
                     const selected = tripTypeInput === option.value;
 
@@ -5551,6 +5542,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       </button>
                     );
                   })}
+                  </div>
                 </div>
 
                 {tripTypeInput === "multi-city" ? (
