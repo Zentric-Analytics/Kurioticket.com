@@ -230,6 +230,18 @@ test("desktop utility actions occupy the top-right header without reserving a mi
   assert.ok(price >= 0 && price < viewDeal, "Fare price renders before View deal");
 });
 
+test("desktop badge cards reserve enough header height for stacked badge and utility actions", () => {
+  assert.match(
+    flightCardSource,
+    /resultBadge && "lg:min-h-16"/,
+  );
+  const headerStart = flightCardSource.indexOf("flight-card-desktop-header");
+  const bodyStart = flightCardSource.indexOf("flight-card-body", headerStart);
+  const header = flightCardSource.slice(headerStart, bodyStart);
+  assert.match(header, /resultBadge && "lg:min-h-16"/);
+});
+
+
 test("price and View Flight retain their semantic order without provider-price clutter", () => {
   const actionStart = flightCardSource.indexOf("function FlightFareAction");
   const action = flightCardSource.slice(actionStart, flightCardSource.indexOf("function FlightDetailLines", actionStart));
