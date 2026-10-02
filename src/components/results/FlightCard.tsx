@@ -315,7 +315,7 @@ function ResponsiveFlightLegRow({
           <div className="flight-card-leg-endpoint min-w-0">
           <div className="flight-card-leg-time-row flex min-w-0 items-center">
             <div
-              className="flight-card-time min-w-0 font-extrabold tracking-[-0.025em] text-slate-950"
+              className="flight-card-time min-w-0 font-semibold tracking-[-0.02em] text-slate-950"
               dir="ltr"
             >
               {formatTime(leg.departureTime, locale)}
@@ -367,7 +367,7 @@ function ResponsiveFlightLegRow({
 
         <div className="flight-card-leg-endpoint min-w-0 text-right">
           <div
-            className="flight-card-time font-extrabold tracking-[-0.025em] text-slate-950"
+            className="flight-card-time font-semibold tracking-[-0.02em] text-slate-950"
             dir="ltr"
           >
             {formatTime(leg.arrivalTime, locale)}
@@ -480,7 +480,7 @@ function FlightFareAction({
         >
           <div
             className={cn(
-              "flight-card-price-value font-bold leading-tight tracking-[-0.025em] text-slate-950",
+              "flight-card-price-value font-semibold leading-tight tracking-[-0.02em] text-slate-950",
               "flight-card-price",
             )}
             aria-label={priceAriaLabel}

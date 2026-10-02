@@ -469,7 +469,8 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                 const selected = fare.key === selectedFare?.key;
                 const price = formatDisplayPrice({ amount: fare.offer.price, sourceCurrency: fare.offer.currency, displayCurrency: selectedOption.currency, convertSourceEstimate: true, useFlightResultSymbols: true, maximumFractionDigits: 0, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
                 const compactTerms = compactFareTerms(fare.distinguishingTerms, available.search.tripType)
-                  .filter(({ text }) => !/^(?:base|total)\s+price\s*·\s*(?:display\s+)?price\s*:/i.test(text.trim()));
+                  .filter(({ text }) => !/^(?:base|total)\s+price\s*·\s*(?:display\s+)?price\s*:/i.test(text.trim()))
+                  .map((row) => ({ ...row, text: formatDesktopCompactFareBenefit(row.text) }));
                 return <button data-desktop-fare-card data-empty-benefits={!compactTerms.length || undefined} key={fare.key} ref={(element) => { fareButtonRefs.current[index] = element; }} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} onClick={() => selectFare(index)} onKeyDown={(event) => handleFareKeyDown(event, index)} className={`relative h-[150px] w-[250px] min-w-[250px] shrink-0 snap-start rounded-[15px] border-[1.5px] px-3 pb-2 pt-2 text-left transition-[border-color,background-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 ${selected ? "border-[#075EE8] bg-[#075EE8]/[0.025] shadow-[0_6px_16px_rgba(7,19,59,0.16)]" : "border-[#D7E0EC] bg-white shadow-[0_2px_7px_rgba(7,19,59,0.07)] hover:border-[#B9C8DA] hover:shadow-[0_4px_11px_rgba(7,19,59,0.11)]"}`}>
                   {compactTerms.length ? (
                     <>
@@ -521,6 +522,54 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
       </div>
     </main>
   );
+}
+
+function formatDesktopCompactFareBenefit(text: string) {
+  const normalized = text.trim();
+
+  const scopedChangeNotAllowed = normalized.match(
+    /^(Outbound|Return):\s*Changes not allowed before departure$/i,
+  );
+  if (scopedChangeNotAllowed) {
+    return `${scopedChangeNotAllowed[1]} changes not allowed`;
+  }
+
+  if (/^Changes not allowed before departure$/i.test(normalized)) {
+    return "Changes not allowed";
+  }
+
+  const scopedChangeFee = normalized.match(
+    /^(Outbound|Return):\s*Changes allowed with\s+([A-Z]{3})\s+([\d,]+(?:\.\d+)?)\s+penalty$/i,
+  );
+  if (scopedChangeFee) {
+    return `${scopedChangeFee[1]} changes · ${scopedChangeFee[2].toUpperCase()} ${compactFareFeeAmount(scopedChangeFee[3])} fee`;
+  }
+
+  const changeFee = normalized.match(
+    /^Changes allowed with\s+([A-Z]{3})\s+([\d,]+(?:\.\d+)?)\s+penalty$/i,
+  );
+  if (changeFee) {
+    return `Changes · ${changeFee[1].toUpperCase()} ${compactFareFeeAmount(changeFee[2])} fee`;
+  }
+
+  const eachWayBaggage = normalized.match(
+    /^(\d+)\s+(carry-ons?|checked bags?)\s+included each way$/i,
+  );
+  if (eachWayBaggage) {
+    const count = Number(eachWayBaggage[1]);
+    const kind = eachWayBaggage[2].toLocaleLowerCase("en-US");
+    if (count === 1 && kind.startsWith("carry")) return "Carry-on included";
+    if (count === 1 && kind.startsWith("checked")) return "Checked bag included";
+    return `${count} ${kind} included`;
+  }
+
+  return normalized;
+}
+
+function compactFareFeeAmount(value: string) {
+  const [whole, fraction] = value.split(".");
+  if (!fraction || /^0+$/.test(fraction)) return whole;
+  return `${whole}.${fraction.replace(/0+$/, "")}`;
 }
 
 const PROVIDER_LOCAL_ISO_DATETIME =
