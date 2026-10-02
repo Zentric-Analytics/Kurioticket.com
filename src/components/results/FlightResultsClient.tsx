@@ -5595,6 +5595,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         {travelerPopoverOpen &&
                         activeDesktopSearchSurface === "sticky" ? (
                           <TravelerCabinPopover
+                            prominentDesktop
                             position={
                               travelerPopoverPosition ?? {
                                 top: 0,
@@ -5836,6 +5837,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       {activeDatePicker &&
                       activeDesktopSearchSurface === "sticky" ? (
                         <DatePickerPopover
+                          prominentDesktop
                           position={
                             datePickerPosition ?? { top: 0, left: 0, width: 0 }
                           }
@@ -5895,6 +5897,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       {travelerPopoverOpen &&
                       activeDesktopSearchSurface === "sticky" ? (
                         <TravelerCabinPopover
+                          prominentDesktop
                           position={
                             travelerPopoverPosition ?? {
                               top: 0,
@@ -8616,6 +8619,7 @@ function DatePickerPopover({
   position,
   mobileSheet = false,
   alignToField,
+  prominentDesktop = false,
   month,
   departureValue,
   returnValue,
@@ -8632,6 +8636,7 @@ function DatePickerPopover({
   position: { top: number; left: number; width: number };
   mobileSheet?: boolean;
   alignToField?: "left" | "right";
+  prominentDesktop?: boolean;
   launcherRef?: RefObject<HTMLElement | null>;
   month: Date;
   departureValue: string;
@@ -8835,7 +8840,9 @@ function DatePickerPopover({
         "w-full border border-slate-200 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.14)]",
         mobileSheet
           ? "flex h-[100dvh] min-h-0 max-w-full flex-col overflow-y-auto overscroll-contain rounded-none p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))]"
-          : "max-w-[min(560px,calc(100vw-2rem))] rounded-2xl p-3",
+          : prominentDesktop
+            ? "max-w-none rounded-xl p-4"
+            : "max-w-[min(560px,calc(100vw-2rem))] rounded-2xl p-3",
       )}
     >
       {mobileSheet ? (
@@ -8919,6 +8926,7 @@ function TravelerCabinPopover({
   position,
   mobileSheet = false,
   alignToField,
+  prominentDesktop = false,
   adultCount,
   childCount,
   infantCount,
@@ -8934,6 +8942,7 @@ function TravelerCabinPopover({
   position: { top: number; left: number; width: number };
   mobileSheet?: boolean;
   alignToField?: "left" | "right";
+  prominentDesktop?: boolean;
   launcherRef?: RefObject<HTMLElement | null>;
   adultCount: number;
   childCount: number;
@@ -9066,7 +9075,9 @@ function TravelerCabinPopover({
         "w-full border border-slate-200 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.14)]",
         mobileSheet
           ? "flex h-[100dvh] min-h-0 max-w-full flex-col overflow-hidden rounded-none pt-[env(safe-area-inset-top)]"
-          : "max-w-[min(320px,calc(100vw-2rem))] rounded-2xl p-3",
+          : prominentDesktop
+            ? "max-w-none rounded-xl p-4"
+            : "max-w-[min(320px,calc(100vw-2rem))] rounded-2xl p-3",
       )}
     >
       {mobileSheet ? (
