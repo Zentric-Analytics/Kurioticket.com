@@ -656,26 +656,26 @@ test("source contract does not restore removed booking-disabled messaging", () =
 });
 
 
-test("standalone desktop amenities pull the left column inward without wrapping or moving the right column", () => {
+test("standalone desktop amenities use a compact four-column two-row grid without wrapping", () => {
   assert.match(
     heroSource,
-    /specs\.map\(\(\[Icon, label\], index\) => \{/,
+    /specs\.map\(\(\[Icon, label\]\) => \(/,
   );
   assert.match(
     heroSource,
-    /index % 2 === 0 \? "lg:justify-self-end" : "lg:justify-self-start"/,
+    /lg:max-w-\[820px\][\s\S]*?lg:grid-cols-4[\s\S]*?lg:gap-x-6[\s\S]*?lg:gap-y-2/,
   );
   assert.match(
     heroSource,
-    /lg:w-max lg:max-w-full[\s\S]*?lg:whitespace-nowrap/,
+    /lg:w-max lg:max-w-full lg:min-h-8 lg:justify-self-center[\s\S]*?lg:whitespace-nowrap/,
   );
   assert.match(
     heroSource,
     /lg:break-normal lg:whitespace-nowrap/,
   );
-  assert.match(
+  assert.doesNotMatch(
     heroSource,
-    /lg:max-w-\[820px\][\s\S]*?lg:grid-cols-2[\s\S]*?lg:gap-x-24/,
+    /index % 2 === 0|lg:justify-self-end|lg:justify-self-start/,
   );
 });
 test("standalone desktop amenities sit directly on the Cars Details page surface", () => {
@@ -704,7 +704,7 @@ test("Cars Details uses the same dedicated transmission icon at mobile and deskt
   );
   assert.match(
     heroSource,
-    /specs\.map\(\(\[Icon, label\], index\) => \([\s\S]*?<Icon[\s\S]*?className="shrink-0 text-slate-600"/,
+    /specs\.map\(\(\[Icon, label\]\) => \([\s\S]*?<Icon[\s\S]*?className="shrink-0 text-slate-600"/,
   );
   assert.doesNotMatch(
     heroSource,
