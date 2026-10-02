@@ -476,7 +476,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                     <>
                       <div data-desktop-fare-content className="min-w-0 pb-14">
                         <div data-desktop-fare-identity className="mx-auto flex max-w-full items-center justify-center gap-[7px]"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-[#CFE3FA] bg-[#EAF3FF] text-[#075EE8]"><Luggage className="h-3.5 w-3.5" aria-hidden="true" /></span><p className="min-w-0 max-w-full line-clamp-2 text-[13px] font-bold leading-[17px] tracking-[0.1px] text-slate-950">{fare.label}</p></div>
-                        <ul data-desktop-fare-benefits className="mt-[5px] space-y-[5px]">{compactTerms.map(({ term, text }, termIndex) => <FareTerm key={`${term.category}-${term.legDirection || "trip"}-${term.text}-${termIndex}`} term={term} text={text} compact />)}</ul>
+                        <ul data-desktop-fare-benefits className="mt-1 space-y-1">{compactTerms.map(({ term, text }, termIndex) => <FareTerm key={`${term.category}-${term.legDirection || "trip"}-${term.text}-${termIndex}`} term={term} text={text} compact />)}</ul>
                       </div>
                       <div data-desktop-fare-price className="absolute inset-x-3 bottom-2 flex min-h-12 min-w-0 items-end justify-center"><p className="max-w-full break-words text-center text-[19px] font-semibold leading-6 tabular-nums text-slate-950 [overflow-wrap:anywhere]" aria-label={price.ariaLabel}>{price.formatted}</p></div>
                     </>
@@ -561,6 +561,37 @@ function formatDesktopCompactFareBenefit(text: string) {
     if (count === 1 && kind.startsWith("carry")) return "Carry-on included";
     if (count === 1 && kind.startsWith("checked")) return "Checked bag included";
     return `${count} ${kind} included`;
+  }
+
+  const unavailableRules = normalized.match(
+    /^(?:(Outbound|Return):\s*)?(Change(?:s)?(?: and refund)?|Refund) rules? not supplied by (?:the )?provider$/i,
+  );
+  if (unavailableRules) {
+    const scope = unavailableRules[1];
+    const ruleKind = unavailableRules[2].toLocaleLowerCase("en-US");
+    const label = /change(?:s)? and refund/.test(ruleKind)
+      ? "change/refund rules unavailable"
+      : /refund/.test(ruleKind)
+        ? "refund rules unavailable"
+        : "change rules unavailable";
+    return scope
+      ? `${scope}: ${label}`
+      : `${label.charAt(0).toUpperCase()}${label.slice(1)}`;
+  }
+
+  const scopedBaggage = normalized.match(
+    /^(Outbound|Return):\s*(\d+)\s+(carry-ons?|checked bags?)\s+included$/i,
+  );
+  if (scopedBaggage) {
+    return `${scopedBaggage[1]}: ${scopedBaggage[2]} ${scopedBaggage[3].toLocaleLowerCase("en-US")}`;
+  }
+
+  const plainCheckedBaggage = normalized.match(
+    /^(\d+)\s+checked bags?\s+included$/i,
+  );
+  if (plainCheckedBaggage) {
+    const count = Number(plainCheckedBaggage[1]);
+    return count === 1 ? "1 checked bag" : `${count} checked bags`;
   }
 
   return normalized;
@@ -807,7 +838,7 @@ function SegmentAirlineMark({ segment, offerAirlineName, offerAirlineLogo, prefe
 function FareTerm({ term, text = term.text, compact = false }: { term: FlightDetailsFareChoice["distinguishingTerms"][number]; text?: string; compact?: boolean }) {
   const Icon = term.semantic === "positive" ? Check : term.semantic === "negative" ? MinusCircle : Info;
   const iconClass = term.semantic === "positive" ? "border-emerald-500 text-emerald-600" : "border-slate-300 text-slate-500";
-  return <li className={`flex min-w-0 items-start text-slate-700 ${compact ? "gap-1.5 text-[12px] leading-4" : "gap-2 text-[13px] leading-5"}`}><span className={`mt-0.5 flex shrink-0 items-center justify-center rounded-full border ${compact ? "h-4 w-4" : "h-4 w-4"} ${iconClass}`}><Icon className="h-2.5 w-2.5" aria-hidden="true" /></span><span className="min-w-0 whitespace-normal break-words [overflow-wrap:anywhere] [text-wrap:pretty] [word-break:normal]">{text}</span></li>;
+  return <li className={`flex min-w-0 items-start text-slate-700 ${compact ? "gap-[5px] text-[11px] leading-[15px]" : "gap-2 text-[13px] leading-5"}`}><span className={`flex shrink-0 items-center justify-center rounded-full border ${compact ? "mt-px h-3.5 w-3.5" : "mt-0.5 h-4 w-4"} ${iconClass}`}><Icon className={compact ? "h-[9px] w-[9px]" : "h-2.5 w-2.5"} aria-hidden="true" /></span><span className="min-w-0 whitespace-normal break-words [overflow-wrap:anywhere] [text-wrap:pretty] [word-break:normal]">{text}</span></li>;
 }
 
 function FarePanel({

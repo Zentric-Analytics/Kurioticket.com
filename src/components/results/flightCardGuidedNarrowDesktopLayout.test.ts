@@ -82,10 +82,12 @@ test("shared card keeps airline, badge, itinerary, details, price, and action", 
   assert.doesNotMatch(flightCardSource, /seatSelection/);
 });
 
-test("mobile card navigation ignores nested controls and keeps canonical href", () => {
-  assert.match(flightCardSource, /max-width: 1023px/);
+test("the full Flight result card is clickable at every width without hijacking nested controls", () => {
   assert.match(flightCardSource, /closest\("a, button, input, select, textarea"\)/);
-  assert.match(flightCardSource, /router\.push\(resolvedDetailsHref\)/);
+  assert.match(flightCardSource, /if \(onAction\) \{\s*onAction\(flight\);\s*return;/);
+  assert.match(flightCardSource, /if \(resolvedDetailsHref\) \{\s*router\.push\(resolvedDetailsHref\);\s*\}/);
+  assert.match(flightCardSource, /\(resolvedDetailsHref \|\| onAction\) && "cursor-pointer"/);
+  assert.doesNotMatch(flightCardSource, /matchMedia\("\(max-width: 1023px\)"\)/);
   assert.match(
     flightCardSource,
     /`\/flights\/details\/\$\{encodeURIComponent\(flight\.id\)\}`/,

@@ -635,6 +635,7 @@ test("desktop Pick your fare cards mirror the native hierarchy without changing 
   assert.match(desktop, /data-desktop-fare-identity className="mx-auto flex max-w-full items-center justify-center gap-\[7px\]"/);
   assert.match(desktop, /h-6 w-6 shrink-0[^"]*rounded-lg border/);
   assert.match(desktop, /line-clamp-2/);
+  assert.match(desktop, /data-desktop-fare-benefits className="mt-1 space-y-1"/);
   assert.match(desktop, /data-desktop-fare-benefits[\s\S]*?<FareTerm[\s\S]*?data-desktop-fare-price/);
   assert.match(desktop, /\(\?:base\|total\)\\s\+price/);
   assert.match(desktop, /data-desktop-fare-price className="absolute inset-x-3 bottom-2 flex min-h-12 min-w-0 items-end justify-center"/);
@@ -660,6 +661,11 @@ test("desktop compact fare cards shorten long provider benefit copy without chan
   assert.match(source, /return "Checked bag included"/);
   assert.match(source, /changes not allowed/);
   assert.match(source, /changes · .* fee/);
+  assert.match(source, /change\/refund rules unavailable/);
+  assert.match(source, /refund rules unavailable/);
+  assert.match(source, /change rules unavailable/);
+  assert.match(source, /return \`\$\{scopedBaggage\[1\]\}: \$\{scopedBaggage\[2\]\} \$\{scopedBaggage\[3\]/);
+  assert.match(source, /return count === 1 \? "1 checked bag" :/);
   assert.match(source, /compactFareFeeAmount/);
   assert.doesNotMatch(
     source.slice(
@@ -668,6 +674,17 @@ test("desktop compact fare cards shorten long provider benefit copy without chan
     ),
     /formatDesktopCompactFareBenefit/,
   );
+});
+
+test("desktop compact fare benefit rows use smaller readable text and status icons", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const fareTermStart = source.indexOf("function FareTerm(");
+  const fareTerm = source.slice(fareTermStart, source.indexOf("function ", fareTermStart + 20));
+
+  assert.match(fareTerm, /compact \? "gap-\[5px\] text-\[11px\] leading-\[15px\]"/);
+  assert.match(fareTerm, /compact \? "mt-px h-3\.5 w-3\.5"/);
+  assert.match(fareTerm, /compact \? "h-\[9px\] w-\[9px\]"/);
+  assert.match(fareTerm, /"gap-2 text-\[13px\] leading-5"/);
 });
 
 test("desktop Fare information uses underline-only tabs and unframed panels", async () => {
