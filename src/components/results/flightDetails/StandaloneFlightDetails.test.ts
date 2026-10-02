@@ -743,7 +743,9 @@ test("desktop Compare deals uses the shared Cars and Hotels price hierarchy", as
   assert.match(panel, /inline-flex h-11 w-\[140px\]/);
   assert.match(panel, /data-provider-handoff-unavailable/);
   assert.match(panel, /disabled:bg-\[#075EE8\]/);
-  assert.match(panel, /border-r border-\[#D9E2E8\] pr-4/);\n  assert.match(panel, /DUFFEL_PROVIDER_LOGO_URL/);\n  assert.match(panel, /grid-cols-2 items-start gap-x-4/);
+  assert.match(panel, /border-r border-\[#D9E2E8\] pr-4/);
+  assert.match(panel, /DUFFEL_PROVIDER_LOGO_URL/);
+  assert.match(panel, /grid-cols-2 items-start gap-x-4/);
   assert.doesNotMatch(panel, /View deal/);
 });
 
