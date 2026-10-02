@@ -168,16 +168,20 @@ test("standalone details use persistent mobile controls with native-ordered hero
   }
   assert.match(
     clientSource,
-    /className={activeTab !== "compare" \? "hidden lg:block" : ""}/,
+    /className={activeTab !== "compare" \? "hidden" : ""}/,
   );
   assert.match(
     clientSource,
-    /className={activeTab !== "pickup" \? "hidden lg:block" : ""}/,
+    /className={activeTab !== "pickup" \? "hidden" : ""}/,
   );
   assert.match(
     clientSource,
-    /className={activeTab !== "location" \? "hidden lg:block" : ""}/,
+    /className={activeTab !== "location" \? "hidden" : ""}/,
   );
+  assert.match(clientSource, /data-car-details-desktop-linear-sections/);
+  assert.match(clientSource, /data-car-details-scroll-section="rental"/);
+  assert.match(navSource, /\{ id: "rental", label: labels\.rental \}/);
+  assert.match(navSource, /mobileTabs = tabs\.filter\(\(tab\) => tab\.id !== "rental"\)/);
   assert.match(
     clientSource,
     /car-details-desktop-section-heading-type hidden lg:block lg:text-\[16px\] lg:font-semibold lg:leading-6/,
@@ -186,6 +190,22 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-mobile-car-deal-list/);
   assert.match(clientSource, /Pickup requirements/);
   assert.match(clientSource, /data-car-location-section/);
+});
+
+test("desktop overview and linear sections use only existing car and offer data", () => {
+  assert.match(clientSource, /data-car-details-desktop-selected-deal/);
+  assert.match(clientSource, /compactBookingProviderName\(offer\)/);
+  assert.match(clientSource, /offer\.freeCancellation/);
+  assert.match(clientSource, /offer\.taxesAndFeesIncluded/);
+  assert.match(clientSource, /offer\.payAtPickup/);
+  assert.match(clientSource, /data-car-details-desktop-pickup-overview/);
+  assert.match(clientSource, /data-car-details-desktop-location-overview/);
+  assert.match(clientSource, /data-car-details-desktop-rental-details/);
+  assert.match(clientSource, /car\.requiredDocuments\.join/);
+  assert.match(clientSource, /car\.includedItems\.map/);
+  assert.match(clientSource, /car\.importantInformation\.map/);
+  assert.match(clientSource, /car\.sandboxPresentation[\s\S]*?"KAYAK sandbox"/);
+  assert.doesNotMatch(clientSource, /vehicle condition as expected|recommended by|collision damage protection/i);
 });
 
 test("standalone desktop Cars Details uses a deliberate non-faint typography hierarchy", () => {
@@ -250,7 +270,7 @@ test("standalone car details restore polished Hotels-style section headings", ()
   assert.match(comparison, /data-desktop-car-deal-list/);
   assert.match(
     comparison,
-    /mt-3 hidden w-full space-y-2 lg:mx-auto lg:block lg:max-w-\[820px\]/,
+    /mt-3 hidden w-full space-y-2 lg:mx-auto lg:block lg:max-w-\[720px\]/,
   );
   assert.match(
     comparison,
@@ -749,11 +769,18 @@ test("desktop standalone duplicate section headings and supporting copy are left
   assert.doesNotMatch(location, /lg:text-center|lg:justify-center/);
 });
 
-test("standalone desktop car image uses a contained white stage on the off-white page canvas", () => {
-  assert.match(heroSource, /relative min-w-0 bg-white[\s\S]*?lg:max-w-\[700px\]/);
-  assert.match(heroSource, /relative w-full overflow-hidden bg-white[\s\S]*?lg:h-\[clamp\(17rem,24vw,21rem\)\]/);
-  assert.doesNotMatch(heroSource, /lg:max-w-\[700px\] lg:bg-\[#F8FAFC\]/);
-  assert.doesNotMatch(heroSource, /lg:h-\[clamp\(17rem,24vw,21rem\)\] lg:bg-\[#F8FAFC\]/);
-  assert.match(heroSource, /sizes={reserveMobileControlSafeZone \? "700px" : "760px"}/);
-  assert.match(heroSource, /lg:max-w-\[820px\] lg:justify-center lg:text-center/);
+test("standalone desktop car overview uses the approved Expedia-inspired split card", () => {
+  assert.match(heroSource, /data-car-details-desktop-overview/);
+  assert.match(
+    heroSource,
+    /lg:grid-cols-\[minmax\(0,1fr\)_320px\][\s\S]*?lg:rounded-\[16px\][\s\S]*?lg:bg-white/,
+  );
+  assert.match(heroSource, /data-car-details-desktop-overview-identity/);
+  assert.match(heroSource, /data-car-details-desktop-overview-specifications/);
+  assert.match(heroSource, /data-car-details-desktop-overview-image/);
+  assert.match(heroSource, /h-\[250px\]/);
+  assert.match(heroSource, /sizes="680px"/);
+  assert.match(heroSource, /className="block min-w-0 truncate" title={label}/);
+  assert.match(heroSource, /data-car-details-desktop-overview-summary/);
+  assert.match(heroSource, /reserveMobileControlSafeZone \? "lg:hidden" : "pt-5"/);
 });
