@@ -47,14 +47,11 @@ test("results desktop search typography mirrors the polished mobile-web hierarch
   ])
     assert.ok(valueClass.includes(token), `missing shared value token: ${token}`);
 
-  for (const token of [
-    "lg:text-[15px]",
-    "lg:font-bold",
-    "lg:leading-5",
-    "lg:tracking-[-0.003em]",
-    "lg:text-slate-950",
-  ])
-    assert.ok(fullValueClass.includes(token), `missing full-search value token: ${token}`);
+  assert.equal(
+    fullValueClass,
+    "cars-results-desktop-filter-heading-type",
+    "full-search selected values must use the same rendered typography contract as filter headings",
+  );
 
   for (const token of [
     "lg:text-[15px]",
