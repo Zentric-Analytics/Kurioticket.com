@@ -56,9 +56,10 @@ test("standalone Cars Results keeps a soft off-white desktop body distinct from 
     results,
     /createPortal\(\s*renderCarsSearchForm\("desktop-navbar"\),\s*desktopNavSearchTarget,\s*\)/,
   );
+  assert.doesNotMatch(results, /aria-label="Breadcrumb"/);
   assert.match(
     results,
-    /aria-label="Breadcrumb"[\s\S]*?className="page-shell hidden pt-12 sm:block lg:pt-7"/,
+    /data-cars-results-scroll-region[\s\S]*?className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-10 sm:pt-6 lg:max-w-\[1020px\] lg:pt-5"/,
   );
   assert.doesNotMatch(
     results,
@@ -86,7 +87,7 @@ test("standalone Cars Results keeps a soft off-white desktop body distinct from 
 test("desktop Cars results body is compact, centered, and keeps shared surfaces aligned", () => {
   assert.match(
     results,
-    /data-cars-results-scroll-region[\s\S]*?className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-10 sm:pt-6 lg:max-w-\[1020px\]"/,
+    /data-cars-results-scroll-region[\s\S]*?className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-10 sm:pt-6 lg:max-w-\[1020px\] lg:pt-5"/,
   );
   assert.match(
     results,
