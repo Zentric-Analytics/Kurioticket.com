@@ -119,6 +119,38 @@ export function FlightCard({
     }
   }
 
+  function renderFlightUtilityActions(className?: string) {
+    return (
+      <div data-flight-card-actions className={cn("flex shrink-0 items-center", className)}>
+        <button
+          type="button"
+          aria-label={`${isSaved ? "Unsave" : "Save"} ${flight.airlineName} flight`}
+          aria-pressed={isSaved}
+          disabled={savedFlightPending}
+          onClick={() => void toggleSavedFlight()}
+          className={cn(
+            "inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 disabled:cursor-wait disabled:opacity-60",
+            isSaved ? "text-rose-600" : "text-slate-600",
+          )}
+        >
+          <Heart
+            size={18}
+            fill={isSaved ? "currentColor" : "none"}
+            aria-hidden="true"
+          />
+        </button>
+        <button
+          type="button"
+          aria-label={`Share ${flight.airlineName} flight`}
+          onClick={() => void shareFlight()}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+        >
+          <Share2 size={18} aria-hidden="true" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <>
       <MobileFlightCard
@@ -158,7 +190,12 @@ export function FlightCard({
       ) : null}
       <div className="flight-card-desktop-shell">
         <div className="flight-card-desktop">
-          <div className="flight-card-desktop-header relative flex min-w-0 items-start justify-between pb-2">
+          <div
+            className={cn(
+              "flight-card-desktop-header relative flex min-w-0 items-start justify-between pb-2",
+              resultBadge && "lg:min-h-16",
+            )}
+          >
             <div className="flight-card-desktop-brand flex min-w-0 items-center">
               <div className="flight-card-header-logo">
                 <AirlineLogo flight={flight} />
@@ -177,14 +214,13 @@ export function FlightCard({
                 ) : null}
               </div>
             </div>
-            {resultBadge ? (
-              <div
-                data-flight-card-header-actions
-                className="flight-card-header-actions flex shrink-0 flex-col items-end"
-              >
-                <ResultBadgePill badge={resultBadge} />
-              </div>
-            ) : null}
+            <div
+              data-flight-card-header-actions
+              className="flight-card-header-actions flex shrink-0 flex-col items-end gap-1"
+            >
+              {resultBadge ? <ResultBadgePill badge={resultBadge} /> : null}
+              {renderFlightUtilityActions("hidden lg:flex")}
+            </div>
           </div>
 
           <div className="flight-card-body mt-2 grid min-w-0 items-stretch gap-y-4">
@@ -208,35 +244,7 @@ export function FlightCard({
               viewFlightLabel={resolvedActionLabel}
               viewFlightAriaLabel={actionAriaLabel}
               onAction={onAction ? () => onAction(flight) : undefined}
-              actions={
-                <div data-flight-card-actions className="flex shrink-0 items-center">
-                  <button
-                    type="button"
-                    aria-label={`${isSaved ? "Unsave" : "Save"} ${flight.airlineName} flight`}
-                    aria-pressed={isSaved}
-                    disabled={savedFlightPending}
-                    onClick={() => void toggleSavedFlight()}
-                    className={cn(
-                      "inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 disabled:cursor-wait disabled:opacity-60",
-                      isSaved ? "text-rose-600" : "text-slate-600",
-                    )}
-                  >
-                    <Heart
-                      size={18}
-                      fill={isSaved ? "currentColor" : "none"}
-                      aria-hidden="true"
-                    />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={`Share ${flight.airlineName} flight`}
-                    onClick={() => void shareFlight()}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
-                  >
-                    <Share2 size={18} aria-hidden="true" />
-                  </button>
-                </div>
-              }
+              actions={renderFlightUtilityActions("lg:hidden")}
             />
           </div>
         </div>
@@ -463,7 +471,7 @@ function FlightFareAction({
       {actions ? (
         <div
           data-flight-card-fare-actions
-          className="mb-1 flex w-full justify-end"
+          className="mb-1 flex w-full justify-end lg:hidden"
         >
           {actions}
         </div>
@@ -532,7 +540,7 @@ function FlightDetailLines({
   return (
     <div
       className={cn(
-        "flight-card-details mt-3 grid min-w-0 flex-1 items-start gap-3 rounded-lg bg-slate-50/70 px-3 py-2.5 text-[10.5px] leading-[15px] text-slate-600",
+        "flight-card-details mt-3 grid min-w-0 flex-1 items-start gap-3 px-3 py-2.5 text-[10.5px] leading-[15px] text-slate-600",
       )}
     >
       {details.map((detail) => {
@@ -546,7 +554,7 @@ function FlightDetailLines({
             )}
           >
             <Icon
-              className="flight-card-detail-icon h-3.5 w-3.5 shrink-0 text-black"
+              className="flight-card-detail-icon h-3.5 w-3.5 shrink-0 text-slate-500"
               aria-hidden="true"
             />
             <span className="flight-card-detail-label shrink-0 font-semibold text-[#07133B]">
