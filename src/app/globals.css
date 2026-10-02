@@ -166,6 +166,18 @@ body {
     opacity: 1;
   }
 
+  .car-details-desktop-selected-info-type {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 700;
+    letter-spacing: -0.003em;
+    font-variation-settings: "wght" 700;
+    font-synthesis: none;
+    font-kerning: normal;
+    text-rendering: optimizeLegibility;
+  }
+
   .cars-results-footer-typography .cars-footer-confidence-tagline,
   .cars-results-footer-typography .cars-footer-seller-notice,
   .cars-results-footer-typography .cars-footer-legal-row {
