@@ -888,7 +888,7 @@ function CompareDealsPanel({
                     {price.formatted}
                   </strong>
                   <span className="block text-[12px] font-normal leading-[14px] text-[#59636a]">
-                    Trip total
+                    {fare?.label ? `${fare.label} · Trip total` : "Trip total"}
                   </span>
                 </span>
               </button>
