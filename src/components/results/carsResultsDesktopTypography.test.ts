@@ -41,10 +41,10 @@ test("desktop Cars Results uses a readable, professional typography hierarchy", 
 });
 
 
-test("desktop Cars full-search values mirror the polished filter-heading hierarchy while compact values stay isolated", () => {
+test("desktop Cars full-search values and filter headings share one enforced rendered typography contract", () => {
   assert.match(
     results,
-    /const desktopFullSelectedValueClass =[\s\S]*?lg:text-\[15px\] lg:font-bold lg:leading-5 lg:tracking-\[-0\.003em\] lg:text-slate-950/,
+    /const desktopFullSelectedValueClass =\s*[\s\S]*?"cars-results-desktop-filter-heading-type"/,
   );
   assert.match(
     results,
@@ -52,7 +52,15 @@ test("desktop Cars full-search values mirror the polished filter-heading hierarc
   );
   assert.match(
     results,
-    /<h3 className="text-\[15px\] font-bold normal-case leading-5 tracking-\[-0\.003em\] text-slate-950">/,
+    /<h3 className="cars-results-desktop-filter-heading-type text-\[15px\] font-bold normal-case leading-5 tracking-\[-0\.003em\] text-slate-950">/,
+  );
+  assert.match(
+    css,
+    /\.cars-results-desktop-filter-heading-type \{[\s\S]*?font-family: var\(--font-sans\) !important;[\s\S]*?font-size: 15px !important;[\s\S]*?line-height: 20px !important;[\s\S]*?font-weight: 700 !important;[\s\S]*?letter-spacing: -0\.003em !important;[\s\S]*?color: #020617 !important;[\s\S]*?font-variation-settings: "wght" 700;/,
+  );
+  assert.match(
+    css,
+    /input\.cars-results-desktop-filter-heading-type::placeholder \{[\s\S]*?font-weight: 500 !important;[\s\S]*?color: #94a3b8 !important;[\s\S]*?font-variation-settings: "wght" 500;/,
   );
   assert.equal(
     (

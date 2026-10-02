@@ -149,6 +149,23 @@ body {
     text-rendering: optimizeLegibility;
   }
 
+  .cars-results-desktop-filter-heading-type {
+    font-family: var(--font-sans) !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.003em !important;
+    color: #020617 !important;
+    font-variation-settings: "wght" 700;
+  }
+
+  input.cars-results-desktop-filter-heading-type::placeholder {
+    font-weight: 500 !important;
+    color: #94a3b8 !important;
+    font-variation-settings: "wght" 500;
+    opacity: 1;
+  }
+
   .cars-results-footer-typography .cars-footer-confidence-tagline,
   .cars-results-footer-typography .cars-footer-seller-notice,
   .cars-results-footer-typography .cars-footer-legal-row {
