@@ -157,6 +157,7 @@ export const translations: TranslationDictionary = {
   mobileTravelHeading: "Reisen",
   mobilePreferencesHeading: "Einstellungen",
   viewDetails: "Details anzeigen",
+  seeDetails: "Details anzeigen",
   manage: "Verwalten",
   deleteAccount: "Konto löschen",
   loadingResults: "Ergebnisse werden geladen",
