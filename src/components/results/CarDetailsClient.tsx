@@ -1313,7 +1313,7 @@ function CarPriceComparisonSection({
   };
   return (
     <div
-      className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-2"
+      className={`border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full lg:bg-transparent lg:pb-[22px] lg:pt-2 ${showDesktopOfferList ? "lg:max-w-[720px]" : "lg:max-w-[820px]"}`}
       data-car-price-comparison
     >
       {showSectionHeading ? (
@@ -1434,7 +1434,7 @@ function CarPriceComparisonSection({
 
       {showDesktopOfferList ? (
         <div
-          className="mt-3 hidden w-full space-y-2 lg:mx-auto lg:block lg:max-w-[820px]"
+          className="mt-3 hidden w-full space-y-2 lg:mx-auto lg:block lg:max-w-[720px]"
           data-desktop-car-deal-list
         >
           {offers.map((offer) => {
