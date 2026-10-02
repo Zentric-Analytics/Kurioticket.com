@@ -29,8 +29,6 @@ import {
 } from "@/components/results/carDetails/CarDetailsSectionNav";
 import {
   formatCarDate,
-  fuelPolicyLabels,
-  mileagePolicyLabels,
   pickupTypeLabels,
 } from "@/components/results/carDetails/helpers";
 import { useSavedCar } from "@/components/results/useSavedCar";
@@ -149,7 +147,6 @@ export function CarDetailsExperience({
   const compareSectionRef = useRef<HTMLElement>(null);
   const pickupSectionRef = useRef<HTMLDivElement>(null);
   const locationSectionRef = useRef<HTMLElement>(null);
-  const rentalSectionRef = useRef<HTMLElement>(null);
   const [mobileHeaderProtected, setMobileHeaderProtected] = useState(false);
   const copy = (key: string) => t[key] || enTranslations[key] || key;
   const text = {
@@ -312,7 +309,6 @@ export function CarDetailsExperience({
       animationFrame = 0;
       if (!desktopQuery.matches) {
         setDesktopSectionBarStuck(false);
-        setActiveTab((current) => (current === "rental" ? "compare" : current));
         return;
       }
 
@@ -325,7 +321,6 @@ export function CarDetailsExperience({
         { id: "compare", element: compareSectionRef.current },
         { id: "pickup", element: pickupSectionRef.current },
         { id: "location", element: locationSectionRef.current },
-        { id: "rental", element: rentalSectionRef.current },
       ];
       let current: CarDetailsTab = "compare";
       for (const section of sections) {
@@ -359,7 +354,6 @@ export function CarDetailsExperience({
       compareSectionRef.current,
       pickupSectionRef.current,
       locationSectionRef.current,
-      rentalSectionRef.current,
     ]) {
       if (target) observer.observe(target);
     }
@@ -387,9 +381,7 @@ export function CarDetailsExperience({
         ? compareSectionRef.current
         : tab === "pickup"
           ? pickupSectionRef.current
-          : tab === "location"
-            ? locationSectionRef.current
-            : rentalSectionRef.current;
+          : locationSectionRef.current;
     target?.scrollIntoView({
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
         ? "auto"
@@ -578,7 +570,6 @@ export function CarDetailsExperience({
                   mobileCompare: "Compare deals",
                   pickup: copy("carDetails.pickupReturn"),
                   location: copy("carDetails.location"),
-                  rental: "Rental details",
                 }}
               />
               <div className="min-h-[240px]" data-car-details-section-panels>
@@ -688,18 +679,6 @@ export function CarDetailsExperience({
                     />
                   </section>
 
-                  <section
-                    ref={rentalSectionRef}
-                    className="pt-3"
-                    data-car-details-scroll-section="rental"
-                    data-car-details-desktop-section="rental"
-                  >
-                    <DesktopRentalDetails
-                      car={car}
-                      offer={primaryOffer}
-                      price={price}
-                    />
-                  </section>
                 </div>
               </div>
             </>
@@ -869,85 +848,6 @@ function DesktopCarHireLocationOverview({
           <ExternalLink size={16} aria-hidden="true" />
         </a>
       ) : null}
-    </div>
-  );
-}
-
-function DesktopRentalDetails({
-  car,
-  offer,
-  price,
-}: {
-  car: NormalizedCarResult;
-  offer: CarOffer | null | undefined;
-  price: PriceFn;
-}) {
-  const details: Array<{ label: string; value: string }> = [];
-
-  if (car.sandboxPresentation) {
-    details.push(
-      { label: "Availability", value: unavailableOfferLabel },
-      { label: "Booking", value: unavailableBookingMessage },
-    );
-  } else {
-    details.push(
-      { label: "Fuel policy", value: fuelPolicyLabels[car.fuelPolicy] },
-      {
-        label: "Mileage",
-        value:
-          car.mileagePolicy === "limited" && car.limitedMileageKm
-            ? `${car.limitedMileageKm} km included`
-            : mileagePolicyLabels[car.mileagePolicy],
-      },
-    );
-    if (car.minimumDriverAge) {
-      details.push({
-        label: "Minimum driver age",
-        value: String(car.minimumDriverAge),
-      });
-    }
-    if (car.requiredDocuments.length) {
-      details.push({
-        label: "Required documents",
-        value: car.requiredDocuments.join(" · "),
-      });
-    }
-    if (offer && typeof car.depositAmount === "number" && car.depositAmount > 0) {
-      details.push({
-        label: "Deposit",
-        value: price(car.depositAmount, offer.currency).formatted,
-      });
-    }
-    if (offer && typeof car.excessAmount === "number" && car.excessAmount > 0) {
-      details.push({
-        label: "Excess",
-        value: price(car.excessAmount, offer.currency).formatted,
-      });
-    }
-  }
-
-  return (
-    <div
-      className="mx-auto w-full max-w-[900px] py-1"
-      data-car-details-desktop-rental-details
-    >
-      <h2 className="car-details-desktop-section-heading-type">Rental details</h2>
-      <div className="mt-4 grid grid-cols-2 gap-x-8" data-car-details-desktop-rental-grid>
-        {details.map((detail) => (
-          <div
-            key={detail.label}
-            className="min-w-0 border-b border-slate-200 py-4"
-          >
-            <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-[#536B92]">
-              {detail.label}
-            </p>
-            <p className="car-details-desktop-primary-copy-type mt-1.5">
-              {detail.value}
-            </p>
-          </div>
-        ))}
-      </div>
-
     </div>
   );
 }
