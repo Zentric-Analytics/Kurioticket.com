@@ -233,7 +233,7 @@ export function CarDetailsHero({
                 ))}
               </ul>
             </div>
-            <div className="min-w-0 self-stretch" data-car-details-desktop-overview-summary>
+            <div className="min-w-0 self-start" data-car-details-desktop-overview-summary>
               {desktopSummary}
             </div>
           </div>
