@@ -2936,7 +2936,7 @@ export function CarsResultsExperience({
                     </p>
                   ) : null}
                   <div className="hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
-                    <span className="shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm lg:text-[14px] lg:font-semibold lg:leading-5">
+                    <span className="shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm lg:text-[14px] lg:font-bold lg:leading-5 lg:tracking-[-0.002em] lg:text-[#334155]">
                       {t("carsResults.sortBy")}:
                     </span>
                     <div
@@ -2949,7 +2949,7 @@ export function CarsResultsExperience({
                         aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
                         aria-haspopup="menu"
                         aria-expanded={carsSortOpen}
-                        className="inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#07133B] sm:gap-2 sm:px-2 sm:text-[16px] lg:text-[14px] lg:font-semibold lg:leading-5 lg:tracking-[-0.003em]"
+                        className="cars-results-desktop-filter-heading-type inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#07133B] sm:gap-2 sm:px-2 sm:text-[16px]"
                         onClick={() => setCarsSortOpen((open) => !open)}
                       >
                         <span className="min-w-0 truncate whitespace-nowrap">
@@ -2958,7 +2958,7 @@ export function CarsResultsExperience({
                         <ChevronDown
                           size={16}
                           className={cn(
-                            "shrink-0 transition-transform duration-150",
+                            "shrink-0 text-current transition-transform duration-150",
                             carsSortOpen && "rotate-180",
                           )}
                           aria-hidden="true"
