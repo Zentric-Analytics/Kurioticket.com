@@ -65,7 +65,7 @@ test("desktop Cars navbar search uses the approved compact Hotels-style one-line
   assert.match(cars, /data-cars-results-navbar-submit=\{isNavbarSearch \? "" : undefined\}/);
   assert.match(cars, /navbarCompact=\{isNavbarSearch\}/);
   assert.match(cars, /navbarCompact[\s\S]*?\? `\$\{driverAge\}\+`/);
-  assert.match(cars, /<Search className="h-\[18px\] w-\[18px\]"/);
+  assert.match(cars, /<Search className="h-\[18px\] w-\[18px\]" strokeWidth=\{2\.25\}/);
 
   assert.match(
     styles,
@@ -81,7 +81,11 @@ test("desktop Cars navbar search uses the approved compact Hotels-style one-line
   );
   assert.match(
     styles,
-    /\[data-cars-results-navbar-search\] \.cars-results-navbar-location-value,[\s\S]*?font-size: 12px !important;[\s\S]*?font-weight: 600 !important;/,
+    /\[data-cars-results-navbar-search\] \.cars-results-navbar-location-value,[\s\S]*?font-size: 12px !important;[\s\S]*?font-weight: 650 !important;[\s\S]*?font-variation-settings: "wght" 650;/,
+  );
+  assert.match(
+    styles,
+    /\[data-cars-results-navbar-search\] \.cars-results-navbar-leading-icon \{[\s\S]*?color: #142033 !important;[\s\S]*?stroke-width: 2\.2;/,
   );
   assert.match(
     styles,

@@ -14,7 +14,7 @@ test("source-contract: Cars compact shell and header match Flights styling", () 
   );
   assert.match(
     source,
-    /desktopSurfaceParity \? "bg-\[#F2F4F8\]" : "bg-\[#EEF3F8\]"/,
+    /desktopSurfaceParity \? "bg-white" : "bg-\[#EEF3F8\]"/,
   );
   assert.match(
     source,
@@ -83,7 +83,7 @@ test("source-contract: compact body is the only vertical scroll owner and header
   );
   assert.match(
     source,
-    /desktopSurfaceParity \? "bg-\[#F2F4F8\]" : "bg-\[#EEF3F8\]"/,
+    /desktopSurfaceParity \? "bg-white" : "bg-\[#EEF3F8\]"/,
   );
   assert.match(
     source,
@@ -100,11 +100,11 @@ test("source-contract: compact body is the only vertical scroll owner and header
 test("source-contract: full desktop and mobile filter styling remain separate", () => {
   assert.match(
     source,
-    /layout === "desktop"[\s\S]*?desktop-filter-sidebar border border-slate-200\/80 p-0 shadow-none rounded-none[\s\S]*?desktopSurfaceParity \? "bg-\[#F2F4F8\]" : "bg-transparent"/,
+    /layout === "desktop"[\s\S]*?desktop-filter-sidebar border border-slate-200\/80 p-0 shadow-none rounded-none[\s\S]*?desktopSurfaceParity \? "bg-white" : "bg-transparent"/,
   );
   assert.match(
     source,
-    /desktopSurfaceParity &&\s*layout !== "mobile" &&\s*"cars-desktop-filter-surface"/,
+    /desktopSurfaceParity &&\s*layout !== "mobile" &&\s*"cars-desktop-filter-surface cars-hotel-filter-surface"/,
   );
   assert.match(
     source,

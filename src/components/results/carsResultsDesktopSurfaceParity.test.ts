@@ -31,18 +31,18 @@ const styles = readFileSync(
   "utf8",
 );
 
-test("standalone Cars Results keeps a soft off-white desktop body distinct from the white header", () => {
+test("standalone Cars Results matches the Hotels white desktop body while preserving mobile canvases", () => {
   assert.match(
     results,
-    /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-\[#F8FAFC\] pb-8">/,
+    /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white pb-8">/,
   );
   assert.match(
     results,
-    /flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-\[#F8FAFC\]/,
+    /flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white/,
   );
   assert.match(
     results,
-    /fixed inset-0 z-\[1200\] overflow-hidden bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-\[#F8FAFC\]/,
+    /fixed inset-0 z-\[1200\] overflow-hidden bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white/,
   );
   assert.doesNotMatch(
     results,
@@ -115,18 +115,18 @@ test("desktop Cars results body is compact, centered, and keeps shared surfaces 
   );
 });
 
-test("desktop Cars filters inherit the mobile F2F4F8 section surface without changing mobile filters", () => {
+test("desktop Cars filters use the Hotels white filter surface without changing mobile filters", () => {
   assert.match(
     results,
-    /desktopSurfaceParity \? "bg-\[#F2F4F8\]" : "bg-transparent"/,
+    /desktopSurfaceParity \? "bg-white" : "bg-transparent"/,
   );
   assert.match(
     results,
-    /desktopSurfaceParity \? "bg-\[#F2F4F8\]" : "bg-\[#EEF3F8\]"/,
+    /desktopSurfaceParity \? "bg-white" : "bg-\[#EEF3F8\]"/,
   );
   assert.match(
     results,
-    /desktopSurfaceParity &&\s*layout !== "mobile" &&\s*"cars-desktop-filter-surface"/,
+    /desktopSurfaceParity &&\s*layout !== "mobile" &&\s*"cars-desktop-filter-surface cars-hotel-filter-surface"/,
   );
   assert.doesNotMatch(results, /t\("carsResults\.filterBy"\)/);
   assert.match(
@@ -135,11 +135,11 @@ test("desktop Cars filters inherit the mobile F2F4F8 section surface without cha
   );
   assert.match(
     styles,
-    /\.desktop-filter-sidebar\.cars-desktop-filter-surface \{\s*background: #F2F4F8 !important;\s*\}/,
+    /\.desktop-filter-sidebar\.cars-desktop-filter-surface\.cars-hotel-filter-surface \{\s*background: #ffffff !important;\s*\}/,
   );
   assert.match(
     styles,
-    /\.desktop-filter-sidebar\.cars-desktop-filter-surface\s*\.desktop-filter-sidebar__header \{\s*background: #F2F4F8 !important;\s*\}/,
+    /\.desktop-filter-sidebar\.cars-desktop-filter-surface\.cars-hotel-filter-surface\s*\.desktop-filter-sidebar__header \{\s*background: #ffffff !important;\s*\}/,
   );
   assert.match(
     styles,
@@ -195,7 +195,7 @@ test("KAYAK car cards and loading canvases stay inside the same standalone deskt
   );
   assert.match(
     route,
-    /<main className="flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-\[#F8FAFC\]">/,
+    /<main className="flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white">/,
   );
   assert.match(skeleton, /desktopSurfaceParity = false/);
   assert.match(skeleton, /desktopSurfaceParity && "md:bg-\[#E7EBF1\]"/);
