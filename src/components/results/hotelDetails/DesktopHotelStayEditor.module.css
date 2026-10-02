@@ -1,12 +1,12 @@
 .editor { width: 100%; min-width: 0; margin-top: 12px; color: #192024; font-family: Inter, sans-serif; }
-.controls { display: inline-flex; max-width: 100%; min-height: 48px; align-items: center; border: 1px solid #d9dfe2; border-radius: 10px; background: #fff; box-shadow: 0 2px 6px rgb(25 32 36 / 4%); }
-.dates { display: flex; width: 386px; flex-shrink: 0; height: 46px; align-items: center; }
-.control { display: inline-flex; height: 46px; width: 171.4px; flex-shrink: 0; align-items: center; justify-content: flex-start; gap: 8px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: #192024; font-size: 15px; line-height: 22px; font-weight: 500; white-space: nowrap; cursor: pointer; }
-.control:hover { background: #f5f8fa; }
-.dateSeparator { flex: 1; height: 24px; border-left: 1px solid #e4e9ed; font-size: 0; }
+.controls { display: inline-flex; max-width: 100%; align-items: center; gap: 8px; }
+.dates { display: flex; flex-shrink: 0; align-items: center; gap: 8px; }
+.control { display: inline-flex; height: 46px; width: 174px; flex-shrink: 0; align-items: center; justify-content: flex-start; gap: 8px; padding: 0 14px; border: 1px solid #bfc8d1; border-radius: 8px; background: #fff; color: #192024; font-size: 15px; line-height: 22px; font-weight: 500; white-space: nowrap; cursor: pointer; }
+.control:hover { border-color: #87939d; background: #fff; }
+.dateSeparator { display: none; }
 .control svg { flex-shrink: 0; }
-.guestsControl { width: 182px; border-left: 1px solid #e4e9ed; border-radius: 0; font-weight: 600; }
-.search { display: inline-flex; height: 42px; width: 42px; flex: 0 0 42px; align-items: center; justify-content: center; margin: 0 6px; border-radius: 7px; background: #eaf2ff; color: #004bb8; cursor: pointer; }
+.guestsControl { width: 190px; font-weight: 600; }
+.search { display: inline-flex; height: 46px; width: 46px; flex: 0 0 46px; align-items: center; justify-content: center; border-radius: 8px; background: #eaf2ff; color: #004bb8; cursor: pointer; }
 .search:hover { background: #dceaff; }
 .editor button:focus-visible, .popover button:focus-visible { outline: 2px solid #004bb8; outline-offset: 3px; }
 .error { margin: 8px 0 0; color: #b91c1c; font-size: 12px; line-height: 18px; }
