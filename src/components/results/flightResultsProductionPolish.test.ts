@@ -318,6 +318,26 @@ test("desktop departure metadata aligns directly beneath time with generous card
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date \{\s*margin-inline-start: 0;/);
 });
 
+test("desktop fare divider stops above the baggage cabin and fare-rule summary", async () => {
+  const source = await readFile(new URL("./FlightCard.tsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+
+  const fareStart = source.indexOf("function FlightFareAction");
+  const fareEnd = source.indexOf("function FlightDetailLines", fareStart);
+  const fare = source.slice(fareStart, fareEnd);
+
+  assert.ok(fareStart >= 0 && fareEnd > fareStart);
+  assert.doesNotMatch(fare, /border-l border-\[#D8E1EC\]/);
+  assert.match(
+    styles,
+    /\.flight-card-fare-action \{[\s\S]*?position: relative;[\s\S]*?padding-left: 0\.75rem;/,
+  );
+  assert.match(
+    styles,
+    /\.flight-card-fare-action::before \{[\s\S]*?top: 0;[\s\S]*?bottom: 2\.75rem;[\s\S]*?left: 0;[\s\S]*?width: 1px;[\s\S]*?background: #d8e1ec;/,
+  );
+});
+
 test("desktop detail panel keeps all values inline at every desktop card width", async () => {
   const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
   const desktopStart = styles.indexOf(
