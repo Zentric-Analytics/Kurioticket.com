@@ -179,9 +179,9 @@ test("standalone details use persistent mobile controls with native-ordered hero
     /className={activeTab !== "location" \? "hidden" : ""}/,
   );
   assert.match(clientSource, /data-car-details-desktop-linear-sections/);
-  assert.match(clientSource, /data-car-details-scroll-section="rental"/);
-  assert.match(navSource, /\{ id: "rental", label: labels\.rental \}/);
-  assert.match(navSource, /mobileTabs = tabs\.filter\(\(tab\) => tab\.id !== "rental"\)/);
+  assert.doesNotMatch(clientSource, /data-car-details-scroll-section="rental"/);
+  assert.doesNotMatch(navSource, /\{ id: "rental", label: labels\.rental \}/);
+  assert.match(navSource, /const mobileTabs = tabs;/);
   assert.match(
     clientSource,
     /car-details-desktop-section-heading-type hidden lg:block lg:text-\[16px\] lg:font-semibold lg:leading-6/,
@@ -192,16 +192,11 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-car-location-section/);
 });
 
-test("desktop Pickup/Return and Rental details sit directly on the page without card containers", () => {
+test("desktop Pickup/Return sits directly on the page and Rental details are removed", () => {
   const pickup = sourceBetween(
     clientSource,
     "function DesktopPickupReturnOverview",
     "function DesktopCarHireLocationOverview",
-  );
-  const rental = sourceBetween(
-    clientSource,
-    "function DesktopRentalDetails",
-    "function StandaloneDesktopDealSummary",
   );
 
   assert.match(
@@ -218,19 +213,9 @@ test("desktop Pickup/Return and Rental details sit directly on the page without 
     /rounded-\[16px\]|rounded-\[12px\]|bg-white p-5 shadow-|bg-\[#F8FAFC\] p-4/,
   );
 
-  assert.match(
-    rental,
-    /className="mx-auto w-full max-w-\[900px\] py-1"[\s\S]*?data-car-details-desktop-rental-details/,
-  );
-  assert.match(
-    rental,
-    /data-car-details-desktop-rental-grid[\s\S]*?grid-cols-2 gap-x-8/,
-  );
-  assert.match(rental, /min-w-0 border-b border-slate-200 py-4/);
-  assert.doesNotMatch(
-    rental,
-    /rounded-\[16px\]|rounded-\[12px\]|bg-white p-5 shadow-|bg-\[#F8FAFC\] p-4/,
-  );
+  assert.doesNotMatch(clientSource, /function DesktopRentalDetails/);
+  assert.doesNotMatch(clientSource, /data-car-details-desktop-rental-details/);
+  assert.doesNotMatch(clientSource, /data-car-details-desktop-rental-grid/);
 });
 test("desktop overview and linear sections use only existing car and offer data", () => {
   assert.match(clientSource, /data-car-details-desktop-selected-deal/);
@@ -240,8 +225,10 @@ test("desktop overview and linear sections use only existing car and offer data"
   assert.match(clientSource, /offer\.payAtPickup/);
   assert.match(clientSource, /data-car-details-desktop-pickup-overview/);
   assert.match(clientSource, /data-car-details-desktop-location-overview/);
-  assert.match(clientSource, /data-car-details-desktop-rental-details/);
-  assert.match(clientSource, /car\.requiredDocuments\.join/);
+  assert.doesNotMatch(clientSource, /data-car-details-desktop-rental-details/);
+  assert.doesNotMatch(clientSource, /function DesktopRentalDetails/);
+  assert.doesNotMatch(clientSource, /car\.depositAmount|car\.excessAmount/);
+  assert.match(clientSource, /car\.requiredDocuments\.some/);
   assert.doesNotMatch(clientSource, /car\.includedItems\.map/);
   assert.doesNotMatch(clientSource, /car\.importantInformation\.map/);
   assert.doesNotMatch(clientSource, />Included<|>Important information</);
