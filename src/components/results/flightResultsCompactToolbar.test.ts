@@ -143,19 +143,51 @@ test("sticky search popout uses neutral field icons and keeps the calendar contr
 
 test("desktop search editor expands from the navbar instead of opening as a centered modal", () => {
   const callback = stickyEditorCallbackSource();
+  const frameStart = source.indexOf("const updateDesktopSearchPopoverFrame = useCallback(");
+  const frameEnd = source.indexOf("const openStickySearchEditor = useCallback(", frameStart);
+  const frame = source.slice(frameStart, frameEnd);
   const start = source.indexOf("function renderStickySearchPopoutOverlay()");
   const end = source.indexOf("function renderCompactSearchForm", start);
   const popout = source.slice(start, end);
 
+  assert.ok(frameStart >= 0 && frameEnd > frameStart);
   assert.match(callback, /closest<HTMLElement>\("\[data-flight-results-nav-search-form\]"\)/);
-  assert.match(callback, /const rect = compactForm\.getBoundingClientRect\(\)/);
-  assert.match(callback, /top: rect\.bottom \+ 8/);
-  assert.match(callback, /preferredWidth = Math\.min\(920/);
+  assert.match(callback, /updateDesktopSearchPopoverFrame\(compactForm\)/);
+  assert.match(frame, /const rect = resolvedCompactForm\.getBoundingClientRect\(\)/);
+  assert.match(frame, /top: rect\.bottom \+ 8/);
+  assert.match(frame, /preferredWidth = Math\.min\(920, availableWidth\)/);
   assert.match(popout, /data-flight-search-anchored-backdrop/);
   assert.match(popout, /bg-slate-950\/10/);
   assert.match(popout, /data-flight-search-anchored-popout/);
   assert.doesNotMatch(popout, /items-start justify-center px-6 pb-8 pt-12/);
   assert.doesNotMatch(popout, /backdrop-blur-\[2px\]/);
+});
+
+test("anchored desktop search recomputes on browser resize and closes below desktop", () => {
+  assert.match(
+    source,
+    /window\.addEventListener\("resize", refreshAnchoredFrame\)/,
+  );
+  assert.match(
+    source,
+    /window\.visualViewport\?\.addEventListener\("resize", refreshAnchoredFrame\)/,
+  );
+  assert.match(
+    source,
+    /if \(window\.innerWidth < 1024\) \{\s*collapseStickySearch\(\);/,
+  );
+  assert.match(
+    source,
+    /document\.querySelector<HTMLElement>\(\s*"\[data-flight-results-nav-search-form\]"\s*\)/,
+  );
+  assert.match(
+    source,
+    /if \(!updateDesktopSearchPopoverFrame\(compactForm\)\) \{\s*collapseStickySearch\(\);/,
+  );
+  assert.match(
+    source,
+    /availableWidth = Math\.max\([\s\S]*?window\.innerWidth - viewportGutter \* 2/,
+  );
 });
 
 test("sticky change-flight overlay centers a black title", () => {
