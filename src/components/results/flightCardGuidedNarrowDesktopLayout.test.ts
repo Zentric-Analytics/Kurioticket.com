@@ -140,7 +140,7 @@ test("desktop fare stays beside the itinerary while the footer summary spans the
   );
   assert.match(
     desktopBodyRule,
-    /grid-template-columns:\s*minmax\(0, 1fr\) 164px/,
+    /grid-template-columns:\s*minmax\(0, 1fr\) 128px/,
   );
   assert.match(desktopBodyRule, /row-gap:\s*0\.5rem/);
   assert.match(desktopFareRule, /align-items:\s*flex-end/);
@@ -194,7 +194,7 @@ test("desktop fare stays beside the itinerary while the footer summary spans the
   );
   assert.match(
     mediumBodyRule,
-    /grid-template-columns:\s*minmax\(0, 1fr\) 164px/,
+    /grid-template-columns:\s*minmax\(0, 1fr\) 128px/,
   );
   assert.match(
     mediumBodyRule,

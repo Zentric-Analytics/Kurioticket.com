@@ -322,7 +322,7 @@ test("desktop itinerary gives the route more room and moves arrival closer to th
     /grid-template-columns:\s*minmax\(112px, 0\.72fr\) minmax\(220px, 1\.8fr\) minmax\(\s*92px,\s*0\.6fr\s*\)/,
   );
   assert.match(baseGrid, /gap:\s*1rem/);
-  assert.match(styles, /@media \(min-width: 1024px\)[\s\S]*\.flight-card-body \{[\s\S]*grid-template-columns: minmax\(0, 1fr\) 164px;/);
+  assert.match(styles, /@media \(min-width: 1024px\)[\s\S]*\.flight-card-body \{[\s\S]*grid-template-columns: minmax\(0, 1fr\) 128px;/);
   assert.match(
     mediumGrid,
     /grid-template-columns:\s*minmax\(106px, 0\.7fr\) minmax\(168px, 1\.55fr\) minmax\(\s*92px,\s*0\.6fr\s*\)/,

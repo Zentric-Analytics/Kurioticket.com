@@ -1783,7 +1783,7 @@ textarea {
    arrival/date from fare content without intruding into the footer summary. */
 @media (min-width: 1024px) {
   .flight-card-body {
-    grid-template-columns: minmax(0, 1fr) 164px;
+    grid-template-columns: minmax(0, 1fr) 128px;
     grid-template-areas:
       "legs fare"
       "details details";
@@ -1823,7 +1823,7 @@ textarea {
 @container (max-width: 759px) {
   @media (min-width: 1024px) {
     .flight-card-body {
-      grid-template-columns: minmax(0, 1fr) 164px;
+      grid-template-columns: minmax(0, 1fr) 128px;
       grid-template-areas:
         "legs fare"
         "details details";
