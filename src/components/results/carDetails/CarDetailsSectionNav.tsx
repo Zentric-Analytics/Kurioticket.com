@@ -19,7 +19,8 @@ export function CarDetailsSectionNav({
   };
   desktopBarRef?: Ref<HTMLDivElement>;
 }) {
-  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const mobileTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const desktopTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const tabs: ReadonlyArray<{ id: CarDetailsTab; label: string }> = [
     { id: "compare", label: labels.compare },
     { id: "pickup", label: labels.pickup },
@@ -27,17 +28,35 @@ export function CarDetailsSectionNav({
   ];
   const mobileTabs = tabs;
 
-  function handleKeyDown(
+  function nextTabIndex(
     event: React.KeyboardEvent<HTMLButtonElement>,
     index: number,
   ) {
-    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return null;
     event.preventDefault();
-    const nextIndex =
-      (index + (event.key === "ArrowRight" ? 1 : -1) + mobileTabs.length) %
-      mobileTabs.length;
-    onTabChange(mobileTabs[nextIndex].id);
-    tabRefs.current[nextIndex]?.focus();
+    return (
+      index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length
+    ) % tabs.length;
+  }
+
+  function handleMobileKeyDown(
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) {
+    const nextIndex = nextTabIndex(event, index);
+    if (nextIndex === null) return;
+    onTabChange(tabs[nextIndex].id);
+    mobileTabRefs.current[nextIndex]?.focus();
+  }
+
+  function handleDesktopKeyDown(
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) {
+    const nextIndex = nextTabIndex(event, index);
+    if (nextIndex === null) return;
+    onTabChange(tabs[nextIndex].id);
+    desktopTabRefs.current[nextIndex]?.focus();
   }
 
   return (
@@ -54,7 +73,7 @@ export function CarDetailsSectionNav({
             <button
               key={tab.id}
               ref={(element) => {
-                tabRefs.current[index] = element;
+                mobileTabRefs.current[index] = element;
               }}
               id={`car-${tab.id}-tab`}
               type="button"
@@ -63,7 +82,7 @@ export function CarDetailsSectionNav({
               aria-controls={`car-${tab.id}-panel`}
               tabIndex={selected ? 0 : -1}
               onClick={() => onTabChange(tab.id)}
-              onKeyDown={(event) => handleKeyDown(event, index)}
+              onKeyDown={(event) => handleMobileKeyDown(event, index)}
               className={`car-details-native-tab-label focus-ring relative inline-flex min-h-12 min-w-0 items-center justify-center whitespace-nowrap px-0.5 font-sans text-[12px] font-semibold leading-[normal] tracking-normal transition-colors min-[390px]:text-[13px] ${tab.id === "compare" ? "w-[32%]" : tab.id === "pickup" ? "w-[43%]" : "w-[25%]"} ${selected ? "text-[#075EE8]" : "text-[#475569]"}`}
             >
               {tab.id === "compare" && labels.mobileCompare
