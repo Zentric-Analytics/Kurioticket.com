@@ -677,15 +677,14 @@ function DesktopPickupReturnOverview({
 }) {
   return (
     <div
-      className="mx-auto w-full max-w-[900px] rounded-[22px] border border-[#DFE6EF] bg-[#F7F9FC] px-5 pb-5 pt-5 shadow-[0_6px_18px_rgba(7,19,59,0.045)]"
+      className="mx-auto w-full max-w-[900px] py-5"
       data-car-details-desktop-pickup-overview
-      data-car-details-layered-surface="pickup"
+      data-car-details-flight-panel="pickup"
     >
       <h2 className="car-details-desktop-section-heading-type">Pickup and return</h2>
       <div
-        className="mt-4 grid grid-cols-2 divide-x divide-[#E1E7EF] rounded-[18px] border border-[#E0E7EF] bg-white px-1 py-3 shadow-[0_2px_8px_rgba(15,23,42,0.035)]"
+        className="mt-4 grid grid-cols-2 divide-x divide-[#D8E1EC] border-y border-[#D8E1EC] py-4"
         data-car-details-desktop-pickup-columns
-        data-car-details-inner-surface="pickup-return"
       >
         {[
           [copy("carDetails.pickup"), car.pickupLocation, search.pickupDate, search.pickupTime],
@@ -755,15 +754,14 @@ function DesktopCarHireLocationOverview({
 
   return (
     <div
-      className="mx-auto w-full max-w-[900px] rounded-[22px] border border-[#DFE6EF] border-t-[#D4DEE9] bg-[#F7F9FC] px-5 pb-5 pt-5 shadow-[0_6px_18px_rgba(7,19,59,0.045)]"
+      className="mx-auto w-full max-w-[900px] py-5"
       data-car-details-desktop-location-overview
-      data-car-details-layered-surface="location"
-      data-car-details-desktop-location-divider
+      data-car-details-flight-panel="location"
     >
       <h2 className="car-details-desktop-section-heading-type">Location</h2>
       <div
-        className="mt-4 flex flex-wrap items-start justify-between gap-x-8 gap-y-3 rounded-[16px] border border-[#E0E7EF] bg-white px-4 py-3 text-sm leading-6 shadow-[0_2px_7px_rgba(15,23,42,0.03)]"
-        data-car-details-inner-surface="location-identity"
+        className="mt-4 flex flex-wrap items-start justify-between gap-x-8 gap-y-3 border-b border-[#D8E1EC] pb-4 text-sm leading-6"
+        data-car-details-location-identity
       >
         <div className="flex min-w-0 items-start gap-2">
           <MapPin className="mt-1 h-4 w-4 shrink-0" aria-hidden="true" />
@@ -831,7 +829,7 @@ function DesktopCarHireLocationOverview({
         )}
       </div>
       <div
-        className="mt-5 border-t border-[#DCE4ED] pb-1 pt-5"
+        className="mt-5 border-t border-[#D8E1EC] pb-1 pt-5"
         data-car-details-desktop-location-details
       >
         <h3 className="car-details-desktop-item-heading-type">
@@ -1079,9 +1077,9 @@ function CarPriceComparisonSection({
   };
   return (
     <div
-      className={`border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full ${showDesktopOfferList ? "lg:max-w-[900px] lg:rounded-[22px] lg:border lg:border-[#DFE6EF] lg:bg-[#F7F9FC] lg:px-5 lg:pb-5 lg:pt-5 lg:shadow-[0_6px_18px_rgba(7,19,59,0.045)]" : "lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-2"}`}
+      className={`border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full ${showDesktopOfferList ? "lg:max-w-[900px] lg:border-0 lg:bg-transparent lg:px-0 lg:pb-5 lg:pt-5" : "lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-2"}`}
       data-car-price-comparison
-      data-car-details-layered-surface={showDesktopOfferList ? "compare" : undefined}
+      data-car-details-flight-panel={showDesktopOfferList ? "compare" : undefined}
     >
       {showSectionHeading ? (
         <Heading
@@ -1193,7 +1191,7 @@ function CarPriceComparisonSection({
 
       {showDesktopOfferList && desktopOrderedOffers.length ? (
         <div
-          className="mt-4 hidden w-full max-w-[720px] space-y-2.5 lg:block"
+          className="mt-4 hidden w-full max-w-[640px] space-y-2 lg:block"
           data-desktop-car-deal-list
         >
           {desktopOrderedOffers.map((offer) => {
@@ -1210,7 +1208,7 @@ function CarPriceComparisonSection({
             return (
               <div
                 key={offer.id}
-                className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-[14px] border bg-white px-4 py-3 transition ${selected ? "border-[#075EE8] shadow-[0_6px_16px_rgba(7,94,232,0.075)] ring-1 ring-[#075EE8]/10" : "border-[#E0E7EF] shadow-[0_2px_7px_rgba(15,23,42,0.03)] hover:border-[#C7D3E1]"}`}
+                className={`grid min-h-[92px] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-xl border bg-white px-4 py-3 transition ${selected ? "border-[#075EE8] shadow-[0_3px_10px_rgba(7,94,232,0.08)]" : "border-[#D9E2E8] hover:border-[#C7D3E1]"}`}
                 data-car-details-desktop-deal-row
                 data-selected={selected ? "true" : "false"}
               >
