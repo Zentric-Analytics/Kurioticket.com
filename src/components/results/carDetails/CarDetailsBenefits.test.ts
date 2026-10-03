@@ -520,7 +520,7 @@ test("desktop Cars details keep Save and Share in controls while Compare deals o
   );
   assert.match(
     clientSource,
-    /car\.inventorySource === "kurioticket-static-cars"[\s\S]*?kurioticket-logo-primary-light-bg\.svg[\s\S]*?offer\.bookingProviderLogoUrl/,
+    /offer\.bookingProviderLogoUrl \|\|[\s\S]*?car\.inventorySource === "kurioticket-static-cars"[\s\S]*?kurioticket-logo-primary-light-bg\.svg/,
   );
 
   assert.doesNotMatch(clientSource, /data-car-details-bottom-booking-bar/);

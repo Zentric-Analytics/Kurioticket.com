@@ -33,7 +33,8 @@ export function buildStaticCarResults(
     offers: buildStaticComparisonFixtures(offerFixtures).map((fixture, index) => ({
       ...fixture,
       id: `${getStaticCarId(car.id)}-offer-${index + 1}`,
-      bookingProviderName: "Kurioticket static fixture",
+      bookingProviderName: "Kurioticket",
+      bookingProviderLogoUrl: "/brand/kurioticket-logo-primary-light-bg.svg",
       rentalCompanyName: car.rentalCompanyName,
       currency: "USD",
       totalPrice: fixture.pricePerDay * days,

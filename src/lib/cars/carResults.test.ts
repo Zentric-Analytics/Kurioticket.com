@@ -30,6 +30,17 @@ const search: CarSearchParams = {
   driverAge: "30",
 };
 const cars = buildStaticCarResults(search);
+test("static Cars offers carry explicit Kurioticket branding", () => {
+  for (const car of cars) {
+    for (const offer of car.offers) {
+      assert.equal(offer.bookingProviderName, "Kurioticket");
+      assert.equal(
+        offer.bookingProviderLogoUrl,
+        "/brand/kurioticket-logo-primary-light-bg.svg",
+      );
+    }
+  }
+});
 test("sandbox placeholder pickup does not improve shared recommendation order", () => {
   const base = { ...cars[0], recommendationScore: 0, supplierRating: undefined };
   const unknown = { ...base, id: "z-unknown", pickupType: "city-location" as const, sandboxPresentation: { specs: [], pickupLabel: "Unknown", filterOptions: [] } };
