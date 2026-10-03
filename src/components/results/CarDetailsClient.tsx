@@ -587,7 +587,7 @@ export function CarDetailsExperience({
                 desktopBackControl={desktopBackControl}
                 desktopUtilityActions={
                   <div
-                    className="flex items-center gap-4 xl:gap-5"
+                    className="flex items-center gap-2.5"
                     data-car-details-utility-placement="tabs"
                   >
                     <CarHeroActions
@@ -941,7 +941,7 @@ function CarHeroActions({
     <div
       className={
         desktop
-          ? "flex shrink-0 items-center gap-2"
+          ? "flex shrink-0 items-center gap-1.5"
           : "flex h-11 shrink-0 items-center overflow-hidden rounded-full border border-white/70 bg-white/85 shadow-[0_2px_7px_rgba(15,23,42,0.08)] backdrop-blur-md"
       }
       data-car-details-actions
@@ -952,10 +952,10 @@ function CarHeroActions({
         aria-pressed={isSaved}
         data-car-details-utility-action="save"
         onClick={toggleSavedCar}
-        className={`focus-ring flex items-center justify-center transition ${desktop ? "size-10 rounded-full border border-slate-300 bg-[#E7EBF1] shadow-[0_2px_8px_rgba(15,23,42,0.14)] hover:bg-[#DDE3EB]" : "size-11 bg-transparent hover:bg-white/70"} ${isSaved ? "text-rose-500" : desktop ? "text-[#07133B]" : "text-slate-700"}`}
+        className={`focus-ring flex items-center justify-center transition ${desktop ? "size-9 rounded-full border border-slate-300 bg-[#E7EBF1] shadow-[0_2px_7px_rgba(15,23,42,0.12)] hover:bg-[#DDE3EB]" : "size-11 bg-transparent hover:bg-white/70"} ${isSaved ? "text-rose-500" : desktop ? "text-[#07133B]" : "text-slate-700"}`}
       >
         <Heart
-          size={desktop ? 20 : 22}
+          size={desktop ? 18 : 22}
           fill={isSaved ? "currentColor" : "none"}
           aria-hidden="true"
         />
@@ -965,9 +965,9 @@ function CarHeroActions({
         aria-label={`${copy("carDetails.share")} ${car.modelName}`}
         data-car-details-utility-action="share"
         onClick={() => void shareCar()}
-        className={`focus-ring flex items-center justify-center transition ${desktop ? "size-10 rounded-full border border-slate-300 bg-[#E7EBF1] text-[#07133B] shadow-[0_2px_8px_rgba(15,23,42,0.14)] hover:bg-[#DDE3EB]" : "size-11 bg-transparent text-slate-700 hover:bg-white/70"}`}
+        className={`focus-ring flex items-center justify-center transition ${desktop ? "size-9 rounded-full border border-slate-300 bg-[#E7EBF1] text-[#07133B] shadow-[0_2px_7px_rgba(15,23,42,0.12)] hover:bg-[#DDE3EB]" : "size-11 bg-transparent text-slate-700 hover:bg-white/70"}`}
       >
-        <Share2 size={desktop ? 19 : 21} aria-hidden="true" />
+        <Share2 size={desktop ? 17 : 21} aria-hidden="true" />
       </button>
     </div>
   );
@@ -1051,10 +1051,10 @@ export function CarDetailsClient({
                   href={resultsHref}
                   aria-label={copy("carDetails.backToResults")}
                   title={copy("carDetails.backToResults")}
-                  className="focus-ring flex size-10 items-center justify-center rounded-full border border-slate-300 bg-[#E7EBF1] text-[#07133B] shadow-[0_2px_8px_rgba(15,23,42,0.14)] transition hover:bg-[#DDE3EB]"
+                  className="focus-ring flex size-9 items-center justify-center rounded-full border border-slate-300 bg-[#E7EBF1] text-[#07133B] shadow-[0_2px_7px_rgba(15,23,42,0.12)] transition hover:bg-[#DDE3EB]"
                   data-car-details-desktop-back-link
                 >
-                  <ArrowLeft size={20} aria-hidden="true" />
+                  <ArrowLeft size={18} aria-hidden="true" />
                 </Link>
               }
             />
