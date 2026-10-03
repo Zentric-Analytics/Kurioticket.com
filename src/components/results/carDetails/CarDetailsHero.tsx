@@ -221,13 +221,13 @@ export function CarDetailsHero({
               {identity}
             </div>
             <ul
-              className="mt-4 grid min-w-0 w-full max-w-[820px] grid-cols-4 gap-3"
+              className="mt-4 grid min-w-0 w-full max-w-[820px] grid-cols-4 gap-x-5 gap-y-2 rounded-[14px] border border-[#E0E7EF] bg-white/75 px-4 py-3"
               data-car-details-desktop-overview-specifications
             >
               {specs.map(([Icon, label]) => (
                 <li
                   key={label}
-                  className="car-details-desktop-amenity-type inline-flex min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-[13px] border border-[#E0E7EF] bg-white px-3 py-2 text-center text-[13px] font-semibold leading-[18px] text-slate-700 shadow-[0_2px_7px_rgba(15,23,42,0.035)]"
+                  className="car-details-desktop-amenity-type inline-flex min-h-8 w-full min-w-0 items-center justify-center gap-2 px-2 py-1.5 text-center text-[13px] font-semibold leading-[18px] text-slate-700"
                 >
                   <Icon
                     size={15}
