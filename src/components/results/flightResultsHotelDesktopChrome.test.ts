@@ -85,17 +85,24 @@ test("desktop Flight Results keeps the navbar search target synchronized through
 
 test("desktop Flight Results matches Hotels by hiding navbar search until results are ready", () => {
   const shellStart = flight.indexOf("const standaloneResultsHeader = guidedMode ? null : (");
-  const preparingStart = flight.indexOf("if (resultsUiPreparing) {", shellStart);
-  const shell = flight.slice(shellStart, preparingStart);
+  const readySearchStart = flight.indexOf("const readyDesktopNavbarSearch =", shellStart);
+  const preparingStart = flight.indexOf("if (resultsUiPreparing) {", readySearchStart);
+  const headerShell = flight.slice(shellStart, readySearchStart);
+  const readySearchDefinition = flight.slice(readySearchStart, preparingStart);
   const guidedStart = flight.indexOf("if (guidedMode) return (", preparingStart);
   const preparing = flight.slice(preparingStart, guidedStart);
   const readyStart = flight.indexOf("return (", guidedStart);
   const ready = flight.slice(readyStart);
 
-  assert.ok(shellStart >= 0 && preparingStart > shellStart && guidedStart > preparingStart);
-  assert.match(shell, /<AppHeader[\s\S]*?flightResultsDesktopSticky/);
-  assert.doesNotMatch(shell, /createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
-  assert.match(shell, /const readyDesktopNavbarSearch =[\s\S]*?createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
+  assert.ok(
+    shellStart >= 0 &&
+      readySearchStart > shellStart &&
+      preparingStart > readySearchStart &&
+      guidedStart > preparingStart,
+  );
+  assert.match(headerShell, /<AppHeader[\s\S]*?flightResultsDesktopSticky/);
+  assert.doesNotMatch(headerShell, /createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
+  assert.match(readySearchDefinition, /createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
   assert.match(preparing, /\{standaloneResultsHeader\}/);
   assert.doesNotMatch(preparing, /readyDesktopNavbarSearch|renderStickySearchPopoutOverlay\(\)|<AppHeader/);
   assert.match(ready, /\{standaloneResultsHeader\}[\s\S]*?\{readyDesktopNavbarSearch\}/);
