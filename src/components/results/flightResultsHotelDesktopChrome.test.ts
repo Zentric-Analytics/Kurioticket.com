@@ -106,7 +106,13 @@ test("desktop Flight navbar search copies the Hotel results-flat card geometry",
   assert.match(toolbar, /grid-cols-\[minmax\(0,1fr\)_minmax\(0,1\.125fr\)_minmax\(0,1\.025fr\)_44px\]/);
   assert.match(toolbar, /rounded-lg border border-\[#D9E2E8\] bg-\[#F0F3F5\]/);
   assert.match(toolbar, /hover:border-\[#B9C9D5\] hover:bg-\[#E8EEF2\]/);
-  assert.match(toolbar, /data-flight-results-nav-field="dates"[\s\S]*?grid-cols-2/);
+  const datesFieldStart = toolbar.indexOf('data-flight-results-nav-field="dates"');
+  const datesButtonStart = toolbar.lastIndexOf("<button", datesFieldStart);
+  const datesButtonEnd = toolbar.indexOf("</button>", datesFieldStart);
+  const datesButton = toolbar.slice(datesButtonStart, datesButtonEnd);
+
+  assert.ok(datesFieldStart >= 0 && datesButtonStart >= 0 && datesButtonEnd > datesFieldStart);
+  assert.match(datesButton, /grid-cols-2/);
   assert.equal(toolbar.match(/data-flight-results-nav-date-part/g)?.length, 2);
   assert.match(toolbar, /data-flight-results-nav-search-action[\s\S]*?h-\[44px\] w-\[44px\][\s\S]*?rounded-lg bg-\[#004BB8\]/);
   assert.match(toolbar, /text-\[14px\] font-normal leading-5 text-\[#142033\]/);
