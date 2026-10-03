@@ -7416,7 +7416,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   const standaloneResultsHeader = guidedMode ? null : (
     <>
-      {standaloneResultsHeader}
+      <AppHeader
+        flushDesktopBottom
+        flushMobileBottom
+        hideDesktopTravelNav
+        hideMobileCategoryTabs
+        hotelDesktopBoundary
+        flightResultsDesktopSticky
+      />
+      {desktopNavSearchTarget
+        ? createPortal(renderDesktopHeaderSearchBar(), desktopNavSearchTarget)
+        : null}
     </>
   );
 
@@ -7472,17 +7482,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   return (
     <>
-    <AppHeader
-      flushDesktopBottom
-      flushMobileBottom
-      hideDesktopTravelNav
-      hideMobileCategoryTabs
-      hotelDesktopBoundary
-      flightResultsDesktopSticky
-    />
-    {desktopNavSearchTarget
-      ? createPortal(renderDesktopHeaderSearchBar(), desktopNavSearchTarget)
-      : null}
+    {standaloneResultsHeader}
     <FlightResultsScrollIndicator />
     {renderMobileCompactResultsHeader()}
     <main data-flight-results-main className="bg-[#F5F7FB] pb-0 sm:flex-1 sm:bg-[#F3F6FA] sm:pb-8 lg:bg-[#F5F7FB]">
