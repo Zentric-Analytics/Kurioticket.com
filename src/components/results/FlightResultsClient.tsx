@@ -5460,43 +5460,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }
 
   function renderDesktopHeaderSearchBar() {
-    const getCompactLocationLabel = (
-      code: string,
-      input: string,
-      fallback: string,
-    ) => {
-      const normalizedCode = (code || input).trim().toUpperCase();
-      const matchedAirport = airports.find(
-        (airport) => airport.code.toUpperCase() === normalizedCode,
-      );
-
-      if (matchedAirport) {
-        return getLocalizedCityName(matchedAirport.city, locale);
-      }
-
-      return input.trim() || code.trim() || fallback;
-    };
     const firstMultiCityLeg = multiCityLegs[0];
-    const originSummary =
+    const compactOriginCode =
       tripTypeInput === "multi-city" && firstMultiCityLeg
-        ? getCompactLocationLabel(
-            "",
-            firstMultiCityLeg.origin,
-            mobileOriginSummary,
-          )
-        : getCompactLocationLabel(originCode, originInput, t("origin"));
-    const destinationSummary =
+        ? firstMultiCityLeg.origin.trim().toUpperCase()
+        : (originCode || originInput).trim().toUpperCase();
+    const compactDestinationCode =
       tripTypeInput === "multi-city" && firstMultiCityLeg
-        ? getCompactLocationLabel(
-            "",
-            firstMultiCityLeg.destination,
-            mobileDestinationSummary,
-          )
-        : getCompactLocationLabel(
-            destinationCode,
-            destinationInput,
-            t("destination"),
-          );
+        ? firstMultiCityLeg.destination.trim().toUpperCase()
+        : (destinationCode || destinationInput).trim().toUpperCase();
     const departureSummary = departureDateInput
       ? formatDesktopHeaderDateLabel(departureDateInput, calendarLocale)
       : t("departure");
@@ -5509,7 +5481,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const fieldClass =
       "focus-ring flex h-[40px] min-w-0 items-center rounded-[8px] border border-[#D8E1EC] bg-[#EEF2F6] px-2.5 text-start text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#E9EEF3]";
     const tripTypeClass =
-      "focus-ring flex h-[40px] min-w-0 items-center justify-between gap-1.5 rounded-[8px] border border-[#D8E1EC] bg-[#E1E8EF] px-2.5 text-start text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#DCE5ED]";
+      "focus-ring flex h-[40px] min-w-0 items-center justify-center rounded-[8px] border border-[#D8E1EC] bg-[#E1E8EF] px-2.5 text-center text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#DCE5ED]";
     const valueClass =
       "min-w-0 truncate text-[12px] font-semibold leading-[17px] text-[#142033]";
 
@@ -5517,7 +5489,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <form
         onSubmit={handleCompactSearchSubmit}
         data-flight-results-nav-search-form
-        className="mx-auto grid h-[40px] w-full max-w-[760px] grid-cols-[82px_minmax(0,1fr)_24px_minmax(0,1fr)_minmax(118px,1.1fr)_minmax(100px,0.9fr)_40px] items-center gap-1 overflow-visible xl:grid-cols-[108px_minmax(90px,1fr)_30px_minmax(90px,1fr)_170px_142px_40px]"
+        className="mx-auto grid h-[40px] w-full max-w-[590px] grid-cols-[78px_minmax(0,1.5fr)_minmax(0,1.4fr)_56px_40px] items-center gap-1 overflow-visible xl:grid-cols-[96px_minmax(150px,1fr)_minmax(160px,1fr)_68px_40px]"
       >
         <button
           type="button"
@@ -5529,49 +5501,47 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           className={tripTypeClass}
         >
           <span className={valueClass}>{mobileTripTypeSummary}</span>
-          <ChevronDown
-            className={cn(
-              "h-3.5 w-3.5 shrink-0 transition-transform",
-              isStickySearchPanelOpen &&
-                activeStickySearchTarget === "trip" &&
-                "rotate-180",
-            )}
-            aria-hidden="true"
-          />
         </button>
 
-        <button
-          type="button"
-          aria-expanded={
-            isStickySearchPanelOpen && activeStickySearchTarget === "origin"
-          }
-          aria-label={`${t("editFlightSearch")}: ${originSummary}`}
-          onClick={(event) => openStickySearchEditor(event, "origin")}
-          className={cn(fieldClass, "justify-center")}
+        <div
+          data-flight-results-compact-route
+          className="grid h-[40px] min-w-0 grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)] items-center overflow-hidden rounded-[8px] border border-[#D8E1EC] bg-[#EEF2F6]"
         >
-          <span className={valueClass}>{originSummary}</span>
-        </button>
+          <button
+            type="button"
+            aria-expanded={
+              isStickySearchPanelOpen && activeStickySearchTarget === "origin"
+            }
+            aria-label={`${t("editFlightSearch")}: ${compactOriginCode}`}
+            onClick={(event) => openStickySearchEditor(event, "origin")}
+            className="focus-ring flex h-full min-w-0 items-center justify-end px-2 text-[#142033] transition-colors hover:bg-[#E9EEF3]"
+          >
+            <span className={valueClass}>{compactOriginCode || t("origin")}</span>
+          </button>
 
-        <button
-          type="button"
-          aria-label={t("swapOriginDestination")}
-          onClick={handleSwapLocations}
-          className="focus-ring inline-flex h-[40px] w-[30px] items-center justify-center text-[#142033] transition hover:text-[#004BB8]"
-        >
-          <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
-        </button>
+          <button
+            type="button"
+            aria-label={t("swapOriginDestination")}
+            onClick={handleSwapLocations}
+            className="focus-ring inline-flex h-full w-[28px] items-center justify-center text-[#142033] transition hover:bg-[#E9EEF3] hover:text-[#004BB8]"
+          >
+            <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
+          </button>
 
-        <button
-          type="button"
-          aria-expanded={
-            isStickySearchPanelOpen && activeStickySearchTarget === "destination"
-          }
-          aria-label={`${t("editFlightSearch")}: ${destinationSummary}`}
-          onClick={(event) => openStickySearchEditor(event, "destination")}
-          className={cn(fieldClass, "justify-center")}
-        >
-          <span className={valueClass}>{destinationSummary}</span>
-        </button>
+          <button
+            type="button"
+            aria-expanded={
+              isStickySearchPanelOpen && activeStickySearchTarget === "destination"
+            }
+            aria-label={`${t("editFlightSearch")}: ${compactDestinationCode}`}
+            onClick={(event) => openStickySearchEditor(event, "destination")}
+            className="focus-ring flex h-full min-w-0 items-center justify-start px-2 text-[#142033] transition-colors hover:bg-[#E9EEF3]"
+          >
+            <span className={valueClass}>
+              {compactDestinationCode || t("destination")}
+            </span>
+          </button>
+        </div>
 
         <button
           type="button"
@@ -5582,9 +5552,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           }
           aria-label={`${t("editFlightSearch")}: ${dateSummary}`}
           onClick={(event) => openStickySearchEditor(event, "dates")}
-          className={cn(fieldClass, "gap-1.5")}
+          className={cn(fieldClass, "justify-center px-2")}
         >
-          <Calendar className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
           <span className={valueClass}>{dateSummary}</span>
         </button>
 
@@ -5595,10 +5564,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           }
           aria-label={`${t("editFlightSearch")}: ${travelerCabinSummary}`}
           onClick={(event) => openStickySearchEditor(event, "travelers")}
-          className={cn(fieldClass, "gap-1.5")}
+          className={cn(fieldClass, "justify-center gap-1.5 px-2")}
         >
           <UserRound className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
-          <span className={valueClass}>{travelerCabinSummary}</span>
+          <span className={valueClass}>{mobileTravelerTotal}</span>
         </button>
 
         <button
@@ -5623,7 +5592,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       { label: t("multiCity"), value: "multi-city", disabled: false },
     ];
     const panelGridClass =
-      "grid-cols-[82px_minmax(0,1fr)_24px_minmax(0,1fr)_minmax(118px,1.1fr)_minmax(100px,0.9fr)_40px] xl:grid-cols-[108px_minmax(90px,1fr)_30px_minmax(90px,1fr)_170px_142px_40px]";
+      "grid-cols-[78px_minmax(0,1.5fr)_minmax(0,1.4fr)_56px_40px] xl:grid-cols-[96px_minmax(150px,1fr)_minmax(160px,1fr)_68px_40px]";
     const departureSummary = departureDateInput
       ? formatCompactDateLabel(departureDateInput, calendarLocale)
       : t("departure");
@@ -5729,7 +5698,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 activeStickySearchTarget === "destination" ? (
                   <div
                     className={cn(
-                      "pointer-events-auto col-start-2 col-span-3 grid min-h-[64px] grid-cols-[minmax(0,1fr)_30px_minmax(0,1fr)] overflow-visible rounded-[12px] border border-[#CFD9E5] bg-white shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]",
+                      "pointer-events-auto col-start-2 grid min-h-[64px] grid-cols-[minmax(0,1fr)_30px_minmax(0,1fr)] overflow-visible rounded-[12px] border border-[#CFD9E5] bg-white shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]",
                     )}
                   >
                     <div ref={stickyOriginWrapRef} className="relative min-w-0 px-3 py-2.5">
@@ -5841,7 +5810,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   <div
                     className={cn(
                       "pointer-events-auto relative rounded-[12px] border border-[#CFD9E5] bg-white shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]",
-                      "col-start-5",
+                      "col-start-3",
                     )}
                   >
                     <button
@@ -5911,7 +5880,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   <div
                     className={cn(
                       "pointer-events-auto relative rounded-[12px] border border-[#CFD9E5] bg-white shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]",
-                      "col-start-6",
+                      "col-start-4",
                     )}
                   >
                     <button
