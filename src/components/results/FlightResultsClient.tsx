@@ -1257,7 +1257,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const stickySearchCloseButtonRef = useRef<HTMLButtonElement | null>(null);
   const stickySearchLauncherRef = useRef<HTMLButtonElement | null>(null);
   const pendingStickySearchTargetRef = useRef<
-    "route" | "dates" | "travelers" | null
+    "trip" | "route" | "dates" | "return" | "travelers" | null
   >(null);
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const expandedSearchScrollYRef = useRef(0);
@@ -1391,11 +1391,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         0,
         window.innerWidth - viewportGutter * 2,
       );
+      const width = Math.min(rect.width, availableWidth);
+      const left = Math.min(
+        Math.max(viewportGutter, rect.left),
+        Math.max(viewportGutter, window.innerWidth - viewportGutter - width),
+      );
 
       setDesktopSearchPopoverFrame({
-        top: rect.bottom + 4,
-        left: viewportGutter,
-        width: availableWidth,
+        top: rect.bottom,
+        left,
+        width,
       });
       return true;
     },
@@ -1405,7 +1410,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const openStickySearchEditor = useCallback(
     (
       event: React.MouseEvent<HTMLButtonElement>,
-      target: "route" | "dates" | "travelers",
+      target: "trip" | "route" | "dates" | "return" | "travelers",
     ) => {
       stickySearchLauncherRef.current = event.currentTarget;
       const compactForm = event.currentTarget.closest<HTMLElement>(
@@ -1413,7 +1418,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       );
       updateDesktopSearchPopoverFrame(compactForm);
       pendingStickySearchTargetRef.current =
-        tripTypeInput === "multi-city" ? null : target;
+        tripTypeInput === "multi-city" || target === "trip" ? null : target;
       const currentScrollY = window.scrollY;
       expandedSearchScrollYRef.current = currentScrollY;
       setIsSearchExpandedWhileSticky(true);
@@ -1426,7 +1431,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       );
       setDropdownPosition(null);
       setActiveDatePicker(
-        tripTypeInput !== "multi-city" && target === "dates" ? "departure" : null,
+        tripTypeInput !== "multi-city"
+          ? target === "dates"
+            ? "departure"
+            : target === "return"
+              ? "return"
+              : null
+          : null,
       );
       setDatePickerPosition(null);
       setTravelerPopoverOpen(
@@ -1635,7 +1646,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         return;
       }
 
-      if (pendingTarget === "dates") {
+      if (pendingTarget === "dates" || pendingTarget === "return") {
         stickyDateButtonRef.current?.focus({ preventScroll: true });
         return;
       }
@@ -5414,13 +5425,21 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }
 
   function renderDesktopHeaderSearchBar() {
-    const compactDateSummary = departureDateInput
-      ? tripTypeInput === "round-trip" && returnDateInput
-        ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
-        : formatCompactDateLabel(departureDateInput, calendarLocale)
-      : t("travelDates");
+    const departureSummary = departureDateInput
+      ? formatCompactDateLabel(departureDateInput, calendarLocale)
+      : t("departure");
+    const returnSummary = returnDateInput
+      ? formatCompactDateLabel(returnDateInput, calendarLocale)
+      : t("return");
+    const firstMultiCityLeg = multiCityLegs[0];
+    const routeSummary =
+      tripTypeInput === "multi-city" && firstMultiCityLeg
+        ? `${firstMultiCityLeg.origin || mobileOriginSummary} → ${firstMultiCityLeg.destination || mobileDestinationSummary}`
+        : `${mobileOriginSummary} → ${mobileDestinationSummary}`;
     const fieldClass =
-      "focus-ring flex h-[44px] min-w-0 items-center gap-2 border-r border-[#D8E1EC] bg-white px-3 text-start text-[#142033] transition-colors hover:bg-slate-50";
+      "focus-ring flex h-[44px] min-w-0 items-center gap-2 rounded-[10px] border border-[#D8E1EC] bg-[#EEF2F6] px-3 text-start text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#E9EEF3]";
+    const tripTypeClass =
+      "focus-ring flex h-[44px] min-w-0 items-center justify-between gap-1.5 rounded-[10px] border border-[#D8E1EC] bg-[#E1E8EF] px-3 text-start text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#DCE5ED]";
     const valueClass =
       "min-w-0 truncate text-[12px] font-semibold leading-[18px] text-[#142033]";
 
@@ -5428,31 +5447,64 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <form
         onSubmit={handleCompactSearchSubmit}
         data-flight-results-nav-search-form
-        className="grid h-[44px] w-full grid-cols-[minmax(0,1.55fr)_minmax(0,1.15fr)_minmax(0,1.2fr)_46px] items-center overflow-hidden rounded-[9px] border border-[#D8E1EC] bg-white"
+        className={cn(
+          "grid h-[44px] w-full items-center gap-1.5 overflow-visible",
+          tripTypeInput === "round-trip"
+            ? "grid-cols-[96px_minmax(0,1.25fr)_112px_112px_minmax(0,1fr)_44px]"
+            : "grid-cols-[96px_minmax(0,1.45fr)_128px_minmax(0,1fr)_44px]",
+        )}
       >
         <button
           type="button"
           aria-expanded={isStickySearchPanelOpen}
-          aria-label={`${t("editFlightSearch")}: ${mobileOriginSummary} ${t("to")} ${mobileDestinationSummary}`}
-          onClick={(event) => openStickySearchEditor(event, "route")}
-          className={fieldClass}
+          aria-label={t("tripType")}
+          onClick={(event) => openStickySearchEditor(event, "trip")}
+          className={tripTypeClass}
         >
-          <MapPin className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
-          <span className={valueClass}>
-            {mobileOriginSummary} → {mobileDestinationSummary}
-          </span>
+          <span className={valueClass}>{mobileTripTypeSummary}</span>
+          <ChevronDown
+            className={cn(
+              "h-3.5 w-3.5 shrink-0 transition-transform",
+              isStickySearchPanelOpen && "rotate-180",
+            )}
+            aria-hidden="true"
+          />
         </button>
 
         <button
           type="button"
           aria-expanded={isStickySearchPanelOpen}
-          aria-label={`${t("editFlightSearch")}: ${compactDateSummary}`}
+          aria-label={`${t("editFlightSearch")}: ${routeSummary}`}
+          onClick={(event) => openStickySearchEditor(event, "route")}
+          className={fieldClass}
+        >
+          <MapPin className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
+          <span className={valueClass}>{routeSummary}</span>
+        </button>
+
+        <button
+          type="button"
+          aria-expanded={isStickySearchPanelOpen}
+          aria-label={`${t("editFlightSearch")}: ${departureSummary}`}
           onClick={(event) => openStickySearchEditor(event, "dates")}
           className={fieldClass}
         >
           <Calendar className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
-          <span className={valueClass}>{compactDateSummary}</span>
+          <span className={valueClass}>{departureSummary}</span>
         </button>
+
+        {tripTypeInput === "round-trip" ? (
+          <button
+            type="button"
+            aria-expanded={isStickySearchPanelOpen}
+            aria-label={`${t("editFlightSearch")}: ${returnSummary}`}
+            onClick={(event) => openStickySearchEditor(event, "return")}
+            className={fieldClass}
+          >
+            <Calendar className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
+            <span className={valueClass}>{returnSummary}</span>
+          </button>
+        ) : null}
 
         <button
           type="button"
@@ -5465,15 +5517,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           <span className={valueClass}>{travelerCabinSummary}</span>
         </button>
 
-        <div className="flex h-[44px] items-center justify-center bg-white">
-          <button
-            type="submit"
-            aria-label={t("search")}
-            className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[#004BB8] text-white transition hover:bg-[#003F9C]"
-          >
-            <Search className="h-[18px] w-[18px]" aria-hidden="true" />
-          </button>
-        </div>
+        <button
+          type="submit"
+          aria-label={t("search")}
+          className="focus-ring inline-flex h-[44px] w-[44px] items-center justify-center rounded-[10px] bg-[#004BB8] text-white transition hover:bg-[#003F9C]"
+        >
+          <Search className="h-[19px] w-[19px]" aria-hidden="true" />
+        </button>
       </form>
     );
   }
@@ -5501,7 +5551,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         {isStickySearchPanelOpen ? (
           <div
             data-flight-search-anchored-backdrop
-            className="fixed inset-0 z-[110] bg-slate-950/[0.04]"
+            className="fixed inset-0 z-[110] bg-transparent"
             role="presentation"
             onMouseDown={(event) => {
               if (event.target === event.currentTarget) {
@@ -5530,13 +5580,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               <form
                 ref={stickySearchPopoutRef}
                 role="dialog"
-                aria-modal="true"
+                aria-modal="false"
                 aria-label={t("editFlightSearch")}
                 onSubmit={handleCompactSearchSubmit}
                 onChangeCapture={markExpandedSearchInteraction}
                 onMouseDown={(event) => event.stopPropagation()}
                 onClick={(event) => event.stopPropagation()}
-                className="max-h-[calc(100dvh-104px)] w-full overflow-y-auto overscroll-contain rounded-[10px] border border-slate-200/80 bg-[#F5F7FB] p-3 text-start shadow-[0_12px_28px_-22px_rgba(15,23,42,0.28)]"
+                className="max-h-[calc(100dvh-104px)] w-full overflow-y-auto overscroll-contain rounded-b-[12px] rounded-t-none border border-t-0 border-[#CFD9E5] bg-[#F3F6FA] p-2 text-start shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)]"
               >
                 <div className="relative">
                   <button
@@ -7865,14 +7915,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   <p className="text-[12px] font-semibold leading-4 text-[#191E3B]">
                     {formatResultsFound(sortedResults.length, t)}
                   </p>
-                  {resultsDisplayRange ? (
-                    <p
-                      aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${sortedResults.length}`}
-                      className="mt-0.5 text-xs font-medium leading-4 text-slate-500"
-                    >
-                      {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
-                    </p>
-                  ) : null}
+
                 </div>
 
                 <div
@@ -7960,26 +8003,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               </div>
               <div
                 ref={paginationListRef}
-                aria-busy={paginationPendingPage !== null}
-                style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined}
-                className={cn("hidden sm:block", paginationRevealing && "animate-[fadeIn_150ms_ease-out]")}
+                aria-busy={filterApplying}
+                className="hidden sm:block"
               >
               {error && results.length === 0 ? (
                 <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger">{error}</div>
-              ) : filterApplying || paginationPendingPage !== null ? (
+              ) : filterApplying ? (
                 <div className="space-y-3">
                   <div role="status" aria-live="polite" className="sr-only">
                     {t("updatingResults")}
                   </div>
-                  {Array.from({ length: paginationPendingPage !== null ? visibleResults.length : 2 }, (_, index) => <FlightCardSkeleton key={index} />)}
-                  {paginationPendingPage !== null ? (
-                    <FlightResultsPagination currentPage={validResultsPage} totalPages={totalResultPages} onPageChange={changeResultsPage} disabled />
-                  ) : null}
+                  {Array.from({ length: 2 }, (_, index) => <FlightCardSkeleton key={index} />)}
                 </div>
               ) : sortedResults.length ? (
                 <>
                   <div data-flight-results-card-list className="space-y-3 sm:space-y-4">
-                    {visibleResults.map((flight, index) => {
+                    {sortedResults.map((flight, index) => {
                       const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
                       if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
                       const detailsQuery = params.toString();
@@ -7999,11 +8038,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       );
                     })}
                   </div>
-                  <FlightResultsPagination
-                    currentPage={validResultsPage}
-                    totalPages={totalResultPages}
-                    onPageChange={changeResultsPage}
-                  />
                 </>
               ) : (
                 <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-muted shadow-sm">
