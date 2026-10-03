@@ -772,7 +772,7 @@ export function AppHeader({
             </Link>
 
             {hotelResultsDesktopSticky ? <div data-hotel-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[560px]" /> : null}
-            {flightResultsDesktopSticky ? <div data-flight-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[560px]" /> : null}
+            {flightResultsDesktopSticky ? <div data-flight-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[540px]" /> : null}
             {carsResultsDesktopSticky ? <div data-cars-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[720px] xl:max-w-[820px]" /> : null}
 
             <div className={cn("hidden min-w-0 flex-1 items-center justify-end gap-3.5 md:flex lg:gap-4", resultsDesktopSticky && "lg:flex-none", hotelResultsDesktopSticky && "lg:gap-[10px]")}>

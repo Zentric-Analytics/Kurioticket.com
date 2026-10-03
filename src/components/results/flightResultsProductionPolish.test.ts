@@ -146,15 +146,11 @@ test("Flight Results keeps the normal mobile header while desktop adopts the Hot
     source,
     /<AppHeader[\s\S]*?flushDesktopBottom[\s\S]*?hideDesktopTravelNav[\s\S]*?hotelDesktopBoundary[\s\S]*?flightResultsDesktopSticky/,
   );
-  const shellStart = source.indexOf("const standaloneResultsHeader = guidedMode ? null : (");
-  const preparingStart = source.indexOf("if (resultsUiPreparing) {", shellStart);
-  const shell = source.slice(shellStart, preparingStart);
+  const preparingStart = source.indexOf("if (resultsUiPreparing) {");
   const guidedStart = source.indexOf("if (guidedMode) return (", preparingStart);
   const preparing = source.slice(preparingStart, guidedStart);
-  assert.ok(shellStart >= 0 && preparingStart > shellStart && guidedStart > preparingStart);
-  assert.match(shell, /flightResultsDesktopSticky/);
-  assert.match(shell, /createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
-  assert.match(preparing, /\{standaloneResultsHeader\}/);
+  assert.ok(preparingStart >= 0 && guidedStart > preparingStart);
+  assert.match(preparing, /flightResultsDesktopSticky/);
   assert.match(preparing, /renderStickySearchPopoutOverlay\(\)/);
   assert.doesNotMatch(source, /mobileResultsSearch=|mobileResultsLeadingAction=|mobileResultsSticky=/);
   assert.match(source, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);

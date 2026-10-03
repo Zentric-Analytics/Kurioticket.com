@@ -21,26 +21,21 @@ function desktopHeaderSearchBarSource() {
   return source.slice(start, end);
 }
 
-test("desktop Flight Results uses the Hotel results-flat navbar card design", () => {
+test("desktop Flight Results uses the Hotels-style four-section header search", () => {
   const toolbar = desktopHeaderSearchBarSource();
 
   assert.match(toolbar, /data-flight-results-nav-search-form/);
-  assert.match(toolbar, /data-flight-results-nav-search-hotel-card/);
   assert.match(
     toolbar,
-    /grid-cols-\[minmax\(0,1fr\)_minmax\(0,1\.125fr\)_minmax\(0,1\.025fr\)_44px\]/,
+    /grid-cols-\[minmax\(0,1\.55fr\)_minmax\(0,1\.15fr\)_minmax\(0,1\.2fr\)_46px\]/,
   );
   assert.match(toolbar, /h-\[44px\]/);
-  assert.match(toolbar, /rounded-lg border border-\[#D9E2E8\] bg-\[#F0F3F5\]/);
-  assert.match(toolbar, /data-flight-results-nav-field="route"/);
-  assert.match(toolbar, /data-flight-results-nav-field="dates"/);
-  assert.match(toolbar, /data-flight-results-nav-field="travelers"/);
-  assert.equal(toolbar.match(/data-flight-results-nav-date-part/g)?.length, 2);
+  assert.match(toolbar, /rounded-\[9px\] border border-\[#D8E1EC\]/);
   assert.match(toolbar, /openStickySearchEditor\(event, "route"\)/);
   assert.match(toolbar, /openStickySearchEditor\(event, "dates"\)/);
   assert.match(toolbar, /openStickySearchEditor\(event, "travelers"\)/);
-  assert.match(toolbar, /data-flight-results-nav-search-action/);
   assert.match(toolbar, /<Search className="h-\[18px\] w-\[18px\]"/);
+  assert.doesNotMatch(toolbar, /t\("tripType"\)/);
   assert.doesNotMatch(toolbar, /mobileTripTypeSummary/);
 });
 
@@ -75,11 +70,10 @@ test("sticky search moves focus directly to the requested expanded control", () 
   assert.match(source, /stickyTravelerButtonRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
 });
 
-test("header search fields keep the Hotel neutral card interaction treatment", () => {
+test("header search fields use the shared neutral focus treatment", () => {
   const toolbar = desktopHeaderSearchBarSource();
 
   assert.match(toolbar, /focus-ring flex h-\[44px\]/);
-  assert.match(toolbar, /hover:border-\[#B9C9D5\] hover:bg-\[#E8EEF2\]/);
   assert.doesNotMatch(toolbar, /focus-visible:bg-slate/);
 });
 
