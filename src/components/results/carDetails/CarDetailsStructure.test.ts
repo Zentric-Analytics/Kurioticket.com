@@ -151,7 +151,7 @@ test("standalone desktop Cars keeps the 900px parent card with background tabs a
   );
   assert.match(navSource, /lg:max-w-\[680px\]/);
   assert.match(navSource, /data-car-details-compact-sticky-tabs/);
-  assert.match(navSource, /data-surface=\{desktopStuck \? "compact" : "background"\}/);
+  assert.match(navSource, /data-surface=\{desktopStuck \? "sticky-bar" : "background"\}/);
   assert.match(navSource, /lg:sticky lg:top-0/);
   assert.match(navSource, /lg:mt-3/);
 });
