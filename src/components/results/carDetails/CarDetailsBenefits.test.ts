@@ -196,26 +196,23 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-car-location-section/);
 });
 
-test("desktop Pickup/Return sits directly on the page and Rental details are removed", () => {
+test("desktop Pickup/Return uses an outer section background and inner information surface", () => {
   const pickup = sourceBetween(
     clientSource,
     "function DesktopPickupReturnOverview",
     "function DesktopCarHireLocationOverview",
   );
 
+  assert.match(pickup, /data-car-details-layered-surface="pickup"/);
   assert.match(
     pickup,
-    /className="mx-auto w-full max-w-\[900px\] pb-6 pt-2"[\s\S]*?data-car-details-desktop-pickup-overview/,
+    /max-w-\[900px\][^"]*rounded-\[22px\][^"]*border-\[#DFE6EF\][^"]*bg-\[#F7F9FC\]/,
   );
   assert.match(
     pickup,
-    /data-car-details-desktop-pickup-columns[\s\S]*?divide-x divide-slate-200/,
+    /data-car-details-desktop-pickup-columns[\s\S]*?rounded-\[18px\][\s\S]*?bg-white/,
   );
-  assert.match(pickup, /min-w-0 px-6 py-1 first:pl-0 last:pr-0/);
-  assert.doesNotMatch(
-    pickup,
-    /rounded-\[16px\]|rounded-\[12px\]|bg-white p-5 shadow-|bg-\[#F8FAFC\] p-4/,
-  );
+  assert.match(pickup, /data-car-details-inner-surface="pickup-return"/);
 
   assert.doesNotMatch(clientSource, /function DesktopRentalDetails/);
   assert.doesNotMatch(clientSource, /data-car-details-desktop-rental-details/);
@@ -251,7 +248,7 @@ test("desktop overview and linear sections use only existing car and offer data"
   assert.doesNotMatch(desktopLocation, /carDetails\.getDirections/);
   assert.match(
     desktopLocation,
-    /className="mt-5 pb-1" data-car-details-desktop-location-details/,
+    /className="mt-5 border-t border-\[#DCE4ED\] pb-1 pt-5" data-car-details-desktop-location-details/,
   );
   assert.doesNotMatch(
     desktopLocation,
@@ -332,7 +329,7 @@ test("standalone car details restore polished Hotels-style section headings", ()
   assert.match(comparison, /data-desktop-car-deal-list/);
   assert.match(
     comparison,
-    /mt-3 hidden w-full space-y-2 lg:mx-auto lg:block lg:max-w-\[720px\]/,
+    /mt-4 hidden w-full max-w-\[720px\] space-y-2\.5 lg:block/,
   );
   assert.match(
     comparison,
@@ -340,7 +337,7 @@ test("standalone car details restore polished Hotels-style section headings", ()
   );
   assert.match(
     comparison,
-    /data-car-price-comparison[\s\S]*?lg:pt-2/,
+    /data-car-price-comparison[\s\S]*?data-car-details-layered-surface=\{showDesktopOfferList \? "compare" : undefined\}/,
   );
   assert.match(
     comparison,
@@ -390,14 +387,15 @@ test("standalone car details restore polished Hotels-style section headings", ()
   assert.match(location, /className="p-4 lg:p-0" data-car-location-timeline/);
 });
 
-test("standalone desktop overview content sits directly on the page without an outer card shell", () => {
+test("standalone desktop overview uses a layered Flight-inspired hero surface", () => {
+  assert.match(heroSource, /data-car-details-layered-surface=\{reserveMobileControlSafeZone \? "hero" : undefined\}/);
   assert.match(
     heroSource,
-    /className="hidden lg:flex lg:flex-col lg:items-center lg:p-5"/,
+    /lg:max-w-\[900px\][\s\S]*?lg:rounded-\[22px\][\s\S]*?lg:border-\[#DFE6EF\][\s\S]*?lg:bg-\[#F7F9FC\]/,
   );
-  assert.doesNotMatch(
+  assert.match(
     heroSource,
-    /data-car-details-desktop-overview[\s\S]*?lg:rounded-\[16px\][\s\S]*?lg:border[\s\S]*?lg:bg-white[\s\S]*?lg:shadow-/,
+    /data-car-details-desktop-overview-specifications[\s\S]*?rounded-\[13px\][\s\S]*?bg-white/,
   );
   assert.doesNotMatch(heroSource, /data-car-details-desktop-overview-summary/);
 });
@@ -453,13 +451,14 @@ test("desktop car details center the overview while keeping controls balanced", 
   );
 });
 
-test("desktop Cars sticky navigation uses a compact balanced control rail", () => {
-  assert.match(sectionNavSource, /min-h-\[52px\]/);
-  assert.match(sectionNavSource, /h-\[52px\][^"]*data-car-details-desktop-sticky-backdrop|h-\[52px\]/);
+test("desktop Cars sticky navigation stays compact on its own layered surface", () => {
+  assert.match(sectionNavSource, /data-car-details-compact-sticky-tabs/);
+  assert.match(sectionNavSource, /min-h-\[48px\]/);
+  assert.match(sectionNavSource, /h-\[48px\][^"]*bg-\[#EEF2F7\]\/92/);
   assert.match(sectionNavSource, /lg:max-w-\[760px\]/);
-  assert.match(sectionNavSource, /gap-0\.5/);
+  assert.match(sectionNavSource, /min-h-\[46px\][^"]*rounded-\[14px\][^"]*bg-white\/95/);
   assert.match(sectionNavSource, /px-3 text-\[13px\] leading-5/);
-  assert.match(sectionNavSource, /w-\[560px\]/);
+  assert.match(sectionNavSource, /border-\[#075EE8\] text-\[#07133B\]/);
 
   const stickyPlacement = sourceBetween(
     clientSource,
@@ -528,10 +527,10 @@ test("desktop Cars details keep Save and Share in controls while Compare deals o
   assert.equal(clientSource.match(/<BookingSummary\b/g)?.length, 1);
 });
 
-test("desktop Pickup/Return and Location use balanced spacing with a subtle section divider", () => {
+test("desktop Pickup/Return and Location use balanced layered spacing with a subtle divider", () => {
   assert.match(
     clientSource,
-    /className="pt-5"[\s\S]*?data-car-details-desktop-section="pickup"/,
+    /hidden lg:block lg:space-y-5 lg:pb-8 lg:pt-4/,
   );
   const pickup = sourceBetween(
     clientSource,
@@ -540,21 +539,23 @@ test("desktop Pickup/Return and Location use balanced spacing with a subtle sect
   );
   assert.match(
     pickup,
-    /className="mx-auto w-full max-w-\[900px\] pb-6 pt-2"/,
+    /max-w-\[900px\][^"]*rounded-\[22px\][^"]*bg-\[#F7F9FC\]/,
   );
+  assert.match(pickup, /data-car-details-inner-surface="pickup-return"/);
 
   const location = sourceBetween(
     clientSource,
     "function DesktopCarHireLocationOverview",
     "function CarHeroActions",
   );
+  assert.match(location, /data-car-details-desktop-location-divider/);
   assert.match(
     location,
-    /className="mx-auto w-full max-w-\[900px\] border-t border-slate-200 pb-6 pt-6"/,
+    /max-w-\[900px\][^"]*rounded-\[22px\][^"]*border-t-\[#D4DEE9\][^"]*bg-\[#F7F9FC\]/,
   );
   assert.match(
     location,
-    /className="mt-6 pb-2" data-car-details-desktop-location-details/,
+    /className="mt-5 border-t border-\[#DCE4ED\] pb-1 pt-5" data-car-details-desktop-location-details/,
   );
 });
 
