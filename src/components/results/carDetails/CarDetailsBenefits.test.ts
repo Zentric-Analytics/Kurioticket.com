@@ -355,7 +355,7 @@ test("standalone car details use polished Flight-style panel headings", () => {
   assert.match(location, /data-car-details-location-identity/);
 });
 
-test("standalone desktop overview uses a layered Flight-inspired hero surface", () => {
+test("standalone desktop overview uses one integrated Flight-inspired hero surface", () => {
   assert.match(heroSource, /data-car-details-layered-surface=\{reserveMobileControlSafeZone \? "hero" : undefined\}/);
   assert.match(
     heroSource,
@@ -363,7 +363,7 @@ test("standalone desktop overview uses a layered Flight-inspired hero surface", 
   );
   assert.match(
     heroSource,
-    /data-car-details-desktop-overview-specifications[\s\S]*?rounded-\[13px\][\s\S]*?bg-white/,
+    /data-car-details-desktop-overview-specifications[\s\S]*?grid-cols-4 gap-x-5 gap-y-2 rounded-\[14px\][\s\S]*?bg-white\/75[\s\S]*?px-4 py-3/,
   );
   assert.doesNotMatch(heroSource, /data-car-details-desktop-overview-summary/);
 });
@@ -818,9 +818,19 @@ test("standalone desktop amenities use a compact four-column two-row grid withou
     /index % 2 === 0|lg:justify-self-end|lg:justify-self-start/,
   );
 });
-test("standalone desktop amenities use compact white inner surfaces on the layered hero", () => {
-  assert.match(heroSource, /data-car-details-desktop-overview-specifications[\s\S]*?min-h-12 w-full[\s\S]*?rounded-\[13px\][\s\S]*?bg-white/);
-  assert.match(heroSource, /data-car-details-layered-surface=\{reserveMobileControlSafeZone \? "hero" : undefined\}/);
+test("standalone desktop amenities are grouped into one compact hero information surface", () => {
+  assert.match(
+    heroSource,
+    /data-car-details-desktop-overview-specifications[\s\S]*?rounded-\[14px\][\s\S]*?bg-white\/75/,
+  );
+  assert.match(
+    heroSource,
+    /car-details-desktop-amenity-type inline-flex min-h-8 w-full[\s\S]*?px-2 py-1\.5/,
+  );
+  assert.doesNotMatch(
+    heroSource,
+    /car-details-desktop-amenity-type[\s\S]*?rounded-\[13px\][\s\S]*?shadow-\[0_2px_7px/,
+  );
 });
 
 test("Cars Details uses the same dedicated transmission icon at mobile and desktop", () => {
@@ -900,7 +910,7 @@ test("standalone desktop car overview follows image then identity then amenities
   );
   assert.match(heroSource, /max-w-\[680px\]/);
   assert.match(heroSource, /h-\[250px\]/);
-  assert.match(heroSource, /max-w-\[820px\] grid-cols-4 gap-3/);
+  assert.match(heroSource, /max-w-\[820px\] grid-cols-4 gap-x-5 gap-y-2 rounded-\[14px\]/);
   assert.doesNotMatch(
     heroSource,
     /lg:grid-cols-\[minmax\(0,1fr\)_320px\]|data-car-details-desktop-overview-summary/,
