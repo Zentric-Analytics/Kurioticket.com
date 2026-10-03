@@ -19,7 +19,7 @@ import { mobileHotelAbout } from "./mobileHotelDetailsPresentation";
 import styles from "./HotelDetailsDesktop.module.css";
 
 const sections = [
-  { id: "hotel-compare-prices", label: "Rate" },
+  { id: "hotel-compare-prices", label: "Rates" },
   { id: "hotel-overview", label: "Overview" },
   { id: "hotel-reviews", label: "Review" },
 ] as const;
@@ -173,6 +173,7 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
       </div>
     </header>
     {shareStatus ? <p className={styles.status} role="status">{shareStatus}</p> : null}
+    <div className={styles.contentCard} data-desktop-hotel-content-card>
     <div className={styles.gallery}>
       <HotelDetailsGallery {...props.galleryProps} embedded layout="desktop" />
       <Link href={props.resultsHref} className={styles.galleryBack} aria-label={props.labels.backToResults} title={props.labels.backToResults} data-standalone-hotel-back-link><ArrowLeft size={20} aria-hidden="true" /></Link>
@@ -230,6 +231,7 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
     {props.relatedHotels.length ? <div id="hotel-related-hotels" className={styles.related}>
       <RelatedHotelsSection hotels={props.relatedHotels} city={relatedCity} searchContext={props.relatedSearchContext} desktopLimit={8} limit={8} labels={{ heading: props.labels.moreHotelsIn, viewHotel: props.labels.viewHotel, pricePerNight: props.labels.pricePerNight, estimatedStayTotal: props.labels.estimatedStayTotal, priceUnavailable: props.labels.priceUnavailable, imageUnavailable: props.labels.imageUnavailable, imageAlt: props.labels.imageAlt, nearLocation: props.labels.nearLocation, starHotelAria: props.labels.starHotelAria }} />
     </div> : null}
+    </div>
     {overlay === "rooms" ? <DesktopDialog title={props.labels.roomTitle} close={() => setOverlay(null)}><p className={styles.dialogNote}>{props.planningPriceText}</p><div className={styles.roomOptions}>{props.roomChoices.map(room => <article key={room.id}><div><h3>{room.name}</h3><p>{room.details}</p><p>{room.cancellationInfo || props.labels.roomTerms}</p></div><div className={styles.roomPrice}><strong>{room.total}</strong><span>{room.nightly}</span></div></article>)}</div></DesktopDialog> : null}
   </div>;
 }
