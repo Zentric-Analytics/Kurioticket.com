@@ -101,18 +101,36 @@ function CarOfferProviderBrand({
       ? "/brand/kurioticket-logo-primary-light-bg.svg"
       : undefined);
   if (logoUrl) {
+    const localBrandLogo = logoUrl.startsWith("/");
+    const width = compact ? 96 : 112;
+    const height = compact ? 20 : 24;
+    const imageClassName = `block h-auto w-auto object-contain object-left ${compact ? "max-h-5 max-w-[96px]" : "max-h-6 max-w-[112px]"}`;
     return (
       <span
-        className={`inline-flex shrink-0 items-center overflow-hidden ${compact ? "h-5 max-w-[96px]" : "h-6 max-w-[112px]"}`}
+        className={`inline-flex shrink-0 items-center ${compact ? "h-5 w-[96px]" : "h-6 w-[112px]"}`}
         data-car-offer-provider-brand
       >
-        <Image
-          src={logoUrl}
-          alt={`${providerName || "Booking provider"} logo`}
-          width={compact ? 96 : 112}
-          height={compact ? 20 : 24}
-          className={`w-auto object-contain object-left ${compact ? "max-h-5 max-w-[96px]" : "max-h-6 max-w-[112px]"}`}
-        />
+        {localBrandLogo ? (
+          <img
+            src={logoUrl}
+            alt={`${providerName || "Booking provider"} logo`}
+            width={width}
+            height={height}
+            loading="eager"
+            decoding="sync"
+            className={imageClassName}
+            data-car-offer-provider-brand-image="local"
+          />
+        ) : (
+          <Image
+            src={logoUrl}
+            alt={`${providerName || "Booking provider"} logo`}
+            width={width}
+            height={height}
+            className={imageClassName}
+            data-car-offer-provider-brand-image="remote"
+          />
+        )}
       </span>
     );
   }

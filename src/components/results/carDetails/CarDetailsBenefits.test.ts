@@ -709,6 +709,20 @@ test("desktop Compare deals includes the active deal first and keeps alternative
   assert.doesNotMatch(comparison, /desktopAlternativeOffers/);
 });
 
+test("local Cars provider logos use a direct eager img with fixed brand dimensions", () => {
+  const providerBrand = sourceBetween(
+    clientSource,
+    "function CarOfferProviderBrand",
+    "const unavailableOfferLabel",
+  );
+  assert.match(providerBrand, /const localBrandLogo = logoUrl\.startsWith\("\/"\)/);
+  assert.match(providerBrand, /h-6 w-\[112px\]/);
+  assert.match(providerBrand, /h-5 w-\[96px\]/);
+  assert.match(providerBrand, /<img[^>]*src=\{logoUrl\}[^>]*loading="eager"[^>]*decoding="sync"/);
+  assert.match(providerBrand, /data-car-offer-provider-brand-image="local"/);
+  assert.match(providerBrand, /data-car-offer-provider-brand-image="remote"/);
+});
+
 test("Kurioticket deal branding does not depend only on inventorySource", () => {
   const providerBrand = sourceBetween(
     clientSource,
