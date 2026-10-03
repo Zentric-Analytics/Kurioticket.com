@@ -107,6 +107,13 @@ test("sticky search moves focus directly to the requested field editor", () => {
   assert.match(source, /stickySearchLauncherRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
 });
 
+test("direct route editors restore focus to the remounted header launcher", () => {
+  assert.match(source, /stickySearchRestoreTargetRef/);
+  assert.match(source, /data-flight-results-header-origin/);
+  assert.match(source, /data-flight-results-header-destination/);
+  assert.match(source, /document\.querySelector<HTMLButtonElement>\(selector\)/);
+  assert.match(source, /mountedLauncher \?\? stickySearchLauncherRef\.current/);
+});
 test("header search fields use the shared neutral focus treatment", () => {
   const toolbar = desktopHeaderSearchBarSource();
 
@@ -172,7 +179,7 @@ test("multi-city accordion stays aligned to the navbar search footprint", () => 
   const end = source.indexOf("function renderCompactSearchForm", start);
   const popout = source.slice(start, end);
 
-  assert.match(callback, /closest<HTMLElement>\("\[data-flight-results-nav-search-form\]"\)/);
+  assert.match(callback, /closest<HTMLElement>\(\s*"\[data-flight-results-nav-search-form\]"\s*,?\s*\)/);
   assert.match(callback, /updateDesktopSearchPopoverFrame\(compactForm\)/);
   assert.match(frame, /const rect = resolvedCompactForm\.getBoundingClientRect\(\)/);
   assert.match(frame, /top: rect\.bottom/);
@@ -195,7 +202,7 @@ test("anchored desktop search recomputes on browser resize and closes below desk
   );
   assert.match(
     source,
-    /document\.querySelector<HTMLElement>\(\s*"\[data-flight-results-nav-search-form\]"\s*\)/,
+    /document\.querySelector<HTMLElement>\(\s*"\[data-flight-results-nav-search-form\]"\s*,?\s*\)/,
   );
   assert.match(
     source,
