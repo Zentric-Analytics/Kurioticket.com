@@ -355,15 +355,22 @@ test("standalone car details use polished Flight-style panel headings", () => {
   assert.match(location, /data-car-details-location-identity/);
 });
 
-test("standalone desktop overview uses one integrated Flight-inspired hero surface", () => {
-  assert.match(heroSource, /data-car-details-layered-surface=\{reserveMobileControlSafeZone \? "hero" : undefined\}/);
+test("standalone desktop hero content stays unchanged while the parent Cars card owns its shell", () => {
   assert.match(
     heroSource,
-    /lg:max-w-\[900px\][\s\S]*?lg:rounded-\[22px\][\s\S]*?lg:border-\[#DFE6EF\][\s\S]*?lg:bg-\[#F7F9FC\]/,
+    /data-car-details-parent-card-hero=\{reserveMobileControlSafeZone \? "true" : undefined\}/,
+  );
+  assert.match(
+    heroSource,
+    /lg:max-w-none[\s\S]*?lg:rounded-none[\s\S]*?lg:border-0[\s\S]*?lg:bg-transparent[\s\S]*?lg:shadow-none/,
   );
   assert.match(
     heroSource,
     /className="mt-4 grid min-w-0 w-full max-w-\[820px\] grid-cols-4 gap-x-5 gap-y-2 rounded-\[14px\] border border-\[#E0E7EF\] bg-white\/75 px-4 py-3"\s*data-car-details-desktop-overview-specifications/,
+  );
+  assert.doesNotMatch(
+    heroSource,
+    /data-car-details-layered-surface=\{reserveMobileControlSafeZone/,
   );
   assert.doesNotMatch(heroSource, /data-car-details-desktop-overview-summary/);
 });
@@ -404,6 +411,20 @@ test("desktop car details center the hero and keep Back Save and Share inside it
     sandboxStart >= 0 && heroStart > sandboxStart,
     "KAYAK and Kurioticket continue through the same integrated desktop hero",
   );
+});
+
+test("desktop Cars nests the current compact tab card inside the larger car information card", () => {
+  assert.match(
+    clientSource,
+    /data-car-details-desktop-parent-card=\{presentation === "standalone-content" \? "true" : undefined\}/,
+  );
+  assert.match(
+    clientSource,
+    /className="lg:mx-auto lg:mt-1 lg:w-full lg:max-w-\[680px\] lg:rounded-\[14px\] lg:border lg:border-\[#E0E7EF\] lg:bg-white lg:shadow-\[0_3px_12px_rgba\(7,19,59,0\.05\)\]"\s*data-car-details-desktop-inner-card/,
+  );
+  assert.match(clientSource, /data-car-details-desktop-tab-panels/);
+  assert.match(clientSource, /lg:max-w-\[680px\]/);
+  assert.match(clientSource, /max-w-\[640px\]/);
 });
 
 test("desktop Cars sticky tabs use the same in-place tab model as Flights", () => {
