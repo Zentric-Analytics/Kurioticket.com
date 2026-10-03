@@ -113,7 +113,7 @@ test("standalone desktop Cars keeps compact child cards inside the one Flight-st
   );
   assert.match(
     experienceSource,
-    /data-car-details-desktop-location-map[\s\S]*?max-w-\[720px\]/,
+    /max-w-\[720px\][^"]*"[\s\S]*?data-car-details-desktop-location-map/,
   );
   assert.doesNotMatch(experienceSource, /data-car-details-layered-surface="pickup"/);
   assert.doesNotMatch(experienceSource, /data-car-details-layered-surface="location"/);
