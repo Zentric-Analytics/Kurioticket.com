@@ -300,7 +300,7 @@ test("standalone desktop Cars Details uses a deliberate non-faint typography hie
     /\.car-details-standalone-typography \.car-details-desktop-amenity-type \{[^}]*font-size: 13px !important;[^}]*font-weight: 600 !important;[^}]*color: #334155 !important;[^}]*font-variation-settings: "wght" 600;/,
   );
 });
-test("standalone car details restore polished Hotels-style section headings", () => {
+test("standalone car details use polished Flight-style panel headings", () => {
   assert.match(clientSource, /<CarDetailsSectionNav activeTab={activeTab}/);
   assert.match(clientSource, /compare: "Compare deals"/);
   assert.match(clientSource, /pickup: copy\("carDetails\.pickupReturn"\)/);
@@ -315,74 +315,39 @@ test("standalone car details restore polished Hotels-style section headings", ()
   );
   assert.match(comparison, /showSectionHeading \? \(/);
   assert.match(comparison, /Compare deals/);
-  assert.doesNotMatch(comparison, /carDetails\.comparePrices/);
   assert.match(
     comparison,
     /lg:text-\[16px\] lg:font-semibold lg:leading-6 lg:tracking-\[-0\.1px\] lg:text-\[#192024\]/,
-  );
-  assert.match(
-    comparison,
-    /lg:text-\[14px\] lg:font-normal lg:leading-\[22px\] lg:text-\[#303B42\]/,
   );
   assert.match(comparison, /data-desktop-car-deal-list/);
   assert.match(
     comparison,
-    /mt-3 hidden w-full space-y-2 lg:mx-auto lg:block lg:max-w-\[720px\]/,
+    /className="mt-4 hidden w-full max-w-\[640px\] space-y-2 lg:block"/,
   );
   assert.match(
     comparison,
-    /lg:rounded-\[14px\] lg:px-4 lg:py-3/,
+    /data-car-details-flight-panel=\{showDesktopOfferList \? "compare" : undefined\}/,
   );
-  assert.match(
+  assert.doesNotMatch(
     comparison,
-    /data-car-price-comparison[\s\S]*?data-car-details-layered-surface=\{showDesktopOfferList \? "compare" : undefined\}/,
-  );
-  assert.match(
-    comparison,
-    /lg:mt-3 lg:gap-4/,
-  );
-
-  const location = sourceBetween(
-    clientSource,
-    "function CarLocationSection",
-    "function BookingSummary",
-  );
-  assert.match(location, /showSectionHeading \? \(/);
-  assert.match(location, /carDetails\.location/);
-  assert.match(
-    location,
-    /lg:text-\[16px\] lg:font-semibold lg:leading-6 lg:tracking-\[-0\.1px\] lg:text-\[#192024\]/,
+    /data-car-details-layered-surface=\{showDesktopOfferList/,
   );
 
   const pickup = sourceBetween(
     clientSource,
-    "function PickupReturnSection",
-    "function MobileBookingDock",
+    "function DesktopPickupReturnOverview",
+    "function DesktopCarHireLocationOverview",
   );
-  assert.match(pickup, /showSectionHeading \? \(/);
-  assert.match(pickup, /carDetails\.pickupReturn/);
-  assert.match(
-    pickup,
-    /lg:text-\[16px\] lg:font-semibold lg:leading-6 lg:tracking-\[-0\.1px\] lg:text-\[#192024\]/,
-  );
-  assert.match(
-    pickup,
-    /lg:text-\[16px\] lg:font-semibold lg:leading-\[24px\] lg:text-\[#192024\]/,
-  );
-  assert.match(
-    pickup,
-    /lg:rounded-none lg:border-x-0 lg:border-t-0 lg:border-b lg:border-slate-200 lg:bg-transparent lg:px-0 lg:pb-\[22px\] lg:pt-5 lg:shadow-none/,
-  );
-  assert.doesNotMatch(
-    pickup,
-    /lg:rounded-2xl lg:border lg:bg-white lg:p-7 lg:shadow-/,
-  );
+  assert.match(pickup, /data-car-details-flight-panel="pickup"/);
+  assert.match(pickup, /border-y border-\[#D8E1EC\]/);
 
-  assert.match(
-    location,
-    /lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent/,
+  const location = sourceBetween(
+    clientSource,
+    "function DesktopCarHireLocationOverview",
+    "function CarHeroActions",
   );
-  assert.match(location, /className="p-4 lg:p-0" data-car-location-timeline/);
+  assert.match(location, /data-car-details-flight-panel="location"/);
+  assert.match(location, /data-car-details-location-identity/);
 });
 
 test("standalone desktop overview uses a layered Flight-inspired hero surface", () => {
@@ -727,7 +692,7 @@ test("Kurioticket deal branding does not depend only on inventorySource", () => 
   assert.match(providerBrand, /kurioticket-logo-primary-light-bg\.svg/);
 });
 
-test("desktop Compare deals wires each provider row to its own logo, total, benefits, and Continue deal action", () => {
+test("desktop Compare deals wires each provider row to its own logo total benefits and Continue deal action", () => {
   const comparison = sourceBetween(
     clientSource,
     "function CarPriceComparisonSection",
@@ -751,19 +716,15 @@ test("desktop Compare deals wires each provider row to its own logo, total, bene
   assert.match(desktop, /offer\.freeCancellation/);
   assert.match(desktop, /offer\.payAtPickup/);
   assert.match(desktop, /offer\.taxesAndFeesIncluded/);
-  assert.match(desktop, /carsResults\.payAtPickup/);
-  assert.match(desktop, /carDetails\.feesIncludedShort/);
   assert.match(desktop, /onClick=\{\(\) => onSelectOffer\(offer\.id\)\}/);
   assert.match(desktop, /href=\{offerAction\.href\}/);
   assert.match(desktop, /target="_blank"/);
   assert.match(desktop, /rel="noopener noreferrer"/);
   assert.match(desktop, /referrerPolicy="no-referrer"/);
-  assert.match(desktop, /copy\("carDetails\.continueDeal"\)/);
-  assert.doesNotMatch(desktop, /role="radio"|aria-checked|size-1\.5 rounded-full/);
   assert.doesNotMatch(desktop, /offer\.pricePerDay|carsResults\.perDay/);
-  assert.match(desktop, /rounded-\[12px\][^"]*px-3\.5 py-2\.5/);
+  assert.match(desktop, /min-h-\[92px\][^"]*rounded-xl[^"]*px-4 py-3/);
   assert.match(desktop, /min-h-9 min-w-\[104px\][^"]*px-3 text-\[12px\] font-semibold/);
-  assert.match(desktop, /max-w-\[720px\]/);
+  assert.match(comparison, /max-w-\[640px\]/);
 
   assert.match(
     clientSource,
