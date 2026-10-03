@@ -8,12 +8,10 @@ test("desktop Flight filters keep long range values visibly separated", async ()
     "utf8",
   );
 
+  const priceStart = source.indexOf('<HotelStyleFilterSection title={t("price")}>');
   const priceSection = source.slice(
-    source.indexOf('<SectionTitle>{t("price")}</SectionTitle>'),
-    source.indexOf(
-      '<OptionSection title={t("stops")}',
-      source.indexOf('<SectionTitle>{t("price")}</SectionTitle>'),
-    ),
+    priceStart,
+    source.indexOf('<HotelStyleFilterSection title={t("duration")}>', priceStart),
   );
   assert.match(priceSection, /grid grid-cols-2 gap-4/);
   assert.match(priceSection, /tabular-nums/);
@@ -32,12 +30,14 @@ test("facet rows reserve flexible copy space and a fixed count column", async ()
   );
   const facetRow = source.slice(source.indexOf("function FacetRow"));
 
-  assert.match(facetRow, /min-h-11/);
-  assert.match(facetRow, /flex min-w-0 flex-1 items-center/);
-  assert.match(facetRow, /className="min-w-0 flex-1"/);
-  assert.match(facetRow, /h-4 w-4 shrink-0/);
+  assert.match(facetRow, /min-h-\[30px\]/);
+  assert.match(facetRow, /flex min-w-0 flex-1 items-start gap-2/);
+  assert.match(facetRow, /peer sr-only/);
+  assert.match(facetRow, /h-\[14px\] w-\[14px\]/);
+  assert.match(facetRow, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
+  assert.match(facetRow, /<Check className="h-2\.5 w-2\.5"/);
   assert.match(facetRow, /block break-words/);
-  assert.match(facetRow, /shrink-0 text-xs/);
+  assert.match(facetRow, /min-w-6 shrink-0 text-right text-\[12px\]/);
   assert.doesNotMatch(facetRow, /block truncate/);
 });
 
@@ -47,10 +47,14 @@ test("desktop filter groups use sentence-case headings and accessible rows", asy
     "utf8",
   );
 
-  assert.match(source, /rounded-2xl border border-\[#D8E1EC\] bg-white/);
-  assert.match(source, /text-sm font-bold leading-5/);
+  assert.match(source, /data-flight-hotel-filter-visual-parity/);
+  assert.match(source, /overflow-hidden rounded-lg border border-\[#CFD9E5\] bg-\[#F2F4F8\]/);
+  assert.match(source, /\{t\("hotelResults\.filterBy"\)\}/);
+  assert.match(source, /text-\[13px\] font-bold leading-5 text-slate-950/);
+  assert.match(source, /min-h-6 w-full items-center justify-between/);
+  assert.match(source, /aria-expanded=\{expanded\}/);
+  assert.doesNotMatch(source, /data-flight-hotel-filter-visual-parity[\s\S]{0,300}bg-white/);
   assert.doesNotMatch(source, /uppercase tracking-\[0\.12em\]/);
-  assert.match(source, /min-h-11 w-full/);
 });
 
 test("alternate time mode control remains full width with comfortable guided sizing", async () => {
