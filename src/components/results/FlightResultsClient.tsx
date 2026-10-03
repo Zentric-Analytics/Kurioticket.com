@@ -1418,33 +1418,34 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         "[data-flight-results-nav-search-form]",
       );
       updateDesktopSearchPopoverFrame(compactForm);
+      const resolvedTarget =
+        tripTypeInput === "multi-city" &&
+        (target === "route" || target === "dates" || target === "return")
+          ? "trip"
+          : target;
       pendingStickySearchTargetRef.current =
-        target === "trip" ? null : target;
+        resolvedTarget === "trip" ? null : resolvedTarget;
       const currentScrollY = window.scrollY;
       expandedSearchScrollYRef.current = currentScrollY;
       setIsSearchExpandedWhileSticky(true);
-      setActiveStickySearchTarget(target);
+      setActiveStickySearchTarget(resolvedTarget);
       setActiveDesktopSearchSurface("sticky");
       setTripTypeMenuOpen(false);
       setActiveSuggest(
-        target === "route" && originInput.trim().length >= 2
+        resolvedTarget === "route" && originInput.trim().length >= 2
           ? "origin"
           : null,
       );
       setDropdownPosition(null);
       setActiveDatePicker(
-        tripTypeInput !== "multi-city"
-          ? target === "dates"
-            ? "departure"
-            : target === "return"
-              ? "return"
-              : null
-          : null,
+        resolvedTarget === "dates"
+          ? "departure"
+          : resolvedTarget === "return"
+            ? "return"
+            : null,
       );
       setDatePickerPosition(null);
-      setTravelerPopoverOpen(
-        tripTypeInput !== "multi-city" && target === "travelers",
-      );
+      setTravelerPopoverOpen(resolvedTarget === "travelers");
       setTravelerPopoverPosition(null);
     },
     [
