@@ -191,8 +191,9 @@ test("desktop related hotels are capped at eight actual cards", () => {
 });
 
 
-test("desktop Hotel content from the gallery through recommendations sits on one white card", () => {
+test("desktop Hotel content from the hotel identity through recommendations sits on one white card", () => {
   const cardStart = desktop.indexOf("data-desktop-hotel-content-card");
+  const identityStart = desktop.indexOf("<header className={styles.identity}>", cardStart);
   const galleryStart = desktop.indexOf("<HotelDetailsGallery", cardStart);
   const ratesStart = desktop.indexOf('data-desktop-section="rate"', cardStart);
   const overviewStart = desktop.indexOf('data-desktop-section="overview"', cardStart);
@@ -201,7 +202,8 @@ test("desktop Hotel content from the gallery through recommendations sits on one
   const cardEnd = desktop.indexOf('{overlay === "rooms" ?', cardStart);
 
   assert.ok(cardStart >= 0);
-  assert.ok(galleryStart > cardStart);
+  assert.ok(identityStart > cardStart);
+  assert.ok(galleryStart > identityStart);
   assert.ok(ratesStart > galleryStart);
   assert.ok(overviewStart > ratesStart);
   assert.ok(reviewStart > overviewStart);
