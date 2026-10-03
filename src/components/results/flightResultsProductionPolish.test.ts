@@ -527,7 +527,7 @@ test("desktop Flight result meta typography uses the premium hierarchy", async (
   );
   const summary = source.slice(summaryStart, summaryStart + 4200);
   assert.match(summary, /text-\[12px\] font-semibold leading-4 text-\[#191E3B\]/);
-  assert.match(summary, /mt-0\.5 text-xs font-medium leading-4 text-slate-500/);
+  assert.doesNotMatch(summary, /mt-0\.5 text-xs font-medium leading-4 text-slate-500|resultsDisplayRange\.start|resultsDisplayRange\.end/);
   assert.match(summary, /hotel-results-sort-trigger/);
   assert.match(summary, /rounded-full border border-\[#9299A9\] bg-white px-3 text-\[#191E3B\]/);
   assert.match(styles, /\.hotel-results-sort-trigger \{[\s\S]*?font-size: 12px;[\s\S]*?font-weight: 700;[\s\S]*?line-height: 16px;/);
