@@ -150,8 +150,8 @@ test("Flight Results keeps the normal mobile header while desktop adopts the Hot
   const guidedStart = source.indexOf("if (guidedMode) return (", preparingStart);
   const preparing = source.slice(preparingStart, guidedStart);
   assert.ok(preparingStart >= 0 && guidedStart > preparingStart);
-  assert.match(preparing, /flightResultsDesktopSticky/);
-  assert.match(preparing, /renderStickySearchPopoutOverlay\(\)/);
+  assert.match(preparing, /\{standaloneResultsHeader\}/);
+  assert.doesNotMatch(preparing, /renderStickySearchPopoutOverlay\(\)|renderDesktopHeaderSearchBar\(\)/);
   assert.doesNotMatch(source, /mobileResultsSearch=|mobileResultsLeadingAction=|mobileResultsSticky=/);
   assert.match(source, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
   assert.match(source, /relative translate-y-1\/2/);
