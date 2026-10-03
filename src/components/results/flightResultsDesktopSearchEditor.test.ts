@@ -119,8 +119,10 @@ test("fare strip is one bounded seven-date grid with adjacent week controls", ()
   const strip = fareStripSource();
   assert.equal(source.match(/const nearbyFareVisibleCount = 7;/g)?.length, 1);
   assert.match(strip, /data-desktop-nearby-fare-rail/);
-  assert.match(strip, /data-desktop-nearby-fare-rail className="grid w-full grid-cols-\[42px_repeat\(7,minmax\(0,1fr\)\)_42px\]/);
-  assert.doesNotMatch(strip, /max-w-\[980px\]|mx-auto/);
+  assert.match(strip, /data-desktop-nearby-fare-rail className="relative grid w-full grid-cols-7/);
+  assert.match(strip, /aria-label="Previous nearby fare date"[\s\S]*?absolute -left-9 top-1\/2/);
+  assert.match(strip, /aria-label="Next nearby fare date"[\s\S]*?absolute -right-9 top-1\/2/);
+  assert.doesNotMatch(strip, /max-w-\[980px\]|mx-auto|grid-cols-\[42px_repeat\(7,minmax\(0,1fr\)\)_42px\]/);
   assert.match(strip, /aria-label="Previous nearby fare date"/);
   assert.match(strip, /aria-label="Next nearby fare date"/);
   assert.match(strip, /navigateNearbyFareWindow\("previous"\)/);
@@ -132,7 +134,7 @@ test("fare strip is one bounded seven-date grid with adjacent week controls", ()
   assert.doesNotMatch(desktopRail, /overflow-x-auto/);
   assert.match(desktopRail, /rounded-2xl border border-slate-200\/90 bg-white/);
   assert.match(desktopRail, /selected && "bg-blue-50\/55 after:scale-x-100/);
-  assert.equal(desktopRail.match(/h-9 w-9 place-self-center/g)?.length, 2);
+  assert.equal(desktopRail.match(/absolute -(?:left|right)-9 top-1\/2[^\n]*h-9 w-9/g)?.length, 2);
 });
 
 test("fare windows are bounded and hidden for multi-city", () => {
