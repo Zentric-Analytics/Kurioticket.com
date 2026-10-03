@@ -80,14 +80,14 @@ export function CarDetailsSectionNav({
 
       <div
         ref={desktopBarRef}
-        className="relative hidden w-full lg:sticky lg:top-0 lg:z-40 lg:mx-auto lg:mt-2 lg:block lg:max-w-[900px] lg:bg-[#EEF2F7]/95 lg:backdrop-blur-xl"
+        className="relative hidden w-full lg:sticky lg:top-0 lg:z-40 lg:mx-auto lg:mt-2 lg:block lg:max-w-[900px] lg:border-b lg:border-slate-200 lg:bg-white"
         data-car-details-section-nav
         data-car-details-flight-style-tabs
       >
         <div
           role="tablist"
           aria-label={labels.navigation}
-          className="mx-auto flex min-h-11 w-full max-w-[760px] items-stretch border-b border-[#D8E1EC]"
+          className="mx-auto flex min-h-11 w-full max-w-[760px] items-stretch"
           data-car-details-desktop-tabs
         >
           {tabs.map((tab, index) => {
