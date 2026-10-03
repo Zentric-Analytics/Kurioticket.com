@@ -676,10 +676,10 @@ export function CarDetailsExperience({
                   </section>
                 </div>
 
-                <div className="hidden lg:block" data-car-details-desktop-linear-sections>
+                <div className="hidden lg:block lg:space-y-5 lg:pb-8 lg:pt-4" data-car-details-desktop-linear-sections>
                   <section
                     ref={compareSectionRef}
-                    className="pt-2"
+                    className=""
                     data-car-details-scroll-section="compare"
                     data-car-details-desktop-section="compare"
                   >
@@ -704,7 +704,7 @@ export function CarDetailsExperience({
 
                   <section
                     ref={pickupSectionRef}
-                    className="pt-5"
+                    className=""
                     data-car-details-scroll-section="pickup"
                     data-car-details-desktop-section="pickup"
                   >
@@ -718,7 +718,7 @@ export function CarDetailsExperience({
 
                   <section
                     ref={locationSectionRef}
-                    className="pt-0"
+                    className=""
                     data-car-details-scroll-section="location"
                     data-car-details-desktop-section="location"
                   >
@@ -779,18 +779,23 @@ function DesktopPickupReturnOverview({
 }) {
   return (
     <div
-      className="mx-auto w-full max-w-[900px] pb-6 pt-2"
+      className="mx-auto w-full max-w-[900px] rounded-[22px] border border-[#DFE6EF] bg-[#F7F9FC] px-5 pb-5 pt-5 shadow-[0_6px_18px_rgba(7,19,59,0.045)]"
       data-car-details-desktop-pickup-overview
+      data-car-details-layered-surface="pickup"
     >
       <h2 className="car-details-desktop-section-heading-type">Pickup and return</h2>
-      <div className="mt-4 grid grid-cols-2 divide-x divide-slate-200" data-car-details-desktop-pickup-columns>
+      <div
+        className="mt-4 grid grid-cols-2 divide-x divide-[#E1E7EF] rounded-[18px] border border-[#E0E7EF] bg-white px-1 py-3 shadow-[0_2px_8px_rgba(15,23,42,0.035)]"
+        data-car-details-desktop-pickup-columns
+        data-car-details-inner-surface="pickup-return"
+      >
         {[
           [copy("carDetails.pickup"), car.pickupLocation, search.pickupDate, search.pickupTime],
           [copy("carDetails.return"), car.returnLocation, search.dropoffDate, search.dropoffTime],
         ].map(([label, location, date, time]) => (
           <div
             key={label}
-            className="min-w-0 px-6 py-1 first:pl-0 last:pr-0"
+            className="min-w-0 px-5 py-2"
           >
             <p className="car-details-desktop-item-heading-type">{label}</p>
             <p className="car-details-desktop-primary-copy-type mt-2 flex items-start gap-2">
@@ -852,11 +857,16 @@ function DesktopCarHireLocationOverview({
 
   return (
     <div
-      className="mx-auto w-full max-w-[900px] border-t border-slate-200 pb-6 pt-6"
+      className="mx-auto w-full max-w-[900px] rounded-[22px] border border-[#DFE6EF] border-t-[#D4DEE9] bg-[#F7F9FC] px-5 pb-5 pt-5 shadow-[0_6px_18px_rgba(7,19,59,0.045)]"
       data-car-details-desktop-location-overview
+      data-car-details-layered-surface="location"
+      data-car-details-desktop-location-divider
     >
       <h2 className="car-details-desktop-section-heading-type">Location</h2>
-      <div className="mt-3 flex flex-wrap items-start justify-between gap-x-8 gap-y-3 text-sm leading-6">
+      <div
+        className="mt-4 flex flex-wrap items-start justify-between gap-x-8 gap-y-3 rounded-[16px] border border-[#E0E7EF] bg-white px-4 py-3 text-sm leading-6 shadow-[0_2px_7px_rgba(15,23,42,0.03)]"
+        data-car-details-inner-surface="location-identity"
+      >
         <div className="flex min-w-0 items-start gap-2">
           <MapPin className="mt-1 h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="car-details-desktop-primary-copy-type min-w-0 break-words">
@@ -876,7 +886,7 @@ function DesktopCarHireLocationOverview({
         ) : null}
       </div>
       <div
-        className="mt-4 flex min-h-11 items-center gap-1 border-b border-[#d9e2e8]"
+        className="mt-4 flex min-h-10 items-center gap-1 border-b border-[#D6E0EB]"
         role="tablist"
         aria-label="Location views"
       >
@@ -889,7 +899,7 @@ function DesktopCarHireLocationOverview({
             aria-selected={view === option}
             aria-controls="car-desktop-location-panel"
             onClick={() => setView(option)}
-            className={`focus-ring min-h-11 border-b-2 px-4 text-sm font-semibold transition-colors ${view === option ? "border-[#004bb8] text-[#004bb8]" : "border-transparent text-[#59636a] hover:text-[#192024]"}`}
+            className={`focus-ring min-h-10 border-b-2 px-3 text-[13px] font-semibold transition-colors ${view === option ? "border-[#075EE8] text-[#075EE8]" : "border-transparent text-[#59636A] hover:text-[#192024]"}`}
           >
             {option === "map" ? "Map" : "Street View"}
           </button>
@@ -899,7 +909,7 @@ function DesktopCarHireLocationOverview({
         id="car-desktop-location-panel"
         role="tabpanel"
         aria-labelledby={`car-desktop-location-${view}-tab`}
-        className="mt-3 overflow-hidden rounded-xl border border-[#d9e2e8] bg-[#f3f5f7]"
+        className="mt-3 overflow-hidden rounded-[16px] border border-[#D6E0EB] bg-[#F3F5F7] shadow-[0_2px_8px_rgba(15,23,42,0.035)]"
         data-car-details-desktop-location-map
       >
         {activeEmbedUrl ? (
@@ -923,7 +933,7 @@ function DesktopCarHireLocationOverview({
         )}
       </div>
       <div
-        className="mt-6 pb-2"
+        className="mt-5 border-t border-[#DCE4ED] pb-1 pt-5"
         data-car-details-desktop-location-details
       >
         <h3 className="car-details-desktop-item-heading-type">
@@ -1039,7 +1049,7 @@ export function CarDetailsClient({
         label: copy("carDetails.continueDeal"),
       };
   return (
-    <main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:bg-[#F8FAFC] lg:pb-0">
+    <main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:bg-[#EEF2F7] lg:pb-0">
       <CarsRouteLoadingOverlay active={mobileResultsPending} />
       <section className="bg-transparent lg:pb-0" data-car-details-desktop-surface>
         <div className="page-shell py-0 lg:py-6 lg:max-w-[1080px]" data-car-details-body-shell>
@@ -1171,8 +1181,9 @@ function CarPriceComparisonSection({
   };
   return (
     <div
-      className={`border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full lg:bg-transparent lg:pb-[22px] lg:pt-2 ${showDesktopOfferList ? "lg:max-w-[900px]" : "lg:max-w-[820px]"}`}
+      className={`border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full ${showDesktopOfferList ? "lg:max-w-[900px] lg:rounded-[22px] lg:border lg:border-[#DFE6EF] lg:bg-[#F7F9FC] lg:px-5 lg:pb-5 lg:pt-5 lg:shadow-[0_6px_18px_rgba(7,19,59,0.045)]" : "lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-2"}`}
       data-car-price-comparison
+      data-car-details-layered-surface={showDesktopOfferList ? "compare" : undefined}
     >
       {showSectionHeading ? (
         <Heading
@@ -1284,7 +1295,7 @@ function CarPriceComparisonSection({
 
       {showDesktopOfferList && desktopOrderedOffers.length ? (
         <div
-          className="mt-3 hidden w-full max-w-[720px] space-y-2 lg:block"
+          className="mt-4 hidden w-full max-w-[720px] space-y-2.5 lg:block"
           data-desktop-car-deal-list
         >
           {desktopOrderedOffers.map((offer) => {
@@ -1301,7 +1312,7 @@ function CarPriceComparisonSection({
             return (
               <div
                 key={offer.id}
-                className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-[12px] border bg-white px-3.5 py-2.5 transition ${selected ? "border-[#075EE8] shadow-[0_4px_14px_rgba(7,94,232,0.06)] ring-1 ring-[#075EE8]/10" : "border-slate-200 hover:border-slate-300"}`}
+                className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-[14px] border bg-white px-4 py-3 transition ${selected ? "border-[#075EE8] shadow-[0_6px_16px_rgba(7,94,232,0.075)] ring-1 ring-[#075EE8]/10" : "border-[#E0E7EF] shadow-[0_2px_7px_rgba(15,23,42,0.03)] hover:border-[#C7D3E1]"}`}
                 data-car-details-desktop-deal-row
                 data-selected={selected ? "true" : "false"}
               >

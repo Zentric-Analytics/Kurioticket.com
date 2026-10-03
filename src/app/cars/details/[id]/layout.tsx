@@ -14,7 +14,7 @@ export default function CarDetailsLayout({
           }
 
           main:has([data-car-details-experience]) {
-            background: #F8FAFC !important;
+            background: #EEF2F7 !important;
           }
 
           [data-car-details-content-grid] {
@@ -40,7 +40,7 @@ export default function CarDetailsLayout({
           }
 
           [data-car-details-section-nav] {
-            background: #F8FAFC !important;
+            background: transparent !important;
           }
 
           [data-car-details-scroll-section] {
@@ -49,11 +49,6 @@ export default function CarDetailsLayout({
 
           [data-car-details-section-panels] {
             margin-top: 0 !important;
-          }
-
-          [data-car-price-comparison],
-          [data-car-location-section] {
-            background: #F8FAFC !important;
           }
 
           #car-pickup-panel {
