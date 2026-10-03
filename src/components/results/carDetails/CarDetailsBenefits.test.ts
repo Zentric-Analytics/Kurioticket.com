@@ -352,7 +352,7 @@ test("standalone car details use polished Flight-style panel headings", () => {
   assert.match(location, /data-car-details-location-identity/);
 });
 
-test("standalone desktop hero keeps specifications directly on the parent Cars background", () => {
+test("standalone desktop hero keeps narrower specifications directly on the parent Cars background", () => {
   assert.match(
     heroSource,
     /data-car-details-parent-card-hero=\{reserveMobileControlSafeZone \? "true" : undefined\}/,
@@ -363,15 +363,11 @@ test("standalone desktop hero keeps specifications directly on the parent Cars b
   );
   assert.match(
     heroSource,
-    /className="mt-4 grid min-w-0 w-full max-w-\[820px\] grid-cols-4 gap-x-6 gap-y-2 px-2 py-1"\s*data-car-details-desktop-overview-specifications/,
+    /className="mt-4 grid min-w-0 w-full max-w-\[680px\] grid-cols-4 gap-x-6 gap-y-2 px-2 py-1"\s*data-car-details-desktop-overview-specifications/,
   );
   assert.doesNotMatch(
     heroSource,
     /data-car-details-desktop-overview-specifications[\s\S]*?rounded-\[14px\][\s\S]*?border border-\[#E0E7EF\][\s\S]*?bg-white\/75/,
-  );
-  assert.doesNotMatch(
-    heroSource,
-    /data-car-details-layered-surface=\{reserveMobileControlSafeZone/,
   );
   assert.doesNotMatch(heroSource, /data-car-details-desktop-overview-summary/);
 });
@@ -416,21 +412,26 @@ test("desktop car details keep hero controls and restore compact sticky Back Sav
   );
 });
 
-test("desktop Cars keeps the current compact inner card while restoring vertical scroll sections", () => {
+test("desktop Cars uses three separate 680px section cards inside the parent while preserving scroll sections", () => {
   assert.match(
     clientSource,
     /data-car-details-desktop-parent-card=\{presentation === "standalone-content" \? "true" : undefined\}/,
   );
-  assert.match(
-    clientSource,
-    /className="lg:mx-auto lg:mt-1 lg:w-full lg:max-w-\[680px\] lg:rounded-\[14px\] lg:border lg:border-\[#E0E7EF\] lg:bg-white lg:shadow-\[0_3px_12px_rgba\(7,19,59,0\.05\)\]"\s*data-car-details-desktop-inner-card/,
-  );
+  assert.doesNotMatch(clientSource, /data-car-details-desktop-inner-card/);
+  for (const section of ["compare", "pickup", "location"]) {
+    assert.match(
+      clientSource,
+      new RegExp(
+        `data-car-details-desktop-section-card="${section}"`,
+      ),
+    );
+  }
   assert.match(clientSource, /data-car-details-desktop-linear-sections/);
   assert.doesNotMatch(clientSource, /data-car-details-desktop-tab-panels/);
   assert.match(clientSource, /max-w-\[640px\]/);
 });
 
-test("desktop Cars restores the compact sticky scroll navigation model", () => {
+test("desktop Cars keeps tabs on the parent background until the compact sticky handoff", () => {
   assert.match(sectionNavSource, /data-car-details-compact-sticky-tabs/);
   assert.match(sectionNavSource, /lg:sticky lg:top-0/);
   assert.match(sectionNavSource, /desktopStuck/);
@@ -439,13 +440,17 @@ test("desktop Cars restores the compact sticky scroll navigation model", () => {
   assert.match(sectionNavSource, /data-car-details-desktop-sticky-back/);
   assert.match(sectionNavSource, /data-car-details-desktop-sticky-actions/);
   assert.match(sectionNavSource, /data-car-details-desktop-sticky-backdrop/);
-  assert.match(sectionNavSource, /min-h-\[48px\]/);
-  assert.match(sectionNavSource, /min-h-\[46px\]/);
-  assert.match(sectionNavSource, /rounded-\[14px\]/);
-  assert.match(clientSource, /data-car-details-desktop-linear-sections/);
+  assert.match(sectionNavSource, /data-surface=\{desktopStuck \? "compact" : "background"\}/);
+  assert.match(
+    sectionNavSource,
+    /desktopStuck \? "relative col-start-2 row-start-1 justify-self-center rounded-\[14px\] border border-\[#DCE4EE\] bg-white\/95 px-1 shadow-/,
+  );
+  assert.match(
+    sectionNavSource,
+    /: "absolute left-1\/2 top-0 -translate-x-1\/2 bg-transparent px-0 shadow-none"/,
+  );
   assert.match(clientSource, /target\?\.scrollIntoView\(\{/);
   assert.match(clientSource, /scheduleDesktopScrollState/);
-  assert.doesNotMatch(clientSource, /data-car-details-desktop-tab-panels/);
 });
 
 test("desktop Cars keeps Save and Share inside the hero while Compare deals owns booking information", () => {
@@ -819,32 +824,29 @@ test("source contract does not restore removed booking-disabled messaging", () =
 });
 
 
-test("standalone desktop amenities use a compact four-column two-row grid without wrapping", () => {
+test("standalone desktop amenities use a 680px four-column two-row grid without wrapping", () => {
   assert.match(
     heroSource,
     /specs\.map\(\(\[Icon, label\]\) => \(/,
   );
   assert.match(
     heroSource,
-    /lg:max-w-\[820px\][\s\S]*?lg:grid-cols-4[\s\S]*?lg:gap-x-6[\s\S]*?lg:gap-y-2/,
+    /max-w-\[680px\][\s\S]*?grid-cols-4[\s\S]*?gap-x-6[\s\S]*?gap-y-2/,
   );
   assert.match(
     heroSource,
-    /lg:w-max lg:max-w-full lg:min-h-8 lg:justify-self-center[\s\S]*?lg:whitespace-nowrap/,
-  );
-  assert.match(
-    heroSource,
-    /lg:break-normal lg:whitespace-nowrap/,
+    /car-details-desktop-amenity-type inline-flex min-h-8 w-full[\s\S]*?justify-center/,
   );
   assert.doesNotMatch(
     heroSource,
     /index % 2 === 0|lg:justify-self-end|lg:justify-self-start/,
   );
 });
-test("standalone desktop amenities are grouped into one compact hero information surface", () => {
+
+test("standalone desktop amenities sit directly on the parent background without another card shell", () => {
   assert.match(
     heroSource,
-    /className="mt-4 grid min-w-0 w-full max-w-\[820px\] grid-cols-4 gap-x-5 gap-y-2 rounded-\[14px\][^"]*bg-white\/75[^"]*"\s*data-car-details-desktop-overview-specifications/,
+    /className="mt-4 grid min-w-0 w-full max-w-\[680px\] grid-cols-4 gap-x-6 gap-y-2 px-2 py-1"\s*data-car-details-desktop-overview-specifications/,
   );
   assert.match(
     heroSource,
@@ -852,7 +854,7 @@ test("standalone desktop amenities are grouped into one compact hero information
   );
   assert.doesNotMatch(
     heroSource,
-    /car-details-desktop-amenity-type[\s\S]*?rounded-\[13px\][\s\S]*?shadow-\[0_2px_7px/,
+    /data-car-details-desktop-overview-specifications[\s\S]*?rounded-\[14px\]|data-car-details-desktop-overview-specifications[\s\S]*?bg-white\/75/,
   );
 });
 
@@ -914,12 +916,8 @@ test("desktop standalone tab panels share one left content rail", () => {
   assert.match(location, /mx-auto w-full max-w-\[640px\] py-5/);
 });
 
-test("standalone desktop car overview follows image then identity then amenities without a deal-side column", () => {
+test("standalone desktop car overview follows image identity and 680px amenities without a deal-side column", () => {
   assert.match(heroSource, /data-car-details-desktop-overview/);
-  assert.match(
-    heroSource,
-    /hidden lg:flex lg:flex-col lg:items-center lg:px-0 lg:pb-1 lg:pt-0/,
-  );
   assert.match(heroSource, /data-car-details-desktop-overview-image/);
   assert.match(heroSource, /data-car-details-desktop-overview-identity/);
   assert.match(heroSource, /data-car-details-desktop-overview-specifications/);
@@ -931,9 +929,11 @@ test("standalone desktop car overview follows image then identity then amenities
     heroSource.indexOf("data-car-details-desktop-overview-identity") <
       heroSource.indexOf("data-car-details-desktop-overview-specifications"),
   );
-  assert.match(heroSource, /max-w-\[680px\]/);
   assert.match(heroSource, /h-\[250px\]/);
-  assert.match(heroSource, /max-w-\[820px\] grid-cols-4 gap-x-5 gap-y-2 rounded-\[14px\]/);
+  assert.match(
+    heroSource,
+    /max-w-\[680px\] grid-cols-4 gap-x-6 gap-y-2 px-2 py-1/,
+  );
   assert.doesNotMatch(
     heroSource,
     /lg:grid-cols-\[minmax\(0,1fr\)_320px\]|data-car-details-desktop-overview-summary/,
