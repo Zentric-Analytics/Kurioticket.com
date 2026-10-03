@@ -14,6 +14,10 @@ const cssSource = readFileSync(
   new URL("../../../app/globals.css", import.meta.url),
   "utf8",
 ).replace(/\s+/g, " ");
+const sectionNavSource = readFileSync(
+  new URL("./CarDetailsSectionNav.tsx", import.meta.url),
+  "utf8",
+).replace(/\s+/g, " ");
 
 function sourceBetween(source: string, startText: string, endText: string) {
   const start = source.indexOf(startText);
