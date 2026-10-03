@@ -14,6 +14,10 @@ const cssSource = readFileSync(
   new URL("../../../app/globals.css", import.meta.url),
   "utf8",
 ).replace(/\s+/g, " ");
+const sectionNavSource = readFileSync(
+  new URL("./CarDetailsSectionNav.tsx", import.meta.url),
+  "utf8",
+).replace(/\s+/g, " ");
 
 function sourceBetween(source: string, startText: string, endText: string) {
   const start = source.indexOf(startText);
@@ -447,6 +451,25 @@ test("desktop car details center the overview while keeping controls balanced", 
     sandboxStart >= 0 && heroStart > sandboxStart,
     "KAYAK and Kurioticket continue through the same standalone desktop controls",
   );
+});
+
+test("desktop Cars sticky navigation uses a compact balanced control rail", () => {
+  assert.match(sectionNavSource, /min-h-\[52px\]/);
+  assert.match(sectionNavSource, /h-\[52px\][^"]*data-car-details-desktop-sticky-backdrop|h-\[52px\]/);
+  assert.match(sectionNavSource, /lg:max-w-\[760px\]/);
+  assert.match(sectionNavSource, /gap-0\.5/);
+  assert.match(sectionNavSource, /px-3 text-\[13px\] leading-5/);
+  assert.match(sectionNavSource, /w-\[560px\]/);
+
+  const stickyPlacement = sourceBetween(
+    clientSource,
+    'data-car-details-utility-placement="tabs"',
+    "labels={{",
+  );
+  assert.match(stickyPlacement, /className="flex items-center gap-2\.5"/);
+  assert.match(clientSource, /desktop \? "size-9 rounded-full/);
+  assert.match(clientSource, /size=\{desktop \? 18 : 22\}/);
+  assert.match(clientSource, /<Share2 size=\{desktop \? 17 : 21\}/);
 });
 
 test("desktop Cars details keep Save and Share in controls while Compare deals owns booking information", () => {
