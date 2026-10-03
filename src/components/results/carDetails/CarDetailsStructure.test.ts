@@ -94,7 +94,7 @@ test("standalone desktop Cars tabs switch one content panel in place like Flight
   );
 });
 
-test("standalone desktop Cars uses a Flight-style content hierarchy instead of stacked section cards", () => {
+test("standalone desktop Cars keeps compact child cards inside the one Flight-style details card", () => {
   assert.match(layoutSource, /background: #EEF2F7 !important/);
   assert.match(
     experienceSource,
@@ -102,14 +102,18 @@ test("standalone desktop Cars uses a Flight-style content hierarchy instead of s
   );
   assert.match(experienceSource, /data-car-details-flight-panel="pickup"/);
   assert.match(experienceSource, /data-car-details-flight-panel="location"/);
-  assert.match(experienceSource, /max-w-\[640px\] space-y-2/);
+  assert.match(experienceSource, /max-w-\[640px\] space-y-2 py-1/);
   assert.match(
     experienceSource,
-    /data-car-details-desktop-pickup-columns[\s\S]*?border-y border-\[#D8E1EC\]/,
+    /data-car-details-compact-card-group="pickup-return"/,
   );
   assert.match(
     experienceSource,
-    /data-car-details-location-identity[\s\S]*?border-b border-\[#D8E1EC\]/,
+    /data-car-details-compact-info-card/,
+  );
+  assert.match(
+    experienceSource,
+    /max-w-\[720px\][^"]*"[\s\S]*?data-car-details-desktop-location-map/,
   );
   assert.doesNotMatch(experienceSource, /data-car-details-layered-surface="pickup"/);
   assert.doesNotMatch(experienceSource, /data-car-details-layered-surface="location"/);
@@ -125,25 +129,35 @@ test("guided Car details renders content-only experience with guided headings", 
   assert.match(guidedSource, /itemHeadingLevel=\{4\}/);
 });
 
-test("standalone desktop Cars details keep a centered hero above the compact sticky tabs", () => {
+test("standalone desktop Cars details use one full-height card for hero tabs and panel content", () => {
   assert.match(
     experienceSource,
     /presentation === "standalone-content" \? "lg:grid-cols-1 lg:gap-0"/,
   );
   assert.match(
     experienceSource,
-    /presentation === "standalone-content" \? "space-y-0 lg:mx-auto lg:w-full lg:max-w-\[1080px\]"/,
+    /presentation === "standalone-content" \? "space-y-0 lg:relative lg:mx-auto lg:w-full lg:max-w-\[900px\] lg:rounded-\[13px\] lg:border lg:border-\[#E2E8F0\] lg:bg-white lg:shadow-/,
+  );
+  assert.match(
+    experienceSource,
+    /data-car-details-desktop-full-height-card=\{presentation === "standalone-content" \? "true" : undefined\}/,
   );
   assert.match(experienceSource, /data-car-details-desktop-hero-controls/);
+  assert.match(experienceSource, /data-car-details-desktop-tab-panels/);
+  assert.match(
+    experienceSource,
+    /className="hidden lg:block lg:min-h-\[280px\] lg:w-full lg:bg-transparent lg:px-5 lg:pb-7"/,
+  );
 
   const navSource = readFileSync(
     new URL("./CarDetailsSectionNav.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(navSource, /lg:max-w-\[900px\]/);
+  assert.match(navSource, /lg:max-w-none/);
   assert.match(navSource, /max-w-\[760px\]/);
   assert.match(navSource, /data-car-details-flight-style-tabs/);
   assert.match(navSource, /lg:sticky lg:top-0/);
+  assert.match(navSource, /lg:border-b lg:border-slate-200 lg:bg-white/);
   assert.doesNotMatch(navSource, /data-car-details-desktop-nav-rule/);
 });
 

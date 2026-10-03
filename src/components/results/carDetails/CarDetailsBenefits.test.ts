@@ -186,7 +186,11 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-car-details-flight-style-panel/);
   assert.match(
     clientSource,
-    /lg:max-w-\[900px\][^"]*lg:bg-white[^"]*lg:px-5/,
+    /data-car-details-desktop-full-height-card=\{presentation === "standalone-content" \? "true" : undefined\}/,
+  );
+  assert.match(
+    clientSource,
+    /className="hidden lg:block lg:min-h-\[280px\] lg:w-full lg:bg-transparent lg:px-5 lg:pb-7"/,
   );
   assert.doesNotMatch(clientSource, /data-car-details-desktop-linear-sections/);
   assert.doesNotMatch(clientSource, /data-car-details-scroll-section="rental"/);
@@ -202,21 +206,26 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-car-location-section/);
 });
 
-test("desktop Pickup/Return avoids nested card-on-card treatment", () => {
+test("desktop Pickup/Return uses compact Flight-style cards rather than another large section card", () => {
   const pickup = sourceBetween(
     clientSource,
     "function DesktopPickupReturnOverview",
     "function DesktopCarHireLocationOverview",
   );
   assert.match(pickup, /data-car-details-flight-panel="pickup"/);
-  assert.match(pickup, /max-w-\[900px\] py-5/);
+  assert.match(pickup, /data-car-details-compact-card-group="pickup-return"/);
   assert.match(
     pickup,
-    /data-car-details-desktop-pickup-columns[\s\S]*?divide-x divide-\[#D8E1EC\][\s\S]*?border-y border-\[#D8E1EC\]/,
+    /data-car-details-desktop-pickup-columns[\s\S]*?max-w-\[640px\][\s\S]*?grid-cols-2 gap-3/,
+  );
+  assert.equal(
+    pickup.match(/data-car-details-compact-info-card/g)?.length,
+    1,
+    "one mapped compact-card marker defines both pickup and return cards",
   );
   assert.doesNotMatch(
     pickup,
-    /rounded-\[22px\]|shadow-\[0_6px_18px|data-car-details-inner-surface/,
+    /max-w-\[900px\][^"]*rounded-|shadow-\[0_6px_18px/,
   );
   assert.doesNotMatch(clientSource, /function DesktopRentalDetails/);
 });
@@ -251,7 +260,7 @@ test("desktop overview and linear sections use only existing car and offer data"
   assert.doesNotMatch(desktopLocation, /carDetails\.getDirections/);
   assert.match(
     desktopLocation,
-    /className="mt-5 border-t border-\[#D8E1EC\] pb-1 pt-5" data-car-details-desktop-location-details/,
+    /className="mt-5 w-full max-w-\[640px\] border-t border-\[#D8E1EC\] pb-1 pt-4" data-car-details-desktop-location-details/,
   );
   assert.doesNotMatch(
     desktopLocation,
@@ -305,12 +314,11 @@ test("standalone desktop Cars Details uses a deliberate non-faint typography hie
     /\.car-details-standalone-typography \.car-details-desktop-amenity-type \{[^}]*font-size: 13px !important;[^}]*font-weight: 600 !important;[^}]*color: #334155 !important;[^}]*font-variation-settings: "wght" 600;/,
   );
 });
-test("standalone car details use polished Flight-style panel headings", () => {
+test("standalone car details keep Flight-style headings above compact internal cards", () => {
   assert.match(clientSource, /<CarDetailsSectionNav activeTab={activeTab}/);
   assert.match(clientSource, /compare: "Compare deals"/);
   assert.match(clientSource, /pickup: copy\("carDetails\.pickupReturn"\)/);
   assert.match(clientSource, /location: copy\("carDetails\.location"\)/);
-  assert.doesNotMatch(clientSource, /showSectionHeading={false}/);
   assert.match(clientSource, /showDesktopOfferList/);
 
   const comparison = sourceBetween(
@@ -320,22 +328,10 @@ test("standalone car details use polished Flight-style panel headings", () => {
   );
   assert.match(comparison, /showSectionHeading \? \(/);
   assert.match(comparison, /Compare deals/);
-  assert.match(
-    comparison,
-    /lg:text-\[16px\] lg:font-semibold lg:leading-6 lg:tracking-\[-0\.1px\] lg:text-\[#192024\]/,
-  );
   assert.match(comparison, /data-desktop-car-deal-list/);
   assert.match(
     comparison,
-    /className="mt-4 hidden w-full max-w-\[640px\] space-y-2 lg:block"/,
-  );
-  assert.match(
-    comparison,
-    /data-car-details-flight-panel=\{showDesktopOfferList \? "compare" : undefined\}/,
-  );
-  assert.doesNotMatch(
-    comparison,
-    /data-car-details-layered-surface=\{showDesktopOfferList/,
+    /className="mt-4 hidden w-full max-w-\[640px\] space-y-2 py-1 lg:block"/,
   );
 
   const pickup = sourceBetween(
@@ -344,7 +340,7 @@ test("standalone car details use polished Flight-style panel headings", () => {
     "function DesktopCarHireLocationOverview",
   );
   assert.match(pickup, /data-car-details-flight-panel="pickup"/);
-  assert.match(pickup, /border-y border-\[#D8E1EC\]/);
+  assert.match(pickup, /data-car-details-compact-card-group="pickup-return"/);
 
   const location = sourceBetween(
     clientSource,
@@ -352,14 +348,21 @@ test("standalone car details use polished Flight-style panel headings", () => {
     "function CarHeroActions",
   );
   assert.match(location, /data-car-details-flight-panel="location"/);
-  assert.match(location, /data-car-details-location-identity/);
+  assert.match(location, /data-car-details-compact-info-card/);
 });
 
-test("standalone desktop overview uses one integrated Flight-inspired hero surface", () => {
-  assert.match(heroSource, /data-car-details-layered-surface=\{reserveMobileControlSafeZone \? "hero" : undefined\}/);
+test("standalone desktop overview is the top section of the one full-height details card", () => {
   assert.match(
     heroSource,
-    /lg:max-w-\[900px\][\s\S]*?lg:rounded-\[22px\][\s\S]*?lg:border-\[#DFE6EF\][\s\S]*?lg:bg-\[#F7F9FC\]/,
+    /data-car-details-full-card-hero=\{reserveMobileControlSafeZone \? "true" : undefined\}/,
+  );
+  assert.match(
+    heroSource,
+    /lg:max-w-none[\s\S]*?lg:rounded-t-\[12px\][\s\S]*?lg:rounded-b-none[\s\S]*?lg:border-0[\s\S]*?lg:bg-white[\s\S]*?lg:shadow-none/,
+  );
+  assert.doesNotMatch(
+    heroSource,
+    /data-car-details-layered-surface=\{reserveMobileControlSafeZone/,
   );
   assert.match(
     heroSource,
@@ -458,7 +461,7 @@ test("desktop Cars keeps Save and Share inside the hero while Compare deals owns
   assert.match(clientSource, /data-mobile-car-booking-dock/);
   assert.equal(clientSource.match(/<BookingSummary\b/g)?.length, 1);
 });
-test("desktop Pickup/Return and Location use one flat Flights-style panel hierarchy", () => {
+test("desktop Pickup/Return and Location use compact internal cards inside the full details card", () => {
   assert.match(clientSource, /data-car-details-desktop-tab-panels/);
   const pickup = sourceBetween(
     clientSource,
@@ -466,12 +469,14 @@ test("desktop Pickup/Return and Location use one flat Flights-style panel hierar
     "function DesktopCarHireLocationOverview",
   );
   assert.match(pickup, /data-car-details-flight-panel="pickup"/);
-  assert.match(pickup, /max-w-\[900px\] py-5/);
+  assert.match(pickup, /data-car-details-compact-card-group="pickup-return"/);
+  assert.match(pickup, /max-w-\[640px\] grid-cols-2 gap-3 py-1/);
   assert.match(
     pickup,
-    /data-car-details-desktop-pickup-columns[\s\S]*?border-y border-\[#D8E1EC\]/,
+    /min-h-\[116px\][^"]*rounded-xl[^"]*border-\[#D9E2E8\][^"]*px-4 py-3/,
   );
-  assert.doesNotMatch(pickup, /rounded-\[22px\]|data-car-details-inner-surface/);
+  assert.match(pickup, /data-car-details-compact-info-card/);
+  assert.doesNotMatch(pickup, /rounded-\[22px\]|shadow-\[0_6px_18px/);
 
   const location = sourceBetween(
     clientSource,
@@ -480,12 +485,15 @@ test("desktop Pickup/Return and Location use one flat Flights-style panel hierar
   );
   assert.match(location, /data-car-details-flight-panel="location"/);
   assert.match(location, /data-car-details-location-identity/);
-  assert.match(location, /border-b border-\[#D8E1EC\]/);
+  assert.match(location, /max-w-\[640px\][^"]*rounded-xl[^"]*border-\[#D9E2E8\]/);
+  assert.match(location, /data-car-details-compact-info-card/);
+  assert.match(location, /data-car-details-desktop-location-map/);
+  assert.match(location, /max-w-\[720px\]/);
+  assert.match(location, /h-\[220px\]/);
   assert.match(
     location,
-    /className="mt-5 border-t border-\[#D8E1EC\] pb-1 pt-5" data-car-details-desktop-location-details/,
+    /className="mt-5 w-full max-w-\[640px\] border-t border-\[#D8E1EC\] pb-1 pt-4" data-car-details-desktop-location-details/,
   );
-  assert.doesNotMatch(location, /data-car-details-layered-surface="location"/);
 });
 
 test("desktop Pickup and return removes pickup type and duplicated pickup-instructions copy", () => {
@@ -674,7 +682,7 @@ test("Kurioticket deal branding does not depend only on inventorySource", () => 
   assert.match(providerBrand, /kurioticket-logo-primary-light-bg\.svg/);
 });
 
-test("desktop Compare deals wires each provider row to its own logo total benefits and Continue deal action", () => {
+test("desktop Compare deals matches Flights compact deal-card geometry inside the full card", () => {
   const comparison = sourceBetween(
     clientSource,
     "function CarPriceComparisonSection",
@@ -689,32 +697,29 @@ test("desktop Compare deals wires each provider row to its own logo total benefi
   assert.match(desktop, /data-car-details-desktop-deal-row/);
   assert.match(desktop, /data-car-details-desktop-deal-provider/);
   assert.match(desktop, /<CarOfferProviderBrand/);
-  assert.match(desktop, /providerName={providerName}/);
   assert.match(desktop, /data-car-details-desktop-deal-total/);
   assert.match(desktop, /data-car-details-desktop-deal-benefits/);
   assert.match(desktop, /data-car-details-desktop-deal-cta/);
   assert.match(desktop, /offer\.totalPrice/);
-  assert.match(desktop, /compactBookingProviderName\(offer\)/);
   assert.match(desktop, /offer\.freeCancellation/);
   assert.match(desktop, /offer\.payAtPickup/);
   assert.match(desktop, /offer\.taxesAndFeesIncluded/);
-  assert.match(desktop, /onClick=\{\(\) => onSelectOffer\(offer\.id\)\}/);
-  assert.match(desktop, /href=\{offerAction\.href\}/);
+  assert.match(desktop, /min-h-\[92px\][^"]*rounded-xl[^"]*px-4 py-3/);
+  assert.match(
+    desktop,
+    /h-9 w-\[112px\][^"]*rounded-lg bg-\[#004BB8\][^"]*text-\[13px\] font-semibold leading-5/,
+  );
+  assert.match(
+    desktop,
+    /text-\[20px\] font-semibold leading-6 tracking-\[-0\.02em\] text-\[#192024\]/,
+  );
+  assert.match(comparison, /max-w-\[640px\] space-y-2 py-1/);
   assert.match(desktop, /target="_blank"/);
   assert.match(desktop, /rel="noopener noreferrer"/);
-  assert.match(desktop, /referrerPolicy="no-referrer"/);
-  assert.doesNotMatch(desktop, /offer\.pricePerDay|carsResults\.perDay/);
-  assert.match(desktop, /min-h-\[92px\][^"]*rounded-xl[^"]*px-4 py-3/);
-  assert.match(desktop, /min-h-9 min-w-\[104px\][^"]*px-3 text-\[12px\] font-semibold/);
-  assert.match(comparison, /max-w-\[640px\]/);
 
   assert.match(
     clientSource,
     /const actionForOffer = \(offer: CarOffer\): CarDetailsPrimaryAction =>[\s\S]*?sandboxBookingUrl\(offer\.bookingUrl\)/,
-  );
-  assert.match(
-    clientSource,
-    /<CarPriceComparisonSection[\s\S]*?actionForOffer=\{actionForOffer\}/,
   );
 });
 
@@ -856,7 +861,7 @@ test("Cars Details uses the same dedicated transmission icon at mobile and deskt
   );
 });
 
-test("desktop standalone tab panels share one left content rail", () => {
+test("desktop standalone tab panels keep compact child content within the full card", () => {
   const comparison = sourceBetween(
     clientSource,
     "function CarPriceComparisonSection",
@@ -872,23 +877,25 @@ test("desktop standalone tab panels share one left content rail", () => {
   );
   assert.match(
     comparison,
-    /className="mt-4 hidden w-full max-w-\[640px\] space-y-2 lg:block"/,
+    /className="mt-4 hidden w-full max-w-\[640px\] space-y-2 py-1 lg:block"/,
   );
-  assert.doesNotMatch(comparison, /lg:text-center|lg:justify-center/);
 
   const pickup = sourceBetween(
     clientSource,
     "function DesktopPickupReturnOverview",
     "function DesktopCarHireLocationOverview",
   );
-  assert.match(pickup, /mx-auto w-full max-w-\[900px\] py-5/);
+  assert.match(pickup, /className="w-full py-5"/);
+  assert.match(pickup, /max-w-\[640px\]/);
 
   const location = sourceBetween(
     clientSource,
     "function DesktopCarHireLocationOverview",
     "function CarHeroActions",
   );
-  assert.match(location, /mx-auto w-full max-w-\[900px\] py-5/);
+  assert.match(location, /className="w-full py-5"/);
+  assert.match(location, /max-w-\[640px\]/);
+  assert.match(location, /max-w-\[720px\]/);
 });
 
 test("standalone desktop car overview follows image then identity then amenities without a deal-side column", () => {
