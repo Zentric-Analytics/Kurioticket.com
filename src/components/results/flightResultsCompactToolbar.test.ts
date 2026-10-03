@@ -162,7 +162,7 @@ test("trip type copies the desktop Sort dropdown layout and multi-city expands s
 test("route field keeps its geometry while switching into inline edit mode", () => {
   const toolbar = desktopHeaderSearchBarSource();
 
-  assert.match(toolbar, /grid-cols-\[minmax\(68px,1fr\)_28px_minmax\(68px,1fr\)\]/);
+  assert.match(toolbar, /grid-cols-\[minmax\(56px,1fr\)_28px_minmax\(56px,1fr\)\]/);
   assert.match(toolbar, /const openCompactRouteEditor =/);
   assert.match(toolbar, /setOriginInput\(compactOriginLabel\)/);
   assert.match(toolbar, /setDestinationInput\(compactDestinationLabel\)/);
