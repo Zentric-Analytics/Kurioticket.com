@@ -5438,7 +5438,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           className={fieldClass}
           data-flight-results-nav-field="route"
         >
-          <ArrowRightLeft className="h-4 w-4 shrink-0 text-[#40536A]" aria-hidden="true" />
+          <MapPin className="h-[18px] w-[18px] shrink-0 text-[#071A48]" aria-hidden="true" />
           <span className={valueClass}>
             {mobileOriginSummary} → {mobileDestinationSummary}
           </span>
@@ -5453,11 +5453,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           data-flight-results-nav-field="dates"
         >
           <span data-flight-results-nav-date-part className="flex min-w-0 items-center gap-[5px] px-2">
-            <Calendar className="h-[14px] w-[14px] shrink-0 text-[#40536A]" aria-hidden="true" />
+            <Calendar className="h-[18px] w-[18px] shrink-0 text-[#071A48]" aria-hidden="true" />
             <span className={valueClass}>{departureLabel}</span>
           </span>
           <span data-flight-results-nav-date-part className="flex min-w-0 items-center gap-[5px] border-l border-[#D9E2E8] px-2">
-            <Calendar className="h-[14px] w-[14px] shrink-0 text-[#40536A]" aria-hidden="true" />
+            <Calendar className="h-[18px] w-[18px] shrink-0 text-[#071A48]" aria-hidden="true" />
             <span className={valueClass}>{returnLabel}</span>
           </span>
         </button>
@@ -5470,7 +5470,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           className={fieldClass}
           data-flight-results-nav-field="travelers"
         >
-          <UserRound className="h-4 w-4 shrink-0 text-[#40536A]" aria-hidden="true" />
+          <UserRound className="h-[18px] w-[18px] shrink-0 text-[#071A48]" aria-hidden="true" />
           <span className={valueClass}>{travelerCabinSummary}</span>
         </button>
 
@@ -7415,20 +7415,20 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }
 
   const standaloneResultsHeader = guidedMode ? null : (
-    <>
-      <AppHeader
-        flushDesktopBottom
-        flushMobileBottom
-        hideDesktopTravelNav
-        hideMobileCategoryTabs
-        hotelDesktopBoundary
-        flightResultsDesktopSticky
-      />
-      {desktopNavSearchTarget
-        ? createPortal(renderDesktopHeaderSearchBar(), desktopNavSearchTarget)
-        : null}
-    </>
+    <AppHeader
+      flushDesktopBottom
+      flushMobileBottom
+      hideDesktopTravelNav
+      hideMobileCategoryTabs
+      hotelDesktopBoundary
+      flightResultsDesktopSticky
+    />
   );
+
+  const readyDesktopNavbarSearch =
+    !guidedMode && desktopNavSearchTarget
+      ? createPortal(renderDesktopHeaderSearchBar(), desktopNavSearchTarget)
+      : null;
 
   if (resultsUiPreparing) {
     if (guidedMode) return <section aria-labelledby="deals-guided-flight-results-heading" className="mt-6" data-flight-results-experience="deals-guided"><h2 id="deals-guided-flight-results-heading" tabIndex={-1} className="text-xl font-extrabold text-slate-950">{t("deals.guided.flightResults.loadingTitle")}</h2><div ref={loadingFocusRef} role="status" tabIndex={-1} className="mt-4 space-y-3"><FlightCardSkeleton /><FlightCardSkeleton /></div></section>;
@@ -7436,7 +7436,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <>
     {standaloneResultsHeader}
       {renderMobileEditSearchDrawer()}
-      {renderStickySearchPopoutOverlay()}
       <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
         <BrandedLoading
           variant="fullscreen"
@@ -7483,6 +7482,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   return (
     <>
     {standaloneResultsHeader}
+    {readyDesktopNavbarSearch}
     <FlightResultsScrollIndicator />
     {renderMobileCompactResultsHeader()}
     <main data-flight-results-main className="bg-[#F5F7FB] pb-0 sm:flex-1 sm:bg-[#F3F6FA] sm:pb-8 lg:bg-[#F5F7FB]">
