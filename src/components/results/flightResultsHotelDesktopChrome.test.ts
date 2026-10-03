@@ -22,7 +22,7 @@ test("desktop Flight Results reuses the Hotels header composition", () => {
     /hotelResultsDesktopSticky \|\| flightResultsDesktopSticky/,
   );
   assert.match(header, /data-flight-results-nav-search/);
-  assert.match(header, /lg:max-w-\[540px\]/);
+  assert.match(header, /data-flight-results-nav-search[^\n]*lg:max-w-\[820px\]/);
   assert.match(
     styles,
     /\[data-hotel-results-desktop-header\],\s*\[data-flight-results-desktop-header\],\s*\[data-cars-results-desktop-header\] \{\s*position: sticky;/,
@@ -140,6 +140,20 @@ test("desktop navbar search opens the Change your flight editor on every click s
   assert.ok(callbackStart >= 0 && callbackEnd > callbackStart);
   assert.match(callback, /setIsSearchExpandedWhileSticky\(true\)/);
   assert.match(callback, /setActiveDesktopSearchSurface\("sticky"\)/);
+});
+
+test("desktop Flight Results renders one continuous desktop list without range text or pagination", () => {
+  const summary = flight.indexOf("data-flight-results-desktop-summary");
+  const desktopResults = flight.indexOf("ref={paginationListRef}", summary);
+  const desktopResultsEnd = flight.indexOf("</section>", desktopResults);
+  const summarySource = flight.slice(summary, desktopResults);
+  const desktopSource = flight.slice(desktopResults, desktopResultsEnd);
+
+  assert.ok(summary >= 0 && desktopResults > summary);
+  assert.doesNotMatch(summarySource, /resultsDisplayRange\.start|resultsDisplayRange\.end|Showing results/);
+  assert.match(desktopSource, /sortedResults\.map\(\(flight, index\) =>/);
+  assert.doesNotMatch(desktopSource, /<FlightResultsPagination/);
+  assert.match(desktopSource, /aria-busy=\{filterApplying\}/);
 });
 
 test("desktop Flight Results puts the Hotels-style summary directly above result cards", () => {
