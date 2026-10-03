@@ -5407,28 +5407,21 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }
 
   function renderDesktopHeaderSearchBar() {
-    const departureLabel = departureDateInput
-      ? formatCompactDateLabel(departureDateInput, calendarLocale)
+    const compactDateSummary = departureDateInput
+      ? tripTypeInput === "round-trip" && returnDateInput
+        ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
+        : formatCompactDateLabel(departureDateInput, calendarLocale)
       : t("travelDates");
-    const returnLabel =
-      tripTypeInput === "round-trip"
-        ? returnDateInput
-          ? formatCompactDateLabel(returnDateInput, calendarLocale)
-          : t("return")
-        : tripTypeInput === "multi-city"
-          ? t("multiCity")
-          : t("oneWay");
     const fieldClass =
-      "focus-ring flex h-[44px] min-w-0 items-center gap-2 rounded-lg border border-[#D9E2E8] bg-[#F0F3F5] px-[10px] text-start text-[#142033] transition-colors hover:border-[#B9C9D5] hover:bg-[#E8EEF2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25";
+      "focus-ring flex h-[44px] min-w-0 items-center gap-2 border-r border-[#D8E1EC] bg-white px-3 text-start text-[#142033] transition-colors hover:bg-slate-50";
     const valueClass =
-      "min-w-0 truncate text-[14px] font-normal leading-5 text-[#142033]";
+      "min-w-0 truncate text-[12px] font-semibold leading-[18px] text-[#142033]";
 
     return (
       <form
         onSubmit={handleCompactSearchSubmit}
         data-flight-results-nav-search-form
-        data-flight-results-nav-search-hotel-card
-        className="grid h-[44px] w-full grid-cols-[minmax(0,1fr)_minmax(0,1.125fr)_minmax(0,1.025fr)_44px] items-center gap-1"
+        className="grid h-[44px] w-full grid-cols-[minmax(0,1.55fr)_minmax(0,1.15fr)_minmax(0,1.2fr)_46px] items-center overflow-hidden rounded-[9px] border border-[#D8E1EC] bg-white"
       >
         <button
           type="button"
@@ -5436,9 +5429,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           aria-label={`${t("editFlightSearch")}: ${mobileOriginSummary} ${t("to")} ${mobileDestinationSummary}`}
           onClick={(event) => openStickySearchEditor(event, "route")}
           className={fieldClass}
-          data-flight-results-nav-field="route"
         >
-          <ArrowRightLeft className="h-4 w-4 shrink-0 text-[#40536A]" aria-hidden="true" />
+          <MapPin className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
           <span className={valueClass}>
             {mobileOriginSummary} → {mobileDestinationSummary}
           </span>
@@ -5447,19 +5439,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <button
           type="button"
           aria-expanded={isStickySearchPanelOpen}
-          aria-label={`${t("editFlightSearch")}: ${departureLabel} ${returnLabel}`}
+          aria-label={`${t("editFlightSearch")}: ${compactDateSummary}`}
           onClick={(event) => openStickySearchEditor(event, "dates")}
-          className="focus-ring grid h-[44px] min-w-0 grid-cols-2 overflow-hidden rounded-lg border border-[#D9E2E8] bg-[#F0F3F5] text-start text-[#142033] transition-colors hover:border-[#B9C9D5] hover:bg-[#E8EEF2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-          data-flight-results-nav-field="dates"
+          className={fieldClass}
         >
-          <span data-flight-results-nav-date-part className="flex min-w-0 items-center gap-[5px] px-2">
-            <Calendar className="h-[14px] w-[14px] shrink-0 text-[#40536A]" aria-hidden="true" />
-            <span className={valueClass}>{departureLabel}</span>
-          </span>
-          <span data-flight-results-nav-date-part className="flex min-w-0 items-center gap-[5px] border-l border-[#D9E2E8] px-2">
-            <Calendar className="h-[14px] w-[14px] shrink-0 text-[#40536A]" aria-hidden="true" />
-            <span className={valueClass}>{returnLabel}</span>
-          </span>
+          <Calendar className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
+          <span className={valueClass}>{compactDateSummary}</span>
         </button>
 
         <button
@@ -5468,20 +5453,20 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           aria-label={`${t("editFlightSearch")}: ${travelerCabinSummary}`}
           onClick={(event) => openStickySearchEditor(event, "travelers")}
           className={fieldClass}
-          data-flight-results-nav-field="travelers"
         >
-          <UserRound className="h-4 w-4 shrink-0 text-[#40536A]" aria-hidden="true" />
+          <UserRound className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
           <span className={valueClass}>{travelerCabinSummary}</span>
         </button>
 
-        <button
-          type="submit"
-          aria-label={t("search")}
-          data-flight-results-nav-search-action
-          className="focus-ring inline-flex h-[44px] w-[44px] items-center justify-center rounded-lg bg-[#004BB8] text-white transition hover:bg-[#003F9C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2"
-        >
-          <Search className="h-[18px] w-[18px]" aria-hidden="true" />
-        </button>
+        <div className="flex h-[44px] items-center justify-center bg-white">
+          <button
+            type="submit"
+            aria-label={t("search")}
+            className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[#004BB8] text-white transition hover:bg-[#003F9C]"
+          >
+            <Search className="h-[18px] w-[18px]" aria-hidden="true" />
+          </button>
+        </div>
       </form>
     );
   }
@@ -7414,8 +7399,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     return <Button type="button" className="mt-4 rounded-xl" onClick={retryMainInventorySearch}>{t("deals.guided.flightResults.retry")}</Button>;
   }
 
-  const standaloneResultsHeader = guidedMode ? null : (
-    <>
+  if (resultsUiPreparing) {
+    if (guidedMode) return <section aria-labelledby="deals-guided-flight-results-heading" className="mt-6" data-flight-results-experience="deals-guided"><h2 id="deals-guided-flight-results-heading" tabIndex={-1} className="text-xl font-extrabold text-slate-950">{t("deals.guided.flightResults.loadingTitle")}</h2><div ref={loadingFocusRef} role="status" tabIndex={-1} className="mt-4 space-y-3"><FlightCardSkeleton /><FlightCardSkeleton /></div></section>;
+    return (
+      <>
       <AppHeader
         flushDesktopBottom
         flushMobileBottom
@@ -7427,14 +7414,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       {desktopNavSearchTarget
         ? createPortal(renderDesktopHeaderSearchBar(), desktopNavSearchTarget)
         : null}
-    </>
-  );
-
-  if (resultsUiPreparing) {
-    if (guidedMode) return <section aria-labelledby="deals-guided-flight-results-heading" className="mt-6" data-flight-results-experience="deals-guided"><h2 id="deals-guided-flight-results-heading" tabIndex={-1} className="text-xl font-extrabold text-slate-950">{t("deals.guided.flightResults.loadingTitle")}</h2><div ref={loadingFocusRef} role="status" tabIndex={-1} className="mt-4 space-y-3"><FlightCardSkeleton /><FlightCardSkeleton /></div></section>;
-    return (
-      <>
-    {standaloneResultsHeader}
       {renderMobileEditSearchDrawer()}
       {renderStickySearchPopoutOverlay()}
       <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
@@ -7482,7 +7461,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   return (
     <>
-    {standaloneResultsHeader}
+    <AppHeader
+      flushDesktopBottom
+      flushMobileBottom
+      hideDesktopTravelNav
+      hideMobileCategoryTabs
+      hotelDesktopBoundary
+      flightResultsDesktopSticky
+    />
+    {desktopNavSearchTarget
+      ? createPortal(renderDesktopHeaderSearchBar(), desktopNavSearchTarget)
+      : null}
     <FlightResultsScrollIndicator />
     {renderMobileCompactResultsHeader()}
     <main data-flight-results-main className="bg-[#F5F7FB] pb-0 sm:flex-1 sm:bg-[#F3F6FA] sm:pb-8 lg:bg-[#F5F7FB]">

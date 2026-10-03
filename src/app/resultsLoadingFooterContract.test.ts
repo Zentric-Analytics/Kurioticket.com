@@ -85,12 +85,11 @@ test("hotel navbar stays outside the inventory loading branch", () => {
   assert.match(page, /fallback=\{[\s\S]*?<AppHeader[\s\S]*?<LocalizedLoadingLabel/);
 });
 
-test("flight loading and ready states share the same persistent AppHeader shell", () => {
+test("flight loading and ready states each own one AppHeader", () => {
   const source = readFileSync(new URL("../components/results/FlightResultsClient.tsx", import.meta.url), "utf8");
-  assert.equal(source.match(/<AppHeader/g)?.length, 1);
-  assert.match(source, /const standaloneResultsHeader = guidedMode \? null : \([\s\S]*?<AppHeader[\s\S]*?createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
-  assert.match(source, /if \(resultsUiPreparing\)[\s\S]*?\{standaloneResultsHeader\}[\s\S]*?<BrandedLoading/);
-  assert.match(source, /return \(\s*<>\s*\{standaloneResultsHeader\}[\s\S]*?<main data-flight-results-main/);
+  assert.equal(source.match(/<AppHeader/g)?.length, 2);
+  assert.match(source, /if \(resultsUiPreparing\)[\s\S]*?<AppHeader[\s\S]*?<BrandedLoading/);
+  assert.match(source, /return \(\s*<>\s*<AppHeader[\s\S]*?<main data-flight-results-main/);
 
   const page = readFileSync(new URL("./flights/results/page.tsx", import.meta.url), "utf8");
   assert.match(page, /fallback=\{[\s\S]*?<AppHeader[\s\S]*?<ResultsFallback/);

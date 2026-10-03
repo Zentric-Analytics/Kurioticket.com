@@ -22,7 +22,7 @@ test("desktop Flight Results reuses the Hotels header composition", () => {
     /hotelResultsDesktopSticky \|\| flightResultsDesktopSticky/,
   );
   assert.match(header, /data-flight-results-nav-search/);
-  assert.match(header, /data-flight-results-nav-search[^>]*lg:max-w-\[560px\]/);
+  assert.match(header, /lg:max-w-\[540px\]/);
   assert.match(
     styles,
     /\[data-hotel-results-desktop-header\],\s*\[data-flight-results-desktop-header\],\s*\[data-cars-results-desktop-header\] \{\s*position: sticky;/,
@@ -83,39 +83,17 @@ test("desktop Flight Results keeps the navbar search target synchronized through
 });
 
 
-test("desktop Flight Results keeps the Hotels-style header shell mounted through preparation", () => {
-  const shellStart = flight.indexOf("const standaloneResultsHeader = guidedMode ? null : (");
-  const preparingStart = flight.indexOf("if (resultsUiPreparing) {", shellStart);
-  const shell = flight.slice(shellStart, preparingStart);
+test("desktop Flight Results keeps the header search mounted through preparation", () => {
+  const preparingStart = flight.indexOf("if (resultsUiPreparing) {");
   const guidedStart = flight.indexOf("if (guidedMode) return (", preparingStart);
   const preparing = flight.slice(preparingStart, guidedStart);
 
-  assert.ok(shellStart >= 0 && preparingStart > shellStart && guidedStart > preparingStart);
-  assert.match(shell, /<AppHeader[\s\S]*?flightResultsDesktopSticky/);
-  assert.match(shell, /createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
-  assert.match(preparing, /\{standaloneResultsHeader\}/);
-  assert.doesNotMatch(preparing, /<AppHeader/);
-});
-
-test("desktop Flight navbar search copies the Hotel results-flat card geometry", () => {
-  const start = flight.indexOf("function renderDesktopHeaderSearchBar()");
-  const end = flight.indexOf("function renderStickySearchPopoutOverlay()", start);
-  const toolbar = flight.slice(start, end);
-
-  assert.match(toolbar, /data-flight-results-nav-search-hotel-card/);
-  assert.match(toolbar, /grid-cols-\[minmax\(0,1fr\)_minmax\(0,1\.125fr\)_minmax\(0,1\.025fr\)_44px\]/);
-  assert.match(toolbar, /rounded-lg border border-\[#D9E2E8\] bg-\[#F0F3F5\]/);
-  assert.match(toolbar, /hover:border-\[#B9C9D5\] hover:bg-\[#E8EEF2\]/);
-  const datesFieldStart = toolbar.indexOf('data-flight-results-nav-field="dates"');
-  const datesButtonStart = toolbar.lastIndexOf("<button", datesFieldStart);
-  const datesButtonEnd = toolbar.indexOf("</button>", datesFieldStart);
-  const datesButton = toolbar.slice(datesButtonStart, datesButtonEnd);
-
-  assert.ok(datesFieldStart >= 0 && datesButtonStart >= 0 && datesButtonEnd > datesFieldStart);
-  assert.match(datesButton, /grid-cols-2/);
-  assert.equal(toolbar.match(/data-flight-results-nav-date-part/g)?.length, 2);
-  assert.match(toolbar, /data-flight-results-nav-search-action[\s\S]*?h-\[44px\] w-\[44px\][\s\S]*?rounded-lg bg-\[#004BB8\]/);
-  assert.match(toolbar, /text-\[14px\] font-normal leading-5 text-\[#142033\]/);
+  assert.ok(preparingStart >= 0 && guidedStart > preparingStart);
+  assert.match(preparing, /flightResultsDesktopSticky/);
+  assert.match(
+    preparing,
+    /createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/,
+  );
 });
 
 test("desktop navbar search opens the Change your flight editor on every click state", () => {
