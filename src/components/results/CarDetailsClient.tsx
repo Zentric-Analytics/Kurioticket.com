@@ -598,10 +598,7 @@ export function CarDetailsExperience({
             }
           />
           {presentation === "standalone-content" ? (
-            <div
-              className="lg:mx-auto lg:mt-1 lg:w-full lg:max-w-[680px] lg:rounded-[14px] lg:border lg:border-[#E0E7EF] lg:bg-white lg:shadow-[0_3px_12px_rgba(7,19,59,0.05)]"
-              data-car-details-desktop-inner-card
-            >
+            <>
               <CarDetailsSectionNav
                 activeTab={activeTab}
                 onTabChange={handleSectionChange}
@@ -685,13 +682,15 @@ export function CarDetailsExperience({
                 </div>
 
                 <div
-                  className="hidden lg:block lg:space-y-5 lg:px-5 lg:pb-8 lg:pt-4"
+                  className="hidden lg:block lg:space-y-4 lg:pb-8 lg:pt-4"
                   data-car-details-desktop-linear-sections
                 >
                   <section
                     ref={compareSectionRef}
+                    className="lg:mx-auto lg:w-full lg:max-w-[680px] lg:rounded-[14px] lg:border lg:border-[#E0E7EF] lg:bg-white lg:shadow-[0_3px_12px_rgba(7,19,59,0.05)]"
                     data-car-details-scroll-section="compare"
                     data-car-details-desktop-section="compare"
+                    data-car-details-desktop-section-card="compare"
                   >
                     {primaryOffer ? (
                       <CarPriceComparisonSection
@@ -714,8 +713,10 @@ export function CarDetailsExperience({
 
                   <section
                     ref={pickupSectionRef}
+                    className="lg:mx-auto lg:w-full lg:max-w-[680px] lg:rounded-[14px] lg:border lg:border-[#E0E7EF] lg:bg-white lg:shadow-[0_3px_12px_rgba(7,19,59,0.05)]"
                     data-car-details-scroll-section="pickup"
                     data-car-details-desktop-section="pickup"
+                    data-car-details-desktop-section-card="pickup"
                   >
                     <DesktopPickupReturnOverview
                       car={car}
@@ -727,8 +728,10 @@ export function CarDetailsExperience({
 
                   <section
                     ref={locationSectionRef}
+                    className="lg:mx-auto lg:w-full lg:max-w-[680px] lg:rounded-[14px] lg:border lg:border-[#E0E7EF] lg:bg-white lg:shadow-[0_3px_12px_rgba(7,19,59,0.05)]"
                     data-car-details-scroll-section="location"
                     data-car-details-desktop-section="location"
+                    data-car-details-desktop-section-card="location"
                   >
                     <DesktopCarHireLocationOverview
                       car={car}
@@ -739,7 +742,7 @@ export function CarDetailsExperience({
                   </section>
                 </div>
               </div>
-            </div>
+            </>
           ) : (
             pickupSection
           )}

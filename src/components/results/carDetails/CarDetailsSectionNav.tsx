@@ -124,8 +124,9 @@ export function CarDetailsSectionNav({
         </div>
         <nav
           aria-label={labels.navigation}
-          className={`z-10 flex min-h-[46px] shrink-0 items-stretch gap-0.5 rounded-[14px] border border-[#DCE4EE] bg-white/95 px-1 shadow-[0_2px_8px_rgba(15,23,42,0.055)] backdrop-blur-md ${desktopStuck ? "relative col-start-2 row-start-1 justify-self-center" : "absolute left-1/2 top-0 -translate-x-1/2"}`}
+          className={`z-10 flex min-h-[46px] shrink-0 items-stretch gap-0.5 transition-[transform,background-color,border-color,box-shadow] duration-200 ease-out ${desktopStuck ? "relative col-start-2 row-start-1 justify-self-center rounded-[14px] border border-[#DCE4EE] bg-white/95 px-1 shadow-[0_2px_8px_rgba(15,23,42,0.055)] backdrop-blur-md" : "absolute left-1/2 top-0 -translate-x-1/2 bg-transparent px-0 shadow-none"}`}
           data-car-details-desktop-tabs
+          data-surface={desktopStuck ? "compact" : "background"}
           data-balanced={desktopStuck ? "true" : "false"}
         >
           {tabs.map((tab) => {

@@ -90,11 +90,23 @@ test("standalone desktop Cars tabs scroll to vertically stacked sections while m
   assert.match(navSource, /onClick=\{\(\) => onTabChange\(tab\.id\)\}/);
 });
 
-test("standalone desktop Cars uses the Flights card-in-card hierarchy without changing current tab content", () => {
+test("standalone desktop Cars keeps the parent card while giving each scroll section its own child card", () => {
   assert.match(layoutSource, /background: #EEF2F7 !important/);
   assert.match(
     experienceSource,
-    /data-car-details-desktop-inner-card[\s\S]*?lg:max-w-\[680px\][\s\S]*?lg:rounded-\[14px\][\s\S]*?lg:bg-white/,
+    /data-car-details-desktop-section-card="compare"/,
+  );
+  assert.match(
+    experienceSource,
+    /data-car-details-desktop-section-card="pickup"/,
+  );
+  assert.match(
+    experienceSource,
+    /data-car-details-desktop-section-card="location"/,
+  );
+  assert.equal(
+    experienceSource.match(/lg:max-w-\[680px\] lg:rounded-\[14px\] lg:border lg:border-\[#E0E7EF\] lg:bg-white lg:shadow-\[0_3px_12px_rgba\(7,19,59,0\.05\)\]/g)?.length,
+    3,
   );
   assert.match(
     experienceSource,
@@ -102,15 +114,7 @@ test("standalone desktop Cars uses the Flights card-in-card hierarchy without ch
   );
   assert.match(experienceSource, /data-car-details-flight-panel="pickup"/);
   assert.match(experienceSource, /data-car-details-flight-panel="location"/);
-  assert.match(experienceSource, /max-w-\[640px\] space-y-2/);
-  assert.match(
-    experienceSource,
-    /data-car-details-desktop-pickup-columns[\s\S]*?border-y border-\[#D8E1EC\]/,
-  );
-  assert.match(
-    experienceSource,
-    /data-car-details-location-identity[\s\S]*?border-b border-\[#D8E1EC\]/,
-  );
+  assert.doesNotMatch(experienceSource, /data-car-details-desktop-inner-card/);
 });
 
 test("guided Car details renders content-only experience with guided headings", () => {
@@ -123,7 +127,7 @@ test("guided Car details renders content-only experience with guided headings", 
   assert.match(guidedSource, /itemHeadingLevel=\{4\}/);
 });
 
-test("standalone desktop Cars keeps the current card-in-card design around the restored scroll sections", () => {
+test("standalone desktop Cars keeps the 900px parent card with background tabs and separated scroll cards", () => {
   assert.match(
     experienceSource,
     /presentation === "standalone-content" \? "lg:grid-cols-1 lg:gap-0"/,
@@ -137,10 +141,9 @@ test("standalone desktop Cars keeps the current card-in-card design around the r
     /data-car-details-desktop-parent-card=\{presentation === "standalone-content" \? "true" : undefined\}/,
   );
   assert.match(experienceSource, /data-car-details-desktop-hero-controls/);
-  assert.match(
-    experienceSource,
-    /data-car-details-desktop-inner-card[\s\S]*?<CarDetailsSectionNav[\s\S]*?data-car-details-desktop-linear-sections/,
-  );
+  assert.match(experienceSource, /<CarDetailsSectionNav/);
+  assert.match(experienceSource, /data-car-details-desktop-linear-sections/);
+  assert.doesNotMatch(experienceSource, /data-car-details-desktop-inner-card/);
 
   const navSource = readFileSync(
     new URL("./CarDetailsSectionNav.tsx", import.meta.url),
@@ -148,6 +151,7 @@ test("standalone desktop Cars keeps the current card-in-card design around the r
   );
   assert.match(navSource, /lg:max-w-\[680px\]/);
   assert.match(navSource, /data-car-details-compact-sticky-tabs/);
+  assert.match(navSource, /data-surface=\{desktopStuck \? "compact" : "background"\}/);
   assert.match(navSource, /lg:sticky lg:top-0/);
   assert.match(navSource, /lg:mt-3/);
 });
