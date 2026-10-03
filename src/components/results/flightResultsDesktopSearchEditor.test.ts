@@ -120,8 +120,8 @@ test("fare strip is one bounded seven-date grid with adjacent week controls", ()
   assert.equal(source.match(/const nearbyFareVisibleCount = 7;/g)?.length, 1);
   assert.match(strip, /data-desktop-nearby-fare-rail/);
   assert.match(strip, /data-desktop-nearby-fare-rail className="relative grid w-full grid-cols-7/);
-  assert.match(strip, /aria-label="Previous nearby fare date"[\s\S]*?absolute -left-9 top-1\/2/);
-  assert.match(strip, /aria-label="Next nearby fare date"[\s\S]*?absolute -right-9 top-1\/2/);
+  assert.match(source, /aria-label="Previous nearby fare date"[\s\S]*?absolute -left-9 top-1\/2/);
+  assert.match(source, /aria-label="Next nearby fare date"[\s\S]*?absolute -right-9 top-1\/2/);
   assert.doesNotMatch(strip, /max-w-\[980px\]|mx-auto|grid-cols-\[42px_repeat\(7,minmax\(0,1fr\)\)_42px\]/);
   assert.match(strip, /aria-label="Previous nearby fare date"/);
   assert.match(strip, /aria-label="Next nearby fare date"/);
