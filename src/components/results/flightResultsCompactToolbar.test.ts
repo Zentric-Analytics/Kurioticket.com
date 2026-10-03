@@ -55,8 +55,8 @@ test("desktop sticky compact search opens the selected control on the first clic
   const callback = stickyEditorCallbackSource();
 
   assert.match(callback, /target: "trip" \| "route" \| "dates" \| "travelers"/);
-  assert.match(callback, /setActiveDatePicker\(target === "dates" \? "departure" : null\)/);
-  assert.match(callback, /setTravelerPopoverOpen\(target === "travelers"\)/);
+  assert.match(callback, /tripTypeInput !== "multi-city" && target === "dates" \? "departure" : null/);
+  assert.match(callback, /tripTypeInput !== "multi-city" && target === "travelers"/);
   assert.match(callback, /target === "route" && originInput\.trim\(\)\.length >= 2/);
   assert.match(callback, /stickySearchLauncherRef\.current = event\.currentTarget/);
   assert.match(callback, /tripTypeInput === "multi-city" \|\| target === "trip" \? null : target/);
@@ -178,7 +178,7 @@ test("desktop Flight search expansion stays aligned to the header search width",
   assert.match(frame, /top: rect\.bottom/);
   assert.match(popout, /rounded-b-\[12px\] rounded-t-none/);
   assert.match(popout, /shadow-\[0_10px_24px_-18px_rgba\(15,23,42,0\.24\)\]/);
-  assert.doesNotMatch(popout, /width: "calc\(100vw - 32px\)"/);
+  assert.match(popout, /desktopSearchPopoverFrame[\s\S]*width: desktopSearchPopoverFrame\.width/);
 });
 
 
