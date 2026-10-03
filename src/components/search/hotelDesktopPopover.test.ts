@@ -27,7 +27,7 @@ const nearBottomGeometry = (desiredHeight: number, preferredWidth: number) =>
 
 test("Hotel dates, guests, and destination panels flip above a low launcher", () => {
   assert.equal(nearBottomGeometry(420, 570).placement, "above");
-  assert.equal(nearBottomGeometry(356, 360).placement, "above");
+  assert.equal(nearBottomGeometry(420, 360).placement, "above");
   assert.equal(nearBottomGeometry(320, 420).placement, "above");
 });
 
@@ -65,10 +65,10 @@ test("all three desktop Hotel pickers reuse the shared wrapper", () => {
   assert.equal(source.match(/<HotelDesktopPopover/g)?.length, 3);
   assert.match(source, /preferredWidth=\{420\}[\s\S]*desiredHeight=\{320\}/);
   assert.match(source, /preferredWidth=\{570\}[\s\S]*desiredHeight=\{isStickyDialog \? 360 : 420\}/);
-  assert.match(source, /preferredWidth=\{360\}[\s\S]*desiredHeight=\{356\}/);
+  assert.match(source, /preferredWidth=\{360\}[\s\S]*desiredHeight=\{420\}/);
 });
 
-test("desktop Hotel guests picker has moderate production hierarchy without redundant actions", () => {
+test("desktop Hotel guests picker separates Guests and Rooms while keeping production typography and colors", () => {
   const source = readFileSync(
     new URL("./HotelSearchBar.tsx", import.meta.url),
     "utf8",
@@ -83,6 +83,12 @@ test("desktop Hotel guests picker has moderate production hierarchy without redu
   assert.match(source, /t\("hotelGuests\.adultDescription"\)/);
   assert.match(source, /t\("hotelGuests\.childDescription"\)/);
   assert.match(source, /t\("hotelGuests\.roomDescription"\)/);
+  assert.match(guestsPanelSource, /desktop-guests-heading/);
+  assert.match(guestsPanelSource, /desktop-rooms-heading/);
+  assert.match(guestsPanelSource, /t\("adults"\)/);
+  assert.match(guestsPanelSource, /t\("children"\)/);
+  assert.match(guestsPanelSource, /t\("rooms"\)/);
+  assert.match(guestsPanelSource, /t\("petFriendly"\)/);
   assert.doesNotMatch(
     guestsPanelSource,
     /RowIcon|<PawPrint|icon: UserRound|icon: BedDouble/,
@@ -136,4 +142,17 @@ test("desktop Hotel hero keeps the search card visible on laptop viewports", () 
   );
   assert.match(source, /min-h-\[28rem\][\s\S]*lg:min-h-\[29rem\]/);
   assert.match(source, /bottom-\[-78px\][\s\S]*lg:bottom-\[-80px\]/);
+});
+
+
+test("Hotel Results desktop edit popovers adopt the Hotel Details popup font family without copying reference-image colors", () => {
+  const source = readFileSync(
+    new URL("./HotelSearchBar.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /isResultsFlat && "font-sans text-\[#192024\]"/);
+  assert.match(source, /border-slate-200/);
+  assert.match(source, /text-slate-950/);
+  assert.match(source, /text-slate-500/);
+  assert.doesNotMatch(source, /#165DFF|#1769ff|#0b57d0/);
 });
