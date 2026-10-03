@@ -182,13 +182,10 @@ test("standalone details use persistent mobile controls with native-ordered hero
     clientSource,
     /className={activeTab !== "location" \? "hidden" : ""}/,
   );
-  assert.match(clientSource, /data-car-details-desktop-tab-panels/);
-  assert.match(clientSource, /data-car-details-flight-style-panel/);
-  assert.match(
-    clientSource,
-    /lg:max-w-\[680px\][^"]*lg:bg-white[^"]*lg:px-5/,
-  );
-  assert.doesNotMatch(clientSource, /data-car-details-desktop-linear-sections/);
+  assert.match(clientSource, /data-car-details-desktop-linear-sections/);
+  assert.doesNotMatch(clientSource, /data-car-details-desktop-tab-panels/);
+  assert.match(clientSource, /target\?\.scrollIntoView\(\{/);
+  assert.match(clientSource, /scheduleDesktopScrollState/);
   assert.doesNotMatch(clientSource, /data-car-details-scroll-section="rental"/);
   assert.doesNotMatch(navSource, /\{ id: "rental", label: labels\.rental \}/);
   assert.match(navSource, /const mobileTabs = tabs;/);
@@ -379,7 +376,7 @@ test("standalone desktop hero keeps specifications directly on the parent Cars b
   assert.doesNotMatch(heroSource, /data-car-details-desktop-overview-summary/);
 });
 
-test("desktop car details center the hero and keep Back Save and Share inside it", () => {
+test("desktop car details keep hero controls and restore compact sticky Back Save and Share", () => {
   assert.match(heroSource, /data-car-details-desktop-overview/);
   assert.match(heroSource, /data-car-details-desktop-overview-image/);
   assert.match(heroSource, /data-car-details-desktop-overview-identity/);
@@ -401,9 +398,11 @@ test("desktop car details center the hero and keep Back Save and Share inside it
     clientSource,
     /data-car-details-utility-placement="hero"[\s\S]*?<CarHeroActions[\s\S]*?desktop/,
   );
-  assert.doesNotMatch(clientSource, /data-car-details-desktop-controls/);
-  assert.doesNotMatch(clientSource, /data-car-details-utility-placement="tabs"/);
-  assert.doesNotMatch(clientSource, /desktopSectionBarStuck/);
+  assert.match(
+    clientSource,
+    /data-car-details-utility-placement="tabs"[\s\S]*?<CarHeroActions[\s\S]*?desktop/,
+  );
+  assert.match(clientSource, /desktopSectionBarStuck/);
   assert.doesNotMatch(heroSource, /data-car-details-desktop-overview-summary/);
   assert.doesNotMatch(clientSource, /function StandaloneDesktopDealSummary/);
 
@@ -413,11 +412,11 @@ test("desktop car details center the hero and keep Back Save and Share inside it
   const heroStart = clientSource.indexOf("<CarDetailsHero");
   assert.ok(
     sandboxStart >= 0 && heroStart > sandboxStart,
-    "KAYAK and Kurioticket continue through the same integrated desktop hero",
+    "KAYAK and Kurioticket continue through the same desktop hero",
   );
 });
 
-test("desktop Cars nests the current compact tab card inside the larger car information card", () => {
+test("desktop Cars keeps the current compact inner card while restoring vertical scroll sections", () => {
   assert.match(
     clientSource,
     /data-car-details-desktop-parent-card=\{presentation === "standalone-content" \? "true" : undefined\}/,
@@ -426,28 +425,27 @@ test("desktop Cars nests the current compact tab card inside the larger car info
     clientSource,
     /className="lg:mx-auto lg:mt-1 lg:w-full lg:max-w-\[680px\] lg:rounded-\[14px\] lg:border lg:border-\[#E0E7EF\] lg:bg-white lg:shadow-\[0_3px_12px_rgba\(7,19,59,0\.05\)\]"\s*data-car-details-desktop-inner-card/,
   );
-  assert.match(clientSource, /data-car-details-desktop-tab-panels/);
-  assert.match(clientSource, /lg:max-w-\[680px\]/);
+  assert.match(clientSource, /data-car-details-desktop-linear-sections/);
+  assert.doesNotMatch(clientSource, /data-car-details-desktop-tab-panels/);
   assert.match(clientSource, /max-w-\[640px\]/);
 });
 
-test("desktop Cars sticky tabs use the same in-place tab model as Flights", () => {
-  assert.match(sectionNavSource, /data-car-details-flight-style-tabs/);
+test("desktop Cars restores the compact sticky scroll navigation model", () => {
+  assert.match(sectionNavSource, /data-car-details-compact-sticky-tabs/);
   assert.match(sectionNavSource, /lg:sticky lg:top-0/);
-  assert.match(sectionNavSource, /role="tablist"/);
-  assert.match(sectionNavSource, /role="tab"/);
-  assert.match(sectionNavSource, /aria-selected=\{selected\}/);
-  assert.match(sectionNavSource, /aria-controls=\{`car-desktop-\$\{tab\.id\}-panel`\}/);
-  assert.match(sectionNavSource, /min-h-11 flex-1/);
-  assert.match(sectionNavSource, /border-b-\[3px\]/);
-  assert.match(sectionNavSource, /border-\[#075EE8\] text-\[#07133B\]/);
-  assert.doesNotMatch(
-    sectionNavSource,
-    /desktopStuck|desktopBackControl|desktopUtilityActions|data-car-details-desktop-sticky-actions/,
-  );
-  assert.match(clientSource, /data-car-details-desktop-tab-panels/);
-  assert.doesNotMatch(clientSource, /data-car-details-desktop-linear-sections/);
-  assert.doesNotMatch(clientSource, /scrollIntoView/);
+  assert.match(sectionNavSource, /desktopStuck/);
+  assert.match(sectionNavSource, /desktopBackControl/);
+  assert.match(sectionNavSource, /desktopUtilityActions/);
+  assert.match(sectionNavSource, /data-car-details-desktop-sticky-back/);
+  assert.match(sectionNavSource, /data-car-details-desktop-sticky-actions/);
+  assert.match(sectionNavSource, /data-car-details-desktop-sticky-backdrop/);
+  assert.match(sectionNavSource, /min-h-\[48px\]/);
+  assert.match(sectionNavSource, /min-h-\[46px\]/);
+  assert.match(sectionNavSource, /rounded-\[14px\]/);
+  assert.match(clientSource, /data-car-details-desktop-linear-sections/);
+  assert.match(clientSource, /target\?\.scrollIntoView\(\{/);
+  assert.match(clientSource, /scheduleDesktopScrollState/);
+  assert.doesNotMatch(clientSource, /data-car-details-desktop-tab-panels/);
 });
 
 test("desktop Cars keeps Save and Share inside the hero while Compare deals owns booking information", () => {
@@ -483,8 +481,8 @@ test("desktop Cars keeps Save and Share inside the hero while Compare deals owns
   assert.match(clientSource, /data-mobile-car-booking-dock/);
   assert.equal(clientSource.match(/<BookingSummary\b/g)?.length, 1);
 });
-test("desktop Pickup/Return and Location use one flat Flights-style panel hierarchy", () => {
-  assert.match(clientSource, /data-car-details-desktop-tab-panels/);
+test("desktop Pickup/Return and Location keep their current panel hierarchy inside the scroll sections", () => {
+  assert.match(clientSource, /data-car-details-desktop-linear-sections/);
   const pickup = sourceBetween(
     clientSource,
     "function DesktopPickupReturnOverview",
