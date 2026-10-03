@@ -86,22 +86,18 @@ export function CarDetailsSectionNav({
 
       <div
         ref={desktopBarRef}
-        className={`relative hidden min-h-[52px] w-full transition-[background-color,border-color] duration-200 ease-out lg:sticky lg:top-0 lg:z-40 lg:mx-auto lg:mt-2 lg:max-w-[760px] ${desktopStuck ? "lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-stretch lg:gap-3 lg:bg-transparent" : "lg:block lg:bg-[#F8FAFC]"}`}
+        className={`relative hidden min-h-[48px] w-full transition-[background-color,border-color] duration-200 ease-out lg:sticky lg:top-0 lg:z-40 lg:mx-auto lg:mt-3 lg:max-w-[760px] ${desktopStuck ? "lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-stretch lg:gap-3 lg:bg-transparent" : "lg:block lg:bg-transparent"}`}
         data-car-details-section-nav
+        data-car-details-compact-sticky-tabs
         data-stuck={desktopStuck ? "true" : "false"}
       >
         <div
           aria-hidden="true"
-          className={`pointer-events-none fixed inset-x-0 top-0 z-0 hidden h-[52px] bg-[#F8FAFC]/95 transition-[opacity,box-shadow] duration-200 ease-out lg:block ${desktopStuck ? "opacity-100 shadow-[0_5px_16px_rgba(15,23,42,0.06)] backdrop-blur-xl" : "opacity-0"}`}
+          className={`pointer-events-none fixed inset-x-0 top-0 z-0 hidden h-[48px] bg-[#EEF2F7]/92 transition-[opacity,box-shadow] duration-200 ease-out lg:block ${desktopStuck ? "opacity-100 shadow-[0_5px_16px_rgba(15,23,42,0.055)] backdrop-blur-xl" : "opacity-0"}`}
           data-car-details-desktop-sticky-backdrop
         />
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute bottom-0 left-1/2 z-[1] hidden h-px w-[560px] max-w-[calc(100%-2rem)] -translate-x-1/2 bg-slate-200 lg:block"
-          data-car-details-desktop-nav-rule
-        />
         <div
-          className={`z-10 transition-[opacity,transform] duration-200 ease-out ${desktopStuck ? "relative col-start-1 row-start-1 flex min-h-[52px] items-center self-stretch justify-self-start translate-x-0 translate-y-0 opacity-100" : "pointer-events-none absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 opacity-0"}`}
+          className={`z-10 transition-[opacity,transform] duration-200 ease-out ${desktopStuck ? "relative col-start-1 row-start-1 flex min-h-[48px] items-center self-stretch justify-self-start translate-x-0 translate-y-0 opacity-100" : "pointer-events-none absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 opacity-0"}`}
           data-car-details-desktop-sticky-back
           aria-hidden={desktopStuck ? undefined : true}
         >
@@ -109,7 +105,7 @@ export function CarDetailsSectionNav({
         </div>
         <nav
           aria-label={labels.navigation}
-          className={`z-10 flex min-h-[52px] shrink-0 items-stretch gap-0.5 transition-[transform] duration-200 ease-out ${desktopStuck ? "relative col-start-2 row-start-1 justify-self-center translate-x-0" : "absolute left-1/2 top-0 -translate-x-1/2"}`}
+          className={`z-10 flex min-h-[46px] shrink-0 items-stretch gap-0.5 rounded-[14px] border border-[#DCE4EE] bg-white/95 px-1 shadow-[0_2px_8px_rgba(15,23,42,0.055)] backdrop-blur-md transition-[transform] duration-200 ease-out ${desktopStuck ? "relative col-start-2 row-start-1 justify-self-center translate-x-0" : "absolute left-1/2 top-0 -translate-x-1/2"}`}
           data-car-details-desktop-tabs
           data-balanced={desktopStuck ? "true" : "false"}
         >
@@ -121,7 +117,7 @@ export function CarDetailsSectionNav({
                 type="button"
                 aria-current={selected ? "location" : undefined}
                 onClick={() => onTabChange(tab.id)}
-                className={`car-details-desktop-selected-info-type focus-ring relative inline-flex min-h-[52px] items-center justify-center whitespace-nowrap border-b-2 px-3 text-[13px] leading-5 transition-colors ${selected ? "border-[#192024] text-slate-950" : "border-transparent text-[#334155] hover:text-[#142033]"}`}
+                className={`car-details-desktop-selected-info-type focus-ring relative inline-flex min-h-[46px] items-center justify-center whitespace-nowrap border-b-2 px-3 text-[13px] leading-5 transition-colors ${selected ? "border-[#075EE8] text-[#07133B]" : "border-transparent text-[#526174] hover:text-[#142033]"}`}
               >
                 {tab.label}
               </button>
@@ -129,7 +125,7 @@ export function CarDetailsSectionNav({
           })}
         </nav>
         <div
-          className={`z-10 transition-[opacity,transform] duration-200 ease-out ${desktopStuck ? "relative col-start-3 row-start-1 flex min-h-[52px] items-center self-stretch justify-self-end translate-x-0 translate-y-0 opacity-100" : "pointer-events-none absolute right-0 top-1/2 translate-x-1 -translate-y-1/2 opacity-0"}`}
+          className={`z-10 transition-[opacity,transform] duration-200 ease-out ${desktopStuck ? "relative col-start-3 row-start-1 flex min-h-[48px] items-center self-stretch justify-self-end translate-x-0 translate-y-0 opacity-100" : "pointer-events-none absolute right-0 top-1/2 translate-x-1 -translate-y-1/2 opacity-0"}`}
           data-car-details-desktop-sticky-actions
           aria-hidden={desktopStuck ? undefined : true}
         >
