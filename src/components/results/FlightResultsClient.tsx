@@ -1197,7 +1197,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
     useState(false);
   const [activeStickySearchTarget, setActiveStickySearchTarget] = useState<
-    "trip" | "route" | "dates" | "return" | "travelers" | null
+    "trip" | "origin" | "destination" | "dates" | "return" | "travelers" | null
   >(null);
   const [desktopNavSearchTarget, setDesktopNavSearchTarget] =
     useState<HTMLElement | null>(null);
@@ -1258,7 +1258,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const stickySearchPopoutRef = useRef<HTMLFormElement | null>(null);
   const stickySearchLauncherRef = useRef<HTMLButtonElement | null>(null);
   const pendingStickySearchTargetRef = useRef<
-    "trip" | "route" | "dates" | "return" | "travelers" | null
+    "trip" | "origin" | "destination" | "dates" | "return" | "travelers" | null
   >(null);
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const expandedSearchScrollYRef = useRef(0);
@@ -1411,7 +1411,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const openStickySearchEditor = useCallback(
     (
       event: React.MouseEvent<HTMLButtonElement>,
-      target: "trip" | "route" | "dates" | "return" | "travelers",
+      target: "trip" | "origin" | "destination" | "dates" | "return" | "travelers",
     ) => {
       stickySearchLauncherRef.current = event.currentTarget;
       const compactForm = event.currentTarget.closest<HTMLElement>(
@@ -1420,7 +1420,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       updateDesktopSearchPopoverFrame(compactForm);
       const resolvedTarget =
         tripTypeInput === "multi-city" &&
-        (target === "route" || target === "dates" || target === "return")
+        (target === "origin" ||
+          target === "destination" ||
+          target === "dates" ||
+          target === "return")
           ? "trip"
           : target;
       pendingStickySearchTargetRef.current =
@@ -1432,9 +1435,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setActiveDesktopSearchSurface("sticky");
       setTripTypeMenuOpen(false);
       setActiveSuggest(
-        resolvedTarget === "route" && originInput.trim().length >= 2
+        resolvedTarget === "origin" && originInput.trim().length >= 2
           ? "origin"
-          : null,
+          : resolvedTarget === "destination" &&
+              destinationInput.trim().length >= 2
+            ? "destination"
+            : null,
       );
       setDropdownPosition(null);
       setActiveDatePicker(
@@ -1449,6 +1455,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setTravelerPopoverPosition(null);
     },
     [
+      destinationInput,
       originInput,
       setActiveDatePicker,
       setActiveSuggest,
@@ -1643,8 +1650,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       const pendingTarget = pendingStickySearchTargetRef.current;
       pendingStickySearchTargetRef.current = null;
 
-      if (pendingTarget === "route") {
+      if (pendingTarget === "origin") {
         stickyOriginWrapRef.current
+          ?.querySelector<HTMLInputElement>("input")
+          ?.focus({ preventScroll: true });
+        return;
+      }
+
+      if (pendingTarget === "destination") {
+        stickyDestinationWrapRef.current
           ?.querySelector<HTMLInputElement>("input")
           ?.focus({ preventScroll: true });
         return;
@@ -3352,6 +3366,21 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   function handleSwapLocations() {
     markExpandedSearchInteraction();
+
+    if (tripTypeInput === "multi-city") {
+      setMultiCityLegs((currentLegs) =>
+        currentLegs.map((leg, index) =>
+          index === 0
+            ? {
+                ...leg,
+                origin: leg.destination,
+                destination: leg.origin,
+              }
+            : leg,
+        ),
+      );
+      return;
+    }
 
     const currentOriginInput = originInput;
     const currentOriginCode = originCode;
@@ -5488,7 +5517,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <form
         onSubmit={handleCompactSearchSubmit}
         data-flight-results-nav-search-form
-        className="mx-auto grid h-[40px] w-full max-w-[760px] grid-cols-[108px_minmax(90px,1fr)_30px_minmax(90px,1fr)_170px_142px_40px] items-center gap-1 overflow-visible"
+        className="mx-auto grid h-[40px] w-full max-w-[760px] grid-cols-[82px_minmax(0,1fr)_24px_minmax(0,1fr)_minmax(118px,1.1fr)_minmax(100px,0.9fr)_40px] items-center gap-1 overflow-visible xl:grid-cols-[108px_minmax(90px,1fr)_30px_minmax(90px,1fr)_170px_142px_40px]"
       >
         <button
           type="button"
@@ -5514,10 +5543,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <button
           type="button"
           aria-expanded={
-            isStickySearchPanelOpen && activeStickySearchTarget === "route"
+            isStickySearchPanelOpen && activeStickySearchTarget === "origin"
           }
           aria-label={`${t("editFlightSearch")}: ${originSummary}`}
-          onClick={(event) => openStickySearchEditor(event, "route")}
+          onClick={(event) => openStickySearchEditor(event, "origin")}
           className={cn(fieldClass, "justify-center")}
         >
           <span className={valueClass}>{originSummary}</span>
@@ -5535,10 +5564,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <button
           type="button"
           aria-expanded={
-            isStickySearchPanelOpen && activeStickySearchTarget === "route"
+            isStickySearchPanelOpen && activeStickySearchTarget === "destination"
           }
           aria-label={`${t("editFlightSearch")}: ${destinationSummary}`}
-          onClick={(event) => openStickySearchEditor(event, "route")}
+          onClick={(event) => openStickySearchEditor(event, "destination")}
           className={cn(fieldClass, "justify-center")}
         >
           <span className={valueClass}>{destinationSummary}</span>
@@ -5594,7 +5623,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       { label: t("multiCity"), value: "multi-city", disabled: false },
     ];
     const panelGridClass =
-      "grid-cols-[108px_minmax(90px,1fr)_30px_minmax(90px,1fr)_170px_142px_40px]";
+      "grid-cols-[82px_minmax(0,1fr)_24px_minmax(0,1fr)_minmax(118px,1.1fr)_minmax(100px,0.9fr)_40px] xl:grid-cols-[108px_minmax(90px,1fr)_30px_minmax(90px,1fr)_170px_142px_40px]";
     const departureSummary = departureDateInput
       ? formatCompactDateLabel(departureDateInput, calendarLocale)
       : t("departure");
@@ -5696,7 +5725,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   </>
                 ) : null}
 
-                {activeStickySearchTarget === "route" ? (
+                {activeStickySearchTarget === "origin" ||
+                activeStickySearchTarget === "destination" ? (
                   <div
                     className={cn(
                       "pointer-events-auto col-start-2 col-span-3 grid min-h-[64px] grid-cols-[minmax(0,1fr)_30px_minmax(0,1fr)] overflow-visible rounded-[12px] border border-[#CFD9E5] bg-white shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]",
