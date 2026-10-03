@@ -142,7 +142,7 @@ function DesktopProviderOffer({
           {!totalPrice ? <span className="block text-[12px] font-normal leading-[14px] text-[#59636a]" data-nightly-supporting-label>{perNightText.replace("{{price}}", "").trim()}</span> : null}
         </span>
       </label>
-      <button type="button" className="focus-ring inline-flex h-9 w-[112px] shrink-0 items-center justify-center rounded-lg bg-[#004BB8] px-3 text-[13px] font-semibold leading-5 text-white transition-colors hover:bg-[#003B91] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500" disabled={disabled || !onContinue} aria-label={pending ? `Opening ${offer.providerName} offer` : `View deal with ${offer.providerName}`} onClick={event => { onSelect(offer.id); onContinue?.(offer.id, event.currentTarget); }} data-provider-action>{pending ? "Opening…" : "View deal"}</button>
+      <button type="button" className="focus-ring inline-flex h-8 w-[96px] shrink-0 items-center justify-center rounded-md bg-[#004BB8] px-2.5 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-[#003B91] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500" disabled={disabled || !onContinue} aria-label={pending ? `Opening ${offer.providerName} offer` : `View deal with ${offer.providerName}`} onClick={event => { onSelect(offer.id); onContinue?.(offer.id, event.currentTarget); }} data-provider-action>{pending ? "Opening…" : "View deal"}</button>
     </article>
   );
 }
