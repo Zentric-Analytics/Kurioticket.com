@@ -83,18 +83,22 @@ test("desktop Flight Results keeps the navbar search target synchronized through
 });
 
 
-test("desktop Flight Results keeps the Hotels-style header shell mounted through preparation", () => {
+test("desktop Flight Results matches Hotels by hiding navbar search until results are ready", () => {
   const shellStart = flight.indexOf("const standaloneResultsHeader = guidedMode ? null : (");
   const preparingStart = flight.indexOf("if (resultsUiPreparing) {", shellStart);
   const shell = flight.slice(shellStart, preparingStart);
   const guidedStart = flight.indexOf("if (guidedMode) return (", preparingStart);
   const preparing = flight.slice(preparingStart, guidedStart);
+  const readyStart = flight.indexOf("return (", guidedStart);
+  const ready = flight.slice(readyStart);
 
   assert.ok(shellStart >= 0 && preparingStart > shellStart && guidedStart > preparingStart);
   assert.match(shell, /<AppHeader[\s\S]*?flightResultsDesktopSticky/);
-  assert.match(shell, /createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
+  assert.doesNotMatch(shell, /createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
+  assert.match(shell, /const readyDesktopNavbarSearch =[\s\S]*?createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
   assert.match(preparing, /\{standaloneResultsHeader\}/);
-  assert.doesNotMatch(preparing, /<AppHeader/);
+  assert.doesNotMatch(preparing, /readyDesktopNavbarSearch|renderStickySearchPopoutOverlay\(\)|<AppHeader/);
+  assert.match(ready, /\{standaloneResultsHeader\}[\s\S]*?\{readyDesktopNavbarSearch\}/);
 });
 
 test("desktop Flight navbar search copies the Hotel results-flat card geometry", () => {
@@ -116,6 +120,10 @@ test("desktop Flight navbar search copies the Hotel results-flat card geometry",
   assert.equal(toolbar.match(/data-flight-results-nav-date-part/g)?.length, 2);
   assert.match(toolbar, /data-flight-results-nav-search-action[\s\S]*?h-\[44px\] w-\[44px\][\s\S]*?rounded-lg bg-\[#004BB8\]/);
   assert.match(toolbar, /text-\[14px\] font-normal leading-5 text-\[#142033\]/);
+  assert.match(toolbar, /<MapPin className="h-\[18px\] w-\[18px\] shrink-0 text-\[#071A48\]"/);
+  assert.equal(toolbar.match(/<Calendar className="h-\[18px\] w-\[18px\] shrink-0 text-\[#071A48\]"/g)?.length, 2);
+  assert.match(toolbar, /<UserRound className="h-\[18px\] w-\[18px\] shrink-0 text-\[#071A48\]"/);
+  assert.doesNotMatch(toolbar, /<ArrowRightLeft/);
 });
 
 test("desktop navbar search opens the Change your flight editor on every click state", () => {
