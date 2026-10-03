@@ -1257,7 +1257,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const stickySearchCloseButtonRef = useRef<HTMLButtonElement | null>(null);
   const stickySearchLauncherRef = useRef<HTMLButtonElement | null>(null);
   const pendingStickySearchTargetRef = useRef<
-    "trip" | "route" | "dates" | "travelers" | null
+    "trip" | "route" | "dates" | "return" | "travelers" | null
   >(null);
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const expandedSearchScrollYRef = useRef(0);
@@ -1410,7 +1410,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const openStickySearchEditor = useCallback(
     (
       event: React.MouseEvent<HTMLButtonElement>,
-      target: "trip" | "route" | "dates" | "travelers",
+      target: "trip" | "route" | "dates" | "return" | "travelers",
     ) => {
       stickySearchLauncherRef.current = event.currentTarget;
       const compactForm = event.currentTarget.closest<HTMLElement>(
@@ -1431,7 +1431,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       );
       setDropdownPosition(null);
       setActiveDatePicker(
-        tripTypeInput !== "multi-city" && target === "dates" ? "departure" : null,
+        tripTypeInput !== "multi-city"
+          ? target === "dates"
+            ? "departure"
+            : target === "return"
+              ? "return"
+              : null
+          : null,
       );
       setDatePickerPosition(null);
       setTravelerPopoverOpen(
@@ -1640,7 +1646,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         return;
       }
 
-      if (pendingTarget === "dates") {
+      if (pendingTarget === "dates" || pendingTarget === "return") {
         stickyDateButtonRef.current?.focus({ preventScroll: true });
         return;
       }
@@ -5492,7 +5498,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             type="button"
             aria-expanded={isStickySearchPanelOpen}
             aria-label={`${t("editFlightSearch")}: ${returnSummary}`}
-            onClick={(event) => openStickySearchEditor(event, "dates")}
+            onClick={(event) => openStickySearchEditor(event, "return")}
             className={fieldClass}
           >
             <Calendar className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
