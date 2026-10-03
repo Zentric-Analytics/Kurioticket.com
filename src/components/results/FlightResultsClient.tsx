@@ -1578,6 +1578,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   );
 
   useEffect(() => {
+    if (!resultsUiPreparing || !isStickySearchPanelOpen) return;
+
+    pendingStickySearchTargetRef.current = null;
+    collapseStickySearch({ restoreScroll: false });
+  }, [collapseStickySearch, isStickySearchPanelOpen, resultsUiPreparing]);
+
+  useEffect(() => {
     if (!isStickySearchPanelOpen || typeof window === "undefined") {
       return undefined;
     }
