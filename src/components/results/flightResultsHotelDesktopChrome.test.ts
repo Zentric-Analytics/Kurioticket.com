@@ -34,7 +34,7 @@ test("desktop Flight Results reuses the Hotels header composition", () => {
   );
   assert.match(
     flight,
-    /document\.querySelector<HTMLElement>\("\[data-flight-results-nav-search\]"\)/,
+    /document\.querySelector<HTMLElement>\(\s*"\[data-flight-results-nav-search\]"\s*,?\s*\)/,
   );
   assert.match(
     flight,
