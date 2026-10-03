@@ -186,7 +186,11 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /data-car-details-flight-style-panel/);
   assert.match(
     clientSource,
-    /lg:max-w-\[900px\][^"]*lg:bg-white[^"]*lg:px-5/,
+    /data-car-details-desktop-full-height-card=\{presentation === "standalone-content" \? "true" : undefined\}/,
+  );
+  assert.match(
+    clientSource,
+    /className="hidden lg:block lg:min-h-\[280px\] lg:w-full lg:bg-transparent lg:px-5 lg:pb-7"/,
   );
   assert.doesNotMatch(clientSource, /data-car-details-desktop-linear-sections/);
   assert.doesNotMatch(clientSource, /data-car-details-scroll-section="rental"/);
