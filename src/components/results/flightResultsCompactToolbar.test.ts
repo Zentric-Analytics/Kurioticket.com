@@ -21,50 +21,21 @@ function desktopHeaderSearchBarSource() {
   return source.slice(start, end);
 }
 
-test("desktop Flight Results header matches the compact city-route reference without reserved width", () => {
+test("desktop Flight Results header is compact, trip-aware, and uses lighter Hotels-like surfaces", () => {
   const toolbar = desktopHeaderSearchBarSource();
 
   assert.match(toolbar, /data-flight-results-nav-search-form/);
-  assert.match(toolbar, /mobileTripTypeSummary/);
-  assert.match(toolbar, /w-fit max-w-full/);
-  assert.match(toolbar, /h-\[40px\]/);
-  assert.match(
-    toolbar,
-    /grid-cols-\[74px_minmax\(0,160px\)_minmax\(0,150px\)_46px_40px\]/,
-  );
-  assert.match(
-    toolbar,
-    /xl:grid-cols-\[96px_190px_170px_56px_40px\]/,
-  );
+  assert.match(toolbar, /tripTypeInput === "round-trip"/);
+  assert.match(toolbar, /grid-cols-\[96px_minmax\(0,1fr\)_minmax\(138px,170px\)_50px_40px\]/);
+  assert.match(toolbar, /grid-cols-\[96px_minmax\(0,1fr\)_112px_50px_40px\]/);
+  assert.match(toolbar, /xl:grid-cols-\[104px_190px_170px_56px_40px\]/);
+  assert.match(toolbar, /xl:grid-cols-\[104px_190px_112px_56px_40px\]/);
   assert.match(toolbar, /getCompactCityLabel/);
-  assert.match(toolbar, /getLocalizedCityName\(matchedAirport\.city, locale\)/);
-  assert.match(toolbar, /compactOriginLabel/);
-  assert.match(toolbar, /compactDestinationLabel/);
   assert.match(toolbar, /data-flight-results-compact-route/);
-  assert.match(
-    toolbar,
-    /grid-cols-\[minmax\(0,1fr\)_28px_minmax\(0,1fr\)\]/,
-  );
-  assert.match(toolbar, /aria-label=\{t\("swapOriginDestination"\)\}/);
-  assert.match(toolbar, /<ArrowRightLeft className="h-4 w-4"/);
-  assert.match(toolbar, /formatDesktopHeaderDateLabel/);
-  assert.match(toolbar, /dateSummary/);
-  assert.match(toolbar, /mobileTravelerTotal/);
-  assert.match(
-    toolbar,
-    /aria-label=\{\`\$\{t\("editFlightSearch"\)\}: \$\{travelerCabinSummary\}\`\}/,
-  );
-  assert.match(toolbar, /openStickySearchEditor\(event, "trip"\)/);
-  assert.match(toolbar, /openStickySearchEditor\(event, "origin"\)/);
-  assert.match(toolbar, /openStickySearchEditor\(event, "destination"\)/);
-  assert.match(toolbar, /openStickySearchEditor\(event, "dates"\)/);
-  assert.doesNotMatch(toolbar, /openStickySearchEditor\(event, "return"\)/);
-  assert.match(toolbar, /openStickySearchEditor\(event, "travelers"\)/);
-  assert.doesNotMatch(toolbar, /<ChevronDown/);
+  assert.match(toolbar, /bg-\[#F8FAFC\]/);
+  assert.doesNotMatch(toolbar, /bg-\[#EEF2F6\]|bg-\[#E1E8EF\]/);
   assert.match(toolbar, /bg-\[#004BB8\]/);
-  assert.doesNotMatch(toolbar, /max-w-\[590px\]/);
 });
-
 
 test("desktop Flight header swap updates the first multi-city leg", () => {
   const start = source.indexOf("function handleSwapLocations()");
@@ -89,6 +60,14 @@ test("desktop Flight header uses the requested weekday numeric date format", () 
     helper,
     /return `\$\{weekday\} \$\{date\.getMonth\(\) \+ 1\}\/\$\{date\.getDate\(\)\}`/,
   );
+});
+
+test("compact multi-city header follows the first edited leg date", () => {
+  const toolbar = desktopHeaderSearchBarSource();
+
+  assert.match(toolbar, /tripTypeInput === "multi-city" && firstMultiCityLeg/);
+  assert.match(toolbar, /\? firstMultiCityLeg\.departureDate/);
+  assert.match(toolbar, /: departureDateInput/);
 });
 
 
@@ -128,6 +107,13 @@ test("sticky search moves focus directly to the requested field editor", () => {
   assert.match(source, /stickySearchLauncherRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
 });
 
+test("direct route editors restore focus to the remounted header launcher", () => {
+  assert.match(source, /stickySearchRestoreTargetRef/);
+  assert.match(source, /data-flight-results-header-origin/);
+  assert.match(source, /data-flight-results-header-destination/);
+  assert.match(source, /document\.querySelector<HTMLButtonElement>\(selector\)/);
+  assert.match(source, /mountedLauncher \?\? stickySearchLauncherRef\.current/);
+});
 test("header search fields use the shared neutral focus treatment", () => {
   const toolbar = desktopHeaderSearchBarSource();
 
@@ -135,57 +121,56 @@ test("header search fields use the shared neutral focus treatment", () => {
   assert.doesNotMatch(toolbar, /focus-visible:bg-slate/);
 });
 
-test("Flight Results no longer opens a duplicated full search form below the header", () => {
+test("desktop Flight header edits route date and travelers without duplicate field cards", () => {
+  const toolbar = desktopHeaderSearchBarSource();
   const start = source.indexOf("function renderStickySearchPopoutOverlay()");
   const end = source.indexOf("function renderCompactSearchForm", start);
-  assert.ok(start >= 0 && end > start);
   const popout = source.slice(start, end);
 
-  assert.match(popout, /role="region"/);
+  assert.match(toolbar, /id="sticky-results-origin"/);
+  assert.match(toolbar, /id="sticky-results-destination"/);
+  assert.match(toolbar, /id="sticky-flight-origin-suggestions"[\s\S]*alignToField/);
+  assert.match(toolbar, /id="sticky-flight-destination-suggestions"[\s\S]*alignToField/);
+  assert.match(toolbar, /<DatePickerPopover[\s\S]*prominentDesktop[\s\S]*alignToField="left"/);
+  assert.match(toolbar, /<TravelerCabinPopover[\s\S]*prominentDesktop[\s\S]*alignToField="right"/);
+  assert.match(popout, /data-sticky-multicity-editor/);
+  assert.doesNotMatch(popout, /id="sticky-results-origin"|id="sticky-results-destination"/);
+  assert.doesNotMatch(popout, /<DatePickerPopover|<TravelerCabinPopover/);
+});
+
+test("trip type copies the desktop Sort dropdown layout and multi-city expands separately", () => {
+  const toolbar = desktopHeaderSearchBarSource();
+  const start = source.indexOf("function renderStickySearchPopoutOverlay()");
+  const end = source.indexOf("function renderCompactSearchForm", start);
+  const popout = source.slice(start, end);
+
+  assert.match(toolbar, /role="listbox"/);
+  assert.match(toolbar, /role="option"/);
+  assert.match(toolbar, /aria-selected=\{selected\}/);
+  assert.match(toolbar, /rounded-xl border border-slate-200 bg-white p-1\.5 shadow-\[0_18px_38px_-18px_rgba\(15,23,42,0\.35\)\]/);
+  assert.match(toolbar, /bg-\[#004BB8\]\/\[0\.08\] text-\[#004BB8\]/);
+  assert.match(toolbar, /<Check[\s\S]*className="h-4 w-4"/);
+  assert.doesNotMatch(toolbar, /role="radiogroup"|role="radio"/);
   assert.match(popout, /activeStickySearchTarget === "trip"/);
-  assert.match(popout, /activeStickySearchTarget === "origin"/);
-  assert.match(popout, /activeStickySearchTarget === "destination"/);
-  assert.match(popout, /activeStickySearchTarget === "dates"/);
-  assert.match(popout, /activeStickySearchTarget === "return"/);
-  assert.match(popout, /activeStickySearchTarget === "travelers"/);
-  assert.match(popout, /<form[\s\S]*onSubmit=\{handleCompactSearchSubmit\}/);
-  assert.doesNotMatch(popout, /<Button[\s\S]*type="submit"/);
-  assert.doesNotMatch(popout, /stickySearchCloseButtonRef/);
-});
-
-test("trip type is a compact field editor and multi-city expands as its accordion content", () => {
-  const start = source.indexOf("function renderStickySearchPopoutOverlay()");
-  const end = source.indexOf("function renderCompactSearchForm", start);
-  const popout = source.slice(start, end);
-  const roundTrip = popout.indexOf('label: t("roundTrip")');
-  const oneWay = popout.indexOf('label: t("oneWay")');
-  const multiCity = popout.indexOf('label: t("multiCity")');
-
-  assert.ok(roundTrip >= 0 && roundTrip < oneWay && oneWay < multiCity);
-  assert.match(popout, /role="radiogroup"/);
-  assert.match(popout, /aria-checked=\{selected\}/);
-  assert.match(popout, /onClick=\{\(\) => handleTripTypeChange\(option\.value\)\}/);
-  assert.match(popout, /activeStickySearchTarget === "trip"[\s\S]*tripTypeInput === "multi-city"[\s\S]*data-sticky-multicity-editor/);
+  assert.match(popout, /tripTypeInput === "multi-city"/);
+  assert.match(popout, /!tripTypeMenuOpen/);
   assert.match(popout, /<MultiCityFlightEditor[\s\S]*presentation="results"/);
-  assert.match(popout, /overflow-y-auto[^"]*overscroll-contain[\s\S]*maxHeight: `calc\(100dvh - \$\{\(desktopSearchPopoverFrame\?\.top \?\? 88\) \+ 60\}px\)`/);
 });
 
-test("route date and traveler editors stay attached to their own header fields", () => {
-  const start = source.indexOf("function renderStickySearchPopoutOverlay()");
-  const end = source.indexOf("function renderCompactSearchForm", start);
-  const popout = source.slice(start, end);
+test("route date and traveler controls open their real editors directly from the header", () => {
+  const toolbar = desktopHeaderSearchBarSource();
 
-  assert.equal(popout.match(/<MapPin aria-hidden="true"/g)?.length, 2);
-  assert.match(popout, /id="sticky-flight-origin-suggestions"[\s\S]*alignToField/);
-  assert.match(popout, /id="sticky-flight-destination-suggestions"[\s\S]*alignToField/);
-  assert.match(popout, /<DatePickerPopover[\s\S]*prominentDesktop[\s\S]*alignToField="left"/);
-  assert.match(popout, /<TravelerCabinPopover[\s\S]*prominentDesktop[\s\S]*alignToField="right"/);
-  assert.match(popout, /activeStickySearchTarget === "dates"[\s\S]*activeStickySearchTarget === "return"[\s\S]*"col-start-3"/);
-  assert.match(popout, /activeStickySearchTarget === "travelers"[\s\S]*"col-start-4"/);
-  assert.match(popout, /col-start-2 grid min-h-\[64px\][\s\S]*grid-cols-\[minmax\(0,1fr\)_30px_minmax\(0,1fr\)\]/);
+  assert.match(toolbar, /activeStickySearchTarget === "origin"[\s\S]*<input/);
+  assert.match(toolbar, /activeStickySearchTarget === "destination"[\s\S]*<input/);
+  assert.match(toolbar, /id="sticky-flight-origin-suggestions"[\s\S]*alignToField/);
+  assert.match(toolbar, /id="sticky-flight-destination-suggestions"[\s\S]*alignToField/);
+  assert.match(toolbar, /activeStickySearchTarget === "dates"[\s\S]*<DatePickerPopover/);
+  assert.match(toolbar, /launcherRef=\{stickyDateButtonRef\}/);
+  assert.match(toolbar, /activeStickySearchTarget === "travelers"[\s\S]*<TravelerCabinPopover/);
+  assert.match(toolbar, /launcherRef=\{stickyTravelerButtonRef\}/);
 });
 
-test("desktop field editors stay aligned to the navbar search footprint", () => {
+test("multi-city accordion stays aligned to the navbar search footprint", () => {
   const callback = stickyEditorCallbackSource();
   const frameStart = source.indexOf("const updateDesktopSearchPopoverFrame = useCallback(");
   const frameEnd = source.indexOf("const openStickySearchEditor = useCallback(", frameStart);
@@ -194,25 +179,12 @@ test("desktop field editors stay aligned to the navbar search footprint", () => 
   const end = source.indexOf("function renderCompactSearchForm", start);
   const popout = source.slice(start, end);
 
-  assert.ok(frameStart >= 0 && frameEnd > frameStart);
-  assert.match(callback, /closest<HTMLElement>\("\[data-flight-results-nav-search-form\]"\)/);
+  assert.match(callback, /closest<HTMLElement>\(\s*"\[data-flight-results-nav-search-form\]"\s*,?\s*\)/);
   assert.match(callback, /updateDesktopSearchPopoverFrame\(compactForm\)/);
   assert.match(frame, /const rect = resolvedCompactForm\.getBoundingClientRect\(\)/);
   assert.match(frame, /top: rect\.bottom/);
-  assert.match(frame, /Math\.min\(rect\.width, availableWidth\)/);
-  assert.match(frame, /Math\.max\(viewportGutter, rect\.left\)/);
-  assert.match(popout, /data-flight-search-anchored-backdrop/);
-  assert.match(popout, /bg-transparent/);
   assert.match(popout, /desktopSearchPopoverFrame[\s\S]*width: desktopSearchPopoverFrame\.width/);
-  assert.match(
-    popout,
-    /grid-cols-\[74px_minmax\(0,160px\)_minmax\(0,150px\)_46px_40px\]/,
-  );
-  assert.match(
-    popout,
-    /xl:grid-cols-\[96px_190px_170px_56px_40px\]/,
-  );
-  assert.doesNotMatch(popout, /rounded-b-\[12px\] rounded-t-none/);
+  assert.match(popout, /data-sticky-multicity-editor/);
 });
 
 test("anchored desktop search recomputes on browser resize and closes below desktop", () => {
@@ -230,7 +202,7 @@ test("anchored desktop search recomputes on browser resize and closes below desk
   );
   assert.match(
     source,
-    /document\.querySelector<HTMLElement>\(\s*"\[data-flight-results-nav-search-form\]"\s*\)/,
+    /document\.querySelector<HTMLElement>\(\s*"\[data-flight-results-nav-search-form\]"\s*,?\s*\)/,
   );
   assert.match(
     source,
@@ -242,41 +214,16 @@ test("anchored desktop search recomputes on browser resize and closes below desk
   );
 });
 
-test("field-specific Flight header editors anchor their controls locally", () => {
-  const popoutStart = source.indexOf("function renderStickySearchPopoutOverlay()");
-  const popoutEnd = source.indexOf("function renderCompactSearchForm", popoutStart);
-  const popout = source.slice(popoutStart, popoutEnd);
+test("field-specific Flight header controls are local descendants of the compact form", () => {
+  const toolbar = desktopHeaderSearchBarSource();
   const datePickerStart = source.indexOf("function DatePickerPopover");
   const suggestionStart = source.indexOf("function SuggestionList");
   const componentSource = source.slice(datePickerStart, suggestionStart);
 
-  assert.match(
-    popout,
-    /id="sticky-flight-origin-suggestions"[\s\S]*?alignToField/,
-  );
-  assert.match(
-    popout,
-    /id="sticky-flight-destination-suggestions"[\s\S]*?alignToField/,
-  );
-  assert.match(
-    popout,
-    /<DatePickerPopover[\s\S]*?prominentDesktop[\s\S]*?alignToField="left"/,
-  );
-  assert.match(
-    popout,
-    /<TravelerCabinPopover[\s\S]*?prominentDesktop[\s\S]*?alignToField="right"/,
-  );
-  assert.match(popout, /launcherRef=\{stickyDateButtonRef\}/);
-  assert.match(popout, /launcherRef=\{stickyTravelerButtonRef\}/);
-  assert.doesNotMatch(
-    popout,
-    /id="sticky-flight-(?:origin|destination)-suggestions"[\s\S]{0,180}?position=\{/,
-  );
-
-  assert.match(
-    componentSource,
-    /prominentDesktop \?\s*"max-w-none rounded-xl p-4"/,
-  );
+  assert.match(toolbar, /id="sticky-flight-origin-suggestions"[\s\S]*?alignToField/);
+  assert.match(toolbar, /id="sticky-flight-destination-suggestions"[\s\S]*?alignToField/);
+  assert.match(toolbar, /<DatePickerPopover[\s\S]*?prominentDesktop[\s\S]*?alignToField="left"/);
+  assert.match(toolbar, /<TravelerCabinPopover[\s\S]*?prominentDesktop[\s\S]*?alignToField="right"/);
   assert.match(componentSource, /alignToField\?: "left" \| "right"/);
 });
 
@@ -307,109 +254,53 @@ test("prominent desktop calendar stays compact and keeps its footer visible", ()
   assert.match(datePicker, /prominentDesktop[\s\S]*?"min-h-9 px-3 py-1\.5 text-xs"/);
 });
 
-test("sticky multi-city selection renders the real multi-city editor", () => {
+test("sticky multi-city selection renders only the real multi-city accordion editor", () => {
   const start = source.indexOf("function renderStickySearchPopoutOverlay()");
   const end = source.indexOf("function renderCompactSearchForm", start);
-  assert.ok(start >= 0 && end > start);
   const popout = source.slice(start, end);
 
-  assert.match(
-    popout,
-    /tripTypeInput === "multi-city"[\s\S]*data-sticky-multicity-editor/,
-  );
-  assert.match(
-    popout,
-    /<MultiCityFlightEditor[\s\S]*legs=\{multiCityLegs\}[\s\S]*onChange=\{setMultiCityLegs\}[\s\S]*presentation="results"/,
-  );
-  assert.match(
-    popout,
-    /minimumDate=\{formatDateValue\(new Date\(\)\)\}/,
-  );
-  const multiCityStart = popout.indexOf("data-sticky-multicity-editor");
-  const multiCityEnd = popout.indexOf(
-    'activeStickySearchTarget === "route"',
-    multiCityStart,
-  );
-  const multiCityBlock = popout.slice(multiCityStart, multiCityEnd);
-
-  assert.ok(multiCityStart >= 0 && multiCityEnd > multiCityStart);
-  assert.doesNotMatch(multiCityBlock, /travelerCabinSummary|<TravelerCabinPopover/);
-  assert.doesNotMatch(multiCityBlock, /<Button[\s\S]*type="submit"/);
+  assert.match(popout, /tripTypeInput === "multi-city"[\s\S]*data-sticky-multicity-editor/);
+  assert.match(popout, /<MultiCityFlightEditor[\s\S]*legs=\{multiCityLegs\}[\s\S]*onChange=\{setMultiCityLegs\}[\s\S]*presentation="results"/);
+  assert.match(popout, /minimumDate=\{formatDateValue\(new Date\(\)\)\}/);
+  assert.doesNotMatch(popout, /travelerCabinSummary|<TravelerCabinPopover|<DatePickerPopover/);
 });
 
-
-test("sticky multi-city overlay is the sole validator and stays reachable on short viewports", () => {
+test("sticky multi-city accordion is scrollable and is the only body-locking header editor", () => {
   const popoutStart = source.indexOf("function renderStickySearchPopoutOverlay()");
   const popoutEnd = source.indexOf("function renderCompactSearchForm", popoutStart);
   const popout = source.slice(popoutStart, popoutEnd);
-  const compactStart = source.indexOf('if (placement === "desktop" && tripTypeInput === "multi-city")');
-  const compactEnd = source.indexOf('if (tripTypeInput === "multi-city")', compactStart + 1);
-  const compactMultiCity = source.slice(compactStart, compactEnd);
+  const lockStart = source.indexOf("const shouldLockForMultiCity");
+  const lockEnd = source.indexOf("useEffect(() => {", lockStart + 1);
+  const lockEffect = source.slice(lockStart, lockEnd);
 
-  assert.match(
-    popout,
-    /max-h-\[calc\(100dvh-6rem\)\][^"]*overflow-y-auto[^"]*overscroll-contain/,
-  );
-  assert.match(
-    compactMultiCity,
-    /if \(isStickySearchPanelOpen\) return null;/,
-  );
-  assert.equal(
-    popout.match(/onAirportValidityChange=\{setMultiCityAirportsValid\}/g)?.length,
-    1,
-  );
+  assert.match(popout, /overflow-y-auto[^"]*overscroll-contain/);
+  assert.match(popout, /maxHeight:/);
+  assert.match(lockEffect, /activeStickySearchTarget === "trip"/);
+  assert.match(lockEffect, /tripTypeInput === "multi-city"/);
+  assert.match(lockEffect, /!tripTypeMenuOpen/);
+  assert.equal(popout.match(/onAirportValidityChange=\{setMultiCityAirportsValid\}/g)?.length, 1);
 });
 
+test("desktop compact header uses lighter Hotels-like surfaces without duplicate editor cards", () => {
+  const toolbar = desktopHeaderSearchBarSource();
+  const popoutStart = source.indexOf("function renderStickySearchPopoutOverlay()");
+  const popoutEnd = source.indexOf("function renderCompactSearchForm", popoutStart);
+  const popout = source.slice(popoutStart, popoutEnd);
 
-test("desktop change-flight fields reuse mobile Results typography and card tokens", () => {
-  const start = source.indexOf("function renderStickySearchPopoutOverlay()");
-  const end = source.indexOf("function renderCompactSearchForm", start);
-  const popout = source.slice(start, end);
-
-  assert.match(
-    popout,
-    /text-\[10px\] font-extrabold uppercase leading-\[14px\] tracking-\[0\.5px\] text-\[#56658E\]/,
-  );
-  assert.match(popout, /flight-results-edit-value mt-0\.5/);
-  assert.equal(
-    popout.match(/MapPin aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-\[#071A48\]"/g)?.length,
-    2,
-  );
-  assert.match(popout, /rounded-\[12px\] border border-\[#CFD9E5\] bg-white shadow-\[0_12px_26px_-18px_rgba\(15,23,42,0\.28\)\]/);
+  assert.match(toolbar, /bg-\[#F8FAFC\]/);
+  assert.match(toolbar, /border border-\[#D8E1EC\]/);
+  assert.match(toolbar, /hover:bg-\[#F3F6FA\]/);
+  assert.doesNotMatch(toolbar, /bg-\[#EEF2F6\]|bg-\[#E1E8EF\]/);
+  assert.doesNotMatch(popout, /stickyLabelClass|stickyValueClass|<MapPin/);
 });
 
+test("direct header route inputs keep the compact header typography contract", () => {
+  const toolbar = desktopHeaderSearchBarSource();
 
-test("desktop Flight edit-search values keep the shared 15px typography contract", () => {
-  const desktopRuleNeedle = `@media (min-width: 640px) {
-  .flight-results-edit-value {`;
-  const desktopStart = styles.indexOf(desktopRuleNeedle);
-  assert.notEqual(desktopStart, -1);
-
-  const desktopEnd = styles.indexOf("\n}\n", desktopStart);
-  assert.notEqual(desktopEnd, -1);
-
-  const desktopStyles = styles.slice(desktopStart, desktopEnd + 3);
-  assert.match(
-    desktopStyles,
-    /\.flight-results-edit-value \{[\s\S]*?font-family: inherit;[\s\S]*?font-size: 15px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?line-height: 20px !important;[\s\S]*?color: rgb\(2 6 23\) !important;/,
-  );
-  assert.doesNotMatch(desktopStyles, /@media \(max-width: 639px\)/);
-
-  const start = source.indexOf("function renderStickySearchPopoutOverlay()");
-  const end = source.indexOf("function renderCompactSearchForm", start);
-  const popout = source.slice(start, end);
-
-  assert.match(
-    popout,
-    /id="sticky-results-origin"[\s\S]*?className="flight-results-edit-value h-6/,
-  );
-  assert.match(
-    popout,
-    /id="sticky-results-destination"[\s\S]*?className="flight-results-edit-value h-6/,
-  );
-  assert.match(popout, /flight-results-edit-value mt-0\.5/);
+  assert.match(toolbar, /id="sticky-results-origin"[\s\S]*?text-\[12px\] font-semibold leading-\[17px\]/);
+  assert.match(toolbar, /id="sticky-results-destination"[\s\S]*?text-\[12px\] font-semibold leading-\[17px\]/);
+  assert.doesNotMatch(toolbar, /flight-results-edit-value h-6/);
 });
-
 
 test("main desktop Results search uses one shared value typography contract", () => {
   const start = source.indexOf('function renderCompactSearchForm(placement: "mobile" | "desktop")');

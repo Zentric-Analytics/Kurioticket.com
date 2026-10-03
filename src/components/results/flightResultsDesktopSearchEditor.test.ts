@@ -73,7 +73,7 @@ test("desktop populated airport inputs remain editable without clear controls", 
 test("desktop results fields lead values with neutral semantic icons", () => {
   assert.ok(
     (source.match(
-      /<MapPin[\s\S]*?aria-hidden="true"[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"/g,
+      /<MapPin[\s\S]*?aria-hidden="true"[\s\S]*?className="h-4 w-4 shrink-0 text-slate-700"/g,
     )?.length ?? 0) >= 2,
   );
   assert.match(
@@ -132,8 +132,8 @@ test("fare strip is one bounded seven-date grid with adjacent week controls", ()
     strip.indexOf("data-desktop-nearby-fare-rail"),
   );
   assert.doesNotMatch(desktopRail, /overflow-x-auto/);
-  assert.match(desktopRail, /rounded-2xl border border-slate-200\/90 bg-white/);
-  assert.match(desktopRail, /selected && "bg-blue-50\/55 after:scale-x-100/);
+  assert.match(desktopRail, /rounded-2xl bg-transparent p-0/);
+  assert.match(desktopRail, /selected && "border-\[#075EE8\] bg-blue-50\/60"/);
   assert.equal(desktopRail.match(/absolute -(?:left|right)-9 top-1\/2[^\n]*h-9 w-9/g)?.length, 2);
 });
 
@@ -158,7 +158,7 @@ test("desktop Multi-city stays on Results and renders the shared multi-city edit
   assert.doesNotMatch(stickyHandlers, /router\.push\(\`\/flights\?/);
   assert.match(
     stickyHandlers,
-    /tripTypeInput === "multi-city"[\s\S]*searchFormRef\.current\?\.scrollIntoView/,
+    /tripTypeInput === "multi-city"[\s\S]*target === "origin"[\s\S]*target === "destination"[\s\S]*\? "trip"[\s\S]*setActiveStickySearchTarget\(resolvedTarget\)/,
   );
   assert.match(
     multiCityEditor,
