@@ -209,7 +209,7 @@ test("desktop Pickup/Return avoids nested card-on-card treatment", () => {
     "function DesktopCarHireLocationOverview",
   );
   assert.match(pickup, /data-car-details-flight-panel="pickup"/);
-  assert.match(pickup, /max-w-\[900px\] py-5/);
+  assert.match(pickup, /max-w-\[640px\] py-5/);
   assert.match(
     pickup,
     /data-car-details-desktop-pickup-columns[\s\S]*?divide-x divide-\[#D8E1EC\][\s\S]*?border-y border-\[#D8E1EC\]/,
