@@ -5513,7 +5513,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <form
         onSubmit={handleCompactSearchSubmit}
         data-flight-results-nav-search-form
-        className="mx-auto grid h-[40px] w-fit max-w-full grid-cols-[82px_160px_150px_50px_40px] items-center gap-1 overflow-visible xl:grid-cols-[96px_190px_170px_56px_40px]"
+        className="mx-auto grid h-[40px] w-fit max-w-full grid-cols-[74px_minmax(0,160px)_minmax(0,150px)_46px_40px] items-center gap-1 overflow-visible xl:grid-cols-[96px_190px_170px_56px_40px]"
       >
         <button
           type="button"
@@ -5614,7 +5614,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       { label: t("multiCity"), value: "multi-city", disabled: false },
     ];
     const panelGridClass =
-      "grid-cols-[82px_160px_150px_50px_40px] xl:grid-cols-[96px_190px_170px_56px_40px]";
+      "grid-cols-[74px_minmax(0,160px)_minmax(0,150px)_46px_40px] xl:grid-cols-[96px_190px_170px_56px_40px]";
     const departureSummary = departureDateInput
       ? formatCompactDateLabel(departureDateInput, calendarLocale)
       : t("departure");
