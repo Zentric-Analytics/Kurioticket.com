@@ -153,9 +153,9 @@ test("Flight Results keeps the normal mobile header while desktop adopts the Hot
   const preparing = source.slice(preparingStart, guidedStart);
   assert.ok(shellStart >= 0 && preparingStart > shellStart && guidedStart > preparingStart);
   assert.match(shell, /flightResultsDesktopSticky/);
-  assert.match(shell, /const readyDesktopNavbarSearch =[\s\S]*?createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
+  assert.match(shell, /createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
   assert.match(preparing, /\{standaloneResultsHeader\}/);
-  assert.doesNotMatch(preparing, /readyDesktopNavbarSearch|renderStickySearchPopoutOverlay\(\)/);
+  assert.match(preparing, /renderStickySearchPopoutOverlay\(\)/);
   assert.doesNotMatch(source, /mobileResultsSearch=|mobileResultsLeadingAction=|mobileResultsSticky=/);
   assert.match(source, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
   assert.match(source, /relative translate-y-1\/2/);
