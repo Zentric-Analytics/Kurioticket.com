@@ -5674,7 +5674,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
         <div
           data-flight-results-compact-route
-          className="relative grid h-[40px] min-w-0 grid-cols-[minmax(68px,1fr)_28px_minmax(68px,1fr)] items-center overflow-visible rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] transition-colors focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/20"
+          className="relative grid h-[40px] min-w-0 grid-cols-[minmax(56px,1fr)_28px_minmax(56px,1fr)] items-center overflow-visible rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] transition-colors focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/20"
         >
           <div
             ref={stickyOriginWrapRef}
