@@ -5567,6 +5567,24 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       activeStickySearchTarget === "trip" &&
       tripTypeMenuOpen;
 
+    const openCompactRouteEditor = (
+      event: React.MouseEvent<HTMLButtonElement>,
+      target: "origin" | "destination",
+    ) => {
+      if (target === "origin") {
+        if (originCode && originInput.trim().toUpperCase() === originCode.trim().toUpperCase()) {
+          setOriginInput(compactOriginLabel);
+        }
+      } else if (
+        destinationCode &&
+        destinationInput.trim().toUpperCase() === destinationCode.trim().toUpperCase()
+      ) {
+        setDestinationInput(compactDestinationLabel);
+      }
+
+      openStickySearchEditor(event, target);
+    };
+
     return (
       <form
         onSubmit={handleCompactSearchSubmit}
@@ -5600,7 +5618,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             <div
               role="listbox"
               aria-label={t("tripType")}
-              className="absolute left-0 top-[calc(100%+0.5rem)] z-[120] min-w-[190px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]"
+              className="pointer-events-auto absolute left-0 top-[calc(100%+0.5rem)] z-[140] min-w-[210px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[16px] border border-[#D8E1EC] bg-white p-2 shadow-[0_20px_48px_-20px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.025]"
             >
               {tripTypeOptions.map((option) => {
                 const selected = tripTypeInput === option.value;
@@ -5611,23 +5629,33 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     role="option"
                     aria-selected={selected}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-base font-medium leading-6 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
+                      "pointer-events-auto flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[14px] font-semibold leading-5 transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25",
                       selected
-                        ? "bg-[#004BB8]/[0.08] text-[#004BB8]"
-                        : "text-slate-800 hover:bg-slate-50 hover:text-slate-950",
+                        ? "bg-[#F0F6FF] text-[#004BB8] shadow-[inset_0_0_0_1px_rgba(0,75,184,0.06)]"
+                        : "text-[#172033] hover:bg-[#F7F9FC] hover:text-[#07133B]",
                     )}
-                    onClick={() => {
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                    }}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
                       handleTripTypeChange(option.value);
                       setTripTypeMenuOpen(false);
                       if (option.value === "multi-city") {
                         setIsSearchExpandedWhileSticky(true);
                         setActiveStickySearchTarget("trip");
+                        setActiveDesktopSearchSurface("sticky");
                         return;
                       }
                       collapseStickySearch({ restoreScroll: false });
                     }}
                   >
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                    <span className={cn(
+                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
+                      selected ? "bg-white text-[#004BB8] shadow-sm" : "text-transparent",
+                    )}>
                       {selected ? (
                         <Check
                           aria-hidden="true"
@@ -5646,7 +5674,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
         <div
           data-flight-results-compact-route
-          className="relative grid h-[40px] min-w-0 grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)] items-center overflow-visible rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] transition-colors focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/20"
+          className="relative grid h-[40px] min-w-0 grid-cols-[minmax(56px,1fr)_28px_minmax(56px,1fr)] items-center overflow-visible rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] transition-colors focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/20"
         >
           <div
             ref={stickyOriginWrapRef}
@@ -5675,7 +5703,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   }}
                   placeholder={t("fromPlaceholder")}
                   autoComplete="off"
-                  className="h-full w-full min-w-0 border-0 bg-transparent px-2 text-right text-[12px] font-semibold leading-[17px] text-[#142033] outline-none placeholder:text-slate-400"
+                  className="box-border h-full w-full min-w-0 border-0 bg-transparent px-2 text-right text-[12px] font-semibold leading-[17px] text-[#142033] outline-none placeholder:text-slate-400"
                 />
                 {activeSuggest === "origin" &&
                 activeDesktopSearchSurface === "sticky" ? (
@@ -5701,7 +5729,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 data-flight-results-header-origin
                 aria-expanded={false}
                 aria-label={`${t("editFlightSearch")}: ${compactOriginLabel}`}
-                onClick={(event) => openStickySearchEditor(event, "origin")}
+                onClick={(event) => openCompactRouteEditor(event, "origin")}
                 className="focus-ring flex h-full w-full min-w-0 items-center justify-end px-2 text-[#142033] transition-colors hover:bg-[#F3F6FA]"
               >
                 <span className={valueClass}>{compactOriginLabel}</span>
@@ -5747,7 +5775,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   }}
                   placeholder={t("toPlaceholder")}
                   autoComplete="off"
-                  className="h-full w-full min-w-0 border-0 bg-transparent px-2 text-left text-[12px] font-semibold leading-[17px] text-[#142033] outline-none placeholder:text-slate-400"
+                  className="box-border h-full w-full min-w-0 border-0 bg-transparent px-2 text-left text-[12px] font-semibold leading-[17px] text-[#142033] outline-none placeholder:text-slate-400"
                 />
                 {activeSuggest === "destination" &&
                 activeDesktopSearchSurface === "sticky" ? (
@@ -5773,7 +5801,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 data-flight-results-header-destination
                 aria-expanded={false}
                 aria-label={`${t("editFlightSearch")}: ${compactDestinationLabel}`}
-                onClick={(event) => openStickySearchEditor(event, "destination")}
+                onClick={(event) => openCompactRouteEditor(event, "destination")}
                 className="focus-ring flex h-full w-full min-w-0 items-center justify-start px-2 text-[#142033] transition-colors hover:bg-[#F3F6FA]"
               >
                 <span className={valueClass}>{compactDestinationLabel}</span>

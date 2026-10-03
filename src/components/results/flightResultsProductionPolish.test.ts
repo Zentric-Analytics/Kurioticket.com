@@ -374,6 +374,16 @@ test("desktop fare divider stops above the full-width footer summary", async () 
   assert.doesNotMatch(styles, /\.flight-card-fare-action::before/);
 });
 
+test("desktop Flight metadata footer moves lower without changing card layout size", async () => {
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+  const desktopStart = styles.indexOf("@media (min-width: 1024px)", styles.indexOf(".flight-card-detail-value"));
+  const desktopEnd = styles.indexOf("@container (max-width: 759px)", desktopStart);
+  const desktopRules = styles.slice(desktopStart, desktopEnd);
+
+  assert.match(desktopRules, /\.flight-card-details \{[\s\S]*?transform: translateY\(0\.375rem\);/);
+  assert.match(styles, /\.flight-card-desktop \{\s*padding: 1\.25rem 1\.5rem 1rem;/);
+  assert.doesNotMatch(desktopRules, /height:\s*calc\(|min-height:\s*calc\(/);
+});
 test("desktop Flight footer summary balances three equal columns across the full width", async () => {
   const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
   const desktopStart = styles.indexOf(
