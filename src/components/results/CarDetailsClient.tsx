@@ -414,8 +414,9 @@ export function CarDetailsExperience({
         data-car-details-content-grid
       >
         <div
-          className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:mx-auto lg:w-full lg:max-w-[1080px]" : "space-y-4 lg:space-y-5"}`}
+          className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:relative lg:mx-auto lg:w-full lg:max-w-[900px] lg:rounded-[13px] lg:border lg:border-[#E2E8F0] lg:bg-white lg:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" : "space-y-4 lg:space-y-5"}`}
           data-car-details-primary-column
+          data-car-details-desktop-full-height-card={presentation === "standalone-content" ? "true" : undefined}
         >
           <CarDetailsHero
             car={car}
@@ -570,7 +571,7 @@ export function CarDetailsExperience({
                 </div>
 
                 <div
-                  className="hidden lg:mx-auto lg:block lg:min-h-[280px] lg:w-full lg:max-w-[900px] lg:bg-white lg:px-5 lg:pb-8"
+                  className="hidden lg:block lg:min-h-[280px] lg:w-full lg:bg-transparent lg:px-5 lg:pb-7"
                   data-car-details-desktop-tab-panels
                   data-car-details-flight-style-panel
                 >
