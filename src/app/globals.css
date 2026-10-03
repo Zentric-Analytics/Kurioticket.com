@@ -1414,12 +1414,6 @@ textarea {
   align-items: center;
 }
 
-/* Shift only the desktop arrival endpoint closer to the fare divider without
-   disturbing the departure or center route geometry. */
-.flight-card-leg-grid > .flight-card-leg-endpoint:last-child {
-  transform: translateX(0.5rem);
-}
-
 .flight-card-leg-time-row {
   gap: 0.5rem;
 }
@@ -1789,7 +1783,7 @@ textarea {
    arrival/date from fare content without intruding into the footer summary. */
 @media (min-width: 1024px) {
   .flight-card-body {
-    grid-template-columns: minmax(0, 1fr) 196px;
+    grid-template-columns: minmax(0, 1fr) 164px;
     grid-template-areas:
       "legs fare"
       "details details";
@@ -1829,7 +1823,7 @@ textarea {
 @container (max-width: 759px) {
   @media (min-width: 1024px) {
     .flight-card-body {
-      grid-template-columns: minmax(0, 1fr) 180px;
+      grid-template-columns: minmax(0, 1fr) 164px;
       grid-template-areas:
         "legs fare"
         "details details";
@@ -1935,10 +1929,6 @@ textarea {
   .flight-card-leg-endpoint,
   .flight-card-leg-center {
     display: block;
-  }
-
-  .flight-card-leg-grid > .flight-card-leg-endpoint:last-child {
-    transform: none;
   }
 
   .flight-card-leg-grid > .flight-card-leg-endpoint:first-child .flight-card-airport,
