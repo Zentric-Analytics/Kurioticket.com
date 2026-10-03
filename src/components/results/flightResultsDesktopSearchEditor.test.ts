@@ -132,7 +132,7 @@ test("fare strip is one bounded seven-date grid with adjacent week controls", ()
     strip.indexOf("data-desktop-nearby-fare-rail"),
   );
   assert.doesNotMatch(desktopRail, /overflow-x-auto/);
-  assert.match(desktopRail, /rounded-2xl border border-slate-200\/90 bg-white/);
+  assert.match(desktopRail, /rounded-2xl bg-transparent p-0/);
   assert.match(desktopRail, /selected && "bg-blue-50\/55 after:scale-x-100/);
   assert.equal(desktopRail.match(/absolute -(?:left|right)-9 top-1\/2[^\n]*h-9 w-9/g)?.length, 2);
 });
@@ -158,7 +158,7 @@ test("desktop Multi-city stays on Results and renders the shared multi-city edit
   assert.doesNotMatch(stickyHandlers, /router\.push\(\`\/flights\?/);
   assert.match(
     stickyHandlers,
-    /tripTypeInput === "multi-city"[\s\S]*searchFormRef\.current\?\.scrollIntoView/,
+    /tripTypeInput === "multi-city"[\s\S]*target === "origin"[\s\S]*target === "destination"[\s\S]*\? "trip"[\s\S]*setActiveStickySearchTarget\(resolvedTarget\)/,
   );
   assert.match(
     multiCityEditor,
