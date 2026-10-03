@@ -570,8 +570,9 @@ export function CarDetailsExperience({
                 </div>
 
                 <div
-                  className="hidden lg:block lg:pb-8"
+                  className="hidden lg:mx-auto lg:block lg:min-h-[280px] lg:w-full lg:max-w-[900px] lg:bg-white lg:px-5 lg:pb-8"
                   data-car-details-desktop-tab-panels
+                  data-car-details-flight-style-panel
                 >
                   <section
                     id="car-desktop-compare-panel"
