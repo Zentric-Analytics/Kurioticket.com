@@ -78,20 +78,13 @@ test("source-contract: mobile Cars typography uses a restrained primary-secondar
   assert.match(quickFilters, /text-\[13px\] font-semibold leading-4 transition/);
 });
 
-test("source-contract: mobile Cars range is end-aligned on the count row while desktop stays stacked", () => {
+test("source-contract: Cars count row omits the old pagination range", () => {
   const summaryRow = source.slice(
     source.lastIndexOf("<div", source.indexOf("data-cars-results-summary-row")),
     source.indexOf("{appliedCarFilters.length"),
   );
-
-  assert.match(
-    summaryRow,
-    /<div className="min-w-0 flex-1">[\s\S]*<h2[\s\S]*className="mt-0\.5 hidden[^\"]*sm:block"[\s\S]*<\/div>[\s\S]*className="shrink-0 whitespace-nowrap text-right[^\"]*sm:hidden"/,
-  );
-  assert.match(
-    summaryRow,
-    /aria-label=\{`Showing results \$\{resultsDisplayRange\.start\} through \$\{resultsDisplayRange\.end\} of \$\{visibleResults\.length\}`\}/,
-  );
+  assert.match(summaryRow, /\.format\(visibleResults\.length\)/);
+  assert.doesNotMatch(summaryRow, /resultsDisplayRange|Showing results .* through/);
 });
 
 test("source-contract: Cars result count and Sort share a shrink-safe row", () => {
