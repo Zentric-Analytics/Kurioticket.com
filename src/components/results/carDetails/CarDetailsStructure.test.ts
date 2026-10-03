@@ -86,15 +86,11 @@ test("CarDetailsExperience uses one Hotels-style sticky desktop section handoff 
   assert.match(layoutSource, /\[data-car-details-scroll-section\] \{\s*scroll-margin-top: 5\.5rem;/);
   assert.match(
     layoutSource,
-    /main:has\(\[data-car-details-experience\]\) \{\s*background: #F8FAFC !important;/,
+    /main:has\(\[data-car-details-experience\]\) \{\s*background: #EEF2F7 !important;/,
   );
   assert.match(
     layoutSource,
-    /\[data-car-details-section-nav\] \{\s*background: #F8FAFC !important;/,
-  );
-  assert.match(
-    layoutSource,
-    /\[data-car-price-comparison\],[\s\S]*?\[data-car-location-section\] \{\s*background: #F8FAFC !important;/,
+    /\[data-car-details-section-nav\] \{\s*background: transparent !important;/,
   );
   assert.match(
     experienceSource,
@@ -123,7 +119,7 @@ test("standalone desktop navigation hands off to the Expedia-inspired linear sec
   assert.match(navSource, /lg:sticky lg:top-0/);
   assert.match(
     navSource,
-    /desktopStuck \? "lg:grid lg:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\] lg:items-stretch lg:gap-4/,
+    /desktopStuck \? "lg:grid lg:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\] lg:items-stretch lg:gap-3/,
   );
   assert.match(
     navSource,
@@ -133,11 +129,11 @@ test("standalone desktop navigation hands off to the Expedia-inspired linear sec
   assert.match(navSource, /left-1\/2 top-0 -translate-x-1\/2/);
   assert.match(
     navSource,
-    /car-details-desktop-selected-info-type[\s\S]*?border-\[#192024\] text-slate-950/,
+    /car-details-desktop-selected-info-type[\s\S]*?border-\[#075EE8\] text-\[#07133B\]/,
   );
   assert.match(
     navSource,
-    /border-transparent text-\[#334155\] hover:text-\[#142033\]/,
+    /border-transparent text-\[#526174\] hover:text-\[#142033\]/,
   );
   const cssSource = readFileSync(
     new URL("../../../app/globals.css", import.meta.url),
@@ -157,26 +153,26 @@ test("standalone desktop navigation hands off to the Expedia-inspired linear sec
   assert.match(navSource, /data-car-details-desktop-sticky-back/);
   assert.match(
     navSource,
-    /desktopStuck \? "relative col-start-1 row-start-1 flex min-h-16 items-center self-stretch justify-self-start translate-x-0 translate-y-0 opacity-100" : "pointer-events-none absolute left-0 top-1\/2 -translate-x-1 -translate-y-1\/2 opacity-0"/,
+    /desktopStuck \? "relative col-start-1 row-start-1 flex min-h-\[48px\] items-center self-stretch justify-self-start translate-x-0 translate-y-0 opacity-100" : "pointer-events-none absolute left-0 top-1\/2 -translate-x-1 -translate-y-1\/2 opacity-0"/,
   );
   assert.match(
     navSource,
-    /desktopStuck \? "relative col-start-3 row-start-1 flex min-h-16 items-center self-stretch justify-self-end translate-x-0 translate-y-0 opacity-100" : "pointer-events-none absolute right-0 top-1\/2 translate-x-1 -translate-y-1\/2 opacity-0"/,
+    /desktopStuck \? "relative col-start-3 row-start-1 flex min-h-\[48px\] items-center self-stretch justify-self-end translate-x-0 translate-y-0 opacity-100" : "pointer-events-none absolute right-0 top-1\/2 translate-x-1 -translate-y-1\/2 opacity-0"/,
   );
   assert.match(navSource, /desktopStuck \? desktopBackControl : null/);
   assert.match(navSource, /desktopStuck \? desktopUtilityActions : null/);
   assert.match(navSource, /data-car-details-desktop-sticky-backdrop/);
   assert.match(
     navSource,
-    /fixed inset-x-0 top-0 z-0 hidden h-16 bg-\[#F8FAFC\]\/95/,
+    /fixed inset-x-0 top-0 z-0 hidden h-\[48px\] bg-\[#EEF2F7\]\/92/,
   );
   assert.match(
     navSource,
-    /desktopStuck \? "opacity-100 shadow-\[0_6px_20px_rgba\(15,23,42,0\.07\)\] backdrop-blur-xl" : "opacity-0"/,
+    /desktopStuck \? "opacity-100 shadow-\[0_5px_16px_rgba\(15,23,42,0\.055\)\] backdrop-blur-xl" : "opacity-0"/,
   );
   assert.match(
     navSource,
-    /desktopStuck \? "lg:grid[\s\S]*?lg:bg-transparent" : "lg:block lg:bg-\[#F8FAFC\]"/,
+    /desktopStuck \? "lg:grid[\s\S]*?lg:bg-transparent" : "lg:block lg:bg-transparent"/,
   );
   assert.doesNotMatch(
     layoutSource,
@@ -190,6 +186,17 @@ test("standalone desktop navigation hands off to the Expedia-inspired linear sec
     experienceSource,
     /lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent[\s\S]*?data-car-location-timeline/,
   );
+});
+
+test("standalone desktop Cars details use a layered Flight-inspired canvas without changing mobile ownership", () => {
+  assert.match(layoutSource, /background: #EEF2F7 !important/);
+  assert.match(experienceSource, /data-car-details-layered-surface=\{showDesktopOfferList \? "compare" : undefined\}/);
+  assert.match(experienceSource, /data-car-details-layered-surface="pickup"/);
+  assert.match(experienceSource, /data-car-details-layered-surface="location"/);
+  assert.match(experienceSource, /data-car-details-inner-surface="pickup-return"/);
+  assert.match(experienceSource, /data-car-details-inner-surface="location-identity"/);
+  assert.match(experienceSource, /hidden lg:block lg:space-y-5 lg:pb-8 lg:pt-4/);
+  assert.match(experienceSource, /data-car-details-desktop-location-details/);
 });
 
 test("guided Car details renders content-only experience with guided headings", () => {
@@ -220,10 +227,11 @@ test("standalone desktop Cars details use a centered single-column composition",
     new URL("./CarDetailsSectionNav.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(navSource, /lg:mx-auto lg:mt-3 lg:max-w-\[820px\]/);
+  assert.match(navSource, /lg:mx-auto lg:mt-3 lg:max-w-\[760px\]/);
   assert.match(navSource, /lg:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/);
   assert.match(navSource, /absolute left-1\/2 top-0 -translate-x-1\/2/);
-  assert.match(navSource, /data-car-details-desktop-nav-rule/);
-  assert.match(navSource, /w-\[620px\]/);
+  assert.match(navSource, /data-car-details-compact-sticky-tabs/);
+  assert.match(navSource, /rounded-\[14px\][^"]*bg-white\/95/);
+  assert.doesNotMatch(navSource, /data-car-details-desktop-nav-rule/);
   assert.doesNotMatch(navSource, /lg:border-b lg:border-slate-200/);
 });
