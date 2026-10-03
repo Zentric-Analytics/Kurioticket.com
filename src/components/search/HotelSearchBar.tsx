@@ -1263,7 +1263,7 @@ export function HotelSearchBar({
                   id={`${idPrefix}-destination-suggestions`}
                   role="listbox"
                   ariaLabel={t("hotelDestinationSuggestions")}
-                  className="p-1.5"
+                  className={cn("p-1.5", isResultsFlat && "font-sans text-[#192024]")}
                 >
                   {destinationSuggestionsLoading ? (
                     <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
@@ -1384,7 +1384,7 @@ export function HotelSearchBar({
                   preferredWidth={570}
                   desiredHeight={isStickyDialog ? 360 : 420}
                   onClose={() => setDatesOpen(false)}
-                  className={isStickyDialog ? "overflow-hidden p-2" : "p-3"}
+                  className={cn(isStickyDialog ? "overflow-hidden p-2" : "p-3", isResultsFlat && "font-sans text-[#192024]")}
                 >
                   <p className={cn("text-sm font-semibold text-slate-900", isStickyDialog ? "mb-1.5" : "mb-2.5")}>
                     {t("chooseTravelDates")}
@@ -1580,140 +1580,185 @@ export function HotelSearchBar({
                   open={guestsRoomsOpen}
                   launcherRef={guestsRoomsMobileLauncherRef}
                   preferredWidth={360}
-                  desiredHeight={356}
+                  desiredHeight={420}
                   align="end"
                   onClose={() => setGuestsRoomsOpen(false)}
-                  className="rounded-2xl border-slate-200 p-0 shadow-[0_24px_64px_-18px_rgba(15,23,42,0.28)]"
+                  className={cn(
+                    "rounded-2xl border-slate-200 p-0 shadow-[0_24px_64px_-18px_rgba(15,23,42,0.28)]",
+                    isResultsFlat && "font-sans text-[#192024]",
+                  )}
                 >
                   <div className="border-b border-slate-200 px-4 py-3.5">
                     <h2 className="text-base font-bold tracking-[-0.01em] text-slate-950">
                       {t("hotelGuestsRooms.mobileTitle")}
                     </h2>
                   </div>
-                  <div className="divide-y divide-slate-200 px-4">
-                    {[
-                      {
-                        key: "adults",
-                        label: t("adults"),
-                        description: t("hotelGuests.adultDescription"),
-                        value: hotelAdultCount,
-                        min: 1,
-                        max: 12 - hotelChildCount,
-                        onDecrement: () =>
-                          setHotelAdultCount((prev) => Math.max(1, prev - 1)),
-                        onIncrement: () =>
-                          setHotelAdultCount((prev) =>
-                            Math.min(12 - hotelChildCount, prev + 1),
-                          ),
-                      },
-                      {
-                        key: "children",
-                        label: t("children"),
-                        description: t("hotelGuests.childDescription"),
-                        value: hotelChildCount,
-                        min: 0,
-                        max: 12 - hotelAdultCount,
-                        onDecrement: () =>
-                          setHotelChildCount((prev) => Math.max(0, prev - 1)),
-                        onIncrement: () =>
-                          setHotelChildCount((prev) =>
-                            Math.min(12 - hotelAdultCount, prev + 1),
-                          ),
-                      },
-                      {
-                        key: "rooms",
-                        label: t("rooms"),
-                        description: t("hotelGuests.roomDescription"),
-                        value: clampCount(rooms, 1, 6),
-                        min: 1,
-                        max: 6,
-                        onDecrement: () =>
-                          setRooms((prev) =>
-                            String(Math.max(1, clampCount(prev, 1, 6) - 1)),
-                          ),
-                        onIncrement: () =>
-                          setRooms((prev) =>
-                            String(Math.min(6, clampCount(prev, 1, 6) + 1)),
-                          ),
-                      },
-                    ].map((row) => {
-                      const canDecrement = row.value > row.min;
-                      const canIncrement = row.value < row.max;
+                  <div className="px-4 py-3">
+                    <section aria-labelledby={`${idPrefix}-desktop-guests-heading`}>
+                      <h3 id={`${idPrefix}-desktop-guests-heading`} className="mb-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                        {t("guests")}
+                      </h3>
+                      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        {[
+                          {
+                            key: "adults",
+                            label: t("adults"),
+                            description: t("hotelGuests.adultDescription"),
+                            value: hotelAdultCount,
+                            min: 1,
+                            max: 12 - hotelChildCount,
+                            onDecrement: () =>
+                              setHotelAdultCount((prev) => Math.max(1, prev - 1)),
+                            onIncrement: () =>
+                              setHotelAdultCount((prev) =>
+                                Math.min(12 - hotelChildCount, prev + 1),
+                              ),
+                          },
+                          {
+                            key: "children",
+                            label: t("children"),
+                            description: t("hotelGuests.childDescription"),
+                            value: hotelChildCount,
+                            min: 0,
+                            max: 12 - hotelAdultCount,
+                            onDecrement: () =>
+                              setHotelChildCount((prev) => Math.max(0, prev - 1)),
+                            onIncrement: () =>
+                              setHotelChildCount((prev) =>
+                                Math.min(12 - hotelAdultCount, prev + 1),
+                              ),
+                          },
+                        ].map((row, index) => {
+                          const canDecrement = row.value > row.min;
+                          const canIncrement = row.value < row.max;
 
-                      return (
-                        <div
-                          key={row.key}
-                          className="flex min-h-[70px] items-center justify-between gap-3 py-2.5"
-                        >
+                          return (
+                            <div
+                              key={row.key}
+                              className={cn(
+                                "flex min-h-[68px] items-center justify-between gap-3 px-3.5 py-2.5",
+                                index > 0 && "border-t border-slate-200",
+                              )}
+                            >
+                              <span className="min-w-0">
+                                <span className="block text-sm font-semibold text-slate-950">
+                                  {row.label}
+                                </span>
+                                <span className="mt-0.5 block text-xs font-normal text-slate-500">
+                                  {row.description}
+                                </span>
+                              </span>
+                              <div className="flex shrink-0 items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={row.onDecrement}
+                                  disabled={!canDecrement}
+                                  aria-label={`${t("decrease")} ${row.label}`}
+                                  className="focus-ring inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 transition-colors hover:border-[#004BB8] hover:bg-blue-50 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:hover:bg-white"
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </button>
+                                <span className="min-w-7 text-center text-sm font-semibold tabular-nums text-slate-950">
+                                  {row.value}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={row.onIncrement}
+                                  disabled={!canIncrement}
+                                  aria-label={`${t("increase")} ${row.label}`}
+                                  className="focus-ring inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 transition-colors hover:border-[#004BB8] hover:bg-blue-50 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:hover:bg-white"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </section>
+
+                    <section aria-labelledby={`${idPrefix}-desktop-rooms-heading`} className="mt-3">
+                      <h3 id={`${idPrefix}-desktop-rooms-heading`} className="mb-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                        {t("rooms")}
+                      </h3>
+                      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        <div className="flex min-h-[68px] items-center justify-between gap-3 px-3.5 py-2.5">
                           <span className="min-w-0">
-                            <span className="block text-sm font-bold text-slate-950">
-                              {row.label}
+                            <span className="block text-sm font-semibold text-slate-950">
+                              {t("rooms")}
                             </span>
-                            <span className="mt-0.5 block text-xs font-medium text-slate-500">
-                              {row.description}
+                            <span className="mt-0.5 block text-xs font-normal text-slate-500">
+                              {t("hotelGuests.roomDescription")}
                             </span>
                           </span>
                           <div className="flex shrink-0 items-center gap-2">
                             <button
                               type="button"
-                              onClick={row.onDecrement}
-                              disabled={!canDecrement}
-                              aria-label={`${t("decrease")} ${row.label}`}
+                              onClick={() =>
+                                setRooms((prev) =>
+                                  String(Math.max(1, clampCount(prev, 1, 6) - 1)),
+                                )
+                              }
+                              disabled={clampCount(rooms, 1, 6) <= 1}
+                              aria-label={`${t("decrease")} ${t("rooms")}`}
                               className="focus-ring inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 transition-colors hover:border-[#004BB8] hover:bg-blue-50 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:hover:bg-white"
                             >
                               <Minus className="h-4 w-4" />
                             </button>
-                            <span className="min-w-7 text-center text-base font-bold tabular-nums text-slate-950">
-                              {row.value}
+                            <span className="min-w-7 text-center text-sm font-semibold tabular-nums text-slate-950">
+                              {clampCount(rooms, 1, 6)}
                             </span>
                             <button
                               type="button"
-                              onClick={row.onIncrement}
-                              disabled={!canIncrement}
-                              aria-label={`${t("increase")} ${row.label}`}
+                              onClick={() =>
+                                setRooms((prev) =>
+                                  String(Math.min(6, clampCount(prev, 1, 6) + 1)),
+                                )
+                              }
+                              disabled={clampCount(rooms, 1, 6) >= 6}
+                              aria-label={`${t("increase")} ${t("rooms")}`}
                               className="focus-ring inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 transition-colors hover:border-[#004BB8] hover:bg-blue-50 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:hover:bg-white"
                             >
                               <Plus className="h-4 w-4" />
                             </button>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                  {!mobileSearchOpen ? (
-                    <div className="border-t border-slate-200 bg-slate-50/70 px-4 py-3">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-900">
-                            {t("petFriendly")}
-                          </p>
-                          <p className="mt-0.5 text-xs leading-5 text-slate-500">
-                            {t("onlyShowPetFriendlyStays")}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={hotelPetFriendly}
-                          aria-label={t("togglePetFriendlyStays")}
-                          onClick={() => setHotelPetFriendly((prev) => !prev)}
-                          className={`focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
-                            hotelPetFriendly
-                              ? "border-[#004BB8] bg-[#004BB8]"
-                              : "border-slate-300 bg-slate-200"
-                          }`}
-                        >
-                          <span
-                            className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-sm transition-transform ${
-                              hotelPetFriendly
-                                ? "translate-x-5"
-                                : "translate-x-0.5"
-                            }`}
-                          />
-                        </button>
+
+                        {!mobileSearchOpen ? (
+                          <div className="flex min-h-[68px] items-center justify-between gap-4 border-t border-slate-200 px-3.5 py-2.5">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-slate-950">
+                                {t("petFriendly")}
+                              </p>
+                              <p className="mt-0.5 text-xs font-normal leading-5 text-slate-500">
+                                {t("onlyShowPetFriendlyStays")}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              role="switch"
+                              aria-checked={hotelPetFriendly}
+                              aria-label={t("togglePetFriendlyStays")}
+                              onClick={() => setHotelPetFriendly((prev) => !prev)}
+                              className={`focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
+                                hotelPetFriendly
+                                  ? "border-[#004BB8] bg-[#004BB8]"
+                                  : "border-slate-300 bg-slate-200"
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-sm transition-transform ${
+                                  hotelPetFriendly
+                                    ? "translate-x-5"
+                                    : "translate-x-0.5"
+                                }`}
+                              />
+                            </button>
+                          </div>
+                        ) : null}
                       </div>
-                    </div>
-                  ) : null}
+                    </section>
+                  </div>
                 </HotelDesktopPopover>
               ) : null}
             </div>
