@@ -48,22 +48,22 @@ test("standalone desktop keeps the 900px car card and nests the current 680px ta
   assert.match(hero, /max-w-\[680px\]/);
   assert.match(hero, /sizes="680px"/);
   assert.match(hero, /max-w-\[820px\] text-center/);
-  assert.match(
-    client,
-    /lg:max-w-\[680px\][^"]*lg:bg-white[^"]*lg:px-5[^"]*"\s*data-car-details-desktop-tab-panels/,
-  );
+  assert.match(client, /data-car-details-desktop-inner-card/);
+  assert.match(client, /lg:max-w-\[680px\]/);
+  assert.match(client, /data-car-details-desktop-linear-sections/);
   assert.match(client, /max-w-\[640px\]/);
   assert.doesNotMatch(hero, /data-car-details-desktop-overview-summary/);
 });
 
-test("desktop tabs switch panels in place instead of scrolling through stacked sections", () => {
-  assert.match(client, /data-car-details-desktop-tab-panels/);
-  assert.match(client, /id="car-desktop-compare-panel"/);
-  assert.match(client, /id="car-desktop-pickup-panel"/);
-  assert.match(client, /id="car-desktop-location-panel"/);
-  assert.doesNotMatch(client, /target\?\.scrollIntoView\(\{/);
-  assert.doesNotMatch(client, /scheduleDesktopScrollState|desktopSectionBarStuck/);
-  assert.doesNotMatch(client, /data-car-details-desktop-linear-sections/);
+test("desktop tabs scroll through stacked sections and keep the compact sticky handoff", () => {
+  assert.match(client, /data-car-details-desktop-linear-sections/);
+  assert.match(client, /data-car-details-scroll-section="compare"/);
+  assert.match(client, /data-car-details-scroll-section="pickup"/);
+  assert.match(client, /data-car-details-scroll-section="location"/);
+  assert.match(client, /target\?\.scrollIntoView\(\{/);
+  assert.match(client, /scheduleDesktopScrollState/);
+  assert.match(client, /desktopSectionBarStuck/);
+  assert.doesNotMatch(client, /data-car-details-desktop-tab-panels/);
 });
 
 test("mobile and guided hero dimensions remain unchanged", () => {

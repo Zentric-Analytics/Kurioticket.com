@@ -36,18 +36,19 @@ test("standalone Car details owns one page wrapper and passes desktop controls i
   assert.match(standaloneSource, /standalone-disabled-provider/);
 });
 
-test("CarDetailsExperience integrates desktop Back Save and Share into the car hero", () => {
+test("CarDetailsExperience keeps hero controls and restores compact sticky Back Save and Share handoff", () => {
   assert.doesNotMatch(experienceSource, /<main\b/);
   assert.match(experienceSource, /data-car-details-experience/);
-  assert.doesNotMatch(experienceSource, /data-car-details-desktop-controls/);
   assert.match(experienceSource, /data-car-details-desktop-hero-controls/);
   assert.match(
     experienceSource,
     /data-car-details-desktop-hero-controls[\s\S]*?\{desktopBackControl\}[\s\S]*?data-car-details-utility-placement="hero"[\s\S]*?<CarHeroActions[\s\S]*?desktop/,
   );
-  assert.doesNotMatch(experienceSource, /data-car-details-utility-placement="tabs"/);
-  assert.doesNotMatch(experienceSource, /desktopSectionBarStuck|scheduleDesktopScrollState|ResizeObserver/);
-  assert.doesNotMatch(experienceSource, /target\?\.scrollIntoView/);
+  assert.match(experienceSource, /data-car-details-utility-placement="tabs"/);
+  assert.match(experienceSource, /desktopSectionBarStuck/);
+  assert.match(experienceSource, /scheduleDesktopScrollState/);
+  assert.match(experienceSource, /new ResizeObserver\(scheduleDesktopScrollState\)/);
+  assert.match(experienceSource, /target\?\.scrollIntoView\(\{/);
   assert.doesNotMatch(experienceSource, /DesktopCompactBookingAction/);
   assert.doesNotMatch(experienceSource, /data-car-details-bottom-booking-bar/);
   assert.match(
@@ -56,21 +57,22 @@ test("CarDetailsExperience integrates desktop Back Save and Share into the car h
   );
 });
 
-test("standalone desktop Cars tabs switch one content panel in place like Flights", () => {
+test("standalone desktop Cars tabs scroll to vertically stacked sections while mobile keeps in-place panels", () => {
   assert.match(
     experienceSource,
     /<div className="min-h-\[240px\]" data-car-details-section-panels>/,
   );
   assert.match(experienceSource, /data-car-details-mobile-section-panels/);
-  assert.match(experienceSource, /data-car-details-desktop-tab-panels/);
-  assert.doesNotMatch(experienceSource, /data-car-details-desktop-linear-sections/);
-  assert.doesNotMatch(experienceSource, /scrollIntoView/);
+  assert.match(experienceSource, /data-car-details-desktop-linear-sections/);
+  assert.doesNotMatch(experienceSource, /data-car-details-desktop-tab-panels/);
+  assert.match(experienceSource, /target\?\.scrollIntoView\(\{/);
+  assert.match(experienceSource, /behavior: window\.matchMedia\("\(prefers-reduced-motion: reduce\)"\)\.matches/);
 
   for (const tab of ["compare", "pickup", "location"]) {
     assert.match(
       experienceSource,
       new RegExp(
-        `id="car-desktop-${tab}-panel"[\\s\\S]*?role="tabpanel"[\\s\\S]*?className=\\{activeTab !== "${tab}" \\? "hidden" : ""\\}`,
+        `data-car-details-scroll-section="${tab}"[\\s\\S]*?data-car-details-desktop-section="${tab}"`,
       ),
     );
   }
@@ -79,19 +81,13 @@ test("standalone desktop Cars tabs switch one content panel in place like Flight
     new URL("./CarDetailsSectionNav.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(navSource, /data-car-details-flight-style-tabs/);
+  assert.match(navSource, /data-car-details-compact-sticky-tabs/);
   assert.match(navSource, /lg:sticky lg:top-0/);
-  assert.match(navSource, /role="tablist"/);
-  assert.match(navSource, /role="tab"/);
-  assert.match(navSource, /aria-selected=\{selected\}/);
-  assert.match(navSource, /aria-controls=\{`car-desktop-\$\{tab\.id\}-panel`\}/);
-  assert.match(navSource, /min-h-11 flex-1[\s\S]*?border-b-\[3px\]/);
-  assert.match(navSource, /border-\[#075EE8\] text-\[#07133B\]/);
+  assert.match(navSource, /data-car-details-desktop-sticky-back/);
+  assert.match(navSource, /data-car-details-desktop-sticky-actions/);
+  assert.match(navSource, /data-car-details-desktop-sticky-backdrop/);
+  assert.match(navSource, /min-h-\[46px\]/);
   assert.match(navSource, /onClick=\{\(\) => onTabChange\(tab\.id\)\}/);
-  assert.doesNotMatch(
-    navSource,
-    /desktopStuck|desktopBackControl|desktopUtilityActions|data-car-details-desktop-sticky-back/,
-  );
 });
 
 test("standalone desktop Cars uses the Flights card-in-card hierarchy without changing current tab content", () => {
@@ -127,7 +123,7 @@ test("guided Car details renders content-only experience with guided headings", 
   assert.match(guidedSource, /itemHeadingLevel=\{4\}/);
 });
 
-test("standalone desktop Cars details use the hero card as the full parent for the compact inner tab card", () => {
+test("standalone desktop Cars keeps the current card-in-card design around the restored scroll sections", () => {
   assert.match(
     experienceSource,
     /presentation === "standalone-content" \? "lg:grid-cols-1 lg:gap-0"/,
@@ -143,7 +139,7 @@ test("standalone desktop Cars details use the hero card as the full parent for t
   assert.match(experienceSource, /data-car-details-desktop-hero-controls/);
   assert.match(
     experienceSource,
-    /data-car-details-desktop-inner-card[\s\S]*?<CarDetailsSectionNav[\s\S]*?data-car-details-desktop-tab-panels/,
+    /data-car-details-desktop-inner-card[\s\S]*?<CarDetailsSectionNav[\s\S]*?data-car-details-desktop-linear-sections/,
   );
 
   const navSource = readFileSync(
@@ -151,9 +147,8 @@ test("standalone desktop Cars details use the hero card as the full parent for t
     "utf8",
   );
   assert.match(navSource, /lg:max-w-\[680px\]/);
-  assert.match(navSource, /max-w-\[640px\]/);
-  assert.match(navSource, /data-car-details-flight-style-tabs/);
+  assert.match(navSource, /data-car-details-compact-sticky-tabs/);
   assert.match(navSource, /lg:sticky lg:top-0/);
-  assert.match(navSource, /lg:mt-0/);
+  assert.match(navSource, /lg:mt-3/);
 });
 
