@@ -146,9 +146,9 @@ function RelatedHotelCard({
               {labels.priceUnavailable}
             </p>
           )}
-          {!mobilePreview ? <span className="mt-2 flex min-h-9 items-center justify-between border-t border-slate-200 pt-2 text-[13px] font-bold text-blue lg:mt-2.5 lg:min-h-11 lg:pt-2.5 lg:text-sm">
+          {!mobilePreview ? <span className="mt-2 flex min-h-9 items-center justify-start gap-1.5 border-t border-slate-200 pt-2 text-[13px] font-bold text-blue lg:mt-2.5 lg:min-h-11 lg:pt-2.5 lg:text-sm">
             {labels.viewHotel}
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
           </span> : null}
         </div>
       </div>

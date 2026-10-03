@@ -31,10 +31,9 @@ test("renders a factual responsive hotel location card", () => {
     assert.ok(source.includes(contract), contract);
 });
 
-test("keeps the default anchor while adding directions only to desktop", () => {
+test("keeps the location anchor without an external Open in Maps text link", () => {
   assert.match(defaultView, /id="hotel-location"/);
-  assert.doesNotMatch(defaultView, /directionsUrl|Open in Maps|maps\/dir/);
-  assert.match(source, /if \(variant === "desktop"\) \{\s*const directionsUrl = buildHotelDirectionsUrl/);
+  assert.doesNotMatch(source, /directionsUrl|Open in Maps|buildHotelDirectionsUrl|ArrowUpRight/);
 });
 test("enables the fallback map only for the desktop variant", () => {
   assert.match(source, /variant = "default"/);
