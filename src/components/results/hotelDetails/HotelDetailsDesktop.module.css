@@ -3,7 +3,7 @@
 .desktop button { cursor: pointer; }
 .desktop button:disabled { cursor: default; opacity: .55; }
 .desktop button:focus-visible, .desktop a:focus-visible, .dialog button:focus-visible, .dialog input:focus-visible { outline: 2px solid #004bb8; outline-offset: 3px; }
-.identity { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 4px 0 16px; }
+.identity { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 0 0 16px; }
 .identityText { min-width: 0; flex: 1; }
 .titleRow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
 .titleRow h1 { font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -.4px; overflow-wrap: anywhere; }
@@ -16,7 +16,7 @@
 .reviewIdentity b { font-weight: 600; }
 .utilityActions { display: flex; flex-shrink: 0; justify-content: flex-end; gap: 8px; }
 .utilityActions[hidden] { display: none; }
-.contentCard { min-width: 0; border: 1px solid #E1E6EA; border-radius: 16px; background: #fff; padding: 16px 20px 20px; box-shadow: 0 2px 8px rgb(25 32 36 / 4%); }
+.contentCard { min-width: 0; margin-top: 12px; border: 1px solid #E1E6EA; border-radius: 16px; background: #fff; padding: 20px 20px 20px; box-shadow: 0 2px 8px rgb(25 32 36 / 4%); }
 .gallery { position: relative; margin-bottom: 30px; }
 .galleryBack { position: absolute; top: 16px; left: 16px; z-index: 2; display: inline-flex; width: 40px; height: 40px; align-items: center; justify-content: center; border: 1px solid #d9dfe2; border-radius: 50%; background: #fff; color: #192024; box-shadow: 0 2px 8px rgb(25 32 36 / 16%); }
 .galleryBack:hover { background: #f3f5f6; }

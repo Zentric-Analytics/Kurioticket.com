@@ -165,6 +165,7 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
   </div>;
 
   return <div ref={detailsRef} className={styles.desktop} data-standalone-hotel-details data-desktop-hotel-details>
+    <div className={styles.contentCard} data-desktop-hotel-content-card>
     <header className={styles.identity}>
       <div className={styles.identityText}>
         <div className={styles.titleRow}><h1>{props.hotelName}</h1>{props.starRating ? <span className={styles.stars} aria-label={props.starRatingAriaLabel}><span aria-hidden="true">{"★".repeat(props.starRating)}</span></span> : null}</div>
@@ -173,7 +174,6 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
       </div>
     </header>
     {shareStatus ? <p className={styles.status} role="status">{shareStatus}</p> : null}
-    <div className={styles.contentCard} data-desktop-hotel-content-card>
     <div className={styles.gallery}>
       <HotelDetailsGallery {...props.galleryProps} embedded layout="desktop" />
       <Link href={props.resultsHref} className={styles.galleryBack} aria-label={props.labels.backToResults} title={props.labels.backToResults} data-standalone-hotel-back-link><ArrowLeft size={20} aria-hidden="true" /></Link>
