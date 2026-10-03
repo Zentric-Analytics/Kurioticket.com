@@ -20,15 +20,21 @@ test("desktop Flight Results adopts approved mobile-web visual rules without rep
 });
 
 test("desktop Flight filters follow the approved section hierarchy and selected-state language", () => {
-  const primaryStart = filters.indexOf(
-    '"desktop-filter-sidebar cars-desktop-filter-surface border border-slate-200/80 bg-[#F2F4F8] p-0 shadow-none"',
-  );
+  const primaryStart = filters.indexOf("data-flight-hotel-filter-visual-parity");
   assert.ok(primaryStart >= 0);
   const primaryFilters = filters.slice(primaryStart);
-  const order = ['t("price")', 't("takeoff") / {t("landing")}', 't("duration")', 't("stops")', 't("airlines")', 't("airports")', 't("baggage") / {t("flexibleRefundable")}'].map((marker) => primaryFilters.indexOf(marker));
+  const order = [
+    '<HotelStyleFilterSection title={t("price")}>',
+    '<HotelStyleFilterSection title={`${t("takeoff")} / ${t("landing")}`}>',
+    '<HotelStyleFilterSection title={t("duration")}>',
+    '<OptionSection title={t("stops")}',
+    '<OptionSection title={t("airlines")}',
+    '<OptionSection title={t("airports")}',
+    '<HotelStyleFilterSection title={`${t("baggage")} / ${t("flexibleRefundable")}`}>',
+  ].map((marker) => primaryFilters.indexOf(marker));
   assert.ok(order.every((position, index) => position >= 0 && (index === 0 || position > order[index - 1])));
   assert.match(filters, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
-  assert.match(filters, /<Check className="h-3 w-3"/);
+  assert.match(filters, /<Check className="h-2\.5 w-2\.5"/);
   assert.match(filters, /\{t\("price"\)\}: \{formatFilterPrice/);
   assert.match(filters, /peer-focus-visible:ring-2/);
 });
@@ -41,9 +47,7 @@ test("desktop Flight search airport values use the same medium typography as the
 
 test("compact Flight time-mode switch stays in the compact panel until the slider changes", () => {
   const compactStart = filters.indexOf("data-flight-desktop-compact-filter-surface");
-  const primaryStart = filters.indexOf(
-    '"desktop-filter-sidebar cars-desktop-filter-surface border border-slate-200/80 bg-[#F2F4F8] p-0 shadow-none"',
-  );
+  const primaryStart = filters.indexOf("data-flight-hotel-filter-visual-parity");
   assert.ok(compactStart >= 0 && primaryStart > compactStart);
   const compactFilters = filters.slice(compactStart, primaryStart);
   const selectorStart = compactFilters.indexOf('{["takeoff", "landing"].map');
@@ -54,7 +58,7 @@ test("compact Flight time-mode switch stays in the compact panel until the slide
   assert.doesNotMatch(selector, /onFilterChange|onFilterCommit/);
 });
 
-test("standalone desktop Flight Results uses Cars-style compact filter parity after the primary sidebar scrolls away", () => {
+test("standalone desktop Flight Results keeps the existing compact handoff after the Hotel-style primary sidebar scrolls away", () => {
   assert.match(results, /renderDesktopFlightFilters\(true\)/);
   assert.match(results, /desktopCompactFilterRef/);
   assert.match(results, /desktopFilterSentinelRef/);
