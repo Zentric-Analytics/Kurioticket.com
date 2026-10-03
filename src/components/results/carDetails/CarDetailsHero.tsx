@@ -72,8 +72,9 @@ export function CarDetailsHero({
 
   return (
     <section
-      className={`-mx-4 border-b border-slate-200 bg-[#F5F7FB] pb-4 sm:mx-0 ${reserveMobileControlSafeZone ? "lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none" : "lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]"}`}
+      className={`-mx-4 border-b border-slate-200 bg-[#F5F7FB] pb-4 sm:mx-0 ${reserveMobileControlSafeZone ? "lg:mx-auto lg:w-full lg:max-w-[900px] lg:rounded-[22px] lg:border lg:border-[#DFE6EF] lg:bg-[#F7F9FC] lg:px-5 lg:pb-5 lg:pt-4 lg:shadow-[0_6px_18px_rgba(7,19,59,0.055)]" : "lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]"}`}
       data-car-details-hero
+      data-car-details-layered-surface={reserveMobileControlSafeZone ? "hero" : undefined}
     >
       <div className="min-w-0">
         <figure
@@ -186,7 +187,7 @@ export function CarDetailsHero({
 
         {reserveMobileControlSafeZone ? (
           <div
-            className="hidden lg:flex lg:flex-col lg:items-center lg:p-5"
+            className="hidden lg:flex lg:flex-col lg:items-center lg:px-0 lg:pb-1 lg:pt-0"
             data-car-details-desktop-overview
           >
             <div
@@ -196,7 +197,7 @@ export function CarDetailsHero({
               {identity}
             </div>
             <div
-              className="relative mt-4 h-[250px] w-full max-w-[680px] overflow-hidden rounded-[12px] bg-white"
+              className="relative mt-4 h-[250px] w-full max-w-[680px] overflow-hidden rounded-[16px] bg-transparent"
               data-car-details-desktop-overview-image
             >
               <CarResultImage
@@ -210,13 +211,13 @@ export function CarDetailsHero({
               />
             </div>
             <ul
-              className="mt-4 grid min-w-0 w-full max-w-[820px] grid-cols-4 gap-x-4 gap-y-2"
+              className="mt-4 grid min-w-0 w-full max-w-[820px] grid-cols-4 gap-3"
               data-car-details-desktop-overview-specifications
             >
               {specs.map(([Icon, label]) => (
                 <li
                   key={label}
-                  className="car-details-desktop-amenity-type inline-flex min-w-0 items-center justify-self-center gap-2 text-center text-[13px] font-semibold leading-[18px] text-slate-700"
+                  className="car-details-desktop-amenity-type inline-flex min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-[13px] border border-[#E0E7EF] bg-white px-3 py-2 text-center text-[13px] font-semibold leading-[18px] text-slate-700 shadow-[0_2px_7px_rgba(15,23,42,0.035)]"
                 >
                   <Icon
                     size={15}
