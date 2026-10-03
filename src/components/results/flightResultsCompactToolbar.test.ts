@@ -62,6 +62,14 @@ test("desktop Flight header uses the requested weekday numeric date format", () 
   );
 });
 
+test("compact multi-city header follows the first edited leg date", () => {
+  const toolbar = desktopHeaderSearchBarSource();
+
+  assert.match(toolbar, /tripTypeInput === "multi-city" && firstMultiCityLeg/);
+  assert.match(toolbar, /\? firstMultiCityLeg\.departureDate/);
+  assert.match(toolbar, /: departureDateInput/);
+});
+
 
 function stickyEditorCallbackSource() {
   const start = source.indexOf("const openStickySearchEditor = useCallback(");
