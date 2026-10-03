@@ -53,7 +53,10 @@ test("standalone desktop overview uses centered single-column sizing", () => {
   assert.match(hero, /sizes="680px"/);
   assert.match(hero, /max-w-\[820px\] text-center/);
   assert.doesNotMatch(hero, /data-car-details-desktop-overview-summary/);
-  assert.match(client, /lg:max-w-\[900px\]/);
+  assert.match(
+    client,
+    /data-car-details-desktop-tab-panels[\s\S]*?lg:max-w-\[680px\]/,
+  );
   assert.match(client, /max-w-\[640px\]/);
 });
 
