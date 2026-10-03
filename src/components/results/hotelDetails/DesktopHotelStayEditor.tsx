@@ -1,7 +1,7 @@
 "use client";
 
-import { CalendarDays, ChevronLeft, ChevronRight, Minus, Plus, Search, UserRound } from "lucide-react";
-import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { CalendarDays, Minus, Plus, Search, UserRound } from "lucide-react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { HotelDesktopPopover } from "@/components/search/HotelDesktopPopover";
 import { parseHotelDetailsSearchCount, parseHotelDetailsSearchDate, type HotelDetailsSearchContext } from "./hotelDetailsPresentation";
 import styles from "./DesktopHotelStayEditor.module.css";
@@ -19,99 +19,158 @@ const dateLabel = (value: string, fallback: string) => {
   const date = parseHotelDetailsSearchDate(value);
   return date ? new Intl.DateTimeFormat("en-US", { weekday: "short", day: "numeric", month: "numeric" }).format(date).replace(",", "") : fallback;
 };
-function DateRangePopup({ start, end, initialPart, onChange, onComplete }: { start: string; end: string; initialPart: DatePart; onChange: (start: string, end: string) => void; onComplete: () => void }) {
+function DateRangePopup({
+  start,
+  end,
+  onChange,
+  onClose,
+}: {
+  start: string;
+  end: string;
+  onChange: (start: string, end: string) => void;
+  onClose: () => void;
+}) {
   const today = localToday();
-  const startDate = parseHotelDetailsSearchDate(start);
-  const initialMode = initialPart === "checkOut" && startDate && startDate >= today ? "checkOut" : "checkIn";
-  const initialMinimum = initialMode === "checkOut" && startDate ? addDays(startDate, 1) : today;
-  const selected = parseHotelDetailsSearchDate(initialMode === "checkIn" ? start : end);
-  const initialFocus = selected && selected >= initialMinimum ? selected : initialMinimum;
-  const [part, setPart] = useState<DatePart>(initialMode);
-  const [visibleMonth, setVisibleMonth] = useState(() => monthStart(initialFocus));
-  const [focusedDate, setFocusedDate] = useState(() => isoDate(initialFocus));
-  const calendarRef = useRef<HTMLDivElement>(null);
-  const minimum = part === "checkOut" && startDate ? addDays(startDate >= today ? startDate : today, 1) : today;
-  const minimumIso = isoDate(minimum);
-  const monthFormatter = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" });
-  const fullFormatter = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const initialDate = parseHotelDetailsSearchDate(start);
+  const [visibleMonth, setVisibleMonth] = useState(() =>
+    monthStart(initialDate && initialDate >= today ? initialDate : today),
+  );
+  const monthFormatter = new Intl.DateTimeFormat("en-GB", {
+    month: "long",
+    year: "numeric",
+  });
+  const fullFormatter = new Intl.DateTimeFormat("en-GB", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+  const weekdays = Array.from({ length: 7 }, (_, day) =>
+    new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(
+      new Date(2024, 0, 7 + day),
+    ),
+  );
 
-  useEffect(() => { calendarRef.current?.querySelector<HTMLButtonElement>(`[data-date="${focusedDate}"]`)?.focus({ preventScroll: true }); }, [focusedDate]);
+  function resultMonthCells(month: Date) {
+    const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
+    const startOffset = firstDay.getDay();
+    const firstCell = new Date(
+      month.getFullYear(),
+      month.getMonth(),
+      1 - startOffset,
+    );
 
-  function focusDate(date: Date) {
-    const next = date < minimum ? minimum : date;
-    if (next < visibleMonth || next >= monthStart(visibleMonth, 2)) setVisibleMonth(monthStart(next));
-    setFocusedDate(isoDate(next));
-    requestAnimationFrame(() => calendarRef.current?.querySelector<HTMLButtonElement>(`[data-date="${isoDate(next)}"]`)?.focus({ preventScroll: true }));
+    return Array.from({ length: 42 }, (_, index) => {
+      const date = new Date(
+        firstCell.getFullYear(),
+        firstCell.getMonth(),
+        firstCell.getDate() + index,
+      );
+      return { date, isCurrentMonth: date.getMonth() === month.getMonth() };
+    });
   }
 
   function selectDate(date: Date) {
-    if (date < minimum) return;
-    const value = isoDate(date);
-    if (part === "checkIn") {
-      const nextEnd = end > value ? end : "";
-      onChange(value, nextEnd);
-      setPart("checkOut");
-      const nextFocus = parseHotelDetailsSearchDate(nextEnd) ?? addDays(date, 1);
-      if (nextFocus < visibleMonth || nextFocus >= monthStart(visibleMonth, 2)) setVisibleMonth(monthStart(nextFocus));
-      setFocusedDate(isoDate(nextFocus));
-    } else {
-      onChange(start, value);
-      onComplete();
-    }
-  }
+    if (date < today) return;
+    const selectedIso = isoDate(date);
 
-  function dayKeyDown(event: KeyboardEvent<HTMLButtonElement>, date: Date) {
-    const offsets: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7, Home: -((date.getDay() + 6) % 7), End: 6 - ((date.getDay() + 6) % 7) };
-    if (event.key in offsets) { event.preventDefault(); focusDate(addDays(date, offsets[event.key])); }
-    else if (event.key === "PageUp" || event.key === "PageDown") {
-      event.preventDefault();
-      const offset = (event.key === "PageDown" ? 1 : -1) * (event.shiftKey ? 12 : 1);
-      const targetMonth = monthStart(date, offset);
-      focusDate(new Date(targetMonth.getFullYear(), targetMonth.getMonth(), Math.min(date.getDate(), new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0).getDate())));
+    if (!start || (start && end)) {
+      onChange(selectedIso, "");
+      return;
     }
+
+    if (selectedIso <= start) {
+      onChange(selectedIso, "");
+      return;
+    }
+
+    onChange(start, selectedIso);
   }
 
   function moveMonth(offset: number) {
-    const next = monthStart(visibleMonth, offset);
-    if (next < monthStart(minimum)) return;
-    setVisibleMonth(next);
-    const firstEnabled = next < minimum ? minimum : next;
-    // Keep one enabled day in the keyboard tab sequence after changing months.
-    if (focusedDate < isoDate(next) || focusedDate >= isoDate(monthStart(next, 2))) setFocusedDate(isoDate(firstEnabled));
+    setVisibleMonth((current) => {
+      const next = monthStart(current, offset);
+      return next < monthStart(today) ? current : next;
+    });
   }
 
-  return <div ref={calendarRef} className={styles.calendar}>
-    <p className={styles.keyboardHint} aria-live="polite">{part === "checkIn" ? "Select check-in date" : "Select check-out date"}</p>
-    <div className={styles.monthNavigation}><button type="button" aria-label="Previous month" disabled={visibleMonth <= monthStart(minimum)} onClick={() => moveMonth(-1)}><ChevronLeft size={20} /></button><button type="button" aria-label="Next month" onClick={() => moveMonth(1)}><ChevronRight size={20} /></button></div>
-    <div className={styles.months}>
-      {[0, 1].map(offset => {
-        const month = monthStart(visibleMonth, offset);
-        const cells = monthDays(month);
-        const heading = monthFormatter.format(month);
-        return <section key={isoDate(month)} className={styles.month} aria-label={heading}>
-          <h3 aria-live="polite">{heading}</h3>
-          <div role="grid" aria-label={heading}>
-            <div role="row" className={styles.weekdays}>{["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map(day => <span role="columnheader" key={day}>{day}</span>)}</div>
-            {Array.from({ length: 6 }, (_, row) => <div role="row" className={styles.week} key={row}>
-              {cells.slice(row * 7, row * 7 + 7).map(date => {
-                const iso = isoDate(date);
-                if (date.getMonth() !== month.getMonth()) return <span role="gridcell" key={iso} />;
-                const disabled = iso < minimumIso;
-                const isStart = iso === start;
-                const isEnd = iso === end;
-                const inRange = Boolean(start && end && iso > start && iso < end);
-                const hasRange = Boolean(start && end && end > start);
-                return <span role="gridcell" key={iso} aria-selected={isStart || isEnd || inRange} className={styles.dayCell} data-range={hasRange && (inRange || isStart || isEnd) || undefined} data-start={hasRange && isStart || undefined} data-end={hasRange && isEnd || undefined}>
-                  <button type="button" data-date={iso} disabled={disabled} tabIndex={iso === focusedDate ? 0 : -1} aria-label={`${fullFormatter.format(date)}${isStart ? ", check-in" : isEnd ? ", check-out" : ""}`} aria-current={iso === isoDate(today) ? "date" : undefined} aria-pressed={isStart || isEnd} onClick={() => selectDate(date)} onKeyDown={event => dayKeyDown(event, date)}>{date.getDate()}</button>
-                </span>;
-              })}
-            </div>)}
-          </div>
-        </section>;
-      })}
+  return (
+    <div className={styles.calendar}>
+      <p className={styles.calendarTitle}>Choose travel dates</p>
+      <div className={styles.calendarNavigation}>
+        <button
+          type="button"
+          disabled={visibleMonth <= monthStart(today)}
+          onClick={() => moveMonth(-1)}
+        >
+          Previous
+        </button>
+        <button type="button" onClick={() => moveMonth(1)}>
+          Next
+        </button>
+      </div>
+
+      <div className={styles.calendarMonths}>
+        {[0, 1].map((offset) => {
+          const month = monthStart(visibleMonth, offset);
+          const cells = resultMonthCells(month);
+          const heading = monthFormatter.format(month);
+
+          return (
+            <section key={isoDate(month)} className={styles.calendarMonth} aria-label={heading}>
+              <p>{heading}</p>
+              <div className={styles.calendarWeekdays}>
+                {weekdays.map((weekday) => (
+                  <span key={weekday}>{weekday}</span>
+                ))}
+              </div>
+              <div className={styles.calendarGrid}>
+                {cells.map(({ date, isCurrentMonth }) => {
+                  const value = isoDate(date);
+                  const isPast = date < today;
+                  const isStart = value === start;
+                  const isEnd = value === end;
+                  const isInRange = Boolean(
+                    start &&
+                      end &&
+                      !isPast &&
+                      value > start &&
+                      value < end,
+                  );
+
+                  if (!isCurrentMonth) {
+                    return <span key={value} aria-hidden="true" />;
+                  }
+
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      disabled={isPast}
+                      aria-label={`Select date ${fullFormatter.format(date)}`}
+                      aria-pressed={isStart || isEnd}
+                      data-in-range={isInRange || undefined}
+                      onClick={() => selectDate(date)}
+                    >
+                      {date.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+
+      <div className={styles.calendarFooter}>
+        <button type="button" className={styles.calendarSecondary} onClick={() => onChange("", "")}>
+          Clear
+        </button>
+        <button type="button" className={styles.calendarPrimary} onClick={onClose}>
+          Done
+        </button>
+      </div>
     </div>
-    <p className={styles.keyboardHint}>Use arrow keys to move between dates.</p>
-  </div>;
+  );
 }
 
 function OccupancyPopup({ draft, onChange }: { draft: Draft; onChange: (field: "guests" | "rooms", value: number) => void }) {
@@ -138,11 +197,7 @@ function StayEditor({ context }: { context?: HotelDetailsSearchContext }) {
     const trigger = opener.current;
     if (wasOpen) requestAnimationFrame(() => { if (openPopup.current === null) trigger?.focus({ preventScroll: true }); });
   }, []);
-  const advanceToGuests = useCallback(() => {
-    opener.current = guestsRef.current;
-    openPopup.current = "guests";
-    setPopup("guests");
-  }, []);
+
 
   useEffect(() => {
     if (!popup) return;
@@ -184,8 +239,8 @@ function StayEditor({ context }: { context?: HotelDetailsSearchContext }) {
       <button type="button" className={styles.search} aria-label="Search hotel rates for this stay" onClick={search}><Search size={24} aria-hidden="true" /></button>
     </div>
     {error ? <p className={styles.error} role="alert">{error}</p> : null}
-    <HotelDesktopPopover open={popup === "checkIn" || popup === "checkOut"} launcherRef={datesRef} preferredWidth={732} desiredHeight={390} onClose={closePopup} className={styles.popover} id={`${id}-dates`} ariaLabel="Choose stay dates">
-      {popup === "checkIn" || popup === "checkOut" ? <DateRangePopup key={popup} initialPart={popup} start={draft.checkIn} end={draft.checkOut} onChange={(checkIn, checkOut) => { setDraft(current => ({ ...current, checkIn, checkOut })); setError(""); }} onComplete={advanceToGuests} /> : null}
+    <HotelDesktopPopover open={popup === "checkIn" || popup === "checkOut"} launcherRef={datesRef} preferredWidth={570} desiredHeight={420} onClose={closePopup} className={styles.popover} id={`${id}-dates`} ariaLabel="Choose stay dates">
+      {popup === "checkIn" || popup === "checkOut" ? <DateRangePopup start={draft.checkIn} end={draft.checkOut} onChange={(checkIn, checkOut) => { setDraft(current => ({ ...current, checkIn, checkOut })); setError(""); }} onClose={closePopup} /> : null}
     </HotelDesktopPopover>
     <HotelDesktopPopover open={popup === "guests"} launcherRef={guestsRef} preferredWidth={310} desiredHeight={144} onClose={closePopup} className={styles.popover} id={`${id}-guests`} ariaLabel="Guests and rooms">
       <OccupancyPopup draft={draft} onChange={(field, value) => setDraft(current => ({ ...current, [field]: value }))} />
