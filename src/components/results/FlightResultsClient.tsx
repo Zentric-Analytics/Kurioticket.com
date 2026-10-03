@@ -5483,9 +5483,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       fallback: string,
     ) => {
       const normalizedCode = (code || input).trim().toUpperCase();
-      const matchedAirport = airports.find(
-        (airport) => airport.code.toUpperCase() === normalizedCode,
-      );
+      const matchedAirport = [
+        ...airports,
+        ...originSuggestions,
+        ...destinationSuggestions,
+      ].find((airport) => airport.code.toUpperCase() === normalizedCode);
 
       if (matchedAirport) {
         return getLocalizedCityName(matchedAirport.city, locale);
@@ -5510,13 +5512,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             destinationInput,
             t("destination"),
           );
-    const departureSummary = departureDateInput
-      ? formatDesktopHeaderDateLabel(departureDateInput, calendarLocale)
+    const compactDepartureDate =
+      tripTypeInput === "multi-city" && firstMultiCityLeg
+        ? firstMultiCityLeg.departureDate
+        : departureDateInput;
+    const departureSummary = compactDepartureDate
+      ? formatDesktopHeaderDateLabel(compactDepartureDate, calendarLocale)
       : t("departure");
     const dateSummary =
       tripTypeInput === "round-trip"
-        ? departureDateInput && returnDateInput
-          ? `${formatDesktopHeaderDateLabel(departureDateInput, calendarLocale)} – ${formatDesktopHeaderDateLabel(returnDateInput, calendarLocale)}`
+        ? compactDepartureDate && returnDateInput
+          ? `${formatDesktopHeaderDateLabel(compactDepartureDate, calendarLocale)} – ${formatDesktopHeaderDateLabel(returnDateInput, calendarLocale)}`
           : departureSummary
         : departureSummary;
     const tripTypeOptions = [
