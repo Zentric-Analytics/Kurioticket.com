@@ -431,7 +431,7 @@ test("desktop Cars uses three separate 680px section cards inside the parent whi
   assert.match(clientSource, /max-w-\[640px\]/);
 });
 
-test("desktop Cars keeps tabs on the parent background until the compact sticky handoff", () => {
+test("desktop Cars keeps tab text directly on the sticky bar without an inner capsule", () => {
   assert.match(sectionNavSource, /data-car-details-compact-sticky-tabs/);
   assert.match(sectionNavSource, /lg:sticky lg:top-0/);
   assert.match(sectionNavSource, /desktopStuck/);
@@ -440,15 +440,20 @@ test("desktop Cars keeps tabs on the parent background until the compact sticky 
   assert.match(sectionNavSource, /data-car-details-desktop-sticky-back/);
   assert.match(sectionNavSource, /data-car-details-desktop-sticky-actions/);
   assert.match(sectionNavSource, /data-car-details-desktop-sticky-backdrop/);
-  assert.match(sectionNavSource, /data-surface=\{desktopStuck \? "compact" : "background"\}/);
+  assert.match(sectionNavSource, /data-surface=\{desktopStuck \? "sticky-bar" : "background"\}/);
   assert.match(
     sectionNavSource,
-    /desktopStuck \? "relative col-start-2 row-start-1 justify-self-center rounded-\[14px\] border border-\[#DCE4EE\] bg-white\/95 px-1 shadow-/,
+    /desktopStuck \? "relative col-start-2 row-start-1 justify-self-center bg-transparent px-0 shadow-none"/,
   );
   assert.match(
     sectionNavSource,
     /: "absolute left-1\/2 top-0 -translate-x-1\/2 bg-transparent px-0 shadow-none"/,
   );
+  assert.doesNotMatch(
+    sectionNavSource,
+    /desktopStuck \? "[^"]*rounded-\[14px\][^"]*border border-\[#DCE4EE\][^"]*bg-white\/95/,
+  );
+  assert.doesNotMatch(sectionNavSource, /data-car-details-desktop-tabs[\s\S]*?backdrop-blur-md/);
   assert.match(clientSource, /target\?\.scrollIntoView\(\{/);
   assert.match(clientSource, /scheduleDesktopScrollState/);
 });
