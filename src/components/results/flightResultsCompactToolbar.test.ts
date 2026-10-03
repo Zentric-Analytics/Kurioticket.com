@@ -55,12 +55,13 @@ test("desktop header opens only the selected field editor", () => {
   const callback = stickyEditorCallbackSource();
 
   assert.match(callback, /target: "trip" \| "route" \| "dates" \| "return" \| "travelers"/);
-  assert.match(callback, /setActiveStickySearchTarget\(target\)/);
-  assert.match(callback, /target === "dates"[\s\S]*?"departure"[\s\S]*?target === "return"[\s\S]*?"return"/);
-  assert.match(callback, /tripTypeInput !== "multi-city" && target === "travelers"/);
-  assert.match(callback, /target === "route" && originInput\.trim\(\)\.length >= 2/);
+  assert.match(callback, /const resolvedTarget =[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?\? "trip"[\s\S]*?: target/);
+  assert.match(callback, /setActiveStickySearchTarget\(resolvedTarget\)/);
+  assert.match(callback, /resolvedTarget === "dates"[\s\S]*?"departure"[\s\S]*?resolvedTarget === "return"[\s\S]*?"return"/);
+  assert.match(callback, /setTravelerPopoverOpen\(resolvedTarget === "travelers"\)/);
+  assert.match(callback, /resolvedTarget === "route" && originInput\.trim\(\)\.length >= 2/);
   assert.match(callback, /stickySearchLauncherRef\.current = event\.currentTarget/);
-  assert.match(callback, /target === "trip" \? null : target/);
+  assert.match(callback, /resolvedTarget === "trip" \? null : resolvedTarget/);
 });
 
 test("sticky search moves focus directly to the requested field editor", () => {
