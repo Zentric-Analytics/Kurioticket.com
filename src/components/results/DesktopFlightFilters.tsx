@@ -1,7 +1,7 @@
 "use client";
 
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Check, ChevronDown, SlidersHorizontal } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
@@ -334,10 +334,20 @@ export function DesktopFlightFilters({
       data-flight-hotel-filter-visual-parity
       className="desktop-filter-sidebar overflow-hidden rounded-lg border border-[#CFD9E5] bg-[#F2F4F8]"
     >
-      <div className="flex min-h-10 items-center px-3 py-2">
+      <div className="flex min-h-10 items-center justify-between gap-3 px-3 py-2">
         <h2 className="truncate text-[14px] font-bold tracking-[-0.01em] text-slate-950">
           {t("hotelResults.filterBy")}
         </h2>
+        {hasActiveFilters ? (
+          <button
+            type="button"
+            aria-label="Reset filters"
+            className="text-[12px] font-semibold leading-4 text-[#004BB8] transition-colors hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+            onClick={onClear}
+          >
+            {t("clearAll")}
+          </button>
+        ) : null}
       </div>
 
       <div className="space-y-0 bg-transparent">
@@ -451,7 +461,7 @@ function CompactFilterSection({
 
 function HotelStyleFilterSection({ title, children }: { title: string; children: ReactNode }) {
   const [expanded, setExpanded] = useState(true);
-  const panelId = `desktop-flight-filter-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-panel`;
+  const panelId = useId();
 
   return (
     <section className="border-t border-slate-200/75 px-3 py-3 first:border-t-0">
