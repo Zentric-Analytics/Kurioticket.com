@@ -397,8 +397,10 @@ test("desktop nearby fares use a contained mobile-like hierarchy", async () => {
   const start = source.indexOf("data-desktop-nearby-fare-rail");
   const strip = source.slice(start, source.indexOf("Next nearby fare date", start) + 300);
 
-  assert.match(strip, /data-desktop-nearby-fare-rail className="grid w-full grid-cols-\[42px_repeat\(7,minmax\(0,1fr\)\)_42px\][^"]*gap-2[^"]*bg-transparent/);
-  assert.doesNotMatch(strip, /max-w-\[980px\]|mx-auto/);
+  assert.match(strip, /data-desktop-nearby-fare-rail className="relative grid w-full grid-cols-7[^"]*gap-2[^"]*bg-transparent/);
+  assert.match(strip, /aria-label="Previous nearby fare date"[\s\S]*?-left-9 top-1\/2/);
+  assert.match(strip, /aria-label="Next nearby fare date"[\s\S]*?-right-9 top-1\/2/);
+  assert.doesNotMatch(strip, /max-w-\[980px\]|mx-auto|grid-cols-\[42px_repeat\(7,minmax\(0,1fr\)\)_42px\]/);
   assert.match(strip, /min-h-\[74px\]/);
   assert.match(strip, /rounded-lg border border-slate-200 bg-white/);
   assert.match(strip, /selected && "border-\[#075EE8\] bg-blue-50\/60"/);
