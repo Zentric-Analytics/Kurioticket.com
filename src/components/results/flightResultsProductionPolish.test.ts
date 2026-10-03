@@ -388,16 +388,19 @@ test("desktop Flight filters use the Hotel typography hierarchy and checkbox rhy
   );
 
   assert.match(filters, /data-flight-desktop-filter-surface/);
-  assert.match(filters, /desktop-filter-sidebar cars-desktop-filter-surface/);
-  assert.match(filters, /bg-\[#F2F4F8\]/);
+  assert.match(filters, /data-flight-hotel-filter-visual-parity/);
+  assert.match(filters, /overflow-hidden rounded-lg border border-\[#CFD9E5\] bg-\[#F2F4F8\]/);
+  assert.match(filters, /\{t\("hotelResults\.filterBy"\)\}/);
   assert.match(filters, /text-\[14px\] font-bold tracking-\[-0\.01em\] text-slate-950/);
-  assert.match(filters, /text-\[13px\] font-bold normal-case leading-5 text-slate-950/);
-  assert.match(filters, /"flex cursor-pointer items-center rounded-lg font-medium leading-5 transition-all"/);
-  assert.match(filters, /compact \? "gap-2 px-1\.5 py-1 text-\[13px\]" : "min-h-\[30px\] gap-2\.5 px-0\.5 py-1 text-\[12px\]"/);
-  assert.match(filters, /compact \? "gap-2 px-1\.5 py-1 text-\[13px\]"/);
+  assert.match(filters, /text-\[13px\] font-bold leading-5 text-slate-950/);
+  assert.match(filters, /border-t border-slate-200\/75 px-3 py-3 first:border-t-0/);
+  assert.match(filters, /min-h-6 w-full items-center justify-between/);
+  assert.match(filters, /h-\[14px\] w-\[14px\]/);
+  assert.match(filters, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
+  assert.match(filters, /<Check className="h-2\.5 w-2\.5"/);
   assert.match(filters, /text-\[12px\] font-medium leading-5 tabular-nums text-slate-500/);
-  assert.match(filters, /h-4 w-4 shrink-0 rounded border-slate-300 accent-blue/);
   assert.match(filters, /text-\[13px\] font-semibold leading-5 tracking-\[-0\.005em\] text-slate-800/);
+  assert.doesNotMatch(filters, /data-flight-hotel-filter-visual-parity[\s\S]{0,300}bg-white/);
 });
 
 test("desktop Flight Stops filter shows labels and counts without fare hints", async () => {
@@ -445,7 +448,7 @@ test("desktop Flight compact filters reuse the same full filter surface as Cars"
 
   assert.match(filters, /compact\?: boolean/);
   assert.match(filters, /compact = false/);
-  assert.match(filters, /max-h-full w-full overflow-y-auto rounded-2xl overscroll-contain/);
+  assert.match(filters, /flex max-h-full w-full flex-col overflow-hidden rounded-2xl/);
 });
 
 test("desktop Flight result meta typography uses the premium hierarchy", async () => {

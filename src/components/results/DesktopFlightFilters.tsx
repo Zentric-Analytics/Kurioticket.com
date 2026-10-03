@@ -1,7 +1,7 @@
 "use client";
 
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Check, ChevronDown, SlidersHorizontal } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
@@ -331,35 +331,18 @@ export function DesktopFlightFilters({
   return (
     <div
       data-flight-desktop-filter-surface
-      className={cn(
-        "desktop-filter-sidebar cars-desktop-filter-surface border border-slate-200/80 bg-[#F2F4F8] p-0 shadow-none",
-        compact
-          ? "max-h-full w-full overflow-y-auto rounded-2xl overscroll-contain"
-          : "rounded-none",
-        isGuidedComfortable && "bg-[#F2F4F8]",
-      )}
+      data-flight-hotel-filter-visual-parity
+      className="desktop-filter-sidebar overflow-hidden rounded-lg border border-[#CFD9E5] bg-[#F2F4F8]"
     >
-      <div className="desktop-filter-sidebar__header shrink-0 border-b border-slate-200/70 px-3 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="truncate text-[14px] font-bold tracking-[-0.01em] text-slate-950">
-            {t("filters")}
-            {hasActiveFilters ? (
-              <span className="ms-2 rounded-full bg-[#004BB8] px-2 py-0.5 text-[12px] font-semibold leading-4 text-white">
-                {activeFilterCount}
-              </span>
-            ) : null}
-          </h2>
-          <SlidersHorizontal
-            aria-hidden="true"
-            className="cars-desktop-filter-icon h-[18px] w-[18px] shrink-0 text-[#07133B]"
-            strokeWidth={2}
-          />
-        </div>
+      <div className="flex min-h-10 items-center justify-between gap-3 px-3 py-2">
+        <h2 className="truncate text-[14px] font-bold tracking-[-0.01em] text-slate-950">
+          {t("hotelResults.filterBy")}
+        </h2>
         {hasActiveFilters ? (
           <button
             type="button"
             aria-label="Reset filters"
-            className="focus-ring mt-2 text-[13px] font-semibold leading-5 text-[#004BB8]"
+            className="text-[12px] font-semibold leading-4 text-[#004BB8] transition-colors hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
             onClick={onClear}
           >
             {t("clearAll")}
@@ -367,19 +350,17 @@ export function DesktopFlightFilters({
         ) : null}
       </div>
 
-      <div className="space-y-0 bg-transparent px-3 py-1">
-        <section className="border-t border-slate-200/75 py-3 first:border-t-0">
-          <SectionTitle>{t("price")}</SectionTitle>
+      <div className="space-y-0 bg-transparent">
+        <HotelStyleFilterSection title={t("price")}>
           <div className={cn("mb-2.5 grid grid-cols-2 gap-4 text-[12px] font-medium leading-5 tabular-nums text-[#475569]", isGuidedComfortable && "text-[13px]")}>
             <span className="min-w-0">{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.min) : "—"}</span>
             <span className="min-w-0 text-right">{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.max) : "—"}</span>
           </div>
           <input aria-label={t("price")} className={rangeClass} type="range" min={priceBounds.min || 0} max={priceBounds.max || 0} step={25} value={priceBounds.max ? Math.min(maxPrice, priceBounds.max) : 0} disabled={!priceBounds.max} onPointerUp={onFilterCommit} onMouseUp={onFilterCommit} onTouchEnd={onFilterCommit} onKeyUp={onFilterCommit} onBlur={onFilterCommit} onChange={(event) => { onFilterChange(); setMaxPrice(Number(event.target.value)); }} />
           {priceBounds.max && priceLabelCurrency ? <p className="mt-2 text-[12px] font-semibold leading-5 text-slate-950">{t("price")}: {formatFilterPrice(Math.min(maxPrice, priceBounds.max))}</p> : null}
-        </section>
+        </HotelStyleFilterSection>
 
-        <section className="border-t border-slate-200/75 py-3 first:border-t-0">
-          <SectionTitle>{t("takeoff")} / {t("landing")}</SectionTitle>
+        <HotelStyleFilterSection title={`${t("takeoff")} / ${t("landing")}`}>
           <div className="mb-2.5 grid grid-cols-2 rounded-[10px] bg-slate-100 p-1">
             {["takeoff", "landing"].map((mode) => <button key={mode} type="button" onClick={() => { onFilterChange(); setTimeFilterMode(mode as TimeFilterMode); onFilterCommit(); }} className={cn("min-h-9 rounded-lg px-2 py-1.5 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30", isGuidedComfortable && "min-h-10", timeFilterMode === mode ? "bg-white text-[#004BB8] shadow-sm" : "text-slate-600 hover:text-slate-950")}>{mode === "takeoff" ? t("takeoff") : t("landing")}</button>)}
           </div>
@@ -388,16 +369,15 @@ export function DesktopFlightFilters({
             <span className="shrink-0 font-semibold tabular-nums text-slate-950">{timeBoundsForMode ? formatTimeFromMinutes(maxTimeForMode ?? timeBoundsForMode.max, calendarLocale) : "—"}</span>
           </div>
           <input aria-label={timeFilterMode === "takeoff" ? t("takeoff") : t("landing")} className={rangeClass} type="range" min={timeBoundsForMode?.min ?? 0} max={timeBoundsForMode?.max ?? 0} step={15} value={maxTimeForMode ?? timeBoundsForMode?.max ?? 0} disabled={!timeBoundsForMode} onPointerUp={onFilterCommit} onMouseUp={onFilterCommit} onTouchEnd={onFilterCommit} onKeyUp={onFilterCommit} onBlur={onFilterCommit} onChange={(event) => { onFilterChange(); setMaxTimeForMode(Number(event.target.value)); }} />
-        </section>
+        </HotelStyleFilterSection>
 
-        <section className="border-t border-slate-200/75 py-3 first:border-t-0">
-          <SectionTitle>{t("duration")}</SectionTitle>
+        <HotelStyleFilterSection title={t("duration")}>
           <div className={cn("mb-2.5 flex items-center justify-between gap-3 text-[12px] leading-5", isGuidedComfortable && "text-[13px]")}>
             <span className="font-medium text-slate-600">{t("duration")}</span>
             <span className="shrink-0 font-semibold tabular-nums text-slate-950">{durationBounds ? formatDurationFromMinutes(maxDurationMinutes ?? durationBounds.max, t) : "—"}</span>
           </div>
           <input aria-label={t("duration")} className={rangeClass} type="range" min={durationBounds?.min ?? 0} max={durationBounds?.max ?? 0} step={15} value={maxDurationMinutes ?? durationBounds?.max ?? 0} disabled={!durationBounds} onPointerUp={onFilterCommit} onMouseUp={onFilterCommit} onTouchEnd={onFilterCommit} onKeyUp={onFilterCommit} onBlur={onFilterCommit} onChange={(event) => { onFilterChange(); setMaxDurationMinutes(Number(event.target.value)); }} />
-        </section>
+        </HotelStyleFilterSection>
 
         <OptionSection title={t("stops")} emptyText={t("stopsAppearAfterResultsLoad")}>{stopOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} checked={selectedStops.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedStops); onFilterCommit(); }} />)}</OptionSection>
 
@@ -410,15 +390,14 @@ export function DesktopFlightFilters({
 
         <OptionSection title={t("airports")} emptyText={t("airportsAppearAfterResultsLoad")}>{airportOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} checked={selectedAirports.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedAirports); onFilterCommit(); }} />)}</OptionSection>
 
-        <section className="border-t border-slate-200/75 py-3 first:border-t-0">
-          <SectionTitle>{t("baggage")} / {t("flexibleRefundable")}</SectionTitle>
+        <HotelStyleFilterSection title={`${t("baggage")} / ${t("flexibleRefundable")}`}>
           <div className="grid gap-0.5">
             <FacetRow label={t("baggageIncluded")} checked={baggageIncludedOnly} onChange={() => { onFilterChange(); setBaggageIncludedOnly(!baggageIncludedOnly); onFilterCommit(); }} />
             <FacetRow label={t("flexibleRefundable")} checked={flexibleOnly} onChange={() => { onFilterChange(); setFlexibleOnly(!flexibleOnly); onFilterCommit(); }} />
           </div>
-        </section>
+        </HotelStyleFilterSection>
 
-        {renderQualitySection ? <Accordion idPrefix={idPrefix} title={t("flightQuality")}>{flightQualityOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} checked={selectedFlightQuality.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedFlightQuality); onFilterCommit(); }} />)}</Accordion> : null}
+        {renderQualitySection ? <HotelStyleFilterSection title={t("flightQuality")}><div className="grid gap-0.5">{flightQualityOptions.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} checked={selectedFlightQuality.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedFlightQuality); onFilterCommit(); }} />)}</div></HotelStyleFilterSection> : null}
       </div>
     </div>
   );
@@ -480,25 +459,65 @@ function CompactFilterSection({
   );
 }
 
-function SectionTitle({ children }: { children: ReactNode }) {
-  return <h3 className="mb-2 text-[13px] font-bold normal-case leading-5 text-slate-950">{children}</h3>;
+function HotelStyleFilterSection({ title, children }: { title: string; children: ReactNode }) {
+  const [expanded, setExpanded] = useState(true);
+  const panelId = useId();
+
+  return (
+    <section className="border-t border-slate-200/75 px-3 py-3 first:border-t-0">
+      <h3 className="text-[13px] font-bold leading-5 text-slate-950">
+        <button
+          type="button"
+          className="flex min-h-6 w-full items-center justify-between gap-3 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+          aria-expanded={expanded}
+          aria-controls={panelId}
+          onClick={() => setExpanded((value) => !value)}
+        >
+          <span>{title}</span>
+          <ChevronDown
+            className={cn("h-4 w-4 text-slate-500 transition-transform", expanded && "rotate-180")}
+            aria-hidden="true"
+          />
+        </button>
+      </h3>
+      <div id={panelId} className={cn("gap-0.5 pt-1", expanded ? "grid" : "hidden")}>
+        {children}
+      </div>
+    </section>
+  );
 }
 
 function OptionSection({ title, emptyText, children }: { title: string; emptyText?: string; children: ReactNode }) {
   const hasOptions = Boolean(children) && (!Array.isArray(children) || children.length > 0);
-  return <section className="border-t border-slate-200/75 py-3 first:border-t-0"><SectionTitle>{title}</SectionTitle><div className="grid gap-0.5">{hasOptions ? children : <p className="py-1 text-xs text-slate-500">{emptyText}</p>}</div></section>;
-}
-
-function Accordion({ idPrefix, title, emptyText, children }: { idPrefix: string; title: string; emptyText?: string; children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const panelId = `${idPrefix}-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-panel`;
-  const hasOptions = Boolean(children) && (!Array.isArray(children) || children.length > 0);
-
-  return <section className="border-t border-slate-200"><button type="button" aria-expanded={isOpen} aria-controls={panelId} className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg py-2.5 text-left text-sm font-semibold text-[#334155] transition hover:bg-slate-100/70 hover:text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30" onClick={() => setIsOpen((current) => !current)}><span>{title}</span><ChevronDown aria-hidden="true" className={cn("h-4 w-4 text-slate-500 transition", isOpen && "rotate-180 text-[#004BB8]")} /></button><div id={panelId} className={cn("grid gap-0.5 pb-3", !isOpen && "hidden")}>{hasOptions ? children : <p className="py-1 text-xs text-slate-500">{emptyText}</p>}</div></section>;
+  return (
+    <HotelStyleFilterSection title={title}>
+      <div className="grid gap-0.5">
+        {hasOptions ? children : <p className="py-1 text-xs text-slate-500">{emptyText}</p>}
+      </div>
+    </HotelStyleFilterSection>
+  );
 }
 
 function FacetRow({ label, count, secondaryLabel, rightLabel, checked, onChange, compact = false }: { label: string; count?: number; secondaryLabel?: string; rightLabel?: string; checked: boolean; onChange: () => void; compact?: boolean }) {
   const trailingLabel = rightLabel ?? (typeof count === "number" ? String(count) : null);
 
-  return <label className={cn("flex cursor-pointer items-center rounded-lg font-medium leading-5 transition-all", compact ? "gap-2 px-1.5 py-1 text-[13px]" : "min-h-[30px] gap-2.5 px-0.5 py-1 text-[12px]", checked ? "font-semibold text-slate-950" : compact ? "text-slate-600 hover:bg-slate-100/70 hover:text-slate-950" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950")}><input type="checkbox" className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue" checked={checked} onChange={onChange} /><span className="min-w-0 flex-1"><span className="block break-words">{label}</span>{secondaryLabel ? <span className="block break-words text-[12px] font-medium leading-4 text-slate-500">{secondaryLabel}</span> : null}</span>{trailingLabel ? <span className="ms-auto min-w-6 shrink-0 text-right text-[12px] font-medium leading-5 tabular-nums text-slate-500">{trailingLabel}</span> : null}</label>;
+  if (compact) {
+    return <label className={cn("flex cursor-pointer items-center rounded-lg font-medium leading-5 transition-all gap-2 px-1.5 py-1 text-[13px]", checked ? "font-semibold text-slate-950" : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-950")}><input type="checkbox" className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue" checked={checked} onChange={onChange} /><span className="min-w-0 flex-1"><span className="block break-words">{label}</span>{secondaryLabel ? <span className="block break-words text-[12px] font-medium leading-4 text-slate-500">{secondaryLabel}</span> : null}</span>{trailingLabel ? <span className="ms-auto min-w-6 shrink-0 text-right text-[12px] font-medium leading-5 tabular-nums text-slate-500">{trailingLabel}</span> : null}</label>;
+  }
+
+  return (
+    <label className="group flex min-h-[30px] min-w-0 cursor-pointer items-center justify-between gap-3 rounded-md px-0.5 py-1 text-[12px] font-medium leading-5 text-slate-700 transition hover:bg-slate-50 hover:text-slate-950">
+      <span className="flex min-w-0 flex-1 items-start gap-2">
+        <input className="peer sr-only" type="checkbox" checked={checked} onChange={onChange} />
+        <span aria-hidden="true" className={cn("mt-0.5 flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[2px] border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2", checked ? "border-[#0067DB] bg-[#0067DB] text-white" : "border-slate-300 bg-white group-hover:border-slate-400")}>
+          {checked ? <Check className="h-2.5 w-2.5" strokeWidth={3} aria-hidden="true" /> : null}
+        </span>
+        <span className={cn("min-w-0 flex-1", checked && "font-semibold text-slate-950")}>
+          <span className="block break-words">{label}</span>
+          {secondaryLabel ? <span className="block break-words text-[12px] font-medium leading-4 text-slate-500">{secondaryLabel}</span> : null}
+        </span>
+      </span>
+      {trailingLabel ? <span className="min-w-6 shrink-0 text-right text-[12px] font-medium leading-5 tabular-nums text-slate-500">{trailingLabel}</span> : null}
+    </label>
+  );
 }
