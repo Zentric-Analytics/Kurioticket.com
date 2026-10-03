@@ -94,6 +94,23 @@ test("the full Flight result card is clickable at every width without hijacking 
   );
 });
 
+test("desktop itinerary keeps the widened center route and right-aligned arrival endpoint", () => {
+  const gridRule = ruleBody(globalsCss, ".flight-card-leg-grid");
+  const legStart = flightCardSource.indexOf("function ResponsiveFlightLegRow");
+  const legEnd = flightCardSource.indexOf("function AirlineLogo", legStart);
+  const leg = flightCardSource.slice(legStart, legEnd);
+
+  assert.match(
+    gridRule,
+    /minmax\(112px, 0\.72fr\)[\s\S]*minmax\(220px, 1\.8fr\)[\s\S]*92px[\s\S]*0\.6fr/,
+  );
+  assert.match(gridRule, /gap:\s*1rem/);
+  assert.match(
+    leg,
+    /flight-card-leg-endpoint min-w-0 text-right[\s\S]*formatTime\(leg\.arrivalTime, locale\)[\s\S]*leg\.destinationAirport[\s\S]*flight-card-arrival-date/,
+  );
+});
+
 test("desktop fare stays beside the itinerary while the footer summary spans the card", () => {
   const baseBodyStart = globalsCss.indexOf(".flight-card-body {");
   assert.match(

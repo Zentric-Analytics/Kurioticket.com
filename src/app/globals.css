@@ -1393,11 +1393,11 @@ textarea {
 .flight-card-details { grid-area: details; }
 
 .flight-card-leg-grid {
-  grid-template-columns: minmax(112px, 0.8fr) minmax(180px, 1.5fr) minmax(
-      105px,
-      0.75fr
+  grid-template-columns: minmax(112px, 0.72fr) minmax(220px, 1.8fr) minmax(
+      92px,
+      0.6fr
     );
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .flight-card-leg-label {
@@ -1655,9 +1655,9 @@ textarea {
   }
 
   .flight-card-leg-grid {
-    grid-template-columns: minmax(106px, 0.8fr) minmax(142px, 1.35fr) minmax(
-        100px,
-        0.75fr
+    grid-template-columns: minmax(106px, 0.7fr) minmax(168px, 1.55fr) minmax(
+        92px,
+        0.6fr
       );
     gap: 0.75rem;
   }
