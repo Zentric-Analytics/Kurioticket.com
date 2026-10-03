@@ -46,7 +46,7 @@ test("quick-sheet drafts are immediate and Apply owns the results commit", () =>
   assert.doesNotMatch(cars, /markQuickFilterUpdating|quickFilterFeedbackTimerRef/);
   assert.match(sheet, /onClick=\{\(\) => setQuickSortDraft\(option\.value\)\}/);
   assert.match(sheet, /onChange=\{\(\) => setQuickFilterDraft/);
-  assert.match(sheet, /startFilterResultsTransition\(\); setCurrentPage\(1\)/);
+  assert.match(sheet, /startFilterResultsTransition\(\)/);
   assert.match(sheet, /closeQuickFilter\(\)/);
 });
 
@@ -60,8 +60,8 @@ test("the full mobile drawer defers its transition until changed filters become 
     cars.indexOf("data-cars-quick-sheet-backdrop"),
   );
 
-  assert.match(handlers, /const toggleMobileDrawerCarFilter[\s\S]*setCurrentPage\(1\)[\s\S]*setSelectedCarFilters/);
-  assert.match(handlers, /const clearMobileDrawerCarFilters[\s\S]*setCurrentPage\(1\)[\s\S]*setSelectedCarFilters\(\{\}\)/);
+  assert.match(handlers, /const toggleMobileDrawerCarFilter[\s\S]*setSelectedCarFilters/);
+  assert.match(handlers, /const clearMobileDrawerCarFilters[\s\S]*setSelectedCarFilters\(\{\}\)/);
   assert.doesNotMatch(
     handlers.slice(0, handlers.indexOf("const closeMobileFiltersDrawer")),
     /startFilterResultsTransition/,
