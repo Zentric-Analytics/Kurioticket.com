@@ -178,66 +178,42 @@ test("anchored desktop search recomputes on browser resize and closes below desk
   );
 });
 
-test("expanded Flight search gives airport, date, and traveler controls prominent desktop surfaces", () => {
-  const dropdownEffectStart = source.indexOf("function updateDropdownPosition");
-  const dateEffectStart = source.indexOf("function updateDatePickerPosition");
-  const travelerEffectStart = source.indexOf("function updateTravelerPopoverPosition");
-  const submitStart = source.indexOf("function handleCompactSearchSubmit");
-  const positioning = source.slice(dropdownEffectStart, submitStart);
+test("field-specific Flight header editors anchor their controls locally", () => {
   const popoutStart = source.indexOf("function renderStickySearchPopoutOverlay()");
   const popoutEnd = source.indexOf("function renderCompactSearchForm", popoutStart);
   const popout = source.slice(popoutStart, popoutEnd);
   const datePickerStart = source.indexOf("function DatePickerPopover");
-  const travelerStart = source.indexOf("function TravelerCabinPopover");
   const suggestionStart = source.indexOf("function SuggestionList");
   const componentSource = source.slice(datePickerStart, suggestionStart);
 
-  assert.ok(dropdownEffectStart >= 0);
-  assert.ok(dateEffectStart > dropdownEffectStart);
-  assert.ok(travelerEffectStart > dateEffectStart);
-  assert.match(positioning, /preferredWidth = useStickyWrap \? 560 : 380/);
-  assert.match(positioning, /preferredWidth = useStickyTrigger \? 920 : 620/);
-  assert.match(positioning, /stickyDateButtonRef\.current/);
-  assert.match(positioning, /preferredWidth = useStickyTrigger \? 480 : 360/);
-  assert.match(positioning, /stickyTravelerButtonRef\.current/);
-  assert.match(
-    positioning,
-    /\}, \[activeDatePicker, activeDesktopSearchSurface\]\);/,
-  );
-  assert.match(
-    positioning,
-    /\}, \[activeDesktopSearchSurface, travelerPopoverOpen\]\);/,
-  );
-
   assert.match(
     popout,
-    /id="sticky-flight-origin-suggestions"[\s\S]*?position=\{[\s\S]*?dropdownPosition/,
+    /id="sticky-flight-origin-suggestions"[\s\S]*?alignToField/,
   );
   assert.match(
     popout,
-    /id="sticky-flight-destination-suggestions"[\s\S]*?position=\{[\s\S]*?dropdownPosition/,
+    /id="sticky-flight-destination-suggestions"[\s\S]*?alignToField/,
   );
+  assert.match(
+    popout,
+    /<DatePickerPopover[\s\S]*?prominentDesktop[\s\S]*?alignToField="left"/,
+  );
+  assert.match(
+    popout,
+    /<TravelerCabinPopover[\s\S]*?prominentDesktop[\s\S]*?alignToField="right"/,
+  );
+  assert.match(popout, /launcherRef=\{stickyDateButtonRef\}/);
+  assert.match(popout, /launcherRef=\{stickyTravelerButtonRef\}/);
   assert.doesNotMatch(
     popout,
-    /id="sticky-flight-(?:origin|destination)-suggestions"[\s\S]{0,120}?alignToField/,
-  );
-  assert.match(
-    popout,
-    /<DatePickerPopover[\s\S]*?prominentDesktop[\s\S]*?datePickerPosition/,
-  );
-  assert.match(
-    popout,
-    /<TravelerCabinPopover[\s\S]*?prominentDesktop[\s\S]*?travelerPopoverPosition/,
+    /id="sticky-flight-(?:origin|destination)-suggestions"[\s\S]{0,180}?position=\{/,
   );
 
   assert.match(
     componentSource,
     /prominentDesktop \?\s*"max-w-none rounded-xl p-4"/,
   );
-  assert.match(
-    componentSource,
-    /prominentDesktop = false/,
-  );
+  assert.match(componentSource, /alignToField\?: "left" \| "right"/);
 });
 
 test("prominent desktop calendar stays compact and keeps its footer visible", () => {
@@ -281,13 +257,13 @@ test("sticky multi-city selection renders the real multi-city editor", () => {
     popout,
     /minimumDate=\{formatDateValue\(new Date\(\)\)\}/,
   );
-  assert.match(
+  assert.doesNotMatch(
     popout,
     /data-sticky-multicity-editor[\s\S]*travelerCabinSummary[\s\S]*<TravelerCabinPopover/,
   );
-  assert.match(
+  assert.doesNotMatch(
     popout,
-    /data-sticky-multicity-editor[\s\S]*<Button[\s\S]*type="submit"[\s\S]*\{t\("search"\)\}/,
+    /data-sticky-multicity-editor[\s\S]*<Button[\s\S]*type="submit"/,
   );
 });
 
@@ -329,7 +305,7 @@ test("desktop change-flight fields reuse mobile Results typography and card toke
     popout.match(/MapPin aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-\[#071A48\]"/g)?.length,
     2,
   );
-  assert.match(popout, /rounded-\[13px\] border border-\[#E7ECF5\] bg-white shadow-none/);
+  assert.match(popout, /rounded-\[12px\] border border-\[#CFD9E5\] bg-white shadow-\[0_12px_26px_-18px_rgba\(15,23,42,0\.28\)\]/);
 });
 
 
