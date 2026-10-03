@@ -893,15 +893,12 @@ test("standalone desktop amenities use a compact four-column two-row grid withou
     /index % 2 === 0|lg:justify-self-end|lg:justify-self-start/,
   );
 });
-test("standalone desktop amenities sit directly on the Cars Details page surface", () => {
+test("standalone desktop amenities use compact white inner surfaces on the layered hero", () => {
   assert.match(
     heroSource,
-    /reserveMobileControlSafeZone \? `lg:w-max lg:max-w-full lg:min-h-8 lg:rounded-none lg:bg-transparent lg:px-0 lg:py-1\.5 lg:text-\[13px\] lg:whitespace-nowrap/,
+    /data-car-details-desktop-overview-specifications[\s\S]*?min-h-12 w-full[\s\S]*?rounded-\[13px\][\s\S]*?bg-white/,
   );
-  assert.doesNotMatch(
-    heroSource,
-    /reserveMobileControlSafeZone \? "lg:min-h-10 lg:rounded-\[10px\] lg:bg-\[#EEF3F8\]/,
-  );
+  assert.match(heroSource, /data-car-details-layered-surface=\{reserveMobileControlSafeZone \? "hero" : undefined\}/);
 });
 
 test("Cars Details uses the same dedicated transmission icon at mobile and desktop", () => {
@@ -927,13 +924,13 @@ test("Cars Details uses the same dedicated transmission icon at mobile and deskt
   );
 });
 
-test("desktop standalone duplicate section headings and deal rows share the left section alignment", () => {
+test("desktop standalone section headings and deal rows keep one left-aligned content rail", () => {
   const comparison = sourceBetween(
     clientSource,
     "function CarPriceComparisonSection",
     "function CarLocationSection",
   );
-  assert.match(comparison, /showDesktopOfferList \? "lg:max-w-\[900px\]" : "lg:max-w-\[820px\]"/);
+  assert.match(comparison, /showDesktopOfferList \? "lg:max-w-\[900px\][^"]*lg:bg-\[#F7F9FC\]/);
   assert.match(
     comparison,
     /className="car-details-desktop-section-heading-type hidden lg:block lg:text-\[16px\] lg:font-semibold/,
@@ -944,7 +941,7 @@ test("desktop standalone duplicate section headings and deal rows share the left
   );
   assert.match(
     comparison,
-    /className="mt-3 hidden w-full max-w-\[720px\] space-y-2 lg:block"/,
+    /className="mt-4 hidden w-full max-w-\[720px\] space-y-2\.5 lg:block"/,
   );
   assert.doesNotMatch(comparison, /lg:text-center|lg:justify-center/);
 
@@ -967,19 +964,19 @@ test("standalone desktop car overview centers the identity, image, and amenities
   assert.match(heroSource, /data-car-details-desktop-overview/);
   assert.match(
     heroSource,
-    /hidden lg:flex lg:flex-col lg:items-center lg:p-5/,
+    /hidden lg:flex lg:flex-col lg:items-center lg:px-0 lg:pb-1 lg:pt-0/,
   );
   assert.match(heroSource, /data-car-details-desktop-overview-identity/);
   assert.match(heroSource, /max-w-\[820px\] text-center/);
   assert.match(heroSource, /data-car-details-desktop-overview-specifications/);
-  assert.match(heroSource, /max-w-\[820px\] grid-cols-4/);
+  assert.match(heroSource, /max-w-\[820px\] grid-cols-4 gap-3/);
   assert.match(
     heroSource,
     /data-car-details-desktop-overview-image[\s\S]*?max-w-\[680px\]/,
   );
   assert.match(heroSource, /h-\[250px\]/);
   assert.match(heroSource, /sizes="680px"/);
-  assert.match(heroSource, /justify-self-center/);
+  assert.match(heroSource, /min-h-12 w-full/);
   assert.doesNotMatch(
     heroSource,
     /lg:grid-cols-\[minmax\(0,1fr\)_320px\]|data-car-details-desktop-overview-summary/,
