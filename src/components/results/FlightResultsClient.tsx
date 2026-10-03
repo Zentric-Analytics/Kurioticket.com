@@ -3990,6 +3990,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }) || (!guidedMode && kayak?.vertical === "flights" && kayak.status === "loading");
 
   useEffect(() => {
+    if (!resultsUiPreparing || !isStickySearchPanelOpen) return;
+
+    pendingStickySearchTargetRef.current = null;
+    collapseStickySearch({ restoreScroll: false });
+  }, [collapseStickySearch, isStickySearchPanelOpen, resultsUiPreparing]);
+
+  useEffect(() => {
     if (
       loading ||
       sessionStatus !== "authenticated" ||
@@ -7399,23 +7406,28 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     return <Button type="button" className="mt-4 rounded-xl" onClick={retryMainInventorySearch}>{t("deals.guided.flightResults.retry")}</Button>;
   }
 
+  const standaloneResultsHeader = guidedMode ? null : (
+    <AppHeader
+      flushDesktopBottom
+      flushMobileBottom
+      hideDesktopTravelNav
+      hideMobileCategoryTabs
+      hotelDesktopBoundary
+      flightResultsDesktopSticky
+    />
+  );
+
+  const readyDesktopNavbarSearch =
+    !guidedMode && desktopNavSearchTarget
+      ? createPortal(renderDesktopHeaderSearchBar(), desktopNavSearchTarget)
+      : null;
+
   if (resultsUiPreparing) {
     if (guidedMode) return <section aria-labelledby="deals-guided-flight-results-heading" className="mt-6" data-flight-results-experience="deals-guided"><h2 id="deals-guided-flight-results-heading" tabIndex={-1} className="text-xl font-extrabold text-slate-950">{t("deals.guided.flightResults.loadingTitle")}</h2><div ref={loadingFocusRef} role="status" tabIndex={-1} className="mt-4 space-y-3"><FlightCardSkeleton /><FlightCardSkeleton /></div></section>;
     return (
       <>
-      <AppHeader
-        flushDesktopBottom
-        flushMobileBottom
-        hideDesktopTravelNav
-        hideMobileCategoryTabs
-        hotelDesktopBoundary
-        flightResultsDesktopSticky
-      />
-      {desktopNavSearchTarget
-        ? createPortal(renderDesktopHeaderSearchBar(), desktopNavSearchTarget)
-        : null}
+      {standaloneResultsHeader}
       {renderMobileEditSearchDrawer()}
-      {renderStickySearchPopoutOverlay()}
       <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
         <BrandedLoading
           variant="fullscreen"
@@ -7461,17 +7473,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   return (
     <>
-    <AppHeader
-      flushDesktopBottom
-      flushMobileBottom
-      hideDesktopTravelNav
-      hideMobileCategoryTabs
-      hotelDesktopBoundary
-      flightResultsDesktopSticky
-    />
-    {desktopNavSearchTarget
-      ? createPortal(renderDesktopHeaderSearchBar(), desktopNavSearchTarget)
-      : null}
+    {standaloneResultsHeader}
+    {readyDesktopNavbarSearch}
     <FlightResultsScrollIndicator />
     {renderMobileCompactResultsHeader()}
     <main data-flight-results-main className="bg-[#F5F7FB] pb-0 sm:flex-1 sm:bg-[#F3F6FA] sm:pb-8 lg:bg-[#F5F7FB]">
