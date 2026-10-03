@@ -147,14 +147,27 @@ test("trip type copies the desktop Sort dropdown layout and multi-city expands s
   assert.match(toolbar, /role="listbox"/);
   assert.match(toolbar, /role="option"/);
   assert.match(toolbar, /aria-selected=\{selected\}/);
-  assert.match(toolbar, /rounded-xl border border-slate-200 bg-white p-1\.5 shadow-\[0_18px_38px_-18px_rgba\(15,23,42,0\.35\)\]/);
-  assert.match(toolbar, /bg-\[#004BB8\]\/\[0\.08\] text-\[#004BB8\]/);
+  assert.match(toolbar, /rounded-\[16px\] border border-\[#D8E1EC\] bg-white p-2 shadow-\[0_20px_48px_-20px_rgba\(15,23,42,0\.32\)\]/);
+  assert.match(toolbar, /bg-\[#F0F6FF\] text-\[#004BB8\]/);
   assert.match(toolbar, /<Check[\s\S]*className="h-4 w-4"/);
+  assert.match(toolbar, /onMouseDown=\{\(event\) => \{[\s\S]*event\.preventDefault\(\);[\s\S]*event\.stopPropagation\(\);/);
+  assert.match(toolbar, /handleTripTypeChange\(option\.value\)/);
   assert.doesNotMatch(toolbar, /role="radiogroup"|role="radio"/);
   assert.match(popout, /activeStickySearchTarget === "trip"/);
   assert.match(popout, /tripTypeInput === "multi-city"/);
   assert.match(popout, /!tripTypeMenuOpen/);
   assert.match(popout, /<MultiCityFlightEditor[\s\S]*presentation="results"/);
+});
+
+test("route field keeps its geometry while switching into inline edit mode", () => {
+  const toolbar = desktopHeaderSearchBarSource();
+
+  assert.match(toolbar, /grid-cols-\[minmax\(68px,1fr\)_28px_minmax\(68px,1fr\)\]/);
+  assert.match(toolbar, /const openCompactRouteEditor =/);
+  assert.match(toolbar, /setOriginInput\(compactOriginLabel\)/);
+  assert.match(toolbar, /setDestinationInput\(compactDestinationLabel\)/);
+  assert.match(toolbar, /onClick=\{\(event\) => openCompactRouteEditor\(event, "origin"\)\}/);
+  assert.match(toolbar, /onClick=\{\(event\) => openCompactRouteEditor\(event, "destination"\)\}/);
 });
 
 test("route date and traveler controls open their real editors directly from the header", () => {
