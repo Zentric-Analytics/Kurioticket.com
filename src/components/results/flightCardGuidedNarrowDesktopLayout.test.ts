@@ -94,7 +94,7 @@ test("the full Flight result card is clickable at every width without hijacking 
   );
 });
 
-test("desktop fare spans the itinerary and metadata rows like the Hotel action column", () => {
+test("desktop fare stays beside the itinerary while the footer summary spans the card", () => {
   const baseBodyStart = globalsCss.indexOf(".flight-card-body {");
   assert.match(
     ruleBody(globalsCss, ".flight-card-body", baseBodyStart),
@@ -103,7 +103,7 @@ test("desktop fare spans the itinerary and metadata rows like the Hotel action c
 
   const finalDesktopStart = globalsCss.indexOf(
     "@media (min-width: 1024px)",
-    globalsCss.indexOf("Keep the desktop fare column beside the itinerary"),
+    globalsCss.indexOf("Keep the desktop fare action beside the itinerary only"),
   );
   assert.ok(finalDesktopStart > baseBodyStart);
 
@@ -119,7 +119,7 @@ test("desktop fare spans the itinerary and metadata rows like the Hotel action c
   );
   assert.match(
     desktopBodyRule,
-    /grid-template-areas:\s*"legs fare"\s*"details fare"/,
+    /grid-template-areas:\s*"legs fare"\s*"details details"/,
   );
   assert.match(
     desktopBodyRule,
@@ -181,7 +181,7 @@ test("desktop fare spans the itinerary and metadata rows like the Hotel action c
   );
   assert.match(
     mediumBodyRule,
-    /grid-template-areas:\s*"legs fare"\s*"details fare"/,
+    /grid-template-areas:\s*"legs fare"\s*"details details"/,
   );
   assert.doesNotMatch(flightCardSource, /flight-card-details[^\n]*grid-cols-3/);
 });
