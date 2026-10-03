@@ -21,23 +21,25 @@ function desktopHeaderSearchBarSource() {
   return source.slice(start, end);
 }
 
-test("desktop Flight Results header uses one compact code route, date range, and traveler count", () => {
+test("desktop Flight Results header matches the compact city-route reference without reserved width", () => {
   const toolbar = desktopHeaderSearchBarSource();
 
   assert.match(toolbar, /data-flight-results-nav-search-form/);
   assert.match(toolbar, /mobileTripTypeSummary/);
-  assert.match(toolbar, /max-w-\[590px\]/);
+  assert.match(toolbar, /w-fit max-w-full/);
   assert.match(toolbar, /h-\[40px\]/);
   assert.match(
     toolbar,
-    /grid-cols-\[78px_minmax\(0,1\.5fr\)_minmax\(0,1\.4fr\)_56px_40px\]/,
+    /grid-cols-\[82px_160px_150px_50px_40px\]/,
   );
   assert.match(
     toolbar,
-    /xl:grid-cols-\[96px_minmax\(150px,1fr\)_minmax\(160px,1fr\)_68px_40px\]/,
+    /xl:grid-cols-\[96px_190px_170px_56px_40px\]/,
   );
-  assert.match(toolbar, /compactOriginCode/);
-  assert.match(toolbar, /compactDestinationCode/);
+  assert.match(toolbar, /getCompactCityLabel/);
+  assert.match(toolbar, /getLocalizedCityName\(matchedAirport\.city, locale\)/);
+  assert.match(toolbar, /compactOriginLabel/);
+  assert.match(toolbar, /compactDestinationLabel/);
   assert.match(toolbar, /data-flight-results-compact-route/);
   assert.match(
     toolbar,
@@ -59,11 +61,8 @@ test("desktop Flight Results header uses one compact code route, date range, and
   assert.doesNotMatch(toolbar, /openStickySearchEditor\(event, "return"\)/);
   assert.match(toolbar, /openStickySearchEditor\(event, "travelers"\)/);
   assert.doesNotMatch(toolbar, /<ChevronDown/);
-  assert.doesNotMatch(toolbar, /travelerCabinSummary/);
-  assert.doesNotMatch(toolbar, /getLocalizedCityName/);
-  assert.match(toolbar, /bg-\[#EEF2F6\]/);
-  assert.match(toolbar, /bg-\[#E1E8EF\]/);
-  assert.match(toolbar, /<Search className="h-\[18px\] w-\[18px\]"/);
+  assert.match(toolbar, /bg-\[#004BB8\]/);
+  assert.doesNotMatch(toolbar, /max-w-\[590px\]/);
 });
 
 
@@ -207,11 +206,11 @@ test("desktop field editors stay aligned to the navbar search footprint", () => 
   assert.match(popout, /desktopSearchPopoverFrame[\s\S]*width: desktopSearchPopoverFrame\.width/);
   assert.match(
     popout,
-    /grid-cols-\[78px_minmax\(0,1\.5fr\)_minmax\(0,1\.4fr\)_56px_40px\]/,
+    /grid-cols-\[82px_160px_150px_50px_40px\]/,
   );
   assert.match(
     popout,
-    /xl:grid-cols-\[96px_minmax\(150px,1fr\)_minmax\(160px,1fr\)_68px_40px\]/,
+    /xl:grid-cols-\[96px_190px_170px_56px_40px\]/,
   );
   assert.doesNotMatch(popout, /rounded-b-\[12px\] rounded-t-none/);
 });
