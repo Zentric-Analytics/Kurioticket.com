@@ -603,6 +603,8 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /scrollIntoView\(\{ behavior: "smooth", block: "nearest", inline: "nearest" \}\)/);
   assert.match(source, /max-w-\[1080px\] px-0 sm:px-6 lg:px-\[30px\]/);
   assert.match(source, /border-y border-\[#E2E8F0\][\s\S]*sm:rounded-\[13px\] sm:border[\s\S]*sm:shadow-/);
+  assert.doesNotMatch(source, /<section className="[^"]*overflow-hidden[^"]*" aria-labelledby="flight-details-heading"/);
+  assert.match(source, /data-testid="flight-details-hero"[^>]*className="[^"]*overflow-hidden[^"]*sm:rounded-t-\[12px\]/);
   assert.match(source, /ml-4.*sm:ml-0/);
   assert.match(source, /function FlightDetailsSkeleton[\s\S]*?<FlightDetailsLoadingShell/);
   assert.match(source, /function FlightDetailsUnavailable[\s\S]*?px-0 sm:px-4/);
