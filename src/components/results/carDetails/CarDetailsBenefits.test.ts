@@ -686,6 +686,27 @@ test("desktop Compare deals includes the active deal first and keeps alternative
   assert.doesNotMatch(comparison, /desktopAlternativeOffers/);
 });
 
+test("Kurioticket deal branding does not depend only on inventorySource", () => {
+  const providerBrand = sourceBetween(
+    clientSource,
+    "function CarOfferProviderBrand",
+    "const unavailableOfferLabel",
+  );
+  assert.match(
+    providerBrand,
+    /providerName\.trim\(\)\.toLowerCase\(\) === "kurioticket"/,
+  );
+  assert.match(
+    providerBrand,
+    /offer\.bookingProviderName\.trim\(\)\.toLowerCase\(\) === "kurioticket"/,
+  );
+  assert.match(
+    providerBrand,
+    /offer\.bookingProviderName\.trim\(\)\.toLowerCase\(\) === "kurioticket static fixture"/,
+  );
+  assert.match(providerBrand, /kurioticket-logo-primary-light-bg\.svg/);
+});
+
 test("desktop Compare deals wires each provider row to its own logo, total, benefits, and Continue deal action", () => {
   const comparison = sourceBetween(
     clientSource,
