@@ -2350,7 +2350,7 @@ textarea {
   }
 
   [data-desktop-nearby-fare-rail] {
-    grid-template-columns: 42px repeat(7, minmax(0, 1fr)) 42px;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 0.5rem;
     padding: 0;
   }
