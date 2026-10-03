@@ -50,13 +50,7 @@ import { CarResultCard } from "@/components/results/CarResultCard";
 import { CarsResultsScrollIndicator } from "@/components/results/CarsResultsScrollIndicator";
 import { CarPriceAlertControl } from "@/components/results/CarPriceAlertControl";
 import { CarCardSkeleton } from "@/components/ui/Skeleton";
-import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
-import {
-  CAR_RESULTS_PAGE_SIZE,
-  getCarPaginationItems,
-  paginateCarResults,
-} from "@/lib/cars/carResultsPagination";
-import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
+import { prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import {
   assignCarBadges,
   buildCarDetailsHref,
@@ -83,7 +77,6 @@ import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 
-type CarsPaginationTransitionPhase = "idle" | "covering" | "settling";
 type CarsFilterTransitionPhase = "idle" | "covering" | "revealing";
 const CARS_FILTER_MIN_BUSY_MS = 220;
 const CARS_FILTER_REVEAL_MS = 160;
@@ -1971,7 +1964,6 @@ export function CarsResultsExperience({
   const [sort, setSort] = useState<CarSort>(
     presentation === "guided-planning" ? "lowestTotal" : "recommended",
   );
-  const [currentPage, setCurrentPage] = useState(1);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [carsSortOpen, setCarsSortOpen] = useState(false);
   const [filterTransitionPhase, setFilterTransitionPhase] =
@@ -1979,10 +1971,6 @@ export function CarsResultsExperience({
   const [filterTransitionMinHeight, setFilterTransitionMinHeight] = useState<
     number | null
   >(null);
-  const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
-  const [paginationTransitionPhase, setPaginationTransitionPhase] = useState<CarsPaginationTransitionPhase>("idle");
-  const [paginationMinHeight, setPaginationMinHeight] = useState<number | null>(null);
-  const [paginationRevealing, setPaginationRevealing] = useState(false);
   const paginationListRef = useRef<HTMLDivElement | null>(null);
   const filterTransitionTimerRef = useRef<number | null>(null);
   const filterTransitionFrameRef = useRef<number | null>(null);
@@ -1994,7 +1982,6 @@ export function CarsResultsExperience({
   const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
   const desktopCompactFilterRef = useRef<HTMLDivElement | null>(null);
   const carsResultsBodyRef = useRef<HTMLDivElement | null>(null);
-  const resultsStartRef = useRef<HTMLDivElement | null>(null);
   const [showDesktopCompactFilter, setShowDesktopCompactFilter] =
     useState(false);
   const [desktopCompactFilterFrame, setDesktopCompactFilterFrame] =
@@ -2107,31 +2094,6 @@ export function CarsResultsExperience({
     const ranked = sortCarResults(filterCarResults(results, selectedCarFilters, displayPricePerDay), sort);
     return sort === "recommended" ? ensureCarProviderCoverage(ranked) : ranked;
   }, [displayPricePerDay, results, selectedCarFilters, sort]);
-  const visibleProviderSignature = useMemo(
-    () => Array.from(new Set(visibleResults.map((result) => result.inventorySource))).sort().join("|"),
-    [visibleResults],
-  );
-  const previousProviderSignatureRef = useRef(visibleProviderSignature);
-  useEffect(() => {
-    const previousSignature = previousProviderSignatureRef.current;
-    previousProviderSignatureRef.current = visibleProviderSignature;
-    if (previousSignature && previousSignature !== visibleProviderSignature) {
-      setCurrentPage(1);
-    }
-  }, [visibleProviderSignature]);
-  const pagination = useMemo(
-    () => paginateCarResults(visibleResults, guidedPlanning ? 1 : currentPage),
-    [currentPage, guidedPlanning, visibleResults],
-  );
-  const pageResults = guidedPlanning ? visibleResults : pagination.pageResults;
-  const resultsDisplayRange = guidedPlanning
-    ? null
-    : getResultsDisplayRange({
-        currentPage: pagination.currentPage,
-        pageSize: CAR_RESULTS_PAGE_SIZE,
-        totalResults: visibleResults.length,
-      });
-
   useEffect(() => {
     if (guidedPlanning || typeof window === "undefined") return undefined;
     const update = () => {
@@ -2146,43 +2108,6 @@ export function CarsResultsExperience({
     };
   }, [guidedPlanning]);
 
-  const changePage = async (page: number) => {
-    if (paginationPendingPage !== null || page === currentPage) return;
-    setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
-    setPaginationPendingPage(page);
-    setPaginationTransitionPhase("covering");
-    const previousRootOverflowAnchor = document.documentElement.style.overflowAnchor;
-    const previousBodyOverflowAnchor = document.body.style.overflowAnchor;
-    document.documentElement.style.overflowAnchor = "none";
-    document.body.style.overflowAnchor = "none";
-    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-    const positionResultsStart = () => {
-      const anchor = resultsStartRef.current;
-      if (!anchor) return;
-      const stickyOffset = window.innerWidth < 640 ? 8 : 160;
-      const top = Math.max(0, window.scrollY + anchor.getBoundingClientRect().top - stickyOffset);
-      window.scrollTo({ top, behavior: "auto" });
-    };
-    setCurrentPage(page);
-    setPaginationTransitionPhase("settling");
-    setPaginationMinHeight(null);
-    await new Promise<void>((resolve) => window.setTimeout(resolve, 460));
-    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-    positionResultsStart();
-    await new Promise<void>((resolve) => window.setTimeout(resolve, 180));
-    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-    setPaginationTransitionPhase("idle");
-    setPaginationPendingPage(null);
-    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-    window.setTimeout(() => {
-      document.documentElement.style.overflowAnchor = previousRootOverflowAnchor;
-      document.body.style.overflowAnchor = previousBodyOverflowAnchor;
-    }, 240);
-    if (!prefersReducedResultsMotion()) {
-      setPaginationRevealing(true);
-      window.setTimeout(() => setPaginationRevealing(false), PAGINATION_REVEAL_MS);
-    }
-  };
   const startFilterResultsTransition = useCallback(() => {
     const run = ++filterTransitionRunRef.current;
     const mobile = window.innerWidth < 1024;
@@ -2226,7 +2151,6 @@ export function CarsResultsExperience({
   }, []);
   const toggleCarFilter = (groupId: string, option: string) => {
     startFilterResultsTransition();
-    setCurrentPage(1);
     setSelectedCarFilters((current) => {
       const currentGroupSelections = current[groupId] ?? [];
       const nextGroupSelections = currentGroupSelections.includes(option)
@@ -2241,11 +2165,9 @@ export function CarsResultsExperience({
   };
   const clearCarFilters = () => {
     startFilterResultsTransition();
-    setCurrentPage(1);
     setSelectedCarFilters({});
   };
   const toggleMobileDrawerCarFilter = (groupId: string, option: string) => {
-    setCurrentPage(1);
     setSelectedCarFilters((current) => {
       const currentGroupSelections = current[groupId] ?? [];
       const nextGroupSelections = currentGroupSelections.includes(option)
@@ -2259,7 +2181,6 @@ export function CarsResultsExperience({
     });
   };
   const clearMobileDrawerCarFilters = () => {
-    setCurrentPage(1);
     setSelectedCarFilters({});
   };
   const closeMobileFiltersDrawer = useCallback(() => {
@@ -2709,7 +2630,6 @@ export function CarsResultsExperience({
 
   return (
     <>
-    {paginationTransitionPhase !== "idle" && typeof document !== "undefined" ? createPortal(<CarsResultsPageTransitionSkeleton />, document.body) : null}
     <section
       className={cn("min-w-0", embedded ? "mt-6" : "w-full")}
       aria-labelledby={resultHeadingId}
@@ -2793,7 +2713,6 @@ export function CarsResultsExperience({
           {results.length > 0 ? (
             <>
               <div
-                ref={resultsStartRef}
                 className="flex w-full min-w-0 flex-col items-start gap-2 pt-1 sm:gap-3 lg:py-1"
                 data-cars-results-toolbar
               >
@@ -2913,23 +2832,7 @@ export function CarsResultsExperience({
                           }).format(visibleResults.length),
                         )}
                     </h2>
-                    {resultsDisplayRange ? (
-                      <p
-                        aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${visibleResults.length}`}
-                        className="mt-0.5 hidden text-xs font-medium leading-4 text-slate-500 sm:block lg:text-[13px] lg:font-medium lg:leading-5 lg:text-[#475569]"
-                      >
-                        {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
-                      </p>
-                    ) : null}
                   </div>
-                  {resultsDisplayRange ? (
-                    <p
-                      aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${visibleResults.length}`}
-                      className="shrink-0 whitespace-nowrap text-right text-xs font-medium leading-4 text-slate-500 sm:hidden"
-                    >
-                      {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
-                    </p>
-                  ) : null}
                   <div className="hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
                     <span className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
                       {t("carsResults.sortBy")}:
@@ -2980,7 +2883,6 @@ export function CarsResultsExperience({
                             className="cars-results-desktop-sort-option flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30"
                             onClick={() => {
                               startFilterResultsTransition();
-                              setCurrentPage(1);
                               setSort(option.value);
                               setCarsSortOpen(false);
                             }}
@@ -3013,7 +2915,7 @@ export function CarsResultsExperience({
                   aria-hidden="true"
                 />
               ) : null}
-              {filterTransitionPhase === "covering" || paginationTransitionPhase === "covering" ? (
+              {filterTransitionPhase === "covering" ? (
                 <div
                   ref={paginationListRef}
                   data-cars-results-card-list
@@ -3021,16 +2923,14 @@ export function CarsResultsExperience({
                   style={
                     filterTransitionPhase === "covering" && filterTransitionMinHeight
                       ? { minHeight: filterTransitionMinHeight }
-                      : paginationMinHeight
-                        ? { minHeight: paginationMinHeight }
-                        : undefined
+                      : undefined
                   }
                   className={cn(
                     "w-full space-y-3.5 max-sm:!mt-2.5 sm:space-y-4",
                     !guidedPlanning && "w-full",
                   )}
                 >
-                  {Array.from({ length: paginationPendingPage !== null ? pageResults.length : 3 }, (_, item) => (
+                  {Array.from({ length: 3 }, (_, item) => (
                     <div
                       key={item}
                       aria-hidden={filterTransitionPhase === "covering" ? "true" : undefined}
@@ -3045,13 +2945,6 @@ export function CarsResultsExperience({
                       />
                     </div>
                   ))}
-                  {paginationPendingPage !== null && pagination.totalPages > 1 ? (
-                    <nav aria-label="Car results pagination" className="flex flex-wrap items-center justify-center gap-1.5 pt-4">
-                      <button type="button" aria-label="Previous page" disabled className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-transparent bg-transparent text-slate-400 sm:border-slate-300 sm:opacity-40"><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
-                      <button type="button" aria-label={`Page ${pagination.currentPage}`} aria-current="page" disabled className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-transparent bg-transparent font-bold text-[#004BB8] sm:border-[#004BB8] sm:bg-[#004BB8] sm:text-white">{pagination.currentPage}</button>
-                      <button type="button" aria-label="Next page" disabled className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-transparent bg-transparent text-slate-400 sm:border-slate-300 sm:opacity-40"><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
-                    </nav>
-                  ) : null}
                 </div>
               ) : visibleResults.length ? (
                 <div
@@ -3061,13 +2954,12 @@ export function CarsResultsExperience({
                   className={cn(
                     "w-full space-y-3.5 max-sm:!mt-2.5 sm:space-y-4",
                     !guidedPlanning && "w-full",
-                    paginationRevealing && "animate-[fadeIn_150ms_ease-out]",
                     filterTransitionPhase === "revealing" &&
                       filterTransitionMobileRef.current &&
                       "cars-filter-results-reveal",
                   )}
                 >
-                  {pageResults.map((car) => car.inventorySource === "kayak-sandbox" && kayak?.offers.some(offer => `kayak-sandbox:${offer.id}` === car.id) ? <KayakResultCard key={car.id} offer={kayak.offers.find(offer => `kayak-sandbox:${offer.id}` === car.id)!} vertical="cars" criteria={kayak.criteria} desktopCarSurfaceParity={!embedded && presentation === "standalone"} /> : (
+                  {visibleResults.map((car) => car.inventorySource === "kayak-sandbox" && kayak?.offers.some(offer => `kayak-sandbox:${offer.id}` === car.id) ? <KayakResultCard key={car.id} offer={kayak.offers.find(offer => `kayak-sandbox:${offer.id}` === car.id)!} vertical="cars" criteria={kayak.criteria} desktopCarSurfaceParity={!embedded && presentation === "standalone"} /> : (
                     <CarResultCard
                       key={car.id}
                       car={car}
@@ -3103,61 +2995,6 @@ export function CarsResultsExperience({
                       }
                     />
                   ))}
-                  {!guidedPlanning && pagination.totalPages > 1 ? (
-                    <nav
-                      aria-label="Car results pagination"
-                      className="flex flex-wrap items-center justify-center gap-1.5 pt-4"
-                    >
-                      <button
-                        type="button"
-                        aria-label="Previous page"
-                        disabled={pagination.currentPage === 1 || paginationPendingPage !== null}
-                        onClick={() => changePage(pagination.currentPage - 1)}
-                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-[#07133B] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
-                      ><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
-                      <span className="hidden items-center gap-1.5 sm:flex">{getCarPaginationItems(pagination.currentPage, pagination.totalPages).map((item, index) =>
-                        item === "ellipsis" ? (
-                          <span key={`ellipsis-${index}`} aria-hidden="true" className="inline-flex h-11 min-w-6 items-center justify-center text-[#536B92]">…</span>
-                        ) : (
-                          <button
-                            key={item}
-                            type="button"
-                            aria-label={`Page ${item}`}
-                            aria-current={item === pagination.currentPage ? "page" : undefined}
-                            onClick={() => changePage(item)}
-                            disabled={paginationPendingPage !== null}
-                            className={cn(
-                              "inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border text-sm font-semibold",
-                              item === pagination.currentPage
-                                ? "border-[#004BB8] bg-[#004BB8] text-white"
-                                : "border-slate-300 bg-white text-[#07133B] hover:bg-slate-50",
-                            )}
-                          >{item}</button>
-                        ),
-                      )}</span>
-                      <span className="flex items-center sm:hidden">{getCarPaginationItems(pagination.currentPage, pagination.totalPages, true).map((item) => (
-                        <button
-                          key={item}
-                          type="button"
-                          aria-label={`Page ${item}`}
-                          aria-current={item === pagination.currentPage ? "page" : undefined}
-                          onClick={() => changePage(item)}
-                          disabled={paginationPendingPage !== null}
-                          className={cn(
-                            "inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-transparent bg-transparent text-sm font-semibold text-[#07133B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
-                            item === pagination.currentPage && "font-bold text-[#004BB8]",
-                          )}
-                        >{item}</button>
-                      ))}</span>
-                      <button
-                        type="button"
-                        aria-label="Next page"
-                        disabled={pagination.currentPage === pagination.totalPages || paginationPendingPage !== null}
-                        onClick={() => changePage(pagination.currentPage + 1)}
-                        className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-md px-0 text-sm font-semibold text-[#07133B] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent sm:px-2.5"
-                      ><span className="hidden sm:inline">Next</span><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
-                    </nav>
-                  ) : null}
                 </div>
               ) : (
                 <div
@@ -3341,7 +3178,7 @@ export function CarsResultsExperience({
               style={{ paddingBottom: "max(12px, calc(env(safe-area-inset-bottom, 0px) - 12px))" }}
             >
               <button type="button" onClick={() => { if (quickFilterGroupId === "sort") setQuickSortDraft("recommended"); else setQuickFilterDraft([]); }} className="h-11 w-[32%] shrink-0 rounded-lg border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-sm font-semibold text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">Reset</button>
-              <button type="button" onClick={() => { startFilterResultsTransition(); setCurrentPage(1); if (quickFilterGroupId === "sort") setSort(quickSortDraft); else setSelectedCarFilters((current) => { const next = { ...current }; if (quickFilterDraft.length) next[quickFilterGroupId] = [...quickFilterDraft]; else delete next[quickFilterGroupId]; return next; }); closeQuickFilter(); }} className="h-11 w-[32%] shrink-0 rounded-lg bg-[#004BB8] px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2">
+              <button type="button" onClick={() => { startFilterResultsTransition(); if (quickFilterGroupId === "sort") setSort(quickSortDraft); else setSelectedCarFilters((current) => { const next = { ...current }; if (quickFilterDraft.length) next[quickFilterGroupId] = [...quickFilterDraft]; else delete next[quickFilterGroupId]; return next; }); closeQuickFilter(); }} className="h-11 w-[32%] shrink-0 rounded-lg bg-[#004BB8] px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2">
                 Apply
               </button>
             </footer>
