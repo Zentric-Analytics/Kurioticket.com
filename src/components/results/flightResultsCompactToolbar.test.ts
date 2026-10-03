@@ -21,23 +21,24 @@ function desktopHeaderSearchBarSource() {
   return source.slice(start, end);
 }
 
-test("desktop Flight Results uses the Hotels-style four-section header search", () => {
+test("desktop Flight Results uses Hotels-style segmented header cards with trip type", () => {
   const toolbar = desktopHeaderSearchBarSource();
 
   assert.match(toolbar, /data-flight-results-nav-search-form/);
-  assert.match(
-    toolbar,
-    /grid-cols-\[minmax\(0,1\.55fr\)_minmax\(0,1\.15fr\)_minmax\(0,1\.2fr\)_46px\]/,
-  );
-  assert.match(toolbar, /h-\[44px\]/);
-  assert.match(toolbar, /rounded-\[9px\] border border-\[#D8E1EC\]/);
+  assert.match(toolbar, /mobileTripTypeSummary/);
+  assert.match(toolbar, /openStickySearchEditor\(event, "trip"\)/);
   assert.match(toolbar, /openStickySearchEditor\(event, "route"\)/);
   assert.match(toolbar, /openStickySearchEditor\(event, "dates"\)/);
   assert.match(toolbar, /openStickySearchEditor\(event, "travelers"\)/);
-  assert.match(toolbar, /<Search className="h-\[18px\] w-\[18px\]"/);
-  assert.doesNotMatch(toolbar, /t\("tripType"\)/);
-  assert.doesNotMatch(toolbar, /mobileTripTypeSummary/);
+  assert.match(toolbar, /bg-\[#EEF2F6\]/);
+  assert.match(toolbar, /bg-\[#E1E8EF\]/);
+  assert.match(toolbar, /rounded-\[10px\] border border-\[#D8E1EC\]/);
+  assert.match(toolbar, /tripTypeInput === "round-trip"/);
+  assert.match(toolbar, /grid-cols-\[96px_minmax\(0,1\.25fr\)_112px_112px_minmax\(0,1fr\)_44px\]/);
+  assert.match(toolbar, /grid-cols-\[96px_minmax\(0,1\.45fr\)_128px_minmax\(0,1fr\)_44px\]/);
+  assert.match(toolbar, /<Search className="h-\[19px\] w-\[19px\]"/);
 });
+
 
 
 function stickyEditorCallbackSource() {
@@ -53,12 +54,12 @@ function stickyEditorCallbackSource() {
 test("desktop sticky compact search opens the selected control on the first click", () => {
   const callback = stickyEditorCallbackSource();
 
-  assert.match(callback, /target: "route" \| "dates" \| "travelers"/);
+  assert.match(callback, /target: "trip" \| "route" \| "dates" \| "travelers"/);
   assert.match(callback, /setActiveDatePicker\(target === "dates" \? "departure" : null\)/);
   assert.match(callback, /setTravelerPopoverOpen\(target === "travelers"\)/);
   assert.match(callback, /target === "route" && originInput\.trim\(\)\.length >= 2/);
   assert.match(callback, /stickySearchLauncherRef\.current = event\.currentTarget/);
-  assert.match(callback, /pendingStickySearchTargetRef\.current = target/);
+  assert.match(callback, /tripTypeInput === "multi-city" \|\| target === "trip" \? null : target/);
 });
 
 test("sticky search moves focus directly to the requested expanded control", () => {
@@ -99,7 +100,7 @@ test("sticky editor exposes all trip types in production order and closes from t
 
 test("sticky search popout uses neutral dialog focus and returns focus to trigger", () => {
   assert.match(source, /role="dialog"/);
-  assert.match(source, /aria-modal="true"/);
+  assert.match(source, /aria-modal="false"/);
   assert.match(
     source,
     /stickySearchCloseButtonRef\.current\?\.focus\(\{ preventScroll: true \}\)/,
@@ -113,7 +114,7 @@ test("sticky search popout matches mobile edit-search color language", () => {
   assert.ok(start >= 0 && end > start);
   const popout = source.slice(start, end);
 
-  assert.match(popout, /bg-\[#F5F7FB\]/);
+  assert.match(popout, /bg-\[#F3F6FA\]/);
   assert.match(popout, /text-\[#56658E\]/);
   assert.match(popout, /grid min-h-\[51px\] w-full grid-cols-3 items-stretch/);
   assert.match(popout, /flight-results-trip-tab/);
@@ -141,7 +142,7 @@ test("sticky search popout uses neutral field icons and keeps the calendar contr
 });
 
 
-test("desktop search editor expands from the navbar instead of opening as a centered modal", () => {
+test("desktop search editor expands directly from the navbar form as an attached accordion", () => {
   const callback = stickyEditorCallbackSource();
   const frameStart = source.indexOf("const updateDesktopSearchPopoverFrame = useCallback(");
   const frameEnd = source.indexOf("const openStickySearchEditor = useCallback(", frameStart);
@@ -154,19 +155,17 @@ test("desktop search editor expands from the navbar instead of opening as a cent
   assert.match(callback, /closest<HTMLElement>\("\[data-flight-results-nav-search-form\]"\)/);
   assert.match(callback, /updateDesktopSearchPopoverFrame\(compactForm\)/);
   assert.match(frame, /const rect = resolvedCompactForm\.getBoundingClientRect\(\)/);
-  assert.match(frame, /const viewportGutter = 16/);
-  assert.match(frame, /top: rect\.bottom \+ 4/);
-  assert.match(frame, /left: viewportGutter/);
-  assert.match(frame, /width: availableWidth/);
-  assert.doesNotMatch(frame, /Math\.min\(920|centeredLeft/);
+  assert.match(frame, /top: rect\.bottom/);
+  assert.match(frame, /Math\.min\(rect\.width, availableWidth\)/);
+  assert.match(frame, /Math\.max\(viewportGutter, rect\.left\)/);
   assert.match(popout, /data-flight-search-anchored-backdrop/);
-  assert.match(popout, /bg-slate-950\/\[0\.04\]/);
-  assert.match(popout, /data-flight-search-anchored-popout/);
-  assert.doesNotMatch(popout, /items-start justify-center px-6 pb-8 pt-12/);
-  assert.doesNotMatch(popout, /backdrop-blur-\[2px\]/);
+  assert.match(popout, /bg-transparent/);
+  assert.match(popout, /rounded-b-\[12px\] rounded-t-none/);
+  assert.match(popout, /border-t-0/);
 });
 
-test("desktop Flight search expansion uses the viewport instead of a 920px modal cap", () => {
+
+test("desktop Flight search expansion stays aligned to the header search width", () => {
   const frameStart = source.indexOf("const updateDesktopSearchPopoverFrame = useCallback(");
   const frameEnd = source.indexOf("const openStickySearchEditor = useCallback(", frameStart);
   const frame = source.slice(frameStart, frameEnd);
@@ -175,14 +174,13 @@ test("desktop Flight search expansion uses the viewport instead of a 920px modal
   const popout = source.slice(popoutStart, popoutEnd);
 
   assert.match(frame, /window\.innerWidth - viewportGutter \* 2/);
-  assert.match(frame, /left: viewportGutter/);
-  assert.match(frame, /width: availableWidth/);
-  assert.doesNotMatch(frame, /920/);
-  assert.match(popout, /width: "calc\(100vw - 32px\)"/);
-  assert.match(popout, /rounded-\[10px\]/);
-  assert.match(popout, /shadow-\[0_12px_28px_-22px_rgba\(15,23,42,0\.28\)\]/);
-  assert.doesNotMatch(popout, /rounded-\[14px\]|shadow-\[0_24px_60px/);
+  assert.match(frame, /const width = Math\.min\(rect\.width, availableWidth\)/);
+  assert.match(frame, /top: rect\.bottom/);
+  assert.match(popout, /rounded-b-\[12px\] rounded-t-none/);
+  assert.match(popout, /shadow-\[0_10px_24px_-18px_rgba\(15,23,42,0\.24\)\]/);
+  assert.doesNotMatch(popout, /width: "calc\(100vw - 32px\)"/);
 });
+
 
 test("anchored desktop search recomputes on browser resize and closes below desktop", () => {
   assert.match(
