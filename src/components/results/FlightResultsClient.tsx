@@ -5460,15 +5460,39 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }
 
   function renderDesktopHeaderSearchBar() {
+    const getCompactCityLabel = (
+      code: string,
+      input: string,
+      fallback: string,
+    ) => {
+      const normalizedCode = (code || input).trim().toUpperCase();
+      const matchedAirport = airports.find(
+        (airport) => airport.code.toUpperCase() === normalizedCode,
+      );
+
+      if (matchedAirport) {
+        return getLocalizedCityName(matchedAirport.city, locale);
+      }
+
+      return input.trim() || code.trim() || fallback;
+    };
     const firstMultiCityLeg = multiCityLegs[0];
-    const compactOriginCode =
+    const compactOriginLabel =
       tripTypeInput === "multi-city" && firstMultiCityLeg
-        ? firstMultiCityLeg.origin.trim().toUpperCase()
-        : (originCode || originInput).trim().toUpperCase();
-    const compactDestinationCode =
+        ? getCompactCityLabel("", firstMultiCityLeg.origin, mobileOriginSummary)
+        : getCompactCityLabel(originCode, originInput, t("origin"));
+    const compactDestinationLabel =
       tripTypeInput === "multi-city" && firstMultiCityLeg
-        ? firstMultiCityLeg.destination.trim().toUpperCase()
-        : (destinationCode || destinationInput).trim().toUpperCase();
+        ? getCompactCityLabel(
+            "",
+            firstMultiCityLeg.destination,
+            mobileDestinationSummary,
+          )
+        : getCompactCityLabel(
+            destinationCode,
+            destinationInput,
+            t("destination"),
+          );
     const departureSummary = departureDateInput
       ? formatDesktopHeaderDateLabel(departureDateInput, calendarLocale)
       : t("departure");
@@ -5489,7 +5513,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <form
         onSubmit={handleCompactSearchSubmit}
         data-flight-results-nav-search-form
-        className="mx-auto grid h-[40px] w-full max-w-[590px] grid-cols-[78px_minmax(0,1.5fr)_minmax(0,1.4fr)_56px_40px] items-center gap-1 overflow-visible xl:grid-cols-[96px_minmax(150px,1fr)_minmax(160px,1fr)_68px_40px]"
+        className="mx-auto grid h-[40px] w-fit max-w-full grid-cols-[82px_160px_150px_50px_40px] items-center gap-1 overflow-visible xl:grid-cols-[96px_190px_170px_56px_40px]"
       >
         <button
           type="button"
@@ -5512,11 +5536,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             aria-expanded={
               isStickySearchPanelOpen && activeStickySearchTarget === "origin"
             }
-            aria-label={`${t("editFlightSearch")}: ${compactOriginCode}`}
+            aria-label={`${t("editFlightSearch")}: ${compactOriginLabel}`}
             onClick={(event) => openStickySearchEditor(event, "origin")}
             className="focus-ring flex h-full min-w-0 items-center justify-end px-2 text-[#142033] transition-colors hover:bg-[#E9EEF3]"
           >
-            <span className={valueClass}>{compactOriginCode || t("origin")}</span>
+            <span className={valueClass}>{compactOriginLabel}</span>
           </button>
 
           <button
@@ -5533,13 +5557,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             aria-expanded={
               isStickySearchPanelOpen && activeStickySearchTarget === "destination"
             }
-            aria-label={`${t("editFlightSearch")}: ${compactDestinationCode}`}
+            aria-label={`${t("editFlightSearch")}: ${compactDestinationLabel}`}
             onClick={(event) => openStickySearchEditor(event, "destination")}
             className="focus-ring flex h-full min-w-0 items-center justify-start px-2 text-[#142033] transition-colors hover:bg-[#E9EEF3]"
           >
-            <span className={valueClass}>
-              {compactDestinationCode || t("destination")}
-            </span>
+            <span className={valueClass}>{compactDestinationLabel}</span>
           </button>
         </div>
 
@@ -5592,7 +5614,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       { label: t("multiCity"), value: "multi-city", disabled: false },
     ];
     const panelGridClass =
-      "grid-cols-[78px_minmax(0,1.5fr)_minmax(0,1.4fr)_56px_40px] xl:grid-cols-[96px_minmax(150px,1fr)_minmax(160px,1fr)_68px_40px]";
+      "grid-cols-[82px_160px_150px_50px_40px] xl:grid-cols-[96px_190px_170px_56px_40px]";
     const departureSummary = departureDateInput
       ? formatCompactDateLabel(departureDateInput, calendarLocale)
       : t("departure");
