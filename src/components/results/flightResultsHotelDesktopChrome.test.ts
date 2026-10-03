@@ -22,7 +22,7 @@ test("desktop Flight Results reuses the Hotels header composition", () => {
     /hotelResultsDesktopSticky \|\| flightResultsDesktopSticky/,
   );
   assert.match(header, /data-flight-results-nav-search/);
-  assert.match(header, /lg:max-w-\[540px\]/);
+  assert.match(header, /data-flight-results-nav-search[^>]*lg:max-w-\[560px\]/);
   assert.match(
     styles,
     /\[data-hotel-results-desktop-header\],\s*\[data-flight-results-desktop-header\],\s*\[data-cars-results-desktop-header\] \{\s*position: sticky;/,
