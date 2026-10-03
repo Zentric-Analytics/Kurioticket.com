@@ -1,13 +1,12 @@
 "use client";
 
-import { ArrowUpRight, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { useState } from "react";
 
 import type { PublicHotelPropertyDetails } from "@/lib/types";
 import {
   buildGoogleHotelMapEmbedUrl,
   buildGoogleHotelStreetViewEmbedUrl,
-  buildHotelDirectionsUrl,
   buildHotelMapEmbedUrl,
 } from "@/lib/hotels/hotelMap";
 
@@ -65,8 +64,6 @@ export function HotelLocationSection({
   const hasAddress = Boolean(streetAddress || secondaryLocation);
 
   if (variant === "desktop") {
-    const directionsUrl = buildHotelDirectionsUrl({ hotelName, propertyDetails });
-
     return (
       <section
         id="hotel-location"
@@ -86,12 +83,6 @@ export function HotelLocationSection({
                 {[streetAddress, secondaryLocation].filter(Boolean).join(", ")}
               </address>
             </div>
-          ) : null}
-          {directionsUrl ? (
-            <a href={directionsUrl} target="_blank" rel="noopener noreferrer" className="focus-ring inline-flex shrink-0 items-center gap-1 rounded-sm font-semibold text-blue hover:underline">
-              Open in Maps
-              <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-            </a>
           ) : null}
         </div>
         <div className="mt-4 flex min-h-11 items-center gap-1 border-b border-[#d9e2e8]" role="tablist" aria-label="Location views">
