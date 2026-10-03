@@ -466,7 +466,7 @@ test("desktop Pickup/Return and Location use one flat Flights-style panel hierar
     "function DesktopCarHireLocationOverview",
   );
   assert.match(pickup, /data-car-details-flight-panel="pickup"/);
-  assert.match(pickup, /max-w-\[900px\] py-5/);
+  assert.match(pickup, /max-w-\[640px\] py-5/);
   assert.match(
     pickup,
     /data-car-details-desktop-pickup-columns[\s\S]*?border-y border-\[#D8E1EC\]/,
