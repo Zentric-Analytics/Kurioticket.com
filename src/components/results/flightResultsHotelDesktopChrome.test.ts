@@ -83,17 +83,44 @@ test("desktop Flight Results keeps the navbar search target synchronized through
 });
 
 
-test("desktop Flight Results keeps the header search mounted through preparation", () => {
-  const preparingStart = flight.indexOf("if (resultsUiPreparing) {");
+test("desktop Flight Results hides navbar search while results are preparing", () => {
+  const shellStart = flight.indexOf("const standaloneResultsHeader = guidedMode ? null : (");
+  const readySearchStart = flight.indexOf("const readyDesktopNavbarSearch =", shellStart);
+  const preparingStart = flight.indexOf("if (resultsUiPreparing) {", readySearchStart);
+  const headerShell = flight.slice(shellStart, readySearchStart);
+  const readySearchDefinition = flight.slice(readySearchStart, preparingStart);
   const guidedStart = flight.indexOf("if (guidedMode) return (", preparingStart);
   const preparing = flight.slice(preparingStart, guidedStart);
+  const readyStart = flight.indexOf("return (", guidedStart);
+  const ready = flight.slice(readyStart);
 
-  assert.ok(preparingStart >= 0 && guidedStart > preparingStart);
-  assert.match(preparing, /flightResultsDesktopSticky/);
-  assert.match(
-    preparing,
-    /createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/,
+  assert.ok(
+    shellStart >= 0 &&
+      readySearchStart > shellStart &&
+      preparingStart > readySearchStart &&
+      guidedStart > preparingStart,
   );
+  assert.match(headerShell, /<AppHeader[\s\S]*?flightResultsDesktopSticky/);
+  assert.doesNotMatch(headerShell, /renderDesktopHeaderSearchBar\(\)/);
+  assert.match(readySearchDefinition, /createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
+  assert.match(preparing, /\{standaloneResultsHeader\}/);
+  assert.doesNotMatch(preparing, /readyDesktopNavbarSearch|renderStickySearchPopoutOverlay\(\)|renderDesktopHeaderSearchBar\(\)/);
+  assert.match(ready, /\{standaloneResultsHeader\}[\s\S]*?\{readyDesktopNavbarSearch\}/);
+});
+
+test("desktop Flight closes an open sticky search when preparation starts", () => {
+  const effectStart = flight.indexOf(
+    "if (!resultsUiPreparing || !isStickySearchPanelOpen) return;",
+  );
+  const effectEnd = flight.indexOf(
+    "if (",
+    effectStart + 20,
+  );
+  const effect = flight.slice(effectStart, effectEnd);
+
+  assert.ok(effectStart >= 0);
+  assert.match(effect, /pendingStickySearchTargetRef\.current = null/);
+  assert.match(effect, /collapseStickySearch\(\{ restoreScroll: false \}\)/);
 });
 
 test("desktop navbar search opens the Change your flight editor on every click state", () => {
