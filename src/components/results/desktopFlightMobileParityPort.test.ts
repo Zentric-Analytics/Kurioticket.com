@@ -73,8 +73,11 @@ test("standalone desktop Flight Results keeps the existing compact handoff after
 
 test("desktop nearby fares keep seven dates and arrows but use mobile-like individual tiles", () => {
   assert.match(results, /const nearbyFareVisibleCount = 7;/);
-  assert.match(results, /data-desktop-nearby-fare-rail className="grid w-full grid-cols-\[42px_repeat\(7,minmax\(0,1fr\)\)_42px\]/);
-  assert.doesNotMatch(results, /data-desktop-nearby-fare-rail[^\n]*max-w-\[980px\]|data-desktop-nearby-fare-rail[^\n]*mx-auto/);
+  assert.match(results, /data-desktop-nearby-fare-rail className="relative grid w-full grid-cols-7/);
+  assert.match(results, /aria-label="Previous nearby fare date"[\s\S]*?-left-9 top-1\/2/);
+  assert.match(results, /aria-label="Next nearby fare date"[\s\S]*?-right-9 top-1\/2/);
+  assert.doesNotMatch(results, /data-desktop-nearby-fare-rail[^\n]*max-w-\[980px\]|data-desktop-nearby-fare-rail[^\n]*mx-auto|grid-cols-\[42px_repeat\(7,minmax\(0,1fr\)\)_42px\]/);
+  assert.match(globals, /\[data-desktop-nearby-fare-rail\] \{[\s\S]*?grid-template-columns: repeat\(7, minmax\(0, 1fr\)\);/);
   assert.match(results, /rounded-lg border border-slate-200 bg-white[^"]*shadow-sm/);
   assert.match(results, /text-\[11px\] font-medium uppercase leading-\[14px\]/);
   assert.match(results, /text-\[10px\] font-medium uppercase leading-\[13px\] tracking-\[0\.05em\]/);
