@@ -41,6 +41,10 @@ test("desktop Flight Results uses the Hotel results-flat navbar card design", ()
   assert.match(toolbar, /openStickySearchEditor\(event, "travelers"\)/);
   assert.match(toolbar, /data-flight-results-nav-search-action/);
   assert.match(toolbar, /<Search className="h-\[18px\] w-\[18px\]"/);
+  assert.match(toolbar, /<MapPin className="h-\[18px\] w-\[18px\] shrink-0 text-\[#071A48\]"/);
+  assert.equal(toolbar.match(/<Calendar className="h-\[18px\] w-\[18px\] shrink-0 text-\[#071A48\]"/g)?.length, 2);
+  assert.match(toolbar, /<UserRound className="h-\[18px\] w-\[18px\] shrink-0 text-\[#071A48\]"/);
+  assert.doesNotMatch(toolbar, /<ArrowRightLeft/);
   assert.doesNotMatch(toolbar, /mobileTripTypeSummary/);
 });
 
