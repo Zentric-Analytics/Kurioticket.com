@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent, Ref } from "react";
+import type { KeyboardEvent, ReactNode, Ref } from "react";
 import { useRef } from "react";
 
 export type CarDetailsTab = "compare" | "pickup" | "location";
@@ -10,6 +10,9 @@ export function CarDetailsSectionNav({
   onTabChange,
   labels,
   desktopBarRef,
+  desktopStuck = false,
+  desktopBackControl,
+  desktopUtilityActions,
 }: {
   activeTab: CarDetailsTab;
   onTabChange: (tab: CarDetailsTab) => void;
@@ -18,6 +21,9 @@ export function CarDetailsSectionNav({
     mobileCompare?: string;
   };
   desktopBarRef?: Ref<HTMLDivElement>;
+  desktopStuck?: boolean;
+  desktopBackControl?: ReactNode;
+  desktopUtilityActions?: ReactNode;
 }) {
   const mobileTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const desktopTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -99,38 +105,50 @@ export function CarDetailsSectionNav({
 
       <div
         ref={desktopBarRef}
-        className="relative hidden w-full lg:sticky lg:top-0 lg:z-40 lg:mx-auto lg:mt-0 lg:block lg:max-w-[680px] lg:rounded-t-[13px] lg:border-b lg:border-slate-200 lg:bg-white"
+        className={`relative hidden min-h-[48px] w-full transition-[background-color,border-color] duration-200 ease-out lg:sticky lg:top-0 lg:z-40 lg:mx-auto lg:mt-3 lg:max-w-[680px] ${desktopStuck ? "lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-stretch lg:gap-3 lg:bg-transparent" : "lg:block lg:bg-transparent"}`}
         data-car-details-section-nav
-        data-car-details-flight-style-tabs
+        data-car-details-compact-sticky-tabs
+        data-stuck={desktopStuck ? "true" : "false"}
       >
         <div
-          role="tablist"
-          aria-label={labels.navigation}
-          className="mx-auto flex min-h-11 w-full max-w-[640px] items-stretch"
-          data-car-details-desktop-tabs
+          aria-hidden="true"
+          className={`pointer-events-none fixed inset-x-0 top-0 z-0 hidden h-[48px] bg-[#EEF2F7]/92 transition-[opacity,box-shadow] duration-200 ease-out lg:block ${desktopStuck ? "opacity-100 shadow-[0_5px_16px_rgba(15,23,42,0.055)] backdrop-blur-xl" : "opacity-0"}`}
+          data-car-details-desktop-sticky-backdrop
+        />
+        <div
+          className={`z-10 transition-[opacity,transform] duration-200 ease-out ${desktopStuck ? "relative col-start-1 row-start-1 flex min-h-[48px] items-center self-stretch justify-self-start opacity-100" : "pointer-events-none absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 opacity-0"}`}
+          data-car-details-desktop-sticky-back
+          aria-hidden={desktopStuck ? undefined : true}
         >
-          {tabs.map((tab, index) => {
+          {desktopStuck ? desktopBackControl : null}
+        </div>
+        <nav
+          aria-label={labels.navigation}
+          className={`z-10 flex min-h-[46px] shrink-0 items-stretch gap-0.5 rounded-[14px] border border-[#DCE4EE] bg-white/95 px-1 shadow-[0_2px_8px_rgba(15,23,42,0.055)] backdrop-blur-md ${desktopStuck ? "relative col-start-2 row-start-1 justify-self-center" : "absolute left-1/2 top-0 -translate-x-1/2"}`}
+          data-car-details-desktop-tabs
+          data-balanced={desktopStuck ? "true" : "false"}
+        >
+          {tabs.map((tab) => {
             const selected = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
-                ref={(element) => {
-                  desktopTabRefs.current[index] = element;
-                }}
-                id={`car-desktop-${tab.id}-tab`}
                 type="button"
-                role="tab"
-                aria-selected={selected}
-                aria-controls={`car-desktop-${tab.id}-panel`}
-                tabIndex={selected ? 0 : -1}
+                aria-current={selected ? "location" : undefined}
                 onClick={() => onTabChange(tab.id)}
-                onKeyDown={(event) => handleDesktopKeyDown(event, index)}
-                className={`car-details-desktop-selected-info-type focus-ring min-h-11 flex-1 whitespace-nowrap border-b-[3px] px-2 text-center text-[13px] font-semibold leading-5 transition-colors ${selected ? "border-[#075EE8] text-[#07133B]" : "border-transparent text-[#536B92] hover:text-[#142033]"}`}
+                className={`car-details-desktop-selected-info-type focus-ring relative inline-flex min-h-[46px] items-center justify-center whitespace-nowrap border-b-2 px-3 text-[13px] leading-5 transition-colors ${selected ? "border-[#075EE8] text-[#07133B]" : "border-transparent text-[#526174] hover:text-[#142033]"}`}
               >
                 {tab.label}
               </button>
             );
           })}
+        </nav>
+        <div
+          className={`z-10 transition-[opacity,transform] duration-200 ease-out ${desktopStuck ? "relative col-start-3 row-start-1 flex min-h-[48px] items-center self-stretch justify-self-end opacity-100" : "pointer-events-none absolute right-0 top-1/2 translate-x-1 -translate-y-1/2 opacity-0"}`}
+          data-car-details-desktop-sticky-actions
+          aria-hidden={desktopStuck ? undefined : true}
+        >
+          {desktopStuck ? desktopUtilityActions : null}
         </div>
       </div>
     </>
