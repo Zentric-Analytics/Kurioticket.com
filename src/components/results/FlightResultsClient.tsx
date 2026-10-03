@@ -1255,7 +1255,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const returnWrapRef = useRef<HTMLDivElement | null>(null);
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
   const stickySentinelRef = useRef<HTMLDivElement | null>(null);
-  const stickySearchPopoutRef = useRef<HTMLDivElement | null>(null);
+  const stickySearchPopoutRef = useRef<HTMLFormElement | null>(null);
   const stickySearchLauncherRef = useRef<HTMLButtonElement | null>(null);
   const pendingStickySearchTargetRef = useRef<
     "trip" | "route" | "dates" | "return" | "travelers" | null
@@ -5598,10 +5598,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     }
               }
             >
-              <div
+              <form
                 ref={stickySearchPopoutRef}
                 role="region"
                 aria-label={t("editFlightSearch")}
+                onSubmit={handleCompactSearchSubmit}
                 onChangeCapture={markExpandedSearchInteraction}
                 className={cn(
                   "grid w-full items-start gap-1.5 overflow-visible",
@@ -5643,7 +5644,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     {tripTypeInput === "multi-city" ? (
                       <div
                         data-sticky-multicity-editor
-                        className="pointer-events-auto col-span-full mt-1 max-h-[calc(100dvh-6rem)] overflow-y-auto overscroll-contain rounded-[12px] border border-[#CFD9E5] bg-[#F3F6FA] p-3 shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]"
+                        className="pointer-events-auto col-span-full mt-1 overflow-y-auto overscroll-contain rounded-[12px] border border-[#CFD9E5] bg-[#F3F6FA] p-3 shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]"
+                        style={{
+                          maxHeight: `calc(100dvh - ${(desktopSearchPopoverFrame?.top ?? 88) + 60}px)`,
+                        }}
                       >
                         <MultiCityFlightEditor
                           legs={multiCityLegs}
@@ -5927,7 +5931,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     ) : null}
                   </div>
                 ) : null}
-              </div>
+              </form>
             </div>
           </div>
         ) : null}
@@ -8619,6 +8623,7 @@ function DatePickerPopover({
           top: "calc(100% + 0.5rem)",
           ...(alignToField === "right" ? { right: 0 } : { left: 0 }),
           width: "min(560px, calc(100vw - 2rem))",
+          maxHeight: "min(520px, calc(100dvh - 8rem))",
           zIndex: 70,
         } as const)
       : ({
