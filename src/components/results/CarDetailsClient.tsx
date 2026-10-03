@@ -414,8 +414,9 @@ export function CarDetailsExperience({
         data-car-details-content-grid
       >
         <div
-          className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:mx-auto lg:w-full lg:max-w-[1080px]" : "space-y-4 lg:space-y-5"}`}
+          className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:mx-auto lg:w-full lg:max-w-[900px] lg:rounded-[22px] lg:border lg:border-[#DFE6EF] lg:bg-[#F7F9FC] lg:pb-6 lg:shadow-[0_6px_18px_rgba(7,19,59,0.055)]" : "space-y-4 lg:space-y-5"}`}
           data-car-details-primary-column
+          data-car-details-desktop-parent-card={presentation === "standalone-content" ? "true" : undefined}
         >
           <CarDetailsHero
             car={car}
@@ -503,7 +504,10 @@ export function CarDetailsExperience({
             }
           />
           {presentation === "standalone-content" ? (
-            <>
+            <div
+              className="lg:mx-auto lg:mt-1 lg:w-full lg:max-w-[680px] lg:rounded-[14px] lg:border lg:border-[#E0E7EF] lg:bg-white lg:shadow-[0_3px_12px_rgba(7,19,59,0.05)]"
+              data-car-details-desktop-inner-card
+            >
               <CarDetailsSectionNav
                 activeTab={activeTab}
                 onTabChange={handleSectionChange}
@@ -631,7 +635,7 @@ export function CarDetailsExperience({
                   </section>
                 </div>
               </div>
-            </>
+            </div>
           ) : (
             pickupSection
           )}
