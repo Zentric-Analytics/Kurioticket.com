@@ -1255,7 +1255,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const returnWrapRef = useRef<HTMLDivElement | null>(null);
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
   const stickySentinelRef = useRef<HTMLDivElement | null>(null);
-  const stickySearchPanelRef = useRef<HTMLDivElement | null>(null);
   const stickySearchPopoutRef = useRef<HTMLDivElement | null>(null);
   const stickySearchLauncherRef = useRef<HTMLButtonElement | null>(null);
   const pendingStickySearchTargetRef = useRef<
@@ -1666,7 +1665,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const handleStickyPanelPointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
       const panel = stickySearchPopoutRef.current;
-      const compactBar = stickySearchPanelRef.current;
+      const compactBar = document.querySelector<HTMLElement>(
+        "[data-flight-results-nav-search-form]",
+      );
       const datePickerPopover = document.getElementById(
         "flight-date-picker-popover",
       );
