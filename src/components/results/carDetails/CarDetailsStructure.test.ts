@@ -94,8 +94,12 @@ test("standalone desktop Cars tabs switch one content panel in place like Flight
   );
 });
 
-test("standalone desktop Cars uses a Flight-style content hierarchy instead of stacked section cards", () => {
+test("standalone desktop Cars uses the Flights card-in-card hierarchy without changing current tab content", () => {
   assert.match(layoutSource, /background: #EEF2F7 !important/);
+  assert.match(
+    experienceSource,
+    /data-car-details-desktop-inner-card[\s\S]*?lg:max-w-\[680px\][\s\S]*?lg:rounded-\[14px\][\s\S]*?lg:bg-white/,
+  );
   assert.match(
     experienceSource,
     /data-car-details-flight-panel=\{showDesktopOfferList \? "compare" : undefined\}/,
@@ -111,8 +115,6 @@ test("standalone desktop Cars uses a Flight-style content hierarchy instead of s
     experienceSource,
     /data-car-details-location-identity[\s\S]*?border-b border-\[#D8E1EC\]/,
   );
-  assert.doesNotMatch(experienceSource, /data-car-details-layered-surface="pickup"/);
-  assert.doesNotMatch(experienceSource, /data-car-details-layered-surface="location"/);
 });
 
 test("guided Car details renders content-only experience with guided headings", () => {
@@ -125,16 +127,24 @@ test("guided Car details renders content-only experience with guided headings", 
   assert.match(guidedSource, /itemHeadingLevel=\{4\}/);
 });
 
-test("standalone desktop Cars details keep a centered hero above the compact sticky tabs", () => {
+test("standalone desktop Cars details use the hero card as the full parent for the compact inner tab card", () => {
   assert.match(
     experienceSource,
     /presentation === "standalone-content" \? "lg:grid-cols-1 lg:gap-0"/,
   );
   assert.match(
     experienceSource,
-    /presentation === "standalone-content" \? "space-y-0 lg:mx-auto lg:w-full lg:max-w-\[1080px\]"/,
+    /presentation === "standalone-content" \? "space-y-0 lg:mx-auto lg:w-full lg:max-w-\[900px\] lg:rounded-\[22px\] lg:border lg:border-\[#DFE6EF\] lg:bg-\[#F7F9FC\] lg:pb-6 lg:shadow-/,
+  );
+  assert.match(
+    experienceSource,
+    /data-car-details-desktop-parent-card=\{presentation === "standalone-content" \? "true" : undefined\}/,
   );
   assert.match(experienceSource, /data-car-details-desktop-hero-controls/);
+  assert.match(
+    experienceSource,
+    /data-car-details-desktop-inner-card[\s\S]*?<CarDetailsSectionNav[\s\S]*?data-car-details-desktop-tab-panels/,
+  );
 
   const navSource = readFileSync(
     new URL("./CarDetailsSectionNav.tsx", import.meta.url),
@@ -144,6 +154,6 @@ test("standalone desktop Cars details keep a centered hero above the compact sti
   assert.match(navSource, /max-w-\[640px\]/);
   assert.match(navSource, /data-car-details-flight-style-tabs/);
   assert.match(navSource, /lg:sticky lg:top-0/);
-  assert.doesNotMatch(navSource, /data-car-details-desktop-nav-rule/);
+  assert.match(navSource, /lg:mt-0/);
 });
 
