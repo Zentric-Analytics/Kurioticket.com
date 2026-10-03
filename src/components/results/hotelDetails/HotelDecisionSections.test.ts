@@ -12,10 +12,10 @@ const relatedHotels = read("./RelatedHotelsSection.tsx");
 const presentation = read("./hotelDetailsPresentation.ts");
 const continuation = read("./hotelBookingContinuation.ts");
 
-test("desktop has exactly Rate, Overview and Review anchor links for continuous navigation", () => {
+test("desktop has exactly Rates, Overview and Review anchor links for continuous navigation", () => {
   const declaration = desktop.slice(desktop.indexOf("const sections = ["), desktop.indexOf("] as const;"));
   const sections = [...declaration.matchAll(/\{ id: "([^"]+)", label: "([^"]+)" \}/g)].map(([, id, label]) => ({ id, label }));
-  assert.deepEqual(sections, [{ id: "hotel-compare-prices", label: "Rate" }, { id: "hotel-overview", label: "Overview" }, { id: "hotel-reviews", label: "Review" }]);
+  assert.deepEqual(sections, [{ id: "hotel-compare-prices", label: "Rates" }, { id: "hotel-overview", label: "Overview" }, { id: "hotel-reviews", label: "Review" }]);
   const navigation = desktop.slice(desktop.indexOf("<nav"), desktop.indexOf("</nav>"));
   assert.match(navigation, /aria-label="Hotel details sections"/);
   assert.match(navigation, /<a\b[^>]*href=\{`#\$\{section\.id\}`\}/);
@@ -188,4 +188,24 @@ test("desktop guest reviews stay compact without an empty guest-summary column",
 test("desktop related hotels are capped at eight actual cards", () => {
   assert.match(desktop, /desktopLimit=\{8\} limit=\{8\}/);
   assert.match(relatedHotels, /const displayedHotels = hotels\.slice\(0, limit\)/);
+});
+
+
+test("desktop Hotel content from the gallery through recommendations sits on one white card", () => {
+  const cardStart = desktop.indexOf("data-desktop-hotel-content-card");
+  const galleryStart = desktop.indexOf("<HotelDetailsGallery", cardStart);
+  const ratesStart = desktop.indexOf('data-desktop-section="rate"', cardStart);
+  const overviewStart = desktop.indexOf('data-desktop-section="overview"', cardStart);
+  const reviewStart = desktop.indexOf('data-desktop-section="review"', cardStart);
+  const relatedStart = desktop.indexOf('id="hotel-related-hotels"', cardStart);
+  const cardEnd = desktop.indexOf('{overlay === "rooms" ?', cardStart);
+
+  assert.ok(cardStart >= 0);
+  assert.ok(galleryStart > cardStart);
+  assert.ok(ratesStart > galleryStart);
+  assert.ok(overviewStart > ratesStart);
+  assert.ok(reviewStart > overviewStart);
+  assert.ok(relatedStart > reviewStart);
+  assert.ok(cardEnd > relatedStart);
+  assert.match(desktop, /className=\{styles\.contentCard\} data-desktop-hotel-content-card/);
 });
