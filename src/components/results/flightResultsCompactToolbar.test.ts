@@ -30,7 +30,11 @@ test("desktop Flight Results header uses one compact code route, date range, and
   assert.match(toolbar, /h-\[40px\]/);
   assert.match(
     toolbar,
-    /grid-cols-\[96px_minmax\(150px,1fr\)_minmax\(160px,1fr\)_68px_40px\]/,
+    /grid-cols-\[78px_minmax\(0,1\.5fr\)_minmax\(0,1\.4fr\)_56px_40px\]/,
+  );
+  assert.match(
+    toolbar,
+    /xl:grid-cols-\[96px_minmax\(150px,1fr\)_minmax\(160px,1fr\)_68px_40px\]/,
   );
   assert.match(toolbar, /compactOriginCode/);
   assert.match(toolbar, /compactDestinationCode/);
@@ -44,6 +48,10 @@ test("desktop Flight Results header uses one compact code route, date range, and
   assert.match(toolbar, /formatDesktopHeaderDateLabel/);
   assert.match(toolbar, /dateSummary/);
   assert.match(toolbar, /mobileTravelerTotal/);
+  assert.match(
+    toolbar,
+    /aria-label=\{\`\$\{t\("editFlightSearch"\)\}: \$\{travelerCabinSummary\}\`\}/,
+  );
   assert.match(toolbar, /openStickySearchEditor\(event, "trip"\)/);
   assert.match(toolbar, /openStickySearchEditor\(event, "origin"\)/);
   assert.match(toolbar, /openStickySearchEditor\(event, "destination"\)/);
@@ -199,7 +207,11 @@ test("desktop field editors stay aligned to the navbar search footprint", () => 
   assert.match(popout, /desktopSearchPopoverFrame[\s\S]*width: desktopSearchPopoverFrame\.width/);
   assert.match(
     popout,
-    /grid-cols-\[96px_minmax\(150px,1fr\)_minmax\(160px,1fr\)_68px_40px\]/,
+    /grid-cols-\[78px_minmax\(0,1\.5fr\)_minmax\(0,1\.4fr\)_56px_40px\]/,
+  );
+  assert.match(
+    popout,
+    /xl:grid-cols-\[96px_minmax\(150px,1fr\)_minmax\(160px,1fr\)_68px_40px\]/,
   );
   assert.doesNotMatch(popout, /rounded-b-\[12px\] rounded-t-none/);
 });
