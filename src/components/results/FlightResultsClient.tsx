@@ -1578,13 +1578,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   );
 
   useEffect(() => {
-    if (!resultsUiPreparing || !isStickySearchPanelOpen) return;
-
-    pendingStickySearchTargetRef.current = null;
-    collapseStickySearch({ restoreScroll: false });
-  }, [collapseStickySearch, isStickySearchPanelOpen, resultsUiPreparing]);
-
-  useEffect(() => {
     if (!isStickySearchPanelOpen || typeof window === "undefined") {
       return undefined;
     }
@@ -3995,6 +3988,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     currentSearchKey: currentFlightSearchKey,
     filtersReadySearchKey,
   }) || (!guidedMode && kayak?.vertical === "flights" && kayak.status === "loading");
+
+  useEffect(() => {
+    if (!resultsUiPreparing || !isStickySearchPanelOpen) return;
+
+    pendingStickySearchTargetRef.current = null;
+    collapseStickySearch({ restoreScroll: false });
+  }, [collapseStickySearch, isStickySearchPanelOpen, resultsUiPreparing]);
 
   useEffect(() => {
     if (
