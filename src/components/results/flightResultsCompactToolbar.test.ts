@@ -29,6 +29,7 @@ test("desktop Flight Results uses Hotels-style segmented header cards with trip 
   assert.match(toolbar, /openStickySearchEditor\(event, "trip"\)/);
   assert.match(toolbar, /openStickySearchEditor\(event, "route"\)/);
   assert.match(toolbar, /openStickySearchEditor\(event, "dates"\)/);
+  assert.match(toolbar, /openStickySearchEditor\(event, "return"\)/);
   assert.match(toolbar, /openStickySearchEditor\(event, "travelers"\)/);
   assert.match(toolbar, /bg-\[#EEF2F6\]/);
   assert.match(toolbar, /bg-\[#E1E8EF\]/);
@@ -54,8 +55,8 @@ function stickyEditorCallbackSource() {
 test("desktop sticky compact search opens the selected control on the first click", () => {
   const callback = stickyEditorCallbackSource();
 
-  assert.match(callback, /target: "trip" \| "route" \| "dates" \| "travelers"/);
-  assert.match(callback, /tripTypeInput !== "multi-city" && target === "dates" \? "departure" : null/);
+  assert.match(callback, /target: "trip" \| "route" \| "dates" \| "return" \| "travelers"/);
+  assert.match(callback, /target === "dates"[\s\S]*?"departure"[\s\S]*?target === "return"[\s\S]*?"return"/);
   assert.match(callback, /tripTypeInput !== "multi-city" && target === "travelers"/);
   assert.match(callback, /target === "route" && originInput\.trim\(\)\.length >= 2/);
   assert.match(callback, /stickySearchLauncherRef\.current = event\.currentTarget/);
@@ -65,7 +66,7 @@ test("desktop sticky compact search opens the selected control on the first clic
 test("sticky search moves focus directly to the requested expanded control", () => {
   assert.match(source, /pendingTarget === "route"/);
   assert.match(source, /querySelector<HTMLInputElement>\("input"\)/);
-  assert.match(source, /pendingTarget === "dates"/);
+  assert.match(source, /pendingTarget === "dates" \|\| pendingTarget === "return"/);
   assert.match(source, /stickyDateButtonRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
   assert.match(source, /pendingTarget === "travelers"/);
   assert.match(source, /stickyTravelerButtonRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
