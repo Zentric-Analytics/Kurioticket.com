@@ -13,26 +13,26 @@
 .editor button:focus-visible, .popover button:focus-visible { outline: 2px solid #004bb8; outline-offset: 3px; }
 .error { margin: 8px 0 0; color: #b91c1c; font-size: 12px; line-height: 18px; }
 .popover { color: #192024; font-family: Inter, sans-serif; border: 0; border-radius: 12px; box-shadow: 0 10px 20px rgb(25 32 36 / 10%), 0 3px 6px rgb(25 32 36 / 4%), 0 -3px 6px rgb(25 32 36 / 4%); }
-.calendar { position: relative; padding: 24px; }
-.monthNavigation { position: absolute; left: 24px; right: 24px; top: 24px; display: flex; justify-content: space-between; pointer-events: none; }
-.monthNavigation button { display: grid; place-items: center; height: 44px; width: 36px; border-radius: 4px; pointer-events: auto; cursor: pointer; }
-.monthNavigation button:hover { background: #f0f3f5; }
-.monthNavigation button:disabled { color: #bdc5cb; cursor: default; background: transparent; }
-.months { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
-.month h3 { height: 44px; margin: 0; display: flex; justify-content: center; align-items: center; font-size: 16px; line-height: 24px; font-weight: 600; }
-.weekdays, .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
-.weekdays { font-size: 12px; line-height: 22px; text-align: center; color: #687680; }
-.week { height: 46px; }
-.dayCell { position: relative; display: grid; place-items: center; min-width: 0; }
-.dayCell[data-range="true"]::before { position: absolute; content: ""; inset: 0; background: #eaf2ff; }
-.dayCell[data-start="true"]::before { left: 50%; }
-.dayCell[data-end="true"]::before { right: 50%; }
-.dayCell button { position: relative; z-index: 1; display: grid; place-items: center; width: 46px; max-width: 100%; height: 46px; border-radius: 4px; font-size: 16px; line-height: 24px; font-weight: 400; cursor: pointer; }
-.dayCell button:hover { background: #eef3f7; }
-.dayCell button[aria-current="date"] { font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
-.dayCell button[aria-pressed="true"] { background: #004bb8; color: white; }
-.dayCell button:disabled { color: #bac2c8; cursor: default; background: transparent; }
-.keyboardHint { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.calendar { padding: 12px; }
+.calendarTitle { margin: 0 0 10px; font-size: 14px; line-height: 20px; font-weight: 600; color: #192024; }
+.calendarNavigation { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.calendarNavigation button, .calendarSecondary { border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 12px; font-size: 14px; line-height: 20px; font-weight: 600; color: #334155; background: #fff; transition: background-color .15s ease, border-color .15s ease; }
+.calendarNavigation button:hover, .calendarSecondary:hover { background: #f8fafc; }
+.calendarNavigation button:disabled { color: #cbd5e1; border-color: #e2e8f0; cursor: default; background: #fff; }
+.calendarMonths { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.calendarMonth > p { margin: 0 0 6px; text-align: center; font-size: 14px; line-height: 20px; font-weight: 600; color: #334155; }
+.calendarWeekdays, .calendarGrid { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); text-align: center; }
+.calendarWeekdays { margin-bottom: 6px; gap: 4px; font-size: 12px; line-height: 16px; font-weight: 600; color: #64748b; }
+.calendarGrid { gap: 4px; }
+.calendarGrid > span, .calendarGrid > button { justify-self: center; width: 32px; height: 32px; }
+.calendarGrid > button { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: 14px; line-height: 20px; font-weight: 400; color: #0f172a; transition: background-color .15s ease, color .15s ease; }
+.calendarGrid > button:hover { background: rgb(0 75 184 / 8%); }
+.calendarGrid > button[data-in-range="true"] { border-radius: 6px; background: rgb(0 75 184 / 10%); color: #021c2b; }
+.calendarGrid > button[aria-pressed="true"] { background: #004bb8; color: #fff; }
+.calendarGrid > button:disabled { color: #cbd5e1; cursor: default; background: transparent; }
+.calendarFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+.calendarPrimary { border-radius: 8px; background: #004bb8; color: #fff; padding: 8px 16px; font-size: 14px; line-height: 20px; font-weight: 600; box-shadow: 0 8px 18px rgb(0 75 184 / 20%); transition: background-color .15s ease; }
+.calendarPrimary:hover { background: #021c2b; }
 .occupancy { padding: 16px; }
 .counter { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; }
 .counter strong { font-size: 14px; font-weight: 600; }
