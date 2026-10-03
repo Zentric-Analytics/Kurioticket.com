@@ -123,3 +123,14 @@ test("desktop rate cards extend slightly beyond the stay editor", () => {
   }));
   assert.match(html, /class="[^"]*max-w-\[680px\][^"]*" data-comparison-offers/);
 });
+
+
+test("desktop View deal action stays compact", () => {
+  const html = renderToStaticMarkup(createElement(HotelPriceComparisonSection, {
+    ...baseProps,
+    variant: "desktop",
+    onContinueOffer: () => {},
+  }));
+  assert.match(html, /h-8 w-\[96px\]/);
+  assert.match(html, /text-\[12px\]/);
+});
