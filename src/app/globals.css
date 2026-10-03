@@ -1541,9 +1541,9 @@ textarea {
 @media (min-width: 1024px) {
   .flight-card-details {
     display: grid;
-    grid-template-columns: repeat(3, max-content);
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: center;
-    justify-content: start;
     column-gap: 1.5rem;
     overflow: visible;
     border: 0;
