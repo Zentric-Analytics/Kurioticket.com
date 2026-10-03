@@ -406,11 +406,11 @@ test("desktop car details center the overview while keeping controls balanced", 
   assert.match(heroSource, /data-car-details-desktop-overview-specifications/);
   assert.match(
     heroSource,
-    /mt-4 grid min-w-0 w-full max-w-\[820px\] grid-cols-4 gap-x-4 gap-y-2/,
+    /mt-4 grid min-w-0 w-full max-w-\[820px\] grid-cols-4 gap-3/,
   );
   assert.match(
     heroSource,
-    /justify-self-center gap-2 text-center/,
+    /min-h-12 w-full[\s\S]*?rounded-\[13px\][\s\S]*?bg-white/,
   );
   assert.match(heroSource, /className="block min-w-0 max-w-full truncate" title={label}/);
   assert.match(heroSource, /data-car-details-desktop-overview-image/);
