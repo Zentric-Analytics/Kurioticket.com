@@ -10,7 +10,7 @@ const source = readFileSync(
 test("related Hotel card keeps View hotel next to its arrow", () => {
   assert.match(
     source,
-    /items-center justify-start gap-1\.5[\s\S]*\{labels\.viewHotel\}[\s\S]*<ArrowRight className="h-4 w-4 shrink-0"/,
+    /items-center justify-end gap-1\.5[\s\S]*\{labels\.viewHotel\}[\s\S]*<ArrowRight className="h-4 w-4 shrink-0"/,
   );
   assert.doesNotMatch(
     source,

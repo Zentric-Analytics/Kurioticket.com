@@ -1594,7 +1594,7 @@ export function HotelSearchBar({
                     isResultsFlat && "font-sans text-[#192024]",
                   )}
                 >
-                  <div className="border-b border-slate-200 px-4 py-3.5">
+                  <div className="px-4 py-3.5 text-center">
                     <h2 className="text-base font-bold tracking-[-0.01em] text-slate-950">
                       {t("hotelGuestsRooms.mobileTitle")}
                     </h2>
