@@ -84,6 +84,8 @@ test("desktop Hotel guests picker separates Guests and Rooms while keeping produ
   assert.match(source, /t\("hotelGuests\.childDescription"\)/);
   assert.match(source, /t\("hotelGuests\.roomDescription"\)/);
   assert.match(guestsPanelSource, /desktop-guests-heading/);
+  assert.match(guestsPanelSource, /className="px-4 py-3\.5 text-center"/);
+  assert.doesNotMatch(guestsPanelSource, /border-b border-slate-200 px-4 py-3\.5/);
   assert.match(guestsPanelSource, /desktop-rooms-heading/);
   assert.match(guestsPanelSource, /t\("adults"\)/);
   assert.match(guestsPanelSource, /t\("children"\)/);
