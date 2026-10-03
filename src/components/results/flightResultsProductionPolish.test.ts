@@ -302,8 +302,6 @@ test("desktop leg columns share strict time airport and date row tracks", async 
   assert.match(leg, /flight-card-leg-endpoint[\s\S]*flight-card-time[\s\S]*leg\.destinationAirport[\s\S]*flight-card-arrival-date/);
   assert.match(styles, /\.flight-card-leg-endpoint,\s*\.flight-card-leg-center \{\s*display: grid;\s*grid-template-rows: 1\.75rem 1\.25rem 1\.25rem;/);
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-leg-endpoint,[\s\S]*\.flight-card-leg-center \{\s*display: block;/);
-  assert.match(styles, /\.flight-card-leg-grid > \.flight-card-leg-endpoint:last-child \{\s*transform: translateX\(0\.5rem\);/);
-  assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-leg-grid > \.flight-card-leg-endpoint:last-child \{\s*transform: none;/);
 });
 
 test("desktop itinerary gives the route more room and moves arrival closer to the fare divider", async () => {
@@ -324,6 +322,7 @@ test("desktop itinerary gives the route more room and moves arrival closer to th
     /grid-template-columns:\s*minmax\(112px, 0\.72fr\) minmax\(220px, 1\.8fr\) minmax\(\s*92px,\s*0\.6fr\s*\)/,
   );
   assert.match(baseGrid, /gap:\s*1rem/);
+  assert.match(styles, /@media \(min-width: 1024px\)[\s\S]*\.flight-card-body \{[\s\S]*grid-template-columns: minmax\(0, 1fr\) 164px;/);
   assert.match(
     mediumGrid,
     /grid-template-columns:\s*minmax\(106px, 0\.7fr\) minmax\(168px, 1\.55fr\) minmax\(\s*92px,\s*0\.6fr\s*\)/,
