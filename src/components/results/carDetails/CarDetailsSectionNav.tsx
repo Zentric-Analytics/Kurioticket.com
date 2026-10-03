@@ -1,6 +1,6 @@
 "use client";
 
-import type { Ref } from "react";
+import type { KeyboardEvent, Ref } from "react";
 import { useRef } from "react";
 
 export type CarDetailsTab = "compare" | "pickup" | "location";
@@ -29,7 +29,7 @@ export function CarDetailsSectionNav({
   const mobileTabs = tabs;
 
   function nextTabIndex(
-    event: React.KeyboardEvent<HTMLButtonElement>,
+    event: KeyboardEvent<HTMLButtonElement>,
     index: number,
   ) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return null;
@@ -40,7 +40,7 @@ export function CarDetailsSectionNav({
   }
 
   function handleMobileKeyDown(
-    event: React.KeyboardEvent<HTMLButtonElement>,
+    event: KeyboardEvent<HTMLButtonElement>,
     index: number,
   ) {
     const nextIndex = nextTabIndex(event, index);
@@ -50,7 +50,7 @@ export function CarDetailsSectionNav({
   }
 
   function handleDesktopKeyDown(
-    event: React.KeyboardEvent<HTMLButtonElement>,
+    event: KeyboardEvent<HTMLButtonElement>,
     index: number,
   ) {
     const nextIndex = nextTabIndex(event, index);
@@ -115,7 +115,7 @@ export function CarDetailsSectionNav({
               <button
                 key={tab.id}
                 ref={(element) => {
-                  tabRefs.current[index] = element;
+                  desktopTabRefs.current[index] = element;
                 }}
                 id={`car-desktop-${tab.id}-tab`}
                 type="button"
@@ -124,7 +124,7 @@ export function CarDetailsSectionNav({
                 aria-controls={`car-desktop-${tab.id}-panel`}
                 tabIndex={selected ? 0 : -1}
                 onClick={() => onTabChange(tab.id)}
-                onKeyDown={(event) => handleKeyDown(event, index)}
+                onKeyDown={(event) => handleDesktopKeyDown(event, index)}
                 className={`car-details-desktop-selected-info-type focus-ring min-h-11 flex-1 whitespace-nowrap border-b-[3px] px-2 text-center text-[13px] font-semibold leading-5 transition-colors ${selected ? "border-[#075EE8] text-[#07133B]" : "border-transparent text-[#536B92] hover:text-[#142033]"}`}
               >
                 {tab.label}
