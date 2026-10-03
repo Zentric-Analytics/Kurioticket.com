@@ -578,7 +578,7 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /useState<FareTab>\("deals"\)/);
   assert.match(source, /role="tabpanel"/);
   assert.match(source, /ArrowRight[\s\S]*ArrowLeft/);
-  assert.match(source, /data-desktop-fare-information-tabs[^>]*className="mt-5 hidden min-w-0 sm:flex"/);
+  assert.match(source, /data-desktop-fare-information-tabs[^>]*className="mt-5 hidden min-w-0 sm:flex lg:sticky lg:top-0 lg:z-40 lg:border-b lg:border-slate-200 lg:bg-white"/);
   assert.match(source, /min-h-11 flex-1 whitespace-nowrap border-b-\[3px\]/);
   assert.doesNotMatch(source, />Selected<\/span>/);
   assert.match(source, /grid-cols-\[minmax\(0,1fr\)_minmax\(120px,180px\)_minmax\(0,1fr\)\]/);
@@ -694,6 +694,9 @@ test("desktop Fare information uses underline-only tabs and unframed panels", as
   const tabs = source.slice(tabsStart, tabsEnd);
 
   assert.match(tabs, /role="tablist" aria-label="Fare information"/);
+  assert.match(tabs, /lg:sticky lg:top-0 lg:z-40/);
+  assert.match(tabs, /lg:border-b lg:border-slate-200 lg:bg-white/);
+  assert.doesNotMatch(tabs, /sm:sticky|sm:top-0/);
   assert.match(tabs, /role="tab"/);
   assert.match(tabs, /aria-selected=\{activeTab === tab\.id\}/);
   assert.match(tabs, /aria-controls=\{`fare-panel-\$\{tab\.id\}`\}/);
