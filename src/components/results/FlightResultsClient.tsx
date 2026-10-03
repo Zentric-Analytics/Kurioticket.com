@@ -7623,7 +7623,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className="hidden w-full sm:block"
                   aria-label="Nearby departure fares"
                 >
-                  <div data-desktop-nearby-fare-rail className="mx-auto grid w-full max-w-[980px] grid-cols-[42px_repeat(7,minmax(0,1fr))_42px] items-stretch gap-2 overflow-visible rounded-2xl bg-transparent p-0">
+                  <div data-desktop-nearby-fare-rail className="grid w-full grid-cols-[42px_repeat(7,minmax(0,1fr))_42px] items-stretch gap-2 overflow-visible rounded-2xl bg-transparent p-0">
                     <button
                       type="button"
                       aria-label="Previous nearby fare date"
