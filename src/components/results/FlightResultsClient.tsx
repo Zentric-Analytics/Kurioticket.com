@@ -7623,13 +7623,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   className="hidden w-full sm:block"
                   aria-label="Nearby departure fares"
                 >
-                  <div data-desktop-nearby-fare-rail className="grid w-full grid-cols-[42px_repeat(7,minmax(0,1fr))_42px] items-stretch gap-2 overflow-visible rounded-2xl bg-transparent p-0">
+                  <div data-desktop-nearby-fare-rail className="relative grid w-full grid-cols-7 items-stretch gap-2 overflow-visible rounded-2xl bg-transparent p-0">
                     <button
                       type="button"
                       aria-label="Previous nearby fare date"
                       disabled={nearbyFareVisibleStart === 0}
                       onClick={() => navigateNearbyFareWindow("previous")}
-                      className="focus-ring inline-flex h-9 w-9 place-self-center items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
+                      className="focus-ring absolute -left-9 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
                     >
                       <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                     </button>
@@ -7764,7 +7764,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         nearbyFareRangeSize - nearbyFareVisibleCount
                       }
                       onClick={() => navigateNearbyFareWindow("next")}
-                      className="focus-ring inline-flex h-9 w-9 place-self-center items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
+                      className="focus-ring absolute -right-9 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
                     >
                       <ChevronRight className="h-5 w-5" aria-hidden="true" />
                     </button>
