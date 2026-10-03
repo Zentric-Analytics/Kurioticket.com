@@ -448,7 +448,7 @@ test("desktop Flight compact filters reuse the same full filter surface as Cars"
 
   assert.match(filters, /compact\?: boolean/);
   assert.match(filters, /compact = false/);
-  assert.match(filters, /max-h-full w-full overflow-y-auto rounded-2xl overscroll-contain/);
+  assert.match(filters, /flex max-h-full w-full flex-col overflow-hidden rounded-2xl/);
 });
 
 test("desktop Flight result meta typography uses the premium hierarchy", async () => {
