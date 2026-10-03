@@ -35,7 +35,7 @@ export default function CarDetailsLayout({
             order: 1;
           }
           [data-car-details-section-nav] {
-            background: transparent !important;
+            background: #FFFFFF !important;
           }
 
           [data-car-details-scroll-section] {
