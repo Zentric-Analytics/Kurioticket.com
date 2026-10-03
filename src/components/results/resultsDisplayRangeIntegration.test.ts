@@ -7,7 +7,6 @@ const read = (file: string) => readFileSync(new URL(file, import.meta.url), "utf
 for (const [product, file, pageSize] of [
   ["Flights", "./FlightResultsClient.tsx", "FLIGHT_RESULTS_PAGE_SIZE"],
   ["Hotels", "./HotelResultsClient.tsx", "HOTEL_RESULTS_PAGE_SIZE"],
-  ["Cars", "./CarsResultsClient.tsx", "CAR_RESULTS_PAGE_SIZE"],
 ] as const) {
   test(`${product} displays the shared current-page result range`, () => {
     const source = read(file);
@@ -26,3 +25,11 @@ for (const [product, file, pageSize] of [
       : /\{resultsDisplayRange \? \(/);
   });
 }
+
+
+test("Cars shows the total result count without a current-page range", () => {
+  const source = read("./CarsResultsClient.tsx");
+  assert.match(source, /\.format\(visibleResults\.length\)/);
+  assert.doesNotMatch(source, /getResultsDisplayRange|resultsDisplayRange|CAR_RESULTS_PAGE_SIZE/);
+  assert.doesNotMatch(source, /Showing results .* through .* of/);
+});
