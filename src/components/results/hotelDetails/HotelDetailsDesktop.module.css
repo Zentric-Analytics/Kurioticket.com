@@ -16,6 +16,7 @@
 .reviewIdentity b { font-weight: 600; }
 .utilityActions { display: flex; flex-shrink: 0; justify-content: flex-end; gap: 8px; }
 .utilityActions[hidden] { display: none; }
+.contentCard { min-width: 0; border: 1px solid #E1E6EA; border-radius: 16px; background: #fff; padding: 16px 20px 20px; box-shadow: 0 2px 8px rgb(25 32 36 / 4%); }
 .gallery { position: relative; margin-bottom: 30px; }
 .galleryBack { position: absolute; top: 16px; left: 16px; z-index: 2; display: inline-flex; width: 40px; height: 40px; align-items: center; justify-content: center; border: 1px solid #d9dfe2; border-radius: 50%; background: #fff; color: #192024; box-shadow: 0 2px 8px rgb(25 32 36 / 16%); }
 .galleryBack:hover { background: #f3f5f6; }
@@ -24,7 +25,7 @@
 .iconButton { width: 36px; height: 36px; display: inline-flex; justify-content: center; align-items: center; border: 1px solid #d9dfe2; border-radius: 5px; background: #fff; color: #192024; }
 .iconButton:hover, .secondaryButton:hover { background: #f3f5f6; }
 .iconButton[aria-pressed=true] { color: #e92d55; }
-.sectionBar { position: sticky; top: 0; z-index: 35; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; border-bottom: 1px solid #d9dfe2; background: #F7F9FC; }
+.sectionBar { position: sticky; top: 0; z-index: 35; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; border-bottom: 1px solid #d9dfe2; background: #fff; }
 .sectionActions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; min-width: 0; margin-left: auto; }
 .sectionBar .utilityActions { gap: 0; }
 .sectionBar .utilityActions .iconButton { width: 28px; height: 32px; border: 0; background: transparent; }
