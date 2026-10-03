@@ -168,11 +168,11 @@ body {
 
   .car-details-desktop-selected-info-type {
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: 14px;
     line-height: 20px;
-    font-weight: 700;
-    letter-spacing: -0.003em;
-    font-variation-settings: "wght" 700;
+    font-weight: 600;
+    letter-spacing: 0;
+    font-variation-settings: "wght" 600;
     font-synthesis: none;
     font-kerning: normal;
     text-rendering: optimizeLegibility;
