@@ -1734,7 +1734,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       }
 
       if (tripTypeMenuOpen) {
-        setTripTypeMenuOpen(false);
+        collapseStickySearch();
         return;
       }
 
