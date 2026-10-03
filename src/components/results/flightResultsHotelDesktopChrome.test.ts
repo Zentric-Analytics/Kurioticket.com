@@ -108,6 +108,25 @@ test("desktop Flight Results matches Hotels by hiding navbar search until result
   assert.match(ready, /\{standaloneResultsHeader\}[\s\S]*?\{readyDesktopNavbarSearch\}/);
 });
 
+test("desktop Flight closes an open sticky search when preparation starts", () => {
+  const effectStart = flight.indexOf(
+    "if (!resultsUiPreparing || !isStickySearchPanelOpen) return;",
+  );
+  const effectEnd = flight.indexOf(
+    "if (!isStickySearchPanelOpen || typeof window === \"undefined\")",
+    effectStart,
+  );
+  const effect = flight.slice(effectStart, effectEnd);
+
+  assert.ok(effectStart >= 0 && effectEnd > effectStart);
+  assert.match(effect, /pendingStickySearchTargetRef\.current = null/);
+  assert.match(effect, /collapseStickySearch\(\{ restoreScroll: false \}\)/);
+  assert.match(
+    effect,
+    /\[collapseStickySearch, isStickySearchPanelOpen, resultsUiPreparing\]/,
+  );
+});
+
 test("desktop Flight navbar search copies the Hotel results-flat card geometry", () => {
   const start = flight.indexOf("function renderDesktopHeaderSearchBar()");
   const end = flight.indexOf("function renderStickySearchPopoutOverlay()", start);
