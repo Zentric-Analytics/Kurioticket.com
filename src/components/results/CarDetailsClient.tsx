@@ -201,15 +201,11 @@ export function CarDetailsExperience({
   const rates = useCurrencyRates();
   const { isSaved, toggleSavedCar } = useSavedCar(car, search);
   const [activeTab, setActiveTab] = useState<CarDetailsTab>("compare");
-  const [desktopSectionBarStuck, setDesktopSectionBarStuck] = useState(false);
   const [shareConfirmation, setShareConfirmation] = useState("");
   const mobileHeaderProtectedRef = useRef(false);
   const mobileHeaderRef = useRef<HTMLDivElement>(null);
   const heroImageStageRef = useRef<HTMLElement>(null);
   const desktopSectionBarRef = useRef<HTMLDivElement>(null);
-  const compareSectionRef = useRef<HTMLElement>(null);
-  const pickupSectionRef = useRef<HTMLDivElement>(null);
-  const locationSectionRef = useRef<HTMLElement>(null);
   const [mobileHeaderProtected, setMobileHeaderProtected] = useState(false);
   const copy = (key: string) => t[key] || enTranslations[key] || key;
   const text = {
@@ -362,96 +358,10 @@ export function CarDetailsExperience({
     };
   }, [presentation]);
 
-  useEffect(() => {
-    if (presentation !== "standalone-content") return;
-
-    let animationFrame = 0;
-    const desktopQuery = window.matchMedia("(min-width: 1024px)");
-
-    const updateDesktopScrollState = () => {
-      animationFrame = 0;
-      if (!desktopQuery.matches) {
-        setDesktopSectionBarStuck(false);
-        return;
-      }
-
-      const barBounds = desktopSectionBarRef.current?.getBoundingClientRect();
-      const stuck = Boolean(barBounds && barBounds.top <= 0);
-      setDesktopSectionBarStuck(stuck);
-
-      const threshold = (barBounds?.height ?? 64) + 24;
-      const sections: Array<{ id: CarDetailsTab; element: HTMLElement | null }> = [
-        { id: "compare", element: compareSectionRef.current },
-        { id: "pickup", element: pickupSectionRef.current },
-        { id: "location", element: locationSectionRef.current },
-      ];
-      let current: CarDetailsTab = "compare";
-      for (const section of sections) {
-        if ((section.element?.getBoundingClientRect().top ?? Infinity) <= threshold) {
-          current = section.id;
-        }
-      }
-      if (
-        window.scrollY > 0 &&
-        Math.ceil(window.scrollY + window.innerHeight) >=
-          document.documentElement.scrollHeight - 2
-      ) {
-        current = "location";
-      }
-      setActiveTab(current);
-    };
-
-    const scheduleDesktopScrollState = () => {
-      if (animationFrame) return;
-      animationFrame = window.requestAnimationFrame(updateDesktopScrollState);
-    };
-
-    scheduleDesktopScrollState();
-    window.addEventListener("scroll", scheduleDesktopScrollState, { passive: true });
-    window.addEventListener("resize", scheduleDesktopScrollState);
-    desktopQuery.addEventListener("change", scheduleDesktopScrollState);
-
-    const observer = new ResizeObserver(scheduleDesktopScrollState);
-    for (const target of [
-      desktopSectionBarRef.current,
-      compareSectionRef.current,
-      pickupSectionRef.current,
-      locationSectionRef.current,
-    ]) {
-      if (target) observer.observe(target);
-    }
-
-    return () => {
-      window.removeEventListener("scroll", scheduleDesktopScrollState);
-      window.removeEventListener("resize", scheduleDesktopScrollState);
-      desktopQuery.removeEventListener("change", scheduleDesktopScrollState);
-      observer.disconnect();
-      if (animationFrame) window.cancelAnimationFrame(animationFrame);
-    };
-  }, [presentation]);
-
   function handleSectionChange(tab: CarDetailsTab) {
     setActiveTab(tab);
-    if (
-      presentation !== "standalone-content" ||
-      !window.matchMedia("(min-width: 1024px)").matches
-    ) {
-      return;
-    }
-
-    const target =
-      tab === "compare"
-        ? compareSectionRef.current
-        : tab === "pickup"
-          ? pickupSectionRef.current
-          : locationSectionRef.current;
-    target?.scrollIntoView({
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        ? "auto"
-        : "smooth",
-      block: "start",
-    });
   }
+
 
   const pickupSection = (
     <PickupReturnSection
@@ -480,29 +390,6 @@ export function CarDetailsExperience({
       ) : null}
       {presentation === "standalone-content" ? (
         <div
-          className="hidden h-16 w-full items-center border-b border-transparent bg-[#F5F7FB] lg:flex lg:bg-[#F8FAFC]"
-          data-car-details-desktop-controls
-        >
-          <div className="mx-auto flex w-full max-w-[820px] items-center justify-between px-2">
-            <div className="relative z-10">{desktopBackControl}</div>
-            <div
-              className="relative z-10 flex items-center gap-2"
-              data-car-details-utility-placement="hero"
-            >
-              <CarHeroActions
-                car={car}
-                isSaved={isSaved}
-                toggleSavedCar={toggleSavedCar}
-                shareCar={shareCar}
-                copy={copy}
-                desktop
-              />
-            </div>
-          </div>
-        </div>
-      ) : null}
-      {presentation === "standalone-content" ? (
-        <div
           ref={mobileHeaderRef}
           className={`pointer-events-none fixed inset-x-0 top-0 z-40 h-[var(--car-details-mobile-header-boundary)] transition-colors duration-150 lg:hidden ${mobileHeaderProtected ? "bg-[#F5F7FB]" : "bg-transparent"}`}
           data-car-details-mobile-controls
@@ -527,7 +414,7 @@ export function CarDetailsExperience({
         data-car-details-content-grid
       >
         <div
-          className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:mx-auto lg:w-full lg:max-w-[1080px] lg:space-y-5" : "space-y-4 lg:space-y-5"}`}
+          className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:mx-auto lg:w-full lg:max-w-[1080px]" : "space-y-4 lg:space-y-5"}`}
           data-car-details-primary-column
         >
           <CarDetailsHero
@@ -535,6 +422,29 @@ export function CarDetailsExperience({
             text={text}
             imageStageRef={heroImageStageRef}
             reserveMobileControlSafeZone={presentation === "standalone-content"}
+            standaloneDesktopControls={
+              presentation === "standalone-content" ? (
+                <div
+                  className="flex w-full items-center justify-between"
+                  data-car-details-desktop-hero-controls
+                >
+                  <div className="relative z-10">{desktopBackControl}</div>
+                  <div
+                    className="relative z-10 flex items-center gap-2"
+                    data-car-details-utility-placement="hero"
+                  >
+                    <CarHeroActions
+                      car={car}
+                      isSaved={isSaved}
+                      toggleSavedCar={toggleSavedCar}
+                      shareCar={shareCar}
+                      copy={copy}
+                      desktop
+                    />
+                  </div>
+                </div>
+              ) : undefined
+            }
             identity={
               <div className="min-w-0">
                 <Heading
@@ -598,23 +508,6 @@ export function CarDetailsExperience({
                 activeTab={activeTab}
                 onTabChange={handleSectionChange}
                 desktopBarRef={desktopSectionBarRef}
-                desktopStuck={desktopSectionBarStuck}
-                desktopBackControl={desktopBackControl}
-                desktopUtilityActions={
-                  <div
-                    className="flex items-center gap-2.5"
-                    data-car-details-utility-placement="tabs"
-                  >
-                    <CarHeroActions
-                      car={car}
-                      isSaved={isSaved}
-                      toggleSavedCar={toggleSavedCar}
-                      shareCar={shareCar}
-                      copy={copy}
-                      desktop
-                    />
-                  </div>
-                }
                 labels={{
                   navigation: copy("carDetails.title"),
                   compare: "Compare deals",
@@ -676,11 +569,15 @@ export function CarDetailsExperience({
                   </section>
                 </div>
 
-                <div className="hidden lg:block lg:space-y-5 lg:pb-8 lg:pt-4" data-car-details-desktop-linear-sections>
+                <div
+                  className="hidden lg:block lg:pb-8"
+                  data-car-details-desktop-tab-panels
+                >
                   <section
-                    ref={compareSectionRef}
-                    className=""
-                    data-car-details-scroll-section="compare"
+                    id="car-desktop-compare-panel"
+                    role="tabpanel"
+                    aria-labelledby="car-desktop-compare-tab"
+                    className={activeTab !== "compare" ? "hidden" : ""}
                     data-car-details-desktop-section="compare"
                   >
                     {primaryOffer ? (
@@ -703,9 +600,10 @@ export function CarDetailsExperience({
                   </section>
 
                   <section
-                    ref={pickupSectionRef}
-                    className=""
-                    data-car-details-scroll-section="pickup"
+                    id="car-desktop-pickup-panel"
+                    role="tabpanel"
+                    aria-labelledby="car-desktop-pickup-tab"
+                    className={activeTab !== "pickup" ? "hidden" : ""}
                     data-car-details-desktop-section="pickup"
                   >
                     <DesktopPickupReturnOverview
@@ -717,9 +615,10 @@ export function CarDetailsExperience({
                   </section>
 
                   <section
-                    ref={locationSectionRef}
-                    className=""
-                    data-car-details-scroll-section="location"
+                    id="car-desktop-location-panel"
+                    role="tabpanel"
+                    aria-labelledby="car-desktop-location-tab"
+                    className={activeTab !== "location" ? "hidden" : ""}
                     data-car-details-desktop-section="location"
                   >
                     <DesktopCarHireLocationOverview
@@ -729,7 +628,6 @@ export function CarDetailsExperience({
                       copy={copy}
                     />
                   </section>
-
                 </div>
               </div>
             </>
