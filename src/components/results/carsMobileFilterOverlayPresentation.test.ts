@@ -270,7 +270,8 @@ test("Cars quick sheets keep changes local until Apply and discard them when clo
   assert.match(cars, /setQuickSortDraft\(sort\)/);
   assert.match(cars, /setQuickFilterDraft\(\(current\) =>/);
   assert.match(cars, /setQuickSortDraft\(option\.value\)/);
-  assert.match(cars, /startFilterResultsTransition\(\); setCurrentPage\(1\); if \(quickFilterGroupId === "sort"\) setSort\(quickSortDraft\)/);
+  assert.match(cars, /startFilterResultsTransition\(\); if \(quickFilterGroupId === "sort"\) setSort\(quickSortDraft\)/);
+  assert.doesNotMatch(cars, /setCurrentPage/);
   assert.match(cars, /next\[quickFilterGroupId\] = \[\.\.\.quickFilterDraft\]/);
   assert.match(cars, /onClick=\{closeQuickFilter\}/);
   assert.match(cars, /if \(quickFilterGroupId\) closeQuickFilter\(\)/);
