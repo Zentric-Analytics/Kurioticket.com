@@ -1256,8 +1256,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
   const stickySentinelRef = useRef<HTMLDivElement | null>(null);
   const stickySearchPanelRef = useRef<HTMLDivElement | null>(null);
-  const stickySearchPopoutRef = useRef<HTMLFormElement | null>(null);
-  const stickySearchCloseButtonRef = useRef<HTMLButtonElement | null>(null);
+  const stickySearchPopoutRef = useRef<HTMLDivElement | null>(null);
   const stickySearchLauncherRef = useRef<HTMLButtonElement | null>(null);
   const pendingStickySearchTargetRef = useRef<
     "trip" | "route" | "dates" | "return" | "travelers" | null
@@ -1661,7 +1660,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         return;
       }
 
-      stickySearchCloseButtonRef.current?.focus({ preventScroll: true });
+      stickySearchLauncherRef.current?.focus({ preventScroll: true });
     });
 
     const handleStickyPanelPointerDown = (event: MouseEvent) => {
@@ -5641,7 +5640,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     {tripTypeInput === "multi-city" ? (
                       <div
                         data-sticky-multicity-editor
-                        className="pointer-events-auto col-span-full mt-1 rounded-[12px] border border-[#CFD9E5] bg-[#F3F6FA] p-3 shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]"
+                        className="pointer-events-auto col-span-full mt-1 max-h-[calc(100dvh-6rem)] overflow-y-auto overscroll-contain rounded-[12px] border border-[#CFD9E5] bg-[#F3F6FA] p-3 shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]"
                       >
                         <MultiCityFlightEditor
                           legs={multiCityLegs}
