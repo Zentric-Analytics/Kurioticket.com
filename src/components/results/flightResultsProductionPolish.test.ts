@@ -304,6 +304,31 @@ test("desktop leg columns share strict time airport and date row tracks", async 
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-leg-endpoint,[\s\S]*\.flight-card-leg-center \{\s*display: block;/);
 });
 
+test("desktop itinerary gives the route more room and moves arrival closer to the fare divider", async () => {
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+  const baseGrid = styles.slice(
+    styles.indexOf(".flight-card-leg-grid {"),
+    styles.indexOf(".flight-card-leg-label", styles.indexOf(".flight-card-leg-grid {")),
+  );
+  const mediumStart = styles.indexOf("@container (max-width: 759px)");
+  const mediumGridStart = styles.indexOf(".flight-card-leg-grid {", mediumStart);
+  const mediumGrid = styles.slice(
+    mediumGridStart,
+    styles.indexOf(".flight-card-time", mediumGridStart),
+  );
+
+  assert.match(
+    baseGrid,
+    /grid-template-columns:\s*minmax\(112px, 0\.72fr\) minmax\(220px, 1\.8fr\) minmax\(\s*92px,\s*0\.6fr\s*\)/,
+  );
+  assert.match(baseGrid, /gap:\s*1rem/);
+  assert.match(
+    mediumGrid,
+    /grid-template-columns:\s*minmax\(106px, 0\.7fr\) minmax\(168px, 1\.55fr\) minmax\(\s*92px,\s*0\.6fr\s*\)/,
+  );
+  assert.match(mediumGrid, /gap:\s*0\.75rem/);
+});
+
 test("desktop departure metadata aligns directly beneath time with generous card rhythm", async () => {
   const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
 
