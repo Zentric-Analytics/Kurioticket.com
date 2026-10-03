@@ -183,6 +183,11 @@ test("standalone details use persistent mobile controls with native-ordered hero
     /className={activeTab !== "location" \? "hidden" : ""}/,
   );
   assert.match(clientSource, /data-car-details-desktop-tab-panels/);
+  assert.match(clientSource, /data-car-details-flight-style-panel/);
+  assert.match(
+    clientSource,
+    /lg:max-w-\[900px\][^"]*lg:bg-white[^"]*lg:px-5/,
+  );
   assert.doesNotMatch(clientSource, /data-car-details-desktop-linear-sections/);
   assert.doesNotMatch(clientSource, /data-car-details-scroll-section="rental"/);
   assert.doesNotMatch(navSource, /\{ id: "rental", label: labels\.rental \}/);
@@ -246,7 +251,7 @@ test("desktop overview and linear sections use only existing car and offer data"
   assert.doesNotMatch(desktopLocation, /carDetails\.getDirections/);
   assert.match(
     desktopLocation,
-    /className="mt-5 border-t border-\[#DCE4ED\] pb-1 pt-5" data-car-details-desktop-location-details/,
+    /className="mt-5 border-t border-\[#D8E1EC\] pb-1 pt-5" data-car-details-desktop-location-details/,
   );
   assert.doesNotMatch(
     desktopLocation,
