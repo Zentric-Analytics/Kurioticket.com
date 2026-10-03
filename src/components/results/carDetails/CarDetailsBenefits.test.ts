@@ -355,7 +355,7 @@ test("standalone car details use polished Flight-style panel headings", () => {
   assert.match(location, /data-car-details-location-identity/);
 });
 
-test("standalone desktop hero content stays unchanged while the parent Cars card owns its shell", () => {
+test("standalone desktop hero keeps specifications directly on the parent Cars background", () => {
   assert.match(
     heroSource,
     /data-car-details-parent-card-hero=\{reserveMobileControlSafeZone \? "true" : undefined\}/,
@@ -366,7 +366,11 @@ test("standalone desktop hero content stays unchanged while the parent Cars card
   );
   assert.match(
     heroSource,
-    /className="mt-4 grid min-w-0 w-full max-w-\[820px\] grid-cols-4 gap-x-5 gap-y-2 rounded-\[14px\] border border-\[#E0E7EF\] bg-white\/75 px-4 py-3"\s*data-car-details-desktop-overview-specifications/,
+    /className="mt-4 grid min-w-0 w-full max-w-\[820px\] grid-cols-4 gap-x-6 gap-y-2 px-2 py-1"\s*data-car-details-desktop-overview-specifications/,
+  );
+  assert.doesNotMatch(
+    heroSource,
+    /data-car-details-desktop-overview-specifications[\s\S]*?rounded-\[14px\][\s\S]*?border border-\[#E0E7EF\][\s\S]*?bg-white\/75/,
   );
   assert.doesNotMatch(
     heroSource,

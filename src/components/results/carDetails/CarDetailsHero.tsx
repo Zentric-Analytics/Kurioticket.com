@@ -221,7 +221,7 @@ export function CarDetailsHero({
               {identity}
             </div>
             <ul
-              className="mt-4 grid min-w-0 w-full max-w-[820px] grid-cols-4 gap-x-5 gap-y-2 rounded-[14px] border border-[#E0E7EF] bg-white/75 px-4 py-3"
+              className="mt-4 grid min-w-0 w-full max-w-[820px] grid-cols-4 gap-x-6 gap-y-2 px-2 py-1"
               data-car-details-desktop-overview-specifications
             >
               {specs.map(([Icon, label]) => (
