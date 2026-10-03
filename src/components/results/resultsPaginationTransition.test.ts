@@ -5,7 +5,6 @@ import fs from "node:fs";
 const read = (name: string) => fs.readFileSync(new URL(`./${name}`, import.meta.url), "utf8");
 
 for (const [vertical, file, skeleton] of [
-  ["Cars", "CarsResultsClient.tsx", "CarCardSkeleton"],
   ["Hotels", "HotelResultsClient.tsx", "HotelCardSkeleton"],
   ["Flights", "FlightResultsClient.tsx", "FlightCardSkeleton"],
 ] as const) {
@@ -20,29 +19,13 @@ for (const [vertical, file, skeleton] of [
   });
 }
 
-test("Cars pagination masks the full page while repositioning and settling", () => {
+test("Cars results render continuously without pagination controls or page transitions", () => {
   const source = read("CarsResultsClient.tsx");
-  const start = source.indexOf("const changePage");
-  const end = source.indexOf("const startFilterResultsTransition", start);
-  const changePage = source.slice(start, end);
-  assert.match(
-    changePage,
-    /setPaginationPendingPage\(page\)[\s\S]*setPaginationTransitionPhase\("covering"\)[\s\S]*setCurrentPage\(page\)[\s\S]*setPaginationTransitionPhase\("settling"\)[\s\S]*positionResultsStart\(\)[\s\S]*setPaginationTransitionPhase\("idle"\)/,
-  );
-  assert.equal(changePage.match(/positionResultsStart\(\)/g)?.length, 1);
-  assert.match(changePage, /resultsStartRef/);
-  assert.match(changePage, /overflowAnchor = "none"/);
-  assert.match(source, /createPortal\(<CarsResultsPageTransitionSkeleton \/>, document\.body\)/);
-  assert.match(source, /fixed inset-0 z-\[1200\]/);
-
-  const paginationStart = source.lastIndexOf('aria-label="Car results pagination"');
-  const pagination = source.slice(
-    paginationStart,
-    source.indexOf("</nav>", paginationStart),
-  );
-  assert.match(pagination, /onClick=\{\(\) => changePage\(pagination\.currentPage - 1\)\}/);
-  assert.match(pagination, /onClick=\{\(\) => changePage\(item\)\}/);
-  assert.match(pagination, /onClick=\{\(\) => changePage\(pagination\.currentPage \+ 1\)\}/);
+  assert.match(source, /\{visibleResults\.map\(\(car\) =>/);
+  assert.match(source, /data-cars-results-card-list/);
+  assert.doesNotMatch(source, /Car results pagination|paginateCarResults|getCarPaginationItems|CAR_RESULTS_PAGE_SIZE/);
+  assert.doesNotMatch(source, /paginationPendingPage|paginationTransitionPhase|const changePage|setCurrentPage/);
+  assert.doesNotMatch(source, /Showing results \$\{resultsDisplayRange/);
 });
 
 test("Flight pagination defers local commit and mirrors URL without Next navigation", () => {
