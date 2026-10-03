@@ -95,10 +95,14 @@ function CarOfferProviderBrand({
   providerName: string;
   compact?: boolean;
 }) {
-  const logoUrl =
-    car.inventorySource === "kurioticket-static-cars"
-      ? "/brand/kurioticket-logo-primary-light-bg.svg"
-      : offer.bookingProviderLogoUrl;
+  const isKurioticketProvider =
+    car.inventorySource === "kurioticket-static-cars" ||
+    providerName.trim().toLowerCase() === "kurioticket" ||
+    offer.bookingProviderName.trim().toLowerCase() === "kurioticket" ||
+    offer.bookingProviderName.trim().toLowerCase() === "kurioticket static fixture";
+  const logoUrl = isKurioticketProvider
+    ? "/brand/kurioticket-logo-primary-light-bg.svg"
+    : offer.bookingProviderLogoUrl;
   if (logoUrl) {
     return (
       <span
