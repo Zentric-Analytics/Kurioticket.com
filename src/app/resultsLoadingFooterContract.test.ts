@@ -85,11 +85,19 @@ test("hotel navbar stays outside the inventory loading branch", () => {
   assert.match(page, /fallback=\{[\s\S]*?<AppHeader[\s\S]*?<LocalizedLoadingLabel/);
 });
 
-test("flight loading and ready states each own one AppHeader", () => {
+test("flight keeps AppHeader during loading but mounts navbar search only when results are ready", () => {
   const source = readFileSync(new URL("../components/results/FlightResultsClient.tsx", import.meta.url), "utf8");
-  assert.equal(source.match(/<AppHeader/g)?.length, 2);
-  assert.match(source, /if \(resultsUiPreparing\)[\s\S]*?<AppHeader[\s\S]*?<BrandedLoading/);
-  assert.match(source, /return \(\s*<>\s*<AppHeader[\s\S]*?<main data-flight-results-main/);
+  assert.equal(source.match(/<AppHeader/g)?.length, 1);
+  assert.match(source, /const standaloneResultsHeader = guidedMode \? null : \([\s\S]*?<AppHeader[\s\S]*?\);/);
+  assert.match(source, /const readyDesktopNavbarSearch =[\s\S]*?createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
+
+  const loadingStart = source.indexOf("if (resultsUiPreparing) {");
+  const guidedStart = source.indexOf("if (guidedMode) return (", loadingStart);
+  const loadingBranch = source.slice(loadingStart, guidedStart);
+  assert.match(loadingBranch, /\{standaloneResultsHeader\}[\s\S]*?<BrandedLoading/);
+  assert.doesNotMatch(loadingBranch, /readyDesktopNavbarSearch|renderDesktopHeaderSearchBar\(\)|renderStickySearchPopoutOverlay\(\)/);
+
+  assert.match(source, /return \(\s*<>\s*\{standaloneResultsHeader\}\s*\{readyDesktopNavbarSearch\}[\s\S]*?<main data-flight-results-main/);
 
   const page = readFileSync(new URL("./flights/results/page.tsx", import.meta.url), "utf8");
   assert.match(page, /fallback=\{[\s\S]*?<AppHeader[\s\S]*?<ResultsFallback/);
