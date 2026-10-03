@@ -1759,7 +1759,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   ]);
 
   useEffect(() => {
-    if (!isStickySearchPanelOpen) {
+    const shouldLockForMultiCity =
+      isStickySearchPanelOpen &&
+      activeStickySearchTarget === "trip" &&
+      tripTypeInput === "multi-city" &&
+      !tripTypeMenuOpen;
+
+    if (!shouldLockForMultiCity) {
       stickySearchScrollLockRef.current?.restore();
       stickySearchScrollLockRef.current = null;
       return undefined;
@@ -1771,7 +1777,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       stickySearchScrollLockRef.current?.restore();
       stickySearchScrollLockRef.current = null;
     };
-  }, [isStickySearchPanelOpen]);
+  }, [
+    activeStickySearchTarget,
+    isStickySearchPanelOpen,
+    tripTypeInput,
+    tripTypeMenuOpen,
+  ]);
 
   useEffect(() => {
     if (loading) {
@@ -2298,6 +2309,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setDraftMobileReturnDate(returnDateInput);
     setActiveDatePicker(null);
     setDatePickerPosition(null);
+
+    if (activeDesktopSearchSurface === "sticky") {
+      collapseStickySearch({ restoreScroll: false });
+      return;
+    }
+
     restoreMobileSearchScrollPosition();
   }
 
@@ -5502,95 +5519,363 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           ? `${formatDesktopHeaderDateLabel(departureDateInput, calendarLocale)} – ${formatDesktopHeaderDateLabel(returnDateInput, calendarLocale)}`
           : departureSummary
         : departureSummary;
+    const tripTypeOptions = [
+      { label: t("roundTrip"), value: "round-trip" },
+      { label: t("oneWay"), value: "one-way" },
+      { label: t("multiCity"), value: "multi-city" },
+    ];
     const fieldClass =
-      "focus-ring flex h-[40px] min-w-0 items-center rounded-[8px] border border-[#D8E1EC] bg-[#EEF2F6] px-2.5 text-start text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#E9EEF3]";
+      "focus-ring flex h-[40px] min-w-0 items-center rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] px-2.5 text-start text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA]";
     const tripTypeClass =
-      "focus-ring flex h-[40px] min-w-0 items-center justify-center rounded-[8px] border border-[#D8E1EC] bg-[#E1E8EF] px-2.5 text-center text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#DCE5ED]";
+      "focus-ring flex h-[40px] w-full min-w-0 items-center justify-center rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] px-2.5 text-center text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA]";
     const valueClass =
       "min-w-0 truncate text-[12px] font-semibold leading-[17px] text-[#142033]";
+    const headerGridClass =
+      tripTypeInput === "round-trip"
+        ? "max-w-[520px] grid-cols-[96px_minmax(0,1fr)_minmax(138px,170px)_50px_40px] xl:w-fit xl:max-w-none xl:grid-cols-[104px_190px_170px_56px_40px]"
+        : "max-w-[462px] grid-cols-[96px_minmax(0,1fr)_112px_50px_40px] xl:w-fit xl:max-w-none xl:grid-cols-[104px_190px_112px_56px_40px]";
+    const tripMenuOpen =
+      isStickySearchPanelOpen &&
+      activeStickySearchTarget === "trip" &&
+      tripTypeMenuOpen;
 
     return (
       <form
         onSubmit={handleCompactSearchSubmit}
         data-flight-results-nav-search-form
-        className="mx-auto grid h-[40px] w-fit max-w-full grid-cols-[74px_minmax(0,160px)_minmax(0,150px)_46px_40px] items-center gap-1 overflow-visible xl:grid-cols-[96px_190px_170px_56px_40px]"
+        className={cn(
+          "mx-auto grid h-[40px] w-full max-w-full items-center gap-1 overflow-visible",
+          headerGridClass,
+        )}
       >
-        <button
-          type="button"
-          aria-expanded={
-            isStickySearchPanelOpen && activeStickySearchTarget === "trip"
-          }
-          aria-label={t("tripType")}
-          onClick={(event) => openStickySearchEditor(event, "trip")}
-          className={tripTypeClass}
-        >
-          <span className={valueClass}>{mobileTripTypeSummary}</span>
-        </button>
+        <div className="relative min-w-0">
+          <button
+            type="button"
+            aria-haspopup="listbox"
+            aria-expanded={tripMenuOpen}
+            aria-label={t("tripType")}
+            onClick={(event) => {
+              if (tripMenuOpen) {
+                collapseStickySearch({ restoreScroll: false });
+                return;
+              }
+              openStickySearchEditor(event, "trip");
+              setTripTypeMenuOpen(true);
+            }}
+            className={tripTypeClass}
+          >
+            <span className={valueClass}>{mobileTripTypeSummary}</span>
+          </button>
+
+          {tripMenuOpen ? (
+            <div
+              role="listbox"
+              aria-label={t("tripType")}
+              className="absolute left-0 top-[calc(100%+0.5rem)] z-[120] min-w-[190px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]"
+            >
+              {tripTypeOptions.map((option) => {
+                const selected = tripTypeInput === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-base font-medium leading-6 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
+                      selected
+                        ? "bg-[#004BB8]/[0.08] text-[#004BB8]"
+                        : "text-slate-800 hover:bg-slate-50 hover:text-slate-950",
+                    )}
+                    onClick={() => {
+                      handleTripTypeChange(option.value);
+                      setTripTypeMenuOpen(false);
+                      if (option.value === "multi-city") {
+                        setIsSearchExpandedWhileSticky(true);
+                        setActiveStickySearchTarget("trip");
+                        return;
+                      }
+                      collapseStickySearch({ restoreScroll: false });
+                    }}
+                  >
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                      {selected ? (
+                        <Check
+                          aria-hidden="true"
+                          className="h-4 w-4"
+                          strokeWidth={2.25}
+                        />
+                      ) : null}
+                    </span>
+                    <span>{option.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
 
         <div
           data-flight-results-compact-route
-          className="grid h-[40px] min-w-0 grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)] items-center overflow-hidden rounded-[8px] border border-[#D8E1EC] bg-[#EEF2F6]"
+          className="relative grid h-[40px] min-w-0 grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)] items-center overflow-visible rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] transition-colors focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/20"
         >
-          <button
-            type="button"
-            aria-expanded={
-              isStickySearchPanelOpen && activeStickySearchTarget === "origin"
-            }
-            aria-label={`${t("editFlightSearch")}: ${compactOriginLabel}`}
-            onClick={(event) => openStickySearchEditor(event, "origin")}
-            className="focus-ring flex h-full min-w-0 items-center justify-end px-2 text-[#142033] transition-colors hover:bg-[#E9EEF3]"
+          <div
+            ref={stickyOriginWrapRef}
+            className="relative flex h-full min-w-0 items-center"
           >
-            <span className={valueClass}>{compactOriginLabel}</span>
-          </button>
+            {isStickySearchPanelOpen &&
+            activeStickySearchTarget === "origin" ? (
+              <>
+                <input
+                  id="sticky-results-origin"
+                  name="origin"
+                  required
+                  value={originInput}
+                  onFocus={() => {
+                    setActiveDesktopSearchSurface("sticky");
+                    if (originInput.trim().length >= 2) {
+                      setActiveSuggest("origin");
+                    }
+                  }}
+                  onChange={(event) => {
+                    setOriginInput(event.target.value);
+                    setOriginCode("");
+                    setActiveSuggest(
+                      event.target.value.trim().length >= 2 ? "origin" : null,
+                    );
+                  }}
+                  placeholder={t("fromPlaceholder")}
+                  autoComplete="off"
+                  className="h-full w-full min-w-0 border-0 bg-transparent px-2 text-right text-[12px] font-semibold leading-[17px] text-[#142033] outline-none placeholder:text-slate-400"
+                />
+                {activeSuggest === "origin" &&
+                activeDesktopSearchSurface === "sticky" ? (
+                  <SuggestionList
+                    id="sticky-flight-origin-suggestions"
+                    alignToField
+                    suggestions={resolvedOriginSuggestions}
+                    locale={locale}
+                    onSelect={(value) => {
+                      markExpandedSearchInteraction();
+                      setOriginInput(value);
+                      setOriginCode(value);
+                      setActiveSuggest(null);
+                      setDropdownPosition(null);
+                      collapseStickySearch({ restoreScroll: false });
+                    }}
+                  />
+                ) : null}
+              </>
+            ) : (
+              <button
+                type="button"
+                aria-expanded={false}
+                aria-label={`${t("editFlightSearch")}: ${compactOriginLabel}`}
+                onClick={(event) => openStickySearchEditor(event, "origin")}
+                className="focus-ring flex h-full w-full min-w-0 items-center justify-end px-2 text-[#142033] transition-colors hover:bg-[#F3F6FA]"
+              >
+                <span className={valueClass}>{compactOriginLabel}</span>
+              </button>
+            )}
+          </div>
 
           <button
             type="button"
             aria-label={t("swapOriginDestination")}
             onClick={handleSwapLocations}
-            className="focus-ring inline-flex h-full w-[28px] items-center justify-center text-[#142033] transition hover:bg-[#E9EEF3] hover:text-[#004BB8]"
+            className="focus-ring inline-flex h-full w-[28px] items-center justify-center text-[#142033] transition hover:bg-[#F3F6FA] hover:text-[#004BB8]"
           >
             <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
           </button>
 
-          <button
-            type="button"
-            aria-expanded={
-              isStickySearchPanelOpen && activeStickySearchTarget === "destination"
-            }
-            aria-label={`${t("editFlightSearch")}: ${compactDestinationLabel}`}
-            onClick={(event) => openStickySearchEditor(event, "destination")}
-            className="focus-ring flex h-full min-w-0 items-center justify-start px-2 text-[#142033] transition-colors hover:bg-[#E9EEF3]"
+          <div
+            ref={stickyDestinationWrapRef}
+            className="relative flex h-full min-w-0 items-center"
           >
-            <span className={valueClass}>{compactDestinationLabel}</span>
-          </button>
+            {isStickySearchPanelOpen &&
+            activeStickySearchTarget === "destination" ? (
+              <>
+                <input
+                  id="sticky-results-destination"
+                  name="destination"
+                  required
+                  value={destinationInput}
+                  onFocus={() => {
+                    setActiveDesktopSearchSurface("sticky");
+                    if (destinationInput.trim().length >= 2) {
+                      setActiveSuggest("destination");
+                    }
+                  }}
+                  onChange={(event) => {
+                    setDestinationInput(event.target.value);
+                    setDestinationCode("");
+                    setActiveSuggest(
+                      event.target.value.trim().length >= 2
+                        ? "destination"
+                        : null,
+                    );
+                  }}
+                  placeholder={t("toPlaceholder")}
+                  autoComplete="off"
+                  className="h-full w-full min-w-0 border-0 bg-transparent px-2 text-left text-[12px] font-semibold leading-[17px] text-[#142033] outline-none placeholder:text-slate-400"
+                />
+                {activeSuggest === "destination" &&
+                activeDesktopSearchSurface === "sticky" ? (
+                  <SuggestionList
+                    id="sticky-flight-destination-suggestions"
+                    alignToField
+                    suggestions={resolvedDestinationSuggestions}
+                    locale={locale}
+                    onSelect={(value) => {
+                      markExpandedSearchInteraction();
+                      setDestinationInput(value);
+                      setDestinationCode(value);
+                      setActiveSuggest(null);
+                      setDropdownPosition(null);
+                      collapseStickySearch({ restoreScroll: false });
+                    }}
+                  />
+                ) : null}
+              </>
+            ) : (
+              <button
+                type="button"
+                aria-expanded={false}
+                aria-label={`${t("editFlightSearch")}: ${compactDestinationLabel}`}
+                onClick={(event) => openStickySearchEditor(event, "destination")}
+                className="focus-ring flex h-full w-full min-w-0 items-center justify-start px-2 text-[#142033] transition-colors hover:bg-[#F3F6FA]"
+              >
+                <span className={valueClass}>{compactDestinationLabel}</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        <button
-          type="button"
-          aria-expanded={
-            isStickySearchPanelOpen &&
-            (activeStickySearchTarget === "dates" ||
-              activeStickySearchTarget === "return")
-          }
-          aria-label={`${t("editFlightSearch")}: ${dateSummary}`}
-          onClick={(event) => openStickySearchEditor(event, "dates")}
-          className={cn(fieldClass, "justify-center px-2")}
-        >
-          <span className={valueClass}>{dateSummary}</span>
-        </button>
+        <div className="relative min-w-0">
+          <button
+            ref={stickyDateButtonRef}
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={
+              isStickySearchPanelOpen &&
+              activeStickySearchTarget === "dates" &&
+              Boolean(activeDatePicker)
+            }
+            aria-label={`${t("editFlightSearch")}: ${dateSummary}`}
+            onClick={(event) => openStickySearchEditor(event, "dates")}
+            className={cn(fieldClass, "w-full justify-center px-2")}
+          >
+            <span className={valueClass}>{dateSummary}</span>
+          </button>
 
-        <button
-          type="button"
-          aria-expanded={
-            isStickySearchPanelOpen && activeStickySearchTarget === "travelers"
-          }
-          aria-label={`${t("editFlightSearch")}: ${travelerCabinSummary}`}
-          onClick={(event) => openStickySearchEditor(event, "travelers")}
-          className={cn(fieldClass, "justify-center gap-1.5 px-2")}
-        >
-          <UserRound className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
-          <span className={valueClass}>{mobileTravelerTotal}</span>
-        </button>
+          {isStickySearchPanelOpen &&
+          activeStickySearchTarget === "dates" &&
+          activeDatePicker &&
+          activeDesktopSearchSurface === "sticky" ? (
+            <DatePickerPopover
+              prominentDesktop
+              alignToField="left"
+              launcherRef={stickyDateButtonRef}
+              position={{ top: 0, left: 0, width: 0 }}
+              onClose={() => {
+                collapseStickySearch({ restoreScroll: false });
+              }}
+              month={calendarMonth}
+              departureValue={departureDateInput}
+              returnValue={returnDateInput}
+              activePicker={activeDatePicker}
+              tripType={tripTypeInput}
+              onMonthChange={setCalendarMonth}
+              onSelect={applyFlightDateSelection}
+              onClear={() => {
+                markExpandedSearchInteraction();
+                if (activeDatePicker === "departure") {
+                  setDepartureDateInput("");
+                  setReturnDateInput("");
+                } else {
+                  setReturnDateInput("");
+                }
+              }}
+              onToday={() => {
+                collapseStickySearch({ restoreScroll: false });
+              }}
+            />
+          ) : null}
+        </div>
+
+        <div className="relative min-w-0">
+          <button
+            ref={stickyTravelerButtonRef}
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={
+              isStickySearchPanelOpen &&
+              activeStickySearchTarget === "travelers" &&
+              travelerPopoverOpen
+            }
+            aria-label={`${t("editFlightSearch")}: ${travelerCabinSummary}`}
+            onClick={(event) => openStickySearchEditor(event, "travelers")}
+            className={cn(fieldClass, "w-full justify-center gap-1.5 px-2")}
+          >
+            <UserRound className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
+            <span className={valueClass}>{mobileTravelerTotal}</span>
+          </button>
+
+          {isStickySearchPanelOpen &&
+          activeStickySearchTarget === "travelers" &&
+          travelerPopoverOpen &&
+          activeDesktopSearchSurface === "sticky" ? (
+            <TravelerCabinPopover
+              prominentDesktop
+              alignToField="right"
+              launcherRef={stickyTravelerButtonRef}
+              position={{ top: 0, left: 0, width: 0 }}
+              onClose={() => {
+                collapseStickySearch({ restoreScroll: false });
+              }}
+              adultCount={adultCount}
+              childCount={childCount}
+              infantCount={infantCount}
+              cabinClass={cabinClassInput}
+              onAdultChange={(nextValue) => {
+                markExpandedSearchInteraction();
+                const nextAdultCount = Math.min(9, Math.max(1, nextValue));
+                setAdultCount(nextAdultCount);
+                setChildCount((current) =>
+                  Math.min(current, 9 - nextAdultCount),
+                );
+                setInfantCount((current) =>
+                  Math.min(current, nextAdultCount, 9 - nextAdultCount),
+                );
+              }}
+              onChildChange={(nextValue) => {
+                markExpandedSearchInteraction();
+                const nextChildCount = Math.min(
+                  9 - adultCount,
+                  Math.max(0, nextValue),
+                );
+                setChildCount(nextChildCount);
+                setInfantCount((current) =>
+                  Math.min(current, 9 - adultCount - nextChildCount),
+                );
+              }}
+              onInfantChange={(nextValue) => {
+                markExpandedSearchInteraction();
+                setInfantCount(
+                  Math.min(
+                    adultCount,
+                    9 - adultCount - childCount,
+                    Math.max(0, nextValue),
+                  ),
+                );
+              }}
+              onCabinClassChange={(nextValue) => {
+                markExpandedSearchInteraction();
+                setCabinClassInput(nextValue);
+              }}
+            />
+          ) : null}
+        </div>
 
         <button
           type="submit"
@@ -5604,391 +5889,69 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }
 
   function renderStickySearchPopoutOverlay() {
-    const stickyLabelClass =
-      "mb-1 block text-[10px] font-extrabold uppercase leading-[14px] tracking-[0.5px] text-[#56658E]";
-    const stickyValueClass =
-      "flight-results-edit-value mt-0.5 block min-w-0 truncate";
-    const tripTypeOptions = [
-      { label: t("roundTrip"), value: "round-trip", disabled: false },
-      { label: t("oneWay"), value: "one-way", disabled: false },
-      { label: t("multiCity"), value: "multi-city", disabled: false },
-    ];
-    const panelGridClass =
-      "grid-cols-[74px_minmax(0,160px)_minmax(0,150px)_46px_40px] xl:grid-cols-[96px_190px_170px_56px_40px]";
-    const departureSummary = departureDateInput
-      ? formatCompactDateLabel(departureDateInput, calendarLocale)
-      : t("departure");
-    const returnSummary = returnDateInput
-      ? formatCompactDateLabel(returnDateInput, calendarLocale)
-      : t("return");
+    const shouldShowMultiCityAccordion =
+      isStickySearchPanelOpen &&
+      activeStickySearchTarget === "trip" &&
+      tripTypeInput === "multi-city" &&
+      !tripTypeMenuOpen;
+
+    if (!shouldShowMultiCityAccordion) return null;
 
     return (
-      <>
-        {isStickySearchPanelOpen && activeStickySearchTarget ? (
-          <div
-            data-flight-search-anchored-backdrop
-            className="fixed inset-x-0 bottom-0 z-[110] bg-transparent"
-            style={{ top: desktopSearchPopoverFrame?.top ?? 88 }}
-            role="presentation"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) {
-                collapseStickySearch();
-              }
-            }}
+      <div
+        data-flight-search-anchored-backdrop
+        className="fixed inset-x-0 bottom-0 z-[110] bg-transparent"
+        style={{ top: desktopSearchPopoverFrame?.top ?? 88 }}
+        role="presentation"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) {
+            collapseStickySearch();
+          }
+        }}
+      >
+        <div
+          data-flight-search-anchored-popout
+          className="fixed"
+          style={
+            desktopSearchPopoverFrame
+              ? {
+                  top: desktopSearchPopoverFrame.top,
+                  left: desktopSearchPopoverFrame.left,
+                  width: desktopSearchPopoverFrame.width,
+                }
+              : {
+                  top: 88,
+                  left: 16,
+                  width: "calc(100vw - 32px)",
+                }
+          }
+        >
+          <form
+            ref={stickySearchPopoutRef}
+            role="region"
+            aria-label={t("editFlightSearch")}
+            onSubmit={handleCompactSearchSubmit}
+            onChangeCapture={markExpandedSearchInteraction}
+            className="w-full"
           >
             <div
-              data-flight-search-anchored-popout
-              className="fixed"
-              style={
-                desktopSearchPopoverFrame
-                  ? {
-                      top: desktopSearchPopoverFrame.top,
-                      left: desktopSearchPopoverFrame.left,
-                      width: desktopSearchPopoverFrame.width,
-                    }
-                  : {
-                      top: 88,
-                      left: 16,
-                      width: "calc(100vw - 32px)",
-                    }
-              }
+              data-sticky-multicity-editor
+              className="pointer-events-auto mt-1 overflow-y-auto overscroll-contain rounded-[12px] border border-[#D8E1EC] bg-[#F8FAFC] p-3 shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]"
+              style={{
+                maxHeight: `calc(100dvh - ${(desktopSearchPopoverFrame?.top ?? 88) + 12}px)`,
+              }}
             >
-              <form
-                ref={stickySearchPopoutRef}
-                role="region"
-                aria-label={t("editFlightSearch")}
-                onSubmit={handleCompactSearchSubmit}
-                onChangeCapture={markExpandedSearchInteraction}
-                className={cn(
-                  "grid w-full items-start gap-1.5 overflow-visible",
-                  panelGridClass,
-                )}
-              >
-                {activeStickySearchTarget === "trip" ? (
-                  <>
-                    <div className="pointer-events-auto col-start-1 col-span-2 overflow-hidden rounded-[12px] border border-[#CFD9E5] bg-white shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]">
-                      <div
-                        role="radiogroup"
-                        aria-label={t("tripType")}
-                        className="grid min-h-[48px] grid-cols-3 items-stretch"
-                      >
-                        {tripTypeOptions.map((option) => {
-                          const selected = tripTypeInput === option.value;
-
-                          return (
-                            <button
-                              key={option.value}
-                              type="button"
-                              role="radio"
-                              aria-checked={selected}
-                              onClick={() => handleTripTypeChange(option.value)}
-                              className={cn(
-                                "flight-results-trip-tab focus-ring inline-flex min-h-[48px] min-w-0 items-center justify-center whitespace-nowrap border-b-2 px-3 text-[13px] font-semibold transition-colors",
-                                selected
-                                  ? "border-[#064CF7] text-[#064CF7]"
-                                  : "border-transparent text-[#071A48] hover:bg-slate-50 hover:text-slate-950",
-                              )}
-                            >
-                              {option.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {tripTypeInput === "multi-city" ? (
-                      <div
-                        data-sticky-multicity-editor
-                        className="pointer-events-auto col-span-full mt-1 overflow-y-auto overscroll-contain rounded-[12px] border border-[#CFD9E5] bg-[#F3F6FA] p-3 shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]"
-                        style={{
-                          maxHeight: `calc(100dvh - ${(desktopSearchPopoverFrame?.top ?? 88) + 60}px)`,
-                        }}
-                      >
-                        <MultiCityFlightEditor
-                          legs={multiCityLegs}
-                          onChange={setMultiCityLegs}
-                          minimumDate={formatDateValue(new Date())}
-                          presentation="results"
-                          onAirportValidityChange={setMultiCityAirportsValid}
-                        />
-                      </div>
-                    ) : null}
-                  </>
-                ) : null}
-
-                {activeStickySearchTarget === "origin" ||
-                activeStickySearchTarget === "destination" ? (
-                  <div
-                    className={cn(
-                      "pointer-events-auto col-start-2 grid min-h-[64px] grid-cols-[minmax(0,1fr)_30px_minmax(0,1fr)] overflow-visible rounded-[12px] border border-[#CFD9E5] bg-white shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]",
-                    )}
-                  >
-                    <div ref={stickyOriginWrapRef} className="relative min-w-0 px-3 py-2.5">
-                      <label className={stickyLabelClass} htmlFor="sticky-results-origin">
-                        {t("origin")}
-                      </label>
-                      <div className="flex min-w-0 items-center gap-2">
-                        <MapPin aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[#071A48]" />
-                        <input
-                          id="sticky-results-origin"
-                          name="origin"
-                          required
-                          value={originInput}
-                          onFocus={() => {
-                            setActiveDesktopSearchSurface("sticky");
-                            if (originInput.trim().length >= 2) setActiveSuggest("origin");
-                          }}
-                          onChange={(event) => {
-                            setOriginInput(event.target.value);
-                            setOriginCode("");
-                            setActiveSuggest(
-                              event.target.value.trim().length >= 2 ? "origin" : null,
-                            );
-                          }}
-                          placeholder={t("fromPlaceholder")}
-                          autoComplete="off"
-                          className="flight-results-edit-value h-6 min-w-0 flex-1 border-0 bg-transparent p-0 outline-none placeholder:text-slate-400"
-                        />
-                      </div>
-                      {activeSuggest === "origin" &&
-                      activeDesktopSearchSurface === "sticky" ? (
-                        <SuggestionList
-                          id="sticky-flight-origin-suggestions"
-                          alignToField
-                          suggestions={resolvedOriginSuggestions}
-                          locale={locale}
-                          onSelect={(value) => {
-                            markExpandedSearchInteraction();
-                            setOriginInput(value);
-                            setOriginCode(value);
-                            setActiveSuggest(null);
-                            setDropdownPosition(null);
-                          }}
-                        />
-                      ) : null}
-                    </div>
-
-                    <button
-                      type="button"
-                      aria-label={t("swapOriginDestination")}
-                      onClick={handleSwapLocations}
-                      className="focus-ring flex min-h-[64px] items-center justify-center border-x border-[#E7ECF5] bg-white text-[#064CF7] transition hover:bg-slate-50"
-                    >
-                      <ArrowRightLeft className="h-[17px] w-[17px]" aria-hidden="true" />
-                    </button>
-
-                    <div ref={stickyDestinationWrapRef} className="relative min-w-0 px-3 py-2.5">
-                      <label className={stickyLabelClass} htmlFor="sticky-results-destination">
-                        {t("destination")}
-                      </label>
-                      <div className="flex min-w-0 items-center gap-2">
-                        <MapPin aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[#071A48]" />
-                        <input
-                          id="sticky-results-destination"
-                          name="destination"
-                          required
-                          value={destinationInput}
-                          onFocus={() => {
-                            setActiveDesktopSearchSurface("sticky");
-                            if (destinationInput.trim().length >= 2)
-                              setActiveSuggest("destination");
-                          }}
-                          onChange={(event) => {
-                            setDestinationInput(event.target.value);
-                            setDestinationCode("");
-                            setActiveSuggest(
-                              event.target.value.trim().length >= 2
-                                ? "destination"
-                                : null,
-                            );
-                          }}
-                          placeholder={t("toPlaceholder")}
-                          autoComplete="off"
-                          className="flight-results-edit-value h-6 min-w-0 flex-1 border-0 bg-transparent p-0 outline-none placeholder:text-slate-400"
-                        />
-                      </div>
-                      {activeSuggest === "destination" &&
-                      activeDesktopSearchSurface === "sticky" ? (
-                        <SuggestionList
-                          id="sticky-flight-destination-suggestions"
-                          alignToField
-                          suggestions={resolvedDestinationSuggestions}
-                          locale={locale}
-                          onSelect={(value) => {
-                            markExpandedSearchInteraction();
-                            setDestinationInput(value);
-                            setDestinationCode(value);
-                            setActiveSuggest(null);
-                            setDropdownPosition(null);
-                          }}
-                        />
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
-
-                {activeStickySearchTarget === "dates" ||
-                activeStickySearchTarget === "return" ? (
-                  <div
-                    className={cn(
-                      "pointer-events-auto relative rounded-[12px] border border-[#CFD9E5] bg-white shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]",
-                      "col-start-3",
-                    )}
-                  >
-                    <button
-                      ref={stickyDateButtonRef}
-                      type="button"
-                      className="focus-ring flex min-h-[62px] w-full flex-col justify-center px-3 text-start"
-                      onClick={() => {
-                        setActiveDesktopSearchSurface("sticky");
-                        setActiveDatePicker(
-                          activeStickySearchTarget === "return"
-                            ? "return"
-                            : "departure",
-                        );
-                      }}
-                    >
-                      <span className={stickyLabelClass}>
-                        {activeStickySearchTarget === "return"
-                          ? t("return")
-                          : t("departure")}
-                      </span>
-                      <span className={cn(stickyValueClass, "flex items-center gap-2")}>
-                        <Calendar aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[#071A48]" />
-                        <span className="truncate">
-                          {activeStickySearchTarget === "return"
-                            ? returnSummary
-                            : departureSummary}
-                        </span>
-                      </span>
-                    </button>
-                    {activeDatePicker &&
-                    activeDesktopSearchSurface === "sticky" ? (
-                      <DatePickerPopover
-                        prominentDesktop
-                        alignToField="left"
-                        launcherRef={stickyDateButtonRef}
-                        position={{ top: 0, left: 0, width: 0 }}
-                        onClose={() => {
-                          setActiveDatePicker(null);
-                          setDatePickerPosition(null);
-                        }}
-                        month={calendarMonth}
-                        departureValue={departureDateInput}
-                        returnValue={returnDateInput}
-                        activePicker={activeDatePicker}
-                        tripType={tripTypeInput}
-                        onMonthChange={setCalendarMonth}
-                        onSelect={applyFlightDateSelection}
-                        onClear={() => {
-                          markExpandedSearchInteraction();
-                          if (activeDatePicker === "departure") {
-                            setDepartureDateInput("");
-                            setReturnDateInput("");
-                          } else {
-                            setReturnDateInput("");
-                          }
-                        }}
-                        onToday={() => {
-                          setActiveDatePicker(null);
-                          setDatePickerPosition(null);
-                        }}
-                      />
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {activeStickySearchTarget === "travelers" ? (
-                  <div
-                    className={cn(
-                      "pointer-events-auto relative rounded-[12px] border border-[#CFD9E5] bg-white shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]",
-                      "col-start-4",
-                    )}
-                  >
-                    <button
-                      ref={stickyTravelerButtonRef}
-                      type="button"
-                      className="focus-ring flex min-h-[62px] w-full items-center justify-between gap-2 px-3 text-start"
-                      onClick={() => {
-                        setActiveDesktopSearchSurface("sticky");
-                        setTravelerPopoverOpen(true);
-                      }}
-                    >
-                      <span className="min-w-0">
-                        <span className={stickyLabelClass}>{t("travelers")}</span>
-                        <span className="flight-results-edit-value flex min-w-0 items-center gap-2">
-                          <UserRound aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[#071A48]" />
-                          <span className="truncate">{travelerCabinSummary}</span>
-                        </span>
-                      </span>
-                      <ChevronDown
-                        className={cn(
-                          "h-4 w-4 shrink-0 text-[#071A48] transition-transform",
-                          travelerPopoverOpen && "rotate-180",
-                        )}
-                        aria-hidden="true"
-                      />
-                    </button>
-                    {travelerPopoverOpen &&
-                    activeDesktopSearchSurface === "sticky" ? (
-                      <TravelerCabinPopover
-                        prominentDesktop
-                        alignToField="right"
-                        launcherRef={stickyTravelerButtonRef}
-                        position={{ top: 0, left: 0, width: 0 }}
-                        onClose={() => {
-                          setTravelerPopoverOpen(false);
-                          setTravelerPopoverPosition(null);
-                        }}
-                        adultCount={adultCount}
-                        childCount={childCount}
-                        infantCount={infantCount}
-                        cabinClass={cabinClassInput}
-                        onAdultChange={(nextValue) => {
-                          markExpandedSearchInteraction();
-                          const nextAdultCount = Math.min(9, Math.max(1, nextValue));
-                          setAdultCount(nextAdultCount);
-                          setChildCount((current) =>
-                            Math.min(current, 9 - nextAdultCount),
-                          );
-                          setInfantCount((current) =>
-                            Math.min(current, nextAdultCount, 9 - nextAdultCount),
-                          );
-                        }}
-                        onChildChange={(nextValue) => {
-                          markExpandedSearchInteraction();
-                          const nextChildCount = Math.min(
-                            9 - adultCount,
-                            Math.max(0, nextValue),
-                          );
-                          setChildCount(nextChildCount);
-                          setInfantCount((current) =>
-                            Math.min(current, 9 - adultCount - nextChildCount),
-                          );
-                        }}
-                        onInfantChange={(nextValue) => {
-                          markExpandedSearchInteraction();
-                          setInfantCount(
-                            Math.min(
-                              adultCount,
-                              9 - adultCount - childCount,
-                              Math.max(0, nextValue),
-                            ),
-                          );
-                        }}
-                        onCabinClassChange={(nextValue) => {
-                          markExpandedSearchInteraction();
-                          setCabinClassInput(nextValue);
-                        }}
-                      />
-                    ) : null}
-                  </div>
-                ) : null}
-              </form>
+              <MultiCityFlightEditor
+                legs={multiCityLegs}
+                onChange={setMultiCityLegs}
+                minimumDate={formatDateValue(new Date())}
+                presentation="results"
+                onAirportValidityChange={setMultiCityAirportsValid}
+              />
             </div>
-          </div>
-        ) : null}
-      </>
+          </form>
+        </div>
+      </div>
     );
   }
 
