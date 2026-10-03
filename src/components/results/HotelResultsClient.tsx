@@ -268,6 +268,7 @@ type HotelMobileSearchDraft = {
 
 export type HotelResultsSearchInput = HotelMobileSearchDraft & {
   sort?: string;
+  petFriendly?: boolean;
   provider?: "kayak-sandbox";
 };
 
@@ -286,6 +287,7 @@ export function HotelResultsClient() {
       guests: Number(params.get("guests")),
       rooms: Number(params.get("rooms")),
       sort: params.get("sort") || "cheapest",
+      petFriendly: params.get("petFriendly") === "true",
       provider:
         params.get("provider") === "kayak-sandbox"
           ? "kayak-sandbox"
@@ -373,6 +375,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }, [currencyRates.rates]);
 
   const providerMode = searchInput.provider === "kayak-sandbox" ? "kayak-sandbox" : undefined;
+  const petFriendlyOnly = searchInput.petFriendly === true;
   const body = useMemo(
     () => ({
       destinationId: searchInput.destinationId,
@@ -393,10 +396,11 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       checkOut: body.checkOut,
       guests: String(body.guests),
       rooms: String(body.rooms),
+      ...(petFriendlyOnly ? { petFriendly: "true" } : {}),
       ...(providerMode ? { provider: providerMode } : {}),
     }).toString();
-  }, [body.checkIn, body.checkOut, body.destination, body.destinationId, body.guests, body.rooms, providerMode]);
-  const bodySearchKey = [body.destinationId, body.destination, body.checkIn, body.checkOut, body.guests, body.rooms, providerMode].join("-");
+  }, [body.checkIn, body.checkOut, body.destination, body.destinationId, body.guests, body.rooms, petFriendlyOnly, providerMode]);
+  const bodySearchKey = [body.destinationId, body.destination, body.checkIn, body.checkOut, body.guests, body.rooms, petFriendlyOnly ? "pets" : "", providerMode].join("-");
   // A changed search must not display cards belonging to the previous request.
   const loading = inventoryLoading || completedSearchKey !== bodySearchKey;
   const bodyMobileSearchDraft = useMemo<HotelMobileSearchDraft>(
@@ -658,7 +662,13 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         const restored = !guided && window.matchMedia("(max-width: 639px)").matches
           ? takeMobileHotelResultsState(bodySearchKey) : null;
         const upperBound = getResultMaxPrice(data.results, currencyRatesRef.current);
-        const restoredFilters = Object.fromEntries(Object.keys(emptySelections).map((key) => [key, restored?.selectedFilters[key] ?? []])) as HotelFilterSelections;
+        const restoredFilters = Object.fromEntries(
+          Object.keys(emptySelections).map((key) => {
+            const restoredValues = restored?.selectedFilters[key as keyof HotelFilterSelections] ?? [];
+            if (key !== "facilities" || !petFriendlyOnly) return [key, restoredValues];
+            return [key, Array.from(new Set([...restoredValues, "petFriendly"]))];
+          }),
+        ) as HotelFilterSelections;
         const restoredMax = restored?.maxPrice ?? upperBound;
         setVisibleFiltered(restored ? data.results.filter((hotel) => hotelMatchesFilters(hotel, restored.propertyNameQuery, restored.minPrice, restoredMax, restored.minPrice > 0 || restoredMax < upperBound, restored.selectedHotelClasses, restoredFilters, currencyRatesRef.current)) : data.results);
         if (restored) {
@@ -705,7 +715,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       active = false;
       controller.abort();
     };
-  }, [body, bodySearchKey, guided, providerMode, retryKey, t]);
+  }, [body, bodySearchKey, guided, petFriendlyOnly, providerMode, retryKey, t]);
 
   useEffect(() => {
     if (loading || error || mobileReturnScrollRef.current === null) return;
