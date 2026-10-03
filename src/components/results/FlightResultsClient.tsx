@@ -1257,6 +1257,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const stickySentinelRef = useRef<HTMLDivElement | null>(null);
   const stickySearchPopoutRef = useRef<HTMLFormElement | null>(null);
   const stickySearchLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const stickySearchRestoreTargetRef = useRef<
+    "trip" | "origin" | "destination" | "dates" | "return" | "travelers" | null
+  >(null);
   const pendingStickySearchTargetRef = useRef<
     "trip" | "origin" | "destination" | "dates" | "return" | "travelers" | null
   >(null);
@@ -1426,6 +1429,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           target === "return")
           ? "trip"
           : target;
+      stickySearchRestoreTargetRef.current = resolvedTarget;
       pendingStickySearchTargetRef.current =
         resolvedTarget === "trip" ? null : resolvedTarget;
       const currentScrollY = window.scrollY;
@@ -1585,7 +1589,25 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setDesktopSearchPopoverFrame(null);
 
       window.requestAnimationFrame(() => {
-        stickySearchLauncherRef.current?.focus();
+        const restoreTarget = stickySearchRestoreTargetRef.current;
+        const selector =
+          restoreTarget === "trip"
+            ? "[data-flight-results-header-trip]"
+            : restoreTarget === "origin"
+              ? "[data-flight-results-header-origin]"
+              : restoreTarget === "destination"
+                ? "[data-flight-results-header-destination]"
+                : restoreTarget === "dates" || restoreTarget === "return"
+                  ? "[data-flight-results-header-dates]"
+                  : restoreTarget === "travelers"
+                    ? "[data-flight-results-header-travelers]"
+                    : null;
+        const mountedLauncher = selector
+          ? document.querySelector<HTMLButtonElement>(selector)
+          : null;
+
+        (mountedLauncher ?? stickySearchLauncherRef.current)?.focus();
+        stickySearchRestoreTargetRef.current = null;
       });
     },
     [
@@ -5557,6 +5579,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <div className="relative min-w-0">
           <button
             type="button"
+            data-flight-results-header-trip
             aria-haspopup="listbox"
             aria-expanded={tripMenuOpen}
             aria-label={t("tripType")}
@@ -5675,6 +5698,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             ) : (
               <button
                 type="button"
+                data-flight-results-header-origin
                 aria-expanded={false}
                 aria-label={`${t("editFlightSearch")}: ${compactOriginLabel}`}
                 onClick={(event) => openStickySearchEditor(event, "origin")}
@@ -5746,6 +5770,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             ) : (
               <button
                 type="button"
+                data-flight-results-header-destination
                 aria-expanded={false}
                 aria-label={`${t("editFlightSearch")}: ${compactDestinationLabel}`}
                 onClick={(event) => openStickySearchEditor(event, "destination")}
@@ -5761,6 +5786,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           <button
             ref={stickyDateButtonRef}
             type="button"
+            data-flight-results-header-dates
             aria-haspopup="dialog"
             aria-expanded={
               isStickySearchPanelOpen &&
@@ -5813,6 +5839,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           <button
             ref={stickyTravelerButtonRef}
             type="button"
+            data-flight-results-header-travelers
             aria-haspopup="dialog"
             aria-expanded={
               isStickySearchPanelOpen &&
