@@ -106,7 +106,7 @@ test("mobile Flight Results uses Hotel rail gutters and keeps result-card rhythm
   assert.match(source, /data-flight-results-card-list className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\] space-y-3"/);
   assert.match(source, /data-mobile-paginated-flight-results[\s\S]{0,220}"pt-3"/);
   assert.match(source, /data-flight-results-skeleton-card-list className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\][^"]*sm:space-y-4"/);
-  assert.match(source, /className=\{cn\("hidden sm:block", paginationRevealing/);
+  assert.match(source, /ref=\{paginationListRef\}[\s\S]{0,180}aria-busy=\{filterApplying\}[\s\S]{0,180}className="hidden sm:block"/);
   assert.match(card, /block w-full rounded-2xl/);
 });
 
