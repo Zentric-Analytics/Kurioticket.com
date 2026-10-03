@@ -420,34 +420,16 @@ test("desktop Cars sticky tabs use the same in-place tab model as Flights", () =
   assert.doesNotMatch(clientSource, /scrollIntoView/);
 });
 
-test("desktop Cars details keep Save and Share in controls while Compare deals owns booking information", () => {
-  const heroPlacement = sourceBetween(
+test("desktop Cars keeps Save and Share inside the hero while Compare deals owns booking information", () => {
+  assert.match(clientSource, /data-car-details-desktop-hero-controls/);
+  assert.match(
     clientSource,
-    'data-car-details-utility-placement="hero"',
-    "data-car-details-mobile-controls",
+    /data-car-details-desktop-hero-controls[\s\S]*?data-car-details-utility-placement="hero"[\s\S]*?<CarHeroActions[\s\S]*?desktop/,
   );
-  assert.match(heroPlacement, /<CarHeroActions[\s\S]*?desktop/);
-  assert.doesNotMatch(heroPlacement, /DesktopCompactBookingAction/);
-  assert.doesNotMatch(heroPlacement, /data-car-details-desktop-compact-/);
-  assert.doesNotMatch(heroPlacement, /carDetails\.bookingSummary/);
+  assert.doesNotMatch(clientSource, /data-car-details-utility-placement="tabs"/);
+  assert.doesNotMatch(clientSource, /DesktopCompactBookingAction/);
   assert.doesNotMatch(clientSource, /data-car-details-desktop-selected-deal/);
   assert.doesNotMatch(clientSource, /data-car-details-desktop-overview-cta/);
-
-  const stickyPlacement = sourceBetween(
-    clientSource,
-    'data-car-details-utility-placement="tabs"',
-    "labels={{",
-  );
-  assert.match(stickyPlacement, /<CarHeroActions[\s\S]*?desktop/);
-  assert.doesNotMatch(stickyPlacement, /DesktopCompactBookingAction/);
-  assert.doesNotMatch(stickyPlacement, /data-car-details-desktop-compact-/);
-  assert.doesNotMatch(stickyPlacement, /carDetails\.bookingSummary/);
-
-  assert.doesNotMatch(clientSource, /function DesktopCompactBookingAction/);
-  assert.doesNotMatch(clientSource, /data-car-details-desktop-compact-booking/);
-  assert.doesNotMatch(clientSource, /data-car-details-desktop-compact-price/);
-  assert.doesNotMatch(clientSource, /data-car-details-desktop-compact-provider/);
-  assert.doesNotMatch(clientSource, /data-car-details-desktop-compact-cta/);
 
   const comparison = sourceBetween(
     clientSource,
@@ -464,10 +446,6 @@ test("desktop Cars details keep Save and Share in controls while Compare deals o
   assert.match(comparison, /<CarOfferProviderBrand/);
   assert.match(
     clientSource,
-    /const compactBookingProviderName = \(offer: CarOffer\) =>[\s\S]*?providerValue\(offer\.bookingProviderName\)[\s\S]*?providerValue\(offer\.rentalCompanyName\)[\s\S]*?provider === "Kurioticket static fixture" \? "Kurioticket" : provider;/,
-  );
-  assert.match(
-    clientSource,
     /offer\.bookingProviderLogoUrl \|\|[\s\S]*?car\.inventorySource === "kurioticket-static-cars"[\s\S]*?kurioticket-logo-primary-light-bg\.svg/,
   );
 
@@ -475,7 +453,6 @@ test("desktop Cars details keep Save and Share in controls while Compare deals o
   assert.match(clientSource, /data-mobile-car-booking-dock/);
   assert.equal(clientSource.match(/<BookingSummary\b/g)?.length, 1);
 });
-
 test("desktop Pickup/Return and Location use one flat Flights-style panel hierarchy", () => {
   assert.match(clientSource, /data-car-details-desktop-tab-panels/);
   const pickup = sourceBetween(
