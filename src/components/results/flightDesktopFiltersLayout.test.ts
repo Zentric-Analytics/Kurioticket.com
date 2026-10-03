@@ -57,6 +57,35 @@ test("desktop filter groups use sentence-case headings and accessible rows", asy
   assert.doesNotMatch(source, /uppercase tracking-\[0\.12em\]/);
 });
 
+test("desktop Flight Hotel-style surface preserves its gray background against global desktop rules", async () => {
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+
+  assert.match(
+    styles,
+    /\.desktop-filter-sidebar\[data-flight-hotel-filter-visual-parity\] \{[\s\S]*?border-color: #cfd9e5;[\s\S]*?border-radius: 0\.5rem;[\s\S]*?background: #f2f4f8;/,
+  );
+});
+
+test("desktop Flight Hotel-style filter keeps Clear all and locale-safe unique panel ids", async () => {
+  const source = await readFile(
+    new URL("./DesktopFlightFilters.tsx", import.meta.url),
+    "utf8",
+  );
+
+  const primaryStart = source.indexOf("data-flight-hotel-filter-visual-parity");
+  const primaryEnd = source.indexOf("function CompactFilterSection", primaryStart);
+  const primary = source.slice(primaryStart, primaryEnd);
+  const hotelSectionStart = source.indexOf("function HotelStyleFilterSection");
+  const hotelSectionEnd = source.indexOf("function OptionSection", hotelSectionStart);
+  const hotelSection = source.slice(hotelSectionStart, hotelSectionEnd);
+
+  assert.match(primary, /hasActiveFilters[\s\S]*?aria-label="Reset filters"[\s\S]*?onClick=\{onClear\}[\s\S]*?\{t\("clearAll"\)\}/);
+  assert.match(source, /import \{ useId, useMemo, useState \} from "react"/);
+  assert.match(hotelSection, /const panelId = useId\(\)/);
+  assert.match(hotelSection, /aria-controls=\{panelId\}/);
+  assert.doesNotMatch(hotelSection, /title\.toLowerCase\(\)/);
+});
+
 test("alternate time mode control remains full width with comfortable guided sizing", async () => {
   const source = await readFile(
     new URL("./DesktopFlightFilters.tsx", import.meta.url),
