@@ -73,8 +73,9 @@ test("desktop Flight Results keeps the navbar search target synchronized through
   const editor = flight.slice(editorStart, editorEnd);
 
   assert.ok(editorStart >= 0 && editorEnd > editorStart);
-  assert.match(editor, /target === "trip" \? null : target/);
-  assert.match(editor, /setActiveStickySearchTarget\(target\)/);
+  assert.match(editor, /const resolvedTarget =[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?\? "trip"[\s\S]*?: target/);
+  assert.match(editor, /resolvedTarget === "trip" \? null : resolvedTarget/);
+  assert.match(editor, /setActiveStickySearchTarget\(resolvedTarget\)/);
   assert.match(editor, /setIsSearchExpandedWhileSticky\(true\)/);
   assert.doesNotMatch(editor, /searchFormRef\.current\?\.scrollIntoView/);
   assert.match(
@@ -140,7 +141,7 @@ test("desktop navbar search opens only the selected Flight header field editor",
 
   assert.ok(callbackStart >= 0 && callbackEnd > callbackStart);
   assert.match(callback, /setIsSearchExpandedWhileSticky\(true\)/);
-  assert.match(callback, /setActiveStickySearchTarget\(target\)/);
+  assert.match(callback, /setActiveStickySearchTarget\(resolvedTarget\)/);
   assert.match(callback, /setActiveDesktopSearchSurface\("sticky"\)/);
 });
 
