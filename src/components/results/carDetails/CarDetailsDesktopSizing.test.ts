@@ -31,33 +31,29 @@ test("standalone desktop Cars Details body is centered at a production-ready wid
   assert.doesNotMatch(client, /<AppHeader\b/);
 });
 
-test("standalone desktop overview uses centered single-column sizing", () => {
-  assert.match(client, /space-y-0 lg:mx-auto lg:w-full lg:max-w-\[1080px\]/);
+test("standalone desktop keeps the 900px car card and nests the current 680px tab card inside it", () => {
+  assert.match(
+    client,
+    /space-y-0 lg:mx-auto lg:w-full lg:max-w-\[900px\] lg:rounded-\[22px\] lg:border lg:border-\[#DFE6EF\] lg:bg-\[#F7F9FC\] lg:pb-6/,
+  );
+  assert.match(client, /data-car-details-desktop-parent-card/);
+  assert.match(client, /data-car-details-desktop-inner-card/);
   assert.match(hero, /data-car-details-desktop-overview/);
   assert.match(
     hero,
-    /hidden lg:flex lg:flex-col lg:items-center lg:px-0 lg:pb-1 lg:pt-0/,
+    /data-car-details-parent-card-hero=\{reserveMobileControlSafeZone \? "true" : undefined\}/,
   );
-  assert.match(
-    hero,
-    /data-car-details-layered-surface=\{reserveMobileControlSafeZone \? "hero" : undefined\}/,
-  );
-  assert.match(
-    hero,
-    /lg:max-w-\[900px\][\s\S]*?lg:rounded-\[22px\][\s\S]*?lg:bg-\[#F7F9FC\]/,
-  );
-  assert.doesNotMatch(hero, /lg:grid-cols-\[minmax\(0,1fr\)_320px\]/);
   assert.match(hero, /data-car-details-desktop-overview-image/);
   assert.match(hero, /h-\[250px\]/);
   assert.match(hero, /max-w-\[680px\]/);
   assert.match(hero, /sizes="680px"/);
   assert.match(hero, /max-w-\[820px\] text-center/);
-  assert.doesNotMatch(hero, /data-car-details-desktop-overview-summary/);
   assert.match(
     client,
     /lg:max-w-\[680px\][^"]*lg:bg-white[^"]*lg:px-5[^"]*"\s*data-car-details-desktop-tab-panels/,
   );
   assert.match(client, /max-w-\[640px\]/);
+  assert.doesNotMatch(hero, /data-car-details-desktop-overview-summary/);
 });
 
 test("desktop tabs switch panels in place instead of scrolling through stacked sections", () => {

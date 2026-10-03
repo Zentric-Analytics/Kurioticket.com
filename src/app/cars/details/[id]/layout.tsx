@@ -23,15 +23,19 @@ export default function CarDetailsLayout({
             gap: 0 !important;
           }
 
-          [data-car-details-primary-column] {
+          [data-car-details-primary-column]:not([data-car-details-desktop-parent-card="true"]) {
             display: contents !important;
           }
 
-          [data-car-details-primary-column] > * {
+          [data-car-details-primary-column][data-car-details-desktop-parent-card="true"] {
+            display: block !important;
+          }
+
+          [data-car-details-primary-column]:not([data-car-details-desktop-parent-card="true"]) > * {
             order: 3;
           }
 
-          [data-car-details-primary-column] > [data-car-details-hero] {
+          [data-car-details-primary-column]:not([data-car-details-desktop-parent-card="true"]) > [data-car-details-hero] {
             order: 1;
           }
           [data-car-details-section-nav] {
