@@ -5570,7 +5570,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         {isStickySearchPanelOpen && activeStickySearchTarget ? (
           <div
             data-flight-search-anchored-backdrop
-            className="fixed inset-0 z-[110] bg-transparent"
+            className="fixed inset-x-0 bottom-0 z-[110] bg-transparent"
+            style={{ top: desktopSearchPopoverFrame?.top ?? 88 }}
             role="presentation"
             onMouseDown={(event) => {
               if (event.target === event.currentTarget) {
