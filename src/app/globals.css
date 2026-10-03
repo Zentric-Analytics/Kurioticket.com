@@ -1261,6 +1261,13 @@ textarea {
     box-shadow: none;
   }
 
+  .desktop-filter-sidebar[data-flight-hotel-filter-visual-parity] {
+    border-color: #cfd9e5;
+    border-radius: 0.5rem;
+    background: #f2f4f8;
+    box-shadow: none;
+  }
+
   .desktop-filter-sidebar__header {
     border-bottom-color: rgba(226, 232, 240, 0.95);
     background: rgba(248, 250, 252, 0.72) !important;
