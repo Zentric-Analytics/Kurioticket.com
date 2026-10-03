@@ -570,7 +570,7 @@ export function CarDetailsExperience({
                 </div>
 
                 <div
-                  className="hidden lg:mx-auto lg:block lg:min-h-[280px] lg:w-full lg:max-w-[900px] lg:bg-white lg:px-5 lg:pb-8"
+                  className="hidden lg:mx-auto lg:block lg:min-h-[280px] lg:w-full lg:max-w-[680px] lg:bg-white lg:px-5 lg:pb-8"
                   data-car-details-desktop-tab-panels
                   data-car-details-flight-style-panel
                 >
@@ -678,7 +678,7 @@ function DesktopPickupReturnOverview({
 }) {
   return (
     <div
-      className="mx-auto w-full max-w-[900px] py-5"
+      className="mx-auto w-full max-w-[640px] py-5"
       data-car-details-desktop-pickup-overview
       data-car-details-flight-panel="pickup"
     >
@@ -755,7 +755,7 @@ function DesktopCarHireLocationOverview({
 
   return (
     <div
-      className="mx-auto w-full max-w-[900px] py-5"
+      className="mx-auto w-full max-w-[640px] py-5"
       data-car-details-desktop-location-overview
       data-car-details-flight-panel="location"
     >
@@ -1078,7 +1078,7 @@ function CarPriceComparisonSection({
   };
   return (
     <div
-      className={`border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full ${showDesktopOfferList ? "lg:max-w-[900px] lg:border-0 lg:bg-transparent lg:px-0 lg:pb-5 lg:pt-5" : "lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-2"}`}
+      className={`border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full ${showDesktopOfferList ? "lg:max-w-[640px] lg:border-0 lg:bg-transparent lg:px-0 lg:pb-5 lg:pt-5" : "lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-2"}`}
       data-car-price-comparison
       data-car-details-flight-panel={showDesktopOfferList ? "compare" : undefined}
     >

@@ -140,8 +140,8 @@ test("standalone desktop Cars details keep a centered hero above the compact sti
     new URL("./CarDetailsSectionNav.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(navSource, /lg:max-w-\[900px\]/);
-  assert.match(navSource, /max-w-\[760px\]/);
+  assert.match(navSource, /lg:max-w-\[680px\]/);
+  assert.match(navSource, /max-w-\[640px\]/);
   assert.match(navSource, /data-car-details-flight-style-tabs/);
   assert.match(navSource, /lg:sticky lg:top-0/);
   assert.doesNotMatch(navSource, /data-car-details-desktop-nav-rule/);
