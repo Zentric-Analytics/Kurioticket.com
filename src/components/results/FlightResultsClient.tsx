@@ -5489,7 +5489,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <form
         onSubmit={handleCompactSearchSubmit}
         data-flight-results-nav-search-form
-        className="mx-auto grid h-[40px] w-full max-w-[590px] grid-cols-[96px_minmax(150px,1fr)_minmax(160px,1fr)_68px_40px] items-center gap-1 overflow-visible"
+        className="mx-auto grid h-[40px] w-full max-w-[590px] grid-cols-[78px_minmax(0,1.5fr)_minmax(0,1.4fr)_56px_40px] items-center gap-1 overflow-visible xl:grid-cols-[96px_minmax(150px,1fr)_minmax(160px,1fr)_68px_40px]"
       >
         <button
           type="button"
@@ -5562,7 +5562,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           aria-expanded={
             isStickySearchPanelOpen && activeStickySearchTarget === "travelers"
           }
-          aria-label={`${t("editFlightSearch")}: ${mobileTravelerTotal}`}
+          aria-label={`${t("editFlightSearch")}: ${travelerCabinSummary}`}
           onClick={(event) => openStickySearchEditor(event, "travelers")}
           className={cn(fieldClass, "justify-center gap-1.5 px-2")}
         >
@@ -5592,7 +5592,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       { label: t("multiCity"), value: "multi-city", disabled: false },
     ];
     const panelGridClass =
-      "grid-cols-[96px_minmax(150px,1fr)_minmax(160px,1fr)_68px_40px]";
+      "grid-cols-[78px_minmax(0,1.5fr)_minmax(0,1.4fr)_56px_40px] xl:grid-cols-[96px_minmax(150px,1fr)_minmax(160px,1fr)_68px_40px]";
     const departureSummary = departureDateInput
       ? formatCompactDateLabel(departureDateInput, calendarLocale)
       : t("departure");
