@@ -34,7 +34,18 @@ test("standalone desktop Cars Details body is centered at a production-ready wid
 test("standalone desktop overview uses centered single-column sizing", () => {
   assert.match(client, /lg:max-w-\[1080px\] lg:space-y-5/);
   assert.match(hero, /data-car-details-desktop-overview/);
-  assert.match(hero, /hidden lg:flex lg:flex-col lg:items-center lg:p-5/);
+  assert.match(
+    hero,
+    /hidden lg:flex lg:flex-col lg:items-center lg:px-0 lg:pb-1 lg:pt-0/,
+  );
+  assert.match(
+    hero,
+    /data-car-details-layered-surface=\{reserveMobileControlSafeZone \? "hero" : undefined\}/,
+  );
+  assert.match(
+    hero,
+    /lg:max-w-\[900px\][\s\S]*?lg:rounded-\[22px\][\s\S]*?lg:bg-\[#F7F9FC\]/,
+  );
   assert.doesNotMatch(hero, /lg:grid-cols-\[minmax\(0,1fr\)_320px\]/);
   assert.match(hero, /data-car-details-desktop-overview-image/);
   assert.match(hero, /h-\[250px\]/);
