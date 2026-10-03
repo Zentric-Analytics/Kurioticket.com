@@ -256,7 +256,7 @@ test("desktop overview and linear sections use only existing car and offer data"
   assert.doesNotMatch(desktopLocation, /carDetails\.getDirections/);
   assert.match(
     desktopLocation,
-    /className="mt-5 border-t border-\[#D8E1EC\] pb-1 pt-5" data-car-details-desktop-location-details/,
+    /className="mt-5 w-full max-w-\[640px\] border-t border-\[#D8E1EC\] pb-1 pt-4" data-car-details-desktop-location-details/,
   );
   assert.doesNotMatch(
     desktopLocation,
