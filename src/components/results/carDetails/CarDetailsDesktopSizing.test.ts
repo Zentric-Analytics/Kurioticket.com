@@ -31,26 +31,26 @@ test("standalone desktop Cars Details body is centered at a production-ready wid
   assert.doesNotMatch(client, /<AppHeader\b/);
 });
 
-test("standalone desktop keeps the 900px car card and nests the current 680px tab card inside it", () => {
+test("standalone desktop keeps the 900px parent card with a 680px amenities and section rail", () => {
   assert.match(
     client,
     /space-y-0 lg:mx-auto lg:w-full lg:max-w-\[900px\] lg:rounded-\[22px\] lg:border lg:border-\[#DFE6EF\] lg:bg-\[#F7F9FC\] lg:pb-6/,
   );
   assert.match(client, /data-car-details-desktop-parent-card/);
-  assert.match(client, /data-car-details-desktop-inner-card/);
+  assert.doesNotMatch(client, /data-car-details-desktop-inner-card/);
   assert.match(hero, /data-car-details-desktop-overview/);
-  assert.match(
-    hero,
-    /data-car-details-parent-card-hero=\{reserveMobileControlSafeZone \? "true" : undefined\}/,
-  );
   assert.match(hero, /data-car-details-desktop-overview-image/);
   assert.match(hero, /h-\[250px\]/);
-  assert.match(hero, /max-w-\[680px\]/);
   assert.match(hero, /sizes="680px"/);
-  assert.match(hero, /max-w-\[820px\] text-center/);
-  assert.match(client, /data-car-details-desktop-inner-card/);
-  assert.match(client, /lg:max-w-\[680px\]/);
+  assert.match(
+    hero,
+    /max-w-\[680px\] grid-cols-4 gap-x-6 gap-y-2 px-2 py-1/,
+  );
   assert.match(client, /data-car-details-desktop-linear-sections/);
+  assert.equal(
+    client.match(/data-car-details-desktop-section-card=/g)?.length,
+    3,
+  );
   assert.match(client, /max-w-\[640px\]/);
   assert.doesNotMatch(hero, /data-car-details-desktop-overview-summary/);
 });
