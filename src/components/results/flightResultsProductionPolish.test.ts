@@ -318,29 +318,34 @@ test("desktop departure metadata aligns directly beneath time with generous card
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date \{\s*margin-inline-start: 0;/);
 });
 
-test("desktop fare column has no partition line", async () => {
-  const source = await readFile(new URL("./FlightCard.tsx", import.meta.url), "utf8");
+test("desktop fare divider stops above the full-width footer summary", async () => {
   const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
 
-  const fareStart = source.indexOf("function FlightFareAction");
-  const fareEnd = source.indexOf("function FlightDetailLines", fareStart);
-  const fare = source.slice(fareStart, fareEnd);
+  const desktopOverrideStart = styles.indexOf(
+    "@media (min-width: 1024px)",
+    styles.indexOf("Keep the desktop fare action beside the itinerary only"),
+  );
+  const desktopOverrideEnd = styles.indexOf(
+    "@container (max-width: 759px)",
+    desktopOverrideStart,
+  );
+  const desktopOverride = styles.slice(desktopOverrideStart, desktopOverrideEnd);
 
-  assert.ok(fareStart >= 0 && fareEnd > fareStart);
-  assert.doesNotMatch(fare, /border-l border-\[#D8E1EC\]/);
+  assert.ok(desktopOverrideStart >= 0 && desktopOverrideEnd > desktopOverrideStart);
+  assert.match(
+    desktopOverride,
+    /grid-template-areas:\s*"legs fare"\s*"details details"/,
+  );
+  assert.match(
+    desktopOverride,
+    /\.flight-card-fare-action \{[\s\S]*?justify-content: flex-end;[\s\S]*?border-left: 1px solid #d8e1ec;[\s\S]*?border-top: 0;/,
+  );
+  assert.match(
+    desktopOverride,
+    /\.flight-card-view-button \{[\s\S]*?align-self: flex-end;/,
+  );
+  assert.doesNotMatch(desktopOverride, /"details fare"/);
   assert.doesNotMatch(styles, /\.flight-card-fare-action::before/);
-  assert.doesNotMatch(
-    styles,
-    /\.flight-card-fare-action\s*\{[^}]*border-left:\s*1px\s+solid\s+#d8e1ec;/,
-  );
-  assert.match(
-    styles,
-    /@media \(min-width: 1024px\)[\s\S]*?\.flight-card-fare-action \{[\s\S]*?border-left: 0;/,
-  );
-  assert.match(
-    styles,
-    /@container \(max-width: 759px\)[\s\S]*?@media \(min-width: 1024px\)[\s\S]*?\.flight-card-fare-action \{[\s\S]*?border-left: 0;/,
-  );
 });
 
 test("desktop detail panel keeps all values inline at every desktop card width", async () => {

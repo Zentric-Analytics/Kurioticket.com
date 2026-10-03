@@ -1778,22 +1778,22 @@ textarea {
   }
 }
 
-/* Keep the desktop fare column beside the itinerary and let it span the
-   itinerary plus metadata rows, matching the compact Hotel action rhythm.
-   This override intentionally lives after the base and container rules. */
+/* Keep the desktop fare action beside the itinerary only. The metadata
+   footer spans the full card width below it, so the short divider separates
+   arrival/date from fare content without intruding into the footer summary. */
 @media (min-width: 1024px) {
   .flight-card-body {
     grid-template-columns: minmax(0, 1fr) 196px;
     grid-template-areas:
       "legs fare"
-      "details fare";
+      "details details";
     row-gap: 0.5rem;
   }
 
   .flight-card-fare-action {
     align-items: flex-end;
     justify-content: flex-end;
-    border-left: 0;
+    border-left: 1px solid #d8e1ec;
     border-top: 0;
     padding-left: 1rem;
     padding-right: 0;
@@ -1826,14 +1826,14 @@ textarea {
       grid-template-columns: minmax(0, 1fr) 180px;
       grid-template-areas:
         "legs fare"
-        "details fare";
+        "details details";
       row-gap: 0.5rem;
     }
 
     .flight-card-fare-action {
       align-items: flex-end;
       justify-content: flex-end;
-      border-left: 0;
+      border-left: 1px solid #d8e1ec;
       border-top: 0;
       padding-left: 0.875rem;
       padding-right: 0;
