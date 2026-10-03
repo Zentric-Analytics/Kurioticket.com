@@ -38,15 +38,19 @@ test("mobile vehicle identity and specification typography mirrors native", () =
   );
 });
 
-test("mobile tabs use native responsive sizes and native selected color", () => {
+test("mobile tabs keep native responsive sizes and selected color independently from desktop", () => {
   assert.match(
     nav,
-    /car-details-native-tab-label[^"]*font-sans text-\[12px\] font-semibold leading-\[normal\] tracking-normal[^"]*min-\[390px\]:text-\[13px\][^"]*lg:text-sm lg:font-bold lg:leading-normal/,
+    /car-details-native-tab-label[^"]*font-sans text-\[12px\] font-semibold leading-\[normal\] tracking-normal[^"]*min-\[390px\]:text-\[13px\]/,
   );
   assert.match(nav, /whitespace-nowrap/);
-  assert.match(nav, /text-\[#075EE8\] lg:text-blue/);
-  assert.match(nav, /text-\[#475569\] lg:hover:text-slate-950/);
-  assert.match(nav, /bg-\[#075EE8\][^"]*lg:bg-blue/);
+  assert.match(nav, /text-\[#075EE8\]/);
+  assert.match(nav, /text-\[#475569\]/);
+  assert.match(nav, /absolute inset-x-2 bottom-0 h-0\.5 bg-\[#075EE8\]/);
+  assert.doesNotMatch(
+    nav,
+    /car-details-native-tab-label[^"]*lg:text-sm|car-details-native-tab-label[^"]*lg:font-bold/,
+  );
 });
 
 test("mobile tab labels own rendered size outside Tailwind so browser button font inheritance cannot enlarge them", () => {
@@ -187,15 +191,17 @@ test("Safari cannot inflate Cars Details mobile text beyond native sizes", () =>
   );
 });
 
-test("desktop Cars Details typography overrides remain intact", () => {
+test("desktop Cars tabs use the same compact semibold hierarchy as Flights", () => {
   assert.match(
     client,
     /lg:text-xl lg:font-extrabold lg:leading-normal lg:tracking-tight/,
   );
   assert.match(
-    client,
-    /lg:text-base lg:font-semibold lg:leading-normal/,
+    nav,
+    /car-details-desktop-selected-info-type[^"]*min-h-11 flex-1[^"]*border-b-\[3px\]/,
   );
-  assert.match(client, /lg:text-base lg:leading-normal/);
-  assert.match(nav, /lg:text-sm lg:font-bold lg:leading-normal/);
+  assert.match(
+    css,
+    /\.car-details-desktop-selected-info-type \{[^}]*font-size: 14px;[^}]*line-height: 20px;[^}]*font-weight: 600;[^}]*font-variation-settings: "wght" 600;/,
+  );
 });

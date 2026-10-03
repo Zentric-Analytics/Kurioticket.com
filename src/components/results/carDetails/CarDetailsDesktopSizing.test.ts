@@ -32,7 +32,7 @@ test("standalone desktop Cars Details body is centered at a production-ready wid
 });
 
 test("standalone desktop overview uses centered single-column sizing", () => {
-  assert.match(client, /lg:max-w-\[1080px\] lg:space-y-5/);
+  assert.match(client, /space-y-0 lg:mx-auto lg:w-full lg:max-w-\[1080px\]/);
   assert.match(hero, /data-car-details-desktop-overview/);
   assert.match(
     hero,
@@ -54,16 +54,17 @@ test("standalone desktop overview uses centered single-column sizing", () => {
   assert.match(hero, /max-w-\[820px\] text-center/);
   assert.doesNotMatch(hero, /data-car-details-desktop-overview-summary/);
   assert.match(client, /lg:max-w-\[900px\]/);
-  assert.match(client, /max-w-\[720px\]/);
+  assert.match(client, /max-w-\[640px\]/);
 });
 
-test("desktop width polish does not rewrite sticky or section-scroll behavior", () => {
-  assert.match(client, /target\?\.scrollIntoView\(\{/);
-  assert.match(client, /behavior: window\.matchMedia\("\(prefers-reduced-motion: reduce\)"\)\.matches/);
-  assert.match(client, /new ResizeObserver\(scheduleDesktopScrollState\)/);
-  assert.match(client, /window\.addEventListener\("scroll", scheduleDesktopScrollState/);
-  assert.match(layout, /\[data-car-details-scroll-section\] \{\s*scroll-margin-top: 5\.5rem;/);
-  assert.match(client, /desktopSectionBarStuck/);
+test("desktop tabs switch panels in place instead of scrolling through stacked sections", () => {
+  assert.match(client, /data-car-details-desktop-tab-panels/);
+  assert.match(client, /id="car-desktop-compare-panel"/);
+  assert.match(client, /id="car-desktop-pickup-panel"/);
+  assert.match(client, /id="car-desktop-location-panel"/);
+  assert.doesNotMatch(client, /target\?\.scrollIntoView\(\{/);
+  assert.doesNotMatch(client, /scheduleDesktopScrollState|desktopSectionBarStuck/);
+  assert.doesNotMatch(client, /data-car-details-desktop-linear-sections/);
 });
 
 test("mobile and guided hero dimensions remain unchanged", () => {

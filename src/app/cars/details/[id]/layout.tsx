@@ -20,7 +20,7 @@ export default function CarDetailsLayout({
           [data-car-details-content-grid] {
             display: grid !important;
             grid-template-columns: minmax(0, 1fr) !important;
-            gap: 1.5rem !important;
+            gap: 0 !important;
           }
 
           [data-car-details-primary-column] {
@@ -34,13 +34,8 @@ export default function CarDetailsLayout({
           [data-car-details-primary-column] > [data-car-details-hero] {
             order: 1;
           }
-
-          [data-car-details-desktop-controls] {
-            min-height: 4rem;
-          }
-
           [data-car-details-section-nav] {
-            background: transparent !important;
+            background: #FFFFFF !important;
           }
 
           [data-car-details-scroll-section] {

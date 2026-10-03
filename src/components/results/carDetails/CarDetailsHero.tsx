@@ -30,6 +30,7 @@ export function CarDetailsHero({
   desktopOverlay,
   imageStageRef,
   guidedMobileActions,
+  standaloneDesktopControls,
   reserveMobileControlSafeZone = false,
 }: {
   car: NormalizedCarResult;
@@ -38,6 +39,7 @@ export function CarDetailsHero({
   desktopOverlay?: ReactNode;
   imageStageRef?: Ref<HTMLElement>;
   guidedMobileActions?: ReactNode;
+  standaloneDesktopControls?: ReactNode;
   reserveMobileControlSafeZone?: boolean;
 }) {
   const transmissionIcon = /manual/i.test(car.transmission)
@@ -77,6 +79,14 @@ export function CarDetailsHero({
       data-car-details-layered-surface={reserveMobileControlSafeZone ? "hero" : undefined}
     >
       <div className="min-w-0">
+        {reserveMobileControlSafeZone && standaloneDesktopControls ? (
+          <div
+            className="hidden lg:mx-auto lg:mb-1 lg:flex lg:w-full lg:max-w-[820px] lg:items-center"
+            data-car-details-desktop-integrated-controls
+          >
+            {standaloneDesktopControls}
+          </div>
+        ) : null}
         <figure
           ref={imageStageRef}
           className={`relative min-w-0 bg-white ${reserveMobileControlSafeZone ? "lg:hidden" : "pt-5"} lg:mx-auto lg:w-full ${reserveMobileControlSafeZone ? "" : "lg:max-w-[760px]"} lg:pt-0`}
@@ -191,13 +201,7 @@ export function CarDetailsHero({
             data-car-details-desktop-overview
           >
             <div
-              className="min-w-0 w-full max-w-[820px] text-center [&_h1]:truncate [&_h2]:truncate [&_h3]:truncate [&_h4]:truncate"
-              data-car-details-desktop-overview-identity
-            >
-              {identity}
-            </div>
-            <div
-              className="relative mt-4 h-[250px] w-full max-w-[680px] overflow-hidden rounded-[16px] bg-transparent"
+              className="relative h-[250px] w-full max-w-[680px] overflow-hidden rounded-[16px] bg-transparent"
               data-car-details-desktop-overview-image
             >
               <CarResultImage
@@ -210,14 +214,20 @@ export function CarDetailsHero({
                 priority
               />
             </div>
+            <div
+              className="mt-3 min-w-0 w-full max-w-[820px] text-center [&_h1]:truncate [&_h2]:truncate [&_h3]:truncate [&_h4]:truncate"
+              data-car-details-desktop-overview-identity
+            >
+              {identity}
+            </div>
             <ul
-              className="mt-4 grid min-w-0 w-full max-w-[820px] grid-cols-4 gap-3"
+              className="mt-4 grid min-w-0 w-full max-w-[820px] grid-cols-4 gap-x-5 gap-y-2 rounded-[14px] border border-[#E0E7EF] bg-white/75 px-4 py-3"
               data-car-details-desktop-overview-specifications
             >
               {specs.map(([Icon, label]) => (
                 <li
                   key={label}
-                  className="car-details-desktop-amenity-type inline-flex min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-[13px] border border-[#E0E7EF] bg-white px-3 py-2 text-center text-[13px] font-semibold leading-[18px] text-slate-700 shadow-[0_2px_7px_rgba(15,23,42,0.035)]"
+                  className="car-details-desktop-amenity-type inline-flex min-h-8 w-full min-w-0 items-center justify-center gap-2 px-2 py-1.5 text-center text-[13px] font-semibold leading-[18px] text-slate-700"
                 >
                   <Icon
                     size={15}
