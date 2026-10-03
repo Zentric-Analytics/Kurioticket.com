@@ -99,7 +99,7 @@ export function CarDetailsSectionNav({
 
       <div
         ref={desktopBarRef}
-        className="relative hidden w-full lg:sticky lg:top-0 lg:z-40 lg:mt-0 lg:block lg:max-w-none lg:border-b lg:border-slate-200 lg:bg-white"
+        className="relative hidden w-full lg:sticky lg:top-0 lg:z-40 lg:mx-auto lg:mt-2 lg:block lg:max-w-[900px] lg:border-b lg:border-slate-200 lg:bg-white"
         data-car-details-section-nav
         data-car-details-flight-style-tabs
       >

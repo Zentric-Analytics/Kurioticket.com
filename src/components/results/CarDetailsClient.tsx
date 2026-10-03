@@ -414,9 +414,8 @@ export function CarDetailsExperience({
         data-car-details-content-grid
       >
         <div
-          className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:relative lg:mx-auto lg:w-full lg:max-w-[900px] lg:rounded-[13px] lg:border lg:border-[#E2E8F0] lg:bg-white lg:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" : "space-y-4 lg:space-y-5"}`}
+          className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:mx-auto lg:w-full lg:max-w-[1080px]" : "space-y-4 lg:space-y-5"}`}
           data-car-details-primary-column
-          data-car-details-desktop-full-height-card={presentation === "standalone-content" ? "true" : undefined}
         >
           <CarDetailsHero
             car={car}
@@ -571,7 +570,7 @@ export function CarDetailsExperience({
                 </div>
 
                 <div
-                  className="hidden lg:block lg:min-h-[280px] lg:w-full lg:bg-transparent lg:px-5 lg:pb-7"
+                  className="hidden lg:mx-auto lg:block lg:min-h-[280px] lg:w-full lg:max-w-[900px] lg:bg-white lg:px-5 lg:pb-8"
                   data-car-details-desktop-tab-panels
                   data-car-details-flight-style-panel
                 >
@@ -679,15 +678,14 @@ function DesktopPickupReturnOverview({
 }) {
   return (
     <div
-      className="w-full py-5"
+      className="mx-auto w-full max-w-[900px] py-5"
       data-car-details-desktop-pickup-overview
       data-car-details-flight-panel="pickup"
     >
       <h2 className="car-details-desktop-section-heading-type">Pickup and return</h2>
       <div
-        className="mt-4 grid w-full max-w-[640px] grid-cols-2 gap-3 py-1"
+        className="mt-4 grid grid-cols-2 divide-x divide-[#D8E1EC] border-y border-[#D8E1EC] py-4"
         data-car-details-desktop-pickup-columns
-        data-car-details-compact-card-group="pickup-return"
       >
         {[
           [copy("carDetails.pickup"), car.pickupLocation, search.pickupDate, search.pickupTime],
@@ -695,8 +693,7 @@ function DesktopPickupReturnOverview({
         ].map(([label, location, date, time]) => (
           <div
             key={label}
-            className="min-h-[116px] min-w-0 rounded-xl border border-[#D9E2E8] bg-white px-4 py-3"
-            data-car-details-compact-info-card
+            className="min-w-0 px-5 py-2"
           >
             <p className="car-details-desktop-item-heading-type">{label}</p>
             <p className="car-details-desktop-primary-copy-type mt-2 flex items-start gap-2">
@@ -758,15 +755,14 @@ function DesktopCarHireLocationOverview({
 
   return (
     <div
-      className="w-full py-5"
+      className="mx-auto w-full max-w-[900px] py-5"
       data-car-details-desktop-location-overview
       data-car-details-flight-panel="location"
     >
       <h2 className="car-details-desktop-section-heading-type">Location</h2>
       <div
-        className="mt-4 flex w-full max-w-[640px] flex-wrap items-start justify-between gap-x-8 gap-y-3 rounded-xl border border-[#D9E2E8] bg-white px-4 py-3 text-sm leading-6"
+        className="mt-4 flex flex-wrap items-start justify-between gap-x-8 gap-y-3 border-b border-[#D8E1EC] pb-4 text-sm leading-6"
         data-car-details-location-identity
-        data-car-details-compact-info-card
       >
         <div className="flex min-w-0 items-start gap-2">
           <MapPin className="mt-1 h-4 w-4 shrink-0" aria-hidden="true" />
@@ -787,7 +783,7 @@ function DesktopCarHireLocationOverview({
         ) : null}
       </div>
       <div
-        className="mt-4 flex min-h-10 w-full max-w-[640px] items-center gap-1 border-b border-[#D6E0EB]"
+        className="mt-4 flex min-h-10 items-center gap-1 border-b border-[#D6E0EB]"
         role="tablist"
         aria-label="Location views"
       >
@@ -810,7 +806,7 @@ function DesktopCarHireLocationOverview({
         id="car-desktop-location-panel"
         role="tabpanel"
         aria-labelledby={`car-desktop-location-${view}-tab`}
-        className="mt-3 w-full max-w-[720px] overflow-hidden rounded-xl border border-[#D9E2E8] bg-[#F3F5F7] shadow-[0_2px_7px_rgba(7,19,59,0.05)]"
+        className="mt-3 overflow-hidden rounded-[16px] border border-[#D6E0EB] bg-[#F3F5F7] shadow-[0_2px_8px_rgba(15,23,42,0.035)]"
         data-car-details-desktop-location-map
       >
         {activeEmbedUrl ? (
@@ -824,17 +820,17 @@ function DesktopCarHireLocationOverview({
             src={activeEmbedUrl}
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
-            className="block h-[220px] w-full border-0"
+            className="block h-[250px] w-full border-0"
           />
         ) : (
-          <div className="flex h-[220px] flex-col items-center justify-center gap-3 text-sm text-[#59636a]">
+          <div className="flex h-[250px] flex-col items-center justify-center gap-3 text-sm text-[#59636a]">
             <MapPin className="h-6 w-6" aria-hidden="true" />
             <p>{view === "streetview" ? "Street View unavailable" : "Map preview unavailable"}</p>
           </div>
         )}
       </div>
       <div
-        className="mt-5 w-full max-w-[640px] border-t border-[#D8E1EC] pb-1 pt-4"
+        className="mt-5 border-t border-[#D8E1EC] pb-1 pt-5"
         data-car-details-desktop-location-details
       >
         <h3 className="car-details-desktop-item-heading-type">
@@ -1196,7 +1192,7 @@ function CarPriceComparisonSection({
 
       {showDesktopOfferList && desktopOrderedOffers.length ? (
         <div
-          className="mt-4 hidden w-full max-w-[640px] space-y-2 py-1 lg:block"
+          className="mt-4 hidden w-full max-w-[640px] space-y-2 lg:block"
           data-desktop-car-deal-list
         >
           {desktopOrderedOffers.map((offer) => {
@@ -1209,7 +1205,7 @@ function CarPriceComparisonSection({
             const providerFacts = providerFactsForOffer(offer);
             const offerAction = actionForOffer(offer);
             const actionClassName =
-              "focus-ring inline-flex h-9 w-[112px] shrink-0 items-center justify-center rounded-lg bg-[#004BB8] px-3 text-[13px] font-semibold leading-5 text-white transition-colors hover:bg-[#003B91]";
+              "focus-ring inline-flex min-h-9 min-w-[104px] shrink-0 items-center justify-center rounded-lg bg-[#075EE8] px-3 text-[12px] font-semibold leading-4 text-white shadow-[0_2px_7px_rgba(7,94,232,0.14)] transition hover:bg-[#004BB8]";
             return (
               <div
                 key={offer.id}
@@ -1232,7 +1228,7 @@ function CarPriceComparisonSection({
                     />
                   </span>
                   <strong
-                    className="mt-1 block whitespace-nowrap text-[20px] font-semibold leading-6 tracking-[-0.02em] text-[#192024] tabular-nums"
+                    className="mt-1 block whitespace-nowrap text-[19px] font-bold leading-6 tracking-[-0.012em] text-[#07133B] tabular-nums"
                     dir="ltr"
                     title={total.title}
                     aria-label={total.ariaLabel}
