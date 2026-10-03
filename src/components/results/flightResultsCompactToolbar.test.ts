@@ -30,7 +30,7 @@ test("desktop Flight Results header matches the compact city-route reference wit
   assert.match(toolbar, /h-\[40px\]/);
   assert.match(
     toolbar,
-    /grid-cols-\[82px_160px_150px_50px_40px\]/,
+    /grid-cols-\[74px_minmax\(0,160px\)_minmax\(0,150px\)_46px_40px\]/,
   );
   assert.match(
     toolbar,
@@ -206,7 +206,7 @@ test("desktop field editors stay aligned to the navbar search footprint", () => 
   assert.match(popout, /desktopSearchPopoverFrame[\s\S]*width: desktopSearchPopoverFrame\.width/);
   assert.match(
     popout,
-    /grid-cols-\[82px_160px_150px_50px_40px\]/,
+    /grid-cols-\[74px_minmax\(0,160px\)_minmax\(0,150px\)_46px_40px\]/,
   );
   assert.match(
     popout,
