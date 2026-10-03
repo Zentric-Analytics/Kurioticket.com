@@ -260,7 +260,9 @@ export function HotelSearchBar({
   );
   const [hotelChildCount, setHotelChildCount] = useState(0);
   const [rooms, setRooms] = useState(String(initialRooms || "1"));
-  const [hotelPetFriendly, setHotelPetFriendly] = useState(false);
+  const [hotelPetFriendly, setHotelPetFriendly] = useState(
+    () => searchParams.get("petFriendly") === "true",
+  );
   const [draftHotelAdults, setDraftHotelAdults] = useState(1);
   const [draftHotelChildren, setDraftHotelChildren] = useState(0);
   const [draftHotelRooms, setDraftHotelRooms] = useState(1);
@@ -815,6 +817,10 @@ export function HotelSearchBar({
 
     if (destinationId) {
       params.set("destinationId", destinationId);
+    }
+
+    if (hotelPetFriendly) {
+      params.set("petFriendly", "true");
     }
 
     if (initialSort) {
