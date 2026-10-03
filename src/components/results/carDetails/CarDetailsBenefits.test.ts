@@ -363,7 +363,7 @@ test("standalone desktop overview uses one integrated Flight-inspired hero surfa
   );
   assert.match(
     heroSource,
-    /data-car-details-desktop-overview-specifications[\s\S]*?grid-cols-4 gap-x-5 gap-y-2 rounded-\[14px\][\s\S]*?bg-white\/75[\s\S]*?px-4 py-3/,
+    /className="mt-4 grid min-w-0 w-full max-w-\[820px\] grid-cols-4 gap-x-5 gap-y-2 rounded-\[14px\] border border-\[#E0E7EF\] bg-white\/75 px-4 py-3"\s*data-car-details-desktop-overview-specifications/,
   );
   assert.doesNotMatch(heroSource, /data-car-details-desktop-overview-summary/);
 });
@@ -821,7 +821,7 @@ test("standalone desktop amenities use a compact four-column two-row grid withou
 test("standalone desktop amenities are grouped into one compact hero information surface", () => {
   assert.match(
     heroSource,
-    /data-car-details-desktop-overview-specifications[\s\S]*?rounded-\[14px\][\s\S]*?bg-white\/75/,
+    /className="mt-4 grid min-w-0 w-full max-w-\[820px\] grid-cols-4 gap-x-5 gap-y-2 rounded-\[14px\][^"]*bg-white\/75[^"]*"\s*data-car-details-desktop-overview-specifications/,
   );
   assert.match(
     heroSource,
