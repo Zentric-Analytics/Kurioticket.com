@@ -1256,7 +1256,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
   const stickySentinelRef = useRef<HTMLDivElement | null>(null);
   const stickySearchPopoutRef = useRef<HTMLFormElement | null>(null);
-  const stickySearchLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const stickySearchLauncherRef = useRef<HTMLElement | null>(null);
   const stickySearchRestoreTargetRef = useRef<
     "trip" | "origin" | "destination" | "dates" | "return" | "travelers" | null
   >(null);
@@ -1413,11 +1413,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   const openStickySearchEditor = useCallback(
     (
-      event: React.MouseEvent<HTMLButtonElement>,
+      launcher: HTMLElement,
       target: "trip" | "origin" | "destination" | "dates" | "return" | "travelers",
     ) => {
-      stickySearchLauncherRef.current = event.currentTarget;
-      const compactForm = event.currentTarget.closest<HTMLElement>(
+      stickySearchLauncherRef.current = launcher;
+      const compactForm = launcher.closest<HTMLElement>(
         "[data-flight-results-nav-search-form]",
       );
       updateDesktopSearchPopoverFrame(compactForm);
@@ -1590,20 +1590,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
       window.requestAnimationFrame(() => {
         const restoreTarget = stickySearchRestoreTargetRef.current;
+
+        if (restoreTarget === "origin" || restoreTarget === "destination") {
+          stickySearchRestoreTargetRef.current = null;
+          return;
+        }
+
         const selector =
           restoreTarget === "trip"
             ? "[data-flight-results-header-trip]"
-            : restoreTarget === "origin"
-              ? "[data-flight-results-header-origin]"
-              : restoreTarget === "destination"
-                ? "[data-flight-results-header-destination]"
-                : restoreTarget === "dates" || restoreTarget === "return"
-                  ? "[data-flight-results-header-dates]"
-                  : restoreTarget === "travelers"
-                    ? "[data-flight-results-header-travelers]"
-                    : null;
+            : restoreTarget === "dates" || restoreTarget === "return"
+              ? "[data-flight-results-header-dates]"
+              : restoreTarget === "travelers"
+                ? "[data-flight-results-header-travelers]"
+                : null;
         const mountedLauncher = selector
-          ? document.querySelector<HTMLButtonElement>(selector)
+          ? document.querySelector<HTMLElement>(selector)
           : null;
 
         (mountedLauncher ?? stickySearchLauncherRef.current)?.focus();
@@ -5567,24 +5569,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       activeStickySearchTarget === "trip" &&
       tripTypeMenuOpen;
 
-    const openCompactRouteEditor = (
-      event: React.MouseEvent<HTMLButtonElement>,
-      target: "origin" | "destination",
-    ) => {
-      if (target === "origin") {
-        if (originCode && originInput.trim().toUpperCase() === originCode.trim().toUpperCase()) {
-          setOriginInput(compactOriginLabel);
-        }
-      } else if (
-        destinationCode &&
-        destinationInput.trim().toUpperCase() === destinationCode.trim().toUpperCase()
-      ) {
-        setDestinationInput(compactDestinationLabel);
-      }
-
-      openStickySearchEditor(event, target);
-    };
-
     return (
       <form
         onSubmit={handleCompactSearchSubmit}
@@ -5606,7 +5590,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 collapseStickySearch({ restoreScroll: false });
                 return;
               }
-              openStickySearchEditor(event, "trip");
+              openStickySearchEditor(event.currentTarget, "trip");
               setTripTypeMenuOpen(true);
             }}
             className={tripTypeClass}
@@ -5674,67 +5658,88 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
         <div
           data-flight-results-compact-route
-          className="relative grid h-[40px] min-w-0 grid-cols-[minmax(56px,1fr)_28px_minmax(56px,1fr)] items-center overflow-visible rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] transition-colors focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/20"
+          className="relative grid h-[40px] min-w-0 grid-cols-[minmax(56px,1fr)_28px_minmax(56px,1fr)] items-center overflow-visible rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA]"
         >
           <div
             ref={stickyOriginWrapRef}
-            className="relative flex h-full min-w-0 items-center"
+            className="relative flex h-full min-w-0 items-center transition-colors focus-within:bg-[#F3F6FA]"
           >
+            <input
+              id="sticky-results-origin"
+              data-flight-results-header-origin
+              name="origin"
+              required
+              value={
+                isStickySearchPanelOpen &&
+                activeStickySearchTarget === "origin"
+                  ? originInput
+                  : compactOriginLabel
+              }
+              aria-label={`${t("editFlightSearch")}: ${compactOriginLabel}`}
+              aria-expanded={
+                isStickySearchPanelOpen &&
+                activeStickySearchTarget === "origin" &&
+                activeSuggest === "origin"
+              }
+              onFocus={(event) => {
+                if (
+                  originCode &&
+                  originInput.trim().toUpperCase() ===
+                    originCode.trim().toUpperCase()
+                ) {
+                  setOriginInput(compactOriginLabel);
+                }
+                openStickySearchEditor(event.currentTarget, "origin");
+              }}
+              onClick={(event) => {
+                if (
+                  !isStickySearchPanelOpen ||
+                  activeStickySearchTarget !== "origin"
+                ) {
+                  openStickySearchEditor(event.currentTarget, "origin");
+                }
+              }}
+              onBlur={() => {
+                if (activeSuggest === "origin") {
+                  setActiveSuggest(null);
+                }
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  event.currentTarget.blur();
+                  collapseStickySearch({ restoreScroll: false });
+                }
+              }}
+              onChange={(event) => {
+                setOriginInput(event.target.value);
+                setOriginCode("");
+                setActiveSuggest(
+                  event.target.value.trim().length >= 2 ? "origin" : null,
+                );
+              }}
+              placeholder={t("fromPlaceholder")}
+              autoComplete="off"
+              className="box-border h-full w-full min-w-0 border-0 bg-transparent px-2 text-right text-[12px] font-semibold leading-[17px] text-[#142033] outline-none placeholder:text-slate-400"
+            />
             {isStickySearchPanelOpen &&
-            activeStickySearchTarget === "origin" ? (
-              <>
-                <input
-                  id="sticky-results-origin"
-                  name="origin"
-                  required
-                  value={originInput}
-                  onFocus={() => {
-                    setActiveDesktopSearchSurface("sticky");
-                    if (originInput.trim().length >= 2) {
-                      setActiveSuggest("origin");
-                    }
-                  }}
-                  onChange={(event) => {
-                    setOriginInput(event.target.value);
-                    setOriginCode("");
-                    setActiveSuggest(
-                      event.target.value.trim().length >= 2 ? "origin" : null,
-                    );
-                  }}
-                  placeholder={t("fromPlaceholder")}
-                  autoComplete="off"
-                  className="box-border h-full w-full min-w-0 border-0 bg-transparent px-2 text-right text-[12px] font-semibold leading-[17px] text-[#142033] outline-none placeholder:text-slate-400"
-                />
-                {activeSuggest === "origin" &&
-                activeDesktopSearchSurface === "sticky" ? (
-                  <SuggestionList
-                    id="sticky-flight-origin-suggestions"
-                    alignToField
-                    suggestions={resolvedOriginSuggestions}
-                    locale={locale}
-                    onSelect={(value) => {
-                      markExpandedSearchInteraction();
-                      setOriginInput(value);
-                      setOriginCode(value);
-                      setActiveSuggest(null);
-                      setDropdownPosition(null);
-                      collapseStickySearch({ restoreScroll: false });
-                    }}
-                  />
-                ) : null}
-              </>
-            ) : (
-              <button
-                type="button"
-                data-flight-results-header-origin
-                aria-expanded={false}
-                aria-label={`${t("editFlightSearch")}: ${compactOriginLabel}`}
-                onClick={(event) => openCompactRouteEditor(event, "origin")}
-                className="focus-ring flex h-full w-full min-w-0 items-center justify-end px-2 text-[#142033] transition-colors hover:bg-[#F3F6FA]"
-              >
-                <span className={valueClass}>{compactOriginLabel}</span>
-              </button>
-            )}
+            activeStickySearchTarget === "origin" &&
+            activeSuggest === "origin" &&
+            activeDesktopSearchSurface === "sticky" ? (
+              <SuggestionList
+                id="sticky-flight-origin-suggestions"
+                alignToField
+                suggestions={resolvedOriginSuggestions}
+                locale={locale}
+                onSelect={(value) => {
+                  markExpandedSearchInteraction();
+                  setOriginInput(getCompactCityLabel(value, value, value));
+                  setOriginCode(value);
+                  setActiveSuggest(null);
+                  setDropdownPosition(null);
+                }}
+              />
+            ) : null}
           </div>
 
           <button
@@ -5748,65 +5753,86 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
           <div
             ref={stickyDestinationWrapRef}
-            className="relative flex h-full min-w-0 items-center"
+            className="relative flex h-full min-w-0 items-center transition-colors focus-within:bg-[#F3F6FA]"
           >
+            <input
+              id="sticky-results-destination"
+              data-flight-results-header-destination
+              name="destination"
+              required
+              value={
+                isStickySearchPanelOpen &&
+                activeStickySearchTarget === "destination"
+                  ? destinationInput
+                  : compactDestinationLabel
+              }
+              aria-label={`${t("editFlightSearch")}: ${compactDestinationLabel}`}
+              aria-expanded={
+                isStickySearchPanelOpen &&
+                activeStickySearchTarget === "destination" &&
+                activeSuggest === "destination"
+              }
+              onFocus={(event) => {
+                if (
+                  destinationCode &&
+                  destinationInput.trim().toUpperCase() ===
+                    destinationCode.trim().toUpperCase()
+                ) {
+                  setDestinationInput(compactDestinationLabel);
+                }
+                openStickySearchEditor(event.currentTarget, "destination");
+              }}
+              onClick={(event) => {
+                if (
+                  !isStickySearchPanelOpen ||
+                  activeStickySearchTarget !== "destination"
+                ) {
+                  openStickySearchEditor(event.currentTarget, "destination");
+                }
+              }}
+              onBlur={() => {
+                if (activeSuggest === "destination") {
+                  setActiveSuggest(null);
+                }
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  event.currentTarget.blur();
+                  collapseStickySearch({ restoreScroll: false });
+                }
+              }}
+              onChange={(event) => {
+                setDestinationInput(event.target.value);
+                setDestinationCode("");
+                setActiveSuggest(
+                  event.target.value.trim().length >= 2
+                    ? "destination"
+                    : null,
+                );
+              }}
+              placeholder={t("toPlaceholder")}
+              autoComplete="off"
+              className="box-border h-full w-full min-w-0 border-0 bg-transparent px-2 text-left text-[12px] font-semibold leading-[17px] text-[#142033] outline-none placeholder:text-slate-400"
+            />
             {isStickySearchPanelOpen &&
-            activeStickySearchTarget === "destination" ? (
-              <>
-                <input
-                  id="sticky-results-destination"
-                  name="destination"
-                  required
-                  value={destinationInput}
-                  onFocus={() => {
-                    setActiveDesktopSearchSurface("sticky");
-                    if (destinationInput.trim().length >= 2) {
-                      setActiveSuggest("destination");
-                    }
-                  }}
-                  onChange={(event) => {
-                    setDestinationInput(event.target.value);
-                    setDestinationCode("");
-                    setActiveSuggest(
-                      event.target.value.trim().length >= 2
-                        ? "destination"
-                        : null,
-                    );
-                  }}
-                  placeholder={t("toPlaceholder")}
-                  autoComplete="off"
-                  className="box-border h-full w-full min-w-0 border-0 bg-transparent px-2 text-left text-[12px] font-semibold leading-[17px] text-[#142033] outline-none placeholder:text-slate-400"
-                />
-                {activeSuggest === "destination" &&
-                activeDesktopSearchSurface === "sticky" ? (
-                  <SuggestionList
-                    id="sticky-flight-destination-suggestions"
-                    alignToField
-                    suggestions={resolvedDestinationSuggestions}
-                    locale={locale}
-                    onSelect={(value) => {
-                      markExpandedSearchInteraction();
-                      setDestinationInput(value);
-                      setDestinationCode(value);
-                      setActiveSuggest(null);
-                      setDropdownPosition(null);
-                      collapseStickySearch({ restoreScroll: false });
-                    }}
-                  />
-                ) : null}
-              </>
-            ) : (
-              <button
-                type="button"
-                data-flight-results-header-destination
-                aria-expanded={false}
-                aria-label={`${t("editFlightSearch")}: ${compactDestinationLabel}`}
-                onClick={(event) => openCompactRouteEditor(event, "destination")}
-                className="focus-ring flex h-full w-full min-w-0 items-center justify-start px-2 text-[#142033] transition-colors hover:bg-[#F3F6FA]"
-              >
-                <span className={valueClass}>{compactDestinationLabel}</span>
-              </button>
-            )}
+            activeStickySearchTarget === "destination" &&
+            activeSuggest === "destination" &&
+            activeDesktopSearchSurface === "sticky" ? (
+              <SuggestionList
+                id="sticky-flight-destination-suggestions"
+                alignToField
+                suggestions={resolvedDestinationSuggestions}
+                locale={locale}
+                onSelect={(value) => {
+                  markExpandedSearchInteraction();
+                  setDestinationInput(getCompactCityLabel(value, value, value));
+                  setDestinationCode(value);
+                  setActiveSuggest(null);
+                  setDropdownPosition(null);
+                }}
+              />
+            ) : null}
           </div>
         </div>
 
@@ -5822,7 +5848,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               Boolean(activeDatePicker)
             }
             aria-label={`${t("editFlightSearch")}: ${dateSummary}`}
-            onClick={(event) => openStickySearchEditor(event, "dates")}
+            onClick={(event) => openStickySearchEditor(event.currentTarget, "dates")}
             className={cn(fieldClass, "w-full justify-center px-2")}
           >
             <span className={valueClass}>{dateSummary}</span>
@@ -5875,7 +5901,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               travelerPopoverOpen
             }
             aria-label={`${t("editFlightSearch")}: ${travelerCabinSummary}`}
-            onClick={(event) => openStickySearchEditor(event, "travelers")}
+            onClick={(event) => openStickySearchEditor(event.currentTarget, "travelers")}
             className={cn(fieldClass, "w-full justify-center gap-1.5 px-2")}
           >
             <UserRound className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
