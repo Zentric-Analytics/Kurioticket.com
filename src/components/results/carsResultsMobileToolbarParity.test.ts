@@ -6,62 +6,86 @@ const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
   "utf8",
 );
-const toolbar = source.slice(
-  source.indexOf("const renderMobileCompactResultsHeader"),
-  source.indexOf(
-    "\n  return (",
-    source.indexOf("const renderMobileCompactResultsHeader"),
-  ),
+const headerSearch = source.slice(
+  source.indexOf("const renderMobileHeaderSearch"),
+  source.indexOf("const renderCarsSearchForm"),
+);
+const stickyShortcuts = source.slice(
+  source.indexOf("data-cars-results-sticky-shortcuts"),
+  source.indexOf("data-cars-results-toolbar"),
 );
 
-test("standalone Cars compact header follows the Flights mobile interaction model", () => {
-  assert.match(toolbar, /presentation !== "standalone"/);
-  assert.match(toolbar, /mobileSearchSummary/);
-  assert.match(toolbar, /ArrowLeft/);
-  assert.match(toolbar, /onClick=\{onMobileBack\}/);
+test("standalone Cars uses one persistent AppHeader search launcher", () => {
+  assert.match(source, /const \[mobileNavSearchTarget, setMobileNavSearchTarget\]/);
   assert.match(
-    toolbar,
-    /onClick=\{\(event\) => onMobileModifySearch\?\.\(event\.currentTarget\)\}/,
+    source,
+    /document\.querySelector<HTMLElement>\(\s*"\[data-cars-results-mobile-nav-search\]"/,
   );
-  assert.match(toolbar, /t\("deals\.results\.modifySearch"\)/);
-  assert.match(toolbar, /SlidersHorizontal/);
-  assert.match(toolbar, /openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/);
-  assert.match(toolbar, /activeFilterCount/);
+  assert.match(
+    source,
+    /createPortal\(renderMobileHeaderSearch\(\), mobileNavSearchTarget\)/,
+  );
+  assert.match(headerSearch, /data-cars-results-mobile-header-search/);
+  assert.match(headerSearch, /locationPairSummary/);
+  assert.match(headerSearch, /rentalDateSummary/);
+  assert.match(headerSearch, /aria-expanded=\{mobileSearchOpen\}/);
+  assert.match(
+    headerSearch,
+    /openMobileSearchDrawer\([\s\S]*?event\.currentTarget[\s\S]*?getOverlayActivationModality\(event\)/,
+  );
+
+  assert.doesNotMatch(source, /renderMobileControlsRow/);
+  assert.doesNotMatch(source, /renderMobileCompactResultsHeader/);
+  assert.doesNotMatch(source, /mobileCompactHeaderVisible/);
+  assert.doesNotMatch(source, /mobileCompactHeaderHandoffRef/);
+  assert.doesNotMatch(source, /data-cars-mobile-compact-handoff/);
 });
 
-test("compact toolbar keeps the full mobile top surface white while preserving Hotels text treatment", () => {
+test("unified Cars header search is compact, shrink-safe, and desktop-inspired", () => {
   assert.match(
-    toolbar,
-    /fixed inset-x-0 top-0 z-\[90\] bg-white/,
+    headerSearch,
+    /h-11 w-full min-w-0[\s\S]*rounded-\[9px\][\s\S]*border border-\[#D8E1EC\][\s\S]*bg-\[#F8FAFC\]/,
   );
-  assert.doesNotMatch(toolbar, /bg-\[#F2F4F8\]|bg-\[#F5F7FB\]/);
+  assert.match(headerSearch, /<Car[\s\S]*?h-3\.5 w-3\.5/);
   assert.match(
-    toolbar,
-    /text-\[15px\] font-bold leading-5 tracking-\[-0\.015em\] text-\[#07133B\]/,
-  );
-  assert.match(
-    toolbar,
-    /text-\[11px\] font-medium leading-4 text-\[#536B92\]/,
+    headerSearch,
+    /text-\[11\.5px\] font-semibold leading-\[14px\][\s\S]*locationPairSummary/,
   );
   assert.match(
-    toolbar,
-    /data-cars-compact-edit-icon[\s\S]*?strokeWidth=\{2\}/,
+    headerSearch,
+    /text-\[9\.5px\] font-medium leading-3[\s\S]*rentalDateSummary/,
+  );
+  assert.match(headerSearch, /<SquarePen[\s\S]*?strokeWidth=\{2\}/);
+  assert.doesNotMatch(headerSearch, /ArrowLeft|SlidersHorizontal|Modify search<\/span>/);
+});
+
+test("one unchanged shortcut rail becomes sticky instead of compacting on scroll", () => {
+  assert.equal((source.match(/data-cars-results-quick-filters/g) ?? []).length, 1);
+  assert.equal((source.match(/data-cars-results-sticky-shortcuts/g) ?? []).length, 1);
+  assert.match(
+    stickyShortcuts,
+    /max-sm:sticky max-sm:top-\[calc\(var\(--cars-results-safe-area-top\)\+61px\)\] max-sm:z-40/,
   );
   assert.match(
-    toolbar,
-    /<SlidersHorizontal[\s\S]*?className="h-4 w-4 shrink-0 text-\[#1a1a1a\]"/,
+    stickyShortcuts,
+    /data-cars-results-quick-filters[\s\S]*?flex-nowrap[\s\S]*?gap-1\.5[\s\S]*?overflow-x-auto[\s\S]*?overscroll-x-contain/,
   );
+  assert.match(stickyShortcuts, /min-h-11 min-w-11 shrink-0/);
   assert.match(
-    toolbar,
-    /px-2 text-\[14px\] font-semibold text-\[#07133B\]/,
+    stickyShortcuts,
+    /h-9 items-center[\s\S]*?rounded-\[9px\][\s\S]*?px-2\.5 text-\[13px\] font-semibold leading-4/,
   );
-  assert.doesNotMatch(
-    toolbar,
-    /<SlidersHorizontal[\s\S]*?text-\[#004BB8\]/,
+  assert.ok(
+    stickyShortcuts.indexOf("filtersButtonRef") <
+      stickyShortcuts.indexOf('quickFilterGroupId === "sort"'),
+  );
+  assert.ok(
+    stickyShortcuts.indexOf('quickFilterGroupId === "sort"') <
+      stickyShortcuts.indexOf("quickFilterGroups.map"),
   );
 });
 
-test("compact toolbar opens the existing filter drawer without duplicate state", () => {
+test("sticky shortcuts keep the existing filter state and drawers", () => {
   assert.match(source, /openMobileFiltersDrawer[\s\S]*setFiltersOpen\(true\)/);
   assert.match(source, /\{filtersOpen \? \([\s\S]*?<CarFilters/);
   assert.equal(
@@ -69,52 +93,4 @@ test("compact toolbar opens the existing filter drawer without duplicate state",
     1,
   );
   assert.doesNotMatch(source, /mobileStickyFiltersOpen|stickySelectedFilters/);
-});
-
-test("compact header waits until the normal mobile results toolbar has scrolled away", () => {
-  const normalToolbarStart = source.indexOf("data-cars-results-toolbar");
-  const normalToolbarEnd = source.indexOf(
-    "data-cars-mobile-compact-handoff",
-    normalToolbarStart,
-  );
-  const firstCardList = source.indexOf(
-    "data-cars-results-card-list",
-    normalToolbarEnd,
-  );
-
-  assert.ok(normalToolbarStart >= 0);
-  assert.ok(normalToolbarEnd > normalToolbarStart);
-  assert.ok(firstCardList > normalToolbarEnd);
-  assert.match(
-    source.slice(normalToolbarStart, normalToolbarEnd),
-    /data-cars-results-quick-filters[\s\S]*CarPriceAlertControl[\s\S]*data-cars-results-summary-row/,
-  );
-  assert.match(
-    source,
-    /ref=\{mobileCompactHeaderHandoffRef\}[\s\S]*data-cars-mobile-compact-handoff[\s\S]*sm:hidden/,
-  );
-  assert.match(
-    source,
-    /hasPassedMobileCompactHandoff[\s\S]*rect\.bottom < 8[\s\S]*window\.scrollY > 96/,
-  );
-  assert.match(
-    source,
-    /hasPassedMobileCompactHandoff\(entry\.boundingClientRect\)/,
-  );
-});
-
-test("Hotel-style SquarePen remains exclusive to the normal summary", () => {
-  const normalControls = source.slice(
-    source.indexOf("const renderMobileControlsRow"),
-    source.indexOf("const renderCarsSearchForm"),
-  );
-  assert.match(normalControls, /locationPairSummary/);
-  assert.match(normalControls, /SquarePen/);
-  assert.match(toolbar, /data-cars-compact-edit-icon[\s\S]*aria-hidden="true"/);
-  assert.doesNotMatch(
-    toolbar,
-    /PencilLine|SquarePen|rounded[^\n]*data-cars-compact-edit-icon|rentalDateSummary|driverAgeSummary/,
-  );
-  assert.match(source, /mobileCompactHeaderHandoffRef/);
-  assert.match(source, /mobileCompactHeaderVisible/);
 });

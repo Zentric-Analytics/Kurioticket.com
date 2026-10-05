@@ -117,6 +117,7 @@ export default async function CarsResultsPage({
         stableMobileSafeAreaTop
         hotelDesktopBoundary
         carsResultsDesktopSticky
+        carsResultsMobileInlineSearch
       />
       <Suspense
         key={searchIdentity}

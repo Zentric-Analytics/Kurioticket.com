@@ -52,7 +52,7 @@ test("homepage keeps search product tabs and primary header controls", () => {
 
 test("mobile account and menu launchers use clean 44px utility targets", () => {
   const mobileControlsStart = headerSource.indexOf(
-    '<div className="flex items-center gap-0 md:hidden">',
+    '<div className={cn("flex items-center gap-0 md:hidden"',
   );
   const mobileControls = headerSource.slice(
     mobileControlsStart,
@@ -64,6 +64,10 @@ test("mobile account and menu launchers use clean 44px utility targets", () => {
 
   assert.ok(mobileControlsStart >= 0);
   assert.match(mobileControls, /flex items-center gap-0 md:hidden/);
+  assert.match(
+    mobileControls,
+    /carsResultsMobileInlineSearch && "shrink-0"/,
+  );
   assert.equal(mobileControls.match(/h-11 w-11/g)?.length, 3);
   assert.equal(mobileControls.match(/border border-transparent bg-transparent/g)?.length, 3);
   assert.doesNotMatch(mobileControls, /bg-\[#F3F7FA\]|border-\[#DDE7F0\]/);
@@ -91,7 +95,10 @@ test("desktop product navigation remains independent of the mobile suppression p
 
 test("results navbar drawer uses pathname-aware product highlighting", () => {
   assert.match(headerSource, /data-mobile-results-navbar/);
-  assert.match(headerSource, /const active = mobileResultsSearch && isNavItemActive\(item\.href\)/);
+  assert.match(
+    headerSource,
+    /const active = \(mobileResultsSearch \|\| carsResultsMobileInlineSearch\) && isNavItemActive\(item\.href\)/,
+  );
   assert.match(headerSource, /aria-current=\{active \? "page" : undefined\}/);
   assert.doesNotMatch(headerSource, /mobileResultsSearch && item\.href === "\/hotels"/);
   assert.match(headerSource, /href\.startsWith\("\/flights"\)[\s\S]*pathname\.startsWith\("\/flights"\)/);
@@ -105,11 +112,15 @@ test("results navbar accepts a custom leading action while preserving the defaul
   assert.match(headerSource, /aria-controls="mobile-menu-drawer"/);
 });
 
-test("results navbar can opt out of sticky behavior for a scroll handoff", () => {
+test("Cars results can keep the standard mobile header sticky with an inline search slot", () => {
   assert.match(headerSource, /mobileResultsSticky\?: boolean/);
   assert.match(headerSource, /mobileResultsSticky = true/);
+  assert.match(headerSource, /carsResultsMobileInlineSearch\?: boolean/);
+  assert.match(headerSource, /carsResultsMobileInlineSearch = false/);
   assert.match(
     headerSource,
-    /mobileResultsSearch && mobileResultsSticky && "max-sm:sticky max-sm:top-0 max-sm:z-\[950\]"/,
+    /\(\(mobileResultsSearch && mobileResultsSticky\) \|\| carsResultsMobileInlineSearch\) &&\s*"max-sm:sticky max-sm:top-0 max-sm:z-\[950\]"/,
   );
+  assert.match(headerSource, /data-cars-results-mobile-nav-search/);
 });
+

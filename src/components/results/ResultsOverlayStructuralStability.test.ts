@@ -11,13 +11,6 @@ const cars = source("./CarsResultsClient.tsx");
 const hotelSearch = source("../search/HotelSearchBar.tsx");
 const hotelResults = source("./HotelResultsClient.tsx");
 
-function expectInteractionOnlyGating(region: string) {
-  assert.match(region, /inert=\{mobileSearchOpen \? true : undefined\}/);
-  assert.match(region, /aria-hidden=\{mobileSearchOpen \? true : undefined\}/);
-  assert.match(region, /mobileSearchOpen && "pointer-events-none"/);
-  assert.doesNotMatch(region, /mobileSearchOpen && "(?:hidden|invisible|h-0|max-h-0|absolute)"/);
-}
-
 test("flight Cars-style summary remains mounted while Edit Search owns its overlay", () => {
   const start = flights.indexOf('<section\n        inert={mobileSearchOpen ? true : undefined}');
   const end = flights.indexOf("{renderMobileCompactResultsHeader()}", 0);
@@ -40,14 +33,24 @@ test("hotel mobile results summary stays mounted beneath Edit Search like Cars",
   assert.match(hotelSearch, /compact && !mobileResultsSheet \? \(/);
 });
 
-test("cars mobile results summary stays mounted beneath Edit Search", () => {
-  const start = cars.indexOf('<section\n        inert={mobileSearchOpen ? true : undefined}');
-  const end = cars.indexOf("<MobileDatePickerDialog", start);
-  const summary = cars.slice(start, end);
+test("cars keeps one main-header search launcher while Edit Search owns its overlay", () => {
+  const start = cars.indexOf("const renderMobileHeaderSearch");
+  const end = cars.indexOf("const renderCarsSearchForm", start);
+  const headerSearch = cars.slice(start, end);
 
   assert.ok(start >= 0 && end > start);
-  expectInteractionOnlyGating(summary);
-  assert.match(summary, /renderMobileControlsRow\(\)/);
+  assert.match(headerSearch, /data-cars-results-mobile-header-search/);
+  assert.match(headerSearch, /aria-expanded=\{mobileSearchOpen\}/);
+  assert.match(headerSearch, /openMobileSearchDrawer/);
+  assert.match(
+    cars,
+    /createPortal\(renderMobileHeaderSearch\(\), mobileNavSearchTarget\)/,
+  );
+  assert.match(
+    cars,
+    /<MobileResultsEditSheet[\s\S]*?appearance="carsResultsEdit"/,
+  );
+  assert.doesNotMatch(cars, /renderMobileControlsRow|renderMobileCompactResultsHeader|mobileCompactHeaderVisible/);
 });
 
 test("standalone mobile and desktop flight lists share pagination without sharing layout shells", () => {
