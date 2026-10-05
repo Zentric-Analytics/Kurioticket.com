@@ -1599,15 +1599,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         const selector =
           restoreTarget === "trip"
             ? "[data-flight-results-header-trip]"
-            : restoreTarget === "origin"
-              ? "[data-flight-results-header-origin]"
-              : restoreTarget === "destination"
-                ? "[data-flight-results-header-destination]"
-                : restoreTarget === "dates" || restoreTarget === "return"
-                  ? "[data-flight-results-header-dates]"
-                  : restoreTarget === "travelers"
-                    ? "[data-flight-results-header-travelers]"
-                    : null;
+            : restoreTarget === "dates" || restoreTarget === "return"
+              ? "[data-flight-results-header-dates]"
+              : restoreTarget === "travelers"
+                ? "[data-flight-results-header-travelers]"
+                : null;
         const mountedLauncher = selector
           ? document.querySelector<HTMLElement>(selector)
           : null;
