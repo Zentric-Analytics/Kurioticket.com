@@ -14,39 +14,59 @@ const presentationSource = readFileSync(
   "src/lib/cars/carFilterPresentation.ts",
   "utf8",
 );
-const mobileSummarySection = resultsSource.slice(
-  resultsSource.indexOf('aria-label={t("carsResults.carRentalSearch")}') - 200,
-  resultsSource.indexOf("<MobileDatePickerDialog"),
-);
-const mobileSummaryControls = resultsSource.slice(
-  resultsSource.indexOf("const renderMobileControlsRow"),
+const mobileHeaderSearch = resultsSource.slice(
+  resultsSource.indexOf("const renderMobileHeaderSearch"),
   resultsSource.indexOf("const renderCarsSearchForm"),
 );
+const stickyShortcuts = resultsSource.slice(
+  resultsSource.indexOf("data-cars-results-sticky-shortcuts"),
+  resultsSource.indexOf("data-cars-results-toolbar"),
+);
 
-test("Cars Results keeps the mobile canvas surface through desktop", () => {
-  assert.match(resultsSource, /<main className="flex-1 bg-\[#F5F7FB\] pb-8">/);
-  assert.doesNotMatch(resultsSource, /bg-\[#F5F7FB\] pb-8 sm:bg-/);
+test("Cars Results keeps the established responsive canvas surfaces", () => {
+  assert.match(
+    resultsSource,
+    /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white pb-8">/,
+  );
 });
 
-test("mobile Cars Results keeps its summary band white above the native canvas", () => {
-  assert.match(mobileSummarySection, /bg-white pb-0 pt-0 sm:hidden/);
-  assert.doesNotMatch(mobileSummarySection, /bg-\[#F5F7FB\]/);
-  assert.match(mobileSummarySection, /relative translate-y-1\/2/);
-  assert.match(mobileSummaryControls, /rounded-\[13px\] border border-\[#D8E1EC\] bg-white/);
+test("mobile Cars Results puts one compact search control in the main header", () => {
+  assert.match(mobileHeaderSearch, /data-cars-results-mobile-header-search/);
+  assert.match(mobileHeaderSearch, /h-11 w-full min-w-0/);
+  assert.match(
+    mobileHeaderSearch,
+    /rounded-\[9px\] border border-\[#D8E1EC\] bg-\[#F8FAFC\]/,
+  );
+  assert.match(mobileHeaderSearch, /locationPairSummary/);
+  assert.match(mobileHeaderSearch, /rentalDateSummary/);
+  assert.match(mobileHeaderSearch, /<Car/);
+  assert.match(mobileHeaderSearch, /<SquarePen/);
+  assert.match(
+    resultsSource,
+    /createPortal\(renderMobileHeaderSearch\(\), mobileNavSearchTarget\)/,
+  );
 });
 
-test("mobile search summary translates the native compact hierarchy without shrinking its touch target", () => {
-  assert.match(mobileSummaryControls, /min-h-\[62px\]/);
-  assert.match(mobileSummaryControls, /rounded-\[13px\] border border-\[#D8E1EC\]/);
-  assert.match(mobileSummaryControls, /text-\[15px\] font-semibold leading-\[19px\]/);
-  assert.match(mobileSummaryControls, /mt-\[2px\][^\"]*text-\[12px\] font-medium leading-\[16px\]/);
-  assert.match(mobileSummaryControls, /h-11 w-11[\s\S]*SquarePen size=\{16\}/);
+test("mobile Cars Results has no alternate search header before or after scrolling", () => {
+  for (const retired of [
+    /renderMobileControlsRow/,
+    /renderMobileCompactResultsHeader/,
+    /mobileCompactHeaderVisible/,
+    /mobileCompactHeaderHandoffRef/,
+    /data-cars-mobile-compact-handoff/,
+  ]) {
+    assert.doesNotMatch(resultsSource, retired);
+  }
+  assert.equal(
+    (resultsSource.match(/data-cars-results-mobile-header-search/g) ?? []).length,
+    1,
+  );
 });
 
-test("mobile shortcuts are compact, scrollable touch targets in canonical order", () => {
+test("mobile shortcuts remain the existing scrollable touch targets in canonical order", () => {
   const rail = resultsSource.slice(
     resultsSource.indexOf("data-cars-results-quick-filters"),
-    resultsSource.indexOf("data-cars-results-summary-row"),
+    resultsSource.indexOf("data-cars-results-toolbar"),
   );
   assert.ok(rail.indexOf("filtersButtonRef") < rail.indexOf('quickFilterGroupId === "sort"'));
   assert.ok(rail.indexOf('quickFilterGroupId === "sort"') < rail.indexOf("quickFilterGroups.map"));
@@ -60,6 +80,19 @@ test("mobile shortcuts are compact, scrollable touch targets in canonical order"
   assert.doesNotMatch(rail, /Swipe for more/i);
   assert.match(resultsSource, /mobile \? group\.title \?\? "Price"/);
   assert.doesNotMatch(rail, /Price \(per day\)/);
+});
+
+test("mobile shortcuts keep their original sizing while the rail itself becomes sticky", () => {
+  assert.match(
+    stickyShortcuts,
+    /max-sm:sticky max-sm:top-\[calc\(var\(--cars-results-safe-area-top\)\+61px\)\] max-sm:z-40/,
+  );
+  assert.match(stickyShortcuts, /max-sm:bg-\[#F5F7FB\] max-sm:py-1/);
+  assert.equal(
+    (resultsSource.match(/data-cars-results-quick-filters/g) ?? []).length,
+    1,
+  );
+  assert.doesNotMatch(stickyShortcuts, /scale-|h-8|text-\[11px\]/);
 });
 
 test("mobile shortcuts retain every shared quick-filter group", () => {
@@ -79,10 +112,10 @@ test("mobile result summary hides the desktop Sort by control", () => {
   assert.match(summary, /carsResults\.sortBy/);
 });
 
-test("mobile result rhythm matches the native list while desktop spacing stays responsive", () => {
+test("mobile result rhythm no longer reserves space for the removed summary card", () => {
   assert.match(
     resultsSource,
-    /page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-10 sm:pt-6/,
+    /page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-3 sm:pt-6/,
   );
   assert.match(resultsSource, /gap-2 pt-1 sm:gap-3 lg:py-1/);
   assert.match(resultsSource, /min-w-0 space-y-0 sm:space-y-4/);
