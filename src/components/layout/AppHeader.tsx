@@ -77,6 +77,7 @@ function SavedHeartIcon({
 type AppHeaderProps = {
   mobileResultsSearch?: ReactNode;
   mobileResultsLeadingAction?: ReactNode;
+  mobileResultsTrailingActions?: boolean;
   mobileResultsSticky?: boolean;
   carsResultsMobileInlineSearch?: boolean;
   hideMobileSecondaryNavLinks?: boolean;
@@ -142,6 +143,7 @@ const mobileInfoLegalMenuItems = [
 export function AppHeader({
   mobileResultsSearch,
   mobileResultsLeadingAction,
+  mobileResultsTrailingActions = false,
   mobileResultsSticky = true,
   carsResultsMobileInlineSearch = false,
   hideMobileSecondaryNavLinks = false,
@@ -750,14 +752,37 @@ export function AppHeader({
           hotelDesktopBoundary && "lg:shadow-[0_2px_12px_rgba(12,14,28,0.08)]",
         )}
       >
-        {mobileResultsSearch ? <div data-mobile-results-navbar className="flex h-[72px] items-center gap-2 border-b border-slate-200 px-2 sm:hidden">
+        {mobileResultsSearch ? <div data-mobile-results-navbar className={cn("flex h-[72px] items-center border-b border-slate-200 sm:hidden", mobileResultsTrailingActions ? "gap-1 px-1" : "gap-2 px-2")}>
           {mobileResultsLeadingAction ?? (
-            <button type="button" aria-label={mobileMenuOpen ? t.closeMobileMenu : t.openMobileMenu} aria-expanded={mobileMenuOpen} aria-controls="mobile-menu-drawer" aria-haspopup="dialog" onClick={() => { setMobileAccountOpen(false); setMobileMenuOpen((value) => !value); }} className="focus-ring flex h-11 w-12 shrink-0 items-center justify-center gap-1 rounded-lg">
-              <RawImage src="/brand/kurioticket-icon-blue.svg" alt="Kurioticket" className="h-7 w-7" /><ChevronDown className={cn("h-3 w-3 text-slate-700", mobileMenuOpen && "rotate-180")} aria-hidden="true" />
-            </button>
+            mobileResultsTrailingActions ? (
+              <Link href="/" aria-label="Kurioticket home" onClick={(event) => handleRouteLinkClick(event, "/")} className="focus-ring flex h-11 w-10 shrink-0 items-center justify-center rounded-lg">
+                <RawImage src="/brand/kurioticket-icon-blue.svg" alt="" className="h-7 w-7" />
+              </Link>
+            ) : (
+              <button type="button" aria-label={mobileMenuOpen ? t.closeMobileMenu : t.openMobileMenu} aria-expanded={mobileMenuOpen} aria-controls="mobile-menu-drawer" aria-haspopup="dialog" onClick={() => { setMobileAccountOpen(false); setMobileMenuOpen((value) => !value); }} className="focus-ring flex h-11 w-12 shrink-0 items-center justify-center gap-1 rounded-lg">
+                <RawImage src="/brand/kurioticket-icon-blue.svg" alt="Kurioticket" className="h-7 w-7" /><ChevronDown className={cn("h-3 w-3 text-slate-700", mobileMenuOpen && "rotate-180")} aria-hidden="true" />
+              </button>
+            )
           )}
           <div className="min-w-0 flex-1" onClickCapture={() => setMobileMenuOpen(false)}>{mobileResultsSearch}</div>
-
+          {mobileResultsTrailingActions ? (
+            <div className="flex shrink-0 items-center gap-0">
+              {isSignedIn ? (
+                <button type="button" aria-label={t.openAccountMenu} aria-expanded={mobileAccountOpen} aria-controls="mobile-account-drawer" aria-haspopup="dialog" onClick={() => { setMobileMenuOpen(false); setMobileAccountOpen((value) => !value); }} className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl text-[#021C2B] hover:bg-[#EEF6FC]">
+                  <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full text-[11px] font-black text-[#004BB8]">
+                    {session?.user?.image ? <RawImage src={session.user.image} alt="" className="h-full w-full object-cover" /> : accountInitials}
+                  </span>
+                </button>
+              ) : (
+                <Link href="/auth/signin" aria-label={t.signIn} onClick={(event) => handleRouteLinkClick(event, "/auth/signin")} className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl text-[#021C2B] hover:bg-[#EEF6FC]">
+                  <UserCircle size={22} aria-hidden="true" />
+                </Link>
+              )}
+              <button type="button" aria-label={mobileMenuOpen ? t.closeMobileMenu : t.openMobileMenu} aria-expanded={mobileMenuOpen} aria-controls="mobile-menu-drawer" aria-haspopup="dialog" onClick={() => { setMobileAccountOpen(false); setMobileMenuOpen((value) => !value); }} className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl text-[#021C2B] hover:bg-[#EEF6FC]">
+                {mobileMenuOpen ? <X size={23} aria-hidden="true" /> : <Menu size={23} aria-hidden="true" />}
+              </button>
+            </div>
+          ) : null}
         </div> : null}
         <div className={cn("page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3", mobileResultsSearch && "max-sm:hidden", resultsDesktopSticky && "lg:py-[14px]")}>
           <div className={cn("flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8", resultsDesktopSticky && "lg:gap-4", carsResultsMobileInlineSearch && "max-sm:gap-2")}>
@@ -1258,7 +1283,7 @@ export function AppHeader({
                   </div>
 
                   <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
-                    {mobileResultsSearch ? <button type="button" aria-haspopup="dialog" onClick={() => { setMobileMenuOpen(false); if (isSignedIn) { setMobileAccountOpen(true); } else setMobileSigninOpen(true); }} className="focus-ring mb-5 flex min-h-12 w-full items-center gap-3 rounded-lg bg-transparent px-3 text-left text-[15px] font-medium text-slate-900 active:bg-slate-100"><UserCircle size={22} /><span>{isSignedIn ? t["accountMenu.myAccount.label"] : t.signIn}</span></button> : null}
+                    {mobileResultsSearch && !mobileResultsTrailingActions ? <button type="button" aria-haspopup="dialog" onClick={() => { setMobileMenuOpen(false); if (isSignedIn) { setMobileAccountOpen(true); } else setMobileSigninOpen(true); }} className="focus-ring mb-5 flex min-h-12 w-full items-center gap-3 rounded-lg bg-transparent px-3 text-left text-[15px] font-medium text-slate-900 active:bg-slate-100"><UserCircle size={22} /><span>{isSignedIn ? t["accountMenu.myAccount.label"] : t.signIn}</span></button> : null}
 
                     <section aria-labelledby="mobile-menu-preferences-heading">
                       <p
@@ -1442,7 +1467,11 @@ export function AppHeader({
         {isSignedIn && mobileAccountOpen && typeof document !== "undefined"
           ? createPortal(
               <div
-                className={cn("fixed inset-0 z-[70] md:hidden", carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:z-[940]")}
+                className={cn(
+                  "fixed inset-0 z-[70] md:hidden",
+                  carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:z-[940]",
+                  mobileResultsSearch && mobileResultsTrailingActions && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:z-[940]",
+                )}
                 role="presentation"
               >
                 <button
@@ -1457,7 +1486,11 @@ export function AppHeader({
                   role="dialog"
                   aria-modal="true"
                   aria-label={t.openAccountMenu}
-                  className={cn("fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl", carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:h-[calc(100dvh-61px-var(--cars-results-safe-area-top))]")}
+                  className={cn(
+                    "fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl",
+                    carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:h-[calc(100dvh-61px-var(--cars-results-safe-area-top))]",
+                    mobileResultsSearch && mobileResultsTrailingActions && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:h-[calc(100dvh-72px-env(safe-area-inset-top))]",
+                  )}
                 >
                   <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
                     <section aria-label="Account">
