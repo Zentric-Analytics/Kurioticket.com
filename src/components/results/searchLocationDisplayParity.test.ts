@@ -17,11 +17,16 @@ test("flight, hotel, and car compact location controls render explanatory second
   assert.match(cars, /MobileLocationLauncher[\s\S]*?display\.secondary/);
 });
 
-test("mobile car compact results header keeps the safe-area and toolbar surface fully white", () => {
+test("mobile car results uses one compact location/date control inside the main header", () => {
   const cars = read("./CarsResultsClient.tsx");
-  const start = cars.indexOf("const renderMobileCompactResultsHeader");
-  const header = cars.slice(start, cars.indexOf("\n  return (", start + 200));
-  assert.match(header, /bg-white px-3/);
-  assert.match(header, /pt-\[calc\(0\.5rem\+var\(--cars-results-safe-area-top\)\)\]/);
-  assert.doesNotMatch(header, /bg-\[#F2F4F8\]|bg-\[#F5F7FB\]|backdrop-blur/);
+  const start = cars.indexOf("const renderMobileHeaderSearch");
+  const header = cars.slice(start, cars.indexOf("const renderCarsSearchForm", start));
+
+  assert.ok(start >= 0);
+  assert.match(header, /data-cars-results-mobile-header-search/);
+  assert.match(header, /locationPairSummary/);
+  assert.match(header, /rentalDateSummary/);
+  assert.match(header, /bg-\[#F8FAFC\]/);
+  assert.match(header, /border border-\[#D8E1EC\]/);
+  assert.doesNotMatch(cars, /renderMobileCompactResultsHeader|data-cars-mobile-compact-handoff/);
 });
