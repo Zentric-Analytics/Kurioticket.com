@@ -6981,6 +6981,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     );
   }
 
+  // Keep mobile Flight Results inside the same AppHeader hierarchy as desktop.
   function renderMobileDesktopStyleHeaderSearch() {
     const openEditSearch = (event: ReactMouseEvent<HTMLButtonElement>) =>
       openMobileSearchDrawer(
