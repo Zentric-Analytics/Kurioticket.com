@@ -2,16 +2,16 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("mobile results rhythm has no decorative divider or oversized spacer", async () => {
+test("mobile results rhythm has no duplicate header, decorative divider, or oversized spacer", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
 
-  assert.match(source, /data-flight-mobile-summary-card/);
-  assert.match(source, /h-\[4\.25rem\][\s\S]{0,260}rounded-xl/);
-  assert.match(source, /relative translate-y-1\/2/);
-  assert.match(source, /bg-white pb-0 pt-0 sm:hidden/);
+  assert.match(source, /data-flight-mobile-unified-header-search/);
+  assert.doesNotMatch(source, /data-flight-mobile-summary-card/);
+  assert.doesNotMatch(source, /relative translate-y-1\/2/);
+  assert.doesNotMatch(source, /renderMobileCompactResultsHeader|data-flight-results-compact-header/);
   assert.match(source, /flight-results-grid page-shell grid[^\n]*pb-0 pt-8 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-4/);
   assert.doesNotMatch(source, /aria-label="Breadcrumb"/);
   assert.doesNotMatch(source, /flight-results-grid page-shell grid[^\n]*pt-12/);
