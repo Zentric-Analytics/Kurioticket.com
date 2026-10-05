@@ -70,7 +70,7 @@ export function CarDetailsSectionNav({
       <div
         role="tablist"
         aria-label={labels.navigation}
-        className="sticky top-[var(--car-details-mobile-header-boundary)] z-30 mt-0 flex w-full items-stretch border-b border-slate-200 bg-[#F5F7FB] lg:hidden"
+        className="sticky top-[var(--car-details-mobile-header-boundary)] z-30 mt-0 flex w-full items-stretch border-b border-slate-200 bg-white sm:bg-[#f8fafc] lg:hidden"
         data-car-details-mobile-section-nav
       >
         {mobileTabs.map((tab, index) => {
@@ -112,7 +112,7 @@ export function CarDetailsSectionNav({
       >
         <div
           aria-hidden="true"
-          className={`pointer-events-none fixed inset-x-0 top-0 z-0 hidden h-[48px] bg-[#EEF2F7]/92 transition-[opacity,box-shadow] duration-200 ease-out lg:block ${desktopStuck ? "opacity-100 shadow-[0_5px_16px_rgba(15,23,42,0.055)] backdrop-blur-xl" : "opacity-0"}`}
+          className={`pointer-events-none fixed inset-x-0 top-0 z-0 hidden h-[48px] bg-[#F7F9FC]/92 transition-[opacity,box-shadow] duration-200 ease-out lg:block ${desktopStuck ? "opacity-100 shadow-[0_5px_16px_rgba(15,23,42,0.055)] backdrop-blur-xl" : "opacity-0"}`}
           data-car-details-desktop-sticky-backdrop
         />
         <div
