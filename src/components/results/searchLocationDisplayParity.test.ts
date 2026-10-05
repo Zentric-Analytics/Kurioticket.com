@@ -32,7 +32,7 @@ test("mobile car results uses separate compact location, date, and edit fields i
   assert.match(header, /rentalDateSummary/);
   assert.match(header, /<CalendarDays/);
   assert.equal(
-    (header.match(/rounded-\[9px\] border border-\[#D8E1EC\] bg-\[#F8FAFC\]/g) ?? []).length,
+    (header.match(/rounded-\[8px\] border border-\[#D5DFEA\] bg-\[#FBFCFE\]/g) ?? []).length,
     3,
   );
   assert.doesNotMatch(header, /data-cars-results-mobile-search-divider/);
