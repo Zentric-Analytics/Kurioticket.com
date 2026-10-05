@@ -3,16 +3,16 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const carsSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
+const appHeaderSource = readFileSync(
+  new URL("../../../components/layout/AppHeader.tsx", import.meta.url),
+  "utf8",
+);
 const safeAreaSource = readFileSync(
   new URL("../../../components/results/CarsResultsMobileSafeArea.tsx", import.meta.url),
   "utf8",
 );
 const carsClientSource = readFileSync(
   new URL("../../../components/results/CarsResultsClient.tsx", import.meta.url),
-  "utf8",
-);
-const flightResultsSource = readFileSync(
-  new URL("../../../components/results/FlightResultsClient.tsx", import.meta.url),
   "utf8",
 );
 const globalStyles = readFileSync(
@@ -29,7 +29,7 @@ const getAppHeader = (source: string) =>
     .map(([header]) => header)
     .find((header) => header.includes("flushDesktopBottom")) ?? "";
 
-test("Cars Results preserves AppHeader while matching Flights mobile header props", () => {
+test("Cars Results keeps the standard AppHeader and opts into the inline mobile Cars search", () => {
   const carsHeader = getAppHeader(carsSource);
   const flightsHeader = getAppHeader(flightsSource);
 
@@ -39,16 +39,43 @@ test("Cars Results preserves AppHeader while matching Flights mobile header prop
     "flushMobileBottom",
     "hideDesktopTravelNav",
     "hideMobileCategoryTabs",
+    "stableMobileSafeAreaTop",
+    "carsResultsDesktopSticky",
+    "carsResultsMobileInlineSearch",
   ]) {
-    assert.match(carsHeader, new RegExp(`\\b${prop}\\b`));
+    assert.match(carsHeader, new RegExp("\\b" + prop + "\\b"));
   }
   for (const mobileProp of ["flushMobileBottom", "hideMobileCategoryTabs"]) {
-    assert.match(flightsHeader, new RegExp(`\\b${mobileProp}\\b`));
-    assert.match(carsHeader, new RegExp(`\\b${mobileProp}\\b`));
+    assert.match(flightsHeader, new RegExp("\\b" + mobileProp + "\\b"));
   }
+  assert.doesNotMatch(carsHeader, /mobileResultsSearch=/);
   assert.doesNotMatch(carsHeader, /mobileSurface="muted"/);
-  assert.match(carsHeader, /stableMobileSafeAreaTop/);
-  assert.doesNotMatch(flightsHeader, /stableMobileSafeAreaTop/);
+});
+
+test("AppHeader reserves a mobile search slot between the Kurioticket logo and account controls", () => {
+  const logo = appHeaderSource.indexOf('src="/brand/kurioticket-logo-primary-light-bg.svg"');
+  const searchSlot = appHeaderSource.indexOf("data-cars-results-mobile-nav-search", logo);
+  const mobileActions = appHeaderSource.indexOf(
+    'className={cn("flex items-center gap-0 md:hidden"',
+    searchSlot,
+  );
+
+  assert.ok(logo >= 0);
+  assert.ok(searchSlot > logo);
+  assert.ok(mobileActions > searchSlot);
+  assert.match(appHeaderSource, /carsResultsMobileInlineSearch\?: boolean/);
+  assert.match(
+    appHeaderSource,
+    /carsResultsMobileInlineSearch && "max-sm:h-6"/,
+  );
+  assert.match(
+    appHeaderSource,
+    /\(\(mobileResultsSearch && mobileResultsSticky\) \|\| carsResultsMobileInlineSearch\)[\s\S]*?"max-sm:sticky max-sm:top-0 max-sm:z-\[950\]"/,
+  );
+  assert.match(
+    carsClientSource,
+    /createPortal\(renderMobileHeaderSearch\(\), mobileNavSearchTarget\)/,
+  );
 });
 
 test("Cars Results owns a permanent non-interactive mobile safe-area guard that is white by default", () => {
@@ -62,25 +89,24 @@ test("Cars Results owns a permanent non-interactive mobile safe-area guard that 
     safeAreaSource,
     /backgroundColor: "var\(--cars-results-safe-area-surface, #ffffff\)"/,
   );
-  assert.doesNotMatch(safeAreaSource, /useLayoutEffect|ResizeObserver|requestAnimationFrame|addEventListener/);
+  assert.doesNotMatch(
+    safeAreaSource,
+    /<style>|html:has|translate-y-0|useLayoutEffect|ResizeObserver|requestAnimationFrame|addEventListener/,
+  );
 });
 
-test("Cars compact mobile header shares the Flights muted surface while preserving normal white and Filters override states", () => {
-  assert.match(
-    flightResultsSource,
-    /data-flight-results-compact-header[\s\S]*?bg-\[#F2F4F8\]/,
-  );
-  assert.match(
+test("the unified header keeps a white safe area while the full Filters overlay can intentionally override it", () => {
+  assert.doesNotMatch(
     safeAreaSource,
-    /\[data-cars-results-experience\] > header\[class\*="--cars-results-safe-area-top"\][\s\S]*?background-color: var\(--cars-results-safe-area-surface, #ffffff\);/,
-  );
-  assert.match(
-    safeAreaSource,
-    /html:has\([\s\S]*?header\[class\*="--cars-results-safe-area-top"\]\.translate-y-0[\s\S]*?--cars-results-safe-area-surface: #F2F4F8;/,
+    /--cars-results-safe-area-surface:\s*#F2F4F8/,
   );
   assert.match(
     carsClientSource,
     /if \(!filtersOpen \|\| typeof window === "undefined"\) return undefined;[\s\S]*?safeAreaSurfaceProperty = "--cars-results-safe-area-surface";[\s\S]*?root\.style\.setProperty\(safeAreaSurfaceProperty, "#F2F4F8"\);/,
+  );
+  assert.match(
+    carsClientSource,
+    /data-cars-results-sticky-shortcuts[\s\S]*?max-sm:top-\[calc\(var\(--cars-results-safe-area-top\)\+61px\)\]/,
   );
 });
 
