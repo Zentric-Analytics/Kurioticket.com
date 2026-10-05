@@ -107,12 +107,15 @@ test("sticky search moves focus directly to the requested field editor", () => {
   assert.match(source, /stickySearchLauncherRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
 });
 
-test("direct route editors restore focus to the remounted header launcher", () => {
+test("direct route editors keep their mounted inputs instead of remounting launchers", () => {
+  const toolbar = desktopHeaderSearchBarSource();
+
   assert.match(source, /stickySearchRestoreTargetRef/);
-  assert.match(source, /data-flight-results-header-origin/);
-  assert.match(source, /data-flight-results-header-destination/);
-  assert.match(source, /document\.querySelector<HTMLButtonElement>\(selector\)/);
-  assert.match(source, /mountedLauncher \?\? stickySearchLauncherRef\.current/);
+  assert.match(toolbar, /<input[\s\S]*data-flight-results-header-origin/);
+  assert.match(toolbar, /<input[\s\S]*data-flight-results-header-destination/);
+  assert.match(source, /restoreTarget === "origin" \|\| restoreTarget === "destination"/);
+  assert.match(source, /document\.querySelector<HTMLElement>\(selector\)/);
+  assert.doesNotMatch(toolbar, /openCompactRouteEditor/);
 });
 test("header search fields use the shared neutral focus treatment", () => {
   const toolbar = desktopHeaderSearchBarSource();
@@ -159,15 +162,19 @@ test("trip type copies the desktop Sort dropdown layout and multi-city expands s
   assert.match(popout, /<MultiCityFlightEditor[\s\S]*presentation="results"/);
 });
 
-test("route field keeps its geometry while switching into inline edit mode", () => {
+test("route field keeps Hotel-like persistent inputs and stable geometry", () => {
   const toolbar = desktopHeaderSearchBarSource();
 
   assert.match(toolbar, /grid-cols-\[minmax\(56px,1fr\)_28px_minmax\(56px,1fr\)\]/);
-  assert.match(toolbar, /const openCompactRouteEditor =/);
-  assert.match(toolbar, /setOriginInput\(compactOriginLabel\)/);
-  assert.match(toolbar, /setDestinationInput\(compactDestinationLabel\)/);
-  assert.match(toolbar, /onClick=\{\(event\) => openCompactRouteEditor\(event, "origin"\)\}/);
-  assert.match(toolbar, /onClick=\{\(event\) => openCompactRouteEditor\(event, "destination"\)\}/);
+  assert.match(toolbar, /data-flight-results-header-origin/);
+  assert.match(toolbar, /data-flight-results-header-destination/);
+  assert.match(toolbar, /openStickySearchEditor\(event\.currentTarget, "origin"\)/);
+  assert.match(toolbar, /openStickySearchEditor\(event\.currentTarget, "destination"\)/);
+  assert.doesNotMatch(toolbar, /openCompactRouteEditor/);
+  assert.doesNotMatch(
+    toolbar,
+    /focus-within:border-\[#004BB8\][\s\S]*focus-within:ring-2/,
+  );
 });
 
 test("route date and traveler controls open their real editors directly from the header", () => {
