@@ -171,7 +171,7 @@ test("mobile Flight Results uses the Cars-style scroll handoff header", async ()
   assert.match(appHeader, /mobileResultsSticky = true/);
   assert.match(
     appHeader,
-    /mobileResultsSearch && mobileResultsSticky && "max-sm:sticky max-sm:top-0 max-sm:z-\[950\]"/,
+    /\(\(mobileResultsSearch && mobileResultsSticky\) \|\| carsResultsMobileInlineSearch\) &&\s*"max-sm:sticky max-sm:top-0 max-sm:z-\[950\]"/,
   );
 
   assert.match(
