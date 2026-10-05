@@ -76,6 +76,8 @@ export default async function HotelResultsPage({
         flushMobileBottom
         hideDesktopTravelNav
         hideMobileCategoryTabs
+        mobileResultsSearch={<div data-hotel-results-mobile-nav-search className="flex h-12 w-full min-w-0 rounded-xl border border-[#D8E1EC] bg-[#F5F7FB] empty:hidden" />}
+        mobileResultsTrailingActions
       />
       <Suspense
         fallback={

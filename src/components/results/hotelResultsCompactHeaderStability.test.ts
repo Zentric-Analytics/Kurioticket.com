@@ -7,21 +7,16 @@ const source = readFileSync(
   "utf8",
 );
 
-test("Hotel results follows Cars floating summary plus compact fixed header behavior", () => {
+test("Hotel results uses one sticky navbar search at every scroll position", () => {
   assert.doesNotMatch(source, /mobileResultsSearch=/);
   assert.doesNotMatch(source, /mobileResultsLeadingAction=/);
-  assert.match(source, /data-hotel-mobile-search-summary/);
-  assert.match(source, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
-  assert.match(source, /relative translate-y-1\/2/);
-  assert.doesNotMatch(source, /sticky top-0 z-40 bg-white/);
-  assert.match(source, /mobileSearchSummarySentinelRef/);
-  assert.match(source, /mobileCompactHeaderVisible/);
-  assert.match(source, /data-hotel-mobile-compact-results-header/);
-  assert.match(source, /grid-cols-\[44px_minmax\(0,1fr\)_82px\]/);
-  assert.match(source, /ref=\{mobileResultsTopRef\}/);
+  assert.match(source, /data-hotel-results-mobile-nav-search-button/);
+  assert.match(source, /createPortal\(renderMobileHotelNavSearch\(\), mobileNavSearchTarget\)/);
+  assert.match(source, /onClick=\{openMobileHotelSearch\}/);
+  assert.doesNotMatch(source, /data-hotel-mobile-search-summary|data-hotel-mobile-compact-results-header/);
 });
 
-test("opening and closing Hotel Edit Search does not reset scroll visibility", () => {
+test("opening and closing Hotel Edit Search preserves its existing sheet behavior", () => {
   const openHandler = source.match(
     /const openMobileHotelSearch = useCallback\([\s\S]*?\n\s+\}, \[\]\);/,
   )?.[0];

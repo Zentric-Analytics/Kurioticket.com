@@ -49,9 +49,9 @@ test("Hotel pagination masks an instant results-start handoff before revealing c
   assert.match(source, /paginationPendingPage !== null[\s\S]*fixed inset-0 z-\[1200\][\s\S]*<HotelCardSkeleton \/>/);
   assert.match(pagination, /window\.innerWidth >= 1024[\s\S]*setTimeout\(resolve, 240\)[\s\S]*positionResultsStart\(\)/);
   assert.match(pagination, /overflowAnchor = "none"/);
-  assert.match(pagination, /mobile[\s\S]*?mobileResultsTopRef\.current\?\.closest\("\[data-mobile-web-hotel-results\]"\)[\s\S]*?: standaloneResultsHeadingRef\.current/);
-  assert.match(pagination, /const stickyOffset = mobile \? 0 : 128/);
-  assert.match(source, /<button\s+ref=\{mobileResultsTopRef\}[\s\S]*?aria-haspopup="dialog"/);
+  assert.match(pagination, /mobile[\s\S]*?document\.querySelector<HTMLElement>\("\[data-mobile-web-hotel-results\]"\)[\s\S]*?: standaloneResultsHeadingRef\.current/);
+  assert.match(pagination, /const stickyOffset = mobile[\s\S]*?data-app-header[\s\S]*?\?\? 72\)[\s\S]*?: 170/);
+  assert.match(source, /data-hotel-results-mobile-nav-search-button[\s\S]*?aria-haspopup="dialog"/);
 });
 
 

@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
-import { ArrowLeft, ArrowUp, Check, ChevronLeft, ChevronRight, ChevronDown, Pencil, SlidersHorizontal, SquarePen, Star, X } from "lucide-react";
+import { ArrowUp, Check, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Star, X } from "lucide-react";
 
 import type { PublicHotelResult } from "@/lib/types";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
@@ -300,7 +300,6 @@ export function HotelResultsClient() {
 }
 export function HotelResultsExperience({ searchInput, guided = false, buildDetailsHref }: { searchInput: HotelResultsSearchInput; guided?: boolean; buildDetailsHref?: (hotelId: string) => string | null }) {
   const { locale, t: dictionary } = useLocale();
-  const router = useRouter();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
@@ -330,12 +329,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const [mobileShortcutDraftMinPrice, setMobileShortcutDraftMinPrice] = useState(0);
   const [mobileShortcutDraftMaxPrice, setMobileShortcutDraftMaxPrice] = useState(1200);
   const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
-  const [mobileCompactHeaderVisible, setMobileCompactHeaderVisible] = useState(false);
   const [mobileHotelSearchClosing, setMobileHotelSearchClosing] = useState(false);
   const [mobileHotelNestedLayerOpen, setMobileHotelNestedLayerOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showStickyHotelFilters, setShowStickyHotelFilters] = useState(false);
   const [desktopNavSearchTarget, setDesktopNavSearchTarget] = useState<HTMLElement | null>(null);
+  const [mobileNavSearchTarget, setMobileNavSearchTarget] = useState<HTMLElement | null>(null);
   const [desktopSearchPlacement, setDesktopSearchPlacement] = useState<"navbar" | "page" | null>(null);
   const [currentResultsPage, setCurrentResultsPage] = useState(1);
   const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
@@ -365,8 +364,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const guidedLoadingStatusRef = useRef<HTMLHeadingElement | null>(null);
   const guidedResultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const standaloneResultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
-  const mobileResultsTopRef = useRef<HTMLButtonElement | null>(null);
-  const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
   const guidedErrorRef = useRef<HTMLDivElement | null>(null);
   const retryFocusPendingRef = useRef(false);
 
@@ -463,22 +460,22 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     [locale],
   );
 
-  const desktopMinimizedDateSummary = useMemo(() => {
-    const checkIn = formatCompactHotelDate(activeDesktopHotelSearchDraft.checkIn);
-    const checkOut = formatCompactHotelDate(activeDesktopHotelSearchDraft.checkOut);
+  const mobileNavDateSummary = useMemo(() => {
+    const checkIn = formatCompactHotelDate(body.checkIn);
+    const checkOut = formatCompactHotelDate(body.checkOut);
 
     if (checkIn && checkOut) return `${checkIn} – ${checkOut}`;
     return checkIn || checkOut || "Travel dates";
-  }, [activeDesktopHotelSearchDraft.checkIn, activeDesktopHotelSearchDraft.checkOut, formatCompactHotelDate]);
+  }, [body.checkIn, body.checkOut, formatCompactHotelDate]);
 
-  const desktopMinimizedGuestsSummary = useMemo(() => {
-    const guests = Math.max(1, Math.min(12, activeDesktopHotelSearchDraft.guests));
-    const rooms = Math.max(1, Math.min(6, activeDesktopHotelSearchDraft.rooms));
+  const mobileNavGuestsSummary = useMemo(() => {
+    const guests = Math.max(1, Math.min(12, body.guests));
+    const rooms = Math.max(1, Math.min(6, body.rooms));
     const guestLabel = guests === 1 ? t("guestSingular") || "guest" : t("guestPlural") || "guests";
     const roomLabel = rooms === 1 ? t("roomSingular") || "room" : t("roomPlural") || "rooms";
 
     return `${guests} ${guestLabel}, ${rooms} ${roomLabel}`;
-  }, [activeDesktopHotelSearchDraft.guests, activeDesktopHotelSearchDraft.rooms, t]);
+  }, [body.guests, body.rooms, t]);
 
   const openMobileHotelSearch = useCallback((event?: ReactMouseEvent<HTMLElement>) => {
     setMobileHotelSearchClosing(false);
@@ -504,53 +501,17 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }, [finishMobileHotelSearchClose, mobileHotelSearchClosing]);
 
   useEffect(() => {
-    setMobileHotelSearchOpen(false);
-    setMobileHotelSearchClosing(false);
+    const frame = window.requestAnimationFrame(() => {
+      setMobileHotelSearchOpen(false);
+      setMobileHotelSearchClosing(false);
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [bodySearchKey]);
 
   useEffect(() => {
     if (mobileHotelSearchOpen) return;
     restoreOverlayLauncherFocus(mobileHotelSearchLauncherRef.current, mobileHotelSearchModalityRef.current);
   }, [mobileHotelSearchOpen]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-
-    const sentinel = mobileSearchSummarySentinelRef.current;
-    const updateFromSentinel = () => {
-      const currentSentinel = mobileSearchSummarySentinelRef.current;
-      if (!currentSentinel) {
-        setMobileCompactHeaderVisible(false);
-        return;
-      }
-      const rect = currentSentinel.getBoundingClientRect();
-      setMobileCompactHeaderVisible(rect.bottom < 8 && window.scrollY > 96);
-    };
-
-    updateFromSentinel();
-    if (typeof IntersectionObserver === "undefined" || !sentinel) {
-      window.addEventListener("scroll", updateFromSentinel, { passive: true });
-      window.addEventListener("resize", updateFromSentinel);
-      return () => {
-        window.removeEventListener("scroll", updateFromSentinel);
-        window.removeEventListener("resize", updateFromSentinel);
-      };
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setMobileCompactHeaderVisible(!entry.isIntersecting && window.scrollY > 96);
-      },
-      { rootMargin: "-8px 0px 0px 0px", threshold: 0 },
-    );
-    observer.observe(sentinel);
-    window.addEventListener("scroll", updateFromSentinel, { passive: true });
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", updateFromSentinel);
-    };
-  }, []);
 
   useEffect(() => {
     const releaseExistingLock = () => {
@@ -918,6 +879,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     };
     const frame = window.requestAnimationFrame(() => {
       setDesktopNavSearchTarget(document.querySelector<HTMLElement>("[data-hotel-results-nav-search]"));
+      setMobileNavSearchTarget(document.querySelector<HTMLElement>("[data-hotel-results-mobile-nav-search]"));
       updatePlacement();
     });
     desktopQuery.addEventListener("change", updatePlacement);
@@ -969,10 +931,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     const positionResultsStart = () => {
       const mobile = window.innerWidth < 640;
       const resultsAnchor = mobile
-        ? mobileResultsTopRef.current?.closest("[data-mobile-web-hotel-results]")
+        ? document.querySelector<HTMLElement>("[data-mobile-web-hotel-results]")
         : standaloneResultsHeadingRef.current;
       if (!resultsAnchor) return;
-      const stickyOffset = mobile ? 0 : 170;
+      const stickyOffset = mobile
+        ? (document.querySelector<HTMLElement>("[data-app-header]")?.getBoundingClientRect().height ?? 72)
+        : 170;
       const resultsTop = Math.max(0, window.scrollY + resultsAnchor.getBoundingClientRect().top - stickyOffset);
       window.scrollTo({ top: resultsTop, behavior: "auto" });
     };
@@ -1332,67 +1296,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     setSelectedFilters((current) => ({ ...current, facilities: [] }));
   }
 
-  function renderMobileCompactResultsHeader() {
-    const modifySearchLabel = `${t("editHotelSearch")}: ${body.destination}`;
-
-    return (
-      <header
-        className={cn(
-          "fixed inset-x-0 top-0 z-[90] bg-[#F2F4F8] px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)] transition-[transform,opacity] duration-200 ease-out sm:hidden",
-          mobileCompactHeaderVisible
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none -translate-y-2 opacity-0",
-        )}
-        aria-hidden={!mobileCompactHeaderVisible}
-        inert={!mobileCompactHeaderVisible ? true : undefined}
-        data-hotel-mobile-compact-results-header
-      >
-        <div className="mx-auto grid h-12 w-full max-w-3xl grid-cols-[44px_minmax(0,1fr)_82px] items-center gap-2">
-          <button
-            type="button"
-            aria-label="Back to hotels"
-            onClick={() => router.push("/hotels")}
-            className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-          >
-            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            aria-label={modifySearchLabel}
-            onClick={(event) => openMobileHotelSearch(event)}
-            className="focus-ring flex min-h-11 min-w-0 flex-col items-center justify-center px-2 py-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-          >
-            <span className="block max-w-full truncate text-[15px] font-bold leading-5 tracking-[-0.015em] text-[#07133B]">
-              {body.destination}
-            </span>
-            <span className="mt-0.5 inline-flex items-center justify-center gap-1 text-[11px] font-medium leading-4 text-[#536B92]">
-              <span>{t("deals.results.modifySearch")}</span>
-              <Pencil
-                className="h-3 w-3 shrink-0 text-[#536B92]"
-                strokeWidth={2}
-                aria-hidden="true"
-              />
-            </span>
-          </button>
-          <button
-            type="button"
-            aria-label={activeFilterCount > 0 ? `${t("filters")} (${activeFilterCount})` : t("filters")}
-            onClick={(event) => {
-              mobileFiltersLauncherRef.current = event.currentTarget;
-              mobileFiltersModalityRef.current = getOverlayActivationModality(event);
-              openAllFilters();
-            }}
-            className="focus-ring inline-flex h-11 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-[14px] font-semibold text-[#07133B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-          >
-            <SlidersHorizontal className="h-4 w-4 shrink-0 text-[#1a1a1a]" strokeWidth={2.2} aria-hidden="true" />
-            <span className="truncate">{t("filters")}</span>
-            {activeFilterCount > 0 ? <span className="sr-only"> ({activeFilterCount})</span> : null}
-          </button>
-        </div>
-      </header>
-    );
-  }
-
   function renderMobileHotelShortcuts() {
     const shortcutButtonClass = "group inline-flex min-h-11 min-w-11 shrink-0 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35";
     const shortcutChipClass = "inline-flex h-9 items-center gap-1 rounded-[9px] border px-2 text-[13px] font-semibold transition";
@@ -1619,8 +1522,35 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     />
   );
 
+  const renderMobileHotelNavSearch = () => (
+    <button
+      type="button"
+      data-hotel-results-mobile-nav-search-button
+      aria-label={`${t("editHotelSearch")}: ${body.destination}, ${mobileNavDateSummary}, ${mobileNavGuestsSummary}`}
+      aria-haspopup="dialog"
+      aria-expanded={mobileHotelSearchOpen}
+      onClick={openMobileHotelSearch}
+      className="focus-ring flex h-full w-full min-w-0 items-center gap-1.5 rounded-xl bg-[#F5F7FB] py-1 pe-2 ps-3 text-start transition hover:bg-[#EDF2FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+    >
+      <span className="flex min-w-0 flex-1 flex-col justify-center">
+        <span className="block truncate text-[14px] font-semibold leading-[18px] text-[#142033]">
+          {body.destination}
+        </span>
+        <span className="mt-0.5 block truncate text-[11px] font-medium leading-[15px] text-[#536B92]">
+          {mobileNavDateSummary} · {mobileNavGuestsSummary}
+        </span>
+      </span>
+      <span aria-hidden="true" className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E6EFFD] text-[#004BB8]">
+        <Search size={17} strokeWidth={2.2} />
+      </span>
+    </button>
+  );
+
   return (
     <>
+      {!guided && !loadingContent && mobileNavSearchTarget
+        ? createPortal(renderMobileHotelNavSearch(), mobileNavSearchTarget)
+        : null}
       {!guided && !loadingContent && desktopSearchPlacement === "navbar" && desktopNavSearchTarget
         ? createPortal(renderDesktopHotelSearch("hotel-results-nav-search"), desktopNavSearchTarget)
         : null}
@@ -1652,61 +1582,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             }
           : {})}
       >
-        {!guided ? renderMobileCompactResultsHeader() : null}
-        {!guided ? (
-          <>
-            <section
-              inert={mobileHotelSearchOpen ? true : undefined}
-              aria-hidden={mobileHotelSearchOpen ? true : undefined}
-              className={cn(
-                "relative z-40 bg-white pb-0 pt-0 sm:hidden",
-                mobileHotelSearchOpen && "pointer-events-none",
-              )}
-              data-hotel-mobile-sticky-search
-              data-hotel-mobile-search-summary
-              aria-label={t("editHotelSearch") || "Edit hotel search"}
-            >
-              <div className="relative translate-y-1/2">
-                <div
-                  className="pointer-events-none absolute inset-x-0 top-1/2 z-0 h-px -translate-y-1/2 bg-slate-300 shadow-[0_1px_0_rgba(100,116,139,0.18)]"
-                  aria-hidden="true"
-                />
-                <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center px-4">
-                  <button
-                    ref={mobileResultsTopRef}
-                    type="button"
-                    aria-label={`${t("editHotelSearch")}: ${body.destination}, ${desktopMinimizedDateSummary}, ${desktopMinimizedGuestsSummary}`}
-                    aria-haspopup="dialog"
-                    aria-expanded={mobileHotelSearchOpen}
-                    onClick={openMobileHotelSearch}
-                    className="group relative z-10 flex h-[4.25rem] min-w-0 w-full max-w-[30rem] touch-manipulation items-center justify-between gap-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-4 py-0 text-start shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] transition [-webkit-tap-highlight-color:transparent] hover:border-slate-300 hover:bg-white hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.62)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-                  >
-                    <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
-                      <span className="block truncate text-[16px] font-bold leading-5 tracking-[-0.015em] text-[#07133B]">
-                        {body.destination}
-                      </span>
-                      <span className="mt-1.5 block truncate text-[12.5px] font-medium leading-4 text-[#536B92]">
-                        {desktopMinimizedDateSummary} · {desktopMinimizedGuestsSummary}
-                      </span>
-                    </span>
-                    <span
-                      aria-hidden="true"
-                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-transparent text-slate-700 transition group-hover:bg-slate-100"
-                    >
-                      <SquarePen size={16} strokeWidth={2.2} />
-                    </span>
-                  </button>
-                </div>
-              </div>
-              <div
-                ref={mobileSearchSummarySentinelRef}
-                className="pointer-events-none h-px w-full"
-                aria-hidden="true"
-              />
-            </section>
-          </>
-        ) : null}
-
         {!guided ? (
           <MobileResultsEditSheet
             open={mobileHotelSearchOpen}
@@ -1759,7 +1634,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           </section>
         ) : null}
 
-        <div data-hotel-results-scroll-region className={cn(guided ? "grid gap-y-5 pb-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8" : "page-shell grid gap-y-3 pb-2 pt-12 max-sm:w-[calc(100%-24px)] sm:gap-y-5 sm:pb-6 sm:pt-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8")}>
+        <div data-hotel-results-scroll-region className={cn(guided ? "grid gap-y-5 pb-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8" : "page-shell grid gap-y-3 pb-2 pt-3 max-sm:w-[calc(100%-24px)] sm:gap-y-5 sm:pb-6 sm:pt-6 min-[1200px]:grid-cols-[288px_minmax(0,1fr)] min-[1200px]:gap-x-8")}>
           <aside className="relative hidden w-[260px] self-stretch min-[1200px]:block min-[1200px]:justify-self-end">
             <HotelResultsMapPreview destination={body.destination} />
             <div ref={desktopFilterPanelRef}>
