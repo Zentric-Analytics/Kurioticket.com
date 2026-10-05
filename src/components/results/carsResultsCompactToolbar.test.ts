@@ -33,46 +33,44 @@ test("source-contract: phone and tablet filter launchers remain responsive", () 
     source.indexOf("export function CarsResultsExperience"),
     source.indexOf("function SearchInputCell"),
   );
-  assert.match(source, /fixed inset-x-0 top-0[^"\n]*sm:hidden/);
+  const stickyShortcuts = source.slice(
+    source.indexOf("data-cars-results-sticky-shortcuts"),
+    source.indexOf("data-cars-results-toolbar"),
+  );
+
+  assert.match(
+    stickyShortcuts,
+    /max-sm:sticky max-sm:top-\[calc\(var\(--cars-results-safe-area-top\)\+61px\)\]/,
+  );
   assert.match(
     mobileControls,
     /onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
   );
 
-  const resultsToolbar = source.slice(
-    source.indexOf("data-cars-results-toolbar"),
-    source.indexOf("{resultsTransitioning ?"),
-  );
-  const tabletFilterClass = resultsToolbar.match(
+  const tabletFilterClass = stickyShortcuts.match(
     /className="([^"]*inline-flex[^"]*lg:hidden[^"]*)"/,
   )?.[1];
   assert.ok(tabletFilterClass);
   for (const token of ["inline-flex", "lg:hidden"])
     assert.ok(tabletFilterClass.split(" ").includes(token));
   assert.equal(tabletFilterClass.split(" ").includes("hidden"), false);
-  assert.match(
-    resultsToolbar,
-    /onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
-  );
 });
 
 test("source-contract: mobile Cars typography uses a restrained primary-secondary hierarchy", () => {
-  const compactHeader = source.slice(
-    source.indexOf("const renderMobileCompactResultsHeader"),
-    source.indexOf("\n  return (", source.indexOf("const renderMobileCompactResultsHeader")),
+  const headerSearch = source.slice(
+    source.indexOf("const renderMobileHeaderSearch"),
+    source.indexOf("const renderCarsSearchForm"),
   );
-  assert.match(compactHeader, /text-\[15px\] font-bold[^\"]*text-\[#07133B\]/);
-  assert.match(compactHeader, /text-\[11px\] font-medium[^\"]*text-\[#536B92\]/);
-  assert.match(compactHeader, /text-\[14px\] font-semibold text-\[#07133B\]/);
-  assert.doesNotMatch(compactHeader, /font-extrabold/);
-  assert.match(compactHeader, /bg-\[#F2F4F8\]/);
-  assert.doesNotMatch(compactHeader, /bg-white|bg-\[#F5F7FB\]/);
-  assert.match(compactHeader, /data-cars-compact-edit-icon[\s\S]*?strokeWidth=\{2\}/);
-  assert.match(compactHeader, /<SlidersHorizontal[\s\S]*?text-\[#1a1a1a\]/);
+  assert.match(headerSearch, /text-\[11\.5px\] font-semibold[^\"]*text-\[#142033\]/);
+  assert.match(headerSearch, /text-\[9\.5px\] font-medium[^\"]*text-\[#64748B\]/);
+  assert.doesNotMatch(headerSearch, /font-extrabold/);
+  assert.match(headerSearch, /bg-\[#F8FAFC\]/);
+  assert.match(headerSearch, /data-cars-results-mobile-header-search/);
+  assert.match(headerSearch, /<SquarePen[\s\S]*?strokeWidth=\{2\}/);
 
   const quickFilters = source.slice(
     source.indexOf("data-cars-results-quick-filters"),
-    source.indexOf("data-cars-results-summary-row"),
+    source.indexOf("data-cars-results-toolbar"),
   );
   assert.match(quickFilters, /text-\[13px\] font-semibold leading-4 text-\[#142033\]/);
   assert.match(quickFilters, /text-\[13px\] font-semibold leading-4 transition/);
@@ -141,22 +139,25 @@ test("source-contract: Cars result count and Sort share a shrink-safe row", () =
   assert.match(resultsToolbar, /"shrink-0 transition-transform duration-150"/);
 });
 
-test("source-contract: mobile Filter precedes the final count and Sort row", () => {
+test("source-contract: mobile Filter stays in the sticky shortcuts before the final count and Sort row", () => {
+  const shortcutsStart = source.indexOf("data-cars-results-sticky-shortcuts");
+  const toolbarStart = source.indexOf("data-cars-results-toolbar", shortcutsStart);
+  const summaryStart = source.indexOf("data-cars-results-summary-row", toolbarStart);
+  const shortcuts = source.slice(shortcutsStart, toolbarStart);
   const resultsToolbar = source.slice(
-    source.lastIndexOf("<div", source.indexOf("data-cars-results-toolbar")),
+    source.lastIndexOf("<div", toolbarStart),
     source.indexOf("{resultsTransitioning ?"),
   );
-  const filterStart = resultsToolbar.indexOf("ref={filtersButtonRef}");
-  const summaryStart = resultsToolbar.indexOf("data-cars-results-summary-row");
 
-  assert.ok(filterStart < summaryStart);
-  assert.ok(summaryStart < resultsToolbar.indexOf("ref={carsSortRef}"));
+  assert.ok(shortcutsStart >= 0);
+  assert.ok(shortcutsStart < toolbarStart);
+  assert.ok(toolbarStart < summaryStart);
   assert.match(
-    resultsToolbar.slice(filterStart, summaryStart),
-    /lg:hidden[\s\S]*onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
+    shortcuts,
+    /ref=\{filtersButtonRef\}[\s\S]*lg:hidden[\s\S]*onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
   );
   assert.match(
-    resultsToolbar.slice(summaryStart),
+    resultsToolbar,
     /data-cars-results-summary-row[\s\S]*<h2[\s\S]*ref=\{carsSortRef\}/,
   );
 });
