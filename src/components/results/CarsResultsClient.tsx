@@ -1077,26 +1077,26 @@ export function CarsResultsClient({
           getOverlayActivationModality(event),
         )
       }
-      className="focus-ring group flex h-11 w-full min-w-0 touch-manipulation items-center gap-1.5 overflow-hidden rounded-[9px] border border-[#D8E1EC] bg-[#F8FAFC] px-2 text-start shadow-[0_1px_3px_rgba(24,48,91,0.06)] transition [-webkit-tap-highlight-color:transparent] hover:border-[#C4CFDC] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+      className="focus-ring group flex h-11 w-full min-w-0 touch-manipulation items-center p-0 text-start transition [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
     >
-      <Car
-        className="h-3.5 w-3.5 shrink-0 text-[#142033]"
-        strokeWidth={2}
-        aria-hidden="true"
-      />
-      <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
-        <span className="block truncate text-[11.5px] font-semibold leading-[14px] tracking-[-0.005em] text-[#142033]">
+      <span className="flex h-9 w-full min-w-0 items-center gap-1.5 overflow-hidden rounded-[9px] border border-[#D8E1EC] bg-[#F8FAFC] px-2 shadow-[0_1px_3px_rgba(24,48,91,0.06)] transition group-hover:border-[#C4CFDC] group-hover:bg-white">
+        <Car
+          className="h-3.5 w-3.5 shrink-0 text-[#142033]"
+          strokeWidth={2}
+          aria-hidden="true"
+        />
+        <span className="min-w-0 flex-1 truncate text-[12px] font-semibold leading-4 tracking-[-0.005em] text-[#142033]">
           {locationPairSummary}
         </span>
-        <span className="mt-px block truncate text-[9.5px] font-medium leading-3 text-[#64748B]">
+        <span className="shrink-0 whitespace-nowrap text-[10.5px] font-medium leading-4 text-[#64748B]">
           {rentalDateSummary}
         </span>
+        <SquarePen
+          className="h-3.5 w-3.5 shrink-0 text-[#536B92] transition group-hover:text-[#142033]"
+          strokeWidth={2}
+          aria-hidden="true"
+        />
       </span>
-      <SquarePen
-        className="h-3.5 w-3.5 shrink-0 text-[#536B92] transition group-hover:text-[#142033]"
-        strokeWidth={2}
-        aria-hidden="true"
-      />
     </button>
   );
 
