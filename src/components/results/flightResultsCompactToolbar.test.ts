@@ -105,6 +105,24 @@ test("desktop header opens only the selected field editor", () => {
   assert.match(callback, /resolvedTarget === "trip" \? null : resolvedTarget/);
 });
 
+test("desktop Multi-city marks the sticky editor open before observer callbacks can collapse it", () => {
+  const callback = stickyEditorCallbackSource();
+  const toolbar = desktopHeaderSearchBarSource();
+
+  assert.match(
+    callback,
+    /stickySearchPanelOpenRef\.current = true;[\s\S]*setIsSearchExpandedWhileSticky\(true\)/,
+  );
+  assert.match(
+    toolbar,
+    /if \(option\.value === "multi-city"\) \{[\s\S]*stickySearchPanelOpenRef\.current = true;[\s\S]*setIsSearchExpandedWhileSticky\(true\)/,
+  );
+  assert.match(
+    source,
+    /const collapseStickySearch = useCallback\([\s\S]*stickySearchPanelOpenRef\.current = false;[\s\S]*setIsSearchExpandedWhileSticky\(false\)/,
+  );
+});
+
 test("sticky search moves focus directly to the requested field editor", () => {
   assert.match(source, /pendingTarget === "origin"/);
   assert.match(source, /stickyOriginWrapRef\.current[\s\S]*querySelector<HTMLInputElement>\("input"\)/);
@@ -295,20 +313,15 @@ test("sticky multi-city selection renders only the real multi-city accordion edi
   assert.doesNotMatch(popout, /travelerCabinSummary|<TravelerCabinPopover|<DatePickerPopover/);
 });
 
-test("sticky multi-city accordion is scrollable and is the only body-locking header editor", () => {
+test("sticky multi-city accordion is scrollable without locking the desktop document", () => {
   const popoutStart = source.indexOf("function renderStickySearchPopoutOverlay()");
   const popoutEnd = source.indexOf("function renderCompactSearchForm", popoutStart);
   const popout = source.slice(popoutStart, popoutEnd);
-  const lockStart = source.indexOf("const shouldLockForMultiCity");
-  const lockEnd = source.indexOf("useEffect(() => {", lockStart + 1);
-  const lockEffect = source.slice(lockStart, lockEnd);
 
   assert.match(popout, /overflow-y-auto[^"]*overscroll-contain/);
   assert.match(popout, /maxHeight:/);
-  assert.match(lockEffect, /activeStickySearchTarget === "trip"/);
-  assert.match(lockEffect, /tripTypeInput === "multi-city"/);
-  assert.match(lockEffect, /!tripTypeMenuOpen/);
   assert.equal(popout.match(/onAirportValidityChange=\{setMultiCityAirportsValid\}/g)?.length, 1);
+  assert.doesNotMatch(source, /shouldLockForMultiCity|lockDocumentScrollWithoutLayoutShift|stickySearchScrollLockRef/);
 });
 
 test("desktop compact header uses lighter Hotels-like surfaces without duplicate editor cards", () => {
