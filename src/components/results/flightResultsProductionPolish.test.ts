@@ -497,7 +497,7 @@ test("desktop Flight filter scrolling follows Hotels without a replacement hando
   assert.match(source, /const \[showStickyFlightFilters, setShowStickyFlightFilters\] = useState\(false\)/);
   assert.match(source, /const filterBottom = fullFilters\.getBoundingClientRect\(\)\.bottom/);
   assert.match(source, /resultsContent\.getBoundingClientRect\(\)\.bottom - filterBottom/);
-  assert.match(source, /window\.matchMedia\("\(min-width: 1200px\)"\)\.matches/);
+  assert.match(source, /window\.matchMedia\("\(min-width: 1024px\)"\)\.matches/);
   assert.match(source, /filterBottom <= 170/);
   assert.match(source, /remainingResultsHeight >= 500/);
   assert.match(source, /data-flight-sticky-popular-filters/);
