@@ -657,17 +657,28 @@ test("desktop compact fare cards shorten long provider benefit copy without chan
   const desktopStart = source.indexOf("data-desktop-fare-rail");
   const desktopEnd = source.indexOf("data-desktop-fare-price-loading", desktopStart);
   const desktop = source.slice(desktopStart, desktopEnd);
+  const formatterStart = source.indexOf("function formatDesktopCompactFareBenefit");
+  const formatterEnd = source.indexOf("function compactFareFeeAmount", formatterStart);
+  const formatter = source.slice(formatterStart, formatterEnd);
 
   assert.match(desktop, /formatDesktopCompactFareBenefit\(row\.text\)/);
-  assert.match(source, /return "Carry-on included"/);
-  assert.match(source, /return "Checked bag included"/);
-  assert.match(source, /changes not allowed/);
-  assert.match(source, /changes · .* fee/);
-  assert.match(source, /change\/refund rules unavailable/);
-  assert.match(source, /refund rules unavailable/);
-  assert.match(source, /change rules unavailable/);
-  assert.match(source, /return \`\$\{scopedBaggage\[1\]\}: \$\{scopedBaggage\[2\]\} \$\{scopedBaggage\[3\]/);
-  assert.match(source, /return count === 1 \? "1 checked bag" :/);
+  assert.match(formatter, /Outbound\|Return\|Flight \\d\+/);
+  assert.match(formatter, /Baggage not provided/);
+  assert.match(formatter, /No additional fare benefits/);
+  assert.match(formatter, /Change\/refund rules unavailable/);
+  assert.match(formatter, /Refund rules unavailable/);
+  assert.match(formatter, /Change rules unavailable/);
+  assert.match(formatter, /Changes unavailable/);
+  assert.match(formatter, /Refunds unavailable/);
+  assert.match(formatter, /Changes not allowed/);
+  assert.match(formatter, /Changes allowed/);
+  assert.match(formatter, /Changes · .* fee/);
+  assert.match(formatter, /Not refundable/);
+  assert.match(formatter, /Refundable/);
+  assert.match(formatter, /Refundable · .* fee/);
+  assert.match(formatter, /Carry-on included/);
+  assert.match(formatter, /Checked bag included/);
+  assert.match(formatter, /withScope/);
   assert.match(source, /compactFareFeeAmount/);
   assert.doesNotMatch(
     source.slice(
@@ -676,6 +687,21 @@ test("desktop compact fare cards shorten long provider benefit copy without chan
     ),
     /formatDesktopCompactFareBenefit/,
   );
+});
+
+test("desktop compact fare formatter handles multi-city scope without leaking provider prose", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("function formatDesktopCompactFareBenefit");
+  const end = source.indexOf("function compactFareFeeAmount", start);
+  const formatter = source.slice(start, end);
+
+  assert.match(formatter, /Flight \\d\+/);
+  assert.match(formatter, /withScope\("Changes not allowed"\)/);
+  assert.match(formatter, /withScope\("Changes allowed"\)/);
+  assert.match(formatter, /withScope\("Not refundable"\)/);
+  assert.match(formatter, /withScope\("Refundable"\)/);
+  assert.match(formatter, /withScope\("Baggage not provided"\)/);
+  assert.match(formatter, /No additional fare benefits/);
 });
 
 test("desktop compact fare benefit rows use smaller readable text and status icons", async () => {
