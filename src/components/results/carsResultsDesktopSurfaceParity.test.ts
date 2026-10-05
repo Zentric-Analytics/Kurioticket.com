@@ -50,7 +50,7 @@ test("standalone Cars Results matches the Hotels white desktop body while preser
   );
   assert.match(
     results,
-    /<section[\s\S]*?className="hidden bg-white pb-0 pt-7 sm:block lg:hidden"/,
+    /<section[\s\S]*?className="hidden bg-\[#f6f8fb\] pb-0 pt-7 sm:block lg:hidden"/,
   );
   assert.match(
     results,

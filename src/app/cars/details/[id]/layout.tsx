@@ -14,7 +14,7 @@ export default function CarDetailsLayout({
           }
 
           main:has([data-car-details-experience]) {
-            background: #EEF2F7 !important;
+            background: #F7F9FC !important;
           }
 
           [data-car-details-content-grid] {

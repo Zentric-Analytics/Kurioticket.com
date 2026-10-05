@@ -1849,7 +1849,7 @@ export function CarsResultsClient({
       ) : null}
 
       <section
-        className="hidden bg-white pb-0 pt-7 sm:block lg:hidden"
+        className="hidden bg-[#f6f8fb] pb-0 pt-7 sm:block lg:hidden"
         aria-labelledby="cars-results-heading"
       >
         <div className="page-shell">

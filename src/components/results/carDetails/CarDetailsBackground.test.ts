@@ -10,6 +10,10 @@ const routeSource = readFileSync(
   new URL("../../../app/cars/details/[id]/page.tsx", import.meta.url),
   "utf8",
 );
+const loadingSource = readFileSync(
+  new URL("../../../app/cars/details/[id]/loading.tsx", import.meta.url),
+  "utf8",
+);
 const flightSource = readFileSync(
   new URL("../FlightDetailsClient.tsx", import.meta.url),
   "utf8",
@@ -21,7 +25,7 @@ const hotelSource = readFileSync(
 
 const mainWrapper = '<main className="flex-1 bg-surface-muted/40">';
 const successfulMainWrapper =
-  '<main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:bg-[#F8FAFC] lg:pb-0">';
+  '<main className="flex-1 bg-white pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-[#f8fafc] lg:bg-[#F7F9FC] lg:pb-0">';
 const whiteSection = '<section className="border-b border-border bg-white">';
 const successfulSection =
   '<section className="bg-transparent lg:pb-0" data-car-details-desktop-surface>';
@@ -66,11 +70,10 @@ test("successful Cars Details uses one continuous production surface", () => {
   ]);
   assert.doesNotMatch(clientSource, /<main className="[^"]*lg:pb-14[^"]*">/);
   assert.doesNotMatch(clientSource, /flex-1 bg-\[#f6f8fb\] lg:pb-14/);
-  assert.match(clientSource, /bg-\[#F5F7FB\]/);
-  assert.match(clientSource, /lg:bg-\[#F8FAFC\]/);
+  assert.match(clientSource, /bg-white pb-\[calc\(7\.5rem\+env\(safe-area-inset-bottom\)\)\] sm:bg-\[#f8fafc\] lg:bg-\[#F7F9FC\]/);
   assert.match(
-    clientSource,
-    /hidden h-16 w-full items-center border-b border-transparent bg-\[#F5F7FB\] lg:flex lg:bg-\[#F8FAFC\]/,
+    hotelSource,
+    /<main className="flex-1 bg-white sm:bg-\[#f8fafc\] lg:bg-\[#F7F9FC\]">/,
   );
   assert.match(clientSource, /page-shell py-0 lg:py-6 lg:max-w-\[1080px\]/);
   assertNoForbiddenBackgroundTreatments(
@@ -79,6 +82,14 @@ test("successful Cars Details uses one continuous production surface", () => {
       clientSource.indexOf('<div className="page-shell py-0 lg:py-6 lg:max-w-[1080px]" data-car-details-body-shell>'),
     ),
   );
+});
+
+test("Cars Details loading state uses the same responsive Hotel Details canvas", () => {
+  assert.match(
+    loadingSource,
+    /className="flex-1 bg-white pb-24 sm:bg-\[#f8fafc\] lg:bg-\[#F7F9FC\]"/,
+  );
+  assert.doesNotMatch(loadingSource, /bg-\[#f6f8fb\]|lg:bg-\[#F8FAFC\]|lg:bg-\[#EEF2F7\]/);
 });
 
 test("successful Cars Details retains layout, content, and price contracts", () => {

@@ -89,7 +89,7 @@ test("source contract keeps the guided desktop summary and mobile safe-area book
   assert.match(clientSource, /fixed inset-x-0 bottom-0/);
   assert.match(clientSource, /safe-area-inset-bottom/);
   assert.match(clientSource, /data-mobile-car-booking-dock/);
-  assert.match(clientSource, /<main className="flex-1 bg-\[#F5F7FB\] pb-/);
+  assert.match(clientSource, /<main className="flex-1 bg-white pb-\[calc\(7\.5rem\+env\(safe-area-inset-bottom\)\)\] sm:bg-\[#f8fafc\] lg:bg-\[#F7F9FC\]/);
 
   const summaryRenders = clientSource.match(/<BookingSummary\b/g) ?? [];
   assert.equal(summaryRenders.length, 1);
@@ -135,7 +135,7 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /pointer-events-none fixed inset-x-0 top-0/);
   assert.match(heroSource, /data-car-details-mobile-identity/);
   assert.match(heroSource, /data-car-details-specifications/);
-  assert.match(heroSource, /bg-\[#F5F7FB\]/);
+  assert.match(heroSource, /bg-white pb-4 sm:mx-0 sm:bg-\[#f8fafc\]/);
   assert.match(heroSource, /bg-white/);
   assert.match(heroSource, /fit="contain"/);
   assert.doesNotMatch(heroSource, /fit="cover"/);

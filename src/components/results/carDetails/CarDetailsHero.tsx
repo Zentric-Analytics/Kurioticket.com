@@ -74,7 +74,7 @@ export function CarDetailsHero({
 
   return (
     <section
-      className={`-mx-4 border-b border-slate-200 bg-[#F5F7FB] pb-4 sm:mx-0 ${reserveMobileControlSafeZone ? "lg:mx-0 lg:w-full lg:max-w-none lg:rounded-none lg:border-0 lg:bg-transparent lg:px-5 lg:pb-5 lg:pt-4 lg:shadow-none" : "lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]"}`}
+      className={`-mx-4 border-b border-slate-200 bg-white pb-4 sm:mx-0 sm:bg-[#f8fafc] ${reserveMobileControlSafeZone ? "lg:mx-0 lg:w-full lg:max-w-none lg:rounded-none lg:border-0 lg:bg-transparent lg:px-5 lg:pb-5 lg:pt-4 lg:shadow-none" : "lg:rounded-[13px] lg:border lg:bg-white lg:p-6 lg:shadow-[0_3px_15px_rgba(15,23,42,0.04)]"}`}
       data-car-details-hero
       data-car-details-parent-card-hero={reserveMobileControlSafeZone ? "true" : undefined}
     >

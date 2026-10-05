@@ -53,7 +53,7 @@ test("CarDetailsExperience keeps hero controls and restores compact sticky Back 
   assert.doesNotMatch(experienceSource, /data-car-details-bottom-booking-bar/);
   assert.match(
     layoutSource,
-    /main:has\(\[data-car-details-experience\]\) \{\s*background: #EEF2F7 !important;/,
+    /main:has\(\[data-car-details-experience\]\) \{\s*background: #F7F9FC !important;/,
   );
 });
 
@@ -91,7 +91,7 @@ test("standalone desktop Cars tabs scroll to vertically stacked sections while m
 });
 
 test("standalone desktop Cars keeps the parent card while giving each scroll section its own child card", () => {
-  assert.match(layoutSource, /background: #EEF2F7 !important/);
+  assert.match(layoutSource, /background: #F7F9FC !important/);
   assert.match(
     experienceSource,
     /data-car-details-desktop-section-card="compare"/,

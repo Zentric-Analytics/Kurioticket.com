@@ -29,7 +29,7 @@ test("standalone mobile controls live in one persistent, scroll-transparent laye
   assert.match(client, /aria-label="Back to Cars results"/);
 });
 
-test("mobile header uses safe areas and protects controls with the Cars canvas", () => {
+test("mobile header uses safe areas and protects controls with the Hotel details canvas", () => {
   for (const safeArea of [
     "env(safe-area-inset-top)",
     "env(safe-area-inset-left)",
@@ -39,7 +39,7 @@ test("mobile header uses safe areas and protects controls with the Cars canvas",
   }
   assert.match(
     client,
-    /mobileHeaderProtected \? "bg-\[#F5F7FB\]" : "bg-transparent"/,
+    /mobileHeaderProtected \? "bg-white" : "bg-transparent"/,
   );
   assert.match(client, /data-protected=\{mobileHeaderProtected/);
   assert.match(client, /const protectionLead = 16/);

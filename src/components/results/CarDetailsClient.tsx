@@ -485,7 +485,7 @@ export function CarDetailsExperience({
       {presentation === "standalone-content" ? (
         <div
           ref={mobileHeaderRef}
-          className={`pointer-events-none fixed inset-x-0 top-0 z-40 h-[var(--car-details-mobile-header-boundary)] transition-colors duration-150 lg:hidden ${mobileHeaderProtected ? "bg-[#F5F7FB]" : "bg-transparent"}`}
+          className={`pointer-events-none fixed inset-x-0 top-0 z-40 h-[var(--car-details-mobile-header-boundary)] transition-colors duration-150 lg:hidden ${mobileHeaderProtected ? "bg-white" : "bg-transparent"}`}
           data-car-details-mobile-controls
           data-protected={mobileHeaderProtected ? "true" : "false"}
         >
@@ -1057,7 +1057,7 @@ export function CarDetailsClient({
         label: copy("carDetails.continueDeal"),
       };
   return (
-    <main className="flex-1 bg-[#F5F7FB] pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:bg-[#EEF2F7] lg:pb-0">
+    <main className="flex-1 bg-white pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-[#f8fafc] lg:bg-[#F7F9FC] lg:pb-0">
       <CarsRouteLoadingOverlay active={mobileResultsPending} />
       <section className="bg-transparent lg:pb-0" data-car-details-desktop-surface>
         <div className="page-shell py-0 lg:py-6 lg:max-w-[1080px]" data-car-details-body-shell>
@@ -1189,7 +1189,7 @@ function CarPriceComparisonSection({
   };
   return (
     <div
-      className={`border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full ${showDesktopOfferList ? "lg:max-w-[640px] lg:border-0 lg:bg-transparent lg:px-0 lg:pb-5 lg:pt-5" : "lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-2"}`}
+      className={`border-b border-slate-200 bg-white pb-7 pt-3 sm:bg-[#f8fafc] lg:mx-auto lg:w-full ${showDesktopOfferList ? "lg:max-w-[640px] lg:border-0 lg:bg-transparent lg:px-0 lg:pb-5 lg:pt-5" : "lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-2"}`}
       data-car-price-comparison
       data-car-details-flight-panel={showDesktopOfferList ? "compare" : undefined}
     >
@@ -1503,7 +1503,7 @@ function CarLocationSection({
   );
   return (
     <div
-      className="border-b border-slate-200 bg-[#F5F7FB] pb-7 pt-3 lg:mx-auto lg:w-full lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-5"
+      className="border-b border-slate-200 bg-white pb-7 pt-3 sm:bg-[#f8fafc] lg:mx-auto lg:w-full lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-5"
       data-car-location-section
     >
       {showSectionHeading ? (
@@ -1739,7 +1739,7 @@ function PickupReturnSection({
   );
   return (
     <section
-      className="-mx-4 border-y border-slate-200 bg-[#F5F7FB] px-4 py-5 lg:mx-auto lg:w-full lg:max-w-[820px] lg:rounded-none lg:border-x-0 lg:border-t-0 lg:border-b lg:border-slate-200 lg:bg-transparent lg:px-0 lg:pb-[22px] lg:pt-5 lg:shadow-none"
+      className="-mx-4 border-y border-slate-200 bg-white px-4 py-5 sm:bg-[#f8fafc] lg:mx-auto lg:w-full lg:max-w-[820px] lg:rounded-none lg:border-x-0 lg:border-t-0 lg:border-b lg:border-slate-200 lg:bg-transparent lg:px-0 lg:pb-[22px] lg:pt-5 lg:shadow-none"
       data-car-pickup-return-section
     >
       {showSectionHeading ? (
