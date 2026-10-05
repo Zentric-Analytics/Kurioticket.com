@@ -526,7 +526,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
 
 function formatDesktopCompactFareBenefit(text: string) {
   const normalized = text.trim().replace(/\.$/, "");
-  const scoped = normalized.match(/^(Outbound|Return|Flight \\d+):\\s*(.+)$/i);
+  const scoped = normalized.match(/^(Outbound|Return|Flight \d+):\s*(.+)$/i);
   const scope = scoped?.[1];
   const body = scoped?.[2] ?? normalized;
   const withScope = (value: string) => (scope ? `${scope} · ${value}` : value);
@@ -573,7 +573,7 @@ function formatDesktopCompactFareBenefit(text: string) {
   }
 
   const changeFee = body.match(
-    /^Changes allowed with\\s+([A-Z]{3})\\s+([\\d,]+(?:\\.\\d+)?)\\s+penalty$/i,
+    /^Changes allowed with\s+([A-Z]{3})\s+([\d,]+(?:\.\d+)?)\s+penalty$/i,
   );
   if (changeFee) {
     return withScope(
@@ -590,7 +590,7 @@ function formatDesktopCompactFareBenefit(text: string) {
   }
 
   const refundFee = body.match(
-    /^Refundable(?: before departure)? with\\s+([A-Z]{3})\\s+([\\d,]+(?:\\.\\d+)?)\\s+penalty$/i,
+    /^Refundable(?: before departure)? with\s+([A-Z]{3})\s+([\d,]+(?:\.\d+)?)\s+penalty$/i,
   );
   if (refundFee) {
     return withScope(
@@ -599,7 +599,7 @@ function formatDesktopCompactFareBenefit(text: string) {
   }
 
   const baggage = body.match(
-    /^(\\d+)\\s+(carry-ons?|checked bags?)\\s+included(?:\\s+(each way))?$/i,
+    /^(\d+)\s+(carry-ons?|checked bags?)\s+included(?:\s+(each way))?$/i,
   );
   if (baggage) {
     const count = Number(baggage[1]);
