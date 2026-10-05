@@ -41,22 +41,26 @@ test("standalone Cars uses one persistent AppHeader search launcher", () => {
   assert.doesNotMatch(source, /data-cars-mobile-compact-handoff/);
 });
 
-test("unified Cars header search is compact, shrink-safe, and desktop-inspired", () => {
+test("unified Cars header search keeps a 44px touch target around a shorter 36px visual surface", () => {
   assert.match(
     headerSearch,
-    /h-11 w-full min-w-0[\s\S]*rounded-\[9px\][\s\S]*border border-\[#D8E1EC\][\s\S]*bg-\[#F8FAFC\]/,
+    /h-11 w-full min-w-0[\s\S]*p-0[\s\S]*focus-visible:ring-2/,
+  );
+  assert.match(
+    headerSearch,
+    /flex h-9 w-full min-w-0 items-center[\s\S]*rounded-\[9px\][\s\S]*border border-\[#D8E1EC\][\s\S]*bg-\[#F8FAFC\]/,
   );
   assert.match(headerSearch, /<Car[\s\S]*?h-3\.5 w-3\.5/);
   assert.match(
     headerSearch,
-    /text-\[11\.5px\] font-semibold leading-\[14px\][\s\S]*locationPairSummary/,
+    /min-w-0 flex-1 truncate text-\[12px\] font-semibold leading-4[\s\S]*locationPairSummary/,
   );
   assert.match(
     headerSearch,
-    /text-\[9\.5px\] font-medium leading-3[\s\S]*rentalDateSummary/,
+    /shrink-0 whitespace-nowrap text-\[10\.5px\] font-medium leading-4[\s\S]*rentalDateSummary/,
   );
   assert.match(headerSearch, /<SquarePen[\s\S]*?strokeWidth=\{2\}/);
-  assert.doesNotMatch(headerSearch, /ArrowLeft|SlidersHorizontal|Modify search<\/span>/);
+  assert.doesNotMatch(headerSearch, /flex-col|text-\[9\.5px\]|ArrowLeft|SlidersHorizontal|Modify search<\/span>/);
 });
 
 test("one unchanged shortcut rail becomes sticky instead of compacting on scroll", () => {

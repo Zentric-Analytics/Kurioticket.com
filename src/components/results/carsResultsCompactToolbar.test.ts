@@ -61,8 +61,9 @@ test("source-contract: mobile Cars typography uses a restrained primary-secondar
     source.indexOf("const renderMobileHeaderSearch"),
     source.indexOf("const renderCarsSearchForm"),
   );
-  assert.match(headerSearch, /text-\[11\.5px\] font-semibold[^\"]*text-\[#142033\]/);
-  assert.match(headerSearch, /text-\[9\.5px\] font-medium[^\"]*text-\[#64748B\]/);
+  assert.match(headerSearch, /text-\[12px\] font-semibold[^\"]*text-\[#142033\]/);
+  assert.match(headerSearch, /text-\[10\.5px\] font-medium[^\"]*text-\[#64748B\]/);
+  assert.doesNotMatch(headerSearch, /flex-col|text-\[9\.5px\]/);
   assert.doesNotMatch(headerSearch, /font-extrabold/);
   assert.match(headerSearch, /bg-\[#F8FAFC\]/);
   assert.match(headerSearch, /data-cars-results-mobile-header-search/);

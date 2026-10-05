@@ -35,7 +35,7 @@ test("mobile Cars Results puts one compact search control in the main header", (
   assert.match(mobileHeaderSearch, /h-11 w-full min-w-0/);
   assert.match(
     mobileHeaderSearch,
-    /rounded-\[9px\] border border-\[#D8E1EC\] bg-\[#F8FAFC\]/,
+    /flex h-9 w-full min-w-0 items-center[\s\S]*rounded-\[9px\] border border-\[#D8E1EC\] bg-\[#F8FAFC\]/,
   );
   assert.match(mobileHeaderSearch, /locationPairSummary/);
   assert.match(mobileHeaderSearch, /rentalDateSummary/);

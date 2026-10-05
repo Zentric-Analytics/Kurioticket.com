@@ -52,21 +52,40 @@ test("Cars Results keeps the standard AppHeader and opts into the inline mobile 
   assert.doesNotMatch(carsHeader, /mobileSurface="muted"/);
 });
 
-test("AppHeader reserves a mobile search slot between the Kurioticket logo and account controls", () => {
-  const logo = appHeaderSource.indexOf('src="/brand/kurioticket-logo-primary-light-bg.svg"');
-  const searchSlot = appHeaderSource.indexOf("data-cars-results-mobile-nav-search", logo);
+test("AppHeader uses the mark-only brand on Cars mobile results and keeps the search between brand and account controls", () => {
+  const carsInlineBranch = appHeaderSource.indexOf(
+    "{carsResultsMobileInlineSearch ? (",
+  );
+  const mobileMark = appHeaderSource.indexOf(
+    'src="/brand/kurioticket-icon-blue.svg"',
+    carsInlineBranch,
+  );
+  const fullLogo = appHeaderSource.indexOf(
+    'src="/brand/kurioticket-logo-primary-light-bg.svg"',
+    mobileMark,
+  );
+  const searchSlot = appHeaderSource.indexOf(
+    "data-cars-results-mobile-nav-search",
+    fullLogo,
+  );
   const mobileActions = appHeaderSource.indexOf(
     'className={cn("flex items-center gap-0 md:hidden"',
     searchSlot,
   );
 
-  assert.ok(logo >= 0);
-  assert.ok(searchSlot > logo);
+  assert.ok(carsInlineBranch >= 0);
+  assert.ok(mobileMark > carsInlineBranch);
+  assert.ok(fullLogo > mobileMark);
+  assert.ok(searchSlot > fullLogo);
   assert.ok(mobileActions > searchSlot);
   assert.match(appHeaderSource, /carsResultsMobileInlineSearch\?: boolean/);
   assert.match(
     appHeaderSource,
-    /carsResultsMobileInlineSearch && "max-sm:h-6"/,
+    /kurioticket-icon-blue\.svg[\s\S]*?className="h-7 w-7 sm:hidden"/,
+  );
+  assert.match(
+    appHeaderSource,
+    /kurioticket-logo-primary-light-bg\.svg[\s\S]*?className="hidden h-8 w-auto sm:block md:h-9 lg:h-9"/,
   );
   assert.match(
     appHeaderSource,

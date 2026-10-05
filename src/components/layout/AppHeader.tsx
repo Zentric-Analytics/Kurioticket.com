@@ -792,11 +792,26 @@ export function AppHeader({
               onClick={(event) => handleRouteLinkClick(event, "/")}
               className="shrink-0"
             >
-              <RawImage
-                src="/brand/kurioticket-logo-primary-light-bg.svg"
-                alt="Kurioticket"
-                className={cn("h-8 w-auto md:h-9 lg:h-9", carsResultsMobileInlineSearch && "max-sm:h-6")}
-              />
+              {carsResultsMobileInlineSearch ? (
+                <>
+                  <RawImage
+                    src="/brand/kurioticket-icon-blue.svg"
+                    alt="Kurioticket"
+                    className="h-7 w-7 sm:hidden"
+                  />
+                  <RawImage
+                    src="/brand/kurioticket-logo-primary-light-bg.svg"
+                    alt="Kurioticket"
+                    className="hidden h-8 w-auto sm:block md:h-9 lg:h-9"
+                  />
+                </>
+              ) : (
+                <RawImage
+                  src="/brand/kurioticket-logo-primary-light-bg.svg"
+                  alt="Kurioticket"
+                  className="h-8 w-auto md:h-9 lg:h-9"
+                />
+              )}
             </Link>
 
             {carsResultsMobileInlineSearch ? (
