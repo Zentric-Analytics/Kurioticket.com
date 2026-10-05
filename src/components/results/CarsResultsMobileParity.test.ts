@@ -46,7 +46,7 @@ test("mobile Cars Results puts three compact visual fields inside one main-heade
   assert.match(mobileHeaderSearch, /<CalendarDays/);
   assert.match(mobileHeaderSearch, /<SquarePen/);
   assert.equal(
-    (mobileHeaderSearch.match(/rounded-\[9px\] border border-\[#D8E1EC\] bg-\[#F8FAFC\]/g) ?? []).length,
+    (mobileHeaderSearch.match(/rounded-\[8px\] border border-\[#D5DFEA\] bg-\[#FBFCFE\]/g) ?? []).length,
     3,
   );
   assert.doesNotMatch(mobileHeaderSearch, /data-cars-results-mobile-search-divider/);
