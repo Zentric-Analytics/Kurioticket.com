@@ -1810,9 +1810,10 @@ textarea {
   .flight-card-fare-action {
     align-items: flex-end;
     justify-content: flex-end;
+    margin-left: 0.5rem;
     border-left: 1px solid #d8e1ec;
     border-top: 0;
-    padding-left: 1rem;
+    padding-left: 0.5rem;
     padding-right: 0;
     padding-top: 0;
     padding-bottom: 0;
