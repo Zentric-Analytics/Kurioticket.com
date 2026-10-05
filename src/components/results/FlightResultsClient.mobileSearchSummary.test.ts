@@ -3,61 +3,55 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const source = readFileSync(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
-const cardStart = source.indexOf("function renderMobileRouteSummaryCard(");
-const cardEnd = source.indexOf("function renderMobileCompactResultsHeader()", cardStart);
-const card = source.slice(cardStart, cardEnd);
+const appHeader = readFileSync(new URL("../layout/AppHeader.tsx", import.meta.url), "utf8");
+const unifiedStart = source.indexOf("function renderMobileDesktopStyleHeaderSearch()");
+const unifiedEnd = source.indexOf("function renderMobileEditSearchDrawer()", unifiedStart);
+const unified = source.slice(unifiedStart, unifiedEnd);
 
-test("standalone Flight Results uses the Cars normal summary surface and compact scroll toolbar", () => {
-  assert.match(source, /<AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs \/>/);
-  assert.doesNotMatch(source, /mobileResultsSearch=|mobileResultsLeadingAction=|mobileResultsSticky=/);
-  assert.match(source, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
-  assert.match(source, /relative translate-y-1\/2/);
-  assert.match(source, /ref=\{mobileSearchSummarySentinelRef\}/);
-  assert.match(source, /renderMobileCompactResultsHeader/);
-  assert.match(source, /data-flight-results-compact-header/);
-  assert.match(source, /mobileCompactHeaderVisible/);
+test("standalone Flight Results uses one desktop-style sticky AppHeader on mobile", () => {
+  assert.match(
+    source,
+    /<AppHeader[\s\S]*mobileResultsSearch=\{renderMobileDesktopStyleHeaderSearch\(\)\}[\s\S]*mobileResultsSticky[\s\S]*mobileResultsDesktopStyle/,
+  );
+  assert.match(appHeader, /mobileResultsDesktopStyle\?: boolean/);
+  assert.match(appHeader, /data-mobile-results-desktop-style/);
+  assert.match(appHeader, /data-mobile-results-currency/);
+  assert.match(appHeader, /kurioticket-logo-primary-light-bg\.svg/);
+  assert.doesNotMatch(source, /renderMobileRouteSummaryCard|renderMobileCompactResultsHeader/);
+  assert.doesNotMatch(source, /mobileCompactHeaderVisible|mobileSearchSummarySentinelRef/);
+  assert.doesNotMatch(source, /data-flight-results-compact-header/);
 });
 
-test("Flight summary matches Cars card placement, color, geometry, and typography", () => {
-  assert.ok(cardStart >= 0);
-  assert.match(card, /mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center px-4/);
-  assert.match(card, /h-\[4\.25rem\]/);
-  assert.match(card, /max-w-\[30rem\]/);
-  assert.match(card, /rounded-xl border border-slate-200\/80 bg-white px-4/);
-  assert.match(card, /shadow-\[0_16px_34px_-26px_rgba\(15,23,42,0\.55\)\]/);
-  assert.match(card, /text-\[16px\] font-bold[^"]*text-\[#07133B\]/);
-  assert.match(card, /text-\[12\.5px\] font-medium[^"]*text-\[#536B92\]/);
-  assert.match(card, /<SquarePen size=\{16\} strokeWidth=\{2\.2\} \/>/);
-  assert.doesNotMatch(card, /bg-\[#f6f8fb\]|h-\[52px\]|rounded-\[10px\]/);
+test("mobile Flight header compresses the desktop search hierarchy into route, dates, travelers and search", () => {
+  assert.ok(unifiedStart >= 0 && unifiedEnd > unifiedStart);
+  assert.match(unified, /data-flight-mobile-unified-header-search/);
+  assert.match(unified, /data-flight-mobile-header-route/);
+  assert.match(unified, /data-flight-mobile-header-dates/);
+  assert.match(unified, /data-flight-mobile-header-travelers/);
+  assert.match(unified, /data-flight-mobile-header-search/);
+  assert.match(unified, /border-\[#D8E1EC\] bg-\[#F8FAFC\]/);
+  assert.match(unified, /<ArrowRightLeft/);
+  assert.match(unified, /<Calendar/);
+  assert.match(unified, /<UserRound/);
+  assert.match(unified, /bg-\[#004BB8\]/);
+  assert.match(unified, /<Search className="h-\[18px\] w-\[18px\]"/);
 });
 
-test("Flight summary remains the whole-card Edit Search launcher", () => {
-  assert.match(card, /<button[\s\S]*openMobileSearchDrawer/);
-  assert.match(card, /aria-haspopup="dialog"/);
-  assert.match(card, /aria-expanded=\{mobileSearchOpen\}/);
-  assert.match(card, /\{mobileRouteSummary\}/);
-  assert.match(card, /\{mobileTripTypeSummary\} · \{mobileDateSummary\} ·/);
-  assert.match(card, /\{mobileTravelerSummary\} · \{mobileCabinClassSummary\}/);
+test("every mobile header search control opens the existing Edit Search drawer", () => {
+  assert.match(unified, /const openEditSearch/);
+  assert.match(unified, /openMobileSearchDrawer/);
+  assert.equal(unified.match(/onClick=\{openEditSearch\}/g)?.length, 4);
+  assert.match(unified, /aria-expanded=\{mobileSearchOpen\}/);
+  assert.match(unified, /\{mobileRouteSummary\}/);
+  assert.match(unified, /\{mobileTripTypeSummary\}/);
+  assert.match(unified, /\{mobileDateSummary\}/);
+  assert.match(unified, /\{mobileTravelerTotal\}/);
+  assert.match(unified, /\{mobileCabinClassSummary\}/);
 });
 
-test("compact Flight header mirrors Cars Back, Modify search, Filters, colors, and geometry", () => {
-  const start = source.indexOf("function renderMobileCompactResultsHeader()");
-  const end = source.indexOf("function renderMobileEditSearchDrawer()", start);
-  const compact = source.slice(start, end);
-
-  assert.match(compact, /fixed inset-x-0 top-0 z-\[90\] bg-white px-3 pb-2/);
-  assert.match(compact, /grid-cols-\[44px_minmax\(0,1fr\)_82px\]/);
-  assert.match(compact, /<ArrowLeft className="h-5 w-5" aria-hidden="true" \/>/);
-  assert.match(compact, /router\.push\("\/flights"\)/);
-  assert.match(compact, /text-\[15px\] font-bold[^"]*text-\[#07133B\]/);
-  assert.match(compact, /text-\[11px\] font-medium[^"]*text-\[#536B92\]/);
-  assert.match(compact, /<Pencil[\s\S]*data-flight-compact-edit-icon/);
-  assert.match(compact, /<SlidersHorizontal[\s\S]*text-\[#004BB8\]/);
-  assert.match(compact, /<span className="truncate">\{t\("filters"\)\}<\/span>/);
-});
-
-test("desktop search toolbar remains isolated from the mobile Cars-style summary", () => {
-  const start = source.indexOf("function renderDesktopMinimizedSearchBar()");
-  const end = source.indexOf("function renderStickySearchPopoutOverlay()", start);
-  assert.doesNotMatch(source.slice(start, end), /renderMobileRouteSummaryCard|h-\[4\.25rem\]/);
+test("desktop search toolbar remains intact and separate from the mobile responsive row", () => {
+  assert.match(source, /function renderDesktopHeaderSearchBar\(\)/);
+  assert.match(source, /data-flight-results-nav-search-form/);
+  assert.match(source, /readyDesktopNavbarSearch/);
+  assert.match(source, /createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
 });
