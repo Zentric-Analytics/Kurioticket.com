@@ -78,6 +78,7 @@ type AppHeaderProps = {
   mobileResultsSearch?: ReactNode;
   mobileResultsLeadingAction?: ReactNode;
   mobileResultsSticky?: boolean;
+  carsResultsMobileInlineSearch?: boolean;
   hideMobileSecondaryNavLinks?: boolean;
   mobileHeroOverlay?: boolean;
   mobileHeroOverlayLowered?: boolean;
@@ -142,6 +143,7 @@ export function AppHeader({
   mobileResultsSearch,
   mobileResultsLeadingAction,
   mobileResultsSticky = true,
+  carsResultsMobileInlineSearch = false,
   hideMobileSecondaryNavLinks = false,
   mobileHeroOverlay = false,
   hideMobileCategoryTabs = false,
@@ -740,7 +742,8 @@ export function AppHeader({
             ? "pt-[var(--cars-results-safe-area-top)] sm:pt-[env(safe-area-inset-top)]"
             : "pt-[env(safe-area-inset-top)]",
           mobileSurface === "muted" && "max-sm:bg-[#F2F4F8]",
-          mobileResultsSearch && mobileResultsSticky && "max-sm:sticky max-sm:top-0 max-sm:z-[950]",
+          ((mobileResultsSearch && mobileResultsSticky) || carsResultsMobileInlineSearch) &&
+            "max-sm:sticky max-sm:top-0 max-sm:z-[950]",
           flushMobileBottom &&
             "border-b-0 shadow-none sm:border-b sm:shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
           flushDesktopBottom && "sm:border-b-0 sm:shadow-none",
@@ -757,7 +760,7 @@ export function AppHeader({
 
         </div> : null}
         <div className={cn("page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3", mobileResultsSearch && "max-sm:hidden", resultsDesktopSticky && "lg:py-[14px]")}>
-          <div className={cn("flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8", resultsDesktopSticky && "lg:gap-4")}>
+          <div className={cn("flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8", resultsDesktopSticky && "lg:gap-4", carsResultsMobileInlineSearch && "max-sm:gap-2")}>
             <Link
               href="/"
               aria-label="Kurioticket home"
@@ -767,10 +770,16 @@ export function AppHeader({
               <RawImage
                 src="/brand/kurioticket-logo-primary-light-bg.svg"
                 alt="Kurioticket"
-                className="h-8 w-auto md:h-9 lg:h-9"
+                className={cn("h-8 w-auto md:h-9 lg:h-9", carsResultsMobileInlineSearch && "max-sm:h-6")}
               />
             </Link>
 
+            {carsResultsMobileInlineSearch ? (
+              <div
+                data-cars-results-mobile-nav-search
+                className="min-w-0 flex-1 sm:hidden"
+              />
+            ) : null}
             {hotelResultsDesktopSticky ? <div data-hotel-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[560px]" /> : null}
             {flightResultsDesktopSticky ? <div data-flight-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[820px]" /> : null}
             {carsResultsDesktopSticky ? <div data-cars-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[720px] xl:max-w-[820px]" /> : null}
@@ -921,7 +930,7 @@ export function AppHeader({
               </div>
             </div>
 
-            <div className="flex items-center gap-0 md:hidden">
+            <div className={cn("flex items-center gap-0 md:hidden", carsResultsMobileInlineSearch && "shrink-0")}>
               {isSignedIn ? (
                 <button
                   type="button"
@@ -1214,7 +1223,7 @@ export function AppHeader({
         {mobileMenuOpen && typeof document !== "undefined"
           ? createPortal(
               <div
-                className={cn("fixed inset-0 z-[70] md:hidden", mobileResultsSearch && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:z-[940]")}
+                className={cn("fixed inset-0 z-[70] md:hidden", mobileResultsSearch && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:z-[940]", carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:z-[940]")}
                 role="presentation"
               >
                 <button
@@ -1229,7 +1238,7 @@ export function AppHeader({
                   role="dialog"
                   aria-modal="true"
                   aria-label={t.menu}
-                  className={cn("fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl", mobileResultsSearch && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:h-[calc(100dvh-72px-env(safe-area-inset-top))]")}
+                  className={cn("fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl", mobileResultsSearch && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:h-[calc(100dvh-72px-env(safe-area-inset-top))]", carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:h-[calc(100dvh-61px-var(--cars-results-safe-area-top))]")}
                 >
                   <div className={cn("flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4", mobileResultsSearch && "max-sm:hidden")}>
                     <div className="min-w-0">
@@ -1322,7 +1331,7 @@ export function AppHeader({
                         <div className="mt-1.5 grid">
                           {mobileTravelMenuNavItems.map((item) => {
                             const Icon = item.icon;
-                            const active = mobileResultsSearch && isNavItemActive(item.href);
+                            const active = (mobileResultsSearch || carsResultsMobileInlineSearch) && isNavItemActive(item.href);
 
                             return (
                               <Link
@@ -1433,7 +1442,7 @@ export function AppHeader({
         {isSignedIn && mobileAccountOpen && typeof document !== "undefined"
           ? createPortal(
               <div
-                className="fixed inset-0 z-[70] md:hidden"
+                className={cn("fixed inset-0 z-[70] md:hidden", carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:z-[940]")}
                 role="presentation"
               >
                 <button
@@ -1448,7 +1457,7 @@ export function AppHeader({
                   role="dialog"
                   aria-modal="true"
                   aria-label={t.openAccountMenu}
-                  className="fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
+                  className={cn("fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl", carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:h-[calc(100dvh-61px-var(--cars-results-safe-area-top))]")}
                 >
                   <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
                     <section aria-label="Account">
