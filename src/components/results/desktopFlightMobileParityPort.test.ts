@@ -62,6 +62,7 @@ test("standalone desktop Flight Results follows the live Hotel sticky-filter han
   assert.match(results, /const desktopFilterPanelRef = useRef<HTMLDivElement \| null>\(null\)/);
   assert.match(results, /const desktopResultsContentRef = useRef<HTMLElement \| null>\(null\)/);
   assert.match(results, /showStickyFlightFilters/);
+  assert.match(results, /window\.matchMedia\("\(min-width: 1024px\)"\)\.matches/);
   assert.match(results, /filterBottom <= 170/);
   assert.match(results, /remainingResultsHeight >= 500/);
   assert.match(results, /data-flight-sticky-popular-filters/);
