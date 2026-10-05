@@ -26,9 +26,9 @@ test("desktop Flight Results header is compact, trip-aware, and uses lighter Hot
 
   assert.match(toolbar, /data-flight-results-nav-search-form/);
   assert.match(toolbar, /tripTypeInput === "round-trip"/);
-  assert.match(toolbar, /grid-cols-\[96px_minmax\(0,1fr\)_minmax\(138px,170px\)_50px_40px\]/);
+  assert.match(toolbar, /grid-cols-\[96px_minmax\(0,1fr\)_minmax\(138px,150px\)_50px_40px\]/);
   assert.match(toolbar, /grid-cols-\[96px_minmax\(0,1fr\)_112px_50px_40px\]/);
-  assert.match(toolbar, /xl:grid-cols-\[104px_190px_170px_56px_40px\]/);
+  assert.match(toolbar, /xl:grid-cols-\[104px_190px_150px_56px_40px\]/);
   assert.match(toolbar, /xl:grid-cols-\[104px_190px_112px_56px_40px\]/);
   assert.match(toolbar, /getCompactCityLabel/);
   assert.match(toolbar, /data-flight-results-compact-route/);
@@ -60,6 +60,16 @@ test("desktop Flight header uses the requested weekday numeric date format", () 
     helper,
     /return `\$\{weekday\} \$\{date\.getMonth\(\) \+ 1\}\/\$\{date\.getDate\(\)\}`/,
   );
+});
+
+test("desktop Flight round-trip date control is visibly more compact", () => {
+  const toolbar = desktopHeaderSearchBarSource();
+
+  assert.match(toolbar, /const dateFieldClass =[\s\S]*?h-\[36px\]/);
+  assert.match(toolbar, /max-w-\[500px\]/);
+  assert.match(toolbar, /minmax\(138px,150px\)/);
+  assert.match(toolbar, /xl:grid-cols-\[104px_190px_150px_56px_40px\]/);
+  assert.match(toolbar, /className=\{cn\(dateFieldClass, "w-full justify-center"\)\}/);
 });
 
 test("compact multi-city header follows the first edited leg date", () => {
@@ -317,8 +327,9 @@ test("desktop compact header uses lighter Hotels-like surfaces without duplicate
 test("direct header route inputs keep the compact header typography contract", () => {
   const toolbar = desktopHeaderSearchBarSource();
 
-  assert.match(toolbar, /id="sticky-results-origin"[\s\S]*?text-\[12px\] font-semibold leading-\[17px\]/);
-  assert.match(toolbar, /id="sticky-results-destination"[\s\S]*?text-\[12px\] font-semibold leading-\[17px\]/);
+  assert.match(toolbar, /id="sticky-results-origin"[\s\S]*?flight-results-nav-route-input/);
+  assert.match(toolbar, /id="sticky-results-destination"[\s\S]*?flight-results-nav-route-input/);
+  assert.match(styles, /\.flight-results-nav-route-input \{[\s\S]*?font-size: 12px;[\s\S]*?line-height: 17px;[\s\S]*?font-weight: 600;[\s\S]*?color: #142033;/);
   assert.doesNotMatch(toolbar, /flight-results-edit-value h-6/);
 });
 

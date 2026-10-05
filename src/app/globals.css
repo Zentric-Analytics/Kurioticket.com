@@ -409,6 +409,19 @@ textarea {
   font: inherit;
 }
 
+@media (min-width: 1024px) {
+  .flight-results-nav-route-input {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 17px;
+    font-weight: 600;
+    color: #142033;
+    font-synthesis: none;
+    font-kerning: normal;
+    text-rendering: optimizeLegibility;
+  }
+}
+
 .hotel-results-sort-trigger {
   font-size: 12px;
   font-weight: 700;
@@ -1551,7 +1564,7 @@ textarea {
     background: transparent;
     margin-top: 0;
     padding: 0.5rem 0;
-    transform: translateY(0.375rem);
+    transform: translateY(0.875rem);
   }
 
   .flight-card-detail-item {

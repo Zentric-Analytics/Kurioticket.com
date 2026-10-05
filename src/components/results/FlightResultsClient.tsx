@@ -5556,13 +5556,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     ];
     const fieldClass =
       "focus-ring flex h-[40px] min-w-0 items-center rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] px-2.5 text-start text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA]";
+    const dateFieldClass =
+      "focus-ring flex h-[36px] min-w-0 items-center rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] px-1.5 text-start text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA]";
     const tripTypeClass =
       "focus-ring flex h-[40px] w-full min-w-0 items-center justify-center rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] px-2.5 text-center text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA]";
     const valueClass =
       "min-w-0 truncate text-[12px] font-semibold leading-[17px] text-[#142033]";
     const headerGridClass =
       tripTypeInput === "round-trip"
-        ? "max-w-[520px] grid-cols-[96px_minmax(0,1fr)_minmax(138px,170px)_50px_40px] xl:w-fit xl:max-w-none xl:grid-cols-[104px_190px_170px_56px_40px]"
+        ? "max-w-[500px] grid-cols-[96px_minmax(0,1fr)_minmax(138px,150px)_50px_40px] xl:w-fit xl:max-w-none xl:grid-cols-[104px_190px_150px_56px_40px]"
         : "max-w-[462px] grid-cols-[96px_minmax(0,1fr)_112px_50px_40px] xl:w-fit xl:max-w-none xl:grid-cols-[104px_190px_112px_56px_40px]";
     const tripMenuOpen =
       isStickySearchPanelOpen &&
@@ -5720,7 +5722,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               }}
               placeholder={t("fromPlaceholder")}
               autoComplete="off"
-              className="box-border h-full w-full min-w-0 border-0 bg-transparent px-2 text-right text-[12px] font-semibold leading-[17px] text-[#142033] outline-none placeholder:text-slate-400"
+              className="flight-results-nav-route-input box-border h-full w-full min-w-0 border-0 bg-transparent px-2 text-right outline-none placeholder:text-slate-400"
             />
             {isStickySearchPanelOpen &&
             activeStickySearchTarget === "origin" &&
@@ -5813,7 +5815,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               }}
               placeholder={t("toPlaceholder")}
               autoComplete="off"
-              className="box-border h-full w-full min-w-0 border-0 bg-transparent px-2 text-left text-[12px] font-semibold leading-[17px] text-[#142033] outline-none placeholder:text-slate-400"
+              className="flight-results-nav-route-input box-border h-full w-full min-w-0 border-0 bg-transparent px-2 text-left outline-none placeholder:text-slate-400"
             />
             {isStickySearchPanelOpen &&
             activeStickySearchTarget === "destination" &&
@@ -5849,7 +5851,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             }
             aria-label={`${t("editFlightSearch")}: ${dateSummary}`}
             onClick={(event) => openStickySearchEditor(event.currentTarget, "dates")}
-            className={cn(fieldClass, "w-full justify-center px-2")}
+            className={cn(dateFieldClass, "w-full justify-center")}
           >
             <span className={valueClass}>{dateSummary}</span>
           </button>
