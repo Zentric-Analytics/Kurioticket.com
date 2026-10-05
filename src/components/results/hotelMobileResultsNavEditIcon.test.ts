@@ -13,6 +13,7 @@ test("mobile web Hotel results navbar uses an edit icon for the search summary",
   const section = source.slice(start, end);
 
   assert.match(section, /data-hotel-results-mobile-nav-search-button/);
-  assert.match(section, /<PencilLine size=\{17\} strokeWidth=\{2\.2\} \/>/);
-  assert.doesNotMatch(section, /<Search/);
+  assert.match(section, /<Pencil size=\{17\} strokeWidth=\{2\.2\} \/>/);
+  assert.doesNotMatch(section, /<Search|<PencilLine/);
+  assert.match(section, /text-\[#142033\]/);
 });
