@@ -113,3 +113,15 @@ test("results navbar can opt out of sticky behavior for a scroll handoff", () =>
     /mobileResultsSearch && mobileResultsSticky && "max-sm:sticky max-sm:top-0 max-sm:z-\[950\]"/,
   );
 });
+
+
+test("desktop-style mobile results keep the primary logo row and place search beneath it", () => {
+  assert.match(headerSource, /mobileResultsDesktopStyle\?: boolean/);
+  assert.match(headerSource, /mobileResultsDesktopStyle = false/);
+  assert.match(headerSource, /mobileResultsSearch && !mobileResultsDesktopStyle \? <div data-mobile-results-navbar/);
+  assert.match(headerSource, /mobileResultsSearch && !mobileResultsDesktopStyle && "max-sm:hidden"/);
+  assert.match(headerSource, /data-mobile-results-currency/);
+  assert.match(headerSource, /data-mobile-results-desktop-style/);
+  assert.match(headerSource, /kurioticket-logo-primary-light-bg\.svg/);
+  assert.match(headerSource, /max-sm:top-\[calc\(119px\+env\(safe-area-inset-top\)\)\]/);
+});

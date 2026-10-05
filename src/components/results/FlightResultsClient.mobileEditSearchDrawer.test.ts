@@ -20,12 +20,12 @@ test("Results delegates mobile Edit Search to the shared drawer", () => {
   assert.match(source, /router\.push\(`\/flights\/results\?/);
 });
 
-test("Results launcher avoids Android tap flash while retaining focus-visible", () => {
-  const start = source.indexOf("function renderMobileRouteSummaryCard");
+test("Results unified header launchers avoid Android tap flash while retaining focus-visible", () => {
+  const start = source.indexOf("function renderMobileDesktopStyleHeaderSearch");
   const end = source.indexOf("function renderMobileEditSearchDrawer", start);
   const launcher = source.slice(start, end);
   assert.match(launcher, /\[-webkit-tap-highlight-color:transparent\]/);
-  assert.match(launcher, /focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/35/);
+  assert.match(launcher, /focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/25/);
   assert.doesNotMatch(launcher, /group-active:bg-slate-200/);
 });
 
@@ -37,13 +37,12 @@ test("Results parent leaves Edit Search scroll locking to the drawer", () => {
   assert.match(source, /mobileFiltersScrollLockRef\.current \?\?= acquireMobileResultsScrollLock\(\)/);
 });
 
-test("Edit Search remains wired to the Cars-style top summary and compact scroll launcher", () => {
-  assert.doesNotMatch(source, /mobileResultsSearch=|mobileResultsLeadingAction=/);
-  assert.match(source, /renderMobileRouteSummaryCard\(\)/);
-  assert.match(source, /relative translate-y-1\/2/);
+test("Edit Search remains wired to the single desktop-style mobile header", () => {
+  assert.match(source, /mobileResultsSearch=\{renderMobileDesktopStyleHeaderSearch\(\)\}/);
+  assert.match(source, /mobileResultsDesktopStyle/);
   assert.match(source, /aria-expanded=\{mobileSearchOpen\}/);
   assert.match(source, /data-flight-results-main/);
-  assert.match(source, /data-flight-results-compact-header/);
-  assert.match(source, /mobileCompactHeaderVisible/);
-  assert.match(source, /openMobileSearchDrawer\(event\.currentTarget/);
+  assert.match(source, /data-flight-mobile-unified-header-search/);
+  assert.doesNotMatch(source, /data-flight-results-compact-header|mobileCompactHeaderVisible/);
+  assert.match(source, /openMobileSearchDrawer/);
 });
