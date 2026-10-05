@@ -34,7 +34,7 @@ test("Flight Filter and quick-filter chips mirror Hotel geometry", () => {
 
   const filter = source.slice(
     source.indexOf("function renderFloatingFilterButton"),
-    source.indexOf("function renderMobileDesktopStyleHeaderSearch"),
+    source.indexOf("function renderMobileRouteSummaryCard"),
   );
   assert.match(filter, /inline-flex h-9 items-center gap-1 rounded-\[9px\] border px-2 text-\[13px\] font-semibold transition/);
   assert.match(filter, /border-\[#142033\] bg-white text-\[#142033\]/);
@@ -130,7 +130,7 @@ test("sheet lifecycle keeps accessibility, scroll lock, Escape and focus restora
 test("full Filters launcher remains separate and retains Hotel-style active count", () => {
   const filter = source.slice(
     source.indexOf("function renderFloatingFilterButton"),
-    source.indexOf("function renderMobileDesktopStyleHeaderSearch"),
+    source.indexOf("function renderMobileRouteSummaryCard"),
   );
   assert.match(filter, /openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/);
   assert.match(filter, /activeFilterCount > 0/);
