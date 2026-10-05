@@ -10,6 +10,10 @@ const routeSource = readFileSync(
   new URL("../../../app/cars/details/[id]/page.tsx", import.meta.url),
   "utf8",
 );
+const loadingSource = readFileSync(
+  new URL("../../../app/cars/details/[id]/loading.tsx", import.meta.url),
+  "utf8",
+);
 const flightSource = readFileSync(
   new URL("../FlightDetailsClient.tsx", import.meta.url),
   "utf8",
@@ -78,6 +82,14 @@ test("successful Cars Details uses one continuous production surface", () => {
       clientSource.indexOf('<div className="page-shell py-0 lg:py-6 lg:max-w-[1080px]" data-car-details-body-shell>'),
     ),
   );
+});
+
+test("Cars Details loading state uses the same responsive Hotel Details canvas", () => {
+  assert.match(
+    loadingSource,
+    /className="flex-1 bg-white pb-24 sm:bg-\[#f8fafc\] lg:bg-\[#F7F9FC\]"/,
+  );
+  assert.doesNotMatch(loadingSource, /bg-\[#f6f8fb\]|lg:bg-\[#F8FAFC\]|lg:bg-\[#EEF2F7\]/);
 });
 
 test("successful Cars Details retains layout, content, and price contracts", () => {
