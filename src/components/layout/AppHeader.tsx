@@ -78,7 +78,6 @@ type AppHeaderProps = {
   mobileResultsSearch?: ReactNode;
   mobileResultsLeadingAction?: ReactNode;
   mobileResultsSticky?: boolean;
-  mobileResultsDesktopStyle?: boolean;
   hideMobileSecondaryNavLinks?: boolean;
   mobileHeroOverlay?: boolean;
   mobileHeroOverlayLowered?: boolean;
@@ -143,7 +142,6 @@ export function AppHeader({
   mobileResultsSearch,
   mobileResultsLeadingAction,
   mobileResultsSticky = true,
-  mobileResultsDesktopStyle = false,
   hideMobileSecondaryNavLinks = false,
   mobileHeroOverlay = false,
   hideMobileCategoryTabs = false,
@@ -749,7 +747,7 @@ export function AppHeader({
           hotelDesktopBoundary && "lg:shadow-[0_2px_12px_rgba(12,14,28,0.08)]",
         )}
       >
-        {mobileResultsSearch && !mobileResultsDesktopStyle ? <div data-mobile-results-navbar className="flex h-[72px] items-center gap-2 border-b border-slate-200 px-2 sm:hidden">
+        {mobileResultsSearch ? <div data-mobile-results-navbar className="flex h-[72px] items-center gap-2 border-b border-slate-200 px-2 sm:hidden">
           {mobileResultsLeadingAction ?? (
             <button type="button" aria-label={mobileMenuOpen ? t.closeMobileMenu : t.openMobileMenu} aria-expanded={mobileMenuOpen} aria-controls="mobile-menu-drawer" aria-haspopup="dialog" onClick={() => { setMobileAccountOpen(false); setMobileMenuOpen((value) => !value); }} className="focus-ring flex h-11 w-12 shrink-0 items-center justify-center gap-1 rounded-lg">
               <RawImage src="/brand/kurioticket-icon-blue.svg" alt="Kurioticket" className="h-7 w-7" /><ChevronDown className={cn("h-3 w-3 text-slate-700", mobileMenuOpen && "rotate-180")} aria-hidden="true" />
@@ -758,7 +756,7 @@ export function AppHeader({
           <div className="min-w-0 flex-1" onClickCapture={() => setMobileMenuOpen(false)}>{mobileResultsSearch}</div>
 
         </div> : null}
-        <div className={cn("page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3", mobileResultsSearch && !mobileResultsDesktopStyle && "max-sm:hidden", resultsDesktopSticky && "lg:py-[14px]")}>
+        <div className={cn("page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3", mobileResultsSearch && "max-sm:hidden", resultsDesktopSticky && "lg:py-[14px]")}>
           <div className={cn("flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8", resultsDesktopSticky && "lg:gap-4")}>
             <Link
               href="/"
@@ -924,14 +922,6 @@ export function AppHeader({
             </div>
 
             <div className="flex items-center gap-0 md:hidden">
-              {mobileResultsDesktopStyle ? (
-                <div
-                  data-mobile-results-currency
-                  className="me-0.5 max-[359px]:hidden [&>button]:!h-9 [&>button]:!gap-1 [&>button]:!rounded-md [&>button]:!border-transparent [&>button]:!bg-transparent [&>button]:!px-2 [&>button]:!text-[12px] [&>button]:!font-semibold [&>button]:!text-[#021C2B]/85 [&>button]:!shadow-none [&>button>svg]:!h-4 [&>button>svg]:!w-4"
-                >
-                  <CountryCurrencySelector variant="header" grouped />
-                </div>
-              ) : null}
               {isSignedIn ? (
                 <button
                   type="button"
@@ -1221,29 +1211,10 @@ export function AppHeader({
           ) : null}
         </div>
 
-        {mobileResultsSearch && mobileResultsDesktopStyle ? (
-          <div
-            data-mobile-results-navbar
-            data-mobile-results-desktop-style
-            className="border-t border-[#E5EAF0] px-3 pb-2 pt-1.5 sm:hidden"
-            onClickCapture={() => setMobileMenuOpen(false)}
-          >
-            <div className="mx-auto w-full max-w-3xl">{mobileResultsSearch}</div>
-          </div>
-        ) : null}
-
         {mobileMenuOpen && typeof document !== "undefined"
           ? createPortal(
               <div
-                className={cn(
-                  "fixed inset-0 z-[70] md:hidden",
-                  mobileResultsSearch &&
-                    !mobileResultsDesktopStyle &&
-                    "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:z-[940]",
-                  mobileResultsSearch &&
-                    mobileResultsDesktopStyle &&
-                    "max-sm:top-[calc(119px+env(safe-area-inset-top))] max-sm:z-[940]",
-                )}
+                className={cn("fixed inset-0 z-[70] md:hidden", mobileResultsSearch && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:z-[940]")}
                 role="presentation"
               >
                 <button
@@ -1258,15 +1229,7 @@ export function AppHeader({
                   role="dialog"
                   aria-modal="true"
                   aria-label={t.menu}
-                  className={cn(
-                    "fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl",
-                    mobileResultsSearch &&
-                      !mobileResultsDesktopStyle &&
-                      "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:h-[calc(100dvh-72px-env(safe-area-inset-top))]",
-                    mobileResultsSearch &&
-                      mobileResultsDesktopStyle &&
-                      "max-sm:top-[calc(119px+env(safe-area-inset-top))] max-sm:h-[calc(100dvh-119px-env(safe-area-inset-top))]",
-                  )}
+                  className={cn("fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl", mobileResultsSearch && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:h-[calc(100dvh-72px-env(safe-area-inset-top))]")}
                 >
                   <div className={cn("flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4", mobileResultsSearch && "max-sm:hidden")}>
                     <div className="min-w-0">
