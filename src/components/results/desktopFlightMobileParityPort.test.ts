@@ -58,17 +58,21 @@ test("compact Flight time-mode switch stays in the compact panel until the slide
   assert.doesNotMatch(selector, /onFilterChange|onFilterCommit/);
 });
 
-test("standalone desktop Flight Results keeps the existing compact handoff after the Hotel-style primary sidebar scrolls away", () => {
-  assert.match(results, /renderDesktopFlightFilters\(true\)/);
-  assert.match(results, /desktopCompactFilterRef/);
-  assert.match(results, /desktopFilterSentinelRef/);
+test("standalone desktop Flight Results follows the live Hotel sticky-filter handoff without remounting the compact accordion", () => {
+  assert.match(results, /const desktopFilterPanelRef = useRef<HTMLDivElement \| null>\(null\)/);
+  assert.match(results, /const desktopResultsContentRef = useRef<HTMLElement \| null>\(null\)/);
+  assert.match(results, /showStickyFlightFilters/);
+  assert.match(results, /filterBottom <= 170/);
+  assert.match(results, /remainingResultsHeight >= 500/);
+  assert.match(results, /data-flight-sticky-popular-filters/);
+  assert.match(results, /sticky top-\[88px\]/);
+  assert.doesNotMatch(results, /renderDesktopFlightFilters\(true\)/);
+  assert.doesNotMatch(results, /desktopCompactFilterRef|desktopFilterSentinelRef|data-flight-desktop-compact-filter/);
+
+  // Keep the legacy compact branch available inside the shared filter component,
+  // but the standalone Flight Results scroll path must not mount it anymore.
   assert.match(filters, /data-flight-desktop-compact-filter-surface/);
   assert.match(filters, /openCompactSection/);
-  assert.match(filters, /setOpenCompactSection\(\(current\) => \(current === section \? null : section\)\)/);
-  assert.match(filters, /desktop-filter-sidebar__title[\s\S]*?SlidersHorizontal[\s\S]*?size=\{15\}/);
-  assert.match(filters, /min-h-9 w-full[\s\S]*?text-\[13px\] font-semibold leading-5 tracking-\[-0\.005em\][\s\S]*?ChevronDown/);
-  assert.match(filters, /min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain/);
-  assert.match(results, /idPrefix=\{compact \? "desktop-flight-filter-compact" : "desktop-flight-filter-primary"\}/);
 });
 
 test("desktop nearby fares keep seven dates and arrows but use mobile-like individual tiles", () => {
