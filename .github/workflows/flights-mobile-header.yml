@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: [dev]
     paths:
+      - src/app/flights/results/page.tsx
       - src/components/results/FlightResultsClient*
       - src/components/layout/AppHeader*
       - qa/mobile-web/tests/flights*.spec.ts

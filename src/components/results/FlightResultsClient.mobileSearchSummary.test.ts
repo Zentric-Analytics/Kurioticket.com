@@ -51,3 +51,11 @@ test("desktop header settings and desktop search stay independent of the mobile 
   assert.doesNotMatch(desktop, /renderMobileRouteSummaryCard/);
   assert.match(appHeader, /mobileResultsSearch && "max-sm:hidden"/);
 });
+
+
+test("mobile Flight Suspense reserves the ready navbar geometry", () => {
+  const page = readFileSync(new URL("../../app/flights/results/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /mobileResultsTrailingActions/);
+  assert.match(page, /mobileResultsSearch=\{[\s\S]*?data-flight-mobile-summary-placeholder/);
+  assert.match(page, /data-flight-mobile-summary-placeholder[\s\S]*?min-h-11 w-full min-w-0/);
+});
