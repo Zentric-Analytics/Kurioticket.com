@@ -1077,51 +1077,51 @@ export function CarsResultsClient({
           getOverlayActivationModality(event),
         )
       }
-      className="focus-ring group flex h-11 w-full min-w-0 touch-manipulation items-center rounded-[10px] p-0 text-start transition [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+      className="focus-ring group flex h-11 w-full min-w-0 touch-manipulation items-center rounded-[9px] p-0 text-start transition [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
     >
       <span
         data-cars-results-mobile-search-fields
-        className="grid h-9 w-full min-w-0 grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)_34px] items-stretch gap-1"
+        className="grid h-9 w-full min-w-0 grid-cols-[minmax(0,0.76fr)_minmax(0,1.24fr)_32px] items-stretch gap-[3px]"
       >
         <span
           data-cars-results-mobile-search-location
-          className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-[9px] border border-[#D8E1EC] bg-[#F8FAFC] px-1.5 shadow-[0_1px_3px_rgba(24,48,91,0.06)] transition group-hover:border-[#C4CFDC] group-hover:bg-white"
+          className="flex min-w-0 items-center gap-[5px] overflow-hidden rounded-[8px] border border-[#D5DFEA] bg-[#FBFCFE] px-[7px] shadow-[0_1px_2px_rgba(24,48,91,0.045)] transition group-hover:border-[#C7D3E0] group-hover:bg-white"
         >
           <Car
-            className="h-3.5 w-3.5 shrink-0 text-[#142033]"
-            strokeWidth={2}
+            className="h-[13px] w-[13px] shrink-0 text-[#24324A]"
+            strokeWidth={2.1}
             aria-hidden="true"
           />
           <span
             title={locationPairSummary}
-            className="min-w-0 flex-1 truncate text-[12px] font-semibold leading-4 tracking-[-0.005em] text-[#142033]"
+            className="min-w-0 flex-1 truncate text-[11.5px] font-semibold leading-[15px] tracking-[-0.01em] text-[#172238]"
           >
             {locationPairSummary}
           </span>
         </span>
         <span
           data-cars-results-mobile-search-dates
-          className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-[9px] border border-[#D8E1EC] bg-[#F8FAFC] px-1.5 shadow-[0_1px_3px_rgba(24,48,91,0.06)] transition group-hover:border-[#C4CFDC] group-hover:bg-white"
+          className="flex min-w-0 items-center gap-[5px] overflow-hidden rounded-[8px] border border-[#D5DFEA] bg-[#FBFCFE] px-[7px] shadow-[0_1px_2px_rgba(24,48,91,0.045)] transition group-hover:border-[#C7D3E0] group-hover:bg-white"
         >
           <CalendarDays
-            className="h-3.5 w-3.5 shrink-0 text-[#536B92]"
-            strokeWidth={2}
+            className="h-[13px] w-[13px] shrink-0 text-[#5B7093]"
+            strokeWidth={1.95}
             aria-hidden="true"
           />
           <span
             title={rentalDateSummary}
-            className="min-w-0 flex-1 truncate whitespace-nowrap text-[10.5px] font-medium leading-4 text-[#64748B]"
+            className="min-w-0 flex-1 truncate whitespace-nowrap text-[10.75px] font-semibold leading-[15px] tracking-[-0.004em] text-[#536786]"
           >
             {rentalDateSummary}
           </span>
         </span>
         <span
           data-cars-results-mobile-search-edit
-          className="flex h-full w-[34px] shrink-0 items-center justify-center rounded-[9px] border border-[#D8E1EC] bg-[#F8FAFC] shadow-[0_1px_3px_rgba(24,48,91,0.06)] transition group-hover:border-[#C4CFDC] group-hover:bg-white"
+          className="flex h-full w-8 shrink-0 items-center justify-center rounded-[8px] border border-[#D5DFEA] bg-[#FBFCFE] shadow-[0_1px_2px_rgba(24,48,91,0.045)] transition group-hover:border-[#C7D3E0] group-hover:bg-white"
         >
           <SquarePen
-            className="h-3.5 w-3.5 text-[#536B92] transition group-hover:text-[#142033]"
-            strokeWidth={2}
+            className="h-[13.5px] w-[13.5px] text-[#5B7093] transition group-hover:text-[#24324A]"
+            strokeWidth={1.95}
             aria-hidden="true"
           />
         </span>
