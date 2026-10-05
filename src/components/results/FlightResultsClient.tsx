@@ -168,6 +168,10 @@ import {
 } from "@/lib/flights/flightSearchJourney";
 import { cn, getItineraryDateKey } from "@/lib/utils";
 import { shouldRenderFlightQualityFilter } from "@/lib/flights/desktopCompactFilter";
+import {
+  FLIGHT_STICKY_POPULAR_FILTER_TOP,
+  shouldShowFlightStickyPopularFilters,
+} from "@/lib/flights/stickyPopularFilter";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   formatFlightsDateSummary,
@@ -179,7 +183,7 @@ import {
 const resultStackClass = "w-full min-w-0";
 export const FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
 
-const desktopFlightStickyFilterTop = 88;
+const desktopFlightStickyFilterTop = FLIGHT_STICKY_POPULAR_FILTER_TOP;
 const desktopFlightResultsScrollOffset = desktopFlightStickyFilterTop + 16;
 
 type MobileShortcutSheet = "sort" | "airlines" | "stops" | "airports";
@@ -4415,13 +4419,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     const update = () => {
       const filterBottom = fullFilters.getBoundingClientRect().bottom;
-      const remainingResultsHeight =
-        resultsContent.getBoundingClientRect().bottom - filterBottom;
+      const resultsBottom = resultsContent.getBoundingClientRect().bottom;
 
       setShowStickyFlightFilters(
-        window.matchMedia("(min-width: 1024px)").matches &&
-          filterBottom <= 170 &&
-          remainingResultsHeight >= 500,
+        shouldShowFlightStickyPopularFilters({
+          viewportWidth: window.innerWidth,
+          fullFilterBottom: filterBottom,
+          resultsBottom,
+        }),
       );
     };
 
