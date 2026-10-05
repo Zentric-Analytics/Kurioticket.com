@@ -711,10 +711,11 @@ textarea {
   [data-cars-results-navbar-search] [data-cars-results-navbar-value] {
     height: 42px !important;
     font-size: 12px !important;
-    font-weight: 400 !important;
+    font-weight: 650 !important;
     line-height: 20px !important;
-    letter-spacing: 0 !important;
+    letter-spacing: -0.005em !important;
     color: #142033 !important;
+    font-variation-settings: "wght" 650;
   }
 
   [data-cars-results-navbar-search] .cars-results-navbar-leading-icon {
