@@ -227,10 +227,6 @@ const nearbyFareRequestConcurrency = 4;
 const nearbyFareCacheTtlMs = 10 * 60 * 1000;
 
 
-type BodyScrollLock = {
-  restore: (options?: { restoreScroll?: boolean }) => void;
-};
-
 type MobileOverlayCloseOptions = {
   restoreFocus?: boolean;
 };
@@ -792,54 +788,6 @@ function FlightBookingFaqSection() {
   );
 }
 
-function lockDocumentScrollWithoutLayoutShift() {
-  const bodyElement = document.body;
-  const rootElement = document.documentElement;
-  const scrollY = window.scrollY;
-  const scrollbarWidth = window.innerWidth - rootElement.clientWidth;
-  let restored = false;
-  const previousBodyStyles = {
-    overflow: bodyElement.style.overflow,
-    overscrollBehavior: bodyElement.style.overscrollBehavior,
-    paddingRight: bodyElement.style.paddingRight,
-  };
-  const previousRootStyles = {
-    overflow: rootElement.style.overflow,
-    overscrollBehavior: rootElement.style.overscrollBehavior,
-  };
-
-  rootElement.style.overflow = "hidden";
-  bodyElement.style.overflow = "hidden";
-  rootElement.style.overscrollBehavior = "none";
-  bodyElement.style.overscrollBehavior = "none";
-
-  if (scrollbarWidth > 0) {
-    bodyElement.style.paddingRight = `${scrollbarWidth}px`;
-  }
-
-  return {
-    restore: ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
-      if (restored) return;
-      restored = true;
-      rootElement.style.overflow = previousRootStyles.overflow;
-      rootElement.style.overscrollBehavior =
-        previousRootStyles.overscrollBehavior;
-      bodyElement.style.overflow = previousBodyStyles.overflow;
-      bodyElement.style.overscrollBehavior =
-        previousBodyStyles.overscrollBehavior;
-      bodyElement.style.paddingRight = previousBodyStyles.paddingRight;
-
-      if (restoreScroll && window.scrollY !== scrollY) {
-        window.requestAnimationFrame(() => {
-          if (window.scrollY !== scrollY) {
-            window.scrollTo(0, scrollY);
-          }
-        });
-      }
-    },
-  };
-}
-
 export type FlightResultsPresentationMode = "standalone" | "deals-guided";
 
 function FlightResultsPagination({
@@ -1282,7 +1230,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const shouldRestoreMobileSearchFocusRef = useRef(true);
   const shouldRestoreMobileFiltersFocusRef = useRef(true);
   const shouldScrollToTopAfterFilterApplyRef = useRef(false);
-  const stickySearchScrollLockRef = useRef<BodyScrollLock | null>(null);
   const stickySearchPanelOpenRef = useRef(false);
   const queryString = params.toString();
   const searchQueryString = getSearchQueryString(params);
@@ -1434,6 +1381,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         resolvedTarget === "trip" ? null : resolvedTarget;
       const currentScrollY = window.scrollY;
       expandedSearchScrollYRef.current = currentScrollY;
+      stickySearchPanelOpenRef.current = true;
       setIsSearchExpandedWhileSticky(true);
       setActiveStickySearchTarget(resolvedTarget);
       setActiveDesktopSearchSurface("sticky");
@@ -1568,14 +1516,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }, [isStickySearchPanelOpen]);
 
   const collapseStickySearch = useCallback(
-    ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
-      const activeScrollLock = stickySearchScrollLockRef.current;
-
-      if (!restoreScroll && activeScrollLock) {
-        activeScrollLock.restore({ restoreScroll: false });
-        stickySearchScrollLockRef.current = null;
-      }
-
+    (_options: { restoreScroll?: boolean } = {}) => {
+      stickySearchPanelOpenRef.current = false;
       setIsSearchExpandedWhileSticky(false);
       setActiveStickySearchTarget(null);
       setTripTypeMenuOpen(false);
@@ -1779,32 +1721,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     collapseStickySearch,
     isStickySearchPanelOpen,
     travelerPopoverOpen,
-    tripTypeMenuOpen,
-  ]);
-
-  useEffect(() => {
-    const shouldLockForMultiCity =
-      isStickySearchPanelOpen &&
-      activeStickySearchTarget === "trip" &&
-      tripTypeInput === "multi-city" &&
-      !tripTypeMenuOpen;
-
-    if (!shouldLockForMultiCity) {
-      stickySearchScrollLockRef.current?.restore();
-      stickySearchScrollLockRef.current = null;
-      return undefined;
-    }
-
-    stickySearchScrollLockRef.current = lockDocumentScrollWithoutLayoutShift();
-
-    return () => {
-      stickySearchScrollLockRef.current?.restore();
-      stickySearchScrollLockRef.current = null;
-    };
-  }, [
-    activeStickySearchTarget,
-    isStickySearchPanelOpen,
-    tripTypeInput,
     tripTypeMenuOpen,
   ]);
 
@@ -5630,6 +5546,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       handleTripTypeChange(option.value);
                       setTripTypeMenuOpen(false);
                       if (option.value === "multi-city") {
+                        stickySearchPanelOpenRef.current = true;
                         setIsSearchExpandedWhileSticky(true);
                         setActiveStickySearchTarget("trip");
                         setActiveDesktopSearchSurface("sticky");
