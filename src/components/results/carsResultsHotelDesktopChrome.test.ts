@@ -100,7 +100,7 @@ test("desktop Cars navbar search uses the approved compact Hotels-style one-line
 test("Cars keeps tablet search and removes the Cars breadcrumb/navigation completely", () => {
   assert.match(
     cars,
-    /className="hidden bg-white pb-0 pt-7 sm:block lg:hidden"[\s\S]*?renderCarsSearchForm\("desktop-full"\)/,
+    /className="hidden bg-\[#f6f8fb\] pb-0 pt-7 sm:block lg:hidden"[\s\S]*?renderCarsSearchForm\("desktop-full"\)/,
   );
   assert.doesNotMatch(cars, /aria-label="Breadcrumb"/);
   assert.doesNotMatch(cars, />Home<|>Cars<|>Car results</);
