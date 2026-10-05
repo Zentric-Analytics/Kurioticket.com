@@ -486,32 +486,49 @@ test("desktop Flight Stops filter shows labels and counts without fare hints", a
   assert.doesNotMatch(desktopStops, /secondaryLabel|option\.rightLabel|t\("from"\)/);
 });
 
-test("desktop Flight compact filters reuse the same full filter surface as Cars", async () => {
+test("desktop Flight filter scrolling follows Hotels without a replacement handoff", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
-  const filters = await readFile(
-    new URL("./DesktopFlightFilters.tsx", import.meta.url),
+
+  assert.match(source, /const desktopFilterPanelRef = useRef<HTMLDivElement \| null>\(null\)/);
+  assert.match(source, /const desktopResultsContentRef = useRef<HTMLElement \| null>\(null\)/);
+  assert.match(source, /const \[showStickyFlightFilters, setShowStickyFlightFilters\] = useState\(false\)/);
+  assert.match(source, /const filterBottom = fullFilters\.getBoundingClientRect\(\)\.bottom/);
+  assert.match(source, /resultsContent\.getBoundingClientRect\(\)\.bottom - filterBottom/);
+  assert.match(source, /window\.matchMedia\("\(min-width: 1200px\)"\)\.matches/);
+  assert.match(source, /filterBottom <= 170/);
+  assert.match(source, /remainingResultsHeight >= 500/);
+  assert.match(source, /data-flight-sticky-popular-filters/);
+  assert.match(source, /sticky top-\[88px\]/);
+  assert.match(source, /max-h-\[calc\(100vh-100px\)\]/);
+  assert.doesNotMatch(source, /desktopFilterSentinelRef/);
+  assert.doesNotMatch(source, /desktopCompactFilterRef/);
+  assert.doesNotMatch(source, /showDesktopCompactFilter/);
+  assert.doesNotMatch(source, /renderDesktopFlightFilters\(true\)/);
+  assert.doesNotMatch(source, /calculateCompactFilterPlacement|shouldShowDesktopCompactFilter|calculateCompactFilterMaxHeight/);
+});
+
+test("desktop Flight sticky filter shares the authoritative Flight filter state", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
 
-  assert.match(source, /calculateCompactFilterPlacement/);
-  assert.match(source, /shouldShowDesktopCompactFilter/);
-  assert.match(source, /calculateCompactFilterMaxHeight/);
-  assert.match(source, /desktopCompactFilterTopOffset = 116/);
-  assert.match(source, /desktopCompactFilterBottomGap = 12/);
-  assert.match(source, /ref=\{desktopFilterSentinelRef\}/);
-  assert.match(source, /ref=\{desktopCompactFilterRef\}/);
-  assert.match(source, /data-flight-desktop-compact-filter/);
-  assert.match(source, /renderDesktopFlightFilters\(true\)/);
-  assert.match(source, /desktopCompactFilterPlacement === "fixed"/);
-  assert.match(source, /desktopCompactFilterPlacement === "docked"/);
-  assert.doesNotMatch(source, /Popular filters|data-flight-popular-filters|popularFlightFilters/);
+  const start = source.indexOf("const stickyFlightPopularFilters = useMemo");
+  const end = source.indexOf("useEffect(() => {", start);
+  const stickyFilter = source.slice(start, end);
 
-  assert.match(filters, /compact\?: boolean/);
-  assert.match(filters, /compact = false/);
-  assert.match(filters, /flex max-h-full w-full flex-col overflow-hidden rounded-2xl/);
+  assert.match(stickyFilter, /selectedStops/);
+  assert.match(stickyFilter, /selectedAirlines/);
+  assert.match(stickyFilter, /selectedAirports/);
+  assert.match(stickyFilter, /selectedFlightQuality/);
+  assert.match(stickyFilter, /setSelectedStops/);
+  assert.match(stickyFilter, /setSelectedAirlines/);
+  assert.match(stickyFilter, /setSelectedAirports/);
+  assert.match(stickyFilter, /setSelectedFlightQuality/);
+  assert.match(stickyFilter, /handleUserFilterCommit\(\)/);
 });
 
 test("desktop Flight result meta typography uses the premium hierarchy", async () => {
