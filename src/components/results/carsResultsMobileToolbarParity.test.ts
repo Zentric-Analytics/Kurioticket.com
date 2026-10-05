@@ -41,26 +41,34 @@ test("standalone Cars uses one persistent AppHeader search launcher", () => {
   assert.doesNotMatch(source, /data-cars-mobile-compact-handoff/);
 });
 
-test("unified Cars header search keeps a 44px touch target around separate 36px desktop-style fields", () => {
+test("unified Cars header search keeps a 44px touch target around polished 36px desktop-style fields", () => {
   assert.match(
     headerSearch,
-    /h-11 w-full min-w-0[\s\S]*rounded-\[10px\][\s\S]*p-0[\s\S]*focus-visible:ring-2/,
+    /h-11 w-full min-w-0[\s\S]*rounded-\[9px\][\s\S]*p-0[\s\S]*focus-visible:ring-2[\s\S]*ring-\[#004BB8\]\/25/,
   );
   assert.match(
     headerSearch,
-    /data-cars-results-mobile-search-fields[\s\S]*grid h-9 w-full min-w-0[\s\S]*grid-cols-\[minmax\(0,0\.78fr\)_minmax\(0,1\.22fr\)_34px\][\s\S]*gap-1/,
+    /data-cars-results-mobile-search-fields[\s\S]*grid h-9 w-full min-w-0[\s\S]*grid-cols-\[minmax\(0,0\.76fr\)_minmax\(0,1\.24fr\)_32px\][\s\S]*gap-\[3px\]/,
   );
   assert.match(
     headerSearch,
-    /data-cars-results-mobile-search-location[\s\S]*rounded-\[9px\][\s\S]*border border-\[#D8E1EC\][\s\S]*bg-\[#F8FAFC\][\s\S]*<Car[\s\S]*title=\{locationPairSummary\}/,
+    /data-cars-results-mobile-search-location[\s\S]*rounded-\[8px\][\s\S]*border border-\[#D5DFEA\][\s\S]*bg-\[#FBFCFE\][\s\S]*shadow-\[0_1px_2px_rgba\(24,48,91,0\.045\)\][\s\S]*<Car[\s\S]*h-\[13px\] w-\[13px\][\s\S]*strokeWidth=\{2\.1\}[\s\S]*title=\{locationPairSummary\}/,
   );
   assert.match(
     headerSearch,
-    /data-cars-results-mobile-search-dates[\s\S]*rounded-\[9px\][\s\S]*border border-\[#D8E1EC\][\s\S]*bg-\[#F8FAFC\][\s\S]*<CalendarDays[\s\S]*title=\{rentalDateSummary\}/,
+    /title=\{locationPairSummary\}[\s\S]*text-\[11\.5px\] font-semibold leading-\[15px\][\s\S]*tracking-\[-0\.01em\][\s\S]*text-\[#172238\]/,
   );
   assert.match(
     headerSearch,
-    /data-cars-results-mobile-search-edit[\s\S]*w-\[34px\][\s\S]*rounded-\[9px\][\s\S]*border border-\[#D8E1EC\][\s\S]*<SquarePen[\s\S]*strokeWidth=\{2\}/,
+    /data-cars-results-mobile-search-dates[\s\S]*rounded-\[8px\][\s\S]*border border-\[#D5DFEA\][\s\S]*bg-\[#FBFCFE\][\s\S]*<CalendarDays[\s\S]*h-\[13px\] w-\[13px\][\s\S]*strokeWidth=\{1\.95\}[\s\S]*title=\{rentalDateSummary\}/,
+  );
+  assert.match(
+    headerSearch,
+    /title=\{rentalDateSummary\}[\s\S]*text-\[10\.75px\] font-semibold leading-\[15px\][\s\S]*tracking-\[-0\.004em\][\s\S]*text-\[#536786\]/,
+  );
+  assert.match(
+    headerSearch,
+    /data-cars-results-mobile-search-edit[\s\S]*w-8[\s\S]*rounded-\[8px\][\s\S]*border border-\[#D5DFEA\][\s\S]*bg-\[#FBFCFE\][\s\S]*<SquarePen[\s\S]*h-\[13\.5px\] w-\[13\.5px\][\s\S]*strokeWidth=\{1\.95\}/,
   );
   assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-divider/);
   assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-segments/);
