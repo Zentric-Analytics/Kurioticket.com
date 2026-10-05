@@ -16,14 +16,12 @@ test("Results shared drawer uses production mobile picker components", () => {
   assert.match(drawer, /<MobileAirportPicker/);
 });
 
-test("Flight Results keeps Edit Search available from the unified desktop-style mobile header", () => {
-  assert.match(results, /mobileResultsSearch=\{renderMobileDesktopStyleHeaderSearch\(\)\}/);
-  assert.match(results, /mobileResultsDesktopStyle/);
-  assert.match(results, /data-flight-mobile-unified-header-search/);
-  assert.match(results, /data-flight-mobile-header-route/);
-  assert.match(results, /data-flight-mobile-header-dates/);
-  assert.match(results, /data-flight-mobile-header-travelers/);
-  assert.match(results, /data-flight-mobile-header-search/);
-  assert.match(results, /openMobileSearchDrawer/);
-  assert.doesNotMatch(results, /data-flight-mobile-summary-card|renderMobileCompactResultsHeader|data-flight-compact-edit-icon/);
+test("Flight Results keeps Edit Search available in Cars-style top and compact launchers", () => {
+  assert.doesNotMatch(results, /mobileResultsLeadingAction=|mobileResultsSearch=/);
+  assert.match(results, /data-flight-mobile-summary-card/);
+  assert.match(results, /relative translate-y-1\/2/);
+  assert.match(results, /renderMobileCompactResultsHeader/);
+  assert.match(results, /t\("deals\.results\.modifySearch"\)/);
+  assert.match(results, /data-flight-compact-edit-icon/);
+  assert.match(results, /openMobileSearchDrawer\(event\.currentTarget/);
 });
