@@ -121,6 +121,7 @@ test("desktop-style mobile results keep the primary logo row and place search be
   assert.match(headerSource, /mobileResultsSearch && !mobileResultsDesktopStyle \? <div data-mobile-results-navbar/);
   assert.match(headerSource, /mobileResultsSearch && !mobileResultsDesktopStyle && "max-sm:hidden"/);
   assert.match(headerSource, /data-mobile-results-currency/);
+  assert.match(headerSource, /data-mobile-results-currency[\s\S]*max-\[359px\]:hidden/);
   assert.match(headerSource, /data-mobile-results-desktop-style/);
   assert.match(headerSource, /kurioticket-logo-primary-light-bg\.svg/);
   assert.match(headerSource, /max-sm:top-\[calc\(119px\+env\(safe-area-inset-top\)\)\]/);

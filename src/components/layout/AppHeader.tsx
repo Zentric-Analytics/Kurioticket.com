@@ -927,7 +927,7 @@ export function AppHeader({
               {mobileResultsDesktopStyle ? (
                 <div
                   data-mobile-results-currency
-                  className="me-0.5 [&>button]:!h-9 [&>button]:!gap-1 [&>button]:!rounded-md [&>button]:!border-transparent [&>button]:!bg-transparent [&>button]:!px-2 [&>button]:!text-[12px] [&>button]:!font-semibold [&>button]:!text-[#021C2B]/85 [&>button]:!shadow-none [&>button>svg]:!h-4 [&>button>svg]:!w-4"
+                  className="me-0.5 max-[359px]:hidden [&>button]:!h-9 [&>button]:!gap-1 [&>button]:!rounded-md [&>button]:!border-transparent [&>button]:!bg-transparent [&>button]:!px-2 [&>button]:!text-[12px] [&>button]:!font-semibold [&>button]:!text-[#021C2B]/85 [&>button]:!shadow-none [&>button>svg]:!h-4 [&>button>svg]:!w-4"
                 >
                   <CountryCurrencySelector variant="header" grouped />
                 </div>
