@@ -18,12 +18,14 @@ export default defineConfig({
   },
   webServer: [
     {
+      cwd: "../../..",
       command: "npm run dev -- --hostname 127.0.0.1 --port 3010",
       url: "http://127.0.0.1:3010/brand/kurioticket-icon-blue.svg",
       timeout: 120_000,
       reuseExistingServer: !process.env.CI,
     },
     {
+      cwd: "../../..",
       command: "node qa/mobile-web/browserstack/flight-fixture-proxy.mjs",
       url: "http://127.0.0.1:3011/brand/kurioticket-icon-blue.svg",
       timeout: 120_000,
