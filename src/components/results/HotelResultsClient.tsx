@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
-import { ArrowUp, Check, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Star, X } from "lucide-react";
+import { ArrowUp, Check, ChevronLeft, ChevronRight, ChevronDown, PencilLine, SlidersHorizontal, Star, X } from "lucide-react";
 
 import type { PublicHotelResult } from "@/lib/types";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
@@ -1541,7 +1541,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         </span>
       </span>
       <span aria-hidden="true" className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E6EFFD] text-[#004BB8]">
-        <Search size={17} strokeWidth={2.2} />
+        <PencilLine size={17} strokeWidth={2.2} />
       </span>
     </button>
   );
