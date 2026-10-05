@@ -525,76 +525,98 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
 }
 
 function formatDesktopCompactFareBenefit(text: string) {
-  const normalized = text.trim();
+  const normalized = text.trim().replace(/\.$/, "");
+  const scoped = normalized.match(/^(Outbound|Return|Flight \\d+):\\s*(.+)$/i);
+  const scope = scoped?.[1];
+  const body = scoped?.[2] ?? normalized;
+  const withScope = (value: string) => (scope ? `${scope} · ${value}` : value);
 
-  const scopedChangeNotAllowed = normalized.match(
-    /^(Outbound|Return):\s*Changes not allowed before departure$/i,
-  );
-  if (scopedChangeNotAllowed) {
-    return `${scopedChangeNotAllowed[1]} changes not allowed`;
+  if (/^baggage details not supplied by (?:the )?provider$/i.test(body)) {
+    return withScope("Baggage not provided");
   }
 
-  if (/^Changes not allowed before departure$/i.test(normalized)) {
-    return "Changes not allowed";
+  if (/^baggage allowance not supplied for one or more passengers$/i.test(body)) {
+    return withScope("Baggage not provided");
   }
 
-  const scopedChangeFee = normalized.match(
-    /^(Outbound|Return):\s*Changes allowed with\s+([A-Z]{3})\s+([\d,]+(?:\.\d+)?)\s+penalty$/i,
-  );
-  if (scopedChangeFee) {
-    return `${scopedChangeFee[1]} changes · ${scopedChangeFee[2].toUpperCase()} ${compactFareFeeAmount(scopedChangeFee[3])} fee`;
+  if (/^no additional comparable fare benefits were supplied by (?:the )?provider$/i.test(body)) {
+    return withScope("No additional fare benefits");
   }
 
-  const changeFee = normalized.match(
-    /^Changes allowed with\s+([A-Z]{3})\s+([\d,]+(?:\.\d+)?)\s+penalty$/i,
-  );
-  if (changeFee) {
-    return `Changes · ${changeFee[1].toUpperCase()} ${compactFareFeeAmount(changeFee[2])} fee`;
-  }
-
-  const eachWayBaggage = normalized.match(
-    /^(\d+)\s+(carry-ons?|checked bags?)\s+included each way$/i,
-  );
-  if (eachWayBaggage) {
-    const count = Number(eachWayBaggage[1]);
-    const kind = eachWayBaggage[2].toLocaleLowerCase("en-US");
-    if (count === 1 && kind.startsWith("carry")) return "Carry-on included";
-    if (count === 1 && kind.startsWith("checked")) return "Checked bag included";
-    return `${count} ${kind} included`;
-  }
-
-  const unavailableRules = normalized.match(
-    /^(?:(Outbound|Return):\s*)?(Change(?:s)?(?: and refund)?|Refund) rules? not supplied by (?:the )?provider$/i,
+  const unavailableRules = body.match(
+    /^(Change(?:s)?(?: and refund)?|Refunds?) rules? not supplied by (?:the )?provider$/i,
   );
   if (unavailableRules) {
-    const scope = unavailableRules[1];
-    const ruleKind = unavailableRules[2].toLocaleLowerCase("en-US");
+    const ruleKind = unavailableRules[1].toLocaleLowerCase("en-US");
     const label = /change(?:s)? and refund/.test(ruleKind)
-      ? "change/refund rules unavailable"
+      ? "Change/refund rules unavailable"
       : /refund/.test(ruleKind)
-        ? "refund rules unavailable"
-        : "change rules unavailable";
-    return scope
-      ? `${scope}: ${label}`
-      : `${label.charAt(0).toUpperCase()}${label.slice(1)}`;
+        ? "Refund rules unavailable"
+        : "Change rules unavailable";
+    return withScope(label);
   }
 
-  const scopedBaggage = normalized.match(
-    /^(Outbound|Return):\s*(\d+)\s+(carry-ons?|checked bags?)\s+included$/i,
+  if (/^changes not supplied by (?:the )?provider$/i.test(body)) {
+    return withScope("Changes unavailable");
+  }
+
+  if (/^refunds? not supplied by (?:the )?provider$/i.test(body)) {
+    return withScope("Refunds unavailable");
+  }
+
+  if (/^changes not allowed(?: before departure)?$/i.test(body)) {
+    return withScope("Changes not allowed");
+  }
+
+  if (/^changes allowed(?: before departure)?$/i.test(body)) {
+    return withScope("Changes allowed");
+  }
+
+  const changeFee = body.match(
+    /^Changes allowed with\\s+([A-Z]{3})\\s+([\\d,]+(?:\\.\\d+)?)\\s+penalty$/i,
   );
-  if (scopedBaggage) {
-    return `${scopedBaggage[1]}: ${scopedBaggage[2]} ${scopedBaggage[3].toLocaleLowerCase("en-US")}`;
+  if (changeFee) {
+    return withScope(
+      `Changes · ${changeFee[1].toUpperCase()} ${compactFareFeeAmount(changeFee[2])} fee`,
+    );
   }
 
-  const plainCheckedBaggage = normalized.match(
-    /^(\d+)\s+checked bags?\s+included$/i,
+  if (/^not refundable(?: before departure)?$/i.test(body)) {
+    return withScope("Not refundable");
+  }
+
+  if (/^refundable(?: before departure)?$/i.test(body)) {
+    return withScope("Refundable");
+  }
+
+  const refundFee = body.match(
+    /^Refundable(?: before departure)? with\\s+([A-Z]{3})\\s+([\\d,]+(?:\\.\\d+)?)\\s+penalty$/i,
   );
-  if (plainCheckedBaggage) {
-    const count = Number(plainCheckedBaggage[1]);
-    return count === 1 ? "1 checked bag" : `${count} checked bags`;
+  if (refundFee) {
+    return withScope(
+      `Refundable · ${refundFee[1].toUpperCase()} ${compactFareFeeAmount(refundFee[2])} fee`,
+    );
   }
 
-  return normalized;
+  const baggage = body.match(
+    /^(\\d+)\\s+(carry-ons?|checked bags?)\\s+included(?:\\s+(each way))?$/i,
+  );
+  if (baggage) {
+    const count = Number(baggage[1]);
+    const kind = baggage[2].toLocaleLowerCase("en-US");
+    const eachWay = Boolean(baggage[3]);
+    const suffix = eachWay ? " each way" : "";
+
+    if (count === 1 && kind.startsWith("carry")) {
+      return withScope(`Carry-on included${suffix}`);
+    }
+    if (count === 1 && kind.startsWith("checked")) {
+      return withScope(`Checked bag included${suffix}`);
+    }
+    return withScope(`${count} ${kind} included${suffix}`);
+  }
+
+  return withScope(body);
 }
 
 function compactFareFeeAmount(value: string) {
