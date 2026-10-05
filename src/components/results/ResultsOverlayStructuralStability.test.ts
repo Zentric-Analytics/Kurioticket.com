@@ -11,13 +11,6 @@ const cars = source("./CarsResultsClient.tsx");
 const hotelSearch = source("../search/HotelSearchBar.tsx");
 const hotelResults = source("./HotelResultsClient.tsx");
 
-function expectInteractionOnlyGating(region: string) {
-  assert.match(region, /inert=\{mobileSearchOpen \? true : undefined\}/);
-  assert.match(region, /aria-hidden=\{mobileSearchOpen \? true : undefined\}/);
-  assert.match(region, /mobileSearchOpen && "pointer-events-none"/);
-  assert.doesNotMatch(region, /mobileSearchOpen && "(?:hidden|invisible|h-0|max-h-0|absolute)"/);
-}
-
 test("flight Cars-style summary remains mounted while Edit Search owns its overlay", () => {
   const start = flights.indexOf('<section\n        inert={mobileSearchOpen ? true : undefined}');
   const end = flights.indexOf("{renderMobileCompactResultsHeader()}", 0);
