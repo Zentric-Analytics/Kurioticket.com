@@ -35,7 +35,7 @@ test("mobile Cars Results puts three compact visual fields inside one main-heade
   assert.match(mobileHeaderSearch, /h-11 w-full min-w-0/);
   assert.match(
     mobileHeaderSearch,
-    /data-cars-results-mobile-search-fields[\s\S]*grid h-9 w-full min-w-0[\s\S]*gap-1/,
+    /data-cars-results-mobile-search-fields[\s\S]*grid h-9 w-full min-w-0[\s\S]*gap-\[3px\]/,
   );
   assert.match(mobileHeaderSearch, /data-cars-results-mobile-search-location/);
   assert.match(mobileHeaderSearch, /data-cars-results-mobile-search-dates/);
