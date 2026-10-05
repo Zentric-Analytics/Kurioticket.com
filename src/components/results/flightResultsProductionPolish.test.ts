@@ -364,7 +364,7 @@ test("desktop fare divider stops above the full-width footer summary", async () 
   );
   assert.match(
     desktopOverride,
-    /\.flight-card-fare-action \{[\s\S]*?justify-content: flex-end;[\s\S]*?border-left: 1px solid #d8e1ec;[\s\S]*?border-top: 0;/,
+    /\.flight-card-fare-action \{[\s\S]*?justify-content: flex-end;[\s\S]*?margin-left: 0\.5rem;[\s\S]*?border-left: 1px solid #d8e1ec;[\s\S]*?padding-left: 0\.5rem;/,
   );
   assert.match(
     desktopOverride,
