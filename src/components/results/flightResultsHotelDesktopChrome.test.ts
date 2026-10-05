@@ -145,6 +145,17 @@ test("desktop navbar search opens only the selected Flight header field editor",
   assert.match(callback, /setActiveDesktopSearchSurface\("sticky"\)/);
 });
 
+test("desktop Multi-city keeps the Hotels-style sticky header visible while its editor is open", () => {
+  assert.match(
+    flight,
+    /stickySearchPanelOpenRef\.current = true;[\s\S]*setIsSearchExpandedWhileSticky\(true\)/,
+  );
+  assert.doesNotMatch(
+    flight,
+    /document\.documentElement\.style\.overflow = "hidden"|lockDocumentScrollWithoutLayoutShift|shouldLockForMultiCity/,
+  );
+});
+
 test("desktop Flight Results renders one continuous desktop list without range text or pagination", () => {
   const summary = flight.indexOf("data-flight-results-desktop-summary");
   const desktopResults = flight.indexOf("ref={paginationListRef}", summary);
