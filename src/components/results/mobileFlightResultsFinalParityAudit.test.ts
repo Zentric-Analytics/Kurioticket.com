@@ -6,18 +6,18 @@ const results = readFileSync(new URL("./FlightResultsClient.tsx", import.meta.ur
 const card = readFileSync(new URL("./MobileFlightCard.tsx", import.meta.url), "utf8");
 
 test("final mobile Flight Results order and controls remain intact", () => {
-  const unifiedHeader = results.indexOf("renderMobileDesktopStyleHeaderSearch()");
+  const summary = results.indexOf("{renderMobileRouteSummaryCard()}");
   const nearby = results.indexOf('data-nearby-fare-presentation="mobile"');
   const shortcuts = results.indexOf("data-flight-mobile-results-shortcuts");
   const alert = results.indexOf("<FlightPriceAlertControl");
   const count = results.indexOf("formatMobileFlightResultsFound");
   const cards = results.indexOf("data-mobile-paginated-flight-results");
 
-  assert.ok(unifiedHeader >= 0 && unifiedHeader < nearby);
-  assert.match(results, /mobileResultsSearch=\{renderMobileDesktopStyleHeaderSearch\(\)\}/);
-  assert.match(results, /data-flight-mobile-unified-header-search/);
+  assert.ok(summary >= 0 && summary < nearby);
+  assert.match(results, /aria-label="Go back"/);
+  assert.match(results, /renderMobileCompactResultsHeader/);
+  assert.match(results, /data-flight-results-compact-header/);
   assert.match(results, /aria-label=\{t\("editFlightSearch"\)\}/);
-  assert.doesNotMatch(results, /renderMobileCompactResultsHeader|data-flight-results-compact-header/);
   assert.ok(nearby >= 0 && nearby < shortcuts && shortcuts < alert && alert < count && count < cards);
   assert.match(results, /\? t\("filtersWithCount"\)[\s\S]*: "Filters"/);
   for (const trigger of ['renderTrigger("sort", activeSortOption.label)', 'renderTrigger("airlines", "Airlines", selectedAirlines.length)', 'renderTrigger("stops", "Stops", selectedStops.length)', 'renderTrigger("airports", "Airports", selectedFromAirports.length + selectedToAirports.length)']) assert.ok(results.includes(trigger));
