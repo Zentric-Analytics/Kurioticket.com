@@ -239,14 +239,14 @@ test("nearby fare DOM remains outside the paginated card subtree", () => {
   assert.doesNotMatch(source.slice(rail, paginatedCards), /paginationPendingPage/);
 });
 
-test("mobile Flight Results keeps one sticky desktop-style header without a scroll handoff", () => {
-  assert.match(source, /mobileResultsSearch=\{renderMobileDesktopStyleHeaderSearch\(\)\}/);
-  assert.match(source, /mobileResultsSticky/);
-  assert.match(source, /mobileResultsDesktopStyle/);
-  assert.match(source, /data-flight-mobile-unified-header-search/);
-  assert.doesNotMatch(source, /renderMobileRouteSummaryCard|renderMobileCompactResultsHeader/);
-  assert.doesNotMatch(source, /mobileCompactHeaderVisible|mobileSearchSummarySentinelRef/);
-  assert.doesNotMatch(source, /rect\.bottom < 8 && window\.scrollY > 96/);
+test("mobile Cars-style summary hands off to the compact header after scroll", () => {
+  assert.doesNotMatch(source, /mobileResultsSearch=|mobileResultsSticky=/);
+  assert.match(source, /relative translate-y-1\/2/);
+  assert.match(source, /renderMobileRouteSummaryCard\(\)/);
+  assert.match(source, /renderMobileCompactResultsHeader/);
+  assert.match(source, /mobileCompactHeaderVisible/);
+  assert.match(source, /mobileSearchSummarySentinelRef/);
+  assert.match(source, /rect\.bottom < 8 && window\.scrollY > 96/);
 });
 
 test("results pagination preserves the searched departure date and its blue selected state", () => {
