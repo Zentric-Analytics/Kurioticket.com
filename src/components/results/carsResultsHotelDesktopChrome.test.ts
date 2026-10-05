@@ -81,11 +81,11 @@ test("desktop Cars navbar search uses the approved compact Hotels-style one-line
   );
   assert.match(
     styles,
-    /\[data-cars-results-navbar-search\] \.cars-results-navbar-location-value,[\s\S]*?font-size: 12px !important;[\s\S]*?font-weight: 650 !important;[\s\S]*?font-variation-settings: "wght" 650;/,
+    /\[data-cars-results-navbar-search\] \.cars-results-navbar-location-value,[\s\S]*?font-size: 12px !important;[\s\S]*?font-weight: 400 !important;/,
   );
   assert.match(
     styles,
-    /\[data-cars-results-navbar-search\] \.cars-results-navbar-leading-icon \{[\s\S]*?color: #142033 !important;[\s\S]*?stroke-width: 2\.2;/,
+    /\[data-cars-results-navbar-search\] \.cars-results-navbar-leading-icon \{[\s\S]*?color: #40536a !important;/,
   );
   assert.match(
     styles,
@@ -93,7 +93,7 @@ test("desktop Cars navbar search uses the approved compact Hotels-style one-line
   );
   assert.match(
     styles,
-    /\[data-cars-results-navbar-submit\] \{[\s\S]*?width: 38px !important;[\s\S]*?height: 36px !important;/,
+    /\[data-cars-results-navbar-submit\] \{[\s\S]*?width: 44px !important;[\s\S]*?height: 44px !important;/,
   );
 });
 

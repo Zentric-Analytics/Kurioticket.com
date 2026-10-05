@@ -668,37 +668,34 @@ textarea {
   }
 
   [data-cars-results-navbar-search] > div {
-    border-color: #d8e1ec !important;
-    border-radius: 9px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
     box-shadow: none !important;
   }
 
   [data-cars-results-navbar-grid] {
     grid-template-columns: minmax(0, 1fr) 150px 140px 86px 46px !important;
-    column-gap: 0 !important;
+    column-gap: 4px !important;
   }
 
   [data-cars-results-navbar-grid][data-return-location-mode="different"] {
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.1fr) 130px 120px 80px 46px !important;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.1fr) 136px 120px 80px 46px !important;
   }
 
   [data-cars-results-navbar-search] [data-cars-results-navbar-field] {
     min-height: 44px !important;
-    padding: 5px 10px !important;
-    border: 0 !important;
-    border-right: 1px solid #d9e1e9 !important;
-    border-radius: 0 !important;
-    background: #ffffff !important;
+    padding: 0 10px !important;
+    border: 1px solid #d9e2e8 !important;
+    border-radius: 8px !important;
+    background: #f0f3f5 !important;
     box-shadow: none !important;
-  }
-
-  [data-cars-results-navbar-search] [data-cars-results-navbar-field]:first-child {
-    border-radius: 9px 0 0 9px !important;
   }
 
   [data-cars-results-navbar-search] [data-cars-results-navbar-field]:hover,
   [data-cars-results-navbar-search] [data-cars-results-navbar-field]:focus-within {
-    background: #f8fafc !important;
+    border-color: #b9c9d5 !important;
+    background: #e8eef2 !important;
   }
 
   [data-cars-results-navbar-search] [data-cars-results-navbar-label] {
@@ -712,18 +709,16 @@ textarea {
 
   [data-cars-results-navbar-search] .cars-results-navbar-location-value,
   [data-cars-results-navbar-search] [data-cars-results-navbar-value] {
-    height: 32px !important;
+    height: 42px !important;
     font-size: 12px !important;
-    font-weight: 650 !important;
-    line-height: 18px !important;
-    letter-spacing: -0.005em !important;
+    font-weight: 400 !important;
+    line-height: 20px !important;
+    letter-spacing: 0 !important;
     color: #142033 !important;
-    font-variation-settings: "wght" 650;
   }
 
   [data-cars-results-navbar-search] .cars-results-navbar-leading-icon {
-    color: #142033 !important;
-    stroke-width: 2.2;
+    color: #40536a !important;
   }
 
   [data-cars-results-navbar-search] [data-cars-results-navbar-chevron] {
@@ -731,16 +726,23 @@ textarea {
   }
 
   [data-cars-results-navbar-submit] {
-    width: 38px !important;
-    min-width: 38px !important;
-    height: 36px !important;
-    min-height: 36px !important;
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
     align-self: center !important;
-    margin: 4px !important;
+    justify-self: center;
+    margin: 0 !important;
     padding: 0 !important;
+    border: 0 !important;
     border-radius: 8px !important;
+    background: #004bb8 !important;
     box-shadow: none !important;
     font-size: 0 !important;
+  }
+
+  [data-cars-results-navbar-submit]:hover {
+    background: #003f9c !important;
   }
 }
 
