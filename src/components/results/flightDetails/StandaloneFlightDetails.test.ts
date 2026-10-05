@@ -679,6 +679,7 @@ test("desktop compact fare cards shorten long provider benefit copy without chan
   assert.match(formatter, /Carry-on included/);
   assert.match(formatter, /Checked bag included/);
   assert.match(formatter, /withScope/);
+  assert.doesNotMatch(formatter, /\\\\(?:d|s|\.)/);
   assert.match(source, /compactFareFeeAmount/);
   assert.doesNotMatch(
     source.slice(
