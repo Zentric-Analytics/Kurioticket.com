@@ -9,10 +9,9 @@ test("mobile results rhythm has no decorative divider or oversized spacer", asyn
   );
 
   assert.match(source, /data-flight-mobile-summary-card/);
-  assert.match(source, /h-\[4\.25rem\][\s\S]{0,260}rounded-xl/);
-  assert.match(source, /relative translate-y-1\/2/);
-  assert.match(source, /bg-white pb-0 pt-0 sm:hidden/);
-  assert.match(source, /flight-results-grid page-shell grid[^\n]*pb-0 pt-8 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-4/);
+  assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.doesNotMatch(source, /relative translate-y-1\/2|renderMobileCompactResultsHeader/);
+  assert.match(source, /flight-results-grid page-shell grid[^\n]*pb-0 pt-1 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-4/);
   assert.doesNotMatch(source, /aria-label="Breadcrumb"/);
   assert.doesNotMatch(source, /flight-results-grid page-shell grid[^\n]*pt-12/);
   assert.match(source, /data-flight-mobile-results-shortcuts/);
@@ -74,15 +73,14 @@ test("partial-provider warnings stay internal while genuine result failures rema
   assert.match(source, /results\.length === 0[\s\S]*?MobileFlightResultsState kind="empty"/);
 });
 
-test("Flight compact header uses the Hotel compact-header visual contract", async () => {
+test("Flight navbar capsule uses light Hotel mobile typography", async () => {
   const source = await readFile(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
-  const start = source.indexOf("function renderMobileCompactResultsHeader()");
-  const compactHeader = source.slice(start, source.indexOf("\n  function ", start + 10));
-  assert.match(compactHeader, /bg-\[#F2F4F8\]/);
-  assert.match(compactHeader, /text-\[15px\] font-bold leading-5 tracking-\[-0\.015em\] text-\[#07133B\]/);
-  assert.match(compactHeader, /text-\[11px\] font-medium leading-4 text-\[#536B92\]/);
-  assert.match(compactHeader, /data-flight-compact-edit-icon[\s\S]*?text-\[#536B92\]/);
-  assert.match(compactHeader, /SlidersHorizontal[\s\S]*?text-\[#1a1a1a\]/);
+  const start = source.indexOf("function renderMobileRouteSummaryCard()");
+  const capsule = source.slice(start, source.indexOf("function renderMobileEditSearchDrawer()", start));
+  assert.match(capsule, /bg-\[#F5F7FB\]/);
+  assert.match(capsule, /text-\[14px\] font-semibold/);
+  assert.match(capsule, /text-\[11px\] font-medium/);
+  assert.match(capsule, /SquarePen/);
 });
 
 test("mobile Flight Results uses Hotel rail gutters and keeps result-card rhythm", async () => {
@@ -152,59 +150,20 @@ test("Flight Results keeps the normal mobile header while desktop adopts the Hot
   assert.ok(preparingStart >= 0 && guidedStart > preparingStart);
   assert.match(preparing, /\{standaloneResultsHeader\}/);
   assert.doesNotMatch(preparing, /renderStickySearchPopoutOverlay\(\)|renderDesktopHeaderSearchBar\(\)/);
-  assert.doesNotMatch(source, /mobileResultsSearch=|mobileResultsLeadingAction=|mobileResultsSticky=/);
-  assert.match(source, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
-  assert.match(source, /relative translate-y-1\/2/);
+  assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.doesNotMatch(source, /renderMobileCompactResultsHeader|mobileCompactHeaderVisible/);
 });
 
-test("mobile Flight Results uses the Cars-style scroll handoff header", async () => {
-  const source = await readFile(
-    new URL("./FlightResultsClient.tsx", import.meta.url),
-    "utf8",
-  );
-  const appHeader = await readFile(
-    new URL("../layout/AppHeader.tsx", import.meta.url),
-    "utf8",
-  );
-
-  assert.match(appHeader, /mobileResultsSticky\?: boolean/);
+test("mobile Flight Results reuses the existing sticky AppHeader architecture", async () => {
+  const source = await readFile(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
+  const appHeader = await readFile(new URL("../layout/AppHeader.tsx", import.meta.url), "utf8");
   assert.match(appHeader, /mobileResultsSticky = true/);
-  assert.match(
-    appHeader,
-    /\(\(mobileResultsSearch && mobileResultsSticky\) \|\| carsResultsMobileInlineSearch\) &&\s*"max-sm:sticky max-sm:top-0 max-sm:z-\[950\]"/,
-  );
-
-  assert.match(
-    source,
-    /const \[mobileCompactHeaderVisible, setMobileCompactHeaderVisible\] = useState\(false\)/,
-  );
-  assert.match(
-    source,
-    /const mobileSearchSummarySentinelRef = useRef<HTMLDivElement \| null>\(null\)/,
-  );
-  assert.match(source, /rect\.bottom < 8 && window\.scrollY > 96/);
-  assert.match(source, /rootMargin: "-8px 0px 0px 0px"/);
-  assert.match(source, /function renderMobileCompactResultsHeader\(\)/);
-  assert.match(source, /data-flight-results-compact-header/);
-  assert.match(
-    source,
-    /grid-cols-\[44px_minmax\(0,1fr\)_82px\]/,
-  );
-  assert.match(source, /\{mobileRouteSummary\}/);
-  assert.match(source, /t\("deals\.results\.modifySearch"\)/);
-  assert.match(source, /data-flight-compact-edit-icon/);
+  assert.match(appHeader, /max-sm:sticky max-sm:top-0/);
+  assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.match(source, /mobileResultsTrailingActions/);
+  assert.doesNotMatch(source, /renderMobileCompactResultsHeader|mobileCompactHeaderVisible/);
   assert.match(source, /openMobileSearchDrawer\(event\.currentTarget/);
   assert.match(source, /openMobileFiltersDrawer\(event\.currentTarget/);
-  assert.match(source, /<span className="truncate">\{t\("filters"\)\}<\/span>/);
-  assert.doesNotMatch(source, /mobileResultsSticky=|mobileResultsSearch=|mobileResultsLeadingAction=/);
-  assert.match(source, /relative translate-y-1\/2/);
-  assert.match(source, /ref=\{mobileSearchSummarySentinelRef\}/);
-  assert.match(source, /\{renderMobileCompactResultsHeader\(\)\}/);
-  assert.match(source, /fixed inset-x-0 top-0 z-\[90\] bg-\[#F2F4F8\] px-3 pb-2/);
-  assert.match(source, /visible pointer-events-auto translate-y-0 opacity-100/);
-  assert.match(source, /invisible pointer-events-none -translate-y-full opacity-0/);
-  assert.match(source, /<ArrowLeft className="h-5 w-5" aria-hidden="true" \/>/);
-  assert.match(source, /<Pencil[\s\S]*data-flight-compact-edit-icon/);
 });
 
 test("mobile Flight filter surfaces use Hotel visual contracts", async () => {
