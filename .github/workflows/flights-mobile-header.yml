@@ -6,7 +6,7 @@ on:
     paths:
       - src/components/results/FlightResultsClient*
       - src/components/layout/AppHeader*
-      - qa/mobile-web/tests/flights.spec.ts
+      - qa/mobile-web/tests/flights*.spec.ts
       - qa/mobile-web/browserstack/flights-header.playwright.config.ts
       - .github/workflows/flights-mobile-header.yml
 
