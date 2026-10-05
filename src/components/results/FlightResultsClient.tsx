@@ -4419,7 +4419,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         resultsContent.getBoundingClientRect().bottom - filterBottom;
 
       setShowStickyFlightFilters(
-        window.matchMedia("(min-width: 1200px)").matches &&
+        window.matchMedia("(min-width: 1024px)").matches &&
           filterBottom <= 170 &&
           remainingResultsHeight >= 500,
       );
