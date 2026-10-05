@@ -67,8 +67,12 @@ test("source-contract: mobile Cars typography uses a restrained primary-secondar
   assert.doesNotMatch(headerSearch, /font-extrabold/);
   assert.match(headerSearch, /bg-\[#F8FAFC\]/);
   assert.match(headerSearch, /data-cars-results-mobile-header-search/);
+  assert.match(headerSearch, /data-cars-results-mobile-search-fields/);
   assert.match(headerSearch, /data-cars-results-mobile-search-location/);
   assert.match(headerSearch, /data-cars-results-mobile-search-dates/);
+  assert.match(headerSearch, /data-cars-results-mobile-search-edit/);
+  assert.match(headerSearch, /gap-1/);
+  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-divider/);
   assert.match(headerSearch, /<CalendarDays[\s\S]*?strokeWidth=\{2\}/);
   assert.match(headerSearch, /<SquarePen[\s\S]*?strokeWidth=\{2\}/);
 
