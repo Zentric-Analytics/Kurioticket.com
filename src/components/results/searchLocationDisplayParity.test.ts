@@ -17,13 +17,14 @@ test("flight, hotel, and car compact location controls render explanatory second
   assert.match(cars, /MobileLocationLauncher[\s\S]*?display\.secondary/);
 });
 
-test("mobile car results uses one compact location/date control inside the main header", () => {
+test("mobile car results uses separate compact location, date, and edit fields inside one header launcher", () => {
   const cars = read("./CarsResultsClient.tsx");
   const start = cars.indexOf("const renderMobileHeaderSearch");
   const header = cars.slice(start, cars.indexOf("const renderCarsSearchForm", start));
 
   assert.ok(start >= 0);
   assert.match(header, /data-cars-results-mobile-header-search/);
+  assert.match(header, /data-cars-results-mobile-search-fields/);
   assert.match(header, /data-cars-results-mobile-search-location/);
   assert.match(header, /data-cars-results-mobile-search-dates/);
   assert.match(header, /data-cars-results-mobile-search-edit/);
@@ -31,10 +32,10 @@ test("mobile car results uses one compact location/date control inside the main 
   assert.match(header, /rentalDateSummary/);
   assert.match(header, /<CalendarDays/);
   assert.equal(
-    (header.match(/data-cars-results-mobile-search-divider/g) ?? []).length,
-    2,
+    (header.match(/rounded-\[9px\] border border-\[#D8E1EC\] bg-\[#F8FAFC\]/g) ?? []).length,
+    3,
   );
-  assert.match(header, /bg-\[#F8FAFC\]/);
-  assert.match(header, /border border-\[#D8E1EC\]/);
+  assert.doesNotMatch(header, /data-cars-results-mobile-search-divider/);
+  assert.doesNotMatch(header, /data-cars-results-mobile-search-segments/);
   assert.doesNotMatch(cars, /renderMobileCompactResultsHeader|data-cars-mobile-compact-handoff/);
 });
