@@ -24,8 +24,16 @@ test("mobile car results uses one compact location/date control inside the main 
 
   assert.ok(start >= 0);
   assert.match(header, /data-cars-results-mobile-header-search/);
+  assert.match(header, /data-cars-results-mobile-search-location/);
+  assert.match(header, /data-cars-results-mobile-search-dates/);
+  assert.match(header, /data-cars-results-mobile-search-edit/);
   assert.match(header, /locationPairSummary/);
   assert.match(header, /rentalDateSummary/);
+  assert.match(header, /<CalendarDays/);
+  assert.equal(
+    (header.match(/data-cars-results-mobile-search-divider/g) ?? []).length,
+    2,
+  );
   assert.match(header, /bg-\[#F8FAFC\]/);
   assert.match(header, /border border-\[#D8E1EC\]/);
   assert.doesNotMatch(cars, /renderMobileCompactResultsHeader|data-cars-mobile-compact-handoff/);
