@@ -168,10 +168,6 @@ import {
 } from "@/lib/flights/flightSearchJourney";
 import { cn, getItineraryDateKey } from "@/lib/utils";
 import { shouldRenderFlightQualityFilter } from "@/lib/flights/desktopCompactFilter";
-import {
-  FLIGHT_STICKY_POPULAR_FILTER_TOP,
-  shouldShowFlightStickyPopularFilters,
-} from "@/lib/flights/stickyPopularFilter";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   formatFlightsDateSummary,
@@ -183,8 +179,133 @@ import {
 const resultStackClass = "w-full min-w-0";
 export const FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
 
-const desktopFlightStickyFilterTop = FLIGHT_STICKY_POPULAR_FILTER_TOP;
+const desktopFlightStickyFilterTop = 88;
 const desktopFlightResultsScrollOffset = desktopFlightStickyFilterTop + 16;
+
+
+type StickyFlightPopularFilterGroup =
+  | "stops"
+  | "airlines"
+  | "airports"
+  | "quality";
+
+type StickyFlightPopularFilterOption = {
+  value: string;
+  label: string;
+  count: number;
+};
+
+function StickyFlightPopularFilters({
+  t,
+  stopOptions,
+  airlineOptions,
+  airportOptions,
+  flightQualityOptions,
+  renderFlightQualityFilter,
+  selectedStops,
+  selectedAirlines,
+  selectedAirports,
+  selectedFlightQuality,
+  onToggle,
+}: {
+  t: (key: string) => string;
+  stopOptions: StickyFlightPopularFilterOption[];
+  airlineOptions: StickyFlightPopularFilterOption[];
+  airportOptions: StickyFlightPopularFilterOption[];
+  flightQualityOptions: StickyFlightPopularFilterOption[];
+  renderFlightQualityFilter: boolean;
+  selectedStops: string[];
+  selectedAirlines: string[];
+  selectedAirports: string[];
+  selectedFlightQuality: string[];
+  onToggle: (group: StickyFlightPopularFilterGroup, value: string) => void;
+}) {
+  const groups: Array<{
+    group: StickyFlightPopularFilterGroup;
+    options: StickyFlightPopularFilterOption[];
+    selected: string[];
+    limit: number;
+  }> = [
+    { group: "stops", options: stopOptions, selected: selectedStops, limit: 3 },
+    {
+      group: "airlines",
+      options: airlineOptions,
+      selected: selectedAirlines,
+      limit: 5,
+    },
+    {
+      group: "airports",
+      options: airportOptions,
+      selected: selectedAirports,
+      limit: 2,
+    },
+    {
+      group: "quality",
+      options: renderFlightQualityFilter ? flightQualityOptions : [],
+      selected: selectedFlightQuality,
+      limit: 2,
+    },
+  ];
+
+  const popularFilters = groups
+    .flatMap(({ group, options, selected, limit }) =>
+      [...options]
+        .sort(
+          (first, second) =>
+            second.count - first.count ||
+            first.label.localeCompare(second.label),
+        )
+        .slice(0, limit)
+        .map((option) => ({
+          key: `${group}-${option.value}`,
+          group,
+          value: option.value,
+          label: option.label,
+          count: option.count,
+          selected: selected.includes(option.value),
+        })),
+    )
+    .sort(
+      (first, second) =>
+        second.count - first.count ||
+        first.label.localeCompare(second.label),
+    );
+
+  if (!popularFilters.length) return null;
+
+  return (
+    <section
+      data-flight-sticky-popular-filters
+      aria-label={t("hotelResults.popularFilters")}
+      className="sticky top-[88px] z-10 mt-3 max-h-[calc(100vh-100px)] overflow-y-auto rounded-lg border border-[#CFD9E5] bg-white px-3 py-3 shadow-[0_4px_16px_-12px_rgba(15,23,42,0.35)]"
+    >
+      <h2 className="mb-1.5 text-[13px] font-bold leading-5 text-[#142033]">
+        {t("hotelResults.popularFilters")}
+      </h2>
+      <div className="space-y-0.5">
+        {popularFilters.map((filter) => (
+          <label
+            key={filter.key}
+            className="flex min-h-7 cursor-pointer items-center gap-2 rounded px-0.5 text-[12px] font-normal leading-4 text-[#142033] hover:bg-slate-50"
+          >
+            <input
+              type="checkbox"
+              checked={filter.selected}
+              onChange={() => onToggle(filter.group, filter.value)}
+              className="h-4 w-4 shrink-0 cursor-pointer accent-[#004BB8]"
+            />
+            <span className="min-w-0 flex-1 truncate" title={filter.label}>
+              {filter.label}
+            </span>
+            <span className="shrink-0 tabular-nums text-slate-500">
+              {filter.count}
+            </span>
+          </label>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 type MobileShortcutSheet = "sort" | "airlines" | "stops" | "airports";
 type NearbyFareState =
@@ -4162,9 +4283,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     "{{count}}",
     String(activeFilterCount),
   );
-  const desktopFilterPanelRef = useRef<HTMLDivElement | null>(null);
-  const desktopResultsContentRef = useRef<HTMLElement | null>(null);
-  const [showStickyFlightFilters, setShowStickyFlightFilters] = useState(false);
   const flightResultsTopRef = useRef<HTMLDivElement | null>(null);
 
   const renderDesktopFlightFilters = () => (
@@ -4325,69 +4443,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     totalResults: sortedResults.length,
   });
 
-  const stickyFlightPopularFilters = useMemo(() => {
-    const groups = [
-      {
-        group: "stops" as const,
-        options: stopOptions,
-        selected: selectedStops,
-        limit: 3,
-      },
-      {
-        group: "airlines" as const,
-        options: airlineOptions,
-        selected: selectedAirlines,
-        limit: 5,
-      },
-      {
-        group: "airports" as const,
-        options: airportOptions,
-        selected: selectedAirports,
-        limit: 2,
-      },
-      {
-        group: "quality" as const,
-        options: renderFlightQualityFilter ? flightQualityOptions : [],
-        selected: selectedFlightQuality,
-        limit: 2,
-      },
-    ];
-
-    return groups
-      .flatMap(({ group, options, selected, limit }) =>
-        [...options]
-          .sort(
-            (first, second) =>
-              second.count - first.count ||
-              first.label.localeCompare(second.label),
-          )
-          .slice(0, limit)
-          .map((option) => ({
-            key: `${group}-${option.value}`,
-            group,
-            value: option.value,
-            label: option.label,
-            count: option.count,
-            selected: selected.includes(option.value),
-          })),
-      )
-      .sort(
-        (first, second) =>
-          second.count - first.count ||
-          first.label.localeCompare(second.label),
-      );
-  }, [
-    airlineOptions,
-    airportOptions,
-    flightQualityOptions,
-    renderFlightQualityFilter,
-    selectedAirlines,
-    selectedAirports,
-    selectedFlightQuality,
-    selectedStops,
-    stopOptions,
-  ]);
-
   const toggleStickyFlightPopularFilter = useCallback(
     (
       group: "stops" | "airlines" | "airports" | "quality",
@@ -4411,39 +4466,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     },
     [handleUserFilterCommit],
   );
-
-  useEffect(() => {
-    const fullFilters = desktopFilterPanelRef.current;
-    const resultsContent = desktopResultsContentRef.current;
-    if (guidedMode || !fullFilters || !resultsContent) return undefined;
-
-    const update = () => {
-      const filterBottom = fullFilters.getBoundingClientRect().bottom;
-      const resultsBottom = resultsContent.getBoundingClientRect().bottom;
-
-      setShowStickyFlightFilters(
-        shouldShowFlightStickyPopularFilters({
-          viewportWidth: window.innerWidth,
-          fullFilterBottom: filterBottom,
-          resultsBottom,
-        }),
-      );
-    };
-
-    const observer = new ResizeObserver(update);
-    observer.observe(fullFilters);
-    observer.observe(resultsContent);
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
-  }, [filterApplying, guidedMode, visibleResults.length]);
-
 
   useEffect(() => {
     if (guidedMode) return;
@@ -7463,55 +7485,23 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-0 pt-8 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-4"
       >
         <aside className="relative hidden self-stretch lg:block">
-          <div ref={desktopFilterPanelRef}>
-            {renderDesktopFlightFilters()}
-          </div>
-          {showStickyFlightFilters && stickyFlightPopularFilters.length > 0 ? (
-            <section
-              data-flight-sticky-popular-filters
-              aria-label={t("hotelResults.popularFilters")}
-              className="sticky top-[88px] z-10 mt-3 max-h-[calc(100vh-100px)] overflow-y-auto rounded-lg border border-[#CFD9E5] bg-white px-3 py-3 shadow-[0_4px_16px_-12px_rgba(15,23,42,0.35)]"
-            >
-              <h2 className="mb-1.5 text-[13px] font-bold leading-5 text-[#142033]">
-                {t("hotelResults.popularFilters")}
-              </h2>
-              <div className="space-y-0.5">
-                {stickyFlightPopularFilters.map((filter) => (
-                  <label
-                    key={filter.key}
-                    className="flex min-h-7 cursor-pointer items-center gap-2 rounded px-0.5 text-[12px] font-normal leading-4 text-[#142033] hover:bg-slate-50"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={filter.selected}
-                      onChange={() =>
-                        toggleStickyFlightPopularFilter(
-                          filter.group,
-                          filter.value,
-                        )
-                      }
-                      className="h-4 w-4 shrink-0 cursor-pointer accent-[#004BB8]"
-                    />
-                    <span
-                      className="min-w-0 flex-1 truncate"
-                      title={filter.label}
-                    >
-                      {filter.label}
-                    </span>
-                    <span className="shrink-0 tabular-nums text-slate-500">
-                      {filter.count}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </section>
-          ) : null}
+          <div>{renderDesktopFlightFilters()}</div>
+          <StickyFlightPopularFilters
+            t={t}
+            stopOptions={stopOptions}
+            airlineOptions={airlineOptions}
+            airportOptions={airportOptions}
+            flightQualityOptions={flightQualityOptions}
+            renderFlightQualityFilter={renderFlightQualityFilter}
+            selectedStops={selectedStops}
+            selectedAirlines={selectedAirlines}
+            selectedAirports={selectedAirports}
+            selectedFlightQuality={selectedFlightQuality}
+            onToggle={toggleStickyFlightPopularFilter}
+          />
         </aside>
 
-        <section
-          ref={desktopResultsContentRef}
-          className="min-w-0 space-y-4 lg:space-y-0"
-        >
+        <section className="min-w-0 space-y-4 lg:space-y-0">
           <p className="sr-only" aria-live="polite">
             {savedItemError}
           </p>

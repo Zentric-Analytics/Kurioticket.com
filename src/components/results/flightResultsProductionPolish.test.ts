@@ -486,52 +486,43 @@ test("desktop Flight Stops filter shows labels and counts without fare hints", a
   assert.doesNotMatch(desktopStops, /secondaryLabel|option\.rightLabel|t\("from"\)/);
 });
 
-test("desktop Flight filter scrolling follows Hotels without a replacement handoff", async () => {
+test("desktop Flight renders the Hotel-style Popular filters card directly after the full sidebar", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
 
-  assert.match(source, /const desktopFilterPanelRef = useRef<HTMLDivElement \| null>\(null\)/);
-  assert.match(source, /const desktopResultsContentRef = useRef<HTMLElement \| null>\(null\)/);
-  assert.match(source, /const \[showStickyFlightFilters, setShowStickyFlightFilters\] = useState\(false\)/);
-  assert.match(source, /const filterBottom = fullFilters\.getBoundingClientRect\(\)\.bottom/);
-  assert.match(source, /const resultsBottom = resultsContent\.getBoundingClientRect\(\)\.bottom/);
-  assert.match(source, /shouldShowFlightStickyPopularFilters\(\{/);
-  assert.match(source, /viewportWidth: window\.innerWidth/);
-  assert.match(source, /fullFilterBottom: filterBottom/);
-  assert.match(source, /resultsBottom/);
-  assert.doesNotMatch(source, /resultsContent\.getBoundingClientRect\(\)\.bottom - filterBottom/);
-  assert.doesNotMatch(source, /remainingResultsHeight >= 500/);
+  assert.match(source, /function StickyFlightPopularFilters\(/);
   assert.match(source, /data-flight-sticky-popular-filters/);
   assert.match(source, /sticky top-\[88px\]/);
   assert.match(source, /max-h-\[calc\(100vh-100px\)\]/);
-  assert.doesNotMatch(source, /desktopFilterSentinelRef/);
-  assert.doesNotMatch(source, /desktopCompactFilterRef/);
-  assert.doesNotMatch(source, /showDesktopCompactFilter/);
+  assert.match(source, /<div>\{renderDesktopFlightFilters\(\)\}<\/div>[\s\S]*?<StickyFlightPopularFilters/);
+  assert.doesNotMatch(source, /showStickyFlightFilters/);
+  assert.doesNotMatch(source, /shouldShowFlightStickyPopularFilters/);
+  assert.doesNotMatch(source, /desktopFilterPanelRef|desktopResultsContentRef/);
+  assert.doesNotMatch(source, /desktopFilterSentinelRef|desktopCompactFilterRef/);
   assert.doesNotMatch(source, /renderDesktopFlightFilters\(true\)/);
-  assert.doesNotMatch(source, /calculateCompactFilterPlacement|shouldShowDesktopCompactFilter|calculateCompactFilterMaxHeight/);
 });
 
-test("desktop Flight sticky filter shares the authoritative Flight filter state", async () => {
+test("desktop Flight Popular filters reuse the authoritative Flight filter state", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
 
-  const start = source.indexOf("const stickyFlightPopularFilters = useMemo");
-  const end = source.indexOf("useEffect(() => {", start);
-  const stickyFilter = source.slice(start, end);
+  const start = source.indexOf("function StickyFlightPopularFilters");
+  const end = source.indexOf("type MobileShortcutSheet", start);
+  const popular = source.slice(start, end);
 
-  assert.match(stickyFilter, /selectedStops/);
-  assert.match(stickyFilter, /selectedAirlines/);
-  assert.match(stickyFilter, /selectedAirports/);
-  assert.match(stickyFilter, /selectedFlightQuality/);
-  assert.match(stickyFilter, /setSelectedStops/);
-  assert.match(stickyFilter, /setSelectedAirlines/);
-  assert.match(stickyFilter, /setSelectedAirports/);
-  assert.match(stickyFilter, /setSelectedFlightQuality/);
-  assert.match(stickyFilter, /handleUserFilterCommit\(\)/);
+  assert.match(popular, /stopOptions/);
+  assert.match(popular, /airlineOptions/);
+  assert.match(popular, /airportOptions/);
+  assert.match(popular, /flightQualityOptions/);
+  assert.match(popular, /selectedStops/);
+  assert.match(popular, /selectedAirlines/);
+  assert.match(popular, /selectedAirports/);
+  assert.match(popular, /selectedFlightQuality/);
+  assert.match(source, /onToggle=\{toggleStickyFlightPopularFilter\}/);
 });
 
 test("desktop Flight result meta typography uses the premium hierarchy", async () => {

@@ -58,22 +58,16 @@ test("compact Flight time-mode switch stays in the compact panel until the slide
   assert.doesNotMatch(selector, /onFilterChange|onFilterCommit/);
 });
 
-test("standalone desktop Flight Results follows the live Hotel sticky-filter handoff without remounting the compact accordion", () => {
-  assert.match(results, /const desktopFilterPanelRef = useRef<HTMLDivElement \| null>\(null\)/);
-  assert.match(results, /const desktopResultsContentRef = useRef<HTMLElement \| null>\(null\)/);
-  assert.match(results, /showStickyFlightFilters/);
-  assert.match(results, /shouldShowFlightStickyPopularFilters\(\{/);
-  assert.match(results, /viewportWidth: window\.innerWidth/);
-  assert.match(results, /fullFilterBottom: filterBottom/);
-  assert.match(results, /resultsBottom/);
-  assert.doesNotMatch(results, /remainingResultsHeight >= 500/);
+test("standalone desktop Flight Results keeps the Hotel-style Popular filters card in the sidebar", () => {
+  assert.match(results, /function StickyFlightPopularFilters\(/);
   assert.match(results, /data-flight-sticky-popular-filters/);
   assert.match(results, /sticky top-\[88px\]/);
-  assert.doesNotMatch(results, /renderDesktopFlightFilters\(true\)/);
-  assert.doesNotMatch(results, /desktopCompactFilterRef|desktopFilterSentinelRef|data-flight-desktop-compact-filter/);
+  assert.match(results, /<div>\{renderDesktopFlightFilters\(\)\}<\/div>[\s\S]*?<StickyFlightPopularFilters/);
+  assert.doesNotMatch(results, /showStickyFlightFilters|shouldShowFlightStickyPopularFilters/);
+  assert.doesNotMatch(results, /desktopCompactFilterRef|desktopFilterSentinelRef/);
 
   // Keep the legacy compact branch available inside the shared filter component,
-  // but the standalone Flight Results scroll path must not mount it anymore.
+  // but standalone Flight Results must not remount it during scrolling.
   assert.match(filters, /data-flight-desktop-compact-filter-surface/);
   assert.match(filters, /openCompactSection/);
 });
