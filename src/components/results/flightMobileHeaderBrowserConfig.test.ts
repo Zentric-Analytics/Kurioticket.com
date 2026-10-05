@@ -19,3 +19,9 @@ test("Flight header browser servers resolve commands from the repository root", 
     }
   }
 });
+
+test("Flight header browser page bypasses the fixture proxy", () => {
+  assert.equal(config.use?.baseURL, "http://127.0.0.1:3010");
+  assert.ok(Array.isArray(config.webServer));
+  assert.equal(config.webServer[1]?.url, "http://127.0.0.1:3011/api/flights/search");
+});

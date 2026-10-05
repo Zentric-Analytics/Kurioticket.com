@@ -8,7 +8,7 @@ export default defineConfig({
   workers: 1,
   reporter: "list",
   use: {
-    baseURL: "http://127.0.0.1:3011",
+    baseURL: "http://127.0.0.1:3010",
     browserName: "chromium",
     viewport: { width: 390, height: 844 },
     isMobile: true,
@@ -27,7 +27,7 @@ export default defineConfig({
     {
       cwd: "../../..",
       command: "node qa/mobile-web/browserstack/flight-fixture-proxy.mjs",
-      url: "http://127.0.0.1:3011/brand/kurioticket-icon-blue.svg",
+      url: "http://127.0.0.1:3011/api/flights/search",
       timeout: 120_000,
       reuseExistingServer: !process.env.CI,
     },

@@ -2,6 +2,13 @@ import { expect, test } from "@playwright/test";
 
 const flightResults = "/flights/results?tripType=round-trip&origin=SFO&destination=LAX&departureDate=2026-11-13&returnDate=2026-11-15&adults=1&children=0&infants=0&travelers=1&cabinClass=economy";
 
+test.beforeEach(async ({ page, request }) => {
+  await page.route("**/api/flights/search", async (route) => {
+    const response = await request.post("http://127.0.0.1:3011/api/flights/search");
+    await route.fulfill({ response });
+  });
+});
+
 for (const width of [320, 360, 390, 412]) {
   test(`Flight mobile filters precede dates without overflow at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
