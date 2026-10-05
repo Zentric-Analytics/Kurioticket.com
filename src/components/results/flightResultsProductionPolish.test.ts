@@ -380,7 +380,7 @@ test("desktop Flight metadata footer moves lower without changing card layout si
   const desktopEnd = styles.indexOf("@container (max-width: 759px)", desktopStart);
   const desktopRules = styles.slice(desktopStart, desktopEnd);
 
-  assert.match(desktopRules, /\.flight-card-details \{[\s\S]*?transform: translateY\(0\.375rem\);/);
+  assert.match(desktopRules, /\.flight-card-details \{[\s\S]*?transform: translateY\(0\.875rem\);/);
   assert.match(styles, /\.flight-card-desktop \{\s*padding: 1\.25rem 1\.5rem 1rem;/);
   assert.doesNotMatch(desktopRules, /height:\s*calc\(|min-height:\s*calc\(/);
 });
