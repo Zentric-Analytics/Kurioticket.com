@@ -1077,15 +1077,15 @@ export function CarsResultsClient({
           getOverlayActivationModality(event),
         )
       }
-      className="focus-ring group flex h-11 w-full min-w-0 touch-manipulation items-center p-0 text-start transition [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+      className="focus-ring group flex h-11 w-full min-w-0 touch-manipulation items-center rounded-[10px] p-0 text-start transition [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
     >
       <span
-        data-cars-results-mobile-search-segments
-        className="flex h-9 w-full min-w-0 items-center overflow-hidden rounded-[9px] border border-[#D8E1EC] bg-[#F8FAFC] shadow-[0_1px_3px_rgba(24,48,91,0.06)] transition group-hover:border-[#C4CFDC] group-hover:bg-white"
+        data-cars-results-mobile-search-fields
+        className="grid h-9 w-full min-w-0 grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)_34px] items-stretch gap-1"
       >
         <span
           data-cars-results-mobile-search-location
-          className="flex min-w-0 flex-[0.72] items-center gap-1.5 px-2"
+          className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-[9px] border border-[#D8E1EC] bg-[#F8FAFC] px-1.5 shadow-[0_1px_3px_rgba(24,48,91,0.06)] transition group-hover:border-[#C4CFDC] group-hover:bg-white"
         >
           <Car
             className="h-3.5 w-3.5 shrink-0 text-[#142033]"
@@ -1100,13 +1100,8 @@ export function CarsResultsClient({
           </span>
         </span>
         <span
-          data-cars-results-mobile-search-divider
-          aria-hidden="true"
-          className="h-5 w-px shrink-0 bg-[#D8E1EC]"
-        />
-        <span
           data-cars-results-mobile-search-dates
-          className="flex min-w-0 flex-[1.28] items-center gap-1.5 px-2"
+          className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-[9px] border border-[#D8E1EC] bg-[#F8FAFC] px-1.5 shadow-[0_1px_3px_rgba(24,48,91,0.06)] transition group-hover:border-[#C4CFDC] group-hover:bg-white"
         >
           <CalendarDays
             className="h-3.5 w-3.5 shrink-0 text-[#536B92]"
@@ -1121,13 +1116,8 @@ export function CarsResultsClient({
           </span>
         </span>
         <span
-          data-cars-results-mobile-search-divider
-          aria-hidden="true"
-          className="h-5 w-px shrink-0 bg-[#D8E1EC]"
-        />
-        <span
           data-cars-results-mobile-search-edit
-          className="flex h-full w-8 shrink-0 items-center justify-center"
+          className="flex h-full w-[34px] shrink-0 items-center justify-center rounded-[9px] border border-[#D8E1EC] bg-[#F8FAFC] shadow-[0_1px_3px_rgba(24,48,91,0.06)] transition group-hover:border-[#C4CFDC] group-hover:bg-white"
         >
           <SquarePen
             className="h-3.5 w-3.5 text-[#536B92] transition group-hover:text-[#142033]"
