@@ -61,20 +61,20 @@ test("source-contract: mobile Cars typography uses a restrained primary-secondar
     source.indexOf("const renderMobileHeaderSearch"),
     source.indexOf("const renderCarsSearchForm"),
   );
-  assert.match(headerSearch, /text-\[12px\] font-semibold[^\"]*text-\[#142033\]/);
-  assert.match(headerSearch, /text-\[10\.5px\] font-medium[^\"]*text-\[#64748B\]/);
+  assert.match(headerSearch, /text-\[11\.5px\] font-semibold[^\"]*text-\[#172238\]/);
+  assert.match(headerSearch, /text-\[10\.75px\] font-semibold[^\"]*text-\[#536786\]/);
   assert.doesNotMatch(headerSearch, /flex-col|text-\[9\.5px\]/);
   assert.doesNotMatch(headerSearch, /font-extrabold/);
-  assert.match(headerSearch, /bg-\[#F8FAFC\]/);
+  assert.match(headerSearch, /bg-\[#FBFCFE\]/);
   assert.match(headerSearch, /data-cars-results-mobile-header-search/);
   assert.match(headerSearch, /data-cars-results-mobile-search-fields/);
   assert.match(headerSearch, /data-cars-results-mobile-search-location/);
   assert.match(headerSearch, /data-cars-results-mobile-search-dates/);
   assert.match(headerSearch, /data-cars-results-mobile-search-edit/);
-  assert.match(headerSearch, /gap-1/);
+  assert.match(headerSearch, /gap-\[3px\]/);
   assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-divider/);
-  assert.match(headerSearch, /<CalendarDays[\s\S]*?strokeWidth=\{2\}/);
-  assert.match(headerSearch, /<SquarePen[\s\S]*?strokeWidth=\{2\}/);
+  assert.match(headerSearch, /<CalendarDays[\s\S]*?strokeWidth=\{1\.95\}/);
+  assert.match(headerSearch, /<SquarePen[\s\S]*?strokeWidth=\{1\.95\}/);
 
   const quickFilters = source.slice(
     source.indexOf("data-cars-results-quick-filters"),

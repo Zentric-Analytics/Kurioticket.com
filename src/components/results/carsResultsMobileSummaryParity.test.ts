@@ -27,7 +27,7 @@ test("Cars mobile results exposes the real search values in the main header", ()
   assert.match(headerSearch, /\[-webkit-tap-highlight-color:transparent\]/);
   assert.match(
     headerSearch,
-    /focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/30/,
+    /focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/25/,
   );
 });
 
@@ -63,7 +63,7 @@ test("the unified launcher presents selected location, dates, and edit as separa
   assert.match(headerSearch, /h-11 w-full min-w-0/);
   assert.match(headerSearch, /data-cars-results-mobile-search-fields/);
   assert.match(headerSearch, /grid h-9 w-full min-w-0/);
-  assert.match(headerSearch, /gap-1/);
+  assert.match(headerSearch, /gap-\[3px\]/);
   assert.match(headerSearch, /data-cars-results-mobile-search-location/);
   assert.match(headerSearch, /data-cars-results-mobile-search-dates/);
   assert.match(headerSearch, /data-cars-results-mobile-search-edit/);
@@ -71,11 +71,13 @@ test("the unified launcher presents selected location, dates, and edit as separa
   assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-divider/);
   assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-segments/);
   assert.equal(
-    (headerSearch.match(/rounded-\[9px\] border border-\[#D8E1EC\] bg-\[#F8FAFC\]/g) ?? []).length,
+    (headerSearch.match(/rounded-\[8px\] border border-\[#D5DFEA\] bg-\[#FBFCFE\]/g) ?? []).length,
     3,
   );
-  assert.match(headerSearch, /text-\[12px\] font-semibold/);
-  assert.match(headerSearch, /text-\[10\.5px\] font-medium/);
+  assert.match(headerSearch, /text-\[11\.5px\] font-semibold/);
+  assert.match(headerSearch, /text-\[10\.75px\] font-semibold/);
+  assert.match(headerSearch, /text-\[#172238\]/);
+  assert.match(headerSearch, /text-\[#536786\]/);
   assert.doesNotMatch(headerSearch, /flex-col|text-\[9\.5px\]/);
   assert.doesNotMatch(headerSearch, /min-h-\[62px\]|max-w-\[30rem\]|translate-y-1\/2/);
 
