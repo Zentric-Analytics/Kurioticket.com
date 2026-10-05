@@ -21,6 +21,7 @@ import { createPortal } from "react-dom";
 import {
   Calendar,
   CalendarDays,
+  Car,
   ArrowUp,
   ArrowLeft,
   Check,
@@ -1267,7 +1268,7 @@ export function CarsResultsClient({
             ) : (
               <SearchInputCell
                 idPrefix={idPrefix}
-                icon={MapPin}
+                icon={isNavbarSearch ? Car : MapPin}
                 inputRef={searchSurfaceRefs.pickupInputRef}
                 isCompact={isCompactSearch}
                 label={
