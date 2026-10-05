@@ -167,13 +167,7 @@ import {
   projectSearchLegs,
 } from "@/lib/flights/flightSearchJourney";
 import { cn, getItineraryDateKey } from "@/lib/utils";
-import {
-  calculateCompactFilterPlacement,
-  shouldRenderFlightQualityFilter,
-  shouldShowDesktopCompactFilter,
-  type DesktopCompactFilterPlacementState,
-} from "@/lib/flights/desktopCompactFilter";
-import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilter";
+import { shouldRenderFlightQualityFilter } from "@/lib/flights/desktopCompactFilter";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   formatFlightsDateSummary,
@@ -185,14 +179,8 @@ import {
 const resultStackClass = "w-full min-w-0";
 export const FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
 
-const desktopCompactFilterTopOffset = 116;
-const desktopCompactFilterBottomGap = 12;
-
-type DesktopCompactFilterFrame = {
-  left: number;
-  width: number;
-  maxHeight: number;
-};
+const desktopFlightStickyFilterTop = 88;
+const desktopFlightResultsScrollOffset = desktopFlightStickyFilterTop + 16;
 
 type MobileShortcutSheet = "sort" | "airlines" | "stops" | "airports";
 type NearbyFareState =
@@ -4170,29 +4158,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     "{{count}}",
     String(activeFilterCount),
   );
-  const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
-  const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
-  const desktopCompactFilterRef = useRef<HTMLDivElement | null>(null);
-  const desktopCompactFilterVisibilityRef = useRef(false);
-  const desktopCompactFilterPlacementRef =
-    useRef<DesktopCompactFilterPlacementState>("hidden");
-  const desktopCompactFilterFrameRef = useRef<DesktopCompactFilterFrame | null>(null);
-  const desktopCompactFilterHeightRef = useRef(1);
-  const scheduleDesktopCompactFilterMeasurementRef = useRef<
-    (() => void) | null
-  >(null);
-  const [showDesktopCompactFilter, setShowDesktopCompactFilter] = useState(false);
-  const [desktopCompactFilterFrame, setDesktopCompactFilterFrame] =
-    useState<DesktopCompactFilterFrame | null>(null);
-  const [desktopCompactFilterPlacement, setDesktopCompactFilterPlacement] =
-    useState<DesktopCompactFilterPlacementState>("hidden");
-  const resultsGridRef = useRef<HTMLDivElement | null>(null);
+  const desktopFilterPanelRef = useRef<HTMLDivElement | null>(null);
+  const desktopResultsContentRef = useRef<HTMLElement | null>(null);
+  const [showStickyFlightFilters, setShowStickyFlightFilters] = useState(false);
   const flightResultsTopRef = useRef<HTMLDivElement | null>(null);
 
-  const renderDesktopFlightFilters = (compact = false) => (
+  const renderDesktopFlightFilters = () => (
     <DesktopFlightFilters
-      compact={compact}
-      idPrefix={compact ? "desktop-flight-filter-compact" : "desktop-flight-filter-primary"}
+      idPrefix="desktop-flight-filter-primary"
       activeFilterCount={activeFilterCount}
       maxPrice={maxPrice}
       setMaxPrice={setMaxPrice}
@@ -4233,150 +4206,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       destinationCode={destinationCode}
     />
   );
-  useEffect(() => {
-    if (guidedMode || typeof window === "undefined") return undefined;
-
-    let animationFrameId: number | null = null;
-
-    const applyPlacement = (
-      placement: DesktopCompactFilterPlacementState,
-      frame: DesktopCompactFilterFrame | null,
-    ) => {
-      if (placement !== desktopCompactFilterPlacementRef.current) {
-        desktopCompactFilterPlacementRef.current = placement;
-        setDesktopCompactFilterPlacement(placement);
-      }
-
-      const currentFrame = desktopCompactFilterFrameRef.current;
-      const frameChanged =
-        (frame === null) !== (currentFrame === null) ||
-        (frame !== null &&
-          currentFrame !== null &&
-          (Math.abs(frame.left - currentFrame.left) >= 0.5 ||
-            Math.abs(frame.width - currentFrame.width) >= 0.5 ||
-            Math.abs(frame.maxHeight - currentFrame.maxHeight) >= 0.5));
-
-      if (frameChanged) {
-        desktopCompactFilterFrameRef.current = frame;
-        setDesktopCompactFilterFrame(frame);
-      }
-    };
-
-    const measureDesktopCompactFilter = () => {
-      const sentinel = desktopFilterSentinelRef.current;
-      const sidebar = desktopFilterSidebarRef.current;
-      const compactPanel = desktopCompactFilterRef.current;
-      const resultsBody = resultsGridRef.current;
-      const scrollY = window.scrollY;
-      const nextVisibility = shouldShowDesktopCompactFilter({
-        viewportWidth: window.innerWidth,
-        sentinelTop:
-          sentinel?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY,
-        topOffset: desktopCompactFilterTopOffset,
-      });
-
-      if (nextVisibility !== desktopCompactFilterVisibilityRef.current) {
-        desktopCompactFilterVisibilityRef.current = nextVisibility;
-        setShowDesktopCompactFilter(nextVisibility);
-      }
-
-      if (!nextVisibility || !sidebar || !resultsBody) {
-        applyPlacement("hidden", null);
-        return;
-      }
-
-      const sidebarRect = sidebar.getBoundingClientRect();
-      const panelHeight =
-        compactPanel?.getBoundingClientRect().height ??
-        desktopCompactFilterHeightRef.current;
-      if (Number.isFinite(panelHeight) && panelHeight > 0) {
-        desktopCompactFilterHeightRef.current = panelHeight;
-      }
-
-      const placement = calculateCompactFilterPlacement({
-        enabled: nextVisibility,
-        scrollY,
-        desiredTop: desktopCompactFilterTopOffset,
-        panelHeight,
-        bodyBottomDocument:
-          resultsBody.getBoundingClientRect().bottom + scrollY,
-        currentState: desktopCompactFilterPlacementRef.current,
-        bottomGap: desktopCompactFilterBottomGap,
-      });
-
-      if (placement.state === "hidden") {
-        applyPlacement("hidden", null);
-        return;
-      }
-
-      applyPlacement(placement.state, {
-        left: sidebarRect.left,
-        width: sidebarRect.width,
-        maxHeight: calculateCompactFilterMaxHeight({
-          viewportHeight: window.innerHeight,
-          topOffset: desktopCompactFilterTopOffset,
-          bottomGap: desktopCompactFilterBottomGap,
-        }),
-      });
-    };
-
-    const scheduleMeasurement = () => {
-      if (animationFrameId !== null) return;
-      animationFrameId = window.requestAnimationFrame(() => {
-        animationFrameId = null;
-        measureDesktopCompactFilter();
-      });
-    };
-
-    scheduleDesktopCompactFilterMeasurementRef.current = scheduleMeasurement;
-    const resizeObserver =
-      "ResizeObserver" in window ? new ResizeObserver(scheduleMeasurement) : null;
-    if (resizeObserver) {
-      if (desktopFilterSidebarRef.current) {
-        resizeObserver.observe(desktopFilterSidebarRef.current);
-      }
-      if (resultsGridRef.current) {
-        resizeObserver.observe(resultsGridRef.current);
-      }
-    }
-
-    measureDesktopCompactFilter();
-    window.addEventListener("scroll", scheduleMeasurement, { passive: true });
-    window.addEventListener("resize", scheduleMeasurement);
-
-    return () => {
-      if (animationFrameId !== null) window.cancelAnimationFrame(animationFrameId);
-      scheduleDesktopCompactFilterMeasurementRef.current = null;
-      resizeObserver?.disconnect();
-      window.removeEventListener("scroll", scheduleMeasurement);
-      window.removeEventListener("resize", scheduleMeasurement);
-    };
-  }, [guidedMode]);
-
-  useEffect(() => {
-    if (
-      typeof window === "undefined" ||
-      !("ResizeObserver" in window) ||
-      desktopCompactFilterPlacement === "hidden" ||
-      !desktopCompactFilterRef.current
-    ) {
-      return undefined;
-    }
-
-    const resizeObserver = new ResizeObserver(() =>
-      scheduleDesktopCompactFilterMeasurementRef.current?.(),
-    );
-    resizeObserver.observe(desktopCompactFilterRef.current);
-    return () => resizeObserver.disconnect();
-  }, [desktopCompactFilterPlacement]);
-
   const scrollToFlightResultsTop = useCallback(() => {
     if (typeof window === "undefined") return;
 
     const target = flightResultsTopRef.current;
     if (!target) return;
 
-    const stickyClearance = desktopCompactFilterTopOffset + 16;
+    const stickyClearance = desktopFlightResultsScrollOffset;
     const top =
       target.getBoundingClientRect().top + window.scrollY - stickyClearance;
     const prefersReducedMotion = window.matchMedia(
@@ -4485,6 +4321,125 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     totalResults: sortedResults.length,
   });
 
+  const stickyFlightPopularFilters = useMemo(() => {
+    const groups = [
+      {
+        group: "stops" as const,
+        options: stopOptions,
+        selected: selectedStops,
+        limit: 3,
+      },
+      {
+        group: "airlines" as const,
+        options: airlineOptions,
+        selected: selectedAirlines,
+        limit: 5,
+      },
+      {
+        group: "airports" as const,
+        options: airportOptions,
+        selected: selectedAirports,
+        limit: 2,
+      },
+      {
+        group: "quality" as const,
+        options: renderFlightQualityFilter ? flightQualityOptions : [],
+        selected: selectedFlightQuality,
+        limit: 2,
+      },
+    ];
+
+    return groups
+      .flatMap(({ group, options, selected, limit }) =>
+        [...options]
+          .sort(
+            (first, second) =>
+              second.count - first.count ||
+              first.label.localeCompare(second.label),
+          )
+          .slice(0, limit)
+          .map((option) => ({
+            key: `${group}-${option.value}`,
+            group,
+            value: option.value,
+            label: option.label,
+            count: option.count,
+            selected: selected.includes(option.value),
+          })),
+      )
+      .sort(
+        (first, second) =>
+          second.count - first.count ||
+          first.label.localeCompare(second.label),
+      );
+  }, [
+    airlineOptions,
+    airportOptions,
+    flightQualityOptions,
+    renderFlightQualityFilter,
+    selectedAirlines,
+    selectedAirports,
+    selectedFlightQuality,
+    selectedStops,
+    stopOptions,
+  ]);
+
+  const toggleStickyFlightPopularFilter = useCallback(
+    (
+      group: "stops" | "airlines" | "airports" | "quality",
+      value: string,
+    ) => {
+      const toggle = (
+        setter: Dispatch<SetStateAction<string[]>>,
+      ) =>
+        setter((current) =>
+          current.includes(value)
+            ? current.filter((item) => item !== value)
+            : [...current, value],
+        );
+
+      if (group === "stops") toggle(setSelectedStops);
+      else if (group === "airlines") toggle(setSelectedAirlines);
+      else if (group === "airports") toggle(setSelectedAirports);
+      else toggle(setSelectedFlightQuality);
+
+      handleUserFilterCommit();
+    },
+    [handleUserFilterCommit],
+  );
+
+  useEffect(() => {
+    const fullFilters = desktopFilterPanelRef.current;
+    const resultsContent = desktopResultsContentRef.current;
+    if (guidedMode || !fullFilters || !resultsContent) return undefined;
+
+    const update = () => {
+      const filterBottom = fullFilters.getBoundingClientRect().bottom;
+      const remainingResultsHeight =
+        resultsContent.getBoundingClientRect().bottom - filterBottom;
+
+      setShowStickyFlightFilters(
+        window.matchMedia("(min-width: 1200px)").matches &&
+          filterBottom <= 170 &&
+          remainingResultsHeight >= 500,
+      );
+    };
+
+    const observer = new ResizeObserver(update);
+    observer.observe(fullFilters);
+    observer.observe(resultsContent);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [filterApplying, guidedMode, visibleResults.length]);
+
+
   useEffect(() => {
     if (guidedMode) return;
     const pageFromUrl = Math.max(1, Number(urlParams.get("page")) || 1);
@@ -4577,7 +4532,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const target = mobileViewport
       ? mobileResultsPageTopRef.current
       : flightResultsTopRef.current;
-    const topOffset = mobileViewport ? 76 : desktopCompactFilterTopOffset + 16;
+    const topOffset = mobileViewport ? 76 : desktopFlightResultsScrollOffset;
     const top = target
       ? target.getBoundingClientRect().top + window.scrollY - topOffset
       : 0;
@@ -7420,8 +7375,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   if (guidedMode) return (
     <section aria-labelledby="deals-guided-flight-results-heading" className="mt-0 lg:relative lg:left-1/2 lg:w-[min(1180px,calc(100vw-32px))] lg:-translate-x-1/2 xl:w-[min(1240px,calc(100vw-32px))]" data-flight-results-experience="deals-guided">
       <h2 id="deals-guided-flight-results-heading" ref={resultsHeadingRef} tabIndex={-1} className="sr-only">{formatResultsFound(sortedResults.length, t)}</h2>
-      <div ref={resultsGridRef} className="grid gap-x-6 gap-y-4 pb-5 pt-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-x-6 xl:grid-cols-[304px_minmax(0,1fr)]">
-        <aside ref={desktopFilterSidebarRef} className="relative hidden self-stretch lg:block"><DesktopFlightFilters presentationMode="deals-guided" activeFilterCount={activeFilterCount} maxPrice={maxPrice} setMaxPrice={setMaxPrice} priceBounds={priceBounds} priceLabelCurrency={priceLabelCurrency} selectedCurrency={selectedCurrency} timeFilterMode={timeFilterMode} setTimeFilterMode={setTimeFilterMode} timeBounds={timeBounds} maxTakeoffMinutes={maxTakeoffMinutes} setMaxTakeoffMinutes={setMaxTakeoffMinutes} maxLandingMinutes={maxLandingMinutes} setMaxLandingMinutes={setMaxLandingMinutes} durationBounds={durationBounds} maxDurationMinutes={maxDurationMinutes} setMaxDurationMinutes={setMaxDurationMinutes} stopOptions={stopOptions} selectedStops={selectedStops} setSelectedStops={setSelectedStops} airlineOptions={airlineOptions} selectedAirlines={selectedAirlines} setSelectedAirlines={setSelectedAirlines} airportOptions={airportOptions} selectedAirports={selectedAirports} setSelectedAirports={setSelectedAirports} flightQualityOptions={flightQualityOptions} renderFlightQualityFilter={renderFlightQualityFilter} selectedFlightQuality={selectedFlightQuality} setSelectedFlightQuality={setSelectedFlightQuality} baggageIncludedOnly={baggageIncludedOnly} setBaggageIncludedOnly={setBaggageIncludedOnly} flexibleOnly={flexibleOnly} setFlexibleOnly={setFlexibleOnly} onFilterChange={triggerFilterApplying} onFilterCommit={handleUserFilterCommit} onClear={clearFlightFilters} originCode={originCode} destinationCode={destinationCode} /></aside>
+      <div className="grid gap-x-6 gap-y-4 pb-5 pt-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-x-6 xl:grid-cols-[304px_minmax(0,1fr)]">
+        <aside className="relative hidden self-stretch lg:block"><DesktopFlightFilters presentationMode="deals-guided" activeFilterCount={activeFilterCount} maxPrice={maxPrice} setMaxPrice={setMaxPrice} priceBounds={priceBounds} priceLabelCurrency={priceLabelCurrency} selectedCurrency={selectedCurrency} timeFilterMode={timeFilterMode} setTimeFilterMode={setTimeFilterMode} timeBounds={timeBounds} maxTakeoffMinutes={maxTakeoffMinutes} setMaxTakeoffMinutes={setMaxTakeoffMinutes} maxLandingMinutes={maxLandingMinutes} setMaxLandingMinutes={setMaxLandingMinutes} durationBounds={durationBounds} maxDurationMinutes={maxDurationMinutes} setMaxDurationMinutes={setMaxDurationMinutes} stopOptions={stopOptions} selectedStops={selectedStops} setSelectedStops={setSelectedStops} airlineOptions={airlineOptions} selectedAirlines={selectedAirlines} setSelectedAirlines={setSelectedAirlines} airportOptions={airportOptions} selectedAirports={selectedAirports} setSelectedAirports={setSelectedAirports} flightQualityOptions={flightQualityOptions} renderFlightQualityFilter={renderFlightQualityFilter} selectedFlightQuality={selectedFlightQuality} setSelectedFlightQuality={setSelectedFlightQuality} baggageIncludedOnly={baggageIncludedOnly} setBaggageIncludedOnly={setBaggageIncludedOnly} flexibleOnly={flexibleOnly} setFlexibleOnly={setFlexibleOnly} onFilterChange={triggerFilterApplying} onFilterCommit={handleUserFilterCommit} onClear={clearFlightFilters} originCode={originCode} destinationCode={destinationCode} /></aside>
         <section className="min-w-0 space-y-4">
           <div className="flex w-full flex-col gap-3 py-1"><div className="flex items-center justify-between gap-4"><p className="text-[16px] font-semibold text-[#142033]">{formatResultsFound(sortedResults.length, t)}</p>{renderDesktopSortControl()}<Button variant="secondary" className="h-10 rounded-xl border-slate-300 text-sm font-bold lg:hidden" onClick={(event) => openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))}>{activeFilterCount > 0 ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount)) : t("filters")}</Button></div><div className="lg:hidden">{renderMobileSortResultsRow()}</div></div>
           {error ? <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger" role="alert"><h2 ref={errorHeadingRef} tabIndex={-1} className="text-lg font-extrabold">{t("deals.guided.flightResults.errorTitle")}</h2><p className="mt-2">{error}</p><p className="mt-2">{t("deals.guided.flightResults.errorBody")}</p>{renderGuidedRetryButton()}</div> : filterApplying ? <div className="space-y-3"><div role="status" className="rounded-xl border border-[#004BB8]/10 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm">{t("updatingResults")}</div><FlightCardSkeleton /><FlightCardSkeleton /></div> : sortedResults.length ? <><div className="space-y-4">{visibleResults.map((flight, index) => <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={buildDetailsHref ? buildDetailsHref(flight) : undefined} actionLabel={actionLabel} actionAriaLabel={actionAriaLabel?.(flight)} onAction={onSelectFlight} />)}</div><FlightResultsPagination currentPage={validResultsPage} totalPages={totalResultPages} onPageChange={changeResultsPage} /></> : <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"><h2 ref={emptyHeadingRef} tabIndex={-1} className="text-lg font-extrabold text-slate-950">{t("deals.guided.flightResults.emptyTitle")}</h2><p className="mt-2">{t("deals.guided.flightResults.emptyBody")}</p>{renderGuidedRetryButton()}</div>}
@@ -7500,47 +7455,58 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       </section>
 
       <div
-        ref={resultsGridRef}
         className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-0 pt-8 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-4"
       >
-        <aside
-          ref={desktopFilterSidebarRef}
-          className="relative hidden self-stretch lg:block"
-        >
-          {renderDesktopFlightFilters()}
-          <div ref={desktopFilterSentinelRef} className="h-px w-full" aria-hidden="true" />
-          {showDesktopCompactFilter &&
-          desktopCompactFilterFrame &&
-          desktopCompactFilterPlacement !== "hidden" ? (
-            <div
-              ref={desktopCompactFilterRef}
-              data-flight-desktop-compact-filter
-              className={cn(
-                "z-30 flex overflow-visible",
-                desktopCompactFilterPlacement === "fixed" && "fixed",
-                desktopCompactFilterPlacement === "docked" &&
-                  "absolute inset-x-0 bottom-0",
-              )}
-              style={
-                desktopCompactFilterPlacement === "fixed"
-                  ? {
-                      top: desktopCompactFilterTopOffset,
-                      left: desktopCompactFilterFrame.left,
-                      width: desktopCompactFilterFrame.width,
-                      maxHeight: desktopCompactFilterFrame.maxHeight,
-                    }
-                  : {
-                      width: "100%",
-                      maxHeight: desktopCompactFilterFrame.maxHeight,
-                    }
-              }
+        <aside className="relative hidden self-stretch lg:block">
+          <div ref={desktopFilterPanelRef}>
+            {renderDesktopFlightFilters()}
+          </div>
+          {showStickyFlightFilters && stickyFlightPopularFilters.length > 0 ? (
+            <section
+              data-flight-sticky-popular-filters
+              aria-label={t("hotelResults.popularFilters")}
+              className="sticky top-[88px] z-10 mt-3 max-h-[calc(100vh-100px)] overflow-y-auto rounded-lg border border-[#CFD9E5] bg-white px-3 py-3 shadow-[0_4px_16px_-12px_rgba(15,23,42,0.35)]"
             >
-              {renderDesktopFlightFilters(true)}
-            </div>
+              <h2 className="mb-1.5 text-[13px] font-bold leading-5 text-[#142033]">
+                {t("hotelResults.popularFilters")}
+              </h2>
+              <div className="space-y-0.5">
+                {stickyFlightPopularFilters.map((filter) => (
+                  <label
+                    key={filter.key}
+                    className="flex min-h-7 cursor-pointer items-center gap-2 rounded px-0.5 text-[12px] font-normal leading-4 text-[#142033] hover:bg-slate-50"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filter.selected}
+                      onChange={() =>
+                        toggleStickyFlightPopularFilter(
+                          filter.group,
+                          filter.value,
+                        )
+                      }
+                      className="h-4 w-4 shrink-0 cursor-pointer accent-[#004BB8]"
+                    />
+                    <span
+                      className="min-w-0 flex-1 truncate"
+                      title={filter.label}
+                    >
+                      {filter.label}
+                    </span>
+                    <span className="shrink-0 tabular-nums text-slate-500">
+                      {filter.count}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </section>
           ) : null}
         </aside>
 
-        <section className="min-w-0 space-y-4 lg:space-y-0">
+        <section
+          ref={desktopResultsContentRef}
+          className="min-w-0 space-y-4 lg:space-y-0"
+        >
           <p className="sr-only" aria-live="polite">
             {savedItemError}
           </p>
