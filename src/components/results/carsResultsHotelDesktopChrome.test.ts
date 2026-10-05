@@ -81,7 +81,7 @@ test("desktop Cars navbar search uses the approved compact Hotels-style one-line
   );
   assert.match(
     styles,
-    /\[data-cars-results-navbar-search\] \.cars-results-navbar-location-value,[\s\S]*?font-size: 12px !important;[\s\S]*?font-weight: 400 !important;/,
+    /\[data-cars-results-navbar-search\] \.cars-results-navbar-location-value,[\s\S]*?font-size: 12px !important;[\s\S]*?font-weight: 650 !important;[\s\S]*?font-variation-settings: "wght" 650;/,
   );
   assert.match(
     styles,
