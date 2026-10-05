@@ -1079,23 +1079,62 @@ export function CarsResultsClient({
       }
       className="focus-ring group flex h-11 w-full min-w-0 touch-manipulation items-center p-0 text-start transition [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
     >
-      <span className="flex h-9 w-full min-w-0 items-center gap-1.5 overflow-hidden rounded-[9px] border border-[#D8E1EC] bg-[#F8FAFC] px-2 shadow-[0_1px_3px_rgba(24,48,91,0.06)] transition group-hover:border-[#C4CFDC] group-hover:bg-white">
-        <Car
-          className="h-3.5 w-3.5 shrink-0 text-[#142033]"
-          strokeWidth={2}
-          aria-hidden="true"
-        />
-        <span className="min-w-0 flex-1 truncate text-[12px] font-semibold leading-4 tracking-[-0.005em] text-[#142033]">
-          {locationPairSummary}
+      <span
+        data-cars-results-mobile-search-segments
+        className="flex h-9 w-full min-w-0 items-center overflow-hidden rounded-[9px] border border-[#D8E1EC] bg-[#F8FAFC] shadow-[0_1px_3px_rgba(24,48,91,0.06)] transition group-hover:border-[#C4CFDC] group-hover:bg-white"
+      >
+        <span
+          data-cars-results-mobile-search-location
+          className="flex min-w-0 flex-[0.72] items-center gap-1.5 px-2"
+        >
+          <Car
+            className="h-3.5 w-3.5 shrink-0 text-[#142033]"
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+          <span
+            title={locationPairSummary}
+            className="min-w-0 flex-1 truncate text-[12px] font-semibold leading-4 tracking-[-0.005em] text-[#142033]"
+          >
+            {locationPairSummary}
+          </span>
         </span>
-        <span className="shrink-0 whitespace-nowrap text-[10.5px] font-medium leading-4 text-[#64748B]">
-          {rentalDateSummary}
-        </span>
-        <SquarePen
-          className="h-3.5 w-3.5 shrink-0 text-[#536B92] transition group-hover:text-[#142033]"
-          strokeWidth={2}
+        <span
+          data-cars-results-mobile-search-divider
           aria-hidden="true"
+          className="h-5 w-px shrink-0 bg-[#D8E1EC]"
         />
+        <span
+          data-cars-results-mobile-search-dates
+          className="flex min-w-0 flex-[1.28] items-center gap-1.5 px-2"
+        >
+          <CalendarDays
+            className="h-3.5 w-3.5 shrink-0 text-[#536B92]"
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+          <span
+            title={rentalDateSummary}
+            className="min-w-0 flex-1 truncate whitespace-nowrap text-[10.5px] font-medium leading-4 text-[#64748B]"
+          >
+            {rentalDateSummary}
+          </span>
+        </span>
+        <span
+          data-cars-results-mobile-search-divider
+          aria-hidden="true"
+          className="h-5 w-px shrink-0 bg-[#D8E1EC]"
+        />
+        <span
+          data-cars-results-mobile-search-edit
+          className="flex h-full w-8 shrink-0 items-center justify-center"
+        >
+          <SquarePen
+            className="h-3.5 w-3.5 text-[#536B92] transition group-hover:text-[#142033]"
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+        </span>
       </span>
     </button>
   );

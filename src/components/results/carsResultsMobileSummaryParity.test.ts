@@ -59,12 +59,21 @@ test("the AppHeader owns the single mobile search while Edit Search keeps the ex
   assert.match(source, /renderCarsSearchForm\("mobile"\)/);
 });
 
-test("the unified launcher stays compact without changing the full Edit Search form", () => {
+test("the unified launcher divides selected location and dates without changing the full Edit Search form", () => {
   assert.match(headerSearch, /h-11 w-full min-w-0/);
+  assert.match(headerSearch, /data-cars-results-mobile-search-segments/);
   assert.match(headerSearch, /flex h-9 w-full min-w-0 items-center/);
   assert.match(headerSearch, /rounded-\[9px\] border border-\[#D8E1EC\]/);
+  assert.match(headerSearch, /data-cars-results-mobile-search-location/);
+  assert.match(headerSearch, /data-cars-results-mobile-search-dates/);
+  assert.match(headerSearch, /data-cars-results-mobile-search-edit/);
+  assert.equal(
+    (headerSearch.match(/data-cars-results-mobile-search-divider/g) ?? []).length,
+    2,
+  );
   assert.match(headerSearch, /text-\[12px\] font-semibold/);
   assert.match(headerSearch, /text-\[10\.5px\] font-medium/);
+  assert.match(headerSearch, /<CalendarDays/);
   assert.doesNotMatch(headerSearch, /flex-col|text-\[9\.5px\]/);
   assert.doesNotMatch(headerSearch, /min-h-\[62px\]|max-w-\[30rem\]|translate-y-1\/2/);
 
