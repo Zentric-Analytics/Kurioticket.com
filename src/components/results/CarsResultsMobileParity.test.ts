@@ -30,17 +30,25 @@ test("Cars Results keeps the established responsive canvas surfaces", () => {
   );
 });
 
-test("mobile Cars Results puts one compact search control in the main header", () => {
+test("mobile Cars Results puts one divided compact search control in the main header", () => {
   assert.match(mobileHeaderSearch, /data-cars-results-mobile-header-search/);
   assert.match(mobileHeaderSearch, /h-11 w-full min-w-0/);
   assert.match(
     mobileHeaderSearch,
-    /flex h-9 w-full min-w-0 items-center[\s\S]*rounded-\[9px\] border border-\[#D8E1EC\] bg-\[#F8FAFC\]/,
+    /data-cars-results-mobile-search-segments[\s\S]*flex h-9 w-full min-w-0 items-center[\s\S]*rounded-\[9px\] border border-\[#D8E1EC\] bg-\[#F8FAFC\]/,
   );
+  assert.match(mobileHeaderSearch, /data-cars-results-mobile-search-location/);
+  assert.match(mobileHeaderSearch, /data-cars-results-mobile-search-dates/);
+  assert.match(mobileHeaderSearch, /data-cars-results-mobile-search-edit/);
   assert.match(mobileHeaderSearch, /locationPairSummary/);
   assert.match(mobileHeaderSearch, /rentalDateSummary/);
   assert.match(mobileHeaderSearch, /<Car/);
+  assert.match(mobileHeaderSearch, /<CalendarDays/);
   assert.match(mobileHeaderSearch, /<SquarePen/);
+  assert.equal(
+    (mobileHeaderSearch.match(/data-cars-results-mobile-search-divider/g) ?? []).length,
+    2,
+  );
   assert.match(
     resultsSource,
     /createPortal\(renderMobileHeaderSearch\(\), mobileNavSearchTarget\)/,
