@@ -59,3 +59,9 @@ test("mobile Flight Suspense reserves the ready navbar geometry", () => {
   assert.match(page, /mobileResultsSearch=\{[\s\S]*?data-flight-mobile-summary-placeholder/);
   assert.match(page, /data-flight-mobile-summary-placeholder[\s\S]*?min-h-11 w-full min-w-0/);
 });
+
+
+test("Flight capsule keeps the previous Edit Search inert boundary", () => {
+  assert.match(card, /inert=\{mobileSearchOpen \? true : undefined\}/);
+  assert.match(card, /aria-hidden=\{mobileSearchOpen \? true : undefined\}/);
+});

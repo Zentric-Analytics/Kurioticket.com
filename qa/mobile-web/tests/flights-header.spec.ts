@@ -53,13 +53,14 @@ for (const width of [320, 390]) {
     await expect(navbar.getByRole("link", { name: /sign in/i })).toBeVisible();
     const controls = await navbar.locator("a, button").evaluateAll(elements => elements.map(element => {
       const rect = element.getBoundingClientRect();
-      return { left: rect.left, right: rect.right, height: rect.height };
+      return { left: rect.left, right: rect.right, width: rect.width, height: rect.height };
     }));
     for (const control of controls) {
       expect(control.left).toBeGreaterThanOrEqual(0);
       expect(control.right).toBeLessThanOrEqual(width);
       expect(control.height).toBeGreaterThanOrEqual(44);
     }
+    for (const control of controls.slice(-2)) expect(control.width).toBeGreaterThanOrEqual(44);
     await navbar.getByRole("button", { name: /open.*menu/i }).click();
     await expect(page.locator("#mobile-menu-drawer")).toBeVisible();
     await navbar.getByRole("button", { name: /close.*menu/i }).click();
@@ -73,9 +74,16 @@ for (const width of [320, 390]) {
     await expect(summary).toBeInViewport();
     await expect(page.locator("[data-mobile-results-navbar]")).toHaveCount(1);
     await expect(page.locator("[data-flight-results-compact-header]")).toHaveCount(0);
-    await summary.click();
+    const scrollBeforeEdit = await page.evaluate(() => scrollY);
+    await summary.focus();
+    await summary.press("Enter");
     await expect(page.locator("[data-mobile-results-overlay-root]")).toBeVisible();
+    await expect(summary).toHaveAttribute("inert", "");
+    await expect(summary).toHaveAttribute("aria-hidden", "true");
+    await expect(summary).not.toBeFocused();
     await page.getByRole("button", { name: /close edit search/i }).click();
+    await expect(summary).toBeFocused();
+    await expect.poll(() => page.evaluate(() => scrollY)).toBe(scrollBeforeEdit);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }

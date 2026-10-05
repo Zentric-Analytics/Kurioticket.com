@@ -6987,6 +6987,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <button
         type="button"
         data-flight-mobile-summary-card
+        inert={mobileSearchOpen ? true : undefined}
+        aria-hidden={mobileSearchOpen ? true : undefined}
         aria-label={`${t("editFlightSearch")}: ${mobileSearchSummaryLabel}`}
         title={mobileSearchSummaryLabel}
         aria-haspopup="dialog"
