@@ -18,14 +18,19 @@ test("Hotel keeps responsive pagination while Cars renders one continuous result
   assert.doesNotMatch(cars, /getCarPaginationItems|paginateCarResults|paginationPendingPage/);
 });
 
-test("Cars price alert follows quick filters and precedes the summary without duplication", () => {
+test("Cars sticky quick filters precede the price alert and summary without duplication", () => {
   assert.equal(cars.match(/<CarPriceAlertControl/g)?.length, 1);
-  const toolbarStart = cars.indexOf("data-cars-results-toolbar");
-  const quickFilters = cars.indexOf("data-cars-results-quick-filters", toolbarStart);
+  const quickFilters = cars.indexOf("data-cars-results-quick-filters");
+  const toolbarStart = cars.indexOf("data-cars-results-toolbar", quickFilters);
   const alert = cars.indexOf("<CarPriceAlertControl", toolbarStart);
   const summary = cars.indexOf("data-cars-results-summary-row", toolbarStart);
-  assert.ok(toolbarStart >= 0 && quickFilters < alert && alert < summary);
-  assert.match(cars.slice(quickFilters, alert), /lg:hidden/);
+  assert.ok(
+    quickFilters >= 0 &&
+      quickFilters < toolbarStart &&
+      toolbarStart < alert &&
+      alert < summary,
+  );
+  assert.match(cars.slice(quickFilters, toolbarStart), /lg:hidden/);
   assert.match(cars.slice(alert - 20, alert + 100), /!embedded \? <CarPriceAlertControl/);
 });
 
