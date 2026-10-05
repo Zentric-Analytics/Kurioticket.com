@@ -41,31 +41,29 @@ test("standalone Cars uses one persistent AppHeader search launcher", () => {
   assert.doesNotMatch(source, /data-cars-mobile-compact-handoff/);
 });
 
-test("unified Cars header search keeps a 44px touch target around a segmented 36px desktop-inspired surface", () => {
+test("unified Cars header search keeps a 44px touch target around separate 36px desktop-style fields", () => {
   assert.match(
     headerSearch,
-    /h-11 w-full min-w-0[\s\S]*p-0[\s\S]*focus-visible:ring-2/,
-  );
-  assert.match(
-    headerSearch,
-    /data-cars-results-mobile-search-segments[\s\S]*flex h-9 w-full min-w-0 items-center[\s\S]*rounded-\[9px\][\s\S]*border border-\[#D8E1EC\][\s\S]*bg-\[#F8FAFC\]/,
+    /h-11 w-full min-w-0[\s\S]*rounded-\[10px\][\s\S]*p-0[\s\S]*focus-visible:ring-2/,
   );
   assert.match(
     headerSearch,
-    /data-cars-results-mobile-search-location[\s\S]*flex-\[0\.72\][\s\S]*<Car[\s\S]*?h-3\.5 w-3\.5[\s\S]*title=\{locationPairSummary\}[\s\S]*locationPairSummary/,
+    /data-cars-results-mobile-search-fields[\s\S]*grid h-9 w-full min-w-0[\s\S]*grid-cols-\[minmax\(0,0\.78fr\)_minmax\(0,1\.22fr\)_34px\][\s\S]*gap-1/,
   );
   assert.match(
     headerSearch,
-    /data-cars-results-mobile-search-dates[\s\S]*flex-\[1\.28\][\s\S]*<CalendarDays[\s\S]*title=\{rentalDateSummary\}[\s\S]*rentalDateSummary/,
-  );
-  assert.equal(
-    (headerSearch.match(/data-cars-results-mobile-search-divider/g) ?? []).length,
-    2,
+    /data-cars-results-mobile-search-location[\s\S]*rounded-\[9px\][\s\S]*border border-\[#D8E1EC\][\s\S]*bg-\[#F8FAFC\][\s\S]*<Car[\s\S]*title=\{locationPairSummary\}/,
   );
   assert.match(
     headerSearch,
-    /data-cars-results-mobile-search-edit[\s\S]*w-8 shrink-0[\s\S]*<SquarePen[\s\S]*?strokeWidth=\{2\}/,
+    /data-cars-results-mobile-search-dates[\s\S]*rounded-\[9px\][\s\S]*border border-\[#D8E1EC\][\s\S]*bg-\[#F8FAFC\][\s\S]*<CalendarDays[\s\S]*title=\{rentalDateSummary\}/,
   );
+  assert.match(
+    headerSearch,
+    /data-cars-results-mobile-search-edit[\s\S]*w-\[34px\][\s\S]*rounded-\[9px\][\s\S]*border border-\[#D8E1EC\][\s\S]*<SquarePen[\s\S]*strokeWidth=\{2\}/,
+  );
+  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-divider/);
+  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-segments/);
   assert.doesNotMatch(
     headerSearch,
     /flex-col|text-\[9\.5px\]|ArrowLeft|SlidersHorizontal|Modify search<\/span>/,
