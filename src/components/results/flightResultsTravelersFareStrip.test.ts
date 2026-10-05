@@ -142,13 +142,12 @@ test("mobile nearby fare states match native terminology", () => {
   assert.doesNotMatch(source.slice(source.indexOf('data-nearby-fare-presentation="mobile"'), source.indexOf('data-desktop-nearby-fare-rail')), />Unavailable</);
 });
 
-test("mobile date rail precedes a non-sticky quick-filter rail", () => {
+test("non-sticky mobile quick filters precede the date rail", () => {
   const dateRail = source.indexOf('data-nearby-fare-presentation="mobile"');
-  const shortcuts = source.indexOf("data-flight-mobile-results-shortcuts", dateRail);
-  assert.ok(dateRail >= 0 && shortcuts > dateRail);
-  const shortcutRegion = source.slice(shortcuts, shortcuts + 900);
-  assert.match(shortcutRegion, /-mx-\[14px\] px-0 py-1 sm:hidden/);
-  assert.doesNotMatch(shortcutRegion, /bg-\[#F5F7FB\]|bg-white/);
+  const shortcuts = source.indexOf("data-flight-mobile-results-shortcuts");
+  assert.ok(shortcuts >= 0 && shortcuts < dateRail);
+  const shortcutRegion = source.slice(shortcuts, source.indexOf("</section>", shortcuts));
+  assert.match(shortcutRegion, /px-0 py-1 sm:hidden/);
   assert.doesNotMatch(shortcutRegion, /sticky|top-\[calc\(|backdrop-blur/);
 });
 
@@ -239,14 +238,9 @@ test("nearby fare DOM remains outside the paginated card subtree", () => {
   assert.doesNotMatch(source.slice(rail, paginatedCards), /paginationPendingPage/);
 });
 
-test("mobile Cars-style summary hands off to the compact header after scroll", () => {
-  assert.doesNotMatch(source, /mobileResultsSearch=|mobileResultsSticky=/);
-  assert.match(source, /relative translate-y-1\/2/);
-  assert.match(source, /renderMobileRouteSummaryCard\(\)/);
-  assert.match(source, /renderMobileCompactResultsHeader/);
-  assert.match(source, /mobileCompactHeaderVisible/);
-  assert.match(source, /mobileSearchSummarySentinelRef/);
-  assert.match(source, /rect\.bottom < 8 && window\.scrollY > 96/);
+test("mobile search stays in AppHeader without a scroll handoff", () => {
+  assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.doesNotMatch(source, /renderMobileCompactResultsHeader|mobileCompactHeaderVisible|mobileSearchSummarySentinelRef/);
 });
 
 test("results pagination preserves the searched departure date and its blue selected state", () => {

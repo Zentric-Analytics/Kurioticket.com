@@ -76,5 +76,5 @@ test("Batch 1 and Batch 2 surfaces remain before the card list", () => {
   const alert = results.indexOf("<FlightPriceAlertControl");
   const count = results.indexOf("formatMobileFlightResultsFound");
   const list = results.indexOf("data-mobile-paginated-flight-results");
-  assert.ok(nearby >= 0 && nearby < shortcuts && shortcuts < alert && alert < count && count < list);
+  assert.ok(shortcuts >= 0 && shortcuts < nearby && nearby < alert && alert < count && count < list);
 });

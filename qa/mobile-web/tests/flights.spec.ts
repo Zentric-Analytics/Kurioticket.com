@@ -2,9 +2,9 @@ import { expect, test } from "@playwright/test";
 import { collectSafariDiagnostics } from "../helpers/safariDiagnostics";
 import { writeArtifact } from "../helpers/artifacts";
 
-const flightResults = process.env.QA_FLIGHT_RESULTS_PATH ?? "/flights/results?tripType=round-trip&origin=SFO&destination=LAX&departureDate=2026-09-10&returnDate=2026-09-12&adults=1&children=0&infants=0&travelers=1&cabinClass=economy";
+const flightResults = process.env.QA_FLIGHT_RESULTS_PATH ?? "/flights/results?tripType=round-trip&origin=SFO&destination=LAX&departureDate=2026-11-13&returnDate=2026-11-15&adults=1&children=0&infants=0&travelers=1&cabinClass=economy";
 
-for (const width of [360, 390, 412]) {
+for (const width of [320, 360, 390, 412]) {
   test(`Flight Results contains horizontal rails without document overflow at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.goto(flightResults, { waitUntil: "domcontentloaded" });
@@ -31,6 +31,7 @@ for (const width of [360, 390, 412]) {
         throw new Error("Expected mobile Flight Results rails and result geometry");
       }
       const scrollRail = (rail: HTMLElement) => {
+        rail.scrollLeft = 0;
         const before = rail.scrollLeft;
         rail.scrollLeft = Math.min(40, rail.scrollWidth - rail.clientWidth);
         return { before, after: rail.scrollLeft, scrollWidth: rail.scrollWidth, clientWidth: rail.clientWidth };
@@ -39,6 +40,8 @@ for (const width of [360, 390, 412]) {
         viewport: window.innerWidth,
         document: document.documentElement.scrollWidth,
         body: document.body.scrollWidth,
+        filterRail: quickRail.getBoundingClientRect().toJSON(),
+        dateRailBounds: dateRail.getBoundingClientRect().toJSON(),
         filterChip: filterChip.getBoundingClientRect().toJSON(),
         priceAlert: priceAlert.getBoundingClientRect().toJSON(),
         resultsFound: resultsFound.getBoundingClientRect().toJSON(),
@@ -54,6 +57,7 @@ for (const width of [360, 390, 412]) {
 
     expect(measurements.document).toBeLessThanOrEqual(measurements.viewport);
     expect(measurements.body).toBeLessThanOrEqual(measurements.viewport);
+    expect(measurements.filterRail.bottom).toBeLessThanOrEqual(measurements.dateRailBounds.top);
     expect(measurements.filterChip.left).toBeCloseTo(12, 0);
     expect(measurements.priceAlert.left).toBeCloseTo(4, 0);
     expect(measurements.priceAlert.right).toBeCloseTo(width - 4, 0);
@@ -75,7 +79,7 @@ test("Flights Edit Search is stable on real iOS Safari", async ({ page }, testIn
   await page.evaluate(() => window.scrollTo(0, Math.min(1800, document.body.scrollHeight - innerHeight)));
   await page.waitForTimeout(700);
   const before = await collectSafariDiagnostics(page, "flights-before");
-  const modifySearch = page.getByRole("button", { name: /modify flight search/i }).first();
+  const modifySearch = page.locator("[data-flight-mobile-summary-card]");
   await expect(modifySearch).toBeVisible();
   await modifySearch.click();
   await expect(page.locator("[data-mobile-results-overlay-root]")).toBeVisible();

@@ -145,7 +145,19 @@ export default async function FlightResultsPage({
       <Suspense
         fallback={
           <>
-            <AppHeader flushDesktopBottom flushMobileBottom hideDesktopTravelNav hideMobileCategoryTabs />
+            <AppHeader
+              flushDesktopBottom
+              flushMobileBottom
+              hideDesktopTravelNav
+              hideMobileCategoryTabs
+              mobileResultsTrailingActions
+              mobileResultsSearch={
+                <span data-flight-mobile-summary-placeholder aria-hidden="true" className="flex min-h-11 w-full min-w-0 flex-col justify-center gap-1.5 rounded-xl bg-[#F5F7FB] px-2.5">
+                  <span className="h-[18px] w-2/3 rounded bg-slate-200/70" />
+                  <span className="h-[15px] w-5/6 rounded bg-slate-200/50" />
+                </span>
+              }
+            />
             <ResultsFallback
               title={t["flightResults.loading.title"]}
               description={t["flightResults.loading.checkingAirlinesAndFares"]}
