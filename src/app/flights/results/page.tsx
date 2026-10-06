@@ -153,7 +153,7 @@ export default async function FlightResultsPage({
         mobileResultsSearch={
           <div
             data-flight-results-mobile-nav-summary
-            className="min-h-11 w-full min-w-0 overflow-hidden rounded-xl bg-[#F5F7FB]"
+            className="min-h-11 w-full min-w-0 overflow-visible rounded-xl bg-[#F5F7FB]"
           />
         }
         mobileResultsFilters={
