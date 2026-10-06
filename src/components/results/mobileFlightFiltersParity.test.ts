@@ -79,9 +79,10 @@ test("all mobile quick sheets share compact edge-aligned footer actions", () => 
   assert.match(quick, /disabled=\{mobileShortcutSheet !== "sort" && draftMatches === 0\}/);
 });
 
-test("mobile Quick Filters rail lives in the header and stays viewport-contained", () => {
+test("mobile Quick Filters rail portals into the persistent header and stays viewport-contained", () => {
   assert.match(client, /data-flight-results-main className="max-sm:overflow-x-clip/);
-  assert.match(client, /mobileResultsFilters=\{[\s\S]{0,500}data-flight-mobile-results-shortcuts/);
+  assert.match(client, /const mobileResultsFiltersContent = \([\s\S]{0,500}data-flight-mobile-results-shortcuts/);
+  assert.match(client, /mobileNavFiltersTarget[\s\S]*createPortal\(mobileResultsFiltersContent, mobileNavFiltersTarget\)/);
   assert.match(client, /data-mobile-flight-shortcuts[\s\S]{0,220}scrollbar-hide flex w-full min-w-0[^"]*px-3/);
   assert.doesNotMatch(client, /data-flight-mobile-filter-slot|flight-mobile-scroll-filter-bar|-mx-\[14px\]/);
 });

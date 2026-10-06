@@ -142,30 +142,36 @@ export default async function FlightResultsPage({
 
   return (
     <>
+      <AppHeader
+        flushDesktopBottom
+        flushMobileBottom
+        hideDesktopTravelNav
+        hideMobileCategoryTabs
+        hotelDesktopBoundary
+        flightResultsDesktopSticky
+        mobileResultsTrailingActions
+        mobileResultsSearch={
+          <div
+            data-flight-results-mobile-nav-summary
+            className="min-h-11 w-full min-w-0 overflow-hidden rounded-xl bg-[#F5F7FB]"
+          />
+        }
+        mobileResultsFilters={
+          <div
+            data-flight-results-mobile-nav-filters
+            className="min-h-[60px] w-full overflow-hidden bg-white"
+          />
+        }
+      />
       <Suspense
         fallback={
-          <>
-            <AppHeader
-              flushDesktopBottom
-              flushMobileBottom
-              hideDesktopTravelNav
-              hideMobileCategoryTabs
-              mobileResultsTrailingActions
-              mobileResultsSearch={
-                <span data-flight-mobile-summary-placeholder aria-hidden="true" className="flex min-h-11 w-full min-w-0 flex-col justify-center gap-1.5 rounded-xl bg-[#F5F7FB] px-2.5">
-                  <span className="h-[18px] w-2/3 rounded bg-slate-200/70" />
-                  <span className="h-[15px] w-5/6 rounded bg-slate-200/50" />
-                </span>
-              }
-            />
-            <ResultsFallback
-              title={t["flightResults.loading.title"]}
-              description={t["flightResults.loading.checkingAirlinesAndFares"]}
-            />
-          </>
+          <ResultsFallback
+            title={t["flightResults.loading.title"]}
+            description={t["flightResults.loading.checkingAirlinesAndFares"]}
+          />
         }
       >
-        <FlightResultsClient />
+        <FlightResultsClient externalResultsHeader />
       </Suspense>
     </>
   );

@@ -53,11 +53,17 @@ test("desktop header settings and desktop search stay independent of the mobile 
 });
 
 
-test("mobile Flight Suspense reserves the ready navbar geometry", () => {
+test("mobile Flight page owns stable summary and filter slots across Suspense loading", () => {
   const page = readFileSync(new URL("../../app/flights/results/page.tsx", import.meta.url), "utf8");
+  const header = page.indexOf("<AppHeader");
+  const suspense = page.indexOf("<Suspense", header);
+  assert.ok(header >= 0 && suspense > header);
+  assert.match(page, /flightResultsDesktopSticky/);
   assert.match(page, /mobileResultsTrailingActions/);
-  assert.match(page, /mobileResultsSearch=\{[\s\S]*?data-flight-mobile-summary-placeholder/);
-  assert.match(page, /data-flight-mobile-summary-placeholder[\s\S]*?min-h-11 w-full min-w-0/);
+  assert.match(page, /data-flight-results-mobile-nav-summary[\s\S]*?min-h-11 w-full min-w-0/);
+  assert.match(page, /data-flight-results-mobile-nav-filters[\s\S]*?min-h-\[60px\]/);
+  assert.match(page, /<FlightResultsClient externalResultsHeader \/>/);
+  assert.doesNotMatch(page.slice(suspense), /fallback=\{[\s\S]*?<AppHeader/);
 });
 
 

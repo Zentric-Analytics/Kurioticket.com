@@ -970,6 +970,7 @@ export type FlightResultsClientProps = {
   actionLabel?: string;
   actionAriaLabel?: (flight: PublicFlightResult) => string;
   onSelectFlight?: (flight: PublicFlightResult) => void;
+  externalResultsHeader?: boolean;
 };
 
 const searchInputToParams = (input: FlightResultsSearchInput) => {
@@ -989,7 +990,7 @@ const searchInputToParams = (input: FlightResultsSearchInput) => {
   return params;
 };
 
-export function FlightResultsClient({ presentationMode = "standalone", searchInput, buildDetailsHref, actionLabel, actionAriaLabel, onSelectFlight }: FlightResultsClientProps = {}) {
+export function FlightResultsClient({ presentationMode = "standalone", searchInput, buildDetailsHref, actionLabel, actionAriaLabel, onSelectFlight, externalResultsHeader = false }: FlightResultsClientProps = {}) {
   const { t: dictionary, locale } = useLocale();
   const t = useCallback(
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
@@ -1257,6 +1258,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     "trip" | "origin" | "destination" | "dates" | "return" | "travelers" | null
   >(null);
   const [desktopNavSearchTarget, setDesktopNavSearchTarget] =
+    useState<HTMLElement | null>(null);
+  const [mobileNavSummaryTarget, setMobileNavSummaryTarget] =
+    useState<HTMLElement | null>(null);
+  const [mobileNavFiltersTarget, setMobileNavFiltersTarget] =
     useState<HTMLElement | null>(null);
   const [desktopSearchPopoverFrame, setDesktopSearchPopoverFrame] = useState<{
     top: number;
@@ -1547,27 +1552,33 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     let frame = 0;
 
-    const syncDesktopNavSearchTarget = () => {
+    const syncResultsHeaderTargets = () => {
       frame = window.requestAnimationFrame(() => {
-        const nextTarget = document.querySelector<HTMLElement>(
+        const nextDesktopTarget = document.querySelector<HTMLElement>(
           "[data-flight-results-nav-search]",
         );
+        const nextMobileSummaryTarget = document.querySelector<HTMLElement>(
+          "[data-flight-results-mobile-nav-summary]",
+        );
+        const nextMobileFiltersTarget = document.querySelector<HTMLElement>(
+          "[data-flight-results-mobile-nav-filters]",
+        );
+
         setDesktopNavSearchTarget((current) =>
-          current === nextTarget ? current : nextTarget,
+          current === nextDesktopTarget ? current : nextDesktopTarget,
+        );
+        setMobileNavSummaryTarget((current) =>
+          current === nextMobileSummaryTarget ? current : nextMobileSummaryTarget,
+        );
+        setMobileNavFiltersTarget((current) =>
+          current === nextMobileFiltersTarget ? current : nextMobileFiltersTarget,
         );
       });
     };
 
-    syncDesktopNavSearchTarget();
+    syncResultsHeaderTargets();
 
-    const observer = new MutationObserver(() => {
-      const currentTarget = document.querySelector<HTMLElement>(
-        "[data-flight-results-nav-search]",
-      );
-      if (currentTarget !== desktopNavSearchTarget) {
-        syncDesktopNavSearchTarget();
-      }
-    });
+    const observer = new MutationObserver(syncResultsHeaderTargets);
 
     observer.observe(document.body, {
       childList: true,
@@ -1578,7 +1589,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       observer.disconnect();
       if (frame) window.cancelAnimationFrame(frame);
     };
-  }, [desktopNavSearchTarget, guidedMode]);
+  }, [guidedMode]);
 
   useEffect(() => {
     stickySearchPanelOpenRef.current = isStickySearchPanelOpen;
@@ -7230,35 +7241,50 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     return <Button type="button" className="mt-4 rounded-xl" onClick={retryMainInventorySearch}>{t("deals.guided.flightResults.retry")}</Button>;
   }
 
-  const standaloneResultsHeader = guidedMode ? null : (
-    <AppHeader
-      flushDesktopBottom
-      flushMobileBottom
-      hideDesktopTravelNav
-      hideMobileCategoryTabs
-      hotelDesktopBoundary
-      flightResultsDesktopSticky
-      mobileResultsSearch={renderMobileRouteSummaryCard()}
-      mobileResultsFilters={
-        <section
-          data-flight-mobile-results-shortcuts
-          inert={mobileSearchOpen ? true : undefined}
-          aria-hidden={mobileSearchOpen ? true : undefined}
-          className={cn(
-            "w-full py-2 sm:hidden",
-            mobileSearchOpen && "pointer-events-none",
-          )}
-          aria-label="Flight result filters"
-        >
-          {renderMobileSortResultsRow()}
-        </section>
-      }
-      mobileResultsTrailingActions
-    />
+  const mobileResultsFiltersContent = (
+    <section
+      data-flight-mobile-results-shortcuts
+      inert={mobileSearchOpen ? true : undefined}
+      aria-hidden={mobileSearchOpen ? true : undefined}
+      className={cn(
+        "w-full py-2 sm:hidden",
+        mobileSearchOpen && "pointer-events-none",
+      )}
+      aria-label="Flight result filters"
+    >
+      {renderMobileSortResultsRow()}
+    </section>
   );
 
+  const standaloneResultsHeader =
+    guidedMode || externalResultsHeader ? null : (
+      <AppHeader
+        flushDesktopBottom
+        flushMobileBottom
+        hideDesktopTravelNav
+        hideMobileCategoryTabs
+        hotelDesktopBoundary
+        flightResultsDesktopSticky
+        mobileResultsSearch={renderMobileRouteSummaryCard()}
+        mobileResultsFilters={mobileResultsFiltersContent}
+        mobileResultsTrailingActions
+      />
+    );
+
+  const readyExternalMobileHeader =
+    !guidedMode && externalResultsHeader && !resultsUiPreparing ? (
+      <>
+        {mobileNavSummaryTarget
+          ? createPortal(renderMobileRouteSummaryCard(), mobileNavSummaryTarget)
+          : null}
+        {mobileNavFiltersTarget
+          ? createPortal(mobileResultsFiltersContent, mobileNavFiltersTarget)
+          : null}
+      </>
+    ) : null;
+
   const readyDesktopNavbarSearch =
-    !guidedMode && desktopNavSearchTarget
+    !guidedMode && !resultsUiPreparing && desktopNavSearchTarget
       ? createPortal(renderDesktopHeaderSearchBar(), desktopNavSearchTarget)
       : null;
 
@@ -7314,6 +7340,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   return (
     <>
     {standaloneResultsHeader}
+    {readyExternalMobileHeader}
     {readyDesktopNavbarSearch}
     <FlightResultsScrollIndicator />
     <main data-flight-results-main className="max-sm:overflow-x-clip bg-[#F5F7FB] pb-0 sm:flex-1 sm:bg-[#F3F6FA] sm:pb-8 lg:bg-[#F5F7FB]">

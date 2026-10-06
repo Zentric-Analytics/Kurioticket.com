@@ -23,9 +23,11 @@ test("mobile Flight rail stays viewport-contained while preserving horizontal sc
   assert.doesNotMatch(shortcuts, /\bsticky\b|top-\[calc\(/);
 });
 
-test("mobile Flight filter rail is rendered inside the AppHeader body", () => {
-  assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}[\s\S]*mobileResultsFilters=\{/);
-  assert.match(source, /mobileResultsFilters=\{[\s\S]{0,500}data-flight-mobile-results-shortcuts/);
+test("mobile Flight filter rail can portal into the page-owned AppHeader body", () => {
+  assert.match(source, /externalResultsHeader\?: boolean/);
+  assert.match(source, /const mobileResultsFiltersContent = \([\s\S]*data-flight-mobile-results-shortcuts/);
+  assert.match(source, /mobileResultsFilters=\{mobileResultsFiltersContent\}/);
+  assert.match(source, /mobileNavFiltersTarget[\s\S]*createPortal\(mobileResultsFiltersContent, mobileNavFiltersTarget\)/);
   assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,240}"w-full py-2 sm:hidden"/);
   assert.doesNotMatch(source, /data-flight-mobile-filter-slot|flight-mobile-scroll-filter-bar/);
 });

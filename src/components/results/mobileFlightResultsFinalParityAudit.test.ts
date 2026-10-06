@@ -3,18 +3,23 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const results = readFileSync(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
+const page = readFileSync(new URL("../../app/flights/results/page.tsx", import.meta.url), "utf8");
 const card = readFileSync(new URL("./MobileFlightCard.tsx", import.meta.url), "utf8");
 
 test("final mobile Flight Results order and controls remain intact", () => {
-  const summary = results.indexOf("mobileResultsSearch={renderMobileRouteSummaryCard()}");
+  const summaryTarget = page.indexOf("data-flight-results-mobile-nav-summary");
+  const filtersTarget = page.indexOf("data-flight-results-mobile-nav-filters");
   const shortcuts = results.indexOf("data-flight-mobile-results-shortcuts");
   const nearby = results.indexOf('data-nearby-fare-presentation="mobile"');
   const alert = results.indexOf("data-flight-price-alert-row", nearby);
   const count = results.indexOf("data-mobile-flight-results-summary-row", alert);
   const cards = results.indexOf("data-mobile-paginated-flight-results", count);
-  assert.ok(summary >= 0 && summary < shortcuts && shortcuts < nearby && nearby < alert && alert < count && count < cards);
+  assert.ok(summaryTarget >= 0 && filtersTarget > summaryTarget);
+  assert.ok(shortcuts >= 0 && shortcuts < nearby && nearby < alert && alert < count && count < cards);
+  assert.match(results, /mobileNavSummaryTarget[\s\S]*createPortal\(renderMobileRouteSummaryCard\(\), mobileNavSummaryTarget\)/);
+  assert.match(results, /mobileNavFiltersTarget[\s\S]*createPortal\(mobileResultsFiltersContent, mobileNavFiltersTarget\)/);
   assert.doesNotMatch(results, /renderMobileCompactResultsHeader/);
-  assert.match(results, /mobileResultsTrailingActions/);
+  assert.match(page, /mobileResultsTrailingActions/);
   assert.match(results, /aria-label=\{`\$\{t\("editFlightSearch"\)\}/);
   for (const trigger of ['renderTrigger("sort", activeSortOption.label)', 'renderTrigger("airlines", "Airlines", selectedAirlines.length)', 'renderTrigger("stops", "Stops", selectedStops.length)', 'renderTrigger("airports", "Airports", selectedFromAirports.length + selectedToAirports.length)']) assert.ok(results.includes(trigger));
 });
