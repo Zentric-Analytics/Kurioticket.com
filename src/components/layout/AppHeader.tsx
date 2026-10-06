@@ -817,7 +817,7 @@ export function AppHeader({
           ) : null}
         </div>
         {mobileResultsFilters ? (
-          <div data-mobile-results-filter-navbar className="border-b border-slate-200 bg-white sm:hidden">
+          <div data-mobile-results-filter-navbar className="bg-white sm:hidden">
             {mobileResultsFilters}
           </div>
         ) : null}
