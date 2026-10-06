@@ -116,13 +116,26 @@ test("provider picker keeps public offer facts without internal handoff copy", (
   );
 });
 
-test("provider preview removes Price, per-day, and selected-state copy while retaining estimated total", () => {
+test("provider preview removes low-value copy and keeps a clear total hierarchy", () => {
   assert.doesNotMatch(picker, />\s*Price\s*</);
   assert.match(picker, /Estimated total/);
   assert.match(picker, /\{total\}/);
+  assert.doesNotMatch(picker, /1 available offer|available offers · best rate selected/);
   assert.doesNotMatch(picker, /perDay|>Per day</);
   assert.doesNotMatch(picker, /Selected · View deal uses this provider/);
   assert.doesNotMatch(picker, /Choose this provider to update View deal/);
+  assert.match(
+    picker,
+    /data-car-deal-total-price[\s\S]*desktop[\s\S]*text-\[26px\] leading-7/,
+  );
+  assert.match(
+    picker,
+    /data-car-deal-estimated-total[\s\S]*desktop[\s\S]*text-\[13px\] font-semibold leading-4/,
+  );
+  assert.match(
+    picker,
+    /data-car-deal-offer-facts[\s\S]*CircleCheck[\s\S]*Free cancellation[\s\S]*ReceiptText[\s\S]*Taxes and fees included/,
+  );
 });
 
 test("Cars results map mirrors the Hotels-style filter-rail interaction", () => {
