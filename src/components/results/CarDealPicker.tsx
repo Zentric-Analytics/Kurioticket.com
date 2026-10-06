@@ -193,8 +193,22 @@ export function CarDealPicker({
       isFallbackRate: currencyRates.isFallback,
     }).formatted;
 
+  const prepareDesktopInlinePosition = () => {
+    if (!desktopPanelTarget || !anchorRef.current) return;
+    const panelWidth = 310;
+    const rect = anchorRef.current.getBoundingClientRect();
+    const targetRect = desktopPanelTarget.getBoundingClientRect();
+    setDesktopInlineLeft(
+      Math.min(
+        Math.max(0, rect.left - targetRect.left),
+        Math.max(0, targetRect.width - panelWidth),
+      ),
+    );
+  };
+
   const selectGroup = (group: CarProviderOfferGroup) => {
     const providerChanged = group.key !== selectedGroup.key;
+    prepareDesktopInlinePosition();
     announceDesktopPickerOpen();
     setOpenProviderKey(group.key);
     setShowAllProviders(false);
@@ -259,6 +273,7 @@ export function CarDealPicker({
               type="button"
               aria-label={`Show ${extraCount} more car deal providers`}
               onClick={() => {
+                prepareDesktopInlinePosition();
                 announceDesktopPickerOpen();
                 setShowAllProviders(true);
                 setOpenProviderKey(null);
@@ -272,41 +287,49 @@ export function CarDealPicker({
         </div>
       </div>
 
-      {overlayOpen && desktopPanelTarget
+      {desktopPanelTarget
         ? createPortal(
             <div
               data-car-deal-picker-desktop-expansion
-              className="hidden w-full pt-3 lg:block"
+              data-open={overlayOpen ? "true" : "false"}
+              aria-hidden={!overlayOpen}
+              className={`hidden w-full transition-[grid-template-rows,opacity,padding] duration-200 ease-out lg:grid ${
+                overlayOpen
+                  ? "grid-rows-[1fr] pt-3 opacity-100"
+                  : "pointer-events-none grid-rows-[0fr] pt-0 opacity-0"
+              }`}
             >
-              <div
-                ref={desktopPanelRef}
-                role="dialog"
-                aria-label={
-                  showAllProviders
-                    ? "Car deal providers"
-                    : `${panelGroup?.providerName ?? "Provider"} deal details`
-                }
-                className="w-[310px] rounded-xl border border-[#D8E1EC] bg-white p-3 shadow-[0_18px_45px_-20px_rgba(15,23,42,0.4)]"
-                style={{ marginInlineStart: desktopInlineLeft }}
-                data-car-deal-picker-desktop-panel
-              >
-                {showAllProviders ? (
-                  <ProviderList
-                    groups={groups}
-                    selectedKey={selectedGroup.key}
-                    onSelect={selectGroup}
-                    onClose={closePanel}
-                  />
-                ) : panelGroup ? (
-                  <ProviderPreview
-                    group={panelGroup}
-                    total={formatOfferPrice(
-                      panelGroup.primaryOffer,
-                      panelGroup.primaryOffer.totalPrice,
-                    )}
-                    onClose={closePanel}
-                  />
-                ) : null}
+              <div className="min-h-0 overflow-hidden">
+                <div
+                  ref={desktopPanelRef}
+                  role="dialog"
+                  aria-label={
+                    showAllProviders
+                      ? "Car deal providers"
+                      : `${panelGroup?.providerName ?? "Provider"} deal details`
+                  }
+                  className="w-[310px] rounded-xl border border-[#D8E1EC] bg-white p-3 shadow-[0_18px_45px_-20px_rgba(15,23,42,0.4)]"
+                  style={{ marginInlineStart: desktopInlineLeft }}
+                  data-car-deal-picker-desktop-panel
+                >
+                  {showAllProviders ? (
+                    <ProviderList
+                      groups={groups}
+                      selectedKey={selectedGroup.key}
+                      onSelect={selectGroup}
+                      onClose={closePanel}
+                    />
+                  ) : panelGroup ? (
+                    <ProviderPreview
+                      group={panelGroup}
+                      total={formatOfferPrice(
+                        panelGroup.primaryOffer,
+                        panelGroup.primaryOffer.totalPrice,
+                      )}
+                      onClose={closePanel}
+                    />
+                  ) : null}
+                </div>
               </div>
             </div>,
             desktopPanelTarget,
