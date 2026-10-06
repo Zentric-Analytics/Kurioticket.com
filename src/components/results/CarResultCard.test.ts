@@ -50,7 +50,7 @@ test("KAYAK handoff is validated once while guided detail navigation remains ava
   assert.equal((source.match(/prefetch=\{car\.inventorySource === "kayak-sandbox" \? false : undefined\}/g) ?? []).length, 1);
 });
 
-test("standalone mobile follows native daily-price and View deal commerce", () => {
+test("standalone mobile follows native daily-price and consistent View deal commerce", () => {
   const mobile = source.slice(
     source.indexOf("data-car-card-mobile-lower-band"),
     source.indexOf("grid-cols-[minmax(0,1.1fr)"),
@@ -63,6 +63,22 @@ test("standalone mobile follows native daily-price and View deal commerce", () =
   assert.match(mobile, /dailyDisplayPrice\.formatted/);
   assert.match(mobile, />per day</);
   assert.match(mobile, /View deal <ChevronRight/);
+  assert.match(
+    source,
+    /const mobileStandaloneViewDealClassName =\s*"[^"]*text-\[13px\] font-semibold leading-\[18px\] text-\[#004BB8\]"/,
+  );
+  assert.equal(
+    (source.match(/\$\{mobileStandaloneViewDealClassName\}/g) ?? []).length,
+    3,
+  );
+  assert.match(
+    mobile,
+    /disabled[\s\S]*aria-label="Provider booking link unavailable"[\s\S]*mobileStandaloneViewDealClassName[\s\S]*cursor-not-allowed disabled:opacity-100/,
+  );
+  assert.doesNotMatch(
+    mobile,
+    /aria-label="Provider booking link unavailable"[\s\S]{0,220}text-slate-400/,
+  );
   assert.doesNotMatch(mobile, /bg-\[#004BB8\]/);
   assert.doesNotMatch(mobile, /Taxes and fees included/);
 });
@@ -441,6 +457,22 @@ test("standalone desktop pricing follows the selected provider and keeps one Vie
   assert.match(desktop, /providerBookingHref \? \(/);
   assert.match(desktop, />\s*View deal\s*/);
   assert.match(desktop, /aria-label="Provider booking link unavailable"/);
+  assert.match(
+    source,
+    /const desktopStandaloneViewDealClassName =\s*"[^"]*text-\[14px\] font-bold leading-5 text-\[#004BB8\]"/,
+  );
+  assert.equal(
+    (source.match(/\$\{desktopStandaloneViewDealClassName\}/g) ?? []).length,
+    2,
+  );
+  assert.match(
+    desktop,
+    /disabled[\s\S]*aria-label="Provider booking link unavailable"[\s\S]*desktopStandaloneViewDealClassName[\s\S]*cursor-not-allowed disabled:opacity-100/,
+  );
+  assert.doesNotMatch(
+    desktop,
+    /aria-label="Provider booking link unavailable"[\s\S]{0,220}text-slate-400/,
+  );
   assert.match(desktop, /carsResults\.comparison\.perDay/);
   assert.doesNotMatch(desktop, /<CarPriceComparison/);
 });

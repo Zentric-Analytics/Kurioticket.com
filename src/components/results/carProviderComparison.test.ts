@@ -106,6 +106,16 @@ test("provider picker is capped at three visible deal choices with an overflow c
   assert.match(picker, /Compare providers/);
 });
 
+test("provider picker keeps public offer facts without internal handoff copy", () => {
+  assert.match(picker, /Free cancellation/);
+  assert.match(picker, /Taxes and fees included/);
+  assert.match(picker, /Pay at pickup/);
+  assert.doesNotMatch(
+    picker,
+    /Provider handoff will appear when this seller supplies a booking link\./,
+  );
+});
+
 test("Cars results map mirrors the Hotels-style filter-rail interaction", () => {
   assert.match(results, /<CarsResultsMapPreview location=\{search\.pickupLocation\} \/>/);
   assert.match(results, /<aside[\s\S]*?<CarsResultsMapPreview[\s\S]*?<CarFilters/);
