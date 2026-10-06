@@ -142,13 +142,13 @@ test("mobile nearby fare states match native terminology", () => {
   assert.doesNotMatch(source.slice(source.indexOf('data-nearby-fare-presentation="mobile"'), source.indexOf('data-desktop-nearby-fare-rail')), />Unavailable</);
 });
 
-test("mobile quick filters live in the header before the date rail", () => {
-  const headerFilters = source.indexOf("mobileResultsFilters={");
-  const shortcuts = source.indexOf("data-flight-mobile-results-shortcuts", headerFilters);
+test("mobile quick filters portal into the header before the date rail", () => {
+  const shortcuts = source.indexOf("data-flight-mobile-results-shortcuts");
   const dateRail = source.indexOf('data-nearby-fare-presentation="mobile"');
-  assert.ok(headerFilters >= 0 && shortcuts > headerFilters && shortcuts < dateRail);
+  assert.ok(shortcuts >= 0 && shortcuts < dateRail);
   const shortcutRegion = source.slice(shortcuts, source.indexOf("</section>", shortcuts));
   assert.match(shortcutRegion, /w-full py-2 sm:hidden/);
+  assert.match(source, /mobileNavFiltersTarget[\s\S]*createPortal\(mobileResultsFiltersContent, mobileNavFiltersTarget\)/);
   assert.doesNotMatch(source, /data-flight-mobile-filter-slot|flight-mobile-scroll-filter-bar/);
   assert.doesNotMatch(source, /data-scroll-visible|data-scroll-pinned|mobileFilterRailPinned|mobileFilterRailVisible/);
 });
