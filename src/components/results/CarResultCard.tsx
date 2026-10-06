@@ -16,7 +16,7 @@ import {
   Tag,
   Users,
 } from "lucide-react";
-import { useState, type MouseEvent as ReactMouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import type { LucideIcon } from "lucide-react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -25,6 +25,7 @@ import { CarDealPicker } from "@/components/results/CarDealPicker";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { CarsRouteLoadingOverlay } from "@/components/results/CarsRouteLoadingOverlay";
+import { CarCardSkeleton } from "@/components/ui/Skeleton";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useSavedCar } from "@/components/results/useSavedCar";
 import {
@@ -39,6 +40,7 @@ import { getPrimaryCarOffer } from "@/lib/cars/carResults";
 import type { CarOffer, NormalizedCarResult } from "@/lib/cars/types";
 import type { CarSearchParams } from "@/lib/cars/types";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
 
 const title = (value: string) =>
@@ -55,6 +57,9 @@ const mobileStandaloneViewDealClassName =
 
 const desktopStandaloneViewDealClassName =
   "mt-2 inline-flex min-h-9 items-center justify-end gap-1 text-[14px] font-bold leading-5 text-[#004BB8]";
+
+const CAR_DEAL_SELECTION_MOBILE_BUSY_MS = 220;
+const CAR_DEAL_SELECTION_DESKTOP_BUSY_MS = 160;
 
 const approvedProviderBookingUrl = (
   car: NormalizedCarResult,
@@ -111,11 +116,22 @@ export function CarResultCard({
   const { start: startRouteProgress } = useRouteProgress();
   const [shareConfirmation, setShareConfirmation] = useState("");
   const [mobileDetailsPending, setMobileDetailsPending] = useState(false);
+  const [dealSelectionPending, setDealSelectionPending] = useState(false);
+  const dealSelectionTimerRef = useRef<number | null>(null);
+  const dealSelectionMobileRef = useRef(false);
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const primaryOffer = getPrimaryCarOffer(car);
   const [selectedOfferId, setSelectedOfferId] = useState(
     () => primaryOffer?.id ?? "",
+  );
+  useEffect(
+    () => () => {
+      if (dealSelectionTimerRef.current !== null) {
+        window.clearTimeout(dealSelectionTimerRef.current);
+      }
+    },
+    [],
   );
   const offer =
     car.offers.find((candidate) => candidate.id === selectedOfferId) ??
@@ -181,7 +197,26 @@ export function CarResultCard({
     : getMobileCarPrimarySpecs(car);
   const mobileSpecColumns = getMobileCarSpecColumns(mobilePrimarySpecs);
   const selectDealOffer = (nextOffer: CarOffer) => {
+    if (nextOffer.id === selectedOfferId) return;
+
+    if (dealSelectionTimerRef.current !== null) {
+      window.clearTimeout(dealSelectionTimerRef.current);
+    }
+
+    dealSelectionMobileRef.current = window.innerWidth < 1024;
+    setDealSelectionPending(true);
     setSelectedOfferId(nextOffer.id);
+
+    const minimumBusyMs = prefersReducedResultsMotion()
+      ? 0
+      : dealSelectionMobileRef.current
+        ? CAR_DEAL_SELECTION_MOBILE_BUSY_MS
+        : CAR_DEAL_SELECTION_DESKTOP_BUSY_MS;
+
+    dealSelectionTimerRef.current = window.setTimeout(() => {
+      setDealSelectionPending(false);
+      dealSelectionTimerRef.current = null;
+    }, minimumBusyMs);
   };
 
   const handleMobileDetailsNavigation = (
@@ -280,6 +315,15 @@ export function CarResultCard({
       </button>
     </div>
   );
+
+  if (dealSelectionPending) {
+    return (
+      <CarCardSkeleton
+        transitionMotion={dealSelectionMobileRef.current ? "shimmer" : "pulse"}
+        desktopSurfaceParity={desktopSurfaceParity}
+      />
+    );
+  }
 
   return (
     <article

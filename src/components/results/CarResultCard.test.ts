@@ -36,6 +36,24 @@ const car = {
   fuelPolicy: "full-to-full",
 } as NormalizedCarResult;
 
+test("Compare deals refreshes only the affected result with the shared car-card skeleton", () => {
+  assert.match(source, /import \{ CarCardSkeleton \} from "@\/components\/ui\/Skeleton"/);
+  assert.match(source, /const CAR_DEAL_SELECTION_MOBILE_BUSY_MS = 220/);
+  assert.match(source, /const CAR_DEAL_SELECTION_DESKTOP_BUSY_MS = 160/);
+  assert.match(source, /const \[dealSelectionPending, setDealSelectionPending\] = useState\(false\)/);
+  assert.match(source, /const dealSelectionTimerRef = useRef<number \| null>\(null\)/);
+  assert.match(source, /const dealSelectionMobileRef = useRef\(false\)/);
+  assert.match(
+    source,
+    /selectDealOffer[\s\S]*setDealSelectionPending\(true\)[\s\S]*setSelectedOfferId\(nextOffer\.id\)/,
+  );
+  assert.match(
+    source,
+    /if \(dealSelectionPending\)[\s\S]*<CarCardSkeleton[\s\S]*"shimmer" : "pulse"/,
+  );
+  assert.doesNotMatch(source, /data-car-deal-selection-loading|Updating deal/);
+});
+
 test("standalone result commerce is provider-ready without fabricating booking URLs", () => {
   assert.match(source, /const approvedProviderBookingUrl/);
   assert.match(source, /sandboxBookingUrl\(offer\.bookingUrl\)/);

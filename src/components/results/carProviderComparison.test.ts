@@ -116,6 +116,15 @@ test("provider picker keeps public offer facts without internal handoff copy", (
   );
 });
 
+test("provider preview removes per-day and selected-state copy while retaining estimated total", () => {
+  assert.match(picker, /Price/);
+  assert.match(picker, /Estimated total/);
+  assert.match(picker, /\{total\}/);
+  assert.doesNotMatch(picker, /perDay|>Per day</);
+  assert.doesNotMatch(picker, /Selected · View deal uses this provider/);
+  assert.doesNotMatch(picker, /Choose this provider to update View deal/);
+});
+
 test("Cars results map mirrors the Hotels-style filter-rail interaction", () => {
   assert.match(results, /<CarsResultsMapPreview location=\{search\.pickupLocation\} \/>/);
   assert.match(results, /<aside[\s\S]*?<CarsResultsMapPreview[\s\S]*?<CarFilters/);
