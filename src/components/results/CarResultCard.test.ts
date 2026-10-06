@@ -36,22 +36,16 @@ const car = {
   fuelPolicy: "full-to-full",
 } as NormalizedCarResult;
 
-test("Compare deals refreshes only the affected result with the shared car-card skeleton", () => {
-  assert.match(source, /import \{ CarCardSkeleton \} from "@\/components\/ui\/Skeleton"/);
-  assert.match(source, /const CAR_DEAL_SELECTION_MOBILE_BUSY_MS = 220/);
-  assert.match(source, /const CAR_DEAL_SELECTION_DESKTOP_BUSY_MS = 160/);
-  assert.match(source, /const \[dealSelectionPending, setDealSelectionPending\] = useState\(false\)/);
-  assert.match(source, /const dealSelectionTimerRef = useRef<number \| null>\(null\)/);
-  assert.match(source, /const dealSelectionMobileRef = useRef\(false\)/);
+test("Compare deals keeps offer state controllable by the results page instead of card-level loading", () => {
+  assert.doesNotMatch(source, /CarCardSkeleton|dealSelectionPending|CAR_DEAL_SELECTION_MOBILE_BUSY_MS|CAR_DEAL_SELECTION_DESKTOP_BUSY_MS/);
+  assert.match(source, /selectedDealOfferId\?: string/);
+  assert.match(source, /onDealOfferSelected\?: \(carId: string, offerId: string\) => void/);
+  assert.match(source, /const \[localSelectedOfferId, setLocalSelectedOfferId\] = useState/);
+  assert.match(source, /const selectedOfferId = selectedDealOfferId \?\? localSelectedOfferId/);
   assert.match(
     source,
-    /selectDealOffer[\s\S]*setDealSelectionPending\(true\)[\s\S]*setSelectedOfferId\(nextOffer\.id\)/,
+    /if \(onDealOfferSelected\) \{[\s\S]*onDealOfferSelected\(car\.id, nextOffer\.id\)[\s\S]*return;[\s\S]*setLocalSelectedOfferId\(nextOffer\.id\)/,
   );
-  assert.match(
-    source,
-    /if \(dealSelectionPending\)[\s\S]*<CarCardSkeleton[\s\S]*"shimmer" : "pulse"/,
-  );
-  assert.doesNotMatch(source, /data-car-deal-selection-loading|Updating deal/);
 });
 
 test("standalone result commerce is provider-ready without fabricating booking URLs", () => {
@@ -68,10 +62,14 @@ test("KAYAK handoff is validated once while guided detail navigation remains ava
   assert.equal((source.match(/prefetch=\{car\.inventorySource === "kayak-sandbox" \? false : undefined\}/g) ?? []).length, 1);
 });
 
-test("disabled Kurioticket View deal neutralizes native disabled styling while keeping KAYAK typography and blue", () => {
+test("Kurioticket View deal uses the exact KAYAK typography and forced blue on desktop and mobile", () => {
   assert.match(
     source,
-    /const unavailableStandaloneViewDealClassName =\s*"[^"]*appearance-none[^"]*border-0[^"]*bg-transparent[^"]*p-0[^"]*text-\[#004BB8\][^"]*\[-webkit-text-fill-color:#004BB8\][^"]*disabled:text-\[#004BB8\][^"]*disabled:opacity-100[^"]*disabled:\[-webkit-text-fill-color:#004BB8\]"/,
+    /const unavailableStandaloneViewDealClassName =\s*"[^"]*appearance-none[^"]*border-0[^"]*bg-transparent[^"]*p-0[^"]*text-\[#004BB8\][^"]*disabled:text-\[#004BB8\][^"]*disabled:opacity-100"/,
+  );
+  assert.match(
+    source,
+    /const standaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*WebkitTextFillColor: "#004BB8"[\s\S]*opacity: 1/,
   );
   assert.match(
     source,
@@ -84,6 +82,10 @@ test("disabled Kurioticket View deal neutralizes native disabled styling while k
   assert.equal(
     (source.match(/\$\{unavailableStandaloneViewDealClassName\}/g) ?? []).length,
     2,
+  );
+  assert.equal(
+    (source.match(/style=\{standaloneViewDealVisualStyle\}/g) ?? []).length,
+    4,
   );
 });
 
