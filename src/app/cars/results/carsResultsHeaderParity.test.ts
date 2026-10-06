@@ -86,7 +86,7 @@ test("AppHeader replaces the Cars mobile mark with back navigation and keeps des
   assert.match(appHeaderSource, /carsResultsMobileInlineSearch\?: boolean/);
   assert.match(
     appHeaderSource,
-    /data-cars-results-mobile-back[\s\S]*?aria-label="Back"[\s\S]*?router\.back\(\)[\s\S]*?router\.push\("\/cars"\)[\s\S]*?sm:hidden/,
+    /aria-label="Back"[\s\S]*?data-cars-results-mobile-back[\s\S]*?router\.back\(\)[\s\S]*?router\.push\("\/cars"\)[\s\S]*?sm:hidden/,
   );
   assert.match(
     appHeaderSource,
@@ -134,7 +134,7 @@ test("the unified header keeps a white safe area while the full Filters overlay 
   );
   assert.match(
     carsClientSource,
-    /const nextVisible =[\s\S]*shortcuts\.getBoundingClientRect\(\)\.top <=[\s\S]*header\.getBoundingClientRect\(\)\.bottom/,
+    /const nextVisible =[\s\S]*shortcuts\.getBoundingClientRect\(\)\.bottom <=[\s\S]*header\.getBoundingClientRect\(\)\.bottom/,
   );
   assert.match(
     carsClientSource,
