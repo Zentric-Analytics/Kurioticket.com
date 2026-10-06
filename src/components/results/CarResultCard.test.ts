@@ -62,30 +62,34 @@ test("KAYAK handoff is validated once while guided detail navigation remains ava
   assert.equal((source.match(/prefetch=\{car\.inventorySource === "kayak-sandbox" \? false : undefined\}/g) ?? []).length, 1);
 });
 
-test("Kurioticket View deal uses the exact KAYAK typography and forced blue on desktop and mobile", () => {
+test("KAYAK and Kurioticket View deal use Kurioticket compact sizing with KAYAK color and weight", () => {
   assert.match(
     source,
-    /const unavailableStandaloneViewDealClassName =\s*"[^"]*appearance-none[^"]*border-0[^"]*bg-transparent[^"]*p-0[^"]*text-\[#004BB8\][^"]*disabled:text-\[#004BB8\][^"]*disabled:opacity-100"/,
+    /const mobileStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*WebkitTextFillColor: "#004BB8"[\s\S]*fontSize: "12px"[\s\S]*fontWeight: 600[\s\S]*lineHeight: "16px"/,
   );
   assert.match(
     source,
-    /const standaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*WebkitTextFillColor: "#004BB8"[\s\S]*opacity: 1/,
+    /const desktopStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*WebkitTextFillColor: "#004BB8"[\s\S]*fontSize: "13px"[\s\S]*fontWeight: 700[\s\S]*lineHeight: "18px"/,
   );
-  assert.match(
-    source,
-    /const mobileStandaloneViewDealClassName =\s*"[^"]*text-\[13px\] font-semibold leading-\[18px\] text-\[#004BB8\]"/,
+  assert.equal(
+    (source.match(/style=\{mobileStandaloneViewDealVisualStyle\}/g) ?? []).length,
+    3,
   );
-  assert.match(
-    source,
-    /const desktopStandaloneViewDealClassName =\s*"[^"]*text-\[14px\] font-bold leading-5 text-\[#004BB8\]"/,
+  assert.equal(
+    (source.match(/style=\{desktopStandaloneViewDealVisualStyle\}/g) ?? []).length,
+    2,
+  );
+  assert.equal(
+    (source.match(/<ChevronRight size=\{14\} aria-hidden="true" \/>/g) ?? []).length,
+    3,
+  );
+  assert.equal(
+    (source.match(/<ChevronRight className="h-\[15px\] w-\[15px\]" aria-hidden="true" \/>/g) ?? []).length,
+    2,
   );
   assert.equal(
     (source.match(/\$\{unavailableStandaloneViewDealClassName\}/g) ?? []).length,
     2,
-  );
-  assert.equal(
-    (source.match(/style=\{standaloneViewDealVisualStyle\}/g) ?? []).length,
-    4,
   );
 });
 
@@ -104,7 +108,7 @@ test("standalone mobile follows native daily-price and consistent View deal comm
   assert.match(mobile, /View deal <ChevronRight/);
   assert.match(
     source,
-    /const mobileStandaloneViewDealClassName =\s*"[^"]*text-\[13px\] font-semibold leading-\[18px\] text-\[#004BB8\]"/,
+    /const mobileStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*fontSize: "12px"[\s\S]*fontWeight: 600/,
   );
   assert.equal(
     (source.match(/\$\{mobileStandaloneViewDealClassName\}/g) ?? []).length,
@@ -498,7 +502,7 @@ test("standalone desktop pricing follows the selected provider and keeps one Vie
   assert.match(desktop, /aria-label="Provider booking link unavailable"/);
   assert.match(
     source,
-    /const desktopStandaloneViewDealClassName =\s*"[^"]*text-\[14px\] font-bold leading-5 text-\[#004BB8\]"/,
+    /const desktopStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*fontSize: "13px"[\s\S]*fontWeight: 700/,
   );
   assert.equal(
     (source.match(/\$\{desktopStandaloneViewDealClassName\}/g) ?? []).length,

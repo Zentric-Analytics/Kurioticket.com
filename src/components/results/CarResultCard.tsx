@@ -51,17 +51,29 @@ const carResultBadgeIcons: Record<CarResultBadge, LucideIcon> = {
 };
 
 const mobileStandaloneViewDealClassName =
-  "inline-flex min-h-9 shrink-0 items-center justify-end gap-1 text-[13px] font-semibold leading-[18px] text-[#004BB8]";
+  "inline-flex min-h-9 shrink-0 items-center justify-end gap-1";
 
 const desktopStandaloneViewDealClassName =
-  "mt-2 inline-flex min-h-9 items-center justify-end gap-1 text-[14px] font-bold leading-5 text-[#004BB8]";
+  "mt-2 inline-flex min-h-9 items-center justify-end gap-1";
 
 const unavailableStandaloneViewDealClassName =
-  "appearance-none border-0 bg-transparent p-0 text-[#004BB8] disabled:text-[#004BB8] disabled:opacity-100";
+  "appearance-none border-0 bg-transparent p-0 disabled:opacity-100";
 
-const standaloneViewDealVisualStyle: CSSProperties = {
+const mobileStandaloneViewDealVisualStyle: CSSProperties = {
   color: "#004BB8",
   WebkitTextFillColor: "#004BB8",
+  fontSize: "12px",
+  fontWeight: 600,
+  lineHeight: "16px",
+  opacity: 1,
+};
+
+const desktopStandaloneViewDealVisualStyle: CSSProperties = {
+  color: "#004BB8",
+  WebkitTextFillColor: "#004BB8",
+  fontSize: "13px",
+  fontWeight: 700,
+  lineHeight: "18px",
   opacity: 1,
 };
 
@@ -469,8 +481,9 @@ export function CarResultCard({
                 onClick={() => onSelect(car)}
                 aria-label={actionAriaLabel}
                 className={`${mobileStandaloneViewDealClassName} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40`}
+                style={mobileStandaloneViewDealVisualStyle}
               >
-                View deal <ChevronRight size={16} aria-hidden="true" />
+                View deal <ChevronRight size={14} aria-hidden="true" />
               </button>
             ) : providerBookingHref ? (
               <a
@@ -479,9 +492,9 @@ export function CarResultCard({
                 rel="noopener noreferrer"
                 aria-label={`View deal from ${offer.bookingProviderName || offer.rentalCompanyName}`}
                 className={`${mobileStandaloneViewDealClassName} transition-colors hover:text-[#003A8C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40`}
-                style={standaloneViewDealVisualStyle}
+                style={mobileStandaloneViewDealVisualStyle}
               >
-                View deal <ChevronRight size={16} aria-hidden="true" />
+                View deal <ChevronRight size={14} aria-hidden="true" />
               </a>
             ) : (
               <button
@@ -489,9 +502,9 @@ export function CarResultCard({
                 disabled
                 aria-label="Provider booking link unavailable"
                 className={`${mobileStandaloneViewDealClassName} ${unavailableStandaloneViewDealClassName} cursor-not-allowed`}
-                style={standaloneViewDealVisualStyle}
+                style={mobileStandaloneViewDealVisualStyle}
               >
-                View deal <ChevronRight size={16} aria-hidden="true" />
+                View deal <ChevronRight size={14} aria-hidden="true" />
               </button>
             )}
             </div>
@@ -796,10 +809,10 @@ export function CarResultCard({
                     rel="noopener noreferrer"
                     aria-label={`View deal from ${offer.bookingProviderName || offer.rentalCompanyName}`}
                     className={`${desktopStandaloneViewDealClassName} transition-colors hover:text-[#003A8C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2`}
-                    style={standaloneViewDealVisualStyle}
+                    style={desktopStandaloneViewDealVisualStyle}
                   >
                     View deal
-                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                    <ChevronRight className="h-[15px] w-[15px]" aria-hidden="true" />
                   </a>
                 ) : (
                   <button
@@ -807,10 +820,10 @@ export function CarResultCard({
                     disabled
                     aria-label="Provider booking link unavailable"
                     className={`${desktopStandaloneViewDealClassName} ${unavailableStandaloneViewDealClassName} cursor-not-allowed`}
-                    style={standaloneViewDealVisualStyle}
+                    style={desktopStandaloneViewDealVisualStyle}
                   >
                     View deal
-                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                    <ChevronRight className="h-[15px] w-[15px]" aria-hidden="true" />
                   </button>
                 )}
               </div>
