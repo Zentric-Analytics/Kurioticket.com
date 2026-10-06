@@ -27,8 +27,10 @@ test("Hotel Results hides only the mobile category tabs", () => {
 test("mobile Hotel search lives in the navbar and retains the existing edit sheet", () => {
   assert.doesNotMatch(resultsSource, /mobileResultsSearch=\{/);
   assert.match(resultsPageSource, /mobileResultsSearch=\{<div data-hotel-results-mobile-nav-search/);
+  assert.match(resultsPageSource, /mobileResultsFilters=\{<div data-hotel-results-mobile-nav-filters/);
   assert.match(resultsSource, /setMobileNavSearchTarget\(document\.querySelector<HTMLElement>\("\[data-hotel-results-mobile-nav-search\]"\)\)/);
   assert.match(resultsSource, /createPortal\(renderMobileHotelNavSearch\(\), mobileNavSearchTarget\)/);
+  assert.match(resultsSource, /createPortal\(renderMobileHotelShortcuts\(\), mobileNavFiltersTarget\)/);
   assert.match(resultsSource, /aria-expanded=\{mobileHotelSearchOpen\}/);
   assert.match(resultsSource, /<MobileResultsEditSheet/);
   assert.match(searchBarSource, /mobileLayout === "controls"/);
@@ -165,4 +167,17 @@ test("mobile Hotel Results navbar uses a back arrow instead of the Kurioticket l
   assert.match(block, /<ArrowLeft size=\{24\} strokeWidth=\{2\.2\}/);
   assert.match(block, /router\.back\(\)/);
   assert.match(block, /router\.push\("\/hotels"\)/);
+});
+
+
+test("Hotel mobile filter rail is hosted inside the sticky results navbar", () => {
+  const headerSource = readFileSync(
+    new URL("../layout/AppHeader.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(headerSource, /mobileResultsFilters\?: ReactNode/);
+  assert.match(headerSource, /data-mobile-results-filter-navbar/);
+  assert.match(headerSource, /bg-\[#F5F7FB\]/);
+  assert.match(resultsSource, /setMobileNavFiltersTarget\(document\.querySelector<HTMLElement>\("\[data-hotel-results-mobile-nav-filters\]"\)\)/);
+  assert.doesNotMatch(resultsSource, /mobileStyles\.scrollFilterBar/);
 });
