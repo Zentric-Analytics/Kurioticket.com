@@ -24,7 +24,7 @@ test("provider comparison is driven by normalized car offers", () => {
   assert.match(card, /<CarDealPicker/);
   assert.match(card, /selectedOfferId=\{offer\.id\}/);
   assert.match(card, /onSelectOffer=\{selectDealOffer\}/);
-  assert.match(picker, /getCarProviderOfferGroups\(car\.offers\)/);
+  assert.match(picker, /getCarDealPickerGroups\(car\)/);
   assert.match(picker, /groups\.slice\(0, 3\)/);
   assert.match(picker, /Math\.max\(0, groups\.length - visibleGroups\.length\)/);
   assert.match(picker, /Compare deals/);
