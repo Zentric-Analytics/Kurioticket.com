@@ -142,13 +142,14 @@ test("mobile nearby fare states match native terminology", () => {
   assert.doesNotMatch(source.slice(source.indexOf('data-nearby-fare-presentation="mobile"'), source.indexOf('data-desktop-nearby-fare-rail')), />Unavailable</);
 });
 
-test("non-sticky mobile quick filters precede the date rail", () => {
+test("mobile quick filters precede the date rail and avoid scroll-direction transforms", () => {
   const dateRail = source.indexOf('data-nearby-fare-presentation="mobile"');
   const shortcuts = source.indexOf("data-flight-mobile-results-shortcuts");
   assert.ok(shortcuts >= 0 && shortcuts < dateRail);
   const shortcutRegion = source.slice(shortcuts, source.indexOf("</section>", shortcuts));
-  assert.match(shortcutRegion, /px-0 py-1 sm:hidden/);
-  assert.doesNotMatch(shortcutRegion, /sticky|top-\[calc\(|backdrop-blur/);
+  assert.match(shortcutRegion, /w-full sm:hidden/);
+  assert.match(source, /data-flight-mobile-filter-slot[\s\S]{0,220}flight-mobile-scroll-filter-bar/);
+  assert.doesNotMatch(source, /data-scroll-visible|data-scroll-pinned|mobileFilterRailPinned|mobileFilterRailVisible/);
 });
 
 test("responsive mobile sizing shows three complete dates and a fourth-date peek", () => {

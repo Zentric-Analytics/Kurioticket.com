@@ -41,6 +41,30 @@ for (const width of [320, 360, 390, 412]) {
       expect(rail.distance).toBeGreaterThan(0);
       expect(rail.topShift).toBe(0);
     }
+
+    const stickyStart = await page.evaluate(() => {
+      const slot = document.querySelector<HTMLElement>("[data-flight-mobile-filter-slot]")!;
+      const navbar = document.querySelector<HTMLElement>("[data-mobile-results-navbar]")!;
+      const naturalSlotTop = window.scrollY + slot.getBoundingClientRect().top;
+      return Math.max(0, naturalSlotTop - navbar.getBoundingClientRect().bottom + 8);
+    });
+    const stickySamples = [];
+    for (const scrollTop of [stickyStart + 120, stickyStart + 260, stickyStart + 180, stickyStart + 320]) {
+      await page.evaluate((top) => window.scrollTo({ top, behavior: "instant" }), scrollTop);
+      stickySamples.push(await page.evaluate(() => {
+        const filters = document.querySelector<HTMLElement>("[data-flight-mobile-results-shortcuts]")!;
+        const navbar = document.querySelector<HTMLElement>("[data-mobile-results-navbar]")!;
+        return {
+          headerBottom: navbar.getBoundingClientRect().bottom,
+          filterTop: filters.getBoundingClientRect().top,
+          overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - innerWidth,
+        };
+      }));
+    }
+    for (const sample of stickySamples) {
+      expect(Math.abs(sample.filterTop - sample.headerBottom - 12)).toBeLessThanOrEqual(1);
+      expect(sample.overflow).toBeLessThanOrEqual(0);
+    }
   });
 }
 
@@ -77,7 +101,13 @@ for (const width of [320, 390]) {
     await page.locator("[data-flight-mobile-results-shortcuts]").getByRole("button", { name: /open filters/i }).click();
     await expect(page.getByRole("dialog", { name: /filters/i })).toBeVisible();
     await page.locator("#flight-mobile-filters-dialog").getByRole("button", { name: /close filters/i }).click();
-    await page.evaluate(() => window.scrollTo(0, 800));
+    await expect(page.locator("#flight-mobile-filters-dialog")).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => document.body.style.position)).not.toBe("fixed");
+    const targetScroll = await page.evaluate(() =>
+      Math.min(800, Math.max(0, document.documentElement.scrollHeight - innerHeight)),
+    );
+    await page.evaluate((top) => window.scrollTo({ top, behavior: "instant" }), targetScroll);
+    await expect.poll(() => page.evaluate(() => scrollY)).toBe(targetScroll);
     await expect(summary).toBeInViewport();
     await expect(page.locator("[data-mobile-results-navbar]")).toHaveCount(1);
     await expect(page.locator("[data-flight-results-compact-header]")).toHaveCount(0);

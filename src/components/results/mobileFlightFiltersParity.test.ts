@@ -79,10 +79,11 @@ test("all mobile quick sheets share compact edge-aligned footer actions", () => 
   assert.match(quick, /disabled=\{mobileShortcutSheet !== "sort" && draftMatches === 0\}/);
 });
 
-test("mobile Quick Filters rail breakout matches the 12px Results gutter", () => {
-  assert.match(client, /data-flight-mobile-results-shortcuts[\s\S]*"-mx-3 px-0 py-1 sm:hidden"/);
+test("mobile Quick Filters rail stays in the clipped 12px Results canvas", () => {
+  assert.match(client, /data-flight-results-main className="max-sm:overflow-x-clip/);
+  assert.match(client, /data-flight-mobile-filter-slot[\s\S]{0,220}flight-mobile-scroll-filter-bar/);
+  assert.match(client, /data-mobile-flight-shortcuts[\s\S]{0,180}scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\]/);
   assert.doesNotMatch(client, /data-flight-mobile-results-shortcuts[\s\S]{0,300}-mx-\[14px\]/);
-  assert.match(client, /data-mobile-flight-shortcuts className="w-full min-w-0 overflow-x-auto/);
 });
 
 test("mobile endpoint airports use authoritative directional endpoints while desktop options remain unchanged", () => {
