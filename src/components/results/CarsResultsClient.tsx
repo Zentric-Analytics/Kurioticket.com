@@ -1950,7 +1950,6 @@ export function CarsResultsExperience({
   const dealTransitionTimerRef = useRef<number | null>(null);
   const dealTransitionFrameRef = useRef<number | null>(null);
   const dealTransitionRunRef = useRef(0);
-  const dealTransitionMobileRef = useRef(false);
   const carsSortRef = useRef<HTMLDivElement | null>(null);
   const carsSortButtonRef = useRef<HTMLButtonElement | null>(null);
   const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
@@ -2128,7 +2127,6 @@ export function CarsResultsExperience({
   const startDealResultsTransition = useCallback(() => {
     const run = ++dealTransitionRunRef.current;
     const mobile = window.innerWidth < 1024;
-    dealTransitionMobileRef.current = mobile;
     if (dealTransitionTimerRef.current !== null)
       window.clearTimeout(dealTransitionTimerRef.current);
     if (dealTransitionFrameRef.current !== null)
