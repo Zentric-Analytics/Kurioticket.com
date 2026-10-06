@@ -21,10 +21,7 @@ import type { LucideIcon } from "lucide-react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { CarResultImage } from "@/components/results/CarResultImage";
-import {
-  CarPriceComparison,
-  type CarComparisonSource,
-} from "@/components/results/CarPriceComparison";
+import { CarDealPicker } from "@/components/results/CarDealPicker";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { CarsRouteLoadingOverlay } from "@/components/results/CarsRouteLoadingOverlay";
@@ -39,9 +36,10 @@ import {
 } from "@/components/results/carResultCardSpecs";
 import type { CarResultBadge } from "@/lib/cars/carResults";
 import { getPrimaryCarOffer } from "@/lib/cars/carResults";
-import type { NormalizedCarResult } from "@/lib/cars/types";
+import type { CarOffer, NormalizedCarResult } from "@/lib/cars/types";
 import type { CarSearchParams } from "@/lib/cars/types";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
 
 const title = (value: string) =>
   value.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -50,6 +48,23 @@ const carResultBadgeIcons: Record<CarResultBadge, LucideIcon> = {
   "Best value": Award,
   Cheapest: Tag,
   "Top rated": Star,
+};
+
+const approvedProviderBookingUrl = (
+  car: NormalizedCarResult,
+  offer: CarOffer,
+): string | null => {
+  if (!offer.bookingUrl) return null;
+  if (car.inventorySource === "kayak-sandbox") {
+    return sandboxBookingUrl(offer.bookingUrl);
+  }
+  try {
+    const url = new URL(offer.bookingUrl);
+    if (url.protocol !== "https:" || url.username || url.password) return null;
+    return url.href;
+  } catch {
+    return null;
+  }
 };
 
 export function CarResultCard({
@@ -92,8 +107,15 @@ export function CarResultCard({
   const [mobileDetailsPending, setMobileDetailsPending] = useState(false);
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
-  const offer = getPrimaryCarOffer(car);
+  const primaryOffer = getPrimaryCarOffer(car);
+  const [selectedOfferId, setSelectedOfferId] = useState(
+    () => primaryOffer?.id ?? "",
+  );
+  const offer =
+    car.offers.find((candidate) => candidate.id === selectedOfferId) ??
+    primaryOffer;
   if (!offer) return null;
+  const providerBookingHref = approvedProviderBookingUrl(car, offer);
   const guidedPlanning = presentation === "guided-planning";
   const orSimilarLabel = planningLabels?.orSimilar ?? t("deals.results.car.orSimilar");
   const vehicleName = car.orSimilar
@@ -152,21 +174,9 @@ export function CarResultCard({
     ? getMobileProviderCarSpecSlots(car.sandboxPresentation.specs)
     : getMobileCarPrimarySpecs(car);
   const mobileSpecColumns = getMobileCarSpecColumns(mobilePrimarySpecs);
-  const comparisonSources: CarComparisonSource[] = [
-    {
-      id: `${car.id}-kurioticket-estimate`,
-      displayName: car.sandboxPresentation ? `${offer.bookingProviderName} · KAYAK sandbox` : t("carsResults.comparison.estimateName"),
-      currency: offer.currency,
-      totalPrice: offer.totalPrice,
-      perDayPrice: offer.pricePerDay,
-      totalDisplay: totalDisplayPrice.formatted,
-      perDayDisplay: dailyDisplayPrice.formatted,
-      priceStatus: "estimate",
-      bookable: false,
-      handoffAvailable: false,
-      disclosure: car.sandboxPresentation ? "Simulated KAYAK price. No real booking." : t("carsResults.comparison.planningPriceNotLive"),
-    },
-  ];
+  const selectDealOffer = (nextOffer: CarOffer) => {
+    setSelectedOfferId(nextOffer.id);
+  };
 
   const handleMobileDetailsNavigation = (
     event: ReactMouseEvent<HTMLAnchorElement>,
@@ -395,18 +405,28 @@ export function CarResultCard({
           >
             <div
               data-car-card-mobile-specs
-              className="grid min-w-0 flex-[2] grid-cols-2 gap-x-1 px-2 py-2.5 text-[11px] font-medium leading-[14px] text-[#536B92]"
+              className="min-w-0 flex-[2] px-2 py-2.5 text-[11px] font-medium leading-[14px] text-[#536B92]"
             >
-              {mobileSpecColumns.map((column, columnIndex) => (
-                <ul key={columnIndex} className="min-w-0 space-y-2">
-                  {column.map(([Icon, label]) => (
-                    <li key={label} className="flex min-w-0 items-start gap-1">
-                      <Icon size={14} className="mt-px shrink-0 text-slate-500" aria-hidden="true" />
-                      <span className="min-w-0 break-words">{label}</span>
-                    </li>
-                  ))}
-                </ul>
-              ))}
+              <div className="grid grid-cols-2 gap-x-1">
+                {mobileSpecColumns.map((column, columnIndex) => (
+                  <ul key={columnIndex} className="min-w-0 space-y-2">
+                    {column.map(([Icon, label]) => (
+                      <li key={label} className="flex min-w-0 items-start gap-1">
+                        <Icon size={14} className="mt-px shrink-0 text-slate-500" aria-hidden="true" />
+                        <span className="min-w-0 break-words">{label}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ))}
+              </div>
+              {!guidedPlanning ? (
+                <CarDealPicker
+                  car={car}
+                  selectedOfferId={offer.id}
+                  onSelectOffer={selectDealOffer}
+                  compact
+                />
+              ) : null}
             </div>
             <div className="flex min-w-0 flex-[1.35] flex-col items-end px-2.5 pb-1 pt-2">
               <p
@@ -427,22 +447,21 @@ export function CarResultCard({
               >
                 View deal <ChevronRight size={16} aria-hidden="true" />
               </button>
-            ) : detailsHref ? (
-              <Link
-                href={detailsHref}
-                prefetch={car.inventorySource === "kayak-sandbox" ? false : undefined}
-                aria-label={actionAriaLabel}
-                aria-disabled={mobileDetailsPending}
-                onClick={handleMobileDetailsNavigation}
+            ) : providerBookingHref ? (
+              <a
+                href={providerBookingHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`View deal from ${offer.bookingProviderName || offer.rentalCompanyName}`}
                 className="inline-flex min-h-9 shrink-0 items-center justify-end gap-1 text-[13px] font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
               >
                 View deal <ChevronRight size={16} aria-hidden="true" />
-              </Link>
+              </a>
             ) : (
               <button
                 type="button"
                 disabled
-                aria-label={actionAriaLabel}
+                aria-label="Provider booking link unavailable"
                 className="inline-flex min-h-9 shrink-0 cursor-not-allowed items-center justify-end gap-1 text-[13px] font-semibold text-slate-400"
               >
                 View deal <ChevronRight size={16} aria-hidden="true" />
@@ -696,6 +715,13 @@ export function CarResultCard({
               </li>
             ))}
           </ul>
+          {!guidedPlanning ? (
+            <CarDealPicker
+              car={car}
+              selectedOfferId={offer.id}
+              onSelectOffer={selectDealOffer}
+            />
+          ) : null}
 
         </div>
 
@@ -724,22 +750,40 @@ export function CarResultCard({
                 {cardActions}
               </div>
 
-              <div className="mt-auto w-full">
-                <CarPriceComparison
-                  resultId={car.id}
-                  sources={comparisonSources}
-                  cleanStaticSummary
-                  labels={{
-                    source: t("carsResults.comparison.source"),
-                    estimate: t("carsResults.comparison.estimate"),
-                    comparePrices: "View deal",
-                    hidePrices: t("carsResults.comparison.hidePrices"),
-                    liveDealsComingSoon: t("carsResults.comparison.liveDealsComingSoon"),
-                    notBookable: t("carsResults.comparison.notBookable"),
-                    total: t("carsResults.comparison.total"),
-                    perDay: t("carsResults.comparison.perDay"),
-                  }}
-                />
+              <div className="mt-auto flex w-full flex-col items-end">
+                <p
+                  className="whitespace-nowrap text-[21px] font-bold leading-[25px] tracking-[-0.012em] text-[#07133B] tabular-nums"
+                  dir="ltr"
+                  title={dailyDisplayPrice.title}
+                  aria-label={dailyDisplayPrice.ariaLabel}
+                >
+                  {dailyDisplayPrice.formatted}
+                </p>
+                <p className="mt-1 text-[13px] font-medium leading-5 text-[#475569]">
+                  {t("carsResults.comparison.perDay")}
+                </p>
+                {providerBookingHref ? (
+                  <a
+                    href={providerBookingHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`View deal from ${offer.bookingProviderName || offer.rentalCompanyName}`}
+                    className="mt-2 inline-flex min-h-9 items-center justify-end gap-1 text-[14px] font-bold leading-5 text-[#004BB8] transition-colors hover:text-[#003A8C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
+                  >
+                    View deal
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    aria-label="Provider booking link unavailable"
+                    className="mt-2 inline-flex min-h-9 cursor-not-allowed items-center justify-end gap-1 text-[14px] font-bold leading-5 text-slate-400"
+                  >
+                    View deal
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                )}
               </div>
             </div>
           ) : (
