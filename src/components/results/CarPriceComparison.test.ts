@@ -64,7 +64,7 @@ test("provider selection portals a desktop popover and mobile bottom sheet witho
   assert.doesNotMatch(picker, />\s*View deal\s*</);
 });
 
-test("changing Compare deals uses the full-page skeleton on desktop only and keeps mobile popup state mounted", () => {
+test("changing Compare deals updates the selected provider in place and keeps the first popup open", () => {
   assert.doesNotMatch(picker, /BrandedLoading|data-car-deal-selection-loading|Updating deal/);
   assert.doesNotMatch(card, /CarCardSkeleton|dealSelectionPending|CAR_DEAL_SELECTION_MOBILE_BUSY_MS/);
   assert.match(picker, /const providerChanged = group\.key !== selectedGroup\.key/);
@@ -73,23 +73,19 @@ test("changing Compare deals uses the full-page skeleton on desktop only and kee
     /setOpenProviderKey\(group\.key\)[\s\S]*if \(!providerChanged\) return;[\s\S]*onSelectOffer\(group\.primaryOffer\)/,
   );
 
-  assert.match(results, /const \[dealTransitionPhase, setDealTransitionPhase\]/);
   assert.match(results, /const \[selectedDealOfferIds, setSelectedDealOfferIds\]/);
   assert.match(
     results,
-    /const startDealResultsTransition = useCallback\(\(\) => \{[\s\S]*window\.matchMedia\("\(min-width: 1024px\)"\)\.matches[\s\S]*setDealTransitionPhase\("idle"\)[\s\S]*return;[\s\S]*setDealTransitionPhase\("covering"\)[\s\S]*requestAnimationFrame[\s\S]*setDealTransitionPhase\("revealing"\)[\s\S]*CARS_FILTER_REVEAL_MS/,
+    /const selectCompareDealOffer = useCallback\([\s\S]*setSelectedDealOfferIds\([\s\S]*\[carId\]: offerId[\s\S]*\[\],[\s\S]*\);/,
   );
+  assert.doesNotMatch(results, /dealTransitionPhase|startDealResultsTransition/);
   assert.match(
     results,
-    /const minimumBusyMs = prefersReducedResultsMotion\(\) \? 0 : 160/,
+    /if \(providersLoading\)[\s\S]*data-cars-results-page-transition="providers"[\s\S]*<CarsResultsPageTransitionSkeleton/,
   );
-  assert.match(
+  assert.doesNotMatch(
     results,
-    /providersLoading \|\| dealTransitionPhase === "covering"[\s\S]*data-cars-results-page-transition=[\s\S]*"compare-deals"[\s\S]*<CarsResultsPageTransitionSkeleton/,
-  );
-  assert.match(
-    results,
-    /dealTransitionPhase === "revealing" && "cars-filter-results-reveal"/,
+    /data-cars-results-page-transition=[\s\S]{0,120}"compare-deals"/,
   );
   assert.match(
     results,
@@ -128,7 +124,7 @@ test("standalone View deal is the single provider handoff and never fabricates a
   assert.doesNotMatch(card, /href="#"/);
 });
 
-test("selected provider survives the synchronized page skeleton and controls View deal", () => {
+test("selected provider updates in place and controls View deal", () => {
   assert.match(card, /const \[localSelectedOfferId, setLocalSelectedOfferId\] = useState/);
   assert.match(card, /const selectedOfferId = selectedDealOfferId \?\? localSelectedOfferId/);
   assert.match(card, /car\.offers\.find\(\(candidate\) => candidate\.id === selectedOfferId\)/);
@@ -138,8 +134,9 @@ test("selected provider survives the synchronized page skeleton and controls Vie
   );
   assert.match(
     results,
-    /setSelectedDealOfferIds\([\s\S]*\[carId\]: offerId[\s\S]*startDealResultsTransition\(\)/,
+    /setSelectedDealOfferIds\([\s\S]*\[carId\]: offerId/,
   );
+  assert.doesNotMatch(results, /startDealResultsTransition|dealTransitionPhase/);
   assert.match(card, /const providerBookingHref = approvedProviderBookingUrl\(car, offer\)/);
   assert.equal((card.match(/href=\{providerBookingHref\}/g) ?? []).length, 2);
   assert.match(desktop, /dailyDisplayPrice\.formatted/);
