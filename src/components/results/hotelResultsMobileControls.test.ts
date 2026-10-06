@@ -198,3 +198,22 @@ test("Hotel mobile filter row ignores iOS bottom rubber-band reverse deltas", ()
   assert.match(resultsSource, /if \(delta < 0 && distanceFromBottom <= 40\)/);
   assert.match(resultsSource, /if \(distance >= \(nextDirection > 0 \? 20 : 12\)\)/);
 });
+
+
+test("Hotel mobile filter handoff hides cleanly on the first downward pin", () => {
+  assert.match(
+    resultsSource,
+    /if \(!mobileFiltersPinnedRef\.current\)[\s\S]*setMobileFiltersPinned\(true\)[\s\S]*setMobileFiltersVisible\(delta < 0\)[\s\S]*direction = Math\.sign\(delta\)/,
+  );
+  assert.doesNotMatch(
+    resultsSource,
+    /Pinning or returning from a filter interaction should not hide the row/,
+  );
+});
+
+test("Hotel mobile quick filter keeps the underlying results at the same scroll position", () => {
+  assert.match(
+    resultsSource,
+    /const releaseScrollLock = acquireMobileResultsScrollLock\(\{ freezeBodyPosition: false \}\);[\s\S]*mobileShortcutMenuContentRef/,
+  );
+});
