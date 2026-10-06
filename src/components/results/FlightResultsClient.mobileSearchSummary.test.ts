@@ -53,19 +53,32 @@ test("desktop header settings and desktop search stay independent of the mobile 
 });
 
 
-test("mobile Flight page owns stable summary and filter slots across Suspense loading", () => {
+test("mobile Flight page keeps header targets empty until results are ready", () => {
   const page = readFileSync(new URL("../../app/flights/results/page.tsx", import.meta.url), "utf8");
   const header = page.indexOf("<AppHeader");
   const suspense = page.indexOf("<Suspense", header);
   assert.ok(header >= 0 && suspense > header);
   assert.match(page, /flightResultsDesktopSticky/);
   assert.match(page, /mobileResultsTrailingActions/);
-  assert.match(page, /data-flight-results-mobile-nav-summary[\s\S]*?min-h-11 w-full min-w-0/);
-  assert.match(page, /data-flight-results-mobile-nav-filters[\s\S]*?min-h-\[60px\]/);
+
+  const summarySlotStart = page.indexOf("data-flight-results-mobile-nav-summary");
+  const summarySlotEnd = page.indexOf("/>", summarySlotStart);
+  const summarySlot = page.slice(summarySlotStart, summarySlotEnd);
+  assert.match(summarySlot, /flex h-12 w-full min-w-0 overflow-visible/);
+  assert.match(summarySlot, /empty:hidden/);
+  assert.doesNotMatch(summarySlot, /overflow-hidden/);
+
+  const filtersSlotStart = page.indexOf("data-flight-results-mobile-nav-filters");
+  const filtersSlotEnd = page.indexOf("/>", filtersSlotStart);
+  const filtersSlot = page.slice(filtersSlotStart, filtersSlotEnd);
+  assert.match(filtersSlot, /w-full overflow-hidden bg-white empty:hidden/);
+  assert.doesNotMatch(filtersSlot, /min-h-\[60px\]/);
+
   assert.match(page, /<FlightResultsClient externalResultsHeader \/>/);
+  assert.match(page, /<LocalizedLoadingLabel labelKey="flightResults\.loading\.title" \/>/);
+  assert.match(page, /page-shell min-h-\[calc\(100svh-5rem\)\] flex-1 py-6 sm:hidden/);
   assert.doesNotMatch(page.slice(suspense), /fallback=\{[\s\S]*?<AppHeader/);
 });
-
 
 test("Flight capsule keeps the previous Edit Search inert boundary", () => {
   assert.match(card, /inert=\{mobileSearchOpen \? true : undefined\}/);

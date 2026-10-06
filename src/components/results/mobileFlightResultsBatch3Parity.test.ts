@@ -41,8 +41,18 @@ test("mobile metadata and commercial action use native copy and order", () => {
   assert.doesNotMatch(card, /View Flight|viewFlight/);
 });
 
-test("standalone mobile loading consumes shared flight presentation with progress semantics", () => {
-  assert.match(results, /showProgress\s+accessibleProgress[\s\S]*searchType="flight"[\s\S]*sm:hidden/);
+test("standalone mobile loading uses the quiet branded status presentation", () => {
+  const preparing = results.indexOf("if (resultsUiPreparing) {");
+  const guided = results.indexOf("if (guidedMode) return (", preparing);
+  const loadingBranch = results.slice(preparing, guided);
+  const mobileLoaderStart = loadingBranch.indexOf("<BrandedLoading");
+  const mobileLoaderEnd = loadingBranch.indexOf("/>", mobileLoaderStart);
+  const mobileLoader = loadingBranch.slice(mobileLoaderStart, mobileLoaderEnd);
+
+  assert.match(mobileLoader, /showProgress=\{false\}/);
+  assert.match(mobileLoader, /searchType="flight"/);
+  assert.match(mobileLoader, /sm:hidden/);
+  assert.doesNotMatch(mobileLoader, /accessibleProgress|messages=\{/);
   assert.match(loading, /searchLoadingPresentation\(searchType, locale\)/);
   assert.match(loading, /role=\{accessibleProgress \? "progressbar" : "status"\}/);
   assert.match(loading, /motion-reduce:animate-none/);

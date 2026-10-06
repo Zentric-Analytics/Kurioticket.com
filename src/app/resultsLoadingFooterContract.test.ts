@@ -99,6 +99,8 @@ test("flight page keeps one results AppHeader mounted while inventory content lo
 
   assert.match(source, /externalResultsHeader\?: boolean/);
   assert.match(source, /guidedMode \|\| externalResultsHeader \? null : \([\s\S]*?<AppHeader/);
+  assert.match(page, /data-flight-results-mobile-nav-summary[\s\S]*?empty:hidden/);
+  assert.match(page, /data-flight-results-mobile-nav-filters[\s\S]*?empty:hidden/);
   assert.match(source, /const readyExternalMobileHeader =[\s\S]*?!resultsUiPreparing[\s\S]*?createPortal\(renderMobileRouteSummaryCard\(\), mobileNavSummaryTarget\)[\s\S]*?createPortal\(mobileResultsFiltersContent, mobileNavFiltersTarget\)/);
   assert.match(source, /const readyDesktopNavbarSearch =[\s\S]*?!resultsUiPreparing[\s\S]*?createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
 
@@ -106,6 +108,9 @@ test("flight page keeps one results AppHeader mounted while inventory content lo
   const guidedStart = source.indexOf("if (guidedMode) return (", loadingStart);
   const loadingBranch = source.slice(loadingStart, guidedStart);
   assert.match(loadingBranch, /\{standaloneResultsHeader\}[\s\S]*?<BrandedLoading/);
+  assert.match(loadingBranch, /bg-\[radial-gradient\(circle_at_top_left,rgba\(92,182,178,0\.20\),transparent_34%\)/);
+  assert.match(loadingBranch, /showProgress=\{false\}[\s\S]*searchType="flight"[\s\S]*sm:hidden/);
+  assert.doesNotMatch(loadingBranch, /showProgress\s+accessibleProgress/);
   assert.doesNotMatch(loadingBranch, /readyExternalMobileHeader|readyDesktopNavbarSearch|renderDesktopHeaderSearchBar\(\)|renderStickySearchPopoutOverlay\(\)/);
 
   assert.match(source, /\{standaloneResultsHeader\}\s*\{readyExternalMobileHeader\}\s*\{readyDesktopNavbarSearch\}[\s\S]*?<main data-flight-results-main/);
