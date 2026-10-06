@@ -150,3 +150,19 @@ test("active Hotel mobile shortcuts use the font-color fill, compact X, and norm
   assert.match(resultsSource, /active \? "pl-2 pr-6" : "px-2"/);
   assert.match(resultsSource, /absolute right-0\.5 top-1\/2 inline-flex h-6 w-6/);
 });
+
+
+test("mobile Hotel Results navbar uses a back arrow instead of the Kurioticket logo", () => {
+  const headerSource = readFileSync(
+    new URL("../layout/AppHeader.tsx", import.meta.url),
+    "utf8",
+  );
+  const start = headerSource.indexOf("data-hotel-results-mobile-back");
+  assert.notEqual(start, -1);
+  const block = headerSource.slice(Math.max(0, start - 900), start + 500);
+  assert.match(block, /hotelResultsDesktopSticky/);
+  assert.match(block, /aria-label="Back"/);
+  assert.match(block, /<ArrowLeft size=\{24\} strokeWidth=\{2\.2\}/);
+  assert.match(block, /router\.back\(\)/);
+  assert.match(block, /router\.push\("\/hotels"\)/);
+});
