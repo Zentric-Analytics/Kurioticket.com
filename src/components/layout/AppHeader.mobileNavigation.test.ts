@@ -112,6 +112,23 @@ test("results navbar accepts a custom leading action while preserving the defaul
   assert.match(headerSource, /aria-controls="mobile-menu-drawer"/);
 });
 
+test("results navbar can render filters as part of the mobile header body", () => {
+  assert.match(headerSource, /mobileResultsFilters\?: ReactNode/);
+  assert.match(headerSource, /!mobileResultsFilters && "border-b border-slate-200"/);
+  assert.match(headerSource, /data-mobile-results-filter-navbar className="overflow-hidden border-b border-slate-200 bg-white sm:hidden"/);
+});
+
+test("mobile Flight Results uses a home arrow while preserving the K logo destination", () => {
+  const marker = headerSource.indexOf("data-flight-results-mobile-home");
+  assert.notEqual(marker, -1);
+  const block = headerSource.slice(Math.max(0, marker - 650), marker + 260);
+  assert.match(block, /flightResultsDesktopSticky/);
+  assert.match(block, /href="\/"/);
+  assert.match(block, /aria-label="Kurioticket home"/);
+  assert.match(block, /handleRouteLinkClick\(event, "\/"\)/);
+  assert.match(block, /<ArrowLeft size=\{24\} strokeWidth=\{2\.2\}/);
+});
+
 test("Cars results can keep the standard mobile header sticky with an inline search slot", () => {
   assert.match(headerSource, /mobileResultsSticky\?: boolean/);
   assert.match(headerSource, /mobileResultsSticky = true/);
