@@ -828,33 +828,50 @@ export function AppHeader({
         </> : null}
         <div className={cn("page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3", mobileResultsSearch && "max-sm:hidden", resultsDesktopSticky && "lg:py-[14px]")}>
           <div className={cn("flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8", resultsDesktopSticky && "lg:gap-4", carsResultsMobileInlineSearch && "max-sm:gap-2")}>
-            <Link
-              href="/"
-              aria-label="Kurioticket home"
-              onClick={(event) => handleRouteLinkClick(event, "/")}
-              className="shrink-0"
-            >
-              {carsResultsMobileInlineSearch ? (
-                <>
-                  <RawImage
-                    src="/brand/kurioticket-icon-blue.svg"
-                    alt="Kurioticket"
-                    className="h-7 w-7 sm:hidden"
-                  />
+            {carsResultsMobileInlineSearch ? (
+              <>
+                <button
+                  type="button"
+                  aria-label="Back"
+                  data-cars-results-mobile-back
+                  onClick={() => {
+                    if (window.history.length > 1) {
+                      router.back();
+                    } else {
+                      router.push("/cars");
+                    }
+                  }}
+                  className="focus-ring flex h-11 w-10 shrink-0 items-center justify-center rounded-lg text-[#142033] hover:bg-[#EEF6FC] sm:hidden"
+                >
+                  <ArrowLeft size={24} strokeWidth={2.2} aria-hidden="true" />
+                </button>
+                <Link
+                  href="/"
+                  aria-label="Kurioticket home"
+                  onClick={(event) => handleRouteLinkClick(event, "/")}
+                  className="hidden shrink-0 sm:block"
+                >
                   <RawImage
                     src="/brand/kurioticket-logo-primary-light-bg.svg"
                     alt="Kurioticket"
-                    className="hidden h-8 w-auto sm:block md:h-9 lg:h-9"
+                    className="h-8 w-auto md:h-9 lg:h-9"
                   />
-                </>
-              ) : (
+                </Link>
+              </>
+            ) : (
+              <Link
+                href="/"
+                aria-label="Kurioticket home"
+                onClick={(event) => handleRouteLinkClick(event, "/")}
+                className="shrink-0"
+              >
                 <RawImage
                   src="/brand/kurioticket-logo-primary-light-bg.svg"
                   alt="Kurioticket"
                   className="h-8 w-auto md:h-9 lg:h-9"
                 />
-              )}
-            </Link>
+              </Link>
+            )}
 
             {carsResultsMobileInlineSearch ? (
               <div
@@ -1013,6 +1030,12 @@ export function AppHeader({
             </div>
 
             <div className={cn("flex items-center gap-0 md:hidden", carsResultsMobileInlineSearch && "shrink-0")}>
+              {carsResultsMobileInlineSearch ? (
+                <div
+                  data-cars-results-mobile-nav-filter
+                  className="me-1 flex h-11 w-9 shrink-0 items-center justify-center sm:hidden"
+                />
+              ) : null}
               {isSignedIn ? (
                 <button
                   type="button"
