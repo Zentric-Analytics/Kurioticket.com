@@ -114,7 +114,7 @@ for (const width of [320, 390]) {
     const homeAction = navbar.getByRole("link", { name: "Kurioticket home" });
     await expect(homeAction).toBeVisible();
     await expect(homeAction).toHaveAttribute("href", "/");
-    await expect(homeAction).toHaveAttribute("data-flight-results-mobile-home", "");
+    await expect(homeAction).toHaveAttribute("data-flight-results-mobile-home", "true");
     await expect(navbar.getByRole("link", { name: /sign in/i })).toBeVisible();
     const controls = await navbar.locator("a, button").evaluateAll(elements => elements.map(element => {
       const rect = element.getBoundingClientRect();
