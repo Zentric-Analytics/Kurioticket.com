@@ -1967,11 +1967,8 @@ export function CarsResultsExperience({
   }, [selectedCarFilters]);
 
   useEffect(() => {
-    if (presentation !== "standalone" || typeof window === "undefined") {
-      setMobileNavFilterTarget(null);
-      setShowMobileHeaderFilter(false);
+    if (presentation !== "standalone" || typeof window === "undefined")
       return undefined;
-    }
 
     const frame = window.requestAnimationFrame(() => {
       setMobileNavFilterTarget(
