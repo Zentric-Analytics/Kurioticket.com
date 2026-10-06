@@ -46,6 +46,7 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { formatTravelDateDisplay } from "@/lib/dateFormatting/travelDateDisplay";
 import { cn } from "@/lib/utils";
 import { CarResultCard } from "@/components/results/CarResultCard";
+import { CarsResultsMapPreview } from "@/components/results/CarsResultsMapPreview";
 import { CarsResultsScrollIndicator } from "@/components/results/CarsResultsScrollIndicator";
 import { CarPriceAlertControl } from "@/components/results/CarPriceAlertControl";
 import { CarCardSkeleton } from "@/components/ui/Skeleton";
@@ -2536,6 +2537,9 @@ export function CarsResultsExperience({
             className="relative hidden lg:block self-stretch"
             ref={desktopFilterSidebarRef}
           >
+            {!guidedPlanning ? (
+              <CarsResultsMapPreview location={search.pickupLocation} />
+            ) : null}
             <CarFilters
               groups={
                 guidedPlanning
