@@ -2003,7 +2003,7 @@ export function CarsResultsExperience({
       }
 
       const nextVisible =
-        shortcuts.getBoundingClientRect().top <=
+        shortcuts.getBoundingClientRect().bottom <=
         header.getBoundingClientRect().bottom;
 
       setShowMobileHeaderFilter((current) =>
@@ -2746,11 +2746,7 @@ export function CarsResultsExperience({
                 ref={mobileShortcutsRef}
                 data-cars-results-sticky-shortcuts
                 data-mobile-header-filter-active={showMobileHeaderFilter ? "true" : "false"}
-                className={cn(
-                  "max-sm:bg-[#F5F7FB] max-sm:py-1 lg:hidden",
-                  showMobileHeaderFilter &&
-                    "max-sm:pointer-events-none max-sm:opacity-0 max-sm:invisible",
-                )}
+                className="max-sm:bg-[#F5F7FB] max-sm:py-1 lg:hidden"
               >
                 {!guidedPlanning ? (
                   <div
