@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Check, ChevronDown, X } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
@@ -11,6 +12,7 @@ import {
 } from "@/lib/cars/carResults";
 import type { CarOffer, NormalizedCarResult } from "@/lib/cars/types";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { acquireMobileResultsScrollLock } from "@/lib/search/mobileResultsScrollLock";
 
 type Props = {
   car: NormalizedCarResult;
@@ -68,6 +70,46 @@ export function CarDealPicker({
   const groups = useMemo(() => getCarProviderOfferGroups(car.offers), [car.offers]);
   const [openProviderKey, setOpenProviderKey] = useState<string | null>(null);
   const [showAllProviders, setShowAllProviders] = useState(false);
+  const anchorRef = useRef<HTMLDivElement | null>(null);
+  const [desktopPosition, setDesktopPosition] = useState({ top: 0, left: 0 });
+  const overlayOpen = Boolean(openProviderKey || showAllProviders);
+
+  useEffect(() => {
+    if (!overlayOpen) return;
+
+    const updatePosition = () => {
+      const rect = anchorRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const panelWidth = 310;
+      setDesktopPosition({
+        top: rect.bottom + 8,
+        left: Math.min(
+          Math.max(12, rect.left),
+          Math.max(12, window.innerWidth - panelWidth - 12),
+        ),
+      });
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpenProviderKey(null);
+      setShowAllProviders(false);
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("keydown", onKeyDown);
+    const releaseMobileScrollLock = window.matchMedia("(max-width: 767px)").matches
+      ? acquireMobileResultsScrollLock()
+      : null;
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("keydown", onKeyDown);
+      releaseMobileScrollLock?.();
+    };
+  }, [overlayOpen]);
 
   const selectedGroup =
     groups.find((group) =>
@@ -106,6 +148,7 @@ export function CarDealPicker({
 
   return (
     <div
+      ref={anchorRef}
       data-car-deal-picker
       className={`relative min-w-0 ${compact ? "mt-2" : "mt-3"}`}
     >
@@ -153,61 +196,68 @@ export function CarDealPicker({
         </div>
       </div>
 
-      {(openProviderKey || showAllProviders) ? (
-        <>
-          <div className="absolute left-0 top-full z-40 mt-2 hidden w-[310px] rounded-xl border border-[#D8E1EC] bg-white p-3 shadow-[0_18px_45px_-20px_rgba(15,23,42,0.4)] md:block">
-            {showAllProviders ? (
-              <ProviderList
-                groups={groups}
-                selectedKey={selectedGroup.key}
-                onSelect={selectGroup}
-              />
-            ) : panelGroup ? (
-              <ProviderPreview
-                group={panelGroup}
-                selected={panelGroup.key === selectedGroup.key}
-                total={formatOfferPrice(panelGroup.primaryOffer, panelGroup.primaryOffer.totalPrice)}
-                perDay={formatOfferPrice(panelGroup.primaryOffer, panelGroup.primaryOffer.pricePerDay)}
-                onClose={closePanel}
-              />
-            ) : null}
-          </div>
+      {overlayOpen && typeof document !== "undefined"
+        ? createPortal(
+            <>
+              <div
+                className="fixed z-[140] hidden w-[310px] rounded-xl border border-[#D8E1EC] bg-white p-3 shadow-[0_18px_45px_-20px_rgba(15,23,42,0.4)] md:block"
+                style={{ top: desktopPosition.top, left: desktopPosition.left }}
+                data-car-deal-picker-desktop-panel
+              >
+                {showAllProviders ? (
+                  <ProviderList
+                    groups={groups}
+                    selectedKey={selectedGroup.key}
+                    onSelect={selectGroup}
+                  />
+                ) : panelGroup ? (
+                  <ProviderPreview
+                    group={panelGroup}
+                    selected={panelGroup.key === selectedGroup.key}
+                    total={formatOfferPrice(panelGroup.primaryOffer, panelGroup.primaryOffer.totalPrice)}
+                    perDay={formatOfferPrice(panelGroup.primaryOffer, panelGroup.primaryOffer.pricePerDay)}
+                    onClose={closePanel}
+                  />
+                ) : null}
+              </div>
 
-          <div
-            className="fixed inset-0 z-[130] flex items-end bg-slate-950/45 md:hidden"
-            role="presentation"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) closePanel();
-            }}
-          >
-            <section
-              role="dialog"
-              aria-modal="true"
-              aria-label={showAllProviders ? "Car deal providers" : `${panelGroup?.providerName ?? "Provider"} deal details`}
-              className="max-h-[72dvh] w-full overflow-y-auto rounded-t-[22px] border-t border-[#D8E1EC] bg-white px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-3 shadow-2xl"
-            >
-              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
-              {showAllProviders ? (
-                <ProviderList
-                  groups={groups}
-                  selectedKey={selectedGroup.key}
-                  onSelect={selectGroup}
-                  onClose={closePanel}
-                />
-              ) : panelGroup ? (
-                <ProviderPreview
-                  group={panelGroup}
-                  selected={panelGroup.key === selectedGroup.key}
-                  total={formatOfferPrice(panelGroup.primaryOffer, panelGroup.primaryOffer.totalPrice)}
-                  perDay={formatOfferPrice(panelGroup.primaryOffer, panelGroup.primaryOffer.pricePerDay)}
-                  onClose={closePanel}
-                  mobile
-                />
-              ) : null}
-            </section>
-          </div>
-        </>
-      ) : null}
+              <div
+                className="fixed inset-0 z-[130] flex items-end bg-slate-950/45 md:hidden"
+                role="presentation"
+                onMouseDown={(event) => {
+                  if (event.target === event.currentTarget) closePanel();
+                }}
+              >
+                <section
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={showAllProviders ? "Car deal providers" : `${panelGroup?.providerName ?? "Provider"} deal details`}
+                  className="max-h-[72dvh] w-full overflow-y-auto rounded-t-[22px] border-t border-[#D8E1EC] bg-white px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+                >
+                  <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
+                  {showAllProviders ? (
+                    <ProviderList
+                      groups={groups}
+                      selectedKey={selectedGroup.key}
+                      onSelect={selectGroup}
+                      onClose={closePanel}
+                    />
+                  ) : panelGroup ? (
+                    <ProviderPreview
+                      group={panelGroup}
+                      selected={panelGroup.key === selectedGroup.key}
+                      total={formatOfferPrice(panelGroup.primaryOffer, panelGroup.primaryOffer.totalPrice)}
+                      perDay={formatOfferPrice(panelGroup.primaryOffer, panelGroup.primaryOffer.pricePerDay)}
+                      onClose={closePanel}
+                      mobile
+                    />
+                  ) : null}
+                </section>
+              </div>
+            </>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
