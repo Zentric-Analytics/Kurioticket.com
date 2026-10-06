@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/AppHeader";
-import { BrandedLoading } from "@/components/layout/BrandedLoading";
+import { LocalizedLoadingLabel } from "@/components/layout/LocalizedLoadingLabel";
 import { FlightResultsClient } from "@/components/results/FlightResultsClient";
 import { getTranslations } from "@/lib/i18n";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
@@ -138,8 +138,6 @@ export default async function FlightResultsPage({
     redirect("/flights");
   }
 
-  const t = getTranslations((await cookies()).get(LOCALE_COOKIE_KEY)?.value);
-
   return (
     <>
       <AppHeader
@@ -153,48 +151,27 @@ export default async function FlightResultsPage({
         mobileResultsSearch={
           <div
             data-flight-results-mobile-nav-summary
-            className="min-h-11 w-full min-w-0 overflow-visible rounded-xl bg-[#F5F7FB]"
+            className="flex h-12 w-full min-w-0 overflow-visible rounded-xl bg-[#F5F7FB] empty:hidden"
           />
         }
         mobileResultsFilters={
           <div
             data-flight-results-mobile-nav-filters
-            className="min-h-[60px] w-full overflow-hidden bg-white"
+            className="w-full overflow-hidden bg-white empty:hidden"
           />
         }
       />
       <Suspense
         fallback={
-          <ResultsFallback
-            title={t["flightResults.loading.title"]}
-            description={t["flightResults.loading.checkingAirlinesAndFares"]}
-          />
+          <main className="page-shell min-h-[calc(100svh-5rem)] flex-1 py-6">
+            <div className="rounded-3xl border border-indigo-100 bg-white p-5 text-sm font-semibold text-violet-700 shadow-sm">
+              <LocalizedLoadingLabel labelKey="flightResults.loading.title" />
+            </div>
+          </main>
         }
       >
         <FlightResultsClient externalResultsHeader />
       </Suspense>
     </>
-  );
-}
-
-function ResultsFallback({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <main className="min-h-[calc(100svh-5rem)] bg-white">
-      <BrandedLoading
-        variant="fullscreen"
-        visual="logoPulse"
-        showProgress={false}
-        className="min-h-[calc(100svh-5rem)] bg-transparent px-5"
-        contentClassName="max-w-md text-center"
-        title={title}
-        description={description}
-      />
-    </main>
   );
 }
