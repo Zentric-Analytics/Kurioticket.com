@@ -522,9 +522,9 @@ export function HotelPriceAlertControl({
   return (
     <section
       aria-label={t("travel.account.hotelAlert.title")}
-      className={cn("mb-3 sm:mb-5", compactDesktop && "sm:mb-0")}
+      className={cn("mb-0 sm:mb-5", compactDesktop && "sm:mb-0")}
     >
-      <div className="flex w-full justify-end sm:hidden">
+      <div className="inline-flex shrink-0 sm:hidden">
         <div className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#9299A9] bg-transparent px-2.5 text-[#1A1A1A]">
           <Bell
             className="h-[15px] w-[15px] shrink-0 text-[#1A1A1A]"
