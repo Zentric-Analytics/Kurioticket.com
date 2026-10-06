@@ -10,59 +10,90 @@ test.beforeEach(async ({ page, request }) => {
 });
 
 for (const width of [320, 360, 390, 412]) {
-  test(`Flight mobile filters precede dates without overflow at ${width}px`, async ({ page }) => {
+  test(`Flight mobile filters stay inside the header without overflow at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.goto(flightResults, { waitUntil: "domcontentloaded" });
-    await expect(page.locator("[data-flight-mobile-results-shortcuts]")).toBeVisible();
-    await expect(page.locator('[data-nearby-fare-presentation="mobile"]')).toBeVisible();
-    const bounds = await page.evaluate(() => {
-      const filters = document.querySelector<HTMLElement>("[data-flight-mobile-results-shortcuts]")!;
+
+    const header = page.locator("[data-app-header]");
+    const navbar = header.locator("[data-mobile-results-navbar]");
+    const filterNavbar = header.locator("[data-mobile-results-filter-navbar]");
+    const filters = filterNavbar.locator("[data-flight-mobile-results-shortcuts]");
+    const dates = page.locator('[data-nearby-fare-presentation="mobile"]');
+
+    await expect(header).toBeVisible();
+    await expect(navbar).toBeVisible();
+    await expect(filterNavbar).toBeVisible();
+    await expect(filters).toBeVisible();
+    await expect(dates).toBeVisible();
+
+    const initial = await page.evaluate(() => {
+      const header = document.querySelector<HTMLElement>("[data-app-header]")!;
+      const navbar = header.querySelector<HTMLElement>("[data-mobile-results-navbar]")!;
+      const filterNavbar = header.querySelector<HTMLElement>("[data-mobile-results-filter-navbar]")!;
+      const filters = filterNavbar.querySelector<HTMLElement>("[data-flight-mobile-results-shortcuts]")!;
       const dates = document.querySelector<HTMLElement>('[data-nearby-fare-presentation="mobile"]')!;
-      const navbar = document.querySelector<HTMLElement>("[data-mobile-results-navbar]")!;
-      const rails = [document.querySelector<HTMLElement>("[data-mobile-flight-shortcuts]")!, dates.firstElementChild as HTMLElement];
+      const quickRail = document.querySelector<HTMLElement>("[data-mobile-flight-shortcuts]")!;
+      const dateRail = dates.firstElementChild as HTMLElement;
+
+      const headerRect = header.getBoundingClientRect();
+      const navbarRect = navbar.getBoundingClientRect();
+      const filterNavbarRect = filterNavbar.getBoundingClientRect();
+      const filterRect = filters.getBoundingClientRect();
+      const dateRect = dates.getBoundingClientRect();
+
+      const scrollRail = (rail: HTMLElement) => {
+        rail.scrollLeft = 0;
+        const top = rail.getBoundingClientRect().top;
+        rail.scrollLeft = Math.min(40, Math.max(0, rail.scrollWidth - rail.clientWidth));
+        return { distance: rail.scrollLeft, topShift: rail.getBoundingClientRect().top - top };
+      };
+
       return {
-        headerBottom: navbar.getBoundingClientRect().bottom,
-        filterTop: filters.getBoundingClientRect().top,
-        filterBottom: filters.getBoundingClientRect().bottom,
-        dateTop: dates.getBoundingClientRect().top,
+        headerTop: headerRect.top,
+        headerBottom: headerRect.bottom,
+        navbarBottom: navbarRect.bottom,
+        filterNavbarTop: filterNavbarRect.top,
+        filterNavbarBottom: filterNavbarRect.bottom,
+        filterTop: filterRect.top,
+        filterBottom: filterRect.bottom,
+        dateTop: dateRect.top,
+        filterOffsetFromHeader: filterRect.top - headerRect.top,
         overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - innerWidth,
-        rails: rails.map(rail => {
-          rail.scrollLeft = 0;
-          const top = rail.getBoundingClientRect().top;
-          rail.scrollLeft = 40;
-          return { distance: rail.scrollLeft, topShift: rail.getBoundingClientRect().top - top };
-        }),
+        quickRail: scrollRail(quickRail),
+        dateRail: scrollRail(dateRail),
       };
     });
-    expect(bounds.headerBottom).toBeLessThanOrEqual(bounds.filterTop);
-    expect(bounds.filterBottom).toBeLessThanOrEqual(bounds.dateTop);
-    expect(bounds.overflow).toBeLessThanOrEqual(0);
-    for (const rail of bounds.rails) {
-      expect(rail.distance).toBeGreaterThan(0);
-      expect(rail.topShift).toBe(0);
-    }
 
-    const stickyStart = await page.evaluate(() => {
-      const slot = document.querySelector<HTMLElement>("[data-flight-mobile-filter-slot]")!;
-      const navbar = document.querySelector<HTMLElement>("[data-mobile-results-navbar]")!;
-      const naturalSlotTop = window.scrollY + slot.getBoundingClientRect().top;
-      return Math.max(0, naturalSlotTop - navbar.getBoundingClientRect().bottom + 8);
-    });
-    const stickySamples = [];
-    for (const scrollTop of [stickyStart + 120, stickyStart + 260, stickyStart + 180, stickyStart + 320]) {
+    expect(Math.abs(initial.filterNavbarTop - initial.navbarBottom)).toBeLessThanOrEqual(1);
+    expect(Math.abs(initial.filterNavbarBottom - initial.headerBottom)).toBeLessThanOrEqual(1);
+    expect(initial.filterBottom).toBeLessThanOrEqual(initial.headerBottom);
+    expect(initial.headerBottom).toBeLessThanOrEqual(initial.dateTop);
+    expect(initial.overflow).toBeLessThanOrEqual(0);
+    expect(initial.quickRail.distance).toBeGreaterThan(0);
+    expect(initial.quickRail.topShift).toBe(0);
+    expect(initial.dateRail.distance).toBeGreaterThan(0);
+    expect(initial.dateRail.topShift).toBe(0);
+
+    for (const scrollTop of [240, 640, 600, 760]) {
       await page.evaluate((top) => window.scrollTo({ top, behavior: "instant" }), scrollTop);
-      stickySamples.push(await page.evaluate(() => {
-        const filters = document.querySelector<HTMLElement>("[data-flight-mobile-results-shortcuts]")!;
-        const navbar = document.querySelector<HTMLElement>("[data-mobile-results-navbar]")!;
+      const sample = await page.evaluate(() => {
+        const header = document.querySelector<HTMLElement>("[data-app-header]")!;
+        const filters = header.querySelector<HTMLElement>("[data-flight-mobile-results-shortcuts]")!;
+        const filterNavbar = header.querySelector<HTMLElement>("[data-mobile-results-filter-navbar]")!;
+        const headerRect = header.getBoundingClientRect();
+        const filterRect = filters.getBoundingClientRect();
+        const filterNavbarRect = filterNavbar.getBoundingClientRect();
         return {
-          headerBottom: navbar.getBoundingClientRect().bottom,
-          filterTop: filters.getBoundingClientRect().top,
+          headerTop: headerRect.top,
+          headerBottom: headerRect.bottom,
+          filterTop: filterRect.top,
+          filterNavbarBottom: filterNavbarRect.bottom,
           overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - innerWidth,
         };
-      }));
-    }
-    for (const sample of stickySamples) {
-      expect(Math.abs(sample.filterTop - sample.headerBottom - 12)).toBeLessThanOrEqual(1);
+      });
+
+      expect(Math.abs((sample.filterTop - sample.headerTop) - initial.filterOffsetFromHeader)).toBeLessThanOrEqual(1);
+      expect(Math.abs(sample.filterNavbarBottom - sample.headerBottom)).toBeLessThanOrEqual(1);
       expect(sample.overflow).toBeLessThanOrEqual(0);
     }
   });
@@ -80,7 +111,10 @@ for (const width of [320, 390]) {
     await expect(summary).toContainText(/Round.trip/);
     await expect(summary).toContainText(/1 adult/);
     await expect(summary).toContainText(/Economy/i);
-    await expect(navbar.getByRole("link", { name: "Kurioticket home" })).toBeVisible();
+    const homeAction = navbar.getByRole("link", { name: "Kurioticket home" });
+    await expect(homeAction).toBeVisible();
+    await expect(homeAction).toHaveAttribute("href", "/");
+    await expect(homeAction).toHaveAttribute("data-flight-results-mobile-home", "");
     await expect(navbar.getByRole("link", { name: /sign in/i })).toBeVisible();
     const controls = await navbar.locator("a, button").evaluateAll(elements => elements.map(element => {
       const rect = element.getBoundingClientRect();
@@ -110,6 +144,7 @@ for (const width of [320, 390]) {
     await expect.poll(() => page.evaluate(() => scrollY)).toBe(targetScroll);
     await expect(summary).toBeInViewport();
     await expect(page.locator("[data-mobile-results-navbar]")).toHaveCount(1);
+    await expect(page.locator("[data-mobile-results-filter-navbar]")).toBeInViewport();
     await expect(page.locator("[data-flight-results-compact-header]")).toHaveCount(0);
     const scrollBeforeEdit = await page.evaluate(() => scrollY);
     await summary.focus();
