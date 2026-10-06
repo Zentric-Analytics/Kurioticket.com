@@ -62,8 +62,8 @@ test("Cars filter covering preserves geometry and exposes one busy results regio
   assert.match(cars, /transitionMotion=[\s\S]*?"shimmer"/);
 });
 
-test("filtered cards and the filtered empty state share the subtle reveal", () => {
-  assert.equal((cars.match(/cars-filter-results-reveal/g) ?? []).length, 2);
+test("filtered results and Compare deals share the subtle reveal language", () => {
+  assert.equal((cars.match(/cars-filter-results-reveal/g) ?? []).length, 3);
   assert.match(styles, /cars-filter-results-reveal 160ms ease-out/);
 });
 
