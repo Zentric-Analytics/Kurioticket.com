@@ -176,7 +176,7 @@ test("desktop standalone keeps Best value above the shared action row and pricin
   );
   assert.match(
     pricing,
-    /<div className="mt-auto w-full">[\s\S]*?<CarPriceComparison/,
+    /<div className="mt-auto flex w-full flex-col items-end">[\s\S]*?providerBookingHref/,
   );
 });
 
