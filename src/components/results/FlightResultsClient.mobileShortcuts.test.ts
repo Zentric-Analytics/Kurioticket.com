@@ -41,6 +41,14 @@ test("mobile Flight filter rail pins, hides on downward scroll and reveals on up
   assert.match(source, /transition-transform duration-\[220ms\]/);
   assert.match(source, /pointer-events-none -translate-y-full duration-\[120ms\]/);
   assert.match(source, /motion-reduce:transition-none/);
+  assert.match(
+    source,
+    /inert=\{mobileSearchOpen \|\| \(mobileFilterRailPinned && !mobileFilterRailVisible\) \? true : undefined\}/,
+  );
+  assert.match(
+    source,
+    /aria-hidden=\{mobileSearchOpen \|\| \(mobileFilterRailPinned && !mobileFilterRailVisible\) \? true : undefined\}/,
+  );
 });
 
 test("Flight Filter and quick-filter chips mirror Hotel geometry", () => {
