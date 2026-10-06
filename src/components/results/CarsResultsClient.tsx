@@ -1937,11 +1937,19 @@ export function CarsResultsExperience({
   const [filterTransitionMinHeight, setFilterTransitionMinHeight] = useState<
     number | null
   >(null);
+  const [dealTransitionPhase, setDealTransitionPhase] =
+    useState<CarsFilterTransitionPhase>("idle");
+  const [selectedDealOfferIds, setSelectedDealOfferIds] = useState<
+    Record<string, string>
+  >({});
   const paginationListRef = useRef<HTMLDivElement | null>(null);
   const filterTransitionTimerRef = useRef<number | null>(null);
   const filterTransitionFrameRef = useRef<number | null>(null);
   const filterTransitionRunRef = useRef(0);
   const filterTransitionMobileRef = useRef(false);
+  const dealTransitionTimerRef = useRef<number | null>(null);
+  const dealTransitionFrameRef = useRef<number | null>(null);
+  const dealTransitionRunRef = useRef(0);
   const carsSortRef = useRef<HTMLDivElement | null>(null);
   const carsSortButtonRef = useRef<HTMLButtonElement | null>(null);
   const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
@@ -2115,6 +2123,65 @@ export function CarsResultsExperience({
       });
     });
   }, []);
+
+  const startDealResultsTransition = useCallback(() => {
+    const run = ++dealTransitionRunRef.current;
+    const mobile = window.innerWidth < 1024;
+    if (dealTransitionTimerRef.current !== null)
+      window.clearTimeout(dealTransitionTimerRef.current);
+    if (dealTransitionFrameRef.current !== null)
+      window.cancelAnimationFrame(dealTransitionFrameRef.current);
+
+    setDealTransitionPhase("covering");
+    const startedAt = performance.now();
+
+    dealTransitionFrameRef.current = window.requestAnimationFrame(() => {
+      dealTransitionFrameRef.current = window.requestAnimationFrame(() => {
+        const minimumBusyMs = prefersReducedResultsMotion()
+          ? 0
+          : mobile
+            ? CARS_FILTER_MIN_BUSY_MS
+            : 160;
+        const remaining = Math.max(
+          0,
+          minimumBusyMs - (performance.now() - startedAt),
+        );
+        dealTransitionTimerRef.current = window.setTimeout(() => {
+          if (dealTransitionRunRef.current !== run) return;
+          if (prefersReducedResultsMotion()) {
+            setDealTransitionPhase("idle");
+            return;
+          }
+          setDealTransitionPhase("revealing");
+          dealTransitionTimerRef.current = window.setTimeout(() => {
+            if (dealTransitionRunRef.current === run)
+              setDealTransitionPhase("idle");
+          }, CARS_FILTER_REVEAL_MS);
+        }, remaining);
+      });
+    });
+  }, []);
+
+  const selectCompareDealOffer = useCallback(
+    (carId: string, offerId: string) => {
+      setSelectedDealOfferIds((current) =>
+        current[carId] === offerId ? current : { ...current, [carId]: offerId },
+      );
+      startDealResultsTransition();
+    },
+    [startDealResultsTransition],
+  );
+
+  useEffect(
+    () => () => {
+      if (dealTransitionTimerRef.current !== null)
+        window.clearTimeout(dealTransitionTimerRef.current);
+      if (dealTransitionFrameRef.current !== null)
+        window.cancelAnimationFrame(dealTransitionFrameRef.current);
+    },
+    [],
+  );
+
   const toggleCarFilter = (groupId: string, option: string) => {
     startFilterResultsTransition();
     setSelectedCarFilters((current) => {
@@ -2516,14 +2583,26 @@ export function CarsResultsExperience({
     scheduleDesktopCompactFilterMeasurementRef.current?.();
   }, [activeFilterCount, results.length, showDesktopCompactFilter]);
 
-  if (providersLoading) {
-    return <CarsResultsPageTransitionSkeleton />;
+  if (providersLoading || dealTransitionPhase === "covering") {
+    return (
+      <div
+        data-cars-results-page-transition={
+          providersLoading ? "providers" : "compare-deals"
+        }
+      >
+        <CarsResultsPageTransitionSkeleton />
+      </div>
+    );
   }
 
   return (
     <>
     <section
-      className={cn("min-w-0", embedded ? "mt-6" : "w-full")}
+      className={cn(
+        "min-w-0",
+        embedded ? "mt-6" : "w-full",
+        dealTransitionPhase === "revealing" && "cars-filter-results-reveal",
+      )}
       aria-labelledby={resultHeadingId}
       data-cars-results-experience
     >
@@ -2858,6 +2937,8 @@ export function CarsResultsExperience({
                       search={search}
                       badge={badges.get(car.id)}
                       detailsHref={detailsHrefForCar(car)}
+                      selectedDealOfferId={selectedDealOfferIds[car.id]}
+                      onDealOfferSelected={selectCompareDealOffer}
                       providerLabel={isKayakSandboxResult(car) ? "KAYAK sandbox · Simulated offer" : undefined}
                       onSelect={
                         onSelectCar && (isCarSelectable?.(car) ?? true)

@@ -116,8 +116,8 @@ test("provider picker keeps public offer facts without internal handoff copy", (
   );
 });
 
-test("provider preview removes per-day and selected-state copy while retaining estimated total", () => {
-  assert.match(picker, /Price/);
+test("provider preview removes Price, per-day, and selected-state copy while retaining estimated total", () => {
+  assert.doesNotMatch(picker, />\s*Price\s*</);
   assert.match(picker, /Estimated total/);
   assert.match(picker, /\{total\}/);
   assert.doesNotMatch(picker, /perDay|>Per day</);
