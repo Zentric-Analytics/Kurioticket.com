@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronDown, X } from "lucide-react";
+import { Check, ChevronDown, CircleCheck, ReceiptText, WalletCards, X } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -308,7 +308,7 @@ export function CarDealPicker({
                       ? "Car deal providers"
                       : `${panelGroup?.providerName ?? "Provider"} deal details`
                   }
-                  className="w-[310px] rounded-xl border border-[#D8E1EC] bg-white p-3 shadow-[0_18px_45px_-20px_rgba(15,23,42,0.4)]"
+                  className="w-[310px] rounded-xl border border-[#D8E1EC] bg-white p-4 shadow-[0_18px_45px_-20px_rgba(15,23,42,0.4)]"
                   style={{ marginInlineStart: desktopInlineLeft }}
                   data-car-deal-picker-desktop-panel
                 >
@@ -327,6 +327,7 @@ export function CarDealPicker({
                         panelGroup.primaryOffer.totalPrice,
                       )}
                       onClose={closePanel}
+                      desktop
                     />
                   ) : null}
                 </div>
@@ -470,24 +471,47 @@ function ProviderPreview({
   total,
   onClose,
   mobile = false,
+  desktop = false,
 }: {
   group: CarProviderOfferGroup;
   total: string;
   onClose: () => void;
   mobile?: boolean;
+  desktop?: boolean;
 }) {
   const offer = group.primaryOffer;
+  const hasOfferFacts =
+    offer.freeCancellation || offer.taxesAndFeesIncluded || offer.payAtPickup;
+
   return (
-    <div>
-      <div className="flex items-start justify-between gap-3">
+    <div
+      data-car-deal-provider-preview
+      data-desktop={desktop ? "true" : "false"}
+    >
+      <div
+        className={`flex items-start justify-between ${
+          desktop
+            ? "gap-4 border-b border-[#E7EDF4] pb-3"
+            : "gap-3"
+        }`}
+      >
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#D8E1EC] bg-white">
+          <span
+            className={`inline-flex shrink-0 items-center justify-center border border-[#D8E1EC] bg-white ${
+              desktop ? "h-10 w-10 rounded-[10px]" : "h-9 w-9 rounded-lg"
+            }`}
+          >
             <ProviderMark group={group} compact />
           </span>
           <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-[#07133B]">{group.providerName}</p>
-            <p className="mt-0.5 text-[11px] text-[#64748B]">
-              {group.offers.length === 1 ? "1 available offer" : `${group.offers.length} available offers · best rate selected`}
+            <p
+              className={`truncate font-bold text-[#07133B] ${
+                desktop
+                  ? "text-[15px] leading-5 tracking-[-0.01em]"
+                  : "text-sm"
+              }`}
+            >
+              {group.providerName}
             </p>
           </div>
         </div>
@@ -495,27 +519,94 @@ function ProviderPreview({
           type="button"
           aria-label="Close provider deal"
           onClick={onClose}
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100"
+          className={`inline-flex shrink-0 items-center justify-center text-slate-600 transition hover:bg-slate-100 ${
+            desktop
+              ? "h-8 w-8 rounded-lg border border-[#E2E8F0] bg-white"
+              : "h-8 w-8 rounded-full"
+          }`}
         >
-          <X size={17} aria-hidden="true" />
+          <X size={desktop ? 16 : 17} strokeWidth={2} aria-hidden="true" />
         </button>
       </div>
 
-      <div className={`${mobile ? "mt-4" : "mt-3"} rounded-lg bg-[#F8FAFC] p-3`}>
-        <p className="text-base font-bold text-[#07133B]" dir="ltr">
+      <div
+        data-car-deal-price-summary
+        className={`${mobile ? "mt-4" : "mt-3"} ${
+          desktop
+            ? "rounded-[10px] border border-[#E1E8F0] bg-[#F8FAFC] px-4 py-3.5"
+            : "rounded-lg bg-[#F8FAFC] p-3"
+        }`}
+      >
+        <p
+          data-car-deal-total-price
+          className={`font-bold text-[#07133B] ${
+            desktop
+              ? "text-[26px] leading-7 tracking-[-0.025em]"
+              : "text-base"
+          }`}
+          dir="ltr"
+        >
           {total}
         </p>
-        <p className="mt-0.5 text-[11px] font-medium leading-4 text-[#64748B]">
+        <p
+          data-car-deal-estimated-total
+          className={`mt-1 font-medium text-[#64748B] ${
+            desktop
+              ? "text-[13px] font-semibold leading-4 text-[#52627A]"
+              : "text-[11px] leading-4"
+          }`}
+        >
           Estimated total
         </p>
       </div>
 
-      <div className="mt-3 space-y-1.5 text-[12px] leading-5 text-[#475569]">
-        {offer.freeCancellation ? <p>Free cancellation</p> : null}
-        {offer.taxesAndFeesIncluded ? <p>Taxes and fees included</p> : null}
-        {offer.payAtPickup ? <p>Pay at pickup</p> : null}
-      </div>
-
+      {hasOfferFacts ? (
+        <div
+          data-car-deal-offer-facts
+          className={
+            desktop
+              ? "mt-3 divide-y divide-[#E7EDF4] overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-[#FCFDFE] px-3.5"
+              : "mt-3 space-y-1.5 text-[12px] leading-5 text-[#475569]"
+          }
+        >
+          {offer.freeCancellation ? (
+            desktop ? (
+              <div className="flex min-h-10 items-center gap-2.5 py-2.5 text-[13px] font-semibold leading-4 text-[#334155]">
+                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#ECF8F1] text-[#16834A]">
+                  <CircleCheck size={14} strokeWidth={2.2} aria-hidden="true" />
+                </span>
+                <span>Free cancellation</span>
+              </div>
+            ) : (
+              <p>Free cancellation</p>
+            )
+          ) : null}
+          {offer.taxesAndFeesIncluded ? (
+            desktop ? (
+              <div className="flex min-h-10 items-center gap-2.5 py-2.5 text-[13px] font-semibold leading-4 text-[#334155]">
+                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-[#52627A]">
+                  <ReceiptText size={14} strokeWidth={2} aria-hidden="true" />
+                </span>
+                <span>Taxes and fees included</span>
+              </div>
+            ) : (
+              <p>Taxes and fees included</p>
+            )
+          ) : null}
+          {offer.payAtPickup ? (
+            desktop ? (
+              <div className="flex min-h-10 items-center gap-2.5 py-2.5 text-[13px] font-semibold leading-4 text-[#334155]">
+                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-[#52627A]">
+                  <WalletCards size={14} strokeWidth={2} aria-hidden="true" />
+                </span>
+                <span>Pay at pickup</span>
+              </div>
+            ) : (
+              <p>Pay at pickup</p>
+            )
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
