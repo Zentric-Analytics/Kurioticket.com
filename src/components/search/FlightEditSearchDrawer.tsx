@@ -364,7 +364,7 @@ export function FlightEditSearchDrawer({
             </h2>
             <button
               type="button"
-              aria-label={t("closeEditSearch")}
+              aria-label={t("closeEditSearch") || "Close edit search"}
               onClick={closeDrawer}
               className="inline-flex h-11 w-11 items-center justify-center text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#064CF7]/35"
             >

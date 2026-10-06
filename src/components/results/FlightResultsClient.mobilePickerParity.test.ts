@@ -16,12 +16,9 @@ test("Results shared drawer uses production mobile picker components", () => {
   assert.match(drawer, /<MobileAirportPicker/);
 });
 
-test("Flight Results keeps Edit Search available in Cars-style top and compact launchers", () => {
-  assert.doesNotMatch(results, /mobileResultsLeadingAction=|mobileResultsSearch=/);
+test("Flight Results keeps Edit Search available in the persistent mobile capsule", () => {
+  assert.match(results, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
   assert.match(results, /data-flight-mobile-summary-card/);
-  assert.match(results, /relative translate-y-1\/2/);
-  assert.match(results, /renderMobileCompactResultsHeader/);
-  assert.match(results, /t\("deals\.results\.modifySearch"\)/);
-  assert.match(results, /data-flight-compact-edit-icon/);
+  assert.doesNotMatch(results, /renderMobileCompactResultsHeader|data-flight-compact-edit-icon/);
   assert.match(results, /openMobileSearchDrawer\(event\.currentTarget/);
 });

@@ -11,7 +11,10 @@ const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "
 test("shared mobile flight editor retains the approved drawer structure", () => {
   assert.match(source, /id="flight-mobile-search-title"/);
   assert.match(source, /resultsMode \? "Change your search" : t\("editFlightSearch"\)/);
-  assert.match(source, /aria-label=\{t\("closeEditSearch"\)\}/);
+  assert.match(
+    source,
+    /aria-label=\{t\("closeEditSearch"\) \|\| "Close edit search"\}/,
+  );
   assert.match(source, /data-mobile-trip-type-grid/);
   assert.match(source, /grid-cols-3/);
   assert.match(source, /role=\{resultsMode \? "tablist" : "radiogroup"\}[\s\S]*?aria-label=\{t\("tripType"\)\}/);
