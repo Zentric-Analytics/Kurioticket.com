@@ -464,7 +464,6 @@ export function CarResultCard({
                   car={car}
                   selectedOfferId={offer.id}
                   onSelectOffer={selectDealOffer}
-              desktopPanelTarget={desktopDealPanelTarget}
                   compact
                 />
               ) : null}
