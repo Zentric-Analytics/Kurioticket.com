@@ -60,7 +60,11 @@ test("mobile Flight page owns stable summary and filter slots across Suspense lo
   assert.ok(header >= 0 && suspense > header);
   assert.match(page, /flightResultsDesktopSticky/);
   assert.match(page, /mobileResultsTrailingActions/);
-  assert.match(page, /data-flight-results-mobile-nav-summary[\s\S]*?min-h-11 w-full min-w-0/);
+  const summarySlotStart = page.indexOf("data-flight-results-mobile-nav-summary");
+  const summarySlotEnd = page.indexOf("/>", summarySlotStart);
+  const summarySlot = page.slice(summarySlotStart, summarySlotEnd);
+  assert.match(summarySlot, /min-h-11 w-full min-w-0 overflow-visible/);
+  assert.doesNotMatch(summarySlot, /overflow-hidden/);
   assert.match(page, /data-flight-results-mobile-nav-filters[\s\S]*?min-h-\[60px\]/);
   assert.match(page, /<FlightResultsClient externalResultsHeader \/>/);
   assert.doesNotMatch(page.slice(suspense), /fallback=\{[\s\S]*?<AppHeader/);
