@@ -88,7 +88,8 @@ export function CarResultCard({
   detailsHref,
   search,
   onSelect,
-  onDealSelectionStart,
+  selectedDealOfferId,
+  onDealOfferSelected,
   actionLabel = "View car",
   providerLabel,
   actionAriaLabel,
@@ -102,7 +103,8 @@ export function CarResultCard({
   detailsHref: string | null;
   search: CarSearchParams;
   onSelect?: (car: NormalizedCarResult) => void;
-  onDealSelectionStart?: () => void;
+  selectedDealOfferId?: string;
+  onDealOfferSelected?: (carId: string, offerId: string) => void;
   actionLabel?: string;
   providerLabel?: string;
   actionAriaLabel?: string;
@@ -125,9 +127,10 @@ export function CarResultCard({
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const primaryOffer = getPrimaryCarOffer(car);
-  const [selectedOfferId, setSelectedOfferId] = useState(
+  const [localSelectedOfferId, setLocalSelectedOfferId] = useState(
     () => primaryOffer?.id ?? "",
   );
+  const selectedOfferId = selectedDealOfferId ?? localSelectedOfferId;
   const offer =
     car.offers.find((candidate) => candidate.id === selectedOfferId) ??
     primaryOffer;
@@ -193,8 +196,11 @@ export function CarResultCard({
   const mobileSpecColumns = getMobileCarSpecColumns(mobilePrimarySpecs);
   const selectDealOffer = (nextOffer: CarOffer) => {
     if (nextOffer.id === selectedOfferId) return;
-    onDealSelectionStart?.();
-    setSelectedOfferId(nextOffer.id);
+    if (onDealOfferSelected) {
+      onDealOfferSelected(car.id, nextOffer.id);
+      return;
+    }
+    setLocalSelectedOfferId(nextOffer.id);
   };
 
   const handleMobileDetailsNavigation = (
