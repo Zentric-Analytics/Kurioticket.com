@@ -62,18 +62,18 @@ const unavailableStandaloneViewDealClassName =
 const mobileStandaloneViewDealVisualStyle: CSSProperties = {
   color: "#004BB8",
   WebkitTextFillColor: "#004BB8",
-  fontSize: "inherit",
+  fontSize: "12px",
   fontWeight: 600,
-  lineHeight: "18px",
+  lineHeight: "16px",
   opacity: 1,
 };
 
 const desktopStandaloneViewDealVisualStyle: CSSProperties = {
   color: "#004BB8",
   WebkitTextFillColor: "#004BB8",
-  fontSize: "inherit",
+  fontSize: "13px",
   fontWeight: 700,
-  lineHeight: "20px",
+  lineHeight: "18px",
   opacity: 1,
 };
 
@@ -483,7 +483,7 @@ export function CarResultCard({
                 className={`${mobileStandaloneViewDealClassName} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40`}
                 style={mobileStandaloneViewDealVisualStyle}
               >
-                View deal <ChevronRight size={16} aria-hidden="true" />
+                View deal <ChevronRight size={14} aria-hidden="true" />
               </button>
             ) : providerBookingHref ? (
               <a
@@ -494,7 +494,7 @@ export function CarResultCard({
                 className={`${mobileStandaloneViewDealClassName} transition-colors hover:text-[#003A8C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40`}
                 style={mobileStandaloneViewDealVisualStyle}
               >
-                View deal <ChevronRight size={16} aria-hidden="true" />
+                View deal <ChevronRight size={14} aria-hidden="true" />
               </a>
             ) : (
               <button
@@ -504,7 +504,7 @@ export function CarResultCard({
                 className={`${mobileStandaloneViewDealClassName} ${unavailableStandaloneViewDealClassName} cursor-not-allowed`}
                 style={mobileStandaloneViewDealVisualStyle}
               >
-                View deal <ChevronRight size={16} aria-hidden="true" />
+                View deal <ChevronRight size={14} aria-hidden="true" />
               </button>
             )}
             </div>
@@ -812,7 +812,7 @@ export function CarResultCard({
                     style={desktopStandaloneViewDealVisualStyle}
                   >
                     View deal
-                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                    <ChevronRight className="h-[15px] w-[15px]" aria-hidden="true" />
                   </a>
                 ) : (
                   <button
@@ -823,7 +823,7 @@ export function CarResultCard({
                     style={desktopStandaloneViewDealVisualStyle}
                   >
                     View deal
-                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                    <ChevronRight className="h-[15px] w-[15px]" aria-hidden="true" />
                   </button>
                 )}
               </div>
