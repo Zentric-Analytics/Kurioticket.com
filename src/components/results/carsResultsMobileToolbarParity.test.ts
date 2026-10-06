@@ -88,11 +88,15 @@ test("the top shortcut rail hands off to a standalone compact header Filter on s
   );
   assert.match(
     source,
-    /const nextVisible =[\s\S]*shortcuts\.getBoundingClientRect\(\)\.top <=[\s\S]*header\.getBoundingClientRect\(\)\.bottom/,
+    /const nextVisible =[\s\S]*shortcuts\.getBoundingClientRect\(\)\.bottom <=[\s\S]*header\.getBoundingClientRect\(\)\.bottom/,
   );
   assert.match(
     stickyShortcuts,
-    /showMobileHeaderFilter[\s\S]*max-sm:pointer-events-none max-sm:opacity-0 max-sm:invisible/,
+    /data-mobile-header-filter-active=\{showMobileHeaderFilter \? "true" : "false"\}/,
+  );
+  assert.doesNotMatch(
+    stickyShortcuts,
+    /pointer-events-none|opacity-0|invisible/,
   );
   assert.match(
     source,
