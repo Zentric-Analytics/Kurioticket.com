@@ -816,7 +816,7 @@ export function AppHeader({
             </div>
           ) : null}
         </div>
-        {mobileResultsFilters ? (
+        {mobileResultsFilters && !mobileMenuOpen && !mobileAccountOpen ? (
           <div data-mobile-results-filter-navbar className="bg-white sm:hidden">
             {mobileResultsFilters}
           </div>
