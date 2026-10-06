@@ -522,18 +522,25 @@ export function HotelPriceAlertControl({
   return (
     <section
       aria-label={t("travel.account.hotelAlert.title")}
-      className={cn("mb-0 sm:mb-5", compactDesktop && "sm:mb-0")}
+      className={cn("mb-3 sm:mb-5", compactDesktop && "sm:mb-0")}
     >
-      <div className="inline-flex shrink-0 sm:hidden">
-        <div className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#9299A9] bg-transparent px-2.5 text-[#1A1A1A]">
-          <Bell
-            className="h-[15px] w-[15px] shrink-0 text-[#1A1A1A]"
-            strokeWidth={2}
-            aria-hidden="true"
-          />
-          <h2 className="truncate text-[12px] font-semibold leading-4 text-[#1A1A1A]">
-            {t("travel.account.hotelAlert.title")}
-          </h2>
+      <div className="w-full sm:hidden">
+        <div className="flex min-h-[58px] items-center gap-3 rounded-xl border border-[#D8E1EC] bg-white px-3 py-2">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F5F7FB]">
+            <Bell
+              className="h-[18px] w-[18px] text-[#142033]"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[14px] font-semibold leading-5 text-[#1A1A1A]">
+              Track prices
+            </h2>
+            <p className="mt-0.5 text-[12px] leading-4 text-[#595959]">
+              Get automatic alerts when prices change.
+            </p>
+          </div>
           <button
             type="button"
             role="switch"
@@ -545,7 +552,7 @@ export function HotelPriceAlertControl({
               void handleToggle(!isTracking, "mobile")
             }
             className={cn(
-              "relative ms-0.5 inline-flex h-[18px] w-8 shrink-0 items-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 disabled:opacity-55",
+              "relative inline-flex h-[24px] w-[42px] shrink-0 items-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 disabled:opacity-55",
               isTracking
                 ? "border-[#004BB8] bg-[#004BB8]"
                 : "border-slate-300 bg-slate-200",
@@ -553,8 +560,8 @@ export function HotelPriceAlertControl({
           >
             <span
               className={cn(
-                "inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform",
-                isTracking ? "translate-x-[14px]" : "translate-x-0.5",
+                "inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform",
+                isTracking ? "translate-x-[19px]" : "translate-x-0.5",
               )}
             />
           </button>
