@@ -210,11 +210,11 @@ test("provider preview keeps only the amount and Estimated total without a Price
 test("standalone View deal keeps one visual hierarchy for linked and unavailable offers", () => {
   assert.match(
     card,
-    /const mobileStandaloneViewDealClassName =\s*"[^"]*text-\[13px\] font-semibold leading-\[18px\] text-\[#004BB8\]"/,
+    /const mobileStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*fontSize: "12px"[\s\S]*fontWeight: 600[\s\S]*color: "#004BB8"|const mobileStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*fontSize: "12px"[\s\S]*fontWeight: 600/,
   );
   assert.match(
     card,
-    /const desktopStandaloneViewDealClassName =\s*"[^"]*text-\[14px\] font-bold leading-5 text-\[#004BB8\]"/,
+    /const desktopStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*fontSize: "13px"[\s\S]*fontWeight: 700[\s\S]*color: "#004BB8"|const desktopStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*fontSize: "13px"[\s\S]*fontWeight: 700/,
   );
   assert.equal(
     (card.match(/\$\{mobileStandaloneViewDealClassName\}/g) ?? []).length,
