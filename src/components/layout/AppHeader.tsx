@@ -756,7 +756,7 @@ export function AppHeader({
         )}
       >
         {mobileResultsSearch ? <>
-        <div data-mobile-results-navbar className={cn("flex h-[72px] items-center sm:hidden", !mobileResultsFilters && "border-b border-slate-200", mobileResultsTrailingActions ? "gap-1 px-1" : "gap-2 px-2")}>
+        <div data-mobile-results-navbar className={cn("flex h-[72px] items-center bg-white sm:hidden", flightResultsDesktopSticky && mobileResultsFilters ? "border-b-0" : "border-b border-slate-200", mobileResultsTrailingActions ? "gap-1 px-1" : "gap-2 px-2")}>
           {mobileResultsLeadingAction ?? (
             mobileResultsTrailingActions ? (
               hotelResultsDesktopSticky ? (
@@ -817,7 +817,7 @@ export function AppHeader({
           ) : null}
         </div>
         {mobileResultsFilters ? (
-          <div data-mobile-results-filter-navbar className="overflow-hidden border-b border-slate-200 bg-white sm:hidden">
+          <div data-mobile-results-filter-navbar className="border-b border-slate-200 bg-white sm:hidden">
             {mobileResultsFilters}
           </div>
         ) : null}

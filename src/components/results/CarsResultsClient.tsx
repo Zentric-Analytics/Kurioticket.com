@@ -2126,22 +2126,25 @@ export function CarsResultsExperience({
 
   const startDealResultsTransition = useCallback(() => {
     const run = ++dealTransitionRunRef.current;
-    const mobile = window.innerWidth < 1024;
     if (dealTransitionTimerRef.current !== null)
       window.clearTimeout(dealTransitionTimerRef.current);
     if (dealTransitionFrameRef.current !== null)
       window.cancelAnimationFrame(dealTransitionFrameRef.current);
+
+    // Compare-deal skeletons are desktop-only. Mobile must keep the active
+    // provider sheet mounted so changing providers behaves like a popup update,
+    // not a page transition.
+    if (!window.matchMedia("(min-width: 1024px)").matches) {
+      setDealTransitionPhase("idle");
+      return;
+    }
 
     setDealTransitionPhase("covering");
     const startedAt = performance.now();
 
     dealTransitionFrameRef.current = window.requestAnimationFrame(() => {
       dealTransitionFrameRef.current = window.requestAnimationFrame(() => {
-        const minimumBusyMs = prefersReducedResultsMotion()
-          ? 0
-          : mobile
-            ? CARS_FILTER_MIN_BUSY_MS
-            : 160;
+        const minimumBusyMs = prefersReducedResultsMotion() ? 0 : 160;
         const remaining = Math.max(
           0,
           minimumBusyMs - (performance.now() - startedAt),
