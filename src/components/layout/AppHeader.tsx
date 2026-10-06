@@ -779,6 +779,16 @@ export function AppHeader({
                 >
                   <ArrowLeft size={24} strokeWidth={2.2} aria-hidden="true" />
                 </button>
+              ) : flightResultsDesktopSticky ? (
+                <Link
+                  href="/"
+                  aria-label="Kurioticket home"
+                  onClick={(event) => handleRouteLinkClick(event, "/")}
+                  className="focus-ring flex h-11 w-10 shrink-0 items-center justify-center rounded-lg text-[#142033] hover:bg-[#EEF6FC]"
+                  data-flight-results-mobile-home
+                >
+                  <ArrowLeft size={24} strokeWidth={2.2} aria-hidden="true" />
+                </Link>
               ) : (
                 <Link href="/" aria-label="Kurioticket home" onClick={(event) => handleRouteLinkClick(event, "/")} className="focus-ring flex h-11 w-10 shrink-0 items-center justify-center rounded-lg">
                   <RawImage src="/brand/kurioticket-icon-blue.svg" alt="" className="h-7 w-7" />
@@ -810,7 +820,7 @@ export function AppHeader({
             </div>
           ) : null}
         </div>
-        {mobileResultsFilters ? (
+        {mobileResultsFilters && !mobileMenuOpen && !mobileAccountOpen ? (
           <div data-mobile-results-filter-navbar className="bg-white sm:hidden">
             {mobileResultsFilters}
           </div>

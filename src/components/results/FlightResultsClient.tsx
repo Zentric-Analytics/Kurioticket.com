@@ -6932,7 +6932,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <>
         <div
           data-mobile-flight-shortcuts
-          className="scrollbar-hide -me-4 flex w-[calc(100%+1rem)] flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
+          className="scrollbar-hide flex w-full min-w-0 flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain px-3 [scroll-padding-inline:0.75rem] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
         >
           {renderFloatingFilterButton(shortcutButtonClass)}
           {renderTrigger("sort", activeSortOption.label)}
@@ -7239,6 +7239,20 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       hotelDesktopBoundary
       flightResultsDesktopSticky
       mobileResultsSearch={renderMobileRouteSummaryCard()}
+      mobileResultsFilters={
+        <section
+          data-flight-mobile-results-shortcuts
+          inert={mobileSearchOpen ? true : undefined}
+          aria-hidden={mobileSearchOpen ? true : undefined}
+          className={cn(
+            "w-full py-2 sm:hidden",
+            mobileSearchOpen && "pointer-events-none",
+          )}
+          aria-label="Flight result filters"
+        >
+          {renderMobileSortResultsRow()}
+        </section>
+      }
       mobileResultsTrailingActions
     />
   );
@@ -7375,24 +7389,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           </h2>
           {!guidedMode && kayak && results.length === 0 ? <CombinedSearchEmpty otherStatus={loading ? "loading" : error ? "error" : "success"} retry={retryMainInventorySearch} /> : (
             <div className={cn(resultStackClass, "space-y-1 sm:space-y-4")}>
-              <div
-                data-flight-mobile-filter-slot
-                className="flight-mobile-scroll-filter-bar flex min-w-0 flex-col items-start sm:hidden"
-              >
-                <section
-                  data-flight-mobile-results-shortcuts
-                  inert={mobileSearchOpen ? true : undefined}
-                  aria-hidden={mobileSearchOpen ? true : undefined}
-                  className={cn(
-                    "w-full sm:hidden",
-                    mobileSearchOpen && "pointer-events-none",
-                  )}
-                  aria-label="Flight result filters"
-                >
-                  {renderMobileSortResultsRow()}
-                </section>
-              </div>
-
               {body?.tripType !== "multi-city" ? (
                 <>
                   <div className="w-full min-w-0 max-w-full overflow-hidden sm:hidden" aria-label="Nearby departure fares" data-nearby-fare-presentation="mobile">

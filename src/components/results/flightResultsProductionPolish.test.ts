@@ -55,7 +55,7 @@ test("mobile nearby insight, quick filters, and price alert use compact native-l
     styles,
     /@media \(max-width: 639px\) \{[\s\S]*?\.flight-mobile-cheaper-nearby \{[\s\S]*?font-size: 11px !important;[\s\S]*?line-height: 15px !important;[\s\S]*?-webkit-text-size-adjust: none;[\s\S]*?text-size-adjust: none;[\s\S]*?\}/,
   );
-  assert.match(source, /data-flight-mobile-filter-slot[\s\S]{0,220}flight-mobile-scroll-filter-bar flex min-w-0 flex-col items-start sm:hidden/);
+  assert.match(source, /mobileResultsFilters=\{[\s\S]{0,500}data-flight-mobile-results-shortcuts/);
   assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 pt-2/);
 });
 
@@ -93,11 +93,11 @@ test("mobile Flight Results contains the filter rail within its gutter and keeps
 
   assert.match(styles, /@media \(max-width: 639px\) \{\s*\.flight-results-grid \{\s*width: calc\(100% - 24px\);/);
   assert.match(source, /min-h-\[28px\][^\n]*max-w-full[^\n]*px-0[^\n]*>Cheaper nearby:/);
-  assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,500}"w-full sm:hidden"/);
+  assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,500}"w-full py-2 sm:hidden"/);
   assert.doesNotMatch(source, /data-flight-mobile-results-shortcuts[\s\S]{0,350}-mx-3/);
-  assert.match(source, /data-mobile-flight-shortcuts[\s\S]{0,180}className="scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\] flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain pe-4/);
+  assert.match(source, /data-mobile-flight-shortcuts[\s\S]{0,220}className="scrollbar-hide flex w-full min-w-0 flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain px-3/);
   assert.match(source, /data-flight-results-main className="max-sm:overflow-x-clip/);
-  assert.match(styles, /\.flight-mobile-scroll-filter-bar \{[\s\S]*?position: sticky;[\s\S]*?padding: 12px 0 4px;/);
+  assert.doesNotMatch(styles, /\.flight-mobile-scroll-filter-bar/);
   assert.doesNotMatch(source, /data-mobile-flight-shortcuts[\s\S]{0,180}className="[^"]*ps-3|flex w-max flex-nowrap/);
   assert.match(source, /data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden"/);
   assert.doesNotMatch(source, /data-flight-mobile-results-intro[^\n]*px-3/);
@@ -162,7 +162,15 @@ test("mobile Flight Results reuses the existing sticky AppHeader architecture", 
   assert.match(appHeader, /mobileResultsSticky = true/);
   assert.match(appHeader, /max-sm:sticky max-sm:top-0/);
   assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.match(source, /mobileResultsFilters=\{/);
   assert.match(source, /mobileResultsTrailingActions/);
+  assert.match(appHeader, /data-flight-results-mobile-home/);
+  const flightHomeMarker = appHeader.indexOf("data-flight-results-mobile-home");
+  const flightHome = appHeader.slice(Math.max(0, flightHomeMarker - 650), flightHomeMarker + 260);
+  assert.match(flightHome, /href="\/"/);
+  assert.match(flightHome, /aria-label="Kurioticket home"/);
+  assert.match(flightHome, /handleRouteLinkClick\(event, "\/"\)/);
+  assert.match(flightHome, /<ArrowLeft size=\{24\} strokeWidth=\{2\.2\}/);
   assert.doesNotMatch(source, /renderMobileCompactResultsHeader|mobileCompactHeaderVisible/);
   assert.match(source, /openMobileSearchDrawer\(event\.currentTarget/);
   assert.match(source, /openMobileFiltersDrawer\(event\.currentTarget/);
