@@ -414,10 +414,7 @@ function ProviderPreview({
       </div>
 
       <div className={`${mobile ? "mt-4" : "mt-3"} rounded-lg bg-[#F8FAFC] p-3`}>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">
-          Price
-        </p>
-        <p className="mt-1 text-base font-bold text-[#07133B]" dir="ltr">
+        <p className="text-base font-bold text-[#07133B]" dir="ltr">
           {total}
         </p>
         <p className="mt-0.5 text-[11px] font-medium leading-4 text-[#64748B]">
