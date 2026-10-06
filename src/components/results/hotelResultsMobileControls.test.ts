@@ -182,3 +182,19 @@ test("Hotel mobile filters are restored to the pre-6108 scroll behavior", () => 
   assert.match(resultsSource, /mobileStyles\.scrollFilterBarHidden/);
   assert.doesNotMatch(resultsPageSource, /mobileResultsFilters=/);
 });
+
+
+test("Hotel mobile filter row ignores filter-interaction scroll restoration", () => {
+  assert.match(resultsSource, /const filterInteractionActive =/);
+  assert.match(resultsSource, /filtersOpen[\s\S]*Boolean\(mobileShortcutMenu\)[\s\S]*mobileHotelSearchOpen[\s\S]*filterApplying/);
+  assert.match(resultsSource, /if \(filterInteractionActive\) \{[\s\S]*direction = 0;[\s\S]*distance = 0;[\s\S]*return;/);
+  assert.match(resultsSource, /setMobileFiltersVisible\(true\);[\s\S]*direction = 0;[\s\S]*distance = 0;/);
+  assert.match(resultsSource, /\[filterApplying, filtersOpen, guided, loading, mobileHotelSearchOpen, mobileShortcutMenu, results\.length\]/);
+});
+
+test("Hotel mobile filter row ignores iOS bottom rubber-band reverse deltas", () => {
+  assert.match(resultsSource, /Math\.min\(maxScrollY, Math\.max\(0, window\.scrollY\)\)/);
+  assert.match(resultsSource, /const distanceFromBottom = Math\.max\(0, maxScrollY - scrollY\)/);
+  assert.match(resultsSource, /if \(delta < 0 && distanceFromBottom <= 40\)/);
+  assert.match(resultsSource, /if \(distance >= \(nextDirection > 0 \? 20 : 12\)\)/);
+});
