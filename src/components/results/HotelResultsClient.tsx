@@ -332,10 +332,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const [mobileHotelSearchClosing, setMobileHotelSearchClosing] = useState(false);
   const [mobileHotelNestedLayerOpen, setMobileHotelNestedLayerOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [mobileFiltersAnimated, setMobileFiltersAnimated] = useState(false);
+  const [mobileFiltersPinned, setMobileFiltersPinned] = useState(false);
+  const [mobileFiltersVisible, setMobileFiltersVisible] = useState(true);
   const [showStickyHotelFilters, setShowStickyHotelFilters] = useState(false);
   const [desktopNavSearchTarget, setDesktopNavSearchTarget] = useState<HTMLElement | null>(null);
   const [mobileNavSearchTarget, setMobileNavSearchTarget] = useState<HTMLElement | null>(null);
-  const [mobileNavFiltersTarget, setMobileNavFiltersTarget] = useState<HTMLElement | null>(null);
   const [desktopSearchPlacement, setDesktopSearchPlacement] = useState<"navbar" | "page" | null>(null);
   const [currentResultsPage, setCurrentResultsPage] = useState(1);
   const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
@@ -345,6 +347,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const paginationListRef = useRef<HTMLDivElement | null>(null);
   const desktopFilterPanelRef = useRef<HTMLDivElement | null>(null);
   const desktopResultsContentRef = useRef<HTMLElement | null>(null);
+  const mobileFilterOriginRef = useRef<HTMLDivElement | null>(null);
+  const mobileFiltersPinnedRef = useRef(false);
   const hotelSortWrapperRef = useRef<HTMLDivElement | null>(null);
   const hotelSortMenuRef = useRef<HTMLDivElement | null>(null);
   const hotelSortTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -873,6 +877,85 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }, [guided]);
 
   useEffect(() => {
+    if (guided || loading || results.length === 0) return undefined;
+
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+    let previousY = Math.max(0, window.scrollY);
+    let direction = 0;
+    let distance = 0;
+    let frame = 0;
+
+    const update = () => {
+      frame = 0;
+      const scrollY = Math.max(0, window.scrollY);
+      const delta = scrollY - previousY;
+      previousY = scrollY;
+
+      if (!mobileQuery.matches) {
+        mobileFiltersPinnedRef.current = false;
+        setMobileFiltersPinned(false);
+        setMobileFiltersAnimated(false);
+        setMobileFiltersVisible(true);
+        return;
+      }
+
+      const headerBottom = document.querySelector<HTMLElement>("[data-app-header]")?.getBoundingClientRect().bottom ?? 72;
+      const naturalFilterBottom = mobileFilterOriginRef.current?.getBoundingClientRect().bottom ?? 0;
+      const resultsBottom = desktopResultsContentRef.current?.getBoundingClientRect().bottom ?? 0;
+      if (scrollY <= 1) {
+        mobileFiltersPinnedRef.current = false;
+        setMobileFiltersPinned(false);
+        setMobileFiltersAnimated(false);
+        setMobileFiltersVisible(true);
+        direction = 0;
+        distance = 0;
+        return;
+      }
+      if (resultsBottom <= headerBottom) {
+        setMobileFiltersVisible(false);
+        return;
+      }
+
+      if (!mobileFiltersPinnedRef.current) {
+        if (naturalFilterBottom <= 8) {
+          mobileFiltersPinnedRef.current = true;
+          setMobileFiltersPinned(true);
+          setMobileFiltersVisible(delta < 0);
+          direction = Math.sign(delta);
+          distance = 0;
+        }
+        return;
+      }
+
+      if (filtersOpen || mobileShortcutMenu || mobileHotelSearchOpen || Math.abs(delta) < 1) return;
+
+      const nextDirection = Math.sign(delta);
+      distance = nextDirection === direction ? distance + Math.abs(delta) : Math.abs(delta);
+      direction = nextDirection;
+      if (distance >= (nextDirection > 0 ? 20 : 12)) {
+        if (nextDirection < 0) setMobileFiltersAnimated(true);
+        setMobileFiltersVisible(nextDirection < 0);
+        distance = 0;
+      }
+    };
+
+    const scheduleUpdate = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+    mobileQuery.addEventListener("change", scheduleUpdate);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+      mobileQuery.removeEventListener("change", scheduleUpdate);
+    };
+  }, [filtersOpen, guided, loading, mobileHotelSearchOpen, mobileShortcutMenu, results.length]);
+
+  useEffect(() => {
     if (guided) return undefined;
     const desktopQuery = window.matchMedia("(min-width: 1024px)");
     const updatePlacement = () => {
@@ -881,7 +964,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     const frame = window.requestAnimationFrame(() => {
       setDesktopNavSearchTarget(document.querySelector<HTMLElement>("[data-hotel-results-nav-search]"));
       setMobileNavSearchTarget(document.querySelector<HTMLElement>("[data-hotel-results-mobile-nav-search]"));
-      setMobileNavFiltersTarget(document.querySelector<HTMLElement>("[data-hotel-results-mobile-nav-filters]"));
       updatePlacement();
     });
     desktopQuery.addEventListener("change", updatePlacement);
@@ -1553,9 +1635,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       {!guided && !loadingContent && mobileNavSearchTarget
         ? createPortal(renderMobileHotelNavSearch(), mobileNavSearchTarget)
         : null}
-      {!guided && !loadingContent && results.length > 0 && mobileNavFiltersTarget
-        ? createPortal(renderMobileHotelShortcuts(), mobileNavFiltersTarget)
-        : null}
       {!guided && !loadingContent && desktopSearchPlacement === "navbar" && desktopNavSearchTarget
         ? createPortal(renderDesktopHotelSearch("hotel-results-nav-search"), desktopNavSearchTarget)
         : null}
@@ -1659,9 +1738,18 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             ) : null}
           </aside>
 
-          <section ref={desktopResultsContentRef} className="min-w-0 space-y-2 sm:space-y-4">
+          <section ref={desktopResultsContentRef} className="relative min-w-0 space-y-2 sm:space-y-4">
             {!guided && results.length > 0 ? (
-              <div data-hotel-results-toolbar className="hidden sm:hidden" aria-hidden="true" />
+              <div ref={mobileFilterOriginRef} className={cn("sm:hidden", mobileStyles.scrollFilterSlot)}>
+                <div
+                  data-hotel-results-toolbar
+                  data-scroll-visible={mobileFiltersVisible ? "true" : "false"}
+                  data-scroll-pinned={mobileFiltersPinned ? "true" : "false"}
+                  className={cn("flex min-w-0 flex-col items-start gap-2 sm:hidden", mobileStyles.scrollFilterBar, mobileFiltersPinned && mobileStyles.scrollFilterBarPinned, mobileFiltersAnimated && mobileStyles.scrollFilterBarAnimated, mobileFiltersPinned && !mobileFiltersVisible && mobileStyles.scrollFilterBarHidden)}
+                >
+                  {renderMobileHotelShortcuts()}
+                </div>
+              </div>
             ) : null}
             {error && results.length === 0 ? (
               <div ref={guided ? guidedErrorRef : undefined} tabIndex={guided ? -1 : undefined} className={cn(hotelResultStackClass, "rounded-[13px] border border-danger/20 bg-white p-4 text-slate-950 shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] sm:rounded-md sm:border-danger/30 sm:bg-red-50 sm:text-danger sm:shadow-none")}>
