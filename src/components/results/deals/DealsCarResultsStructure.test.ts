@@ -103,8 +103,8 @@ test("source-contract: standalone and guided adapters share the one Car result c
   assert.match(stage, /<CarsResultsExperience[\s\S]*results=\{results\}/);
   assert.equal((carsClient.match(/sortCarResults\(filterCarResults/g) ?? []).length, 1);
   assert.equal((carsClient.match(/pageResults\.map\(\(car\) =>/g) ?? []).length, 1);
-  assert.match(carsClient, /<KayakResultCard/);
-  assert.match(carsClient, /<CarResultCard/);
+  assert.doesNotMatch(carsClient, /<KayakResultCard/);
+  assert.match(carsClient, /visibleResults\.map\(\(car\) => \([\s\S]*?<CarResultCard/);
   assert.equal((carsClient.match(/detailsHrefForCar\(car\)/g) ?? []).length, 1);
 });
 
