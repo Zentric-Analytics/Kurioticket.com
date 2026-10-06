@@ -55,11 +55,15 @@ test("provider selection expands the desktop result gap while preserving tablet 
   assert.match(picker, /desktopPanelTarget\?: HTMLElement \| null/);
   assert.match(
     picker,
-    /overlayOpen && desktopPanelTarget[\s\S]*createPortal\([\s\S]*data-car-deal-picker-desktop-expansion[\s\S]*hidden w-full pt-3 lg:block/,
+    /desktopPanelTarget[\s\S]*createPortal\([\s\S]*data-car-deal-picker-desktop-expansion[\s\S]*data-open=\{overlayOpen \? "true" : "false"\}[\s\S]*grid-rows-\[1fr\][\s\S]*grid-rows-\[0fr\]/,
   );
   assert.match(
     picker,
-    /data-car-deal-picker-desktop-panel[\s\S]*style=\{\{ marginInlineStart: desktopInlineLeft \}\}/,
+    /style=\{\{ marginInlineStart: desktopInlineLeft \}\}[\s\S]*data-car-deal-picker-desktop-panel/,
+  );
+  assert.match(
+    picker,
+    /prepareDesktopInlinePosition\(\)[\s\S]*announceDesktopPickerOpen\(\)[\s\S]*setOpenProviderKey\(group\.key\)/,
   );
   assert.doesNotMatch(
     picker,
@@ -84,14 +88,14 @@ test("provider selection expands the desktop result gap while preserving tablet 
   assert.doesNotMatch(picker, />\s*View deal\s*</);
 });
 
-test("closing desktop Compare deals removes the expansion content and restores the normal card gap", () => {
+test("closing desktop Compare deals collapses the expansion and restores the normal card gap", () => {
   assert.match(
     picker,
     /const closePanel = \(\) => \{[\s\S]*setOpenProviderKey\(null\)[\s\S]*setShowAllProviders\(false\)/,
   );
   assert.match(
     picker,
-    /overlayOpen && desktopPanelTarget[\s\S]*data-car-deal-picker-desktop-expansion/,
+    /data-car-deal-picker-desktop-expansion[\s\S]*data-open=\{overlayOpen \? "true" : "false"\}[\s\S]*overlayOpen[\s\S]*grid-rows-\[1fr\] pt-3 opacity-100[\s\S]*grid-rows-\[0fr\] pt-0 opacity-0/,
   );
   assert.match(
     picker,
