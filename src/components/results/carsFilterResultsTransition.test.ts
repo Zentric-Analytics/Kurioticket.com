@@ -6,6 +6,40 @@ const cars = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "
 const skeleton = readFileSync(new URL("../ui/Skeleton.tsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 
+test("Compare deals uses the synchronized full-page Cars skeleton and reveal lifecycle", () => {
+  const start = cars.indexOf("const startDealResultsTransition");
+  const end = cars.indexOf("const toggleCarFilter", start);
+  const transition = cars.slice(start, end);
+
+  assert.ok(start >= 0);
+  assert.match(transition, /setDealTransitionPhase\("covering"\)/);
+  assert.match(transition, /requestAnimationFrame\(\(\) => \{[\s\S]*requestAnimationFrame/);
+  assert.match(transition, /CARS_FILTER_MIN_BUSY_MS/);
+  assert.match(transition, /setDealTransitionPhase\("revealing"\)/);
+  assert.match(transition, /CARS_FILTER_REVEAL_MS/);
+  assert.match(transition, /setDealTransitionPhase\("idle"\)/);
+  assert.match(transition, /dealTransitionRunRef\.current !== run/);
+  assert.match(transition, /setSelectedDealOfferIds/);
+  assert.match(transition, /startDealResultsTransition\(\)/);
+
+  assert.match(
+    cars,
+    /providersLoading \|\| dealTransitionPhase === "covering"[\s\S]*data-cars-results-page-transition=[\s\S]*"compare-deals"[\s\S]*<CarsResultsPageTransitionSkeleton/,
+  );
+  assert.match(
+    cars,
+    /function CarsResultsPageTransitionSkeleton\(\)[\s\S]*fixed inset-0 z-\[1200\]/,
+  );
+  assert.match(
+    cars,
+    /dealTransitionPhase === "revealing" && "cars-filter-results-reveal"/,
+  );
+  assert.match(
+    cars,
+    /selectedDealOfferId=\{selectedDealOfferIds\[car\.id\]\}[\s\S]*onDealOfferSelected=\{selectCompareDealOffer\}/,
+  );
+});
+
 test("Cars filter commits use a painted, cancellable covering and reveal lifecycle", () => {
   const start = cars.indexOf("const startFilterResultsTransition");
   const end = cars.indexOf("const toggleCarFilter", start);
