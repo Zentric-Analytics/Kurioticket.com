@@ -57,29 +57,32 @@ test("provider selection portals a desktop popover and mobile bottom sheet witho
   assert.match(picker, /acquireMobileResultsScrollLock\(\)/);
   assert.match(picker, /event\.key !== "Escape"/);
   assert.match(picker, /role="dialog"/);
-  assert.match(picker, /Selected · View deal uses this provider/);
+  assert.doesNotMatch(picker, /Selected · View deal uses this provider/);
+  assert.doesNotMatch(picker, /Choose this provider to update View deal/);
   assert.doesNotMatch(picker, />\s*Continue deal\s*</);
   assert.doesNotMatch(picker, />\s*View deal\s*</);
 });
 
-test("changing Compare deals shows the shared full-page Cars loading state on desktop and mobile", () => {
-  assert.match(picker, /const CAR_DEAL_SELECTION_BUSY_MS = 320/);
-  assert.match(picker, /const \[dealSelectionPending, setDealSelectionPending\] = useState\(false\)/);
+test("changing Compare deals uses the same result-card skeleton language as Cars filters", () => {
+  assert.doesNotMatch(picker, /BrandedLoading|data-car-deal-selection-loading|Updating deal/);
+  assert.doesNotMatch(picker, /CAR_DEAL_SELECTION_BUSY_MS|dealSelectionPending/);
   assert.match(picker, /const providerChanged = group\.key !== selectedGroup\.key/);
   assert.match(
     picker,
-    /setDealSelectionPending\(true\)[\s\S]*onSelectOffer\(group\.primaryOffer\)[\s\S]*window\.setTimeout\([\s\S]*setDealSelectionPending\(false\)[\s\S]*CAR_DEAL_SELECTION_BUSY_MS/,
+    /if \(!providerChanged\) return;[\s\S]*onSelectOffer\(group\.primaryOffer\)/,
   );
-  assert.match(picker, /aria-busy=\{dealSelectionPending\}/);
-  assert.match(picker, /data-car-deal-selection-loading/);
-  assert.match(picker, /fixed inset-0 z-\[12050\] bg-\[#F5F7FB\]/);
+
+  assert.match(card, /import \{ CarCardSkeleton \} from "@\/components\/ui\/Skeleton"/);
+  assert.match(card, /const CAR_DEAL_SELECTION_MOBILE_BUSY_MS = 220/);
+  assert.match(card, /const CAR_DEAL_SELECTION_DESKTOP_BUSY_MS = 160/);
+  assert.match(card, /const \[dealSelectionPending, setDealSelectionPending\] = useState\(false\)/);
   assert.match(
-    picker,
-    /<BrandedLoading[\s\S]*title="Updating deal"[\s\S]*messages=\{\["Refreshing price and provider\.\.\."\]\}[\s\S]*variant="fullscreen"[\s\S]*visual="logoPulse"[\s\S]*accessibleProgress/,
+    card,
+    /const selectDealOffer = \(nextOffer: CarOffer\) => \{[\s\S]*setDealSelectionPending\(true\)[\s\S]*setSelectedOfferId\(nextOffer\.id\)[\s\S]*prefersReducedResultsMotion\(\)[\s\S]*CAR_DEAL_SELECTION_MOBILE_BUSY_MS[\s\S]*CAR_DEAL_SELECTION_DESKTOP_BUSY_MS[\s\S]*setDealSelectionPending\(false\)/,
   );
-  assert.doesNotMatch(
-    picker,
-    /data-car-deal-selection-loading[^>]*lg:hidden/,
+  assert.match(
+    card,
+    /if \(dealSelectionPending\) \{[\s\S]*<CarCardSkeleton[\s\S]*transitionMotion=\{dealSelectionMobileRef\.current \? "shimmer" : "pulse"\}[\s\S]*desktopSurfaceParity=\{desktopSurfaceParity\}/,
   );
 });
 
@@ -165,7 +168,7 @@ test("desktop Compare deals enforces one open popup across result cards", () => 
   const overflowStart = picker.indexOf("extraCount > 0");
   const overflow = picker.slice(
     overflowStart,
-    picker.indexOf("data-car-deal-selection-loading", overflowStart),
+    picker.indexOf("overlayOpen && typeof document", overflowStart),
   );
   assert.ok(
     overflow.indexOf("announceDesktopPickerOpen()") <
@@ -173,10 +176,17 @@ test("desktop Compare deals enforces one open popup across result cards", () => 
   );
 });
 
-test("provider preview omits internal booking-link handoff copy", () => {
+test("provider preview keeps only total pricing with Price and Estimated total labels", () => {
   assert.doesNotMatch(
     picker,
     /Provider handoff will appear when this seller supplies a booking link\./,
+  );
+  assert.doesNotMatch(picker, /Selected · View deal uses this provider/);
+  assert.doesNotMatch(picker, /Choose this provider to update View deal/);
+  assert.doesNotMatch(picker, /perDay|>Per day</);
+  assert.match(
+    picker,
+    /Price[\s\S]*\{total\}[\s\S]*Estimated total/,
   );
   assert.match(picker, /Free cancellation/);
   assert.match(picker, /Taxes and fees included/);
