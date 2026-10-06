@@ -941,10 +941,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         if (naturalFilterBottom <= 8) {
           mobileFiltersPinnedRef.current = true;
           setMobileFiltersPinned(true);
-          // Pinning or returning from a filter interaction should not hide the row.
-          // A real subsequent downward scroll still hides it after the normal threshold.
-          setMobileFiltersVisible(true);
-          direction = 0;
+          // During the initial downward handoff, pin hidden immediately instead of
+          // briefly flashing the fixed row before the normal hide threshold catches up.
+          // Interaction-driven scroll restoration is ignored above, so applying a
+          // filter no longer re-enters this branch and hides the row by accident.
+          setMobileFiltersVisible(delta < 0);
+          direction = Math.sign(delta);
           distance = 0;
         }
         return;
@@ -1363,7 +1365,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     }
 
     document.addEventListener("keydown", handleKeyDown);
-    const releaseScrollLock = acquireMobileResultsScrollLock();
+    const releaseScrollLock = acquireMobileResultsScrollLock({ freezeBodyPosition: false });
     window.requestAnimationFrame(() => mobileShortcutMenuContentRef.current?.querySelector<HTMLElement>("button:not([disabled])")?.focus());
 
     return () => {
