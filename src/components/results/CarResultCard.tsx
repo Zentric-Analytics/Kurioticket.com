@@ -50,6 +50,12 @@ const carResultBadgeIcons: Record<CarResultBadge, LucideIcon> = {
   "Top rated": Star,
 };
 
+const mobileStandaloneViewDealClassName =
+  "inline-flex min-h-9 shrink-0 items-center justify-end gap-1 text-[13px] font-semibold leading-[18px] text-[#004BB8]";
+
+const desktopStandaloneViewDealClassName =
+  "mt-2 inline-flex min-h-9 items-center justify-end gap-1 text-[14px] font-bold leading-5 text-[#004BB8]";
+
 const approvedProviderBookingUrl = (
   car: NormalizedCarResult,
   offer: CarOffer,
@@ -443,7 +449,7 @@ export function CarResultCard({
                 type="button"
                 onClick={() => onSelect(car)}
                 aria-label={actionAriaLabel}
-                className="inline-flex min-h-9 shrink-0 items-center justify-end gap-1 text-[13px] font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+                className={`${mobileStandaloneViewDealClassName} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40`}
               >
                 View deal <ChevronRight size={16} aria-hidden="true" />
               </button>
@@ -453,7 +459,7 @@ export function CarResultCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`View deal from ${offer.bookingProviderName || offer.rentalCompanyName}`}
-                className="inline-flex min-h-9 shrink-0 items-center justify-end gap-1 text-[13px] font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+                className={`${mobileStandaloneViewDealClassName} transition-colors hover:text-[#003A8C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40`}
               >
                 View deal <ChevronRight size={16} aria-hidden="true" />
               </a>
@@ -462,7 +468,7 @@ export function CarResultCard({
                 type="button"
                 disabled
                 aria-label="Provider booking link unavailable"
-                className="inline-flex min-h-9 shrink-0 cursor-not-allowed items-center justify-end gap-1 text-[13px] font-semibold text-slate-400"
+                className={`${mobileStandaloneViewDealClassName} cursor-not-allowed disabled:opacity-100`}
               >
                 View deal <ChevronRight size={16} aria-hidden="true" />
               </button>
@@ -768,7 +774,7 @@ export function CarResultCard({
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`View deal from ${offer.bookingProviderName || offer.rentalCompanyName}`}
-                    className="mt-2 inline-flex min-h-9 items-center justify-end gap-1 text-[14px] font-bold leading-5 text-[#004BB8] transition-colors hover:text-[#003A8C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
+                    className={`${desktopStandaloneViewDealClassName} transition-colors hover:text-[#003A8C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2`}
                   >
                     View deal
                     <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -778,7 +784,7 @@ export function CarResultCard({
                     type="button"
                     disabled
                     aria-label="Provider booking link unavailable"
-                    className="mt-2 inline-flex min-h-9 cursor-not-allowed items-center justify-end gap-1 text-[14px] font-bold leading-5 text-slate-400"
+                    className={`${desktopStandaloneViewDealClassName} cursor-not-allowed disabled:opacity-100`}
                   >
                     View deal
                     <ChevronRight className="h-4 w-4" aria-hidden="true" />
