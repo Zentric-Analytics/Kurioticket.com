@@ -191,3 +191,16 @@ test("Hotel mobile filter rail is inside the sticky navbar and uses the navbar w
   assert.match(resultsSource, /setMobileNavFiltersTarget\(document\.querySelector<HTMLElement>\("\[data-hotel-results-mobile-nav-filters\]"\)\)/);
   assert.doesNotMatch(resultsSource, /mobileStyles\.scrollFilterBar/);
 });
+
+
+test("Hotel mobile search row removes its inner divider when the navbar filter row is present", () => {
+  const headerSource = readFileSync(
+    new URL("../layout/AppHeader.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    headerSource,
+    /data-mobile-results-navbar[\s\S]*!mobileResultsFilters && "border-b border-slate-200"/,
+  );
+  assert.match(headerSource, /data-mobile-results-filter-navbar[^\n]*bg-white/);
+});

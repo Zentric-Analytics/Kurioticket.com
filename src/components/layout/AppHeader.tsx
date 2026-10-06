@@ -756,7 +756,11 @@ export function AppHeader({
         )}
       >
         {mobileResultsSearch ? <>
-        <div data-mobile-results-navbar className={cn("flex h-[72px] items-center border-b border-slate-200 bg-white sm:hidden", mobileResultsTrailingActions ? "gap-1 px-1" : "gap-2 px-2")}>
+        <div data-mobile-results-navbar className={cn(
+          "flex h-[72px] items-center bg-white sm:hidden",
+          !mobileResultsFilters && "border-b border-slate-200",
+          mobileResultsTrailingActions ? "gap-1 px-1" : "gap-2 px-2",
+        )}>
           {mobileResultsLeadingAction ?? (
             mobileResultsTrailingActions ? (
               hotelResultsDesktopSticky ? (
