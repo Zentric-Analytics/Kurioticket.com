@@ -501,7 +501,7 @@ function ProviderPreview({
               desktop ? "h-10 w-10 rounded-[10px]" : "h-9 w-9 rounded-lg"
             }`}
           >
-            <ProviderMark group={group} compact />
+            <ProviderMark group={group} compact={!desktop} />
           </span>
           <div className="min-w-0">
             <p
@@ -550,11 +550,11 @@ function ProviderPreview({
         </p>
         <p
           data-car-deal-estimated-total
-          className={`mt-1 font-medium text-[#64748B] ${
+          className={
             desktop
-              ? "text-[13px] font-semibold leading-4 text-[#52627A]"
-              : "text-[11px] leading-4"
-          }`}
+              ? "mt-1 text-[13px] font-semibold leading-4 text-[#52627A]"
+              : "mt-0.5 text-[11px] font-medium leading-4 text-[#64748B]"
+          }
         >
           Estimated total
         </p>
