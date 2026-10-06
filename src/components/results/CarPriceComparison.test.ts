@@ -24,7 +24,7 @@ test("provider comparison is driven by normalized car offers", () => {
   assert.match(card, /<CarDealPicker/);
   assert.match(card, /selectedOfferId=\{offer\.id\}/);
   assert.match(card, /onSelectOffer=\{selectDealOffer\}/);
-  assert.match(picker, /getCarProviderOfferGroups\(car\.offers\)/);
+  assert.match(picker, /getCarDealPickerGroups\(car\)/);
   assert.match(picker, /groups\.slice\(0, 3\)/);
   assert.match(picker, /Math\.max\(0, groups\.length - visibleGroups\.length\)/);
   assert.match(picker, /Compare deals/);
@@ -35,7 +35,9 @@ test("provider branding uses mark-only Kurioticket treatment and truthful fallba
   assert.match(picker, /\/brand\/kurioticket-icon-blue\.svg/);
   assert.match(picker, /group\.logoUrl/);
   assert.match(picker, /providerInitial\(group\.providerName\)/);
-  assert.match(picker, /aria-label=\{\`Compare deal from \$\{group\.providerName\}\`\}/);
+  assert.match(picker, /repeatedProvider/);
+  assert.match(picker, /Compare \$\{group\.providerName\} deal \$\{index \+ 1\}/);
+  assert.match(picker, /Compare deal from \$\{group\.providerName\}/);
 });
 
 test("provider selection portals a desktop popover and mobile bottom sheet without another booking CTA", () => {
