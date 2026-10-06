@@ -118,6 +118,16 @@ test("results navbar can render filters as part of the mobile header body", () =
   assert.match(headerSource, /data-mobile-results-filter-navbar className="border-b border-slate-200 bg-white sm:hidden"/);
 });
 
+test("results header hides its filter rail while mobile drawers are open", () => {
+  assert.match(
+    headerSource,
+    /mobileResultsFilters && !mobileMenuOpen && !mobileAccountOpen \? \(/,
+  );
+  assert.match(headerSource, /id="mobile-menu-drawer"[\s\S]*aria-modal="true"/);
+  assert.match(headerSource, /id="mobile-account-drawer"[\s\S]*aria-modal="true"/);
+});
+
+
 test("mobile Flight Results uses a home arrow while preserving the K logo destination", () => {
   const marker = headerSource.indexOf("data-flight-results-mobile-home");
   assert.notEqual(marker, -1);
