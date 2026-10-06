@@ -159,14 +159,24 @@ export function CarDealPicker({
           Compare deals
         </span>
         <div className="flex min-w-0 items-center gap-1.5" role="list" aria-label="Car deal providers">
-          {visibleGroups.map((group) => {
+          {visibleGroups.map((group, index) => {
             const selected = group.key === selectedGroup.key;
+            const repeatedProvider = groups.some(
+              (candidate) =>
+                candidate.key !== group.key &&
+                candidate.providerName.trim().toLocaleLowerCase() ===
+                  group.providerName.trim().toLocaleLowerCase(),
+            );
             return (
               <button
                 key={group.key}
                 type="button"
                 role="listitem"
-                aria-label={`Compare deal from ${group.providerName}`}
+                aria-label={
+                  repeatedProvider
+                    ? `Compare ${group.providerName} deal ${index + 1}`
+                    : `Compare deal from ${group.providerName}`
+                }
                 aria-pressed={selected}
                 onClick={() => selectGroup(group)}
                 className={`inline-flex ${compact ? "h-8 w-8 rounded-lg" : "h-9 w-9 rounded-[10px]"} shrink-0 items-center justify-center overflow-hidden border bg-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 ${
