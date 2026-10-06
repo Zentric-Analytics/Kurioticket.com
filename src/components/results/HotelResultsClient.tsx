@@ -880,14 +880,21 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     if (guided || loading || results.length === 0) return undefined;
 
     const mobileQuery = window.matchMedia("(max-width: 639px)");
-    let previousY = Math.max(0, window.scrollY);
+    const readScrollPosition = () => {
+      const maxScrollY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      return {
+        maxScrollY,
+        scrollY: Math.min(maxScrollY, Math.max(0, window.scrollY)),
+      };
+    };
+    let previousY = readScrollPosition().scrollY;
     let direction = 0;
     let distance = 0;
     let frame = 0;
 
     const update = () => {
       frame = 0;
-      const scrollY = Math.max(0, window.scrollY);
+      const { maxScrollY, scrollY } = readScrollPosition();
       const delta = scrollY - previousY;
       previousY = scrollY;
 
@@ -896,6 +903,20 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         setMobileFiltersPinned(false);
         setMobileFiltersAnimated(false);
         setMobileFiltersVisible(true);
+        return;
+      }
+
+      const filterInteractionActive =
+        filtersOpen ||
+        Boolean(mobileShortcutMenu) ||
+        mobileHotelSearchOpen ||
+        filterApplying;
+
+      // Mobile overlays temporarily lock/restore page scroll. Do not interpret those
+      // programmatic jumps as user scroll direction or reset the pinned filter state.
+      if (filterInteractionActive) {
+        direction = 0;
+        distance = 0;
         return;
       }
 
@@ -920,14 +941,26 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         if (naturalFilterBottom <= 8) {
           mobileFiltersPinnedRef.current = true;
           setMobileFiltersPinned(true);
-          setMobileFiltersVisible(delta < 0);
-          direction = Math.sign(delta);
+          // Pinning or returning from a filter interaction should not hide the row.
+          // A real subsequent downward scroll still hides it after the normal threshold.
+          setMobileFiltersVisible(true);
+          direction = 0;
           distance = 0;
         }
         return;
       }
 
-      if (filtersOpen || mobileShortcutMenu || mobileHotelSearchOpen || Math.abs(delta) < 1) return;
+      if (Math.abs(delta) < 1) return;
+
+      // iOS WebKit can report a short reverse delta while the bottom rubber-band
+      // settles, including in Chrome. Ignore it until the page has genuinely moved
+      // away from the footer; an intentional upward scroll then behaves normally.
+      const distanceFromBottom = Math.max(0, maxScrollY - scrollY);
+      if (delta < 0 && distanceFromBottom <= 40) {
+        direction = 0;
+        distance = 0;
+        return;
+      }
 
       const nextDirection = Math.sign(delta);
       distance = nextDirection === direction ? distance + Math.abs(delta) : Math.abs(delta);
@@ -953,7 +986,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       window.removeEventListener("resize", scheduleUpdate);
       mobileQuery.removeEventListener("change", scheduleUpdate);
     };
-  }, [filtersOpen, guided, loading, mobileHotelSearchOpen, mobileShortcutMenu, results.length]);
+  }, [filterApplying, filtersOpen, guided, loading, mobileHotelSearchOpen, mobileShortcutMenu, results.length]);
 
   useEffect(() => {
     if (guided) return undefined;
