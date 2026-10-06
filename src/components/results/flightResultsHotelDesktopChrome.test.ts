@@ -53,15 +53,16 @@ test("desktop Flight Results reuses the Hotels header composition", () => {
 test("desktop Flight Results keeps the navbar search target synchronized through loading transitions", () => {
   assert.match(
     flight,
-    /const observer = new MutationObserver\(\(\) => \{[\s\S]*?\[data-flight-results-nav-search\][\s\S]*?syncDesktopNavSearchTarget\(\)/,
+    /const syncResultsHeaderTargets = \(\) => \{[\s\S]*?\[data-flight-results-nav-search\][\s\S]*?\[data-flight-results-mobile-nav-summary\][\s\S]*?\[data-flight-results-mobile-nav-filters\]/,
   );
+  assert.match(flight, /const observer = new MutationObserver\(syncResultsHeaderTargets\)/);
   assert.match(
     flight,
     /observer\.observe\(document\.body, \{[\s\S]*?childList: true,[\s\S]*?subtree: true/,
   );
   assert.match(
     flight,
-    /setDesktopNavSearchTarget\(\(current\) =>[\s\S]*?current === nextTarget \? current : nextTarget/,
+    /setDesktopNavSearchTarget\(\(current\) =>[\s\S]*?current === nextDesktopTarget \? current : nextDesktopTarget/,
   );
   assert.doesNotMatch(
     flight,
@@ -85,11 +86,12 @@ test("desktop Flight Results keeps the navbar search target synchronized through
 });
 
 
-test("desktop Flight Results hides navbar search while results are preparing", () => {
-  const shellStart = flight.indexOf("const standaloneResultsHeader = guidedMode ? null : (");
-  const readySearchStart = flight.indexOf("const readyDesktopNavbarSearch =", shellStart);
+test("desktop Flight Results keeps page-owned navbar geometry while search waits for readiness", () => {
+  const shellStart = flight.indexOf("const standaloneResultsHeader =");
+  const externalMobileStart = flight.indexOf("const readyExternalMobileHeader =", shellStart);
+  const readySearchStart = flight.indexOf("const readyDesktopNavbarSearch =", externalMobileStart);
   const preparingStart = flight.indexOf("if (resultsUiPreparing) {", readySearchStart);
-  const headerShell = flight.slice(shellStart, readySearchStart);
+  const headerShell = flight.slice(shellStart, externalMobileStart);
   const readySearchDefinition = flight.slice(readySearchStart, preparingStart);
   const guidedStart = flight.indexOf("if (guidedMode) return (", preparingStart);
   const preparing = flight.slice(preparingStart, guidedStart);
@@ -98,16 +100,16 @@ test("desktop Flight Results hides navbar search while results are preparing", (
 
   assert.ok(
     shellStart >= 0 &&
-      readySearchStart > shellStart &&
+      externalMobileStart > shellStart &&
+      readySearchStart > externalMobileStart &&
       preparingStart > readySearchStart &&
       guidedStart > preparingStart,
   );
-  assert.match(headerShell, /<AppHeader[\s\S]*?flightResultsDesktopSticky/);
-  assert.doesNotMatch(headerShell, /renderDesktopHeaderSearchBar\(\)/);
-  assert.match(readySearchDefinition, /createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
+  assert.match(headerShell, /guidedMode \|\| externalResultsHeader \? null : \([\s\S]*?<AppHeader[\s\S]*?flightResultsDesktopSticky/);
+  assert.match(readySearchDefinition, /!resultsUiPreparing[\s\S]*?createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
   assert.match(preparing, /\{standaloneResultsHeader\}/);
-  assert.doesNotMatch(preparing, /readyDesktopNavbarSearch|renderStickySearchPopoutOverlay\(\)|renderDesktopHeaderSearchBar\(\)/);
-  assert.match(ready, /\{standaloneResultsHeader\}[\s\S]*?\{readyDesktopNavbarSearch\}/);
+  assert.doesNotMatch(preparing, /readyExternalMobileHeader|readyDesktopNavbarSearch|renderStickySearchPopoutOverlay\(\)|renderDesktopHeaderSearchBar\(\)/);
+  assert.match(ready, /\{standaloneResultsHeader\}[\s\S]*?\{readyExternalMobileHeader\}[\s\S]*?\{readyDesktopNavbarSearch\}/);
 });
 
 test("desktop Flight closes an open sticky search when preparation starts", () => {
