@@ -125,6 +125,14 @@ export function CarResultCard({
   const [selectedOfferId, setSelectedOfferId] = useState(
     () => primaryOffer?.id ?? "",
   );
+  useEffect(
+    () => () => {
+      if (dealSelectionTimerRef.current !== null) {
+        window.clearTimeout(dealSelectionTimerRef.current);
+      }
+    },
+    [],
+  );
   const offer =
     car.offers.find((candidate) => candidate.id === selectedOfferId) ??
     primaryOffer;
@@ -188,15 +196,6 @@ export function CarResultCard({
     ? getMobileProviderCarSpecSlots(car.sandboxPresentation.specs)
     : getMobileCarPrimarySpecs(car);
   const mobileSpecColumns = getMobileCarSpecColumns(mobilePrimarySpecs);
-  useEffect(
-    () => () => {
-      if (dealSelectionTimerRef.current !== null) {
-        window.clearTimeout(dealSelectionTimerRef.current);
-      }
-    },
-    [],
-  );
-
   const selectDealOffer = (nextOffer: CarOffer) => {
     if (nextOffer.id === selectedOfferId) return;
 
