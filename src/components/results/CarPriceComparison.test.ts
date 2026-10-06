@@ -129,3 +129,82 @@ test("guided selection and legacy comparison component remain isolated from stan
   assert.match(comparison, /desktopDetailsSelector/);
   assert.doesNotMatch(comparison, /window\.open|router\./);
 });
+
+
+test("desktop Compare deals enforces one open popup across result cards", () => {
+  assert.match(picker, /useId/);
+  assert.match(
+    picker,
+    /const CAR_DEAL_PICKER_DESKTOP_OPEN_EVENT =\s*"kurioticket:car-deal-picker-desktop-open"/,
+  );
+  assert.match(picker, /const pickerInstanceId = useId\(\)/);
+  assert.match(
+    picker,
+    /const closeWhenAnotherDesktopPickerOpens = \(event: Event\) => \{[\s\S]*window\.matchMedia\("\(min-width: 768px\)"\)\.matches[\s\S]*sourceId === pickerInstanceId[\s\S]*setOpenProviderKey\(null\)[\s\S]*setShowAllProviders\(false\)/,
+  );
+  assert.match(
+    picker,
+    /window\.addEventListener\([\s\S]*CAR_DEAL_PICKER_DESKTOP_OPEN_EVENT,[\s\S]*closeWhenAnotherDesktopPickerOpens/,
+  );
+  assert.match(
+    picker,
+    /window\.removeEventListener\([\s\S]*CAR_DEAL_PICKER_DESKTOP_OPEN_EVENT,[\s\S]*closeWhenAnotherDesktopPickerOpens/,
+  );
+  assert.match(
+    picker,
+    /const announceDesktopPickerOpen = \(\) => \{[\s\S]*window\.matchMedia\("\(min-width: 768px\)"\)\.matches[\s\S]*window\.dispatchEvent\([\s\S]*new CustomEvent<string>\(CAR_DEAL_PICKER_DESKTOP_OPEN_EVENT/,
+  );
+  const selectGroup = picker.slice(
+    picker.indexOf("const selectGroup"),
+    picker.indexOf("const closePanel"),
+  );
+  assert.ok(
+    selectGroup.indexOf("announceDesktopPickerOpen()") <
+      selectGroup.indexOf("setOpenProviderKey(group.key)"),
+  );
+  const overflow = picker.slice(
+    picker.indexOf("extraCount > 0"),
+    picker.indexOf("dealSelectionPending"),
+  );
+  assert.ok(
+    overflow.indexOf("announceDesktopPickerOpen()") <
+      overflow.indexOf("setShowAllProviders(true)"),
+  );
+});
+
+test("provider preview omits internal booking-link handoff copy", () => {
+  assert.doesNotMatch(
+    picker,
+    /Provider handoff will appear when this seller supplies a booking link\./,
+  );
+  assert.match(picker, /Free cancellation/);
+  assert.match(picker, /Taxes and fees included/);
+});
+
+test("standalone View deal keeps one visual hierarchy for linked and unavailable offers", () => {
+  assert.match(
+    card,
+    /const mobileStandaloneViewDealClassName =\s*"[^"]*text-\[13px\] font-semibold leading-\[18px\] text-\[#004BB8\]"/,
+  );
+  assert.match(
+    card,
+    /const desktopStandaloneViewDealClassName =\s*"[^"]*text-\[14px\] font-bold leading-5 text-\[#004BB8\]"/,
+  );
+  assert.equal(
+    (card.match(/\$\{mobileStandaloneViewDealClassName\}/g) ?? []).length,
+    3,
+  );
+  assert.equal(
+    (card.match(/\$\{desktopStandaloneViewDealClassName\}/g) ?? []).length,
+    2,
+  );
+  assert.equal(
+    (card.match(/aria-label="Provider booking link unavailable"/g) ?? []).length,
+    2,
+  );
+  assert.equal((card.match(/disabled:opacity-100/g) ?? []).length, 2);
+  assert.doesNotMatch(
+    card,
+    /aria-label="Provider booking link unavailable"[\s\S]{0,220}text-slate-400/,
+  );
+});
