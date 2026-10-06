@@ -2,7 +2,6 @@
 import { useKayakResults } from "./KayakResultsContext";
 import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
 import { kayakCarCardModel } from "./kayakCardModels";
-import { KayakResultCard } from "./KayakResultCard";
 import { isKayakSandboxResult, resultActionHref } from "@/lib/travel/resultAction";
 
 import {
@@ -2852,14 +2851,14 @@ export function CarsResultsExperience({
                       "cars-filter-results-reveal",
                   )}
                 >
-                  {visibleResults.map((car) => car.inventorySource === "kayak-sandbox" && kayak?.offers.some(offer => `kayak-sandbox:${offer.id}` === car.id) ? <KayakResultCard key={car.id} offer={kayak.offers.find(offer => `kayak-sandbox:${offer.id}` === car.id)!} vertical="cars" criteria={kayak.criteria} desktopCarSurfaceParity={!embedded && presentation === "standalone"} /> : (
+                  {visibleResults.map((car) => (
                     <CarResultCard
                       key={car.id}
                       car={car}
                       search={search}
                       badge={badges.get(car.id)}
                       detailsHref={detailsHrefForCar(car)}
-                      providerLabel={isKayakSandboxResult(car) ? "KAYAK sandbox · Not bookable" : undefined}
+                      providerLabel={isKayakSandboxResult(car) ? "KAYAK sandbox · Simulated offer" : undefined}
                       onSelect={
                         onSelectCar && (isCarSelectable?.(car) ?? true)
                           ? onSelectCar
