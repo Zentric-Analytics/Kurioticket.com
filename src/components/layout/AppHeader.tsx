@@ -18,6 +18,7 @@ import { createPortal } from "react-dom";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
+  ArrowLeft,
   Bed,
   Car,
   Check,
@@ -755,9 +756,27 @@ export function AppHeader({
         {mobileResultsSearch ? <div data-mobile-results-navbar className={cn("flex h-[72px] items-center border-b border-slate-200 sm:hidden", mobileResultsTrailingActions ? "gap-1 px-1" : "gap-2 px-2")}>
           {mobileResultsLeadingAction ?? (
             mobileResultsTrailingActions ? (
-              <Link href="/" aria-label="Kurioticket home" onClick={(event) => handleRouteLinkClick(event, "/")} className="focus-ring flex h-11 w-10 shrink-0 items-center justify-center rounded-lg">
-                <RawImage src="/brand/kurioticket-icon-blue.svg" alt="" className="h-7 w-7" />
-              </Link>
+              hotelResultsDesktopSticky ? (
+                <button
+                  type="button"
+                  aria-label="Back"
+                  onClick={() => {
+                    if (window.history.length > 1) {
+                      router.back();
+                    } else {
+                      router.push("/hotels");
+                    }
+                  }}
+                  className="focus-ring flex h-11 w-10 shrink-0 items-center justify-center rounded-lg text-[#142033] hover:bg-[#EEF6FC]"
+                  data-hotel-results-mobile-back
+                >
+                  <ArrowLeft size={24} strokeWidth={2.2} aria-hidden="true" />
+                </button>
+              ) : (
+                <Link href="/" aria-label="Kurioticket home" onClick={(event) => handleRouteLinkClick(event, "/")} className="focus-ring flex h-11 w-10 shrink-0 items-center justify-center rounded-lg">
+                  <RawImage src="/brand/kurioticket-icon-blue.svg" alt="" className="h-7 w-7" />
+                </Link>
+              )
             ) : (
               <button type="button" aria-label={mobileMenuOpen ? t.closeMobileMenu : t.openMobileMenu} aria-expanded={mobileMenuOpen} aria-controls="mobile-menu-drawer" aria-haspopup="dialog" onClick={() => { setMobileAccountOpen(false); setMobileMenuOpen((value) => !value); }} className="focus-ring flex h-11 w-12 shrink-0 items-center justify-center gap-1 rounded-lg">
                 <RawImage src="/brand/kurioticket-icon-blue.svg" alt="Kurioticket" className="h-7 w-7" /><ChevronDown className={cn("h-3 w-3 text-slate-700", mobileMenuOpen && "rotate-180")} aria-hidden="true" />
