@@ -4,7 +4,6 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, X } from "lucide-react";
 
-import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import {
@@ -21,8 +20,6 @@ type Props = {
   onSelectOffer: (offer: CarOffer) => void;
   compact?: boolean;
 };
-
-const CAR_DEAL_SELECTION_BUSY_MS = 320;
 
 const CAR_DEAL_PICKER_DESKTOP_OPEN_EVENT =
   "kurioticket:car-deal-picker-desktop-open";
@@ -77,10 +74,8 @@ export function CarDealPicker({
   const pickerInstanceId = useId();
   const [openProviderKey, setOpenProviderKey] = useState<string | null>(null);
   const [showAllProviders, setShowAllProviders] = useState(false);
-  const [dealSelectionPending, setDealSelectionPending] = useState(false);
   const anchorRef = useRef<HTMLDivElement | null>(null);
   const desktopPanelRef = useRef<HTMLDivElement | null>(null);
-  const selectionTimerRef = useRef<number | null>(null);
   const [desktopPosition, setDesktopPosition] = useState({ top: 0, left: 0 });
   const overlayOpen = Boolean(openProviderKey || showAllProviders);
 
@@ -162,15 +157,6 @@ export function CarDealPicker({
     };
   }, [overlayOpen]);
 
-  useEffect(
-    () => () => {
-      if (selectionTimerRef.current !== null) {
-        window.clearTimeout(selectionTimerRef.current);
-      }
-    },
-    [],
-  );
-
   const selectedGroup =
     groups.find((group) =>
       group.offers.some((offer) => offer.id === selectedOfferId),
@@ -201,16 +187,7 @@ export function CarDealPicker({
 
     if (!providerChanged) return;
 
-    if (selectionTimerRef.current !== null) {
-      window.clearTimeout(selectionTimerRef.current);
-    }
-
-    setDealSelectionPending(true);
     onSelectOffer(group.primaryOffer);
-    selectionTimerRef.current = window.setTimeout(() => {
-      setDealSelectionPending(false);
-      selectionTimerRef.current = null;
-    }, CAR_DEAL_SELECTION_BUSY_MS);
   };
 
   const closePanel = () => {
@@ -224,7 +201,6 @@ export function CarDealPicker({
     <div
       ref={anchorRef}
       data-car-deal-picker
-      aria-busy={dealSelectionPending}
       className={`relative min-w-0 ${compact ? "mt-2" : "mt-3"}`}
     >
       <div className="flex min-w-0 items-center gap-2">
@@ -282,28 +258,6 @@ export function CarDealPicker({
         </div>
       </div>
 
-      {dealSelectionPending && typeof document !== "undefined"
-        ? createPortal(
-            <div
-              data-car-deal-selection-loading
-              className="fixed inset-0 z-[12050] bg-[#F5F7FB]"
-            >
-              <BrandedLoading
-                title="Updating deal"
-                messages={["Refreshing price and provider..."]}
-                variant="fullscreen"
-                visual="logoPulse"
-                showProgress
-                showActivityDots={false}
-                accessibleProgress
-                className="min-h-[100svh] w-full bg-[#F5F7FB] px-5"
-                contentClassName="max-w-md text-center"
-              />
-            </div>,
-            document.body,
-          )
-        : null}
-
       {overlayOpen && typeof document !== "undefined"
         ? createPortal(
             <>
@@ -322,9 +276,7 @@ export function CarDealPicker({
                 ) : panelGroup ? (
                   <ProviderPreview
                     group={panelGroup}
-                    selected={panelGroup.key === selectedGroup.key}
                     total={formatOfferPrice(panelGroup.primaryOffer, panelGroup.primaryOffer.totalPrice)}
-                    perDay={formatOfferPrice(panelGroup.primaryOffer, panelGroup.primaryOffer.pricePerDay)}
                     onClose={closePanel}
                   />
                 ) : null}
@@ -355,9 +307,7 @@ export function CarDealPicker({
                   ) : panelGroup ? (
                     <ProviderPreview
                       group={panelGroup}
-                      selected={panelGroup.key === selectedGroup.key}
                       total={formatOfferPrice(panelGroup.primaryOffer, panelGroup.primaryOffer.totalPrice)}
-                      perDay={formatOfferPrice(panelGroup.primaryOffer, panelGroup.primaryOffer.pricePerDay)}
                       onClose={closePanel}
                       mobile
                     />
@@ -429,16 +379,12 @@ function ProviderList({
 
 function ProviderPreview({
   group,
-  selected,
   total,
-  perDay,
   onClose,
   mobile = false,
 }: {
   group: CarProviderOfferGroup;
-  selected: boolean;
   total: string;
-  perDay: string;
   onClose: () => void;
   mobile?: boolean;
 }) {
@@ -467,15 +413,16 @@ function ProviderPreview({
         </button>
       </div>
 
-      <div className={`${mobile ? "mt-4" : "mt-3"} grid grid-cols-2 gap-2 rounded-lg bg-[#F8FAFC] p-3`}>
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">Total</p>
-          <p className="mt-1 text-base font-bold text-[#07133B]" dir="ltr">{total}</p>
-        </div>
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">Per day</p>
-          <p className="mt-1 text-base font-bold text-[#07133B]" dir="ltr">{perDay}</p>
-        </div>
+      <div className={`${mobile ? "mt-4" : "mt-3"} rounded-lg bg-[#F8FAFC] p-3`}>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">
+          Price
+        </p>
+        <p className="mt-1 text-base font-bold text-[#07133B]" dir="ltr">
+          {total}
+        </p>
+        <p className="mt-0.5 text-[11px] font-medium leading-4 text-[#64748B]">
+          Estimated total
+        </p>
       </div>
 
       <div className="mt-3 space-y-1.5 text-[12px] leading-5 text-[#475569]">
@@ -484,11 +431,6 @@ function ProviderPreview({
         {offer.payAtPickup ? <p>Pay at pickup</p> : null}
       </div>
 
-      <p className={`mt-3 rounded-lg px-3 py-2 text-[11px] font-semibold ${
-        selected ? "bg-[#EEF5FF] text-[#004BB8]" : "bg-slate-100 text-[#475569]"
-      }`}>
-        {selected ? "Selected · View deal uses this provider" : "Choose this provider to update View deal"}
-      </p>
     </div>
   );
 }
