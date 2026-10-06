@@ -213,7 +213,10 @@ test("standalone View deal keeps one visual hierarchy for linked and unavailable
     (card.match(/aria-label="Provider booking link unavailable"/g) ?? []).length,
     2,
   );
-  assert.equal((card.match(/disabled:opacity-100/g) ?? []).length, 2);
+  assert.match(
+    card,
+    /const unavailableStandaloneViewDealClassName =\s*"[^"]*appearance-none[^"]*text-\[#004BB8\][^"]*\[-webkit-text-fill-color:#004BB8\][^"]*disabled:text-\[#004BB8\][^"]*disabled:opacity-100[^"]*disabled:\[-webkit-text-fill-color:#004BB8\]"/,
+  );
   assert.doesNotMatch(
     card,
     /aria-label="Provider booking link unavailable"[\s\S]{0,220}text-slate-400/,

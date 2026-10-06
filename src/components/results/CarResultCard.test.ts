@@ -68,6 +68,25 @@ test("KAYAK handoff is validated once while guided detail navigation remains ava
   assert.equal((source.match(/prefetch=\{car\.inventorySource === "kayak-sandbox" \? false : undefined\}/g) ?? []).length, 1);
 });
 
+test("disabled Kurioticket View deal neutralizes native disabled styling while keeping KAYAK typography and blue", () => {
+  assert.match(
+    source,
+    /const unavailableStandaloneViewDealClassName =\s*"[^"]*appearance-none[^"]*border-0[^"]*bg-transparent[^"]*p-0[^"]*text-\[#004BB8\][^"]*\[-webkit-text-fill-color:#004BB8\][^"]*disabled:text-\[#004BB8\][^"]*disabled:opacity-100[^"]*disabled:\[-webkit-text-fill-color:#004BB8\]"/,
+  );
+  assert.match(
+    source,
+    /const mobileStandaloneViewDealClassName =\s*"[^"]*text-\[13px\] font-semibold leading-\[18px\] text-\[#004BB8\]"/,
+  );
+  assert.match(
+    source,
+    /const desktopStandaloneViewDealClassName =\s*"[^"]*text-\[14px\] font-bold leading-5 text-\[#004BB8\]"/,
+  );
+  assert.equal(
+    (source.match(/\$\{unavailableStandaloneViewDealClassName\}/g) ?? []).length,
+    2,
+  );
+});
+
 test("standalone mobile follows native daily-price and consistent View deal commerce", () => {
   const mobile = source.slice(
     source.indexOf("data-car-card-mobile-lower-band"),
@@ -91,7 +110,7 @@ test("standalone mobile follows native daily-price and consistent View deal comm
   );
   assert.match(
     mobile,
-    /disabled[\s\S]*aria-label="Provider booking link unavailable"[\s\S]*mobileStandaloneViewDealClassName[\s\S]*cursor-not-allowed disabled:opacity-100/,
+    /disabled[\s\S]*aria-label="Provider booking link unavailable"[\s\S]*mobileStandaloneViewDealClassName[\s\S]*unavailableStandaloneViewDealClassName[\s\S]*cursor-not-allowed/,
   );
   assert.doesNotMatch(
     mobile,
@@ -485,7 +504,7 @@ test("standalone desktop pricing follows the selected provider and keeps one Vie
   );
   assert.match(
     desktop,
-    /disabled[\s\S]*aria-label="Provider booking link unavailable"[\s\S]*desktopStandaloneViewDealClassName[\s\S]*cursor-not-allowed disabled:opacity-100/,
+    /disabled[\s\S]*aria-label="Provider booking link unavailable"[\s\S]*desktopStandaloneViewDealClassName[\s\S]*unavailableStandaloneViewDealClassName[\s\S]*cursor-not-allowed/,
   );
   assert.doesNotMatch(
     desktop,
