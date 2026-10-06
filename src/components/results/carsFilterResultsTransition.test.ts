@@ -6,15 +6,24 @@ const cars = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "
 const skeleton = readFileSync(new URL("../ui/Skeleton.tsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 
-test("Compare deals uses the synchronized full-page Cars skeleton and reveal lifecycle", () => {
+test("Compare deals uses the synchronized full-page Cars skeleton on desktop only", () => {
   const start = cars.indexOf("const startDealResultsTransition");
   const end = cars.indexOf("const toggleCarFilter", start);
   const transition = cars.slice(start, end);
 
   assert.ok(start >= 0);
+  assert.match(
+    transition,
+    /window\.matchMedia\("\(min-width: 1024px\)"\)\.matches/,
+  );
+  assert.match(
+    transition,
+    /if \(!window\.matchMedia[\s\S]*setDealTransitionPhase\("idle"\)[\s\S]*return;/,
+  );
   assert.match(transition, /setDealTransitionPhase\("covering"\)/);
   assert.match(transition, /requestAnimationFrame\(\(\) => \{[\s\S]*requestAnimationFrame/);
-  assert.match(transition, /CARS_FILTER_MIN_BUSY_MS/);
+  assert.doesNotMatch(transition, /CARS_FILTER_MIN_BUSY_MS/);
+  assert.match(transition, /prefersReducedResultsMotion\(\) \? 0 : 160/);
   assert.match(transition, /setDealTransitionPhase\("revealing"\)/);
   assert.match(transition, /CARS_FILTER_REVEAL_MS/);
   assert.match(transition, /setDealTransitionPhase\("idle"\)/);

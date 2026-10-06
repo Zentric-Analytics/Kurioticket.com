@@ -64,20 +64,24 @@ test("provider selection portals a desktop popover and mobile bottom sheet witho
   assert.doesNotMatch(picker, />\s*View deal\s*</);
 });
 
-test("changing Compare deals switches the entire Cars page into the shared skeleton lifecycle", () => {
+test("changing Compare deals uses the full-page skeleton on desktop only and keeps mobile popup state mounted", () => {
   assert.doesNotMatch(picker, /BrandedLoading|data-car-deal-selection-loading|Updating deal/);
   assert.doesNotMatch(card, /CarCardSkeleton|dealSelectionPending|CAR_DEAL_SELECTION_MOBILE_BUSY_MS/);
   assert.match(picker, /const providerChanged = group\.key !== selectedGroup\.key/);
   assert.match(
     picker,
-    /if \(!providerChanged\) return;[\s\S]*onSelectOffer\(group\.primaryOffer\)/,
+    /setOpenProviderKey\(group\.key\)[\s\S]*if \(!providerChanged\) return;[\s\S]*onSelectOffer\(group\.primaryOffer\)/,
   );
 
   assert.match(results, /const \[dealTransitionPhase, setDealTransitionPhase\]/);
   assert.match(results, /const \[selectedDealOfferIds, setSelectedDealOfferIds\]/);
   assert.match(
     results,
-    /const startDealResultsTransition = useCallback\(\(\) => \{[\s\S]*setDealTransitionPhase\("covering"\)[\s\S]*requestAnimationFrame[\s\S]*CARS_FILTER_MIN_BUSY_MS[\s\S]*setDealTransitionPhase\("revealing"\)[\s\S]*CARS_FILTER_REVEAL_MS/,
+    /const startDealResultsTransition = useCallback\(\(\) => \{[\s\S]*window\.matchMedia\("\(min-width: 1024px\)"\)\.matches[\s\S]*setDealTransitionPhase\("idle"\)[\s\S]*return;[\s\S]*setDealTransitionPhase\("covering"\)[\s\S]*requestAnimationFrame[\s\S]*setDealTransitionPhase\("revealing"\)[\s\S]*CARS_FILTER_REVEAL_MS/,
+  );
+  assert.match(
+    results,
+    /const minimumBusyMs = prefersReducedResultsMotion\(\) \? 0 : 160/,
   );
   assert.match(
     results,
