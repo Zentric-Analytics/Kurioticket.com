@@ -756,7 +756,7 @@ export function AppHeader({
         )}
       >
         {mobileResultsSearch ? <>
-        <div data-mobile-results-navbar className={cn("flex h-[72px] items-center border-b border-slate-200 sm:hidden", mobileResultsTrailingActions ? "gap-1 px-1" : "gap-2 px-2")}>
+        <div data-mobile-results-navbar className={cn("flex h-[72px] items-center sm:hidden", !mobileResultsFilters && "border-b border-slate-200", mobileResultsTrailingActions ? "gap-1 px-1" : "gap-2 px-2")}>
           {mobileResultsLeadingAction ?? (
             mobileResultsTrailingActions ? (
               hotelResultsDesktopSticky ? (
@@ -775,6 +775,16 @@ export function AppHeader({
                 >
                   <ArrowLeft size={24} strokeWidth={2.2} aria-hidden="true" />
                 </button>
+              ) : flightResultsDesktopSticky ? (
+                <Link
+                  href="/"
+                  aria-label="Kurioticket home"
+                  onClick={(event) => handleRouteLinkClick(event, "/")}
+                  className="focus-ring flex h-11 w-10 shrink-0 items-center justify-center rounded-lg text-[#142033] hover:bg-[#EEF6FC]"
+                  data-flight-results-mobile-home
+                >
+                  <ArrowLeft size={24} strokeWidth={2.2} aria-hidden="true" />
+                </Link>
               ) : (
                 <Link href="/" aria-label="Kurioticket home" onClick={(event) => handleRouteLinkClick(event, "/")} className="focus-ring flex h-11 w-10 shrink-0 items-center justify-center rounded-lg">
                   <RawImage src="/brand/kurioticket-icon-blue.svg" alt="" className="h-7 w-7" />
@@ -807,7 +817,7 @@ export function AppHeader({
           ) : null}
         </div>
         {mobileResultsFilters ? (
-          <div data-mobile-results-filter-navbar className="border-b border-slate-200 bg-[#F5F7FB] sm:hidden">
+          <div data-mobile-results-filter-navbar className="overflow-hidden border-b border-slate-200 bg-white sm:hidden">
             {mobileResultsFilters}
           </div>
         ) : null}
