@@ -335,7 +335,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const [showStickyHotelFilters, setShowStickyHotelFilters] = useState(false);
   const [desktopNavSearchTarget, setDesktopNavSearchTarget] = useState<HTMLElement | null>(null);
   const [mobileNavSearchTarget, setMobileNavSearchTarget] = useState<HTMLElement | null>(null);
-  const [mobileNavFiltersTarget, setMobileNavFiltersTarget] = useState<HTMLElement | null>(null);
   const [desktopSearchPlacement, setDesktopSearchPlacement] = useState<"navbar" | "page" | null>(null);
   const [currentResultsPage, setCurrentResultsPage] = useState(1);
   const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
@@ -881,7 +880,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     const frame = window.requestAnimationFrame(() => {
       setDesktopNavSearchTarget(document.querySelector<HTMLElement>("[data-hotel-results-nav-search]"));
       setMobileNavSearchTarget(document.querySelector<HTMLElement>("[data-hotel-results-mobile-nav-search]"));
-      setMobileNavFiltersTarget(document.querySelector<HTMLElement>("[data-hotel-results-mobile-nav-filters]"));
       updatePlacement();
     });
     desktopQuery.addEventListener("change", updatePlacement);
@@ -1542,7 +1540,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           {mobileNavDateSummary} · {mobileNavGuestsSummary}
         </span>
       </span>
-      <span aria-hidden="true" className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E6EFFD] text-[#142033]">
+      <span aria-hidden="true" className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#142033]">
         <SquarePen size={15} strokeWidth={2} />
       </span>
     </button>
@@ -1552,9 +1550,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     <>
       {!guided && !loadingContent && mobileNavSearchTarget
         ? createPortal(renderMobileHotelNavSearch(), mobileNavSearchTarget)
-        : null}
-      {!guided && !loadingContent && results.length > 0 && mobileNavFiltersTarget
-        ? createPortal(renderMobileHotelShortcuts(), mobileNavFiltersTarget)
         : null}
       {!guided && !loadingContent && desktopSearchPlacement === "navbar" && desktopNavSearchTarget
         ? createPortal(renderDesktopHotelSearch("hotel-results-nav-search"), desktopNavSearchTarget)
@@ -1661,7 +1656,9 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
           <section ref={desktopResultsContentRef} className="min-w-0 space-y-2 sm:space-y-4">
             {!guided && results.length > 0 ? (
-              <div data-hotel-results-toolbar className="hidden sm:hidden" aria-hidden="true" />
+              <div data-hotel-results-toolbar className={cn("flex min-w-0 flex-col items-start sm:hidden", mobileStyles.scrollFilterBar)}>
+                {renderMobileHotelShortcuts()}
+              </div>
             ) : null}
             {error && results.length === 0 ? (
               <div ref={guided ? guidedErrorRef : undefined} tabIndex={guided ? -1 : undefined} className={cn(hotelResultStackClass, "rounded-[13px] border border-danger/20 bg-white p-4 text-slate-950 shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] sm:rounded-md sm:border-danger/30 sm:bg-red-50 sm:text-danger sm:shadow-none")}>
