@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 
 const card = readFileSync(new URL("./CarResultCard.tsx", import.meta.url), "utf8");
 const picker = readFileSync(new URL("./CarDealPicker.tsx", import.meta.url), "utf8");
+const results = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
 const comparison = readFileSync(new URL("./CarPriceComparison.tsx", import.meta.url), "utf8");
 const desktop = card.slice(card.indexOf('data-region="heading"'));
 const specs = desktop.slice(
@@ -63,26 +64,32 @@ test("provider selection portals a desktop popover and mobile bottom sheet witho
   assert.doesNotMatch(picker, />\s*View deal\s*</);
 });
 
-test("changing Compare deals uses the same result-card skeleton language as Cars filters", () => {
+test("changing Compare deals switches the entire Cars page into the shared skeleton lifecycle", () => {
   assert.doesNotMatch(picker, /BrandedLoading|data-car-deal-selection-loading|Updating deal/);
-  assert.doesNotMatch(picker, /CAR_DEAL_SELECTION_BUSY_MS|dealSelectionPending/);
+  assert.doesNotMatch(card, /CarCardSkeleton|dealSelectionPending|CAR_DEAL_SELECTION_MOBILE_BUSY_MS/);
   assert.match(picker, /const providerChanged = group\.key !== selectedGroup\.key/);
   assert.match(
     picker,
     /if \(!providerChanged\) return;[\s\S]*onSelectOffer\(group\.primaryOffer\)/,
   );
 
-  assert.match(card, /import \{ CarCardSkeleton \} from "@\/components\/ui\/Skeleton"/);
-  assert.match(card, /const CAR_DEAL_SELECTION_MOBILE_BUSY_MS = 220/);
-  assert.match(card, /const CAR_DEAL_SELECTION_DESKTOP_BUSY_MS = 160/);
-  assert.match(card, /const \[dealSelectionPending, setDealSelectionPending\] = useState\(false\)/);
+  assert.match(results, /const \[dealTransitionPhase, setDealTransitionPhase\]/);
+  assert.match(results, /const \[selectedDealOfferIds, setSelectedDealOfferIds\]/);
   assert.match(
-    card,
-    /const selectDealOffer = \(nextOffer: CarOffer\) => \{[\s\S]*setDealSelectionPending\(true\)[\s\S]*setSelectedOfferId\(nextOffer\.id\)[\s\S]*prefersReducedResultsMotion\(\)[\s\S]*CAR_DEAL_SELECTION_MOBILE_BUSY_MS[\s\S]*CAR_DEAL_SELECTION_DESKTOP_BUSY_MS[\s\S]*setDealSelectionPending\(false\)/,
+    results,
+    /const startDealResultsTransition = useCallback\(\(\) => \{[\s\S]*setDealTransitionPhase\("covering"\)[\s\S]*requestAnimationFrame[\s\S]*CARS_FILTER_MIN_BUSY_MS[\s\S]*setDealTransitionPhase\("revealing"\)[\s\S]*CARS_FILTER_REVEAL_MS/,
   );
   assert.match(
-    card,
-    /if \(dealSelectionPending\) \{[\s\S]*<CarCardSkeleton[\s\S]*transitionMotion=\{dealSelectionMobileRef\.current \? "shimmer" : "pulse"\}[\s\S]*desktopSurfaceParity=\{desktopSurfaceParity\}/,
+    results,
+    /providersLoading \|\| dealTransitionPhase === "covering"[\s\S]*data-cars-results-page-transition=[\s\S]*"compare-deals"[\s\S]*<CarsResultsPageTransitionSkeleton/,
+  );
+  assert.match(
+    results,
+    /dealTransitionPhase === "revealing" && "cars-filter-results-reveal"/,
+  );
+  assert.match(
+    results,
+    /selectedDealOfferId=\{selectedDealOfferIds\[car\.id\]\}[\s\S]*onDealOfferSelected=\{selectCompareDealOffer\}/,
   );
 });
 
@@ -117,10 +124,20 @@ test("standalone View deal is the single provider handoff and never fabricates a
   assert.doesNotMatch(card, /href="#"/);
 });
 
-test("selected provider controls the visible standalone price", () => {
-  assert.match(card, /const \[selectedOfferId, setSelectedOfferId\] = useState/);
+test("selected provider survives the synchronized page skeleton and controls View deal", () => {
+  assert.match(card, /const \[localSelectedOfferId, setLocalSelectedOfferId\] = useState/);
+  assert.match(card, /const selectedOfferId = selectedDealOfferId \?\? localSelectedOfferId/);
   assert.match(card, /car\.offers\.find\(\(candidate\) => candidate\.id === selectedOfferId\)/);
-  assert.match(card, /setSelectedOfferId\(nextOffer\.id\)/);
+  assert.match(
+    card,
+    /if \(onDealOfferSelected\) \{[\s\S]*onDealOfferSelected\(car\.id, nextOffer\.id\)[\s\S]*return;[\s\S]*setLocalSelectedOfferId\(nextOffer\.id\)/,
+  );
+  assert.match(
+    results,
+    /setSelectedDealOfferIds\([\s\S]*\[carId\]: offerId[\s\S]*startDealResultsTransition\(\)/,
+  );
+  assert.match(card, /const providerBookingHref = approvedProviderBookingUrl\(car, offer\)/);
+  assert.equal((card.match(/href=\{providerBookingHref\}/g) ?? []).length, 2);
   assert.match(desktop, /dailyDisplayPrice\.formatted/);
   assert.doesNotMatch(desktop, /<CarPriceComparison/);
 });
@@ -176,7 +193,7 @@ test("desktop Compare deals enforces one open popup across result cards", () => 
   );
 });
 
-test("provider preview keeps only total pricing with Price and Estimated total labels", () => {
+test("provider preview keeps only the amount and Estimated total without a Price label", () => {
   assert.doesNotMatch(
     picker,
     /Provider handoff will appear when this seller supplies a booking link\./,
@@ -184,10 +201,8 @@ test("provider preview keeps only total pricing with Price and Estimated total l
   assert.doesNotMatch(picker, /Selected · View deal uses this provider/);
   assert.doesNotMatch(picker, /Choose this provider to update View deal/);
   assert.doesNotMatch(picker, /perDay|>Per day</);
-  assert.match(
-    picker,
-    /Price[\s\S]*\{total\}[\s\S]*Estimated total/,
-  );
+  assert.doesNotMatch(picker, />\s*Price\s*</);
+  assert.match(picker, /\{total\}[\s\S]*Estimated total/);
   assert.match(picker, /Free cancellation/);
   assert.match(picker, /Taxes and fees included/);
 });
@@ -215,7 +230,15 @@ test("standalone View deal keeps one visual hierarchy for linked and unavailable
   );
   assert.match(
     card,
-    /const unavailableStandaloneViewDealClassName =\s*"[^"]*appearance-none[^"]*text-\[#004BB8\][^"]*\[-webkit-text-fill-color:#004BB8\][^"]*disabled:text-\[#004BB8\][^"]*disabled:opacity-100[^"]*disabled:\[-webkit-text-fill-color:#004BB8\]"/,
+    /const unavailableStandaloneViewDealClassName =\s*"[^"]*appearance-none[^"]*text-\[#004BB8\][^"]*disabled:text-\[#004BB8\][^"]*disabled:opacity-100"/,
+  );
+  assert.match(
+    card,
+    /const standaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*WebkitTextFillColor: "#004BB8"[\s\S]*opacity: 1/,
+  );
+  assert.equal(
+    (card.match(/style=\{standaloneViewDealVisualStyle\}/g) ?? []).length,
+    4,
   );
   assert.doesNotMatch(
     card,
