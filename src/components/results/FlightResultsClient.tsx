@@ -1115,6 +1115,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [mobileShortcutSheet, setMobileShortcutSheet] = useState<MobileShortcutSheet | null>(null);
+  const [mobileFilterRailVisible, setMobileFilterRailVisible] = useState(true);
+  const [mobileFilterRailPinned, setMobileFilterRailPinned] = useState(false);
+  const [mobileFilterRailAnimated, setMobileFilterRailAnimated] = useState(false);
+  const mobileFilterRailOriginRef = useRef<HTMLDivElement | null>(null);
+  const mobileFilterRailPinnedRef = useRef(false);
+  const mobileResultsContentRef = useRef<HTMLElement | null>(null);
 
   const [mobileDraftSort, setMobileDraftSort] = useState<SortMode>(sortMode);
   const [mobileDraftAirlines, setMobileDraftAirlines] = useState<string[]>([]);
@@ -1541,6 +1547,96 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
   }, [guidedMode]);
+
+  useEffect(() => {
+    if (guidedMode || loading || results.length === 0 || typeof window === "undefined") return undefined;
+
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+    let previousY = Math.max(0, window.scrollY);
+    let direction = 0;
+    let distance = 0;
+    let frame = 0;
+
+    const resetMobileFilterRail = () => {
+      mobileFilterRailPinnedRef.current = false;
+      setMobileFilterRailPinned(false);
+      setMobileFilterRailAnimated(false);
+      setMobileFilterRailVisible(true);
+      direction = 0;
+      distance = 0;
+    };
+
+    const update = () => {
+      frame = 0;
+      const scrollY = Math.max(0, window.scrollY);
+      const delta = scrollY - previousY;
+      previousY = scrollY;
+
+      if (!mobileQuery.matches) {
+        resetMobileFilterRail();
+        return;
+      }
+
+      const headerBottom =
+        document.querySelector<HTMLElement>("[data-app-header]")?.getBoundingClientRect().bottom ?? 72;
+      const naturalFilterBottom =
+        mobileFilterRailOriginRef.current?.getBoundingClientRect().bottom ?? 0;
+      const resultsBottom =
+        mobileResultsContentRef.current?.getBoundingClientRect().bottom ?? 0;
+
+      if (scrollY <= 1) {
+        resetMobileFilterRail();
+        return;
+      }
+
+      if (resultsBottom <= headerBottom) {
+        setMobileFilterRailVisible(false);
+        return;
+      }
+
+      if (!mobileFilterRailPinnedRef.current) {
+        if (naturalFilterBottom <= 8) {
+          mobileFilterRailPinnedRef.current = true;
+          setMobileFilterRailPinned(true);
+          setMobileFilterRailVisible(delta < 0);
+          direction = Math.sign(delta);
+          distance = 0;
+        }
+        return;
+      }
+
+      if (filtersOpen || mobileShortcutSheet || mobileSearchOpen || Math.abs(delta) < 1) return;
+
+      const nextDirection = Math.sign(delta);
+      distance =
+        nextDirection === direction
+          ? distance + Math.abs(delta)
+          : Math.abs(delta);
+      direction = nextDirection;
+
+      if (distance >= (nextDirection > 0 ? 20 : 12)) {
+        if (nextDirection < 0) setMobileFilterRailAnimated(true);
+        setMobileFilterRailVisible(nextDirection < 0);
+        distance = 0;
+      }
+    };
+
+    const scheduleUpdate = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+    mobileQuery.addEventListener("change", scheduleUpdate);
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+      mobileQuery.removeEventListener("change", scheduleUpdate);
+    };
+  }, [filtersOpen, guidedMode, loading, mobileSearchOpen, mobileShortcutSheet, results.length]);
 
   useEffect(() => {
     if (guidedMode || typeof window === "undefined") return undefined;
@@ -6932,7 +7028,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <>
         <div
           data-mobile-flight-shortcuts
-          className="scrollbar-hide -me-4 flex w-[calc(100%+1rem)] flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
+          className="scrollbar-hide -me-[14px] flex w-[calc(100%+14px)] flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pe-[14px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
         >
           {renderFloatingFilterButton(shortcutButtonClass)}
           {renderTrigger("sort", activeSortOption.label)}
@@ -7343,7 +7439,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       </section>
 
       <div
-        className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-0 pt-1 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-4"
+        className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-0 pt-0 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-4"
       >
         <aside className="relative hidden self-stretch lg:block">
           <div>{renderDesktopFlightFilters()}</div>
@@ -7362,7 +7458,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           />
         </aside>
 
-        <section className="min-w-0 space-y-4 lg:space-y-0">
+        <section ref={mobileResultsContentRef} className="min-w-0 space-y-4 lg:space-y-0">
           <p className="sr-only" aria-live="polite">
             {savedItemError}
           </p>
@@ -7375,18 +7471,33 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           </h2>
           {!guidedMode && kayak && results.length === 0 ? <CombinedSearchEmpty otherStatus={loading ? "loading" : error ? "error" : "success"} retry={retryMainInventorySearch} /> : (
             <div className={cn(resultStackClass, "space-y-1 sm:space-y-4")}>
-              <section
-                data-flight-mobile-results-shortcuts
-                inert={mobileSearchOpen ? true : undefined}
-                aria-hidden={mobileSearchOpen ? true : undefined}
-                className={cn(
-                  "px-0 py-1 sm:hidden",
-                  mobileSearchOpen && "pointer-events-none",
-                )}
-                aria-label="Flight result filters"
+              <div
+                ref={mobileFilterRailOriginRef}
+                data-flight-mobile-filter-slot
+                className="h-[48px] pt-1 sm:hidden"
               >
-                {renderMobileSortResultsRow()}
-              </section>
+                <section
+                  data-flight-mobile-results-shortcuts
+                  data-scroll-visible={mobileFilterRailVisible ? "true" : "false"}
+                  data-scroll-pinned={mobileFilterRailPinned ? "true" : "false"}
+                  inert={mobileSearchOpen || (mobileFilterRailPinned && !mobileFilterRailVisible) ? true : undefined}
+                  aria-hidden={mobileSearchOpen || (mobileFilterRailPinned && !mobileFilterRailVisible) ? true : undefined}
+                  className={cn(
+                    "h-11 w-full px-0 sm:hidden",
+                    mobileFilterRailPinned &&
+                      "fixed left-0 top-[calc(72px+env(safe-area-inset-top))] z-[850] h-[52px] w-full overflow-hidden bg-[#F5F7FB] px-[14px] py-1",
+                    mobileFilterRailAnimated &&
+                      "transition-transform duration-[220ms] ease-[cubic-bezier(0,0,0.4,1)] motion-reduce:transition-none",
+                    mobileFilterRailPinned &&
+                      !mobileFilterRailVisible &&
+                      "pointer-events-none -translate-y-full duration-[120ms] ease-[cubic-bezier(0.6,0,1,1)]",
+                    mobileSearchOpen && "pointer-events-none",
+                  )}
+                  aria-label="Flight result filters"
+                >
+                  {renderMobileSortResultsRow()}
+                </section>
+              </div>
 
               {body?.tripType !== "multi-city" ? (
                 <>
