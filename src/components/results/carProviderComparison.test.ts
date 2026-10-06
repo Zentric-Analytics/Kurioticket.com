@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 
-import { getCarProviderOfferGroups } from "@/lib/cars/carResults";
+import {
+  getCarDealPickerGroups,
+  getCarProviderOfferGroups,
+} from "@/lib/cars/carResults";
 import type { CarOffer } from "@/lib/cars/types";
 
 const picker = readFileSync(
@@ -60,7 +63,43 @@ test("provider groups normalize seller identity without inventing a provider", (
   assert.equal(groups[0]?.primaryOffer.id, "a");
 });
 
-test("provider picker is capped at three visible sellers with an overflow control", () => {
+test("static Kurioticket inventory exposes up to three real offer choices without inventing providers", () => {
+  const groups = getCarDealPickerGroups({
+    inventorySource: "kurioticket-static-cars",
+    offers: [
+      offer("k-278", "Kurioticket", 278, "/brand/kurioticket-logo-primary-light-bg.svg"),
+      offer("k-292", "Kurioticket", 292, "/brand/kurioticket-logo-primary-light-bg.svg"),
+      offer("k-306", "Kurioticket", 306, "/brand/kurioticket-logo-primary-light-bg.svg"),
+    ],
+  });
+
+  assert.equal(groups.length, 3);
+  assert.deepEqual(groups.map((group) => group.primaryOffer.id), [
+    "k-278",
+    "k-292",
+    "k-306",
+  ]);
+  assert.ok(groups.every((group) => group.providerName === "Kurioticket"));
+  assert.ok(groups.every((group) => group.offers.length === 1));
+});
+
+test("live or sandbox inventory keeps provider grouping instead of splitting one seller's offers", () => {
+  const groups = getCarDealPickerGroups({
+    inventorySource: "kayak-sandbox",
+    offers: [
+      offer("p-low", "Provider B", 278),
+      offer("p-high", "Provider B", 292),
+      offer("other", "Provider C", 306),
+    ],
+  });
+
+  assert.equal(groups.length, 2);
+  assert.deepEqual(groups[0]?.offers.map((item) => item.id), ["p-low", "p-high"]);
+  assert.equal(groups[1]?.providerName, "Provider C");
+});
+
+test("provider picker is capped at three visible deal choices with an overflow control", () => {
+  assert.match(picker, /getCarDealPickerGroups\(car\)/);
   assert.match(picker, /groups\.slice\(0, 3\)/);
   assert.match(picker, /extraCount > 0/);
   assert.match(picker, /\+\{extraCount\}/);
