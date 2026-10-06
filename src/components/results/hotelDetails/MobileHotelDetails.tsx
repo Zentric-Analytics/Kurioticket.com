@@ -177,7 +177,6 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
       {tab === "rates" ? <section className={styles.rates}>
         <div className={styles.ratesHeader}>
           <p>{[stay.dates, stay.nights].filter(Boolean).join(" · ")}</p>
-          {props.priceAlert ? <HotelPriceAlertControl search={props.priceAlert.search} hotel={props.priceAlert.hotel} /> : null}
         </div>
         <div aria-label="Hotel rates" className={styles.rateList}>
           {offers.map(offer => <article key={offer.id} className={styles.rate} data-selected={selected?.id === offer.id}>
@@ -192,6 +191,7 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
       </section> : null}
       {tab === "overview" ? <>
         <button type="button" className={styles.stay} onClick={openStay} aria-label="Edit stay dates, rooms and guests"><CalendarDays size={22} /><span><strong>{stay.dates}</strong><span>{stay.occupancy}</span></span></button>
+        {props.priceAlert ? <HotelPriceAlertControl search={props.priceAlert.search} hotel={props.priceAlert.hotel} /> : null}
         <section className={styles.section}><h2>About this hotel</h2><p>{mobileHotelAbout(props.hotelName, property, props.starRating)}</p></section>
         <section className={styles.section}><h2>Location</h2>
           {location ? <><div className={styles.address}><span><MapPin size={18} strokeWidth={1.3} /></span><div><strong>{location.streetAddress}</strong><p>{secondaryAddress}</p></div></div>
