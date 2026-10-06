@@ -1937,8 +1937,6 @@ export function CarsResultsExperience({
   const [filterTransitionMinHeight, setFilterTransitionMinHeight] = useState<
     number | null
   >(null);
-  const [dealTransitionPhase, setDealTransitionPhase] =
-    useState<CarsFilterTransitionPhase>("idle");
   const [selectedDealOfferIds, setSelectedDealOfferIds] = useState<
     Record<string, string>
   >({});
@@ -1947,9 +1945,6 @@ export function CarsResultsExperience({
   const filterTransitionFrameRef = useRef<number | null>(null);
   const filterTransitionRunRef = useRef(0);
   const filterTransitionMobileRef = useRef(false);
-  const dealTransitionTimerRef = useRef<number | null>(null);
-  const dealTransitionFrameRef = useRef<number | null>(null);
-  const dealTransitionRunRef = useRef(0);
   const carsSortRef = useRef<HTMLDivElement | null>(null);
   const carsSortButtonRef = useRef<HTMLButtonElement | null>(null);
   const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
@@ -2124,63 +2119,11 @@ export function CarsResultsExperience({
     });
   }, []);
 
-  const startDealResultsTransition = useCallback(() => {
-    const run = ++dealTransitionRunRef.current;
-    if (dealTransitionTimerRef.current !== null)
-      window.clearTimeout(dealTransitionTimerRef.current);
-    if (dealTransitionFrameRef.current !== null)
-      window.cancelAnimationFrame(dealTransitionFrameRef.current);
-
-    // Compare-deal skeletons are desktop-only. Mobile must keep the active
-    // provider sheet mounted so changing providers behaves like a popup update,
-    // not a page transition.
-    if (!window.matchMedia("(min-width: 1024px)").matches) {
-      setDealTransitionPhase("idle");
-      return;
-    }
-
-    setDealTransitionPhase("covering");
-    const startedAt = performance.now();
-
-    dealTransitionFrameRef.current = window.requestAnimationFrame(() => {
-      dealTransitionFrameRef.current = window.requestAnimationFrame(() => {
-        const minimumBusyMs = prefersReducedResultsMotion() ? 0 : 160;
-        const remaining = Math.max(
-          0,
-          minimumBusyMs - (performance.now() - startedAt),
-        );
-        dealTransitionTimerRef.current = window.setTimeout(() => {
-          if (dealTransitionRunRef.current !== run) return;
-          if (prefersReducedResultsMotion()) {
-            setDealTransitionPhase("idle");
-            return;
-          }
-          setDealTransitionPhase("revealing");
-          dealTransitionTimerRef.current = window.setTimeout(() => {
-            if (dealTransitionRunRef.current === run)
-              setDealTransitionPhase("idle");
-          }, CARS_FILTER_REVEAL_MS);
-        }, remaining);
-      });
-    });
-  }, []);
-
   const selectCompareDealOffer = useCallback(
     (carId: string, offerId: string) => {
       setSelectedDealOfferIds((current) =>
         current[carId] === offerId ? current : { ...current, [carId]: offerId },
       );
-      startDealResultsTransition();
-    },
-    [startDealResultsTransition],
-  );
-
-  useEffect(
-    () => () => {
-      if (dealTransitionTimerRef.current !== null)
-        window.clearTimeout(dealTransitionTimerRef.current);
-      if (dealTransitionFrameRef.current !== null)
-        window.cancelAnimationFrame(dealTransitionFrameRef.current);
     },
     [],
   );
@@ -2586,13 +2529,9 @@ export function CarsResultsExperience({
     scheduleDesktopCompactFilterMeasurementRef.current?.();
   }, [activeFilterCount, results.length, showDesktopCompactFilter]);
 
-  if (providersLoading || dealTransitionPhase === "covering") {
+  if (providersLoading) {
     return (
-      <div
-        data-cars-results-page-transition={
-          providersLoading ? "providers" : "compare-deals"
-        }
-      >
+      <div data-cars-results-page-transition="providers">
         <CarsResultsPageTransitionSkeleton />
       </div>
     );
@@ -2601,11 +2540,7 @@ export function CarsResultsExperience({
   return (
     <>
     <section
-      className={cn(
-        "min-w-0",
-        embedded ? "mt-6" : "w-full",
-        dealTransitionPhase === "revealing" && "cars-filter-results-reveal",
-      )}
+      className={cn("min-w-0", embedded ? "mt-6" : "w-full")}
       aria-labelledby={resultHeadingId}
       data-cars-results-experience
     >
