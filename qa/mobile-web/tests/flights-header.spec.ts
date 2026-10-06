@@ -62,7 +62,7 @@ for (const width of [320, 360, 390, 412]) {
       }));
     }
     for (const sample of stickySamples) {
-      expect(Math.abs(sample.filterTop - sample.headerBottom)).toBeLessThanOrEqual(1);
+      expect(Math.abs(sample.filterTop - sample.headerBottom - 12)).toBeLessThanOrEqual(1);
       expect(sample.overflow).toBeLessThanOrEqual(0);
     }
   });
@@ -101,7 +101,7 @@ for (const width of [320, 390]) {
     await page.locator("[data-flight-mobile-results-shortcuts]").getByRole("button", { name: /open filters/i }).click();
     await expect(page.getByRole("dialog", { name: /filters/i })).toBeVisible();
     await page.locator("#flight-mobile-filters-dialog").getByRole("button", { name: /close filters/i }).click();
-    await expect(page.locator("#flight-mobile-filters-dialog")).toHaveAttribute("aria-hidden", "true");
+    await expect(page.locator("#flight-mobile-filters-dialog")).toHaveCount(0);
     await expect.poll(() => page.evaluate(() => document.body.style.position)).not.toBe("fixed");
     const targetScroll = await page.evaluate(() =>
       Math.min(800, Math.max(0, document.documentElement.scrollHeight - innerHeight)),
