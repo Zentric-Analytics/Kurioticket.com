@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronDown, LoaderCircle, X } from "lucide-react";
+import { Check, ChevronDown, X } from "lucide-react";
 
+import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import {
@@ -20,6 +21,8 @@ type Props = {
   onSelectOffer: (offer: CarOffer) => void;
   compact?: boolean;
 };
+
+const CAR_DEAL_SELECTION_BUSY_MS = 320;
 
 const providerInitial = (name: string) =>
   name.trim().charAt(0).toLocaleUpperCase() || "P";
@@ -172,7 +175,7 @@ export function CarDealPicker({
     selectionTimerRef.current = window.setTimeout(() => {
       setDealSelectionPending(false);
       selectionTimerRef.current = null;
-    }, 280);
+    }, CAR_DEAL_SELECTION_BUSY_MS);
   };
 
   const closePanel = () => {
@@ -247,27 +250,19 @@ export function CarDealPicker({
         ? createPortal(
             <div
               data-car-deal-selection-loading
-              className="fixed inset-0 z-[155] flex items-center justify-center bg-[#F5F7FB]/95 px-5 backdrop-blur-[1.5px]"
-              role="status"
-              aria-live="polite"
-              aria-busy="true"
+              className="fixed inset-0 z-[12050] bg-[#F5F7FB]"
             >
-              <div className="flex max-w-sm items-center gap-3 rounded-[14px] border border-[#D8E1EC] bg-white px-4 py-3 shadow-[0_18px_45px_-24px_rgba(15,23,42,0.35)]">
-                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEF5FF] text-[#004BB8]">
-                  <LoaderCircle
-                    className="h-5 w-5 animate-spin motion-reduce:animate-none"
-                    aria-hidden="true"
-                  />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[14px] font-bold leading-5 text-[#07133B]">
-                    Updating deal
-                  </span>
-                  <span className="mt-0.5 block text-[12px] font-medium leading-4 text-[#64748B]">
-                    Refreshing price and provider…
-                  </span>
-                </span>
-              </div>
+              <BrandedLoading
+                title="Updating deal"
+                messages={["Refreshing price and provider..."]}
+                variant="fullscreen"
+                visual="logoPulse"
+                showProgress
+                showActivityDots={false}
+                accessibleProgress
+                className="min-h-[100svh] w-full bg-[#F5F7FB] px-5"
+                contentClassName="max-w-md text-center"
+              />
             </div>,
             document.body,
           )
