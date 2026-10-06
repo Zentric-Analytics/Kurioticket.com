@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, X } from "lucide-react";
 
@@ -23,6 +23,9 @@ type Props = {
 };
 
 const CAR_DEAL_SELECTION_BUSY_MS = 320;
+
+const CAR_DEAL_PICKER_DESKTOP_OPEN_EVENT =
+  "kurioticket:car-deal-picker-desktop-open";
 
 const providerInitial = (name: string) =>
   name.trim().charAt(0).toLocaleUpperCase() || "P";
@@ -71,6 +74,7 @@ export function CarDealPicker({
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const groups = useMemo(() => getCarDealPickerGroups(car), [car]);
+  const pickerInstanceId = useId();
   const [openProviderKey, setOpenProviderKey] = useState<string | null>(null);
   const [showAllProviders, setShowAllProviders] = useState(false);
   const [dealSelectionPending, setDealSelectionPending] = useState(false);
@@ -79,6 +83,36 @@ export function CarDealPicker({
   const selectionTimerRef = useRef<number | null>(null);
   const [desktopPosition, setDesktopPosition] = useState({ top: 0, left: 0 });
   const overlayOpen = Boolean(openProviderKey || showAllProviders);
+
+  useEffect(() => {
+    const closeWhenAnotherDesktopPickerOpens = (event: Event) => {
+      if (!window.matchMedia("(min-width: 768px)").matches) return;
+      const sourceId = (event as CustomEvent<string>).detail;
+      if (!sourceId || sourceId === pickerInstanceId) return;
+      setOpenProviderKey(null);
+      setShowAllProviders(false);
+    };
+
+    window.addEventListener(
+      CAR_DEAL_PICKER_DESKTOP_OPEN_EVENT,
+      closeWhenAnotherDesktopPickerOpens,
+    );
+    return () => {
+      window.removeEventListener(
+        CAR_DEAL_PICKER_DESKTOP_OPEN_EVENT,
+        closeWhenAnotherDesktopPickerOpens,
+      );
+    };
+  }, [pickerInstanceId]);
+
+  const announceDesktopPickerOpen = () => {
+    if (!window.matchMedia("(min-width: 768px)").matches) return;
+    window.dispatchEvent(
+      new CustomEvent<string>(CAR_DEAL_PICKER_DESKTOP_OPEN_EVENT, {
+        detail: pickerInstanceId,
+      }),
+    );
+  };
 
   useEffect(() => {
     if (!overlayOpen) return;
@@ -161,6 +195,7 @@ export function CarDealPicker({
 
   const selectGroup = (group: CarProviderOfferGroup) => {
     const providerChanged = group.key !== selectedGroup.key;
+    announceDesktopPickerOpen();
     setOpenProviderKey(group.key);
     setShowAllProviders(false);
 
@@ -234,6 +269,7 @@ export function CarDealPicker({
               type="button"
               aria-label={`Show ${extraCount} more car deal providers`}
               onClick={() => {
+                announceDesktopPickerOpen();
                 setShowAllProviders(true);
                 setOpenProviderKey(null);
               }}
@@ -446,7 +482,6 @@ function ProviderPreview({
         {offer.freeCancellation ? <p>Free cancellation</p> : null}
         {offer.taxesAndFeesIncluded ? <p>Taxes and fees included</p> : null}
         {offer.payAtPickup ? <p>Pay at pickup</p> : null}
-        {!offer.bookingUrl ? <p>Provider handoff will appear when this seller supplies a booking link.</p> : null}
       </div>
 
       <p className={`mt-3 rounded-lg px-3 py-2 text-[11px] font-semibold ${
