@@ -52,21 +52,25 @@ test("Cars Results keeps the standard AppHeader and opts into the inline mobile 
   assert.doesNotMatch(carsHeader, /mobileSurface="muted"/);
 });
 
-test("AppHeader uses the mark-only brand on Cars mobile results and keeps the search between brand and account controls", () => {
+test("AppHeader replaces the Cars mobile mark with back navigation and keeps desktop branding", () => {
   const carsInlineBranch = appHeaderSource.indexOf(
     "{carsResultsMobileInlineSearch ? (",
   );
-  const mobileMark = appHeaderSource.indexOf(
-    'src="/brand/kurioticket-icon-blue.svg"',
+  const backButton = appHeaderSource.indexOf(
+    "data-cars-results-mobile-back",
     carsInlineBranch,
   );
   const fullLogo = appHeaderSource.indexOf(
     'src="/brand/kurioticket-logo-primary-light-bg.svg"',
-    mobileMark,
+    backButton,
   );
   const searchSlot = appHeaderSource.indexOf(
     "data-cars-results-mobile-nav-search",
     fullLogo,
+  );
+  const filterSlot = appHeaderSource.indexOf(
+    "data-cars-results-mobile-nav-filter",
+    searchSlot,
   );
   const mobileActions = appHeaderSource.indexOf(
     'className={cn("flex items-center gap-0 md:hidden"',
@@ -74,18 +78,23 @@ test("AppHeader uses the mark-only brand on Cars mobile results and keeps the se
   );
 
   assert.ok(carsInlineBranch >= 0);
-  assert.ok(mobileMark > carsInlineBranch);
-  assert.ok(fullLogo > mobileMark);
+  assert.ok(backButton > carsInlineBranch);
+  assert.ok(fullLogo > backButton);
   assert.ok(searchSlot > fullLogo);
   assert.ok(mobileActions > searchSlot);
+  assert.ok(filterSlot > mobileActions);
   assert.match(appHeaderSource, /carsResultsMobileInlineSearch\?: boolean/);
   assert.match(
     appHeaderSource,
-    /kurioticket-icon-blue\.svg[\s\S]*?className="h-7 w-7 sm:hidden"/,
+    /data-cars-results-mobile-back[\s\S]*?aria-label="Back"[\s\S]*?router\.back\(\)[\s\S]*?router\.push\("\/cars"\)[\s\S]*?sm:hidden/,
   );
   assert.match(
     appHeaderSource,
-    /kurioticket-logo-primary-light-bg\.svg[\s\S]*?className="hidden h-8 w-auto sm:block md:h-9 lg:h-9"/,
+    /kurioticket-logo-primary-light-bg\.svg[\s\S]*?className="h-8 w-auto md:h-9 lg:h-9"/,
+  );
+  assert.match(
+    appHeaderSource,
+    /data-cars-results-mobile-nav-filter[\s\S]*?empty:hidden sm:hidden/,
   );
   assert.match(
     appHeaderSource,
@@ -125,7 +134,11 @@ test("the unified header keeps a white safe area while the full Filters overlay 
   );
   assert.match(
     carsClientSource,
-    /data-cars-results-sticky-shortcuts[\s\S]*?max-sm:top-\[calc\(var\(--cars-results-safe-area-top\)\+61px\)\]/,
+    /const nextVisible =[\s\S]*shortcuts\.getBoundingClientRect\(\)\.top <=[\s\S]*header\.getBoundingClientRect\(\)\.bottom/,
+  );
+  assert.match(
+    carsClientSource,
+    /data-cars-results-mobile-header-filter[\s\S]*openMobileFiltersDrawer\([\s\S]*event\.currentTarget/,
   );
 });
 
