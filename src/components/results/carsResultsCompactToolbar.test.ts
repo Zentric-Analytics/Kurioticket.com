@@ -38,9 +38,14 @@ test("source-contract: phone and tablet filter launchers remain responsive", () 
     source.indexOf("data-cars-results-toolbar"),
   );
 
-  assert.match(
+  assert.doesNotMatch(
     stickyShortcuts,
-    /max-sm:sticky max-sm:top-\[calc\(var\(--cars-results-safe-area-top\)\+61px\)\]/,
+    /max-sm:sticky|max-sm:top-\[calc\(var\(--cars-results-safe-area-top\)\+61px\)\]/,
+  );
+  assert.match(stickyShortcuts, /ref=\{mobileShortcutsRef\}/);
+  assert.match(
+    mobileControls,
+    /data-cars-results-mobile-header-filter[\s\S]*openMobileFiltersDrawer\([\s\S]*event\.currentTarget/,
   );
   assert.match(
     mobileControls,
@@ -147,7 +152,7 @@ test("source-contract: Cars result count and Sort share a shrink-safe row", () =
   assert.match(resultsToolbar, /"shrink-0 transition-transform duration-150"/);
 });
 
-test("source-contract: mobile Filter stays in the sticky shortcuts before the final count and Sort row", () => {
+test("source-contract: mobile Filter stays in the top rail and gains a scrolled header launcher", () => {
   const shortcutsStart = source.indexOf("data-cars-results-sticky-shortcuts");
   const toolbarStart = source.indexOf("data-cars-results-toolbar", shortcutsStart);
   const summaryStart = source.indexOf("data-cars-results-summary-row", toolbarStart);
@@ -163,6 +168,10 @@ test("source-contract: mobile Filter stays in the sticky shortcuts before the fi
   assert.match(
     shortcuts,
     /ref=\{filtersButtonRef\}[\s\S]*lg:hidden[\s\S]*onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
+  );
+  assert.match(
+    source,
+    /data-cars-results-mobile-header-filter[\s\S]*aria-haspopup="dialog"[\s\S]*aria-expanded=\{filtersOpen\}[\s\S]*openMobileFiltersDrawer/,
   );
   assert.match(
     resultsToolbar,

@@ -108,12 +108,21 @@ test("mobile shortcuts remain the existing scrollable touch targets in canonical
   assert.doesNotMatch(rail, /Price \(per day\)/);
 });
 
-test("mobile shortcuts keep their original sizing while the rail itself becomes sticky", () => {
-  assert.match(
-    stickyShortcuts,
-    /max-sm:sticky max-sm:top-\[calc\(var\(--cars-results-safe-area-top\)\+61px\)\] max-sm:z-40/,
-  );
+test("mobile shortcuts keep their original sizing and hand off to the compact header Filter", () => {
+  assert.match(stickyShortcuts, /ref=\{mobileShortcutsRef\}/);
   assert.match(stickyShortcuts, /max-sm:bg-\[#F5F7FB\] max-sm:py-1/);
+  assert.doesNotMatch(
+    stickyShortcuts,
+    /max-sm:sticky|max-sm:top-\[calc\(var\(--cars-results-safe-area-top\)\+61px\)\]/,
+  );
+  assert.match(
+    resultsSource,
+    /data-cars-results-mobile-header-filter[\s\S]*h-9 w-9[\s\S]*rounded-\[8px\]/,
+  );
+  assert.match(
+    resultsSource,
+    /data-cars-results-mobile-header-filter[\s\S]*openMobileFiltersDrawer\([\s\S]*event\.currentTarget/,
+  );
   assert.equal(
     (resultsSource.match(/data-cars-results-quick-filters/g) ?? []).length,
     1,
