@@ -58,6 +58,9 @@ const mobileStandaloneViewDealClassName =
 const desktopStandaloneViewDealClassName =
   "mt-2 inline-flex min-h-9 items-center justify-end gap-1 text-[14px] font-bold leading-5 text-[#004BB8]";
 
+const unavailableStandaloneViewDealClassName =
+  "appearance-none border-0 bg-transparent p-0 text-[#004BB8] [-webkit-text-fill-color:#004BB8] disabled:text-[#004BB8] disabled:opacity-100 disabled:[-webkit-text-fill-color:#004BB8]";
+
 const CAR_DEAL_SELECTION_MOBILE_BUSY_MS = 220;
 const CAR_DEAL_SELECTION_DESKTOP_BUSY_MS = 160;
 
@@ -512,7 +515,7 @@ export function CarResultCard({
                 type="button"
                 disabled
                 aria-label="Provider booking link unavailable"
-                className={`${mobileStandaloneViewDealClassName} cursor-not-allowed disabled:opacity-100`}
+                className={`${mobileStandaloneViewDealClassName} ${unavailableStandaloneViewDealClassName} cursor-not-allowed`}
               >
                 View deal <ChevronRight size={16} aria-hidden="true" />
               </button>
@@ -828,7 +831,7 @@ export function CarResultCard({
                     type="button"
                     disabled
                     aria-label="Provider booking link unavailable"
-                    className={`${desktopStandaloneViewDealClassName} cursor-not-allowed disabled:opacity-100`}
+                    className={`${desktopStandaloneViewDealClassName} ${unavailableStandaloneViewDealClassName} cursor-not-allowed`}
                   >
                     View deal
                     <ChevronRight className="h-4 w-4" aria-hidden="true" />
