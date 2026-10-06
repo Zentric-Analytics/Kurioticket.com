@@ -78,22 +78,35 @@ test("unified Cars header search keeps a 44px touch target around polished 36px 
   );
 });
 
-test("one unchanged shortcut rail becomes sticky instead of compacting on scroll", () => {
+test("the top shortcut rail hands off to a standalone compact header Filter on scroll", () => {
   assert.equal((source.match(/data-cars-results-quick-filters/g) ?? []).length, 1);
   assert.equal((source.match(/data-cars-results-sticky-shortcuts/g) ?? []).length, 1);
+  assert.match(stickyShortcuts, /ref=\{mobileShortcutsRef\}/);
+  assert.doesNotMatch(
+    stickyShortcuts,
+    /max-sm:sticky|max-sm:top-\[calc\(var\(--cars-results-safe-area-top\)\+61px\)\]/,
+  );
+  assert.match(
+    source,
+    /const nextVisible =[\s\S]*shortcuts\.getBoundingClientRect\(\)\.bottom <=[\s\S]*header\.getBoundingClientRect\(\)\.bottom/,
+  );
   assert.match(
     stickyShortcuts,
-    /max-sm:sticky max-sm:top-\[calc\(var\(--cars-results-safe-area-top\)\+61px\)\] max-sm:z-40/,
+    /data-mobile-header-filter-active=\{showMobileHeaderFilter \? "true" : "false"\}/,
+  );
+  assert.doesNotMatch(
+    stickyShortcuts,
+    /pointer-events-none|opacity-0|invisible/,
+  );
+  assert.match(
+    source,
+    /data-cars-results-mobile-header-filter[\s\S]*h-9 w-9[\s\S]*rounded-\[8px\][\s\S]*<SlidersHorizontal[\s\S]*h-\[16px\] w-\[16px\]/,
   );
   assert.match(
     stickyShortcuts,
     /data-cars-results-quick-filters[\s\S]*?flex-nowrap[\s\S]*?gap-1\.5[\s\S]*?overflow-x-auto[\s\S]*?overscroll-x-contain/,
   );
   assert.match(stickyShortcuts, /min-h-11 min-w-11 shrink-0/);
-  assert.match(
-    stickyShortcuts,
-    /h-9 items-center[\s\S]*?rounded-\[9px\][\s\S]*?px-2\.5 text-\[13px\] font-semibold leading-4/,
-  );
   assert.ok(
     stickyShortcuts.indexOf("filtersButtonRef") <
       stickyShortcuts.indexOf('quickFilterGroupId === "sort"'),
@@ -104,12 +117,20 @@ test("one unchanged shortcut rail becomes sticky instead of compacting on scroll
   );
 });
 
-test("sticky shortcuts keep the existing filter state and drawers", () => {
+test("top and scrolled Filter launchers share the existing filter state and drawer", () => {
   assert.match(source, /openMobileFiltersDrawer[\s\S]*setFiltersOpen\(true\)/);
   assert.match(source, /\{filtersOpen \? \([\s\S]*?<CarFilters/);
   assert.equal(
     (source.match(/const \[filtersOpen, setFiltersOpen\]/g) ?? []).length,
     1,
   );
-  assert.doesNotMatch(source, /mobileStickyFiltersOpen|stickySelectedFilters/);
+  assert.match(
+    source,
+    /data-cars-results-mobile-header-filter[\s\S]*openMobileFiltersDrawer\([\s\S]*event\.currentTarget/,
+  );
+  assert.match(
+    source,
+    /aria-expanded=\{filtersOpen\}/,
+  );
+  assert.doesNotMatch(source, /mobileStickyFiltersOpen|stickySelectedFilters|headerSelectedFilters/);
 });
