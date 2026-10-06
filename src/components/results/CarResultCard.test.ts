@@ -36,18 +36,18 @@ const car = {
   fuelPolicy: "full-to-full",
 } as NormalizedCarResult;
 
-test("CarResultCard accepts string and null href actions without provider fallback", () => {
-  assert.match(source, /detailsHref: string \| null/);
-  assert.match(source, /detailsHref \? \(\s*<Link\s+href=\{detailsHref\}/);
-  assert.match(source, /<button\s+type="button"\s+disabled/);
-  assert.doesNotMatch(
-    source,
-    /href=\{detailsHref \?\?|href="#"|bookingUrl|api\/redirect/,
-  );
+test("standalone result commerce is provider-ready without fabricating booking URLs", () => {
+  assert.match(source, /const approvedProviderBookingUrl/);
+  assert.match(source, /sandboxBookingUrl\(offer\.bookingUrl\)/);
+  assert.match(source, /url\.protocol !== "https:" \|\| url\.username \|\| url\.password/);
+  assert.equal((source.match(/href=\{providerBookingHref\}/g) ?? []).length, 2);
+  assert.match(source, /aria-label="Provider booking link unavailable"/);
+  assert.doesNotMatch(source, /href="#"/);
 });
 
-test("KAYAK detail links cannot prefetch and duplicate provider recovery", () => {
-  assert.equal((source.match(/prefetch=\{car\.inventorySource === "kayak-sandbox" \? false : undefined\}/g) ?? []).length, 2);
+test("KAYAK handoff is validated once while guided detail navigation remains available", () => {
+  assert.equal((source.match(/sandboxBookingUrl\(offer\.bookingUrl\)/g) ?? []).length, 1);
+  assert.equal((source.match(/prefetch=\{car\.inventorySource === "kayak-sandbox" \? false : undefined\}/g) ?? []).length, 1);
 });
 
 test("standalone mobile follows native daily-price and View deal commerce", () => {
@@ -176,7 +176,7 @@ test("desktop standalone keeps Best value above the shared action row and pricin
   );
   assert.match(
     pricing,
-    /<div className="mt-auto w-full">[\s\S]*?<CarPriceComparison/,
+    /<div className="mt-auto flex w-full flex-col items-end">[\s\S]*?providerBookingHref/,
   );
 });
 
@@ -434,18 +434,15 @@ test("Free cancellation is data-driven in mobile and secondary benefits stay des
   );
 });
 
-test("desktop static pricing removes provider, sandbox, total, and disclosure chrome while keeping daily price and View deal", () => {
+test("standalone desktop pricing follows the selected provider and keeps one View deal action", () => {
   const desktop = source.slice(source.indexOf('data-region="pricing"'));
 
-  assert.match(
-    desktop,
-    /<CarPriceComparison[\s\S]*?\n\s+cleanStaticSummary\n/,
-  );
-  assert.doesNotMatch(desktop, /cleanStaticSummary=\{!car\.sandboxPresentation\}/);
-  assert.doesNotMatch(desktop, /"KAYAK"|"Sandbox"|Simulated inventory — no real booking/);
-  assert.match(desktop, /comparePrices: "View deal"/);
-  assert.doesNotMatch(desktop, /carsResults\.comparison\.comparePrices/);
+  assert.match(desktop, /dailyDisplayPrice\.formatted/);
+  assert.match(desktop, /providerBookingHref \? \(/);
+  assert.match(desktop, />\s*View deal\s*/);
+  assert.match(desktop, /aria-label="Provider booking link unavailable"/);
   assert.match(desktop, /carsResults\.comparison\.perDay/);
+  assert.doesNotMatch(desktop, /<CarPriceComparison/);
 });
 
 test("standalone desktop pricing is anchored to the card bottom-right while guided pricing stays centered", () => {
@@ -476,7 +473,8 @@ test("desktop and guided contracts retain their responsive grid and owned disclo
 });
 
 test("prices preserve formatter output, LTR semantics, and accessible fallback metadata", () => {
-  assert.match(source, /const offer = getPrimaryCarOffer\(car\)/);
+  assert.match(source, /const primaryOffer = getPrimaryCarOffer\(car\)/);
+  assert.match(source, /car\.offers\.find\(\(candidate\) => candidate\.id === selectedOfferId\)/);
   assert.doesNotMatch(source, /car\.offers\[0\]/);
   for (const price of ["totalDisplayPrice", "dailyDisplayPrice"]) {
     assert.match(

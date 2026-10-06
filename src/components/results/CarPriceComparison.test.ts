@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 
 const card = readFileSync(new URL("./CarResultCard.tsx", import.meta.url), "utf8");
+const picker = readFileSync(new URL("./CarDealPicker.tsx", import.meta.url), "utf8");
 const comparison = readFileSync(new URL("./CarPriceComparison.tsx", import.meta.url), "utf8");
 const desktop = card.slice(card.indexOf('data-region="heading"'));
 const specs = desktop.slice(
@@ -19,85 +20,60 @@ test("standalone desktop owns exactly four required primary specifications", () 
   assert.doesNotMatch(specs, /Air conditioning|Snowflake/);
 });
 
-test("static comparison is truthful, local, and capability driven", () => {
-  assert.match(card, /displayName: car\.sandboxPresentation \? .*KAYAK sandbox.* : t\("carsResults\.comparison\.estimateName"\)/);
-  assert.match(card, /priceStatus: "estimate"/);
-  assert.match(card, /bookable: false/);
-  assert.match(card, /handoffAvailable: false/);
-  assert.doesNotMatch(card, /approvedUrl:|bookingUrl/);
-  assert.doesNotMatch(comparison, /window\.open|router\./);
-  assert.doesNotMatch(comparison, /Kurioticket static fixture|>Provider<|>Book<|>Reserve<|>View deal/);
+test("provider comparison is driven by normalized car offers", () => {
+  assert.match(card, /<CarDealPicker/);
+  assert.match(card, /selectedOfferId=\{offer\.id\}/);
+  assert.match(card, /onSelectOffer=\{selectDealOffer\}/);
+  assert.match(picker, /getCarProviderOfferGroups\(car\.offers\)/);
+  assert.match(picker, /groups\.slice\(0, 3\)/);
+  assert.match(picker, /Math\.max\(0, groups\.length - visibleGroups\.length\)/);
+  assert.match(picker, /Compare deals/);
+  assert.match(picker, /Show \$\{extraCount\} more car deal providers/);
 });
 
-test("clean static summary hides source, estimate, total, and coming-soon chrome", () => {
-  assert.match(comparison, /cleanStaticSummary = false/);
-  assert.match(
-    comparison,
-    /!cleanStaticSummary \? \([\s\S]*?\{labels\.source\}[\s\S]*?\{labels\.estimate\}[\s\S]*?\{estimate\.totalDisplay\}[\s\S]*?\{labels\.total\}/,
-  );
-  assert.match(
-    comparison,
-    /data-car-price-comparison-summary[\s\S]*?items-end text-right[\s\S]*?text-\[20px\] font-bold leading-\[23px\] tracking-\[-0\.015em\] text-\[#07133B\] tabular-nums[\s\S]*?\{estimate\.perDayDisplay\}[\s\S]*?mt-1 text-\[11\.5px\] font-medium leading-\[14px\] text-\[#536B92\][\s\S]*?\{labels\.perDay\}/,
-  );
-  assert.match(
-    comparison,
-    /mt-1 flex flex-col items-end text-right[\s\S]*?\{estimate\.perDayDisplay\}[\s\S]*?\{labels\.perDay\}/,
-  );
-  assert.match(comparison, /\{labels\.comparePrices\}/);
-  assert.doesNotMatch(comparison, /expanded \? labels\.hidePrices/);
-  assert.match(
-    comparison,
-    /!cleanStaticSummary \? <p[^>]*>\{labels\.liveDealsComingSoon\}<\/p> : null/,
-  );
-  assert.match(card, /<CarPriceComparison[\s\S]*?\n\s+cleanStaticSummary\n/);
-  assert.doesNotMatch(desktop, /"KAYAK"|"Sandbox"|Simulated inventory — no real booking/);
+test("provider branding uses mark-only Kurioticket treatment and truthful fallbacks", () => {
+  assert.match(picker, /\/brand\/kurioticket-icon-blue\.svg/);
+  assert.match(picker, /group\.logoUrl/);
+  assert.match(picker, /providerInitial\(group\.providerName\)/);
+  assert.match(picker, /aria-label=\{\`Compare deal from \$\{group\.providerName\}\`\}/);
 });
 
-test("standalone desktop uses the mobile-style View deal label with a right arrow", () => {
-  const mobile = card.slice(
-    card.indexOf("data-car-card-mobile-main"),
-    card.indexOf("data-region=\"heading\""),
-  );
-
-  assert.match(
-    desktop,
-    /<CarPriceComparison[\s\S]*?comparePrices: "View deal"/,
-  );
-  assert.match(
-    comparison,
-    /data-car-price-comparison-action[\s\S]*?text-\[#004BB8\][\s\S]*?\{labels\.comparePrices\}[\s\S]*?<ChevronRight className="h-4 w-4"/,
-  );
-  assert.doesNotMatch(
-    comparison,
-    /data-car-price-comparison-action[\s\S]*?bg-\[#004BB8\]|rounded-lg bg-\[#004BB8\]/,
-  );
-  assert.match(comparison, /data-car-price-comparison[^>]*className="w-full"/);
-  assert.doesNotMatch(comparison, /translate-y/);
-  assert.match(
-    comparison,
-    /data-car-price-comparison-action[\s\S]*?className="mt-2 ml-auto inline-flex min-h-9 items-center justify-end/,
-  );
-  assert.match(
-    mobile,
-    /View deal <ChevronRight size=\{16\} aria-hidden="true" \/>/,
-  );
+test("provider selection portals a desktop popover and mobile bottom sheet without another booking CTA", () => {
+  assert.match(picker, /createPortal\(/);
+  assert.match(picker, /data-car-deal-picker-desktop-panel/);
+  assert.match(picker, /fixed z-\[140\][\s\S]*md:block/);
+  assert.match(picker, /fixed inset-0 z-\[130\][\s\S]*md:hidden/);
+  assert.match(picker, /acquireMobileResultsScrollLock\(\)/);
+  assert.match(picker, /event\.key !== "Escape"/);
+  assert.match(picker, /role="dialog"/);
+  assert.match(picker, /Selected · View deal uses this provider/);
+  assert.doesNotMatch(picker, />\s*Continue deal\s*</);
+  assert.doesNotMatch(picker, />\s*View deal\s*</);
 });
 
-test("standalone desktop View deal follows the result card details route instead of expanding inline", () => {
-  assert.match(comparison, /desktopDetailsSelector/);
-  assert.match(comparison, /a\[href\^=\"\/cars\/details\/\"\]/);
-  assert.match(comparison, /a\[href\^=\"\/sandbox\/kayak\/details\"\]/);
-  assert.match(comparison, /closest\("article"\)/);
-  assert.match(comparison, /querySelector<HTMLAnchorElement>\(desktopDetailsSelector\)/);
-  assert.match(comparison, /detailsLink\?\.click\(\)/);
-  assert.match(comparison, /onClick=\{\(event\) => openDesktopDetails\(event\.currentTarget\)\}/);
-  assert.doesNotMatch(comparison, /useState\(false\)|aria-expanded|aria-controls|setExpanded|data-car-price-comparison-panel/);
+test("standalone View deal is the single provider handoff and never fabricates a URL", () => {
+  assert.match(card, /const approvedProviderBookingUrl/);
+  assert.match(card, /sandboxBookingUrl\(offer\.bookingUrl\)/);
+  assert.match(card, /url\.protocol !== "https:" \|\| url\.username \|\| url\.password/);
+  assert.equal((card.match(/href=\{providerBookingHref\}/g) ?? []).length, 2);
+  assert.equal((card.match(/target="_blank"/g) ?? []).length, 2);
+  assert.equal((card.match(/rel="noopener noreferrer"/g) ?? []).length, 2);
+  assert.match(card, /aria-label="Provider booking link unavailable"/);
+  assert.doesNotMatch(card, /href="#"/);
 });
 
-test("desktop-only navigation reuses existing card detail links while guided selection remains unchanged", () => {
-  assert.match(desktop, /!guidedPlanning \? \(/);
-  assert.match(desktop, /<CarPriceComparison/);
+test("selected provider controls the visible standalone price", () => {
+  assert.match(card, /const \[selectedOfferId, setSelectedOfferId\] = useState/);
+  assert.match(card, /car\.offers\.find\(\(candidate\) => candidate\.id === selectedOfferId\)/);
+  assert.match(card, /setSelectedOfferId\(nextOffer\.id\)/);
+  assert.match(desktop, /dailyDisplayPrice\.formatted/);
+  assert.doesNotMatch(desktop, /<CarPriceComparison/);
+});
+
+test("guided selection and legacy comparison component remain isolated from standalone provider handoff", () => {
+  assert.match(desktop, /onClick=\{\(\) => onSelect\(car\)\}/);
   assert.match(card, /href=\{detailsHref\}/);
   assert.match(card, /onClick=\{handleMobileDetailsNavigation\}/);
-  assert.match(desktop, /onClick=\{\(\) => onSelect\(car\)\}/);
+  assert.match(comparison, /desktopDetailsSelector/);
+  assert.doesNotMatch(comparison, /window\.open|router\./);
 });
