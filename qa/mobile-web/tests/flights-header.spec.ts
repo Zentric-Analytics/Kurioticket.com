@@ -9,6 +9,79 @@ test.beforeEach(async ({ page, request }) => {
   });
 });
 
+test("Flight mobile results header keeps its geometry while inventory loads", async ({ page, request }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.unroute("**/api/flights/search");
+
+  let releaseSearch!: () => void;
+  const searchGate = new Promise<void>((resolve) => {
+    releaseSearch = resolve;
+  });
+
+  await page.route("**/api/flights/search", async (route) => {
+    await searchGate;
+    const response = await request.post("http://127.0.0.1:3011/api/flights/search");
+    await route.fulfill({ response });
+  });
+
+  await page.goto(flightResults, { waitUntil: "domcontentloaded" });
+
+  const header = page.locator("[data-app-header]");
+  const summaryTarget = header.locator("[data-flight-results-mobile-nav-summary]");
+  const filtersTarget = header.locator("[data-flight-results-mobile-nav-filters]");
+
+  await expect(header).toBeVisible();
+  await expect(summaryTarget).toBeVisible();
+  await expect(filtersTarget).toBeVisible();
+  await expect(header.locator("[data-flight-mobile-summary-card]")).toHaveCount(0);
+
+  const before = await page.evaluate(() => {
+    const header = document.querySelector<HTMLElement>("[data-app-header]")!;
+    const summary = document.querySelector<HTMLElement>("[data-flight-results-mobile-nav-summary]")!;
+    const filters = document.querySelector<HTMLElement>("[data-flight-results-mobile-nav-filters]")!;
+    const headerRect = header.getBoundingClientRect();
+    const summaryRect = summary.getBoundingClientRect();
+    const filtersRect = filters.getBoundingClientRect();
+    return {
+      headerTop: headerRect.top,
+      headerHeight: headerRect.height,
+      summaryTop: summaryRect.top,
+      summaryHeight: summaryRect.height,
+      filtersTop: filtersRect.top,
+      filtersHeight: filtersRect.height,
+    };
+  });
+
+  releaseSearch();
+
+  await expect(header.locator("[data-flight-mobile-summary-card]")).toBeVisible();
+  await expect(header.locator("[data-flight-mobile-results-shortcuts]")).toBeVisible();
+
+  const after = await page.evaluate(() => {
+    const header = document.querySelector<HTMLElement>("[data-app-header]")!;
+    const summary = document.querySelector<HTMLElement>("[data-flight-results-mobile-nav-summary]")!;
+    const filters = document.querySelector<HTMLElement>("[data-flight-results-mobile-nav-filters]")!;
+    const headerRect = header.getBoundingClientRect();
+    const summaryRect = summary.getBoundingClientRect();
+    const filtersRect = filters.getBoundingClientRect();
+    return {
+      headerTop: headerRect.top,
+      headerHeight: headerRect.height,
+      summaryTop: summaryRect.top,
+      summaryHeight: summaryRect.height,
+      filtersTop: filtersRect.top,
+      filtersHeight: filtersRect.height,
+    };
+  });
+
+  expect(Math.abs(after.headerTop - before.headerTop)).toBeLessThanOrEqual(1);
+  expect(Math.abs(after.headerHeight - before.headerHeight)).toBeLessThanOrEqual(1);
+  expect(Math.abs(after.summaryTop - before.summaryTop)).toBeLessThanOrEqual(1);
+  expect(Math.abs(after.summaryHeight - before.summaryHeight)).toBeLessThanOrEqual(1);
+  expect(Math.abs(after.filtersTop - before.filtersTop)).toBeLessThanOrEqual(1);
+  expect(Math.abs(after.filtersHeight - before.filtersHeight)).toBeLessThanOrEqual(1);
+});
+
 for (const width of [320, 360, 390, 412]) {
   test(`Flight mobile filters stay inside the header without overflow at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
