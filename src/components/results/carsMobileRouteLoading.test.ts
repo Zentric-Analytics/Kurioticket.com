@@ -100,7 +100,9 @@ test("Cars Results edit search blocks expired pickup times before navigation", (
   assert.match(resultsForm, /role="alert"[\s\S]*?searchValidationError/);
 });
 
-test("mobile View deal starts Cars loading without changing the destination href", () => {
+test("standalone View deal uses provider handoff while guided details keep the Cars route loader", () => {
+  assert.match(card, /href=\{providerBookingHref\}[\s\S]*?target="_blank"[\s\S]*?rel="noopener noreferrer"/);
+  assert.match(card, /aria-label="Provider booking link unavailable"/);
   assert.match(card, /const \[mobileDetailsPending, setMobileDetailsPending\] = useState\(false\)/);
   assert.match(card, /setMobileDetailsPending\(true\);\s*startRouteProgress\(\);/);
   assert.match(
@@ -110,7 +112,7 @@ test("mobile View deal starts Cars loading without changing the destination href
   assert.match(card, /<CarsRouteLoadingOverlay active=\{mobileDetailsPending\} \/>/);
   assert.equal(
     (card.match(/prefetch=\{car\.inventorySource === "kayak-sandbox" \? false : undefined\}/g) ?? []).length,
-    2,
+    1,
   );
 });
 
