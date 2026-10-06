@@ -1033,7 +1033,7 @@ export function AppHeader({
               {carsResultsMobileInlineSearch ? (
                 <div
                   data-cars-results-mobile-nav-filter
-                  className="me-1 flex h-11 w-9 shrink-0 items-center justify-center sm:hidden"
+                  className="me-1 flex h-11 w-9 shrink-0 items-center justify-center empty:hidden sm:hidden"
                 />
               ) : null}
               {isSignedIn ? (
