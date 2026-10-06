@@ -162,9 +162,10 @@ test("desktop Compare deals enforces one open popup across result cards", () => 
     selectGroup.indexOf("announceDesktopPickerOpen()") <
       selectGroup.indexOf("setOpenProviderKey(group.key)"),
   );
+  const overflowStart = picker.indexOf("extraCount > 0");
   const overflow = picker.slice(
-    picker.indexOf("extraCount > 0"),
-    picker.indexOf("dealSelectionPending"),
+    overflowStart,
+    picker.indexOf("data-car-deal-selection-loading", overflowStart),
   );
   assert.ok(
     overflow.indexOf("announceDesktopPickerOpen()") <
