@@ -38,9 +38,13 @@ test("provider branding uses mark-only Kurioticket treatment and truthful fallba
   assert.match(picker, /aria-label=\{\`Compare deal from \$\{group\.providerName\}\`\}/);
 });
 
-test("provider selection has desktop popover and mobile bottom sheet without another booking CTA", () => {
-  assert.match(picker, /absolute left-0 top-full z-40[\s\S]*md:block/);
+test("provider selection portals a desktop popover and mobile bottom sheet without another booking CTA", () => {
+  assert.match(picker, /createPortal\(/);
+  assert.match(picker, /data-car-deal-picker-desktop-panel/);
+  assert.match(picker, /fixed z-\[140\][\s\S]*md:block/);
   assert.match(picker, /fixed inset-0 z-\[130\][\s\S]*md:hidden/);
+  assert.match(picker, /acquireMobileResultsScrollLock\(\)/);
+  assert.match(picker, /event\.key !== "Escape"/);
   assert.match(picker, /role="dialog"/);
   assert.match(picker, /Selected · View deal uses this provider/);
   assert.doesNotMatch(picker, />\s*Continue deal\s*</);
