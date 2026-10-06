@@ -16,7 +16,7 @@ import {
   Tag,
   Users,
 } from "lucide-react";
-import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
+import { useState, type CSSProperties, type MouseEvent as ReactMouseEvent } from "react";
 import type { LucideIcon } from "lucide-react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -25,7 +25,6 @@ import { CarDealPicker } from "@/components/results/CarDealPicker";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { CarsRouteLoadingOverlay } from "@/components/results/CarsRouteLoadingOverlay";
-import { CarCardSkeleton } from "@/components/ui/Skeleton";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useSavedCar } from "@/components/results/useSavedCar";
 import {
@@ -40,7 +39,6 @@ import { getPrimaryCarOffer } from "@/lib/cars/carResults";
 import type { CarOffer, NormalizedCarResult } from "@/lib/cars/types";
 import type { CarSearchParams } from "@/lib/cars/types";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
-import { prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
 
 const title = (value: string) =>
@@ -59,10 +57,13 @@ const desktopStandaloneViewDealClassName =
   "mt-2 inline-flex min-h-9 items-center justify-end gap-1 text-[14px] font-bold leading-5 text-[#004BB8]";
 
 const unavailableStandaloneViewDealClassName =
-  "appearance-none border-0 bg-transparent p-0 text-[#004BB8] [-webkit-text-fill-color:#004BB8] disabled:text-[#004BB8] disabled:opacity-100 disabled:[-webkit-text-fill-color:#004BB8]";
+  "appearance-none border-0 bg-transparent p-0 text-[#004BB8] disabled:text-[#004BB8] disabled:opacity-100";
 
-const CAR_DEAL_SELECTION_MOBILE_BUSY_MS = 220;
-const CAR_DEAL_SELECTION_DESKTOP_BUSY_MS = 160;
+const standaloneViewDealVisualStyle: CSSProperties = {
+  color: "#004BB8",
+  WebkitTextFillColor: "#004BB8",
+  opacity: 1,
+};
 
 const approvedProviderBookingUrl = (
   car: NormalizedCarResult,
@@ -87,6 +88,7 @@ export function CarResultCard({
   detailsHref,
   search,
   onSelect,
+  onDealSelectionStart,
   actionLabel = "View car",
   providerLabel,
   actionAriaLabel,
@@ -100,6 +102,7 @@ export function CarResultCard({
   detailsHref: string | null;
   search: CarSearchParams;
   onSelect?: (car: NormalizedCarResult) => void;
+  onDealSelectionStart?: () => void;
   actionLabel?: string;
   providerLabel?: string;
   actionAriaLabel?: string;
@@ -119,22 +122,11 @@ export function CarResultCard({
   const { start: startRouteProgress } = useRouteProgress();
   const [shareConfirmation, setShareConfirmation] = useState("");
   const [mobileDetailsPending, setMobileDetailsPending] = useState(false);
-  const [dealSelectionPending, setDealSelectionPending] = useState(false);
-  const dealSelectionTimerRef = useRef<number | null>(null);
-  const dealSelectionMobileRef = useRef(false);
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const primaryOffer = getPrimaryCarOffer(car);
   const [selectedOfferId, setSelectedOfferId] = useState(
     () => primaryOffer?.id ?? "",
-  );
-  useEffect(
-    () => () => {
-      if (dealSelectionTimerRef.current !== null) {
-        window.clearTimeout(dealSelectionTimerRef.current);
-      }
-    },
-    [],
   );
   const offer =
     car.offers.find((candidate) => candidate.id === selectedOfferId) ??
@@ -201,25 +193,8 @@ export function CarResultCard({
   const mobileSpecColumns = getMobileCarSpecColumns(mobilePrimarySpecs);
   const selectDealOffer = (nextOffer: CarOffer) => {
     if (nextOffer.id === selectedOfferId) return;
-
-    if (dealSelectionTimerRef.current !== null) {
-      window.clearTimeout(dealSelectionTimerRef.current);
-    }
-
-    dealSelectionMobileRef.current = window.innerWidth < 1024;
-    setDealSelectionPending(true);
+    onDealSelectionStart?.();
     setSelectedOfferId(nextOffer.id);
-
-    const minimumBusyMs = prefersReducedResultsMotion()
-      ? 0
-      : dealSelectionMobileRef.current
-        ? CAR_DEAL_SELECTION_MOBILE_BUSY_MS
-        : CAR_DEAL_SELECTION_DESKTOP_BUSY_MS;
-
-    dealSelectionTimerRef.current = window.setTimeout(() => {
-      setDealSelectionPending(false);
-      dealSelectionTimerRef.current = null;
-    }, minimumBusyMs);
   };
 
   const handleMobileDetailsNavigation = (
@@ -318,15 +293,6 @@ export function CarResultCard({
       </button>
     </div>
   );
-
-  if (dealSelectionPending) {
-    return (
-      <CarCardSkeleton
-        transitionMotion={dealSelectionMobileRef.current ? "shimmer" : "pulse"}
-        desktopSurfaceParity={desktopSurfaceParity}
-      />
-    );
-  }
 
   return (
     <article
@@ -507,6 +473,7 @@ export function CarResultCard({
                 rel="noopener noreferrer"
                 aria-label={`View deal from ${offer.bookingProviderName || offer.rentalCompanyName}`}
                 className={`${mobileStandaloneViewDealClassName} transition-colors hover:text-[#003A8C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40`}
+                style={standaloneViewDealVisualStyle}
               >
                 View deal <ChevronRight size={16} aria-hidden="true" />
               </a>
@@ -516,6 +483,7 @@ export function CarResultCard({
                 disabled
                 aria-label="Provider booking link unavailable"
                 className={`${mobileStandaloneViewDealClassName} ${unavailableStandaloneViewDealClassName} cursor-not-allowed`}
+                style={standaloneViewDealVisualStyle}
               >
                 View deal <ChevronRight size={16} aria-hidden="true" />
               </button>
@@ -822,6 +790,7 @@ export function CarResultCard({
                     rel="noopener noreferrer"
                     aria-label={`View deal from ${offer.bookingProviderName || offer.rentalCompanyName}`}
                     className={`${desktopStandaloneViewDealClassName} transition-colors hover:text-[#003A8C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2`}
+                    style={standaloneViewDealVisualStyle}
                   >
                     View deal
                     <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -832,6 +801,7 @@ export function CarResultCard({
                     disabled
                     aria-label="Provider booking link unavailable"
                     className={`${desktopStandaloneViewDealClassName} ${unavailableStandaloneViewDealClassName} cursor-not-allowed`}
+                    style={standaloneViewDealVisualStyle}
                   >
                     View deal
                     <ChevronRight className="h-4 w-4" aria-hidden="true" />
