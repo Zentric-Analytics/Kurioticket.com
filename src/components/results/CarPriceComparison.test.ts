@@ -88,6 +88,37 @@ test("provider selection expands the desktop result gap while preserving tablet 
   assert.doesNotMatch(picker, />\s*View deal\s*</);
 });
 
+test("desktop Compare deals popup has a polished hierarchy without changing mobile/tablet presentation", () => {
+  assert.equal((picker.match(/<ProviderPreview/g) ?? []).length, 3);
+  assert.equal((picker.match(/\sdesktop\s*\/>/g) ?? []).length, 1);
+  assert.match(
+    picker,
+    /data-car-deal-picker-desktop-panel[\s\S]*ProviderPreview[\s\S]*desktop/,
+  );
+  assert.match(
+    picker,
+    /data-car-deal-provider-preview[\s\S]*data-desktop=\{desktop \? "true" : "false"\}/,
+  );
+  assert.doesNotMatch(picker, /1 available offer|available offers · best rate selected/);
+  assert.match(
+    picker,
+    /desktop\s*\?\s*"text-\[26px\] leading-7 tracking-\[-0\.025em\]"\s*:\s*"text-base"/,
+  );
+  assert.match(
+    picker,
+    /desktop[\s\S]*text-\[13px\] font-semibold leading-4 text-\[#52627A\]/,
+  );
+  assert.match(
+    picker,
+    /CircleCheck[\s\S]*Free cancellation[\s\S]*ReceiptText[\s\S]*Taxes and fees included/,
+  );
+  assert.match(picker, /WalletCards[\s\S]*Pay at pickup/);
+  assert.match(
+    picker,
+    /desktop[\s\S]*border-b border-\[#E7EDF4\] pb-3/,
+  );
+});
+
 test("closing desktop Compare deals collapses the expansion and restores the normal card gap", () => {
   assert.match(
     picker,
