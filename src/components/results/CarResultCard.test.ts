@@ -48,6 +48,23 @@ test("Compare deals keeps offer state controllable by the results page instead o
   );
 });
 
+test("desktop Compare deals owns a sibling expansion slot without changing mobile picker behavior", () => {
+  assert.match(source, /data-car-result-card-shell className="w-full"/);
+  assert.match(
+    source,
+    /data-car-deal-picker-desktop-slot[\s\S]*className="hidden w-full lg:block"/,
+  );
+  assert.equal(
+    (source.match(/desktopPanelTarget=\{desktopDealPanelTarget\}/g) ?? []).length,
+    1,
+  );
+  const mobile = source.slice(
+    source.indexOf("data-car-card-mobile-lower-band"),
+    source.indexOf('guidedPlanning ? "grid"'),
+  );
+  assert.doesNotMatch(mobile, /desktopPanelTarget/);
+});
+
 test("standalone result commerce is provider-ready without fabricating booking URLs", () => {
   assert.match(source, /const approvedProviderBookingUrl/);
   assert.match(source, /sandboxBookingUrl\(offer\.bookingUrl\)/);
