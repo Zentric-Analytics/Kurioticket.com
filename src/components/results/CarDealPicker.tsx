@@ -406,7 +406,6 @@ export function CarDealPicker({
             document.body,
           )
         : null}
-        : null}
     </div>
   );
 }
