@@ -8,6 +8,45 @@ export const getPrimaryCarOffer = (car: NormalizedCarResult): CarOffer | undefin
   [...car.offers].filter((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0)
     .sort((a, b) => a.totalPrice - b.totalPrice || a.pricePerDay - b.pricePerDay || a.id.localeCompare(b.id))[0];
 
+export type CarProviderOfferGroup = {
+  key: string;
+  providerName: string;
+  logoUrl?: string;
+  offers: CarOffer[];
+  primaryOffer: CarOffer;
+};
+
+const carProviderIdentity = (offer: CarOffer) =>
+  (offer.bookingProviderName.trim() || offer.rentalCompanyName.trim() || "Provider")
+    .toLocaleLowerCase();
+
+export const getCarProviderOfferGroups = (
+  offers: CarOffer[],
+): CarProviderOfferGroup[] => {
+  const groups = new Map<string, CarOffer[]>();
+  for (const offer of sortCarOffers(offers)) {
+    const key = carProviderIdentity(offer);
+    const existing = groups.get(key);
+    if (existing) existing.push(offer);
+    else groups.set(key, [offer]);
+  }
+
+  return [...groups.entries()].flatMap(([key, providerOffers]) => {
+    const primaryOffer = providerOffers[0];
+    if (!primaryOffer) return [];
+    return [{
+      key,
+      providerName:
+        primaryOffer.bookingProviderName.trim() ||
+        primaryOffer.rentalCompanyName.trim() ||
+        "Provider",
+      logoUrl: primaryOffer.bookingProviderLogoUrl,
+      offers: providerOffers,
+      primaryOffer,
+    }];
+  });
+};
+
 /** The details comparison intentionally has a simpler, stable price ordering. */
 export const sortCarOffers = (offers: CarOffer[]) =>
   [...offers]
