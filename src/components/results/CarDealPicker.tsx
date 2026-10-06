@@ -7,7 +7,7 @@ import { Check, ChevronDown, X } from "lucide-react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import {
-  getCarProviderOfferGroups,
+  getCarDealPickerGroups,
   type CarProviderOfferGroup,
 } from "@/lib/cars/carResults";
 import type { CarOffer, NormalizedCarResult } from "@/lib/cars/types";
@@ -67,7 +67,7 @@ export function CarDealPicker({
 }: Props) {
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
-  const groups = useMemo(() => getCarProviderOfferGroups(car.offers), [car.offers]);
+  const groups = useMemo(() => getCarDealPickerGroups(car), [car]);
   const [openProviderKey, setOpenProviderKey] = useState<string | null>(null);
   const [showAllProviders, setShowAllProviders] = useState(false);
   const anchorRef = useRef<HTMLDivElement | null>(null);
