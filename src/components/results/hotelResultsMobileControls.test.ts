@@ -27,8 +27,10 @@ test("Hotel Results hides only the mobile category tabs", () => {
 test("mobile Hotel search lives in the navbar and retains the existing edit sheet", () => {
   assert.doesNotMatch(resultsSource, /mobileResultsSearch=\{/);
   assert.match(resultsPageSource, /mobileResultsSearch=\{<div data-hotel-results-mobile-nav-search/);
+  assert.match(resultsPageSource, /mobileResultsFilters=\{<div data-hotel-results-mobile-nav-filters[^}]*bg-white/);
   assert.match(resultsSource, /setMobileNavSearchTarget\(document\.querySelector<HTMLElement>\("\[data-hotel-results-mobile-nav-search\]"\)\)/);
   assert.match(resultsSource, /createPortal\(renderMobileHotelNavSearch\(\), mobileNavSearchTarget\)/);
+  assert.match(resultsSource, /createPortal\(renderMobileHotelShortcuts\(\), mobileNavFiltersTarget\)/);
   assert.match(resultsSource, /aria-expanded=\{mobileHotelSearchOpen\}/);
   assert.match(resultsSource, /<MobileResultsEditSheet/);
   assert.match(searchBarSource, /mobileLayout === "controls"/);
@@ -174,4 +176,17 @@ test("Hotel mobile filter rail remains below the navbar in the results page", ()
     /data-hotel-results-toolbar[\s\S]*mobileStyles\.scrollFilterBar[\s\S]*renderMobileHotelShortcuts\(\)/,
   );
   assert.doesNotMatch(resultsPageSource, /mobileResultsFilters=/);
+});
+
+
+test("Hotel mobile filter rail is inside the sticky navbar and uses the navbar white background", () => {
+  const headerSource = readFileSync(
+    new URL("../layout/AppHeader.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(headerSource, /mobileResultsFilters\?: ReactNode/);
+  assert.match(headerSource, /data-mobile-results-filter-navbar[^\n]*bg-white/);
+  assert.match(resultsSource, /setMobileNavFiltersTarget\(document\.querySelector<HTMLElement>\("\[data-hotel-results-mobile-nav-filters\]"\)\)/);
+  assert.doesNotMatch(resultsSource, /mobileStyles\.scrollFilterBar/);
 });

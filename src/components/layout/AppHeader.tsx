@@ -77,6 +77,7 @@ function SavedHeartIcon({
 
 type AppHeaderProps = {
   mobileResultsSearch?: ReactNode;
+  mobileResultsFilters?: ReactNode;
   mobileResultsLeadingAction?: ReactNode;
   mobileResultsTrailingActions?: boolean;
   mobileResultsSticky?: boolean;
@@ -143,6 +144,7 @@ const mobileInfoLegalMenuItems = [
 
 export function AppHeader({
   mobileResultsSearch,
+  mobileResultsFilters,
   mobileResultsLeadingAction,
   mobileResultsTrailingActions = false,
   mobileResultsSticky = true,
@@ -753,7 +755,8 @@ export function AppHeader({
           hotelDesktopBoundary && "lg:shadow-[0_2px_12px_rgba(12,14,28,0.08)]",
         )}
       >
-        {mobileResultsSearch ? <div data-mobile-results-navbar className={cn("flex h-[72px] items-center border-b border-slate-200 sm:hidden", mobileResultsTrailingActions ? "gap-1 px-1" : "gap-2 px-2")}>
+        {mobileResultsSearch ? <>
+        <div data-mobile-results-navbar className={cn("flex h-[72px] items-center border-b border-slate-200 bg-white sm:hidden", mobileResultsTrailingActions ? "gap-1 px-1" : "gap-2 px-2")}>
           {mobileResultsLeadingAction ?? (
             mobileResultsTrailingActions ? (
               hotelResultsDesktopSticky ? (
@@ -802,7 +805,13 @@ export function AppHeader({
               </button>
             </div>
           ) : null}
-        </div> : null}
+        </div>
+        {mobileResultsFilters ? (
+          <div data-mobile-results-filter-navbar className="border-b border-slate-200 bg-white sm:hidden">
+            {mobileResultsFilters}
+          </div>
+        ) : null}
+        </> : null}
         <div className={cn("page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3", mobileResultsSearch && "max-sm:hidden", resultsDesktopSticky && "lg:py-[14px]")}>
           <div className={cn("flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8", resultsDesktopSticky && "lg:gap-4", carsResultsMobileInlineSearch && "max-sm:gap-2")}>
             <Link
