@@ -102,7 +102,7 @@ test("desktop Compare deals popup has a polished hierarchy without changing mobi
   assert.doesNotMatch(picker, /1 available offer|available offers · best rate selected/);
   assert.match(
     picker,
-    /desktop \? "text-\[26px\] leading-7 tracking-\[-0\.025em\]" : "text-base"/,
+    /desktop\s*\?\s*"text-\[26px\] leading-7 tracking-\[-0\.025em\]"\s*:\s*"text-base"/,
   );
   assert.match(
     picker,
