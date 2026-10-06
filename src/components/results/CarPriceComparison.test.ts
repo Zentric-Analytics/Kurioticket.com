@@ -35,7 +35,9 @@ test("provider branding uses mark-only Kurioticket treatment and truthful fallba
   assert.match(picker, /\/brand\/kurioticket-icon-blue\.svg/);
   assert.match(picker, /group\.logoUrl/);
   assert.match(picker, /providerInitial\(group\.providerName\)/);
-  assert.match(picker, /aria-label=\{\`Compare deal from \$\{group\.providerName\}\`\}/);
+  assert.match(picker, /repeatedProvider/);
+  assert.match(picker, /Compare \$\{group\.providerName\} deal \$\{index \+ 1\}/);
+  assert.match(picker, /Compare deal from \$\{group\.providerName\}/);
 });
 
 test("provider selection portals a desktop popover and mobile bottom sheet without another booking CTA", () => {
