@@ -11,7 +11,7 @@ test("mobile results rhythm has no decorative divider or oversized spacer", asyn
   assert.match(source, /data-flight-mobile-summary-card/);
   assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
   assert.doesNotMatch(source, /relative translate-y-1\/2|renderMobileCompactResultsHeader/);
-  assert.match(source, /flight-results-grid page-shell grid[^\n]*pb-0 pt-1 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-4/);
+  assert.match(source, /flight-results-grid page-shell grid[^\n]*pb-0 pt-0 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-4/);
   assert.doesNotMatch(source, /aria-label="Breadcrumb"/);
   assert.doesNotMatch(source, /flight-results-grid page-shell grid[^\n]*pt-12/);
   assert.match(source, /data-flight-mobile-results-shortcuts/);
@@ -55,7 +55,7 @@ test("mobile nearby insight, quick filters, and price alert use compact native-l
     styles,
     /@media \(max-width: 639px\) \{[\s\S]*?\.flight-mobile-cheaper-nearby \{[\s\S]*?font-size: 11px !important;[\s\S]*?line-height: 15px !important;[\s\S]*?-webkit-text-size-adjust: none;[\s\S]*?text-size-adjust: none;[\s\S]*?\}/,
   );
-  assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,350}py-1/);
+  assert.match(source, /data-flight-mobile-filter-slot[\s\S]{0,180}h-\[48px\] pt-1 sm:hidden/);
   assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 pt-2/);
 });
 
@@ -83,7 +83,7 @@ test("Flight navbar capsule uses light Hotel mobile typography", async () => {
   assert.match(capsule, /SquarePen/);
 });
 
-test("mobile Flight Results uses Hotel rail gutters and keeps result-card rhythm", async () => {
+test("mobile Flight Results contains the filter rail within its gutter and keeps result-card rhythm", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
@@ -91,11 +91,11 @@ test("mobile Flight Results uses Hotel rail gutters and keeps result-card rhythm
   const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
   const card = await readFile(new URL("./MobileFlightCard.tsx", import.meta.url), "utf8");
 
-  assert.match(styles, /@media \(max-width: 639px\) \{\s*\.flight-results-grid \{\s*width: min\(100% - 24px, 1560px\);/);
+  assert.match(styles, /@media \(max-width: 639px\) \{\s*\.flight-results-grid \{\s*width: calc\(100% - 28px\);/);
   assert.match(source, /min-h-\[28px\][^\n]*max-w-full[^\n]*px-0[^\n]*>Cheaper nearby:/);
-  assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,500}px-0 py-1 sm:hidden/);
+  assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,500}h-11 w-full px-0 sm:hidden/);
   assert.doesNotMatch(source, /data-flight-mobile-results-shortcuts[\s\S]{0,350}-mx-3/);
-  assert.match(source, /data-mobile-flight-shortcuts[\s\S]{0,180}className="scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\] flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain pe-4/);
+  assert.match(source, /data-mobile-flight-shortcuts[\s\S]{0,180}className="scrollbar-hide -me-\[14px\] flex w-\[calc\(100%\+14px\)\] flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain pe-\[14px\]/);
   assert.doesNotMatch(source, /data-mobile-flight-shortcuts[\s\S]{0,180}className="[^"]*ps-3|flex w-max flex-nowrap/);
   assert.match(source, /data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden"/);
   assert.doesNotMatch(source, /data-flight-mobile-results-intro[^\n]*px-3/);
