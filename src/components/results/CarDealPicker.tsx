@@ -19,6 +19,7 @@ type Props = {
   selectedOfferId: string;
   onSelectOffer: (offer: CarOffer) => void;
   compact?: boolean;
+  desktopPanelTarget?: HTMLElement | null;
 };
 
 const CAR_DEAL_PICKER_DESKTOP_OPEN_EVENT =
@@ -67,6 +68,7 @@ export function CarDealPicker({
   selectedOfferId,
   onSelectOffer,
   compact = false,
+  desktopPanelTarget = null,
 }: Props) {
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -76,7 +78,9 @@ export function CarDealPicker({
   const [showAllProviders, setShowAllProviders] = useState(false);
   const anchorRef = useRef<HTMLDivElement | null>(null);
   const desktopPanelRef = useRef<HTMLDivElement | null>(null);
+  const tabletPanelRef = useRef<HTMLDivElement | null>(null);
   const [desktopPosition, setDesktopPosition] = useState({ top: 0, left: 0 });
+  const [desktopInlineLeft, setDesktopInlineLeft] = useState(0);
   const overlayOpen = Boolean(openProviderKey || showAllProviders);
 
   useEffect(() => {
@@ -123,6 +127,15 @@ export function CarDealPicker({
           Math.max(12, window.innerWidth - panelWidth - 12),
         ),
       });
+      if (desktopPanelTarget) {
+        const targetRect = desktopPanelTarget.getBoundingClientRect();
+        setDesktopInlineLeft(
+          Math.min(
+            Math.max(0, rect.left - targetRect.left),
+            Math.max(0, targetRect.width - panelWidth),
+          ),
+        );
+      }
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
@@ -135,6 +148,7 @@ export function CarDealPicker({
       if (!(target instanceof Node)) return;
       if (anchorRef.current?.contains(target)) return;
       if (desktopPanelRef.current?.contains(target)) return;
+      if (tabletPanelRef.current?.contains(target)) return;
       setOpenProviderKey(null);
       setShowAllProviders(false);
     };
@@ -155,7 +169,7 @@ export function CarDealPicker({
       document.removeEventListener("pointerdown", onPointerDown, true);
       releaseMobileScrollLock?.();
     };
-  }, [overlayOpen]);
+  }, [desktopPanelTarget, overlayOpen]);
 
   const selectedGroup =
     groups.find((group) =>
@@ -258,13 +272,22 @@ export function CarDealPicker({
         </div>
       </div>
 
-      {overlayOpen && typeof document !== "undefined"
+      {overlayOpen && desktopPanelTarget
         ? createPortal(
-            <>
+            <div
+              data-car-deal-picker-desktop-expansion
+              className="hidden w-full pt-3 lg:block"
+            >
               <div
                 ref={desktopPanelRef}
-                className="fixed z-[140] hidden w-[310px] rounded-xl border border-[#D8E1EC] bg-white p-3 shadow-[0_18px_45px_-20px_rgba(15,23,42,0.4)] md:block"
-                style={{ top: desktopPosition.top, left: desktopPosition.left }}
+                role="dialog"
+                aria-label={
+                  showAllProviders
+                    ? "Car deal providers"
+                    : `${panelGroup?.providerName ?? "Provider"} deal details`
+                }
+                className="w-[310px] rounded-xl border border-[#D8E1EC] bg-white p-3 shadow-[0_18px_45px_-20px_rgba(15,23,42,0.4)]"
+                style={{ marginInlineStart: desktopInlineLeft }}
                 data-car-deal-picker-desktop-panel
               >
                 {showAllProviders ? (
@@ -272,11 +295,53 @@ export function CarDealPicker({
                     groups={groups}
                     selectedKey={selectedGroup.key}
                     onSelect={selectGroup}
+                    onClose={closePanel}
                   />
                 ) : panelGroup ? (
                   <ProviderPreview
                     group={panelGroup}
-                    total={formatOfferPrice(panelGroup.primaryOffer, panelGroup.primaryOffer.totalPrice)}
+                    total={formatOfferPrice(
+                      panelGroup.primaryOffer,
+                      panelGroup.primaryOffer.totalPrice,
+                    )}
+                    onClose={closePanel}
+                  />
+                ) : null}
+              </div>
+            </div>,
+            desktopPanelTarget,
+          )
+        : null}
+
+      {overlayOpen && typeof document !== "undefined"
+        ? createPortal(
+            <>
+              <div
+                ref={tabletPanelRef}
+                role="dialog"
+                aria-label={
+                  showAllProviders
+                    ? "Car deal providers"
+                    : `${panelGroup?.providerName ?? "Provider"} deal details`
+                }
+                className="fixed z-[140] hidden w-[310px] rounded-xl border border-[#D8E1EC] bg-white p-3 shadow-[0_18px_45px_-20px_rgba(15,23,42,0.4)] md:block lg:hidden"
+                style={{ top: desktopPosition.top, left: desktopPosition.left }}
+                data-car-deal-picker-tablet-panel
+              >
+                {showAllProviders ? (
+                  <ProviderList
+                    groups={groups}
+                    selectedKey={selectedGroup.key}
+                    onSelect={selectGroup}
+                    onClose={closePanel}
+                  />
+                ) : panelGroup ? (
+                  <ProviderPreview
+                    group={panelGroup}
+                    total={formatOfferPrice(
+                      panelGroup.primaryOffer,
+                      panelGroup.primaryOffer.totalPrice,
+                    )}
                     onClose={closePanel}
                   />
                 ) : null}
@@ -317,6 +382,7 @@ export function CarDealPicker({
             </>,
             document.body,
           )
+        : null}
         : null}
     </div>
   );
