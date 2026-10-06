@@ -187,6 +187,7 @@ test("Hotel mobile filter rail is inside the sticky navbar and uses the navbar w
 
   assert.match(headerSource, /mobileResultsFilters\?: ReactNode/);
   assert.match(headerSource, /data-mobile-results-filter-navbar[^\n]*bg-white/);
+  assert.doesNotMatch(headerSource, /data-mobile-results-filter-navbar[^\n]*border-b/);
   assert.match(resultsSource, /setMobileNavFiltersTarget\(document\.querySelector<HTMLElement>\("\[data-hotel-results-mobile-nav-filters\]"\)\)/);
   assert.doesNotMatch(resultsSource, /mobileStyles\.scrollFilterBar/);
 });
