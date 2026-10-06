@@ -541,6 +541,9 @@ export function CarsResultsClient({
     useState<HTMLElement | null>(null);
   const [mobileNavSearchTarget, setMobileNavSearchTarget] =
     useState<HTMLElement | null>(null);
+  const [mobileNavFilterTarget, setMobileNavFilterTarget] =
+    useState<HTMLElement | null>(null);
+  const [showMobileHeaderFilter, setShowMobileHeaderFilter] = useState(false);
   const [desktopStickySearchSection, setDesktopStickySearchSection] = useState<
     "locations" | "dates" | "times" | "driverAge" | null
   >(null);
@@ -580,6 +583,7 @@ export function CarsResultsClient({
   const returnLocationLauncherRef = useRef<HTMLButtonElement | null>(null);
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
+  const mobileShortcutsRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileSearchModalityRef = useRef<OverlayActivationModality>("programmatic");
   const mobileSearchSnapshotRef = useRef<CarsResultsSearchSnapshot | null>(
@@ -608,8 +612,65 @@ export function CarsResultsClient({
           "[data-cars-results-mobile-nav-search]",
         ),
       );
+      setMobileNavFilterTarget(
+        document.querySelector<HTMLElement>(
+          "[data-cars-results-mobile-nav-filter]",
+        ),
+      );
     });
     return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    let frame = 0;
+    const media = window.matchMedia("(max-width: 639px)");
+
+    const measureMobileFilterHandoff = () => {
+      frame = 0;
+      if (!media.matches) {
+        setShowMobileHeaderFilter(false);
+        return;
+      }
+
+      const shortcuts = mobileShortcutsRef.current;
+      const header = document.querySelector<HTMLElement>("[data-app-header]");
+      if (!shortcuts || !header) {
+        setShowMobileHeaderFilter(false);
+        return;
+      }
+
+      const nextVisible =
+        shortcuts.getBoundingClientRect().top <=
+        header.getBoundingClientRect().bottom;
+
+      setShowMobileHeaderFilter((current) =>
+        current === nextVisible ? current : nextVisible,
+      );
+    };
+
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(measureMobileFilterHandoff);
+    };
+
+    const observer =
+      "ResizeObserver" in window ? new ResizeObserver(schedule) : null;
+    observer?.observe(document.documentElement);
+    if (mobileShortcutsRef.current) observer?.observe(mobileShortcutsRef.current);
+
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    media.addEventListener("change", schedule);
+    schedule();
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      media.removeEventListener("change", schedule);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   const hasSearchContext = Boolean(pickupLocation || pickupDate || dropoffDate);
@@ -1569,6 +1630,51 @@ export function CarsResultsClient({
       : null}
     {mobileNavSearchTarget
       ? createPortal(renderMobileHeaderSearch(), mobileNavSearchTarget)
+      : null}
+    {mobileNavFilterTarget && showMobileHeaderFilter
+      ? createPortal(
+          <button
+            type="button"
+            data-cars-results-mobile-header-filter
+            aria-label={
+              activeFilterCount > 0
+                ? t("filtersWithCount").replace(
+                    "{{count}}",
+                    String(activeFilterCount),
+                  )
+                : t("filters")
+            }
+            aria-haspopup="dialog"
+            aria-expanded={filtersOpen}
+            onClick={(event) =>
+              openMobileFiltersDrawer(
+                event.currentTarget,
+                getOverlayActivationModality(event),
+              )
+            }
+            className={cn(
+              "focus-ring relative inline-flex h-9 w-9 items-center justify-center rounded-[8px] border shadow-[0_1px_2px_rgba(24,48,91,0.045)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25",
+              activeFilterCount > 0
+                ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
+                : "border-[#D5DFEA] bg-[#FBFCFE] text-[#24324A] hover:border-[#C7D3E0] hover:bg-white",
+            )}
+          >
+            <SlidersHorizontal
+              className="h-[16px] w-[16px]"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+            {activeFilterCount > 0 ? (
+              <span
+                data-cars-results-mobile-header-filter-count
+                className="absolute -end-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#004BB8] px-1 text-[9px] font-bold leading-none text-white"
+              >
+                {activeFilterCount}
+              </span>
+            ) : null}
+          </button>,
+          mobileNavFilterTarget,
+        )
       : null}
     <main className="flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-white pb-8">
       <MobileDatePickerDialog
@@ -2624,8 +2730,14 @@ export function CarsResultsExperience({
           {results.length > 0 ? (
             <>
               <div
+                ref={mobileShortcutsRef}
                 data-cars-results-sticky-shortcuts
-                className="max-sm:sticky max-sm:top-[calc(var(--cars-results-safe-area-top)+61px)] max-sm:z-40 max-sm:bg-[#F5F7FB] max-sm:py-1 lg:hidden"
+                data-mobile-header-filter-active={showMobileHeaderFilter ? "true" : "false"}
+                className={cn(
+                  "max-sm:bg-[#F5F7FB] max-sm:py-1 lg:hidden",
+                  showMobileHeaderFilter &&
+                    "max-sm:pointer-events-none max-sm:opacity-0 max-sm:invisible",
+                )}
               >
                 {!guidedPlanning ? (
                   <div
