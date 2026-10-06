@@ -524,13 +524,13 @@ export function HotelPriceAlertControl({
       aria-label={t("travel.account.hotelAlert.title")}
       className={cn("mb-3 sm:mb-5", compactDesktop && "sm:mb-0")}
     >
-      <div className="flex min-h-12 items-center gap-2 rounded-xl border border-[#D8E1EC] bg-[#F0F5FC] px-3 sm:hidden">
+      <div className="flex min-h-11 items-center gap-2.5 border-b border-[#E7ECF5] px-0 py-1 sm:hidden">
         <Bell
-          className="h-[17px] w-[17px] shrink-0 text-[#004BB8]"
+          className="h-[17px] w-[17px] shrink-0 text-[#1A1A1A]"
           strokeWidth={2}
           aria-hidden="true"
         />
-        <h2 className="min-w-0 flex-1 truncate text-[12.5px] font-bold leading-4 text-[#071A48]">
+        <h2 className="truncate text-[12.5px] font-bold leading-4 text-[#1A1A1A]">
           {t("travel.account.hotelAlert.title")}
         </h2>
         <button
@@ -544,7 +544,7 @@ export function HotelPriceAlertControl({
             void handleToggle(!isTracking, "mobile")
           }
           className={cn(
-            "relative inline-flex h-[28px] w-[49px] shrink-0 items-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 disabled:opacity-55",
+            "relative ms-1 inline-flex h-[28px] w-[49px] shrink-0 items-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 disabled:opacity-55",
             isTracking
               ? "border-[#004BB8] bg-[#004BB8]"
               : "border-slate-300 bg-slate-300",
