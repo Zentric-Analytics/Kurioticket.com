@@ -14,6 +14,11 @@ const presentationSource = readFileSync(
   "src/lib/cars/carFilterPresentation.ts",
   "utf8",
 );
+const hotelResultsSource = readFileSync(
+  "src/components/results/HotelResultsClient.tsx",
+  "utf8",
+);
+const globalStyles = readFileSync("src/app/globals.css", "utf8");
 const mobileHeaderSearch = resultsSource.slice(
   resultsSource.indexOf("const renderMobileHeaderSearch"),
   resultsSource.indexOf("const renderCarsSearchForm"),
@@ -27,6 +32,17 @@ test("Cars Results keeps the established responsive canvas surfaces", () => {
   assert.match(
     resultsSource,
     /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white pb-8">/,
+  );
+});
+
+test("mobile Cars Results owns the same full document canvas as Hotel Results", () => {
+  assert.match(
+    hotelResultsSource,
+    /flex-1 overflow-x-clip bg-\[#F5F7FB\] pb-2 sm:pb-8 sm:bg-\[#f6f8fb\] lg:bg-white/,
+  );
+  assert.match(
+    globalStyles,
+    /html\[data-cars-results-scroll-indicator\],\s*html\[data-cars-results-scroll-indicator\] body \{\s*background: #f5f7fb;\s*\}/,
   );
 });
 
