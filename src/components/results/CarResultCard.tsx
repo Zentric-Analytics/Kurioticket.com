@@ -136,6 +136,8 @@ export function CarResultCard({
   const { start: startRouteProgress } = useRouteProgress();
   const [shareConfirmation, setShareConfirmation] = useState("");
   const [mobileDetailsPending, setMobileDetailsPending] = useState(false);
+  const [desktopDealPanelTarget, setDesktopDealPanelTarget] =
+    useState<HTMLDivElement | null>(null);
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const primaryOffer = getPrimaryCarOffer(car);
@@ -313,6 +315,7 @@ export function CarResultCard({
   );
 
   return (
+    <div data-car-result-card-shell className="w-full">
     <article
       className={`relative w-full overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-[#E7EBF1] shadow-[0_2px_10px_rgba(24,48,91,0.08)] md:rounded-2xl ${desktopSurfaceParity ? "md:bg-[#E7EBF1]" : "md:bg-white"} md:shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] md:transition md:duration-200 md:hover:-translate-y-0.5 md:hover:border-[#CBD6E2] md:hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]`}
     >
@@ -461,6 +464,7 @@ export function CarResultCard({
                   car={car}
                   selectedOfferId={offer.id}
                   onSelectOffer={selectDealOffer}
+              desktopPanelTarget={desktopDealPanelTarget}
                   compact
                 />
               ) : null}
@@ -760,6 +764,7 @@ export function CarResultCard({
               car={car}
               selectedOfferId={offer.id}
               onSelectOffer={selectDealOffer}
+              desktopPanelTarget={desktopDealPanelTarget}
             />
           ) : null}
 
@@ -897,5 +902,14 @@ export function CarResultCard({
         </div>
       </div>
     </article>
+    {!guidedPlanning ? (
+      <div
+        ref={setDesktopDealPanelTarget}
+        data-car-deal-picker-desktop-slot
+        className="hidden w-full lg:block"
+        aria-live="polite"
+      />
+    ) : null}
+    </div>
   );
 }
