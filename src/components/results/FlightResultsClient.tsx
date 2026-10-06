@@ -7294,15 +7294,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <>
       {standaloneResultsHeader}
       {renderMobileEditSearchDrawer()}
-      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
+      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.16),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)] sm:bg-white">
         <BrandedLoading
           variant="fullscreen"
           visual="logoPulse"
-          showProgress
-          accessibleProgress
-          contentClassName="max-w-md text-center"
+          showProgress={false}
           searchType="flight"
           className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5 sm:hidden"
+          contentClassName="max-w-md text-center"
         />
         <BrandedLoading
           variant="fullscreen"
