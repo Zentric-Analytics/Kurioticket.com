@@ -41,6 +41,24 @@ for (const width of [320, 360, 390, 412]) {
       expect(rail.distance).toBeGreaterThan(0);
       expect(rail.topShift).toBe(0);
     }
+
+    const stickySamples = [];
+    for (const scrollTop of [240, 640, 600, 760]) {
+      await page.evaluate((top) => window.scrollTo(0, top), scrollTop);
+      stickySamples.push(await page.evaluate(() => {
+        const filters = document.querySelector<HTMLElement>("[data-flight-mobile-results-shortcuts]")!;
+        const navbar = document.querySelector<HTMLElement>("[data-mobile-results-navbar]")!;
+        return {
+          headerBottom: navbar.getBoundingClientRect().bottom,
+          filterTop: filters.getBoundingClientRect().top,
+          overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - innerWidth,
+        };
+      }));
+    }
+    for (const sample of stickySamples) {
+      expect(Math.abs(sample.filterTop - sample.headerBottom)).toBeLessThanOrEqual(1);
+      expect(sample.overflow).toBeLessThanOrEqual(0);
+    }
   });
 }
 

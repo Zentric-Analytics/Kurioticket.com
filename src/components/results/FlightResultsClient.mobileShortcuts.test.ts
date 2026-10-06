@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const source = readFileSync(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
+const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 const start = source.indexOf("function renderMobileSortResultsRow()");
 const end = source.indexOf("function renderFloatingFilterButton", start);
 const shortcuts = source.slice(start, end);
@@ -16,39 +17,26 @@ test("mobile Flight rail stays viewport-contained while preserving horizontal sc
   assert.ok(filter >= 0 && filter < sort && sort < airlines && airlines < stops && stops < airports);
 
   const flightRailClass =
-    "scrollbar-hide -me-[14px] flex w-[calc(100%+14px)] flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pe-[14px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden";
+    "scrollbar-hide -me-4 flex w-[calc(100%+1rem)] flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden";
   assert.ok(shortcuts.includes(flightRailClass));
-  assert.doesNotMatch(shortcuts, /-me-4|w-\[calc\(100%\+1rem\)\]|\bpe-4\b/);
+  assert.doesNotMatch(shortcuts, /-me-\[14px\]|w-\[calc\(100%\+14px\)\]|pe-\[14px\]/);
   assert.doesNotMatch(shortcuts, /mobileShortcutAxisLockRef|touch-pan-y|touch-pan-x|\bw-max\b|\bps-3\b/);
   assert.doesNotMatch(shortcuts, /\bsticky\b|top-\[calc\(/);
 });
 
-test("mobile Flight filter slot keeps a tighter header gap", () => {
+test("mobile Flight filter slot keeps the compact header spacing contract", () => {
   assert.match(source, /flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-0 pt-0 sm:pb-5 sm:pt-5/);
-  assert.match(source, /data-flight-mobile-filter-slot[\s\S]*className="h-\[48px\] pt-1 sm:hidden"/);
+  assert.match(source, /data-flight-mobile-filter-slot[\s\S]*flight-mobile-scroll-filter-bar flex min-w-0 flex-col items-start sm:hidden/);
+  assert.match(styles, /\.flight-mobile-scroll-filter-bar \{[\s\S]*?height: 60px;[\s\S]*?padding: 12px 0 4px;/);
 });
 
-test("mobile Flight filter rail pins, hides on downward scroll and reveals on upward scroll", () => {
-  assert.match(source, /const \[mobileFilterRailVisible, setMobileFilterRailVisible\] = useState\(true\)/);
-  assert.match(source, /const \[mobileFilterRailPinned, setMobileFilterRailPinned\] = useState\(false\)/);
-  assert.match(source, /naturalFilterBottom <= 8/);
-  assert.match(source, /distance >= \(nextDirection > 0 \? 20 : 12\)/);
-  assert.match(source, /setMobileFilterRailVisible\(nextDirection < 0\)/);
-  assert.match(source, /filtersOpen \|\| mobileShortcutSheet \|\| mobileSearchOpen \|\| Math\.abs\(delta\) < 1/);
-  assert.match(source, /data-scroll-visible=\{mobileFilterRailVisible \? "true" : "false"\}/);
-  assert.match(source, /data-scroll-pinned=\{mobileFilterRailPinned \? "true" : "false"\}/);
-  assert.match(source, /fixed left-0 top-\[calc\(72px\+env\(safe-area-inset-top\)\)\] z-\[850\]/);
-  assert.match(source, /transition-transform duration-\[220ms\]/);
-  assert.match(source, /pointer-events-none -translate-y-full duration-\[120ms\]/);
-  assert.match(source, /motion-reduce:transition-none/);
-  assert.match(
-    source,
-    /inert=\{mobileSearchOpen \|\| \(mobileFilterRailPinned && !mobileFilterRailVisible\) \? true : undefined\}/,
-  );
-  assert.match(
-    source,
-    /aria-hidden=\{mobileSearchOpen \|\| \(mobileFilterRailPinned && !mobileFilterRailVisible\) \? true : undefined\}/,
-  );
+test("mobile Flight filter rail uses CSS sticky positioning without scroll-direction state", () => {
+  assert.doesNotMatch(source, /mobileFilterRailVisible|mobileFilterRailPinned|mobileFilterRailAnimated/);
+  assert.doesNotMatch(source, /naturalFilterBottom|previousY|nextDirection|data-scroll-visible|data-scroll-pinned/);
+  assert.doesNotMatch(source, /pointer-events-none -translate-y-full|transition-transform duration-\[220ms\]/);
+  assert.match(source, /data-flight-results-main className="max-sm:overflow-x-clip/);
+  assert.match(styles, /\.flight-mobile-scroll-filter-bar \{[\s\S]*?position: sticky;[\s\S]*?top: calc\(72px \+ env\(safe-area-inset-top\)\);[\s\S]*?z-index: 850;/);
+  assert.match(styles, /\.flight-mobile-scroll-filter-bar \[data-mobile-flight-shortcuts\] \{[\s\S]*?width: 100%;[\s\S]*?padding-inline: 12px;[\s\S]*?scroll-padding-inline: 12px;/);
 });
 
 test("Flight Filter and quick-filter chips mirror Hotel geometry", () => {
