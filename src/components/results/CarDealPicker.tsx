@@ -36,6 +36,8 @@ function ProviderMark({
 
   if (logoUrl) {
     return (
+      // Provider logos can be external seller assets and must not depend on Next image host allowlists.
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={logoUrl}
         alt=""
