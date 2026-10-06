@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronDown, X } from "lucide-react";
+import { Check, ChevronDown, LoaderCircle, X } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -70,7 +70,10 @@ export function CarDealPicker({
   const groups = useMemo(() => getCarDealPickerGroups(car), [car]);
   const [openProviderKey, setOpenProviderKey] = useState<string | null>(null);
   const [showAllProviders, setShowAllProviders] = useState(false);
+  const [dealSelectionPending, setDealSelectionPending] = useState(false);
   const anchorRef = useRef<HTMLDivElement | null>(null);
+  const desktopPanelRef = useRef<HTMLDivElement | null>(null);
+  const selectionTimerRef = useRef<number | null>(null);
   const [desktopPosition, setDesktopPosition] = useState({ top: 0, left: 0 });
   const overlayOpen = Boolean(openProviderKey || showAllProviders);
 
@@ -94,11 +97,21 @@ export function CarDealPicker({
       setOpenProviderKey(null);
       setShowAllProviders(false);
     };
+    const onPointerDown = (event: PointerEvent) => {
+      if (!window.matchMedia("(min-width: 768px)").matches) return;
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (anchorRef.current?.contains(target)) return;
+      if (desktopPanelRef.current?.contains(target)) return;
+      setOpenProviderKey(null);
+      setShowAllProviders(false);
+    };
 
     updatePosition();
     window.addEventListener("resize", updatePosition);
     window.addEventListener("scroll", updatePosition, true);
     window.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown, true);
     const releaseMobileScrollLock = window.matchMedia("(max-width: 767px)").matches
       ? acquireMobileResultsScrollLock()
       : null;
@@ -107,9 +120,19 @@ export function CarDealPicker({
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
       window.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown, true);
       releaseMobileScrollLock?.();
     };
   }, [overlayOpen]);
+
+  useEffect(
+    () => () => {
+      if (selectionTimerRef.current !== null) {
+        window.clearTimeout(selectionTimerRef.current);
+      }
+    },
+    [],
+  );
 
   const selectedGroup =
     groups.find((group) =>
@@ -134,9 +157,22 @@ export function CarDealPicker({
     }).formatted;
 
   const selectGroup = (group: CarProviderOfferGroup) => {
-    onSelectOffer(group.primaryOffer);
+    const providerChanged = group.key !== selectedGroup.key;
     setOpenProviderKey(group.key);
     setShowAllProviders(false);
+
+    if (!providerChanged) return;
+
+    if (selectionTimerRef.current !== null) {
+      window.clearTimeout(selectionTimerRef.current);
+    }
+
+    setDealSelectionPending(true);
+    onSelectOffer(group.primaryOffer);
+    selectionTimerRef.current = window.setTimeout(() => {
+      setDealSelectionPending(false);
+      selectionTimerRef.current = null;
+    }, 280);
   };
 
   const closePanel = () => {
@@ -150,6 +186,7 @@ export function CarDealPicker({
     <div
       ref={anchorRef}
       data-car-deal-picker
+      aria-busy={dealSelectionPending}
       className={`relative min-w-0 ${compact ? "mt-2" : "mt-3"}`}
     >
       <div className="flex min-w-0 items-center gap-2">
@@ -206,10 +243,41 @@ export function CarDealPicker({
         </div>
       </div>
 
+      {dealSelectionPending && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              data-car-deal-selection-loading
+              className="fixed inset-0 z-[155] flex items-center justify-center bg-[#F5F7FB]/95 px-5 backdrop-blur-[1.5px]"
+              role="status"
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <div className="flex max-w-sm items-center gap-3 rounded-[14px] border border-[#D8E1EC] bg-white px-4 py-3 shadow-[0_18px_45px_-24px_rgba(15,23,42,0.35)]">
+                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEF5FF] text-[#004BB8]">
+                  <LoaderCircle
+                    className="h-5 w-5 animate-spin motion-reduce:animate-none"
+                    aria-hidden="true"
+                  />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[14px] font-bold leading-5 text-[#07133B]">
+                    Updating deal
+                  </span>
+                  <span className="mt-0.5 block text-[12px] font-medium leading-4 text-[#64748B]">
+                    Refreshing price and provider…
+                  </span>
+                </span>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+
       {overlayOpen && typeof document !== "undefined"
         ? createPortal(
             <>
               <div
+                ref={desktopPanelRef}
                 className="fixed z-[140] hidden w-[310px] rounded-xl border border-[#D8E1EC] bg-white p-3 shadow-[0_18px_45px_-20px_rgba(15,23,42,0.4)] md:block"
                 style={{ top: desktopPosition.top, left: desktopPosition.left }}
                 data-car-deal-picker-desktop-panel
