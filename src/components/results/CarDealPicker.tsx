@@ -232,7 +232,8 @@ export function CarDealPicker({
                   role="dialog"
                   aria-modal="true"
                   aria-label={showAllProviders ? "Car deal providers" : `${panelGroup?.providerName ?? "Provider"} deal details`}
-                  className="max-h-[72dvh] w-full overflow-y-auto rounded-t-[22px] border-t border-[#D8E1EC] bg-white px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+                  data-car-deal-picker-mobile-sheet
+                  className="mobile-results-sheet-surface mobile-results-sheet-surface-smooth mx-3 mb-3 max-h-[72dvh] w-[calc(100%_-_24px)] overflow-y-auto rounded-[24px] border border-white/70 bg-white px-4 pb-[max(18px,env(safe-area-inset-bottom,0px))] pt-3 shadow-[0_20px_48px_-18px_rgba(15,23,42,0.45)]"
                 >
                   <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
                   {showAllProviders ? (

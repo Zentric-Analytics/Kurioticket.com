@@ -43,6 +43,15 @@ test("provider selection portals a desktop popover and mobile bottom sheet witho
   assert.match(picker, /data-car-deal-picker-desktop-panel/);
   assert.match(picker, /fixed z-\[140\][\s\S]*md:block/);
   assert.match(picker, /fixed inset-0 z-\[130\][\s\S]*md:hidden/);
+  assert.match(picker, /data-car-deal-picker-mobile-sheet/);
+  assert.match(
+    picker,
+    /mobile-results-sheet-surface mobile-results-sheet-surface-smooth mx-3 mb-3[\s\S]*w-\[calc\(100%_-_24px\)\][\s\S]*rounded-\[24px\]/,
+  );
+  assert.doesNotMatch(
+    picker,
+    /max-h-\[72dvh\] w-full overflow-y-auto rounded-t-\[22px\]/,
+  );
   assert.match(picker, /acquireMobileResultsScrollLock\(\)/);
   assert.match(picker, /event\.key !== "Escape"/);
   assert.match(picker, /role="dialog"/);
