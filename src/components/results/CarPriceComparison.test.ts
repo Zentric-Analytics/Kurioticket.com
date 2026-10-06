@@ -41,19 +41,39 @@ test("provider branding uses mark-only Kurioticket treatment and truthful fallba
   assert.match(picker, /Compare deal from \$\{group\.providerName\}/);
 });
 
-test("provider selection portals a desktop popover and mobile bottom sheet without another booking CTA", () => {
-  assert.match(picker, /createPortal\(/);
-  assert.match(picker, /data-car-deal-picker-desktop-panel/);
-  assert.match(picker, /fixed z-\[140\][\s\S]*md:block/);
+test("provider selection expands the desktop result gap while preserving tablet and mobile overlays", () => {
+  assert.match(card, /const \[desktopDealPanelTarget, setDesktopDealPanelTarget\]/);
+  assert.match(
+    card,
+    /data-car-deal-picker-desktop-slot[\s\S]*className="hidden w-full lg:block"/,
+  );
+  assert.equal(
+    (card.match(/desktopPanelTarget=\{desktopDealPanelTarget\}/g) ?? []).length,
+    1,
+    "only the desktop card picker receives the inline expansion target",
+  );
+  assert.match(picker, /desktopPanelTarget\?: HTMLElement \| null/);
+  assert.match(
+    picker,
+    /overlayOpen && desktopPanelTarget[\s\S]*createPortal\([\s\S]*data-car-deal-picker-desktop-expansion[\s\S]*hidden w-full pt-3 lg:block/,
+  );
+  assert.match(
+    picker,
+    /data-car-deal-picker-desktop-panel[\s\S]*style=\{\{ marginInlineStart: desktopInlineLeft \}\}/,
+  );
+  assert.doesNotMatch(
+    picker,
+    /data-car-deal-picker-desktop-panel[\s\S]{0,220}fixed z-\[140\]/,
+  );
+  assert.match(
+    picker,
+    /data-car-deal-picker-tablet-panel[\s\S]*fixed z-\[140\][\s\S]*md:block lg:hidden/,
+  );
   assert.match(picker, /fixed inset-0 z-\[130\][\s\S]*md:hidden/);
   assert.match(picker, /data-car-deal-picker-mobile-sheet/);
   assert.match(
     picker,
     /mobile-results-sheet-surface mobile-results-sheet-surface-smooth mx-3 mb-3[\s\S]*w-\[calc\(100%_-_24px\)\][\s\S]*rounded-\[24px\]/,
-  );
-  assert.doesNotMatch(
-    picker,
-    /max-h-\[72dvh\] w-full overflow-y-auto rounded-t-\[22px\]/,
   );
   assert.match(picker, /acquireMobileResultsScrollLock\(\)/);
   assert.match(picker, /event\.key !== "Escape"/);
@@ -62,6 +82,29 @@ test("provider selection portals a desktop popover and mobile bottom sheet witho
   assert.doesNotMatch(picker, /Choose this provider to update View deal/);
   assert.doesNotMatch(picker, />\s*Continue deal\s*</);
   assert.doesNotMatch(picker, />\s*View deal\s*</);
+});
+
+test("closing desktop Compare deals removes the expansion content and restores the normal card gap", () => {
+  assert.match(
+    picker,
+    /const closePanel = \(\) => \{[\s\S]*setOpenProviderKey\(null\)[\s\S]*setShowAllProviders\(false\)/,
+  );
+  assert.match(
+    picker,
+    /overlayOpen && desktopPanelTarget[\s\S]*data-car-deal-picker-desktop-expansion/,
+  );
+  assert.match(
+    picker,
+    /ProviderPreview[\s\S]*onClose=\{closePanel\}/,
+  );
+  assert.match(
+    picker,
+    /ProviderList[\s\S]*onClose=\{closePanel\}/,
+  );
+  assert.match(
+    card,
+    /data-car-result-card-shell[\s\S]*<article[\s\S]*<div[\s\S]*data-car-deal-picker-desktop-slot/,
+  );
 });
 
 test("changing Compare deals updates the selected provider in place and keeps the first popup open", () => {
