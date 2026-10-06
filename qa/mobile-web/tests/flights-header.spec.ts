@@ -128,7 +128,9 @@ for (const width of [320, 390]) {
     for (const control of controls.slice(-2)) expect(control.width).toBeGreaterThanOrEqual(44);
     await navbar.getByRole("button", { name: /open.*menu/i }).click();
     await expect(page.locator("#mobile-menu-drawer")).toBeVisible();
+    await expect(page.locator("[data-mobile-results-filter-navbar]")).toHaveCount(0);
     await navbar.getByRole("button", { name: /close.*menu/i }).click();
+    await expect(page.locator("[data-mobile-results-filter-navbar]")).toBeVisible();
     await summary.click();
     await expect(page.locator("[data-mobile-results-overlay-root]")).toBeVisible();
     await page.getByRole("button", { name: /close edit search/i }).click();
