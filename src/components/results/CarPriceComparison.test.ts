@@ -71,7 +71,7 @@ test("provider selection expands the desktop result gap while preserving tablet 
   );
   assert.match(
     picker,
-    /data-car-deal-picker-tablet-panel[\s\S]*fixed z-\[140\][\s\S]*md:block lg:hidden/,
+    /fixed z-\[140\][\s\S]*md:block lg:hidden[\s\S]*data-car-deal-picker-tablet-panel/,
   );
   assert.match(picker, /fixed inset-0 z-\[130\][\s\S]*md:hidden/);
   assert.match(picker, /data-car-deal-picker-mobile-sheet/);
