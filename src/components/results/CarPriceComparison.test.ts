@@ -230,15 +230,23 @@ test("standalone View deal keeps one visual hierarchy for linked and unavailable
   );
   assert.match(
     card,
-    /const unavailableStandaloneViewDealClassName =\s*"[^"]*appearance-none[^"]*text-\[#004BB8\][^"]*disabled:text-\[#004BB8\][^"]*disabled:opacity-100"/,
+    /const unavailableStandaloneViewDealClassName =\s*"[^"]*appearance-none[^"]*disabled:opacity-100"/,
   );
   assert.match(
     card,
-    /const standaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*WebkitTextFillColor: "#004BB8"[\s\S]*opacity: 1/,
+    /const mobileStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*fontSize: "12px"[\s\S]*fontWeight: 600/,
+  );
+  assert.match(
+    card,
+    /const desktopStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*fontSize: "13px"[\s\S]*fontWeight: 700/,
   );
   assert.equal(
-    (card.match(/style=\{standaloneViewDealVisualStyle\}/g) ?? []).length,
-    4,
+    (card.match(/style=\{mobileStandaloneViewDealVisualStyle\}/g) ?? []).length,
+    3,
+  );
+  assert.equal(
+    (card.match(/style=\{desktopStandaloneViewDealVisualStyle\}/g) ?? []).length,
+    2,
   );
   assert.doesNotMatch(
     card,
