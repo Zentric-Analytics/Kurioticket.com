@@ -70,7 +70,7 @@ test("desktop filter, result-count, and sort typography share a consistent hiera
   );
   assert.match(
     results,
-    /data-cars-results-summary-row[\s\S]*?sm:text-\[17px\] sm:font-semibold[\s\S]*?lg:text-\[17px\] lg:font-semibold lg:leading-6 lg:tracking-\[-0\.008em\]/,
+    /data-cars-results-summary-row[\s\S]*?text-\[12px\] font-semibold leading-4[\s\S]*?sm:text-\[14px\] sm:font-semibold sm:leading-5[\s\S]*?lg:text-\[14px\] lg:font-semibold lg:leading-5 lg:tracking-\[-0\.005em\]/,
   );
   assert.match(
     results,
