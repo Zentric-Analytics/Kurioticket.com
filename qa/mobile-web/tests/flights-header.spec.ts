@@ -9,7 +9,7 @@ test.beforeEach(async ({ page, request }) => {
   });
 });
 
-test("Flight mobile results header keeps its geometry while inventory loads", async ({ page, request }) => {
+test("Flight mobile loading keeps one header and reveals real controls only when ready", async ({ page, request }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.unroute("**/api/flights/search");
 
@@ -29,59 +29,33 @@ test("Flight mobile results header keeps its geometry while inventory loads", as
   const header = page.locator("[data-app-header]");
   const summaryTarget = header.locator("[data-flight-results-mobile-nav-summary]");
   const filtersTarget = header.locator("[data-flight-results-mobile-nav-filters]");
+  const filterNavbar = header.locator("[data-mobile-results-filter-navbar]");
 
   await expect(header).toBeVisible();
-  await expect(summaryTarget).toBeVisible();
-  await expect(filtersTarget).toBeVisible();
+  await expect(header).toHaveCount(1);
+  await expect(summaryTarget).toBeHidden();
+  await expect(filtersTarget).toBeHidden();
+  await expect(filterNavbar).toBeHidden();
   await expect(header.locator("[data-flight-mobile-summary-card]")).toHaveCount(0);
+  await expect(header.locator("[data-flight-mobile-results-shortcuts]")).toHaveCount(0);
+  await expect(page.getByRole("progressbar")).toHaveCount(0);
 
-  const before = await page.evaluate(() => {
-    const header = document.querySelector<HTMLElement>("[data-app-header]")!;
-    const summary = document.querySelector<HTMLElement>("[data-flight-results-mobile-nav-summary]")!;
-    const filters = document.querySelector<HTMLElement>("[data-flight-results-mobile-nav-filters]")!;
-    const headerRect = header.getBoundingClientRect();
-    const summaryRect = summary.getBoundingClientRect();
-    const filtersRect = filters.getBoundingClientRect();
-    return {
-      headerTop: headerRect.top,
-      headerHeight: headerRect.height,
-      summaryTop: summaryRect.top,
-      summaryHeight: summaryRect.height,
-      filtersTop: filtersRect.top,
-      filtersHeight: filtersRect.height,
-    };
-  });
+  const beforeHeader = await header.boundingBox();
+  expect(beforeHeader).not.toBeNull();
 
   releaseSearch();
 
   await expect(header.locator("[data-flight-mobile-summary-card]")).toBeVisible();
   await expect(header.locator("[data-flight-mobile-results-shortcuts]")).toBeVisible();
+  await expect(summaryTarget).toBeVisible();
+  await expect(filtersTarget).toBeVisible();
+  await expect(filterNavbar).toBeVisible();
+  await expect(header).toHaveCount(1);
 
-  const after = await page.evaluate(() => {
-    const header = document.querySelector<HTMLElement>("[data-app-header]")!;
-    const summary = document.querySelector<HTMLElement>("[data-flight-results-mobile-nav-summary]")!;
-    const filters = document.querySelector<HTMLElement>("[data-flight-results-mobile-nav-filters]")!;
-    const headerRect = header.getBoundingClientRect();
-    const summaryRect = summary.getBoundingClientRect();
-    const filtersRect = filters.getBoundingClientRect();
-    return {
-      headerTop: headerRect.top,
-      headerHeight: headerRect.height,
-      summaryTop: summaryRect.top,
-      summaryHeight: summaryRect.height,
-      filtersTop: filtersRect.top,
-      filtersHeight: filtersRect.height,
-    };
-  });
-
-  expect(Math.abs(after.headerTop - before.headerTop)).toBeLessThanOrEqual(1);
-  expect(Math.abs(after.headerHeight - before.headerHeight)).toBeLessThanOrEqual(1);
-  expect(Math.abs(after.summaryTop - before.summaryTop)).toBeLessThanOrEqual(1);
-  expect(Math.abs(after.summaryHeight - before.summaryHeight)).toBeLessThanOrEqual(1);
-  expect(Math.abs(after.filtersTop - before.filtersTop)).toBeLessThanOrEqual(1);
-  expect(Math.abs(after.filtersHeight - before.filtersHeight)).toBeLessThanOrEqual(1);
+  const afterHeader = await header.boundingBox();
+  expect(afterHeader).not.toBeNull();
+  expect(afterHeader!.y).toBe(beforeHeader!.y);
 });
-
 for (const width of [320, 360, 390, 412]) {
   test(`Flight mobile filters stay inside the header without overflow at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
