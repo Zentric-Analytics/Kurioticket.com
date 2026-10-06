@@ -62,6 +62,47 @@ test("provider selection portals a desktop popover and mobile bottom sheet witho
   assert.doesNotMatch(picker, />\s*View deal\s*</);
 });
 
+test("changing Compare deals shows the shared full-page Cars loading state on desktop and mobile", () => {
+  assert.match(picker, /const CAR_DEAL_SELECTION_BUSY_MS = 320/);
+  assert.match(picker, /const \[dealSelectionPending, setDealSelectionPending\] = useState\(false\)/);
+  assert.match(picker, /const providerChanged = group\.key !== selectedGroup\.key/);
+  assert.match(
+    picker,
+    /setDealSelectionPending\(true\)[\s\S]*onSelectOffer\(group\.primaryOffer\)[\s\S]*window\.setTimeout\([\s\S]*setDealSelectionPending\(false\)[\s\S]*CAR_DEAL_SELECTION_BUSY_MS/,
+  );
+  assert.match(picker, /aria-busy=\{dealSelectionPending\}/);
+  assert.match(picker, /data-car-deal-selection-loading/);
+  assert.match(picker, /fixed inset-0 z-\[12050\] bg-\[#F5F7FB\]/);
+  assert.match(
+    picker,
+    /<BrandedLoading[\s\S]*title="Updating deal"[\s\S]*messages=\{\["Refreshing price and provider\.\.\."\]\}[\s\S]*variant="fullscreen"[\s\S]*visual="logoPulse"[\s\S]*accessibleProgress/,
+  );
+  assert.doesNotMatch(
+    picker,
+    /data-car-deal-selection-loading[^>]*lg:hidden/,
+  );
+});
+
+test("desktop Compare deals closes when the page is clicked outside the picker and popover", () => {
+  assert.match(picker, /const desktopPanelRef = useRef<HTMLDivElement \| null>\(null\)/);
+  assert.match(
+    picker,
+    /const onPointerDown = \(event: PointerEvent\) => \{[\s\S]*window\.matchMedia\("\(min-width: 768px\)"\)\.matches[\s\S]*anchorRef\.current\?\.contains\(target\)[\s\S]*desktopPanelRef\.current\?\.contains\(target\)[\s\S]*setOpenProviderKey\(null\)[\s\S]*setShowAllProviders\(false\)/,
+  );
+  assert.match(
+    picker,
+    /document\.addEventListener\("pointerdown", onPointerDown, true\)/,
+  );
+  assert.match(
+    picker,
+    /document\.removeEventListener\("pointerdown", onPointerDown, true\)/,
+  );
+  assert.match(
+    picker,
+    /ref=\{desktopPanelRef\}[\s\S]*data-car-deal-picker-desktop-panel/,
+  );
+});
+
 test("standalone View deal is the single provider handoff and never fabricates a URL", () => {
   assert.match(card, /const approvedProviderBookingUrl/);
   assert.match(card, /sandboxBookingUrl\(offer\.bookingUrl\)/);
