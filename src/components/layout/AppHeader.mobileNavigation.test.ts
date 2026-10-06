@@ -114,7 +114,7 @@ test("results navbar accepts a custom leading action while preserving the defaul
 
 test("results navbar can render filters as part of the mobile header body", () => {
   assert.match(headerSource, /mobileResultsFilters\?: ReactNode/);
-  assert.match(headerSource, /flightResultsDesktopSticky && mobileResultsFilters \? "border-b-0" : "border-b border-slate-200"/);
+  assert.match(headerSource, /!mobileResultsFilters && "border-b border-slate-200"/);
   assert.match(headerSource, /data-mobile-results-filter-navbar className="bg-white sm:hidden"/);
 });
 
