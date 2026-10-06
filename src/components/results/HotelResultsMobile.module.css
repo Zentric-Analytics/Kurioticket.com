@@ -19,6 +19,44 @@
 .editSheet [data-hotel-mobile-edit-search-action] > button { height: 52px; min-height: 52px; margin-top: 0; border-radius: 12px; font-size: 16px; font-weight: 600; background: #064cf7; box-shadow: none; }
 
 @media (max-width: 639px) {
+  .scrollFilterSlot { height: 56px; padding-top: 12px; }
+  .scrollFilterBar {
+    height: 44px;
+    width: 100%;
+  }
+  .scrollFilterBarPinned {
+    position: fixed;
+    top: calc(72px + env(safe-area-inset-top));
+    left: 0;
+    z-index: 850;
+    width: 100vw;
+    height: 60px;
+    padding: 8px 0;
+    overflow: hidden;
+    background: #f5f7fb;
+    transform: translateY(0);
+  }
+  .scrollFilterBarAnimated {
+    transition: transform 220ms cubic-bezier(0, 0, .4, 1);
+  }
+  .scrollFilterBarPinned [data-mobile-hotel-shortcuts] {
+    width: 100%;
+    margin-inline-end: 0;
+    padding-inline: 12px;
+    scroll-padding-inline: 12px;
+  }
+  .scrollFilterBarPinned.scrollFilterBarHidden {
+    transform: translateY(-100%);
+    pointer-events: none;
+  }
+  .scrollFilterBarAnimated.scrollFilterBarHidden {
+    transition-duration: 120ms;
+    transition-timing-function: cubic-bezier(.6, 0, 1, 1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scrollFilterBar,
+    .scrollFilterBarHidden { transition: none; }
+  }
   .results { color: #1a1a1a; }
   .results [class~="text-[#071A48]"],
   .results [class~="text-[#07133B]"],
