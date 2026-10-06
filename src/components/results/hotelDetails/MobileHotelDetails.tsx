@@ -175,8 +175,10 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
     </div>
     <div id={`mobile-hotel-${tab}-panel`} role="tabpanel" aria-labelledby={`mobile-hotel-${tab}-tab`} className={styles.panel}>
       {tab === "rates" ? <section className={styles.rates}>
-        <p>{[stay.dates, stay.nights].filter(Boolean).join(" · ")}</p>
-        {props.priceAlert ? <HotelPriceAlertControl search={props.priceAlert.search} hotel={props.priceAlert.hotel} /> : null}
+        <div className={styles.ratesHeader}>
+          <p>{[stay.dates, stay.nights].filter(Boolean).join(" · ")}</p>
+          {props.priceAlert ? <HotelPriceAlertControl search={props.priceAlert.search} hotel={props.priceAlert.hotel} /> : null}
+        </div>
         <div aria-label="Hotel rates" className={styles.rateList}>
           {offers.map(offer => <article key={offer.id} className={styles.rate} data-selected={selected?.id === offer.id}>
             <div className={styles.rateChoice}>
