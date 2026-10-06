@@ -524,39 +524,41 @@ export function HotelPriceAlertControl({
       aria-label={t("travel.account.hotelAlert.title")}
       className={cn("mb-3 sm:mb-5", compactDesktop && "sm:mb-0")}
     >
-      <div className="flex min-h-11 items-center gap-2.5 border-b border-[#E7ECF5] px-0 py-1 sm:hidden">
-        <Bell
-          className="h-[17px] w-[17px] shrink-0 text-[#1A1A1A]"
-          strokeWidth={2}
-          aria-hidden="true"
-        />
-        <h2 className="truncate text-[12.5px] font-bold leading-4 text-[#1A1A1A]">
-          {t("travel.account.hotelAlert.title")}
-        </h2>
-        <button
-          type="button"
-          role="switch"
-          aria-label={t("travel.account.hotelAlert.title")}
-          aria-checked={Boolean(isTracking)}
-          aria-busy={pending || !alertKnown}
-          disabled={compactDisabled}
-          onClick={() =>
-            void handleToggle(!isTracking, "mobile")
-          }
-          className={cn(
-            "relative ms-1 inline-flex h-[28px] w-[49px] shrink-0 items-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 disabled:opacity-55",
-            isTracking
-              ? "border-[#004BB8] bg-[#004BB8]"
-              : "border-slate-300 bg-slate-300",
-          )}
-        >
-          <span
-            className={cn(
-              "inline-block h-6 w-6 rounded-full bg-white shadow-sm transition-transform",
-              isTracking ? "translate-x-[21px]" : "translate-x-0.5",
-            )}
+      <div className="flex w-full justify-end sm:hidden">
+        <div className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#9299A9] bg-transparent px-2.5 text-[#1A1A1A]">
+          <Bell
+            className="h-[15px] w-[15px] shrink-0 text-[#1A1A1A]"
+            strokeWidth={2}
+            aria-hidden="true"
           />
-        </button>
+          <h2 className="truncate text-[12px] font-semibold leading-4 text-[#1A1A1A]">
+            {t("travel.account.hotelAlert.title")}
+          </h2>
+          <button
+            type="button"
+            role="switch"
+            aria-label={t("travel.account.hotelAlert.title")}
+            aria-checked={Boolean(isTracking)}
+            aria-busy={pending || !alertKnown}
+            disabled={compactDisabled}
+            onClick={() =>
+              void handleToggle(!isTracking, "mobile")
+            }
+            className={cn(
+              "relative ms-0.5 inline-flex h-[18px] w-8 shrink-0 items-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 disabled:opacity-55",
+              isTracking
+                ? "border-[#004BB8] bg-[#004BB8]"
+                : "border-slate-300 bg-slate-200",
+            )}
+          >
+            <span
+              className={cn(
+                "inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform",
+                isTracking ? "translate-x-[14px]" : "translate-x-0.5",
+              )}
+            />
+          </button>
+        </div>
       </div>
 
       <div className={cn("hidden rounded-2xl border border-[#CFE0F8] bg-[#EEF6FF] px-4 py-2.5 shadow-[0_10px_26px_-24px_rgba(15,23,42,0.45)] sm:block", compactDesktop && "sm:inline-flex sm:h-8 sm:items-center sm:rounded-lg sm:border-[#9299A9] sm:bg-transparent sm:px-3 sm:py-0 sm:shadow-none")}>
