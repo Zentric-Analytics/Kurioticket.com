@@ -55,7 +55,7 @@ test("mobile nearby insight, quick filters, and price alert use compact native-l
     styles,
     /@media \(max-width: 639px\) \{[\s\S]*?\.flight-mobile-cheaper-nearby \{[\s\S]*?font-size: 11px !important;[\s\S]*?line-height: 15px !important;[\s\S]*?-webkit-text-size-adjust: none;[\s\S]*?text-size-adjust: none;[\s\S]*?\}/,
   );
-  assert.match(source, /mobileResultsFilters=\{[\s\S]{0,500}data-flight-mobile-results-shortcuts/);
+  assert.match(source, /const mobileResultsFiltersContent = \([\s\S]{0,500}data-flight-mobile-results-shortcuts/);
   assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 pt-2/);
 });
 
@@ -136,23 +136,29 @@ test("Flight Results matches the Cars Back-to-top control", async () => {
   assert.match(source, /<Footer variant="brand-legal-only" \/>/);
 });
 
-test("Flight Results keeps the normal mobile header while desktop adopts the Hotels results header", async () => {
+test("Flight Results supports a page-owned persistent header without changing fallback consumers", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
+  const page = await readFile(
+    new URL("../../app/flights/results/page.tsx", import.meta.url),
+    "utf8",
+  );
 
+  assert.match(source, /externalResultsHeader\?: boolean/);
   assert.match(
     source,
-    /<AppHeader[\s\S]*?flushDesktopBottom[\s\S]*?hideDesktopTravelNav[\s\S]*?hotelDesktopBoundary[\s\S]*?flightResultsDesktopSticky/,
+    /guidedMode \|\| externalResultsHeader \? null : \([\s\S]*?<AppHeader[\s\S]*?flightResultsDesktopSticky/,
   );
+  assert.match(page, /<AppHeader[\s\S]*?flightResultsDesktopSticky[\s\S]*?data-flight-results-mobile-nav-summary[\s\S]*?data-flight-results-mobile-nav-filters/);
+  assert.match(page, /<FlightResultsClient externalResultsHeader \/>/);
   const preparingStart = source.indexOf("if (resultsUiPreparing) {");
   const guidedStart = source.indexOf("if (guidedMode) return (", preparingStart);
   const preparing = source.slice(preparingStart, guidedStart);
   assert.ok(preparingStart >= 0 && guidedStart > preparingStart);
   assert.match(preparing, /\{standaloneResultsHeader\}/);
-  assert.doesNotMatch(preparing, /renderStickySearchPopoutOverlay\(\)|renderDesktopHeaderSearchBar\(\)/);
-  assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.doesNotMatch(preparing, /readyExternalMobileHeader|readyDesktopNavbarSearch|renderDesktopHeaderSearchBar\(\)/);
   assert.doesNotMatch(source, /renderMobileCompactResultsHeader|mobileCompactHeaderVisible/);
 });
 
@@ -162,7 +168,7 @@ test("mobile Flight Results reuses the existing sticky AppHeader architecture", 
   assert.match(appHeader, /mobileResultsSticky = true/);
   assert.match(appHeader, /max-sm:sticky max-sm:top-0/);
   assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
-  assert.match(source, /mobileResultsFilters=\{/);
+  assert.match(source, /mobileResultsFilters=\{mobileResultsFiltersContent\}/);
   assert.match(source, /mobileResultsTrailingActions/);
   assert.match(appHeader, /data-flight-results-mobile-home/);
   const flightHomeMarker = appHeader.indexOf("data-flight-results-mobile-home");
