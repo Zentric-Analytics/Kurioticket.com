@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/AppHeader";
+import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { LocalizedLoadingLabel } from "@/components/layout/LocalizedLoadingLabel";
 import { FlightResultsClient } from "@/components/results/FlightResultsClient";
 import { getTranslations } from "@/lib/i18n";
@@ -138,6 +139,8 @@ export default async function FlightResultsPage({
     redirect("/flights");
   }
 
+  const t = getTranslations((await cookies()).get(LOCALE_COOKIE_KEY)?.value);
+
   return (
     <>
       <AppHeader
@@ -163,11 +166,24 @@ export default async function FlightResultsPage({
       />
       <Suspense
         fallback={
-          <main className="page-shell min-h-[calc(100svh-5rem)] flex-1 py-6">
-            <div className="rounded-3xl border border-indigo-100 bg-white p-5 text-sm font-semibold text-violet-700 shadow-sm">
-              <LocalizedLoadingLabel labelKey="flightResults.loading.title" />
-            </div>
-          </main>
+          <>
+            <main className="page-shell min-h-[calc(100svh-5rem)] flex-1 py-6 sm:hidden">
+              <div className="rounded-3xl border border-indigo-100 bg-white p-5 text-sm font-semibold text-violet-700 shadow-sm">
+                <LocalizedLoadingLabel labelKey="flightResults.loading.title" />
+              </div>
+            </main>
+            <main className="hidden min-h-[calc(100svh-5rem)] bg-white sm:block">
+              <BrandedLoading
+                variant="fullscreen"
+                visual="logoPulse"
+                showProgress={false}
+                className="min-h-[calc(100svh-5rem)] bg-transparent px-5"
+                contentClassName="max-w-md text-center"
+                title={t["flightResults.loading.title"]}
+                description={t["flightResults.loading.checkingAirlinesAndFares"]}
+              />
+            </main>
+          </>
         }
       >
         <FlightResultsClient externalResultsHeader />
