@@ -7480,8 +7480,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   data-flight-mobile-results-shortcuts
                   data-scroll-visible={mobileFilterRailVisible ? "true" : "false"}
                   data-scroll-pinned={mobileFilterRailPinned ? "true" : "false"}
-                  inert={mobileSearchOpen ? true : undefined}
-                  aria-hidden={mobileSearchOpen ? true : undefined}
+                  inert={mobileSearchOpen || (mobileFilterRailPinned && !mobileFilterRailVisible) ? true : undefined}
+                  aria-hidden={mobileSearchOpen || (mobileFilterRailPinned && !mobileFilterRailVisible) ? true : undefined}
                   className={cn(
                     "h-11 w-full px-0 sm:hidden",
                     mobileFilterRailPinned &&
