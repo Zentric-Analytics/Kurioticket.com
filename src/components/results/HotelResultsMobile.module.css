@@ -36,6 +36,12 @@
     background: #f5f7fb;
     transform: translateY(0);
   }
+  /* Cars Results uses a 61px mobile header plus a stable/max Safari inset.
+     Keep the returning filter rail locked to that exact header edge while
+     browser chrome expands/collapses during upward scrolling. */
+  .scrollFilterBarPinned[data-cars-results-scroll-filter-bar] {
+    top: calc(61px + var(--cars-results-safe-area-top));
+  }
   .scrollFilterBarAnimated {
     transition: transform 220ms cubic-bezier(0, 0, .4, 1);
   }
