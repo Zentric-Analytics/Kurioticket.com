@@ -2768,6 +2768,9 @@ export function CarsResultsExperience({
                   presentation === "standalone" &&
                     !guidedPlanning &&
                     mobileResultsStyles.scrollFilterSlot,
+                  presentation === "standalone" &&
+                    !guidedPlanning &&
+                    mobileResultsStyles.carsScrollFilterSlot,
                 )}
               >
                 <div
