@@ -332,8 +332,8 @@ body {
      returning filter rail away from the protected status area. Keep normal
      document scrolling and horizontal filter swipes, but stop vertical
      boundary bounce on this route. */
-  html[data-cars-results-mobile-scroll-boundary],
-  body[data-cars-results-mobile-scroll-boundary] {
+  html:has(body [data-cars-results-mobile-safe-area]),
+  body:has([data-cars-results-mobile-safe-area]) {
     overscroll-behavior-y: none;
   }
 
