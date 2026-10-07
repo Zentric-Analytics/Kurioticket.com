@@ -144,7 +144,6 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const selectedDeal = selectedFare ? nativeFlightDealSelection(selectedDealOfferId, selectedFare) : null;
   const activeOffer = selectedDeal?.offer ?? selectedOffer;
   const savedFlightKey = selectedOffer?.id ?? id;
-  const handoff = selectedFare?.handoff ?? available?.handoff ?? { available: false as const };
   const mobilePricesReady = !currencyRates.isLoading;
 
   useEffect(() => {
