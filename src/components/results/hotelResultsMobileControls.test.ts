@@ -289,7 +289,7 @@ test("Hotel mobile filter rail is not fixed before the existing handoff point", 
 });
 
 
-test("pinned Hotel filter rail keeps the same single 12px horizontal inset as the natural rail", () => {
+test("Hotel mobile filter rail keeps the same tighter 4px horizontal inset when pinned", () => {
   const mobileStyles = readFileSync(
     new URL("./HotelResultsMobile.module.css", import.meta.url),
     "utf8",
@@ -300,6 +300,18 @@ test("pinned Hotel filter rail keeps the same single 12px horizontal inset as th
   assert.doesNotMatch(pinnedHotelRule, /padding-inline:/);
   assert.match(
     mobileStyles,
-    /\.scrollFilterBarPinned \[data-mobile-hotel-shortcuts\][\s\S]*padding-inline: 12px;/,
+    /\.scrollFilterSlot \{[\s\S]*padding: 8px 4px 0;/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.hotelNavbarFilterBar \[data-mobile-hotel-shortcuts\][\s\S]*scroll-padding-inline: 4px;/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.scrollFilterBarPinned \[data-mobile-hotel-shortcuts\][\s\S]*padding-inline: 4px;[\s\S]*scroll-padding-inline: 4px;/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.scrollFilterBarPinned \[data-cars-results-quick-filters\][\s\S]*padding-inline: 12px;[\s\S]*scroll-padding-inline: 12px;/,
   );
 });
