@@ -235,40 +235,27 @@ test("Hotel mobile quick filter keeps the underlying results at the same scroll 
 });
 
 
-test("Hotel mobile filter rail uses Flight Details curve geometry while Sort remains in results", () => {
+test("Hotel mobile filter rail uses the same white navbar background as Flight while Sort remains in results", () => {
   const mobileStyles = readFileSync(
     new URL("./HotelResultsMobile.module.css", import.meta.url),
     "utf8",
   );
-  const flightDetailsSource = readFileSync(
-    new URL("./flightDetails/StandaloneFlightDetails.tsx", import.meta.url),
-    "utf8",
-  );
 
   assert.match(
-    flightDetailsSource,
-    /data-flight-details-hero-curve[\s\S]*d="M0 12 Q50 64 100 12 L100 64 L0 64 Z"/,
+    mobileStyles,
+    /\.scrollFilterSlot \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 15px;[\s\S]*border-bottom-right-radius: 0;/,
   );
   assert.match(
     mobileStyles,
-    /\.scrollFilterSlot \{[\s\S]*position: relative;[\s\S]*overflow: hidden;[\s\S]*background: #fff;/,
+    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 15px;[\s\S]*border-bottom-right-radius: 0;/,
   );
-  assert.match(
-    mobileStyles,
-    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;/,
-  );
-  assert.match(
-    mobileStyles,
-    /\.scrollFilterSlot::after,[\s\S]*\.scrollFilterBarPinned\.hotelNavbarFilterBar::after \{[\s\S]*width: 26px;[\s\S]*height: 26px;[\s\S]*M0%200%20Q13%2026%2026%2026%20L0%2026%20Z/,
-  );
-  assert.doesNotMatch(mobileStyles, /border-bottom-left-radius: 15px/);
   assert.match(resultsSource, /data-mobile-hotel-shortcuts/);
   assert.match(resultsSource, /<span>Sort:<\/span>[\s\S]*currentSortLabel/);
   assert.doesNotMatch(resultsSource, /renderMobileHotelNavbarFilters[\s\S]{0,600}Sort:/);
 });
 
 
-test("Hotel mobile navbar removes the divider and keeps only the left Flight-style curve", () => {
+test("Hotel mobile navbar removes the divider above the filter rail and keeps the asymmetric edge", () => {
   const headerSource = readFileSync(
     new URL("../layout/AppHeader.tsx", import.meta.url),
     "utf8",
@@ -284,11 +271,7 @@ test("Hotel mobile navbar removes the divider and keeps only the left Flight-sty
   );
   assert.match(
     mobileStyles,
-    /\.scrollFilterSlot::after,[\s\S]*left: 0;[\s\S]*bottom: 0;[\s\S]*background-size: 26px 26px;/,
-  );
-  assert.doesNotMatch(
-    mobileStyles,
-    /border-bottom-right-radius:[^;]*[1-9]/,
+    /\.hotelNavbarFilterBar \{[\s\S]*border-bottom-left-radius: 15px;[\s\S]*border-bottom-right-radius: 0;/,
   );
 });
 

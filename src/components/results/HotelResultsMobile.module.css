@@ -20,13 +20,14 @@
 
 @media (max-width: 639px) {
   .scrollFilterSlot {
-    position: relative;
     height: 60px;
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
     padding: 8px 12px 0;
     overflow: hidden;
     background: #fff;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 0;
   }
   .scrollFilterBar {
     height: 44px;
