@@ -247,7 +247,19 @@ test("Hotel mobile filter rail uses the same white navbar background as Flight w
   );
   assert.match(
     mobileStyles,
-    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 15px;[\s\S]*border-bottom-right-radius: 0;/,
+    /\.hotelScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 15px 26px;[\s\S]*border-bottom-right-radius: 0;/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 15px 26px;[\s\S]*border-bottom-right-radius: 0;/,
+  );
+  assert.match(
+    resultsSource,
+    /mobileStyles\.scrollFilterSlot, mobileStyles\.hotelScrollFilterSlot/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.hotelScrollFilterSlot::after,[\s\S]*\.scrollFilterBarPinned\.hotelNavbarFilterBar::after \{[\s\S]*display: none;/,
   );
   assert.match(resultsSource, /data-mobile-hotel-shortcuts/);
   assert.match(resultsSource, /<span>Sort:<\/span>[\s\S]*currentSortLabel/);
@@ -271,7 +283,11 @@ test("Hotel mobile navbar removes the divider above the filter rail and keeps th
   );
   assert.match(
     mobileStyles,
-    /\.hotelNavbarFilterBar \{[\s\S]*border-bottom-left-radius: 15px;[\s\S]*border-bottom-right-radius: 0;/,
+    /\.hotelScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 15px 26px;[\s\S]*border-bottom-right-radius: 0;/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*border-bottom-left-radius: 15px 26px;[\s\S]*border-bottom-right-radius: 0;/,
   );
 });
 
