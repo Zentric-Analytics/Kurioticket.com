@@ -30,7 +30,8 @@
     border-bottom-right-radius: 0;
   }
   .hotelScrollFilterSlot {
-    border-bottom-left-radius: 15px 26px;
+    position: relative;
+    border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
   }
   .carsScrollFilterSlot {
@@ -45,6 +46,8 @@
     background: transparent;
   }
   .hotelNavbarFilterBar [data-mobile-hotel-shortcuts] {
+    position: relative;
+    z-index: 1;
     width: 100%;
     margin-inline-end: 0;
     padding-inline: 0;
@@ -63,8 +66,9 @@
     transform: translateY(0);
   }
   .scrollFilterBarPinned.hotelNavbarFilterBar {
+    position: fixed;
     background: #fff;
-    border-bottom-left-radius: 15px 26px;
+    border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
   }
   /* Legacy shared cutout retained for the base surface only.
@@ -86,12 +90,27 @@
     background-repeat: no-repeat;
     background-size: 26px 26px;
   }
-  /* Product-specific rails use native radii instead of the legacy SVG cutout.
-     Hotels keeps its taller elliptical corner; Cars uses a broader 32px quarter
-     curve matching the approved sketch. The same treatment is used when pinned. */
+  /* Hotel mobile web: match the first approved mockup with a pronounced
+     sharp-C cutout that begins beside the Filter chip and sweeps into the
+     results background. Keep it behind the chips so their shape/position stays intact. */
   .hotelScrollFilterSlot::after,
+  .scrollFilterBarPinned.hotelNavbarFilterBar::after {
+    content: "";
+    display: block;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    z-index: 0;
+    width: 42px;
+    height: 52px;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2042%2052'%3E%3Cpath%20d='M0%200%20H14%20C28%200%2020%2015%2020%2024%20C20%2038%2029%2046%2042%2048%20V52%20H0%20Z'%20fill='%23F5F7FB'/%3E%3C/svg%3E");
+    background-position: left bottom;
+    background-repeat: no-repeat;
+    background-size: 42px 52px;
+  }
+  /* Cars keeps the independently approved smooth 32px native radius from #6170. */
   .carsScrollFilterSlot::after,
-  .scrollFilterBarPinned.hotelNavbarFilterBar::after,
   .scrollFilterBarPinned[data-cars-results-scroll-filter-bar]::after {
     content: none;
     display: none;

@@ -247,19 +247,28 @@ test("Hotel mobile filter rail uses the same white navbar background as Flight w
   );
   assert.match(
     mobileStyles,
-    /\.hotelScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 15px 26px;[\s\S]*border-bottom-right-radius: 0;/,
+    /\.hotelScrollFilterSlot \{[\s\S]*position: relative;[\s\S]*border-bottom-left-radius: 0;[\s\S]*border-bottom-right-radius: 0;/,
   );
   assert.match(
     mobileStyles,
-    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 15px 26px;[\s\S]*border-bottom-right-radius: 0;/,
+    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 0;[\s\S]*border-bottom-right-radius: 0;/,
   );
   assert.match(
     resultsSource,
     /mobileStyles\.scrollFilterSlot, mobileStyles\.hotelScrollFilterSlot/,
   );
+  const hotelCurveRule =
+    mobileStyles.match(/\.hotelScrollFilterSlot::after,[\s\S]*?\.scrollFilterBarPinned\.hotelNavbarFilterBar::after \{([\s\S]*?)\n  \}/)?.[1] ?? "";
+  assert.match(hotelCurveRule, /z-index: 0;/);
+  assert.match(hotelCurveRule, /width: 42px;/);
+  assert.match(hotelCurveRule, /height: 52px;/);
+  assert.match(
+    hotelCurveRule,
+    /M0%200%20H14%20C28%200%2020%2015%2020%2024%20C20%2038%2029%2046%2042%2048%20V52%20H0%20Z/,
+  );
   assert.match(
     mobileStyles,
-    /\.hotelScrollFilterSlot::after,[\s\S]*\.scrollFilterBarPinned\.hotelNavbarFilterBar::after \{[\s\S]*display: none;/,
+    /\.hotelNavbarFilterBar \[data-mobile-hotel-shortcuts\] \{[\s\S]*position: relative;[\s\S]*z-index: 1;/,
   );
   assert.match(resultsSource, /data-mobile-hotel-shortcuts/);
   assert.match(resultsSource, /<span>Sort:<\/span>[\s\S]*currentSortLabel/);
@@ -283,11 +292,11 @@ test("Hotel mobile navbar removes the divider above the filter rail and keeps th
   );
   assert.match(
     mobileStyles,
-    /\.hotelScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 15px 26px;[\s\S]*border-bottom-right-radius: 0;/,
+    /\.hotelScrollFilterSlot::after,[\s\S]*width: 42px;[\s\S]*height: 52px;/,
   );
   assert.match(
     mobileStyles,
-    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*border-bottom-left-radius: 15px 26px;[\s\S]*border-bottom-right-radius: 0;/,
+    /\.scrollFilterBarPinned\.hotelNavbarFilterBar::after[\s\S]*background-size: 42px 52px;/,
   );
 });
 
