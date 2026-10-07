@@ -6,6 +6,10 @@ const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
   "utf8",
 );
+const mobileStyles = readFileSync(
+  new URL("./HotelResultsMobile.module.css", import.meta.url),
+  "utf8",
+);
 const headerSearch = source.slice(
   source.indexOf("const renderMobileHeaderSearch"),
   source.indexOf("const renderCarsSearchForm"),
@@ -91,6 +95,30 @@ test("Cars mobile filter rail uses the Hotels pinned hide/reveal scroll model", 
     /const distanceFromBottom = Math\.max\(0, maxScrollY - scrollY\)[\s\S]*if \(delta < 0 && distanceFromBottom <= 40\)/,
   );
   assert.doesNotMatch(source, /data-cars-results-mobile-header-filter|showMobileHeaderFilter|mobileNavFilterTarget/);
+});
+
+test("Cars pinned rail reuses the exact Hotels mobile geometry and motion", () => {
+  assert.match(mobileStyles, /\.scrollFilterSlot \{ height: 56px; padding-top: 12px; \}/);
+  assert.match(
+    mobileStyles,
+    /\.scrollFilterBarPinned \{[\s\S]*position: fixed;[\s\S]*top: calc\(72px \+ env\(safe-area-inset-top\)\);[\s\S]*height: 60px;[\s\S]*background: #f5f7fb/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.scrollFilterBarAnimated \{[\s\S]*transition: transform 220ms cubic-bezier\(0, 0, \.4, 1\)/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.scrollFilterBarPinned \[data-mobile-hotel-shortcuts\],[\s\S]*\.scrollFilterBarPinned \[data-cars-results-quick-filters\]/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.scrollFilterBarPinned\.scrollFilterBarHidden \{[\s\S]*transform: translateY\(-100%\)/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.scrollFilterBarAnimated\.scrollFilterBarHidden \{[\s\S]*transition-duration: 120ms/,
+  );
 });
 
 test("Cars keeps one Filter launcher/state while overlays do not disturb scroll direction", () => {
