@@ -29,6 +29,10 @@
     border-bottom-left-radius: 15px;
     border-bottom-right-radius: 0;
   }
+  .hotelScrollFilterSlot {
+    border-bottom-left-radius: 15px 26px;
+    border-bottom-right-radius: 0;
+  }
   .scrollFilterBar {
     height: 44px;
     width: 100%;
@@ -56,6 +60,8 @@
   }
   .scrollFilterBarPinned.hotelNavbarFilterBar {
     background: #fff;
+    border-bottom-left-radius: 15px 26px;
+    border-bottom-right-radius: 0;
   }
   /* Use the left half of Flight Details' quadratic hero curve:
      M0 12 Q50 64 100 12 -> normalized left half M0 0 Q13 26 26 26.
@@ -78,6 +84,13 @@
     background-position: left bottom;
     background-repeat: no-repeat;
     background-size: 26px 26px;
+  }
+  /* Hotel keeps the same 15px horizontal reach but raises the curve vertically
+     so its top sits close to the Filter chip without changing rail spacing.
+     Cars keeps the existing quadratic cutout unchanged. */
+  .hotelScrollFilterSlot::after,
+  .scrollFilterBarPinned.hotelNavbarFilterBar::after {
+    display: none;
   }
   /* Cars Results uses a 61px mobile header plus a stable/max Safari inset.
      Keep the returning filter rail locked to that exact header edge while
