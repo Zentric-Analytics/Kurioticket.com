@@ -11,6 +11,10 @@ const safeAreaSource = readFileSync(
   new URL("../../../components/results/CarsResultsMobileSafeArea.tsx", import.meta.url),
   "utf8",
 );
+const scrollBoundarySource = readFileSync(
+  new URL("../../../components/results/CarsResultsMobileScrollBoundary.tsx", import.meta.url),
+  "utf8",
+);
 const carsClientSource = readFileSync(
   new URL("../../../components/results/CarsResultsClient.tsx", import.meta.url),
   "utf8",
@@ -159,6 +163,38 @@ test("Cars pinned mobile filters stay locked to the stable Cars header edge duri
   assert.match(
     mobileResultsStyles,
     /\.scrollFilterBarPinned \{[\s\S]*top: calc\(72px \+ env\(safe-area-inset-top\)\);/,
+  );
+});
+
+test("Cars Results stops iOS top-edge rubber-band without changing the Hotels-style filter reveal", () => {
+  assert.match(
+    carsSource,
+    /import \{ CarsResultsMobileScrollBoundary \} from "@\/components\/results\/CarsResultsMobileScrollBoundary";/,
+  );
+  assert.match(carsSource, /<CarsResultsMobileScrollBoundary \/>/);
+  assert.match(
+    scrollBoundarySource,
+    /const ROOT_ATTRIBUTE = "data-cars-results-mobile-scroll-boundary";/,
+  );
+  assert.match(
+    scrollBoundarySource,
+    /root\.setAttribute\(ROOT_ATTRIBUTE, ""\);[\s\S]*body\.setAttribute\(ROOT_ATTRIBUTE, ""\);/,
+  );
+  assert.match(
+    scrollBoundarySource,
+    /root\.removeAttribute\(ROOT_ATTRIBUTE\);[\s\S]*body\.removeAttribute\(ROOT_ATTRIBUTE\);/,
+  );
+  assert.match(
+    globalStyles,
+    /@media \(max-width: 639px\) \{[\s\S]*html\[data-cars-results-mobile-scroll-boundary\],[\s\S]*body\[data-cars-results-mobile-scroll-boundary\] \{[\s\S]*overscroll-behavior-y: none;/,
+  );
+  assert.doesNotMatch(
+    globalStyles,
+    /html\[data-cars-results-mobile-scroll-boundary\][\s\S]{0,180}(?:overflow:\s*hidden|touch-action:\s*none)/,
+  );
+  assert.match(
+    carsClientSource,
+    /distance >= \(nextDirection > 0 \? 20 : 12\)[\s\S]*setMobileFiltersVisible\(nextDirection < 0\)/,
   );
 });
 
