@@ -1898,6 +1898,8 @@ export function CarsResultsExperience({
   const mobileFiltersOverlayOpen = filtersOpen || quickFilterOverlayOpen;
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFilterOriginRef = useRef<HTMLDivElement | null>(null);
+  const mobileQuickFiltersRef = useRef<HTMLDivElement | null>(null);
+  const [mobileQuickFiltersHasMore, setMobileQuickFiltersHasMore] = useState(false);
   const mobileFiltersPinnedRef = useRef(false);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
@@ -2183,6 +2185,24 @@ export function CarsResultsExperience({
     const group = visibleCarFilterGroups.find((item) => item.id === id);
     return group ? [group] : [];
   });
+  useEffect(() => {
+    if (guidedPlanning || typeof window === "undefined") return undefined;
+    const rail = mobileQuickFiltersRef.current;
+    if (!rail) return undefined;
+
+    const updateOverflowCue = () => {
+      const remaining = rail.scrollWidth - rail.clientWidth - rail.scrollLeft;
+      setMobileQuickFiltersHasMore(remaining > 6);
+    };
+
+    updateOverflowCue();
+    rail.addEventListener("scroll", updateOverflowCue, { passive: true });
+    window.addEventListener("resize", updateOverflowCue);
+    return () => {
+      rail.removeEventListener("scroll", updateOverflowCue);
+      window.removeEventListener("resize", updateOverflowCue);
+    };
+  }, [guidedPlanning, quickFilterGroups.length]);
   const badges = useMemo(
     () => (guidedPlanning ? new Map() : assignCarBadges(results)),
     [guidedPlanning, results],
@@ -2798,10 +2818,12 @@ export function CarsResultsExperience({
                   )}
                 >
                 {!guidedPlanning ? (
-                  <div
-                    data-cars-results-quick-filters
-                    className="scrollbar-hide -me-4 flex w-[calc(100%+1rem)] flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden"
-                  >
+                  <div className="relative w-full">
+                    <div
+                      ref={mobileQuickFiltersRef}
+                      data-cars-results-quick-filters
+                      className="scrollbar-hide -me-4 flex w-[calc(100%+1rem)] flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pe-10 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden"
+                    >
                     <button
                       ref={filtersButtonRef}
                       type="button"
@@ -3031,6 +3053,16 @@ export function CarsResultsExperience({
                         <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#B8CDED] bg-[#EEF5FF] px-2.5 text-[11px] font-semibold leading-[14px] text-[#064A9B] lg:text-[13px] lg:font-semibold lg:leading-5">{filter.label}<X className="h-[13px] w-[13px] shrink-0" aria-hidden="true" /></span>
                       </button>
                     ))}
+                    </div>
+                    {mobileQuickFiltersHasMore ? (
+                      <div
+                        aria-hidden="true"
+                        data-cars-results-quick-filters-more
+                        className="pointer-events-none absolute inset-y-0 end-0 flex w-9 items-center justify-end bg-gradient-to-l from-white via-white/95 to-transparent pe-1.5 lg:hidden"
+                      >
+                        <ChevronRight className="h-4 w-4 text-[#52627A]" strokeWidth={2} />
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
