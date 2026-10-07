@@ -221,7 +221,7 @@ function DealsSurface({
             <button
               type="button"
               disabled={redirecting || !canContinue}
-              aria-label={canContinue ? `Continue deal with ${deal.providerName}` : `Provider checkout unavailable for ${deal.providerName}`}
+              aria-label={canContinue ? `View deal with ${deal.providerName}` : `Provider checkout unavailable for ${deal.providerName}`}
               onClick={() => {
                 onSelectDeal(deal.offerId);
                 onViewDeal(deal.offerId);
