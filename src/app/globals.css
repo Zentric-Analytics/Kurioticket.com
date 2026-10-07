@@ -2157,6 +2157,10 @@ textarea {
 }
 
 @media (max-width: 639px) {
+  .flight-results-grid {
+    width: calc(100% - 24px);
+  }
+
   /* Keep the Flight Results filter row on the header's curved left edge. */
   [data-flight-results-desktop-header] {
     border-bottom-left-radius: 15px;
@@ -2167,9 +2171,6 @@ textarea {
     overflow: hidden;
   }
 
-  .flight-results-grid {
-    width: calc(100% - 24px);
-  }
 }
 
 .flight-results-right-rail {
