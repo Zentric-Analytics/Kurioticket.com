@@ -247,16 +247,19 @@ test("desktop header route selection advances From to To and closes after destin
 });
 
 test("sticky airport suggestions support arrow and Home/End navigation", () => {
+  const toolbar = desktopHeaderSearchBarSource();
   const start = source.indexOf("function SuggestionList");
   const end = source.indexOf("type FilterOption", start);
   const suggestions = source.slice(start, end);
 
+  assert.match(toolbar, /event\.key === "ArrowDown" && activeSuggest === "origin"[\s\S]*?sticky-flight-origin-suggestions \[role="option"\][\s\S]*?firstSuggestion\.focus\(\)/);
+  assert.match(toolbar, /event\.key === "ArrowDown"[\s\S]*?activeSuggest === "destination"[\s\S]*?sticky-flight-destination-suggestions \[role="option"\][\s\S]*?firstSuggestion\.focus\(\)/);
   assert.match(suggestions, /keyboardNavigation = false/);
   assert.match(suggestions, /event\.key === "ArrowDown"/);
   assert.match(suggestions, /event\.key === "ArrowUp"/);
   assert.match(suggestions, /event\.key === "Home"/);
   assert.match(suggestions, /event\.key === "End"/);
-  assert.match(suggestions, /options\[nextIndex\]\?\.focus\(\)/);
+  assert.match(suggestions, /event\.preventDefault\(\);[\s\S]*?options\[nextIndex\]\?\.focus\(\)/);
 });
 
 test("multi-city accordion stays aligned to the navbar search footprint", () => {
