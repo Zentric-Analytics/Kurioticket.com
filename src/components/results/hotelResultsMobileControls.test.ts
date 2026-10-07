@@ -152,16 +152,18 @@ test("active Hotel mobile shortcuts use the font-color fill, compact X, and norm
 });
 
 
-test("mobile Hotel Results navbar uses a back arrow instead of the Kurioticket logo", () => {
+test("mobile Hotel Results navbar arrow leads directly to the homepage", () => {
   const headerSource = readFileSync(
     new URL("../layout/AppHeader.tsx", import.meta.url),
     "utf8",
   );
-  const start = headerSource.indexOf("data-hotel-results-mobile-back");
-  assert.notEqual(start, -1);
-  const block = headerSource.slice(Math.max(0, start - 900), start + 500);
-  assert.match(block, /hotelResultsDesktopSticky/);
-  assert.match(block, /href="\\/"\/);
+  const marker = headerSource.indexOf("data-hotel-results-mobile-back");
+  assert.notEqual(marker, -1);
+  const linkStart = headerSource.lastIndexOf("<Link", marker);
+  const linkEnd = headerSource.indexOf("</Link>", marker);
+  assert.ok(linkStart >= 0 && linkEnd > marker);
+  const block = headerSource.slice(linkStart, linkEnd + "</Link>".length);
+  assert.ok(block.includes('href="/"'));
   assert.match(block, /aria-label="Kurioticket home"/);
   assert.match(block, /handleRouteLinkClick\(event, "\/"\)/);
   assert.match(block, /<ArrowLeft size=\{24\} strokeWidth=\{2\.2\}/);
