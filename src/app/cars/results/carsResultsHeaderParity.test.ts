@@ -180,7 +180,11 @@ test("Cars Results preserves native top-edge reload while keeping the Hotels-sty
 test("Cars pinned filters blend into the white header while the natural rail keeps its existing results surface", () => {
   assert.match(
     mobileResultsStyles,
-    /\.scrollFilterBar \{[\s\S]*background:\s*#F5F7FB;/,
+    /\.scrollFilterBarPinned \{[\s\S]*background:\s*#f5f7fb;/,
+  );
+  assert.doesNotMatch(
+    mobileResultsStyles,
+    /\.scrollFilterBar \{[^}]*background:\s*#fff(?:fff)?;/,
   );
   assert.match(
     mobileResultsStyles,
