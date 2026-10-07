@@ -5581,7 +5581,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   openStickySearchEditor(event.currentTarget, "origin");
                 }
               }}
-              onBlur={() => {
+              onBlur={(event) => {
+                const nextFocus = event.relatedTarget;
+                if (
+                  nextFocus instanceof Node &&
+                  event.currentTarget.parentElement?.contains(nextFocus)
+                ) {
+                  return;
+                }
                 if (activeSuggest === "origin") {
                   setActiveSuggest(null);
                 }
@@ -5729,7 +5736,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   openStickySearchEditor(event.currentTarget, "destination");
                 }
               }}
-              onBlur={() => {
+              onBlur={(event) => {
+                const nextFocus = event.relatedTarget;
+                if (
+                  nextFocus instanceof Node &&
+                  event.currentTarget.parentElement?.contains(nextFocus)
+                ) {
+                  return;
+                }
                 if (activeSuggest === "destination") {
                   setActiveSuggest(null);
                 }
