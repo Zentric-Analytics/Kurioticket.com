@@ -231,60 +231,72 @@ export function CarDealPicker({
       data-car-deal-picker
       className={`relative min-w-0 ${compact ? "mt-2" : "mt-3"}`}
     >
-      <div className="flex min-w-0 items-center gap-2">
-        <span
-          className={`${compact ? "text-[10px]" : "text-[11px]"} shrink-0 font-semibold text-[#475569]`}
-        >
-          Compare deals
-        </span>
-        <div className="flex min-w-0 items-center gap-1.5" role="list" aria-label="Car deal providers">
-          {visibleGroups.map((group, index) => {
-            const selected = group.key === selectedGroup.key;
-            const repeatedProvider = groups.some(
-              (candidate) =>
-                candidate.key !== group.key &&
-                candidate.providerName.trim().toLocaleLowerCase() ===
-                  group.providerName.trim().toLocaleLowerCase(),
-            );
-            return (
-              <button
-                key={group.key}
-                type="button"
-                role="listitem"
-                aria-label={
-                  repeatedProvider
-                    ? `Compare ${group.providerName} deal ${index + 1}`
-                    : `Compare deal from ${group.providerName}`
-                }
-                aria-pressed={selected}
-                onClick={() => selectGroup(group)}
-                className={`inline-flex ${compact ? "h-8 w-8 rounded-lg" : "h-9 w-9 rounded-[10px]"} shrink-0 items-center justify-center overflow-hidden border bg-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 ${
-                  selected
-                    ? "border-[#004BB8] ring-1 ring-[#004BB8]/20"
-                    : "border-[#CBD5E1] hover:border-[#94A3B8]"
-                }`}
-              >
-                <ProviderMark group={group} compact={compact} />
-              </button>
-            );
-          })}
-          {extraCount > 0 ? (
+      <div
+        className="flex min-w-0 items-center gap-1"
+        role="list"
+        aria-label="Car deal providers"
+        data-car-deal-provider-chips
+      >
+        {visibleGroups.map((group, index) => {
+          const selected = group.key === selectedGroup.key;
+          const repeatedProvider = groups.some(
+            (candidate) =>
+              candidate.key !== group.key &&
+              candidate.providerName.trim().toLocaleLowerCase() ===
+                group.providerName.trim().toLocaleLowerCase(),
+          );
+          return (
             <button
+              key={group.key}
               type="button"
-              aria-label={`Show ${extraCount} more car deal providers`}
-              onClick={() => {
-                prepareDesktopInlinePosition();
-                announceDesktopPickerOpen();
-                setShowAllProviders(true);
-                setOpenProviderKey(null);
-              }}
-              className={`inline-flex ${compact ? "h-8 min-w-8 rounded-lg px-1.5 text-[10px]" : "h-9 min-w-9 rounded-[10px] px-2 text-[11px]"} shrink-0 items-center justify-center gap-0.5 border border-[#CBD5E1] bg-white font-bold text-[#334155] hover:border-[#94A3B8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40`}
+              role="listitem"
+              aria-label={
+                repeatedProvider
+                  ? `Compare ${group.providerName} deal ${index + 1}`
+                  : `Compare deal from ${group.providerName}`
+              }
+              aria-pressed={selected}
+              onClick={() => selectGroup(group)}
+              className={`inline-flex min-w-0 shrink items-center overflow-hidden border bg-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 ${
+                compact
+                  ? "h-8 max-w-[88px] flex-1 gap-1 rounded-lg px-1.5"
+                  : "h-9 max-w-[112px] flex-1 gap-1.5 rounded-[10px] px-2"
+              } ${
+                selected
+                  ? "border-[#004BB8] ring-1 ring-[#004BB8]/20"
+                  : "border-[#CBD5E1] hover:border-[#94A3B8]"
+              }`}
             >
-              +{extraCount}
-              <ChevronDown size={compact ? 11 : 12} aria-hidden="true" />
+              <span
+                className={`${compact ? "h-4 w-4" : "h-[18px] w-[18px]"} inline-flex shrink-0 items-center justify-center overflow-hidden`}
+              >
+                <ProviderMark group={group} compact />
+              </span>
+              <span
+                className={`${compact ? "text-[10px] leading-[12px]" : "text-[11px] leading-[13px]"} min-w-0 truncate text-left font-semibold text-[#334155]`}
+                title={group.providerName}
+              >
+                {group.providerName}
+              </span>
             </button>
-          ) : null}
-        </div>
+          );
+        })}
+        {extraCount > 0 ? (
+          <button
+            type="button"
+            aria-label={`Show ${extraCount} more car deal providers`}
+            onClick={() => {
+              prepareDesktopInlinePosition();
+              announceDesktopPickerOpen();
+              setShowAllProviders(true);
+              setOpenProviderKey(null);
+            }}
+            className={`inline-flex ${compact ? "h-8 min-w-8 rounded-lg px-1 text-[10px]" : "h-9 min-w-9 rounded-[10px] px-1.5 text-[11px]"} shrink-0 items-center justify-center gap-0.5 border border-[#CBD5E1] bg-white font-bold text-[#334155] hover:border-[#94A3B8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40`}
+          >
+            +{extraCount}
+            <ChevronDown size={compact ? 11 : 12} aria-hidden="true" />
+          </button>
+        ) : null}
       </div>
 
       {desktopPanelTarget
