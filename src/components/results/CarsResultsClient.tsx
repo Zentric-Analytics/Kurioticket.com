@@ -102,6 +102,7 @@ import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } f
 import { acquireMobileResultsOverlayCanvas } from "@/lib/search/mobileResultsOverlayCanvas";
 import { getOverlayActivationModality, restoreOverlayLauncherFocus, type OverlayActivationModality } from "@/lib/search/mobileResultsOverlayFocus";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
+import mobileResultsStyles from "./HotelResultsMobile.module.css";
 import {
   carsDesktopPopoverClassName,
   useCarsDesktopPopover,
@@ -1827,6 +1828,7 @@ export function CarsResultsClient({
           search={values}
           inventoryStatus={inventoryStatus}
           hasSearchContext={hasSearchContext}
+          mobileSearchInteractionActive={mobileSearchOpen || mobileSearchClosing}
           resultHeadingId="cars-results-heading"
           detailsHrefForCar={(car) => resultActionHref(car, buildCarDetailsHref(car.id, values))}
         />
@@ -1853,6 +1855,7 @@ export function CarsResultsExperience({
   resultHeadingRef,
   presentation = "standalone",
   isCarSelectable,
+  mobileSearchInteractionActive = false,
 }: {
   results: NormalizedCarResult[];
   search: CarSearchParams;
@@ -1864,6 +1867,7 @@ export function CarsResultsExperience({
   embedded?: boolean;
   presentation?: "standalone" | "guided-planning";
   isCarSelectable?: (car: NormalizedCarResult) => boolean;
+  mobileSearchInteractionActive?: boolean;
   detailsHrefForCar: (car: NormalizedCarResult) => string | null;
   actionLabel?: string;
   actionAriaLabelForCar?: (car: NormalizedCarResult) => string;
@@ -1875,9 +1879,9 @@ export function CarsResultsExperience({
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [mobileNavFilterTarget, setMobileNavFilterTarget] =
-    useState<HTMLElement | null>(null);
-  const [showMobileHeaderFilter, setShowMobileHeaderFilter] = useState(false);
+  const [mobileFiltersAnimated, setMobileFiltersAnimated] = useState(false);
+  const [mobileFiltersPinned, setMobileFiltersPinned] = useState(false);
+  const [mobileFiltersVisible, setMobileFiltersVisible] = useState(true);
   const kayak = useKayakResults();
   const results = useMemo(() => presentation !== "standalone" || kayak?.vertical !== "cars" ? providerResults : [
     ...providerResults, ...kayak.offers.map(offer => kayakCarCardModel(offer,Math.max(1,Math.ceil((Date.parse(search.dropoffDate)-Date.parse(search.pickupDate))/86400000)||1),search.pickupLocation)),
@@ -1893,7 +1897,8 @@ export function CarsResultsExperience({
   const quickFilterOverlayOpen = quickFilterGroupId !== null;
   const mobileFiltersOverlayOpen = filtersOpen || quickFilterOverlayOpen;
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
-  const mobileShortcutsRef = useRef<HTMLDivElement | null>(null);
+  const mobileFilterOriginRef = useRef<HTMLDivElement | null>(null);
+  const mobileFiltersPinnedRef = useRef(false);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
   const filtersDialogRef = useRef<HTMLElement | null>(null);
@@ -1945,74 +1950,145 @@ export function CarsResultsExperience({
   }, [selectedCarFilters]);
 
   useEffect(() => {
-    if (presentation !== "standalone" || typeof window === "undefined")
+    if (
+      presentation !== "standalone" ||
+      embedded ||
+      providersLoading ||
+      results.length === 0 ||
+      typeof window === "undefined"
+    )
       return undefined;
 
-    const frame = window.requestAnimationFrame(() => {
-      setMobileNavFilterTarget(
-        document.querySelector<HTMLElement>(
-          "[data-cars-results-mobile-nav-filter]",
-        ),
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+    const readScrollPosition = () => {
+      const maxScrollY = Math.max(
+        0,
+        document.documentElement.scrollHeight - window.innerHeight,
       );
-    });
-
-    return () => window.cancelAnimationFrame(frame);
-  }, [presentation]);
-
-  useEffect(() => {
-    if (presentation !== "standalone" || typeof window === "undefined")
-      return undefined;
-
+      return {
+        maxScrollY,
+        scrollY: Math.min(maxScrollY, Math.max(0, window.scrollY)),
+      };
+    };
+    let previousY = readScrollPosition().scrollY;
+    let direction = 0;
+    let distance = 0;
     let frame = 0;
-    const media = window.matchMedia("(max-width: 639px)");
 
-    const measureMobileFilterHandoff = () => {
+    const update = () => {
       frame = 0;
-      if (!media.matches) {
-        setShowMobileHeaderFilter(false);
+      const { maxScrollY, scrollY } = readScrollPosition();
+      const delta = scrollY - previousY;
+      previousY = scrollY;
+
+      if (!mobileQuery.matches) {
+        mobileFiltersPinnedRef.current = false;
+        setMobileFiltersPinned(false);
+        setMobileFiltersAnimated(false);
+        setMobileFiltersVisible(true);
         return;
       }
 
-      const shortcuts = mobileShortcutsRef.current;
-      const header = document.querySelector<HTMLElement>("[data-app-header]");
-      if (!shortcuts || !header) {
-        setShowMobileHeaderFilter(false);
+      const filterInteractionActive =
+        mobileFiltersOverlayOpen ||
+        mobileSearchInteractionActive ||
+        filterTransitionPhase !== "idle";
+
+      // Match Hotel Results: overlay scroll locking/restoration must not be
+      // interpreted as a user scroll direction change.
+      if (filterInteractionActive) {
+        direction = 0;
+        distance = 0;
         return;
       }
 
-      const nextVisible =
-        shortcuts.getBoundingClientRect().bottom <=
-        header.getBoundingClientRect().bottom;
+      const headerBottom =
+        document
+          .querySelector<HTMLElement>("[data-app-header]")
+          ?.getBoundingClientRect().bottom ?? 72;
+      const naturalFilterBottom =
+        mobileFilterOriginRef.current?.getBoundingClientRect().bottom ?? 0;
+      const resultsBottom =
+        carsResultsBodyRef.current?.getBoundingClientRect().bottom ?? 0;
 
-      setShowMobileHeaderFilter((current) =>
-        current === nextVisible ? current : nextVisible,
-      );
+      if (scrollY <= 1) {
+        mobileFiltersPinnedRef.current = false;
+        setMobileFiltersPinned(false);
+        setMobileFiltersAnimated(false);
+        setMobileFiltersVisible(true);
+        direction = 0;
+        distance = 0;
+        return;
+      }
+
+      if (resultsBottom <= headerBottom) {
+        setMobileFiltersVisible(false);
+        return;
+      }
+
+      if (!mobileFiltersPinnedRef.current) {
+        if (naturalFilterBottom <= 8) {
+          mobileFiltersPinnedRef.current = true;
+          setMobileFiltersPinned(true);
+          // Match Hotels: the initial downward handoff pins hidden so the
+          // full rail never flashes while leaving its natural position.
+          setMobileFiltersVisible(delta < 0);
+          direction = Math.sign(delta);
+          distance = 0;
+        }
+        return;
+      }
+
+      if (Math.abs(delta) < 1) return;
+
+      // Match Hotels' iOS/WebKit rubber-band guard at the bottom edge.
+      const distanceFromBottom = Math.max(0, maxScrollY - scrollY);
+      if (delta < 0 && distanceFromBottom <= 40) {
+        direction = 0;
+        distance = 0;
+        return;
+      }
+
+      const nextDirection = Math.sign(delta);
+      distance =
+        nextDirection === direction
+          ? distance + Math.abs(delta)
+          : Math.abs(delta);
+      direction = nextDirection;
+
+      // Same Hotels thresholds: hide after 20px down, reveal after only
+      // 12px up so the full filter rail returns almost immediately.
+      if (distance >= (nextDirection > 0 ? 20 : 12)) {
+        if (nextDirection < 0) setMobileFiltersAnimated(true);
+        setMobileFiltersVisible(nextDirection < 0);
+        distance = 0;
+      }
     };
 
-    const schedule = () => {
-      if (!frame)
-        frame = window.requestAnimationFrame(measureMobileFilterHandoff);
+    const scheduleUpdate = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
     };
 
-    const observer =
-      "ResizeObserver" in window ? new ResizeObserver(schedule) : null;
-    observer?.observe(document.documentElement);
-    if (mobileShortcutsRef.current)
-      observer?.observe(mobileShortcutsRef.current);
-
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    media.addEventListener("change", schedule);
-    schedule();
-
+    update();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+    mobileQuery.addEventListener("change", scheduleUpdate);
     return () => {
-      observer?.disconnect();
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      media.removeEventListener("change", schedule);
       if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+      mobileQuery.removeEventListener("change", scheduleUpdate);
     };
-  }, [presentation]);
+  }, [
+    embedded,
+    filterTransitionPhase,
+    mobileFiltersOverlayOpen,
+    mobileSearchInteractionActive,
+    presentation,
+    providersLoading,
+    results.length,
+  ]);
+
   const desktopCompactFilterVisibilityRef = useRef(false);
   const desktopCompactFilterPlacementRef =
     useRef<DesktopCompactFilterPlacementState>("hidden");
@@ -2600,51 +2676,6 @@ export function CarsResultsExperience({
 
   return (
     <>
-    {mobileNavFilterTarget && showMobileHeaderFilter
-      ? createPortal(
-          <button
-            type="button"
-            data-cars-results-mobile-header-filter
-            aria-label={
-              activeFilterCount > 0
-                ? t("filtersWithCount").replace(
-                    "{{count}}",
-                    String(activeFilterCount),
-                  )
-                : t("filters")
-            }
-            aria-haspopup="dialog"
-            aria-expanded={filtersOpen}
-            onClick={(event) =>
-              openMobileFiltersDrawer(
-                event.currentTarget,
-                getOverlayActivationModality(event),
-              )
-            }
-            className={cn(
-              "focus-ring relative inline-flex h-9 w-9 items-center justify-center rounded-[8px] border shadow-[0_1px_2px_rgba(24,48,91,0.045)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25",
-              activeFilterCount > 0
-                ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
-                : "border-[#D5DFEA] bg-[#FBFCFE] text-[#24324A] hover:border-[#C7D3E0] hover:bg-white",
-            )}
-          >
-            <SlidersHorizontal
-              className="h-[16px] w-[16px]"
-              strokeWidth={2}
-              aria-hidden="true"
-            />
-            {activeFilterCount > 0 ? (
-              <span
-                data-cars-results-mobile-header-filter-count
-                className="absolute -end-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#004BB8] px-1 text-[9px] font-bold leading-none text-white"
-              >
-                {activeFilterCount}
-              </span>
-            ) : null}
-          </button>,
-          mobileNavFilterTarget,
-        )
-      : null}
     <section
       className={cn("min-w-0", embedded ? "mt-6" : "w-full")}
       aria-labelledby={resultHeadingId}
@@ -2730,11 +2761,39 @@ export function CarsResultsExperience({
           {results.length > 0 ? (
             <>
               <div
-                ref={mobileShortcutsRef}
-                data-cars-results-sticky-shortcuts
-                data-mobile-header-filter-active={showMobileHeaderFilter ? "true" : "false"}
-                className="max-sm:bg-[#F5F7FB] max-sm:py-1 lg:hidden"
+                ref={mobileFilterOriginRef}
+                data-cars-results-filter-origin
+                className={cn(
+                  "lg:hidden",
+                  presentation === "standalone" &&
+                    !guidedPlanning &&
+                    mobileResultsStyles.scrollFilterSlot,
+                )}
               >
+                <div
+                  data-cars-results-toolbar-scroll
+                  data-scroll-visible={mobileFiltersVisible ? "true" : "false"}
+                  data-scroll-pinned={mobileFiltersPinned ? "true" : "false"}
+                  className={cn(
+                    "flex min-w-0 flex-col items-start lg:hidden",
+                    presentation === "standalone" &&
+                      !guidedPlanning &&
+                      mobileResultsStyles.scrollFilterBar,
+                    presentation === "standalone" &&
+                      !guidedPlanning &&
+                      mobileFiltersPinned &&
+                      mobileResultsStyles.scrollFilterBarPinned,
+                    presentation === "standalone" &&
+                      !guidedPlanning &&
+                      mobileFiltersAnimated &&
+                      mobileResultsStyles.scrollFilterBarAnimated,
+                    presentation === "standalone" &&
+                      !guidedPlanning &&
+                      mobileFiltersPinned &&
+                      !mobileFiltersVisible &&
+                      mobileResultsStyles.scrollFilterBarHidden,
+                  )}
+                >
                 {!guidedPlanning ? (
                   <div
                     data-cars-results-quick-filters
@@ -2762,27 +2821,6 @@ export function CarsResultsExperience({
                             {activeFilterCount}
                           </span>
                         ) : null}
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      aria-haspopup="dialog"
-                      aria-expanded={quickFilterGroupId === "sort"}
-                      aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
-                      onClick={(event) => {
-                        openQuickFilter("sort", event.currentTarget, getOverlayActivationModality(event));
-                      }}
-                      className="group inline-flex min-h-11 min-w-11 shrink-0 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
-                    >
-                      <span className="inline-flex h-9 items-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2.5 text-[13px] font-semibold leading-4 text-[#142033] transition group-hover:bg-slate-50">
-                        {sort === "recommended" ? "Sort" : selectedCarSortLabel}
-                        <ChevronDown
-                          className={cn(
-                            "h-[13px] w-[13px] text-slate-500 transition-transform duration-150 motion-reduce:transition-none",
-                            quickFilterGroupId === "sort" && "rotate-180",
-                          )}
-                          aria-hidden="true"
-                        />
                       </span>
                     </button>
                     {quickFilterGroups.map((group) => {
@@ -2864,7 +2902,7 @@ export function CarsResultsExperience({
                     {t("filters")}
                   </button>
                 )}
-
+                </div>
               </div>
               <div
                 className="flex w-full min-w-0 flex-col items-start gap-2 pt-1 sm:gap-3 lg:py-1"
@@ -2895,6 +2933,30 @@ export function CarsResultsExperience({
                         )}
                     </h2>
                   </div>
+                  <button
+                    type="button"
+                    data-cars-sort-trigger
+                    aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
+                    aria-haspopup="dialog"
+                    aria-expanded={quickFilterGroupId === "sort"}
+                    onClick={(event) =>
+                      openQuickFilter(
+                        "sort",
+                        event.currentTarget,
+                        getOverlayActivationModality(event),
+                      )
+                    }
+                    className="focus-ring inline-flex min-h-[38px] min-w-[116px] shrink-0 items-center justify-center gap-[5px] rounded-[10px] border border-[#D8E1EC] px-2.5 py-2 text-[13px] font-medium leading-[17px] text-[#56658E] sm:hidden"
+                  >
+                    <span>Sort:</span>
+                    <span className="font-semibold text-[#07133B]">
+                      {selectedCarSortLabel}
+                    </span>
+                    <ChevronDown
+                      className="h-3.5 w-3.5"
+                      aria-hidden="true"
+                    />
+                  </button>
                   <div className="hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
                     <span className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
                       {t("carsResults.sortBy")}:
