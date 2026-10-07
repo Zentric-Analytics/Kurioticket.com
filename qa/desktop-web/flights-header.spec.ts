@@ -1,6 +1,27 @@
 import { expect, test } from "@playwright/test";
 
-const resultsUrl = "/flights/results?tripType=round-trip&origin=LOS&destination=DXB&departureDate=2026-11-22&returnDate=2026-12-22&adults=1&children=0&infants=0&travelers=1&cabinClass=economy";
+// Use next month's dates so the route and calendar remain valid on every run.
+// UTC matches the browser timezone configured for this suite.
+const now = new Date();
+const departure = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 22));
+const returning = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 2, 22));
+const departureDate = departure.toISOString().slice(0, 10);
+const returnDate = returning.toISOString().slice(0, 10);
+const selectedDepartureDate = `${departureDate.slice(0, 7)}-23`;
+const selectedReturnDate = `${departureDate.slice(0, 7)}-24`;
+const calendarMonth = departure.getUTCMonth() + 1;
+const resultsUrl = `/flights/results?${new URLSearchParams({
+  tripType: "round-trip",
+  origin: "LOS",
+  destination: "DXB",
+  departureDate,
+  returnDate,
+  adults: "1",
+  children: "0",
+  infants: "0",
+  travelers: "1",
+  cabinClass: "economy",
+})}`;
 const formSelector = "[data-flight-results-nav-search-form]";
 
 test.beforeEach(async ({ page, request }) => {
@@ -120,16 +141,16 @@ test("desktop search retains swap, trip, travelers, calendar and submission", as
   await expect(calendar).toBeVisible();
   await calendar.getByRole("button", { name: "23", exact: true }).first().click();
   await calendar.getByRole("button", { name: "24", exact: true }).first().click();
-  await expect(dates).toContainText("11/23");
-  await expect(dates).toContainText("11/24");
+  await expect(dates).toContainText(`${calendarMonth}/23`);
+  await expect(dates).toContainText(`${calendarMonth}/24`);
   await page.keyboard.press("Escape");
   await form.getByRole("button", { name: "Search", exact: true }).click();
-  await expect(page).toHaveURL(/departureDate=2026-11-23/);
+  await expect(page).toHaveURL(url => url.searchParams.get("departureDate") === selectedDepartureDate);
   const params = new URL(page.url()).searchParams;
   expect(params.get("origin")).toBe("LOS");
   expect(params.get("destination")).toBe("DXB");
   expect(params.get("tripType")).toBe("round-trip");
-  expect(params.get("returnDate")).toBe("2026-11-24");
+  expect(params.get("returnDate")).toBe(selectedReturnDate);
   expect(params.get("adults")).toBe("2");
   expect(params.get("cabinClass")).toBe("business");
 });
