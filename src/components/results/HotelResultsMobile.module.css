@@ -30,7 +30,7 @@
     border-bottom-right-radius: 0;
   }
   .carsScrollFilterSlot {
-    border-bottom-left-radius: 32px;
+    border-bottom-left-radius: 18px;
     border-bottom-right-radius: 0;
   }
   .scrollFilterBar {
@@ -80,7 +80,8 @@
     background-repeat: no-repeat;
     background-size: 26px 26px;
   }
-  /* Cars keeps the independently approved smooth 32px native radius from #6170. */
+  /* Cars uses a restrained native curve in both natural and pinned states.
+     Keep it noticeably rounded without the oversized quarter-circle scoop. */
   .carsScrollFilterSlot::after,
   .scrollFilterBarPinned[data-cars-results-scroll-filter-bar]::after {
     content: none;
@@ -93,7 +94,7 @@
     top: calc(61px + var(--cars-results-safe-area-top));
     background: #ffffff;
     border-top: 0;
-    border-bottom-left-radius: 32px;
+    border-bottom-left-radius: 18px;
     border-bottom-right-radius: 0;
     box-shadow: none;
   }
