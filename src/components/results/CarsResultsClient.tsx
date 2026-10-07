@@ -1821,7 +1821,7 @@ export function CarsResultsClient({
       <div
         ref={resultsGridRef}
         data-cars-results-scroll-region
-        className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-3 sm:pt-6 lg:max-w-[1020px] lg:pt-5"
+        className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-0 sm:pt-6 lg:max-w-[1020px] lg:pt-5"
       >
         <CarsResultsExperience
           results={initialResults}
