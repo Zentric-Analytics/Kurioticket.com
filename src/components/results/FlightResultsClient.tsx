@@ -5587,6 +5587,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 }
               }}
               onKeyDown={(event) => {
+                if (event.key === "ArrowDown" && activeSuggest === "origin") {
+                  const firstSuggestion = document.querySelector<HTMLButtonElement>(
+                    '#sticky-flight-origin-suggestions [role="option"]',
+                  );
+                  if (firstSuggestion) {
+                    event.preventDefault();
+                    firstSuggestion.focus();
+                  }
+                  return;
+                }
                 if (event.key === "Escape") {
                   event.preventDefault();
                   event.currentTarget.blur();
@@ -5725,6 +5735,19 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 }
               }}
               onKeyDown={(event) => {
+                if (
+                  event.key === "ArrowDown" &&
+                  activeSuggest === "destination"
+                ) {
+                  const firstSuggestion = document.querySelector<HTMLButtonElement>(
+                    '#sticky-flight-destination-suggestions [role="option"]',
+                  );
+                  if (firstSuggestion) {
+                    event.preventDefault();
+                    firstSuggestion.focus();
+                  }
+                  return;
+                }
                 if (event.key === "Escape") {
                   event.preventDefault();
                   event.currentTarget.blur();
@@ -9294,7 +9317,7 @@ function SuggestionList({
                       : event.key === "End"
                         ? options.length - 1
                         : -1;
-              if (nextIndex < 0 || nextIndex === currentIndex) return;
+              if (nextIndex < 0) return;
               event.preventDefault();
               options[nextIndex]?.focus();
             }}
