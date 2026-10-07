@@ -215,7 +215,7 @@ test("Cars mobile header and filter rail keep a smooth rounded left edge through
   );
   assert.match(
     mobileResultsStyles,
-    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*background: #ffffff;[\s\S]*border-top: 0;[\s\S]*border-bottom-left-radius: 32px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*box-shadow: none;/,
+    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*background: #ffffff;[\s\S]*border-top: 0;[\s\S]*border-bottom-left-radius: 18px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*box-shadow: none;/,
   );
   assert.match(
     mobileResultsStyles,
