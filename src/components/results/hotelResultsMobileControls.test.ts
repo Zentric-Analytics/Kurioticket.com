@@ -287,3 +287,19 @@ test("Hotel mobile filter rail is not fixed before the existing handoff point", 
   assert.match(resultsSource, /if \(naturalFilterBottom <= 8\)/);
   assert.match(resultsSource, /mobileFiltersPinned && mobileStyles\.scrollFilterBarPinned/);
 });
+
+
+test("pinned Hotel filter rail keeps the same single 12px horizontal inset as the natural rail", () => {
+  const mobileStyles = readFileSync(
+    new URL("./HotelResultsMobile.module.css", import.meta.url),
+    "utf8",
+  );
+  const pinnedHotelRule =
+    mobileStyles.match(/\.scrollFilterBarPinned\.hotelNavbarFilterBar \{([\s\S]*?)\n  \}/)?.[1] ?? "";
+
+  assert.doesNotMatch(pinnedHotelRule, /padding-inline:/);
+  assert.match(
+    mobileStyles,
+    /\.scrollFilterBarPinned \[data-mobile-hotel-shortcuts\][\s\S]*padding-inline: 12px;/,
+  );
+});
