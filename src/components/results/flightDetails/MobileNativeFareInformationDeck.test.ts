@@ -49,6 +49,8 @@ test("mobile Compare deals keeps resilient provider identity, selection, price h
   assert.match(deck, /aria-checked=\{selected\}/);
   assert.match(deck, /tabIndex=\{selected \? 0 : -1\}/);
   assert.match(deck, /onClick=\{\(\) => onSelectDeal\(deal\.offerId\)\}/);
+  assert.match(deck, /event\.key === "ArrowRight" \|\| event\.key === "ArrowDown"/);
+  assert.match(deck, /event\.key === "Home"[\s\S]*?event\.key === "End"/);
   assert.match(deck, /priceAvailable \? price\.formatted : "Loading price…"/);
   assert.match(deck, /Trip total/);
   assert.match(deck, /data-mobile-flight-deal-action/);
