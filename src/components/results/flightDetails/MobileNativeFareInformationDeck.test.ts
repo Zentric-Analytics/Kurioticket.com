@@ -44,6 +44,7 @@ test("mobile Compare deals keeps resilient provider identity, selection, price h
   assert.match(deck, /data-mobile-flight-deal-list/);
   assert.match(deck, /data-mobile-flight-deal-card/);
   assert.match(deck, /data-mobile-flight-provider-logo/);
+  assert.match(deck, /deal\.providerLogoUrl[\s\S]*?deal\.providerName/);
   assert.match(deck, /FlightIdentityMark logoUrl=\{identityMark\.logoUrl\} decorative mobile/);
   assert.match(deck, /role="radio"/);
   assert.match(deck, /aria-checked=\{selected\}/);
@@ -51,11 +52,13 @@ test("mobile Compare deals keeps resilient provider identity, selection, price h
   assert.match(deck, /onClick=\{\(\) => onSelectDeal\(deal\.offerId\)\}/);
   assert.match(deck, /event\.key === "ArrowRight" \|\| event\.key === "ArrowDown"/);
   assert.match(deck, /event\.key === "Home"[\s\S]*?event\.key === "End"/);
-  assert.match(deck, /priceAvailable \? price\.formatted : "Loading price…"/);
+  assert.match(deck, /const sourcePrice = formatFlightResultCurrency\(deal\.price, deal\.currency/);
+  assert.match(deck, /const visiblePrice = !pricesReady[\s\S]*?priceAvailable[\s\S]*?price\.formatted[\s\S]*?: sourcePrice/);
+  assert.match(deck, /const canViewDeal = canContinue && pricesReady/);
   assert.match(deck, /Trip total/);
   assert.match(deck, /data-mobile-flight-deal-action/);
   assert.match(deck, /redirecting \? "Opening…" : "View deal"/);
-  assert.match(deck, /disabled=\{redirecting \|\| !canContinue\}/);
+  assert.match(deck, /disabled=\{redirecting \|\| !canViewDeal\}/);
   assert.match(deck, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.doesNotMatch(deck, /No booking deals available|No additional live provider deals were supplied for this fare/);
 });
