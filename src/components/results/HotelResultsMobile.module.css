@@ -34,6 +34,10 @@
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
   }
+  .carsScrollFilterSlot {
+    border-bottom-left-radius: 32px;
+    border-bottom-right-radius: 0;
+  }
   .scrollFilterBar {
     height: 44px;
     width: 100%;
@@ -67,12 +71,9 @@
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
   }
-  /* Use the left half of Flight Details' quadratic hero curve:
-     M0 12 Q50 64 100 12 -> normalized left half M0 0 Q13 26 26 26.
-     The 26px cutout stays only on the left; the right edge remains straight.
-     Cars shares this exact curve in both its natural and pinned states so the
-     white header/filter surface never becomes a plain rectangular block while
-     scrolling down or returning upward. */
+  /* Legacy shared cutout retained for the base surface only.
+     Product-specific Hotel and Cars rails below use native border radii so
+     their visible corners stay smooth in both natural and pinned states. */
   .scrollFilterSlot::after,
   .scrollFilterBarPinned.hotelNavbarFilterBar::after,
   .scrollFilterBarPinned[data-cars-results-scroll-filter-bar]::after {
@@ -108,6 +109,12 @@
     background-repeat: no-repeat;
     background-size: 42px 52px;
   }
+  /* Cars keeps the independently approved smooth 32px native radius from #6170. */
+  .carsScrollFilterSlot::after,
+  .scrollFilterBarPinned[data-cars-results-scroll-filter-bar]::after {
+    content: none;
+    display: none;
+  }
   /* Cars Results uses a 61px mobile header plus a stable/max Safari inset.
      Keep the returning filter rail locked to that exact header edge while
      browser chrome expands/collapses during upward scrolling. */
@@ -115,6 +122,8 @@
     top: calc(61px + var(--cars-results-safe-area-top));
     background: #ffffff;
     border-top: 0;
+    border-bottom-left-radius: 32px;
+    border-bottom-right-radius: 0;
     box-shadow: none;
   }
   .scrollFilterBarAnimated {

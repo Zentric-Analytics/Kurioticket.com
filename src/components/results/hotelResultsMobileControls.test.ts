@@ -257,9 +257,14 @@ test("Hotel mobile filter rail uses the same white navbar background as Flight w
     resultsSource,
     /mobileStyles\.scrollFilterSlot, mobileStyles\.hotelScrollFilterSlot/,
   );
+  const hotelCurveRule =
+    mobileStyles.match(/\.hotelScrollFilterSlot::after,[\s\S]*?\.scrollFilterBarPinned\.hotelNavbarFilterBar::after \{([\s\S]*?)\n  \}/)?.[1] ?? "";
+  assert.match(hotelCurveRule, /z-index: 0;/);
+  assert.match(hotelCurveRule, /width: 42px;/);
+  assert.match(hotelCurveRule, /height: 52px;/);
   assert.match(
-    mobileStyles,
-    /\.hotelScrollFilterSlot::after,[\s\S]*\.scrollFilterBarPinned\.hotelNavbarFilterBar::after \{[\s\S]*width: 42px;[\s\S]*height: 52px;[\s\S]*z-index: 0;[\s\S]*M0%200%20H14%20C28%200%2020%2015%2020%2024%20C20%2038%2029%2046%2042%2048%20V52%20H0%20Z/,
+    hotelCurveRule,
+    /M0%200%20H14%20C28%200%2020%2015%2020%2024%20C20%2038%2029%2046%2042%2048%20V52%20H0%20Z/,
   );
   assert.match(
     mobileStyles,
