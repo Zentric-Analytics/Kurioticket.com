@@ -5555,6 +5555,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 activeSuggest === "origin"
               }
               onFocus={(event) => {
+                const input = event.currentTarget;
                 const enteringOrigin =
                   !isStickySearchPanelOpen ||
                   activeStickySearchTarget !== "origin";
@@ -5565,10 +5566,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 ) {
                   setOriginInput(compactOriginLabel);
                 }
-                openStickySearchEditor(event.currentTarget, "origin");
+                openStickySearchEditor(input, "origin");
                 if (enteringOrigin) {
                   window.requestAnimationFrame(() => {
-                    event.currentTarget.select();
+                    input.select();
                   });
                 }
               }}
@@ -5692,6 +5693,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 activeSuggest === "destination"
               }
               onFocus={(event) => {
+                const input = event.currentTarget;
                 const enteringDestination =
                   !isStickySearchPanelOpen ||
                   activeStickySearchTarget !== "destination";
@@ -5702,10 +5704,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 ) {
                   setDestinationInput(compactDestinationLabel);
                 }
-                openStickySearchEditor(event.currentTarget, "destination");
+                openStickySearchEditor(input, "destination");
                 if (enteringDestination) {
                   window.requestAnimationFrame(() => {
-                    event.currentTarget.select();
+                    input.select();
                   });
                 }
               }}
