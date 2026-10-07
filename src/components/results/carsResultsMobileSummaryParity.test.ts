@@ -13,11 +13,15 @@ const headerSearch = source.slice(
 
 test("Cars mobile results exposes the real search values in the main header", () => {
   assert.match(headerSearch, /locationPairSummary/);
-  assert.match(headerSearch, /rentalDateSummary/);
+  assert.match(headerSearch, /mobileSearchSecondarySummary/);
   assert.match(headerSearch, /data-cars-results-mobile-header-search/);
   assert.match(
+    source,
+    /const mobileSearchSecondarySummary = `\$\{rentalDateSummary\} · \$\{timeSummary\} · \$\{driverAgeSummary\}`/,
+  );
+  assert.match(
     headerSearch,
-    /aria-label=\{\`\$\{t\("deals\.results\.modifySearch"\)\}: \$\{locationPairSummary\}, \$\{rentalDateSummary\}\`\}/,
+    /aria-label=\{\`\$\{t\("deals\.results\.modifySearch"\)\}: \$\{locationPairSummary\}, \$\{mobileSearchSecondarySummary\}\`\}/,
   );
   assert.match(
     headerSearch,
@@ -59,27 +63,22 @@ test("the AppHeader owns the single mobile search while Edit Search keeps the ex
   assert.match(source, /renderCarsSearchForm\("mobile"\)/);
 });
 
-test("the unified launcher presents selected location, dates, and edit as separate compact fields", () => {
-  assert.match(headerSearch, /h-11 w-full min-w-0/);
-  assert.match(headerSearch, /data-cars-results-mobile-search-fields/);
-  assert.match(headerSearch, /grid h-9 w-full min-w-0/);
-  assert.match(headerSearch, /gap-\[3px\]/);
-  assert.match(headerSearch, /data-cars-results-mobile-search-location/);
-  assert.match(headerSearch, /data-cars-results-mobile-search-dates/);
+test("the unified launcher uses the Hotels two-line hierarchy without cramped mini-fields", () => {
+  assert.match(headerSearch, /h-full w-full min-w-0/);
+  assert.match(headerSearch, /data-cars-results-mobile-search-summary/);
+  assert.match(headerSearch, /flex min-w-0 flex-1 flex-col justify-center/);
+  assert.match(headerSearch, /locationPairSummary/);
+  assert.match(headerSearch, /mobileSearchSecondarySummary/);
+  assert.match(headerSearch, /text-\[14px\] font-semibold leading-\[18px\]/);
+  assert.match(headerSearch, /text-\[11px\] font-medium leading-\[15px\]/);
   assert.match(headerSearch, /data-cars-results-mobile-search-edit/);
-  assert.match(headerSearch, /<CalendarDays/);
-  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-divider/);
-  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-segments/);
-  assert.equal(
-    (headerSearch.match(/rounded-\[8px\] border border-\[#D5DFEA\] bg-\[#FBFCFE\]/g) ?? []).length,
-    3,
-  );
-  assert.match(headerSearch, /text-\[11\.5px\] font-semibold/);
-  assert.match(headerSearch, /text-\[10\.75px\] font-semibold/);
-  assert.match(headerSearch, /text-\[#172238\]/);
-  assert.match(headerSearch, /text-\[#536786\]/);
-  assert.doesNotMatch(headerSearch, /flex-col|text-\[9\.5px\]/);
-  assert.doesNotMatch(headerSearch, /min-h-\[62px\]|max-w-\[30rem\]|translate-y-1\/2/);
+  assert.match(headerSearch, /<SquarePen size=\{15\} strokeWidth=\{2\}/);
+  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-fields/);
+  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-location/);
+  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-dates/);
+  assert.doesNotMatch(headerSearch, /grid-cols-|gap-\[3px\]|<CalendarDays|<Car/);
+  assert.match(headerSearch, /bg-\[#F5F7FB\]/);
+  assert.match(headerSearch, /hover:bg-\[#EDF2FA\]/);
 
   const editForm = source.slice(
     source.indexOf('appearance="carsResultsEdit"'),
