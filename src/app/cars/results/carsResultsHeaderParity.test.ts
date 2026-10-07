@@ -19,6 +19,10 @@ const globalStyles = readFileSync(
   new URL("../../globals.css", import.meta.url),
   "utf8",
 );
+const mobileResultsStyles = readFileSync(
+  new URL("../../../components/results/HotelResultsMobile.module.css", import.meta.url),
+  "utf8",
+);
 const flightsSource = readFileSync(
   new URL("../../flights/results/page.tsx", import.meta.url),
   "utf8",
@@ -141,6 +145,21 @@ test("Cars Results uses the browser static max top inset so Safari scroll chrome
   );
   assert.doesNotMatch(safeAreaSource, /safe-area-inset-top|safe-area-max-inset-top/);
   assert.doesNotMatch(safeAreaSource, /44px|47px|50px|59px/);
+});
+
+test("Cars pinned mobile filters stay locked to the stable Cars header edge during Safari chrome changes", () => {
+  assert.match(
+    appHeaderSource,
+    /page-shell flex flex-col gap-0\.5 pb-1 pt-\[5px\][\s\S]*min-h-\[52px\][\s\S]*carsResultsMobileInlineSearch/,
+  );
+  assert.match(
+    mobileResultsStyles,
+    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*top: calc\(61px \+ var\(--cars-results-safe-area-top\)\);/,
+  );
+  assert.match(
+    mobileResultsStyles,
+    /\.scrollFilterBarPinned \{[\s\S]*top: calc\(72px \+ env\(safe-area-inset-top\)\);/,
+  );
 });
 
 test("Cars Results does not independently render product category tabs", () => {

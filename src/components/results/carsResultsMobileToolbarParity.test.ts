@@ -97,11 +97,15 @@ test("Cars mobile filter rail uses the Hotels pinned hide/reveal scroll model", 
   assert.doesNotMatch(source, /data-cars-results-mobile-header-filter|showMobileHeaderFilter|mobileNavFilterTarget/);
 });
 
-test("Cars pinned rail reuses the exact Hotels mobile geometry and motion", () => {
+test("Cars shares Hotels filter motion but stays locked to the stable Cars header edge", () => {
   assert.match(mobileStyles, /\.scrollFilterSlot \{ height: 56px; padding-top: 12px; \}/);
   assert.match(
     mobileStyles,
     /\.scrollFilterBarPinned \{[\s\S]*position: fixed;[\s\S]*top: calc\(72px \+ env\(safe-area-inset-top\)\);[\s\S]*height: 60px;[\s\S]*background: #f5f7fb/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*top: calc\(61px \+ var\(--cars-results-safe-area-top\)\);[\s\S]*\}/,
   );
   assert.match(
     mobileStyles,
