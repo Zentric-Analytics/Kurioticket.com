@@ -184,7 +184,7 @@ test("Hotel mobile menu covers the full viewport like Flight", () => {
 
 
 
-test("Hotel mobile filters keep their existing scroll behavior on the white navbar surface", () => {
+test("Hotel mobile filters keep the original natural-to-pinned scroll handoff on the white navbar surface", () => {
   assert.match(resultsSource, /mobileFiltersVisible/);
   assert.match(resultsSource, /mobileFiltersPinned/);
   assert.match(resultsSource, /mobileFiltersAnimated/);
@@ -194,7 +194,8 @@ test("Hotel mobile filters keep their existing scroll behavior on the white navb
   assert.match(resultsSource, /mobileStyles\.scrollFilterBarPinned/);
   assert.match(resultsSource, /mobileStyles\.scrollFilterBarHidden/);
   assert.match(resultsSource, /mobileStyles\.hotelNavbarFilterBar/);
-  assert.match(resultsSource, /createPortal\(renderMobileHotelNavbarFilters\(\), document\.body\)/);
+  assert.match(resultsSource, /ref=\{mobileFilterOriginRef\}[\s\S]*data-hotel-results-toolbar/);
+  assert.doesNotMatch(resultsSource, /renderMobileHotelNavbarFilters|createPortal\(renderMobileHotelNavbarFilters/);
   assert.doesNotMatch(resultsPageSource, /mobileResultsFilters=/);
 });
 
@@ -242,9 +243,12 @@ test("Hotel mobile filter rail uses the same white navbar background as Flight w
 
   assert.match(
     mobileStyles,
-    /\.hotelNavbarFilterBar \{[\s\S]*top: calc\(72px \+ env\(safe-area-inset-top\)\);[\s\S]*background: #fff;/,
+    /\.scrollFilterSlot \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 13px;[\s\S]*border-bottom-right-radius: 13px;/,
   );
-  assert.match(resultsSource, /renderMobileHotelNavbarFilters/);
+  assert.match(
+    mobileStyles,
+    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 13px;[\s\S]*border-bottom-right-radius: 13px;/,
+  );
   assert.match(resultsSource, /data-mobile-hotel-shortcuts/);
   assert.match(resultsSource, /<span>Sort:<\/span>[\s\S]*currentSortLabel/);
   assert.doesNotMatch(resultsSource, /renderMobileHotelNavbarFilters[\s\S]{0,600}Sort:/);
@@ -269,4 +273,17 @@ test("Hotel mobile navbar removes the divider above the filter rail and matches 
     mobileStyles,
     /\.hotelNavbarFilterBar \{[\s\S]*border-bottom-left-radius: 13px;[\s\S]*border-bottom-right-radius: 13px;/,
   );
+});
+
+
+test("Hotel mobile filter rail is not fixed before the existing handoff point", () => {
+  const mobileStyles = readFileSync(
+    new URL("./HotelResultsMobile.module.css", import.meta.url),
+    "utf8",
+  );
+  const naturalRule = mobileStyles.match(/\.hotelNavbarFilterBar \{([\s\S]*?)\n  \}/)?.[1] ?? "";
+  assert.doesNotMatch(naturalRule, /position:\s*fixed|top:\s*calc/);
+  assert.match(resultsSource, /naturalFilterBottom = mobileFilterOriginRef\.current\?\.getBoundingClientRect\(\)\.bottom/);
+  assert.match(resultsSource, /if \(naturalFilterBottom <= 8\)/);
+  assert.match(resultsSource, /mobileFiltersPinned && mobileStyles\.scrollFilterBarPinned/);
 });
