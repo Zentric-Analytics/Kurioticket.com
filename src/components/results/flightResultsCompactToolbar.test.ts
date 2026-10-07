@@ -65,15 +65,16 @@ test("desktop Flight header uses the requested weekday numeric date format", () 
 test("desktop Flight route control is clearly dominant over the date control", () => {
   const toolbar = desktopHeaderSearchBarSource();
 
-  assert.match(toolbar, /const dateFieldClass =[\s\S]*?h-\[36px\]/);
+  assert.match(toolbar, /const fieldClass =[\s\S]*?h-\[40px\]/);
+  assert.doesNotMatch(toolbar, /h-\[36px\]/);
   assert.match(toolbar, /max-w-\[548px\]/);
   assert.match(toolbar, /minmax\(138px,150px\)/);
   assert.match(toolbar, /xl:grid-cols-\[104px_230px_150px_56px_40px\]/);
-  assert.match(toolbar, /className=\{cn\(dateFieldClass, "w-full justify-center"\)\}/);
+  assert.match(toolbar, /className=\{cn\(fieldClass, "w-full justify-center px-1.5"\)\}/);
   assert.match(toolbar, /grid-cols-\[96px_minmax\(0,1fr\)_minmax\(138px,150px\)_50px_40px\]/);
   assert.match(toolbar, /xl:grid-cols-\[104px_230px_150px_56px_40px\]/);
   assert.doesNotMatch(toolbar, /minmax\(168px,1fr\)/);
-  assert.doesNotMatch(toolbar, /Calendar|CalendarDays/);
+  assert.doesNotMatch(toolbar, /<Calendar(?:Days)?[\s>]/);
 });
 
 test("compact multi-city header follows the first edited leg date", () => {
@@ -99,13 +100,13 @@ test("desktop header opens only the selected field editor", () => {
   const callback = stickyEditorCallbackSource();
 
   assert.match(callback, /target: "trip" \| "origin" \| "destination" \| "dates" \| "return" \| "travelers"/);
-  assert.match(callback, /const resolvedTarget =[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?\? "trip"[\s\S]*?: target/);
+  assert.match(callback, /const resolvedTarget =[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?target === "origin"[\s\S]*?target === "return"[\s\S]*?\? "trip"[\s\S]*?: target/);
   assert.match(callback, /setActiveStickySearchTarget\(resolvedTarget\)/);
   assert.match(callback, /resolvedTarget === "dates"[\s\S]*?"departure"[\s\S]*?resolvedTarget === "return"[\s\S]*?"return"/);
   assert.match(callback, /setTravelerPopoverOpen\(resolvedTarget === "travelers"\)/);
   assert.match(callback, /resolvedTarget === "origin" && originInput\.trim\(\)\.length >= 2/);
   assert.match(callback, /resolvedTarget === "destination"[\s\S]*destinationInput\.trim\(\)\.length >= 2/);
-  assert.match(callback, /stickySearchLauncherRef\.current = event\.currentTarget/);
+  assert.match(callback, /stickySearchLauncherRef\.current = launcher/);
   assert.match(callback, /resolvedTarget === "trip" \? null : resolvedTarget/);
 });
 
@@ -214,8 +215,8 @@ test("route field is one grouped control with explicit swap dividers", () => {
 test("route date and traveler controls open their real editors directly from the header", () => {
   const toolbar = desktopHeaderSearchBarSource();
 
-  assert.match(toolbar, /activeStickySearchTarget === "origin"[\s\S]*<input/);
-  assert.match(toolbar, /activeStickySearchTarget === "destination"[\s\S]*<input/);
+  assert.match(toolbar, /<input[\s\S]*?data-flight-results-header-origin[\s\S]*?activeStickySearchTarget === "origin"/);
+  assert.match(toolbar, /<input[\s\S]*?data-flight-results-header-destination[\s\S]*?activeStickySearchTarget === "destination"/);
   assert.match(toolbar, /id="sticky-flight-origin-suggestions"[\s\S]*alignToField/);
   assert.match(toolbar, /id="sticky-flight-destination-suggestions"[\s\S]*alignToField/);
   assert.match(toolbar, /activeStickySearchTarget === "dates"[\s\S]*<DatePickerPopover/);

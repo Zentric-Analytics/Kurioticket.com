@@ -5423,10 +5423,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     ];
     const fieldClass =
       "focus-ring flex h-[40px] min-w-0 items-center rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] px-2.5 text-start text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA]";
-    const dateFieldClass =
-      "focus-ring flex h-[36px] min-w-0 items-center rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] px-1.5 text-start text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA]";
-    const tripTypeClass =
-      "focus-ring flex h-[40px] w-full min-w-0 items-center justify-center rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] px-2.5 text-center text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA]";
+    const selectorClass = cn(fieldClass, "w-full justify-start gap-1 px-2");
     const valueClass =
       "min-w-0 truncate text-[12px] font-semibold leading-[17px] text-[#142033]";
     const headerGridClass =
@@ -5462,9 +5459,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               openStickySearchEditor(event.currentTarget, "trip");
               setTripTypeMenuOpen(true);
             }}
-            className={tripTypeClass}
+            className={selectorClass}
           >
             <span className={valueClass}>{mobileTripTypeSummary}</span>
+            <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />
           </button>
 
           {tripMenuOpen ? (
@@ -5619,7 +5617,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               }}
               placeholder={t("fromPlaceholder")}
               autoComplete="off"
-              className={cn("flight-results-nav-route-input box-border h-full w-full min-w-0 border-0 bg-transparent pr-2 text-right outline-none placeholder:text-slate-400", isStickySearchPanelOpen && activeStickySearchTarget === "origin" && originInput.trim() ? "pl-7" : "pl-2")}
+              className={cn("flight-results-nav-route-input box-border h-full w-full min-w-0 border-0 bg-transparent pl-2 text-left outline-none placeholder:text-slate-400", isStickySearchPanelOpen && activeStickySearchTarget === "origin" && originInput.trim() ? "pr-7" : "pr-2")}
             />
             {isStickySearchPanelOpen &&
             activeStickySearchTarget === "origin" &&
@@ -5645,7 +5643,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       ?.focus({ preventScroll: true });
                   });
                 }}
-                className="focus-ring absolute left-1 top-1/2 z-[2] inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white hover:text-slate-700"
+                className="focus-ring absolute right-1 top-1/2 z-[2] inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white hover:text-slate-700"
               >
                 <X className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
@@ -5846,7 +5844,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             }
             aria-label={`${t("editFlightSearch")}: ${dateSummary}`}
             onClick={(event) => openStickySearchEditor(event.currentTarget, "dates")}
-            className={cn(dateFieldClass, "w-full justify-center")}
+            className={cn(fieldClass, "w-full justify-center px-1.5")}
           >
             <span className={valueClass}>{dateSummary}</span>
           </button>
@@ -5899,10 +5897,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             }
             aria-label={`${t("editFlightSearch")}: ${travelerCabinSummary}`}
             onClick={(event) => openStickySearchEditor(event.currentTarget, "travelers")}
-            className={cn(fieldClass, "w-full justify-center gap-1.5 px-2")}
+            className={cn(selectorClass, "gap-0.5 px-1")}
           >
             <UserRound className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
             <span className={valueClass}>{mobileTravelerTotal}</span>
+            <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />
           </button>
 
           {isStickySearchPanelOpen &&
