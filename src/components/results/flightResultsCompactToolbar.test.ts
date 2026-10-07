@@ -229,8 +229,8 @@ test("desktop header airport controls behave like true comboboxes", () => {
 
   assert.match(toolbar, /id="sticky-results-origin"[\s\S]*?role="combobox"[\s\S]*?aria-autocomplete="list"[\s\S]*?aria-controls="sticky-flight-origin-suggestions"/);
   assert.match(toolbar, /id="sticky-results-destination"[\s\S]*?role="combobox"[\s\S]*?aria-autocomplete="list"[\s\S]*?aria-controls="sticky-flight-destination-suggestions"/);
-  assert.match(toolbar, /const enteringOrigin =[\s\S]*?event\.currentTarget\.select\(\)/);
-  assert.match(toolbar, /const enteringDestination =[\s\S]*?event\.currentTarget\.select\(\)/);
+  assert.match(toolbar, /const input = event\.currentTarget;[\s\S]*?const enteringOrigin =[\s\S]*?input\.select\(\)/);
+  assert.match(toolbar, /const input = event\.currentTarget;[\s\S]*?const enteringDestination =[\s\S]*?input\.select\(\)/);
   assert.match(toolbar, /data-flight-results-header-origin-clear[\s\S]*?aria-label=\{t\("clearOrigin"\)\}/);
   assert.match(toolbar, /data-flight-results-header-destination-clear[\s\S]*?aria-label=\{t\("clearDestination"\)\}/);
   assert.match(toolbar, /setOriginInput\(""\)[\s\S]*?setOriginCode\(""\)/);
