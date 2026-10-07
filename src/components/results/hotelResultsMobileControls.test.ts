@@ -161,10 +161,21 @@ test("mobile Hotel Results navbar uses a back arrow instead of the Kurioticket l
   assert.notEqual(start, -1);
   const block = headerSource.slice(Math.max(0, start - 900), start + 500);
   assert.match(block, /hotelResultsDesktopSticky/);
-  assert.match(block, /aria-label="Back"/);
+  assert.match(block, /href="\\/"\/);
+  assert.match(block, /aria-label="Kurioticket home"/);
+  assert.match(block, /handleRouteLinkClick\(event, "\/"\)/);
   assert.match(block, /<ArrowLeft size=\{24\} strokeWidth=\{2\.2\}/);
-  assert.match(block, /router\.back\(\)/);
-  assert.match(block, /router\.push\("\/hotels"\)/);
+  assert.doesNotMatch(block, /router\.back\(\)|router\.push\("\/hotels"\)/);
+});
+
+test("Hotel mobile menu covers the full viewport like Flight", () => {
+  const headerSource = readFileSync(
+    new URL("../layout/AppHeader.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(headerSource, /const fullscreenHotelMobileMenu = Boolean\(hotelResultsDesktopSticky && mobileResultsSearch\)/);
+  assert.match(headerSource, /fullscreenHotelMobileMenu && "max-sm:z-\[1100\]"/);
+  assert.match(headerSource, /fullscreenHotelMobileMenu && "max-sm:inset-x-0 max-sm:top-0 max-sm:w-full max-sm:max-w-none"/);
 });
 
 
