@@ -31,8 +31,9 @@ test("Flight mobile loading keeps one header and reveals real controls only when
   const filtersTarget = header.locator("[data-flight-results-mobile-nav-filters]");
   const filterNavbar = header.locator("[data-mobile-results-filter-navbar]");
 
-  await expect(header).toBeVisible();
+  await expect(page.locator("[data-flight-results-desktop-header]")).toBeVisible();
   await expect(header).toHaveCount(1);
+  await expect(header).toBeVisible();
   await expect(summaryTarget).toBeHidden();
   await expect(filtersTarget).toBeHidden();
   await expect(filterNavbar).toBeHidden();
@@ -67,6 +68,8 @@ for (const width of [320, 360, 390, 412]) {
     const filters = filterNavbar.locator("[data-flight-mobile-results-shortcuts]");
     const dates = page.locator('[data-nearby-fare-presentation="mobile"]');
 
+    await expect(page.locator("[data-flight-results-desktop-header]")).toBeVisible();
+    await expect(header).toHaveCount(1);
     await expect(header).toBeVisible();
     await expect(navbar).toBeVisible();
     await expect(filterNavbar).toBeVisible();
