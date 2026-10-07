@@ -103,8 +103,8 @@ test("mobile shortcuts remain the existing scrollable touch targets in canonical
     resultsSource.indexOf("data-cars-results-quick-filters"),
     resultsSource.indexOf("data-cars-results-toolbar"),
   );
-  assert.ok(rail.indexOf("filtersButtonRef") < rail.indexOf('quickFilterGroupId === "sort"'));
-  assert.ok(rail.indexOf('quickFilterGroupId === "sort"') < rail.indexOf("quickFilterGroups.map"));
+  assert.ok(rail.indexOf("filtersButtonRef") < rail.indexOf("quickFilterGroups.map"));
+  assert.doesNotMatch(rail, /quickFilterGroupId === "sort"|data-cars-sort-trigger/);
   assert.match(rail, /flex-nowrap[^\"]*gap-1\.5[^\"]*overflow-x-auto[^\"]*overscroll-x-contain/);
   assert.match(rail, /\[scrollbar-width:none\][^\"]*\[&::-webkit-scrollbar\]:hidden/);
   assert.match(rail, /-me-4[^\"]*w-\[calc\(100%\+1rem\)\][^\"]*pe-4/);
@@ -117,20 +117,17 @@ test("mobile shortcuts remain the existing scrollable touch targets in canonical
   assert.doesNotMatch(rail, /Price \(per day\)/);
 });
 
-test("mobile shortcuts keep their original sizing and hand off to the compact header Filter", () => {
-  assert.match(stickyShortcuts, /ref=\{mobileShortcutsRef\}/);
-  assert.match(stickyShortcuts, /max-sm:bg-\[#F5F7FB\] max-sm:py-1/);
+test("mobile Cars filters use the full Hotels-style pinned rail and immediate upward reveal", () => {
+  assert.match(stickyShortcuts, /ref=\{mobileFilterOriginRef\}/);
+  assert.match(stickyShortcuts, /data-cars-results-toolbar-scroll/);
+  assert.match(stickyShortcuts, /mobileResultsStyles\.scrollFilterBarPinned/);
+  assert.match(stickyShortcuts, /mobileResultsStyles\.scrollFilterBarHidden/);
+  assert.match(resultsSource, /distance >= \(nextDirection > 0 \? 20 : 12\)/);
+  assert.match(resultsSource, /setMobileFiltersVisible\(nextDirection < 0\)/);
+  assert.match(resultsSource, /if \(nextDirection < 0\) setMobileFiltersAnimated\(true\)/);
   assert.doesNotMatch(
-    stickyShortcuts,
-    /max-sm:sticky|max-sm:top-\[calc\(var\(--cars-results-safe-area-top\)\+61px\)\]/,
-  );
-  assert.match(
     resultsSource,
-    /data-cars-results-mobile-header-filter[\s\S]*h-9 w-9[\s\S]*rounded-\[8px\]/,
-  );
-  assert.match(
-    resultsSource,
-    /data-cars-results-mobile-header-filter[\s\S]*openMobileFiltersDrawer\([\s\S]*event\.currentTarget/,
+    /data-cars-results-mobile-header-filter|data-cars-results-mobile-nav-filter|showMobileHeaderFilter/,
   );
   assert.equal(
     (resultsSource.match(/data-cars-results-quick-filters/g) ?? []).length,
