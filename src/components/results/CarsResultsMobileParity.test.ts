@@ -113,6 +113,11 @@ test("mobile shortcuts remain the existing scrollable touch targets in canonical
   assert.doesNotMatch(rail, /style=\{\{\s*width|basis-/);
   assert.match(rail, /locale\.startsWith\("en"\) \? "Filter" : t\("filters"\)/);
   assert.doesNotMatch(rail, /Swipe for more/i);
+  assert.match(resultsSource, /const \[mobileQuickFiltersHasMore, setMobileQuickFiltersHasMore\] = useState\(false\)/);
+  assert.match(resultsSource, /scrollWidth - rail\.clientWidth - rail\.scrollLeft/);
+  assert.match(resultsSource, /data-cars-results-quick-filters-more/);
+  assert.match(resultsSource, /bg-gradient-to-l from-white via-white\/95 to-transparent/);
+  assert.match(resultsSource, /<ChevronRight className="h-4 w-4 text-\[#52627A\]"/);
   assert.match(resultsSource, /mobile \? group\.title \?\? "Price"/);
   assert.doesNotMatch(rail, /Price \(per day\)/);
 });
