@@ -28,37 +28,32 @@ test("source-contract: Cars compact toolbar is transparent, shrink-safe, and fiv
   );
 });
 
-test("source-contract: phone and tablet filter launchers remain responsive", () => {
+test("source-contract: phone Cars filters use the Hotels pinned rail without a header Filter launcher", () => {
   const mobileControls = source.slice(
     source.indexOf("export function CarsResultsExperience"),
     source.indexOf("function SearchInputCell"),
   );
-  const stickyShortcuts = source.slice(
-    source.indexOf("data-cars-results-sticky-shortcuts"),
+  const shortcuts = source.slice(
+    source.indexOf("data-cars-results-filter-origin"),
     source.indexOf("data-cars-results-toolbar"),
   );
 
+  assert.match(shortcuts, /ref=\{mobileFilterOriginRef\}/);
+  assert.match(shortcuts, /data-cars-results-toolbar-scroll/);
+  assert.match(shortcuts, /mobileResultsStyles\.scrollFilterBarPinned/);
+  assert.match(shortcuts, /mobileResultsStyles\.scrollFilterBarHidden/);
+  assert.match(
+    mobileControls,
+    /distance >= \(nextDirection > 0 \? 20 : 12\)[\s\S]*setMobileFiltersVisible\(nextDirection < 0\)/,
+  );
   assert.doesNotMatch(
-    stickyShortcuts,
-    /max-sm:sticky|max-sm:top-\[calc\(var\(--cars-results-safe-area-top\)\+61px\)\]/,
-  );
-  assert.match(stickyShortcuts, /ref=\{mobileShortcutsRef\}/);
-  assert.match(
     mobileControls,
-    /data-cars-results-mobile-header-filter[\s\S]*openMobileFiltersDrawer\([\s\S]*event\.currentTarget/,
+    /data-cars-results-mobile-header-filter|mobileNavFilterTarget|showMobileHeaderFilter/,
   );
   assert.match(
-    mobileControls,
+    shortcuts,
     /onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
   );
-
-  const tabletFilterClass = stickyShortcuts.match(
-    /className="([^"]*inline-flex[^"]*lg:hidden[^"]*)"/,
-  )?.[1];
-  assert.ok(tabletFilterClass);
-  for (const token of ["inline-flex", "lg:hidden"])
-    assert.ok(tabletFilterClass.split(" ").includes(token));
-  assert.equal(tabletFilterClass.split(" ").includes("hidden"), false);
 });
 
 test("source-contract: mobile Cars search typography now mirrors Hotels", () => {
@@ -150,8 +145,8 @@ test("source-contract: Cars result count and Sort share a shrink-safe row", () =
   assert.match(resultsToolbar, /"shrink-0 transition-transform duration-150"/);
 });
 
-test("source-contract: mobile Filter stays in the top rail and gains a scrolled header launcher", () => {
-  const shortcutsStart = source.indexOf("data-cars-results-sticky-shortcuts");
+test("source-contract: Cars keeps the full filter rail pinned on upward scroll and Sort in the summary", () => {
+  const shortcutsStart = source.indexOf("data-cars-results-filter-origin");
   const toolbarStart = source.indexOf("data-cars-results-toolbar", shortcutsStart);
   const summaryStart = source.indexOf("data-cars-results-summary-row", toolbarStart);
   const shortcuts = source.slice(shortcutsStart, toolbarStart);
@@ -165,15 +160,14 @@ test("source-contract: mobile Filter stays in the top rail and gains a scrolled 
   assert.ok(toolbarStart < summaryStart);
   assert.match(
     shortcuts,
-    /ref=\{filtersButtonRef\}[\s\S]*lg:hidden[\s\S]*onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
+    /ref=\{filtersButtonRef\}[\s\S]*onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
   );
-  assert.match(
-    source,
-    /data-cars-results-mobile-header-filter[\s\S]*aria-haspopup="dialog"[\s\S]*aria-expanded=\{filtersOpen\}[\s\S]*openMobileFiltersDrawer/,
-  );
+  assert.match(shortcuts, /mobileResultsStyles\.scrollFilterBarPinned/);
+  assert.match(shortcuts, /mobileResultsStyles\.scrollFilterBarHidden/);
+  assert.doesNotMatch(source, /data-cars-results-mobile-header-filter/);
   assert.match(
     resultsToolbar,
-    /data-cars-results-summary-row[\s\S]*<h2[\s\S]*ref=\{carsSortRef\}/,
+    /data-cars-results-summary-row[\s\S]*data-cars-sort-trigger[\s\S]*ref=\{carsSortRef\}/,
   );
 });
 
