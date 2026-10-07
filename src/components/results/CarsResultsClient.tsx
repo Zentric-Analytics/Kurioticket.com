@@ -2771,7 +2771,7 @@ export function CarsResultsExperience({
                 )}
               >
                 <div
-                  data-cars-results-toolbar-scroll
+                  data-cars-results-scroll-filter-bar
                   data-scroll-visible={mobileFiltersVisible ? "true" : "false"}
                   data-scroll-pinned={mobileFiltersPinned ? "true" : "false"}
                   className={cn(
