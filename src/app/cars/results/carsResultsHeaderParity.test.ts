@@ -196,7 +196,7 @@ test("Cars pinned filters blend into the white header while the natural rail kee
   );
 });
 
-test("Cars mobile header and filter rail keep the Hotel white surface and curve through the scroll handoff", () => {
+test("Cars mobile header and filter rail keep a smooth rounded left edge through the scroll handoff", () => {
   const carsHeader = getAppHeader(carsSource);
 
   assert.match(carsHeader, /flushMobileBottom/);
@@ -206,16 +206,20 @@ test("Cars mobile header and filter rail keep the Hotel white surface and curve 
     /"relative z-50 border-b border-\[#D8E1EC\] bg-white[\s\S]*flushMobileBottom[\s\S]*"border-b-0 shadow-none sm:border-b/,
   );
   assert.match(
-    mobileResultsStyles,
-    /\.scrollFilterSlot \{[\s\S]*background: #fff;/,
+    carsClientSource,
+    /mobileResultsStyles\.scrollFilterSlot,[\s\S]*mobileResultsStyles\.carsScrollFilterSlot/,
   );
   assert.match(
     mobileResultsStyles,
-    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*background: #ffffff;[\s\S]*border-top: 0;[\s\S]*box-shadow: none;/,
+    /\.carsScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 32px;[\s\S]*border-bottom-right-radius: 0;/,
   );
   assert.match(
     mobileResultsStyles,
-    /\.scrollFilterSlot::after,[\s\S]*\.scrollFilterBarPinned\.hotelNavbarFilterBar::after,[\s\S]*\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\]::after \{[\s\S]*width: 26px;[\s\S]*height: 26px;[\s\S]*M0%200%20Q13%2026%2026%2026%20L0%2026%20Z/,
+    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*background: #ffffff;[\s\S]*border-top: 0;[\s\S]*border-bottom-left-radius: 32px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*box-shadow: none;/,
+  );
+  assert.match(
+    mobileResultsStyles,
+    /\.carsScrollFilterSlot::after,[\s\S]*\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\]::after \{[\s\S]*content: none;[\s\S]*display: none;/,
   );
   assert.match(
     carsClientSource,
