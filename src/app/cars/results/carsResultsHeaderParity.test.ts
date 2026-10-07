@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const carsSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
+const loadingSource = readFileSync(new URL("./loading.tsx", import.meta.url), "utf8");
 const appHeaderSource = readFileSync(
   new URL("../../../components/layout/AppHeader.tsx", import.meta.url),
   "utf8",
@@ -159,6 +160,25 @@ test("Cars pinned mobile filters stay locked to the stable Cars header edge duri
   assert.match(
     mobileResultsStyles,
     /\.scrollFilterBarPinned \{[\s\S]*top: calc\(72px \+ env\(safe-area-inset-top\)\);/,
+  );
+});
+
+test("Cars Results stops iOS top-edge rubber-band from server-rendered route markup without changing the Hotels-style filter reveal", () => {
+  assert.match(carsSource, /<CarsResultsMobileSafeArea \/>/);
+  assert.match(loadingSource, /<CarsResultsMobileSafeArea \/>/);
+  assert.match(safeAreaSource, /data-cars-results-mobile-safe-area/);
+  assert.match(
+    globalStyles,
+    /@media \(max-width: 639px\) \{[\s\S]*html:has\(body \[data-cars-results-mobile-safe-area\]\),[\s\S]*body:has\(\[data-cars-results-mobile-safe-area\]\) \{[\s\S]*overscroll-behavior-y: none;/,
+  );
+  assert.doesNotMatch(
+    globalStyles,
+    /data-cars-results-mobile-safe-area[\s\S]{0,220}(?:overflow:\s*hidden|touch-action:\s*none)/,
+  );
+  assert.doesNotMatch(carsSource, /CarsResultsMobileScrollBoundary/);
+  assert.match(
+    carsClientSource,
+    /distance >= \(nextDirection > 0 \? 20 : 12\)[\s\S]*setMobileFiltersVisible\(nextDirection < 0\)/,
   );
 });
 
