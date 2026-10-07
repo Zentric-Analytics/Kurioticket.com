@@ -34,6 +34,8 @@
     padding: 8px 0;
     overflow: hidden;
     background: #fff;
+    border-bottom-left-radius: 13px;
+    border-bottom-right-radius: 13px;
     transform: translateY(0);
   }
   .hotelNavbarFilterBar [data-mobile-hotel-shortcuts] {
