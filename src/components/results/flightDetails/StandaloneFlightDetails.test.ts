@@ -777,7 +777,7 @@ test("desktop Flight Details keeps price and booking action inside Compare deals
   assert.match(panel, /disabled=\{redirecting \|\| !canContinue\}/);
   assert.match(panel, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.doesNotMatch(source, /DesktopCheckoutSummary|data-desktop-checkout-summary/);
-  assert.match(source, /function MobileCheckoutDock[\s\S]*?fixed inset-x-0 bottom-0[\s\S]*?lg:hidden/);
+  assert.doesNotMatch(source, /MobileCheckoutDock|CheckoutButton|fixed inset-x-0 bottom-0 z-\[90\]/);
 });
 
 test("desktop loading shell no longer reserves a checkout sidebar", async () => {
