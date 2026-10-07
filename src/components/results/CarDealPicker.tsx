@@ -108,7 +108,7 @@ export function CarDealPicker({
       className={`min-w-0 ${compact ? "mt-1.5" : "mt-2"}`}
     >
       <div
-        className={`grid min-w-0 grid-cols-3 ${compact ? "gap-x-1.5" : "gap-x-3"}`}
+        className={`grid min-w-0 grid-cols-3 ${compact ? "gap-x-1" : "gap-x-3"}`}
         role="list"
         aria-label="Car deal providers"
         data-car-deal-provider-offers
@@ -124,15 +124,16 @@ export function CarDealPicker({
               className="min-w-0"
               data-car-deal-provider-offer
             >
-              <div className="flex min-w-0 items-center gap-1">
+              <div className={`flex min-w-0 items-center ${compact ? "gap-0.5" : "gap-1"}`}>
                 <span
                   className={`${compact ? "h-3.5 w-3.5" : "h-4 w-4"} inline-flex shrink-0 items-center justify-center overflow-hidden`}
                 >
                   <ProviderMark group={group} compact={compact} />
                 </span>
                 <span
-                  className={`${compact ? "text-[9px] leading-[11px]" : "text-[10px] leading-3"} min-w-0 truncate font-semibold text-[#334155]`}
+                  className={`${compact ? "whitespace-nowrap text-[9px] leading-[11px] tracking-[-0.01em]" : "min-w-0 truncate text-[10px] leading-3"} font-semibold text-[#334155]`}
                   title={group.providerName}
+                  data-car-deal-provider-name
                 >
                   {group.providerName}
                 </span>
