@@ -33,6 +33,10 @@
     border-bottom-left-radius: 15px 26px;
     border-bottom-right-radius: 0;
   }
+  .carsScrollFilterSlot {
+    border-bottom-left-radius: 32px;
+    border-bottom-right-radius: 0;
+  }
   .scrollFilterBar {
     height: 44px;
     width: 100%;
@@ -63,12 +67,9 @@
     border-bottom-left-radius: 15px 26px;
     border-bottom-right-radius: 0;
   }
-  /* Use the left half of Flight Details' quadratic hero curve:
-     M0 12 Q50 64 100 12 -> normalized left half M0 0 Q13 26 26 26.
-     The 26px cutout stays only on the left; the right edge remains straight.
-     Cars shares this exact curve in both its natural and pinned states so the
-     white header/filter surface never becomes a plain rectangular block while
-     scrolling down or returning upward. */
+  /* Legacy shared cutout retained for the base surface only.
+     Product-specific Hotel and Cars rails below use native border radii so
+     their visible corners stay smooth in both natural and pinned states. */
   .scrollFilterSlot::after,
   .scrollFilterBarPinned.hotelNavbarFilterBar::after,
   .scrollFilterBarPinned[data-cars-results-scroll-filter-bar]::after {
@@ -85,11 +86,14 @@
     background-repeat: no-repeat;
     background-size: 26px 26px;
   }
-  /* Hotel keeps the same 15px horizontal reach but raises the curve vertically
-     so its top sits close to the Filter chip without changing rail spacing.
-     Cars keeps the existing quadratic cutout unchanged. */
+  /* Product-specific rails use native radii instead of the legacy SVG cutout.
+     Hotels keeps its taller elliptical corner; Cars uses a broader 32px quarter
+     curve matching the approved sketch. The same treatment is used when pinned. */
   .hotelScrollFilterSlot::after,
-  .scrollFilterBarPinned.hotelNavbarFilterBar::after {
+  .carsScrollFilterSlot::after,
+  .scrollFilterBarPinned.hotelNavbarFilterBar::after,
+  .scrollFilterBarPinned[data-cars-results-scroll-filter-bar]::after {
+    content: none;
     display: none;
   }
   /* Cars Results uses a 61px mobile header plus a stable/max Safari inset.
@@ -99,6 +103,8 @@
     top: calc(61px + var(--cars-results-safe-area-top));
     background: #ffffff;
     border-top: 0;
+    border-bottom-left-radius: 32px;
+    border-bottom-right-radius: 0;
     box-shadow: none;
   }
   .scrollFilterBarAnimated {
