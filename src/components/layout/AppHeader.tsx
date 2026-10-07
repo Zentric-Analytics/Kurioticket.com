@@ -169,6 +169,7 @@ export function AppHeader({
   const isSignedIn = Boolean(session?.user);
   const resultsDesktopSticky =
     hotelResultsDesktopSticky || flightResultsDesktopSticky || carsResultsDesktopSticky;
+  const fullscreenHotelMobileMenu = Boolean(hotelResultsDesktopSticky && mobileResultsSearch);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSigninOpen, setMobileSigninOpen] = useState(false);
@@ -764,21 +765,15 @@ export function AppHeader({
           {mobileResultsLeadingAction ?? (
             mobileResultsTrailingActions ? (
               hotelResultsDesktopSticky ? (
-                <button
-                  type="button"
-                  aria-label="Back"
-                  onClick={() => {
-                    if (window.history.length > 1) {
-                      router.back();
-                    } else {
-                      router.push("/hotels");
-                    }
-                  }}
+                <Link
+                  href="/"
+                  aria-label="Kurioticket home"
+                  onClick={(event) => handleRouteLinkClick(event, "/")}
                   className="focus-ring flex h-11 w-10 shrink-0 items-center justify-center rounded-lg text-[#142033] hover:bg-[#EEF6FC]"
                   data-hotel-results-mobile-back
                 >
                   <ArrowLeft size={24} strokeWidth={2.2} aria-hidden="true" />
-                </button>
+                </Link>
               ) : flightResultsDesktopSticky ? (
                 <Link
                   href="/"
@@ -1102,7 +1097,7 @@ export function AppHeader({
                       className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-auto rounded-none border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:inset-x-0 md:bottom-auto md:top-[max(64px,6vh)] md:mx-auto md:w-[min(980px,96vw)] md:rounded-3xl md:p-7"
                     >
                       <div className="mb-5 flex items-start justify-between gap-4">
-                        <div className="min-w-0">
+                        <div>
                           <p className="break-words text-xs font-black uppercase tracking-[0.2em] text-[#004BB8]">
                             {t.globalLanguage}
                           </p>
@@ -1322,7 +1317,7 @@ export function AppHeader({
         {mobileMenuOpen && typeof document !== "undefined"
           ? createPortal(
               <div
-                className={cn("fixed inset-0 z-[70] md:hidden", mobileResultsSearch && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:z-[940]", carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:z-[940]")}
+                className={cn("fixed inset-0 z-[70] md:hidden", mobileResultsSearch && !fullscreenHotelMobileMenu && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:z-[940]", fullscreenHotelMobileMenu && "max-sm:z-[1100]", carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:z-[940]")}
                 role="presentation"
               >
                 <button
@@ -1337,9 +1332,9 @@ export function AppHeader({
                   role="dialog"
                   aria-modal="true"
                   aria-label={t.menu}
-                  className={cn("fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl", mobileResultsSearch && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:h-[calc(100dvh-72px-env(safe-area-inset-top))]", carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:h-[calc(100dvh-61px-var(--cars-results-safe-area-top))]")}
+                  className={cn("fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl", mobileResultsSearch && !fullscreenHotelMobileMenu && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:h-[calc(100dvh-72px-env(safe-area-inset-top))]", fullscreenHotelMobileMenu && "max-sm:inset-x-0 max-sm:top-0 max-sm:w-full max-sm:max-w-none", carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:h-[calc(100dvh-61px-var(--cars-results-safe-area-top))]")}
                 >
-                  <div className={cn("flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4", mobileResultsSearch && "max-sm:hidden")}>
+                  <div className={cn("flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4", mobileResultsSearch && !fullscreenHotelMobileMenu && "max-sm:hidden", fullscreenHotelMobileMenu && "max-sm:pt-[calc(1rem+env(safe-area-inset-top))]")}>
                     <div className="min-w-0">
                       <h2 className="truncate text-xl font-semibold tracking-[-0.02em] text-slate-950">
                         {t.menu}

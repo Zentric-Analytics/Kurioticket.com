@@ -152,19 +152,32 @@ test("active Hotel mobile shortcuts use the font-color fill, compact X, and norm
 });
 
 
-test("mobile Hotel Results navbar uses a back arrow instead of the Kurioticket logo", () => {
+test("mobile Hotel Results navbar arrow leads directly to the homepage", () => {
   const headerSource = readFileSync(
     new URL("../layout/AppHeader.tsx", import.meta.url),
     "utf8",
   );
-  const start = headerSource.indexOf("data-hotel-results-mobile-back");
-  assert.notEqual(start, -1);
-  const block = headerSource.slice(Math.max(0, start - 900), start + 500);
-  assert.match(block, /hotelResultsDesktopSticky/);
-  assert.match(block, /aria-label="Back"/);
+  const marker = headerSource.indexOf("data-hotel-results-mobile-back");
+  assert.notEqual(marker, -1);
+  const linkStart = headerSource.lastIndexOf("<Link", marker);
+  const linkEnd = headerSource.indexOf("</Link>", marker);
+  assert.ok(linkStart >= 0 && linkEnd > marker);
+  const block = headerSource.slice(linkStart, linkEnd + "</Link>".length);
+  assert.ok(block.includes('href="/"'));
+  assert.match(block, /aria-label="Kurioticket home"/);
+  assert.match(block, /handleRouteLinkClick\(event, "\/"\)/);
   assert.match(block, /<ArrowLeft size=\{24\} strokeWidth=\{2\.2\}/);
-  assert.match(block, /router\.back\(\)/);
-  assert.match(block, /router\.push\("\/hotels"\)/);
+  assert.doesNotMatch(block, /router\.back\(\)|router\.push\("\/hotels"\)/);
+});
+
+test("Hotel mobile menu covers the full viewport like Flight", () => {
+  const headerSource = readFileSync(
+    new URL("../layout/AppHeader.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(headerSource, /const fullscreenHotelMobileMenu = Boolean\(hotelResultsDesktopSticky && mobileResultsSearch\)/);
+  assert.match(headerSource, /fullscreenHotelMobileMenu && "max-sm:z-\[1100\]"/);
+  assert.match(headerSource, /fullscreenHotelMobileMenu && "max-sm:inset-x-0 max-sm:top-0 max-sm:w-full max-sm:max-w-none"/);
 });
 
 
