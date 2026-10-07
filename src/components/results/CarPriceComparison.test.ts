@@ -28,14 +28,21 @@ test("provider comparison is driven by normalized car offers", () => {
   assert.match(picker, /getCarDealPickerGroups\(car\)/);
   assert.match(picker, /groups\.slice\(0, 3\)/);
   assert.match(picker, /Math\.max\(0, groups\.length - visibleGroups\.length\)/);
-  assert.match(picker, /Compare deals/);
+  assert.doesNotMatch(picker, />\s*Compare deals\s*</);
+  assert.match(picker, /data-car-deal-provider-chips/);
   assert.match(picker, /Show \$\{extraCount\} more car deal providers/);
 });
 
-test("provider branding uses mark-only Kurioticket treatment and truthful fallbacks", () => {
+test("provider chips show logo and readable provider name for the first three providers", () => {
   assert.match(picker, /\/brand\/kurioticket-icon-blue\.svg/);
   assert.match(picker, /group\.logoUrl/);
   assert.match(picker, /providerInitial\(group\.providerName\)/);
+  assert.match(picker, /groups\.slice\(0, 3\)/);
+  assert.match(picker, /<ProviderMark group=\{group\} compact \/>/);
+  assert.match(picker, /title=\{group\.providerName\}[\s\S]*\{group\.providerName\}/);
+  assert.match(picker, /max-w-\[88px\] flex-1 gap-1 rounded-lg px-1\.5/);
+  assert.match(picker, /text-\[10px\] leading-\[12px\]/);
+  assert.match(picker, /truncate text-left font-semibold text-\[#334155\]/);
   assert.match(picker, /repeatedProvider/);
   assert.match(picker, /Compare \$\{group\.providerName\} deal \$\{index \+ 1\}/);
   assert.match(picker, /Compare deal from \$\{group\.providerName\}/);
