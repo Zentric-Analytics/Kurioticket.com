@@ -876,7 +876,7 @@ export function AppHeader({
             {carsResultsMobileInlineSearch ? (
               <div
                 data-cars-results-mobile-nav-search
-                className="min-w-0 flex-1 sm:hidden"
+                className="flex h-12 w-full min-w-0 flex-1 rounded-xl border border-[#D8E1EC] bg-[#F5F7FB] empty:hidden sm:hidden"
               />
             ) : null}
             {hotelResultsDesktopSticky ? <div data-hotel-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[560px]" /> : null}
