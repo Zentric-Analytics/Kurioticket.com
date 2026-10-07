@@ -24,6 +24,24 @@
     height: 44px;
     width: 100%;
   }
+  .hotelNavbarFilterBar {
+    position: fixed;
+    top: calc(72px + env(safe-area-inset-top));
+    left: 0;
+    z-index: 850;
+    width: 100vw;
+    height: 60px;
+    padding: 8px 0;
+    overflow: hidden;
+    background: #fff;
+    transform: translateY(0);
+  }
+  .hotelNavbarFilterBar [data-mobile-hotel-shortcuts] {
+    width: 100%;
+    margin-inline-end: 0;
+    padding-inline: 0;
+    scroll-padding-inline: 12px;
+  }
   .scrollFilterBarPinned {
     position: fixed;
     top: calc(72px + env(safe-area-inset-top));
@@ -35,6 +53,9 @@
     overflow: hidden;
     background: #f5f7fb;
     transform: translateY(0);
+  }
+  .scrollFilterBarPinned.hotelNavbarFilterBar {
+    background: #fff;
   }
   /* Cars Results uses a 61px mobile header plus a stable/max Safari inset.
      Keep the returning filter rail locked to that exact header edge while
