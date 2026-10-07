@@ -1898,8 +1898,6 @@ export function CarsResultsExperience({
   const mobileFiltersOverlayOpen = filtersOpen || quickFilterOverlayOpen;
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFilterOriginRef = useRef<HTMLDivElement | null>(null);
-  const mobileQuickFiltersRef = useRef<HTMLDivElement | null>(null);
-  const [mobileQuickFiltersHasMore, setMobileQuickFiltersHasMore] = useState(false);
   const mobileFiltersPinnedRef = useRef(false);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
@@ -2185,24 +2183,6 @@ export function CarsResultsExperience({
     const group = visibleCarFilterGroups.find((item) => item.id === id);
     return group ? [group] : [];
   });
-  useEffect(() => {
-    if (guidedPlanning || typeof window === "undefined") return undefined;
-    const rail = mobileQuickFiltersRef.current;
-    if (!rail) return undefined;
-
-    const updateOverflowCue = () => {
-      const remaining = rail.scrollWidth - rail.clientWidth - rail.scrollLeft;
-      setMobileQuickFiltersHasMore(remaining > 6);
-    };
-
-    updateOverflowCue();
-    rail.addEventListener("scroll", updateOverflowCue, { passive: true });
-    window.addEventListener("resize", updateOverflowCue);
-    return () => {
-      rail.removeEventListener("scroll", updateOverflowCue);
-      window.removeEventListener("resize", updateOverflowCue);
-    };
-  }, [guidedPlanning, quickFilterGroups.length]);
   const badges = useMemo(
     () => (guidedPlanning ? new Map() : assignCarBadges(results)),
     [guidedPlanning, results],
@@ -2818,12 +2798,10 @@ export function CarsResultsExperience({
                   )}
                 >
                 {!guidedPlanning ? (
-                  <div className="relative w-full">
-                    <div
-                      ref={mobileQuickFiltersRef}
-                      data-cars-results-quick-filters
-                      className="scrollbar-hide -me-4 flex w-[calc(100%+1rem)] flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pe-10 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden"
-                    >
+                  <div
+                    data-cars-results-quick-filters
+                    className="scrollbar-hide -me-4 flex w-[calc(100%+1rem)] flex-nowrap gap-1 overflow-x-auto overscroll-x-contain pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden"
+                  >
                     <button
                       ref={filtersButtonRef}
                       type="button"
@@ -2834,7 +2812,7 @@ export function CarsResultsExperience({
                       onClick={(event) => openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))}
                     >
                       <span className={cn(
-                        "inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border px-2.5 text-[13px] font-semibold leading-4 transition",
+                        "inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border px-2 text-[13px] font-semibold leading-4 transition",
                         activeFilterCount > 0
                           ? "border-[#142033] bg-white text-[#142033]"
                           : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
@@ -2881,7 +2859,7 @@ export function CarsResultsExperience({
                               aria-pressed={active}
                               className={cn(
                                 "focus-ring inline-flex h-full min-w-0 items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35",
-                                active ? "pl-2.5 pr-7" : "px-2.5",
+                                active ? "pl-2 pr-7" : "px-2",
                               )}
                               onClick={(event) => {
                                 openQuickFilter(group.id, event.currentTarget, getOverlayActivationModality(event));
@@ -2915,16 +2893,6 @@ export function CarsResultsExperience({
                         </div>
                       );
                     })}
-                    </div>
-                    {mobileQuickFiltersHasMore ? (
-                      <div
-                        aria-hidden="true"
-                        data-cars-results-quick-filters-more
-                        className="pointer-events-none absolute inset-y-0 end-0 flex w-9 items-center justify-end bg-gradient-to-l from-white via-white/95 to-transparent pe-1.5 lg:hidden"
-                      >
-                        <ChevronRight className="h-4 w-4 text-[#52627A]" strokeWidth={2} />
-                      </div>
-                    ) : null}
                   </div>
                 ) : (
                   <button
