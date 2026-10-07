@@ -2915,6 +2915,16 @@ export function CarsResultsExperience({
                         </div>
                       );
                     })}
+                    </div>
+                    {mobileQuickFiltersHasMore ? (
+                      <div
+                        aria-hidden="true"
+                        data-cars-results-quick-filters-more
+                        className="pointer-events-none absolute inset-y-0 end-0 flex w-9 items-center justify-end bg-gradient-to-l from-white via-white/95 to-transparent pe-1.5 lg:hidden"
+                      >
+                        <ChevronRight className="h-4 w-4 text-[#52627A]" strokeWidth={2} />
+                      </div>
+                    ) : null}
                   </div>
                 ) : (
                   <button
