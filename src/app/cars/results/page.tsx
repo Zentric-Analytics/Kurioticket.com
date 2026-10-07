@@ -5,6 +5,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { CarsResultsClient } from "@/components/results/CarsResultsClient";
 import { CarsResultsMobileSafeArea } from "@/components/results/CarsResultsMobileSafeArea";
+import { CarsResultsMobileScrollBoundary } from "@/components/results/CarsResultsMobileScrollBoundary";
 import type { LocationBoundCarSearchParams } from "@/lib/cars/types";
 import { parseCarLocationTarget } from "@/lib/cars/carSearchLocationTarget";
 import { hasExplicitDifferentReturnLocation } from "@/lib/cars/carsSearchUtils";
@@ -108,6 +109,7 @@ export default async function CarsResultsPage({
         data-cars-results-reload-scroll-policy
         dangerouslySetInnerHTML={{ __html: CARS_RESULTS_RELOAD_SCROLL_SCRIPT }}
       />
+      <CarsResultsMobileScrollBoundary />
       <CarsResultsMobileSafeArea />
       <AppHeader
         flushDesktopBottom
