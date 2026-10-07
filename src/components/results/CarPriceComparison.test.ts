@@ -34,6 +34,10 @@ test("provider offers show logo, name, per-day price and a direct provider View 
   assert.match(picker, /\/brand\/kurioticket-icon-blue\.svg/);
   assert.match(picker, /group\.logoUrl/);
   assert.match(picker, /title=\{group\.providerName\}/);
+  assert.match(picker, /data-car-deal-provider-name/);
+  assert.match(picker, /compact \? "whitespace-nowrap text-\[9px\] leading-\[11px\] tracking-\[-0\.01em\]" : "min-w-0 truncate text-\[10px\] leading-3"/);
+  assert.match(picker, /compact \? "gap-0\.5" : "gap-1"/);
+  assert.match(picker, /compact \? "gap-x-1" : "gap-x-3"/);
   assert.match(picker, /const offer = group\.primaryOffer/);
   assert.match(picker, /amount: offer\.pricePerDay/);
   assert.match(picker, /\{formatOfferPrice\(offer\)\}/);
