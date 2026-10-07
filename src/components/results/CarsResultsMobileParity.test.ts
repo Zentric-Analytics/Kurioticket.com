@@ -46,27 +46,36 @@ test("mobile Cars Results owns the same full document canvas as Hotel Results", 
   );
 });
 
-test("mobile Cars Results puts three compact visual fields inside one main-header search launcher", () => {
+test("mobile Cars Results matches Hotels with one two-line search summary surface", () => {
   assert.match(mobileHeaderSearch, /data-cars-results-mobile-header-search/);
-  assert.match(mobileHeaderSearch, /h-11 w-full min-w-0/);
   assert.match(
     mobileHeaderSearch,
-    /data-cars-results-mobile-search-fields[\s\S]*grid h-9 w-full min-w-0[\s\S]*gap-\[3px\]/,
+    /h-full w-full min-w-0[\s\S]*rounded-xl bg-\[#F5F7FB\][\s\S]*py-1 pe-2 ps-3/,
   );
-  assert.match(mobileHeaderSearch, /data-cars-results-mobile-search-location/);
-  assert.match(mobileHeaderSearch, /data-cars-results-mobile-search-dates/);
-  assert.match(mobileHeaderSearch, /data-cars-results-mobile-search-edit/);
+  assert.match(
+    mobileHeaderSearch,
+    /data-cars-results-mobile-search-summary[\s\S]*flex min-w-0 flex-1 flex-col justify-center/,
+  );
   assert.match(mobileHeaderSearch, /locationPairSummary/);
-  assert.match(mobileHeaderSearch, /rentalDateSummary/);
-  assert.match(mobileHeaderSearch, /<Car/);
-  assert.match(mobileHeaderSearch, /<CalendarDays/);
-  assert.match(mobileHeaderSearch, /<SquarePen/);
-  assert.equal(
-    (mobileHeaderSearch.match(/rounded-\[8px\] border border-\[#D5DFEA\] bg-\[#FBFCFE\]/g) ?? []).length,
-    3,
+  assert.match(mobileHeaderSearch, /mobileSearchSecondarySummary/);
+  assert.match(
+    resultsSource,
+    /const mobileSearchSecondarySummary = `\$\{rentalDateSummary\} · \$\{timeSummary\} · \$\{driverAgeSummary\}`/,
   );
-  assert.doesNotMatch(mobileHeaderSearch, /data-cars-results-mobile-search-divider/);
-  assert.doesNotMatch(mobileHeaderSearch, /data-cars-results-mobile-search-segments/);
+  assert.match(
+    mobileHeaderSearch,
+    /text-\[14px\] font-semibold leading-\[18px\] text-\[#142033\]/,
+  );
+  assert.match(
+    mobileHeaderSearch,
+    /text-\[11px\] font-medium leading-\[15px\] text-\[#536B92\]/,
+  );
+  assert.match(mobileHeaderSearch, /data-cars-results-mobile-search-edit/);
+  assert.match(mobileHeaderSearch, /<SquarePen size=\{15\} strokeWidth=\{2\}/);
+  assert.doesNotMatch(mobileHeaderSearch, /data-cars-results-mobile-search-fields/);
+  assert.doesNotMatch(mobileHeaderSearch, /data-cars-results-mobile-search-location/);
+  assert.doesNotMatch(mobileHeaderSearch, /data-cars-results-mobile-search-dates/);
+  assert.doesNotMatch(mobileHeaderSearch, /<Car|<CalendarDays/);
   assert.match(
     resultsSource,
     /createPortal\(renderMobileHeaderSearch\(\), mobileNavSearchTarget\)/,
