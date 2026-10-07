@@ -26,10 +26,10 @@ test("desktop Flight Results header is compact, trip-aware, and uses lighter Hot
 
   assert.match(toolbar, /data-flight-results-nav-search-form/);
   assert.match(toolbar, /tripTypeInput === "round-trip"/);
-  assert.match(toolbar, /grid-cols-\[96px_minmax\(0,1fr\)_minmax\(138px,150px\)_50px_40px\]/);
-  assert.match(toolbar, /grid-cols-\[96px_minmax\(0,1fr\)_112px_50px_40px\]/);
-  assert.match(toolbar, /xl:grid-cols-\[104px_190px_150px_56px_40px\]/);
-  assert.match(toolbar, /xl:grid-cols-\[104px_190px_112px_56px_40px\]/);
+  assert.match(toolbar, /grid-cols-\[96px_minmax\(168px,1fr\)_minmax\(126px,138px\)_50px_40px\]/);
+  assert.match(toolbar, /grid-cols-\[96px_minmax\(168px,1fr\)_104px_50px_40px\]/);
+  assert.match(toolbar, /xl:grid-cols-\[104px_230px_138px_56px_40px\]/);
+  assert.match(toolbar, /xl:grid-cols-\[104px_230px_104px_56px_40px\]/);
   assert.match(toolbar, /getCompactCityLabel/);
   assert.match(toolbar, /data-flight-results-compact-route/);
   assert.match(toolbar, /bg-\[#F8FAFC\]/);
@@ -62,14 +62,16 @@ test("desktop Flight header uses the requested weekday numeric date format", () 
   );
 });
 
-test("desktop Flight round-trip date control is visibly more compact", () => {
+test("desktop Flight route control is clearly dominant over the date control", () => {
   const toolbar = desktopHeaderSearchBarSource();
 
   assert.match(toolbar, /const dateFieldClass =[\s\S]*?h-\[36px\]/);
-  assert.match(toolbar, /max-w-\[500px\]/);
-  assert.match(toolbar, /minmax\(138px,150px\)/);
-  assert.match(toolbar, /xl:grid-cols-\[104px_190px_150px_56px_40px\]/);
+  assert.match(toolbar, /max-w-\[548px\]/);
+  assert.match(toolbar, /minmax\(126px,138px\)/);
+  assert.match(toolbar, /xl:grid-cols-\[104px_230px_138px_56px_40px\]/);
   assert.match(toolbar, /className=\{cn\(dateFieldClass, "w-full justify-center"\)\}/);
+  assert.match(toolbar, /xl:grid-cols-\[104px_230px_138px_56px_40px\]/);
+  assert.doesNotMatch(toolbar, /Calendar|CalendarDays/);
 });
 
 test("compact multi-city header follows the first edited leg date", () => {
