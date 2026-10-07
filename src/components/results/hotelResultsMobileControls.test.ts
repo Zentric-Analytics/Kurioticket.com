@@ -184,7 +184,7 @@ test("Hotel mobile menu covers the full viewport like Flight", () => {
 
 
 
-test("Hotel mobile filters are restored to the pre-6108 scroll behavior", () => {
+test("Hotel mobile filters keep their existing scroll behavior on the white navbar surface", () => {
   assert.match(resultsSource, /mobileFiltersVisible/);
   assert.match(resultsSource, /mobileFiltersPinned/);
   assert.match(resultsSource, /mobileFiltersAnimated/);
@@ -193,6 +193,8 @@ test("Hotel mobile filters are restored to the pre-6108 scroll behavior", () => 
   assert.match(resultsSource, /data-scroll-pinned=\{mobileFiltersPinned \? "true" : "false"\}/);
   assert.match(resultsSource, /mobileStyles\.scrollFilterBarPinned/);
   assert.match(resultsSource, /mobileStyles\.scrollFilterBarHidden/);
+  assert.match(resultsSource, /mobileStyles\.hotelNavbarFilterBar/);
+  assert.match(resultsSource, /createPortal\(renderMobileHotelNavbarFilters\(\), document\.body\)/);
   assert.doesNotMatch(resultsPageSource, /mobileResultsFilters=/);
 });
 
@@ -229,4 +231,21 @@ test("Hotel mobile quick filter keeps the underlying results at the same scroll 
     resultsSource,
     /const releaseScrollLock = acquireMobileResultsScrollLock\(\{ freezeBodyPosition: false \}\);[\s\S]*mobileShortcutMenuContentRef/,
   );
+});
+
+
+test("Hotel mobile filter rail uses the same white navbar background as Flight while Sort remains in results", () => {
+  const mobileStyles = readFileSync(
+    new URL("./HotelResultsMobile.module.css", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    mobileStyles,
+    /\.hotelNavbarFilterBar \{[\s\S]*top: calc\(72px \+ env\(safe-area-inset-top\)\);[\s\S]*background: #fff;/,
+  );
+  assert.match(resultsSource, /renderMobileHotelNavbarFilters/);
+  assert.match(resultsSource, /data-mobile-hotel-shortcuts/);
+  assert.match(resultsSource, /<span>Sort:<\/span>[\s\S]*currentSortLabel/);
+  assert.doesNotMatch(resultsSource, /renderMobileHotelNavbarFilters[\s\S]{0,600}Sort:/);
 });
