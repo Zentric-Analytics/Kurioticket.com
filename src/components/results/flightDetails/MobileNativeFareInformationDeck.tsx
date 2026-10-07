@@ -171,6 +171,20 @@ function DealsSurface({
           deal.currency.toUpperCase() === selectedCurrency.toUpperCase()
           || (!isFallbackRate && price.currency.toUpperCase() === selectedCurrency.toUpperCase())
         );
+        const sourcePrice = formatFlightResultCurrency(deal.price, deal.currency, {
+          maximumFractionDigits: 0,
+        });
+        const visiblePrice = !pricesReady
+          ? "Loading price…"
+          : priceAvailable
+            ? price.formatted
+            : sourcePrice;
+        const visiblePriceAriaLabel = !pricesReady
+          ? "Price loading"
+          : priceAvailable
+            ? price.ariaLabel
+            : `${sourcePrice} in provider currency`;
+        const canViewDeal = canContinue && pricesReady;
 
         return (
           <article
@@ -189,7 +203,7 @@ function DealsSurface({
               role="radio"
               aria-checked={selected}
               tabIndex={selected ? 0 : -1}
-              aria-label={`${deal.providerName}, ${priceAvailable ? price.ariaLabel : "price loading"}, ${fare?.label ?? "fare"}`}
+              aria-label={`${deal.providerName}, ${visiblePriceAriaLabel}, ${fare?.label ?? "fare"}`}
               onClick={() => onSelectDeal(deal.offerId)}
               onKeyDown={(event) => {
                 const direction =
@@ -217,8 +231,11 @@ function DealsSurface({
             >
               <span className="block min-w-0" data-mobile-flight-deal-provider>
                 {deal.providerLogoUrl ? (
-                  <span data-mobile-flight-provider-logo className="inline-flex h-8 max-w-[76px] items-center justify-start overflow-hidden">
-                    <Image src={deal.providerLogoUrl} alt="" aria-hidden="true" width={76} height={32} className="max-h-8 w-auto max-w-[76px] object-contain object-left" title={deal.providerName} />
+                  <span className="inline-flex min-w-0 items-center gap-2">
+                    <span data-mobile-flight-provider-logo className="inline-flex h-8 max-w-[76px] shrink-0 items-center justify-start overflow-hidden">
+                      <Image src={deal.providerLogoUrl} alt="" aria-hidden="true" width={76} height={32} className="max-h-8 w-auto max-w-[76px] object-contain object-left" title={deal.providerName} />
+                    </span>
+                    <strong className="truncate text-[14px] font-semibold leading-5 text-[#192024]">{deal.providerName}</strong>
                   </span>
                 ) : identityMark.kind === "airline" ? (
                   <span className="inline-flex min-w-0 items-center gap-2">
@@ -231,8 +248,8 @@ function DealsSurface({
               </span>
 
               <span className="mt-2 block min-w-0" data-mobile-flight-deal-price>
-                <strong className="block break-words text-[18px] font-semibold leading-[22px] tracking-[-0.02em] tabular-nums text-[#192024]" aria-label={price.ariaLabel}>
-                  {priceAvailable ? price.formatted : "Loading price…"}
+                <strong className="block break-words text-[18px] font-semibold leading-[22px] tracking-[-0.02em] tabular-nums text-[#192024]" aria-label={visiblePriceAriaLabel}>
+                  {visiblePrice}
                 </strong>
                 <span className="block text-[11px] font-normal leading-[14px] text-[#59636a]">
                   {fare?.label ? `${fare.label} · Trip total` : "Trip total"}
@@ -242,8 +259,8 @@ function DealsSurface({
 
             <button
               type="button"
-              disabled={redirecting || !canContinue}
-              aria-label={canContinue ? `View deal with ${deal.providerName}` : `Provider checkout unavailable for ${deal.providerName}`}
+              disabled={redirecting || !canViewDeal}
+              aria-label={canViewDeal ? `View deal with ${deal.providerName}` : `Provider checkout unavailable for ${deal.providerName}`}
               onClick={() => {
                 onSelectDeal(deal.offerId);
                 onViewDeal(deal.offerId);
@@ -251,7 +268,7 @@ function DealsSurface({
               className="inline-flex h-9 w-[96px] shrink-0 items-center justify-center rounded-lg bg-[#004BB8] px-2.5 text-[12px] font-semibold leading-5 text-white transition-colors hover:bg-[#003B91] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[#004BB8] disabled:text-white disabled:opacity-100 min-[360px]:w-[108px] min-[360px]:text-[13px]"
               data-mobile-flight-deal-action
             >
-              {canContinue ? redirecting ? "Opening…" : "View deal" : "Unavailable"}
+              {canViewDeal ? redirecting ? "Opening…" : "View deal" : pricesReady ? "Unavailable" : "Checking…"}
             </button>
           </article>
         );
