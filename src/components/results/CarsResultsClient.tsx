@@ -3159,9 +3159,7 @@ export function CarsResultsExperience({
             className="h-11 min-w-0 flex-1 rounded-lg bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
             onClick={closeMobileFiltersDrawer}
           >
-            {locale.startsWith("en")
-              ? `View ${visibleResults.length} ${visibleResults.length === 1 ? "car" : "cars"}`
-              : `${t("carsResults.show")} ${visibleResults.length}`}
+            {`View ${visibleResults.length} ${visibleResults.length === 1 ? "car" : "cars"}`}
           </Button>
         </footer>
       </aside>
