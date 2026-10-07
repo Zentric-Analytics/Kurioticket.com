@@ -139,6 +139,20 @@ test("mobile shortcuts keep their original sizing and hand off to the compact he
   assert.doesNotMatch(stickyShortcuts, /scale-|h-8|text-\[11px\]/);
 });
 
+test("mobile selected shortcuts match Hotels with dark chips and direct clear X controls", () => {
+  const rail = resultsSource.slice(
+    resultsSource.indexOf("data-cars-results-quick-filters"),
+    resultsSource.indexOf("data-cars-results-toolbar"),
+  );
+  assert.match(rail, /border-\[#142033\] bg-\[#142033\] text-white/);
+  assert.match(rail, /aria-pressed=\{active\}/);
+  assert.match(rail, /!active \? \([\s\S]*?<ChevronDown/);
+  assert.match(rail, /active \? \([\s\S]*?aria-label=\{\`Clear \$\{carFilterGroupLabel\(group, t, true\)\} filter\`\}/);
+  assert.match(rail, /clearQuickFilterSelection\(group\.id\)/);
+  assert.match(resultsSource, /const clearQuickFilterSelection = \(groupId: string\) =>/);
+  assert.match(resultsSource, /delete next\[groupId\]/);
+});
+
 test("mobile shortcuts retain every shared quick-filter group", () => {
   assert.match(resultsSource, /const quickFilterGroups = carQuickFilterGroupIds\.flatMap/);
   assert.match(
