@@ -40,7 +40,7 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
   }, []);
 
   return (
-    <main className="flex-1 bg-[#F3F6FA] pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-[#F7F9FC] sm:pt-7 lg:pb-7 lg:pt-7">
+    <main className="flex-1 bg-[#F3F6FA] pb-[calc(1.75rem+env(safe-area-inset-bottom))] sm:bg-[#F7F9FC] sm:pb-7 sm:pt-7 lg:pt-7">
       <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 top-0 z-[70] h-[calc(env(safe-area-inset-top)+64px)] transition-colors sm:hidden ${headerProtected ? "bg-[#F3F6FA]" : "bg-transparent"}`} />
       {resultsHref ? (
         <div ref={backControlRef} className="fixed left-4 top-[calc(env(safe-area-inset-top)+8px)] z-[80] sm:hidden">
@@ -121,13 +121,7 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
           </div>
         </div>
       </div>
-      <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-[90] flex min-h-[88px] items-center justify-between gap-[14px] rounded-t-[22px] border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_28px_rgba(15,23,42,0.14)] lg:hidden">
-        <div className="min-w-0 max-w-[46%] flex-1 space-y-[5px]">
-          <div className="h-[10px] w-[78%] max-w-[124px] animate-pulse rounded bg-slate-200" />
-          <div className="h-[27px] w-[88%] max-w-[142px] animate-pulse rounded bg-slate-200" />
-        </div>
-        <div className="h-[45px] min-w-[132px] max-w-[210px] flex-1 animate-pulse rounded-lg bg-slate-200" />
-      </div>
+
     </main>
   );
 }

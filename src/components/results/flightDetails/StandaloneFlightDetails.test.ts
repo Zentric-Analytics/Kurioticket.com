@@ -562,16 +562,19 @@ test("Flight Details reuses Flight Results selected-currency conversion and symb
 });
 
 test("standalone UI preserves the approved desktop and mobile blueprint composition", async () => {
-  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const [source, mobileDeck] = await Promise.all([
+    readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8"),
+    readFile(new URL("./MobileNativeFareInformationDeck.tsx", import.meta.url), "utf8"),
+  ]);
   assert.match(source, /max-w-\[1080px\] px-0 sm:px-6 lg:px-\[30px\]/);
   assert.doesNotMatch(source, /lg:grid-cols-\[minmax\(0,2\.45fr\)_minmax\(310px,0\.95fr\)\]/);
   assert.doesNotMatch(source, /data-desktop-checkout-summary|DesktopCheckoutSummary/);
   assert.doesNotMatch(source, /<aside className="[^"]*(?:sticky|fixed)|top-24/);
-  assert.match(source, /function MobileCheckoutDock/);
-  assert.doesNotMatch(source, /function MobileTripTotal/);
-  assert.match(source, /fixed inset-x-0 bottom-0 z-\[90px\]|fixed inset-x-0 bottom-0 z-\[90\]/);
-  assert.match(source, /pb-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\]/);
-  assert.match(source, /pb-\[calc\(7\.5rem\+env\(safe-area-inset-bottom\)\)\][\s\S]*lg:pb-16/);
+  assert.doesNotMatch(source, /function MobileCheckoutDock|function CheckoutButton|mobile-trip-total-heading/);
+  assert.doesNotMatch(source, /fixed inset-x-0 bottom-0 z-\[90px\]|fixed inset-x-0 bottom-0 z-\[90\]/);
+  assert.match(source, /pb-\[calc\(1\.75rem\+env\(safe-area-inset-bottom\)\)\][\s\S]*sm:pb-16/);
+  assert.match(mobileDeck, /data-mobile-flight-deal-action/);
+  assert.match(mobileDeck, />View deal</);
   assert.match(source, /role="tablist"/);
   assert.equal((source.match(/role="tab"/g) || []).length, 1);
   assert.deepEqual(["Compare deals", "Fare details", "Fare conditions", "Optional extras"].map((label) => source.includes(`label: "${label}"`)), [true, true, true, true]);
@@ -774,7 +777,7 @@ test("desktop Flight Details keeps price and booking action inside Compare deals
   assert.match(panel, /disabled=\{redirecting \|\| !canContinue\}/);
   assert.match(panel, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.doesNotMatch(source, /DesktopCheckoutSummary|data-desktop-checkout-summary/);
-  assert.match(source, /function MobileCheckoutDock[\s\S]*?fixed inset-x-0 bottom-0[\s\S]*?lg:hidden/);
+  assert.doesNotMatch(source, /MobileCheckoutDock|CheckoutButton|fixed inset-x-0 bottom-0 z-\[90\]/);
 });
 
 test("desktop loading shell no longer reserves a checkout sidebar", async () => {
@@ -991,7 +994,6 @@ test("Flight Details mobile cleanup uses native fare rail behavior and fare info
   assert.match(source, /<MobileNativeFareRail fares=\{fareChoices\}/);
   assert.match(source, /data-mobile-native-fare-price-loading/);
   assert.match(source, /mobilePricesReady = !currencyRates\.isLoading/);
-  assert.match(source, /Loading price…/);
 
   assert.match(fareSource, /data-mobile-native-fare-rail/);
   assert.match(fareSource, /gap-\[10px\].*pb-\[18px\].*pt-3.*pr-\[38px\]/);
@@ -1005,7 +1007,7 @@ test("Flight Details mobile cleanup uses native fare rail behavior and fare info
   assert.doesNotMatch(fareSource, /getCenteredFareScrollLeft|rail\.scrollTo|snap-mandatory|snap-start/);
 });
 
-test("mobile web Fare information deck mirrors native tabs and selection-only deal cards", async () => {
+test("mobile web Fare information deck mirrors native tabs and owns deal booking actions", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   const deck = await readFile(new URL("./MobileNativeFareInformationDeck.tsx", import.meta.url), "utf8");
 
@@ -1032,10 +1034,14 @@ test("mobile web Fare information deck mirrors native tabs and selection-only de
   assert.match(deck, /left-0\.5 right-0\.5 h-\[3px\] rounded-\[2px\]/);
 
   assert.match(deck, /role="radiogroup" aria-label="Flight deal options"/);
-  assert.match(deck, /min-h-24.*rounded-\[14px\]/);
+  assert.match(deck, /data-mobile-flight-deal-card/);
+  assert.match(deck, /min-h-\[92px\].*rounded-xl/);
   assert.match(deck, /priceAvailable = pricesReady/);
-  assert.match(deck, /priceAvailable \? price\.formatted : "—"/);
-  assert.doesNotMatch(deck, /View deal|onViewDeal/);
+  assert.match(deck, /formatFlightResultCurrency\(deal\.price, deal\.currency/);
+  assert.match(deck, /visiblePrice = !pricesReady/);
+  assert.match(deck, /data-mobile-flight-deal-action/);
+  assert.match(deck, /View deal/);
+  assert.match(deck, /onViewDeal/);
 });
 
 test("mobile web Fare information surfaces match native information hierarchy", async () => {
@@ -1057,27 +1063,38 @@ test("mobile web Fare information surfaces match native information hierarchy", 
   assert.doesNotMatch(deck, /rounded-\[10px\] border border-\[#E2E8F0\] p-4/);
 });
 
-test("mobile selected deal controls one Cars-style checkout dock below lg", async () => {
-  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+test("mobile Compare deals owns booking actions without a fixed checkout dock", async () => {
+  const [source, mobileDeck, loading] = await Promise.all([
+    readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8"),
+    readFile(new URL("./MobileNativeFareInformationDeck.tsx", import.meta.url), "utf8"),
+    readFile(new URL("./FlightDetailsLoadingShell.tsx", import.meta.url), "utf8"),
+  ]);
 
   assert.match(source, /nativeFlightDealSelection\(selectedDealOfferId, selectedFare\)/);
   assert.match(source, /const activeOffer = selectedDeal\?\.offer \?\? selectedOffer/);
-  assert.match(source, /const mobilePriceCandidate = selectedDeal/);
-  assert.match(source, /const mobilePrice = mobilePricesReady && canUseMobilePrice/);
-  assert.match(source, /price=\{mobilePrice\}/);
-  assert.match(source, /canContinue=\{canContinueMobile && Boolean\(mobilePrice\)\}/);
-  assert.match(source, /priceLoading=\{!mobilePricesReady\}/);
-  assert.match(source, /onContinue=\{\(\) => continueToOffer\(selectedDeal\?\.offerId \?\? selectedOffer\.id\)\}/);
-  assert.match(source, /label="Continue deal" pendingLabel="Checking offer…"/);
-  assert.match(source, /Total for \$\{travelerCount\} traveler/);
-  assert.match(source, /rounded-t-\[22px\].*border-t border-slate-200.*px-4.*pb-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\].*pt-3.*shadow-\[0_-8px_28px_rgba\(15,23,42,0\.14\)\].*lg:hidden/);
-  assert.match(source, /Loading price…/);
-  assert.doesNotMatch(source, /TabletCheckoutDock/);
-  assert.equal((source.match(/<MobileCheckoutDock\b/g) ?? []).length, 1);
+  assert.match(source, /<MobileNativeFareInformationDeck[\s\S]*?redirecting=\{redirecting\}[\s\S]*?onViewDeal=\{continueToOffer\}/);
+  assert.doesNotMatch(source, /MobileCheckoutDock|CheckoutButton|mobilePriceCandidate|canContinueMobile|mobile-trip-total-heading/);
+  assert.doesNotMatch(source, /fixed inset-x-0 bottom-0 z-\[90\]/);
 
-  const loading = await readFile(new URL("./FlightDetailsLoadingShell.tsx", import.meta.url), "utf8");
-  assert.match(loading, /rounded-t-\[22px\].*border-t border-slate-200.*px-4.*pb-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\].*pt-3.*shadow-\[0_-8px_28px_rgba\(15,23,42,0\.14\)\].*lg:hidden/);
-  assert.match(loading, /pb-\[calc\(7\.5rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(mobileDeck, /const displayedDeals = deals\.length/);
+  assert.match(mobileDeck, /fallbackOffer\?\.bookingProviderName\?\.trim\(\)/);
+  assert.match(mobileDeck, /fallbackOffer\?\.provider\?\.trim\(\)/);
+  assert.match(mobileDeck, /data-mobile-flight-deal-list/);
+  assert.match(mobileDeck, /data-mobile-flight-deal-card/);
+  assert.match(mobileDeck, /data-mobile-flight-deal-action/);
+  assert.match(mobileDeck, /data-mobile-flight-provider-logo/);
+  assert.match(mobileDeck, /fare\?\.label \? `\$\{fare\.label\} · Trip total` : "Trip total"/);
+  assert.match(mobileDeck, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
+  assert.match(mobileDeck, /const sourcePrice = formatFlightResultCurrency\(deal\.price, deal\.currency/);
+  assert.match(mobileDeck, /const canViewDeal = canContinue && pricesReady/);
+  assert.match(mobileDeck, /deal\.providerLogoUrl[\s\S]*?deal\.providerName/);
+  assert.match(mobileDeck, /redirecting \? "Opening…" : "View deal"/);
+  assert.match(mobileDeck, /disabled=\{redirecting \|\| !canViewDeal\}/);
+  assert.doesNotMatch(mobileDeck, /No booking deals available|No additional live provider deals were supplied for this fare/);
+
+  assert.doesNotMatch(loading, /fixed inset-x-0 bottom-0 z-\[90\]/);
+  assert.doesNotMatch(loading, /min-h-\[88px\].*rounded-t-\[22px\]/);
+  assert.match(loading, /pb-\[calc\(1\.75rem\+env\(safe-area-inset-bottom\)\)\][\s\S]*sm:pb-7/);
 });
 
 test("mobile fare rail starts naturally and preserves manual horizontal scrolling", async () => {
@@ -1192,7 +1209,7 @@ test("mobile web Flight Details loading itinerary matches native-parity geometry
   assert.match(source, /gap-\[10px\].*pb-\[18px\].*pr-\[38px\]/);
   assert.match(source, /\{\[0, 1\]\.map/);
   assert.match(source, /data-flight-details-loading-hero-curve/);
-  assert.match(source, /fixed inset-x-0 bottom-0 z-\[90\].*min-h-\[88px\]/);
+  assert.doesNotMatch(source, /fixed inset-x-0 bottom-0 z-\[90\].*min-h-\[88px\]/);
 });
 
 
@@ -1256,9 +1273,8 @@ test("desktop Fare information uses the native semantic hierarchy without changi
 test("desktop selected deal drives fare information and the Compare deals action", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   assert.match(source, /const activeOffer = selectedDeal\?\.offer \?\? selectedOffer/);
-  assert.match(source, /const activeHandoff = selectedDeal[\s\S]*?providerName: selectedDeal\.providerName[\s\S]*?: handoff/);
-  assert.match(source, /const providerPrice = activeOffer[\s\S]*?amount: activeOffer\.price[\s\S]*?sourceCurrency: activeOffer\.currency/);
   assert.match(source, /<FarePanel activeTab=\{activeTab\} fare=\{selectedFare\} offer=\{activeOffer\}[\s\S]*?selectedDealOfferId=\{selectedDeal\?\.offerId \?\? null\}[\s\S]*?onSelectDeal=\{setSelectedDealOfferId\}/);
+  assert.match(source, /<MobileNativeFareInformationDeck[\s\S]*?activeOffer=\{activeOffer\}[\s\S]*?onViewDeal=\{continueToOffer\}/);
   assert.match(source, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.match(source, /tabIndex=\{selected \? 0 : -1\}/);
   assert.doesNotMatch(source, /DesktopCheckoutSummary|data-desktop-checkout-summary/);
