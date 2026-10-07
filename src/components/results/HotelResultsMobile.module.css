@@ -58,9 +58,13 @@
   }
   /* Use the left half of Flight Details' quadratic hero curve:
      M0 12 Q50 64 100 12 -> normalized left half M0 0 Q13 26 26 26.
-     The 26px cutout stays only on the left; the right edge remains straight. */
+     The 26px cutout stays only on the left; the right edge remains straight.
+     Cars shares this exact curve in both its natural and pinned states so the
+     white header/filter surface never becomes a plain rectangular block while
+     scrolling down or returning upward. */
   .scrollFilterSlot::after,
-  .scrollFilterBarPinned.hotelNavbarFilterBar::after {
+  .scrollFilterBarPinned.hotelNavbarFilterBar::after,
+  .scrollFilterBarPinned[data-cars-results-scroll-filter-bar]::after {
     content: "";
     position: absolute;
     left: 0;
