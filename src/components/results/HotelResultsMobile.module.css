@@ -55,7 +55,6 @@
     transform: translateY(0);
   }
   .scrollFilterBarPinned.hotelNavbarFilterBar {
-    padding-inline: 12px;
     background: #fff;
     border-bottom-left-radius: 13px;
     border-bottom-right-radius: 13px;
