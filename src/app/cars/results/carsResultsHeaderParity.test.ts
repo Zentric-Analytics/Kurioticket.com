@@ -68,10 +68,6 @@ test("AppHeader replaces the Cars mobile mark with back navigation and keeps des
     "data-cars-results-mobile-nav-search",
     fullLogo,
   );
-  const filterSlot = appHeaderSource.indexOf(
-    "data-cars-results-mobile-nav-filter",
-    searchSlot,
-  );
   const mobileActions = appHeaderSource.indexOf(
     'className={cn("flex items-center gap-0 md:hidden"',
     searchSlot,
@@ -82,7 +78,7 @@ test("AppHeader replaces the Cars mobile mark with back navigation and keeps des
   assert.ok(fullLogo > backButton);
   assert.ok(searchSlot > fullLogo);
   assert.ok(mobileActions > searchSlot);
-  assert.ok(filterSlot > mobileActions);
+  assert.doesNotMatch(appHeaderSource, /data-cars-results-mobile-nav-filter/);
   assert.match(appHeaderSource, /carsResultsMobileInlineSearch\?: boolean/);
   assert.match(
     appHeaderSource,
@@ -91,10 +87,6 @@ test("AppHeader replaces the Cars mobile mark with back navigation and keeps des
   assert.match(
     appHeaderSource,
     /kurioticket-logo-primary-light-bg\.svg[\s\S]*?className="h-8 w-auto md:h-9 lg:h-9"/,
-  );
-  assert.match(
-    appHeaderSource,
-    /data-cars-results-mobile-nav-filter[\s\S]*?empty:hidden sm:hidden/,
   );
   assert.match(
     appHeaderSource,
@@ -134,11 +126,11 @@ test("the unified header keeps a white safe area while the full Filters overlay 
   );
   assert.match(
     carsClientSource,
-    /const nextVisible =[\s\S]*shortcuts\.getBoundingClientRect\(\)\.bottom <=[\s\S]*header\.getBoundingClientRect\(\)\.bottom/,
+    /distance >= \(nextDirection > 0 \? 20 : 12\)[\s\S]*setMobileFiltersVisible\(nextDirection < 0\)/,
   );
-  assert.match(
+  assert.doesNotMatch(
     carsClientSource,
-    /data-cars-results-mobile-header-filter[\s\S]*openMobileFiltersDrawer\([\s\S]*event\.currentTarget/,
+    /data-cars-results-mobile-header-filter|mobileNavFilterTarget|showMobileHeaderFilter/,
   );
 });
 

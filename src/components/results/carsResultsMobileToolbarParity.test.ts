@@ -6,12 +6,16 @@ const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
   "utf8",
 );
+const mobileStyles = readFileSync(
+  new URL("./HotelResultsMobile.module.css", import.meta.url),
+  "utf8",
+);
 const headerSearch = source.slice(
   source.indexOf("const renderMobileHeaderSearch"),
   source.indexOf("const renderCarsSearchForm"),
 );
 const stickyShortcuts = source.slice(
-  source.indexOf("data-cars-results-sticky-shortcuts"),
+  source.indexOf("data-cars-results-filter-origin"),
   source.indexOf("data-cars-results-toolbar"),
 );
 
@@ -68,46 +72,56 @@ test("Cars header search mirrors the Hotels one-surface two-line contract", () =
   );
 });
 
-test("the top shortcut rail hands off to a standalone compact header Filter on scroll", () => {
+test("Cars mobile filter rail uses the Hotels pinned hide/reveal scroll model", () => {
   assert.equal((source.match(/data-cars-results-quick-filters/g) ?? []).length, 1);
-  assert.equal((source.match(/data-cars-results-sticky-shortcuts/g) ?? []).length, 1);
-  assert.match(stickyShortcuts, /ref=\{mobileShortcutsRef\}/);
-  assert.doesNotMatch(
-    stickyShortcuts,
-    /max-sm:sticky|max-sm:top-\[calc\(var\(--cars-results-safe-area-top\)\+61px\)\]/,
+  assert.equal((source.match(/data-cars-results-filter-origin/g) ?? []).length, 1);
+  assert.match(stickyShortcuts, /ref=\{mobileFilterOriginRef\}/);
+  assert.match(stickyShortcuts, /data-scroll-visible=\{mobileFiltersVisible \? "true" : "false"\}/);
+  assert.match(stickyShortcuts, /data-scroll-pinned=\{mobileFiltersPinned \? "true" : "false"\}/);
+  assert.match(stickyShortcuts, /mobileResultsStyles\.scrollFilterBarPinned/);
+  assert.match(stickyShortcuts, /mobileResultsStyles\.scrollFilterBarAnimated/);
+  assert.match(stickyShortcuts, /mobileResultsStyles\.scrollFilterBarHidden/);
+  assert.match(
+    source,
+    /const nextDirection = Math\.sign\(delta\)[\s\S]*distance >= \(nextDirection > 0 \? 20 : 12\)[\s\S]*setMobileFiltersVisible\(nextDirection < 0\)/,
+  );
+  assert.match(source, /if \(nextDirection < 0\) setMobileFiltersAnimated\(true\)/);
+  assert.match(
+    source,
+    /if \(!mobileFiltersPinnedRef\.current\)[\s\S]*naturalFilterBottom <= 8[\s\S]*setMobileFiltersPinned\(true\)[\s\S]*setMobileFiltersVisible\(delta < 0\)/,
   );
   assert.match(
     source,
-    /const nextVisible =[\s\S]*shortcuts\.getBoundingClientRect\(\)\.bottom <=[\s\S]*header\.getBoundingClientRect\(\)\.bottom/,
+    /const distanceFromBottom = Math\.max\(0, maxScrollY - scrollY\)[\s\S]*if \(delta < 0 && distanceFromBottom <= 40\)/,
+  );
+  assert.doesNotMatch(source, /data-cars-results-mobile-header-filter|showMobileHeaderFilter|mobileNavFilterTarget/);
+});
+
+test("Cars pinned rail reuses the exact Hotels mobile geometry and motion", () => {
+  assert.match(mobileStyles, /\.scrollFilterSlot \{ height: 56px; padding-top: 12px; \}/);
+  assert.match(
+    mobileStyles,
+    /\.scrollFilterBarPinned \{[\s\S]*position: fixed;[\s\S]*top: calc\(72px \+ env\(safe-area-inset-top\)\);[\s\S]*height: 60px;[\s\S]*background: #f5f7fb/,
   );
   assert.match(
-    stickyShortcuts,
-    /data-mobile-header-filter-active=\{showMobileHeaderFilter \? "true" : "false"\}/,
-  );
-  assert.doesNotMatch(
-    stickyShortcuts,
-    /pointer-events-none|opacity-0|invisible/,
+    mobileStyles,
+    /\.scrollFilterBarAnimated \{[\s\S]*transition: transform 220ms cubic-bezier\(0, 0, \.4, 1\)/,
   );
   assert.match(
-    source,
-    /data-cars-results-mobile-header-filter[\s\S]*h-9 w-9[\s\S]*rounded-\[8px\][\s\S]*<SlidersHorizontal[\s\S]*h-\[16px\] w-\[16px\]/,
+    mobileStyles,
+    /\.scrollFilterBarPinned \[data-mobile-hotel-shortcuts\],[\s\S]*\.scrollFilterBarPinned \[data-cars-results-quick-filters\]/,
   );
   assert.match(
-    stickyShortcuts,
-    /data-cars-results-quick-filters[\s\S]*?flex-nowrap[\s\S]*?gap-1\.5[\s\S]*?overflow-x-auto[\s\S]*?overscroll-x-contain/,
+    mobileStyles,
+    /\.scrollFilterBarPinned\.scrollFilterBarHidden \{[\s\S]*transform: translateY\(-100%\)/,
   );
-  assert.match(stickyShortcuts, /min-h-11 min-w-11 shrink-0/);
-  assert.ok(
-    stickyShortcuts.indexOf("filtersButtonRef") <
-      stickyShortcuts.indexOf('quickFilterGroupId === "sort"'),
-  );
-  assert.ok(
-    stickyShortcuts.indexOf('quickFilterGroupId === "sort"') <
-      stickyShortcuts.indexOf("quickFilterGroups.map"),
+  assert.match(
+    mobileStyles,
+    /\.scrollFilterBarAnimated\.scrollFilterBarHidden \{[\s\S]*transition-duration: 120ms/,
   );
 });
 
-test("top and scrolled Filter launchers share the existing filter state and drawer", () => {
+test("Cars keeps one Filter launcher/state while overlays do not disturb scroll direction", () => {
   assert.match(source, /openMobileFiltersDrawer[\s\S]*setFiltersOpen\(true\)/);
   assert.match(source, /\{filtersOpen \? \([\s\S]*?<CarFilters/);
   assert.equal(
@@ -116,11 +130,26 @@ test("top and scrolled Filter launchers share the existing filter state and draw
   );
   assert.match(
     source,
-    /data-cars-results-mobile-header-filter[\s\S]*openMobileFiltersDrawer\([\s\S]*event\.currentTarget/,
+    /const filterInteractionActive =[\s\S]*mobileFiltersOverlayOpen[\s\S]*mobileSearchInteractionActive[\s\S]*filterTransitionPhase !== "idle"/,
   );
   assert.match(
     source,
-    /aria-expanded=\{filtersOpen\}/,
+    /if \(filterInteractionActive\) \{[\s\S]*direction = 0;[\s\S]*distance = 0;[\s\S]*return;/,
   );
   assert.doesNotMatch(source, /mobileStickyFiltersOpen|stickySelectedFilters|headerSelectedFilters/);
+});
+
+test("Cars mobile Sort sits with the results summary and is absent from the filter rail", () => {
+  const rail = source.slice(
+    source.indexOf("data-cars-results-quick-filters"),
+    source.indexOf("data-cars-results-toolbar"),
+  );
+  const summary = source.slice(
+    source.indexOf("data-cars-results-summary-row"),
+    source.indexOf("{appliedCarFilters.length"),
+  );
+  assert.doesNotMatch(rail, /quickFilterGroupId === "sort"|Sort:/);
+  assert.match(summary, /data-cars-sort-trigger/);
+  assert.match(summary, /<span>Sort:<\/span>[\s\S]*selectedCarSortLabel/);
+  assert.match(summary, /openQuickFilter\([\s\S]*"sort"[\s\S]*event\.currentTarget/);
 });

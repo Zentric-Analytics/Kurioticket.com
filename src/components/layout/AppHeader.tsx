@@ -1025,12 +1025,6 @@ export function AppHeader({
             </div>
 
             <div className={cn("flex items-center gap-0 md:hidden", carsResultsMobileInlineSearch && "shrink-0")}>
-              {carsResultsMobileInlineSearch ? (
-                <div
-                  data-cars-results-mobile-nav-filter
-                  className="me-1 flex h-11 w-9 shrink-0 items-center justify-center empty:hidden sm:hidden"
-                />
-              ) : null}
               {isSignedIn ? (
                 <button
                   type="button"
