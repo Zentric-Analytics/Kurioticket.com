@@ -119,7 +119,7 @@ test("mobile shortcuts remain the existing scrollable touch targets in canonical
 
 test("mobile Cars filters use the full Hotels-style pinned rail and immediate upward reveal", () => {
   assert.match(stickyShortcuts, /ref=\{mobileFilterOriginRef\}/);
-  assert.match(stickyShortcuts, /data-cars-results-toolbar-scroll/);
+  assert.match(stickyShortcuts, /data-cars-results-scroll-filter-bar/);
   assert.match(stickyShortcuts, /mobileResultsStyles\.scrollFilterBarPinned/);
   assert.match(stickyShortcuts, /mobileResultsStyles\.scrollFilterBarHidden/);
   assert.match(resultsSource, /distance >= \(nextDirection > 0 \? 20 : 12\)/);
