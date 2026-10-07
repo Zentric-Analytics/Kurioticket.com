@@ -254,6 +254,10 @@ test("sticky airport suggestions support arrow and Home/End navigation", () => {
 
   assert.match(toolbar, /event\.key === "ArrowDown" && activeSuggest === "origin"[\s\S]*?sticky-flight-origin-suggestions \[role="option"\][\s\S]*?firstSuggestion\.focus\(\)/);
   assert.match(toolbar, /event\.key === "ArrowDown"[\s\S]*?activeSuggest === "destination"[\s\S]*?sticky-flight-destination-suggestions \[role="option"\][\s\S]*?firstSuggestion\.focus\(\)/);
+  assert.match(toolbar, /const nextFocus = event\.relatedTarget;[\s\S]*?event\.currentTarget\.parentElement\?\.contains\(nextFocus\)[\s\S]*?return;/);
+  assert.ok(
+    (toolbar.match(/event\.currentTarget\.parentElement\?\.contains\(nextFocus\)/g)?.length ?? 0) >= 2,
+  );
   assert.match(suggestions, /keyboardNavigation = false/);
   assert.match(suggestions, /event\.key === "ArrowDown"/);
   assert.match(suggestions, /event\.key === "ArrowUp"/);
