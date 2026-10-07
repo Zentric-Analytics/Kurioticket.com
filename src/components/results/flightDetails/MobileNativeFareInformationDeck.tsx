@@ -191,6 +191,28 @@ function DealsSurface({
               tabIndex={selected ? 0 : -1}
               aria-label={`${deal.providerName}, ${priceAvailable ? price.ariaLabel : "price loading"}, ${fare?.label ?? "fare"}`}
               onClick={() => onSelectDeal(deal.offerId)}
+              onKeyDown={(event) => {
+                const direction =
+                  event.key === "ArrowRight" || event.key === "ArrowDown"
+                    ? 1
+                    : event.key === "ArrowLeft" || event.key === "ArrowUp"
+                      ? -1
+                      : 0;
+                const nextIndex =
+                  event.key === "Home"
+                    ? 0
+                    : event.key === "End"
+                      ? displayedDeals.length - 1
+                      : direction
+                        ? (index + direction + displayedDeals.length) % displayedDeals.length
+                        : -1;
+                if (nextIndex < 0) return;
+                event.preventDefault();
+                onSelectDeal(displayedDeals[nextIndex].deal.offerId);
+                event.currentTarget.parentElement?.parentElement
+                  ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
+                  [nextIndex]?.focus();
+              }}
               className="min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2"
             >
               <span className="block min-w-0" data-mobile-flight-deal-provider>
