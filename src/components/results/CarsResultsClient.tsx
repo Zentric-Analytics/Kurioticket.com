@@ -3063,16 +3063,6 @@ export function CarsResultsExperience({
                         <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#B8CDED] bg-[#EEF5FF] px-2.5 text-[11px] font-semibold leading-[14px] text-[#064A9B] lg:text-[13px] lg:font-semibold lg:leading-5">{filter.label}<X className="h-[13px] w-[13px] shrink-0" aria-hidden="true" /></span>
                       </button>
                     ))}
-                    </div>
-                    {mobileQuickFiltersHasMore ? (
-                      <div
-                        aria-hidden="true"
-                        data-cars-results-quick-filters-more
-                        className="pointer-events-none absolute inset-y-0 end-0 flex w-9 items-center justify-end bg-gradient-to-l from-white via-white/95 to-transparent pe-1.5 lg:hidden"
-                      >
-                        <ChevronRight className="h-4 w-4 text-[#52627A]" strokeWidth={2} />
-                      </div>
-                    ) : null}
                   </div>
                 ) : null}
               </div>
