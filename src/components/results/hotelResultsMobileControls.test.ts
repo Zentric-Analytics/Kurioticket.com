@@ -249,3 +249,24 @@ test("Hotel mobile filter rail uses the same white navbar background as Flight w
   assert.match(resultsSource, /<span>Sort:<\/span>[\s\S]*currentSortLabel/);
   assert.doesNotMatch(resultsSource, /renderMobileHotelNavbarFilters[\s\S]{0,600}Sort:/);
 });
+
+
+test("Hotel mobile navbar removes the divider above the filter rail and matches card bottom corners", () => {
+  const headerSource = readFileSync(
+    new URL("../layout/AppHeader.tsx", import.meta.url),
+    "utf8",
+  );
+  const mobileStyles = readFileSync(
+    new URL("./HotelResultsMobile.module.css", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    headerSource,
+    /!mobileResultsFilters && !hotelResultsDesktopSticky && "border-b border-slate-200"/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.hotelNavbarFilterBar \{[\s\S]*border-bottom-left-radius: 13px;[\s\S]*border-bottom-right-radius: 13px;/,
+  );
+});
