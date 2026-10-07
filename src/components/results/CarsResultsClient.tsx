@@ -653,6 +653,7 @@ export function CarsResultsClient({
   const locationPairSummary = returnToDifferentLocation
     ? `${pickupSummary} → ${returnSummary}`
     : pickupSummary;
+  const mobileSearchSecondarySummary = `${rentalDateSummary} · ${timeSummary} · ${driverAgeSummary}`;
   const openDesktopStickySearch = useCallback(
     (
       section: NonNullable<typeof desktopStickySearchSection>,
@@ -1068,7 +1069,7 @@ export function CarsResultsClient({
     <button
       type="button"
       data-cars-results-mobile-header-search
-      aria-label={`${t("deals.results.modifySearch")}: ${locationPairSummary}, ${rentalDateSummary}`}
+      aria-label={`${t("deals.results.modifySearch")}: ${locationPairSummary}, ${mobileSearchSecondarySummary}`}
       aria-haspopup="dialog"
       aria-expanded={mobileSearchOpen}
       onClick={(event) =>
@@ -1077,54 +1078,31 @@ export function CarsResultsClient({
           getOverlayActivationModality(event),
         )
       }
-      className="focus-ring group flex h-11 w-full min-w-0 touch-manipulation items-center rounded-[9px] p-0 text-start transition [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+      className="focus-ring flex h-full w-full min-w-0 touch-manipulation items-center gap-1.5 rounded-xl bg-[#F5F7FB] py-1 pe-2 ps-3 text-start transition hover:bg-[#EDF2FA] [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
     >
       <span
-        data-cars-results-mobile-search-fields
-        className="grid h-9 w-full min-w-0 grid-cols-[minmax(0,0.76fr)_minmax(0,1.24fr)_32px] items-stretch gap-[3px]"
+        data-cars-results-mobile-search-summary
+        className="flex min-w-0 flex-1 flex-col justify-center"
       >
         <span
-          data-cars-results-mobile-search-location
-          className="flex min-w-0 items-center gap-[5px] overflow-hidden rounded-[8px] border border-[#D5DFEA] bg-[#FBFCFE] px-[7px] shadow-[0_1px_2px_rgba(24,48,91,0.045)] transition group-hover:border-[#C7D3E0] group-hover:bg-white"
+          title={locationPairSummary}
+          className="block truncate text-[14px] font-semibold leading-[18px] text-[#142033]"
         >
-          <Car
-            className="h-[13px] w-[13px] shrink-0 text-[#24324A]"
-            strokeWidth={2.1}
-            aria-hidden="true"
-          />
-          <span
-            title={locationPairSummary}
-            className="min-w-0 flex-1 truncate text-[11.5px] font-semibold leading-[15px] tracking-[-0.01em] text-[#172238]"
-          >
-            {locationPairSummary}
-          </span>
+          {locationPairSummary}
         </span>
         <span
-          data-cars-results-mobile-search-dates
-          className="flex min-w-0 items-center gap-[5px] overflow-hidden rounded-[8px] border border-[#D5DFEA] bg-[#FBFCFE] px-[7px] shadow-[0_1px_2px_rgba(24,48,91,0.045)] transition group-hover:border-[#C7D3E0] group-hover:bg-white"
+          title={mobileSearchSecondarySummary}
+          className="mt-0.5 block truncate text-[11px] font-medium leading-[15px] text-[#536B92]"
         >
-          <CalendarDays
-            className="h-[13px] w-[13px] shrink-0 text-[#5B7093]"
-            strokeWidth={1.95}
-            aria-hidden="true"
-          />
-          <span
-            title={rentalDateSummary}
-            className="min-w-0 flex-1 truncate whitespace-nowrap text-[10.75px] font-semibold leading-[15px] tracking-[-0.004em] text-[#536786]"
-          >
-            {rentalDateSummary}
-          </span>
+          {mobileSearchSecondarySummary}
         </span>
-        <span
-          data-cars-results-mobile-search-edit
-          className="flex h-full w-8 shrink-0 items-center justify-center rounded-[8px] border border-[#D5DFEA] bg-[#FBFCFE] shadow-[0_1px_2px_rgba(24,48,91,0.045)] transition group-hover:border-[#C7D3E0] group-hover:bg-white"
-        >
-          <SquarePen
-            className="h-[13.5px] w-[13.5px] text-[#5B7093] transition group-hover:text-[#24324A]"
-            strokeWidth={1.95}
-            aria-hidden="true"
-          />
-        </span>
+      </span>
+      <span
+        data-cars-results-mobile-search-edit
+        aria-hidden="true"
+        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#142033]"
+      >
+        <SquarePen size={15} strokeWidth={2} />
       </span>
     </button>
   );
@@ -2306,6 +2284,15 @@ export function CarsResultsExperience({
     setFiltersOpen(false);
     setQuickFilterGroupId(kind);
   };
+  const clearQuickFilterSelection = (groupId: string) => {
+    if (!(selectedCarFilters[groupId]?.length)) return;
+    startFilterResultsTransition();
+    setSelectedCarFilters((current) => {
+      const next = { ...current };
+      delete next[groupId];
+      return next;
+    });
+  };
   useEffect(
     () => () => {
       filterTransitionRunRef.current += 1;
@@ -2765,12 +2752,16 @@ export function CarsResultsExperience({
                       <span className={cn(
                         "inline-flex h-9 items-center justify-center gap-1 rounded-[9px] border px-2.5 text-[13px] font-semibold leading-4 transition",
                         activeFilterCount > 0
-                          ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
+                          ? "border-[#142033] bg-white text-[#142033]"
                           : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
                       )}>
-                        <SlidersHorizontal className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <SlidersHorizontal className="h-4 w-4 shrink-0" strokeWidth={2.2} aria-hidden="true" />
                         {locale.startsWith("en") ? "Filter" : t("filters")}
-                        {activeFilterCount > 0 ? <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8] px-1.5 text-[10px] font-semibold leading-none text-white">{activeFilterCount}</span> : null}
+                        {activeFilterCount > 0 ? (
+                          <span className="rounded-full bg-[#F1F5F9] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#142033]">
+                            {activeFilterCount}
+                          </span>
+                        ) : null}
                       </span>
                     </button>
                     <button
@@ -2795,37 +2786,70 @@ export function CarsResultsExperience({
                       </span>
                     </button>
                     {quickFilterGroups.map((group) => {
-                      const count = selectedCarFilters[group.id]?.length ?? 0;
+                      const selected = selectedCarFilters[group.id] ?? [];
+                      const active = selected.length > 0;
+                      const selectedOption =
+                        selected.length === 1
+                          ? group.options.find((option) => option.id === selected[0])
+                          : null;
+                      const label =
+                        selectedOption
+                          ? selectedOption.label ?? t(selectedOption.labelKey)
+                          : active
+                            ? `${carFilterGroupLabel(group, t, true)} (${selected.length})`
+                            : carFilterGroupLabel(group, t, true);
                       return (
-                        <button
+                        <div
                           key={group.id}
-                          type="button"
-                          aria-haspopup="dialog"
-                          aria-expanded={quickFilterGroupId === group.id}
-                          onClick={(event) => {
-                            openQuickFilter(group.id, event.currentTarget, getOverlayActivationModality(event));
-                          }}
-                          className={cn(
-                            "group inline-flex min-h-11 min-w-11 shrink-0 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35",
-                          )}
+                          className="group inline-flex min-h-11 min-w-11 shrink-0 items-center"
                         >
-                          <span className={cn(
-                            "inline-flex h-9 items-center gap-1 rounded-[9px] border px-2.5 text-[13px] font-semibold leading-4 transition",
-                            count > 0
-                              ? "border-[#075EE8] bg-[#EAF2FF] text-[#004BB8]"
-                              : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
-                          )}>
-                            {carFilterGroupLabel(group, t, true)}
-                            {count > 0 ? <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8] px-1.5 text-[10px] font-semibold leading-none text-white">{count}</span> : null}
-                            <ChevronDown
+                          <span
+                            className={cn(
+                              "relative inline-flex h-9 items-center overflow-hidden rounded-[9px] border p-0 text-[13px] font-semibold leading-4 transition",
+                              active
+                                ? "border-[#142033] bg-[#142033] text-white"
+                                : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
+                            )}
+                          >
+                            <button
+                              type="button"
+                              aria-haspopup="dialog"
+                              aria-expanded={quickFilterGroupId === group.id}
+                              aria-pressed={active}
                               className={cn(
-                                "h-[13px] w-[13px] shrink-0 text-slate-500 transition-transform duration-150 motion-reduce:transition-none",
-                                quickFilterGroupId === group.id && "rotate-180",
+                                "focus-ring inline-flex h-full min-w-0 items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35",
+                                active ? "pl-2.5 pr-7" : "px-2.5",
                               )}
-                              aria-hidden="true"
-                            />
+                              onClick={(event) => {
+                                openQuickFilter(group.id, event.currentTarget, getOverlayActivationModality(event));
+                              }}
+                            >
+                              <span className="max-w-[11rem] truncate">{label}</span>
+                              {!active ? (
+                                <ChevronDown
+                                  className={cn(
+                                    "h-[13px] w-[13px] shrink-0 text-slate-500 transition-transform duration-150 motion-reduce:transition-none",
+                                    quickFilterGroupId === group.id && "rotate-180",
+                                  )}
+                                  aria-hidden="true"
+                                />
+                              ) : null}
+                            </button>
+                            {active ? (
+                              <button
+                                type="button"
+                                aria-label={`Clear ${carFilterGroupLabel(group, t, true)} filter`}
+                                className="focus-ring absolute right-0.5 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/70"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  clearQuickFilterSelection(group.id);
+                                }}
+                              >
+                                <X className="h-3 w-3" strokeWidth={2.1} aria-hidden="true" />
+                              </button>
+                            ) : null}
                           </span>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -3077,63 +3101,70 @@ export function CarsResultsExperience({
           type="button"
           aria-label={t("carsResults.closeFilters")}
           onClick={closeMobileFiltersDrawer}
-          className="fixed inset-0 z-[9999] hidden bg-slate-950/35 backdrop-blur-[1px] sm:block lg:hidden"
+          className="fixed inset-0 z-[9999] bg-slate-950/35 backdrop-blur-[1px] lg:hidden"
         />
       ) : null}
-      {filtersOpen ? (
-        <aside
-          ref={filtersDialogRef}
-          tabIndex={-1}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="cars-guided-filters-title"
-          data-cars-mobile-filter-shell
-          className="fixed inset-y-0 right-0 z-[10000] flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2F4F8] sm:w-[420px] lg:hidden"
-        >
-          <header className="flex min-h-[64px] shrink-0 items-center bg-[#F2F4F8] pe-[10px] ps-5">
-            <div className="min-w-0 flex-1">
-              <h2 id="cars-guided-filters-title" className="truncate text-[18px] font-bold leading-[23px] text-slate-950">{t("filters")}</h2>
-              {activeFilterCount > 0 ? (
-                <p className="text-xs font-medium leading-4 text-slate-500">{activeFilterLabel}</p>
-              ) : null}
-            </div>
-            <button ref={filtersCloseButtonRef} type="button" className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-700 transition hover:text-slate-950 focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35" aria-label={t("carsResults.closeFilters")} onClick={closeMobileFiltersDrawer}>
-              <X className="h-[22px] w-[22px]" aria-hidden="true" />
-            </button>
-          </header>
-          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#F2F4F8] px-6 pb-8 pt-4">
-            <CarFilters
-              groups={
-                guidedPlanning
-                  ? visibleCarFilterGroups.filter(
-                      (group) => group.id !== "cancellation",
-                    )
-                  : visibleCarFilterGroups
-              }
-              activeFilterCount={activeFilterCount}
-              layout="mobile"
-              onClear={clearMobileDrawerCarFilters}
-              onToggle={toggleMobileDrawerCarFilter}
-              selectedFilters={selectedCarFilters}
-              t={t}
-            />
-          </div>
-          <footer className="flex shrink-0 items-center gap-3.5 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3">
+      <aside
+        ref={filtersDialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cars-guided-filters-title"
+        aria-hidden={!filtersOpen}
+        inert={!filtersOpen ? true : undefined}
+        data-cars-mobile-filter-shell
+        className={cn(
+          "fixed inset-y-0 right-0 z-[10000] flex h-[95dvh] w-full flex-col overflow-hidden rounded-t-[20px] bg-[#F2F4F8] shadow-2xl transition-transform duration-200 ease-out motion-reduce:transition-none max-sm:top-auto sm:h-[100dvh] sm:w-[420px] sm:rounded-none lg:hidden",
+          filtersOpen
+            ? "translate-y-0 sm:translate-x-0"
+            : "pointer-events-none translate-y-full sm:translate-x-full sm:translate-y-0",
+        )}
+      >
+        <header className="relative flex min-h-[64px] shrink-0 items-center bg-[#F2F4F8] pe-[10px] ps-5">
+          <div className="min-w-0 flex-1">
+            <h2 id="cars-guided-filters-title" className="truncate text-base font-semibold leading-5 text-slate-950">{t("filters")}</h2>
             {activeFilterCount > 0 ? (
-              <button type="button" aria-label={t("carsResults.resetFilters")} onClick={clearMobileDrawerCarFilters} className="h-[49px] min-w-[116px] rounded-xl border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-[15px] font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
-                {t("carsResults.reset")}
-              </button>
+              <p className="text-xs font-medium leading-4 text-slate-500">{activeFilterLabel}</p>
             ) : null}
-            <Button
-              type="button"
-              className="min-h-[50px] min-w-0 flex-1 rounded-[10px] bg-[#004BB8] px-5 text-base font-bold leading-[22px] text-white shadow-none"
-              onClick={closeMobileFiltersDrawer}
-            >
-              Show {visibleResults.length} {visibleResults.length === 1 ? "car" : "cars"}
-            </Button>
-          </footer>
-        </aside>
-      ) : null}
+          </div>
+          <button ref={filtersCloseButtonRef} type="button" className="focus-ring absolute right-3 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-700 transition hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35" aria-label={t("carsResults.closeFilters")} onClick={closeMobileFiltersDrawer}>
+            <X className="h-[22px] w-[22px]" aria-hidden="true" />
+          </button>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#F2F4F8] px-6 py-4">
+          <CarFilters
+            groups={
+              guidedPlanning
+                ? visibleCarFilterGroups.filter(
+                    (group) => group.id !== "cancellation",
+                  )
+                : visibleCarFilterGroups
+            }
+            activeFilterCount={activeFilterCount}
+            layout="mobile"
+            onClear={clearMobileDrawerCarFilters}
+            onToggle={toggleMobileDrawerCarFilter}
+            selectedFilters={selectedCarFilters}
+            t={t}
+          />
+        </div>
+        <footer className="flex shrink-0 items-center gap-3 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.08)]">
+          {activeFilterCount > 0 ? (
+            <button type="button" aria-label={t("carsResults.resetFilters")} onClick={clearMobileDrawerCarFilters} className="focus-ring h-11 w-[30%] shrink-0 rounded-lg border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-sm font-semibold text-slate-700">
+              {t("carsResults.reset")}
+            </button>
+          ) : null}
+          <Button
+            type="button"
+            className="h-11 min-w-0 flex-1 rounded-lg bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+            onClick={closeMobileFiltersDrawer}
+          >
+            {locale.startsWith("en")
+              ? `View ${visibleResults.length} ${visibleResults.length === 1 ? "car" : "cars"}`
+              : `${t("carsResults.show")} ${visibleResults.length}`}
+          </Button>
+        </footer>
+      </aside>
       {quickFilterGroupId && (quickFilterGroupId === "sort" || activeQuickFilterGroup) && typeof document !== "undefined" ? createPortal(
         <div
           data-cars-quick-sheet-backdrop
