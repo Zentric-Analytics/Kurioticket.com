@@ -1292,6 +1292,13 @@ textarea {
     box-shadow: none;
   }
 
+  /* Standalone Flight Results uses the same white filter surface as Hotels.
+     Keep the shared guided/compact filter surfaces and smaller widths unchanged. */
+  [data-flight-results-main]
+    .desktop-filter-sidebar[data-flight-hotel-filter-visual-parity] {
+    background: #ffffff;
+  }
+
   .desktop-filter-sidebar__header {
     border-bottom-color: rgba(226, 232, 240, 0.95);
     background: rgba(248, 250, 252, 0.72) !important;

@@ -471,7 +471,7 @@ test("desktop Flight renders the Hotel-style Popular filters card directly after
   assert.match(source, /data-flight-sticky-popular-filters/);
   assert.match(source, /sticky top-\[88px\]/);
   assert.match(source, /max-h-\[calc\(100vh-100px\)\]/);
-  assert.match(source, /data-flight-sticky-popular-filters[\s\S]*?bg-\[#F2F4F8\]/);
+  assert.match(source, /data-flight-sticky-popular-filters[\s\S]*?bg-white/);
   assert.match(source, /<div>\{renderDesktopFlightFilters\(\)\}<\/div>[\s\S]*?<StickyFlightPopularFilters/);
   assert.doesNotMatch(source, /showStickyFlightFilters/);
   assert.doesNotMatch(source, /shouldShowFlightStickyPopularFilters/);

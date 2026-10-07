@@ -275,7 +275,7 @@ function StickyFlightPopularFilters({
     <section
       data-flight-sticky-popular-filters
       aria-label={t("hotelResults.popularFilters")}
-      className="sticky top-[88px] z-10 mt-3 max-h-[calc(100vh-100px)] overflow-y-auto rounded-lg border border-[#CFD9E5] bg-[#F2F4F8] px-3 py-3 shadow-[0_4px_16px_-12px_rgba(15,23,42,0.35)]"
+      className="sticky top-[88px] z-10 mt-3 max-h-[calc(100vh-100px)] overflow-y-auto rounded-lg border border-[#CFD9E5] bg-white px-3 py-3 shadow-[0_4px_16px_-12px_rgba(15,23,42,0.35)]"
     >
       <h2 className="mb-1.5 text-[13px] font-bold leading-5 text-[#142033]">
         {t("hotelResults.popularFilters")}
@@ -4642,7 +4642,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   if (!body) {
     return (
-      <main className="flex-1 bg-[#F3F6FA] pb-8 pt-4 sm:pt-8 lg:pt-8">
+      <main className="flex-1 bg-[#F3F6FA] pb-8 pt-4 sm:pt-8 lg:bg-white lg:pt-8">
         <section className="page-shell">
           <form
             className="mx-auto mt-0 w-full max-w-5xl space-y-3 sm:space-y-2"
@@ -7468,7 +7468,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     {readyExternalMobileHeader}
     {readyDesktopNavbarSearch}
     <FlightResultsScrollIndicator />
-    <main data-flight-results-main className="max-sm:overflow-x-clip bg-[#F5F7FB] pb-0 sm:flex-1 sm:bg-[#F3F6FA] sm:pb-8 lg:bg-[#F5F7FB]">
+    <main data-flight-results-main className="max-sm:overflow-x-clip bg-[#F5F7FB] pb-0 sm:flex-1 sm:bg-[#F3F6FA] sm:pb-8 lg:bg-white">
       {paginationPendingPage !== null && typeof document !== "undefined"
         ? createPortal(
             <FlightResultsPageTransitionSkeleton
@@ -7967,7 +7967,7 @@ function FlightResultsPageTransitionSkeleton({
   return (
     <div
       data-flight-results-transition-cover
-      className="fixed inset-0 z-[9990] overflow-hidden bg-[#F5F7FB] sm:bg-[#F3F6FA] lg:bg-[#F5F7FB]"
+      className="fixed inset-0 z-[9990] overflow-hidden bg-[#F5F7FB] sm:bg-[#F3F6FA] lg:bg-white"
       aria-busy="true"
     >
       <p className="sr-only" role="status" aria-live="polite">

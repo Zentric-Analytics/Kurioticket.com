@@ -57,12 +57,16 @@ test("desktop filter groups use sentence-case headings and accessible rows", asy
   assert.doesNotMatch(source, /uppercase tracking-\[0\.12em\]/);
 });
 
-test("desktop Flight Hotel-style surface preserves its gray background against global desktop rules", async () => {
+test("shared Flight filter surface stays muted while standalone desktop uses white", async () => {
   const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
 
   assert.match(
     styles,
     /\.desktop-filter-sidebar\[data-flight-hotel-filter-visual-parity\] \{[\s\S]*?border-color: #cfd9e5;[\s\S]*?border-radius: 0\.5rem;[\s\S]*?background: #f2f4f8;/,
+  );
+  assert.match(
+    styles,
+    /\[data-flight-results-main\]\s+\.desktop-filter-sidebar\[data-flight-hotel-filter-visual-parity\] \{\s*background: #ffffff;/,
   );
 });
 
