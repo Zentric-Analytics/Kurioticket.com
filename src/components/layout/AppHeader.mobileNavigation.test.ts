@@ -139,7 +139,7 @@ test("mobile Flight Results uses a home arrow while preserving the K logo destin
   assert.match(block, /<ArrowLeft size=\{24\} strokeWidth=\{2\.2\}/);
 });
 
-test("Cars results keep the sticky inline search with a mobile-only Back control and collapsible Filter slot", () => {
+test("Cars results keep the sticky inline search with a mobile-only Back control and no compact Filter slot", () => {
   assert.match(headerSource, /mobileResultsSticky\?: boolean/);
   assert.match(headerSource, /mobileResultsSticky = true/);
   assert.match(headerSource, /carsResultsMobileInlineSearch\?: boolean/);
@@ -153,9 +153,6 @@ test("Cars results keep the sticky inline search with a mobile-only Back control
     headerSource,
     /aria-label="Back"[\s\S]*data-cars-results-mobile-back[\s\S]*router\.back\(\)[\s\S]*router\.push\("\/cars"\)/,
   );
-  assert.match(
-    headerSource,
-    /data-cars-results-mobile-nav-filter[\s\S]*empty:hidden sm:hidden/,
-  );
+  assert.doesNotMatch(headerSource, /data-cars-results-mobile-nav-filter/);
 });
 
