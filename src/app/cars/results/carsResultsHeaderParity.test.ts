@@ -211,7 +211,7 @@ test("Cars mobile header and filter rail keep a smooth rounded left edge through
   );
   assert.match(
     mobileResultsStyles,
-    /\.carsScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 32px;[\s\S]*border-bottom-right-radius: 0;/,
+    /\.carsScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 18px;[\s\S]*border-bottom-right-radius: 0;/,
   );
   assert.match(
     mobileResultsStyles,
