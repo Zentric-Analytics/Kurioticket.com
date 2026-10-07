@@ -86,9 +86,9 @@
     background-repeat: no-repeat;
     background-size: 26px 26px;
   }
-  /* Hotel keeps the same 15px horizontal reach but raises the curve vertically
-     so its top sits close to the Filter chip without changing rail spacing.
-     Cars keeps the existing quadratic cutout unchanged. */
+  /* Product-specific rails use native radii instead of the legacy SVG cutout.
+     Hotels keeps its taller elliptical corner; Cars uses a broader 32px quarter
+     curve matching the approved sketch. The same treatment is used when pinned. */
   .hotelScrollFilterSlot::after,
   .carsScrollFilterSlot::after,
   .scrollFilterBarPinned.hotelNavbarFilterBar::after,
