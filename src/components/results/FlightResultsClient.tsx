@@ -5538,6 +5538,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               id="sticky-results-origin"
               data-flight-results-header-origin
               name="origin"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls="sticky-flight-origin-suggestions"
               required
               value={
                 isStickySearchPanelOpen &&
@@ -5552,6 +5555,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 activeSuggest === "origin"
               }
               onFocus={(event) => {
+                const input = event.currentTarget;
+                const enteringOrigin =
+                  !isStickySearchPanelOpen ||
+                  activeStickySearchTarget !== "origin";
                 if (
                   originCode &&
                   originInput.trim().toUpperCase() ===
@@ -5559,7 +5566,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 ) {
                   setOriginInput(compactOriginLabel);
                 }
-                openStickySearchEditor(event.currentTarget, "origin");
+                openStickySearchEditor(input, "origin");
+                if (enteringOrigin) {
+                  window.requestAnimationFrame(() => {
+                    input.select();
+                  });
+                }
               }}
               onClick={(event) => {
                 if (
@@ -5569,12 +5581,29 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   openStickySearchEditor(event.currentTarget, "origin");
                 }
               }}
-              onBlur={() => {
+              onBlur={(event) => {
+                const nextFocus = event.relatedTarget;
+                if (
+                  nextFocus instanceof Node &&
+                  event.currentTarget.parentElement?.contains(nextFocus)
+                ) {
+                  return;
+                }
                 if (activeSuggest === "origin") {
                   setActiveSuggest(null);
                 }
               }}
               onKeyDown={(event) => {
+                if (event.key === "ArrowDown" && activeSuggest === "origin") {
+                  const firstSuggestion = document.querySelector<HTMLButtonElement>(
+                    '#sticky-flight-origin-suggestions [role="option"]',
+                  );
+                  if (firstSuggestion) {
+                    event.preventDefault();
+                    firstSuggestion.focus();
+                  }
+                  return;
+                }
                 if (event.key === "Escape") {
                   event.preventDefault();
                   event.currentTarget.blur();
@@ -5590,8 +5619,37 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               }}
               placeholder={t("fromPlaceholder")}
               autoComplete="off"
-              className="flight-results-nav-route-input box-border h-full w-full min-w-0 border-0 bg-transparent px-2 text-right outline-none placeholder:text-slate-400"
+              className={cn("flight-results-nav-route-input box-border h-full w-full min-w-0 border-0 bg-transparent pr-2 text-right outline-none placeholder:text-slate-400", isStickySearchPanelOpen && activeStickySearchTarget === "origin" && originInput.trim() ? "pl-7" : "pl-2")}
             />
+            {isStickySearchPanelOpen &&
+            activeStickySearchTarget === "origin" &&
+            originInput.trim() ? (
+              <button
+                type="button"
+                data-flight-results-header-origin-clear
+                aria-label={t("clearOrigin")}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setOriginInput("");
+                  setOriginCode("");
+                  setActiveSuggest(null);
+                  setDropdownPosition(null);
+                  window.requestAnimationFrame(() => {
+                    stickyOriginWrapRef.current
+                      ?.querySelector<HTMLInputElement>("input")
+                      ?.focus({ preventScroll: true });
+                  });
+                }}
+                className="focus-ring absolute left-1 top-1/2 z-[2] inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white hover:text-slate-700"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            ) : null}
             {isStickySearchPanelOpen &&
             activeStickySearchTarget === "origin" &&
             activeSuggest === "origin" &&
@@ -5599,6 +5657,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               <SuggestionList
                 id="sticky-flight-origin-suggestions"
                 alignToField
+                keyboardNavigation
                 suggestions={resolvedOriginSuggestions}
                 locale={locale}
                 onSelect={(value) => {
@@ -5607,6 +5666,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   setOriginCode(value);
                   setActiveSuggest(null);
                   setDropdownPosition(null);
+                  window.requestAnimationFrame(() => {
+                    stickyDestinationWrapRef.current
+                      ?.querySelector<HTMLInputElement>("input")
+                      ?.focus({ preventScroll: true });
+                  });
                 }}
               />
             ) : null}
@@ -5616,7 +5680,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             type="button"
             aria-label={t("swapOriginDestination")}
             onClick={handleSwapLocations}
-            className="focus-ring inline-flex h-full w-[28px] items-center justify-center text-[#142033] transition hover:bg-[#F3F6FA] hover:text-[#004BB8]"
+            className="focus-ring inline-flex h-full w-[28px] items-center justify-center border-x border-[#D8E1EC] bg-white/35 text-[#142033] transition hover:bg-[#F3F6FA] hover:text-[#004BB8]"
           >
             <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -5629,6 +5693,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               id="sticky-results-destination"
               data-flight-results-header-destination
               name="destination"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls="sticky-flight-destination-suggestions"
               required
               value={
                 isStickySearchPanelOpen &&
@@ -5643,6 +5710,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 activeSuggest === "destination"
               }
               onFocus={(event) => {
+                const input = event.currentTarget;
+                const enteringDestination =
+                  !isStickySearchPanelOpen ||
+                  activeStickySearchTarget !== "destination";
                 if (
                   destinationCode &&
                   destinationInput.trim().toUpperCase() ===
@@ -5650,7 +5721,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 ) {
                   setDestinationInput(compactDestinationLabel);
                 }
-                openStickySearchEditor(event.currentTarget, "destination");
+                openStickySearchEditor(input, "destination");
+                if (enteringDestination) {
+                  window.requestAnimationFrame(() => {
+                    input.select();
+                  });
+                }
               }}
               onClick={(event) => {
                 if (
@@ -5660,12 +5736,32 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   openStickySearchEditor(event.currentTarget, "destination");
                 }
               }}
-              onBlur={() => {
+              onBlur={(event) => {
+                const nextFocus = event.relatedTarget;
+                if (
+                  nextFocus instanceof Node &&
+                  event.currentTarget.parentElement?.contains(nextFocus)
+                ) {
+                  return;
+                }
                 if (activeSuggest === "destination") {
                   setActiveSuggest(null);
                 }
               }}
               onKeyDown={(event) => {
+                if (
+                  event.key === "ArrowDown" &&
+                  activeSuggest === "destination"
+                ) {
+                  const firstSuggestion = document.querySelector<HTMLButtonElement>(
+                    '#sticky-flight-destination-suggestions [role="option"]',
+                  );
+                  if (firstSuggestion) {
+                    event.preventDefault();
+                    firstSuggestion.focus();
+                  }
+                  return;
+                }
                 if (event.key === "Escape") {
                   event.preventDefault();
                   event.currentTarget.blur();
@@ -5683,8 +5779,37 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               }}
               placeholder={t("toPlaceholder")}
               autoComplete="off"
-              className="flight-results-nav-route-input box-border h-full w-full min-w-0 border-0 bg-transparent px-2 text-left outline-none placeholder:text-slate-400"
+              className={cn("flight-results-nav-route-input box-border h-full w-full min-w-0 border-0 bg-transparent pl-2 text-left outline-none placeholder:text-slate-400", isStickySearchPanelOpen && activeStickySearchTarget === "destination" && destinationInput.trim() ? "pr-7" : "pr-2")}
             />
+            {isStickySearchPanelOpen &&
+            activeStickySearchTarget === "destination" &&
+            destinationInput.trim() ? (
+              <button
+                type="button"
+                data-flight-results-header-destination-clear
+                aria-label={t("clearDestination")}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setDestinationInput("");
+                  setDestinationCode("");
+                  setActiveSuggest(null);
+                  setDropdownPosition(null);
+                  window.requestAnimationFrame(() => {
+                    stickyDestinationWrapRef.current
+                      ?.querySelector<HTMLInputElement>("input")
+                      ?.focus({ preventScroll: true });
+                  });
+                }}
+                className="focus-ring absolute right-1 top-1/2 z-[2] inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white hover:text-slate-700"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            ) : null}
             {isStickySearchPanelOpen &&
             activeStickySearchTarget === "destination" &&
             activeSuggest === "destination" &&
@@ -5692,6 +5817,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               <SuggestionList
                 id="sticky-flight-destination-suggestions"
                 alignToField
+                keyboardNavigation
                 suggestions={resolvedDestinationSuggestions}
                 locale={locale}
                 onSelect={(value) => {
@@ -5700,6 +5826,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   setDestinationCode(value);
                   setActiveSuggest(null);
                   setDropdownPosition(null);
+                  collapseStickySearch({ restoreScroll: false });
                 }}
               />
             ) : null}
@@ -9136,6 +9263,7 @@ function SuggestionList({
   onSelect,
   position,
   alignToField = false,
+  keyboardNavigation = false,
   locale,
 }: {
   id: string;
@@ -9143,6 +9271,7 @@ function SuggestionList({
   onSelect: (value: string) => void;
   position?: { top: number; left: number; width: number };
   alignToField?: boolean;
+  keyboardNavigation?: boolean;
   locale?: string | null;
 }) {
   const visibleSuggestions = suggestions.slice(0, 5);
@@ -9184,6 +9313,28 @@ function SuggestionList({
               event.stopPropagation();
             }}
             onClick={() => onSelect(airportInputValue(item))}
+            onKeyDown={(event) => {
+              if (!keyboardNavigation) return;
+              const options = Array.from(
+                event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
+                  '[role="option"]',
+                ) ?? [],
+              );
+              const currentIndex = options.indexOf(event.currentTarget);
+              const nextIndex =
+                event.key === "ArrowDown"
+                  ? Math.min(options.length - 1, currentIndex + 1)
+                  : event.key === "ArrowUp"
+                    ? Math.max(0, currentIndex - 1)
+                    : event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? options.length - 1
+                        : -1;
+              if (nextIndex < 0) return;
+              event.preventDefault();
+              options[nextIndex]?.focus();
+            }}
             className={cn(
               "block min-h-[58px] w-full px-4 py-2.5 text-start transition-colors hover:bg-slate-50 focus-visible:bg-blue-50/60 focus-visible:outline-none",
               index < visibleSuggestions.length - 1 && "border-b border-slate-200/75",

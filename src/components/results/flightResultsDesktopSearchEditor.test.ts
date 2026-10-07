@@ -61,11 +61,11 @@ test("desktop results keeps trip type inside the clicked edit-search state", () 
 });
 
 
-test("desktop populated airport inputs remain editable without clear controls", () => {
+test("desktop populated airport inputs remain editable while compact header adds local clear controls", () => {
   assert.match(source, /id="results-origin"[\s\S]*?onChange=\{/);
   assert.match(source, /id="results-destination"[\s\S]*?onChange=\{/);
-  assert.doesNotMatch(source, /aria-label={t\("clearOrigin"\)}/);
-  assert.doesNotMatch(source, /aria-label={t\("clearDestination"\)}/);
+  assert.match(source, /data-flight-results-header-origin-clear[\s\S]*?aria-label={t\("clearOrigin"\)}/);
+  assert.match(source, /data-flight-results-header-destination-clear[\s\S]*?aria-label={t\("clearDestination"\)}/);
   assert.doesNotMatch(source, /function clearOriginField/);
   assert.doesNotMatch(source, /function clearDestinationField/);
 });
@@ -99,6 +99,8 @@ test("origin and destination share one bounded production-ready suggestion card"
   assert.match(suggestions, /overflow-hidden/);
   assert.match(suggestions, /min-h-\[58px\]/);
   assert.match(suggestions, /border-b border-slate-200\/75/);
+  assert.match(suggestions, /keyboardNavigation\?: boolean/);
+  assert.match(suggestions, /querySelectorAll<HTMLButtonElement>\(\s*'\[role="option"\]'/);
   assert.doesNotMatch(suggestions, /overflow-auto|max-h-\[/);
   assert.equal(source.match(/<SuggestionList/g)?.length, 6);
 });

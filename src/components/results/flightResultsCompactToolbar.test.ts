@@ -194,10 +194,12 @@ test("trip type copies the desktop Sort dropdown layout and multi-city expands s
   assert.match(popout, /<MultiCityFlightEditor[\s\S]*presentation="results"/);
 });
 
-test("route field keeps Hotel-like persistent inputs and stable geometry", () => {
+test("route field is one grouped control with explicit swap dividers", () => {
   const toolbar = desktopHeaderSearchBarSource();
 
+  assert.match(toolbar, /data-flight-results-compact-route/);
   assert.match(toolbar, /grid-cols-\[minmax\(56px,1fr\)_28px_minmax\(56px,1fr\)\]/);
+  assert.match(toolbar, /aria-label=\{t\("swapOriginDestination"\)\}[\s\S]*?border-x border-\[#D8E1EC\]/);
   assert.match(toolbar, /data-flight-results-header-origin/);
   assert.match(toolbar, /data-flight-results-header-destination/);
   assert.match(toolbar, /openStickySearchEditor\(event\.currentTarget, "origin"\)/);
@@ -220,6 +222,48 @@ test("route date and traveler controls open their real editors directly from the
   assert.match(toolbar, /launcherRef=\{stickyDateButtonRef\}/);
   assert.match(toolbar, /activeStickySearchTarget === "travelers"[\s\S]*<TravelerCabinPopover/);
   assert.match(toolbar, /launcherRef=\{stickyTravelerButtonRef\}/);
+});
+
+test("desktop header airport controls behave like true comboboxes", () => {
+  const toolbar = desktopHeaderSearchBarSource();
+
+  assert.match(toolbar, /id="sticky-results-origin"[\s\S]*?role="combobox"[\s\S]*?aria-autocomplete="list"[\s\S]*?aria-controls="sticky-flight-origin-suggestions"/);
+  assert.match(toolbar, /id="sticky-results-destination"[\s\S]*?role="combobox"[\s\S]*?aria-autocomplete="list"[\s\S]*?aria-controls="sticky-flight-destination-suggestions"/);
+  assert.match(toolbar, /const input = event\.currentTarget;[\s\S]*?const enteringOrigin =[\s\S]*?input\.select\(\)/);
+  assert.match(toolbar, /const input = event\.currentTarget;[\s\S]*?const enteringDestination =[\s\S]*?input\.select\(\)/);
+  assert.match(toolbar, /data-flight-results-header-origin-clear[\s\S]*?aria-label=\{t\("clearOrigin"\)\}/);
+  assert.match(toolbar, /data-flight-results-header-destination-clear[\s\S]*?aria-label=\{t\("clearDestination"\)\}/);
+  assert.match(toolbar, /setOriginInput\(""\)[\s\S]*?setOriginCode\(""\)/);
+  assert.match(toolbar, /setDestinationInput\(""\)[\s\S]*?setDestinationCode\(""\)/);
+});
+
+test("desktop header route selection advances From to To and closes after destination", () => {
+  const toolbar = desktopHeaderSearchBarSource();
+
+  assert.match(toolbar, /id="sticky-flight-origin-suggestions"[\s\S]*?keyboardNavigation/);
+  assert.match(toolbar, /setOriginCode\(value\)[\s\S]*?stickyDestinationWrapRef\.current[\s\S]*?focus\(\{ preventScroll: true \}\)/);
+  assert.match(toolbar, /id="sticky-flight-destination-suggestions"[\s\S]*?keyboardNavigation/);
+  assert.match(toolbar, /setDestinationCode\(value\)[\s\S]*?collapseStickySearch\(\{ restoreScroll: false \}\)/);
+});
+
+test("sticky airport suggestions support arrow and Home/End navigation", () => {
+  const toolbar = desktopHeaderSearchBarSource();
+  const start = source.indexOf("function SuggestionList");
+  const end = source.indexOf("type FilterOption", start);
+  const suggestions = source.slice(start, end);
+
+  assert.match(toolbar, /event\.key === "ArrowDown" && activeSuggest === "origin"[\s\S]*?sticky-flight-origin-suggestions \[role="option"\][\s\S]*?firstSuggestion\.focus\(\)/);
+  assert.match(toolbar, /event\.key === "ArrowDown"[\s\S]*?activeSuggest === "destination"[\s\S]*?sticky-flight-destination-suggestions \[role="option"\][\s\S]*?firstSuggestion\.focus\(\)/);
+  assert.match(toolbar, /const nextFocus = event\.relatedTarget;[\s\S]*?event\.currentTarget\.parentElement\?\.contains\(nextFocus\)[\s\S]*?return;/);
+  assert.ok(
+    (toolbar.match(/event\.currentTarget\.parentElement\?\.contains\(nextFocus\)/g)?.length ?? 0) >= 2,
+  );
+  assert.match(suggestions, /keyboardNavigation = false/);
+  assert.match(suggestions, /event\.key === "ArrowDown"/);
+  assert.match(suggestions, /event\.key === "ArrowUp"/);
+  assert.match(suggestions, /event\.key === "Home"/);
+  assert.match(suggestions, /event\.key === "End"/);
+  assert.match(suggestions, /event\.preventDefault\(\);[\s\S]*?options\[nextIndex\]\?\.focus\(\)/);
 });
 
 test("multi-city accordion stays aligned to the navbar search footprint", () => {
