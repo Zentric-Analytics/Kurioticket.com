@@ -29,11 +29,6 @@
     border-bottom-left-radius: 15px;
     border-bottom-right-radius: 0;
   }
-  .hotelScrollFilterSlot {
-    position: relative;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-  }
   .carsScrollFilterSlot {
     border-bottom-left-radius: 32px;
     border-bottom-right-radius: 0;
@@ -46,14 +41,10 @@
     background: transparent;
   }
   .hotelNavbarFilterBar [data-mobile-hotel-shortcuts] {
-    position: relative;
-    z-index: 1;
     width: 100%;
     margin-inline-end: 0;
-    padding-inline-start: 28px;
-    padding-inline-end: 0;
-    scroll-padding-inline-start: 28px;
-    scroll-padding-inline-end: 4px;
+    padding-inline: 0;
+    scroll-padding-inline: 4px;
   }
   .scrollFilterBarPinned {
     position: fixed;
@@ -68,10 +59,7 @@
     transform: translateY(0);
   }
   .scrollFilterBarPinned.hotelNavbarFilterBar {
-    position: fixed;
     background: #fff;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
   }
   /* Legacy shared cutout retained for the base surface only.
      Product-specific Hotel and Cars rails below use native border radii so
@@ -91,25 +79,6 @@
     background-position: left bottom;
     background-repeat: no-repeat;
     background-size: 26px 26px;
-  }
-  /* Hotel mobile web: match the first approved mockup with a pronounced
-     sharp-C cutout that begins beside the Filter chip and sweeps into the
-     results background. Keep it behind the chips so their shape/position stays intact. */
-  .hotelScrollFilterSlot::after,
-  .scrollFilterBarPinned.hotelNavbarFilterBar::after {
-    content: "";
-    display: block;
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    z-index: 0;
-    width: 34px;
-    height: 60px;
-    pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2034%2060'%3E%3Cpath%20d='M0%200%20H8%20C24%200%2028%209%2028%2018%20C28%2028%2015%2032%2015%2041%20C15%2051%2024%2057%2034%2057%20V60%20H0%20Z'%20fill='%23F5F7FB'/%3E%3C/svg%3E");
-    background-position: left bottom;
-    background-repeat: no-repeat;
-    background-size: 34px 60px;
   }
   /* Cars keeps the independently approved smooth 32px native radius from #6170. */
   .carsScrollFilterSlot::after,
@@ -134,10 +103,8 @@
   .scrollFilterBarPinned [data-mobile-hotel-shortcuts] {
     width: 100%;
     margin-inline-end: 0;
-    padding-inline-start: 28px;
-    padding-inline-end: 4px;
-    scroll-padding-inline-start: 28px;
-    scroll-padding-inline-end: 4px;
+    padding-inline: 4px;
+    scroll-padding-inline: 4px;
   }
   .scrollFilterBarPinned [data-cars-results-quick-filters] {
     width: 100%;

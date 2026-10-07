@@ -235,7 +235,7 @@ test("Hotel mobile quick filter keeps the underlying results at the same scroll 
 });
 
 
-test("Hotel mobile filter rail uses the same white navbar background as Flight while Sort remains in results", () => {
+test("Hotel mobile filter rail uses the PR6167 white navbar surface while Sort remains in results", () => {
   const mobileStyles = readFileSync(
     new URL("./HotelResultsMobile.module.css", import.meta.url),
     "utf8",
@@ -243,40 +243,24 @@ test("Hotel mobile filter rail uses the same white navbar background as Flight w
 
   assert.match(
     mobileStyles,
-    /\.scrollFilterSlot \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 15px;[\s\S]*border-bottom-right-radius: 0;/,
+    /\.scrollFilterSlot \{[\s\S]*padding: 8px 4px 0;[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 15px;[\s\S]*border-bottom-right-radius: 0;/,
   );
   assert.match(
     mobileStyles,
-    /\.hotelScrollFilterSlot \{[\s\S]*position: relative;[\s\S]*border-bottom-left-radius: 0;[\s\S]*border-bottom-right-radius: 0;/,
+    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;/,
   );
   assert.match(
     mobileStyles,
-    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 0;[\s\S]*border-bottom-right-radius: 0;/,
+    /\.scrollFilterSlot::after,[\s\S]*\.scrollFilterBarPinned\.hotelNavbarFilterBar::after,[\s\S]*width: 26px;[\s\S]*height: 26px;/,
   );
-  assert.match(
-    resultsSource,
-    /mobileStyles\.scrollFilterSlot, mobileStyles\.hotelScrollFilterSlot/,
-  );
-  const hotelCurveRule =
-    mobileStyles.match(/\.hotelScrollFilterSlot::after,[\s\S]*?\.scrollFilterBarPinned\.hotelNavbarFilterBar::after \{([\s\S]*?)\n  \}/)?.[1] ?? "";
-  assert.match(hotelCurveRule, /z-index: 0;/);
-  assert.match(hotelCurveRule, /width: 34px;/);
-  assert.match(hotelCurveRule, /height: 60px;/);
-  assert.match(
-    hotelCurveRule,
-    /M0%200%20H8%20C24%200%2028%209%2028%2018%20C28%2028%2015%2032%2015%2041%20C15%2051%2024%2057%2034%2057%20V60%20H0%20Z/,
-  );
-  assert.match(
-    mobileStyles,
-    /\.hotelNavbarFilterBar \[data-mobile-hotel-shortcuts\] \{[\s\S]*position: relative;[\s\S]*z-index: 1;/,
-  );
+  assert.doesNotMatch(resultsSource, /mobileStyles\.hotelScrollFilterSlot/);
   assert.match(resultsSource, /data-mobile-hotel-shortcuts/);
   assert.match(resultsSource, /<span>Sort:<\/span>[\s\S]*currentSortLabel/);
   assert.doesNotMatch(resultsSource, /renderMobileHotelNavbarFilters[\s\S]{0,600}Sort:/);
 });
 
 
-test("Hotel mobile navbar removes the divider above the filter rail and keeps the asymmetric edge", () => {
+test("Hotel mobile navbar keeps the PR6167 asymmetric left edge", () => {
   const headerSource = readFileSync(
     new URL("../layout/AppHeader.tsx", import.meta.url),
     "utf8",
@@ -292,11 +276,7 @@ test("Hotel mobile navbar removes the divider above the filter rail and keeps th
   );
   assert.match(
     mobileStyles,
-    /\.hotelScrollFilterSlot::after,[\s\S]*width: 34px;[\s\S]*height: 60px;/,
-  );
-  assert.match(
-    mobileStyles,
-    /\.scrollFilterBarPinned\.hotelNavbarFilterBar::after[\s\S]*background-size: 34px 60px;/,
+    /\.scrollFilterSlot \{[\s\S]*border-bottom-left-radius: 15px;[\s\S]*border-bottom-right-radius: 0;/,
   );
 });
 
@@ -314,7 +294,7 @@ test("Hotel mobile filter rail is not fixed before the existing handoff point", 
 });
 
 
-test("Hotel mobile filter rail keeps the approved 28px chip start in natural and pinned states", () => {
+test("Hotel mobile filter rail keeps the same tighter 4px horizontal inset when pinned", () => {
   const mobileStyles = readFileSync(
     new URL("./HotelResultsMobile.module.css", import.meta.url),
     "utf8",
@@ -329,11 +309,11 @@ test("Hotel mobile filter rail keeps the approved 28px chip start in natural and
   );
   assert.match(
     mobileStyles,
-    /\.hotelNavbarFilterBar \[data-mobile-hotel-shortcuts\][\s\S]*padding-inline-start: 28px;[\s\S]*scroll-padding-inline-start: 28px;/,
+    /\.hotelNavbarFilterBar \[data-mobile-hotel-shortcuts\][\s\S]*scroll-padding-inline: 4px;/,
   );
   assert.match(
     mobileStyles,
-    /\.scrollFilterBarPinned \[data-mobile-hotel-shortcuts\][\s\S]*padding-inline-start: 28px;[\s\S]*scroll-padding-inline-start: 28px;/,
+    /\.scrollFilterBarPinned \[data-mobile-hotel-shortcuts\][\s\S]*padding-inline: 4px;[\s\S]*scroll-padding-inline: 4px;/,
   );
   assert.match(
     mobileStyles,

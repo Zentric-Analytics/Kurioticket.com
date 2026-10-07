@@ -1776,7 +1776,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
           <section ref={desktopResultsContentRef} className="relative min-w-0 space-y-2 sm:space-y-4">
             {!guided && results.length > 0 ? (
-              <div ref={mobileFilterOriginRef} className={cn("sm:hidden", mobileStyles.scrollFilterSlot, mobileStyles.hotelScrollFilterSlot)}>
+              <div ref={mobileFilterOriginRef} className={cn("sm:hidden", mobileStyles.scrollFilterSlot)}>
                 <div
                   data-hotel-results-toolbar
                   data-scroll-visible={mobileFiltersVisible ? "true" : "false"}
