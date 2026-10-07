@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Check, ExternalLink, Leaf } from "lucide-react";
 
 import { formatDisplayPrice, formatFlightResultCurrency } from "@/lib/currency/formatCurrency";
@@ -31,6 +32,8 @@ export function MobileNativeFareInformationDeck({
   isFallbackRate,
   locale,
   pricesReady,
+  redirecting,
+  onViewDeal,
 }: {
   activeTab: MobileFareInfoTab;
   onTabChange: (tab: MobileFareInfoTab) => void;
@@ -43,6 +46,8 @@ export function MobileNativeFareInformationDeck({
   isFallbackRate: boolean;
   locale: string;
   pricesReady: boolean;
+  redirecting: boolean;
+  onViewDeal: (offerId: string) => void;
 }) {
   const fareInformationTouchRailRef = useFareInformationTouchRailRef<HTMLDivElement>();
   return (
@@ -81,6 +86,8 @@ export function MobileNativeFareInformationDeck({
             currencyRates={currencyRates}
             isFallbackRate={isFallbackRate}
             pricesReady={pricesReady}
+            redirecting={redirecting}
+            onViewDeal={onViewDeal}
           />
         ) : null}
         {activeTab === "details" ? <DetailsSurface offer={activeOffer} locale={locale} /> : null}
@@ -99,6 +106,8 @@ function DealsSurface({
   currencyRates,
   isFallbackRate,
   pricesReady,
+  redirecting,
+  onViewDeal,
 }: {
   fare?: FlightDetailsFareChoice;
   selectedDealOfferId: string | null;
@@ -107,16 +116,46 @@ function DealsSurface({
   currencyRates: ExchangeRates;
   isFallbackRate: boolean;
   pricesReady: boolean;
+  redirecting: boolean;
+  onViewDeal: (offerId: string) => void;
 }) {
   const deals = fare?.deals ?? [];
-  if (!deals.length) {
-    return <EmptyState title="No booking deals available" description="No additional live provider deals were supplied for this fare." />;
+  const fallbackOffer = fare?.offer;
+  const fallbackProviderName =
+    fallbackOffer?.bookingProviderName?.trim() ||
+    fallbackOffer?.provider?.trim() ||
+    fallbackOffer?.airlineName?.trim() ||
+    "";
+  const fallbackDeal =
+    !deals.length &&
+    fallbackOffer &&
+    fallbackProviderName &&
+    Number.isFinite(fallbackOffer.price) &&
+    fallbackOffer.price > 0
+      ? {
+          key: `mobile-source-${fare?.key ?? fallbackOffer.id}`,
+          offerId: fallbackOffer.id,
+          providerName: fallbackProviderName,
+          ...(fallbackOffer.bookingProviderLogoUrl ? { providerLogoUrl: fallbackOffer.bookingProviderLogoUrl } : {}),
+          price: fallbackOffer.price,
+          currency: fallbackOffer.currency,
+          offer: fallbackOffer,
+        }
+      : null;
+  const displayedDeals = deals.length
+    ? deals.map((deal) => ({ deal, canContinue: true }))
+    : fallbackDeal
+      ? [{ deal: fallbackDeal, canContinue: Boolean(fare?.handoff.available) }]
+      : [];
+
+  if (!displayedDeals.length) {
+    return <EmptyState title="No fare price available" description="The provider did not supply a usable price for this fare." />;
   }
 
   return (
-    <div role="radiogroup" aria-label="Flight deal options" className="space-y-[10px] py-3">
-      {deals.map((deal) => {
-        const selected = deal.offerId === selectedDealOfferId;
+    <div role="radiogroup" aria-label="Flight deal options" className="space-y-[10px] py-3" data-mobile-flight-deal-list>
+      {displayedDeals.map(({ deal, canContinue }, index) => {
+        const selected = deal.offerId === selectedDealOfferId || (!selectedDealOfferId && index === 0);
         const identityMark = resolveDealIdentityMark(deal);
         const price = formatDisplayPrice({
           amount: deal.price,
@@ -132,34 +171,67 @@ function DealsSurface({
           deal.currency.toUpperCase() === selectedCurrency.toUpperCase()
           || (!isFallbackRate && price.currency.toUpperCase() === selectedCurrency.toUpperCase())
         );
+
         return (
-          <button
+          <article
             key={deal.key}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            aria-label={`${deal.providerName}, ${priceAvailable ? price.ariaLabel : "price unavailable"}, ${fare?.label ?? "fare"}`}
-            onClick={() => onSelectDeal(deal.offerId)}
-            className={`flex min-h-24 w-full flex-col justify-between gap-[14px] rounded-[14px] border px-[15px] py-[13px] text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 ${
+            data-mobile-flight-deal-card
+            data-selected={selected || undefined}
+            data-provider-handoff-unavailable={!canContinue || undefined}
+            className={`grid min-h-[92px] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border bg-white px-[14px] py-3 transition ${
               selected
-                ? "border-[#075EE8] bg-[#F4F8FF] shadow-[0_4px_10px_rgba(7,19,59,0.12)]"
-                : "border-[#D8E1EC] bg-white"
+                ? "border-[#075EE8] shadow-[0_3px_10px_rgba(7,94,232,0.08)]"
+                : "border-[#D9E2E8]"
             }`}
           >
-            <span className="flex min-w-0 items-start justify-between gap-3">
-              <span className="flex min-w-0 flex-1 items-center gap-2">
-                {identityMark.kind === "airline" ? <FlightIdentityMark logoUrl={identityMark.logoUrl} decorative mobile /> : null}
-                <span className="min-w-0 flex-1 truncate text-[15px] font-bold leading-5 text-[#1A1A1A]">{deal.providerName}</span>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              tabIndex={selected ? 0 : -1}
+              aria-label={`${deal.providerName}, ${priceAvailable ? price.ariaLabel : "price loading"}, ${fare?.label ?? "fare"}`}
+              onClick={() => onSelectDeal(deal.offerId)}
+              className="min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2"
+            >
+              <span className="block min-w-0" data-mobile-flight-deal-provider>
+                {deal.providerLogoUrl ? (
+                  <span data-mobile-flight-provider-logo className="inline-flex h-8 max-w-[76px] items-center justify-start overflow-hidden">
+                    <Image src={deal.providerLogoUrl} alt="" aria-hidden="true" width={76} height={32} className="max-h-8 w-auto max-w-[76px] object-contain object-left" title={deal.providerName} />
+                  </span>
+                ) : identityMark.kind === "airline" ? (
+                  <span className="inline-flex min-w-0 items-center gap-2">
+                    <FlightIdentityMark logoUrl={identityMark.logoUrl} decorative mobile />
+                    <strong className="truncate text-[14px] font-semibold leading-5 text-[#192024]">{deal.providerName}</strong>
+                  </span>
+                ) : (
+                  <strong className="truncate text-[14px] font-semibold leading-5 text-[#004BB8]">{deal.providerName}</strong>
+                )}
               </span>
-              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-[1.5px] ${selected ? "border-[#075EE8]" : "border-[#64748B]"}`}>
-                {selected ? <span className="h-2 w-2 rounded-full bg-[#075EE8]" aria-hidden="true" /> : null}
+
+              <span className="mt-2 block min-w-0" data-mobile-flight-deal-price>
+                <strong className="block break-words text-[18px] font-semibold leading-[22px] tracking-[-0.02em] tabular-nums text-[#192024]" aria-label={price.ariaLabel}>
+                  {priceAvailable ? price.formatted : "Loading price…"}
+                </strong>
+                <span className="block text-[11px] font-normal leading-[14px] text-[#59636a]">
+                  {fare?.label ? `${fare.label} · Trip total` : "Trip total"}
+                </span>
               </span>
-            </span>
-            <span className="flex items-end justify-between gap-3">
-              <span className="min-w-0 flex-1 text-[12px] font-medium leading-[17px] text-[#536B92]">{fare?.label}</span>
-              <span className="max-w-[60%] shrink-0 text-right text-[18px] font-extrabold leading-[22px] tabular-nums text-[#1A1A1A]" aria-label={price.ariaLabel}>{priceAvailable ? price.formatted : "—"}</span>
-            </span>
-          </button>
+            </button>
+
+            <button
+              type="button"
+              disabled={redirecting || !canContinue}
+              aria-label={canContinue ? `Continue deal with ${deal.providerName}` : `Provider checkout unavailable for ${deal.providerName}`}
+              onClick={() => {
+                onSelectDeal(deal.offerId);
+                onViewDeal(deal.offerId);
+              }}
+              className="inline-flex h-9 w-[96px] shrink-0 items-center justify-center rounded-lg bg-[#004BB8] px-2.5 text-[12px] font-semibold leading-5 text-white transition-colors hover:bg-[#003B91] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[#004BB8] disabled:text-white disabled:opacity-100 min-[360px]:w-[108px] min-[360px]:text-[13px]"
+              data-mobile-flight-deal-action
+            >
+              {canContinue ? redirecting ? "Opening…" : "View deal" : "Unavailable"}
+            </button>
+          </article>
         );
       })}
     </div>
