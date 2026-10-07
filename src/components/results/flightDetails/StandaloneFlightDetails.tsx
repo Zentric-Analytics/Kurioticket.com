@@ -10,7 +10,6 @@ import {
   Check,
   ExternalLink,
   Clock3,
-  LockKeyhole,
   Luggage,
   Leaf,
   Info,
@@ -146,17 +145,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const activeOffer = selectedDeal?.offer ?? selectedOffer;
   const savedFlightKey = selectedOffer?.id ?? id;
   const handoff = selectedFare?.handoff ?? available?.handoff ?? { available: false as const };
-  const activeHandoff = selectedDeal
-    ? { available: true as const, providerName: selectedDeal.providerName }
-    : handoff;
-  const mobileHandoff = activeHandoff;
   const mobilePricesReady = !currencyRates.isLoading;
-  const canUseMobilePrice = (price: ReturnType<typeof formatDisplayPrice> | null, sourceCurrency: string) =>
-    Boolean(price && (
-      sourceCurrency.toUpperCase() === selectedOption.currency.toUpperCase()
-      || (!currencyRates.isFallback && price.currency.toUpperCase() === selectedOption.currency.toUpperCase())
-    ));
-  const canContinueMobile = Boolean(activeOffer && mobilePricesReady && (selectedDeal || handoff.available));
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !selectedOffer) {
@@ -273,31 +262,6 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const tripLine = `${tripType} • ${new Intl.NumberFormat(locale).format(travelers.count)} ${t(travelers.count === 1 ? "deals.travelerSingular" : "deals.travelerPlural")}`;
   const nativeTripType = available.search.tripType === "round-trip" ? "Round-trip" : available.search.tripType === "multi-city" ? "Multi-city" : "One-way";
   const nativeTripLine = `${nativeTripType} · ${available.search.travelers} traveler${available.search.travelers === 1 ? "" : "s"} · ${titleCase(available.search.cabinClass)}`;
-  const providerPrice = activeOffer
-    ? formatDisplayPrice({
-        amount: activeOffer.price,
-        sourceCurrency: activeOffer.currency,
-        displayCurrency: selectedOption.currency,
-        convertSourceEstimate: true, useFlightResultSymbols: true, maximumFractionDigits: 0,
-        rates: currencyRates.rates,
-        isFallbackRate: currencyRates.isFallback,
-      })
-    : null;
-  const mobilePriceCandidate = selectedDeal
-    ? formatDisplayPrice({
-        amount: selectedDeal.price,
-        sourceCurrency: selectedDeal.currency,
-        displayCurrency: selectedOption.currency,
-        convertSourceEstimate: true, useFlightResultSymbols: true, maximumFractionDigits: 0,
-        rates: currencyRates.rates,
-        isFallbackRate: currencyRates.isFallback,
-      })
-    : providerPrice;
-  const mobilePriceSourceCurrency = selectedDeal?.currency ?? activeOffer.currency;
-  const mobilePrice = mobilePricesReady && canUseMobilePrice(mobilePriceCandidate, mobilePriceSourceCurrency)
-    ? mobilePriceCandidate
-    : null;
-
   const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
     const offset = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
     if (!offset) return;
@@ -398,7 +362,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     : localSavedFlightIds.includes(savedFlightKey);
 
   return (
-    <main className="flex-1 bg-[#F3F6FA] pb-[calc(7.5rem+env(safe-area-inset-bottom))] text-[#142033] sm:bg-[#F7F9FC] sm:pt-4 lg:pb-16 lg:pt-3">
+    <main className="flex-1 bg-[#F3F6FA] pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-[#142033] sm:bg-[#F7F9FC] sm:pb-16 sm:pt-4 lg:pt-3">
       <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 top-0 z-[70] h-[calc(env(safe-area-inset-top)+64px)] transition-colors sm:hidden ${mobileHeaderProtected ? "bg-[#F3F6FA]" : "bg-transparent"}`} />
       <div ref={mobileBackControlRef} className="fixed left-4 top-[calc(env(safe-area-inset-top)+8px)] z-[80] sm:hidden">
         <Link href={resultsHref} aria-label="Back to results" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/55 bg-white/90 text-slate-900 shadow-[0_2px_6px_rgba(15,23,42,0.12)] backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">
@@ -490,6 +454,14 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               })}
             </div> : <div data-desktop-fare-price-loading role="status" aria-label="Loading fare prices" aria-busy="true" className="hidden min-w-0 gap-3 overflow-hidden pb-3 pr-6 sm:flex">{fareChoices.map((fare)=><div data-desktop-fare-loading-card key={fare.key} className="relative h-[150px] w-[250px] min-w-[250px] shrink-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-2 shadow-[0_2px_7px_rgba(7,19,59,0.07)]"><div className="min-w-0 pb-14"><div className="flex max-w-full items-center justify-center gap-[7px]"><div className="h-6 w-6 shrink-0 animate-pulse rounded-lg bg-slate-200 motion-reduce:animate-none" /><div className="h-3 w-[72px] max-w-[60%] animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /></div><div className="mt-[5px] space-y-[5px]">{[0,1,2].map((row)=><div key={row} className="flex min-w-0 items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none" /><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div>)}</div></div><div data-desktop-fare-loading-price className="absolute inset-x-3 bottom-2 flex min-h-12 items-end justify-center"><div className="h-5 w-[82px] animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /></div></div>)}</div>}
 
+            {error || notice ? (
+              <p
+                role={error ? "alert" : "status"}
+                className={`mt-2 rounded-lg px-3 py-2 text-[12px] font-medium sm:hidden ${error ? "bg-red-50 text-red-700" : "bg-blue-50 text-[#075EE8]"}`}
+              >
+                {error || notice}
+              </p>
+            ) : null}
             <MobileNativeFareInformationDeck
               activeTab={activeTab}
               onTabChange={setActiveTab}
@@ -502,6 +474,8 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               isFallbackRate={currencyRates.isFallback}
               locale={locale}
               pricesReady={mobilePricesReady}
+              redirecting={redirecting}
+              onViewDeal={continueToOffer}
             />
             <div data-desktop-fare-information-tabs className="mt-5 hidden min-w-0 sm:flex lg:sticky lg:top-0 lg:z-40 lg:border-b lg:border-slate-200 lg:bg-white" role="tablist" aria-label="Fare information">{fareTabs.map((tab, index) => <button key={tab.id} ref={(element) => { tabRefs.current[index] = element; }} id={`fare-tab-${tab.id}`} type="button" role="tab" aria-selected={activeTab === tab.id} aria-controls={`fare-panel-${tab.id}`} tabIndex={activeTab === tab.id ? 0 : -1} onClick={() => setActiveTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)} className={`min-h-11 flex-1 whitespace-nowrap border-b-[3px] px-1 text-center text-sm font-semibold text-[#536B92] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 ${activeTab === tab.id ? "border-[#075EE8]" : "border-transparent"}`}>{tab.label}</button>)}</div>
             <div className="hidden sm:block">
@@ -515,7 +489,6 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               ) : null}
               <FarePanel activeTab={activeTab} fare={selectedFare} offer={activeOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} selectedDealOfferId={selectedDeal?.offerId ?? null} onSelectDeal={setSelectedDealOfferId} onViewDeal={continueToOffer} />
             </div>
-            <MobileCheckoutDock travelerCount={travelers.count} price={mobilePrice} redirecting={redirecting} handoff={mobileHandoff} canContinue={canContinueMobile && Boolean(mobilePrice)} onContinue={() => continueToOffer(selectedDeal?.offerId ?? selectedOffer.id)} error={error || notice} priceLoading={!mobilePricesReady} />
             </div>
           </section>
         </div>
@@ -1684,10 +1657,6 @@ function carrierConditionsLinks(offer: FlightDetailsOffer) {
 }
 
 function EmissionsRow({ amount, locale }: { amount: number; locale: string }) { return <div className="mt-4 flex min-h-9 items-center justify-between gap-3 rounded-md bg-emerald-50/70 px-3 py-2 text-xs"><span className="inline-flex items-center gap-2 font-medium text-emerald-700"><Leaf className="h-4 w-4" aria-hidden="true" /> Estimated CO₂ emissions</span><span className="inline-flex items-center gap-2 text-right font-medium text-slate-800">{amount.toLocaleString(locale)} kg for this offer <Info className="h-3.5 w-3.5" aria-hidden="true" /></span></div>; }
-
-function CheckoutButton({ redirecting, handoff, canContinue, onContinue, dock = false, mobileDock = false, label = "Continue booking", pendingLabel = "Opening booking…" }: { redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; dock?: boolean; mobileDock?: boolean; label?: string; pendingLabel?: string }) { return <button type="button" aria-label={handoff.available ? label : "Booking currently unavailable"} aria-disabled={!canContinue || redirecting} disabled={!canContinue || redirecting} onClick={onContinue} className={`${mobileDock ? "inline-flex h-12 min-w-[140px] max-w-[180px] flex-[0.78]" : dock ? "inline-flex min-h-[50px] min-w-[168px] flex-1 sm:max-w-[260px]" : "mt-4 inline-flex min-h-[50px] w-full"} items-center justify-center whitespace-nowrap rounded-[8px] bg-[#075EE8] px-3 ${mobileDock ? "text-xs font-bold" : "gap-2 text-sm font-semibold"} text-white transition hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`}>{!mobileDock ? <LockKeyhole className="h-4 w-4" aria-hidden="true" /> : null}{redirecting ? pendingLabel : label}</button>; }
-
-function MobileCheckoutDock({ travelerCount, price, redirecting, handoff, canContinue, onContinue, error, priceLoading=false }: { travelerCount: number; price: ReturnType<typeof formatDisplayPrice> | null; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string; priceLoading?: boolean }) { const totalLabel=`Total for ${travelerCount} traveler${travelerCount===1?"":"s"}`; return <section className="fixed inset-x-0 bottom-0 z-[90] rounded-t-[22px] border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_28px_rgba(15,23,42,0.14)] lg:hidden" aria-labelledby="mobile-trip-total-heading"><div className="mx-auto max-w-3xl">{error ? <p role="alert" className="mb-2 line-clamp-2 text-xs font-medium leading-4 text-red-700">{error}</p> : null}<div className="flex min-h-[48px] items-center justify-between gap-[14px]"><div className="min-w-0 flex-1">{priceLoading ? <p className="truncate text-[19px] font-semibold leading-[22px] tracking-[-0.25px] text-[#1A1A1A]">Loading price…</p> : price ? <p className="truncate text-[19px] font-semibold leading-[22px] tracking-[-0.25px] text-[#1A1A1A] tabular-nums" aria-label={price.ariaLabel}>{price.formatted}</p> : <p className="text-sm font-semibold text-slate-500">Price unavailable</p>}<h2 id="mobile-trip-total-heading" className="mt-px truncate text-[11px] font-semibold leading-4 text-[#536B92]">{totalLabel}</h2></div><CheckoutButton mobileDock redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={onContinue} label="Continue deal" pendingLabel="Checking offer…" /></div></div></section>; }
 
 function FlightDetailsSkeleton({ resultsHref }: { resultsHref: string }) { return <FlightDetailsLoadingShell resultsHref={resultsHref} />; }
 function FlightDetailsUnavailable({ resultsHref, message }: { resultsHref: string; message: string }) { return <main className="flex-1 bg-white sm:bg-[#F7F9FC] sm:py-10"><div className="flex min-h-[52px] items-center px-4 pt-[env(safe-area-inset-top)] sm:hidden"><Link href={resultsHref} aria-label="Back to results" className="inline-flex min-h-11 items-center gap-2 text-sm font-extrabold text-[#075EE8]"><ArrowLeft className="h-[18px] w-[18px]" /><span>Back to results</span></Link></div><div className="mx-auto max-w-3xl px-0 sm:px-4"><Link href={resultsHref} className="ml-4 hidden items-center gap-2 text-sm font-semibold text-[#075EE8] sm:inline-flex sm:ml-0"><ArrowLeft className="h-4 w-4" /> Back to results</Link><section className="mt-4 border-y border-slate-200 bg-white p-6 sm:rounded-[15px] sm:border sm:p-8"><h1 className="text-xl font-bold">Flight quote unavailable</h1><p className="mt-2 text-sm text-slate-600">{message || "Please return to results and search again for current prices."}</p></section></div></main>; }
