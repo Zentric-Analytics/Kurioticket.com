@@ -1665,35 +1665,11 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     </button>
   );
 
-  const renderMobileHotelNavbarFilters = () => (
-    <div
-      data-hotel-results-toolbar
-      data-scroll-visible={mobileFiltersVisible ? "true" : "false"}
-      data-scroll-pinned={mobileFiltersPinned ? "true" : "false"}
-      className={cn(
-        "flex min-w-0 flex-col items-start gap-2 sm:hidden",
-        mobileStyles.scrollFilterBar,
-        mobileStyles.hotelNavbarFilterBar,
-        mobileFiltersPinned && mobileStyles.scrollFilterBarPinned,
-        mobileFiltersAnimated && mobileStyles.scrollFilterBarAnimated,
-        mobileFiltersPinned &&
-          !mobileFiltersVisible &&
-          mobileStyles.scrollFilterBarHidden,
-      )}
-    >
-      <div className="w-full px-3">
-        {renderMobileHotelShortcuts()}
-      </div>
-    </div>
-  );
 
   return (
     <>
       {!guided && !loadingContent && mobileNavSearchTarget
         ? createPortal(renderMobileHotelNavSearch(), mobileNavSearchTarget)
-        : null}
-      {!guided && !loadingContent && results.length > 0 && typeof document !== "undefined"
-        ? createPortal(renderMobileHotelNavbarFilters(), document.body)
         : null}
       {!guided && !loadingContent && desktopSearchPlacement === "navbar" && desktopNavSearchTarget
         ? createPortal(renderDesktopHotelSearch("hotel-results-nav-search"), desktopNavSearchTarget)
@@ -1800,11 +1776,25 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
           <section ref={desktopResultsContentRef} className="relative min-w-0 space-y-2 sm:space-y-4">
             {!guided && results.length > 0 ? (
-              <div
-                ref={mobileFilterOriginRef}
-                className={cn("sm:hidden", mobileStyles.scrollFilterSlot)}
-                aria-hidden="true"
-              />
+              <div ref={mobileFilterOriginRef} className={cn("sm:hidden", mobileStyles.scrollFilterSlot)}>
+                <div
+                  data-hotel-results-toolbar
+                  data-scroll-visible={mobileFiltersVisible ? "true" : "false"}
+                  data-scroll-pinned={mobileFiltersPinned ? "true" : "false"}
+                  className={cn(
+                    "flex min-w-0 flex-col items-start gap-2 sm:hidden",
+                    mobileStyles.scrollFilterBar,
+                    mobileStyles.hotelNavbarFilterBar,
+                    mobileFiltersPinned && mobileStyles.scrollFilterBarPinned,
+                    mobileFiltersAnimated && mobileStyles.scrollFilterBarAnimated,
+                    mobileFiltersPinned &&
+                      !mobileFiltersVisible &&
+                      mobileStyles.scrollFilterBarHidden,
+                  )}
+                >
+                  {renderMobileHotelShortcuts()}
+                </div>
+              </div>
             ) : null}
             {error && results.length === 0 ? (
               <div ref={guided ? guidedErrorRef : undefined} tabIndex={guided ? -1 : undefined} className={cn(hotelResultStackClass, "rounded-[13px] border border-danger/20 bg-white p-4 text-slate-950 shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] sm:rounded-md sm:border-danger/30 sm:bg-red-50 sm:text-danger sm:shadow-none")}>
