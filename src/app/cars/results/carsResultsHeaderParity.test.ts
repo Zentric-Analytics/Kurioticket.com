@@ -163,22 +163,36 @@ test("Cars pinned mobile filters stay locked to the stable Cars header edge duri
   );
 });
 
-test("Cars Results stops iOS top-edge rubber-band from server-rendered route markup without changing the Hotels-style filter reveal", () => {
+test("Cars Results preserves native top-edge reload while keeping the Hotels-style filter reveal", () => {
   assert.match(carsSource, /<CarsResultsMobileSafeArea \/>/);
   assert.match(loadingSource, /<CarsResultsMobileSafeArea \/>/);
   assert.match(safeAreaSource, /data-cars-results-mobile-safe-area/);
-  assert.match(
-    globalStyles,
-    /@media \(max-width: 639px\) \{[\s\S]*html:has\(body \[data-cars-results-mobile-safe-area\]\),[\s\S]*body:has\(\[data-cars-results-mobile-safe-area\]\) \{[\s\S]*overscroll-behavior-y: none;/,
-  );
   assert.doesNotMatch(
     globalStyles,
-    /data-cars-results-mobile-safe-area[\s\S]{0,220}(?:overflow:\s*hidden|touch-action:\s*none)/,
+    /data-cars-results-mobile-safe-area[\s\S]{0,260}(?:overscroll-behavior-y:\s*none|overflow:\s*hidden|touch-action:\s*none)/,
   );
-  assert.doesNotMatch(carsSource, /CarsResultsMobileScrollBoundary/);
   assert.match(
     carsClientSource,
     /distance >= \(nextDirection > 0 \? 20 : 12\)[\s\S]*setMobileFiltersVisible\(nextDirection < 0\)/,
+  );
+});
+
+test("Cars pinned filters blend into the white header while the natural rail keeps its existing results surface", () => {
+  assert.match(
+    mobileResultsStyles,
+    /\.scrollFilterBarPinned \{[\s\S]*background:\s*#f5f7fb;/,
+  );
+  assert.doesNotMatch(
+    mobileResultsStyles,
+    /\.scrollFilterBar \{[^}]*background:\s*#fff(?:fff)?;/,
+  );
+  assert.match(
+    mobileResultsStyles,
+    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*background:\s*#ffffff;[\s\S]*border-top:\s*0;[\s\S]*box-shadow:\s*none;/,
+  );
+  assert.match(
+    carsClientSource,
+    /data-scroll-pinned=\{mobileFiltersPinned \? "true" : "false"\}/,
   );
 });
 

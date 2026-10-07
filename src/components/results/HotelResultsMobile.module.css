@@ -64,6 +64,9 @@
      browser chrome expands/collapses during upward scrolling. */
   .scrollFilterBarPinned[data-cars-results-scroll-filter-bar] {
     top: calc(61px + var(--cars-results-safe-area-top));
+    background: #ffffff;
+    border-top: 0;
+    box-shadow: none;
   }
   .scrollFilterBarAnimated {
     transition: transform 220ms cubic-bezier(0, 0, .4, 1);
