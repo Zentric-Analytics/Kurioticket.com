@@ -328,6 +328,12 @@ body {
 /* Cars, Hotels, and Flight Results paint compact presentation-only thumbs while
    retaining the document as the sole mobile scroll owner. */
 @media (max-width: 639px) {
+  /* Let the results surface show through the header's rounded corner. */
+  html[data-flight-results-scroll-indicator],
+  html[data-flight-results-scroll-indicator] body {
+    background: #f5f7fb;
+  }
+
   /* Keep the Cars mobile document/browser canvas on the same surface as
      Hotel Results. This prevents the white root canvas from showing through
      at overscroll edges or around the full-width results surface. */
@@ -2151,6 +2157,16 @@ textarea {
 }
 
 @media (max-width: 639px) {
+  /* Keep the Flight Results filter row on the header's curved left edge. */
+  [data-flight-results-desktop-header] {
+    border-bottom-left-radius: 15px;
+  }
+
+  [data-flight-results-desktop-header] > [data-mobile-results-filter-navbar] {
+    border-bottom-left-radius: inherit;
+    overflow: hidden;
+  }
+
   .flight-results-grid {
     width: calc(100% - 24px);
   }

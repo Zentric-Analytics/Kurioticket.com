@@ -96,6 +96,10 @@ for (const width of [320, 360, 390, 412]) {
       };
 
       return {
+        canvasBackground: getComputedStyle(document.body).backgroundColor,
+        headerBottomLeftRadius: getComputedStyle(header).borderBottomLeftRadius,
+        headerBottomRightRadius: getComputedStyle(header).borderBottomRightRadius,
+        filterBottomLeftRadius: getComputedStyle(filterNavbar).borderBottomLeftRadius,
         headerTop: headerRect.top,
         headerBottom: headerRect.bottom,
         navbarBottom: navbarRect.bottom,
@@ -111,6 +115,10 @@ for (const width of [320, 360, 390, 412]) {
       };
     });
 
+    expect(initial.canvasBackground).toBe("rgb(245, 247, 251)");
+    expect(initial.headerBottomLeftRadius).toBe("15px");
+    expect(initial.headerBottomRightRadius).toBe("0px");
+    expect(initial.filterBottomLeftRadius).toBe("15px");
     expect(Math.abs(initial.filterNavbarTop - initial.navbarBottom)).toBeLessThanOrEqual(1);
     expect(Math.abs(initial.filterNavbarBottom - initial.headerBottom)).toBeLessThanOrEqual(1);
     expect(initial.filterBottom).toBeLessThanOrEqual(initial.headerBottom);
