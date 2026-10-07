@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, type MouseEvent } from "react";
+import { ChevronRight } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -153,10 +154,11 @@ export function CarDealPicker({
                   rel="noopener noreferrer"
                   aria-label={`View deal from ${group.providerName}`}
                   onClick={isolateProviderAction}
-                  className={`${compact ? "mt-0.5 text-[9px] leading-[11px]" : "mt-1 text-[10px] leading-3"} inline-flex min-h-4 items-center font-semibold text-[#004BB8] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35`}
+                  className={`${compact ? "mt-0.5 text-[10px] leading-[14px]" : "mt-1 text-[11px] leading-4"} inline-flex min-h-4 items-center gap-0.5 font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35`}
                   data-car-deal-provider-view-deal
                 >
                   View deal
+                  <ChevronRight size={compact ? 11 : 12} strokeWidth={2} aria-hidden="true" />
                 </a>
               ) : (
                 <span
