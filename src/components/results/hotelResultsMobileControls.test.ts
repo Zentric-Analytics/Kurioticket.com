@@ -243,11 +243,11 @@ test("Hotel mobile filter rail uses the same white navbar background as Flight w
 
   assert.match(
     mobileStyles,
-    /\.scrollFilterSlot \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 13px;[\s\S]*border-bottom-right-radius: 13px;/,
+    /\.scrollFilterSlot \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 15px;[\s\S]*border-bottom-right-radius: 0;/,
   );
   assert.match(
     mobileStyles,
-    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 13px;[\s\S]*border-bottom-right-radius: 13px;/,
+    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 15px;[\s\S]*border-bottom-right-radius: 0;/,
   );
   assert.match(resultsSource, /data-mobile-hotel-shortcuts/);
   assert.match(resultsSource, /<span>Sort:<\/span>[\s\S]*currentSortLabel/);
@@ -255,7 +255,7 @@ test("Hotel mobile filter rail uses the same white navbar background as Flight w
 });
 
 
-test("Hotel mobile navbar removes the divider above the filter rail and matches card bottom corners", () => {
+test("Hotel mobile navbar removes the divider above the filter rail and keeps the asymmetric edge", () => {
   const headerSource = readFileSync(
     new URL("../layout/AppHeader.tsx", import.meta.url),
     "utf8",
@@ -271,7 +271,7 @@ test("Hotel mobile navbar removes the divider above the filter rail and matches 
   );
   assert.match(
     mobileStyles,
-    /\.hotelNavbarFilterBar \{[\s\S]*border-bottom-left-radius: 13px;[\s\S]*border-bottom-right-radius: 13px;/,
+    /\.hotelNavbarFilterBar \{[\s\S]*border-bottom-left-radius: 15px;[\s\S]*border-bottom-right-radius: 0;/,
   );
 });
 

@@ -26,8 +26,8 @@
     padding: 8px 12px 0;
     overflow: hidden;
     background: #fff;
-    border-bottom-left-radius: 13px;
-    border-bottom-right-radius: 13px;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 0;
   }
   .scrollFilterBar {
     height: 44px;
@@ -56,8 +56,8 @@
   }
   .scrollFilterBarPinned.hotelNavbarFilterBar {
     background: #fff;
-    border-bottom-left-radius: 13px;
-    border-bottom-right-radius: 13px;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 0;
   }
   /* Cars Results uses a 61px mobile header plus a stable/max Safari inset.
      Keep the returning filter rail locked to that exact header edge while
