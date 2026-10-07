@@ -12,22 +12,32 @@ const hotelMobileStyles = readFileSync(new URL("./HotelResultsMobile.module.css"
 const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 const presentation = readFileSync(new URL("../../lib/cars/carFilterPresentation.ts", import.meta.url), "utf8");
 
-test("Cars full Filter follows the native Cars filter hierarchy without changing desktop filters", () => {
+test("Cars full Filter matches the Hotels mobile bottom-sheet hierarchy without changing desktop filters", () => {
   const start = cars.indexOf("data-cars-mobile-filter-shell");
   const end = cars.indexOf('quickFilterGroupId === "sort"', start);
   const shell = cars.slice(start, end);
   assert.ok(start >= 0 && end > start);
-  assert.match(shell, /h-\[100dvh\] w-full.*bg-\[#F2F4F8\].*sm:w-\[420px\] lg:hidden/);
-  assert.match(shell, /min-h-\[64px\].*bg-\[#F2F4F8\].*pe-\[10px\] ps-5/);
-  assert.doesNotMatch(shell, /SlidersHorizontal|All cars shown|clearAll/);
+  assert.match(
+    shell,
+    /h-\[95dvh\] w-full[\s\S]*rounded-t-\[20px\][\s\S]*bg-\[#F2F4F8\][\s\S]*max-sm:top-auto[\s\S]*sm:h-\[100dvh\][\s\S]*sm:w-\[420px\][\s\S]*sm:rounded-none[\s\S]*lg:hidden/,
+  );
+  assert.match(shell, /aria-hidden=\{!filtersOpen\}/);
+  assert.match(shell, /translate-y-0 sm:translate-x-0/);
+  assert.match(shell, /translate-y-full sm:translate-x-full sm:translate-y-0/);
+  assert.match(shell, /min-h-\[64px\][\s\S]*bg-\[#F2F4F8\][\s\S]*pe-\[10px\] ps-5/);
+  assert.match(shell, /text-base font-semibold leading-5 text-slate-950/);
   assert.match(shell, /activeFilterCount > 0[\s\S]*?activeFilterLabel[\s\S]*?: null/);
   assert.match(shell, /h-11 w-11[\s\S]*?<X className="h-\[22px\] w-\[22px\]"/);
   assert.match(shell, /overflow-y-auto overflow-x-hidden overscroll-contain/);
-  assert.match(shell, /bg-\[#F2F4F8\] px-6 pb-8 pt-4/);
+  assert.match(shell, /bg-\[#F2F4F8\] px-6 py-4/);
   assert.match(shell, /border-t border-\[#D8DEE8\] bg-\[#F2F4F8\]/);
-  assert.match(shell, /max\(20px,env\(safe-area-inset-bottom\)\)/);
-  assert.match(shell, /activeFilterCount > 0[\s\S]*?min-w-\[116px\][\s\S]*?carsResults\.reset/);
-  assert.match(shell, /Show \{visibleResults\.length\}/);
+  assert.match(shell, /pb-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(shell, /activeFilterCount > 0[\s\S]*?w-\[30%\][\s\S]*?carsResults\.reset/);
+  assert.match(shell, /View \$\{visibleResults\.length\}/);
+  assert.match(
+    cars,
+    /className="fixed inset-0 z-\[9999\] bg-slate-950\/35 backdrop-blur-\[1px\] lg:hidden"/,
+  );
   assert.match(cars, /desktop-filter-sidebar/);
 });
 
@@ -234,15 +244,21 @@ test("Cars quick sheet scrim geometry now matches Hotels exactly", () => {
   assert.match(cars, /bg-\[rgba\(8,18,35,0\.52\)\]/);
 });
 
-test("Cars shortcut chevrons mirror native expanded state", () => {
+test("Cars shortcut controls mirror Hotels selected-state behavior", () => {
   assert.match(
     cars,
     /quickFilterGroupId === "sort" && "rotate-180"/,
   );
   assert.match(
     cars,
-    /quickFilterGroupId === group\.id && "rotate-180"/,
+    /!active \? \([\s\S]*?quickFilterGroupId === group\.id && "rotate-180"/,
   );
+  assert.match(
+    cars,
+    /active \? \([\s\S]*?<X className="h-3 w-3" strokeWidth=\{2\.1\}/,
+  );
+  assert.match(cars, /clearQuickFilterSelection\(group\.id\)/);
+  assert.match(cars, /border-\[#142033\] bg-\[#142033\] text-white/);
   assert.match(
     cars,
     /transition-transform duration-150 motion-reduce:transition-none/,
@@ -307,7 +323,7 @@ test("Cars mobile filter overlays avoid duplicate top safe-area padding and keep
   const full = cars.slice(fullStart, fullEnd);
   assert.doesNotMatch(full, /pt-\[env\(safe-area-inset-top\)\]/);
   assert.match(full, /min-h-\[64px\]/);
-  assert.match(full, /pb-\[max\(20px,env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(full, /pb-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\]/);
 
   const quickStart = cars.indexOf("data-cars-quick-sheet-backdrop");
   const quickEnd = cars.indexOf('aria-label="Back to top"', quickStart);
