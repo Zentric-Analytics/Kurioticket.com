@@ -5431,8 +5431,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       "min-w-0 truncate text-[12px] font-semibold leading-[17px] text-[#142033]";
     const headerGridClass =
       tripTypeInput === "round-trip"
-        ? "max-w-[548px] grid-cols-[96px_minmax(168px,1fr)_minmax(126px,138px)_50px_40px] xl:w-fit xl:max-w-none xl:grid-cols-[104px_230px_138px_56px_40px]"
-        : "max-w-[514px] grid-cols-[96px_minmax(168px,1fr)_104px_50px_40px] xl:w-fit xl:max-w-none xl:grid-cols-[104px_230px_104px_56px_40px]";
+        ? "max-w-[548px] grid-cols-[96px_minmax(0,1fr)_minmax(138px,150px)_50px_40px] xl:w-fit xl:max-w-none xl:grid-cols-[104px_230px_150px_56px_40px]"
+        : "max-w-[514px] grid-cols-[96px_minmax(0,1fr)_104px_50px_40px] xl:w-fit xl:max-w-none xl:grid-cols-[104px_230px_104px_56px_40px]";
     const tripMenuOpen =
       isStickySearchPanelOpen &&
       activeStickySearchTarget === "trip" &&
