@@ -61,32 +61,30 @@ test("source-contract: phone and tablet filter launchers remain responsive", () 
   assert.equal(tabletFilterClass.split(" ").includes("hidden"), false);
 });
 
-test("source-contract: mobile Cars typography uses a restrained primary-secondary hierarchy", () => {
+test("source-contract: mobile Cars search typography now mirrors Hotels", () => {
   const headerSearch = source.slice(
     source.indexOf("const renderMobileHeaderSearch"),
     source.indexOf("const renderCarsSearchForm"),
   );
-  assert.match(headerSearch, /text-\[11\.5px\] font-semibold[^\"]*text-\[#172238\]/);
-  assert.match(headerSearch, /text-\[10\.75px\] font-semibold[^\"]*text-\[#536786\]/);
-  assert.doesNotMatch(headerSearch, /flex-col|text-\[9\.5px\]/);
-  assert.doesNotMatch(headerSearch, /font-extrabold/);
-  assert.match(headerSearch, /bg-\[#FBFCFE\]/);
+  assert.match(headerSearch, /text-\[14px\] font-semibold[^"]*text-\[#142033\]/);
+  assert.match(headerSearch, /text-\[11px\] font-medium[^"]*text-\[#536B92\]/);
   assert.match(headerSearch, /data-cars-results-mobile-header-search/);
-  assert.match(headerSearch, /data-cars-results-mobile-search-fields/);
-  assert.match(headerSearch, /data-cars-results-mobile-search-location/);
-  assert.match(headerSearch, /data-cars-results-mobile-search-dates/);
-  assert.match(headerSearch, /data-cars-results-mobile-search-edit/);
-  assert.match(headerSearch, /gap-\[3px\]/);
-  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-divider/);
-  assert.match(headerSearch, /<CalendarDays[\s\S]*?strokeWidth=\{1\.95\}/);
-  assert.match(headerSearch, /<SquarePen[\s\S]*?strokeWidth=\{1\.95\}/);
+  assert.match(headerSearch, /data-cars-results-mobile-search-summary/);
+  assert.match(headerSearch, /mobileSearchSecondarySummary/);
+  assert.match(headerSearch, /bg-\[#F5F7FB\]/);
+  assert.match(headerSearch, /<SquarePen size=\{15\} strokeWidth=\{2\}/);
+  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-fields/);
+  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-location/);
+  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-dates/);
+  assert.doesNotMatch(headerSearch, /gap-\[3px\]|<CalendarDays|<Car/);
 
   const quickFilters = source.slice(
     source.indexOf("data-cars-results-quick-filters"),
     source.indexOf("data-cars-results-toolbar"),
   );
-  assert.match(quickFilters, /text-\[13px\] font-semibold leading-4 text-\[#142033\]/);
-  assert.match(quickFilters, /text-\[13px\] font-semibold leading-4 transition/);
+  assert.match(quickFilters, /text-\[13px\] font-semibold leading-4/);
+  assert.match(quickFilters, /border-\[#142033\] bg-\[#142033\] text-white/);
+  assert.match(quickFilters, /clearQuickFilterSelection\(group\.id\)/);
 });
 
 test("source-contract: Cars count row omits the old pagination range", () => {

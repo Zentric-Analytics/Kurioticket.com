@@ -17,25 +17,21 @@ test("flight, hotel, and car compact location controls render explanatory second
   assert.match(cars, /MobileLocationLauncher[\s\S]*?display\.secondary/);
 });
 
-test("mobile car results uses separate compact location, date, and edit fields inside one header launcher", () => {
+test("mobile car results uses one Hotels-style summary while preserving compact location labels", () => {
   const cars = read("./CarsResultsClient.tsx");
   const start = cars.indexOf("const renderMobileHeaderSearch");
   const header = cars.slice(start, cars.indexOf("const renderCarsSearchForm", start));
 
   assert.ok(start >= 0);
   assert.match(header, /data-cars-results-mobile-header-search/);
-  assert.match(header, /data-cars-results-mobile-search-fields/);
-  assert.match(header, /data-cars-results-mobile-search-location/);
-  assert.match(header, /data-cars-results-mobile-search-dates/);
-  assert.match(header, /data-cars-results-mobile-search-edit/);
+  assert.match(header, /data-cars-results-mobile-search-summary/);
   assert.match(header, /locationPairSummary/);
-  assert.match(header, /rentalDateSummary/);
-  assert.match(header, /<CalendarDays/);
-  assert.equal(
-    (header.match(/rounded-\[8px\] border border-\[#D5DFEA\] bg-\[#FBFCFE\]/g) ?? []).length,
-    3,
-  );
-  assert.doesNotMatch(header, /data-cars-results-mobile-search-divider/);
-  assert.doesNotMatch(header, /data-cars-results-mobile-search-segments/);
+  assert.match(header, /mobileSearchSecondarySummary/);
+  assert.match(cars, /pickupSummaryDisplay = getLocationFieldDisplay\(pickupLocationLabel\)\.primary/);
+  assert.match(cars, /returnSummaryDisplay = getLocationFieldDisplay\(dropoffLocationLabel\)\.primary/);
+  assert.match(header, /data-cars-results-mobile-search-edit/);
+  assert.match(header, /<SquarePen size=\{15\} strokeWidth=\{2\}/);
+  assert.doesNotMatch(header, /data-cars-results-mobile-search-fields|data-cars-results-mobile-search-location|data-cars-results-mobile-search-dates/);
+  assert.doesNotMatch(header, /<CalendarDays|<Car/);
   assert.doesNotMatch(cars, /renderMobileCompactResultsHeader|data-cars-mobile-compact-handoff/);
 });
