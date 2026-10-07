@@ -39,7 +39,7 @@ test("source-contract: phone Cars filters use the Hotels pinned rail without a h
   );
 
   assert.match(shortcuts, /ref=\{mobileFilterOriginRef\}/);
-  assert.match(shortcuts, /data-cars-results-toolbar-scroll/);
+  assert.match(shortcuts, /data-cars-results-scroll-filter-bar/);
   assert.match(shortcuts, /mobileResultsStyles\.scrollFilterBarPinned/);
   assert.match(shortcuts, /mobileResultsStyles\.scrollFilterBarHidden/);
   assert.match(
