@@ -2163,7 +2163,8 @@ textarea {
 
   /* Keep the Flight Results filter row on the header's curved left edge. */
   [data-flight-results-desktop-header] {
-    border-bottom-left-radius: 15px;
+    border-bottom-left-radius: 28px;
+    box-shadow: 0 1px 0 #d8e1ec;
   }
 
   [data-flight-results-desktop-header] > [data-mobile-results-filter-navbar] {
