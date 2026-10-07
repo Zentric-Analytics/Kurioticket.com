@@ -21,184 +21,49 @@ test("standalone desktop owns exactly four required primary specifications", () 
   assert.doesNotMatch(specs, /Air conditioning|Snowflake/);
 });
 
-test("provider comparison is driven by normalized car offers", () => {
+test("provider offers are driven by normalized car offers and capped at three", () => {
   assert.match(card, /<CarDealPicker/);
-  assert.match(card, /selectedOfferId=\{offer\.id\}/);
-  assert.match(card, /onSelectOffer=\{selectDealOffer\}/);
   assert.match(picker, /getCarDealPickerGroups\(car\)/);
   assert.match(picker, /groups\.slice\(0, 3\)/);
-  assert.match(picker, /Math\.max\(0, groups\.length - visibleGroups\.length\)/);
-  assert.doesNotMatch(picker, />\s*Compare deals\s*</);
-  assert.match(picker, /data-car-deal-provider-chips/);
-  assert.match(picker, /Show \$\{extraCount\} more car deal providers/);
+  assert.match(picker, /data-car-deal-provider-offers/);
+  assert.match(picker, /data-car-deal-provider-offer/);
+  assert.doesNotMatch(picker, /data-car-deal-provider-chips|extraCount|Compare providers/);
 });
 
-test("provider chips show logo and readable provider name for the first three providers", () => {
+test("provider offers show logo, name, per-day price and a direct provider View deal", () => {
   assert.match(picker, /\/brand\/kurioticket-icon-blue\.svg/);
   assert.match(picker, /group\.logoUrl/);
-  assert.match(picker, /providerInitial\(group\.providerName\)/);
-  assert.match(picker, /groups\.slice\(0, 3\)/);
-  assert.match(picker, /<ProviderMark group=\{group\} compact \/>/);
-  assert.match(picker, /title=\{group\.providerName\}[\s\S]*\{group\.providerName\}/);
-  assert.match(picker, /max-w-\[88px\] flex-1 gap-1 rounded-lg px-1\.5/);
-  assert.match(picker, /text-\[10px\] leading-\[12px\]/);
-  assert.match(picker, /truncate text-left font-semibold text-\[#334155\]/);
-  assert.match(picker, /repeatedProvider/);
-  assert.match(picker, /Compare \$\{group\.providerName\} deal \$\{index \+ 1\}/);
-  assert.match(picker, /Compare deal from \$\{group\.providerName\}/);
+  assert.match(picker, /title=\{group\.providerName\}/);
+  assert.match(picker, /const offer = group\.primaryOffer/);
+  assert.match(picker, /amount: offer\.pricePerDay/);
+  assert.match(picker, /\{formatOfferPrice\(offer\)\}/);
+  assert.match(picker, />\/day</);
+  assert.match(picker, /data-car-deal-provider-view-deal/);
+  assert.match(picker, />\s*View deal\s*</);
 });
 
-test("provider selection expands the desktop result gap while preserving tablet and mobile overlays", () => {
-  assert.match(card, /const \[desktopDealPanelTarget, setDesktopDealPanelTarget\]/);
-  assert.match(
-    card,
-    /data-car-deal-picker-desktop-slot[\s\S]*className="hidden w-full lg:block"/,
-  );
-  assert.equal(
-    (card.match(/desktopPanelTarget=\{desktopDealPanelTarget\}/g) ?? []).length,
-    1,
-    "only the desktop card picker receives the inline expansion target",
-  );
-  assert.match(picker, /desktopPanelTarget\?: HTMLElement \| null/);
-  assert.match(
-    picker,
-    /desktopPanelTarget[\s\S]*createPortal\([\s\S]*data-car-deal-picker-desktop-expansion[\s\S]*data-open=\{overlayOpen \? "true" : "false"\}[\s\S]*grid-rows-\[1fr\][\s\S]*grid-rows-\[0fr\]/,
-  );
-  assert.match(
-    picker,
-    /style=\{\{ marginInlineStart: desktopInlineLeft \}\}[\s\S]*data-car-deal-picker-desktop-panel/,
-  );
-  assert.match(
-    picker,
-    /prepareDesktopInlinePosition\(\)[\s\S]*announceDesktopPickerOpen\(\)[\s\S]*setOpenProviderKey\(group\.key\)/,
-  );
+test("provider View deal validates its own URL and stays isolated from main offer selection", () => {
+  assert.match(picker, /const approvedProviderBookingUrl/);
+  assert.match(picker, /sandboxBookingUrl\(offer\.bookingUrl\)/);
+  assert.match(picker, /url\.protocol !== "https:" \|\| url\.username \|\| url\.password/);
+  assert.match(picker, /const bookingHref = approvedProviderBookingUrl\(car, offer\)/);
+  assert.match(picker, /href=\{bookingHref\}/);
+  assert.match(picker, /target="_blank"/);
+  assert.match(picker, /rel="noopener noreferrer"/);
+  assert.match(picker, /event\.stopPropagation\(\)/);
+  assert.doesNotMatch(picker, /onSelectOffer\(group\.primaryOffer\)/);
+  assert.doesNotMatch(picker, /setLocalSelectedOfferId|onDealOfferSelected/);
+});
+
+test("inline provider offers do not retain the old comparison overlays", () => {
+  assert.match(picker, /grid min-w-0 grid-cols-3/);
   assert.doesNotMatch(
     picker,
-    /data-car-deal-picker-desktop-panel[\s\S]{0,220}fixed z-\[140\]/,
-  );
-  assert.match(
-    picker,
-    /fixed z-\[140\][\s\S]*md:block lg:hidden[\s\S]*data-car-deal-picker-tablet-panel/,
-  );
-  assert.match(picker, /fixed inset-0 z-\[130\][\s\S]*md:hidden/);
-  assert.match(picker, /data-car-deal-picker-mobile-sheet/);
-  assert.match(
-    picker,
-    /mobile-results-sheet-surface mobile-results-sheet-surface-smooth mx-3 mb-3[\s\S]*w-\[calc\(100%_-_24px\)\][\s\S]*rounded-\[24px\]/,
-  );
-  assert.match(picker, /acquireMobileResultsScrollLock\(\)/);
-  assert.match(picker, /event\.key !== "Escape"/);
-  assert.match(picker, /role="dialog"/);
-  assert.doesNotMatch(picker, /Selected · View deal uses this provider/);
-  assert.doesNotMatch(picker, /Choose this provider to update View deal/);
-  assert.doesNotMatch(picker, />\s*Continue deal\s*</);
-  assert.doesNotMatch(picker, />\s*View deal\s*</);
-});
-
-test("desktop Compare deals popup has a polished hierarchy without changing mobile/tablet presentation", () => {
-  assert.equal((picker.match(/<ProviderPreview/g) ?? []).length, 3);
-  assert.equal((picker.match(/\sdesktop\s*\/>/g) ?? []).length, 1);
-  assert.match(
-    picker,
-    /data-car-deal-picker-desktop-panel[\s\S]*ProviderPreview[\s\S]*desktop/,
-  );
-  assert.match(
-    picker,
-    /data-car-deal-provider-preview[\s\S]*data-desktop=\{desktop \? "true" : "false"\}/,
-  );
-  assert.doesNotMatch(picker, /1 available offer|available offers · best rate selected/);
-  assert.match(
-    picker,
-    /desktop\s*\?\s*"text-\[26px\] leading-7 tracking-\[-0\.025em\]"\s*:\s*"text-base"/,
-  );
-  assert.match(
-    picker,
-    /desktop[\s\S]*text-\[13px\] font-semibold leading-4 text-\[#52627A\]/,
-  );
-  assert.match(
-    picker,
-    /CircleCheck[\s\S]*Free cancellation[\s\S]*ReceiptText[\s\S]*Taxes and fees included/,
-  );
-  assert.match(picker, /WalletCards[\s\S]*Pay at pickup/);
-  assert.match(
-    picker,
-    /desktop[\s\S]*border-b border-\[#E7EDF4\] pb-3/,
+    /createPortal|ProviderPreview|ProviderList|data-car-deal-picker-mobile-sheet|data-car-deal-picker-desktop-panel|acquireMobileResultsScrollLock/,
   );
 });
 
-test("closing desktop Compare deals collapses the expansion and restores the normal card gap", () => {
-  assert.match(
-    picker,
-    /const closePanel = \(\) => \{[\s\S]*setOpenProviderKey\(null\)[\s\S]*setShowAllProviders\(false\)/,
-  );
-  assert.match(
-    picker,
-    /data-car-deal-picker-desktop-expansion[\s\S]*data-open=\{overlayOpen \? "true" : "false"\}[\s\S]*overlayOpen[\s\S]*grid-rows-\[1fr\] pt-3 opacity-100[\s\S]*grid-rows-\[0fr\] pt-0 opacity-0/,
-  );
-  assert.match(
-    picker,
-    /ProviderPreview[\s\S]*onClose=\{closePanel\}/,
-  );
-  assert.match(
-    picker,
-    /ProviderList[\s\S]*onClose=\{closePanel\}/,
-  );
-  assert.match(
-    card,
-    /data-car-result-card-shell[\s\S]*<article[\s\S]*<div[\s\S]*data-car-deal-picker-desktop-slot/,
-  );
-});
-
-test("changing Compare deals updates the selected provider in place and keeps the first popup open", () => {
-  assert.doesNotMatch(picker, /BrandedLoading|data-car-deal-selection-loading|Updating deal/);
-  assert.doesNotMatch(card, /CarCardSkeleton|dealSelectionPending|CAR_DEAL_SELECTION_MOBILE_BUSY_MS/);
-  assert.match(picker, /const providerChanged = group\.key !== selectedGroup\.key/);
-  assert.match(
-    picker,
-    /setOpenProviderKey\(group\.key\)[\s\S]*if \(!providerChanged\) return;[\s\S]*onSelectOffer\(group\.primaryOffer\)/,
-  );
-
-  assert.match(results, /const \[selectedDealOfferIds, setSelectedDealOfferIds\]/);
-  assert.match(
-    results,
-    /const selectCompareDealOffer = useCallback\([\s\S]*setSelectedDealOfferIds\([\s\S]*\[carId\]: offerId[\s\S]*\[\],[\s\S]*\);/,
-  );
-  assert.doesNotMatch(results, /dealTransitionPhase|startDealResultsTransition/);
-  assert.match(
-    results,
-    /if \(providersLoading\)[\s\S]*data-cars-results-page-transition="providers"[\s\S]*<CarsResultsPageTransitionSkeleton/,
-  );
-  assert.doesNotMatch(
-    results,
-    /data-cars-results-page-transition=[\s\S]{0,120}"compare-deals"/,
-  );
-  assert.match(
-    results,
-    /selectedDealOfferId=\{selectedDealOfferIds\[car\.id\]\}[\s\S]*onDealOfferSelected=\{selectCompareDealOffer\}/,
-  );
-});
-
-test("desktop Compare deals closes when the page is clicked outside the picker and popover", () => {
-  assert.match(picker, /const desktopPanelRef = useRef<HTMLDivElement \| null>\(null\)/);
-  assert.match(
-    picker,
-    /const onPointerDown = \(event: PointerEvent\) => \{[\s\S]*window\.matchMedia\("\(min-width: 768px\)"\)\.matches[\s\S]*anchorRef\.current\?\.contains\(target\)[\s\S]*desktopPanelRef\.current\?\.contains\(target\)[\s\S]*setOpenProviderKey\(null\)[\s\S]*setShowAllProviders\(false\)/,
-  );
-  assert.match(
-    picker,
-    /document\.addEventListener\("pointerdown", onPointerDown, true\)/,
-  );
-  assert.match(
-    picker,
-    /document\.removeEventListener\("pointerdown", onPointerDown, true\)/,
-  );
-  assert.match(
-    picker,
-    /ref=\{desktopPanelRef\}[\s\S]*data-car-deal-picker-desktop-panel/,
-  );
-});
-
-test("standalone View deal is the single provider handoff and never fabricates a URL", () => {
+test("standalone main View deal remains independently validated", () => {
   assert.match(card, /const approvedProviderBookingUrl/);
   assert.match(card, /sandboxBookingUrl\(offer\.bookingUrl\)/);
   assert.match(card, /url\.protocol !== "https:" \|\| url\.username \|\| url\.password/);
@@ -209,19 +74,10 @@ test("standalone View deal is the single provider handoff and never fabricates a
   assert.doesNotMatch(card, /href="#"/);
 });
 
-test("selected provider updates in place and controls View deal", () => {
+test("selected provider state remains available to the existing main card View deal", () => {
   assert.match(card, /const \[localSelectedOfferId, setLocalSelectedOfferId\] = useState/);
   assert.match(card, /const selectedOfferId = selectedDealOfferId \?\? localSelectedOfferId/);
   assert.match(card, /car\.offers\.find\(\(candidate\) => candidate\.id === selectedOfferId\)/);
-  assert.match(
-    card,
-    /if \(onDealOfferSelected\) \{[\s\S]*onDealOfferSelected\(car\.id, nextOffer\.id\)[\s\S]*return;[\s\S]*setLocalSelectedOfferId\(nextOffer\.id\)/,
-  );
-  assert.match(
-    results,
-    /setSelectedDealOfferIds\([\s\S]*\[carId\]: offerId/,
-  );
-  assert.doesNotMatch(results, /startDealResultsTransition|dealTransitionPhase/);
   assert.match(card, /const providerBookingHref = approvedProviderBookingUrl\(car, offer\)/);
   assert.equal((card.match(/href=\{providerBookingHref\}/g) ?? []).length, 2);
   assert.match(desktop, /dailyDisplayPrice\.formatted/);
@@ -234,108 +90,4 @@ test("guided selection and legacy comparison component remain isolated from stan
   assert.match(card, /onClick=\{handleMobileDetailsNavigation\}/);
   assert.match(comparison, /desktopDetailsSelector/);
   assert.doesNotMatch(comparison, /window\.open|router\./);
-});
-
-
-test("desktop Compare deals enforces one open popup across result cards", () => {
-  assert.match(picker, /useId/);
-  assert.match(
-    picker,
-    /const CAR_DEAL_PICKER_DESKTOP_OPEN_EVENT =\s*"kurioticket:car-deal-picker-desktop-open"/,
-  );
-  assert.match(picker, /const pickerInstanceId = useId\(\)/);
-  assert.match(
-    picker,
-    /const closeWhenAnotherDesktopPickerOpens = \(event: Event\) => \{[\s\S]*window\.matchMedia\("\(min-width: 768px\)"\)\.matches[\s\S]*sourceId === pickerInstanceId[\s\S]*setOpenProviderKey\(null\)[\s\S]*setShowAllProviders\(false\)/,
-  );
-  assert.match(
-    picker,
-    /window\.addEventListener\([\s\S]*CAR_DEAL_PICKER_DESKTOP_OPEN_EVENT,[\s\S]*closeWhenAnotherDesktopPickerOpens/,
-  );
-  assert.match(
-    picker,
-    /window\.removeEventListener\([\s\S]*CAR_DEAL_PICKER_DESKTOP_OPEN_EVENT,[\s\S]*closeWhenAnotherDesktopPickerOpens/,
-  );
-  assert.match(
-    picker,
-    /const announceDesktopPickerOpen = \(\) => \{[\s\S]*window\.matchMedia\("\(min-width: 768px\)"\)\.matches[\s\S]*window\.dispatchEvent\([\s\S]*new CustomEvent<string>\(CAR_DEAL_PICKER_DESKTOP_OPEN_EVENT/,
-  );
-  const selectGroup = picker.slice(
-    picker.indexOf("const selectGroup"),
-    picker.indexOf("const closePanel"),
-  );
-  assert.ok(
-    selectGroup.indexOf("announceDesktopPickerOpen()") <
-      selectGroup.indexOf("setOpenProviderKey(group.key)"),
-  );
-  const overflowStart = picker.indexOf("extraCount > 0");
-  const overflow = picker.slice(
-    overflowStart,
-    picker.indexOf("overlayOpen && typeof document", overflowStart),
-  );
-  assert.ok(
-    overflow.indexOf("announceDesktopPickerOpen()") <
-      overflow.indexOf("setShowAllProviders(true)"),
-  );
-});
-
-test("provider preview keeps only the amount and Estimated total without a Price label", () => {
-  assert.doesNotMatch(
-    picker,
-    /Provider handoff will appear when this seller supplies a booking link\./,
-  );
-  assert.doesNotMatch(picker, /Selected · View deal uses this provider/);
-  assert.doesNotMatch(picker, /Choose this provider to update View deal/);
-  assert.doesNotMatch(picker, /perDay|>Per day</);
-  assert.doesNotMatch(picker, />\s*Price\s*</);
-  assert.match(picker, /\{total\}[\s\S]*Estimated total/);
-  assert.match(picker, /Free cancellation/);
-  assert.match(picker, /Taxes and fees included/);
-});
-
-test("standalone View deal keeps one visual hierarchy for linked and unavailable offers", () => {
-  assert.match(
-    card,
-    /const mobileStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*fontSize: "12px"[\s\S]*fontWeight: 600[\s\S]*color: "#004BB8"|const mobileStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*fontSize: "12px"[\s\S]*fontWeight: 600/,
-  );
-  assert.match(
-    card,
-    /const desktopStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*fontSize: "13px"[\s\S]*fontWeight: 700[\s\S]*color: "#004BB8"|const desktopStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*fontSize: "13px"[\s\S]*fontWeight: 700/,
-  );
-  assert.equal(
-    (card.match(/\$\{mobileStandaloneViewDealClassName\}/g) ?? []).length,
-    3,
-  );
-  assert.equal(
-    (card.match(/\$\{desktopStandaloneViewDealClassName\}/g) ?? []).length,
-    2,
-  );
-  assert.equal(
-    (card.match(/aria-label="Provider booking link unavailable"/g) ?? []).length,
-    2,
-  );
-  assert.match(
-    card,
-    /const unavailableStandaloneViewDealClassName =\s*"[^"]*appearance-none[^"]*disabled:opacity-100"/,
-  );
-  assert.match(
-    card,
-    /const mobileStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*fontSize: "12px"[\s\S]*fontWeight: 600/,
-  );
-  assert.match(
-    card,
-    /const desktopStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*fontSize: "13px"[\s\S]*fontWeight: 700/,
-  );
-  assert.equal(
-    (card.match(/style=\{mobileStandaloneViewDealVisualStyle\}/g) ?? []).length,
-    3,
-  );
-  assert.equal(
-    (card.match(/style=\{desktopStandaloneViewDealVisualStyle\}/g) ?? []).length,
-    2,
-  );
-  assert.doesNotMatch(
-    card,
-    /aria-label="Provider booking link unavailable"[\s\S]{0,220}text-slate-400/,
-  );
 });
