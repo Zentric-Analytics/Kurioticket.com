@@ -50,8 +50,10 @@
     z-index: 1;
     width: 100%;
     margin-inline-end: 0;
-    padding-inline: 0;
-    scroll-padding-inline: 4px;
+    padding-inline-start: 28px;
+    padding-inline-end: 0;
+    scroll-padding-inline-start: 28px;
+    scroll-padding-inline-end: 4px;
   }
   .scrollFilterBarPinned {
     position: fixed;
@@ -101,13 +103,13 @@
     left: 0;
     bottom: 0;
     z-index: 0;
-    width: 42px;
-    height: 52px;
+    width: 34px;
+    height: 60px;
     pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2042%2052'%3E%3Cpath%20d='M0%200%20H14%20C28%200%2020%2015%2020%2024%20C20%2038%2029%2046%2042%2048%20V52%20H0%20Z'%20fill='%23F5F7FB'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2034%2060'%3E%3Cpath%20d='M0%200%20H8%20C24%200%2028%209%2028%2018%20C28%2028%2015%2032%2015%2041%20C15%2051%2024%2057%2034%2057%20V60%20H0%20Z'%20fill='%23F5F7FB'/%3E%3C/svg%3E");
     background-position: left bottom;
     background-repeat: no-repeat;
-    background-size: 42px 52px;
+    background-size: 34px 60px;
   }
   /* Cars keeps the independently approved smooth 32px native radius from #6170. */
   .carsScrollFilterSlot::after,
@@ -132,8 +134,10 @@
   .scrollFilterBarPinned [data-mobile-hotel-shortcuts] {
     width: 100%;
     margin-inline-end: 0;
-    padding-inline: 4px;
-    scroll-padding-inline: 4px;
+    padding-inline-start: 28px;
+    padding-inline-end: 4px;
+    scroll-padding-inline-start: 28px;
+    scroll-padding-inline-end: 4px;
   }
   .scrollFilterBarPinned [data-cars-results-quick-filters] {
     width: 100%;
