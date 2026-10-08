@@ -1032,7 +1032,7 @@ test("mobile web Fare information deck mirrors native tabs and owns deal booking
     styles,
     /@media \(max-width: 639px\) \{[\s\S]*?\.flight-mobile-fare-info-tab-label \{[\s\S]*?font-size: 14px !important;[\s\S]*?line-height: 20px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?-webkit-text-size-adjust: none;[\s\S]*?text-size-adjust: none;[\s\S]*?\}/,
   );
-  assert.match(deck, /selected \? <span className="absolute -bottom-px left-0\.5 right-0\.5 h-\[3px\] rounded-\[2px\] bg-\[#0754F7\]"/);
+  assert.match(deck, /selected \? <span className="absolute -bottom-px left-0\.5 right-0\.5 h-\[3px\] rounded-\[2px\] bg-\[#075EE8\]"/);
   assert.match(deck, /left-0\.5 right-0\.5 h-\[3px\] rounded-\[2px\]/);
 
   assert.match(deck, /role="radiogroup" aria-label="Flight deal options"/);
