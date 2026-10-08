@@ -5,9 +5,9 @@ import test from "node:test";
 const source = readFileSync(new URL("./CarLocationAutocomplete.tsx", import.meta.url), "utf8");
 const contract = readFileSync(new URL("./useCarsDesktopPopover.ts", import.meta.url), "utf8");
 
-test("desktop Cars locations use the shared moderate popover contract", () => {
+test("desktop Cars locations keep the shared popover contract with a tighter Results width", () => {
   assert.match(source, /useCarsDesktopPopover/);
-  assert.match(source, /preferredWidth: 420/);
+  assert.match(source, /preferredWidth: desktopResultsPresentation \? 340 : 420/);
   assert.match(source, /maxHeight: 320/);
   assert.match(contract, /rounded-\[10px\]/);
   assert.match(contract, /border-\[#DEE5ED\]/);

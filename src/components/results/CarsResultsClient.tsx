@@ -1274,7 +1274,7 @@ export function CarsResultsClient({
                   searchSurfaceRefs.pickupInputRef.current?.focus();
                 }}
                 placeholder={t("carsSearch.pickupLocationPlaceholder")}
-                showClearButton={false}
+                showClearButton
                 value={pickupLocation}
                 clearLabel={t("carsSearch.clearPickupLocation")}
                 strings={locationStrings}
