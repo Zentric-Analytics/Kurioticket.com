@@ -48,6 +48,10 @@ test("source-contract: Cars compact sections keep normal desktop control sizing"
   );
   assert.match(
     source,
+    /cars-results-desktop-filter-heading-type min-w-0 truncate[\s\S]*compactOpen && "cars-results-desktop-filter-heading-type--active"/,
+  );
+  assert.match(
+    source,
     /h-4 w-4 text-slate-500 transition duration-200[\s\S]*?compactOpen && "rotate-180 text-\[#004BB8\]"/,
   );
   assert.match(source, /strokeWidth=\{2\.3\}/);
