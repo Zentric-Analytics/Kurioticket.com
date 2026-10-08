@@ -255,11 +255,15 @@ test("Hotel mobile filter rail uses the exact Flight Results 28px left edge whil
   );
   assert.match(
     mobileStyles,
-    /\.hotelScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;/,
+    /\.hotelScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;/,
   );
   assert.match(
     mobileStyles,
-    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;/,
+    /\.hotelScrollFilterSlot > \.hotelNavbarFilterBar \{[\s\S]*border-bottom-left-radius: inherit;[\s\S]*border-bottom-right-radius: inherit;[\s\S]*overflow: hidden;[\s\S]*background: #fff;/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*overflow: hidden;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;/,
   );
   assert.match(
     mobileStyles,
