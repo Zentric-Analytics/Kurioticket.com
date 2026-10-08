@@ -1567,7 +1567,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     !guided && results.length > 0 ? (
       <section
         data-hotel-results-toolbar
-        className="w-full py-2 sm:hidden"
+        className="w-full pt-2 sm:hidden"
         aria-label="Hotel result filters"
       >
         {renderMobileHotelShortcuts()}
