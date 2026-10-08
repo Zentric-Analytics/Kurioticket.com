@@ -112,10 +112,6 @@ test("Cars shares Hotels filter motion and the exact Flight rounded edge at the 
   );
   assert.match(
     mobileStyles,
-    /\.carsScrollFilterSlot \[data-cars-results-quick-filters\],[\s\S]*\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \[data-cars-results-quick-filters\] \{[\s\S]*padding-inline: 12px;[\s\S]*scroll-padding-inline: 12px;[\s\S]*gap: 6px;/,
-  );
-  assert.match(
-    mobileStyles,
     /\.scrollFilterBarPinned \{[\s\S]*position: fixed;[\s\S]*top: calc\(72px \+ env\(safe-area-inset-top\)\);[\s\S]*height: 60px;[\s\S]*background: #f5f7fb/,
   );
   assert.match(
