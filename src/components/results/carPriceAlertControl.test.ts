@@ -57,11 +57,12 @@ test("Cars price tracking snackbar defines enter, exit, and reduced-motion behav
   assert.match(globals, /prefers-reduced-motion: reduce[\s\S]*cars-price-alert-snackbar-entering,[\s\S]*cars-price-alert-snackbar-leaving \{ animation: none; \}/);
 });
 
-test("mobile Cars price tracking fills its content gutter without compromising narrow layouts", () => {
+test("mobile Cars price tracking stays full-width while desktop is centered and slightly narrower", () => {
   assert.match(source, /data-cars-price-alert/);
   assert.match(source, /w-full min-w-0 max-w-full/);
-  assert.match(source, /lg:w-auto/);
-  assert.match(source, /bg-\[#EDF6FF\][^"]*px-3 py-0[^"]*sm:py-1/);
+  assert.match(source, /bg-\[#EDF6FF\][^"]*px-3 py-0[^"]*sm:bg-\[#EDF6FF\][^"]*sm:py-1/);
+  assert.match(source, /lg:mx-auto lg:w-\[calc\(100%_-_12rem\)\] lg:bg-\[#F1F7FE\]/);
+  assert.doesNotMatch(source, /lg:w-auto/);
   assert.match(source, /min-h-\[52px\] min-w-0 items-center/);
   assert.match(source, /min-w-0 flex-1 \[overflow-wrap:anywhere\]/);
   assert.match(source, /shrink-0 items-center justify-center[^"\n]*sm:h-8 sm:w-8/);
