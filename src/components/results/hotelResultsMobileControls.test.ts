@@ -235,32 +235,47 @@ test("Hotel mobile quick filter keeps the underlying results at the same scroll 
 });
 
 
-test("Hotel mobile filter rail uses the PR6167 white navbar surface while Sort remains in results", () => {
+test("Hotel mobile filter rail uses the exact Flight Results 28px left edge while Sort remains in results", () => {
   const mobileStyles = readFileSync(
     new URL("./HotelResultsMobile.module.css", import.meta.url),
     "utf8",
   );
+  const globalsSource = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
 
   assert.match(
-    mobileStyles,
-    /\.scrollFilterSlot \{[\s\S]*padding: 8px 4px 0;[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 15px;[\s\S]*border-bottom-right-radius: 0;/,
+    globalsSource,
+    /\[data-flight-results-desktop-header\] \{[\s\S]*border-bottom-left-radius: 28px;[\s\S]*\}/,
+  );
+  assert.match(
+    globalsSource,
+    /\[data-flight-results-desktop-header\] > \[data-mobile-results-filter-navbar\] \{[\s\S]*border-bottom-left-radius: inherit;[\s\S]*overflow: hidden;/,
   );
   assert.match(
     mobileStyles,
-    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;/,
+    /\.hotelScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;/,
   );
   assert.match(
     mobileStyles,
-    /\.scrollFilterSlot::after,[\s\S]*\.scrollFilterBarPinned\.hotelNavbarFilterBar::after,[\s\S]*width: 26px;[\s\S]*height: 26px;/,
+    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;/,
   );
-  assert.doesNotMatch(resultsSource, /mobileStyles\.hotelScrollFilterSlot/);
+  assert.match(
+    mobileStyles,
+    /\.hotelScrollFilterSlot::after,[\s\S]*\.scrollFilterBarPinned\.hotelNavbarFilterBar::after,[\s\S]*content: none;[\s\S]*display: none;/,
+  );
+  assert.match(
+    resultsSource,
+    /mobileStyles\.scrollFilterSlot, mobileStyles\.hotelScrollFilterSlot/,
+  );
   assert.match(resultsSource, /data-mobile-hotel-shortcuts/);
   assert.match(resultsSource, /<span>Sort:<\/span>[\s\S]*currentSortLabel/);
   assert.doesNotMatch(resultsSource, /renderMobileHotelNavbarFilters[\s\S]{0,600}Sort:/);
 });
 
 
-test("Hotel mobile navbar keeps the PR6167 asymmetric left edge", () => {
+test("Hotel mobile navbar keeps the Flight Results curve while preserving the PR6167 filter inset", () => {
   const headerSource = readFileSync(
     new URL("../layout/AppHeader.tsx", import.meta.url),
     "utf8",
@@ -276,7 +291,11 @@ test("Hotel mobile navbar keeps the PR6167 asymmetric left edge", () => {
   );
   assert.match(
     mobileStyles,
-    /\.scrollFilterSlot \{[\s\S]*border-bottom-left-radius: 15px;[\s\S]*border-bottom-right-radius: 0;/,
+    /\.scrollFilterSlot \{[\s\S]*padding: 8px 4px 0;/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.hotelScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;/,
   );
 });
 
