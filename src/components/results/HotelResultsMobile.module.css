@@ -90,14 +90,6 @@
   .scrollFilterBarAnimated {
     transition: transform 220ms cubic-bezier(0, 0, .4, 1);
   }
-  .carsScrollFilterSlot [data-cars-results-quick-filters],
-  .scrollFilterBarPinned[data-cars-results-scroll-filter-bar] [data-cars-results-quick-filters] {
-    width: 100%;
-    margin-inline-end: 0;
-    padding-inline: 12px;
-    scroll-padding-inline: 12px;
-    gap: 6px;
-  }
   .scrollFilterBarPinned.scrollFilterBarHidden {
     transform: translateY(-100%);
     pointer-events: none;
