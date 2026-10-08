@@ -6,7 +6,8 @@ Mobile Flight Results uses `#F5F7FB`. Flight Details previously repeated
 `#F3F6FA` in the loaded and loading page backgrounds, hero section, hero curve,
 and scroll header cover. Those surfaces now use `#F5F7FB` consistently.
 Desktop backgrounds retain the existing `sm:` styles. Native app files and
-Flight Results were not changed.
+the mobile Flight Results canvas were not changed. The additional desktop
+form task is documented in [the combined preview](../combined-flight-preview/README.md).
 
 Files changed:
 
