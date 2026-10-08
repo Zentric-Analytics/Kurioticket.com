@@ -177,7 +177,7 @@ test("Cars Results preserves native top-edge reload while keeping the Hotels-sty
   );
 });
 
-test("Cars pinned filters blend into the white header while the natural rail keeps its existing results surface", () => {
+test("Cars pinned filters blend into the white header with the Flight-style bottom edge", () => {
   assert.match(
     mobileResultsStyles,
     /\.scrollFilterBarPinned \{[\s\S]*background:\s*#f5f7fb;/,
@@ -188,7 +188,7 @@ test("Cars pinned filters blend into the white header while the natural rail kee
   );
   assert.match(
     mobileResultsStyles,
-    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*background:\s*#ffffff;[\s\S]*border-top:\s*0;[\s\S]*box-shadow:\s*none;/,
+    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*background:\s*#ffffff;[\s\S]*border-top:\s*0;[\s\S]*box-shadow:\s*0 1px 0 #d8e1ec;/,
   );
   assert.match(
     carsClientSource,
@@ -211,11 +211,11 @@ test("Cars mobile header and filter rail keep a smooth rounded left edge through
   );
   assert.match(
     mobileResultsStyles,
-    /\.carsScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 18px;[\s\S]*border-bottom-right-radius: 0;/,
+    /\.carsScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*overflow: hidden;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;/,
   );
   assert.match(
     mobileResultsStyles,
-    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*background: #ffffff;[\s\S]*border-top: 0;[\s\S]*border-bottom-left-radius: 18px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*box-shadow: none;/,
+    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*background: #ffffff;[\s\S]*border-top: 0;[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;/,
   );
   assert.match(
     mobileResultsStyles,

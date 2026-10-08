@@ -30,8 +30,10 @@
     border-bottom-right-radius: 0;
   }
   .carsScrollFilterSlot {
-    border-bottom-left-radius: 15px;
+    border-bottom-left-radius: 28px;
     border-bottom-right-radius: 0;
+    overflow: hidden;
+    box-shadow: 0 1px 0 #d8e1ec;
   }
   .scrollFilterBar {
     height: 44px;
@@ -67,7 +69,7 @@
     background-repeat: no-repeat;
     background-size: 26px 26px;
   }
-  /* Cars keeps its independently approved native curve. */
+  /* Cars mirrors the Flight Results native curved edge; keep fake cutouts disabled. */
   .carsScrollFilterSlot::after,
   .scrollFilterBarPinned[data-cars-results-scroll-filter-bar]::after {
     content: none;
@@ -80,9 +82,9 @@
     top: calc(61px + var(--cars-results-safe-area-top));
     background: #ffffff;
     border-top: 0;
-    border-bottom-left-radius: 15px;
+    border-bottom-left-radius: 28px;
     border-bottom-right-radius: 0;
-    box-shadow: none;
+    box-shadow: 0 1px 0 #d8e1ec;
   }
   .scrollFilterBarAnimated {
     transition: transform 220ms cubic-bezier(0, 0, .4, 1);
