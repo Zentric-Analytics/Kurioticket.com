@@ -88,7 +88,7 @@ test("source-contract: Cars count row omits the old pagination range", () => {
     source.indexOf("{appliedCarFilters.length"),
   );
   assert.match(summaryRow, /\.format\(visibleResults\.length\)/);
-  assert.doesNotMatch(summaryRow, /resultsDisplayRange|Showing results .* through/);
+  assert.doesNotMatch(summaryRow, /resultsDisplayRange|Showing results .* through|data-cars-results-visible-range/);
 });
 
 test("source-contract: Cars result count keeps a shrink-safe row with desktop Sort isolated", () => {
