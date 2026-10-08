@@ -106,11 +106,17 @@ test("mobile shortcuts remain the existing scrollable touch targets in canonical
   assert.ok(rail.indexOf("filtersButtonRef") < rail.indexOf("quickFilterGroups.map"));
   assert.match(rail, /data-cars-sort-trigger/);
   assert.match(rail, /quickFilterGroupId === "sort"/);
-  assert.match(rail, /flex-nowrap[^\"]*gap-1\.5[^\"]*overflow-x-auto[^\"]*overscroll-x-contain/);
+  assert.match(rail, /group inline-flex min-h-11 min-w-11 shrink-0 items-center/);
+  assert.match(rail, /relative inline-flex h-9 items-center overflow-hidden rounded-\[9px\] border/);
+  assert.match(rail, /data-cars-sort-trigger[\s\S]*h-full min-w-0 items-center gap-1 px-2/);
+  assert.match(rail, /<span className="max-w-\[11rem\] truncate">Sort<\/span>/);
+  assert.match(rail, /quickFilterGroupId === "sort" && "rotate-180"/);
+  assert.doesNotMatch(rail, /data-cars-sort-trigger[\s\S]{0,500}h-9 min-h-11/);
+  assert.match(rail, /flex-nowrap[^\"]*gap-1[^\"]*overflow-x-auto[^\"]*overscroll-x-contain/);
   assert.match(rail, /\[scrollbar-width:none\][^\"]*\[&::-webkit-scrollbar\]:hidden/);
   assert.match(rail, /-me-4[^\"]*w-\[calc\(100%\+1rem\)\][^\"]*pe-4/);
   assert.match(rail, /min-h-11 min-w-11 shrink-0/);
-  assert.match(rail, /h-9[^\"]*rounded-\[9px\][^\"]*border[^\"]*px-2\.5[^\"]*text-\[13px\][^\"]*leading-4/);
+  assert.match(rail, /h-9[^\"]*rounded-\[9px\][^\"]*border[^\"]*text-\[13px\][^\"]*leading-4/);
   assert.doesNotMatch(rail, /style=\{\{\s*width|basis-/);
   assert.match(rail, /locale\.startsWith\("en"\) \? "Filter" : t\("filters"\)/);
   assert.doesNotMatch(rail, /Swipe for more/i);
@@ -162,6 +168,19 @@ test("mobile shortcuts retain every shared quick-filter group", () => {
   );
 });
 
+test("mobile Cars pagination reuses the compact Flights presentation", () => {
+  const pagination = resultsSource.slice(
+    resultsSource.indexOf("data-cars-mobile-pagination"),
+    resultsSource.indexOf("</nav>", resultsSource.indexOf("data-cars-mobile-pagination")) + 6,
+  );
+  assert.match(pagination, /flight-results-pagination mb-6 mt-6 flex min-w-0 items-center justify-center sm:hidden/);
+  assert.match(pagination, /buildFlightPaginationItems\(currentMobilePage, mobilePageCount, true\)/);
+  assert.equal((pagination.match(/className="flight-pagination-control"/g) ?? []).length >= 3, true);
+  assert.match(pagination, /<ChevronLeft className="h-4 w-4"/);
+  assert.match(pagination, /<ChevronRight className="h-4 w-4"/);
+  assert.doesNotMatch(pagination, /gap-5|h-5 w-5|min-w-9|text-base/);
+});
+
 test("mobile result summary restores visible range and keeps desktop Sort by separate", () => {
   const summary = resultsSource.slice(
     resultsSource.indexOf("data-cars-results-summary-row"),
@@ -169,7 +188,8 @@ test("mobile result summary restores visible range and keeps desktop Sort by sep
   );
   assert.match(summary, /hidden[^\"]*sm:flex/);
   assert.match(summary, /data-cars-results-visible-range/);
-  assert.match(summary, /1–\$\{visibleResults\.length\}/);
+  assert.match(summary, /mobilePageStart \+ 1/);
+  assert.match(summary, /Math\.min\(mobilePageStart \+ mobilePageSize, visibleResults\.length\)/);
   assert.doesNotMatch(summary, /data-cars-sort-trigger/);
   assert.match(resultsSource, /data-cars-sort-trigger/);
 });
