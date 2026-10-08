@@ -114,7 +114,14 @@ test("mobile shortcuts remain the existing scrollable touch targets in canonical
   assert.doesNotMatch(rail, /data-cars-sort-trigger[\s\S]{0,500}h-9 min-h-11/);
   assert.match(rail, /flex-nowrap[^\"]*gap-1[^\"]*overflow-x-auto[^\"]*overscroll-x-contain/);
   assert.match(rail, /\[scrollbar-width:none\][^\"]*\[&::-webkit-scrollbar\]:hidden/);
-  assert.match(rail, /-me-4[^\"]*w-\[calc\(100%\+1rem\)\][^\"]*pe-4/);
+  assert.match(
+    mobileStyles,
+    /\.carsScrollFilterSlot \{[\s\S]*padding-inline: 0;[\s\S]*border-bottom-left-radius: 28px;/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.carsScrollFilterSlot \[data-cars-results-quick-filters\],[\s\S]*\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \[data-cars-results-quick-filters\] \{[\s\S]*width: 100%;[\s\S]*margin-inline-end: 0;[\s\S]*padding-inline: 12px;[\s\S]*scroll-padding-inline: 12px;[\s\S]*gap: 6px;/,
+  );
   assert.match(rail, /min-h-11 min-w-11 shrink-0/);
   assert.match(rail, /h-9[^\"]*rounded-\[9px\][^\"]*border[^\"]*text-\[13px\][^\"]*leading-4/);
   assert.doesNotMatch(rail, /style=\{\{\s*width|basis-/);
