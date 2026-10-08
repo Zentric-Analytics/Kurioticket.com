@@ -108,7 +108,7 @@ export function CarDealPicker({
       className={`min-w-0 ${compact ? "mt-1.5" : "mt-2"}`}
     >
       <div
-        className={`grid min-w-0 grid-cols-3 ${compact ? "gap-x-2" : "gap-x-3"}`}
+        className={`grid min-w-0 grid-cols-3 ${compact ? "gap-x-2.5" : "gap-x-3"}`}
         role="list"
         aria-label="Car deal providers"
         data-car-deal-provider-offers
