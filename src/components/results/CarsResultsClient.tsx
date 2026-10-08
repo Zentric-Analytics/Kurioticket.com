@@ -85,6 +85,7 @@ import {
   type DesktopCompactFilterPlacementState,
 } from "@/lib/flights/desktopCompactFilter";
 import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilter";
+import { buildFlightPaginationItems } from "@/lib/flights/flightResultsPagination";
 import { lockDesktopPageScroll } from "@/lib/search/desktopPageScrollLock";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
 import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
@@ -2847,27 +2848,34 @@ export function CarsResultsExperience({
                         ) : null}
                       </span>
                     </button>
-                  <button
-                    type="button"
-                    data-cars-sort-trigger
-                    aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
-                    aria-haspopup="dialog"
-                    aria-expanded={quickFilterGroupId === "sort"}
-                    onClick={(event) =>
-                      openQuickFilter(
-                        "sort",
-                        event.currentTarget,
-                        getOverlayActivationModality(event),
-                      )
-                    }
-                    className="focus-ring inline-flex h-9 min-h-11 shrink-0 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2 text-[13px] font-semibold leading-4 text-[#142033] lg:hidden"
-                  >
-                    <span>Sort</span>
-                    <ChevronDown
-                      className="h-3.5 w-3.5"
-                      aria-hidden="true"
-                    />
-                  </button>
+                  <div className="group inline-flex min-h-11 min-w-11 shrink-0 items-center">
+                    <span className="relative inline-flex h-9 items-center overflow-hidden rounded-[9px] border border-[#D8E1EC] bg-white p-0 text-[13px] font-semibold leading-4 text-[#142033] transition group-hover:bg-slate-50">
+                      <button
+                        type="button"
+                        data-cars-sort-trigger
+                        aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
+                        aria-haspopup="dialog"
+                        aria-expanded={quickFilterGroupId === "sort"}
+                        className="focus-ring inline-flex h-full min-w-0 items-center gap-1 px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35"
+                        onClick={(event) =>
+                          openQuickFilter(
+                            "sort",
+                            event.currentTarget,
+                            getOverlayActivationModality(event),
+                          )
+                        }
+                      >
+                        <span className="max-w-[11rem] truncate">Sort</span>
+                        <ChevronDown
+                          className={cn(
+                            "h-3.5 w-3.5 shrink-0 transition-transform",
+                            quickFilterGroupId === "sort" && "rotate-180",
+                          )}
+                          aria-hidden="true"
+                        />
+                      </button>
+                    </span>
+                  </div>
                     {quickFilterGroups.map((group) => {
                       const selected = selectedCarFilters[group.id] ?? [];
                       const active = selected.length > 0;
@@ -3162,15 +3170,42 @@ export function CarsResultsExperience({
                 </div>
               )}
               {isMobilePaginationViewport && visibleResults.length > mobilePageSize && filterTransitionPhase === "idle" ? (
-                <nav aria-label="Cars results pages" data-cars-mobile-pagination className="mt-8 flex items-center justify-center gap-5 pb-6 sm:hidden">
-                  <button type="button" aria-label="Previous page" disabled={currentMobilePage === 1} onClick={() => navigateMobileResultsPage(currentMobilePage - 1)} className="flex h-11 w-11 items-center justify-center text-[#142033] disabled:text-[#94A3B8] focus-visible:rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]">
-                    <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                <nav
+                  aria-label="Cars results pages"
+                  data-cars-mobile-pagination
+                  className="flight-results-pagination mb-6 mt-6 flex min-w-0 items-center justify-center sm:hidden"
+                >
+                  <button
+                    type="button"
+                    aria-label="Previous page"
+                    disabled={currentMobilePage === 1}
+                    onClick={() => navigateMobileResultsPage(currentMobilePage - 1)}
+                    className="flight-pagination-control"
+                  >
+                    <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                   </button>
-                  {Array.from({ length: mobilePageCount }, (_, index) => index + 1).filter((page) => page === 1 || page === mobilePageCount || Math.abs(page - currentMobilePage) <= 1).map((page) => (
-                    <button key={page} type="button" aria-label={`Page ${page}`} aria-current={page === currentMobilePage ? "page" : undefined} onClick={() => navigateMobileResultsPage(page)} className={cn("flex h-11 min-w-9 items-center justify-center rounded-lg px-1 text-base font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]", page === currentMobilePage ? "text-[#204BB5]" : "text-[#142033]")}>{page}</button>
-                  ))}
-                  <button type="button" aria-label="Next page" disabled={currentMobilePage === mobilePageCount} onClick={() => navigateMobileResultsPage(currentMobilePage + 1)} className="flex h-11 w-11 items-center justify-center text-[#142033] disabled:text-[#94A3B8] focus-visible:rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]">
-                    <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                  <span className="flex min-w-0 items-center">
+                    {buildFlightPaginationItems(currentMobilePage, mobilePageCount, true).map((page) => (
+                      <button
+                        key={page}
+                        type="button"
+                        aria-label={`Page ${page}`}
+                        aria-current={page === currentMobilePage ? "page" : undefined}
+                        onClick={() => navigateMobileResultsPage(page)}
+                        className="flight-pagination-control"
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Next page"
+                    disabled={currentMobilePage === mobilePageCount}
+                    onClick={() => navigateMobileResultsPage(currentMobilePage + 1)}
+                    className="flight-pagination-control"
+                  >
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </nav>
               ) : null}
