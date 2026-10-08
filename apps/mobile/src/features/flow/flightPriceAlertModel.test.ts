@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { availableFlightAlertCurrencies, buildAutomaticFlightPriceAlertPayload, buildFlightPriceAlertPayload, flightAlertPresentation, flightPriceAlertMatchesPlan, matchingFlightPriceAlert, MAX_PRICE_ALERT_TARGET, parseTargetPrice, selectAutomaticFlightBaseline } from "./flightPriceAlertModel";
+import type { MobilePriceAlert } from "../../api/travelApi";
+import { availableFlightAlertCurrencies, buildAutomaticFlightPriceAlertPayload, buildFlightPriceAlertPayload, flightAlertPresentation, flightPriceAlertMatchesPlan, matchingFlightPriceAlert, MAX_PRICE_ALERT_TARGET, parseTargetPrice, selectAutomaticFlightBaseline, pauseActiveFlightPriceAlerts } from "./flightPriceAlertModel";
 
 const plan = { key: "flight", summary: "JFK → CDG", payload: { tripType: "round-trip", origin: "JFK", destination: "CDG", departureDate: "2030-01-01", returnDate: "2030-01-08", adults: 2, children: 1, infants: 0, travelers: 3, cabinClass: "premium-economy" } };
 test("builds canonical premium economy round-trip payload", () => {
@@ -39,7 +40,33 @@ const alert = (overrides: Record<string, unknown> = {}) => ({
   id: "alert-1", type: "FLIGHT", origin: "JFK", destination: "CDG", targetPrice: null, mode: "AUTOMATIC", currency: "EUR", status: "ACTIVE",
   createdAt: "", updatedAt: "", lastSeenPrice: null, lastCheckedAt: null,
   query: { ...plan.payload, currency: "EUR" }, ...overrides,
-}) as never;
+}) as MobilePriceAlert;
+
+test("turning tracking off pauses every active target and automatic identity match", async () => {
+  const alerts = [alert({ id: "target", mode: "TARGET" }), alert({ id: "automatic" }), alert({ id: "paused", status: "PAUSED" }), alert({ id: "other", query: { ...plan.payload, destination: "LAX" } })];
+  const ids: string[] = [];
+  const updated = await pauseActiveFlightPriceAlerts(alerts, plan, async (id) => {
+    ids.push(id);
+    return alert({ ...alerts.find((item) => item.id === id), id, status: "PAUSED" });
+  });
+  assert.deepEqual(ids.sort(), ["automatic", "target"]);
+  assert.equal(matchingFlightPriceAlert(updated, plan)?.status, "PAUSED");
+  assert.equal(updated.find((item) => item.id === "other")?.status, "ACTIVE");
+});
+
+test("a partial pause failure attempts all matches and never reports success", async () => {
+  const ids: string[] = [];
+  await assert.rejects(pauseActiveFlightPriceAlerts([alert({ id: "target", mode: "TARGET" }), alert({ id: "automatic" })], plan, async (id) => {
+    ids.push(id);
+    if (id === "target") throw new Error("Network failure");
+    return alert({ id, status: "PAUSED" });
+  }), /Network failure/);
+  assert.deepEqual(ids.sort(), ["automatic", "target"]);
+});
+
+test("an unconfirmed pause cannot turn tracking off", async () => {
+  await assert.rejects(pauseActiveFlightPriceAlerts([alert()], plan, async () => alert()), /not paused/);
+});
 
 test("matches the exact canonical route, dates, trip type, passenger composition, and cabin", () => {
   assert.equal(flightPriceAlertMatchesPlan(alert(), plan), true);

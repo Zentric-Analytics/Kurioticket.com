@@ -12,6 +12,11 @@ test("Flight Results keeps one compact accessible Track Price switch", () => {
   assert.match(alert, /flight \? "Track this flight price"/);
 });
 
+test("Flight keeps its disabled row without an eligible fare while active alerts remain pausable", () => {
+  assert.match(alert, /if \(!flight && currentTotal === null\) return null/);
+  assert.match(alert, /\(currentTotal === null && !isTracking\)/);
+});
+
 test("Flight OFF to ON opens the Hotel-style target sheet without creating an alert", () => {
   const toggle = alert.slice(alert.indexOf("const handleToggle"), alert.indexOf("const createAlert"));
   assert.match(toggle, /await openSheet\(\)/);
@@ -23,6 +28,8 @@ test("Flight OFF to ON opens the Hotel-style target sheet without creating an al
 
 test("Flight pause, paused-target save, duplicates and sign-in remain authoritative", () => {
   assert.match(alert, /updatePriceAlertStatus\(matchingAlert.id, "PAUSED"\)/);
+  assert.match(alert, /pauseActiveFlightPriceAlerts/);
+  assert.match(alert, /catch \(cause\)[\s\S]*await reconcile\(\)/);
   assert.match(alert, /updatePriceAlertStatus\(samePausedTarget.id, "ACTIVE"\)/);
   assert.match(alert, /cause.status === 409[\s\S]*flightPriceAlertMatchesPlan/);
   assert.match(alert, /readSession\(\)[\s\S]*requireSignIn\(\)/);

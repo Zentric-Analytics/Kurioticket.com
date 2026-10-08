@@ -32,7 +32,7 @@ import {
   buildHotelPriceAlertPayload,
   matchingHotelPriceAlert,
 } from "../flow/hotelPriceAlertModel";
-import { buildFlightPriceAlertPayload, flightPriceAlertMatchesPlan, matchingFlightPriceAlert, selectAutomaticFlightBaseline } from "../flow/flightPriceAlertModel";
+import { buildFlightPriceAlertPayload, flightPriceAlertMatchesPlan, matchingFlightPriceAlert, pauseActiveFlightPriceAlerts, selectAutomaticFlightBaseline } from "../flow/flightPriceAlertModel";
 import type { SearchPlan } from "../flow/travelSearchModel";
 import { FlightRangeSlider } from "./FlightRangeSlider";
 import { PriceAlertTargetIntent } from "./priceAlertTargetIntent";
@@ -254,11 +254,24 @@ export function HotelPriceAlert({
     pendingRef.current = true;
     setPending(true);
     try {
-      const paused = (await travelApi.updatePriceAlertStatus(matchingAlert.id, "PAUSED")).alert;
+      let paused: MobilePriceAlert | undefined;
+      if (flight) {
+        const alerts = (await travelApi.priceAlerts()).alerts;
+        if (planRef.current.key !== planKey) return;
+        const updated = await pauseActiveFlightPriceAlerts(alerts, plan, async (id) =>
+          (await travelApi.updatePriceAlertStatus(id, "PAUSED")).alert,
+        );
+        paused = matchingFlightPriceAlert(updated, plan);
+      } else {
+        paused = (await travelApi.updatePriceAlertStatus(matchingAlert.id, "PAUSED")).alert;
+      }
       if (planRef.current.key !== planKey) return;
       setCurrentMatchingAlert(paused);
       if (flight) onFeedback?.("paused");
     } catch (cause) {
+      if (planRef.current.key !== planKey) return;
+      // A partial failure must reflect any remaining active alerts on the switch.
+      if (flight) await reconcile();
       if (cause instanceof TravelApiError && cause.status === 401) {
         setCurrentMatchingAlert(undefined);
         requireSignIn();
@@ -348,10 +361,10 @@ export function HotelPriceAlert({
     }
   };
 
-  if (currentTotal === null) return null;
-  const toggleDisabled = pending || loadingAlert || !alertKnown || (!available && !isTracking);
+  if (!flight && currentTotal === null) return null;
+  const toggleDisabled = pending || loadingAlert || !alertKnown || (!available && !isTracking) || (currentTotal === null && !isTracking);
   const formatTotal = (amount: number) => formatMarketCurrency(amount, visibleCurrency);
-  const dropAmount = desiredTotal === null ? 0 : Math.max(0, currentTotal - desiredTotal);
+  const dropAmount = desiredTotal === null || currentTotal === null ? 0 : Math.max(0, currentTotal - desiredTotal);
 
   return (
     <View
@@ -423,7 +436,7 @@ export function HotelPriceAlert({
 
               <View style={[styles.currentPriceCard, { borderColor: theme.border, backgroundColor: theme.background }]}>
                 <Text style={[styles.metricLabel, { color: theme.textSecondary }]}>{currentLabel}</Text>
-                <Text style={[styles.currentPrice, { color: theme.textPrimary }]}>{formatTotal(currentTotal)}</Text>
+                <Text style={[styles.currentPrice, { color: theme.textPrimary }]}>{currentTotal === null ? "—" : formatTotal(currentTotal)}</Text>
               </View>
 
               <View style={styles.sliderBlock}>

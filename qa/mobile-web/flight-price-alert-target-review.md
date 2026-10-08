@@ -33,6 +33,16 @@ Native tests cover models and component source contracts. An iOS/Android
 simulator or device was not available; native sheet interactions were not
 visually verified on a device.
 
+## Review corrections
+
+Native Flight keeps its compact Track Price row visible when no eligible fare
+exists, disabling creation while leaving existing active alerts pausable.
+Turning tracking off fetches current alerts and pauses every active match for
+the search, including legacy automatic alerts. A partial failure reconciles
+server state and does not show a success message. Async model regressions cover
+multiple active modes, unrelated searches, partial failure, and unconfirmed
+pause responses. The full native suite still passes all 336 test files.
+
 ## Run browser regression tests locally
 
 Start the application and existing deterministic Flight fixture service:
