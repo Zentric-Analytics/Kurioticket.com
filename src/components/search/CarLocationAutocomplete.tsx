@@ -117,7 +117,7 @@ export function CarLocationAutocomplete({
   const { placement, popoverRef, style } = useCarsDesktopPopover({
     open: showPanel && usesDesktopPanel,
     launcherRef: activeInputRef,
-    preferredWidth: 420,
+    preferredWidth: desktopResultsPresentation ? 340 : 420,
     desiredHeight: 320,
     maxHeight: 320,
     providedPopoverRef: panelRef,
