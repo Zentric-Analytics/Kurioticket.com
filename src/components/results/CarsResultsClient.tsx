@@ -2800,7 +2800,7 @@ export function CarsResultsExperience({
                 {!guidedPlanning ? (
                   <div
                     data-cars-results-quick-filters
-                    className="scrollbar-hide -me-4 flex w-[calc(100%+1rem)] flex-nowrap gap-1 overflow-x-auto overscroll-x-contain pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden"
+                    className="scrollbar-hide flex w-full min-w-0 flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain px-3 [scroll-padding-inline:0.75rem] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden"
                   >
                     <button
                       ref={filtersButtonRef}
