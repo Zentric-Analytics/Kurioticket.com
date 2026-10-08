@@ -1918,6 +1918,7 @@ export function CarsResultsExperience({
     presentation === "guided-planning" ? "lowestTotal" : "recommended",
   );
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [mobileResultsPage, setMobileResultsPage] = useState(1);
   const [carsSortOpen, setCarsSortOpen] = useState(false);
   const [filterTransitionPhase, setFilterTransitionPhase] =
     useState<CarsFilterTransitionPhase>("idle");
@@ -2191,6 +2192,26 @@ export function CarsResultsExperience({
     const ranked = sortCarResults(filterCarResults(results, selectedCarFilters, displayPricePerDay), sort);
     return sort === "recommended" ? ensureCarProviderCoverage(ranked) : ranked;
   }, [displayPricePerDay, results, selectedCarFilters, sort]);
+  const mobilePageSize = 20;
+  const mobilePageCount = Math.max(1, Math.ceil(visibleResults.length / mobilePageSize));
+  const currentMobilePage = Math.min(mobileResultsPage, mobilePageCount);
+  const mobilePageStart = (currentMobilePage - 1) * mobilePageSize;
+  const mobilePageResults = visibleResults.slice(mobilePageStart, mobilePageStart + mobilePageSize);
+  const [isMobilePaginationViewport, setIsMobilePaginationViewport] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 639px)");
+    const update = () => setIsMobilePaginationViewport(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  useEffect(() => { setMobileResultsPage(1); }, [sort, selectedCarFilters, results]);
+  const navigateMobileResultsPage = (page: number) => {
+    setMobileResultsPage(Math.max(1, Math.min(page, mobilePageCount)));
+    window.requestAnimationFrame(() => {
+      paginationListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
   useEffect(() => {
     if (guidedPlanning || typeof window === "undefined") return undefined;
     const update = () => {
@@ -2839,7 +2860,7 @@ export function CarsResultsExperience({
                         getOverlayActivationModality(event),
                       )
                     }
-                    className="focus-ring inline-flex min-h-11 shrink-0 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2 text-[13px] font-semibold leading-4 text-[#142033] lg:hidden"
+                    className="focus-ring inline-flex h-9 min-h-11 shrink-0 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2 text-[13px] font-semibold leading-4 text-[#142033] lg:hidden"
                   >
                     <span>Sort:</span>
                     <span className="font-semibold text-[#07133B]">
@@ -2960,7 +2981,7 @@ export function CarsResultsExperience({
                         )}
                     </h2>
                   </div>
-                  <span data-cars-results-visible-range className="shrink-0 text-[12px] font-medium text-[#64748B] sm:hidden">{visibleResults.length ? `1–${visibleResults.length}` : "0"}</span>
+                  <span data-cars-results-visible-range className="shrink-0 text-[12px] font-medium text-[#64748B] sm:hidden">{visibleResults.length ? `${mobilePageStart + 1}–${Math.min(mobilePageStart + mobilePageSize, visibleResults.length)}` : "0"}</span>
                   <div className="hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
                     <span className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
                       {t("carsResults.sortBy")}:
@@ -3079,7 +3100,7 @@ export function CarsResultsExperience({
                       "cars-filter-results-reveal",
                   )}
                 >
-                  {visibleResults.map((car) => (
+                  {(isMobilePaginationViewport ? mobilePageResults : visibleResults).map((car) => (
                     <CarResultCard
                       key={car.id}
                       car={car}
@@ -3143,6 +3164,15 @@ export function CarsResultsExperience({
                   </Button>
                 </div>
               )}
+              {isMobilePaginationViewport && visibleResults.length > mobilePageSize && filterTransitionPhase === "idle" ? (
+                <nav aria-label="Cars results pages" data-cars-mobile-pagination className="mt-5 flex items-center justify-center gap-2 sm:hidden">
+                  <button type="button" disabled={currentMobilePage === 1} onClick={() => navigateMobileResultsPage(currentMobilePage - 1)} className="min-h-11 min-w-11 rounded-lg border border-[#D8E1EC] bg-white px-3 disabled:opacity-40">Previous</button>
+                  {Array.from({ length: mobilePageCount }, (_, index) => index + 1).filter((page) => page === 1 || page === mobilePageCount || Math.abs(page - currentMobilePage) <= 1).map((page) => (
+                    <button key={page} type="button" aria-label={`Page ${page}`} aria-current={page === currentMobilePage ? "page" : undefined} onClick={() => navigateMobileResultsPage(page)} className={cn("min-h-11 min-w-11 rounded-lg border px-3 text-sm font-semibold", page === currentMobilePage ? "border-[#004BB8] bg-[#004BB8] text-white" : "border-[#D8E1EC] bg-white text-[#142033]")}>{page}</button>
+                  ))}
+                  <button type="button" disabled={currentMobilePage === mobilePageCount} onClick={() => navigateMobileResultsPage(currentMobilePage + 1)} className="min-h-11 min-w-11 rounded-lg border border-[#D8E1EC] bg-white px-3 disabled:opacity-40">Next</button>
+                </nav>
+              ) : null}
             </>
           ) : (
             <>
