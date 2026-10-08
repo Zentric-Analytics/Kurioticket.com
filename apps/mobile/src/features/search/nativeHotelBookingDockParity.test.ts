@@ -23,13 +23,13 @@ function rateStyle(name: string, nextName?: string) {
   return ratesSource.slice(start, end);
 }
 
-test("mobile web reference retains its independent Hotel rate action contract", () => {
-  assert.match(webMobileDetails, /className=\{styles\.rateAction\}/);
-  assert.match(webMobileDetails, />Stay total<\/span>/);
-  assert.match(webMobileDetails, /aria-label=\{`View deal from \$\{offer\.providerName\}`\}/);
-  assert.match(webMobileCss, /\.rate \{[^}]*grid-template-columns: minmax\(0, 1fr\) minmax\(112px, 36%\)/);
-  assert.match(webMobileCss, /\.rateAction \{[^}]*display: contents/);
-  assert.match(webMobileCss, /\.rateAction > button \{[^}]*min-height: 44px[^}]*border-radius: 8px[^}]*font-weight: 700[^}]*color: white/);
+test("mobile web reference reuses the desktop Hotel rate-card contract", () => {
+  assert.match(webMobileDetails, /import \{ DesktopProviderOffer \} from "\.\/HotelPriceComparisonSection"/);
+  assert.match(webMobileDetails, /offers\.map\(offer => <DesktopProviderOffer/);
+  assert.match(webMobileDetails, /perNightText=\{props\.perNightText\}/);
+  assert.match(webMobileDetails, /totalPrice: total/);
+  assert.doesNotMatch(webMobileDetails, /className=\{styles\.rateAction\}|>Stay total<\/span>/);
+  assert.doesNotMatch(webMobileCss, /\.rate\[data-selected="true"\][^}]*border-color: var\(--accent\)/);
 });
 
 test("native Hotel keeps one selected-provider dock visible across Rates, Overview, and Reviews", () => {
