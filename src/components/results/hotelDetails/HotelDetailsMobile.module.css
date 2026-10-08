@@ -34,20 +34,6 @@
 .ratesHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-block: 8px 4px; }
 .ratesHeader > p { min-width: 0; flex: 1; font-size: 14px; line-height: 20px; font-weight: 600; letter-spacing: -.25px; font-variant-numeric: tabular-nums; color: #1a1a1a; }
 .rateList { display: grid; gap: 8px; padding-block: 2px 6px; }
-.rate { position: relative; min-height: 80px; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(112px, 36%); column-gap: 12px; row-gap: 8px; align-items: center; }
-.rate[data-selected="true"] { background: #f5f8ff; border-color: var(--accent); box-shadow: 0 4px 10px rgb(15 23 42 / 12%); }
-.rate:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 3px; }
-.rate input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.rateTop { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 24px; }
-.rateTop > img { width: 116px; height: 24px; object-fit: contain; object-position: left; }
-.rateTop > strong { font-size: 14px; line-height: 19px; font-weight: 700; }
-.radio { flex-shrink: 0; width: 20px; height: 20px; border: 1.5px solid #595959; border-radius: 50%; display: grid; place-items: center; }
-.rate[data-selected="true"] .radio { border-color: var(--accent); }
-.radio i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-.rateBottom { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.rateBottom > span { font-size: 12px; line-height: 17px; font-weight: 500; color: var(--muted); }
-.rateBottom > strong { max-width: 60%; font-size: 16px; line-height: 20px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.rateChoice { grid-column: 1; grid-row: 1; min-width: 0; }
 .noRates { border: 1px solid var(--border); border-radius: 14px; padding: 16px; font-size: 13px; line-height: 19px; }
 .noRates h2 { font-size: 15px; font-weight: 700; }
 .noRates a { color: var(--accent); display: inline-block; padding-top: 12px; }
@@ -80,12 +66,6 @@
 .panel [data-related-hotels-section] { margin-top: 16px; padding: 0; }
 .panel [data-related-hotels-grid] { margin: 8px -16px 0; width: calc(100% + 32px); max-width: none; padding: 0 16px 4px; scroll-padding-inline: 16px; gap: 12px; }
 .panel [data-hotel-reviews-section] { border: 0; padding: 8px 0; }
-.rateAction { display: contents; }
-.rateAction > div { grid-column: 1; grid-row: 2; min-width: 0; align-self: center; display: flex; flex-direction: column; gap: 1px; }
-.rateAction strong { font-size: 17px; line-height: 21px; font-weight: 600; letter-spacing: -.25px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.rateAction span { font-size: 11px; line-height: 16px; font-weight: 600; color: var(--muted); }
-.rateAction > button { grid-column: 2; grid-row: 1 / 3; align-self: center; width: 100%; min-width: 0; min-height: 44px; display: flex; align-items: center; justify-content: center; padding: 8px 12px; background: var(--accent); border-radius: 8px; font-size: 12px; line-height: 16px; font-weight: 700; color: white; }
-.rateAction > button:active { opacity: .82; }
 .dialog { position: fixed; inset: auto 0 0; width: 100%; max-width: none; max-height: 90dvh; margin: 0; border: 0; border-radius: 22px 22px 0 0; padding: 0; color: #1a1a1a; font-family: Inter,sans-serif; overflow: auto; }
 .dialog:focus, .dialog:focus-visible { outline: none; }
 .dialog::backdrop { background: rgb(2 6 23 / 42%); }
