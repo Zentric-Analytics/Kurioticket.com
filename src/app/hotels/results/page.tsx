@@ -70,7 +70,7 @@ export default async function HotelResultsPage({
   return (
     <div
       data-hotel-results-page-surface
-      className="min-h-[100svh] bg-[#F5F7FB] sm:bg-transparent"
+      className="flex min-h-[100svh] flex-col bg-[#F5F7FB] sm:bg-transparent"
     >
       <AppHeader
         flushDesktopBottom
