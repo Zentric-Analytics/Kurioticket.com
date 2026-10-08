@@ -40,8 +40,8 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
   }, []);
 
   return (
-    <main className="flex-1 bg-[#F3F6FA] pb-[calc(1.75rem+env(safe-area-inset-bottom))] sm:bg-[#F7F9FC] sm:pb-7 sm:pt-7 lg:pt-7">
-      <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 top-0 z-[70] h-[calc(env(safe-area-inset-top)+64px)] transition-colors sm:hidden ${headerProtected ? "bg-[#F3F6FA]" : "bg-transparent"}`} />
+    <main className="flex-1 bg-[#F5F7FB] pb-[calc(1.75rem+env(safe-area-inset-bottom))] sm:bg-[#F7F9FC] sm:pb-7 sm:pt-7 lg:pt-7">
+      <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 top-0 z-[70] h-[calc(env(safe-area-inset-top)+64px)] transition-colors sm:hidden ${headerProtected ? "bg-[#F5F7FB]" : "bg-transparent"}`} />
       {resultsHref ? (
         <div ref={backControlRef} className="fixed left-4 top-[calc(env(safe-area-inset-top)+8px)] z-[80] sm:hidden">
           <Link href={resultsHref} aria-label="Back to results" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/55 bg-white/90 text-slate-900 shadow-[0_2px_6px_rgba(15,23,42,0.12)] backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">
@@ -56,7 +56,7 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
       <div className="mx-auto w-full max-w-[1080px] px-0 sm:px-6 lg:px-[30px]">
         <div role="status" aria-label="Loading flight details" className="min-w-0">
           <span className="sr-only">Loading flight details</span>
-          <div className="overflow-hidden border-b border-slate-200 bg-[#F3F6FA] sm:rounded-[15px] sm:border sm:bg-white">
+          <div className="overflow-hidden border-b border-slate-200 bg-[#F5F7FB] sm:rounded-[15px] sm:border sm:bg-white">
             <div ref={heroRef} className="relative flex min-h-[318px] flex-col justify-end overflow-hidden bg-[#E2E8F0] px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:block sm:bg-transparent sm:px-6 sm:pb-16 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="hidden object-cover sm:block" />
               <div
@@ -75,7 +75,7 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
                 <div className="h-8 w-[62%] animate-pulse rounded-lg bg-slate-300 sm:w-full sm:bg-white/35" />
                 <div className="h-4 w-[58%] animate-pulse rounded bg-slate-300 sm:hidden" />
               </div>
-              <svg data-flight-details-loading-hero-curve aria-hidden="true" viewBox="0 0 100 64" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[65px] w-full sm:hidden"><path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z" fill="#F3F6FA" /></svg>
+              <svg data-flight-details-loading-hero-curve aria-hidden="true" viewBox="0 0 100 64" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[65px] w-full sm:hidden"><path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z" fill="#F5F7FB" /></svg>
             </div>
             <div className="relative z-10 px-[18px] pb-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0">
             <div ref={itineraryRef} data-mobile-native-itinerary-loading className="-mx-[10px] -mt-[104px] sm:mx-0 sm:mt-0">
