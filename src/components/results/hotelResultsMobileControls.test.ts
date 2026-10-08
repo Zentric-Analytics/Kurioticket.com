@@ -184,14 +184,18 @@ test("Hotel mobile menu covers the full viewport like Flight", () => {
 
 
 
-test("Hotel mobile filters use the same sticky AppHeader architecture without extra white space below the curve", () => {
+test("Hotel mobile filters use the same sticky AppHeader architecture over the results-colored page underlay", () => {
   assert.match(resultsPageSource, /mobileResultsFilters=\{<div data-hotel-results-mobile-nav-filters[\s\S]*?empty:hidden/);
   assert.match(resultsSource, /const \[mobileNavFiltersTarget, setMobileNavFiltersTarget\]/);
   assert.match(resultsSource, /\[data-hotel-results-mobile-nav-filters\]/);
   assert.match(resultsSource, /const syncResultsHeaderTargets = \(\) =>/);
   assert.match(resultsSource, /new MutationObserver\(syncResultsHeaderTargets\)/);
   assert.match(resultsSource, /createPortal\(mobileResultsFiltersContent, mobileNavFiltersTarget\)/);
-  assert.match(resultsSource, /data-hotel-results-toolbar[\s\S]*w-full pt-2 sm:hidden/);
+  assert.match(resultsSource, /data-hotel-results-toolbar[\s\S]*w-full py-2 sm:hidden/);
+  assert.match(
+    resultsPageSource,
+    /data-hotel-results-page-surface[\s\S]*className="min-h-\[100svh\] bg-\[#F5F7FB\] sm:bg-transparent"[\s\S]*<AppHeader/,
+  );
   assert.doesNotMatch(resultsSource, /mobileFiltersPinned|mobileFiltersVisible|mobileFiltersAnimated|mobileFilterOriginRef|mobileFiltersPinnedRef/);
   assert.doesNotMatch(resultsSource, /data-scroll-visible|data-scroll-pinned|scrollFilterBarPinned|scrollFilterBarHidden/);
 });
