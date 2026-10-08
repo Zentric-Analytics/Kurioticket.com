@@ -66,10 +66,10 @@ export function MobileNativeFareInformationDeck({
                 aria-controls={`mobile-fare-panel-${tab.id}`}
                 onClick={() => onTabChange(tab.id)}
                 style={{ color: "#536B92" }}
-                className="flight-mobile-fare-info-tab-label relative min-h-[48px] shrink-0 whitespace-nowrap px-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0754F7]/35"
+                className="flight-mobile-fare-info-tab-label relative min-h-[48px] shrink-0 whitespace-nowrap px-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35"
               >
                 {tab.label}
-                {selected ? <span className="absolute -bottom-px left-0.5 right-0.5 h-[3px] rounded-[2px] bg-[#0754F7]" aria-hidden="true" /> : null}
+                {selected ? <span className="absolute -bottom-px left-0.5 right-0.5 h-[3px] rounded-[2px] bg-[#075EE8]" aria-hidden="true" /> : null}
               </button>
             );
           })}
@@ -192,7 +192,7 @@ function DealsSurface({
             data-mobile-flight-deal-card
             data-selected={selected || undefined}
             data-provider-handoff-unavailable={!canContinue || undefined}
-            className={`grid min-h-[92px] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border bg-white px-[14px] py-3 transition ${
+            className={`grid min-h-[92px] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-[1.5px] bg-white px-[14px] py-3 transition ${
               selected
                 ? "border-[#075EE8] shadow-[0_3px_10px_rgba(7,94,232,0.08)]"
                 : "border-[#D9E2E8]"

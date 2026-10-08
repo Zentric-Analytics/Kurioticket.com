@@ -43,6 +43,10 @@ test("mobile Compare deals keeps resilient provider identity, selection, price h
   assert.match(deck, /const displayedDeals = deals\.length/);
   assert.match(deck, /data-mobile-flight-deal-list/);
   assert.match(deck, /data-mobile-flight-deal-card/);
+  assert.match(deck, /rounded-xl border-\[1\.5px\] bg-white/);
+  assert.match(deck, /border-\[#075EE8\]/);
+  assert.match(deck, /h-\[3px\][^"\n]*bg-\[#075EE8\]/);
+  assert.doesNotMatch(deck, /#0754F7/);
   assert.match(deck, /data-mobile-flight-provider-logo/);
   assert.match(deck, /deal\.providerLogoUrl[\s\S]*?deal\.providerName/);
   assert.match(deck, /FlightIdentityMark logoUrl=\{identityMark\.logoUrl\} decorative mobile/);
