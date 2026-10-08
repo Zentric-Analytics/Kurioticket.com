@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { formatCurrency } from "@/lib/currency/formatCurrency";
+import { HOTEL_ALERT_MAX_DROP_PERCENT } from "@/lib/price-alerts/hotelPriceAlerts";
 import {
   buildCanonicalFlightPriceAlertQuery,
   buildFlightPriceAlertPayload,
@@ -174,7 +175,9 @@ export function FlightPriceAlertControl({ query: queryInput, results }: { query:
       && targetAlert.currency?.toUpperCase() === baseline.currency.toUpperCase()
       ? Number(targetAlert.targetPrice)
       : Number.NaN;
-    const usablePausedTarget = Number.isFinite(pausedTarget) && pausedTarget > 0 && pausedTarget < baseline.price;
+    const pausedDropPercent = Math.round((1 - pausedTarget / baseline.price) * 100 * 1e6) / 1e6;
+    const usablePausedTarget = Number.isFinite(pausedTarget) && pausedTarget > 0 && pausedTarget < baseline.price
+      && (surface === "desktop" || (pausedDropPercent >= FLIGHT_ALERT_MIN_DROP_PERCENT && pausedDropPercent <= HOTEL_ALERT_MAX_DROP_PERCENT));
     setPreservedPausedTarget(usablePausedTarget ? { id: targetAlert!.id, target: pausedTarget } : null);
     setDropPercent(usablePausedTarget
       ? flightAlertDropPercentForTarget(baseline.price, pausedTarget)
@@ -276,8 +279,8 @@ export function FlightPriceAlertControl({ query: queryInput, results }: { query:
       </div>
       <div>
         <div className="flex items-center justify-between gap-3"><span className="text-[15px] font-semibold text-slate-950">Price drop</span><strong className="text-[15px] text-[#004BB8]">{dropPercent}%</strong></div>
-        <input type="range" min={FLIGHT_ALERT_MIN_DROP_PERCENT} max={FLIGHT_ALERT_MAX_DROP_PERCENT} step={1} value={dropPercent} aria-label="Price drop" aria-valuetext={`${dropPercent}%`} onChange={(event) => { setPreservedPausedTarget(null); setDropPercent(Number(event.target.value)); setFeedback(null); }} className="mt-2 h-2 w-full cursor-pointer accent-[#004BB8]" />
-        <div className="mt-1 flex justify-between text-[11px] text-slate-500"><span>1%</span><span>50%</span></div>
+        <input type="range" min={FLIGHT_ALERT_MIN_DROP_PERCENT} max={surface === "mobile" ? HOTEL_ALERT_MAX_DROP_PERCENT : FLIGHT_ALERT_MAX_DROP_PERCENT} step={1} value={dropPercent} aria-label="Price drop" aria-valuetext={`${dropPercent}%`} onChange={(event) => { setPreservedPausedTarget(null); setDropPercent(Number(event.target.value)); setFeedback(null); }} className="mt-2 h-2 w-full cursor-pointer accent-[#004BB8]" />
+        <div className="mt-1 flex justify-between text-[11px] text-slate-500"><span>1%</span><span>{surface === "mobile" ? HOTEL_ALERT_MAX_DROP_PERCENT : FLIGHT_ALERT_MAX_DROP_PERCENT}%</span></div>
       </div>
       <div className="grid min-h-[58px] grid-cols-2 gap-3 border-y border-slate-200 py-2">
         <div><p className="text-xs font-medium text-slate-500">Drops by</p><p className="mt-0.5 text-[15px] font-bold text-slate-950 tabular-nums">{dropAmount === null ? "—" : formatPrice(dropAmount)}</p></div>

@@ -35,6 +35,6 @@ test("ready Flight content retains dates, sticky filters, alert, count and cards
   assert.match(list, /sections=\{\[\{ data: !flightState \? \[null, \.\.\.\(sorted as FlightResult\[\]\)\] : \[\] \}\]\}/);
   assert.match(list, /ListHeaderComponent=\{flightDateStrip\}/);
   assert.match(list, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
-  assert.match(list, /renderItem=\{\(\{ item, index \}\) => item === null \? \([\s\S]*?<PriceAlert product="flight"[\s\S]*?<FlightResultsSummaryRow count=\{sorted\.length\} \/>[\s\S]*?\) : \([\s\S]*?<FlightCard/);
+  assert.match(list, /renderItem=\{\(\{ item, index \}\) => item === null \? \([\s\S]*?<FlightPriceAlert[\s\S]*?<FlightResultsSummaryRow count=\{sorted\.length\} \/>[\s\S]*?\) : \([\s\S]*?<FlightCard/);
   assert.match(list, /logInitialMount=\{index === 1\}/);
 });

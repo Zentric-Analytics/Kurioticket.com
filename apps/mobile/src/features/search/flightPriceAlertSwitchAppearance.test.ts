@@ -1,20 +1,15 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-
-const source = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
-const priceAlert = source.slice(source.indexOf("function PriceAlert"), source.indexOf("export function BottomNav"));
-const flightAlert = priceAlert.slice(priceAlert.indexOf("if (flight)"), priceAlert.indexOf('if (product !== "hotel"'));
-const hotelAlert = priceAlert.slice(priceAlert.indexOf('if (product !== "hotel"'));
-
-test("Flight Track Price uses a dedicated compact native switch presentation", () => {
-  assert.match(flightAlert, /<Switch style=\{Platform\.OS === "ios" \? s0\.compactPriceAlertSwitchIos : undefined\} hitSlop=\{6\} accessibilityRole="switch" accessibilityLabel="Track this flight price"/);
-  assert.doesNotMatch(source, /flightPriceAlertSwitch|scale: 0\.88/);
-  assert.match(source, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44/);
-  assert.doesNotMatch(flightAlert, />On<|>Off</);
+const source = readFileSync("src/features/search/HotelPriceAlert.tsx", "utf8");
+test("Flight keeps its compact native switch and expanded touch target", () => {
+  assert.match(source, /hitSlop=\{flight \? 6 : undefined\}/);
+  assert.match(source, /style=\{Platform.OS === "ios" \? styles.switchIos : undefined\}/);
+  assert.match(source, /switchSlot: \{ minWidth: 51, minHeight: 44/);
+  assert.doesNotMatch(source, />On<|>Off</);
 });
-
-test("Hotel Track Price does not inherit the Flight-only transform", () => {
-  assert.match(hotelAlert, /<Switch style=\{Platform\.OS === "ios" \? s0\.compactPriceAlertSwitchIos : undefined\}/);
-  assert.doesNotMatch(hotelAlert, /flightPriceAlertSwitch|hitSlop=\{6\}/);
+test("Hotel retains its switch appearance without Flight's additional hit area", () => {
+  assert.match(source, /product = "hotel"/);
+  assert.match(source, /hitSlop=\{flight \? 6 : undefined\}/);
+  assert.match(source, /switchIos: \{ transform: \[\{ translateY: 8 \}\]/);
 });

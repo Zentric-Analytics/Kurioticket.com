@@ -33,7 +33,7 @@ export function buildFlightPriceAlertPayload(plan: SearchPlan, targetPrice: numb
   const normalizedCurrency = currency.trim().toUpperCase();
   if (!supported.has(normalizedCurrency)) throw new Error("Unsupported alert currency.");
   return {
-    type: "FLIGHT" as const,
+    type: "FLIGHT" as const, mode: "TARGET" as const,
     origin: String(query.origin), destination: String(query.destination), targetPrice, currency: normalizedCurrency,
     query: {
       tripType: query.tripType as "round-trip" | "one-way", origin: String(query.origin), destination: String(query.destination),
@@ -75,6 +75,27 @@ export function flightPriceAlertMatchesPlan(alert: MobilePriceAlert, plan: Searc
 }
 
 export function matchingFlightPriceAlert(alerts: MobilePriceAlert[], plan: SearchPlan) {
-  const matches = alerts.filter((alert) => alert.mode === "AUTOMATIC" && flightPriceAlertMatchesPlan(alert, plan));
-  return matches.find(({ status }) => status === "ACTIVE") ?? matches.find(({ status }) => status === "PAUSED");
+  const matches = alerts.filter((alert) => flightPriceAlertMatchesPlan(alert, plan));
+  return matches.find((alert) => alert.mode === "TARGET" && alert.status === "ACTIVE")
+    ?? matches.find((alert) => alert.mode === "AUTOMATIC" && alert.status === "ACTIVE")
+    ?? matches.find((alert) => alert.mode === "TARGET" && alert.status === "PAUSED")
+    ?? matches.find((alert) => alert.mode === "AUTOMATIC" && alert.status === "PAUSED");
+}
+
+/** The switch represents every active alert for this search, including legacy modes. */
+export async function pauseActiveFlightPriceAlerts(
+  alerts: MobilePriceAlert[],
+  plan: SearchPlan,
+  pause: (id: string) => Promise<MobilePriceAlert>,
+) {
+  const active = alerts.filter((alert) => alert.status === "ACTIVE" && flightPriceAlertMatchesPlan(alert, plan));
+  const outcomes = await Promise.allSettled(active.map(async (alert) => {
+    const paused = await pause(alert.id);
+    if (paused.id !== alert.id || paused.status !== "PAUSED") throw new Error("Flight price alert was not paused.");
+    return paused;
+  }));
+  const failure = outcomes.find((outcome) => outcome.status === "rejected");
+  if (failure?.status === "rejected") throw failure.reason;
+  const updates = new Map(outcomes.flatMap((outcome) => outcome.status === "fulfilled" ? [[outcome.value.id, outcome.value] as const] : []));
+  return alerts.map((alert) => updates.get(alert.id) ?? alert);
 }
