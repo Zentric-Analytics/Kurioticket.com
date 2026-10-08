@@ -28,8 +28,8 @@ test("desktop Flight Results header is compact, trip-aware, and uses lighter Hot
   assert.match(toolbar, /tripTypeInput === "round-trip"/);
   assert.match(toolbar, /grid-cols-\[96px_minmax\(0,1fr\)_minmax\(138px,150px\)_50px_40px\]/);
   assert.match(toolbar, /grid-cols-\[96px_minmax\(0,1fr\)_104px_50px_40px\]/);
-  assert.match(toolbar, /xl:grid-cols-\[104px_230px_150px_56px_40px\]/);
-  assert.match(toolbar, /xl:grid-cols-\[104px_230px_104px_56px_40px\]/);
+  assert.match(toolbar, /xl:grid-cols-\[104px_270px_150px_56px_40px\]/);
+  assert.match(toolbar, /xl:grid-cols-\[104px_270px_104px_56px_40px\]/);
   assert.match(toolbar, /getCompactCityLabel/);
   assert.match(toolbar, /data-flight-results-compact-route/);
   assert.match(toolbar, /bg-\[#F8FAFC\]/);
@@ -67,12 +67,12 @@ test("desktop Flight route control is clearly dominant over the date control", (
 
   assert.match(toolbar, /const fieldClass =[\s\S]*?h-\[40px\]/);
   assert.doesNotMatch(toolbar, /h-\[36px\]/);
-  assert.match(toolbar, /max-w-\[548px\]/);
+  assert.match(toolbar, /max-w-\[588px\]/);
   assert.match(toolbar, /minmax\(138px,150px\)/);
-  assert.match(toolbar, /xl:grid-cols-\[104px_230px_150px_56px_40px\]/);
+  assert.match(toolbar, /xl:grid-cols-\[104px_270px_150px_56px_40px\]/);
   assert.match(toolbar, /className=\{cn\(fieldClass, "w-full justify-center px-1.5"\)\}/);
   assert.match(toolbar, /grid-cols-\[96px_minmax\(0,1fr\)_minmax\(138px,150px\)_50px_40px\]/);
-  assert.match(toolbar, /xl:grid-cols-\[104px_230px_150px_56px_40px\]/);
+  assert.match(toolbar, /xl:grid-cols-\[104px_270px_150px_56px_40px\]/);
   assert.doesNotMatch(toolbar, /minmax\(168px,1fr\)/);
   assert.doesNotMatch(toolbar, /<Calendar(?:Days)?[\s>]/);
 });
@@ -195,12 +195,15 @@ test("trip type copies the desktop Sort dropdown layout and multi-city expands s
   assert.match(popout, /<MultiCityFlightEditor[\s\S]*presentation="results"/);
 });
 
-test("route field is one grouped control with explicit swap dividers", () => {
+test("route field is one grouped control with a circular swap and interrupted divider", () => {
   const toolbar = desktopHeaderSearchBarSource();
 
   assert.match(toolbar, /data-flight-results-compact-route/);
-  assert.match(toolbar, /grid-cols-\[minmax\(56px,1fr\)_28px_minmax\(56px,1fr\)\]/);
-  assert.match(toolbar, /aria-label=\{t\("swapOriginDestination"\)\}[\s\S]*?border-x border-\[#D8E1EC\]/);
+  assert.match(toolbar, /grid-cols-\[minmax\(56px,1fr\)_36px_minmax\(56px,1fr\)\]/);
+  assert.match(toolbar, /data-flight-results-header-swap[\s\S]*?onClick=\{handleSwapLocations\}[\s\S]*?h-8 w-8[\s\S]*?rounded-full[\s\S]*?bg-white/);
+  assert.equal(toolbar.match(/data-flight-results-swap-divider/g)?.length, 2);
+  assert.match(toolbar, /data-flight-results-swap-slot[\s\S]*?flex-col/);
+  assert.doesNotMatch(toolbar, /border-x border-\[#D8E1EC\]/);
   assert.match(toolbar, /data-flight-results-header-origin/);
   assert.match(toolbar, /data-flight-results-header-destination/);
   assert.match(toolbar, /openStickySearchEditor\(event\.currentTarget, "origin"\)/);

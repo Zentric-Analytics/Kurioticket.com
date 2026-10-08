@@ -361,8 +361,8 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     : localSavedFlightIds.includes(savedFlightKey);
 
   return (
-    <main className="flex-1 bg-[#F3F6FA] pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-[#142033] sm:bg-[#F7F9FC] sm:pb-16 sm:pt-4 lg:pt-3">
-      <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 top-0 z-[70] h-[calc(env(safe-area-inset-top)+64px)] transition-colors sm:hidden ${mobileHeaderProtected ? "bg-[#F3F6FA]" : "bg-transparent"}`} />
+    <main className="flex-1 bg-[#F5F7FB] pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-[#142033] sm:bg-[#F7F9FC] sm:pb-16 sm:pt-4 lg:pt-3">
+      <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 top-0 z-[70] h-[calc(env(safe-area-inset-top)+64px)] transition-colors sm:hidden ${mobileHeaderProtected ? "bg-[#F5F7FB]" : "bg-transparent"}`} />
       <div ref={mobileBackControlRef} className="fixed left-4 top-[calc(env(safe-area-inset-top)+8px)] z-[80] sm:hidden">
         <Link href={resultsHref} aria-label="Back to results" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/55 bg-white/90 text-slate-900 shadow-[0_2px_6px_rgba(15,23,42,0.12)] backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">
           <ArrowLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
@@ -379,7 +379,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
       <span className="sr-only" role="status" aria-live="polite">{shareFeedback}</span>
       <div className="mx-auto w-full max-w-[1080px] px-0 sm:px-6 lg:px-[30px]">
         <div className="min-w-0">
-          <section className="min-w-0 border-b border-[#E2E8F0] bg-[#F3F6FA] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
+          <section className="min-w-0 border-b border-[#E2E8F0] bg-[#F5F7FB] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
             <div ref={mobileHeroRef} data-testid="flight-details-hero" className="relative flex min-h-[318px] flex-col justify-end overflow-hidden px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:justify-end sm:rounded-t-[12px] sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
               <div
@@ -420,7 +420,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                 <h1 ref={headingRef} id="flight-details-heading" tabIndex={-1} className="text-[27px] font-extrabold leading-[1.12] tracking-[-0.025em] outline-none sm:text-[30px]">{route}</h1>
                 <p className="mt-[3px] text-[11px] font-bold uppercase leading-4 tracking-[0.55px] text-white/95 sm:mt-2 sm:text-[13px] sm:leading-normal sm:tracking-[0.08em]"><span className="sm:hidden">{nativeTripLine}</span><span className="hidden sm:inline">{tripLine}</span></p>
               </div>
-              <svg data-flight-details-hero-curve aria-hidden="true" viewBox="0 0 100 64" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[65px] w-full sm:hidden"><path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z" fill="#F3F6FA" /></svg>
+              <svg data-flight-details-hero-curve aria-hidden="true" viewBox="0 0 100 64" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[65px] w-full sm:hidden"><path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z" fill="#F5F7FB" /></svg>
             </div>
             <div className="relative z-10 px-[18px] pb-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0 lg:px-6 lg:pb-6">
             <div ref={mobileItineraryRef} data-mobile-native-itinerary-stack className="-mx-[10px] -mt-[104px] space-y-[14px] sm:mx-0 sm:mt-0 sm:space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>

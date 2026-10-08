@@ -5428,8 +5428,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       "min-w-0 truncate text-[12px] font-semibold leading-[17px] text-[#142033]";
     const headerGridClass =
       tripTypeInput === "round-trip"
-        ? "max-w-[548px] grid-cols-[96px_minmax(0,1fr)_minmax(138px,150px)_50px_40px] xl:w-fit xl:max-w-none xl:grid-cols-[104px_230px_150px_56px_40px]"
-        : "max-w-[514px] grid-cols-[96px_minmax(0,1fr)_104px_50px_40px] xl:w-fit xl:max-w-none xl:grid-cols-[104px_230px_104px_56px_40px]";
+        ? "max-w-[588px] grid-cols-[96px_minmax(0,1fr)_minmax(138px,150px)_50px_40px] xl:w-fit xl:max-w-none xl:grid-cols-[104px_270px_150px_56px_40px]"
+        : "max-w-[554px] grid-cols-[96px_minmax(0,1fr)_104px_50px_40px] xl:w-fit xl:max-w-none xl:grid-cols-[104px_270px_104px_56px_40px]";
     const tripMenuOpen =
       isStickySearchPanelOpen &&
       activeStickySearchTarget === "trip" &&
@@ -5526,7 +5526,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
         <div
           data-flight-results-compact-route
-          className="relative grid h-[40px] min-w-0 grid-cols-[minmax(56px,1fr)_28px_minmax(56px,1fr)] items-center overflow-visible rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA]"
+          className="relative grid h-[40px] min-w-0 grid-cols-[minmax(56px,1fr)_36px_minmax(56px,1fr)] items-center overflow-visible rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA]"
         >
           <div
             ref={stickyOriginWrapRef}
@@ -5674,14 +5674,19 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             ) : null}
           </div>
 
-          <button
-            type="button"
-            aria-label={t("swapOriginDestination")}
-            onClick={handleSwapLocations}
-            className="focus-ring inline-flex h-full w-[28px] items-center justify-center border-x border-[#D8E1EC] bg-white/35 text-[#142033] transition hover:bg-[#F3F6FA] hover:text-[#004BB8]"
-          >
-            <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
-          </button>
+          <div data-flight-results-swap-slot className="flex h-full min-h-0 flex-col items-center">
+            <span data-flight-results-swap-divider aria-hidden="true" className="pointer-events-none w-px flex-1 bg-[#D8E1EC]" />
+            <button
+              type="button"
+              data-flight-results-header-swap
+              aria-label={t("swapOriginDestination")}
+              onClick={handleSwapLocations}
+              className="focus-ring relative z-[1] inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D8E1EC] bg-white text-[#142033] shadow-[0_2px_6px_rgba(15,23,42,0.12)] transition hover:bg-[#F3F6FA] hover:text-[#004BB8]"
+            >
+              <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <span data-flight-results-swap-divider aria-hidden="true" className="pointer-events-none w-px flex-1 bg-[#D8E1EC]" />
+          </div>
 
           <div
             ref={stickyDestinationWrapRef}
