@@ -168,7 +168,10 @@ test("mobile result summary restores visible range and keeps desktop Sort by sep
     resultsSource.indexOf("appliedCarFilters.length"),
   );
   assert.match(summary, /hidden[^\"]*sm:flex/);
-  assert.match(summary, /carsResults\.sortBy/);
+  assert.match(summary, /data-cars-results-visible-range/);
+  assert.match(summary, /1–\$\{visibleResults\.length\}/);
+  assert.doesNotMatch(summary, /data-cars-sort-trigger/);
+  assert.match(resultsSource, /data-cars-sort-trigger/);
 });
 
 test("mobile result rhythm no longer reserves space for the removed summary card", () => {
