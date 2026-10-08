@@ -41,14 +41,14 @@ test("Cars adds spacing only below the mobile price alert", () => {
   assert.doesNotMatch(cars, /data-cars-results-summary-row[^>]*className="[^"]*mt-/);
 });
 
-test("desktop Cars price alert spans the available results column", () => {
+test("desktop Cars price alert is centered and reduced by roughly two inches", () => {
   const alertStart = alert.indexOf("data-cars-price-alert");
   const alertEnd = alert.indexOf("</section>", alertStart);
   const alertMarkup = alert.slice(alertStart, alertEnd);
 
   assert.match(
     alertMarkup,
-    /className="[^"]*\bw-full\b[^"]*\bmax-w-full\b[^"]*"/,
+    /className="[^"]*\bw-full\b[^"]*\bmax-w-full\b[^"]*lg:mx-auto[^"]*lg:w-\[calc\(100%_-_12rem\)\][^"]*"/,
   );
   assert.doesNotMatch(alertMarkup, /\blg:w-auto\b/);
   assert.match(
