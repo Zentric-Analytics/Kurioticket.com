@@ -10,7 +10,7 @@ const presentation = readFileSync(new URL("../../lib/cars/carFilterPresentation.
 test("source-contract: Cars compact shell keeps the normal desktop visual scale", () => {
   assert.match(
     source,
-    /desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-\[#D8E1EC\] p-0 shadow-\[0_14px_30px_-26px_rgba\(15,23,42,0\.42\)\]/,
+    /desktop-filter-sidebar flex max-h-full w-full flex-col overflow-hidden rounded-2xl border border-\[#D8E1EC\] p-0 shadow-\[0_14px_30px_-26px_rgba\(15,23,42,0\.42\)\]/,
   );
   assert.match(
     source,
@@ -82,7 +82,7 @@ test("source-contract: compact body is the only vertical scroll owner and header
   );
   assert.match(
     source,
-    /desktop-filter-sidebar flex max-h-full flex-col overflow-hidden/,
+    /desktop-filter-sidebar flex max-h-full w-full flex-col overflow-hidden/,
   );
   assert.match(source, /desktop-filter-sidebar__header shrink-0/);
   assert.equal(
@@ -176,6 +176,10 @@ test("source-contract: Cars filters use the Flights desktop lifecycle", () => {
   assert.match(
     source,
     /desktopCompactFilterPlacement === "fixed"[\s\S]*top: desktopCompactFilterTopOffset,[\s\S]*left: desktopCompactFilterFrame\.left,[\s\S]*width: desktopCompactFilterFrame\.width/,
+  );
+  assert.match(
+    source,
+    /layout === "compact"[\s\S]*desktop-filter-sidebar flex max-h-full w-full flex-col/,
   );
   assert.match(
     source,
