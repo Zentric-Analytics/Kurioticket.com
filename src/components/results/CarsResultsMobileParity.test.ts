@@ -19,6 +19,10 @@ const hotelResultsSource = readFileSync(
   "utf8",
 );
 const globalStyles = readFileSync("src/app/globals.css", "utf8");
+const mobileStyles = readFileSync(
+  "src/components/results/HotelResultsMobile.module.css",
+  "utf8",
+);
 const mobileHeaderSearch = resultsSource.slice(
   resultsSource.indexOf("const renderMobileHeaderSearch"),
   resultsSource.indexOf("const renderCarsSearchForm"),
