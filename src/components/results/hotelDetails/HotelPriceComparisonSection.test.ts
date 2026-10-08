@@ -125,12 +125,16 @@ test("desktop rate cards extend slightly beyond the stay editor", () => {
 });
 
 
-test("desktop View deal action stays compact", () => {
+test("desktop View deal action stays compact while the shared row stacks cleanly on mobile", () => {
   const html = renderToStaticMarkup(createElement(HotelPriceComparisonSection, {
     ...baseProps,
     variant: "desktop",
     onContinueOffer: () => {},
   }));
-  assert.match(html, /h-8 w-\[96px\]/);
+  assert.match(html, /grid-cols-\[minmax\(0,1fr\)_88px\][^"]*grid-rows-\[auto_auto\][^"]*sm:flex/);
+  assert.match(html, /col-span-2 row-start-1[^"]*sm:col-span-1/);
+  assert.match(html, /col-start-1 row-start-2[^"]*sm:text-center/);
+  assert.match(html, /h-8 w-\[88px\][^"]*whitespace-nowrap[^"]*sm:w-\[96px\]/);
+  assert.match(html, /text-\[13px\][^"]*text-\[#192024\][^"]*sm:text-base/);
   assert.match(html, /text-\[12px\]/);
 });
