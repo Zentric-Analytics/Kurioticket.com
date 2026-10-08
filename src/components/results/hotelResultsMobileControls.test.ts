@@ -184,48 +184,30 @@ test("Hotel mobile menu covers the full viewport like Flight", () => {
 
 
 
-test("Hotel mobile filters keep the original natural-to-pinned scroll handoff on the white navbar surface", () => {
-  assert.match(resultsSource, /mobileFiltersVisible/);
-  assert.match(resultsSource, /mobileFiltersPinned/);
-  assert.match(resultsSource, /mobileFiltersAnimated/);
-  assert.match(resultsSource, /mobileFilterOriginRef/);
-  assert.match(resultsSource, /data-scroll-visible=\{mobileFiltersVisible \? "true" : "false"\}/);
-  assert.match(resultsSource, /data-scroll-pinned=\{mobileFiltersPinned \? "true" : "false"\}/);
-  assert.match(resultsSource, /mobileStyles\.scrollFilterBarPinned/);
-  assert.match(resultsSource, /mobileStyles\.scrollFilterBarHidden/);
-  assert.match(resultsSource, /mobileStyles\.hotelNavbarFilterBar/);
-  assert.match(resultsSource, /ref=\{mobileFilterOriginRef\}[\s\S]*data-hotel-results-toolbar/);
-  assert.doesNotMatch(resultsSource, /renderMobileHotelNavbarFilters|createPortal\(renderMobileHotelNavbarFilters/);
-  assert.doesNotMatch(resultsPageSource, /mobileResultsFilters=/);
+test("Hotel mobile filters use the same sticky AppHeader architecture as Flight Results", () => {
+  assert.match(resultsPageSource, /mobileResultsFilters=\{<div data-hotel-results-mobile-nav-filters[\s\S]*?empty:hidden/);
+  assert.match(resultsSource, /const \[mobileNavFiltersTarget, setMobileNavFiltersTarget\]/);
+  assert.match(resultsSource, /\[data-hotel-results-mobile-nav-filters\]/);
+  assert.match(resultsSource, /const syncResultsHeaderTargets = \(\) =>/);
+  assert.match(resultsSource, /new MutationObserver\(syncResultsHeaderTargets\)/);
+  assert.match(resultsSource, /createPortal\(mobileResultsFiltersContent, mobileNavFiltersTarget\)/);
+  assert.match(resultsSource, /data-hotel-results-toolbar[\s\S]*w-full py-2 sm:hidden/);
+  assert.doesNotMatch(resultsSource, /mobileFiltersPinned|mobileFiltersVisible|mobileFiltersAnimated|mobileFilterOriginRef|mobileFiltersPinnedRef/);
+  assert.doesNotMatch(resultsSource, /data-scroll-visible|data-scroll-pinned|scrollFilterBarPinned|scrollFilterBarHidden/);
 });
 
 
-test("Hotel mobile filter row ignores filter-interaction scroll restoration", () => {
-  assert.match(resultsSource, /const filterInteractionActive =/);
-  assert.match(resultsSource, /filtersOpen[\s\S]*Boolean\(mobileShortcutMenu\)[\s\S]*mobileHotelSearchOpen[\s\S]*filterApplying/);
-  assert.match(resultsSource, /if \(filterInteractionActive\) \{[\s\S]*direction = 0;[\s\S]*distance = 0;[\s\S]*return;/);
-  assert.match(resultsSource, /setMobileFiltersVisible\(true\);[\s\S]*direction = 0;[\s\S]*distance = 0;/);
-  assert.match(resultsSource, /\[filterApplying, filtersOpen, guided, loading, mobileHotelSearchOpen, mobileShortcutMenu, results\.length\]/);
-});
-
-test("Hotel mobile filter row ignores iOS bottom rubber-band reverse deltas", () => {
-  assert.match(resultsSource, /Math\.min\(maxScrollY, Math\.max\(0, window\.scrollY\)\)/);
-  assert.match(resultsSource, /const distanceFromBottom = Math\.max\(0, maxScrollY - scrollY\)/);
-  assert.match(resultsSource, /if \(delta < 0 && distanceFromBottom <= 40\)/);
-  assert.match(resultsSource, /if \(distance >= \(nextDirection > 0 \? 20 : 12\)\)/);
-});
-
-
-test("Hotel mobile filter handoff hides cleanly on the first downward pin", () => {
+test("Hotel mobile filter rail matches Flight horizontal padding instead of the old 4px alignment", () => {
   assert.match(
     resultsSource,
-    /if \(!mobileFiltersPinnedRef\.current\)[\s\S]*setMobileFiltersPinned\(true\)[\s\S]*setMobileFiltersVisible\(delta < 0\)[\s\S]*direction = Math\.sign\(delta\)/,
+    /data-mobile-hotel-shortcuts[\s\S]{0,260}scrollbar-hide flex w-full min-w-0 flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain px-3/,
   );
   assert.doesNotMatch(
     resultsSource,
-    /Pinning or returning from a filter interaction should not hide the row/,
+    /data-mobile-hotel-shortcuts[\s\S]{0,260}-me-4|data-mobile-hotel-shortcuts[\s\S]{0,260}w-\[calc\(100%\+1rem\)\]/,
   );
 });
+
 
 test("Hotel mobile quick filter keeps the underlying results at the same scroll position", () => {
   assert.match(
@@ -235,11 +217,7 @@ test("Hotel mobile quick filter keeps the underlying results at the same scroll 
 });
 
 
-test("Hotel mobile filter rail uses the exact Flight Results 28px left edge while Sort remains in results", () => {
-  const mobileStyles = readFileSync(
-    new URL("./HotelResultsMobile.module.css", import.meta.url),
-    "utf8",
-  );
+test("Hotel mobile sticky header inherits the exact Flight Results curve and clipping", () => {
   const globalsSource = readFileSync(
     new URL("../../app/globals.css", import.meta.url),
     "utf8",
@@ -247,99 +225,15 @@ test("Hotel mobile filter rail uses the exact Flight Results 28px left edge whil
 
   assert.match(
     globalsSource,
-    /\[data-flight-results-desktop-header\] \{[\s\S]*border-bottom-left-radius: 28px;[\s\S]*\}/,
+    /\[data-flight-results-desktop-header\],[\s\S]*\[data-hotel-results-desktop-header\] \{[\s\S]*border-bottom-left-radius: 28px;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;/,
   );
   assert.match(
     globalsSource,
-    /\[data-flight-results-desktop-header\] > \[data-mobile-results-filter-navbar\] \{[\s\S]*border-bottom-left-radius: inherit;[\s\S]*overflow: hidden;/,
+    /\[data-flight-results-desktop-header\] > \[data-mobile-results-filter-navbar\],[\s\S]*\[data-hotel-results-desktop-header\] > \[data-mobile-results-filter-navbar\] \{[\s\S]*border-bottom-left-radius: inherit;[\s\S]*overflow: hidden;/,
   );
-  assert.match(
-    mobileStyles,
-    /\.hotelScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;/,
-  );
-  assert.match(
-    mobileStyles,
-    /\.hotelScrollFilterSlot > \.hotelNavbarFilterBar \{[\s\S]*border-bottom-left-radius: inherit;[\s\S]*border-bottom-right-radius: inherit;[\s\S]*overflow: hidden;[\s\S]*background: #fff;/,
-  );
-  assert.match(
-    mobileStyles,
-    /\.scrollFilterBarPinned\.hotelNavbarFilterBar \{[\s\S]*background: #fff;[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*overflow: hidden;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;/,
-  );
-  assert.match(
-    mobileStyles,
-    /\.hotelScrollFilterSlot::after,[\s\S]*\.scrollFilterBarPinned\.hotelNavbarFilterBar::after,[\s\S]*content: none;[\s\S]*display: none;/,
-  );
-  assert.match(
-    resultsSource,
-    /mobileStyles\.scrollFilterSlot, mobileStyles\.hotelScrollFilterSlot/,
-  );
-  assert.match(resultsSource, /data-mobile-hotel-shortcuts/);
+  assert.doesNotMatch(resultsSource, /hotelScrollFilterSlot|hotelNavbarFilterBar/);
   assert.match(resultsSource, /<span>Sort:<\/span>[\s\S]*currentSortLabel/);
-  assert.doesNotMatch(resultsSource, /renderMobileHotelNavbarFilters[\s\S]{0,600}Sort:/);
 });
 
 
-test("Hotel mobile navbar keeps the Flight Results curve while preserving the PR6167 filter inset", () => {
-  const headerSource = readFileSync(
-    new URL("../layout/AppHeader.tsx", import.meta.url),
-    "utf8",
-  );
-  const mobileStyles = readFileSync(
-    new URL("./HotelResultsMobile.module.css", import.meta.url),
-    "utf8",
-  );
 
-  assert.match(
-    headerSource,
-    /!mobileResultsFilters && !hotelResultsDesktopSticky && "border-b border-slate-200"/,
-  );
-  assert.match(
-    mobileStyles,
-    /\.scrollFilterSlot \{[\s\S]*padding: 8px 4px 0;/,
-  );
-  assert.match(
-    mobileStyles,
-    /\.hotelScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;/,
-  );
-});
-
-
-test("Hotel mobile filter rail is not fixed before the existing handoff point", () => {
-  const mobileStyles = readFileSync(
-    new URL("./HotelResultsMobile.module.css", import.meta.url),
-    "utf8",
-  );
-  const naturalRule = mobileStyles.match(/\.hotelNavbarFilterBar \{([\s\S]*?)\n  \}/)?.[1] ?? "";
-  assert.doesNotMatch(naturalRule, /position:\s*fixed|top:\s*calc/);
-  assert.match(resultsSource, /naturalFilterBottom = mobileFilterOriginRef\.current\?\.getBoundingClientRect\(\)\.bottom/);
-  assert.match(resultsSource, /if \(naturalFilterBottom <= 8\)/);
-  assert.match(resultsSource, /mobileFiltersPinned && mobileStyles\.scrollFilterBarPinned/);
-});
-
-
-test("Hotel mobile filter rail keeps the same tighter 4px horizontal inset when pinned", () => {
-  const mobileStyles = readFileSync(
-    new URL("./HotelResultsMobile.module.css", import.meta.url),
-    "utf8",
-  );
-  const pinnedHotelRule =
-    mobileStyles.match(/\.scrollFilterBarPinned\.hotelNavbarFilterBar \{([\s\S]*?)\n  \}/)?.[1] ?? "";
-
-  assert.doesNotMatch(pinnedHotelRule, /padding-inline:/);
-  assert.match(
-    mobileStyles,
-    /\.scrollFilterSlot \{[\s\S]*padding: 8px 4px 0;/,
-  );
-  assert.match(
-    mobileStyles,
-    /\.hotelNavbarFilterBar \[data-mobile-hotel-shortcuts\][\s\S]*scroll-padding-inline: 4px;/,
-  );
-  assert.match(
-    mobileStyles,
-    /\.scrollFilterBarPinned \[data-mobile-hotel-shortcuts\][\s\S]*padding-inline: 4px;[\s\S]*scroll-padding-inline: 4px;/,
-  );
-  assert.match(
-    mobileStyles,
-    /\.scrollFilterBarPinned \[data-cars-results-quick-filters\][\s\S]*padding-inline: 12px;[\s\S]*scroll-padding-inline: 12px;/,
-  );
-});
