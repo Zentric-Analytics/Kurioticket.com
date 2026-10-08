@@ -124,7 +124,7 @@ export function DesktopProviderOffer({
 
   return (
     <article
-      className="relative flex min-h-[80px] min-w-0 items-center justify-between gap-2 rounded-xl border border-[#D9E2E8] bg-transparent px-3 py-3 sm:gap-4 sm:px-4"
+      className="relative grid min-h-[80px] min-w-0 grid-cols-[minmax(0,1fr)_88px] grid-rows-[auto_auto] items-center gap-x-3 gap-y-2 rounded-xl border border-[#D9E2E8] bg-transparent px-3 py-3 sm:flex sm:justify-between sm:gap-4 sm:px-4"
       data-provider-offer
       data-provider-offer-id={offer.id}
       data-provider-selected={selected || undefined}
@@ -133,16 +133,16 @@ export function DesktopProviderOffer({
     >
       <input id={selectorId} type="radio" name="hotel-provider-offer" value={offer.id} checked={selected} disabled={disabled} onChange={() => onSelect(offer.id)} className="peer sr-only" aria-label={`Select ${offer.providerName} offer`} />
       <span className="pointer-events-none absolute inset-0 rounded-xl peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8] peer-focus-visible:ring-offset-2" aria-hidden="true" />
-      <label htmlFor={selectorId} className={`grid min-w-0 flex-1 grid-cols-[80px_minmax(0,1fr)] items-center sm:grid-cols-[132px_minmax(0,1fr)] ${disabled ? "cursor-default" : "cursor-pointer"}`}>
-        <span className="block min-w-0" data-provider-brand>
-          {offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={offer.providerName} width={132} height={30} className="h-8 w-[72px] object-contain object-left sm:w-[86px]" /> : <strong className="text-base font-semibold leading-6 text-[#004BB8]">{offer.providerName}</strong>}
+      <label htmlFor={selectorId} className={`contents sm:grid sm:min-w-0 sm:flex-1 sm:grid-cols-[132px_minmax(0,1fr)] sm:items-center ${disabled ? "cursor-default" : "cursor-pointer"}`}>
+        <span className="col-span-2 row-start-1 block min-w-0 self-start sm:col-span-1 sm:row-auto sm:self-center" data-provider-brand>
+          {offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={offer.providerName} width={132} height={30} className="h-8 w-[86px] object-contain object-left" /> : <strong className="text-[13px] font-semibold leading-4 text-[#192024] sm:text-base sm:leading-6 sm:text-[#004BB8]">{offer.providerName}</strong>}
         </span>
-        <span className="block min-w-0 text-center" data-provider-price>
+        <span className="col-start-1 row-start-2 block min-w-0 text-left sm:col-auto sm:row-auto sm:text-center" data-provider-price>
           <strong className="block break-words text-[20px] font-semibold leading-6 tracking-[-0.02em] text-[#192024] tabular-nums" title={totalPrice ? undefined : offer.nightlyPriceTitle} aria-label={totalPrice ? undefined : offer.nightlyPriceAriaLabel} data-nightly-amount={!totalPrice || undefined}>{totalPrice || offer.nightlyPrice}</strong>
           {!totalPrice ? <span className="block text-[12px] font-normal leading-[14px] text-[#59636a]" data-nightly-supporting-label>{perNightText.replace("{{price}}", "").trim()}</span> : null}
         </span>
       </label>
-      <button type="button" className="focus-ring inline-flex h-8 w-[88px] shrink-0 items-center justify-center rounded-md bg-[#004BB8] px-2 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-[#003B91] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 sm:w-[96px] sm:px-2.5" disabled={disabled || !onContinue} aria-label={pending ? `Opening ${offer.providerName} offer` : `View deal with ${offer.providerName}`} onClick={event => { onSelect(offer.id); onContinue?.(offer.id, event.currentTarget); }} data-provider-action>{pending ? "Opening…" : "View deal"}</button>
+      <button type="button" className="focus-ring col-start-2 row-start-2 inline-flex h-8 w-[88px] shrink-0 items-center justify-center self-center whitespace-nowrap rounded-md bg-[#004BB8] px-2 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-[#003B91] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 sm:col-auto sm:row-auto sm:w-[96px] sm:px-2.5" disabled={disabled || !onContinue} aria-label={pending ? `Opening ${offer.providerName} offer` : `View deal with ${offer.providerName}`} onClick={event => { onSelect(offer.id); onContinue?.(offer.id, event.currentTarget); }} data-provider-action>{pending ? "Opening…" : "View deal"}</button>
     </article>
   );
 }
