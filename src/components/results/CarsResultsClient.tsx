@@ -4240,7 +4240,7 @@ function CarFilters({
       className={cn(
         layout === "compact"
           ? cn(
-              "desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-[#D8E1EC] p-0 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.42)]",
+              "desktop-filter-sidebar flex max-h-full w-full flex-col overflow-hidden rounded-2xl border border-[#D8E1EC] p-0 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.42)]",
               desktopSurfaceParity ? "bg-white" : "bg-[#EEF3F8]",
             )
           : layout === "desktop"
