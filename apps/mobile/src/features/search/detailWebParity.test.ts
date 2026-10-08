@@ -84,6 +84,15 @@ test("active Hotel Details keeps fixed icon-only controls and stack-aware Result
   assert.doesNotMatch(returnNavigation, /router\.back\(|router\.dismissTo/);
 });
 
+test("web mobile Hotel rates reuse the exact desktop rate card and drop the old blue selected outline", () => {
+  assert.match(webMobileHotelDetails, /import \{ DesktopProviderOffer \} from "\.\/HotelPriceComparisonSection"/);
+  assert.match(webMobileHotelDetails, /offers\.map\(offer => <DesktopProviderOffer/);
+  assert.match(webMobileHotelDetails, /perNightText=\{props\.perNightText\}/);
+  assert.match(webMobileHotelDetails, /totalPrice: total/);
+  assert.doesNotMatch(webMobileHotelDetails, /className=\{styles\.rate\}|className=\{styles\.rateAction\}|>Stay total</);
+  assert.doesNotMatch(webMobileHotelDetailsCss, /\.rate\[data-selected="true"\][^}]*border-color: var\(--accent\)/);
+});
+
 test("active Hotel light canvas matches the web white article while allowing a full-bleed hero", () => {
   assert.match(appTheme, /lightTheme = \{[\s\S]*?background: "#FAFBFF",[\s\S]*?surface: "#FFFFFF",/);
   assert.match(webHotelDetails, /<MobileHotelDetails \{\.\.\.props\} \/>/);
