@@ -19,6 +19,10 @@ const hotelResultsSource = readFileSync(
   "utf8",
 );
 const globalStyles = readFileSync("src/app/globals.css", "utf8");
+const mobileStyles = readFileSync(
+  "src/components/results/HotelResultsMobile.module.css",
+  "utf8",
+);
 const mobileHeaderSearch = resultsSource.slice(
   resultsSource.indexOf("const renderMobileHeaderSearch"),
   resultsSource.indexOf("const renderCarsSearchForm"),
@@ -112,9 +116,14 @@ test("mobile shortcuts remain the existing scrollable touch targets in canonical
   assert.match(rail, /<span className="max-w-\[11rem\] truncate">Sort<\/span>/);
   assert.match(rail, /quickFilterGroupId === "sort" && "rotate-180"/);
   assert.doesNotMatch(rail, /data-cars-sort-trigger[\s\S]{0,500}h-9 min-h-11/);
-  assert.match(rail, /flex-nowrap[^\"]*gap-1[^\"]*overflow-x-auto[^\"]*overscroll-x-contain/);
+  assert.match(rail, /flex w-full min-w-0 flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain px-3/);
   assert.match(rail, /\[scrollbar-width:none\][^\"]*\[&::-webkit-scrollbar\]:hidden/);
-  assert.match(rail, /-me-4[^\"]*w-\[calc\(100%\+1rem\)\][^\"]*pe-4/);
+  assert.match(
+    mobileStyles,
+    /\.carsScrollFilterSlot \{[\s\S]*padding-inline: 0;[\s\S]*border-bottom-left-radius: 28px;/,
+  );
+  assert.match(rail, /\[scroll-padding-inline:0\.75rem\]/);
+  assert.doesNotMatch(rail, /-me-4|w-\[calc\(100%\+1rem\)\]|pe-4/);
   assert.match(rail, /min-h-11 min-w-11 shrink-0/);
   assert.match(rail, /h-9[^\"]*rounded-\[9px\][^\"]*border[^\"]*text-\[13px\][^\"]*leading-4/);
   assert.doesNotMatch(rail, /style=\{\{\s*width|basis-/);
