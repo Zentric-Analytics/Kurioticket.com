@@ -154,7 +154,7 @@ test("Cars keeps one Filter launcher/state while overlays do not disturb scroll 
   assert.doesNotMatch(source, /mobileStickyFiltersOpen|stickySelectedFilters|headerSelectedFilters/);
 });
 
-test("Cars mobile Sort sits with the results summary and is absent from the filter rail", () => {
+test("Cars mobile Sort is a polished filter-rail shortcut while the summary keeps only the range", () => {
   const rail = source.slice(
     source.indexOf("data-cars-results-quick-filters"),
     source.indexOf("data-cars-results-toolbar"),
@@ -163,8 +163,12 @@ test("Cars mobile Sort sits with the results summary and is absent from the filt
     source.indexOf("data-cars-results-summary-row"),
     source.indexOf("{appliedCarFilters.length"),
   );
-  assert.doesNotMatch(rail, /quickFilterGroupId === "sort"|Sort:/);
-  assert.match(summary, /data-cars-sort-trigger/);
-  assert.match(summary, /<span>Sort:<\/span>[\s\S]*selectedCarSortLabel/);
-  assert.match(summary, /openQuickFilter\([\s\S]*"sort"[\s\S]*event\.currentTarget/);
+  assert.match(rail, /data-cars-sort-trigger/);
+  assert.match(rail, /quickFilterGroupId === "sort"/);
+  assert.match(rail, /group inline-flex min-h-11 min-w-11 shrink-0 items-center/);
+  assert.match(rail, /relative inline-flex h-9 items-center overflow-hidden rounded-\[9px\] border/);
+  assert.match(rail, /<span className="max-w-\[11rem\] truncate">Sort<\/span>/);
+  assert.match(rail, /openQuickFilter\([\s\S]*"sort"[\s\S]*event\.currentTarget/);
+  assert.doesNotMatch(summary, /data-cars-sort-trigger|Sort:/);
+  assert.match(summary, /data-cars-results-visible-range/);
 });

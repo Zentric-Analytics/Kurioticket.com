@@ -91,7 +91,7 @@ test("source-contract: Cars count row omits the old pagination range", () => {
   assert.doesNotMatch(summaryRow, /resultsDisplayRange|Showing results .* through/);
 });
 
-test("source-contract: Cars result count and Sort share a shrink-safe row", () => {
+test("source-contract: Cars result count keeps a shrink-safe row with desktop Sort isolated", () => {
   const resultsToolbar = source.slice(
     source.lastIndexOf("<div", source.indexOf("data-cars-results-toolbar")),
     source.indexOf("{resultsTransitioning ?"),
@@ -145,7 +145,7 @@ test("source-contract: Cars result count and Sort share a shrink-safe row", () =
   assert.match(resultsToolbar, /"shrink-0 transition-transform duration-150"/);
 });
 
-test("source-contract: Cars keeps the full filter rail pinned on upward scroll and Sort in the summary", () => {
+test("source-contract: Cars keeps the full filter rail pinned on upward scroll with mobile Sort inside it", () => {
   const shortcutsStart = source.indexOf("data-cars-results-filter-origin");
   const toolbarStart = source.indexOf("data-cars-results-toolbar", shortcutsStart);
   const summaryStart = source.indexOf("data-cars-results-summary-row", toolbarStart);
@@ -165,10 +165,11 @@ test("source-contract: Cars keeps the full filter rail pinned on upward scroll a
   assert.match(shortcuts, /mobileResultsStyles\.scrollFilterBarPinned/);
   assert.match(shortcuts, /mobileResultsStyles\.scrollFilterBarHidden/);
   assert.doesNotMatch(source, /data-cars-results-mobile-header-filter/);
-  assert.match(
-    resultsToolbar,
-    /data-cars-results-summary-row[\s\S]*data-cars-sort-trigger[\s\S]*ref=\{carsSortRef\}/,
-  );
+  assert.match(shortcuts, /data-cars-sort-trigger/);
+  assert.match(shortcuts, /<span className="max-w-\[11rem\] truncate">Sort<\/span>/);
+  assert.match(resultsToolbar, /data-cars-results-summary-row/);
+  assert.doesNotMatch(resultsToolbar, /data-cars-sort-trigger/);
+  assert.match(resultsToolbar, /ref=\{carsSortRef\}/);
 });
 
 test("source-contract: Cars Sort menu accessibility and desktop filters remain", () => {
