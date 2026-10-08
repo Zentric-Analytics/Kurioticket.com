@@ -55,6 +55,10 @@ test("desktop Cars full-search values and filter headings share one enforced ren
     /<h3 className="cars-results-desktop-filter-heading-type text-\[15px\] font-bold normal-case leading-5 tracking-\[-0\.003em\] text-slate-950">/,
   );
   assert.match(
+    results,
+    /cars-results-desktop-filter-heading-type min-w-0 truncate[\s\S]*cars-results-desktop-filter-heading-type--active/,
+  );
+  assert.match(
     css,
     /\.cars-results-desktop-filter-heading-type \{[\s\S]*?font-family: var\(--font-sans\) !important;[\s\S]*?font-size: 15px !important;[\s\S]*?line-height: 20px !important;[\s\S]*?font-weight: 700 !important;[\s\S]*?letter-spacing: -0\.003em !important;[\s\S]*?color: #020617 !important;[\s\S]*?font-variation-settings: "wght" 700;/,
   );
