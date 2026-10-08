@@ -173,14 +173,18 @@ test("desktop car cards use the mobile information surface while preserving the 
   );
 });
 
-test("desktop price alert keeps the mobile light-blue surface", () => {
+test("desktop price alert uses a subtly lighter blue while mobile surfaces remain unchanged", () => {
   assert.match(
     alert,
-    /bg-\[#EDF6FF\][^"]*sm:border-blue-100 sm:bg-\[#EDF6FF\]/,
+    /bg-\[#EDF6FF\][^"]*sm:border-blue-100 sm:bg-\[#EDF6FF\][^"]*lg:bg-\[#F1F7FE\]/,
+  );
+  assert.match(
+    alert,
+    /lg:mx-auto lg:w-\[calc\(100%_-_12rem\)\]/,
   );
   assert.doesNotMatch(
     alert,
-    /data-cars-price-alert[\s\S]{0,400}sm:bg-white/,
+    /data-cars-price-alert[\s\S]{0,500}(?:sm|lg):bg-white/,
   );
 });
 
