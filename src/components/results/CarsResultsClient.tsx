@@ -4445,7 +4445,14 @@ function FilterSection({
             compactOpen && "text-[#004BB8]",
           )}
         >
-          <span className="min-w-0 truncate">{carFilterGroupLabel(group, t)}</span>
+          <span
+            className={cn(
+              "cars-results-desktop-filter-heading-type min-w-0 truncate",
+              compactOpen && "cars-results-desktop-filter-heading-type--active",
+            )}
+          >
+            {carFilterGroupLabel(group, t)}
+          </span>
           <span className="flex shrink-0 items-center gap-2">
             {selectedOptions.length ? (
               <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[12px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">
