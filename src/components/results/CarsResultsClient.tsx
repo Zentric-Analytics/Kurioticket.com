@@ -2800,7 +2800,7 @@ export function CarsResultsExperience({
                 {!guidedPlanning ? (
                   <div
                     data-cars-results-quick-filters
-                    className="scrollbar-hide -me-4 flex w-[calc(100%+1rem)] flex-nowrap gap-1 overflow-x-auto overscroll-x-contain pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden"
+                    className="scrollbar-hide flex w-full min-w-0 flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain px-3 [scroll-padding-inline:0.75rem] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden"
                   >
                     <button
                       ref={filtersButtonRef}
@@ -4240,7 +4240,7 @@ function CarFilters({
       className={cn(
         layout === "compact"
           ? cn(
-              "desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-[#D8E1EC] p-0 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.42)]",
+              "desktop-filter-sidebar flex max-h-full w-full flex-col overflow-hidden rounded-2xl border border-[#D8E1EC] p-0 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.42)]",
               desktopSurfaceParity ? "bg-white" : "bg-[#EEF3F8]",
             )
           : layout === "desktop"
@@ -4257,16 +4257,15 @@ function CarFilters({
       {layout === "compact" ? (
         <div
           className={cn(
-            "desktop-filter-sidebar__header shrink-0 border-b border-[#D8E1EC]/80 px-3.5 py-2.5",
+            "desktop-filter-sidebar__header shrink-0 border-b border-[#D8E1EC]/80 px-3 py-3",
             desktopSurfaceParity ? "bg-white" : "bg-[#EEF3F8]",
           )}
         >
           <div className="flex items-center justify-between gap-3">
-            <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[15px] font-bold leading-5 tracking-[-0.004em] text-[#07133B]">
+            <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[16px] font-bold leading-6 tracking-[-0.006em] text-[#07133B]">
               <SlidersHorizontal
                 className="desktop-filter-sidebar__icon cars-desktop-filter-icon shrink-0 text-[#07133B]"
-                size={15}
-                strokeWidth={2.25}
+                size={18}
                 aria-hidden="true"
               />
               <span className="truncate">{t("filters")}</span>
@@ -4279,7 +4278,7 @@ function CarFilters({
               </span>
               <button
                 type="button"
-                className="rounded-full px-1.5 py-0.5 text-[12px] font-bold leading-4 text-[#475569] transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                className="rounded-full px-1.5 py-0.5 text-[13px] font-bold leading-5 text-[#475569] transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                 onClick={onClear}
               >
                 {t("clearAll")}
@@ -4319,7 +4318,7 @@ function CarFilters({
         className={cn(
           layout === "compact"
             ? cn(
-                "min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-2 py-1",
+                "min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-3 py-1",
                 desktopSurfaceParity ? "bg-white" : "bg-[#EEF3F8]",
               )
             : layout === "mobile"
@@ -4442,11 +4441,18 @@ function FilterSection({
           onClick={onCompactOpen}
           className={cn(
             "group flex w-full items-center justify-between gap-3 text-start font-bold text-slate-900 transition-colors duration-200 motion-reduce:transition-none hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
-            "min-h-9 rounded-md px-2.5 py-2 text-[14px] leading-5 tracking-[-0.004em] hover:bg-[#E5ECF4]",
+            "min-h-10 rounded-md px-3 py-2.5 text-[15px] leading-5 tracking-[-0.003em] hover:bg-[#E5ECF4]",
             compactOpen && "text-[#004BB8]",
           )}
         >
-          <span className="min-w-0 truncate">{carFilterGroupLabel(group, t)}</span>
+          <span
+            className={cn(
+              "cars-results-desktop-filter-heading-type min-w-0 truncate",
+              compactOpen && "cars-results-desktop-filter-heading-type--active",
+            )}
+          >
+            {carFilterGroupLabel(group, t)}
+          </span>
           <span className="flex shrink-0 items-center gap-2">
             {selectedOptions.length ? (
               <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[12px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">
@@ -4455,7 +4461,7 @@ function FilterSection({
             ) : null}
             <ChevronDown
               className={cn(
-                "h-3.5 w-3.5 text-slate-500 transition duration-200 motion-reduce:transition-none group-hover:text-[#004BB8]",
+                "h-4 w-4 text-slate-500 transition duration-200 motion-reduce:transition-none group-hover:text-[#004BB8]",
                 compactOpen && "rotate-180 text-[#004BB8]",
               )}
               strokeWidth={2.3}
@@ -4474,7 +4480,7 @@ function FilterSection({
         aria-hidden={layout === "compact" && !compactOpen}
         className={cn(
           layout === "compact"
-            ? "grid h-auto gap-0.5 overflow-visible bg-transparent px-2.5 pb-3 pt-0.5"
+            ? "grid h-auto gap-0.5 overflow-visible bg-transparent px-3 pb-3 pt-1.5"
             : "mt-2 grid gap-0.5",
         )}
       >
@@ -4486,7 +4492,7 @@ function FilterSection({
               tabIndex={layout === "compact" && !compactOpen ? -1 : undefined}
               className={
                 layout === "compact"
-                  ? "mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                  ? "mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                   : "h-4 w-4 rounded border-slate-300 accent-blue"
               }
               checked={selected}
@@ -4504,7 +4510,7 @@ function FilterSection({
               key={option.id}
               className={cn(
                 layout === "compact"
-                  ? "flex min-h-8 cursor-pointer items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-[14px] font-medium leading-5 text-[#334155] transition hover:bg-slate-50 hover:text-slate-950"
+                  ? "flex min-h-8 cursor-pointer items-center justify-between gap-2.5 rounded-lg px-1.5 py-1.5 text-[14px] font-medium leading-5 text-[#334155] transition hover:bg-slate-50 hover:text-slate-950"
                   : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-[14px] font-medium leading-5 transition-all",
                 selected
                   ? "font-semibold text-[#142033]"
@@ -4514,7 +4520,7 @@ function FilterSection({
               )}
             >
               {layout === "compact" ? (
-                <span className="flex min-w-0 items-start gap-1.5">
+                <span className="flex min-w-0 items-center gap-2.5">
                   {input}
                   {label}
                 </span>

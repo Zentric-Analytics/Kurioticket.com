@@ -30,6 +30,7 @@
     border-bottom-right-radius: 0;
   }
   .carsScrollFilterSlot {
+    padding-inline: 0;
     border-bottom-left-radius: 28px;
     border-bottom-right-radius: 0;
     overflow: hidden;
@@ -88,12 +89,6 @@
   }
   .scrollFilterBarAnimated {
     transition: transform 220ms cubic-bezier(0, 0, .4, 1);
-  }
-  .scrollFilterBarPinned [data-cars-results-quick-filters] {
-    width: 100%;
-    margin-inline-end: 0;
-    padding-inline: 12px;
-    scroll-padding-inline: 12px;
   }
   .scrollFilterBarPinned.scrollFilterBarHidden {
     transform: translateY(-100%);

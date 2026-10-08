@@ -7,10 +7,10 @@ const source = readFileSync(
 );
 const presentation = readFileSync(new URL("../../lib/cars/carFilterPresentation.ts", import.meta.url), "utf8");
 
-test("source-contract: Cars compact shell and header match Flights styling", () => {
+test("source-contract: Cars compact shell keeps the normal desktop visual scale", () => {
   assert.match(
     source,
-    /desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-\[#D8E1EC\] p-0 shadow-\[0_14px_30px_-26px_rgba\(15,23,42,0\.42\)\]/,
+    /desktop-filter-sidebar flex max-h-full w-full flex-col overflow-hidden rounded-2xl border border-\[#D8E1EC\] p-0 shadow-\[0_14px_30px_-26px_rgba\(15,23,42,0\.42\)\]/,
   );
   assert.match(
     source,
@@ -18,68 +18,67 @@ test("source-contract: Cars compact shell and header match Flights styling", () 
   );
   assert.match(
     source,
-    /desktop-filter-sidebar__header shrink-0 border-b border-\[#D8E1EC\]\/80 px-3\.5 py-2\.5/,
+    /desktop-filter-sidebar__header shrink-0 border-b border-\[#D8E1EC\]\/80 px-3 py-3/,
   );
   assert.match(
     source,
-    /desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-\[15px\] font-semibold leading-5/,
+    /desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-\[16px\] font-bold leading-6/,
   );
   assert.match(
     source,
-    /<SlidersHorizontal\s+className="desktop-filter-sidebar__icon cars-desktop-filter-icon shrink-0 text-\[#07133B\]"\s+size=\{15\}\s+strokeWidth=\{2\.25\}\s+aria-hidden="true"\s*\/>\s*<span className="truncate">\{t\("filters"\)\}<\/span>/,
+    /<SlidersHorizontal\s+className="desktop-filter-sidebar__icon cars-desktop-filter-icon shrink-0 text-\[#07133B\]"\s+size=\{18\}\s+aria-hidden="true"\s*\/>\s*<span className="truncate">\{t\("filters"\)\}<\/span>/,
   );
   assert.match(
     source,
     /desktop-filter-sidebar__count rounded-full bg-\[#EAF2FB\].*ring-\[#004BB8\]\/8/,
   );
+  assert.match(source, /rounded-full px-1\.5 py-0\.5 text-\[13px\] font-bold leading-5/);
   assert.match(source, /\{activeFilterLabel\}/);
   assert.match(source, /\{t\("clearAll"\)\}/);
 });
 
-test("source-contract: Cars compact sections match Flights density", () => {
+test("source-contract: Cars compact sections keep normal desktop control sizing", () => {
   assert.match(
     source,
     /layout === "compact"\s*\? "border-t border-\[#D8E1EC\]\/75 first:border-t-0"/,
   );
-  assert.doesNotMatch(source, /layout === "compact" \? "[^"]*py-3/);
   assert.match(
     source,
-    /group flex w-full items-center justify-between gap-3 text-start font-semibold/,
+    /min-h-10 rounded-md px-3 py-2\.5 text-\[15px\] leading-5 tracking-\[-0\.003em\]/,
   );
-  assert.doesNotMatch(source, /layout === "compact"[^\n]*min-h-10/);
-  assert.doesNotMatch(source, /layout === "compact"[^\n]*text-sm font-bold/);
   assert.match(
     source,
-    /h-3\.5 w-3\.5 text-slate-500 transition duration-200[\s\S]*?compactOpen && "rotate-180 text-\[#004BB8\]"/,
+    /cars-results-desktop-filter-heading-type min-w-0 truncate[\s\S]*compactOpen && "cars-results-desktop-filter-heading-type--active"/,
+  );
+  assert.match(
+    source,
+    /h-4 w-4 text-slate-500 transition duration-200[\s\S]*?compactOpen && "rotate-180 text-\[#004BB8\]"/,
   );
   assert.match(source, /strokeWidth=\{2\.3\}/);
   assert.match(
     source,
     /min-w-5 rounded-full bg-\[#E2EAF3\].*text-\[#235A9F\].*group-hover:bg-\[#DCE8F6\]/,
   );
-  assert.doesNotMatch(
+  assert.match(
     source,
-    /selectedOptions\.length \? <span className="rounded-full bg-\[#004BB8\]/,
+    /grid h-auto gap-0\.5 overflow-visible bg-transparent px-3 pb-3 pt-1\.5/,
   );
   assert.match(
     source,
-    /grid h-auto gap-0\.5 overflow-visible bg-transparent px-2\.5 pb-3 pt-0\.5/,
+    /flex min-h-8 cursor-pointer items-center justify-between gap-2\.5 rounded-lg px-1\.5 py-1\.5 text-\[14px\]/,
   );
+  assert.match(source, /flex min-w-0 items-center gap-2\.5/);
   assert.match(
     source,
-    /flex min-h-8 cursor-pointer items-start justify-between gap-2 rounded-lg px-1\.5 py-1 text-\[13px\]/,
+    /mt-0\.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-blue/,
   );
-  assert.match(source, /flex min-w-0 items-start gap-1\.5/);
-  assert.match(
-    source,
-    /mt-0\.5 h-3\.5 w-3\.5 shrink-0 rounded border-slate-300 accent-blue/,
-  );
+  assert.doesNotMatch(source, /layout === "compact"[\s\S]{0,220}h-3\.5 w-3\.5 shrink-0 rounded border-slate-300 accent-blue/);
 });
 
 test("source-contract: compact body is the only vertical scroll owner and header does not scroll", () => {
   assert.match(
     source,
-    /min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-2 py-1/,
+    /min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-3 py-1/,
   );
   assert.match(
     source,
@@ -87,7 +86,7 @@ test("source-contract: compact body is the only vertical scroll owner and header
   );
   assert.match(
     source,
-    /desktop-filter-sidebar flex max-h-full flex-col overflow-hidden/,
+    /desktop-filter-sidebar flex max-h-full w-full flex-col overflow-hidden/,
   );
   assert.match(source, /desktop-filter-sidebar__header shrink-0/);
   assert.equal(
@@ -115,7 +114,7 @@ test("source-contract: full desktop and mobile filter styling remain separate", 
   assert.match(source, /layout === "compact" \? \([\s\S]*?aria-expanded=\{compactOpen\}/);
   assert.match(
     source,
-    /layout === "compact"\s*\? "mt-0\.5 h-3\.5 w-3\.5[^"\n]*"\s*: "h-4 w-4 rounded border-slate-300 accent-blue"/,
+    /layout === "compact"\s*\? "mt-0\.5 h-4 w-4[^"\n]*"\s*: "h-4 w-4 rounded border-slate-300 accent-blue"/,
   );
 });
 
@@ -181,6 +180,10 @@ test("source-contract: Cars filters use the Flights desktop lifecycle", () => {
   assert.match(
     source,
     /desktopCompactFilterPlacement === "fixed"[\s\S]*top: desktopCompactFilterTopOffset,[\s\S]*left: desktopCompactFilterFrame\.left,[\s\S]*width: desktopCompactFilterFrame\.width/,
+  );
+  assert.match(
+    source,
+    /layout === "compact"[\s\S]*desktop-filter-sidebar flex max-h-full w-full flex-col/,
   );
   assert.match(
     source,
