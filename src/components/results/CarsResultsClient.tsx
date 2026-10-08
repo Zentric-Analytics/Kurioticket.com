@@ -2862,10 +2862,7 @@ export function CarsResultsExperience({
                     }
                     className="focus-ring inline-flex h-9 min-h-11 shrink-0 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2 text-[13px] font-semibold leading-4 text-[#142033] lg:hidden"
                   >
-                    <span>Sort:</span>
-                    <span className="font-semibold text-[#07133B]">
-                      {selectedCarSortLabel}
-                    </span>
+                    <span>Sort</span>
                     <ChevronDown
                       className="h-3.5 w-3.5"
                       aria-hidden="true"
@@ -3165,12 +3162,16 @@ export function CarsResultsExperience({
                 </div>
               )}
               {isMobilePaginationViewport && visibleResults.length > mobilePageSize && filterTransitionPhase === "idle" ? (
-                <nav aria-label="Cars results pages" data-cars-mobile-pagination className="mt-5 flex items-center justify-center gap-2 sm:hidden">
-                  <button type="button" disabled={currentMobilePage === 1} onClick={() => navigateMobileResultsPage(currentMobilePage - 1)} className="min-h-11 min-w-11 rounded-lg border border-[#D8E1EC] bg-white px-3 disabled:opacity-40">Previous</button>
+                <nav aria-label="Cars results pages" data-cars-mobile-pagination className="mt-8 flex items-center justify-center gap-5 pb-6 sm:hidden">
+                  <button type="button" aria-label="Previous page" disabled={currentMobilePage === 1} onClick={() => navigateMobileResultsPage(currentMobilePage - 1)} className="flex h-11 w-11 items-center justify-center text-[#142033] disabled:text-[#94A3B8] focus-visible:rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]">
+                    <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                  </button>
                   {Array.from({ length: mobilePageCount }, (_, index) => index + 1).filter((page) => page === 1 || page === mobilePageCount || Math.abs(page - currentMobilePage) <= 1).map((page) => (
-                    <button key={page} type="button" aria-label={`Page ${page}`} aria-current={page === currentMobilePage ? "page" : undefined} onClick={() => navigateMobileResultsPage(page)} className={cn("min-h-11 min-w-11 rounded-lg border px-3 text-sm font-semibold", page === currentMobilePage ? "border-[#004BB8] bg-[#004BB8] text-white" : "border-[#D8E1EC] bg-white text-[#142033]")}>{page}</button>
+                    <button key={page} type="button" aria-label={`Page ${page}`} aria-current={page === currentMobilePage ? "page" : undefined} onClick={() => navigateMobileResultsPage(page)} className={cn("flex h-11 min-w-9 items-center justify-center rounded-lg px-1 text-base font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]", page === currentMobilePage ? "text-[#204BB5]" : "text-[#142033]")}>{page}</button>
                   ))}
-                  <button type="button" disabled={currentMobilePage === mobilePageCount} onClick={() => navigateMobileResultsPage(currentMobilePage + 1)} className="min-h-11 min-w-11 rounded-lg border border-[#D8E1EC] bg-white px-3 disabled:opacity-40">Next</button>
+                  <button type="button" aria-label="Next page" disabled={currentMobilePage === mobilePageCount} onClick={() => navigateMobileResultsPage(currentMobilePage + 1)} className="flex h-11 w-11 items-center justify-center text-[#142033] disabled:text-[#94A3B8] focus-visible:rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]">
+                    <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                  </button>
                 </nav>
               ) : null}
             </>
