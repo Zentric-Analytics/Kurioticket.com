@@ -108,7 +108,11 @@ test("Cars shares Hotels filter motion and the exact Flight rounded edge at the 
   );
   assert.match(
     mobileStyles,
-    /\.carsScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*overflow: hidden;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;/,
+    /\.carsScrollFilterSlot \{[\s\S]*padding-inline: 0;[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*overflow: hidden;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;/,
+  );
+  assert.match(
+    mobileStyles,
+    /\.carsScrollFilterSlot \[data-cars-results-quick-filters\],[\s\S]*\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \[data-cars-results-quick-filters\] \{[\s\S]*padding-inline: 12px;[\s\S]*scroll-padding-inline: 12px;[\s\S]*gap: 6px;/,
   );
   assert.match(
     mobileStyles,
