@@ -13,6 +13,7 @@ import { formatMobileHotelPrice, mobileHotelAbout, mobileHotelAmenityGroups, mob
 import { MobileHotelStayEditor } from "./MobileHotelStayEditor";
 import { HotelPriceAlertControl } from "../HotelPriceAlertControl";
 import type { HotelDetailsProviderOffer } from "./hotelDetailsPresentation";
+import { DesktopProviderOffer } from "./HotelPriceComparisonSection";
 import { acquireMobileResultsScrollLock } from "@/lib/search/mobileResultsScrollLock";
 import styles from "./HotelDetailsMobile.module.css";
 
@@ -75,12 +76,12 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
   const mapOptions = location ? { hotelName: props.hotelName, propertyDetails: location, googleMapsEmbedApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY } : null;
   const mapUrl = mapOptions ? buildHotelMapEmbedUrl(mapOptions) : null;
   const streetUrl = mapOptions ? buildGoogleHotelStreetViewEmbedUrl(mapOptions) : null;
+  const total = formatMobileHotelPrice(props.totalDisplayPrice, props.labels.priceUnavailable);
   const offers: HotelDetailsProviderOffer[] = [
-    ...(props.roomChoices.length ? [{ id: "kurioticket", providerName: "Kurioticket", providerLogoUrl: "/brand/kurioticket-logo-primary-light-bg.svg", nightlyPrice: props.nightlyDisplayPrice?.formatted ?? props.labels.priceUnavailable, action: { kind: "internal-room-flow" as const } }] : []),
+    ...(props.roomChoices.length ? [{ id: "kurioticket", providerName: "Kurioticket", providerLogoUrl: "/brand/kurioticket-logo-primary-light-bg.svg", nightlyPrice: props.nightlyDisplayPrice?.formatted ?? props.labels.priceUnavailable, totalPrice: total, action: { kind: "internal-room-flow" as const } }] : []),
     ...(props.onProviderOfferHandoff ? props.providerOffers ?? [] : []),
   ];
   const selected = offers.find(offer => offer.id === selectedId) ?? offers[0];
-  const total = formatMobileHotelPrice(props.totalDisplayPrice, props.labels.priceUnavailable);
 
   useEffect(() => {
     // Preview reserves a separate 72px row for the fixed hero actions when tabs pin.
@@ -179,12 +180,21 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
           <p>{[stay.dates, stay.nights].filter(Boolean).join(" · ")}</p>
         </div>
         <div aria-label="Hotel rates" className={styles.rateList}>
-          {offers.map(offer => <article key={offer.id} className={styles.rate} data-selected={selected?.id === offer.id}>
-            <div className={styles.rateChoice}>
-              <span className={styles.rateTop}>{offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={`${offer.providerName} logo`} width={132} height={30} /> : <strong>{offer.providerName}</strong>}</span>
-            </div>
-            <div className={styles.rateAction}><div><strong>{offer.action.kind === "internal-room-flow" ? total : offer.totalPrice || props.labels.priceUnavailable}</strong><span>Stay total</span></div><button type="button" aria-label={`View deal from ${offer.providerName}`} onClick={() => void viewDeal(offer)} disabled={pending}>{pending && selected?.id === offer.id ? "Opening…" : "View deal"}</button></div>
-          </article>)}
+          {offers.map(offer => <DesktopProviderOffer
+            key={offer.id}
+            offer={offer}
+            perNightText={props.perNightText}
+            totalLabel={props.labels.estimatedStayTotal}
+            selected={selected?.id === offer.id}
+            selectable
+            pendingOfferId={pending ? selected?.id ?? null : null}
+            continueLabel={props.labels.viewDeal}
+            onSelect={setSelectedId}
+            onContinue={(offerId) => {
+              const nextOffer = offers.find(candidate => candidate.id === offerId);
+              if (nextOffer) void viewDeal(nextOffer);
+            }}
+          />)}
           {!offers.length ? <div className={styles.noRates}><h2>No rates available</h2><p>Refresh your search for current prices and availability.</p><a href={props.resultsHref}>Back to hotel results</a></div> : null}
         </div>
         {handoffError ? <p role="alert">{handoffError}</p> : null}
