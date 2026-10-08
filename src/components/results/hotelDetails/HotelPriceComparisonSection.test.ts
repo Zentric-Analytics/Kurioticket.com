@@ -131,10 +131,10 @@ test("desktop View deal action stays compact while the shared row stays side by 
     variant: "desktop",
     onContinueOffer: () => {},
   }));
-  assert.match(html, /grid-cols-\[64px_minmax\(0,1fr\)_80px\][^"]*sm:flex/);
+  assert.match(html, /grid-cols-\[92px_minmax\(0,1fr\)_80px\][^"]*sm:flex/);
   assert.match(html, /col-start-1[^"]*self-start/);
   assert.match(html, /col-start-2[^"]*text-center/);
   assert.match(html, /col-start-3[^"]*w-\[80px\][^"]*whitespace-nowrap[^"]*sm:w-\[96px\]/);
   assert.match(html, /whitespace-nowrap text-\[16px\][^"]*min-\[360px\]:text-\[20px\]/);
-  assert.match(html, /text-\[13px\][^"]*text-\[#192024\][^"]*sm:text-base/);
+  assert.match(html, /whitespace-nowrap[^"]*text-\[13px\][^"]*text-\[#192024\][^"]*sm:text-base/);
 });
