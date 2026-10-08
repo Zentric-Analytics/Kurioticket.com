@@ -445,7 +445,7 @@ export function CarResultCard({
           >
             <div
               data-car-card-mobile-specs
-              className="min-w-0 flex-[2] px-2 py-2.5 text-[11px] font-medium leading-[14px] text-[#536B92]"
+              className="min-w-0 flex-[2.1] px-2 py-2.5 text-[11px] font-medium leading-[14px] text-[#536B92]"
             >
               <div className="grid grid-cols-2 gap-x-1">
                 {mobileSpecColumns.map((column, columnIndex) => (
@@ -468,7 +468,10 @@ export function CarResultCard({
                 />
               ) : null}
             </div>
-            <div className="flex min-w-0 flex-[1.35] flex-col items-end px-2.5 pb-1 pt-2">
+            <div
+              data-car-card-mobile-pricing
+              className="flex min-w-0 flex-[1.25] flex-col items-end justify-center px-2.5 py-2"
+            >
               <p
                 className="max-w-full whitespace-nowrap text-[19px] font-semibold leading-[22px] tracking-[-0.02em] text-[#07133B] tabular-nums"
                 dir="ltr"
