@@ -16,6 +16,10 @@ test("Hotel keeps responsive pagination while Cars renders one continuous result
   assert.doesNotMatch(cars, /aria-label="Car results pagination"/);
   assert.doesNotMatch(cars, /aria-label="Previous page"|aria-label="Next page"/);
   assert.doesNotMatch(cars, /getCarPaginationItems|paginateCarResults|paginationPendingPage/);
+  assert.doesNotMatch(
+    cars,
+    /mobileResultsPage|mobilePageSize|mobilePageCount|mobilePageStart|mobilePageResults|isMobilePaginationViewport|data-cars-mobile-pagination|data-cars-results-visible-range|buildFlightPaginationItems/,
+  );
 });
 
 test("Cars sticky quick filters precede the price alert and summary without duplication", () => {
