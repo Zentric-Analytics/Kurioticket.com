@@ -32,6 +32,13 @@
   .hotelScrollFilterSlot {
     border-bottom-left-radius: 28px;
     border-bottom-right-radius: 0;
+    box-shadow: 0 1px 0 #d8e1ec;
+  }
+  .hotelScrollFilterSlot > .hotelNavbarFilterBar {
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
+    overflow: hidden;
+    background: #fff;
   }
   .carsScrollFilterSlot {
     border-bottom-left-radius: 15px;
@@ -66,6 +73,8 @@
     background: #fff;
     border-bottom-left-radius: 28px;
     border-bottom-right-radius: 0;
+    overflow: hidden;
+    box-shadow: 0 1px 0 #d8e1ec;
   }
   /* Legacy shared cutout retained for the base surface only.
      Product-specific Hotel and Cars rails below use native border radii so
