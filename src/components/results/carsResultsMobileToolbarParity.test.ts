@@ -97,7 +97,7 @@ test("Cars mobile filter rail uses the Hotels pinned hide/reveal scroll model", 
   assert.doesNotMatch(source, /data-cars-results-mobile-header-filter|showMobileHeaderFilter|mobileNavFilterTarget/);
 });
 
-test("Cars shares Hotels filter motion but keeps its approved rounded edge at the stable header edge", () => {
+test("Cars shares Hotels filter motion and the exact Flight rounded edge at the stable header edge", () => {
   assert.match(
     mobileStyles,
     /\.scrollFilterSlot \{[\s\S]*height: 60px;[\s\S]*padding: 8px 4px 0;/,
@@ -108,7 +108,7 @@ test("Cars shares Hotels filter motion but keeps its approved rounded edge at th
   );
   assert.match(
     mobileStyles,
-    /\.carsScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 32px;[\s\S]*border-bottom-right-radius: 0;/,
+    /\.carsScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*overflow: hidden;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;/,
   );
   assert.match(
     mobileStyles,
@@ -116,7 +116,7 @@ test("Cars shares Hotels filter motion but keeps its approved rounded edge at th
   );
   assert.match(
     mobileStyles,
-    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*top: calc\(61px \+ var\(--cars-results-safe-area-top\)\);[\s\S]*\}/,
+    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*top: calc\(61px \+ var\(--cars-results-safe-area-top\)\);[\s\S]*border-bottom-left-radius: 28px;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;[\s\S]*\}/,
   );
   assert.match(
     mobileStyles,
