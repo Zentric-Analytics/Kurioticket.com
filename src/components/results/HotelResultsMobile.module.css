@@ -30,7 +30,7 @@
     border-bottom-right-radius: 0;
   }
   .carsScrollFilterSlot {
-    border-bottom-left-radius: 18px;
+    border-bottom-left-radius: 15px;
     border-bottom-right-radius: 0;
   }
   .scrollFilterBar {
@@ -94,7 +94,7 @@
     top: calc(61px + var(--cars-results-safe-area-top));
     background: #ffffff;
     border-top: 0;
-    border-bottom-left-radius: 18px;
+    border-bottom-left-radius: 15px;
     border-bottom-right-radius: 0;
     box-shadow: none;
   }

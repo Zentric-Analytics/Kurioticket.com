@@ -2826,6 +2826,30 @@ export function CarsResultsExperience({
                         ) : null}
                       </span>
                     </button>
+                  <button
+                    type="button"
+                    data-cars-sort-trigger
+                    aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
+                    aria-haspopup="dialog"
+                    aria-expanded={quickFilterGroupId === "sort"}
+                    onClick={(event) =>
+                      openQuickFilter(
+                        "sort",
+                        event.currentTarget,
+                        getOverlayActivationModality(event),
+                      )
+                    }
+                    className="focus-ring inline-flex min-h-11 shrink-0 items-center justify-center gap-1 rounded-[9px] border border-[#D8E1EC] bg-white px-2 text-[13px] font-semibold leading-4 text-[#142033] lg:hidden"
+                  >
+                    <span>Sort:</span>
+                    <span className="font-semibold text-[#07133B]">
+                      {selectedCarSortLabel}
+                    </span>
+                    <ChevronDown
+                      className="h-3.5 w-3.5"
+                      aria-hidden="true"
+                    />
+                  </button>
                     {quickFilterGroups.map((group) => {
                       const selected = selectedCarFilters[group.id] ?? [];
                       const active = selected.length > 0;
@@ -2936,30 +2960,7 @@ export function CarsResultsExperience({
                         )}
                     </h2>
                   </div>
-                  <button
-                    type="button"
-                    data-cars-sort-trigger
-                    aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
-                    aria-haspopup="dialog"
-                    aria-expanded={quickFilterGroupId === "sort"}
-                    onClick={(event) =>
-                      openQuickFilter(
-                        "sort",
-                        event.currentTarget,
-                        getOverlayActivationModality(event),
-                      )
-                    }
-                    className="focus-ring inline-flex min-h-[38px] min-w-[116px] shrink-0 items-center justify-center gap-[5px] rounded-[10px] border border-[#D8E1EC] px-2.5 py-2 text-[13px] font-medium leading-[17px] text-[#56658E] sm:hidden"
-                  >
-                    <span>Sort:</span>
-                    <span className="font-semibold text-[#07133B]">
-                      {selectedCarSortLabel}
-                    </span>
-                    <ChevronDown
-                      className="h-3.5 w-3.5"
-                      aria-hidden="true"
-                    />
-                  </button>
+                  <span data-cars-results-visible-range className="shrink-0 text-[12px] font-medium text-[#64748B] sm:hidden">{visibleResults.length ? `1–${visibleResults.length}` : "0"}</span>
                   <div className="hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
                     <span className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
                       {t("carsResults.sortBy")}:
