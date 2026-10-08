@@ -3185,18 +3185,20 @@ export function CarsResultsExperience({
                     <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                   </button>
                   <span className="flex min-w-0 items-center">
-                    {buildFlightPaginationItems(currentMobilePage, mobilePageCount, true).map((page) => (
-                      <button
-                        key={page}
-                        type="button"
-                        aria-label={`Page ${page}`}
-                        aria-current={page === currentMobilePage ? "page" : undefined}
-                        onClick={() => navigateMobileResultsPage(page)}
-                        className="flight-pagination-control"
-                      >
-                        {page}
-                      </button>
-                    ))}
+                    {buildFlightPaginationItems(currentMobilePage, mobilePageCount, true).map((page) =>
+                      page === "ellipsis" ? null : (
+                        <button
+                          key={page}
+                          type="button"
+                          aria-label={`Page ${page}`}
+                          aria-current={page === currentMobilePage ? "page" : undefined}
+                          onClick={() => navigateMobileResultsPage(page)}
+                          className="flight-pagination-control"
+                        >
+                          {page}
+                        </button>
+                      ),
+                    )}
                   </span>
                   <button
                     type="button"
