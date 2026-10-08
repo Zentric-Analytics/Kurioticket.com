@@ -68,7 +68,10 @@ export default async function HotelResultsPage({
   if (!route.resultsReady) redirect(route.recoveryHref);
 
   return (
-    <>
+    <div
+      data-hotel-results-page-surface
+      className="flex min-h-[100svh] flex-col bg-[#F5F7FB] sm:bg-transparent"
+    >
       <AppHeader
         flushDesktopBottom
         hotelDesktopBoundary
@@ -91,6 +94,6 @@ export default async function HotelResultsPage({
       >
         <HotelResultsClient />
       </Suspense>
-    </>
+    </div>
   );
 }
