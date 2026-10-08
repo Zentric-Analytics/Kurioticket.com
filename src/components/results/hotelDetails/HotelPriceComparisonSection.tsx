@@ -124,7 +124,7 @@ export function DesktopProviderOffer({
 
   return (
     <article
-      className="relative grid min-h-[80px] min-w-0 grid-cols-[64px_minmax(0,1fr)_80px] items-center gap-x-2 rounded-xl border border-[#D9E2E8] bg-transparent px-3 py-3 sm:flex sm:justify-between sm:gap-4 sm:px-4"
+      className="relative grid min-h-[80px] min-w-0 grid-cols-[92px_minmax(0,1fr)_80px] items-center gap-x-2 rounded-xl border border-[#D9E2E8] bg-transparent px-3 py-3 sm:flex sm:justify-between sm:gap-4 sm:px-4"
       data-provider-offer
       data-provider-offer-id={offer.id}
       data-provider-selected={selected || undefined}
@@ -135,7 +135,7 @@ export function DesktopProviderOffer({
       <span className="pointer-events-none absolute inset-0 rounded-xl peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8] peer-focus-visible:ring-offset-2" aria-hidden="true" />
       <label htmlFor={selectorId} className={`contents sm:grid sm:min-w-0 sm:flex-1 sm:grid-cols-[132px_minmax(0,1fr)] sm:items-center ${disabled ? "cursor-default" : "cursor-pointer"}`}>
         <span className="col-start-1 block min-w-0 self-start sm:col-auto sm:self-center" data-provider-brand>
-          {offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={offer.providerName} width={132} height={30} className="h-8 w-[64px] object-contain object-left sm:w-[86px]" /> : <strong className="text-[13px] font-semibold leading-4 text-[#192024] sm:text-base sm:leading-6 sm:text-[#004BB8]">{offer.providerName}</strong>}
+          {offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={offer.providerName} width={132} height={30} className="h-8 w-[64px] object-contain object-left sm:w-[86px]" /> : <strong className="whitespace-nowrap text-[13px] font-semibold leading-4 text-[#192024] sm:text-base sm:leading-6 sm:text-[#004BB8]">{offer.providerName}</strong>}
         </span>
         <span className="col-start-2 block min-w-0 text-center" data-provider-price>
           <strong className="block whitespace-nowrap text-[16px] font-semibold leading-5 tracking-[-0.02em] text-[#192024] tabular-nums min-[360px]:text-[20px] min-[360px]:leading-6" title={totalPrice ? undefined : offer.nightlyPriceTitle} aria-label={totalPrice ? undefined : offer.nightlyPriceAriaLabel} data-nightly-amount={!totalPrice || undefined}>{totalPrice || offer.nightlyPrice}</strong>
