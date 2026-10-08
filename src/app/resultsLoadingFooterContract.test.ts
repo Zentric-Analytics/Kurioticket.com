@@ -75,14 +75,20 @@ test("guided Flight and Hotel Results return before standalone Footer ownership"
   }
 });
 
-test("hotel navbar stays outside the inventory loading branch", () => {
+test("hotel page keeps one sticky results AppHeader mounted while inventory content loads", () => {
   const source = readFileSync(new URL("../components/results/HotelResultsClient.tsx", import.meta.url), "utf8");
-  const header = source.indexOf("<AppHeader");
-  const content = source.indexOf("{loadingContent ?? <>");
-  assert.ok(header >= 0 && content > header);
-  assert.match(source, /loadingContent = \([\s\S]*?<BrandedLoading/);
   const page = readFileSync(new URL("./hotels/results/page.tsx", import.meta.url), "utf8");
-  assert.match(page, /fallback=\{[\s\S]*?<AppHeader[\s\S]*?<LocalizedLoadingLabel/);
+
+  const pageHeader = page.indexOf("<AppHeader");
+  const suspense = page.indexOf("<Suspense", pageHeader);
+  assert.ok(pageHeader >= 0 && suspense > pageHeader);
+  assert.match(page, /data-hotel-results-mobile-nav-search/);
+  assert.match(page, /data-hotel-results-mobile-nav-filters/);
+  assert.match(page, /data-hotel-results-mobile-nav-filters[\s\S]*?empty:hidden/);
+  assert.match(source, /loadingContent = \([\s\S]*?<BrandedLoading/);
+  assert.match(source, /createPortal\(renderMobileHotelNavSearch\(\), mobileNavSearchTarget\)/);
+  assert.match(source, /createPortal\(mobileResultsFiltersContent, mobileNavFiltersTarget\)/);
+  assert.doesNotMatch(page.slice(suspense), /fallback=\{[\s\S]*?<AppHeader/);
 });
 
 test("flight page keeps one results AppHeader mounted while inventory content loads", () => {

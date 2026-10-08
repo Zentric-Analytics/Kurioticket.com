@@ -2161,13 +2161,15 @@ textarea {
     width: calc(100% - 24px);
   }
 
-  /* Keep the Flight Results filter row on the header's curved left edge. */
-  [data-flight-results-desktop-header] {
+  /* Keep Flight and Hotel Results filter rows on the same curved sticky header edge. */
+  [data-flight-results-desktop-header],
+  [data-hotel-results-desktop-header] {
     border-bottom-left-radius: 28px;
     box-shadow: 0 1px 0 #d8e1ec;
   }
 
-  [data-flight-results-desktop-header] > [data-mobile-results-filter-navbar] {
+  [data-flight-results-desktop-header] > [data-mobile-results-filter-navbar],
+  [data-hotel-results-desktop-header] > [data-mobile-results-filter-navbar] {
     border-bottom-left-radius: inherit;
     overflow: hidden;
   }

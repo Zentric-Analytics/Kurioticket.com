@@ -332,12 +332,10 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const [mobileHotelSearchClosing, setMobileHotelSearchClosing] = useState(false);
   const [mobileHotelNestedLayerOpen, setMobileHotelNestedLayerOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [mobileFiltersAnimated, setMobileFiltersAnimated] = useState(false);
-  const [mobileFiltersPinned, setMobileFiltersPinned] = useState(false);
-  const [mobileFiltersVisible, setMobileFiltersVisible] = useState(true);
   const [showStickyHotelFilters, setShowStickyHotelFilters] = useState(false);
   const [desktopNavSearchTarget, setDesktopNavSearchTarget] = useState<HTMLElement | null>(null);
   const [mobileNavSearchTarget, setMobileNavSearchTarget] = useState<HTMLElement | null>(null);
+  const [mobileNavFiltersTarget, setMobileNavFiltersTarget] = useState<HTMLElement | null>(null);
   const [desktopSearchPlacement, setDesktopSearchPlacement] = useState<"navbar" | "page" | null>(null);
   const [currentResultsPage, setCurrentResultsPage] = useState(1);
   const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
@@ -347,8 +345,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const paginationListRef = useRef<HTMLDivElement | null>(null);
   const desktopFilterPanelRef = useRef<HTMLDivElement | null>(null);
   const desktopResultsContentRef = useRef<HTMLElement | null>(null);
-  const mobileFilterOriginRef = useRef<HTMLDivElement | null>(null);
-  const mobileFiltersPinnedRef = useRef(false);
   const hotelSortWrapperRef = useRef<HTMLDivElement | null>(null);
   const hotelSortMenuRef = useRef<HTMLDivElement | null>(null);
   const hotelSortTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -877,134 +873,36 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }, [guided]);
 
   useEffect(() => {
-    if (guided || loading || results.length === 0) return undefined;
+    if (guided || typeof window === "undefined") return undefined;
 
-    const mobileQuery = window.matchMedia("(max-width: 639px)");
-    const readScrollPosition = () => {
-      const maxScrollY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      return {
-        maxScrollY,
-        scrollY: Math.min(maxScrollY, Math.max(0, window.scrollY)),
-      };
-    };
-    let previousY = readScrollPosition().scrollY;
-    let direction = 0;
-    let distance = 0;
+    const desktopQuery = window.matchMedia("(min-width: 1024px)");
     let frame = 0;
 
-    const update = () => {
-      frame = 0;
-      const { maxScrollY, scrollY } = readScrollPosition();
-      const delta = scrollY - previousY;
-      previousY = scrollY;
-
-      if (!mobileQuery.matches) {
-        mobileFiltersPinnedRef.current = false;
-        setMobileFiltersPinned(false);
-        setMobileFiltersAnimated(false);
-        setMobileFiltersVisible(true);
-        return;
-      }
-
-      const filterInteractionActive =
-        filtersOpen ||
-        Boolean(mobileShortcutMenu) ||
-        mobileHotelSearchOpen ||
-        filterApplying;
-
-      // Mobile overlays temporarily lock/restore page scroll. Do not interpret those
-      // programmatic jumps as user scroll direction or reset the pinned filter state.
-      if (filterInteractionActive) {
-        direction = 0;
-        distance = 0;
-        return;
-      }
-
-      const headerBottom = document.querySelector<HTMLElement>("[data-app-header]")?.getBoundingClientRect().bottom ?? 72;
-      const naturalFilterBottom = mobileFilterOriginRef.current?.getBoundingClientRect().bottom ?? 0;
-      const resultsBottom = desktopResultsContentRef.current?.getBoundingClientRect().bottom ?? 0;
-      if (scrollY <= 1) {
-        mobileFiltersPinnedRef.current = false;
-        setMobileFiltersPinned(false);
-        setMobileFiltersAnimated(false);
-        setMobileFiltersVisible(true);
-        direction = 0;
-        distance = 0;
-        return;
-      }
-      if (resultsBottom <= headerBottom) {
-        setMobileFiltersVisible(false);
-        return;
-      }
-
-      if (!mobileFiltersPinnedRef.current) {
-        if (naturalFilterBottom <= 8) {
-          mobileFiltersPinnedRef.current = true;
-          setMobileFiltersPinned(true);
-          // During the initial downward handoff, pin hidden immediately instead of
-          // briefly flashing the fixed row before the normal hide threshold catches up.
-          // Interaction-driven scroll restoration is ignored above, so applying a
-          // filter no longer re-enters this branch and hides the row by accident.
-          setMobileFiltersVisible(delta < 0);
-          direction = Math.sign(delta);
-          distance = 0;
-        }
-        return;
-      }
-
-      if (Math.abs(delta) < 1) return;
-
-      // iOS WebKit can report a short reverse delta while the bottom rubber-band
-      // settles, including in Chrome. Ignore it until the page has genuinely moved
-      // away from the footer; an intentional upward scroll then behaves normally.
-      const distanceFromBottom = Math.max(0, maxScrollY - scrollY);
-      if (delta < 0 && distanceFromBottom <= 40) {
-        direction = 0;
-        distance = 0;
-        return;
-      }
-
-      const nextDirection = Math.sign(delta);
-      distance = nextDirection === direction ? distance + Math.abs(delta) : Math.abs(delta);
-      direction = nextDirection;
-      if (distance >= (nextDirection > 0 ? 20 : 12)) {
-        if (nextDirection < 0) setMobileFiltersAnimated(true);
-        setMobileFiltersVisible(nextDirection < 0);
-        distance = 0;
-      }
-    };
-
-    const scheduleUpdate = () => {
-      if (!frame) frame = window.requestAnimationFrame(update);
-    };
-
-    update();
-    window.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate);
-    mobileQuery.addEventListener("change", scheduleUpdate);
-    return () => {
+    const syncResultsHeaderTargets = () => {
       if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", scheduleUpdate);
-      mobileQuery.removeEventListener("change", scheduleUpdate);
-    };
-  }, [filterApplying, filtersOpen, guided, loading, mobileHotelSearchOpen, mobileShortcutMenu, results.length]);
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const nextDesktopTarget = document.querySelector<HTMLElement>("[data-hotel-results-nav-search]");
+        const nextMobileSearchTarget = document.querySelector<HTMLElement>("[data-hotel-results-mobile-nav-search]");
+        const nextMobileFiltersTarget = document.querySelector<HTMLElement>("[data-hotel-results-mobile-nav-filters]");
 
-  useEffect(() => {
-    if (guided) return undefined;
-    const desktopQuery = window.matchMedia("(min-width: 1024px)");
-    const updatePlacement = () => {
-      setDesktopSearchPlacement(desktopQuery.matches ? "navbar" : "page");
+        setDesktopNavSearchTarget((current) => current === nextDesktopTarget ? current : nextDesktopTarget);
+        setMobileNavSearchTarget((current) => current === nextMobileSearchTarget ? current : nextMobileSearchTarget);
+        setMobileNavFiltersTarget((current) => current === nextMobileFiltersTarget ? current : nextMobileFiltersTarget);
+        setDesktopSearchPlacement(desktopQuery.matches ? "navbar" : "page");
+      });
     };
-    const frame = window.requestAnimationFrame(() => {
-      setDesktopNavSearchTarget(document.querySelector<HTMLElement>("[data-hotel-results-nav-search]"));
-      setMobileNavSearchTarget(document.querySelector<HTMLElement>("[data-hotel-results-mobile-nav-search]"));
-      updatePlacement();
-    });
-    desktopQuery.addEventListener("change", updatePlacement);
+
+    syncResultsHeaderTargets();
+
+    const observer = new MutationObserver(syncResultsHeaderTargets);
+    observer.observe(document.body, { childList: true, subtree: true });
+    desktopQuery.addEventListener("change", syncResultsHeaderTargets);
+
     return () => {
-      window.cancelAnimationFrame(frame);
-      desktopQuery.removeEventListener("change", updatePlacement);
+      observer.disconnect();
+      desktopQuery.removeEventListener("change", syncResultsHeaderTargets);
+      if (frame) window.cancelAnimationFrame(frame);
     };
   }, [guided]);
 
@@ -1561,7 +1459,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       <>
         <div
           data-mobile-hotel-shortcuts
-          className="scrollbar-hide -me-4 flex w-[calc(100%+1rem)] flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pe-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
+          className="scrollbar-hide flex w-full min-w-0 flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain px-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
         >
           <button
             type="button"
@@ -1665,11 +1563,24 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     </button>
   );
 
+  const mobileResultsFiltersContent =
+    !guided && results.length > 0 ? (
+      <section
+        data-hotel-results-toolbar
+        className="w-full py-2 sm:hidden"
+        aria-label="Hotel result filters"
+      >
+        {renderMobileHotelShortcuts()}
+      </section>
+    ) : null;
 
   return (
     <>
       {!guided && !loadingContent && mobileNavSearchTarget
         ? createPortal(renderMobileHotelNavSearch(), mobileNavSearchTarget)
+        : null}
+      {!guided && !loadingContent && mobileNavFiltersTarget && mobileResultsFiltersContent
+        ? createPortal(mobileResultsFiltersContent, mobileNavFiltersTarget)
         : null}
       {!guided && !loadingContent && desktopSearchPlacement === "navbar" && desktopNavSearchTarget
         ? createPortal(renderDesktopHotelSearch("hotel-results-nav-search"), desktopNavSearchTarget)
@@ -1775,27 +1686,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           </aside>
 
           <section ref={desktopResultsContentRef} className="relative min-w-0 space-y-2 sm:space-y-4">
-            {!guided && results.length > 0 ? (
-              <div ref={mobileFilterOriginRef} className={cn("sm:hidden", mobileStyles.scrollFilterSlot, mobileStyles.hotelScrollFilterSlot)}>
-                <div
-                  data-hotel-results-toolbar
-                  data-scroll-visible={mobileFiltersVisible ? "true" : "false"}
-                  data-scroll-pinned={mobileFiltersPinned ? "true" : "false"}
-                  className={cn(
-                    "flex min-w-0 flex-col items-start gap-2 sm:hidden",
-                    mobileStyles.scrollFilterBar,
-                    mobileStyles.hotelNavbarFilterBar,
-                    mobileFiltersPinned && mobileStyles.scrollFilterBarPinned,
-                    mobileFiltersAnimated && mobileStyles.scrollFilterBarAnimated,
-                    mobileFiltersPinned &&
-                      !mobileFiltersVisible &&
-                      mobileStyles.scrollFilterBarHidden,
-                  )}
-                >
-                  {renderMobileHotelShortcuts()}
-                </div>
-              </div>
-            ) : null}
             {error && results.length === 0 ? (
               <div ref={guided ? guidedErrorRef : undefined} tabIndex={guided ? -1 : undefined} className={cn(hotelResultStackClass, "rounded-[13px] border border-danger/20 bg-white p-4 text-slate-950 shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] sm:rounded-md sm:border-danger/30 sm:bg-red-50 sm:text-danger sm:shadow-none")}>
                 <p role="alert" className="text-sm font-semibold leading-5">{error}</p>
