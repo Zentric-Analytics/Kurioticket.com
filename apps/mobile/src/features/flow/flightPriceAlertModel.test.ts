@@ -68,7 +68,18 @@ test("automatic payload carries the lowest live Duffel baseline in its source cu
   assert.equal(payload.query.currency, "EUR");
 });
 
-test("target alerts never control the automatic Flight Results switch", () => {
-  assert.equal(matchingFlightPriceAlert([alert({ mode: "TARGET" })], plan), undefined);
-  assert.equal(matchingFlightPriceAlert([alert({ mode: "AUTOMATIC" })], plan)?.id, "alert-1");
+test("Flight Results prefers active targets while retaining legacy automatic controls", () => {
+  const target = alert({ id: "target", mode: "TARGET", targetPrice: "540" });
+  const automatic = alert({ id: "automatic", mode: "AUTOMATIC" });
+  assert.equal(matchingFlightPriceAlert([automatic, target], plan)?.id, "target");
+  assert.equal(matchingFlightPriceAlert([automatic], plan)?.id, "automatic");
+  assert.equal(matchingFlightPriceAlert([alert({ id: "target", mode: "TARGET", targetPrice: "540", status: "PAUSED" }), automatic], plan)?.id, "automatic");
+  assert.equal(matchingFlightPriceAlert([alert({ id: "target", mode: "TARGET", targetPrice: "540", status: "PAUSED" })], plan)?.id, "target");
+});
+
+test("new native Flight alerts explicitly save a target rather than an automatic baseline", () => {
+  const payload = buildFlightPriceAlertPayload(plan, 540, "EUR");
+  assert.equal(payload.mode, "TARGET");
+  assert.equal(payload.targetPrice, 540);
+  assert.equal("baselinePrice" in payload, false);
 });

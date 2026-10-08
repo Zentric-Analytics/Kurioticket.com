@@ -33,7 +33,7 @@ export function buildFlightPriceAlertPayload(plan: SearchPlan, targetPrice: numb
   const normalizedCurrency = currency.trim().toUpperCase();
   if (!supported.has(normalizedCurrency)) throw new Error("Unsupported alert currency.");
   return {
-    type: "FLIGHT" as const,
+    type: "FLIGHT" as const, mode: "TARGET" as const,
     origin: String(query.origin), destination: String(query.destination), targetPrice, currency: normalizedCurrency,
     query: {
       tripType: query.tripType as "round-trip" | "one-way", origin: String(query.origin), destination: String(query.destination),
@@ -75,6 +75,9 @@ export function flightPriceAlertMatchesPlan(alert: MobilePriceAlert, plan: Searc
 }
 
 export function matchingFlightPriceAlert(alerts: MobilePriceAlert[], plan: SearchPlan) {
-  const matches = alerts.filter((alert) => alert.mode === "AUTOMATIC" && flightPriceAlertMatchesPlan(alert, plan));
-  return matches.find(({ status }) => status === "ACTIVE") ?? matches.find(({ status }) => status === "PAUSED");
+  const matches = alerts.filter((alert) => flightPriceAlertMatchesPlan(alert, plan));
+  return matches.find((alert) => alert.mode === "TARGET" && alert.status === "ACTIVE")
+    ?? matches.find((alert) => alert.mode === "AUTOMATIC" && alert.status === "ACTIVE")
+    ?? matches.find((alert) => alert.mode === "TARGET" && alert.status === "PAUSED")
+    ?? matches.find((alert) => alert.mode === "AUTOMATIC" && alert.status === "PAUSED");
 }

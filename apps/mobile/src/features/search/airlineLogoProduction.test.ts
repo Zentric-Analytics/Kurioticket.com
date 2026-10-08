@@ -55,7 +55,7 @@ test("Flight Result structure and SectionList controls remain intact", () => {
   assert.match(screen, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\}/);
   assert.match(screen, /<Animated\.SectionList[\s\S]*?ListHeaderComponent=\{flightDateStrip\}[\s\S]*?renderSectionHeader[\s\S]*?renderItem[\s\S]*?<FlightResultsSummaryRow[\s\S]*?<FlightCard/);
   assert.match(screen, /renderSectionHeader[\s\S]*?stickySectionHeadersEnabled/);
-  assert.match(screen, /<PriceAlert/);
+  assert.match(screen, /<FlightPriceAlert/);
   assert.match(screen, /<FlightSortSheet/);
   assert.match(screen, /<FlightFilterSheet/);
 });

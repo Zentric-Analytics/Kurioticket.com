@@ -23,7 +23,7 @@ test("Flight switch opens a target editor without creating an alert", () => {
 
 test("Flight target editor exposes the approved defaults, bounds, prices and accessible slider", () => {
   assert.match(control, /FLIGHT_ALERT_DEFAULT_DROP_PERCENT/);
-  assert.match(control, /min=\{FLIGHT_ALERT_MIN_DROP_PERCENT\} max=\{FLIGHT_ALERT_MAX_DROP_PERCENT\} step=\{1\}/);
+  assert.match(control, /min=\{FLIGHT_ALERT_MIN_DROP_PERCENT\} max=\{surface === "mobile" \? HOTEL_ALERT_MAX_DROP_PERCENT : FLIGHT_ALERT_MAX_DROP_PERCENT\} step=\{1\}/);
   assert.match(control, /aria-label="Price drop" aria-valuetext/);
   assert.match(control, />Current price</);
   assert.match(control, />Drops by</);
@@ -73,7 +73,7 @@ test("Flight feedback is accessible and never claims tracking before save", () =
 test("desktop Flight alert restores the compact original blue treatment without helper copy", () => {
   assert.match(control, /hidden rounded-2xl border border-\[#CFE0F8\] bg-\[#EEF6FF\] px-4 py-2/);
   assert.match(control, /flex min-h-10 items-center justify-between gap-2/);
-  assert.equal(control.match(/Choose a target and we’ll notify you if the price drops\./g)?.length, 1);
+  assert.equal(control.slice(control.indexOf("const desktopEditor")).match(/Choose a target and we’ll notify you if the price drops\./g)?.length, 1);
 });
 
 test("Hotel alert implementation remains isolated from Flight target work", () => {
@@ -93,4 +93,9 @@ test("desktop Flight Track Price uses the Hotel-style modal interaction", () => 
     control,
     /openSurface === "desktop" \? <div className="mt-4 grid max-w-xl/,
   );
+});
+
+ test("mobile Flight target uses Hotel's range while desktop keeps its original bounds", () => {
+  assert.match(control, /HOTEL_ALERT_MAX_DROP_PERCENT/);
+  assert.match(control, /surface === "mobile" \? HOTEL_ALERT_MAX_DROP_PERCENT : FLIGHT_ALERT_MAX_DROP_PERCENT/);
 });
