@@ -168,29 +168,18 @@ test("mobile shortcuts retain every shared quick-filter group", () => {
   );
 });
 
-test("mobile Cars pagination reuses the compact Flights presentation", () => {
-  const pagination = resultsSource.slice(
-    resultsSource.indexOf("data-cars-mobile-pagination"),
-    resultsSource.indexOf("</nav>", resultsSource.indexOf("data-cars-mobile-pagination")) + 6,
-  );
-  assert.match(pagination, /flight-results-pagination mb-6 mt-6 flex min-w-0 items-center justify-center sm:hidden/);
-  assert.match(pagination, /buildFlightPaginationItems\(currentMobilePage, mobilePageCount, true\)/);
-  assert.equal((pagination.match(/className="flight-pagination-control"/g) ?? []).length >= 3, true);
-  assert.match(pagination, /<ChevronLeft className="h-4 w-4"/);
-  assert.match(pagination, /<ChevronRight className="h-4 w-4"/);
-  assert.doesNotMatch(pagination, /gap-5|h-5 w-5|min-w-9|text-base/);
-});
-
-test("mobile result summary restores visible range and keeps desktop Sort by separate", () => {
+test("mobile Cars renders one continuous all-results list without pagination", () => {
   const summary = resultsSource.slice(
     resultsSource.indexOf("data-cars-results-summary-row"),
     resultsSource.indexOf("appliedCarFilters.length"),
   );
+  assert.match(resultsSource, /\{visibleResults\.map\(\(car\) => \(/);
+  assert.doesNotMatch(
+    resultsSource,
+    /mobileResultsPage|mobilePageSize|mobilePageCount|mobilePageStart|mobilePageResults|isMobilePaginationViewport|data-cars-mobile-pagination|data-cars-results-visible-range|buildFlightPaginationItems/,
+  );
   assert.match(summary, /hidden[^\"]*sm:flex/);
-  assert.match(summary, /data-cars-results-visible-range/);
-  assert.match(summary, /mobilePageStart \+ 1/);
-  assert.match(summary, /Math\.min\(mobilePageStart \+ mobilePageSize, visibleResults\.length\)/);
-  assert.doesNotMatch(summary, /data-cars-sort-trigger/);
+  assert.doesNotMatch(summary, /data-cars-results-visible-range|data-cars-sort-trigger/);
   assert.match(resultsSource, /data-cars-sort-trigger/);
 });
 

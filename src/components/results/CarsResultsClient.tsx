@@ -85,7 +85,6 @@ import {
   type DesktopCompactFilterPlacementState,
 } from "@/lib/flights/desktopCompactFilter";
 import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilter";
-import { buildFlightPaginationItems } from "@/lib/flights/flightResultsPagination";
 import { lockDesktopPageScroll } from "@/lib/search/desktopPageScrollLock";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
 import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
@@ -1919,7 +1918,6 @@ export function CarsResultsExperience({
     presentation === "guided-planning" ? "lowestTotal" : "recommended",
   );
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [mobileResultsPage, setMobileResultsPage] = useState(1);
   const [carsSortOpen, setCarsSortOpen] = useState(false);
   const [filterTransitionPhase, setFilterTransitionPhase] =
     useState<CarsFilterTransitionPhase>("idle");
@@ -1929,7 +1927,7 @@ export function CarsResultsExperience({
   const [selectedDealOfferIds, setSelectedDealOfferIds] = useState<
     Record<string, string>
   >({});
-  const paginationListRef = useRef<HTMLDivElement | null>(null);
+  const resultsListRef = useRef<HTMLDivElement | null>(null);
   const filterTransitionTimerRef = useRef<number | null>(null);
   const filterTransitionFrameRef = useRef<number | null>(null);
   const filterTransitionRunRef = useRef(0);
@@ -2193,26 +2191,6 @@ export function CarsResultsExperience({
     const ranked = sortCarResults(filterCarResults(results, selectedCarFilters, displayPricePerDay), sort);
     return sort === "recommended" ? ensureCarProviderCoverage(ranked) : ranked;
   }, [displayPricePerDay, results, selectedCarFilters, sort]);
-  const mobilePageSize = 20;
-  const mobilePageCount = Math.max(1, Math.ceil(visibleResults.length / mobilePageSize));
-  const currentMobilePage = Math.min(mobileResultsPage, mobilePageCount);
-  const mobilePageStart = (currentMobilePage - 1) * mobilePageSize;
-  const mobilePageResults = visibleResults.slice(mobilePageStart, mobilePageStart + mobilePageSize);
-  const [isMobilePaginationViewport, setIsMobilePaginationViewport] = useState(false);
-  useEffect(() => {
-    const media = window.matchMedia("(max-width: 639px)");
-    const update = () => setIsMobilePaginationViewport(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
-  useEffect(() => { setMobileResultsPage(1); }, [sort, selectedCarFilters, results]);
-  const navigateMobileResultsPage = (page: number) => {
-    setMobileResultsPage(Math.max(1, Math.min(page, mobilePageCount)));
-    window.requestAnimationFrame(() => {
-      paginationListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  };
   useEffect(() => {
     if (guidedPlanning || typeof window === "undefined") return undefined;
     const update = () => {
@@ -2237,7 +2215,7 @@ export function CarsResultsExperience({
       window.cancelAnimationFrame(filterTransitionFrameRef.current);
 
     setFilterTransitionMinHeight(
-      paginationListRef.current?.getBoundingClientRect().height ?? null,
+      resultsListRef.current?.getBoundingClientRect().height ?? null,
     );
     setFilterTransitionPhase("covering");
     const startedAt = performance.now();
@@ -2986,7 +2964,6 @@ export function CarsResultsExperience({
                         )}
                     </h2>
                   </div>
-                  <span data-cars-results-visible-range className="shrink-0 text-[12px] font-medium text-[#64748B] sm:hidden">{visibleResults.length ? `${mobilePageStart + 1}–${Math.min(mobilePageStart + mobilePageSize, visibleResults.length)}` : "0"}</span>
                   <div className="hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
                     <span className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
                       {t("carsResults.sortBy")}:
@@ -3063,7 +3040,7 @@ export function CarsResultsExperience({
               </div>
               {filterTransitionPhase === "covering" ? (
                 <div
-                  ref={paginationListRef}
+                  ref={resultsListRef}
                   data-cars-results-card-list
                   aria-busy="true"
                   style={
@@ -3094,7 +3071,7 @@ export function CarsResultsExperience({
                 </div>
               ) : visibleResults.length ? (
                 <div
-                  ref={paginationListRef}
+                  ref={resultsListRef}
                   data-cars-results-card-list
                   aria-busy="false"
                   className={cn(
@@ -3105,7 +3082,7 @@ export function CarsResultsExperience({
                       "cars-filter-results-reveal",
                   )}
                 >
-                  {(isMobilePaginationViewport ? mobilePageResults : visibleResults).map((car) => (
+                  {visibleResults.map((car) => (
                     <CarResultCard
                       key={car.id}
                       car={car}
@@ -3169,48 +3146,7 @@ export function CarsResultsExperience({
                   </Button>
                 </div>
               )}
-              {isMobilePaginationViewport && visibleResults.length > mobilePageSize && filterTransitionPhase === "idle" ? (
-                <nav
-                  aria-label="Cars results pages"
-                  data-cars-mobile-pagination
-                  className="flight-results-pagination mb-6 mt-6 flex min-w-0 items-center justify-center sm:hidden"
-                >
-                  <button
-                    type="button"
-                    aria-label="Previous page"
-                    disabled={currentMobilePage === 1}
-                    onClick={() => navigateMobileResultsPage(currentMobilePage - 1)}
-                    className="flight-pagination-control"
-                  >
-                    <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                  <span className="flex min-w-0 items-center">
-                    {buildFlightPaginationItems(currentMobilePage, mobilePageCount, true).map((page) =>
-                      page === "ellipsis" ? null : (
-                        <button
-                          key={page}
-                          type="button"
-                          aria-label={`Page ${page}`}
-                          aria-current={page === currentMobilePage ? "page" : undefined}
-                          onClick={() => navigateMobileResultsPage(page)}
-                          className="flight-pagination-control"
-                        >
-                          {page}
-                        </button>
-                      ),
-                    )}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="Next page"
-                    disabled={currentMobilePage === mobilePageCount}
-                    onClick={() => navigateMobileResultsPage(currentMobilePage + 1)}
-                    className="flight-pagination-control"
-                  >
-                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                </nav>
-              ) : null}
+
             </>
           ) : (
             <>
