@@ -108,7 +108,7 @@ type DesktopOfferProps = {
   onContinue?: ContinueOffer;
 };
 
-function DesktopProviderOffer({
+export function DesktopProviderOffer({
   offer,
   perNightText,
   selected,
