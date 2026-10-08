@@ -104,7 +104,8 @@ test("mobile shortcuts remain the existing scrollable touch targets in canonical
     resultsSource.indexOf("data-cars-results-toolbar"),
   );
   assert.ok(rail.indexOf("filtersButtonRef") < rail.indexOf("quickFilterGroups.map"));
-  assert.doesNotMatch(rail, /quickFilterGroupId === "sort"|data-cars-sort-trigger/);
+  assert.match(rail, /data-cars-sort-trigger/);
+  assert.match(rail, /quickFilterGroupId === "sort"/);
   assert.match(rail, /flex-nowrap[^\"]*gap-1\.5[^\"]*overflow-x-auto[^\"]*overscroll-x-contain/);
   assert.match(rail, /\[scrollbar-width:none\][^\"]*\[&::-webkit-scrollbar\]:hidden/);
   assert.match(rail, /-me-4[^\"]*w-\[calc\(100%\+1rem\)\][^\"]*pe-4/);
@@ -161,7 +162,7 @@ test("mobile shortcuts retain every shared quick-filter group", () => {
   );
 });
 
-test("mobile result summary hides the desktop Sort by control", () => {
+test("mobile result summary restores visible range and keeps desktop Sort by separate", () => {
   const summary = resultsSource.slice(
     resultsSource.indexOf("data-cars-results-summary-row"),
     resultsSource.indexOf("appliedCarFilters.length"),
