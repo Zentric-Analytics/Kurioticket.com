@@ -157,26 +157,27 @@ test("results location autocomplete owns the remaining value-row width", () => {
   );
 });
 
-test("pickup and return omit redundant clear buttons and reclaim the input width", () => {
+test("desktop pickup exposes an easy clear control while return keeps its compact width", () => {
   const pickupCell = source.match(
     /<SearchInputCell[\s\S]*?name="pickupLocation"[\s\S]*?\/>/,
   )?.[0];
   const returnCell = source.match(/name="dropoffLocation"[\s\S]*?\/>/)?.[0];
 
   assert.ok(pickupCell, "Pickup SearchInputCell should remain rendered");
-  assert.match(pickupCell, /showClearButton=\{false\}/);
+  assert.match(pickupCell, /showClearButton(?:\s|\n)/);
+  assert.doesNotMatch(pickupCell, /showClearButton=\{false\}/);
+  assert.match(
+    pickupCell,
+    /onClear=\{\(\) => \{[\s\S]*?setPickupLocation\(""\)[\s\S]*?setPickupLocationTarget\(""\)[\s\S]*?pickupInputRef\.current\?\.focus\(\)/,
+  );
   assert.ok(returnCell, "Return SearchInputCell should remain rendered");
   assert.match(returnCell, /showClearButton=\{false\}/);
   assert.match(returnCell, /onClear=\{\(\) => \{/);
   assert.match(
     source,
-    /inputClassName=\{cn\(fieldInputClass, showClearButton && "pr-8"\)\}/,
+    /inputClassName=\{cn\("cars-results-navbar-location-value", fieldInputClass, isCompact \? desktopCompactSelectedValueClass : desktopFullSelectedValueClass, showClearButton && "pr-8"\)\}/,
   );
   assert.match(source, /\{showClearButton && value \? \(/);
-  assert.doesNotMatch(
-    source,
-    /inputClassName=\{cn\(fieldInputClass, "pr-8"\)\}/,
-  );
 });
 
 test("desktop-full rental dates show only the selected date range, without a visible duration line", () => {
