@@ -41,9 +41,7 @@ test("native Cars prewarm artwork separately from the full initial row extent", 
   assert.match(resultsScreen, /windowSize=\{CAR_RESULT_WINDOW_SIZE\}/);
 });
 
-test("native Cars pass the already-versioned artwork URL into Details for the same cache key", () => {
-  assert.match(
-    resultsScreen,
-    /result:JSON\.stringify\(\{\.\.\.result,imageUrl:resolveNativeCarImageUri\(result\.imageUrl\)\?\?result\.imageUrl\}\)/,
-  );
+test("native Cars pass already-versioned artwork directly into inline result cards without a Details handoff", () => {
+  assert.match(resultsScreen, /imageUri=\{resolveNativeCarImageUri\(item\.imageUrl\)\}/);
+  assert.doesNotMatch(resultsScreen, /result:JSON\.stringify|pathname:"\/car-details"/);
 });
