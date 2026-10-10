@@ -20,14 +20,14 @@ test("details return preserves results and page without another provider search"
   });
   await page.goto("/hotels/results?destination=New+York&checkIn=2030-10-12&checkOut=2030-10-13&guests=1&rooms=1");
   await expect(page.getByRole("heading", { name: "25 results found" })).toBeVisible();
-  await page.getByRole("navigation", { name: "Hotel results pages" }).getByRole("button", { name: "2", exact: true }).click();
-  await expect(page.getByText("Showing 21–25", { exact: true })).toBeVisible();
+  await page.getByRole("navigation", { name: "Hotel results pages" }).getByRole("button", { name: "Next page", exact: true }).click();
+  await expect(page.getByText("Showing 21–25", { exact: true }).filter({ visible: true })).toBeVisible();
   const searchesBeforeDetails = searches;
   await page.getByRole("link", { name: "View hotel", exact: true }).first().click();
   await expect(page).toHaveURL(/\/hotels\/details\//);
   await expect(page.getByRole("heading", { name: "Synthetic Hotel 20", exact: true })).toBeVisible();
   await page.goBack();
   await expect(page.getByRole("heading", { name: "25 results found" })).toBeVisible();
-  await expect(page.getByText("Showing 21–25", { exact: true })).toBeVisible();
+  await expect(page.getByText("Showing 21–25", { exact: true }).filter({ visible: true })).toBeVisible();
   expect(searches).toBe(searchesBeforeDetails);
 });
