@@ -69,5 +69,7 @@ test("currency propagation preserves the daily-price Car card commerce contract"
   assert.doesNotMatch(card, /money\(offer\.currency, offer\.totalPrice\)/);
   assert.doesNotMatch(card, /offer\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
   assert.match(card, /useSavedCar\(result, searchParams\)/);
-  assert.match(card, /onPress=\{onViewDeal\}/);
+  assert.match(card, /nativeCarPrimaryBookingUrl\(result\)/);
+  assert.match(card, /onPress=\{primaryBookingUrl \? \(\) => void Linking\.openURL\(primaryBookingUrl\) : undefined\}/);
+  assert.match(card, /disabled=\{!primaryBookingUrl\}/);
 });
