@@ -12,6 +12,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { getSearchLegs } from "@/lib/flights/flightSearchJourney";
 import { buildFlightItineraryKey } from "@/services/travel/flightOfferInventory";
 import { createHash } from "node:crypto";
+import { runCacheWrite } from "@/lib/search/cacheWriteGate";
 
 type CacheRecord<T> = {
   value: T;
@@ -119,14 +120,19 @@ export function createPrismaFlightCacheBackend(
     async write(records) {
       if (!records.length) return [];
       const db = getDatabase();
-      // One PostgreSQL statement is atomic and keeps the database round-trip
-      // count constant for large provider result sets. ON CONFLICT preserves
-      // the existing refresh behavior for an opaque ID without a long-running
-      // interactive transaction or partial chunk commits.
-      const rows = await db.$queryRaw<Array<{ publicResultId: string }>>(
-        buildFlightCacheUpsertQuery(records),
-      );
-      return rows.map(({ publicResultId }) => publicResultId);
+      // Bound statement size without exposing partial inventory: every batch
+      // commits in one transaction, or every batch rolls back on failure.
+      return runCacheWrite(() => db.$transaction(async tx => {
+        await tx.$executeRaw`SET LOCAL statement_timeout = '4000ms'`;
+        const ids: string[] = [];
+        for (let offset = 0; offset < records.length; offset += 50) {
+          const rows = await tx.$queryRaw<Array<{ publicResultId: string }>>(
+            buildFlightCacheUpsertQuery(records.slice(offset, offset + 50)),
+          );
+          ids.push(...rows.map(({ publicResultId }) => publicResultId));
+        }
+        return ids;
+      }, { maxWait: 1000, timeout: 10000 }));
     },
     async find(publicResultId, now) {
       const row = await getDatabase().flightResultCache.findFirst({

@@ -3,6 +3,7 @@ import test from "node:test";
 import { getPrisma } from "../src/lib/prisma";
 import { rememberProviderResults, getProviderResultWithContext, rememberHotelSearchCohort, getHotelSearchCohort } from "../src/services/travel/providerResultCache";
 import type { NormalizedHotelResult } from "../src/lib/types";
+import { createPrismaFlightCacheBackend, type SharedFlightCacheRecord } from "../src/lib/searchCache";
 
 // Deliberately refuse non-disposable targets, including all Render hosts.
 const target = new URL(process.env.DATABASE_URL || "http://invalid");
@@ -31,6 +32,9 @@ test("PostgreSQL persists every batched offer, duplicate update and complete coh
     assert.equal((await getProviderResultWithContext<{ pricePerNight: number }>("hotel", results[0].id))?.result.pricePerNight, 999);
     await rememberHotelSearchCohort(results, search);
     assert.deepEqual(await getHotelSearchCohort(search), results);
+    const updatedCohort = results.map(result => ({ ...result, cancellationInfo: "Updated policy" }));
+    await rememberHotelSearchCohort(updatedCohort, search);
+    assert.deepEqual(await getHotelSearchCohort(search), updatedCohort);
     // A later search must not overwrite the first search's distinct result identity.
     await rememberProviderResults("hotel", [{ id: "second-search", name: "Other hotel" }], search);
     assert.deepEqual((await getProviderResultWithContext("hotel", results[1041].id))?.result, results[1041]);
@@ -52,5 +56,29 @@ test("PostgreSQL persists every batched offer, duplicate update and complete coh
       assert.ok(Date.now() - started < 7000, "cache write must terminate within its bounded database deadline");
     } finally { releaseLock(); await lock; }
     assert.equal(await db.providerResultCache.count({ where: { resultId: { startsWith: "blocked-" } } }), 0);
+  } finally { await db.$disconnect(); }
+});
+
+test("flight cache batches commit all identities and roll back a later batch failure", async () => {
+  // The preceding lock-timeout test deliberately opens the shared circuit.
+  await new Promise(resolve => setTimeout(resolve, 5100));
+  const db = getPrisma();
+  try {
+    await db.$executeRawUnsafe(`CREATE TABLE "FlightResultCache" (
+      "publicResultId" text PRIMARY KEY, "normalizedResult" jsonb NOT NULL,
+      "searchContext" jsonb, "searchKey" text, "itineraryKey" text NOT NULL,
+      "expiresAt" timestamp(3) NOT NULL, "createdAt" timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`);
+    const backend = createPrismaFlightCacheBackend();
+    const records = Array.from({ length: 103 }, (_, i): SharedFlightCacheRecord => ({
+      publicResultId: `flight-integration-${i}`, normalizedResult: { id: `flight-integration-${i}` } as never,
+      searchContext: null, searchKey: null, itineraryKey: "test", expiresAt: Date.now() + 60_000,
+    }));
+    assert.deepEqual(await backend.write(records), records.map(record => record.publicResultId));
+    assert.equal(await db.flightResultCache.count(), 103);
+    const invalid = records.slice(0, 100).map((record, i) => ({ ...record, publicResultId: i < 50 ? `rollback-${i}` : "duplicate-in-second-batch" }));
+    await assert.rejects(backend.write(invalid));
+    assert.equal(await db.flightResultCache.count(), 103, "no first-batch rows may survive failure of the second batch");
   } finally { await db.$disconnect(); }
 });

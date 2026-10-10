@@ -25,6 +25,21 @@ function boundedCacheWrite<T>(task: (db: Prisma.TransactionClient) => Promise<T>
   }, { maxWait: 1000, timeout: 5000 }));
 }
 
+// Cohorts can contain thousands of full provider offers. Bind the payload once
+// and do not RETURNING it: neither caller consumes a copy from the database.
+function writeSearchCohort(vertical: ProviderDetailsVertical, resultId: string, results: unknown[], search: unknown, now: number) {
+  const payload = JSON.stringify(results);
+  const context = JSON.stringify(search);
+  return boundedCacheWrite(db => db.$executeRaw(Prisma.sql`
+    INSERT INTO "ProviderResultCache" ("cacheKey", "vertical", "resultId", "normalizedResult", "searchContext", "expiresAt", "createdAt", "updatedAt")
+    VALUES (${cacheKey(vertical, resultId)}, ${vertical}, ${resultId}, ${payload}::jsonb, ${context}::jsonb, ${new Date(now + TTL_MS)}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ON CONFLICT ("cacheKey") DO UPDATE SET
+      "normalizedResult" = EXCLUDED."normalizedResult",
+      "searchContext" = EXCLUDED."searchContext",
+      "expiresAt" = EXCLUDED."expiresAt", "updatedAt" = CURRENT_TIMESTAMP
+  `));
+}
+
 function rememberCarInMemory(key: string, value: unknown, expiresAt: number) {
   const now = Date.now();
   for (const [candidate, entry] of memoryCarResults) {
@@ -196,18 +211,7 @@ export async function rememberCarSearchCohort(
     now + TTL_MS,
   );
   try {
-    await boundedCacheWrite(db => db.providerResultCache.upsert({
-      where: { cacheKey: cacheKey("car", resultId) },
-      create: {
-        cacheKey: cacheKey("car", resultId), vertical: "car", resultId,
-        normalizedResult: results as never, searchContext: search as never,
-        expiresAt: new Date(now + TTL_MS),
-      },
-      update: {
-        normalizedResult: results as never, searchContext: search as never,
-        expiresAt: new Date(now + TTL_MS),
-      },
-    }));
+    await writeSearchCohort("car", resultId, results, search, now);
   } catch {
     console.error("[provider-result-cache]", { event: "cohort_write_error", vertical: "car" });
   }
@@ -243,22 +247,7 @@ export async function rememberHotelSearchCohort(
   if (!results.length) return;
   const resultId = hotelSearchCohortId(search);
   try {
-    await boundedCacheWrite(db => db.providerResultCache.upsert({
-      where: { cacheKey: cacheKey("hotel", resultId) },
-      create: {
-        cacheKey: cacheKey("hotel", resultId),
-        vertical: "hotel",
-        resultId,
-        normalizedResult: results as never,
-        searchContext: search as never,
-        expiresAt: new Date(now + TTL_MS),
-      },
-      update: {
-        normalizedResult: results as never,
-        searchContext: search as never,
-        expiresAt: new Date(now + TTL_MS),
-      },
-    }));
+    await writeSearchCohort("hotel", resultId, results, search, now);
   } catch {
     console.error("[provider-result-cache]", { event: "cohort_write_error", vertical: "hotel" });
   }
