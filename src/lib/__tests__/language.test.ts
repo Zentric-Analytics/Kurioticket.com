@@ -9758,7 +9758,7 @@ test("Thai Cars results copy and datepicker render path resolve without English 
   const carsResultsPageSource = readFileSync("src/app/cars/results/page.tsx", "utf8");
   const carsResultsSource = (readFileSync("src/components/results/CarsResultsClient.tsx", "utf8") + "\n" + readFileSync("src/lib/cars/carFilterPresentation.ts", "utf8"));
 
-  assert.ok(carsResultsPageSource.includes("<CarsResultsClient"), "Cars results page should render the client path under test.");
+  assert.ok(carsResultsPageSource.includes("<CarInventoryLoader") && readFileSync("src/components/results/CarInventoryLoader.tsx", "utf8").includes("<CarsResultsClient"), "Cars results page should render the localized client through the inventory loader.");
 
   const expectedCopy: Array<[string, string, string]> = [
     ["carsResults.filterBy", "กรองตาม", "Filter by"],
@@ -9832,7 +9832,7 @@ test("Vietnamese Cars Results copy resolves without English fallback", () => {
   const carsResultsPageSource = readFileSync("src/app/cars/results/page.tsx", "utf8");
   const carsResultsSource = (readFileSync("src/components/results/CarsResultsClient.tsx", "utf8") + "\n" + readFileSync("src/lib/cars/carFilterPresentation.ts", "utf8"));
 
-  assert.ok(carsResultsPageSource.includes("<CarsResultsClient"), "Cars results page should render the active client path under test.");
+  assert.ok(carsResultsPageSource.includes("<CarInventoryLoader") && readFileSync("src/components/results/CarInventoryLoader.tsx", "utf8").includes("<CarsResultsClient"), "Cars results page should render the localized client through the inventory loader.");
 
   const expectedCopy: Array<[string, string, string]> = [
     ["carsSearch.pickupLocationPlaceholder", "Sân bay, thành phố hoặc địa chỉ", "Airport, city, or address"],

@@ -79,8 +79,10 @@ test("cancel restores the snapshot while mobile Search uses submit semantics", (
 test("a committed Results navigation remounts client state for the new search", () => {
   assert.match(
     pageSource,
-    /<CarsResultsClient\s+key=\{searchIdentity\}\s+values=\{values\}/,
+    /<CarInventoryLoader\s+key=\{searchIdentity\}\s+values=\{values\}/,
   );
+  const loader = readFileSync(new URL("./CarInventoryLoader.tsx", import.meta.url), "utf8");
+  assert.match(loader, /<CarsResultsClient values=\{values\} initialResults=\{results\}/);
 });
 
 test("mobile Edit Search delegates one fixed-body lock to the shared sheet without manual scroll ownership", () => {

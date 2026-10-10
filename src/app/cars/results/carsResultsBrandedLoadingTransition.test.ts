@@ -20,24 +20,22 @@ test("Cars streams branded results below the persistent Results header", () => {
   assert.match(pageSource, /<BrandedLoading/);
 });
 
-test("the real Cars inventory search is inside async Suspense content", () => {
-  const pageBody = pageSource.slice(
-    pageSource.indexOf("export default async function CarsResultsPage"),
-    pageSource.indexOf("async function CarsResultsContent"),
-  );
-  const contentBody = pageSource.slice(
-    pageSource.indexOf("async function CarsResultsContent"),
-    pageSource.indexOf("function CarsResultsFallback"),
-  );
-
-  assert.doesNotMatch(pageBody, /await searchCars\(/);
-  assert.match(contentBody, /const inventory = await searchCars\(values, \{ kayak: \{ clientIp: getKayakClientIp\(request\), userAgent: requestHeaders\.get\("user-agent"\) \|\| undefined \} \}\)/);
+test("Cars uses canonical JSON inventory rather than streaming every card in HTML", () => {
+  const loader = readFileSync(new URL("../../../components/results/CarInventoryLoader.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(pageSource, /await searchCars\(/);
+  assert.match(pageSource, /<CarInventoryLoader/);
+  assert.match(loader, /fetch\("\/api\/cars\/search"/);
+  assert.match(loader, /body: JSON.stringify\(values\)/);
+  assert.match(loader, /controller.abort\(\), 60_000/);
+  assert.match(loader, /Retry search/);
+  assert.match(loader, /initialResults=\{results\}/);
+  assert.doesNotMatch(loader, /results\.slice\(/);
 });
 
 test("the complete committed search identity resets boundary and client", () => {
   assert.match(pageSource, /const searchIdentity = JSON\.stringify\(values\)/);
   assert.match(pageSource, /<Suspense\s+key=\{searchIdentity\}/);
-  assert.match(pageSource, /<CarsResultsClient\s+key=\{searchIdentity\}/);
+  assert.match(pageSource, /<CarInventoryLoader\s+key=\{searchIdentity\}/);
 
   const lagos = JSON.stringify({ pickupLocation: "Lagos", driverAge: "30" });
   const heathrow = JSON.stringify({

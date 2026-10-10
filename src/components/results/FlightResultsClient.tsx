@@ -330,7 +330,7 @@ const nearbyFareCenteredVisibleStart = Math.max(
     nearbyFareRangeSize - nearbyFareVisibleCount,
   ),
 );
-const nearbyFareRequestConcurrency = 4;
+const nearbyFareRequestConcurrency = 1;
 const nearbyFareCacheTtlMs = 10 * 60 * 1000;
 
 
@@ -2563,8 +2563,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     () => (body ? buildFlightResultsSearchKey(body) : ""),
     [body],
   );
+  const mainInventoryReadyRef = useRef(false);
 
   useEffect(() => {
+    // Reset synchronously before the optional-fare effect, not inside the timer.
+    mainInventoryReadyRef.current = false;
     if (!body) {
       activeFlightSearchKeyRef.current = "";
       const resetTimer = window.setTimeout(() => {
@@ -2603,7 +2606,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         // refresh settles so the page cannot expose a changing scroll extent.
         setLoading(refreshingStaleSnapshot);
         setBackgroundRefreshing(refreshingStaleSnapshot);
-        if (!refreshingStaleSnapshot) return;
+        if (!refreshingStaleSnapshot) {
+          mainInventoryReadyRef.current = true;
+          return;
+        }
       } else {
         setResults([]);
         setLoading(true);
@@ -2668,6 +2674,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         })
         .finally(() => {
           if (active && activeFlightSearchKeyRef.current === searchKey) {
+            mainInventoryReadyRef.current = true;
             setLoading(false);
             setBackgroundRefreshing(false);
           }
@@ -2732,6 +2739,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       return () => window.clearTimeout(timer);
     }
 
+    // Optional comparisons must not compete with the requested inventory.
+    if (loading || backgroundRefreshing) return;
+    if (!mainInventoryReadyRef.current) return;
     if (!body?.departureDate) {
       const timer = window.setTimeout(() => setNearbyFares([]), 0);
       return () => window.clearTimeout(timer);
@@ -2787,6 +2797,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       })
       .filter(
         (date) =>
+          date !== body.departureDate &&
           !getFreshNearbyFareCacheEntry(
             nearbyFareCacheRef.current,
             getNearbyFareCacheKey(body, date),
@@ -2900,7 +2911,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       activeRequests.forEach((request) => request.controller.abort());
       activeRequests.clear();
     };
-  }, [body, currencyRates.rates, guidedMode, providerResults, selectedCurrency]);
+  }, [body, currencyRates.rates, guidedMode, providerResults, selectedCurrency, loading, backgroundRefreshing]);
 
   useEffect(() => {
     if (!tripTypeMenuOpen) return;

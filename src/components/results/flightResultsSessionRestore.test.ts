@@ -24,7 +24,7 @@ test("FlightResultsClient restores a matching snapshot before its no-cache reque
   assert.match(restoreBlock, /setError\(""\)/);
   assert.match(restoreBlock, /setLoading\(refreshingStaleSnapshot\)/);
   assert.match(restoreBlock, /setBackgroundRefreshing\(refreshingStaleSnapshot\)/);
-  assert.match(restoreBlock, /if \(!refreshingStaleSnapshot\) return/);
+  assert.match(restoreBlock, /if \(!refreshingStaleSnapshot\) \{\s*mainInventoryReadyRef.current = true;\s*return;/);
   assert.match(restoreBlock, /activeFlightSearchKeyRef\.current !== searchKey/);
   assert.match(restoreBlock, /return;/);
 });

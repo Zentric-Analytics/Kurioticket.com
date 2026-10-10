@@ -7,6 +7,8 @@ const mobileResults = readFileSync("src/features/search/ApprovedResultsScreen.ts
 const desktopFlights = readFileSync("../../src/components/results/FlightResultsClient.tsx", "utf8");
 const desktopHotels = readFileSync("../../src/components/results/HotelResultsClient.tsx", "utf8");
 const desktopCars = readFileSync("../../src/app/cars/results/page.tsx", "utf8");
+const carInventoryLoader = readFileSync("../../src/components/results/CarInventoryLoader.tsx", "utf8");
+const carSearchRoute = readFileSync("../../src/app/api/cars/search/route.ts", "utf8");
 
 test("Android and website use the shared travel search pipeline", () => {
   assert.match(mobileApi, /"\/api\/flights\/search"/);
@@ -14,7 +16,10 @@ test("Android and website use the shared travel search pipeline", () => {
   assert.match(mobileApi, /"\/api\/cars\/search"/);
   assert.match(desktopFlights, /fetch\("\/api\/flights\/search"/);
   assert.match(desktopHotels, /fetch\("\/api\/hotels\/search"/);
-  assert.match(desktopCars, /searchCars\(values, \{ kayak:/);
+  assert.match(desktopCars, /<CarInventoryLoader/);
+  assert.match(carInventoryLoader, /fetch\("\/api\/cars\/search"/);
+  assert.match(carInventoryLoader, /body: JSON\.stringify\(values\)/);
+  assert.match(carSearchRoute, /await searchCars\(search, \{ requestId, kayak:/);
 });
 
 test("Android renders server-owned policy without restoring mobile inventory policy", () => {

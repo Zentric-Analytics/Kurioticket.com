@@ -1,4 +1,41 @@
 import { test, expect } from "@playwright/test";
+import { buildStaticCarResults } from "../../src/services/travel/staticCarResults";
+
+test("Rejected car criteria retain the editable results shell instead of retrying", async ({ page }) => {
+  let searches = 0;
+  await page.route("**/api/cars/search", route => {
+    searches++;
+    return route.fulfill({ status: 400, json: { error: "Invalid car search parameters." } });
+  });
+  await page.goto("/cars/results?pickupLocation=BOS&dropoffLocation=BOS&pickupDate=2020-10-12&dropoffDate=2020-10-17&driverAge=18-70");
+  await expect(page.getByRole("button", { name: "Retry search", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("status").filter({ hasText: "pickup" }).filter({ visible: true })).toBeVisible();
+  expect(searches).toBe(1);
+});
+
+test("Cars exits loading through JSON inventory and allows explicit retry after failure", async ({ page }) => {
+  const search = { pickupLocation: "BOS", dropoffLocation: "BOS", pickupDate: "2030-10-12", pickupTime: "10:00",
+    dropoffDate: "2030-10-17", dropoffTime: "10:00", driverAge: "18-70" };
+  const templates = buildStaticCarResults(search);
+  const cars = Array.from({ length: 810 }, (_, index) => ({
+    ...templates[index % templates.length], id: `synthetic-car-${index}`,
+  }));
+  expect(cars.length).toBeGreaterThan(0);
+  let searches = 0;
+  await page.route("**/api/cars/search", route => {
+    searches++;
+    expect(route.request().postDataJSON()).toMatchObject(search);
+    return searches === 1 ? route.fulfill({ status: 503, json: { error: "Unavailable" } })
+      : route.fulfill({ json: { results: cars, status: "available" } });
+  });
+  await page.goto(`/cars/results?${new URLSearchParams(search)}`);
+  await expect(page.getByRole("alert").filter({ hasText: "couldn’t complete" })).toBeVisible();
+  expect(searches).toBe(1);
+  await page.getByRole("button", { name: "Retry search", exact: true }).click();
+  await expect(page.getByText(`${cars.length} results found`, { exact: true }).filter({ visible: true })).toBeVisible();
+  expect(searches).toBe(2);
+  await expect(page.getByRole("heading", { name: "Searching the best cars for you" })).toHaveCount(0);
+});
 
 test("details return preserves results and page without another provider search", async ({ page }, testInfo) => {
   let searches = 0;

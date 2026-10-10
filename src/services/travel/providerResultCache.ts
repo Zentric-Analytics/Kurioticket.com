@@ -272,12 +272,14 @@ export async function rememberHotelSearchCohort(
   search: HotelSearchParams,
   now = Date.now(),
 ) {
-  if (!results.length) return;
+  if (!results.length) return true;
   const resultId = hotelSearchCohortId(search);
   try {
     await writeSearchCohort("hotel", resultId, results, search, now);
+    return true;
   } catch {
     console.error("[provider-result-cache]", { event: "cohort_write_error", vertical: "hotel" });
+    return false;
   }
 }
 
