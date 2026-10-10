@@ -14,6 +14,8 @@ const mobileDetails = readFileSync(
   new URL("./hotelDetails/MobileHotelDetails.tsx", import.meta.url),
   "utf8",
 );
+const providerCard = readFileSync(new URL("./hotelDetails/HotelPriceComparisonSection.tsx", import.meta.url), "utf8");
+const mobileStyles = readFileSync(new URL("./hotelDetails/HotelDetailsMobile.module.css", import.meta.url), "utf8");
 const continuation = readFileSync(
   new URL("./hotelDetails/hotelBookingContinuation.ts", import.meta.url),
   "utf8",
@@ -57,33 +59,35 @@ test("Hotel selection defaults to the first actionable rate and preserves later 
     /if \(selectedOfferId && actionableOffers\.some\(\(offer\) => offer\.id === selectedOfferId\)\) return selectedOfferId;/,
   );
   assert.match(continuation, /return actionableOffers\[0\]\?\.id \?\? null;/);
-  assert.match(details, /internalRoomFlowAvailable \? \[kurioticketOffer\] : \[\]/);
+  assert.match(details, /mobile \? <MobileHotelDetails/);
+  assert.match(mobileDetails, /props\.roomChoices\.length \? \[\{/);
+  assert.match(mobileDetails, /offers\.find\(offer => offer\.id === selectedId\) \?\? offers\[0\]/);
 });
 
-test("mobile Hotel booking dock reflects the selected provider and action semantics", () => {
-  assert.match(details, /const selectedProviderOffer =/);
-  assert.match(details, /const bookingActionAvailable =/);
-  assert.match(
-    details,
-    /bookingContinuation\.kind === "provider-handoff"[\s\S]*?props\.labels\.viewDeal[\s\S]*?props\.labels\.continueBooking/,
-  );
-  assert.match(details, /data-mobile-hotel-selected-rate/);
-  assert.match(details, /mobileDockPrimaryPrice/);
-  assert.match(details, /mobileDockProviderName/);
-  assert.match(details, /mobileDockSupportingText/);
-  assert.match(
-    details,
-    /const mobileDockSupportingText = selectedProviderIsExternal[\s\S]*?mobileDockUsesProviderTotal[\s\S]*?: ""/,
-  );
-  assert.match(details, /aria-label=\{[\s\S]*?bookingActionLabel[\s\S]*?mobileDockProviderName/);
+test("mobile Hotel inline rate actions target their own provider rather than an obsolete booking dock", () => {
+  assert.match(mobileDetails, /offers\.map\(offer => <DesktopProviderOffer/);
+  assert.match(mobileDetails, /selected=\{selected\?\.id === offer\.id\}/);
+  assert.match(mobileDetails, /pendingOfferId=\{pending \? selected\?\.id \?\? null : null\}/);
+  assert.match(mobileDetails, /offers\.find\(candidate => candidate\.id === offerId\)/);
+  assert.match(mobileDetails, /if \(nextOffer\) void viewDeal\(nextOffer\)/);
+  assert.match(mobileDetails, /offer\.action\.kind === "internal-room-flow"[\s\S]*setOverlay\("rooms"\)/);
+  assert.match(providerCard, /View deal with \$\{offer\.providerName\}/);
+  assert.match(providerCard, /disabled=\{disabled \|\| !onContinue\}/);
 });
 
 test("changing the selected Hotel rate clears stale provider handoff feedback", () => {
   assert.match(
-    details,
-    /function selectProviderOffer\(offerId: string\) \{[\s\S]*?setProviderHandoffError\(null\);[\s\S]*?setSelectedProviderOfferId\(offerId\);[\s\S]*?\}/,
+    mobileDetails,
+    /function selectProviderOffer\(offerId: string\) \{[\s\S]*?setHandoffError\(""\);[\s\S]*?setSelectedId\(offerId\);[\s\S]*?\}/,
   );
-  assert.match(details, /onSelectOffer=\{selectProviderOffer\}/);
+  assert.match(mobileDetails, /onSelect=\{selectProviderOffer\}/);
+  const body = mobileDetails.match(/function selectProviderOffer\(offerId: string\) \{([^}]+)\}/)?.[1];
+  assert.ok(body);
+  const changes: unknown[] = [];
+  new Function("offerId", "setHandoffError", "setSelectedId", body)(
+    "next-provider", (value: string) => changes.push(value), (value: string) => changes.push(value),
+  );
+  assert.deepEqual(changes, ["", "next-provider"]);
 });
 
 test("web Hotel provider action stays live-price gated and server-authoritative", () => {
@@ -99,14 +103,11 @@ test("web Hotel provider action stays live-price gated and server-authoritative"
   );
 });
 
-test("mobile Hotel booking dock remains usable on narrow phones and respects the safe area", () => {
-  assert.match(details, /pb-\[calc\(0\.625rem\+env\(safe-area-inset-bottom\)\)\]/);
-  assert.match(details, /grid-cols-\[minmax\(0,1fr\)_minmax\(124px,42%\)\]/);
-  assert.match(details, /min-\[390px\]:grid-cols-\[minmax\(0,1fr\)_minmax\(140px,0\.82fr\)\]/);
-  assert.match(details, /text-\[18px\][\s\S]*?min-\[390px\]:text-\[20px\]/);
-  assert.match(details, /min-h-12 w-full rounded-lg bg-blue px-2 text-\[12px\]/);
-  assert.match(details, /min-\[390px\]:px-3 min-\[390px\]:text-\[13px\]/);
-  assert.match(details, /bookingActionAvailable \? "min-w-0 pb-\[calc\(7\.5rem\+env\(safe-area-inset-bottom\)\)\]/);
+test("mobile Hotel inline rate actions fit narrow phones and content respects the safe area", () => {
+  assert.match(providerCard, /grid-cols-\[92px_minmax\(0,1fr\)_80px\]/);
+  assert.match(providerCard, /h-8 w-\[80px\] shrink-0/);
+  assert.match(providerCard, /text-\[16px\][\s\S]*min-\[360px\]:text-\[20px\]/);
+  assert.match(mobileStyles, /padding-bottom: max\(16px, env\(safe-area-inset-bottom\)\)/);
 });
 
 test("Hotel Details loading dock uses the same narrow-phone geometry", () => {

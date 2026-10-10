@@ -162,5 +162,5 @@ export function nativeFareBenefitRows(
   addGroup("Change/refund rules", 2);
   sourceRows.forEach((row, position) => { if (!consumed.has(position)) grouped.push({ ...row, priority: 3, position }); });
   return grouped.sort((left, right) => left.priority - right.priority || left.position - right.position).slice(0, maxRows)
-    .map(({ priority: _priority, position: _position, category: _category, ...row }) => row);
+    .map(({ title, detail, semantic, key }) => ({ title, detail, semantic, key }));
 }

@@ -5,7 +5,6 @@ import {
   type ProductionMarketAssetRequirement,
 } from "./productionMarketAssetRequirements";
 import { stagedProductionMarketImagePacks } from "./marketImagePacks/stagedProductionPacks";
-import type { MarketImageRegistryEntry } from "./imageTypes";
 
 export type MarketImageRolloutPlanItem = {
   market: ProductionAssetIntakeMarket;

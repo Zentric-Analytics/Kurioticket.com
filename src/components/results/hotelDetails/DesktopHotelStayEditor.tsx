@@ -12,9 +12,7 @@ type Draft = { checkIn: string; checkOut: string; guests: number; rooms: number 
 
 const isoDate = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 const localToday = () => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), now.getDate()); };
-const addDays = (date: Date, days: number) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 const monthStart = (date: Date, offset = 0) => new Date(date.getFullYear(), date.getMonth() + offset, 1);
-const monthDays = (month: Date) => Array.from({ length: 42 }, (_, index) => new Date(month.getFullYear(), month.getMonth(), 1 - ((month.getDay() + 6) % 7) + index));
 const dateLabel = (value: string, fallback: string) => {
   const date = parseHotelDetailsSearchDate(value);
   return date ? new Intl.DateTimeFormat("en-US", { weekday: "short", day: "numeric", month: "numeric" }).format(date).replace(",", "") : fallback;
@@ -225,6 +223,8 @@ function StayEditor({ context }: { context?: HotelDetailsSearchContext }) {
     url.searchParams.set("checkOut", draft.checkOut);
     url.searchParams.set("guests", String(draft.guests));
     url.searchParams.set("rooms", String(draft.rooms));
+    // A changed stay must discard the previous detail session and reload its inventory.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.assign(`${url.pathname}${url.search}${url.hash}`);
   }
 

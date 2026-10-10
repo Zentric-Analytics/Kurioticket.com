@@ -9,7 +9,8 @@ const source = readFileSync(
 
 test("renders up to twelve mobile related Hotels with a configurable desktop cap", () => {
   for (const contract of [
-    "hotels.slice(0, 12)",
+    "hotels.slice(0, limit)",
+    "limit = 12",
     "buildHotelDetailsHref(hotel.id, searchContext)",
     "getHotelPriceDetails(hotel)",
     "formatDisplayPrice({",

@@ -28,7 +28,7 @@ const mobileHeaderSearch = resultsSource.slice(
   resultsSource.indexOf("const renderCarsSearchForm"),
 );
 const stickyShortcuts = resultsSource.slice(
-  resultsSource.indexOf("data-cars-results-sticky-shortcuts"),
+  resultsSource.indexOf("ref={mobileFilterOriginRef}"),
   resultsSource.indexOf("data-cars-results-toolbar"),
 );
 
@@ -132,7 +132,7 @@ test("mobile shortcuts remain the existing scrollable touch targets in canonical
   assert.doesNotMatch(resultsSource, /mobileQuickFiltersHasMore|data-cars-results-quick-filters-more/);
   assert.doesNotMatch(rail, /bg-gradient-to-l|pointer-events-none absolute inset-y-0 end-0/);
   assert.match(rail, /active \? "pl-2 pr-7" : "px-2"/);
-  assert.match(resultsSource, /mobile \? group\.title \?\? "Price"/);
+  assert.match(resultsSource, /if \(group\.id === "pricePerDay"\) \{\s*return group\.title \?\? "Price";/);
   assert.doesNotMatch(rail, /Price \(per day\)/);
 });
 
@@ -163,7 +163,7 @@ test("mobile selected shortcuts match Hotels with dark chips and direct clear X 
   assert.match(rail, /border-\[#142033\] bg-\[#142033\] text-white/);
   assert.match(rail, /aria-pressed=\{active\}/);
   assert.match(rail, /!active \? \([\s\S]*?<ChevronDown/);
-  assert.match(rail, /active \? \([\s\S]*?aria-label=\{\`Clear \$\{carFilterGroupLabel\(group, t, true\)\} filter\`\}/);
+  assert.match(rail, /active \? \([\s\S]*?aria-label=\{\`Clear \$\{carFilterGroupLabel\(group, t\)\} filter\`\}/);
   assert.match(rail, /clearQuickFilterSelection\(group\.id\)/);
   assert.match(resultsSource, /const clearQuickFilterSelection = \(groupId: string\) =>/);
   assert.match(resultsSource, /delete next\[groupId\]/);

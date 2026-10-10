@@ -29,15 +29,18 @@ test("guided results use explicit truthful planning presentation", () => {
     if (ts.isPropertyAccessExpression(node) && node.getText(parsed) === "offer.freeCancellation") {
       cancellationChecks++;
       let guarded = false;
+      let child: ts.Node = node;
       for (let parent = node.parent; parent; parent = parent.parent) {
         if (ts.isBinaryExpression(parent) && parent.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken && parent.left.getText(parsed) === "!guidedPlanning") guarded = true;
+        if (ts.isConditionalExpression(parent) && parent.condition.getText(parsed) === "guidedPlanning" && child === parent.whenFalse) guarded = true;
+        child = parent;
       }
       assert.ok(guarded, "standalone cancellation claims must remain inside the non-planning branch");
     }
     ts.forEachChild(node, visit);
   };
   visit(parsed);
-  assert.equal(cancellationChecks, 1);
+  assert.equal(cancellationChecks, 3, "each responsive cancellation rendering must be guarded");
   assert.doesNotMatch(card, /offer\.(payAtPickup|taxesAndFeesIncluded)/);
   assert.match(results, /group\.id !== "cancellation"/);
   assert.doesNotMatch(

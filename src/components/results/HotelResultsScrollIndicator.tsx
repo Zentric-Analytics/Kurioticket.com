@@ -86,25 +86,25 @@ export function HotelResultsScrollIndicator() {
         return;
       }
 
-      const priceAlert = document.querySelector<HTMLElement>(
-        "[data-hotel-price-alert-row]",
+      const listStart = document.querySelector<HTMLElement>(
+        "[data-hotel-results-list-start]",
       );
       const resultsRegion = document.querySelector<HTMLElement>(
         "[data-hotel-results-scroll-region]",
       );
-      if (!priceAlert || !resultsRegion) {
+      if (!listStart || !resultsRegion) {
         resetGeometry();
         return;
       }
 
-      resizeObserver?.observe(priceAlert);
+      resizeObserver?.observe(listStart);
       resizeObserver?.observe(resultsRegion);
 
       const viewportHeight = visualViewport?.height ?? window.innerHeight;
       const scrollY = window.scrollY;
       const scrollStart = Math.max(
         0,
-        priceAlert.getBoundingClientRect().top + scrollY,
+        listStart.getBoundingClientRect().top + scrollY,
       );
       const regionBottom = Math.max(
         scrollStart,

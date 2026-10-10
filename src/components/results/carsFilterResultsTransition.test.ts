@@ -112,7 +112,7 @@ test("every full mobile drawer exit compares its opening snapshot before closing
   assert.match(closeHandler, /if \(filtersChanged\) startFilterResultsTransition\(\);[\s\S]*setFiltersOpen\(false\)/);
   assert.equal((drawer.match(/onClick=\{closeMobileFiltersDrawer\}/g) ?? []).length, 2);
   assert.match(cars, /else closeMobileFiltersDrawer\(\)/);
-  assert.match(cars, /onClick=\{closeMobileFiltersDrawer\}[\s\S]*Show \{visibleResults\.length\}/);
+  assert.match(cars, /onClick=\{closeMobileFiltersDrawer\}[\s\S]*`View \$\{visibleResults\.length\}/);
   assert.doesNotMatch(drawer, /onClick=\{\(\) => setFiltersOpen\(false\)\}/);
 });
 

@@ -21,7 +21,7 @@ test("Cars full Filter matches the Hotels mobile bottom-sheet hierarchy without 
     shell,
     /h-\[95dvh\] w-full[\s\S]*rounded-t-\[20px\][\s\S]*bg-\[#F2F4F8\][\s\S]*max-sm:top-auto[\s\S]*sm:h-\[100dvh\][\s\S]*sm:w-\[420px\][\s\S]*sm:rounded-none[\s\S]*lg:hidden/,
   );
-  assert.match(shell, /aria-hidden=\{!filtersOpen\}/);
+  assert.match(cars.slice(cars.lastIndexOf("<aside", start), start), /aria-hidden=\{!filtersOpen\}[\s\S]*?inert=\{!filtersOpen \? true : undefined\}/);
   assert.match(shell, /translate-y-0 sm:translate-x-0/);
   assert.match(shell, /translate-y-full sm:translate-x-full sm:translate-y-0/);
   assert.match(shell, /min-h-\[64px\][\s\S]*bg-\[#F2F4F8\][\s\S]*pe-\[10px\] ps-5/);
@@ -154,10 +154,11 @@ test("every Cars shortcut uses the compact Hotels Reset and Apply action geometr
 });
 
 test("Cars edit search uses the same full-viewport overlay lock as quick filters", () => {
-  const editStart = cars.indexOf('<MobileResultsEditSheet\n        appearance="carsResultsEdit"');
+  const editStart = cars.indexOf('<MobileResultsEditSheet');
   const editEnd = cars.indexOf("</MobileResultsEditSheet>", editStart);
   const edit = cars.slice(editStart, editEnd);
   assert.ok(editStart >= 0 && editEnd > editStart);
+  assert.match(edit, /appearance="carsResultsEdit"/);
   assert.match(edit, /browserCanvasColor="#ffffff"/);
   assert.match(edit, /\n\s*freezeBodyPosition\n/);
   assert.match(edit, /isolatedBackdrop/);
@@ -328,7 +329,7 @@ test("Cars mobile filter overlays avoid duplicate top safe-area padding and keep
   const quickStart = cars.indexOf("data-cars-quick-sheet-backdrop");
   const quickEnd = cars.indexOf('aria-label="Back to top"', quickStart);
   const quick = cars.slice(quickStart, quickEnd);
-  assert.match(quick, /min-h-\[64px\]/);
+  assert.match(quick, /min-h-16/);
   assert.match(
     quick,
     /paddingBottom: "max\(12px, calc\(env\(safe-area-inset-bottom, 0px\) - 12px\)\)"/,

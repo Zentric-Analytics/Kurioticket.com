@@ -24,7 +24,7 @@ test("source-contract: Cars compact toolbar is transparent, shrink-safe, and fiv
   assert.match(source, /driverAgeSummary/);
   assert.match(
     source,
-    /<span\s+title=\{summary\}\s+className="min-w-0 truncate whitespace-nowrap text-\[15px\] font-semibold leading-5 tracking-normal text-\[#1A1A1A\]"\s*>\s*\{summary\}\s*<\/span>/,
+    /<span\s+title=\{summary\}\s+className="min-w-0 truncate whitespace-nowrap text-\[15px\] font-semibold leading-5 tracking-\[-0\.005em\] text-\[#142033\]"\s*>\s*\{summary\}\s*<\/span>/,
   );
 });
 
@@ -34,7 +34,7 @@ test("source-contract: phone Cars filters use the Hotels pinned rail without a h
     source.indexOf("function SearchInputCell"),
   );
   const shortcuts = source.slice(
-    source.indexOf("data-cars-results-filter-origin"),
+    source.lastIndexOf("<div", source.indexOf("data-cars-results-filter-origin")),
     source.indexOf("data-cars-results-toolbar"),
   );
 
@@ -132,17 +132,17 @@ test("source-contract: Cars result count keeps a shrink-safe row with desktop So
     summaryRow.indexOf("<h2") < summaryRow.indexOf("ref={carsSortRef}"),
     "the visible count precedes the end-aligned Sort control",
   );
-  assert.match(summaryRow, /className="shrink-0 whitespace-nowrap[^"\n]*"/);
+  assert.match(summaryRow, /className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap[^"\n]*"/);
   assert.match(
     resultsToolbar,
     /className="relative inline-flex min-w-0 max-w-full shrink/,
   );
-  assert.match(resultsToolbar, /className="inline-flex h-9 min-w-0 max-w-full/);
+  assert.match(resultsToolbar, /className="cars-results-desktop-sort-trigger inline-flex h-9 min-w-0 max-w-full/);
   assert.match(
     resultsToolbar,
     /<span className="min-w-0 truncate whitespace-nowrap">\s*\{selectedCarSortLabel\}/,
   );
-  assert.match(resultsToolbar, /"shrink-0 transition-transform duration-150"/);
+  assert.match(resultsToolbar, /"shrink-0 text-current transition-transform duration-150"/);
 });
 
 test("source-contract: Cars keeps the full filter rail pinned on upward scroll with mobile Sort inside it", () => {

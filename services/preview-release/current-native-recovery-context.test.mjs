@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { join } from "node:path";
 import { PREVIEW_IDENTITY } from "./config.mjs";
 import { PreviewOrchestrator } from "./orchestrator.mjs";
 
@@ -20,7 +21,7 @@ function makeOrchestrator({ currentSha = sourceSha, currentFingerprints = { ios:
     github: { latestDevSha: async () => currentSha },
     render: {},
     easFactory: (cwd) => {
-      assert.equal(cwd, "/tmp/exact-current/apps/mobile");
+      assert.equal(cwd, join("/tmp/exact-current", "apps/mobile"));
       return exactEas;
     },
     checkoutFactory: async ({ repository, token, sha }) => {

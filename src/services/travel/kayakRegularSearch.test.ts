@@ -104,7 +104,8 @@ test("JFK same-day pickup is rejected after the rental-local time has passed", a
   }
 });
 
-test("PAE same-day pickup remains valid while it is still future in Washington", async () => {
+test("PAE same-day pickup remains valid while it is still future in Washington", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-09-25T07:22:00Z") });
   const result = await resolveRegularKayakSearch(
     "cars",
     {
@@ -150,7 +151,8 @@ test("provider-resolved London city uses the resolved LHR rental timezone", asyn
   if (!result.supported) assert.equal(result.reasonCode, "pickup_time_past");
 });
 
-test("future rental-local pickup preserves the exact user-selected time", async () => {
+test("future rental-local pickup preserves the exact user-selected time", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-09-25T08:33:00Z") });
   const result = await resolveRegularKayakSearch(
     "cars",
     {

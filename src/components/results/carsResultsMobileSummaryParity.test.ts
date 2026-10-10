@@ -27,11 +27,11 @@ test("Cars mobile results exposes the real search values in the main header", ()
     headerSearch,
     /openMobileSearchDrawer\([\s\S]*?event\.currentTarget[\s\S]*?getOverlayActivationModality\(event\)/,
   );
-  assert.match(headerSearch, /<SquarePen[\s\S]*?aria-hidden="true"/);
+  assert.match(headerSearch, /data-cars-results-mobile-search-edit\s+aria-hidden="true"[\s\S]*?<SquarePen/);
   assert.match(headerSearch, /\[-webkit-tap-highlight-color:transparent\]/);
   assert.match(
     headerSearch,
-    /focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/25/,
+    /focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/35/,
   );
 });
 

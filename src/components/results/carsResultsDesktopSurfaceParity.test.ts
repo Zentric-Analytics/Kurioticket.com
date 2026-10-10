@@ -14,10 +14,6 @@ const alert = readFileSync(
   new URL("./CarPriceAlertControl.tsx", import.meta.url),
   "utf8",
 );
-const kayak = readFileSync(
-  new URL("./KayakResultCard.tsx", import.meta.url),
-  "utf8",
-);
 const route = readFileSync(
   new URL("../../app/cars/results/page.tsx", import.meta.url),
   "utf8",
@@ -59,9 +55,9 @@ test("standalone Cars Results matches the Hotels white desktop body while preser
   assert.doesNotMatch(results, /aria-label="Breadcrumb"/);
   assert.match(
     results,
-    /data-cars-results-scroll-region[\s\S]*?className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-10 sm:pt-6 lg:max-w-\[1020px\] lg:pt-5"/,
+    /data-cars-results-scroll-region[\s\S]*?className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-0 sm:pt-6 lg:max-w-\[1020px\] lg:pt-5"/,
   );
-  assert.doesNotMatch(
+  assert.match(
     results,
     /<main className="flex-1[^"]*lg:bg-white[^"]*pb-8">/,
   );
@@ -87,7 +83,7 @@ test("standalone Cars Results matches the Hotels white desktop body while preser
 test("desktop Cars results body is compact, centered, and keeps shared surfaces aligned", () => {
   assert.match(
     results,
-    /data-cars-results-scroll-region[\s\S]*?className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-10 sm:pt-6 lg:max-w-\[1020px\] lg:pt-5"/,
+    /data-cars-results-scroll-region[\s\S]*?className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-0 sm:pt-6 lg:max-w-\[1020px\] lg:pt-5"/,
   );
   assert.match(
     results,
@@ -191,11 +187,11 @@ test("desktop price alert uses a subtly lighter blue while mobile surfaces remai
 test("KAYAK car cards and loading canvases stay inside the same standalone desktop surface contract", () => {
   assert.match(
     results,
-    /desktopCarSurfaceParity=\{!embedded && presentation === "standalone"\}/,
+    /<CarResultCard[\s\S]*?providerLabel=\{isKayakSandboxResult\(car\)[\s\S]*?desktopSurfaceParity=\{!embedded && presentation === "standalone"\}/,
   );
   assert.match(
-    kayak,
-    /desktopSurfaceParity=\{desktopCarSurfaceParity\}/,
+    results,
+    /visibleResults\.map\(\(car\) => \(\s*<CarResultCard/,
   );
   assert.match(
     route,

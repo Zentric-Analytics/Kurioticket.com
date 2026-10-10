@@ -43,14 +43,14 @@ test("compact rules are desktop-only, standalone-scoped, and content-driven", ()
       if (!/logo|view-button/.test(rule[1])) assert.doesNotMatch(rule[2], /(?:^|;)\s*(?:min-|max-)?height:/);
     }
   }
-  assert.match(desktop, /\.flight-card-time \{ font-size: 1\.0625rem; line-height: 1\.375rem;/);
+  assert.match(desktop, /\.flight-card-time \{ font-size: 1rem; line-height: 1\.125rem;/);
   assert.match(desktop, /minmax\(1\.5rem, auto\)/);
-  assert.match(desktop, /min-height: 44px/);
+  assert.match(desktop, /\.flight-card-view-button \{\s*min-height: 1\.5rem/);
   assert.match(desktop, /padding: 0\.75rem 1rem/);
 });
 
 test("desktop fare geometry preserves seven dates and complete price accessibility", () => {
-  assert.match(desktop, /44px repeat\(7, minmax\(0, 1fr\)\) 44px/);
+  assert.match(desktop, /grid-template-columns: repeat\(7, minmax\(0, 1fr\)\)/);
   assert.match(desktop, /min-height: 74px/);
   assert.match(desktop, /font-variant-numeric: tabular-nums/);
   assert.doesNotMatch(desktop, /text-overflow|overflow:\s*hidden/);

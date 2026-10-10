@@ -53,6 +53,8 @@ function InactivitySignOut() {
       await revokeCurrentAccountSession();
       await signOut({ redirect: false, callbackUrl: "/" });
     } finally {
+      // Discard cached authenticated UI even if session revocation fails.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.assign("/");
     }
   }, [clearInactivityTimer]);

@@ -71,8 +71,8 @@ test("Flight keeps its own filter content while using Hotel design", () => {
   assert.match(shortcuts, /renderTrigger\("airlines", "Airlines", selectedAirlines\.length\)/);
   assert.match(shortcuts, /renderTrigger\("stops", "Stops", selectedStops\.length\)/);
   assert.match(shortcuts, /renderTrigger\("airports", "Airports", selectedFromAirports\.length \+ selectedToAirports\.length\)/);
-  assert.match(shortcuts, />From</);
-  assert.match(shortcuts, />To</);
+  assert.match(shortcuts, />\s*From\s*</);
+  assert.match(shortcuts, />\s*To\s*</);
   assert.match(shortcuts, /placeholder="Search airlines"/);
 });
 

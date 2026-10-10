@@ -111,7 +111,8 @@ function CarOfferProviderBrand({
         data-car-offer-provider-brand
       >
         {localBrandLogo ? (
-          <img
+          <Image
+            unoptimized
             src={logoUrl}
             alt={`${providerName || "Booking provider"} logo`}
             width={width}
@@ -234,33 +235,15 @@ export function CarDetailsExperience({
   const [selectedOfferId, setSelectedOfferId] = useState<string | undefined>(
     () => canonicalPrimaryOffer?.id,
   );
-  useEffect(() => {
-    if (presentation !== "standalone-content") {
-      setSelectedOfferId(canonicalPrimaryOffer?.id);
-      return;
-    }
-    if (
-      selectedOfferId &&
-      comparisonOffers.some((candidate) => candidate.id === selectedOfferId)
-    ) {
-      return;
-    }
-    const nextOffer =
-      (canonicalPrimaryOffer &&
-      comparisonOffers.some((candidate) => candidate.id === canonicalPrimaryOffer.id)
-        ? canonicalPrimaryOffer
-        : comparisonOffers[0]) ?? canonicalPrimaryOffer;
-    setSelectedOfferId(nextOffer?.id);
-  }, [
-    canonicalPrimaryOffer,
-    comparisonOffers,
-    presentation,
-    selectedOfferId,
-  ]);
+  const fallbackOffer =
+    (canonicalPrimaryOffer &&
+    comparisonOffers.some((candidate) => candidate.id === canonicalPrimaryOffer.id)
+      ? canonicalPrimaryOffer
+      : comparisonOffers[0]) ?? canonicalPrimaryOffer;
   const primaryOffer =
     presentation === "standalone-content"
       ? comparisonOffers.find((candidate) => candidate.id === selectedOfferId) ??
-        canonicalPrimaryOffer
+        fallbackOffer
       : canonicalPrimaryOffer;
   const standaloneSandbox =
     presentation === "standalone-content" &&
@@ -1776,11 +1759,11 @@ function PickupReturnSection({
               <span className="hidden lg:inline">{label}</span>
             </Heading>
             <p className="car-details-desktop-primary-copy-type mt-1 flex gap-2 text-[14px] font-medium leading-5 text-[#071A48] lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
-              <MapPin size={16} className="shrink-0 text-[#004BB8]" />
+              <MapPin size={16} className="shrink-0 text-[#004BB8]" aria-hidden="true" />
               {location || copy("carDetails.locationUnavailable")}
             </p>
             <p className="car-details-desktop-secondary-copy-type mt-1 flex gap-2 text-[13px] font-normal leading-5 text-[#56658E] lg:text-[14px] lg:leading-[22px] lg:text-[#59636A]">
-              <Clock3 size={16} />
+              <Clock3 size={16} className="shrink-0" aria-hidden="true" />
               <time dateTime={`${date}T${time}`}>
                 {formatCarDate(date, locale)}
                 {time ? ` · ${time}` : ""}

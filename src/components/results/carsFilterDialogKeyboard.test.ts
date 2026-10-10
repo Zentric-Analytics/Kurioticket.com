@@ -5,11 +5,18 @@ import { runInNewContext } from "node:vm";
 import ts from "typescript";
 
 const source = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
-const start = source.indexOf("    const releaseExistingLock = () => {");
-const end = source.indexOf("  }, [filtersOpen, quickFilterGroupId]);", start);
+const start = source.indexOf('    if ((!filtersOpen && !quickFilterGroupId) || typeof window === "undefined")');
+const end = source.indexOf("  }, [closeMobileFiltersDrawer, closeQuickFilter, filtersOpen, quickFilterGroupId]);", start);
 assert.ok(start >= 0 && end > start);
+const lockStart = source.indexOf('    if (!mobileFiltersOverlayOpen || typeof window === "undefined")');
+const lockEnd = source.indexOf("  }, [mobileFiltersOverlayOpen, quickFilterOverlayOpen]);", lockStart);
+assert.ok(lockStart >= 0 && lockEnd > lockStart);
 // Execute the actual effect body, including its cleanup, with deterministic DOM doubles.
-const effect = ts.transpileModule(`(() => {${source.slice(start, end)}})()`, {
+const effect = ts.transpileModule(`(() => {
+  const releaseLock = (() => {${source.slice(lockStart, lockEnd)}})();
+  const releaseFocus = (() => {${source.slice(start, end)}})();
+  return () => { releaseFocus(); releaseLock(); };
+})()`, {
   compilerOptions: { target: ts.ScriptTarget.ES2022 },
 }).outputText;
 
@@ -26,6 +33,11 @@ function install(quick: boolean, empty = false) {
   const state = { filtersOpen: !quick, quickFilterGroupId: quick ? "features" : null as string | null, released: 0, restored: 0 };
   const cleanup = runInNewContext(effect, {
     document, filtersOpen: state.filtersOpen, quickFilterGroupId: state.quickFilterGroupId,
+    mobileFiltersOverlayOpen: true, quickFilterOverlayOpen: quick,
+    quickFilterCloseTimerRef: { current: null }, quickFilterClosingRef: { current: false },
+    quickFilterGroupIdRef: { current: state.quickFilterGroupId }, setQuickFilterClosing() {},
+    closeMobileFiltersDrawer: () => { state.filtersOpen = false; },
+    closeQuickFilter: () => { state.quickFilterGroupId = null; },
     window: { matchMedia: () => media, addEventListener(name: string, fn: (event: { key: string; shiftKey: boolean; preventDefault(): void }) => void) { keyHandlers.set(name, fn); }, removeEventListener(name: string) { keyHandlers.delete(name); } },
     requestAnimationFrame: (fn: () => void) => { fn(); return 1; }, cancelAnimationFrame() {},
     mobileFiltersScrollLockRef: { current: null },

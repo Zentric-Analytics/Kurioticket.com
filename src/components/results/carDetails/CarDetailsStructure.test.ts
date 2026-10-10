@@ -109,7 +109,7 @@ test("standalone desktop Cars keeps the parent card while giving each scroll sec
     3,
   );
   assert.match(
-    experienceSource,
+    clientSource,
     /data-car-details-flight-panel=\{showDesktopOfferList \? "compare" : undefined\}/,
   );
   assert.match(experienceSource, /data-car-details-flight-panel="pickup"/);

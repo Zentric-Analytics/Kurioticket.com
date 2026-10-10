@@ -533,7 +533,9 @@ export function CarsResultsClient({
   const [mobileSearchClosing, setMobileSearchClosing] = useState(false);
   const mobileSearchCloseTimerRef = useRef<number | null>(null);
   const [isSearchSubmitting, setIsSearchSubmitting] = useState(false);
-  const [searchValidationError, setSearchValidationError] = useState("");
+  const [pickupValidation, setPickupValidation] = useState<{
+    pickupDate: string; pickupTime: string; message: string;
+  } | null>(null);
   const isSearchSubmittingRef = useRef(false);
   const [mobilePicker, setMobilePicker] =
     useState<CarsResultsMobilePicker>(null);
@@ -997,9 +999,9 @@ export function CarsResultsClient({
     const pickupTimeExpired =
       validation.pickupTime === "carsSearch.error.pickupTimePast";
 
-    setSearchValidationError(
-      pickupTimeExpired ? t("carsSearch.error.pickupTimePast") : "",
-    );
+    setPickupValidation({ pickupDate, pickupTime,
+      message: pickupTimeExpired ? t("carsSearch.error.pickupTimePast") : "",
+    });
 
     return !pickupTimeExpired;
   }, [
@@ -1014,9 +1016,13 @@ export function CarsResultsClient({
     t,
   ]);
 
-  useEffect(() => {
-    setSearchValidationError("");
-  }, [pickupDate, pickupTime]);
+  const searchValidationError = pickupValidation?.pickupDate === pickupDate &&
+    pickupValidation.pickupTime === pickupTime ? pickupValidation.message : "";
+
+  const shouldRestoreMobileSearchScroll = useCallback(
+    () => !isSearchSubmittingRef.current,
+    [],
+  );
 
   const submitMobileSearch = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
@@ -1156,12 +1162,7 @@ export function CarsResultsClient({
         method="get"
         data-cars-results-navbar-search={isNavbarSearch ? "" : undefined}
         className={cn("mx-auto w-full min-w-0", isNavbarSearch ? "max-w-full" : "max-w-5xl", placement === "mobile" && "bg-transparent")}
-        onSubmit={(event) => {
-          if (placement === "mobile") {
-            submitMobileSearch(event);
-            return;
-          }
-
+        onSubmit={placement === "mobile" ? submitMobileSearch : (event) => {
           if (!validateCurrentPickupTime()) {
             event.preventDefault();
             if (placement === "desktop-sticky") {
@@ -1646,6 +1647,7 @@ export function CarsResultsClient({
       />
 
       <MobileResultsEditSheet
+        shouldRestoreScroll={shouldRestoreMobileSearchScroll}
         appearance="carsResultsEdit"
         open={mobileSearchOpen}
         browserCanvasColor="#ffffff"
@@ -1931,7 +1933,7 @@ export function CarsResultsExperience({
   const filterTransitionTimerRef = useRef<number | null>(null);
   const filterTransitionFrameRef = useRef<number | null>(null);
   const filterTransitionRunRef = useRef(0);
-  const filterTransitionMobileRef = useRef(false);
+  const [filterTransitionMobile, setFilterTransitionMobile] = useState(false);
   const carsSortRef = useRef<HTMLDivElement | null>(null);
   const carsSortButtonRef = useRef<HTMLButtonElement | null>(null);
   const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
@@ -2208,7 +2210,7 @@ export function CarsResultsExperience({
   const startFilterResultsTransition = useCallback(() => {
     const run = ++filterTransitionRunRef.current;
     const mobile = window.innerWidth < 1024;
-    filterTransitionMobileRef.current = mobile;
+    setFilterTransitionMobile(mobile);
     if (filterTransitionTimerRef.current !== null)
       window.clearTimeout(filterTransitionTimerRef.current);
     if (filterTransitionFrameRef.current !== null)
@@ -2865,8 +2867,8 @@ export function CarsResultsExperience({
                         selectedOption
                           ? selectedOption.label ?? t(selectedOption.labelKey)
                           : active
-                            ? `${carFilterGroupLabel(group, t, true)} (${selected.length})`
-                            : carFilterGroupLabel(group, t, true);
+                            ? `${carFilterGroupLabel(group, t)} (${selected.length})`
+                            : carFilterGroupLabel(group, t);
                       return (
                         <div
                           key={group.id}
@@ -2907,7 +2909,7 @@ export function CarsResultsExperience({
                             {active ? (
                               <button
                                 type="button"
-                                aria-label={`Clear ${carFilterGroupLabel(group, t, true)} filter`}
+                                aria-label={`Clear ${carFilterGroupLabel(group, t)} filter`}
                                 className="focus-ring absolute right-0.5 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/70"
                                 onClick={(event) => {
                                   event.stopPropagation();
@@ -3060,7 +3062,7 @@ export function CarsResultsExperience({
                     >
                       <CarCardSkeleton
                         transitionMotion={
-                          filterTransitionPhase === "covering" && filterTransitionMobileRef.current
+                          filterTransitionPhase === "covering" && filterTransitionMobile
                             ? "shimmer"
                             : "pulse"
                         }
@@ -3078,7 +3080,7 @@ export function CarsResultsExperience({
                     "w-full space-y-3.5 max-sm:!mt-2.5 sm:space-y-4",
                     !guidedPlanning && "w-full",
                     filterTransitionPhase === "revealing" &&
-                      filterTransitionMobileRef.current &&
+                      filterTransitionMobile &&
                       "cars-filter-results-reveal",
                   )}
                 >
@@ -3091,7 +3093,7 @@ export function CarsResultsExperience({
                       detailsHref={detailsHrefForCar(car)}
                       selectedDealOfferId={selectedDealOfferIds[car.id]}
                       onDealOfferSelected={selectCompareDealOffer}
-                      providerLabel={isKayakSandboxResult(car) ? "KAYAK sandbox · Simulated offer" : undefined}
+                      providerLabel={isKayakSandboxResult(car) ? "KAYAK sandbox · Not bookable" : undefined}
                       onSelect={
                         onSelectCar && (isCarSelectable?.(car) ?? true)
                           ? onSelectCar
@@ -3128,7 +3130,7 @@ export function CarsResultsExperience({
                   className={cn(
                     "w-full rounded-xl border border-slate-200 bg-white p-8 text-center",
                     filterTransitionPhase === "revealing" &&
-                      filterTransitionMobileRef.current &&
+                      filterTransitionMobile &&
                       "cars-filter-results-reveal",
                   )}
                 >
@@ -3277,7 +3279,7 @@ export function CarsResultsExperience({
           >
             <header className="relative flex min-h-16 shrink-0 items-center justify-center bg-[#F2F4F8] px-16 py-3">
               <h2 id={`cars-quick-${quickFilterGroupId}`} className="text-center text-base font-semibold text-slate-950">
-                {quickFilterGroupId === "sort" ? "Sort" : carFilterGroupLabel(activeQuickFilterGroup!, t, true)}
+                {quickFilterGroupId === "sort" ? "Sort" : carFilterGroupLabel(activeQuickFilterGroup!, t)}
               </h2>
               <button ref={quickFiltersCloseButtonRef} type="button" aria-label="Close" onClick={closeQuickFilter} className="absolute right-3 inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
                 <X className="h-5 w-5" aria-hidden="true" />
@@ -4350,7 +4352,6 @@ function CarFilters({
 function carFilterGroupLabel(
   group: CarFilterGroup,
   t: (key: string) => string,
-  _mobile = false,
 ) {
   if (group.id === "pricePerDay") {
     return group.title ?? "Price";
@@ -4382,7 +4383,7 @@ function FilterSection({
       <section className="grid gap-[5px]">
         <div className="flex min-h-7 items-center">
           <h3 className="text-[15px] font-extrabold text-slate-950">
-            {carFilterGroupLabel(group, t, true)}
+            {carFilterGroupLabel(group, t)}
           </h3>
         </div>
         <div>

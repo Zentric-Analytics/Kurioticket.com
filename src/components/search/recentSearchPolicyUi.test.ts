@@ -27,10 +27,11 @@ test("homepage and standalone cars record the same semantic recent-search model"
 
 test("account hydration never deletes device recents as a side effect", () => {
   const results = read("../results/FlightResultsClient.tsx");
-  const hydrationEffects = results.slice(
-    results.indexOf("const refreshBackendSavedItems"),
-    results.indexOf("const closeMobileShortcutMenus"),
-  );
+  const start = results.indexOf("const refreshBackendSavedItems");
+  const endMarker = "}, [guidedMode, refreshBackendSavedItems, sessionStatus]);";
+  const end = results.indexOf(endMarker, start);
+  assert.ok(start >= 0 && end > start);
+  const hydrationEffects = results.slice(start, end + endMarker.length);
   assert.doesNotMatch(hydrationEffects, /removeRecentSearch\(/);
   assert.doesNotMatch(hydrationEffects, /clearRecentSearches\(/);
 });

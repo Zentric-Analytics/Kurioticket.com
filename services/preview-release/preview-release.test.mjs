@@ -6,9 +6,9 @@ import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
-import { PREVIEW_IDENTITY, PREVIEW_WORKER_BUILD_PATHS, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
+import { PREVIEW_IDENTITY, PREVIEW_WORKER_BUILD_PATHS, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission, reconcileSubmissionHistory } from "./eas-state.mjs";
-import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, assertCoalescedOtaCompatibility, enforceDeliveredNativeBaseline, maintainLease, nativeBuildIdentityKey, nativeDriftTargets, retry, waitForOwnedNativeRemoteId } from "./orchestrator.mjs";
+import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, assertCoalescedOtaCompatibility, enforceDeliveredNativeBaseline, nativeBuildIdentityKey, nativeDriftTargets, waitForOwnedNativeRemoteId } from "./orchestrator.mjs";
 import { createExactCheckoutDirectory, easCommandEnvironment, easCommandFailureMessage, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, isExactEasObjectMissing, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
@@ -1242,14 +1242,23 @@ test("submission completion alone cannot satisfy the iOS native baseline", () =>
 });
 
 test("exact-checkout preparation reuses the immutable build dependency trees", async () => {
-  const copies = [];
-  await prepareCheckout(repositoryRoot, {
-    dependencyRoot: repositoryRoot,
-    commandRunner: async (...args) => { copies.push(args); },
-  });
-  assert.deepEqual(copies.map(([command, args]) => [command, args]), [
-    ["cp", ["-al", "--", resolve(repositoryRoot, "apps/mobile/node_modules"), resolve(repositoryRoot, "apps/mobile/node_modules")]],
-  ]);
+  const temporary = await mkdtemp(resolve(tmpdir(), "preview-dependency-fixture-"));
+  try {
+    await mkdir(resolve(temporary, "apps/mobile/node_modules"), { recursive: true });
+    for (const manifest of ["package.json", "package-lock.json", "apps/mobile/package.json", "apps/mobile/package-lock.json"]) {
+      await copyFile(resolve(repositoryRoot, manifest), resolve(temporary, manifest));
+    }
+    const copies = [];
+    await prepareCheckout(repositoryRoot, {
+      dependencyRoot: temporary,
+      commandRunner: async (...args) => { copies.push(args); },
+    });
+    assert.deepEqual(copies.map(([command, args]) => [command, args]), [
+      ["cp", ["-al", "--", resolve(temporary, "apps/mobile/node_modules"), resolve(repositoryRoot, "apps/mobile/node_modules")]],
+    ]);
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
 });
 
 test("exact checkouts are created on the selected worker artifact filesystem", async () => {
@@ -2137,15 +2146,18 @@ test("canonical recovery may reuse dependencies when only root operator scripts 
   const temporary = await mkdtemp(resolve(tmpdir(), "preview-recovery-dependencies-"));
   try {
     await mkdir(resolve(temporary, "apps/mobile"), { recursive: true });
+    const dependencyRoot = resolve(temporary, "immutable-worker");
+    await mkdir(resolve(dependencyRoot, "apps/mobile/node_modules"), { recursive: true });
     for (const manifest of ["package.json", "package-lock.json", "apps/mobile/package.json", "apps/mobile/package-lock.json"]) {
       await copyFile(resolve(repositoryRoot, manifest), resolve(temporary, manifest));
+      await copyFile(resolve(repositoryRoot, manifest), resolve(dependencyRoot, manifest));
     }
     const rootPackagePath = resolve(temporary, "package.json");
     const rootPackage = JSON.parse(readFileSync(rootPackagePath, "utf8"));
     delete rootPackage.scripts["preview-release:recover-native"];
     await writeFile(rootPackagePath, `${JSON.stringify(rootPackage, null, 2)}\n`);
     await prepareCheckout(temporary, {
-      dependencyRoot: repositoryRoot,
+      dependencyRoot,
       allowRootScriptDrift: true,
       commandRunner: async () => {},
     });

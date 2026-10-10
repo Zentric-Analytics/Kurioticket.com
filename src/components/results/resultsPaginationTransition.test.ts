@@ -11,8 +11,14 @@ for (const [vertical, file, skeleton] of [
   test(`${vertical} pagination preserves geometry and uses card skeletons`, () => {
     const source = read(file);
     assert.match(source, /paginationPendingPage/);
-    assert.match(source, /getBoundingClientRect\(\)\.height/);
-    assert.match(source, /minHeight: paginationMinHeight/);
+    if (vertical === "Hotels") {
+      assert.match(source, /getBoundingClientRect\(\)\.height/);
+      assert.match(source, /minHeight: paginationMinHeight/);
+    } else {
+      // Flights masks the existing list with a portal, preserving its layout.
+      assert.match(source, /paginationPendingPage !== null[\s\S]*createPortal\([\s\S]*<FlightResultsPageTransitionSkeleton/);
+      assert.match(source, /data-mobile-paginated-flight-results[\s\S]*visibleResults\.map/);
+    }
     assert.match(source, /aria-busy=/);
     assert.match(source, new RegExp(skeleton));
     if (vertical === "Flights") assert.match(source, /scrollToResultsAndWait/);

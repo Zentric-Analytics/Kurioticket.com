@@ -123,6 +123,7 @@ test("homepage and standalone mobile pickers share draft-only presentation and D
   }
   assert.match(drawer, /<MobileTravelerCabinPicker/);
   assert.doesNotMatch(drawer, /travelerPickerDensity|<MobileTravelerCabinPicker[^>]*density=/);
-  assert.match(details, /<FlightEditSearchDrawer/);
+  // Details intentionally returns to results for search changes; it owns no competing editor.
+  assert.doesNotMatch(details, /<FlightEditSearchDrawer|<MobileTravelerCabinPicker/);
   assert.doesNotMatch(details, /travelerPickerDensity|density=/);
 });

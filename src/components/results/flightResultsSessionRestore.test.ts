@@ -19,7 +19,8 @@ test("FlightResultsClient restores a matching snapshot before its no-cache reque
     restoreBlock,
     /filterResultsByRequestedOutboundDate\([\s\S]*snapshot\.results/,
   );
-  assert.match(restoreBlock, /setWarnings\(snapshot\.warnings\)/);
+  // Provider warnings are retained in the snapshot, not rendered as a separate
+  // provider-status panel. Restoring results must not restart a fresh search.
   assert.match(restoreBlock, /setError\(""\)/);
   assert.match(restoreBlock, /setLoading\(refreshingStaleSnapshot\)/);
   assert.match(restoreBlock, /setBackgroundRefreshing\(refreshingStaleSnapshot\)/);

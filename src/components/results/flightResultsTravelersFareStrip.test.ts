@@ -235,9 +235,9 @@ test("standalone pagination owns local state and mirrors it through native histo
 
 test("nearby fare DOM remains outside the paginated card subtree", () => {
   const rail = source.indexOf('data-nearby-fare-presentation="mobile"');
-  const paginatedCards = source.indexOf("ref={paginationListRef}");
+  const paginatedCards = source.indexOf("data-mobile-paginated-flight-results");
   assert.ok(rail > -1 && paginatedCards > rail);
-  assert.doesNotMatch(source.slice(rail, paginatedCards), /paginationPendingPage/);
+  assert.doesNotMatch(source.slice(rail, paginatedCards), /<FlightResultsPagination/);
 });
 
 test("mobile search stays in AppHeader without a scroll handoff", () => {

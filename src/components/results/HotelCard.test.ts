@@ -299,7 +299,7 @@ test("desktop Hotel result reviews use Expedia-style score badge with stacked la
 
   assert.match(source, /data-hotel-card-reviews-desktop/);
   assert.match(source, /min-h-7 min-w-8 shrink-0 items-center justify-center rounded-md bg-slate-900/);
-  assert.match(source, /\{formattedReviewScore\}<\/span>/);
+  assert.match(source, /\{formattedReviewScore\}\s*<\/span>/);
   assert.match(source, /text-\[13px\] font-semibold leading-4 text-slate-800[\s\S]*\{reviewLabel\}/);
   assert.match(source, /mt-0\.5 text-\[12px\] font-normal leading-4 text-slate-500[\s\S]*\{reviewCountText\}/);
   assert.doesNotMatch(desktopReview, /formattedReviewScore\} \/ \{reviewScale\}/);

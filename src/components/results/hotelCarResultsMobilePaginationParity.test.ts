@@ -38,9 +38,10 @@ test("Cars sticky quick filters precede the price alert and summary without dupl
   assert.match(cars.slice(alert - 20, alert + 100), /!embedded \? <CarPriceAlertControl/);
 });
 
-test("Hotel price-alert ownership remains unchanged", () => {
-  const alert = hotel.indexOf("<HotelPriceAlertControl");
-  const quickFilters = hotel.indexOf("data-hotel-results-quick-filters");
-  assert.ok(alert >= 0);
-  if (quickFilters >= 0) assert.ok(quickFilters < alert);
+test("Hotel results retain the approved alert-free layout and a stable results scroll anchor", () => {
+  // The desktop hotel redesign removed the results-level alert; cards and
+  // pagination must not depend on that retired row being mounted.
+  assert.doesNotMatch(hotel, /<HotelPriceAlertControl/);
+  assert.match(hotel, /<section data-hotel-results-list-start/);
+  assert.match(hotel, /<HotelResultsScrollIndicator \/>/);
 });

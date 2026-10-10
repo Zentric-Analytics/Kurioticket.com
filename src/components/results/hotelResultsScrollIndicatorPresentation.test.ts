@@ -15,14 +15,16 @@ const globalCss = readFileSync("src/app/globals.css", "utf8");
 test("Hotel mobile results owns a Cars-style document scroll indicator", () => {
   assert.match(resultsSource, /<HotelResultsScrollIndicator \/>/);
   assert.match(resultsSource, /data-hotel-results-scroll-region/);
-  assert.match(resultsSource, /data-hotel-price-alert-row/);
+  assert.match(resultsSource, /<section data-hotel-results-list-start/);
   assert.match(indicatorSource, /window\.scrollY/);
   assert.doesNotMatch(indicatorSource, /document\.documentElement\.scrollHeight/);
   assert.doesNotMatch(indicatorSource, /document\.body\.scrollHeight/);
 });
 
-test("Hotel indicator starts at Track this stay price and measures the results region", () => {
-  assert.match(indicatorSource, /data-hotel-price-alert-row/);
+test("Hotel indicator starts at the actual results list without depending on a removed alert row", () => {
+  assert.match(indicatorSource, /data-hotel-results-list-start/);
+  assert.match(indicatorSource, /listStart\.getBoundingClientRect\(\)\.top \+ scrollY/);
+  assert.doesNotMatch(indicatorSource, /data-hotel-price-alert-row/);
   assert.match(indicatorSource, /data-hotel-results-scroll-region/);
   assert.match(indicatorSource, /regionBottom - viewportHeight/);
   assert.match(indicatorSource, /track\.style\.top/);

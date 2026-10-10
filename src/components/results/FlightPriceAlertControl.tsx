@@ -146,13 +146,14 @@ export function FlightPriceAlertControl({ query: queryInput, results }: { query:
     if (openSurface !== "desktop") return;
     const dialog = desktopDialogRef.current;
     if (!dialog) return;
+    const trigger = desktopSwitchRef.current;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     dialog.showModal();
     return () => {
       if (dialog.open) dialog.close();
       document.body.style.overflow = previousOverflow;
-      window.setTimeout(() => desktopSwitchRef.current?.focus({ preventScroll: true }), 0);
+      window.setTimeout(() => trigger?.focus({ preventScroll: true }), 0);
     };
   }, [openSurface]);
 

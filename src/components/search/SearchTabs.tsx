@@ -937,7 +937,7 @@ export function SearchTabs({
           ? "p-3 sm:p-4 lg:rounded-[22px] lg:border-white/80 lg:bg-white/95 lg:p-5 lg:shadow-[0_22px_54px_rgba(15,23,42,0.16)] lg:ring-1 lg:ring-white/80"
           : "p-2"
       ),
-    [compactHero, mobileHomepage, searchTabsOverlayOpen, tab]
+    [compactHero, mobileHomepage, searchTabsOverlayOpen]
   );
 
   const tabsClassName = cn(

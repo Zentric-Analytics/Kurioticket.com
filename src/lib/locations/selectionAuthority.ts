@@ -30,7 +30,9 @@ export function resolveProviderSelection(input: { id: string; selectionToken?: s
 }
 
 export function publicLocationSelection(location: CanonicalLocation, product: TravelProduct) {
-  const { providerBindings: _bindings, providerIds: _ids, ...publicLocation } = location;
+  const publicLocation = { ...location };
+  delete publicLocation.providerBindings;
+  delete publicLocation.providerIds;
   return { ...publicLocation, providerBindings: [], selectionToken: issueLocationSelection(location, product) };
 }
 

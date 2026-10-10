@@ -94,16 +94,23 @@ export function HotelPriceAlertControl({
     [alerts, search, hotel.id],
   );
   const isTracking = matchingAlert?.status === "ACTIVE";
+  const lookupKey = JSON.stringify([hotel.id, search.checkIn, search.checkOut, search.destination, search.guests, search.rooms]);
+  const [previousLookupKey, setPreviousLookupKey] = useState(lookupKey);
+  if (previousLookupKey !== lookupKey) {
+    setPreviousLookupKey(lookupKey);
+    setAlerts([]);
+    setAlertKnown(false);
+    setAuthenticated(null);
+  }
 
   useEffect(() => {
     const controller = new AbortController();
-    setAlertKnown(false);
-    setAuthenticated(null);
     void fetch("/api/price-alerts", {
       cache: "no-store",
       signal: controller.signal,
     })
       .then(async (response) => {
+        if (controller.signal.aborted) return;
         if (response.status === 401) {
           setAlerts([]);
           setAuthenticated(false);
@@ -114,6 +121,7 @@ export function HotelPriceAlertControl({
         const body = (await response.json()) as {
           alerts?: HotelPriceAlertRecord[];
         };
+        if (controller.signal.aborted) return;
         setAlerts(Array.isArray(body.alerts) ? body.alerts : []);
         setAuthenticated(true);
         setAlertKnown(true);

@@ -6,7 +6,7 @@ const source = readFileSync(new URL("./HotelResultsClient.tsx", import.meta.url)
 
 test("wide desktop uses a dedicated 288px rail and smaller screens use the filter dialog", () => {
   assert.match(source, /min-\[1200px\]:grid-cols-\[288px_minmax\(0,1fr\)\]/);
-  assert.match(source, /w-\[288px\][^\n]*min-\[1200px\]:block/);
+  assert.match(source, /w-\[260px\][^\n]*min-\[1200px\]:block/);
   assert.match(source, /sm:w-\[420px\][^\n]*min-\[1200px\]:hidden/);
   assert.match(source, /role="dialog"/);
   assert.match(source, /aria-modal="true"/);
@@ -19,7 +19,7 @@ test("facets follow the production hierarchy and omit cancellation claims", () =
   const area = source.indexOf('title={layout === "mobile" ? "Area"', hotelClass);
   const property = source.indexOf('title={t("hotelResults.propertyType")}', area);
   const amenities = source.indexOf('title={t("hotelResults.facilities")}', property);
-  const room = source.indexOf('title="Room & bed"', amenities);
+  const room = source.indexOf('title={locale.startsWith("en") ? "Room & bed"', amenities);
   assert.ok(price < hotelClass && hotelClass < area && area < property && property < amenities && amenities < room);
   const compactSections = source.slice(source.indexOf("const compactSections = ("), source.indexOf('if (layout === "compact")'));
   assert.doesNotMatch(compactSections, /id: "cancellationPolicies"/);
@@ -45,11 +45,11 @@ test("mobile Hotel filter sheet uses the Cars continuous #F2F4F8 surface", () =>
   const sheetStart = source.indexOf('aria-label="Hotel filters"');
   const sheetEnd = source.indexOf("</aside>", sheetStart);
   const sheet = source.slice(sheetStart, sheetEnd);
-  assert.match(sheet, /bg-[#F2F4F8]/);
-  assert.match(sheet, /hotel-filter-scrollbar[^"]*bg-[#F2F4F8]/);
-  assert.match(sheet, /border-t border-[#D8DEE8] bg-[#F2F4F8]/);
-  assert.match(sheet, /Reset hotel filters"[^>]*className="[^"]*bg-[#F2F4F8]/);
-  assert.doesNotMatch(sheet, /bg-[#F1F3F8]|sm:bg-[#F6F8FB]/);
+  assert.match(sheet, /bg-\[#F2F4F8\]/);
+  assert.match(sheet, /hotel-filter-scrollbar[^"]*bg-\[#F2F4F8\]/);
+  assert.match(sheet, /border-t border-\[#D8DEE8\] bg-\[#F2F4F8\]/);
+  assert.match(sheet, /Reset hotel filters"[^>]*className="[^"]*bg-\[#F2F4F8\]/);
+  assert.doesNotMatch(sheet, /bg-\[#F1F3F8\]|sm:bg-\[#F6F8FB\]/);
 });
 
 test("filter sheet applies local filters through the normal Hotel results loading branch", () => {
@@ -66,11 +66,11 @@ test("filter sheet applies local filters through the normal Hotel results loadin
   assert.match(source, /env\(safe-area-inset-top\)/);
   assert.match(source, /env\(safe-area-inset-bottom\)/);
   assert.match(source, /overflow-y-auto overflow-x-hidden overscroll-contain/);
-  assert.match(source, /hidden max-w-full space-y-2 overflow-x-clip sm:block/);
+  assert.match(source, /hidden max-w-full overflow-x-clip sm:block/);
   assert.match(source, /mobilePriceShortcutLabel/);
   assert.match(source, /mobileFacilitiesShortcutLabel/);
   assert.match(source, /mobileRoomTypesShortcutLabel/);
-  assert.match(source, /bg-slate-950\/35 backdrop-blur-\[1px\]/);
+  assert.match(source, /bg-slate-950\/35 sm:backdrop-blur-\[1px\]/);
   assert.match(source, /if \(loading \|\| filterApplying\)/);
   assert.match(source, /<BrandedLoading variant="fullscreen"[\s\S]*searchType="hotel"/);
 });
@@ -101,11 +101,11 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.match(source, /facilities: mobileShortcutDraftFacilities/);
   assert.match(source, /fixed inset-y-0 right-0[^\n]*h-\[95dvh\][^\n]*w-full/);
   assert.doesNotMatch(source, /mobileResultsSearch=/);
-  assert.match(source, /h-\[4\.25rem\][\s\S]*max-w-\[30rem\]/);
+  assert.match(source, /data-hotel-results-mobile-nav-search-button[\s\S]*h-full w-full min-w-0/);
   assert.doesNotMatch(source, /trigger\("sort",/);
   assert.doesNotMatch(source, /transition-all duration-200 sm:hidden/);
-  assert.match(source, /bg-\[#F5F7FB\] px-1 pb-0 pt-10 sm:hidden/);
-  assert.match(source, /page-shell grid gap-y-5 pb-6 pt-4 sm:pt-6/);
+  assert.match(source, /data-hotel-results-toolbar[\s\S]*w-full py-2 sm:hidden/);
+  assert.match(source, /page-shell grid gap-y-3 pb-2 pt-0[\s\S]*sm:gap-y-5 sm:pb-6 sm:pt-6/);
 });
 
 test("results omit the superseded comparison disclosure", () => {

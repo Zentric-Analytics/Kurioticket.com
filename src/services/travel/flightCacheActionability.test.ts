@@ -23,7 +23,7 @@ test("Flight Search fails closed when provider results are not cache-confirmed",
 
   assert.match(aggregator, /const actionableResults = cacheResult\.persisted \? results : \[\]/);
   assert.match(aggregator, /results\.length > 0 && !cacheResult\.persisted/);
-  assert.match(aggregator, /provider\.status !== "success" \|\| cacheUnavailable/);
+  assert.match(aggregator, /provider\.status === "failed" \|\| kayak\.status === "failed" \|\| cacheUnavailable/);
 });
 
 test("browser snapshots require the server-owned cache validity from the same response", async () => {

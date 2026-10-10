@@ -5,6 +5,21 @@ import { getTranslations } from "@/lib/i18n";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
 
+test("saved flight state is invalidated when the active offer or authentication changes", async () => {
+  const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+  const body = source.match(/if \(previousSavedLookupKey !== savedLookupKey\) \{([^}]+)\}/)?.[1];
+  assert.ok(body);
+  const changes: unknown[] = [];
+  new Function("savedLookupKey", "setPreviousSavedLookupKey", "setSavedFlightBackendId", body)(
+    "authenticated:new-offer", (value: unknown) => changes.push(value), (value: unknown) => changes.push(value),
+  );
+  assert.deepEqual(changes, ["authenticated:new-offer", null]);
+  assert.match(source, /savedLookupKey = `\$\{sessionStatus\}:\$\{savedFlightKey\}`/);
+  assert.match(source, /requestAnimationFrame\(syncSavedFlights\)/);
+  assert.match(source, /removeEventListener\("storage", syncSavedFlights\)/);
+  assert.match(source, /function selectFare[\s\S]*setSelectedDealOfferId\(null\);[\s\S]*setSelectedFareKey/);
+});
+
 import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
 import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
 import { buildFareDisplayRows, canUseOfferAirlineLogo, compactFareTerms, formatItineraryDepartureDate, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
@@ -472,15 +487,15 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     'index === 0 ? "OUTBOUND" : "RETURN"',
     "leg.segments.map",
     "const flight = selectedOffer",
-    '"Continue booking"',
-    'aria-disabled={!canContinue || redirecting}',
+    '"View deal"',
+    'disabled={redirecting || !canContinue}',
     "id: offerId",
     'role="radiogroup"',
     'role="radio"',
     "term.semantic === \"positive\" ? Check",
     'event.key === "ArrowRight" || event.key === "ArrowDown"',
     'tabIndex={selected ? 0 : -1}',
-    "activeOffer.price",
+    "fare.offer.price",
     "<FarePanel activeTab={activeTab} fare={selectedFare} offer={activeOffer}",
     "Operated by {segment.operatingCarrier.name}",
     "Technical stop at {stop.airport.iataCode}",
@@ -519,8 +534,8 @@ test("standalone UI renders every leg and segment from selected offer and uses a
   assert.ok(!source.includes("Not included/not allowed"));
   assert.ok(!source.includes("Provider fare refreshed"));
   assert.ok(!source.includes("Supported loyalty programmes:"));
-  assert.match(source, /Booking currently unavailable/);
-  assert.match(source, /disabled=\{!canContinue \|\| redirecting\}/);
+  assert.match(source, /Provider checkout unavailable/);
+  assert.match(source, /disabled=\{redirecting \|\| !canContinue\}/);
 });
 
 test("all Flight Details deal paths reserve and safely navigate a provider tab", async () => {
@@ -535,7 +550,7 @@ test("all Flight Details deal paths reserve and safely navigate a provider tab",
   assert.doesNotMatch(handoff, /window\.location\.href\s*=/);
   assert.equal((handoff.match(/providerWindow\.close\(\)/g) ?? []).length, 2);
   assert.match(handoff, /result\.status === 409 && data\.code === "offer_changed"[\s\S]*?providerWindow\.close\(\)/);
-  assert.match(source, /onContinue=\{\(\) => continueToOffer\(selectedDeal\?\.offerId \?\? selectedOffer\.id\)\}/);
+  assert.equal((source.match(/onViewDeal=\{continueToOffer\}/g) ?? []).length, 2);
   assert.match(source, /onViewDeal=\{continueToOffer\}/);
 });
 
@@ -574,7 +589,7 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.doesNotMatch(source, /fixed inset-x-0 bottom-0 z-\[90px\]|fixed inset-x-0 bottom-0 z-\[90\]/);
   assert.match(source, /pb-\[calc\(1\.75rem\+env\(safe-area-inset-bottom\)\)\][\s\S]*sm:pb-16/);
   assert.match(mobileDeck, /data-mobile-flight-deal-action/);
-  assert.match(mobileDeck, />View deal</);
+  assert.match(mobileDeck, /canViewDeal \? redirecting \? "Opening…" : "View deal"/);
   assert.match(source, /role="tablist"/);
   assert.equal((source.match(/role="tab"/g) || []).length, 1);
   assert.deepEqual(["Compare deals", "Fare details", "Fare conditions", "Optional extras"].map((label) => source.includes(`label: "${label}"`)), [true, true, true, true]);
@@ -588,24 +603,20 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(source, /border-dashed border-\[#075EE8\]/);
   assert.match(source, /offerAirlineLogo=\{flight\.airlineLogo\}/);
   assert.match(source, /<SegmentAirlineMark segment=\{segment\}/);
-  assert.match(source, /onError=\{\(\) => setLogoFailed\(true\)\}/);
-  assert.match(source, /fareChoices\.length === 1 \? "max-w-\[270px\]"/);
-  assert.match(source, /fareChoices\.length === 2 \? "sm:grid-cols-2 lg:max-w-\[632px\]"/);
-  assert.match(source, /md:grid-cols-3 lg:max-w-\[954px\]/);
-  assert.match(source, /xl:max-w-\[1276px\] xl:grid-cols-4/);
-  assert.match(source, /: "w-\[min\(100%,270px\)\] max-w-\[270px\]"/);
-  assert.doesNotMatch(source, /: "w-full"/);
+  assert.match(source, /<FlightIdentityMark logoUrl=\{logoUrl\}/);
+  assert.match(source, /canUseOfferAirlineLogo\(segment, offerAirlineName, offerAirlineLogo\)/);
+  assert.match(source, /<MobileNativeFareRail fares=\{fareChoices\}/);
   const fareRailMarkup = source.slice(source.indexOf(`role="radiogroup"`), source.indexOf(`role="tablist"`));
-  assert.match(fareRailMarkup, /min-h-\[154px\]/);
-  assert.match(source, /w-\[min\(78vw,275px\)\] max-w-\[275px\] shrink-0 snap-center/);
+  assert.match(fareRailMarkup, /h-\[150px\] w-\[250px\] min-w-\[250px\]/);
+  assert.match(fareRailMarkup, /shrink-0 snap-start/);
   assert.doesNotMatch(source, /310px\)\] max-w-\[310px\]/);
-  assert.match(source, /min-w-0 rounded-\[10px\]/);
+  assert.match(fareRailMarkup, /rounded-\[15px\] border-\[1\.5px\]/);
   assert.match(source, /whitespace-normal break-words \[overflow-wrap:anywhere\].*\[word-break:normal\]/);
   assert.doesNotMatch(source, /text-overflow|ellipsis/);
-  assert.match(source, /overflow-x-auto[\s\S]*sm:grid/);
+  assert.match(fareRailMarkup, /overflow-x-auto[\s\S]*sm:flex sm:snap-x sm:snap-mandatory/);
   assert.match(source, /scrollIntoView\(\{ behavior: "smooth", block: "nearest", inline: "nearest" \}\)/);
   assert.match(source, /max-w-\[1080px\] px-0 sm:px-6 lg:px-\[30px\]/);
-  assert.match(source, /border-y border-\[#E2E8F0\][\s\S]*sm:rounded-\[13px\] sm:border[\s\S]*sm:shadow-/);
+  assert.match(source, /border-b border-\[#E2E8F0\][\s\S]*sm:rounded-\[13px\] sm:border[\s\S]*sm:shadow-/);
   assert.doesNotMatch(source, /<section className="[^"]*overflow-hidden[^"]*" aria-labelledby="flight-details-heading"/);
   assert.match(source, /data-testid="flight-details-hero"[^>]*className="[^"]*overflow-hidden[^"]*sm:rounded-t-\[12px\]/);
   assert.match(source, /ml-4.*sm:ml-0/);
@@ -630,7 +641,7 @@ test("desktop Pick your fare cards mirror the native hierarchy without changing 
   assert.match(desktop, /data-desktop-fare-rail/);
   assert.match(desktop, /overflow-x-auto overscroll-x-contain/);
   assert.match(desktop, /sm:flex sm:snap-x sm:snap-mandatory/);
-  assert.match(desktop, /data-desktop-fare-card[^>]*[\\s\\S]*?h-\\[150px\\] w-\\[250px\\] min-w-\\[250px\\] shrink-0 snap-start[\\s\\S]*?rounded-\\[15px\\] border-\\[1\\.5px\\]/);
+  assert.match(desktop, /data-desktop-fare-card[\s\S]*?h-\[150px\] w-\[250px\] min-w-\[250px\] shrink-0 snap-start[\s\S]*?rounded-\[15px\] border-\[1\.5px\]/);
   assert.match(desktop, /border-\[#075EE8\][\s\S]*?shadow-\[0_6px_16px/);
   assert.match(desktop, /border-\[#D7E0EC\][\s\S]*?shadow-\[0_2px_7px/);
   assert.doesNotMatch(desktop, /selected \? "[^"]*border-(?:2|\[2px\])/);
@@ -645,8 +656,12 @@ test("desktop Pick your fare cards mirror the native hierarchy without changing 
   assert.match(desktop, /\(\?:base\|total\)\\s\+price/);
   assert.match(desktop, /data-desktop-fare-price className="absolute inset-x-3 bottom-2 flex min-h-12 min-w-0 items-end justify-center"/);
   assert.match(desktop, /text-\[19px\] font-semibold[^"\n]*text-slate-950/);
-  assert.doesNotMatch(desktop, /data-desktop-fare-price[\s\S]*?font-extrabold/);
-  assert.doesNotMatch(desktop, /data-desktop-fare-price[\s\S]*?text-\[#075EE8\]/);
+  const priceClasses = Array.from(desktop.matchAll(/data-desktop-fare-price className="[^"]*"><p className="([^"]*)"/g), match => match[1]);
+  assert.equal(priceClasses.length, 2, "both populated and empty-benefit fares retain a price");
+  for (const classes of priceClasses) {
+    assert.match(classes, /font-semibold.*text-slate-950/);
+    assert.doesNotMatch(classes, /font-extrabold|text-\[#075EE8\]/);
+  }
   assert.match(desktop, /tabular-nums[^"]*\[overflow-wrap:anywhere\]" aria-label=\{price\.ariaLabel\}>\{price\.formatted\}/);
   assert.match(desktop, /role="radio" aria-checked=\{selected\} tabIndex=\{selected \? 0 : -1\}/);
   assert.match(desktop, /onKeyDown=\{\(event\) => handleFareKeyDown\(event, index\)\}/);
@@ -762,7 +777,7 @@ test("desktop Flight Details keeps price and booking action inside Compare deals
   assert.match(panel, /data-desktop-flight-deal-list/);
   assert.match(panel, /data-desktop-flight-deal-card/);
   assert.match(panel, /data-desktop-flight-deal-action/);
-  assert.match(panel, /className="max-w-\\[640px\\] space-y-2 py-1"/);
+  assert.match(panel, /className="max-w-\[640px\] space-y-2 py-1"/);
   assert.match(panel, /fallbackOffer\?\.bookingProviderName\?\.trim\(\)/);
   assert.match(panel, /fallbackOffer\?\.provider\?\.trim\(\)/);
   assert.match(panel, /displayedDeals = deals\.length/);
@@ -771,9 +786,9 @@ test("desktop Flight Details keeps price and booking action inside Compare deals
   assert.doesNotMatch(panel, /data-desktop-flight-deal-benefits/);
   assert.match(panel, /"View deal"/);
   assert.match(panel, /"Unavailable"/);
-  assert.match(panel, /h-9 w-\\[112px\\]/);
+  assert.match(panel, /h-9 w-\[112px\]/);
   assert.match(panel, /data-desktop-flight-provider-logo/);
-  assert.match(panel, /min-h-\\[92px\\]/);
+  assert.match(panel, /min-h-\[92px\]/);
   assert.match(panel, /disabled=\{redirecting \|\| !canContinue\}/);
   assert.match(panel, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.doesNotMatch(source, /DesktopCheckoutSummary|data-desktop-checkout-summary/);
@@ -817,13 +832,13 @@ test("desktop Compare deals uses the shared Cars and Hotels price hierarchy", as
   assert.match(panel, /Trip total/);
   assert.match(panel, /View deal/);
   assert.match(panel, /rounded-xl border bg-white px-4 py-3/);
-  assert.match(panel, /grid-cols-\\[minmax\\(0,1fr\\)_auto\\]/);
-  assert.match(panel, /data-desktop-flight-deal-price[\s\S]*?mt-2 block min-w-0/);
-  assert.match(panel, /inline-flex h-9 w-\\[112px\\]/);
+  assert.match(panel, /grid-cols-\[minmax\(0,1fr\)_auto\]/);
+  assert.match(panel, /className="mt-2 block min-w-0" data-desktop-flight-deal-price/);
+  assert.match(panel, /inline-flex h-9 w-\[112px\]/);
   assert.match(panel, /data-provider-handoff-unavailable/);
-  assert.match(panel, /disabled:bg-\\[#004BB8\\]/);
+  assert.match(panel, /disabled:bg-\[#004BB8\]/);
   assert.match(panel, /data-desktop-flight-deal-provider/);
-  assert.match(panel, /deal\\.providerLogoUrl/);
+  assert.match(panel, /deal\.providerLogoUrl/);
   assert.match(panel, /BookingProviderLogo/);
   assert.doesNotMatch(source, /DUFFEL_PROVIDER_LOGO_URL/);
   assert.doesNotMatch(panel, /data-desktop-flight-deal-benefits/);
@@ -1110,7 +1125,7 @@ test("mobile web Flight Details uses the refined fare typography without changin
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   const fareSource = await readFile(new URL("./MobileNativeFareRail.tsx", import.meta.url), "utf8");
 
-  assert.match(source, /text-\[16px\] font-medium leading-\[21px\][^\"]*sm:text-\[18px\] sm:font-semibold sm:leading-tight[^\"]*">Pick your fare<\/h2>/);
+  assert.match(source, /text-\[16px\] font-medium leading-\[21px\][^\"]*sm:text-\[18px\] sm:font-medium sm:leading-tight[^\"]*">Pick your fare<\/h2>/);
   assert.match(fareSource, /text-\[19px\] font-semibold leading-\[23px\] tabular-nums/);
   assert.match(fareSource, /gap-\[10px\].*overflow-x-auto.*pb-\[18px\].*pt-3.*pr-\[38px\]/);
   assert.match(fareSource, /min-h-\[142px\] w-\[clamp\(197px,calc\(197px\+\(100vw-320px\)\*0\.27\),217px\)\]/);

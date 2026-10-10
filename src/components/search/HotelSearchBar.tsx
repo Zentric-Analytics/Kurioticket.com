@@ -390,7 +390,6 @@ export function HotelSearchBar({
 
   const checkInParsed = parseIsoDate(checkIn);
   const checkOutParsed = parseIsoDate(checkOut);
-  const normalizedRooms = String(clampCount(rooms, 1, 6));
   const selectedCountryHint = hasUserSelectedRegion
     ? selectedCountryCode ?? selectedOption.code
     : "";
@@ -438,7 +437,7 @@ export function HotelSearchBar({
         guestsRoomsMobileLauncherRef.current?.focus({ preventScroll: true });
       }
     });
-  }, [desktopPresentation, initialDesktopSection, submitOnDesktopOpen]);
+  }, [desktopPresentation, initialDesktopSection, submitOnDesktopOpen, setDestinationSuggestionsOpen]);
 
   useEffect(() => {
     if (!compact || mobileLayout === "default") return;
@@ -560,7 +559,7 @@ export function HotelSearchBar({
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [datesOpen, destinationSuggestionsOpen, guestsRoomsOpen]);
+  }, [datesOpen, destinationSuggestionsOpen, guestsRoomsOpen, setDestinationSuggestionsOpen]);
 
   useEffect(() => {
     const releaseExistingLock = () => {

@@ -27,7 +27,8 @@ test("Hotel Results hides only the mobile category tabs", () => {
 test("mobile Hotel search lives in the navbar and retains the existing edit sheet", () => {
   assert.doesNotMatch(resultsSource, /mobileResultsSearch=\{/);
   assert.match(resultsPageSource, /mobileResultsSearch=\{<div data-hotel-results-mobile-nav-search/);
-  assert.match(resultsSource, /setMobileNavSearchTarget\(document\.querySelector<HTMLElement>\("\[data-hotel-results-mobile-nav-search\]"\)\)/);
+  assert.match(resultsSource, /document\.querySelector<HTMLElement>\("\[data-hotel-results-mobile-nav-search\]"\)/);
+  assert.match(resultsSource, /setMobileNavSearchTarget\(\(current\) => current === nextMobileSearchTarget \? current : nextMobileSearchTarget\)/);
   assert.match(resultsSource, /createPortal\(renderMobileHotelNavSearch\(\), mobileNavSearchTarget\)/);
   assert.match(resultsSource, /aria-expanded=\{mobileHotelSearchOpen\}/);
   assert.match(resultsSource, /<MobileResultsEditSheet/);
@@ -43,7 +44,7 @@ test("Hotel mobile navbar shows the applied search without a scroll-swapped dupl
 });
 
 test("Hotel mobile filter and quick-filter surfaces match Cars background treatment", () => {
-  assert.match(resultsSource, /data-mobile-hotel-shortcuts[\s\S]*scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\]/);
+  assert.match(resultsSource, /data-mobile-hotel-shortcuts[\s\S]*scrollbar-hide flex w-full min-w-0/);
   assert.match(resultsSource, /border-\[#D8E1EC\] bg-white text-\[#142033\] group-hover:bg-slate-50/);
   assert.match(resultsSource, /active[\s\S]{0,180}border-\[#142033\] bg-\[#142033\] text-white/);
   assert.doesNotMatch(resultsSource, /active[\s\S]{0,180}border-\[#075EE8\] bg-\[#EAF2FF\] text-\[#004BB8\]/);
@@ -75,7 +76,7 @@ test("mobile Hotel shortcut rail keeps Cars geometry while Sort stays with the r
   assert.match(resultsSource, /selectedFilters\.roomTypes/);
   assert.match(resultsSource, /mobileShortcutDraftFacilities/);
   assert.match(resultsSource, /mobileShortcutDraftRoomTypes/);
-  assert.match(toolbar, /scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\] flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain pe-4/);
+  assert.match(toolbar, /scrollbar-hide flex w-full min-w-0 flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain px-3/);
   assert.match(resultsSource, /group inline-flex min-h-11 min-w-11 shrink-0 items-center/);
   assert.match(resultsSource, /inline-flex h-9 items-center gap-1 rounded-\[9px\]/);
   assert.match(resultsSource, /overflow-hidden p-0/);

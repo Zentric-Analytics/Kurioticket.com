@@ -64,17 +64,19 @@ test("Cars alert preserves its existing switch presentation", () => {
   assert.match(alert, /tracking \? "border-\[#004BB8\] bg-\[#004BB8\]" : "border-slate-300 bg-slate-200"/);
 });
 
-test("Hotel mobile web uses a real tracking switch while desktop keeps Create price alert", () => {
+test("Hotel mobile and desktop tracking switches share authenticated alert behavior", () => {
   assert.match(hotelAlert, /role="switch"/);
   assert.match(hotelAlert, /aria-checked=\{Boolean\(isTracking\)\}/);
-  assert.match(hotelAlert, /handleMobileToggle\(!isTracking\)/);
-  assert.match(hotelAlert, /fetch\("\/api\/price-alerts", \{ cache: "no-store"/);
+  assert.match(hotelAlert, /handleToggle\(!isTracking, "mobile"\)/);
+  assert.match(hotelAlert, /handleToggle\(!isTracking, "desktop"\)/);
+  assert.match(hotelAlert, /fetch\("\/api\/price-alerts", \{\s*cache: "no-store"/);
   assert.match(hotelAlert, /method: "PATCH"/);
-  assert.match(hotelAlert, /status: "PAUSED"/);
-  assert.match(hotelAlert, /status: "ACTIVE"/);
+  assert.match(hotelAlert, /updateStatus\(matchingAlert, "PAUSED"\)/);
+  assert.match(hotelAlert, /updateStatus\(samePausedTarget, "ACTIVE"\)/);
+  assert.match(hotelAlert, /body: JSON.stringify\(\{ status: nextStatus \}\)/);
   assert.match(hotelAlert, /sm:hidden/);
   assert.match(hotelAlert, /hidden rounded-2xl[^"]*sm:block/);
-  assert.match(hotelAlert, /travel\.account\.hotelAlert\.create/);
+  assert.match(hotelAlert, /travel\.account\.hotelAlert\.title/);
   assert.match(hotelAlert, /createPortal/);
 });
 

@@ -15,7 +15,7 @@ const headerSearch = source.slice(
   source.indexOf("const renderCarsSearchForm"),
 );
 const stickyShortcuts = source.slice(
-  source.indexOf("data-cars-results-filter-origin"),
+  source.lastIndexOf("<div", source.indexOf("data-cars-results-filter-origin")),
   source.indexOf("data-cars-results-toolbar"),
 );
 
@@ -31,7 +31,8 @@ test("standalone Cars uses one persistent AppHeader search launcher", () => {
   );
   assert.match(headerSearch, /data-cars-results-mobile-header-search/);
   assert.match(headerSearch, /locationPairSummary/);
-  assert.match(headerSearch, /rentalDateSummary/);
+  assert.match(headerSearch, /mobileSearchSecondarySummary/);
+  assert.match(source, /const mobileSearchSecondarySummary = `\$\{rentalDateSummary\} · \$\{timeSummary\} · \$\{driverAgeSummary\}`/);
   assert.match(headerSearch, /aria-expanded=\{mobileSearchOpen\}/);
   assert.match(
     headerSearch,
@@ -124,7 +125,7 @@ test("Cars shares Hotels filter motion and the exact Flight rounded edge at the 
   );
   assert.match(
     mobileStyles,
-    /\.scrollFilterBarPinned \[data-mobile-hotel-shortcuts\],[\s\S]*\.scrollFilterBarPinned \[data-cars-results-quick-filters\]/,
+    /\.scrollFilterBarPinned \{[^}]*width: 100vw;[^}]*height: 60px;[^}]*overflow: hidden;/,
   );
   assert.match(
     mobileStyles,

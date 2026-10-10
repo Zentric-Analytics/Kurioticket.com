@@ -150,7 +150,6 @@ export function AppHeader({
   mobileResultsSticky = true,
   carsResultsMobileInlineSearch = false,
   hideMobileSecondaryNavLinks = false,
-  mobileHeroOverlay = false,
   hideMobileCategoryTabs = false,
   hideTravelNav = false,
   hideDesktopTravelNav = false,
@@ -728,6 +727,8 @@ export function AppHeader({
     try {
       await revokeCurrentAccountSession();
       await signOut({ redirect: false, callbackUrl: "/" });
+      // A full document load clears cached authenticated UI after logout.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.assign("/");
     } catch {
       setIsSigningOut(false);

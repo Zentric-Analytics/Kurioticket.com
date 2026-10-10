@@ -14,8 +14,7 @@ test("mobile web Compare deals mirrors the compact real-offer contract", () => {
   assert.match(details, /role="radio"/);
   assert.match(details, /aria-checked=\{selected\}/);
   assert.match(details, /onClick=\{\(\) => onSelectOffer\(offer\.id\)\}/);
-  assert.match(details, /width=\{108\}/);
-  assert.match(details, /height=\{24\}/);
+  assert.match(details, /<CarOfferProviderBrand[\s\S]*providerName=\{providerName\}[\s\S]*compact/);
   assert.match(details, /size-4 shrink-0/);
   assert.match(details, /size-1\.5 rounded-full bg-\[#075EE8\]/);
   assert.match(details, /text-\[10\.5px\][^"]*leading-\[15px\]/);
@@ -50,7 +49,7 @@ test("mobile web KAYAK Compare deals mirrors native provider-owned identity", ()
   );
   assert.match(
     details,
-    /car\.sandboxPresentation \? \([\s\S]*?\{sandboxProvider\}[\s\S]*?\) : \([\s\S]*?kurioticket-logo-primary-light-bg\.svg/,
+    /const providerName =[\s\S]*compactBookingProviderName\(offer\)[\s\S]*providerValue\(car\.rentalCompanyName\)/,
   );
   assert.match(
     details,

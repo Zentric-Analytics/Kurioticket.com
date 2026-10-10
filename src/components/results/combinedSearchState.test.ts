@@ -23,10 +23,22 @@ test("zero offers are empty only after all providers finish successfully", () =>
   assert.equal(combinedSearchState(0,["error","success"]),"error");
   assert.equal(combinedSearchState(0,["success","needs-input"]),"needs-input");
 });
-test("all regular search screens use combined empty-state handling", () => {
-  for (const name of ["FlightResultsClient","HotelResultsClient","CarsResultsClient"]) {
+test("client-combined search screens use combined empty-state handling", () => {
+  for (const name of ["FlightResultsClient","CarsResultsClient"]) {
     assert.match(readFileSync(`src/components/results/${name}.tsx`,"utf8"),/<CombinedSearchEmpty otherStatus=/);
   }
+});
+
+test("Hotels waits for the server-combined result before rendering an empty or failed search", () => {
+  const client = readFileSync("src/components/results/HotelResultsClient.tsx", "utf8");
+  const aggregate = readFileSync("src/services/travel/hotelAggregator.ts", "utf8");
+  assert.match(aggregate, /const \[catalogue, kayak\] = await Promise\.all\(/);
+  assert.match(aggregate, /dedupeHotels\(\[\.\.\.catalogue, \.\.\.kayak\.results\]\)/);
+  assert.match(client, /fetch\("\/api\/hotels\/search"/);
+  assert.match(client, /data\.warningCategory === "provider_unavailable"/);
+  assert.match(client, /setResults\(data\.results\)/);
+  assert.match(client, /error && results\.length === 0/);
+  assert.match(client, /hotelResults\.noStaysMatchFiltersInline/);
 });
 
 test("combined empty screen renders generic loading, failure and completed-empty messages", () => {

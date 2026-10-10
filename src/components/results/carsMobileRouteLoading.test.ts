@@ -50,7 +50,7 @@ test("Cars mobile route loader uses the shared Cars loading presentation and vis
 test("valid Cars main searches enter mobile pending only after validation", () => {
   const standalone = carsMain.slice(
     carsMain.indexOf("const handleSubmit"),
-    carsMain.indexOf("if (isSubmitting)"),
+    carsMain.indexOf("\n  if (isSubmitting)"),
   );
   assert.ok(
     standalone.indexOf("validateCarsForm") <

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const details = readFileSync(
-  new URL("./hotelDetails/StandaloneHotelDetails.tsx", import.meta.url),
+  new URL("./hotelDetails/DesktopHotelDetails.tsx", import.meta.url),
   "utf8",
 );
 const nav = readFileSync(
@@ -45,14 +45,14 @@ test("desktop Hotel details use the same Rates, Overview, Reviews decision struc
 
 test("desktop Rates contains provider decisions only", () => {
   const comparePanel = details.slice(
-    details.indexOf('{activeTab === "compare"'),
-    details.indexOf('{activeTab === "about"'),
+    details.indexOf('data-desktop-section="rate"'),
+    details.indexOf('data-desktop-section="overview"'),
   );
   assert.match(comparePanel, /<HotelPriceComparisonSection/);
   assert.doesNotMatch(comparePanel, /data-hotel-mobile-map|<HotelLocationSection/);
   assert.doesNotMatch(comparePanel, /<RelatedHotelsSection/);
 
-  assert.match(rates, />\s*Rates\s*<\/h2>/);
+  assert.match(rates, /desktop \? "Compare prices" : "Rates"/);
   assert.match(rates, /bg-\[#F4F8FF\][\s\S]*?lg:bg-white/);
   assert.doesNotMatch(rates, /data-provider-amenities|<HotelAmenityList/);
   assert.match(rates, /text-\[18px\] font-extrabold/);
@@ -60,14 +60,14 @@ test("desktop Rates contains provider decisions only", () => {
 
 test("desktop Overview owns location, popular amenities, room comfort, accessibility, provider context, and related stays", () => {
   const aboutPanel = details.slice(
-    details.indexOf('{activeTab === "about"'),
-    details.indexOf('{activeTab === "reviews"'),
+    details.indexOf('data-desktop-section="overview"'),
+    details.indexOf('data-desktop-section="review"'),
   );
-  assert.match(aboutPanel, /mobileAfterDescription=[\s\S]*?<HotelLocationSection/);
-  assert.match(aboutPanel, /mobilePolicies=\{mobileProviderPolicies\}/);
-  assert.match(aboutPanel, /providerRoomName=\{providerRoomName\}/);
+  assert.match(aboutPanel, /<HotelLocationSection variant="desktop"/);
+  assert.match(aboutPanel, /property\?\.roomSummary/);
+  assert.match(aboutPanel, /property\?\.accessibility/);
   assert.doesNotMatch(aboutPanel, /data-provider-hotel-details|KAYAK-provided details/);
-  assert.match(aboutPanel, /data-hotel-mobile-overview-related[\s\S]*?<RelatedHotelsSection/);
+  assert.match(details, /id="hotel-related-hotels"[\s\S]*?<RelatedHotelsSection/);
 
   assert.match(about, /mobilePopularAmenities = amenities\.slice\(0, 4\)/);
   assert.match(about, /Popular amenities/);
@@ -91,7 +91,8 @@ test("mobile Reviews make the verified score a primary decision signal without i
 
 test("mobile related Hotels can use twelve API results while desktop can request its own visible-card cap", () => {
   assert.match(client, /mode === "standalone"\) detailsParams\.set\("relatedLimit", "12"\)/);
-  assert.match(related, /hotels\.slice\(0, 12\)/);
+  assert.match(related, /hotels\.slice\(0, limit\)/);
+  assert.match(related, /limit = 12/);
   assert.match(related, /desktopLimit = 7/);
   assert.match(related, /desktopHidden=\{index >= desktopLimit\}/);
   assert.match(related, /w-\[241px\]/);

@@ -54,7 +54,7 @@ test("source contract: homepage Rental Dates alone uses a decorative Calendar an
     carsBranch.indexOf('<CarsSummaryField id="homepage-cars-rental-dates"'),
     carsBranch.indexOf("<CarsRentalDatePickerContent"),
   );
-  assert.match(rentalDatesLauncher, /leadingIcon=\{<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" \/>\}/);
+  assert.match(rentalDatesLauncher, /leadingIcon=\{<Calendar aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\] sm:h-4 sm:w-4 sm:text-slate-500" \/>\}/);
   assert.match(rentalDatesLauncher, /showChevron=\{false\}/);
   assert.match(source, /showChevron = true/);
   assert.match(source, /\{showChevron \? <ChevronDown aria-hidden="true"/);
@@ -82,7 +82,7 @@ test("wide homepage Cars renders one conditional return-location field beside pi
   assert.match(carsBranch, /Different return location[\s\S]*?\{!compactHero \? carsReturnLocationField : null\}/);
   assert.match(carsBranch, /homepage-cars-driver-age[\s\S]*?Different return location/);
   assert.match(source, /if \(key === "returnToDifferentLocation" && value === false\) \{\s*next\.dropoffLocation = "";/);
-  assert.match(returnLocationField, /sm:!bg-white/);
+  assert.match(returnLocationField, /border-slate-300 bg-white/);
 });
 
 test("Cars CSS-hidden desktop autocompletes are logically closed on mobile", () => {
@@ -132,7 +132,8 @@ test("homepage Cars picker source contracts use the shared experiences", () => {
 test("desktop Cars pickers stay open for selection and use viewport-safe homepage placement", () => {
   for (const id of ["homepage-cars-rental-dates", "homepage-cars-time-range", "homepage-cars-driver-age"]) {
     const start = carsBranch.indexOf(`<CarsSummaryField id="${id}"`);
-    const invocation = carsBranch.slice(start, carsBranch.indexOf("\n", start));
+    const invocation = carsBranch.slice(start, carsBranch.indexOf("</CarsSummaryField>", start));
+    assert.ok(start >= 0, id);
     assert.match(invocation, /desktopPlacement="auto"/, id);
   }
 

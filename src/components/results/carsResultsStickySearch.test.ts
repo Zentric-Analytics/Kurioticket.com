@@ -203,7 +203,7 @@ test("source-contract: collapsed Cars search icons use neutral slate styling", (
 
   assert.notEqual(compactStart, -1);
   assert.notEqual(compactEnd, -1);
-  assert.match(compactToolbar, /className="h-4 w-4 shrink-0 text-slate-500"/);
+  assert.match(compactToolbar, /className="cars-results-navbar-leading-icon h-4 w-4 shrink-0 text-slate-500"/);
   assert.doesNotMatch(compactToolbar, /className="h-4 w-4 shrink-0 text-\[#004BB8\]"/);
 });
 

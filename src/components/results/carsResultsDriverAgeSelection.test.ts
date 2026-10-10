@@ -32,7 +32,7 @@ test("desktop-full Driver Age selection updates without closing the picker", () 
 test("desktop-sticky Driver Age selection updates without closing the picker", () => {
   assert.match(
     renderCarsSearchForm,
-    /placement: "desktop-full" \| "desktop-sticky" \| "mobile"/,
+    /placement: "desktop-full" \| "desktop-navbar" \| "desktop-sticky" \| "mobile"/,
   );
   assert.doesNotMatch(driverAgeSelection, /setDriverAgeOpen\(false\)/);
 });
