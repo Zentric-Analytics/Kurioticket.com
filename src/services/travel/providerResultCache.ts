@@ -1,4 +1,5 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
+import { encodeCohort, decodeCohort, isCohortManifest } from "@/lib/search/cohortEncoding";
 import { getPrisma } from "@/lib/prisma";
 import { runCacheWrite } from "@/lib/search/cacheWriteGate";
 import { Prisma } from "@/generated/prisma/client";
@@ -18,26 +19,57 @@ const memoryCarResults = new Map<
 const cacheKey = (vertical: ProviderDetailsVertical, resultId: string) =>
   `${vertical}:${resultId}`;
 
-function boundedCacheWrite<T>(task: (db: Prisma.TransactionClient) => Promise<T>) {
+function boundedCacheWrite<T>(task: (db: Prisma.TransactionClient) => Promise<T>, deadline?: number) {
   return runCacheWrite(() => getPrisma().$transaction(async db => {
     await db.$executeRaw`SET LOCAL statement_timeout = '4000ms'`;
     return task(db);
-  }, { maxWait: 1000, timeout: 5000 }));
+  }, { maxWait: 1000, timeout: 5000 }), deadline);
 }
 
-// Cohorts can contain thousands of full provider offers. Bind the payload once
-// and do not RETURNING it: neither caller consumes a copy from the database.
-function writeSearchCohort(vertical: ProviderDetailsVertical, resultId: string, results: unknown[], search: unknown, now: number) {
-  const payload = JSON.stringify(results);
-  const context = JSON.stringify(search);
-  return boundedCacheWrite(db => db.$executeRaw(Prisma.sql`
+// Compress and bound each database value; a small manifest publishes only a
+// complete immutable generation. Compression is in the app, not PostgreSQL.
+async function writeSearchCohort(vertical: ProviderDetailsVertical, resultId: string, results: unknown[], search: unknown, now: number) {
+  const { manifest, chunks } = await encodeCohort(results, randomUUID());
+  const deadline = Date.now() + 10_000;
+  const write = (id: string, value: unknown, contextValue: unknown) => {
+    const payload = JSON.stringify(value);
+    const context = JSON.stringify(contextValue);
+    return boundedCacheWrite(db => db.$executeRaw(Prisma.sql`
     INSERT INTO "ProviderResultCache" ("cacheKey", "vertical", "resultId", "normalizedResult", "searchContext", "expiresAt", "createdAt", "updatedAt")
-    VALUES (${cacheKey(vertical, resultId)}, ${vertical}, ${resultId}, ${payload}::jsonb, ${context}::jsonb, ${new Date(now + TTL_MS)}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    VALUES (${cacheKey(vertical, id)}, ${vertical}, ${id}, ${payload}::jsonb, ${context}::jsonb, ${new Date(now + TTL_MS)}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     ON CONFLICT ("cacheKey") DO UPDATE SET
       "normalizedResult" = EXCLUDED."normalizedResult",
       "searchContext" = EXCLUDED."searchContext",
       "expiresAt" = EXCLUDED."expiresAt", "updatedAt" = CURRENT_TIMESTAMP
-  `));
+    `), deadline);
+  };
+  for (let i = 0; i < chunks.length; i++) {
+    await write(`${resultId}:chunk:${manifest.generation}:${i}`, chunks[i], null);
+  }
+  // Readers see either the previous complete generation or this complete one.
+  // Failed/abandoned chunks expire normally; never publish a partial manifest.
+  await write(resultId, manifest, search);
+  console.info("[provider-result-cache]", { event: "cohort_published", vertical,
+    rawBytes: manifest.rawBytes, chunks: manifest.chunks, resultCount: results.length });
+}
+
+async function readSearchCohort(vertical: ProviderDetailsVertical, resultId: string, now: number): Promise<unknown[]> {
+  const db = getPrisma();
+  const row = await db.providerResultCache.findUnique({ where: { cacheKey: cacheKey(vertical, resultId) } });
+  if (!row || row.expiresAt.getTime() <= now) return [];
+  // Existing unexpired cohorts remain readable through the rolling deploy.
+  if (Array.isArray(row.normalizedResult)) return structuredClone(row.normalizedResult);
+  const manifest = row.normalizedResult;
+  if (!isCohortManifest(manifest)) return [];
+  const chunks: unknown[] = [];
+  for (let i = 0; i < manifest.chunks; i++) {
+    const chunk = await db.providerResultCache.findUnique({
+      where: { cacheKey: cacheKey(vertical, `${resultId}:chunk:${manifest.generation}:${i}`) },
+    });
+    if (!chunk || chunk.expiresAt.getTime() <= now) return [];
+    chunks.push(chunk.normalizedResult);
+  }
+  return decodeCohort(manifest, chunks);
 }
 
 function rememberCarInMemory(key: string, value: unknown, expiresAt: number) {
@@ -228,11 +260,7 @@ export async function getCarSearchCohort(
   );
   if (memory) return memory;
   try {
-    const row = await getPrisma().providerResultCache.findUnique({
-      where: { cacheKey: cacheKey("car", resultId) },
-    });
-    if (!row || row.expiresAt.getTime() <= now || !Array.isArray(row.normalizedResult)) return [];
-    return structuredClone(row.normalizedResult) as unknown as NormalizedCarResult[];
+    return await readSearchCohort("car", resultId, now) as NormalizedCarResult[];
   } catch {
     console.error("[provider-result-cache]", { event: "cohort_read_error", vertical: "car" });
     return [];
@@ -259,11 +287,7 @@ export async function getHotelSearchCohort(
 ): Promise<NormalizedHotelResult[]> {
   const resultId = hotelSearchCohortId(search);
   try {
-    const row = await getPrisma().providerResultCache.findUnique({
-      where: { cacheKey: cacheKey("hotel", resultId) },
-    });
-    if (!row || row.expiresAt.getTime() <= now || !Array.isArray(row.normalizedResult)) return [];
-    return structuredClone(row.normalizedResult) as unknown as NormalizedHotelResult[];
+    return await readSearchCohort("hotel", resultId, now) as NormalizedHotelResult[];
   } catch {
     console.error("[provider-result-cache]", { event: "cohort_read_error", vertical: "hotel" });
     return [];

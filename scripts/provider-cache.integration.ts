@@ -36,6 +36,26 @@ test("PostgreSQL persists every batched offer, duplicate update and complete coh
     const updatedCohort = results.map(result => ({ ...result, cancellationInfo: "Updated policy" }));
     await rememberHotelSearchCohort(updatedCohort, search);
     assert.deepEqual(await getHotelSearchCohort(search), updatedCohort);
+    const manifestRow = await db.providerResultCache.findFirstOrThrow({ where: {
+      resultId: { startsWith: "__hotel-search-cohort__:", not: { contains: ":chunk:" } },
+    } });
+    const manifest = manifestRow.normalizedResult as { generation: string; chunks: number; format: string };
+    assert.equal(manifest.format, "gzip-chunks-v1");
+    const firstChunk = await db.providerResultCache.findUniqueOrThrow({ where: {
+      cacheKey: `${manifestRow.cacheKey}:chunk:${manifest.generation}:0`,
+    } });
+    assert.ok(Buffer.byteLength(JSON.stringify(firstChunk.normalizedResult)) <= 87386);
+    await db.providerResultCache.delete({ where: { cacheKey: firstChunk.cacheKey } });
+    assert.deepEqual(await getHotelSearchCohort(search), [], "missing chunk must never expose a partial result set");
+    await db.providerResultCache.create({ data: firstChunk as never });
+    assert.deepEqual(await getHotelSearchCohort(search), updatedCohort);
+    await db.$executeRawUnsafe(`CREATE FUNCTION reject_manifest() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN IF NEW."normalizedResult"->>'format' = 'gzip-chunks-v1' THEN RAISE EXCEPTION 'synthetic publish failure'; END IF; RETURN NEW; END $$`);
+    await db.$executeRawUnsafe(`CREATE TRIGGER reject_manifest BEFORE INSERT OR UPDATE ON "ProviderResultCache" FOR EACH ROW EXECUTE FUNCTION reject_manifest()`);
+    await rememberHotelSearchCohort(results, search);
+    await db.$executeRawUnsafe('DROP TRIGGER reject_manifest ON "ProviderResultCache"');
+    assert.deepEqual(await getHotelSearchCohort(search), updatedCohort, "failed publication preserves the previous complete generation");
+    await new Promise(resolve => setTimeout(resolve, 5100));
     // A later search must not overwrite the first search's distinct result identity.
     await rememberProviderResults("hotel", [{ id: "second-search", name: "Other hotel" }], search);
     assert.deepEqual((await getProviderResultWithContext("hotel", results[1041].id))?.result, results[1041]);
