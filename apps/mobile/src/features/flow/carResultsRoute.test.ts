@@ -9,17 +9,21 @@ test("car results route mounts the active approved car results surface", () => {
   assert.match(travelResults, /product === "car".*ApprovedCarResultsScreen/);
 });
 
-test("approved car results use the live API contract and open the native detail route", () => {
+test("approved car results use live canonical inventory and inline safe provider offer handoffs", () => {
   const screen = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
+  const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
+  const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
+  const deals = readFileSync("src/features/search/nativeCarResultDeals.ts", "utf8");
   assert.match(screen, /travelApi\.searchCars/);
   assert.match(screen, /safeCanonicalCarResult/);
   assert.match(screen, /canonicalResultsWereSilentlyLost/);
-  assert.match(screen, /pathname:\s*"\/car-details"/);
-  assert.match(screen, /result:JSON\.stringify\(\{\.\.\.result,imageUrl:resolveNativeCarImageUri\(result\.imageUrl\)\?\?result\.imageUrl\}\)/);
-  assert.match(screen, /carResultsStack:\s*"1"/);
-  assert.match(screen, /result\.searchPolicy\.action\.kind==="provider"/);
-  assert.match(screen, /Linking\.openURL\(result\.searchPolicy\.action\.href\)/);
-  assert.match(screen, /CarResultCard/);
+  assert.match(screen, /<CarResultCard result=\{item\}/);
+  assert.doesNotMatch(screen, /pathname:\s*"\/car-details"|carResultsStack|const openDeal=/);
+  assert.match(card, /<NativeCarResultOfferPicker result=\{result\}/);
+  assert.match(card, /nativeCarPrimaryBookingUrl\(result\)/);
+  assert.match(picker, /Linking\.openURL\(bookingUrl\)/);
+  assert.match(deals, /getCarDealPickerGroups\(result\)/);
+  assert.match(deals, /validHttpsBookingUrl\(offer\.bookingUrl\)/);
   assert.doesNotMatch(screen, /Hertz|Enterprise|Toyota RAV4|Chevrolet Tahoe/);
 });
 
