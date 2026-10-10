@@ -72,8 +72,8 @@ export async function POST(request: Request) {
     signal: request.signal,
   };
   const aggregate = providerMode
-    ? await searchHotelsByProvider(search, providerMode, { kayak: kayakContext })
-    : await searchHotels(search, { kayak: kayakContext });
+    ? await searchHotelsByProvider(search, providerMode, { kayak: kayakContext, defer: after })
+    : await searchHotels(search, { kayak: kayakContext, defer: after });
   if (aggregate.unavailableMessage) {
     after(() => Promise.all(
       aggregate.providerStatuses.map((provider) =>

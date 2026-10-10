@@ -4,25 +4,29 @@ import { buildStaticHotelResults } from "@/services/travel/staticHotelResults";
 import { compareHotelsByAvailablePrice } from "@/lib/hotels/hotelResultAvailability";
 import { searchKayakHotels, type KayakRequestContext } from "./kayakMetasearchProvider";
 import { rememberHotelSearchCohort, rememberProviderResults } from "./providerResultCache";
+import { persistHotelInventory } from "./persistHotelInventory";
+type HotelSearchOptions = { kayak?: KayakRequestContext; defer?: (task: () => Promise<void>) => void };
 
 export type HotelProviderMode = "kayak-sandbox";
 
 async function persistHotelProviderResults(
   results: NormalizedHotelResult[],
   search: HotelSearchParams,
+  defer?: HotelSearchOptions["defer"],
 ) {
   if (results.length) rememberHotels(results, search);
-  await Promise.all([
-    rememberProviderResults("hotel", results, search),
-    rememberHotelSearchCohort(results, search),
-  ]);
+  await persistHotelInventory(
+    () => rememberHotelSearchCohort(results, search),
+    () => rememberProviderResults("hotel", results, search),
+    defer,
+  );
 }
 
 /** Provider-only search mode used by gated diagnostics while retaining the canonical Hotel UI contract. */
 export async function searchHotelsByProvider(
   search: HotelSearchParams,
   provider: HotelProviderMode,
-  options: { kayak?: KayakRequestContext } = {},
+  options: HotelSearchOptions = {},
 ): Promise<AggregatedResult<NormalizedHotelResult>> {
   const startedAt = Date.now();
   if (provider !== "kayak-sandbox") {
@@ -37,7 +41,7 @@ export async function searchHotelsByProvider(
 
   const kayak = await searchKayakHotels(search, options.kayak);
   const results = [...kayak.results].sort(compareHotelsByAvailablePrice);
-  await persistHotelProviderResults(results, search);
+  await persistHotelProviderResults(results, search, options.defer);
 
   return {
     results,
@@ -53,7 +57,7 @@ export async function searchHotelsByProvider(
 /** The sole current hotel pipeline: deterministic catalogue inventory plus enabled providers. */
 export async function searchHotels(
   search: HotelSearchParams,
-  options: { kayak?: KayakRequestContext } = {},
+  options: HotelSearchOptions = {},
 ): Promise<AggregatedResult<NormalizedHotelResult>> {
   const startedAt = Date.now();
   const [catalogue, kayak] = await Promise.all([
@@ -64,10 +68,11 @@ export async function searchHotels(
     compareHotelsByAvailablePrice,
   );
   if (results.length) rememberHotels(results, search);
-  await Promise.all([
-    rememberProviderResults("hotel", kayak.results, search),
-    rememberHotelSearchCohort(results, search),
-  ]);
+  await persistHotelInventory(
+    () => rememberHotelSearchCohort(results, search),
+    () => rememberProviderResults("hotel", kayak.results, search),
+    options.defer,
+  );
   return {
     results,
     providerStatuses: [
