@@ -404,12 +404,19 @@ test("Postgres cache persistence uses one atomic set-based upsert for 603 rows",
   assert.equal(query.values.length, records.length * 6);
 });
 
-test("production backend keeps query count constant through 1000 rows", async () => {
+test("production backend bounds statements to 50 rows in one transaction per search", async () => {
   let executeCount = 0;
+  let transactions = 0;
   const database = {
+    async $transaction(run: (tx: unknown) => Promise<unknown>) {
+      transactions++;
+      return run(database);
+    },
+    async $executeRaw() {},
     async $queryRaw(query: { values: unknown[] }) {
       executeCount += 1;
       const size = query.values.length / 6;
+      assert.ok(size <= 50);
       return Array.from({ length: size }, (_, index) => ({
         publicResultId: `duffel-result-query-${size}-${index}`,
       }));
@@ -431,7 +438,8 @@ test("production backend keeps query count constant through 1000 rows", async ()
     measurements.push({ size, elapsedMs: performance.now() - before });
   }
 
-  assert.equal(executeCount, 4);
+  assert.equal(executeCount, 36);
+  assert.equal(transactions, 4);
   assert.deepEqual(measurements.map(({ size }) => size), [10, 100, 603, 1000]);
   console.info("[flight-cache-test:bulk-write]", measurements);
 });
