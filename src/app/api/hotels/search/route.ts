@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicHotel } from "@/lib/searchCache";
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
     ? await searchHotelsByProvider(search, providerMode, { kayak: kayakContext })
     : await searchHotels(search, { kayak: kayakContext });
   if (aggregate.unavailableMessage) {
-    await Promise.all(
+    after(() => Promise.all(
       aggregate.providerStatuses.map((provider) =>
         logProviderCall({
           provider: provider.provider,
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
           errorMessage: provider.error,
         }),
       ),
-    );
+    ).then(() => undefined));
 
     return NextResponse.json(
       {
@@ -108,11 +109,22 @@ export async function POST(request: Request) {
   }
 
   const publicResults = aggregate.results.map(toPublicHotel);
+  console.info("[hotel-search-summary]", {
+    requestId,
+    searchFingerprint: createHash("sha256").update(JSON.stringify(search)).digest("hex"),
+    offerCount: publicResults.length,
+    propertyCount: new Set(publicResults.map(result => JSON.stringify([result.provider, result.propertyGroupId ?? result.id]))).size,
+    latencyMs: aggregate.latencyMs,
+    providers: aggregate.providerStatuses.map(provider => ({
+      provider: provider.provider, status: provider.status, offerCount: provider.results.length,
+      latencyMs: provider.latencyMs, error: sanitizeProviderError(provider.error),
+    })),
+  });
   const status = aggregate.providerStatuses.some((provider) => provider.status === "failed")
       ? "PARTIAL"
       : "SUCCESS";
 
-  await Promise.all([
+  after(() => Promise.all([
     logSearchHistory({
       userId: session?.user?.id,
       type: "HOTEL",
@@ -143,7 +155,7 @@ export async function POST(request: Request) {
         errorMessage: provider.error,
       }),
     ),
-  ]);
+  ]).then(() => undefined));
 
   const classified = classifyHotels(publicResults, aggregate.warnings, requestId);
   return NextResponse.json({
