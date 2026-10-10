@@ -10,6 +10,7 @@ export function CarInventoryLoader({ values, fallback }: {
 }) {
   const [results, setResults] = useState<NormalizedCarResult[] | null>(null);
   const [error, setError] = useState(false);
+  const [invalidSearch, setInvalidSearch] = useState(false);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
@@ -19,6 +20,10 @@ export function CarInventoryLoader({ values, fallback }: {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(values), signal: controller.signal,
     }).then(async response => {
+      if (response.status === 400) {
+        if (active) setInvalidSearch(true);
+        return;
+      }
       if (!response.ok) throw new Error("Car inventory unavailable");
       const data = await response.json();
       if (!Array.isArray(data.results)) throw new Error("Invalid car inventory");
@@ -27,6 +32,7 @@ export function CarInventoryLoader({ values, fallback }: {
       .finally(() => window.clearTimeout(timeout));
     return () => { active = false; window.clearTimeout(timeout); controller.abort(); };
   }, [values, attempt]);
+  if (invalidSearch) return <CarsResultsClient values={values} initialResults={[]} inventoryStatus="invalid-search" />;
   if (error) return <main className="page-shell py-8">
     <p role="alert">We couldn’t complete your search. Please try again.</p>
     <button type="button" className="mt-4 rounded border px-4 py-2" onClick={() => {
