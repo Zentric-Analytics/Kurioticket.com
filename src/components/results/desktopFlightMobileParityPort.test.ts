@@ -11,7 +11,7 @@ const searchFields = readFileSync(new URL("../search/FlightSearchFieldPrimitives
 const globals = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 
 test("desktop Flight Results adopts approved mobile-web visual rules without replacing mobile contracts", () => {
-  assert.match(results, /data-flight-results-main className="bg-\[#F5F7FB\][^"]*sm:bg-\[#F3F6FA\][^"]*lg:bg-\[#F5F7FB\]"/);
+  assert.match(results, /data-flight-results-main className="max-sm:overflow-x-clip bg-\[#F5F7FB\][^"]*sm:bg-\[#F3F6FA\][^"]*lg:bg-white"/);
   assert.match(results, /data-desktop-cheaper-nearby/);
   assert.match(results, /className="max-sm:pt-2 max-sm:pb-1 sm:mb-4"><div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
   assert.match(results, /data-flight-results-card-list className="space-y-3 sm:space-y-4"/);
@@ -86,7 +86,8 @@ test("desktop nearby fares keep seven dates and arrows but use mobile-like indiv
   const desktopNearby = results.match(/data-desktop-cheaper-nearby[\s\S]*?className="([^"]*)"[\s\S]*?>\s*Cheaper nearby:/)?.[1] ?? "";
   assert.match(desktopNearby, /px-0/);
   assert.match(desktopNearby, /w-fit/);
-  assert.match(desktopNearby, /text-\[13px\] font-medium/);
+  assert.match(desktopNearby, /desktop-flight-cheaper-nearby/);
+  assert.match(globals, /\.desktop-flight-cheaper-nearby \{\s*font-size: 11px !important;\s*font-weight: 600 !important;\s*line-height: 16px !important;/);
   assert.doesNotMatch(desktopNearby, /mx-auto|rounded-full|bg-white|ring-slate-200/);
   assert.match(results, /Cheaper nearby: \{formatFareStripDateLabel\(cheaperNearbyFare\.date, calendarLocale\)\} · Save \{cheaperNearbyFare\.savings\}/);
 });
@@ -112,13 +113,13 @@ test("desktop Flight result cards use the lighter hierarchy without changing Mob
   assert.match(globals, /\.flight-card-price-value\.flight-card-price\[data-price-size="normal"\] \{[\s\S]*font-size: 1\.1875rem;/);
   assert.match(globals, /\.flight-results-grid \.flight-card-flight-number \{ font-size: 0\.6875rem; line-height: 0\.875rem; \}/);
   assert.match(globals, /\.flight-results-grid \.flight-card-time \{ font-size: 1rem; line-height: 1\.125rem; \}/);
-  assert.match(card, /flight-card-details mt-3[^\n]*rounded-lg bg-slate-50\/70/);
-  assert.match(card, /className="h-3\.5 w-3\.5 shrink-0 text-black"/);
+  assert.match(card, /flight-card-details mt-3 grid min-w-0 flex-1 items-start gap-3 px-3 py-2\.5/);
+  assert.match(card, /className="flight-card-detail-icon h-3\.5 w-3\.5 shrink-0 text-slate-500"/);
   assert.match(globals, /grid-template-areas:\s*"legs fare"\s*"details details"/);
   assert.match(card, /actionLabel \?\? t\("viewDeal"\)/);
   assert.match(card, /flight-card-fare-action flex flex-col items-end/);
-  assert.match(card, /flight-card-fare-action flex flex-col items-end justify-end/);
-  assert.match(card, /flight-card-fare-commerce mt-auto flex w-full flex-col items-end/);
+  assert.match(card, /flight-card-fare-action flex flex-col items-end justify-start/);
+  assert.match(card, /flight-card-fare-commerce flex w-full flex-col items-end/);
   assert.match(card, /flight-card-view-button mt-2/);
   assert.match(globals, /\.flight-card-fare-action \{[\s\S]*padding-bottom: 0\.25rem;/);
   assert.match(globals, /\.flight-card-fare-action \.flight-card-price-value \{[\s\S]*text-align: right;/);
@@ -138,9 +139,10 @@ test("desktop Flight result cards use the lighter hierarchy without changing Mob
 
 test("desktop Flight Details carries fare typography, underline-only tabs, and price readiness", () => {
   assert.match(details, /data-desktop-fare-price-loading/);
-  assert.match(details, /data-desktop-trip-price-loading/);
+  assert.match(details, /data-desktop-flight-deal-list/);
+  assert.match(details, /pricesReady=\{mobilePricesReady\}/);
   assert.match(details, /sm:text-\[18px\] sm:font-medium/);
-  assert.match(details, /text-\[20px\] font-semibold leading-5 text-\[#075EE8\]/);
-  assert.match(details, /activeTab === tab.id \? "border-\[#075EE8\] text-slate-700"/);
-  assert.match(details, /priceLoading=\{!mobilePricesReady\}/);
+  assert.match(details, /text-\[20px\] font-semibold leading-6 tracking-\[-0\.02em\] tabular-nums text-\[#192024\]/);
+  assert.match(details, /activeTab === tab.id \? "border-\[#075EE8\]" : "border-transparent"/);
+  assert.match(details, /mobilePricesReady \? <div role="radiogroup"/);
 });

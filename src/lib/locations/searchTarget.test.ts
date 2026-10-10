@@ -11,12 +11,13 @@ const target = {
   ],
 } as const;
 
-test("a selected location preserves canonical identity and namespaced provider bindings", () => {
+test("a selected location preserves display identity but cannot authorize client-carried provider bindings", () => {
   const parsed = searchLocationSchema.parse(target);
   assert.equal(parsed.id, "city:us-new-york");
   assert.equal(parsed.submittedValue, "New York, NY, United States");
-  assert.equal(verifiedProviderValue(parsed, "kayak"), "kplace:123");
-  assert.equal(verifiedProviderValue(parsed, "duffel"), "cit_nyc_us");
+  assert.deepEqual(parsed.providerBindings, target.providerBindings);
+  assert.equal(verifiedProviderValue(parsed, "kayak"), undefined);
+  assert.equal(verifiedProviderValue(parsed, "duffel"), undefined);
 });
 
 test("ambiguous duplicate and unverified bindings are never resolved", () => {

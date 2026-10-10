@@ -170,7 +170,8 @@ test("location and stay-fit facts use metadata without invented distances", () =
   assert.match(location, /Map preview unavailable/);
   assert.match(location, /stayFitFacts\.map/);
   assert.match(location, /accessibilityDetails\.map/);
-  assert.match(location, /rel="noopener noreferrer"/);
+  assert.match(location, /<iframe[\s\S]*?src=\{activeEmbedUrl\}[\s\S]*?loading="lazy"[\s\S]*?referrerPolicy="strict-origin-when-cross-origin"/);
+  assert.doesNotMatch(location, /target="_blank"/);
   assert.doesNotMatch(desktop + location, /\b\d+ min(?:ute)?s?\b|\b\d+ min walk\b/i);
 });
 

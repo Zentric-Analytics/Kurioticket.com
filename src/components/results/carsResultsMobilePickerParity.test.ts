@@ -169,10 +169,11 @@ test("Results Edit time opens at the top without discarding selected draft value
   assert.match(carsPickerContent, /open=\{open\}/);
   assert.match(carsPickerContent, /pickupListRef\.current\.scrollTop = 0/);
   assert.match(carsPickerContent, /returnListRef\.current\.scrollTop = 0/);
-  assert.match(carsPickerContent, /aria-selected=\{selectedTime === time\}/);
+  assert.match(carsPickerContent, /<CarsTimeOptionButton[\s\S]*?selected=\{selectedTime === time\}/);
+  assert.match(carsPickerContent, /role="option"\s+aria-selected=\{selected\}/);
   assert.match(
     carsPickerContent,
-    /mobileShell && selectedTime === time[\s\S]*?data-selected-time-indicator/,
+    /mobileShell && selected[\s\S]*?data-selected-time-indicator/,
   );
   assert.match(
     carsPickerContent,

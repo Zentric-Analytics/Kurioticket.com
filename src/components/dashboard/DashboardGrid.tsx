@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
+import { AuthenticatorQrCode } from "./AuthenticatorQrCode";
 import { useRouter } from "next/navigation";
 import {
   Bell,
@@ -2913,6 +2914,8 @@ export function SecurityDashboardPage() {
     if (!window.confirm("Sign out everywhere, including this device?")) return;
     const response = await fetch("/api/account/security/sessions/revoke-all", { method: "POST", credentials: "same-origin" });
     if (!response.ok) { setActionMessage("Unable to sign out everywhere."); return; }
+    // This is an authentication endpoint, not a client-side application route.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.assign("/api/auth/signout?callbackUrl=/auth/signin");
   };
 
@@ -3156,7 +3159,7 @@ export function SecurityDashboardPage() {
             ) : (
               <><p className="mt-2 text-sm leading-6 text-slate-600">{twoFactorModal === "setup" ? "Scan the QR code with an authenticator app, or enter the manual setup key. Then enter the current 6-digit code." : twoFactorModal === "recovery" ? "Enter a current authenticator app code to replace your recovery codes." : "Disabling 2FA reduces account protection. Verify with your authenticator/recovery code, or your current password."}</p>
               {twoFactorModalError ? <MessageBanner tone="error" className="mt-4">{twoFactorModalError}</MessageBanner> : null}
-              {twoFactorModal === "setup" && totpSetup ? <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-center"><img alt="Authenticator app QR code" className="mx-auto h-48 w-48 rounded-lg bg-white p-2" src={`https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=${encodeURIComponent(totpSetup.otpauthUri)}`} /><p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Manual setup key</p><code className="mt-1 block break-all rounded-lg bg-white px-3 py-2 text-sm font-bold text-slate-900">{totpSetup.manualSetupKey}</code></div> : null}
+              {twoFactorModal === "setup" && totpSetup ? <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-center"><AuthenticatorQrCode value={totpSetup.otpauthUri} /><p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Manual setup key</p><code className="mt-1 block break-all rounded-lg bg-white px-3 py-2 text-sm font-bold text-slate-900">{totpSetup.manualSetupKey}</code></div> : null}
               <div className="mt-5 space-y-4">
                 <label className="block text-sm font-medium text-slate-800">{twoFactorModal === "disable" ? "Authenticator or recovery code" : "Authenticator code"}
                   <input value={twoFactorCode} onChange={(event) => { setTwoFactorModalError(""); setTwoFactorCode(event.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 32)); }} autoComplete="one-time-code" maxLength={32} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="123456" />

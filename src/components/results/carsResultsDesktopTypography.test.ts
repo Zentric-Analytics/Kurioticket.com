@@ -35,9 +35,9 @@ test("desktop Cars Results uses a readable, professional typography hierarchy", 
   assert.match(results, /lg:text-\[15px\] lg:font-bold lg:leading-5 lg:tracking-\[-0\.005em\] lg:text-\[#07133B\]/);
   assert.match(results, /data-cars-results-compact-search-summary[\s\S]*?text-\[15px\] font-semibold leading-5 tracking-\[-0\.005em\]/);
   assert.match(results, /sticky-cars-search-title[\s\S]*?text-\[19px\] font-bold leading-6 tracking-\[-0\.012em\]/);
-  assert.match(results, /aria-label="Breadcrumb"[\s\S]*?text-\[13px\] font-medium leading-5 text-\[#526174\]/);
-  assert.match(results, /lg:text-\[17px\] lg:font-bold lg:leading-6 lg:tracking-\[-0\.008em\]/);
-  assert.match(results, /cars-results-desktop-filter-heading-type inline-flex h-9/);
+  assert.doesNotMatch(results, /aria-label="Breadcrumb"/);
+  assert.match(results, /lg:text-\[14px\] lg:font-semibold lg:leading-5 lg:tracking-\[-0\.005em\]/);
+  assert.match(results, /cars-results-desktop-sort-trigger inline-flex h-9/);
 });
 
 
@@ -81,7 +81,7 @@ test("desktop Cars full-search values and filter headings share one enforced ren
   );
   assert.match(
     results,
-    /!pickupDate && "lg:font-medium lg:text-slate-400"/,
+    /!pickupDate && "text-slate-400 lg:font-medium lg:text-slate-400"/,
   );
 });
 
@@ -96,10 +96,10 @@ test("desktop Cars filters mirror the stronger mobile hierarchy without changing
 
 test("desktop Cars result cards mirror the mobile weight and category hierarchy", () => {
   assert.equal((card.match(/text-\[19px\] font-bold leading-\[24px\] tracking-\[-0\.012em\] text-\[#07133B\]/g) ?? []).length, 2);
-  assert.match(card, /text-\[11px\] font-bold uppercase leading-4 tracking-\[0\.12em\] text-\[#004BB8\]/);
-  assert.match(card, /text-\[14px\] font-medium leading-5 text-\[#334155\]/);
-  assert.match(card, /text-\[14px\] font-semibold leading-5 text-slate-950/);
-  assert.match(card, /lg:text-\[14px\] lg:font-medium lg:leading-5 lg:text-\[#334155\]/);
+  assert.match(card, /text-\[10px\] font-bold uppercase leading-\[15px\] tracking-\[0\.1em\] text-\[#004BB8\]/);
+  assert.match(card, /text-\[13px\] font-semibold leading-\[18px\] tracking-\[-0\.001em\] text-\[#334155\]/);
+  assert.match(card, /text-\[13px\] font-semibold leading-\[18px\] tracking-\[-0\.001em\] text-slate-950/);
+  assert.match(card, /lg:text-\[13px\] lg:font-semibold lg:leading-\[18px\] lg:tracking-\[-0\.001em\] lg:text-\[#334155\]/);
   assert.doesNotMatch(card, /text-\[19px\] font-semibold leading-\[24px\]/);
   assert.doesNotMatch(card, /text-\[13px\] font-medium normal-case leading-5 tracking-normal/);
   assert.match(card, /desktopSurfaceParity \? "lg:text-\[13px\] lg:leading-5" : ""/);

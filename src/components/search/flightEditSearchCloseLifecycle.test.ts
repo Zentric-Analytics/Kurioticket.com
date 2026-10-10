@@ -78,7 +78,7 @@ test("bottom-sheet close keeps Results locked until unmount and restores once ac
   assert.deepEqual(
     browser.scrollCalls,
     Array.from({ length: 5 }, () => [
-      { left: 24, top: 840, behavior: "auto" },
+      { left: 24, top: 840, behavior: "instant" },
     ]),
   );
   assert.equal(browser.rootStyle.overflow, "");

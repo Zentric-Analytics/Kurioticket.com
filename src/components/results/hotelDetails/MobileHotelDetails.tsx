@@ -119,9 +119,14 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
     }
   }
 
+  function selectProviderOffer(offerId: string) {
+    setHandoffError("");
+    setSelectedId(offerId);
+  }
+
   async function viewDeal(offer: HotelDetailsProviderOffer) {
     if (pending) return;
-    setSelectedId(offer.id);
+    selectProviderOffer(offer.id);
     if (offer.action.kind === "internal-room-flow") { setOverlay("rooms"); return; }
 
     const providerWindow = window.open("about:blank", "_blank");
@@ -189,7 +194,7 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
             selectable
             pendingOfferId={pending ? selected?.id ?? null : null}
             continueLabel={props.labels.viewDeal}
-            onSelect={setSelectedId}
+            onSelect={selectProviderOffer}
             onContinue={(offerId) => {
               const nextOffer = offers.find(candidate => candidate.id === offerId);
               if (nextOffer) void viewDeal(nextOffer);

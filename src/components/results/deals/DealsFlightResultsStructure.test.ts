@@ -10,7 +10,7 @@ test("FlightCard action distinguishes undefined string and null contracts", asyn
   assert.match(card, /detailsHref\?: string \| null/);
   assert.match(card, /detailsHref === undefined\s*\? `\/flights\/details/);
   assert.match(card, /onAction \? \(\s*<button/);
-  assert.match(card, /detailsHref \? \(\s*<LinkButton/);
+  assert.match(card, /detailsHref \? \(\s*<Link\s+href=\{detailsHref\}/);
   assert.match(card, /disabled\s*aria-disabled="true"/);
 });
 

@@ -125,12 +125,12 @@ test("source-contract: Cars price filters use the short Price label on mobile an
   );
   assert.doesNotMatch(source, /t\("carsResults\.pricePerDay"\)/);
   assert.equal(
-    (source.match(/carFilterGroupLabel\([^\n]+, t, true\)/g) ?? []).length,
-    3,
+    (source.match(/carFilterGroupLabel\([^\n]+, t\)/g) ?? []).length,
+    7,
   );
   assert.match(
     source,
-    /carFilterGroupLabel\(group, t, true\)/,
+    /carFilterGroupLabel\(group, t\)/,
   );
   assert.match(presentation, /id: "pricePerDay", titleKey: "", title: "Price"/);
   assert.doesNotMatch(

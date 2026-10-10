@@ -78,7 +78,7 @@ test("results desktop search typography mirrors the polished mobile-web hierarch
 });
 
 test("results search preserves both desktop grid geometries with the refined compact height", () => {
-  assert.match(source, /mx-auto w-full min-w-0 max-w-5xl/);
+  assert.match(source, /cn\("mx-auto w-full min-w-0", isNavbarSearch \? "max-w-full" : "max-w-5xl"/);
   const fieldShellClass = source.match(
     /const fieldShellClass =\s*\n\s*"([^"]+)";/,
   )?.[1];
@@ -216,11 +216,11 @@ test("desktop-full rental dates compose calendar, date value, then chevron witho
   assert.ok(searchDateCell, "SearchDateCell should remain defined");
   assert.match(
     searchDateCell,
-    /\{showRentalDuration \? \(\s*<Calendar[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"[\s\S]*?<span className="min-w-0 flex-1">[\s\S]*?\{summary\}[\s\S]*?<ChevronDown/,
+    /\{showRentalDuration \? \(\s*<Calendar[\s\S]*?className="cars-results-navbar-leading-icon h-4 w-4 shrink-0 text-slate-500"[\s\S]*?<span className="min-w-0 flex-1">[\s\S]*?\{summary\}[\s\S]*?<ChevronDown/,
   );
   assert.doesNotMatch(searchDateCell, /rentalDaysLabel|rentalDayCount/);
   const labelRow = searchDateCell.match(
-    /<div className=\{cn\(fieldLabelClass,[^\n]*\)\}>[\s\S]*?<\/div>/,
+    /<div data-cars-results-navbar-label[^>]*>[\s\S]*?<\/div>/,
   )?.[0];
   assert.ok(labelRow, "SearchDateCell label row should remain defined");
   assert.doesNotMatch(labelRow, /<Calendar\b/);
@@ -332,7 +332,7 @@ test("desktop time cell matches the main compact range while retaining full pick
   assert.match(searchTimeCell, /useMainPageDesktopPresentation: boolean/);
   assert.match(
     searchTimeCell,
-    /<Clock[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"[\s\S]*?formatCarsCompactTimeRange\(pickupTime, dropoffTime\)/,
+    /<Clock[\s\S]*?className="cars-results-navbar-leading-icon h-4 w-4 shrink-0 text-slate-500"[\s\S]*?formatCarsCompactTimeRange\(pickupTime, dropoffTime\)/,
   );
   assert.match(searchTimeCell, /<ChevronDown/);
   assert.match(
@@ -366,7 +366,7 @@ test("desktop driver age cell uses the compact main-search label and icon", () =
   assert.match(driverAgeCell, /useMainPageDesktopPresentation: boolean/);
   assert.match(
     driverAgeCell,
-    /<UserRound[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"/,
+    /<UserRound[\s\S]*?className="cars-results-navbar-leading-icon h-4 w-4 shrink-0 text-slate-500"/,
   );
   assert.match(
     driverAgeCell,
@@ -408,7 +408,7 @@ test("results desktop popovers pass explicit alignment without changing the defa
   assert.match(resultsDesktopPopover, /shellClassName\?: string/);
   assert.match(
     resultsDesktopPopover,
-    /className=\{cn\(carsDesktopPopoverClassName, shellClassName\)\}/,
+    /className=\{cn\("cars-results-desktop-typeface", carsDesktopPopoverClassName, shellClassName\)\}/,
   );
   assert.match(resultsDesktopPopover, /align\?: "start" \| "center" \| "end"/);
   assert.match(

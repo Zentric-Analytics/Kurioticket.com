@@ -124,7 +124,8 @@ test("desktop Flight closes an open sticky search when preparation starts", () =
 
   assert.ok(effectStart >= 0);
   assert.match(effect, /pendingStickySearchTargetRef\.current = null/);
-  assert.match(effect, /collapseStickySearch\(\{ restoreScroll: false \}\)/);
+  assert.match(effect, /window\.requestAnimationFrame\(\(\) => \{[\s\S]*?collapseStickySearch\(\);/);
+  assert.match(effect, /window\.cancelAnimationFrame\(frame\)/);
 });
 
 test("desktop navbar search opens only the selected Flight header field editor", () => {

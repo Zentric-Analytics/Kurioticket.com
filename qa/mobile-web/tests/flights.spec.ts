@@ -14,7 +14,6 @@ for (const width of [320, 360, 390, 412]) {
     await expect(page.locator("[data-flight-price-alert-row]")).toBeVisible();
     const mobileResults = page.locator("[data-mobile-paginated-flight-results]");
     await expect(mobileResults.locator("[data-flight-results-card-list]")).toBeVisible();
-    const pagination = mobileResults.getByRole("navigation", { name: "Flight results pages" });
     await expect(page.locator("footer")).toBeVisible();
 
     const measurements = await page.evaluate(() => {

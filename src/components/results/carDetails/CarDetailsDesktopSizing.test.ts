@@ -10,10 +10,6 @@ const hero = readFileSync(
   new URL("./CarDetailsHero.tsx", import.meta.url),
   "utf8",
 );
-const layout = readFileSync(
-  new URL("../../../app/cars/details/[id]/layout.tsx", import.meta.url),
-  "utf8",
-);
 const route = readFileSync(
   new URL("../../../app/cars/details/[id]/page.tsx", import.meta.url),
   "utf8",

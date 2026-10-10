@@ -1514,6 +1514,7 @@ test("the final Asia batch preserves canonical identities and exact resolved pro
     assert.deepEqual({
       id: destination.id, name: destination.name, country: destination.country,
       countryCode: destination.countryCode, primaryAirportCode: destination.primaryAirportCode,
+      latitude: destination.latitude, longitude: destination.longitude,
       airportCodes: destination.airportCodes, airportNames: destination.airportNames,
       searchAliases: destination.searchAliases, imageDestinationId: destination.imageDestinationId,
       provenance: destination.provenance,

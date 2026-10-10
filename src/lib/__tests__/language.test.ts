@@ -11,6 +11,22 @@ const activeDealsRenderKeys = new Set([
   "deals.destinationCardAriaPrefix",
 ]);
 const retainedTranslationOnlyKeys = new Set([
+  // The extracted desktop filters use hotelResults.filterBy, takeoff/landing,
+  // duration and baggage/flexibleRefundable instead of these legacy headings.
+  "filterBy",
+  "times",
+  "totalTripTime",
+  "amenities",
+  // Current cards use viewDeal; the filter heading uses the shared filters key.
+  // Their active translated replacements are checked separately below.
+  "viewFlight",
+  "carsResults.filterBy",
+  "carsResults.openFilters",
+  "carsResults.editSearch",
+  "carsResults.carRentalSearch",
+  // The persistent filter redesign removed the standalone Meals heading.
+  "hotelResults.meals",
+  "hotelResults.cancellationPolicy",
   // The unified flight card no longer renders the redundant "Flight option" heading.
   "flightOption",
   "estimatedPrice",
@@ -42,6 +58,15 @@ const retainedTranslationOnlyKeys = new Set([
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
+function readFlightResultsRenderSources() {
+  const client = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
+  assert.match(client, /<DesktopFlightFilters/);
+  assert.match(client, /<MobileFlightFiltersSheet/);
+  return [client, ...["DesktopFlightFilters", "MobileFlightFiltersSheet"].map(
+    (name) => readFileSync(`src/components/results/${name}.tsx`, "utf8"),
+  )].join("\n");
+}
+
 import {
   applyLanguageToDocument,
   getLanguageFromStorage,
@@ -69,6 +94,26 @@ import { translations as thTranslations } from "@/lib/i18n/th";
 import { translations as viTranslations } from "@/lib/i18n/vi";
 import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
 import { travelAccountTranslations } from "@/lib/i18n/travelAccount";
+
+test("current flight deal actions and shared car filter headings retain translated active labels", () => {
+  const card = readFileSync("src/components/results/FlightCard.tsx", "utf8");
+  const cars = readFileSync("src/components/results/CarsResultsClient.tsx", "utf8");
+  assert.match(card, /actionLabel \?\? t\("viewDeal"\)/);
+  assert.match(cars, /id="cars-guided-filters-title"[^>]*>\{t\("filters"\)\}/);
+  assert.match(cars, /title=\{t\("carsResults.editCarSearch"\)\}/);
+  assert.match(cars, /aria-label=\{`\$\{t\("deals.results.modifySearch"\)\}/);
+  assert.match(cars, /aria-label=\{activeFilterCount > 0[\s\S]*?t\("filtersWithCount"\)[\s\S]*?: t\("filters"\)/);
+  for (const dictionary of [esTranslations, deTranslations, frTranslations, itTranslations, ptBrTranslations, nlTranslations, arTranslations, zhCnTranslations, jaTranslations, koTranslations, hiTranslations, trTranslations, plTranslations, svTranslations, idTranslations, thTranslations, viTranslations]) {
+    for (const key of ["viewDeal", "filters"] as const) {
+      assert.ok(dictionary[key]?.trim(), `${key} must be translated`);
+      if (dictionary === nlTranslations && key === "filters") {
+        assert.equal(dictionary[key], "Filters", "Dutch and English share this spelling");
+      } else {
+        assert.notEqual(dictionary[key], enTranslations[key], `${key} must not fall back to English`);
+      }
+    }
+  }
+});
 import { supportedLocales } from "@/lib/supportedLocales";
 import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
@@ -1104,7 +1149,7 @@ test("Thai Hotels results page copy resolves through active i18n keys", () => {
     assert.equal(th[key], expected, `${key} should resolve to Thai`);
     assert.notEqual(th[key], englishFallback, `${key} should not fall back to screenshot English`);
     assert.ok(
-      sources.length === 0 || sources.some((source) => source.includes(`t("${key}")`) || source.includes(`labelKey: "${key}"`) || source.includes(`"${key}"`)),
+      retainedTranslationOnlyKeys.has(key) || sources.length === 0 || sources.some((source) => source.includes(`t("${key}")`) || source.includes(`labelKey: "${key}"`) || source.includes(`"${key}"`)),
       `${key} should be read through i18n on the active Thai hotels render path`,
     );
   }
@@ -1191,7 +1236,7 @@ test("Vietnamese Hotels Results page copy resolves through active i18n keys", ()
     assert.equal(vi[key], expected, `${key} should resolve to Vietnamese`);
     assert.notEqual(vi[key], englishFallback, `${key} should not fall back to screenshot English`);
     assert.ok(
-      sources.length === 0 || sources.some((source) => source.includes(`t("${key}")`) || source.includes(`labelKey: "${key}"`) || source.includes(`"${key}"`)),
+      retainedTranslationOnlyKeys.has(key) || sources.length === 0 || sources.some((source) => source.includes(`t("${key}")`) || source.includes(`labelKey: "${key}"`) || source.includes(`"${key}"`)),
       `${key} should be read through i18n on the active Vietnamese hotels render path`,
     );
   }
@@ -4353,11 +4398,11 @@ test("Hindi flights landing static render path resolves screenshot-visible copy"
 
 test("Polish flights results active render path resolves visible copy without English fallback", () => {
   const pl = getTranslations("pl");
-  const resultsSource = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
-  const cardSource = readFileSync("src/components/results/FlightCard.tsx", "utf8");
+  const resultsSource = readFlightResultsRenderSources();
+  const cardSource = readFileSync("src/components/results/FlightCard.tsx", "utf8") + readFileSync("src/components/results/flightCardBaggage.ts", "utf8");
   const pageSource = readFileSync("src/app/flights/results/page.tsx", "utf8");
 
-  assert.ok(pageSource.includes("<FlightResultsClient />"), "active /flights/results page should render FlightResultsClient");
+  assert.match(pageSource, /<FlightResultsClient\b[^>]*\/>/, "active /flights/results page should render FlightResultsClient");
 
   const expectedResultsCopy: Array<[string, string, string, string[]]> = [
     ["cheapest", "NAJTAŃSZE", "CHEAPEST", [resultsSource]],
@@ -6496,7 +6541,6 @@ test("Polish hotels results active render path copy is localized without English
     "hotelResults.propertyType",
     "hotelResults.roomType",
     "hotelResults.bedType",
-    "hotelResults.meals",
   ]) {
     assert.match(hotelResultsClientSource, new RegExp(`t\\(\"${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\"`), `${key} should be read by the active /hotels/results client render path`);
   }
@@ -7275,7 +7319,7 @@ test("Active email verification render path uses localized keys and preserves fo
   assert.match(verifyEmailFormSource, /fetch\("\/api\/auth\/verify-email", \{\s+method: "PUT"/);
   assert.match(verifyEmailFormSource, /body: JSON\.stringify\(\{ email, code: String\(formData\.get\("code"\) \|\| ""\) \}\)/);
   assert.match(verifyEmailFormSource, /body: JSON\.stringify\(\{ email \}\)/);
-  assert.match(verifyEmailFormSource, /window\.location\.href = "\/auth\/signin\?callbackUrl=\/onboarding\/security"/);
+  assert.match(verifyEmailFormSource, /router\.push\("\/auth\/signin\?callbackUrl=\/onboarding\/security"\)/);
   assert.match(verifyEmailFormSource, /href="\/auth\/signin\?callbackUrl=\/dashboard"/);
   assert.match(verifyEmailFormSource, /<Card className="mx-auto w-full max-w-md p-5">/);
   assert.match(verifyEmailFormSource, /<form action=\{submit\} className="mt-5 grid gap-4">/);
@@ -9692,7 +9736,7 @@ test("Turkish cars results render path copy resolves without English fallback", 
     "carsResults.driverAge",
     "carsResults.searchCars",
     "carsResults.emptyInventory",
-    "carsResults.filterBy",
+    "filters",
   ]) {
     assert.ok(carsResultsSource.includes(`t("${key}")`), `Cars results render path should resolve ${key} through i18n`);
   }
@@ -10937,7 +10981,7 @@ test("Polish signup render path keeps i18n keys and preserves auth behavior", ()
   assert.match(signupFormSource, /<Input name="password" type="password" autoComplete="new-password" minLength=\{8\} required/);
   assert.match(signupFormSource, /fetch\("\/api\/auth\/signup", \{/);
   assert.match(signupFormSource, /method: "POST"/);
-  assert.match(signupFormSource, /window\.location\.href = `\/auth\/verify-email\?email=\$\{encodeURIComponent\(email\)\}`/);
+  assert.match(signupFormSource, /router\.push\(`\/auth\/verify-email\?email=\$\{encodeURIComponent\(email\)\}`\)/);
   assert.match(signupFormSource, /signIn\("google", \{ callbackUrl: "\/onboarding" \}\)/);
   assert.match(signupFormSource, /href="\/legal\/terms-of-service"/);
   assert.match(signupFormSource, /href="\/legal\/privacy-policy"/);
@@ -11151,9 +11195,9 @@ test("Polish homepage render paths keep using i18n keys and preserve route/searc
 test("Swedish Flights results active render path copy resolves without English fallback", () => {
   const sv = getTranslations("sv");
   const resultsPageSource = readFileSync("src/app/flights/results/page.tsx", "utf8");
-  const resultsSource = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
+  const resultsSource = readFlightResultsRenderSources();
 
-  assert.ok(resultsPageSource.includes("<FlightResultsClient />"));
+  assert.match(resultsPageSource, /<FlightResultsClient\b[^>]*\/>/);
 
   const expectedCopy: Array<[string, string, string]> = [
     ["filterBy", "Filtrera efter", "Filter by"],
@@ -11227,7 +11271,7 @@ test("Swedish Flights results active render path copy resolves without English f
   assert.ok(resultsSource.includes('flight.airlineName'));
   assert.ok(resultsSource.includes('flight.originAirport'));
   assert.ok(resultsSource.includes('flight.destinationAirport'));
-  assert.ok(/formatResultPriceLabel\([\s\S]*?data\.minPrice[\s\S]*?data\.currencies/.test(resultsSource));
+  assert.match(resultsSource, /formatResultPriceLabel\(data\.minPrice, selectedCurrency\)/);
   assert.equal(availableLocaleOptions.find((option) => option.code === "sv")?.direction, "ltr");
   assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
 });
@@ -11238,11 +11282,11 @@ test("Thai Flights results and selected-flight detail render paths resolve visib
   const th = getTranslations("th");
   const resultsPageSource = readFileSync("src/app/flights/results/page.tsx", "utf8");
   const detailsPageSource = readFileSync("src/app/flights/details/[id]/page.tsx", "utf8");
-  const resultsSource = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
-  const cardSource = readFileSync("src/components/results/FlightCard.tsx", "utf8");
+  const resultsSource = readFlightResultsRenderSources();
+  const cardSource = readFileSync("src/components/results/FlightCard.tsx", "utf8") + readFileSync("src/components/results/flightCardBaggage.ts", "utf8");
   const detailsSource = readFileSync("src/components/results/FlightDetailsClient.tsx", "utf8");
 
-  assert.ok(resultsPageSource.includes("<FlightResultsClient />"));
+  assert.match(resultsPageSource, /<FlightResultsClient\b[^>]*\/>/);
   assert.ok(detailsPageSource.includes("<FlightDetailsClient id={id} />"));
 
   const expectedCopy: Array<[string, string, string, string[]]> = [
@@ -11323,8 +11367,8 @@ test("Vietnamese Flights Results page resolves search, filters, cards, and provi
   const viVn = getTranslations("vi-VN");
   const viAlias = getTranslations("vi-vn");
   const resultsPageSource = readFileSync("src/app/flights/results/page.tsx", "utf8");
-  const resultsSource = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
-  const cardSource = readFileSync("src/components/results/FlightCard.tsx", "utf8");
+  const resultsSource = readFlightResultsRenderSources();
+  const cardSource = readFileSync("src/components/results/FlightCard.tsx", "utf8") + readFileSync("src/components/results/flightCardBaggage.ts", "utf8");
   const detailsPageSource = readFileSync("src/app/flights/details/[id]/page.tsx", "utf8");
   const detailsSource = readFileSync("src/components/results/FlightDetailsClient.tsx", "utf8");
   const standaloneFlightSearchSource = readFileSync("src/components/search/StandaloneFlightSearchForm.tsx", "utf8");
@@ -11332,7 +11376,7 @@ test("Vietnamese Flights Results page resolves search, filters, cards, and provi
 
   assert.deepEqual(vi, viVn);
   assert.deepEqual(vi, viAlias);
-  assert.ok(resultsPageSource.includes("<FlightResultsClient />"));
+  assert.match(resultsPageSource, /<FlightResultsClient\b[^>]*\/>/);
   assert.ok(detailsPageSource.includes("<FlightDetailsClient id={id} />"));
 
   const expectedCopy: Array<[string, string, string, string[]]> = [
@@ -11413,11 +11457,11 @@ test("Indonesian Flights results and selected-flight detail render paths resolve
   const id = getTranslations("id");
   const resultsPageSource = readFileSync("src/app/flights/results/page.tsx", "utf8");
   const detailsPageSource = readFileSync("src/app/flights/details/[id]/page.tsx", "utf8");
-  const resultsSource = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
-  const cardSource = readFileSync("src/components/results/FlightCard.tsx", "utf8");
+  const resultsSource = readFlightResultsRenderSources();
+  const cardSource = readFileSync("src/components/results/FlightCard.tsx", "utf8") + readFileSync("src/components/results/flightCardBaggage.ts", "utf8");
   const detailsSource = readFileSync("src/components/results/FlightDetailsClient.tsx", "utf8");
 
-  assert.ok(resultsPageSource.includes("<FlightResultsClient />"));
+  assert.match(resultsPageSource, /<FlightResultsClient\b[^>]*\/>/);
   assert.ok(detailsPageSource.includes("<FlightDetailsClient id={id} />"));
 
   const expectedCopy: Array<[string, string, string, string[]]> = [
@@ -11514,7 +11558,7 @@ test("Swedish selected-flight details active render path resolves card and provi
   const sv = getTranslations("sv");
   const detailsPageSource = readFileSync("src/app/flights/details/[id]/page.tsx", "utf8");
   const detailsSource = readFileSync("src/components/results/FlightDetailsClient.tsx", "utf8");
-  const cardSource = readFileSync("src/components/results/FlightCard.tsx", "utf8");
+  const cardSource = readFileSync("src/components/results/FlightCard.tsx", "utf8") + readFileSync("src/components/results/flightCardBaggage.ts", "utf8");
 
   assert.ok(detailsPageSource.includes("<FlightDetailsClient id={id} />"));
 
@@ -11584,7 +11628,7 @@ test("Swedish selected-flight details active render path resolves card and provi
   assert.match(detailsSource, /fetch\(`\/api\/flights\/details\?id=\$\{encodeURIComponent\(id\)\}`\)/);
   assert.match(readFileSync("src/components/results/flightDetails/StandaloneFlightDetails.tsx", "utf8"), /fetch\("\/api\/redirect"/);
   assert.match(readFileSync("src/components/results/flightDetails/StandaloneFlightDetails.tsx", "utf8"), /sourcePage: "flight_details"/);
-  assert.match(readFileSync("src/components/results/flightDetails/StandaloneFlightDetails.tsx", "utf8"), /window\.location\.href = data\.url/);
+  assert.match(readFileSync("src/components/results/flightDetails/StandaloneFlightDetails.tsx", "utf8"), /providerWindow\.location\.replace\(data\.url\)/);
   assert.match(detailsSource, /partnerRedirectUrl \|\| flight\.bookingUrl/);
   assert.match(detailsSource, /flight\.airlineName/);
   assert.match(detailsSource, /flight\.flightNumber/);
@@ -11615,7 +11659,7 @@ test("Polish flight details active render path resolves selected-flight copy wit
   const pl = getTranslations("pl");
   const detailsPageSource = readFileSync("src/app/flights/details/[id]/page.tsx", "utf8");
   const detailsSource = readFileSync("src/components/results/FlightDetailsClient.tsx", "utf8");
-  const resultsSource = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
+  const resultsSource = readFlightResultsRenderSources();
 
   assert.ok(detailsPageSource.includes("<FlightDetailsClient id={id} />"));
 
@@ -11660,7 +11704,7 @@ test("Polish flight details active render path resolves selected-flight copy wit
   assert.notEqual(`${1} ${pl.stopSingular}`, "1 przesiadki");
   assert.match(detailsSource, /if \(stops === 1\) return `\$\{stops\} \$\{labels\.stopSingular\}`;/);
   assert.match(detailsSource, /partnerRedirectUrl \|\| flight\.bookingUrl/);
-  assert.match(readFileSync("src/components/results/flightDetails/StandaloneFlightDetails.tsx", "utf8"), /window\.location\.href = data\.url/);
+  assert.match(readFileSync("src/components/results/flightDetails/StandaloneFlightDetails.tsx", "utf8"), /providerWindow\.location\.replace\(data\.url\)/);
   assert.match(detailsSource, /flight\.airlineName/);
   assert.match(detailsSource, /flight\.flightNumber/);
   assert.match(detailsSource, /flight\.originAirport/);
@@ -14137,7 +14181,7 @@ test("Thai footer Discover destinations link resolves through active i18n key", 
 
   assert.match(footerSource, /heading: t\.footerDiscover,[\s\S]*?label: t\.flights,[\s\S]*?href: "\/flights",[\s\S]*?label: t\.hotels,[\s\S]*?href: "\/hotels",[\s\S]*?label: t\.cars,[\s\S]*?href: "\/cars",[\s\S]*?label: t\.deals,[\s\S]*?href: "\/packages",[\s\S]*?label: t\.destinations,[\s\S]*?href: "\/destinations",[\s\S]*?label: t\["accountMenu.savedRecent.label"\],[\s\S]*?href: "\/saved",/);
   assert.ok(!footerSource.includes('label: "Destinations"'));
-  assert.match(footerSource, /<footer className="border-t border-slate-200 bg-white [^"]*text-slate-700"/);
+  assert.match(footerSource, /<footer\s+className=\{cn\(\s*"border-t border-slate-200 bg-white [^"]*text-slate-700"/);
   assert.ok(footerSource.includes('transition-colors hover:text-[#004BB8]'));
   assert.ok(footerSource.includes('focus-visible:ring-2'));
   assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");

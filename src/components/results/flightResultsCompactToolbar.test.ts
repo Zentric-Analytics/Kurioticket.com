@@ -247,7 +247,7 @@ test("desktop header route selection advances From to To and closes after destin
   assert.match(toolbar, /id="sticky-flight-origin-suggestions"[\s\S]*?keyboardNavigation/);
   assert.match(toolbar, /setOriginCode\(value\)[\s\S]*?stickyDestinationWrapRef\.current[\s\S]*?focus\(\{ preventScroll: true \}\)/);
   assert.match(toolbar, /id="sticky-flight-destination-suggestions"[\s\S]*?keyboardNavigation/);
-  assert.match(toolbar, /setDestinationCode\(value\)[\s\S]*?collapseStickySearch\(\{ restoreScroll: false \}\)/);
+  assert.match(toolbar, /setDestinationCode\(value\)[\s\S]*?collapseStickySearch\(\)/);
 });
 
 test("sticky airport suggestions support arrow and Home/End navigation", () => {

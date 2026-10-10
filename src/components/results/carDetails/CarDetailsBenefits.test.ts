@@ -34,7 +34,7 @@ test("source contract keeps the canonical primary offer as the selection fallbac
   );
   assert.match(
     clientSource,
-    /comparisonOffers\.find\(\(candidate\) => candidate\.id === selectedOfferId\)[\s\S]*?canonicalPrimaryOffer/,
+    /comparisonOffers\.find\(\(candidate\) => candidate\.id === selectedOfferId\)[\s\S]*?fallbackOffer/,
   );
   assert.doesNotMatch(clientSource, /car\.offers\[0\]/);
 });
@@ -53,6 +53,21 @@ test("hero omits the duplicate cancellation and taxes benefit cards", () => {
       `unexpected ${removedContract}`,
     );
   }
+});
+
+test("offer selection immediately falls back to a current offer without effect-driven state updates", () => {
+  const selection = sourceBetween(clientSource, "const fallbackOffer =", "const standaloneSandbox =");
+  const select = new Function("canonicalPrimaryOffer", "comparisonOffers", "selectedOfferId", "presentation", `${selection} return primaryOffer;`);
+  const first = { id: "first" };
+  const second = { id: "second" };
+  const stale = { id: "stale" };
+  assert.equal(select(first, [first, second], "second", "standalone-content"), second);
+  assert.equal(select(first, [first, second], "missing", "standalone-content"), first);
+  assert.equal(select(stale, [first, second], "missing", "standalone-content"), first);
+  assert.equal(select(stale, [], "missing", "standalone-content"), stale);
+  assert.equal(select(first, [first, second], "second", "guided-content"), first);
+  assert.equal(select(null, [], undefined, "standalone-content"), null);
+  assert.doesNotMatch(selection, /setSelectedOfferId/);
 });
 
 test("source contract keeps guided summary pricing without a duplicate standalone desktop booking summary", () => {
@@ -117,7 +132,7 @@ test("source contract keeps the guided desktop summary and mobile safe-area book
   assert.ok(
     hero >= 0 &&
       pickupReturn > hero &&
-      sectionPanels > pickupReturn
+      sectionPanels > hero && pickupReturn > sectionPanels
   );
 });
 
@@ -209,7 +224,7 @@ test("desktop Pickup/Return avoids nested card-on-card treatment", () => {
   assert.match(pickup, /max-w-\[640px\] py-5/);
   assert.match(
     pickup,
-    /data-car-details-desktop-pickup-columns[\s\S]*?divide-x divide-\[#D8E1EC\][\s\S]*?border-y border-\[#D8E1EC\]/,
+    /divide-x divide-\[#D8E1EC\][\s\S]*?border-y border-\[#D8E1EC\][\s\S]*?data-car-details-desktop-pickup-columns/,
   );
   assert.doesNotMatch(
     pickup,
@@ -287,19 +302,19 @@ test("standalone desktop Cars Details uses a deliberate non-faint typography hie
   );
   assert.match(
     cssSource,
-    /\.car-details-standalone-typography \.car-details-desktop-primary-copy-type \{[^}]*font-size: 14px !important;[^}]*font-weight: 500 !important;[^}]*color: #334155 !important;[^}]*font-variation-settings: "wght" 500;/,
+    /\.car-details-standalone-typography \.car-details-desktop-primary-copy-type \{[^}]*font-size: 13px !important;[^}]*font-weight: 500 !important;[^}]*color: #334155 !important;[^}]*font-variation-settings: "wght" 500;/,
   );
   assert.match(
     cssSource,
-    /\.car-details-standalone-typography \.car-details-desktop-secondary-copy-type \{[^}]*font-size: 14px !important;[^}]*font-weight: 500 !important;[^}]*color: #475569 !important;[^}]*font-variation-settings: "wght" 500;/,
+    /\.car-details-standalone-typography \.car-details-desktop-secondary-copy-type \{[^}]*font-size: 13px !important;[^}]*font-weight: 450 !important;[^}]*color: #526174 !important;[^}]*font-variation-settings: "wght" 450;/,
   );
   assert.match(
     cssSource,
-    /\.car-details-standalone-typography \.car-details-desktop-benefit-type \{[^}]*font-size: 13px !important;[^}]*font-weight: 600 !important;[^}]*color: #475569 !important;[^}]*font-variation-settings: "wght" 600;/,
+    /\.car-details-standalone-typography \.car-details-desktop-benefit-type \{[^}]*font-size: 12px !important;[^}]*font-weight: 500 !important;[^}]*color: #526174 !important;[^}]*font-variation-settings: "wght" 500;/,
   );
   assert.match(
     cssSource,
-    /\.car-details-standalone-typography \.car-details-desktop-amenity-type \{[^}]*font-size: 13px !important;[^}]*font-weight: 600 !important;[^}]*color: #334155 !important;[^}]*font-variation-settings: "wght" 600;/,
+    /\.car-details-standalone-typography \.car-details-desktop-amenity-type \{[^}]*font-size: 12\.5px !important;[^}]*font-weight: 550 !important;[^}]*color: #334155 !important;[^}]*font-variation-settings: "wght" 550;/,
   );
 });
 test("standalone car details use polished Flight-style panel headings", () => {
@@ -458,13 +473,13 @@ test("desktop Cars keeps tab text directly on the sticky bar without an inner ca
   assert.match(clientSource, /scheduleDesktopScrollState/);
 });
 
-test("desktop Cars keeps Save and Share inside the hero while Compare deals owns booking information", () => {
+test("desktop Cars keeps Save and Share in hero and sticky navigation while Compare deals owns booking information", () => {
   assert.match(clientSource, /data-car-details-desktop-hero-controls/);
   assert.match(
     clientSource,
     /data-car-details-desktop-hero-controls[\s\S]*?data-car-details-utility-placement="hero"[\s\S]*?<CarHeroActions[\s\S]*?desktop/,
   );
-  assert.doesNotMatch(clientSource, /data-car-details-utility-placement="tabs"/);
+  assert.match(clientSource, /desktopUtilityActions=\{[\s\S]*?data-car-details-utility-placement="tabs"[\s\S]*?<CarHeroActions/);
   assert.doesNotMatch(clientSource, /DesktopCompactBookingAction/);
   assert.doesNotMatch(clientSource, /data-car-details-desktop-selected-deal/);
   assert.doesNotMatch(clientSource, /data-car-details-desktop-overview-cta/);
@@ -502,7 +517,7 @@ test("desktop Pickup/Return and Location keep their current panel hierarchy insi
   assert.match(pickup, /max-w-\[640px\] py-5/);
   assert.match(
     pickup,
-    /data-car-details-desktop-pickup-columns[\s\S]*?border-y border-\[#D8E1EC\]/,
+    /border-y border-\[#D8E1EC\][\s\S]*?data-car-details-desktop-pickup-columns/,
   );
   assert.doesNotMatch(pickup, /rounded-\[22px\]|data-car-details-inner-surface/);
 
@@ -563,9 +578,9 @@ test("Location map card keeps a balanced mobile viewport and fixed directions ro
     location,
     /className="focus-ring flex h-11 shrink-0 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold leading-5 text-\[#075EE8\]/,
   );
-  assert.match(location, /<ExternalLink size={16} className="shrink-0"/);
+  assert.match(location, /<ExternalLink size=\{16\} className="shrink-0"/);
   assert.doesNotMatch(location, /h-\[200px\] w-full border-0/);
-  assert.doesNotMatch(location, /flex min-h-11 items-center justify-between/);
+  assert.doesNotMatch(sourceBetween(location, "data-car-location-map-card", "data-car-location-timeline"), /flex min-h-11 items-center justify-between/);
 });
 
 test("Location tab timeline mirrors Pickup and return pins and icons", () => {
@@ -587,11 +602,11 @@ test("Location tab timeline mirrors Pickup and return pins and icons", () => {
   );
   assert.match(
     timeline,
-    /<MapPin size={16} className="shrink-0 text-\[#004BB8\]" aria-hidden="true" \/>/,
+    /<MapPin size=\{16\} className="shrink-0 text-\[#004BB8\]" aria-hidden="true" \/>/,
   );
   assert.match(
     timeline,
-    /<Clock3 size={16} className="shrink-0" aria-hidden="true" \/>/,
+    /<Clock3 size=\{16\} className="shrink-0" aria-hidden="true" \/>/,
   );
   assert.match(timeline, /<time dateTime={`\$\{date\}T\$\{time\}`}>/);
   assert.doesNotMatch(timeline, /relative flex w-9 shrink-0 justify-center/);
@@ -638,7 +653,8 @@ test("mobile price comparison retains the existing per-day selection card", () =
   assert.match(comparison, /carsResults\.fullToFull/);
   assert.doesNotMatch(comparison, /carDetails\.estimatedCataloguePrice/);
   assert.doesNotMatch(comparison, /border-t border-slate-100/);
-  assert.doesNotMatch(comparison, /feesIncludedShort/);
+  const mobileCards = sourceBetween(comparison, "offers.map((offer)", "data-desktop-car-deal-list");
+  assert.doesNotMatch(mobileCards, /feesIncludedShort|providerFactsForOffer/);
   assert.doesNotMatch(comparison, /row-start-4/);
 });
 
@@ -681,12 +697,12 @@ test("local Cars provider logos use a direct eager img with fixed brand dimensio
   assert.match(providerBrand, /const localBrandLogo = logoUrl\.startsWith\("\/"\)/);
   assert.match(providerBrand, /h-6 w-\[112px\]/);
   assert.match(providerBrand, /h-5 w-\[96px\]/);
-  assert.match(providerBrand, /<img[^>]*src=\{logoUrl\}[^>]*loading="eager"[^>]*decoding="sync"/);
+  assert.match(providerBrand, /<Image\s+unoptimized[^>]*src=\{logoUrl\}[^>]*loading="eager"[^>]*decoding="sync"/);
   assert.match(providerBrand, /data-car-offer-provider-brand-image="local"/);
   assert.match(providerBrand, /data-car-offer-provider-brand-image="remote"/);
 });
 
-test("Kurioticket deal branding does not depend only on inventorySource", () => {
+test("explicit provider logos take precedence over the static inventory brand fallback", () => {
   const providerBrand = sourceBetween(
     clientSource,
     "function CarOfferProviderBrand",
@@ -694,16 +710,9 @@ test("Kurioticket deal branding does not depend only on inventorySource", () => 
   );
   assert.match(
     providerBrand,
-    /providerName\.trim\(\)\.toLowerCase\(\) === "kurioticket"/,
+    /offer\.bookingProviderLogoUrl \|\| \(car\.inventorySource === "kurioticket-static-cars"/,
   );
-  assert.match(
-    providerBrand,
-    /offer\.bookingProviderName\.trim\(\)\.toLowerCase\(\) === "kurioticket"/,
-  );
-  assert.match(
-    providerBrand,
-    /offer\.bookingProviderName\.trim\(\)\.toLowerCase\(\) === "kurioticket static fixture"/,
-  );
+  assert.doesNotMatch(providerBrand, /providerName\.trim|bookingProviderName\.trim/);
   assert.match(providerBrand, /kurioticket-logo-primary-light-bg\.svg/);
 });
 
@@ -728,9 +737,11 @@ test("desktop Compare deals wires each provider row to its own logo total benefi
   assert.match(desktop, /data-car-details-desktop-deal-cta/);
   assert.match(desktop, /offer\.totalPrice/);
   assert.match(desktop, /compactBookingProviderName\(offer\)/);
-  assert.match(desktop, /offer\.freeCancellation/);
-  assert.match(desktop, /offer\.payAtPickup/);
-  assert.match(desktop, /offer\.taxesAndFeesIncluded/);
+  assert.match(desktop, /providerFactsForOffer\(offer\)/);
+  assert.match(desktop, /providerFacts\.map/);
+  assert.match(comparison, /if \(offer\.freeCancellation\)/);
+  assert.match(comparison, /if \(offer\.payAtPickup\)/);
+  assert.match(comparison, /if \(offer\.taxesAndFeesIncluded\)/);
   assert.match(desktop, /onClick=\{\(\) => onSelectOffer\(offer\.id\)\}/);
   assert.match(desktop, /href=\{offerAction\.href\}/);
   assert.match(desktop, /target="_blank"/);

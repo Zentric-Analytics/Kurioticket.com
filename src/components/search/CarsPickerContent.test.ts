@@ -38,7 +38,8 @@ test("shared time content renders two independently scrollable button lists", ()
   assert.match(shared, /data-cars-time-columns/);
   assert.match(shared, /data-cars-time-list=\{kind\}/);
   assert.match(shared, /timeOptions\.map/);
-  assert.match(shared, /aria-selected=\{selectedTime === time\}/);
+  assert.match(shared, /selected=\{selectedTime === time\}/);
+  assert.match(shared, /role="option"\s+aria-selected=\{selected\}/);
   assert.match(shared, /grid min-h-0 flex-1 grid-cols-2 overflow-hidden/);
   assert.match(shared, /min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain/);
   assert.match(shared, /list\.scrollTop = Math\.max/);

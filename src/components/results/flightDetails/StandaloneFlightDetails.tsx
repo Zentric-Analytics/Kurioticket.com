@@ -107,7 +107,13 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
 
   useEffect(() => {
     if (sessionStatus === "authenticated" || typeof window === "undefined") return;
-    setLocalSavedFlightIds(readSavedItemIds());
+    const syncSavedFlights = () => setLocalSavedFlightIds(readSavedItemIds());
+    const frame = window.requestAnimationFrame(syncSavedFlights);
+    window.addEventListener("storage", syncSavedFlights);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("storage", syncSavedFlights);
+    };
   }, [sessionStatus]);
 
   useEffect(() => {
@@ -144,11 +150,16 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const selectedDeal = selectedFare ? nativeFlightDealSelection(selectedDealOfferId, selectedFare) : null;
   const activeOffer = selectedDeal?.offer ?? selectedOffer;
   const savedFlightKey = selectedOffer?.id ?? id;
+  const savedLookupKey = `${sessionStatus}:${savedFlightKey}`;
+  const [previousSavedLookupKey, setPreviousSavedLookupKey] = useState(savedLookupKey);
+  if (previousSavedLookupKey !== savedLookupKey) {
+    setPreviousSavedLookupKey(savedLookupKey);
+    setSavedFlightBackendId(null);
+  }
   const mobilePricesReady = !currencyRates.isLoading;
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !selectedOffer) {
-      setSavedFlightBackendId(null);
       return;
     }
 
@@ -171,19 +182,10 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     return () => controller.abort();
   }, [selectedOffer, sessionStatus]);
 
-  useEffect(() => {
-    if (!selectedFare) {
-      setSelectedDealOfferId(null);
-      return;
-    }
-    setSelectedDealOfferId((current) => nativeFlightDealSelection(current, selectedFare)?.offerId ?? null);
-  }, [selectedFare]);
-
-
-
   function selectFare(index: number) {
     const fare = fareChoices[index];
     if (!fare) return;
+    setSelectedDealOfferId(null);
     setSelectedFareKey(fare.key);
   }
 

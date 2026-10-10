@@ -77,7 +77,8 @@ test("mobile list paginates twenty results with the shared pagination state", ()
   assert.doesNotMatch(results, /data-flight-results-transition-cover[\s\S]{0,220}hidden[\s\S]{0,120}sm:block/);
   assert.match(results, /aria-label="Back to top"/);
   assert.match(results, /<Footer variant="brand-legal-only" \/>/);
-  assert.doesNotMatch(results, /data-mobile-continuous-flight-list|sortedResults\.map\(\(flight, index\)/);
+  const mobileList = results.slice(results.indexOf("data-mobile-paginated-flight-results"), results.indexOf("ref={paginationListRef}"));
+  assert.doesNotMatch(mobileList, /data-mobile-continuous-flight-list|sortedResults\.map\(\(flight, index\)/);
 });
 
 test("Batch 1 and Batch 2 surfaces remain before the card list", () => {

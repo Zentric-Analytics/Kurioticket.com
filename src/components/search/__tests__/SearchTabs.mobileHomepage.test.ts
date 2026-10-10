@@ -233,8 +233,8 @@ test("mobile Cars places its single return-location field directly after pickup"
 test("mobile homepage Cars aligns a decorative MapPin before the dynamic pickup value", () => {
   assert.match(carsPickupField, /cars-pickup-location-field[\s\S]*?carsSearch\.pickupLocationLabel/);
   assert.match(carsPickupField, /id="homepage-cars-pickup"[\s\S]*?onClick=\{\(\) => openMobilePickerWithKeyboard\(\(\) => setCarsOpenPicker\("pickup"\), "homepage-cars-pickup-mobile-input"\)\}/);
-  assert.match(carsPickupField, /sm:hidden[\s\S]*?<span className="flex min-w-0 items-center gap-2">/);
-  assert.match(carsPickupField, /<MapPin aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-slate-500" \/>[\s\S]*?carsPickupDisplay\.primary[\s\S]*?carsPickupDisplay\.secondary/);
+  assert.match(carsPickupField, /sm:hidden[\s\S]*?<span className="flex min-w-0 items-center gap-\[10px\]">/);
+  assert.match(carsPickupField, /<MapPin aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\]" \/>[\s\S]*?carsPickupDisplay\.primary[\s\S]*?carsPickupDisplay\.secondary/);
   assert.doesNotMatch(carsPickupField, /<MapPin[^>]*className="[^"]*(?:rounded|bg-)/);
   assert.match(carsPickupField, /hidden sm:block[\s\S]*?<CarLocationAutocomplete/);
 });
@@ -305,7 +305,7 @@ test("mobile Cars filled fields share the native selected-value hierarchy", () =
   );
   assert.match(
     carsPickupField,
-    /text-\[12px\] font-normal leading-4 text-\[#56658E\]/,
+    /text-\[12px\] font-normal leading-4 text-slate-600/,
   );
 
   assert.match(
@@ -335,7 +335,8 @@ test("mobile homepage Cars isolates CSS-hidden desktop location autocompletes", 
   assert.match(carsPickupField, /presentation=\{mobileHomepage \? "desktop" : "responsive"\}/);
   assert.match(carsPickupField, /isOpen=\{\(!mobileHomepage \|\| isSmCarsHomepageViewport\) && carsOpenPicker === "pickup"\}/);
   assert.match(carsPickupField, /if \(mobileHomepage && !isSmCarsHomepageViewport\) return/);
-  assert.match(source, /carsOpenPicker === "dropoff"[\s\S]*?presentation=\{mobileHomepage \? "desktop" : "responsive"\}[\s\S]*?isOpen=\{\(!mobileHomepage \|\| isSmCarsHomepageViewport\) && carsOpenPicker === "dropoff"\}/);
+  const returnField = source.slice(source.indexOf("const carsReturnLocationField"), source.indexOf("const mobileHomepageProductTabs"));
+  assert.match(returnField, /presentation=\{mobileHomepage \? "desktop" : "responsive"\}[\s\S]*?isOpen=\{\(!mobileHomepage \|\| isSmCarsHomepageViewport\) && carsOpenPicker === "dropoff"\}/);
 });
 
 test("Cars adds neutral value icons without changing summaries or chevrons", () => {

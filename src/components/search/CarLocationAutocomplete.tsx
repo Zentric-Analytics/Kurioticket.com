@@ -139,10 +139,8 @@ export function CarLocationAutocomplete({
       requestIdRef.current += 1;
       abortRef.current?.abort();
       abortRef.current = null;
-      setSuggestions([]);
-      setLoading(false);
-      setError(false);
-      setHighlightedIndex(-1);
+      // Query changes already clear these states before rendering. This effect
+      // only owns request cancellation, not a second synchronous reset.
       return;
     }
     if (!open || disabled) return;

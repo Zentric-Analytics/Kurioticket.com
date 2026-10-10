@@ -45,7 +45,9 @@ for (const { route, client, loadingGuard } of products) {
 
   test(`${route} standalone client excludes Footer from loading and owns one ready-state Footer`, () => {
     const loadingStart = clientSource.indexOf(loadingGuard);
-    const readyFooter = '<Footer variant="brand-legal-only" />';
+    const readyFooter = route === "cars"
+      ? '<Footer variant="brand-legal-only" className="cars-results-footer-typography" />'
+      : '<Footer variant="brand-legal-only" />';
     const footerIndex = clientSource.indexOf(readyFooter, loadingStart);
 
     assert.ok(loadingStart >= 0, `${loadingGuard} must remain explicit`);

@@ -4,7 +4,6 @@ import { readFileSync } from "node:fs";
 
 const card = readFileSync(new URL("./CarResultCard.tsx", import.meta.url), "utf8");
 const picker = readFileSync(new URL("./CarDealPicker.tsx", import.meta.url), "utf8");
-const results = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
 const comparison = readFileSync(new URL("./CarPriceComparison.tsx", import.meta.url), "utf8");
 const desktop = card.slice(card.indexOf('data-region="heading"'));
 const specs = desktop.slice(
@@ -21,10 +20,11 @@ test("standalone desktop owns exactly four required primary specifications", () 
   assert.doesNotMatch(specs, /Air conditioning|Snowflake/);
 });
 
-test("provider offers are driven by normalized car offers and capped at three", () => {
+test("provider offers render every normalized provider without a three-provider cutoff", () => {
   assert.match(card, /<CarDealPicker/);
   assert.match(picker, /getCarDealPickerGroups\(car\)/);
-  assert.match(picker, /groups\.slice\(0, 3\)/);
+  assert.match(picker, /groups\.map\(\(group\) =>/);
+  assert.doesNotMatch(picker, /groups\.slice\(/);
   assert.match(picker, /data-car-deal-provider-offers/);
   assert.match(picker, /data-car-deal-provider-offer/);
   assert.doesNotMatch(picker, /data-car-deal-provider-chips|extraCount|Compare providers/);

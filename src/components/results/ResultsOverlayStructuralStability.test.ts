@@ -23,7 +23,7 @@ test("hotel mobile results summary stays mounted beneath Edit Search like Cars",
   assert.match(hotelResults, /inert=\{mobileHotelSearchOpen \? true : undefined\}/);
   assert.match(hotelResults, /aria-hidden=\{mobileHotelSearchOpen \? true : undefined\}/);
   assert.match(hotelResults, /mobileHotelSearchOpen && "pointer-events-none"/);
-  assert.match(hotelResults, /relative translate-y-1\/2/);
+  assert.match(hotelResults, /createPortal\(renderMobileHotelNavSearch\(\), mobileNavSearchTarget\)/);
   assert.match(hotelResults, /<MobileResultsEditSheet/);
   assert.match(hotelSearch, /compact && !mobileResultsSheet \? \(/);
 });
@@ -48,15 +48,15 @@ test("cars keeps one main-header search launcher while Edit Search owns its over
   assert.doesNotMatch(cars, /renderMobileControlsRow|renderMobileCompactResultsHeader|mobileCompactHeaderVisible/);
 });
 
-test("standalone mobile and desktop flight lists share pagination without sharing layout shells", () => {
+test("mobile flights paginate while desktop retains the complete continuous list", () => {
   const mobileStart = flights.indexOf("data-mobile-paginated-flight-results");
   const desktopStart = flights.indexOf('ref={paginationListRef}');
   const mobileRegion = flights.slice(mobileStart, desktopStart);
   const desktopList = flights.indexOf('<div data-flight-results-card-list className="space-y-3 sm:space-y-4">', desktopStart);
-  const desktopPagination = flights.indexOf("<FlightResultsPagination", desktopList);
-
-  assert.ok(mobileStart >= 0 && desktopStart > mobileStart && desktopList > desktopStart && desktopPagination > desktopList);
+  assert.ok(mobileStart >= 0 && desktopStart > mobileStart && desktopList > desktopStart);
   assert.match(mobileRegion, /visibleResults\.map/);
   assert.match(mobileRegion, /<FlightResultsPagination/);
-  assert.match(flights.slice(desktopList, desktopPagination), /visibleResults\.map/);
+  const desktopRegion = flights.slice(desktopList, flights.indexOf("{renderMobileFullFiltersSheet()}", desktopList));
+  assert.match(desktopRegion, /sortedResults\.map/);
+  assert.doesNotMatch(desktopRegion, /<FlightResultsPagination|visibleResults\.map/);
 });

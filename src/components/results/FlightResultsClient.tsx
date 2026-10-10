@@ -6,7 +6,6 @@ import type {
   Dispatch,
   FormEvent,
   MouseEvent as ReactMouseEvent,
-  ReactNode,
   RefObject,
   SetStateAction,
 } from "react";
@@ -33,7 +32,6 @@ import {
   MapPin,
   Minus,
   SquarePen,
-  Users,
   UserRound,
   Plus,
   SlidersHorizontal,
@@ -62,7 +60,6 @@ import { FlightResultsScrollIndicator } from "@/components/results/FlightResults
 import { MobileFlightResultsState } from "@/components/results/MobileFlightResultsState";
 import {
   MobileFlightFiltersSheet,
-  mobileFlightLegKey,
   type MobileJourneyTimeMaximums,
 } from "@/components/results/MobileFlightFiltersSheet";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
@@ -170,7 +167,6 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   formatFlightsDateSummary,
   formatFlightsMonthHeading,
-  formatFlightsWeekdays,
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
 
@@ -351,17 +347,6 @@ const scrollWindowToPageTop = () => {
     behavior: "auto",
   });
 };
-
-type CompactFilterSectionId =
-  | "price"
-  | "times"
-  | "duration"
-  | "quality"
-  | "stops"
-  | "airlines"
-  | "airports"
-  | "amenities"
-  | null;
 
 const filterQueryParamKeys = [
   "fPrice",
@@ -1000,42 +985,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     () => normalizeFlightResultsCalendarLocale(locale),
     [locale],
   );
-  const weekdays = useMemo(
-    () => formatFlightsWeekdays(calendarLocale),
-    [calendarLocale],
-  );
-  const airportPickerLabels = useMemo(
-    () => ({
-      clear: dictionary.clear ?? enTranslations.clear ?? "",
-      done: dictionary.done ?? enTranslations.done ?? "",
-      chooseOrigin:
-        dictionary.chooseOrigin ?? enTranslations.chooseOrigin ?? "",
-      clearOrigin: dictionary.clearOrigin ?? enTranslations.clearOrigin ?? "",
-      clearDestination:
-        dictionary.clearDestination ?? enTranslations.clearDestination ?? "",
-      searchAirportsAndCities:
-        dictionary.searchAirportsAndCities ??
-        enTranslations.searchAirportsAndCities ??
-        "",
-      searchAirportsOrCities:
-        dictionary.searchAirportsOrCities ??
-        enTranslations.searchAirportsOrCities ??
-        "",
-      startTypingCityOrAirport:
-        dictionary.startTypingCityOrAirport ??
-        enTranslations.startTypingCityOrAirport ??
-        "",
-      searchingAirportsAndCities:
-        dictionary.searchingAirportsAndCities ??
-        enTranslations.searchingAirportsAndCities ??
-        "",
-      noMatchingAirportsOrCities:
-        dictionary.noMatchingAirportsOrCities ??
-        enTranslations.noMatchingAirportsOrCities ??
-        "",
-    }),
-    [dictionary],
-  );
   const urlParams = useSearchParams();
   const router = useRouter();
   const guidedMode = presentationMode === "deals-guided";
@@ -1109,7 +1058,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const paginationListRef = useRef<HTMLDivElement | null>(null);
   const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
   const [paginationCommitting, setPaginationCommitting] = useState(false);
-  const [paginationMinHeight, setPaginationMinHeight] = useState<number | null>(null);
   const [paginationRevealing, setPaginationRevealing] = useState(false);
   const errorHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const emptyHeadingRef = useRef<HTMLHeadingElement | null>(null);
@@ -1231,19 +1179,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     startOfMonth(new Date()),
   );
   const [travelerPopoverOpen, setTravelerPopoverOpen] = useState(false);
-  const [draftMobileDepartureDate, setDraftMobileDepartureDate] =
-    useState(departureDateInput);
-  const [draftMobileReturnDate, setDraftMobileReturnDate] =
-    useState(returnDateInput);
-  const [draftAdultCount, setDraftAdultCount] = useState(adultCount);
-  const [draftChildCount, setDraftChildCount] = useState(childCount);
-  const [draftInfantCount, setDraftInfantCount] = useState(infantCount);
-  const [draftCabinClassInput, setDraftCabinClassInput] =
-    useState<CabinClassValue>(cabinClassInput);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [activeMobileAirportPicker, setActiveMobileAirportPicker] = useState<
-    "origin" | "destination" | null
-  >(null);
   const mobileSearchScrollRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchScrollTopRef = useRef(0);
   const pendingMobileDatePickerRef = useRef<"departure" | "return" | null>(
@@ -1305,8 +1241,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const tripTypeMenuRef = useRef<HTMLDivElement | null>(null);
   const originInputRef = useRef<HTMLInputElement | null>(null);
   const destinationInputRef = useRef<HTMLInputElement | null>(null);
-  const mobileOriginLauncherRef = useRef<HTMLButtonElement | null>(null);
-  const mobileDestinationLauncherRef = useRef<HTMLButtonElement | null>(null);
   const originWrapRef = useRef<HTMLDivElement | null>(null);
   const destinationWrapRef = useRef<HTMLDivElement | null>(null);
   const stickyOriginWrapRef = useRef<HTMLDivElement | null>(null);
@@ -1596,7 +1530,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }, [isStickySearchPanelOpen]);
 
   const collapseStickySearch = useCallback(
-    (_options: { restoreScroll?: boolean } = {}) => {
+    () => {
       stickySearchPanelOpenRef.current = false;
       setIsSearchExpandedWhileSticky(false);
       setActiveStickySearchTarget(null);
@@ -2257,61 +2191,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }
   }
 
-  function handleMobileTripTypeChange(nextTripType: string) {
-    markExpandedSearchInteraction();
-    setTripTypeMenuOpen(false);
 
-    if (nextTripType === "multi-city") {
-      if (multiCityLegs.length === 0) {
-        const firstLeg = {
-          origin: originCode || originInput.trim().toUpperCase(),
-          destination:
-            destinationCode || destinationInput.trim().toUpperCase(),
-          departureDate: departureDateInput,
-        };
-        const projectedLegs = [
-          firstLeg,
-          tripTypeInput === "round-trip" && returnDateInput
-            ? {
-                origin: firstLeg.destination,
-                destination: firstLeg.origin,
-                departureDate: returnDateInput,
-              }
-            : {
-                origin: firstLeg.destination,
-                destination: "",
-                departureDate: departureDateInput,
-              },
-        ];
-        const projection = projectSearchLegs("multi-city", projectedLegs);
-        setMultiCityLegs(projection.legs);
-      }
-      setTripTypeInput("multi-city");
-      closeFlightSearchPopovers();
-      return;
-    }
-
-    const normalizedTripType =
-      nextTripType === "one-way" ? "one-way" : "round-trip";
-    if (tripTypeInput === "multi-city" && multiCityLegs.length > 0) {
-      const projection = projectSearchLegs(normalizedTripType, multiCityLegs);
-      setOriginInput(projection.origin);
-      setOriginCode(projection.origin);
-      setDestinationInput(projection.destination);
-      setDestinationCode(projection.destination);
-      setDepartureDateInput(projection.departureDate);
-      setReturnDateInput(projection.returnDate ?? "");
-    } else if (normalizedTripType === "one-way") {
-      setReturnDateInput("");
-    }
-    setTripTypeInput(normalizedTripType);
-    closeFlightSearchPopovers();
-  }
-
-  function rememberMobileSearchScrollPosition() {
-    mobileSearchScrollTopRef.current =
-      mobileSearchScrollRef.current?.scrollTop ?? 0;
-  }
 
   function restoreMobileSearchScrollPosition() {
     window.requestAnimationFrame(() => {
@@ -2324,37 +2204,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     });
   }
 
-  function closeMobileDatePicker() {
-    setDraftMobileDepartureDate(departureDateInput);
-    setDraftMobileReturnDate(returnDateInput);
-    setActiveDatePicker(null);
-    setDatePickerPosition(null);
 
-    if (activeDesktopSearchSurface === "sticky") {
-      collapseStickySearch({ restoreScroll: false });
-      return;
-    }
 
-    restoreMobileSearchScrollPosition();
-  }
-
-  function openMobileDatePicker() {
-    rememberMobileSearchScrollPosition();
-    setDraftMobileDepartureDate(departureDateInput);
-    setDraftMobileReturnDate(returnDateInput);
-    setActiveDatePicker("departure");
-    setDatePickerPosition(null);
-  }
-
-  function getMissingMobileDatePicker() {
-    if (!departureDateInput.trim()) return "departure";
-
-    if (tripTypeInput === "round-trip" && !returnDateInput.trim()) {
-      return "return";
-    }
-
-    return null;
-  }
 
   function clearPendingMobileDatePickerTransition() {
     pendingMobileDatePickerRef.current = null;
@@ -2370,80 +2221,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }
   }
 
-  function openPendingMobileDatePickerAfterAirportClose() {
-    const nextPicker = pendingMobileDatePickerRef.current;
-    if (!nextPicker) return;
 
-    pendingMobileDatePickerRef.current = null;
 
-    if (mobileDatePickerTransitionFrameRef.current !== null) {
-      window.cancelAnimationFrame(mobileDatePickerTransitionFrameRef.current);
-    }
 
-    if (mobileDatePickerTransitionTimeoutRef.current !== null) {
-      window.clearTimeout(mobileDatePickerTransitionTimeoutRef.current);
-      mobileDatePickerTransitionTimeoutRef.current = null;
-    }
 
-    mobileDatePickerTransitionFrameRef.current = window.requestAnimationFrame(
-      () => {
-        mobileDatePickerTransitionFrameRef.current = null;
-        mobileDatePickerTransitionTimeoutRef.current = window.setTimeout(() => {
-          mobileDatePickerTransitionTimeoutRef.current = null;
-          restoreMobileSearchScrollPosition();
-          setActiveDatePicker(nextPicker);
-          setDatePickerPosition(null);
-        }, 16);
-      },
-    );
-  }
-
-  function closeMobileAirportPicker() {
-    setActiveMobileAirportPicker(null);
-    openPendingMobileDatePickerAfterAirportClose();
-  }
-
-  function closeMobileTravelerPopover() {
-    setDraftAdultCount(adultCount);
-    setDraftChildCount(childCount);
-    setDraftInfantCount(infantCount);
-    setDraftCabinClassInput(cabinClassInput);
-    setTravelerPopoverOpen(false);
-    setTravelerPopoverPosition(null);
-    restoreMobileSearchScrollPosition();
-  }
-
-  function openMobileTravelerPopover() {
-    rememberMobileSearchScrollPosition();
-    setDraftAdultCount(adultCount);
-    setDraftChildCount(childCount);
-    setDraftInfantCount(infantCount);
-    setDraftCabinClassInput(cabinClassInput);
-    setTravelerPopoverOpen(true);
-    setTravelerPopoverPosition(null);
-  }
-
-  function commitMobileTravelerPopover() {
-    const adults = Math.min(9, Math.max(1, draftAdultCount));
-    const children = Math.min(9 - adults, Math.max(0, draftChildCount));
-    const infants = Math.min(
-      adults,
-      9 - adults - children,
-      Math.max(0, draftInfantCount),
-    );
-
-    setAdultCount(adults);
-    setChildCount(children);
-    setInfantCount(infants);
-    setCabinClassInput(draftCabinClassInput);
-    setTravelerPopoverOpen(false);
-    setTravelerPopoverPosition(null);
-    restoreMobileSearchScrollPosition();
-  }
 
   function closeFlightSearchPopovers() {
     clearPendingMobileDatePickerTransition();
-    setActiveMobileAirportPicker(null);
     setActiveSuggest(null);
     setDropdownPosition(null);
     setActiveDatePicker(null);
@@ -2483,13 +2267,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setFiltersOpen(true);
   }
 
-  function focusOriginInput() {
-    window.requestAnimationFrame(() => originInputRef.current?.focus());
-  }
 
-  function focusDestinationInput() {
-    window.requestAnimationFrame(() => destinationInputRef.current?.focus());
-  }
 
 
 
@@ -3572,7 +3350,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }
 
     if (shouldCloseStickyPopout) {
-      collapseStickySearch({ restoreScroll: false });
+      collapseStickySearch();
     }
 
     router.push(`/flights/results?${nextParams.toString()}`, { scroll: true });
@@ -4075,8 +3853,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   useEffect(() => {
     if (!resultsUiPreparing || !isStickySearchPanelOpen) return;
 
-    pendingStickySearchTargetRef.current = null;
-    collapseStickySearch({ restoreScroll: false });
+    const frame = window.requestAnimationFrame(() => {
+      pendingStickySearchTargetRef.current = null;
+      collapseStickySearch();
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [collapseStickySearch, isStickySearchPanelOpen, resultsUiPreparing]);
 
   useEffect(() => {
@@ -4519,7 +4300,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const changeResultsPage = useCallback(async (nextPage: number) => {
     const page = clampFlightResultsPage(nextPage, totalResultPages);
     if (page === validResultsPage || paginationPendingPage !== null) return;
-    setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
     setPaginationPendingPage(page);
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     const mobileViewport = window.matchMedia("(max-width: 639px)").matches;
@@ -4556,7 +4336,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       secondFrame = window.requestAnimationFrame(() => {
         setPaginationPendingPage(null);
         setPaginationCommitting(false);
-        setPaginationMinHeight(null);
         resultsHeadingRef.current?.focus({ preventScroll: true });
         if (!prefersReducedResultsMotion()) {
           setPaginationRevealing(true);
@@ -5453,7 +5232,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             aria-label={t("tripType")}
             onClick={(event) => {
               if (tripMenuOpen) {
-                collapseStickySearch({ restoreScroll: false });
+                collapseStickySearch();
                 return;
               }
               openStickySearchEditor(event.currentTarget, "trip");
@@ -5501,7 +5280,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         setActiveDesktopSearchSurface("sticky");
                         return;
                       }
-                      collapseStickySearch({ restoreScroll: false });
+                      collapseStickySearch();
                     }}
                   >
                     <span className={cn(
@@ -5605,7 +5384,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 if (event.key === "Escape") {
                   event.preventDefault();
                   event.currentTarget.blur();
-                  collapseStickySearch({ restoreScroll: false });
+                  collapseStickySearch();
                 }
               }}
               onChange={(event) => {
@@ -5768,7 +5547,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 if (event.key === "Escape") {
                   event.preventDefault();
                   event.currentTarget.blur();
-                  collapseStickySearch({ restoreScroll: false });
+                  collapseStickySearch();
                 }
               }}
               onChange={(event) => {
@@ -5829,7 +5608,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   setDestinationCode(value);
                   setActiveSuggest(null);
                   setDropdownPosition(null);
-                  collapseStickySearch({ restoreScroll: false });
+                  collapseStickySearch();
                 }}
               />
             ) : null}
@@ -5864,7 +5643,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               launcherRef={stickyDateButtonRef}
               position={{ top: 0, left: 0, width: 0 }}
               onClose={() => {
-                collapseStickySearch({ restoreScroll: false });
+                collapseStickySearch();
               }}
               month={calendarMonth}
               departureValue={departureDateInput}
@@ -5883,7 +5662,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 }
               }}
               onToday={() => {
-                collapseStickySearch({ restoreScroll: false });
+                collapseStickySearch();
               }}
             />
           ) : null}
@@ -5919,7 +5698,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               launcherRef={stickyTravelerButtonRef}
               position={{ top: 0, left: 0, width: 0 }}
               onClose={() => {
-                collapseStickySearch({ restoreScroll: false });
+                collapseStickySearch();
               }}
               adultCount={adultCount}
               childCount={childCount}
@@ -7195,7 +6974,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <>
         <button
           type="button"
-          aria-label="Close filters"
+          aria-label={t("closeFilters")}
           onClick={() => closeMobileFiltersDrawer()}
           className="fixed inset-0 z-[9999] bg-slate-950/35 sm:hidden"
         />
@@ -7225,7 +7004,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               ref={mobileFiltersCloseButtonRef}
               type="button"
               className="focus-ring absolute right-3 flex h-11 w-11 items-center justify-center rounded-lg text-slate-700"
-              aria-label="Close filters"
+              aria-label={t("closeFilters")}
               onClick={() => closeMobileFiltersDrawer()}
             >
               <X size={22} aria-hidden="true" />
@@ -9372,12 +9151,7 @@ type FilterOption = {
   rightLabel?: string;
 };
 
-type TimeFilterMode = "takeoff" | "landing";
 
-type TimeBounds = {
-  takeoff: { min: number; max: number } | null;
-  landing: { min: number; max: number } | null;
-};
 
 const flightQualityDefinitions = [
   { value: "wifi", labelKey: "wifi" },
@@ -9408,44 +9182,7 @@ function getTimeMinutes(value: string) {
   return hours * 60 + minutes;
 }
 
-function formatTimeFromMinutes(value: number, locale: string) {
-  const normalized = Math.max(0, Math.min(1439, value));
-  const hours24 = Math.floor(normalized / 60);
-  const minutes = normalized % 60;
-  const date = new Date(2000, 0, 1, hours24, minutes);
 
-  return new Intl.DateTimeFormat(locale, {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
-}
-
-function formatDurationFromMinutes(
-  totalMinutes: number,
-  t: (key: string) => string,
-) {
-  const minutes = Math.max(0, Math.round(totalMinutes));
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-
-  if (hours <= 0) {
-    return t("flightResults.duration.minutesOnly").replace(
-      "{{minutes}}",
-      String(remainingMinutes),
-    );
-  }
-
-  if (remainingMinutes === 0) {
-    return t("flightResults.duration.hoursOnly").replace(
-      "{{hours}}",
-      String(hours),
-    );
-  }
-
-  return t("flightResults.duration.hoursMinutes")
-    .replace("{{hours}}", String(hours))
-    .replace("{{minutes}}", String(remainingMinutes));
-}
 
 function formatOptionsFound(count: number, t: (key: string) => string) {
   const key = count === 1 ? "optionFound" : "optionsFound";
@@ -9464,9 +9201,6 @@ function formatMobileFlightResultsFound(count: number, t: (key: string) => strin
   return formatResultsFound(count, t);
 }
 
-function getStopBucket(stops: number) {
-  return stops >= 2 ? "2+" : String(stops);
-}
 
 function stopLabel(bucket: string, t: (key: string) => string) {
   if (bucket === "0") return t("nonstop");
@@ -9478,15 +9212,7 @@ function stopBucketSortValue(bucket: string) {
   return bucket === "2+" ? 2 : Number(bucket);
 }
 
-function hasBaggageIncluded(flight: PublicFlightResult) {
-  return /included|carry-on|checked/i.test(flight.baggageInfo || "");
-}
 
-function hasFlexibleTerms(flight: PublicFlightResult) {
-  return /refundable|changes allowed|change allowed|flexible/i.test(
-    flight.refundInfo || "",
-  );
-}
 
 function getFlightQualityText(flight: PublicFlightResult) {
   return [
@@ -9525,13 +9251,6 @@ function flightHasQualityOption(flight: PublicFlightResult, option: string) {
   return false;
 }
 
-function flightMatchesAirport(flight: PublicFlightResult, airport: string) {
-  return (
-    flight.originAirport === airport ||
-    flight.destinationAirport === airport ||
-    flight.layovers.some((layover) => layover.airport === airport)
-  );
-}
 
 function buildCountOptions(values: string[]): FilterOption[] {
   const counts = new Map<string, number>();
@@ -9563,897 +9282,5 @@ function toggleFilterValue(
     current.includes(value)
       ? current.filter((item) => item !== value)
       : [...current, value],
-  );
-}
-
-function Filters({
-  layout,
-  activeFilterCount,
-  maxPrice,
-  setMaxPrice,
-  priceBounds,
-  priceLabelCurrency,
-  selectedCurrency,
-  timeFilterMode,
-  setTimeFilterMode,
-  timeBounds,
-  maxTakeoffMinutes,
-  setMaxTakeoffMinutes,
-  maxLandingMinutes,
-  setMaxLandingMinutes,
-  durationBounds,
-  maxDurationMinutes,
-  setMaxDurationMinutes,
-  stopOptions,
-  selectedStops,
-  setSelectedStops,
-  airlineOptions,
-  selectedAirlines,
-  setSelectedAirlines,
-  airportOptions,
-  selectedAirports,
-  setSelectedAirports,
-  flightQualityOptions,
-  renderFlightQualityFilter,
-  selectedFlightQuality,
-  setSelectedFlightQuality,
-  baggageIncludedOnly,
-  setBaggageIncludedOnly,
-  flexibleOnly,
-  setFlexibleOnly,
-  onFilterChange,
-  onFilterCommit,
-  onClear,
-}: {
-  layout: "desktop" | "mobile" | "compact";
-  activeFilterCount: number;
-  maxPrice: number;
-  setMaxPrice: (value: number) => void;
-  priceBounds: { min: number; max: number };
-  priceLabelCurrency: string | null;
-  selectedCurrency: string;
-  timeFilterMode: TimeFilterMode;
-  setTimeFilterMode: Dispatch<SetStateAction<TimeFilterMode>>;
-  timeBounds: TimeBounds;
-  maxTakeoffMinutes: number | null;
-  setMaxTakeoffMinutes: (value: number | null) => void;
-  maxLandingMinutes: number | null;
-  setMaxLandingMinutes: (value: number | null) => void;
-  durationBounds: { min: number; max: number } | null;
-  maxDurationMinutes: number | null;
-  setMaxDurationMinutes: (value: number | null) => void;
-  stopOptions: FilterOption[];
-  selectedStops: string[];
-  setSelectedStops: Dispatch<SetStateAction<string[]>>;
-  airlineOptions: FilterOption[];
-  selectedAirlines: string[];
-  setSelectedAirlines: Dispatch<SetStateAction<string[]>>;
-  airportOptions: FilterOption[];
-  selectedAirports: string[];
-  setSelectedAirports: Dispatch<SetStateAction<string[]>>;
-  flightQualityOptions: FilterOption[];
-  renderFlightQualityFilter: boolean;
-  selectedFlightQuality: string[];
-  setSelectedFlightQuality: Dispatch<SetStateAction<string[]>>;
-  baggageIncludedOnly: boolean;
-  setBaggageIncludedOnly: (value: boolean) => void;
-  flexibleOnly: boolean;
-  setFlexibleOnly: (value: boolean) => void;
-  onFilterChange: () => void;
-  onFilterCommit: () => void;
-  onClear: () => void;
-}) {
-  const { t: dictionary, locale } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const calendarLocale = normalizeFlightResultsCalendarLocale(locale);
-  const currencyRates = useCurrencyRates();
-  const filterRangeClass =
-    "h-2 w-full cursor-pointer appearance-none rounded-full bg-border outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[#2F73C8] [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#2F73C8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#2F73C8] [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#2F73C8] [&::-moz-range-thumb]:shadow-md";
-  const formatFilterPrice = (amount: number) =>
-    priceLabelCurrency
-      ? formatDisplayPrice({
-          amount,
-          sourceCurrency: priceLabelCurrency,
-          displayCurrency: selectedCurrency,
-          convertSourceEstimate: true,
-          useFlightResultSymbols: true,
-          rates: currencyRates.rates,
-          isFallbackRate: currencyRates.isFallback,
-        }).formatted
-      : t("mixedProviderCurrencies");
-
-  const [compactOpenSection, setCompactOpenSection] =
-    useState<CompactFilterSectionId>(null);
-  const activeFilterLabel = t("activeFilterCount").replace(
-    "{{count}}",
-    String(activeFilterCount),
-  );
-  const renderQualitySection =
-    renderFlightQualityFilter && flightQualityOptions.length > 0;
-
-  const effectiveCompactOpenSection =
-    compactOpenSection === "quality" && !renderQualitySection
-      ? null
-      : compactOpenSection;
-
-  const compactSectionCounts = {
-    price: priceBounds.max && maxPrice < priceBounds.max ? 1 : 0,
-    times:
-      (timeBounds.takeoff && maxTakeoffMinutes !== timeBounds.takeoff.max
-        ? 1
-        : 0) +
-      (timeBounds.landing && maxLandingMinutes !== timeBounds.landing.max
-        ? 1
-        : 0),
-    duration:
-      durationBounds && maxDurationMinutes !== durationBounds.max ? 1 : 0,
-    quality: selectedFlightQuality.length,
-    stops: selectedStops.length,
-    airlines: selectedAirlines.length,
-    airports: selectedAirports.length,
-    amenities: (baggageIncludedOnly ? 1 : 0) + (flexibleOnly ? 1 : 0),
-  };
-
-  if (layout === "compact") {
-    return (
-      <div className="desktop-filter-sidebar flex h-auto flex-col overflow-visible rounded-2xl border border-[#D8E1EC] bg-[#EEF3F8] p-0 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.42)]">
-        <div className="desktop-filter-sidebar__header shrink-0 border-b border-[#D8E1EC]/80 bg-[#EEF3F8] px-3.5 py-2.5">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[15px] font-semibold leading-5 tracking-[-0.01em] text-slate-950">
-              <SlidersHorizontal
-                className="desktop-filter-sidebar__icon shrink-0 text-[#004BB8]"
-                size={15}
-                strokeWidth={2.25}
-                aria-hidden="true"
-              />
-              <span className="truncate">{t("filterBy")}</span>
-            </h2>
-          </div>
-          {activeFilterCount > 0 ? (
-            <div className="mt-2 flex items-center justify-between gap-3">
-              <span className="desktop-filter-sidebar__count rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold text-[#235A9F] ring-1 ring-[#004BB8]/8">
-                {activeFilterLabel}
-              </span>
-              <button
-                type="button"
-                className="rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-                onClick={onClear}
-              >
-                Clear all
-              </button>
-            </div>
-          ) : null}
-        </div>
-        <div className="h-auto overflow-visible bg-[#EEF3F8] px-2 py-1">
-          <CompactFilterSection
-            title={t("price")}
-            count={compactSectionCounts.price}
-            sectionId="price"
-            openSection={effectiveCompactOpenSection}
-            setOpenSection={setCompactOpenSection}
-          >
-            <input
-              aria-label={t("price")}
-              className={filterRangeClass}
-              type="range"
-              min={priceBounds.min || 0}
-              max={priceBounds.max || 0}
-              step={25}
-              value={priceBounds.max ? Math.min(maxPrice, priceBounds.max) : 0}
-              disabled={!priceBounds.max}
-              onPointerUp={onFilterCommit}
-              onMouseUp={onFilterCommit}
-              onTouchEnd={onFilterCommit}
-              onKeyUp={onFilterCommit}
-              onBlur={onFilterCommit}
-              onChange={(event) => {
-                onFilterChange();
-                setMaxPrice(Number(event.target.value));
-              }}
-            />
-            <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-medium tabular-nums text-slate-500">
-              <span className="min-w-0 truncate whitespace-nowrap">
-                {priceBounds.max && priceLabelCurrency
-                  ? formatFilterPrice(priceBounds.min)
-                  : "—"}
-              </span>
-              <span className="min-w-0 truncate whitespace-nowrap">
-                {priceBounds.max && priceLabelCurrency
-                  ? formatFilterPrice(Math.min(maxPrice, priceBounds.max))
-                  : "—"}
-              </span>
-            </div>
-          </CompactFilterSection>
-          <CompactFilterSection
-            title={t("times")}
-            count={compactSectionCounts.times}
-            sectionId="times"
-            openSection={effectiveCompactOpenSection}
-            setOpenSection={setCompactOpenSection}
-          >
-            <div className="space-y-3.5">
-              {[
-                {
-                  key: "takeoff",
-                  eyebrow: t("takeoff"),
-                  label: t("takeoffTimeFromOrigin"),
-                  bounds: timeBounds.takeoff,
-                  value: maxTakeoffMinutes,
-                  setValue: setMaxTakeoffMinutes,
-                },
-                {
-                  key: "landing",
-                  eyebrow: t("landing"),
-                  label: t("landingTimeAtDestination"),
-                  bounds: timeBounds.landing,
-                  value: maxLandingMinutes,
-                  setValue: setMaxLandingMinutes,
-                },
-              ].map((item) => (
-                <label key={item.key} className="block">
-                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                    {item.eyebrow}
-                  </span>
-                  <span className="mb-1.5 flex items-center justify-between gap-3 text-xs font-medium text-slate-600">
-                    <span className="min-w-0 truncate">{item.label}</span>
-                    <span className="shrink-0 whitespace-nowrap font-mono tabular-nums text-navy">
-                      {item.bounds && item.value !== null
-                        ? formatTimeFromMinutes(item.value, calendarLocale)
-                        : t("loading")}
-                    </span>
-                  </span>
-                  <input
-                    className={filterRangeClass}
-                    type="range"
-                    min={item.bounds?.min ?? 0}
-                    max={item.bounds?.max ?? 0}
-                    step={15}
-                    value={item.value ?? item.bounds?.max ?? 0}
-                    disabled={!item.bounds}
-                    onPointerUp={onFilterCommit}
-                    onMouseUp={onFilterCommit}
-                    onTouchEnd={onFilterCommit}
-                    onKeyUp={onFilterCommit}
-                    onBlur={onFilterCommit}
-                    onChange={(event) => {
-                      onFilterChange();
-                      item.setValue(Number(event.target.value));
-                    }}
-                  />
-                </label>
-              ))}
-            </div>
-          </CompactFilterSection>
-          <CompactFilterSection
-            title={t("duration")}
-            count={compactSectionCounts.duration}
-            sectionId="duration"
-            openSection={effectiveCompactOpenSection}
-            setOpenSection={setCompactOpenSection}
-          >
-            <div className="mb-1.5 flex items-center justify-between gap-3 text-xs font-medium text-slate-600">
-              <span className="min-w-0 truncate">{t("totalTripTime")}</span>
-              <span className="shrink-0 whitespace-nowrap font-mono tabular-nums text-navy">
-                {durationBounds && maxDurationMinutes !== null
-                  ? formatDurationFromMinutes(maxDurationMinutes, t)
-                  : t("loading")}
-              </span>
-            </div>
-            <input
-              aria-label={t("duration")}
-              className={filterRangeClass}
-              type="range"
-              min={durationBounds?.min ?? 0}
-              max={durationBounds?.max ?? 0}
-              step={15}
-              value={maxDurationMinutes ?? durationBounds?.max ?? 0}
-              disabled={!durationBounds}
-              onPointerUp={onFilterCommit}
-              onMouseUp={onFilterCommit}
-              onTouchEnd={onFilterCommit}
-              onKeyUp={onFilterCommit}
-              onBlur={onFilterCommit}
-              onChange={(event) => {
-                onFilterChange();
-                setMaxDurationMinutes(Number(event.target.value));
-              }}
-            />
-          </CompactFilterSection>
-          {renderQualitySection ? (
-            <CompactFilterSection
-              title={t("flightQuality")}
-              count={compactSectionCounts.quality}
-              sectionId="quality"
-              openSection={effectiveCompactOpenSection}
-              setOpenSection={setCompactOpenSection}
-            >
-              {flightQualityOptions.map((option) => (
-                <FilterOptionRow
-                  compact
-                  key={option.value}
-                  label={option.label}
-                  count={option.count}
-                  checked={selectedFlightQuality.includes(option.value)}
-                  onChange={() => {
-                    toggleFilterValue(option.value, setSelectedFlightQuality);
-                    onFilterCommit();
-                  }}
-                />
-              ))}
-            </CompactFilterSection>
-          ) : null}
-          <CompactFilterSection
-            title={t("stops")}
-            count={compactSectionCounts.stops}
-            sectionId="stops"
-            openSection={effectiveCompactOpenSection}
-            setOpenSection={setCompactOpenSection}
-            emptyText={t("stopsAppearAfterResultsLoad")}
-          >
-            {stopOptions.map((option) => (
-              <FilterOptionRow
-                compact
-                key={option.value}
-                label={option.label}
-                count={option.count}
-                secondaryLabel={option.secondaryLabel}
-                rightLabel={option.rightLabel}
-                checked={selectedStops.includes(option.value)}
-                onChange={() => {
-                  toggleFilterValue(option.value, setSelectedStops);
-                  onFilterCommit();
-                }}
-              />
-            ))}
-          </CompactFilterSection>
-          <CompactFilterSection
-            title={t("airlines")}
-            count={compactSectionCounts.airlines}
-            sectionId="airlines"
-            openSection={effectiveCompactOpenSection}
-            setOpenSection={setCompactOpenSection}
-            emptyText={t("airlinesAppearAfterResultsLoad")}
-          >
-            {airlineOptions.map((option) => (
-              <FilterOptionRow
-                compact
-                key={option.value}
-                label={option.label}
-                count={option.count}
-                checked={selectedAirlines.includes(option.value)}
-                onChange={() => {
-                  toggleFilterValue(option.value, setSelectedAirlines);
-                  onFilterCommit();
-                }}
-              />
-            ))}
-          </CompactFilterSection>
-          <CompactFilterSection
-            title={t("airports")}
-            count={compactSectionCounts.airports}
-            sectionId="airports"
-            openSection={effectiveCompactOpenSection}
-            setOpenSection={setCompactOpenSection}
-            emptyText={t("airportsAppearAfterResultsLoad")}
-          >
-            {airportOptions.map((option) => (
-              <FilterOptionRow
-                compact
-                key={option.value}
-                label={option.label}
-                count={option.count}
-                checked={selectedAirports.includes(option.value)}
-                onChange={() => {
-                  toggleFilterValue(option.value, setSelectedAirports);
-                  onFilterCommit();
-                }}
-              />
-            ))}
-          </CompactFilterSection>
-          <CompactFilterSection
-            title={t("amenities")}
-            count={compactSectionCounts.amenities}
-            sectionId="amenities"
-            openSection={effectiveCompactOpenSection}
-            setOpenSection={setCompactOpenSection}
-          >
-            <FilterOptionRow
-              compact
-              label={t("baggageIncluded")}
-              checked={baggageIncludedOnly}
-              onChange={() => {
-                setBaggageIncludedOnly(!baggageIncludedOnly);
-                onFilterCommit();
-              }}
-            />
-            <FilterOptionRow
-              compact
-              label={t("flexibleRefundable")}
-              checked={flexibleOnly}
-              onChange={() => {
-                setFlexibleOnly(!flexibleOnly);
-                onFilterCommit();
-              }}
-            />
-          </CompactFilterSection>
-        </div>
-      </div>
-    );
-  }
-
-  if (layout === "desktop") {
-    return null;
-  }
-
-  return (
-    <div className="bg-white">
-      <div className={cn("space-y-4 bg-white")}>
-        <section>
-          <div className="mb-1.5 flex items-center justify-between gap-3 text-sm font-semibold leading-5 text-slate-800">
-              <span>{t("price")}</span>
-              <span className="shrink-0 text-xs font-medium text-navy">
-                {priceBounds.max
-                  ? priceLabelCurrency
-                    ? `${formatFilterPrice(priceBounds.min)} - ${formatFilterPrice(
-                        Math.min(maxPrice, priceBounds.max),
-                      )}`
-                    : t("mixedProviderCurrencies")
-                  : t("loadingPrices")}
-              </span>
-          </div>
-          <input
-            className={filterRangeClass}
-            type="range"
-            min={priceBounds.min || 0}
-            max={priceBounds.max || 0}
-            step={25}
-            value={priceBounds.max ? Math.min(maxPrice, priceBounds.max) : 0}
-            disabled={!priceBounds.max}
-            onChange={(event) => {
-              onFilterChange();
-              setMaxPrice(Number(event.target.value));
-            }}
-          />
-          <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
-            <span>
-              {priceBounds.max && priceLabelCurrency
-                ? formatFilterPrice(priceBounds.min)
-                : "—"}
-            </span>
-            <span>
-              {priceBounds.max && priceLabelCurrency
-                ? formatFilterPrice(priceBounds.max)
-                : "—"}
-            </span>
-          </div>
-        </section>
-
-        <FilterSection title={t("times")}>
-          <div className="grid grid-cols-2 rounded-full bg-slate-100 p-1">
-            <button
-              type="button"
-              onClick={() => setTimeFilterMode("takeoff")}
-              className={cn(
-                "rounded-full px-2 py-1.5 text-xs font-bold transition",
-                timeFilterMode === "takeoff"
-                  ? "bg-white text-[#004BB8] shadow-sm ring-1 ring-slate-200/70"
-                  : "text-slate-600 hover:text-slate-900",
-              )}
-            >
-              {t("takeoff")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimeFilterMode("landing")}
-              className={cn(
-                "rounded-full px-2 py-1.5 text-xs font-bold transition",
-                timeFilterMode === "landing"
-                  ? "bg-white text-[#004BB8] shadow-sm ring-1 ring-slate-200/70"
-                  : "text-slate-600 hover:text-slate-900",
-              )}
-            >
-              {t("landing")}
-            </button>
-          </div>
-
-          {timeFilterMode === "takeoff" ? (
-            <div className="mt-2">
-              <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
-                <span>{t("takeoffTimeFromOrigin")}</span>
-                <span className="font-mono text-navy">
-                  {timeBounds.takeoff && maxTakeoffMinutes !== null
-                    ? formatTimeFromMinutes(maxTakeoffMinutes, calendarLocale)
-                    : t("loading")}
-                </span>
-              </div>
-              <input
-                className={filterRangeClass}
-                type="range"
-                min={timeBounds.takeoff?.min ?? 0}
-                max={timeBounds.takeoff?.max ?? 0}
-                step={15}
-                value={maxTakeoffMinutes ?? timeBounds.takeoff?.max ?? 0}
-                disabled={!timeBounds.takeoff}
-                onPointerUp={onFilterCommit}
-                onMouseUp={onFilterCommit}
-                onTouchEnd={onFilterCommit}
-                onKeyUp={onFilterCommit}
-                onBlur={onFilterCommit}
-                onChange={(event) => {
-                  onFilterChange();
-                  setMaxTakeoffMinutes(Number(event.target.value));
-                }}
-              />
-              <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-medium tabular-nums text-slate-500">
-                <span>
-                  {timeBounds.takeoff
-                    ? formatTimeFromMinutes(
-                        timeBounds.takeoff.min,
-                        calendarLocale,
-                      )
-                    : "—"}
-                </span>
-                <span>
-                  {timeBounds.takeoff
-                    ? formatTimeFromMinutes(
-                        timeBounds.takeoff.max,
-                        calendarLocale,
-                      )
-                    : "—"}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-2">
-              <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
-                <span>{t("landingTimeAtDestination")}</span>
-                <span className="font-mono text-navy">
-                  {timeBounds.landing && maxLandingMinutes !== null
-                    ? formatTimeFromMinutes(maxLandingMinutes, calendarLocale)
-                    : t("loading")}
-                </span>
-              </div>
-              <input
-                className={filterRangeClass}
-                type="range"
-                min={timeBounds.landing?.min ?? 0}
-                max={timeBounds.landing?.max ?? 0}
-                step={15}
-                value={maxLandingMinutes ?? timeBounds.landing?.max ?? 0}
-                disabled={!timeBounds.landing}
-                onPointerUp={onFilterCommit}
-                onMouseUp={onFilterCommit}
-                onTouchEnd={onFilterCommit}
-                onKeyUp={onFilterCommit}
-                onBlur={onFilterCommit}
-                onChange={(event) => {
-                  onFilterChange();
-                  setMaxLandingMinutes(Number(event.target.value));
-                }}
-              />
-              <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-medium tabular-nums text-slate-500">
-                <span>
-                  {timeBounds.landing
-                    ? formatTimeFromMinutes(
-                        timeBounds.landing.min,
-                        calendarLocale,
-                      )
-                    : "—"}
-                </span>
-                <span>
-                  {timeBounds.landing
-                    ? formatTimeFromMinutes(
-                        timeBounds.landing.max,
-                        calendarLocale,
-                      )
-                    : "—"}
-                </span>
-              </div>
-            </div>
-          )}
-        </FilterSection>
-
-        <FilterSection title={t("duration")}>
-          <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
-            <span>{t("totalTripTime")}</span>
-            <span className="font-mono text-navy">
-              {durationBounds && maxDurationMinutes !== null
-                ? formatDurationFromMinutes(maxDurationMinutes, t)
-                : t("loading")}
-            </span>
-          </div>
-
-          <input
-            className={filterRangeClass}
-            type="range"
-            min={durationBounds?.min ?? 0}
-            max={durationBounds?.max ?? 0}
-            step={15}
-            value={maxDurationMinutes ?? durationBounds?.max ?? 0}
-            disabled={!durationBounds}
-            onChange={(event) => {
-              onFilterChange();
-              setMaxDurationMinutes(Number(event.target.value));
-            }}
-          />
-
-          <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
-            <span>
-              {durationBounds
-                ? formatDurationFromMinutes(durationBounds.min, t)
-                : "—"}
-            </span>
-            <span>
-              {durationBounds
-                ? formatDurationFromMinutes(durationBounds.max, t)
-                : "—"}
-            </span>
-          </div>
-        </FilterSection>
-
-        {renderQualitySection ? (
-          <FilterSection title={t("flightQuality")}>
-            {flightQualityOptions.map((option) => (
-              <FilterOptionRow
-                key={option.value}
-                label={option.label}
-                count={option.count}
-                checked={selectedFlightQuality.includes(option.value)}
-                onChange={() => {
-                  toggleFilterValue(option.value, setSelectedFlightQuality);
-                  onFilterCommit();
-                }}
-              />
-            ))}
-          </FilterSection>
-        ) : null}
-
-        <FilterSection
-          title={t("stops")}
-          emptyText={t("stopsAppearAfterResultsLoad")}
-        >
-          {stopOptions.map((option) => (
-            <FilterOptionRow
-              key={option.value}
-              label={option.label}
-              count={option.count}
-              secondaryLabel={option.secondaryLabel}
-              rightLabel={option.rightLabel}
-              checked={selectedStops.includes(option.value)}
-              onChange={() => {
-                onFilterChange();
-                toggleFilterValue(option.value, setSelectedStops);
-                onFilterCommit();
-              }}
-            />
-          ))}
-        </FilterSection>
-
-        <FilterSection
-          title={t("airlines")}
-          emptyText={t("airlinesAppearAfterResultsLoad")}
-        >
-          {airlineOptions.map((option) => (
-            <FilterOptionRow
-              key={option.value}
-              label={option.label}
-              count={option.count}
-              checked={selectedAirlines.includes(option.value)}
-              onChange={() => {
-                onFilterChange();
-                toggleFilterValue(option.value, setSelectedAirlines);
-                onFilterCommit();
-              }}
-            />
-          ))}
-        </FilterSection>
-
-        <FilterSection
-          title={t("airports")}
-          emptyText={t("airportsAppearAfterResultsLoad")}
-        >
-          {airportOptions.map((option) => (
-            <FilterOptionRow
-              key={option.value}
-              label={option.label}
-              count={option.count}
-              checked={selectedAirports.includes(option.value)}
-              onChange={() => {
-                onFilterChange();
-                toggleFilterValue(option.value, setSelectedAirports);
-                onFilterCommit();
-              }}
-            />
-          ))}
-        </FilterSection>
-
-        <FilterSection title={t("amenities")}>
-          <FilterOptionRow
-            label={t("baggageIncluded")}
-            checked={baggageIncludedOnly}
-            onChange={() => {
-              setBaggageIncludedOnly(!baggageIncludedOnly);
-              onFilterCommit();
-            }}
-          />
-          <FilterOptionRow
-            label={t("flexibleRefundable")}
-            checked={flexibleOnly}
-            onChange={() => {
-              setFlexibleOnly(!flexibleOnly);
-              onFilterCommit();
-            }}
-          />
-        </FilterSection>
-      </div>
-    </div>
-  );
-}
-
-function CompactFilterSection({
-  title,
-  count,
-  sectionId,
-  openSection,
-  setOpenSection,
-  emptyText,
-  children,
-}: {
-  title: string;
-  count: number;
-  sectionId: Exclude<CompactFilterSectionId, null>;
-  openSection: CompactFilterSectionId;
-  setOpenSection: Dispatch<SetStateAction<CompactFilterSectionId>>;
-  emptyText?: string;
-  children: ReactNode;
-}) {
-  const isOpen = openSection === sectionId;
-  const panelId = `compact-filter-${sectionId}-panel`;
-  const hasOptions =
-    Boolean(children) && (!Array.isArray(children) || children.length > 0);
-
-  return (
-    <section className="border-t border-[#D8E1EC]/75 first:border-t-0">
-      <button
-        type="button"
-        aria-expanded={isOpen}
-        aria-controls={panelId}
-        className={cn(
-          "group flex min-h-9 w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-start text-[13px] font-semibold leading-5 tracking-[-0.005em] text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:bg-[#E5ECF4] hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
-          isOpen && "text-[#004BB8]",
-        )}
-        onClick={() => {
-          setOpenSection((current) =>
-            current === sectionId ? null : sectionId,
-          );
-
-          if (typeof window !== "undefined") {
-            window.requestAnimationFrame(() => {
-              window.dispatchEvent(new Event("resize"));
-            });
-          }
-        }}
-      >
-        <span className="min-w-0 truncate">{title}</span>
-        <span className="flex shrink-0 items-center gap-2">
-          {count > 0 ? (
-            <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[11px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">
-              {count}
-            </span>
-          ) : null}
-          <ChevronDown
-            aria-hidden="true"
-            className={cn(
-              "h-3.5 w-3.5 text-slate-500 transition duration-200 motion-reduce:transition-none group-hover:text-[#004BB8]",
-              isOpen && "rotate-180 text-[#004BB8]",
-            )}
-            strokeWidth={2.3}
-          />
-        </span>
-      </button>
-      <div
-        id={panelId}
-        className={cn(
-          "grid h-auto gap-0.5 overflow-visible bg-transparent px-2.5 pb-3 pt-0.5",
-          !isOpen && "hidden",
-        )}
-      >
-        {hasOptions ? (
-          children
-        ) : (
-          <p className="py-1 text-xs font-normal text-slate-500">{emptyText}</p>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function FilterSection({
-  title,
-  emptyText,
-  children,
-}: {
-  title: string;
-  emptyText?: string;
-  children: ReactNode;
-}) {
-  const hasOptions =
-    Boolean(children) && (!Array.isArray(children) || children.length > 0);
-
-  return (
-    <section className="border-t border-slate-200/75 py-4 first:border-t-0">
-      <h3 className="mb-2.5 text-sm font-bold leading-5 tracking-[-0.005em] text-slate-950">
-        {title}
-      </h3>
-      <div className="grid gap-0.5">
-        {hasOptions ? (
-          children
-        ) : (
-          <p className="py-1 text-xs font-normal text-slate-500">{emptyText}</p>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function FilterOptionRow({
-  label,
-  count,
-  secondaryLabel,
-  rightLabel,
-  checked,
-  onChange,
-  compact = false,
-}: {
-  label: string;
-  count?: number;
-  secondaryLabel?: string;
-  rightLabel?: string;
-  checked: boolean;
-  onChange: () => void;
-  compact?: boolean;
-}) {
-  const trailingLabel =
-    rightLabel ?? (typeof count === "number" ? String(count) : null);
-
-  return (
-    <label
-      className={cn(
-        "flex cursor-pointer items-center justify-between rounded-lg font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950 focus-within:bg-slate-50 focus-within:text-slate-950",
-        compact
-          ? "min-h-8 gap-2 px-1.5 py-1 text-[13px]"
-          : "min-h-11 gap-3 px-1.5 py-1.5 text-[13px] leading-5",
-      )}
-    >
-      <span
-        className={cn(
-          "flex min-w-0 items-center",
-          compact ? "gap-1.5" : "gap-2",
-        )}
-      >
-        <input
-          type="checkbox"
-          className={cn(
-            "mt-0.5 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-[#004BB8]/25",
-            compact ? "h-3.5 w-3.5" : "h-4 w-4",
-          )}
-          checked={checked}
-          onChange={onChange}
-        />
-        <span className="min-w-0">
-          <span className="block truncate">{label}</span>
-          {secondaryLabel ? (
-            <span className="block text-[12px] font-medium leading-4 text-slate-500">
-              {secondaryLabel}
-            </span>
-          ) : null}
-        </span>
-      </span>
-      {trailingLabel ? (
-        <span className="shrink-0 text-[12px] font-medium leading-5 text-slate-500">
-          {trailingLabel}
-        </span>
-      ) : null}
-    </label>
   );
 }

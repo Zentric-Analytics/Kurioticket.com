@@ -47,7 +47,7 @@ import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicke
 import { MobilePackageTravelersRoomsPicker } from "@/components/search/MobilePackageTravelersRoomsPicker";
 import { MobileCarDriverAgePickerDialog, MobileCarTimePickerDialog } from "@/components/search/CarsPickerContent";
 import { translations as en } from "@/lib/i18n/en";
-import { driverAgeOptions, timeOptions } from "@/lib/cars/carsSearchUtils";
+import { timeOptions } from "@/lib/cars/carsSearchUtils";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import { getHotelLocationFieldDisplay } from "@/lib/search/hotelLocationFieldDisplay";
 import {
@@ -331,7 +331,6 @@ function DealsCarPopover({
   width: preferredWidth,
   marker,
   desktopLanding = false,
-  minimumDesktopWidth = 1024,
   onDismiss,
   children,
 }: {
@@ -936,7 +935,6 @@ export function DealsSearchForm({
   const [draftHotelPetFriendly, setDraftHotelPetFriendly] = useState(
     search.hotelPetFriendly,
   );
-  const carPickupLocationRef = useRef<HTMLInputElement>(null);
   const carPickupLocationLauncherRef = useRef<HTMLButtonElement>(null);
   const carReturnLocationLauncherRef = useRef<HTMLButtonElement>(null);
   const carReturnLocationInputRef = useRef<HTMLInputElement>(null);
@@ -988,7 +986,7 @@ export function DealsSearchForm({
     search.carReturnTime,
   );
   const [mobileCarDriverAgeOpen, setMobileCarDriverAgeOpen] = useState(false);
-  const [draftCarDriverAge, setDraftCarDriverAge] = useState(
+  const [, setDraftCarDriverAge] = useState(
     search.carDriverAge,
   );
   const included = getIncludedProducts(search.mode);
@@ -1392,13 +1390,13 @@ export function DealsSearchForm({
         ? desktopStayDatesLauncherRef
         : stayDatesLauncherRef
       : hotelDatesLauncherRef;
-  const restoreHotelDatesFocus = () =>
+  const restoreHotelDatesFocus = useCallback(() =>
     requestAnimationFrame(() =>
       (window.matchMedia("(max-width: 639px)").matches
         ? hotelDatesLauncherRef
         : desktopHotelDatesLauncherRef
       ).current?.focus({ preventScroll: true }),
-    );
+    ), [desktopHotelDatesLauncherRef]);
   const openHotelDates = () => {
     closeDesktopLandingPanels();
     resetHotelDatesDraft();
@@ -1418,7 +1416,7 @@ export function DealsSearchForm({
       setHotelDatesOpen(false);
       if (restoreFocus) restoreHotelDatesFocus();
     },
-    [resetHotelDatesDraft],
+    [resetHotelDatesDraft, restoreHotelDatesFocus],
   );
   const validDraftHotelRange = useMemo(() => {
     const checkIn = parseIsoDate(draftHotelCheckIn);
@@ -1478,7 +1476,7 @@ export function DealsSearchForm({
     mobileHotelDatesCommittedRef.current = false;
     setMobileHotelDatesOpen(false);
     restoreHotelDatesFocus();
-  }, [resetHotelDatesDraft]);
+  }, [resetHotelDatesDraft, restoreHotelDatesFocus]);
 
   const travelerSummary = useMemo(() => {
     const total =
@@ -1584,40 +1582,6 @@ export function DealsSearchForm({
       }),
     [carIntlLocale],
   );
-  const carDatesSummary = useMemo(() => {
-    const pickup = parseIsoDate(search.carPickupDate);
-    const returning = parseIsoDate(search.carReturnDate);
-    return pickup &&
-      returning &&
-      !isBeforeToday(pickup) &&
-      !isBeforeToday(returning) &&
-      returning >= pickup
-      ? formatTravelDateRangeDisplay(search.carPickupDate, search.carReturnDate, carIntlLocale)
-        ?? t("carsSearch.rentalDatePlaceholder")
-      : t("carsSearch.rentalDatePlaceholder");
-  }, [
-    carIntlLocale,
-    isBeforeToday,
-    search.carPickupDate,
-    search.carReturnDate,
-    t,
-  ]);
-  const carTimesSummary = useMemo(
-    () =>
-      timeOptions.includes(search.carPickupTime) &&
-      timeOptions.includes(search.carReturnTime)
-        ? t("carsSearch.pickupReturnTimeSummary")
-            .replace(
-              "{pickupTime}",
-              formatCarTimeLabel(search.carPickupTime, carIntlLocale),
-            )
-            .replace(
-              "{returnTime}",
-              formatCarTimeLabel(search.carReturnTime, carIntlLocale),
-            )
-        : t("carsSearch.pickupReturnTimeLabel"),
-    [carIntlLocale, search.carPickupTime, search.carReturnTime, t],
-  );
   const carDriverAgeLabel = (age: string) =>
     age === "18-70" ? t("carsSearch.driverAgeAnyAgeRange") : age;
   const resetCarDatesDraft = useCallback(() => {
@@ -1635,42 +1599,6 @@ export function DealsSearchForm({
   }, [search.carPickupTime, search.carReturnTime]);
   const restoreCarFocus = (ref: RefObject<HTMLButtonElement | null>) =>
     requestAnimationFrame(() => ref.current?.focus({ preventScroll: true }));
-  const closeOtherDealsPickers = () => {
-    setFlightOriginOpen(false);
-    setFlightDestinationOpen(false);
-    setFlightMobileAirport(null);
-    setHotelDestinationOpen(false);
-    setHotelDestinationMobileOpen(false);
-    dismissDesktopFlightDates();
-    setMobileFlightDatesOpen(false);
-    dismissDesktopHotelDates();
-    setMobileHotelDatesOpen(false);
-    setTravelersOpen(false);
-    setMobileTravelersOpen(false);
-  };
-  const closeCarMobilePickers = () => {
-    setMobileCarLocation(null);
-    setMobileCarDatesOpen(false);
-    setMobileCarTimesOpen(false);
-    setMobileCarDriverAgeOpen(false);
-  };
-  const openCarLocation = (kind: "pickup" | "return") => {
-    closeDesktopLandingPanels();
-    closeOtherDealsPickers();
-    resetCarDatesDraft();
-    resetCarTimesDraft();
-    setCarDatesOpen(false);
-    setCarTimesOpen(false);
-    closeCarMobilePickers();
-    if (kind === "return") setDraftCarReturnLocation(search.carReturnLocation);
-    if (window.matchMedia("(max-width: 639px)").matches)
-      openMobilePickerWithKeyboard(
-        () => setMobileCarLocation(kind),
-        `deals-car-${kind}-mobile-input`,
-      );
-    else if (kind === "return") setCarReturnLocationOpen(true);
-    else setMobileCarLocation(kind);
-  };
   const dismissCarReturnLocation = useCallback(() => {
     setDraftCarReturnLocation(search.carReturnLocation);
     setCarReturnLocationOpen(false);
@@ -1683,20 +1611,6 @@ export function DealsSearchForm({
     setCarReturnLocationOpen(false);
     restoreCarFocus(carReturnLocationLauncherRef);
   };
-  const openCarDates = () => {
-    closeDesktopLandingPanels();
-    resetCarDatesDraft();
-    resetCarTimesDraft();
-    closeOtherDealsPickers();
-    closeCarMobilePickers();
-    setCarTimesOpen(false);
-    const pickup = parseIsoDate(search.carPickupDate);
-    const visible = pickup && !isBeforeToday(pickup) ? pickup : todayLocal;
-    setVisibleCarMonth(new Date(visible.getFullYear(), visible.getMonth(), 1));
-    if (window.matchMedia("(max-width: 639px)").matches)
-      setMobileCarDatesOpen(true);
-    else setCarDatesOpen(true);
-  };
   const dismissCarDates = useCallback(
     (focus = false) => {
       resetCarDatesDraft();
@@ -1705,17 +1619,6 @@ export function DealsSearchForm({
     },
     [resetCarDatesDraft],
   );
-  const openCarTimes = () => {
-    closeDesktopLandingPanels();
-    resetCarTimesDraft();
-    resetCarDatesDraft();
-    closeOtherDealsPickers();
-    closeCarMobilePickers();
-    setCarDatesOpen(false);
-    if (window.matchMedia("(max-width: 639px)").matches)
-      setMobileCarTimesOpen(true);
-    else setCarTimesOpen(true);
-  };
   const dismissCarTimes = useCallback(
     (focus = false) => {
       resetCarTimesDraft();
@@ -4321,11 +4224,6 @@ export function DealsSearchForm({
                       aria-expanded={
                         isDesktopLanding && isPackagesLanding
                           ? hotelDatesOpen
-                          : undefined
-                      }
-                      aria-haspopup={
-                        isDesktopLanding && isPackagesLanding
-                          ? "dialog"
                           : undefined
                       }
                       aria-controls={

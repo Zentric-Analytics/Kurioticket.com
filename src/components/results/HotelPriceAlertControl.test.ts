@@ -7,6 +7,18 @@ const source = readFileSync(
   "utf8",
 );
 
+test("changed hotel alert identity clears prior search state before rendering", () => {
+  const body = source.match(/if \(previousLookupKey !== lookupKey\) \{([^}]+)\}/)?.[1];
+  assert.ok(body);
+  const changes: unknown[] = [];
+  new Function("lookupKey", "setPreviousLookupKey", "setAlerts", "setAlertKnown", "setAuthenticated", body)(
+    "new-search", ...Array.from({ length: 4 }, () => (value: unknown) => changes.push(value)),
+  );
+  assert.deepEqual(changes, ["new-search", [], false, null]);
+  assert.match(source, /JSON.stringify\(\[hotel.id, search.checkIn, search.checkOut, search.destination, search.guests, search.rooms\]\)/);
+  assert.match(source, /await response.json\(\)[\s\S]*if \(controller.signal.aborted\) return;[\s\S]*setAlerts/);
+});
+
 test("web Hotel Price Alert uses the native percentage-drop model instead of manual target entry", () => {
   assert.match(source, /hotelAlertPriceBasis/);
   assert.match(source, /HOTEL_ALERT_MIN_DROP_PERCENT/);
@@ -30,11 +42,13 @@ test("web Hotel Price Alert preserves provider currency while showing display cu
   assert.match(source, /buildHotelPriceAlertPayload\([\s\S]*?alertTarget,[\s\S]*?providerCurrency/);
 });
 
-test("web Hotel Price Alert compact row matches the native 48px toggle presentation", () => {
-  assert.match(source, /min-h-12/);
-  assert.match(source, /h-\[17px\] w-\[17px\]/);
-  assert.match(source, /text-\[12\.5px\] font-bold leading-4/);
+test("web Hotel Price Alert uses the mobile overview utility card presentation", () => {
+  assert.match(source, /min-h-\[58px\]/);
+  assert.match(source, /h-\[18px\] w-\[18px\]/);
+  assert.match(source, /text-\[14px\] font-semibold leading-5/);
   assert.match(source, /role="switch"/);
+  assert.match(source, /aria-checked=\{Boolean\(isTracking\)\}/);
+  assert.match(source, /disabled=\{compactDisabled\}/);
 });
 
 
@@ -61,7 +75,7 @@ test("desktop Hotel Results price-alert row is vertically aligned and compact", 
   assert.match(row, /flex min-w-0 items-center gap-3/);
   assert.match(row, /h-8 w-8 shrink-0/);
   assert.match(row, /relative inline-flex h-7 w-12/);
-  assert.match(row, /compactDesktop && "sm:inline-flex sm:h-8 sm:items-center sm:rounded-full sm:border-\[#9299A9\] sm:bg-transparent sm:px-3 sm:py-0 sm:shadow-none"/);
+  assert.match(row, /compactDesktop && "sm:inline-flex sm:h-8 sm:items-center sm:rounded-lg sm:border-\[#9299A9\] sm:bg-transparent sm:px-3 sm:py-0 sm:shadow-none"/);
   assert.match(row, /compactDesktop && "sm:h-\[18px\] sm:w-8"/);
 });
 

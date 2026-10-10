@@ -132,7 +132,7 @@ test("Results mode copies native route/date/traveler grouping and trip tabs", ()
   assert.match(group, /flight-results-edit-surface[^"]*bg-white/);
   assert.match(
     group,
-    /data-mobile-swap-control[\s\S]*?rounded-full bg-white[\s\S]*?h-9 w-9/,
+    /data-mobile-swap-control[\s\S]*?rounded-full !border-t-0 bg-white[\s\S]*?h-9 w-9/,
   );
   assert.match(group, /data-mobile-swap-control[\s\S]*?!border-t-0/);
 

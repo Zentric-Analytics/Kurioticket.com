@@ -83,9 +83,7 @@ export function CarDealPicker({
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const groups = useMemo(() => getCarDealPickerGroups(car), [car]);
-  const visibleGroups = groups.slice(0, 3);
-
-  if (!visibleGroups.length) return null;
+  if (!groups.length) return null;
 
   const formatOfferPrice = (offer: CarOffer) =>
     formatDisplayPrice({
@@ -108,12 +106,12 @@ export function CarDealPicker({
       className={`min-w-0 ${compact ? "mt-1.5" : "mt-2"}`}
     >
       <div
-        className={`grid min-w-0 grid-cols-3 ${compact ? "gap-x-2.5" : "gap-x-3"}`}
+        className={`grid min-w-0 grid-cols-3 gap-y-3 ${compact ? "gap-x-2.5" : "gap-x-3"}`}
         role="list"
         aria-label="Car deal providers"
         data-car-deal-provider-offers
       >
-        {visibleGroups.map((group) => {
+        {groups.map((group) => {
           const offer = group.primaryOffer;
           const bookingHref = approvedProviderBookingUrl(car, offer);
 

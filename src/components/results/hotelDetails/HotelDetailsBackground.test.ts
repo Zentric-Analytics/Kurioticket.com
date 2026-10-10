@@ -19,7 +19,7 @@ test("keeps Flights Details independently scoped", () => {
   assert.match(flightClientSource, /<main/);
 });
 
-test("standalone desktop uses a white canvas while guided details keep their own composition", () => {
+test("standalone desktop uses its approved muted canvas while guided details keep their own composition", () => {
   const standalone = hotelClientSource.slice(
     hotelClientSource.indexOf('if (mode === "standalone")'),
     hotelClientSource.indexOf("const detailsContent = ("),
@@ -28,7 +28,7 @@ test("standalone desktop uses a white canvas while guided details keep their own
   const shellIndex = standalone.indexOf("data-hotel-details-page-shell");
   const detailsIndex = standalone.indexOf("<StandaloneHotelDetails");
   assert.ok(mainIndex >= 0 && shellIndex > mainIndex && detailsIndex > shellIndex);
-  assert.match(standalone, /<main className="[^"]*lg:bg-white/);
+  assert.match(standalone, /<main className="[^"]*lg:bg-\[#F7F9FC\]/);
   assert.match(standalone, /w-full/);
   assert.doesNotMatch(standalone.slice(mainIndex, shellIndex), /gradient|shadow-|role="separator"/);
 
@@ -57,7 +57,7 @@ test("aligns both Hotel Details page states without changing their contracts", (
     hotelStatesSource.indexOf("type HotelDetailsUnavailableStateProps"),
   );
   assert.match(loadingSource, /lg:max-w-\[1080px\] lg:px-\[30px\]/);
-  assert.match(loadingSource, /flex-1 bg-white sm:bg-\[#f8fafc\] lg:bg-white/);
+  assert.match(loadingSource, /flex-1 bg-white sm:bg-\[#f8fafc\] lg:bg-\[#F7F9FC\]/);
 
   const unavailableSource = hotelStatesSource.slice(
     hotelStatesSource.indexOf("export function HotelDetailsUnavailableState"),

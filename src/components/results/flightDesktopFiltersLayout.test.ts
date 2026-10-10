@@ -96,11 +96,12 @@ test("alternate time mode control remains full width with comfortable guided siz
     "utf8",
   );
 
-  assert.match(source, /min-h-7 w-full/);
-  assert.match(source, /isGuidedComfortable && "min-h-9 text-\[13px\]"/);
+  assert.match(source, /grid grid-cols-2 rounded-\[10px\]/);
+  assert.match(source, /min-h-9 rounded-lg/);
+  assert.match(source, /isGuidedComfortable && "min-h-10"/);
   assert.match(
     source,
-    /setTimeFilterMode\([\s\S]*?timeFilterMode === "takeoff"[\s\S]*?\? "landing"[\s\S]*?: "takeoff"[\s\S]*?\)/,
+    /\["takeoff", "landing"\]\.map\(\(mode\) =>[\s\S]*setTimeFilterMode\(mode as TimeFilterMode\)/,
   );
 });
 
@@ -134,7 +135,8 @@ test("desktop airline facets show counts without prices while retaining filter c
   assert.doesNotMatch(airlines, /secondaryLabel|rightLabel|t\("from"\)/);
   assert.match(airlines, /type="search"[\s\S]*setAirlineSearch/);
   assert.match(airlines, /showAllAirlines \? t\("hotelResults\.showLess"\) : t\("showMoreResults"\)/);
-  assert.match(stops, /t\("from"\)\.toLowerCase\(\)[\s\S]*option\.rightLabel/);
+  assert.match(stops, /count=\{option\.count\}/);
+  assert.doesNotMatch(stops, /rightLabel/);
   assert.match(airlineOptions, /const counts = new Map<string, number>\(\)/);
   assert.match(airlineOptions, /count,[\s\S]*\.sort\([\s\S]*\.slice\(0, 8\)/);
   assert.doesNotMatch(airlineOptions, /minPrice|rightLabel|getComparableFlightPrice/);

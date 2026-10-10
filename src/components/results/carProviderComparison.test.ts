@@ -98,44 +98,46 @@ test("live or sandbox inventory keeps provider grouping instead of splitting one
   assert.equal(groups[1]?.providerName, "Provider C");
 });
 
-test("provider picker is capped at three visible deal choices with an overflow control", () => {
+test("provider picker exposes every supplied seller without a three-provider cutoff", () => {
   assert.match(picker, /getCarDealPickerGroups\(car\)/);
-  assert.match(picker, /groups\.slice\(0, 3\)/);
-  assert.match(picker, /extraCount > 0/);
-  assert.match(picker, /\+\{extraCount\}/);
-  assert.match(picker, /Compare providers/);
+  assert.match(picker, /groups\.map\(\(group\) =>/);
+  assert.doesNotMatch(picker, /groups\.slice\(/);
+  assert.match(picker, /grid-cols-3 gap-y-3/);
+  const groups = getCarDealPickerGroups({
+    inventorySource: "kayak-sandbox",
+    offers: Array.from({ length: 7 }, (_, index) => offer(String(index), `Seller ${index}`, 200 + index)),
+  });
+  assert.equal(groups.length, 7);
+  assert.equal(new Set(groups.map((group) => group.providerName)).size, 7);
 });
 
-test("provider picker keeps public offer facts without internal handoff copy", () => {
-  assert.match(picker, /Free cancellation/);
-  assert.match(picker, /Taxes and fees included/);
-  assert.match(picker, /Pay at pickup/);
+test("provider picker links each supplied seller directly through a validated booking URL", () => {
+  assert.match(picker, /const offer = group\.primaryOffer/);
+  assert.match(picker, /approvedProviderBookingUrl\(car, offer\)/);
+  assert.match(picker, /sandboxBookingUrl\(offer\.bookingUrl\)/);
+  assert.match(picker, /url\.protocol !== "https:" \|\| url\.username \|\| url\.password/);
+  assert.match(picker, /href=\{bookingHref\}/);
+  assert.match(picker, /rel="noopener noreferrer"/);
+  assert.match(picker, /aria-disabled="true"/);
   assert.doesNotMatch(
     picker,
     /Provider handoff will appear when this seller supplies a booking link\./,
   );
 });
 
-test("provider preview removes low-value copy and keeps a clear total hierarchy", () => {
+test("inline provider choices show an explicitly labelled converted daily price", () => {
   assert.doesNotMatch(picker, />\s*Price\s*</);
-  assert.match(picker, /Estimated total/);
-  assert.match(picker, /\{total\}/);
+  assert.match(picker, /amount: offer\.pricePerDay/);
+  assert.match(picker, /sourceCurrency: offer\.currency/);
+  assert.match(picker, /displayCurrency: selectedOption\.currency/);
+  assert.match(picker, /rates: currencyRates\.rates/);
+  assert.match(picker, /\{formatOfferPrice\(offer\)\}/);
+  assert.match(picker, />\/day<\/span>/);
   assert.doesNotMatch(picker, /1 available offer|available offers · best rate selected/);
-  assert.doesNotMatch(picker, /perDay|>Per day</);
   assert.doesNotMatch(picker, /Selected · View deal uses this provider/);
   assert.doesNotMatch(picker, /Choose this provider to update View deal/);
-  assert.match(
-    picker,
-    /data-car-deal-total-price[\s\S]*desktop[\s\S]*text-\[26px\] leading-7/,
-  );
-  assert.match(
-    picker,
-    /data-car-deal-estimated-total[\s\S]*desktop[\s\S]*text-\[13px\] font-semibold leading-4/,
-  );
-  assert.match(
-    picker,
-    /data-car-deal-offer-facts[\s\S]*CircleCheck[\s\S]*Free cancellation[\s\S]*ReceiptText[\s\S]*Taxes and fees included/,
-  );
+  assert.match(picker, /data-car-deal-provider-price/);
+  assert.match(picker, /event\.stopPropagation\(\)/);
 });
 
 test("Cars results map mirrors the Hotels-style filter-rail interaction", () => {
@@ -151,5 +153,5 @@ test("Cars results map mirrors the Hotels-style filter-rail interaction", () => 
 test("standalone normalized cars share one result-card contract", () => {
   assert.doesNotMatch(results, /<KayakResultCard/);
   assert.match(results, /visibleResults\.map\(\(car\) => \([\s\S]*?<CarResultCard/);
-  assert.match(results, /KAYAK sandbox · Simulated offer/);
+  assert.match(results, /KAYAK sandbox · Not bookable/);
 });

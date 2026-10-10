@@ -99,7 +99,7 @@ test("orphaned iOS reservation adopts one exact EAS history match instead of cre
   let fingerprintChecks = 0;
   const build = exactIosBuild();
   const pool = {
-    async query(sql, params = []) {
+    async query(sql) {
       if (sql.startsWith("SELECT * FROM preview_release_action WHERE id=$1 LIMIT 2")) {
         return { rowCount: 1, rows: [structuredClone(row)] };
       }

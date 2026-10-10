@@ -80,29 +80,29 @@ test("source-contract: guided filters launcher is mobile and tablet visible unti
   assert.match(carsClient, /flex w-full min-w-0 flex-col items-start/);
 });
 
-test("source-contract: mobile drawer is conditional, focus trapped, restores safely, and releases scroll lock", () => {
+test("source-contract: mobile drawer stays mounted but inert when closed, traps focus and releases scroll lock", () => {
   const experience = carsClient.slice(carsClient.indexOf("export function CarsResultsExperience"));
-  assert.match(experience, /filtersOpen \? \(\s*<aside\s+ref=\{filtersDialogRef\}\s+tabIndex=\{-1\}\s+role="dialog"\s+aria-modal="true"/);
-  assert.match(experience, /ref=\{quickFiltersDialogRef\} tabIndex=\{-1\} role="dialog" aria-modal="true"/);
+  assert.match(experience, /<aside\s+ref=\{filtersDialogRef\}\s+tabIndex=\{-1\}\s+role="dialog"\s+aria-modal="true"[\s\S]*?aria-hidden=\{!filtersOpen\}\s+inert=\{!filtersOpen \? true : undefined\}/);
+  assert.match(experience, /ref=\{quickFiltersDialogRef\}\s+tabIndex=\{-1\}\s+role="dialog"\s+aria-modal="true"/);
   assert.match(experience, /activeCloseButtonRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
   assert.match(experience, /event\.key === "Tab"/);
   assert.match(experience, /event\.shiftKey && document\.activeElement === first/);
   assert.match(experience, /!event\.shiftKey && document\.activeElement === last/);
-  assert.match(experience, /event\.key === "Escape"[\s\S]*?setFiltersOpen\(false\);\s*setQuickFilterGroupId\(null\)/);
+  assert.match(experience, /event\.key === "Escape"[\s\S]*?if \(quickFilterGroupId\) closeQuickFilter\(\);\s*else closeMobileFiltersDrawer\(\)/);
   assert.match(
     experience,
     /const releaseScrollLock = quickFilterOverlayOpen\s*\? acquireMobileResultsScrollLock\(\)\s*:\s*acquireMobileResultsScrollLock\(\{ freezeBodyPosition: false \}\)[\s\S]*mobileFiltersScrollLockRef\.current = releaseScrollLock/,
   );
-  assert.match(experience, /releaseExistingLock\(\)/);
+  assert.match(experience, /return \(\) => \{\s*releaseScrollLock\(\);\s*if \(mobileFiltersScrollLockRef\.current === releaseScrollLock\)/);
   assert.match(experience, /restoreOverlayLauncherFocus\(launcher, mobileFiltersModalityRef\.current\)/);
-  assert.match(experience, /shouldRestoreFocus = false;\s*setFiltersOpen\(false\)/);
+  assert.match(experience, /shouldRestoreFocus = false;\s*if \(filtersOpen\) closeMobileFiltersDrawer\(\);\s*else setFiltersOpen\(false\)/);
 });
 
 test("source-contract: standalone and guided adapters share the one Car result core", () => {
   assert.match(carsClient, /export function CarsResultsClient[\s\S]*<CarsResultsExperience[\s\S]*results=\{initialResults\}/);
   assert.match(stage, /<CarsResultsExperience[\s\S]*results=\{results\}/);
   assert.equal((carsClient.match(/sortCarResults\(filterCarResults/g) ?? []).length, 1);
-  assert.equal((carsClient.match(/pageResults\.map\(\(car\) =>/g) ?? []).length, 1);
+  assert.equal((carsClient.match(/visibleResults\.map\(\(car\) =>/g) ?? []).length, 1);
   assert.doesNotMatch(carsClient, /<KayakResultCard/);
   assert.match(carsClient, /visibleResults\.map\(\(car\) => \([\s\S]*?<CarResultCard/);
   assert.equal((carsClient.match(/detailsHrefForCar\(car\)/g) ?? []).length, 1);

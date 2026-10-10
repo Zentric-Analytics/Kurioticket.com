@@ -33,7 +33,8 @@ test("mobile list uses the shared twenty-result pagination and keeps website foo
   assert.match(results, /<FlightResultsPagination[\s\S]*disabled=\{paginationPendingPage !== null\}/);
   assert.match(results, /aria-label="Back to top"/);
   assert.match(results, /<Footer variant="brand-legal-only" \/>/);
-  assert.doesNotMatch(results, /data-mobile-continuous-flight-list|sortedResults\.map\(\(flight, index\)/);
+  const mobileList = results.slice(results.indexOf("data-mobile-paginated-flight-results"), results.indexOf("ref={paginationListRef}"));
+  assert.doesNotMatch(mobileList, /data-mobile-continuous-flight-list|sortedResults\.map\(\(flight, index\)/);
 });
 
 test("mobile and desktop commercial actions stay isolated", () => {

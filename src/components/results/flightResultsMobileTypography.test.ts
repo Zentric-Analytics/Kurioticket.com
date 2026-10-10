@@ -17,7 +17,7 @@ test("mobile Flight Results disables text inflation within its existing page sco
   )?.[0];
 
   assert.ok(textAdjustRule);
-  assert.equal(css.match(/\[data-flight-results-main\]/g)?.length, 1);
+  assert.equal(css.match(/\[data-flight-results-main\]\s*\{\s*-webkit-text-size-adjust/g)?.length, 1);
   assert.match(resultsSource, /<main data-flight-results-main[^>]*>/);
   assert.match(
     resultsSource,
@@ -47,7 +47,7 @@ test("mobile Flight Results uses the native compact hierarchy without changing d
   assert.match(css, /@media \(max-width: 1023px\)[\s\S]*?flight-card-price-value\.flight-card-price\[data-price-size="normal"\][\s\S]*?font-size: 1\.1875rem/);
   assert.match(css, /@media \(max-width: 1023px\)[\s\S]*?flight-card-price-value\.flight-card-price\[data-price-size="compact"\][\s\S]*?font-size: clamp\(0\.8125rem, 3\.6vw, 0\.9375rem\)/);
   assert.match(mobile, /flight-card-view-button[\s\S]*?min-height: 44px/);
-  assert.match(desktop, /\.flight-card-time \{[\s\S]*?font-size: 1\.125rem/);
+  assert.match(desktop, /\.flight-card-time \{[\s\S]*?font-size: 1rem;[\s\S]*?line-height: 1\.125rem/);
 });
 
 test("long airline and numeric-price overflow protections remain in place", () => {

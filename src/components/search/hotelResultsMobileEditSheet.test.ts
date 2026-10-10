@@ -39,11 +39,11 @@ test("Hotel Results keeps page summaries mounted but omits the sheet summary", (
   assert.doesNotMatch(searchBar.slice(form), /\{mobileSearchSummary\}/);
 });
 
-test("hotel editing follows the Cars floating-summary and bottom-sheet structure", () => {
+test("hotel editing retains its navbar launcher and floating bottom sheet", () => {
   assert.doesNotMatch(results, /mobileResultsSearch=/);
   assert.doesNotMatch(results, /placement="top"/);
-  assert.match(results, /h-\[4\.25rem\][\s\S]*max-w-\[30rem\]/);
-  assert.match(results, /cleanBackdrop[\s\S]*bottomSurfaceContinuation[\s\S]*smoothMotion[\s\S]*isolatedBackdrop/);
+  assert.match(results, /createPortal\(renderMobileHotelNavSearch\(\), mobileNavSearchTarget\)/);
+  assert.match(results, /backdropClassName=\{mobileStyles.editBackdrop\}[\s\S]*smoothMotion[\s\S]*isolatedBackdrop/);
   assert.match(results, /aria-expanded=\{mobileHotelSearchOpen\}/);
 });
 
@@ -62,13 +62,14 @@ test("Hotel results cards place their icons and approved affordances in value ro
 
 test("Hotel results sheet uses the Cars bottom-sheet surface and motion contract", () => {
   assert.match(results, /browserCanvasColor="#ffffff"/);
-  assert.match(results, /contentClassName="!pt-3 pb-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\]"/);
+  assert.match(results, /className=\{mobileStyles.editSheet\}/);
+  assert.match(read("../results/HotelResultsMobile.module.css"), /padding: 10px 12px max\(20px, env\(safe-area-inset-bottom\)\)/);
   assert.match(results, /closing=\{mobileHotelSearchClosing\}/);
   assert.match(results, /onCloseAnimationComplete=\{finishMobileHotelSearchClose\}/);
   assert.doesNotMatch(results, /mobileHotelSearchCloseTimerRef|mobileHotelSearchCloseMotionMs/);
   assert.match(results, /prefers-reduced-motion: reduce/);
-  assert.match(results, /cleanBackdrop/);
-  assert.match(results, /bottomSurfaceContinuation/);
+  assert.match(results, /backdropClassName=\{mobileStyles.editBackdrop\}/);
+  assert.match(read("../results/HotelResultsMobile.module.css"), /\.editSheet \{[^}]*margin: 0 12px 12px/);
   assert.doesNotMatch(results, /placement="top"/);
   assert.match(sheet, /placement === "top"/);
 });
@@ -92,7 +93,7 @@ test("the shared sheet exclusively owns locking while nested Hotel pickers are o
   );
   assert.doesNotMatch(results, /mobileHotelSearchScrollLockRef/);
   assert.equal(
-    results.match(/acquireMobileResultsScrollLock\(\)/g)?.length,
+    results.match(/acquireMobileResultsScrollLock\(/g)?.length,
     2,
     "the independent mobile Filters drawer and desktop compact panel own Results-level locking",
   );

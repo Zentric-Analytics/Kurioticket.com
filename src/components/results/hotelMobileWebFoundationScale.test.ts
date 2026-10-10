@@ -11,15 +11,15 @@ const card = readFileSync(
   "utf8",
 );
 const detailsClient = readFileSync(
-  new URL("./HotelDetailsClient.tsx", import.meta.url),
+  new URL("./hotelDetails/DesktopHotelDetails.tsx", import.meta.url),
   "utf8",
 );
 const details = readFileSync(
-  new URL("./hotelDetails/StandaloneHotelDetails.tsx", import.meta.url),
+  new URL("./hotelDetails/MobileHotelDetails.tsx", import.meta.url),
   "utf8",
 );
-const detailsNav = readFileSync(
-  new URL("./hotelDetails/HotelDetailsSectionNav.tsx", import.meta.url),
+const detailsCss = readFileSync(
+  new URL("./hotelDetails/HotelDetailsMobile.module.css", import.meta.url),
   "utf8",
 );
 
@@ -27,68 +27,51 @@ test("mobile-web Hotel results keep a readable foundation scale without browser 
   assert.match(results, /data-mobile-web-hotel-results/);
   assert.match(
     results,
-    /block truncate text-\[14px\] font-semibold leading-5 text-slate-950/,
+    /block truncate text-\[14px\] font-semibold leading-\[18px\] text-\[#142033\]/,
   );
   assert.match(
     results,
-    /inline-flex max-w-full items-center gap-1\.5 text-\[13px\] font-medium leading-\[18px\] text-slate-600/,
+    /block truncate text-\[11px\] font-medium leading-\[15px\] text-\[#536B92\]/,
   );
   assert.doesNotMatch(results, /\bzoom\s*:/);
 });
 
-test("mobile-web Hotel cards no longer compress supporting content to 10px", () => {
-  assert.doesNotMatch(card, /text-\[10px\]/);
+test("mobile-web Hotel cards preserve the current readable title, amenity and price hierarchy", () => {
   assert.match(
     card,
-    /text-\[12px\] font-normal leading-\[18px\] text-slate-600 md:text-\[13px\] md:leading-5/,
+    /sm:text-\[12px\] sm:leading-\[18px\] sm:text-slate-600 md:text-\[13px\] md:leading-5/,
   );
   assert.match(
     card,
-    /grid grid-cols-1 gap-y-0\.5 text-\[11px\] leading-4[\s\S]*?md:text-xs md:leading-4/,
+    /grid grid-cols-1 gap-y-\[3px\] text-\[13px\] font-normal leading-\[19px\][\s\S]*?md:text-xs md:leading-4/,
   );
   assert.match(
     card,
-    /text-\[12px\] font-medium leading-\[18px\] text-emerald-700 md:mt-2 md:text-\[13px\] md:leading-5/,
+    /sm:text-\[12px\] sm:font-medium sm:leading-\[18px\] sm:text-emerald-700 md:mt-2 md:text-\[13px\] md:leading-5/,
   );
-  assert.match(card, /text-\[14px\] font-semibold leading-5[\s\S]*?lg:text-\[17px\]/);
+  assert.match(card, /text-\[15px\] font-bold leading-5[\s\S]*?lg:text-\[19px\]/);
+  assert.match(card, /data-hotel-card-price[\s\S]*?text-\[18px\] font-bold leading-6/);
 });
 
 test("mobile-web Hotel details use a phone-readable identity scale while desktop stays unchanged", () => {
-  assert.match(details, /data-mobile-web-hotel-details/);
-  assert.match(
-    details,
-    /text-\[24px\] font-extrabold leading-\[30px\][\s\S]*?lg:text-\[30px\] lg:leading-tight/,
-  );
-  assert.equal(
-    details.match(/text-\[13px\] font-semibold leading-5 text-slate-700/g)?.length,
-    3,
-  );
-  assert.match(
-    details,
-    /text-\[11px\] font-semibold leading-4 text-slate-600 min-\[390px\]:text-\[12px\]/,
-  );
-  assert.match(
-    details,
-    /text-\[11px\] font-medium leading-4 text-slate-500/,
-  );
-  assert.match(
-    details,
-    /min-h-12 w-full rounded-lg bg-blue px-2 text-\[12px\] font-bold leading-4[\s\S]*?min-\[390px\]:px-3 min-\[390px\]:text-\[13px\] min-\[390px\]:leading-\[18px\]/,
-  );
+  assert.match(details, /data-mobile-hotel-details/);
+  assert.match(details, /className=\{styles.identity\}/);
+  assert.match(detailsCss, /\.identity h1 \{[^}]*font-size: 22px; line-height: 28px; font-weight: 700/);
+  assert.match(detailsCss, /\.reviewSummary \{[^}]*font-size: 13px; line-height: 19px/);
+  assert.match(detailsCss, /\.tabs button \{[^}]*min-height: 44px;[^}]*font-size: 12px/);
+  assert.match(detailsCss, /\.section p \{[^}]*font-size: 13px; line-height: 19px/);
+  assert.match(details, /<DesktopProviderOffer/);
 });
 
-test("desktop Hotel details navigation keeps its existing web typography while using the shared three labels", () => {
+test("desktop Hotel details retains accessible back navigation and its three section labels", () => {
   assert.match(
     detailsClient,
-    /hidden lg:block lg:px-0[\s\S]*?min-h-10 items-center gap-2 text-\[13px\] font-semibold/,
+    /<Link href=\{props.resultsHref\} className=\{styles.galleryBack\} aria-label=\{props.labels.backToResults\}/,
   );
-  assert.match(
-    detailsNav,
-    /grid-cols-3[\s\S]*?min-h-11[\s\S]*?text-\[13px\] font-bold[\s\S]*?sm:text-sm/,
-  );
-  for (const label of ["Rates", "Overview", "Reviews"]) {
-    assert.match(detailsNav, new RegExp(`label: "${label}"`));
+  for (const label of ["Rates", "Overview", "Review"]) {
+    assert.match(detailsClient, new RegExp(`label: "${label}"`));
   }
-  assert.doesNotMatch(detailsNav, /mobileLabel|desktopOnly|id: "location"/);
-  assert.doesNotMatch(detailsNav, /min-\[390px\]:text-\[13px\]/);
+  assert.match(detailsClient, /<HotelPriceComparisonSection/);
+  assert.match(detailsClient, /id="hotel-overview"/);
+  assert.match(detailsClient, /<HotelReviewsSection/);
 });

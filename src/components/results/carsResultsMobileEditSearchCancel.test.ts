@@ -6,7 +6,7 @@ import { variableInitializer } from "@/lib/testing/sourceContract";
 const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 const pageSource = readFileSync(
   new URL("../../app/cars/results/page.tsx", import.meta.url),
   "utf8",
@@ -34,10 +34,7 @@ const focusLifecycleStart = source.indexOf(
 );
 const focusLifecycle = source.slice(
   focusLifecycleStart,
-  source.indexOf(
-    '  useEffect(() => {\n    if (typeof window === "undefined")',
-    focusLifecycleStart,
-  ),
+  source.indexOf("}, [mobileSearchOpen]);", focusLifecycleStart) + "}, [mobileSearchOpen]);".length,
 );
 
 test("opening mobile Edit Search snapshots every mutable Cars search value", () => {
@@ -88,10 +85,11 @@ test("a committed Results navigation remounts client state for the new search", 
 
 test("mobile Edit Search delegates one fixed-body lock to the shared sheet without manual scroll ownership", () => {
   assert.doesNotMatch(source, /mobileSearchScrollLockRef/);
-  const start = source.indexOf('<MobileResultsEditSheet\n        appearance="carsResultsEdit"');
+  const start = source.indexOf("<MobileResultsEditSheet");
   const end = source.indexOf("</MobileResultsEditSheet>", start);
   const sheet = source.slice(start, end);
   assert.ok(start >= 0 && end > start);
+  assert.match(sheet, /appearance="carsResultsEdit"/);
   assert.match(sheet, /\n\s*freezeBodyPosition\n/);
   assert.doesNotMatch(sheet, /freezeBodyPosition=\{false\}|backdropClassName|safe-area-inset-top/);
   assert.match(
@@ -110,7 +108,7 @@ test("mobile Edit Search delegates one fixed-body lock to the shared sheet witho
   assert.doesNotMatch(closeDrawer, /window\.scrollTo|releaseMobileSearchScrollLock/);
   assert.match(
     source,
-    /openMobileSearchDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/,
+    /openMobileSearchDrawer\(\s*event\.currentTarget,\s*getOverlayActivationModality\(event\),?\s*\)/,
   );
 });
 

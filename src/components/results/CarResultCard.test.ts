@@ -22,7 +22,7 @@ import {
 import {
   AutomaticTransmissionIcon,
   ManualTransmissionIcon,
-} from "./CarTransmissionIcon";
+} from "@/components/results/CarTransmissionIcon";
 import type { NormalizedCarResult } from "@/lib/cars/types";
 
 const source = readFileSync("src/components/results/CarResultCard.tsx", "utf8");
@@ -60,7 +60,7 @@ test("desktop Compare deals owns a sibling expansion slot without changing mobil
   );
   const mobile = source.slice(
     source.indexOf("data-car-card-mobile-lower-band"),
-    source.indexOf('guidedPlanning ? "grid"'),
+    source.indexOf('className={`${guidedPlanning ? "grid'),
   );
   assert.doesNotMatch(mobile, /desktopPanelTarget/);
 });
@@ -190,7 +190,7 @@ test("standalone desktop uses a shared header row for identity and actions witho
   assert.match(details, /desktopStandaloneSpecifications/);
   assert.match(
     details,
-    /guidedPlanning \? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2"/,
+    /guidedPlanning \? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 lg:text-\[13px\] lg:font-semibold lg:leading-\[18px\] lg:tracking-\[-0\.001em\] lg:text-\[#334155\]"/,
   );
   assert.match(source, /getCarSpecificationIcon\(title\(car\.transmission\)\)/);
 
@@ -315,19 +315,19 @@ test("standalone desktop identity stack keeps compact but visible breathing room
 
   assert.match(
     heading,
-    /row-start-2 mt-0\.5 text-\[10px\] font-bold uppercase leading-none/,
+    /row-start-2 mt-2 text-\[10px\] font-bold uppercase leading-none/,
   );
   assert.match(
     heading,
-    /\$\{badge && BadgeIcon \? "row-start-3" : "row-start-2"\} mt-0\.5 px-4/,
+    /\$\{badge && BadgeIcon \? "row-start-3" : "row-start-2"\} mt-1 whitespace-nowrap px-4/,
   );
   assert.match(
     heading,
-    /\$\{badge && BadgeIcon \? "row-start-3" : "row-start-2"\} mt-1 flex/,
+    /\$\{badge && BadgeIcon \? "row-start-4" : "row-start-3"\} mt-2 flex/,
   );
   assert.match(
     heading,
-    /\$\{badge && BadgeIcon \? "row-start-4" : "row-start-3"\} mt-1\.5 flex/,
+    /\$\{badge && BadgeIcon \? "row-start-5" : "row-start-4"\} mt-2 flex/,
   );
 });
 
@@ -406,7 +406,7 @@ test("standalone desktop location stays flat and gains width from the compact ri
   );
   assert.match(
     heading,
-    /row-start-4" : "row-start-3"\} mt-2 flex min-w-0 items-center gap-1\.5 ps-4 pe-2/,
+    /row-start-4" : "row-start-3"\} mt-2 flex min-w-0 items-center gap-1\.5 px-4/,
   );
   assert.match(
     heading,
@@ -446,7 +446,7 @@ test("standalone desktop shows localized data-driven Free cancellation directly 
   );
   assert.match(
     heading,
-    /\$\{badge && BadgeIcon \? "row-start-4" : "row-start-3"\} mt-1\.5 flex/,
+    /\$\{badge && BadgeIcon \? "row-start-5" : "row-start-4"\} mt-2 flex/,
   );
 });
 
@@ -542,15 +542,15 @@ test("standalone desktop pricing is anchored to the card bottom-right while guid
 
   assert.match(
     desktop,
-    /!guidedPlanning \? "lg:items-stretch lg:pb-3 lg:text-right" : "lg:items-center lg:justify-center lg:text-center"/,
+    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-\[#CBD5E1\] lg:pb-3 lg:text-right" : "lg:row-span-2 lg:row-start-1 lg:items-center lg:justify-center lg:border-s lg:border-t-0 lg:text-center"/,
   );
 });
 
 test("desktop and guided contracts retain their responsive grid and owned disclosures", () => {
-  assert.match(source, /guidedPlanning \? "grid lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\] xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]" : "hidden md:grid lg:grid-cols-\[250px_minmax\(0,1fr\)_180px\] xl:grid-cols-\[270px_minmax\(0,1fr\)_180px\]"/);
+  assert.match(source, /guidedPlanning \? "grid lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\] xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]" : "hidden md:grid lg:grid-cols-\[220px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[228px_minmax\(0,1fr\)_152px\]"/);
   assert.match(source, /md:grid-cols-\[250px_minmax\(0,1fr\)\]/);
-  assert.match(source, /lg:grid-cols-\[250px_minmax\(0,1fr\)_180px\]/);
-  assert.match(source, /xl:grid-cols-\[270px_minmax\(0,1fr\)_180px\]/);
+  assert.match(source, /lg:grid-cols-\[220px_minmax\(0,1fr\)_152px\]/);
+  assert.match(source, /xl:grid-cols-\[228px_minmax\(0,1fr\)_152px\]/);
   assert.match(source, /lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\]/);
   assert.match(source, /xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]/);
   const desktop = source.slice(source.indexOf('data-region="heading"'));
@@ -838,7 +838,7 @@ test("standalone desktop narrows the card without wrapping identity or metadata"
   );
   assert.match(desktop, /flex min-w-0 flex-nowrap items-baseline/);
   assert.equal(
-    (desktop.match(/whitespace-nowrap text-\[19px\] font-semibold/g) ?? []).length,
+    (desktop.match(/whitespace-nowrap text-\[19px\] font-bold/g) ?? []).length,
     2,
   );
   assert.match(

@@ -248,6 +248,7 @@ export function isKayakSandboxEnabled(
 export function normalizeSandboxOffers(
   vertical: KayakVertical,
   value: unknown,
+  resultOffset = 0,
 ): SandboxOffer[] {
   const data = object(value);
   if (!Array.isArray(data.results)) throw new KayakError("invalid_response");
@@ -336,7 +337,7 @@ export function normalizeSandboxOffers(
       const flightOptionalServices = vertical === "flights" ? kayakOptionalServices(option.optionalServices, currency) : [];
       const flightSegmentCabins = vertical === "flights" ? kayakSegmentCabins(data, result, option) : [];
       offers.push({
-        id: `${text(result.id) || index}:${optionIndex}`,
+        id: `${text(result.id) || (index + resultOffset)}:${optionIndex}`,
         title: title || "KAYAK test result",
         description,
         details,
@@ -542,7 +543,8 @@ export class KayakSandboxClient {
         currencyCode: "USD",
         responseOptions: "multipleHotelsAllRates,images,features,rateBreakdown,reviews,hotelPlace",
         onlyIfComplete: "false",
-        pageSize: "10",
+        pageSize: "25",
+        pageIndex: "0",
       };
     } else {
       path = `/i/api/affiliate/search/${search.vertical === "flights" ? "flight" : "car"}/v1/poll`;
@@ -579,6 +581,55 @@ export class KayakSandboxClient {
           },
         };
     }
+    if (search.vertical === "hotels") {
+      const offers: SandboxOffer[] = [];
+      const seenPages = new Set<string>();
+      let offset = 0;
+      let expectedTotal: number | undefined;
+      let dictionary: unknown = [];
+      for (let pageIndex = 0; ; pageIndex++) {
+        let page: ObjectValue | undefined;
+        for (let attempt = 0; attempt < 12; attempt++) {
+          if (signal.aborted) throw new KayakError("timeout");
+          const response = await this.request(path, trackId,
+            { ...query, pageIndex: String(pageIndex) }, undefined, signal, empty);
+          if (response.isComplete === true) { page = response; break; }
+          await this.pause(750);
+        }
+        if (!page) throw new KayakError("timeout");
+        if (!Array.isArray(page.results)) throw new KayakError("invalid_response");
+        const count = page.results.length;
+        const total = page.totalFilteredResults;
+        if (total !== undefined) {
+          if (typeof total !== "number" || !Number.isSafeInteger(total) || total < 0 ||
+              (expectedTotal !== undefined && total !== expectedTotal)) {
+            throw new KayakError("invalid_response");
+          }
+          expectedTotal = total;
+        }
+        const fingerprint = JSON.stringify(page.results);
+        if (count > 0 && seenPages.has(fingerprint)) throw new KayakError("invalid_response");
+        seenPages.add(fingerprint);
+        if (pageIndex === 0) {
+          try {
+            const constants = await this.request("/api/4.0/constants-mapping", trackId,
+              { types: "facility", languageCode: "en" }, null, signal);
+            dictionary = object(constants.facility).features;
+          } catch { /* Missing metadata must not discard otherwise valid rates. */ }
+        }
+        offers.push(...normalizeSandboxOffers("hotels", { ...page, amenityDictionary: dictionary }, offset));
+        offset += count;
+        if (expectedTotal !== undefined) {
+          if (offset > expectedTotal || (count === 0 && offset < expectedTotal)) throw new KayakError("invalid_response");
+          if (offset === expectedTotal) return offers.sort((a, b) => a.price - b.price);
+          if (count !== 25) throw new KayakError("invalid_response");
+        } else {
+          // Legacy short responses are terminal; a full page needs a provider total.
+          if (count < 25) return offers.sort((a, b) => a.price - b.price);
+          throw new KayakError("invalid_response");
+        }
+      }
+    }
     for (let attempt = 0; attempt < 12; attempt++) {
       if (signal.aborted) throw new KayakError("timeout");
       const data = await this.request(
@@ -590,24 +641,36 @@ export class KayakSandboxClient {
         empty,
         search.vertical === "cars",
       );
-      if (
-        search.vertical === "hotels"
-          ? data.isComplete === true
-          : data.status === "complete"
-      ) {
-        if (search.vertical === "hotels") {
-          try {
-            const constants = await this.request("/api/4.0/constants-mapping", trackId,
-              {types:"facility",languageCode:"en"}, null, signal);
-            data.amenityDictionary = object(constants.facility).features;
-          } catch {
-            // Metadata failure must not discard otherwise valid hotel rates.
-            data.amenityDictionary = [];
+      if (data.status === "complete") {
+        const offers = normalizeSandboxOffers(search.vertical, data);
+        const total = data.totalCount;
+        if (total === undefined) return offers;
+        if (typeof total !== "number" || !Number.isSafeInteger(total) || total < 0) throw new KayakError("invalid_response");
+        let offset = list(data.results).length;
+        const size = data.pageSize;
+        const seenPages = new Set([JSON.stringify(data.results)]);
+        for (let pageNumber = search.vertical === "cars" ? 1 : 2; offset < total; pageNumber++) {
+          if (!Number.isSafeInteger(size) || typeof size !== "number" || size <= 0 || !text(data.searchId) || !text(data.cluster)) throw new KayakError("invalid_response");
+          let page: ObjectValue | undefined;
+          for (let poll = 0; poll < 12; poll++) {
+            if (signal.aborted) throw new KayakError("timeout");
+            const response = await this.request(path, trackId, { cluster: text(data.cluster) }, {
+              searchId: data.searchId,
+              resultParameters: { ...resultParameters, pageSize: size, pageNumber },
+            }, signal, empty, search.vertical === "cars");
+            if (response.status === "complete") { page = response; break; }
+            await this.pause(750);
           }
+          if (!page) throw new KayakError("timeout");
+          if (!Array.isArray(page.results) || page.results.length === 0 || page.totalCount !== total || seenPages.has(JSON.stringify(page.results))) throw new KayakError("invalid_response");
+          seenPages.add(JSON.stringify(page.results));
+          offers.push(...normalizeSandboxOffers(search.vertical, page, offset));
+          offset += page.results.length;
         }
-        return normalizeSandboxOffers(search.vertical, data);
+        if (offset !== total) throw new KayakError("invalid_response");
+        return offers.sort((a, b) => a.price - b.price);
       }
-      if (search.vertical !== "hotels") {
+      {
         if (
           !["first-phase", "second-phase"].includes(text(data.status)) ||
           !text(data.searchId) ||

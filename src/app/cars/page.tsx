@@ -42,7 +42,6 @@ import {
   MobileCarDriverAgePickerDialog,
   MobileCarTimePickerDialog,
 } from "@/components/search/CarsPickerContent";
-import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import {
   carsDesktopPopoverClassName,
   useCarsDesktopPopover,
@@ -58,7 +57,6 @@ import { buildCarRecentSearch, syncBackendRecentSearch, upsertRecentSearch } fro
 import {
   addMonths,
   buildCarResultsHref,
-  buildMonthCells,
   buildPickupHref,
   defaultDriverAge,
   driverAgeOptions,
@@ -67,7 +65,6 @@ import {
   getInitialValues,
   isBeforeToday,
   parseIsoDate,
-  timeOptions,
   toIsoDate,
   toTimeValue,
   validateCarsForm,
@@ -1239,18 +1236,12 @@ function CarsSearchBar({
 
 function CarsMobilePickerDialogs({
   activeMobilePicker,
-  clearRentalDates,
   datesLauncherRef,
   driverAgeLauncherRef,
   dropoffLocationLauncherRef,
-  dropoffMobileInputRef,
   pickupLocationLauncherRef,
-  pickupMobileInputRef,
   timesLauncherRef,
   onClose,
-  onNextMonth,
-  onPreviousMonth,
-  onSelectDate,
   updateValue,
   values,
   visibleMonthDate,
@@ -1278,11 +1269,6 @@ function CarsMobilePickerDialogs({
   const { locale, t } = useCarsLandingTranslations();
   const intlLocale = getCarsIntlLocale(locale);
   const weekdays = useMemo(() => formatCarWeekdays(intlLocale), [intlLocale]);
-  const pickupParsed = parseIsoDate(values.pickupDate);
-  const dropoffParsed = parseIsoDate(values.dropoffDate);
-  const timeListClass =
-    "grid max-h-72 gap-2 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2";
-  const locationAutocompleteStrings = getCarLocationAutocompleteStrings(t);
 
   return (
     <>
@@ -1427,7 +1413,10 @@ function CarImageCardLink({ card }: { card: TranslatedCarImageCard }) {
       className="group flex h-full min-w-0 snap-start flex-col overflow-hidden rounded-[1.35rem] border border-slate-200/90 bg-white shadow-[0_16px_34px_-26px_rgba(15,23,42,0.42)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-white sm:rounded-2xl sm:border-slate-200 sm:shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)]"
     >
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 sm:aspect-[4/3]">
-        <img
+        <Image
+          fill
+          unoptimized
+          sizes="(max-width: 640px) 85vw, 33vw"
           src={card.image}
           alt={card.imageAlt}
           className="h-full w-full object-cover saturate-[1.08] contrast-[1.02] transition duration-700 group-hover:scale-[1.03] group-hover:saturate-[1.12]"

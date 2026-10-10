@@ -376,7 +376,8 @@ export function easCommandFailureMessage(command, error, secrets = []) {
 export function easCommandEnvironment({ baseEnvironment = process.env, directory, expoToken, isUpdatePublish, isBuildCreate = false, platform = null }) {
   if (!directory) throw new Error("EAS command temporary directory is required.");
   if ((isBuildCreate || isUpdatePublish) && !["ios", "android"].includes(platform)) throw new Error("EAS platform is required for app-config parity.");
-  const { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: _inheritedGoogleIosClientId, ...sanitizedBaseEnvironment } = baseEnvironment;
+  const sanitizedBaseEnvironment = { ...baseEnvironment };
+  delete sanitizedBaseEnvironment.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
   return {
     ...sanitizedBaseEnvironment,
     EXPO_TOKEN: expoToken,
@@ -463,7 +464,7 @@ export async function exactCheckout({ repository, token, sha }) {
   } catch (error) { await rm(directory, { recursive: true, force: true }); throw error; }
 }
 
-export async function exactChangeSet({ directory, repository, token, previousSha, targetSha }) {
+export async function exactChangeSet({ directory, token, previousSha, targetSha }) {
   assertExactSha(previousSha, "Previous SHA");
   assertExactSha(targetSha, "Target SHA");
   const auth = gitAuthEnvironment(token);
@@ -538,7 +539,8 @@ export async function nativeFingerprints(directory, { commandRunner = exec, expo
     const startedAt = Date.now();
     console.log(JSON.stringify({ event: "preview-release-fingerprint-started", platform, rssBytes: process.memoryUsage().rss }));
     const fingerprintCommand = `npx eas-cli@16.17.4 fingerprint:generate --build-profile preview --platform ${platform} --json --non-interactive`;
-    const { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: _inheritedGoogleIosClientId, ...sanitizedBaseEnvironment } = baseEnvironment;
+    const sanitizedBaseEnvironment = { ...baseEnvironment };
+    delete sanitizedBaseEnvironment.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
     const { stdout } = await commandRunner(command, ["eas-cli@16.17.4", "env:exec", "preview", fingerprintCommand, "--non-interactive"], {
       cwd,
       encoding: "utf8",

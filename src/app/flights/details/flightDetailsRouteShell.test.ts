@@ -19,7 +19,7 @@ test("Flight Details route provides a truthful accessible loading boundary", asy
   assert.match(shellSource, /role="status"/);
   assert.match(shellSource, /<span className="sr-only">Loading flight details<\/span>/);
   assert.match(shellSource, /env\(safe-area-inset-(?:top|bottom)\)/);
-  assert.match(shellSource, /hidden[^\n]*lg:block/);
+  assert.match(shellSource, /hidden[^\n]*sm:block/);
   assert.doesNotMatch(shellSource, /\$\d|Duffel|Expedia|American Airlines/);
   assert.match(pageSource, /<FlightDetailsClient id=\{id\} \/>/);
 });

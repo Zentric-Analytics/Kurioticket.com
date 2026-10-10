@@ -49,5 +49,5 @@ test("iOS Hotel dialogs focus the dialog surface instead of the close X", () => 
 test("Hotel Results no longer carries an iOS-only quick-filter rail workaround", () => {
   assert.doesNotMatch(resultsSource, /mobileShortcutRailRef|clampIosHotelShortcutRail|rail\.scrollLeft/);
   assert.match(resultsSource, /data-hotel-results-toolbar/);
-  assert.match(resultsSource, /scrollbar-hide -me-4 flex w-\[calc\(100%\+1rem\)\] flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain pe-4/);
+  assert.match(resultsSource, /scrollbar-hide flex w-full min-w-0 flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain px-3/);
 });

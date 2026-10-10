@@ -142,12 +142,12 @@ test("Flight Results explicitly selects the brand/legal-only Footer", () => {
 });
 
 test("Hotel Results explicitly selects the brand/legal-only Footer", () => {
-  assert.match(hotelResultsPage, /<Footer variant="brand-legal-only" className="lg:bg-\[#EFF3F7\]" \/>/);
+  assert.match(hotelResultsPage, /<Footer variant="brand-legal-only" \/>/);
   assert.equal(hotelResultsPage.match(/<Footer/g)?.length, 1);
 });
 
 test("Cars Results explicitly selects the brand/legal-only Footer", () => {
-  assert.match(carResultsPage, /<Footer variant="brand-legal-only" \/>/);
+  assert.match(carResultsPage, /<Footer variant="brand-legal-only" className="cars-results-footer-typography" \/>/);
   assert.doesNotMatch(carResultsPage, /<Footer \/>/);
   assert.equal(carResultsPage.match(/<Footer/g)?.length, 1);
 });

@@ -11,16 +11,16 @@ const hotelSource = readFileSync(
   "utf8",
 );
 
-test("Cars uses a stable white browser canvas and clean backdrop while Results sheets own lower continuations", () => {
+test("Cars and Hotels edit sheets isolate the background and preserve their current white browser canvas", () => {
   assert.match(carsSource, /browserCanvasColor="#ffffff"/);
-  assert.match(carsSource, /cleanBackdrop/);
+  assert.match(carsSource, /isolatedBackdrop/);
   assert.match(
     carsSource,
-    /<MobileResultsEditSheet\s+[\s\S]{0,300}bottomSurfaceContinuation/,
+    /<MobileResultsEditSheet\s+[^>]*appearance="carsResultsEdit"[^>]*freezeBodyPosition/,
   );
-  assert.match(carsSource, /<MobileResultsEditSheet\s+[\s\S]{0,400}smoothMotion/);
+  assert.match(carsSource, /<MobileResultsEditSheet\s+[^>]*closing=\{mobileSearchClosing\}[^>]*onCloseAnimationComplete=\{cancelMobileSearchDrawer\}/);
   assert.match(
     hotelSource,
-    /<MobileResultsEditSheet\s+[^>]*browserCanvasColor="#f6f8fb"[^>]*bottomSurfaceContinuation[^>]*bottomSurfaceContinuationClassName="bg-\[#f6f8fb\]"[^>]*className="bg-\[#f6f8fb\]"/,
+    /<MobileResultsEditSheet\s+[^>]*browserCanvasColor="#ffffff"[^>]*smoothMotion[^>]*isolatedBackdrop[^>]*className=\{mobileStyles.editSheet\}/,
   );
 });

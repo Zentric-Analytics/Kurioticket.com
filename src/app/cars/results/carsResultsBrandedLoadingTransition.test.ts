@@ -31,7 +31,7 @@ test("the real Cars inventory search is inside async Suspense content", () => {
   );
 
   assert.doesNotMatch(pageBody, /await searchCars\(/);
-  assert.match(contentBody, /const inventory = await searchCars\(values\)/);
+  assert.match(contentBody, /const inventory = await searchCars\(values, \{ kayak: \{ clientIp: getKayakClientIp\(request\), userAgent: requestHeaders\.get\("user-agent"\) \|\| undefined \} \}\)/);
 });
 
 test("the complete committed search identity resets boundary and client", () => {

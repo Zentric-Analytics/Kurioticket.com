@@ -24,12 +24,14 @@ export function calculateHotelResultsScrollIndicatorGeometry({
   trackHeight,
   minThumbHeight = 24,
 }: HotelResultsScrollIndicatorGeometryInput): HotelResultsScrollIndicatorGeometry {
-  const safeScrollTop = finiteNonNegative(scrollTop);
   const safeScrollStart = finiteNonNegative(scrollStart);
   const safeScrollEnd = Math.max(
     safeScrollStart,
     finiteNonNegative(scrollEnd),
   );
+  const safeScrollTop = scrollTop === Number.POSITIVE_INFINITY
+    ? safeScrollEnd
+    : finiteNonNegative(scrollTop);
   const safeTrackHeight = finiteNonNegative(trackHeight);
   const maxScroll = Math.max(0, safeScrollEnd - safeScrollStart);
   const isScrollable = maxScroll > 0 && safeTrackHeight > 0;

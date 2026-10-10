@@ -26,7 +26,6 @@ export function CarDetailsSectionNav({
   desktopUtilityActions?: ReactNode;
 }) {
   const mobileTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const desktopTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const tabs: ReadonlyArray<{ id: CarDetailsTab; label: string }> = [
     { id: "compare", label: labels.compare },
     { id: "pickup", label: labels.pickup },
@@ -53,16 +52,6 @@ export function CarDetailsSectionNav({
     if (nextIndex === null) return;
     onTabChange(tabs[nextIndex].id);
     mobileTabRefs.current[nextIndex]?.focus();
-  }
-
-  function handleDesktopKeyDown(
-    event: KeyboardEvent<HTMLButtonElement>,
-    index: number,
-  ) {
-    const nextIndex = nextTabIndex(event, index);
-    if (nextIndex === null) return;
-    onTabChange(tabs[nextIndex].id);
-    desktopTabRefs.current[nextIndex]?.focus();
   }
 
   return (

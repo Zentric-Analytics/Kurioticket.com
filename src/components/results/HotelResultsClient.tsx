@@ -14,7 +14,7 @@ import { PAGINATION_MIN_BUSY_MS, PAGINATION_REVEAL_MS, prefersReducedResultsMoti
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
 import { HotelResultsMapPreview } from "@/components/results/HotelResultsMapPreview";
-import { resultActionHref } from "@/lib/travel/resultAction";
+import { isKayakSandboxResult, resultActionHref } from "@/lib/travel/resultAction";
 import { HotelResultsScrollIndicator } from "@/components/results/HotelResultsScrollIndicator";
 import { buildHotelFacilityFilterOptions, hotelMatchesFacilityFilters } from "@/components/results/hotelFacilityFilter";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
@@ -1543,11 +1543,13 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     <button
       type="button"
       data-hotel-results-mobile-nav-search-button
+      inert={mobileHotelSearchOpen ? true : undefined}
+      aria-hidden={mobileHotelSearchOpen ? true : undefined}
       aria-label={`${t("editHotelSearch")}: ${body.destination}, ${mobileNavDateSummary}, ${mobileNavGuestsSummary}`}
       aria-haspopup="dialog"
       aria-expanded={mobileHotelSearchOpen}
       onClick={openMobileHotelSearch}
-      className="focus-ring flex h-full w-full min-w-0 items-center gap-1.5 rounded-xl bg-[#F5F7FB] py-1 pe-2 ps-3 text-start transition hover:bg-[#EDF2FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+      className={cn("focus-ring flex h-full w-full min-w-0 items-center gap-1.5 rounded-xl bg-[#F5F7FB] py-1 pe-2 ps-3 text-start transition hover:bg-[#EDF2FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35", mobileHotelSearchOpen && "pointer-events-none")}
     >
       <span className="flex min-w-0 flex-1 flex-col justify-center">
         <span className="block truncate text-[14px] font-semibold leading-[18px] text-[#142033]">
@@ -1685,7 +1687,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             ) : null}
           </aside>
 
-          <section ref={desktopResultsContentRef} className="relative min-w-0 space-y-2 sm:space-y-4">
+          <section data-hotel-results-list-start ref={desktopResultsContentRef} className="relative min-w-0 space-y-2 sm:space-y-4">
             {error && results.length === 0 ? (
               <div ref={guided ? guidedErrorRef : undefined} tabIndex={guided ? -1 : undefined} className={cn(hotelResultStackClass, "rounded-[13px] border border-danger/20 bg-white p-4 text-slate-950 shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] sm:rounded-md sm:border-danger/30 sm:bg-red-50 sm:text-danger sm:shadow-none")}>
                 <p role="alert" className="text-sm font-semibold leading-5">{error}</p>
@@ -1837,7 +1839,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                     ) : paginatedVisibleHotels.length ? (
                       paginatedVisibleHotels.map((hotel, index) => {
                         const internalHref = guided ? (buildDetailsHref?.(hotel.id) ?? null) : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`;
-                        return <HotelCard key={hotel.id} hotel={hotel} detailsHref={resultActionHref(hotel, internalHref)} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined} />;
+                        return <HotelCard key={hotel.id} hotel={hotel} providerLabel={isKayakSandboxResult(hotel) ? "KAYAK sandbox · Not bookable" : undefined} detailsHref={resultActionHref(hotel, internalHref)} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined} />;
                       })
                     ) : (
                       <div className="rounded-[13px] border border-slate-200 bg-white p-4 text-[13px] font-semibold leading-5 text-muted shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] sm:rounded-xl sm:p-6 sm:text-sm sm:shadow-sm">
@@ -2174,13 +2176,13 @@ function HotelFilters({ layout = "desktop", propertyNameQuery, setPropertyNameQu
       },
       {
         id: "roomTypes",
-        title: "Room & bed",
+        title: locale.startsWith("en") ? "Room & bed" : t("hotelResults.roomType"),
         selectedCount: getSelectedCount("roomTypes"),
         content: <CheckboxFilterOptions layout="compact" options={options.roomTypes} selected={selectedFilters.roomTypes} onToggle={(value) => toggleFilter("roomTypes", value)} t={t} locale={locale} collapsedCount={5} />,
       },
       {
         id: "bedTypes",
-        title: "Bed options",
+        title: locale.startsWith("en") ? "Bed options" : t("hotelResults.bedType"),
         selectedCount: getSelectedCount("bedTypes"),
         content: <CheckboxFilterOptions layout="compact" options={options.bedTypes} selected={selectedFilters.bedTypes} onToggle={(value) => toggleFilter("bedTypes", value)} t={t} locale={locale} collapsedCount={5} />,
       },
@@ -2260,9 +2262,9 @@ function HotelFilters({ layout = "desktop", propertyNameQuery, setPropertyNameQu
 
         <CheckboxFilterSection title="Accessibility" options={options.accessibility} selected={selectedFilters.accessibility} onToggle={(value) => toggleFilter("accessibility", value)} t={t} locale={locale} collapsedCount={5} layout={layout} />
 
-        <CheckboxFilterSection title="Room & bed" minimumOptionCount={2} options={options.roomTypes} selected={selectedFilters.roomTypes} onToggle={(value) => toggleFilter("roomTypes", value)} t={t} locale={locale} collapsedCount={5} layout={layout} />
+        <CheckboxFilterSection title={locale.startsWith("en") ? "Room & bed" : t("hotelResults.roomType")} minimumOptionCount={2} options={options.roomTypes} selected={selectedFilters.roomTypes} onToggle={(value) => toggleFilter("roomTypes", value)} t={t} locale={locale} collapsedCount={5} layout={layout} />
 
-        {options.bedTypes.length > 1 ? <CheckboxFilterSection title="Bed options" minimumOptionCount={2} options={options.bedTypes} selected={selectedFilters.bedTypes} onToggle={(value) => toggleFilter("bedTypes", value)} t={t} locale={locale} collapsedCount={5} layout={layout} /> : null}
+        {options.bedTypes.length > 1 ? <CheckboxFilterSection title={locale.startsWith("en") ? "Bed options" : t("hotelResults.bedType")} minimumOptionCount={2} options={options.bedTypes} selected={selectedFilters.bedTypes} onToggle={(value) => toggleFilter("bedTypes", value)} t={t} locale={locale} collapsedCount={5} layout={layout} /> : null}
       </div>
     </div>
   );

@@ -17,7 +17,7 @@ const mobileControls = source.slice(
 );
 const mobileSubmit = source.slice(
   source.indexOf("const submitMobileSearch"),
-  source.indexOf("useLayoutEffect", source.indexOf("const submitMobileSearch")),
+  source.indexOf("\n  useEffect", source.indexOf("const submitMobileSearch")),
 );
 
 function submittedLocations({
@@ -84,9 +84,6 @@ test("mobile Search captures the live form before submit-close and router naviga
     "mobileSearchSnapshotRef.current = null",
   );
   const pendingIndex = submitHandler.indexOf("setIsSearchSubmitting(true)");
-  const releaseIndex = submitHandler.indexOf(
-    "releaseMobileSearchScrollLock({ restoreScroll: false })",
-  );
   const topIndex = submitHandler.indexOf(
     'window.scrollTo({ top: 0, left: 0, behavior: "auto" })',
   );
@@ -98,16 +95,13 @@ test("mobile Search captures the live form before submit-close and router naviga
   assert.ok(formDataIndex < hrefIndex);
   assert.ok(hrefIndex < closeIndex);
   assert.ok(closeIndex < pendingIndex);
-  assert.ok(pendingIndex < releaseIndex);
-  assert.ok(releaseIndex < topIndex);
+  assert.ok(pendingIndex < topIndex);
   assert.ok(topIndex < drawerCloseIndex);
   assert.ok(drawerCloseIndex < navigationIndex);
   assert.doesNotMatch(submitHandler, /mode: "cancel"/);
   assert.match(submitHandler, /router\.push\(href, \{ scroll: true \}\)/);
-  assert.match(
-    submitHandler,
-    /releaseMobileSearchScrollLock\(\{ restoreScroll: false \}\)/,
-  );
+  assert.match(source, /const shouldRestoreMobileSearchScroll = useCallback\(\s*\(\) => !isSearchSubmittingRef\.current/);
+  assert.match(source, /shouldRestoreScroll=\{shouldRestoreMobileSearchScroll\}/);
 });
 
 test("mobile Search replaces stale Cars results with localized branded loading", () => {

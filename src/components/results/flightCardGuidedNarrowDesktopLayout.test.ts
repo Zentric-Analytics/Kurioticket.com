@@ -147,7 +147,7 @@ test("desktop fare stays beside the itinerary while the footer summary spans the
   assert.match(desktopFareRule, /justify-content:\s*flex-end/);
   assert.match(desktopFareRule, /border-left:\s*1px solid #d8e1ec/);
   assert.match(desktopFareRule, /border-top:\s*0/);
-  assert.match(desktopFareRule, /padding-left:\s*1rem/);
+  assert.match(desktopFareRule, /padding-left:\s*0\.5rem/);
   assert.match(desktopFareRule, /padding-bottom:\s*0/);
   assert.match(desktopFareRule, /text-align:\s*right/);
 

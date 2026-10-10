@@ -113,9 +113,8 @@ test("Cars mobile web keeps the main tabs while hiding redundant panel headings"
     nav,
     /font-sans text-\[12px\] font-semibold leading-\[normal\] tracking-normal[\s\S]*?min-\[390px\]:text-\[13px\]/,
   );
-  assert.match(nav, /text-\[#075EE8\] lg:text-blue/);
-  assert.match(nav, /text-\[#475569\] lg:hover:text-slate-950/);
-  assert.match(nav, /bg-\[#075EE8\][^"]*lg:bg-blue/);
+  assert.match(nav, /selected \? "text-\[#075EE8\]" : "text-\[#475569\]"/);
+  assert.match(nav, /bg-\[#075EE8\] transition-opacity/);
 
   assert.match(
     native,
@@ -123,7 +122,7 @@ test("Cars mobile web keeps the main tabs while hiding redundant panel headings"
   );
   assert.match(
     web,
-    /hidden text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-slate-950 lg:block/,
+    /car-details-desktop-section-heading-type hidden lg:block/,
   );
 
   assert.match(
@@ -170,7 +169,7 @@ test("Cars mobile web Pickup and return text and copy match native", () => {
   );
   assert.match(
     web,
-    /hidden text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-\[#020617\] lg:block/,
+    /car-details-desktop-section-heading-type hidden lg:block/,
   );
 
   assert.match(
@@ -200,7 +199,7 @@ test("Cars mobile web Pickup and return text and copy match native", () => {
     /text-\[13px\] font-normal leading-5 text-\[#56658E\]/,
   );
 
-  assert.match(web, /\["Pick-up",[\s\S]*?copy\("carDetails\.pickup"\)/);
+  assert.match(web, /\[\s*"Pick-up",[\s\S]*?copy\("carDetails\.pickup"\)/);
   assert.match(
     web,
     /mt-4 hidden text-sm font-medium leading-5 lg:block/,
@@ -235,7 +234,7 @@ test("Cars mobile web Location and booking-dock text match native", () => {
   );
   assert.match(
     web,
-    /hidden text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-slate-950 lg:block/,
+    /car-details-desktop-section-heading-type hidden lg:block/,
   );
 
   assert.match(

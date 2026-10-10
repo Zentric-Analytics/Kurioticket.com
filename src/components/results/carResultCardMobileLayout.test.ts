@@ -41,26 +41,27 @@ test("mobile identity and exactly four readable primary specs live beside the im
   assert.doesNotMatch(main, /formatCarPickupType\(car\.pickupType\)/);
   const lowerBand = between(
     "data-car-card-mobile-lower-band",
-    'guidedPlanning ? "grid"',
+    'className={`${guidedPlanning ? "grid',
   );
   assert.match(lowerBand, /data-car-card-mobile-specs/);
   assert.match(lowerBand, /grid-cols-2/);
   assert.match(source, /rounded-\[13px\][^"]*md:rounded-2xl/);
   assert.match(
     source,
-    /const mobilePrimarySpecs = car\.sandboxPresentation \? specifications : getMobileCarPrimarySpecs\(car\)/,
+    /const mobilePrimarySpecs = car\.sandboxPresentation\s*\? getMobileProviderCarSpecSlots\(car\.sandboxPresentation\.specs\)\s*: getMobileCarPrimarySpecs\(car\)/,
   );
 });
 
 test("mobile conversion strip is full width, divided once, and retains accessible pricing/action", () => {
   const conversion = between(
     "data-car-card-mobile-lower-band",
-    'guidedPlanning ? "grid"',
+    'className={`${guidedPlanning ? "grid',
   );
   assert.match(conversion, /border-t/);
   assert.match(conversion, /dailyDisplayPrice\.formatted/);
   assert.match(conversion, /dir="ltr"/);
-  assert.match(conversion, /min-h-9/);
+  assert.match(conversion, /mobileStandaloneViewDealClassName/);
+  assert.match(source, /const mobileStandaloneViewDealClassName =\s*"inline-flex min-h-9/);
   assert.match(conversion, /data-car-card-mobile-specs[\s\S]*flex-\[2\.1\]/);
   assert.match(conversion, /data-car-card-mobile-pricing/);
   assert.match(conversion, /flex-\[1\.25\][^"]*items-end[^"]*justify-center[^"]*px-2\.5[^"]*py-2/);
@@ -79,7 +80,8 @@ test("legacy composition is hidden only for standalone mobile while compact desk
 
 test("offer selection and semantic card ownership remain unchanged", () => {
   assert.equal((source.match(/<article\b/g) ?? []).length, 1);
-  assert.match(source, /const offer = getPrimaryCarOffer\(car\)/);
+  assert.match(source, /const primaryOffer = getPrimaryCarOffer\(car\)/);
+  assert.match(source, /const offer =\s*car\.offers\.find\(\(candidate\) => candidate\.id === selectedOfferId\) \?\?\s*primaryOffer/);
   assert.match(source, /if \(!offer\) return null/);
   assert.doesNotMatch(source, /car\.offers\[0\]/);
 });

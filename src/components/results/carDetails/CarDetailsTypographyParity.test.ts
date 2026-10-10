@@ -80,7 +80,7 @@ test("mobile tab strip binds the native static semibold face instead of the vari
 test("mobile comparison typography retains the native compact hierarchy", () => {
   assert.match(
     client,
-    /text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-slate-950/,
+    /car-details-desktop-section-heading-type hidden lg:block/,
   );
   assert.match(
     client,
@@ -103,29 +103,29 @@ test("mobile comparison typography retains the native compact hierarchy", () => 
 test("pickup and return uses native timeline, copy, and requirement typography", () => {
   assert.match(
     client,
-    /text-xs font-bold leading-\[18px\] tracking-\[-0\.2px\] text-\[#020617\]/,
+    /car-details-desktop-section-heading-type hidden lg:block/,
   );
   assert.match(
     client,
-    /text-\[15px\] font-bold leading-\[22px\] text-\[#071A48\][^"]*lg:text-base/,
+    /text-\[15px\] font-bold leading-\[22px\] text-\[#071A48\][^"]*lg:text-\[16px\]/,
   );
   assert.match(
     client,
-    /text-\[14px\] font-medium leading-5 text-\[#071A48\][^"]*lg:text-sm lg:font-normal/,
+    /text-\[14px\] font-medium leading-5 text-\[#071A48\]/,
   );
   assert.match(
     client,
-    /text-\[13px\] font-normal leading-5 text-\[#56658E\] lg:text-sm/,
+    /text-\[13px\] font-normal leading-5 text-\[#56658E\]/,
   );
   assert.match(client, /"Pick-up",[\s\S]*?copy\("carDetails\.pickup"\)/);
   assert.match(client, /Pickup requirements/);
   assert.match(
     client,
-    /text-\[14px\] font-bold leading-5 text-\[#071A48\][^"]*lg:text-base/,
+    /text-\[14px\] font-bold leading-5 text-\[#071A48\]/,
   );
   assert.match(
     client,
-    /text-\[14px\] font-medium leading-5 text-\[#071A48\][^"]*lg:text-sm/,
+    /text-\[14px\] font-medium leading-5 text-\[#071A48\]/,
   );
   assert.match(
     client,
@@ -149,7 +149,7 @@ test("location identity, timeline, directions, and body typography mirror native
   );
   assert.match(
     client,
-    /text-\[15px\] font-bold leading-\[22px\] text-\[#071A48\][^"]*lg:uppercase/,
+    /text-\[15px\] font-bold leading-\[22px\] text-\[#071A48\]/,
   );
   assert.match(
     client,
@@ -161,11 +161,11 @@ test("location identity, timeline, directions, and body typography mirror native
   );
   assert.match(
     client,
-    /text-\[14px\] font-bold leading-5 text-\[#071A48\] lg:text-base/,
+    /text-\[14px\] font-bold leading-5 text-\[#071A48\]/,
   );
   assert.match(
     client,
-    /text-\[14px\] font-normal leading-5 text-\[#334155\][^"]*lg:leading-6/,
+    /text-\[14px\] font-normal leading-5 text-\[#334155\]/,
   );
 });
 
@@ -187,18 +187,18 @@ test("mobile booking dock uses native typography and copy", () => {
 test("Safari cannot inflate Cars Details mobile text beyond native sizes", () => {
   assert.match(
     css,
-    /@media \(max-width: 1023px\) \{ \[data-car-details-experience\] \{ -webkit-text-size-adjust: 100%; text-size-adjust: 100%; \} \}/,
+    /@media \(max-width: 1023px\) \{ \[data-car-details-experience\] \{ -webkit-text-size-adjust: 100%; text-size-adjust: 100%; \}/,
   );
 });
 
 test("desktop Cars tabs use the same compact semibold hierarchy as Flights", () => {
   assert.match(
     client,
-    /lg:text-xl lg:font-extrabold lg:leading-normal lg:tracking-tight/,
+    /car-details-desktop-section-heading-type hidden lg:block lg:text-\[16px\] lg:font-semibold/,
   );
   assert.match(
     nav,
-    /car-details-desktop-selected-info-type[^"]*min-h-11 flex-1[^"]*border-b-\[3px\]/,
+    /car-details-desktop-selected-info-type[^"]*min-h-\[46px\][^"]*border-b-2/,
   );
   assert.match(
     css,

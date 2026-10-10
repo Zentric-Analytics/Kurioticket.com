@@ -43,7 +43,7 @@ test("provider coverage keeps the strongest result from every successful Cars pr
 
 test("native Cars applies provider coverage only to recommended results", () => {
   const native = readFileSync("apps/mobile/src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
-  assert.match(native, /const ranked=sortCarResults\(filterCarResults\(results,filters\),sort\)/);
+  assert.match(native, /const ranked=sortCarResults\(filterCarResults\(results,filters,pricePerDay\),sort\)/);
   assert.match(native, /sort==="recommended"\?ensureCarProviderCoverage\(ranked\):ranked/);
 });
 

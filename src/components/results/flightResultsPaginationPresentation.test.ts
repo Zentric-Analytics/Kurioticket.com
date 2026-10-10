@@ -60,12 +60,12 @@ test("pagination nav sits directly on the Results background", () => {
 test("mobile standalone Results ends after the pagination breathing space without viewport filler", () => {
   assert.match(
     componentSource,
-    /<main data-flight-results-main className="bg-\[#F5F7FB\] pb-0 sm:flex-1 sm:bg-\[#F3F6FA\] sm:pb-8">/,
+    /<main data-flight-results-main className="max-sm:overflow-x-clip bg-\[#F5F7FB\] pb-0 sm:flex-1 sm:bg-\[#F3F6FA\] sm:pb-8 lg:bg-white">/,
     "the mobile main does not flex-grow or add page-bottom padding, while desktop keeps both",
   );
   assert.match(
     componentSource,
-    /className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-0 pt-8 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-6"/,
+    /className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-0 pt-0 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-4"/,
     "the mobile grid does not add another gap below pagination, while desktop keeps its padding",
   );
   assert.match(

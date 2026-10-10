@@ -56,7 +56,7 @@ test("Cars Edit Search keeps its bottom-sheet placement while centering only the
   );
   assert.match(
     source,
-    /carsResultsEdit && "pointer-events-none absolute inset-x-12 top-1\/2 -translate-y-1\/2 text-center text-\[19px\] font-semibold leading-\[24px\] tracking-normal"/,
+    /carsResultsEdit && "cars-results-edit-title pointer-events-none absolute inset-x-12 top-1\/2 -translate-y-1\/2 text-center text-\[19px\] font-semibold leading-\[24px\] tracking-normal"/,
   );
   assert.match(source, /carsResultsEdit && "absolute right-0"/);
 });
@@ -96,13 +96,31 @@ test("sheet owns internal focus but leaves launcher restoration to Results", () 
     source,
     /acquireMobileResultsOverlayCanvas\(\{\s*canvasColor: browserCanvasColor,\s*\}\)/,
   );
-  assert.match(source, /\[browserCanvasColor, freezeBodyPosition, open\]/);
+  assert.match(source, /\[browserCanvasColor, freezeBodyPosition, open, shouldRestoreScroll\]/);
   assert.doesNotMatch(source, /style\.position/);
-  assert.doesNotMatch(source, /window\.scrollTo/);
+  assert.match(source, /if \(!restoreScroll\) window\.scrollTo/);
   assert.match(source, /motion-reduce:transition-none/);
   assert.match(source, /closing && "mobile-results-sheet-surface-closing"/);
   assert.match(
     source,
     /closing && "mobile-results-sheet-bottom-continuation-closing"/,
   );
+});
+
+test("sheet cleanup restores cancelled searches but resets submitted searches after unlocking", () => {
+  const cleanup = source.match(/return \(\) => \{\s*(const restoreScroll = shouldRestoreScroll\?\.\(\)[\s\S]*?releaseCanvas\(\);)\s*\};/);
+  assert.ok(cleanup, "scroll cleanup must remain present");
+  for (const restore of [undefined, true, false]) {
+    const calls: unknown[] = [];
+    const run = new Function("shouldRestoreScroll", "releaseScrollLock", "releaseCanvas", "window", cleanup[1]);
+    run(
+      restore === undefined ? undefined : () => restore,
+      (options: unknown) => calls.push(options),
+      () => calls.push("canvas released"),
+      { scrollTo: (options: unknown) => calls.push(options) },
+    );
+    assert.deepEqual(calls, restore === false
+      ? [{ restoreScroll: false }, { top: 0, left: 0, behavior: "instant" }, "canvas released"]
+      : [{ restoreScroll: true }, "canvas released"]);
+  }
 });

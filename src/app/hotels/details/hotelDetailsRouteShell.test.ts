@@ -34,7 +34,7 @@ test("Hotel Details owns an immersive mobile shell while preserving its desktop 
   assert.match(loadingSource, /<HotelDetailsLoadingState/);
   assert.match(
     pageSource,
-    /data-hotel-details-desktop-footer>[\s\S]*?<Footer variant="brand-legal-only" className="lg:bg-\[#EFF3F7\]" \/>/,
+    /data-hotel-details-desktop-footer>[\s\S]*?<Footer variant="brand-legal-only" \/>/,
   );
   assert.doesNotMatch(loadingSource, /import\s+\{\s*Footer\s*\}|<Footer\b/);
 });

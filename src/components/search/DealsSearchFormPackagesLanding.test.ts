@@ -272,7 +272,7 @@ test("desktop Packages stay-date override is a visible semantic checkbox", () =>
   assert.match(checkbox, /onChange=\{\(event\) =>/);
   assert.match(checkbox, /customizeInheritedField\(current, "stayDates"/);
   assert.match(checkbox, /relinkInheritedField\(current, "stayDates"\)/);
-  assert.match(checkbox, /aria-haspopup=[\s\S]*\? "dialog"/);
+  assert.doesNotMatch(checkbox.slice(0, checkbox.indexOf("/>", checkbox.indexOf("<input"))), /aria-haspopup=/);
   assert.match(checkbox, /aria-controls=[\s\S]*"deals-hotel-desktop-dates"/);
   assert.match(
     checkbox,
