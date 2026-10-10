@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Image, Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { Image, Linking, Pressable, Share, StyleSheet, Text, View } from "react-native";
 import { Award, BriefcaseBusiness, CarFront, ChevronRight, DoorOpen, MapPin, Share2, ShieldCheck, Users } from "lucide-react-native";
 import type { CarResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
@@ -8,6 +8,8 @@ import { useSavedCar } from "./carSavedState";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { getPrimaryCarOffer } from "../../../../../src/lib/cars/carResults";
+import { NativeCarResultOfferPicker } from "./NativeCarResultOfferPicker";
+import { nativeCarPrimaryBookingUrl } from "./nativeCarResultDeals";
 import { isCuratedCarResultImage } from "../../../../../src/lib/cars/carResultImage";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { nativeCarResultIdentity } from "./nativeCarResultIdentity";
@@ -15,9 +17,9 @@ import { presentCarOfferCurrency } from "./carDisplayCurrency";
 import { useCarDisplayCurrency } from "./useCarDisplayCurrency";
 import { isKayakSandboxCar, nativeCarPrimarySpecLabels } from "./nativeCarProviderPresentation";
 
-export function CarResultCard({ result, rank, imageUri, searchParams, resultBackgroundColor, onViewDeal }: {
+export function CarResultCard({ result, rank, imageUri, searchParams, resultBackgroundColor }: {
   result: CarResult; rank: number; imageUri?: string;
-  searchParams: Record<string, unknown>; resultBackgroundColor: string; onViewDeal: () => void;
+  searchParams: Record<string, unknown>; resultBackgroundColor: string;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
   useEffect(() => setImageFailed(false), [imageUri]);
@@ -42,6 +44,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
     : /automatic/i.test(specLabels.transmission)
       ? "transmissionAutomatic"
       : null;
+  const primaryBookingUrl = nativeCarPrimaryBookingUrl(result);
   const share = () => void Share.share({ message: result.modelName, title: result.modelName });
   return <View style={[c.card,{backgroundColor:carInformationSurface,borderColor:theme.dark?theme.border:"#D8E1EC",shadowColor:theme.dark?"#000000":"#18305B"}]}>
     <View style={c.topSection}>
@@ -69,6 +72,8 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
       </View>
     </View>
     <View style={[c.lowerBand,{backgroundColor:carInformationSurface,borderTopColor:carDividerColor}]}>
+      <View style={c.detailsColumn}>
+        <View style={c.specRow}>
       {hasPrimarySpecs ? <View style={c.specColumn}>
         {specLabels.passengers ? <Spec icon={<Users size={14} color="#64748B" />} label={specLabels.passengers} /> : null}
         {specLabels.transmission ? <Spec icon={transmissionIcon ? <FlowIcon name={transmissionIcon} size={14} color="#64748B" /> : <CarFront size={14} color="#64748B" />} label={specLabels.transmission} /> : null}
@@ -77,11 +82,14 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
         {specLabels.doors ? <Spec icon={<DoorOpen size={14} color="#64748B" />} label={specLabels.doors} /> : null}
         {specLabels.bags ? <Spec icon={<BriefcaseBusiness size={14} color="#64748B" />} label={specLabels.bags} /> : null}
       </View> : null}
+        </View>
+        <NativeCarResultOfferPicker result={result} displayCurrency={displayCurrency} rates={rates}/>
+      </View>
       <View style={c.commerceColumn}>
           <View style={c.priceColumn}>
             {offer ? <><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[c.dailyPrice,{color:theme.textPrimary}]}>{money(offer.currency, offer.pricePerDay)}</Text><Text style={[c.perDayLabel,{color:theme.textSecondary}]}>per day</Text></> : <Text style={[c.unavailablePrice,{color:theme.textSecondary}]}>Live price unavailable</Text>}
           </View>
-        <Pressable accessibilityRole="button" accessibilityLabel={`View deal for ${result.modelName}`} onPress={onViewDeal} hitSlop={{top:4,bottom:4,left:4,right:4}} style={({pressed}) => [c.viewDeal,pressed&&c.pressed]}><Text style={[c.viewDealText,{color:theme.dark ? "#8FB5FF" : ui.blue}]}>View deal</Text><ChevronRight accessible={false} size={16} strokeWidth={2.2} color={theme.dark ? "#8FB5FF" : ui.blue} /></Pressable>
+        <Pressable accessibilityRole={primaryBookingUrl ? "link" : "button"} accessibilityLabel={`View deal for ${result.modelName}`} accessibilityState={{disabled: !primaryBookingUrl}} disabled={!primaryBookingUrl} onPress={primaryBookingUrl ? () => void Linking.openURL(primaryBookingUrl) : undefined} hitSlop={{top:4,bottom:4,left:4,right:4}} style={({pressed}) => [c.viewDeal,pressed&&c.pressed]}><Text style={[c.viewDealText,{color:primaryBookingUrl ? (theme.dark ? "#8FB5FF" : ui.blue) : "#94A3B8"}]}>View deal</Text><ChevronRight accessible={false} size={16} strokeWidth={2.2} color={primaryBookingUrl ? (theme.dark ? "#8FB5FF" : ui.blue) : "#94A3B8"} /></Pressable>
       </View>
     </View>
   </View>;
@@ -90,5 +98,5 @@ function Spec({ icon, label }: { icon: ReactNode; label: string }) { const { the
 const c = StyleSheet.create({
   card:{borderWidth:1,borderRadius:13,overflow:"hidden",shadowOpacity:0.08,shadowRadius:10,shadowOffset:{width:0,height:2},elevation:2},topSection:{minHeight:156,flexDirection:"row",alignItems:"stretch"},visualColumn:{width:"40%",minHeight:156,padding:6},visual:{flex:1,overflow:"hidden",borderRadius:10},image:{...StyleSheet.absoluteFillObject},curatedImage:{transform:[{scale:1.08}]},imageFallback:{flex:1,alignItems:"center",justifyContent:"center",gap:7,padding:8},fallbackText:{fontSize:10,fontWeight:"600",fontFamily:appFonts.semibold,color:"#315A7D",textAlign:"center"},
   identityZone:{flex:1,minWidth:0,paddingHorizontal:10,paddingTop:7,paddingBottom:8},bestValueRow:{minWidth:0,alignItems:"flex-end",marginBottom:4},freeCancellation:{minWidth:0,flexShrink:1,flexDirection:"row",alignItems:"center",gap:3},freeCancellationText:{fontSize:11,lineHeight:15,fontWeight:"600",fontFamily:appFonts.semibold},headerRow:{flexDirection:"row",alignItems:"flex-start",gap:6},identityColumn:{flex:1,minWidth:0},name:{fontSize:15,fontWeight:"700",fontFamily:appFonts.bold,lineHeight:18,letterSpacing:-0.15,color:ui.navy},identityLine:{minWidth:0,lineHeight:18},secondaryModel:{fontSize:15,fontWeight:"700",fontFamily:appFonts.bold,lineHeight:18,letterSpacing:-0.15},similar:{fontSize:11,fontWeight:"500",fontFamily:appFonts.medium,lineHeight:16,color:"#536B92"},category:{fontSize:10,fontWeight:"700",fontFamily:appFonts.bold,letterSpacing:0.9,lineHeight:15,textTransform:"uppercase",color:"#004BB8"},utilityColumn:{flexShrink:0,alignItems:"flex-end"},badge:{flexShrink:0,flexDirection:"row",alignItems:"center",gap:3,borderRadius:5,backgroundColor:"#ECFDF5",paddingHorizontal:5,paddingVertical:2},badgeText:{fontSize:9,fontWeight:"700",fontFamily:appFonts.bold,color:"#15803D"},actions:{flexDirection:"row",alignItems:"center"},action:{width:28,height:44,justifyContent:"flex-start"},saveAction:{alignItems:"flex-end",paddingRight:2},shareAction:{alignItems:"flex-start",paddingLeft:2},pressed:{opacity:0.7},identityDetails:{minWidth:0,marginTop:5,gap:6},location:{flexDirection:"row",alignItems:"flex-start",gap:4},locationIcon:{marginTop:1},meta:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",fontFamily:appFonts.medium,lineHeight:15,color:"#536B92"},
-  lowerBand:{flexDirection:"row",alignItems:"stretch",borderTopWidth:1},specColumn:{flex:1,minWidth:0,gap:8,paddingHorizontal:8,paddingVertical:10},spec:{minWidth:0,flexDirection:"row",alignItems:"flex-start",gap:4},specText:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",fontFamily:appFonts.medium,lineHeight:14,color:"#536B92"},commerceColumn:{flex:1.35,minWidth:0,paddingLeft:8,paddingRight:9,paddingTop:8,paddingBottom:5},priceColumn:{minWidth:0,maxWidth:"100%",alignItems:"flex-end"},unavailablePrice:{maxWidth:"100%",textAlign:"right",fontSize:11,fontWeight:"500",fontFamily:appFonts.medium,lineHeight:15},dailyPrice:{maxWidth:"100%",fontSize:19,fontWeight:"600",fontFamily:appFonts.semibold,lineHeight:22,letterSpacing:-0.25,fontVariant:["tabular-nums"],color:ui.navy},perDayLabel:{maxWidth:"100%",marginTop:1,fontSize:10,fontWeight:"500",fontFamily:appFonts.medium,lineHeight:13,textAlign:"right"},viewDeal:{minHeight:36,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4},viewDealText:{fontSize:13,lineHeight:16,fontWeight:"600",fontFamily:appFonts.semibold},
+  lowerBand:{flexDirection:"row",alignItems:"stretch",borderTopWidth:1},detailsColumn:{flex:2.1,minWidth:0,paddingBottom:2},specRow:{flexDirection:"row",alignItems:"flex-start"},specColumn:{flex:1,minWidth:0,gap:8,paddingHorizontal:8,paddingTop:10,paddingBottom:5},spec:{minWidth:0,flexDirection:"row",alignItems:"flex-start",gap:4},specText:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",fontFamily:appFonts.medium,lineHeight:14,color:"#536B92"},commerceColumn:{flex:1.15,minWidth:0,paddingLeft:4,paddingRight:9,paddingTop:8,paddingBottom:5},priceColumn:{minWidth:0,maxWidth:"100%",alignItems:"flex-end"},unavailablePrice:{maxWidth:"100%",textAlign:"right",fontSize:11,fontWeight:"500",fontFamily:appFonts.medium,lineHeight:15},dailyPrice:{maxWidth:"100%",fontSize:19,fontWeight:"600",fontFamily:appFonts.semibold,lineHeight:22,letterSpacing:-0.25,fontVariant:["tabular-nums"],color:ui.navy},perDayLabel:{maxWidth:"100%",marginTop:1,fontSize:10,fontWeight:"500",fontFamily:appFonts.medium,lineHeight:13,textAlign:"right"},viewDeal:{minHeight:36,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4},viewDealText:{fontSize:13,lineHeight:16,fontWeight:"600",fontFamily:appFonts.semibold},
 });
