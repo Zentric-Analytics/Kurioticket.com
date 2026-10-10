@@ -1,0 +1,39 @@
+name: Hotel search resilience
+on:
+  pull_request:
+    branches: [dev]
+permissions:
+  contents: read
+jobs:
+  hotel-resilience:
+    name: Hotel PostgreSQL and return navigation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: kurioticket_cache_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kurioticket_cache_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - name: Isolated PostgreSQL cache integration
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kurioticket_cache_test
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+        run: node --test --import jiti/register scripts/provider-cache.integration.ts
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Mobile and desktop return journey
+        run: npx playwright test --config=qa/hotel-return/playwright.config.ts

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
-import { forEachBounded } from "@/lib/search/forEachBounded";
+import { runCacheWrite } from "@/lib/search/cacheWriteGate";
+import { Prisma } from "@/generated/prisma/client";
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 
@@ -16,6 +17,13 @@ const memoryCarResults = new Map<
 
 const cacheKey = (vertical: ProviderDetailsVertical, resultId: string) =>
   `${vertical}:${resultId}`;
+
+function boundedCacheWrite<T>(task: (db: Prisma.TransactionClient) => Promise<T>) {
+  return runCacheWrite(() => getPrisma().$transaction(async db => {
+    await db.$executeRaw`SET LOCAL statement_timeout = '4000ms'`;
+    return task(db);
+  }, { maxWait: 1000, timeout: 5000 }));
+}
 
 function rememberCarInMemory(key: string, value: unknown, expiresAt: number) {
   const now = Date.now();
@@ -105,22 +113,27 @@ export async function rememberProviderResults<T extends { id: string }>(
     }
   }
   try {
-    await forEachBounded(results, 2, (result) => getPrisma().providerResultCache.upsert({
-      where: { cacheKey: cacheKey(vertical, result.id) },
-      create: {
-        cacheKey: cacheKey(vertical, result.id),
-        vertical,
-        resultId: result.id,
-        normalizedResult: result as never,
-        searchContext: searchContext as never,
-        expiresAt,
-      },
-      update: {
-        normalizedResult: result as never,
-        searchContext: searchContext as never,
-        expiresAt,
-      },
-    }));
+    const deadline = Date.now() + 10_000;
+    // A bulk ON CONFLICT statement cannot update the same row twice.
+    const uniqueResults = [...new Map(results.map(result => [result.id, result])).values()];
+    for (let offset = 0; offset < uniqueResults.length; offset += 50) {
+      const rows = uniqueResults.slice(offset, offset + 50).map(result => Prisma.sql`(
+        ${cacheKey(vertical, result.id)}, ${vertical}, ${result.id},
+        ${JSON.stringify(result)}::jsonb, ${JSON.stringify(searchContext ?? null)}::jsonb,
+        ${expiresAt}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+      )`);
+      await runCacheWrite(() => getPrisma().$transaction(async db => {
+        await db.$executeRaw`SET LOCAL statement_timeout = '4000ms'`;
+        await db.$executeRaw(Prisma.sql`
+          INSERT INTO "ProviderResultCache" ("cacheKey", "vertical", "resultId", "normalizedResult", "searchContext", "expiresAt", "createdAt", "updatedAt")
+          VALUES ${Prisma.join(rows)}
+          ON CONFLICT ("cacheKey") DO UPDATE SET
+            "normalizedResult" = EXCLUDED."normalizedResult",
+            "searchContext" = EXCLUDED."searchContext",
+            "expiresAt" = EXCLUDED."expiresAt", "updatedAt" = CURRENT_TIMESTAMP
+        `);
+      }, { maxWait: 1000, timeout: 5000 }), deadline);
+    }
   } catch {
     console.error("[provider-result-cache]", { event: "write_error", vertical });
   }
@@ -183,7 +196,7 @@ export async function rememberCarSearchCohort(
     now + TTL_MS,
   );
   try {
-    await getPrisma().providerResultCache.upsert({
+    await boundedCacheWrite(db => db.providerResultCache.upsert({
       where: { cacheKey: cacheKey("car", resultId) },
       create: {
         cacheKey: cacheKey("car", resultId), vertical: "car", resultId,
@@ -194,7 +207,7 @@ export async function rememberCarSearchCohort(
         normalizedResult: results as never, searchContext: search as never,
         expiresAt: new Date(now + TTL_MS),
       },
-    });
+    }));
   } catch {
     console.error("[provider-result-cache]", { event: "cohort_write_error", vertical: "car" });
   }
@@ -230,7 +243,7 @@ export async function rememberHotelSearchCohort(
   if (!results.length) return;
   const resultId = hotelSearchCohortId(search);
   try {
-    await getPrisma().providerResultCache.upsert({
+    await boundedCacheWrite(db => db.providerResultCache.upsert({
       where: { cacheKey: cacheKey("hotel", resultId) },
       create: {
         cacheKey: cacheKey("hotel", resultId),
@@ -245,7 +258,7 @@ export async function rememberHotelSearchCohort(
         searchContext: search as never,
         expiresAt: new Date(now + TTL_MS),
       },
-    });
+    }));
   } catch {
     console.error("[provider-result-cache]", { event: "cohort_write_error", vertical: "hotel" });
   }

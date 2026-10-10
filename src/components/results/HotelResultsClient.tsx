@@ -7,6 +7,7 @@ import { ArrowUp, Check, ChevronLeft, ChevronRight, ChevronDown, SlidersHorizont
 
 import type { PublicHotelResult } from "@/lib/types";
 import { readHotelSearchResponse } from "@/lib/search/readHotelSearchResponse";
+import { readHotelReturnSnapshot, rememberHotelReturnSnapshot } from "@/lib/hotels/hotelReturnSnapshot";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
@@ -592,11 +593,18 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     }
   }, [filtersOpen]);
 
+  const returnStateRef = useRef<{ key: string; value: ReturnType<typeof takeMobileHotelResultsState> } | null>(null);
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
-
-    fetch("/api/hotels/search", {
+    if (returnStateRef.current?.key !== bodySearchKey) {
+      returnStateRef.current = { key: bodySearchKey, value: !guided ? takeMobileHotelResultsState(bodySearchKey) : null };
+    }
+    const restored = retryKey === 0 ? returnStateRef.current.value : null;
+    const snapshot = restored ? readHotelReturnSnapshot(bodySearchKey) : null;
+    let timedOut = false;
+    const timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, 60_000);
+    const request = snapshot ? Promise.resolve(snapshot) : fetch("/api/hotels/search", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -607,14 +615,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     })
       .then((response) => readHotelSearchResponse(response, t("hotelResults.searchUnavailableDetailed"), (data) =>
         data.error === enTranslations["hotelResults.liveSearchUnavailable"] ? t("hotelResults.liveSearchUnavailable") : t("hotelResults.unableToSearchHotels"),
-      ))
-      .then((data) => {
+      ));
+    request.then((data) => {
         if (!active) return;
-
+        if (!snapshot) rememberHotelReturnSnapshot(bodySearchKey, data.results);
         setError("");
         setResults(data.results);
-        const restored = !guided && window.matchMedia("(max-width: 639px)").matches
-          ? takeMobileHotelResultsState(bodySearchKey) : null;
         const upperBound = getResultMaxPrice(data.results, currencyRatesRef.current);
         const restoredFilters = Object.fromEntries(
           Object.keys(emptySelections).map((key) => {
@@ -643,7 +649,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         setSelectedHotelClasses(restored?.selectedHotelClasses ?? []);
       })
       .catch((searchError) => {
-        if (!active || controller.signal.aborted) return;
+        if (!active || (controller.signal.aborted && !timedOut)) return;
 
         setSearchApplying(false);
         setFilterApplying(false);
@@ -656,9 +662,10 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           filterApplyingTimeoutRef.current = null;
         }
         setResults([]);
-        setError(searchError instanceof Error ? searchError.message : t("hotelResults.unableToSearchHotels"));
+        setError(timedOut ? t("hotelResults.searchUnavailableDetailed") : searchError instanceof Error ? searchError.message : t("hotelResults.unableToSearchHotels"));
       })
       .finally(() => {
+        window.clearTimeout(timeout);
         if (active) {
           setCompletedSearchKey(bodySearchKey);
           setLoading(false);
@@ -667,6 +674,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
     return () => {
       active = false;
+      window.clearTimeout(timeout);
       controller.abort();
     };
   }, [body, bodySearchKey, guided, petFriendlyOnly, providerMode, retryKey, t]);
@@ -1590,7 +1598,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       {loadingContent ?? <>
       <ResultsRoot
         onClickCapture={(event) => {
-          if (guided || !window.matchMedia("(max-width: 639px)").matches) return;
+          if (guided) return;
           const target = event.target;
           if (!(target instanceof Element) || !target.closest('a[href*="/hotels/details/"]')) return;
           saveMobileHotelResultsState(bodySearchKey, {
