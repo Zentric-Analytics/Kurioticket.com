@@ -34,5 +34,23 @@ test("PostgreSQL persists every batched offer, duplicate update and complete coh
     // A later search must not overwrite the first search's distinct result identity.
     await rememberProviderResults("hotel", [{ id: "second-search", name: "Other hotel" }], search);
     assert.deepEqual((await getProviderResultWithContext("hotel", results[1041].id))?.result, results[1041]);
+    // A blocked database must not hold the response indefinitely or proceed
+    // with thousands of queued writes. Use only this disposable table.
+    let releaseLock!: () => void;
+    let confirmLock!: () => void;
+    const held = new Promise<void>(resolve => { releaseLock = resolve; });
+    const acquired = new Promise<void>(resolve => { confirmLock = resolve; });
+    const lock = db.$transaction(async tx => {
+      await tx.$executeRawUnsafe('LOCK TABLE "ProviderResultCache" IN ACCESS EXCLUSIVE MODE');
+      confirmLock();
+      await held;
+    }, { timeout: 15_000 });
+    await acquired;
+    const started = Date.now();
+    try {
+      await rememberProviderResults("hotel", Array.from({ length: 200 }, (_, i) => ({ id: `blocked-${i}` })), search);
+      assert.ok(Date.now() - started < 7000, "cache write must terminate within its bounded database deadline");
+    } finally { releaseLock(); await lock; }
+    assert.equal(await db.providerResultCache.count({ where: { resultId: { startsWith: "blocked-" } } }), 0);
   } finally { await db.$disconnect(); }
 });
