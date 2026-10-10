@@ -4,6 +4,7 @@ import { getPrisma } from "../src/lib/prisma";
 import { rememberProviderResults, getProviderResultWithContext, rememberHotelSearchCohort, getHotelSearchCohort } from "../src/services/travel/providerResultCache";
 import type { NormalizedHotelResult } from "../src/lib/types";
 import { createPrismaFlightCacheBackend, type SharedFlightCacheRecord } from "../src/lib/searchCache";
+import { deleteExpiredCacheBatch } from "../src/lib/cacheMaintenance";
 
 // Deliberately refuse non-disposable targets, including all Render hosts.
 const target = new URL(process.env.DATABASE_URL || "http://invalid");
@@ -80,5 +81,19 @@ test("flight cache batches commit all identities and roll back a later batch fai
     const invalid = records.slice(0, 100).map((record, i) => ({ ...record, publicResultId: i < 50 ? `rollback-${i}` : "duplicate-in-second-batch" }));
     await assert.rejects(backend.write(invalid));
     assert.equal(await db.flightResultCache.count(), 103, "no first-batch rows may survive failure of the second batch");
+    const cutoff = new Date("2020-01-01T00:00:00Z");
+    await db.$executeRaw`INSERT INTO "FlightResultCache" ("publicResultId", "normalizedResult", "itineraryKey", "expiresAt")
+      SELECT 'expired-' || n, '{}'::jsonb, 'test', ${cutoff} FROM generate_series(1, 205) n`;
+    const first = await deleteExpiredCacheBatch(cutoff, db);
+    assert.equal(first.flights, 200);
+    assert.equal(await db.flightResultCache.count(), 108, "all 103 valid rows survive");
+    const second = await deleteExpiredCacheBatch(cutoff, db);
+    assert.equal(second.flights, 5);
+    assert.equal(await db.flightResultCache.count(), 103);
+    assert.ok(await db.providerResultCache.count() > 0, "valid provider records survive");
+    await db.$transaction(async tx => {
+      await tx.$queryRaw`SELECT true AS locked FROM pg_advisory_xact_lock(6213, 1)`;
+      assert.equal((await deleteExpiredCacheBatch(cutoff, db)).skipped, true);
+    });
   } finally { await db.$disconnect(); }
 });
