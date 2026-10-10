@@ -4,7 +4,10 @@ import { buildStaticCarResults } from "../../src/services/travel/staticCarResult
 test("Cars exits loading through JSON inventory and allows explicit retry after failure", async ({ page }) => {
   const search = { pickupLocation: "BOS", dropoffLocation: "BOS", pickupDate: "2030-10-12", pickupTime: "10:00",
     dropoffDate: "2030-10-17", dropoffTime: "10:00", driverAge: "18-70" };
-  const cars = buildStaticCarResults(search);
+  const templates = buildStaticCarResults(search);
+  const cars = Array.from({ length: 810 }, (_, index) => ({
+    ...templates[index % templates.length], id: `synthetic-car-${index}`,
+  }));
   expect(cars.length).toBeGreaterThan(0);
   let searches = 0;
   await page.route("**/api/cars/search", route => {
