@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { ArrowLeft, Bed, CalendarDays, ChevronLeft, ChevronRight, Heart, MapPin, Users, X } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -161,7 +162,7 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
         </button>) : <div className={styles.emptyHero}>{gallery.imageUnavailableText}</div>}
       </div>
       {gallery.usableIndices.length > 0 ? <span className={styles.photoCount}>{gallery.activePosition} / {gallery.usableIndices.length}</span> : null}
-      <a href={props.resultsHref} aria-label="Back to hotel results" className={styles.back}><ArrowLeft size={25} strokeWidth={2.2} /></a>
+      <Link href={props.resultsHref} aria-label="Back to hotel results" className={styles.back} prefetch={false}><ArrowLeft size={25} strokeWidth={2.2} /></Link>
       <div className={styles.actions}>
         <button type="button" aria-label={props.savedHotelLabel} aria-pressed={props.isSaved} onClick={props.onSave}><Heart size={22} strokeWidth={2} fill={props.isSaved ? "#E92D55" : "none"} color={props.isSaved ? "#E92D55" : "#334155"} /></button>
         <button type="button" aria-label={`Share ${props.hotelName}`} onClick={() => void share()}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5" /></svg></button>
@@ -200,7 +201,7 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
               if (nextOffer) void viewDeal(nextOffer);
             }}
           />)}
-          {!offers.length ? <div className={styles.noRates}><h2>No rates available</h2><p>Refresh your search for current prices and availability.</p><a href={props.resultsHref}>Back to hotel results</a></div> : null}
+          {!offers.length ? <div className={styles.noRates}><h2>No rates available</h2><p>Refresh your search for current prices and availability.</p><Link href={props.resultsHref} prefetch={false}>Back to hotel results</Link></div> : null}
         </div>
         {handoffError ? <p role="alert">{handoffError}</p> : null}
       </section> : null}

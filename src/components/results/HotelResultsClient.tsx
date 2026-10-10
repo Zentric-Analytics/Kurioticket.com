@@ -597,8 +597,11 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
-    if (returnStateRef.current?.key !== bodySearchKey) {
-      returnStateRef.current = { key: bodySearchKey, value: !guided ? takeMobileHotelResultsState(bodySearchKey) : null };
+    const pendingReturn = !guided ? takeMobileHotelResultsState(bodySearchKey) : null;
+    if (pendingReturn || returnStateRef.current?.key !== bodySearchKey) {
+      // A retained route can be reactivated more than once for the same search.
+      // Prefer the latest departure state while retaining it for effect replay.
+      returnStateRef.current = { key: bodySearchKey, value: pendingReturn };
     }
     const restored = retryKey === 0 ? returnStateRef.current.value : null;
     const snapshot = restored ? readHotelReturnSnapshot(bodySearchKey) : null;
@@ -854,11 +857,13 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const showFilteredEmptyState = !loading && !error && !filterApplying && results.length > 0 && filtered.length === 0;
 
   useEffect(() => {
+    // Do not clamp a restored page against the empty, pre-restoration inventory.
+    if (loading) return;
     const frame = window.requestAnimationFrame(() => {
       setCurrentResultsPage((page) => clampHotelResultsPage(page, totalHotelResultPages));
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [totalHotelResultPages]);
+  }, [loading, totalHotelResultPages]);
 
   useEffect(() => {
     if (guided || typeof window === "undefined") return undefined;

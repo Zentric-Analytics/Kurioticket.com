@@ -14,6 +14,12 @@ const page = read("../../../app/hotels/details/[id]/page.tsx");
 const gallery = read("./HotelDetailsGallery.tsx");
 const stayEditor = read("./DesktopHotelStayEditor.tsx");
 
+test("mobile results return uses client navigation to retain the in-memory search snapshot", () => {
+  assert.match(mobile, /import Link from "next\/link"/);
+  assert.match(mobile, /<Link href=\{props\.resultsHref\} aria-label="Back to hotel results"/);
+  assert.doesNotMatch(mobile, /<a href=\{props\.resultsHref\}/);
+});
+
 test("standalone chooses independent mobile and desktop presentations with shared data", () => {
   assert.match(dispatcher, /useSyncExternalStore/);
   assert.match(dispatcher, /max-width: 1023px/);
