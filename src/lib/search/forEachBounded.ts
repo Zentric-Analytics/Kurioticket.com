@@ -8,10 +8,18 @@ export async function forEachBounded<T>(
     throw new RangeError("Concurrency must be a positive integer");
   }
   let cursor = 0;
+  let failed = false;
+  let firstError: unknown;
   await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, async () => {
     while (cursor < items.length) {
       const item = items[cursor++];
-      await task(item);
+      try {
+        await task(item);
+      } catch (error) {
+        if (!failed) firstError = error;
+        failed = true;
+      }
     }
   }));
+  if (failed) throw firstError;
 }
