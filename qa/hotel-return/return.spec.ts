@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("details return preserves results and page without another provider search", async ({ page }) => {
+test("details return preserves results and page without another provider search", async ({ page }, testInfo) => {
   let searches = 0;
   const hotels = Array.from({ length: 25 }, (_, i) => ({
     id: `kayak-sandbox:test:${i}`, provider: "KAYAK sandbox", name: `Synthetic Hotel ${i}`,
@@ -30,4 +30,14 @@ test("details return preserves results and page without another provider search"
   await expect(page.getByRole("heading", { name: "25 results found" })).toBeVisible();
   await expect(page.getByText("Showing 21–25", { exact: true }).filter({ visible: true })).toBeVisible();
   expect(searches).toBe(searchesBeforeDetails);
+  await page.getByRole("link", { name: "View hotel", exact: true }).first().click();
+  await expect(page.getByRole("heading", { name: "Synthetic Hotel 20", exact: true })).toBeVisible();
+  const returnLink = page.getByRole("link", { name: "Back to hotel results", exact: true });
+  if (testInfo.project.name === "mobile") {
+    await expect(returnLink).toBeVisible();
+    await returnLink.click();
+    await expect(page.getByRole("heading", { name: "25 results found" })).toBeVisible();
+    await expect(page.getByText("Showing 21–25", { exact: true }).filter({ visible: true })).toBeVisible();
+    expect(searches).toBe(searchesBeforeDetails);
+  }
 });
