@@ -2,10 +2,18 @@ import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/ca
 import type { FlightSearchParams, HotelSearchParams, NormalizedFlightResult, PublicHotelResult, ProviderResult } from "@/lib/types";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import { kayakCarCardModel, kayakFlightCardModel, kayakHotelCardModel } from "@/components/results/kayakCardModels";
-import { isKayakSandboxEnabled, KayakError, KayakSandboxClient, type KayakVertical } from "./kayakSandbox";
+import { isKayakSandboxEnabled, KayakError, KayakPartialSearchError, KayakSandboxClient, type KayakVertical } from "./kayakSandbox";
 import { resolveRegularKayakSearch } from "./kayakRegularSearch";
 
 export type KayakRequestContext = { clientIp: string; userAgent?: string; trackId?: string; signal?: AbortSignal };
+
+/** Provider row IDs can be positions reused by later searches. Cache and route
+ * identities must belong to one result snapshot, never to a global row number. */
+export function scopeKayakOfferIds<T extends { id: string; hotelPropertyKey?: string }>(offers: T[], snapshotId: string): T[] {
+  return offers.map((offer) => ({ ...offer, id: `${snapshotId}:${offer.id}`,
+    ...(offer.hotelPropertyKey !== undefined ? { hotelPropertyKey: `${snapshotId}:${offer.hotelPropertyKey}` } : {}),
+  }));
+}
 
 async function search<T>(vertical: KayakVertical, criteria: Record<string, string>, context?: KayakRequestContext, map?: (offer: Parameters<typeof kayakFlightCardModel>[0]) => T | null): Promise<ProviderResult<T>> {
   const startedAt = Date.now();
@@ -26,13 +34,19 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
         errorReason: pickupTimePast ? "pickup_time_past" : "unsupported_location",
       };
     }
-    const offers = await client.search(resolved.search, trackId, context.signal);
+    const offers = scopeKayakOfferIds(
+      await client.search(resolved.search, trackId, context.signal),
+      crypto.randomUUID(),
+    );
     return { provider: "KAYAK sandbox", results: offers.flatMap(offer => { const value = map?.(offer); return value ? [value] : []; }), status: "success", latencyMs: Date.now() - startedAt };
   } catch (error) {
     const reason = error instanceof KayakError ? error.code : "unavailable";
     const errorCategory = reason === "timeout" ? "timeout" : reason === "unauthorized" ? "auth" : reason === "invalid_response" ? "invalid_response" : reason === "unavailable" ? "network" : "server";
     const errorReason = reason === "timeout" ? "provider_timeout" : reason === "unauthorized" ? "provider_auth_error" : reason === "invalid_response" ? "provider_invalid_response" : reason === "unavailable" ? "provider_network_error" : "provider_server_error";
-    return { provider: "KAYAK sandbox", results: [], status: "failed", latencyMs: Date.now() - startedAt, error: reason, errorCategory, errorReason };
+    const results = error instanceof KayakPartialSearchError
+      ? scopeKayakOfferIds(error.offers, crypto.randomUUID()).flatMap(offer => { const value = map?.(offer); return value ? [value] : []; })
+      : [];
+    return { provider: "KAYAK sandbox", results, status: "failed", latencyMs: Date.now() - startedAt, error: reason, errorCategory, errorReason };
   }
 }
 

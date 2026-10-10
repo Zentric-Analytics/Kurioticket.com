@@ -3093,7 +3093,7 @@ export function CarsResultsExperience({
                       detailsHref={detailsHrefForCar(car)}
                       selectedDealOfferId={selectedDealOfferIds[car.id]}
                       onDealOfferSelected={selectCompareDealOffer}
-                      providerLabel={isKayakSandboxResult(car) ? "KAYAK sandbox · Not bookable" : undefined}
+                      providerLabel={isKayakSandboxResult(car) ? "KAYAK sandbox" : undefined}
                       onSelect={
                         onSelectCar && (isCarSelectable?.(car) ?? true)
                           ? onSelectCar

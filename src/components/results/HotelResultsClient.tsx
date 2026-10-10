@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { ArrowUp, Check, ChevronLeft, ChevronRight, ChevronDown, SlidersHorizontal, SquarePen, Star, X } from "lucide-react";
 
 import type { PublicHotelResult } from "@/lib/types";
+import { readHotelSearchResponse } from "@/lib/search/readHotelSearchResponse";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
@@ -13,6 +14,7 @@ import { HotelCardSkeleton } from "@/components/ui/Skeleton";
 import { PAGINATION_MIN_BUSY_MS, PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
+import { groupHotelOffers } from "@/lib/hotels/groupHotelOffers";
 import { HotelResultsMapPreview } from "@/components/results/HotelResultsMapPreview";
 import { isKayakSandboxResult, resultActionHref } from "@/lib/travel/resultAction";
 import { HotelResultsScrollIndicator } from "@/components/results/HotelResultsScrollIndicator";
@@ -603,19 +605,9 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       body: JSON.stringify(body),
       signal: controller.signal,
     })
-      .then(async (response) => {
-        const data = await response.json();
-
-        if (data.warningCategory === "provider_unavailable") {
-          throw new Error(t("hotelResults.searchUnavailableDetailed"));
-        }
-
-        if (!response.ok) {
-          throw new Error(data.error === enTranslations["hotelResults.liveSearchUnavailable"] ? t("hotelResults.liveSearchUnavailable") : t("hotelResults.unableToSearchHotels"));
-        }
-
-        return data as { results: PublicHotelResult[]; warnings?: string[] };
-      })
+      .then((response) => readHotelSearchResponse(response, t("hotelResults.searchUnavailableDetailed"), (data) =>
+        data.error === enTranslations["hotelResults.liveSearchUnavailable"] ? t("hotelResults.liveSearchUnavailable") : t("hotelResults.unableToSearchHotels"),
+      ))
       .then((data) => {
         if (!active) return;
 
@@ -813,7 +805,9 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     return count;
   }, [priceFilterActive, propertyNameQuery, selectedFilters, selectedHotelClasses]);
   const visibleFilteredHotels = resultsApplying ? visibleFiltered : filtered;
-  const sortedVisibleHotels = useMemo(() => sortHotelSummaryResults(visibleFilteredHotels, hotelSummarySortMode, currencyRates.rates), [currencyRates.rates, hotelSummarySortMode, visibleFilteredHotels]);
+  const hotelOfferGroups = useMemo(() => groupHotelOffers(sortHotelSummaryResults(visibleFilteredHotels, hotelSummarySortMode, currencyRates.rates)), [currencyRates.rates, hotelSummarySortMode, visibleFilteredHotels]);
+  const sortedVisibleHotels = useMemo(() => hotelOfferGroups.map(group => group[0]), [hotelOfferGroups]);
+  const additionalHotelOffers = useMemo(() => new Map(hotelOfferGroups.map(group => [group[0].id, group.slice(1)])), [hotelOfferGroups]);
   const totalHotelResultPages = guided ? 0 : getHotelResultsPageCount(sortedVisibleHotels.length);
   const paginatedVisibleHotels = useMemo(() => (guided ? sortedVisibleHotels : paginateHotelResults(sortedVisibleHotels, currentResultsPage)), [currentResultsPage, guided, sortedVisibleHotels]);
   const paginationItems = useMemo(() => buildHotelResultsPaginationItems(currentResultsPage, totalHotelResultPages), [currentResultsPage, totalHotelResultPages]);
@@ -840,8 +834,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     [t],
   );
   const currentSortLabel = hotelSortOptions.find((option) => option.value === hotelSummarySortMode)?.label ?? hotelSortOptions[0]?.label ?? "";
-  const formattedDisplayedHotelCount = formatHotelCount(visibleFilteredHotels.length, locale);
-  const resultsHeading = t(visibleFilteredHotels.length === 1 ? "resultFound" : "resultsFound").replace("{{count}}", formattedDisplayedHotelCount);
+  const formattedDisplayedHotelCount = formatHotelCount(sortedVisibleHotels.length, locale);
+  const resultsHeading = t(sortedVisibleHotels.length === 1 ? "resultFound" : "resultsFound").replace("{{count}}", formattedDisplayedHotelCount);
   const resultsDisplayRange = guided
     ? null
     : getResultsDisplayRange({
@@ -1839,7 +1833,17 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                     ) : paginatedVisibleHotels.length ? (
                       paginatedVisibleHotels.map((hotel, index) => {
                         const internalHref = guided ? (buildDetailsHref?.(hotel.id) ?? null) : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`;
-                        return <HotelCard key={hotel.id} hotel={hotel} providerLabel={isKayakSandboxResult(hotel) ? "KAYAK sandbox · Not bookable" : undefined} detailsHref={resultActionHref(hotel, internalHref)} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined} />;
+                        const alternatives = additionalHotelOffers.get(hotel.id) ?? [];
+                        return <section key={hotel.id} aria-label={hotel.name}>
+                          <HotelCard hotel={hotel} providerLabel={isKayakSandboxResult(hotel) ? "KAYAK sandbox" : undefined} detailsHref={resultActionHref(hotel, internalHref)} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined} />
+                          {alternatives.length > 0 ? <details className="mt-2 rounded-xl border border-slate-200 bg-white p-3">
+                            <summary className="cursor-pointer font-semibold">{t("deals.guided.hotelResults.viewRooms")} ({alternatives.length})</summary>
+                            <div className="mt-3 space-y-3">{alternatives.map(offer => {
+                              const href = guided ? (buildDetailsHref?.(offer.id) ?? null) : `/hotels/details/${encodeURIComponent(offer.id)}?${hotelDetailsSearchParams}`;
+                              return <HotelCard key={offer.id} hotel={offer} providerLabel={isKayakSandboxResult(offer) ? "KAYAK sandbox" : undefined} detailsHref={resultActionHref(offer, href)} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} />;
+                            })}</div>
+                          </details> : null}
+                        </section>;
                       })
                     ) : (
                       <div className="rounded-[13px] border border-slate-200 bg-white p-4 text-[13px] font-semibold leading-5 text-muted shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] sm:rounded-xl sm:p-6 sm:text-sm sm:shadow-sm">

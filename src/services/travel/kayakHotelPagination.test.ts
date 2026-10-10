@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { KayakSandboxClient } from "./kayakSandbox";
+import { KayakSandboxClient, KayakPartialSearchError } from "./kayakSandbox";
 import { paginateHotelResults } from "@/lib/hotels/hotelResultsPagination";
 import { paginateFlightResults } from "@/lib/flights/flightResultsPagination";
 import { paginateCarResults } from "@/lib/cars/carResultsPagination";
@@ -17,6 +17,23 @@ test("every retrieved result remains reachable across hotel, flight and car disp
 
 const search = { vertical: "hotels" as const, destination: "kplace:123", departure: "2026-12-01", returnDate: "2026-12-03", adults: 1 };
 const hotel = (n: number) => ({ name: `Hotel ${n}`, rates: [{ totalRate: n + 1, bookUri: "https://affiliates.kayak.com/sandbox-clickout" }] });
+
+for (const status of [429, 503]) {
+  test(`completed hotel pages survive a later ${status} without claiming completion`, async () => {
+    const client = new KayakSandboxClient("test", async input => {
+      const url = new URL(String(input));
+      if (url.pathname.includes("constants-mapping")) return Response.json({});
+      if (url.searchParams.get("pageIndex") !== "0") return new Response(null, { status });
+      return Response.json({ isComplete: true, totalFilteredResults: 26, currencyCode: "USD", results: Array.from({ length: 25 }, (_, n) => hotel(n)) });
+    }, async () => {});
+    await assert.rejects(client.search(search, "session"), error => {
+      assert.ok(error instanceof KayakPartialSearchError);
+      assert.equal(error.offers.length, 25);
+      assert.equal(error.code, status === 429 ? "rate_limited" : "server_error");
+      return true;
+    });
+  });
+}
 
 for (const vertical of ["flights", "cars"] as const) {
   test(`${vertical} retrieves subsequent completed pages using the documented page base`, async () => {

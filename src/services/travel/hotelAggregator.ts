@@ -87,10 +87,13 @@ export async function searchHotels(
   };
 }
 
-function dedupeHotels(results: NormalizedHotelResult[]) {
+export function dedupeHotels(results: NormalizedHotelResult[]) {
   const seen = new Map<string, NormalizedHotelResult>();
   for (const result of results) {
-    const key = `${result.name.toLowerCase()}|${result.location.toLowerCase()}`;
+    // Names are not property identities, and properties can have distinct rates.
+    // Remove only repetitions of the same provider offer; never let catalogue
+    // ordering erase live offers or their room/cancellation terms.
+    const key = JSON.stringify([result.provider, result.id]);
     if (!seen.has(key)) seen.set(key, result);
   }
   return [...seen.values()];
