@@ -31,6 +31,9 @@ test("PostgreSQL persists every batched offer, duplicate update and complete coh
     assert.equal((await getProviderResultWithContext<{ pricePerNight: number }>("hotel", results[0].id))?.result.pricePerNight, 999);
     await rememberHotelSearchCohort(results, search);
     assert.deepEqual(await getHotelSearchCohort(search), results);
+    const updatedCohort = results.map(result => ({ ...result, cancellationInfo: "Updated policy" }));
+    await rememberHotelSearchCohort(updatedCohort, search);
+    assert.deepEqual(await getHotelSearchCohort(search), updatedCohort);
     // A later search must not overwrite the first search's distinct result identity.
     await rememberProviderResults("hotel", [{ id: "second-search", name: "Other hotel" }], search);
     assert.deepEqual((await getProviderResultWithContext("hotel", results[1041].id))?.result, results[1041]);
