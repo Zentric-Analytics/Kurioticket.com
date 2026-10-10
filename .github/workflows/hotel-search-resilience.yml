@@ -28,6 +28,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx prisma generate
+      - run: node --test scripts/local-diagnosis-target.test.mjs
       - name: Isolated PostgreSQL cache integration
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kurioticket_cache_test

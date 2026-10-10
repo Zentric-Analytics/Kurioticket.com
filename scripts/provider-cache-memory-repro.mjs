@@ -3,18 +3,16 @@ import { execFileSync } from 'node:child_process';
 import pg from 'pg';
 import { randomUUID } from 'node:crypto';
 import { createJiti } from 'jiti';
+import { localDiagnosisTarget } from './local-diagnosis-target.mjs';
 
 // Synthetic-only destructive experiment; refuse every non-local database.
-const target = new URL(process.env.DIAGNOSIS_DATABASE_URL || 'http://invalid');
-assert.equal(target.hostname, '127.0.0.1');
-assert.equal(target.port, '55439');
-assert.equal(target.pathname, '/kurioticket_diagnosis');
+const target = localDiagnosisTarget(process.env.DIAGNOSIS_DATABASE_URL);
 const container = 'kurioticket-pg-diagnosis';
 function memory() {
   return execFileSync('docker', ['exec', container, 'sh', '-c',
     'cat /sys/fs/cgroup/memory.current /sys/fs/cgroup/memory.peak /sys/fs/cgroup/memory.events'], { encoding: 'utf8' }).trim();
 }
-const client = new pg.Client({ connectionString: target.href });
+const client = new pg.Client(target);
 client.on('error', () => {});
 await client.connect();
 await client.query('CREATE TABLE IF NOT EXISTS diagnosis_cache (id text PRIMARY KEY, payload jsonb NOT NULL)');
