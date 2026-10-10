@@ -6,18 +6,24 @@ const read = (path: string) => readFileSync(path, "utf8").replace(/\r\n/g, "\n")
 const results = read("src/features/search/ApprovedCarResultsScreen.tsx");
 const details = read("src/features/search/ApprovedCarDetailScreen.tsx");
 const saved = read("src/features/saved/SavedScreen.tsx");
-const openDeal = results.slice(results.indexOf("const openDeal"), results.indexOf("const clearFilters="));
+const card = read("src/features/search/CarResultCard.tsx");
+const picker = read("src/features/search/NativeCarResultOfferPicker.tsx");
+const dealActions = read("src/features/search/nativeCarResultDeals.ts");
 const returnToCarResultsStart = details.indexOf("const returnToCarResults");
 const returnToResults = details.slice(returnToCarResultsStart, details.indexOf("const light =", returnToCarResultsStart));
 const savedCarRoute = saved.slice(saved.indexOf('if (item.type === "car")'), saved.indexOf("const destinationId"));
 
-test("Cars Results pushes Details with Results-stack provenance and the resolved image cache key", () => {
-  assert.match(openDeal, /router\.push\s*\(\s*\{/);
-  assert.match(openDeal, /pathname\s*:\s*"\/car-details"/);
-  assert.match(openDeal, /result\s*:\s*JSON\.stringify\s*\(\s*\{\s*\.\.\.result\s*,\s*imageUrl\s*:\s*resolveNativeCarImageUri\s*\(\s*result\.imageUrl\s*\)\s*\?\?\s*result\.imageUrl\s*\}\s*\)/);
-  assert.match(openDeal, /resultId\s*:\s*result\.id/);
-  assert.match(openDeal, /carResultsStack\s*:\s*"1"/);
-  assert.doesNotMatch(openDeal, /router\.replace\s*\(/);
+test("Cars Results exposes provider links in cards without navigating to the details page", () => {
+  assert.doesNotMatch(results, /pathname\s*:\s*"\/car-details"|carResultsStack/);
+  assert.doesNotMatch(results, /const openDeal=/);
+  assert.match(results, /<CarResultCard result=\{item\}/);
+  assert.match(card, /<NativeCarResultOfferPicker result=\{result\}/);
+  assert.match(card, /nativeCarPrimaryBookingUrl\(result\)/);
+  assert.match(card, /disabled=\{!primaryBookingUrl\}/);
+  assert.match(card, /Linking\.openURL\(primaryBookingUrl\)/);
+  assert.match(picker, /Linking\.openURL\(bookingUrl\)/);
+  assert.match(dealActions, /getCarDealPickerGroups\(result\)/);
+  assert.doesNotMatch(card, /router\.push|\/car-details/);
 });
 
 test("Cars Details reads provenance and dismisses to actual existing Results", () => {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { FlatList, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, ChevronDown, SlidersHorizontal, SquarePen } from "lucide-react-native";
@@ -45,6 +45,7 @@ async function prefetchInitialCarImages(results: readonly CarResult[]){const car
 export function ApprovedCarResultsScreen() {
   const { theme } = useAppTheme();
   const carCanvasColor = theme.dark ? theme.background : CAR_RESULTS_LIGHT_CANVAS;
+  const headerSurfaceColor = theme.dark ? theme.background : "#FFFFFF";
   const insets = useSafeAreaInsets();
   const carResultsScrollIndicatorInsets = Platform.OS === "ios"
     ? { top: 4, right: 3, bottom: Math.max(insets.bottom, 8), left: 0 }
@@ -102,17 +103,14 @@ export function ApprovedCarResultsScreen() {
   const openQuickFilter=(groupId:string)=>{carFilterSessionDirtyRef.current=false;setQuickSheetKind(groupId);};
   const closeFilterSheet=()=>setFilterSheetVisible(false);
   const completeCarFilterSession=()=>{closeFilterSheet();if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}};
-  const openDeal=(result:CarResult)=>result.searchPolicy.action.kind==="provider"
-    ? void Linking.openURL(result.searchPolicy.action.href)
-    : router.push({pathname:"/car-details",params:{result:JSON.stringify({...result,imageUrl:resolveNativeCarImageUri(result.imageUrl)??result.imageUrl}),resultId:result.id,...Object.fromEntries(Object.entries(payload).map(([key,value])=>[key,String(value)])),carResultsStack:"1"}});
   const clearFilters=()=>{setFilters({});startCarResultsTransition();};
   const listData=status==="ready"&&!carResultsApplying?filtered:[];
   const listHeader=<>{message?<Text accessibilityRole="alert" style={[r.notice,{backgroundColor:theme.surface,color:theme.textPrimary,borderColor:theme.dark?theme.border:"#D8E1EC"}]}>{message}</Text>:null}{status==="ready"?<><NativeCarPriceAlert plan={plan.plan} results={results} available={availability.priceAlerts} onFeedback={setPriceAlertFeedback}/>{!carResultsApplying?<View accessibilityLabel="Car results summary" style={r.carResultsSummaryRow}><Text accessibilityRole="header" style={[r.carResultCount,{color:theme.textPrimary}]}>{carResultCountLabel(filtered.length)}</Text></View>:null}</>:null}</>;
   const listEmpty=status==="empty"?<Empty title="No rental cars found" body="Try changing your dates, pickup location, or filters." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:status==="error"?<Empty title="Car search could not be completed" body={message||"Check your connection and try again."} retry={()=>setRetry((value)=>value+1)} edit={edit}/>:status==="ready"&&carResultsApplying?<CarSkeletons/>:status==="ready"&&!filtered.length?<Empty title="No cars match these filters" body="Clear filters to see the available rental cars." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:null;
   if(status==="loading") return <NativeBrandedSearchLoading product="car"/>;
-  return <SafeAreaView style={[r.safe,{backgroundColor:carCanvasColor}]} edges={["top"]}>
-    <CarResultsHeader destination={carSummaryDestination} secondaryLine={carSummarySecondary} onEdit={edit} backgroundColor={carCanvasColor}/>
-    <View style={[r.carFilterSectionHeader,{backgroundColor:carCanvasColor}]}><ScrollView horizontal style={r.filterRail} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false} bounces={false} overScrollMode="never" contentContainerStyle={r.filters}>
+  return <SafeAreaView style={[r.safe,{backgroundColor:headerSurfaceColor}]} edges={["top"]}>
+    <CarResultsHeader destination={carSummaryDestination} secondaryLine={carSummarySecondary} onEdit={edit} backgroundColor={headerSurfaceColor}/>
+    <View style={[r.carFilterSectionHeader,{backgroundColor:headerSurfaceColor}]}><ScrollView horizontal style={r.filterRail} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false} bounces={false} overScrollMode="never" contentContainerStyle={r.filters}>
       <CarResultsShortcut label="Filter" accessibilityLabel="Filters" count={activeCarFilterCount(filters)||undefined} icon showChevron={false} expanded={filterSheetVisible} onPress={openAllFilters}/>
       <CarResultsShortcut label={sort === "recommended" ? "Sort" : sort === "lowestTotal" ? "Total price" : "Top rated"} accessibilityLabel={`Sort, ${sort === "recommended" ? "Recommended" : sort === "lowestTotal" ? "Total price" : "Top rated"}`} expanded={quickSheetKind === "sort"} onPress={()=>openQuickFilter("sort")}/>
       {quickGroups.map(group=><CarResultsShortcut key={group.id} label={carFilterGroupLabel(copy,group)} count={filters[group.id]?.length||undefined} expanded={quickSheetKind===group.id} onPress={()=>openQuickFilter(group.id)}/>)}
@@ -120,7 +118,7 @@ export function ApprovedCarResultsScreen() {
     {/* Render the complete bounded result set in the first virtualized batch.
         UIKit then receives the final contentSize before scrolling begins, while
         image prefetching stays independently limited to the first few assets. */}
-    <FlatList ref={carScrollRef} style={{backgroundColor:carCanvasColor}} data={listData} keyExtractor={result=>result.id} renderItem={({item,index})=><View style={r.carResultCardSlot}><CarResultCard result={item} rank={index} imageUri={resolveNativeCarImageUri(item.imageUrl)} searchParams={payload} resultBackgroundColor={carCanvasColor} onViewDeal={()=>openDeal(item)}/></View>} ItemSeparatorComponent={CarResultItemSeparator} ListHeaderComponent={listHeader} ListEmptyComponent={listEmpty} initialNumToRender={Math.max(results.length,1)} maxToRenderPerBatch={Math.max(results.length,CAR_RESULT_RENDER_BATCH_SIZE)} windowSize={CAR_RESULT_WINDOW_SIZE} updateCellsBatchingPeriod={CAR_RESULT_BATCHING_PERIOD_MS} removeClippedSubviews={Platform.OS === "android"} showsVerticalScrollIndicator={true} automaticallyAdjustsScrollIndicatorInsets={false} scrollIndicatorInsets={carResultsScrollIndicatorInsets} alwaysBounceVertical={false} bounces={false} overScrollMode="never" keyboardShouldPersistTaps="handled" contentContainerStyle={[r.body,{paddingBottom:Math.max(insets.bottom + 16,16)}]}/>
+    <FlatList ref={carScrollRef} style={{backgroundColor:carCanvasColor}} data={listData} keyExtractor={result=>result.id} renderItem={({item,index})=><View style={r.carResultCardSlot}><CarResultCard result={item} rank={index} imageUri={resolveNativeCarImageUri(item.imageUrl)} searchParams={payload} resultBackgroundColor={carCanvasColor}/></View>} ItemSeparatorComponent={CarResultItemSeparator} ListHeaderComponent={listHeader} ListEmptyComponent={listEmpty} initialNumToRender={Math.max(results.length,1)} maxToRenderPerBatch={Math.max(results.length,CAR_RESULT_RENDER_BATCH_SIZE)} windowSize={CAR_RESULT_WINDOW_SIZE} updateCellsBatchingPeriod={CAR_RESULT_BATCHING_PERIOD_MS} removeClippedSubviews={Platform.OS === "android"} showsVerticalScrollIndicator={true} automaticallyAdjustsScrollIndicatorInsets={false} scrollIndicatorInsets={carResultsScrollIndicatorInsets} alwaysBounceVertical={false} bounces={false} overScrollMode="never" keyboardShouldPersistTaps="handled" contentContainerStyle={[r.body,{paddingBottom:Math.max(insets.bottom + 16,16)}]}/>
     <CarFilterSheet visible={filterSheetVisible} results={results} filters={filters} pricePerDay={pricePerDay} onChange={changeCarFilters} onClose={completeCarFilterSession}/>
     {quickSheetKind ? <CarResultsQuickFilterSheet key={quickSheetKind} kind={quickSheetKind} results={results} filters={filters} pricePerDay={pricePerDay} sort={sort} onApplyFilters={(next)=>{changeCarFilters(next);}} onApplySort={(next)=>{if(next!==sort){setSort(next);startCarResultsTransition();}}} onClose={()=>{setQuickSheetKind(null);if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}}}/> : null}
     <CarEditSearchModal visible={carEditSearchOpen} params={params} onClose={()=>setCarEditSearchOpen(false)}/>
@@ -144,7 +142,7 @@ function CarResultsHeader({destination,secondaryLine,onEdit,backgroundColor}:{de
           <ArrowLeft size={25} strokeWidth={2} color={theme.icon}/>
         </Pressable>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Edit car search. ${destination}. ${secondaryLine}`} onPress={onEdit} style={({pressed})=>[r.carSummaryCard,{backgroundColor:theme.surface,borderColor:theme.dark?theme.border:"#D8E1EC"},pressed&&r.carSummaryCardPressed]}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Edit car search. ${destination}. ${secondaryLine}`} onPress={onEdit} style={({pressed})=>[r.carSummaryCard,{backgroundColor:theme.dark?theme.surface:CAR_RESULTS_LIGHT_CANVAS,borderColor:theme.dark?theme.border:"#D8E1EC"},pressed&&r.carSummaryCardPressed]}>
         <View style={r.carSummaryText}>
           <Text numberOfLines={1} ellipsizeMode="tail" style={[r.carSummaryDestination,{color:theme.textPrimary}]}>{destination}</Text>
           <Text numberOfLines={1} ellipsizeMode="tail" style={[r.carSummarySecondary,{color:theme.textSecondary}]}>{secondaryLine}</Text>

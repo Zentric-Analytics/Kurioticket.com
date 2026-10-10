@@ -66,7 +66,7 @@ test("Cars keep a modest outer gutter while preserving result-card spacing with 
   const slot = cars.match(/carResultCardSlot:\{([^}]*)\}/)?.[1] ?? "";
   assert.doesNotMatch(slot, /(?:minW|w|W)idth|position|absolute|transform|margin(?:Horizontal)?:-|Dimensions|window|screen/);
   assert.doesNotMatch(cars, /carResultCardSlot:\{[^}]*width:"100%"|carResultCardSlot:\{[^}]*Dimensions/);
-  assert.match(cars, /renderItem=\{\(\{item,index\}\)=><View style=\{r\.carResultCardSlot\}><CarResultCard result=\{item\} rank=\{index\} imageUri=\{resolveNativeCarImageUri\(item\.imageUrl\)\} searchParams=\{payload\} resultBackgroundColor=\{carCanvasColor\} onViewDeal=\{\(\)=>openDeal\(item\)\}\/><\/View>\}/);
+  assert.match(cars, /renderItem=\{\(\{item,index\}\)=><View style=\{r\.carResultCardSlot\}><CarResultCard result=\{item\} rank=\{index\} imageUri=\{resolveNativeCarImageUri\(item\.imageUrl\)\} searchParams=\{payload\} resultBackgroundColor=\{carCanvasColor\}\/><\/View>\}/);
   assert.match(cars, /style=\{\[r\.skeleton,r\.carResultCardSlot,\{backgroundColor:/);
   assert.match(cars, /skeleton:\{height:216/);
   assert.doesNotMatch(cars, /<NativeCarPriceAlert[^>]*carResultCardSlot|<View accessibilityLabel="Car results summary"[^>]*carResultCardSlot/);
@@ -188,14 +188,18 @@ test("Cars quick controls use the Flight-family icon, geometry, and surface cont
   assert.match(cars, /shortcutChevronExpanded:\{transform:\[\{rotate:"180deg"\}\]\}/);
 });
 
-test("Cars Results carries the Flight-family canvas without a white filter band", () => {
+test("Cars Results keeps the mobile-web white chrome and muted search/body while preserving its native arrangement", () => {
   assert.match(cars, /const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
   assert.match(cars, /const carCanvasColor = theme\.dark \? theme\.background : CAR_RESULTS_LIGHT_CANVAS/);
-  assert.match(cars, /r\.safe,\{backgroundColor:carCanvasColor\}/);
-  assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{carCanvasColor\}/);
+  assert.match(cars, /const headerSurfaceColor = theme\.dark \? theme\.background : "#FFFFFF"/);
+  assert.match(cars, /r\.safe,\{backgroundColor:headerSurfaceColor\}/);
+  assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{headerSurfaceColor\}/);
   assert.match(carHeader, /\{backgroundColor,paddingLeft:/);
-  assert.match(cars, /r\.carFilterSectionHeader,\{backgroundColor:carCanvasColor\}/);
+  assert.match(cars, /r\.carFilterSectionHeader,\{backgroundColor:headerSurfaceColor\}/);
+  assert.match(cars, /<FlatList ref=\{carScrollRef\} style=\{\{backgroundColor:carCanvasColor\}\}/);
+  assert.match(cars, /r\.carSummaryCard,\{backgroundColor:theme\.dark\?theme\.surface:CAR_RESULTS_LIGHT_CANVAS/);
   assert.match(cars, /<CarResultCard[^>]*resultBackgroundColor=\{carCanvasColor\}/);
+  assert.doesNotMatch(carHeader, /profile|hamburger|menu/i);
   assert.doesNotMatch(cars, /r\.filterRail,\{backgroundColor:theme\.dark\?theme\.surface:"#FFFFFF"\}/);
 });
 

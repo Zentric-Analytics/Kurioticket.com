@@ -157,7 +157,7 @@ test("commerce remains authoritative, responsive, and accessible", () => {
   assert.doesNotMatch(source, /money\(offer\.currency, offer\.totalPrice\)|offer\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
   assert.match(source, /Live price unavailable/);
   assert.match(source, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\}/);
-  assert.match(style("commerceColumn"), /flex:1\.35,minWidth:0/);
+  assert.match(style("commerceColumn"), /flex:1\.15,minWidth:0,justifyContent:"space-between"/);
   assert.match(style("priceColumn"), /minWidth:0,maxWidth:"100%",alignItems:"flex-end"/);
   assert.match(style("dailyPrice"), /maxWidth:"100%",fontSize:19,fontWeight:"600",fontFamily:appFonts\.semibold,lineHeight:22/);
   assert.match(style("dailyPrice"), /fontVariant:\["tabular-nums"\]/);
@@ -165,7 +165,9 @@ test("commerce remains authoritative, responsive, and accessible", () => {
   assert.match(style("perDayLabel"), /fontSize:10,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:13,textAlign:"right"/);
   assert.doesNotMatch(style("perDayLabel"), /fontSize:11|lineHeight:14/);
   assert.doesNotMatch(styles, /(?:^|,)total:|taxDisclosure:|(?:^|,)perDay:/);
-  assert.match(source, /<Pressable accessibilityRole="button" accessibilityLabel=\{`View deal for \$\{result\.modelName\}`\} onPress=\{onViewDeal\}/);
+  assert.match(source, /<Pressable accessibilityRole=\{primaryBookingUrl \? "link" : "button"\}/);
+  assert.match(source, /accessibilityState=\{\{disabled: !primaryBookingUrl\}\} disabled=\{!primaryBookingUrl\}/);
+  assert.match(source, /Linking\.openURL\(primaryBookingUrl\)/);
   assert.match(style("viewDeal"), /minHeight:36/);
   assert.doesNotMatch(source, /result\.offers\[0\]|TOTAL\s*·|\/day/);
 });
