@@ -26,7 +26,7 @@ test("normal metasearch hides the page-level provider panel", () => {
 
 test("the details page keeps the approved sandbox link away from result cards", () => {
   const source = readFileSync("src/app/sandbox/kayak/details/KayakSandboxDetails.tsx", "utf8");
-  assert.match(source, /KAYAK sandbox · Not bookable/);
+  assert.match(source, /KAYAK sandbox/);
   assert.match(source, /Open KAYAK test page/);
   assert.match(source, /rel="noopener noreferrer"/);
   assert.match(source, /referrerPolicy="no-referrer"/);

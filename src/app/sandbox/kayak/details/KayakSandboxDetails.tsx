@@ -16,7 +16,7 @@ export function KayakSandboxDetails({id}:{id:string}) {
   if (!stored) return <div className="rounded-xl border bg-white p-6"><h1 className="text-2xl font-bold">Result details are no longer available</h1><p className="mt-2">Return to the search results and open this offer again.</p><Link className="mt-4 inline-block text-[#004BB8] underline" href="/">Start a new search</Link></div>;
   const {offer,vertical}=stored;
   return <article className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-    <p className="text-sm font-semibold text-amber-800">KAYAK sandbox · Not bookable</p>
+    <p className="text-sm font-semibold text-amber-800">KAYAK sandbox</p>
     <div><p className="text-sm uppercase text-slate-500">{vertical.slice(0,-1)} result</p><h1 className="text-3xl font-bold">{offer.title}</h1><p className="mt-2">{offer.description}</p></div>
     {offer.images?.length ? <div className="grid gap-3 sm:grid-cols-2">{offer.images.map((image,index)=><div key={image.url} className="relative aspect-[16/10] overflow-hidden rounded-xl bg-slate-100"><Image src={image.url} alt={image.alt} fill priority={index===0} className="object-cover" /></div>)}</div> : null}
     <section><h2 className="text-xl font-bold">Supplied details</h2><p className="mt-2 font-semibold">{offer.price} {offer.currency} · {offer.priceBasis}</p><ul className="mt-3 list-disc space-y-1 pl-5">{offer.details.map((detail,index)=><li key={index}>{detail}</li>)}</ul></section>

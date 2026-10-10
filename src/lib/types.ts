@@ -253,6 +253,7 @@ type HotelInventoryDiscovery = {
 type HotelInventory = HotelInventoryBookable | HotelInventoryDiscovery;
 
 type NormalizedHotelBase = {
+  propertyGroupId?: string;
   id: string;
   provider: string;
   bookingProviderName?: string;
@@ -288,6 +289,7 @@ type NormalizedHotelBase = {
 };
 
 type PublicHotelBase = {
+  propertyGroupId?: string;
   id: string;
   provider: string;
   bookingProviderName?: string;

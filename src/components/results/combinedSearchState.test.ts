@@ -35,7 +35,9 @@ test("Hotels waits for the server-combined result before rendering an empty or f
   assert.match(aggregate, /const \[catalogue, kayak\] = await Promise\.all\(/);
   assert.match(aggregate, /dedupeHotels\(\[\.\.\.catalogue, \.\.\.kayak\.results\]\)/);
   assert.match(client, /fetch\("\/api\/hotels\/search"/);
-  assert.match(client, /data\.warningCategory === "provider_unavailable"/);
+  assert.match(client, /readHotelSearchResponse\(response, t\("hotelResults\.searchUnavailableDetailed"\),/);
+  const responseReader = readFileSync("src/lib/search/readHotelSearchResponse.ts", "utf8");
+  assert.match(responseReader, /warningCategory\s*=== "provider_unavailable"/);
   assert.match(client, /setResults\(data\.results\)/);
   assert.match(client, /error && results\.length === 0/);
   assert.match(client, /hotelResults\.noStaysMatchFiltersInline/);

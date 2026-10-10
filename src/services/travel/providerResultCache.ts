@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
+import { forEachBounded } from "@/lib/search/forEachBounded";
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 
@@ -104,7 +105,7 @@ export async function rememberProviderResults<T extends { id: string }>(
     }
   }
   try {
-    await Promise.all(results.map((result) => getPrisma().providerResultCache.upsert({
+    await forEachBounded(results, 2, (result) => getPrisma().providerResultCache.upsert({
       where: { cacheKey: cacheKey(vertical, result.id) },
       create: {
         cacheKey: cacheKey(vertical, result.id),
@@ -119,7 +120,7 @@ export async function rememberProviderResults<T extends { id: string }>(
         searchContext: searchContext as never,
         expiresAt,
       },
-    })));
+    }));
   } catch {
     console.error("[provider-result-cache]", { event: "write_error", vertical });
   }

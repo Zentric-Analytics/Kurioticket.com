@@ -57,6 +57,7 @@ export type KayakSearch = z.infer<typeof kayakSearchSchema>;
 export type KayakVertical = z.infer<typeof kayakVertical>;
 export type SandboxOffer = {
   id: string;
+  hotelPropertyKey?: string;
   title: string;
   description: string;
   details: string[];
@@ -225,6 +226,13 @@ export class KayakError extends Error {
   }
 }
 
+/** Retain validated completed pages without claiming the search completed. */
+export class KayakPartialSearchError extends KayakError {
+  constructor(code: KayakError["code"], public readonly offers: SandboxOffer[]) {
+    super(code);
+  }
+}
+
 export function isKayakSandboxEnabled(
   env: Record<string, string | undefined> = process.env,
 ) {
@@ -338,6 +346,7 @@ export function normalizeSandboxOffers(
       const flightSegmentCabins = vertical === "flights" ? kayakSegmentCabins(data, result, option) : [];
       offers.push({
         id: `${text(result.id) || (index + resultOffset)}:${optionIndex}`,
+        ...(vertical === "hotels" ? { hotelPropertyKey: String(index + resultOffset) } : {}),
         title: title || "KAYAK test result",
         description,
         details,
@@ -587,6 +596,7 @@ export class KayakSandboxClient {
       let offset = 0;
       let expectedTotal: number | undefined;
       let dictionary: unknown = [];
+      try {
       for (let pageIndex = 0; ; pageIndex++) {
         let page: ObjectValue | undefined;
         for (let attempt = 0; attempt < 12; attempt++) {
@@ -628,6 +638,12 @@ export class KayakSandboxClient {
           if (count < 25) return offers.sort((a, b) => a.price - b.price);
           throw new KayakError("invalid_response");
         }
+      }
+      } catch (error) {
+        if (offers.length && error instanceof KayakError && error.code !== "invalid_response") {
+          throw new KayakPartialSearchError(error.code, offers);
+        }
+        throw error;
       }
     }
     for (let attempt = 0; attempt < 12; attempt++) {
