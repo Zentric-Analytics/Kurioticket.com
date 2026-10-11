@@ -45,6 +45,6 @@ test("Hotel continuous results retain filter loading but remove page transitions
   const source = read("HotelResultsClient.tsx");
   assert.match(source, /aria-busy=\{filterApplying\}/);
   assert.match(source, /sortedVisibleHotels\.map/);
-  assert.match(source, /contentVisibility: "auto"/);
+  assert.doesNotMatch(source, /contentVisibility|containIntrinsicSize/);
   assert.doesNotMatch(source, /changeResultsPage|paginationPendingPage|PAGINATION_MIN_BUSY_MS|HotelResultsPageTransitionSkeleton/);
 });

@@ -58,6 +58,6 @@ test("Hotel empty and error states are phone-sized and recoverable", () => {
 
 test("Hotel continuous list has no paging controls or artificial page-transition delay", () => {
   assert.match(results, /sortedVisibleHotels\.map/);
-  assert.match(results, /contentVisibility: "auto"/);
+  assert.doesNotMatch(results, /contentVisibility|containIntrinsicSize/);
   assert.doesNotMatch(results, /PAGINATION_MIN_BUSY_MS|Hotel results pages|buildHotelResultsPaginationItems/);
 });

@@ -1729,7 +1729,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                     {sortedVisibleHotels.length ? (
                       sortedVisibleHotels.map((hotel, index) => {
                         const internalHref = guided ? (buildDetailsHref?.(hotel.id) ?? null) : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`;
-                        return <section key={hotel.id} aria-label={hotel.name} style={{ contentVisibility: "auto", containIntrinsicSize: "auto 400px" }}>
+                        return <section key={hotel.id} aria-label={hotel.name}>
                           <HotelCard hotel={hotel} detailsHref={resultActionHref(hotel, internalHref)} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={index === 0 ? hotelSummarySortMode : undefined} />
                         </section>;
                       })

@@ -70,7 +70,7 @@ test("continuous results preserve a later hotel on details return without anothe
   await expect(page.getByRole("heading", { name: "25 results found" })).toBeVisible();
   await expect(cards).toHaveCount(25);
   expect(searches).toBe(searchesBeforeDetails);
-  await laterHotel.scrollIntoViewIfNeeded();
+  await expect(laterHotel).toBeInViewport();
   await laterHotel.getByRole("link", { name: "View hotel", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Synthetic Hotel 20", exact: true })).toBeVisible();
   const returnLink = page.getByRole("link", { name: "Back to hotel results", exact: true });
@@ -79,6 +79,7 @@ test("continuous results preserve a later hotel on details return without anothe
     await returnLink.click();
     await expect(page.getByRole("heading", { name: "25 results found" })).toBeVisible();
     await expect(cards).toHaveCount(25);
+    await expect(laterHotel).toBeInViewport();
     expect(searches).toBe(searchesBeforeDetails);
   }
 });
