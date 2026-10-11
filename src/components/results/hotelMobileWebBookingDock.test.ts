@@ -27,15 +27,16 @@ const loading = readFileSync(
 
 test("standalone web Hotel Rates receive the current actionable external provider", () => {
   assert.match(client, /const standaloneProviderOffers: HotelDetailsProviderOffer\[\]/);
-  assert.match(client, /providerName: standaloneProviderName/);
-  assert.match(client, /providerLogoUrl: hotel\.providerLogoUrl/);
-  assert.match(client, /nightlyPrice: nightlyDisplayPrice\.formatted/);
-  assert.match(client, /totalPrice: totalDisplayPrice\?\.formatted/);
+  assert.match(client, /providerName: offer\.bookingProviderName/);
+  assert.match(client, /providerLogoUrl: offer\.providerLogoUrl/);
+  assert.match(client, /nightlyPrice: nightly\.formatted/);
+  assert.match(client, /totalPrice: format\(price\.totalPrice\)\.formatted/);
   assert.match(client, /kind: "provider-handoff"/);
-  assert.match(client, /providerOfferId: "current-provider"/);
+  assert.match(client, /providerOfferId: offer\.id/);
   assert.match(client, /providerOffers=\{standaloneProviderOffers\}/);
   assert.match(client, /onProviderOfferHandoff=/);
-  assert.match(client, /await runProviderRedirect\(targetWindow\)/);
+  assert.match(client, /await runProviderRedirect\(targetWindow, providerOfferId\)/);
+  assert.match(client, /id: offerId/);
 });
 
 test("standalone provider handoff remains server-authoritative", () => {
@@ -94,7 +95,7 @@ test("web Hotel provider action stays live-price gated and server-authoritative"
   assert.match(client, /const providerEnabled = canUseHotelDetailsProviderLink\(hotel\)/);
   assert.match(
     client,
-    /mode === "standalone" &&[\s\S]*?providerEnabled &&[\s\S]*?nightlyDisplayPrice &&/,
+    /if \(!price \|\| !canUseHotelDetailsProviderLink\(offer\)/,
   );
   assert.match(client, /fetch\("\/api\/redirect"/);
   assert.match(

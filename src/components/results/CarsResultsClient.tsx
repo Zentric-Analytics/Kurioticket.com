@@ -2,7 +2,7 @@
 import { useKayakResults } from "./KayakResultsContext";
 import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
 import { kayakCarCardModel } from "./kayakCardModels";
-import { isKayakSandboxResult, resultActionHref } from "@/lib/travel/resultAction";
+import { resultActionHref } from "@/lib/travel/resultAction";
 
 import {
   useCallback,
@@ -3093,7 +3093,6 @@ export function CarsResultsExperience({
                       detailsHref={detailsHrefForCar(car)}
                       selectedDealOfferId={selectedDealOfferIds[car.id]}
                       onDealOfferSelected={selectCompareDealOffer}
-                      providerLabel={isKayakSandboxResult(car) ? "KAYAK sandbox" : undefined}
                       onSelect={
                         onSelectCar && (isCarSelectable?.(car) ?? true)
                           ? onSelectCar

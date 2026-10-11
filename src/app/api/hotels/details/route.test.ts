@@ -38,6 +38,24 @@ function testHotel(id: string, name: string): NormalizedHotelResult {
   };
 }
 
+test("details preserves every same-property rate without mixing providers or search snapshots", async () => {
+  const search = { destination: "Rate Test City", checkIn: "2026-12-01", checkOut: "2026-12-03", guests: 1, rooms: 1 };
+  const first = { ...testHotel("rate-a", "Hotel"), propertyGroupId: "snapshot:property" };
+  if (first.inventoryKind === "discovery") throw new Error("Expected a priced test offer");
+  const second = { ...first, id: "rate-b", roomType: "Suite", totalPrice: 300 };
+  const other = { ...first, id: "rate-other", propertyGroupId: "other-snapshot:property" };
+  const otherProvider = { ...first, id: "rate-provider", provider: "Different Provider" };
+  rememberHotels([first, second, other, otherProvider], search);
+  const query = new URLSearchParams({ id: first.id, ...search, guests: "1", rooms: "1", relatedLimit: "1" });
+  const response = await GET(new Request("https://kurioticket.test/api/hotels/details?" + query));
+  const payload = await response.json();
+  assert.deepEqual(payload.propertyOffers.map((offer: { hotel: { id: string } }) => offer.hotel.id), ["rate-a", "rate-b"]);
+  assert.equal(payload.propertyOffers[1].hotel.totalPrice, 300);
+  assert.equal(payload.propertyOffers[1].hotel.roomType, "Suite");
+  assert.ok(payload.propertyOffers.every((offer: { hotel: object }) => !Object.hasOwn(offer.hotel, "rawProviderReference")));
+  assert.ok(payload.relatedHotels.every((hotel: { id: string }) => hotel.id !== second.id));
+});
+
 test("hotel details returns 400 when id is missing", async () => {
   const response = await GET(
     new Request("https://kurioticket.test/api/hotels/details"),

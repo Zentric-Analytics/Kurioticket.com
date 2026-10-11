@@ -3,6 +3,14 @@ import type { ReactNode } from "react";
 
 import type { HotelDetailsProviderOffer } from "./hotelDetailsPresentation";
 
+function RateTerms({ offer }: { offer: HotelDetailsProviderOffer }) {
+  return <span className="block min-w-0 space-y-1 text-sm text-slate-700" data-rate-terms>
+    <strong className="block">{offer.roomName || "Room description not supplied"}</strong>
+    {offer.suppliedRateFacts?.map((fact, index) => <span className="block" key={index}>{fact.label}: {fact.value}</span>)}
+    {[offer.bedConfiguration, offer.mealPlanLabel, offer.cancellationLabel, offer.paymentLabel, offer.taxesAndFeesLabel].filter(Boolean).map((term, index) => <span className="block" key={index}>{term}</span>)}
+  </span>;
+}
+
 function ProviderOffer({
   offer,
   perNightText,
@@ -91,6 +99,7 @@ function ProviderOffer({
           </span>
         </span>
       </span>
+      <RateTerms offer={offer} />
     </label>
   );
 }
@@ -111,6 +120,7 @@ type DesktopOfferProps = {
 export function DesktopProviderOffer({
   offer,
   perNightText,
+  totalLabel,
   selected,
   selectable,
   pendingOfferId,
@@ -124,7 +134,7 @@ export function DesktopProviderOffer({
 
   return (
     <article
-      className="relative grid min-h-[80px] min-w-0 grid-cols-[92px_minmax(0,1fr)_80px] items-center gap-x-2 rounded-xl border border-[#D9E2E8] bg-transparent px-3 py-3 sm:flex sm:justify-between sm:gap-4 sm:px-4"
+      className="relative grid min-h-[80px] min-w-0 grid-cols-[92px_minmax(0,1fr)_80px] items-center gap-x-2 rounded-xl border border-[#D9E2E8] bg-transparent px-3 py-3 sm:flex sm:flex-wrap sm:justify-between sm:gap-4 sm:px-4"
       data-provider-offer
       data-provider-offer-id={offer.id}
       data-provider-selected={selected || undefined}
@@ -139,10 +149,11 @@ export function DesktopProviderOffer({
         </span>
         <span className="col-start-2 block min-w-0 text-center" data-provider-price>
           <strong className="block whitespace-nowrap text-[16px] font-semibold leading-5 tracking-[-0.02em] text-[#192024] tabular-nums min-[360px]:text-[20px] min-[360px]:leading-6" title={totalPrice ? undefined : offer.nightlyPriceTitle} aria-label={totalPrice ? undefined : offer.nightlyPriceAriaLabel} data-nightly-amount={!totalPrice || undefined}>{totalPrice || offer.nightlyPrice}</strong>
-          {!totalPrice ? <span className="block text-[12px] font-normal leading-[14px] text-[#59636a]" data-nightly-supporting-label>{perNightText.replace("{{price}}", "").trim()}</span> : null}
+          <span className="block text-[12px] font-normal leading-[14px] text-[#59636a]" data-nightly-supporting-label={!totalPrice || undefined}>{totalPrice ? totalLabel : perNightText.replace("{{price}}", "").trim()}</span>
         </span>
       </label>
       <button type="button" className="focus-ring col-start-3 inline-flex h-8 w-[80px] shrink-0 items-center justify-center self-center whitespace-nowrap rounded-md bg-[#004BB8] px-2 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-[#003B91] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 sm:col-auto sm:w-[96px] sm:px-2.5" disabled={disabled || !onContinue} aria-label={pending ? `Opening ${offer.providerName} offer` : `View deal with ${offer.providerName}`} onClick={event => { onSelect(offer.id); onContinue?.(offer.id, event.currentTarget); }} data-provider-action>{pending ? "Opening…" : "View deal"}</button>
+      <div className="col-span-3 mt-3 min-w-0 sm:basis-full"><RateTerms offer={offer} /></div>
     </article>
   );
 }

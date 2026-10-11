@@ -123,6 +123,7 @@ export function HotelDetailsClient({
   const [propertyDetails, setPropertyDetails] = useState<PublicHotelPropertyDetails | null>(null);
   const [locationDetails, setLocationDetails] = useState<PublicHotelPropertyDetails | null>(null);
   const [providerDetails, setProviderDetails] = useState<PublicHotelProviderDetails | null>(null);
+  const [propertyOffers, setPropertyOffers] = useState<Array<{ hotel: PublicHotelResult; providerDetails: PublicHotelProviderDetails | null }>>([]);
   const [roomOptions, setRoomOptions] = useState<HotelRoomOption[]>([]);
   const [relatedHotels, setRelatedHotels] = useState<PublicHotelResult[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState("");
@@ -197,6 +198,7 @@ export function HotelDetailsClient({
           propertyDetails?: PublicHotelPropertyDetails | null;
           locationDetails?: PublicHotelPropertyDetails | null;
           providerDetails?: PublicHotelProviderDetails | null;
+          propertyOffers?: Array<{ hotel: PublicHotelResult; providerDetails: PublicHotelProviderDetails | null }>;
           roomOptions?: HotelRoomOption[];
           relatedHotels?: PublicHotelResult[];
           error?: string;
@@ -207,6 +209,7 @@ export function HotelDetailsClient({
           throw new Error(unavailableFallback);
         return {
           hotel: data.hotel,
+          propertyOffers: Array.isArray(data.propertyOffers) ? data.propertyOffers : [],
           propertyDetails: data.propertyDetails ?? null,
           locationDetails: data.locationDetails ?? data.propertyDetails ?? null,
           providerDetails: data.providerDetails ?? null,
@@ -216,9 +219,10 @@ export function HotelDetailsClient({
             : [],
         };
       })
-      .then(({ hotel: nextHotel, propertyDetails: nextPropertyDetails, locationDetails: nextLocationDetails, providerDetails: nextProviderDetails, roomOptions: nextRoomOptions, relatedHotels: nextRelatedHotels }) => {
+      .then(({ propertyOffers: nextPropertyOffers, hotel: nextHotel, propertyDetails: nextPropertyDetails, locationDetails: nextLocationDetails, providerDetails: nextProviderDetails, roomOptions: nextRoomOptions, relatedHotels: nextRelatedHotels }) => {
         if (!active) return;
         setHotel(nextHotel);
+        setPropertyOffers(nextPropertyOffers);
         setPropertyDetails(nextPropertyDetails);
         setLocationDetails(nextLocationDetails);
         setProviderDetails(nextProviderDetails);
@@ -253,8 +257,9 @@ export function HotelDetailsClient({
     mode,
   ]);
 
-  async function runProviderRedirect(targetWindow?: Window | null) {
+  async function runProviderRedirect(targetWindow?: Window | null, offerId = id) {
     if (!hotel || redirecting || !canUseHotelDetailsProviderLink(hotel)) return;
+    if (offerId !== hotel.id && !propertyOffers.some(offer => offer.hotel.id === offerId)) return;
     setRedirecting(true);
     setRedirectError("");
     try {
@@ -262,7 +267,7 @@ export function HotelDetailsClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id,
+          id: offerId,
           type: "hotel",
           sourcePage: "hotel_details",
         }),
@@ -599,31 +604,29 @@ export function HotelDetailsClient({
             ? t("hotelDetails.directLinkUnavailable")
             : "";
 
-  const standaloneProviderName =
-    hotel.bookingProviderName?.trim() || hotel.provider.trim();
-  const standaloneProviderOffers: HotelDetailsProviderOffer[] =
-    mode === "standalone" &&
-    providerEnabled &&
-    nightlyDisplayPrice &&
-    standaloneProviderName &&
-    standaloneProviderName.toLocaleLowerCase() !== "kurioticket" &&
-    hotel.provider !== "Kurioticket static catalogue"
-      ? [
-          {
-            id: "current-provider",
-            providerName: standaloneProviderName,
-            providerLogoUrl: hotel.providerLogoUrl,
-            nightlyPrice: nightlyDisplayPrice.formatted,
-            nightlyPriceTitle: nightlyDisplayPrice.title,
-            nightlyPriceAriaLabel: nightlyDisplayPrice.ariaLabel,
-            totalPrice: totalDisplayPrice?.formatted,
-            action: {
-              kind: "provider-handoff",
-              providerOfferId: "current-provider",
-            },
-          },
-        ]
-      : [];
+  const standaloneProviderOffers: HotelDetailsProviderOffer[] = mode === "standalone"
+    ? (propertyOffers.length ? propertyOffers : [{ hotel, providerDetails }]).flatMap(({ hotel: offer, providerDetails: supplied }) => {
+        const price = getHotelPriceDetails(offer);
+        if (!price || !canUseHotelDetailsProviderLink(offer) || offer.provider === "Kurioticket static catalogue") return [];
+        const format = (amount: number) => formatDisplayPrice({
+          amount, sourceCurrency: price.currency, displayCurrency: selectedOption.currency,
+          convertSourceEstimate: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback,
+        });
+        const nightly = format(price.pricePerNight);
+        return [{
+          id: offer.id,
+          providerName: offer.bookingProviderName?.trim() || offer.provider,
+          providerLogoUrl: offer.providerLogoUrl,
+          roomName: supplied?.rate?.roomName || offer.roomType || undefined,
+          cancellationLabel: offer.cancellationInfo || undefined,
+          suppliedRateFacts: [...(supplied?.rate?.conditions ?? []), ...(supplied?.rate?.rateBreakdown ?? [])],
+          paymentLabel: supplied?.rate?.payLater === undefined ? undefined : supplied.rate.payLater ? "Pay later" : "Pay later not offered",
+          nightlyPrice: nightly.formatted, nightlyPriceTitle: nightly.title,
+          nightlyPriceAriaLabel: nightly.ariaLabel, totalPrice: format(price.totalPrice).formatted,
+          taxesAndFeesLabel: offer.taxesAndFeesIncluded === undefined ? undefined : t(offer.taxesAndFeesIncluded ? "hotelResults.taxesFeesIncluded" : "hotelResults.taxesFeesNotIncluded"),
+          action: { kind: "provider-handoff" as const, providerOfferId: offer.id },
+        }];
+      }) : [];
   const guidedSelection =
     mode === "guided" && guidedSearch && resultReceivedAt !== null
       ? buildDealsHotelDetailsSelection({
@@ -938,8 +941,8 @@ export function HotelDetailsClient({
                 providerOffers={standaloneProviderOffers}
                 onProviderOfferHandoff={
                   standaloneProviderOffers.length
-                    ? async (_providerOfferId, targetWindow) => {
-                        await runProviderRedirect(targetWindow);
+                    ? async (providerOfferId, targetWindow) => {
+                        await runProviderRedirect(targetWindow, providerOfferId);
                       }
                     : undefined
                 }

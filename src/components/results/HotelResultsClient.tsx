@@ -17,7 +17,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
 import { groupHotelOffers } from "@/lib/hotels/groupHotelOffers";
 import { HotelResultsMapPreview } from "@/components/results/HotelResultsMapPreview";
-import { isKayakSandboxResult, resultActionHref } from "@/lib/travel/resultAction";
+import { resultActionHref } from "@/lib/travel/resultAction";
 import { HotelResultsScrollIndicator } from "@/components/results/HotelResultsScrollIndicator";
 import { buildHotelFacilityFilterOptions, hotelMatchesFacilityFilters } from "@/components/results/hotelFacilityFilter";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
@@ -816,9 +816,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     return count;
   }, [priceFilterActive, propertyNameQuery, selectedFilters, selectedHotelClasses]);
   const visibleFilteredHotels = resultsApplying ? visibleFiltered : filtered;
-  const hotelOfferGroups = useMemo(() => groupHotelOffers(sortHotelSummaryResults(visibleFilteredHotels, hotelSummarySortMode, currencyRates.rates)), [currencyRates.rates, hotelSummarySortMode, visibleFilteredHotels]);
-  const sortedVisibleHotels = useMemo(() => hotelOfferGroups.map(group => group[0]), [hotelOfferGroups]);
-  const additionalHotelOffers = useMemo(() => new Map(hotelOfferGroups.map(group => [group[0].id, group.slice(1)])), [hotelOfferGroups]);
+  const hotelOfferGroups = useMemo(() => groupHotelOffers(sortHotelSummaryResults(visibleFilteredHotels, "cheapest", currencyRates.rates)), [currencyRates.rates, visibleFilteredHotels]);
+  const sortedVisibleHotels = useMemo(() => sortHotelSummaryResults(hotelOfferGroups.map(group => group[0]), hotelSummarySortMode, currencyRates.rates), [hotelOfferGroups, hotelSummarySortMode, currencyRates.rates]);
   const totalHotelResultPages = guided ? 0 : getHotelResultsPageCount(sortedVisibleHotels.length);
   const paginatedVisibleHotels = useMemo(() => (guided ? sortedVisibleHotels : paginateHotelResults(sortedVisibleHotels, currentResultsPage)), [currentResultsPage, guided, sortedVisibleHotels]);
   const paginationItems = useMemo(() => buildHotelResultsPaginationItems(currentResultsPage, totalHotelResultPages), [currentResultsPage, totalHotelResultPages]);
@@ -1846,16 +1845,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                     ) : paginatedVisibleHotels.length ? (
                       paginatedVisibleHotels.map((hotel, index) => {
                         const internalHref = guided ? (buildDetailsHref?.(hotel.id) ?? null) : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`;
-                        const alternatives = additionalHotelOffers.get(hotel.id) ?? [];
                         return <section key={hotel.id} aria-label={hotel.name}>
-                          <HotelCard hotel={hotel} providerLabel={isKayakSandboxResult(hotel) ? "KAYAK sandbox" : undefined} detailsHref={resultActionHref(hotel, internalHref)} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined} />
-                          {alternatives.length > 0 ? <details className="mt-2 rounded-xl border border-slate-200 bg-white p-3">
-                            <summary className="cursor-pointer font-semibold">{t("deals.guided.hotelResults.viewRooms")} ({alternatives.length})</summary>
-                            <div className="mt-3 space-y-3">{alternatives.map(offer => {
-                              const href = guided ? (buildDetailsHref?.(offer.id) ?? null) : `/hotels/details/${encodeURIComponent(offer.id)}?${hotelDetailsSearchParams}`;
-                              return <HotelCard key={offer.id} hotel={offer} providerLabel={isKayakSandboxResult(offer) ? "KAYAK sandbox" : undefined} detailsHref={resultActionHref(offer, href)} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} />;
-                            })}</div>
-                          </details> : null}
+                          <HotelCard hotel={hotel} detailsHref={resultActionHref(hotel, internalHref)} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined} />
                         </section>;
                       })
                     ) : (

@@ -138,8 +138,15 @@ export async function GET(request: Request) {
   const relatedSearchCohort = relatedStayMatches
     ? memoryContext?.relatedHotels ?? persistedCohort
     : [];
+  const propertyOffers = cached
+    ? [cached, ...relatedSearchCohort.filter(offer =>
+        offer.id !== cached.id && Boolean(cached.propertyGroupId) &&
+        offer.propertyGroupId === cached.propertyGroupId && offer.provider === cached.provider)]
+    : [];
+  const propertyOfferIds = new Set(propertyOffers.map(offer => offer.id));
+  const otherProperties = relatedSearchCohort.filter(offer => !propertyOfferIds.has(offer.id));
   const relatedHotelCandidates = relatedSearchCohort.length
-    ? relatedHotelsFromSearchCohort(relatedSearchCohort, id, relatedPreviewLimit)
+    ? relatedHotelsFromSearchCohort(otherProperties, id, relatedPreviewLimit)
     : record
       ? buildRelatedStaticHotelResults(record, search).map(toPublicHotel)
       : [];
@@ -170,6 +177,7 @@ export async function GET(request: Request) {
       locationDetails: kayakHotelLocationDetails(cached),
       providerDetails: providerDetails(cached),
       roomOptions: [],
+      propertyOffers: propertyOffers.map(offer => ({ hotel: toPublicHotel(offer), providerDetails: providerDetails(offer) })),
       relatedHotels,
       relatedHotelsHasMore,
     });
