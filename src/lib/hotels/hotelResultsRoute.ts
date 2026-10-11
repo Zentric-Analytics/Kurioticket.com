@@ -6,6 +6,8 @@ export type HotelResultsRouteInput = {
   checkIn?: string;
   checkOut?: string;
   guests?: string;
+  adults?: string;
+  children?: string;
   rooms?: string;
   sort?: string;
 };

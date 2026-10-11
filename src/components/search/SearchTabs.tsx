@@ -1,4 +1,5 @@
 "use client";
+import { writeHotelDestinationSelection } from "@/lib/hotels/destinationSelection";
 
 import {
   useCallback,
@@ -894,7 +895,9 @@ export function SearchTabs({
     locale: locale ?? activeLocale,
   });
 
+  const [selectedHotelDestination, setSelectedHotelDestination] = useState<HotelDestinationSuggestion>();
   const selectHotelDestination = (suggestion: HotelDestinationSuggestion) => {
+    setSelectedHotelDestination(suggestion);
     setDestination(commitHotelDestinationSuggestion(suggestion));
     window.requestAnimationFrame(() =>
       hotelDestinationDesktopInputRef.current?.focus({ preventScroll: true }),
@@ -2173,17 +2176,23 @@ export function SearchTabs({
         guests:
           normalizedGuests,
         rooms: normalizedRooms,
+        adults: String(hotelAdultCount),
+        children: String(hotelChildCount),
       });
 
+    writeHotelDestinationSelection(params, selectedHotelDestination, destination);
     const href = `/hotels/results?${params.toString()}`;
 
     try {
       const matchedHotelImage = findDiscoveryImageForHotel(params.get("destination") ?? "");
       const recentSearch = buildHotelRecentSearch({
+          destinationId: params.get("destinationId") || undefined,
           destination: params.get("destination") ?? "",
           checkIn: params.get("checkIn") ?? "",
           checkOut: params.get("checkOut") ?? "",
           guests: Number(params.get("guests") ?? "1"),
+          adults: hotelAdultCount,
+          children: hotelChildCount,
           rooms: Number(params.get("rooms") ?? "1"),
         }, matchedHotelImage ? { image: matchedHotelImage.image, imageAlt: matchedHotelImage.imageAlt } : undefined);
       if (sessionStatus === "authenticated") {
@@ -4522,6 +4531,7 @@ export function SearchTabs({
             launcherRef={hotelDestinationMobileLauncherRef}
             detectedCountryHint={countryHint}
             onChange={(nextDestination) => setDestination(nextDestination)}
+            onSelect={setSelectedHotelDestination}
             onClose={() => setHotelDestinationMobilePickerOpen(false)}
           />
 

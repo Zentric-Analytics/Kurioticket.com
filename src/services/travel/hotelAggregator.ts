@@ -1,11 +1,12 @@
 import type { AggregatedResult, HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import { rememberHotels } from "@/lib/searchCache";
-import { buildStaticHotelResults } from "@/services/travel/staticHotelResults";
+import { providerSearchWarnings } from "./providerSearchOutcome";
 import { compareHotelsByAvailablePrice } from "@/lib/hotels/hotelResultAvailability";
 import { searchKayakHotels, type KayakRequestContext } from "./kayakMetasearchProvider";
 import { rememberHotelSearchCohort, rememberProviderResults } from "./providerResultCache";
 import { persistHotelInventory } from "./persistHotelInventory";
-type HotelSearchOptions = { kayak?: KayakRequestContext; defer?: (task: () => Promise<void>) => void };
+type HotelSearchOptions = { kayak?: KayakRequestContext; defer?: (task: () => Promise<void>) => void;
+  dependencies?: { searchKayak: typeof searchKayakHotels; persist: typeof persistHotelProviderResults } };
 
 export type HotelProviderMode = "kayak-sandbox";
 
@@ -39,55 +40,33 @@ export async function searchHotelsByProvider(
     };
   }
 
-  const kayak = await searchKayakHotels(search, options.kayak);
+  const kayak = await (options.dependencies?.searchKayak ?? searchKayakHotels)(search, options.kayak);
   const results = [...kayak.results].sort(compareHotelsByAvailablePrice);
-  await persistHotelProviderResults(results, search, options.defer);
+  await (options.dependencies?.persist ?? persistHotelProviderResults)(results, search, options.defer);
 
   return {
     results,
     providerStatuses: [kayak],
-    warnings:
-      kayak.status === "failed"
-        ? ["KAYAK is temporarily unavailable."]
-        : [],
+    warnings: providerSearchWarnings([kayak], results.length),
     latencyMs: Date.now() - startedAt,
   };
 }
 
-/** The sole current hotel pipeline: deterministic catalogue inventory plus enabled providers. */
+/** Availability results contain provider offers only. Catalogue planning data is not inventory. */
 export async function searchHotels(
   search: HotelSearchParams,
   options: HotelSearchOptions = {},
 ): Promise<AggregatedResult<NormalizedHotelResult>> {
   const startedAt = Date.now();
-  const [catalogue, kayak] = await Promise.all([
-    Promise.resolve(buildStaticHotelResults(search)),
-    searchKayakHotels(search, options.kayak),
-  ]);
-  const results = dedupeHotels([...catalogue, ...kayak.results]).sort(
+  const kayak = await (options.dependencies?.searchKayak ?? searchKayakHotels)(search, options.kayak);
+  const results = dedupeHotels(kayak.results).sort(
     compareHotelsByAvailablePrice,
   );
-  if (results.length) rememberHotels(results, search);
-  await persistHotelInventory(
-    () => rememberHotelSearchCohort(results, search),
-    () => rememberProviderResults("hotel", kayak.results, search),
-    options.defer,
-  );
+  await (options.dependencies?.persist ?? persistHotelProviderResults)(results, search, options.defer);
   return {
     results,
-    providerStatuses: [
-      {
-        provider: "Kurioticket static catalogue",
-        results: catalogue,
-        status: "success",
-        latencyMs: Date.now() - startedAt,
-      },
-      kayak,
-    ],
-    warnings:
-      kayak.status === "failed"
-        ? ["KAYAK is temporarily unavailable. Other provider results are shown."]
-        : [],
+    providerStatuses: [kayak],
+    warnings: providerSearchWarnings([kayak], results.length),
     latencyMs: Date.now() - startedAt,
   };
 }

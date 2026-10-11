@@ -30,8 +30,8 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
         status: "skipped",
         latencyMs: Date.now() - startedAt,
         error: resolved.reason,
-        errorCategory: pickupTimePast ? "invalid_search" : "unsupported_location",
-        errorReason: pickupTimePast ? "pickup_time_past" : "unsupported_location",
+        errorCategory: pickupTimePast ? "invalid_search" : resolved.reasonCode === "unsupported_search" ? "unsupported_search" : "unsupported_location",
+        errorReason: pickupTimePast ? "pickup_time_past" : resolved.reasonCode === "unsupported_search" ? "unsupported_search" : "unsupported_location",
       };
     }
     const offers = scopeKayakOfferIds(

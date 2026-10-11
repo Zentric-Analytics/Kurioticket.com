@@ -5,6 +5,28 @@ import { KayakSandboxClient } from "./kayakSandbox";
 import { issueLocationSelection } from "@/lib/locations/selectionAuthority";
 
 const hotel = { destination: "Boston, Massachusetts, United States", checkIn: "2099-10-12", checkOut: "2099-10-17", guests: "2", rooms: "1", currency: "JPY" };
+test("hotel location recovery never substitutes the same city name in another country", async () => {
+  const result = await resolveRegularKayakSearch("hotels", { ...hotel, destination: "San Francisco, California, United States" }, async () => [
+    { label: "San Francisco, Nayarit, Mexico", value: "kplace:2", kind: "city" },
+  ]);
+  assert.equal(result.supported, false);
+});
+
+test("different equally ranked places are not disambiguated by label length", async () => {
+  const result = await resolveRegularKayakSearch("hotels", { ...hotel, destination: "Example City, Example Country" }, async () => [
+    { label: "Example City, North, Example Country", value: "kplace:1", kind: "city" },
+    { label: "Example City, Southwest, Example Country", value: "kplace:2", kind: "city" },
+  ]);
+  assert.equal(result.supported, false);
+});
+
+test("non-Latin location names retain their identity during provider matching", async () => {
+  const result = await resolveRegularKayakSearch("hotels", { ...hotel, destination: "東京, 日本" }, async () => [
+    { label: "東京, 日本", value: "kplace:3", kind: "city" },
+  ]);
+  assert.equal(result.supported, true);
+  if (result.supported && result.search.vertical === "hotels") assert.equal(result.search.destination, "kplace:3");
+});
 const locationTarget = (provider: "kayak", value: string, product: "hotels" | "cars" = "hotels") => { const location = {
   id: "city:us-boston", kind: "city", primaryLabel: "Boston", supportingLabel: "Massachusetts, United States",
   submittedValue: "Boston, Massachusetts, United States", verification: "verified",

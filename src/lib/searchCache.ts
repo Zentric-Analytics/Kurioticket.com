@@ -13,6 +13,7 @@ import { getSearchLegs } from "@/lib/flights/flightSearchJourney";
 import { buildFlightItineraryKey } from "@/services/travel/flightOfferInventory";
 import { createHash } from "node:crypto";
 import { runCacheWrite } from "@/lib/search/cacheWriteGate";
+import { hotelOccupancy } from "@/lib/hotels/hotelOccupancy";
 
 type CacheRecord<T> = {
   value: T;
@@ -409,12 +410,14 @@ export async function getFlightDetailsCacheContext(id: string, now = Date.now())
 
 function hotelSearchIdentity(search: HotelSearchParams) {
   return JSON.stringify([
-    "hotel-search-context-v1",
+    "hotel-search-context-v2",
     search.destinationId ?? "",
     search.destination.trim().toLocaleLowerCase(),
     search.checkIn,
     search.checkOut,
     search.guests,
+    hotelOccupancy(search).adults,
+    hotelOccupancy(search).children,
     search.rooms,
   ]);
 }

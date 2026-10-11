@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { hotelOccupancy } from "@/lib/hotels/hotelOccupancy";
 import { getHotelDetailsCacheContext, getHotelFromCache, toPublicHotel } from "@/lib/searchCache";
 import {
   buildStaticHotelResult,
@@ -77,6 +78,9 @@ function hotelSearchContext(value: unknown): HotelSearchParams | null {
     checkIn: candidate.checkIn,
     checkOut: candidate.checkOut,
     guests: candidate.guests,
+    adults: candidate.adults,
+    children: candidate.children,
+    destinationId: candidate.destinationId,
     rooms: candidate.rooms,
   };
 }
@@ -110,6 +114,8 @@ export async function GET(request: Request) {
     checkIn,
     checkOut,
     guests: Number(url.searchParams.get("guests")) || 2,
+    adults: url.searchParams.has("adults") ? Number(url.searchParams.get("adults")) : undefined,
+    children: url.searchParams.has("children") ? Number(url.searchParams.get("children")) : undefined,
     rooms: Number(url.searchParams.get("rooms")) || 1,
   };
   const memoryContext = search.destination
@@ -134,6 +140,8 @@ export async function GET(request: Request) {
     relatedSearchContext?.checkIn === search.checkIn &&
     relatedSearchContext?.checkOut === search.checkOut &&
     relatedSearchContext?.guests === search.guests &&
+    (!relatedSearchContext || (hotelOccupancy(relatedSearchContext).children === hotelOccupancy(search).children &&
+      hotelOccupancy(relatedSearchContext).adults === hotelOccupancy(search).adults)) &&
     relatedSearchContext?.rooms === search.rooms;
   const relatedSearchCohort = relatedStayMatches
     ? memoryContext?.relatedHotels ?? persistedCohort

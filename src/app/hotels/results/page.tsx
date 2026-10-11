@@ -62,6 +62,8 @@ export default async function HotelResultsPage({
     checkIn: first(query.checkIn),
     checkOut: first(query.checkOut),
     guests: first(query.guests),
+    adults: first(query.adults),
+    children: first(query.children),
     rooms: first(query.rooms),
     sort: first(query.sort),
   });

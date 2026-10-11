@@ -184,6 +184,10 @@ function deriveHotelWarningCategory(
     "providerStatuses" | "results"
   >,
 ) {
+  if (!aggregate.results.length && aggregate.providerStatuses.every(provider => provider.status === "skipped") &&
+      aggregate.providerStatuses.some(provider => provider.errorReason === "unsupported_search" || provider.errorReason === "unsupported_location")) {
+    return "unsupported_search";
+  }
   if (aggregate.providerStatuses.some((provider) => provider.error === "unsupported_destination")) {
     return "unsupported_destination";
   }
