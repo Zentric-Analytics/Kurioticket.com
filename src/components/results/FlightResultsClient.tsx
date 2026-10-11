@@ -81,7 +81,7 @@ import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
 import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
-import { PAGINATION_REVEAL_MS, prefersReducedResultsMotion, scrollToResultsAndWait } from "@/lib/results/paginationTransition";
+
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -124,14 +124,6 @@ import {
   readFlightResultsSessionSnapshotForRefresh,
   writeFlightResultsSessionSnapshot,
 } from "@/lib/flights/flightResultsSessionCache";
-import {
-  buildFlightPaginationItems,
-  clampFlightResultsPage,
-  FLIGHT_RESULTS_PAGE_SIZE,
-  getFlightResultsPageCount,
-  paginateFlightResults,
-} from "@/lib/flights/flightResultsPagination";
-import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 import { isFlightResultsPreparing } from "@/components/results/flightResultsReadiness";
 import {
   readSavedItemIds,
@@ -886,54 +878,6 @@ function FlightBookingFaqSection() {
 
 export type FlightResultsPresentationMode = "standalone" | "deals-guided";
 
-function FlightResultsPagination({
-  currentPage,
-  totalPages,
-  onPageChange,
-  disabled = false,
-}: {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  disabled?: boolean;
-}) {
-  if (totalPages <= 1) return null;
-  const items = buildFlightPaginationItems(currentPage, totalPages);
-  const mobileItems = buildFlightPaginationItems(currentPage, totalPages, true);
-
-  const renderItems = (pageItems: typeof items) => pageItems.map((item, index) => item === "ellipsis" ? (
-    <span key={`ellipsis-${index}`} className="flight-pagination-ellipsis" aria-hidden="true">…</span>
-  ) : (
-    <button
-      key={item}
-      type="button"
-      aria-label={`Go to flight results page ${item}`}
-      aria-current={item === currentPage ? "page" : undefined}
-      disabled={disabled}
-      onClick={() => onPageChange(item)}
-      className="flight-pagination-control"
-    >
-      {item}
-    </button>
-  ));
-
-  return (
-    <nav
-      aria-label="Flight results pages"
-      className="flight-results-pagination mb-6 mt-6 flex min-w-0 items-center justify-center"
-    >
-      <button type="button" aria-label="Previous flight results page" disabled={disabled || currentPage === 1} onClick={() => onPageChange(currentPage - 1)} className="flight-pagination-control">
-        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-      </button>
-      <span className="hidden items-center gap-1 sm:flex">{renderItems(items)}</span>
-      <span className="flex min-w-0 items-center sm:hidden">{renderItems(mobileItems)}</span>
-      <button type="button" aria-label="Next flight results page" disabled={disabled || currentPage === totalPages} onClick={() => onPageChange(currentPage + 1)} className="flight-pagination-control">
-        <ChevronRight className="h-4 w-4" aria-hidden="true" />
-      </button>
-    </nav>
-  );
-}
-
 export type FlightResultsSearchInput = {
   tripType: string;
   origin: string;
@@ -1031,10 +975,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [sortMode, setSortMode] = useState<SortMode>(
     (params.get("sort") as SortMode) || "cheapest",
   );
-  const [guidedResultsPage, setGuidedResultsPage] = useState(1);
-  const [standaloneResultsPage, setStandaloneResultsPage] = useState(() =>
-    Math.max(1, Number(urlParams.get("page")) || 1),
-  );
   const [desktopSortOpen, setDesktopSortOpen] = useState(false);
   const desktopSortRef = useRef<HTMLDivElement | null>(null);
   const desktopSortButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -1056,9 +996,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const resultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const mobileResultsPageTopRef = useRef<HTMLDivElement | null>(null);
   const paginationListRef = useRef<HTMLDivElement | null>(null);
-  const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
-  const [paginationCommitting, setPaginationCommitting] = useState(false);
-  const [paginationRevealing, setPaginationRevealing] = useState(false);
   const errorHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const emptyHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -4107,9 +4044,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }, []);
 
   const handleUserFilterCommit = useCallback(() => {
-    setGuidedResultsPage(1);
     if (!guidedMode) {
-      setStandaloneResultsPage(1);
       const nextParams = new URLSearchParams(urlParams.toString());
       nextParams.delete("page");
       window.history.replaceState(
@@ -4187,21 +4122,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     return nextResults;
   }, [currencyRates.rates, filtered, selectedCurrency, sortMode]);
 
-  const totalResultPages = getFlightResultsPageCount(sortedResults.length);
-  const requestedResultsPage = guidedMode
-    ? guidedResultsPage
-    : standaloneResultsPage;
-  const validResultsPage = clampFlightResultsPage(requestedResultsPage, totalResultPages);
-  const visibleResults = useMemo(
-    () => paginateFlightResults(sortedResults, validResultsPage),
-    [sortedResults, validResultsPage],
-  );
-  const resultsDisplayRange = getResultsDisplayRange({
-    currentPage: validResultsPage,
-    pageSize: FLIGHT_RESULTS_PAGE_SIZE,
-    totalResults: sortedResults.length,
-  });
-
   const toggleStickyFlightPopularFilter = useCallback(
     (
       group: "stops" | "airlines" | "airports" | "quality",
@@ -4225,14 +4145,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     },
     [handleUserFilterCommit],
   );
-
-  useEffect(() => {
-    if (guidedMode) return;
-    const pageFromUrl = Math.max(1, Number(urlParams.get("page")) || 1);
-    const syncPageFromExternalUrl = () => setStandaloneResultsPage(pageFromUrl);
-    const frame = window.requestAnimationFrame(syncPageFromExternalUrl);
-    return () => window.cancelAnimationFrame(frame);
-  }, [guidedMode, urlParams]);
 
   const alignSelectedMobileFare = useCallback((forceVisibilityCheck = false) => {
     if (!body?.departureDate) return false;
@@ -4307,62 +4219,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [alignSelectedMobileFare, body?.departureDate, nearbyFares.length]);
-
-  const changeResultsPage = useCallback(async (nextPage: number) => {
-    const page = clampFlightResultsPage(nextPage, totalResultPages);
-    if (page === validResultsPage || paginationPendingPage !== null) return;
-    setPaginationPendingPage(page);
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    const mobileViewport = window.matchMedia("(max-width: 639px)").matches;
-    const target = mobileViewport
-      ? mobileResultsPageTopRef.current
-      : flightResultsTopRef.current;
-    const topOffset = mobileViewport
-      ? (document.querySelector<HTMLElement>("[data-app-header]")?.getBoundingClientRect().height ?? 72) + 4
-      : desktopFlightResultsScrollOffset;
-    const top = target
-      ? target.getBoundingClientRect().top + window.scrollY - topOffset
-      : 0;
-    await scrollToResultsAndWait({ top });
-    setPaginationCommitting(true);
-    if (guidedMode) {
-      setGuidedResultsPage(page);
-    } else {
-      setStandaloneResultsPage(page);
-      const nextParams = new URLSearchParams(urlParams.toString());
-      if (page === 1) nextParams.delete("page");
-      else nextParams.set("page", String(page));
-      window.history.replaceState(
-        window.history.state,
-        "",
-        `/flights/results?${nextParams.toString()}`,
-      );
-    }
-  }, [guidedMode, paginationPendingPage, totalResultPages, urlParams, validResultsPage]);
-
-  useEffect(() => {
-    if (!paginationCommitting || paginationPendingPage !== validResultsPage) return;
-    let secondFrame: number | null = null;
-    const frame = window.requestAnimationFrame(() => {
-      secondFrame = window.requestAnimationFrame(() => {
-        setPaginationPendingPage(null);
-        setPaginationCommitting(false);
-        resultsHeadingRef.current?.focus({ preventScroll: true });
-        if (!prefersReducedResultsMotion()) {
-          setPaginationRevealing(true);
-          window.setTimeout(
-            () => setPaginationRevealing(false),
-            PAGINATION_REVEAL_MS,
-          );
-        }
-      });
-    });
-    return () => {
-      window.cancelAnimationFrame(frame);
-      if (secondFrame !== null) window.cancelAnimationFrame(secondFrame);
-    };
-  }, [paginationCommitting, paginationPendingPage, validResultsPage]);
-
 
   useEffect(() => {
     if (resultsUiPreparing || !userInitiatedRetryRef.current) return;
@@ -7250,7 +7106,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <aside className="relative hidden self-stretch lg:block"><DesktopFlightFilters presentationMode="deals-guided" activeFilterCount={activeFilterCount} maxPrice={maxPrice} setMaxPrice={setMaxPrice} priceBounds={priceBounds} priceLabelCurrency={priceLabelCurrency} selectedCurrency={selectedCurrency} timeFilterMode={timeFilterMode} setTimeFilterMode={setTimeFilterMode} timeBounds={timeBounds} maxTakeoffMinutes={maxTakeoffMinutes} setMaxTakeoffMinutes={setMaxTakeoffMinutes} maxLandingMinutes={maxLandingMinutes} setMaxLandingMinutes={setMaxLandingMinutes} durationBounds={durationBounds} maxDurationMinutes={maxDurationMinutes} setMaxDurationMinutes={setMaxDurationMinutes} stopOptions={stopOptions} selectedStops={selectedStops} setSelectedStops={setSelectedStops} airlineOptions={airlineOptions} selectedAirlines={selectedAirlines} setSelectedAirlines={setSelectedAirlines} airportOptions={airportOptions} selectedAirports={selectedAirports} setSelectedAirports={setSelectedAirports} flightQualityOptions={flightQualityOptions} renderFlightQualityFilter={renderFlightQualityFilter} selectedFlightQuality={selectedFlightQuality} setSelectedFlightQuality={setSelectedFlightQuality} baggageIncludedOnly={baggageIncludedOnly} setBaggageIncludedOnly={setBaggageIncludedOnly} flexibleOnly={flexibleOnly} setFlexibleOnly={setFlexibleOnly} onFilterChange={triggerFilterApplying} onFilterCommit={handleUserFilterCommit} onClear={clearFlightFilters} originCode={originCode} destinationCode={destinationCode} /></aside>
         <section className="min-w-0 space-y-4">
           <div className="flex w-full flex-col gap-3 py-1"><div className="flex items-center justify-between gap-4"><p className="text-[16px] font-semibold text-[#142033]">{formatResultsFound(sortedResults.length, t)}</p>{renderDesktopSortControl()}<Button variant="secondary" className="h-10 rounded-xl border-slate-300 text-sm font-bold lg:hidden" onClick={(event) => openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))}>{activeFilterCount > 0 ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount)) : t("filters")}</Button></div><div className="lg:hidden">{renderMobileSortResultsRow()}</div></div>
-          {error ? <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger" role="alert"><h2 ref={errorHeadingRef} tabIndex={-1} className="text-lg font-extrabold">{t("deals.guided.flightResults.errorTitle")}</h2><p className="mt-2">{error}</p><p className="mt-2">{t("deals.guided.flightResults.errorBody")}</p>{renderGuidedRetryButton()}</div> : filterApplying ? <div className="space-y-3"><div role="status" className="rounded-xl border border-[#004BB8]/10 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm">{t("updatingResults")}</div><FlightCardSkeleton /><FlightCardSkeleton /></div> : sortedResults.length ? <><div className="space-y-4">{visibleResults.map((flight, index) => <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={buildDetailsHref ? buildDetailsHref(flight) : undefined} actionLabel={actionLabel} actionAriaLabel={actionAriaLabel?.(flight)} onAction={onSelectFlight} />)}</div><FlightResultsPagination currentPage={validResultsPage} totalPages={totalResultPages} onPageChange={changeResultsPage} /></> : <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"><h2 ref={emptyHeadingRef} tabIndex={-1} className="text-lg font-extrabold text-slate-950">{t("deals.guided.flightResults.emptyTitle")}</h2><p className="mt-2">{t("deals.guided.flightResults.emptyBody")}</p>{renderGuidedRetryButton()}</div>}
+          {error ? <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger" role="alert"><h2 ref={errorHeadingRef} tabIndex={-1} className="text-lg font-extrabold">{t("deals.guided.flightResults.errorTitle")}</h2><p className="mt-2">{error}</p><p className="mt-2">{t("deals.guided.flightResults.errorBody")}</p>{renderGuidedRetryButton()}</div> : filterApplying ? <div className="space-y-3"><div role="status" className="rounded-xl border border-[#004BB8]/10 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm">{t("updatingResults")}</div><FlightCardSkeleton /><FlightCardSkeleton /></div> : sortedResults.length ? <><div className="space-y-4">{sortedResults.map((flight, index) => <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={buildDetailsHref ? buildDetailsHref(flight) : undefined} actionLabel={actionLabel} actionAriaLabel={actionAriaLabel?.(flight)} onAction={onSelectFlight} />)}</div></> : <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"><h2 ref={emptyHeadingRef} tabIndex={-1} className="text-lg font-extrabold text-slate-950">{t("deals.guided.flightResults.emptyTitle")}</h2><p className="mt-2">{t("deals.guided.flightResults.emptyBody")}</p>{renderGuidedRetryButton()}</div>}
         </section>
       </div>
       {renderMobileFullFiltersSheet()}
@@ -7264,14 +7120,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     {readyDesktopNavbarSearch}
     <FlightResultsScrollIndicator />
     <main data-flight-results-main className="max-sm:overflow-x-clip bg-[#F5F7FB] pb-0 sm:flex-1 sm:bg-[#F3F6FA] sm:pb-8 lg:bg-white">
-      {paginationPendingPage !== null && typeof document !== "undefined"
-        ? createPortal(
-            <FlightResultsPageTransitionSkeleton
-              statusText={t("updatingResults")}
-            />,
-            document.body,
-          )
-        : null}
       {renderMobileEditSearchDrawer()}
 
       {renderStickySearchPopoutOverlay()}
@@ -7537,14 +7385,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   <p className="flight-results-count min-w-0 text-[13px] font-bold leading-[17px] tracking-[-0.005em] text-slate-900">
                     {formatMobileFlightResultsFound(sortedResults.length, t, locale)}
                   </p>
-                  {resultsDisplayRange ? (
-                    <p
-                      aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end} of ${sortedResults.length}`}
-                      className="shrink-0 text-[12px] font-medium leading-4 text-[#536B92]"
-                    >
-                      {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
-                    </p>
-                  ) : null}
                 </div>
               </div>
 
@@ -7560,16 +7400,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   <MobileFlightResultsState kind="filtered" onPrimary={clearFlightFilters} onSecondary={() => openMobileFiltersDrawer()} />
                 ) : (
                   <div
-                    data-mobile-paginated-flight-results
-                    aria-busy={paginationPendingPage !== null}
-                    className={cn(
-                      "pt-3",
-                      totalResultPages <= 1 ? "pb-6" : "pb-0",
-                      paginationRevealing && "animate-[fadeIn_150ms_ease-out]",
-                    )}
+                    data-mobile-continuous-flight-results
+                    aria-busy={filterApplying}
+                    className="pt-3 pb-6"
                   >
                     <div data-flight-results-card-list className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)] space-y-3">
-                      {visibleResults.map((flight, index) => {
+                      {sortedResults.map((flight, index) => {
                         const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
                         if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
                         const detailsQuery = params.toString();
@@ -7577,12 +7413,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         return <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={resultActionHref(flight, internalDetailsHref)} />;
                       })}
                     </div>
-                    <FlightResultsPagination
-                      currentPage={validResultsPage}
-                      totalPages={totalResultPages}
-                      onPageChange={changeResultsPage}
-                      disabled={paginationPendingPage !== null}
-                    />
                   </div>
                 )}
               </div>
@@ -7751,64 +7581,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     ) : null}
     <Footer variant="brand-legal-only" />
     </>
-  );
-}
-
-function FlightResultsPageTransitionSkeleton({
-  statusText,
-}: {
-  statusText: string;
-}) {
-  return (
-    <div
-      data-flight-results-transition-cover
-      className="fixed inset-0 z-[9990] overflow-hidden bg-[#F5F7FB] sm:bg-[#F3F6FA] lg:bg-white"
-      aria-busy="true"
-    >
-      <p className="sr-only" role="status" aria-live="polite">
-        {statusText}
-      </p>
-
-      <div className="h-20 border-b border-slate-100 bg-white px-4 sm:h-[86px]">
-        <div className="mx-auto flex h-full max-w-[1400px] items-center justify-between">
-          <div className="h-5 w-28 animate-pulse rounded bg-slate-200 motion-reduce:animate-none sm:h-7 sm:w-40" />
-          <div className="h-8 w-8 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none sm:h-10 sm:w-10" />
-        </div>
-      </div>
-
-      <div className="border-b border-slate-100 bg-white px-4 py-4 sm:hidden">
-        <div className="mx-auto h-[4.25rem] w-full max-w-[30rem] animate-pulse rounded-xl border border-slate-200 bg-white shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] motion-reduce:animate-none" />
-      </div>
-
-      <div className="mx-auto max-w-[1400px] px-3 py-4 sm:px-4 sm:py-8">
-        <div className="mb-3 flex gap-1.5 overflow-hidden sm:hidden">
-          {[84, 92, 76, 88].map((width) => (
-            <div
-              key={width}
-              className="h-9 shrink-0 animate-pulse rounded-lg border border-slate-200 bg-white motion-reduce:animate-none"
-              style={{ width }}
-            />
-          ))}
-        </div>
-
-        <div className="mb-3 flex items-center justify-between sm:hidden">
-          <div className="h-4 w-28 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />
-          <div className="h-3 w-10 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />
-        </div>
-
-        <div className="hidden h-20 animate-pulse rounded-2xl border border-slate-200 bg-white motion-reduce:animate-none sm:block" />
-
-        <div className="mt-3 grid gap-6 sm:mt-6 lg:grid-cols-[288px_minmax(0,1fr)]">
-          <div className="hidden h-[34rem] animate-pulse rounded-2xl border border-slate-200 bg-white lg:block motion-reduce:animate-none" />
-          <div data-flight-results-skeleton-card-list className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)] space-y-3 sm:space-y-4">
-            <div className="hidden h-7 w-44 animate-pulse rounded bg-slate-200 motion-reduce:animate-none sm:block" />
-            {Array.from({ length: 3 }, (_, index) => (
-              <FlightCardSkeleton key={index} />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
 

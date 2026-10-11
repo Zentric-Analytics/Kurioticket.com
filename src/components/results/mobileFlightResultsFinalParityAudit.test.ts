@@ -13,7 +13,7 @@ test("final mobile Flight Results order and controls remain intact", () => {
   const nearby = results.indexOf('data-nearby-fare-presentation="mobile"');
   const alert = results.indexOf("data-flight-price-alert-row", nearby);
   const count = results.indexOf("data-mobile-flight-results-summary-row", alert);
-  const cards = results.indexOf("data-mobile-paginated-flight-results", count);
+  const cards = results.indexOf("data-mobile-continuous-flight-results", count);
   assert.ok(summaryTarget >= 0 && filtersTarget > summaryTarget);
   assert.ok(shortcuts >= 0 && shortcuts < nearby && nearby < alert && alert < count && count < cards);
   assert.match(results, /mobileNavSummaryTarget[\s\S]*createPortal\(renderMobileRouteSummaryCard\(\), mobileNavSummaryTarget\)/);
@@ -24,17 +24,17 @@ test("final mobile Flight Results order and controls remain intact", () => {
   for (const trigger of ['renderTrigger("sort", activeSortOption.label)', 'renderTrigger("airlines", "Airlines", selectedAirlines.length)', 'renderTrigger("stops", "Stops", selectedStops.length)', 'renderTrigger("airports", "Airports", selectedFromAirports.length + selectedToAirports.length)']) assert.ok(results.includes(trigger));
 });
 
-test("mobile list uses the shared twenty-result pagination and keeps website footer controls", () => {
-  assert.match(results, /data-mobile-paginated-flight-results/);
-  assert.match(results, /visibleResults\.map\(\(flight, index\)/);
+test("mobile list uses continuous results and keeps website footer controls", () => {
+  assert.match(results, /data-mobile-continuous-flight-results/);
+  assert.match(results, /sortedResults\.map\(\(flight, index\)/);
   assert.match(results, /data-mobile-flight-results-summary-row/);
-  assert.match(results, /resultsDisplayRange\.start/);
-  assert.match(results, /resultsDisplayRange\.end/);
-  assert.match(results, /<FlightResultsPagination[\s\S]*disabled=\{paginationPendingPage !== null\}/);
+  assert.doesNotMatch(results, /FlightResultsPagination|resultsDisplayRange|FLIGHT_RESULTS_PAGE_SIZE|data-flight-results-transition-cover/);
+  assert.doesNotMatch(results, /FlightResultsPagination|resultsDisplayRange|FLIGHT_RESULTS_PAGE_SIZE|data-flight-results-transition-cover/);
+  assert.doesNotMatch(results, /FlightResultsPagination|resultsDisplayRange|FLIGHT_RESULTS_PAGE_SIZE|data-flight-results-transition-cover/);
   assert.match(results, /aria-label="Back to top"/);
   assert.match(results, /<Footer variant="brand-legal-only" \/>/);
-  const mobileList = results.slice(results.indexOf("data-mobile-paginated-flight-results"), results.indexOf("ref={paginationListRef}"));
-  assert.doesNotMatch(mobileList, /data-mobile-continuous-flight-list|sortedResults\.map\(\(flight, index\)/);
+  const mobileList = results.slice(results.indexOf("data-mobile-continuous-flight-results"), results.indexOf("ref={paginationListRef}"));
+  assert.match(mobileList, /sortedResults\.map\(\(flight, index\)/);
 });
 
 test("mobile and desktop commercial actions stay isolated", () => {

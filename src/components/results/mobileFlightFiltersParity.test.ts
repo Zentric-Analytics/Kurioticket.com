@@ -102,11 +102,11 @@ test("multi-city Edit Search uses the projected first-leg departure date", () =>
   assert.doesNotMatch(client, /departureDate: value\.departureDate/);
 });
 
-test("mobile results count uses native English capitalization and identifies the visible page range", () => {
+test("mobile results count uses native English capitalization without a misleading page range", () => {
   assert.match(client, /`\$\{count\} \$\{count === 1 \? "Result" : "Results"\} found`/);
   const intro = client.slice(client.indexOf("data-flight-mobile-results-intro"), client.indexOf("data-flight-mobile-results-intro") + 700);
-  assert.match(intro, /resultsDisplayRange/);
-  assert.match(client, /Showing results \$\{resultsDisplayRange.start\} through \$\{resultsDisplayRange.end\} of \$\{sortedResults.length\}/);
+  assert.doesNotMatch(intro, /resultsDisplayRange/);
+  assert.doesNotMatch(client, /Showing results \$\{resultsDisplayRange.start\} through \$\{resultsDisplayRange.end\} of \$\{sortedResults.length\}/);
   assert.match(intro, /text-\[13px\][^\n]*font-bold[^\n]*leading-\[17px\]/);
   assert.match(client, /className="hidden w-full items-center[^\n]*sm:flex/);
 });

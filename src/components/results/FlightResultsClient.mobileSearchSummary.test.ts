@@ -39,7 +39,7 @@ test("mobile Flight filters precede nearby dates and price/results/cards", () =>
   const cheaper = source.indexOf('flight-mobile-cheaper-nearby', dates);
   const alert = source.indexOf("data-flight-price-alert-row", dates);
   const count = source.indexOf("data-mobile-flight-results-summary-row", alert);
-  const cards = source.indexOf("data-mobile-paginated-flight-results", count);
+  const cards = source.indexOf("data-mobile-continuous-flight-results", count);
   assert.ok(filters > 0 && filters < dates && dates < cheaper && cheaper < alert && alert < count && count < cards);
   assert.match(source.slice(filters, dates), /renderMobileSortResultsRow\(\)/);
 });
