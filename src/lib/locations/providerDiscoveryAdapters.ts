@@ -32,7 +32,7 @@ export function kayakDiscoveryAdapter(request: Request): DiscoveryAdapter | null
   if (!isKayakSandboxEnabled()) return null;
   const ip = getKayakClientIp(request);
   if (!ip) return null;
-  const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined, request.headers.get("user-agent") || "kurioticket-server", ip);
+  const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined, request.headers.get("user-agent")?.trim() || undefined, ip);
   return { provider: "kayak", products: ["flights", "hotels", "cars"], async discover(query, { product, signal }) {
     const vertical = product as KayakVertical;
     const places = await client.places(vertical, query, crypto.randomUUID(), signal);

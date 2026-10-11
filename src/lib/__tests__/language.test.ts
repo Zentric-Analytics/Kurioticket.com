@@ -11,6 +11,10 @@ const activeDealsRenderKeys = new Set([
   "deals.destinationCardAriaPrefix",
 ]);
 const retainedTranslationOnlyKeys = new Set([
+  // Room filters now display supplied offer names, not static room categories.
+  // Keep dictionary assertions for these legacy translations without requiring dead UI code.
+  "hotelResults.filter.singleRoom",
+  "hotelResults.filter.doubleRoom",
   // The extracted desktop filters use hotelResults.filterBy, takeoff/landing,
   // duration and baggage/flexibleRefundable instead of these legacy headings.
   "filterBy",

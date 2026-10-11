@@ -656,6 +656,7 @@ export function HotelCard({
                   />
                   <span className="min-w-0 line-clamp-1 sm:line-clamp-none">{hotel.location}</span>
                 </p>
+                {hotel.provider === "KAYAK sandbox" ? <p data-hotel-test-location className="mt-1 text-xs text-slate-600">Provider test location — not verified for travel.</p> : null}
               </div>
               {renderReviewSummary("mt-1.5 flex md:mt-2 lg:hidden")}
               {sourceAttributions.length ? (

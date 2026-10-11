@@ -59,7 +59,7 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
   const [allAmenities, setAllAmenities] = useState(false);
   const handoffPending = useRef(false);
   const property = props.propertyDetails;
-  const locationProperty = props.locationDetails ?? property;
+  const locationProperty = props.locationIsSimulated ? null : props.locationDetails ?? property;
   const description = mobileHotelAbout(props.hotelName, property, props.starRating);
   const canonicalAddress = locationProperty ? buildHotelAddress(locationProperty) : props.locationParts.join(" · ");
   const internalRoomFlowAvailable = props.roomChoices.length > 0;

@@ -73,7 +73,7 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}`);
   }
   const property = props.propertyDetails;
-  const location = props.locationDetails ?? property;
+  const location = props.locationIsSimulated ? null : props.locationDetails ?? property;
   const mapOptions = location ? { hotelName: props.hotelName, propertyDetails: location, googleMapsEmbedApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY } : null;
   const mapUrl = mapOptions ? buildHotelMapEmbedUrl(mapOptions) : null;
   const streetUrl = mapOptions ? buildGoogleHotelStreetViewEmbedUrl(mapOptions) : null;
