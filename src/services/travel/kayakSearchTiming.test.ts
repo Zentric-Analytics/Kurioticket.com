@@ -2,6 +2,22 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { KayakSandboxClient, type KayakSearchTiming } from "./kayakSandbox";
 
+test("car transient retry backoff is measured as local wait, not provider time", async () => {
+  let calls = 0;
+  const reports: KayakSearchTiming[] = [];
+  const client = new KayakSandboxClient("test", async () => ++calls === 1
+    ? new Response(null, { status: 503 })
+    : Response.json({ status: "complete", totalCount: 0, results: [], currency: "USD", priceMode: "total" }),
+  async ms => { assert.equal(ms, 300); await new Promise(resolve => setTimeout(resolve, 40)); },
+  undefined, undefined, timing => reports.push(timing));
+  await client.search({ vertical: "cars", origin: "LAX", departure: "2026-12-01", returnDate: "2026-12-03" }, "track");
+  assert.equal(calls, 2);
+  const timing = reports[0];
+  assert.equal(timing.status, "success");
+  assert.ok(timing.waitMs >= 20);
+  assert.ok(timing.stages.initial.elapsedMs + timing.waitMs <= timing.elapsedMs + 2);
+});
+
 for (const vertical of ["flights", "cars", "hotels"] as const) {
   test(`${vertical} does not sleep after exhausting its polling attempts`, async () => {
     let calls = 0;

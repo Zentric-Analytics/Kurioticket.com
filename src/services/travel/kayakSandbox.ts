@@ -454,6 +454,7 @@ export class KayakSandboxClient {
     signal: AbortSignal,
     empty = false,
     retryTransient = false,
+    pause = this.pause,
   ): Promise<ObjectValue> {
     if (!this.key.trim()) throw new KayakError("unauthorized");
     const url = new URL(path, KAYAK_SANDBOX_ORIGIN);
@@ -492,7 +493,7 @@ export class KayakSandboxClient {
                 ? "server_error"
                 : "request_rejected";
           if (retryTransient && code === "server_error" && attempt === 0 && !signal.aborted) {
-            await this.pause(300);
+            await pause(300);
             continue;
           }
           throw new KayakError(code);
@@ -512,7 +513,7 @@ export class KayakSandboxClient {
         // Fetch exceptions can contain the credential-bearing request URL. Never log/rethrow them.
         if (signal.aborted) throw new KayakError("timeout");
         if (retryTransient && attempt === 0) {
-          await this.pause(300);
+          await pause(300);
           continue;
         }
         throw new KayakError("unavailable");
@@ -568,8 +569,9 @@ export class KayakSandboxClient {
       const entry = timing.stages[stage];
       entry.operations++;
       const start = performance.now();
-      try { return await this.request(...args); }
-      finally { entry.elapsedMs += performance.now() - start; }
+      const previousWait = timing.waitMs;
+      try { return await this.request(args[0], args[1], args[2], args[3], args[4], args[5], args[6], pause); }
+      finally { entry.elapsedMs += Math.max(0, performance.now() - start - (timing.waitMs - previousWait)); }
     };
     const pause = async (ms: number) => {
       const start = performance.now();
