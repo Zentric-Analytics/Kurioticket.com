@@ -39,8 +39,9 @@ export async function POST(request: Request) {
   const search = canonicalSearch(body);
   if (!search) return Response.json({ error: "Invalid car search parameters.", requestId }, { status: 400, headers: noStore });
   try {
-    const { results, status, warnings } = await searchCars(search, { requestId, kayak: { clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
+    const { results, status, warnings, unsupported } = await searchCars(search, { requestId, kayak: { clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
     const response = classifyCars(results, search, requestId, warnings);
+    if (unsupported) return Response.json({ ...response, code: "SEARCH_UNSUPPORTED", error: "The available providers cannot search these rental options. Please change your search." }, { status: 422, headers: noStore });
     if (status === "unavailable") {
       return Response.json({ ...response, error: "Car search is temporarily unavailable." }, { status: 503, headers: noStore });
     }

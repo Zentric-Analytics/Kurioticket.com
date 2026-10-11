@@ -35,6 +35,8 @@ export type HotelSearchParams = {
   checkIn: string;
   checkOut: string;
   guests: number;
+  adults?: number;
+  children?: number;
   rooms: number;
   sort?: "cheapest" | "best" | "rating" | "location";
   destinationLocation?: import("./locations/searchTarget").SearchLocation;
@@ -377,6 +379,7 @@ export type ProviderErrorCategory =
   | "failed"
   | "skipped"
   | "unsupported_location"
+    | "unsupported_search"
   | "invalid_search";
 
 export type ProviderErrorReason =
@@ -390,6 +393,7 @@ export type ProviderErrorReason =
   | "provider_failed"
   | "provider_skipped"
   | "unsupported_location"
+    | "unsupported_search"
   | "pickup_time_past";
 
 export type ProviderResult<T> = {

@@ -153,6 +153,8 @@ export function HotelDetailsClient({
   const requestCheckOut = effectiveRequestContext.checkOut;
   const requestGuests = effectiveRequestContext.guests;
   const requestRooms = effectiveRequestContext.rooms;
+  const requestAdults = searchContext?.adults;
+  const requestChildren = searchContext?.children;
 
   useEffect(() => {
     let active = true;
@@ -187,6 +189,8 @@ export function HotelDetailsClient({
       rooms: requestRooms,
     });
     if (mode === "standalone") detailsParams.set("relatedLimit", "12");
+    if (requestAdults !== undefined) detailsParams.set("adults", requestAdults);
+    if (requestChildren !== undefined) detailsParams.set("children", requestChildren);
 
     fetch(
       `/api/hotels/details?${detailsParams.toString()}`,
@@ -253,6 +257,8 @@ export function HotelDetailsClient({
     requestCheckOut,
     requestGuests,
     requestRooms,
+    requestAdults,
+    requestChildren,
     loadAttempt,
     mode,
   ]);
@@ -911,6 +917,9 @@ export function HotelDetailsClient({
                   checkIn: requestCheckIn,
                   checkOut: requestCheckOut,
                   guests: requestGuests,
+                  adults: requestAdults,
+                  children: requestChildren,
+                  destinationLocation: searchContext?.destinationLocation,
                   rooms: requestRooms,
                   provider: searchContext?.provider,
                 }}
@@ -921,6 +930,8 @@ export function HotelDetailsClient({
                     checkIn: requestCheckIn,
                     checkOut: requestCheckOut,
                     guests: Number(requestGuests),
+                    adults: requestAdults === undefined ? undefined : Number(requestAdults),
+                    children: requestChildren === undefined ? undefined : Number(requestChildren),
                     rooms: Number(requestRooms),
                   },
                 } : undefined}

@@ -19,10 +19,13 @@ export type RecentFlightParams = {
 };
 
 export type RecentHotelParams = {
+  destinationId?: string;
   destination: string;
   checkIn: string;
   checkOut: string;
   guests: number;
+  adults?: number;
+  children?: number;
   rooms: number;
 };
 
@@ -410,6 +413,9 @@ export const buildHotelRecentSearch = (
   const subtitle = `${formatIsoDate(params.checkIn) || params.checkIn} – ${formatIsoDate(params.checkOut) || params.checkOut} · ${params.guests} guest${params.guests === 1 ? "" : "s"} · ${params.rooms} room${params.rooms === 1 ? "" : "s"}`;
   const query = new URLSearchParams({
     destination: params.destination,
+    ...(params.destinationId ? { destinationId: params.destinationId } : {}),
+    ...(params.adults !== undefined ? { adults: String(params.adults) } : {}),
+    ...(params.children !== undefined ? { children: String(params.children) } : {}),
     checkIn: params.checkIn,
     checkOut: params.checkOut,
     guests: String(params.guests),

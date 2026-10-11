@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { searchCars } from "@/services/travel/carAggregator";
+import { buildStaticCarResults } from "@/services/travel/staticCarResults";
+import type { CarSearchParams } from "@/lib/cars/types";
 
 const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
@@ -160,6 +162,13 @@ test("Heathrow mobile draft produces one exact pickup query value", () => {
 });
 
 test("changed server search input replaces inventory search context", async () => {
+  // Explicit test provider: real searches no longer inject static inventory.
+  const options = { dependencies: {
+    searchKayak: async (search: CarSearchParams) => ({ provider: "test", status: "success" as const,
+      results: buildStaticCarResults(search).slice(0, 1), latencyMs: 0 }),
+    rememberResults: async () => {},
+    rememberCohort: async () => {},
+  } };
   const common = {
     pickupDate: "2026-09-10",
     dropoffDate: "2026-09-12",
@@ -171,12 +180,12 @@ test("changed server search input replaces inventory search context", async () =
     ...common,
     pickupLocation: "Old pickup location",
     dropoffLocation: "Old pickup location",
-  });
+  }, options);
   const newInventory = await searchCars({
     ...common,
     pickupLocation: "Heathrow Airport (LHR)",
     dropoffLocation: "Heathrow Airport (LHR)",
-  });
+  }, options);
 
   assert.equal(oldInventory.results[0]?.pickupLocation, "Old pickup location");
   assert.equal(

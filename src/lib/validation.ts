@@ -156,10 +156,17 @@ export const hotelSearchSchema = z
     checkIn: hotelFutureDate,
     checkOut: hotelFutureDate,
     guests: z.coerce.number().int().min(1).max(12).default(2),
+    adults: z.coerce.number().int().min(1).max(12).optional(),
+    children: z.coerce.number().int().min(0).max(11).optional(),
     rooms: z.coerce.number().int().min(1).max(6).default(1),
     sort: z.enum(["cheapest", "best", "rating", "location"]).optional(),
     destinationLocation: searchLocationSchema.optional(),
   })
+  .refine((data) => {
+    const children = data.children ?? (data.adults === undefined ? 0 : data.guests - data.adults);
+    const adults = data.adults ?? data.guests - children;
+    return adults >= 1 && children >= 0 && adults + children === data.guests;
+  }, { message: "Guest total must match the adults and children selected.", path: ["guests"] })
   .refine((data) => data.checkOut > data.checkIn, {
     message: "Check-out must be after check-in.",
     path: ["checkOut"],

@@ -2,6 +2,18 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { classifyCars, classifyFlights, classifyHotels } from "./searchContract";
 
+test("empty results with provider failures are unavailable, not confirmed no availability", () => {
+  const search = { tripType: "one-way", origin: "BOS", destination: "JFK", departureDate: "2027-02-10", adults: 1, children: 0, infants: 0, travelers: 1, cabinClass: "economy" } as const;
+  const cars = { pickupLocation: "BOS", dropoffLocation: "BOS", pickupDate: "2027-02-10", dropoffDate: "2027-02-13", pickupTime: "10:30", dropoffTime: "16:00", driverAge: "30" };
+  for (const warnings of [[], ["Provider unavailable"]]) {
+    const expected = warnings.length ? "unavailable" : "empty";
+    assert.equal(classifyHotels([], warnings, "request").status, expected);
+    assert.equal(classifyFlights([], search, warnings, "request").status, expected);
+    assert.equal(classifyCars([], cars, "request", warnings).status, expected);
+  }
+  assert.equal(classifyHotels([{ id: "h" } as never], ["Provider unavailable"], "request").status, "partial");
+});
+
 test("authoritative sources and truthful actions", () => {
   const flight = classifyFlights(
     [{ id: "f", provider: "Duffel" } as never],

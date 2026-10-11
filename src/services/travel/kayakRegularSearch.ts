@@ -22,7 +22,7 @@ type Resolution =
       supported: false;
       reason: string;
       choices?: SandboxPlace[];
-      reasonCode?: "pickup_time_past";
+      reasonCode?: "pickup_time_past" | "unsupported_search";
     };
 type ResolveRegularKayakSearchOptions = { now?: Date };
 const airportCode = (value = "") => /^[A-Z]{3}$/.test(value) ? value : value.match(/\(([A-Z]{3})\)$/)?.[1] || value;
@@ -31,7 +31,7 @@ const parseTarget = (value?: string) => {
   try { return searchLocationSchema.safeParse(JSON.parse(value)); } catch { return undefined; }
 };
 const normalizePlace = (value: string) => value.trim().toLocaleLowerCase("en-US")
-  .normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  .normalize("NFKD").replace(/\p{M}/gu, "").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 
 /**
  * A Kurioticket label is only a user-facing canonical location.  This function
@@ -48,7 +48,8 @@ function providerPlaceMatch(term: string, candidates: SandboxPlace[]) {
         && normalizedInput.includes(normalizePlace(destination.country)));
   });
   const expectedName = normalizePlace(catalogue?.name || term.split(",")[0] || term);
-  const expectedCountry = normalizePlace(catalogue?.country || "");
+  const parts = term.split(",").map(part => part.trim()).filter(Boolean);
+  const expectedCountry = normalizePlace(catalogue?.country || (parts.length > 1 ? parts.at(-1)! : ""));
   const expectedRegion = normalizePlace(catalogue?.region || "");
   if (!expectedName || (!catalogue && !term.includes(","))) return undefined;
 
@@ -58,6 +59,8 @@ function providerPlaceMatch(term: string, candidates: SandboxPlace[]) {
     if (firstPart !== expectedName && !label.startsWith(`${expectedName} `)) return [];
     let score = 100;
     const words = ` ${label} `;
+    // A provider reporting a different country cannot win by name or short-label ranking.
+    if (expectedCountry && candidate.label.includes(",") && !words.includes(` ${expectedCountry} `)) return [];
     if (expectedCountry && words.includes(` ${expectedCountry} `)) score += 40;
     if (expectedRegion && words.includes(` ${expectedRegion} `)) score += 30;
     const kind = normalizePlace(candidate.kind || "");
@@ -66,7 +69,7 @@ function providerPlaceMatch(term: string, candidates: SandboxPlace[]) {
     return [{ candidate, score, length: label.length }];
   }).sort((left, right) => right.score - left.score || left.length - right.length);
   if (!ranked.length) return undefined;
-  if (ranked.length > 1 && ranked[0].score === ranked[1].score && ranked[0].length === ranked[1].length) return undefined;
+  if (ranked.length > 1 && ranked[0].score === ranked[1].score && ranked[0].candidate.value !== ranked[1].candidate.value) return undefined;
   return ranked[0].candidate;
 }
 

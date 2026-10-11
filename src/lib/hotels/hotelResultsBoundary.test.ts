@@ -115,7 +115,9 @@ test("incomplete native Hotel results replace history before ApprovedResultsScre
 });
 
 test("discovery intent hydrates each Hotel form without issuing a search", () => {
-  assert.match(webHotelForm, /useState\(initialDestination \|\| searchParams\.get\("destination"\) \|\| ""\)/);
+  assert.match(webHotelForm, /const initial = initialDestination \|\| urlDestination/);
+  assert.match(webHotelForm, /readHotelDestinationSelection\(searchParams\.get\("destinationLocation"\), urlDestination\)/);
+  assert.match(webHotelForm, /\? selected\.submittedValue : initial/);
   assert.doesNotMatch(webHotelForm, /fetch\("\/api\/hotels\/search"/);
   assert.match(nativeHotelForm, /initializeHotelForm\(params\)/);
   assert.match(nativeHotelForm, /router\[submitNavigation\]\(\{ pathname: "\/hotel-results"/);
@@ -127,7 +129,9 @@ test("web Hotel form preserves the canonical destination selected by the user", 
   assert.match(webHotelForm, /setDestinationId\(suggestion\.id\)/);
   assert.match(webHotelForm, /params\.set\("destinationId", destinationId\)/);
   assert.match(webHotelForm, /setDestinationId\(""\)/);
-  assert.match(webHotelForm, /onSelect=\{\(suggestion\) => setDestinationId\(suggestion\.id\)\}/);
+  assert.match(webHotelForm, /onSelect=\{\(suggestion\) => \{ setDestinationId\(suggestion\.id\); setSelectedDestination\(suggestion\); \}\}/);
+  assert.match(webHotelForm, /writeHotelDestinationSelection\(params, selectedDestination, trimmedDestination\)/);
+  assert.match(resultsClient, /destinationLocation: searchInput\.destinationLocation/);
   assert.match(webHotelForm, /destinationId: destinationId \|\| undefined/);
   assert.match(resultsClient, /initialDestinationId=\{activeDesktopHotelSearchDraft\.destinationId\}/);
   assert.match(resultsClient, /initialDestinationId=\{activeMobileHotelSearchDraft\.destinationId\}/);

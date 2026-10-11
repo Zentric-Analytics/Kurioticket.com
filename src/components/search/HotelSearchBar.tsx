@@ -1,4 +1,5 @@
 "use client";
+import { readHotelDestinationSelection, writeHotelDestinationSelection } from "@/lib/hotels/destinationSelection";
 
 import {
   type FormEvent,
@@ -164,6 +165,8 @@ type HotelSearchDraft = {
   checkIn: string;
   checkOut: string;
   guests: number;
+  adults?: number;
+  children?: number;
   rooms: number;
 };
 
@@ -178,6 +181,8 @@ export type HotelSearchBarProps = {
   initialCheckIn?: string;
   initialCheckOut?: string;
   initialGuests?: string | number;
+  initialAdults?: string | number;
+  initialChildren?: string | number;
   initialRooms?: string | number;
   initialSort?: string | null;
   introLabel?: string;
@@ -199,6 +204,8 @@ export type HotelSearchBarProps = {
 };
 
 export function HotelSearchBar({
+  initialAdults,
+  initialChildren,
   desktopPresentation = "inline",
   initialDesktopSection = null,
   submitOnDesktopOpen = false,
@@ -248,17 +255,24 @@ export function HotelSearchBar({
     detectedCountryCode,
     hasUserSelectedRegion,
   } = useRegion();
-  const [destination, setDestination] = useState(initialDestination || searchParams.get("destination") || "");
+  const [destination, setDestination] = useState(() => {
+    const urlDestination = searchParams.get("destination") || "";
+    const selected = readHotelDestinationSelection(searchParams.get("destinationLocation"), urlDestination);
+    const initial = initialDestination || urlDestination;
+    return selected && normalizeHotelDestinationSearchValue(initial) === normalizeHotelDestinationSearchValue(urlDestination)
+      ? selected.submittedValue : initial;
+  });
   const [destinationId, setDestinationId] = useState(
     initialDestinationId ?? searchParams.get("destinationId") ?? "",
   );
   const destinationDisplay = getHotelLocationFieldDisplay(destination, locale);
+  const [selectedDestination, setSelectedDestination] = useState<HotelDestinationSuggestion>();
   const [checkIn, setCheckIn] = useState(initialCheckIn);
   const [checkOut, setCheckOut] = useState(initialCheckOut);
   const [hotelAdultCount, setHotelAdultCount] = useState(() =>
-    normalizeGuestCount(initialGuests),
+    normalizeGuestCount(initialAdults ?? searchParams.get("adults") ?? (normalizeGuestCount(initialGuests) - Number(initialChildren ?? searchParams.get("children") ?? 0))),
   );
-  const [hotelChildCount, setHotelChildCount] = useState(0);
+  const [hotelChildCount, setHotelChildCount] = useState(() => clampCount(String(initialChildren ?? searchParams.get("children") ?? 0), 0, 11));
   const [rooms, setRooms] = useState(String(initialRooms || "1"));
   const [hotelPetFriendly, setHotelPetFriendly] = useState(
     () => searchParams.get("petFriendly") === "true",
@@ -448,6 +462,8 @@ export function HotelSearchBar({
       checkIn,
       checkOut,
       guests: Math.max(1, Math.min(12, totalHotelGuests)),
+      adults: hotelAdultCount,
+      children: hotelChildCount,
       rooms: clampCount(rooms, 1, 6),
     });
   }, [
@@ -458,6 +474,8 @@ export function HotelSearchBar({
     destinationId,
     mobileLayout,
     onMobileDraftChange,
+    hotelAdultCount,
+    hotelChildCount,
     rooms,
     totalHotelGuests,
   ]);
@@ -473,6 +491,8 @@ export function HotelSearchBar({
       checkIn,
       checkOut,
       guests: Math.max(1, Math.min(12, totalHotelGuests)),
+      adults: hotelAdultCount,
+      children: hotelChildCount,
       rooms: clampCount(rooms, 1, 6),
     });
   }, [
@@ -483,6 +503,8 @@ export function HotelSearchBar({
     destinationId,
     mobileLayout,
     onDesktopDraftChange,
+    hotelAdultCount,
+    hotelChildCount,
     rooms,
     totalHotelGuests,
   ]);
@@ -634,6 +656,7 @@ export function HotelSearchBar({
   }, [mobileLayout, mobileSearchOpen]);
 
   const selectDestinationSuggestion = (suggestion: HotelDestinationSuggestion) => {
+    setSelectedDestination(suggestion);
     setDestination(commitDestinationSuggestion(suggestion));
     setDestinationId(suggestion.id);
     setError("");
@@ -803,19 +826,30 @@ export function HotelSearchBar({
       return;
     }
 
-    const searchDestination =
-      normalizeHotelDestinationSearchValue(trimmedDestination);
+    // Retain the selected geography; a city-only display label is not a search identity.
+    const searchDestination = trimmedDestination;
 
     const params = new URLSearchParams({
       destination: searchDestination,
       checkIn,
       checkOut,
       guests: String(normalizedGuests),
+      adults: String(hotelAdultCount),
+      children: String(hotelChildCount),
       rooms: String(normalizedRooms),
     });
 
     if (destinationId) {
       params.set("destinationId", destinationId);
+    }
+    const retainedLocation = readHotelDestinationSelection(searchParams.get("destinationLocation"), trimmedDestination);
+    if (retainedLocation) {
+      params.set("destination", trimmedDestination);
+      params.set("destinationLocation", JSON.stringify(retainedLocation));
+    }
+    if (selectedDestination?.searchValue.trim() === trimmedDestination) {
+      params.set("destination", trimmedDestination);
+      writeHotelDestinationSelection(params, selectedDestination, trimmedDestination);
     }
 
     if (hotelPetFriendly) {
@@ -868,10 +902,13 @@ export function HotelSearchBar({
     startRouteProgress();
     try {
       const recentSearch = buildHotelRecentSearch({
+        destinationId: destinationId || undefined,
         destination: searchDestination,
         checkIn,
         checkOut,
         guests: normalizedGuests,
+        adults: hotelAdultCount,
+        children: hotelChildCount,
         rooms: normalizedRooms,
       });
       if (sessionStatus === "authenticated") {
@@ -1838,7 +1875,7 @@ export function HotelSearchBar({
           setDestinationSuggestionsOpen(false);
           setError("");
         }}
-        onSelect={(suggestion) => setDestinationId(suggestion.id)}
+        onSelect={(suggestion) => { setDestinationId(suggestion.id); setSelectedDestination(suggestion); }}
         onClose={() => setDestinationMobilePickerOpen(false)}
       />
 

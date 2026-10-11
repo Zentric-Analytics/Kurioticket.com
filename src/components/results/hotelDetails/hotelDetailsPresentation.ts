@@ -8,6 +8,9 @@ export type HotelDetailsSearchContext = {
   checkIn?: string;
   checkOut?: string;
   guests?: string;
+  adults?: string;
+  children?: string;
+  destinationLocation?: string;
   rooms?: string;
   provider?: "kayak-sandbox";
 };
@@ -109,6 +112,9 @@ export function buildHotelDetailsResultsHref(searchContext?: HotelDetailsSearchC
     checkIn: searchContext?.checkIn || "",
     checkOut: searchContext?.checkOut || "",
     guests: String(guestCount),
+      ...(searchContext?.adults !== undefined ? { adults: searchContext.adults } : {}),
+      ...(searchContext?.children !== undefined ? { children: searchContext.children } : {}),
+      ...(searchContext?.destinationLocation ? { destinationLocation: searchContext.destinationLocation } : {}),
     rooms: String(roomCount),
     ...(searchContext?.provider === "kayak-sandbox"
       ? { provider: "kayak-sandbox" }

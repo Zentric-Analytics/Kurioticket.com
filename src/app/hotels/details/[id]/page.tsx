@@ -44,6 +44,9 @@ export default async function HotelDetailsPage({
     checkIn: getFirstSearchParam(query.checkIn),
     checkOut: getFirstSearchParam(query.checkOut),
     guests: getFirstSearchParam(query.guests),
+    adults: getFirstSearchParam(query.adults),
+    children: getFirstSearchParam(query.children),
+    destinationLocation: getFirstSearchParam(query.destinationLocation),
     rooms: getFirstSearchParam(query.rooms),
     provider:
       getFirstSearchParam(query.provider) === "kayak-sandbox"

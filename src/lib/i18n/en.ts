@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  "hotelResults.unsupportedSearch": "The available providers cannot search these options. Please change your destination, rooms or guests.",
   "accountDashboard.recently": "Recently",
   "metadata.root.title.default": "Kurioticket | Find Cheap Flights Fast",
   "metadata.root.description":

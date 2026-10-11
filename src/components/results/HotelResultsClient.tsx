@@ -1,4 +1,6 @@
 "use client";
+import { readHotelDestinationSelection } from "@/lib/hotels/destinationSelection";
+import { hotelOccupancy } from "@/lib/hotels/hotelOccupancy";
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
@@ -23,7 +25,6 @@ import { buildHotelFacilityFilterOptions, hotelMatchesFacilityFilters } from "@/
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { MobileResultsEditSheet } from "@/components/search/MobileResultsEditSheet";
 import mobileStyles from "./HotelResultsMobile.module.css";
-import { normalizeHotelDestinationSearchValue } from "@/data/hotelDestinations";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -261,11 +262,14 @@ const getResultMaxPrice = (hotels: PublicHotelResult[], rates?: ExchangeRates) =
 type HotelSummarySortMode = "cheapest" | "bestValue" | "topRated";
 
 type HotelMobileSearchDraft = {
+  destinationLocation?: ReturnType<typeof readHotelDestinationSelection>;
   destinationId?: string;
   destination: string;
   checkIn: string;
   checkOut: string;
   guests: number;
+  adults?: number;
+  children?: number;
   rooms: number;
 };
 
@@ -280,14 +284,17 @@ export function HotelResultsClient() {
   const searchInput = useMemo<HotelResultsSearchInput>(
     () => ({
       destinationId: params.get("destinationId") || undefined,
+      destinationLocation: readHotelDestinationSelection(params.get("destinationLocation"), params.get("destination") || ""),
       destination:
-        normalizeHotelDestinationSearchValue(params.get("destination") || "") ||
+        (params.get("destination") || "").trim() ||
         (params.get("provider") === "kayak-sandbox"
           ? "KAYAK sandbox destination"
           : ""),
       checkIn: params.get("checkIn") || "",
       checkOut: params.get("checkOut") || "",
       guests: Number(params.get("guests")),
+      adults: params.has("adults") ? Number(params.get("adults")) : undefined,
+      children: params.has("children") ? Number(params.get("children")) : undefined,
       rooms: Number(params.get("rooms")),
       sort: params.get("sort") || "cheapest",
       petFriendly: params.get("petFriendly") === "true",
@@ -380,10 +387,13 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const body = useMemo(
     () => ({
       destinationId: searchInput.destinationId,
+      destinationLocation: searchInput.destinationLocation,
       destination: searchInput.destination,
       checkIn: searchInput.checkIn,
       checkOut: searchInput.checkOut,
       guests: searchInput.guests,
+      adults: searchInput.adults,
+      children: searchInput.children,
       rooms: searchInput.rooms,
       sort: searchInput.sort || "cheapest",
     }),
@@ -392,16 +402,19 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const hotelDetailsSearchParams = useMemo(() => {
     return new URLSearchParams({
       ...(body.destinationId ? { destinationId: body.destinationId } : {}),
-      destination: body.destination,
+      ...(body.destinationLocation ? { destinationLocation: JSON.stringify(body.destinationLocation) } : {}),
+      destination: body.destinationLocation?.submittedValue ?? body.destination,
       checkIn: body.checkIn,
       checkOut: body.checkOut,
       guests: String(body.guests),
+      ...(body.adults !== undefined ? { adults: String(body.adults) } : {}),
+      ...(body.children !== undefined ? { children: String(body.children) } : {}),
       rooms: String(body.rooms),
       ...(petFriendlyOnly ? { petFriendly: "true" } : {}),
       ...(providerMode ? { provider: providerMode } : {}),
     }).toString();
-  }, [body.checkIn, body.checkOut, body.destination, body.destinationId, body.guests, body.rooms, petFriendlyOnly, providerMode]);
-  const bodySearchKey = [body.destinationId, body.destination, body.checkIn, body.checkOut, body.guests, body.rooms, petFriendlyOnly ? "pets" : "", providerMode].join("-");
+  }, [body.checkIn, body.checkOut, body.destination, body.destinationId, body.destinationLocation, body.guests, body.adults, body.children, body.rooms, petFriendlyOnly, providerMode]);
+  const bodySearchKey = [body.destinationId, body.destination, body.checkIn, body.checkOut, body.guests, hotelOccupancy(body).adults, hotelOccupancy(body).children, body.rooms, petFriendlyOnly ? "pets" : "", providerMode].join("-");
   // A changed search must not display cards belonging to the previous request.
   const loading = inventoryLoading || completedSearchKey !== bodySearchKey;
   const bodyMobileSearchDraft = useMemo<HotelMobileSearchDraft>(
@@ -411,9 +424,11 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       checkIn: body.checkIn,
       checkOut: body.checkOut,
       guests: body.guests,
+      adults: body.adults,
+      children: body.children,
       rooms: body.rooms,
     }),
-    [body.checkIn, body.checkOut, body.destination, body.destinationId, body.guests, body.rooms],
+    [body.checkIn, body.checkOut, body.destination, body.destinationId, body.guests, body.adults, body.children, body.rooms],
   );
   const [mobileHotelSearchDraft, setMobileHotelSearchDraft] = useState<HotelMobileSearchDraft>(() => bodyMobileSearchDraft);
   const [mobileHotelSearchDraftKey, setMobileHotelSearchDraftKey] = useState(bodySearchKey);
@@ -426,7 +441,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     (nextDraft: HotelMobileSearchDraft) => {
       setMobileHotelSearchDraftKey(bodySearchKey);
       setMobileHotelSearchDraft((currentDraft) => {
-        if (currentDraft.destinationId === nextDraft.destinationId && currentDraft.destination === nextDraft.destination && currentDraft.checkIn === nextDraft.checkIn && currentDraft.checkOut === nextDraft.checkOut && currentDraft.guests === nextDraft.guests && currentDraft.rooms === nextDraft.rooms) {
+        if (currentDraft.destinationId === nextDraft.destinationId && currentDraft.destination === nextDraft.destination && currentDraft.checkIn === nextDraft.checkIn && currentDraft.checkOut === nextDraft.checkOut && currentDraft.guests === nextDraft.guests && currentDraft.adults === nextDraft.adults && currentDraft.children === nextDraft.children && currentDraft.rooms === nextDraft.rooms) {
           return currentDraft;
         }
 
@@ -440,7 +455,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     (nextDraft: HotelMobileSearchDraft) => {
       setDesktopHotelSearchDraftKey(bodySearchKey);
       setDesktopHotelSearchDraft((currentDraft) => {
-        if (currentDraft.destinationId === nextDraft.destinationId && currentDraft.destination === nextDraft.destination && currentDraft.checkIn === nextDraft.checkIn && currentDraft.checkOut === nextDraft.checkOut && currentDraft.guests === nextDraft.guests && currentDraft.rooms === nextDraft.rooms) {
+        if (currentDraft.destinationId === nextDraft.destinationId && currentDraft.destination === nextDraft.destination && currentDraft.checkIn === nextDraft.checkIn && currentDraft.checkOut === nextDraft.checkOut && currentDraft.guests === nextDraft.guests && currentDraft.adults === nextDraft.adults && currentDraft.children === nextDraft.children && currentDraft.rooms === nextDraft.rooms) {
           return currentDraft;
         }
 
@@ -618,6 +633,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     })
       .then((response) => readHotelSearchResponse(response, t("hotelResults.searchUnavailableDetailed"), (data) =>
         data.error === enTranslations["hotelResults.liveSearchUnavailable"] ? t("hotelResults.liveSearchUnavailable") : t("hotelResults.unableToSearchHotels"),
+        t("hotelResults.unsupportedSearch"),
       ));
     request.then((data) => {
         if (!active) return;
@@ -1530,6 +1546,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       initialCheckIn={activeDesktopHotelSearchDraft.checkIn}
       initialCheckOut={activeDesktopHotelSearchDraft.checkOut}
       initialGuests={activeDesktopHotelSearchDraft.guests}
+      initialAdults={activeDesktopHotelSearchDraft.adults}
+      initialChildren={activeDesktopHotelSearchDraft.children}
       initialRooms={activeDesktopHotelSearchDraft.rooms}
       initialSort={body.sort}
       errorRole="alert"
@@ -1644,6 +1662,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
               initialCheckIn={activeMobileHotelSearchDraft.checkIn}
               initialCheckOut={activeMobileHotelSearchDraft.checkOut}
               initialGuests={activeMobileHotelSearchDraft.guests}
+              initialAdults={activeMobileHotelSearchDraft.adults}
+              initialChildren={activeMobileHotelSearchDraft.children}
               initialRooms={activeMobileHotelSearchDraft.rooms}
               initialSort={body.sort}
               errorRole="alert"

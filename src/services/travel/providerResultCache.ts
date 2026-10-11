@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import { hotelOccupancy } from "@/lib/hotels/hotelOccupancy";
 import { encodeCohort, decodeCohort, isCohortManifest } from "@/lib/search/cohortEncoding";
 import { getPrisma } from "@/lib/prisma";
 import { runCacheWrite } from "@/lib/search/cacheWriteGate";
@@ -103,11 +104,14 @@ function readCarInMemory<T>(key: string, now: number): T | null {
 
 function hotelSearchCohortId(search: HotelSearchParams) {
   const identity = JSON.stringify([
-    "hotel-search-cohort-v1",
+    "hotel-search-cohort-v2",
+    search.destinationId ?? "",
     search.destination.trim().toLocaleLowerCase(),
     search.checkIn,
     search.checkOut,
     search.guests,
+    hotelOccupancy(search).adults,
+    hotelOccupancy(search).children,
     search.rooms,
   ]);
   return `${HOTEL_SEARCH_COHORT_PREFIX}${createHash("sha256").update(identity).digest("hex")}`;

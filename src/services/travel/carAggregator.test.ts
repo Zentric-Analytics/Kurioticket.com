@@ -32,21 +32,22 @@ test("successful KAYAK cars merge unchanged and persist through both details cac
     { kind: "exact", ids: [providerCar.id] },
     { kind: "cohort", ids: [providerCar.id] },
   ]);
-  assert.ok(result.results.some((row) => row.inventorySource === "kurioticket-static-cars"));
+  assert.deepEqual(result.results, [providerCar]);
+  assert.equal(result.results.some((row) => row.inventorySource === "kurioticket-static-cars"), false);
   assert.deepEqual(result.warnings, []);
 });
 
-test("a failed KAYAK call leaves normal Cars inventory intact without fabricating cache rows", async () => {
+test("a failed provider call does not fabricate replacement rental availability", async () => {
   let persisted = 0;
-  const normal = buildStaticCarResults(search);
   const result = await searchCars(search, { dependencies: {
     searchKayak: async () => ({ provider: "KAYAK sandbox", status: "failed", results: [], latencyMs: 8, errorCategory: "network", errorReason: "provider_network_error" }),
     rememberResults: async (_vertical, rows) => { persisted += rows.length; },
     rememberCohort: async (rows) => { persisted += rows.length; },
   }});
 
-  assert.deepEqual(result.results, normal);
+  assert.deepEqual(result.results, []);
+  assert.equal(result.status, "unavailable");
   assert.equal(persisted, 0);
   assert.equal(result.warnings.length, 1);
-  assert.equal(result.results.some((row) => row.inventorySource === "kayak-sandbox"), false);
+  assert.equal(result.results.length, 0);
 });

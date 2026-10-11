@@ -14,6 +14,7 @@ import {
   isFlightProviderOfferUsableAt,
 } from "@/services/travel/flightOfferInventory";
 import { searchKayakFlights, type KayakRequestContext } from "./kayakMetasearchProvider";
+import { providerSearchWarnings } from "./providerSearchOutcome";
 
 /** The sole production flight pipeline. Provider policy is deliberately not configurable. */
 export async function searchFlights(
@@ -70,7 +71,7 @@ export async function searchFlights(
     warnings:
       provider.status === "failed" || kayak.status === "failed" || cacheUnavailable
         ? ["Flight results are temporarily unavailable. Please try again."]
-        : [],
+        : providerSearchWarnings([provider, kayak], actionableResults.length),
     latencyMs: Date.now() - startedAt,
     performance: {
       supplierMs: providerPerformance?.supplierMs ?? provider.latencyMs,
