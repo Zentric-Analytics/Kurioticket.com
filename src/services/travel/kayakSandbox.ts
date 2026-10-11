@@ -424,6 +424,16 @@ export function normalizeSandboxOffers(
 // increasing concurrency or dropping any property/rate from the search.
 const HOTEL_PAGE_SIZE = 250;
 
+type SearchStage = "initial" | "poll" | "pages" | "metadata";
+export type KayakSearchTiming = {
+  vertical: KayakVertical;
+  status: "success" | "partial" | "failed";
+  resultCount: number;
+  elapsedMs: number;
+  waitMs: number;
+  stages: Record<SearchStage, { operations: number; elapsedMs: number }>;
+};
+
 export class KayakSandboxClient {
   constructor(
     private readonly key: string,
@@ -432,6 +442,8 @@ export class KayakSandboxClient {
       new Promise<void>((resolve) => setTimeout(resolve, ms)),
     private readonly userAgent = "kayakaffiliateapp",
     private readonly clientIp = "",
+    private readonly reportTiming: (timing: KayakSearchTiming) => void = timing =>
+      console.info("[kayak-search:stage-timing]", JSON.stringify(timing)),
   ) {}
 
   private async request(
@@ -442,6 +454,7 @@ export class KayakSandboxClient {
     signal: AbortSignal,
     empty = false,
     retryTransient = false,
+    pause = this.pause,
   ): Promise<ObjectValue> {
     if (!this.key.trim()) throw new KayakError("unauthorized");
     const url = new URL(path, KAYAK_SANDBOX_ORIGIN);
@@ -480,7 +493,7 @@ export class KayakSandboxClient {
                 ? "server_error"
                 : "request_rejected";
           if (retryTransient && code === "server_error" && attempt === 0 && !signal.aborted) {
-            await this.pause(300);
+            await pause(300);
             continue;
           }
           throw new KayakError(code);
@@ -500,7 +513,7 @@ export class KayakSandboxClient {
         // Fetch exceptions can contain the credential-bearing request URL. Never log/rethrow them.
         if (signal.aborted) throw new KayakError("timeout");
         if (retryTransient && attempt === 0) {
-          await this.pause(300);
+          await pause(300);
           continue;
         }
         throw new KayakError("unavailable");
@@ -541,6 +554,58 @@ export class KayakSandboxClient {
     trackId: string,
     externalSignal?: AbortSignal,
     empty = false,
+  ): Promise<SandboxOffer[]> {
+    const started = performance.now();
+    const timing: KayakSearchTiming = {
+      vertical: search.vertical, status: "failed", resultCount: 0, elapsedMs: 0, waitMs: 0,
+      stages: { initial: { operations: 0, elapsedMs: 0 }, poll: { operations: 0, elapsedMs: 0 },
+        pages: { operations: 0, elapsedMs: 0 }, metadata: { operations: 0, elapsedMs: 0 } },
+    };
+    const request = async (...args: Parameters<KayakSandboxClient["request"]>) => {
+      const [path, , query, body] = args;
+      const stage: SearchStage = path.includes("constants-mapping") ? "metadata"
+        : Number(query.pageIndex) > 0 || object(object(body).resultParameters).pageNumber !== undefined ? "pages"
+        : object(body).searchId || timing.stages.initial.operations > 0 ? "poll" : "initial";
+      const entry = timing.stages[stage];
+      entry.operations++;
+      const start = performance.now();
+      const previousWait = timing.waitMs;
+      try { return await this.request(args[0], args[1], args[2], args[3], args[4], args[5], args[6], pause); }
+      finally { entry.elapsedMs += Math.max(0, performance.now() - start - (timing.waitMs - previousWait)); }
+    };
+    const pause = async (ms: number) => {
+      const start = performance.now();
+      try { await this.pause(ms); }
+      finally { timing.waitMs += performance.now() - start; }
+    };
+    try {
+      const offers = await this.performSearch(search, trackId, externalSignal, empty, request, pause);
+      timing.status = "success";
+      timing.resultCount = offers.length;
+      return offers;
+    } catch (error) {
+      if (error instanceof KayakPartialSearchError) {
+        timing.status = "partial";
+        timing.resultCount = error.offers.length;
+      }
+      throw error;
+    } finally {
+      timing.elapsedMs = Math.round(performance.now() - started);
+      timing.waitMs = Math.round(timing.waitMs);
+      for (const entry of Object.values(timing.stages)) entry.elapsedMs = Math.round(entry.elapsedMs);
+      // Numeric, bounded diagnostics only: never log query, track ID, IP, URL or credentials.
+      // Observability failures must not turn a successful search into a failed one.
+      try { this.reportTiming(timing); } catch { /* diagnostic sink unavailable */ }
+    }
+  }
+
+  private async performSearch(
+    search: KayakSearch,
+    trackId: string,
+    externalSignal: AbortSignal | undefined,
+    empty: boolean,
+    request: KayakSandboxClient["request"],
+    pause: (ms: number) => Promise<void>,
   ): Promise<SandboxOffer[]> {
     const signal = AbortSignal.any([
       AbortSignal.timeout(30000),
@@ -612,10 +677,10 @@ export class KayakSandboxClient {
         let page: ObjectValue | undefined;
         for (let attempt = 0; attempt < 12; attempt++) {
           if (signal.aborted) throw new KayakError("timeout");
-          const response = await this.request(path, trackId,
+          const response = await request(path, trackId,
             { ...query, pageIndex: String(pageIndex) }, undefined, signal, empty);
           if (response.isComplete === true) { page = response; break; }
-          await this.pause(750);
+          if (attempt < 11) await pause(750);
         }
         if (!page) throw new KayakError("timeout");
         if (!Array.isArray(page.results)) throw new KayakError("invalid_response");
@@ -631,9 +696,9 @@ export class KayakSandboxClient {
         const fingerprint = JSON.stringify(page.results);
         if (count > 0 && seenPages.has(fingerprint)) throw new KayakError("invalid_response");
         seenPages.add(fingerprint);
-        if (pageIndex === 0) {
+        if (pageIndex === 0 && count > 0) {
           try {
-            const constants = await this.request("/api/4.0/constants-mapping", trackId,
+            const constants = await request("/api/4.0/constants-mapping", trackId,
               { types: "facility", languageCode: "en" }, null, signal);
             dictionary = object(constants.facility).features;
           } catch { /* Missing metadata must not discard otherwise valid rates. */ }
@@ -661,7 +726,7 @@ export class KayakSandboxClient {
     try {
     for (let attempt = 0; attempt < 12; attempt++) {
       if (signal.aborted) throw new KayakError("timeout");
-      const data = await this.request(
+      const data = await request(
         path,
         trackId,
         query,
@@ -683,7 +748,7 @@ export class KayakSandboxClient {
           let page: ObjectValue | undefined;
           for (let poll = 0; poll < 12; poll++) {
             if (signal.aborted) throw new KayakError("timeout");
-            const response = await this.request(path, trackId, { cluster: text(data.cluster) }, {
+            const response = await request(path, trackId, { cluster: text(data.cluster) }, {
               searchId: data.searchId,
               resultParameters: { ...resultParameters, pageSize: size, pageNumber },
             }, signal, empty, search.vertical === "cars");
@@ -691,7 +756,7 @@ export class KayakSandboxClient {
             if (!["first-phase", "second-phase"].includes(text(response.status))) {
               throw new KayakError("invalid_response");
             }
-            await this.pause(750);
+            if (poll < 11) await pause(750);
           }
           if (!page) throw new KayakError("timeout");
           if (!Array.isArray(page.results) || page.results.length === 0 || page.totalCount !== total || seenPages.has(JSON.stringify(page.results))) throw new KayakError("invalid_response");
@@ -712,7 +777,7 @@ export class KayakSandboxClient {
         body = { searchId: data.searchId };
         query = { cluster: text(data.cluster) };
       }
-      await this.pause(750);
+      if (attempt < 11) await pause(750);
     }
     throw new KayakError("timeout");
     } catch (error) {
