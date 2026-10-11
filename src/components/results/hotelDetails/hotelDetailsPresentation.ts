@@ -31,6 +31,7 @@ export type HotelDetailsProviderOffer = {
   cancellationLabel?: string;
   mealPlanLabel?: string;
   paymentLabel?: string;
+  suppliedRateFacts?: Array<{ label: string; value: string }>;
   taxesAndFeesLabel?: string;
   checkedAt?: string;
   action: HotelDetailsProviderOfferAction;

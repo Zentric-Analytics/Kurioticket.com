@@ -25,8 +25,8 @@ test("sandbox Hotel results use the canonical Hotel results shell", () => {
   assert.match(searchRoute, /request\.headers\.get\("x-hotel-provider-mode"\)/);
   assert.match(resultsClient, /return <section key=\{hotel\.id\}/);
   assert.match(resultsClient, /<HotelCard hotel=\{hotel\}/);
-  assert.match(resultsClient, /<HotelCard key=\{offer\.id\} hotel=\{offer\}/);
-  assert.match(resultsClient, /additionalHotelOffers\.get\(hotel\.id\)/);
+  assert.doesNotMatch(resultsClient, /<HotelCard key=\{offer\.id\} hotel=\{offer\}/);
+  assert.doesNotMatch(resultsClient, /additionalHotelOffers|alternatives\.length/);
   assert.match(resultsClient, /allowSave=\{!guided\}/);
   assert.doesNotMatch(resultsClient, /allowSave=\{!guided&&!isKayakSandboxResult\(hotel\)\}/);
   assert.doesNotMatch(resultsClient, /useKayakResults|KayakResultCard|kayakHotelCardModel|kayak\.offers/);

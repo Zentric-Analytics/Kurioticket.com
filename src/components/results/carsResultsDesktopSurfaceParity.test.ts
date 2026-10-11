@@ -187,7 +187,7 @@ test("desktop price alert uses a subtly lighter blue while mobile surfaces remai
 test("KAYAK car cards and loading canvases stay inside the same standalone desktop surface contract", () => {
   assert.match(
     results,
-    /<CarResultCard[\s\S]*?providerLabel=\{isKayakSandboxResult\(car\)[\s\S]*?desktopSurfaceParity=\{!embedded && presentation === "standalone"\}/,
+    /<CarResultCard[\s\S]*?desktopSurfaceParity=\{!embedded && presentation === "standalone"\}/,
   );
   assert.match(
     results,

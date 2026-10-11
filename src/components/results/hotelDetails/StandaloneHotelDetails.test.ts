@@ -120,7 +120,7 @@ test("client supplies both provider paths through the existing price and navigat
   for (const contract of ["totalDisplayPrice={totalDisplayPrice}", "nightlyDisplayPrice={nightlyDisplayPrice}", "resultsHref={resultsHref}", "staySummary={staySummary}", "relatedHotels={relatedHotels}", "roomOptions.map", "formatDisplayPrice"]) assert.ok(client.includes(contract), contract);
   assert.match(client, /providerOffers=\{standaloneProviderOffers\}/);
   assert.match(client, /onProviderOfferHandoff=\{/);
-  assert.match(client, /await runProviderRedirect\(targetWindow\)/);
+  assert.match(client, /await runProviderRedirect\(targetWindow, providerOfferId\)/);
   assert.match(desktop, /props\.taxesText \|\| props\.planningPriceText/);
   assert.doesNotMatch(desktop + mobile, /1,248 reviews|Best price guarantee|Taxes and fees included/);
 });
