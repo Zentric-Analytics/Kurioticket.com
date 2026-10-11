@@ -419,6 +419,11 @@ export function normalizeSandboxOffers(
   return offers.sort((a, b) => a.price - b.price);
 }
 
+// KAYAK Hotels Search API permits 1–250 results per page (default 25).
+// Use its documented maximum to reduce sequential round trips without
+// increasing concurrency or dropping any property/rate from the search.
+const HOTEL_PAGE_SIZE = 250;
+
 export class KayakSandboxClient {
   constructor(
     private readonly key: string,
@@ -552,7 +557,7 @@ export class KayakSandboxClient {
         currencyCode: "USD",
         responseOptions: "multipleHotelsAllRates,images,features,rateBreakdown,reviews,hotelPlace",
         onlyIfComplete: "false",
-        pageSize: "25",
+        pageSize: String(HOTEL_PAGE_SIZE),
         pageIndex: "0",
       };
     } else {
@@ -632,10 +637,10 @@ export class KayakSandboxClient {
         if (expectedTotal !== undefined) {
           if (offset > expectedTotal || (count === 0 && offset < expectedTotal)) throw new KayakError("invalid_response");
           if (offset === expectedTotal) return offers.sort((a, b) => a.price - b.price);
-          if (count !== 25) throw new KayakError("invalid_response");
+          if (count !== HOTEL_PAGE_SIZE) throw new KayakError("invalid_response");
         } else {
           // Legacy short responses are terminal; a full page needs a provider total.
-          if (count < 25) return offers.sort((a, b) => a.price - b.price);
+          if (count < HOTEL_PAGE_SIZE) return offers.sort((a, b) => a.price - b.price);
           throw new KayakError("invalid_response");
         }
       }

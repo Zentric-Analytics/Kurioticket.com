@@ -103,7 +103,7 @@ test("desktop and mobile Hotel result summaries keep their own count and sort co
   assert.match(mobileMarkup, /\{resultsHeading\}/);
   assert.match(mobileMarkup, /<span>Sort:<\/span>[\s\S]*currentSortLabel/);
   assert.match(mobileMarkup, /openMobileShortcutMenu\("sort", event\.currentTarget\)/);
-  assert.match(mobileMarkup, /totalHotelResultPages > 1/);
+  assert.doesNotMatch(mobileMarkup, /resultsDisplayRange|totalHotelResultPages/);
   assert.equal(resultsSource.match(/data-mobile-hotel-results-summary/g)?.length, 1);
 
   const guidedHeading = resultsSource.indexOf("ref={guidedResultsHeadingRef}");

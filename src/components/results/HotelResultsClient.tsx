@@ -5,7 +5,7 @@ import { hotelOccupancy } from "@/lib/hotels/hotelOccupancy";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
-import { ArrowUp, Check, ChevronLeft, ChevronRight, ChevronDown, SlidersHorizontal, SquarePen, Star, X } from "lucide-react";
+import { ArrowUp, Check, ChevronDown, SlidersHorizontal, SquarePen, Star, X } from "lucide-react";
 
 import type { PublicHotelResult } from "@/lib/types";
 import { readHotelSearchResponse } from "@/lib/search/readHotelSearchResponse";
@@ -14,7 +14,7 @@ import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
 import { HotelCardSkeleton } from "@/components/ui/Skeleton";
-import { PAGINATION_MIN_BUSY_MS, PAGINATION_REVEAL_MS, prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
+import { prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
 import { groupHotelOffers, hotelPropertyKey } from "@/lib/hotels/groupHotelOffers";
@@ -39,12 +39,9 @@ import { cn } from "@/lib/utils";
 import { countHotelsByStarRating, hotelMatchesStarRating, type HotelStarRatingSelection } from "@/components/results/hotelStarRatingFilter";
 import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } from "@/lib/search/mobileResultsScrollLock";
 import { getOverlayActivationModality, restoreOverlayLauncherFocus, type OverlayActivationModality } from "@/lib/search/mobileResultsOverlayFocus";
-import { buildHotelResultsPaginationItems, clampHotelResultsPage, getHotelResultsPageCount, HOTEL_RESULTS_PAGE_SIZE, paginateHotelResults } from "@/lib/hotels/hotelResultsPagination";
-import { getResultsDisplayRange } from "@/lib/results/resultsDisplayRange";
 import { buildHotelRoomFilterOptions, hotelMatchesRoomFilter, hotelShortcutAvailability } from "./hotelFilterAvailability";
 
 const hotelResultStackClass = "w-full max-w-[800px] lg:max-w-[756px]";
-type PaginationTransitionPhase = "idle" | "covering" | "settling";
 type MobileHotelShortcutMenu = "price" | "stars" | "amenities" | "roomTypes" | "sort";
 
 type CompactHotelFilterSectionId = "price" | "travellerFeatures" | "rating" | "locations" | "propertyTypes" | "facilities" | "accessibility" | "roomTypes" | "bedTypes" | null;
@@ -309,11 +306,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const [mobileNavSearchTarget, setMobileNavSearchTarget] = useState<HTMLElement | null>(null);
   const [mobileNavFiltersTarget, setMobileNavFiltersTarget] = useState<HTMLElement | null>(null);
   const [desktopSearchPlacement, setDesktopSearchPlacement] = useState<"navbar" | "page" | null>(null);
-  const [currentResultsPage, setCurrentResultsPage] = useState(1);
-  const [paginationPendingPage, setPaginationPendingPage] = useState<number | null>(null);
-  const [paginationTransitionPhase, setPaginationTransitionPhase] = useState<PaginationTransitionPhase>("idle");
-  const [paginationMinHeight, setPaginationMinHeight] = useState<number | null>(null);
-  const [paginationRevealing, setPaginationRevealing] = useState(false);
   const paginationListRef = useRef<HTMLDivElement | null>(null);
   const desktopFilterPanelRef = useRef<HTMLDivElement | null>(null);
   const desktopResultsContentRef = useRef<HTMLElement | null>(null);
@@ -615,7 +607,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         if (restored) {
           setPropertyNameQuery(restored.propertyNameQuery);
           setHotelSummarySortMode(restored.sort);
-          setCurrentResultsPage(restored.page);
+
           mobileReturnScrollRef.current = restored.scrollY;
         }
         setFilterApplying(false);
@@ -668,7 +660,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       mobileReturnScrollRef.current = null;
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [loading, error, visibleFiltered, currentResultsPage]);
+  }, [loading, error, visibleFiltered]);
 
   const retryGuidedHotelSearch = useCallback(() => {
     retryFocusPendingRef.current = true;
@@ -796,10 +788,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const visibleFilteredHotels = resultsApplying ? visibleFiltered : filtered;
   const hotelOfferGroups = useMemo(() => groupHotelOffers(sortHotelSummaryResults(visibleFilteredHotels, "cheapest", currencyRates.rates)), [currencyRates.rates, visibleFilteredHotels]);
   const sortedVisibleHotels = useMemo(() => sortHotelSummaryResults(hotelOfferGroups.map(group => group[0]), hotelSummarySortMode, currencyRates.rates), [hotelOfferGroups, hotelSummarySortMode, currencyRates.rates]);
-  const totalHotelResultPages = guided ? 0 : getHotelResultsPageCount(sortedVisibleHotels.length);
-  const paginatedVisibleHotels = useMemo(() => (guided ? sortedVisibleHotels : paginateHotelResults(sortedVisibleHotels, currentResultsPage)), [currentResultsPage, guided, sortedVisibleHotels]);
-  const paginationItems = useMemo(() => buildHotelResultsPaginationItems(currentResultsPage, totalHotelResultPages), [currentResultsPage, totalHotelResultPages]);
-  const mobilePaginationItems = useMemo(() => buildHotelResultsPaginationItems(currentResultsPage, totalHotelResultPages, true), [currentResultsPage, totalHotelResultPages]);
   const hotelSortOptions = useMemo(
     () =>
       [
@@ -824,23 +812,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const currentSortLabel = hotelSortOptions.find((option) => option.value === hotelSummarySortMode)?.label ?? hotelSortOptions[0]?.label ?? "";
   const formattedDisplayedHotelCount = formatHotelCount(sortedVisibleHotels.length, locale);
   const resultsHeading = t(sortedVisibleHotels.length === 1 ? "resultFound" : "resultsFound").replace("{{count}}", formattedDisplayedHotelCount);
-  const resultsDisplayRange = guided
-    ? null
-    : getResultsDisplayRange({
-        currentPage: currentResultsPage,
-        pageSize: HOTEL_RESULTS_PAGE_SIZE,
-        totalResults: sortedVisibleHotels.length,
-      });
   const showFilteredEmptyState = !loading && !error && !filterApplying && results.length > 0 && filtered.length === 0;
 
-  useEffect(() => {
-    // Do not clamp a restored page against the empty, pre-restoration inventory.
-    if (loading) return;
-    const frame = window.requestAnimationFrame(() => {
-      setCurrentResultsPage((page) => clampHotelResultsPage(page, totalHotelResultPages));
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [loading, totalHotelResultPages]);
 
   useEffect(() => {
     if (guided || typeof window === "undefined") return undefined;
@@ -915,58 +888,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, [guided, paginatedVisibleHotels.length, filterApplying]);
-
-  async function changeResultsPage(page: number) {
-    const target = clampHotelResultsPage(page, totalHotelResultPages);
-    if (paginationPendingPage !== null || target === currentResultsPage) return;
-    setPaginationMinHeight(paginationListRef.current?.getBoundingClientRect().height ?? null);
-    setPaginationPendingPage(target);
-    setPaginationTransitionPhase("covering");
-    const previousRootOverflowAnchor = document.documentElement.style.overflowAnchor;
-    const previousBodyOverflowAnchor = document.body.style.overflowAnchor;
-    document.documentElement.style.overflowAnchor = "none";
-    document.body.style.overflowAnchor = "none";
-    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-
-    const positionResultsStart = () => {
-      const mobile = window.innerWidth < 640;
-      const resultsAnchor = mobile
-        ? document.querySelector<HTMLElement>("[data-mobile-web-hotel-results]")
-        : standaloneResultsHeadingRef.current;
-      if (!resultsAnchor) return;
-      const stickyOffset = mobile
-        ? (document.querySelector<HTMLElement>("[data-app-header]")?.getBoundingClientRect().height ?? 72)
-        : 170;
-      const resultsTop = Math.max(0, window.scrollY + resultsAnchor.getBoundingClientRect().top - stickyOffset);
-      window.scrollTo({ top: resultsTop, behavior: "auto" });
-    };
-
-    positionResultsStart();
-    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-    setCurrentResultsPage(target);
-    setPaginationTransitionPhase("settling");
-    setPaginationMinHeight(null);
-    await new Promise<void>((resolve) => window.setTimeout(resolve, PAGINATION_MIN_BUSY_MS));
-    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-    positionResultsStart();
-    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-    positionResultsStart();
-    if (window.innerWidth >= 1024) {
-      await new Promise<void>((resolve) => window.setTimeout(resolve, 240));
-      positionResultsStart();
-      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-    }
-    setPaginationTransitionPhase("idle");
-    setPaginationPendingPage(null);
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    document.documentElement.style.overflowAnchor = previousRootOverflowAnchor;
-    document.body.style.overflowAnchor = previousBodyOverflowAnchor;
-    if (!prefersReducedResultsMotion()) {
-      setPaginationRevealing(true);
-      window.setTimeout(() => setPaginationRevealing(false), PAGINATION_REVEAL_MS);
-    }
-  }
+  }, [guided, sortedVisibleHotels.length, filterApplying]);
 
   useEffect(() => {
     if (!filterApplying || loading || error) return;
@@ -1019,7 +941,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }
 
   const triggerFilterApplying = useCallback(() => {
-    setCurrentResultsPage(1);
+
     setVisibleFiltered((current) => {
       if (resultsApplying && current.length > 0) return current;
       return filtered;
@@ -1048,22 +970,22 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }, [triggerFilterApplying]);
 
   const updateMaxPrice = (value: number) => {
-    setCurrentResultsPage(1);
+
     setMaxPrice(Math.max(value, minPrice));
   };
 
   const updateMinPrice = (value: number) => {
-    setCurrentResultsPage(1);
+
     setMinPrice(Math.min(value, maxPrice));
   };
 
   const updatePropertyNameQuery = (value: string) => {
-    setCurrentResultsPage(1);
+
     setPropertyNameQuery(value);
   };
 
   const toggleHotelClass = (rating: number) => {
-    setCurrentResultsPage(1);
+
     setSelectedHotelClasses((current) => (current.includes(rating) ? current.filter((item) => item !== rating) : [...current, rating].sort((a, b) => b - a)));
   };
 
@@ -1072,7 +994,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }
 
   const resetFilters = () => {
-    setCurrentResultsPage(1);
+
     setMinPrice(0);
     setMaxPrice(resultMaxPrice);
     setSelectedHotelClasses([]);
@@ -1081,7 +1003,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   };
 
   const toggleFilter = (group: keyof HotelFilterSelections, value?: string) => {
-    setCurrentResultsPage(1);
+
     setSelectedFilters((current) => ({
       ...current,
       [group]: value === undefined ? [] : current[group].includes(value) ? current[group].filter((item) => item !== value) : [...current[group], value],
@@ -1089,7 +1011,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   };
 
   const removeFilterChip = (chip: ActiveHotelFilterChip) => {
-    setCurrentResultsPage(1);
+
 
     if (chip.kind === "priceRange") {
       setMinPrice(0);
@@ -1118,7 +1040,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   };
 
   const updateHotelSummarySortMode = (sortMode: HotelSummarySortMode) => {
-    setCurrentResultsPage(1);
+
     setHotelSummarySortMode(sortMode);
   };
 
@@ -1584,12 +1506,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       {!guided && !loadingContent && desktopSearchPlacement === "navbar" && desktopNavSearchTarget
         ? createPortal(renderDesktopHotelSearch("hotel-results-nav-search"), desktopNavSearchTarget)
         : null}
-      {!guided && paginationTransitionPhase !== "idle" && typeof document !== "undefined"
-        ? createPortal(
-            <HotelResultsPageTransitionSkeleton />,
-            document.body,
-          )
-        : null}
       {loadingContent ?? <>
       <ResultsRoot
         onClickCapture={(event) => {
@@ -1599,7 +1515,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           saveMobileHotelResultsState(bodySearchKey, {
             minPrice, maxPrice: maxPrice >= resultMaxPrice ? null : maxPrice,
             selectedHotelClasses, propertyNameQuery, selectedFilters,
-            sort: hotelSummarySortMode, page: currentResultsPage,
+            sort: hotelSummarySortMode, page: 1,
             scrollY: window.scrollY, savedAt: Date.now(),
           });
         }}
@@ -1734,12 +1650,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                           {resultsHeading}
                         </h1>
                       )}
-                      {resultsDisplayRange && totalHotelResultPages > 1 ? (
-                        <p aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end}`} className="mt-0.5 text-xs font-medium leading-4 text-slate-500">
-                          Showing {resultsDisplayRange.start}&ndash;
-                          {resultsDisplayRange.end}
-                        </p>
-                      ) : null}
                     </div>
                     <div className="hidden shrink-0 flex-nowrap items-center justify-end whitespace-nowrap sm:flex min-[1200px]:justify-self-end">
                       <div
@@ -1808,11 +1718,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                         <h1 tabIndex={-1} className="scroll-mt-20 truncate whitespace-nowrap text-[13px] font-bold leading-[17px] text-[#071A48]">
                           {resultsHeading}
                         </h1>
-                        {resultsDisplayRange && totalHotelResultPages > 1 ? (
-                          <p aria-label={`Showing results ${resultsDisplayRange.start} through ${resultsDisplayRange.end}`} className="mt-0.5 text-xs font-medium leading-4 text-slate-500">
-                            Showing {resultsDisplayRange.start}&ndash;{resultsDisplayRange.end}
-                          </p>
-                        ) : null}
                       </div>
                       <button type="button" data-hotel-sort-trigger aria-label={`Sort hotels: ${currentSortLabel}`} aria-haspopup="dialog" aria-expanded={mobileShortcutMenu === "sort"} onClick={(event) => openMobileShortcutMenu("sort", event.currentTarget)} className="focus-ring inline-flex min-h-[38px] min-w-[116px] shrink-0 items-center justify-center gap-[5px] rounded-[10px] border border-[#D8E1EC] px-2.5 py-2 text-[13px] font-medium leading-[17px] text-[#56658E]">
                         <span>Sort:</span><span className="font-semibold text-[#071A48]">{currentSortLabel}</span><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
@@ -1820,26 +1725,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                     </div>
                   ) : null}
 
-                  <div ref={paginationListRef} aria-busy={paginationPendingPage !== null} style={paginationMinHeight ? { minHeight: paginationMinHeight } : undefined} className={cn("relative max-sm:-mx-2 max-sm:w-[calc(100%+16px)] space-y-2 sm:space-y-4 lg:!space-y-3", paginationRevealing && "animate-[fadeIn_150ms_ease-out]")}>
-                    {paginationTransitionPhase === "covering" ? (
-                      <div className="space-y-4">
-                        <div role="status" aria-live="polite" className="sr-only">
-                          {t("updatingResults")}
-                        </div>
-                        {Array.from(
-                          {
-                            length: paginatedVisibleHotels.length,
-                          },
-                          (_, index) => (
-                            <HotelCardSkeleton key={index} />
-                          ),
-                        )}
-                      </div>
-                    ) : paginatedVisibleHotels.length ? (
-                      paginatedVisibleHotels.map((hotel, index) => {
+                  <div ref={paginationListRef} aria-busy={filterApplying} className="relative max-sm:-mx-2 max-sm:w-[calc(100%+16px)] space-y-2 sm:space-y-4 lg:!space-y-3" data-hotel-continuous-results>
+                    {sortedVisibleHotels.length ? (
+                      sortedVisibleHotels.map((hotel, index) => {
                         const internalHref = guided ? (buildDetailsHref?.(hotel.id) ?? null) : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`;
-                        return <section key={hotel.id} aria-label={hotel.name}>
-                          <HotelCard hotel={hotel} detailsHref={resultActionHref(hotel, internalHref)} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={(currentResultsPage - 1) * HOTEL_RESULTS_PAGE_SIZE + index === 0 ? hotelSummarySortMode : undefined} />
+                        return <section key={hotel.id} aria-label={hotel.name} style={{ contentVisibility: "auto", containIntrinsicSize: "auto 400px" }}>
+                          <HotelCard hotel={hotel} detailsHref={resultActionHref(hotel, internalHref)} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={index === 0 ? hotelSummarySortMode : undefined} />
                         </section>;
                       })
                     ) : (
@@ -1852,32 +1743,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                         ) : null}
                       </div>
                     )}
-                    {!guided && totalHotelResultPages > 1 && !filterApplying ? (
-                      <nav aria-label="Hotel results pages" className="flex flex-wrap items-center justify-center gap-1 pt-2 sm:gap-1.5 sm:pt-4">
-                        <button type="button" aria-label="Previous page" disabled={currentResultsPage === 1 || paginationPendingPage !== null} onClick={() => changeResultsPage(currentResultsPage - 1)} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-transparent bg-transparent text-[#07133B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent sm:border-slate-200 sm:bg-white sm:text-slate-700 sm:disabled:opacity-40">
-                          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                        </button>
-                        <span className="hidden items-center gap-1.5 sm:flex">{paginationItems.map((item, index) =>
-                          item === "ellipsis" ? (
-                            <span key={`ellipsis-${index}`} className="inline-flex min-h-11 min-w-8 items-center justify-center text-slate-500" aria-hidden="true">
-                              …
-                            </span>
-                          ) : (
-                            <button key={item} type="button" disabled={paginationPendingPage !== null} aria-current={item === currentResultsPage ? "page" : undefined} onClick={() => changeResultsPage(item)} className={cn("inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border text-sm font-bold", item === currentResultsPage ? "border-[#004BB8] bg-[#004BB8] text-white" : "border-slate-200 bg-white text-slate-800 hover:border-[#004BB8]/40")}>
-                              {item}
-                            </button>
-                          ),
-                        )}</span>
-                        <span className="flex items-center sm:hidden">{mobilePaginationItems.map((item) => (
-                          <button key={item} type="button" disabled={paginationPendingPage !== null} aria-label={`Page ${item}`} aria-current={item === currentResultsPage ? "page" : undefined} onClick={() => changeResultsPage(item)} className={cn("inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-transparent bg-transparent text-sm font-semibold text-[#07133B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35", item === currentResultsPage && "font-bold text-[#004BB8]")}>
-                            {item}
-                          </button>
-                        ))}</span>
-                        <button type="button" aria-label="Next page" disabled={currentResultsPage === totalHotelResultPages || paginationPendingPage !== null} onClick={() => changeResultsPage(currentResultsPage + 1)} className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg border border-transparent bg-transparent text-sm font-bold text-[#07133B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent sm:border-slate-200 sm:bg-white sm:px-3 sm:text-slate-700 sm:disabled:opacity-40">
-                          <span className="hidden sm:inline">Next</span><ChevronRight className="h-4 w-4" aria-hidden="true" />
-                        </button>
-                      </nav>
-                    ) : null}
                   </div>
                 </div>
               </div>
@@ -2058,69 +1923,6 @@ function ActiveHotelFilterChips({ chips, onRemove, t }: { chips: ActiveHotelFilt
             </span>
           </button>
         ))}
-      </div>
-    </div>
-  );
-}
-
-function HotelResultsPageTransitionSkeleton() {
-  return (
-    <div aria-hidden="true" className="fixed inset-0 z-[1200] overflow-hidden bg-[#f6f8fb] lg:bg-white">
-      <div className="h-20 border-b border-slate-100 bg-white px-4 sm:h-24">
-        <div className="mx-auto flex h-full max-w-[1400px] items-center justify-between">
-          <div className="h-8 w-40 animate-pulse rounded-md bg-slate-200 motion-reduce:animate-none" />
-          <div className="flex items-center gap-3">
-            <div className="hidden h-5 w-16 animate-pulse rounded bg-slate-200 motion-reduce:animate-none sm:block" />
-            <div className="h-10 w-10 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none" />
-          </div>
-        </div>
-      </div>
-
-      <div className="border-b border-slate-100 bg-white px-4 py-5">
-        <div className="mx-auto max-w-[1180px]">
-          <div className="hidden h-[72px] animate-pulse grid-cols-[1.2fr_1fr_.7fr_112px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm motion-reduce:animate-none sm:grid">
-            <div className="border-r border-slate-200 p-4"><div className="h-4 w-36 rounded bg-slate-200" /><div className="mt-2 h-3 w-24 rounded bg-slate-100" /></div>
-            <div className="border-r border-slate-200 p-4"><div className="h-4 w-40 rounded bg-slate-200" /><div className="mt-2 h-3 w-28 rounded bg-slate-100" /></div>
-            <div className="border-r border-slate-200 p-4"><div className="h-4 w-28 rounded bg-slate-200" /><div className="mt-2 h-3 w-20 rounded bg-slate-100" /></div>
-            <div className="m-2 rounded-xl bg-[#D9E7F7]" />
-          </div>
-          <div className="h-16 animate-pulse rounded-2xl border border-slate-200 bg-white p-4 shadow-sm motion-reduce:animate-none sm:hidden">
-            <div className="h-4 w-32 rounded bg-slate-200" /><div className="mt-2 h-3 w-48 rounded bg-slate-100" />
-          </div>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-[1400px] px-4 py-6">
-        <div className="mb-5 flex gap-2 sm:hidden">
-          {[76, 68, 72, 96].map((width) => <div key={width} className="h-11 shrink-0 animate-pulse rounded-xl border border-slate-200 bg-white motion-reduce:animate-none" style={{ width }} />)}
-        </div>
-        <div className="grid min-w-0 gap-8 min-[1200px]:grid-cols-[288px_minmax(0,1fr)]">
-          <aside className="hidden min-[1200px]:block">
-            <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="h-5 w-24 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />
-              <div className="h-11 animate-pulse rounded-lg bg-slate-100 motion-reduce:animate-none" />
-              {["price", "class", "trip", "area", "type"].map((item, index) => (
-                <div key={item} className="border-t border-slate-100 pt-4">
-                  <div className="h-4 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" style={{ width: `${52 + index * 6}%` }} />
-                  <div className="mt-3 h-3 w-full animate-pulse rounded bg-slate-100 motion-reduce:animate-none" />
-                  <div className="mt-2 h-3 w-4/5 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" />
-                </div>
-              ))}
-            </div>
-          </aside>
-
-          <section className="min-w-0">
-            <div className="mb-4 flex items-center justify-between">
-              <div><div className="h-7 w-48 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /><div className="mt-2 h-3 w-24 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div>
-              <div className="hidden h-10 w-36 animate-pulse rounded-lg bg-slate-200 motion-reduce:animate-none sm:block" />
-            </div>
-            <div className="space-y-4">
-              <HotelCardSkeleton />
-              <HotelCardSkeleton />
-              <HotelCardSkeleton />
-            </div>
-          </section>
-        </div>
       </div>
     </div>
   );
