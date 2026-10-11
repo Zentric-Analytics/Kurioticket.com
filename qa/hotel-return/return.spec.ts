@@ -37,7 +37,7 @@ test("Cars exits loading through JSON inventory and allows explicit retry after 
   await expect(page.getByRole("heading", { name: "Searching the best cars for you" })).toHaveCount(0);
 });
 
-test("details return preserves results and page without another provider search", async ({ page }, testInfo) => {
+test("continuous results preserve a later hotel on details return without another provider search", async ({ page }, testInfo) => {
   let searches = 0;
   const hotels = Array.from({ length: 25 }, (_, i) => ({
     id: `kayak-sandbox:test:${i}`, provider: "KAYAK sandbox", name: `Synthetic Hotel ${i}`,
@@ -57,24 +57,28 @@ test("details return preserves results and page without another provider search"
   });
   await page.goto("/hotels/results?destination=New+York&checkIn=2030-10-12&checkOut=2030-10-13&guests=1&rooms=1");
   await expect(page.getByRole("heading", { name: "25 results found" })).toBeVisible();
-  await page.getByRole("navigation", { name: "Hotel results pages" }).getByRole("button", { name: "Next page", exact: true }).click();
-  await expect(page.getByText("Showing 21–25", { exact: true }).filter({ visible: true })).toBeVisible();
+  const cards = page.locator("[data-hotel-continuous-results] > section");
+  await expect(cards).toHaveCount(25);
+  await expect(page.getByRole("navigation", { name: "Hotel results pages" })).toHaveCount(0);
+  const laterHotel = cards.filter({ has: page.getByRole("heading", { name: "Synthetic Hotel 20", exact: true }) });
+  await laterHotel.scrollIntoViewIfNeeded();
   const searchesBeforeDetails = searches;
-  await page.getByRole("link", { name: "View hotel", exact: true }).first().click();
+  await laterHotel.getByRole("link", { name: "View hotel", exact: true }).click();
   await expect(page).toHaveURL(/\/hotels\/details\//);
   await expect(page.getByRole("heading", { name: "Synthetic Hotel 20", exact: true })).toBeVisible();
   await page.goBack();
   await expect(page.getByRole("heading", { name: "25 results found" })).toBeVisible();
-  await expect(page.getByText("Showing 21–25", { exact: true }).filter({ visible: true })).toBeVisible();
+  await expect(cards).toHaveCount(25);
   expect(searches).toBe(searchesBeforeDetails);
-  await page.getByRole("link", { name: "View hotel", exact: true }).first().click();
+  await laterHotel.scrollIntoViewIfNeeded();
+  await laterHotel.getByRole("link", { name: "View hotel", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Synthetic Hotel 20", exact: true })).toBeVisible();
   const returnLink = page.getByRole("link", { name: "Back to hotel results", exact: true });
   if (testInfo.project.name === "mobile") {
     await expect(returnLink).toBeVisible();
     await returnLink.click();
     await expect(page.getByRole("heading", { name: "25 results found" })).toBeVisible();
-    await expect(page.getByText("Showing 21–25", { exact: true }).filter({ visible: true })).toBeVisible();
+    await expect(cards).toHaveCount(25);
     expect(searches).toBe(searchesBeforeDetails);
   }
 });
