@@ -423,6 +423,10 @@ export function normalizeSandboxOffers(
 // Use its documented maximum to reduce sequential round trips without
 // increasing concurrency or dropping any property/rate from the search.
 const HOTEL_PAGE_SIZE = 250;
+// Match SearchResultsParameters.pageSize's documented request default.
+// https://developers.kayak.com/cars-search-api (verified 2026-10-11).
+// Keep sequential paging and use the response's actual size for later pages.
+const CAR_PAGE_SIZE = 50;
 
 type SearchStage = "initial" | "poll" | "pages" | "metadata";
 export type KayakSearchTiming = {
@@ -616,7 +620,7 @@ export class KayakSandboxClient {
     let query: Record<string, string> = {};
     const resultParameters =
       search.vertical === "cars"
-        ? { priceMode: "total", currency: "USD", pageSize: 10 }
+        ? { priceMode: "total", currency: "USD", pageSize: CAR_PAGE_SIZE }
         : undefined;
     if (search.vertical === "hotels") {
       path = "/api/3.0/hotels";
