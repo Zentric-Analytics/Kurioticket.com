@@ -485,7 +485,13 @@ export class KayakSandboxClient {
           }
           throw new KayakError(code);
         }
-        const parsed: unknown = await response.json();
+        let parsed: unknown;
+        try {
+          parsed = await response.json();
+        } catch (error) {
+          if (error instanceof SyntaxError) throw new KayakError("invalid_response");
+          throw error;
+        }
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
           throw new KayakError("invalid_response");
         return parsed as ObjectValue;
@@ -651,6 +657,8 @@ export class KayakSandboxClient {
         throw error;
       }
     }
+    const offers: SandboxOffer[] = [];
+    try {
     for (let attempt = 0; attempt < 12; attempt++) {
       if (signal.aborted) throw new KayakError("timeout");
       const data = await this.request(
@@ -663,7 +671,7 @@ export class KayakSandboxClient {
         search.vertical === "cars",
       );
       if (data.status === "complete") {
-        const offers = normalizeSandboxOffers(search.vertical, data);
+        offers.push(...normalizeSandboxOffers(search.vertical, data));
         const total = data.totalCount;
         if (total === undefined) return offers;
         if (typeof total !== "number" || !Number.isSafeInteger(total) || total < 0) throw new KayakError("invalid_response");
@@ -680,6 +688,9 @@ export class KayakSandboxClient {
               resultParameters: { ...resultParameters, pageSize: size, pageNumber },
             }, signal, empty, search.vertical === "cars");
             if (response.status === "complete") { page = response; break; }
+            if (!["first-phase", "second-phase"].includes(text(response.status))) {
+              throw new KayakError("invalid_response");
+            }
             await this.pause(750);
           }
           if (!page) throw new KayakError("timeout");
@@ -704,5 +715,13 @@ export class KayakSandboxClient {
       await this.pause(750);
     }
     throw new KayakError("timeout");
+    } catch (error) {
+      // A later transport failure must not erase completed, validated pages.
+      // Inconsistent/malformed inventory still fails closed.
+      if (offers.length && error instanceof KayakError && error.code !== "invalid_response") {
+        throw new KayakPartialSearchError(error.code, offers);
+      }
+      throw error;
+    }
   }
 }

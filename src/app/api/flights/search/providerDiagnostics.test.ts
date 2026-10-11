@@ -62,7 +62,7 @@ test("logs only safe provider diagnostics for native flight searches", (t) => {
   ]) assert.doesNotMatch(serialized, new RegExp(secret.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 });
 
-test("does not add log noise or mutate responses for non-native searches", (t) => {
+test("logs safe web diagnostics without mutating responses", (t) => {
   const calls: unknown[][] = [];
   t.mock.method(console, "info", (...args: unknown[]) => { calls.push(args); });
   const finalResults = [publicFlight("duffel-1", "Duffel")];
@@ -77,6 +77,7 @@ test("does not add log noise or mutate responses for non-native searches", (t) =
     finalResults,
   });
 
-  assert.equal(calls.length, 0);
+  assert.equal(calls.length, 1);
+  assert.equal((calls[0][1] as { mobilePlatform: null }).mobilePlatform, null);
   assert.equal(JSON.stringify({ results: finalResults, status: "SUCCESS" }), responseBefore);
 });
