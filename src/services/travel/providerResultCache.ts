@@ -3,6 +3,7 @@ import { hotelOccupancy } from "@/lib/hotels/hotelOccupancy";
 import { encodeCohort, decodeCohort, isCohortManifest } from "@/lib/search/cohortEncoding";
 import { getPrisma } from "@/lib/prisma";
 import { runCacheWrite } from "@/lib/search/cacheWriteGate";
+import { publishCohort } from "@/lib/search/publishCohort";
 import { Prisma } from "@/generated/prisma/client";
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
@@ -30,28 +31,36 @@ function boundedCacheWrite<T>(task: (db: Prisma.TransactionClient) => Promise<T>
 // Compress and bound each database value; a small manifest publishes only a
 // complete immutable generation. Compression is in the app, not PostgreSQL.
 async function writeSearchCohort(vertical: ProviderDetailsVertical, resultId: string, results: unknown[], search: unknown, now: number) {
+  const startedAt = performance.now();
   const { manifest, chunks } = await encodeCohort(results, randomUUID());
+  const encodedAt = performance.now();
   const deadline = Date.now() + 10_000;
-  const write = (id: string, value: unknown, contextValue: unknown) => {
+  const write = (entries: { id: string; value: unknown; contextValue: unknown }[]) => {
+    const rows = entries.map(({ id, value, contextValue }) => {
     const payload = JSON.stringify(value);
     const context = JSON.stringify(contextValue);
+    return Prisma.sql`(${cacheKey(vertical, id)}, ${vertical}, ${id}, ${payload}::jsonb, ${context}::jsonb, ${new Date(now + TTL_MS)}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
+    });
     return boundedCacheWrite(db => db.$executeRaw(Prisma.sql`
     INSERT INTO "ProviderResultCache" ("cacheKey", "vertical", "resultId", "normalizedResult", "searchContext", "expiresAt", "createdAt", "updatedAt")
-    VALUES (${cacheKey(vertical, id)}, ${vertical}, ${id}, ${payload}::jsonb, ${context}::jsonb, ${new Date(now + TTL_MS)}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    VALUES ${Prisma.join(rows)}
     ON CONFLICT ("cacheKey") DO UPDATE SET
       "normalizedResult" = EXCLUDED."normalizedResult",
       "searchContext" = EXCLUDED."searchContext",
       "expiresAt" = EXCLUDED."expiresAt", "updatedAt" = CURRENT_TIMESTAMP
     `), deadline);
   };
-  for (let i = 0; i < chunks.length; i++) {
-    await write(`${resultId}:chunk:${manifest.generation}:${i}`, chunks[i], null);
-  }
   // Readers see either the previous complete generation or this complete one.
   // Failed/abandoned chunks expire normally; never publish a partial manifest.
-  await write(resultId, manifest, search);
+  await publishCohort(chunks,
+    (batch, offset) => write(batch.map((value, index) => ({
+      id: `${resultId}:chunk:${manifest.generation}:${offset + index}`, value, contextValue: null,
+    }))),
+    () => write([{ id: resultId, value: manifest, contextValue: search }]),
+  );
   console.info("[provider-result-cache]", { event: "cohort_published", vertical,
-    rawBytes: manifest.rawBytes, chunks: manifest.chunks, resultCount: results.length });
+    rawBytes: manifest.rawBytes, chunks: manifest.chunks, resultCount: results.length,
+    encodeMs: Math.round(encodedAt - startedAt), writeMs: Math.round(performance.now() - encodedAt) });
 }
 
 async function readSearchCohort(vertical: ProviderDetailsVertical, resultId: string, now: number): Promise<unknown[]> {

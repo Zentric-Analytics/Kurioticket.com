@@ -68,17 +68,17 @@ test("mobile terminal states are distinct and expose working actions", () => {
   assert.match(state, /aria-live="polite"/);
 });
 
-test("mobile list paginates twenty results with the shared pagination state", () => {
-  assert.match(results, /data-mobile-paginated-flight-results/);
-  assert.match(results, /visibleResults\.map\(\(flight, index\)/);
-  assert.match(results, /<FlightResultsPagination[\s\S]*currentPage=\{validResultsPage\}[\s\S]*totalPages=\{totalResultPages\}/);
-  assert.match(results, /FLIGHT_RESULTS_PAGE_SIZE/);
-  assert.match(results, /data-flight-results-transition-cover[\s\S]*fixed inset-0 z-\[9990\][\s\S]*<FlightCardSkeleton key=\{index\} \/>/);
+test("mobile list renders every sorted result without pagination", () => {
+  assert.match(results, /data-mobile-continuous-flight-results/);
+  assert.match(results, /sortedResults\.map\(\(flight, index\)/);
+  assert.doesNotMatch(results, /FlightResultsPagination|resultsDisplayRange|FLIGHT_RESULTS_PAGE_SIZE|data-flight-results-transition-cover/);
+  assert.doesNotMatch(results, /FlightResultsPagination|resultsDisplayRange|FLIGHT_RESULTS_PAGE_SIZE|data-flight-results-transition-cover/);
+  assert.doesNotMatch(results, /FlightResultsPagination|resultsDisplayRange|FLIGHT_RESULTS_PAGE_SIZE|data-flight-results-transition-cover/);
   assert.doesNotMatch(results, /data-flight-results-transition-cover[\s\S]{0,220}hidden[\s\S]{0,120}sm:block/);
   assert.match(results, /aria-label="Back to top"/);
   assert.match(results, /<Footer variant="brand-legal-only" \/>/);
-  const mobileList = results.slice(results.indexOf("data-mobile-paginated-flight-results"), results.indexOf("ref={paginationListRef}"));
-  assert.doesNotMatch(mobileList, /data-mobile-continuous-flight-list|sortedResults\.map\(\(flight, index\)/);
+  const mobileList = results.slice(results.indexOf("data-mobile-continuous-flight-results"), results.indexOf("ref={paginationListRef}"));
+  assert.match(mobileList, /sortedResults\.map\(\(flight, index\)/);
 });
 
 test("Batch 1 and Batch 2 surfaces remain before the card list", () => {
@@ -86,6 +86,6 @@ test("Batch 1 and Batch 2 surfaces remain before the card list", () => {
   const shortcuts = results.indexOf("data-flight-mobile-results-shortcuts");
   const alert = results.indexOf("<FlightPriceAlertControl");
   const count = results.indexOf("formatMobileFlightResultsFound");
-  const list = results.indexOf("data-mobile-paginated-flight-results");
+  const list = results.indexOf("data-mobile-continuous-flight-results");
   assert.ok(shortcuts >= 0 && shortcuts < nearby && nearby < alert && alert < count && count < list);
 });

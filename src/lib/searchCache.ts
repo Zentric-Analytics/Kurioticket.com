@@ -432,15 +432,16 @@ export function rememberHotels(
   const expiresAt = now + FLIGHT_CACHE_TTL_MS;
   const searchKey = search ? hotelSearchIdentity(search) : null;
   const searchContext = search ? clone(search) : null;
+  const snapshot = clone(results);
   if (searchKey) {
     hotelSearchCache.set(searchKey, {
-      value: clone(results),
+      value: snapshot,
       expiresAt,
     });
   }
-  for (const result of results) {
+  for (const result of snapshot) {
     hotelCache.set(result.id, {
-      value: clone(result),
+      value: result,
       expiresAt,
       searchKey,
       searchContext,
@@ -450,7 +451,8 @@ export function rememberHotels(
 
 export function getHotelFromCache(id: string, now = Date.now()) {
   purgeExpired(hotelCache, now);
-  return hotelCache.get(id)?.value ?? null;
+  const result = hotelCache.get(id)?.value;
+  return result ? clone(result) : null;
 }
 
 export function getHotelDetailsCacheContext(

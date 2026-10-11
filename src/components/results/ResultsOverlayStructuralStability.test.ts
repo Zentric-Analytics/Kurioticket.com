@@ -48,14 +48,14 @@ test("cars keeps one main-header search launcher while Edit Search owns its over
   assert.doesNotMatch(cars, /renderMobileControlsRow|renderMobileCompactResultsHeader|mobileCompactHeaderVisible/);
 });
 
-test("mobile flights paginate while desktop retains the complete continuous list", () => {
-  const mobileStart = flights.indexOf("data-mobile-paginated-flight-results");
+test("mobile and desktop flights retain complete continuous lists", () => {
+  const mobileStart = flights.indexOf("data-mobile-continuous-flight-results");
   const desktopStart = flights.indexOf('ref={paginationListRef}');
   const mobileRegion = flights.slice(mobileStart, desktopStart);
   const desktopList = flights.indexOf('<div data-flight-results-card-list className="space-y-3 sm:space-y-4">', desktopStart);
   assert.ok(mobileStart >= 0 && desktopStart > mobileStart && desktopList > desktopStart);
-  assert.match(mobileRegion, /visibleResults\.map/);
-  assert.match(mobileRegion, /<FlightResultsPagination/);
+  assert.match(mobileRegion, /sortedResults\.map/);
+  assert.doesNotMatch(mobileRegion, /<FlightResultsPagination/);
   const desktopRegion = flights.slice(desktopList, flights.indexOf("{renderMobileFullFiltersSheet()}", desktopList));
   assert.match(desktopRegion, /sortedResults\.map/);
   assert.doesNotMatch(desktopRegion, /<FlightResultsPagination|visibleResults\.map/);

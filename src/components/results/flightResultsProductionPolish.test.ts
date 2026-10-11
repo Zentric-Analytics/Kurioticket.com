@@ -104,8 +104,8 @@ test("mobile Flight Results contains the filter rail within its gutter and keeps
   assert.match(source, /data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
   assert.match(source, /data-mobile-flight-results-summary-row\s*className="flex w-full/);
   assert.match(source, /data-flight-results-card-list className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\] space-y-3"/);
-  assert.match(source, /data-mobile-paginated-flight-results[\s\S]{0,220}"pt-3"/);
-  assert.match(source, /data-flight-results-skeleton-card-list className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\][^"]*sm:space-y-4"/);
+  assert.match(source, /data-mobile-continuous-flight-results[\s\S]{0,220}"pt-3 pb-6"/);
+  assert.doesNotMatch(source, /data-flight-results-skeleton-card-list|FlightResultsPageTransitionSkeleton/);
   assert.match(source, /ref=\{paginationListRef\}[\s\S]{0,180}aria-busy=\{filterApplying\}[\s\S]{0,180}className="hidden sm:block"/);
   assert.match(card, /block w-full rounded-2xl/);
 });
@@ -229,20 +229,11 @@ test("mobile Flight filter surfaces use Hotel visual contracts", async () => {
   assert.doesNotMatch(quick, /bg-\[#075EE8\]|bg-\[#EAF2FF\]/);
 });
 
-test("pagination uses an occluding full-page transition with an accessible status on mobile and desktop", async () => {
-  const source = await readFile(
-    new URL("./FlightResultsClient.tsx", import.meta.url),
-    "utf8",
-  );
-
-  assert.match(source, /createPortal\([\s\S]*<FlightResultsPageTransitionSkeleton/);
-  assert.match(source, /data-flight-results-transition-cover/);
-  assert.match(source, /fixed inset-0 z-\[9990\]/);
-  assert.match(source, /className="sr-only" role="status" aria-live="polite"/);
-  assert.match(source, /px-3 py-4 sm:px-4 sm:py-8/);
-  assert.match(source, /<FlightCardSkeleton key=\{index\} \/>/);
-  assert.doesNotMatch(source, /data-flight-results-transition-cover[\s\S]{0,220}hidden[\s\S]{0,120}sm:block/);
-  assert.match(source, /motion-reduce:animate-none/);
+test("continuous flights retain accessible filter status without pagination overlays", async () => {
+  const source = await readFile(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /FlightResultsPageTransitionSkeleton|data-flight-results-transition-cover/);
+  assert.match(source, /role="status" aria-live="polite"/);
+  assert.match(source, /aria-busy=\{filterApplying\}/);
 });
 
 test("desktop cards use one prominent stacked airline identity", async () => {

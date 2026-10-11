@@ -21,7 +21,7 @@ test("Flight mobile web uses the stable Hotel/Cars-style results-region scrollba
   assert.match(resultsSource, /<FlightResultsScrollIndicator \/>/);
   assert.match(indicatorSource, /window\.scrollY/);
   assert.match(indicatorSource, /\[data-flight-mobile-results-intro\]/);
-  assert.match(indicatorSource, /\[data-mobile-paginated-flight-results\]/);
+  assert.match(indicatorSource, /\[data-mobile-continuous-flight-results\]/);
   assert.match(indicatorSource, /regionBottom - viewportHeight/);
   assert.match(indicatorSource, /const trackTop = Math\.min\(scrollStart, maxTrackTop\)/);
   assert.doesNotMatch(indicatorSource, /compactHeaderVisible|data-flight-results-compact-header/);

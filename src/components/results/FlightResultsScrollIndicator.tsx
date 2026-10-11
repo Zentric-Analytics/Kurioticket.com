@@ -78,7 +78,7 @@ export function FlightResultsScrollIndicator() {
       }
 
       const resultsIntro = document.querySelector<HTMLElement>("[data-flight-mobile-results-intro]");
-      const resultsRegion = document.querySelector<HTMLElement>("[data-mobile-paginated-flight-results]");
+      const resultsRegion = document.querySelector<HTMLElement>("[data-mobile-continuous-flight-results]");
       if (!resultsIntro || !resultsRegion) {
         geometryRef.current = { scrollStart: 0, maxScroll: 0, thumbTravel: 0 };
         setThumbHeight(0);

@@ -219,23 +219,14 @@ test("results pagination is calendar-blind", () => {
   assert.doesNotMatch(source, /getNearbyFareAnchorCorrection|NearbyFarePaginationSnapshot/);
 });
 
-test("standalone pagination owns local state and mirrors it through native history", () => {
-  assert.match(source, /const \[standaloneResultsPage, setStandaloneResultsPage\] = useState\(\(\) =>[\s\S]*?urlParams\.get\("page"\)/);
-  assert.match(source, /guidedMode[\s\S]*?guidedResultsPage[\s\S]*?: standaloneResultsPage/);
-  assert.match(source, /paginateFlightResults\(sortedResults, validResultsPage\)/);
-  const start = source.indexOf("const changeResultsPage");
-  const end = source.indexOf("useEffect", start);
-  const pagination = source.slice(start, end);
-  assert.match(pagination, /setStandaloneResultsPage\(page\)/);
-  assert.match(pagination, /page === 1\) nextParams\.delete\("page"\)/);
-  assert.match(pagination, /nextParams\.set\("page", String\(page\)\)/);
-  assert.match(pagination, /window\.history\.replaceState/);
-  assert.doesNotMatch(pagination, /router\.push/);
+test("continuous results do not use URL page state to limit inventory", () => {
+  assert.doesNotMatch(source, /standaloneResultsPage|guidedResultsPage|paginateFlightResults|changeResultsPage/);
+  assert.match(source, /sortedResults\.map/);
 });
 
 test("nearby fare DOM remains outside the paginated card subtree", () => {
   const rail = source.indexOf('data-nearby-fare-presentation="mobile"');
-  const paginatedCards = source.indexOf("data-mobile-paginated-flight-results");
+  const paginatedCards = source.indexOf("data-mobile-continuous-flight-results");
   assert.ok(rail > -1 && paginatedCards > rail);
   assert.doesNotMatch(source.slice(rail, paginatedCards), /<FlightResultsPagination/);
 });
@@ -255,7 +246,7 @@ test("results pagination preserves the searched departure date and its blue sele
   const pageChangeStart = source.indexOf("const changeResultsPage");
   const pageChangeEnd = source.indexOf("useEffect", pageChangeStart);
   const pageChange = source.slice(pageChangeStart, pageChangeEnd);
-  assert.match(pageChange, /nextParams\.set\("page", String\(page\)\)/);
+  assert.doesNotMatch(source, /nextParams\.set\("page", String\(page\)\)/);
   assert.doesNotMatch(pageChange, /setDepartureDate|nearbyFareCacheRef|setNearbyFares/);
 });
 

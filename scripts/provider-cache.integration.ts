@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
 import test from "node:test";
 import { getPrisma } from "../src/lib/prisma";
 import { rememberProviderResults, getProviderResultWithContext, rememberHotelSearchCohort, getHotelSearchCohort } from "../src/services/travel/providerResultCache";
@@ -23,7 +24,7 @@ test("PostgreSQL persists every batched offer, duplicate update and complete coh
     const results: NormalizedHotelResult[] = Array.from({ length: 1042 }, (_, i) => ({
       id: `integration-${i}`, name: `Hotel ${i}`, pricePerNight: i + 1, totalPrice: i + 1,
       provider: "Synthetic", currency: "USD", bookingUrl: "https://example.com", partnerRedirectUrl: "https://example.com",
-      rating: 4, location: "Test city", amenities: [], roomType: "Test room", cancellationInfo: "Test policy",
+      rating: 4, location: "Test city", amenities: [], roomType: randomBytes(1024).toString("hex"), cancellationInfo: "Test policy",
       valueScore: 80, travelConfidenceScore: 80, arrivalSuitabilityScore: 80, recommendationReasons: [], badges: [],
     }));
     const search = { destination: "Synthetic test city", checkIn: "2030-01-01", checkOut: "2030-01-02", guests: 1, rooms: 1 };
@@ -41,6 +42,7 @@ test("PostgreSQL persists every batched offer, duplicate update and complete coh
     } });
     const manifest = manifestRow.normalizedResult as { generation: string; chunks: number; format: string };
     assert.equal(manifest.format, "gzip-chunks-v1");
+    assert.ok(manifest.chunks > 8, "exercise more than one bounded chunk-write batch");
     const firstChunk = await db.providerResultCache.findUniqueOrThrow({ where: {
       cacheKey: `${manifestRow.cacheKey}:chunk:${manifest.generation}:0`,
     } });

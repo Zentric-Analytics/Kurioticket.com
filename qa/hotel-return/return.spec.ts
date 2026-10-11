@@ -1,6 +1,31 @@
 import { test, expect } from "@playwright/test";
 import { buildStaticCarResults } from "../../src/services/travel/staticCarResults";
 
+test("flight results expose all 45 offers without pagination, including old page URLs", async ({ page }) => {
+  const results = Array.from({ length: 45 }, (_, index) => ({
+    id: `qa-continuous-${index}`, provider: "QA Fixture", airlineName: "Test Air", airlineCode: "TA",
+    originAirport: "SFO", destinationAirport: "LAX", departureTime: "2030-10-12T08:00:00Z",
+    arrivalTime: "2030-10-12T10:00:00Z", duration: "2h", durationMinutes: 120, stops: 0,
+    layovers: [], cabinClass: "economy", baggageInfo: "Carry-on included", refundInfo: "Test policy",
+    price: 100 + index, currency: "USD", bookingUrl: "", partnerRedirectUrl: "",
+    valueScore: 80, riskScore: 5, comfortScore: 80, travelConfidenceScore: 90, travelEffortScore: 15,
+    recommendationReasons: [], badges: [],
+    searchPolicy: { source: "duffel", bookable: true, action: { kind: "internal-detail", href: `/flights/details/qa-continuous-${index}`, enabled: true } },
+  }));
+  await page.route("**/api/flights/search", route => route.fulfill({ json: {
+    results, warnings: [], status: "available", resultsCacheValidUntil: Date.now() + 600_000,
+  } }));
+  await page.goto("/flights/results?tripType=one-way&origin=SFO&destination=LAX&departureDate=2030-10-12&adults=1&children=0&infants=0&travelers=1&cabinClass=economy&page=3");
+  const list = page.locator("[data-flight-results-card-list]").filter({ visible: true });
+  await expect(list).toHaveCount(1);
+  await expect.poll(async () => list.locator('a[href*="/flights/details/qa-continuous-"]').evaluateAll(links =>
+    new Set(links.map(link => (link as HTMLAnchorElement).pathname)).size)).toBe(45);
+  await expect(page.getByRole("navigation", { name: "Flight results pages" })).toHaveCount(0);
+  const last = list.locator('a[href*="/flights/details/qa-continuous-44"]').filter({ visible: true }).first();
+  await last.scrollIntoViewIfNeeded();
+  await expect(last).toBeInViewport();
+});
+
 test("Rejected car criteria retain the editable results shell instead of retrying", async ({ page }) => {
   let searches = 0;
   await page.route("**/api/cars/search", route => {
