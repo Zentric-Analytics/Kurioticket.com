@@ -23,9 +23,20 @@ test("mobile results return uses client navigation to retain the in-memory searc
 test("standalone chooses independent mobile and desktop presentations with shared data", () => {
   assert.match(dispatcher, /useSyncExternalStore/);
   assert.match(dispatcher, /max-width: 1023px/);
-  assert.match(dispatcher, /return mobile \? <MobileHotelDetails \{\.\.\.props\} \/> : <DesktopHotelDetails \{\.\.\.props\} \/>/);
+  assert.match(dispatcher, /mobile \? <MobileHotelDetails \{\.\.\.props\} \/> : <DesktopHotelDetails \{\.\.\.props\} \/>/);
   assert.match(dispatcher, /removeEventListener\("change", callback\)/);
   assert.doesNotMatch(dispatcher, /<article|<aside|<h1/);
+});
+
+test("sandbox location facts stay disclosed without presenting synthetic coordinates as travel directions", () => {
+  assert.match(client, /locationIsSimulated=\{hotel.provider === "KAYAK sandbox"\}/);
+  assert.match(dispatcher, /props.locationIsSimulated \? <p data-hotel-test-location/);
+  assert.match(dispatcher, /not verified for travel/);
+  assert.match(mobile, /const location = props.locationIsSimulated \? null : props.locationDetails \?\? property/);
+  assert.match(desktop, /const locationProperty = props.locationIsSimulated \? null : props.locationDetails \?\? property/);
+  const card = read("../HotelCard.tsx");
+  assert.match(card, /hotel.provider === "KAYAK sandbox" \? <p data-hotel-test-location/);
+  assert.match(card, /\{hotel.location\}/);
 });
 
 test("canonical result name and save state reach both property presentations", () => {

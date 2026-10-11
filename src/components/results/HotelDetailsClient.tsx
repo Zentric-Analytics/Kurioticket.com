@@ -895,6 +895,7 @@ export function HotelDetailsClient({
           <div className="mx-auto w-full max-w-[1400px] px-0 lg:max-w-[1080px] lg:px-[30px]" data-hotel-details-page-shell>
             <div>
               <StandaloneHotelDetails
+                locationIsSimulated={hotel.provider === "KAYAK sandbox"}
                 hotelName={hotel.name}
                 starRating={starRating}
                 starRatingAriaLabel={starRating ? t("hotelResults.starHotelAria").replace("{{rating}}", formatHotelDetailsRating(starRating, locale)) : ""}

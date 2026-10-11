@@ -11,6 +11,17 @@ import {
 
 const click = "https://affiliates.kayak.com/sandbox-clickout";
 
+test("sandbox requests use the accepted client default while preserving a supplied browser user agent", async () => {
+  for (const userAgent of [undefined, "Mozilla/5.0 test-browser"]) {
+    const client = new KayakSandboxClient("test-key", async (_url, init) => {
+      assert.equal(new Headers(init?.headers).get("User-Agent"), userAgent ?? "kayakaffiliateapp");
+      assert.equal(new Headers(init?.headers).get("x-original-client-ip"), "192.0.2.10");
+      return new Response(JSON.stringify({ results: [] }), { status: 200 });
+    }, undefined, userAgent, "192.0.2.10");
+    assert.deepEqual(await client.places("hotels", "Los Angeles", "test-track"), []);
+  }
+});
+
 test("only explicit offer-specific carry-on inclusion qualifies for baggage inclusion", () => {
   for (const restriction of ["included", "notIncluded", "unknown", undefined]) {
     const [offer] = normalizeSandboxOffers("flights", {currency:"USD",priceMode:"total",legs:{l:{segments:[{id:"s"}]}},segments:{s:{origin:"BOS",destination:"JFK",airline:"AA"}},results:[{legs:[{id:"l"}],bookingOptions:[{type:"regular",displayPrice:{price:100},bookingUrl:click,fees:{carryOnBag:[{bagNumber:"first",restriction}]}}]}]});

@@ -30,6 +30,7 @@ type RoomChoice = {
 type GalleryProps = Parameters<typeof HotelDetailsGallery>[0];
 
 export type StandaloneHotelDetailsProps = {
+  locationIsSimulated?: boolean;
   hotelName: string;
   starRating: number | null;
   starRatingAriaLabel: string;
@@ -101,5 +102,8 @@ function subscribeMobileDetails(callback: () => void) {
 
 export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
   const mobile = useSyncExternalStore(subscribeMobileDetails, () => window.matchMedia("(max-width: 1023px)").matches, () => false);
-  return mobile ? <MobileHotelDetails {...props} /> : <DesktopHotelDetails {...props} />;
+  return <>
+    {props.locationIsSimulated ? <p data-hotel-test-location role="note" className="mx-4 my-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Provider test location: the supplied address and coordinates may be synthetic. They are not verified for travel; maps and directions are unavailable for this test offer.</p> : null}
+    {mobile ? <MobileHotelDetails {...props} /> : <DesktopHotelDetails {...props} />}
+  </>;
 }
