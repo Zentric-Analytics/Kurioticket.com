@@ -126,7 +126,8 @@ test("property search is shared, normalized and represented as an active filter"
 test("mobile Hotel filter apply uses the normal page loader and compact selected-value chips", () => {
   const cardRegion = source.slice(source.indexOf("ref={paginationListRef}"), source.indexOf("</section>", source.indexOf("ref={paginationListRef}")));
   assert.doesNotMatch(cardRegion, /data-hotel-filter-refresh-progress/);
-  assert.match(cardRegion, /paginationTransitionPhase === "covering"/);
+  assert.match(cardRegion, /aria-busy=\{filterApplying\}/);
+  assert.match(cardRegion, /data-hotel-continuous-results/);
   const quickApply = source.slice(source.indexOf('className="h-11 w-\[32%\] shrink-0 rounded-lg bg-[#004BB8]'), source.indexOf("</footer>", source.indexOf('className="h-11 w-\[32%\] shrink-0 rounded-lg bg-[#004BB8]')));
   assert.match(quickApply, /triggerFilterApplying\(\)/);
   assert.match(source, /if \(loading \|\| filterApplying\)/);

@@ -56,9 +56,8 @@ test("Hotel empty and error states are phone-sized and recoverable", () => {
   assert.match(results, /<div className="rounded-\[13px\][^"\n]*">\s*<p>[^\n]*noStaysMatchFiltersInline/);
 });
 
-test("Hotel pagination keeps shared paging semantics without an artificial half-second hold", () => {
-  assert.match(results, /PAGINATION_MIN_BUSY_MS/);
-  assert.doesNotMatch(results, /setTimeout\(resolve, 520\)/);
-  assert.match(results, /aria-label="Hotel results pages"[\s\S]*?pt-2 sm:gap-1\.5 sm:pt-4/);
-  assert.match(results, /buildHotelResultsPaginationItems\(currentResultsPage, totalHotelResultPages, true\)/);
+test("Hotel continuous list has no paging controls or artificial page-transition delay", () => {
+  assert.match(results, /sortedVisibleHotels\.map/);
+  assert.doesNotMatch(results, /contentVisibility|containIntrinsicSize/);
+  assert.doesNotMatch(results, /PAGINATION_MIN_BUSY_MS|Hotel results pages|buildHotelResultsPaginationItems/);
 });

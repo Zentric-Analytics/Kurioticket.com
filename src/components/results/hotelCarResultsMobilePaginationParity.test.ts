@@ -5,13 +5,11 @@ import test from "node:test";
 const hotel = readFileSync(new URL("./HotelResultsClient.tsx", import.meta.url), "utf8");
 const cars = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
 
-test("Hotel keeps responsive pagination while Cars renders one continuous result list", () => {
-  assert.equal(hotel.match(/aria-label="Hotel results pages"/g)?.length, 1);
-  assert.match(hotel, /buildHotelResultsPaginationItems\(currentResultsPage, totalHotelResultPages\)/);
-  assert.match(hotel, /buildHotelResultsPaginationItems\(currentResultsPage, totalHotelResultPages, true\)/);
-  assert.match(hotel, /hidden items-center gap-1\.5 sm:flex/);
-  assert.match(hotel, /flex items-center sm:hidden/);
-
+test("Hotels and Cars render continuous result lists without page controls", () => {
+  assert.match(hotel, /sortedVisibleHotels\.map/);
+  assert.match(hotel, /data-hotel-continuous-results/);
+  assert.doesNotMatch(hotel, /Hotel results pages|paginateHotelResults|paginationPendingPage/);
+  assert.doesNotMatch(hotel, /aria-label="Previous page"|aria-label="Next page"/);
   assert.match(cars, /\{visibleResults\.map\(\(car\) =>/);
   assert.doesNotMatch(cars, /aria-label="Car results pagination"/);
   assert.doesNotMatch(cars, /aria-label="Previous page"|aria-label="Next page"/);

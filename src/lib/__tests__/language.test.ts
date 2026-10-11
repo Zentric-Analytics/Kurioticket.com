@@ -1185,7 +1185,7 @@ test("Thai Hotels results page copy resolves through active i18n keys", () => {
   assert.ok(hotelCardSource.includes("hotel.location"));
   assert.ok(hotelCardSource.includes("getHotelPriceDetails(hotel)"));
   assert.ok(hotelCardSource.includes("nightlyDisplayPrice.formatted"));
-  assert.ok(hotelResultsClientSource.includes("sortHotelSummaryResults") && hotelResultsClientSource.includes("paginateHotelResults(sortedVisibleHotels, currentResultsPage)") && hotelResultsClientSource.includes("paginatedVisibleHotels.map"));
+  assert.ok(hotelResultsClientSource.includes("sortHotelSummaryResults") && hotelResultsClientSource.includes("data-hotel-continuous-results") && hotelResultsClientSource.includes("sortedVisibleHotels.map"));
   assert.ok(hotelResultsClientSource.includes("className="));
   assert.ok(hotelCardSource.includes("aria-label="));
   assert.deepEqual(["Welcome Center Hotels", "Victoria Crown Plaza Hotel", "The Wheatbaker", "The Federal Palace Hotel & Casino", "Lagos Continental Hotel", "Whitehouse Msquare Hotel"], ["Welcome Center Hotels", "Victoria Crown Plaza Hotel", "The Wheatbaker", "The Federal Palace Hotel & Casino", "Lagos Continental Hotel", "Whitehouse Msquare Hotel"]);
@@ -1284,7 +1284,7 @@ test("Vietnamese Hotels Results page copy resolves through active i18n keys", ()
   assert.ok(hotelCardSource.includes("getHotelPriceDetails(hotel)"));
   assert.ok(hotelCardSource.includes("hotel.id"));
   assert.ok(hotelCardSource.includes("nightlyDisplayPrice.formatted"));
-  assert.ok(hotelResultsClientSource.includes("sortHotelSummaryResults") && hotelResultsClientSource.includes("paginateHotelResults(sortedVisibleHotels, currentResultsPage)") && hotelResultsClientSource.includes("paginatedVisibleHotels.map"));
+  assert.ok(hotelResultsClientSource.includes("sortHotelSummaryResults") && hotelResultsClientSource.includes("data-hotel-continuous-results") && hotelResultsClientSource.includes("sortedVisibleHotels.map"));
   assert.ok(hotelResultsClientSource.includes("buildHotelFilterOptions") && hotelResultsClientSource.includes("toggleFilter"));
   assert.ok(hotelResultsClientSource.includes("className="));
   assert.ok(hotelCardSource.includes("aria-label="));
@@ -6923,7 +6923,6 @@ test("Swedish Hotels results filter and live-search error copy is localized on t
     "filters",
     "closeFilters",
     "deals.results.package.view.hotel",
-    "updatingResults",
   ]) {
     if (!retainedTranslationOnlyKeys.has(key)) assert.ok(hotelResultsClientSource.includes(key), `${key} should be read by the active /hotels/results client render path`);
   }
