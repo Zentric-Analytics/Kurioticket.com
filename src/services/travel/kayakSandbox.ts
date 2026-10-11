@@ -651,6 +651,8 @@ export class KayakSandboxClient {
         throw error;
       }
     }
+    const offers: SandboxOffer[] = [];
+    try {
     for (let attempt = 0; attempt < 12; attempt++) {
       if (signal.aborted) throw new KayakError("timeout");
       const data = await this.request(
@@ -663,7 +665,7 @@ export class KayakSandboxClient {
         search.vertical === "cars",
       );
       if (data.status === "complete") {
-        const offers = normalizeSandboxOffers(search.vertical, data);
+        offers.push(...normalizeSandboxOffers(search.vertical, data));
         const total = data.totalCount;
         if (total === undefined) return offers;
         if (typeof total !== "number" || !Number.isSafeInteger(total) || total < 0) throw new KayakError("invalid_response");
@@ -704,5 +706,13 @@ export class KayakSandboxClient {
       await this.pause(750);
     }
     throw new KayakError("timeout");
+    } catch (error) {
+      // A later transport failure must not erase completed, validated pages.
+      // Inconsistent/malformed inventory still fails closed.
+      if (offers.length && error instanceof KayakError && error.code !== "invalid_response") {
+        throw new KayakPartialSearchError(error.code, offers);
+      }
+      throw error;
+    }
   }
 }

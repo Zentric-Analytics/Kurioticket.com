@@ -10,8 +10,6 @@ export function logNativeFlightProviderDiagnostics(input: {
   providerStatuses: ProviderResult<unknown>[];
   finalResults: ProviderIdentifiedResult[];
 }) {
-  if (!input.mobilePlatform) return;
-
   console.info("[flight-search:provider-diagnostics]", {
     requestId: input.requestId,
     mobilePlatform: input.mobilePlatform,
