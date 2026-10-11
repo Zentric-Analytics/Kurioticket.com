@@ -485,7 +485,13 @@ export class KayakSandboxClient {
           }
           throw new KayakError(code);
         }
-        const parsed: unknown = await response.json();
+        let parsed: unknown;
+        try {
+          parsed = await response.json();
+        } catch (error) {
+          if (error instanceof SyntaxError) throw new KayakError("invalid_response");
+          throw error;
+        }
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
           throw new KayakError("invalid_response");
         return parsed as ObjectValue;
@@ -682,6 +688,9 @@ export class KayakSandboxClient {
               resultParameters: { ...resultParameters, pageSize: size, pageNumber },
             }, signal, empty, search.vertical === "cars");
             if (response.status === "complete") { page = response; break; }
+            if (!["first-phase", "second-phase"].includes(text(response.status))) {
+              throw new KayakError("invalid_response");
+            }
             await this.pause(750);
           }
           if (!page) throw new KayakError("timeout");

@@ -49,6 +49,20 @@ for (const vertical of ["cars", "flights"] as const) {
     });
     assert.equal(calls, 2);
   });
+  for (const malformed of ["json", "state"] as const) {
+    test(`${vertical} rejects malformed later ${malformed} without exposing partial offers`, async () => {
+      let calls = 0;
+      const client = new KayakSandboxClient("test", async () => ++calls === 1
+        ? Response.json(page)
+        : malformed === "json" ? new Response("not json") : Response.json({ status: "unexpected" }), async () => {});
+      await assert.rejects(client.search(search, "test-track"), error => {
+        assert.ok(!(error instanceof KayakPartialSearchError));
+        assert.equal((error as { code: string }).code, "invalid_response");
+        return true;
+      });
+      assert.equal(calls, 2);
+    });
+  }
   test(`${vertical} does not preserve an inconsistent repeated page`, async () => {
     const client = new KayakSandboxClient("test", async () => Response.json(page), async () => {});
     await assert.rejects(client.search(search, "test-track"), error => {
