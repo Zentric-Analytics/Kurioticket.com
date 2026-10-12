@@ -2942,17 +2942,16 @@ export function CarsResultsExperience({
                 className="flex w-full min-w-0 flex-col items-start gap-2 pt-1 sm:gap-3 lg:py-1"
                 data-cars-results-toolbar
               >
-                {!embedded ? <CarPriceAlertControl search={search} results={providerResults} /> : null}
                 <div
-                  className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-2"
+                  className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0 sm:gap-y-3"
                   data-cars-results-summary-row
                 >
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0">
                     <h2
                       ref={resultHeadingRef}
                       id={resultHeadingId}
                       tabIndex={-1}
-                      className="truncate whitespace-nowrap text-[12px] font-semibold leading-4 tracking-[-0.002em] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[14px] sm:font-semibold sm:leading-5 sm:tracking-[-0.004em] lg:text-[14px] lg:font-semibold lg:leading-5 lg:tracking-[-0.005em]"
+                      className="truncate whitespace-nowrap text-[12px] font-semibold leading-4 tracking-[-0.002em] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] max-[359px]:text-[11px] sm:text-[14px] sm:font-semibold sm:leading-5 sm:tracking-[-0.004em] lg:text-[14px] lg:font-semibold lg:leading-5 lg:tracking-[-0.005em]"
                     >
                       {resultHeading ??
                         t(
@@ -2967,6 +2966,7 @@ export function CarsResultsExperience({
                         )}
                     </h2>
                   </div>
+                  {!embedded ? <CarPriceAlertControl search={search} results={providerResults} /> : null}
                   <div className="hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
                     <span className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
                       {t("carsResults.sortBy")}:
