@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
+import { MobileFlightDetailsActionBar, mobileFlightDetailsNavSurfaceClass } from "./MobileFlightDetailsActionBar";
 import { FlightDetailsLoadingShell } from "@/components/results/flightDetails/FlightDetailsLoadingShell";
 import { FlightIdentityMark } from "@/components/results/flightDetails/FlightIdentityMark";
 import { MobileNativeFareRail } from "@/components/results/flightDetails/MobileNativeFareRail";
@@ -73,10 +74,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const headingRef = useRef<HTMLHeadingElement>(null);
   const fareButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const mobileHeroRef = useRef<HTMLDivElement>(null);
-  const mobileItineraryRef = useRef<HTMLDivElement>(null);
-  const mobileBackControlRef = useRef<HTMLDivElement>(null);
-  const [mobileHeaderProtected, setMobileHeaderProtected] = useState(false);
+
 
   useEffect(() => {
     const controller = new AbortController();
@@ -116,32 +114,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     };
   }, [sessionStatus]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const sync = () => {
-      if (window.matchMedia("(min-width: 640px)").matches) {
-        setMobileHeaderProtected(false);
-        return;
-      }
-      const hero = mobileHeroRef.current;
-      const itinerary = mobileItineraryRef.current;
-      if (!hero || !itinerary) return;
-      const heroTop = hero.getBoundingClientRect().top + window.scrollY;
-      const heroHeight = hero.getBoundingClientRect().height;
-      const itineraryTop = itinerary.getBoundingClientRect().top + window.scrollY;
-      const foregroundOffset = itineraryTop - (heroTop + heroHeight);
-      const protectedHeight = (mobileBackControlRef.current?.getBoundingClientRect().bottom ?? 52) + 12;
-      const threshold = Math.max(0, heroTop + heroHeight + foregroundOffset - protectedHeight);
-      setMobileHeaderProtected(window.scrollY >= threshold);
-    };
-    sync();
-    window.addEventListener("scroll", sync, { passive: true });
-    window.addEventListener("resize", sync);
-    return () => {
-      window.removeEventListener("scroll", sync);
-      window.removeEventListener("resize", sync);
-    };
-  }, [response]);
+
 
   const available = response?.status === "available" ? response : null;
   const fareChoices = useMemo(() => available?.fareChoices ?? [], [available]);
@@ -363,26 +336,29 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     : localSavedFlightIds.includes(savedFlightKey);
 
   return (
-    <main className="flex-1 bg-[#F5F7FB] pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-[#142033] sm:bg-[#F7F9FC] sm:pb-16 sm:pt-4 lg:pt-3">
-      <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 top-0 z-[70] h-[calc(env(safe-area-inset-top)+64px)] transition-colors sm:hidden ${mobileHeaderProtected ? "bg-[#F5F7FB]" : "bg-transparent"}`} />
-      <div ref={mobileBackControlRef} className="fixed left-4 top-[calc(env(safe-area-inset-top)+8px)] z-[80] sm:hidden">
-        <Link href={resultsHref} aria-label="Back to results" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/55 bg-white/90 text-slate-900 shadow-[0_2px_6px_rgba(15,23,42,0.12)] backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">
-          <ArrowLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
-        </Link>
-      </div>
-      <div data-flight-details-mobile-floating-actions className="fixed right-4 top-[calc(env(safe-area-inset-top)+8px)] z-[80] inline-flex h-11 w-[88px] items-center rounded-[20px] border border-white/55 bg-white/90 shadow-[0_2px_6px_rgba(15,23,42,0.12)] backdrop-blur-md sm:hidden">
-        <button type="button" aria-label={flightSaved ? "Remove saved flight" : "Save flight"} aria-pressed={flightSaved} disabled={savedFlightPending} onClick={() => void toggleSavedFlight()} className="inline-flex h-11 w-11 items-center justify-center rounded-l-[20px] text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 disabled:cursor-wait disabled:opacity-60">
-          <Heart className="h-[17px] w-[17px] translate-x-1" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
-        </button>
-        <button type="button" aria-label="Share flight" onClick={() => void shareFlight()} className="inline-flex h-11 w-11 items-center justify-center rounded-r-[20px] text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35">
-          <Share2 className="h-[17px] w-[17px] -translate-x-1" strokeWidth={2} aria-hidden="true" />
-        </button>
-      </div>
+    <main className="flex-1 bg-[#F5F7FB] pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-slate-900 sm:bg-[#F7F9FC] sm:text-[#142033] sm:pb-16 sm:pt-4 lg:pt-3">
+      <MobileFlightDetailsActionBar
+        back={(
+          <Link href={resultsHref} aria-label="Back to results" className={`${mobileFlightDetailsNavSurfaceClass} w-11 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35`}>
+            <ArrowLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+          </Link>
+        )}
+        actions={(
+          <>
+            <button type="button" aria-label={flightSaved ? "Remove saved flight" : "Save flight"} aria-pressed={flightSaved} disabled={savedFlightPending} onClick={() => void toggleSavedFlight()} className="inline-flex h-11 w-11 items-center justify-center shrink-0 rounded-full text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 disabled:cursor-wait disabled:opacity-60">
+              <Heart className="h-5 w-5" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
+            </button>
+            <button type="button" aria-label="Share flight" onClick={() => void shareFlight()} className="inline-flex h-11 w-11 items-center justify-center shrink-0 rounded-full text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35">
+              <Share2 className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+            </button>
+          </>
+        )}
+      />
       <span className="sr-only" role="status" aria-live="polite">{shareFeedback}</span>
       <div className="mx-auto w-full max-w-[1080px] px-0 sm:px-6 lg:px-[30px]">
         <div className="min-w-0">
           <section className="min-w-0 border-b border-[#E2E8F0] bg-[#F5F7FB] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
-            <div ref={mobileHeroRef} data-testid="flight-details-hero" className="relative flex min-h-[318px] flex-col justify-end overflow-hidden px-[18px] pb-[122px] pt-[calc(env(safe-area-inset-top)+64px)] sm:min-h-[280px] sm:justify-end sm:rounded-t-[12px] sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
+            <div data-testid="flight-details-hero" className="relative flex min-h-[254px] flex-col justify-end overflow-hidden px-[18px] pb-[122px] pt-4 sm:min-h-[280px] sm:justify-end sm:rounded-t-[12px] sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
               <div
                 data-flight-details-desktop-navigation
@@ -424,11 +400,11 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               </div>
               <svg data-flight-details-hero-curve aria-hidden="true" viewBox="0 0 100 64" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[65px] w-full sm:hidden"><path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z" fill="#F5F7FB" /></svg>
             </div>
-            <div className="relative z-10 px-[18px] pb-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0 lg:px-6 lg:pb-6">
-            <div ref={mobileItineraryRef} data-mobile-native-itinerary-stack className="-mx-[10px] -mt-[104px] space-y-[14px] sm:mx-0 sm:mt-0 sm:space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
+            <div className="relative z-10 px-3 pb-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0 lg:px-6 lg:pb-6">
+            <div data-mobile-native-itinerary-stack className="-mx-2 -mt-[104px] space-y-3 sm:mx-0 sm:mt-0 sm:space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
 
-            <h2 className="mb-0 mt-6 text-[16px] font-medium leading-[21px] tracking-[-0.15px] text-[#1A1A1A] sm:mb-3 sm:text-[18px] sm:font-medium sm:leading-tight sm:tracking-normal sm:text-slate-950">Pick your fare</h2>
-            {mobilePricesReady ? <MobileNativeFareRail fares={fareChoices} selectedFareKey={selectedFare?.key ?? ""} tripType={available.search.tripType} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} onSelect={selectFare} /> : <div data-mobile-native-fare-price-loading role="progressbar" aria-label="Loading fare prices" aria-busy="true" className="flex gap-[10px] overflow-hidden pb-[18px] pt-3 pr-[38px] sm:hidden">{fareChoices.slice(0,2).map((fare)=><div key={fare.key} className="relative h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-1.5 shadow-[0_2px_6px_rgba(7,19,59,0.06)]"><div className="flex justify-center gap-[7px]"><div className="h-6 w-6 animate-pulse rounded-lg bg-slate-200"/><div className="mt-1.5 h-3 w-[72px] animate-pulse rounded bg-slate-200"/></div><div className="mt-[5px] space-y-[5px]">{[0,1,2].map((row)=><div key={row} className="flex items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200"/><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-200"/></div>)}</div><div className="absolute inset-x-3 bottom-1.5 flex justify-center"><div className="h-4 w-[82px] animate-pulse rounded bg-slate-200"/></div></div>)}</div>}
+            <h2 className="mb-0 mt-6 text-[16px] font-medium leading-[21px] tracking-[-0.15px] text-slate-900 sm:mb-3 sm:text-[18px] sm:font-medium sm:leading-tight sm:tracking-normal sm:text-slate-950">Pick your fare</h2>
+            {mobilePricesReady ? <MobileNativeFareRail fares={fareChoices} selectedFareKey={selectedFare?.key ?? ""} tripType={available.search.tripType} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} onSelect={selectFare} /> : <div data-mobile-native-fare-price-loading role="progressbar" aria-label="Loading fare prices" aria-busy="true" className="flex gap-3 overflow-hidden pb-3 pt-3 pr-[38px] sm:hidden">{fareChoices.slice(0,2).map((fare)=><div key={fare.key} className="relative h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-1.5 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]"><div className="flex justify-center gap-[7px]"><div className="h-6 w-6 animate-pulse rounded-lg bg-slate-200"/><div className="mt-1.5 h-3 w-[72px] animate-pulse rounded bg-slate-200"/></div><div className="mt-[5px] space-y-[5px]">{[0,1,2].map((row)=><div key={row} className="flex items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200"/><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-200"/></div>)}</div><div className="absolute inset-x-3 bottom-1.5 flex justify-center"><div className="h-4 w-[82px] animate-pulse rounded bg-slate-200"/></div></div>)}</div>}
             {mobilePricesReady ? <div role="radiogroup" aria-label="Available fares" data-desktop-fare-rail className="hidden min-w-0 gap-3 overflow-x-auto overscroll-x-contain pb-3 pr-6 sm:flex sm:snap-x sm:snap-mandatory [scrollbar-width:thin]">
               {fareChoices.map((fare, index) => {
                 const selected = fare.key === selectedFare?.key;
@@ -659,7 +635,7 @@ function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, of
   return <>
     <section
       data-mobile-native-itinerary-card
-      className="relative overflow-hidden rounded-[15px] border border-[#E1E7EF] bg-white p-[15px] shadow-[0_6px_18px_rgba(7,19,59,0.14)] sm:hidden"
+      className="relative overflow-hidden rounded-[15px] border border-[#E1E7EF] bg-white p-[15px] shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)] sm:hidden"
       aria-labelledby={`${label.toLowerCase()}-mobile-heading`}
     >
       <div
@@ -670,18 +646,18 @@ function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, of
       <div className="relative z-[1]">
         <div className="flex items-start justify-between gap-3">
           <h2 id={`${label.toLowerCase()}-mobile-heading`} className="min-w-0 shrink text-[11px] font-extrabold uppercase leading-[15px] tracking-[0.5px] text-[#075EE8]">{label}</h2>
-          <time dateTime={leg.departureTime} className="shrink-0 whitespace-nowrap text-right text-[11px] font-medium leading-[15px] text-[#536B92]">{departureLongDate}</time>
+          <time dateTime={leg.departureTime} className="shrink-0 whitespace-nowrap text-right text-[11px] font-medium leading-[15px] text-slate-500">{departureLongDate}</time>
         </div>
 
         <div className="mt-[14px] grid grid-cols-[1.1fr_.8fr_1.1fr] items-center gap-2">
           <div className="min-w-0">
-            <p className="whitespace-nowrap text-[19px] font-extrabold leading-6 tabular-nums text-[#142033]">{formatTime(leg.departureTime, locale)}</p>
-            <p className="mt-[3px] text-[13px] font-bold leading-[17px] text-[#142033]">{leg.originAirport}</p>
-            {departureShortDate ? <p className="mt-px whitespace-nowrap text-[9.5px] font-medium leading-3 text-[#536B92]">{departureShortDate}</p> : null}
+            <p className="whitespace-nowrap text-[19px] font-extrabold leading-6 tabular-nums text-slate-950">{formatTime(leg.departureTime, locale)}</p>
+            <p className="mt-[3px] text-[13px] font-bold leading-[17px] text-slate-900">{leg.originAirport}</p>
+            {departureShortDate ? <p className="mt-px whitespace-nowrap text-[9.5px] font-medium leading-3 text-slate-500">{departureShortDate}</p> : null}
           </div>
 
           <div className="min-w-[72px] text-center">
-            <p className="text-[11px] font-semibold leading-4 text-[#536B92]">{leg.duration}</p>
+            <p className="text-[11px] font-semibold leading-4 text-slate-600">{leg.duration}</p>
             <div className="mt-[5px] flex items-center" aria-hidden="true">
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" />
               <span className="h-px min-w-1 flex-1 bg-[#94A3B8]/60" />
@@ -689,24 +665,24 @@ function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, of
               <span className="h-px min-w-1 flex-1 bg-[#94A3B8]/60" />
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" />
             </div>
-            <p className="mt-[5px] text-[10px] font-medium leading-[13px] text-[#536B92]">{stopStatus}</p>
+            <p className="mt-[5px] text-[10px] font-medium leading-[13px] text-slate-500">{stopStatus}</p>
           </div>
 
           <div className="min-w-0 text-right">
-            <p className="whitespace-nowrap text-[19px] font-extrabold leading-6 tabular-nums text-[#142033]">{formatTime(leg.arrivalTime, locale)}</p>
-            <p className="mt-[3px] text-[13px] font-bold leading-[17px] text-[#142033]">{leg.destinationAirport}</p>
-            {arrivalShortDate ? <p className="mt-px whitespace-nowrap text-[9.5px] font-medium leading-3 text-[#536B92]">{arrivalShortDate}</p> : null}
+            <p className="whitespace-nowrap text-[19px] font-extrabold leading-6 tabular-nums text-slate-950">{formatTime(leg.arrivalTime, locale)}</p>
+            <p className="mt-[3px] text-[13px] font-bold leading-[17px] text-slate-900">{leg.destinationAirport}</p>
+            {arrivalShortDate ? <p className="mt-px whitespace-nowrap text-[9.5px] font-medium leading-3 text-slate-500">{arrivalShortDate}</p> : null}
           </div>
         </div>
 
         <div className="mt-[13px] grid grid-cols-2 items-start gap-5">
           <div className="min-w-0">
-            <p className="text-[12px] font-medium leading-[17px] text-[#142033]">{airportName(departurePoint, leg.originAirport)}</p>
-            {departurePoint?.terminal ? <p className="mt-[5px] text-[11px] font-normal leading-4 text-[#536B92]">Terminal {departurePoint.terminal}</p> : null}
+            <p className="text-[12px] font-medium leading-[17px] text-slate-900">{airportName(departurePoint, leg.originAirport)}</p>
+            {departurePoint?.terminal ? <p className="mt-[5px] text-[11px] font-normal leading-4 text-slate-500">Terminal {departurePoint.terminal}</p> : null}
           </div>
           <div className="min-w-0 text-right">
-            <p className="text-[12px] font-medium leading-[17px] text-[#142033]">{airportName(arrivalPoint, leg.destinationAirport)}</p>
-            {arrivalPoint?.terminal ? <p className="mt-[5px] text-[11px] font-normal leading-4 text-[#536B92]">Terminal {arrivalPoint.terminal}</p> : null}
+            <p className="text-[12px] font-medium leading-[17px] text-slate-900">{airportName(arrivalPoint, leg.destinationAirport)}</p>
+            {arrivalPoint?.terminal ? <p className="mt-[5px] text-[11px] font-normal leading-4 text-slate-500">Terminal {arrivalPoint.terminal}</p> : null}
           </div>
         </div>
 
@@ -724,9 +700,9 @@ function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, of
               {layover ? (
                 <div data-flight-details-connection-row className="mb-0.5 flex items-center gap-[7px] rounded-[9px] border border-[#D6E2F0] bg-[#F3F7FC] px-[11px] py-2">
                   <Clock3 className="h-[13px] w-[13px] shrink-0 text-[#5D7496]" strokeWidth={1.8} aria-hidden="true" />
-                  <p className="min-w-0 flex-1 truncate text-[11px] font-semibold leading-4 text-[#142033]">
+                  <p className="min-w-0 flex-1 truncate text-[11px] font-semibold leading-4 text-slate-900">
                     Connection at {layoverLabel(layover.airport)}
-                    <span className="font-medium text-[#536B92]"> · {layover.duration}</span>
+                    <span className="font-medium text-slate-500"> · {layover.duration}</span>
                   </p>
                 </div>
               ) : null}
@@ -734,13 +710,13 @@ function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, of
                 <SegmentAirlineMark segment={segment} offerAirlineName={offerAirlineName} offerAirlineLogo={offerAirlineLogo} preferSegmentLogo />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-[10px]">
-                    <p className="min-w-0 shrink text-[13px] font-bold leading-[18px] text-[#142033]">{segment.originAirport} → {segment.destinationAirport}</p>
-                    <p className="max-w-[48%] shrink-0 whitespace-nowrap text-right text-[11px] font-semibold leading-4 tabular-nums text-[#142033]">{formatTime(segment.departureTime, locale)} – {formatTime(segment.arrivalTime, locale)}</p>
+                    <p className="min-w-0 shrink text-[13px] font-bold leading-[18px] text-slate-900">{segment.originAirport} → {segment.destinationAirport}</p>
+                    <p className="max-w-[48%] shrink-0 whitespace-nowrap text-right text-[11px] font-semibold leading-4 tabular-nums text-slate-950">{formatTime(segment.departureTime, locale)} – {formatTime(segment.arrivalTime, locale)}</p>
                   </div>
-                  <p className="mt-0.5 text-[11px] font-medium leading-4 text-[#536B92]">{carrier || "Carrier not supplied"}{flightNumber ? ` · Flight ${flightNumber}` : ""}</p>
-                  {operatingDiffers ? <p className="mt-0.5 text-[11px] font-normal leading-4 text-[#536B92]">Operated by {segment.operatingCarrier?.name}{segment.operatingFlightNumber ? ` · Flight ${segment.operatingFlightNumber}` : ""}</p> : null}
-                  {aircraftName ? <p className="mt-0.5 text-[11px] font-normal leading-4 text-[#536B92]">Aircraft: {aircraftName}{aircraftSuffix}</p> : null}
-                  {segment.distanceKm !== undefined ? <p className="mt-0.5 text-[11px] font-normal leading-4 text-[#536B92]">Flight distance: {formatDistanceKm(segment.distanceKm, locale)}</p> : null}
+                  <p className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500">{carrier || "Carrier not supplied"}{flightNumber ? ` · Flight ${flightNumber}` : ""}</p>
+                  {operatingDiffers ? <p className="mt-0.5 text-[11px] font-normal leading-4 text-slate-500">Operated by {segment.operatingCarrier?.name}{segment.operatingFlightNumber ? ` · Flight ${segment.operatingFlightNumber}` : ""}</p> : null}
+                  {aircraftName ? <p className="mt-0.5 text-[11px] font-normal leading-4 text-slate-500">Aircraft: {aircraftName}{aircraftSuffix}</p> : null}
+                  {segment.distanceKm !== undefined ? <p className="mt-0.5 text-[11px] font-normal leading-4 text-slate-500">Flight distance: {formatDistanceKm(segment.distanceKm, locale)}</p> : null}
                 </div>
               </div>
             </li>;
@@ -750,15 +726,15 @@ function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, of
         {hasFlightInfo ? <>
           <div className="my-[13px] h-px bg-[#E2E8F0]" />
           <div className="space-y-[7px]">
-            <p className="mb-0.5 text-[12px] font-bold uppercase leading-4 tracking-[0.65px] text-[#142033]">Flight info</p>
+            <p className="mb-0.5 text-[12px] font-bold uppercase leading-4 tracking-[0.65px] text-slate-900">Flight info</p>
             {departureTimeZone && arrivalTimeZone && departureTimeZone === arrivalTimeZone ? (
               <div className="flex items-start justify-between gap-3">
-                <span className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-[#142033]">Time zone</span>
-                <span className="max-w-[52%] text-right text-[11px] font-normal leading-4 text-[#536B92]">{departureTimeZone}</span>
+                <span className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-slate-900">Time zone</span>
+                <span className="max-w-[52%] text-right text-[11px] font-normal leading-4 text-slate-500">{departureTimeZone}</span>
               </div>
             ) : <>
-              {departureTimeZone ? <div className="flex items-start justify-between gap-3"><span className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-[#142033]">Departure time zone</span><span className="max-w-[52%] text-right text-[11px] font-normal leading-4 text-[#536B92]">{departureTimeZone}</span></div> : null}
-              {arrivalTimeZone ? <div className="flex items-start justify-between gap-3"><span className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-[#142033]">Arrival time zone</span><span className="max-w-[52%] text-right text-[11px] font-normal leading-4 text-[#536B92]">{arrivalTimeZone}</span></div> : null}
+              {departureTimeZone ? <div className="flex items-start justify-between gap-3"><span className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-slate-900">Departure time zone</span><span className="max-w-[52%] text-right text-[11px] font-normal leading-4 text-slate-500">{departureTimeZone}</span></div> : null}
+              {arrivalTimeZone ? <div className="flex items-start justify-between gap-3"><span className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-slate-900">Arrival time zone</span><span className="max-w-[52%] text-right text-[11px] font-normal leading-4 text-slate-500">{arrivalTimeZone}</span></div> : null}
             </>}
           </div>
         </> : null}
