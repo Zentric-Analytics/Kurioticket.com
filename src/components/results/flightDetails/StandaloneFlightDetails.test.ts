@@ -941,10 +941,16 @@ test("Flight Details mobile web uses the native hero asset, geometry, curve, and
   assert.match(source, /M0 12 Q50 64 100 12 L100 64 L0 64 Z/);
   assert.match(source, /<MobileFlightDetailsActionBar/);
   assert.match(actionBar, /data-flight-details-mobile-action-bar/);
-  assert.match(actionBar, /sticky top-0[^"]*bg-\[#F5F7FB\][^"]*sm:hidden/);
+  assert.match(actionBar, /sticky top-0[^"]*bg-inherit[^"]*sm:hidden/);
   assert.match(actionBar, /env\(safe-area-inset-top\)/);
   assert.match(actionBar, /data-flight-details-mobile-actions/);
-  assert.match(actionBar, /h-11 w-\[88px\]/);
+  assert.match(actionBar, /h-11 shrink-0[^"]*rounded-full[^"]*bg-white[^"]*shadow-\[0_1px_3px_rgba\(15,23,42,0\.06\)\]/);
+  assert.match(actionBar, /w-\[92px\] gap-1/);
+  assert.match(actionBar, /min-h-\[calc\(env\(safe-area-inset-top\)\+60px\)\]/);
+  assert.doesNotMatch(actionBar, /bg-\[#F5F7FB\]|backdrop-blur/);
+  const controls = source.slice(source.indexOf("<MobileFlightDetailsActionBar"), source.indexOf('      <span className="sr-only" role="status"', source.indexOf("<MobileFlightDetailsActionBar")));
+  assert.equal(controls.match(/className="h-5 w-5" strokeWidth=\{2\}/g)?.length, 3);
+  assert.doesNotMatch(controls, /translate-x/);
   assert.ok(source.indexOf("<MobileFlightDetailsActionBar") < source.indexOf('data-testid="flight-details-hero"'));
   assert.match(source, /aria-label=\{flightSaved \? "Remove saved flight" : "Save flight"\}/);
   assert.match(source, /aria-label="Share flight"/);

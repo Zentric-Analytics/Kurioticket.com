@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
-import { MobileFlightDetailsActionBar } from "./MobileFlightDetailsActionBar";
+import { MobileFlightDetailsActionBar, mobileFlightDetailsNavSurfaceClass } from "./MobileFlightDetailsActionBar";
 import { FlightDetailsLoadingShell } from "@/components/results/flightDetails/FlightDetailsLoadingShell";
 import { FlightIdentityMark } from "@/components/results/flightDetails/FlightIdentityMark";
 import { MobileNativeFareRail } from "@/components/results/flightDetails/MobileNativeFareRail";
@@ -339,17 +339,17 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     <main className="flex-1 bg-[#F5F7FB] pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-slate-900 sm:bg-[#F7F9FC] sm:text-[#142033] sm:pb-16 sm:pt-4 lg:pt-3">
       <MobileFlightDetailsActionBar
         back={(
-          <Link href={resultsHref} aria-label="Back to results" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/55 bg-white/90 text-slate-900 shadow-[0_2px_6px_rgba(15,23,42,0.12)] backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">
+          <Link href={resultsHref} aria-label="Back to results" className={`${mobileFlightDetailsNavSurfaceClass} w-11 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35`}>
             <ArrowLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
           </Link>
         )}
         actions={(
           <>
-            <button type="button" aria-label={flightSaved ? "Remove saved flight" : "Save flight"} aria-pressed={flightSaved} disabled={savedFlightPending} onClick={() => void toggleSavedFlight()} className="inline-flex h-11 w-11 items-center justify-center rounded-l-[20px] text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 disabled:cursor-wait disabled:opacity-60">
-              <Heart className="h-[17px] w-[17px] translate-x-1" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
+            <button type="button" aria-label={flightSaved ? "Remove saved flight" : "Save flight"} aria-pressed={flightSaved} disabled={savedFlightPending} onClick={() => void toggleSavedFlight()} className="inline-flex h-11 w-11 items-center justify-center shrink-0 rounded-full text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 disabled:cursor-wait disabled:opacity-60">
+              <Heart className="h-5 w-5" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
             </button>
-            <button type="button" aria-label="Share flight" onClick={() => void shareFlight()} className="inline-flex h-11 w-11 items-center justify-center rounded-r-[20px] text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35">
-              <Share2 className="h-[17px] w-[17px] -translate-x-1" strokeWidth={2} aria-hidden="true" />
+            <button type="button" aria-label="Share flight" onClick={() => void shareFlight()} className="inline-flex h-11 w-11 items-center justify-center shrink-0 rounded-full text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35">
+              <Share2 className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
             </button>
           </>
         )}

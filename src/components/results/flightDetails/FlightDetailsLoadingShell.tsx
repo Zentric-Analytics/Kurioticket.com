@@ -4,7 +4,7 @@ import { ArrowLeft, Heart, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { MobileFlightDetailsActionBar } from "./MobileFlightDetailsActionBar";
+import { MobileFlightDetailsActionBar, mobileFlightDetailsNavSurfaceClass } from "./MobileFlightDetailsActionBar";
 
 import flightDetailsHero from "../../../../apps/mobile/assets/heroes/flight-details-hero.webp";
 
@@ -13,18 +13,18 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
     <main className="flex-1 bg-[#F5F7FB] pb-[calc(1.75rem+env(safe-area-inset-bottom))] sm:bg-[#F7F9FC] sm:pb-7 sm:pt-7 lg:pt-7">
       <MobileFlightDetailsActionBar
         back={resultsHref ? (
-          <Link href={resultsHref} aria-label="Back to results" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/55 bg-white/90 text-slate-900 shadow-[0_2px_6px_rgba(15,23,42,0.12)] backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">
+          <Link href={resultsHref} aria-label="Back to results" className={`${mobileFlightDetailsNavSurfaceClass} w-11 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35`}>
             <ArrowLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
           </Link>
         ) : (
-          <span aria-hidden="true" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/55 bg-white/90 text-slate-400">
+          <span aria-hidden="true" className={`${mobileFlightDetailsNavSurfaceClass} w-11 text-slate-400`}>
             <ArrowLeft className="h-5 w-5" strokeWidth={2} />
           </span>
         )}
         actions={(
-          <span aria-hidden="true" className="inline-flex">
-            <span className="inline-flex h-11 w-11 translate-x-1 items-center justify-center text-slate-400"><Heart className="h-[17px] w-[17px]" strokeWidth={2} /></span>
-            <span className="inline-flex h-11 w-11 -translate-x-1 items-center justify-center text-slate-400"><Share2 className="h-[17px] w-[17px]" strokeWidth={2} /></span>
+          <span aria-hidden="true" className="inline-flex gap-1">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-400"><Heart className="h-5 w-5" strokeWidth={2} /></span>
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-400"><Share2 className="h-5 w-5" strokeWidth={2} /></span>
 
           </span>
         )}
