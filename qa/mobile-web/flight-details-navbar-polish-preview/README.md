@@ -4,9 +4,11 @@ Branch: `fix/mobile-flight-details-surface-consistency`
 
 Starting HEAD: `09526c73dc15bd04b3d410e64d4b966516ac43d5`
 
-Latest dev inspected: `b26cc3fba8d5b62e18c3c6995155415f962ac68b`
+Dev inspected before editing: `b26cc3fba8d5b62e18c3c6995155415f962ac68b`
 
 The branch was two commits behind dev; merged safely without conflicts at `6e36335ae7b51fe3153cd2c37c7677be3ba9b7a3`. Incoming changes concerned Cars, not Flight Details.
+
+Final dev fetched: `44c300baa3181a34790e89a75f6c6aae53e19a19`. Its additional Cars-only commit was merged safely after validation; Flight Details files were unaffected.
 
 ## Changes
 
