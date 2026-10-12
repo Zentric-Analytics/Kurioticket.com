@@ -1833,7 +1833,7 @@ export const translations: TranslationDictionary = {
   "carsResults.enterPickupDetails":
     "Enter pickup details above to prepare a car search.",
   "carsResults.pricePerDay": "Price (per day)",
-  "carsResults.priceTracking.title": "Track rental car prices",
+  "carsResults.priceTracking.title": "Track car prices",
   "carsResults.priceTracking.active": "Price tracking is on",
   "carsResults.priceTracking.activeBody": "We'll notify you if the price drops.",
   "carsResults.priceTracking.inactive": "Price tracking is off",
