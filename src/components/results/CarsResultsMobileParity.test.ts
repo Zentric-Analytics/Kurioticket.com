@@ -205,12 +205,14 @@ test("mobile result rhythm no longer reserves space for the removed summary card
   );
 });
 
-test("car price alert keeps the mobile blue surface while desktop gets a lighter override", () => {
-  assert.match(alertSource, /border-\[#C8DFF7\] bg-\[#EDF6FF\]/);
+test("Cars uses the flat right-side tracking control on mobile without changing its desktop blue card", () => {
+  assert.match(alertSource, /col-start-2 row-start-1 mb-0 w-auto min-w-0 max-w-full justify-self-end bg-transparent/);
+  assert.match(alertSource, /sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full/);
   assert.match(alertSource, /sm:border-blue-100 sm:bg-\[#EDF6FF\]/);
   assert.match(alertSource, /lg:bg-\[#F1F7FE\]/);
   assert.match(alertSource, /lg:mx-auto lg:w-\[calc\(100%_-_12rem\)\]/);
   assert.match(alertSource, /text-\[#1769AA\]/);
   assert.match(alertSource, /sm:rounded-full sm:bg-blue-50/);
-  assert.match(alertSource, /text-\[12\.5px\] font-bold leading-4/);
+  assert.match(alertSource, /whitespace-nowrap text-\[11px\] font-semibold leading-4/);
+  assert.match(alertSource, /h-11 w-\[51px\] shrink-0/);
 });
