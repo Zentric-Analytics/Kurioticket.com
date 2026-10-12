@@ -6,11 +6,11 @@ const hotel = readFileSync(new URL("./HotelResultsClient.tsx", import.meta.url),
 const cars = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
 
 test("Hotels and Cars render continuous result lists without page controls", () => {
-  assert.match(hotel, /sortedVisibleHotels\.map/);
+  assert.match(hotel, /items=\{sortedVisibleHotels\}/);
   assert.match(hotel, /data-hotel-continuous-results/);
   assert.doesNotMatch(hotel, /Hotel results pages|paginateHotelResults|paginationPendingPage/);
   assert.doesNotMatch(hotel, /aria-label="Previous page"|aria-label="Next page"/);
-  assert.match(cars, /\{visibleResults\.map\(\(car\) =>/);
+  assert.match(cars, /items=\{visibleResults\}/);
   assert.doesNotMatch(cars, /aria-label="Car results pagination"/);
   assert.doesNotMatch(cars, /aria-label="Previous page"|aria-label="Next page"/);
   assert.doesNotMatch(cars, /getCarPaginationItems|paginateCarResults|paginationPendingPage/);

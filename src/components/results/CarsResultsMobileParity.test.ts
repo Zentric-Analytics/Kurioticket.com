@@ -182,7 +182,7 @@ test("mobile Cars renders one continuous all-results list without pagination", (
     resultsSource.indexOf("data-cars-results-summary-row"),
     resultsSource.indexOf("appliedCarFilters.length"),
   );
-  assert.match(resultsSource, /\{visibleResults\.map\(\(car\) => \(/);
+  assert.match(resultsSource, /items=\{visibleResults\}[\s\S]*renderItem=\{car => \(/);
   assert.doesNotMatch(
     resultsSource,
     /mobileResultsPage|mobilePageSize|mobilePageCount|mobilePageStart|mobilePageResults|isMobilePaginationViewport|data-cars-mobile-pagination|data-cars-results-visible-range|buildFlightPaginationItems/,

@@ -168,7 +168,7 @@ test("desktop Flight Results renders one continuous desktop list without range t
 
   assert.ok(summary >= 0 && desktopResults > summary);
   assert.doesNotMatch(summarySource, /resultsDisplayRange\.start|resultsDisplayRange\.end|Showing results/);
-  assert.match(desktopSource, /sortedResults\.map\(\(flight, index\) =>/);
+  assert.match(desktopSource, /items=\{sortedResults\}/);
   assert.doesNotMatch(desktopSource, /<FlightResultsPagination/);
   assert.match(desktopSource, /aria-busy=\{filterApplying\}/);
 });

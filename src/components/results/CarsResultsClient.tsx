@@ -1,4 +1,5 @@
 "use client";
+import { resultIdKey, VirtualResultsList } from "./VirtualResultsList";
 import { useKayakResults } from "./KayakResultsContext";
 import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
 import { kayakCarCardModel } from "./kayakCardModels";
@@ -3084,7 +3085,7 @@ export function CarsResultsExperience({
                       "cars-filter-results-reveal",
                   )}
                 >
-                  {visibleResults.map((car) => (
+                  <VirtualResultsList items={visibleResults} itemKey={resultIdKey} label="Car results" rowClassName="pb-3.5 sm:pb-4" estimateHeight={360} renderItem={car => (
                     <CarResultCard
                       key={car.id}
                       car={car}
@@ -3120,7 +3121,7 @@ export function CarsResultsExperience({
                           : undefined
                       }
                     />
-                  ))}
+                  )} />
                 </div>
               ) : (
                 <div

@@ -70,7 +70,7 @@ test("mobile terminal states are distinct and expose working actions", () => {
 
 test("mobile list renders every sorted result without pagination", () => {
   assert.match(results, /data-mobile-continuous-flight-results/);
-  assert.match(results, /sortedResults\.map\(\(flight, index\)/);
+  assert.match(results, /items=\{sortedResults\}/);
   assert.doesNotMatch(results, /FlightResultsPagination|resultsDisplayRange|FLIGHT_RESULTS_PAGE_SIZE|data-flight-results-transition-cover/);
   assert.doesNotMatch(results, /FlightResultsPagination|resultsDisplayRange|FLIGHT_RESULTS_PAGE_SIZE|data-flight-results-transition-cover/);
   assert.doesNotMatch(results, /FlightResultsPagination|resultsDisplayRange|FLIGHT_RESULTS_PAGE_SIZE|data-flight-results-transition-cover/);
@@ -78,7 +78,7 @@ test("mobile list renders every sorted result without pagination", () => {
   assert.match(results, /aria-label="Back to top"/);
   assert.match(results, /<Footer variant="brand-legal-only" \/>/);
   const mobileList = results.slice(results.indexOf("data-mobile-continuous-flight-results"), results.indexOf("ref={paginationListRef}"));
-  assert.match(mobileList, /sortedResults\.map\(\(flight, index\)/);
+  assert.match(mobileList, /items=\{sortedResults\}/);
 });
 
 test("Batch 1 and Batch 2 surfaces remain before the card list", () => {

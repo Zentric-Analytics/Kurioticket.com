@@ -26,7 +26,7 @@ test("final mobile Flight Results order and controls remain intact", () => {
 
 test("mobile list uses continuous results and keeps website footer controls", () => {
   assert.match(results, /data-mobile-continuous-flight-results/);
-  assert.match(results, /sortedResults\.map\(\(flight, index\)/);
+  assert.match(results, /items=\{sortedResults\}/);
   assert.match(results, /data-mobile-flight-results-summary-row/);
   assert.doesNotMatch(results, /FlightResultsPagination|resultsDisplayRange|FLIGHT_RESULTS_PAGE_SIZE|data-flight-results-transition-cover/);
   assert.doesNotMatch(results, /FlightResultsPagination|resultsDisplayRange|FLIGHT_RESULTS_PAGE_SIZE|data-flight-results-transition-cover/);
@@ -34,7 +34,7 @@ test("mobile list uses continuous results and keeps website footer controls", ()
   assert.match(results, /aria-label="Back to top"/);
   assert.match(results, /<Footer variant="brand-legal-only" \/>/);
   const mobileList = results.slice(results.indexOf("data-mobile-continuous-flight-results"), results.indexOf("ref={paginationListRef}"));
-  assert.match(mobileList, /sortedResults\.map\(\(flight, index\)/);
+  assert.match(mobileList, /items=\{sortedResults\}/);
 });
 
 test("mobile and desktop commercial actions stay isolated", () => {

@@ -1,4 +1,5 @@
 "use client";
+import { resultIdKey, ResultsViewport, VirtualResultsList } from "./VirtualResultsList";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -7390,7 +7391,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
               
 
-              <div className="sm:hidden">
+              <ResultsViewport mobile><div className="sm:hidden">
                 <p role="status" aria-live="polite" className="sr-only">{filterApplying ? t("updatingResults") : ""}</p>
                 {error && results.length === 0 ? (
                   <MobileFlightResultsState kind="error" onPrimary={retryMainInventorySearch} onSecondary={() => openMobileSearchDrawer()} />
@@ -7405,17 +7406,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     className="pt-3 pb-6"
                   >
                     <div data-flight-results-card-list className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)] space-y-3">
-                      {sortedResults.map((flight, index) => {
+                      <VirtualResultsList items={sortedResults} itemKey={resultIdKey} label="Flight results" rowClassName="pb-3" estimateHeight={320} renderItem={(flight, index) => {
                         const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
                         if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
                         const detailsQuery = params.toString();
                         const internalDetailsHref = `/flights/details/${encodeURIComponent(flight.id)}` + (detailsQuery ? `?${detailsQuery}` : "");
                         return <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={resultActionHref(flight, internalDetailsHref)} />;
-                      })}
+                      }} />
                     </div>
                   </div>
                 )}
-              </div>
+              </div></ResultsViewport>
 
               <div
                 data-flight-results-desktop-summary
@@ -7511,7 +7512,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     : t("filters")}
                 </Button>
               </div>
-              <div
+              <ResultsViewport mobile={false}><div
                 ref={paginationListRef}
                 aria-busy={filterApplying}
                 className="hidden sm:block"
@@ -7528,7 +7529,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               ) : sortedResults.length ? (
                 <>
                   <div data-flight-results-card-list className="space-y-3 sm:space-y-4">
-                    {sortedResults.map((flight, index) => {
+                    <VirtualResultsList items={sortedResults} itemKey={resultIdKey} label="Flight results" estimateHeight={320} renderItem={(flight, index) => {
                       const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
                       if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
                       const detailsQuery = params.toString();
@@ -7546,7 +7547,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                           detailsHref={detailsHref}
                         />
                       );
-                    })}
+                    }} />
                   </div>
                 </>
               ) : (
@@ -7554,7 +7555,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   {t("noFlightsMatchFilters")}
                 </div>
               )}
-              </div>
+              </div></ResultsViewport>
             </div>
           )}
         </section>

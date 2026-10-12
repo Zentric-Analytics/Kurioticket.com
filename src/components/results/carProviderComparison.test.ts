@@ -152,6 +152,6 @@ test("Cars results map mirrors the Hotels-style filter-rail interaction", () => 
 
 test("standalone normalized cars share one result-card contract", () => {
   assert.doesNotMatch(results, /<KayakResultCard/);
-  assert.match(results, /visibleResults\.map\(\(car\) => \([\s\S]*?<CarResultCard/);
+  assert.match(results, /items=\{visibleResults\}[\s\S]*renderItem=\{car => \([\s\S]*?<CarResultCard/);
   assert.doesNotMatch(results, /providerLabel=[^\n]*KAYAK sandbox/);
 });
