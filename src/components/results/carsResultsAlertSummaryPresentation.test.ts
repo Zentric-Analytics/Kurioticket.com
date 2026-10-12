@@ -23,42 +23,41 @@ test("Cars Results summary selects compact display values but retains canonical 
   assert.equal(dropoff, "Lyon, France");
 });
 
-test("Cars has one alert after quick filters and before the result summary", () => {
-  assert.equal(cars.match(/<CarPriceAlertControl/g)?.length, 1);
+test("Cars keeps one tracking control in the results-count row, below quick filters", () => {
+  assert.equal((cars.match(/<CarPriceAlertControl/g) ?? []).length, 1);
   const quickFilters = cars.indexOf("data-cars-results-quick-filters");
-  const alertControl = cars.indexOf("<CarPriceAlertControl", quickFilters);
-  const summary = cars.indexOf("data-cars-results-summary-row", alertControl);
-  assert.ok(quickFilters >= 0 && quickFilters < alertControl && alertControl < summary);
+  const toolbar = cars.indexOf("data-cars-results-toolbar", quickFilters);
+  const summary = cars.indexOf("data-cars-results-summary-row", toolbar);
+  const count = cars.indexOf("ref={resultHeadingRef}", summary);
+  const alertControl = cars.indexOf("<CarPriceAlertControl", summary);
+  const sort = cars.indexOf("ref={carsSortRef}", summary);
+  assert.ok(quickFilters >= 0 && quickFilters < toolbar && toolbar < summary);
+  assert.ok(summary < count && count < alertControl && alertControl < sort);
+  assert.match(cars, /grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_auto\] items-center gap-x-2 gap-y-0 sm:gap-y-3/);
+  assert.match(cars, /<CarPriceAlertControl search=\{search\} results=\{providerResults\} \/>/);
 });
 
-test("Cars adds spacing only below the mobile price alert", () => {
-  assert.match(alert, /data-cars-price-alert[\s\S]*?className="[^"]*\bmb-1\b[^"]*\bsm:mb-0\b/);
-  assert.match(
-    cars,
-    /data-cars-results-toolbar[\s\S]*?className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-2"[\s\S]*?data-cars-results-summary-row/,
-  );
+test("Cars aligns both mobile controls with a compact heading and leaves no separate tracking row", () => {
+  assert.match(alert, /data-cars-price-alert\s+className="col-start-2 row-start-1 mb-0 w-auto min-w-0 max-w-full justify-self-end bg-transparent/);
+  assert.match(alert, /min-h-\[52px\] min-w-0 items-center justify-end gap-1/);
+  assert.match(cars, /data-cars-results-toolbar[\s\S]*?data-cars-results-summary-row[\s\S]*?ref=\{resultHeadingRef\}[\s\S]*?<CarPriceAlertControl/);
   assert.match(cars, /items-start gap-2 pt-1 sm:gap-3 lg:py-1/);
   assert.doesNotMatch(cars, /data-cars-results-summary-row[^>]*className="[^"]*mt-/);
 });
 
-test("desktop Cars price alert is centered and reduced by roughly two inches", () => {
+test("desktop Cars alert stays full width above the separate count and Sort row", () => {
   const alertStart = alert.indexOf("data-cars-price-alert");
   const alertEnd = alert.indexOf("</section>", alertStart);
   const alertMarkup = alert.slice(alertStart, alertEnd);
-
-  assert.match(
-    alertMarkup,
-    /className="[^"]*\bw-full\b[^"]*\bmax-w-full\b[^"]*lg:mx-auto[^"]*lg:w-\[calc\(100%_-_12rem\)\][^"]*"/,
-  );
+  assert.match(alertMarkup, /sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full/);
+  assert.match(alertMarkup, /lg:mx-auto lg:w-\[calc\(100%_-_12rem\)\]/);
   assert.doesNotMatch(alertMarkup, /\blg:w-auto\b/);
-  assert.match(
-    cars,
-    /data-cars-results-toolbar[\s\S]*?<CarPriceAlertControl search=\{search\} results=\{providerResults\} \/>[\s\S]*?data-cars-results-summary-row/,
-  );
+  assert.match(cars, /!embedded && "sm:row-start-2"/);
+  assert.match(cars, /col-start-2 row-start-1 hidden[^"]*sm:flex/);
 });
 
-test("Cars alert preserves its existing switch presentation", () => {
-  assert.match(alert, /<h2 className="[^"]*flex-1[^>]*>\{t\("carsResults\.priceTracking\.title"\)\}<\/h2>/);
+test("Cars alert preserves its working switch and translated label", () => {
+  assert.match(alert, /<h2 className="[^"]*sm:flex-1[^>]*>\{t\("carsResults\.priceTracking\.title"\)\}<\/h2>/);
   assert.match(alert, /role="switch"/);
   assert.match(alert, /aria-checked=\{tracking\}/);
   assert.match(alert, /tracking \? "border-\[#004BB8\] bg-\[#004BB8\]" : "border-slate-300 bg-slate-200"/);

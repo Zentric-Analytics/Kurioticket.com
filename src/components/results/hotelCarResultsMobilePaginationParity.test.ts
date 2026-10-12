@@ -20,17 +20,19 @@ test("Hotels and Cars render continuous result lists without page controls", () 
   );
 });
 
-test("Cars sticky quick filters precede the price alert and summary without duplication", () => {
-  assert.equal(cars.match(/<CarPriceAlertControl/g)?.length, 1);
+test("Cars sticky quick filters precede the single inline tracking-and-results summary", () => {
+  assert.equal((cars.match(/<CarPriceAlertControl/g) ?? []).length, 1);
   const quickFilters = cars.indexOf("data-cars-results-quick-filters");
   const toolbarStart = cars.indexOf("data-cars-results-toolbar", quickFilters);
-  const alert = cars.indexOf("<CarPriceAlertControl", toolbarStart);
   const summary = cars.indexOf("data-cars-results-summary-row", toolbarStart);
+  const alert = cars.indexOf("<CarPriceAlertControl", summary);
+  const applied = cars.indexOf("{appliedCarFilters.length", summary);
   assert.ok(
     quickFilters >= 0 &&
       quickFilters < toolbarStart &&
-      toolbarStart < alert &&
-      alert < summary,
+      toolbarStart < summary &&
+      summary < alert &&
+      alert < applied,
   );
   assert.match(cars.slice(quickFilters, toolbarStart), /lg:hidden/);
   assert.match(cars.slice(alert - 20, alert + 100), /!embedded \? <CarPriceAlertControl/);

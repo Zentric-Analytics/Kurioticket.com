@@ -117,11 +117,11 @@ export function CarPriceAlertControl({ search, results }: { search: CarSearchPar
     <section
       aria-label={t("carsResults.priceTracking.title")}
       data-cars-price-alert
-      className="mb-1 w-full min-w-0 max-w-full bg-transparent px-0 py-0 sm:mb-0 sm:rounded-2xl sm:border sm:border-blue-100 sm:bg-[#EDF6FF] sm:px-4 sm:py-1 sm:shadow-sm lg:mx-auto lg:w-[calc(100%_-_12rem)] lg:bg-[#F1F7FE]"
+      className="col-start-2 row-start-1 mb-0 w-auto min-w-0 max-w-full justify-self-end bg-transparent px-0 py-0 sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full sm:justify-self-center sm:rounded-2xl sm:border sm:border-blue-100 sm:bg-[#EDF6FF] sm:px-4 sm:py-1 sm:shadow-sm lg:mx-auto lg:w-[calc(100%_-_12rem)] lg:bg-[#F1F7FE]"
     >
-      <div className="flex min-h-[52px] min-w-0 items-center gap-2 sm:gap-2.5">
-        <span className="inline-flex shrink-0 items-center justify-center text-[#1769AA] sm:h-8 sm:w-8 sm:rounded-full sm:bg-blue-50 sm:text-[#004BB8]"><Bell className="h-[17px] w-[17px]" aria-hidden="true" /></span>
-        <h2 className="min-w-0 flex-1 [overflow-wrap:anywhere] text-[12.5px] font-bold leading-4 text-slate-950 sm:text-sm lg:text-[14px] lg:font-bold lg:leading-5 lg:tracking-[-0.002em] lg:text-slate-950">{t("carsResults.priceTracking.title")}</h2>
+      <div className="flex min-h-[52px] min-w-0 items-center justify-end gap-1 sm:justify-start sm:gap-2.5">
+        <span className="inline-flex shrink-0 items-center justify-center text-[#1769AA] sm:h-8 sm:w-8 sm:rounded-full sm:bg-blue-50 sm:text-[#004BB8]"><Bell className="h-[15px] w-[15px] sm:h-[17px] sm:w-[17px]" aria-hidden="true" /></span>
+        <h2 className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[11px] font-semibold leading-4 text-slate-950 max-[359px]:text-[10.5px] sm:flex-1 sm:overflow-visible sm:whitespace-normal sm:[overflow-wrap:anywhere] sm:text-sm lg:text-[14px] lg:font-bold lg:leading-5 lg:tracking-[-0.002em] lg:text-slate-950">{t("carsResults.priceTracking.title")}</h2>
         <span className="flex h-11 w-[51px] shrink-0 items-center justify-end"><button ref={switchRef} type="button" role="switch" aria-checked={tracking} aria-busy={pending} disabled={disabled} aria-label={t("carsResults.priceTracking.title")} onClick={() => void toggle(!tracking)} className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 ${tracking ? "border-[#004BB8] bg-[#004BB8]" : "border-slate-300 bg-slate-200"}`}><span className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${tracking ? "translate-x-[22px] rtl:-translate-x-[22px]" : "translate-x-[3px] rtl:-translate-x-[3px]"}`} /></button></span>
       </div>
     </section>
