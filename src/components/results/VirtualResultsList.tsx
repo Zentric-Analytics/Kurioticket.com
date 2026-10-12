@@ -13,6 +13,12 @@ const subscribeViewport = (update: () => void) => {
 };
 const mobileViewport = () => window.matchMedia("(max-width: 639px)").matches;
 const serverViewport = () => false;
+const subscribeWidth = (update: () => void) => {
+  window.addEventListener("resize", update);
+  return () => window.removeEventListener("resize", update);
+};
+const viewportWidth = () => window.innerWidth;
+const serverWidth = () => 1200;
 export function ResultsViewport({ mobile, children }: { mobile: boolean; children: ReactNode }) {
   const isMobile = useSyncExternalStore(subscribeViewport, mobileViewport, serverViewport);
   return isMobile === mobile ? children : null;
@@ -29,11 +35,12 @@ export function VirtualResultsList<T>({ items, itemKey, renderItem, estimateHeig
   rowClassName?: string;
 }) {
   const root = useRef<HTMLDivElement>(null);
+  const width = useSyncExternalStore(subscribeWidth, viewportWidth, serverWidth);
   const [scrollMargin, setScrollMargin] = useState(0);
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
   const focusRequest = useRef<{ index: number; last: boolean } | null>(null);
   const indexByKey = useMemo(() => new Map(items.map((item, index) => [itemKey(item), index])), [items, itemKey]);
-  const measurementKey = useMemo(() => `${label}:${typeof window === "undefined" ? 0 : window.innerWidth}:${Array.from(indexByKey.keys()).join("|")}`, [indexByKey, label]);
+  const measurementKey = useMemo(() => `${label}:${width}:${Array.from(indexByKey.keys()).join("|")}`, [indexByKey, label, width]);
   const focusedIndex = focusedKey === null ? undefined : indexByKey.get(focusedKey);
   const getItemKey = useCallback((index: number) => itemKey(items[index]), [items, itemKey]);
   const rangeExtractor = useCallback((range: Parameters<typeof defaultRangeExtractor>[0]) => {
@@ -83,7 +90,7 @@ export function VirtualResultsList<T>({ items, itemKey, renderItem, estimateHeig
     const row = root.current?.querySelector<HTMLElement>(`[data-virtual-index="${request.index}"]`);
     if (!row) return;
     const targets = Array.from(row.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex='0']"))
-      .filter(target => target.getBoundingClientRect().width > 0);
+      .filter(target => target.tabIndex >= 0 && target.getBoundingClientRect().width > 0);
     const target = request.last ? targets.at(-1) : targets[0];
     (target ?? row).focus({ preventScroll: true });
     focusRequest.current = null;
@@ -95,7 +102,7 @@ export function VirtualResultsList<T>({ items, itemKey, renderItem, estimateHeig
     if (!row) return;
     const index = Number(row.dataset.virtualIndex);
     const targets = Array.from(row.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex='0']"))
-      .filter(element => element.getBoundingClientRect().width > 0);
+      .filter(element => element.tabIndex >= 0 && element.getBoundingClientRect().width > 0);
     const boundary = event.shiftKey ? targets[0] : targets.at(-1);
     const next = index + (event.shiftKey ? -1 : 1);
     if (target !== boundary || next < 0 || next >= items.length) return;

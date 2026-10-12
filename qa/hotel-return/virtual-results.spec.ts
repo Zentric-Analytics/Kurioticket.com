@@ -10,7 +10,7 @@ const hotels = Array.from({ length: count }, (_, index) => ({
   inventoryKind: "bookable", pricePerNight: 100 + index, currency: "USD", totalPrice: 100 + index,
   partnerRedirectUrl: "https://affiliates.kayak.com/sandbox-clickout", bookingUrl: "https://affiliates.kayak.com/sandbox-clickout",
   rating: index % 2 ? 5 : 4, location: "Test city", amenities: [], roomType: "Test room", cancellationInfo: "Test policy",
-  valueScore: 80, travelConfidenceScore: 80, arrivalSuitabilityScore: 80, recommendationReasons: [], badges: [],
+  valueScore: index === count - 1 ? 99 : 80, travelConfidenceScore: 80, arrivalSuitabilityScore: 80, recommendationReasons: [], badges: [],
 }));
 const flights = Array.from({ length: count }, (_, index) => ({
   id: `flight-${index}`, provider: "QA Fixture", airlineName: `Fixture Air ${index}`, airlineCode: "QA",
@@ -76,7 +76,7 @@ test("flights mount one layout when resizing between desktop and mobile", async 
   await expect(page.locator("[data-virtual-results]")).toHaveAttribute("data-total-results", String(count));
 });
 
-test("hotel filters can find an offer that was never mounted", async ({ page }) => {
+test("hotel filters and sorting can find an offer that was never mounted", async ({ page }) => {
   await page.setViewportSize({ width: 1365, height: 900 });
   await page.goto(routes.hotels);
   const list = page.locator('[data-virtual-results]');
@@ -92,6 +92,10 @@ test("hotel filters can find an offer that was never mounted", async ({ page }) 
   await page.getByPlaceholder('Search properties').filter({ visible: true }).first().fill('Fixture Hotel 0');
   await expect(list).toHaveAttribute('data-total-results', '1');
   await page.getByPlaceholder('Search properties').filter({ visible: true }).first().fill('');
+  await expect(list).toHaveAttribute('data-total-results', String(count));
+  await page.getByRole('button', { name: /^Sort by / }).click();
+  await page.getByRole('option', { name: 'Best value', exact: true }).click();
+  await expect(list.locator('[data-virtual-index="0"]')).toHaveAttribute('data-result-key', `kayak-sandbox:fixture:${count - 1}`);
   await expect(list).toHaveAttribute('data-total-results', String(count));
 });
 
@@ -109,5 +113,11 @@ test("keyboard focus reaches results beyond the initial mounted window", async (
     expect(reached).toBeGreaterThanOrEqual(0);
   }
   expect(reached).toBeGreaterThanOrEqual(20);
+  for (let step = 0; step < 300 && reached > 0; step++) {
+    await page.keyboard.press('Shift+Tab');
+    reached = await page.evaluate(() => Number(document.activeElement?.closest<HTMLElement>('[data-virtual-index]')?.dataset.virtualIndex ?? -1));
+    expect(reached).toBeGreaterThanOrEqual(0);
+  }
+  expect(reached).toBe(0);
   expect(await list.locator('[data-virtual-index]').count()).toBeLessThan(30);
 });
