@@ -95,7 +95,7 @@ test("desktop Cars results body is compact, centered, and keeps shared surfaces 
   );
   assert.match(
     alert,
-    /data-cars-price-alert[\s\S]*?className="mb-1 w-full min-w-0 max-w-full/,
+    /data-cars-price-alert[\s\S]*?className="col-start-2 row-start-1 mb-0 w-auto min-w-0 max-w-full/,
   );
   assert.match(
     card,
