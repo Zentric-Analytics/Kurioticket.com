@@ -6,6 +6,11 @@ const source = readFileSync(
   new URL("./CarResultCard.tsx", import.meta.url),
   "utf8",
 );
+const hotelSource = readFileSync(
+  new URL("./HotelCard.tsx", import.meta.url),
+  "utf8",
+);
+
 const between = (startMarker: string, endMarker: string) => {
   const start = source.indexOf(startMarker);
   const end = source.indexOf(endMarker, start);
@@ -13,6 +18,23 @@ const between = (startMarker: string, endMarker: string) => {
   assert.notEqual(end, -1, `missing ${endMarker}`);
   return source.slice(start, end);
 };
+
+test("mobile Cars card matches the Hotels white information area without changing layout or desktop", () => {
+  const mobile = source.slice(
+    source.indexOf("data-car-card-mobile-main"),
+    source.indexOf('data-region="image"'),
+  );
+  const hotelDetails = hotelSource.slice(hotelSource.indexOf("data-hotel-card-details"));
+  assert.match(hotelDetails, /data-hotel-card-details\s+className="[^"]*bg-white/);
+  assert.match(source, /rounded-\[13px\] border border-\[#D8E1EC\] bg-white shadow/);
+  assert.match(mobile, /data-car-card-mobile-image\s+className="[^"]*bg-white p-1\.5"/);
+  assert.match(mobile, /data-car-card-mobile-information\s+className="[^"]*bg-white px-2\.5/);
+  assert.match(mobile, /data-car-card-mobile-lower-band\s+className="[^"]*border-t border-\[#CBD5E1\] bg-white"/);
+  assert.doesNotMatch(mobile, /bg-\[#E7EBF1\]/);
+  assert.match(source, /desktopSurfaceParity \? "md:bg-\[#E7EBF1\]" : "md:bg-white"/);
+  assert.match(mobile, /<CarDealPicker/);
+  assert.match(mobile, /dailyDisplayPrice\.formatted/);
+});
 
 test("standalone mobile uses a marked 40/60 image and information row", () => {
   const main = between(
