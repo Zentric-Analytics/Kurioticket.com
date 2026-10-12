@@ -191,7 +191,7 @@ test("KAYAK car cards and loading canvases stay inside the same standalone deskt
   );
   assert.match(
     results,
-    /visibleResults\.map\(\(car\) => \(\s*<CarResultCard/,
+    /items=\{visibleResults\}[\s\S]*renderItem=\{car => \(\s*<CarResultCard/,
   );
   assert.match(
     route,

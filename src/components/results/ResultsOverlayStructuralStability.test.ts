@@ -54,9 +54,9 @@ test("mobile and desktop flights retain complete continuous lists", () => {
   const mobileRegion = flights.slice(mobileStart, desktopStart);
   const desktopList = flights.indexOf('<div data-flight-results-card-list className="space-y-3 sm:space-y-4">', desktopStart);
   assert.ok(mobileStart >= 0 && desktopStart > mobileStart && desktopList > desktopStart);
-  assert.match(mobileRegion, /sortedResults\.map/);
+  assert.match(mobileRegion, /items=\{sortedResults\}/);
   assert.doesNotMatch(mobileRegion, /<FlightResultsPagination/);
   const desktopRegion = flights.slice(desktopList, flights.indexOf("{renderMobileFullFiltersSheet()}", desktopList));
-  assert.match(desktopRegion, /sortedResults\.map/);
+  assert.match(desktopRegion, /items=\{sortedResults\}/);
   assert.doesNotMatch(desktopRegion, /<FlightResultsPagination|visibleResults\.map/);
 });

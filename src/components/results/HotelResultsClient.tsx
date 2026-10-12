@@ -1,4 +1,5 @@
 "use client";
+import { resultIdKey, VirtualResultsList } from "./VirtualResultsList";
 import { readHotelDestinationSelection } from "@/lib/hotels/destinationSelection";
 import { hotelOccupancy } from "@/lib/hotels/hotelOccupancy";
 
@@ -1727,12 +1728,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
                   <div ref={paginationListRef} aria-busy={filterApplying} className="relative max-sm:-mx-2 max-sm:w-[calc(100%+16px)] space-y-2 sm:space-y-4 lg:!space-y-3" data-hotel-continuous-results>
                     {sortedVisibleHotels.length ? (
-                      sortedVisibleHotels.map((hotel, index) => {
+                      <VirtualResultsList items={sortedVisibleHotels} itemKey={resultIdKey} label="Hotel results" rowClassName="pb-2 sm:pb-4 lg:pb-3" estimateHeight={360} renderItem={(hotel, index) => {
                         const internalHref = guided ? (buildDetailsHref?.(hotel.id) ?? null) : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`;
                         return <section key={hotel.id} aria-label={hotel.name}>
                           <HotelCard hotel={hotel} detailsHref={resultActionHref(hotel, internalHref)} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={index === 0 ? hotelSummarySortMode : undefined} />
                         </section>;
-                      })
+                      }} />
                     ) : (
                       <div className="rounded-[13px] border border-slate-200 bg-white p-4 text-[13px] font-semibold leading-5 text-muted shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] sm:rounded-xl sm:p-6 sm:text-sm sm:shadow-sm">
                         <p>{guided && results.length === 0 ? t("deals.guided.hotelResults.empty") : t("hotelResults.noStaysMatchFiltersInline")}</p>

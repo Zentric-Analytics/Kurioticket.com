@@ -18,10 +18,11 @@ test("flight results expose all 45 offers without pagination, including old page
   await page.goto("/flights/results?tripType=one-way&origin=SFO&destination=LAX&departureDate=2030-10-12&adults=1&children=0&infants=0&travelers=1&cabinClass=economy&page=3");
   const list = page.locator("[data-flight-results-card-list]").filter({ visible: true });
   await expect(list).toHaveCount(1);
-  await expect.poll(async () => list.locator('a[href*="/flights/details/qa-continuous-"]').evaluateAll(links =>
-    new Set(links.map(link => (link as HTMLAnchorElement).pathname)).size)).toBe(45);
+  const virtual = list.locator('[data-virtual-results]');
+  await expect(virtual).toHaveAttribute('data-total-results', '45');
   await expect(page.getByRole("navigation", { name: "Flight results pages" })).toHaveCount(0);
   const last = list.locator('a[href*="/flights/details/qa-continuous-44"]').filter({ visible: true }).first();
+  await virtual.evaluate(element => window.scrollTo({ top: element.getBoundingClientRect().top + window.scrollY + element.scrollHeight - window.innerHeight, behavior: 'instant' }));
   await last.scrollIntoViewIfNeeded();
   await expect(last).toBeInViewport();
 });
@@ -82,10 +83,16 @@ test("continuous results preserve a later hotel on details return without anothe
   });
   await page.goto("/hotels/results?destination=New+York&checkIn=2030-10-12&checkOut=2030-10-13&guests=1&rooms=1");
   await expect(page.getByRole("heading", { name: "25 results found" })).toBeVisible();
-  const cards = page.locator("[data-hotel-continuous-results] > section");
-  await expect(cards).toHaveCount(25);
+  const virtual = page.locator('[data-hotel-continuous-results] [data-virtual-results]');
+  const cards = virtual.locator('[data-virtual-index] > section');
+  await expect(virtual).toHaveAttribute('data-total-results', '25');
+  expect(await cards.count()).toBeLessThan(25);
   await expect(page.getByRole("navigation", { name: "Hotel results pages" })).toHaveCount(0);
   const laterHotel = cards.filter({ has: page.getByRole("heading", { name: "Synthetic Hotel 20", exact: true }) });
+  for (let step = 0; step < 12 && await laterHotel.count() === 0; step++) {
+    await page.mouse.wheel(0, 600);
+    await page.waitForTimeout(100);
+  }
   await laterHotel.scrollIntoViewIfNeeded();
   const searchesBeforeDetails = searches;
   await laterHotel.getByRole("link", { name: "View hotel", exact: true }).click();
@@ -93,7 +100,7 @@ test("continuous results preserve a later hotel on details return without anothe
   await expect(page.getByRole("heading", { name: "Synthetic Hotel 20", exact: true })).toBeVisible();
   await page.goBack();
   await expect(page.getByRole("heading", { name: "25 results found" })).toBeVisible();
-  await expect(cards).toHaveCount(25);
+  await expect(virtual).toHaveAttribute('data-total-results', '25');
   expect(searches).toBe(searchesBeforeDetails);
   await expect(laterHotel).toBeInViewport();
   await laterHotel.getByRole("link", { name: "View hotel", exact: true }).click();
@@ -103,7 +110,7 @@ test("continuous results preserve a later hotel on details return without anothe
     await expect(returnLink).toBeVisible();
     await returnLink.click();
     await expect(page.getByRole("heading", { name: "25 results found" })).toBeVisible();
-    await expect(cards).toHaveCount(25);
+    await expect(virtual).toHaveAttribute('data-total-results', '25');
     await expect(laterHotel).toBeInViewport();
     expect(searches).toBe(searchesBeforeDetails);
   }
