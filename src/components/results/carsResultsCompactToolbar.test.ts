@@ -91,16 +91,13 @@ test("source-contract: Cars count row omits the old pagination range", () => {
   assert.doesNotMatch(summaryRow, /resultsDisplayRange|Showing results .* through|data-cars-results-visible-range/);
 });
 
-test("source-contract: Cars result count keeps a shrink-safe row with desktop Sort isolated", () => {
+test("source-contract: Cars count and tracking share a shrink-safe mobile row without moving desktop Sort", () => {
   const resultsToolbar = source.slice(
     source.lastIndexOf("<div", source.indexOf("data-cars-results-toolbar")),
     source.indexOf("{resultsTransitioning ?"),
   );
   const summaryRow = resultsToolbar.slice(
-    resultsToolbar.lastIndexOf(
-      "<div",
-      resultsToolbar.indexOf("data-cars-results-summary-row"),
-    ),
+    resultsToolbar.lastIndexOf("<div", resultsToolbar.indexOf("data-cars-results-summary-row")),
     resultsToolbar.indexOf("{appliedCarFilters.length"),
   );
 
@@ -108,40 +105,27 @@ test("source-contract: Cars result count keeps a shrink-safe row with desktop So
   const toolbarClass = resultsToolbar.match(/className="([^"]+)"\s+data-cars-results-toolbar/)?.[1];
   assert.ok(toolbarClass);
   assert.equal(toolbarClass.split(" ").includes("flex-wrap"), false);
-  assert.match(
-    summaryRow,
-    /flex w-full min-w-0 flex-nowrap items-center justify-between gap-2/,
-  );
 
-  assert.match(
-    summaryRow,
-    /<div className="min-w-0 flex-1">[\s\S]*<h2[^>]*className="[^"]*truncate[^"]*whitespace-nowrap/,
-  );
-  assert.doesNotMatch(summaryRow, /sr-only/);
+  assert.match(summaryRow, /grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_auto\] items-center gap-x-2/);
+  assert.match(summaryRow, /className=\{cn\("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2"\)\}/);
+  assert.match(summaryRow, /<h2[^>]*className="[^"]*truncate[^"]*whitespace-nowrap/);
+  assert.match(summaryRow, /max-\[359px\]:text-\[11px\]/);
+  assert.doesNotMatch(summaryRow, /sr-only|flex-nowrap items-center justify-between/);
+
   assert.match(resultsToolbar, /visibleResults\.length === 1/);
-  assert.match(resultsToolbar, /"resultFound"/);
-  assert.match(resultsToolbar, /"resultsFound"/);
+  assert.match(resultsToolbar, /"resultFound"|"resultsFound"/);
   assert.match(resultsToolbar, /new Intl\.NumberFormat\(intlLocale/);
   assert.match(resultsToolbar, /\.format\(visibleResults\.length\)/);
 
-  assert.match(
-    summaryRow,
-    /className="hidden min-w-0 max-w-full[^"]*justify-end[^"]*sm:flex/,
-  );
-  assert.ok(
-    summaryRow.indexOf("<h2") < summaryRow.indexOf("ref={carsSortRef}"),
-    "the visible count precedes the end-aligned Sort control",
-  );
+  const alertPosition = summaryRow.indexOf("<CarPriceAlertControl");
+  assert.ok(alertPosition > summaryRow.indexOf("<h2"));
+  assert.equal((resultsToolbar.match(/<CarPriceAlertControl/g) ?? []).length, 1);
+  assert.match(summaryRow, /className=\{cn\("col-start-2 row-start-1 hidden[^"]*sm:flex sm:gap-2", !embedded && "sm:row-start-2"\)\}/);
+  assert.ok(summaryRow.indexOf("<h2") < summaryRow.indexOf("ref={carsSortRef}"));
   assert.match(summaryRow, /className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap[^"\n]*"/);
-  assert.match(
-    resultsToolbar,
-    /className="relative inline-flex min-w-0 max-w-full shrink/,
-  );
+  assert.match(resultsToolbar, /className="relative inline-flex min-w-0 max-w-full shrink/);
   assert.match(resultsToolbar, /className="cars-results-desktop-sort-trigger inline-flex h-9 min-w-0 max-w-full/);
-  assert.match(
-    resultsToolbar,
-    /<span className="min-w-0 truncate whitespace-nowrap">\s*\{selectedCarSortLabel\}/,
-  );
+  assert.match(resultsToolbar, /<span className="min-w-0 truncate whitespace-nowrap">\s*\{selectedCarSortLabel\}/);
   assert.match(resultsToolbar, /"shrink-0 text-current transition-transform duration-150"/);
 });
 
