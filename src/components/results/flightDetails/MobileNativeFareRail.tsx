@@ -49,7 +49,7 @@ export function MobileNativeFareRail({
       role="radiogroup"
       aria-label="Available fares"
       data-mobile-native-fare-rail
-      className="flex min-w-0 items-start gap-[10px] overflow-x-auto overflow-y-visible pb-[18px] pt-3 pr-[38px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
+      className="flex min-w-0 items-start gap-3 overflow-x-auto overflow-y-visible pb-3 pt-3 pr-[38px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
     >
       {fares.map((fare, index) => {
         const selected = fare.key === selectedFareKey;
@@ -84,8 +84,8 @@ export function MobileNativeFareRail({
             data-mobile-native-fare-card
             className={`relative min-h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 rounded-[15px] border-[1.5px] px-3 pb-2 pt-1.5 transition-[border-color,background-color,box-shadow] ${
               selected
-                ? "z-[1] border-[#075EE8] bg-[#F4F8FF] shadow-[0_6px_14px_rgba(7,19,59,0.18)]"
-                : "z-0 border-[#D7E0EC] bg-white shadow-[0_2px_6px_rgba(7,19,59,0.06)]"
+                ? "z-[1] border-[#075EE8] bg-[#F4F8FF] shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]"
+                : "z-0 border-[#D7E0EC] bg-white shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]"
             }`}
           >
             <button
@@ -106,7 +106,7 @@ export function MobileNativeFareRail({
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-[#CFE3FA] bg-[#EAF3FF] text-[#075EE8]">
                     <Luggage className="h-3.5 w-3.5" aria-hidden="true" />
                   </span>
-                  <p className="line-clamp-2 min-w-0 shrink text-[13px] font-extrabold leading-[17px] tracking-[0.1px] text-[#1A1A1A]">
+                  <p className="line-clamp-2 min-w-0 shrink text-[13px] font-extrabold leading-[17px] tracking-[0.1px] text-slate-900">
                     {fare.label}
                   </p>
                 </div>
@@ -145,15 +145,15 @@ export function MobileNativeFareRail({
                           </span>
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block text-[12px] font-semibold leading-4 text-[#1A1A1A]">{row.title}</span>
+                          <span className="block text-[12px] font-semibold leading-4 text-slate-900">{row.title}</span>
                           {expanded ? (
-                            <span className="mt-px block whitespace-pre-line text-[11px] font-normal leading-4 text-[#64748B]">
+                            <span className="mt-px block whitespace-pre-line text-[11px] font-normal leading-4 text-slate-500">
                               {row.detail}
                             </span>
                           ) : null}
                         </span>
                         <ChevronDown
-                          className={`mt-0.5 h-[13px] w-[13px] shrink-0 text-[#64748B] transition-transform ${
+                          className={`mt-0.5 h-[13px] w-[13px] shrink-0 text-slate-500 transition-transform ${
                             expanded ? "rotate-180" : ""
                           }`}
                           aria-hidden="true"
@@ -167,7 +167,7 @@ export function MobileNativeFareRail({
 
             <div className="pointer-events-none absolute inset-x-3 bottom-1.5 z-[1] flex justify-center">
               <p
-                className="max-w-full truncate text-center text-[19px] font-semibold leading-[23px] tabular-nums text-[#1A1A1A]"
+                className="max-w-full truncate text-center text-[19px] font-semibold leading-[23px] tabular-nums text-slate-950"
                 aria-label={price.ariaLabel}
               >
                 {priceAvailable ? price.formatted : "Price unavailable"}

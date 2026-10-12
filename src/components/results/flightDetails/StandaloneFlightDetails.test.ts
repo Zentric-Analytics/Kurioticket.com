@@ -960,8 +960,8 @@ test("mobile web Flight Details removes the branded header and uses the native e
   assert.doesNotMatch(loading, /<MobileFlightDetailsBrandHeader/);
   assert.match(source, /<main className="flex-1 bg-\[#F5F7FB\][^"]*sm:bg-\[#F7F9FC\]/);
   assert.match(source, /data-flight-details-hero-curve[^\n]*fill="#F5F7FB"/);
-  assert.match(source, /px-\[18px\] pb-4 pt-0/);
-  assert.match(source, /data-mobile-native-itinerary-stack[\s\S]*-mx-\[10px\] -mt-\[104px\]/);
+  assert.match(source, /px-3 pb-4 pt-0/);
+  assert.match(source, /data-mobile-native-itinerary-stack[\s\S]*-mx-2 -mt-\[104px\]/);
   assert.match(source, /data-flight-details-desktop-navigation/);
   assert.match(source, /aria-label="Back to flight results"/);
   assert.doesNotMatch(source, />Back to flight results<\/span>/);
@@ -972,7 +972,7 @@ test("mobile web Flight Details removes the branded header and uses the native e
   assert.match(source, /const nativeTripLine = `[\s\S]*titleCase\(available\.search\.cabinClass\)/);
   assert.match(loading, /<main className="flex-1 bg-\[#F5F7FB\][^"]*sm:bg-\[#F7F9FC\]/);
   assert.match(loading, /data-flight-details-loading-hero-curve[^\n]*fill="#F5F7FB"/);
-  assert.match(loading, /data-mobile-native-itinerary-loading[\s\S]*-mx-\[10px\] -mt-\[104px\]/);
+  assert.match(loading, /data-mobile-native-itinerary-loading[\s\S]*-mx-2 -mt-\[104px\]/);
   assert.match(loading, /h-\[226px\]/);
 });
 
@@ -1013,7 +1013,7 @@ test("Flight Details mobile cleanup uses native fare rail behavior and fare info
   assert.match(source, /mobilePricesReady = !currencyRates\.isLoading/);
 
   assert.match(fareSource, /data-mobile-native-fare-rail/);
-  assert.match(fareSource, /gap-\[10px\].*pb-\[18px\].*pt-3.*pr-\[38px\]/);
+  assert.match(fareSource, /gap-3.*pb-3.*pt-3.*pr-\[38px\]/);
   assert.match(fareSource, /w-\[clamp\(197px,calc\(197px\+\(100vw-320px\)\*0\.27\),217px\)\]/);
   assert.match(fareSource, /min-h-\[142px\]/);
   assert.match(fareSource, /rounded-\[15px\] border-\[1\.5px\]/);
@@ -1039,7 +1039,7 @@ test("mobile web Fare information deck mirrors native tabs and owns deal booking
   assert.match(deck, /gap-\[14px\]/);
   assert.match(deck, /flight-mobile-fare-info-tab-label/);
   assert.doesNotMatch(deck, /text-\[12px\] leading-4/);
-  assert.match(deck, /style=\{\{ color: "#536B92" \}\}/);
+  assert.match(deck, /flight-mobile-fare-info-tab-label[^"\n]*text-slate-500/);
   assert.doesNotMatch(deck, /color: selected \?/);
   assert.doesNotMatch(deck, /fontWeight: selected \?/);
   const styles = await readFile(new URL("../../../app/globals.css", import.meta.url), "utf8");
@@ -1127,7 +1127,7 @@ test("mobile web Flight Details uses the refined fare typography without changin
 
   assert.match(source, /text-\[16px\] font-medium leading-\[21px\][^\"]*sm:text-\[18px\] sm:font-medium sm:leading-tight[^\"]*">Pick your fare<\/h2>/);
   assert.match(fareSource, /text-\[19px\] font-semibold leading-\[23px\] tabular-nums/);
-  assert.match(fareSource, /gap-\[10px\].*overflow-x-auto.*pb-\[18px\].*pt-3.*pr-\[38px\]/);
+  assert.match(fareSource, /gap-3.*overflow-x-auto.*pb-3.*pt-3.*pr-\[38px\]/);
   assert.match(fareSource, /min-h-\[142px\] w-\[clamp\(197px,calc\(197px\+\(100vw-320px\)\*0\.27\),217px\)\]/);
   assert.doesNotMatch(fareSource, /text-\[19px\] font-extrabold leading-\[23px\] tabular-nums/);
 });
@@ -1148,9 +1148,11 @@ test("mobile web Flight Details itinerary mirrors the native card hierarchy and 
   const itinerary = source.slice(start, end);
 
   assert.match(source, /data-mobile-native-itinerary-stack/);
-  assert.match(source, /-mx-\[10px\] -mt-\[104px\] space-y-\[14px\]/);
+  assert.match(source, /-mx-2 -mt-\[104px\] space-y-3/);
   assert.match(itinerary, /data-mobile-native-itinerary-card/);
-  assert.match(itinerary, /rounded-\[15px\].*border-\[#E1E7EF\].*bg-white.*shadow-\[0_6px_18px_rgba\(7,19,59,0\.14\)\]/);
+  assert.match(itinerary, /tabular-nums text-slate-950/);
+  assert.match(itinerary, /<time[^>]*text-slate-500/);
+  assert.match(itinerary, /rounded-\[15px\].*border-\[#E1E7EF\].*bg-white.*shadow-\[0_10px_28px_-24px_rgba\(15,23,42,0\.5\)\]/);
   assert.match(itinerary, /data-flight-details-itinerary-gloss/);
   assert.match(itinerary, /linear-gradient\(135deg,rgba\(255,255,255,0\.78\)_0%,rgba\(255,255,255,0\.18\)_46%,rgba\(255,255,255,0\)_100%\)/);
   assert.match(itinerary, /text-\[19px\] font-extrabold leading-6 tabular-nums/);
@@ -1216,14 +1218,14 @@ test("mobile web Flight Details loading itinerary matches native-parity geometry
   assert.match(source, /min-h-\[318px\]/);
   assert.match(source, /pb-\[122px\]/);
   assert.match(source, /data-mobile-native-itinerary-loading/);
-  assert.match(source, /-mx-\[10px\] -mt-\[104px\]/);
-  assert.match(source, /rounded-\[15px\].*border-\[#E1E7EF\].*bg-white.*shadow-\[0_6px_18px_rgba\(7,19,59,0\.14\)\]/);
+  assert.match(source, /-mx-2 -mt-\[104px\]/);
+  assert.match(source, /rounded-\[15px\].*border-\[#E1E7EF\].*bg-white.*shadow-\[0_10px_28px_-24px_rgba\(15,23,42,0\.5\)\]/);
   assert.match(source, /linear-gradient\(135deg,rgba\(255,255,255,0\.78\)_0%,rgba\(255,255,255,0\.18\)_46%,rgba\(255,255,255,0\)_100%\)/);
   assert.match(source, /sm:rounded-\[10px\] sm:border-slate-200 sm:bg-slate-100 sm:shadow-lg/);
   assert.match(source, /data-mobile-native-fare-loading/);
   assert.match(source, /h-\[142px\] w-\[clamp\(197px,calc\(197px\+\(100vw-320px\)\*0\.27\),217px\)\]/);
   assert.match(source, /rounded-\[15px\] border-\[1\.5px\] border-\[#D7E0EC\] bg-white/);
-  assert.match(source, /gap-\[10px\].*pb-\[18px\].*pr-\[38px\]/);
+  assert.match(source, /gap-3.*pb-3.*pr-\[38px\]/);
   assert.match(source, /\{\[0, 1\]\.map/);
   assert.match(source, /data-flight-details-loading-hero-curve/);
   assert.doesNotMatch(source, /fixed inset-x-0 bottom-0 z-\[90\].*min-h-\[88px\]/);

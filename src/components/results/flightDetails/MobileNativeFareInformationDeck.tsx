@@ -52,7 +52,7 @@ export function MobileNativeFareInformationDeck({
   const fareInformationTouchRailRef = useFareInformationTouchRailRef<HTMLDivElement>();
   return (
     <section data-mobile-native-fare-information-deck className="mt-3 sm:hidden">
-      <div ref={fareInformationTouchRailRef} className="-mx-[10px] touch-pan-y overflow-x-auto border-b border-[#D8E1EC] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div ref={fareInformationTouchRailRef} className="-mx-2 touch-pan-y overflow-x-auto border-b border-[#D8E1EC] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div role="tablist" aria-label="Fare information" className="flex w-max min-w-full gap-[14px] px-0">
           {tabs.map((tab) => {
             const selected = activeTab === tab.id;
@@ -65,8 +65,7 @@ export function MobileNativeFareInformationDeck({
                 aria-selected={selected}
                 aria-controls={`mobile-fare-panel-${tab.id}`}
                 onClick={() => onTabChange(tab.id)}
-                style={{ color: "#536B92" }}
-                className="flight-mobile-fare-info-tab-label relative min-h-[48px] shrink-0 whitespace-nowrap px-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35"
+                className="flight-mobile-fare-info-tab-label text-slate-500 relative min-h-[48px] shrink-0 whitespace-nowrap px-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35"
               >
                 {tab.label}
                 {selected ? <span className="absolute -bottom-px left-0.5 right-0.5 h-[3px] rounded-[2px] bg-[#075EE8]" aria-hidden="true" /> : null}
@@ -76,7 +75,7 @@ export function MobileNativeFareInformationDeck({
         </div>
       </div>
 
-      <div data-mobile-native-fare-information-active-content className="px-1 pb-1 pt-[7px]">
+      <div data-mobile-native-fare-information-active-content className="pb-1 pt-3">
         {activeTab === "deals" ? (
           <DealsSurface
             fare={fare}
@@ -194,7 +193,7 @@ function DealsSurface({
             data-provider-handoff-unavailable={!canContinue || undefined}
             className={`grid min-h-[92px] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-[1.5px] bg-white px-[14px] py-3 transition ${
               selected
-                ? "border-[#075EE8] shadow-[0_3px_10px_rgba(7,94,232,0.08)]"
+                ? "border-[#075EE8] shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]"
                 : "border-[#D9E2E8]"
             }`}
           >
@@ -235,12 +234,12 @@ function DealsSurface({
                     <span data-mobile-flight-provider-logo className="inline-flex h-8 max-w-[76px] shrink-0 items-center justify-start overflow-hidden">
                       <Image src={deal.providerLogoUrl} alt="" aria-hidden="true" width={76} height={32} className="max-h-8 w-auto max-w-[76px] object-contain object-left" title={deal.providerName} />
                     </span>
-                    <strong className="truncate text-[14px] font-semibold leading-5 text-[#192024]">{deal.providerName}</strong>
+                    <strong className="truncate text-[14px] font-semibold leading-5 text-slate-900">{deal.providerName}</strong>
                   </span>
                 ) : identityMark.kind === "airline" ? (
                   <span className="inline-flex min-w-0 items-center gap-2">
                     <FlightIdentityMark logoUrl={identityMark.logoUrl} decorative mobile />
-                    <strong className="truncate text-[14px] font-semibold leading-5 text-[#192024]">{deal.providerName}</strong>
+                    <strong className="truncate text-[14px] font-semibold leading-5 text-slate-900">{deal.providerName}</strong>
                   </span>
                 ) : (
                   <strong className="truncate text-[14px] font-semibold leading-5 text-[#004BB8]">{deal.providerName}</strong>
@@ -248,10 +247,10 @@ function DealsSurface({
               </span>
 
               <span className="mt-2 block min-w-0" data-mobile-flight-deal-price>
-                <strong className="block break-words text-[18px] font-semibold leading-[22px] tracking-[-0.02em] tabular-nums text-[#192024]" aria-label={visiblePriceAriaLabel}>
+                <strong className="block break-words text-[18px] font-semibold leading-[22px] tracking-[-0.02em] tabular-nums text-slate-950" aria-label={visiblePriceAriaLabel}>
                   {visiblePrice}
                 </strong>
-                <span className="block text-[11px] font-normal leading-[14px] text-[#59636a]">
+                <span className="block text-[11px] font-normal leading-[14px] text-slate-500">
                   {fare?.label ? `${fare.label} · Trip total` : "Trip total"}
                 </span>
               </span>
@@ -298,7 +297,7 @@ function DetailsSurface({ offer, locale }: { offer: FlightDetailsOffer; locale: 
           const hasOnBoard = Boolean(seat || cabin.amenities?.wifi || cabin.amenities?.power);
           return (
             <div key={`${segment.departureTime}-${index}`} className={`py-[10px] ${index ? "border-t border-[#D8E1EC]" : ""}`}>
-              <p className="mb-[11px] text-[14px] font-semibold leading-[19px] text-[#1A1A1A]">
+              <p className="mb-[11px] text-[14px] font-semibold leading-[19px] text-slate-900">
                 {segment.originAirport} → {segment.destinationAirport}
                 {segment.marketingFlightNumber || segment.flightNumber ? ` · ${segment.marketingFlightNumber || segment.flightNumber}` : ""}
               </p>
@@ -343,8 +342,8 @@ function DetailsSurface({ offer, locale }: { offer: FlightDetailsOffer; locale: 
               <Leaf className="h-[17px] w-[17px]" aria-hidden="true" /> Estimated CO₂ emissions
             </span>
             <span className="ml-auto text-right">
-              <span className="block text-[14px] font-semibold leading-[18px] text-[#1A1A1A]">{provider.totalEmissionsKg.toLocaleString(locale)} kg</span>
-              <span className="block text-[11px] leading-[15px] text-[#536B92]">for this offer</span>
+              <span className="block text-[14px] font-semibold leading-[18px] text-slate-900">{provider.totalEmissionsKg.toLocaleString(locale)} kg</span>
+              <span className="block text-[11px] leading-[15px] text-slate-500">for this offer</span>
             </span>
           </div>
         </section>
@@ -352,8 +351,8 @@ function DetailsSurface({ offer, locale }: { offer: FlightDetailsOffer; locale: 
 
       {provider?.updatedAt ? (
         <section className="py-[11px]">
-          <p className="text-[11px] font-medium leading-4 text-[#536B92]">Provider offer last updated</p>
-          <p className="text-[11px] leading-4 text-[#536B92]">{formatProviderTimestamp(provider.updatedAt, locale)}</p>
+          <p className="text-[11px] font-medium leading-4 text-slate-500">Provider offer last updated</p>
+          <p className="text-[11px] leading-4 text-slate-500">{formatProviderTimestamp(provider.updatedAt, locale)}</p>
         </section>
       ) : null}
     </div>
@@ -384,9 +383,9 @@ function ConditionsSurface({ offer, locale }: { offer: FlightDetailsOffer; local
                 <div key={`${condition.scope}-${condition.category}-${index}`} className={`flex items-start gap-[11px] py-[9px] ${index ? "border-t border-[#D8E1EC]" : ""}`}>
                   <StatusIcon semantic={semantic} />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-semibold leading-[18px] text-[#1A1A1A]">{conditionState(condition)}</p>
-                    <p className="mt-0.5 text-[11px] leading-4 text-[#536B92]">{conditionScope(condition)}</p>
-                    {penalty ? <p className="mt-0.5 text-[11px] font-medium leading-4 text-[#536B92]">{penalty}</p> : null}
+                    <p className="text-[13px] font-semibold leading-[18px] text-slate-900">{conditionState(condition)}</p>
+                    <p className="mt-0.5 text-[11px] leading-4 text-slate-500">{conditionScope(condition)}</p>
+                    {penalty ? <p className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500">{penalty}</p> : null}
                   </div>
                 </div>
               );
@@ -398,7 +397,7 @@ function ConditionsSurface({ offer, locale }: { offer: FlightDetailsOffer; local
       {(provider?.passengerIdentityDocumentsRequired || provider?.supportedIdentityDocumentTypes?.length) ? (
         <section className="py-3">
           <GroupLabel>Travel documents</GroupLabel>
-          {provider.passengerIdentityDocumentsRequired ? <p className="mb-[7px] text-[13px] leading-[19px] text-[#1A1A1A]">Passport or identity information is required to complete booking.</p> : null}
+          {provider.passengerIdentityDocumentsRequired ? <p className="mb-[7px] text-[13px] leading-[19px] text-slate-900">Passport or identity information is required to complete booking.</p> : null}
           {provider.supportedIdentityDocumentTypes?.length ? <DetailRow label="Supported documents" value={provider.supportedIdentityDocumentTypes.map(titleCase).join(", ")} /> : null}
         </section>
       ) : null}
@@ -406,7 +405,7 @@ function ConditionsSurface({ offer, locale }: { offer: FlightDetailsOffer; local
       {(provider?.offerOwner || links.length) ? (
         <section className="py-3">
           <GroupLabel>Airline</GroupLabel>
-          {provider?.offerOwner ? <p className="mb-[3px] text-[13px] font-medium leading-[19px] text-[#1A1A1A]">{provider.offerOwner.name}{provider.offerOwner.iataCode ? ` • ${provider.offerOwner.iataCode}` : ""}</p> : null}
+          {provider?.offerOwner ? <p className="mb-[3px] text-[13px] font-medium leading-[19px] text-slate-900">{provider.offerOwner.name}{provider.offerOwner.iataCode ? ` • ${provider.offerOwner.iataCode}` : ""}</p> : null}
           {links.map((link) => (
             <a key={link.url} href={link.url} target="_blank" rel="noreferrer" className="flex min-h-11 items-center justify-between gap-3 text-[13px] font-semibold leading-[18px] text-[#075EE8]">
               <span className="min-w-0 flex-1">{link.name} conditions of carriage</span>
@@ -418,8 +417,8 @@ function ConditionsSurface({ offer, locale }: { offer: FlightDetailsOffer; local
 
       {provider?.updatedAt ? (
         <section className="py-[11px]">
-          <p className="text-[11px] font-medium leading-4 text-[#536B92]">Provider offer last updated</p>
-          <p className="text-[11px] leading-4 text-[#536B92]">{formatProviderTimestamp(provider.updatedAt, locale)}</p>
+          <p className="text-[11px] font-medium leading-4 text-slate-500">Provider offer last updated</p>
+          <p className="text-[11px] leading-4 text-slate-500">{formatProviderTimestamp(provider.updatedAt, locale)}</p>
         </section>
       ) : null}
     </div>
@@ -436,12 +435,12 @@ function ExtrasSurface({ offer, locale }: { offer: FlightDetailsOffer; locale: s
         {services.length ? services.map((service, index) => (
           <div key={`${service.type}-${service.description}-${index}`} className={`py-3 ${index ? "border-t border-[#D8E1EC]" : ""}`}>
             <div className="flex items-start justify-between gap-3">
-              <p className="min-w-0 flex-1 text-[13px] font-semibold leading-[19px] text-[#1A1A1A]">{service.description}</p>
-              <p className="max-w-[42%] shrink-0 text-right text-[13px] font-bold leading-[19px] tabular-nums text-[#1A1A1A]">{formatSourceMoney(service.price, service.currency, locale)}{service.pricedPerTraveler ? " each" : ""}</p>
+              <p className="min-w-0 flex-1 text-[13px] font-semibold leading-[19px] text-slate-900">{service.description}</p>
+              <p className="max-w-[42%] shrink-0 text-right text-[13px] font-bold leading-[19px] tabular-nums text-slate-950">{formatSourceMoney(service.price, service.currency, locale)}{service.pricedPerTraveler ? " each" : ""}</p>
             </div>
-            {service.travelerCount ? <p className="mt-1 text-[12px] leading-[17px] text-[#536B92]">Available for {service.travelerCount} traveler{service.travelerCount === 1 ? "" : "s"}</p> : null}
-            {service.maximumQuantity !== undefined ? <p className="mt-1 text-[12px] leading-[17px] text-[#536B92]">{service.pricedPerTraveler ? "Maximum quantity per traveler" : "Maximum quantity"}: {service.maximumQuantity}</p> : null}
-            {service.journeyContext ? <p className="mt-1 text-[12px] leading-[17px] text-[#536B92]">{service.journeyContext}</p> : null}
+            {service.travelerCount ? <p className="mt-1 text-[12px] leading-[17px] text-slate-500">Available for {service.travelerCount} traveler{service.travelerCount === 1 ? "" : "s"}</p> : null}
+            {service.maximumQuantity !== undefined ? <p className="mt-1 text-[12px] leading-[17px] text-slate-500">{service.pricedPerTraveler ? "Maximum quantity per traveler" : "Maximum quantity"}: {service.maximumQuantity}</p> : null}
+            {service.journeyContext ? <p className="mt-1 text-[12px] leading-[17px] text-slate-500">{service.journeyContext}</p> : null}
           </div>
         )) : <QuietText>No optional services were supplied by this provider.</QuietText>}
       </section>
@@ -449,7 +448,7 @@ function ExtrasSurface({ offer, locale }: { offer: FlightDetailsOffer; locale: s
       {provider?.supportedLoyaltyProgrammes?.length ? (
         <section className="py-3">
           <GroupLabel>Loyalty programmes</GroupLabel>
-          <p className="text-[13px] font-medium leading-[19px] text-[#1A1A1A]">{provider.supportedLoyaltyProgrammes.join(", ")}</p>
+          <p className="text-[13px] font-medium leading-[19px] text-slate-900">{provider.supportedLoyaltyProgrammes.join(", ")}</p>
         </section>
       ) : null}
     </div>
@@ -457,28 +456,28 @@ function ExtrasSurface({ offer, locale }: { offer: FlightDetailsOffer; locale: s
 }
 
 function GroupLabel({ children }: { children: React.ReactNode }) {
-  return <p className="mb-[9px] text-[11px] font-bold uppercase leading-[15px] tracking-[0.85px] text-[#536B92]">{children}</p>;
+  return <p className="mb-[9px] text-[11px] font-bold uppercase leading-[15px] tracking-[0.85px] text-slate-500">{children}</p>;
 }
 
 function DetailRow({ label, value, strong = false }: { label: string; value?: string | null; strong?: boolean }) {
   if (!value) return null;
   return (
     <div className="flex items-start justify-between gap-4">
-      <span className={`shrink-0 text-[13px] leading-[19px] text-[#536B92] ${strong ? "font-bold" : "font-normal"}`}>{label}</span>
-      <span className={`min-w-0 flex-1 text-right text-[13px] leading-[19px] text-[#1A1A1A] ${strong ? "font-bold" : "font-medium"}`}>{value}</span>
+      <span className={`shrink-0 text-[13px] leading-[19px] text-slate-500 ${strong ? "font-bold" : "font-normal"}`}>{label}</span>
+      <span className={`min-w-0 flex-1 text-right text-[13px] leading-[19px] text-slate-900 ${strong ? "font-bold" : "font-medium"}`}>{value}</span>
     </div>
   );
 }
 
 function QuietText({ children }: { children: React.ReactNode }) {
-  return <p className="py-[18px] text-[13px] leading-[19px] text-[#536B92]">{children}</p>;
+  return <p className="py-[18px] text-[13px] leading-[19px] text-slate-500">{children}</p>;
 }
 
 function EmptyState({ title, description }: { title: string; description: string }) {
   return (
     <div className="px-[10px] py-[18px] text-center">
-      <p className="text-[14px] font-semibold leading-[19px] text-[#1A1A1A]">{title}</p>
-      <p className="mt-[5px] text-[13px] leading-[19px] text-[#536B92]">{description}</p>
+      <p className="text-[14px] font-semibold leading-[19px] text-slate-900">{title}</p>
+      <p className="mt-[5px] text-[13px] leading-[19px] text-slate-500">{description}</p>
     </div>
   );
 }

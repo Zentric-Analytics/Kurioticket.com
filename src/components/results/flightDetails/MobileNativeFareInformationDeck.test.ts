@@ -43,6 +43,9 @@ test("mobile Compare deals keeps resilient provider identity, selection, price h
   assert.match(deck, /const displayedDeals = deals\.length/);
   assert.match(deck, /data-mobile-flight-deal-list/);
   assert.match(deck, /data-mobile-flight-deal-card/);
+  assert.match(deck, /shadow-\[0_10px_28px_-24px_rgba\(15,23,42,0\.5\)\]/);
+  assert.match(deck, /tabular-nums text-slate-950/);
+  assert.match(deck, /text-slate-500/);
   assert.match(deck, /rounded-xl border-\[1\.5px\] bg-white/);
   assert.match(deck, /border-\[#075EE8\]/);
   assert.match(deck, /h-\[3px\][^"\n]*bg-\[#075EE8\]/);
