@@ -57,19 +57,23 @@ test("Cars price tracking snackbar defines enter, exit, and reduced-motion behav
   assert.match(globals, /prefers-reduced-motion: reduce[\s\S]*cars-price-alert-snackbar-entering,[\s\S]*cars-price-alert-snackbar-leaving \{ animation: none; \}/);
 });
 
-test("mobile Cars tracking is a flat horizontal row on the results background; desktop remains a card", () => {
+test("mobile Cars tracking is a compact, accessible, right-aligned control with unchanged desktop card", () => {
   const section = source.match(/data-cars-price-alert\s+className="([^"]+)"/)?.[1];
-  assert.ok(section, "tracking section is retained as scroll indicator anchor");
+  assert.ok(section, "tracking section remains a scroll-indicator anchor");
   const mobileClasses = section.split(/\s+/).filter((name) => !name.includes(":"));
-  assert.deepEqual(mobileClasses, ["mb-1", "w-full", "min-w-0", "max-w-full", "bg-transparent", "px-0", "py-0"]);
+  assert.deepEqual(mobileClasses, ["col-start-2", "row-start-1", "mb-0", "w-auto", "min-w-0", "max-w-full", "justify-self-end", "bg-transparent", "px-0", "py-0"]);
   assert.doesNotMatch(mobileClasses.join(" "), /rounded|border|shadow|bg-\[#/);
+  assert.match(section, /sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full sm:justify-self-center/);
   assert.match(section, /sm:rounded-2xl sm:border sm:border-blue-100 sm:bg-\[#EDF6FF\] sm:px-4 sm:py-1 sm:shadow-sm/);
   assert.match(section, /lg:mx-auto lg:w-\[calc\(100%_-_12rem\)\] lg:bg-\[#F1F7FE\]/);
-  assert.match(source, /flex min-h-\[52px\] min-w-0 items-center gap-2/);
-  assert.match(source, /min-w-0 flex-1 \[overflow-wrap:anywhere\]/);
-  assert.match(source, /shrink-0 items-center justify-center[^"\n]*sm:h-8 sm:w-8/);
+  assert.match(source, /flex min-h-\[52px\] min-w-0 items-center justify-end gap-1 sm:justify-start sm:gap-2\.5/);
+  assert.match(source, /min-w-0 whitespace-nowrap text-\[11px\] font-semibold leading-4/);
+  assert.match(source, /max-\[359px\]:text-\[10\.5px\] sm:flex-1 sm:whitespace-normal/);
+  assert.match(source, /h-\[15px\] w-\[15px\] sm:h-\[17px\] sm:w-\[17px\]/);
   assert.match(source, /h-11 w-\[51px\] shrink-0 items-center/);
+  assert.match(source, /inline-flex h-7 w-12 shrink-0/);
   assert.match(source, /role="switch" aria-checked=\{tracking\}/);
+  assert.match(source, /onClick=\{\(\) => void toggle\(!tracking\)\}/);
 });
 
 test("Cars tracking title and accessible control use the shortened shared translation", () => {
