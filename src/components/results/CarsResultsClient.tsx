@@ -2946,7 +2946,7 @@ export function CarsResultsExperience({
                   className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0 sm:gap-y-3"
                   data-cars-results-summary-row
                 >
-                  <div className="col-start-1 row-start-1 min-w-0 sm:row-start-2">
+                  <div className={cn("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2")}>
                     <h2
                       ref={resultHeadingRef}
                       id={resultHeadingId}
@@ -2967,7 +2967,7 @@ export function CarsResultsExperience({
                     </h2>
                   </div>
                   {!embedded ? <CarPriceAlertControl search={search} results={providerResults} /> : null}
-                  <div className="col-start-2 row-start-2 hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2">
+                  <div className={cn("col-start-2 row-start-1 hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2", !embedded && "sm:row-start-2")}>
                     <span className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
                       {t("carsResults.sortBy")}:
                     </span>
