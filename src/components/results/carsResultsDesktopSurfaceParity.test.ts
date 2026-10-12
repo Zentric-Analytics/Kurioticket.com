@@ -145,8 +145,9 @@ test("desktop Cars filters use the Hotels white filter surface without changing 
   assert.match(results, /data-cars-mobile-filter-shell[\s\S]*?bg-\[#F2F4F8\]/);
 });
 
-test("desktop car cards use the mobile information surface while preserving the white image section", () => {
+test("mobile car information matches the Hotels white surface without changing standalone desktop parity", () => {
   assert.match(card, /desktopSurfaceParity = false/);
+  assert.match(card, /border border-\[#D8E1EC\] bg-white shadow-\[0_2px_10px_rgba\(24,48,91,0\.08\)\] md:rounded-2xl/);
   assert.match(
     card,
     /desktopSurfaceParity \? "md:bg-\[#E7EBF1\]" : "md:bg-white"/,
@@ -161,11 +162,11 @@ test("desktop car cards use the mobile information surface while preserving the 
   );
   assert.match(
     card,
-    /data-car-card-mobile-information[\s\S]*?bg-\[#E7EBF1\]/,
+    /data-car-card-mobile-information\s+className="min-w-0 bg-white px-2\.5 pb-2 pt-\[7px\]"/,
   );
   assert.match(
     card,
-    /data-car-card-mobile-lower-band[\s\S]*?bg-\[#E7EBF1\]/,
+    /data-car-card-mobile-lower-band\s+className="flex min-w-0 items-stretch border-t border-\[#CBD5E1\] bg-white"/,
   );
 });
 
