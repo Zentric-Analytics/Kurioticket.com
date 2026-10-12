@@ -49,7 +49,7 @@ export function VirtualResultsList<T>({ items, itemKey, renderItem, estimateHeig
   });
   useLayoutEffect(() => () => {
     const snapshot = virtualizer.takeSnapshot();
-    if (!snapshot.every(row => row.key === itemKey(items[row.index]))) return;
+    if (!snapshot.every(row => items[row.index] !== undefined && row.key === itemKey(items[row.index]))) return;
     measurements.delete(measurementKey);
     measurements.set(measurementKey, snapshot);
     while (measurements.size > 8) measurements.delete(measurements.keys().next().value!);

@@ -87,6 +87,12 @@ test("hotel filters can find an offer that was never mounted", async ({ page }) 
   await expect(page.getByRole('heading', { name: 'Fixture Hotel 999', exact: true })).toBeVisible();
   await page.getByPlaceholder('Search properties').filter({ visible: true }).first().fill('');
   await expect(list).toHaveAttribute('data-total-results', String(count));
+  // Restoring a larger inventory whose first key is unchanged must not read
+  // beyond the previous one-item measurement snapshot during effect cleanup.
+  await page.getByPlaceholder('Search properties').filter({ visible: true }).first().fill('Fixture Hotel 0');
+  await expect(list).toHaveAttribute('data-total-results', '1');
+  await page.getByPlaceholder('Search properties').filter({ visible: true }).first().fill('');
+  await expect(list).toHaveAttribute('data-total-results', String(count));
 });
 
 test("keyboard focus reaches results beyond the initial mounted window", async ({ page }) => {
