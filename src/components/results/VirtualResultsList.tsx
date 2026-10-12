@@ -123,8 +123,7 @@ export function VirtualResultsList<T>({ items, itemKey, renderItem, estimateHeig
     style={{ position: "relative", height: virtualizer.getTotalSize(), overflowAnchor: "none" }}>
     {rows.map(row => <div key={row.key} ref={virtualizer.measureElement} data-index={row.index} data-virtual-index={row.index} className={rowClassName}
       data-result-key={itemKey(items[row.index])} role="listitem" aria-posinset={row.index + 1} aria-setsize={items.length} tabIndex={-1}
-      style={{ position: "absolute", top: 0, left: 0, width: "100%",
-        transform: `translateY(${row.start - scrollMargin}px)` }}>
+      style={{ position: "absolute", top: row.start - scrollMargin, left: 0, width: "100%" }}>
       {renderItem(items[row.index], row.index)}
     </div>)}
   </div>;

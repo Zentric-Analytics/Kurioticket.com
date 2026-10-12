@@ -47,6 +47,8 @@ for (const vertical of ["hotels", "flights", "cars"] as const) {
     await expect(list).toHaveAttribute("data-total-results", String(count));
     await expect.poll(() => list.locator("[data-virtual-index]").count()).toBeGreaterThan(0);
     expect(await list.locator("[data-virtual-index]").count()).toBeLessThan(30);
+    await expect.poll(() => list.locator('[data-virtual-index]').evaluateAll(rows =>
+      rows.every(row => getComputedStyle(row).transform === 'none'))).toBe(true);
     const elements = await page.locator("*").count();
     expect(elements).toBeLessThan(15_000);
     console.log(JSON.stringify({ project: testInfo.project.name, vertical, inventory: count,

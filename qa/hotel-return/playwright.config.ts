@@ -2,6 +2,7 @@ import { defineConfig } from "@playwright/test";
 import { randomBytes } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+const browserName = process.env.QA_RENDER_BROWSER === "webkit" ? "webkit" : "chromium";
 export default defineConfig({
   testDir: ".", testMatch: ["return.spec.ts", "virtual-results.spec.ts"], workers: 1,
   outputDir: join(tmpdir(), "kurioticket-web-rendering-tests"),
@@ -11,7 +12,7 @@ export default defineConfig({
     env: { NEXTAUTH_SECRET: randomBytes(32).toString("hex"), NEXTAUTH_URL: "http://127.0.0.1:3100", DATABASE_URL: "postgresql://local_test:local_test@127.0.0.1:1/local_test?connect_timeout=1" },
   },
   projects: [
-    { name: "mobile", use: { browserName: "chromium", viewport: { width: 393, height: 852 } } },
-    { name: "desktop", use: { browserName: "chromium", viewport: { width: 1365, height: 900 } } },
+    { name: "mobile", use: { browserName, viewport: { width: 393, height: 852 } } },
+    { name: "desktop", use: { browserName, viewport: { width: 1365, height: 900 } } },
   ],
 });
