@@ -932,24 +932,26 @@ test("details expose authoritative cabin class without provider secrets", async 
 test("Flight Details mobile web uses the native hero asset, geometry, curve, and screen-level controls", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   const loadingSource = await readFile(new URL("./FlightDetailsLoadingShell.tsx", import.meta.url), "utf8");
+  const actionBar = await readFile(new URL("./MobileFlightDetailsActionBar.tsx", import.meta.url), "utf8");
   await access("apps/mobile/assets/heroes/flight-details-hero.webp");
   assert.match(source, /data-testid="flight-details-hero"/);
   assert.match(source, /import flightDetailsHero from "\.\.\/\.\.\/\.\.\/\.\.\/apps\/mobile\/assets\/heroes\/flight-details-hero\.webp"/);
-  assert.match(source, /min-h-\[318px\][\s\S]*pb-\[122px\][\s\S]*pt-\[calc\(env\(safe-area-inset-top\)\+64px\)\]/);
+  assert.match(source, /min-h-\[254px\][\s\S]*pb-\[122px\][\s\S]*pt-4/);
   assert.match(source, /data-flight-details-hero-curve/);
   assert.match(source, /M0 12 Q50 64 100 12 L100 64 L0 64 Z/);
-  assert.match(source, /fixed left-4 top-\[calc\(env\(safe-area-inset-top\)\+8px\)\].*sm:hidden/);
-  assert.match(source, /data-flight-details-mobile-floating-actions/);
-  assert.match(source, /fixed right-4 top-\[calc\(env\(safe-area-inset-top\)\+8px\)\]/);
-  assert.match(source, /h-11 w-\[88px\]/);
+  assert.match(source, /<MobileFlightDetailsActionBar/);
+  assert.match(actionBar, /data-flight-details-mobile-action-bar/);
+  assert.match(actionBar, /sticky top-0[^"]*bg-\[#F5F7FB\][^"]*sm:hidden/);
+  assert.match(actionBar, /env\(safe-area-inset-top\)/);
+  assert.match(actionBar, /data-flight-details-mobile-actions/);
+  assert.match(actionBar, /h-11 w-\[88px\]/);
+  assert.ok(source.indexOf("<MobileFlightDetailsActionBar") < source.indexOf('data-testid="flight-details-hero"'));
   assert.match(source, /aria-label=\{flightSaved \? "Remove saved flight" : "Save flight"\}/);
   assert.match(source, /aria-label="Share flight"/);
-  assert.match(source, /mobileHeaderProtected \? "bg-\[#F5F7FB\]" : "bg-transparent"/);
-  assert.match(source, /protectedHeight = \(mobileBackControlRef\.current\?\.getBoundingClientRect\(\)\.bottom \?\? 52\) \+ 12/);
-  assert.match(loadingSource, /min-h-\[318px\]/);
+  assert.doesNotMatch(source, /mobileHeaderProtected|mobileBackControlRef/);
+  assert.match(loadingSource, /min-h-\[254px\]/);
+  assert.match(loadingSource, /<MobileFlightDetailsActionBar/);
   assert.match(loadingSource, /data-flight-details-loading-hero-curve/);
-  assert.match(loadingSource, /fixed left-4 top-\[calc\(env\(safe-area-inset-top\)\+8px\)\]/);
-  assert.match(loadingSource, /fixed right-4 top-\[calc\(env\(safe-area-inset-top\)\+8px\)\]/);
 });
 
 test("mobile web Flight Details removes the branded header and uses the native edge-to-edge available state", async () => {
@@ -1215,7 +1217,7 @@ test("desktop Flight Details uses a compact endpoint hierarchy and reserves time
 test("mobile web Flight Details loading itinerary matches native-parity geometry", async () => {
   const source = await readFile(new URL("./FlightDetailsLoadingShell.tsx", import.meta.url), "utf8");
   assert.match(source, /bg-\[#F5F7FB\]/);
-  assert.match(source, /min-h-\[318px\]/);
+  assert.match(source, /min-h-\[254px\]/);
   assert.match(source, /pb-\[122px\]/);
   assert.match(source, /data-mobile-native-itinerary-loading/);
   assert.match(source, /-mx-2 -mt-\[104px\]/);

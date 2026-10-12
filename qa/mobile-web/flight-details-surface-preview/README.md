@@ -2,6 +2,10 @@
 
 Starting `dev`: `0733e8d0612938f44ad03bdc343ae9ca0298d413`.
 
+The branch now also moves the mobile controls above the hero. See the
+[latest combined previews](../flight-details-action-bar-preview/README.md).
+The screenshots below capture the earlier surface-styling stage.
+
 Mobile Details now uses the existing mobile Results card shadow:
 `0 10px 28px -24px rgba(15, 23, 42, 0.5)`. Shadows remain visible but no longer
 create the broad dark halo around the itinerary and selected fare cards.
