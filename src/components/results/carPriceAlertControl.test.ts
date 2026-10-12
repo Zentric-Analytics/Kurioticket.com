@@ -57,18 +57,28 @@ test("Cars price tracking snackbar defines enter, exit, and reduced-motion behav
   assert.match(globals, /prefers-reduced-motion: reduce[\s\S]*cars-price-alert-snackbar-entering,[\s\S]*cars-price-alert-snackbar-leaving \{ animation: none; \}/);
 });
 
-test("mobile Cars price tracking stays full-width while desktop is centered and slightly narrower", () => {
-  assert.match(source, /data-cars-price-alert/);
-  assert.match(source, /w-full min-w-0 max-w-full/);
-  assert.match(source, /bg-\[#EDF6FF\][^"]*px-3 py-0[^"]*sm:bg-\[#EDF6FF\][^"]*sm:py-1/);
-  assert.match(source, /lg:mx-auto lg:w-\[calc\(100%_-_12rem\)\] lg:bg-\[#F1F7FE\]/);
-  assert.doesNotMatch(source, /lg:w-auto/);
-  assert.match(source, /min-h-\[52px\] min-w-0 items-center/);
+test("mobile Cars tracking is a flat horizontal row on the results background; desktop remains a card", () => {
+  const section = source.match(/data-cars-price-alert\s+className="([^"]+)"/)?.[1];
+  assert.ok(section, "tracking section is retained as scroll indicator anchor");
+  const mobileClasses = section.split(/\s+/).filter((name) => !name.includes(":"));
+  assert.deepEqual(mobileClasses, ["mb-1", "w-full", "min-w-0", "max-w-full", "bg-transparent", "px-0", "py-0"]);
+  assert.doesNotMatch(mobileClasses.join(" "), /rounded|border|shadow|bg-\[#/);
+  assert.match(section, /sm:rounded-2xl sm:border sm:border-blue-100 sm:bg-\[#EDF6FF\] sm:px-4 sm:py-1 sm:shadow-sm/);
+  assert.match(section, /lg:mx-auto lg:w-\[calc\(100%_-_12rem\)\] lg:bg-\[#F1F7FE\]/);
+  assert.match(source, /flex min-h-\[52px\] min-w-0 items-center gap-2/);
   assert.match(source, /min-w-0 flex-1 \[overflow-wrap:anywhere\]/);
   assert.match(source, /shrink-0 items-center justify-center[^"\n]*sm:h-8 sm:w-8/);
   assert.match(source, /h-11 w-\[51px\] shrink-0 items-center/);
+  assert.match(source, /role="switch" aria-checked=\{tracking\}/);
 });
 
+test("Cars tracking title and accessible control use the shortened shared translation", () => {
+  const english = readFileSync(new URL("../../lib/i18n/en.ts", import.meta.url), "utf8");
+  assert.match(english, /"carsResults\.priceTracking\.title": "Track car prices"/);
+  assert.match(source, /aria-label=\{t\("carsResults\.priceTracking\.title"\)\}/);
+  assert.match(source, /<h2 className="[^"]*"[^>]*>\{t\("carsResults\.priceTracking\.title"\)\}<\/h2>/);
+  assert.match(source, /role="switch"[^>]*aria-label=\{t\("carsResults\.priceTracking\.title"\)\}/);
+});
 
 test("Cars price tracking failures use an accessible blocking dialog", () => {
   assert.match(source, /role="alertdialog" aria-modal="true"/);

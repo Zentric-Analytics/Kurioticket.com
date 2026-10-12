@@ -638,7 +638,7 @@ test("cards expose compact, functional save and share actions", () => {
   assert.match(source, /inline-flex min-h-5 shrink-0 items-center gap-1 whitespace-nowrap/);
   assert.match(
     source,
-    /data-car-card-mobile-information[\s\S]*?bg-\[#E7EBF1\]/,
+    /data-car-card-mobile-information\s+className="min-w-0 bg-white px-2\.5 pb-2 pt-\[7px\]"/,
   );
 });
 

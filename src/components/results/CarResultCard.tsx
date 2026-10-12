@@ -317,7 +317,7 @@ export function CarResultCard({
   return (
     <div data-car-result-card-shell className="w-full">
     <article
-      className={`relative w-full overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-[#E7EBF1] shadow-[0_2px_10px_rgba(24,48,91,0.08)] md:rounded-2xl ${desktopSurfaceParity ? "md:bg-[#E7EBF1]" : "md:bg-white"} md:shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] md:transition md:duration-200 md:hover:-translate-y-0.5 md:hover:border-[#CBD6E2] md:hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]`}
+      className={`relative w-full overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white shadow-[0_2px_10px_rgba(24,48,91,0.08)] md:rounded-2xl ${desktopSurfaceParity ? "md:bg-[#E7EBF1]" : "md:bg-white"} md:shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] md:transition md:duration-200 md:hover:-translate-y-0.5 md:hover:border-[#CBD6E2] md:hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]`}
     >
       <CarsRouteLoadingOverlay active={mobileDetailsPending} />
       {providerLabel && <p className={`px-4 pt-3 text-xs font-semibold text-amber-800 ${desktopSurfaceParity ? "lg:text-[13px] lg:leading-5" : ""}`}>{providerLabel}</p>}
@@ -355,7 +355,7 @@ export function CarResultCard({
 
             <div
               data-car-card-mobile-information
-              className="min-w-0 bg-[#E7EBF1] px-2.5 pb-2 pt-[7px]"
+              className="min-w-0 bg-white px-2.5 pb-2 pt-[7px]"
             >
               {badge && BadgeIcon ? (
                 <div className="mb-1 flex min-w-0 justify-end">
@@ -441,7 +441,7 @@ export function CarResultCard({
 
           <div
             data-car-card-mobile-lower-band
-            className="flex min-w-0 items-stretch border-t border-[#CBD5E1] bg-[#E7EBF1]"
+            className="flex min-w-0 items-stretch border-t border-[#CBD5E1] bg-white"
           >
             <div
               data-car-card-mobile-specs
