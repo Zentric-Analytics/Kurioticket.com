@@ -170,19 +170,15 @@ test("mobile car information matches the Hotels white surface without changing s
   );
 });
 
-test("desktop price alert uses a subtly lighter blue while mobile surfaces remain unchanged", () => {
-  assert.match(
-    alert,
-    /bg-\[#EDF6FF\][^"]*sm:border-blue-100 sm:bg-\[#EDF6FF\][^"]*lg:bg-\[#F1F7FE\]/,
-  );
-  assert.match(
-    alert,
-    /lg:mx-auto lg:w-\[calc\(100%_-_12rem\)\]/,
-  );
-  assert.doesNotMatch(
-    alert,
-    /data-cars-price-alert[\s\S]{0,500}(?:sm|lg):bg-white/,
-  );
+test("desktop price alert retains blue styling while mobile tracking sits directly on the page", () => {
+  const section = alert.match(/data-cars-price-alert\s+className="([^"]+)"/)?.[1];
+  assert.ok(section);
+  assert.match(section, /bg-transparent px-0 py-0/);
+  assert.match(section, /sm:rounded-2xl sm:border sm:border-blue-100 sm:bg-\[#EDF6FF\] sm:px-4 sm:py-1 sm:shadow-sm/);
+  assert.match(section, /lg:mx-auto lg:w-\[calc\(100%_-_12rem\)\] lg:bg-\[#F1F7FE\]/);
+  assert.doesNotMatch(section.split("sm:")[0], /border|rounded|shadow|bg-\[#/);
+  assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white pb-8">/);
+  assert.doesNotMatch(section, /(?:sm|lg):bg-white/);
 });
 
 test("KAYAK car cards and loading canvases stay inside the same standalone desktop surface contract", () => {
