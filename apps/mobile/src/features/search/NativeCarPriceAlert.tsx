@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Animated, Easing, Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { Alert, Animated, Easing, I18nManager, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Bell, CircleCheck } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -100,14 +100,35 @@ export function NativeCarPriceAlert({ plan, results, available, onFeedback }: { 
     } finally { pendingRef.current = false; setPending(false); setOptimisticTracking(null); }
   };
 
-  if (!presentation.visible) return null;
   const committedTracking = matchingAlert?.status === "ACTIVE";
   const tracking = optimisticTracking ?? committedTracking;
   const disabled = loading || !alertKnown || (!available && !tracking);
-  return <View accessibilityLabel="Track rental car prices" style={[styles.control, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}>
-    <Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent}/>
-    <Text style={[styles.title, { color: theme.textPrimary }]}>Track rental car prices</Text>
-    <View style={styles.switchSlot}><Switch accessibilityRole="switch" accessibilityLabel="Track rental car prices" accessibilityState={{ checked: tracking, disabled, busy: pending }} disabled={disabled} value={tracking} onValueChange={(next) => void toggle(next)} trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }} thumbColor="#FFFFFF" /></View>
+  const switchAnimation = useRef(new Animated.Value(tracking ? 1 : 0)).current;
+  useEffect(() => {
+    const motion = Animated.timing(switchAnimation, {
+      toValue: tracking ? 1 : 0,
+      duration: 160,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    });
+    motion.start();
+    return () => motion.stop();
+  }, [switchAnimation, tracking]);
+  const thumbTranslateX = switchAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, I18nManager.isRTL ? -20 : 20],
+  });
+  if (!presentation.visible) return null;
+  return <View style={styles.control}>
+    <Bell accessible={false} size={16} strokeWidth={2} color={theme.priceAlertAccent}/>
+    <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.title, { color: theme.dark ? theme.textPrimary : "#07133B" }]}>Track car prices</Text>
+    <View style={styles.switchSlot}>
+      <Pressable accessibilityRole="switch" accessibilityLabel="Track car prices" accessibilityState={{ checked: tracking, disabled, busy: pending }} disabled={disabled} onPress={() => void toggle(!tracking)} style={styles.switchTouchTarget}>
+        <View pointerEvents="none" style={[styles.switchTrack, { backgroundColor: tracking ? theme.switchTrackActive : theme.dark ? "#465269" : "#CBD5E1", borderColor: tracking ? theme.switchTrackActive : theme.dark ? "#465269" : "#CBD5E1" }]}>
+          <Animated.View style={[styles.switchThumb, I18nManager.isRTL ? styles.switchThumbRtl : styles.switchThumbLtr, { transform: [{ translateX: thumbTranslateX }] }]}/>
+        </View>
+      </Pressable>
+    </View>
   </View>;
 }
 
@@ -143,9 +164,14 @@ export function CarPriceAlertSnackbar({ feedback, onDismiss }: { feedback: Exclu
 export const PriceTrackingSnackbar = CarPriceAlertSnackbar;
 
 const styles = StyleSheet.create({
-  control: { width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1, paddingLeft: 12, paddingRight: 14, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 8 },
-  title: { flex: 1, flexShrink: 1, fontSize: 12.5, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },
-  switchSlot: { width: 51, minHeight: 44, alignItems: "flex-end", justifyContent: "center" },
+  control: { flexShrink: 1, minWidth: 0, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 6 },
+  title: { minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 17, fontWeight: "600", fontFamily: appFonts.semibold },
+  switchSlot: { width: 51, minHeight: 44, flexShrink: 0, alignItems: "flex-end", justifyContent: "center" },
+  switchTouchTarget: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  switchTrack: { width: 44, height: 24, borderRadius: 12, borderWidth: 1, justifyContent: "center" },
+  switchThumb: { position: "absolute", top: 3, width: 18, height: 18, borderRadius: 9, backgroundColor: "#FFFFFF", shadowColor: "#0F172A", shadowOpacity: 0.12, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
+  switchThumbLtr: { left: 3 },
+  switchThumbRtl: { right: 3 },
   snackbarPosition: { position: "absolute", left: 16, right: 16, zIndex: 50 },
   snackbar: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, paddingHorizontal: 13, paddingVertical: 11, flexDirection: "row", alignItems: "center", gap: 10, shadowColor: "#0F172A", shadowOpacity: 0.18, shadowRadius: 12, elevation: 10 },
   snackbarCopy: { flex: 1, minWidth: 0, gap: 1 },
