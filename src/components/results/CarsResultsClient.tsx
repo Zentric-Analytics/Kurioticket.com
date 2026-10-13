@@ -1988,9 +1988,9 @@ export function CarsResultsExperience({
         mobileFilterOriginRef.current?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
       const scrollY = Math.max(0, window.scrollY);
 
-      // Pin at the instant the natural rail reaches the header, not after
-      // scrolling it out of view. Keep the entire rail with the header
-      // through the last result, in BOTH directions; release at the top.
+      // The rail origin is CSS-sticky and stays in document flow. This flag
+      // changes only its visual treatment; it must not detach the rail from
+      // layout during Safari viewport and overscroll changes.
       const shouldPin =
         scrollY > 1 &&
         naturalFilterTop <= headerBottom + 1;
