@@ -29,7 +29,15 @@ test("mobile web reference renders dedicated Hotel provider offers from shared o
   assert.match(webMobileDetails, /onInfo=\{\(\) => setRateInfo\(offer\)\}/);
   assert.match(webMobileDetails, /perNightText=\{props\.perNightText\}/);
   assert.match(webMobileDetails, /totalPrice: total/);
-  assert.doesNotMatch(webMobileDetails, /className=\{styles\.rateAction\}|>Stay total<\/span>/);
+  const rateListStart = webMobileDetails.indexOf('<div aria-label="Hotel rates" className={styles.rateList}>');
+  assert.ok(rateListStart >= 0, "the provider-card list must be present");
+  const rateListEnd = webMobileDetails.indexOf("</div>", rateListStart);
+  assert.ok(rateListEnd > rateListStart);
+  const providerCards = webMobileDetails.slice(rateListStart, rateListEnd);
+  assert.match(providerCards, /offers\.map\(offer => <MobileProviderOffer/);
+  assert.doesNotMatch(providerCards, />Stay total</, "the card list must not repeat the details-dialog total label");
+  assert.match(webMobileDetails, /rateInfo\.totalPrice \? <div className=\{styles\.rateInfoTotal\}><span>Stay total<\/span>/);
+  assert.doesNotMatch(webMobileDetails, /className=\{styles\.rateAction\}/);
   assert.doesNotMatch(webMobileCss, /\.rate\[data-selected="true"\][^}]*border-color: var\(--accent\)/);
 });
 
