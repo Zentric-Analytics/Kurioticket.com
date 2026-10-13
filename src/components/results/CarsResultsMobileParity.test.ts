@@ -197,10 +197,10 @@ test("mobile result rhythm no longer reserves space for the removed summary card
     resultsSource,
     /page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-0 sm:pt-6/,
   );
-  assert.match(resultsSource, /gap-2 pt-1 sm:gap-3 lg:py-1/);
+  assert.match(resultsSource, /gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1/);
   assert.match(resultsSource, /min-w-0 space-y-0 sm:space-y-4/);
   assert.equal(
-    (resultsSource.match(/space-y-3\.5 max-sm:!mt-2\.5/g) ?? []).length,
+    (resultsSource.match(/space-y-3\.5 max-sm:!mt-1\.5/g) ?? []).length,
     2,
   );
 });
