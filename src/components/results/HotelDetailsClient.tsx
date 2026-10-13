@@ -625,7 +625,7 @@ export function HotelDetailsClient({
           providerLogoUrl: offer.providerLogoUrl,
           roomName: supplied?.rate?.roomName || offer.roomType || undefined,
           cancellationLabel: offer.cancellationInfo || undefined,
-          suppliedRateFacts: [...(supplied?.rate?.conditions ?? []), ...(supplied?.rate?.rateBreakdown ?? [])],
+          suppliedRateFacts: [...(supplied?.rate?.conditions ?? []), ...(supplied?.rate?.rateBreakdown ?? []), ...(supplied?.rate?.bundledRate === undefined ? [] : [{ label: "Bundled rate", value: supplied.rate.bundledRate ? "Yes" : "No" }])],
           paymentLabel: supplied?.rate?.payLater === undefined ? undefined : supplied.rate.payLater ? "Pay later" : "Pay later not offered",
           nightlyPrice: nightly.formatted, nightlyPriceTitle: nightly.title,
           nightlyPriceAriaLabel: nightly.ariaLabel, totalPrice: format(price.totalPrice).formatted,

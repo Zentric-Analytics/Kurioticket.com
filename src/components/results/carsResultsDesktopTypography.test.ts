@@ -171,8 +171,9 @@ test("desktop Cars Results keeps footer supporting copy readable without changin
 
 test("mobile typography remains intact while desktop is refined", () => {
   assert.match(card, /text-\[15px\] font-bold leading-\[18px\]/);
-  assert.match(results, /text-\[15px\] font-extrabold text-slate-950/);
-  assert.match(alert, /text-\[12\.5px\] font-bold leading-4 text-slate-950/);
+  assert.match(results, /className="text-xl font-extrabold text-slate-950 outline-none/);
+  assert.match(alert, /text-\[12px\] font-semibold leading-\[17px\] text-\[#07133B\]/);
+  assert.match(alert, /max-\[359px\]:text-\[10\.5px\]/);
 });
 
 test("desktop Cars Results uses the same Inter foundation as mobile web", () => {

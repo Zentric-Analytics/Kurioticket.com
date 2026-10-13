@@ -38,6 +38,26 @@ const routes = {
   flights: `/flights/results?tripType=one-way&origin=SFO&destination=LOS&departureDate=${date}&adults=1&children=0&infants=0&travelers=1&cabinClass=economy&sort=cheapest`,
   cars: `/cars/results?${new URLSearchParams(carSearch)}`,
 };
+test("supplier car facts remain accessible before the external handoff", async ({ page }) => {
+  const result = { ...carBase, offers: carBase.offers.map(offer => ({ ...offer, suppliedFacts: [{ label: "Fuel policy", value: "Return with the supplied fuel level" }] })) };
+  await page.route("**/api/cars/search", route => route.fulfill({ json: { results: [result], status: "available" } }));
+  await page.goto(routes.cars);
+  const facts = page.locator("[data-supplier-information]").first();
+  await facts.locator("summary").click();
+  await expect(facts.getByText("Return with the supplied fuel level", { exact: true })).toBeVisible();
+});
+test("supplier hotel policies and review quotations are available on both layouts", async ({ page }) => {
+  await page.route("**/api/hotels/details?**", route => route.fulfill({ json: {
+    hotel: hotels[0], propertyDetails: null, roomOptions: [], relatedHotels: [],
+    providerDetails: { source: "KAYAK", overview: { policies: [{ label: "Check-in", value: "After 3 PM" }], selfRated: false }, reviews: { quotes: [{ label: "Guest quote", value: "Great location supplied by provider" }] } },
+  } }));
+  await page.goto(`/hotels/details/${encodeURIComponent(hotels[0].id)}?destination=London&checkIn=${date}&checkOut=2030-11-21&guests=1&rooms=1`);
+  const facts = page.locator("[data-supplier-information]");
+  await facts.locator("summary").click();
+  await expect(facts.getByText("After 3 PM", { exact: true })).toBeVisible();
+  await expect(facts.getByText("Great location supplied by provider", { exact: true })).toBeVisible();
+  await expect(facts.getByText("No", { exact: true })).toBeVisible();
+});
 for (const vertical of ["hotels", "flights", "cars"] as const) {
   test(`${vertical} keeps all results reachable with bounded mounted cards`, async ({ page }, testInfo) => {
     const started = Date.now();

@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { fileURLToPath, URL } from "node:url";
 import test from "node:test";
 
-const hotel = readFileSync(new URL("./HotelSearchPanel.tsx", import.meta.url).pathname, "utf8");
-const primitives = readFileSync(new URL("./FlowPrimitives.tsx", import.meta.url).pathname, "utf8");
-const packages = readFileSync(new URL("./PackageSearchForm.tsx", import.meta.url).pathname, "utf8");
+const hotel = readFileSync(fileURLToPath(new URL("./HotelSearchPanel.tsx", import.meta.url)), "utf8");
+const primitives = readFileSync(fileURLToPath(new URL("./FlowPrimitives.tsx", import.meta.url)), "utf8");
+const packages = readFileSync(fileURLToPath(new URL("./PackageSearchForm.tsx", import.meta.url)), "utf8");
 const closedFields = hotel.slice(hotel.indexOf("return <View"), hotel.indexOf("<DateRangeSheet"));
 
 test("Hotel closed rows reuse the Packages CompactSearchField architecture", () => {

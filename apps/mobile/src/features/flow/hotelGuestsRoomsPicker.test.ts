@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
+import { fileURLToPath, URL } from "node:url";
 
-const source = readFileSync(new URL("./HotelSearchPanel.tsx", import.meta.url).pathname, "utf8");
+const source = readFileSync(fileURLToPath(new URL("./HotelSearchPanel.tsx", import.meta.url)), "utf8");
 const sheet = source.slice(source.indexOf("function HotelGuestsRoomsSheet"));
 const guestContent = sheet.slice(sheet.indexOf("const guestContent"), sheet.indexOf("if (presentation ==="));
 const counterButton = source.slice(source.indexOf("function CounterButton"), source.indexOf("const styles = StyleSheet.create"));
-const model = readFileSync(new URL("./hotelSearchModel.ts", import.meta.url).pathname, "utf8");
+const model = readFileSync(fileURLToPath(new URL("./hotelSearchModel.ts", import.meta.url)), "utf8");
 
 test("hotel picker exposes the complete website content in native order", () => {
   const concepts = [">GUESTS<", 'label="Adults"', "Ages 18+", 'label="Children"', "Ages 0–17", ">ROOMS<", 'label="Rooms"', "Separate rooms", "Pet-friendly", "Only show stays that allow pets"];

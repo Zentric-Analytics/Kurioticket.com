@@ -35,7 +35,7 @@ test("mobile sandbox restores location previews without warning labels", () => {
   assert.match(mobile, /hotelName: props.locationIsSimulated \? "" : props.hotelName/);
   assert.doesNotMatch(mobile, /<small>Sandbox location<\/small>/);
   assert.match(mobile, /Why this location works/);
-  assert.match(desktop, /const locationProperty = props.locationIsSimulated \? null : props.locationDetails \?\? property/);
+  assert.match(desktop, /const locationProperty = props.locationDetails \?\? property/);
   const card = read("../HotelCard.tsx");
   assert.match(card, /hotel.provider === "KAYAK sandbox" \? <p data-hotel-test-location/);
   assert.match(card, /\{hotel.location\}/);

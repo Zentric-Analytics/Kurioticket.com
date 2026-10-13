@@ -32,6 +32,7 @@ export type CarCategory =
   | "van";
 
 export type CarOffer = {
+  suppliedFacts?: Array<{ label: string; value: string }>;
   id: string;
   bookingProviderName: string;
   bookingProviderLogoUrl?: string;

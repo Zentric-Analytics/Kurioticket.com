@@ -66,14 +66,14 @@ test("Hotel selection defaults to the first actionable rate and preserves later 
 });
 
 test("mobile Hotel inline rate actions target their own provider rather than an obsolete booking dock", () => {
-  assert.match(mobileDetails, /offers\.map\(offer => <DesktopProviderOffer/);
+  assert.match(mobileDetails, /offers\.map\(offer => <MobileProviderOffer/);
   assert.match(mobileDetails, /selected=\{selected\?\.id === offer\.id\}/);
   assert.match(mobileDetails, /pendingOfferId=\{pending \? selected\?\.id \?\? null : null\}/);
   assert.match(mobileDetails, /offers\.find\(candidate => candidate\.id === offerId\)/);
   assert.match(mobileDetails, /if \(nextOffer\) void viewDeal\(nextOffer\)/);
   assert.match(mobileDetails, /offer\.action\.kind === "internal-room-flow"[\s\S]*setOverlay\("rooms"\)/);
   assert.match(providerCard, /View deal with \$\{offer\.providerName\}/);
-  assert.match(providerCard, /disabled=\{disabled \|\| !onContinue\}/);
+  assert.match(providerCard, /disabled=\{!selectable \|\| pendingOfferId !== null \|\| !onContinue\}/);
 });
 
 test("changing the selected Hotel rate clears stale provider handoff feedback", () => {
@@ -105,9 +105,10 @@ test("web Hotel provider action stays live-price gated and server-authoritative"
 });
 
 test("mobile Hotel inline rate actions fit narrow phones and content respects the safe area", () => {
-  assert.match(providerCard, /grid-cols-\[92px_minmax\(0,1fr\)_80px\]/);
-  assert.match(providerCard, /h-8 w-\[80px\] shrink-0/);
-  assert.match(providerCard, /text-\[16px\][\s\S]*min-\[360px\]:text-\[20px\]/);
+  assert.match(providerCard, /grid-cols-\[minmax\(0,1fr\)_auto_auto\]/);
+  assert.match(providerCard, /min-h-8 items-center justify-center whitespace-nowrap/);
+  assert.match(providerCard, /text-\[16px\] font-semibold leading-5/);
+  assert.match(providerCard, /onContinue\?\.\(offer\.id, event\.currentTarget\)/);
   assert.match(mobileStyles, /padding-bottom: max\(16px, env\(safe-area-inset-bottom\)\)/);
 });
 

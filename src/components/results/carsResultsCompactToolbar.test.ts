@@ -97,7 +97,7 @@ test("source-contract: Cars count and tracking share a shrink-safe mobile row wi
   );
 
   assert.match(resultsToolbar, /flex w-full min-w-0 flex-col items-start/);
-  const toolbarClass = resultsToolbar.match(/className="([^"]+)"\s+data-cars-results-toolbar/)?.[1];
+  const toolbarClass = resultsToolbar.match(/className=\{cn\(\s*"([^"]+)",\s*!embedded && presentation === "standalone" && "max-sm:pt-2",\s*\)\}\s+data-cars-results-toolbar/)?.[1];
   assert.ok(toolbarClass);
   assert.equal(toolbarClass.split(" ").includes("flex-wrap"), false);
 

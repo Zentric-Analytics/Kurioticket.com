@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { SupplierInformation } from "../SupplierInformation";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -466,6 +467,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               ) : null}
               <FarePanel activeTab={activeTab} fare={selectedFare} offer={activeOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} selectedDealOfferId={selectedDeal?.offerId ?? null} onSelectDeal={setSelectedDealOfferId} onViewDeal={continueToOffer} />
             </div>
+            <SupplierInformation facts={activeOffer.providerDetails?.suppliedFacts} />
             </div>
           </section>
         </div>

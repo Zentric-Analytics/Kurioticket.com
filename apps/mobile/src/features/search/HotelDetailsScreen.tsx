@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { NativeSupplierInformation } from "./NativeSupplierInformation";
+import { hotelSupplierFacts } from "../../../../../src/lib/hotels/hotelSupplierFacts";
 import {
   Alert,
   Platform,
@@ -668,6 +670,8 @@ function HotelDetail({
             />
           ) : null}
         </View>
+        <NativeSupplierInformation facts={hotelSupplierFacts(details?.providerDetails, false)} title="Property information supplied by KAYAK" />
+        {details?.propertyOffers?.map(({ hotel, providerDetails }) => <NativeSupplierInformation key={hotel.id} facts={hotelSupplierFacts(providerDetails).filter(fact => /^(Room|Free cancellation|Pay later|Bundled rate|Rate breakdown|Rate condition)/.test(fact.label))} title={`Rate information — ${hotel.bookingProviderName || hotel.provider} — ${providerDetails?.rate?.roomName || "Room"} — ${hotel.currency} ${hotel.totalPrice}`} />)}
       </ScrollView>
 
       {detailsStatus === "loading" ? (
