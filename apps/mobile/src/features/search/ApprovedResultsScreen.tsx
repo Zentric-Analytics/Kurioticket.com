@@ -1768,7 +1768,7 @@ function HotelCard({
         {score == null ? null : (
           <Text style={[s0.review,{color:theme.textPrimary}]}>
             <Text style={s0.score}>{score.toFixed(1)}</Text>{" "}
-            {score >= 9 ? "Exceptional" : score >= 8 ? "Excellent" : "Good"}
+            {result.reviewSentiment?.trim() || ""}
             {result.reviewCount ? `  ·  ${result.reviewCount.toLocaleString()} reviews` : ""}
           </Text>
         )}

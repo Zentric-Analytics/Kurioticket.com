@@ -65,10 +65,9 @@ test("invalid review values always use the full fallback", () => {
   assert.match(reviews, /scale === undefined[\s\S]*score === undefined[\s\S]*count === undefined[\s\S]*band === null/);
 });
 
-test("Reviews use exact canonical labels without invented breakdowns", () => {
-  for (const label of ["Exceptional", "Very good", "Good", "Pleasant", "Review score"]) {
-    assert.match(reviews, new RegExp(label));
-  }
+test("Reviews use supplier sentiment without score-generated adjectives or invented breakdowns", () => {
+  assert.match(reviews, /label: result\.reviewSentiment\?\.trim\(\) \|\| ""/);
+  assert.doesNotMatch(reviews, /reviewLabels\[band\]/);
   for (const unsupported of ["Excellent", "Mediocre", "Poor", "Cleanliness", "Bed Comfort", "Gym"]) {
     assert.doesNotMatch(reviews, new RegExp(unsupported));
   }

@@ -139,6 +139,7 @@ export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<strin
 
 export function kayakHotelCardModel(offer: SandboxOffer, nights: number): NormalizedHotelResult {
   const providerDetails = kayakHotelProviderDetails(offer);
+  const reviewSentiment = providerDetails.reviews?.sentiment;
   const freeCancellation = providerDetails.rate?.freeCancellation;
   return ({id:`kayak-sandbox:${offer.id}`,provider:"KAYAK sandbox",propertyGroupId:offer.hotelPropertyKey,
     bookingProviderName:offer.bookingProviderName,providerLogoUrl:offer.bookingProviderLogoUrl,name:offer.title,
@@ -151,6 +152,7 @@ export function kayakHotelCardModel(offer: SandboxOffer, nights: number): Normal
     pricePerNight:offer.price/nights,totalPrice:offer.price,currency:offer.currency,
     bookingUrl:offer.testUrl,partnerRedirectUrl:offer.testUrl,valueScore:0,travelConfidenceScore:0,arrivalSuitabilityScore:0,
     recommendationReasons:[],badges:[],dataSource:"demo",providerDetails,
+    ...(reviewSentiment ? { reviewSentiment } : {}),
     rawProviderReference:{
       kind:"kayak-hotel-details",
       details:providerDetails,
