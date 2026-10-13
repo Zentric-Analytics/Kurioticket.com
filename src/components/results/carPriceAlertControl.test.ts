@@ -66,10 +66,10 @@ test("mobile Cars tracking is a compact, accessible, right-aligned control with 
   assert.match(section, /sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full sm:justify-self-center/);
   assert.match(section, /sm:rounded-2xl sm:border sm:border-blue-100 sm:bg-\[#EDF6FF\] sm:px-4 sm:py-1 sm:shadow-sm/);
   assert.match(section, /lg:mx-auto lg:w-\[calc\(100%_-_12rem\)\] lg:bg-\[#F1F7FE\]/);
-  assert.match(source, /flex min-h-11 min-w-0 items-center justify-end gap-1 sm:min-h-\[52px\] sm:justify-start sm:gap-2\.5/);
-  assert.match(source, /min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-\[11px\] font-semibold leading-4/);
+  assert.match(source, /flex min-h-11 min-w-0 items-center justify-end gap-1\.5 max-\[359px\]:gap-1 sm:min-h-\[52px\] sm:justify-start sm:gap-2\.5/);
+  assert.match(source, /min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-\[12px\] font-semibold leading-\[17px\] text-\[#07133B\]/);
   assert.match(source, /max-\[359px\]:text-\[10\.5px\] sm:flex-1 sm:overflow-visible sm:whitespace-normal/);
-  assert.match(source, /h-\[15px\] w-\[15px\] sm:h-\[17px\] sm:w-\[17px\]/);
+  assert.match(source, /h-4 w-4 max-\[359px\]:h-\[15px\] max-\[359px\]:w-\[15px\] sm:h-\[17px\] sm:w-\[17px\]/);
   assert.match(source, /h-11 w-\[51px\] shrink-0 items-center/);
   assert.match(source, /inline-flex h-7 w-12 shrink-0/);
   assert.match(source, /role="switch" aria-checked=\{tracking\}/);
