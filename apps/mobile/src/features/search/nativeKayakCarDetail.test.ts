@@ -137,7 +137,7 @@ test("native KAYAK Cars details do not invent unsupported static-provider facts 
 
 test("sandbox native results omit recommendations while retaining provider data and standard save/share actions", () => {
   const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
-  assert.match(card, /rank === 0 && !sandbox/);
+  assert.match(card, /cheapest \? <View style=\{c\.bestValueRow\}>/);
   assert.doesNotMatch(card, /!sandbox \? <View style=\{c\.utilityColumn\}>/);
   assert.match(card, /accessibilityLabel=\{savedState\.saved \? `Remove \$\{result\.modelName\} from saved` : `Save \$\{result\.modelName\}`\}/);
   assert.match(card, /accessibilityLabel=\{`Share \$\{result\.modelName\}`\}/);
