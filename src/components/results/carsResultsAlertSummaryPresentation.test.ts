@@ -67,6 +67,22 @@ test("Cars results heading aligns to the inner card gutters and sits close to th
   assert.match(alert, /role="switch" aria-checked=\{tracking\}/);
 });
 
+test("Cars heading has balanced vertical clearance with the smaller mobile toggle", () => {
+  const rowHeightPx = 44;
+  const switchHeightPx = 24;
+  const cardTopMarginPx = 4;
+  const clearAboveTrack = (rowHeightPx - switchHeightPx) / 2;
+  const clearBelowTrack = clearAboveTrack + cardTopMarginPx;
+  assert.equal(clearAboveTrack, 10);
+  assert.equal(clearBelowTrack, 14);
+  assert.ok(clearBelowTrack - clearAboveTrack <= 4, "space below the track must stay visually close to space above");
+  assert.equal((cars.match(/w-full space-y-3\.5 max-sm:!mt-1 sm:space-y-4/g) ?? []).length, 2);
+  assert.match(alert, /flex min-h-11 min-w-0 items-center justify-end gap-1\.5/);
+  assert.match(alert, /relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full/);
+  assert.match(alert, /relative inline-flex h-6 w-11 shrink-0 items-center rounded-full/);
+  assert.match(alert, /sm:h-7 sm:w-12/);
+});
+
 test("Cars leaves the entire left-side result count and grid placement unchanged", () => {
   assert.match(cars, /className=\{cn\("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2"\)\}/);
   assert.match(cars, /className="truncate whitespace-nowrap text-\[12px\] font-semibold leading-4 tracking-\[-0\.002em\] text-\[#07133B\][^"]*max-\[359px\]:text-\[11px\] sm:text-\[14px\]/);
