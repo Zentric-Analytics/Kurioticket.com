@@ -6,7 +6,7 @@ const cars = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "u
 const stateSource = readFileSync("src/features/search/carResultsBackToTopState.ts", "utf8");
 
 test("Native Cars Results exposes one floating Back-to-top after a meaningful scroll", () => {
-  assert.match(stateSource, /const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 240/);
+  assert.match(stateSource, /const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 600/);
   assert.match(cars, /carBackToTopOffsetRef=useRef\(0\)/);
   assert.match(cars, /carBackToTopVisibleRef=useRef\(false\)/);
   assert.match(cars, /carBackToTopReturningRef=useRef\(false\)/);
@@ -16,6 +16,11 @@ test("Native Cars Results exposes one floating Back-to-top after a meaningful sc
   assert.match(cars, /if\(next\.visible!==carBackToTopVisibleRef\.current\)/);
   assert.match(cars, /setCarBackToTopVisible\(next\.visible\)/);
   assert.match(cars, /carBackToTopVisible && status==="ready" && !carResultsApplying/);
+  assert.match(cars, /<Animated.View pointerEvents=/);
+  assert.match(cars, /opacity:carBackToTopProgress,transform:/);
+  assert.match(cars, /outputRange:\[8,0\]/);
+  assert.match(cars, /duration:carBackToTopReducedMotion\?0:200/);
+  assert.match(cars, /accessibilityElementsHidden=\{!carBackToTopVisible\}/);
   assert.equal((cars.match(/accessibilityLabel="Back to top"/g) ?? []).length, 1);
   assert.match(cars, /accessibilityRole="button" accessibilityLabel="Back to top"/);
   assert.match(cars, /accessibilityHint="Scroll to the beginning of car results"/);
