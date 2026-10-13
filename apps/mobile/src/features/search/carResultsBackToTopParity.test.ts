@@ -19,6 +19,7 @@ test("Native Cars Results exposes one floating Back-to-top after a meaningful sc
   assert.match(cars, /<ArrowUp accessible=\{false\} size=\{18\} strokeWidth=\{2\.2\}/);
   assert.match(cars, /carBackToTop:\{position:"absolute",right:16,width:44,height:44,[^}]*borderRadius:12,borderWidth:1,zIndex:20,elevation:5/);
   assert.match(cars, /bottom:Math\.max\(insets\.bottom,0\)\+16/);
+  assert.match(cars, /paddingBottom:Math\.max\(insets\.bottom \+ 64,64\)/);
   assert.match(cars, /theme\.dark\?theme\.surface:"#EEF2F6"/);
   assert.match(cars, /theme\.dark\?theme\.textPrimary:"#004BB8"/);
 });
@@ -53,7 +54,7 @@ test("Cars vertical owner is cross-platform stable, virtualized, and safe-area a
   assert.match(owner, /windowSize=\{CAR_RESULT_WINDOW_SIZE\}/);
   assert.match(owner, /onScroll=\{handleCarScroll\} scrollEventThrottle=\{16\}/);
   assert.match(owner, /onScrollBeginDrag=\{\(\)=>\{carBackToTopReturningRef\.current=false;\}\}/);
-  assert.match(owner, /contentContainerStyle=\{\[r\.body,\{paddingBottom:Math\.max\(insets\.bottom \+ 16,16\)\}\]\}/);
+  assert.match(owner, /contentContainerStyle=\{\[r\.body,\{paddingBottom:Math\.max\(insets\.bottom \+ 64,64\)\}\]\}/);
   assert.match(cars, /edges=\{\["top"\]\}/);
   const horizontal = cars.match(/<ScrollView horizontal[^>]*>/)?.[0];
   assert.ok(horizontal);
