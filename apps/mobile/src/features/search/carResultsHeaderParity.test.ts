@@ -54,7 +54,6 @@ test("native Cars rail matches the mobile-web full-height spacing and 28px curve
   assert.doesNotMatch(carHeader, /profile|hamburger|menu/i);
   const railHeight = 8 + 44 + 8;
   assert.equal(railHeight, 60, "native rail height must match the 60px mobile-web rail");
-  assert.equal(12, 12, "rail starts at the web's 12px quick-filter gutter");
 });
 
 test("Cars summary uses compact typography and independent ellipsis", () => {
