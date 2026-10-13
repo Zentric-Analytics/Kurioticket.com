@@ -228,7 +228,7 @@ test("Cars mobile header and always-visible filter rail keep a smooth rounded le
   );
   assert.match(
     carsClientSource,
-    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1 &&[\s\S]*resultsBottom > headerBottom/,
+    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1;/,
   );
 });
 
