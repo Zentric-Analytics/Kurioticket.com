@@ -36,15 +36,17 @@ test("vehicle image presentation and canvas ownership remain intact", () => {
   assert.match(source, />Vehicle image unavailable<\/Text>/);
 });
 
-test("non-image information uses a balanced light gray while the image stays separate", () => {
-  assert.match(source, /const carInformationSurface = theme\.dark \? resultBackgroundColor : "#E7EBF1"/);
-  assert.match(priceAlertSource, /trackColor=\{\{ false: theme\.dark \? "#465269" : "#CBD5E1", true: theme\.switchTrackActive \}\}/);
-  assert.doesNotMatch(source, /const carInformationSurface = theme\.dark \? resultBackgroundColor : "#(?:DEE4EC|CBD5E1)"/);
+test("native Cars information and lower pricing band use the Hotels white surface while imagery stays separate", () => {
+  assert.match(source, /const carInformationSurface = theme\.dark \? resultBackgroundColor : "#FFFFFF"/);
+  assert.doesNotMatch(source, /const carInformationSurface = theme\.dark \? resultBackgroundColor : "#E7EBF1"/);
+  assert.match(priceAlertSource, /theme\.dark \? "#465269" : "#CBD5E1"/);
   assert.match(source, /\[c\.identityZone,\{backgroundColor:carInformationSurface\}\]/);
   assert.match(source, /\[c\.lowerBand,\{backgroundColor:carInformationSurface,borderTopColor:carDividerColor\}\]/);
+  assert.match(source, /\[c\.card,\{backgroundColor:carInformationSurface,borderColor:/);
   assert.doesNotMatch(source, /c\.visualColumn,\{backgroundColor:carInformationSurface\}/);
   assert.match(source, /c\.visualColumn,\{backgroundColor:theme\.surface\}/);
-  assert.doesNotMatch(source, /c\.visualColumn,\{backgroundColor:"#(?:E7EBF1|DEE4EC|CBD5E1)"\}/);
+  assert.match(source, /const carDividerColor = theme\.dark \? theme\.border : "#CBD5E1"/);
+  assert.match(style("card"), /borderWidth:1,borderRadius:13,overflow:"hidden"/);
 });
 
 test("top section owns only the visual and identity information", () => {
