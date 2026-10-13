@@ -46,7 +46,7 @@ test("Cars keeps stable cross-platform boundary behavior", () => {
   assert.match(list, /overScrollMode="never"/);
   assert.match(list, /onScroll=\{handleCarScroll\} scrollEventThrottle=\{16\}/);
   assert.match(list, /onScrollBeginDrag=\{\(\)=>\{carBackToTopReturningRef\.current=false;\}\}/);
-  assert.match(backToTopState, /const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 600/);
+  assert.match(backToTopState, /const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 240/);
   assert.match(list, /onMomentumScrollEnd=\{\(event\)=>\{carBackToTopReturningRef\.current=false;handleCarScroll\(event\);\}\}/);
   assert.doesNotMatch(list, /getItemLayout|ListFooterComponent/);
 });
