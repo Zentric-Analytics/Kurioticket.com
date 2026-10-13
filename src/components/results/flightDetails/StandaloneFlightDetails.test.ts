@@ -1036,6 +1036,10 @@ test("Flight Details mobile cleanup uses native fare rail behavior and fare info
   assert.match(fareSource, /w-\[clamp\(197px,calc\(197px\+\(100vw-320px\)\*0\.27\),217px\)\]/);
   assert.match(fareSource, /min-h-\[142px\]/);
   assert.match(fareSource, /rounded-\[15px\] border-\[1\.5px\]/);
+  assert.match(fareSource, /border-\[1\.5px\] bg-white/);
+  assert.doesNotMatch(fareSource, /#F4F8FF|background-color/);
+  assert.match(fareSource, /z-\[1\] border-\[#075EE8\]/);
+
   assert.match(fareSource, /text-\[19px\] font-semibold leading-\[23px\] tabular-nums/);
   assert.match(fareSource, /nativeFareBenefitRows\(/);
   assert.match(fareSource, /aria-expanded=\{expanded\}/);
