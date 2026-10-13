@@ -136,22 +136,21 @@ test("mobile shortcuts remain the existing scrollable touch targets in canonical
   assert.doesNotMatch(rail, /Price \(per day\)/);
 });
 
-test("mobile Cars filters use the full Hotels-style pinned rail and immediate upward reveal", () => {
+test("mobile Cars keeps the full filter rail visible with the header throughout both scroll directions", () => {
   assert.match(stickyShortcuts, /ref=\{mobileFilterOriginRef\}/);
   assert.match(stickyShortcuts, /data-cars-results-scroll-filter-bar/);
+  assert.match(stickyShortcuts, /data-scroll-pinned=\{mobileFiltersPinned \? "true" : "false"\}/);
   assert.match(stickyShortcuts, /mobileResultsStyles\.scrollFilterBarPinned/);
-  assert.match(stickyShortcuts, /mobileResultsStyles\.scrollFilterBarHidden/);
-  assert.match(resultsSource, /distance >= \(nextDirection > 0 \? 20 : 12\)/);
-  assert.match(resultsSource, /setMobileFiltersVisible\(nextDirection < 0\)/);
-  assert.match(resultsSource, /if \(nextDirection < 0\) setMobileFiltersAnimated\(true\)/);
+  assert.match(resultsSource, /naturalFilterTop <= headerBottom \+ 1/);
+  assert.match(resultsSource, /if \(mobileFiltersPinnedRef\.current !== shouldPin\)/);
+  assert.match(resultsSource, /setMobileFiltersPinned\(shouldPin\)/);
+  assert.doesNotMatch(stickyShortcuts, /scrollFilterBarHidden|scrollFilterBarAnimated|data-scroll-visible/);
+  assert.doesNotMatch(resultsSource, /mobileFiltersVisible|mobileFiltersAnimated|distance >= \(nextDirection|setMobileFiltersVisible/);
   assert.doesNotMatch(
     resultsSource,
     /data-cars-results-mobile-header-filter|data-cars-results-mobile-nav-filter|showMobileHeaderFilter/,
   );
-  assert.equal(
-    (resultsSource.match(/data-cars-results-quick-filters/g) ?? []).length,
-    1,
-  );
+  assert.equal((resultsSource.match(/data-cars-results-quick-filters/g) ?? []).length, 1);
   assert.doesNotMatch(stickyShortcuts, /scale-|h-8|text-\[11px\]/);
 });
 
