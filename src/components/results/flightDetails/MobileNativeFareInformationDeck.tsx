@@ -193,7 +193,7 @@ function DealsSurface({
             data-provider-handoff-unavailable={!canContinue || undefined}
             className={`grid min-h-[92px] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-[1.5px] bg-white px-[14px] py-3 transition ${
               selected
-                ? "border-[#075EE8] shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]"
+                ? "border-[#075EE8] shadow-[0_10px_28px_-22px_rgba(15,23,42,0.5)]"
                 : "border-[#D9E2E8]"
             }`}
           >

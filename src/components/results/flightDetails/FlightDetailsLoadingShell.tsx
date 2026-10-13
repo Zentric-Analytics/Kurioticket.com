@@ -55,7 +55,7 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
             </div>
             <div className="relative z-10 px-3 pb-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0">
             <div data-mobile-native-itinerary-loading className="-mx-2 -mt-[104px] sm:mx-0 sm:mt-0">
-              <div className="relative h-[226px] overflow-hidden rounded-[15px] border border-[#E1E7EF] bg-white shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)] sm:rounded-[10px] sm:border-slate-200 sm:bg-slate-100 sm:shadow-lg">
+              <div className="relative h-[226px] overflow-hidden rounded-[15px] border border-[#E1E7EF] bg-white shadow-[0_10px_28px_-22px_rgba(15,23,42,0.5)] sm:rounded-[10px] sm:border-slate-200 sm:bg-slate-100 sm:shadow-lg">
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-[52%] rounded-t-[15px] bg-[linear-gradient(135deg,rgba(255,255,255,0.78)_0%,rgba(255,255,255,0.18)_46%,rgba(255,255,255,0)_100%)] sm:hidden" aria-hidden="true" />
                 <div className="relative z-[1] p-[15px] sm:hidden">
                   <div className="flex items-start justify-between"><div className="h-[10px] w-16 animate-pulse rounded bg-slate-200" /><div className="h-[10px] w-24 animate-pulse rounded bg-slate-200" /></div>
@@ -72,7 +72,7 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
             <div className="mt-7 h-[23px] w-[136px] animate-pulse rounded bg-slate-200" />
             <div data-mobile-native-fare-loading className="mt-3 flex gap-3 overflow-hidden pb-3 pr-[38px] sm:hidden">
               {[0, 1].map((index) => (
-                <div key={index} className="relative h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-1.5 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]">
+                <div key={index} className="relative h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-1.5 shadow-[0_10px_28px_-22px_rgba(15,23,42,0.5)]">
                   <div className="flex justify-center gap-[7px]"><div className="h-6 w-6 animate-pulse rounded-lg bg-slate-200" /><div className="mt-1.5 h-3 w-[72px] animate-pulse rounded bg-slate-200" /></div>
                   <div className="mt-[5px] space-y-[5px]">
                     {[0, 1, 2].map((row) => <div key={row} className="flex items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200" /><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-200" /></div>)}
