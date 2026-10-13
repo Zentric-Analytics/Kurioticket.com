@@ -38,14 +38,8 @@ test("source-contract: phone Cars filters use the Hotels pinned rail without a h
     source.indexOf("data-cars-results-toolbar"),
   );
 
-  assert.match(shortcuts, /ref=\{mobileFilterOriginRef\}/);
   assert.match(shortcuts, /data-cars-results-scroll-filter-bar/);
-  assert.match(shortcuts, /mobileResultsStyles\.scrollFilterBarPinned/);
   assert.doesNotMatch(shortcuts, /mobileResultsStyles\.scrollFilterBarHidden|mobileResultsStyles\.scrollFilterBarAnimated/);
-  assert.match(
-    mobileControls,
-    /const shouldPin =[\s\S]*naturalFilterTop <= headerBottom \+ 1;[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
-  );
   assert.doesNotMatch(mobileControls, /mobileFiltersVisible|mobileFiltersAnimated|nextDirection|scrollFilterBarHidden/);
   assert.doesNotMatch(
     mobileControls,
@@ -147,7 +141,6 @@ test("source-contract: Cars keeps the full filter rail pinned in both directions
     shortcuts,
     /ref=\{filtersButtonRef\}[\s\S]*onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
   );
-  assert.match(shortcuts, /mobileResultsStyles\.scrollFilterBarPinned/);
   assert.doesNotMatch(shortcuts, /mobileResultsStyles\.scrollFilterBarHidden|mobileResultsStyles\.scrollFilterBarAnimated/);
   assert.doesNotMatch(source, /data-cars-results-mobile-header-filter/);
   assert.match(shortcuts, /data-cars-sort-trigger/);

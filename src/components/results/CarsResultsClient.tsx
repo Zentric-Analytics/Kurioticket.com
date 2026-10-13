@@ -1882,7 +1882,6 @@ export function CarsResultsExperience({
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [mobileFiltersPinned, setMobileFiltersPinned] = useState(false);
   const kayak = useKayakResults();
   const results = useMemo(() => presentation !== "standalone" || kayak?.vertical !== "cars" ? providerResults : [
     ...providerResults, ...kayak.offers.map(offer => kayakCarCardModel(offer,Math.max(1,Math.ceil((Date.parse(search.dropoffDate)-Date.parse(search.pickupDate))/86400000)||1),search.pickupLocation)),
@@ -1898,8 +1897,6 @@ export function CarsResultsExperience({
   const quickFilterOverlayOpen = quickFilterGroupId !== null;
   const mobileFiltersOverlayOpen = filtersOpen || quickFilterOverlayOpen;
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
-  const mobileFilterOriginRef = useRef<HTMLDivElement | null>(null);
-  const mobileFiltersPinnedRef = useRef(false);
   const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
   const filtersDialogRef = useRef<HTMLElement | null>(null);
@@ -1949,80 +1946,6 @@ export function CarsResultsExperience({
   useLayoutEffect(() => {
     selectedCarFiltersRef.current = selectedCarFilters;
   }, [selectedCarFilters]);
-
-  useEffect(() => {
-    if (
-      presentation !== "standalone" ||
-      embedded ||
-      providersLoading ||
-      results.length === 0 ||
-      typeof window === "undefined"
-    )
-      return undefined;
-
-    const mobileQuery = window.matchMedia("(max-width: 639px)");
-    let frame = 0;
-
-    const update = () => {
-      frame = 0;
-      if (!mobileQuery.matches) {
-        mobileFiltersPinnedRef.current = false;
-        setMobileFiltersPinned(false);
-        return;
-      }
-
-      // An open filter/search overlay can lock and restore page scroll.
-      // Preserve the current fixed rail rather than interpreting that as a
-      // natural-position handoff.
-      const filterInteractionActive =
-        mobileFiltersOverlayOpen ||
-        mobileSearchInteractionActive ||
-        filterTransitionPhase !== "idle";
-      if (filterInteractionActive) return;
-
-      const headerBottom =
-        document
-          .querySelector<HTMLElement>("[data-app-header]")
-          ?.getBoundingClientRect().bottom ?? 72;
-      const naturalFilterTop =
-        mobileFilterOriginRef.current?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
-      const scrollY = Math.max(0, window.scrollY);
-
-      // The rail origin is CSS-sticky and stays in document flow. This flag
-      // changes only its visual treatment; it must not detach the rail from
-      // layout during Safari viewport and overscroll changes.
-      const shouldPin =
-        scrollY > 1 &&
-        naturalFilterTop <= headerBottom + 1;
-      if (mobileFiltersPinnedRef.current !== shouldPin) {
-        mobileFiltersPinnedRef.current = shouldPin;
-        setMobileFiltersPinned(shouldPin);
-      }
-    };
-
-    const scheduleUpdate = () => {
-      if (!frame) frame = window.requestAnimationFrame(update);
-    };
-
-    update();
-    window.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate);
-    mobileQuery.addEventListener("change", scheduleUpdate);
-    return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", scheduleUpdate);
-      mobileQuery.removeEventListener("change", scheduleUpdate);
-    };
-  }, [
-    embedded,
-    filterTransitionPhase,
-    mobileFiltersOverlayOpen,
-    mobileSearchInteractionActive,
-    presentation,
-    providersLoading,
-    results.length,
-  ]);
 
   const desktopCompactFilterVisibilityRef = useRef(false);
   const desktopCompactFilterPlacementRef =
@@ -2696,7 +2619,6 @@ export function CarsResultsExperience({
           {results.length > 0 ? (
             <>
               <div
-                ref={mobileFilterOriginRef}
                 data-cars-results-filter-origin
                 className={cn(
                   "lg:hidden",
@@ -2710,16 +2632,11 @@ export function CarsResultsExperience({
               >
                 <div
                   data-cars-results-scroll-filter-bar
-                  data-scroll-pinned={mobileFiltersPinned ? "true" : "false"}
                   className={cn(
                     "flex min-w-0 flex-col items-start lg:hidden",
                     presentation === "standalone" &&
                       !guidedPlanning &&
                       mobileResultsStyles.scrollFilterBar,
-                    presentation === "standalone" &&
-                      !guidedPlanning &&
-                      mobileFiltersPinned &&
-                      mobileResultsStyles.scrollFilterBarPinned,
                   )}
                 >
                 {!guidedPlanning ? (
