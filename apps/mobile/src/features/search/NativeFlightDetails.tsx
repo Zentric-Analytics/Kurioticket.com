@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { NativeSupplierInformation } from "./NativeSupplierInformation";
 import { AccessibilityInfo, Alert, Animated, Easing, ImageBackground, Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -274,6 +275,7 @@ export function NativeFlightDetails({ params }: { params: Params }) {
         <View accessibilityRole="tablist" accessibilityLabel="Fare information" style={s.fareTabList}>{([['deals','Compare deals'],['details','Fare details'],['conditions','Fare conditions'],['extras','Optional extras']] as const).map(([key,label])=><Pressable accessibilityRole="tab" accessibilityState={{selected:tab===key}} key={key} onPress={()=>setTab(key)} style={s.fareInfoTab}><Text numberOfLines={1} style={[s.fareInfoTabText,{color:tab===key?fareHeadingTextColor:theme.textSecondary},tab===key&&s.fareInfoTabTextActive]}>{label}</Text>{tab===key?<View style={s.fareTabIndicator}/>:null}</Pressable>)}</View>
       </ScrollView>
       <View testID="fare-information-active-content" style={s.fareInfoBody}><FareSurface tab={tab} choice={selected} dealPrices={displayPrices} selectedDealOfferId={selectedDeal?.offerId??null} onSelectDeal={setSelectedDealOfferId} activeOffer={activeOffer} theme={theme}/></View>
+      <NativeSupplierInformation facts={activeOffer.providerDetails?.suppliedFacts} />
     </View>
     </View>
   </ScrollView><View style={[s.sticky,theme.dark?s.stickyDark:s.stickyLight,{paddingBottom:Math.max(inset.bottom,10),backgroundColor:theme.surface,borderTopColor:surfaceBorderColor}]}><View style={s.checkoutTotal}><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72} style={[s.total,{color:theme.textPrimary}]}>{displayPricesReady?(activePrice?.formatted??"Price unavailable") : "Loading price…"}</Text><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={[s.checkoutLabel,{color:theme.textSecondary}]}>Total for {details.search.travelers} traveler{details.search.travelers===1?"":"s"}</Text></View><View style={[s.checkoutAction,Platform.OS==="android"&&s.checkoutActionAndroid]}><Pressable accessibilityRole="button" accessibilityState={{disabled:checkoutDisabled}} disabled={checkoutDisabled} onPress={()=>void handoff(selectedDeal?.offerId??offer.id)} style={[s.continue,checkoutDisabled&&s.continueDisabled]}><Text style={s.continueText}>{booking?"Checking offer…":"Continue deal"}</Text></Pressable></View></View></SafeAreaView>;

@@ -3,8 +3,8 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { getMobileFaqCopy } from "./mobileFaqCopy";
 
-const screenSource = readFileSync(new URL("./MobileFaqScreen.tsx", import.meta.url).pathname, "utf8");
-const routeSource = readFileSync(new URL("../../../app/faq.tsx", import.meta.url).pathname, "utf8");
+const screenSource = readFileSync(new URL("./MobileFaqScreen.tsx", import.meta.url), "utf8");
+const routeSource = readFileSync(new URL("../../../app/faq.tsx", import.meta.url), "utf8");
 
 test("FAQ route uses the dedicated native mobile FAQ screen", () => {
   assert.match(routeSource, /MobileFaqScreen/);

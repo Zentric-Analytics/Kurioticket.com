@@ -305,8 +305,11 @@ test("Kayak standalone desktop reuses Kurioticket save/share controls while mobi
   assert.match(desktopActions, /void shareCar\(\)/);
   assert.match(
     mobileActions,
-    /const mobileCardActions = car\.sandboxPresentation \? null : \(/,
+    /const mobileCardActions = \(/,
   );
+  assert.match(mobileActions, /toggleSavedCar/);
+  assert.match(mobileActions, /void shareCar\(\)/);
+  assert.match(mobileActions, /aria-pressed=\{isSaved\}/);
 });
 
 test("standalone desktop identity stack keeps compact but visible breathing room", () => {

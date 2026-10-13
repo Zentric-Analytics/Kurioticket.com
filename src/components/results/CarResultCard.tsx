@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { SupplierInformation } from "./SupplierInformation";
 import {
   Award,
   BriefcaseBusiness,
@@ -903,6 +904,7 @@ export function CarResultCard({
           )}
         </div>
       </div>
+      <SupplierInformation facts={offer.suppliedFacts} title={`Supplier information — ${offer.bookingProviderName}`} />
     </article>
     {!guidedPlanning ? (
       <div

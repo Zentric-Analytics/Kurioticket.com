@@ -128,6 +128,7 @@ export type FlightOptionalService = {
 
 /** Deliberately normalized provider-authored customer facts; never raw Duffel data. */
 export type FlightProviderDetails = {
+  suppliedFacts?: Array<{ label: string; value: string }>;
   offerOwner?: {
     name: string;
     iataCode?: string;

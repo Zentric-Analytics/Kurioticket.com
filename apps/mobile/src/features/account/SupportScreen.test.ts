@@ -4,7 +4,7 @@ import test from "node:test";
 import { dictionaries } from "../../localization/mobileLocalizationCatalog";
 import { supportCategories, supportDraft } from "./nativeAccountModels";
 
-const source = readFileSync(new URL("./NativeAccountScreens.tsx", import.meta.url).pathname, "utf8");
+const source = readFileSync(new URL("./NativeAccountScreens.tsx", import.meta.url), "utf8");
 
 test("support form keeps its submission and account identity contracts", () => {
   assert.match(source, /travelApi\.profile\(\)/);

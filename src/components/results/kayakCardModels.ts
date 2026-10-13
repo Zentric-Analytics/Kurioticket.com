@@ -122,6 +122,7 @@ export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<strin
     ...legs[0], legs, cabinClass:offer.flightCabin || "Not supplied", fareBrandName:offer.flightFareFamily,
     fareTerms: kayakFareTerms(offer),
     providerDetails: {
+      ...(offer.attributes?.length ? { suppliedFacts: offer.attributes.map(fact => ({ ...fact })) } : {}),
       price:{totalAmount:offer.price * (offer.priceBasis === "per person" ? travelers : 1),totalCurrency:offer.currency},
       ...(offer.flightConditions?.length ? {conditions:offer.flightConditions} : {}),
       ...(offer.flightOptionalServices?.length ? {optionalServices:offer.flightOptionalServices} : {}),
@@ -164,7 +165,7 @@ export function kayakCarCardModel(offer: SandboxOffer, days: number, pickup: str
     pickupType:"city-location",pickupLocation:pickup,returnLocation:pickup,shuttleRequired:false,
     rentalCompanyName:offer.details[1] || "Supplier not supplied",recommendationScore:0,requiredDocuments:[],includedItems:[],importantInformation:[],
     inventorySource:"kayak-sandbox",sandboxPresentation:{specs:offer.carSpecs || ["Specifications not supplied"],pickupLabel:"Search pickup",filterOptions:offer.carFilterOptions},
-    offers:[{id:offer.id,bookingProviderName:offer.bookingProviderName || offer.description,bookingProviderLogoUrl:offer.bookingProviderLogoUrl,rentalCompanyName:offer.details[1] || "Supplier not supplied",
+    offers:[{id:offer.id,suppliedFacts:offer.attributes?.map(fact => ({ ...fact })),bookingProviderName:offer.bookingProviderName || offer.description,bookingProviderLogoUrl:offer.bookingProviderLogoUrl,rentalCompanyName:offer.details[1] || "Supplier not supplied",
       currency:offer.currency,totalPrice:offer.priceBasis === "per day" ? offer.price*days : offer.price,
       pricePerDay:offer.priceBasis === "per day" ? offer.price : offer.price/days,
       taxesAndFeesIncluded:false,payAtPickup:false,freeCancellation:false,bookingUrl:offer.testUrl}]};

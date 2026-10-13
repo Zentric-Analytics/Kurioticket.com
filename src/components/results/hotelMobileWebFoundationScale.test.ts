@@ -60,7 +60,7 @@ test("mobile-web Hotel details use a phone-readable identity scale while desktop
   assert.match(detailsCss, /\.reviewSummary \{[^}]*font-size: 13px; line-height: 19px/);
   assert.match(detailsCss, /\.tabs button \{[^}]*min-height: 44px;[^}]*font-size: 12px/);
   assert.match(detailsCss, /\.section p \{[^}]*font-size: 13px; line-height: 19px/);
-  assert.match(details, /<DesktopProviderOffer/);
+  assert.match(details, /<MobileProviderOffer/);
 });
 
 test("desktop Hotel details retains accessible back navigation and its three section labels", () => {
