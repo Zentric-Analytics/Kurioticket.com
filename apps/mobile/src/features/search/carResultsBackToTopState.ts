@@ -3,7 +3,7 @@
  * Keep scroll visibility direction-independent. Only suppress events while
  * the list is genuinely animating back toward offset zero.
  */
-export const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 240;
+export const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 600;
 
 export type CarBackToTopScrollState = {
   offset: number;
