@@ -84,9 +84,10 @@ test("active Hotel Details keeps fixed icon-only controls and stack-aware Result
   assert.doesNotMatch(returnNavigation, /router\.back\(|router\.dismissTo/);
 });
 
-test("web mobile Hotel rates reuse the exact desktop rate card and drop the old blue selected outline", () => {
-  assert.match(webMobileHotelDetails, /import \{ DesktopProviderOffer \} from "\.\/HotelPriceComparisonSection"/);
-  assert.match(webMobileHotelDetails, /offers\.map\(offer => <DesktopProviderOffer/);
+test("web mobile Hotel rates use dedicated mobile provider cards without the old blue selected outline", () => {
+  assert.match(webMobileHotelDetails, /import \{ MobileProviderOffer \} from "\.\/HotelPriceComparisonSection"/);
+  assert.match(webMobileHotelDetails, /offers\.map\(offer => <MobileProviderOffer/);
+  assert.match(webMobileHotelDetails, /onInfo=\{\(\) => setRateInfo\(offer\)\}/);
   assert.match(webMobileHotelDetails, /perNightText=\{props\.perNightText\}/);
   assert.match(webMobileHotelDetails, /totalPrice: total/);
   assert.doesNotMatch(webMobileHotelDetails, /className=\{styles\.rate\}|className=\{styles\.rateAction\}|>Stay total</);
