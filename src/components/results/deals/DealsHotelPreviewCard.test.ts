@@ -58,7 +58,7 @@ test("the Hotel information group follows identity and precedes price and action
 test("the Hotel details preserve review and stay contracts and avoid empty groups", () => {
   for (const contract of [
     "score",
-    "band",
+    "hotel.reviewSentiment?.trim()",
     "count",
     "deals.results.review",
     "deals.results.reviews",
@@ -75,6 +75,7 @@ test("the Hotel details preserve review and stay contracts and avoid empty group
     "hasDetails &&",
   ])
     assert.ok(card.includes(contract), `missing ${contract}`);
+  assert.ok(!card.includes("hotelResults.reviewBand."), "review adjectives must not be inferred from numeric scores");
 
   const staySection = card.slice(
     card.indexOf('className="space-y-1 py-3'),
