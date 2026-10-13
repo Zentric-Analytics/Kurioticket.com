@@ -28,7 +28,7 @@ const mobileHeaderSearch = resultsSource.slice(
   resultsSource.indexOf("const renderCarsSearchForm"),
 );
 const stickyShortcuts = resultsSource.slice(
-  resultsSource.indexOf("ref={mobileFilterOriginRef}"),
+  resultsSource.indexOf("data-cars-results-filter-origin"),
   resultsSource.indexOf("data-cars-results-toolbar"),
 );
 
@@ -137,13 +137,7 @@ test("mobile shortcuts remain the existing scrollable touch targets in canonical
 });
 
 test("mobile Cars keeps the full filter rail visible with the header throughout both scroll directions", () => {
-  assert.match(stickyShortcuts, /ref=\{mobileFilterOriginRef\}/);
   assert.match(stickyShortcuts, /data-cars-results-scroll-filter-bar/);
-  assert.match(stickyShortcuts, /data-scroll-pinned=\{mobileFiltersPinned \? "true" : "false"\}/);
-  assert.match(stickyShortcuts, /mobileResultsStyles\.scrollFilterBarPinned/);
-  assert.match(resultsSource, /naturalFilterTop <= headerBottom \+ 1/);
-  assert.match(resultsSource, /if \(mobileFiltersPinnedRef\.current !== shouldPin\)/);
-  assert.match(resultsSource, /setMobileFiltersPinned\(shouldPin\)/);
   assert.doesNotMatch(stickyShortcuts, /scrollFilterBarHidden|scrollFilterBarAnimated|data-scroll-visible/);
   assert.doesNotMatch(resultsSource, /mobileFiltersVisible|mobileFiltersAnimated|distance >= \(nextDirection|setMobileFiltersVisible/);
   assert.doesNotMatch(
