@@ -82,7 +82,8 @@ test("car results keep separate stable virtualized vertical and horizontal scrol
   assert.match(verticalOwner, /removeClippedSubviews=\{Platform\.OS === "android"\}/);
   assert.match(verticalOwner, /onScroll=\{handleCarScroll\} scrollEventThrottle=\{16\}/);
   assert.match(verticalOwner, /onScrollBeginDrag=\{\(\)=>\{carBackToTopReturningRef\.current=false;\}\}/);
-  assert.match(source, /const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 600/);
+  assert.match(read("src/features/search/carResultsBackToTopState.ts"), /const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 600/);
+  assert.match(verticalOwner, /onMomentumScrollEnd=\{\(event\)=>\{carBackToTopReturningRef\.current=false;handleCarScroll\(event\);\}\}/);
   assert.match(source, /const handleCarScroll=useCallback/);
   assert.match(source, /carBackToTopVisible && status==="ready" && !carResultsApplying/);
   assert.match(source, /accessibilityLabel="Back to top"/);
