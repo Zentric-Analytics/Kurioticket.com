@@ -39,10 +39,28 @@ test("Cars keeps one tracking control in the results-count row, below quick filt
 
 test("Cars aligns both mobile controls with a compact heading and leaves no separate tracking row", () => {
   assert.match(alert, /data-cars-price-alert\s+className="col-start-2 row-start-1 mb-0 w-auto min-w-0 max-w-full justify-self-end bg-transparent/);
-  assert.match(alert, /min-h-\[52px\] min-w-0 items-center justify-end gap-1/);
+  assert.match(alert, /min-h-11 min-w-0 items-center justify-end gap-1 sm:min-h-\[52px\]/);
   assert.match(cars, /data-cars-results-toolbar[\s\S]*?data-cars-results-summary-row[\s\S]*?ref=\{resultHeadingRef\}[\s\S]*?<CarPriceAlertControl/);
-  assert.match(cars, /items-start gap-2 pt-1 sm:gap-3 lg:py-1/);
+  assert.match(cars, /items-start gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1/);
   assert.doesNotMatch(cars, /data-cars-results-summary-row[^>]*className="[^"]*mt-/);
+});
+
+test("Cars results heading aligns to the inner card gutters and sits close to the first card on mobile", () => {
+  const summaryClasses = cars.match(/className="([^"]+)"\s+data-cars-results-summary-row/)?.[1];
+  assert.ok(summaryClasses, "the existing results-count and tracking row is retained");
+  assert.match(summaryClasses, /grid-cols-\[minmax\(0,1fr\)_auto\] items-center/);
+  assert.match(summaryClasses, /gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1/);
+  assert.match(summaryClasses, /sm:gap-x-2 sm:gap-y-3 sm:px-0/);
+  assert.match(cars, /data-cars-results-toolbar[\s\S]*?gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1/);
+  assert.equal(
+    (cars.match(/w-full space-y-3\.5 max-sm:!mt-1\.5 sm:space-y-4/g) ?? []).length,
+    2,
+    "loading and loaded car lists share the same tightened gap beneath the results heading",
+  );
+  assert.doesNotMatch(cars, /w-full space-y-3\.5 max-sm:!mt-2\.5/);
+  assert.match(alert, /min-h-11 min-w-0 items-center justify-end gap-1 sm:min-h-\[52px\]/);
+  assert.match(alert, /flex h-11 w-\[51px\] shrink-0 items-center justify-end/);
+  assert.match(alert, /role="switch" aria-checked=\{tracking\}/);
 });
 
 test("desktop Cars alert stays full width above the separate count and Sort row", () => {
