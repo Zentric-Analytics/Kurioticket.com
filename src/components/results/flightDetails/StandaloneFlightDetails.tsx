@@ -336,7 +336,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     : localSavedFlightIds.includes(savedFlightKey);
 
   return (
-    <main className="flex-1 bg-[#F5F7FB] pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-slate-900 sm:bg-[#F7F9FC] sm:text-[#142033] sm:pb-16 sm:pt-4 lg:pt-3">
+    <main className="flex-1 bg-white pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-slate-900 sm:bg-[#F7F9FC] sm:text-[#142033] sm:pb-16 sm:pt-4 lg:pt-3">
       <MobileFlightDetailsActionBar
         back={(
           <Link href={resultsHref} aria-label="Back to results" className={`${mobileFlightDetailsNavSurfaceClass} w-11 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35`}>
@@ -357,7 +357,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
       <span className="sr-only" role="status" aria-live="polite">{shareFeedback}</span>
       <div className="mx-auto w-full max-w-[1080px] px-0 sm:px-6 lg:px-[30px]">
         <div className="min-w-0">
-          <section className="min-w-0 border-b border-[#E2E8F0] bg-[#F5F7FB] sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
+          <section className="min-w-0 border-[#E2E8F0] bg-white sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
             <div data-testid="flight-details-hero" className="relative flex min-h-[254px] flex-col justify-end overflow-hidden px-[18px] pb-[122px] pt-4 sm:min-h-[280px] sm:justify-end sm:rounded-t-[12px] sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
               <div
@@ -398,13 +398,13 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                 <h1 ref={headingRef} id="flight-details-heading" tabIndex={-1} className="text-[27px] font-extrabold leading-[1.12] tracking-[-0.025em] outline-none sm:text-[30px]">{route}</h1>
                 <p className="mt-[3px] text-[11px] font-bold uppercase leading-4 tracking-[0.55px] text-white/95 sm:mt-2 sm:text-[13px] sm:leading-normal sm:tracking-[0.08em]"><span className="sm:hidden">{nativeTripLine}</span><span className="hidden sm:inline">{tripLine}</span></p>
               </div>
-              <svg data-flight-details-hero-curve aria-hidden="true" viewBox="0 0 100 64" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[65px] w-full sm:hidden"><path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z" fill="#F5F7FB" /></svg>
+              <svg data-flight-details-hero-curve aria-hidden="true" viewBox="0 0 100 64" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[65px] w-full text-white sm:hidden"><path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z" fill="currentColor" /></svg>
             </div>
             <div className="relative z-10 px-3 pb-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0 lg:px-6 lg:pb-6">
             <div data-mobile-native-itinerary-stack className="-mx-2 -mt-[104px] space-y-3 sm:mx-0 sm:mt-0 sm:space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
 
             <h2 className="mb-0 mt-6 text-[16px] font-medium leading-[21px] tracking-[-0.15px] text-slate-900 sm:mb-3 sm:text-[18px] sm:font-medium sm:leading-tight sm:tracking-normal sm:text-slate-950">Pick your fare</h2>
-            {mobilePricesReady ? <MobileNativeFareRail fares={fareChoices} selectedFareKey={selectedFare?.key ?? ""} tripType={available.search.tripType} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} onSelect={selectFare} /> : <div data-mobile-native-fare-price-loading role="progressbar" aria-label="Loading fare prices" aria-busy="true" className="flex gap-3 overflow-hidden pb-3 pt-3 pr-[38px] sm:hidden">{fareChoices.slice(0,2).map((fare)=><div key={fare.key} className="relative h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-1.5 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]"><div className="flex justify-center gap-[7px]"><div className="h-6 w-6 animate-pulse rounded-lg bg-slate-200"/><div className="mt-1.5 h-3 w-[72px] animate-pulse rounded bg-slate-200"/></div><div className="mt-[5px] space-y-[5px]">{[0,1,2].map((row)=><div key={row} className="flex items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200"/><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-200"/></div>)}</div><div className="absolute inset-x-3 bottom-1.5 flex justify-center"><div className="h-4 w-[82px] animate-pulse rounded bg-slate-200"/></div></div>)}</div>}
+            {mobilePricesReady ? <MobileNativeFareRail fares={fareChoices} selectedFareKey={selectedFare?.key ?? ""} tripType={available.search.tripType} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} onSelect={selectFare} /> : <div data-mobile-native-fare-price-loading role="progressbar" aria-label="Loading fare prices" aria-busy="true" className="flex gap-3 overflow-hidden pb-3 pt-3 pr-[38px] sm:hidden">{fareChoices.slice(0,2).map((fare)=><div key={fare.key} className="relative h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-1.5 shadow-[0_10px_28px_-22px_rgba(15,23,42,0.5)]"><div className="flex justify-center gap-[7px]"><div className="h-6 w-6 animate-pulse rounded-lg bg-slate-200"/><div className="mt-1.5 h-3 w-[72px] animate-pulse rounded bg-slate-200"/></div><div className="mt-[5px] space-y-[5px]">{[0,1,2].map((row)=><div key={row} className="flex items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200"/><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-200"/></div>)}</div><div className="absolute inset-x-3 bottom-1.5 flex justify-center"><div className="h-4 w-[82px] animate-pulse rounded bg-slate-200"/></div></div>)}</div>}
             {mobilePricesReady ? <div role="radiogroup" aria-label="Available fares" data-desktop-fare-rail className="hidden min-w-0 gap-3 overflow-x-auto overscroll-x-contain pb-3 pr-6 sm:flex sm:snap-x sm:snap-mandatory [scrollbar-width:thin]">
               {fareChoices.map((fare, index) => {
                 const selected = fare.key === selectedFare?.key;
@@ -635,7 +635,7 @@ function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, of
   return <>
     <section
       data-mobile-native-itinerary-card
-      className="relative overflow-hidden rounded-[15px] border border-[#E1E7EF] bg-white p-[15px] shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)] sm:hidden"
+      className="relative overflow-hidden rounded-[15px] border border-[#E1E7EF] bg-white p-[15px] shadow-[0_10px_28px_-22px_rgba(15,23,42,0.5)] sm:hidden"
       aria-labelledby={`${label.toLowerCase()}-mobile-heading`}
     >
       <div

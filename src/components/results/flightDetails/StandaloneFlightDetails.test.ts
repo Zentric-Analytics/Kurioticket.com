@@ -616,7 +616,7 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(fareRailMarkup, /overflow-x-auto[\s\S]*sm:flex sm:snap-x sm:snap-mandatory/);
   assert.match(source, /scrollIntoView\(\{ behavior: "smooth", block: "nearest", inline: "nearest" \}\)/);
   assert.match(source, /max-w-\[1080px\] px-0 sm:px-6 lg:px-\[30px\]/);
-  assert.match(source, /border-b border-\[#E2E8F0\][\s\S]*sm:rounded-\[13px\] sm:border[\s\S]*sm:shadow-/);
+  assert.match(source, /border-\[#E2E8F0\][\s\S]*sm:rounded-\[13px\] sm:border[\s\S]*sm:shadow-/);
   assert.doesNotMatch(source, /<section className="[^"]*overflow-hidden[^"]*" aria-labelledby="flight-details-heading"/);
   assert.match(source, /data-testid="flight-details-hero"[^>]*className="[^"]*overflow-hidden[^"]*sm:rounded-t-\[12px\]/);
   assert.match(source, /ml-4.*sm:ml-0/);
@@ -966,8 +966,15 @@ test("mobile web Flight Details removes the branded header and uses the native e
 
   assert.doesNotMatch(source, /<MobileFlightDetailsBrandHeader/);
   assert.doesNotMatch(loading, /<MobileFlightDetailsBrandHeader/);
-  assert.match(source, /<main className="flex-1 bg-\[#F5F7FB\][^"]*sm:bg-\[#F7F9FC\]/);
-  assert.match(source, /data-flight-details-hero-curve[^\n]*fill="#F5F7FB"/);
+  assert.match(source, /<main className="flex-1 bg-white[^"]*sm:bg-\[#F7F9FC\]/);
+  assert.match(source, /data-flight-details-hero-curve[^\n]*fill="currentColor"/);
+  const detailsFrame = source.match(/<section className="([^"]+)" aria-labelledby="flight-details-heading"/)?.[1];
+  const loadingFrame = loading.match(/<div className="(overflow-hidden [^"]+)"/)?.[1];
+  for (const frame of [detailsFrame, loadingFrame]) {
+    assert.ok(frame);
+    assert.doesNotMatch(frame, /(?:^|\s)border-b(?:\s|$)/);
+    assert.match(frame, /(?:^|\s)sm:border(?:\s|$)/);
+  }
   assert.match(source, /px-3 pb-4 pt-0/);
   assert.match(source, /data-mobile-native-itinerary-stack[\s\S]*-mx-2 -mt-\[104px\]/);
   assert.match(source, /data-flight-details-desktop-navigation/);
@@ -978,8 +985,12 @@ test("mobile web Flight Details removes the branded header and uses the native e
   assert.match(loading, /data-flight-details-loading-desktop-navigation/);
   assert.match(source, /function FlightDetailsUnavailable[\s\S]*Back to results/);
   assert.match(source, /const nativeTripLine = `[\s\S]*titleCase\(available\.search\.cabinClass\)/);
-  assert.match(loading, /<main className="flex-1 bg-\[#F5F7FB\][^"]*sm:bg-\[#F7F9FC\]/);
-  assert.match(loading, /data-flight-details-loading-hero-curve[^\n]*fill="#F5F7FB"/);
+  assert.match(loading, /<main className="flex-1 bg-white[^"]*sm:bg-\[#F7F9FC\]/);
+  assert.match(loading, /data-flight-details-loading-hero-curve[^\n]*fill="currentColor"/);
+  for (const view of [source, loading]) {
+    assert.doesNotMatch(view, /#F5F7FB/);
+    assert.match(view, /h-\[65px\] w-full text-white sm:hidden/);
+  }
   assert.match(loading, /data-mobile-native-itinerary-loading[\s\S]*-mx-2 -mt-\[104px\]/);
   assert.match(loading, /h-\[226px\]/);
 });
@@ -1160,7 +1171,7 @@ test("mobile web Flight Details itinerary mirrors the native card hierarchy and 
   assert.match(itinerary, /data-mobile-native-itinerary-card/);
   assert.match(itinerary, /tabular-nums text-slate-950/);
   assert.match(itinerary, /<time[^>]*text-slate-500/);
-  assert.match(itinerary, /rounded-\[15px\].*border-\[#E1E7EF\].*bg-white.*shadow-\[0_10px_28px_-24px_rgba\(15,23,42,0\.5\)\]/);
+  assert.match(itinerary, /rounded-\[15px\].*border-\[#E1E7EF\].*bg-white.*shadow-\[0_10px_28px_-22px_rgba\(15,23,42,0\.5\)\]/);
   assert.match(itinerary, /data-flight-details-itinerary-gloss/);
   assert.match(itinerary, /linear-gradient\(135deg,rgba\(255,255,255,0\.78\)_0%,rgba\(255,255,255,0\.18\)_46%,rgba\(255,255,255,0\)_100%\)/);
   assert.match(itinerary, /text-\[19px\] font-extrabold leading-6 tabular-nums/);
@@ -1222,12 +1233,12 @@ test("desktop Flight Details uses a compact endpoint hierarchy and reserves time
 
 test("mobile web Flight Details loading itinerary matches native-parity geometry", async () => {
   const source = await readFile(new URL("./FlightDetailsLoadingShell.tsx", import.meta.url), "utf8");
-  assert.match(source, /bg-\[#F5F7FB\]/);
+  assert.match(source, /<main className="flex-1 bg-white/);
   assert.match(source, /min-h-\[254px\]/);
   assert.match(source, /pb-\[122px\]/);
   assert.match(source, /data-mobile-native-itinerary-loading/);
   assert.match(source, /-mx-2 -mt-\[104px\]/);
-  assert.match(source, /rounded-\[15px\].*border-\[#E1E7EF\].*bg-white.*shadow-\[0_10px_28px_-24px_rgba\(15,23,42,0\.5\)\]/);
+  assert.match(source, /rounded-\[15px\].*border-\[#E1E7EF\].*bg-white.*shadow-\[0_10px_28px_-22px_rgba\(15,23,42,0\.5\)\]/);
   assert.match(source, /linear-gradient\(135deg,rgba\(255,255,255,0\.78\)_0%,rgba\(255,255,255,0\.18\)_46%,rgba\(255,255,255,0\)_100%\)/);
   assert.match(source, /sm:rounded-\[10px\] sm:border-slate-200 sm:bg-slate-100 sm:shadow-lg/);
   assert.match(source, /data-mobile-native-fare-loading/);

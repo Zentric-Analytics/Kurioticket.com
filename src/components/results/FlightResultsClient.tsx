@@ -7405,7 +7405,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     aria-busy={filterApplying}
                     className="pt-3 pb-6"
                   >
-                    <div data-flight-results-card-list className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)] space-y-3">
+                    <div data-flight-results-card-list className="space-y-3">
                       <VirtualResultsList items={sortedResults} itemKey={resultIdKey} label="Flight results" rowClassName="pb-3" estimateHeight={320} renderItem={(flight, index) => {
                         const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
                         if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
