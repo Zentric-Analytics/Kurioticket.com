@@ -116,45 +116,38 @@ type DesktopOfferProps = {
   continueLabel: string;
   onSelect: (offerId: string) => void;
   onContinue?: ContinueOffer;
+  onInfo?: () => void;
 };
 
 export function DesktopProviderOffer({
   offer,
-  perNightText,
-  totalLabel,
   selected,
   selectable,
   pendingOfferId,
   onSelect,
   onContinue,
+  onInfo,
 }: DesktopOfferProps) {
   const totalPrice = offer.totalPrice?.trim();
   const pending = pendingOfferId === offer.id;
   const disabled = !selectable || pendingOfferId !== null;
-  const selectorId = `desktop-hotel-provider-${encodeURIComponent(offer.id)}`;
 
   return (
     <article
-      className="relative grid min-h-[80px] min-w-0 grid-cols-[92px_minmax(0,1fr)_80px] items-center gap-x-2 rounded-xl border border-[#D9E2E8] bg-transparent px-3 py-3 sm:flex sm:flex-wrap sm:justify-between sm:gap-4 sm:px-4"
+      className="grid min-h-[88px] min-w-0 items-center gap-6 rounded-xl border border-[#D9E2E8] bg-white px-5 py-4"
+      style={{ gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)" }}
       data-provider-offer
       data-provider-offer-id={offer.id}
       data-provider-selected={selected || undefined}
       data-desktop-provider-offer
       aria-busy={pending || undefined}
     >
-      <input id={selectorId} type="radio" name="hotel-provider-offer" value={offer.id} checked={selected} disabled={disabled} onChange={() => onSelect(offer.id)} className="peer sr-only" aria-label={`Select ${offer.providerName} offer`} />
-      <span className="pointer-events-none absolute inset-0 rounded-xl peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8] peer-focus-visible:ring-offset-2" aria-hidden="true" />
-      <label htmlFor={selectorId} className={`contents sm:grid sm:min-w-0 sm:flex-1 sm:grid-cols-[132px_minmax(0,1fr)] sm:items-center ${disabled ? "cursor-default" : "cursor-pointer"}`}>
-        <span className="col-start-1 block min-w-0 self-start sm:col-auto sm:self-center" data-provider-brand>
-          {offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={offer.providerName} width={132} height={30} className="h-8 w-[64px] object-contain object-left sm:w-[86px]" /> : <strong className="whitespace-nowrap text-[13px] font-semibold leading-4 text-[#192024] sm:text-base sm:leading-6 sm:text-[#004BB8]">{offer.providerName}</strong>}
-        </span>
-        <span className="col-start-2 block min-w-0 text-center" data-provider-price>
-          <strong className="block whitespace-nowrap text-[16px] font-semibold leading-5 tracking-[-0.02em] text-[#192024] tabular-nums min-[360px]:text-[20px] min-[360px]:leading-6" title={totalPrice ? undefined : offer.nightlyPriceTitle} aria-label={totalPrice ? undefined : offer.nightlyPriceAriaLabel} data-nightly-amount={!totalPrice || undefined}>{totalPrice || offer.nightlyPrice}</strong>
-          <span className="block text-[12px] font-normal leading-[14px] text-[#59636a]" data-nightly-supporting-label={!totalPrice || undefined}>{totalPrice ? totalLabel : perNightText.replace("{{price}}", "").trim()}</span>
-        </span>
-      </label>
-      <button type="button" className="focus-ring col-start-3 inline-flex h-8 w-[80px] shrink-0 items-center justify-center self-center whitespace-nowrap rounded-md bg-[#004BB8] px-2 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-[#003B91] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 sm:col-auto sm:w-[96px] sm:px-2.5" disabled={disabled || !onContinue} aria-label={pending ? `Opening ${offer.providerName} offer` : `View deal with ${offer.providerName}`} onClick={event => { onSelect(offer.id); onContinue?.(offer.id, event.currentTarget); }} data-provider-action>{pending ? "Opening…" : "View deal"}</button>
-      <div className="col-span-3 mt-3 min-w-0 sm:basis-full"><RateTerms offer={offer} /></div>
+      <div className="flex min-w-0 items-center gap-2" data-provider-brand>
+      {offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={offer.providerName} width={132} height={30} className="h-8 min-w-0 max-w-[132px] object-contain object-left" /> : <strong className="min-w-0 truncate text-[14px] font-semibold text-[#1a1a1a]" title={offer.providerName}>{offer.providerName}</strong>}
+      <button type="button" className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#595959] hover:bg-[#f2f4f8]" aria-label={'Rate details for ' + (offer.roomName || offer.providerName)} onClick={onInfo}><Info size={18} strokeWidth={1.6} /></button>
+      </div>
+      <div className="text-center"><strong className="block whitespace-nowrap text-[18px] font-semibold leading-6 text-[#1a1a1a] tabular-nums" data-provider-price aria-label={(totalPrice ? 'Stay total: ' : 'Per night: ') + (totalPrice || offer.nightlyPrice)}>{totalPrice || offer.nightlyPrice}</strong><span className="block text-[11px] font-normal leading-4 text-[#595959]">{totalPrice ? "Stay total" : "Per night"}</span></div>
+      <button type="button" className="focus-ring inline-flex h-9 w-[112px] justify-self-end items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[16px] font-semibold leading-5 text-white hover:bg-[#003B91] disabled:opacity-50" disabled={disabled || !onContinue} aria-label={pending ? `Opening ${offer.providerName} offer` : `View deal with ${offer.providerName}`} onClick={event => { onSelect(offer.id); onContinue?.(offer.id, event.currentTarget); }} data-provider-action>{pending ? "Opening…" : "View deal"}</button>
     </article>
   );
 }
@@ -169,7 +162,7 @@ export function MobileProviderOffer({ offer, selectable, pendingOfferId, continu
     <button type="button" className="focus-ring relative inline-flex h-5 w-6 shrink-0 items-center justify-center self-center rounded-md text-[#595959]" aria-label={'Rate details for ' + (offer.roomName || offer.providerName)} onClick={onInfo}><Info size={18} strokeWidth={1.6} /><span className="absolute -inset-y-3 inset-x-0" aria-hidden="true" /></button>
     </div>
 
-    <strong className="mr-3 whitespace-nowrap text-[16px] font-semibold leading-5 tracking-tight text-[#1a1a1a] tabular-nums" aria-label={(totalPrice ? 'Stay total: ' : 'Per night: ') + (totalPrice || offer.nightlyPrice)}>{totalPrice || offer.nightlyPrice}</strong>
+    <div className="mr-3 text-center"><strong className="block whitespace-nowrap text-[16px] font-semibold leading-5 tracking-tight text-[#1a1a1a] tabular-nums" aria-label={(totalPrice ? 'Stay total: ' : 'Per night: ') + (totalPrice || offer.nightlyPrice)}>{totalPrice || offer.nightlyPrice}</strong><span className="block text-[10px] font-normal leading-4 text-[#595959]">{totalPrice ? "Stay total" : "Per night"}</span></div>
 
     <button type="button" className="focus-ring inline-flex min-h-8 items-center justify-center whitespace-nowrap rounded-lg bg-[#004bb8] px-2.5 text-[16px] font-semibold leading-5 text-white disabled:opacity-50" disabled={!selectable || pendingOfferId !== null || !onContinue} aria-label={(pending ? 'Opening ' : 'View deal with ') + offer.providerName} onClick={event => { onSelect(offer.id); onContinue?.(offer.id, event.currentTarget); }} data-provider-action>{pending ? "Opening…" : continueLabel}</button>
   </article>;
@@ -184,6 +177,7 @@ export function HotelPriceComparisonSection({
   onSelectOffer,
   variant = "default",
   onContinueOffer,
+  onInfoOffer,
   pendingOfferId = null,
   totalLabel = "Stay total",
   continueLabel = "View deal",
@@ -199,6 +193,7 @@ export function HotelPriceComparisonSection({
   onSelectOffer: (offerId: string) => void;
   variant?: "default" | "desktop";
   onContinueOffer?: ContinueOffer;
+  onInfoOffer?: (offer: HotelDetailsProviderOffer) => void;
   pendingOfferId?: string | null;
   totalLabel?: string;
   continueLabel?: string;
@@ -243,7 +238,7 @@ export function HotelPriceComparisonSection({
         </p>
       ) : null}
       {offers.length ? <div
-        role="radiogroup"
+        role={desktop ? "group" : "radiogroup"}
         aria-label="Hotel provider offers"
         className={desktop ? "mt-4 w-full max-w-[680px] space-y-3" : "mt-4 space-y-2.5 sm:-mx-1 sm:mt-5 sm:space-y-3 lg:mx-0"}
         data-comparison-offers
@@ -260,6 +255,7 @@ export function HotelPriceComparisonSection({
             continueLabel={continueLabel}
             onSelect={onSelectOffer}
             onContinue={onContinueOffer}
+            onInfo={() => onInfoOffer?.(offer)}
           />
         ) : (
           <ProviderOffer
