@@ -16,6 +16,11 @@ test("Native Cars Results exposes one floating Back-to-top after a meaningful sc
   assert.match(cars, /if\(next\.visible!==carBackToTopVisibleRef\.current\)/);
   assert.match(cars, /setCarBackToTopVisible\(next\.visible\)/);
   assert.match(cars, /carBackToTopVisible && status==="ready" && !carResultsApplying/);
+  assert.match(cars, /<Animated.View pointerEvents=/);
+  assert.match(cars, /opacity:carBackToTopProgress,transform:/);
+  assert.match(cars, /outputRange:\[8,0\]/);
+  assert.match(cars, /duration:carBackToTopReducedMotion\?0:200/);
+  assert.match(cars, /accessibilityElementsHidden=\{!carBackToTopVisible\}/);
   assert.equal((cars.match(/accessibilityLabel="Back to top"/g) ?? []).length, 1);
   assert.match(cars, /accessibilityRole="button" accessibilityLabel="Back to top"/);
   assert.match(cars, /accessibilityHint="Scroll to the beginning of car results"/);
