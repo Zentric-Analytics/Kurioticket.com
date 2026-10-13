@@ -131,8 +131,9 @@ test("the unified header keeps a white safe area while the full Filters overlay 
   );
   assert.match(
     carsClientSource,
-    /distance >= \(nextDirection > 0 \? 20 : 12\)[\s\S]*setMobileFiltersVisible\(nextDirection < 0\)/,
+    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1 &&[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
   );
+  assert.doesNotMatch(carsClientSource, /mobileFiltersVisible|mobileFiltersAnimated|scrollFilterBarHidden|scrollFilterBarAnimated/);
   assert.doesNotMatch(
     carsClientSource,
     /data-cars-results-mobile-header-filter|mobileNavFilterTarget|showMobileHeaderFilter/,
@@ -163,7 +164,7 @@ test("Cars pinned mobile filters stay locked to the stable Cars header edge duri
   );
 });
 
-test("Cars Results preserves native top-edge reload while keeping the Hotels-style filter reveal", () => {
+test("Cars Results preserves native top-edge reload while keeping filters permanently visible", () => {
   assert.match(carsSource, /<CarsResultsMobileSafeArea \/>/);
   assert.match(loadingSource, /<CarsResultsMobileSafeArea \/>/);
   assert.match(safeAreaSource, /data-cars-results-mobile-safe-area/);
@@ -173,7 +174,7 @@ test("Cars Results preserves native top-edge reload while keeping the Hotels-sty
   );
   assert.match(
     carsClientSource,
-    /distance >= \(nextDirection > 0 \? 20 : 12\)[\s\S]*setMobileFiltersVisible\(nextDirection < 0\)/,
+    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1 &&[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
   );
 });
 
@@ -196,7 +197,7 @@ test("Cars pinned filters blend into the white header with the Flight-style bott
   );
 });
 
-test("Cars mobile header and filter rail keep a smooth rounded left edge through the scroll handoff", () => {
+test("Cars mobile header and always-visible filter rail keep a smooth rounded left edge through the scroll handoff", () => {
   const carsHeader = getAppHeader(carsSource);
 
   assert.match(carsHeader, /flushMobileBottom/);
@@ -223,11 +224,11 @@ test("Cars mobile header and filter rail keep a smooth rounded left edge through
   );
   assert.match(
     carsClientSource,
-    /distance >= \(nextDirection > 0 \? 20 : 12\)[\s\S]*setMobileFiltersVisible\(nextDirection < 0\)/,
+    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1 &&[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
   );
   assert.match(
     carsClientSource,
-    /if \(scrollY <= 1\) \{[\s\S]*setMobileFiltersPinned\(false\)[\s\S]*setMobileFiltersVisible\(true\)/,
+    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1 &&[\s\S]*resultsBottom > headerBottom/,
   );
 });
 
