@@ -28,7 +28,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
   const primaryOffer = getPrimaryCarOffer(result);
   const offer = primaryOffer ? presentCarOfferCurrency(primaryOffer, displayCurrency, rates) : undefined;
   const { theme } = useAppTheme();
-  const carInformationSurface = theme.dark ? resultBackgroundColor : "#E7EBF1";
+  const carInformationSurface = theme.dark ? resultBackgroundColor : "#FFFFFF";
   const carDividerColor = theme.dark ? theme.border : "#CBD5E1";
   const freeCancellationColor = theme.dark ? theme.textPrimary : "#000000";
   const identity = nativeCarResultIdentity(result.modelName);
