@@ -25,15 +25,45 @@ test("Cars toggle has no visible submission loading UI", () => {
   assert.match(source, /optimisticTracking/);
 });
 
-test("Cars toggle keeps its responsive geometry and balanced trailing inset", () => {
-  assert.match(source, /control: \{ width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1, paddingLeft: 12, paddingRight: 14, paddingVertical: 4, flexDirection: "row", alignItems: "center"/);
-  assert.match(source, /title: \{ flex: 1, flexShrink: 1,/);
-  assert.match(source, /switchSlot: \{ width: 51, minHeight: 44, alignItems: "flex-end", justifyContent: "center" \}/);
+test("native Cars price tracking is an inline label with a compact accessible switch instead of a blue panel", () => {
+  assert.match(source, /return <View style=\{styles\.control\}>/);
+  assert.doesNotMatch(source, /styles\.control, \{ backgroundColor: theme\.priceAlertSurface/);
+  assert.match(source, /<Bell accessible=\{false\} size=\{16\} strokeWidth=\{2\} color=\{theme\.priceAlertAccent\}/);
+  assert.match(source, /<Text numberOfLines=\{1\} ellipsizeMode="tail" style=\{\[styles\.title,/);
+  assert.match(source, />Track car prices<\/Text>/);
+  assert.doesNotMatch(source, /Track rental car prices/);
+  assert.match(source, /control: \{ flexShrink: 1, minWidth: 0, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 6 \}/);
+  assert.match(source, /title: \{ minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 17, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
+  assert.match(source, /switchSlot: \{ width: 51, minHeight: 44, flexShrink: 0, alignItems: "flex-end", justifyContent: "center" \}/);
+  assert.doesNotMatch(source, /<Switch\b/);
+});
 
-  const fixedHorizontalSpace = 12 + 14 + 17 + 8 + 8 + 51;
-  for (const deviceWidth of [320, 375, 390, 414, 480]) {
-    assert.ok(deviceWidth - fixedHorizontalSpace > 0, `title retains flexible space at ${deviceWidth}px`);
+test("native Cars compact switch uses a 44-by-24 track, 18px thumb and full 44px target", () => {
+  assert.match(source, /<Pressable accessibilityRole="switch" accessibilityLabel="Track car prices"/);
+  assert.match(source, /accessibilityState=\{\{ checked: tracking, disabled, busy: pending \}\} disabled=\{disabled\} onPress=\{\(\) => void toggle\(!tracking\)\}/);
+  assert.match(source, /switchTouchTarget: \{ width: 44, height: 44, alignItems: "center", justifyContent: "center" \}/);
+  assert.match(source, /switchTrack: \{ width: 44, height: 24, borderRadius: 12, borderWidth: 1/);
+  assert.match(source, /switchThumb: \{ position: "absolute", top: 3, width: 18, height: 18, borderRadius: 9/);
+  assert.match(source, /pointerEvents="none"/);
+  assert.equal((source.match(/accessibilityRole="switch"/g) ?? []).length, 1);
+  const trackWidth = 44, thumbWidth = 18, endInset = 3;
+  assert.equal(trackWidth - thumbWidth - 2 * endInset, 20);
+  assert.match(source, /outputRange: \[0, I18nManager\.isRTL \? -20 : 20\]/);
+  assert.match(source, /I18nManager\.isRTL \? styles\.switchThumbRtl : styles\.switchThumbLtr/);
+  assert.match(source, /Animated\.timing\(switchAnimation/);
+  assert.match(source, /useNativeDriver: true/);
+});
+
+test("native Cars keeps the result count readable alongside tracking at small phone widths", () => {
+  const trackFixed = 16 + 6 + 51; // bell, minimum gap, trailing control slot
+  const outerGutters = 2 * (14 + 8);
+  const rowGap = 8;
+  for (const width of [320, 360, 375, 390, 414, 480]) {
+    const available = width - outerGutters - rowGap;
+    assert.ok(available - trackFixed > 110, "count and title retain layout space");
   }
+  assert.match(source, /minWidth: 0, flexShrink: 1, fontSize: 12/);
+  assert.match(source, /numberOfLines=\{1\} ellipsizeMode="tail"/);
 });
 
 test("Cars toggle preserves sign-in and explicit failure feedback", () => {
