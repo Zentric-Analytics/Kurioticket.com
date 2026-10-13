@@ -51,7 +51,7 @@ test("Cars results heading aligns to the inner card gutters and sits close to th
   assert.match(summaryClasses, /grid-cols-\[minmax\(0,1fr\)_auto\] items-center/);
   assert.match(summaryClasses, /gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1/);
   assert.match(summaryClasses, /sm:gap-x-2 sm:gap-y-3 sm:px-0/);
-  assert.match(cars, /data-cars-results-toolbar[\s\S]*?gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1/);
+  assert.match(cars, /gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1"\s+data-cars-results-toolbar/);
   assert.equal(
     (cars.match(/w-full space-y-3\.5 max-sm:!mt-1\.5 sm:space-y-4/g) ?? []).length,
     2,
