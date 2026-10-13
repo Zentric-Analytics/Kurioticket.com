@@ -43,6 +43,7 @@ test("KAYAK hotel model preserves only sanitized customer-facing detail facts", 
   assert.equal(model.pricePerNight, 100);
   assert.equal(model.cancellationInfo, "Free cancellation");
   assert.equal(model.reviewSource, "KAYAK");
+  assert.equal(model.reviewSentiment, "Excellent");
   assert.equal(model.providerDetails?.overview?.address, "10 Test Street");
   assert.equal(model.providerDetails?.overview?.countryCode, "US");
   assert.deepEqual(model.providerDetails?.overview?.policies, [{ label: "policies", value: "Check-in after 3 PM" }]);

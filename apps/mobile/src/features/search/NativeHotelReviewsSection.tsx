@@ -4,23 +4,15 @@ import {
   normalizeHotelReviewCount,
   normalizeHotelReviewScale,
   normalizeHotelReviewScore,
-  type HotelReviewBand,
 } from "../../../../../src/lib/hotels/hotelRatingSemantics";
 import { useAppTheme } from "../../theme/AppTheme";
-
-const reviewLabels: Record<HotelReviewBand, string> = {
-  exceptional: "Exceptional",
-  veryGood: "Very good",
-  good: "Good",
-  pleasant: "Pleasant",
-  reviewScore: "Review score",
-};
 
 type ReviewResult = {
   reviewScore?: unknown;
   reviewScale?: unknown;
   reviewCount?: unknown;
   reviewSource?: string;
+  reviewSentiment?: string;
 };
 
 export function nativeHotelReviewPresentation(result: ReviewResult) {
@@ -47,7 +39,7 @@ export function nativeHotelReviewPresentation(result: ReviewResult) {
     score: `${formattedScore} / ${scale}`,
     displayScore: formattedScore,
     scale,
-    label: reviewLabels[band],
+    label: result.reviewSentiment?.trim() || "",
     count: `${formattedCount} ${count === 1 ? "review" : "reviews"}`,
   };
 }

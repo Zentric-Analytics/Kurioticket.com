@@ -73,7 +73,6 @@ import type { DealsTripPlanHotel } from "@/lib/deals/dealsTripPlan";
 import {
   getHotelReviewBand,
   getHotelReviewCount,
-  type HotelReviewBand,
 } from "@/components/results/hotelReviewPresentation";
 
 export type { HotelDetailsSearchContext };
@@ -87,22 +86,6 @@ type HotelDetailsClientProps = {
   confirming?: boolean;
   confirmationError?: string;
   onGuidedSelection?: (selection: DealsTripPlanHotel) => void;
-};
-
-const reviewLabelKeys: Record<HotelReviewBand, string> = {
-  exceptional: "hotelResults.review.exceptional",
-  veryGood: "hotelResults.review.veryGood",
-  good: "hotelResults.review.good",
-  pleasant: "hotelResults.review.pleasant",
-  reviewScore: "hotelResults.review.score",
-};
-
-const reviewLabelFallbacks: Record<HotelReviewBand, string> = {
-  exceptional: "Exceptional",
-  veryGood: "Very good",
-  good: "Good",
-  pleasant: "Pleasant",
-  reviewScore: "Review score",
 };
 
 export function HotelDetailsClient({
@@ -558,9 +541,7 @@ export function HotelDetailsClient({
   );
   const reviewBand = getHotelReviewBand(normalizedReviewScore, reviewScale);
   const reviewCount = getHotelReviewCount(hotel.reviewCount);
-  const reviewLabel = reviewBand
-    ? t(reviewLabelKeys[reviewBand]) || reviewLabelFallbacks[reviewBand]
-    : "";
+  const reviewLabel = providerDetails?.reviews?.sentiment?.trim() || hotel.reviewSentiment?.trim() || "";
   const reviewScore =
     reviewBand && reviewScale
       ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(normalizedReviewScore ?? 0)} / ${reviewScale}`

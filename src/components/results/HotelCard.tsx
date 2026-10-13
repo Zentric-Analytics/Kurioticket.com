@@ -36,7 +36,6 @@ import {
 import {
   getHotelReviewBand,
   getHotelReviewCount,
-  type HotelReviewBand,
 } from "@/components/results/hotelReviewPresentation";
 import {
   buildHotelGalleryCandidates,
@@ -117,22 +116,6 @@ function getCancellationDisplay(
 
   return null;
 }
-
-const reviewLabelKeys: Record<HotelReviewBand, string> = {
-  exceptional: "hotelResults.review.exceptional",
-  veryGood: "hotelResults.review.veryGood",
-  good: "hotelResults.review.good",
-  pleasant: "hotelResults.review.pleasant",
-  reviewScore: "hotelResults.review.score",
-};
-
-const reviewLabelFallbacks: Record<HotelReviewBand, string> = {
-  exceptional: "Exceptional",
-  veryGood: "Very good",
-  good: "Good",
-  pleasant: "Pleasant",
-  reviewScore: "Review score",
-};
 
 type HotelSortBadge = "cheapest" | "bestValue" | "topRated";
 
@@ -222,9 +205,7 @@ export function HotelCard({
   const reviewScore = normalizeHotelReviewScore(hotel.reviewScore, reviewScale);
   const reviewBand = getHotelReviewBand(reviewScore, reviewScale);
   const reviewCount = getHotelReviewCount(hotel.reviewCount);
-  const reviewLabel = reviewBand
-    ? t(reviewLabelKeys[reviewBand]) || reviewLabelFallbacks[reviewBand]
-    : "";
+  const reviewLabel = hotel.reviewSentiment?.trim() || "";
   const formattedReviewScore = reviewBand
     ? new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(
         typeof reviewScore === "number" ? reviewScore : 0,

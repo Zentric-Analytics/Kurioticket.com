@@ -271,6 +271,8 @@ type NormalizedHotelBase = {
   reviewScale?: HotelReviewScale;
   reviewCount?: number;
   reviewSource?: string;
+  /** Exact supplier-authored review description; never inferred from score bands. */
+  reviewSentiment?: string;
   neighbourhood?: string;
   location: string;
   distanceFromCenter?: string;
@@ -307,6 +309,8 @@ type PublicHotelBase = {
   reviewScale?: HotelReviewScale;
   reviewCount?: number;
   reviewSource?: string;
+  /** Exact supplier-authored review description; never inferred from score bands. */
+  reviewSentiment?: string;
   neighbourhood?: string;
   location: string;
   distanceFromCenter?: string;
