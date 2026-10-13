@@ -44,7 +44,7 @@ test("source-contract: phone Cars filters use the Hotels pinned rail without a h
   assert.doesNotMatch(shortcuts, /mobileResultsStyles\.scrollFilterBarHidden|mobileResultsStyles\.scrollFilterBarAnimated/);
   assert.match(
     mobileControls,
-    /const shouldPin =[\s\S]*naturalFilterTop <= headerBottom \+ 1 &&[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
+    /const shouldPin =[\s\S]*naturalFilterTop <= headerBottom \+ 1;[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
   );
   assert.doesNotMatch(mobileControls, /mobileFiltersVisible|mobileFiltersAnimated|nextDirection|scrollFilterBarHidden/);
   assert.doesNotMatch(
