@@ -131,7 +131,7 @@ test("the unified header keeps a white safe area while the full Filters overlay 
   );
   assert.match(
     carsClientSource,
-    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1 &&[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
+    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1;[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
   );
   assert.doesNotMatch(carsClientSource, /mobileFiltersVisible|mobileFiltersAnimated|scrollFilterBarHidden|scrollFilterBarAnimated/);
   assert.doesNotMatch(
@@ -174,7 +174,7 @@ test("Cars Results preserves native top-edge reload while keeping filters perman
   );
   assert.match(
     carsClientSource,
-    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1 &&[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
+    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1;[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
   );
 });
 
@@ -224,7 +224,7 @@ test("Cars mobile header and always-visible filter rail keep a smooth rounded le
   );
   assert.match(
     carsClientSource,
-    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1 &&[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
+    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1;[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
   );
   assert.match(
     carsClientSource,
