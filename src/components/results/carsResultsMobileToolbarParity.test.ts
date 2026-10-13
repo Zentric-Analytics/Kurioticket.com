@@ -80,7 +80,7 @@ test("Cars pins the only full mobile rail beneath its header in both scroll dire
   assert.match(stickyShortcuts, /data-scroll-pinned=\{mobileFiltersPinned \? "true" : "false"\}/);
   assert.match(stickyShortcuts, /mobileResultsStyles\.scrollFilterBarPinned/);
   assert.match(source, /const naturalFilterTop =[\s\S]*mobileFilterOriginRef\.current\?\.getBoundingClientRect\(\)\.top/);
-  assert.match(source, /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1 &&[\s\S]*resultsBottom > headerBottom/);
+  assert.match(source, /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1;/);
   assert.match(source, /if \(mobileFiltersPinnedRef\.current !== shouldPin\) \{[\s\S]*setMobileFiltersPinned\(shouldPin\)/);
   assert.match(source, /const filterInteractionActive =[\s\S]*mobileFiltersOverlayOpen[\s\S]*mobileSearchInteractionActive[\s\S]*filterTransitionPhase !== "idle"/);
   assert.match(source, /if \(filterInteractionActive\) return;/);
