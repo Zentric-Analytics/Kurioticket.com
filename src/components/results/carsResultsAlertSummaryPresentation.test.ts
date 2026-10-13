@@ -53,15 +53,34 @@ test("Cars results heading aligns to the inner card gutters and sits close to th
   assert.match(summaryClasses, /sm:gap-x-2 sm:gap-y-3 sm:px-0/);
   assert.match(cars, /gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1"\s+data-cars-results-toolbar/);
   assert.equal(
-    (cars.match(/w-full space-y-3\.5 max-sm:!mt-2\.5 sm:space-y-4/g) ?? []).length,
+    (cars.match(/w-full space-y-3\.5 max-sm:!mt-1 sm:space-y-4/g) ?? []).length,
     2,
     "loading and loaded car lists share the same tightened gap beneath the results heading",
   );
+  assert.doesNotMatch(cars, /w-full space-y-3\.5 max-sm:!mt-2\.5/);
   assert.doesNotMatch(cars, /w-full space-y-3\.5 max-sm:!mt-1\.5/);
   assert.doesNotMatch(cars, /w-full space-y-3\.5 max-sm:!mt-0\.5/);
   assert.match(alert, /min-h-11 min-w-0 items-center justify-end gap-1\.5 max-\[359px\]:gap-1 sm:min-h-\[52px\]/);
   assert.match(alert, /flex h-11 w-\[51px\] shrink-0 items-center justify-end/);
+  assert.match(alert, /className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full[^"]*sm:w-12"/);
+  assert.match(alert, /aria-hidden="true" className=\{`relative inline-flex h-6 w-11[^}]*sm:h-7 sm:w-12/);
   assert.match(alert, /role="switch" aria-checked=\{tracking\}/);
+});
+
+test("Cars heading has balanced vertical clearance with the smaller mobile toggle", () => {
+  const rowHeightPx = 44;
+  const switchHeightPx = 24;
+  const cardTopMarginPx = 4;
+  const clearAboveTrack = (rowHeightPx - switchHeightPx) / 2;
+  const clearBelowTrack = clearAboveTrack + cardTopMarginPx;
+  assert.equal(clearAboveTrack, 10);
+  assert.equal(clearBelowTrack, 14);
+  assert.ok(clearBelowTrack - clearAboveTrack <= 4, "space below the track must stay visually close to space above");
+  assert.equal((cars.match(/w-full space-y-3\.5 max-sm:!mt-1 sm:space-y-4/g) ?? []).length, 2);
+  assert.match(alert, /flex min-h-11 min-w-0 items-center justify-end gap-1\.5/);
+  assert.match(alert, /relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full/);
+  assert.match(alert, /relative inline-flex h-6 w-11 shrink-0 items-center rounded-full/);
+  assert.match(alert, /sm:h-7 sm:w-12/);
 });
 
 test("Cars leaves the entire left-side result count and grid placement unchanged", () => {

@@ -200,7 +200,7 @@ test("mobile result rhythm no longer reserves space for the removed summary card
   assert.match(resultsSource, /gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1/);
   assert.match(resultsSource, /min-w-0 space-y-0 sm:space-y-4/);
   assert.equal(
-    (resultsSource.match(/space-y-3\.5 max-sm:!mt-2\.5/g) ?? []).length,
+    (resultsSource.match(/space-y-3\.5 max-sm:!mt-1/g) ?? []).length,
     2,
   );
 });
@@ -215,4 +215,6 @@ test("Cars uses the flat right-side tracking control on mobile without changing 
   assert.match(alertSource, /sm:rounded-full sm:bg-blue-50/);
   assert.match(alertSource, /whitespace-nowrap text-\[12px\] font-semibold leading-\[17px\] text-\[#07133B\]/);
   assert.match(alertSource, /h-11 w-\[51px\] shrink-0/);
+  assert.match(alertSource, /h-11 w-11 shrink-0 items-center justify-center rounded-full[^"]*sm:w-12/);
+  assert.match(alertSource, /h-6 w-11 shrink-0 items-center rounded-full border transition-colors sm:h-7 sm:w-12/);
 });
