@@ -222,7 +222,7 @@ test("Cars quick controls use the Flight-family icon, geometry, and surface cont
   assert.doesNotMatch(cars, /<FlowIcon name="sliders"/);
   assert.match(cars, /<ChevronDown accessible=\{false\} size=\{13\} strokeWidth=\{1\.9\} color=\{chevron\} style=\{expanded\?r\.shortcutChevronExpanded:undefined\}/);
   assert.doesNotMatch(cars, /<FlowIcon name="chevronDown"|#EDF4FF/);
-  assert.match(cars, /filters:\{paddingLeft:8,paddingRight:16,gap:6/);
+  assert.match(cars, /filters:\{paddingLeft:12,paddingRight:16,gap:6/);
   assert.match(cars, /shortcut:\{height:36,[^}]*gap:4,[^}]*borderWidth:1,borderRadius:9,paddingHorizontal:10\}/);
   for (const token of ["#D8E1EC", "#142033", "#64748B", "#F8FAFC", "#F1F5F9", "#FFFFFF"]) assert.match(cars, new RegExp(token));
   assert.match(cars, /accessibilityState=\{\{expanded,selected:active\}\}/);
