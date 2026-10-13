@@ -1882,9 +1882,7 @@ export function CarsResultsExperience({
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [mobileFiltersAnimated, setMobileFiltersAnimated] = useState(false);
   const [mobileFiltersPinned, setMobileFiltersPinned] = useState(false);
-  const [mobileFiltersVisible, setMobileFiltersVisible] = useState(true);
   const kayak = useKayakResults();
   const results = useMemo(() => presentation !== "standalone" || kayak?.vertical !== "cars" ? providerResults : [
     ...providerResults, ...kayak.offers.map(offer => kayakCarCardModel(offer,Math.max(1,Math.ceil((Date.parse(search.dropoffDate)-Date.parse(search.pickupDate))/86400000)||1),search.pickupLocation)),
@@ -1963,108 +1961,45 @@ export function CarsResultsExperience({
       return undefined;
 
     const mobileQuery = window.matchMedia("(max-width: 639px)");
-    const readScrollPosition = () => {
-      const maxScrollY = Math.max(
-        0,
-        document.documentElement.scrollHeight - window.innerHeight,
-      );
-      return {
-        maxScrollY,
-        scrollY: Math.min(maxScrollY, Math.max(0, window.scrollY)),
-      };
-    };
-    let previousY = readScrollPosition().scrollY;
-    let direction = 0;
-    let distance = 0;
     let frame = 0;
 
     const update = () => {
       frame = 0;
-      const { maxScrollY, scrollY } = readScrollPosition();
-      const delta = scrollY - previousY;
-      previousY = scrollY;
-
       if (!mobileQuery.matches) {
         mobileFiltersPinnedRef.current = false;
         setMobileFiltersPinned(false);
-        setMobileFiltersAnimated(false);
-        setMobileFiltersVisible(true);
         return;
       }
 
+      // An open filter/search overlay can lock and restore page scroll.
+      // Preserve the current fixed rail rather than interpreting that as a
+      // natural-position handoff.
       const filterInteractionActive =
         mobileFiltersOverlayOpen ||
         mobileSearchInteractionActive ||
         filterTransitionPhase !== "idle";
-
-      // Match Hotel Results: overlay scroll locking/restoration must not be
-      // interpreted as a user scroll direction change.
-      if (filterInteractionActive) {
-        direction = 0;
-        distance = 0;
-        return;
-      }
+      if (filterInteractionActive) return;
 
       const headerBottom =
         document
           .querySelector<HTMLElement>("[data-app-header]")
           ?.getBoundingClientRect().bottom ?? 72;
-      const naturalFilterBottom =
-        mobileFilterOriginRef.current?.getBoundingClientRect().bottom ?? 0;
+      const naturalFilterTop =
+        mobileFilterOriginRef.current?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
       const resultsBottom =
         carsResultsBodyRef.current?.getBoundingClientRect().bottom ?? 0;
+      const scrollY = Math.max(0, window.scrollY);
 
-      if (scrollY <= 1) {
-        mobileFiltersPinnedRef.current = false;
-        setMobileFiltersPinned(false);
-        setMobileFiltersAnimated(false);
-        setMobileFiltersVisible(true);
-        direction = 0;
-        distance = 0;
-        return;
-      }
-
-      if (resultsBottom <= headerBottom) {
-        setMobileFiltersVisible(false);
-        return;
-      }
-
-      if (!mobileFiltersPinnedRef.current) {
-        if (naturalFilterBottom <= 8) {
-          mobileFiltersPinnedRef.current = true;
-          setMobileFiltersPinned(true);
-          // Match Hotels: the initial downward handoff pins hidden so the
-          // full rail never flashes while leaving its natural position.
-          setMobileFiltersVisible(delta < 0);
-          direction = Math.sign(delta);
-          distance = 0;
-        }
-        return;
-      }
-
-      if (Math.abs(delta) < 1) return;
-
-      // Match Hotels' iOS/WebKit rubber-band guard at the bottom edge.
-      const distanceFromBottom = Math.max(0, maxScrollY - scrollY);
-      if (delta < 0 && distanceFromBottom <= 40) {
-        direction = 0;
-        distance = 0;
-        return;
-      }
-
-      const nextDirection = Math.sign(delta);
-      distance =
-        nextDirection === direction
-          ? distance + Math.abs(delta)
-          : Math.abs(delta);
-      direction = nextDirection;
-
-      // Same Hotels thresholds: hide after 20px down, reveal after only
-      // 12px up so the full filter rail returns almost immediately.
-      if (distance >= (nextDirection > 0 ? 20 : 12)) {
-        if (nextDirection < 0) setMobileFiltersAnimated(true);
-        setMobileFiltersVisible(nextDirection < 0);
-        distance = 0;
+      // Pin at the instant the natural rail reaches the header, not after
+      // scrolling the rail out of view. Keep it fully visible in BOTH
+      // directions; release at the top or once the results section ends.
+      const shouldPin =
+        scrollY > 1 &&
+        naturalFilterTop <= headerBottom + 1 &&
+        resultsBottom > headerBottom;
+      if (mobileFiltersPinnedRef.current !== shouldPin) {
+        mobileFiltersPinnedRef.current = shouldPin;
+        setMobileFiltersPinned(shouldPin);
       }
     };
 
@@ -2778,7 +2713,6 @@ export function CarsResultsExperience({
               >
                 <div
                   data-cars-results-scroll-filter-bar
-                  data-scroll-visible={mobileFiltersVisible ? "true" : "false"}
                   data-scroll-pinned={mobileFiltersPinned ? "true" : "false"}
                   className={cn(
                     "flex min-w-0 flex-col items-start lg:hidden",
@@ -2789,15 +2723,6 @@ export function CarsResultsExperience({
                       !guidedPlanning &&
                       mobileFiltersPinned &&
                       mobileResultsStyles.scrollFilterBarPinned,
-                    presentation === "standalone" &&
-                      !guidedPlanning &&
-                      mobileFiltersAnimated &&
-                      mobileResultsStyles.scrollFilterBarAnimated,
-                    presentation === "standalone" &&
-                      !guidedPlanning &&
-                      mobileFiltersPinned &&
-                      !mobileFiltersVisible &&
-                      mobileResultsStyles.scrollFilterBarHidden,
                   )}
                 >
                 {!guidedPlanning ? (
