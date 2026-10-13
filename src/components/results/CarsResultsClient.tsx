@@ -3052,7 +3052,7 @@ export function CarsResultsExperience({
                       : undefined
                   }
                   className={cn(
-                    "w-full space-y-3.5 max-sm:!mt-1.5 sm:space-y-4",
+                    "w-full space-y-3.5 max-sm:!mt-0.5 sm:space-y-4",
                     !guidedPlanning && "w-full",
                   )}
                 >
@@ -3078,7 +3078,7 @@ export function CarsResultsExperience({
                   data-cars-results-card-list
                   aria-busy="false"
                   className={cn(
-                    "w-full space-y-3.5 max-sm:!mt-1.5 sm:space-y-4",
+                    "w-full space-y-3.5 max-sm:!mt-0.5 sm:space-y-4",
                     !guidedPlanning && "w-full",
                     filterTransitionPhase === "revealing" &&
                       filterTransitionMobile &&
