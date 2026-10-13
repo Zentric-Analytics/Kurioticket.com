@@ -23,9 +23,10 @@ function rateStyle(name: string, nextName?: string) {
   return ratesSource.slice(start, end);
 }
 
-test("mobile web reference reuses the desktop Hotel rate-card contract", () => {
-  assert.match(webMobileDetails, /import \{ DesktopProviderOffer \} from "\.\/HotelPriceComparisonSection"/);
-  assert.match(webMobileDetails, /offers\.map\(offer => <DesktopProviderOffer/);
+test("mobile web reference renders dedicated Hotel provider offers from shared offer data", () => {
+  assert.match(webMobileDetails, /import \{ MobileProviderOffer \} from "\.\/HotelPriceComparisonSection"/);
+  assert.match(webMobileDetails, /offers\.map\(offer => <MobileProviderOffer/);
+  assert.match(webMobileDetails, /onInfo=\{\(\) => setRateInfo\(offer\)\}/);
   assert.match(webMobileDetails, /perNightText=\{props\.perNightText\}/);
   assert.match(webMobileDetails, /totalPrice: total/);
   assert.doesNotMatch(webMobileDetails, /className=\{styles\.rateAction\}|>Stay total<\/span>/);
