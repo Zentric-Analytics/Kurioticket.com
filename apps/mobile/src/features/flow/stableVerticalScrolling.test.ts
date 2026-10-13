@@ -80,8 +80,12 @@ test("car results keep separate stable virtualized vertical and horizontal scrol
   assert.match(verticalOwner, /maxToRenderPerBatch=\{Math\.max\(results\.length,CAR_RESULT_RENDER_BATCH_SIZE\)\}/);
   assert.match(verticalOwner, /windowSize=\{CAR_RESULT_WINDOW_SIZE\}/);
   assert.match(verticalOwner, /removeClippedSubviews=\{Platform\.OS === "android"\}/);
-  assert.doesNotMatch(verticalOwner, /onScroll=|scrollEventThrottle=/);
-  assert.doesNotMatch(source, /handleCarScroll|carBackToTop|accessibilityLabel="Back to top"/);
+  assert.match(verticalOwner, /onScroll=\{handleCarScroll\} scrollEventThrottle=\{16\}/);
+  assert.match(verticalOwner, /onScrollBeginDrag=\{\(\)=>\{carBackToTopReturningRef\.current=false;\}\}/);
+  assert.match(source, /const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 600/);
+  assert.match(source, /const handleCarScroll=useCallback/);
+  assert.match(source, /carBackToTopVisible && status==="ready" && !carResultsApplying/);
+  assert.match(source, /accessibilityLabel="Back to top"/);
   const horizontalOwner = source.slice(source.indexOf("<ScrollView horizontal"), horizontalEnd);
   for (const prop of horizontalStableProps) assert.match(horizontalOwner, prop);
   assert.doesNotMatch(horizontalOwner, /alwaysBounceVertical=\{false\}/);
