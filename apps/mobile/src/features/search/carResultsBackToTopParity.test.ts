@@ -6,7 +6,7 @@ const cars = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "u
 const stateSource = readFileSync("src/features/search/carResultsBackToTopState.ts", "utf8");
 
 test("Native Cars Results exposes one floating Back-to-top after a meaningful scroll", () => {
-  assert.match(stateSource, /const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 240/);
+  assert.match(stateSource, /const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 600/);
   assert.match(cars, /carBackToTopOffsetRef=useRef\(0\)/);
   assert.match(cars, /carBackToTopVisibleRef=useRef\(false\)/);
   assert.match(cars, /carBackToTopReturningRef=useRef\(false\)/);
