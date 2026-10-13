@@ -9,7 +9,7 @@ import {
 
 test("native Cars Back to top appears while scrolling down, not only on the way back up", () => {
   let state = INITIAL_CAR_BACK_TO_TOP_SCROLL_STATE;
-  state = updateCarBackToTopScroll(state, 300);
+  state = updateCarBackToTopScroll(state, 160);
   assert.equal(state.visible, false);
   state = updateCarBackToTopScroll(state, CAR_BACK_TO_TOP_SCROLL_THRESHOLD);
   assert.equal(state.visible, false);

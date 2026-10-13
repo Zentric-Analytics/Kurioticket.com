@@ -3,7 +3,9 @@
  * Keep scroll visibility direction-independent. Only suppress events while
  * the list is genuinely animating back toward offset zero.
  */
-export const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 600;
+// The native list begins below the persistent search/filter header, unlike the web page.
+// Reveal within the first result card instead of waiting for a second card.
+export const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
 
 export type CarBackToTopScrollState = {
   offset: number;
