@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
+import type { HotelDetailsProviderOffer } from "./hotelDetailsPresentation";
 import { ArrowLeft, Heart, MapPin, Share2, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { StandaloneHotelDetailsProps } from "./StandaloneHotelDetails";
@@ -25,7 +27,7 @@ const sections = [
 ] as const;
 type DesktopHotelSection = typeof sections[number]["id"];
 
-function DesktopDialog({ title, close, children }: { title: string; close: () => void; children: ReactNode }) {
+function DesktopDialog({ title, close, children, rate = false }: { title: string; close: () => void; children: ReactNode; rate?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current;
@@ -35,7 +37,7 @@ function DesktopDialog({ title, close, children }: { title: string; close: () =>
     dialog?.showModal();
     return () => { dialog?.close(); document.body.style.overflow = previousOverflow; opener?.focus({ preventScroll: true }); };
   }, []);
-  return <dialog ref={ref} className={styles.dialog} aria-label={title} onCancel={event => { event.preventDefault(); close(); }} onClick={event => {
+  return <dialog ref={ref} className={`${styles.dialog} ${rate ? styles.rateDialog : ""}`} aria-label={title} onCancel={event => { event.preventDefault(); close(); }} onClick={event => {
     if (event.target !== event.currentTarget) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) close();
@@ -56,10 +58,11 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
   const [providerHandoffError, setProviderHandoffError] = useState<string | null>(null);
   const [shareStatus, setShareStatus] = useState("");
   const [overlay, setOverlay] = useState<"rooms" | null>(null);
+  const [rateInfo, setRateInfo] = useState<HotelDetailsProviderOffer | null>(null);
   const [allAmenities, setAllAmenities] = useState(false);
   const handoffPending = useRef(false);
   const property = props.propertyDetails;
-  const locationProperty = props.locationIsSimulated ? null : props.locationDetails ?? property;
+  const locationProperty = props.locationDetails ?? property;
   const description = mobileHotelAbout(props.hotelName, property, props.starRating);
   const canonicalAddress = locationProperty ? buildHotelAddress(locationProperty) : props.locationParts.join(" · ");
   const internalRoomFlowAvailable = props.roomChoices.length > 0;
@@ -194,8 +197,8 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
       stayContext={props.staySummary ? `${props.staySummary.dateText} · ${props.staySummary.occupancyText}` : undefined}
       perNightText={props.perNightText} offers={offers} selectedOfferId={selectedId}
       selectableOfferIds={new Set(offers.map(offer => offer.id))} providerHandoffError={providerHandoffError}
-      onSelectOffer={setSelectedOfferId} onContinueOffer={(id, trigger) => void continueOffer(id, trigger)}
-      pendingOfferId={pendingProviderOfferId} totalLabel={props.estimatedTotalText} continueLabel={props.labels.continueBooking} />
+      onSelectOffer={setSelectedOfferId} onInfoOffer={setRateInfo} onContinueOffer={(id, trigger) => void continueOffer(id, trigger)}
+      pendingOfferId={pendingProviderOfferId} totalLabel="Stay total" continueLabel={props.labels.continueBooking} />
     </div>
 
     <div data-desktop-section="overview">
@@ -220,7 +223,7 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
       <h3>Accessibility</h3>{property?.accessibility?.length ? <ul className={styles.accessibility}>{property.accessibility.map(detail => <li key={detail}>{detail}</li>)}</ul> : <p>Confirm specific accessibility requirements with the property before travel.</p>}
     </section>
 
-    {locationProperty ? <HotelLocationSection variant="desktop" hotelName={props.hotelName} propertyDetails={locationProperty} locationLabel="Location" mapLabel={props.labels.map} streetViewLabel={props.labels.streetView} stayFitFacts={[locationProperty.neighbourhood ? `${locationProperty.neighbourhood} neighborhood` : "", locationProperty.businessSuitable ? "Work-friendly property" : "", locationProperty.familySuitable ? "Family-friendly" : "", locationProperty.interestTags?.some(tag => /sightseeing|culture|history|art|theatre/i.test(tag)) ? "Good for sightseeing" : ""].filter(Boolean)} accessibilityDetails={locationProperty.accessibility} /> : <section id="hotel-location" className={styles.section}><h2 tabIndex={-1}>Location</h2><p>Verified location details are not available for this property yet.</p></section>}
+    {locationProperty ? <HotelLocationSection variant="desktop" locationIsSimulated={props.locationIsSimulated} hotelName={props.hotelName} propertyDetails={locationProperty} locationLabel="Location" mapLabel={props.labels.map} streetViewLabel={props.labels.streetView} stayFitFacts={[locationProperty.neighbourhood ? `${locationProperty.neighbourhood} neighborhood` : "", locationProperty.businessSuitable ? "Work-friendly property" : "", locationProperty.familySuitable ? "Family-friendly" : "", locationProperty.interestTags?.some(tag => /sightseeing|culture|history|art|theatre/i.test(tag)) ? "Good for sightseeing" : ""].filter(Boolean)} accessibilityDetails={locationProperty.accessibility} /> : <section id="hotel-location" className={styles.section}><h2 tabIndex={-1}>Location</h2><p>Verified location details are not available for this property yet.</p></section>}
 
 
 
@@ -232,6 +235,21 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
       <RelatedHotelsSection hotels={props.relatedHotels} city={relatedCity} searchContext={props.relatedSearchContext} desktopLimit={8} limit={8} labels={{ heading: props.labels.moreHotelsIn, viewHotel: props.labels.viewHotel, pricePerNight: props.labels.pricePerNight, estimatedStayTotal: props.labels.estimatedStayTotal, priceUnavailable: props.labels.priceUnavailable, imageUnavailable: props.labels.imageUnavailable, imageAlt: props.labels.imageAlt, nearLocation: props.labels.nearLocation, starHotelAria: props.labels.starHotelAria }} />
     </div> : null}
     </div>
+    {rateInfo ? <DesktopDialog title="Rate details" rate close={() => setRateInfo(null)}>
+      <div className={styles.rateInfoBody}>
+        <section className={styles.rateInfoRoom}>
+          {rateInfo.providerLogoUrl ? <Image src={rateInfo.providerLogoUrl} alt={rateInfo.providerName} width={132} height={30} className={styles.rateInfoLogo} /> : <p className={styles.rateInfoProvider}>{rateInfo.providerName}</p>}
+          <h3>{rateInfo.roomName || "Room description not supplied"}</h3>
+          {[rateInfo.bedConfiguration, rateInfo.mealPlanLabel].filter(Boolean).map((term, index) => <p key={index}>{term}</p>)}
+        </section>
+        {rateInfo.cancellationLabel || rateInfo.paymentLabel ? <section className={styles.rateInfoSection}>
+          <h3>Booking conditions</h3>
+          <dl>{rateInfo.cancellationLabel ? <div><dt>Cancellation</dt><dd>{rateInfo.cancellationLabel}</dd></div> : null}{rateInfo.paymentLabel ? <div><dt>Payment</dt><dd>{rateInfo.paymentLabel}</dd></div> : null}</dl>
+        </section> : null}
+        {rateInfo.suppliedRateFacts?.length || rateInfo.taxesAndFeesLabel ? <section className={styles.rateInfoSection}><h3>Price details</h3><dl>{rateInfo.suppliedRateFacts?.map((fact, index) => <div key={index}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl>{rateInfo.taxesAndFeesLabel ? <p>{rateInfo.taxesAndFeesLabel}</p> : null}</section> : null}
+        {rateInfo.totalPrice ? <div className={styles.rateInfoTotal}><span>Stay total</span><strong>{rateInfo.totalPrice}</strong></div> : null}
+      </div>
+    </DesktopDialog> : null}
     {overlay === "rooms" ? <DesktopDialog title={props.labels.roomTitle} close={() => setOverlay(null)}><p className={styles.dialogNote}>{props.planningPriceText}</p><div className={styles.roomOptions}>{props.roomChoices.map(room => <article key={room.id}><div><h3>{room.name}</h3><p>{room.details}</p><p>{room.cancellationInfo || props.labels.roomTerms}</p></div><div className={styles.roomPrice}><strong>{room.total}</strong><span>{room.nightly}</span></div></article>)}</div></DesktopDialog> : null}
   </div>;
 }

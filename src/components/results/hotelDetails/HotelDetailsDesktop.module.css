@@ -70,3 +70,24 @@
 .roomPrice span { font-size: 12px; color: #59636a; margin-top: 4px; }
 @media (max-width:1100px) { .tabs a { padding-inline: 10px; } }
 @media (prefers-reduced-motion:reduce) { .desktop { scroll-behavior: auto; } }
+
+.rateInfoBody { display: flex; flex-direction: column; gap: 20px; color: #1a1a1a; }
+
+.rateInfoRoom { padding: 16px; border-radius: 14px; background: white; }
+.rateInfoProvider { font-size: 12px; line-height: 18px; font-weight: 600; color: #595959; }
+.rateInfoLogo { width: auto; max-width: 132px; height: 26px; object-fit: contain; object-position: left; }
+.rateInfoRoom h3 { margin-top: 8px; font-size: 15px; line-height: 22px; font-weight: 600; }
+.rateInfoRoom > p:not(.rateInfoProvider), .rateInfoSection > p { margin-top: 6px; font-size: 13px; line-height: 20px; color: #595959; }
+.rateInfoSection h3 { margin-bottom: 10px; font-size: 14px; line-height: 20px; font-weight: 600; }
+.rateInfoSection dl { display: grid; gap: 12px; font-size: 13px; line-height: 20px; }
+.rateInfoSection dl > div { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.5fr); gap: 16px; align-items: start; }
+.rateInfoSection dt { color: #595959; overflow-wrap: anywhere; }
+.rateInfoSection dd { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.rateInfoTotal { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; padding: 14px 16px; border-radius: 12px; background: white; }
+.rateInfoTotal span { font-size: 13px; line-height: 20px; font-weight: 600; }
+.rateInfoTotal strong { margin-left: auto; font-size: 19px; line-height: 26px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+.rateDialog { width: min(520px, calc(100vw - 48px)); border: 0; border-radius: 24px; background: #f2f4f8; color: #1a1a1a; }
+.rateDialog .dialogHeader { position: relative; justify-content: center; min-height: 36px; margin-bottom: 24px; padding-inline: 40px; }
+.rateDialog .dialogHeader h2 { font-size: 18px; }
+.rateDialog .dialogHeader .iconButton { position: absolute; right: 0; border: 0; background: transparent; color: #1a1a1a; }

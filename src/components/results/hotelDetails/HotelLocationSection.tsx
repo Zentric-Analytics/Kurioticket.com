@@ -13,6 +13,7 @@ import {
 type HotelLocationSectionProps = {
   variant?: "default" | "desktop";
   hotelName: string;
+  locationIsSimulated?: boolean;
   propertyDetails: PublicHotelPropertyDetails;
   locationLabel: string;
   mapLabel: string;
@@ -23,7 +24,9 @@ type HotelLocationSectionProps = {
 
 function getSecondaryLocation(details: PublicHotelPropertyDetails): string {
   const address = details.streetAddress.toLocaleLowerCase();
-  return [details.neighbourhood, details.city, details.country]
+  const country = details.country.trim();
+  const countryName = /^[a-z]{2}$/i.test(country) ? new Intl.DisplayNames(["en"], { type: "region" }).of(country.toUpperCase()) ?? country : country;
+  return [details.neighbourhood, details.city, countryName]
     .map((part) => part.trim())
     .filter(
       (part, index, parts) =>
@@ -40,6 +43,7 @@ function getSecondaryLocation(details: PublicHotelPropertyDetails): string {
 export function HotelLocationSection({
   variant = "default",
   hotelName,
+  locationIsSimulated = false,
   propertyDetails,
   locationLabel,
   mapLabel,
@@ -50,11 +54,12 @@ export function HotelLocationSection({
   const [view, setView] = useState<"map" | "streetview">("map");
   const googleMapsEmbedApiKey =
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY;
+  const mapHotelName = locationIsSimulated ? "" : hotelName;
   const mapUrl = variant === "desktop"
-    ? buildHotelMapEmbedUrl({ hotelName, propertyDetails, googleMapsEmbedApiKey })
-    : buildGoogleHotelMapEmbedUrl({ hotelName, propertyDetails, googleMapsEmbedApiKey });
+    ? buildHotelMapEmbedUrl({ hotelName: mapHotelName, propertyDetails, googleMapsEmbedApiKey })
+    : buildGoogleHotelMapEmbedUrl({ hotelName: mapHotelName, propertyDetails, googleMapsEmbedApiKey });
   const streetViewUrl = buildGoogleHotelStreetViewEmbedUrl({
-    hotelName,
+    hotelName: mapHotelName,
     propertyDetails,
     googleMapsEmbedApiKey,
   });
@@ -118,16 +123,16 @@ export function HotelLocationSection({
             </div>
           )}
         </div>
-        {stayFitFacts.length || accessibilityDetails.length ? (
+        {(
           <div className="mt-5 grid grid-cols-1 gap-5" data-hotel-stay-fit-facts>
-            {stayFitFacts.length ? (
+            {(
               <div>
                 <h3 className="text-base font-semibold">Why this location works</h3>
-                <ul className="mt-2 list-none p-0 text-sm leading-6 text-[#303b42]">
+                {stayFitFacts.length ? <ul className="mt-2 list-none p-0 text-sm leading-6 text-[#303b42]">
                   {stayFitFacts.map((fact) => <li key={fact}>{fact}</li>)}
-                </ul>
+                </ul> : <p className="mt-2 text-sm leading-6 text-[#595959]">{locationIsSimulated ? "Location details are limited to the provider’s sandbox address and map." : "Location fit details are limited to the verified address and map."}</p>}
               </div>
-            ) : null}
+            )}
             {accessibilityDetails.length ? (
               <div>
                 <h3 className="text-base font-semibold">Accessibility and location details</h3>
@@ -137,7 +142,7 @@ export function HotelLocationSection({
               </div>
             ) : null}
           </div>
-        ) : null}
+        )}
       </section>
     );
   }

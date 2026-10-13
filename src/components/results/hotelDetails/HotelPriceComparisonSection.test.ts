@@ -40,7 +40,7 @@ function findElement(node: ReactNode, predicate: (element: ReactElement<Record<s
   return undefined;
 }
 
-test("desktop rate card shows supplied room terms alongside provider, price, and deal action", () => {
+test("desktop rate card exposes details separately from provider, price, and deal action", () => {
   const html = renderToStaticMarkup(createElement(HotelPriceComparisonSection, {
     ...baseProps,
     variant: "desktop",
@@ -49,14 +49,15 @@ test("desktop rate card shows supplied room terms alongside provider, price, and
     onContinueOffer: () => {},
   }));
   for (const fact of ["Example stays", "NGN 240,000", "View deal"]) assert.ok(html.includes(fact), fact);
-  for (const fact of ["Deluxe room", "King bed", "Breakfast included", "Non-refundable", "Pay at property", "Taxes included"]) assert.ok(html.includes(fact), fact);
+  assert.match(html, /Rate details for Deluxe room/);
+  assert.doesNotMatch(html, /King bed|Breakfast included|Non-refundable|Pay at property|Taxes included|data-rate-terms/);
   assert.equal((html.match(/data-desktop-provider-offer/g) ?? []).length, 1);
   assert.match(html, /<article/);
   assert.doesNotMatch(html, /<label[^>]*>[\s\S]*?<button[\s\S]*?<\/label>/);
 
   const nightlyOnly = renderToStaticMarkup(createElement(HotelPriceComparisonSection, { ...baseProps, variant: "desktop", onContinueOffer: () => {} }));
   assert.ok(nightlyOnly.includes("NGN 80,000"));
-  assert.ok(nightlyOnly.includes("per night"));
+  assert.ok(nightlyOnly.includes("Per night"));
   assert.doesNotMatch(nightlyOnly, /Stay total|Breakfast|cancellation|Taxes included/);
 });
 
@@ -87,7 +88,7 @@ test("pending and unavailable desktop offers cannot start another continuation",
   assert.ok(pending.includes("Opening…"));
 
   const unavailable = renderToStaticMarkup(createElement(HotelPriceComparisonSection, { ...baseProps, variant: "desktop", selectableOfferIds: new Set<string>(), onContinueOffer: () => {} }));
-  assert.match(unavailable, /<input[^>]*disabled=""/);
+
   assert.match(unavailable, /<button[^>]*disabled=""/);
 });
 
@@ -125,16 +126,13 @@ test("desktop rate cards extend slightly beyond the stay editor", () => {
 });
 
 
-test("desktop View deal action stays compact while the shared row stays side by side on mobile", () => {
-  const html = renderToStaticMarkup(createElement(HotelPriceComparisonSection, {
-    ...baseProps,
-    variant: "desktop",
-    onContinueOffer: () => {},
-  }));
-  assert.match(html, /grid-cols-\[92px_minmax\(0,1fr\)_80px\][^"]*sm:flex/);
-  assert.match(html, /col-start-1[^"]*self-start/);
-  assert.match(html, /col-start-2[^"]*text-center/);
-  assert.match(html, /col-start-3[^"]*w-\[80px\][^"]*whitespace-nowrap[^"]*sm:w-\[96px\]/);
-  assert.match(html, /whitespace-nowrap text-\[16px\][^"]*min-\[360px\]:text-\[20px\]/);
-  assert.match(html, /whitespace-nowrap[^"]*text-\[13px\][^"]*text-\[#192024\][^"]*sm:text-base/);
+test("desktop info opens the matching offer without starting a booking", () => {
+  const shown: HotelDetailsProviderOffer[] = [];
+  const selected: string[] = [];
+  const tree = HotelPriceComparisonSection({ ...baseProps, variant: "desktop", onInfoOffer: value => shown.push(value), onSelectOffer: id => selected.push(id) });
+  const button = findElement(tree, element => element.type === "button" && element.props["aria-label"] === "Rate details for Example stays");
+  assert.ok(button);
+  (button.props.onClick as () => void)();
+  assert.deepEqual(shown, [offer]);
+  assert.deepEqual(selected, []);
 });
