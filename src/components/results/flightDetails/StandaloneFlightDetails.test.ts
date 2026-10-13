@@ -966,8 +966,8 @@ test("mobile web Flight Details removes the branded header and uses the native e
 
   assert.doesNotMatch(source, /<MobileFlightDetailsBrandHeader/);
   assert.doesNotMatch(loading, /<MobileFlightDetailsBrandHeader/);
-  assert.match(source, /<main className="flex-1 bg-\[#F5F7FB\][^"]*sm:bg-\[#F7F9FC\]/);
-  assert.match(source, /data-flight-details-hero-curve[^\n]*fill="#F5F7FB"/);
+  assert.match(source, /<main className="flex-1 bg-white[^"]*sm:bg-\[#F7F9FC\]/);
+  assert.match(source, /data-flight-details-hero-curve[^\n]*fill="currentColor"/);
   assert.match(source, /px-3 pb-4 pt-0/);
   assert.match(source, /data-mobile-native-itinerary-stack[\s\S]*-mx-2 -mt-\[104px\]/);
   assert.match(source, /data-flight-details-desktop-navigation/);
@@ -978,8 +978,12 @@ test("mobile web Flight Details removes the branded header and uses the native e
   assert.match(loading, /data-flight-details-loading-desktop-navigation/);
   assert.match(source, /function FlightDetailsUnavailable[\s\S]*Back to results/);
   assert.match(source, /const nativeTripLine = `[\s\S]*titleCase\(available\.search\.cabinClass\)/);
-  assert.match(loading, /<main className="flex-1 bg-\[#F5F7FB\][^"]*sm:bg-\[#F7F9FC\]/);
-  assert.match(loading, /data-flight-details-loading-hero-curve[^\n]*fill="#F5F7FB"/);
+  assert.match(loading, /<main className="flex-1 bg-white[^"]*sm:bg-\[#F7F9FC\]/);
+  assert.match(loading, /data-flight-details-loading-hero-curve[^\n]*fill="currentColor"/);
+  for (const view of [source, loading]) {
+    assert.doesNotMatch(view, /#F5F7FB/);
+    assert.match(view, /h-\[65px\] w-full text-white sm:hidden/);
+  }
   assert.match(loading, /data-mobile-native-itinerary-loading[\s\S]*-mx-2 -mt-\[104px\]/);
   assert.match(loading, /h-\[226px\]/);
 });
@@ -1222,7 +1226,7 @@ test("desktop Flight Details uses a compact endpoint hierarchy and reserves time
 
 test("mobile web Flight Details loading itinerary matches native-parity geometry", async () => {
   const source = await readFile(new URL("./FlightDetailsLoadingShell.tsx", import.meta.url), "utf8");
-  assert.match(source, /bg-\[#F5F7FB\]/);
+  assert.match(source, /<main className="flex-1 bg-white/);
   assert.match(source, /min-h-\[254px\]/);
   assert.match(source, /pb-\[122px\]/);
   assert.match(source, /data-mobile-native-itinerary-loading/);
