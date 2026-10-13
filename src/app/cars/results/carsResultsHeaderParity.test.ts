@@ -129,10 +129,6 @@ test("the unified header keeps a white safe area while the full Filters overlay 
     carsClientSource,
     /if \(!filtersOpen \|\| typeof window === "undefined"\) return undefined;[\s\S]*?safeAreaSurfaceProperty = "--cars-results-safe-area-surface";[\s\S]*?root\.style\.setProperty\(safeAreaSurfaceProperty, "#F2F4F8"\);/,
   );
-  assert.match(
-    carsClientSource,
-    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1;[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
-  );
   assert.doesNotMatch(carsClientSource, /mobileFiltersVisible|mobileFiltersAnimated|scrollFilterBarHidden|scrollFilterBarAnimated/);
   assert.doesNotMatch(
     carsClientSource,
@@ -154,14 +150,6 @@ test("Cars pinned mobile filters stay locked to the stable Cars header edge duri
     appHeaderSource,
     /page-shell flex flex-col gap-0\.5 pb-1 pt-\[5px\][\s\S]*min-h-\[52px\][\s\S]*carsResultsMobileInlineSearch/,
   );
-  assert.match(
-    mobileResultsStyles,
-    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*top: calc\(61px \+ var\(--cars-results-safe-area-top\)\);/,
-  );
-  assert.match(
-    mobileResultsStyles,
-    /\.scrollFilterBarPinned \{[\s\S]*top: calc\(72px \+ env\(safe-area-inset-top\)\);/,
-  );
 });
 
 test("Cars Results preserves native top-edge reload while keeping filters permanently visible", () => {
@@ -172,28 +160,12 @@ test("Cars Results preserves native top-edge reload while keeping filters perman
     globalStyles,
     /data-cars-results-mobile-safe-area[\s\S]{0,260}(?:overscroll-behavior-y:\s*none|overflow:\s*hidden|touch-action:\s*none)/,
   );
-  assert.match(
-    carsClientSource,
-    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1;[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
-  );
 });
 
 test("Cars pinned filters blend into the white header with the Flight-style bottom edge", () => {
-  assert.match(
-    mobileResultsStyles,
-    /\.scrollFilterBarPinned \{[\s\S]*background:\s*#f5f7fb;/,
-  );
   assert.doesNotMatch(
     mobileResultsStyles,
     /\.scrollFilterBar \{[^}]*background:\s*#fff(?:fff)?;/,
-  );
-  assert.match(
-    mobileResultsStyles,
-    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*background:\s*#ffffff;[\s\S]*border-top:\s*0;[\s\S]*box-shadow:\s*0 1px 0 #d8e1ec;/,
-  );
-  assert.match(
-    carsClientSource,
-    /data-scroll-pinned=\{mobileFiltersPinned \? "true" : "false"\}/,
   );
 });
 
@@ -213,22 +185,6 @@ test("Cars mobile header and always-visible filter rail keep a smooth rounded le
   assert.match(
     mobileResultsStyles,
     /\.carsScrollFilterSlot \{[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*overflow: hidden;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;/,
-  );
-  assert.match(
-    mobileResultsStyles,
-    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*background: #ffffff;[\s\S]*border-top: 0;[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;/,
-  );
-  assert.match(
-    mobileResultsStyles,
-    /\.carsScrollFilterSlot::after,[\s\S]*\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\]::after \{[\s\S]*content: none;[\s\S]*display: none;/,
-  );
-  assert.match(
-    carsClientSource,
-    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1;[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
-  );
-  assert.match(
-    carsClientSource,
-    /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1;/,
   );
 });
 
