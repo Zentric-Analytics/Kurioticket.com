@@ -33,7 +33,7 @@ test("Cars keeps one tracking control in the results-count row, below quick filt
   const sort = cars.indexOf("ref={carsSortRef}", summary);
   assert.ok(quickFilters >= 0 && quickFilters < toolbar && toolbar < summary);
   assert.ok(summary < count && count < alertControl && alertControl < sort);
-  assert.match(cars, /grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_auto\] items-center gap-x-2 gap-y-0 sm:gap-y-3/);
+  assert.match(cars, /grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_auto\] items-center gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1 sm:gap-x-2 sm:gap-y-3 sm:px-0/);
   assert.match(cars, /<CarPriceAlertControl search=\{search\} results=\{providerResults\} \/>/);
 });
 
