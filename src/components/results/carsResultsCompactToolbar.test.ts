@@ -106,7 +106,7 @@ test("source-contract: Cars count and tracking share a shrink-safe mobile row wi
   assert.ok(toolbarClass);
   assert.equal(toolbarClass.split(" ").includes("flex-wrap"), false);
 
-  assert.match(summaryRow, /grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_auto\] items-center gap-x-2/);
+  assert.match(summaryRow, /grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_auto\] items-center gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1 sm:gap-x-2/);
   assert.match(summaryRow, /className=\{cn\("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2"\)\}/);
   assert.match(summaryRow, /<h2[^>]*className="[^"]*truncate[^"]*whitespace-nowrap/);
   assert.match(summaryRow, /max-\[359px\]:text-\[11px\]/);
