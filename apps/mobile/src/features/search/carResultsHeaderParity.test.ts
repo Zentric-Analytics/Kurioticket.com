@@ -110,10 +110,16 @@ test("Cars result summary keeps Hotel typography but owns a balanced non-floatin
   assert.match(cars, /const carResultCountLabel = \(count: number\) => `\$\{count\} \$\{count === 1 \? "Result" : "Results"\} found`/);
   assert.match(cars, /<Text accessibilityRole="header" numberOfLines=\{1\} style=\{\[r\.carResultCount,\{color:theme\.textPrimary\}\]\}>\{carResultCountLabel\(filtered\.length\)\}<\/Text>/);
   assert.match(cars, /carResultCount:\{fontSize:13,lineHeight:17,fontWeight:"700",fontFamily:appFonts\.bold\}/);
-  assert.match(cars, /carResultsSummaryRow:\{marginTop:10,marginBottom:10,minHeight:44,paddingHorizontal:8,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\}/);
+  assert.match(cars, /carResultsSummaryRow:\{marginTop:2,marginBottom:2,minHeight:44,paddingHorizontal:8,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\}/);
   assert.doesNotMatch(cars, /carResultsSummaryRow:\{[^}]*minHeight:38/);
   assert.match(cars, /carResultsSummaryRow:\{[^}]*alignItems:"center"/);
   assert.doesNotMatch(cars, /carResultsSummaryRow:\{[^}]*margin(?:Top|Bottom):-/);
+  const previousHeight = 10 + 44 + 10;
+  const compactHeight = 2 + 44 + 2;
+  assert.equal(compactHeight, 48, "Cars results heading should match mobile-web row rhythm");
+  assert.equal(previousHeight - compactHeight, 16, "reduce total extra breathing room by 16 points");
+  assert.match(cars, /carResultCount:\{fontSize:13,lineHeight:17,fontWeight:"700",fontFamily:appFonts\.bold\}/);
+  assert.match(cars, /carHeaderSurface:\{borderBottomLeftRadius:28,borderBottomRightRadius:0/);
   assert.doesNotMatch(cars, /carResultsCountColumn/);
   assert.match(cars, /body:\{paddingHorizontal:14\}/);
   assert.match(cars, /carResultItemSeparator:\{height:14\}/);
@@ -136,7 +142,7 @@ test("Cars Results places one compact price control alongside the count without 
   assert.match(cars, /carFilterSectionHeader:\{paddingTop:8,paddingBottom:8\}/);
   assert.match(hotels, /hotelFilterSectionHeader: \{ paddingBottom: 12 \}/);
   assert.match(cars, /body:\{paddingHorizontal:14\}/);
-  assert.match(cars, /carResultsSummaryRow:\{marginTop:10,marginBottom:10,minHeight:44,paddingHorizontal:8,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\}/);
+  assert.match(cars, /carResultsSummaryRow:\{marginTop:2,marginBottom:2,minHeight:44,paddingHorizontal:8,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\}/);
   assert.match(carAlert, /<Bell accessible=\{false\} size=\{16\}/);
   assert.match(carAlert, /<Pressable accessibilityRole="switch" accessibilityLabel="Track car prices"/);
   assert.match(carAlert, />Track car prices<\/Text>/);
