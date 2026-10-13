@@ -59,15 +59,15 @@ test("top section owns only the visual and identity information", () => {
   assert.doesNotMatch(source, /topMetaShell|topMetaRow|topMetaContent|hasTopMeta/);
 });
 
-test("Best value stays normal-only while sandbox cards omit authored sandbox status copy", () => {
-  const bestValueStart = source.indexOf("rank === 0 && !sandbox");
+test("Cheapest badge reflects price while sandbox cards omit authored sandbox status copy", () => {
+  const bestValueStart = source.indexOf("cheapest ? <View");
   const headerStart = source.indexOf('<View style={c.headerRow}>', bestValueStart);
   const detailsStart = source.indexOf('<View style={c.identityDetails}>', headerStart);
   const locationStart = source.indexOf('<View style={c.location}>', detailsStart);
   const freeCancellationStart = source.indexOf("offer?.freeCancellation", locationStart);
   assert.ok(bestValueStart >= 0 && bestValueStart < headerStart);
   assert.ok(headerStart < detailsStart && detailsStart < locationStart && locationStart < freeCancellationStart);
-  assert.match(source, /rank === 0 && !sandbox \? <View style=\{c\.bestValueRow\}><View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Best value/);
+  assert.match(source, /cheapest \? <View style=\{c\.bestValueRow\}><View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Cheapest/);
   assert.doesNotMatch(source, /KAYAK sandbox · Simulated · Not bookable|sandboxStatus/);
   assert.match(source, /<View style=\{c\.utilityColumn\}>/);
   assert.doesNotMatch(source, /!sandbox \? <View style=\{c\.utilityColumn\}>/);
@@ -78,7 +78,7 @@ test("Best value stays normal-only while sandbox cards omit authored sandbox sta
   assert.match(style("badgeText"), /color:"#15803D"/);
   assert.match(style("bestValueRow"), /alignItems:"flex-end"/);
   assert.equal(source.match(/>Free cancellation<\/Text>/g)?.length, 1);
-  assert.equal(source.match(/>Best value<\/Text>/g)?.length, 1);
+  assert.equal(source.match(/>Cheapest<\/Text>/g)?.length, 1);
   assert.doesNotMatch(source, /benefits/);
   for (const name of ["bestValueRow", "badge"])
     assert.doesNotMatch(style(name), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translate/);

@@ -285,7 +285,7 @@ export function CarResultCard({
     </div>
   );
 
-  const mobileCardActions = car.sandboxPresentation ? null : (
+  const mobileCardActions = (
     <div
       data-car-card-mobile-actions
       className="ms-auto flex shrink-0 items-center gap-0"

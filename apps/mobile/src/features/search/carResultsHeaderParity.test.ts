@@ -100,7 +100,7 @@ test("Cars keep a modest outer gutter while preserving result-card spacing with 
   const slot = cars.match(/carResultCardSlot:\{([^}]*)\}/)?.[1] ?? "";
   assert.doesNotMatch(slot, /(?:minW|w|W)idth|position|absolute|transform|margin(?:Horizontal)?:-|Dimensions|window|screen/);
   assert.doesNotMatch(cars, /carResultCardSlot:\{[^}]*width:"100%"|carResultCardSlot:\{[^}]*Dimensions/);
-  assert.match(cars, /renderItem=\{\(\{item,index\}\)=><View style=\{r\.carResultCardSlot\}><CarResultCard result=\{item\} rank=\{index\} imageUri=\{resolveNativeCarImageUri\(item\.imageUrl\)\} searchParams=\{payload\} resultBackgroundColor=\{carCanvasColor\}\/><\/View>\}/);
+  assert.match(cars, /renderItem=\{\(\{item,index\}\)=><View style=\{r\.carResultCardSlot\}><CarResultCard result=\{item\} rank=\{index\} cheapest=\{item\.id===cheapestCarId\} imageUri=\{resolveNativeCarImageUri\(item\.imageUrl\)\} searchParams=\{payload\} resultBackgroundColor=\{carCanvasColor\}\/><\/View>\}/);
   assert.match(cars, /style=\{\[r\.skeleton,r\.carResultCardSlot,\{backgroundColor:/);
   assert.match(cars, /skeleton:\{height:216/);
   assert.doesNotMatch(cars, /<NativeCarPriceAlert[^>]*carResultCardSlot|<View accessibilityLabel="Car results summary"[^>]*carResultCardSlot/);

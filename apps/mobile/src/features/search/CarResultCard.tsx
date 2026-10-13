@@ -17,8 +17,8 @@ import { presentCarOfferCurrency } from "./carDisplayCurrency";
 import { useCarDisplayCurrency } from "./useCarDisplayCurrency";
 import { isKayakSandboxCar, nativeCarPrimarySpecLabels } from "./nativeCarProviderPresentation";
 
-export function CarResultCard({ result, rank, imageUri, searchParams, resultBackgroundColor }: {
-  result: CarResult; rank: number; imageUri?: string;
+export function CarResultCard({ result, rank, cheapest, imageUri, searchParams, resultBackgroundColor }: {
+  result: CarResult; rank: number; cheapest?: boolean; imageUri?: string;
   searchParams: Record<string, unknown>; resultBackgroundColor: string;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -50,7 +50,7 @@ export function CarResultCard({ result, rank, imageUri, searchParams, resultBack
     <View style={c.topSection}>
       <View style={[c.visualColumn,{backgroundColor:theme.surface}]}><View style={c.visual}>{imageUri && !imageFailed ? <Image source={{ uri: imageUri }} resizeMode={imageResizeMode} style={[c.image,curatedImage&&c.curatedImage]} accessibilityLabel={result.imageAlt} onError={() => setImageFailed(true)} /> : <View accessibilityLabel={`${result.modelName} vehicle image unavailable`} style={c.imageFallback}><FlowIcon name="car" size={48} color="#315A7D" /><Text style={c.fallbackText}>Vehicle image unavailable</Text></View>}</View></View>
       <View style={[c.identityZone,{backgroundColor:carInformationSurface}]}>
-        {rank === 0 && !sandbox ? <View style={c.bestValueRow}><View style={c.badge}><Award size={11} color="#15803D" /><Text style={c.badgeText}>Best value</Text></View></View> : null}
+        {cheapest ? <View style={c.bestValueRow}><View style={c.badge}><Award size={11} color="#15803D" /><Text style={c.badgeText}>Cheapest</Text></View></View> : null}
         <View style={c.headerRow}>
           <View style={c.identityColumn}>
             <Text numberOfLines={1} style={[c.name,{color:theme.textPrimary}]}>{identity.primaryName}</Text>
