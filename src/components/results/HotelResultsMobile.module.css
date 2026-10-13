@@ -30,6 +30,10 @@
     border-bottom-right-radius: 0;
   }
   .carsScrollFilterSlot {
+    /* Keep the rail in document flow: no fixed/normal handoff on Safari. */
+    position: sticky;
+    top: calc(61px + var(--cars-results-safe-area-top));
+    z-index: 850;
     padding-inline: 0;
     border-bottom-left-radius: 28px;
     border-bottom-right-radius: 0;
@@ -79,12 +83,19 @@
   /* Cars Results pins the full filter rail to the 61px mobile header plus
      the stable/max Safari safe area, in both scroll directions. */
   .scrollFilterBarPinned[data-cars-results-scroll-filter-bar] {
+    /* The sticky origin now owns vertical positioning; the pinned class
+       only controls its visual treatment, not viewport positioning. */
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
     top: calc(61px + var(--cars-results-safe-area-top));
     background: #ffffff;
     border-top: 0;
     border-bottom-left-radius: 28px;
     border-bottom-right-radius: 0;
     box-shadow: 0 1px 0 #d8e1ec;
+    top: auto;
   }
   .results { color: #1a1a1a; }
   .results [class~="text-[#071A48]"],
