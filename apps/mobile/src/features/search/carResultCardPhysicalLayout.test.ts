@@ -67,7 +67,7 @@ test("Cheapest badge reflects price while sandbox cards omit authored sandbox st
   const freeCancellationStart = source.indexOf("offer?.freeCancellation", locationStart);
   assert.ok(bestValueStart >= 0 && bestValueStart < headerStart);
   assert.ok(headerStart < detailsStart && detailsStart < locationStart && locationStart < freeCancellationStart);
-  assert.match(source, /cheapest ? <View \? <View style=\{c\.bestValueRow\}><View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Cheapest/);
+  assert.match(source, /cheapest \? <View style=\{c\.bestValueRow\}><View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Cheapest/);
   assert.doesNotMatch(source, /KAYAK sandbox · Simulated · Not bookable|sandboxStatus/);
   assert.match(source, /<View style=\{c\.utilityColumn\}>/);
   assert.doesNotMatch(source, /!sandbox \? <View style=\{c\.utilityColumn\}>/);
