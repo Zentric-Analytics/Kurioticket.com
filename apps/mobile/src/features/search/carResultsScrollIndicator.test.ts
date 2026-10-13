@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const screen = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
+const backToTopState = readFileSync("src/features/search/carResultsBackToTopState.ts", "utf8");
 const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
 const listStart = screen.indexOf("<FlatList ref={carScrollRef}");
 const listEnd = screen.indexOf("contentContainerStyle=", listStart);
@@ -45,6 +46,7 @@ test("Cars keeps stable cross-platform boundary behavior", () => {
   assert.match(list, /overScrollMode="never"/);
   assert.match(list, /onScroll=\{handleCarScroll\} scrollEventThrottle=\{16\}/);
   assert.match(list, /onScrollBeginDrag=\{\(\)=>\{carBackToTopReturningRef\.current=false;\}\}/);
-  assert.match(screen, /const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 600/);
+  assert.match(backToTopState, /const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 600/);
+  assert.match(list, /onMomentumScrollEnd=\{\(event\)=>\{carBackToTopReturningRef\.current=false;handleCarScroll\(event\);\}\}/);
   assert.doesNotMatch(list, /getItemLayout|ListFooterComponent/);
 });
