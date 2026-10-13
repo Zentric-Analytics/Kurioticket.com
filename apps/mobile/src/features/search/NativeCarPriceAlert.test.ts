@@ -49,9 +49,26 @@ test("native Cars compact switch uses a 44-by-24 track, 18px thumb and full 44px
   const trackWidth = 44, thumbWidth = 18, endInset = 3;
   assert.equal(trackWidth - thumbWidth - 2 * endInset, 20);
   assert.match(source, /outputRange: \[0, I18nManager\.isRTL \? -20 : 20\]/);
-  assert.match(source, /I18nManager\.isRTL \? styles\.switchThumbRtl : styles\.switchThumbLtr/);
+  assert.match(source, /I18nManager\.isRTL && !I18nManager\.doLeftAndRightSwapInRTL \? styles\.switchThumbRtl : styles\.switchThumbLtr/);
   assert.match(source, /Animated\.timing\(switchAnimation/);
   assert.match(source, /useNativeDriver: true/);
+});
+
+test("RTL thumb anchors exactly once with or without automatic React Native left/right swapping", () => {
+  assert.match(source, /I18nManager\.isRTL && !I18nManager\.doLeftAndRightSwapInRTL \? styles\.switchThumbRtl : styles\.switchThumbLtr/);
+  assert.match(source, /switchThumbLtr: \{ left: 3 \}/);
+  assert.match(source, /switchThumbRtl: \{ right: 3 \}/);
+  assert.match(source, /outputRange: \[0, I18nManager\.isRTL \? -20 : 20\]/);
+  for (const isRTL of [false, true]) {
+    for (const autoSwap of [false, true]) {
+      const declared = isRTL && !autoSwap ? "right" : "left";
+      const physical = isRTL && autoSwap ? (declared === "left" ? "right" : "left") : declared;
+      assert.equal(physical, isRTL ? "right" : "left", "the off thumb must start at the locale's logical start edge");
+      const physicalOff = physical === "left" ? 3 : 44 - 3 - 18;
+      const physicalOn = physicalOff + (isRTL ? -20 : 20);
+      assert.equal(physicalOn, physical === "left" ? 23 : 3, "the on thumb must finish within the opposite end inset");
+    }
+  }
 });
 
 test("native Cars keeps the result count readable alongside tracking at small phone widths", () => {
