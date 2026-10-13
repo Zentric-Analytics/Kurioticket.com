@@ -2939,11 +2939,11 @@ export function CarsResultsExperience({
                 </div>
               </div>
               <div
-                className="flex w-full min-w-0 flex-col items-start gap-2 pt-1 sm:gap-3 lg:py-1"
+                className="flex w-full min-w-0 flex-col items-start gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1"
                 data-cars-results-toolbar
               >
                 <div
-                  className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0 sm:gap-y-3"
+                  className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1.5 gap-y-0 px-2 max-[359px]:px-1 sm:gap-x-2 sm:gap-y-3 sm:px-0"
                   data-cars-results-summary-row
                 >
                   <div className={cn("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2")}>
@@ -3052,7 +3052,7 @@ export function CarsResultsExperience({
                       : undefined
                   }
                   className={cn(
-                    "w-full space-y-3.5 max-sm:!mt-2.5 sm:space-y-4",
+                    "w-full space-y-3.5 max-sm:!mt-1.5 sm:space-y-4",
                     !guidedPlanning && "w-full",
                   )}
                 >
@@ -3078,7 +3078,7 @@ export function CarsResultsExperience({
                   data-cars-results-card-list
                   aria-busy="false"
                   className={cn(
-                    "w-full space-y-3.5 max-sm:!mt-2.5 sm:space-y-4",
+                    "w-full space-y-3.5 max-sm:!mt-1.5 sm:space-y-4",
                     !guidedPlanning && "w-full",
                     filterTransitionPhase === "revealing" &&
                       filterTransitionMobile &&
