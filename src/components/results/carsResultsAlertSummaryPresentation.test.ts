@@ -51,11 +51,11 @@ test("Cars results heading aligns to the inner card gutters and sits close to th
   assert.match(summaryClasses, /grid-cols-\[minmax\(0,1fr\)_auto\] items-center/);
   assert.match(summaryClasses, /gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1/);
   assert.match(summaryClasses, /sm:gap-x-2 sm:gap-y-3 sm:px-0/);
-  assert.match(cars, /gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1"\s+data-cars-results-toolbar/);
+  assert.match(cars, /gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1",\s*!embedded && presentation === "standalone" && "max-sm:pt-2",\s*\)\}\s*data-cars-results-toolbar/);
   assert.equal(
-    (cars.match(/w-full space-y-3\.5 max-sm:!mt-1 sm:space-y-4/g) ?? []).length,
+    (cars.match(/"w-full space-y-3\.5 sm:space-y-4",\s*!embedded && presentation === "standalone" \? "max-sm:!mt-0" : "max-sm:!mt-1"/g) ?? []).length,
     2,
-    "loading and loaded car lists share the same tightened gap beneath the results heading",
+    "loading and loaded car lists share the same standalone-mobile spacing beneath the results heading",
   );
   assert.doesNotMatch(cars, /w-full space-y-3\.5 max-sm:!mt-2\.5/);
   assert.doesNotMatch(cars, /w-full space-y-3\.5 max-sm:!mt-1\.5/);
@@ -67,20 +67,30 @@ test("Cars results heading aligns to the inner card gutters and sits close to th
   assert.match(alert, /role="switch" aria-checked=\{tracking\}/);
 });
 
-test("Cars heading has balanced vertical clearance with the smaller mobile toggle", () => {
+test("Cars heading has balanced vertical clearance with the tighter mobile card gap", () => {
   const rowHeightPx = 44;
   const switchHeightPx = 24;
-  const cardTopMarginPx = 4;
+  const cardTopMarginPx = 0;
   const clearAboveTrack = (rowHeightPx - switchHeightPx) / 2;
   const clearBelowTrack = clearAboveTrack + cardTopMarginPx;
   assert.equal(clearAboveTrack, 10);
-  assert.equal(clearBelowTrack, 14);
-  assert.ok(clearBelowTrack - clearAboveTrack <= 4, "space below the track must stay visually close to space above");
-  assert.equal((cars.match(/w-full space-y-3\.5 max-sm:!mt-1 sm:space-y-4/g) ?? []).length, 2);
+  assert.equal(clearBelowTrack, 10);
+  assert.equal(clearBelowTrack, clearAboveTrack, "the tracking switch keeps symmetric visible clearance to the first card");
+  assert.equal((cars.match(/"w-full space-y-3\.5 sm:space-y-4",\s*!embedded && presentation === "standalone" \? "max-sm:!mt-0" : "max-sm:!mt-1"/g) ?? []).length, 2);
   assert.match(alert, /flex min-h-11 min-w-0 items-center justify-end gap-1\.5/);
   assert.match(alert, /relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full/);
   assert.match(alert, /relative inline-flex h-6 w-11 shrink-0 items-center rounded-full/);
   assert.match(alert, /sm:h-7 sm:w-12/);
+});
+
+
+test("standalone mobile Cars redistributes space from the card gap to the filter separation", () => {
+  const toolbar = cars.slice(cars.indexOf("data-cars-results-filter-origin"), cars.indexOf("data-cars-results-summary-row"));
+  assert.match(toolbar, /!embedded && presentation === "standalone" && "max-sm:pt-2"/);
+  assert.doesNotMatch(toolbar, /sm:pt-2 lg:pt-2/);
+  // Both loading and loaded lists have zero mobile top margin only for standalone Cars.
+  assert.equal((cars.match(/!embedded && presentation === "standalone" \? "max-sm:!mt-0" : "max-sm:!mt-1"/g) ?? []).length, 2);
+  assert.match(cars, /min-w-0 space-y-0 sm:space-y-4/);
 });
 
 test("Cars leaves the entire left-side result count and grid placement unchanged", () => {
