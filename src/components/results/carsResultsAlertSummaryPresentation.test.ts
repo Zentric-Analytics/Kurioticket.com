@@ -53,14 +53,17 @@ test("Cars results heading aligns to the inner card gutters and sits close to th
   assert.match(summaryClasses, /sm:gap-x-2 sm:gap-y-3 sm:px-0/);
   assert.match(cars, /gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1"\s+data-cars-results-toolbar/);
   assert.equal(
-    (cars.match(/w-full space-y-3\.5 max-sm:!mt-2\.5 sm:space-y-4/g) ?? []).length,
+    (cars.match(/w-full space-y-3\.5 max-sm:!mt-1 sm:space-y-4/g) ?? []).length,
     2,
     "loading and loaded car lists share the same tightened gap beneath the results heading",
   );
+  assert.doesNotMatch(cars, /w-full space-y-3\.5 max-sm:!mt-2\.5/);
   assert.doesNotMatch(cars, /w-full space-y-3\.5 max-sm:!mt-1\.5/);
   assert.doesNotMatch(cars, /w-full space-y-3\.5 max-sm:!mt-0\.5/);
   assert.match(alert, /min-h-11 min-w-0 items-center justify-end gap-1\.5 max-\[359px\]:gap-1 sm:min-h-\[52px\]/);
   assert.match(alert, /flex h-11 w-\[51px\] shrink-0 items-center justify-end/);
+  assert.match(alert, /className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full[^"]*sm:w-12"/);
+  assert.match(alert, /aria-hidden="true" className=\{`relative inline-flex h-6 w-11[^}]*sm:h-7 sm:w-12/);
   assert.match(alert, /role="switch" aria-checked=\{tracking\}/);
 });
 
