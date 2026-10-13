@@ -73,32 +73,25 @@ test("Cars header search mirrors the Hotels one-surface two-line contract", () =
   );
 });
 
-test("Cars mobile filter rail uses the Hotels pinned hide/reveal scroll model", () => {
+test("Cars pins the only full mobile rail beneath its header in both scroll directions", () => {
   assert.equal((source.match(/data-cars-results-quick-filters/g) ?? []).length, 1);
   assert.equal((source.match(/data-cars-results-filter-origin/g) ?? []).length, 1);
   assert.match(stickyShortcuts, /ref=\{mobileFilterOriginRef\}/);
-  assert.match(stickyShortcuts, /data-scroll-visible=\{mobileFiltersVisible \? "true" : "false"\}/);
   assert.match(stickyShortcuts, /data-scroll-pinned=\{mobileFiltersPinned \? "true" : "false"\}/);
   assert.match(stickyShortcuts, /mobileResultsStyles\.scrollFilterBarPinned/);
-  assert.match(stickyShortcuts, /mobileResultsStyles\.scrollFilterBarAnimated/);
-  assert.match(stickyShortcuts, /mobileResultsStyles\.scrollFilterBarHidden/);
-  assert.match(
-    source,
-    /const nextDirection = Math\.sign\(delta\)[\s\S]*distance >= \(nextDirection > 0 \? 20 : 12\)[\s\S]*setMobileFiltersVisible\(nextDirection < 0\)/,
-  );
-  assert.match(source, /if \(nextDirection < 0\) setMobileFiltersAnimated\(true\)/);
-  assert.match(
-    source,
-    /if \(!mobileFiltersPinnedRef\.current\)[\s\S]*naturalFilterBottom <= 8[\s\S]*setMobileFiltersPinned\(true\)[\s\S]*setMobileFiltersVisible\(delta < 0\)/,
-  );
-  assert.match(
-    source,
-    /const distanceFromBottom = Math\.max\(0, maxScrollY - scrollY\)[\s\S]*if \(delta < 0 && distanceFromBottom <= 40\)/,
-  );
+  assert.match(source, /const naturalFilterTop =[\s\S]*mobileFilterOriginRef\.current\?\.getBoundingClientRect\(\)\.top/);
+  assert.match(source, /const shouldPin =[\s\S]*scrollY > 1 &&[\s\S]*naturalFilterTop <= headerBottom \+ 1 &&[\s\S]*resultsBottom > headerBottom/);
+  assert.match(source, /if \(mobileFiltersPinnedRef\.current !== shouldPin\) \{[\s\S]*setMobileFiltersPinned\(shouldPin\)/);
+  assert.match(source, /const filterInteractionActive =[\s\S]*mobileFiltersOverlayOpen[\s\S]*mobileSearchInteractionActive[\s\S]*filterTransitionPhase !== "idle"/);
+  assert.match(source, /if \(filterInteractionActive\) return;/);
+  assert.match(source, /window\.addEventListener\("scroll", scheduleUpdate, \{ passive: true \}\)/);
+  assert.match(source, /mobileQuery\.addEventListener\("change", scheduleUpdate\)/);
+  assert.doesNotMatch(source, /mobileFiltersVisible|mobileFiltersAnimated|scrollFilterBarHidden|scrollFilterBarAnimated|nextDirection|naturalFilterBottom|setMobileFiltersVisible/);
+  assert.doesNotMatch(stickyShortcuts, /data-scroll-visible|mobileResultsStyles\.scrollFilterBarHidden|mobileResultsStyles\.scrollFilterBarAnimated/);
   assert.doesNotMatch(source, /data-cars-results-mobile-header-filter|showMobileHeaderFilter|mobileNavFilterTarget/);
 });
 
-test("Cars shares Hotels filter motion and the exact Flight rounded edge at the stable header edge", () => {
+test("Cars retains the Hotels-sized full rail and smooth white 28px corner while pinned", () => {
   assert.match(
     mobileStyles,
     /\.scrollFilterSlot \{[\s\S]*height: 60px;[\s\S]*padding: 8px 4px 0;/,
@@ -117,41 +110,19 @@ test("Cars shares Hotels filter motion and the exact Flight rounded edge at the 
   );
   assert.match(
     mobileStyles,
-    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*top: calc\(61px \+ var\(--cars-results-safe-area-top\)\);[\s\S]*border-bottom-left-radius: 28px;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;[\s\S]*\}/,
+    /\.scrollFilterBarPinned\[data-cars-results-scroll-filter-bar\] \{[\s\S]*top: calc\(61px \+ var\(--cars-results-safe-area-top\)\);[\s\S]*background: #ffffff;[\s\S]*border-bottom-left-radius: 28px;[\s\S]*border-bottom-right-radius: 0;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;/,
   );
-  assert.match(
-    mobileStyles,
-    /\.scrollFilterBarAnimated \{[\s\S]*transition: transform 220ms cubic-bezier\(0, 0, \.4, 1\)/,
-  );
-  assert.match(
-    mobileStyles,
-    /\.scrollFilterBarPinned \{[^}]*width: 100vw;[^}]*height: 60px;[^}]*overflow: hidden;/,
-  );
-  assert.match(
-    mobileStyles,
-    /\.scrollFilterBarPinned\.scrollFilterBarHidden \{[\s\S]*transform: translateY\(-100%\)/,
-  );
-  assert.match(
-    mobileStyles,
-    /\.scrollFilterBarAnimated\.scrollFilterBarHidden \{[\s\S]*transition-duration: 120ms/,
-  );
+  assert.match(mobileStyles, /\.scrollFilterBarPinned \{[^}]*width: 100vw;[^}]*height: 60px;[^}]*overflow: hidden;/);
+  assert.doesNotMatch(mobileStyles, /scrollFilterBarHidden|scrollFilterBarAnimated|translateY\(-100%\)/);
+  assert.match(stickyShortcuts, /scrollbar-hide flex w-full min-w-0 flex-nowrap gap-1\.5 overflow-x-auto/);
 });
 
-test("Cars keeps one Filter launcher/state while overlays do not disturb scroll direction", () => {
+test("Cars keeps one Filter launcher and retains sticky placement during overlay scroll locking", () => {
   assert.match(source, /openMobileFiltersDrawer[\s\S]*setFiltersOpen\(true\)/);
   assert.match(source, /\{filtersOpen \? \([\s\S]*?<CarFilters/);
-  assert.equal(
-    (source.match(/const \[filtersOpen, setFiltersOpen\]/g) ?? []).length,
-    1,
-  );
-  assert.match(
-    source,
-    /const filterInteractionActive =[\s\S]*mobileFiltersOverlayOpen[\s\S]*mobileSearchInteractionActive[\s\S]*filterTransitionPhase !== "idle"/,
-  );
-  assert.match(
-    source,
-    /if \(filterInteractionActive\) \{[\s\S]*direction = 0;[\s\S]*distance = 0;[\s\S]*return;/,
-  );
+  assert.equal((source.match(/const \[filtersOpen, setFiltersOpen\]/g) ?? []).length, 1);
+  assert.match(source, /const filterInteractionActive =[\s\S]*mobileFiltersOverlayOpen[\s\S]*mobileSearchInteractionActive[\s\S]*filterTransitionPhase !== "idle"/);
+  assert.match(source, /if \(filterInteractionActive\) return;/);
   assert.doesNotMatch(source, /mobileStickyFiltersOpen|stickySelectedFilters|headerSelectedFilters/);
 });
 
