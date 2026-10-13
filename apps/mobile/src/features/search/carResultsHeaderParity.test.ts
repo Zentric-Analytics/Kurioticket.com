@@ -22,6 +22,24 @@ test("Cars Results replaces branded chrome with two Hotel-style header targets",
 test("Cars header uses compact safe-area-aware Hotel geometry", () => {
   for (const contract of [/paddingLeft:Math\.max\(insets\.left\+6,6\)/,/carHeaderMainRow:\{width:"100%",flexDirection:"row",alignItems:"center",gap:6\}/,/carHeaderSide:\{width:44,flexShrink:0\}/,/carHeaderBack:\{width:44,height:44/,/carSummaryCard:\{flex:1,minWidth:0,minHeight:62/,/carSummaryEditSlot:\{width:44,height:44,flexShrink:0/]) assert.match(cars, contract);
 });
+test("native Cars header has the mobile-web white surface, 28px left curve and muted underlay", () => {
+  assert.match(cars, /const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
+  assert.match(cars, /const headerSurfaceColor = theme\.dark \? theme\.background : "#FFFFFF"/);
+  assert.match(cars, /<SafeAreaView style=\{\[r\.safe,\{backgroundColor:headerSurfaceColor\}\]\} edges=\{\["top"\]\}>/);
+  assert.match(cars, /<View style=\{\[r\.carHeaderBackdrop,\{backgroundColor:carCanvasColor\}\]\}>/);
+  assert.match(cars, /<View style=\{\[r\.carHeaderSurface,\{backgroundColor:headerSurfaceColor,borderBottomColor:theme\.dark\?theme\.border:"#D8E1EC"\}\]\}>/);
+  assert.match(cars, /carHeaderSurface:\{borderBottomLeftRadius:28,borderBottomRightRadius:0,borderBottomWidth:StyleSheet\.hairlineWidth,overflow:"hidden"\}/);
+  assert.match(cars, /carHeaderBackdrop:\{width:"100%"\}/);
+  const search = cars.indexOf("<CarResultsHeader destination=");
+  const filters = cars.indexOf("<View style={[r.carFilterSectionHeader", search);
+  const list = cars.indexOf("<FlatList ref={carScrollRef}", filters);
+  assert.ok(search > 0 && filters > search && list > filters);
+  assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{headerSurfaceColor\}/);
+  assert.match(cars, /r\.carFilterSectionHeader,\{backgroundColor:headerSurfaceColor\}/);
+  assert.match(cars, /<FlatList ref=\{carScrollRef\} style=\{\{backgroundColor:carCanvasColor\}\}/);
+  assert.doesNotMatch(carHeader, /profile|hamburger|menu/i);
+});
+
 test("Cars summary uses compact typography and independent ellipsis", () => {
  assert.match(cars,/carSummaryDestination:\{fontSize:14,lineHeight:18/); assert.match(cars,/carSummarySecondary:\{marginTop:3,fontSize:10\.5,lineHeight:14/); assert.equal((carHeader.match(/numberOfLines=\{1\} ellipsizeMode="tail"/g)??[]).length,2); assert.doesNotMatch(carHeader,/position:\s*"absolute"|marginLeft:\s*-/);
 });
@@ -74,11 +92,11 @@ test("Cars keep a modest outer gutter while preserving result-card spacing with 
 
 test("Cars result summary keeps Hotel typography but owns a balanced non-floating rhythm", () => {
   assert.match(cars, /const carResultCountLabel = \(count: number\) => `\$\{count\} \$\{count === 1 \? "Result" : "Results"\} found`/);
-  assert.match(cars, /<Text accessibilityRole="header" style=\{\[r\.carResultCount,\{color:theme\.textPrimary\}\]\}>\{carResultCountLabel\(filtered\.length\)\}<\/Text>/);
+  assert.match(cars, /<Text accessibilityRole="header" numberOfLines=\{1\} style=\{\[r\.carResultCount,\{color:theme\.textPrimary\}\]\}>\{carResultCountLabel\(filtered\.length\)\}<\/Text>/);
   assert.match(cars, /carResultCount:\{fontSize:13,lineHeight:17,fontWeight:"700",fontFamily:appFonts\.bold\}/);
-  assert.match(cars, /carResultsSummaryRow:\{marginTop:10,marginBottom:10\}/);
+  assert.match(cars, /carResultsSummaryRow:\{marginTop:10,marginBottom:10,minHeight:44,paddingHorizontal:8,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\}/);
   assert.doesNotMatch(cars, /carResultsSummaryRow:\{[^}]*minHeight:38/);
-  assert.doesNotMatch(cars, /carResultsSummaryRow:\{[^}]*alignItems:"center"/);
+  assert.match(cars, /carResultsSummaryRow:\{[^}]*alignItems:"center"/);
   assert.doesNotMatch(cars, /carResultsSummaryRow:\{[^}]*margin(?:Top|Bottom):-/);
   assert.doesNotMatch(cars, /carResultsCountColumn/);
   assert.match(cars, /body:\{paddingHorizontal:14\}/);
@@ -91,24 +109,31 @@ test("Cars result summary keeps Hotel typography but owns a balanced non-floatin
   assert.match(hotels, /hotelResultsItemSeparator: \{ height: 14 \}/);
 });
 
-test("Cars use one truthful compact price alert before the summary and cards", () => {
+test("Cars Results places one compact price control alongside the count without a separate panel", () => {
   assert.equal((cars.match(/<NativeCarPriceAlert/g) ?? []).length, 1);
-  assert.ok(cars.indexOf("<NativeCarPriceAlert") < cars.indexOf("<View accessibilityLabel=\"Car results summary\""));
-  assert.ok(cars.indexOf("<View accessibilityLabel=\"Car results summary\"") < cars.indexOf("<CarResultCard"));
+  const summary = cars.indexOf('<View accessibilityLabel="Car results summary"');
+  const count = cars.indexOf('carResultCountLabel(filtered.length)', summary);
+  const alertControl = cars.indexOf("<NativeCarPriceAlert", summary);
+  const list = cars.indexOf("<FlatList ref={carScrollRef}");
+  assert.ok(summary >= 0 && count > summary && alertControl > count);
+  assert.ok(list > alertControl);
   assert.match(cars, /carFilterSectionHeader:\{paddingBottom:12\}/);
   assert.match(hotels, /hotelFilterSectionHeader: \{ paddingBottom: 12 \}/);
   assert.match(cars, /body:\{paddingHorizontal:14\}/);
-  assert.match(cars, /carResultsSummaryRow:\{marginTop:10,marginBottom:10\}/);
-  assert.match(carAlert, /<Bell/); assert.match(carAlert, /<Switch/); assert.match(carAlert, /Track rental car prices/);
-  assert.doesNotMatch(carAlert, /numberOfLines=\{1\}/);
-  assert.match(carAlert, /accessibilityLabel="Track rental car prices"/);
-  assert.match(carAlert, /backgroundColor: theme\.priceAlertSurface, borderColor: theme\.priceAlertBorder/);
-  assert.match(carAlert, /<Bell[^>]*color=\{theme\.priceAlertAccent\}/);
-  assert.doesNotMatch(carAlert, /\bActivityIndicator\b|loadingSlot/);
-  assert.match(carAlert, /styles\.title, \{ color: theme\.textPrimary \}/);
-  assert.match(carAlert, /control: \{ width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1/);
-  assert.match(carAlert, /switchSlot: \{ width: 51, minHeight: 44/);
-  assert.match(carAlert, /travelApi\.priceAlerts\(\)/); assert.match(carAlert, /updatePriceAlertStatus/); assert.match(carAlert, /createPriceAlert/);
+  assert.match(cars, /carResultsSummaryRow:\{marginTop:10,marginBottom:10,minHeight:44,paddingHorizontal:8,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\}/);
+  assert.match(carAlert, /<Bell accessible=\{false\} size=\{16\}/);
+  assert.match(carAlert, /<Pressable accessibilityRole="switch" accessibilityLabel="Track car prices"/);
+  assert.match(carAlert, />Track car prices<\/Text>/);
+  assert.match(carAlert, /numberOfLines=\{1\} ellipsizeMode="tail"/);
+  assert.doesNotMatch(carAlert, /Track rental car prices|<Switch\b/);
+  assert.doesNotMatch(carAlert, /styles\.control, \{ backgroundColor: theme\.priceAlertSurface/);
+  assert.match(carAlert, /control: \{ flexShrink: 1, minWidth: 0, minHeight: 44/);
+  assert.match(carAlert, /switchSlot: \{ width: 51, minHeight: 44, flexShrink: 0/);
+  assert.match(carAlert, /switchTouchTarget: \{ width: 44, height: 44/);
+  assert.match(carAlert, /switchTrack: \{ width: 44, height: 24/);
+  assert.match(carAlert, /travelApi\.priceAlerts\(\)/);
+  assert.match(carAlert, /updatePriceAlertStatus/);
+  assert.match(carAlert, /createPriceAlert/);
   assert.doesNotMatch(carAlert, /not available yet/);
   assert.match(hotels, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
 });
@@ -131,7 +156,7 @@ test("Cars Results gives handled child taps to its primary vertical scroll owner
   const listHeaderStart = cars.indexOf("const listHeader=");
   const listHeaderEnd = cars.indexOf("const listEmpty=", listHeaderStart);
   const listHeader = cars.slice(listHeaderStart, listHeaderEnd);
-  assert.ok(listHeader.indexOf("<NativeCarPriceAlert") < listHeader.indexOf("<View accessibilityLabel=\"Car results summary\""));
+  assert.ok(listHeader.indexOf("<View accessibilityLabel=\"Car results summary\"") < listHeader.indexOf("<NativeCarPriceAlert"));
   assert.match(resultsScrollOpeningTag, /renderItem=\{\(\{item,index\}\)=>[\s\S]*?<CarResultCard/);
 });
 
@@ -159,7 +184,7 @@ test("Cars Price Alert keeps automatic toggle request safety and feedback", () =
   assert.match(carAlert, /travelApi\.updatePriceAlertStatus/);
   assert.match(carAlert, /showFeedback\(next \? "active" : "paused"\)/);
   assert.match(carAlert, /finally \{ pendingRef\.current = false; setPending\(false\); setOptimisticTracking\(null\); \}/);
-  assert.match(carAlert, /onValueChange=\{\(next\) => void toggle\(next\)\}/);
+  assert.match(carAlert, /onPress=\{\(\) => void toggle\(!tracking\)\}/);
   assert.doesNotMatch(carAlert, /const create = async|Create alert|Target rental total/);
 });
 
