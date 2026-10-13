@@ -1986,17 +1986,14 @@ export function CarsResultsExperience({
           ?.getBoundingClientRect().bottom ?? 72;
       const naturalFilterTop =
         mobileFilterOriginRef.current?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
-      const resultsBottom =
-        carsResultsBodyRef.current?.getBoundingClientRect().bottom ?? 0;
       const scrollY = Math.max(0, window.scrollY);
 
       // Pin at the instant the natural rail reaches the header, not after
-      // scrolling the rail out of view. Keep it fully visible in BOTH
-      // directions; release at the top or once the results section ends.
+      // scrolling it out of view. Keep the entire rail with the header
+      // through the last result, in BOTH directions; release at the top.
       const shouldPin =
         scrollY > 1 &&
-        naturalFilterTop <= headerBottom + 1 &&
-        resultsBottom > headerBottom;
+        naturalFilterTop <= headerBottom + 1;
       if (mobileFiltersPinnedRef.current !== shouldPin) {
         mobileFiltersPinnedRef.current = shouldPin;
         setMobileFiltersPinned(shouldPin);
