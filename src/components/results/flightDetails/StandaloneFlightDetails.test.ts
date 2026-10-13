@@ -1071,7 +1071,7 @@ test("mobile web Fare information deck mirrors native tabs and owns deal booking
 
   assert.match(deck, /role="radiogroup" aria-label="Flight deal options"/);
   assert.match(deck, /data-mobile-flight-deal-card/);
-  assert.match(deck, /min-h-\[92px\].*rounded-xl/);
+  assert.match(deck, /min-h-\[80px\].*rounded-xl/);
   assert.match(deck, /priceAvailable = pricesReady/);
   assert.match(deck, /formatFlightResultCurrency\(deal\.price, deal\.currency/);
   assert.match(deck, /visiblePrice = !pricesReady/);
@@ -1119,7 +1119,7 @@ test("mobile Compare deals owns booking actions without a fixed checkout dock", 
   assert.match(mobileDeck, /data-mobile-flight-deal-card/);
   assert.match(mobileDeck, /data-mobile-flight-deal-action/);
   assert.match(mobileDeck, /data-mobile-flight-provider-logo/);
-  assert.match(mobileDeck, /fare\?\.label \? `\$\{fare\.label\} · Trip total` : "Trip total"/);
+  assert.match(mobileDeck, />\s*Trip total\s*<\/span>/);
   assert.match(mobileDeck, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.match(mobileDeck, /const sourcePrice = formatFlightResultCurrency\(deal\.price, deal\.currency/);
   assert.match(mobileDeck, /const canViewDeal = canContinue && pricesReady/);

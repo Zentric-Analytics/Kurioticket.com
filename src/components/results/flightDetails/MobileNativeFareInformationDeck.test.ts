@@ -69,3 +69,17 @@ test("mobile Compare deals keeps resilient provider identity, selection, price h
   assert.match(deck, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.doesNotMatch(deck, /No booking deals available|No additional live provider deals were supplied for this fare/);
 });
+
+
+test("mobile provider card uses an aligned provider, price and action row", async () => {
+  const deck = await readFile("src/components/results/flightDetails/MobileNativeFareInformationDeck.tsx", "utf8");
+  assert.match(deck, /grid min-h-\[80px\][^"\n]*gap-2 rounded-xl/);
+  assert.match(deck, /grid grid-cols-\[minmax\(0,1fr\)_minmax\(0,1\.2fr\)\] items-center gap-2/);
+  assert.match(deck, /className="block min-w-0 text-center" data-mobile-flight-deal-price/);
+  assert.match(deck, />\s*Trip total\s*<\/span>/);
+  assert.doesNotMatch(deck, /fare\?\.label \? `\$\{fare.label\} · Trip total`/);
+  assert.match(deck, /inline-flex h-11 w-\[88px\]/);
+  assert.match(deck, /min-\[360px\]:w-\[96px\]/);
+  assert.match(deck, /block max-w-full truncate text-\[14px\]/);
+  assert.match(deck, /whitespace-nowrap text-\[12px\]! font-semibold! leading-5!/);
+});
