@@ -2778,7 +2778,10 @@ export function CarsResultsExperience({
                 </div>
               </div>
               <div
-                className="flex w-full min-w-0 flex-col items-start gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1"
+                className={cn(
+                  "flex w-full min-w-0 flex-col items-start gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1",
+                  !embedded && presentation === "standalone" && "max-sm:pt-2",
+                )}
                 data-cars-results-toolbar
               >
                 <div
@@ -2891,7 +2894,8 @@ export function CarsResultsExperience({
                       : undefined
                   }
                   className={cn(
-                    "w-full space-y-3.5 max-sm:!mt-1 sm:space-y-4",
+                    "w-full space-y-3.5 sm:space-y-4",
+                    !embedded && presentation === "standalone" ? "max-sm:!mt-0" : "max-sm:!mt-1",
                     !guidedPlanning && "w-full",
                   )}
                 >
@@ -2917,7 +2921,8 @@ export function CarsResultsExperience({
                   data-cars-results-card-list
                   aria-busy="false"
                   className={cn(
-                    "w-full space-y-3.5 max-sm:!mt-1 sm:space-y-4",
+                    "w-full space-y-3.5 sm:space-y-4",
+                    !embedded && presentation === "standalone" ? "max-sm:!mt-0" : "max-sm:!mt-1",
                     !guidedPlanning && "w-full",
                     filterTransitionPhase === "revealing" &&
                       filterTransitionMobile &&
