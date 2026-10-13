@@ -32,7 +32,7 @@ export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: strin
       <div className="mx-auto w-full max-w-[1080px] px-0 sm:px-6 lg:px-[30px]">
         <div role="status" aria-label="Loading flight details" className="min-w-0">
           <span className="sr-only">Loading flight details</span>
-          <div className="overflow-hidden border-b border-slate-200 bg-white sm:rounded-[15px] sm:border sm:bg-white">
+          <div className="overflow-hidden border-slate-200 bg-white sm:rounded-[15px] sm:border sm:bg-white">
             <div className="relative flex min-h-[254px] flex-col justify-end overflow-hidden bg-[#E2E8F0] px-[18px] pb-[122px] pt-4 sm:min-h-[280px] sm:block sm:bg-transparent sm:px-6 sm:pb-16 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="hidden object-cover sm:block" />
               <div

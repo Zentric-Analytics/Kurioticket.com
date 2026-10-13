@@ -616,7 +616,7 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.match(fareRailMarkup, /overflow-x-auto[\s\S]*sm:flex sm:snap-x sm:snap-mandatory/);
   assert.match(source, /scrollIntoView\(\{ behavior: "smooth", block: "nearest", inline: "nearest" \}\)/);
   assert.match(source, /max-w-\[1080px\] px-0 sm:px-6 lg:px-\[30px\]/);
-  assert.match(source, /border-b border-\[#E2E8F0\][\s\S]*sm:rounded-\[13px\] sm:border[\s\S]*sm:shadow-/);
+  assert.match(source, /border-\[#E2E8F0\][\s\S]*sm:rounded-\[13px\] sm:border[\s\S]*sm:shadow-/);
   assert.doesNotMatch(source, /<section className="[^"]*overflow-hidden[^"]*" aria-labelledby="flight-details-heading"/);
   assert.match(source, /data-testid="flight-details-hero"[^>]*className="[^"]*overflow-hidden[^"]*sm:rounded-t-\[12px\]/);
   assert.match(source, /ml-4.*sm:ml-0/);
@@ -968,6 +968,13 @@ test("mobile web Flight Details removes the branded header and uses the native e
   assert.doesNotMatch(loading, /<MobileFlightDetailsBrandHeader/);
   assert.match(source, /<main className="flex-1 bg-white[^"]*sm:bg-\[#F7F9FC\]/);
   assert.match(source, /data-flight-details-hero-curve[^\n]*fill="currentColor"/);
+  const detailsFrame = source.match(/<section className="([^"]+)" aria-labelledby="flight-details-heading"/)?.[1];
+  const loadingFrame = loading.match(/<div className="(overflow-hidden [^"]+)"/)?.[1];
+  for (const frame of [detailsFrame, loadingFrame]) {
+    assert.ok(frame);
+    assert.doesNotMatch(frame, /(?:^|\s)border-b(?:\s|$)/);
+    assert.match(frame, /(?:^|\s)sm:border(?:\s|$)/);
+  }
   assert.match(source, /px-3 pb-4 pt-0/);
   assert.match(source, /data-mobile-native-itinerary-stack[\s\S]*-mx-2 -mt-\[104px\]/);
   assert.match(source, /data-flight-details-desktop-navigation/);

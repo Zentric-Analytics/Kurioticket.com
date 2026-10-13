@@ -357,7 +357,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
       <span className="sr-only" role="status" aria-live="polite">{shareFeedback}</span>
       <div className="mx-auto w-full max-w-[1080px] px-0 sm:px-6 lg:px-[30px]">
         <div className="min-w-0">
-          <section className="min-w-0 border-b border-[#E2E8F0] bg-white sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
+          <section className="min-w-0 border-[#E2E8F0] bg-white sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
             <div data-testid="flight-details-hero" className="relative flex min-h-[254px] flex-col justify-end overflow-hidden px-[18px] pb-[122px] pt-4 sm:min-h-[280px] sm:justify-end sm:rounded-t-[12px] sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
               <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
               <div
