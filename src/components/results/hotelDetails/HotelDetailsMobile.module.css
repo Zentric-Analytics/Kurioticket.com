@@ -5,6 +5,7 @@
 .details button:disabled { cursor: default; opacity: .45; }
 .details button:focus-visible, .details a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .heroShell { position: relative; }
+.actionBar { position: sticky; top: 0; z-index: 30; height: calc(72px + env(safe-area-inset-top)); background: white; }
 .hero { display: flex; width: 100%; aspect-ratio: 1 / .84; height: round(nearest, 84vw, 1px); overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
 .hero::-webkit-scrollbar { display: none; }
 .hero > button { position: relative; flex: 0 0 100%; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; background: #dce2eb; }
@@ -14,7 +15,7 @@
 .photoCount, .back::before, .actions::before { background: rgb(255 255 255 / 56%); border: .5px solid rgb(255 255 255 / 78%); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 2px 6px rgb(15 23 42 / 12%); }
 .back::before, .actions::before { content: ""; position: absolute; inset: 2px; border-radius: 20px; z-index: -1; pointer-events: none; }
 .actions::before { left: 0; right: 0; }
-.back, .actions { position: fixed; top: calc(12px + env(safe-area-inset-top)); height: 44px; z-index: 30; isolation: isolate; border-radius: 22px; color: #0f172a; }
+.back, .actions { position: absolute; top: calc(12px + env(safe-area-inset-top)); height: 44px; z-index: 30; isolation: isolate; border-radius: 22px; color: #0f172a; }
 .back { left: 20px; width: 44px; display: grid; place-items: center; }
 .actions { right: 20px; width: 96px; display: flex; }
 .actions button { width: 48px; display: grid; place-items: center; }
@@ -125,3 +126,19 @@
 .amenitiesDialog .dialogHeader h2 { text-align: center; font-size: 16px; line-height: 24px; font-weight: 600; }
 .amenitiesDialog .dialogHeader button { position: absolute; right: 12px; top: 10px; color: #1a1a1a; }
 .amenitiesDialog .sheetBody { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px 24px max(24px, env(safe-area-inset-bottom)); }
+
+.rateInfoBody { display: flex; flex-direction: column; gap: 20px; color: #1a1a1a; }
+.amenitiesDialog .rateInfoBody { padding-top: 4px; }
+.rateInfoRoom { padding: 16px; border-radius: 14px; background: white; }
+.rateInfoProvider { font-size: 12px; line-height: 18px; font-weight: 600; color: #595959; }
+.rateInfoLogo { width: auto; max-width: 132px; height: 26px; object-fit: contain; object-position: left; }
+.rateInfoRoom h3 { margin-top: 8px; font-size: 15px; line-height: 22px; font-weight: 600; }
+.rateInfoRoom > p:not(.rateInfoProvider), .rateInfoSection > p { margin-top: 6px; font-size: 13px; line-height: 20px; color: #595959; }
+.rateInfoSection h3 { margin-bottom: 10px; font-size: 14px; line-height: 20px; font-weight: 600; }
+.rateInfoSection dl { display: grid; gap: 12px; font-size: 13px; line-height: 20px; }
+.rateInfoSection dl > div { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.5fr); gap: 16px; align-items: start; }
+.rateInfoSection dt { color: #595959; overflow-wrap: anywhere; }
+.rateInfoSection dd { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.rateInfoTotal { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; padding: 14px 16px; border-radius: 12px; background: white; }
+.rateInfoTotal span { font-size: 13px; line-height: 20px; font-weight: 600; }
+.rateInfoTotal strong { margin-left: auto; font-size: 19px; line-height: 26px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }

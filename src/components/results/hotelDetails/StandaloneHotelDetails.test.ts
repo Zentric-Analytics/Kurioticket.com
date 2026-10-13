@@ -28,11 +28,13 @@ test("standalone chooses independent mobile and desktop presentations with share
   assert.doesNotMatch(dispatcher, /<article|<aside|<h1/);
 });
 
-test("sandbox location facts stay disclosed without presenting synthetic coordinates as travel directions", () => {
+test("mobile sandbox restores location previews without warning labels", () => {
   assert.match(client, /locationIsSimulated=\{hotel.provider === "KAYAK sandbox"\}/);
-  assert.match(dispatcher, /props.locationIsSimulated \? <p data-hotel-test-location/);
-  assert.match(dispatcher, /not verified for travel/);
-  assert.match(mobile, /const location = props.locationIsSimulated \? null : props.locationDetails \?\? property/);
+  assert.doesNotMatch(dispatcher, /data-hotel-test-location|Provider test location/);
+  assert.match(mobile, /const location = props.locationDetails \?\? property/);
+  assert.match(mobile, /hotelName: props.locationIsSimulated \? "" : props.hotelName/);
+  assert.doesNotMatch(mobile, /<small>Sandbox location<\/small>/);
+  assert.match(mobile, /Why this location works/);
   assert.match(desktop, /const locationProperty = props.locationIsSimulated \? null : props.locationDetails \?\? property/);
   const card = read("../HotelCard.tsx");
   assert.match(card, /hotel.provider === "KAYAK sandbox" \? <p data-hotel-test-location/);

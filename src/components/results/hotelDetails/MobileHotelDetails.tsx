@@ -14,7 +14,7 @@ import { formatMobileHotelPrice, mobileHotelAbout, mobileHotelAmenityGroups, mob
 import { MobileHotelStayEditor } from "./MobileHotelStayEditor";
 import { HotelPriceAlertControl } from "../HotelPriceAlertControl";
 import type { HotelDetailsProviderOffer } from "./hotelDetailsPresentation";
-import { DesktopProviderOffer } from "./HotelPriceComparisonSection";
+import { MobileProviderOffer } from "./HotelPriceComparisonSection";
 import { acquireMobileResultsScrollLock } from "@/lib/search/mobileResultsScrollLock";
 import styles from "./HotelDetailsMobile.module.css";
 
@@ -45,6 +45,7 @@ function DetailsDialog({ title, onClose, children, full = false, back, compact =
 }
 
 export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
+  const [rateInfo, setRateInfo] = useState<HotelDetailsProviderOffer | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const reopenStayEditor = searchParams.get("hotelStayEditor") === "1";
@@ -73,8 +74,8 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}`);
   }
   const property = props.propertyDetails;
-  const location = props.locationIsSimulated ? null : props.locationDetails ?? property;
-  const mapOptions = location ? { hotelName: props.hotelName, propertyDetails: location, googleMapsEmbedApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY } : null;
+  const location = props.locationDetails ?? property;
+  const mapOptions = location ? { hotelName: props.locationIsSimulated ? "" : props.hotelName, propertyDetails: location, googleMapsEmbedApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY } : null;
   const mapUrl = mapOptions ? buildHotelMapEmbedUrl(mapOptions) : null;
   const streetUrl = mapOptions ? buildGoogleHotelStreetViewEmbedUrl(mapOptions) : null;
   const total = formatMobileHotelPrice(props.totalDisplayPrice, props.labels.priceUnavailable);
@@ -145,9 +146,20 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
   }
 
   const facts = property ? [property.neighbourhood ? `${property.neighbourhood} neighborhood` : "", property.businessSuitable ? "Work-friendly property" : "", property.familySuitable ? "Family-friendly" : "", property.accessibility?.length ? "Accessibility details available" : ""].filter(Boolean) : [];
-  const secondaryAddress = location ? [location.neighbourhood, location.city, location.country].filter(part => part && !location.streetAddress.toLowerCase().includes(part.toLowerCase())).join(", ") : "";
+  const country = location?.country?.trim() ?? "";
+  const countryName = /^[a-z]{2}$/i.test(country)
+    ? new Intl.DisplayNames(["en"], { type: "region" }).of(country.toUpperCase()) ?? country
+    : country;
+  const secondaryAddress = location ? [location.neighbourhood, location.city, countryName].filter(part => part && !location.streetAddress.toLowerCase().includes(part.toLowerCase())).join(", ") : "";
 
   return <div className={styles.details} data-mobile-hotel-details>
+    <div className={styles.actionBar}>
+      <Link href={props.resultsHref} aria-label="Back to hotel results" className={styles.back} prefetch={false}><ArrowLeft size={25} strokeWidth={2.2} /></Link>
+      <div className={styles.actions}>
+        <button type="button" aria-label={props.savedHotelLabel} aria-pressed={props.isSaved} onClick={props.onSave}><Heart size={22} strokeWidth={2} fill={props.isSaved ? "#E92D55" : "none"} color={props.isSaved ? "#E92D55" : "#334155"} /></button>
+        <button type="button" aria-label={`Share ${props.hotelName}`} onClick={() => void share()}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5" /></svg></button>
+      </div>
+    </div>
     <div className={styles.heroShell}>
       <div ref={hero} className={styles.hero} data-mobile-hotel-hero onScroll={event => {
         const pager = event.currentTarget;
@@ -162,11 +174,7 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
         </button>) : <div className={styles.emptyHero}>{gallery.imageUnavailableText}</div>}
       </div>
       {gallery.usableIndices.length > 0 ? <span className={styles.photoCount}>{gallery.activePosition} / {gallery.usableIndices.length}</span> : null}
-      <Link href={props.resultsHref} aria-label="Back to hotel results" className={styles.back} prefetch={false}><ArrowLeft size={25} strokeWidth={2.2} /></Link>
-      <div className={styles.actions}>
-        <button type="button" aria-label={props.savedHotelLabel} aria-pressed={props.isSaved} onClick={props.onSave}><Heart size={22} strokeWidth={2} fill={props.isSaved ? "#E92D55" : "none"} color={props.isSaved ? "#E92D55" : "#334155"} /></button>
-        <button type="button" aria-label={`Share ${props.hotelName}`} onClick={() => void share()}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5" /></svg></button>
-      </div>
+
     </div>
     <header className={styles.identity}>
       <h1>{props.hotelName}</h1>
@@ -186,11 +194,12 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
           <p>{[stay.dates, stay.nights].filter(Boolean).join(" · ")}</p>
         </div>
         <div aria-label="Hotel rates" className={styles.rateList}>
-          {offers.map(offer => <DesktopProviderOffer
+          {offers.map(offer => <MobileProviderOffer
+            onInfo={() => setRateInfo(offer)}
             key={offer.id}
             offer={offer}
             perNightText={props.perNightText}
-            totalLabel={props.labels.estimatedStayTotal}
+            totalLabel="Stay total"
             selected={selected?.id === offer.id}
             selectable
             pendingOfferId={pending ? selected?.id ?? null : null}
@@ -215,7 +224,7 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
             <div className={styles.map}>
               {(mapView === "map" ? mapUrl : streetUrl) ? <iframe title={`${mapView === "map" ? "Map" : "Street View"} for ${props.hotelName}`} src={(mapView === "map" ? mapUrl : streetUrl)!} loading="lazy" referrerPolicy="strict-origin-when-cross-origin" /> : <p>{mapView === "map" ? "Map preview unavailable" : "Street View unavailable"}</p>}
               {mapView === "map" && mapUrl ? <button type="button" aria-label={`Open full map for ${props.hotelName}`} className={styles.mapOpener} onClick={() => setOverlay("map")} /> : null}
-            </div><h3>Why this location works</h3>{facts.length ? <ul className={styles.facts}>{facts.map(fact => <li key={fact}>{fact}</li>)}</ul> : <p>Location fit details are limited to the verified address and map.</p>}</> : <p>Verified location details are not available for this property yet.</p>}
+            </div><h3>Why this location works</h3>{facts.length ? <ul className={styles.facts}>{facts.map(fact => <li key={fact}>{fact}</li>)}</ul> : <p>{props.locationIsSimulated ? "Location details are limited to the provider’s sandbox address and map." : "Location fit details are limited to the verified address and map."}</p>}</> : <p>Verified location details are not available for this property yet.</p>}
         </section>
         <section className={styles.section}><h2>Popular amenities</h2><HotelAmenityList items={props.amenityItems.slice(0, 4)} t={() => ""} className={styles.amenities} />{props.amenityItems.length ? <button className={styles.textButton} type="button" onClick={() => setOverlay("amenities")}>See all amenities</button> : <p>Property highlights are not available yet.</p>}</section>
         <section className={styles.section}><h2>Room &amp; comfort</h2>{[property?.roomSummary, property?.bedSummary].filter(Boolean).map(value => <p className={styles.roomFact} key={value}><Bed size={18} strokeWidth={1.3} />{value}</p>)}{!property?.roomSummary && !property?.bedSummary ? <p>Room details are confirmed when you choose a room.</p> : null}</section>
@@ -225,6 +234,21 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
       {tab === "reviews" ? <section className={styles.reviews} aria-label="Guest reviews" data-hotel-reviews-section>{props.reviewScore && props.reviewCountText ? <div className={styles.reviewCard}><div className={styles.reviewScore}><strong>{props.reviewScore.split("/")[0].trim()}</strong><span>/{props.mobileReviewScale ?? 10}</span></div><div className={styles.reviewMeta}><h2>{props.reviewLabel}</h2><p>{props.reviewCountText}</p>{props.reviewSource ? <small>Source: {props.reviewSource}</small> : null}</div></div> : <><h2>Guest reviews</h2><p>Verified guest reviews are not connected for this property yet.</p></>}</section> : null}
     </div>
     <span role="status" className="sr-only">{shareStatus}</span>
+    {rateInfo ? <DetailsDialog title="Rate details" compact onClose={() => setRateInfo(null)}>
+      <div className={`${styles.sheetBody} ${styles.rateInfoBody}`}>
+        <section className={styles.rateInfoRoom}>
+          {rateInfo.providerLogoUrl ? <Image src={rateInfo.providerLogoUrl} alt={rateInfo.providerName} width={132} height={30} className={styles.rateInfoLogo} /> : <p className={styles.rateInfoProvider}>{rateInfo.providerName}</p>}
+          <h3>{rateInfo.roomName || "Room description not supplied"}</h3>
+          {[rateInfo.bedConfiguration, rateInfo.mealPlanLabel].filter(Boolean).map((term, index) => <p key={index}>{term}</p>)}
+        </section>
+        {rateInfo.cancellationLabel || rateInfo.paymentLabel ? <section className={styles.rateInfoSection}>
+          <h3>Booking conditions</h3>
+          <dl>{rateInfo.cancellationLabel ? <div><dt>Cancellation</dt><dd>{rateInfo.cancellationLabel}</dd></div> : null}{rateInfo.paymentLabel ? <div><dt>Payment</dt><dd>{rateInfo.paymentLabel}</dd></div> : null}</dl>
+        </section> : null}
+        {rateInfo.suppliedRateFacts?.length || rateInfo.taxesAndFeesLabel ? <section className={styles.rateInfoSection}><h3>Price details</h3><dl>{rateInfo.suppliedRateFacts?.map((fact, index) => <div key={index}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl>{rateInfo.taxesAndFeesLabel ? <p>{rateInfo.taxesAndFeesLabel}</p> : null}</section> : null}
+        {rateInfo.totalPrice ? <div className={styles.rateInfoTotal}><span>Stay total</span><strong>{rateInfo.totalPrice}</strong></div> : null}
+      </div>
+    </DetailsDialog> : null}
 
     {overlay && overlay !== "stay" ? <DetailsDialog compact={overlay === "amenities"} title={overlay === "gallery" ? "Photos" : overlay === "photo" ? `${gallery.activePosition} / ${gallery.usableIndices.length}` : overlay === "amenities" ? "All amenities" : overlay === "map" ? "Location" : "Room options"} full={overlay === "gallery" || overlay === "photo" || overlay === "map"} back={overlay === "photo" ? () => setOverlay("gallery") : undefined} onClose={() => setOverlay(null)}>
       {overlay === "gallery" ? <div className={styles.galleryGrid}>{gallery.usableIndices.map((index, position) => <button type="button" key={index} onClick={() => { gallery.onSelectImage(index); setOverlay("photo"); }} aria-label={`View photo ${position + 1}`}><Image src={gallery.displayCandidates[index]} alt={`${props.hotelName} photo ${position + 1}`} fill sizes={position % 3 === 0 ? "100vw" : "50vw"} className={styles.cover} onError={() => gallery.onImageError(gallery.displayCandidates[index])} /></button>)}</div> : null}
