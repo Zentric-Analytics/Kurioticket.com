@@ -125,7 +125,7 @@ export function NativeCarPriceAlert({ plan, results, available, onFeedback }: { 
     <View style={styles.switchSlot}>
       <Pressable accessibilityRole="switch" accessibilityLabel="Track car prices" accessibilityState={{ checked: tracking, disabled, busy: pending }} disabled={disabled} onPress={() => void toggle(!tracking)} style={styles.switchTouchTarget}>
         <View pointerEvents="none" style={[styles.switchTrack, { backgroundColor: tracking ? theme.switchTrackActive : theme.dark ? "#465269" : "#CBD5E1", borderColor: tracking ? theme.switchTrackActive : theme.dark ? "#465269" : "#CBD5E1" }]}>
-          <Animated.View style={[styles.switchThumb, I18nManager.isRTL ? styles.switchThumbRtl : styles.switchThumbLtr, { transform: [{ translateX: thumbTranslateX }] }]}/>
+          <Animated.View style={[styles.switchThumb, I18nManager.isRTL && !I18nManager.doLeftAndRightSwapInRTL ? styles.switchThumbRtl : styles.switchThumbLtr, { transform: [{ translateX: thumbTranslateX }] }]}/>
         </View>
       </Pressable>
     </View>
