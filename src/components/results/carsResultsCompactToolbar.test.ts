@@ -41,11 +41,12 @@ test("source-contract: phone Cars filters use the Hotels pinned rail without a h
   assert.match(shortcuts, /ref=\{mobileFilterOriginRef\}/);
   assert.match(shortcuts, /data-cars-results-scroll-filter-bar/);
   assert.match(shortcuts, /mobileResultsStyles\.scrollFilterBarPinned/);
-  assert.match(shortcuts, /mobileResultsStyles\.scrollFilterBarHidden/);
+  assert.doesNotMatch(shortcuts, /mobileResultsStyles\.scrollFilterBarHidden|mobileResultsStyles\.scrollFilterBarAnimated/);
   assert.match(
     mobileControls,
-    /distance >= \(nextDirection > 0 \? 20 : 12\)[\s\S]*setMobileFiltersVisible\(nextDirection < 0\)/,
+    /const shouldPin =[\s\S]*naturalFilterTop <= headerBottom \+ 1;[\s\S]*setMobileFiltersPinned\(shouldPin\)/,
   );
+  assert.doesNotMatch(mobileControls, /mobileFiltersVisible|mobileFiltersAnimated|nextDirection|scrollFilterBarHidden/);
   assert.doesNotMatch(
     mobileControls,
     /data-cars-results-mobile-header-filter|mobileNavFilterTarget|showMobileHeaderFilter/,
@@ -129,7 +130,7 @@ test("source-contract: Cars count and tracking share a shrink-safe mobile row wi
   assert.match(resultsToolbar, /"shrink-0 text-current transition-transform duration-150"/);
 });
 
-test("source-contract: Cars keeps the full filter rail pinned on upward scroll with mobile Sort inside it", () => {
+test("source-contract: Cars keeps the full filter rail pinned in both directions with mobile Sort inside it", () => {
   const shortcutsStart = source.indexOf("data-cars-results-filter-origin");
   const toolbarStart = source.indexOf("data-cars-results-toolbar", shortcutsStart);
   const summaryStart = source.indexOf("data-cars-results-summary-row", toolbarStart);
@@ -147,7 +148,7 @@ test("source-contract: Cars keeps the full filter rail pinned on upward scroll w
     /ref=\{filtersButtonRef\}[\s\S]*onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
   );
   assert.match(shortcuts, /mobileResultsStyles\.scrollFilterBarPinned/);
-  assert.match(shortcuts, /mobileResultsStyles\.scrollFilterBarHidden/);
+  assert.doesNotMatch(shortcuts, /mobileResultsStyles\.scrollFilterBarHidden|mobileResultsStyles\.scrollFilterBarAnimated/);
   assert.doesNotMatch(source, /data-cars-results-mobile-header-filter/);
   assert.match(shortcuts, /data-cars-sort-trigger/);
   assert.match(shortcuts, /<span className="max-w-\[11rem\] truncate">Sort<\/span>/);

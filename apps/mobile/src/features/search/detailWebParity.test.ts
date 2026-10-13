@@ -84,12 +84,21 @@ test("active Hotel Details keeps fixed icon-only controls and stack-aware Result
   assert.doesNotMatch(returnNavigation, /router\.back\(|router\.dismissTo/);
 });
 
-test("web mobile Hotel rates reuse the exact desktop rate card and drop the old blue selected outline", () => {
-  assert.match(webMobileHotelDetails, /import \{ DesktopProviderOffer \} from "\.\/HotelPriceComparisonSection"/);
-  assert.match(webMobileHotelDetails, /offers\.map\(offer => <DesktopProviderOffer/);
+test("web mobile Hotel rates use dedicated mobile provider cards without the old blue selected outline", () => {
+  assert.match(webMobileHotelDetails, /import \{ MobileProviderOffer \} from "\.\/HotelPriceComparisonSection"/);
+  assert.match(webMobileHotelDetails, /offers\.map\(offer => <MobileProviderOffer/);
+  assert.match(webMobileHotelDetails, /onInfo=\{\(\) => setRateInfo\(offer\)\}/);
   assert.match(webMobileHotelDetails, /perNightText=\{props\.perNightText\}/);
   assert.match(webMobileHotelDetails, /totalPrice: total/);
-  assert.doesNotMatch(webMobileHotelDetails, /className=\{styles\.rate\}|className=\{styles\.rateAction\}|>Stay total</);
+  const rateListStart = webMobileHotelDetails.indexOf('<div aria-label="Hotel rates" className={styles.rateList}>');
+  assert.ok(rateListStart >= 0, "the provider-card list must be present");
+  const rateListEnd = webMobileHotelDetails.indexOf("</div>", rateListStart);
+  assert.ok(rateListEnd > rateListStart);
+  const providerCards = webMobileHotelDetails.slice(rateListStart, rateListEnd);
+  assert.match(providerCards, /offers\.map\(offer => <MobileProviderOffer/);
+  assert.doesNotMatch(providerCards, />Stay total</, "the card list must not repeat the details-dialog total label");
+  assert.match(webMobileHotelDetails, /rateInfo\.totalPrice \? <div className=\{styles\.rateInfoTotal\}><span>Stay total<\/span>/);
+  assert.doesNotMatch(webMobileHotelDetails, /className=\{styles\.rate\}|className=\{styles\.rateAction\}/);
   assert.doesNotMatch(webMobileHotelDetailsCss, /\.rate\[data-selected="true"\][^}]*border-color: var\(--accent\)/);
 });
 

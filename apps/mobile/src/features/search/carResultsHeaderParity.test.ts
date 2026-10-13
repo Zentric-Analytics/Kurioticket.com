@@ -40,6 +40,22 @@ test("native Cars header has the mobile-web white surface, 28px left curve and m
   assert.doesNotMatch(carHeader, /profile|hamburger|menu/i);
 });
 
+test("native Cars rail matches the mobile-web full-height spacing and 28px curve", () => {
+  assert.match(cars, /carHeaderSurface:\{borderBottomLeftRadius:28,borderBottomRightRadius:0,borderBottomWidth:StyleSheet\.hairlineWidth,overflow:"hidden"\}/);
+  assert.match(cars, /carFilterSectionHeader:\{paddingTop:8,paddingBottom:8\}/);
+  assert.match(cars, /filterRail:\{height:44,flexGrow:0,flexShrink:0\}/);
+  assert.match(cars, /filters:\{paddingLeft:12,paddingRight:16,gap:6,alignItems:"center",flexWrap:"nowrap"\}/);
+  assert.match(cars, /shortcutTouchTarget:\{minWidth:44,minHeight:44,justifyContent:"center"\}/);
+  assert.match(cars, /shortcut:\{height:36,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:4,borderWidth:1,borderRadius:9,paddingHorizontal:10\}/);
+  assert.match(cars, /r\.carHeaderBackdrop,\{backgroundColor:carCanvasColor\}/);
+  assert.match(cars, /r\.carFilterSectionHeader,\{backgroundColor:headerSurfaceColor\}/);
+  assert.match(cars, /const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
+  assert.match(cars, /const headerSurfaceColor = theme\.dark \? theme\.background : "#FFFFFF"/);
+  assert.doesNotMatch(carHeader, /profile|hamburger|menu/i);
+  const railHeight = 8 + 44 + 8;
+  assert.equal(railHeight, 60, "native rail height must match the 60px mobile-web rail");
+});
+
 test("Cars summary uses compact typography and independent ellipsis", () => {
  assert.match(cars,/carSummaryDestination:\{fontSize:14,lineHeight:18/); assert.match(cars,/carSummarySecondary:\{marginTop:3,fontSize:10\.5,lineHeight:14/); assert.equal((carHeader.match(/numberOfLines=\{1\} ellipsizeMode="tail"/g)??[]).length,2); assert.doesNotMatch(carHeader,/position:\s*"absolute"|marginLeft:\s*-/);
 });
@@ -117,7 +133,7 @@ test("Cars Results places one compact price control alongside the count without 
   const list = cars.indexOf("<FlatList ref={carScrollRef}");
   assert.ok(summary >= 0 && count > summary && alertControl > count);
   assert.ok(list > alertControl);
-  assert.match(cars, /carFilterSectionHeader:\{paddingBottom:12\}/);
+  assert.match(cars, /carFilterSectionHeader:\{paddingTop:8,paddingBottom:8\}/);
   assert.match(hotels, /hotelFilterSectionHeader: \{ paddingBottom: 12 \}/);
   assert.match(cars, /body:\{paddingHorizontal:14\}/);
   assert.match(cars, /carResultsSummaryRow:\{marginTop:10,marginBottom:10,minHeight:44,paddingHorizontal:8,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\}/);
@@ -206,7 +222,7 @@ test("Cars quick controls use the Flight-family icon, geometry, and surface cont
   assert.doesNotMatch(cars, /<FlowIcon name="sliders"/);
   assert.match(cars, /<ChevronDown accessible=\{false\} size=\{13\} strokeWidth=\{1\.9\} color=\{chevron\} style=\{expanded\?r\.shortcutChevronExpanded:undefined\}/);
   assert.doesNotMatch(cars, /<FlowIcon name="chevronDown"|#EDF4FF/);
-  assert.match(cars, /filters:\{paddingLeft:8,paddingRight:16,gap:6/);
+  assert.match(cars, /filters:\{paddingLeft:12,paddingRight:16,gap:6/);
   assert.match(cars, /shortcut:\{height:36,[^}]*gap:4,[^}]*borderWidth:1,borderRadius:9,paddingHorizontal:10\}/);
   for (const token of ["#D8E1EC", "#142033", "#64748B", "#F8FAFC", "#F1F5F9", "#FFFFFF"]) assert.match(cars, new RegExp(token));
   assert.match(cars, /accessibilityState=\{\{expanded,selected:active\}\}/);
