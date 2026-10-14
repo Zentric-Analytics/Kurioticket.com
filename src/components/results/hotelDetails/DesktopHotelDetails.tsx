@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import type { HotelDetailsProviderOffer } from "./hotelDetailsPresentation";
 import { ArrowLeft, Heart, MapPin, Share2, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
