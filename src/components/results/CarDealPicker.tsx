@@ -62,7 +62,7 @@ function ProviderMark({
         src={logoUrl}
         alt=""
         aria-hidden="true"
-        className={`${compact ? "h-3.5 w-3.5" : "h-4 w-4"} max-w-full object-contain`}
+        className={`${compact ? "h-4 w-4" : "h-4 w-4"} max-w-full object-contain`}
       />
     );
   }
@@ -70,7 +70,7 @@ function ProviderMark({
   return (
     <span
       aria-hidden="true"
-      className={`${compact ? "text-[9px]" : "text-[10px]"} font-bold text-[#07133B]`}
+      className={`${compact ? "text-[11px]" : "text-[10px]"} font-bold text-[#07133B]`}
     >
       {providerInitial(group.providerName)}
     </span>
@@ -119,7 +119,7 @@ export function CarDealPicker({
   if (!groups.length) return null;
 
   return (
-    <div data-car-deal-picker className={["min-w-0", compact ? "mt-1" : "mt-1.5"].join(" ")}>
+    <div data-car-deal-picker data-car-deal-picker-compact={compact ? "true" : undefined} className={["min-w-0", compact ? "mt-1" : "mt-1.5"].join(" ")}>
       <div
         role="list"
         aria-label="Car deal providers"
@@ -137,18 +137,18 @@ export function CarDealPicker({
               role="listitem"
               className={[
                 responsiveVisibility, "min-w-0 items-center",
-                compact ? "grid-cols-[minmax(0,calc(50%_+_20px))_minmax(0,1fr)] min-h-6"
+                compact ? "grid-cols-[minmax(0,calc(50%_+_12px))_minmax(0,1fr)] min-h-10 max-[359px]:grid-cols-1 max-[359px]:py-1"
                         : "grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)] min-h-6",
               ].join(" ")}
               data-car-deal-provider-offer
             >
               <div data-car-deal-provider-meta className={["flex min-w-0 items-center gap-1", compact ? "pr-2" : "pr-3"].join(" ")}>
                 <div className={["flex min-w-0 flex-1 items-center", compact ? "gap-0.5" : "gap-1"].join(" ")}>
-                  <span className={[(compact ? "h-3.5 w-3.5" : "h-4 w-4"), "inline-flex shrink-0 items-center justify-center overflow-hidden"].join(" ")}>
+                  <span className={[(compact ? "h-4 w-4" : "h-4 w-4"), "inline-flex shrink-0 items-center justify-center overflow-hidden"].join(" ")}>
                     <ProviderMark group={group} compact={compact} />
                   </span>
                   <span
-                    className={[(compact ? "text-[9px] leading-[11px] tracking-[-0.01em]" : "text-[10px] leading-3"), "min-w-0 truncate whitespace-nowrap font-semibold text-[#334155]"].join(" ")}
+                    className={[(compact ? "text-[11px] leading-[15px]" : "text-[10px] leading-3"), "min-w-0 truncate whitespace-nowrap font-semibold text-[#334155]"].join(" ")}
                     title={group.providerName}
                     data-car-deal-provider-name
                   >
@@ -156,15 +156,15 @@ export function CarDealPicker({
                   </span>
                 </div>
                 <p
-                  className={[(compact ? "text-[11px] leading-[13px]" : "text-xs leading-[14px]"), "min-w-0 max-w-full truncate whitespace-nowrap font-bold tabular-nums text-[#07133B]"].join(" ")}
+                  className={[(compact ? "text-[12px] leading-[16px]" : "text-xs leading-[14px]"), "min-w-0 max-w-full truncate whitespace-nowrap font-bold tabular-nums text-[#07133B]"].join(" ")}
                   dir="ltr"
                   data-car-deal-provider-price
                 >
                   {formatOfferPrice(offer)}
-                  <span className="ml-0.5 font-medium text-[#64748B]">/day</span>
+                  <span className={["ml-0.5 font-medium text-[#64748B]", compact ? "text-[10px]" : ""].join(" ")}>/day</span>
                 </p>
               </div>
-              <div data-car-deal-provider-action-slot className="flex min-w-0 items-center justify-start gap-0.5">
+              <div data-car-deal-provider-action-slot className={["flex min-w-0 items-center justify-start gap-0.5", compact ? "max-[359px]:pl-4" : ""].join(" ")}>
                 {bookingHref ? (
                   <a
                     href={bookingHref}
@@ -172,15 +172,15 @@ export function CarDealPicker({
                     rel="noopener noreferrer"
                     aria-label={"View deal from " + group.providerName}
                     onClick={isolateProviderAction}
-                    className={[(compact ? "text-[10px] leading-[14px]" : "text-[11px] leading-4"), "inline-flex min-h-6 shrink-0 items-center gap-0.5 whitespace-nowrap font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"].join(" ")}
+                    className={[(compact ? "text-[12px] leading-4" : "text-[11px] leading-4"), `inline-flex ${compact ? "min-h-10" : "min-h-6"} shrink-0 items-center gap-0.5 whitespace-nowrap font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35`].join(" ")}
                     data-car-deal-provider-view-deal
                   >
-                    View deal <ChevronRight size={compact ? 11 : 12} strokeWidth={2} aria-hidden="true" />
+                    View deal <ChevronRight size={compact ? 12 : 12} strokeWidth={2} aria-hidden="true" />
                   </a>
                 ) : (
                   <span
                     aria-disabled="true"
-                    className={[(compact ? "text-[9px] leading-[11px]" : "text-[10px] leading-3"), "inline-flex min-h-6 shrink-0 items-center whitespace-nowrap font-semibold text-[#94A3B8]"].join(" ")}
+                    className={[(compact ? "text-[12px] leading-4" : "text-[10px] leading-3"), `inline-flex ${compact ? "min-h-10" : "min-h-6"} shrink-0 items-center whitespace-nowrap font-semibold text-[#94A3B8]`].join(" ")}
                     data-car-deal-provider-view-deal-unavailable
                   >
                     View deal
@@ -190,11 +190,11 @@ export function CarDealPicker({
                   <button
                     type="button"
                     data-car-rate-info
-                    className="ml-auto inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[#64748B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+                    className={["ml-auto inline-flex shrink-0 items-center justify-center rounded-full text-[#64748B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40", compact ? "h-10 w-9" : "h-6 w-6"].join(" ")}
                     aria-label={"Rate information for " + group.providerName + ", " + formatOfferPrice(offer) + " per day"}
                     onClick={event => { event.stopPropagation(); setDetailsKey(group.key); }}
                   >
-                    <Info size={compact ? 12 : 14} aria-hidden="true" />
+                    <Info size={compact ? 16 : 14} aria-hidden="true" />
                   </button>
                 ) : null}
               </div>
@@ -206,7 +206,8 @@ export function CarDealPicker({
         <button
           type="button"
           data-car-deal-more-offers
-          className="mt-1 inline-flex min-h-6 items-center gap-1 text-[10px] font-semibold text-[#004BB8] md:hidden"
+          className="mt-1 inline-flex min-h-9 items-center gap-1 text-[10px] font-semibold text-[#004BB8] md:hidden"
+          style={compact ? { fontSize: 11, lineHeight: "16px", fontWeight: 600 } : undefined}
           onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
           aria-expanded={expanded}
         >
@@ -219,6 +220,7 @@ export function CarDealPicker({
           type="button"
           data-car-deal-more-offers
           className="mt-1 hidden min-h-6 items-center gap-1 text-[10px] font-semibold text-[#004BB8] md:inline-flex"
+          style={compact ? { fontSize: 11, lineHeight: "16px", fontWeight: 600 } : undefined}
           onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
           aria-expanded={expanded}
         >
