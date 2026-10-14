@@ -32,8 +32,19 @@ test("mobile Cars card matches the Hotels white information area without changin
   assert.match(mobile, /data-car-card-mobile-lower-band\s+className="[^"]*border-t border-\[#CBD5E1\] bg-white"/);
   assert.doesNotMatch(mobile, /bg-\[#E7EBF1\]/);
   assert.match(source, /desktopSurfaceParity \? "md:bg-\[#E7EBF1\]" : "md:bg-white"/);
-  assert.match(mobile, /<CarDealPicker/);
+  assert.doesNotMatch(mobile, /<CarDealPicker/);
+  assert.equal((source.match(/<CarDealPicker/g) ?? []).length, 1, "one shared full-width picker follows the responsive card content");
   assert.match(mobile, /dailyDisplayPrice\.formatted/);
+});
+
+test("Compare deals takes full card width below the mobile and desktop information and pricing", () => {
+  const mobile = source.indexOf("data-car-card-mobile-lower-band");
+  const desktop = source.indexOf('data-region="pricing"');
+  const compare = source.indexOf("<CarDealPicker");
+  const supplier = source.indexOf("<SupplierInformation facts=");
+  assert.ok(mobile >= 0 && desktop > mobile && compare > desktop && supplier > compare);
+  assert.match(source.slice(compare, supplier), /!guidedPlanning|desktopPanelTarget=\{desktopDealPanelTarget\}/);
+  assert.doesNotMatch(source.slice(mobile, desktop), /<CarDealPicker/);
 });
 
 test("standalone mobile uses a marked 40/60 image and information row", () => {
