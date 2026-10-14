@@ -44,13 +44,16 @@ test("hotel facts retain false flags, policies and quotations without inventing 
   assert.ok(hotelSupplierFacts(details, false).some(fact => fact.value === "Great location"));
   assert.ok(!hotelSupplierFacts(details, false).some(fact => fact.value === "King room"));
 });
-test("web and native connect the same supplier fields without truncating fact values", () => {
+test("remaining supplier-information surfaces preserve sanitized facts without truncation", () => {
   const source = (path: string) => readFileSync(path, "utf8");
   assert.match(source("src/components/results/flightDetails/StandaloneFlightDetails.tsx"), /activeOffer\.providerDetails\?\.suppliedFacts/);
   assert.match(source("apps/mobile/src/features/search/NativeFlightDetails.tsx"), /activeOffer\.providerDetails\?\.suppliedFacts/);
   assert.match(source("src/components/results/CarResultCard.tsx"), /facts=\{offer\.suppliedFacts\}/);
   assert.match(source("apps/mobile/src/features/search/CarResultCard.tsx"), /facts=\{candidate\.suppliedFacts\}/);
-  assert.match(source("src/components/results/hotelDetails/StandaloneHotelDetails.tsx"), /hotelSupplierFacts\(props\.providerDetails, false\)/);
+
+  const webHotel = source("src/components/results/hotelDetails/StandaloneHotelDetails.tsx");
+  assert.doesNotMatch(webHotel, /SupplierInformation|hotelSupplierFacts|Property information supplied by KAYAK/);
+
   assert.match(source("apps/mobile/src/features/search/HotelDetailsScreen.tsx"), /hotelSupplierFacts\(details\?\.providerDetails, false\)/);
   for (const path of ["src/components/results/SupplierInformation.tsx", "apps/mobile/src/features/search/NativeSupplierInformation.tsx"]) {
     const component = source(path);
