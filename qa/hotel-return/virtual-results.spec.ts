@@ -38,13 +38,18 @@ const routes = {
   flights: `/flights/results?tripType=one-way&origin=SFO&destination=LOS&departureDate=${date}&adults=1&children=0&infants=0&travelers=1&cabinClass=economy&sort=cheapest`,
   cars: `/cars/results?${new URLSearchParams(carSearch)}`,
 };
-test("supplier car facts remain accessible before the external handoff", async ({ page }) => {
+test("Cars cards omit the supplier-information bar and preserve View deal on mobile and desktop", async ({ page }) => {
   const result = { ...carBase, offers: carBase.offers.map(offer => ({ ...offer, suppliedFacts: [{ label: "Fuel policy", value: "Return with the supplied fuel level" }] })) };
   await page.route("**/api/cars/search", route => route.fulfill({ json: { results: [result], status: "available" } }));
-  await page.goto(routes.cars);
-  const facts = page.locator("[data-supplier-information]").first();
-  await facts.locator("summary").click();
-  await expect(facts.getByText("Return with the supplied fuel level", { exact: true })).toBeVisible();
+  for (const viewport of [{ width: 390, height: 844 }, { width: 1365, height: 900 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto(routes.cars);
+    const card = page.locator("[data-car-result-card-shell]").first();
+    await expect(card).toBeVisible();
+    await expect(card.locator("[data-supplier-information]")).toHaveCount(0);
+    await expect(page.getByText("Supplier information", { exact: false })).toHaveCount(0);
+    await expect(card.getByText("View deal", { exact: true }).filter({ visible: true }).first()).toBeVisible();
+  }
 });
 test("customer Hotel Details does not append the generic KAYAK supplier-information box", async ({ page }) => {
   await page.route("**/api/hotels/details?**", route => route.fulfill({ json: {
