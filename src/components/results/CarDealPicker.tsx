@@ -119,7 +119,7 @@ export function CarDealPicker({
             <div
               key={group.key}
               role="listitem"
-              className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center ${compact ? "min-h-[18px] gap-x-1" : "min-h-5 gap-x-2"}`}
+              className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center ${compact ? "min-h-4 gap-x-1" : "min-h-[18px] gap-x-2"}`}
               data-car-deal-provider-offer
             >
               <div className={`flex min-w-0 items-center ${compact ? "gap-0.5" : "gap-1"}`}>
