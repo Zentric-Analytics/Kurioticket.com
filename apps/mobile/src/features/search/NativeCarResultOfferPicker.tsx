@@ -50,7 +50,7 @@ export function NativeCarResultOfferPicker({
       const displayed = presentCarOfferCurrency(offer, displayCurrency, rates);
       const actionColor = bookingUrl ? (theme.dark ? "#8FB5FF" : "#004BB8") : "#94A3B8";
       return <View key={key} style={styles.provider}>
-        <View style={[styles.meta, { width: rowWidth > 0 ? Math.min(rowWidth, rowWidth / 2 + 26) : "62%" }]}>
+        <View style={[styles.meta, { width: rowWidth > 0 ? Math.min(rowWidth, rowWidth / 2 + 26) : ("62%" as const) }]}>
           <View style={styles.brand}>
           <ProviderMark name={providerName} logoUrl={logoUrl} />
           <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.providerName, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{providerName}</Text>
