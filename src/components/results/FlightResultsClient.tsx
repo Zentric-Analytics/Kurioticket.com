@@ -7575,9 +7575,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         onClick={() => {
           window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         }}
-        className="fixed bottom-[calc(2rem+env(safe-area-inset-bottom))] end-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#004BB8] shadow-lg transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
+        className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] end-4 z-40 max-sm:z-[800] inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-[#F8FAFC] text-[#004BB8] shadow-md transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:rounded-full sm:bg-white sm:shadow-lg sm:transition sm:hover:bg-slate-50 sm:focus-visible:outline-none sm:focus-visible:ring-2 sm:focus-visible:ring-[#004BB8]/40 sm:focus-visible:ring-offset-2 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
       >
-        <ArrowUp className="h-5 w-5" aria-hidden="true" />
+        <ArrowUp className="h-[18px] w-[18px] sm:h-5 sm:w-5" aria-hidden="true" />
       </button>
     ) : null}
     <Footer variant="brand-legal-only" />
