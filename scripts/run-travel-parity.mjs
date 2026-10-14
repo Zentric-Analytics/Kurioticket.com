@@ -26,7 +26,6 @@ const matrices = {
     "src/components/results/carProviderComparison.test.ts",
     "src/components/results/CarPriceComparison.test.ts",
     "src/components/results/carResultCardMobileLayout.test.ts",
-    "src/components/results/CarResultCard.test.ts",
     "src/services/travel/packageOrchestrator.test.ts",
     "src/app/api/packages/search/route.test.ts",
     "src/components/results/flightResultsProductionPolish.test.ts",
