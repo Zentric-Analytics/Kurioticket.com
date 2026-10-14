@@ -282,7 +282,9 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
         expect(provider!.x + provider!.width).toBeLessThanOrEqual(price!.x + 1);
         expect(price!.x + price!.width + 6).toBeLessThanOrEqual(link!.x + 1);
         if (!mobile) expect(Math.abs(link!.x - rightSpecRect!.x)).toBeLessThanOrEqual(3);
-        expect(Math.abs(provider!.y - link!.y)).toBeLessThan(10);
+        const providerCenterY = provider!.y + provider!.height / 2;
+        const linkCenterY = link!.y + link!.height / 2;
+        expect(Math.abs(providerCenterY - linkCenterY)).toBeLessThanOrEqual(3);
         expect(rowRect!.x + rowRect!.width).toBeLessThanOrEqual(mainRect!.x + 1);
         expect(rowRect!.y + rowRect!.height).toBeLessThanOrEqual(cardRect!.y + cardRect!.height + 1);
       }
