@@ -92,7 +92,7 @@ test("mobile conversion strip is full width, divided once, and retains accessibl
   assert.match(conversion, /dir="ltr"/);
   assert.match(conversion, /mobileStandaloneViewDealClassName/);
   assert.match(source, /const mobileStandaloneViewDealClassName =\s*"inline-flex min-h-9/);
-  assert.match(conversion, /data-car-card-mobile-offers[\s\S]*flex-\[2\.65\]/);
+  assert.match(conversion, /data-car-card-mobile-offers[\s\S]*flex-\[2\.65\][^\"]*px-2 py-1\.5/);
   assert.match(conversion, /data-car-card-mobile-pricing/);
   assert.match(conversion, /flex-\[1\.1\][^"]*items-end[^"]*justify-center[^"]*px-2\.5[^"]*py-2/);
   assert.match(conversion, /focus-visible:ring-2/);
