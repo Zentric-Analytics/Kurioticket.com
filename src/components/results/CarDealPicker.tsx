@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type MouseEvent } from "react";
+import { useId, useMemo, useState, type MouseEvent } from "react";
 import { ChevronRight } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
@@ -12,6 +12,7 @@ import {
 import type { CarOffer, NormalizedCarResult } from "@/lib/cars/types";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
+import { formatCarSupplierFacts } from "@/lib/cars/supplierFacts";
 
 type Props = {
   car: NormalizedCarResult;
@@ -76,12 +77,37 @@ function ProviderMark({
   );
 }
 
+function CarRateDetails({ id, offer, seller, total, payment }: {
+  id: string; offer: CarOffer; seller: string; total: string; payment: string;
+}) {
+  const [open, setOpen] = useState(false);
+  if (!offer.suppliedFacts?.length) return null;
+  return <>
+    <button type="button" popoverTarget={id} onClick={event => event.stopPropagation()}
+      aria-label={`Rate details from ${seller}, ${total} total, ${payment}`}
+      className="min-h-11 text-xs font-semibold text-[#004BB8] underline">Rate details</button>
+    <div id={id} popover="auto" aria-label={`Rate details from ${seller}`}
+      onToggle={event => setOpen(event.currentTarget.matches(":popover-open"))}
+      className="fixed inset-0 m-auto max-h-[80vh] w-[calc(100vw-2rem)] max-w-lg overflow-auto rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-800 shadow-xl">
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="font-bold">{seller} — {total} total</h3>
+        <button type="button" popoverTarget={id} popoverTargetAction="hide" className="min-h-11 shrink-0 text-blue-700">Close</button>
+      </div>
+      <p className="mb-3">Specifications and conditions for this offer</p>
+      {open && <dl className="space-y-3">{formatCarSupplierFacts(offer.suppliedFacts)?.map((fact, index) => <div key={index} className="break-words">
+        <dt className="font-semibold">{fact.label}</dt><dd className="whitespace-pre-wrap">{fact.value}</dd>
+      </div>)}</dl>}
+    </div>
+  </>;
+}
+
 export function CarDealPicker({
   car,
   compact = false,
 }: Props) {
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
+  const detailsId = useId();
   const groups = useMemo(() => getCarDealPickerGroups(car), [car]);
   if (!groups.length) return null;
 
@@ -98,6 +124,15 @@ export function CarDealPicker({
 
   const isolateProviderAction = (event: MouseEvent<HTMLAnchorElement>) => {
     event.stopPropagation();
+  };
+  const formatTotal = (offer: CarOffer) => formatDisplayPrice({
+    amount: offer.totalPrice, sourceCurrency: offer.currency,
+    displayCurrency: selectedOption.currency, convertSourceEstimate: true,
+    rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback,
+  }).formatted;
+  const paymentLabel = (offer: CarOffer) => {
+    const value = offer.suppliedFacts?.find(fact => fact.label === "payment Type")?.value;
+    return value === "prepay" ? "Pay now" : value === "payAtPickup" ? "Pay at pickup" : value === "deposit" ? "Deposit payment" : "";
   };
 
   return (
@@ -145,6 +180,11 @@ export function CarDealPicker({
                 {formatOfferPrice(offer)}
                 <span className="ml-0.5 font-medium text-[#64748B]">/day</span>
               </p>
+              {car.inventorySource === "kayak-sandbox" && <>
+                <p className="text-xs text-slate-600">{formatTotal(offer)} total</p>
+                {paymentLabel(offer) && <p className="text-xs text-slate-600">{paymentLabel(offer)}</p>}
+                <CarRateDetails id={`${detailsId}-${offer.id}`} offer={offer} seller={group.providerName} total={formatTotal(offer)} payment={paymentLabel(offer)} />
+              </>}
 
               {bookingHref ? (
                 <a
@@ -172,6 +212,9 @@ export function CarDealPicker({
           );
         })}
       </div>
+      {car.inventorySource === "kayak-sandbox" && <div className="min-w-0">
+        {car.offers.length > 1 && <p className="mt-3 text-xs text-slate-600">Specifications and terms can vary by offer. Check each seller&apos;s details.</p>}
+      </div>}
     </div>
   );
 }

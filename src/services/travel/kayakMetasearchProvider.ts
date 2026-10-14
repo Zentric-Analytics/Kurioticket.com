@@ -9,9 +9,10 @@ export type KayakRequestContext = { clientIp: string; userAgent?: string; trackI
 
 /** Provider row IDs can be positions reused by later searches. Cache and route
  * identities must belong to one result snapshot, never to a global row number. */
-export function scopeKayakOfferIds<T extends { id: string; hotelPropertyKey?: string }>(offers: T[], snapshotId: string): T[] {
+export function scopeKayakOfferIds<T extends { id: string; hotelPropertyKey?: string; carGroupKey?: string }>(offers: T[], snapshotId: string): T[] {
   return offers.map((offer) => ({ ...offer, id: `${snapshotId}:${offer.id}`,
     ...(offer.hotelPropertyKey !== undefined ? { hotelPropertyKey: `${snapshotId}:${offer.hotelPropertyKey}` } : {}),
+    ...(offer.carGroupKey !== undefined ? { carGroupKey: `${snapshotId}:${offer.carGroupKey}` } : {}),
   }));
 }
 
@@ -67,8 +68,22 @@ export const searchKayakHotels = (criteria: HotelSearchParams, context?: KayakRe
   const nights = Math.max(1, Math.round((Date.parse(criteria.checkOut) - Date.parse(criteria.checkIn)) / 86_400_000));
   return search<PublicHotelResult>("hotels", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakHotelCardModel(offer, nights));
 };
-export const searchKayakCars = (criteria: LocationBoundCarSearchParams, context?: KayakRequestContext) => {
+/** Only KAYAK's search-scoped result identity groups cars, never a model name. */
+export function groupKayakCarResults(results: NormalizedCarResult[]): NormalizedCarResult[] {
+  const groups = new Map<string, NormalizedCarResult>();
+  for (const car of results) {
+    const existing = groups.get(car.id);
+    if (!existing) { groups.set(car.id, { ...car, offers: [...car.offers] }); continue; }
+    const offers = [...existing.offers, ...car.offers];
+    const representative = car.offers[0].totalPrice < existing.offers[0].totalPrice ? car : existing;
+    groups.set(car.id, { ...representative, offers: offers.sort((a, b) => a.totalPrice - b.totalPrice || a.id.localeCompare(b.id)) });
+  }
+  return [...groups.values()];
+}
+
+export const searchKayakCars = async (criteria: LocationBoundCarSearchParams, context?: KayakRequestContext) => {
   const days = Math.max(1, Math.ceil((Date.parse(`${criteria.dropoffDate}T${criteria.dropoffTime}:00`) - Date.parse(`${criteria.pickupDate}T${criteria.pickupTime}:00`)) / 86_400_000));
   const pickup = getLocationFieldDisplay(criteria.pickupLocation).primary || criteria.pickupLocation;
-  return search<NormalizedCarResult>("cars", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakCarCardModel(offer, days, pickup));
+  const response = await search<NormalizedCarResult>("cars", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakCarCardModel(offer, days, pickup));
+  return { ...response, results: groupKayakCarResults(response.results) };
 };

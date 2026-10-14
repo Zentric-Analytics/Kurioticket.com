@@ -161,13 +161,15 @@ export function kayakHotelCardModel(offer: SandboxOffer, nights: number): Normal
 }
 
 export function kayakCarCardModel(offer: SandboxOffer, days: number, pickup: string): NormalizedCarResult {
-  return {id:`kayak-sandbox:${offer.id}`,category:"economy",categoryLabel:offer.details[0] || "Category not supplied",
+  days = offer.carRentalDays ?? days;
+  return {id:`kayak-sandbox:${offer.carGroupKey ?? offer.id}`,category:"economy",categoryLabel:offer.details[0] || "Category not supplied",
     modelName:offer.title,orSimilar:false,imageUrl:offer.images?.[0]?.url,imageAlt:offer.title,
     passengers:0,bags:0,doors:0,transmission:"automatic",airConditioning:false,fuelPolicy:"other",mileagePolicy:"limited",
     pickupType:"city-location",pickupLocation:pickup,returnLocation:pickup,shuttleRequired:false,
     rentalCompanyName:offer.details[1] || "Supplier not supplied",recommendationScore:0,requiredDocuments:[],includedItems:[],importantInformation:[],
     inventorySource:"kayak-sandbox",sandboxPresentation:{specs:offer.carSpecs || ["Specifications not supplied"],pickupLabel:"Search pickup",filterOptions:offer.carFilterOptions},
     offers:[{id:offer.id,suppliedFacts:offer.attributes?.map(fact => ({ ...fact })),bookingProviderName:offer.bookingProviderName || offer.description,bookingProviderLogoUrl:offer.bookingProviderLogoUrl,rentalCompanyName:offer.details[1] || "Supplier not supplied",
+      carPresentation:{modelName:offer.title,categoryLabel:offer.details[0] || "Category not supplied",imageUrl:offer.images?.[0]?.url,imageAlt:offer.title,specs:offer.carSpecs || ["Specifications not supplied"],filterOptions:offer.carFilterOptions},
       currency:offer.currency,totalPrice:offer.priceBasis === "per day" ? offer.price*days : offer.price,
       pricePerDay:offer.priceBasis === "per day" ? offer.price : offer.price/days,
       taxesAndFeesIncluded:false,payAtPickup:false,freeCancellation:false,bookingUrl:offer.testUrl}]};

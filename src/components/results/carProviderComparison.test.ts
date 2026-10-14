@@ -83,7 +83,7 @@ test("static Kurioticket inventory exposes up to three real offer choices withou
   assert.ok(groups.every((group) => group.offers.length === 1));
 });
 
-test("live or sandbox inventory keeps provider grouping instead of splitting one seller's offers", () => {
+test("sandbox comparison exposes every distinct rate even from the same seller", () => {
   const groups = getCarDealPickerGroups({
     inventorySource: "kayak-sandbox",
     offers: [
@@ -93,9 +93,9 @@ test("live or sandbox inventory keeps provider grouping instead of splitting one
     ],
   });
 
-  assert.equal(groups.length, 2);
-  assert.deepEqual(groups[0]?.offers.map((item) => item.id), ["p-low", "p-high"]);
-  assert.equal(groups[1]?.providerName, "Provider C");
+  assert.equal(groups.length, 3);
+  assert.deepEqual(groups.map(group => group.primaryOffer.id), ["p-low", "p-high", "other"]);
+  assert.equal(groups[2]?.providerName, "Provider C");
 });
 
 test("provider picker exposes every supplied seller without a three-provider cutoff", () => {
