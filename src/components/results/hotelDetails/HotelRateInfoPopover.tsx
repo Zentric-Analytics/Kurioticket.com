@@ -29,6 +29,7 @@ export function HotelRateInfoPopover({
   onClose: () => void;
 }) {
   const popoverRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [geometry, setGeometry] = useState<Geometry | null>(null);
 
   const updatePosition = useCallback(() => {
@@ -99,6 +100,19 @@ export function HotelRateInfoPopover({
   }, [updatePosition]);
 
   useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      closeButtonRef.current?.focus({ preventScroll: true });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      if (anchor.isConnected) {
+        anchor.focus({ preventScroll: true });
+      }
+    };
+  }, [anchor]);
+
+  useEffect(() => {
     const frame = window.requestAnimationFrame(updatePosition);
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
@@ -166,6 +180,7 @@ export function HotelRateInfoPopover({
         <header className="sticky top-0 z-[2] flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">
           <h2 className="text-[16px] font-semibold leading-6">Rate details</h2>
           <button
+            ref={closeButtonRef}
             type="button"
             aria-label="Close Rate details"
             onClick={onClose}
