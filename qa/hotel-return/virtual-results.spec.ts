@@ -121,6 +121,95 @@ test("Cars mobile card balances category and moves four specifications underneat
   await expect(noCancellation.locator("[data-car-card-mobile-main]")).not.toBeVisible();
 });
 
+
+test("Cars offer controls are legible and easy to tap on small phones without overflowing the main price rail", async ({ page }) => {
+  const baseOffer = carBase.offers[0];
+  if (!baseOffer) throw new Error("Missing fixture offer");
+  const result = {
+    ...carBase,
+    id: "kayak-sandbox:mobile-touch-targets",
+    inventorySource: "kayak-sandbox" as const,
+    offers: Array.from({ length: 7 }, (_, index) => ({
+      ...baseOffer,
+      id: "touch-offer-" + index,
+      bookingProviderName: index === 0 ? "Extra Long Rental Provider Name" : "Seller " + index,
+      bookingUrl: "https://affiliates.kayak.com/sandbox-clickout",
+      pricePerDay: index === 6 ? 233 : 49 + index,
+      totalPrice: 200 + index * 5,
+      suppliedFacts: [{ label: "payment Type", value: "payAtPickup" }],
+    })),
+  };
+  await page.route("**/api/cars/search", route =>
+    route.fulfill({ json: { results: [result], status: "available" } }));
+
+  for (const width of [320, 375, 390, 414, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(routes.cars);
+    const card = page.locator("[data-car-result-card-shell]").first();
+    const offers = card.locator("[data-car-card-mobile-offers]");
+    const rail = card.locator("[data-car-card-mobile-pricing]");
+    const rows = offers.locator("[data-car-deal-provider-offer]");
+    const toggle = offers.locator("[data-car-deal-more-offers]").filter({ visible: true });
+    await expect(rows).toHaveCount(7);
+    await expect(rows.filter({ visible: true })).toHaveCount(3);
+    await expect(toggle).toHaveCount(1);
+    await expect(rail).toBeVisible();
+
+    const toggleTextSize = await toggle.evaluate(element => parseFloat(getComputedStyle(element).fontSize));
+    expect(toggleTextSize).toBeGreaterThanOrEqual(10);
+    expect(toggleTextSize).toBeLessThanOrEqual(12);
+    const railRect = (await rail.boundingBox())!;
+    const row = rows.first();
+    const name = row.locator("[data-car-deal-provider-name]");
+    const price = row.locator("[data-car-deal-provider-price]");
+    const viewDeal = row.locator("[data-car-deal-provider-view-deal]");
+    const info = row.locator("[data-car-rate-info]");
+    const nameRect = (await name.boundingBox())!;
+    const priceRect = (await price.boundingBox())!;
+    const linkRect = (await viewDeal.boundingBox())!;
+    const infoRect = (await info.boundingBox())!;
+
+    for (const [locator, minimumSize] of [[name, 11], [price, 12], [viewDeal, 12]] as const) {
+      const size = await locator.evaluate(element => parseFloat(getComputedStyle(element).fontSize));
+      expect(size).toBeGreaterThanOrEqual(minimumSize);
+    }
+    expect(nameRect.x + nameRect.width).toBeLessThanOrEqual(priceRect.x + 1);
+    expect(linkRect.height).toBeGreaterThanOrEqual(40);
+    expect(infoRect.height).toBeGreaterThanOrEqual(40);
+    expect(infoRect.width).toBeGreaterThanOrEqual(32);
+    expect(linkRect.x + linkRect.width).toBeLessThanOrEqual(infoRect.x + 1);
+    expect(infoRect.x + infoRect.width).toBeLessThanOrEqual(railRect.x + 1);
+    if (width < 360) {
+      expect(linkRect.y).toBeGreaterThanOrEqual(priceRect.y + priceRect.height - 1);
+    } else {
+      expect(priceRect.x + priceRect.width).toBeLessThanOrEqual(linkRect.x + 1);
+    }
+    const infoSvg = info.locator("svg");
+    await expect(infoSvg).toBeVisible();
+    const iconWidth = await infoSvg.evaluate(element => element.getBoundingClientRect().width);
+    expect(iconWidth).toBeGreaterThanOrEqual(16);
+
+    await toggle.click();
+    await expect(rows.filter({ visible: true })).toHaveCount(7);
+    await expect(toggle).toContainText("Show fewer offers");
+    const expandedToggleSize = await toggle.evaluate(element => parseFloat(getComputedStyle(element).fontSize));
+    expect(expandedToggleSize).toBe(toggleTextSize);
+    await toggle.click();
+    await expect(rows.filter({ visible: true })).toHaveCount(3);
+  }
+
+  await page.setViewportSize({ width: 1365, height: 900 });
+  await page.goto(routes.cars);
+  const desktopCard = page.locator("[data-car-result-card-shell]").first();
+  const desktopOffer = desktopCard.locator('[data-region="details"] [data-car-deal-provider-offer]').first();
+  await expect(desktopOffer).toBeVisible();
+  await expect(desktopCard.locator('[data-region="pricing"]')).toBeVisible();
+  const desktopFont = await desktopOffer.locator("[data-car-deal-provider-name]").evaluate(
+    element => parseFloat(getComputedStyle(element).fontSize),
+  );
+  expect(desktopFont).toBe(10);
+});
+
 test("Cars comparison rows stay horizontal within the existing card beside the main price on mobile and desktop", async ({ page }) => {
   const firstOffer = carBase.offers[0];
   if (!firstOffer) throw new Error("Missing test offer");
