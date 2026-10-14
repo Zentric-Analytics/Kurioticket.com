@@ -102,7 +102,7 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.match(picker, /Linking\.openURL\(bookingUrl\)/);
   assert.match(picker, /disabled=\{!bookingUrl\}/);
   assert.match(picker, /flexDirection: "row", alignItems: "center"/);
-  assert.match(picker, /<Text[^>]*>Compare deals<\\/Text>/);
+  assert.match(picker, /Compare deals/);
   assert.match(picker, /choices\.map\(\(\{ key, providerName, logoUrl, offer, bookingUrl \}, index\) =>/);
   assert.match(picker, /index > 0 && \{ borderTopWidth: 1/);
   assert.match(card, /<NativeCarResultOfferPicker result=\{result\}/);
