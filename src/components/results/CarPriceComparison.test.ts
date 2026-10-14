@@ -38,7 +38,8 @@ test("provider offers show logo, name, per-day price and a direct provider View 
   assert.ok(picker.includes('text-[9px] leading-[11px] tracking-[-0.01em]'));
   assert.ok(picker.includes('min-w-0 truncate whitespace-nowrap font-semibold'));
   assert.match(picker, /compact \? "gap-0\.5" : "gap-1"/);
-  assert.ok(picker.includes('grid-cols-[minmax(0,1fr)_auto_auto]'));
+  assert.ok(picker.includes('grid-cols-[minmax(0,calc(50%+20px))_minmax(0,1fr)]'));
+  assert.ok(picker.includes('grid-cols-[minmax(0,calc(50%+31px))_minmax(0,1fr)]'));
   assert.match(picker, /const offer = group\.primaryOffer/);
   assert.match(picker, /amount: offer\.pricePerDay/);
   assert.match(picker, /\{formatOfferPrice\(offer\)\}/);
@@ -61,9 +62,14 @@ test("provider View deal validates its own URL and stays isolated from main offe
 });
 
 test("inline provider offers do not retain the old comparison overlays", () => {
-  assert.ok(picker.includes('grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto]'));
-  assert.ok(picker.includes('min-h-4 gap-x-1'));
-  assert.ok(picker.includes('min-h-[18px] gap-x-2'));
+  assert.ok(picker.includes('grid min-w-0 items-center'));
+  assert.ok(picker.includes('min-h-4'));
+  assert.ok(picker.includes('min-h-[18px]'));
+  assert.match(picker, /data-car-deal-provider-meta/);
+  assert.match(picker, /data-car-deal-provider-action-slot/);
+  assert.ok(picker.includes('compact ? "pr-2" : "pr-3"'));
+  assert.match(card, /data-car-card-mobile-specs[\s\S]*grid grid-cols-2 gap-x-1/);
+  assert.match(card, /data-car-card-desktop-primary-specs[\s\S]*grid gap-x-5/);
   assert.match(picker, /role="list"/);
   assert.match(picker, /role="listitem"/);
   assert.doesNotMatch(picker, /grid-cols-3|Compare deals/);
