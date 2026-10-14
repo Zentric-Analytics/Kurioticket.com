@@ -11,7 +11,7 @@ test("empty results with provider failures are unavailable, not confirmed no ava
     assert.equal(classifyFlights([], search, warnings, "request").status, expected);
     assert.equal(classifyCars([], cars, "request", warnings).status, expected);
   }
-  assert.equal(classifyHotels([{ id: "h" } as never], ["Provider unavailable"], "request").status, "partial");
+  assert.equal(classifyHotels([{ id: "kayak-sandbox:h", provider: "KAYAK sandbox", dataSource: "demo" } as never], ["Provider unavailable"], "request").status, "partial");
 });
 
 test("authoritative sources and truthful actions", () => {
@@ -45,18 +45,16 @@ test("authoritative sources and truthful actions", () => {
   }
 
   const hotel = classifyHotels([{ id: "h", provider: "Kurioticket static catalogue" } as never], [], "r");
-  assert.equal(hotel.source, "kurioticket-static-hotels");
-  assert.equal(hotel.results[0].searchPolicy.bookable, false);
-  assert.equal(hotel.results[0].searchPolicy.action.kind, "internal-detail");
+  assert.equal(hotel.source, "kayak-sandbox");
+  assert.deepEqual(hotel.results, []);
 
   const car = classifyCars(
     [{ id: "c", offers: [] } as never],
     { pickupLocation: "LAX", dropoffLocation: "LAX", pickupDate: "2027-01-01", dropoffDate: "2027-01-02", pickupTime: "10:00", dropoffTime: "10:00", driverAge: "30" },
     "r",
   );
-  assert.equal(car.source, "kurioticket-static-cars");
-  assert.equal(car.results[0].searchPolicy.bookable, false);
-  assert.equal(car.results[0].searchPolicy.action.kind, "internal-detail");
+  assert.equal(car.source, "kayak-sandbox");
+  assert.deepEqual(car.results, []);
   assert.deepEqual(car.warnings, []);
 });
 

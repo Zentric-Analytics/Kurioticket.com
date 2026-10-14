@@ -265,7 +265,7 @@ test("exactly 30 unique static vehicles retain three valid distinct offers", () 
     cars.some((car) => car.offers.every((offer) => !offer.freeCancellation)),
   );
 });
-test("static catalogue details require a known exact id", async () => {
+test("retired static catalogue details never resolve", async () => {
   assert.equal(await getCarDetails("not-a-known-id", search), null);
-  assert.equal((await getCarDetails(cars[0].id, search))?.id, cars[0].id);
+  for (const car of cars) assert.equal(await getCarDetails(car.id, search), null);
 });

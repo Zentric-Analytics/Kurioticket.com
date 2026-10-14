@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildStaticHotelResults } from "@/services/travel/staticHotelResults";
+import type { PublicHotelResult } from "@/lib/types";
 import { classifyHotels } from "@/lib/travel/searchContract";
 import { buildDealsHotelPropertyOptions, buildDealsHotelRoomOptions, confirmDealsHotelRoom, getStagedHotelProgress } from "./dealsHotelJourney";
 
-const hotels = () => classifyHotels(buildStaticHotelResults({ destination: "London, United Kingdom", checkIn: "2027-06-01", checkOut: "2027-06-04", guests: 2, rooms: 1 }), [], "staged-test").results;
+const hotels = () => classifyHotels([{ id: "kayak-sandbox:provider-hotel", provider: "KAYAK sandbox", dataSource: "demo", name: "Provider Hotel", location: "London", roomType: "Provider double room", cancellationInfo: "Provider conditions", totalPrice: 300, currency: "USD" } as PublicHotelResult], [], "staged-test").results;
 
 test("eligible property options preserve Hotel API order and omit ineligible results", () => {
   const source = hotels(); const invalid = hotels()[0]; invalid.totalPrice = 0; const options = buildDealsHotelPropertyOptions([invalid, ...source]);

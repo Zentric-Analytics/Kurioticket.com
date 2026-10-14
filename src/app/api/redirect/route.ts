@@ -1,3 +1,4 @@
+import { isProviderHotelResult } from "@/services/travel/hotelInventorySource";
 import { NextResponse } from "next/server";
 import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { getMobileSession } from "@/lib/mobile-auth";
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
   const hotelTarget = body.type === "hotel" ? (target as NormalizedHotelResult) : null;
   const hotelPriceDetails = hotelTarget ? getHotelPriceDetails(hotelTarget) : null;
 
-  if (body.type === "hotel" && "dataSource" in target && target.dataSource === "demo" && target.provider !== "KAYAK sandbox") {
+  if (hotelTarget && !isProviderHotelResult(hotelTarget)) {
     return NextResponse.json(
       {
         error:

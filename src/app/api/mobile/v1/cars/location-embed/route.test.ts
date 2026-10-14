@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import test, { before } from "node:test";
+import { rememberProviderResults } from "../../../../../../services/travel/providerResultCache";
+import type { NormalizedCarResult } from "@/lib/cars/types";
 import { GET } from "./route";
 
+before(async () => { await rememberProviderResults("car", [{ id: "kayak-sandbox:trusted-car", inventorySource: "kayak-sandbox", offers: [], pickupLocation: "Paris Charles de Gaulle Airport" } as unknown as NormalizedCarResult], null); });
 const endpoint="https://kurioticket.test/api/mobile/v1/cars/location-embed";
-const valid=()=>new URLSearchParams({id:"static-car-luxury-eclass",pickupLocation:"Paris Charles de Gaulle Airport",dropoffLocation:"Paris Charles de Gaulle Airport",pickupDate:"2026-09-06",pickupTime:"10:00",dropoffDate:"2026-09-09",dropoffTime:"10:00",driverAge:"30"});
+const valid=()=>new URLSearchParams({id:"kayak-sandbox:trusted-car",pickupLocation:"Paris Charles de Gaulle Airport",dropoffLocation:"Paris Charles de Gaulle Airport",pickupDate:"2026-09-06",pickupTime:"10:00",dropoffDate:"2026-09-09",dropoffTime:"10:00",driverAge:"30"});
 
 test("cars map wrapper validates the complete search identity and supported view",async()=>{
   assert.equal((await GET(new Request(endpoint))).status,400);
@@ -50,4 +53,9 @@ test("cars map wrapper returns an interactive Street View embed only for explici
     assert.match(html,/source=outdoor/);
     assert.match(html,/Car pickup area Street View/);
   }finally{if(previous===undefined)delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY;else process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY=previous;}
+});
+
+test("retired static car map IDs return 404", async () => {
+  const query = valid(); query.set("id", "static-car-luxury-eclass");
+  assert.equal((await GET(new Request(endpoint + "?" + query))).status, 404);
 });

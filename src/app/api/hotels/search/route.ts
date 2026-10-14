@@ -93,7 +93,7 @@ export async function POST(request: Request) {
         error: aggregate.unavailableMessage,
         results: [],
         status: "unavailable",
-        source: providerMode || "kurioticket-static-hotels",
+        source: providerMode || "kayak-sandbox",
         warnings: aggregate.warnings,
         partial: false,
         requestId,
