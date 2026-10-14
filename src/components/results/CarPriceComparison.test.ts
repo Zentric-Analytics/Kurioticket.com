@@ -76,7 +76,9 @@ test("inline provider offers do not retain the old comparison overlays", () => {
   assert.match(picker, /data-car-deal-provider-meta/);
   assert.match(picker, /data-car-deal-provider-action-slot/);
   assert.ok(picker.includes('compact ? "pr-2" : "pr-3"'));
-  assert.match(card, /data-car-card-mobile-specs[\s\S]*grid grid-cols-2 gap-x-1/);
+  assert.match(card, /data-car-card-mobile-specs[\s\S]*grid min-w-0 grid-cols-2 gap-x-2/);
+  assert.match(card, /data-car-card-mobile-offers[\s\S]*<CarDealPicker/);
+  assert.ok(card.indexOf("data-car-card-mobile-specs") < card.indexOf("data-car-card-mobile-lower-band"));
   assert.match(card, /data-car-card-desktop-primary-specs[\s\S]*grid gap-x-5/);
   assert.match(picker, /role="list"/);
   assert.match(picker, /role="listitem"/);
