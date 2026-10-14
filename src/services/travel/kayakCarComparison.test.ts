@@ -1,11 +1,24 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
+import { groupKayakCarResults as sharedCarGrouping } from "@/lib/cars/carResults";
 import { normalizeSandboxOffers } from "./kayakSandbox";
 import { groupKayakCarResults, scopeKayakOfferIds } from "./kayakMetasearchProvider";
 import { kayakCarCardModel } from "@/components/results/kayakCardModels";
 import { getCarDealPickerGroups, filterCarResults } from "@/lib/cars/carResults";
 import { capturedKayakCars } from "./fixtures/kayakCarsCaptured";
 import { formatCarSupplierFacts } from "@/lib/cars/supplierFacts";
+
+test("browser-loaded and server KAYAK cars use the same complete grouping", () => {
+  assert.equal(groupKayakCarResults, sharedCarGrouping);
+  const client = readFileSync("src/components/results/CarsResultsClient.tsx", "utf8");
+  assert.match(client, /groupKayakCarResults\(kayak\.offers\.map\(offer => kayakCarCardModel/);
+  assert.doesNotMatch(client, /\.\.\.kayak\.offers\.map/);
+  const offers = normalizeSandboxOffers("cars", capturedKayakCars);
+  const groups = sharedCarGrouping(offers.map(offer => kayakCarCardModel(offer, 3, "LAX")));
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].offers.length, 7);
+});
 
 const option = (seller: string, price: number) => ({
   providerCode: seller, agencyCode: "agency", pickupLocationId: "pickup", dropoffLocationId: "dropoff",

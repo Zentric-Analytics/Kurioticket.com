@@ -2,6 +2,7 @@ import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/ca
 import type { FlightSearchParams, HotelSearchParams, NormalizedFlightResult, PublicHotelResult, ProviderResult } from "@/lib/types";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import { kayakCarCardModel, kayakFlightCardModel, kayakHotelCardModel } from "@/components/results/kayakCardModels";
+import { groupKayakCarResults } from "@/lib/cars/carResults";
 import { isKayakSandboxEnabled, KayakError, KayakPartialSearchError, KayakSandboxClient, type KayakVertical } from "./kayakSandbox";
 import { resolveRegularKayakSearch } from "./kayakRegularSearch";
 
@@ -69,17 +70,7 @@ export const searchKayakHotels = (criteria: HotelSearchParams, context?: KayakRe
   return search<PublicHotelResult>("hotels", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakHotelCardModel(offer, nights));
 };
 /** Only KAYAK's search-scoped result identity groups cars, never a model name. */
-export function groupKayakCarResults(results: NormalizedCarResult[]): NormalizedCarResult[] {
-  const groups = new Map<string, NormalizedCarResult>();
-  for (const car of results) {
-    const existing = groups.get(car.id);
-    if (!existing) { groups.set(car.id, { ...car, offers: [...car.offers] }); continue; }
-    const offers = [...existing.offers, ...car.offers];
-    const representative = car.offers[0].totalPrice < existing.offers[0].totalPrice ? car : existing;
-    groups.set(car.id, { ...representative, offers: offers.sort((a, b) => a.totalPrice - b.totalPrice || a.id.localeCompare(b.id)) });
-  }
-  return [...groups.values()];
-}
+export { groupKayakCarResults } from "@/lib/cars/carResults";
 
 export const searchKayakCars = async (criteria: LocationBoundCarSearchParams, context?: KayakRequestContext) => {
   const days = Math.max(1, Math.ceil((Date.parse(`${criteria.dropoffDate}T${criteria.dropoffTime}:00`) - Date.parse(`${criteria.pickupDate}T${criteria.pickupTime}:00`)) / 86_400_000));

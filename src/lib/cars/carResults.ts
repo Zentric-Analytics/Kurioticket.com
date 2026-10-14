@@ -4,6 +4,20 @@ export type SelectedCarFilters = Record<string, string[]>;
 export type CarSort = "recommended" | "lowestTotal" | "topRated";
 export type CarResultBadge = "Best value" | "Cheapest" | "Top rated";
 
+/** Shared by server search and browser-loaded KAYAK inventory. */
+export function groupKayakCarResults(results: NormalizedCarResult[]): NormalizedCarResult[] {
+  const groups = new Map<string, NormalizedCarResult>();
+  for (const car of results) {
+    if (!car.offers.length) continue;
+    const existing = groups.get(car.id);
+    if (!existing) { groups.set(car.id, { ...car, offers: [...car.offers] }); continue; }
+    const offers = [...existing.offers, ...car.offers];
+    const representative = car.offers[0].totalPrice < existing.offers[0].totalPrice ? car : existing;
+    groups.set(car.id, { ...representative, offers: offers.sort((a, b) => a.totalPrice - b.totalPrice || a.id.localeCompare(b.id)) });
+  }
+  return [...groups.values()];
+}
+
 export const getPrimaryCarOffer = (car: NormalizedCarResult): CarOffer | undefined =>
   [...car.offers].filter((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0)
     .sort((a, b) => a.totalPrice - b.totalPrice || a.pricePerDay - b.pricePerDay || a.id.localeCompare(b.id))[0];
