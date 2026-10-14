@@ -103,6 +103,10 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.match(picker, /provider: \{ minHeight: 18, minWidth: 0, flexDirection: "row", alignItems: "center"/);
   assert.match(picker, /providers: \{ minWidth: 0, gap: 0/);
   assert.match(picker, /brand: \{ flex: 1, minWidth: 0/);
+  assert.match(picker, /Math\.round\(event\.nativeEvent\.layout\.width\)/);
+  assert.match(picker, /rowWidth \/ 2 \+ 26/);
+  assert.match(picker, /meta: \{ minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4, paddingLeft: 6, paddingRight: 8/);
+  assert.match(picker, /action: \{ minHeight: 18, flex: 1, minWidth: 0[\s\S]*justifyContent: "flex-start"/);
   assert.doesNotMatch(picker, /Compare deals/);
   assert.match(card, /<NativeCarResultOfferPicker result=\{result\}/);
   assert.match(card, /disabled=\{!primaryBookingUrl\}/);
