@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { createJiti } from "jiti";
@@ -61,6 +62,15 @@ test("mobile rate row keeps intrinsic provider, price, and View deal widths with
   assert.match(html, /text-\[16px\][^"]*max-\[349px\]:text-\[13px\]/);
   assert.match(html, /justify-self-end[^"]*whitespace-nowrap[^"]*max-\[349px\]:px-1\.5[^"]*max-\[349px\]:text-\[13px\]/);
   assert.doesNotMatch(html, /grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/);
+});
+
+
+test("rate info callbacks receive the info button that launched them", () => {
+  const source = readFileSync(new URL("./HotelPriceComparisonSection.tsx", import.meta.url), "utf8");
+  assert.match(source, /onInfo\?: \(trigger: HTMLButtonElement\) => void/);
+  assert.match(source, /onInfoOffer\?: \(offer: HotelDetailsProviderOffer, trigger: HTMLButtonElement\) => void/);
+  assert.match(source, /onClick=\{event => onInfo\?\.\(event\.currentTarget\)\}/);
+  assert.match(source, /onClick=\{event => onInfo\(event\.currentTarget\)\}/);
 });
 
 
