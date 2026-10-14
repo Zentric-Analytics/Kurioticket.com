@@ -197,10 +197,9 @@ function resolveIntlCurrencySymbol(currency: string) {
 /** A conventional, market-distinct symbol for Hotel price presentation. */
 export function currencyMarketSymbol(currency: string) {
   const normalizedCurrency = currency.trim().toUpperCase();
-  const catalogueSymbol = marketCurrencySymbols.get(normalizedCurrency);
-  if (catalogueSymbol) return catalogueSymbol;
   const intlSymbol = resolveIntlMarketCurrencySymbol(normalizedCurrency);
-  return intlSymbol && intlSymbol.toUpperCase() !== normalizedCurrency ? intlSymbol : null;
+  if (intlSymbol && intlSymbol.toUpperCase() !== normalizedCurrency) return intlSymbol;
+  return marketCurrencySymbols.get(normalizedCurrency) ?? null;
 }
 
 function resolveIntlMarketCurrencySymbol(currency: string) {
