@@ -40,9 +40,9 @@ function findElement(node: ReactNode, predicate: (element: ReactElement<Record<s
   return undefined;
 }
 
-test("mobile rate amount stays centered between provider and View deal", () => {
+test("mobile rate row keeps intrinsic provider, price, and View deal widths without narrow-screen overlap", () => {
   const html = renderToStaticMarkup(createElement(MobileProviderOffer, {
-    offer: { ...offer, totalPrice: "NGN 969,409.36" },
+    offer: { ...offer, totalPrice: "NGN 969,409.36", providerName: "KAYAK sandbox" },
     perNightText: "{{price}} per night",
     totalLabel: "Stay total",
     selected: true,
@@ -53,10 +53,14 @@ test("mobile rate amount stays centered between provider and View deal", () => {
     onContinue: () => {},
     onInfo: () => {},
   }));
-  assert.match(html, /grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/);
-  assert.match(html, /justify-self-center text-center/);
-  assert.match(html, /justify-self-end[^"]*whitespace-nowrap/);
-  assert.doesNotMatch(html, /mr-3 text-center/);
+  assert.match(html, /grid-cols-\[max-content_max-content_max-content\]/);
+  assert.match(html, /justify-between/);
+  assert.match(html, /gap-x-1/);
+  assert.match(html, /max-\[349px\]:px-2/);
+  assert.match(html, /whitespace-nowrap text-\[12px\][^"]*max-\[349px\]:text-\[11px\]/);
+  assert.match(html, /text-\[16px\][^"]*max-\[349px\]:text-\[13px\]/);
+  assert.match(html, /justify-self-end[^"]*whitespace-nowrap[^"]*max-\[349px\]:px-1\.5[^"]*max-\[349px\]:text-\[13px\]/);
+  assert.doesNotMatch(html, /grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/);
 });
 
 
