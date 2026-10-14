@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import type { HotelDetailsProviderOffer } from "./hotelDetailsPresentation";
 import { ArrowLeft, Heart, MapPin, Share2, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { StandaloneHotelDetailsProps } from "./StandaloneHotelDetails";
 import { HotelDetailsGallery } from "./HotelDetailsGallery";
 import { HotelPriceComparisonSection } from "./HotelPriceComparisonSection";
-import { HotelRateInfoPopover } from "./HotelRateInfoPopover";
 import { DesktopHotelStayEditor } from "./DesktopHotelStayEditor";
 import { HotelLocationSection } from "./HotelLocationSection";
 import { HotelReviewsSection } from "./HotelReviewsSection";
@@ -58,7 +58,7 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
   const [providerHandoffError, setProviderHandoffError] = useState<string | null>(null);
   const [shareStatus, setShareStatus] = useState("");
   const [overlay, setOverlay] = useState<"rooms" | null>(null);
-  const [rateInfo, setRateInfo] = useState<{ offer: HotelDetailsProviderOffer; anchor: HTMLButtonElement } | null>(null);
+  const [rateInfo, setRateInfo] = useState<HotelDetailsProviderOffer | null>(null);
   const [allAmenities, setAllAmenities] = useState(false);
   const handoffPending = useRef(false);
   const property = props.propertyDetails;
@@ -197,7 +197,7 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
       stayContext={props.staySummary ? `${props.staySummary.dateText} · ${props.staySummary.occupancyText}` : undefined}
       perNightText={props.perNightText} offers={offers} selectedOfferId={selectedId}
       selectableOfferIds={new Set(offers.map(offer => offer.id))} providerHandoffError={providerHandoffError}
-      onSelectOffer={setSelectedOfferId} onInfoOffer={(offer, anchor) => setRateInfo({ offer, anchor })} onContinueOffer={(id, trigger) => void continueOffer(id, trigger)}
+      onSelectOffer={setSelectedOfferId} onInfoOffer={setRateInfo} onContinueOffer={(id, trigger) => void continueOffer(id, trigger)}
       pendingOfferId={pendingProviderOfferId} totalLabel="Stay total" continueLabel={props.labels.continueBooking} />
     </div>
 
@@ -235,13 +235,21 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
       <RelatedHotelsSection hotels={props.relatedHotels} city={relatedCity} searchContext={props.relatedSearchContext} desktopLimit={8} limit={8} labels={{ heading: props.labels.moreHotelsIn, viewHotel: props.labels.viewHotel, pricePerNight: props.labels.pricePerNight, estimatedStayTotal: props.labels.estimatedStayTotal, priceUnavailable: props.labels.priceUnavailable, imageUnavailable: props.labels.imageUnavailable, imageAlt: props.labels.imageAlt, nearLocation: props.labels.nearLocation, starHotelAria: props.labels.starHotelAria }} />
     </div> : null}
     </div>
-    {rateInfo ? (
-      <HotelRateInfoPopover
-        offer={rateInfo.offer}
-        anchor={rateInfo.anchor}
-        onClose={() => setRateInfo(null)}
-      />
-    ) : null}
+    {rateInfo ? <DesktopDialog title="Rate details" rate close={() => setRateInfo(null)}>
+      <div className={styles.rateInfoBody}>
+        <section className={styles.rateInfoRoom}>
+          {rateInfo.providerLogoUrl ? <Image src={rateInfo.providerLogoUrl} alt={rateInfo.providerName} width={132} height={30} className={styles.rateInfoLogo} /> : <p className={styles.rateInfoProvider}>{rateInfo.providerName}</p>}
+          <h3>{rateInfo.roomName || "Room description not supplied"}</h3>
+          {[rateInfo.bedConfiguration, rateInfo.mealPlanLabel].filter(Boolean).map((term, index) => <p key={index}>{term}</p>)}
+        </section>
+        {rateInfo.cancellationLabel || rateInfo.paymentLabel ? <section className={styles.rateInfoSection}>
+          <h3>Booking conditions</h3>
+          <dl>{rateInfo.cancellationLabel ? <div><dt>Cancellation</dt><dd>{rateInfo.cancellationLabel}</dd></div> : null}{rateInfo.paymentLabel ? <div><dt>Payment</dt><dd>{rateInfo.paymentLabel}</dd></div> : null}</dl>
+        </section> : null}
+        {rateInfo.suppliedRateFacts?.length || rateInfo.taxesAndFeesLabel ? <section className={styles.rateInfoSection}><h3>Price details</h3><dl>{rateInfo.suppliedRateFacts?.map((fact, index) => <div key={index}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl>{rateInfo.taxesAndFeesLabel ? <p>{rateInfo.taxesAndFeesLabel}</p> : null}</section> : null}
+        {rateInfo.totalPrice ? <div className={styles.rateInfoTotal}><span>Stay total</span><strong>{rateInfo.totalPrice}</strong></div> : null}
+      </div>
+    </DesktopDialog> : null}
     {overlay === "rooms" ? <DesktopDialog title={props.labels.roomTitle} close={() => setOverlay(null)}><p className={styles.dialogNote}>{props.planningPriceText}</p><div className={styles.roomOptions}>{props.roomChoices.map(room => <article key={room.id}><div><h3>{room.name}</h3><p>{room.details}</p><p>{room.cancellationInfo || props.labels.roomTerms}</p></div><div className={styles.roomPrice}><strong>{room.total}</strong><span>{room.nightly}</span></div></article>)}</div></DesktopDialog> : null}
   </div>;
 }
