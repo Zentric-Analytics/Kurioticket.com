@@ -20,7 +20,7 @@ const car = (
   searchPolicy: { source: inventorySource, bookable: false, action: { kind: "internal-detail", enabled: true, href: "/cars/details/test" } },
 } as CarResult);
 
-test("native Cars shows the web's three real static Kurioticket prices without inventing links", () => {
+test("native Cars retains all real static Kurioticket prices without inventing links", () => {
   const result = car([
     offer("a", "Kurioticket", 139),
     offer("b", "Kurioticket", 146),
@@ -28,24 +28,33 @@ test("native Cars shows the web's three real static Kurioticket prices without i
     offer("d", "Kurioticket", 160),
   ]);
   const choices = nativeCarResultDealChoices(result);
-  assert.deepEqual(choices.map(({ offer: item }) => item.id), ["a", "b", "c"]);
-  assert.deepEqual(choices.map(({ offer: item }) => item.pricePerDay), [139, 146, 153]);
+  assert.deepEqual(choices.map(({ offer: item }) => item.id), ["a", "b", "c", "d"]);
+  assert.deepEqual(choices.map(({ offer: item }) => item.pricePerDay), [139, 146, 153, 160]);
   assert.ok(choices.every(({ providerName }) => providerName === "Kurioticket"));
   assert.ok(choices.every(({ bookingUrl }) => bookingUrl === null));
   assert.equal(nativeCarPrimaryBookingUrl(result), null);
 });
 
-test("native Cars groups other providers the same way as web, preserving the cheapest seller offer", () => {
+test("native Cars keeps multiple offers from the same provider as distinct compact rows", () => {
   const result = car([
     offer("b-high", "Provider B", 200),
     offer("a-low", "Provider A", 111, "https://sandbox-en-us.kayakaffiliates.com/in?offer=a"),
     offer("b-low", "Provider B", 135),
   ], "kayak-sandbox");
   const choices = nativeCarResultDealChoices(result);
-  assert.deepEqual(choices.map(({ providerName }) => providerName), ["Provider A", "Provider B"]);
-  assert.deepEqual(choices.map(({ offer: item }) => item.id), ["a-low", "b-low"]);
+  assert.deepEqual(choices.map(({ providerName }) => providerName), ["Provider A", "Provider B", "Provider B"]);
+  assert.deepEqual(choices.map(({ offer: item }) => item.id), ["a-low", "b-low", "b-high"]);
   assert.equal(choices[0]?.bookingUrl, "https://sandbox-en-us.kayakaffiliates.com/in?offer=a");
   assert.equal(choices[1]?.bookingUrl, null);
+  assert.equal(choices[2]?.bookingUrl, null);
+});
+
+test("native Cars preserves ten KAYAK offers without truncation or duplicate keys", () => {
+  const result = car(Array.from({ length: 10 }, (_, index) => offer(`k-${index}`, "KAYAK seller", 200 - index)), "kayak-sandbox");
+  const choices = nativeCarResultDealChoices(result);
+  assert.equal(choices.length, 10);
+  assert.deepEqual(choices.map(({ offer: item }) => item.pricePerDay), [191, 192, 193, 194, 195, 196, 197, 198, 199, 200]);
+  assert.equal(new Set(choices.map(({ key }) => key)).size, 10);
 });
 
 test("native result-card actions only accept credential-free HTTPS, with stricter sandbox clickout rules", () => {
@@ -90,6 +99,12 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.match(picker, /Linking\.openURL\(bookingUrl\)/);
   assert.match(picker, /disabled=\{!bookingUrl\}/);
   assert.match(card, /<NativeCarResultOfferPicker result=\{result\}/);
+  assert.ok(card.indexOf("<NativeCarResultOfferPicker") > card.indexOf("style={c.commerceColumn}"));
+  assert.doesNotMatch(card, /NativeSupplierInformation/);
+  assert.match(picker, /style=\{\[styles\.provider, index > 0/);
+  assert.match(picker, /flexDirection: "row", alignItems: "center"/);
+  assert.match(picker, /Compare deals/);
+  assert.doesNotMatch(picker, /fontSize: 13, lineHeight: 18, fontWeight: "600"/);
   assert.match(card, /disabled=\{!primaryBookingUrl\}/);
   assert.doesNotMatch(results, /\/car-details/);
   assert.match(results, /backgroundColor:theme\.dark\?theme\.surface:CAR_RESULTS_LIGHT_CANVAS/);

@@ -38,13 +38,67 @@ const routes = {
   flights: `/flights/results?tripType=one-way&origin=SFO&destination=LOS&departureDate=${date}&adults=1&children=0&infants=0&travelers=1&cabinClass=economy&sort=cheapest`,
   cars: `/cars/results?${new URLSearchParams(carSearch)}`,
 };
-test("supplier car facts remain accessible before the external handoff", async ({ page }) => {
+test("Cars result cards exclude the bulky supplier panel while retaining compact offer rows", async ({ page }) => {
   const result = { ...carBase, offers: carBase.offers.map(offer => ({ ...offer, suppliedFacts: [{ label: "Fuel policy", value: "Return with the supplied fuel level" }] })) };
   await page.route("**/api/cars/search", route => route.fulfill({ json: { results: [result], status: "available" } }));
   await page.goto(routes.cars);
-  const facts = page.locator("[data-supplier-information]").first();
-  await facts.locator("summary").click();
-  await expect(facts.getByText("Return with the supplied fuel level", { exact: true })).toBeVisible();
+  await expect(page.locator("[data-supplier-information]")).toHaveCount(0);
+  await expect(page.locator("[data-car-deal-provider-offer]")).toHaveCount(result.offers.length);
+});
+
+test("Cars compact deal rows keep their horizontal alignment and expand cards for nine offers", async ({ page }) => {
+  const firstOffer = carBase.offers[0];
+  if (!firstOffer) throw new Error("Missing car offer fixture");
+  const offers = Array.from({ length: 9 }, (_, index) => ({
+    ...firstOffer,
+    id: `fixture-offer-${index}`,
+    bookingProviderName: `Seller ${index}`,
+    bookingUrl: `https://example.com/offer-${index}`,
+    pricePerDay: 30 + index,
+    totalPrice: 90 + index * 3,
+  }));
+  const carsWithOffers = [
+    { ...carBase, id: "fixture-many-offers", offers },
+    { ...carBase, id: "fixture-few-offers", offers: offers.slice(0, 2) },
+  ];
+  await page.route("**/api/cars/search", route => route.fulfill({ json: { results: carsWithOffers, status: "available" } }));
+  for (const viewport of [{ width: 390, height: 844 }, { width: 1365, height: 900 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto(routes.cars);
+    const cards = page.locator("[data-car-result-card-shell]");
+    await expect(cards).toHaveCount(2);
+    // Results are sorted by their cheapest offer and ID, not fixture array order.
+    // Identify each card by its stable result key so this test verifies actual
+    // offer counts and natural card growth regardless of sorting.
+    const manyCard = page.locator('[data-result-key="fixture-many-offers"] [data-car-result-card-shell]');
+    const fewCard = page.locator('[data-result-key="fixture-few-offers"] [data-car-result-card-shell]');
+    await expect(manyCard).toHaveCount(1);
+    await expect(fewCard).toHaveCount(1);
+    await expect(manyCard.locator("[data-car-deal-provider-offer]")).toHaveCount(9);
+    await expect(fewCard.locator("[data-car-deal-provider-offer]")).toHaveCount(2);
+    const many = await manyCard.boundingBox();
+    const few = await fewCard.boundingBox();
+    expect(many).not.toBeNull();
+    expect(few).not.toBeNull();
+    expect(many!.height).toBeGreaterThan(few!.height + 150);
+    // Neither list order nor changing heights may make cards overlap.
+    expect(
+      many!.y + many!.height <= few!.y + 1 ||
+      few!.y + few!.height <= many!.y + 1,
+    ).toBe(true);
+
+    const firstRow = manyCard.locator("[data-car-deal-provider-offer]").first();
+    const provider = await firstRow.locator("[data-car-deal-provider-name]").boundingBox();
+    const price = await firstRow.locator("[data-car-deal-provider-price]").boundingBox();
+    const action = await firstRow.locator("[data-car-deal-provider-view-deal]").boundingBox();
+    expect(provider).not.toBeNull();
+    expect(price).not.toBeNull();
+    expect(action).not.toBeNull();
+    expect(provider!.x + provider!.width).toBeLessThan(price!.x + 1);
+    expect(price!.x + price!.width).toBeLessThan(action!.x + 1);
+    expect(Math.abs(provider!.y - price!.y)).toBeLessThan(16);
+    expect(await page.locator("[data-supplier-information]").count()).toBe(0);
+  }
 });
 test("customer Hotel Details does not append the generic KAYAK supplier-information box", async ({ page }) => {
   await page.route("**/api/hotels/details?**", route => route.fulfill({ json: {

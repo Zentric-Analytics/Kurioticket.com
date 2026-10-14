@@ -48,8 +48,8 @@ test("remaining supplier-information surfaces preserve sanitized facts without t
   const source = (path: string) => readFileSync(path, "utf8");
   assert.match(source("src/components/results/flightDetails/StandaloneFlightDetails.tsx"), /activeOffer\.providerDetails\?\.suppliedFacts/);
   assert.match(source("apps/mobile/src/features/search/NativeFlightDetails.tsx"), /activeOffer\.providerDetails\?\.suppliedFacts/);
-  assert.match(source("src/components/results/CarResultCard.tsx"), /facts=\{offer\.suppliedFacts\}/);
-  assert.match(source("apps/mobile/src/features/search/CarResultCard.tsx"), /facts=\{candidate\.suppliedFacts\}/);
+  assert.doesNotMatch(source("src/components/results/CarResultCard.tsx"), /SupplierInformation|facts=\{offer\.suppliedFacts\}/);
+  assert.doesNotMatch(source("apps/mobile/src/features/search/CarResultCard.tsx"), /NativeSupplierInformation|facts=\{candidate\.suppliedFacts\}/);
 
   const webHotel = source("src/components/results/hotelDetails/StandaloneHotelDetails.tsx");
   assert.doesNotMatch(webHotel, /SupplierInformation|hotelSupplierFacts|Property information supplied by KAYAK/);
