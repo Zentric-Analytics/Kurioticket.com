@@ -35,7 +35,17 @@ test("provider offers show logo, name, per-day price and a direct provider View 
   assert.match(picker, /group\.logoUrl/);
   assert.match(picker, /title=\{group\.providerName\}/);
   assert.match(picker, /data-car-deal-provider-name/);
-  assert.ok(picker.includes('text-[9px] leading-[11px] tracking-[-0.01em]'));
+  assert.ok(picker.includes('text-[11px] leading-[15px]'));
+  assert.ok(picker.includes('text-[12px] leading-[16px]'));
+  assert.ok(picker.includes('text-[12px] leading-4'));
+  assert.match(picker, /data-car-deal-picker-compact/);
+  assert.ok(picker.includes('min-h-10 max-[359px]:grid-cols-1'));
+  assert.ok(picker.includes('max-[409px]:hidden'));
+  assert.ok(picker.includes('h-10 w-9 max-[389px]:w-8'));
+  assert.match(picker, /Info size=\{compact \? 16 : 14\}/);
+  assert.equal((picker.match(/fontSize: 11, lineHeight: "16px", fontWeight: 600/g) ?? []).length, 2);
+  assert.match(card, /data-car-card-mobile-offers[\s\S]*flex-\[2\.65\]/);
+  assert.match(card, /data-car-card-mobile-pricing[\s\S]*flex-\[1\.1\]/);
   assert.ok(picker.includes('min-w-0 truncate whitespace-nowrap font-semibold'));
   assert.match(picker, /compact \? "gap-0\.5" : "gap-1"/);
   assert.ok(picker.includes('grid-cols-[minmax(0,calc(50%_+_20px))_minmax(0,1fr)]'));
