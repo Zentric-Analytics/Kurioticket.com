@@ -589,7 +589,7 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.doesNotMatch(source, /fixed inset-x-0 bottom-0 z-\[90px\]|fixed inset-x-0 bottom-0 z-\[90\]/);
   assert.match(source, /pb-\[calc\(1\.75rem\+env\(safe-area-inset-bottom\)\)\][\s\S]*sm:pb-16/);
   assert.match(mobileDeck, /data-mobile-flight-deal-action/);
-  assert.match(mobileDeck, /canViewDeal \? redirecting \? "Opening…" : "View deal"/);
+  assert.match(mobileDeck, /data-mobile-flight-deal-action\s*>\s*View deals\s*<\/button>/);
   assert.match(source, /role="tablist"/);
   assert.equal((source.match(/role="tab"/g) || []).length, 1);
   assert.deepEqual(["Compare deals", "Fare details", "Fare conditions", "Optional extras"].map((label) => source.includes(`label: "${label}"`)), [true, true, true, true]);
@@ -1128,7 +1128,7 @@ test("mobile Compare deals owns booking actions without a fixed checkout dock", 
   assert.match(mobileDeck, /const sourcePrice = formatFlightResultCurrency\(deal\.price, deal\.currency/);
   assert.match(mobileDeck, /const canViewDeal = canContinue && pricesReady/);
   assert.match(mobileDeck, /deal\.providerLogoUrl[\s\S]*?deal\.providerName/);
-  assert.match(mobileDeck, /redirecting \? "Opening…" : "View deal"/);
+  assert.match(mobileDeck, /data-mobile-flight-deal-action\s*>\s*View deals\s*<\/button>/);
   assert.match(mobileDeck, /disabled=\{redirecting \|\| !canViewDeal\}/);
   assert.doesNotMatch(mobileDeck, /No booking deals available|No additional live provider deals were supplied for this fare/);
 

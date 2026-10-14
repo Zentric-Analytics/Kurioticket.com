@@ -66,7 +66,7 @@ test("mobile Compare deals keeps resilient provider identity, selection, price h
   assert.match(deck, /const canViewDeal = canContinue && pricesReady/);
   assert.match(deck, /Trip total/);
   assert.match(deck, /data-mobile-flight-deal-action/);
-  assert.match(deck, /redirecting \? "Opening…" : "View deal"/);
+  assert.equal(deck.match(/data-mobile-flight-deal-action\s*>\s*([^<]+)<\/button>/)?.[1].trim(), "View deals");
   assert.match(deck, /disabled=\{redirecting \|\| !canViewDeal\}/);
   assert.match(deck, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.doesNotMatch(deck, /No booking deals available|No additional live provider deals were supplied for this fare/);

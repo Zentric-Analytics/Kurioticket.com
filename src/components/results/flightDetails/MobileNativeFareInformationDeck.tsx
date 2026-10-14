@@ -247,7 +247,8 @@ function DealsSurface({
             <button
               type="button"
               disabled={redirecting || !canViewDeal}
-              aria-label={canViewDeal ? `View deal with ${deal.providerName}` : `Provider checkout unavailable for ${deal.providerName}`}
+              aria-busy={redirecting || !pricesReady || undefined}
+              aria-label={canViewDeal ? `View deals with ${deal.providerName}` : `Provider checkout unavailable for ${deal.providerName}`}
               onClick={() => {
                 onSelectDeal(deal.offerId);
                 onViewDeal(deal.offerId);
@@ -255,7 +256,7 @@ function DealsSurface({
               className="focus-ring inline-flex min-h-8 items-center justify-center whitespace-nowrap rounded-lg bg-[#004bb8] px-2.5 text-[16px] font-semibold leading-5 text-white disabled:opacity-50"
               data-mobile-flight-deal-action
             >
-              {canViewDeal ? redirecting ? "Opening…" : "View deal" : pricesReady ? "Unavailable" : "Checking…"}
+              View deals
             </button>
           </article>
         );
