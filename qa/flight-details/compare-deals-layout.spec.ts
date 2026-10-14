@@ -58,7 +58,7 @@ test("compact inline totals, provider truncation, keyboard selection and exact-o
     const amount = group.querySelector("strong")!, basis = group.querySelector("span")!;
     const action = element.querySelector(`[data-${prefix}-flight-deal-action]`)!;
     const r = element.getBoundingClientRect(), g = group.getBoundingClientRect(), a = amount.getBoundingClientRect(), b = basis.getBoundingClientRect(), c = action.getBoundingClientRect();
-    return { display: getComputedStyle(group).display, align: getComputedStyle(group).alignItems, nowrap: getComputedStyle(group).whiteSpace, cardHeight: r.height, groupHeight: g.height, amountRight: a.right, basisLeft: b.left, right: r.right, groupRight: g.right, actionRight: c.right, overflow: document.documentElement.scrollWidth - innerWidth };
+    return { display: getComputedStyle(group).display, align: getComputedStyle(group).alignItems, nowrap: getComputedStyle(group).whiteSpace, centerOffset: Math.abs((g.left + g.right - r.left - r.right) / 2), actionLeft: c.left, cardHeight: r.height, groupHeight: g.height, amountRight: a.right, basisLeft: b.left, right: r.right, groupRight: g.right, actionRight: c.right, overflow: document.documentElement.scrollWidth - innerWidth };
   }), prefix);
   for (const g of geometry) {
     expect(g.display).toMatch(/^(inline-)?flex$/); expect(g.align).toBe("baseline"); expect(g.nowrap).toBe("nowrap");
@@ -66,6 +66,8 @@ test("compact inline totals, provider truncation, keyboard selection and exact-o
     expect(g.cardHeight).toBe(page.viewportSize()!.width < 640 ? 76 : 88);
     expect(g.groupRight).toBeLessThanOrEqual(g.right); expect(g.actionRight).toBeLessThanOrEqual(g.right);
     expect(g.overflow).toBe(0);
+    expect(g.centerOffset).toBeLessThanOrEqual(1);
+    expect(g.groupRight).toBeLessThanOrEqual(g.actionLeft - 3);
   }
   await first.getByRole("radio").focus(); await page.keyboard.press("End");
   await expect(last.getByRole("radio")).toBeFocused(); await expect(last.getByRole("radio")).toBeChecked();

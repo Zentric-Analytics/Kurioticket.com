@@ -89,7 +89,7 @@ test("mobile Flight and Hotel provider cards retain shared styling with product-
     assert.ok(flightCard.split(/\s+/).includes(token), `Flight retains ${token}`);
     assert.ok(card.split(/\s+/).includes(token), `Hotel retains ${token}`);
   }
-  assert.ok(flightCard.includes("grid-cols-[minmax(0,1fr)_auto_auto]"));
+  assert.ok(flightCard.includes("grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]"));
   assert.ok(card.includes("grid-cols-[max-content_max-content_max-content]"));
   assert.ok(card.includes("justify-between"));
   assert.ok(card.includes("max-[349px]:px-2"));
