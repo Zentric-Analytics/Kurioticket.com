@@ -63,7 +63,7 @@ for (const [workspace, files] of Object.entries(matrices)) {
   const args = workspace === "root"
     ? ["--test", "--import", "jiti/register", ...files]
     : ["--test", "--require", "./testAssetSetup.cjs", "--import", "jiti/register", ...files];
-  const env = { ...process.env, JITI_TSCONFIG_PATHS: "true", TZ: "UTC" };
+  const env = { ...process.env, JITI_TSCONFIG_PATHS: "true", JITI_JSX: "true", TZ: "UTC" };
   const result = spawnSync(process.execPath, args, { cwd, env, stdio: "inherit" });
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
