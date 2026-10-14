@@ -102,7 +102,9 @@ test("provider picker exposes every supplied seller without a three-provider cut
   assert.match(picker, /getCarDealPickerGroups\(car\)/);
   assert.match(picker, /groups\.map\(\(group\) =>/);
   assert.doesNotMatch(picker, /groups\.slice\(/);
-  assert.match(picker, /grid-cols-3 gap-y-3/);
+  assert.ok(picker.includes('grid-cols-[minmax(0,1fr)_auto_auto]'));
+  assert.ok(picker.includes('space-y-0'));
+  assert.doesNotMatch(picker, /grid-cols-3 gap-y-3|Compare deals/);
   const groups = getCarDealPickerGroups({
     inventorySource: "kayak-sandbox",
     offers: Array.from({ length: 7 }, (_, index) => offer(String(index), `Seller ${index}`, 200 + index)),

@@ -25,7 +25,7 @@ function ProviderMark({ name, logoUrl }: { name: string; logoUrl?: string }) {
   return <View accessible={false} style={styles.fallbackMark}><Text style={styles.fallbackLetter}>{name.trim().slice(0, 1).toUpperCase() || "P"}</Text></View>;
 }
 
-/** The same three inline seller/offer choices as mobile web, not a details-page preview. */
+/** Compact one-line seller offers in the card's existing left-side comparison area. */
 export function NativeCarResultOfferPicker({
   result, displayCurrency, rates,
 }: {
@@ -64,15 +64,15 @@ export function NativeCarResultOfferPicker({
 }
 
 const styles = StyleSheet.create({
-  providers: { minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 6, paddingHorizontal: 8, paddingTop: 2, paddingBottom: 5 },
-  provider: { flex: 1, minWidth: 0 },
-  brand: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 2 },
+  providers: { minWidth: 0, gap: 0, paddingHorizontal: 6, paddingTop: 2, paddingBottom: 3 },
+  provider: { minHeight: 18, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 3 },
+  brand: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 2 },
   logo: { width: 14, height: 14, flexShrink: 0 },
   fallbackMark: { width: 14, height: 14, borderRadius: 3, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center" },
   fallbackLetter: { fontSize: 10, fontWeight: "700", color: "#07133B", fontFamily: appFonts.bold },
   providerName: { flex: 1, minWidth: 0, fontSize: 9, lineHeight: 12, fontWeight: "600", fontFamily: appFonts.semibold },
-  price: { marginTop: 3, fontSize: 11, lineHeight: 14, fontWeight: "700", fontFamily: appFonts.bold, fontVariant: ["tabular-nums"] },
+  price: { flexShrink: 0, fontSize: 11, lineHeight: 14, fontWeight: "700", fontFamily: appFonts.bold, fontVariant: ["tabular-nums"] },
   perDay: { fontSize: 9, lineHeight: 12, fontWeight: "500", fontFamily: appFonts.medium },
-  action: { minHeight: 26, flexDirection: "row", alignItems: "center", gap: 2 },
+  action: { minHeight: 18, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 2 },
   link: { fontSize: 9, lineHeight: 13, fontWeight: "600", fontFamily: appFonts.semibold },
 });
