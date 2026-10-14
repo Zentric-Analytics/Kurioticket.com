@@ -38,8 +38,8 @@ test("provider offers show logo, name, per-day price and a direct provider View 
   assert.ok(picker.includes('text-[9px] leading-[11px] tracking-[-0.01em]'));
   assert.ok(picker.includes('min-w-0 truncate whitespace-nowrap font-semibold'));
   assert.match(picker, /compact \? "gap-0\.5" : "gap-1"/);
-  assert.ok(picker.includes('grid-cols-[minmax(0,calc(50%+20px))_minmax(0,1fr)]'));
-  assert.ok(picker.includes('grid-cols-[minmax(0,calc(50%+31px))_minmax(0,1fr)]'));
+  assert.ok(picker.includes('grid-cols-[minmax(0,calc(50%_+_20px))_minmax(0,1fr)]'));
+  assert.ok(picker.includes('grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)]'));
   assert.match(picker, /const offer = group\.primaryOffer/);
   assert.match(picker, /amount: offer\.pricePerDay/);
   assert.match(picker, /\{formatOfferPrice\(offer\)\}/);
