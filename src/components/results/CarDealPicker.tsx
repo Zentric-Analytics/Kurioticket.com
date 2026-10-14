@@ -232,7 +232,7 @@ export function CarDealPicker({
         aria-label="Rental rate details"
         onClose={() => setDetailsKey(null)}
         onClick={event => { event.stopPropagation(); if (event.target === event.currentTarget) event.currentTarget.close(); }}
-        className="fixed inset-x-0 bottom-0 top-auto m-0 max-h-[85dvh] w-full max-w-none overflow-y-auto rounded-t-2xl border border-[#D8E1EC] bg-white p-4 text-[#07133B] shadow-2xl backdrop:bg-[#07133B]/55 md:inset-0 md:m-auto md:max-h-[80vh] md:w-[min(540px,calc(100%-2rem))] md:rounded-2xl md:p-5"
+        className="fixed inset-x-0 bottom-0 top-auto m-0 max-h-[85dvh] w-full max-w-none overflow-y-auto rounded-t-2xl border border-[#D8E1EC] bg-white p-4 text-[#07133B] shadow-2xl backdrop:bg-[#07133B]/55 md:inset-0 md:m-auto md:max-h-[80vh] md:w-[540px] md:max-w-[calc(100%_-_2rem)] md:rounded-2xl md:p-5"
       >
         {selectedOffer && selectedGroup ? (
           <div className="space-y-4" onClick={event => event.stopPropagation()}>
