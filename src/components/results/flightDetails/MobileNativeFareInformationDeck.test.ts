@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { MobileNativeFareInformationDeck } from "./MobileNativeFareInformationDeck";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
@@ -66,7 +68,7 @@ test("mobile Compare deals keeps resilient provider identity, selection, price h
   assert.match(deck, /const canViewDeal = canContinue && pricesReady/);
   assert.match(deck, /Trip total/);
   assert.match(deck, /data-mobile-flight-deal-action/);
-  assert.match(deck, /redirecting \? "Opening…" : "View deal"/);
+  assert.equal(deck.match(/data-mobile-flight-deal-action\s*>\s*([^<]+)<\/button>/)?.[1].trim(), "View deals");
   assert.match(deck, /disabled=\{redirecting \|\| !canViewDeal\}/);
   assert.match(deck, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.doesNotMatch(deck, /No booking deals available|No additional live provider deals were supplied for this fare/);
@@ -109,6 +111,35 @@ test("provider identity treatment preserves the default mark and broken-logo fal
     assert.doesNotMatch(provider.props.className, /border|rounded/);
     assert.equal(standard.props["data-flight-identity-mark"], "fallback");
     assert.equal(provider.props["data-flight-identity-mark"], "fallback");
+  } finally {
+    if (previousReact === undefined) Reflect.deleteProperty(globalThis, "React");
+    else Reflect.set(globalThis, "React", previousReact);
+  }
+});
+
+test("provider action accessible names include the visible label in every state", () => {
+  const previousReact = Reflect.get(globalThis, "React");
+  Reflect.set(globalThis, "React", React);
+  try {
+    for (const state of [
+      {available: true,ready: true,redirecting: false,suffix: ""},
+      {available: false,ready: true,redirecting: false,suffix: ", checkout unavailable"},
+      {available: true,ready: false,redirecting: false,suffix: ", checking price"},
+      {available: true,ready: true,redirecting: true,suffix: ""},
+    ]) {
+      const offer = {id:"offer-1",provider:"Duffel",airlineName:"Example Air",price:100,currency:"USD"};
+      const fare = {key:"basic",label:"Basic",offer,handoff:{available:state.available},deals:[]};
+      const markup = renderToStaticMarkup(React.createElement(MobileNativeFareInformationDeck, {
+        activeTab:"deals",onTabChange:()=>{},fare:fare as never,activeOffer:offer as never,locale:"en-US",
+        selectedDealOfferId:null,onSelectDeal:()=>{},selectedCurrency:"USD",currencyRates:{USD:1},
+        isFallbackRate:false,pricesReady:state.ready,redirecting:state.redirecting,onViewDeal:()=>{},
+      }));
+      const action = markup.match(/<button\b[^>]*data-mobile-flight-deal-action[^>]*>/)?.[0];
+      assert.ok(action);
+      assert.equal(action.match(/aria-label="([^"]+)"/)?.[1], `View deals with Duffel${state.suffix}`);
+      assert.equal(/disabled=""/.test(action), !state.available || !state.ready || state.redirecting);
+      assert.equal(/aria-busy="true"/.test(action), !state.ready || state.redirecting);
+    }
   } finally {
     if (previousReact === undefined) Reflect.deleteProperty(globalThis, "React");
     else Reflect.set(globalThis, "React", previousReact);
