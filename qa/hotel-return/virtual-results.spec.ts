@@ -70,6 +70,8 @@ test("Cars mobile card balances category and moves four specifications underneat
     const info = card.locator("[data-car-card-mobile-information]");
     const specs = card.locator("[data-car-card-mobile-specs]");
     const cancellation = card.locator("[data-car-card-mobile-cancellation]");
+    const category = card.locator("[data-car-card-mobile-category]");
+    const name = card.locator("[data-car-card-mobile-identity] h2, [data-car-card-mobile-identity] h3").first();
     const image = card.locator("[data-car-card-mobile-image]");
     const lower = card.locator("[data-car-card-mobile-lower-band]");
     const offers = card.locator("[data-car-card-mobile-offers]");
@@ -80,6 +82,11 @@ test("Cars mobile card balances category and moves four specifications underneat
     await expect(offers).toBeVisible();
     await expect(lower.locator("[data-car-card-mobile-specs]")).toHaveCount(0);
     const infoRect = (await info.boundingBox())!;
+    const nameRect = (await name.boundingBox())!;
+    const categoryRect = (await category.boundingBox())!;
+    const categoryGap = categoryRect.y - (nameRect.y + nameRect.height);
+    expect(categoryGap).toBeGreaterThanOrEqual(4);
+    expect(categoryGap).toBeLessThanOrEqual(11);
     const specRect = (await specs.boundingBox())!;
     const cancelRect = (await cancellation.boundingBox())!;
     const imageRect = (await image.boundingBox())!;
@@ -104,7 +111,7 @@ test("Cars mobile card balances category and moves four specifications underneat
   await page.goto(routes.cars);
   const noCancellation = page.locator("[data-car-result-card-shell]").first();
   await expect(noCancellation.locator("[data-car-card-mobile-cancellation]")).toHaveCount(0);
-  const locationRect = (await noCancellation.locator("[data-car-card-mobile-information] p").first().boundingBox())!;
+  const locationRect = (await noCancellation.locator("[data-car-card-mobile-location]").boundingBox())!;
   const specRect = (await noCancellation.locator("[data-car-card-mobile-specs]").boundingBox())!;
   expect(specRect.y).toBeGreaterThanOrEqual(locationRect.y + locationRect.height - 1);
 
