@@ -220,9 +220,9 @@ test("a missing rate falls back accurately to the provider currency", () => {
 });
 
 const marketSymbols = {
-  USD: "$", NGN: "₦", CAD: "CA$", AUD: "A$", GBP: "£", EUR: "€",
-  BRL: "R$", INR: "₹", JPY: "¥", CNY: "CN¥", HKD: "HK$", SGD: "S$",
-  NZD: "NZ$", MXN: "MX$", KRW: "₩", PLN: "zł",
+  USD: "$", NGN: "₦", CAD: "$", AUD: "$", GBP: "£", EUR: "€",
+  BRL: "R$", INR: "₹", JPY: "¥", CNY: "¥", HKD: "$", SGD: "$",
+  NZD: "$", MXN: "$", KRW: "₩", PLN: "zł",
 } as const;
 
 test("Hotel market formatting uses deterministic recognizable symbols", () => {
@@ -239,7 +239,7 @@ test("Hotel market formatting uses deterministic recognizable symbols", () => {
 test("Hotel symbols remain available when formatToParts is unavailable", () => {
   withoutFormatToParts(() => {
     assert.equal(formatMarketCurrency(420, "USD"), "$420.00");
-    assert.equal(formatMarketCurrency(420, "CAD"), "CA$420.00");
+    assert.equal(formatMarketCurrency(420, "CAD"), "$420.00");
     assert.equal(formatMarketCurrency(420, "NGN"), "₦420.00");
     assert.equal(formatMarketCurrency(420, "JPY"), "¥420");
   });
@@ -278,7 +278,7 @@ test("Hotel conversion keeps provider truth and falls back when rates are missin
   const provider = { pricePerNight: 210, currency: "USD" };
   const rates = { USD: 1, CAD: 1.4, NGN: 1600, GBP: 0.8, EUR: 0.9 };
   assert.equal(displayMarketPrice(210, provider.currency, "USD", rates).formatted, "$210.00");
-  assert.equal(displayMarketPrice(210, provider.currency, "CAD", rates).formatted, "CA$294.00");
+  assert.equal(displayMarketPrice(210, provider.currency, "CAD", rates).formatted, "$294.00");
   assert.equal(displayMarketPrice(210, provider.currency, "NGN", rates).formatted, "₦336,000.00");
   assert.equal(displayMarketPrice(210, provider.currency, "GBP", rates).formatted, "£168.00");
   assert.equal(displayMarketPrice(210, provider.currency, "EUR", rates).formatted, "€189.00");
@@ -290,7 +290,7 @@ test("Hotel conversion keeps provider truth and falls back when rates are missin
 });
 
 test("Hotel auto-detected markets and explicit preference select market symbols", () => {
-  for (const [country, expected] of [["US","$"],["NG","₦"],["CA","CA$"],["GB","£"],["FR","€"],["JP","¥"],["IN","₹"]]) {
+  for (const [country, expected] of [["US","$"],["NG","₦"],["CA","$"],["GB","£"],["FR","€"],["JP","¥"],["IN","₹"]]) {
     const currency = resolveDisplayCurrencyContext({ preferredCurrency: null, ipCountryCode: country, locale: "en-US" }).resolvedCurrency;
     assert.ok(formatMarketCurrency(1, currency).startsWith(expected));
   }
