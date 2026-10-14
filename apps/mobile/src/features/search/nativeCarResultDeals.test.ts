@@ -35,17 +35,19 @@ test("native Cars shows all supplied static Kurioticket prices without inventing
   assert.equal(nativeCarPrimaryBookingUrl(result), null);
 });
 
-test("native Cars groups other providers the same way as web, preserving the cheapest seller offer", () => {
+test("native Cars preserves every distinct KAYAK rate through the shared web grouping", () => {
   const result = car([
     offer("b-high", "Provider B", 200),
     offer("a-low", "Provider A", 111, "https://sandbox-en-us.kayakaffiliates.com/in?offer=a"),
     offer("b-low", "Provider B", 135),
   ], "kayak-sandbox");
   const choices = nativeCarResultDealChoices(result);
-  assert.deepEqual(choices.map(({ providerName }) => providerName), ["Provider A", "Provider B"]);
-  assert.deepEqual(choices.map(({ offer: item }) => item.id), ["a-low", "b-low"]);
+  assert.deepEqual(choices.map(({ providerName }) => providerName), ["Provider A", "Provider B", "Provider B"]);
+  assert.deepEqual(choices.map(({ offer: item }) => item.id), ["a-low", "b-low", "b-high"]);
+  assert.equal(new Set(choices.map(choice => choice.key)).size, 3);
   assert.equal(choices[0]?.bookingUrl, "https://sandbox-en-us.kayakaffiliates.com/in?offer=a");
   assert.equal(choices[1]?.bookingUrl, null);
+  assert.equal(choices[2]?.bookingUrl, null);
 });
 
 test("native Cars preserves five distinct sellers without a three-choice cap", () => {

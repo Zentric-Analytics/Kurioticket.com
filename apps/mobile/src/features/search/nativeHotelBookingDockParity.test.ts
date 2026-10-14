@@ -26,7 +26,7 @@ function rateStyle(name: string, nextName?: string) {
 test("mobile web reference renders dedicated Hotel provider offers from shared offer data", () => {
   assert.match(webMobileDetails, /import \{ MobileProviderOffer \} from "\.\/HotelPriceComparisonSection"/);
   assert.match(webMobileDetails, /offers\.map\(offer => <MobileProviderOffer/);
-  assert.match(webMobileDetails, /onInfo=\{\(anchor\) => setRateInfo\(\{ offer, anchor \}\)\}/);
+  assert.match(webMobileDetails, /onInfo=\{\(\) => setRateInfo\(offer\)\}/);
   assert.match(webMobileDetails, /perNightText=\{props\.perNightText\}/);
   assert.match(webMobileDetails, /totalPrice: total/);
   const rateListStart = webMobileDetails.indexOf('<div aria-label="Hotel rates" className={styles.rateList}>');
@@ -36,8 +36,9 @@ test("mobile web reference renders dedicated Hotel provider offers from shared o
   const providerCards = webMobileDetails.slice(rateListStart, rateListEnd);
   assert.match(providerCards, /offers\.map\(offer => <MobileProviderOffer/);
   assert.doesNotMatch(providerCards, />Stay total</, "the card list must not repeat the details-dialog total label");
-  assert.match(webMobileDetails, /<HotelRateInfoPopover[\s\S]*offer=\{rateInfo\.offer\}[\s\S]*anchor=\{rateInfo\.anchor\}/);
-  assert.doesNotMatch(webMobileDetails, /<DetailsDialog title="Rate details"/);
+  assert.match(webMobileDetails, /rateInfo \? <DetailsDialog title="Rate details" compact preserveStickyPage onClose=\{\(\) => setRateInfo\(null\)\}/);
+  assert.match(webMobileDetails, /rateInfo\.suppliedRateFacts\?\.map/);
+  assert.doesNotMatch(webMobileDetails, /<HotelRateInfoPopover/);
   assert.doesNotMatch(webMobileDetails, /className=\{styles\.rateAction\}/);
   assert.doesNotMatch(webMobileCss, /\.rate\[data-selected="true"\][^}]*border-color: var\(--accent\)/);
 });
