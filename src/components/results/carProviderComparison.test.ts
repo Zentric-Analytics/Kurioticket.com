@@ -63,27 +63,29 @@ test("provider groups normalize seller identity without inventing a provider", (
   assert.equal(groups[0]?.primaryOffer.id, "a");
 });
 
-test("static Kurioticket inventory exposes up to three real offer choices without inventing providers", () => {
+test("static Kurioticket inventory retains all real offers without inventing providers", () => {
   const groups = getCarDealPickerGroups({
     inventorySource: "kurioticket-static-cars",
     offers: [
       offer("k-278", "Kurioticket", 278, "/brand/kurioticket-logo-primary-light-bg.svg"),
       offer("k-292", "Kurioticket", 292, "/brand/kurioticket-logo-primary-light-bg.svg"),
       offer("k-306", "Kurioticket", 306, "/brand/kurioticket-logo-primary-light-bg.svg"),
+      offer("k-320", "Kurioticket", 320, "/brand/kurioticket-logo-primary-light-bg.svg"),
     ],
   });
 
-  assert.equal(groups.length, 3);
+  assert.equal(groups.length, 4);
   assert.deepEqual(groups.map((group) => group.primaryOffer.id), [
     "k-278",
     "k-292",
     "k-306",
+    "k-320",
   ]);
   assert.ok(groups.every((group) => group.providerName === "Kurioticket"));
   assert.ok(groups.every((group) => group.offers.length === 1));
 });
 
-test("live or sandbox inventory keeps provider grouping instead of splitting one seller's offers", () => {
+test("live KAYAK inventory creates one result row per offer, including the same seller", () => {
   const groups = getCarDealPickerGroups({
     inventorySource: "kayak-sandbox",
     offers: [
@@ -92,17 +94,29 @@ test("live or sandbox inventory keeps provider grouping instead of splitting one
       offer("other", "Provider C", 306),
     ],
   });
+  assert.equal(groups.length, 3);
+  assert.deepEqual(groups.map(group => group.primaryOffer.id), ["p-low", "p-high", "other"]);
+  assert.deepEqual(groups.map(group => group.providerName), ["Provider B", "Provider B", "Provider C"]);
+  assert.equal(new Set(groups.map(group => group.key)).size, 3);
+});
 
-  assert.equal(groups.length, 2);
-  assert.deepEqual(groups[0]?.offers.map((item) => item.id), ["p-low", "p-high"]);
-  assert.equal(groups[1]?.providerName, "Provider C");
+test("ten offers from one KAYAK seller stay distinct and ordered for card expansion", () => {
+  const groups = getCarDealPickerGroups({
+    inventorySource: "kayak-sandbox",
+    offers: Array.from({ length: 10 }, (_, index) => offer(`offer-${index}`, "KAYAK seller", 400 - index)),
+  });
+  assert.equal(groups.length, 10);
+  assert.deepEqual(groups.map(group => group.primaryOffer.totalPrice), [391, 392, 393, 394, 395, 396, 397, 398, 399, 400]);
+  assert.equal(new Set(groups.map(group => group.key)).size, 10);
 });
 
 test("provider picker exposes every supplied seller without a three-provider cutoff", () => {
   assert.match(picker, /getCarDealPickerGroups\(car\)/);
   assert.match(picker, /groups\.map\(\(group\) =>/);
   assert.doesNotMatch(picker, /groups\.slice\(/);
-  assert.match(picker, /grid-cols-3 gap-y-3/);
+  assert.match(picker, /grid-cols-\\[minmax\\(0,1fr\\)_auto_auto\\]/);
+  assert.match(picker, /divide-y divide-\\[#E2E8F0\\]/);
+  assert.doesNotMatch(picker, /grid-cols-3/);
   const groups = getCarDealPickerGroups({
     inventorySource: "kayak-sandbox",
     offers: Array.from({ length: 7 }, (_, index) => offer(String(index), `Seller ${index}`, 200 + index)),
