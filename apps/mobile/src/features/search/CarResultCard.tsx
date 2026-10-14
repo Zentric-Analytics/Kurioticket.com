@@ -84,7 +84,6 @@ export function CarResultCard({ result, rank, cheapest, imageUri, searchParams, 
         {specLabels.bags ? <Spec icon={<BriefcaseBusiness size={14} color="#64748B" />} label={specLabels.bags} /> : null}
       </View> : null}
         </View>
-        <NativeCarResultOfferPicker result={result} displayCurrency={displayCurrency} rates={rates}/>
       </View>
       <View style={c.commerceColumn}>
           <View style={c.priceColumn}>
@@ -93,6 +92,7 @@ export function CarResultCard({ result, rank, cheapest, imageUri, searchParams, 
         <Pressable accessibilityRole={primaryBookingUrl ? "link" : "button"} accessibilityLabel={`View deal for ${result.modelName}`} accessibilityState={{disabled: !primaryBookingUrl}} disabled={!primaryBookingUrl} onPress={primaryBookingUrl ? () => void Linking.openURL(primaryBookingUrl) : undefined} hitSlop={{top:4,bottom:4,left:4,right:4}} style={({pressed}) => [c.viewDeal,pressed&&c.pressed]}><Text style={[c.viewDealText,{color:theme.dark ? "#8FB5FF" : ui.blue}]}>View deal</Text><ChevronRight accessible={false} size={16} strokeWidth={2.2} color={theme.dark ? "#8FB5FF" : ui.blue} /></Pressable>
       </View>
     </View>
+    <NativeCarResultOfferPicker result={result} displayCurrency={displayCurrency} rates={rates}/>
     {result.offers.map(candidate => <NativeSupplierInformation key={candidate.id} facts={candidate.suppliedFacts} title={`Supplier information — ${candidate.bookingProviderName} — ${candidate.currency} ${candidate.totalPrice}`} />)}
   </View>;
 }
