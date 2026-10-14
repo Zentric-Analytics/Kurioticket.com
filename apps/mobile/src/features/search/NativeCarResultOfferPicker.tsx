@@ -40,7 +40,7 @@ export function NativeCarResultOfferPicker({
   const [expanded, setExpanded] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const choices = nativeCarResultDealChoices(result);
-  const visibleChoices = expanded ? choices : choices.slice(0, 2);
+  const visibleChoices = expanded ? choices : choices.slice(0, 5);
   const narrowActions = rowWidth > 0 && rowWidth < 268;
   const stackVeryNarrow = rowWidth > 0 && rowWidth < 225;
   const selectedChoice = choices.find(choice => choice.key === selectedKey);
@@ -92,15 +92,15 @@ export function NativeCarResultOfferPicker({
         </View>
       </View>;
     })}
-    {choices.length > 2 ? (
+    {choices.length > 5 ? (
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={expanded ? "Show fewer car offers" : "Show " + (choices.length - 2) + " more car offers"}
+        accessibilityLabel={expanded ? "Show fewer car offers" : "Show " + (choices.length - 5) + " more car offers"}
         accessibilityState={{ expanded }}
         onPress={() => setExpanded(current => !current)}
         style={styles.moreAction}
       >
-        <Text style={styles.moreText}>{expanded ? "Show fewer offers" : "+" + (choices.length - 2) + " more offers"}</Text>
+        <Text style={styles.moreText}>{expanded ? "Show fewer offers" : "+" + (choices.length - 5) + " more offers"}</Text>
         <ChevronRight accessible={false} size={12} color="#004BB8" style={{ transform: [{ rotate: expanded ? "-90deg" : "90deg" }] }} />
       </Pressable>
     ) : null}
@@ -156,8 +156,8 @@ export function NativeCarResultOfferPicker({
 }
 
 const styles = StyleSheet.create({
-  providers: { minWidth: 0, gap: 0, paddingTop: 2, paddingBottom: 3 },
-  provider: { minHeight: 44, minWidth: 0, flexDirection: "row", alignItems: "center" },
+  providers: { minWidth: 0, gap: 0, paddingTop: 0, paddingBottom: 0 },
+  provider: { minHeight: 40, minWidth: 0, flexDirection: "row", alignItems: "center" },
   providerNarrow: { flexDirection: "column", alignItems: "stretch", paddingVertical: 3 },
   meta: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4, paddingLeft: 6, paddingRight: 8 },
   brand: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 2 },
@@ -169,9 +169,9 @@ const styles = StyleSheet.create({
   perDay: { fontSize: 10, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
   actionArea: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 2 },
   actionAreaNarrow: { width: "100%", flex: 0, paddingLeft: 22 },
-  action: { minHeight: 44, flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 2 },
+  action: { minHeight: 40, flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 2 },
   link: { fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
-  infoAction: { width: 36, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
+  infoAction: { width: 36, height: 40, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   moreAction: { minHeight: 36, paddingLeft: 6, flexDirection: "row", alignItems: "center", gap: 4 },
   moreText: { fontSize: 11, lineHeight: 16, color: "#004BB8", fontWeight: "600", fontFamily: appFonts.semibold },
   modalRoot: { flex: 1, justifyContent: "flex-end" },
