@@ -1,5 +1,4 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { NativeSupplierInformation } from "./NativeSupplierInformation";
 import { Image, Linking, Pressable, Share, StyleSheet, Text, View } from "react-native";
 import { Award, BriefcaseBusiness, CarFront, ChevronRight, DoorOpen, MapPin, Share2, ShieldCheck, Users } from "lucide-react-native";
 import type { CarResult } from "../../api/travelApi";
@@ -93,7 +92,6 @@ export function CarResultCard({ result, rank, cheapest, imageUri, searchParams, 
         <Pressable accessibilityRole={primaryBookingUrl ? "link" : "button"} accessibilityLabel={`View deal for ${result.modelName}`} accessibilityState={{disabled: !primaryBookingUrl}} disabled={!primaryBookingUrl} onPress={primaryBookingUrl ? () => void Linking.openURL(primaryBookingUrl) : undefined} hitSlop={{top:4,bottom:4,left:4,right:4}} style={({pressed}) => [c.viewDeal,pressed&&c.pressed]}><Text style={[c.viewDealText,{color:theme.dark ? "#8FB5FF" : ui.blue}]}>View deal</Text><ChevronRight accessible={false} size={16} strokeWidth={2.2} color={theme.dark ? "#8FB5FF" : ui.blue} /></Pressable>
       </View>
     </View>
-    {result.offers.map(candidate => <NativeSupplierInformation key={candidate.id} facts={candidate.suppliedFacts} title={`Supplier information — ${candidate.bookingProviderName} — ${candidate.currency} ${candidate.totalPrice}`} />)}
   </View>;
 }
 function Spec({ icon, label }: { icon: ReactNode; label: string }) { const { theme } = useAppTheme(); return <View style={c.spec}>{icon}<Text numberOfLines={2} style={[c.specText,{color:theme.textSecondary}]}>{label}</Text></View>; }
