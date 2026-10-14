@@ -23,8 +23,9 @@ test("mobile results return uses client navigation to retain the in-memory searc
 test("standalone chooses independent mobile and desktop presentations with shared data", () => {
   assert.match(dispatcher, /useSyncExternalStore/);
   assert.match(dispatcher, /max-width: 1023px/);
-  assert.match(dispatcher, /mobile \? <MobileHotelDetails \{\.\.\.props\} \/> : <DesktopHotelDetails \{\.\.\.props\} \/>/);
+  assert.match(dispatcher, /return mobile \? <MobileHotelDetails \{\.\.\.props\} \/> : <DesktopHotelDetails \{\.\.\.props\} \/>/);
   assert.match(dispatcher, /removeEventListener\("change", callback\)/);
+  assert.doesNotMatch(dispatcher, /SupplierInformation|hotelSupplierFacts|Property information supplied by KAYAK|data-supplier-information/);
   assert.doesNotMatch(dispatcher, /<article|<aside|<h1/);
 });
 
