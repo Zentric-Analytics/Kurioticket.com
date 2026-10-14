@@ -119,10 +119,10 @@ export function CarDealPicker({
             <div
               key={group.key}
               role="listitem"
-              className={`grid min-w-0 grid-cols-2 items-center ${compact ? "min-h-4 gap-x-1" : "min-h-[18px] gap-x-5"}`}
+              className={`grid min-w-0 items-center ${compact ? "grid-cols-[minmax(0,calc(50%+20px))_minmax(0,1fr)] min-h-4" : "grid-cols-[minmax(0,calc(50%+31px))_minmax(0,1fr)] min-h-[18px]"}`}
               data-car-deal-provider-offer
             >
-              <div data-car-deal-provider-meta className="flex min-w-0 items-center gap-1">
+              <div data-car-deal-provider-meta className={`flex min-w-0 items-center gap-1 ${compact ? "pr-2" : "pr-3"}`}>
                 <div className={`flex min-w-0 flex-1 items-center ${compact ? "gap-0.5" : "gap-1"}`}>
                 <span
                   className={`${compact ? "h-3.5 w-3.5" : "h-4 w-4"} inline-flex shrink-0 items-center justify-center overflow-hidden`}
@@ -148,7 +148,7 @@ export function CarDealPicker({
                 </p>
               </div>
 
-              <div data-car-deal-provider-action-slot className={`flex min-w-0 items-center justify-start ${compact ? "pl-[18px]" : "pl-[21px]"}`}>
+              <div data-car-deal-provider-action-slot className="flex min-w-0 items-center justify-start">
               {bookingHref ? (
                 <a
                   href={bookingHref}
