@@ -48,8 +48,14 @@ test("remaining supplier-information surfaces preserve sanitized facts without t
   const source = (path: string) => readFileSync(path, "utf8");
   assert.match(source("src/components/results/flightDetails/StandaloneFlightDetails.tsx"), /activeOffer\.providerDetails\?\.suppliedFacts/);
   assert.match(source("apps/mobile/src/features/search/NativeFlightDetails.tsx"), /activeOffer\.providerDetails\?\.suppliedFacts/);
-  assert.match(source("src/components/results/CarResultCard.tsx"), /facts=\{offer\.suppliedFacts\}/);
-  assert.match(source("apps/mobile/src/features/search/CarResultCard.tsx"), /facts=\{candidate\.suppliedFacts\}/);
+  // Keep the sanitized offer data in the models, but never append supplier
+  // information sections to Cars Results cards on web or native.
+  for (const path of [
+    "src/components/results/CarResultCard.tsx",
+    "apps/mobile/src/features/search/CarResultCard.tsx",
+  ]) {
+    assert.doesNotMatch(source(path), /SupplierInformation|NativeSupplierInformation|data-supplier-information|Supplier information/);
+  }
 
   const webHotel = source("src/components/results/hotelDetails/StandaloneHotelDetails.tsx");
   assert.doesNotMatch(webHotel, /SupplierInformation|hotelSupplierFacts|Property information supplied by KAYAK/);
