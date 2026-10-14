@@ -52,6 +52,20 @@ test("a canonical hotel city is resolved to the matching provider place", async 
   assert.equal(result.supported, true);
   if (result.supported && result.search.vertical === "hotels") assert.equal(result.search.destination, "kplace:58075");
 });
+test("an unbound selected hotel destination is not rediscovered as a different provider place", async () => {
+  const location = {
+    id: "city:example", kind: "city", primaryLabel: "Example City", supportingLabel: "Example Country",
+    submittedValue: "Example City, Example Country", verification: "catalogue-only", providerBindings: [],
+    staticCoverage: { flights: "none", hotels: "none", cars: "none", packages: "none" },
+    source: { catalog: "kurioticket", datasetVersion: "test" },
+  } as const;
+  const target = JSON.stringify({ ...location, selectionToken: issueLocationSelection(location, "hotels") });
+  const result = await resolveRegularKayakSearch("hotels", { ...hotel, destination: location.submittedValue, destinationLocation: target }, async () => {
+    throw new Error("selected destinations must not be silently rediscovered");
+  });
+  assert.equal(result.supported, false);
+  if (!result.supported) assert.match(result.reason, /selected destination/i);
+});
 test("tampering with client-carried provider IDs cannot replace the server-authoritative binding", async () => {
   const duffelOnly = JSON.stringify({ ...JSON.parse(locationTarget("kayak", "kplace:1")), providerBindings: [{ provider: "duffel", value: "pla_1", verification: "verified", provenance: "provider-discovery" }] });
   const result = await resolveRegularKayakSearch("hotels", { ...hotel, destinationLocation: duffelOnly }, async () => []);
@@ -72,14 +86,36 @@ test("a selected car city is translated only through its verified provider bindi
   assert.equal(result.supported, true);
   if (result.supported && result.search.vertical === "cars") assert.equal(result.search.origin, "SFO");
 });
+test("an unbound selected car city is not silently reinterpreted as a provider airport", async () => {
+  const location = {
+    id: "city:ng-abuja", kind: "city", primaryLabel: "Abuja", supportingLabel: "Nigeria",
+    submittedValue: "Abuja, Nigeria", verification: "catalogue-only", providerBindings: [],
+    staticCoverage: { flights: "none", hotels: "none", cars: "none", packages: "none" },
+    source: { catalog: "kurioticket", datasetVersion: "test" },
+  } as const;
+  const target = JSON.stringify({ ...location, selectionToken: issueLocationSelection(location, "cars") });
+  const result = await resolveRegularKayakSearch("cars", {
+    pickupLocation: "Abuja, Nigeria", pickupLocationTarget: target,
+    pickupDate: "2099-10-12", dropoffDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45",
+  }, async () => [{ label: "Nnamdi Azikiwe International Airport (ABV)", value: "ABV", kind: "airport" }]);
+  assert.equal(result.supported, false);
+  if (!result.supported) assert.match(result.reason, /selected pick-up location|verified car-search match/i);
+});
 test("an ambiguous car free-text candidate is never accepted by first-candidate guessing", async () => {
   const result = await resolveRegularKayakSearch("cars", { pickupLocation: "Springfield", pickupDate: "2099-10-12", dropoffDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45" }, async () => [{ label: "Springfield, Illinois", value: "SPI" }]);
   assert.equal(result.supported, false);
 });
-test("a canonical car city is resolved to the provider's supported airport", async () => {
+test("a canonical car city is not silently resolved to a similarly named airport", async () => {
   const result = await resolveRegularKayakSearch("cars", { pickupLocation: "San Francisco, California, United States", pickupDate: "2099-10-12", dropoffDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45" }, async (_term, vertical) => {
     assert.equal(vertical, "cars");
     return [{ label: "San Francisco International Airport (SFO)", value: "SFO", kind: "airport" }];
+  });
+  assert.equal(result.supported, false);
+});
+test("a provider city suggestion preserves its exact provider city value", async () => {
+  const result = await resolveRegularKayakSearch("cars", { pickupLocation: "San Francisco, California, United States", pickupDate: "2099-10-12", dropoffDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45" }, async (_term, vertical) => {
+    assert.equal(vertical, "cars");
+    return [{ label: "San Francisco, California, United States", value: "SFO", kind: "city" }];
   });
   assert.equal(result.supported, true);
   if (result.supported && result.search.vertical === "cars") assert.equal(result.search.origin, "SFO");
@@ -148,25 +184,28 @@ test("PAE same-day pickup remains valid while it is still future in Washington",
 });
 
 test("provider-resolved London city uses the resolved LHR rental timezone", async () => {
+  const target = {
+    id: "airport:gb-lhr",
+    kind: "airport",
+    primaryLabel: "London Heathrow Airport",
+    supportingLabel: "London, United Kingdom",
+    submittedValue: "London Heathrow Airport (LHR)",
+    verification: "verified",
+    providerBindings: [{ provider: "kayak", value: "LHR", kind: "airport", verification: "verified", provenance: "provider-discovery" }],
+    staticCoverage: { flights: "none", hotels: "none", cars: "none", packages: "none" },
+    source: { catalog: "kurioticket", datasetVersion: "test" },
+  } as const;
   const result = await resolveRegularKayakSearch(
     "cars",
     {
-      pickupLocation: "London, United Kingdom",
+      pickupLocation: target.submittedValue,
+      pickupLocationTarget: JSON.stringify({ ...target, selectionToken: issueLocationSelection(target, "cars") }),
       pickupDate: "2026-09-25",
       dropoffDate: "2026-09-27",
       pickupTime: "02:30",
       dropoffTime: "05:00",
     },
-    async (_term, vertical) => {
-      assert.equal(vertical, "cars");
-      return [
-        {
-          label: "London Heathrow Airport (LHR)",
-          value: "LHR",
-          kind: "airport",
-        },
-      ];
-    },
+    async () => assert.fail("a verified provider selection should not be rediscovered"),
     { now: new Date("2026-09-25T08:32:00Z") },
   );
   assert.equal(result.supported, false);

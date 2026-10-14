@@ -18,7 +18,10 @@ test("hotel suggestion surfaces share canonical primary and supporting display h
 });
 
 test("hotel selection continues to submit the legacy searchValue", () => {
-  assert.match(read("./useHotelDestinationAutocomplete.ts"), /return suggestion\.searchValue/);
+  const hook = read("./useHotelDestinationAutocomplete.ts");
+  assert.match(hook, /return suggestion\.searchValue/);
+  assert.match(hook, /suggestionsQuery === trimmedQuery/);
+  assert.match(hook, /setSuggestionsQuery\(trimmedQuery\)/);
   assert.match(read("./HotelDestinationMobilePicker.tsx"), /onChange\(option\.searchValue\)/);
 });
 

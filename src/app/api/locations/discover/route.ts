@@ -19,6 +19,7 @@ export async function GET(request: Request) {
   const catalog = product === "flights" ? getOwnedFlightLocationCatalog()
     : product === "hotels" ? hotelDestinations.map(fromHotelDestination)
     : getCanonicalCarLocationCatalog();
-  const result = await discoverLocations({ query, product, catalog, adapters: availableDiscoveryAdapters(request, product), limit: 8, timeoutMs: 900 });
+  const supportedByProviders = product === "flights" ? ["duffel", "kayak"] : ["kayak"];
+  const result = await discoverLocations({ query, product, catalog, adapters: availableDiscoveryAdapters(request, product), limit: 8, timeoutMs: 900, supportedByProviders });
   return Response.json({ ...result, query, product, isLiveAvailability: false }, { headers: { "Cache-Control": "private, no-store" } });
 }

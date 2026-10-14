@@ -43,7 +43,7 @@ type Props = {
   desktopResultsPresentation?: boolean;
 };
 
-type ApiResponse = { suggestions?: CarLocationSuggestion[]; source?: "local-fallback" };
+type ApiResponse = { suggestions?: CarLocationSuggestion[]; recovery?: { message?: string } };
 
 const kindIcon: Record<CarLocationSuggestionKind, typeof MapPin> = {
   airport: Plane,
@@ -99,6 +99,7 @@ export function CarLocationAutocomplete({
   }, [isOpen, onOpenChange]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [recoveryMessage, setRecoveryMessage] = useState("");
   const requestIdRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
   const trimmedQuery = value.trim();
@@ -108,6 +109,7 @@ export function CarLocationAutocomplete({
     setSuggestions([]);
     setLoading(false);
     setError(false);
+    setRecoveryMessage("");
     setHighlightedIndex(-1);
   }
   const showPanel =
@@ -162,11 +164,13 @@ export function CarLocationAutocomplete({
         .then((data: ApiResponse) => {
           if (requestId !== requestIdRef.current) return;
           setSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
+          setRecoveryMessage(typeof data.recovery?.message === "string" ? data.recovery.message : "");
           setHighlightedIndex(-1);
         })
         .catch((fetchError: unknown) => {
           if ((fetchError as { name?: string }).name === "AbortError" || requestId !== requestIdRef.current) return;
           setSuggestions([]);
+          setRecoveryMessage("");
           setError(true);
         })
         .finally(() => {
@@ -260,7 +264,7 @@ export function CarLocationAutocomplete({
   const panelContent = (
     <>
       {!usesDesktopPanel ? <div className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</div> : null}
-      <p id={statusId} role="status" aria-live="polite" className={loading || error || suggestions.length === 0 ? "px-3 py-3 text-sm font-semibold text-slate-600" : "sr-only"}>{loading ? strings.loadingSuggestions : error ? `${strings.suggestionsUnavailable} ${strings.continueTypingManually}` : suggestions.length === 0 ? `${strings.noMatchingLocations} ${strings.continueTypingManually}` : `${suggestions.length} ${label}`}</p>
+      <p id={statusId} role="status" aria-live="polite" className={loading || error || suggestions.length === 0 ? "px-3 py-3 text-sm font-semibold text-slate-600" : "sr-only"}>{loading ? strings.loadingSuggestions : error ? `${strings.suggestionsUnavailable} ${strings.continueTypingManually}` : suggestions.length === 0 ? recoveryMessage || `${strings.noMatchingLocations} ${strings.continueTypingManually}` : `${suggestions.length} ${label}`}</p>
       <div role="listbox" id={listboxId} aria-label={label}>
         {suggestions.map((suggestion, index) => {
           const Icon = kindIcon[suggestion.kind];

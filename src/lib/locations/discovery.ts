@@ -11,7 +11,7 @@ export type DiscoveryAdapter = {
 export type DiscoverySourceStatus = { provider: string; status: "success" | "failed" | "timeout"; count: number; failure?: DiscoveryFailure };
 
 const identity = (location: CanonicalLocation) => location.codes?.iata
-  ? `iata:${location.codes.iata.toUpperCase()}`
+  ? `iata:${location.kind}:${location.codes.iata.toUpperCase()}`
   : `${location.kind}:${location.primaryLabel.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, "")}:${location.country?.code?.toUpperCase() ?? ""}`;
 
 function merge(left: CanonicalLocation, right: CanonicalLocation): CanonicalLocation {
@@ -32,7 +32,7 @@ async function bounded(adapter: DiscoveryAdapter, query: string, product: Travel
   finally { clearTimeout(timer); }
 }
 
-export async function discoverLocations(options: { query: string; product: TravelProduct; catalog: readonly CanonicalLocation[]; adapters?: readonly DiscoveryAdapter[]; limit?: number; timeoutMs?: number }) {
+export async function discoverLocations(options: { query: string; product: TravelProduct; catalog: readonly CanonicalLocation[]; adapters?: readonly DiscoveryAdapter[]; limit?: number; timeoutMs?: number; supportedByProviders?: readonly string[] }) {
   const query = options.query.trim();
   if (!query) return { suggestions: [], sources: [] };
   const adapters = (options.adapters ?? []).filter((adapter) => adapter.products.includes(options.product));
@@ -44,7 +44,13 @@ export async function discoverLocations(options: { query: string; product: Trave
     const key = identity(location);
     merged.set(key, merged.has(key) ? merge(merged.get(key)!, location) : location);
   }
-  const ranked = searchLocations([...merged.values()], query, options.limit ?? 8).map(({ match }) => match.location);
+  const eligibleLocations = options.supportedByProviders?.length
+    ? [...merged.values()].filter((location) => (location.providerBindings ?? []).some((binding) =>
+      options.supportedByProviders!.some((provider) => binding.provider.toLowerCase() === provider.toLowerCase())
+      && binding.verification === "verified",
+    ))
+    : [...merged.values()];
+  const ranked = searchLocations(eligibleLocations, query, options.limit ?? 8).map(({ match }) => match.location);
   return {
     suggestions: ranked.map((location) => publicLocationSelection(location, options.product)),
     sources: adapters.map((adapter, index): DiscoverySourceStatus => ({ provider: adapter.provider, status: outcomes[index].status, count: outcomes[index].locations.length,

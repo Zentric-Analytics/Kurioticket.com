@@ -50,10 +50,8 @@ test("native Cars presentations gate searches and keep a native empty state", ()
     picker,
     /loadCarLocationSuggestions\(trimmedQuery, controller\.signal, 8\)/,
   );
-  assert.match(
-    picker,
-    /return searchCarLocationSuggestions\(query\.trim\(\), \{ limit \}\)/,
-  );
+  assert.doesNotMatch(picker, /searchCarLocationSuggestions/);
+  assert.match(picker, /throw error;/);
   assert.doesNotMatch(
     picker,
     /Popular locations|Recent searches|readRecentCarLocations|recents/,
@@ -89,7 +87,7 @@ test("a retained Cars Main picker clears stale state before paint and invalidate
   );
   assert.match(
     picker,
-    /if \(!active \|\| requestId !== searchRequestRef\.current\) return;\s*setResults\(items\)/,
+    /if \(!active \|\| requestId !== searchRequestRef\.current\) return;\s*setResults\(items\.suggestions\)/,
   );
 });
 

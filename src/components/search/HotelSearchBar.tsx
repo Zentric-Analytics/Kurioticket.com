@@ -412,6 +412,7 @@ export function HotelSearchBar({
     handleKeyDown: handleDestinationAutocompleteKeyDown,
     highlight: destinationHighlight,
     loading: destinationSuggestionsLoading,
+    recoveryMessage: destinationSuggestionsRecovery,
     open: destinationSuggestionsOpen,
     select: commitDestinationSuggestion,
     setHighlight: setDestinationHighlight,
@@ -1350,7 +1351,7 @@ export function HotelSearchBar({
                     })
                   ) : (
                     <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
-                      {t("noMatchingDestinationsYet")}
+                      {destinationSuggestionsRecovery || t("noMatchingDestinationsYet")}
                     </div>
                   )}
                 </HotelDesktopPopover>

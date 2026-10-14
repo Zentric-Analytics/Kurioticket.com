@@ -8,11 +8,15 @@ import { getKayakClientIp } from "@/lib/kayak-client-ip";
 import { timezones as airportTimeZones } from "@/services/travel/airportTimeZones";
 
 const emptyCoverage = { flights: "none", hotels: "none", cars: "none", packages: "none" } as const;
-const canonicalFromProvider = (provider: string, value: string, label: string, kind?: string): CanonicalLocation => {
+export const canonicalFromProvider = (provider: string, value: string, label: string, kind?: string): CanonicalLocation => {
   const iata = /^[A-Z]{3}$/.test(value) ? value : undefined;
-  const normalizedKind = iata ? "airport" : kind === "district" ? "district" : kind === "landmark" ? "landmark" : kind?.includes("airport") ? "airport" : "city";
+  const providerKind = kind?.trim().toLowerCase() ?? "";
+  const normalizedKind = providerKind.includes("city") ? "city"
+    : providerKind.includes("district") ? "district"
+    : providerKind.includes("landmark") ? "landmark"
+    : providerKind.includes("airport") || iata ? "airport" : "city";
   const parts = label.split(",").map((part) => part.trim());
-  const base: CanonicalLocation = { id: iata ? `airport:${iata}` : `place:${normalizeLocationText(label).replaceAll(" ", "-").slice(0, 120)}`,
+  const base: CanonicalLocation = { id: iata ? `${normalizedKind}:${iata}` : `place:${normalizeLocationText(label).replaceAll(" ", "-").slice(0, 120)}`,
     kind: normalizedKind, primaryLabel: parts[0] || label, supportingLabel: parts.slice(1).join(", "), submittedValue: label,
     codes: iata ? { iata } : undefined, timeZone: iata ? airportTimeZones[iata] : undefined,
     staticCoverage: emptyCoverage, source: { catalog: "kurioticket", datasetVersion: "provider-discovery-v1" } };

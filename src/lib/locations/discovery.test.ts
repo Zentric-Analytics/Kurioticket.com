@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { discoverLocations, providerLocation, type DiscoveryAdapter } from "./discovery";
-import { clearLocationSelectionsForTest, resolveProviderSelection } from "./selectionAuthority";
+import { resolveProviderSelection } from "./selectionAuthority";
 import type { CanonicalLocation } from "./types";
 
 const place = (id: string, primaryLabel: string, kind: CanonicalLocation["kind"] = "city", country = "US"): CanonicalLocation => ({
@@ -15,8 +15,32 @@ test("query ranking excludes unrelated catalogue rows and keeps ambiguous cities
   assert.deepEqual(result.suggestions.map((item) => item.primaryLabel), ["New York", "New Orleans"]);
 });
 
+test("provider-support filtering removes attractive catalogue-only suggestions", async () => {
+  const owned = place("akure", "Akure", "city", "NG");
+  const verified = providerLocation("kayak", "AKR", { ...owned, id: "provider-akure" });
+  const result = await discoverLocations({
+    query: "Akure",
+    product: "cars",
+    catalog: [owned],
+    adapters: [{ provider: "kayak", products: ["cars"], discover: async () => [verified] }],
+    supportedByProviders: ["kayak"],
+  });
+  assert.equal(result.suggestions.length, 1);
+  assert.deepEqual(resolveProviderSelection(result.suggestions[0], "cars", "kayak"), { ok: true, value: "AKR" });
+});
+
+test("provider-support filtering returns no selectable result when only the local catalogue matches", async () => {
+  const result = await discoverLocations({
+    query: "Akure",
+    product: "cars",
+    catalog: [place("akure", "Akure", "city", "NG")],
+    adapters: [],
+    supportedByProviders: ["kayak"],
+  });
+  assert.deepEqual(result.suggestions, []);
+});
+
 test("provider and canonical duplicates merge into one public result with an opaque binding", async () => {
-  clearLocationSelectionsForTest();
   const owned = place("ny", "New York");
   const adapter: DiscoveryAdapter = { provider: "kayak", products: ["hotels"], discover: async () => [providerLocation("kayak", "kplace:58075", owned)] };
   const result = await discoverLocations({ query: "New", product: "hotels", catalog: [owned], adapters: [adapter] });
@@ -28,7 +52,6 @@ test("provider and canonical duplicates merge into one public result with an opa
 });
 
 test("a client verified flag, tampered canonical id, and stale token are never authoritative", async () => {
-  clearLocationSelectionsForTest();
   const owned = providerLocation("kayak", "kplace:1", place("bos", "Boston"));
   const result = await discoverLocations({ query: "Bos", product: "hotels", catalog: [owned], adapters: [] });
   const selected = result.suggestions[0];
@@ -50,4 +73,17 @@ test("airport and city remain visually and canonically distinct", async () => {
   const result = await discoverLocations({ query: "New", product: "flights", catalog: [city, airport], adapters: [] });
   assert.equal(result.suggestions.length, 2);
   assert.deepEqual(new Set(result.suggestions.map((item) => item.kind)), new Set(["city", "airport"]));
+});
+
+test("provider IATA city codes are not relabeled or merged as airports", async () => {
+  const city = providerLocation("kayak", "NYC", { ...place("nyc-city", "New York", "city"), codes: { iata: "NYC" } });
+  const airport = providerLocation("kayak", "NYC", { ...place("nyc-airport", "New York", "airport"), codes: { iata: "NYC" } });
+  const result = await discoverLocations({
+    query: "New York",
+    product: "cars",
+    catalog: [],
+    adapters: [{ provider: "kayak", products: ["cars"], discover: async () => [city, airport] }],
+    supportedByProviders: ["kayak"],
+  });
+  assert.deepEqual(new Set(result.suggestions.map((suggestion) => suggestion.kind)), new Set(["city", "airport"]));
 });

@@ -48,6 +48,7 @@ function providerPlaceMatch(term: string, candidates: SandboxPlace[]) {
         && normalizedInput.includes(normalizePlace(destination.country)));
   });
   const expectedName = normalizePlace(catalogue?.name || term.split(",")[0] || term);
+  const expectedKind = catalogue?.kind === "airport-area" ? "airport" : catalogue?.kind;
   const parts = term.split(",").map(part => part.trim()).filter(Boolean);
   const expectedCountry = normalizePlace(catalogue?.country || (parts.length > 1 ? parts.at(-1)! : ""));
   const expectedRegion = normalizePlace(catalogue?.region || "");
@@ -57,13 +58,17 @@ function providerPlaceMatch(term: string, candidates: SandboxPlace[]) {
     const label = normalizePlace(candidate.label);
     const firstPart = normalizePlace(candidate.label.split(",")[0] || "");
     if (firstPart !== expectedName && !label.startsWith(`${expectedName} `)) return [];
+    const kind = normalizePlace(candidate.kind || "");
+    if (expectedKind === "city" && !kind.includes("city")) return [];
+    if (expectedKind === "airport" && !kind.includes("airport")) return [];
+    if (expectedKind === "district" && !kind.includes("district")) return [];
+    if (expectedKind === "landmark" && !kind.includes("landmark")) return [];
     let score = 100;
     const words = ` ${label} `;
     // A provider reporting a different country cannot win by name or short-label ranking.
     if (expectedCountry && candidate.label.includes(",") && !words.includes(` ${expectedCountry} `)) return [];
     if (expectedCountry && words.includes(` ${expectedCountry} `)) score += 40;
     if (expectedRegion && words.includes(` ${expectedRegion} `)) score += 30;
-    const kind = normalizePlace(candidate.kind || "");
     if (catalogue?.kind === "city") score += kind === "city" ? 50 : kind.includes("airport") ? 15 : 0;
     if (catalogue?.kind === "airport-area") score += kind.includes("airport") ? 50 : 0;
     return [{ candidate, score, length: label.length }];
@@ -93,10 +98,24 @@ export async function resolveRegularKayakSearch(
   if (vertical === "cars") {
     const pickupInput = criteria.pickupLocation || "";
     const dropoffInput = criteria.dropoffLocation || pickupInput;
+    const pickupTargetValue = criteria.pickupLocationTarget?.trim();
+    const dropoffTargetValue = criteria.dropoffLocationTarget?.trim();
     const pickupTarget = parseTarget(criteria.pickupLocationTarget);
     const dropoffTarget = parseTarget(criteria.dropoffLocationTarget);
-    let pickup = pickupTarget?.success ? (() => { const value = resolveProviderSelection(pickupTarget.data, "cars", "kayak"); return value.ok ? value.value : undefined; })() : undefined;
-    let dropoff = dropoffTarget?.success ? (() => { const value = resolveProviderSelection(dropoffTarget.data, "cars", "kayak"); return value.ok ? value.value : undefined; })() : undefined;
+    let pickup: string | undefined;
+    let dropoff: string | undefined;
+    if (pickupTargetValue) {
+      if (!pickupTarget?.success) return { supported: false, reason: "The selected pick-up location could not be verified. Choose a location from the suggestions again." };
+      const resolution = resolveProviderSelection(pickupTarget.data, "cars", "kayak");
+      if (!resolution.ok) return { supported: false, reason: "KAYAK has no verified car-search match for the selected pick-up location. Choose a supported suggestion or another provider." };
+      pickup = resolution.value;
+    }
+    if (dropoffTargetValue) {
+      if (!dropoffTarget?.success) return { supported: false, reason: "The selected drop-off location could not be verified. Choose a location from the suggestions again." };
+      const resolution = resolveProviderSelection(dropoffTarget.data, "cars", "kayak");
+      if (!resolution.ok) return { supported: false, reason: "KAYAK has no verified car-search match for the selected drop-off location. Choose a supported suggestion or another provider." };
+      dropoff = resolution.value;
+    }
     // IATA codes are an exact, provider-supported public namespace. Free text is not.
     pickup ||= /^[A-Z]{3}$/.test(airportCode(pickupInput)) ? airportCode(pickupInput) : undefined;
     if (!pickup) pickup = providerPlaceMatch(pickupInput, await places(pickupInput, "cars"))?.value;
@@ -130,7 +149,13 @@ export async function resolveRegularKayakSearch(
       pickupTime, dropoffTime: criteria.dropoffTime || "10:00" });
   }
   const hotelTarget = parseTarget(criteria.destinationLocation);
+  if (criteria.destinationLocation?.trim() && !hotelTarget?.success) {
+    return { supported: false, reason: "The selected hotel destination could not be verified. Choose a destination from the suggestions again." };
+  }
   const boundDestination = hotelTarget?.success ? (() => { const value = resolveProviderSelection(hotelTarget.data, "hotels", "kayak"); return value.ok ? value.value : undefined; })() : undefined;
+  if (hotelTarget?.success && !boundDestination) {
+    return { supported: false, reason: "KAYAK has no verified hotel-search match for the selected destination. Choose a supported suggestion or another provider." };
+  }
   if (boundDestination) return adaptKayakHotelSearch({ ...input, destinationId: boundDestination });
   if (/^kplace:\d+$/.test(criteria.destinationId || "")) return adaptKayakHotelSearch(input);
   const term = (criteria.destination || "").trim();

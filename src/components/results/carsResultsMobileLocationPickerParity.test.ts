@@ -104,9 +104,10 @@ test("Back and Clear do not commit, and the shell restores launcher focus", () =
   assert.doesNotMatch(clear, /onCommit/);
 });
 
-test("Cars suggestion engine and typed custom values remain in the picker", () => {
-  assert.match(pickerSource, /searchCarLocationSuggestions/);
-  assert.match(pickerSource, /item\.kind === "custom"/);
+test("Cars picker uses provider-backed suggestions and never exposes free-text as a selectable result", () => {
+  assert.match(pickerSource, /fetch\(`\/api\/cars\/locations/);
+  assert.doesNotMatch(pickerSource, /searchCarLocationSuggestions/);
+  assert.match(pickerSource, /throw error;/);
   assert.match(pickerSource, /carsSearch\.loadingSuggestions/);
   assert.match(pickerSource, /carsSearch\.noMatchingLocations/);
   assert.match(pickerSource, /carsSearch\.suggestionsUnavailable/);

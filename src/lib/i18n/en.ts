@@ -1734,7 +1734,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.noMatchingLocations": "No matching locations found.",
   "carsSearch.suggestionsUnavailable":
     "Location suggestions are temporarily unavailable.",
-  "carsSearch.continueTypingManually": "You can continue typing manually.",
+  "carsSearch.continueTypingManually": "Try a nearby airport or provider-supported city.",
   "carsSearch.useTypedLocation": "Use typed location",
   "carsSearch.unverifiedTypedLocation": "Unverified typed location",
   "carsSearch.type.airport": "Airport",
