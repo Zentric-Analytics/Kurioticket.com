@@ -87,7 +87,8 @@
 .rateInfoTotal span { font-size: 13px; line-height: 20px; font-weight: 600; }
 .rateInfoTotal strong { margin-left: auto; font-size: 19px; line-height: 26px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 
-.rateDialog { width: min(520px, calc(100vw - 48px)); border: 0; border-radius: 24px; background: #f2f4f8; color: #1a1a1a; }
+.rateDialog { width: min(520px, calc(100vw - 48px)); border: 0; border-radius: 24px; background: #f2f4f8; color: #1a1a1a; scrollbar-width: none; -ms-overflow-style: none; }
+.rateDialog::-webkit-scrollbar { width: 0; height: 0; display: none; }
 .rateDialog .dialogHeader { position: relative; justify-content: center; min-height: 36px; margin-bottom: 24px; padding-inline: 40px; }
 .rateDialog .dialogHeader h2 { font-size: 18px; }
 .rateDialog .dialogHeader .iconButton { position: absolute; right: 0; border: 0; background: transparent; color: #1a1a1a; }
