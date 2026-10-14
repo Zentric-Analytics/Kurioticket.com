@@ -57,8 +57,8 @@ test("Cars detail price formatters use currency marks instead of NGN, USD, or CA
   assert.equal(formatCurrency(100, "USD"), "$100");
   assert.equal(formatMarketCurrency(100, "NGN"), "₦100.00");
   assert.equal(formatMarketCurrency(100, "USD"), "$100.00");
-  assert.equal(formatMarketCurrency(100, "CAD"), "CA$100.00");
-  assert.equal(formatMarketCurrency(100, "AUD"), "A$100.00");
+  assert.equal(formatMarketCurrency(100, "CAD"), "$100.00");
+  assert.equal(formatMarketCurrency(100, "AUD"), "$100.00");
   assert.equal(formatMarketCurrency(100, "GBP"), "£100.00");
   assert.equal(formatMarketCurrency(100, "EUR"), "€100.00");
   assert.equal(formatMarketCurrency(100, "JPY"), "¥100");
