@@ -1,8 +1,6 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { SupplierInformation } from "../SupplierInformation";
-import { hotelSupplierFacts } from "@/lib/hotels/hotelSupplierFacts";
 import { MobileHotelDetails } from "./MobileHotelDetails";
 import { DesktopHotelDetails } from "./DesktopHotelDetails";
 import type { HotelAmenityPresentationItem } from "@/components/results/hotelAmenityPresentation";
@@ -104,8 +102,5 @@ function subscribeMobileDetails(callback: () => void) {
 
 export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
   const mobile = useSyncExternalStore(subscribeMobileDetails, () => window.matchMedia("(max-width: 1023px)").matches, () => false);
-  return <>
-    {mobile ? <MobileHotelDetails {...props} /> : <DesktopHotelDetails {...props} />}
-    <div className="mx-4"><SupplierInformation facts={hotelSupplierFacts(props.providerDetails, false)} title="Property information supplied by KAYAK" /></div>
-  </>;
+  return mobile ? <MobileHotelDetails {...props} /> : <DesktopHotelDetails {...props} />;
 }
