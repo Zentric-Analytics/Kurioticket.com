@@ -13,33 +13,7 @@ function providerValue(value: string) {
 
 function kayakFareTerms(offer: SandboxOffer): FlightFareTerm[] {
   if (offer.flightFareTerms) return offer.flightFareTerms;
-  const terms: FlightFareTerm[] = [];
-  if (offer.flightCarryOnIncluded !== undefined) terms.push({
-    category: "baggage",
-    semantic: offer.flightCarryOnIncluded ? "positive" : "informational",
-    text: offer.flightCarryOnIncluded ? "Carry-on included" : "See supplied baggage details",
-  });
-
-  for (const attribute of offer.attributes ?? []) {
-    if (!/^fees(?:\s|·|$)/i.test(attribute.label)) continue;
-    const label = attribute.label.replace(/^fees\s*·?\s*/i, "").trim();
-    if (!label || /bag number$/i.test(label)) continue;
-    const value = providerValue(attribute.value);
-    if (!value) continue;
-    const text = `${label}: ${value}`;
-    if (terms.some((term) => term.text.toLowerCase() === text.toLowerCase())) continue;
-    const normalizedValue = value.toLowerCase();
-    terms.push({
-      category: /bag|baggage/i.test(label) ? "baggage" : "fare",
-      semantic: /not included|not allowed|excluded/.test(normalizedValue)
-        ? "negative"
-        : /(^|\s)included($|\s)/.test(normalizedValue)
-          ? "positive"
-          : "informational",
-      text,
-    });
-  }
-  return terms;
+  return offer.flightCarryOnIncluded === true ? [{ category: "baggage", semantic: "positive", text: "Carry-on included" }] : [];
 }
 
 function hotelAttributeFacts(offer: SandboxOffer, prefix: string): PublicHotelProviderFact[] {
@@ -112,10 +86,13 @@ export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<strin
     segments: leg.segments.map(segment => ({originAirport:segment.origin, destinationAirport:segment.destination,
       departureTime:segment.departure, arrivalTime:segment.arrival, airlineName:segment.airline,
       airlineLogo:segment.airlineLogo, flightNumber:segment.flightNumber, operatingCarrier:segment.operatingDisclosure ? {name:segment.operatingDisclosure} : undefined,
+      ...(segment.aircraft ? {aircraft:segment.aircraft} : {}),
+      ...(segment.duration ? {duration:segment.duration} : {}),
       ...(segment.cabinDetails ? {cabinDetails:[segment.cabinDetails]} : {})})),
   }));
   const first = source[0].segments[0];
   const travelers = Math.max(1, Number(criteria.adults || 1) + Number(criteria.children || 0) + Number(criteria.infants || 0));
+  const multiplier = offer.priceBasis === "per person" ? travelers : 1;
   return {
     id: `kayak-sandbox:${offer.id}`, provider:"KAYAK sandbox", airlineName:first.airline,
     airlineLogo:first.airlineLogo, flightNumber:first.flightNumber,
@@ -123,10 +100,15 @@ export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<strin
     fareTerms: kayakFareTerms(offer),
     providerDetails: {
       ...(offer.attributes?.length ? { suppliedFacts: offer.attributes.map(fact => ({ ...fact })) } : {}),
-      price:{totalAmount:offer.price * (offer.priceBasis === "per person" ? travelers : 1),totalCurrency:offer.currency},
+      price:{totalAmount:offer.price * multiplier,totalCurrency:offer.currency,
+        ...(offer.flightPrice?.baseAmount !== undefined && offer.flightPrice.baseCurrency ? {baseAmount:offer.flightPrice.baseAmount * multiplier,baseCurrency:offer.flightPrice.baseCurrency} : {}),
+        ...(offer.flightPrice?.taxAmount !== undefined && offer.flightPrice.taxCurrency ? {taxAmount:offer.flightPrice.taxAmount * multiplier,taxCurrency:offer.flightPrice.taxCurrency} : {}),
+      },
+      ...(offer.flightAirlineBaggagePolicies?.length ? {airlineBaggagePolicies:offer.flightAirlineBaggagePolicies} : {}),
       ...(offer.flightConditions?.length ? {conditions:offer.flightConditions} : {}),
       ...(offer.flightOptionalServices?.length ? {optionalServices:offer.flightOptionalServices} : {}),
     },
+    ...(offer.flightUnmappedFacts?.length ? {rawProviderReference:{unmappedFacts:offer.flightUnmappedFacts}} : {}),
     baggageInfo:offer.flightCarryOnIncluded === true ? "Carry-on included" : offer.flightCarryOnIncluded === false ? "See supplied baggage details" : "Baggage allowance not supplied by provider",
     refundInfo:"Not supplied by provider", price:offer.price * (offer.priceBasis === "per person" ? travelers : 1), currency:offer.currency,
     bookingUrl:offer.testUrl, partnerRedirectUrl:offer.testUrl, providerOfferId:offer.id,

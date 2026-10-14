@@ -1,3 +1,5 @@
+import type { FlightAircraftDetails, FlightCabinDetails } from "@/lib/types";
+
 /** Public supplier media only. Never forward API/detail URLs or credentials. */
 export function kayakImageUrl(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
@@ -73,7 +75,8 @@ export type KayakFlightLeg = {
   durationMinutes?: number;
   segments: { origin: string; destination: string; departure: string; arrival: string;
     airline: string; airlineLogo?: string; flightNumber: string; operatingDisclosure?: string;
-    cabinDetails?: { cabinClass?: string; fareBrandName?: string } }[];
+    aircraft?: FlightAircraftDetails; duration?: string;
+    cabinDetails?: FlightCabinDetails }[];
 };
 
 export function kayakFlightCabin(data: Record<string, unknown>, result: Record<string, unknown>, option: Record<string, unknown>): string | undefined {
