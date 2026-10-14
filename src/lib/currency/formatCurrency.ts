@@ -47,6 +47,7 @@ export function formatCurrency(
   const formatter = new Intl.NumberFormat(undefined, {
     style: "currency",
     currency: normalizedCurrency,
+    currencyDisplay: "narrowSymbol",
     maximumFractionDigits,
     minimumFractionDigits,
   });
