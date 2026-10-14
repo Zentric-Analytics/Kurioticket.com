@@ -49,7 +49,7 @@ test("native Cars information and lower pricing band use the Hotels white surfac
   assert.match(style("card"), /borderWidth:1,borderRadius:13,overflow:"hidden"/);
 });
 
-test("top section owns only the visual and identity information", () => {
+test("top section owns imagery, identity and the four vehicle specifications", () => {
   assert.ok(topStart >= 0 && lowerStart > topStart);
   assert.match(top, /c\.visualColumn[\s\S]*<View style=\{\[c\.identityZone,\{backgroundColor:carInformationSurface\}\]\}>/);
   for (const token of ["identity.primaryName", "identity.secondaryModel", "or similar", "categoryLabel", "result.pickupLocation", "savedState.toggle", "Share2", "Free cancellation"])
@@ -115,14 +115,20 @@ test("Cars card typography uses the shared Inter hierarchy without changing card
   assert.match(style("viewDealText"), /fontSize:13,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold/);
 });
 
-test("lower band uses provider-aware spec labels in the approved two-column order without an internal divider", () => {
-  const firstStart = lower.indexOf('<View style={c.specColumn}>');
-  const middleStart = lower.indexOf('<View style={c.specColumn}>', firstStart + 1);
+test("upper information keeps both provider-aware spec columns below cancellation while lower band owns booking", () => {
+  const firstStart = top.indexOf('<View style={c.specColumn}>');
+  const middleStart = top.indexOf('<View style={c.specColumn}>', firstStart + 1);
   const commerceStart = lower.indexOf('<View style={c.commerceColumn}>');
-  const first = lower.slice(firstStart, middleStart);
-  const middle = lower.slice(middleStart, commerceStart);
+  const first = top.slice(firstStart, middleStart);
+  const middle = top.slice(middleStart);
   const commerce = lower.slice(commerceStart);
-  assert.ok(firstStart >= 0 && middleStart > firstStart && commerceStart > middleStart);
+  assert.ok(firstStart >= 0 && middleStart > firstStart && commerceStart >= 0);
+  assert.ok(top.indexOf("accessibilityLabel=\"Vehicle specifications\"") > top.indexOf("Free cancellation"));
+  assert.match(top, /hasPrimarySpecs \|\| hasSecondarySpecs \? <View style=\{c\.specRow\}/);
+  assert.match(style("category"), /marginTop:5/);
+  assert.match(style("identityDetails"), /marginTop:3/);
+  assert.doesNotMatch(lower, /<View style=\{c\.specRow\}>|specLabels\./);
+  assert.match(lower, /<NativeCarResultOfferPicker result=\{result\}/);
   assert.match(source, /const specLabels = nativeCarPrimarySpecLabels\(result\)/);
   assert.match(first, /specLabels\.passengers[\s\S]*specLabels\.transmission/);
   assert.doesNotMatch(first, /specLabels\.doors|specLabels\.bags/);
