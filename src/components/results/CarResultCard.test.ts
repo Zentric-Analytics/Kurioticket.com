@@ -517,7 +517,7 @@ test("mobile result card rebalances vehicle category and places amenities undern
     source.indexOf("data-car-card-mobile-lower-band"),
     source.indexOf('className={`${guidedPlanning ? "grid'),
   );
-  assert.match(mobile, /car\.categoryLabel \? <p className="mt-1\.5 truncate/);
+  assert.match(mobile, /car\.categoryLabel \? <p data-car-card-mobile-category className="mt-1\.5 truncate/);
   assert.match(mobile, /data-car-card-mobile-cancellation/);
   assert.match(mobile, /data-car-card-mobile-specs/);
   assert.ok(
