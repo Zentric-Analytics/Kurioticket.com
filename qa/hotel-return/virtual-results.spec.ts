@@ -179,7 +179,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await expect(firstInfo).toBeVisible();
     const scrollBefore = await page.evaluate(() => window.scrollY);
     await firstInfo.click();
-    const dialog = card.locator("[data-car-rate-dialog]");
+    const dialog = area.locator("[data-car-rate-dialog]");
     await expect(dialog).toBeVisible();
     await expect(dialog.getByText("Airport Pickup 0", { exact: true })).toBeVisible();
     await expect(dialog.getByText("Airport Pickup 1", { exact: true })).toHaveCount(0);
