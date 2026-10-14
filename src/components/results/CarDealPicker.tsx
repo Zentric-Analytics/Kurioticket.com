@@ -76,8 +76,10 @@ function ProviderMark({
   );
 }
 
-/** Compact comparison lines inside the existing result card, not a popup or a second card. */
-export function CarDealPicker({ car }: Props) {
+export function CarDealPicker({
+  car,
+  compact = false,
+}: Props) {
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const groups = useMemo(() => getCarDealPickerGroups(car), [car]);
@@ -99,44 +101,51 @@ export function CarDealPicker({ car }: Props) {
   };
 
   return (
-    <section data-car-deal-picker className="min-w-0 border-t border-[#CBD5E1] bg-white px-3 pb-1.5 pt-2 sm:px-4">
-      <h4 className="mb-0.5 text-[12px] font-semibold leading-4 text-[#07133B]">Compare deals</h4>
+    <div
+      data-car-deal-picker
+      className={`min-w-0 ${compact ? "mt-1.5" : "mt-2"}`}
+    >
       <div
+        className={`grid min-w-0 grid-cols-3 gap-y-3 ${compact ? "gap-x-2.5" : "gap-x-3"}`}
         role="list"
         aria-label="Car deal providers"
         data-car-deal-provider-offers
-        className="min-w-0 divide-y divide-[#E2E8F0]"
       >
         {groups.map((group) => {
           const offer = group.primaryOffer;
           const bookingHref = approvedProviderBookingUrl(car, offer);
+
           return (
             <div
               key={group.key}
               role="listitem"
+              className="min-w-0"
               data-car-deal-provider-offer
-              className="grid min-h-10 min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2 py-0.5 sm:gap-x-3"
             >
-              <div className="flex min-w-0 items-center gap-1.5">
-                <span className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center overflow-hidden">
-                  <ProviderMark group={group} compact />
+              <div className={`flex min-w-0 items-center ${compact ? "gap-0.5" : "gap-1"}`}>
+                <span
+                  className={`${compact ? "h-3.5 w-3.5" : "h-4 w-4"} inline-flex shrink-0 items-center justify-center overflow-hidden`}
+                >
+                  <ProviderMark group={group} compact={compact} />
                 </span>
                 <span
-                  className="min-w-0 truncate text-[10px] font-semibold leading-[14px] text-[#334155] sm:text-[11px]"
+                  className={`${compact ? "whitespace-nowrap text-[9px] leading-[11px] tracking-[-0.01em]" : "min-w-0 truncate text-[10px] leading-3"} font-semibold text-[#334155]`}
                   title={group.providerName}
                   data-car-deal-provider-name
                 >
                   {group.providerName}
                 </span>
               </div>
+
               <p
+                className={`${compact ? "mt-0.5 text-[11px] leading-[13px]" : "mt-1 text-xs leading-[14px]"} truncate font-bold tabular-nums text-[#07133B]`}
                 dir="ltr"
                 data-car-deal-provider-price
-                className="shrink-0 whitespace-nowrap text-[11px] font-bold leading-4 tabular-nums text-[#07133B] sm:text-xs"
               >
                 {formatOfferPrice(offer)}
-                <span className="ml-0.5 text-[9px] font-medium text-[#64748B] sm:text-[10px]">/day</span>
+                <span className="ml-0.5 font-medium text-[#64748B]">/day</span>
               </p>
+
               {bookingHref ? (
                 <a
                   href={bookingHref}
@@ -144,17 +153,17 @@ export function CarDealPicker({ car }: Props) {
                   rel="noopener noreferrer"
                   aria-label={`View deal from ${group.providerName}`}
                   onClick={isolateProviderAction}
+                  className={`${compact ? "mt-0.5 text-[10px] leading-[14px]" : "mt-1 text-[11px] leading-4"} inline-flex min-h-4 items-center gap-0.5 font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35`}
                   data-car-deal-provider-view-deal
-                  className="inline-flex min-h-10 min-w-[69px] shrink-0 items-center justify-end gap-0.5 whitespace-nowrap text-[10px] font-semibold leading-4 text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 sm:min-w-[80px] sm:text-[11px]"
                 >
                   View deal
-                  <ChevronRight size={11} strokeWidth={2} aria-hidden="true" />
+                  <ChevronRight size={compact ? 11 : 12} strokeWidth={2} aria-hidden="true" />
                 </a>
               ) : (
                 <span
                   aria-disabled="true"
+                  className={`${compact ? "mt-0.5 text-[9px] leading-[11px]" : "mt-1 text-[10px] leading-3"} inline-flex min-h-4 items-center font-semibold text-[#94A3B8]`}
                   data-car-deal-provider-view-deal-unavailable
-                  className="inline-flex min-h-10 min-w-[69px] shrink-0 items-center justify-end whitespace-nowrap text-[10px] font-semibold leading-4 text-[#94A3B8] sm:min-w-[80px] sm:text-[11px]"
                 >
                   View deal
                 </span>
@@ -163,6 +172,6 @@ export function CarDealPicker({ car }: Props) {
           );
         })}
       </div>
-    </section>
+    </div>
   );
 }
