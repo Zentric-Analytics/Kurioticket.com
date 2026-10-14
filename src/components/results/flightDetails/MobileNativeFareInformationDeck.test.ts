@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import React from "react";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+import { FlightIdentityMarkContent } from "./FlightIdentityMark";
 import { resolveDealIdentityMark } from "./flightDetailsPresentation";
 
 test("matching airline deal identity uses the authoritative offer logo", () => {
@@ -43,16 +45,16 @@ test("mobile Compare deals keeps resilient provider identity, selection, price h
   assert.match(deck, /const displayedDeals = deals\.length/);
   assert.match(deck, /data-mobile-flight-deal-list/);
   assert.match(deck, /data-mobile-flight-deal-card/);
-  assert.match(deck, /shadow-\[0_10px_28px_-22px_rgba\(15,23,42,0\.5\)\]/);
-  assert.match(deck, /tabular-nums text-slate-950/);
-  assert.match(deck, /text-slate-500/);
-  assert.match(deck, /rounded-xl border-\[1\.5px\] bg-white/);
-  assert.match(deck, /border-\[#075EE8\]/);
+  assert.doesNotMatch(deck, /shadow-\[/);
+  assert.match(deck, /text-\[#1a1a1a\] tabular-nums/);
+  assert.match(deck, /text-\[#595959\]/);
+  assert.match(deck, /rounded-xl border border-\[#D9E2E8\] bg-white/);
+  assert.match(deck, /border-\[#D9E2E8\]/);
   assert.match(deck, /h-\[3px\][^"\n]*bg-\[#075EE8\]/);
   assert.doesNotMatch(deck, /#0754F7/);
   assert.match(deck, /data-mobile-flight-provider-logo/);
   assert.match(deck, /deal\.providerLogoUrl[\s\S]*?deal\.providerName/);
-  assert.match(deck, /FlightIdentityMark logoUrl=\{identityMark\.logoUrl\} decorative mobile/);
+  assert.match(deck, /FlightIdentityMark logoUrl=\{identityMark\.logoUrl\} decorative mobile variant="provider"/);
   assert.match(deck, /role="radio"/);
   assert.match(deck, /aria-checked=\{selected\}/);
   assert.match(deck, /tabIndex=\{selected \? 0 : -1\}/);
@@ -71,15 +73,44 @@ test("mobile Compare deals keeps resilient provider identity, selection, price h
 });
 
 
-test("mobile provider card uses an aligned provider, price and action row", async () => {
-  const deck = await readFile("src/components/results/flightDetails/MobileNativeFareInformationDeck.tsx", "utf8");
-  assert.match(deck, /grid min-h-\[80px\][^"\n]*gap-2 rounded-xl/);
-  assert.match(deck, /grid grid-cols-\[minmax\(0,1fr\)_minmax\(0,1\.2fr\)\] items-center gap-2/);
-  assert.match(deck, /className="block min-w-0 text-center" data-mobile-flight-deal-price/);
+test("mobile Flight provider card follows the Hotel card styling", async () => {
+  const [deck, hotel] = await Promise.all([
+    readFile("src/components/results/flightDetails/MobileNativeFareInformationDeck.tsx", "utf8"),
+    readFile("src/components/results/hotelDetails/HotelPriceComparisonSection.tsx", "utf8"),
+  ]);
+  const mobileHotel = hotel.slice(hotel.indexOf("export function MobileProviderOffer"), hotel.indexOf("export function HotelPriceComparisonSection"));
+  const card = mobileHotel.match(/<article className="([^"]+)"/)?.[1];
+  assert.ok(card);
+  const flightCard = deck.match(/className="(grid min-h-\[76px\][^"]+)"/)?.[1];
+  assert.ok(flightCard);
+  assert.equal(flightCard, card);
+  const price = mobileHotel.match(/<strong className="([^"]+)"/)?.[1];
+  const action = mobileHotel.match(/<button type="button" className="([^"]+)" disabled=/)?.[1];
+  assert.ok(price && action);
+  assert.ok(deck.includes(`className="${price}"`));
+  assert.ok(deck.includes(`className="${action}"`));
+  assert.match(deck, /col-span-2 grid grid-cols-subgrid/);
+  assert.match(deck, /grid gap-2 px-1 pb-1\.5 pt-0\.5/);
+  assert.match(deck, /className="mr-3 text-center" data-mobile-flight-deal-price/);
+  assert.match(deck, /block text-\[10px\] font-normal leading-4 text-\[#595959\]/);
   assert.match(deck, />\s*Trip total\s*<\/span>/);
-  assert.doesNotMatch(deck, /fare\?\.label \? `\$\{fare.label\} · Trip total`/);
-  assert.match(deck, /inline-flex h-11 w-\[88px\]/);
-  assert.match(deck, /min-\[360px\]:w-\[96px\]/);
-  assert.match(deck, /block max-w-full truncate text-\[14px\]/);
-  assert.match(deck, /whitespace-nowrap text-\[12px\]! font-semibold! leading-5!/);
+  assert.doesNotMatch(deck, /min-\[360px\]:text|w-\[88px\]|h-11 w-\[88px\]/);
+});
+
+
+test("provider identity treatment preserves the default mark and broken-logo fallback", () => {
+  const previousReact = Reflect.get(globalThis, "React");
+  Reflect.set(globalThis, "React", React);
+  try {
+    const standard = FlightIdentityMarkContent({logoUrl:"invalid-logo",logoFailed:true,decorative:true});
+    const provider = FlightIdentityMarkContent({logoUrl:"invalid-logo",logoFailed:true,decorative:true,mobile:true,variant:"provider"});
+    assert.match(standard.props.className, /h-8 w-8.*rounded-lg border/);
+    assert.match(provider.props.className, /h-7 w-7/);
+    assert.doesNotMatch(provider.props.className, /border|rounded/);
+    assert.equal(standard.props["data-flight-identity-mark"], "fallback");
+    assert.equal(provider.props["data-flight-identity-mark"], "fallback");
+  } finally {
+    if (previousReact === undefined) Reflect.deleteProperty(globalThis, "React");
+    else Reflect.set(globalThis, "React", previousReact);
+  }
 });

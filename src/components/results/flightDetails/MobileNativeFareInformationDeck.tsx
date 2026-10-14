@@ -152,7 +152,7 @@ function DealsSurface({
   }
 
   return (
-    <div role="radiogroup" aria-label="Flight deal options" className="space-y-[10px] py-3" data-mobile-flight-deal-list>
+    <div role="radiogroup" aria-label="Flight deal options" className="grid gap-2 px-1 pb-1.5 pt-0.5" data-mobile-flight-deal-list>
       {displayedDeals.map(({ deal, canContinue }, index) => {
         const selected = deal.offerId === selectedDealOfferId || (!selectedDealOfferId && index === 0);
         const identityMark = resolveDealIdentityMark(deal);
@@ -191,11 +191,7 @@ function DealsSurface({
             data-mobile-flight-deal-card
             data-selected={selected || undefined}
             data-provider-handoff-unavailable={!canContinue || undefined}
-            className={`grid min-h-[80px] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-xl border-[1.5px] bg-white px-3 py-3 transition ${
-              selected
-                ? "border-[#075EE8] shadow-[0_10px_28px_-22px_rgba(15,23,42,0.5)]"
-                : "border-[#D9E2E8]"
-            }`}
+            className="grid min-h-[76px] min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-baseline content-center gap-1 rounded-xl border border-[#D9E2E8] bg-white px-3 py-3"
           >
             <button
               type="button"
@@ -226,31 +222,23 @@ function DealsSurface({
                   ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
                   [nextIndex]?.focus();
               }}
-              className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] items-center gap-2 min-w-0 min-h-11 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2"
+              className="col-span-2 grid grid-cols-subgrid grid-rows-subgrid items-baseline gap-1 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2"
             >
-              <span className="block min-w-0" data-mobile-flight-deal-provider>
+              <span className="flex min-w-0 items-baseline gap-0.5 pr-2" data-mobile-flight-deal-provider>
                 {deal.providerLogoUrl ? (
-                  <span className="flex min-w-0 flex-wrap items-center gap-1.5">
-                    <span data-mobile-flight-provider-logo className="inline-flex h-8 w-full max-w-[76px] shrink-0 items-center justify-start overflow-hidden">
-                      <Image src={deal.providerLogoUrl} alt="" aria-hidden="true" width={76} height={32} className="max-h-8 w-auto max-w-full object-contain object-left" title={deal.providerName} />
-                    </span>
-                    <strong className="block max-w-full truncate text-[14px] font-semibold leading-5 text-slate-900">{deal.providerName}</strong>
-                  </span>
-                ) : identityMark.kind === "airline" ? (
-                  <span className="flex min-w-0 flex-wrap items-center gap-1.5">
-                    <FlightIdentityMark logoUrl={identityMark.logoUrl} decorative mobile />
-                    <strong className="block max-w-full truncate text-[14px] font-semibold leading-5 text-slate-900">{deal.providerName}</strong>
-                  </span>
+                  <Image data-mobile-flight-provider-logo src={deal.providerLogoUrl} alt="" aria-hidden="true" width={132} height={30} className="h-7 min-w-0 max-w-[80px] object-contain object-left" title={deal.providerName} />
+                ) : identityMark.kind === "airline" && identityMark.logoUrl ? (
+                  <FlightIdentityMark logoUrl={identityMark.logoUrl} decorative mobile variant="provider" />
                 ) : (
-                  <strong className="block max-w-full truncate text-[14px] font-semibold leading-5 text-[#004BB8]">{deal.providerName}</strong>
+                  <span className="block min-w-0 truncate text-[12px] font-semibold leading-5 text-[#1a1a1a]" title={deal.providerName}>{deal.providerName}</span>
                 )}
               </span>
 
-              <span className="block min-w-0 text-center" data-mobile-flight-deal-price>
-                <strong className="block break-words text-[14px] min-[360px]:text-[16px] min-[440px]:text-[18px] font-semibold leading-[22px] tracking-[-0.02em] tabular-nums text-slate-950" aria-label={visiblePriceAriaLabel}>
+              <span className="mr-3 text-center" data-mobile-flight-deal-price>
+                <strong className="block whitespace-nowrap text-[16px] font-semibold leading-5 tracking-tight text-[#1a1a1a] tabular-nums" aria-label={visiblePriceAriaLabel}>
                   {visiblePrice}
                 </strong>
-                <span className="block text-[11px] font-normal leading-[14px] text-slate-500">
+                <span className="block text-[10px] font-normal leading-4 text-[#595959]">
                   Trip total
                 </span>
               </span>
@@ -264,7 +252,7 @@ function DealsSurface({
                 onSelectDeal(deal.offerId);
                 onViewDeal(deal.offerId);
               }}
-              className="inline-flex h-11 w-[88px] shrink-0 items-center justify-center rounded-lg bg-[#004BB8] px-2.5 whitespace-nowrap text-[12px]! font-semibold! leading-5! text-white transition-colors hover:bg-[#003B91] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[#004BB8] disabled:text-white disabled:opacity-100 min-[360px]:w-[96px] min-[360px]:text-[13px]!"
+              className="focus-ring inline-flex min-h-8 items-center justify-center whitespace-nowrap rounded-lg bg-[#004bb8] px-2.5 text-[16px] font-semibold leading-5 text-white disabled:opacity-50"
               data-mobile-flight-deal-action
             >
               {canViewDeal ? redirecting ? "Opening…" : "View deal" : pricesReady ? "Unavailable" : "Checking…"}

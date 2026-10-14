@@ -82,10 +82,10 @@ export function MobileNativeFareRail({
           <div
             key={fare.key}
             data-mobile-native-fare-card
-            className={`relative min-h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 rounded-[15px] border-[1.5px] px-3 pb-2 pt-1.5 transition-[border-color,background-color,box-shadow] ${
+            className={`relative min-h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 rounded-[15px] border-[1.5px] bg-white px-3 pb-2 pt-1.5 transition-[border-color,box-shadow] ${
               selected
-                ? "z-[1] border-[#075EE8] bg-[#F4F8FF] shadow-[0_10px_28px_-22px_rgba(15,23,42,0.5)]"
-                : "z-0 border-[#D7E0EC] bg-white shadow-[0_10px_28px_-22px_rgba(15,23,42,0.5)]"
+                ? "z-[1] border-[#075EE8] shadow-[0_10px_28px_-22px_rgba(15,23,42,0.5)]"
+                : "z-0 border-[#D7E0EC] shadow-[0_10px_28px_-22px_rgba(15,23,42,0.5)]"
             }`}
           >
             <button
