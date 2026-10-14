@@ -3,6 +3,7 @@ import { resultIdKey, VirtualResultsList } from "./VirtualResultsList";
 import { useKayakResults } from "./KayakResultsContext";
 import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
 import { kayakCarCardModel } from "./kayakCardModels";
+import { groupKayakCarResults } from "@/lib/cars/carResults";
 import { resultActionHref } from "@/lib/travel/resultAction";
 
 import {
@@ -1858,7 +1859,6 @@ export function CarsResultsExperience({
   resultHeadingRef,
   presentation = "standalone",
   isCarSelectable,
-  mobileSearchInteractionActive = false,
 }: {
   results: NormalizedCarResult[];
   search: CarSearchParams;
@@ -1884,7 +1884,7 @@ export function CarsResultsExperience({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const kayak = useKayakResults();
   const results = useMemo(() => presentation !== "standalone" || kayak?.vertical !== "cars" ? providerResults : [
-    ...providerResults, ...kayak.offers.map(offer => kayakCarCardModel(offer,Math.max(1,Math.ceil((Date.parse(search.dropoffDate)-Date.parse(search.pickupDate))/86400000)||1),search.pickupLocation)),
+    ...providerResults, ...groupKayakCarResults(kayak.offers.map(offer => kayakCarCardModel(offer,Math.max(1,Math.ceil((Date.parse(search.dropoffDate)-Date.parse(search.pickupDate))/86400000)||1),search.pickupLocation))),
   ],[presentation,kayak,providerResults,search.dropoffDate,search.pickupDate,search.pickupLocation]);
   const providersLoading = presentation === "standalone" && kayak?.vertical === "cars" && kayak.status === "loading";
   const [quickFilterGroupId, setQuickFilterGroupId] = useState<string | null>(null);

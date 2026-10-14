@@ -32,6 +32,10 @@ export type CarCategory =
   | "van";
 
 export type CarOffer = {
+  carPresentation?: {
+    modelName: string; categoryLabel: string; imageUrl?: string; imageAlt: string;
+    specs: string[]; filterOptions?: string[];
+  };
   suppliedFacts?: Array<{ label: string; value: string }>;
   id: string;
   bookingProviderName: string;

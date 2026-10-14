@@ -173,7 +173,7 @@ test("global language catalog renders", () => {
 test("global language selector active render path hides visible locale codes while preserving metadata", () => {
   const appHeaderSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
   const activeSubtitleRender =
-    "{getLanguageDescriptionLabel(option)}\n                                  </span>";
+    /\{getLanguageDescriptionLabel\(option\)\}\s*<\/span>/;
   const visibleLocaleSuffixes = [
     "· en-US",
     "· es-ES",
@@ -243,8 +243,8 @@ test("global language selector active render path hides visible locale codes whi
   assert.ok(appHeaderSource.includes("aria-label={t.closeLanguageSelector}"), "close button remains rendered");
   assert.ok(appHeaderSource.includes("id={languageSearchId}"), "search input remains rendered");
   assert.ok(appHeaderSource.includes("option.locale.toLowerCase().includes(query)"), "locale codes remain searchable metadata");
-  assert.ok(appHeaderSource.includes(activeSubtitleRender), "active subtitle render path uses only the human-readable language description");
-  assert.ok(!appHeaderSource.includes("{option.locale}\n                                  </span>"), "active subtitle render path no longer appends locale metadata");
+  assert.match(appHeaderSource, activeSubtitleRender, "active subtitle render path uses only the human-readable language description");
+  assert.doesNotMatch(appHeaderSource, /\{option\.locale\}\s*<\/span>/, "active subtitle render path no longer appends locale metadata");
 
   for (const suffix of visibleLocaleSuffixes) {
     assert.ok(!appHeaderSource.includes(suffix), `${suffix} is not hard-coded in the active selector UI`);

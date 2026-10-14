@@ -38,7 +38,7 @@ import {
   buildGoogleCarMapEmbedUrl,
   buildGoogleCarStreetViewEmbedUrl,
 } from "@/lib/cars/carMap";
-import { calculateRentalDays, getComparisonCarOffers, getPrimaryCarOffer } from "@/lib/cars/carResults";
+import { calculateRentalDays, getComparisonCarOffers, getPrimaryCarOffer, sortCarOffers } from "@/lib/cars/carResults";
 import type {
   CarOffer,
   CarSearchParams,
@@ -229,8 +229,8 @@ export function CarDetailsExperience({
   };
   const canonicalPrimaryOffer = suppliedPrimaryOffer ?? getPrimaryCarOffer(car);
   const comparisonOffers = useMemo(
-    () => getComparisonCarOffers(car.offers),
-    [car.offers],
+    () => car.inventorySource === "kayak-sandbox" ? sortCarOffers(car.offers) : getComparisonCarOffers(car.offers),
+    [car.offers, car.inventorySource],
   );
   const [selectedOfferId, setSelectedOfferId] = useState<string | undefined>(
     () => canonicalPrimaryOffer?.id,
