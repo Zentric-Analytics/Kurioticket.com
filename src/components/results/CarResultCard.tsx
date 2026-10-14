@@ -465,7 +465,7 @@ export function CarResultCard({
           >
             <div
               data-car-card-mobile-offers
-              className="min-w-0 flex-[2.1] px-2 py-2.5"
+              className="min-w-0 flex-[2.65] px-2 py-2.5"
             >
               {!guidedPlanning ? (
                 <CarDealPicker
@@ -478,7 +478,7 @@ export function CarResultCard({
             </div>
             <div
               data-car-card-mobile-pricing
-              className="flex min-w-0 flex-[1.25] flex-col items-end justify-center px-2.5 py-2"
+              className="flex min-w-0 flex-[1.1] flex-col items-end justify-center px-2.5 py-2 max-[359px]:px-1"
             >
               <p
                 className="max-w-full whitespace-nowrap text-[19px] font-semibold leading-[22px] tracking-[-0.02em] text-[#07133B] tabular-nums"
