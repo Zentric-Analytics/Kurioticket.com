@@ -62,7 +62,7 @@ function ProviderMark({
         src={logoUrl}
         alt=""
         aria-hidden="true"
-        className={`${compact ? "h-4 w-4" : "h-4 w-4"} max-w-full object-contain`}
+        className="h-4 w-4 max-w-full object-contain"}
       />
     );
   }
@@ -137,14 +137,14 @@ export function CarDealPicker({
               role="listitem"
               className={[
                 responsiveVisibility, "min-w-0 items-center",
-                compact ? "grid-cols-[minmax(0,calc(50%_+_12px))_minmax(0,1fr)] min-h-10 max-[359px]:grid-cols-1 max-[359px]:py-1"
+                compact ? "grid-cols-[minmax(0,calc(50%_+_20px))_minmax(0,1fr)] min-h-10 max-[359px]:grid-cols-1 max-[359px]:py-1"
                         : "grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)] min-h-6",
               ].join(" ")}
               data-car-deal-provider-offer
             >
               <div data-car-deal-provider-meta className={["flex min-w-0 items-center gap-1", compact ? "pr-2" : "pr-3"].join(" ")}>
                 <div className={["flex min-w-0 flex-1 items-center", compact ? "gap-0.5" : "gap-1"].join(" ")}>
-                  <span className={[(compact ? "h-4 w-4" : "h-4 w-4"), "inline-flex shrink-0 items-center justify-center overflow-hidden"].join(" ")}>
+                  <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden">
                     <ProviderMark group={group} compact={compact} />
                   </span>
                   <span
@@ -175,7 +175,7 @@ export function CarDealPicker({
                     className={[(compact ? "text-[12px] leading-4" : "text-[11px] leading-4"), `inline-flex ${compact ? "min-h-10" : "min-h-6"} shrink-0 items-center gap-0.5 whitespace-nowrap font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35`].join(" ")}
                     data-car-deal-provider-view-deal
                   >
-                    View deal <ChevronRight size={compact ? 12 : 12} strokeWidth={2} aria-hidden="true" />
+                    View deal <ChevronRight size={compact ? 11 : 12} strokeWidth={2} aria-hidden="true" className={compact ? "max-[409px]:hidden" : undefined} />
                   </a>
                 ) : (
                   <span
@@ -190,7 +190,7 @@ export function CarDealPicker({
                   <button
                     type="button"
                     data-car-rate-info
-                    className={["ml-auto inline-flex shrink-0 items-center justify-center rounded-full text-[#64748B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40", compact ? "h-10 w-9" : "h-6 w-6"].join(" ")}
+                    className={["ml-auto inline-flex shrink-0 items-center justify-center rounded-full text-[#64748B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40", compact ? "h-10 w-9 max-[389px]:w-8" : "h-6 w-6"].join(" ")}
                     aria-label={"Rate information for " + group.providerName + ", " + formatOfferPrice(offer) + " per day"}
                     onClick={event => { event.stopPropagation(); setDetailsKey(group.key); }}
                   >
