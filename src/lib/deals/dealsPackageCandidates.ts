@@ -1,3 +1,4 @@
+import { isProviderHotelResult } from "@/services/travel/hotelInventorySource";
 import { getPrimaryCarOffer } from "@/lib/cars/carResults";
 import type { NormalizedCarResult } from "@/lib/cars/types";
 import { convertCurrencyAmount, type ExchangeRates } from "@/lib/currency/exchangeRates";
@@ -30,8 +31,8 @@ function safeInternalDetail(action: TravelResultAction, product: "flights" | "ho
 }
 const liveBookable = (item: { searchPolicy: ContractResult<object>["searchPolicy"] }) => item.searchPolicy.bookable && item.searchPolicy.action.enabled;
 export const isDealsFlightEligible = (item: ContractResult<PublicFlightResult>) => Boolean(item.id.trim() && Number.isFinite(item.price) && item.price > 0 && item.currency?.trim() && liveBookable(item) && safeInternalDetail(item.searchPolicy.action, "flights", item.id));
-export const isDealsHotelEligible = (item: ContractResult<PublicHotelResult>) => Boolean(item.id.trim() && Number.isFinite(item.totalPrice) && item.totalPrice! > 0 && item.currency?.trim() && item.searchPolicy.source === "kurioticket-static-hotels" && !item.searchPolicy.bookable && safeInternalDetail(item.searchPolicy.action, "hotels", item.id));
-export const isDealsCarEligible = (item: ContractResult<NormalizedCarResult>) => { const offer = getPrimaryCarOffer(item); return Boolean(item.id.trim() && offer && Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && offer.currency.trim() && !item.searchPolicy.bookable && safeInternalDetail(item.searchPolicy.action, "cars", item.id)); };
+export const isDealsHotelEligible = (item: ContractResult<PublicHotelResult>) => Boolean(item.id.trim() && Number.isFinite(item.totalPrice) && item.totalPrice! > 0 && item.currency?.trim() && isProviderHotelResult(item) && (item.searchPolicy.source === "kayak-sandbox" || item.searchPolicy.source === "metasearch") && !item.searchPolicy.bookable && safeInternalDetail(item.searchPolicy.action, "hotels", item.id));
+export const isDealsCarEligible = (item: ContractResult<NormalizedCarResult>) => { const offer = getPrimaryCarOffer(item); return Boolean(item.inventorySource === "kayak-sandbox" && item.id.trim() && offer && Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && offer.currency.trim() && !item.searchPolicy.bookable && safeInternalDetail(item.searchPolicy.action, "cars", item.id)); };
 
 const asc = (a: number | null | undefined, b: number | null | undefined) => (a ?? Number.POSITIVE_INFINITY) - (b ?? Number.POSITIVE_INFINITY);
 const desc = (a: number | null | undefined, b: number | null | undefined) => (b ?? Number.NEGATIVE_INFINITY) - (a ?? Number.NEGATIVE_INFINITY);

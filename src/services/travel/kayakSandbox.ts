@@ -59,6 +59,8 @@ export type KayakVertical = z.infer<typeof kayakVertical>;
 export type SandboxOffer = {
   id: string;
   hotelPropertyKey?: string;
+  carGroupKey?: string;
+  carRentalDays?: number;
   title: string;
   description: string;
   details: string[];
@@ -280,23 +282,29 @@ export function normalizeSandboxOffers(
       offers.push({
         id: `${text(result.id) || (index + resultOffset)}:${optionIndex}`,
         ...(vertical === "hotels" ? { hotelPropertyKey: String(index + resultOffset) } : {}),
+        ...(vertical === "cars" ? {
+          carGroupKey: text(result.id) || String(index + resultOffset),
+          ...(typeof data.days === "number" && Number.isFinite(data.days) && data.days > 0 ? { carRentalDays: data.days } : {}),
+        } : {}),
         title: title || "KAYAK test result",
         description,
         details,
         images: kayakImages(vertical, result, car, title),
         attributes: vertical === "cars" ? [
           ...kayakAttributes(car,["type","brand","sipp","fuel","bags","passengers","doors","transmission","features"]),
-          ...kayakAttributes(option,["policy","paymentType","rateType","badges"]),
-          ...kayakAttributes(object(object(data.carLocations)[text(option.pickupLocationId)]),["address","cityName","countryCode","locationType","displayDistance","airport"]),
+          ...kayakAttributes(option,["policy","fees","isCreditCardRequired","paymentType","rateType","badges"]),
+          ...kayakAttributes(object(object(data.agencies)[text(option.agencyCode)]),["displayName","type"]).map(fact => ({ ...fact, label: `Rental agency · ${fact.label}` })),
+          ...kayakAttributes(object(object(data.carLocations)[text(option.pickupLocationId)]),["address","cityName","countryCode","locationType","displayDistance","airport","coordinates"]).map(fact => ({ ...fact, label: `Pickup · ${fact.label}` })),
+          ...kayakAttributes(object(object(data.carLocations)[text(option.dropoffLocationId || option.pickupLocationId)]),["address","cityName","countryCode","locationType","displayDistance","airport","coordinates"]).map(fact => ({ ...fact, label: `Drop-off · ${fact.label}` })),
         ] : vertical === "hotels" ? [
           { label: "Amenity information", value: kayakHotelAmenityStatus(result.features, data.amenityDictionary) },
           ...kayakAttributes({...result, amenities: kayakHotelAmenities(result.features, data.amenityDictionary)},["address","hotelCountryCode","starRating","isSelfRated","amenities","policies","guestRating","guestRatingSentiment","reviewQuotes","place"]),
           ...kayakAttributes(option,["roomName","hasFreeCancellation","canPayLater","isBundledRate","rateBreakdown","conditions"]),
         ] : [...kayakAttributes(option,["fees","badges","segmentFares","fareFamily"]), ...kayakFlightAttributes(data,result)].filter(fact => sanitizeKayakFlightText(fact.value)),
-        ...(vertical === "cars" ? { carFilterOptions: kayakCarFilterOptions(car), carSpecs: [
+        ...(vertical === "cars" ? { carFilterOptions: kayakCarFilterOptions(car, option, object(object(data.carLocations)[text(option.pickupLocationId)])), carSpecs: [
           typeof car.passengers === "number" ? `${car.passengers} passengers` : "Passengers not supplied",
           typeof car.bags === "number" ? `${car.bags} bags` : "Baggage capacity not supplied",
-          /^doors\d+$/.test(text(car.doors)) ? `${text(car.doors).slice(5)} doors` : text(car.doors) || "Doors not supplied",
+          /^doors\d+$/.test(text(car.doors)) ? `${text(car.doors).slice(5).split("").join(" or ")} doors` : text(car.doors) || "Doors not supplied",
           text(car.transmission) ? text(car.transmission).replace(/^./,letter=>letter.toUpperCase()) : "Transmission not supplied",
         ] } : {}),
         ...(vertical === "hotels" && typeof result.starRating === "number" ? {hotelStars:result.starRating} : {}),
@@ -319,8 +327,8 @@ export function normalizeSandboxOffers(
         ...((vertical === "flights" || vertical === "hotels" || vertical === "cars") && (text(provider.displayName) || text(option.providerCode))
           ? { bookingProviderName: text(provider.displayName) || text(option.providerCode) }
           : {}),
-        ...((vertical === "flights" || vertical === "hotels" || vertical === "cars") && kayakImageUrl(provider.logoUrl)
-          ? { bookingProviderLogoUrl: kayakImageUrl(provider.logoUrl) }
+        ...((vertical === "flights" || vertical === "hotels" || vertical === "cars") && kayakImageUrl(vertical === "cars" ? object(provider.logoUrls).horizontalUrl || provider.logoUrl : provider.logoUrl)
+          ? { bookingProviderLogoUrl: kayakImageUrl(vertical === "cars" ? object(provider.logoUrls).horizontalUrl || provider.logoUrl : provider.logoUrl) }
           : {}),
         ...(vertical === "flights" ? {flightCabin} : {}),
         ...(flightFareFamily ? {flightFareFamily} : {}),

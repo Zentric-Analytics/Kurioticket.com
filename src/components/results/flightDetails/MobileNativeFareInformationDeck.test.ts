@@ -75,7 +75,7 @@ test("mobile Compare deals keeps resilient provider identity, selection, price h
 });
 
 
-test("mobile Flight provider card follows the Hotel card styling", async () => {
+test("mobile Flight and Hotel provider cards retain shared styling with product-specific grids", async () => {
   const [deck, hotel] = await Promise.all([
     readFile("src/components/results/flightDetails/MobileNativeFareInformationDeck.tsx", "utf8"),
     readFile("src/components/results/hotelDetails/HotelPriceComparisonSection.tsx", "utf8"),
@@ -85,12 +85,24 @@ test("mobile Flight provider card follows the Hotel card styling", async () => {
   assert.ok(card);
   const flightCard = deck.match(/className="(grid min-h-\[76px\][^"]+)"/)?.[1];
   assert.ok(flightCard);
-  assert.equal(flightCard, card);
+  for (const token of ["grid", "min-h-[76px]", "min-w-0", "items-baseline", "content-center", "rounded-xl", "border", "border-[#D9E2E8]", "bg-white", "px-3", "py-3"]) {
+    assert.ok(flightCard.split(/\s+/).includes(token), `Flight retains ${token}`);
+    assert.ok(card.split(/\s+/).includes(token), `Hotel retains ${token}`);
+  }
+  assert.ok(flightCard.includes("grid-cols-[minmax(0,1fr)_auto_auto]"));
+  assert.ok(card.includes("grid-cols-[max-content_max-content_max-content]"));
+  assert.ok(card.includes("justify-between"));
+  assert.ok(card.includes("max-[349px]:px-2"));
   const price = mobileHotel.match(/<strong className="([^"]+)"/)?.[1];
   const action = mobileHotel.match(/<button type="button" className="([^"]+)" disabled=/)?.[1];
   assert.ok(price && action);
-  assert.ok(deck.includes(`className="${price}"`));
-  assert.ok(deck.includes(`className="${action}"`));
+  for (const token of ["text-[16px]", "font-semibold", "leading-5"]) {
+    assert.ok(price.split(/\s+/).includes(token));
+    assert.ok(action.split(/\s+/).includes(token));
+    assert.ok(deck.includes(token));
+  }
+  assert.ok(price.includes("max-[349px]:text-[13px]"));
+  assert.ok(action.includes("max-[349px]:text-[13px]"));
   assert.match(deck, /col-span-2 grid grid-cols-subgrid/);
   assert.match(deck, /grid gap-2 px-1 pb-1\.5 pt-0\.5/);
   assert.match(deck, /className="mr-3 text-center" data-mobile-flight-deal-price/);

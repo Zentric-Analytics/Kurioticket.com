@@ -35,7 +35,8 @@ export function kayakHotelAmenityStatus(features: unknown, mapping: unknown): st
 }
 
 /** Only explicitly supplied specifications may participate in shared filters. */
-export function kayakCarFilterOptions(car: Record<string, unknown>): string[] {
+export function kayakCarFilterOptions(car: Record<string, unknown>, booking: Record<string, unknown> = {}, pickup: Record<string, unknown> = {}): string[] {
+  const obj = (value: unknown): Record<string, unknown> => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
   const options: string[] = [];
   const type = car.type && typeof car.type === "object" ? car.type as Record<string, unknown> : {};
   const category = typeof type.displayName === "string" ? type.displayName.trim().toLowerCase() : "";
@@ -53,6 +54,15 @@ export function kayakCarFilterOptions(car: Record<string, unknown>): string[] {
   for (const count of [2, 3, 4]) {
     if (typeof car.bags === "number" && Number.isFinite(car.bags) && car.bags >= count) options.push(`bags${count}Plus`);
   }
+  const policy = obj(booking.policy);
+  const fuel = obj(policy.fuel).code;
+  const mileage = obj(policy.mileage).code;
+  if (fuel === "fullToFull" || fuel === "sameToSame") options.push(fuel);
+  if (mileage === "unlimited" || mileage === "limited") options.push(`${mileage}Mileage`);
+  if (booking.paymentType === "payAtPickup") options.push("payAtPickup");
+  if (obj(policy.cancellation).isUnlimited === true || (Array.isArray(booking.badges) && booking.badges.some(badge => obj(badge).code === "freeCancellation"))) options.push("freeCancellation");
+  const pickupFilters: Record<string, string> = { inTerminal: "airportCounter", shuttle: "shuttlePickup", nonAirport: "cityLocation" };
+  if (typeof pickup.locationType === "string" && pickupFilters[pickup.locationType]) options.push(pickupFilters[pickup.locationType]);
   return options;
 }
 

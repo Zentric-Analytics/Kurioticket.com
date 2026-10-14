@@ -35,17 +35,19 @@ test("native Cars shows all supplied static Kurioticket prices without inventing
   assert.equal(nativeCarPrimaryBookingUrl(result), null);
 });
 
-test("native Cars groups other providers the same way as web, preserving the cheapest seller offer", () => {
+test("native Cars preserves every distinct KAYAK rate through the shared web grouping", () => {
   const result = car([
     offer("b-high", "Provider B", 200),
     offer("a-low", "Provider A", 111, "https://sandbox-en-us.kayakaffiliates.com/in?offer=a"),
     offer("b-low", "Provider B", 135),
   ], "kayak-sandbox");
   const choices = nativeCarResultDealChoices(result);
-  assert.deepEqual(choices.map(({ providerName }) => providerName), ["Provider A", "Provider B"]);
-  assert.deepEqual(choices.map(({ offer: item }) => item.id), ["a-low", "b-low"]);
+  assert.deepEqual(choices.map(({ providerName }) => providerName), ["Provider A", "Provider B", "Provider B"]);
+  assert.deepEqual(choices.map(({ offer: item }) => item.id), ["a-low", "b-low", "b-high"]);
+  assert.equal(new Set(choices.map(choice => choice.key)).size, 3);
   assert.equal(choices[0]?.bookingUrl, "https://sandbox-en-us.kayakaffiliates.com/in?offer=a");
   assert.equal(choices[1]?.bookingUrl, null);
+  assert.equal(choices[2]?.bookingUrl, null);
 });
 
 test("native Cars preserves five distinct sellers without a three-choice cap", () => {
@@ -103,6 +105,11 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.match(picker, /provider: \{ minHeight: 18, minWidth: 0, flexDirection: "row", alignItems: "center"/);
   assert.match(picker, /providers: \{ minWidth: 0, gap: 0/);
   assert.match(picker, /brand: \{ flex: 1, minWidth: 0/);
+  assert.match(picker, /Math\.round\(event\.nativeEvent\.layout\.width\)/);
+  assert.match(picker, /rowWidth \/ 2 \+ 26/);
+  assert.match(picker, /meta: \{ minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4, paddingLeft: 6, paddingRight: 8/);
+  assert.match(picker, /action: \{ minHeight: 18, flex: 1, minWidth: 0[\s\S]*justifyContent: "flex-start"/);
+  assert.match(picker, /price: \{ flexShrink: 1, minWidth: 0/);
   assert.doesNotMatch(picker, /Compare deals/);
   assert.match(card, /<NativeCarResultOfferPicker result=\{result\}/);
   assert.match(card, /disabled=\{!primaryBookingUrl\}/);

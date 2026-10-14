@@ -4,6 +4,20 @@ export type SelectedCarFilters = Record<string, string[]>;
 export type CarSort = "recommended" | "lowestTotal" | "topRated";
 export type CarResultBadge = "Best value" | "Cheapest" | "Top rated";
 
+/** Shared by server search and browser-loaded KAYAK inventory. */
+export function groupKayakCarResults(results: NormalizedCarResult[]): NormalizedCarResult[] {
+  const groups = new Map<string, NormalizedCarResult>();
+  for (const car of results) {
+    if (!car.offers.length) continue;
+    const existing = groups.get(car.id);
+    if (!existing) { groups.set(car.id, { ...car, offers: [...car.offers] }); continue; }
+    const offers = [...existing.offers, ...car.offers];
+    const representative = car.offers[0].totalPrice < existing.offers[0].totalPrice ? car : existing;
+    groups.set(car.id, { ...representative, offers: offers.sort((a, b) => a.totalPrice - b.totalPrice || a.id.localeCompare(b.id)) });
+  }
+  return [...groups.values()];
+}
+
 export const getPrimaryCarOffer = (car: NormalizedCarResult): CarOffer | undefined =>
   [...car.offers].filter((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0)
     .sort((a, b) => a.totalPrice - b.totalPrice || a.pricePerDay - b.pricePerDay || a.id.localeCompare(b.id))[0];
@@ -57,6 +71,12 @@ export const getCarDealPickerGroups = (
   car: Pick<NormalizedCarResult, "offers" | "inventorySource">,
 ): CarProviderOfferGroup[] => {
   const providerGroups = getCarProviderOfferGroups(car.offers);
+  // Preserve distinct rates/conditions even when the same seller supplies them.
+  if (car.inventorySource === "kayak-sandbox") {
+    return providerGroups.flatMap(group => group.offers.map(offer => ({
+      ...group, key: `${group.key}:${offer.id}`, primaryOffer: offer, offers: [offer],
+    })));
+  }
   const onlyProvider = providerGroups[0];
   const shouldPreviewStaticKurioticketOffers =
     car.inventorySource === "kurioticket-static-cars" &&
@@ -153,7 +173,7 @@ const optionMatches: Record<string, (car: NormalizedCarResult) => boolean> = {
   cityLocation: (car) => car.pickupType === "city-location",
 };
 
-export const doesCarMatchFilterOption = (car: NormalizedCarResult, option: string, resolvePricePerDay: CarPricePerDayResolver = getPrimaryCarPricePerDay) => {
+const doesSingleCarMatchFilterOption = (car: NormalizedCarResult, option: string, resolvePricePerDay: CarPricePerDayResolver = getPrimaryCarPricePerDay) => {
   const dailyPricePredicate = dailyPriceOptionMatches[option];
   if (dailyPricePredicate) {
     const price = resolvePricePerDay(car);
@@ -166,9 +186,31 @@ export const doesCarMatchFilterOption = (car: NormalizedCarResult, option: strin
   return optionMatches[option]?.(car) ?? false;
 };
 
+function withCarOffer<T extends NormalizedCarResult>(car: T, offer: CarOffer): T {
+  const presentation = offer.carPresentation;
+  return { ...car, offers: [offer], ...(presentation ? {
+    modelName: presentation.modelName, categoryLabel: presentation.categoryLabel,
+    imageUrl: presentation.imageUrl, imageAlt: presentation.imageAlt,
+    sandboxPresentation: { specs: presentation.specs, filterOptions: presentation.filterOptions, pickupLabel: car.sandboxPresentation?.pickupLabel ?? "Search pickup" },
+  } : {}) };
+}
+
+export const doesCarMatchFilterOption = (car: NormalizedCarResult, option: string, resolvePricePerDay: CarPricePerDayResolver = getPrimaryCarPricePerDay) =>
+  car.inventorySource === "kayak-sandbox" && car.offers.some(offer => offer.carPresentation)
+    ? car.offers.some(offer => doesSingleCarMatchFilterOption(withCarOffer(car, offer), option, resolvePricePerDay))
+    : doesSingleCarMatchFilterOption(car, option, resolvePricePerDay);
+
 export function filterCarResults<T extends NormalizedCarResult>(results: T[], filters: SelectedCarFilters, resolvePricePerDay: CarPricePerDayResolver = getPrimaryCarPricePerDay): T[] {
   const groups = Object.values(filters).filter((options) => options.length);
-  return results.filter((car) => groups.every((options) => options.some((option) => doesCarMatchFilterOption(car, option, resolvePricePerDay))));
+  if (!groups.length) return results;
+  return results.flatMap(car => {
+    if (car.inventorySource === "kayak-sandbox" && car.offers.some(offer => offer.carPresentation)) {
+      const offers = sortCarOffers(car.offers).filter(offer => groups.every(options => options.some(option =>
+        doesSingleCarMatchFilterOption(withCarOffer(car, offer), option, resolvePricePerDay))));
+      return offers.length ? [{ ...withCarOffer(car, offers[0]), offers }] : [];
+    }
+    return groups.every(options => options.some(option => doesCarMatchFilterOption(car, option, resolvePricePerDay))) ? [car] : [];
+  });
 }
 
 // Kurioticket's transparent recommendation tie-breaker rewards practical rental terms.

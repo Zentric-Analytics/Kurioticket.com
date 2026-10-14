@@ -15,7 +15,6 @@ test("encoded KAYAK car route IDs resolve the exact cached provider car", async 
     searchKayak: async () => { throw new Error("No provider search expected"); },
     rememberExact: async () => {},
     rememberCohort: async () => {},
-    buildStatic: () => { throw new Error("No static fallback expected"); },
   };
   assert.equal(await resolveCarDetails(decoded, undefined, undefined, dependencies), car);
 });

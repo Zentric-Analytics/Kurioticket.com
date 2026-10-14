@@ -1,5 +1,4 @@
 import type { CarInventoryStatus, LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
-import { buildStaticCarResults } from "@/services/travel/staticCarResults";
 import { providerSearchWarnings } from "./providerSearchOutcome";
 import { searchKayakCars, type KayakRequestContext } from "./kayakMetasearchProvider";
 import { getCarSearchCohort, getProviderResult, rememberCarSearchCohort, rememberProviderResults } from "./providerResultCache";
@@ -61,7 +60,6 @@ export type CarDetailsDependencies = {
   searchKayak: typeof searchKayakCars;
   rememberExact: typeof rememberProviderResults<NormalizedCarResult>;
   rememberCohort: typeof rememberCarSearchCohort;
-  buildStatic: typeof buildStaticCarResults;
 };
 
 const carDetailsDependencies: CarDetailsDependencies = {
@@ -70,7 +68,6 @@ const carDetailsDependencies: CarDetailsDependencies = {
   searchKayak: searchKayakCars,
   rememberExact: rememberProviderResults,
   rememberCohort: rememberCarSearchCohort,
-  buildStatic: buildStaticCarResults,
 };
 
 /** Resolve provider IDs without ever interpreting them as static catalogue IDs.
@@ -83,7 +80,7 @@ export async function resolveCarDetails(
   dependencies: CarDetailsDependencies = carDetailsDependencies,
 ) {
   if (!id.startsWith(KAYAK_CAR_ID_PREFIX)) {
-    return search ? dependencies.buildStatic(search).find(car => car.id === id) ?? null : null;
+    return null;
   }
   if (!isKayakCarResultId(id)) return null;
 

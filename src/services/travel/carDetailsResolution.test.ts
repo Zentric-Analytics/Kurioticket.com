@@ -16,7 +16,7 @@ function kayakCar(id: string, modelName = "Provider compact") {
 }
 
 function dependencies(overrides: Partial<CarDetailsDependencies> = {}) {
-  const calls = { static: 0, searches: 0, exactWrites: 0, cohortWrites: 0 };
+  const calls = { searches: 0, exactWrites: 0, cohortWrites: 0 };
   const value: CarDetailsDependencies = {
     getExact: async () => null,
     getCohort: async () => [],
@@ -26,7 +26,6 @@ function dependencies(overrides: Partial<CarDetailsDependencies> = {}) {
     },
     rememberExact: async () => { calls.exactWrites += 1; },
     rememberCohort: async () => { calls.cohortWrites += 1; },
-    buildStatic: () => { calls.static += 1; return []; },
     ...overrides,
   };
   return { calls, value };
@@ -41,7 +40,7 @@ test("an exact provider-cache hit resolves a KAYAK car without static fallback",
     return expected;
   } });
   assert.equal(await resolveCarDetails(id, search, undefined, fixture.value), expected);
-  assert.deepEqual(fixture.calls, { static: 0, searches: 0, exactWrites: 0, cohortWrites: 0 });
+  assert.deepEqual(fixture.calls, { searches: 0, exactWrites: 0, cohortWrites: 0 });
 });
 
 test("a server-owned search cohort recovers the exact selected result after an exact miss", async () => {
@@ -53,7 +52,6 @@ test("a server-owned search cohort recovers the exact selected result after an e
   } });
   assert.equal(await resolveCarDetails(selected.id, search, undefined, fixture.value), selected);
   assert.equal(fixture.calls.searches, 0);
-  assert.equal(fixture.calls.static, 0);
 });
 
 test("a cache miss repeats the canonical provider search and remembers all results", async () => {
@@ -70,7 +68,6 @@ test("a cache miss repeats the canonical provider search and remembers all resul
   assert.equal(fixture.calls.searches, 1);
   assert.equal(fixture.calls.exactWrites, 1);
   assert.equal(fixture.calls.cohortWrites, 1);
-  assert.equal(fixture.calls.static, 0);
 });
 
 test("missing, mismatched, and malformed KAYAK results fail closed", async () => {
@@ -80,7 +77,6 @@ test("missing, mismatched, and malformed KAYAK results fail closed", async () =>
     getCohort: async () => [{ ...kayakCar(wanted), inventorySource: "kurioticket-static-cars" }],
   });
   assert.equal(await resolveCarDetails(wanted, search, undefined, fixture.value), null);
-  assert.equal(fixture.calls.static, 0);
   assert.equal(isKayakCarResultId("kayak-sandbox:"), false);
   assert.equal(isKayakCarResultId("kayak-sandbox:../../private"), false);
   assert.equal(isKayakCarResultId("kayak-sandbox:valid:opaque:4"), true);
@@ -88,13 +84,9 @@ test("missing, mismatched, and malformed KAYAK results fail closed", async () =>
   assert.equal(fixture.calls.searches, 1, "malformed IDs do not trigger another provider request");
 });
 
-test("normal static car IDs retain the catalogue-only resolution path", async () => {
+test("retired static car IDs cannot revive catalogue offers", async () => {
   const expected = { id: "static-car-luxury-eclass" } as NormalizedCarResult;
-  const fixture = dependencies({ buildStatic: received => {
-    fixture.calls.static += 1;
-    assert.deepEqual(received, search);
-    return [expected];
-  } });
-  assert.equal(await resolveCarDetails(expected.id, search, undefined, fixture.value), expected);
-  assert.deepEqual(fixture.calls, { static: 1, searches: 0, exactWrites: 0, cohortWrites: 0 });
+  const fixture = dependencies();
+  assert.equal(await resolveCarDetails(expected.id, search, undefined, fixture.value), null);
+  assert.deepEqual(fixture.calls, { searches: 0, exactWrites: 0, cohortWrites: 0 });
 });

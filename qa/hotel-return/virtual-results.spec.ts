@@ -68,7 +68,7 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
   await page.route("**/api/cars/search", route =>
     route.fulfill({ json: { results: [makeResult(offerCount)], status: "available" } }));
 
-  for (const viewport of [{ width: 390, height: 844 }, { width: 1365, height: 900 }]) {
+  for (const viewport of [{ width: 375, height: 812 }, { width: 390, height: 844 }, { width: 1365, height: 900 }]) {
     await page.setViewportSize(viewport);
     let threeOfferHeight: number | null = null;
 
@@ -87,7 +87,12 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
         : card.locator('[data-region="pricing"]');
 
       const rows = dealArea.locator("[data-car-deal-provider-offer]");
+      const rightSpecLabel = mobile
+        ? dealArea.locator("ul").nth(1).locator("li span").first()
+        : dealArea.locator("[data-car-card-desktop-primary-specs] li").nth(1).locator("span").first();
       await expect(rows).toHaveCount(count);
+      const rightSpecRect = await rightSpecLabel.boundingBox();
+      expect(rightSpecRect).not.toBeNull();
       await expect(card.locator("[data-supplier-information]")).toHaveCount(0);
       await expect(mainPrice).toBeVisible();
 
@@ -108,7 +113,8 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
         expect(link).not.toBeNull();
         expect(rowRect).not.toBeNull();
         expect(provider!.x + provider!.width).toBeLessThanOrEqual(price!.x + 1);
-        expect(price!.x + price!.width).toBeLessThanOrEqual(link!.x + 1);
+        expect(price!.x + price!.width + 6).toBeLessThanOrEqual(link!.x + 1);
+        expect(Math.abs(link!.x - rightSpecRect!.x)).toBeLessThanOrEqual(3);
         expect(Math.abs(provider!.y - link!.y)).toBeLessThan(10);
         expect(rowRect!.x + rowRect!.width).toBeLessThanOrEqual(mainRect!.x + 1);
         expect(rowRect!.y + rowRect!.height).toBeLessThanOrEqual(cardRect!.y + cardRect!.height + 1);
