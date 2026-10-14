@@ -130,7 +130,7 @@ export function CarDealPicker({
           const offer = group.primaryOffer;
           const bookingHref = approvedProviderBookingUrl(car, offer);
           const hasDetails = car.inventorySource === "kayak-sandbox" && Boolean(offer.suppliedFacts?.length);
-          const responsiveVisibility = expanded ? "grid" : index < 2 ? "grid" : index < 5 ? "hidden md:grid" : "hidden";
+          const responsiveVisibility = expanded ? "grid" : index < 3 ? "grid" : index < 5 ? "hidden md:grid" : "hidden";
           return (
             <div
               key={group.key}
@@ -202,7 +202,7 @@ export function CarDealPicker({
           );
         })}
       </div>
-      {groups.length > 2 ? (
+      {groups.length > 3 ? (
         <button
           type="button"
           data-car-deal-more-offers
@@ -210,7 +210,7 @@ export function CarDealPicker({
           onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
           aria-expanded={expanded}
         >
-          {expanded ? "Show fewer offers" : "+" + (groups.length - 2) + " more offers"}
+          {expanded ? "Show fewer offers" : "+" + (groups.length - 3) + " more offers"}
           <ChevronRight size={12} className={expanded ? "-rotate-90" : "rotate-90"} aria-hidden="true" />
         </button>
       ) : null}
