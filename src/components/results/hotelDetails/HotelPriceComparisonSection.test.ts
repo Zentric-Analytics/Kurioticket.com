@@ -61,6 +61,7 @@ test("mobile rate row keeps intrinsic provider, price, and View deal widths with
   assert.match(html, /text-\[16px\][^"]*max-\[349px\]:text-\[13px\]/);
   assert.match(html, /justify-self-end[^"]*whitespace-nowrap[^"]*max-\[349px\]:px-1\.5[^"]*max-\[349px\]:text-\[13px\]/);
   assert.doesNotMatch(html, /grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/);
+  assert.match(html, /aria-haspopup="dialog"/);
 });
 
 
@@ -74,6 +75,7 @@ test("desktop rate card exposes details separately from provider, price, and dea
   }));
   for (const fact of ["Example stays", "NGN 240,000", "View deal"]) assert.ok(html.includes(fact), fact);
   assert.match(html, /Rate details for Deluxe room/);
+  assert.match(html, /aria-haspopup="dialog"/);
   assert.doesNotMatch(html, /King bed|Breakfast included|Non-refundable|Pay at property|Taxes included|data-rate-terms/);
   assert.equal((html.match(/data-desktop-provider-offer/g) ?? []).length, 1);
   assert.match(html, /<article/);
