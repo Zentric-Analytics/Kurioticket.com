@@ -26,13 +26,11 @@ export function ResultsViewport({ mobile, children }: { mobile: boolean; childre
 
 /** Window scrolling stays continuous; only nearby cards are mounted. The full
  * inventory remains in the caller for sorting, filters and result counts. */
-export function VirtualResultsList<T>({ items, itemKey, renderItem, estimateHeight = 320, estimateItemSize, label, rowClassName = "pb-4" }: {
+export function VirtualResultsList<T>({ items, itemKey, renderItem, estimateHeight = 320, label, rowClassName = "pb-4" }: {
   items: readonly T[];
   itemKey: (item: T) => string;
   renderItem: (item: T, index: number) => ReactNode;
   estimateHeight?: number;
-  /** Optional per-result estimate for variable-height cards; actual height is still measured. */
-  estimateItemSize?: (item: T, viewportWidth: number) => number;
   label: string;
   rowClassName?: string;
 }) {
@@ -51,7 +49,7 @@ export function VirtualResultsList<T>({ items, itemKey, renderItem, estimateHeig
     return indices.sort((a, b) => a - b);
   }, [focusedIndex]);
   const virtualizer = useWindowVirtualizer({
-    count: items.length, getItemKey, estimateSize: (index) => estimateItemSize?.(items[index], width) ?? estimateHeight,
+    count: items.length, getItemKey, estimateSize: () => estimateHeight,
     overscan: 4, scrollMargin, rangeExtractor,
     initialRect: { width: 1200, height: 900 },
     initialMeasurementsCache: measurements.get(measurementKey),

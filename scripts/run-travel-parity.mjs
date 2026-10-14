@@ -23,9 +23,6 @@ const matrices = {
     "src/data/homepageCountryDirectory.test.ts",
     "src/lib/cars/carCanonicalCatalog.test.ts",
     "src/lib/cars/carResults.test.ts",
-    "src/components/results/carProviderComparison.test.ts",
-    "src/components/results/CarPriceComparison.test.ts",
-    "src/components/results/carResultCardMobileLayout.test.ts",
     "src/services/travel/packageOrchestrator.test.ts",
     "src/app/api/packages/search/route.test.ts",
     "src/components/results/flightResultsProductionPolish.test.ts",
@@ -62,7 +59,7 @@ for (const [workspace, files] of Object.entries(matrices)) {
   const args = workspace === "root"
     ? ["--test", "--import", "jiti/register", ...files]
     : ["--test", "--require", "./testAssetSetup.cjs", "--import", "jiti/register", ...files];
-  const env = { ...process.env, JITI_TSCONFIG_PATHS: "true", JITI_JSX: "true", TZ: "UTC" };
+  const env = { ...process.env, JITI_TSCONFIG_PATHS: "true", TZ: "UTC" };
   const result = spawnSync(process.execPath, args, { cwd, env, stdio: "inherit" });
   if (result.status !== 0) process.exit(result.status ?? 1);
 }

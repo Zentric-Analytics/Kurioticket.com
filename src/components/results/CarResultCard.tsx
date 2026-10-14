@@ -460,6 +460,14 @@ export function CarResultCard({
                   </ul>
                 ))}
               </div>
+              {!guidedPlanning ? (
+                <CarDealPicker
+                  car={car}
+                  selectedOfferId={offer.id}
+                  onSelectOffer={selectDealOffer}
+                  compact
+                />
+              ) : null}
             </div>
             <div
               data-car-card-mobile-pricing
@@ -754,6 +762,15 @@ export function CarResultCard({
               </li>
             ))}
           </ul>
+          {!guidedPlanning ? (
+            <CarDealPicker
+              car={car}
+              selectedOfferId={offer.id}
+              onSelectOffer={selectDealOffer}
+              desktopPanelTarget={desktopDealPanelTarget}
+            />
+          ) : null}
+
         </div>
 
         <div
@@ -887,14 +904,6 @@ export function CarResultCard({
           )}
         </div>
       </div>
-      {!guidedPlanning ? (
-        <CarDealPicker
-          car={car}
-          selectedOfferId={offer.id}
-          onSelectOffer={selectDealOffer}
-          desktopPanelTarget={desktopDealPanelTarget}
-        />
-      ) : null}
       <SupplierInformation facts={offer.suppliedFacts} title={`Supplier information — ${offer.bookingProviderName}`} />
     </article>
     {!guidedPlanning ? (
