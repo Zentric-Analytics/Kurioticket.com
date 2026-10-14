@@ -1,0 +1,21 @@
+.popover { position: fixed; z-index: 100; width: min(304px, calc(100vw - 24px)); border: 1px solid #e1e6eb; border-radius: 14px; background: #fff; color: #1a1a1a; box-shadow: 0 8px 28px rgb(25 32 36 / 18%); font-family: inherit; font-size: 12px; line-height: 1.45; outline: none; }
+.content { padding: 14px; max-height: inherit; overflow-y: auto; overscroll-behavior: contain; border-radius: inherit; scrollbar-width: thin; }
+.popover header { position: relative; display: flex; align-items: center; justify-content: center; min-height: 22px; padding-inline: 28px; margin-bottom: 10px; }
+.popover h2 { margin: 0; font-size: 14px; font-weight: 600; }
+.popover header button { position: absolute; right: -5px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; margin: 0; background: transparent; border: 0; color: #595959; cursor: pointer; border-radius: 6px; }
+.popover button:focus-visible { outline: 2px solid #004bb8; }
+.popover section + section { margin-top: 12px; }
+.popover h3 { margin: 0 0 6px; font-size: 12px; font-weight: 600; }
+.popover p { margin: 3px 0 0; overflow-wrap: anywhere; }
+.provider { font-weight: 600; }
+.room { color: #595959; }
+.popover dl { display: grid; gap: 5px; margin: 0; }
+.popover dl > div { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; }
+.popover dt { color: #595959; }
+.popover dd { margin: 0; text-align: right; overflow-wrap: anywhere; font-style: normal; }
+.total { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; padding: 9px 10px; border-radius: 8px; background: #f2f4f8; font-weight: 600; }
+.total strong { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pointer { position: absolute; width: 10px; height: 10px; background: white; transform: rotate(45deg); }
+.left { left: -6px; margin-top: -5px; border-left: 1px solid #e1e6eb; border-bottom: 1px solid #e1e6eb; }
+.top { top: -6px; margin-left: -5px; border-left: 1px solid #e1e6eb; border-top: 1px solid #e1e6eb; }
+.bottom { bottom: -6px; margin-left: -5px; border-right: 1px solid #e1e6eb; border-bottom: 1px solid #e1e6eb; }
