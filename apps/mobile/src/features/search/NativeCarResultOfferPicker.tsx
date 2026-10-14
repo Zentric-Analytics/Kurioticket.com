@@ -41,8 +41,8 @@ export function NativeCarResultOfferPicker({
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const choices = nativeCarResultDealChoices(result);
   const visibleChoices = expanded ? choices : choices.slice(0, 2);
-  const narrowActions = rowWidth > 0 && rowWidth < 246;
-  const stackVeryNarrow = rowWidth > 0 && rowWidth < 207;
+  const narrowActions = rowWidth > 0 && rowWidth < 268;
+  const stackVeryNarrow = rowWidth > 0 && rowWidth < 225;
   const selectedChoice = choices.find(choice => choice.key === selectedKey);
   const selectedPrice = selectedChoice
     ? presentCarOfferCurrency(selectedChoice.offer, displayCurrency, rates)
@@ -62,7 +62,7 @@ export function NativeCarResultOfferPicker({
       const actionColor = bookingUrl ? (theme.dark ? "#8FB5FF" : "#004BB8") : "#94A3B8";
       const hasDetails = result.inventorySource === "kayak-sandbox" && Boolean(offer.suppliedFacts?.length);
       return <View key={key} style={[styles.provider, stackVeryNarrow && styles.providerNarrow]}>
-        <View style={[styles.meta, { width: stackVeryNarrow ? "100%" : rowWidth > 0 ? Math.min(rowWidth, rowWidth / 2 + 16) : ("58%" as const) }]}>
+        <View style={[styles.meta, { width: stackVeryNarrow ? ("100%" as const) : rowWidth > 0 ? Math.min(rowWidth, rowWidth / 2 + 20) : ("58%" as const) }]}>
           <View style={styles.brand}>
             <ProviderMark name={providerName} logoUrl={logoUrl} />
             <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.providerName, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{providerName}</Text>
