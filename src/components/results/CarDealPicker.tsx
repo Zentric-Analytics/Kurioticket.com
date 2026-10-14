@@ -119,7 +119,7 @@ export function CarDealPicker({
             <div
               key={group.key}
               role="listitem"
-              className={`grid min-w-0 items-center ${compact ? "grid-cols-[minmax(0,calc(50%+20px))_minmax(0,1fr)] min-h-4" : "grid-cols-[minmax(0,calc(50%+31px))_minmax(0,1fr)] min-h-[18px]"}`}
+              className={`grid min-w-0 items-center ${compact ? "grid-cols-[minmax(0,calc(50%_+_20px))_minmax(0,1fr)] min-h-4" : "grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)] min-h-[18px]"}`}
               data-car-deal-provider-offer
             >
               <div data-car-deal-provider-meta className={`flex min-w-0 items-center gap-1 ${compact ? "pr-2" : "pr-3"}`}>
