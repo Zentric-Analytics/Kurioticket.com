@@ -68,7 +68,7 @@ test("mobile Compare deals keeps resilient provider identity, selection, price h
   assert.match(deck, /const canViewDeal = canContinue && pricesReady/);
   assert.match(deck, /Trip total/);
   assert.match(deck, /data-mobile-flight-deal-action/);
-  assert.equal(deck.match(/data-mobile-flight-deal-action\s*>\s*([^<]+)<\/button>/)?.[1].trim(), "View deals");
+  assert.equal(deck.match(/data-mobile-flight-deal-action\s*>\s*([^<]+)<\/button>/)?.[1].trim(), "View deal");
   assert.match(deck, /disabled=\{redirecting \|\| !canViewDeal\}/);
   assert.match(deck, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.doesNotMatch(deck, /No booking deals available|No additional live provider deals were supplied for this fare/);
@@ -89,24 +89,26 @@ test("mobile Flight and Hotel provider cards retain shared styling with product-
     assert.ok(flightCard.split(/\s+/).includes(token), `Flight retains ${token}`);
     assert.ok(card.split(/\s+/).includes(token), `Hotel retains ${token}`);
   }
-  assert.ok(flightCard.includes("grid-cols-[minmax(0,1fr)_auto_auto]"));
+  assert.ok(flightCard.includes("grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]"));
   assert.ok(card.includes("grid-cols-[max-content_max-content_max-content]"));
   assert.ok(card.includes("justify-between"));
   assert.ok(card.includes("max-[349px]:px-2"));
+  assert.ok(flightCard.includes("max-[349px]:px-2"));
   const price = mobileHotel.match(/<strong className="([^"]+)"/)?.[1];
   const action = mobileHotel.match(/<button type="button" className="([^"]+)" disabled=/)?.[1];
   assert.ok(price && action);
-  for (const token of ["text-[16px]", "font-semibold", "leading-5"]) {
+  for (const token of ["text-[13px]", "font-semibold", "leading-5", "max-[349px]:text-[10px]"]) {
     assert.ok(price.split(/\s+/).includes(token));
+    assert.ok(deck.includes(token));
+  }
+  for (const token of ["min-h-8", "text-[12px]", "px-1.5", "disabled:opacity-50"]) {
     assert.ok(action.split(/\s+/).includes(token));
     assert.ok(deck.includes(token));
   }
-  assert.ok(price.includes("max-[349px]:text-[13px]"));
-  assert.ok(action.includes("max-[349px]:text-[13px]"));
   assert.match(deck, /col-span-2 grid grid-cols-subgrid/);
   assert.match(deck, /grid gap-2 px-1 pb-1\.5 pt-0\.5/);
-  assert.match(deck, /className="mr-3 text-center" data-mobile-flight-deal-price/);
-  assert.match(deck, /block text-\[10px\] font-normal leading-4 text-\[#595959\]/);
+  assert.match(deck, /className="inline-flex items-baseline justify-self-center gap-1 whitespace-nowrap" data-mobile-flight-deal-price/);
+  assert.match(deck, /block text-\[10px\] font-normal leading-4 text-\[#595959\] max-\[349px\]:text-\[9px\]/);
   assert.match(deck, />\s*Trip total\s*<\/span>/);
   assert.doesNotMatch(deck, /min-\[360px\]:text|w-\[88px\]|h-11 w-\[88px\]/);
 });
@@ -148,7 +150,7 @@ test("provider action accessible names include the visible label in every state"
       }));
       const action = markup.match(/<button\b[^>]*data-mobile-flight-deal-action[^>]*>/)?.[0];
       assert.ok(action);
-      assert.equal(action.match(/aria-label="([^"]+)"/)?.[1], `View deals with Duffel${state.suffix}`);
+      assert.equal(action.match(/aria-label="([^"]+)"/)?.[1], `View deal with Duffel${state.suffix}`);
       assert.equal(/disabled=""/.test(action), !state.available || !state.ready || state.redirecting);
       assert.equal(/aria-busy="true"/.test(action), !state.ready || state.redirecting);
     }
@@ -156,4 +158,22 @@ test("provider action accessible names include the visible label in every state"
     if (previousReact === undefined) Reflect.deleteProperty(globalThis, "React");
     else Reflect.set(globalThis, "React", previousReact);
   }
+});
+
+
+test("mobile Flight price and Trip total share one accessible inline group without an info control", () => {
+  const previousReact = Reflect.get(globalThis, "React"); Reflect.set(globalThis, "React", React);
+  try {
+    const offer = {id:"selected-offer",provider:"KAYAK sandbox",bookingProviderName:"Priceline",airlineName:"Example Air",price:419351,currency:"NGN"};
+    const fare = {key:"economy",label:"Economy",offer,handoff:{available:true},deals:[]};
+    const markup = renderToStaticMarkup(React.createElement(MobileNativeFareInformationDeck, {
+      activeTab:"deals",onTabChange:()=>{},fare:fare as never,activeOffer:offer as never,locale:"en-US",selectedDealOfferId:null,
+      onSelectDeal:()=>{},selectedCurrency:"NGN",currencyRates:{NGN:1},isFallbackRate:false,pricesReady:true,redirecting:false,onViewDeal:()=>{},
+    }));
+    assert.match(markup, /class="inline-flex items-baseline justify-self-center gap-1 whitespace-nowrap" data-mobile-flight-deal-price="true"><strong[^>]*aria-label="Trip total:[^"]+"[^>]*>[^<]+<\/strong><span[^>]*>Trip total<\/span>/);
+    assert.match(markup, /aria-label="View deal with Priceline"/);
+    assert.match(markup, />View deal<\/button>/);
+    assert.match(markup, /title="Priceline"/);
+    assert.doesNotMatch(markup, /View deals|Rate details|aria-haspopup|lucide-info/);
+  } finally { if (previousReact === undefined) Reflect.deleteProperty(globalThis, "React"); else Reflect.set(globalThis, "React", previousReact); }
 });

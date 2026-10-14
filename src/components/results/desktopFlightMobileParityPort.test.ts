@@ -142,7 +142,7 @@ test("desktop Flight Details carries fare typography, underline-only tabs, and p
   assert.match(details, /data-desktop-flight-deal-list/);
   assert.match(details, /pricesReady=\{mobilePricesReady\}/);
   assert.match(details, /sm:text-\[18px\] sm:font-medium/);
-  assert.match(details, /text-\[20px\] font-semibold leading-6 tracking-\[-0\.02em\] tabular-nums text-\[#192024\]/);
+  assert.match(details, /text-\[18px\] font-semibold leading-6 text-\[#1a1a1a\] tabular-nums/);
   assert.match(details, /activeTab === tab.id \? "border-\[#075EE8\]" : "border-transparent"/);
   assert.match(details, /mobilePricesReady \? <div role="radiogroup"/);
 });
