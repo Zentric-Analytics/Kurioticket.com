@@ -23,7 +23,7 @@ test("standalone desktop owns exactly four required primary specifications", () 
 test("provider offers render every normalized provider without a three-provider cutoff", () => {
   assert.match(card, /<CarDealPicker/);
   assert.match(picker, /getCarDealPickerGroups\(car\)/);
-  assert.match(picker, /groups\.map\(\(group\) =>/);
+  assert.match(picker, /groups\.map\(\(group, index\) =>/);
   assert.doesNotMatch(picker, /groups\.slice\(/);
   assert.match(picker, /data-car-deal-provider-offers/);
   assert.match(picker, /data-car-deal-provider-offer/);
@@ -62,9 +62,17 @@ test("provider View deal validates its own URL and stays isolated from main offe
 });
 
 test("inline provider offers do not retain the old comparison overlays", () => {
-  assert.ok(picker.includes('grid min-w-0 items-center'));
-  assert.ok(picker.includes('min-h-4'));
-  assert.ok(picker.includes('min-h-[18px]'));
+  assert.ok(picker.includes('min-w-0 items-center'));
+  assert.ok(picker.includes('min-h-6'));
+  assert.match(picker, /responsiveVisibility = expanded \? "grid" : index < 2 \? "grid" : index < 5 \? "hidden md:grid" : "hidden"/);
+  assert.match(picker, /groups\.length > 2/);
+  assert.match(picker, /groups\.length > 5/);
+  assert.match(picker, /data-car-deal-more-offers/);
+  assert.match(picker, /data-car-rate-info/);
+  assert.match(picker, /data-car-rate-dialog/);
+  assert.match(picker, /dialog\.showModal\(\)/);
+  assert.match(picker, /getCarRateDisclosureSections\(selectedOffer\)/);
+  assert.doesNotMatch(picker, /data-car-rate-terms|CarRateDetails\(/);
   assert.match(picker, /data-car-deal-provider-meta/);
   assert.match(picker, /data-car-deal-provider-action-slot/);
   assert.ok(picker.includes('compact ? "pr-2" : "pr-3"'));

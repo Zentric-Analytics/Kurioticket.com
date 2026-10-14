@@ -91,6 +91,14 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
         ? dealArea.locator("ul").nth(1).locator("li span").first()
         : dealArea.locator("[data-car-card-desktop-primary-specs] li").nth(1).locator("span").first();
       await expect(rows).toHaveCount(count);
+      const initiallyVisible = Math.min(count, mobile ? 2 : 5);
+      await expect(rows.filter({ visible: true })).toHaveCount(initiallyVisible);
+      if (count > initiallyVisible) {
+        const more = dealArea.locator("[data-car-deal-more-offers]").filter({ visible: true });
+        await expect(more).toHaveCount(1);
+        await more.click();
+        await expect(rows.filter({ visible: true })).toHaveCount(count);
+      }
       const rightSpecRect = await rightSpecLabel.boundingBox();
       expect(rightSpecRect).not.toBeNull();
       await expect(card.locator("[data-supplier-information]")).toHaveCount(0);
@@ -121,6 +129,76 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
       }
       if (count === 3) threeOfferHeight = cardRect!.height;
       else expect(cardRect!.height).toBeGreaterThanOrEqual(threeOfferHeight!);
+    }
+  }
+});
+
+
+test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer terms without a details page", async ({ page }) => {
+  const firstOffer = carBase.offers[0];
+  if (!firstOffer) throw new Error("Missing car offer");
+  const result = {
+    ...carBase,
+    id: "kayak-sandbox:fixture-rate-options",
+    inventorySource: "kayak-sandbox" as const,
+    offers: Array.from({ length: 7 }, (_, index) => ({
+      ...firstOffer,
+      id: "option-" + index,
+      bookingProviderName: index < 2 ? "Same Seller" : "Seller " + index,
+      bookingUrl: "https://affiliates.kayak.com/sandbox-clickout",
+      pricePerDay: 50 + index,
+      totalPrice: 150 + index * 3,
+      suppliedFacts: [
+        { label: "payment Type", value: index % 2 === 0 ? "prepay" : "payAtPickup" },
+        { label: "Pickup · address", value: "Airport Pickup " + index },
+        { label: "policy · fuel · code", value: "fullToFull" },
+      ],
+    })),
+  };
+  await page.route("**/api/cars/search", route => route.fulfill({ json: { results: [result], status: "available" } }));
+  for (const viewport of [{ width: 390, height: 844 }, { width: 1365, height: 900 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto(routes.cars);
+    const card = page.locator("[data-car-result-card-shell]").first();
+    await expect(card).toBeVisible();
+    const mobile = viewport.width < 640;
+    const area = mobile ? card.locator("[data-car-card-mobile-specs]") : card.locator('[data-region="details"]');
+    const rows = area.locator("[data-car-deal-provider-offer]");
+    const main = mobile ? card.locator("[data-car-card-mobile-pricing]") : card.locator('[data-region="pricing"]');
+    await expect(rows).toHaveCount(7);
+    await expect(rows.filter({ visible: true })).toHaveCount(mobile ? 2 : 5);
+    await expect(main).toBeVisible();
+    await expect(area.locator("[data-car-rate-terms]")).toHaveCount(0);
+    await expect(area.getByText("Rate details", { exact: true })).toHaveCount(0);
+    const initialHeight = (await card.boundingBox())!.height;
+    await area.locator("[data-car-deal-more-offers]").filter({ visible: true }).click();
+    await expect(rows.filter({ visible: true })).toHaveCount(7);
+    await expect.poll(async () => (await card.boundingBox())!.height).toBeGreaterThan(initialHeight);
+
+    const firstInfo = rows.first().locator("[data-car-rate-info]");
+    await expect(firstInfo).toBeVisible();
+    const scrollBefore = await page.evaluate(() => window.scrollY);
+    await firstInfo.click();
+    const dialog = card.locator("[data-car-rate-dialog]");
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText("Airport Pickup 0", { exact: true })).toBeVisible();
+    await expect(dialog.getByText("Airport Pickup 1", { exact: true })).toHaveCount(0);
+    await expect(dialog.getByText("Estimated total:", { exact: false })).toBeVisible();
+    await expect(dialog.locator("[data-car-rate-section=payment]")).toBeVisible();
+    await dialog.getByRole("button", { name: "Close rate details" }).click();
+    await expect(dialog).not.toBeVisible();
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
+    await rows.nth(1).locator("[data-car-rate-info]").click();
+    await expect(dialog.getByText("Airport Pickup 1", { exact: true })).toBeVisible();
+    await expect(dialog.getByText("Airport Pickup 0", { exact: true })).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(dialog).not.toBeVisible();
+    await expect(main).toBeVisible();
+    if (!mobile) {
+      const image = card.locator('[data-region="image"] > div').first();
+      const imageRect = await image.boundingBox();
+      expect(imageRect).not.toBeNull();
+      expect(imageRect!.height).toBeLessThanOrEqual(230);
     }
   }
 });
