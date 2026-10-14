@@ -87,7 +87,7 @@ test("active Hotel Details keeps fixed icon-only controls and stack-aware Result
 test("web mobile Hotel rates use dedicated mobile provider cards without the old blue selected outline", () => {
   assert.match(webMobileHotelDetails, /import \{ MobileProviderOffer \} from "\.\/HotelPriceComparisonSection"/);
   assert.match(webMobileHotelDetails, /offers\.map\(offer => <MobileProviderOffer/);
-  assert.match(webMobileHotelDetails, /onInfo=\{\(\) => setRateInfo\(offer\)\}/);
+  assert.match(webMobileHotelDetails, /onInfo=\{anchor => \{ setRateAnchor\(anchor\); setRateInfo\(current =>/);
   assert.match(webMobileHotelDetails, /perNightText=\{props\.perNightText\}/);
   assert.match(webMobileHotelDetails, /totalPrice: total/);
   const rateListStart = webMobileHotelDetails.indexOf('<div aria-label="Hotel rates" className={styles.rateList}>');
@@ -97,8 +97,8 @@ test("web mobile Hotel rates use dedicated mobile provider cards without the old
   const providerCards = webMobileHotelDetails.slice(rateListStart, rateListEnd);
   assert.match(providerCards, /offers\.map\(offer => <MobileProviderOffer/);
   assert.doesNotMatch(providerCards, />Stay total</, "the card list must not repeat the details-dialog total label");
-  assert.match(webMobileHotelDetails, /rateInfo \? <DetailsDialog title="Rate details" compact preserveStickyPage onClose=\{\(\) => setRateInfo\(null\)\}/);
-  assert.match(webMobileHotelDetails, /rateInfo\.suppliedRateFacts\?\.map/);
+  assert.match(webMobileHotelDetails, /rateInfo && rateAnchor \? <HotelRatePopover offer=\{rateInfo\} anchor=\{rateAnchor\} onClose=\{\(\) => setRateInfo\(null\)\}/);
+  assert.match(webMobileHotelDetails, /import \{ HotelRatePopover \} from "\.\/HotelRatePopover"/);
   assert.doesNotMatch(webMobileHotelDetails, /<HotelRateInfoPopover/);
   assert.doesNotMatch(webMobileHotelDetails, /className=\{styles\.rate\}|className=\{styles\.rateAction\}/);
   assert.doesNotMatch(webMobileHotelDetailsCss, /\.rate\[data-selected="true"\][^}]*border-color: var\(--accent\)/);
