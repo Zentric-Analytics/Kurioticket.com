@@ -164,6 +164,13 @@ test("desktop external Hotel View deal reserves a new tab before the async provi
 });
 
 
+test("desktop Rate details keeps overflow usable without showing a scrollbar", () => {
+  assert.match(desktopStyles, /\.rateDialog \{[^}]*scrollbar-width: none;[^}]*-ms-overflow-style: none;/);
+  assert.match(desktopStyles, /\.rateDialog::\-webkit-scrollbar \{[^}]*width: 0;[^}]*height: 0;[^}]*display: none;/);
+  assert.match(desktopStyles, /\.dialog \{[^}]*overflow: auto;/);
+});
+
+
 test("standalone Hotel Details matches the Flight Details desktop page canvas", () => {
   assert.match(client, /<main className="flex-1 bg-white sm:bg-\[#f8fafc\] lg:bg-\[#F7F9FC\]">/);
   assert.match(desktopStyles, /\.desktop \{ color: #192024; background: #F7F9FC;/);
