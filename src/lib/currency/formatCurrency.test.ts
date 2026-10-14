@@ -10,10 +10,26 @@ const rates: ExchangeRates = {
   NGN: 1500,
 };
 
-test("web currency formatting keeps the canonical naira symbol", () => {
-  const formatted = formatCurrency(1281596.79, "NGN");
-  assert.match(formatted, /^₦/);
-  assert.doesNotMatch(formatted, /\bNGN\b/);
+test("web currency formatting uses clean narrow symbols without country prefixes", () => {
+  const expected = new Map([
+    ["NGN", "₦"],
+    ["USD", "$"],
+    ["CAD", "$"],
+    ["AUD", "$"],
+    ["GBP", "£"],
+    ["EUR", "€"],
+    ["JPY", "¥"],
+    ["CNY", "¥"],
+    ["HKD", "$"],
+    ["SGD", "$"],
+    ["NZD", "$"],
+    ["MXN", "$"],
+  ]);
+  for (const [currency, symbol] of expected) {
+    const formatted = formatCurrency(420, currency);
+    assert.ok(formatted.startsWith(symbol), `${currency}: ${formatted}`);
+    assert.doesNotMatch(formatted, /^(?:US|CA|A|CN|HK|S|NZ|MX)[$¥]/, `${currency}: ${formatted}`);
+  }
 });
 
 test("formatDisplayPrice preserves existing convertUsdEstimate behavior", () => {
