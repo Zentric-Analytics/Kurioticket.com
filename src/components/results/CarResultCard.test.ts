@@ -495,7 +495,7 @@ test("mobile card matches native compact height, semantic spec columns, and top-
     source.indexOf("data-car-card-mobile-offers"),
     source.indexOf("data-car-card-mobile-pricing"),
   );
-  assert.match(offers, /flex-\[2\.1\] px-2 py-2\.5/);
+  assert.match(offers, /flex-\[2\.65\] px-2 py-2\.5/);
   assert.match(offers, /<CarDealPicker/);
   assert.doesNotMatch(offers, /mobileSpecColumns\.map/);
 
