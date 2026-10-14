@@ -180,6 +180,9 @@ test("multi-offer cards grow in normal flow while the web results virtualizer me
   assert.match(picker, /grid min-h-12 min-w-0 grid-cols-\[minmax\(0,1fr\)_auto_auto\]/);
   assert.doesNotMatch(picker, /grid-cols-3|groups\.slice\(|max-h-\[/);
   assert.match(virtualList, /ref=\{virtualizer\.measureElement\}/);
+  assert.match(virtualList, /estimateItemSize\?\.\(items\[index\], width\)/);
+  assert.match(results, /estimateItemSize=\{guidedPlanning \? undefined : estimateStandaloneCarRowHeight\}/);
+  assert.match(results, /return \(viewportWidth < 640 \? 318 : 292\) \+ offers \* 48/);
   assert.match(virtualList, /ResizeObserver/);
   assert.match(nativeCard, /<NativeCarResultOfferPicker result=\{result\}/);
   assert.match(nativeResults, /<FlatList ref=\{carScrollRef\}/);
