@@ -33,14 +33,15 @@ export function nativeCarPrimaryBookingUrl(result: CarResult): string | null {
 }
 
 export function nativeCarResultDealChoices(result: CarResult) {
+  // Mirror the web result card: each real offer gets a compact row.
+  // A KAYAK seller may return many offers; none should be silently capped.
   return getCarDealPickerGroups(result)
-    .filter((group) => Number.isFinite(group.primaryOffer.pricePerDay) && group.primaryOffer.pricePerDay >= 0)
-    .slice(0, 3)
-    .map((group) => ({
-      key: group.key,
+    .flatMap((group) => group.offers.map((offer) => ({
+      key: group.key + ":offer:" + offer.id,
       providerName: group.providerName,
       logoUrl: group.logoUrl,
-      offer: group.primaryOffer,
-      bookingUrl: nativeCarOfferBookingUrl(result, group.primaryOffer),
-    }));
+      offer,
+      bookingUrl: nativeCarOfferBookingUrl(result, offer),
+    })))
+    .filter(({ offer }) => Number.isFinite(offer.pricePerDay) && offer.pricePerDay >= 0);
 }
