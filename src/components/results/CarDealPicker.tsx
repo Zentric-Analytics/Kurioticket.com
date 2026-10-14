@@ -62,7 +62,7 @@ function ProviderMark({
         src={logoUrl}
         alt=""
         aria-hidden="true"
-        className="h-4 w-4 max-w-full object-contain"}
+        className="h-4 w-4 max-w-full object-contain"
       />
     );
   }
