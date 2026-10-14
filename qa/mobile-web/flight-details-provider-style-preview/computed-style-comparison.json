@@ -1,0 +1,452 @@
+[
+  {
+    "viewport": 320,
+    "hotel": {
+      "geometry": {
+        "provider": {
+          "x": 13,
+          "y": 25,
+          "width": 55.921875,
+          "height": 20
+        },
+        "price": {
+          "x": 72.921875,
+          "y": 23,
+          "width": 93.09375,
+          "height": 36
+        },
+        "action": {
+          "x": 182.015625,
+          "y": 17,
+          "width": 92.984375,
+          "height": 32
+        }
+      },
+      "card": {
+        "width": "288px",
+        "height": "76px",
+        "paddingTop": "12px",
+        "paddingBottom": "12px",
+        "paddingLeft": "12px",
+        "paddingRight": "12px",
+        "borderTopWidth": "1px",
+        "borderRadius": "12px",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "boxShadow": "none",
+        "columnGap": "4px"
+      },
+      "name": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "12px",
+        "fontWeight": "600",
+        "lineHeight": "20px",
+        "color": "rgb(26, 26, 26)",
+        "letterSpacing": "normal"
+      },
+      "price": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "600",
+        "lineHeight": "20px",
+        "color": "rgb(26, 26, 26)",
+        "letterSpacing": "-0.4px"
+      },
+      "caption": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "10px",
+        "fontWeight": "400",
+        "lineHeight": "16px",
+        "color": "rgb(89, 89, 89)",
+        "letterSpacing": "normal"
+      },
+      "action": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "24px",
+        "color": "rgb(255, 255, 255)",
+        "letterSpacing": "normal",
+        "height": "32px",
+        "width": "92.9844px",
+        "paddingLeft": "10px",
+        "paddingRight": "10px",
+        "borderRadius": "8px",
+        "backgroundColor": "rgb(0, 75, 184)"
+      }
+    },
+    "flight": {
+      "geometry": {
+        "provider": {
+          "x": 13,
+          "y": 25,
+          "width": 55.921875,
+          "height": 20
+        },
+        "price": {
+          "x": 72.921875,
+          "y": 23,
+          "width": 93.09375,
+          "height": 36
+        },
+        "action": {
+          "x": 182.015625,
+          "y": 17,
+          "width": 92.984375,
+          "height": 32
+        }
+      },
+      "card": {
+        "width": "288px",
+        "height": "76px",
+        "paddingTop": "12px",
+        "paddingBottom": "12px",
+        "paddingLeft": "12px",
+        "paddingRight": "12px",
+        "borderTopWidth": "1px",
+        "borderRadius": "12px",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "boxShadow": "none",
+        "columnGap": "4px"
+      },
+      "name": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "12px",
+        "fontWeight": "600",
+        "lineHeight": "20px",
+        "color": "rgb(26, 26, 26)",
+        "letterSpacing": "normal"
+      },
+      "price": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "600",
+        "lineHeight": "20px",
+        "color": "rgb(26, 26, 26)",
+        "letterSpacing": "-0.4px"
+      },
+      "caption": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "10px",
+        "fontWeight": "400",
+        "lineHeight": "16px",
+        "color": "rgb(89, 89, 89)",
+        "letterSpacing": "normal"
+      },
+      "action": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "24px",
+        "color": "rgb(255, 255, 255)",
+        "letterSpacing": "normal",
+        "height": "32px",
+        "width": "92.9844px",
+        "paddingLeft": "10px",
+        "paddingRight": "10px",
+        "borderRadius": "8px",
+        "backgroundColor": "rgb(0, 75, 184)"
+      }
+    },
+    "overflow": 0
+  },
+  {
+    "viewport": 390,
+    "hotel": {
+      "geometry": {
+        "provider": {
+          "x": 13,
+          "y": 25,
+          "width": 125.921875,
+          "height": 20
+        },
+        "price": {
+          "x": 142.921875,
+          "y": 23,
+          "width": 93.09375,
+          "height": 36
+        },
+        "action": {
+          "x": 252.015625,
+          "y": 17,
+          "width": 92.984375,
+          "height": 32
+        }
+      },
+      "card": {
+        "width": "358px",
+        "height": "76px",
+        "paddingTop": "12px",
+        "paddingBottom": "12px",
+        "paddingLeft": "12px",
+        "paddingRight": "12px",
+        "borderTopWidth": "1px",
+        "borderRadius": "12px",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "boxShadow": "none",
+        "columnGap": "4px"
+      },
+      "name": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "12px",
+        "fontWeight": "600",
+        "lineHeight": "20px",
+        "color": "rgb(26, 26, 26)",
+        "letterSpacing": "normal"
+      },
+      "price": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "600",
+        "lineHeight": "20px",
+        "color": "rgb(26, 26, 26)",
+        "letterSpacing": "-0.4px"
+      },
+      "caption": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "10px",
+        "fontWeight": "400",
+        "lineHeight": "16px",
+        "color": "rgb(89, 89, 89)",
+        "letterSpacing": "normal"
+      },
+      "action": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "24px",
+        "color": "rgb(255, 255, 255)",
+        "letterSpacing": "normal",
+        "height": "32px",
+        "width": "92.9844px",
+        "paddingLeft": "10px",
+        "paddingRight": "10px",
+        "borderRadius": "8px",
+        "backgroundColor": "rgb(0, 75, 184)"
+      }
+    },
+    "flight": {
+      "geometry": {
+        "provider": {
+          "x": 13,
+          "y": 25,
+          "width": 125.921875,
+          "height": 20
+        },
+        "price": {
+          "x": 142.921875,
+          "y": 23,
+          "width": 93.09375,
+          "height": 36
+        },
+        "action": {
+          "x": 252.015625,
+          "y": 17,
+          "width": 92.984375,
+          "height": 32
+        }
+      },
+      "card": {
+        "width": "358px",
+        "height": "76px",
+        "paddingTop": "12px",
+        "paddingBottom": "12px",
+        "paddingLeft": "12px",
+        "paddingRight": "12px",
+        "borderTopWidth": "1px",
+        "borderRadius": "12px",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "boxShadow": "none",
+        "columnGap": "4px"
+      },
+      "name": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "12px",
+        "fontWeight": "600",
+        "lineHeight": "20px",
+        "color": "rgb(26, 26, 26)",
+        "letterSpacing": "normal"
+      },
+      "price": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "600",
+        "lineHeight": "20px",
+        "color": "rgb(26, 26, 26)",
+        "letterSpacing": "-0.4px"
+      },
+      "caption": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "10px",
+        "fontWeight": "400",
+        "lineHeight": "16px",
+        "color": "rgb(89, 89, 89)",
+        "letterSpacing": "normal"
+      },
+      "action": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "24px",
+        "color": "rgb(255, 255, 255)",
+        "letterSpacing": "normal",
+        "height": "32px",
+        "width": "92.9844px",
+        "paddingLeft": "10px",
+        "paddingRight": "10px",
+        "borderRadius": "8px",
+        "backgroundColor": "rgb(0, 75, 184)"
+      }
+    },
+    "overflow": 0
+  },
+  {
+    "viewport": 430,
+    "hotel": {
+      "geometry": {
+        "provider": {
+          "x": 13,
+          "y": 25,
+          "width": 165.921875,
+          "height": 20
+        },
+        "price": {
+          "x": 182.921875,
+          "y": 23,
+          "width": 93.09375,
+          "height": 36
+        },
+        "action": {
+          "x": 292.015625,
+          "y": 17,
+          "width": 92.984375,
+          "height": 32
+        }
+      },
+      "card": {
+        "width": "398px",
+        "height": "76px",
+        "paddingTop": "12px",
+        "paddingBottom": "12px",
+        "paddingLeft": "12px",
+        "paddingRight": "12px",
+        "borderTopWidth": "1px",
+        "borderRadius": "12px",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "boxShadow": "none",
+        "columnGap": "4px"
+      },
+      "name": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "12px",
+        "fontWeight": "600",
+        "lineHeight": "20px",
+        "color": "rgb(26, 26, 26)",
+        "letterSpacing": "normal"
+      },
+      "price": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "600",
+        "lineHeight": "20px",
+        "color": "rgb(26, 26, 26)",
+        "letterSpacing": "-0.4px"
+      },
+      "caption": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "10px",
+        "fontWeight": "400",
+        "lineHeight": "16px",
+        "color": "rgb(89, 89, 89)",
+        "letterSpacing": "normal"
+      },
+      "action": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "24px",
+        "color": "rgb(255, 255, 255)",
+        "letterSpacing": "normal",
+        "height": "32px",
+        "width": "92.9844px",
+        "paddingLeft": "10px",
+        "paddingRight": "10px",
+        "borderRadius": "8px",
+        "backgroundColor": "rgb(0, 75, 184)"
+      }
+    },
+    "flight": {
+      "geometry": {
+        "provider": {
+          "x": 13,
+          "y": 25,
+          "width": 165.921875,
+          "height": 20
+        },
+        "price": {
+          "x": 182.921875,
+          "y": 23,
+          "width": 93.09375,
+          "height": 36
+        },
+        "action": {
+          "x": 292.015625,
+          "y": 17,
+          "width": 92.984375,
+          "height": 32
+        }
+      },
+      "card": {
+        "width": "398px",
+        "height": "76px",
+        "paddingTop": "12px",
+        "paddingBottom": "12px",
+        "paddingLeft": "12px",
+        "paddingRight": "12px",
+        "borderTopWidth": "1px",
+        "borderRadius": "12px",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "boxShadow": "none",
+        "columnGap": "4px"
+      },
+      "name": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "12px",
+        "fontWeight": "600",
+        "lineHeight": "20px",
+        "color": "rgb(26, 26, 26)",
+        "letterSpacing": "normal"
+      },
+      "price": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "600",
+        "lineHeight": "20px",
+        "color": "rgb(26, 26, 26)",
+        "letterSpacing": "-0.4px"
+      },
+      "caption": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "10px",
+        "fontWeight": "400",
+        "lineHeight": "16px",
+        "color": "rgb(89, 89, 89)",
+        "letterSpacing": "normal"
+      },
+      "action": {
+        "fontFamily": "Inter, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "24px",
+        "color": "rgb(255, 255, 255)",
+        "letterSpacing": "normal",
+        "height": "32px",
+        "width": "92.9844px",
+        "paddingLeft": "10px",
+        "paddingRight": "10px",
+        "borderRadius": "8px",
+        "backgroundColor": "rgb(0, 75, 184)"
+      }
+    },
+    "overflow": 0
+  }
+]

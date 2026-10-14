@@ -1075,7 +1075,7 @@ test("mobile web Fare information deck mirrors native tabs and owns deal booking
 
   assert.match(deck, /role="radiogroup" aria-label="Flight deal options"/);
   assert.match(deck, /data-mobile-flight-deal-card/);
-  assert.match(deck, /min-h-\[80px\].*rounded-xl/);
+  assert.match(deck, /min-h-\[76px\].*rounded-xl/);
   assert.match(deck, /priceAvailable = pricesReady/);
   assert.match(deck, /formatFlightResultCurrency\(deal\.price, deal\.currency/);
   assert.match(deck, /visiblePrice = !pricesReady/);
