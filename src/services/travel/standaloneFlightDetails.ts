@@ -258,7 +258,7 @@ export function buildMaterialFareChoices(
         key: `fare-${createHash("sha256").update(key).digest("base64url").slice(0, 16)}`,
         label: fareLabel(source),
         offer: toFlightDetailsOffer(source),
-        distinguishingTerms: providerSuppliedTermsOnly ? source.fareTerms ?? [] : fareTerms(source),
+        distinguishingTerms: providerSuppliedTermsOnly ? toFlightDetailsOffer(source).fareTerms ?? [] : fareTerms(source),
         selectedOffer: Boolean(selectedProviderOfferId && group.some((offer) => offer.providerOfferId === selectedProviderOfferId)),
         handoff: handoff
           ? { available: true, providerName: handoff.providerName }

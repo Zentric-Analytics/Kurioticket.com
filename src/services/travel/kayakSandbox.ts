@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { normalizeKayakFlightInformation } from "./kayakFlightInformation";
+import { normalizeKayakFlightInformation, sanitizeKayakFlightText } from "./kayakFlightInformation";
 import { isIP } from "node:net";
 import { kayakImageUrl, kayakImages, kayakFlightLegs, kayakFlightAttributes, kayakAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
 import { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
@@ -292,7 +292,7 @@ export function normalizeSandboxOffers(
           { label: "Amenity information", value: kayakHotelAmenityStatus(result.features, data.amenityDictionary) },
           ...kayakAttributes({...result, amenities: kayakHotelAmenities(result.features, data.amenityDictionary)},["address","hotelCountryCode","starRating","isSelfRated","amenities","policies","guestRating","guestRatingSentiment","reviewQuotes","place"]),
           ...kayakAttributes(option,["roomName","hasFreeCancellation","canPayLater","isBundledRate","rateBreakdown","conditions"]),
-        ] : [...kayakAttributes(option,["fees","badges","segmentFares","fareFamily"]), ...kayakFlightAttributes(data,result)],
+        ] : [...kayakAttributes(option,["fees","badges","segmentFares","fareFamily"]), ...kayakFlightAttributes(data,result)].filter(fact => sanitizeKayakFlightText(fact.value)),
         ...(vertical === "cars" ? { carFilterOptions: kayakCarFilterOptions(car), carSpecs: [
           typeof car.passengers === "number" ? `${car.passengers} passengers` : "Passengers not supplied",
           typeof car.bags === "number" ? `${car.bags} bags` : "Baggage capacity not supplied",

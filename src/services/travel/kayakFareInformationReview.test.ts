@@ -176,3 +176,13 @@ test("different onboard features remain specific to their seller fare", async ()
   assert.equal(details.fareChoices.length, 2);
   assert.deepEqual(details.fareChoices.map(f => f.offer.legs?.[0].segments[0].cabinDetails?.[0].onboardFeatures?.[0].description), ["USB outlet", "Power (some rows) & USB"]);
 });
+
+test("legacy raw baggage terms never survive KAYAK Details fare cards or deal offers", async () => {
+  const data = { ...baseFlightData(), results: [{ id: "legacy", legs: [{ id: "l" }], bookingOptions: [{ ...sharedOption, providerCode: "A" }] }] };
+  const cached = kayakFlightCardModel(normalizeSandboxOffers("flights", data)[0])!;
+  cached.fareTerms = [{ category: "baggage", semantic: "informational", text: "checked Bag 1 · price: 35" }];
+  cached.providerDetails = { ...cached.providerDetails, suppliedFacts: [{ label: "fees · checked Bag 1 · price", value: "35" }] } as typeof cached.providerDetails;
+  const details = await buildProviderAwareFlightDetails({ cachedSelected: cached, cachedAlternatives: [cached], search, now: 1 });
+  assert.equal(details.status, "available");
+  assert.doesNotMatch(JSON.stringify(details), /checked Bag 1|suppliedFacts/);
+});

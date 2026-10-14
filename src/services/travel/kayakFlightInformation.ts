@@ -5,11 +5,13 @@ type RecordValue = Record<string, unknown>;
 const object = (value: unknown): RecordValue => value !== null && typeof value === "object" && !Array.isArray(value) ? value as RecordValue : {};
 const list = (value: unknown): unknown[] => Array.isArray(value) ? value : [];
 /** Provider descriptions are escaped by React; transport/credential-bearing text is not presentation data. */
-function description(value: unknown): string | undefined {
+export function sanitizeKayakFlightText(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
   const clean = value.trim();
-  return clean && clean.length <= 1200 && !/https?:\/\/|api[-_]?key|access[-_]?token|authorization|secretToken/i.test(clean) ? clean : undefined;
+  return clean && clean.length <= 1200 && !/https?:\/\/|api[-_\s]?key|(?:access|secret|auth|refresh)[-_\s]?token|authorization|\b(?:password|credential|token|cookie)\s*[:=]|\bbearer\s+[\w.-]+/i.test(clean) ? clean : undefined;
 }
+const description = sanitizeKayakFlightText;
+function unmapped(value: RecordValue, keys: string[]) { return kayakAttributes(value, keys).filter(fact => description(fact.value)); }
 function display(value: unknown) {
   const source = object(value);
   return description(typeof value === "string" ? value : source.displayName ?? source.description ?? source.name);
@@ -30,6 +32,17 @@ function requiresFee(source: RecordValue, text: string) {
   return /\(fee\)|\b(?:available for a fee|additional fee|additional charge|paid)\b/i.test(text);
 }
 function quantity(value: unknown) { return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : undefined; }
+function serviceMetadata(source: RecordValue, fallbackContext?: string) {
+  const maximumQuantity = quantity(source.maximumQuantity), travelerCount = quantity(source.travelerCount);
+  const journeyContext = description(source.journeyContext) ?? fallbackContext;
+  return {
+    ...(maximumQuantity !== undefined ? { maximumQuantity } : {}),
+    ...(travelerCount !== undefined ? { travelerCount } : {}),
+    ...(journeyContext ? { journeyContext } : {}),
+    ...(source.pricedPerTraveler === true ? { pricedPerTraveler: true } : {}),
+  };
+}
+
 
 export type KayakFlightInformation = {
   fareFamily?: string;
@@ -48,12 +61,12 @@ export function normalizeKayakFlightInformation(data: RecordValue, result: Recor
   const info: KayakFlightInformation = { segments: {}, fareTerms: [], conditions: [], optionalServices: [], airlineBaggagePolicies: [], unmappedFacts: [] };
   info.fareFamily = display(option.fareFamily);
   const knownOptionKeys = new Set(["type", "providerCode", "displayPrice", "bookingUrl", "fareFamily", "fees", "conditions", "optionalServices", "segmentFares", "badges", "basePrice", "totalPrice", "taxes", "price"]);
-  info.unmappedFacts.push(...kayakAttributes(option, Object.keys(option).filter(key => !knownOptionKeys.has(key))));
+  info.unmappedFacts.push(...unmapped(option, Object.keys(option).filter(key => !knownOptionKeys.has(key))));
   const fees = object(option.fees);
   for (const [key, label] of [["carryOnBag", "carry-on"], ["checkedBag", "checked bag"]] as const) {
     for (const raw of list(fees[key])) {
       const bag = object(raw);
-      const ordinal = ({ first: "1", second: "second", third: "third" } as Record<string, string>)[String(bag.bagNumber)] ?? "";
+      const ordinal = new Map([["first", "1"], ["second", "second"], ["third", "third"]]).get(String(bag.bagNumber)) ?? "";
       const subject = `${ordinal ? `${ordinal} ` : ""}${label}`;
       const charge = money(bag.price ?? bag.fee ?? bag.amount, currency);
       const restriction = typeof bag.restriction === "string" ? bag.restriction : "";
@@ -63,7 +76,7 @@ export function normalizeKayakFlightInformation(data: RecordValue, result: Recor
       else if (["fee", "charge", "availableForFee"].includes(restriction) && charge) info.fareTerms.push({ category: "baggage", semantic: "informational", text: `${subject} available for ${charge.currency} ${charge.amount.toFixed(2)}` });
       else {
         info.fareTerms.push({ category: "baggage", semantic: "informational", text: `${label === "carry-on" ? "Carry-on" : "Checked bag"} allowance not supplied by provider` });
-        info.unmappedFacts.push(...kayakAttributes(bag, Object.keys(bag)));
+        info.unmappedFacts.push(...unmapped(bag, Object.keys(bag)));
       }
     }
   }
@@ -79,17 +92,9 @@ export function normalizeKayakFlightInformation(data: RecordValue, result: Recor
     const source = object(raw), text = display(source);
     const price = money(source.price, currency);
     if (!text || source.optional !== true || (!price && !requiresFee(source, text))) {
-      info.unmappedFacts.push(...kayakAttributes(source, Object.keys(source))); continue;
+      info.unmappedFacts.push(...unmapped(source, Object.keys(source))); continue;
     }
-    const maximumQuantity = quantity(source.maximumQuantity), travelerCount = quantity(source.travelerCount);
-    const journeyContext = description(source.journeyContext);
-    const common = {
-      type: description(source.type) ?? "service", description: text,
-      ...(maximumQuantity !== undefined ? { maximumQuantity } : {}),
-      ...(travelerCount !== undefined ? { travelerCount } : {}),
-      ...(journeyContext ? { journeyContext } : {}),
-      ...(source.pricedPerTraveler === true ? { pricedPerTraveler: true } : {}),
-    };
+    const common = { type: description(source.type) ?? "service", description: text, ...serviceMetadata(source) };
     info.optionalServices.push(price ? { ...common, price: price.amount, currency: price.currency } : { ...common, pricing: "fee-unspecified" });
   }
   const fares = list(option.segmentFares).map(object);
@@ -113,10 +118,10 @@ export function normalizeKayakFlightInformation(data: RecordValue, result: Recor
         const code = typeof (source.code ?? source.semantic) === "string" ? String(source.code ?? source.semantic) : "";
         const kind = Object.hasOwn(knownQualityKinds, code) ? knownQualityKinds[code] : undefined;
         const text = display(source);
-        if (!kind || !text) { info.unmappedFacts.push(...kayakAttributes(source, Object.keys(source))); continue; }
+        if (!kind || !text) { info.unmappedFacts.push(...unmapped(source, Object.keys(source))); continue; }
         const price = money(source.price ?? source.fee, currency);
         if (requiresFee(source, text) || (price && price.amount > 0)) {
-          const service = { type: kind, description: text, ...(context ? { journeyContext: context } : {}) };
+          const service = { type: kind, description: text, ...serviceMetadata(source, context || undefined) };
           info.optionalServices.push(price ? { ...service, price: price.amount, currency: price.currency } : { ...service, pricing: "fee-unspecified" });
         } else if (!onboardFeatures.some(feature => feature.kind === kind && feature.description === text)) onboardFeatures.push({ kind, description: text });
       }
@@ -139,7 +144,7 @@ export function normalizeKayakFlightInformation(data: RecordValue, result: Recor
         const bagType = policy.bagType ?? policy.type;
         const destination = ["carryOn", "carryOnBag", "carry-on"].includes(String(bagType)) ? carryOn : ["checked", "checkedBag", "checked-bag"].includes(String(bagType)) ? checked : undefined;
         const texts = [display(policy), ...list(policy.restrictions).map(value => display(value))].filter((text): text is string => Boolean(text));
-        if (!destination || !texts.length) { info.unmappedFacts.push(...kayakAttributes(policy, Object.keys(policy))); continue; }
+        if (!destination || !texts.length) { info.unmappedFacts.push(...unmapped(policy, Object.keys(policy))); continue; }
         for (const text of texts) if (!destination.includes(text)) destination.push(text);
       }
       if (carryOn.length || checked.length) info.airlineBaggagePolicies.push({ carrierName, ...(/^[A-Z0-9]{2,3}$/.test(airlineCode) ? { carrierCode: airlineCode } : {}), ...(carryOn.length ? { carryOn } : {}), ...(checked.length ? { checked } : {}) });

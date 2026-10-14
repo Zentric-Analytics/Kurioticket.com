@@ -463,3 +463,18 @@ test("legacy raw supplier facts and internal diagnostics never cross either Flig
   }
   assert.deepEqual(internal, before);
 });
+
+test("legacy KAYAK raw-fee fallback terms are omitted from public Flight and Details without changing Duffel", () => {
+  const cached = flight("legacy-kayak", 15000);
+  cached.provider = "KAYAK sandbox";
+  cached.providerDetails = { price: { totalAmount: 309, totalCurrency: "USD" }, suppliedFacts: [{ label: "fees · checked Bag 1 · price", value: "35" }] } as typeof cached.providerDetails;
+  cached.fareTerms = [{ category: "baggage", semantic: "informational", text: "checked Bag 1 · price: 35" }];
+  const before = structuredClone(cached);
+  for (const value of [toPublicFlight(cached), toFlightDetailsOffer(cached)]) {
+    assert.deepEqual(value.fareTerms, []);
+    assert.doesNotMatch(JSON.stringify(value), /checked Bag 1|suppliedFacts/);
+  }
+  assert.deepEqual(cached, before);
+  const duffel = flight("duffel", 15000); duffel.fareTerms = [{ category: "baggage", semantic: "positive", text: "1 checked bag included" }];
+  assert.deepEqual(toPublicFlight(duffel).fareTerms, duffel.fareTerms);
+});

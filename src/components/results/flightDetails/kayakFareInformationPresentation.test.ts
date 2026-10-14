@@ -69,3 +69,14 @@ test("changing the active offer refreshes facts without needing raw provider row
   const updated = render("details", second);
   assert.match(updated, /USB outlet/); assert.doesNotMatch(updated, /Power &amp; USB outlets/);
 });
+
+test("fee services render supplied per-traveler qualification and legacy schema terms never render", () => {
+  const flight = offer();
+  flight.providerDetails!.optionalServices = [{ type: "wifi", description: "Fast web browsing", price: 10, currency: "USD", pricedPerTraveler: true, maximumQuantity: 1, travelerCount: 2 }];
+  const extras = render("extras", flight);
+  assert.match(extras, /\$10 each/); assert.match(extras, /Maximum quantity per traveler/);
+  const legacy = kayakFlightCardModel(normalizeSandboxOffers("flights", kayakFlightInformationFixture())[0])!;
+  legacy.fareTerms = [{ category: "baggage", semantic: "informational", text: "checked Bag 1 · price: 35" }];
+  legacy.providerDetails = { ...legacy.providerDetails, suppliedFacts: [{ label: "fees · checked Bag 1 · price", value: "35" }] } as typeof legacy.providerDetails;
+  assert.doesNotMatch(render("conditions", toFlightDetailsOffer(legacy)), /checked Bag 1/);
+});

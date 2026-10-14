@@ -131,3 +131,38 @@ test("missing fields and unsupported optional-service shapes produce no invented
   assert.equal(normalized(data).flight.providerDetails?.conditions, undefined);
   assert.equal(normalized(data).flight.cabinClass, "Not supplied");
 });
+
+test("priced and unpriced quality-item extras preserve all supplied scope and quantity metadata", () => {
+  for (const priced of [true, false]) {
+    const data = kayakFlightInformationFixture();
+    Object.assign(data.results[0].bookingOptions[0].segmentFares[1].qualityItems[1], { hasFee: true, ...(priced ? { price: 10 } : {}), pricedPerTraveler: true, travelerCount: 2, maximumQuantity: 1, journeyContext: "Outbound segment" });
+    const service = normalized(data).flight.providerDetails!.optionalServices!.find(service => service.type === "wifi")!;
+    assert.equal(service.price, priced ? 10 : undefined);
+    assert.equal(service.pricedPerTraveler, true);
+    assert.equal(service.travelerCount, 2);
+    assert.equal(service.maximumQuantity, 1);
+    assert.equal(service.journeyContext, "Outbound segment");
+  }
+});
+
+test("all new public descriptions and internal unmapped facts reject credential spellings", () => {
+  for (const token of ["secret_token", "secret-token", "secretToken", "access_token", "API_KEY", "authorization"]) {
+    const data = kayakFlightInformationFixture();
+    const injected = `Wi-Fi ${token}=PRIVATE_TEST_VALUE`;
+    data.results[0].bookingOptions[0].optionalServices[0].description = injected;
+    data.results[0].bookingOptions[0].segmentFares[0].qualityItems.push({ code: "wifi", displayName: injected });
+    data.segments["provider-segment-1"].equipmentTypeName = injected;
+    data.airlines.AA.baggagePolicies[0].description = injected;
+    Object.assign(data.results[0].bookingOptions[0], { futureUnknownField: injected });
+    const { offer, flight } = normalized(data);
+    assert.doesNotMatch(JSON.stringify(offer), /PRIVATE_TEST_VALUE/);
+    assert.doesNotMatch(JSON.stringify(flight), /PRIVATE_TEST_VALUE/);
+  }
+});
+
+test("unknown baggage ordinals cannot become inherited object-property descriptions", () => {
+  const data = kayakFlightInformationFixture();
+  data.results[0].bookingOptions[0].fees.checkedBag[0].bagNumber = "constructor";
+  const terms = normalized(data).flight.fareTerms;
+  assert.doesNotMatch(JSON.stringify(terms), /function|native code|constructor/);
+});
