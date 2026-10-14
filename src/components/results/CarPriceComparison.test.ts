@@ -64,8 +64,8 @@ test("provider View deal validates its own URL and stays isolated from main offe
 test("inline provider offers do not retain the old comparison overlays", () => {
   assert.ok(picker.includes('min-w-0 items-center'));
   assert.ok(picker.includes('min-h-6'));
-  assert.match(picker, /responsiveVisibility = expanded \? "grid" : index < 2 \? "grid" : index < 5 \? "hidden md:grid" : "hidden"/);
-  assert.match(picker, /groups\.length > 2/);
+  assert.match(picker, /responsiveVisibility = expanded \? "grid" : index < 3 \? "grid" : index < 5 \? "hidden md:grid" : "hidden"/);
+  assert.match(picker, /groups\.length > 3/);
   assert.match(picker, /groups\.length > 5/);
   assert.match(picker, /data-car-deal-more-offers/);
   assert.match(picker, /data-car-rate-info/);
