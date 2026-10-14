@@ -10,7 +10,7 @@ export function HotelRatePopover({ offer, anchor, onClose, closeOnOutsideScroll 
   const panel = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   useLayoutEffect(() => { close.current = onClose; }, [onClose]);
-  const [position, setPosition] = useState({ left: 0, top: 0, pointer: 20, side: "top", ready: false });
+  const [position, setPosition] = useState({ left: 0, top: 0, pointer: 20, side: "left", ready: false });
   useLayoutEffect(() => {
     const element = panel.current;
     if (!element) return;
@@ -19,17 +19,16 @@ export function HotelRatePopover({ offer, anchor, onClose, closeOnOutsideScroll 
       const viewport = window.visualViewport;
       const vx = viewport?.offsetLeft ?? 0, vy = viewport?.offsetTop ?? 0;
       const width = viewport?.width ?? window.innerWidth, height = viewport?.height ?? window.innerHeight;
-      element.style.maxWidth = `${Math.max(0, width - 24)}px`;
-      element.style.maxHeight = `${Math.max(100, height - 24)}px`;
+      const rightSpace = Math.max(0, vx + width - 24 - rect.right);
+      const leftSpace = Math.max(0, rect.left - vx - 24);
+      const right = rightSpace >= 304 || rightSpace >= leftSpace;
+      element.style.maxWidth = (right ? rightSpace : leftSpace) + "px";
+      element.style.maxHeight = Math.max(100, height - 24) + "px";
       const box = element.getBoundingClientRect();
-      const right = rect.right + 12 + box.width <= vx + width - 12;
-      let left = right ? rect.right + 12 : Math.max(vx + 12, Math.min(rect.left + rect.width / 2 - box.width / 2, vx + width - box.width - 12));
-      let top = right ? rect.top - 20 : rect.bottom + 12;
-      let side = right ? "left" : "top";
-      if (!right && top + box.height > vy + height - 12 && rect.top - box.height - 12 >= vy + 12) { top = rect.top - box.height - 12; side = "bottom"; }
-      top = Math.max(vy + 12, Math.min(top, vy + height - box.height - 12));
-      left = Math.max(vx + 12, left);
-      const pointer = side === "left" ? Math.max(16, Math.min(rect.top + rect.height / 2 - top, box.height - 16)) : Math.max(16, Math.min(rect.left + rect.width / 2 - left, box.width - 16));
+      const left = right ? rect.right + 12 : rect.left - 12 - box.width;
+      const top = Math.max(vy + 12, Math.min(rect.top - 20, vy + height - box.height - 12));
+      const side = right ? "left" : "right";
+      const pointer = Math.max(16, Math.min(rect.top + rect.height / 2 - top, box.height - 16));
       setPosition({ left, top, pointer, side, ready: true });
     };
     update();
@@ -51,7 +50,7 @@ export function HotelRatePopover({ offer, anchor, onClose, closeOnOutsideScroll 
     return () => { observer.disconnect(); document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", key); document.removeEventListener("focusin", focus); window.removeEventListener("scroll", scroll, true); window.removeEventListener("wheel", scroll, true); window.removeEventListener("resize", update); window.visualViewport?.removeEventListener("resize", update); window.visualViewport?.removeEventListener("scroll", update); };
   }, [anchor, closeOnOutsideScroll]);
   return createPortal(<div ref={panel} role="dialog" aria-label="Rate details" tabIndex={-1} className={styles.popover} style={{ left: position.left, top: position.top, visibility: position.ready ? "visible" : "hidden" }}>
-    <span className={`${styles.pointer} ${styles[position.side]}`} style={position.side === "left" ? { top: position.pointer } : { left: position.pointer }} aria-hidden="true" />
+    <span className={`${styles.pointer} ${styles[position.side]}`} style={{ top: position.pointer }} aria-hidden="true" />
     <div className={styles.content}>
       <header><h2>Rate details</h2><button type="button" aria-label="Close Rate details" onClick={() => { onClose(); anchor.focus({ preventScroll: true }); }}><X size={18} /></button></header>
       <section><p className={styles.provider}>{offer.providerName}</p><p className={styles.room}>{offer.roomName || "Room description not supplied"}</p>{[offer.bedConfiguration, offer.mealPlanLabel].filter(Boolean).map((term, index) => <p key={index}>{term}</p>)}</section>
