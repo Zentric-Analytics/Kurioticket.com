@@ -2,6 +2,7 @@ import { z } from "zod";
 import { isIP } from "node:net";
 import { kayakImageUrl, kayakImages, kayakFlightLegs, kayakFlightCabin, kayakFlightAttributes, kayakAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
 import { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
+import { captureTemporarySupplierAudit, temporaryAuditAllowed } from "./temporarySupplierAudit";
 import type { FlightFareTerm, FlightOptionalService, FlightProviderCondition } from "@/lib/types";
 export { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
 
@@ -574,7 +575,16 @@ export class KayakSandboxClient {
       entry.operations++;
       const start = performance.now();
       const previousWait = timing.waitMs;
-      try { return await this.request(args[0], args[1], args[2], args[3], args[4], args[5], args[6], pause); }
+      try {
+        const data = await this.request(args[0], args[1], args[2], args[3], args[4], args[5], args[6], pause);
+        if (temporaryAuditAllowed(search) && Array.isArray(data.results) && data.results.length && (data.isComplete === true || data.status === "complete")) {
+          try {
+            const sample = normalizeSandboxOffers(search.vertical, { ...data, results: [data.results[0]] })[0];
+            if (sample) captureTemporarySupplierAudit(search, data, sample);
+          } catch { /* Diagnostics must never change provider search behavior. */ }
+        }
+        return data;
+      }
       finally { entry.elapsedMs += Math.max(0, performance.now() - start - (timing.waitMs - previousWait)); }
     };
     const pause = async (ms: number) => {
