@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { HotelRatePopover } from "./HotelRatePopover";
 import Link from "next/link";
 import { ArrowLeft, Bed, CalendarDays, ChevronLeft, ChevronRight, Heart, MapPin, Users, X } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -45,6 +46,7 @@ function DetailsDialog({ title, onClose, children, full = false, back, compact =
 }
 
 export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
+  const [rateAnchor, setRateAnchor] = useState<HTMLButtonElement | null>(null);
   const [rateInfo, setRateInfo] = useState<HotelDetailsProviderOffer | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -195,7 +197,7 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
         </div>
         <div aria-label="Hotel rates" className={styles.rateList}>
           {offers.map(offer => <MobileProviderOffer
-            onInfo={() => setRateInfo(offer)}
+            onInfo={anchor => { setRateAnchor(anchor); setRateInfo(current => current?.id === offer.id && rateAnchor === anchor ? null : offer); }}
             key={offer.id}
             offer={offer}
             perNightText={props.perNightText}
@@ -234,21 +236,7 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
       {tab === "reviews" ? <section className={styles.reviews} aria-label="Guest reviews" data-hotel-reviews-section>{props.reviewScore && props.reviewCountText ? <div className={styles.reviewCard}><div className={styles.reviewScore}><strong>{props.reviewScore.split("/")[0].trim()}</strong><span>/{props.mobileReviewScale ?? 10}</span></div><div className={styles.reviewMeta}><h2>{props.reviewLabel}</h2><p>{props.reviewCountText}</p>{props.reviewSource ? <small>Source: {props.reviewSource}</small> : null}</div></div> : <><h2>Guest reviews</h2><p>Verified guest reviews are not connected for this property yet.</p></>}</section> : null}
     </div>
     <span role="status" className="sr-only">{shareStatus}</span>
-    {rateInfo ? <DetailsDialog title="Rate details" compact preserveStickyPage onClose={() => setRateInfo(null)}>
-      <div className={`${styles.sheetBody} ${styles.rateInfoBody}`}>
-        <section className={styles.rateInfoRoom}>
-          {rateInfo.providerLogoUrl ? <Image src={rateInfo.providerLogoUrl} alt={rateInfo.providerName} width={132} height={30} className={styles.rateInfoLogo} /> : <p className={styles.rateInfoProvider}>{rateInfo.providerName}</p>}
-          <h3>{rateInfo.roomName || "Room description not supplied"}</h3>
-          {[rateInfo.bedConfiguration, rateInfo.mealPlanLabel].filter(Boolean).map((term, index) => <p key={index}>{term}</p>)}
-        </section>
-        {rateInfo.cancellationLabel || rateInfo.paymentLabel ? <section className={styles.rateInfoSection}>
-          <h3>Booking conditions</h3>
-          <dl>{rateInfo.cancellationLabel ? <div><dt>Cancellation</dt><dd>{rateInfo.cancellationLabel}</dd></div> : null}{rateInfo.paymentLabel ? <div><dt>Payment</dt><dd>{rateInfo.paymentLabel}</dd></div> : null}</dl>
-        </section> : null}
-        {rateInfo.suppliedRateFacts?.length || rateInfo.taxesAndFeesLabel ? <section className={styles.rateInfoSection}><h3>Price details</h3><dl>{rateInfo.suppliedRateFacts?.map((fact, index) => <div key={index}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl>{rateInfo.taxesAndFeesLabel ? <p>{rateInfo.taxesAndFeesLabel}</p> : null}</section> : null}
-        {rateInfo.totalPrice ? <div className={styles.rateInfoTotal}><span>Stay total</span><strong>{rateInfo.totalPrice}</strong></div> : null}
-      </div>
-    </DetailsDialog> : null}
+    {rateInfo && rateAnchor ? <HotelRatePopover offer={rateInfo} anchor={rateAnchor} onClose={() => setRateInfo(null)} /> : null}
 
     {overlay && overlay !== "stay" ? <DetailsDialog compact={overlay === "amenities"} title={overlay === "gallery" ? "Photos" : overlay === "photo" ? `${gallery.activePosition} / ${gallery.usableIndices.length}` : overlay === "amenities" ? "All amenities" : overlay === "map" ? "Location" : "Room options"} full={overlay === "gallery" || overlay === "photo" || overlay === "map"} back={overlay === "photo" ? () => setOverlay("gallery") : undefined} onClose={() => setOverlay(null)}>
       {overlay === "gallery" ? <div className={styles.galleryGrid}>{gallery.usableIndices.map((index, position) => <button type="button" key={index} onClick={() => { gallery.onSelectImage(index); setOverlay("photo"); }} aria-label={`View photo ${position + 1}`}><Image src={gallery.displayCandidates[index]} alt={`${props.hotelName} photo ${position + 1}`} fill sizes={position % 3 === 0 ? "100vw" : "50vw"} className={styles.cover} onError={() => gallery.onImageError(gallery.displayCandidates[index])} /></button>)}</div> : null}
