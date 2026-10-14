@@ -39,9 +39,11 @@ test("provider offers show logo, name, per-day price and a direct provider View 
   assert.ok(picker.includes('text-[12px] leading-[16px]'));
   assert.ok(picker.includes('text-[12px] leading-4'));
   assert.match(picker, /data-car-deal-picker-compact/);
-  assert.ok(picker.includes('min-h-10 max-[359px]:grid-cols-1'));
+  assert.ok(picker.includes('min-h-9 max-[359px]:grid-cols-1'));
+  assert.ok(picker.includes('compact ? "min-h-9" : "min-h-6"'));
+  assert.ok(picker.includes('compact ? "h-9 w-9 max-[389px]:w-8" : "h-6 w-6"'));
   assert.ok(picker.includes('max-[409px]:hidden'));
-  assert.ok(picker.includes('h-10 w-9 max-[389px]:w-8'));
+  assert.ok(picker.includes('h-9 w-9 max-[389px]:w-8'));
   assert.match(picker, /Info size=\{compact \? 16 : 14\}/);
   assert.equal((picker.match(/fontSize: 11, lineHeight: "16px", fontWeight: 600/g) ?? []).length, 2);
   assert.match(card, /data-car-card-mobile-offers[\s\S]*flex-\[2\.65\]/);
@@ -74,8 +76,10 @@ test("provider View deal validates its own URL and stays isolated from main offe
 test("inline provider offers do not retain the old comparison overlays", () => {
   assert.ok(picker.includes('min-w-0 items-center'));
   assert.ok(picker.includes('min-h-6'));
-  assert.match(picker, /responsiveVisibility = expanded \? "grid" : index < 3 \? "grid" : index < 5 \? "hidden md:grid" : "hidden"/);
-  assert.match(picker, /groups\.length > 3/);
+  assert.match(picker, /responsiveVisibility = expanded \? "grid" : index < 5 \? "grid" : "hidden"/);
+  assert.equal((picker.match(/groups\.length > 5/g) ?? []).length, 2);
+  assert.equal((picker.match(/groups\.length - 5/g) ?? []).length, 2);
+  assert.doesNotMatch(picker, /groups\.length > 3|groups\.length - 3|index < 3/);
   assert.match(picker, /groups\.length > 5/);
   assert.match(picker, /data-car-deal-more-offers/);
   assert.match(picker, /data-car-rate-info/);
