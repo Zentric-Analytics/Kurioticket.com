@@ -51,6 +51,69 @@ test("Cars cards omit the supplier-information bar and preserve View deal on mob
     await expect(card.getByText("View deal", { exact: true }).filter({ visible: true }).first()).toBeVisible();
   }
 });
+
+test("Cars mobile card balances category and moves four specifications underneath cancellation without crowding", async ({ page }) => {
+  const offer = carBase.offers[0];
+  if (!offer) throw new Error("Fixture offer missing");
+  const result = {
+    ...carBase, id: "mobile-spec-layout-fixture", modelName: "Chrysler Pacifica",
+    categoryLabel: "MINIVAN",
+    offers: [{ ...offer, id: "fixture-offer", freeCancellation: true }],
+  };
+  await page.route("**/api/cars/search", route =>
+    route.fulfill({ json: { results: [result], status: "available" } }));
+
+  for (const width of [320, 375, 390, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(routes.cars);
+    const card = page.locator("[data-car-result-card-shell]").first();
+    const info = card.locator("[data-car-card-mobile-information]");
+    const specs = card.locator("[data-car-card-mobile-specs]");
+    const cancellation = card.locator("[data-car-card-mobile-cancellation]");
+    const image = card.locator("[data-car-card-mobile-image]");
+    const lower = card.locator("[data-car-card-mobile-lower-band]");
+    const offers = card.locator("[data-car-card-mobile-offers]");
+    await expect(info).toBeVisible();
+    await expect(cancellation).toBeVisible();
+    await expect(specs).toBeVisible();
+    await expect(specs.locator("li")).toHaveCount(4);
+    await expect(offers).toBeVisible();
+    await expect(lower.locator("[data-car-card-mobile-specs]")).toHaveCount(0);
+    const infoRect = (await info.boundingBox())!;
+    const specRect = (await specs.boundingBox())!;
+    const cancelRect = (await cancellation.boundingBox())!;
+    const imageRect = (await image.boundingBox())!;
+    const lowerRect = (await lower.boundingBox())!;
+    expect(specRect.y).toBeGreaterThanOrEqual(cancelRect.y + cancelRect.height - 1);
+    expect(specRect.x).toBeGreaterThanOrEqual(imageRect.x + imageRect.width - 1);
+    expect(specRect.x).toBeGreaterThanOrEqual(infoRect.x - 1);
+    expect(specRect.x + specRect.width).toBeLessThanOrEqual(infoRect.x + infoRect.width + 1);
+    expect(specRect.y + specRect.height).toBeLessThanOrEqual(lowerRect.y + 1);
+    for (const item of await specs.locator("li").all()) {
+      const box = (await item.boundingBox())!;
+      expect(box.x).toBeGreaterThanOrEqual(infoRect.x - 1);
+      expect(box.x + box.width).toBeLessThanOrEqual(infoRect.x + infoRect.width + 1);
+    }
+    await expect(card.getByText("MINIVAN", { exact: true }).filter({ visible: true })).toBeVisible();
+    await expect(lower.locator("[data-car-deal-provider-offer]")).toHaveCount(1);
+    await expect(card.locator("[data-car-card-mobile-pricing]")).toBeVisible();
+  }
+
+  await page.route("**/api/cars/search", route =>
+    route.fulfill({ json: { results: [{ ...result, offers: [{ ...result.offers[0], freeCancellation: false }] }], status: "available" } }));
+  await page.goto(routes.cars);
+  const noCancellation = page.locator("[data-car-result-card-shell]").first();
+  await expect(noCancellation.locator("[data-car-card-mobile-cancellation]")).toHaveCount(0);
+  const locationRect = (await noCancellation.locator("[data-car-card-mobile-information] p").first().boundingBox())!;
+  const specRect = (await noCancellation.locator("[data-car-card-mobile-specs]").boundingBox())!;
+  expect(specRect.y).toBeGreaterThanOrEqual(locationRect.y + locationRect.height - 1);
+
+  await page.setViewportSize({ width: 1365, height: 900 });
+  await page.goto(routes.cars);
+  await expect(noCancellation.locator("[data-car-card-desktop-primary-specs]")).toBeVisible();
+  await expect(noCancellation.locator("[data-car-card-mobile-main]")).not.toBeVisible();
+});
+
 test("Cars comparison rows stay horizontal within the existing card beside the main price on mobile and desktop", async ({ page }) => {
   const firstOffer = carBase.offers[0];
   if (!firstOffer) throw new Error("Missing test offer");
@@ -58,7 +121,7 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
   const makeResult = (count: number) => ({
     ...carBase, id: "fixture-inline-offers",
     offers: Array.from({ length: count }, (_, index) => ({
-      ...firstOffer, id: "offer-" + index, bookingProviderName: "Seller " + index,
+      ...firstOffer, id: "offer-" + index, freeCancellation: true, bookingProviderName: "Seller " + index,
       bookingUrl: "https://example.com/offer-" + index,
       pricePerDay: 30 + index, totalPrice: 90 + index * 3,
     })),
@@ -80,7 +143,7 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
       await expect(card).toBeVisible();
       const mobile = viewport.width < 640;
       const dealArea = mobile
-        ? card.locator("[data-car-card-mobile-specs]")
+        ? card.locator("[data-car-card-mobile-offers]")
         : card.locator('[data-region="details"]');
       const mainPrice = mobile
         ? card.locator("[data-car-card-mobile-pricing]")
@@ -88,7 +151,7 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
 
       const rows = dealArea.locator("[data-car-deal-provider-offer]");
       const rightSpecLabel = mobile
-        ? dealArea.locator("ul").nth(1).locator("li span").first()
+        ? card.locator("[data-car-card-mobile-specs] ul").nth(1).locator("li span").first()
         : dealArea.locator("[data-car-card-desktop-primary-specs] li").nth(1).locator("span").first();
       await expect(rows).toHaveCount(count);
       const initiallyVisible = Math.min(count, mobile ? 3 : 5);
@@ -122,7 +185,7 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
         expect(rowRect).not.toBeNull();
         expect(provider!.x + provider!.width).toBeLessThanOrEqual(price!.x + 1);
         expect(price!.x + price!.width + 6).toBeLessThanOrEqual(link!.x + 1);
-        expect(Math.abs(link!.x - rightSpecRect!.x)).toBeLessThanOrEqual(3);
+        if (!mobile) expect(Math.abs(link!.x - rightSpecRect!.x)).toBeLessThanOrEqual(3);
         expect(Math.abs(provider!.y - link!.y)).toBeLessThan(10);
         expect(rowRect!.x + rowRect!.width).toBeLessThanOrEqual(mainRect!.x + 1);
         expect(rowRect!.y + rowRect!.height).toBeLessThanOrEqual(cardRect!.y + cardRect!.height + 1);
@@ -162,7 +225,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     const card = page.locator("[data-car-result-card-shell]").first();
     await expect(card).toBeVisible();
     const mobile = viewport.width < 640;
-    const area = mobile ? card.locator("[data-car-card-mobile-specs]") : card.locator('[data-region="details"]');
+    const area = mobile ? card.locator("[data-car-card-mobile-offers]") : card.locator('[data-region="details"]');
     const rows = area.locator("[data-car-deal-provider-offer]");
     const main = mobile ? card.locator("[data-car-card-mobile-pricing]") : card.locator('[data-region="pricing"]');
     await expect(rows).toHaveCount(7);
