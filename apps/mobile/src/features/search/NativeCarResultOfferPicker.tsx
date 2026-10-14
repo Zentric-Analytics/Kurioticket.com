@@ -20,7 +20,7 @@ function ProviderMark({ name, logoUrl }: { name: string; logoUrl?: string }) {
   const safeLogoUrl = resolveTravelProviderLogo(logoUrl);
   if (safeLogoUrl && failedUrl !== safeLogoUrl) {
     return /\.svg(?:[?#]|$)/i.test(safeLogoUrl)
-      ? <SvgUri uri={safeLogoUrl} width={14} height={14} onError={() => setFailedUrl(safeLogoUrl)} />
+      ? <SvgUri uri={safeLogoUrl} width={16} height={16} onError={() => setFailedUrl(safeLogoUrl)} />
       : <Image accessible={false} source={{ uri: safeLogoUrl }} resizeMode="contain" style={styles.logo} onError={() => setFailedUrl(safeLogoUrl)} />;
   }
   return <View accessible={false} style={styles.fallbackMark}><Text style={styles.fallbackLetter}>{name.trim().slice(0, 1).toUpperCase() || "P"}</Text></View>;
@@ -41,6 +41,8 @@ export function NativeCarResultOfferPicker({
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const choices = nativeCarResultDealChoices(result);
   const visibleChoices = expanded ? choices : choices.slice(0, 2);
+  const narrowActions = rowWidth > 0 && rowWidth < 268;
+  const stackVeryNarrow = rowWidth > 0 && rowWidth < 225;
   const selectedChoice = choices.find(choice => choice.key === selectedKey);
   const selectedPrice = selectedChoice
     ? presentCarOfferCurrency(selectedChoice.offer, displayCurrency, rates)
@@ -59,15 +61,15 @@ export function NativeCarResultOfferPicker({
       const displayed = presentCarOfferCurrency(offer, displayCurrency, rates);
       const actionColor = bookingUrl ? (theme.dark ? "#8FB5FF" : "#004BB8") : "#94A3B8";
       const hasDetails = result.inventorySource === "kayak-sandbox" && Boolean(offer.suppliedFacts?.length);
-      return <View key={key} style={styles.provider}>
-        <View style={[styles.meta, { width: rowWidth > 0 ? Math.min(rowWidth, rowWidth / 2 + 26) : ("62%" as const) }]}>
+      return <View key={key} style={[styles.provider, stackVeryNarrow && styles.providerNarrow]}>
+        <View style={[styles.meta, { width: stackVeryNarrow ? ("100%" as const) : rowWidth > 0 ? Math.min(rowWidth, rowWidth / 2 + 20) : ("58%" as const) }]}>
           <View style={styles.brand}>
             <ProviderMark name={providerName} logoUrl={logoUrl} />
             <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.providerName, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{providerName}</Text>
           </View>
           <Text numberOfLines={1} ellipsizeMode="tail" adjustsFontSizeToFit minimumFontScale={0.78} style={[styles.price, { color: theme.textPrimary }]}>{money(displayed.currency, displayed.pricePerDay)}<Text style={[styles.perDay, { color: theme.textSecondary }]}>/day</Text></Text>
         </View>
-        <View style={styles.actionArea}>
+        <View style={[styles.actionArea, stackVeryNarrow && styles.actionAreaNarrow]}>
           <Pressable
             accessibilityRole={bookingUrl ? "link" : "button"}
             accessibilityLabel={"View deal from " + providerName}
@@ -77,16 +79,15 @@ export function NativeCarResultOfferPicker({
             style={styles.action}
           >
             <Text style={[styles.link, { color: actionColor }]}>View deal</Text>
-            {bookingUrl ? <ChevronRight accessible={false} size={10} color={actionColor} /> : null}
+            {bookingUrl && !narrowActions ? <ChevronRight accessible={false} size={12} color={actionColor} /> : null}
           </Pressable>
           {hasDetails ? <Pressable
             accessibilityRole="button"
             accessibilityLabel={"Rate information for " + providerName}
             onPress={() => setSelectedKey(key)}
-            hitSlop={4}
             style={styles.infoAction}
           >
-            <Info accessible={false} size={12} color={theme.textSecondary} />
+            <Info accessible={false} size={16} color={theme.textSecondary} />
           </Pressable> : null}
         </View>
       </View>;
@@ -156,21 +157,23 @@ export function NativeCarResultOfferPicker({
 
 const styles = StyleSheet.create({
   providers: { minWidth: 0, gap: 0, paddingTop: 2, paddingBottom: 3 },
-  provider: { minHeight: 18, minWidth: 0, flexDirection: "row", alignItems: "center" },
+  provider: { minHeight: 44, minWidth: 0, flexDirection: "row", alignItems: "center" },
+  providerNarrow: { flexDirection: "column", alignItems: "stretch", paddingVertical: 3 },
   meta: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4, paddingLeft: 6, paddingRight: 8 },
   brand: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 2 },
-  logo: { width: 14, height: 14, flexShrink: 0 },
-  fallbackMark: { width: 14, height: 14, borderRadius: 3, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center" },
-  fallbackLetter: { fontSize: 10, fontWeight: "700", color: "#07133B", fontFamily: appFonts.bold },
-  providerName: { flex: 1, minWidth: 0, fontSize: 9, lineHeight: 12, fontWeight: "600", fontFamily: appFonts.semibold },
-  price: { flexShrink: 1, minWidth: 0, fontSize: 11, lineHeight: 14, fontWeight: "700", fontFamily: appFonts.bold, fontVariant: ["tabular-nums"] },
-  perDay: { fontSize: 9, lineHeight: 12, fontWeight: "500", fontFamily: appFonts.medium },
-  actionArea: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center" },
-  action: { minHeight: 18, flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 2 },
-  link: { fontSize: 9, lineHeight: 13, fontWeight: "600", fontFamily: appFonts.semibold },
-  infoAction: { width: 24, height: 26, alignItems: "center", justifyContent: "center" },
-  moreAction: { minHeight: 28, paddingLeft: 6, flexDirection: "row", alignItems: "center", gap: 4 },
-  moreText: { fontSize: 10, color: "#004BB8", fontWeight: "600", fontFamily: appFonts.semibold },
+  logo: { width: 16, height: 16, flexShrink: 0 },
+  fallbackMark: { width: 16, height: 16, borderRadius: 3, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center" },
+  fallbackLetter: { fontSize: 11, fontWeight: "700", color: "#07133B", fontFamily: appFonts.bold },
+  providerName: { flex: 1, minWidth: 0, fontSize: 11, lineHeight: 15, fontWeight: "600", fontFamily: appFonts.semibold },
+  price: { flexShrink: 1, minWidth: 0, fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold, fontVariant: ["tabular-nums"] },
+  perDay: { fontSize: 10, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
+  actionArea: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 2 },
+  actionAreaNarrow: { width: "100%", flex: 0, paddingLeft: 22 },
+  action: { minHeight: 44, flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 2 },
+  link: { fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
+  infoAction: { width: 36, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
+  moreAction: { minHeight: 36, paddingLeft: 6, flexDirection: "row", alignItems: "center", gap: 4 },
+  moreText: { fontSize: 11, lineHeight: 16, color: "#004BB8", fontWeight: "600", fontFamily: appFonts.semibold },
   modalRoot: { flex: 1, justifyContent: "flex-end" },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(7,19,59,0.55)" },
   sheet: { maxHeight: "82%", borderTopLeftRadius: 20, borderTopRightRadius: 20, borderWidth: 1, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 24 },
