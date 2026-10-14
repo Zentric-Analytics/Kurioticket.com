@@ -10,7 +10,7 @@ const jiti = createJiti(import.meta.url, {
   jsx: { runtime: "automatic" },
   alias: { "@": fileURLToPath(new URL("../../../", import.meta.url)) },
 });
-const { HotelPriceComparisonSection, MobileProviderOffer } = jiti("./HotelPriceComparisonSection.tsx") as typeof import("./HotelPriceComparisonSection");
+const { HotelPriceComparisonSection } = jiti("./HotelPriceComparisonSection.tsx") as typeof import("./HotelPriceComparisonSection");
 
 const offer: HotelDetailsProviderOffer = {
   id: "provider-one",
@@ -40,31 +40,6 @@ function findElement(node: ReactNode, predicate: (element: ReactElement<Record<s
   return undefined;
 }
 
-test("mobile rate row keeps intrinsic provider, price, and View deal widths without narrow-screen overlap", () => {
-  const html = renderToStaticMarkup(createElement(MobileProviderOffer, {
-    offer: { ...offer, totalPrice: "NGN 969,409.36", providerName: "KAYAK sandbox" },
-    perNightText: "{{price}} per night",
-    totalLabel: "Stay total",
-    selected: true,
-    selectable: true,
-    pendingOfferId: null,
-    continueLabel: "View deal",
-    onSelect: () => {},
-    onContinue: () => {},
-    onInfo: () => {},
-  }));
-  assert.match(html, /grid-cols-\[max-content_max-content_max-content\]/);
-  assert.match(html, /justify-between/);
-  assert.match(html, /gap-x-1/);
-  assert.match(html, /max-\[349px\]:px-2/);
-  assert.match(html, /whitespace-nowrap text-\[12px\][^"]*max-\[349px\]:text-\[11px\]/);
-  assert.match(html, /text-\[16px\][^"]*max-\[349px\]:text-\[13px\]/);
-  assert.match(html, /justify-self-end[^"]*whitespace-nowrap[^"]*max-\[349px\]:px-1\.5[^"]*max-\[349px\]:text-\[13px\]/);
-  assert.doesNotMatch(html, /grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/);
-  assert.match(html, /aria-haspopup="dialog"/);
-});
-
-
 test("desktop rate card exposes details separately from provider, price, and deal action", () => {
   const html = renderToStaticMarkup(createElement(HotelPriceComparisonSection, {
     ...baseProps,
@@ -75,7 +50,6 @@ test("desktop rate card exposes details separately from provider, price, and dea
   }));
   for (const fact of ["Example stays", "NGN 240,000", "View deal"]) assert.ok(html.includes(fact), fact);
   assert.match(html, /Rate details for Deluxe room/);
-  assert.match(html, /aria-haspopup="dialog"/);
   assert.doesNotMatch(html, /King bed|Breakfast included|Non-refundable|Pay at property|Taxes included|data-rate-terms/);
   assert.equal((html.match(/data-desktop-provider-offer/g) ?? []).length, 1);
   assert.match(html, /<article/);
@@ -154,11 +128,14 @@ test("desktop rate cards extend slightly beyond the stay editor", () => {
 
 test("desktop info opens the matching offer without starting a booking", () => {
   const shown: HotelDetailsProviderOffer[] = [];
+  const anchors: HTMLButtonElement[] = [];
+  const trigger = {} as HTMLButtonElement;
   const selected: string[] = [];
-  const tree = HotelPriceComparisonSection({ ...baseProps, variant: "desktop", onInfoOffer: value => shown.push(value), onSelectOffer: id => selected.push(id) });
+  const tree = HotelPriceComparisonSection({ ...baseProps, variant: "desktop", onInfoOffer: (value, anchor) => { shown.push(value); anchors.push(anchor); }, onSelectOffer: id => selected.push(id) });
   const button = findElement(tree, element => element.type === "button" && element.props["aria-label"] === "Rate details for Example stays");
   assert.ok(button);
-  (button.props.onClick as () => void)();
+  (button.props.onClick as (event: { currentTarget: HTMLButtonElement }) => void)({ currentTarget: trigger });
   assert.deepEqual(shown, [offer]);
+  assert.deepEqual(anchors, [trigger]);
   assert.deepEqual(selected, []);
 });

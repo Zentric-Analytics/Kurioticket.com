@@ -116,7 +116,7 @@ type DesktopOfferProps = {
   continueLabel: string;
   onSelect: (offerId: string) => void;
   onContinue?: ContinueOffer;
-  onInfo?: () => void;
+  onInfo?: (anchor: HTMLButtonElement) => void;
 };
 
 export function DesktopProviderOffer({
@@ -144,27 +144,27 @@ export function DesktopProviderOffer({
     >
       <div className="flex min-w-0 items-center gap-2" data-provider-brand>
       {offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={offer.providerName} width={132} height={30} className="h-8 min-w-0 max-w-[132px] object-contain object-left" /> : <strong className="min-w-0 truncate text-[14px] font-semibold text-[#1a1a1a]" title={offer.providerName}>{offer.providerName}</strong>}
-      <button type="button" className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#595959] hover:bg-[#f2f4f8]" aria-haspopup="dialog" aria-label={'Rate details for ' + (offer.roomName || offer.providerName)} onClick={onInfo}><Info size={18} strokeWidth={1.6} /></button>
+      <button type="button" className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#595959] hover:bg-[#f2f4f8]" aria-haspopup="dialog" aria-label={'Rate details for ' + (offer.roomName || offer.providerName)} onClick={event => onInfo?.(event.currentTarget)}><Info size={18} strokeWidth={1.6} /></button>
       </div>
-      <div className="text-center"><strong className="block whitespace-nowrap text-[18px] font-semibold leading-6 text-[#1a1a1a] tabular-nums" data-provider-price aria-label={(totalPrice ? 'Stay total: ' : 'Per night: ') + (totalPrice || offer.nightlyPrice)}>{totalPrice || offer.nightlyPrice}</strong><span className="block text-[11px] font-normal leading-4 text-[#595959]">{totalPrice ? "Stay total" : "Per night"}</span></div>
+      <div className="inline-flex items-baseline justify-center gap-1.5 whitespace-nowrap"><span className="block text-[12px] font-semibold leading-4 text-[#1a1a1a]">{totalPrice ? "Stay total" : "Per night"}</span><strong className="block whitespace-nowrap text-[18px] font-semibold leading-6 text-[#1a1a1a] tabular-nums" data-provider-price aria-label={(totalPrice ? 'Stay total: ' : 'Per night: ') + (totalPrice || offer.nightlyPrice)}>{totalPrice || offer.nightlyPrice}</strong></div>
       <button type="button" className="focus-ring inline-flex h-9 w-[112px] justify-self-end items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[16px] font-semibold leading-5 text-white hover:bg-[#003B91] disabled:opacity-50" disabled={disabled || !onContinue} aria-label={pending ? `Opening ${offer.providerName} offer` : `View deal with ${offer.providerName}`} onClick={event => { onSelect(offer.id); onContinue?.(offer.id, event.currentTarget); }} data-provider-action>{pending ? "Opening…" : "View deal"}</button>
     </article>
   );
 }
 
-export function MobileProviderOffer({ offer, selectable, pendingOfferId, continueLabel, onSelect, onContinue, onInfo }: DesktopOfferProps & { onInfo: () => void }) {
+export function MobileProviderOffer({ offer, selectable, pendingOfferId, continueLabel, onSelect, onContinue, onInfo }: DesktopOfferProps & { onInfo: (anchor: HTMLButtonElement) => void }) {
   const pending = pendingOfferId === offer.id;
   const totalPrice = offer.totalPrice?.trim();
   return <article className="grid min-h-[76px] min-w-0 grid-cols-[max-content_max-content_max-content] items-baseline content-center justify-between gap-x-1 rounded-xl border border-[#D9E2E8] bg-white px-3 py-3 max-[349px]:px-2" data-provider-offer data-provider-offer-id={offer.id} aria-busy={pending || undefined}>
     <div className="flex min-w-0 items-baseline gap-0.5" data-provider-brand>
-      {offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={offer.providerName} width={132} height={30} className="h-7 min-w-0 max-w-[80px] object-contain object-left" /> : <p className="min-w-0 whitespace-nowrap text-[12px] font-semibold leading-5 text-[#1a1a1a] max-[349px]:text-[11px]" title={offer.providerName}>{offer.providerName}</p>}
+      {offer.providerLogoUrl ? <Image src={offer.providerLogoUrl} alt={offer.providerName} width={132} height={30} className="h-7 shrink-0 max-w-[64px] max-[349px]:max-w-[48px] object-contain object-left" /> : <p className="shrink-0 whitespace-nowrap text-[11px] font-semibold leading-5 text-[#1a1a1a] max-[349px]:text-[9px]" title={offer.providerName}>{offer.providerName}</p>}
 
-    <button type="button" className="focus-ring relative inline-flex h-5 w-6 shrink-0 items-center justify-center self-center rounded-md text-[#595959] max-[349px]:w-5" aria-haspopup="dialog" aria-label={'Rate details for ' + (offer.roomName || offer.providerName)} onClick={onInfo}><Info size={18} strokeWidth={1.6} /><span className="absolute -inset-y-3 inset-x-0" aria-hidden="true" /></button>
+    <button type="button" className="focus-ring relative inline-flex h-5 w-5 shrink-0 items-center justify-center self-center rounded-md text-[#595959] max-[349px]:w-4" aria-haspopup="dialog" aria-label={'Rate details for ' + (offer.roomName || offer.providerName)} onClick={event => onInfo?.(event.currentTarget)}><Info size={18} strokeWidth={1.6} /><span className="absolute -inset-y-3 inset-x-0" aria-hidden="true" /></button>
     </div>
 
-    <div className="justify-self-center text-center"><strong className="block whitespace-nowrap text-[16px] font-semibold leading-5 tracking-tight text-[#1a1a1a] tabular-nums max-[349px]:text-[13px] max-[349px]:leading-4" aria-label={(totalPrice ? 'Stay total: ' : 'Per night: ') + (totalPrice || offer.nightlyPrice)}>{totalPrice || offer.nightlyPrice}</strong><span className="block text-[10px] font-normal leading-4 text-[#595959] max-[349px]:text-[9px]">{totalPrice ? "Stay total" : "Per night"}</span></div>
+    <div className="inline-flex items-baseline justify-self-center gap-1 whitespace-nowrap"><span className="block text-[10px] font-semibold leading-4 text-[#1a1a1a] max-[349px]:text-[8px]">{totalPrice ? "Stay total" : "Per night"}</span><strong className="block whitespace-nowrap text-[13px] font-semibold leading-5 tracking-tight text-[#1a1a1a] tabular-nums max-[349px]:text-[10px] max-[349px]:leading-4" aria-label={(totalPrice ? 'Stay total: ' : 'Per night: ') + (totalPrice || offer.nightlyPrice)}>{totalPrice || offer.nightlyPrice}</strong></div>
 
-    <button type="button" className="focus-ring inline-flex min-h-8 items-center justify-center justify-self-end whitespace-nowrap rounded-lg bg-[#004bb8] px-2.5 text-[16px] font-semibold leading-5 text-white disabled:opacity-50 max-[349px]:px-1.5 max-[349px]:text-[13px] max-[349px]:leading-4" disabled={!selectable || pendingOfferId !== null || !onContinue} aria-label={(pending ? 'Opening ' : 'View deal with ') + offer.providerName} onClick={event => { onSelect(offer.id); onContinue?.(offer.id, event.currentTarget); }} data-provider-action>{pending ? "Opening…" : continueLabel}</button>
+    <button type="button" className="focus-ring inline-flex min-h-8 items-center justify-center justify-self-end whitespace-nowrap rounded-lg bg-[#004bb8] px-1.5 text-[12px] font-semibold leading-5 text-white disabled:opacity-50 max-[349px]:px-1 max-[349px]:text-[13px] max-[349px]:leading-4" disabled={!selectable || pendingOfferId !== null || !onContinue} aria-label={(pending ? 'Opening ' : 'View deal with ') + offer.providerName} onClick={event => { onSelect(offer.id); onContinue?.(offer.id, event.currentTarget); }} style={{ fontSize: "clamp(10px, 3vw, 12px)", paddingInline: 6 }} data-provider-action>{pending ? "Opening…" : continueLabel}</button>
   </article>;
 }
 export function HotelPriceComparisonSection({
@@ -193,7 +193,7 @@ export function HotelPriceComparisonSection({
   onSelectOffer: (offerId: string) => void;
   variant?: "default" | "desktop";
   onContinueOffer?: ContinueOffer;
-  onInfoOffer?: (offer: HotelDetailsProviderOffer) => void;
+  onInfoOffer?: (offer: HotelDetailsProviderOffer, anchor: HTMLButtonElement) => void;
   pendingOfferId?: string | null;
   totalLabel?: string;
   continueLabel?: string;
@@ -255,7 +255,7 @@ export function HotelPriceComparisonSection({
             continueLabel={continueLabel}
             onSelect={onSelectOffer}
             onContinue={onContinueOffer}
-            onInfo={() => onInfoOffer?.(offer)}
+            onInfo={anchor => onInfoOffer?.(offer, anchor)}
           />
         ) : (
           <ProviderOffer
