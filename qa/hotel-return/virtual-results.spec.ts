@@ -177,6 +177,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
 
     const firstInfo = rows.first().locator("[data-car-rate-info]");
     await expect(firstInfo).toBeVisible();
+    await firstInfo.scrollIntoViewIfNeeded();
     const scrollBefore = await page.evaluate(() => window.scrollY);
     await firstInfo.click();
     const dialog = area.locator("[data-car-rate-dialog]");
