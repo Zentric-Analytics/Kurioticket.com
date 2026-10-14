@@ -48,34 +48,32 @@ export const getCarProviderOfferGroups = (
 };
 
 /**
- * Static Kurioticket inventory currently contains multiple real offers from the
- * same seller. Split those offers into separate picker choices so Results can
- * exercise the finished three-option layout before live multi-provider feeds
- * arrive. Live/provider-fed inventory keeps provider grouping unchanged.
+ * A result-card deal row represents one actual bookable offer, not one seller.
+ * KAYAK can return several prices from the same seller, so grouping must never
+ * hide those offers or impose a three-choice cap. Keep the separate provider-
+ * grouping helper for comparison contexts that explicitly need aggregation.
  */
 export const getCarDealPickerGroups = (
   car: Pick<NormalizedCarResult, "offers" | "inventorySource">,
-): CarProviderOfferGroup[] => {
-  const providerGroups = getCarProviderOfferGroups(car.offers);
-  const onlyProvider = providerGroups[0];
-  const shouldPreviewStaticKurioticketOffers =
-    car.inventorySource === "kurioticket-static-cars" &&
-    providerGroups.length === 1 &&
-    Boolean(onlyProvider) &&
-    /kurioticket/i.test(onlyProvider?.providerName ?? "") &&
-    (onlyProvider?.offers.length ?? 0) > 1;
-
-  if (!shouldPreviewStaticKurioticketOffers || !onlyProvider) {
-    return providerGroups;
-  }
-
-  return onlyProvider.offers.map((offer) => ({
-    ...onlyProvider,
-    key: `${onlyProvider.key}:offer:${offer.id}`,
-    offers: [offer],
-    primaryOffer: offer,
-  }));
-};
+): CarProviderOfferGroup[] =>
+  getCarProviderOfferGroups(car.offers)
+    .flatMap((group) =>
+      group.offers
+        .filter((offer) => Number.isFinite(offer.pricePerDay) && offer.pricePerDay >= 0)
+        .map((offer) => ({
+          ...group,
+          key: `${group.key}:offer:${offer.id}`,
+          logoUrl: offer.bookingProviderLogoUrl ?? group.logoUrl,
+          offers: [offer],
+          primaryOffer: offer,
+        })),
+    )
+    .sort(
+      (a, b) =>
+        a.primaryOffer.totalPrice - b.primaryOffer.totalPrice ||
+        a.primaryOffer.pricePerDay - b.primaryOffer.pricePerDay ||
+        a.key.localeCompare(b.key),
+    );
 
 /** The details comparison intentionally has a simpler, stable price ordering. */
 export const sortCarOffers = (offers: CarOffer[]) =>
