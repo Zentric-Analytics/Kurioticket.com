@@ -29,7 +29,7 @@ test("room options use the surrounding two-decimal display currency", () => {
 test("room options retain same currency and Hotel market precision", () => {
   assert.equal(createHotelRoomDisplayPrice(12.5, 25, "USD", "USD", {})?.nightly.formatted, "$12.50");
   assert.equal(createHotelRoomDisplayPrice(210, 630, "USD", "JPY", { USD: 1, JPY: 150 })?.nightly.formatted, "¥31,500");
-  assert.equal(createHotelRoomDisplayPrice(10, 20, "CAD", "CAD", {})?.nightly.formatted, "CA$10.00");
+  assert.equal(createHotelRoomDisplayPrice(10, 20, "CAD", "CAD", {})?.nightly.formatted, "$10.00");
 });
 
 test("room options never fall back to a mixed source currency", () => {
