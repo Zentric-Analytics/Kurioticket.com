@@ -102,7 +102,10 @@ test("provider picker exposes every supplied seller without a three-provider cut
   assert.match(picker, /getCarDealPickerGroups\(car\)/);
   assert.match(picker, /groups\.map\(\(group\) =>/);
   assert.doesNotMatch(picker, /groups\.slice\(/);
-  assert.ok(picker.includes('grid-cols-[minmax(0,1fr)_auto_auto]'));
+  assert.ok(picker.includes('grid-cols-[minmax(0,calc(50%_+_20px))_minmax(0,1fr)]'));
+  assert.ok(picker.includes('grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)]'));
+  assert.match(picker, /data-car-rate-terms/);
+  assert.match(picker, /col-span-2 flex min-w-0 flex-wrap/);
   assert.ok(picker.includes('space-y-0'));
   assert.doesNotMatch(picker, /grid-cols-3 gap-y-3|Compare deals/);
   const groups = getCarDealPickerGroups({

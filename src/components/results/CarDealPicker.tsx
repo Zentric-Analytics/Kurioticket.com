@@ -154,10 +154,11 @@ export function CarDealPicker({
             <div
               key={group.key}
               role="listitem"
-              className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center ${compact ? "min-h-4 gap-x-1" : "min-h-[18px] gap-x-2"}`}
+              className={`grid min-w-0 items-center ${compact ? "grid-cols-[minmax(0,calc(50%_+_20px))_minmax(0,1fr)] min-h-4" : "grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)] min-h-[18px]"}`}
               data-car-deal-provider-offer
             >
-              <div className={`flex min-w-0 items-center ${compact ? "gap-0.5" : "gap-1"}`}>
+              <div data-car-deal-provider-meta className={`flex min-w-0 items-center gap-1 ${compact ? "pr-2" : "pr-3"}`}>
+                <div className={`flex min-w-0 flex-1 items-center ${compact ? "gap-0.5" : "gap-1"}`}>
                 <span
                   className={`${compact ? "h-3.5 w-3.5" : "h-4 w-4"} inline-flex shrink-0 items-center justify-center overflow-hidden`}
                 >
@@ -170,17 +171,19 @@ export function CarDealPicker({
                 >
                   {group.providerName}
                 </span>
-              </div>
+                </div>
 
-              <p
-                className={`${compact ? "text-[11px] leading-[13px]" : "text-xs leading-[14px]"} shrink-0 whitespace-nowrap font-bold tabular-nums text-[#07133B]`}
+                <p
+                  className={`${compact ? "text-[11px] leading-[13px]" : "text-xs leading-[14px]"} min-w-0 max-w-full truncate whitespace-nowrap font-bold tabular-nums text-[#07133B]`}
                 dir="ltr"
                 data-car-deal-provider-price
               >
                 {formatOfferPrice(offer)}
                 <span className="ml-0.5 font-medium text-[#64748B]">/day</span>
-              </p>
+                </p>
+              </div>
 
+              <div data-car-deal-provider-action-slot className="flex min-w-0 items-center justify-start">
               {bookingHref ? (
                 <a
                   href={bookingHref}
@@ -203,7 +206,8 @@ export function CarDealPicker({
                   View deal
                 </span>
               )}
-              {car.inventorySource === "kayak-sandbox" && <div className="col-span-3 flex min-w-0 flex-wrap items-center gap-x-3 text-xs text-slate-600" data-car-rate-terms>
+              </div>
+              {car.inventorySource === "kayak-sandbox" && <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-x-3 text-xs text-slate-600" data-car-rate-terms>
                 <span>{formatTotal(offer)} total</span>
                 {paymentLabel(offer) && <span>{paymentLabel(offer)}</span>}
                 <CarRateDetails id={`${detailsId}-${offer.id}`} offer={offer} seller={group.providerName} total={formatTotal(offer)} payment={paymentLabel(offer)} />
