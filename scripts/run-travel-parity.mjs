@@ -23,6 +23,7 @@ const matrices = {
     "src/data/homepageCountryDirectory.test.ts",
     "src/lib/cars/carCanonicalCatalog.test.ts",
     "src/lib/cars/carResults.test.ts",
+    "src/lib/cars/carRateDisclosure.test.ts",
     "src/components/results/carProviderComparison.test.ts",
     "src/components/results/CarPriceComparison.test.ts",
     "src/components/results/carResultCardMobileLayout.test.ts",

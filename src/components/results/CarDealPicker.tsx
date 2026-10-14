@@ -1,7 +1,7 @@
 "use client";
 
-import { useId, useMemo, useState, type MouseEvent } from "react";
-import { ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { ChevronRight, Info, X } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -12,7 +12,7 @@ import {
 import type { CarOffer, NormalizedCarResult } from "@/lib/cars/types";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
-import { formatCarSupplierFacts } from "@/lib/cars/supplierFacts";
+import { getCarRateDisclosureSections, getCarRatePaymentLabel } from "@/lib/cars/carRateDisclosure";
 
 type Props = {
   car: NormalizedCarResult;
@@ -77,29 +77,6 @@ function ProviderMark({
   );
 }
 
-function CarRateDetails({ id, offer, seller, total, payment }: {
-  id: string; offer: CarOffer; seller: string; total: string; payment: string;
-}) {
-  const [open, setOpen] = useState(false);
-  if (!offer.suppliedFacts?.length) return null;
-  return <>
-    <button type="button" popoverTarget={id} onClick={event => event.stopPropagation()}
-      aria-label={`Rate details from ${seller}, ${total} total, ${payment}`}
-      className="min-h-11 text-xs font-semibold text-[#004BB8] underline">Rate details</button>
-    <div id={id} popover="auto" aria-label={`Rate details from ${seller}`}
-      onToggle={event => setOpen(event.currentTarget.matches(":popover-open"))}
-      className="fixed inset-0 m-auto max-h-[80vh] w-[calc(100vw-2rem)] max-w-lg overflow-auto rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-800 shadow-xl">
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="font-bold">{seller} — {total} total</h3>
-        <button type="button" popoverTarget={id} popoverTargetAction="hide" className="min-h-11 shrink-0 text-blue-700">Close</button>
-      </div>
-      <p className="mb-3">Specifications and conditions for this offer</p>
-      {open && <dl className="space-y-3">{formatCarSupplierFacts(offer.suppliedFacts)?.map((fact, index) => <div key={index} className="break-words">
-        <dt className="font-semibold">{fact.label}</dt><dd className="whitespace-pre-wrap">{fact.value}</dd>
-      </div>)}</dl>}
-    </div>
-  </>;
-}
 
 export function CarDealPicker({
   car,
@@ -107,9 +84,19 @@ export function CarDealPicker({
 }: Props) {
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
-  const detailsId = useId();
   const groups = useMemo(() => getCarDealPickerGroups(car), [car]);
-  if (!groups.length) return null;
+  const [expanded, setExpanded] = useState(false);
+  const [detailsKey, setDetailsKey] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const selectedGroup = groups.find(group => group.key === detailsKey);
+  const selectedOffer = selectedGroup?.primaryOffer;
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (selectedOffer && !dialog.open) dialog.showModal();
+    if (!selectedOffer && dialog.open) dialog.close();
+  }, [selectedOffer]);
 
   const formatOfferPrice = (offer: CarOffer) =>
     formatDisplayPrice({
@@ -121,104 +108,170 @@ export function CarDealPicker({
       rates: currencyRates.rates,
       isFallbackRate: currencyRates.isFallback,
     }).formatted;
-
-  const isolateProviderAction = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.stopPropagation();
-  };
   const formatTotal = (offer: CarOffer) => formatDisplayPrice({
     amount: offer.totalPrice, sourceCurrency: offer.currency,
     displayCurrency: selectedOption.currency, convertSourceEstimate: true,
     rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback,
   }).formatted;
-  const paymentLabel = (offer: CarOffer) => {
-    const value = offer.suppliedFacts?.find(fact => fact.label === "payment Type")?.value;
-    return value === "prepay" ? "Pay now" : value === "payAtPickup" ? "Pay at pickup" : value === "deposit" ? "Deposit payment" : "";
+  const isolateProviderAction = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.stopPropagation();
   };
+  if (!groups.length) return null;
 
   return (
-    <div
-      data-car-deal-picker
-      className={`min-w-0 ${compact ? "mt-1" : "mt-1.5"}`}
-    >
+    <div data-car-deal-picker className={["min-w-0", compact ? "mt-1" : "mt-1.5"].join(" ")}>
       <div
-        className={`min-w-0 ${compact ? "space-y-0" : "space-y-0.5"}`}
         role="list"
         aria-label="Car deal providers"
         data-car-deal-provider-offers
+        className={["min-w-0", compact ? "space-y-0" : "space-y-0.5"].join(" ")}
       >
-        {groups.map((group) => {
+        {groups.map((group, index) => {
           const offer = group.primaryOffer;
           const bookingHref = approvedProviderBookingUrl(car, offer);
-
+          const hasDetails = car.inventorySource === "kayak-sandbox" && Boolean(offer.suppliedFacts?.length);
+          const responsiveVisibility = expanded ? "grid" : index < 3 ? "grid" : index < 5 ? "hidden md:grid" : "hidden";
           return (
             <div
               key={group.key}
               role="listitem"
-              className={`grid min-w-0 items-center ${compact ? "grid-cols-[minmax(0,calc(50%_+_20px))_minmax(0,1fr)] min-h-4" : "grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)] min-h-[18px]"}`}
+              className={[
+                responsiveVisibility, "min-w-0 items-center",
+                compact ? "grid-cols-[minmax(0,calc(50%_+_20px))_minmax(0,1fr)] min-h-6"
+                        : "grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)] min-h-6",
+              ].join(" ")}
               data-car-deal-provider-offer
             >
-              <div data-car-deal-provider-meta className={`flex min-w-0 items-center gap-1 ${compact ? "pr-2" : "pr-3"}`}>
-                <div className={`flex min-w-0 flex-1 items-center ${compact ? "gap-0.5" : "gap-1"}`}>
-                <span
-                  className={`${compact ? "h-3.5 w-3.5" : "h-4 w-4"} inline-flex shrink-0 items-center justify-center overflow-hidden`}
-                >
-                  <ProviderMark group={group} compact={compact} />
-                </span>
-                <span
-                  className={`${compact ? "text-[9px] leading-[11px] tracking-[-0.01em]" : "text-[10px] leading-3"} min-w-0 truncate whitespace-nowrap font-semibold text-[#334155]`}
-                  title={group.providerName}
-                  data-car-deal-provider-name
-                >
-                  {group.providerName}
-                </span>
+              <div data-car-deal-provider-meta className={["flex min-w-0 items-center gap-1", compact ? "pr-2" : "pr-3"].join(" ")}>
+                <div className={["flex min-w-0 flex-1 items-center", compact ? "gap-0.5" : "gap-1"].join(" ")}>
+                  <span className={[(compact ? "h-3.5 w-3.5" : "h-4 w-4"), "inline-flex shrink-0 items-center justify-center overflow-hidden"].join(" ")}>
+                    <ProviderMark group={group} compact={compact} />
+                  </span>
+                  <span
+                    className={[(compact ? "text-[9px] leading-[11px] tracking-[-0.01em]" : "text-[10px] leading-3"), "min-w-0 truncate whitespace-nowrap font-semibold text-[#334155]"].join(" ")}
+                    title={group.providerName}
+                    data-car-deal-provider-name
+                  >
+                    {group.providerName}
+                  </span>
                 </div>
-
                 <p
-                  className={`${compact ? "text-[11px] leading-[13px]" : "text-xs leading-[14px]"} min-w-0 max-w-full truncate whitespace-nowrap font-bold tabular-nums text-[#07133B]`}
-                dir="ltr"
-                data-car-deal-provider-price
-              >
-                {formatOfferPrice(offer)}
-                <span className="ml-0.5 font-medium text-[#64748B]">/day</span>
+                  className={[(compact ? "text-[11px] leading-[13px]" : "text-xs leading-[14px]"), "min-w-0 max-w-full truncate whitespace-nowrap font-bold tabular-nums text-[#07133B]"].join(" ")}
+                  dir="ltr"
+                  data-car-deal-provider-price
+                >
+                  {formatOfferPrice(offer)}
+                  <span className="ml-0.5 font-medium text-[#64748B]">/day</span>
                 </p>
               </div>
-
-              <div data-car-deal-provider-action-slot className="flex min-w-0 items-center justify-start">
-              {bookingHref ? (
-                <a
-                  href={bookingHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`View deal from ${group.providerName}`}
-                  onClick={isolateProviderAction}
-                  className={`${compact ? "text-[10px] leading-[14px]" : "text-[11px] leading-4"} inline-flex min-h-4 shrink-0 items-center gap-0.5 whitespace-nowrap font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35`}
-                  data-car-deal-provider-view-deal
-                >
-                  View deal
-                  <ChevronRight size={compact ? 11 : 12} strokeWidth={2} aria-hidden="true" />
-                </a>
-              ) : (
-                <span
-                  aria-disabled="true"
-                  className={`${compact ? "text-[9px] leading-[11px]" : "text-[10px] leading-3"} inline-flex min-h-4 shrink-0 items-center whitespace-nowrap font-semibold text-[#94A3B8]`}
-                  data-car-deal-provider-view-deal-unavailable
-                >
-                  View deal
-                </span>
-              )}
+              <div data-car-deal-provider-action-slot className="flex min-w-0 items-center justify-start gap-0.5">
+                {bookingHref ? (
+                  <a
+                    href={bookingHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={"View deal from " + group.providerName}
+                    onClick={isolateProviderAction}
+                    className={[(compact ? "text-[10px] leading-[14px]" : "text-[11px] leading-4"), "inline-flex min-h-6 shrink-0 items-center gap-0.5 whitespace-nowrap font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"].join(" ")}
+                    data-car-deal-provider-view-deal
+                  >
+                    View deal <ChevronRight size={compact ? 11 : 12} strokeWidth={2} aria-hidden="true" />
+                  </a>
+                ) : (
+                  <span
+                    aria-disabled="true"
+                    className={[(compact ? "text-[9px] leading-[11px]" : "text-[10px] leading-3"), "inline-flex min-h-6 shrink-0 items-center whitespace-nowrap font-semibold text-[#94A3B8]"].join(" ")}
+                    data-car-deal-provider-view-deal-unavailable
+                  >
+                    View deal
+                  </span>
+                )}
+                {hasDetails ? (
+                  <button
+                    type="button"
+                    data-car-rate-info
+                    className="ml-auto inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[#64748B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+                    aria-label={"Rate information for " + group.providerName + ", " + formatOfferPrice(offer) + " per day"}
+                    onClick={event => { event.stopPropagation(); setDetailsKey(group.key); }}
+                  >
+                    <Info size={compact ? 12 : 14} aria-hidden="true" />
+                  </button>
+                ) : null}
               </div>
-              {car.inventorySource === "kayak-sandbox" && <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-x-3 text-xs text-slate-600" data-car-rate-terms>
-                <span>{formatTotal(offer)} total</span>
-                {paymentLabel(offer) && <span>{paymentLabel(offer)}</span>}
-                <CarRateDetails id={`${detailsId}-${offer.id}`} offer={offer} seller={group.providerName} total={formatTotal(offer)} payment={paymentLabel(offer)} />
-              </div>}
             </div>
           );
         })}
       </div>
-      {car.inventorySource === "kayak-sandbox" && <div className="min-w-0">
-        {car.offers.length > 1 && <p className="mt-3 text-xs text-slate-600">Specifications and terms can vary by offer. Check each seller&apos;s details.</p>}
-      </div>}
+      {groups.length > 3 ? (
+        <button
+          type="button"
+          data-car-deal-more-offers
+          className="mt-1 inline-flex min-h-6 items-center gap-1 text-[10px] font-semibold text-[#004BB8] md:hidden"
+          onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
+          aria-expanded={expanded}
+        >
+          {expanded ? "Show fewer offers" : "+" + (groups.length - 3) + " more offers"}
+          <ChevronRight size={12} className={expanded ? "-rotate-90" : "rotate-90"} aria-hidden="true" />
+        </button>
+      ) : null}
+      {groups.length > 5 ? (
+        <button
+          type="button"
+          data-car-deal-more-offers
+          className="mt-1 hidden min-h-6 items-center gap-1 text-[10px] font-semibold text-[#004BB8] md:inline-flex"
+          onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
+          aria-expanded={expanded}
+        >
+          {expanded ? "Show fewer offers" : "+" + (groups.length - 5) + " more offers"}
+          <ChevronRight size={12} className={expanded ? "-rotate-90" : "rotate-90"} aria-hidden="true" />
+        </button>
+      ) : null}
+      <dialog
+        ref={dialogRef}
+        data-car-rate-dialog
+        aria-label="Rental rate details"
+        onClose={() => setDetailsKey(null)}
+        onClick={event => { event.stopPropagation(); if (event.target === event.currentTarget) event.currentTarget.close(); }}
+        className="fixed inset-x-0 bottom-0 top-auto m-0 max-h-[85dvh] w-full max-w-none overflow-y-auto rounded-t-2xl border border-[#D8E1EC] bg-white p-4 text-[#07133B] shadow-2xl backdrop:bg-[#07133B]/55 md:inset-0 md:m-auto md:max-h-[80vh] md:w-[540px] md:max-w-[calc(100%_-_2rem)] md:rounded-2xl md:p-5"
+      >
+        {selectedOffer && selectedGroup ? (
+          <div className="space-y-4" onClick={event => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-base font-bold">Rate details</p>
+                <p className="mt-1 truncate text-sm font-semibold text-[#475569]">{selectedGroup.providerName}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => dialogRef.current?.close()}
+                aria-label="Close rate details"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#07133B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+              >
+                <X size={20} aria-hidden="true" />
+              </button>
+            </div>
+            <div className="border-y border-[#E2E8F0] py-3">
+              <p className="text-xl font-bold tabular-nums">{formatOfferPrice(selectedOffer)}<span className="ml-1 text-xs font-medium text-[#64748B]">per day</span></p>
+              <p className="mt-1 text-sm text-[#475569]">Estimated total: {formatTotal(selectedOffer)}</p>
+              <p className="mt-1 text-xs text-[#64748B]">{getCarRatePaymentLabel(selectedOffer) ?? "Payment timing not supplied"}</p>
+            </div>
+            {getCarRateDisclosureSections(selectedOffer).map(section => (
+              <section key={section.id} className="space-y-2" data-car-rate-section={section.id}>
+                <h3 className="text-sm font-bold">{section.title}</h3>
+                <dl className="space-y-2">
+                  {section.facts.map((fact, index) => (
+                    <div key={fact.label + ":" + index} className="grid grid-cols-[minmax(0,42%)_minmax(0,1fr)] gap-x-3 border-b border-[#F0F2F6] pb-2 text-xs">
+                      <dt className="min-w-0 break-words font-semibold text-[#475569]">{fact.label}</dt>
+                      <dd className="min-w-0 break-words whitespace-pre-wrap text-[#07133B]">{fact.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            ))}
+            <p className="text-xs leading-5 text-[#64748B]">These conditions are specific to this offer. Confirm final terms with the rental provider before booking.</p>
+          </div>
+        ) : null}
+      </dialog>
     </div>
   );
 }
