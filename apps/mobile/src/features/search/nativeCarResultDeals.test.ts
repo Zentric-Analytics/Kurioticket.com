@@ -20,7 +20,7 @@ const car = (
   searchPolicy: { source: inventorySource, bookable: false, action: { kind: "internal-detail", enabled: true, href: "/cars/details/test" } },
 } as CarResult);
 
-test("native Cars shows the web's three real static Kurioticket prices without inventing links", () => {
+test("native Cars shows all supplied static Kurioticket prices without inventing links", () => {
   const result = car([
     offer("a", "Kurioticket", 139),
     offer("b", "Kurioticket", 146),
@@ -28,8 +28,8 @@ test("native Cars shows the web's three real static Kurioticket prices without i
     offer("d", "Kurioticket", 160),
   ]);
   const choices = nativeCarResultDealChoices(result);
-  assert.deepEqual(choices.map(({ offer: item }) => item.id), ["a", "b", "c"]);
-  assert.deepEqual(choices.map(({ offer: item }) => item.pricePerDay), [139, 146, 153]);
+  assert.deepEqual(choices.map(({ offer: item }) => item.id), ["a", "b", "c", "d"]);
+  assert.deepEqual(choices.map(({ offer: item }) => item.pricePerDay), [139, 146, 153, 160]);
   assert.ok(choices.every(({ providerName }) => providerName === "Kurioticket"));
   assert.ok(choices.every(({ bookingUrl }) => bookingUrl === null));
   assert.equal(nativeCarPrimaryBookingUrl(result), null);
@@ -46,6 +46,17 @@ test("native Cars groups other providers the same way as web, preserving the che
   assert.deepEqual(choices.map(({ offer: item }) => item.id), ["a-low", "b-low"]);
   assert.equal(choices[0]?.bookingUrl, "https://sandbox-en-us.kayakaffiliates.com/in?offer=a");
   assert.equal(choices[1]?.bookingUrl, null);
+});
+
+test("native Cars preserves five distinct sellers without a three-choice cap", () => {
+  const result = car(Array.from({ length: 5 }, (_, index) =>
+    offer("seller-" + index, "Seller " + index, 100 + index)
+  ), "kayak-sandbox");
+  const choices = nativeCarResultDealChoices(result);
+  assert.equal(choices.length, 5);
+  assert.equal(new Set(choices.map(choice => choice.key)).size, 5);
+  assert.deepEqual(choices.map(choice => choice.providerName),
+    ["Seller 0", "Seller 1", "Seller 2", "Seller 3", "Seller 4"]);
 });
 
 test("native result-card actions only accept credential-free HTTPS, with stricter sandbox clickout rules", () => {
@@ -89,6 +100,10 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.match(picker, /presentCarOfferCurrency\(offer, displayCurrency, rates\)/);
   assert.match(picker, /Linking\.openURL\(bookingUrl\)/);
   assert.match(picker, /disabled=\{!bookingUrl\}/);
+  assert.match(picker, /provider: \{ minHeight: 18, minWidth: 0, flexDirection: "row", alignItems: "center"/);
+  assert.match(picker, /providers: \{ minWidth: 0, gap: 0/);
+  assert.match(picker, /brand: \{ flex: 1, minWidth: 0/);
+  assert.doesNotMatch(picker, /Compare deals/);
   assert.match(card, /<NativeCarResultOfferPicker result=\{result\}/);
   assert.match(card, /disabled=\{!primaryBookingUrl\}/);
   assert.doesNotMatch(results, /\/car-details/);

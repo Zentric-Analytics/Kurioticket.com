@@ -35,7 +35,6 @@ export function nativeCarPrimaryBookingUrl(result: CarResult): string | null {
 export function nativeCarResultDealChoices(result: CarResult) {
   return getCarDealPickerGroups(result)
     .filter((group) => Number.isFinite(group.primaryOffer.pricePerDay) && group.primaryOffer.pricePerDay >= 0)
-    .slice(0, 3)
     .map((group) => ({
       key: group.key,
       providerName: group.providerName,
