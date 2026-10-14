@@ -74,6 +74,17 @@ test("rate info callbacks receive the info button that launched them", () => {
 });
 
 
+test("rate info popover moves focus inside and restores the launcher on close", () => {
+  const popover = readFileSync(new URL("./HotelRateInfoPopover.tsx", import.meta.url), "utf8");
+  const source = readFileSync(new URL("./HotelPriceComparisonSection.tsx", import.meta.url), "utf8");
+  assert.match(popover, /const closeButtonRef = useRef<HTMLButtonElement>\(null\)/);
+  assert.match(popover, /closeButtonRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(popover, /if \(anchor\.isConnected\) \{\s*anchor\.focus\(\{ preventScroll: true \}\);/);
+  assert.match(popover, /ref=\{closeButtonRef\}[\s\S]*aria-label="Close Rate details"/);
+  assert.equal((source.match(/aria-haspopup="dialog"/g) ?? []).length, 2);
+});
+
+
 test("desktop rate card exposes details separately from provider, price, and deal action", () => {
   const html = renderToStaticMarkup(createElement(HotelPriceComparisonSection, {
     ...baseProps,
