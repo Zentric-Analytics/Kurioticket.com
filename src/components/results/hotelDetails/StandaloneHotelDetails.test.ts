@@ -88,12 +88,13 @@ test("mobile booking dock follows selection and hides when no rates exist", () =
   assert.match(mobileCss, /safe-area-inset-bottom/);
 });
 
-test("mobile Rate details preserves an already-sticky tab row while the modal is open", () => {
-  assert.match(mobile, /preserveStickyPage = false/);
-  assert.match(mobile, /compact && !preserveStickyPage \? acquireMobileResultsScrollLock\(\) : null/);
-  assert.match(mobile, /if \(!releaseScroll\) document\.body\.style\.overflow = "hidden"/);
-  assert.match(mobile, /<DetailsDialog title="Rate details" compact preserveStickyPage/);
-  assert.match(mobile, /\[compact, preserveStickyPage\]/);
+test("mobile Rate details uses the accessible anchored popover without replacing sticky tabs", () => {
+  const popover = read("./HotelRatePopover.tsx");
+  assert.match(mobile, /<div ref=\{tabsShell\} className=\{styles\.tabs\} data-pinned=\{tabsPinned\}/);
+  assert.match(mobile, /rateInfo && rateAnchor \? <HotelRatePopover/);
+  assert.match(mobile, /onInfo=\{anchor => \{ setRateAnchor\(anchor\)/);
+  assert.match(popover, /role="dialog" aria-label="Rate details"/);
+  assert.match(popover, /onClose\(\)/);
 });
 
 

@@ -2354,7 +2354,7 @@ export function SearchTabs({
     loadingSuggestions: translate("carsSearch.loadingSuggestions") || "Loading suggestions",
     noMatchingLocations: translate("carsSearch.noMatchingLocations") || "No matching locations",
     suggestionsUnavailable: translate("carsSearch.suggestionsUnavailable") || "Suggestions unavailable.",
-    continueTypingManually: translate("carsSearch.continueTypingManually") || "You can continue typing.",
+    continueTypingManually: translate("carsSearch.continueTypingManually") || "Try a nearby airport or provider-supported city.",
     useTypedLocation: translate("carsSearch.useTypedLocation") || "Use this location",
     unverifiedTypedLocation: translate("carsSearch.unverifiedTypedLocation") || "Custom location",
     airport: translate("carsSearch.type.airport") || "Airport",

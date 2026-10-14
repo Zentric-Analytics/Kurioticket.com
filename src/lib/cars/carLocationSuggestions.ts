@@ -18,8 +18,8 @@ export type CarLocationSuggestion = {
   airportCode?: string;
   providerPlaceId?: string;
   canonical?: CanonicalLocation;
-  validation?: "owned-catalog" | "unverified-text";
-  isProviderValidated?: false;
+  validation?: "owned-catalog" | "unverified-text" | "provider-verified" | "catalogue-airport-code";
+  isProviderValidated?: boolean;
 };
 
 type SearchOptions = { limit?: number; country?: string | null };

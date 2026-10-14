@@ -15,6 +15,7 @@ import type {
 
 type HotelDestinationsApiResponse = {
   suggestions?: HotelDestinationSuggestion[];
+  recovery?: { message?: string };
 };
 
 export const hotelDestinationKindLabels: Record<HotelDestinationKind, string> = {
@@ -51,9 +52,11 @@ export function useHotelDestinationAutocomplete({
   locale,
 }: UseHotelDestinationAutocompleteOptions) {
   const [suggestions, setSuggestions] = useState<HotelDestinationSuggestion[]>([]);
+  const [suggestionsQuery, setSuggestionsQuery] = useState("");
   const [suggestionsCountryHint, setSuggestionsCountryHint] = useState("");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [recoveryMessage, setRecoveryMessage] = useState("");
   const [highlight, setHighlight] = useState(0);
   const normalizedSelectedCountryHint = normalizeCountryHint(selectedCountryHint);
   const normalizedDetectedCountryHint = normalizedSelectedCountryHint
@@ -64,8 +67,10 @@ export function useHotelDestinationAutocomplete({
   const trimmedQuery = query.trim();
   const visibleSuggestions = useMemo(
     () =>
-      suggestionsCountryHint === activeCountryHint ? suggestions : [],
-    [activeCountryHint, suggestions, suggestionsCountryHint],
+      suggestionsQuery === trimmedQuery && suggestionsCountryHint === activeCountryHint
+        ? suggestions
+        : [],
+    [activeCountryHint, suggestions, suggestionsCountryHint, suggestionsQuery, trimmedQuery],
   );
   const shouldShow =
     open &&
@@ -112,11 +117,15 @@ export function useHotelDestinationAutocomplete({
               .slice(0, 8)
           : [];
         setSuggestions(nextSuggestions);
+        setSuggestionsQuery(trimmedQuery);
+        setRecoveryMessage(typeof payload.recovery?.message === "string" ? payload.recovery.message : "");
         setSuggestionsCountryHint(activeCountryHint);
         setHighlight(0);
       } catch {
         if (!controller.signal.aborted) {
           setSuggestions([]);
+          setSuggestionsQuery(trimmedQuery);
+          setRecoveryMessage("Hotel destination suggestions could not be loaded. Please try again.");
           setSuggestionsCountryHint(activeCountryHint);
         }
       } finally {
@@ -183,6 +192,7 @@ export function useHotelDestinationAutocomplete({
     handleKeyDown,
     highlight,
     loading,
+    recoveryMessage,
     open,
     select,
     setHighlight,

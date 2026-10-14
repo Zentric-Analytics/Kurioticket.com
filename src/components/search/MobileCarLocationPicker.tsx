@@ -11,10 +11,7 @@ import {
   type CarLocationPointerSession,
 } from "@/components/search/carLocationPointerIntent";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
-import {
-  searchCarLocationSuggestions,
-  type CarLocationSuggestion,
-} from "@/lib/cars/carLocationSuggestions";
+import type { CarLocationSuggestion } from "@/lib/cars/carLocationSuggestions";
 import { hasMinimumCarLocationSearchLetters } from "@/lib/cars/locationSearchQuery";
 import { cn } from "@/lib/utils";
 
@@ -58,15 +55,20 @@ async function loadCarLocationSuggestions(
     if (!response.ok) throw new Error("Car locations unavailable");
     const payload = (await response.json()) as {
       suggestions?: CarLocationSuggestion[];
+      recovery?: { message?: string };
     };
-    return Array.isArray(payload.suggestions) ? payload.suggestions : [];
+    return {
+      suggestions: Array.isArray(payload.suggestions) ? payload.suggestions : [],
+      recoveryMessage: typeof payload.recovery?.message === "string" ? payload.recovery.message : "",
+    };
   } catch (error) {
     if (signal.aborted || (error as { name?: string }).name === "AbortError") {
       throw error;
     }
-    // Keep the existing deterministic catalogue as a graceful fallback. The
-    // server discovery route remains authoritative whenever it is reachable.
-    return searchCarLocationSuggestions(query.trim(), { limit });
+    // A local catalogue fallback can look selectable without a provider
+    // binding. Fail closed so a failed provider lookup is never disguised as
+    // a valid car-search location.
+    throw error;
   }
 }
 
@@ -209,6 +211,7 @@ export function MobileCarLocationPicker({
   const [searchCompleted, setSearchCompleted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [recoveryMessage, setRecoveryMessage] = useState("");
   const resultsEdit = presentation === "carsResultsEdit";
   const nativeCarsAppearance = resultsEdit || presentation === "carsMain";
 
@@ -229,6 +232,7 @@ export function MobileCarLocationPicker({
     setSearchCompleted(false);
     setLoading(!nativeCarsAppearance);
     setError(false);
+    setRecoveryMessage("");
     /* eslint-enable react-hooks/set-state-in-effect */
     const frame = requestAnimationFrame(() => {
       if (inputRef.current && document.activeElement !== inputRef.current) {
@@ -238,7 +242,8 @@ export function MobileCarLocationPicker({
       void loadCarLocationSuggestions("", controller.signal, 8)
         .then((items) => {
           if (requestId !== searchRequestRef.current) return;
-          setResults(items);
+          setResults(items.suggestions);
+          setRecoveryMessage(items.recoveryMessage);
           setSearchCompleted(true);
         })
         .catch(() => {
@@ -275,12 +280,14 @@ export function MobileCarLocationPicker({
         void loadCarLocationSuggestions(trimmedQuery, controller.signal, 8)
           .then((items) => {
             if (!active || requestId !== searchRequestRef.current) return;
-            setResults(items);
+            setResults(items.suggestions);
+            setRecoveryMessage(items.recoveryMessage);
             setSearchCompleted(true);
           })
           .catch(() => {
             if (!active || requestId !== searchRequestRef.current) return;
             setResults([]);
+            setRecoveryMessage("");
             setError(true);
             setSearchCompleted(true);
           })
@@ -319,6 +326,7 @@ export function MobileCarLocationPicker({
     setSearchCompleted(false);
     setLoading(false);
     setError(false);
+    setRecoveryMessage("");
     window.requestAnimationFrame(() =>
       inputRef.current?.focus({ preventScroll: true }),
     );
@@ -445,7 +453,7 @@ export function MobileCarLocationPicker({
               >
                 {nativeCarsAppearance
                   ? "Couldn’t load locations. Please try again."
-                  : `${text("carsSearch.suggestionsUnavailable", "Suggestions unavailable.")} ${text("carsSearch.continueTypingManually", "Continue typing manually.")}`}
+                  : `${text("carsSearch.suggestionsUnavailable", "Suggestions unavailable.")} ${text("carsSearch.continueTypingManually", "Try a nearby airport or provider-supported city.")}`}
               </p>
             ) : visibleResults.length ? (
               <div
@@ -475,7 +483,7 @@ export function MobileCarLocationPicker({
               trimmedQuery &&
               (!nativeCarsAppearance || eligible) ? (
               <p className="px-4 py-8 text-center text-sm font-medium text-slate-500">
-                {text(
+                {recoveryMessage || text(
                   "carsSearch.noMatchingLocations",
                   nativeCarsAppearance
                     ? "No matching locations."
