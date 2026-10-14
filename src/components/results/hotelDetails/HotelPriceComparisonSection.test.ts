@@ -10,7 +10,7 @@ const jiti = createJiti(import.meta.url, {
   jsx: { runtime: "automatic" },
   alias: { "@": fileURLToPath(new URL("../../../", import.meta.url)) },
 });
-const { HotelPriceComparisonSection } = jiti("./HotelPriceComparisonSection.tsx") as typeof import("./HotelPriceComparisonSection");
+const { HotelPriceComparisonSection, MobileProviderOffer } = jiti("./HotelPriceComparisonSection.tsx") as typeof import("./HotelPriceComparisonSection");
 
 const offer: HotelDetailsProviderOffer = {
   id: "provider-one",
@@ -39,6 +39,26 @@ function findElement(node: ReactNode, predicate: (element: ReactElement<Record<s
   }
   return undefined;
 }
+
+test("mobile rate amount stays centered between provider and View deal", () => {
+  const html = renderToStaticMarkup(createElement(MobileProviderOffer, {
+    offer: { ...offer, totalPrice: "NGN 969,409.36" },
+    perNightText: "{{price}} per night",
+    totalLabel: "Stay total",
+    selected: true,
+    selectable: true,
+    pendingOfferId: null,
+    continueLabel: "View deal",
+    onSelect: () => {},
+    onContinue: () => {},
+    onInfo: () => {},
+  }));
+  assert.match(html, /grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/);
+  assert.match(html, /justify-self-center text-center/);
+  assert.match(html, /justify-self-end[^"]*whitespace-nowrap/);
+  assert.doesNotMatch(html, /mr-3 text-center/);
+});
+
 
 test("desktop rate card exposes details separately from provider, price, and deal action", () => {
   const html = renderToStaticMarkup(createElement(HotelPriceComparisonSection, {
