@@ -492,6 +492,19 @@ export function getHotelDetailsCacheContext(
 
 export function toPublicFlight(result: NormalizedFlightResult): PublicFlightResult {
   const publicResult = { ...result };
+  // Old KAYAK snapshots could derive fareTerms from arbitrary flattened fee labels.
+  // Their supplier-row marker identifies that legacy shape; keep no unverified terms publicly.
+  if (/^kayak(?: sandbox)?$/i.test(result.provider.trim()) && result.providerDetails && Object.hasOwn(result.providerDetails, "suppliedFacts")) {
+    publicResult.fareTerms = [];
+  }
+  // Explicit projection also strips raw rows from offers cached before structured normalization.
+  if (result.providerDetails) {
+    const source = result.providerDetails;
+    publicResult.providerDetails = {};
+    for (const key of ["airlineBaggagePolicies", "offerOwner", "price", "totalEmissionsKg", "updatedAt", "passengerIdentityDocumentsRequired", "supportedIdentityDocumentTypes", "supportedLoyaltyProgrammes", "conditions", "optionalServices"] as const) {
+      if (source[key] !== undefined) Object.assign(publicResult.providerDetails, { [key]: source[key] });
+    }
+  }
   delete publicResult.rawProviderReference;
   delete publicResult.providerOfferId;
   delete publicResult.providerExpiresAt;

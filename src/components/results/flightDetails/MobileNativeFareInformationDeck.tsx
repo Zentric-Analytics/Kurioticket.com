@@ -1,5 +1,7 @@
 "use client";
 
+import { flightBaggageTerms, flightFareDetailCabins, flightOnboardFeatureLabel } from "@/lib/flights/flightFareInformation";
+
 import Image from "next/image";
 import { Check, ExternalLink, Leaf } from "lucide-react";
 
@@ -267,9 +269,7 @@ function DealsSurface({
 
 function DetailsSurface({ offer, locale }: { offer: FlightDetailsOffer; locale: string }) {
   const provider = offer.providerDetails;
-  const cabins = (offer.legs ?? []).flatMap((leg) => leg.segments.flatMap((segment) =>
-    (segment.cabinDetails ?? []).map((cabin) => ({ segment, cabin })),
-  ));
+  const cabins = flightFareDetailCabins(offer);
 
   return (
     <div className="divide-y divide-[#D8E1EC]">
@@ -282,8 +282,8 @@ function DetailsSurface({ offer, locale }: { offer: FlightDetailsOffer; locale: 
           ].filter(Boolean).join(" · ");
           const wifi = cabin.amenities?.wifi;
           const wifiValue = wifi ? `${amenityState(wifi.state)}${wifi.state === "included" && wifi.cost ? ` (${titleCase(wifi.cost)})` : ""}` : undefined;
-          const hasCabin = Boolean(cabin.fareBrandName || cabin.cabinClass || cabin.cabinMarketingName || cabin.fareBasisCode);
-          const hasOnBoard = Boolean(seat || cabin.amenities?.wifi || cabin.amenities?.power);
+          const hasCabin = Boolean(cabin.fareBrandName || cabin.cabinClass || cabin.cabinMarketingName || cabin.fareBasisCode || segment.aircraft);
+          const hasOnBoard = Boolean(seat || cabin.amenities?.wifi || cabin.amenities?.power || cabin.onboardFeatures?.length);
           return (
             <div key={`${segment.departureTime}-${index}`} className={`py-[10px] ${index ? "border-t border-[#D8E1EC]" : ""}`}>
               <p className="mb-[11px] text-[14px] font-semibold leading-[19px] text-slate-900">
@@ -297,6 +297,7 @@ function DetailsSurface({ offer, locale }: { offer: FlightDetailsOffer; locale: 
                   <DetailRow label="Cabin" value={cabin.cabinClass && titleCase(cabin.cabinClass)} />
                   <DetailRow label="Cabin product" value={cabin.cabinMarketingName} />
                   <DetailRow label="Fare basis" value={cabin.fareBasisCode} />
+                  <DetailRow label="Aircraft" value={segment.aircraft?.name || segment.aircraft?.iataCode} />
                 </div>
               ) : null}
               {hasCabin && hasOnBoard ? <div className="my-[11px] h-px bg-[#D8E1EC]" /> : null}
@@ -306,6 +307,7 @@ function DetailsSurface({ offer, locale }: { offer: FlightDetailsOffer; locale: 
                   <DetailRow label="Seat" value={seat || undefined} />
                   <DetailRow label="Wi-Fi" value={wifiValue} />
                   <DetailRow label="Power" value={cabin.amenities?.power ? amenityState(cabin.amenities.power.state) : undefined} />
+                  {cabin.onboardFeatures?.map((feature, featureIndex) => <DetailRow key={`${feature.kind}-${featureIndex}`} label={flightOnboardFeatureLabel(feature.kind)} value={feature.description} />)}
                 </div>
               ) : null}
             </div>
@@ -351,6 +353,8 @@ function DetailsSurface({ offer, locale }: { offer: FlightDetailsOffer; locale: 
 function ConditionsSurface({ offer, locale }: { offer: FlightDetailsOffer; locale: string }) {
   const provider = offer.providerDetails;
   const conditions = provider?.conditions ?? [];
+  const baggageTerms = flightBaggageTerms(offer);
+  const policies = provider?.airlineBaggagePolicies ?? [];
   const groups = [...new Set(conditions.map((condition) => condition.category))].map((category) => ({
     category,
     conditions: conditions.filter((condition) => condition.category === category),
@@ -359,6 +363,16 @@ function ConditionsSurface({ offer, locale }: { offer: FlightDetailsOffer; local
 
   return (
     <div className="divide-y divide-[#D8E1EC]">
+      {baggageTerms.length ? <section className="py-3"><GroupLabel>Baggage allowance</GroupLabel>
+        {baggageTerms.map((term, index) => <div key={index} className="flex items-start gap-[11px] py-[9px]"><StatusIcon semantic={term.semantic} /><p className="text-[13px] leading-[19px] text-slate-900">{term.text}</p></div>)}
+      </section> : null}
+      {policies.length ? <section className="py-3"><GroupLabel>Airline baggage policy</GroupLabel>
+        {policies.map((policy, index) => <div key={`${policy.carrierCode}-${index}`} className="space-y-2 py-[9px]">
+          <p className="text-[13px] font-semibold leading-[19px] text-slate-900">{policy.carrierName}{policy.carrierCode && policy.carrierName !== policy.carrierCode ? ` · ${policy.carrierCode}` : ""}</p>
+          {policy.carryOn?.map((value, i) => <DetailRow key={`carry-${i}`} label="Carry-on" value={value} />)}
+          {policy.checked?.map((value, i) => <DetailRow key={`checked-${i}`} label="Checked bag" value={value} />)}
+        </div>)}
+      </section> : null}
       <section>
         {groups.length ? groups.map((group, groupIndex) => (
           <div key={group.category} className={`py-3 ${groupIndex ? "border-t border-[#D8E1EC]" : ""}`}>
@@ -380,7 +394,7 @@ function ConditionsSurface({ offer, locale }: { offer: FlightDetailsOffer; local
               );
             })}
           </div>
-        )) : <EmptyState title="Fare conditions unavailable" description="Conditions were not supplied by the provider." />}
+        )) : baggageTerms.length || policies.length ? null : <EmptyState title="Fare conditions unavailable" description="Conditions were not supplied by the provider." />}
       </section>
 
       {(provider?.passengerIdentityDocumentsRequired || provider?.supportedIdentityDocumentTypes?.length) ? (
@@ -425,7 +439,7 @@ function ExtrasSurface({ offer, locale }: { offer: FlightDetailsOffer; locale: s
           <div key={`${service.type}-${service.description}-${index}`} className={`py-3 ${index ? "border-t border-[#D8E1EC]" : ""}`}>
             <div className="flex items-start justify-between gap-3">
               <p className="min-w-0 flex-1 text-[13px] font-semibold leading-[19px] text-slate-900">{service.description}</p>
-              <p className="max-w-[42%] shrink-0 text-right text-[13px] font-bold leading-[19px] tabular-nums text-slate-950">{formatSourceMoney(service.price, service.currency, locale)}{service.pricedPerTraveler ? " each" : ""}</p>
+              <p className="max-w-[42%] shrink-0 text-right text-[13px] font-bold leading-[19px] tabular-nums text-slate-950">{service.pricing === "fee-unspecified" ? "Available for a fee" : `${formatSourceMoney(service.price, service.currency, locale)}${service.pricedPerTraveler ? " each" : ""}`}</p>
             </div>
             {service.travelerCount ? <p className="mt-1 text-[12px] leading-[17px] text-slate-500">Available for {service.travelerCount} traveler{service.travelerCount === 1 ? "" : "s"}</p> : null}
             {service.maximumQuantity !== undefined ? <p className="mt-1 text-[12px] leading-[17px] text-slate-500">{service.pricedPerTraveler ? "Maximum quantity per traveler" : "Maximum quantity"}: {service.maximumQuantity}</p> : null}

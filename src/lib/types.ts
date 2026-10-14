@@ -97,7 +97,18 @@ export type FlightCabinAmenities = {
   power?: { state: FlightProviderState };
   seat?: { type?: string; pitch?: string; legroom?: string };
 };
+export type FlightOnboardFeature = {
+  kind: "seat" | "power" | "entertainment" | "meal" | "wifi" | "overnight";
+  description: string;
+};
+export type FlightAirlineBaggagePolicy = {
+  carrierName: string;
+  carrierCode?: string;
+  carryOn?: string[];
+  checked?: string[];
+};
 export type FlightCabinDetails = {
+  onboardFeatures?: FlightOnboardFeature[];
   cabinClass?: string;
   cabinMarketingName?: string;
   fareBrandName?: string;
@@ -114,11 +125,9 @@ export type FlightProviderCondition = {
   penaltyCurrency?: string;
 };
 
-export type FlightOptionalService = {
+type FlightOptionalServiceScope = {
   type: string;
   description: string;
-  price: number;
-  currency: string;
   maximumQuantity?: number;
   travelerCount?: number;
   journeyContext?: string;
@@ -126,9 +135,14 @@ export type FlightOptionalService = {
   pricedPerTraveler?: boolean;
 };
 
-/** Deliberately normalized provider-authored customer facts; never raw Duffel data. */
+export type FlightOptionalService = FlightOptionalServiceScope & (
+  | { price: number; currency: string; pricing?: "exact" }
+  | { pricing: "fee-unspecified"; price?: never; currency?: never }
+);
+
+/** Deliberately normalized provider-authored customer facts; never raw provider data. */
 export type FlightProviderDetails = {
-  suppliedFacts?: Array<{ label: string; value: string }>;
+  airlineBaggagePolicies?: FlightAirlineBaggagePolicy[];
   offerOwner?: {
     name: string;
     iataCode?: string;

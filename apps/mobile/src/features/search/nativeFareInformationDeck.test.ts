@@ -217,3 +217,29 @@ test("fare content uses category, primary, and supporting colors without duplica
   assert.match(source,/semantic==="negative"\?<View style=\{s\.fareStatusMinus\}/);
   assert.match(source,/:<View style=\{s\.fareStatusDot\}/);
 });
+
+
+test("native Flight fare tabs consume the shared structured contract without supplier rows or label parsing",()=>{
+  assert.doesNotMatch(source,/NativeSupplierInformation|Supplier information|suppliedFacts/);
+  const details=between('if(tab==="details")','if(tab==="conditions")');
+  assert.match(details,/c\.onboardFeatures\?\.map/);
+  assert.match(details,/flightOnboardFeatureLabel\(feature\.kind\)/);
+  assert.match(details,/detailRow\("Aircraft",segment\.aircraft/);
+  const conditions=between('if(tab==="conditions")','if(tab==="extras")');
+  assert.match(conditions,/groupLabel\("Baggage allowance"\)/);
+  assert.match(conditions,/groupLabel\("Airline baggage policy"\)/);
+  assert.match(conditions,/policy\.carrierName/);
+  assert.match(source,/p\?\.airlineBaggagePolicies/);
+  const extras=surface.slice(surface.indexOf('if(tab==="extras")'));
+  assert.match(extras,/service\.pricing==="fee-unspecified"\?"Available for a fee"/);
+});
+
+test("native policy-only and entitlement-only conditions suppress the unavailable fallback",()=>{
+  const conditions=between('if(tab==="conditions")','if(tab==="extras")');
+  assert.match(conditions,/baggageTerms\.length\|\|policies\.length\?null:emptyState\("Fare conditions unavailable"/);
+});
+
+test("native provider baggage copy uses the existing flexible condition column for long rules",()=>{
+  const conditions=between('if(tab==="conditions")','if(tab==="extras")');
+  assert.match(conditions,/<FareStatusIcon semantic=\{term\.semantic\}\/><View style=\{s\.conditionCopy\}><Text/);
+});

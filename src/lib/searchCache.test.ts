@@ -447,3 +447,34 @@ test("production backend bounds statements to 50 rows in one transaction per sea
 function cloneLegs(legs: FlightLeg[]) {
   return structuredClone(legs);
 }
+
+test("legacy raw supplier facts and internal diagnostics never cross either Flight public projection", () => {
+  const internal = flight("legacy", 15000);
+  internal.providerDetails = {
+    price: { totalAmount: 309, totalCurrency: "USD" },
+    suppliedFacts: [{ label: "segment Id", value: "PRIVATE_SEGMENT_ID" }],
+    futureUnmapped: { secretToken: "DO_NOT_EXPOSE" },
+  } as typeof internal.providerDetails;
+  internal.rawProviderReference = { unmappedFacts: [{ label: "Future flag", value: "Engineering fact" }] };
+  const before = structuredClone(internal);
+  for (const projected of [toPublicFlight(internal), toFlightDetailsOffer(internal)]) {
+    assert.deepEqual(projected.providerDetails, { price: { totalAmount: 309, totalCurrency: "USD" } });
+    assert.doesNotMatch(JSON.stringify(projected), /PRIVATE_SEGMENT_ID|DO_NOT_EXPOSE|Engineering fact|suppliedFacts|futureUnmapped/);
+  }
+  assert.deepEqual(internal, before);
+});
+
+test("legacy KAYAK raw-fee fallback terms are omitted from public Flight and Details without changing Duffel", () => {
+  const cached = flight("legacy-kayak", 15000);
+  cached.provider = "KAYAK sandbox";
+  cached.providerDetails = { price: { totalAmount: 309, totalCurrency: "USD" }, suppliedFacts: [{ label: "fees · checked Bag 1 · price", value: "35" }] } as typeof cached.providerDetails;
+  cached.fareTerms = [{ category: "baggage", semantic: "informational", text: "checked Bag 1 · price: 35" }];
+  const before = structuredClone(cached);
+  for (const value of [toPublicFlight(cached), toFlightDetailsOffer(cached)]) {
+    assert.deepEqual(value.fareTerms, []);
+    assert.doesNotMatch(JSON.stringify(value), /checked Bag 1|suppliedFacts/);
+  }
+  assert.deepEqual(cached, before);
+  const duffel = flight("duffel", 15000); duffel.fareTerms = [{ category: "baggage", semantic: "positive", text: "1 checked bag included" }];
+  assert.deepEqual(toPublicFlight(duffel).fareTerms, duffel.fareTerms);
+});
