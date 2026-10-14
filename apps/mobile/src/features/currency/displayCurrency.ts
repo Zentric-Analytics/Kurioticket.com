@@ -10,6 +10,13 @@ const canonicalCurrencySymbols: Readonly<Record<string, string>> = {
   AUD: "$",
   GBP: "£",
   EUR: "€",
+  CNY: "¥",
+  EGP: "£",
+  GHS: "₵",
+  HKD: "$",
+  MXN: "$",
+  NZD: "$",
+  SGD: "$",
 };
 
 const regionCurrency = new Map(
@@ -199,7 +206,9 @@ export function currencyMarketSymbol(currency: string) {
   const normalizedCurrency = currency.trim().toUpperCase();
   const intlSymbol = resolveIntlMarketCurrencySymbol(normalizedCurrency);
   if (intlSymbol && intlSymbol.toUpperCase() !== normalizedCurrency) return intlSymbol;
-  return marketCurrencySymbols.get(normalizedCurrency) ?? null;
+  return canonicalCurrencySymbols[normalizedCurrency]
+    ?? marketCurrencySymbols.get(normalizedCurrency)
+    ?? null;
 }
 
 function resolveIntlMarketCurrencySymbol(currency: string) {
