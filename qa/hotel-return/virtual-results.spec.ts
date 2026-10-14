@@ -91,7 +91,7 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
         ? dealArea.locator("ul").nth(1).locator("li span").first()
         : dealArea.locator("[data-car-card-desktop-primary-specs] li").nth(1).locator("span").first();
       await expect(rows).toHaveCount(count);
-      const initiallyVisible = Math.min(count, mobile ? 2 : 5);
+      const initiallyVisible = Math.min(count, mobile ? 3 : 5);
       await expect(rows.filter({ visible: true })).toHaveCount(initiallyVisible);
       if (count > initiallyVisible) {
         const more = dealArea.locator("[data-car-deal-more-offers]").filter({ visible: true });
@@ -166,7 +166,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     const rows = area.locator("[data-car-deal-provider-offer]");
     const main = mobile ? card.locator("[data-car-card-mobile-pricing]") : card.locator('[data-region="pricing"]');
     await expect(rows).toHaveCount(7);
-    await expect(rows.filter({ visible: true })).toHaveCount(mobile ? 2 : 5);
+    await expect(rows.filter({ visible: true })).toHaveCount(mobile ? 3 : 5);
     await expect(main).toBeVisible();
     await expect(area.locator("[data-car-rate-terms]")).toHaveCount(0);
     await expect(area.getByText("Rate details", { exact: true })).toHaveCount(0);
