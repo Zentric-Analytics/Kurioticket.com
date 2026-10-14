@@ -172,5 +172,6 @@ export function kayakCarCardModel(offer: SandboxOffer, days: number, pickup: str
       carPresentation:{modelName:offer.title,categoryLabel:offer.details[0] || "Category not supplied",imageUrl:offer.images?.[0]?.url,imageAlt:offer.title,specs:offer.carSpecs || ["Specifications not supplied"],filterOptions:offer.carFilterOptions},
       currency:offer.currency,totalPrice:offer.priceBasis === "per day" ? offer.price*days : offer.price,
       pricePerDay:offer.priceBasis === "per day" ? offer.price : offer.price/days,
-      taxesAndFeesIncluded:false,payAtPickup:false,freeCancellation:false,bookingUrl:offer.testUrl}]};
+      taxesAndFeesIncluded:false,payAtPickup:offer.carFilterOptions?.includes("payAtPickup") ?? false,
+      freeCancellation:offer.carFilterOptions?.includes("freeCancellation") ?? false,bookingUrl:offer.testUrl}]};
 }

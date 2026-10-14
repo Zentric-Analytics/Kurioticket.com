@@ -5,7 +5,7 @@ import { groupKayakCarResults as sharedCarGrouping } from "@/lib/cars/carResults
 import { normalizeSandboxOffers } from "./kayakSandbox";
 import { groupKayakCarResults, scopeKayakOfferIds } from "./kayakMetasearchProvider";
 import { kayakCarCardModel } from "@/components/results/kayakCardModels";
-import { getCarDealPickerGroups, filterCarResults } from "@/lib/cars/carResults";
+import { getCarDealPickerGroups, filterCarResults, sortCarOffers } from "@/lib/cars/carResults";
 import { capturedKayakCars } from "./fixtures/kayakCarsCaptured";
 import { formatCarSupplierFacts } from "@/lib/cars/supplierFacts";
 
@@ -53,12 +53,18 @@ test("actual LAX sandbox response replays as one car with all seven rates from f
   assert.equal(new Set(car.offers.map(offer => offer.bookingProviderName)).size, 5);
   assert.deepEqual(car.offers.map(offer => offer.totalPrice), [210, 1693, 1695, 1695, 1700, 1700, 1700]);
   assert.equal(getCarDealPickerGroups(car).length, 7);
+  assert.equal(sortCarOffers(car.offers).length, 7);
+  const details = readFileSync("src/components/results/CarDetailsClient.tsx", "utf8");
+  assert.match(details, /car\.inventorySource === "kayak-sandbox" \? sortCarOffers\(car\.offers\) : getComparisonCarOffers\(car\.offers\)/);
   for (const [index, raw] of capturedKayakCars.results[0].bookingOptions.entries()) {
     const offer = car.offers.find(item => item.id.endsWith(`:${index}`))!;
     assert.equal(offer.totalPrice, raw.price.price);
     assert.equal(offer.pricePerDay, raw.price.price / capturedKayakCars.days);
     assert.equal(offer.bookingProviderName, capturedKayakCars.providers[raw.providerCode].displayName);
     assert.equal(offer.bookingUrl, raw.bookingUrl);
+    assert.equal(offer.payAtPickup, raw.paymentType === "payAtPickup");
+    const cancellation = (raw.policy as { cancellation?: { isUnlimited?: boolean } }).cancellation;
+    assert.equal(offer.freeCancellation, cancellation?.isUnlimited === true || (raw.badges?.some(badge => badge.code === "freeCancellation") ?? false));
     assert.ok(offer.suppliedFacts?.some(fact => fact.label === "is Credit Card Required" && fact.value === (raw.isCreditCardRequired ? "Yes" : "No")));
     assert.ok(offer.suppliedFacts?.some(fact => fact.label === "payment Type" && fact.value === raw.paymentType));
     assert.ok(offer.suppliedFacts?.some(fact => fact.label === "bags" && fact.value === String(raw.car.bags)));
