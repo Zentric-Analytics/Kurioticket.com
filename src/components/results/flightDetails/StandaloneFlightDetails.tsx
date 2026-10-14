@@ -922,7 +922,7 @@ function CompareDealsPanel({
       <div
         role="radiogroup"
         aria-label="Flight deal options"
-        className="max-w-[640px] space-y-2 py-1"
+        className="max-w-[680px] space-y-2 py-1"
         data-desktop-flight-deal-list
       >
         {displayedDeals.map(({ deal, canContinue }, index) => {
@@ -946,12 +946,14 @@ function CompareDealsPanel({
               data-desktop-flight-deal-card
               data-selected={selected || undefined}
               data-provider-handoff-unavailable={!canContinue || undefined}
-              className={`relative grid min-h-[92px] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-xl border bg-white px-4 py-3 transition ${selected ? "border-[#075EE8] shadow-[0_3px_10px_rgba(7,94,232,0.08)]" : "border-[#D9E2E8]"}`}
+              className="grid min-h-[88px] min-w-0 items-center gap-6 rounded-xl border border-[#D9E2E8] bg-white px-5 py-4"
+              style={{ gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)" }}
             >
               <button
                 type="button"
                 role="radio"
                 aria-checked={selected}
+                aria-label={`${deal.providerName}, Trip total: ${price.ariaLabel}, ${fare?.label ?? "fare"}`}
                 tabIndex={selected ? 0 : -1}
                 onClick={() => onSelectDeal(deal.offerId)}
                 onKeyDown={(event) => {
@@ -977,40 +979,40 @@ function CompareDealsPanel({
                     ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
                     [nextIndex]?.focus();
                 }}
-                className="min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2"
+                className="col-span-2 grid grid-cols-subgrid items-center gap-6 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2"
               >
-                <span className="block min-w-0" data-desktop-flight-deal-provider>
+                <span className="flex min-w-0 items-center gap-2" data-desktop-flight-deal-provider>
                   {deal.providerLogoUrl ? (
                     <BookingProviderLogo
                       providerName={deal.providerName}
                       logoUrl={deal.providerLogoUrl}
                     />
                   ) : identityMark.kind === "airline" ? (
-                    <span className="inline-flex items-center gap-2">
+                    <span className="inline-flex min-w-0 items-center gap-2">
                       <FlightIdentityMark
                         logoUrl={identityMark.logoUrl}
                         decorative
                       />
-                      <strong className="truncate text-[15px] font-semibold leading-5 text-[#192024]">
+                      <strong className="min-w-0 truncate text-[14px] font-semibold text-[#1a1a1a]">
                         {deal.providerName}
                       </strong>
                     </span>
                   ) : (
-                    <strong className="truncate text-[15px] font-semibold leading-5 text-[#004BB8]">
+                    <strong className="min-w-0 truncate text-[14px] font-semibold text-[#1a1a1a]">
                       {deal.providerName}
                     </strong>
                   )}
                 </span>
 
-                <span className="mt-2 block min-w-0" data-desktop-flight-deal-price>
+                <span className="inline-flex items-baseline justify-center gap-1.5 whitespace-nowrap" data-desktop-flight-deal-price>
                   <strong
-                    className="block break-words text-[20px] font-semibold leading-6 tracking-[-0.02em] tabular-nums text-[#192024]"
-                    aria-label={price.ariaLabel}
+                    className="block whitespace-nowrap text-[18px] font-semibold leading-6 text-[#1a1a1a] tabular-nums"
+                    aria-label={`Trip total: ${price.ariaLabel}`}
                   >
                     {price.formatted}
                   </strong>
-                  <span className="block text-[12px] font-normal leading-[14px] text-[#59636a]">
-                    {fare?.label ? `${fare.label} · Trip total` : "Trip total"}
+                  <span className="block text-[11px] font-normal leading-4 text-[#595959]">
+                    Trip total
                   </span>
                 </span>
               </button>
@@ -1018,23 +1020,16 @@ function CompareDealsPanel({
               <button
                 type="button"
                 disabled={redirecting || !canContinue}
-                aria-label={
-                  canContinue
-                    ? `Continue deal with ${deal.providerName}`
-                    : `Provider checkout unavailable for ${deal.providerName}`
-                }
+                aria-busy={redirecting || undefined}
+                aria-label={`View deal with ${deal.providerName}${canContinue ? "" : ", checkout unavailable"}`}
                 onClick={() => {
                   onSelectDeal(deal.offerId);
                   onViewDeal(deal.offerId);
                 }}
-                className="inline-flex h-9 w-[112px] shrink-0 items-center justify-center rounded-lg bg-[#004BB8] px-3 text-[13px] font-semibold leading-5 text-white transition-colors hover:bg-[#003B91] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[#004BB8] disabled:text-white disabled:opacity-100"
+                className="focus-ring inline-flex h-9 w-[112px] justify-self-end items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[16px] font-semibold leading-5 text-white hover:bg-[#003B91] disabled:opacity-50"
                 data-desktop-flight-deal-action
               >
-                {canContinue
-                  ? redirecting
-                    ? "Opening…"
-                    : "View deal"
-                  : "Unavailable"}
+                View deal
               </button>
             </article>
           );
@@ -1054,15 +1049,15 @@ function BookingProviderLogo({
   return (
     <span
       data-desktop-flight-provider-logo
-      className="inline-flex h-9 max-w-[82px] shrink-0 items-center justify-center overflow-hidden"
+      className="inline-flex min-w-0 items-center"
     >
       <Image
         src={logoUrl}
         alt=""
         aria-hidden="true"
-        width={82}
-        height={36}
-        className="max-h-9 w-auto max-w-[82px] object-contain object-left"
+        width={132}
+        height={30}
+        className="h-8 min-w-0 max-w-[132px] object-contain object-left"
         title={providerName}
       />
     </span>

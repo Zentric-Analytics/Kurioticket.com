@@ -193,14 +193,14 @@ function DealsSurface({
             data-mobile-flight-deal-card
             data-selected={selected || undefined}
             data-provider-handoff-unavailable={!canContinue || undefined}
-            className="grid min-h-[76px] min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-baseline content-center gap-1 rounded-xl border border-[#D9E2E8] bg-white px-3 py-3"
+            className="grid min-h-[76px] min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-baseline content-center gap-1 rounded-xl border border-[#D9E2E8] bg-white px-3 py-3 max-[349px]:px-2"
           >
             <button
               type="button"
               role="radio"
               aria-checked={selected}
               tabIndex={selected ? 0 : -1}
-              aria-label={`${deal.providerName}, ${visiblePriceAriaLabel}, ${fare?.label ?? "fare"}`}
+              aria-label={`${deal.providerName}, ${visiblePriceAriaLabel}, Trip total, ${fare?.label ?? "fare"}`}
               onClick={() => onSelectDeal(deal.offerId)}
               onKeyDown={(event) => {
                 const direction =
@@ -228,19 +228,19 @@ function DealsSurface({
             >
               <span className="flex min-w-0 items-baseline gap-0.5 pr-2" data-mobile-flight-deal-provider>
                 {deal.providerLogoUrl ? (
-                  <Image data-mobile-flight-provider-logo src={deal.providerLogoUrl} alt="" aria-hidden="true" width={132} height={30} className="h-7 min-w-0 max-w-[80px] object-contain object-left" title={deal.providerName} />
+                  <Image data-mobile-flight-provider-logo src={deal.providerLogoUrl} alt="" aria-hidden="true" width={132} height={30} className="h-7 min-w-0 max-w-[64px] max-[349px]:max-w-[48px] object-contain object-left" title={deal.providerName} />
                 ) : identityMark.kind === "airline" && identityMark.logoUrl ? (
                   <FlightIdentityMark logoUrl={identityMark.logoUrl} decorative mobile variant="provider" />
                 ) : (
-                  <span className="block min-w-0 truncate text-[12px] font-semibold leading-5 text-[#1a1a1a]" title={deal.providerName}>{deal.providerName}</span>
+                  <span className="block min-w-0 truncate text-[11px] font-semibold leading-5 text-[#1a1a1a] max-[349px]:text-[9px]" title={deal.providerName}>{deal.providerName}</span>
                 )}
               </span>
 
-              <span className="mr-3 text-center" data-mobile-flight-deal-price>
-                <strong className="block whitespace-nowrap text-[16px] font-semibold leading-5 tracking-tight text-[#1a1a1a] tabular-nums" aria-label={visiblePriceAriaLabel}>
+              <span className="inline-flex items-baseline justify-self-center gap-1 whitespace-nowrap" data-mobile-flight-deal-price>
+                <strong className="block whitespace-nowrap text-[13px] font-semibold leading-5 tracking-tight text-[#1a1a1a] tabular-nums max-[349px]:text-[10px] max-[349px]:leading-4" aria-label={`Trip total: ${visiblePriceAriaLabel}`}>
                   {visiblePrice}
                 </strong>
-                <span className="block text-[10px] font-normal leading-4 text-[#595959]">
+                <span className="block text-[10px] font-normal leading-4 text-[#595959] max-[349px]:text-[9px]">
                   Trip total
                 </span>
               </span>
@@ -250,15 +250,16 @@ function DealsSurface({
               type="button"
               disabled={redirecting || !canViewDeal}
               aria-busy={redirecting || !pricesReady || undefined}
-              aria-label={`View deals with ${deal.providerName}${canViewDeal ? "" : pricesReady ? ", checkout unavailable" : ", checking price"}`}
+              aria-label={`View deal with ${deal.providerName}${canViewDeal ? "" : pricesReady ? ", checkout unavailable" : ", checking price"}`}
               onClick={() => {
                 onSelectDeal(deal.offerId);
                 onViewDeal(deal.offerId);
               }}
-              className="focus-ring inline-flex min-h-8 items-center justify-center whitespace-nowrap rounded-lg bg-[#004bb8] px-2.5 text-[16px] font-semibold leading-5 text-white disabled:opacity-50"
+              className="focus-ring inline-flex min-h-8 items-center justify-center justify-self-end whitespace-nowrap rounded-lg bg-[#004bb8] px-1.5 text-[12px] font-semibold leading-5 text-white disabled:opacity-50 max-[349px]:px-1 max-[349px]:text-[13px] max-[349px]:leading-4"
+              style={{ fontSize: "clamp(10px, 3vw, 12px)", paddingInline: 6 }}
               data-mobile-flight-deal-action
             >
-              View deals
+              View deal
             </button>
           </article>
         );

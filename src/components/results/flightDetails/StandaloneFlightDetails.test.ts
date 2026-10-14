@@ -487,7 +487,7 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     'index === 0 ? "OUTBOUND" : "RETURN"',
     "leg.segments.map",
     "const flight = selectedOffer",
-    '"View deal"',
+    "View deal",
     'disabled={redirecting || !canContinue}',
     "id: offerId",
     'role="radiogroup"',
@@ -534,7 +534,7 @@ test("standalone UI renders every leg and segment from selected offer and uses a
   assert.ok(!source.includes("Not included/not allowed"));
   assert.ok(!source.includes("Provider fare refreshed"));
   assert.ok(!source.includes("Supported loyalty programmes:"));
-  assert.match(source, /Provider checkout unavailable/);
+  assert.match(source, /View deal with \$\{deal\.providerName\}.*checkout unavailable/);
   assert.match(source, /disabled=\{redirecting \|\| !canContinue\}/);
 });
 
@@ -589,7 +589,7 @@ test("standalone UI preserves the approved desktop and mobile blueprint composit
   assert.doesNotMatch(source, /fixed inset-x-0 bottom-0 z-\[90px\]|fixed inset-x-0 bottom-0 z-\[90\]/);
   assert.match(source, /pb-\[calc\(1\.75rem\+env\(safe-area-inset-bottom\)\)\][\s\S]*sm:pb-16/);
   assert.match(mobileDeck, /data-mobile-flight-deal-action/);
-  assert.match(mobileDeck, /data-mobile-flight-deal-action\s*>\s*View deals\s*<\/button>/);
+  assert.match(mobileDeck, /data-mobile-flight-deal-action\s*>\s*View deal\s*<\/button>/);
   assert.match(source, /role="tablist"/);
   assert.equal((source.match(/role="tab"/g) || []).length, 1);
   assert.deepEqual(["Compare deals", "Fare details", "Fare conditions", "Optional extras"].map((label) => source.includes(`label: "${label}"`)), [true, true, true, true]);
@@ -777,18 +777,18 @@ test("desktop Flight Details keeps price and booking action inside Compare deals
   assert.match(panel, /data-desktop-flight-deal-list/);
   assert.match(panel, /data-desktop-flight-deal-card/);
   assert.match(panel, /data-desktop-flight-deal-action/);
-  assert.match(panel, /className="max-w-\[640px\] space-y-2 py-1"/);
+  assert.match(panel, /className="max-w-\[680px\] space-y-2 py-1"/);
   assert.match(panel, /fallbackOffer\?\.bookingProviderName\?\.trim\(\)/);
   assert.match(panel, /fallbackOffer\?\.provider\?\.trim\(\)/);
   assert.match(panel, /displayedDeals = deals\.length/);
-  assert.match(panel, /text-\[20px\] font-semibold leading-6/);
-  assert.match(panel, /fare\?\.label \? `\$\{fare\.label\} · Trip total` : "Trip total"/);
+  assert.match(panel, /text-\[18px\] font-semibold leading-6/);
+  assert.match(panel, />\s*Trip total\s*<\/span>/);
   assert.doesNotMatch(panel, /data-desktop-flight-deal-benefits/);
-  assert.match(panel, /"View deal"/);
-  assert.match(panel, /"Unavailable"/);
+  assert.match(panel, />\s*View deal\s*<\/button>/);
+  assert.doesNotMatch(panel, />\s*Unavailable\s*</);
   assert.match(panel, /h-9 w-\[112px\]/);
   assert.match(panel, /data-desktop-flight-provider-logo/);
-  assert.match(panel, /min-h-\[92px\]/);
+  assert.match(panel, /min-h-\[88px\]/);
   assert.match(panel, /disabled=\{redirecting \|\| !canContinue\}/);
   assert.match(panel, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
   assert.doesNotMatch(source, /DesktopCheckoutSummary|data-desktop-checkout-summary/);
@@ -831,12 +831,12 @@ test("desktop Compare deals uses the shared Cars and Hotels price hierarchy", as
   assert.match(panel, /price\.formatted/);
   assert.match(panel, /Trip total/);
   assert.match(panel, /View deal/);
-  assert.match(panel, /rounded-xl border bg-white px-4 py-3/);
-  assert.match(panel, /grid-cols-\[minmax\(0,1fr\)_auto\]/);
-  assert.match(panel, /className="mt-2 block min-w-0" data-desktop-flight-deal-price/);
+  assert.match(panel, /rounded-xl border border-\[#D9E2E8\] bg-white px-5 py-4/);
+  assert.match(panel, /gridTemplateColumns: "minmax\(0, 1fr\) auto minmax\(0, 1fr\)"/);
+  assert.match(panel, /className="inline-flex items-baseline justify-center gap-1\.5 whitespace-nowrap" data-desktop-flight-deal-price/);
   assert.match(panel, /inline-flex h-9 w-\[112px\]/);
   assert.match(panel, /data-provider-handoff-unavailable/);
-  assert.match(panel, /disabled:bg-\[#004BB8\]/);
+  assert.match(panel, /disabled:opacity-50/);
   assert.match(panel, /data-desktop-flight-deal-provider/);
   assert.match(panel, /deal\.providerLogoUrl/);
   assert.match(panel, /BookingProviderLogo/);
@@ -1128,7 +1128,7 @@ test("mobile Compare deals owns booking actions without a fixed checkout dock", 
   assert.match(mobileDeck, /const sourcePrice = formatFlightResultCurrency\(deal\.price, deal\.currency/);
   assert.match(mobileDeck, /const canViewDeal = canContinue && pricesReady/);
   assert.match(mobileDeck, /deal\.providerLogoUrl[\s\S]*?deal\.providerName/);
-  assert.match(mobileDeck, /data-mobile-flight-deal-action\s*>\s*View deals\s*<\/button>/);
+  assert.match(mobileDeck, /data-mobile-flight-deal-action\s*>\s*View deal\s*<\/button>/);
   assert.match(mobileDeck, /disabled=\{redirecting \|\| !canViewDeal\}/);
   assert.doesNotMatch(mobileDeck, /No booking deals available|No additional live provider deals were supplied for this fare/);
 
@@ -1363,3 +1363,21 @@ test("desktop Flight Details hero actions stay icon-only while booking lives in 
   assert.match(source, /data-desktop-flight-deal-action/);
 });
 
+
+
+test("desktop Flight Compare deals reuses Hotel geometry, inline price basis and action styling without info controls", async () => {
+  const [flight, hotel] = await Promise.all([
+    readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../hotelDetails/HotelPriceComparisonSection.tsx", import.meta.url), "utf8"),
+  ]);
+  const panel = flight.slice(flight.indexOf("function CompareDealsPanel"), flight.indexOf("function BookingProviderLogo"));
+  const reference = hotel.slice(hotel.indexOf("export function DesktopProviderOffer"), hotel.indexOf("export function MobileProviderOffer"));
+  const card = reference.match(/className="(grid min-h-\[88px\][^"]+)"/)?.[1];
+  const action = reference.match(/className="(focus-ring inline-flex h-9[^"]+)"/)?.[1];
+  assert.ok(card && action);
+  assert.ok(panel.includes(`className="${card}"`));
+  assert.ok(panel.includes(`className="${action}"`));
+  assert.match(panel, /inline-flex items-baseline justify-center gap-1\.5 whitespace-nowrap/);
+  assert.match(panel, /aria-label=\{`Trip total: \$\{price\.ariaLabel\}`\}/);
+  assert.doesNotMatch(panel, /<Info|onInfo|Rate details|aria-haspopup/);
+});
