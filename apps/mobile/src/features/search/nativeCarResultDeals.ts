@@ -5,7 +5,7 @@ import { sandboxBookingUrl } from "../../../../../src/services/travel/kayakSandb
 import { validHttpsBookingUrl } from "./carDetailState";
 
 /**
- * Mirror each real web result-card offer row without inventing or capping offers.
+ * Mirror the web result-card provider picker without inventing offers.
  * Only an actual, safe provider URL can activate a result-card deal action.
  * The standalone result card never navigates to the Cars details page.
  */
@@ -35,6 +35,7 @@ export function nativeCarPrimaryBookingUrl(result: CarResult): string | null {
 export function nativeCarResultDealChoices(result: CarResult) {
   return getCarDealPickerGroups(result)
     .filter((group) => Number.isFinite(group.primaryOffer.pricePerDay) && group.primaryOffer.pricePerDay >= 0)
+    .slice(0, 3)
     .map((group) => ({
       key: group.key,
       providerName: group.providerName,
