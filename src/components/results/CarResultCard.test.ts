@@ -485,11 +485,19 @@ test("mobile card matches native compact height, semantic spec columns, and top-
   assert.doesNotMatch(source, /index % 2 === 0|index % 2 === 1/);
   const specs = source.slice(
     source.indexOf("data-car-card-mobile-specs"),
-    source.indexOf('className="flex min-w-0 flex-[1.35]', source.indexOf("data-car-card-mobile-specs")),
+    source.indexOf("data-car-card-mobile-lower-band"),
   );
-  assert.match(specs, /px-2 py-2\.5/);
-  assert.match(specs, /space-y-2/);
+  assert.match(specs, /mt-2 min-w-0 text-\[11px\]/);
+  assert.match(specs, /grid min-w-0 grid-cols-2 gap-x-2/);
+  assert.match(specs, /space-y-1\.5/);
   assert.doesNotMatch(specs, /<li[^>]*py-2\.5/);
+  const offers = source.slice(
+    source.indexOf("data-car-card-mobile-offers"),
+    source.indexOf("data-car-card-mobile-pricing"),
+  );
+  assert.match(offers, /flex-\[2\.1\] px-2 py-2\.5/);
+  assert.match(offers, /<CarDealPicker/);
+  assert.doesNotMatch(offers, /mobileSpecColumns\.map/);
 
   const actions = source.slice(
     source.indexOf("data-car-card-mobile-actions"),
@@ -498,6 +506,29 @@ test("mobile card matches native compact height, semantic spec columns, and top-
   assert.match(actions, /items-start justify-end/);
   assert.match(actions, /items-start justify-start/);
   assert.equal((actions.match(/h-11 w-7/g) ?? []).length, 2);
+});
+
+test("mobile result card rebalances vehicle category and places amenities underneath the cancellation or location", () => {
+  const mobile = source.slice(
+    source.indexOf("data-car-card-mobile-main"),
+    source.indexOf("data-car-card-mobile-lower-band"),
+  );
+  const lower = source.slice(
+    source.indexOf("data-car-card-mobile-lower-band"),
+    source.indexOf('className={`${guidedPlanning ? "grid'),
+  );
+  assert.match(mobile, /car\.categoryLabel \? <p className="mt-1\.5 truncate/);
+  assert.match(mobile, /data-car-card-mobile-cancellation/);
+  assert.match(mobile, /data-car-card-mobile-specs/);
+  assert.ok(
+    mobile.indexOf("data-car-card-mobile-specs") > mobile.indexOf("data-car-card-mobile-cancellation"),
+    "specs must be positioned directly after the optional cancellation",
+  );
+  assert.match(mobile, /mobileSpecColumns\.some/);
+  assert.match(mobile, /mobileSpecColumns\.map/);
+  assert.match(mobile, /min-w-0 break-words/);
+  assert.match(lower, /data-car-card-mobile-offers/);
+  assert.doesNotMatch(lower, /mobileSpecColumns\.map|data-car-card-mobile-specs/);
 });
 
 test("Free cancellation is data-driven in mobile and secondary benefits stay desktop-only", () => {
