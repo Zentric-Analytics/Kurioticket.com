@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { SupplierInformation } from "../SupplierInformation";
+import { flightBaggageTerms, flightFareDetailCabins, flightOnboardFeatureLabel } from "@/lib/flights/flightFareInformation";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -467,7 +467,6 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               ) : null}
               <FarePanel activeTab={activeTab} fare={selectedFare} offer={activeOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} selectedDealOfferId={selectedDeal?.offerId ?? null} onSelectDeal={setSelectedDealOfferId} onViewDeal={continueToOffer} />
             </div>
-            <SupplierInformation facts={activeOffer.providerDetails?.suppliedFacts} />
             </div>
           </section>
         </div>
@@ -1078,11 +1077,7 @@ function FareDetails({
   locale: string;
 }) {
   const provider = offer.providerDetails;
-  const cabins = (offer.legs ?? []).flatMap((leg) =>
-    leg.segments.flatMap((segment) =>
-      (segment.cabinDetails ?? []).map((cabin) => ({ segment, cabin })),
-    ),
-  );
+  const cabins = flightFareDetailCabins(offer);
   return (
     <DesktopFarePanel id="details">
       <div className="divide-y divide-[#D8E1EC]">
@@ -1107,10 +1102,10 @@ function FareDetails({
                 cabin.fareBrandName ||
                 cabin.cabinClass ||
                 cabin.cabinMarketingName ||
-                cabin.fareBasisCode,
+                cabin.fareBasisCode || segment.aircraft,
               );
               const hasOnBoard = Boolean(
-                seat || cabin.amenities?.wifi || cabin.amenities?.power,
+                seat || cabin.amenities?.wifi || cabin.amenities?.power || cabin.onboardFeatures?.length,
               );
               return (
                 <div
@@ -1144,6 +1139,7 @@ function FareDetails({
                           label="Fare basis"
                           value={cabin.fareBasisCode}
                         />
+                        <DesktopDetailRow label="Aircraft" value={segment.aircraft?.name || segment.aircraft?.iataCode} />
                       </dl>
                     </DesktopFareGroup>
                   ) : null}
@@ -1166,6 +1162,7 @@ function FareDetails({
                               : undefined
                           }
                         />
+                        {cabin.onboardFeatures?.map((feature, featureIndex) => <DesktopDetailRow key={`${feature.kind}-${featureIndex}`} label={flightOnboardFeatureLabel(feature.kind)} value={feature.description} />)}
                       </dl>
                     </DesktopFareGroup>
                   ) : null}
@@ -1246,6 +1243,8 @@ function FareConditions({
 }) {
   const provider = offer.providerDetails;
   const conditions = provider?.conditions ?? [];
+  const baggageTerms = flightBaggageTerms(offer);
+  const policies = provider?.airlineBaggagePolicies ?? [];
   const groups = [
     ...new Set(conditions.map((condition) => condition.category)),
   ].map((category) => ({
@@ -1258,6 +1257,16 @@ function FareConditions({
   return (
     <DesktopFarePanel id="conditions">
       <div className="divide-y divide-[#D8E1EC]">
+        {baggageTerms.length ? <section className="py-4"><DesktopGroupLabel>Baggage allowance</DesktopGroupLabel>
+          {baggageTerms.map((term, index) => <div key={index} className="flex items-start gap-3 py-2.5"><DesktopStatusIcon semantic={term.semantic} /><p className="text-[13px] leading-[19px] text-slate-950">{term.text}</p></div>)}
+        </section> : null}
+        {policies.length ? <section className="py-4"><DesktopFareGroup label="Airline baggage policy">
+          {policies.map((policy, index) => <div key={`${policy.carrierCode}-${index}`} className="grid gap-2 py-2.5 md:max-w-3xl">
+            <p className="text-[13px] font-semibold leading-[19px] text-slate-950">{policy.carrierName}{policy.carrierCode && policy.carrierName !== policy.carrierCode ? ` · ${policy.carrierCode}` : ""}</p>
+            {policy.carryOn?.map((value, i) => <DesktopDetailRow key={`carry-${i}`} label="Carry-on" value={value} />)}
+            {policy.checked?.map((value, i) => <DesktopDetailRow key={`checked-${i}`} label="Checked bag" value={value} />)}
+          </div>)}
+        </DesktopFareGroup></section> : null}
         <section>
           {groups.length ? (
             groups.map((group, groupIndex) => (
@@ -1306,7 +1315,7 @@ function FareConditions({
                 </div>
               </div>
             ))
-          ) : (
+          ) : baggageTerms.length || policies.length ? null : (
             <DesktopEmptyState
               title="Fare conditions unavailable"
               description="Conditions were not supplied by the provider."
@@ -1407,12 +1416,7 @@ function OptionalExtras({
                       {service.description}
                     </p>
                     <p className="max-w-[42%] shrink-0 break-words text-right text-[13px] font-bold leading-[19px] tabular-nums text-slate-950">
-                      {formatSourceMoney(
-                        service.price,
-                        service.currency,
-                        locale,
-                      )}
-                      {service.pricedPerTraveler ? " each" : ""}
+                      {service.pricing === "fee-unspecified" ? "Available for a fee" : `${formatSourceMoney(service.price, service.currency, locale)}${service.pricedPerTraveler ? " each" : ""}`}
                     </p>
                   </div>
                   {service.travelerCount ? (

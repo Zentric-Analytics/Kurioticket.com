@@ -46,8 +46,9 @@ test("hotel facts retain false flags, policies and quotations without inventing 
 });
 test("remaining supplier-information surfaces preserve sanitized facts without truncation", () => {
   const source = (path: string) => readFileSync(path, "utf8");
-  assert.match(source("src/components/results/flightDetails/StandaloneFlightDetails.tsx"), /activeOffer\.providerDetails\?\.suppliedFacts/);
-  assert.match(source("apps/mobile/src/features/search/NativeFlightDetails.tsx"), /activeOffer\.providerDetails\?\.suppliedFacts/);
+  for (const path of ["src/components/results/flightDetails/StandaloneFlightDetails.tsx", "src/components/results/flightDetails/MobileNativeFareInformationDeck.tsx", "apps/mobile/src/features/search/NativeFlightDetails.tsx"]) {
+    assert.doesNotMatch(source(path), /SupplierInformation|NativeSupplierInformation|suppliedFacts|Supplier information/);
+  }
   // Keep the sanitized offer data in the models, but never append supplier
   // information sections to Cars Results cards on web or native.
   for (const path of [
