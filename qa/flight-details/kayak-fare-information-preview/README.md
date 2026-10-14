@@ -58,13 +58,13 @@ No live sandbox credentials are configured in this execution workspace, so a liv
 - Root typecheck: `npx tsc --noEmit` passed.
 - Native typecheck: `npm run typecheck --prefix apps/mobile` passed after installing locked native dependencies.
 - Focused root/QA ESLint and `git diff --check` passed.
-- 224 relevant root test cases run: 223 passed; one pre-existing Hotel-style comparison failed identically on the untouched starting dev.
-- 34 focused native test cases run: 33 passed; one pre-existing Hotel popover expectation failed identically on starting dev. All 17 native fare-deck cases passed.
+- After merging current dev `241163dd18e1c3c036e0cba3ca1eb02c01d32cd1`, all 231 root cases passed (including 7 Car parser cases to verify the shared merge resolution).
+- All 34 focused native cases passed, including all 17 native fare-deck cases.
 - Six browser cases passed at 390px/1440px: rich structured KAYAK facts, selected seller price refresh, missing provider data/policy-only truthfulness, and Duffel amenities/conditions/extras.
 - Standard ESLint intentionally excludes native. An additional forced native lint run found the same 17 existing errors on baseline (React hook/ref rules and require import); this change did not repair unrelated native code or suppress rules.
 - Independent read-only review found legacy raw terms, fee-service metadata, credential spelling, and native empty-state issues. All were corrected with regression tests observed red then green. An additional unknown ordinal/prototype case and native long-rule wrapping were covered.
 
-The two existing test failures were not weakened or deleted. Their causes are Compare deals Hotel/Flight style equality and a reverted Hotel popover, which fall outside this task's strict scope.
+The two initially observed baseline failures were corrected upstream in the latest dev and now pass. This task did not weaken/delete their assertions or change unrelated Compare deals/Hotel UI.
 
 Browser regression command:
 
@@ -101,7 +101,7 @@ One-way, round-trip, multisegment, multicarrier, no extras, paid extras, unknown
 ## Rulings and limitations
 
 1. Cloud skill helper executables were unavailable; equivalent plan-specific progress/test/commit evidence was maintained manually.
-2. Preserve the two unrelated baseline failures and existing Compare deals/Hotel UI; fixing them here would violate scope.
+2. Initially preserve unrelated baseline failures and existing Compare deals/Hotel UI; their assertions were fixed upstream and pass after the dev update.
 3. Retain shared supplier helpers while removing every Flight usage; native Hotel still needs its helper.
 4. Move the temporary baseline archive outside the project so root TypeScript cannot ingest its archived native shim; production configuration stays unchanged.
 5. Unknown undocumented shapes and transport-ID-only scope are unmapped, not inferred. Cost: those facts need a deliberate future mapping before customers can see them.
