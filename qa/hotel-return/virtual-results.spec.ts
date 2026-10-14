@@ -51,6 +51,74 @@ test("Cars cards omit the supplier-information bar and preserve View deal on mob
     await expect(card.getByText("View deal", { exact: true }).filter({ visible: true }).first()).toBeVisible();
   }
 });
+test("Cars comparison rows stay horizontal within the existing card beside the main price on mobile and desktop", async ({ page }) => {
+  const firstOffer = carBase.offers[0];
+  if (!firstOffer) throw new Error("Missing test offer");
+
+  const makeResult = (count: number) => ({
+    ...carBase, id: "fixture-inline-offers",
+    offers: Array.from({ length: count }, (_, index) => ({
+      ...firstOffer, id: "offer-" + index, bookingProviderName: "Seller " + index,
+      bookingUrl: "https://example.com/offer-" + index,
+      pricePerDay: 30 + index, totalPrice: 90 + index * 3,
+    })),
+  });
+
+  let offerCount = 3;
+  await page.route("**/api/cars/search", route =>
+    route.fulfill({ json: { results: [makeResult(offerCount)], status: "available" } }));
+
+  for (const viewport of [{ width: 390, height: 844 }, { width: 1365, height: 900 }]) {
+    await page.setViewportSize(viewport);
+    let threeOfferHeight: number | null = null;
+
+    for (const count of [3, 5]) {
+      offerCount = count;
+      await page.goto(routes.cars);
+
+      const card = page.locator("[data-car-result-card-shell]").first();
+      await expect(card).toBeVisible();
+      const mobile = viewport.width < 640;
+      const dealArea = mobile
+        ? card.locator("[data-car-card-mobile-specs]")
+        : card.locator('[data-region="details"]');
+      const mainPrice = mobile
+        ? card.locator("[data-car-card-mobile-pricing]")
+        : card.locator('[data-region="pricing"]');
+
+      const rows = dealArea.locator("[data-car-deal-provider-offer]");
+      await expect(rows).toHaveCount(count);
+      await expect(card.locator("[data-supplier-information]")).toHaveCount(0);
+      await expect(mainPrice).toBeVisible();
+
+      const mainRect = await mainPrice.boundingBox();
+      const cardRect = await card.boundingBox();
+      expect(mainRect).not.toBeNull();
+      expect(cardRect).not.toBeNull();
+
+      for (let index = 0; index < count; index++) {
+        const row = rows.nth(index);
+        const provider = await row.locator("[data-car-deal-provider-name]").boundingBox();
+        const price = await row.locator("[data-car-deal-provider-price]").boundingBox();
+        const link = await row.locator("[data-car-deal-provider-view-deal]").boundingBox();
+        const rowRect = await row.boundingBox();
+
+        expect(provider).not.toBeNull();
+        expect(price).not.toBeNull();
+        expect(link).not.toBeNull();
+        expect(rowRect).not.toBeNull();
+        expect(provider!.x + provider!.width).toBeLessThanOrEqual(price!.x + 1);
+        expect(price!.x + price!.width).toBeLessThanOrEqual(link!.x + 1);
+        expect(Math.abs(provider!.y - link!.y)).toBeLessThan(10);
+        expect(rowRect!.x + rowRect!.width).toBeLessThanOrEqual(mainRect!.x + 1);
+        expect(rowRect!.y + rowRect!.height).toBeLessThanOrEqual(cardRect!.y + cardRect!.height + 1);
+      }
+      if (count === 3) threeOfferHeight = cardRect!.height;
+      else expect(cardRect!.height).toBeGreaterThanOrEqual(threeOfferHeight!);
+    }
+  }
+});
+
 test("customer Hotel Details does not append the generic KAYAK supplier-information box", async ({ page }) => {
   await page.route("**/api/hotels/details?**", route => route.fulfill({ json: {
     hotel: hotels[0], propertyDetails: null, roomOptions: [], relatedHotels: [],

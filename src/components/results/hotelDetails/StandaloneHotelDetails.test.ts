@@ -88,15 +88,16 @@ test("mobile booking dock follows selection and hides when no rates exist", () =
   assert.match(mobileCss, /safe-area-inset-bottom/);
 });
 
-test("mobile Rate details uses an anchored non-modal popover and keeps sticky tabs untouched", () => {
-  assert.match(mobile, /import \{ HotelRateInfoPopover \} from "\.\/HotelRateInfoPopover"/);
-  assert.match(mobile, /setRateInfo\(\{ offer, anchor \}\)/);
-  assert.match(mobile, /<HotelRateInfoPopover[\s\S]*offer=\{rateInfo\.offer\}[\s\S]*anchor=\{rateInfo\.anchor\}/);
-  assert.doesNotMatch(mobile, /<DetailsDialog title="Rate details"/);
+test("mobile Rate details preserves an already-sticky tab row while the modal is open", () => {
+  assert.match(mobile, /preserveStickyPage = false/);
+  assert.match(mobile, /compact && !preserveStickyPage \? acquireMobileResultsScrollLock\(\) : null/);
+  assert.match(mobile, /if \(!releaseScroll\) document\.body\.style\.overflow = "hidden"/);
+  assert.match(mobile, /<DetailsDialog title="Rate details" compact preserveStickyPage/);
+  assert.match(mobile, /\[compact, preserveStickyPage\]/);
 });
 
 
-test("remaining Hotel detail dialogs release scroll locks and restore focus on close paths", () => {
+test("native dialogs release scroll locks and restore focus on every close path", () => {
   for (const source of [desktop, mobile]) {
     assert.match(source, /dialog\?\.showModal\(\)/);
     assert.match(source, /dialog\?\.close\(\)/);
@@ -172,11 +173,10 @@ test("desktop external Hotel View deal reserves a new tab before the async provi
 });
 
 
-test("desktop Rate details uses the same anchored non-modal popover as mobile", () => {
-  assert.match(desktop, /import \{ HotelRateInfoPopover \} from "\.\/HotelRateInfoPopover"/);
-  assert.match(desktop, /onInfoOffer=\{\(offer, anchor\) => setRateInfo\(\{ offer, anchor \}\)\}/);
-  assert.match(desktop, /<HotelRateInfoPopover[\s\S]*offer=\{rateInfo\.offer\}[\s\S]*anchor=\{rateInfo\.anchor\}/);
-  assert.doesNotMatch(desktop, /<DesktopDialog title="Rate details"/);
+test("desktop Rate details keeps overflow usable without showing a scrollbar", () => {
+  assert.match(desktopStyles, /\.rateDialog \{[^}]*scrollbar-width: none;[^}]*-ms-overflow-style: none;/);
+  assert.match(desktopStyles, /\.rateDialog::\-webkit-scrollbar \{[^}]*width: 0;[^}]*height: 0;[^}]*display: none;/);
+  assert.match(desktopStyles, /\.dialog \{[^}]*overflow: auto;/);
 });
 
 

@@ -87,7 +87,7 @@ test("active Hotel Details keeps fixed icon-only controls and stack-aware Result
 test("web mobile Hotel rates use dedicated mobile provider cards without the old blue selected outline", () => {
   assert.match(webMobileHotelDetails, /import \{ MobileProviderOffer \} from "\.\/HotelPriceComparisonSection"/);
   assert.match(webMobileHotelDetails, /offers\.map\(offer => <MobileProviderOffer/);
-  assert.match(webMobileHotelDetails, /onInfo=\{\(\) => setRateInfo\(offer\)\}/);
+  assert.match(webMobileHotelDetails, /onInfo=\{\(anchor\) => setRateInfo\(\{ offer, anchor \}\)\}/);
   assert.match(webMobileHotelDetails, /perNightText=\{props\.perNightText\}/);
   assert.match(webMobileHotelDetails, /totalPrice: total/);
   const rateListStart = webMobileHotelDetails.indexOf('<div aria-label="Hotel rates" className={styles.rateList}>');
@@ -97,7 +97,8 @@ test("web mobile Hotel rates use dedicated mobile provider cards without the old
   const providerCards = webMobileHotelDetails.slice(rateListStart, rateListEnd);
   assert.match(providerCards, /offers\.map\(offer => <MobileProviderOffer/);
   assert.doesNotMatch(providerCards, />Stay total</, "the card list must not repeat the details-dialog total label");
-  assert.match(webMobileHotelDetails, /rateInfo\.totalPrice \? <div className=\{styles\.rateInfoTotal\}><span>Stay total<\/span>/);
+  assert.match(webMobileHotelDetails, /<HotelRateInfoPopover[\s\S]*offer=\{rateInfo\.offer\}[\s\S]*anchor=\{rateInfo\.anchor\}/);
+  assert.doesNotMatch(webMobileHotelDetails, /<DetailsDialog title="Rate details"/);
   assert.doesNotMatch(webMobileHotelDetails, /className=\{styles\.rate\}|className=\{styles\.rateAction\}/);
   assert.doesNotMatch(webMobileHotelDetailsCss, /\.rate\[data-selected="true"\][^}]*border-color: var\(--accent\)/);
 });
