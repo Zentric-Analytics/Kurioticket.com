@@ -525,7 +525,7 @@ export function CarResultCard({
           data-region="image"
           className={`col-span-2 row-start-1 flex items-stretch border-b border-[#E2E8F0] bg-white md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 md:border-b-0 md:border-e ${!guidedPlanning ? "lg:border-e-0" : ""}`}
         >
-          <div className="relative aspect-[4/3] w-full overflow-hidden bg-white md:aspect-auto md:h-full md:min-h-[220px]">
+          <div className={["relative aspect-[4/3] w-full overflow-hidden bg-white md:aspect-auto md:h-full md:min-h-[220px]", !guidedPlanning ? "md:!h-[220px] md:!min-h-[220px] md:max-h-[220px] md:self-start" : ""].join(" ")}>
             <CarResultImage
               imageUrl={car.imageUrl}
               imageAlt={car.imageAlt}
