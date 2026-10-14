@@ -5,7 +5,7 @@ import type { PublicHotelResult } from "../../../../../src/lib/types";
 import { prepareNativeRelatedHotels } from "./nativeHotelRelatedHotelsModel";
 
 const hotel = (id: string, overrides: Partial<PublicHotelResult> = {}): PublicHotelResult => ({
-  id, provider: "Kurioticket", name: `Hotel ${id}`, rating: 8,
+  id, provider: "Test Provider", dataSource: "live", name: `Hotel ${id}`, rating: 8,
   classificationStars: 4, reviewScore: 8, reviewScale: 10, reviewCount: 12,
   neighbourhood: "Oberkampf", location: "Paris", amenities: [], roomType: "Room",
   cancellationInfo: "Terms apply", valueScore: 1, travelConfidenceScore: 1,
@@ -21,10 +21,10 @@ test("related hotels preserve the full backend cohort while excluding current an
   assert.deepEqual(prepared.map(({ hotel: item }) => item.id), ["a", "b", "c", "d", "e", "f", "g", "h"]);
 });
 
-test("related cards retain static internal-detail policy and classification truth", () => {
+test("related provider cards retain internal-detail policy and classification truth", () => {
   const [prepared] = prepareNativeRelatedHotels({ hotels: [hotel("a", { classificationStars: undefined, rating: 5 })], currentHotelId: "current", displayCurrency: "USD", rates: {} });
   assert.equal(prepared.classificationStars, null);
-  assert.equal(prepared.result.searchPolicy.source, "kurioticket-static-hotels");
+  assert.equal(prepared.result.searchPolicy.source, "metasearch");
   assert.equal(prepared.result.searchPolicy.bookable, false);
   assert.equal(prepared.result.searchPolicy.action.kind, "internal-detail");
   assert.equal(prepared.result.partnerRedirectUrl, undefined);

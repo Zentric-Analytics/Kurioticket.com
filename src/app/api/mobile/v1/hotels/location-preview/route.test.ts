@@ -1,10 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import sharp from "sharp";
-import { getStaticHotelById } from "@/services/travel/staticHotelResults";
 import { rememberHotels } from "@/lib/searchCache";
 import type { NormalizedHotelResult } from "@/lib/types";
 import { GET } from "./route";
+
+const providerLocationHotel = {
+  id: "kayak-sandbox:trusted-map-fixture", provider: "KAYAK sandbox", dataSource: "demo",
+  name: "citizenM Paris Gare de Lyon", location: "Paris", amenities: [],
+  rating: 0, roomType: "Provider room", cancellationInfo: "Provider conditions",
+  valueScore: 0, travelConfidenceScore: 0, arrivalSuitabilityScore: 0,
+  recommendationReasons: [], badges: [], inventoryKind: "discovery",
+  rawProviderReference: { kind: "kayak-hotel-details", location: { latitude: 48.844, longitude: 2.373, address: "Paris" } },
+} as NormalizedHotelResult;
+rememberHotels([providerLocationHotel]);
 
 const endpoint = "https://kurioticket.test/api/mobile/v1/hotels/location-preview";
 const request = (query = "") => GET(new Request(`${endpoint}?${query}`));
@@ -15,15 +24,11 @@ test("validates a canonical Hotel id", async () => {
 });
 
 test("fails closed when the canonical Hotel has no usable coordinates", async () => {
-  const hotel = getStaticHotelById("citizenm-paris-gare-de-lyon");
-  assert.ok(hotel);
-  const latitude = hotel.latitude;
-  hotel.latitude = Number.NaN;
-  try {
-    assert.equal((await request("id=citizenm-paris-gare-de-lyon")).status, 503);
-  } finally {
-    hotel.latitude = latitude;
-  }
+  const hotel = structuredClone(providerLocationHotel);
+  (hotel.rawProviderReference as { location: { latitude: number } }).location.latitude = Number.NaN;
+  hotel.id = "kayak-sandbox:invalid-coordinates";
+  rememberHotels([hotel]);
+  assert.equal((await request("id=kayak-sandbox:invalid-coordinates")).status, 404);
 });
 
 test("returns an attributed cached PNG built from canonical coordinates", async () => {
@@ -35,7 +40,7 @@ test("returns an attributed cached PNG built from canonical coordinates", async 
     return new Response(new Uint8Array(tile), { status: 200, headers: { "Content-Type": "image/png" } });
   }) as typeof fetch;
   try {
-    const response = await request("id=citizenm-paris-gare-de-lyon&latitude=0&longitude=0");
+    const response = await request("id=kayak-sandbox:trusted-map-fixture&latitude=0&longitude=0");
     assert.equal(response.status, 200);
     assert.equal(response.headers.get("content-type"), "image/png");
     assert.match(response.headers.get("cache-control") ?? "", /s-maxage=86400/);
@@ -98,10 +103,14 @@ test("settles to an unavailable response when the tile provider fails", async ()
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (async () => new Response("unavailable", { status: 503 })) as typeof fetch;
   try {
-    const response = await request("id=citizenm-paris-gare-de-lyon");
+    const response = await request("id=kayak-sandbox:trusted-map-fixture");
     assert.equal(response.status, 503);
     assert.equal(await response.text(), "Map preview unavailable.");
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test("retired catalogue location URLs return 404", async () => {
+  assert.equal((await request("id=citizenm-paris-gare-de-lyon")).status, 404);
 });

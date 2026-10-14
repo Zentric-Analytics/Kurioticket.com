@@ -1,37 +1,12 @@
+import { isProviderHotelResult } from "@/services/travel/hotelInventorySource";
 import { NextResponse } from "next/server";
 import { hotelOccupancy } from "@/lib/hotels/hotelOccupancy";
 import { getHotelDetailsCacheContext, getHotelFromCache, toPublicHotel } from "@/lib/searchCache";
-import {
-  buildStaticHotelResult,
-  buildRelatedStaticHotelResults,
-  buildStaticHotelRoomOptions,
-  getStaticHotelById,
-} from "@/services/travel/staticHotelResults";
-import type { StaticHotelRecord } from "@/services/travel/staticHotelCatalogue";
 import { getHotelSearchCohort, getProviderResultWithContext } from "@/services/travel/providerResultCache";
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import type { PublicHotelProviderDetails } from "@/lib/hotels/hotelProviderDetails";
 import { kayakHotelLocationDetails } from "@/lib/hotels/kayakHotelLocation";
 
-function toPublicPropertyDetails(record: StaticHotelRecord | null) {
-  if (!record) return null;
-  return {
-    description: record.description,
-    propertyType: record.propertyType,
-    latitude: record.latitude,
-    longitude: record.longitude,
-    streetAddress: record.location,
-    city: record.city,
-    country: record.country,
-    neighbourhood: record.neighbourhood,
-    roomSummary: record.roomSummary,
-    bedSummary: record.bedSummary,
-    interestTags: [...record.interestTags],
-    familySuitable: record.familySuitable,
-    businessSuitable: record.businessSuitable,
-    accessibility: [...record.accessibility],
-  };
-}
 
 function providerDetails(result: NormalizedHotelResult): PublicHotelProviderDetails | null {
   const reference = result.rawProviderReference;
@@ -100,7 +75,6 @@ export async function GET(request: Request) {
     .toISOString()
     .slice(0, 10);
   const checkOut = url.searchParams.get("checkOut") || tomorrow;
-  const record = getStaticHotelById(id);
   const requestedPreviewLimit = Number(url.searchParams.get("relatedLimit"));
   const relatedPreviewLimit =
     Number.isInteger(requestedPreviewLimit) &&
@@ -110,7 +84,7 @@ export async function GET(request: Request) {
       : null;
   const requestedDestination = url.searchParams.get("destination")?.trim() || "";
   const search: HotelSearchParams = {
-    destination: requestedDestination || record?.city || "",
+    destination: requestedDestination,
     checkIn,
     checkOut,
     guests: Number(url.searchParams.get("guests")) || 2,
@@ -121,10 +95,10 @@ export async function GET(request: Request) {
   const memoryContext = search.destination
     ? getHotelDetailsCacheContext(id, search)
     : getHotelDetailsCacheContext(id);
-  const unscopedCached = !record && !memoryContext
+  const unscopedCached = !memoryContext
     ? getHotelFromCache(id)
     : null;
-  const providerContext = !record && !memoryContext && !unscopedCached
+  const providerContext = !memoryContext && !unscopedCached
     ? await getProviderResultWithContext<NormalizedHotelResult>("hotel", id)
     : null;
   const persistedSearch = search.destination
@@ -133,8 +107,9 @@ export async function GET(request: Request) {
   const persistedCohort = !memoryContext && persistedSearch
     ? await getHotelSearchCohort(persistedSearch)
     : [];
-  const cached = memoryContext?.hotel ?? unscopedCached ?? providerContext?.result
+  const candidate = memoryContext?.hotel ?? unscopedCached ?? providerContext?.result
     ?? persistedCohort.find(hotel => hotel.id === id) ?? null;
+  const cached = candidate && isProviderHotelResult(candidate) ? candidate : null;
   const relatedSearchContext = memoryContext?.searchContext ?? persistedSearch;
   const relatedStayMatches =
     relatedSearchContext?.checkIn === search.checkIn &&
@@ -143,9 +118,9 @@ export async function GET(request: Request) {
     (!relatedSearchContext || (hotelOccupancy(relatedSearchContext).children === hotelOccupancy(search).children &&
       hotelOccupancy(relatedSearchContext).adults === hotelOccupancy(search).adults)) &&
     relatedSearchContext?.rooms === search.rooms;
-  const relatedSearchCohort = relatedStayMatches
+  const relatedSearchCohort = (relatedStayMatches
     ? memoryContext?.relatedHotels ?? persistedCohort
-    : [];
+    : []).filter(isProviderHotelResult);
   const propertyOffers = cached
     ? [cached, ...relatedSearchCohort.filter(offer =>
         offer.id !== cached.id && Boolean(cached.propertyGroupId) &&
@@ -155,9 +130,7 @@ export async function GET(request: Request) {
   const otherProperties = relatedSearchCohort.filter(offer => !propertyOfferIds.has(offer.id));
   const relatedHotelCandidates = relatedSearchCohort.length
     ? relatedHotelsFromSearchCohort(otherProperties, id, relatedPreviewLimit)
-    : record
-      ? buildRelatedStaticHotelResults(record, search).map(toPublicHotel)
-      : [];
+    : [];
   const relatedHotelsHasMore =
     relatedPreviewLimit !== null &&
     relatedHotelCandidates.length > relatedPreviewLimit;
@@ -165,19 +138,6 @@ export async function GET(request: Request) {
     relatedPreviewLimit === null
       ? relatedHotelCandidates
       : relatedHotelCandidates.slice(0, relatedPreviewLimit);
-  if (record) {
-    const hotel = buildStaticHotelResult(record, search);
-    const propertyDetails = toPublicPropertyDetails(record);
-    return NextResponse.json({
-      hotel: toPublicHotel(hotel),
-      propertyDetails,
-      locationDetails: propertyDetails,
-      providerDetails: null,
-      roomOptions: buildStaticHotelRoomOptions(record, search),
-      relatedHotels,
-      relatedHotelsHasMore,
-    });
-  }
   if (cached)
     return NextResponse.json({
       hotel: toPublicHotel(cached),
