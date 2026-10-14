@@ -67,16 +67,27 @@ test("Cars compact deal rows keep their horizontal alignment and expand cards fo
     await page.goto(routes.cars);
     const cards = page.locator("[data-car-result-card-shell]");
     await expect(cards).toHaveCount(2);
-    await expect(cards.nth(0).locator("[data-car-deal-provider-offer]")).toHaveCount(9);
-    await expect(cards.nth(1).locator("[data-car-deal-provider-offer]")).toHaveCount(2);
-    const many = await cards.first().boundingBox();
-    const few = await cards.nth(1).boundingBox();
+    // Results are sorted by their cheapest offer and ID, not fixture array order.
+    // Identify each card by its stable result key so this test verifies actual
+    // offer counts and natural card growth regardless of sorting.
+    const manyCard = page.locator('[data-result-key="fixture-many-offers"] [data-car-result-card-shell]');
+    const fewCard = page.locator('[data-result-key="fixture-few-offers"] [data-car-result-card-shell]');
+    await expect(manyCard).toHaveCount(1);
+    await expect(fewCard).toHaveCount(1);
+    await expect(manyCard.locator("[data-car-deal-provider-offer]")).toHaveCount(9);
+    await expect(fewCard.locator("[data-car-deal-provider-offer]")).toHaveCount(2);
+    const many = await manyCard.boundingBox();
+    const few = await fewCard.boundingBox();
     expect(many).not.toBeNull();
     expect(few).not.toBeNull();
     expect(many!.height).toBeGreaterThan(few!.height + 150);
-    expect(few!.y).toBeGreaterThanOrEqual(many!.y + many!.height);
+    // Neither list order nor changing heights may make cards overlap.
+    expect(
+      many!.y + many!.height <= few!.y + 1 ||
+      few!.y + few!.height <= many!.y + 1,
+    ).toBe(true);
 
-    const firstRow = cards.first().locator("[data-car-deal-provider-offer]").first();
+    const firstRow = manyCard.locator("[data-car-deal-provider-offer]").first();
     const provider = await firstRow.locator("[data-car-deal-provider-name]").boundingBox();
     const price = await firstRow.locator("[data-car-deal-provider-price]").boundingBox();
     const action = await firstRow.locator("[data-car-deal-provider-view-deal]").boundingBox();
