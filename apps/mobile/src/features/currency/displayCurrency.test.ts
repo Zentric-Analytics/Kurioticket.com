@@ -240,6 +240,12 @@ test("Hotel symbols remain available when formatToParts is unavailable", () => {
   withoutFormatToParts(() => {
     assert.equal(formatMarketCurrency(420, "USD"), "$420.00");
     assert.equal(formatMarketCurrency(420, "CAD"), "$420.00");
+    assert.equal(formatMarketCurrency(420, "AUD"), "$420.00");
+    assert.equal(formatMarketCurrency(420, "CNY"), "¥420.00");
+    assert.equal(formatMarketCurrency(420, "HKD"), "$420.00");
+    assert.equal(formatMarketCurrency(420, "NZD"), "$420.00");
+    assert.equal(formatMarketCurrency(420, "MXN"), "$420.00");
+    assert.equal(formatMarketCurrency(420, "SGD"), "$420.00");
     assert.equal(formatMarketCurrency(420, "NGN"), "₦420.00");
     assert.equal(formatMarketCurrency(420, "JPY"), "¥420");
   });
