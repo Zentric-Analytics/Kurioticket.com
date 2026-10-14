@@ -417,12 +417,12 @@ export function CarResultCard({
                         ) : null}
                       </h2>
                     )}
-                    {car.categoryLabel ? <p className="mt-1.5 truncate text-[10px] font-bold uppercase leading-[15px] tracking-[0.09em] text-[#004BB8]">{car.categoryLabel}</p> : null}
+                    {car.categoryLabel ? <p data-car-card-mobile-category className="mt-1.5 truncate text-[10px] font-bold uppercase leading-[15px] tracking-[0.09em] text-[#004BB8]">{car.categoryLabel}</p> : null}
                   </div>
                 </div>
                 {mobileCardActions}
               </header>
-              <p className="mt-1 flex min-w-0 items-start gap-1 text-[11px] font-medium leading-[15px] text-[#536B92]">
+              <p data-car-card-mobile-location className="mt-1 flex min-w-0 items-start gap-1 text-[11px] font-medium leading-[15px] text-[#536B92]">
                 <MapPin
                   size={13}
                   className="mt-px shrink-0 text-[#07133B]"
