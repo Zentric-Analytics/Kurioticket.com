@@ -63,27 +63,29 @@ test("provider groups normalize seller identity without inventing a provider", (
   assert.equal(groups[0]?.primaryOffer.id, "a");
 });
 
-test("static Kurioticket inventory exposes up to three real offer choices without inventing providers", () => {
+test("static Kurioticket inventory shows all real offers, including a fourth choice", () => {
   const groups = getCarDealPickerGroups({
     inventorySource: "kurioticket-static-cars",
     offers: [
       offer("k-278", "Kurioticket", 278, "/brand/kurioticket-logo-primary-light-bg.svg"),
       offer("k-292", "Kurioticket", 292, "/brand/kurioticket-logo-primary-light-bg.svg"),
       offer("k-306", "Kurioticket", 306, "/brand/kurioticket-logo-primary-light-bg.svg"),
+      offer("k-320", "Kurioticket", 320, "/brand/kurioticket-logo-primary-light-bg.svg"),
     ],
   });
 
-  assert.equal(groups.length, 3);
+  assert.equal(groups.length, 4);
   assert.deepEqual(groups.map((group) => group.primaryOffer.id), [
     "k-278",
     "k-292",
     "k-306",
+    "k-320",
   ]);
   assert.ok(groups.every((group) => group.providerName === "Kurioticket"));
   assert.ok(groups.every((group) => group.offers.length === 1));
 });
 
-test("live or sandbox inventory keeps provider grouping instead of splitting one seller's offers", () => {
+test("live or sandbox inventory gives every real seller offer an independent row", () => {
   const groups = getCarDealPickerGroups({
     inventorySource: "kayak-sandbox",
     offers: [
@@ -93,22 +95,49 @@ test("live or sandbox inventory keeps provider grouping instead of splitting one
     ],
   });
 
-  assert.equal(groups.length, 2);
-  assert.deepEqual(groups[0]?.offers.map((item) => item.id), ["p-low", "p-high"]);
-  assert.equal(groups[1]?.providerName, "Provider C");
+  assert.equal(groups.length, 3);
+  assert.deepEqual(groups.map((group) => group.primaryOffer.id), ["p-low", "p-high", "other"]);
+  assert.deepEqual(groups.map((group) => group.providerName), ["Provider B", "Provider B", "Provider C"]);
+  assert.ok(groups.every((group) => group.offers.length === 1));
 });
 
 test("provider picker exposes every supplied seller without a three-provider cutoff", () => {
   assert.match(picker, /getCarDealPickerGroups\(car\)/);
   assert.match(picker, /groups\.map\(\(group\) =>/);
   assert.doesNotMatch(picker, /groups\.slice\(/);
-  assert.match(picker, /grid-cols-3 gap-y-3/);
+  assert.match(picker, /grid-cols-\[minmax\(0,1fr\)_auto_auto\]/);
+  assert.match(picker, /data-car-deals-comparison/);
+  assert.match(picker, /divide-y divide-\[#E2E8F0\]/);
   const groups = getCarDealPickerGroups({
     inventorySource: "kayak-sandbox",
     offers: Array.from({ length: 7 }, (_, index) => offer(String(index), `Seller ${index}`, 200 + index)),
   });
   assert.equal(groups.length, 7);
   assert.equal(new Set(groups.map((group) => group.providerName)).size, 7);
+});
+
+
+test("eight KAYAK offers from the same provider are all retained as stable price-ordered rows", () => {
+  const groups = getCarDealPickerGroups({
+    inventorySource: "kayak-sandbox",
+    offers: Array.from({ length: 8 }, (_, index) =>
+      offer(`kayak-${index}`, "KAYAK Seller", 500 - index * 10),
+    ),
+  });
+  assert.equal(groups.length, 8);
+  assert.deepEqual(groups.map((group) => group.primaryOffer.totalPrice), [430, 440, 450, 460, 470, 480, 490, 500]);
+  assert.equal(new Set(groups.map((group) => group.key)).size, 8);
+  assert.ok(groups.every((group) => group.providerName === "KAYAK Seller"));
+});
+
+test("result-card choices reject non-finite daily prices but retain distinct offers at equal prices", () => {
+  const offers = [
+    offer("valid-a", "Provider A", 200),
+    { ...offer("invalid", "Provider A", 150), pricePerDay: Number.NaN },
+    offer("valid-b", "Provider A", 200),
+  ];
+  const groups = getCarDealPickerGroups({ inventorySource: "kayak-sandbox", offers });
+  assert.deepEqual(groups.map((group) => group.primaryOffer.id), ["valid-a", "valid-b"]);
 });
 
 test("provider picker links each supplied seller directly through a validated booking URL", () => {
