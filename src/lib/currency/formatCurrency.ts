@@ -8,6 +8,16 @@ import {
 
 const canonicalCurrencySymbols: Readonly<Record<string, string>> = {
   NGN: "₦",
+  USD: "$",
+  CAD: "$",
+  AUD: "$",
+  CNY: "¥",
+  EGP: "£",
+  GHS: "₵",
+  HKD: "$",
+  MXN: "$",
+  NZD: "$",
+  SGD: "$",
 };
 
 const zeroDecimalCurrencies = new Set([
@@ -47,6 +57,7 @@ export function formatCurrency(
   const formatter = new Intl.NumberFormat(undefined, {
     style: "currency",
     currency: normalizedCurrency,
+    currencyDisplay: "narrowSymbol",
     maximumFractionDigits,
     minimumFractionDigits,
   });
