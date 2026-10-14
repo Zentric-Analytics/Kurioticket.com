@@ -46,17 +46,14 @@ test("supplier car facts remain accessible before the external handoff", async (
   await facts.locator("summary").click();
   await expect(facts.getByText("Return with the supplied fuel level", { exact: true })).toBeVisible();
 });
-test("supplier hotel policies and review quotations are available on both layouts", async ({ page }) => {
+test("customer Hotel Details does not append the generic KAYAK supplier-information box", async ({ page }) => {
   await page.route("**/api/hotels/details?**", route => route.fulfill({ json: {
     hotel: hotels[0], propertyDetails: null, roomOptions: [], relatedHotels: [],
     providerDetails: { source: "KAYAK", overview: { policies: [{ label: "Check-in", value: "After 3 PM" }], selfRated: false }, reviews: { quotes: [{ label: "Guest quote", value: "Great location supplied by provider" }] } },
   } }));
   await page.goto(`/hotels/details/${encodeURIComponent(hotels[0].id)}?destination=London&checkIn=${date}&checkOut=2030-11-21&guests=1&rooms=1`);
-  const facts = page.locator("[data-supplier-information]");
-  await facts.locator("summary").click();
-  await expect(facts.getByText("After 3 PM", { exact: true })).toBeVisible();
-  await expect(facts.getByText("Great location supplied by provider", { exact: true })).toBeVisible();
-  await expect(facts.getByText("No", { exact: true })).toBeVisible();
+  await expect(page.locator("[data-supplier-information]")).toHaveCount(0);
+  await expect(page.getByText("Property information supplied by KAYAK", { exact: true })).toHaveCount(0);
 });
 for (const vertical of ["hotels", "flights", "cars"] as const) {
   test(`${vertical} keeps all results reachable with bounded mounted cards`, async ({ page }, testInfo) => {
