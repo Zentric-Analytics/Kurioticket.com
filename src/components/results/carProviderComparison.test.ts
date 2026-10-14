@@ -169,6 +169,23 @@ test("inline provider choices show an explicitly labelled converted daily price"
   assert.match(picker, /event\.stopPropagation\(\)/);
 });
 
+test("multi-offer cards grow in normal flow while the web results virtualizer measures variable heights", () => {
+  const card = readFileSync(new URL("./CarResultCard.tsx", import.meta.url), "utf8");
+  const virtualList = readFileSync(new URL("./VirtualResultsList.tsx", import.meta.url), "utf8");
+  const nativeCard = readFileSync("apps/mobile/src/features/search/CarResultCard.tsx", "utf8");
+  const nativeResults = readFileSync("apps/mobile/src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
+
+  assert.equal((card.match(/<CarDealPicker/g) ?? []).length, 1);
+  assert.ok(card.indexOf("<CarDealPicker") > card.indexOf('data-region="pricing"'));
+  assert.match(picker, /grid min-h-12 min-w-0 grid-cols-\[minmax\(0,1fr\)_auto_auto\]/);
+  assert.doesNotMatch(picker, /grid-cols-3|groups\.slice\(|max-h-\[/);
+  assert.match(virtualList, /ref=\{virtualizer\.measureElement\}/);
+  assert.match(virtualList, /ResizeObserver/);
+  assert.match(nativeCard, /<NativeCarResultOfferPicker result=\{result\}/);
+  assert.match(nativeResults, /<FlatList ref=\{carScrollRef\}/);
+  assert.doesNotMatch(nativeResults, /getItemLayout=/);
+});
+
 test("Cars results map mirrors the Hotels-style filter-rail interaction", () => {
   assert.match(results, /<CarsResultsMapPreview location=\{search\.pickupLocation\} \/>/);
   assert.match(results, /<aside[\s\S]*?<CarsResultsMapPreview[\s\S]*?<CarFilters/);
