@@ -21,18 +21,18 @@ import styles from "./HotelDetailsMobile.module.css";
 type Tab = "rates" | "overview" | "reviews";
 type Overlay = "gallery" | "photo" | "amenities" | "stay" | "rooms" | "map" | null;
 
-function DetailsDialog({ title, onClose, children, full = false, back, compact = false }: { title: string; onClose: () => void; children: ReactNode; full?: boolean; back?: () => void; compact?: boolean }) {
+function DetailsDialog({ title, onClose, children, full = false, back, compact = false, preserveStickyPage = false }: { title: string; onClose: () => void; children: ReactNode; full?: boolean; back?: () => void; compact?: boolean; preserveStickyPage?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current;
     const opener = document.activeElement as HTMLElement | null;
     const overflow = document.body.style.overflow;
-    const releaseScroll = compact ? acquireMobileResultsScrollLock() : null;
-    if (!compact) document.body.style.overflow = "hidden";
+    const releaseScroll = compact && !preserveStickyPage ? acquireMobileResultsScrollLock() : null;
+    if (!releaseScroll) document.body.style.overflow = "hidden";
     dialog?.showModal();
     if (isIosHotelMobileWeb()) dialog?.focus({ preventScroll: true });
     return () => { dialog?.close(); if (releaseScroll) releaseScroll(); else document.body.style.overflow = overflow; opener?.focus({ preventScroll: true }); };
-  }, [compact]);
+  }, [compact, preserveStickyPage]);
   return <dialog ref={ref} tabIndex={-1} className={`${styles.dialog} ${full ? styles.fullDialog : ""} ${compact ? styles.amenitiesDialog : ""}`} aria-label={title} onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
     <div className={`${styles.dialogSurface} ${compact ? "mobile-results-sheet-surface mobile-results-sheet-surface-smooth" : ""}`}>
       <header className={styles.dialogHeader}>
@@ -234,7 +234,7 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
       {tab === "reviews" ? <section className={styles.reviews} aria-label="Guest reviews" data-hotel-reviews-section>{props.reviewScore && props.reviewCountText ? <div className={styles.reviewCard}><div className={styles.reviewScore}><strong>{props.reviewScore.split("/")[0].trim()}</strong><span>/{props.mobileReviewScale ?? 10}</span></div><div className={styles.reviewMeta}><h2>{props.reviewLabel}</h2><p>{props.reviewCountText}</p>{props.reviewSource ? <small>Source: {props.reviewSource}</small> : null}</div></div> : <><h2>Guest reviews</h2><p>Verified guest reviews are not connected for this property yet.</p></>}</section> : null}
     </div>
     <span role="status" className="sr-only">{shareStatus}</span>
-    {rateInfo ? <DetailsDialog title="Rate details" compact onClose={() => setRateInfo(null)}>
+    {rateInfo ? <DetailsDialog title="Rate details" compact preserveStickyPage onClose={() => setRateInfo(null)}>
       <div className={`${styles.sheetBody} ${styles.rateInfoBody}`}>
         <section className={styles.rateInfoRoom}>
           {rateInfo.providerLogoUrl ? <Image src={rateInfo.providerLogoUrl} alt={rateInfo.providerName} width={132} height={30} className={styles.rateInfoLogo} /> : <p className={styles.rateInfoProvider}>{rateInfo.providerName}</p>}

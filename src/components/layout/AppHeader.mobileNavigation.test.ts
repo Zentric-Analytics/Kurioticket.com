@@ -93,6 +93,40 @@ test("desktop product navigation remains independent of the mobile suppression p
   assert.doesNotMatch(desktopRail, /gap-0 md:hidden/);
 });
 
+
+test("mobile preference selectors open full-screen without unmounting the currency selector", () => {
+  const handlerStart = headerSource.indexOf("const handleMobileCountryCurrencyBeforeOpen");
+  const handlerEnd = headerSource.indexOf("const handleSignOut", handlerStart);
+  const currencyHandler = headerSource.slice(handlerStart, handlerEnd);
+
+  assert.match(currencyHandler, /setMobileAccountOpen\(false\)/);
+  assert.doesNotMatch(currencyHandler, /setMobileMenuOpen\(false\)/);
+
+  const languageStart = headerSource.indexOf('{languageOpen && typeof document !== "undefined"');
+  const languageEnd = headerSource.indexOf("{desktopPrimaryNavItems.length > 0", languageStart);
+  const languageDialog = headerSource.slice(languageStart, languageEnd);
+
+  assert.match(languageDialog, /fixed inset-0 z-\[1000\]/);
+  assert.match(languageDialog, /data-mobile-language-dialog/);
+  assert.match(languageDialog, /h-\[100dvh\] max-h-\[100dvh\] w-full max-w-full overflow-y-auto/);
+  assert.match(languageDialog, /md:h-auto md:max-h-\[88vh\]/);
+  assert.match(languageDialog, /onClick=\{closeLanguageDialog\}/);
+  assert.match(languageDialog, /<X size=\{18\} aria-hidden="true" \/>/);
+  assert.doesNotMatch(languageDialog, /fixed inset-x-0 bottom-0 z-50 max-h-\[88vh\]/);
+});
+
+
+test("mobile currency selector renders above the Hotel Results full-screen hamburger", () => {
+  const selectorSource = readFileSync(
+    new URL("../region/CountryCurrencySelector.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(headerSource, /fullscreenHotelMobileMenu && "max-sm:z-\[1100\]"/);
+  assert.match(selectorSource, /fixed inset-0 z-\[1200\][^"]*md:z-\[1000\]/);
+  assert.match(selectorSource, /relative z-\[1201\][^"]*md:z-\[1001\]/);
+});
+
 test("results navbar drawer uses pathname-aware product highlighting", () => {
   assert.match(headerSource, /data-mobile-results-navbar/);
   assert.match(

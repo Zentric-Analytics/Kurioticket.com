@@ -101,17 +101,12 @@ export function CarDealPicker({
   };
 
   return (
-    <section
+    <div
       data-car-deal-picker
-      data-car-deals-comparison
-      aria-label="Compare deals"
-      className="min-w-0 border-t border-[#CBD5E1] bg-white px-3 py-3 sm:px-4"
+      className={`min-w-0 ${compact ? "mt-1.5" : "mt-2"}`}
     >
-      <h3 className="mb-2 text-[13px] font-semibold leading-5 text-[#07133B] sm:text-sm">
-        Compare deals
-      </h3>
       <div
-        className="min-w-0 divide-y divide-[#E2E8F0] overflow-hidden rounded-xl border border-[#D8E1EC] bg-white"
+        className={`grid min-w-0 grid-cols-3 gap-y-3 ${compact ? "gap-x-2.5" : "gap-x-3"}`}
         role="list"
         aria-label="Car deal providers"
         data-car-deal-provider-offers
@@ -124,15 +119,17 @@ export function CarDealPicker({
             <div
               key={group.key}
               role="listitem"
-              className="grid min-h-12 min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 px-2.5 max-[359px]:gap-1.5 max-[359px]:px-2 sm:gap-4 sm:px-3"
+              className="min-w-0"
               data-car-deal-provider-offer
             >
-              <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-sm">
+              <div className={`flex min-w-0 items-center ${compact ? "gap-0.5" : "gap-1"}`}>
+                <span
+                  className={`${compact ? "h-3.5 w-3.5" : "h-4 w-4"} inline-flex shrink-0 items-center justify-center overflow-hidden`}
+                >
                   <ProviderMark group={group} compact={compact} />
                 </span>
                 <span
-                  className="min-w-0 truncate text-[11px] font-semibold leading-4 text-[#334155] sm:text-[13px]"
+                  className={`${compact ? "whitespace-nowrap text-[9px] leading-[11px] tracking-[-0.01em]" : "min-w-0 truncate text-[10px] leading-3"} font-semibold text-[#334155]`}
                   title={group.providerName}
                   data-car-deal-provider-name
                 >
@@ -141,12 +138,12 @@ export function CarDealPicker({
               </div>
 
               <p
-                className="min-w-0 whitespace-nowrap text-[12px] font-bold leading-4 tabular-nums text-[#07133B] sm:text-sm"
+                className={`${compact ? "mt-0.5 text-[11px] leading-[13px]" : "mt-1 text-xs leading-[14px]"} truncate font-bold tabular-nums text-[#07133B]`}
                 dir="ltr"
                 data-car-deal-provider-price
               >
                 {formatOfferPrice(offer)}
-                <span className="ml-0.5 text-[10px] font-medium text-[#64748B] sm:text-xs">/day</span>
+                <span className="ml-0.5 font-medium text-[#64748B]">/day</span>
               </p>
 
               {bookingHref ? (
@@ -156,26 +153,25 @@ export function CarDealPicker({
                   rel="noopener noreferrer"
                   aria-label={`View deal from ${group.providerName}`}
                   onClick={isolateProviderAction}
-                  className="inline-flex min-h-11 shrink-0 items-center justify-end gap-0.5 whitespace-nowrap text-[11px] font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 sm:text-[13px]"
+                  className={`${compact ? "mt-0.5 text-[10px] leading-[14px]" : "mt-1 text-[11px] leading-4"} inline-flex min-h-4 items-center gap-0.5 font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35`}
                   data-car-deal-provider-view-deal
                 >
                   View deal
-                  <ChevronRight size={compact ? 12 : 14} strokeWidth={2} aria-hidden="true" />
+                  <ChevronRight size={compact ? 11 : 12} strokeWidth={2} aria-hidden="true" />
                 </a>
               ) : (
                 <span
                   aria-disabled="true"
-                  className="inline-flex min-h-11 shrink-0 items-center justify-end gap-0.5 whitespace-nowrap text-[11px] font-semibold text-[#94A3B8] sm:text-[13px]"
+                  className={`${compact ? "mt-0.5 text-[9px] leading-[11px]" : "mt-1 text-[10px] leading-3"} inline-flex min-h-4 items-center font-semibold text-[#94A3B8]`}
                   data-car-deal-provider-view-deal-unavailable
                 >
                   View deal
-                  <ChevronRight size={compact ? 12 : 14} strokeWidth={2} aria-hidden="true" />
                 </span>
               )}
             </div>
           );
         })}
       </div>
-    </section>
+    </div>
   );
 }

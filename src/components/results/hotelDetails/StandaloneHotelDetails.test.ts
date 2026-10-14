@@ -88,6 +88,15 @@ test("mobile booking dock follows selection and hides when no rates exist", () =
   assert.match(mobileCss, /safe-area-inset-bottom/);
 });
 
+test("mobile Rate details preserves an already-sticky tab row while the modal is open", () => {
+  assert.match(mobile, /preserveStickyPage = false/);
+  assert.match(mobile, /compact && !preserveStickyPage \? acquireMobileResultsScrollLock\(\) : null/);
+  assert.match(mobile, /if \(!releaseScroll\) document\.body\.style\.overflow = "hidden"/);
+  assert.match(mobile, /<DetailsDialog title="Rate details" compact preserveStickyPage/);
+  assert.match(mobile, /\[compact, preserveStickyPage\]/);
+});
+
+
 test("native dialogs release scroll locks and restore focus on every close path", () => {
   for (const source of [desktop, mobile]) {
     assert.match(source, /dialog\?\.showModal\(\)/);

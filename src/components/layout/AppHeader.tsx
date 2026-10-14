@@ -1083,9 +1083,9 @@ export function AppHeader({
 
             {languageOpen && typeof document !== "undefined"
               ? createPortal(
-                  <>
+                  <div className="fixed inset-0 z-[1000] flex items-end justify-center md:items-start md:px-4 md:pt-[max(64px,6vh)]">
                     <div
-                      className="fixed inset-0 z-40 bg-slate-900/45"
+                      className="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px]"
                       onClick={closeLanguageDialog}
                     />
 
@@ -1095,140 +1095,145 @@ export function AppHeader({
                       role="dialog"
                       aria-modal="true"
                       aria-labelledby={languageTitleId}
-                      className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-auto rounded-none border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:inset-x-0 md:bottom-auto md:top-[max(64px,6vh)] md:mx-auto md:w-[min(980px,96vw)] md:rounded-3xl md:p-7"
+                      data-mobile-language-dialog
+                      className="relative z-[1001] h-[100dvh] max-h-[100dvh] w-full max-w-full overflow-y-auto overscroll-contain rounded-none bg-white text-slate-900 shadow-2xl [-webkit-overflow-scrolling:touch] md:h-auto md:max-h-[88vh] md:w-[min(980px,96vw)] md:rounded-3xl md:border md:border-slate-200 md:p-7"
                     >
-                      <div className="mb-5 flex items-start justify-between gap-4">
-                        <div>
-                          <p className="break-words text-xs font-black uppercase tracking-[0.2em] text-[#004BB8]">
-                            {t.globalLanguage}
-                          </p>
-                          <h2
-                            id={languageTitleId}
-                            className="mt-1 break-words text-xl font-black text-slate-950"
+                      <div className="shrink-0 border-b border-slate-200 px-5 pb-4 pt-5 md:mb-5 md:border-b-0 md:p-0">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="hidden break-words text-xs font-black uppercase tracking-[0.2em] text-[#004BB8] md:block">
+                              {t.globalLanguage}
+                            </p>
+                            <h2
+                              id={languageTitleId}
+                              className="break-words text-xl font-semibold tracking-tight text-slate-950 md:mt-1 md:font-black"
+                            >
+                              {t.websiteLanguageTitle}
+                            </h2>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={closeLanguageDialog}
+                            className="shrink-0 cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                            aria-label={t.closeLanguageSelector}
                           >
-                            {t.websiteLanguageTitle}
-                          </h2>
+                            <X size={18} aria-hidden="true" />
+                          </button>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={closeLanguageDialog}
-                          className="shrink-0 cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-                          aria-label={t.closeLanguageSelector}
+                        <label
+                          htmlFor={languageSearchId}
+                          className="mt-5 block text-sm font-medium text-slate-800 md:font-bold md:text-slate-900"
                         >
-                          <X size={18} aria-hidden="true" />
-                        </button>
+                          {t.languageSearchLabel}
+                        </label>
+
+                        <div className="mt-2 flex items-center gap-2 rounded-none border border-slate-300 bg-white px-3.5 py-3 transition-colors focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-100 md:mb-4 md:border-slate-200 md:px-3 md:py-2 md:focus-within:border-[#004BB8]/25 md:focus-within:ring-[#004BB8]/20">
+                          <Search
+                            size={17}
+                            className="shrink-0 text-slate-500"
+                            aria-hidden="true"
+                          />
+
+                          <input
+                            ref={languageSearchInputRef}
+                            id={languageSearchId}
+                            value={languageQuery}
+                            onChange={(event) => {
+                              setLanguageQuery(event.target.value);
+                              setLanguageStatusMessage("");
+                            }}
+                            placeholder={t.languageSearchPlaceholder}
+                            className="h-6 w-full min-w-0 border-0 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400 md:text-sm"
+                          />
+                        </div>
+
+                        {languageStatusMessage ? (
+                          <p
+                            className="mt-4 rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900 md:mb-4 md:mt-0"
+                            role="status"
+                          >
+                            {languageStatusMessage}
+                          </p>
+                        ) : null}
                       </div>
 
-                      <label
-                        htmlFor={languageSearchId}
-                        className="mb-2 block text-sm font-bold text-slate-900"
-                      >
-                        {t.languageSearchLabel}
-                      </label>
-
-                      <div className="mb-4 flex items-center gap-2 rounded-none border border-slate-200 px-3 py-2 focus-within:border-[#004BB8]/25 focus-within:ring-2 focus-within:ring-[#004BB8]/20">
-                        <Search
-                          size={16}
-                          className="text-slate-500"
-                          aria-hidden="true"
-                        />
-
-                        <input
-                          ref={languageSearchInputRef}
-                          id={languageSearchId}
-                          value={languageQuery}
-                          onChange={(event) => {
-                            setLanguageQuery(event.target.value);
-                            setLanguageStatusMessage("");
-                          }}
-                          placeholder={t.languageSearchPlaceholder}
-                          className="min-w-0 w-full border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
-                        />
-                      </div>
-
-                      {languageStatusMessage ? (
-                        <p
-                          className="mb-4 rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900"
-                          role="status"
+                      <div className="px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:p-0">
+                        <div
+                          role="radiogroup"
+                          aria-label={t.languageOptionsLabel}
+                          className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3"
                         >
-                          {languageStatusMessage}
-                        </p>
-                      ) : null}
+                          {filteredLanguages.map((option) => {
+                            const active = option.code === locale;
+                            const available = option.status === "available";
 
-                      <div
-                        role="radiogroup"
-                        aria-label={t.languageOptionsLabel}
-                        className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
-                      >
-                        {filteredLanguages.map((option) => {
-                          const active = option.code === locale;
-                          const available = option.status === "available";
+                            return (
+                              <button
+                                key={option.code}
+                                type="button"
+                                role="radio"
+                                aria-checked={active}
+                                aria-disabled={!available}
+                                aria-label={
+                                  available
+                                    ? t.selectLanguageOption.replace(
+                                        "{{language}}",
+                                        option.nativeLabel,
+                                      )
+                                    : t.languagePreparingAria.replace(
+                                        "{{language}}",
+                                        option.nativeLabel,
+                                      )
+                                }
+                                onClick={() => handleLanguageSelect(option)}
+                                className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 ${
+                                  active
+                                    ? "border-[#004BB8]/18 bg-[#004BB8]/6 ring-2 ring-[#004BB8]/8"
+                                    : available
+                                      ? "border-slate-200 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5"
+                                      : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300"
+                                }`}
+                              >
+                                <span className="flex min-w-0 items-start gap-2.5">
+                                  {renderFlag(
+                                    option.countryCode,
+                                    option.fallbackText,
+                                  )}
 
-                          return (
-                            <button
-                              key={option.code}
-                              type="button"
-                              role="radio"
-                              aria-checked={active}
-                              aria-disabled={!available}
-                              aria-label={
-                                available
-                                  ? t.selectLanguageOption.replace(
-                                      "{{language}}",
-                                      option.nativeLabel,
-                                    )
-                                  : t.languagePreparingAria.replace(
-                                      "{{language}}",
-                                      option.nativeLabel,
-                                    )
-                              }
-                              onClick={() => handleLanguageSelect(option)}
-                              className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 ${
-                                active
-                                  ? "border-[#004BB8]/18 bg-[#004BB8]/6 ring-2 ring-[#004BB8]/8"
-                                  : available
-                                    ? "border-slate-200 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5"
-                                    : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300"
-                              }`}
-                            >
-                              <span className="flex min-w-0 items-start gap-2.5">
-                                {renderFlag(
-                                  option.countryCode,
-                                  option.fallbackText,
-                                )}
-
-                                <span className="min-w-0">
-                                  <span
-                                    className="block truncate text-sm font-black text-slate-950"
-                                    dir={option.direction}
-                                  >
-                                    {option.nativeLabel}
-                                  </span>
-                                  <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
-                                    {getLanguageDescriptionLabel(option)}
-                                  </span>
-                                  {!available ? (
-                                    <span className="mt-1 inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-500">
-                                      {t.preparing}
+                                  <span className="min-w-0">
+                                    <span
+                                      className="block truncate text-sm font-black text-slate-950"
+                                      dir={option.direction}
+                                    >
+                                      {option.nativeLabel}
                                     </span>
-                                  ) : null}
+                                    <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
+                                      {getLanguageDescriptionLabel(option)}
+                                    </span>
+                                    {!available ? (
+                                      <span className="mt-1 inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-500">
+                                        {t.preparing}
+                                      </span>
+                                    ) : null}
+                                  </span>
                                 </span>
-                              </span>
 
-                              {active ? (
-                                <Check
-                                  size={16}
-                                  className="mt-0.5 shrink-0 text-[#004BB8]"
-                                  aria-hidden="true"
-                                />
-                              ) : null}
-                            </button>
-                          );
-                        })}
+                                {active ? (
+                                  <Check
+                                    size={16}
+                                    className="mt-0.5 shrink-0 text-[#004BB8]"
+                                    aria-hidden="true"
+                                  />
+                                ) : null}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </section>
-                  </>,
+                  </div>,
                   document.body,
                 )
               : null}
