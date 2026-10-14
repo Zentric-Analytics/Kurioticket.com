@@ -23,8 +23,9 @@ test("mobile results return uses client navigation to retain the in-memory searc
 test("standalone chooses independent mobile and desktop presentations with shared data", () => {
   assert.match(dispatcher, /useSyncExternalStore/);
   assert.match(dispatcher, /max-width: 1023px/);
-  assert.match(dispatcher, /mobile \? <MobileHotelDetails \{\.\.\.props\} \/> : <DesktopHotelDetails \{\.\.\.props\} \/>/);
+  assert.match(dispatcher, /return mobile \? <MobileHotelDetails \{\.\.\.props\} \/> : <DesktopHotelDetails \{\.\.\.props\} \/>/);
   assert.match(dispatcher, /removeEventListener\("change", callback\)/);
+  assert.doesNotMatch(dispatcher, /SupplierInformation|hotelSupplierFacts|Property information supplied by KAYAK|data-supplier-information/);
   assert.doesNotMatch(dispatcher, /<article|<aside|<h1/);
 });
 
@@ -160,6 +161,13 @@ test("desktop external Hotel View deal reserves a new tab before the async provi
   assert.match(continueOffer, /providerWindow && !providerWindow\.closed/);
   assert.match(continueOffer, /providerWindow\.close\(\)/);
   assert.doesNotMatch(continueOffer, /window\.location\.href/);
+});
+
+
+test("desktop Rate details keeps overflow usable without showing a scrollbar", () => {
+  assert.match(desktopStyles, /\.rateDialog \{[^}]*scrollbar-width: none;[^}]*-ms-overflow-style: none;/);
+  assert.match(desktopStyles, /\.rateDialog::\-webkit-scrollbar \{[^}]*width: 0;[^}]*height: 0;[^}]*display: none;/);
+  assert.match(desktopStyles, /\.dialog \{[^}]*overflow: auto;/);
 });
 
 
