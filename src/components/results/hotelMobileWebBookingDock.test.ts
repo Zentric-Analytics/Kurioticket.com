@@ -105,8 +105,11 @@ test("web Hotel provider action stays live-price gated and server-authoritative"
 });
 
 test("mobile Hotel inline rate actions fit narrow phones and content respects the safe area", () => {
-  assert.match(providerCard, /grid-cols-\[minmax\(0,1fr\)_auto_auto\]/);
-  assert.match(providerCard, /min-h-8 items-center justify-center whitespace-nowrap/);
+  assert.match(providerCard, /grid-cols-\[max-content_max-content_max-content\]/);
+  assert.match(providerCard, /justify-between gap-x-1/);
+  assert.match(providerCard, /max-\[349px\]:px-2/);
+  assert.match(providerCard, /min-h-8 items-center justify-center justify-self-end whitespace-nowrap/);
+  assert.match(providerCard, /max-\[349px\]:text-\[13px\]/);
   assert.match(providerCard, /text-\[16px\] font-semibold leading-5/);
   assert.match(providerCard, /onContinue\?\.\(offer\.id, event\.currentTarget\)/);
   assert.match(mobileStyles, /padding-bottom: max\(16px, env\(safe-area-inset-bottom\)\)/);
