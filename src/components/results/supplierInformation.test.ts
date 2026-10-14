@@ -18,13 +18,13 @@ test("car supplier facts survive normalization and JSON without transport creden
   assert.doesNotMatch(JSON.stringify(result), /DO_NOT_EXPOSE/);
   assert.ok(result.offers[0].suppliedFacts?.some(fact => fact.label === "payment Type"));
 });
-test("flight models retain all sanitized supplier attributes without altering fare conditions", () => {
+test("flight models keep raw sanitized facts internal without altering fare conditions", () => {
   const attributes = [{ label: "Leg 1, segment 1 · equipment Type Name", value: "Airbus A350" }, { label: "Airline policy (not included allowance)", value: "Additional checked bag fees apply" }];
   const result = kayakFlightCardModel({ id: "flight", title: "Flight", description: "Supplier", details: [], price: 100, currency: "USD", priceBasis: "per person", testUrl: click, attributes,
     flightLegs: [{ segments: [{ origin: "SFO", destination: "LOS", departure: "2026-11-18T10:00:00", arrival: "2026-11-19T10:00:00", airline: "Airline", flightNumber: "A1" }] }],
   });
-  assert.deepEqual(result?.providerDetails?.suppliedFacts, attributes);
-  assert.deepEqual(toPublicFlight(result!).providerDetails?.suppliedFacts, attributes);
+  assert.deepEqual(result?.rawProviderReference, { suppliedFacts: attributes });
+  assert.equal("suppliedFacts" in (toPublicFlight(result!).providerDetails ?? {}), false);
   assert.equal(result?.baggageInfo, "Baggage allowance not supplied by provider");
 });
 test("supplier text remains escaped and readable rather than inserted as HTML", async () => {

@@ -143,7 +143,6 @@ export type FlightOptionalService = FlightOptionalServiceScope & (
 /** Deliberately normalized provider-authored customer facts; never raw provider data. */
 export type FlightProviderDetails = {
   airlineBaggagePolicies?: FlightAirlineBaggagePolicy[];
-  suppliedFacts?: Array<{ label: string; value: string }>;
   offerOwner?: {
     name: string;
     iataCode?: string;

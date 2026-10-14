@@ -146,3 +146,33 @@ test("KAYAK sellers with different optional services do not share one fare choic
 
   assert.equal(choices.length, 2);
 });
+
+test("different normalized carrier policies never share one misleading KAYAK fare choice", async () => {
+  const data = {
+    ...baseFlightData(),
+    results: [{ id: "policies", legs: [{ id: "l" }], bookingOptions: [
+      { ...sharedOption, providerCode: "A" }, { ...sharedOption, providerCode: "B" },
+    ] }],
+  };
+  const normalized = normalizeSandboxOffers("flights", data).map(offer => kayakFlightCardModel(offer)!);
+  normalized[0].providerDetails!.airlineBaggagePolicies = [{ carrierName: "Carrier", carryOn: ["Up to 21 × 15 × 7 in"] }];
+  normalized[1].providerDetails!.airlineBaggagePolicies = [{ carrierName: "Carrier", carryOn: ["Up to 21 × 15 × 9 in"] }];
+  const details = await buildProviderAwareFlightDetails({ cachedSelected: normalized[0], cachedAlternatives: normalized, search, now: 1 });
+  assert.equal(details.status, "available");
+  if (details.status !== "available") throw new Error("expected available");
+  assert.equal(details.fareChoices.length, 2);
+  assert.deepEqual(details.fareChoices.map(f => f.offer.providerDetails?.airlineBaggagePolicies?.[0].carryOn), [["Up to 21 × 15 × 7 in"], ["Up to 21 × 15 × 9 in"]]);
+});
+
+test("different onboard features remain specific to their seller fare", async () => {
+  const data = { ...baseFlightData(), results: [{ id: "features", legs: [{ id: "l" }], bookingOptions: [
+    { ...sharedOption, providerCode: "A", segmentFares: sharedOption.segmentFares.map(fare => ({ ...fare, qualityItems: [{ code: "power", displayName: "USB outlet" }] })) },
+    { ...sharedOption, providerCode: "B", segmentFares: sharedOption.segmentFares.map(fare => ({ ...fare, qualityItems: [{ code: "powerNegative", displayName: "Power (some rows) & USB" }] })) },
+  ] }] };
+  const normalized = normalizeSandboxOffers("flights", data).map(offer => kayakFlightCardModel(offer)!);
+  const details = await buildProviderAwareFlightDetails({ cachedSelected: normalized[0], cachedAlternatives: normalized, search, now: 1 });
+  assert.equal(details.status, "available");
+  if (details.status !== "available") throw new Error("expected available");
+  assert.equal(details.fareChoices.length, 2);
+  assert.deepEqual(details.fareChoices.map(f => f.offer.legs?.[0].segments[0].cabinDetails?.[0].onboardFeatures?.[0].description), ["USB outlet", "Power (some rows) & USB"]);
+});

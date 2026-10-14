@@ -447,3 +447,19 @@ test("production backend bounds statements to 50 rows in one transaction per sea
 function cloneLegs(legs: FlightLeg[]) {
   return structuredClone(legs);
 }
+
+test("legacy raw supplier facts and internal diagnostics never cross either Flight public projection", () => {
+  const internal = flight("legacy", 15000);
+  internal.providerDetails = {
+    price: { totalAmount: 309, totalCurrency: "USD" },
+    suppliedFacts: [{ label: "segment Id", value: "PRIVATE_SEGMENT_ID" }],
+    futureUnmapped: { secretToken: "DO_NOT_EXPOSE" },
+  } as typeof internal.providerDetails;
+  internal.rawProviderReference = { unmappedFacts: [{ label: "Future flag", value: "Engineering fact" }] };
+  const before = structuredClone(internal);
+  for (const projected of [toPublicFlight(internal), toFlightDetailsOffer(internal)]) {
+    assert.deepEqual(projected.providerDetails, { price: { totalAmount: 309, totalCurrency: "USD" } });
+    assert.doesNotMatch(JSON.stringify(projected), /PRIVATE_SEGMENT_ID|DO_NOT_EXPOSE|Engineering fact|suppliedFacts|futureUnmapped/);
+  }
+  assert.deepEqual(internal, before);
+});

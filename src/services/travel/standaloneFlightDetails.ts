@@ -179,6 +179,7 @@ function kayakMaterialKey(offer: NormalizedFlightResult) {
     cabinClass: canonical(offer.cabinClass),
     materialTerms,
     segmentCabinDetails,
+    airlineBaggagePolicies: offer.providerDetails?.airlineBaggagePolicies,
     conditions,
     optionalServices,
   });

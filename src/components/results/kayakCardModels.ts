@@ -99,7 +99,6 @@ export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<strin
     ...legs[0], legs, cabinClass:offer.flightCabin || "Not supplied", fareBrandName:offer.flightFareFamily,
     fareTerms: kayakFareTerms(offer),
     providerDetails: {
-      ...(offer.attributes?.length ? { suppliedFacts: offer.attributes.map(fact => ({ ...fact })) } : {}),
       price:{totalAmount:offer.price * multiplier,totalCurrency:offer.currency,
         ...(offer.flightPrice?.baseAmount !== undefined && offer.flightPrice.baseCurrency ? {baseAmount:offer.flightPrice.baseAmount * multiplier,baseCurrency:offer.flightPrice.baseCurrency} : {}),
         ...(offer.flightPrice?.taxAmount !== undefined && offer.flightPrice.taxCurrency ? {taxAmount:offer.flightPrice.taxAmount * multiplier,taxCurrency:offer.flightPrice.taxCurrency} : {}),
@@ -108,7 +107,10 @@ export function kayakFlightCardModel(offer: SandboxOffer, criteria: Record<strin
       ...(offer.flightConditions?.length ? {conditions:offer.flightConditions} : {}),
       ...(offer.flightOptionalServices?.length ? {optionalServices:offer.flightOptionalServices} : {}),
     },
-    ...(offer.flightUnmappedFacts?.length ? {rawProviderReference:{unmappedFacts:offer.flightUnmappedFacts}} : {}),
+    ...(offer.attributes?.length || offer.flightUnmappedFacts?.length ? {rawProviderReference:{
+      ...(offer.attributes?.length ? {suppliedFacts:offer.attributes.map(fact => ({...fact}))} : {}),
+      ...(offer.flightUnmappedFacts?.length ? {unmappedFacts:offer.flightUnmappedFacts} : {}),
+    }} : {}),
     baggageInfo:offer.flightCarryOnIncluded === true ? "Carry-on included" : offer.flightCarryOnIncluded === false ? "See supplied baggage details" : "Baggage allowance not supplied by provider",
     refundInfo:"Not supplied by provider", price:offer.price * (offer.priceBasis === "per person" ? travelers : 1), currency:offer.currency,
     bookingUrl:offer.testUrl, partnerRedirectUrl:offer.testUrl, providerOfferId:offer.id,
