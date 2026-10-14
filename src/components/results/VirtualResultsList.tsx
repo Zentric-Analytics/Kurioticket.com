@@ -30,7 +30,7 @@ export function VirtualResultsList<T>({ items, itemKey, renderItem, estimateHeig
   items: readonly T[];
   itemKey: (item: T) => string;
   renderItem: (item: T, index: number) => ReactNode;
-  estimateHeight?: number;
+  estimateHeight?: number | ((item: T, index: number) => number);
   label: string;
   rowClassName?: string;
 }) {
@@ -43,13 +43,17 @@ export function VirtualResultsList<T>({ items, itemKey, renderItem, estimateHeig
   const measurementKey = useMemo(() => `${label}:${width}:${Array.from(indexByKey.keys()).join("|")}`, [indexByKey, label, width]);
   const focusedIndex = focusedKey === null ? undefined : indexByKey.get(focusedKey);
   const getItemKey = useCallback((index: number) => itemKey(items[index]), [items, itemKey]);
+  const estimateItemSize = useCallback(
+    (index: number) => typeof estimateHeight === "number" ? estimateHeight : estimateHeight(items[index], index),
+    [estimateHeight, items],
+  );
   const rangeExtractor = useCallback((range: Parameters<typeof defaultRangeExtractor>[0]) => {
     const indices = defaultRangeExtractor(range);
     if (focusedIndex !== undefined && !indices.includes(focusedIndex)) indices.push(focusedIndex);
     return indices.sort((a, b) => a - b);
   }, [focusedIndex]);
   const virtualizer = useWindowVirtualizer({
-    count: items.length, getItemKey, estimateSize: () => estimateHeight,
+    count: items.length, getItemKey, estimateSize: estimateItemSize,
     overscan: 4, scrollMargin, rangeExtractor,
     initialRect: { width: 1200, height: 900 },
     initialMeasurementsCache: measurements.get(measurementKey),
