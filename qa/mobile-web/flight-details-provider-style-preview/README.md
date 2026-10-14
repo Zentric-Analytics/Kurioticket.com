@@ -1,6 +1,6 @@
 # Mobile provider-card style parity
 
-Flight Compare deals now follows the actual mobile Hotel provider-card styling. It retains its real provider/prices, Trip total label, blue selected outline and booking/selection handlers. No information icon is added, as requested.
+Flight Compare deals now follows the actual mobile Hotel provider-card styling. It retains its real provider/prices, Trip total label, light-gray outline in every selection state and booking/selection handlers. No information icon is added, as requested.
 
 | Property | Matched styling |
 | --- | --- |
@@ -21,7 +21,7 @@ Latest dev inspected/merged safely: `15fcdcf81b3ac544398c7c0d62f31947b56b6429`. 
 
 Validation: 62 Details and 6 provider/identity tests pass; changed-file lint, typecheck and diff checks pass. The parity test reads actual Hotel classes, and the real components are rendered together in an isolated preview. Chromium at 320/390/430px verifies matching computed card size, padding, border thickness/radius, shadow, text styles, button dimensions and relative provider/price/action positions. No horizontal overflow occurs. Stress fixtures verify long provider names, large naira prices, keyboard selection, enabled mocked provider handoff and existing navbar Back/Save/Share. Alignment checks use the measured Hotel baseline geometry instead of the previous centered-row target.
 
-Hotel source/UI, hero, itinerary/fare cards, other fare-information panels, Results, native and desktop styling are unchanged. The identity-mark default and broken-logo fallback are covered. Device Safari and live checkout were not tested. The preview-only comparison route and instrumentation workaround are confined to an isolated non-git copy; no production instrumentation changes are included.
+Hotel source/UI, hero, itinerary/fare cards, other fare-information panels, Results, native and desktop styling are unchanged. The identity-mark default and broken-logo fallback are covered. A follow-up removes the blue selected outline: all provider cards now use the same #D9E2E8 border as Hotel, while selection state and booking behavior remain intact. The full card class and computed border color are included in parity checks. Device Safari and live checkout were not tested. The preview-only comparison route and instrumentation workaround are confined to an isolated non-git copy; no production instrumentation changes are included.
 
 In the screenshots the Hotel card is above the Flight card:
 

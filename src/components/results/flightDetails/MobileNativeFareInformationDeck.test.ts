@@ -48,8 +48,8 @@ test("mobile Compare deals keeps resilient provider identity, selection, price h
   assert.doesNotMatch(deck, /shadow-\[/);
   assert.match(deck, /text-\[#1a1a1a\] tabular-nums/);
   assert.match(deck, /text-\[#595959\]/);
-  assert.match(deck, /rounded-xl border bg-white/);
-  assert.match(deck, /border-\[#075EE8\]/);
+  assert.match(deck, /rounded-xl border border-\[#D9E2E8\] bg-white/);
+  assert.match(deck, /border-\[#D9E2E8\]/);
   assert.match(deck, /h-\[3px\][^"\n]*bg-\[#075EE8\]/);
   assert.doesNotMatch(deck, /#0754F7/);
   assert.match(deck, /data-mobile-flight-provider-logo/);
@@ -81,9 +81,9 @@ test("mobile Flight provider card follows the Hotel card styling", async () => {
   const mobileHotel = hotel.slice(hotel.indexOf("export function MobileProviderOffer"), hotel.indexOf("export function HotelPriceComparisonSection"));
   const card = mobileHotel.match(/<article className="([^"]+)"/)?.[1];
   assert.ok(card);
-  const flightCard = deck.match(/className=\{`(grid min-h-\[76px\][^$]+)\$\{/)?.[1];
+  const flightCard = deck.match(/className="(grid min-h-\[76px\][^"]+)"/)?.[1];
   assert.ok(flightCard);
-  for (const token of card.split(" ").filter(token => token !== "border-[#D9E2E8]")) assert.ok(flightCard.includes(token), token);
+  assert.equal(flightCard, card);
   const price = mobileHotel.match(/<strong className="([^"]+)"/)?.[1];
   const action = mobileHotel.match(/<button type="button" className="([^"]+)" disabled=/)?.[1];
   assert.ok(price && action);

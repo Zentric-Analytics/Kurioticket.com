@@ -191,11 +191,7 @@ function DealsSurface({
             data-mobile-flight-deal-card
             data-selected={selected || undefined}
             data-provider-handoff-unavailable={!canContinue || undefined}
-            className={`grid min-h-[76px] min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-baseline content-center gap-1 rounded-xl border bg-white px-3 py-3 ${
-              selected
-                ? "border-[#075EE8]"
-                : "border-[#D9E2E8]"
-            }`}
+            className="grid min-h-[76px] min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-baseline content-center gap-1 rounded-xl border border-[#D9E2E8] bg-white px-3 py-3"
           >
             <button
               type="button"
