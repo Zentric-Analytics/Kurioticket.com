@@ -55,7 +55,7 @@ export function NativeCarResultOfferPicker({
           <ProviderMark name={providerName} logoUrl={logoUrl} />
           <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.providerName, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{providerName}</Text>
           </View>
-          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={[styles.price, { color: theme.textPrimary }]}>{money(displayed.currency, displayed.pricePerDay)}<Text style={[styles.perDay, { color: theme.textSecondary }]}>/day</Text></Text>
+          <Text numberOfLines={1} ellipsizeMode="tail" adjustsFontSizeToFit minimumFontScale={0.78} style={[styles.price, { color: theme.textPrimary }]}>{money(displayed.currency, displayed.pricePerDay)}<Text style={[styles.perDay, { color: theme.textSecondary }]}>/day</Text></Text>
         </View>
         <Pressable
           accessibilityRole={bookingUrl ? "link" : "button"}
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   fallbackMark: { width: 14, height: 14, borderRadius: 3, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center" },
   fallbackLetter: { fontSize: 10, fontWeight: "700", color: "#07133B", fontFamily: appFonts.bold },
   providerName: { flex: 1, minWidth: 0, fontSize: 9, lineHeight: 12, fontWeight: "600", fontFamily: appFonts.semibold },
-  price: { flexShrink: 0, fontSize: 11, lineHeight: 14, fontWeight: "700", fontFamily: appFonts.bold, fontVariant: ["tabular-nums"] },
+  price: { flexShrink: 1, minWidth: 0, fontSize: 11, lineHeight: 14, fontWeight: "700", fontFamily: appFonts.bold, fontVariant: ["tabular-nums"] },
   perDay: { fontSize: 9, lineHeight: 12, fontWeight: "500", fontFamily: appFonts.medium },
   action: { minHeight: 18, flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 2 },
   link: { fontSize: 9, lineHeight: 13, fontWeight: "600", fontFamily: appFonts.semibold },
