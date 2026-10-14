@@ -151,7 +151,7 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.match(picker, /<Modal/);
   assert.match(picker, /onRequestClose=\{\(\) => setSelectedKey\(null\)\}/);
   assert.match(picker, /accessibilityViewIsModal/);
-  assert.match(picker, /choices\.length > 2/);
+  assert.match(picker, /choices\.length > 5/);
   assert.doesNotMatch(picker, /Compare deals/);
   assert.match(card, /<NativeCarResultOfferPicker result=\{result\}/);
   assert.match(card, /disabled=\{!primaryBookingUrl\}/);
