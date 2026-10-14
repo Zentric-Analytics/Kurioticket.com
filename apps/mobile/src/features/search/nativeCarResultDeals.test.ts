@@ -90,6 +90,25 @@ test("main View deal opens only a genuine provider action; never a Cars details 
   assert.equal(nativeCarPrimaryBookingUrl(result), "https://seller.example/offer");
 });
 
+test("native Cars balances the category label and positions specifications below free cancellation", () => {
+  const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
+  const top = card.slice(card.indexOf("<View style={c.topSection}>"), card.indexOf("<View style={[c.lowerBand"));
+  const lower = card.slice(card.indexOf("<View style={[c.lowerBand"), card.indexOf("  </View>;\n}"));
+
+  assert.match(card, /category:\{marginTop:5,fontSize:10/);
+  assert.match(top, /offer\?\.freeCancellation \? <View style=\{c\.freeCancellation\}/);
+  assert.match(top, /hasPrimarySpecs \|\| hasSecondarySpecs \? <View style=\{c\.specRow\}/);
+  assert.match(top, /accessibilityLabel="Vehicle specifications"/);
+  assert.ok(top.indexOf("accessibilityLabel=\"Vehicle specifications\"") > top.indexOf("Free cancellation"));
+  assert.ok(top.indexOf("accessibilityLabel=\"Vehicle specifications\"") > top.indexOf("result.pickupLocation"));
+  assert.match(top, /specLabels\.passengers[\s\S]*specLabels\.transmission[\s\S]*specLabels\.doors[\s\S]*specLabels\.bags/);
+  assert.match(card, /specRow:\{minWidth:0,flexDirection:"row",alignItems:"flex-start",gap:6,marginTop:2/);
+  assert.match(card, /specColumn:\{flex:1,minWidth:0,gap:6,paddingRight:1/);
+  assert.doesNotMatch(lower, /<View style=\{c\.specRow\}>/);
+  assert.match(lower, /<NativeCarResultOfferPicker result=\{result\}/);
+  assert.match(lower, /<View style=\{c\.commerceColumn\}>/);
+});
+
 test("native inline provider card keeps logos, individual prices and disabled unavailable actions", () => {
   const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
   const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");

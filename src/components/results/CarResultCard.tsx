@@ -417,12 +417,12 @@ export function CarResultCard({
                         ) : null}
                       </h2>
                     )}
-                    {car.categoryLabel ? <p className="mt-0.5 truncate text-[10px] font-bold uppercase leading-[15px] tracking-[0.09em] text-[#004BB8]">{car.categoryLabel}</p> : null}
+                    {car.categoryLabel ? <p data-car-card-mobile-category className="mt-1.5 truncate text-[10px] font-bold uppercase leading-[15px] tracking-[0.09em] text-[#004BB8]">{car.categoryLabel}</p> : null}
                   </div>
                 </div>
                 {mobileCardActions}
               </header>
-              <p className="mt-1.5 flex min-w-0 items-start gap-1 text-[11px] font-medium leading-[15px] text-[#536B92]">
+              <p data-car-card-mobile-location className="mt-1 flex min-w-0 items-start gap-1 text-[11px] font-medium leading-[15px] text-[#536B92]">
                 <MapPin
                   size={13}
                   className="mt-px shrink-0 text-[#07133B]"
@@ -431,11 +431,31 @@ export function CarResultCard({
                 <span className="min-w-0">{car.pickupLocation}</span>
               </p>
               {offer.freeCancellation && (
-                <span className="mt-1.5 inline-flex max-w-full items-center gap-1 text-[11px] font-semibold leading-[15px] text-black">
+                <span data-car-card-mobile-cancellation className="mt-1.5 inline-flex max-w-full items-center gap-1 text-[11px] font-semibold leading-[15px] text-black">
                   <ShieldCheck size={13} className="shrink-0" aria-hidden="true" />
                   <span className="min-w-0">Free cancellation</span>
                 </span>
               )}
+              {mobileSpecColumns.some((column) => column.length > 0) ? (
+                <div
+                  data-car-card-mobile-specs
+                  aria-label="Vehicle specifications"
+                  className="mt-2 min-w-0 text-[11px] font-medium leading-[14px] text-[#536B92]"
+                >
+                  <div className="grid min-w-0 grid-cols-2 gap-x-2">
+                    {mobileSpecColumns.map((column, columnIndex) => (
+                      <ul key={columnIndex} className="min-w-0 space-y-1.5">
+                        {column.map(([Icon, label]) => (
+                          <li key={label} className="flex min-w-0 items-start gap-1">
+                            <Icon size={14} className="mt-px shrink-0 text-slate-500" aria-hidden="true" />
+                            <span className="min-w-0 break-words">{label}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -444,21 +464,9 @@ export function CarResultCard({
             className="flex min-w-0 items-stretch border-t border-[#CBD5E1] bg-white"
           >
             <div
-              data-car-card-mobile-specs
-              className="min-w-0 flex-[2.1] px-2 py-2.5 text-[11px] font-medium leading-[14px] text-[#536B92]"
+              data-car-card-mobile-offers
+              className="min-w-0 flex-[2.1] px-2 py-2.5"
             >
-              <div className="grid grid-cols-2 gap-x-1">
-                {mobileSpecColumns.map((column, columnIndex) => (
-                  <ul key={columnIndex} className="min-w-0 space-y-2">
-                    {column.map(([Icon, label]) => (
-                      <li key={label} className="flex min-w-0 items-start gap-1">
-                        <Icon size={14} className="mt-px shrink-0 text-slate-500" aria-hidden="true" />
-                        <span className="min-w-0 break-words">{label}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ))}
-              </div>
               {!guidedPlanning ? (
                 <CarDealPicker
                   car={car}

@@ -50,7 +50,7 @@ test("standalone mobile uses a marked 40/60 image and information row", () => {
   assert.doesNotMatch(main, /col-span-2/);
 });
 
-test("mobile identity and exactly four readable primary specs live beside the image", () => {
+test("mobile identity and four spec slots sit below cancellation beside the image", () => {
   const main = between(
     "data-car-card-mobile-main",
     "data-car-card-mobile-lower-band",
@@ -61,12 +61,20 @@ test("mobile identity and exactly four readable primary specs live beside the im
   assert.match(main, /<MapPin/);
   assert.match(main, /\{car\.pickupLocation\}/);
   assert.doesNotMatch(main, /formatCarPickupType\(car\.pickupType\)/);
+  assert.match(main, /data-car-card-mobile-cancellation/);
+  assert.match(main, /data-car-card-mobile-specs/);
+  assert.match(main, /grid min-w-0 grid-cols-2 gap-x-2/);
+  assert.ok(
+    main.indexOf("data-car-card-mobile-specs") > main.indexOf("data-car-card-mobile-cancellation"),
+    "vehicle specs must follow cancellation in the right-hand information panel",
+  );
+  assert.match(main, /mobileSpecColumns\.map/);
   const lowerBand = between(
     "data-car-card-mobile-lower-band",
     'className={`${guidedPlanning ? "grid',
   );
-  assert.match(lowerBand, /data-car-card-mobile-specs/);
-  assert.match(lowerBand, /grid-cols-2/);
+  assert.match(lowerBand, /data-car-card-mobile-offers/);
+  assert.doesNotMatch(lowerBand, /data-car-card-mobile-specs|mobileSpecColumns\.map/);
   assert.match(source, /rounded-\[13px\][^"]*md:rounded-2xl/);
   assert.match(
     source,
@@ -84,7 +92,7 @@ test("mobile conversion strip is full width, divided once, and retains accessibl
   assert.match(conversion, /dir="ltr"/);
   assert.match(conversion, /mobileStandaloneViewDealClassName/);
   assert.match(source, /const mobileStandaloneViewDealClassName =\s*"inline-flex min-h-9/);
-  assert.match(conversion, /data-car-card-mobile-specs[\s\S]*flex-\[2\.1\]/);
+  assert.match(conversion, /data-car-card-mobile-offers[\s\S]*flex-\[2\.1\]/);
   assert.match(conversion, /data-car-card-mobile-pricing/);
   assert.match(conversion, /flex-\[1\.25\][^"]*items-end[^"]*justify-center[^"]*px-2\.5[^"]*py-2/);
   assert.match(conversion, /focus-visible:ring-2/);
