@@ -712,7 +712,6 @@ export function AppHeader({
     setLanguageOpen(false);
     setAccountOpen(false);
     setMobileAccountOpen(false);
-    setMobileMenuOpen(false);
   };
 
   const handleSignOut = async () => {
