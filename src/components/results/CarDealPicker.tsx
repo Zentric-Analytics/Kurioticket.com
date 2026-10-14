@@ -103,10 +103,10 @@ export function CarDealPicker({
   return (
     <div
       data-car-deal-picker
-      className={`min-w-0 ${compact ? "mt-1.5" : "mt-2"}`}
+      className={`min-w-0 ${compact ? "mt-1" : "mt-1.5"}`}
     >
       <div
-        className={`grid min-w-0 grid-cols-3 gap-y-3 ${compact ? "gap-x-2.5" : "gap-x-3"}`}
+        className={`min-w-0 ${compact ? "space-y-0" : "space-y-0.5"}`}
         role="list"
         aria-label="Car deal providers"
         data-car-deal-provider-offers
@@ -119,7 +119,7 @@ export function CarDealPicker({
             <div
               key={group.key}
               role="listitem"
-              className="min-w-0"
+              className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center ${compact ? "min-h-[18px] gap-x-1" : "min-h-5 gap-x-2"}`}
               data-car-deal-provider-offer
             >
               <div className={`flex min-w-0 items-center ${compact ? "gap-0.5" : "gap-1"}`}>
@@ -129,7 +129,7 @@ export function CarDealPicker({
                   <ProviderMark group={group} compact={compact} />
                 </span>
                 <span
-                  className={`${compact ? "whitespace-nowrap text-[9px] leading-[11px] tracking-[-0.01em]" : "min-w-0 truncate text-[10px] leading-3"} font-semibold text-[#334155]`}
+                  className={`${compact ? "text-[9px] leading-[11px] tracking-[-0.01em]" : "text-[10px] leading-3"} min-w-0 truncate whitespace-nowrap font-semibold text-[#334155]`}
                   title={group.providerName}
                   data-car-deal-provider-name
                 >
@@ -138,7 +138,7 @@ export function CarDealPicker({
               </div>
 
               <p
-                className={`${compact ? "mt-0.5 text-[11px] leading-[13px]" : "mt-1 text-xs leading-[14px]"} truncate font-bold tabular-nums text-[#07133B]`}
+                className={`${compact ? "text-[11px] leading-[13px]" : "text-xs leading-[14px]"} shrink-0 whitespace-nowrap font-bold tabular-nums text-[#07133B]`}
                 dir="ltr"
                 data-car-deal-provider-price
               >
@@ -153,7 +153,7 @@ export function CarDealPicker({
                   rel="noopener noreferrer"
                   aria-label={`View deal from ${group.providerName}`}
                   onClick={isolateProviderAction}
-                  className={`${compact ? "mt-0.5 text-[10px] leading-[14px]" : "mt-1 text-[11px] leading-4"} inline-flex min-h-4 items-center gap-0.5 font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35`}
+                  className={`${compact ? "text-[10px] leading-[14px]" : "text-[11px] leading-4"} inline-flex min-h-4 shrink-0 items-center gap-0.5 whitespace-nowrap font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35`}
                   data-car-deal-provider-view-deal
                 >
                   View deal
@@ -162,7 +162,7 @@ export function CarDealPicker({
               ) : (
                 <span
                   aria-disabled="true"
-                  className={`${compact ? "mt-0.5 text-[9px] leading-[11px]" : "mt-1 text-[10px] leading-3"} inline-flex min-h-4 items-center font-semibold text-[#94A3B8]`}
+                  className={`${compact ? "text-[9px] leading-[11px]" : "text-[10px] leading-3"} inline-flex min-h-4 shrink-0 items-center whitespace-nowrap font-semibold text-[#94A3B8]`}
                   data-car-deal-provider-view-deal-unavailable
                 >
                   View deal
