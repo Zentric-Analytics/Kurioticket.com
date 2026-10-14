@@ -32,9 +32,7 @@ test("mobile Cars card matches the Hotels white information area without changin
   assert.match(mobile, /data-car-card-mobile-lower-band\s+className="[^"]*border-t border-\[#CBD5E1\] bg-white"/);
   assert.doesNotMatch(mobile, /bg-\[#E7EBF1\]/);
   assert.match(source, /desktopSurfaceParity \? "md:bg-\[#E7EBF1\]" : "md:bg-white"/);
-  assert.doesNotMatch(mobile, /<CarDealPicker/);
-  assert.match(source, /<CarDealPicker/);
-  assert.ok(source.indexOf("<CarDealPicker") > source.indexOf('data-region="pricing"'));
+  assert.match(mobile, /<CarDealPicker/);
   assert.match(mobile, /dailyDisplayPrice\.formatted/);
 });
 

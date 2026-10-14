@@ -2929,7 +2929,7 @@ export function CarsResultsExperience({
                       "cars-filter-results-reveal",
                   )}
                 >
-                  <VirtualResultsList items={visibleResults} itemKey={resultIdKey} label="Car results" rowClassName="pb-3.5 sm:pb-4" estimateHeight={car => guidedPlanning ? 360 : Math.max(360, 235 + car.offers.filter(offer => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0 && Number.isFinite(offer.pricePerDay) && offer.pricePerDay >= 0).length * 41)} renderItem={car => (
+                  <VirtualResultsList items={visibleResults} itemKey={resultIdKey} label="Car results" rowClassName="pb-3.5 sm:pb-4" estimateHeight={360} renderItem={car => (
                     <CarResultCard
                       key={car.id}
                       car={car}
