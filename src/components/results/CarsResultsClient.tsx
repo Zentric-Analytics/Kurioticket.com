@@ -77,6 +77,18 @@ import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 
 type CarsFilterTransitionPhase = "idle" | "covering" | "revealing";
+/** Reserve proportional room before a variable-height standalone card is measured.
+ * The virtualizer still measures the rendered card, so these are only estimates.
+ */
+const estimateStandaloneCarRowHeight = (car: NormalizedCarResult, viewportWidth: number) => {
+  const offers = car.offers.filter(
+    (offer) =>
+      Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0 &&
+      Number.isFinite(offer.pricePerDay) && offer.pricePerDay >= 0,
+  ).length;
+  return (viewportWidth < 640 ? 318 : 292) + offers * 48;
+};
+
 const CARS_FILTER_MIN_BUSY_MS = 220;
 const CARS_FILTER_REVEAL_MS = 160;
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
@@ -2929,7 +2941,7 @@ export function CarsResultsExperience({
                       "cars-filter-results-reveal",
                   )}
                 >
-                  <VirtualResultsList items={visibleResults} itemKey={resultIdKey} label="Car results" rowClassName="pb-3.5 sm:pb-4" estimateHeight={360} renderItem={car => (
+                  <VirtualResultsList items={visibleResults} itemKey={resultIdKey} label="Car results" rowClassName="pb-3.5 sm:pb-4" estimateHeight={360} estimateItemSize={guidedPlanning ? undefined : estimateStandaloneCarRowHeight} renderItem={car => (
                     <CarResultCard
                       key={car.id}
                       car={car}
