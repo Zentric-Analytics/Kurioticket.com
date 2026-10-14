@@ -17,5 +17,4 @@
 .total strong { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .pointer { position: absolute; width: 10px; height: 10px; background: white; transform: rotate(45deg); }
 .left { left: -6px; margin-top: -5px; border-left: 1px solid #e1e6eb; border-bottom: 1px solid #e1e6eb; }
-.top { top: -6px; margin-left: -5px; border-left: 1px solid #e1e6eb; border-top: 1px solid #e1e6eb; }
-.bottom { bottom: -6px; margin-left: -5px; border-right: 1px solid #e1e6eb; border-bottom: 1px solid #e1e6eb; }
+.right { right: -6px; margin-top: -5px; border-right: 1px solid #e1e6eb; border-top: 1px solid #e1e6eb; }
