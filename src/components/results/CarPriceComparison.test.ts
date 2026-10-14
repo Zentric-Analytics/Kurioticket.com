@@ -35,9 +35,9 @@ test("provider offers show logo, name, per-day price and a direct provider View 
   assert.match(picker, /group\.logoUrl/);
   assert.match(picker, /title=\{group\.providerName\}/);
   assert.match(picker, /data-car-deal-provider-name/);
-  assert.match(picker, /text-\\[10px\\] font-semibold leading-\\[14px\\]/);
-  assert.match(picker, /items-center gap-1\\.5/);
-  assert.match(picker, /grid-cols-\\[minmax\\(0,1fr\\)_auto_auto\\]/);
+  assert.ok(picker.includes("text-[10px] font-semibold leading-[14px]"));
+  assert.ok(picker.includes("items-center gap-1.5"));
+  assert.ok(picker.includes("grid-cols-[minmax(0,1fr)_auto_auto]"));
   assert.match(picker, /divide-y/);
   assert.match(picker, /const offer = group\.primaryOffer/);
   assert.match(picker, /amount: offer\.pricePerDay/);
@@ -61,7 +61,7 @@ test("provider View deal validates its own URL and stays isolated from main offe
 });
 
 test("inline provider offers do not retain the old comparison overlays", () => {
-  assert.match(picker, /grid min-h-10 min-w-0 grid-cols-\\[minmax\\(0,1fr\\)_auto_auto\\]/);
+  assert.ok(picker.includes("grid min-h-10 min-w-0 grid-cols-[minmax(0,1fr)_auto_auto]"));
   assert.doesNotMatch(picker, /grid-cols-3/);
   assert.doesNotMatch(
     picker,
