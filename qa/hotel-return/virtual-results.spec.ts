@@ -195,7 +195,7 @@ test("Cars single provider bars match Hotel-style blue actions and nearby info o
     const firstRateButton = rows.first().locator("[data-car-rate-info]");
     await expect(firstRateButton.locator("svg")).toBeVisible();
     await firstRateButton.click();
-    await expect(page.locator("[data-car-rate-dialog]")).toBeVisible();
+    await expect(page.locator("[data-car-rate-dialog][open]")).toBeVisible();
     await page.getByRole("button", { name: "Close rate details" }).click();
     await toggle.click();
     await expect(rows.filter({ visible: true })).toHaveCount(7);
