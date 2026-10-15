@@ -244,7 +244,7 @@ test("desktop standalone keeps Best value above the shared action row and pricin
   );
   assert.match(
     pricing,
-    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-\[#CBD5E1\] lg:pb-3 lg:text-right"/,
+    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t-0 lg:border-\[#E2E8F0\] lg:pb-2 lg:text-right"/,
   );
   assert.match(
     pricing,
@@ -256,7 +256,7 @@ test("desktop standalone keeps Best value above the shared action row and pricin
   );
 });
 
-test("standalone desktop uses only the approved subtle T divider", () => {
+test("standalone desktop keeps its vertical price divider but removes the gap before amenities", () => {
   const desktop = source.slice(source.indexOf('data-region="image"'));
   const heading = desktop.slice(
     desktop.indexOf('data-region="heading"'),
@@ -270,7 +270,7 @@ test("standalone desktop uses only the approved subtle T divider", () => {
 
   assert.match(
     desktop,
-    /data-region="image"[\s\S]*?\$\{!guidedPlanning \? "lg:border-e-0" : ""\}/,
+    /data-region="image"[\s\S]*?\$\{!guidedPlanning \? "lg:border-e-0 lg:items-center" : ""\}/,
   );
   assert.doesNotMatch(
     heading,
@@ -278,11 +278,11 @@ test("standalone desktop uses only the approved subtle T divider", () => {
   );
   assert.match(
     details,
-    /\$\{!guidedPlanning \? "lg:border-t lg:border-\[#CBD5E1\]" : ""\}/,
+    /\$\{!guidedPlanning \? "lg:border-t-0 lg:pb-2 lg:pt-2" : ""\}/,
   );
   assert.match(
     pricing,
-    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-\[#CBD5E1\] lg:pb-3 lg:text-right"/,
+    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t-0 lg:border-\[#E2E8F0\] lg:pb-2 lg:text-right"/,
   );
 });
 
@@ -576,7 +576,7 @@ test("standalone desktop pricing is anchored to the card bottom-right while guid
 
   assert.match(
     desktop,
-    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-\[#CBD5E1\] lg:pb-3 lg:text-right" : "lg:row-span-2 lg:row-start-1 lg:items-center lg:justify-center lg:border-s lg:border-t-0 lg:text-center"/,
+    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t-0 lg:border-\[#E2E8F0\] lg:pb-2 lg:text-right" : "lg:row-span-2 lg:row-start-1 lg:items-center lg:justify-center lg:border-s lg:border-t-0 lg:text-center"/,
   );
 });
 
@@ -891,4 +891,19 @@ test("standalone desktop narrows the card without wrapping identity or metadata"
     desktop,
     /data-car-card-desktop-primary-specs[\s\S]*?<span className="min-w-0 whitespace-nowrap">\{label\}<\/span>/,
   );
+});
+
+
+test("desktop Cars cards use pure-white surfaces and keep amenities close to Free cancellation", () => {
+  assert.match(source, /rounded-\[13px\] border border-\[#D8E1EC\] bg-white shadow/);
+  assert.match(source, /md:rounded-2xl md:bg-white md:shadow/);
+  assert.doesNotMatch(source, /md:bg-\[#E7EBF1\]/);
+  assert.match(source, /data-car-card-desktop-header-rail[\s\S]*?bg-white/);
+  assert.match(source, /data-region="pricing"[\s\S]*?desktopSurfaceParity \? "bg-white" : "bg-slate-50\/45 lg:bg-white"/);
+  assert.match(source, /md:!h-\[220px\] md:!min-h-\[220px\] md:max-h-\[220px\]/);
+  assert.match(source, /lg:border-e-0 lg:items-center/);
+  const details = source.slice(source.indexOf('data-region="details"'), source.indexOf('data-region="pricing"'));
+  assert.match(details, /lg:border-t-0 lg:pb-2 lg:pt-2/);
+  assert.match(details, /data-car-card-desktop-primary-specs[\s\S]*?<CarDealPicker/);
+  assert.doesNotMatch(details, /lg:border-t lg:border-\[#CBD5E1\]/);
 });
