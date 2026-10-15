@@ -197,10 +197,10 @@ test("KAYAK car cards and loading canvases stay inside the same standalone deskt
     /<main className="flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white">/,
   );
   assert.match(skeleton, /desktopSurfaceParity = false/);
-  assert.match(skeleton, /desktopSurfaceParity && "md:bg-\[#E7EBF1\]"/);
+  assert.match(skeleton, /desktopSurfaceParity && "md:bg-white"/);
   assert.match(
     skeleton,
-    /desktopSurfaceParity \? "md:bg-\[#E7EBF1\] lg:bg-\[#E7EBF1\]" : "lg:bg-white"/,
+    /desktopSurfaceParity \? "md:bg-white lg:bg-white" : "lg:bg-white"/,
   );
   assert.equal(
     (results.match(/<CarCardSkeleton desktopSurfaceParity \/>/g) ?? []).length,
