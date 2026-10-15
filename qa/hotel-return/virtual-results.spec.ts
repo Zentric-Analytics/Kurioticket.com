@@ -610,7 +610,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     for (const sectionId of ["payment", "policies", "pickup", "driver", "vehicle"]) {
       const section = dialog.locator(`[data-car-rate-section="${sectionId}"]`);
       const heading = section.locator("h3");
-      await expect(heading).toHaveCSS("margin-bottom", "18px");
+      await expect(heading).toHaveCSS("margin-bottom", "24px");
       const icon = heading.locator("[data-car-rate-section-icon]");
       await expect(icon).toHaveCount(1);
       await expect(icon).toHaveAttribute("data-car-rate-section-icon", sectionId);
