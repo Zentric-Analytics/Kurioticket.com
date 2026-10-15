@@ -11,11 +11,12 @@ const styles = readFileSync(
   "utf8",
 );
 
-test("nearby fares stay inside one ten-day request window", () => {
+
+test("mobile nearby fares stay inside one ten-day request window", () => {
   assert.match(source, /const nearbyFareRangeSize = 10;/);
-  assert.match(source, /const nearbyFareVisibleCount = 7;/);
-  assert.match(source, /nearbyFares\.slice\(/);
-  assert.match(source, /nearbyFareRangeSize - nearbyFareVisibleCount/);
+  assert.match(source, /getNearbyFareDateRange\(/);
+  assert.match(source, /data-nearby-fare-presentation="mobile"/);
+  assert.doesNotMatch(source, /nearbyFareVisibleCount|nearbyFareVisibleStart|nearbyFareCenteredVisibleStart/);
   assert.doesNotMatch(source, /setFareWindowStart/);
 });
 
@@ -40,51 +41,63 @@ test("long nearby-fare currency values use adaptive sizing without wrapping", ()
   );
   assert.match(styles, /white-space: nowrap/);
   assert.match(styles, /max-width: 100%/);
-  assert.match(source, /displayPrice \?\? "Unavailable"/);
+  assert.match(
+    source,
+    /const visibleFare = displayPrice \?\? \(fare\.status === "loading" \? "•••" : fare\.status === "unavailable" \? "No fare"/,
+  );
   assert.match(source, /overflow-hidden text-ellipsis whitespace-nowrap/);
 });
 
-test("desktop nearby fares use a lighter hierarchy independently of mobile", () => {
-  const desktopStart = source.indexOf("data-desktop-nearby-fare-rail");
-  const desktopEnd = source.indexOf('className="hidden w-full items-center', desktopStart);
-  const desktopStrip = source.slice(desktopStart, desktopEnd);
 
-  assert.match(
-    desktopStrip,
-    /text-\[11px\] font-medium uppercase leading-\[14px\]/,
-  );
-  assert.match(
-    desktopStrip,
-    /text-\[10px\] font-medium uppercase leading-\[13px\] tracking-\[0\.05em\]/,
-  );
-  assert.match(desktopStrip, /rounded-lg border border-slate-200 bg-white/);
-  assert.match(desktopStrip, /selected && "border-\[#075EE8\] bg-blue-50\/60"/);
-  assert.match(desktopStrip, /absolute inset-x-2 top-0 h-0\.5 rounded-b bg-\[#075EE8\]/);
-  assert.match(desktopStrip, /flight-fare-strip-price mt-1[^"]*font-medium/);
-  assert.doesNotMatch(desktopStrip, /text-\[12px\] font-bold|mt-2[^"]*font-bold/);
-  assert.match(
-    styles,
-    /\.desktop-flight-fare-price \{[\s\S]*?margin-top: 0\.1875rem;[\s\S]*?font-size: clamp\(0\.6875rem, 15cqi, 0\.75rem\);[\s\S]*?font-weight: 500;/,
-  );
-  assert.match(
-    styles,
-    /\[data-nearby-fare-presentation="mobile"\] \.flight-fare-strip-price \{[\s\S]*?font-weight: 600;/,
-  );
+test("desktop nearby fare calendar and cheaper-nearby insight are removed without changing mobile", () => {
+  assert.doesNotMatch(source, /data-desktop-nearby-fare-rail/);
+  assert.doesNotMatch(source, /data-desktop-cheaper-nearby/);
+  assert.doesNotMatch(source, /desktop-flight-fare-price|desktop-flight-cheaper-nearby/);
+  assert.doesNotMatch(styles, /data-desktop-nearby-fare-rail|desktop-flight-fare-price|desktop-flight-cheaper-nearby/);
+  assert.match(source, /data-nearby-fare-presentation="mobile"/);
+  assert.match(source, /flight-mobile-cheaper-nearby/);
 });
 
-test("mobile and desktop nearby fares share one truthful fare state and selection handler", () => {
+
+test("nearby fare provider requests run only on mobile viewports and react to breakpoint changes", () => {
+  assert.match(
+    source,
+    /const \[mobileNearbyFaresEnabled, setMobileNearbyFaresEnabled\] = useState\([\s\S]*?matchMedia\("\(max-width: 639px\)"\)\.matches/,
+  );
+  assert.match(
+    source,
+    /const mediaQuery = window\.matchMedia\("\(max-width: 639px\)"\);[\s\S]*?mediaQuery\.addEventListener\("change", handleChange\)[\s\S]*?mediaQuery\.removeEventListener\("change", handleChange\)/,
+  );
+  assert.match(
+    source,
+    /if \(!mobileNearbyFaresEnabled\) \{[\s\S]*?setNearbyFares\(\[\]\)[\s\S]*?return \(\) => window\.clearTimeout\(timer\);/,
+  );
+  const nearbyEffectStart = source.indexOf(
+    "const generation = nearbyFareGenerationRef.current + 1",
+  );
+  const nearbyEffectEnd = source.indexOf(
+    "useEffect(() => {\n    if (!tripTypeMenuOpen)",
+    nearbyEffectStart,
+  );
+  const nearbyEffect = source.slice(nearbyEffectStart, nearbyEffectEnd);
+  assert.match(nearbyEffect, /fetch\("\/api\/flights\/search"/);
+  assert.match(nearbyEffect, /mobileNearbyFaresEnabled/);
+});
+
+test("mobile nearby fares keep one truthful fare state and selection handler", () => {
   assert.equal(source.match(/const \[nearbyFares, setNearbyFares\]/g)?.length, 1);
   assert.equal(source.match(/nearbyFareCacheRef = useRef/g)?.length, 1);
   assert.match(source, /data-nearby-fare-presentation="mobile"/);
   assert.match(source, /nearbyFares\.length[\s\S]*\? nearbyFares/);
-  assert.match(source, /nearbyFares\.slice\(/);
-  assert.ok((source.match(/handleNearbyFareDateSelect\(fare\.date\)/g) ?? []).length >= 2);
+  assert.ok((source.match(/handleNearbyFareDateSelect\(fare\.date\)/g) ?? []).length >= 1);
+  assert.match(source, /handleNearbyFareDateSelect\(cheaperNearbyFare\.date\)/);
+  assert.doesNotMatch(source, /data-desktop-nearby-fare-rail|data-desktop-cheaper-nearby/);
 });
 
 test("mobile nearby fares scroll horizontally without widening the page", () => {
   const marker = source.indexOf('data-nearby-fare-presentation="mobile"');
   const start = source.lastIndexOf("<div", marker);
-  const end = source.indexOf('className="hidden w-full sm:block"', start);
+  const end = source.indexOf("{mobileFlightPriceAlertQuery", start);
   const mobileStrip = source.slice(start, end);
 
   assert.match(mobileStrip, /sm:hidden/);
@@ -139,7 +152,10 @@ test("mobile nearby fare states match native terminology", () => {
   assert.match(source, /Fare unavailable/);
   assert.match(source, /Fare could not be checked/);
   assert.match(source, /Fare not checked/);
-  assert.doesNotMatch(source.slice(source.indexOf('data-nearby-fare-presentation="mobile"'), source.indexOf('data-desktop-nearby-fare-rail')), />Unavailable</);
+  const mobileStart = source.indexOf('data-nearby-fare-presentation="mobile"');
+  const mobileEnd = source.indexOf("{mobileFlightPriceAlertQuery", mobileStart);
+  assert.ok(mobileStart >= 0 && mobileEnd > mobileStart);
+  assert.doesNotMatch(source.slice(mobileStart, mobileEnd), />Unavailable</);
 });
 
 test("mobile quick filters portal into the header before the date rail", () => {
@@ -250,15 +266,13 @@ test("results pagination preserves the searched departure date and its blue sele
   assert.doesNotMatch(pageChange, /setDepartureDate|nearbyFareCacheRef|setNearbyFares/);
 });
 
-test("desktop nearby-fare window resets for departure-date changes, not pagination", () => {
-  const resetMarker = source.indexOf(
-    "setNearbyFareVisibleStart(nearbyFareCenteredVisibleStart)",
-  );
-  const resetEffectStart = source.lastIndexOf("useEffect", resetMarker);
-  const resetEffectEnd = source.indexOf("useEffect", resetMarker + 1);
-  const resetEffect = source.slice(resetEffectStart, resetEffectEnd);
-  assert.match(resetEffect, /body\?\.departureDate/);
-  assert.doesNotMatch(resetEffect, /validResultsPage/);
+
+test("desktop nearby-fare window state is removed", () => {
+  assert.doesNotMatch(source, /nearbyFareVisibleStart/);
+  assert.doesNotMatch(source, /setNearbyFareVisibleStart/);
+  assert.doesNotMatch(source, /navigateNearbyFareWindow/);
+  assert.doesNotMatch(source, /nearbyFareVisibleCount/);
+  assert.doesNotMatch(source, /nearbyFareCenteredVisibleStart/);
 });
 
 test("nearby fares remain excluded from multi-city searches", () => {
