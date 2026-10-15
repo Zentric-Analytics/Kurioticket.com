@@ -164,7 +164,7 @@ export function NativeCarResultOfferPicker({
                   {paymentFacts.map((fact, index) => (
                     <View key={fact.label + ":" + index} style={[styles.factRow, { borderBottomColor: theme.border }]}>
                       <Text style={[styles.factLabel, { color: theme.textSecondary }]}>{fact.label}</Text>
-                      <Text style={[styles.factValue, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{fact.value}</Text>
+                      <Text style={[styles.factValue, { color: theme.dark ? "#CBD5E1" : "#334155" }]}>{fact.value}</Text>
                     </View>
                   ))}
                 </View>
@@ -174,7 +174,7 @@ export function NativeCarResultOfferPicker({
                     {section.facts.map((fact, index) => (
                       <View key={fact.label + ":" + index} style={[styles.factRow, { borderBottomColor: theme.border }]}>
                         <Text style={[styles.factLabel, { color: theme.textSecondary }]}>{fact.label}</Text>
-                        <Text style={[styles.factValue, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{fact.value}</Text>
+                        <Text style={[styles.factValue, { color: theme.dark ? "#CBD5E1" : "#334155" }]}>{fact.value}</Text>
                       </View>
                     ))}
                   </View>
