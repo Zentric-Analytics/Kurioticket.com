@@ -44,11 +44,15 @@ function sourceMoney(fields: Map<string, string>, prefix: string, currency?: str
   // Prefer KAYAK's supplied display-price string, without guessing a currency.
   const displayed = fields.get(prefix + ".displayprice");
   if (displayed && displayed.length <= 48 && /\d/.test(displayed) &&
-    !/[<>]|https?:\/\/|(?:api|access)[-_]?key/i.test(displayed)) return displayed;
+    !/[<>]|https?:\/\/|(?:api|access)[-_]?key/i.test(displayed)) {
+    // Fees remain in the supplier's currency even when the search UI converts
+    // the daily rate; explicitly label that currency to avoid mixing totals.
+    return displayed + (currency && /^[A-Z]{3}$/.test(currency) && !displayed.includes(currency) ? " " + currency : "");
+  }
   const amount = numeric(fields.get(prefix + ".price"));
   if (amount === undefined || !currency || !/^[A-Z]{3}$/.test(currency)) return null;
   try {
-    return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount);
+    return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount) + " " + currency;
   } catch {
     return null;
   }
@@ -67,7 +71,7 @@ export function getCarRateDisclosureSections(offer: SupplierOffer): CarRateDiscl
   const add = (id: CarRateDisclosureSection["id"], label: string, value: string | null | undefined) => {
     if (!value?.trim()) return;
     const section = sections.find(section => section.id === id);
-    if (section && !section.facts.some(fact => fact.label === label)) {
+    if (section && !section.facts.some(fact => fact.label === label && fact.value === value.trim())) {
       section.facts.push({ label, value: value.trim() });
     }
   };
@@ -130,8 +134,10 @@ export function getCarRateDisclosureSections(offer: SupplierOffer): CarRateDiscl
   if (fuel === "sametosame") add("policies", "Fuel return policy", "Same level as collected");
 
   add("pickup", "Rental agency", get("rentalagency.displayname"));
-  const location = (prefix: "pickup" | "dropoff") =>
-    get(prefix + ".address") || [get(prefix + ".cityname"), get(prefix + ".countrycode")].filter(Boolean).join(", ");
+  const location = (prefix: "pickup" | "dropoff") => {
+    const city = get(prefix + ".cityname");
+    return get(prefix + ".address") || (city ? [city, get(prefix + ".countrycode")].filter(Boolean).join(", ") : undefined);
+  };
   add("pickup", "Pickup location", location("pickup"));
   add("pickup", "Return location", location("dropoff"));
   const pickupMethod: Record<string, string> = {
