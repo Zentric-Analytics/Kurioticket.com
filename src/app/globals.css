@@ -2503,9 +2503,12 @@ textarea {
 
 /* Desktop Cars Rate details alone: slim scrolling thumb and scaled-down arrow glyphs. */
 @media (min-width: 768px) {
-  [data-car-rate-dialog] [data-car-rate-scroll] {
-    scrollbar-width: thin;
-    scrollbar-color: #94a3b8 transparent;
+  /* Firefox uses the native thin rail. Chromium and WebKit use the exact custom rail below. */
+  @supports (-moz-appearance: none) {
+    [data-car-rate-dialog] [data-car-rate-scroll] {
+      scrollbar-width: thin;
+      scrollbar-color: #94a3b8 transparent;
+    }
   }
 
   [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar {
