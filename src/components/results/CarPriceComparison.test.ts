@@ -32,34 +32,31 @@ test("provider offers retain all normalized sellers behind a three-row desktop p
   assert.doesNotMatch(picker, /data-car-deal-provider-chips|extraCount|Compare providers/);
 });
 
-test("provider offers show logo, name, per-day price and a direct provider View deal", () => {
-  assert.match(picker, /\/brand\/kurioticket-icon-blue\.svg/);
-  assert.match(picker, /group\.logoUrl/);
-  assert.match(picker, /title=\{group\.providerName\}/);
-  assert.match(picker, /data-car-deal-provider-name/);
-  assert.ok(picker.includes('text-[11px] leading-[15px]'));
-  assert.ok(picker.includes('text-[12px] leading-[16px]'));
-  assert.ok(picker.includes('text-[12px] leading-4'));
-  assert.match(picker, /data-car-deal-picker-compact/);
-  assert.ok(picker.includes('min-h-9 max-[359px]:grid-cols-1'));
-  assert.ok(picker.includes('compact ? "min-h-9" : "min-h-6"'));
-  assert.ok(picker.includes('compact ? "h-9 w-8" : "h-6 w-7"'));
-  assert.ok(picker.includes('max-[409px]:hidden'));
-  assert.ok(picker.includes('h-9 w-8'));
-  assert.match(picker, /Info size=\{compact \? 17 : 16\}/);
-  assert.equal((picker.match(/fontSize: 11, lineHeight: "16px", fontWeight: 600/g) ?? []).length, 1);
-  assert.match(card, /data-car-card-mobile-offers[\s\S]*flex-\[2\.65\]/);
-  assert.match(card, /data-car-card-mobile-pricing[\s\S]*flex-\[1\.1\]/);
-  assert.ok(picker.includes('min-w-0 flex-1 truncate whitespace-nowrap font-semibold'));
-  assert.match(picker, /compact \? "gap-0\.5" : "gap-1"/);
-  assert.ok(picker.includes('grid-cols-[minmax(0,calc(65%_+_20px))_minmax(0,1fr)]'));
-  assert.ok(picker.includes('grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)]'));
-  assert.match(picker, /const offer = group\.primaryOffer/);
-  assert.match(picker, /amount: offer\.pricePerDay/);
-  assert.match(picker, /\{formatOfferPrice\(offer\)\}/);
-  assert.match(picker, />\/day</);
-  assert.match(picker, /data-car-deal-provider-view-deal/);
-  assert.match(picker, />\s*View deal\s*</);
+test("Cars offers render individual Hotel-style provider, rate and blue action bars", () => {
+  const offers = picker.slice(picker.indexOf("data-car-deal-provider-offers"), picker.indexOf("{groups.length > INITIAL_VISIBLE_OFFER_COUNT ? ("));
+  assert.match(offers, /role="listitem"/);
+  assert.match(offers, /grid-cols-\[minmax\(0,1fr\)_auto_78px\]/);
+  assert.match(offers, /rounded-xl border border-\[#D9E2E8\] bg-white/);
+  assert.match(offers, /compact \? "min-h-\[48px\]" : "min-h-\[42px\]"/);
+  assert.match(offers, /data-car-deal-provider-brand/);
+  assert.match(offers, /<ProviderMark group=\{group\} compact=\{compact\} \/>/);
+  assert.match(offers, /title=\{group\.providerName\}/);
+  assert.match(offers, /data-car-deal-provider-name/);
+  assert.match(offers, /data-car-rate-info/);
+  assert.match(offers, /<Info size=\{18\} strokeWidth=\{1\.6\}/);
+  assert.match(offers, /data-car-deal-provider-price/);
+  assert.match(offers, /\{formatOfferPrice\(offer\)\}/);
+  assert.match(offers, />\/day<\/span>/);
+  assert.match(offers, /data-car-deal-provider-action-slot/);
+  assert.match(offers, /data-car-deal-provider-view-deal/);
+  assert.match(offers, /rounded-lg bg-\[#004BB8\]/);
+  assert.match(offers, /whitespace-nowrap/);
+  assert.match(offers, /text-white/);
+  assert.match(offers, /data-car-deal-provider-view-deal-unavailable/);
+  assert.match(offers, /aria-disabled="true"/);
+  assert.doesNotMatch(offers, /max-\[359px\]:grid-cols-1|data-car-rate-info-spacer/);
+  assert.match(card, /data-car-card-mobile-offers[\s\S]*w-full/);
+  assert.match(card, /data-car-card-mobile-pricing[\s\S]*w-full/);
 });
 
 test("provider View deal validates its own URL and stays isolated from main offer selection", () => {
@@ -75,34 +72,24 @@ test("provider View deal validates its own URL and stays isolated from main offe
   assert.doesNotMatch(picker, /setLocalSelectedOfferId|onDealOfferSelected/);
 });
 
-test("inline provider offers do not retain the old comparison overlays", () => {
-  assert.ok(picker.includes('min-w-0 items-center'));
-  assert.ok(picker.includes('min-h-6'));
+test("Cars Hotel-style inline bars retain direct supplier actions without comparison overlays", () => {
   assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
   assert.match(picker, /groups\.length > INITIAL_VISIBLE_OFFER_COUNT/);
   assert.match(picker, /groups\.length - INITIAL_VISIBLE_OFFER_COUNT/);
   assert.equal((picker.match(/data-car-deal-more-offers/g) ?? []).length, 1);
   assert.match(picker, /data-car-deal-more-slot/);
-  assert.match(picker, /data-car-deal-more-offers/);
-  assert.match(picker, /data-car-rate-info/);
   assert.match(picker, /data-car-rate-dialog/);
   assert.match(picker, /dialog\.showModal\(\)/);
   assert.match(picker, /getCarRateDisclosureSections\(selectedOffer\)/);
-  assert.doesNotMatch(picker, /data-car-rate-terms|CarRateDetails\(/);
   assert.match(picker, /data-car-deal-provider-meta/);
   assert.match(picker, /data-car-deal-provider-action-slot/);
-  assert.ok(picker.includes('compact ? "grid-cols-[minmax(0,1fr)_32px_66px] pr-2" : "grid-cols-[minmax(0,1fr)_28px_66px] pr-2"'));
   assert.match(card, /data-car-card-mobile-specs[\s\S]*grid min-w-0 grid-cols-2 gap-x-2/);
   assert.match(card, /data-car-card-mobile-offers[\s\S]*<CarDealPicker/);
   assert.ok(card.indexOf("data-car-card-mobile-specs") < card.indexOf("data-car-card-mobile-lower-band"));
   assert.match(card, /data-car-card-desktop-primary-specs[\s\S]*grid gap-x-5/);
   assert.match(picker, /role="list"/);
   assert.match(picker, /role="listitem"/);
-  assert.doesNotMatch(picker, /grid-cols-3|Compare deals/);
-  assert.doesNotMatch(
-    picker,
-    /createPortal|ProviderPreview|ProviderList|data-car-deal-picker-mobile-sheet|data-car-deal-picker-desktop-panel|acquireMobileResultsScrollLock/,
-  );
+  assert.doesNotMatch(picker, /Compare deals|data-car-deal-picker-mobile-sheet|createPortal/);
 });
 
 test("standalone main View deal remains independently validated", () => {
@@ -236,48 +223,46 @@ test("touch-opened Cars rate details focuses its accessible heading instead of p
   assert.doesNotMatch(card.slice(card.indexOf('data-car-result-card-shell className="w-full"'), card.indexOf("data-car-card-mobile-main")), /ring-2|border-\[#004BB8\]/);
 });
 
-test("desktop and mobile web use the same three-offer preview with a reserved disclosure slot", () => {
+test("Cars provider bars show three offers and reserve a consistent disclosure slot", () => {
   const compactSource = picker.slice(picker.indexOf("const INITIAL_VISIBLE_OFFER_COUNT"));
   const toggle = compactSource.slice(compactSource.indexOf("{groups.length > INITIAL_VISIBLE_OFFER_COUNT ? ("));
   assert.match(compactSource, /const INITIAL_VISIBLE_OFFER_COUNT = 3/);
+  assert.match(compactSource, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
+  assert.match(compactSource, /data-car-deal-more-slot className="mt-1 flex min-h-8 items-center md:min-h-6"/);
   assert.match(toggle, /Show fewer offers/);
   assert.match(toggle, /aria-expanded=\{expanded\}/);
   assert.match(toggle, /groups\.length - INITIAL_VISIBLE_OFFER_COUNT/);
-  assert.match(compactSource, /data-car-deal-more-slot className="mt-0\.5 flex min-h-9 items-center md:mt-1 md:min-h-6"/);
-  assert.match(compactSource, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
   assert.doesNotMatch(compactSource, /groups\.slice\(/);
   assert.match(compactSource, /groups\.map\(\(group, index\) =>/);
   assert.equal((compactSource.match(/data-car-deal-more-offers/g) ?? []).length, 1);
 });
 
-test("Cars inline offer rows place info after provider branding and before price and link on web", () => {
-  const offers = picker.slice(picker.indexOf('data-car-deal-provider-offers'), picker.indexOf('{groups.length > INITIAL_VISIBLE_OFFER_COUNT ? ('));
-  const logoAt = offers.indexOf('<ProviderMark group={group} compact={compact} />');
-  const nameAt = offers.indexOf('data-car-deal-provider-name');
-  const infoAt = offers.indexOf('data-car-rate-info');
-  const priceAt = offers.indexOf('data-car-deal-provider-price');
-  const viewDealAt = offers.indexOf('data-car-deal-provider-view-deal');
+test("Cars Hotel-style bars place rate info close to the actual provider name", () => {
+  const offers = picker.slice(picker.indexOf("data-car-deal-provider-offers"), picker.indexOf("{groups.length > INITIAL_VISIBLE_OFFER_COUNT ? ("));
+  const logoAt = offers.indexOf("<ProviderMark group={group} compact={compact} />");
+  const nameAt = offers.indexOf("data-car-deal-provider-name");
+  const infoAt = offers.indexOf("data-car-rate-info");
+  const priceAt = offers.indexOf("data-car-deal-provider-price");
+  const viewDealAt = offers.indexOf("data-car-deal-provider-view-deal");
   assert.ok(logoAt >= 0 && logoAt < nameAt && nameAt < infoAt && infoAt < priceAt && priceAt < viewDealAt);
-  assert.match(offers, /data-car-deal-provider-brand/);
-  assert.match(offers, /data-car-rate-info-spacer/);
-  assert.match(offers, /grid min-w-0 items-center gap-x-2/);
-  assert.match(offers, /grid-cols-\[minmax\(0,1fr\)_32px_66px\]/);
-  assert.match(offers, /grid-cols-\[minmax\(0,1fr\)_28px_66px\]/);
+  assert.match(offers, /data-car-deal-provider-brand className="flex min-w-0 items-center gap-1"/);
+  assert.match(offers, /min-w-0 truncate whitespace-nowrap text-\[11px\]/);
+  assert.match(offers, /<Info size=\{18\} strokeWidth=\{1\.6\}/);
   assert.match(offers, /aria-label=\{"Rate information for " \+ group\.providerName/);
   assert.match(offers, /setDetailsKey\(group\.key\)/);
-  assert.match(offers, /grid-cols-\[minmax\(0,calc\(65%_\+_20px\)\)_minmax\(0,1fr\)\]/);
-  assert.doesNotMatch(offers.slice(offers.indexOf('data-car-deal-provider-action-slot')), /<Info/);
+  assert.doesNotMatch(offers, /data-car-rate-info-spacer|grid-cols-\[minmax\(0,1fr\)_32px_66px\]/);
 });
 
-test("Cars offers reserve a stable three-row preview without fabricating provider options", () => {
-  assert.match(picker, /min-h-\[108px\] md:min-h-\[76px\]/);
-  assert.match(picker, /max-\[359px\]:min-h-\[240px\]/);
+test("Cars Hotel-style bars reserve three actual rows without fabricating suppliers", () => {
+  assert.match(picker, /min-h-\[162px\] space-y-1\.5 md:min-h-\[138px\] md:space-y-1/);
+  assert.match(picker, /compact \? "min-h-\[48px\]" : "min-h-\[42px\]"/);
   assert.match(picker, /data-car-deal-more-slot/);
-  assert.match(picker, /flex min-h-9 items-center md:mt-1 md:min-h-6/);
-  assert.match(picker, /compact \? "grid-cols-\[minmax/);
+  assert.match(picker, /min-h-8 items-center md:min-h-6/);
   assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
-  assert.match(picker, /min-h-9 max-\[359px\]:grid-cols-1/);
-  assert.match(picker, /: "grid-cols-\[minmax\(0,calc\(50%_\+_31px\)\)_minmax\(0,1fr\)\] min-h-6"/);
   assert.match(picker, /groups\.map\(\(group, index\) =>/);
   assert.doesNotMatch(picker, /placeholder|Empty provider|ghost rate/i);
+  assert.match(card, /data-car-card-mobile-lower-band[\s\S]*flex-col items-stretch/);
+  assert.match(card, /data-car-card-mobile-offers[\s\S]*w-full/);
+  assert.match(card, /data-car-card-mobile-pricing[\s\S]*justify-between[\s\S]*border-t border-\[#E2E8F0\]/);
+  assert.match(card, /data-car-card-mobile-primary-price/);
 });
