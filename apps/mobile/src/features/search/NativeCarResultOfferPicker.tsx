@@ -97,16 +97,17 @@ export function NativeCarResultOfferPicker({
           <View style={styles.brand}>
             <ProviderMark name={providerName} logoUrl={logoUrl} />
             <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.providerName, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{providerName}</Text>
-
           </View>
-            {hasDetails ? <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={"Rate information for " + providerName}
-            onPress={() => setSelectedKey(key)}
-            style={styles.infoAction}
-          >
-            <Info accessible={false} size={17} strokeWidth={1.9} color={theme.textSecondary} />
-            </Pressable> : null}
+          {hasDetails ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={"Rate information for " + providerName}
+              onPress={() => setSelectedKey(key)}
+              style={styles.infoAction}
+            >
+              <Info accessible={false} size={17} strokeWidth={1.9} color={theme.textSecondary} />
+            </Pressable>
+          ) : <View style={styles.infoAction} accessible={false} />}
           <Text numberOfLines={1} ellipsizeMode="tail" adjustsFontSizeToFit minimumFontScale={0.78} style={[styles.price, { color: theme.textPrimary }]}>{money(displayed.currency, displayed.pricePerDay)}<Text style={[styles.perDay, { color: theme.textSecondary }]}>/day</Text></Text>
         </View>
         <View style={[styles.actionArea, stackVeryNarrow && styles.actionAreaNarrow]}>
