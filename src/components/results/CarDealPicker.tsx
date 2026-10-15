@@ -112,6 +112,7 @@ export function CarDealPicker({
   const dialogHeadingRef = useRef<HTMLHeadingElement>(null);
   const selectedGroup = groups.find(group => group.key === detailsKey);
   const selectedOffer = selectedGroup?.primaryOffer;
+  const selectedRateBookingHref = selectedOffer ? approvedProviderBookingUrl(car, selectedOffer) : null;
   const disclosureSections = selectedOffer ? getCarRateDisclosureSections(selectedOffer) : [];
   const paymentFacts = disclosureSections.find(section => section.id === "payment")?.facts ?? [];
 
@@ -272,7 +273,7 @@ export function CarDealPicker({
                   type="button"
                   onClick={() => dialogRef.current?.close()}
                   aria-label="Close rate details"
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#07133B] focus-visible:bg-slate-100 focus-visible:outline-none md:hidden"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#07133B] focus-visible:bg-slate-100 focus-visible:outline-none"
                 >
                   <X size={20} aria-hidden="true" />
                 </button>
@@ -314,6 +315,36 @@ export function CarDealPicker({
                 </dl>
               </section>
             ))}
+              </div>
+            </div>
+            <div
+              data-car-rate-footer
+              className="shrink-0 border-t border-[#E2E8F0] bg-white px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 md:px-5 md:pb-4"
+            >
+              <div className="flex justify-center">
+                {selectedRateBookingHref ? (
+                  <a
+                    href={selectedRateBookingHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={"View deal from " + selectedGroup.providerName}
+                    onClick={isolateProviderAction}
+                    data-car-rate-view-deal
+                    className="inline-flex min-h-11 w-full max-w-[240px] items-center justify-center gap-2 rounded-lg bg-[#004BB8] px-5 py-2.5 text-[14px] font-semibold leading-5 text-white transition-colors hover:bg-[#003B91] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
+                  >
+                    View deal <ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    data-car-rate-view-deal-unavailable
+                    aria-label={"Booking link unavailable for " + selectedGroup.providerName}
+                    className="inline-flex min-h-11 w-full max-w-[240px] cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-[#004BB8] px-5 py-2.5 text-[14px] font-semibold leading-5 text-white opacity-40"
+                  >
+                    View deal <ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
+                  </button>
+                )}
               </div>
             </div>
           </>
