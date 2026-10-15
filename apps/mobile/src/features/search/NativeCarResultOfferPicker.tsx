@@ -55,6 +55,7 @@ function RateSectionHeading({
 }
 
 /** Compact seller offers, with all supplier facts in a rate-specific native sheet. */
+const INITIAL_VISIBLE_OFFER_COUNT = 3;
 export function NativeCarResultOfferPicker({
   result, displayCurrency, rates,
 }: {
@@ -67,7 +68,7 @@ export function NativeCarResultOfferPicker({
   const [expanded, setExpanded] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const choices = nativeCarResultDealChoices(result);
-  const visibleChoices = expanded ? choices : choices.slice(0, 5);
+  const visibleChoices = expanded ? choices : choices.slice(0, INITIAL_VISIBLE_OFFER_COUNT);
   const narrowActions = rowWidth > 0 && rowWidth < 268;
   const stackVeryNarrow = rowWidth > 0 && rowWidth < 225;
   const selectedChoice = choices.find(choice => choice.key === selectedKey);
@@ -80,12 +81,13 @@ export function NativeCarResultOfferPicker({
 
   return <View
     accessibilityLabel="Car deal providers"
-    style={[styles.providers, stackVeryNarrow && styles.providersStacked]}
+    style={styles.providers}
     onLayout={event => {
       const width = Math.round(event.nativeEvent.layout.width);
       setRowWidth(current => current === width ? current : width);
     }}
   >
+    <View style={[styles.offerRows, stackVeryNarrow && styles.offerRowsStacked]}>
     {visibleChoices.map(({ key, providerName, logoUrl, offer, bookingUrl }) => {
       const displayed = presentCarOfferCurrency(offer, displayCurrency, rates);
       const actionColor = bookingUrl ? (theme.dark ? "#8FB5FF" : "#004BB8") : "#94A3B8";
@@ -122,18 +124,21 @@ export function NativeCarResultOfferPicker({
         </View>
       </View>;
     })}
-    {choices.length > 5 ? (
+    </View>
+    <View style={styles.moreSlot}>
+    {choices.length > INITIAL_VISIBLE_OFFER_COUNT ? (
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={expanded ? "Show fewer car offers" : "Show " + (choices.length - 5) + " more car offers"}
+        accessibilityLabel={expanded ? "Show fewer car offers" : "Show " + (choices.length - INITIAL_VISIBLE_OFFER_COUNT) + " more car offers"}
         accessibilityState={{ expanded }}
         onPress={() => setExpanded(current => !current)}
         style={styles.moreAction}
       >
-        <Text style={styles.moreText}>{expanded ? "Show fewer offers" : "+" + (choices.length - 5) + " more offers"}</Text>
+        <Text style={styles.moreText}>{expanded ? "Show fewer offers" : "+" + (choices.length - INITIAL_VISIBLE_OFFER_COUNT) + " more offers"}</Text>
         <ChevronRight accessible={false} size={12} color="#004BB8" style={{ transform: [{ rotate: expanded ? "-90deg" : "90deg" }] }} />
       </Pressable>
     ) : null}
+    </View>
     <Modal
       visible={Boolean(selectedChoice)}
       transparent={false}
@@ -191,8 +196,10 @@ export function NativeCarResultOfferPicker({
 }
 
 const styles = StyleSheet.create({
-  providers: { minWidth: 0, minHeight: 120, gap: 0, paddingTop: 0, paddingBottom: 0 },
-  providersStacked: { minHeight: 258 },
+  providers: { minWidth: 0, gap: 0, paddingTop: 0, paddingBottom: 0 },
+  offerRows: { minWidth: 0, minHeight: 120 },
+  offerRowsStacked: { minHeight: 258 },
+  moreSlot: { minHeight: 36, justifyContent: "center" },
   provider: { minHeight: 40, minWidth: 0, flexDirection: "row", alignItems: "center" },
   providerNarrow: { flexDirection: "column", alignItems: "stretch", paddingVertical: 3 },
   meta: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4, paddingLeft: 6, paddingRight: 8 },
