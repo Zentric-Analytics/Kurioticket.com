@@ -202,6 +202,20 @@ test("standalone desktop uses a shared header row for identity and actions witho
   assert.match(mobile, /mobileSpecColumns\.map/);
 });
 
+test("desktop badges, mobile source awards and identity spacing remain independent", () => {
+  assert.match(source, /mobileBadge\?: CarResultBadge \| null/);
+  assert.match(source, /mobileBadge === undefined \? badge : mobileBadge/);
+  assert.match(source, /const MobileBadgeIcon = mobileBadgeLabel \? carResultBadgeIcons\[mobileBadgeLabel\] : null/);
+  const mobile = source.slice(source.indexOf("data-car-card-mobile-information"), source.indexOf("data-car-card-mobile-identity"));
+  assert.match(mobile, /mobileBadgeLabel && MobileBadgeIcon/);
+  assert.match(mobile, /\{mobileBadgeLabel\}/);
+  const desktop = source.slice(source.indexOf("data-car-card-desktop-shared-header"), source.indexOf('data-region="details"'));
+  assert.match(desktop, /data-car-card-desktop-badge/);
+  assert.match(desktop, /data-car-card-desktop-title-row[\s\S]*?h-11/);
+  assert.match(desktop, /data-car-card-desktop-actions[\s\S]*?h-11/);
+  assert.match(desktop, /data-car-card-desktop-category[\s\S]*?lg:-mt-1/);
+});
+
 test("desktop standalone title and save/share occupy the exact same grid row below Best value", () => {
   const desktop = source.slice(source.indexOf('data-region="heading"'));
   const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
