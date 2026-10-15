@@ -168,7 +168,7 @@ test("desktop and mobile Cars result cards use the same pure-white surface", () 
   );
   assert.match(
     card,
-    /data-car-card-mobile-lower-band\s+className="flex min-w-0 flex-col items-stretch border-t border-\[#CBD5E1\] bg-white"/,
+    /data-car-card-mobile-lower-band\s+className="flex min-w-0 items-stretch border-t border-\[#CBD5E1\] bg-white"/,
   );
 });
 

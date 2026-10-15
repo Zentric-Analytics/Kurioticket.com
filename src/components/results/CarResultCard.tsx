@@ -461,11 +461,11 @@ export function CarResultCard({
 
           <div
             data-car-card-mobile-lower-band
-            className="flex min-w-0 flex-col items-stretch border-t border-[#CBD5E1] bg-white"
+            className="flex min-w-0 items-stretch border-t border-[#CBD5E1] bg-white"
           >
             <div
               data-car-card-mobile-offers
-              className="min-w-0 w-full px-2.5 py-2"
+              className="min-w-0 flex-[2.65] px-2 py-1.5"
             >
               {!guidedPlanning ? (
                 <CarDealPicker
@@ -478,9 +478,8 @@ export function CarResultCard({
             </div>
             <div
               data-car-card-mobile-pricing
-              className="flex min-w-0 w-full items-center justify-between gap-3 border-t border-[#E2E8F0] px-3 py-1.5"
+              className="flex min-w-0 flex-[1.1] flex-col items-end justify-center px-2.5 py-2 max-[359px]:px-1"
             >
-              <div data-car-card-mobile-primary-price className="flex min-w-0 items-baseline gap-1.5">
               <p
                 className="max-w-full whitespace-nowrap text-[19px] font-semibold leading-[22px] tracking-[-0.02em] text-[#07133B] tabular-nums"
                 dir="ltr"
@@ -490,8 +489,6 @@ export function CarResultCard({
                 {dailyDisplayPrice.formatted}
               </p>
               <p className="mt-px text-[10px] font-medium leading-[13px] text-[#536B92]">per day</p>
-              </div>
-              <div className="flex shrink-0 items-center">
             {onSelect ? (
               <button
                 type="button"
@@ -524,7 +521,6 @@ export function CarResultCard({
                 View deal <ChevronRight size={14} aria-hidden="true" />
               </button>
             )}
-              </div>
             </div>
           </div>
         </div>

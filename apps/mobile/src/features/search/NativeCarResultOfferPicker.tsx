@@ -64,10 +64,13 @@ export function NativeCarResultOfferPicker({
   rates: ExchangeRates;
 }) {
   const { theme } = useAppTheme();
+  const [rowWidth, setRowWidth] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const choices = nativeCarResultDealChoices(result);
   const visibleChoices = expanded ? choices : choices.slice(0, INITIAL_VISIBLE_OFFER_COUNT);
+  const narrowActions = rowWidth > 0 && rowWidth < 268;
+  const stackVeryNarrow = rowWidth > 0 && rowWidth < 225;
   const selectedChoice = choices.find(choice => choice.key === selectedKey);
   const disclosureSections = selectedChoice ? getCarRateDisclosureSections(selectedChoice.offer) : [];
   const paymentFacts = disclosureSections.find(section => section.id === "payment")?.facts ?? [];
@@ -76,62 +79,67 @@ export function NativeCarResultOfferPicker({
     : null;
   if (!choices.length) return null;
 
-
-  return <View accessibilityLabel="Car deal providers" style={styles.providers}>
-    <View style={styles.offerRows}>
-      {visibleChoices.map(({ key, providerName, logoUrl, offer, bookingUrl }) => {
-        const displayed = presentCarOfferCurrency(offer, displayCurrency, rates);
-        const hasDetails = result.inventorySource === "kayak-sandbox" && Boolean(offer.suppliedFacts?.length);
-        return (
-          <View
-            key={key}
-            style={[styles.provider, { backgroundColor: theme.dark ? theme.surface : "#FFFFFF", borderColor: theme.dark ? theme.border : "#D9E2E8" }]}
-          >
-            <View style={styles.brand}>
-              <ProviderMark name={providerName} logoUrl={logoUrl} />
-              <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.providerName, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{providerName}</Text>
-              {hasDetails ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={"Rate information for " + providerName}
-                  onPress={() => setSelectedKey(key)}
-                  hitSlop={4}
-                  style={styles.infoAction}
-                >
-                  <Info accessible={false} size={18} strokeWidth={1.6} color={theme.dark ? theme.textSecondary : "#595959"} />
-                </Pressable>
-              ) : null}
-            </View>
-            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={[styles.price, { color: theme.textPrimary }]}>
-              {money(displayed.currency, displayed.pricePerDay)}<Text style={[styles.perDay, { color: theme.textSecondary }]}>/day</Text>
-            </Text>
-            <Pressable
-              accessibilityRole={bookingUrl ? "link" : "button"}
-              accessibilityLabel={"View deal from " + providerName}
-              accessibilityState={{ disabled: !bookingUrl }}
-              disabled={!bookingUrl}
-              onPress={bookingUrl ? () => void Linking.openURL(bookingUrl) : undefined}
-              style={({ pressed }) => [styles.action, !bookingUrl && styles.actionDisabled, pressed && styles.actionPressed]}
-            >
-              <Text style={styles.link}>View deal</Text>
-            </Pressable>
+  return <View
+    accessibilityLabel="Car deal providers"
+    style={styles.providers}
+    onLayout={event => {
+      const width = Math.round(event.nativeEvent.layout.width);
+      setRowWidth(current => current === width ? current : width);
+    }}
+  >
+    <View style={[styles.offerRows, stackVeryNarrow && styles.offerRowsStacked]}>
+    {visibleChoices.map(({ key, providerName, logoUrl, offer, bookingUrl }) => {
+      const displayed = presentCarOfferCurrency(offer, displayCurrency, rates);
+      const actionColor = bookingUrl ? (theme.dark ? "#8FB5FF" : "#004BB8") : "#94A3B8";
+      const hasDetails = result.inventorySource === "kayak-sandbox" && Boolean(offer.suppliedFacts?.length);
+      return <View key={key} style={[styles.provider, stackVeryNarrow && styles.providerNarrow]}>
+        <View style={[styles.meta, { width: stackVeryNarrow ? ("100%" as const) : rowWidth > 0 ? Math.min(rowWidth, rowWidth * 0.65 + 20) : ("65%" as const) }]}>
+          <View style={styles.brand}>
+            <ProviderMark name={providerName} logoUrl={logoUrl} />
+            <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.providerName, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{providerName}</Text>
           </View>
-        );
-      })}
+          {hasDetails ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={"Rate information for " + providerName}
+              onPress={() => setSelectedKey(key)}
+              style={styles.infoAction}
+            >
+              <Info accessible={false} size={17} strokeWidth={1.9} color={theme.textSecondary} />
+            </Pressable>
+          ) : <View style={styles.infoAction} accessible={false} />}
+          <Text numberOfLines={1} ellipsizeMode="tail" adjustsFontSizeToFit minimumFontScale={0.78} style={[styles.price, { color: theme.textPrimary }]}>{money(displayed.currency, displayed.pricePerDay)}<Text style={[styles.perDay, { color: theme.textSecondary }]}>/day</Text></Text>
+        </View>
+        <View style={[styles.actionArea, stackVeryNarrow && styles.actionAreaNarrow]}>
+          <Pressable
+            accessibilityRole={bookingUrl ? "link" : "button"}
+            accessibilityLabel={"View deal from " + providerName}
+            accessibilityState={{ disabled: !bookingUrl }}
+            disabled={!bookingUrl}
+            onPress={bookingUrl ? () => void Linking.openURL(bookingUrl) : undefined}
+            style={styles.action}
+          >
+            <Text style={[styles.link, { color: actionColor }]}>View deal</Text>
+            {bookingUrl && !narrowActions ? <ChevronRight accessible={false} size={12} color={actionColor} /> : null}
+          </Pressable>
+
+        </View>
+      </View>;
+    })}
     </View>
     <View style={styles.moreSlot}>
-      {choices.length > INITIAL_VISIBLE_OFFER_COUNT ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={expanded ? "Show fewer car offers" : "Show " + (choices.length - INITIAL_VISIBLE_OFFER_COUNT) + " more car offers"}
-          accessibilityState={{ expanded }}
-          onPress={() => setExpanded(current => !current)}
-          style={styles.moreAction}
-        >
-          <Text style={styles.moreText}>{expanded ? "Show fewer offers" : "+" + (choices.length - INITIAL_VISIBLE_OFFER_COUNT) + " more offers"}</Text>
-          <ChevronRight accessible={false} size={12} color="#004BB8" style={{ transform: [{ rotate: expanded ? "-90deg" : "90deg" }] }} />
-        </Pressable>
-      ) : null}
+    {choices.length > INITIAL_VISIBLE_OFFER_COUNT ? (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={expanded ? "Show fewer car offers" : "Show " + (choices.length - INITIAL_VISIBLE_OFFER_COUNT) + " more car offers"}
+        accessibilityState={{ expanded }}
+        onPress={() => setExpanded(current => !current)}
+        style={styles.moreAction}
+      >
+        <Text style={styles.moreText}>{expanded ? "Show fewer offers" : "+" + (choices.length - INITIAL_VISIBLE_OFFER_COUNT) + " more offers"}</Text>
+        <ChevronRight accessible={false} size={12} color="#004BB8" style={{ transform: [{ rotate: expanded ? "-90deg" : "90deg" }] }} />
+      </Pressable>
+    ) : null}
     </View>
     <Modal
       visible={Boolean(selectedChoice)}
@@ -190,21 +198,24 @@ export function NativeCarResultOfferPicker({
 
 const styles = StyleSheet.create({
   providers: { minWidth: 0, gap: 0, paddingTop: 0, paddingBottom: 0 },
-  offerRows: { minWidth: 0, minHeight: 168 },
+  offerRows: { minWidth: 0, minHeight: 120 },
+  offerRowsStacked: { minHeight: 258 },
   moreSlot: { minHeight: 36, justifyContent: "center" },
-  provider: { minHeight: 50, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, marginBottom: 6 },
-  brand: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4 },
+  provider: { minHeight: 40, minWidth: 0, flexDirection: "row", alignItems: "center" },
+  providerNarrow: { flexDirection: "column", alignItems: "stretch", paddingVertical: 3 },
+  meta: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4, paddingLeft: 4, paddingRight: 4 },
+  brand: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 2 },
   logo: { width: 16, height: 16, flexShrink: 0 },
   fallbackMark: { width: 16, height: 16, borderRadius: 3, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center" },
   fallbackLetter: { fontSize: 11, fontWeight: "700", color: "#07133B", fontFamily: appFonts.bold },
-  providerName: { flexShrink: 1, minWidth: 0, fontSize: 11, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
-  infoAction: { width: 25, height: 40, flexShrink: 0, alignItems: "center", justifyContent: "center" },
-  price: { width: 67, flexShrink: 0, textAlign: "right", fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold, fontVariant: ["tabular-nums"] },
-  perDay: { fontSize: 10, lineHeight: 14, fontWeight: "400", fontFamily: appFonts.regular },
-  action: { width: 78, minHeight: 36, flexShrink: 0, alignItems: "center", justifyContent: "center", borderRadius: 8, backgroundColor: "#004BB8", paddingHorizontal: 5 },
-  actionDisabled: { opacity: 0.4 },
-  actionPressed: { backgroundColor: "#003B91" },
-  link: { fontSize: 12, lineHeight: 16, color: "#FFFFFF", fontWeight: "600", fontFamily: appFonts.semibold },
+  providerName: { flex: 1, minWidth: 0, fontSize: 11, lineHeight: 15, fontWeight: "600", fontFamily: appFonts.semibold },
+  price: { width: 58, flexShrink: 0, textAlign: "right", fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold, fontVariant: ["tabular-nums"] },
+  perDay: { fontSize: 10, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
+  actionArea: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 2 },
+  actionAreaNarrow: { width: "100%", flex: 0, paddingLeft: 22 },
+  action: { minHeight: 40, flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 2 },
+  link: { fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
+  infoAction: { width: 32, height: 40, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   moreAction: { minHeight: 36, paddingLeft: 6, flexDirection: "row", alignItems: "center", gap: 4 },
   moreText: { fontSize: 11, lineHeight: 16, color: "#004BB8", fontWeight: "600", fontFamily: appFonts.semibold },
   sheetScreen: { flex: 1, paddingHorizontal: 18 },
