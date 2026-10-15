@@ -122,13 +122,20 @@ test("results airport values are code-only while placeholders and rich picker co
   assert.match(editor, /\{option\.code\}/);
 });
 
-test("desktop airport labels use City plus IATA without changing mobile value rendering", () => {
+test("desktop airport labels use one City plus IATA line without changing mobile or Results", () => {
   assert.match(primitives, /desktopValue\?: string/);
+  assert.match(primitives, /showDesktopSecondary\?: boolean/);
+  assert.match(primitives, /showDesktopSecondary = true/);
   assert.match(primitives, /value=\{desktopValue \?\? value\}/);
+  assert.match(
+    primitives,
+    /showDesktopSecondary && display\.secondary \? <span className="block truncate text-\[10px\]/,
+  );
   assert.match(
     editor,
     /desktopValue=\{[\s\S]*?landingPresentation && selectedAirport && draftQuery === null[\s\S]*?formatAirportLabel\(selectedAirport, locale\)/,
   );
+  assert.match(editor, /showDesktopSecondary=\{!landingPresentation\}/);
   assert.match(editor, /<MobileAirportPicker[\s\S]*?value=\{query\}/);
   assert.match(editor, /value=\{resultsPresentation && draftQuery === null \? code : query\}/);
 });
