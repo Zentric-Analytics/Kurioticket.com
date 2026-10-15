@@ -25,8 +25,8 @@ test("provider offers retain all normalized sellers behind a three-row desktop p
   assert.match(picker, /getCarDealPickerGroups\(car\)/);
   assert.match(picker, /groups\.map\(\(group, index\) =>/);
   assert.doesNotMatch(picker, /groups\.slice\(/);
-  assert.match(picker, /const INITIAL_DESKTOP_OFFER_COUNT = 3;/);
-  assert.match(picker, /const INITIAL_MOBILE_OFFER_COUNT = 5;/);
+  assert.match(picker, /const INITIAL_VISIBLE_OFFER_COUNT = 3;/);
+  assert.doesNotMatch(picker, /INITIAL_DESKTOP_OFFER_COUNT|INITIAL_MOBILE_OFFER_COUNT/);
   assert.match(picker, /data-car-deal-provider-offers/);
   assert.match(picker, /data-car-deal-provider-offer/);
   assert.doesNotMatch(picker, /data-car-deal-provider-chips|extraCount|Compare providers/);
@@ -47,7 +47,7 @@ test("provider offers show logo, name, per-day price and a direct provider View 
   assert.ok(picker.includes('max-[409px]:hidden'));
   assert.ok(picker.includes('h-9 w-8 max-[389px]:w-7'));
   assert.match(picker, /Info size=\{compact \? 17 : 16\}/);
-  assert.equal((picker.match(/fontSize: 11, lineHeight: "16px", fontWeight: 600/g) ?? []).length, 2);
+  assert.equal((picker.match(/fontSize: 11, lineHeight: "16px", fontWeight: 600/g) ?? []).length, 1);
   assert.match(card, /data-car-card-mobile-offers[\s\S]*flex-\[2\.65\]/);
   assert.match(card, /data-car-card-mobile-pricing[\s\S]*flex-\[1\.1\]/);
   assert.ok(picker.includes('min-w-0 truncate whitespace-nowrap font-semibold'));
@@ -78,15 +78,11 @@ test("provider View deal validates its own URL and stays isolated from main offe
 test("inline provider offers do not retain the old comparison overlays", () => {
   assert.ok(picker.includes('min-w-0 items-center'));
   assert.ok(picker.includes('min-h-6'));
-  assert.match(picker, /responsiveVisibility = expanded/);
-  assert.match(picker, /index < INITIAL_DESKTOP_OFFER_COUNT/);
-  assert.match(picker, /index < INITIAL_MOBILE_OFFER_COUNT/);
-  assert.match(picker, /"grid md:hidden"/);
-  assert.match(picker, /groups\.length > INITIAL_MOBILE_OFFER_COUNT/);
-  assert.match(picker, /groups\.length > INITIAL_DESKTOP_OFFER_COUNT/);
-  assert.match(picker, /groups\.length - INITIAL_MOBILE_OFFER_COUNT/);
-  assert.match(picker, /groups\.length - INITIAL_DESKTOP_OFFER_COUNT/);
-  assert.equal((picker.match(/data-car-deal-more-offers/g) ?? []).length, 2);
+  assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
+  assert.match(picker, /groups\.length > INITIAL_VISIBLE_OFFER_COUNT/);
+  assert.match(picker, /groups\.length - INITIAL_VISIBLE_OFFER_COUNT/);
+  assert.equal((picker.match(/data-car-deal-more-offers/g) ?? []).length, 1);
+  assert.match(picker, /data-car-deal-more-slot/);
   assert.match(picker, /data-car-deal-more-offers/);
   assert.match(picker, /data-car-rate-info/);
   assert.match(picker, /data-car-rate-dialog/);
@@ -235,23 +231,22 @@ test("touch-opened Cars rate details focuses its accessible heading instead of p
   assert.doesNotMatch(card.slice(card.indexOf('data-car-result-card-shell className="w-full"'), card.indexOf("data-car-card-mobile-main")), /ring-2|border-\[#004BB8\]/);
 });
 
-test("compact desktop Cars cards expose three offers and accurately count expandable remainder", () => {
-  const compactSource = picker.slice(picker.indexOf("const INITIAL_MOBILE_OFFER_COUNT"));
-  const mobileToggle = compactSource.slice(compactSource.indexOf("{groups.length > INITIAL_MOBILE_OFFER_COUNT ? ("));
-  const desktopToggle = compactSource.slice(compactSource.indexOf("{groups.length > INITIAL_DESKTOP_OFFER_COUNT ? ("));
-  assert.match(mobileToggle, /INITIAL_MOBILE_OFFER_COUNT/);
-  assert.match(desktopToggle, /INITIAL_DESKTOP_OFFER_COUNT/);
-  assert.match(desktopToggle, /Show fewer offers/);
-  assert.match(desktopToggle, /aria-expanded=\{expanded\}/);
-  assert.match(desktopToggle, /md:inline-flex/);
+test("desktop and mobile web use the same three-offer preview with a reserved disclosure slot", () => {
+  const compactSource = picker.slice(picker.indexOf("const INITIAL_VISIBLE_OFFER_COUNT"));
+  const toggle = compactSource.slice(compactSource.indexOf("{groups.length > INITIAL_VISIBLE_OFFER_COUNT ? ("));
+  assert.match(compactSource, /const INITIAL_VISIBLE_OFFER_COUNT = 3/);
+  assert.match(toggle, /Show fewer offers/);
+  assert.match(toggle, /aria-expanded=\{expanded\}/);
+  assert.match(toggle, /groups\.length - INITIAL_VISIBLE_OFFER_COUNT/);
+  assert.match(compactSource, /data-car-deal-more-slot className="mt-0\.5 flex min-h-9 items-center md:mt-1 md:min-h-6"/);
+  assert.match(compactSource, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
   assert.doesNotMatch(compactSource, /groups\.slice\(/);
   assert.match(compactSource, /groups\.map\(\(group, index\) =>/);
-  assert.match(compactSource, /index < INITIAL_MOBILE_OFFER_COUNT[\s\S]*?"grid md:hidden"/);
+  assert.equal((compactSource.match(/data-car-deal-more-offers/g) ?? []).length, 1);
 });
 
-
 test("Cars inline offer rows place info after provider branding and before price and link on web", () => {
-  const offers = picker.slice(picker.indexOf('data-car-deal-provider-offers'), picker.indexOf('{groups.length > INITIAL_MOBILE_OFFER_COUNT ? ('));
+  const offers = picker.slice(picker.indexOf('data-car-deal-provider-offers'), picker.indexOf('{groups.length > INITIAL_VISIBLE_OFFER_COUNT ? ('));
   const logoAt = offers.indexOf('<ProviderMark group={group} compact={compact} />');
   const nameAt = offers.indexOf('data-car-deal-provider-name');
   const infoAt = offers.indexOf('data-car-rate-info');
@@ -269,8 +264,10 @@ test("Cars inline offer rows place info after provider branding and before price
 test("Cars offers reserve a stable three-row preview without fabricating provider options", () => {
   assert.match(picker, /min-h-\[108px\] md:min-h-\[76px\]/);
   assert.match(picker, /max-\[359px\]:min-h-\[240px\]/);
+  assert.match(picker, /data-car-deal-more-slot/);
+  assert.match(picker, /flex min-h-9 items-center md:mt-1 md:min-h-6/);
   assert.match(picker, /compact \? "grid-cols-\[minmax/);
-  assert.match(picker, /"grid md:hidden"/);
+  assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
   assert.match(picker, /min-h-9 max-\[359px\]:grid-cols-1/);
   assert.match(picker, /: "grid-cols-\[minmax\(0,calc\(50%_\+_31px\)\)_minmax\(0,1fr\)\] min-h-6"/);
   assert.match(picker, /groups\.map\(\(group, index\) =>/);
