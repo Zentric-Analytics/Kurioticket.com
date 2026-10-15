@@ -177,7 +177,7 @@ export function SearchResultsLoadingTransition({
       searchType={searchType}
       title={title}
       messages={messages}
-      className="min-h-[calc(100svh-5rem)] w-full !bg-white px-5"
+      className="results-loading-surface min-h-[calc(100svh-5rem)] w-full !bg-white px-5"
       contentClassName="max-w-md text-center"
     />
   );
@@ -270,7 +270,7 @@ function MobileFiltersSkeleton() {
 function HotelResultsShell() {
   return (
     <main
-      className="min-h-[calc(100svh-5rem)] w-full flex-1 bg-[#F1F5F9] pb-2 sm:bg-[#eef3f8] sm:pb-8 lg:bg-white"
+      className="results-loading-surface min-h-[calc(100svh-5rem)] w-full flex-1 bg-[#F1F5F9] pb-2 sm:bg-[#eef3f8] sm:pb-8 lg:bg-white"
       role="status"
       aria-label="Loading hotel results"
       aria-busy="true"
@@ -319,7 +319,7 @@ function FlightResultsShell() {
   return (
     <main
       data-flight-results-main
-      className="min-h-[calc(100svh-5rem)] flex-1 bg-[#F5F7FB] pb-0 sm:bg-[#F3F6FA] sm:pb-8 lg:bg-white"
+      className="results-loading-surface min-h-[calc(100svh-5rem)] flex-1 bg-[#F5F7FB] pb-0 sm:bg-[#F3F6FA] sm:pb-8 lg:bg-white"
       role="status"
       aria-label="Loading flight results"
       aria-busy="true"
@@ -357,7 +357,7 @@ function FlightResultsShell() {
 function CarResultsShell() {
   return (
     <div
-      className="min-h-[calc(100svh-5rem)] flex-1 bg-[#F5F7FB] pb-8 sm:bg-[#f6f8fb] lg:bg-white"
+      className="results-loading-surface min-h-[calc(100svh-5rem)] flex-1 bg-[#F5F7FB] pb-8 sm:bg-[#f6f8fb] lg:bg-white"
       role="status"
       aria-label="Loading car results"
       aria-busy="true"

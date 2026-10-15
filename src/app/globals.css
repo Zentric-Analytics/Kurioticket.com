@@ -2199,6 +2199,19 @@ textarea {
     overflow: hidden;
   }
 
+  /* Branded result loading should remain one clean canvas. The ready-state
+     hotel/flight header treatment adds a divider and curved edge for the
+     filter rail, which otherwise leaks into the white loading surface. */
+  body:has(.results-loading-surface) [data-flight-results-desktop-header],
+  body:has(.results-loading-surface) [data-hotel-results-desktop-header] {
+    border-bottom-left-radius: 0;
+    box-shadow: none;
+  }
+
+  body:has(.results-loading-surface) [data-hotel-results-page-surface] {
+    background-color: #ffffff;
+  }
+
 }
 
 .flight-results-right-rail {
