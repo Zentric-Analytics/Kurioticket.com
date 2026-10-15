@@ -90,8 +90,13 @@ export function SearchResultsLoadingTransition({
             mobileFilters: null,
           };
 
-    const frame = window.requestAnimationFrame(() => {
-      setHeaderSlots({
+    let cancelled = false;
+    let frame = 0;
+    let attempts = 0;
+
+    const locateSlots = () => {
+      if (cancelled) return;
+      const nextSlots = {
         desktopSearch: selectors.desktopSearch
           ? document.querySelector<HTMLElement>(selectors.desktopSearch)
           : null,
@@ -101,9 +106,24 @@ export function SearchResultsLoadingTransition({
         mobileFilters: selectors.mobileFilters
           ? document.querySelector<HTMLElement>(selectors.mobileFilters)
           : null,
-      });
-    });
-    return () => window.cancelAnimationFrame(frame);
+      };
+      setHeaderSlots(nextSlots);
+
+      const foundEveryRequestedSlot =
+        (!selectors.desktopSearch || nextSlots.desktopSearch) &&
+        (!selectors.mobileSearch || nextSlots.mobileSearch) &&
+        (!selectors.mobileFilters || nextSlots.mobileFilters);
+      if (foundEveryRequestedSlot || attempts >= 8) return;
+
+      attempts += 1;
+      frame = window.requestAnimationFrame(locateSlots);
+    };
+
+    frame = window.requestAnimationFrame(locateSlots);
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+    };
   }, [desktopHeaderProvided, mobileHeaderProvided, searchType]);
 
   useEffect(() => {
@@ -157,7 +177,7 @@ export function SearchResultsLoadingTransition({
       searchType={searchType}
       title={title}
       messages={messages}
-      className="min-h-[calc(100svh-5rem)] w-full bg-white px-5"
+      className="min-h-[calc(100svh-5rem)] w-full !bg-white px-5"
       contentClassName="max-w-md text-center"
     />
   );
@@ -250,7 +270,7 @@ function MobileFiltersSkeleton() {
 function HotelResultsShell() {
   return (
     <main
-      className="min-h-[calc(100svh-5rem)] w-full flex-1 bg-[#F5F7FB] pb-2 sm:bg-[#f6f8fb] sm:pb-8 lg:bg-white"
+      className="min-h-[calc(100svh-5rem)] w-full flex-1 bg-[#F1F5F9] pb-2 sm:bg-[#eef3f8] sm:pb-8 lg:bg-white"
       role="status"
       aria-label="Loading hotel results"
       aria-busy="true"
@@ -280,12 +300,14 @@ function HotelResultsShell() {
           </div>
         </aside>
         <section className="min-w-0 space-y-2 sm:space-y-4">
-          <div aria-hidden="true" className="flex items-center justify-between gap-3 py-1">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-[38px] w-[116px] rounded-[10px] sm:w-28" />
-          </div>
+          <ResultsToolbarSkeleton />
+          <TrackPriceSkeleton label="Track this stay price" />
           <div className="space-y-2 sm:space-y-4">
-            {[0, 1, 2, 3].map((index) => <HotelCardSkeleton key={index} />)}
+            {[0, 1, 2, 3].map((index) => (
+              <LoadingReveal key={index} index={index}>
+                <HotelCardSkeleton />
+              </LoadingReveal>
+            ))}
           </div>
         </section>
       </div>
@@ -314,15 +336,17 @@ function FlightResultsShell() {
           ))}
         </aside>
         <section className="min-w-0 space-y-3 sm:space-y-4">
-          <div aria-hidden="true" className="flex min-h-8 items-center justify-between gap-3">
-            <Skeleton className="h-4 w-36" />
-            <Skeleton className="h-8 w-28 rounded-full" />
-          </div>
+          <ResultsToolbarSkeleton />
+          <TrackPriceSkeleton label="Track prices and save on flights" />
           <div aria-hidden="true" className="flex gap-2 overflow-hidden sm:grid sm:grid-cols-7">
             {Array.from({ length: 7 }, (_, index) => <Skeleton key={index} className="h-[70px] w-20 shrink-0 rounded-lg sm:w-full" />)}
           </div>
           <div className="space-y-3 sm:space-y-4">
-            {[0, 1, 2].map((index) => <FlightCardSkeleton key={index} />)}
+            {[0, 1, 2].map((index) => (
+              <LoadingReveal key={index} index={index}>
+                <FlightCardSkeleton />
+              </LoadingReveal>
+            ))}
           </div>
         </section>
       </div>
@@ -363,11 +387,51 @@ function CarResultsShell() {
               <Skeleton className="hidden h-9 w-36 sm:block" />
             </div>
             <div className="space-y-4">
-              {[0, 1, 2].map((index) => <CarCardSkeleton key={index} desktopSurfaceParity />)}
+              {[0, 1, 2].map((index) => (
+                <LoadingReveal key={index} index={index}>
+                  <CarCardSkeleton desktopSurfaceParity />
+                </LoadingReveal>
+              ))}
             </div>
           </section>
         </div>
       </div>
+    </div>
+  );
+}
+
+function LoadingReveal({ index, children }: { index: number; children: ReactNode }) {
+  return (
+    <div
+      className="results-loading-reveal"
+      style={{ animationDelay: `${index * 180}ms` }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function ResultsToolbarSkeleton() {
+  return (
+    <div aria-hidden="true" className="flex min-h-8 items-center justify-between gap-3 py-1">
+      <Skeleton className="h-4 w-36" />
+      <Skeleton className="h-8 w-28 rounded-full" />
+    </div>
+  );
+}
+
+function TrackPriceSkeleton({ label }: { label: string }) {
+  return (
+    <div
+      aria-hidden="true"
+      data-loading-surface={label}
+      className="flex min-h-[54px] items-center justify-between gap-3 rounded-xl border border-[#D8E1EC] bg-white px-3 py-2.5 shadow-[0_8px_22px_-18px_rgba(15,23,42,0.35)] sm:px-4"
+    >
+      <div className="flex min-w-0 items-center gap-2.5">
+        <Skeleton className="h-8 w-8 shrink-0 rounded-lg bg-[#DDEAF6]" />
+        <span className="truncate text-sm font-semibold text-[#142033]">{label}</span>
+      </div>
+      <Skeleton className="h-7 w-12 shrink-0 rounded-full" />
     </div>
   );
 }

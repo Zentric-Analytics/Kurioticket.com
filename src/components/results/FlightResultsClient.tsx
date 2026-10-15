@@ -7077,6 +7077,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <>
       {standaloneResultsHeader}
       {renderMobileEditSearchDrawer()}
+      {renderMobileFullFiltersSheet()}
       <SearchResultsLoadingTransition
         searchType="flight"
         active={resultsUiPreparing}
