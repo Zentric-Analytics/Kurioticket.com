@@ -186,8 +186,8 @@ test("desktop guest reviews stay compact without an empty guest-summary column",
   assert.doesNotMatch(reviewSection, /sentiment=|quotes=|hotelName=/);
 });
 
-test("desktop related hotels are capped at eight actual cards", () => {
-  assert.match(desktop, /desktopLimit=\{8\} limit=\{8\}/);
+test("desktop related hotels show four cards while mobile keeps its larger rail", () => {
+  assert.match(desktop, /desktopLimit=\{4\} limit=\{8\}/);
   assert.match(relatedHotels, /const displayedHotels = hotels\.slice\(0, limit\)/);
 });
 

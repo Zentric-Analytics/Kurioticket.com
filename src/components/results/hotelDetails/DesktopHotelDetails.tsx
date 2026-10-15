@@ -233,7 +233,7 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
     <HotelReviewsSection variant="desktop" score={reviewScore} label={props.reviewLabel} countText={props.reviewCountText} source={props.reviewSource} />
     </div>
     {props.relatedHotels.length ? <div id="hotel-related-hotels" className={styles.related}>
-      <RelatedHotelsSection hotels={props.relatedHotels} city={relatedCity} searchContext={props.relatedSearchContext} desktopLimit={8} limit={8} labels={{ heading: props.labels.moreHotelsIn, viewHotel: props.labels.viewHotel, pricePerNight: props.labels.pricePerNight, estimatedStayTotal: props.labels.estimatedStayTotal, priceUnavailable: props.labels.priceUnavailable, imageUnavailable: props.labels.imageUnavailable, imageAlt: props.labels.imageAlt, nearLocation: props.labels.nearLocation, starHotelAria: props.labels.starHotelAria }} />
+      <RelatedHotelsSection hotels={props.relatedHotels} city={relatedCity} searchContext={props.relatedSearchContext} desktopLimit={4} limit={8} labels={{ heading: props.labels.moreHotelsIn, viewHotel: props.labels.viewHotel, pricePerNight: props.labels.pricePerNight, estimatedStayTotal: props.labels.estimatedStayTotal, priceUnavailable: props.labels.priceUnavailable, imageUnavailable: props.labels.imageUnavailable, imageAlt: props.labels.imageAlt, nearLocation: props.labels.nearLocation, starHotelAria: props.labels.starHotelAria }} />
     </div> : null}
     </div>
     {rateInfo && rateAnchor ? <HotelRatePopover closeOnOutsideScroll offer={rateInfo} anchor={rateAnchor} onClose={() => setRateInfo(null)} /> : null}
