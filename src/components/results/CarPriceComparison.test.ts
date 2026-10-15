@@ -205,7 +205,7 @@ test("Cars Rate details uses borderless close, polished section icons, and reada
   const closeButton = sheet.match(/aria-label="Close rate details"\s+className="([^"]+)"/)?.[1];
   assert.ok(closeButton);
   assert.ok(closeButton.includes("h-11 w-11"));
-  assert.ok(closeButton.includes("md:hidden"), "desktop close icon hidden, mobile icon preserved");
+  assert.ok(!closeButton.includes("md:hidden"), "the close X must be visible on desktop and mobile web");
   assert.equal(closeButton.split(/\s+/).some(token => token === "border" || token.startsWith("border-")), false);
   assert.ok(closeButton.includes("focus-visible:bg-slate-100")); // Keyboard focus stays visible without a blue circle.
   assert.equal((sheet.match(/data-car-rate-fact-value className="[^"]*text-right font-medium text-\[#1E293B\]/g) ?? []).length, 2);
@@ -213,6 +213,25 @@ test("Cars Rate details uses borderless close, polished section icons, and reada
   assert.ok(sheet.includes("h-[100dvh] max-h-[100dvh]"));
 });
 
+
+test("Rate details keeps a centered footer outside scroll with the inspected provider booking link", () => {
+  const sheet = picker.slice(picker.indexOf('data-car-rate-dialog'));
+  assert.match(picker, /const selectedRateBookingHref = selectedOffer \? approvedProviderBookingUrl\(car, selectedOffer\) : null/);
+  assert.ok(sheet.indexOf("data-car-rate-header") < sheet.indexOf("data-car-rate-scroll"));
+  assert.ok(sheet.indexOf("data-car-rate-scroll") < sheet.indexOf("data-car-rate-footer"));
+  assert.match(sheet, /data-car-rate-footer[\s\S]*shrink-0 border-t border-\[#E2E8F0\]/);
+  assert.ok(sheet.includes("pb-[max(16px,env(safe-area-inset-bottom))]"));
+  assert.ok(sheet.includes('className="flex justify-center"'));
+  assert.ok(sheet.includes("max-w-[240px]"));
+  assert.match(sheet, /href=\{selectedRateBookingHref\}/);
+  assert.match(sheet, /data-car-rate-view-deal/);
+  assert.match(sheet, /aria-label=\{"View deal from " \+ selectedGroup\.providerName\}/);
+  assert.match(sheet, /target="_blank"/);
+  assert.match(sheet, /rel="noopener noreferrer"/);
+  assert.match(sheet, /data-car-rate-view-deal-unavailable/);
+  assert.match(sheet, /\sdisabled\s+data-car-rate-view-deal-unavailable/);
+  assert.match(sheet, /onClick=\{isolateProviderAction\}/);
+});
 
 test("Cars Rate details desktop scrollbar is slim with smaller arrows and isolated from other surfaces", () => {
   const start = globalStyles.indexOf("/* Desktop Cars Rate details alone:");
@@ -245,7 +264,7 @@ test("touch-opened Cars rate details focuses its accessible heading instead of p
   const closeButton = sheet.match(/aria-label="Close rate details"\s+className="([^"]+)"/)?.[1];
   assert.ok(closeButton);
   assert.ok(closeButton.includes("h-11 w-11"));
-  assert.ok(closeButton.includes("md:hidden"), "desktop close icon hidden, mobile icon preserved");
+  assert.ok(!closeButton.includes("md:hidden"), "the close X must be visible on desktop and mobile web");
   assert.equal(closeButton.includes("focus-visible:ring-"), false);
   assert.equal(closeButton.includes("ring-[#004BB8]"), false);
   assert.ok(sheet.includes('focus:outline-none'));
