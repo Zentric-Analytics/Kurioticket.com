@@ -95,6 +95,14 @@ export function NativeCarResultOfferPicker({
           <View style={styles.brand}>
             <ProviderMark name={providerName} logoUrl={logoUrl} />
             <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.providerName, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{providerName}</Text>
+          {hasDetails ? <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={"Rate information for " + providerName}
+            onPress={() => setSelectedKey(key)}
+            style={styles.infoAction}
+          >
+            <Info accessible={false} size={17} strokeWidth={1.9} color={theme.textSecondary} />
+          </Pressable> : null}
           </View>
           <Text numberOfLines={1} ellipsizeMode="tail" adjustsFontSizeToFit minimumFontScale={0.78} style={[styles.price, { color: theme.textPrimary }]}>{money(displayed.currency, displayed.pricePerDay)}<Text style={[styles.perDay, { color: theme.textSecondary }]}>/day</Text></Text>
         </View>
@@ -110,14 +118,7 @@ export function NativeCarResultOfferPicker({
             <Text style={[styles.link, { color: actionColor }]}>View deal</Text>
             {bookingUrl && !narrowActions ? <ChevronRight accessible={false} size={12} color={actionColor} /> : null}
           </Pressable>
-          {hasDetails ? <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={"Rate information for " + providerName}
-            onPress={() => setSelectedKey(key)}
-            style={styles.infoAction}
-          >
-            <Info accessible={false} size={16} color={theme.textSecondary} />
-          </Pressable> : null}
+
         </View>
       </View>;
     })}
@@ -190,7 +191,7 @@ export function NativeCarResultOfferPicker({
 }
 
 const styles = StyleSheet.create({
-  providers: { minWidth: 0, gap: 0, paddingTop: 0, paddingBottom: 0 },
+  providers: { minWidth: 0, minHeight: 120, gap: 0, paddingTop: 0, paddingBottom: 0 },
   provider: { minHeight: 40, minWidth: 0, flexDirection: "row", alignItems: "center" },
   providerNarrow: { flexDirection: "column", alignItems: "stretch", paddingVertical: 3 },
   meta: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4, paddingLeft: 6, paddingRight: 8 },
@@ -198,14 +199,14 @@ const styles = StyleSheet.create({
   logo: { width: 16, height: 16, flexShrink: 0 },
   fallbackMark: { width: 16, height: 16, borderRadius: 3, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center" },
   fallbackLetter: { fontSize: 11, fontWeight: "700", color: "#07133B", fontFamily: appFonts.bold },
-  providerName: { flex: 1, minWidth: 0, fontSize: 11, lineHeight: 15, fontWeight: "600", fontFamily: appFonts.semibold },
+  providerName: { flexShrink: 1, minWidth: 0, fontSize: 11, lineHeight: 15, fontWeight: "600", fontFamily: appFonts.semibold },
   price: { flexShrink: 1, minWidth: 0, fontSize: 12, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold, fontVariant: ["tabular-nums"] },
   perDay: { fontSize: 10, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
   actionArea: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 2 },
   actionAreaNarrow: { width: "100%", flex: 0, paddingLeft: 22 },
   action: { minHeight: 40, flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 2 },
   link: { fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
-  infoAction: { width: 36, height: 40, flexShrink: 0, alignItems: "center", justifyContent: "center" },
+  infoAction: { width: 32, height: 40, marginLeft: 6, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   moreAction: { minHeight: 36, paddingLeft: 6, flexDirection: "row", alignItems: "center", gap: 4 },
   moreText: { fontSize: 11, lineHeight: 16, color: "#004BB8", fontWeight: "600", fontFamily: appFonts.semibold },
   sheetScreen: { flex: 1, paddingHorizontal: 18 },
