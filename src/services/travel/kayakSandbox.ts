@@ -295,7 +295,7 @@ export function normalizeSandboxOffers(
           ...kayakAttributes(option,["policy","fees","isCreditCardRequired","paymentType","rateType","badges"]),
           ...kayakAttributes(object(object(data.agencies)[text(option.agencyCode)]),["displayName","type"]).map(fact => ({ ...fact, label: `Rental agency · ${fact.label}` })),
           ...kayakAttributes(object(object(data.carLocations)[text(option.pickupLocationId)]),["address","cityName","countryCode","locationType","displayDistance","airport","coordinates"]).map(fact => ({ ...fact, label: `Pickup · ${fact.label}` })),
-          ...kayakAttributes(object(object(data.carLocations)[text(option.dropoffLocationId || option.pickupLocationId)]),["address","cityName","countryCode","locationType","displayDistance","airport","coordinates"]).map(fact => ({ ...fact, label: `Drop-off · ${fact.label}` })),
+          ...(text(option.dropoffLocationId) ? kayakAttributes(object(object(data.carLocations)[text(option.dropoffLocationId)]),["address","cityName","countryCode","locationType","displayDistance","airport","coordinates"]).map(fact => ({ ...fact, label: `Drop-off · ${fact.label}` })) : []),
         ] : vertical === "hotels" ? [
           { label: "Amenity information", value: kayakHotelAmenityStatus(result.features, data.amenityDictionary) },
           ...kayakAttributes({...result, amenities: kayakHotelAmenities(result.features, data.amenityDictionary)},["address","hotelCountryCode","starRating","isSelfRated","amenities","policies","guestRating","guestRatingSentiment","reviewQuotes","place"]),
