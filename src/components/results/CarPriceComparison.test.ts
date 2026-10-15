@@ -198,8 +198,33 @@ test("Cars Rate details uses borderless close, left-side semantic section icons,
   assert.ok(closeButton);
   assert.ok(closeButton.includes("h-11 w-11"));
   assert.equal(closeButton.split(/\s+/).some(token => token === "border" || token.startsWith("border-")), false);
-  assert.ok(closeButton.includes("focus-visible:ring-2")); // Keyboard focus remains clearly visible.
+  assert.ok(closeButton.includes("focus-visible:bg-slate-100")); // Keyboard focus stays visible without a blue circle.
   assert.equal((sheet.match(/data-car-rate-fact-value className="[^"]*text-right font-normal text-\[#334155\]/g) ?? []).length, 2);
   assert.ok(sheet.includes('grid-cols-[minmax(0,42%)_minmax(0,1fr)]'));
   assert.ok(sheet.includes("h-[100dvh] max-h-[100dvh]"));
+});
+
+
+test("touch-opened Cars rate details focuses its accessible heading instead of producing a blue close-button halo", () => {
+  const sheet = picker.slice(picker.indexOf('data-car-rate-dialog'));
+  for (const required of [
+    "const dialogHeadingRef = useRef<HTMLHeadingElement>(null)",
+    "dialog.showModal();",
+    "dialogHeadingRef.current?.focus({ preventScroll: true });",
+    "ref={dialogHeadingRef}",
+    "data-car-rate-heading=\"true\"",
+    "tabIndex={-1}",
+    "focus:outline-none",
+    "focus-visible:bg-slate-100",
+  ]) assert.ok(picker.includes(required), required);
+  const closeButton = sheet.match(/aria-label="Close rate details"\s+className="([^"]+)"/)?.[1];
+  assert.ok(closeButton);
+  assert.ok(closeButton.includes("h-11 w-11"));
+  assert.equal(closeButton.includes("focus-visible:ring-"), false);
+  assert.equal(closeButton.includes("ring-[#004BB8]"), false);
+  assert.ok(sheet.includes('focus:outline-none'));
+  const results = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
+  assert.match(results, /label="Car results" rowClassName="pb-3\.5 sm:pb-4 focus:outline-none"/);
+  assert.match(results, /<CarResultCard/);
+  assert.doesNotMatch(card.slice(card.indexOf('data-car-result-card-shell className="w-full"'), card.indexOf("data-car-card-mobile-main")), /ring-2|border-\[#004BB8\]/);
 });
