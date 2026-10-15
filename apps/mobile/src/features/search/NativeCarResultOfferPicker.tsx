@@ -48,7 +48,7 @@ function RateSectionHeading({
   const SectionIcon = rateSectionIcons[id];
   return (
     <View style={styles.sectionHeading}>
-      <SectionIcon accessible={false} size={17} strokeWidth={1.8} color={iconColor} />
+      <SectionIcon accessible={false} size={18} strokeWidth={2.1} color={iconColor} />
       <Text accessibilityRole="header" style={[styles.sectionTitle, { color: textColor }]}>{title}</Text>
     </View>
   );
@@ -152,42 +152,41 @@ export function NativeCarResultOfferPicker({
       <SafeAreaProvider>
         <SafeAreaView edges={["top", "bottom", "left", "right"]} style={[styles.sheetScreen, { backgroundColor: theme.surface }]} accessibilityViewIsModal>
           <View style={[styles.sheetHeader, { borderBottomColor: theme.border }]}>
-            <View style={styles.sheetHeading}>
+            <View style={styles.sheetTitleRow}>
+              <View accessible={false} style={styles.sheetHeadingSpacer} />
               <Text accessibilityRole="header" style={[styles.sheetTitle, { color: theme.textPrimary }]}>Rate details</Text>
-              <Text numberOfLines={2} style={[styles.seller, { color: theme.textSecondary }]}>Booking provider · {selectedChoice?.providerName ?? ""}</Text>
-              <Text style={[styles.sandboxNote, { color: theme.textSecondary }]}>KAYAK sandbox · Simulated rates and availability. No live booking.</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="Close rate details" onPress={() => setSelectedKey(null)} style={styles.closeButton}>
+                <X accessible={false} color={theme.textPrimary} size={20} />
+              </Pressable>
             </View>
-            <Pressable accessibilityRole="button" accessibilityLabel="Close rate details" onPress={() => setSelectedKey(null)} style={styles.closeButton}>
-              <X accessible={false} color={theme.textPrimary} size={20} />
-            </Pressable>
+            <Text numberOfLines={2} style={[styles.seller, { color: theme.textSecondary }]}>Booking provider · {selectedChoice?.providerName ?? ""}</Text>
           </View>
           <ScrollView style={styles.sheetScroll} contentContainerStyle={styles.sheetBody} nestedScrollEnabled>
             {selectedPrice && selectedChoice ? (
               <>
                 <View style={[styles.paymentSection, { borderBottomColor: theme.border }]}>
-                  <RateSectionHeading id="payment" title="Price and payment" textColor={theme.textPrimary} iconColor={theme.textSecondary} />
+                  <RateSectionHeading id="payment" title="Price and payment" textColor={theme.textPrimary} iconColor={theme.dark ? "#CBD5E1" : "#475569"} />
                   <Text style={[styles.sheetPrice, { color: theme.textPrimary }]}>{money(selectedPrice.currency, selectedPrice.pricePerDay)}<Text style={[styles.sheetPerDay, { color: theme.textSecondary }]}> per day</Text></Text>
-                  <Text style={[styles.sheetTotal, { color: theme.textSecondary }]}>Estimated total: {money(selectedPrice.currency, selectedPrice.totalPrice)}</Text>
+                  <Text style={[styles.sheetTotal, { color: theme.dark ? "#CBD5E1" : "#475569" }]}>Estimated total: <Text style={[styles.sheetTotalAmount, { color: theme.textPrimary }]}>{money(selectedPrice.currency, selectedPrice.totalPrice)}</Text></Text>
                   <Text style={[styles.sheetPayment, { color: theme.textSecondary }]}>Payment timing: {getCarRatePaymentLabel(selectedChoice.offer) ?? "Not supplied"}</Text>
                   {paymentFacts.map((fact, index) => (
                     <View key={fact.label + ":" + index} style={[styles.factRow, { borderBottomColor: theme.border }]}>
-                      <Text style={[styles.factLabel, { color: theme.textSecondary }]}>{fact.label}</Text>
-                      <Text style={[styles.factValue, { color: theme.dark ? "#CBD5E1" : "#334155" }]}>{fact.value}</Text>
+                      <Text style={[styles.factLabel, { color: theme.dark ? "#CBD5E1" : "#475569" }]}>{fact.label}</Text>
+                      <Text style={[styles.factValue, { color: theme.dark ? "#E2E8F0" : "#1E293B" }]}>{fact.value}</Text>
                     </View>
                   ))}
                 </View>
                 {disclosureSections.filter(section => section.id !== "payment").map(section => (
                   <View key={section.id} style={[styles.section, { borderBottomColor: theme.border }]}>
-                    <RateSectionHeading id={section.id} title={section.title} textColor={theme.textPrimary} iconColor={theme.textSecondary} />
+                    <RateSectionHeading id={section.id} title={section.title} textColor={theme.textPrimary} iconColor={theme.dark ? "#CBD5E1" : "#475569"} />
                     {section.facts.map((fact, index) => (
                       <View key={fact.label + ":" + index} style={[styles.factRow, { borderBottomColor: theme.border }]}>
-                        <Text style={[styles.factLabel, { color: theme.textSecondary }]}>{fact.label}</Text>
-                        <Text style={[styles.factValue, { color: theme.dark ? "#CBD5E1" : "#334155" }]}>{fact.value}</Text>
+                        <Text style={[styles.factLabel, { color: theme.dark ? "#CBD5E1" : "#475569" }]}>{fact.label}</Text>
+                        <Text style={[styles.factValue, { color: theme.dark ? "#E2E8F0" : "#1E293B" }]}>{fact.value}</Text>
                       </View>
                     ))}
                   </View>
                 ))}
-                <Text style={[styles.disclaimer, { color: theme.textSecondary }]}>Sandbox rate information is simulated. Confirm pricing, rental eligibility, and final terms directly with the rental provider before booking.</Text>
               </>
             ) : null}
           </ScrollView>
@@ -221,16 +220,17 @@ const styles = StyleSheet.create({
   moreText: { fontSize: 11, lineHeight: 16, color: "#004BB8", fontWeight: "600", fontFamily: appFonts.semibold },
   sheetScreen: { flex: 1, paddingHorizontal: 18 },
   sheetScroll: { flex: 1, minHeight: 0 },
-  sheetHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, paddingTop: 12, paddingBottom: 14 },
-  sheetHeading: { flex: 1, minWidth: 0, gap: 3 },
-  sheetTitle: { fontSize: 18, lineHeight: 23, fontWeight: "700", fontFamily: appFonts.bold },
-  seller: { fontSize: 13, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
-  sandboxNote: { fontSize: 11, lineHeight: 16, marginTop: 2, fontFamily: appFonts.regular },
+  sheetHeader: { borderBottomWidth: StyleSheet.hairlineWidth, paddingTop: 12, paddingBottom: 14 },
+  sheetTitleRow: { flexDirection: "row", alignItems: "center", minHeight: 44 },
+  sheetHeadingSpacer: { width: 44, height: 44 },
+  sheetTitle: { flex: 1, minWidth: 0, textAlign: "center", fontSize: 18, lineHeight: 23, fontWeight: "700", fontFamily: appFonts.bold },
+  seller: { marginTop: 3, fontSize: 13, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
   closeButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   sheetBody: { paddingTop: 16, paddingBottom: 24 },
   sheetPrice: { fontSize: 22, fontWeight: "700", fontFamily: appFonts.bold, fontVariant: ["tabular-nums"], lineHeight: 28 },
   sheetPerDay: { fontSize: 12, fontWeight: "500", fontFamily: appFonts.medium },
-  sheetTotal: { marginTop: 4, fontSize: 13, lineHeight: 18, fontFamily: appFonts.medium },
+  sheetTotal: { marginTop: 4, fontSize: 14, lineHeight: 20, fontWeight: "500", fontFamily: appFonts.medium },
+  sheetTotalAmount: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold, fontVariant: ["tabular-nums"] },
   sheetPayment: { marginTop: 4, marginBottom: 12, fontSize: 12, lineHeight: 18, fontFamily: appFonts.medium },
   paymentSection: { borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: 16 },
   section: { borderBottomWidth: StyleSheet.hairlineWidth, paddingTop: 16, paddingBottom: 12, gap: 0 },
@@ -238,6 +238,5 @@ const styles = StyleSheet.create({
   sectionTitle: { flex: 1, minWidth: 0, fontSize: 15, lineHeight: 21, letterSpacing: -0.18, fontWeight: "600", fontFamily: appFonts.semibold },
   factRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, minWidth: 0, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },
   factLabel: { width: "42%", minWidth: 0, flexShrink: 1, fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
-  factValue: { flex: 1, minWidth: 0, textAlign: "right", fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
-  disclaimer: { marginTop: 12, fontSize: 11, lineHeight: 16, fontFamily: appFonts.medium },
+  factValue: { flex: 1, minWidth: 0, textAlign: "right", fontSize: 13, lineHeight: 19, fontWeight: "500", fontFamily: appFonts.medium },
 });
