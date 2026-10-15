@@ -1548,7 +1548,8 @@ export function AppHeader({
                 className={cn(
                   "fixed inset-0 z-[70] md:hidden",
                   carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:z-[940]",
-                  mobileResultsSearch && mobileResultsTrailingActions && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:z-[940]",
+                  mobileResultsSearch && mobileResultsTrailingActions && !fullscreenHotelMobileMenu && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:z-[940]",
+                  fullscreenHotelMobileMenu && "max-sm:z-[1100]",
                 )}
                 role="presentation"
               >
@@ -1567,7 +1568,8 @@ export function AppHeader({
                   className={cn(
                     "fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl",
                     carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:h-[calc(100dvh-61px-var(--cars-results-safe-area-top))]",
-                    mobileResultsSearch && mobileResultsTrailingActions && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:h-[calc(100dvh-72px-env(safe-area-inset-top))]",
+                    mobileResultsSearch && mobileResultsTrailingActions && !fullscreenHotelMobileMenu && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:h-[calc(100dvh-72px-env(safe-area-inset-top))]",
+                    fullscreenHotelMobileMenu && "max-sm:inset-x-0 max-sm:top-0 max-sm:w-full max-sm:max-w-none",
                   )}
                 >
                   <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
