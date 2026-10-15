@@ -101,10 +101,10 @@ test("mobile related Hotels can use twelve API results while desktop can request
 });
 
 
-test("desktop Hotel Details requests eight related Hotel cards", () => {
+test("desktop Hotel Details requests four related Hotel cards", () => {
   const desktop = readFileSync(
     new URL("./hotelDetails/DesktopHotelDetails.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(desktop, /<RelatedHotelsSection[\s\S]*?desktopLimit=\{8\}/);
+  assert.match(desktop, /<RelatedHotelsSection[\s\S]*?desktopLimit=\{4\}[^\n]*limit=\{4\}/);
 });
