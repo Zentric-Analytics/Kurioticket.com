@@ -1524,36 +1524,8 @@ export function CarsResultsClient({
     );
   };
 
-  if (isSearchSubmitting) {
-    return (
-      <SearchResultsLoadingTransition
-        searchType="car"
-        active={isSearchSubmitting}
-        searchKey={searchKey}
-        title={t("carsResults.loading.title")}
-        messages={[
-          t("carsResults.loading.checkingCarsAndRates"),
-          t("carsResults.loading.comparingVehiclesAndProviders"),
-          t("carsResults.loading.findingBestAvailableOptions"),
-          t("carsResults.loading.preparingResults"),
-        ]}
-        summary={[pickupLocationLabel, pickupDate + " — " + dropoffDate, pickupTime + " — " + dropoffTime, "Driver age " + driverAge]}
-      />
-    );
-  }
-
-  return (
+  const mobileSearchOverlays = (
     <>
-    {desktopNavSearchTarget && !mobileSearchOpen
-      ? createPortal(
-          renderCarsSearchForm("desktop-navbar"),
-          desktopNavSearchTarget,
-        )
-      : null}
-    {mobileNavSearchTarget
-      ? createPortal(renderMobileHeaderSearch(), mobileNavSearchTarget)
-      : null}
-    <main className="flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-white pb-8">
       <MobileDatePickerDialog
         presentation="carsResultsEdit"
         open={mobileSearchOpen && mobilePicker === "dates"}
@@ -1592,9 +1564,7 @@ export function CarsResultsClient({
         commitOnSelect
         onCommit={(nextValue, suggestion) => {
           setPickupLocation(nextValue);
-          setPickupLocationTarget(
-            serializeSuggestionLocationTarget(suggestion),
-          );
+          setPickupLocationTarget(serializeSuggestionLocationTarget(suggestion));
         }}
         onClose={() => setMobilePicker(null)}
       />
@@ -1609,9 +1579,7 @@ export function CarsResultsClient({
         commitOnSelect
         onCommit={(nextValue, suggestion) => {
           setDropoffLocation(nextValue);
-          setDropoffLocationTarget(
-            serializeSuggestionLocationTarget(suggestion),
-          );
+          setDropoffLocationTarget(serializeSuggestionLocationTarget(suggestion));
         }}
         onClose={() => setMobilePicker(null)}
       />
@@ -1666,7 +1634,45 @@ export function CarsResultsClient({
           {mobileSearchOpen ? renderCarsSearchForm("mobile") : null}
         </div>
       </MobileResultsEditSheet>
+    </>
+  );
 
+  if (isSearchSubmitting) {
+    return (
+      <>
+        {mobileSearchOverlays}
+        <SearchResultsLoadingTransition
+          searchType="car"
+          active={isSearchSubmitting}
+          searchKey={searchKey}
+          desktopSearch={renderCarsSearchForm("desktop-navbar")}
+          mobileSearch={renderMobileHeaderSearch()}
+          title={t("carsResults.loading.title")}
+          messages={[
+            t("carsResults.loading.checkingCarsAndRates"),
+            t("carsResults.loading.comparingVehiclesAndProviders"),
+            t("carsResults.loading.findingBestAvailableOptions"),
+            t("carsResults.loading.preparingResults"),
+          ]}
+          summary={[pickupLocationLabel, pickupDate + " — " + dropoffDate, pickupTime + " — " + dropoffTime, "Driver age " + driverAge]}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+    {desktopNavSearchTarget && !mobileSearchOpen
+      ? createPortal(
+          renderCarsSearchForm("desktop-navbar"),
+          desktopNavSearchTarget,
+        )
+      : null}
+    {mobileNavSearchTarget
+      ? createPortal(renderMobileHeaderSearch(), mobileNavSearchTarget)
+      : null}
+    {mobileSearchOverlays}
+    <main className="flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-white pb-8">
       <div
         className={cn(
           "pointer-events-none fixed inset-x-0 top-0 z-[1000] hidden px-4 transition-all duration-200 lg:block",

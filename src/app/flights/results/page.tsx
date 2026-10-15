@@ -148,6 +148,7 @@ export default async function FlightResultsPage({
         flushMobileBottom
         hideDesktopTravelNav
         hideMobileCategoryTabs
+        hideMobileResultsNavbarDivider
         hotelDesktopBoundary
         flightResultsDesktopSticky
         mobileResultsTrailingActions

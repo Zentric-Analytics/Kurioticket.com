@@ -81,6 +81,7 @@ type AppHeaderProps = {
   mobileResultsLeadingAction?: ReactNode;
   mobileResultsTrailingActions?: boolean;
   mobileResultsSticky?: boolean;
+  hideMobileResultsNavbarDivider?: boolean;
   carsResultsMobileInlineSearch?: boolean;
   hideMobileSecondaryNavLinks?: boolean;
   mobileHeroOverlay?: boolean;
@@ -148,6 +149,7 @@ export function AppHeader({
   mobileResultsLeadingAction,
   mobileResultsTrailingActions = false,
   mobileResultsSticky = true,
+  hideMobileResultsNavbarDivider = false,
   carsResultsMobileInlineSearch = false,
   hideMobileSecondaryNavLinks = false,
   hideMobileCategoryTabs = false,
@@ -761,6 +763,7 @@ export function AppHeader({
         <div data-mobile-results-navbar className={cn(
           "flex h-[72px] items-center bg-white sm:hidden",
           !mobileResultsFilters && !hotelResultsDesktopSticky && "border-b border-slate-200",
+          hideMobileResultsNavbarDivider && "border-b-0 shadow-none",
           mobileResultsTrailingActions ? "gap-1 px-1" : "gap-2 px-2",
         )}>
           {mobileResultsLeadingAction ?? (
@@ -817,7 +820,7 @@ export function AppHeader({
           ) : null}
         </div>
         {mobileResultsFilters && !mobileMenuOpen && !mobileAccountOpen ? (
-          <div data-mobile-results-filter-navbar className="bg-white sm:hidden">
+          <div data-mobile-results-filter-navbar className={cn("bg-white sm:hidden", hideMobileResultsNavbarDivider && "border-b-0 shadow-none")}>
             {mobileResultsFilters}
           </div>
         ) : null}

@@ -162,7 +162,9 @@ test("Flight Results supports a page-owned persistent header without changing fa
   const preparing = source.slice(preparingStart, guidedStart);
   assert.ok(preparingStart >= 0 && guidedStart > preparingStart);
   assert.match(preparing, /\{standaloneResultsHeader\}/);
-  assert.doesNotMatch(preparing, /readyExternalMobileHeader|readyDesktopNavbarSearch|renderDesktopHeaderSearchBar\(\)/);
+  assert.match(preparing, /desktopSearch=\{renderDesktopHeaderSearchBar\(\)\}/);
+  assert.match(preparing, /mobileSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.match(preparing, /mobileFilters=\{mobileResultsFiltersContent\}/);
   assert.doesNotMatch(source, /renderMobileCompactResultsHeader|mobileCompactHeaderVisible/);
 });
 

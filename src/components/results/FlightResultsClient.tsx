@@ -7045,6 +7045,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         flushMobileBottom
         hideDesktopTravelNav
         hideMobileCategoryTabs
+        hideMobileResultsNavbarDivider
         hotelDesktopBoundary
         flightResultsDesktopSticky
         mobileResultsSearch={renderMobileRouteSummaryCard()}
@@ -7081,6 +7082,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         active={resultsUiPreparing}
         mobileHeaderProvided={Boolean(standaloneResultsHeader)}
         searchKey={currentFlightSearchKey}
+        desktopSearch={renderDesktopHeaderSearchBar()}
+        mobileSearch={renderMobileRouteSummaryCard()}
+        mobileFilters={mobileResultsFiltersContent}
         messages={[
           t("flightResults.loading.checkingAirlinesAndFares"),
           t("flightResults.loading.comparingRoutesAndProviders"),
