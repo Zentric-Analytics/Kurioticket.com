@@ -293,7 +293,7 @@ test("desktop and mobile web use the same three-offer preview with a reserved di
   assert.match(toggle, /Show fewer offers/);
   assert.match(toggle, /aria-expanded=\{expanded\}/);
   assert.match(toggle, /groups\.length - INITIAL_VISIBLE_OFFER_COUNT/);
-  assert.match(compactSource, /data-car-deal-more-slot className="mt-0\.5 flex min-h-9 items-center md:mt-1 md:min-h-6"/);
+  assert.match(compactSource, /data-car-deal-more-slot className="mt-0\.5 flex min-h-9 items-center md:mt-1 md:min-h-6 lg:mt-2"/);
   assert.match(compactSource, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
   assert.doesNotMatch(compactSource, /groups\.slice\(/);
   assert.match(compactSource, /groups\.map\(\(group, index\) =>/);
@@ -330,6 +330,19 @@ test("Cars provider expansion is parent-controlled and keeps supplier clickout a
   assert.match(picker, /setDetailsKey\(group\.key\)/);
 });
 
+test("desktop Cars provider offers have even vertical space while mobile compact rows are unchanged", () => {
+  // Desktop only: each visible row is at least 32px tall with a consistent 6px gap.
+  // The 108px minimum reserves the same height for one-, two- and three-offer previews.
+  assert.ok(picker.includes('compact ? "max-[359px]:min-h-[240px] space-y-0" : "space-y-0.5 lg:space-y-1.5 lg:min-h-[108px]"'));
+  assert.ok(picker.includes(': "grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)] min-h-6 lg:min-h-8"'));
+  assert.ok(picker.includes('data-car-deal-more-slot className="mt-0.5 flex min-h-9 items-center md:mt-1 md:min-h-6 lg:mt-2"'));
+  // No mobile spacing, tap-target, price, info, or provider-action changes.
+  assert.ok(picker.includes('compact ? "grid-cols-[minmax(0,calc(65%_+_20px))_minmax(0,1fr)] min-h-9 max-[359px]:grid-cols-1 max-[359px]:py-1"'));
+  assert.ok(picker.includes('compact ? "h-9 w-8" : "h-6 w-7"'));
+  assert.ok(picker.includes('compact ? "min-h-9" : "min-h-6"'));
+  assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
+});
+
 test("Cars offers reserve a stable three-row preview without fabricating provider options", () => {
   assert.match(picker, /min-h-\[108px\] md:min-h-\[76px\]/);
   assert.match(picker, /max-\[359px\]:min-h-\[240px\]/);
@@ -338,7 +351,7 @@ test("Cars offers reserve a stable three-row preview without fabricating provide
   assert.match(picker, /compact \? "grid-cols-\[minmax/);
   assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
   assert.match(picker, /min-h-9 max-\[359px\]:grid-cols-1/);
-  assert.match(picker, /: "grid-cols-\[minmax\(0,calc\(50%_\+_31px\)\)_minmax\(0,1fr\)\] min-h-6"/);
+  assert.match(picker, /: "grid-cols-\[minmax\(0,calc\(50%_\+_31px\)\)_minmax\(0,1fr\)\] min-h-6 lg:min-h-8"/);
   assert.match(picker, /groups\.map\(\(group, index\) =>/);
   assert.doesNotMatch(picker, /placeholder|Empty provider|ghost rate/i);
 });
