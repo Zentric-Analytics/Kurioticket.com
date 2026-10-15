@@ -480,6 +480,87 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
 
 
 
+test("desktop Cars sort badge follows the selected sort and keeps title aligned with Save and Share", async ({ page }) => {
+  const baseOffer = carBase.offers[0];
+  if (!baseOffer) throw new Error("Missing Cars fixture");
+  const fixture = (id: string, modelName: string, recommendationScore: number, total: number, rating: number) => ({
+    ...carBase,
+    id, modelName, recommendationScore, supplierRating: rating,
+    offers: Array.from({ length: 5 }, (_, index) => ({
+      ...baseOffer,
+      id: id + "-offer-" + index,
+      bookingProviderName: "Fixture Seller " + index,
+      bookingUrl: "https://example.com/cars/" + id + "/" + index,
+      totalPrice: total + index * 15,
+      pricePerDay: Math.round((total + index * 15) / 3),
+    })),
+  });
+  const cars = [
+    fixture("sort-best", "Sort Leader", 90, 120, 4.1),
+    fixture("sort-other", "Value Alternative", 70, 170, 4.5),
+    fixture("sort-rated", "Rated Leader", 60, 220, 4.9),
+  ];
+  await page.route("**/api/cars/search", route =>
+    route.fulfill({ json: { results: cars, status: "available" } }));
+
+  await page.setViewportSize({ width: 1365, height: 900 });
+  await page.goto(routes.cars);
+  const firstCard = page.locator("[data-car-result-card-shell]").first();
+  const heading = firstCard.locator("[data-car-card-desktop-shared-header]");
+  const badge = heading.locator("[data-car-card-desktop-badge]");
+  const cardName = heading.locator("[data-car-card-desktop-title-row] h2");
+  await expect(cardName).toHaveText("Sort Leader");
+  await expect(badge).toContainText("Best value");
+
+  const checkIdentitySpacing = async () => {
+    const nameRect = await cardName.boundingBox();
+    const actions = heading.locator("[data-car-card-desktop-actions]");
+    const saveRect = await actions.locator("button").first().boundingBox();
+    const shareRect = await actions.locator("button").nth(1).boundingBox();
+    const typeRect = await heading.locator("[data-car-card-desktop-category]").boundingBox();
+    expect(nameRect).not.toBeNull();
+    expect(saveRect).not.toBeNull();
+    expect(shareRect).not.toBeNull();
+    expect(typeRect).not.toBeNull();
+    const nameCenter = nameRect!.y + nameRect!.height / 2;
+    expect(Math.abs(nameCenter - (saveRect!.y + saveRect!.height / 2))).toBeLessThanOrEqual(3);
+    expect(Math.abs(nameCenter - (shareRect!.y + shareRect!.height / 2))).toBeLessThanOrEqual(3);
+    const gap = typeRect!.y - (nameRect!.y + nameRect!.height);
+    expect(gap).toBeGreaterThanOrEqual(1);
+    expect(gap).toBeLessThanOrEqual(9);
+  };
+  await checkIdentitySpacing();
+  const toggle = firstCard.locator("[data-car-deal-more-offers]").filter({ visible: true });
+  await expect(toggle).toContainText("+2 more offers");
+  await expect(toggle).toHaveCSS("font-size", "9.5px");
+  await toggle.click();
+  await expect(toggle).toContainText("Show fewer offers");
+  await expect(toggle).toHaveCSS("font-size", "9.5px");
+  await toggle.click();
+  await expect(toggle).toContainText("+2 more offers");
+
+  const sortButton = page.locator(".cars-results-desktop-sort-trigger").filter({ visible: true }).first();
+  await sortButton.click();
+  await page.locator(".cars-results-desktop-sort-option").nth(1).click();
+  await expect(cardName).toHaveText("Sort Leader");
+  await expect(badge).toContainText("Cheapest");
+  await checkIdentitySpacing();
+
+  await sortButton.click();
+  await page.locator(".cars-results-desktop-sort-option").nth(2).click();
+  await expect(cardName).toHaveText("Rated Leader");
+  await expect(badge).toContainText("Top rated");
+  await checkIdentitySpacing();
+
+  // Mobile keeps objective source badges and its original +more 11px sizing.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(routes.cars);
+  const mobileCard = page.locator("[data-car-result-card-shell]").first();
+  await expect(mobileCard.locator("[data-car-card-mobile-information]")).toContainText("Sort Leader");
+  await expect(mobileCard.locator("[data-car-card-mobile-information]")).toContainText("Cheapest");
+  await expect(mobileCard.locator("[data-car-deal-more-offers]").filter({ visible: true })).toHaveCSS("font-size", "11px");
+});
+
 test("desktop Cars previews three sellers and expands all additional offers without affecting mobile previews", async ({ page }) => {
   const original = carBase.offers[0];
   if (!original) throw new Error("Missing Cars comparison test offer");
