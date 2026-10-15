@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ChevronRight, Info, X } from "lucide-react-native";
 import { SvgUri } from "react-native-svg";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import type { CarResult } from "../../api/travelApi";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
@@ -107,35 +108,30 @@ export function NativeCarResultOfferPicker({
       </Pressable>
     ) : null}
     <Modal
-      transparent
       visible={Boolean(selectedChoice)}
+      transparent={false}
       animationType="slide"
+      presentationStyle="fullScreen"
+      statusBarTranslucent={false}
       onRequestClose={() => setSelectedKey(null)}
-      statusBarTranslucent
     >
-      <View style={styles.modalRoot}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Close rate details"
-          style={styles.backdrop}
-          onPress={() => setSelectedKey(null)}
-        />
-        <View style={[styles.sheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityViewIsModal>
-          <View style={styles.sheetHeader}>
+      <SafeAreaProvider>
+        <SafeAreaView edges={["top", "bottom", "left", "right"]} style={[styles.sheetScreen, { backgroundColor: theme.surface }]} accessibilityViewIsModal>
+          <View style={[styles.sheetHeader, { borderBottomColor: theme.border }]}>
             <View style={styles.sheetHeading}>
-              <Text style={[styles.sheetTitle, { color: theme.textPrimary }]}>Rate details</Text>
-              <Text numberOfLines={1} style={[styles.seller, { color: theme.textSecondary }]}>Booking provider · {selectedChoice?.providerName ?? ""}</Text>
+              <Text accessibilityRole="header" style={[styles.sheetTitle, { color: theme.textPrimary }]}>Rate details</Text>
+              <Text numberOfLines={2} style={[styles.seller, { color: theme.textSecondary }]}>Booking provider · {selectedChoice?.providerName ?? ""}</Text>
+              <Text style={[styles.sandboxNote, { color: theme.textSecondary }]}>KAYAK sandbox · Simulated rates and availability. No live booking.</Text>
             </View>
-            <Pressable accessibilityRole="button" accessibilityLabel="Close rate details" onPress={() => setSelectedKey(null)} style={styles.closeButton}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Close rate details" onPress={() => setSelectedKey(null)} style={[styles.closeButton, { borderColor: theme.border }]}>
               <X accessible={false} color={theme.textPrimary} size={20} />
             </Pressable>
           </View>
-          <Text style={[styles.sandboxNote, { color: theme.textSecondary }]}>KAYAK sandbox · Simulated rates and availability. No live booking.</Text>
-          <ScrollView contentContainerStyle={styles.sheetBody} nestedScrollEnabled>
+          <ScrollView style={styles.sheetScroll} contentContainerStyle={styles.sheetBody} nestedScrollEnabled>
             {selectedPrice && selectedChoice ? (
               <>
-                <View style={[styles.paymentSection, { borderTopColor: theme.border, borderBottomColor: theme.border }]}>
-                  <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Price and payment</Text>
+                <View style={[styles.paymentSection, { borderBottomColor: theme.border }]}>
+                  <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.textPrimary }]}>Price and payment</Text>
                   <Text style={[styles.sheetPrice, { color: theme.textPrimary }]}>{money(selectedPrice.currency, selectedPrice.pricePerDay)}<Text style={[styles.sheetPerDay, { color: theme.textSecondary }]}> per day</Text></Text>
                   <Text style={[styles.sheetTotal, { color: theme.textSecondary }]}>Estimated total: {money(selectedPrice.currency, selectedPrice.totalPrice)}</Text>
                   <Text style={[styles.sheetPayment, { color: theme.textSecondary }]}>Payment timing: {getCarRatePaymentLabel(selectedChoice.offer) ?? "Not supplied"}</Text>
@@ -147,8 +143,8 @@ export function NativeCarResultOfferPicker({
                   ))}
                 </View>
                 {disclosureSections.filter(section => section.id !== "payment").map(section => (
-                  <View key={section.id} style={[styles.section, { borderTopColor: theme.border }]}>
-                    <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>{section.title}</Text>
+                  <View key={section.id} style={[styles.section, { borderBottomColor: theme.border }]}>
+                    <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.textPrimary }]}>{section.title}</Text>
                     {section.facts.map((fact, index) => (
                       <View key={fact.label + ":" + index} style={[styles.factRow, { borderBottomColor: theme.border }]}>
                         <Text style={[styles.factLabel, { color: theme.textSecondary }]}>{fact.label}</Text>
@@ -161,8 +157,8 @@ export function NativeCarResultOfferPicker({
               </>
             ) : null}
           </ScrollView>
-        </View>
-      </View>
+        </SafeAreaView>
+      </SafeAreaProvider>
     </Modal>
   </View>;
 }
@@ -186,25 +182,24 @@ const styles = StyleSheet.create({
   infoAction: { width: 36, height: 40, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   moreAction: { minHeight: 36, paddingLeft: 6, flexDirection: "row", alignItems: "center", gap: 4 },
   moreText: { fontSize: 11, lineHeight: 16, color: "#004BB8", fontWeight: "600", fontFamily: appFonts.semibold },
-  modalRoot: { flex: 1, justifyContent: "flex-end" },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(7,19,59,0.55)" },
-  sheet: { maxHeight: "82%", borderTopLeftRadius: 20, borderTopRightRadius: 20, borderWidth: 1, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 24 },
-  sheetHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 10 },
+  sheetScreen: { flex: 1, paddingHorizontal: 18 },
+  sheetScroll: { flex: 1, minHeight: 0 },
+  sheetHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, paddingTop: 12, paddingBottom: 14 },
   sheetHeading: { flex: 1, minWidth: 0, gap: 3 },
   sheetTitle: { fontSize: 18, lineHeight: 23, fontWeight: "700", fontFamily: appFonts.bold },
   seller: { fontSize: 13, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
-  sandboxNote: { fontSize: 11, lineHeight: 16, marginBottom: 10, fontFamily: appFonts.regular },
-  closeButton: { minWidth: 40, minHeight: 40, alignItems: "center", justifyContent: "center" },
-  sheetBody: { paddingBottom: 18 },
+  sandboxNote: { fontSize: 11, lineHeight: 16, marginTop: 2, fontFamily: appFonts.regular },
+  closeButton: { width: 44, height: 44, borderWidth: StyleSheet.hairlineWidth, borderRadius: 22, alignItems: "center", justifyContent: "center" },
+  sheetBody: { paddingTop: 16, paddingBottom: 24 },
   sheetPrice: { fontSize: 22, fontWeight: "700", fontFamily: appFonts.bold, fontVariant: ["tabular-nums"], lineHeight: 28 },
   sheetPerDay: { fontSize: 12, fontWeight: "500", fontFamily: appFonts.medium },
   sheetTotal: { marginTop: 4, fontSize: 13, lineHeight: 18, fontFamily: appFonts.medium },
-  sheetPayment: { marginTop: 4, marginBottom: 12, fontSize: 11, lineHeight: 16, fontFamily: appFonts.medium },
-  paymentSection: { borderTopWidth: 1, borderBottomWidth: 1, paddingTop: 12, paddingBottom: 10, marginBottom: 4 },
-  section: { borderTopWidth: 1, paddingTop: 12, paddingBottom: 6, gap: 0 },
-  sectionTitle: { marginBottom: 8, fontSize: 11, lineHeight: 15, letterSpacing: 0.85, textTransform: "uppercase", fontWeight: "700", fontFamily: appFonts.bold },
-  factRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, minWidth: 0, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth },
-  factLabel: { width: "42%", minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
-  factValue: { flex: 1, minWidth: 0, textAlign: "right", fontSize: 12, lineHeight: 18, fontWeight: "500", fontFamily: appFonts.medium },
+  sheetPayment: { marginTop: 4, marginBottom: 12, fontSize: 12, lineHeight: 18, fontFamily: appFonts.medium },
+  paymentSection: { borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: 16 },
+  section: { borderBottomWidth: StyleSheet.hairlineWidth, paddingTop: 16, paddingBottom: 12, gap: 0 },
+  sectionTitle: { marginBottom: 12, fontSize: 15, lineHeight: 21, letterSpacing: -0.18, fontWeight: "600", fontFamily: appFonts.semibold },
+  factRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, minWidth: 0, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },
+  factLabel: { width: "42%", minWidth: 0, flexShrink: 1, fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
+  factValue: { flex: 1, minWidth: 0, textAlign: "right", fontSize: 13, lineHeight: 19, fontWeight: "500", fontFamily: appFonts.medium },
   disclaimer: { marginTop: 12, fontSize: 11, lineHeight: 16, fontFamily: appFonts.medium },
 });
