@@ -49,7 +49,7 @@ type MultiCityFlightEditorProps = {
   legs: FlightSearchLeg[];
   onChange: (legs: FlightSearchLeg[]) => void;
   minimumDate: string;
-  presentation?: "standalone" | "homepage" | "results";
+  presentation?: "standalone" | "homepage" | "landing" | "results";
   onAirportValidityChange?: (valid: boolean) => void;
 };
 
@@ -65,6 +65,7 @@ export function MultiCityFlightEditor({
   const calendarLocale = useMemo(() => normalizeFlightsCalendarLocale(locale), [locale]);
   const [activePicker, setActivePicker] = useState<ActivePicker>(null);
   const resultsPresentation = presentation === "results";
+  const landingPresentation = presentation === "landing";
   const [verifiedAirports, setVerifiedAirports] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
     legs.forEach((leg, index) => {
@@ -170,11 +171,11 @@ export function MultiCityFlightEditor({
       aria-label={resultsPresentation ? t("multiCity") : undefined}
       aria-labelledby={resultsPresentation ? undefined : "multi-city-flights-heading"}
       data-multi-city-presentation={presentation}
-      className={cn("mt-1", resultsPresentation && "min-w-0")}
+      className={cn("mt-1", resultsPresentation && "min-w-0", landingPresentation && "lg:mt-0")}
     >
-      <div className={cn("flex items-center justify-between gap-3", resultsPresentation && "justify-end")}>
+      <div className={cn("flex items-center justify-between gap-3", resultsPresentation && "justify-end", landingPresentation && "lg:justify-end")}>
         {!resultsPresentation ? (
-          <h3 id="multi-city-flights-heading" className="text-sm font-bold text-slate-950">
+          <h3 id="multi-city-flights-heading" className={cn("text-sm font-bold text-slate-950", landingPresentation && "lg:sr-only")}>
             {t("flightMultiCity.title")}
           </h3>
         ) : null}
@@ -187,17 +188,21 @@ export function MultiCityFlightEditor({
         {legs.map((leg, index) => {
           const legMinimumDate = index > 0 ? legs[index - 1].departureDate || minimumDate : minimumDate;
           return (
-            <div key={index} className={cn("space-y-1.5", resultsPresentation && "min-w-0 space-y-2")}>
-              <p className="text-xs font-semibold text-slate-700">{flightLabel(index)}</p>
+            <div key={index} className={cn("space-y-1.5", resultsPresentation && "min-w-0 space-y-2", landingPresentation && "lg:space-y-1.5")}>
+              <p className={cn("text-xs font-semibold text-slate-700", landingPresentation && "lg:text-[11px] lg:font-semibold lg:uppercase lg:tracking-[0.08em] lg:text-slate-600")}>{flightLabel(index)}</p>
               <div className={cn(
                 "grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 md:grid-cols-[minmax(0,2fr)_minmax(170px,.72fr)] md:gap-0 lg:grid-cols-[minmax(0,2fr)_minmax(170px,.72fr)_48px]",
                 resultsPresentation && "flex min-w-0 flex-col gap-2.5 sm:ring-0",
+                landingPresentation &&
+                  "lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_48px] lg:items-stretch lg:gap-0 lg:overflow-hidden lg:rounded-2xl lg:bg-white lg:ring-1 lg:ring-slate-200",
               )}>
                 <div
                   className={cn(
                     "relative grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0",
                     resultsPresentation &&
                       "flight-results-edit-surface gap-0 overflow-hidden rounded-[13px] border border-[#E7ECF5] bg-white sm:grid-cols-[minmax(0,1fr)_56px_minmax(0,1fr)]",
+                    landingPresentation &&
+                      "lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 lg:bg-transparent lg:before:absolute lg:before:left-1/2 lg:before:top-3 lg:before:h-[calc(100%-1.5rem)] lg:before:w-px lg:before:-translate-x-1/2 lg:before:bg-slate-200/90",
                   )}
                   data-multi-city-route-pair
                   data-multi-city-results-route-card={resultsPresentation ? true : undefined}
@@ -222,6 +227,7 @@ export function MultiCityFlightEditor({
                   }}
                   t={t}
                   resultsPresentation={resultsPresentation}
+                  landingPresentation={landingPresentation}
                 />
                 {resultsPresentation ? (
                   <span
@@ -250,6 +256,7 @@ export function MultiCityFlightEditor({
                   }}
                   t={t}
                   resultsPresentation={resultsPresentation}
+                  landingPresentation={landingPresentation}
                 />
                 <button
                   type="button"
@@ -260,6 +267,8 @@ export function MultiCityFlightEditor({
                     "focus-ring absolute left-1/2 top-1/2 z-10 inline-flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#D8E1EC] bg-white text-[#004BB8]",
                     resultsPresentation &&
                       "border-0 bg-white text-[#064CF7] sm:static sm:col-start-2 sm:row-start-1 sm:self-center sm:justify-self-center sm:translate-x-0 sm:translate-y-0",
+                    landingPresentation &&
+                      "lg:static lg:col-start-2 lg:row-start-1 lg:h-8 lg:w-8 lg:self-center lg:justify-self-center lg:translate-x-0 lg:translate-y-0 lg:border-slate-300 lg:text-[#004BB8] lg:shadow-[0_4px_12px_rgba(15,23,42,0.12)]",
                   )}
                 >
                   {resultsPresentation ? (
@@ -281,10 +290,12 @@ export function MultiCityFlightEditor({
                   onChange={(departureDate) => update(index, { departureDate })}
                   t={t}
                   resultsPresentation={resultsPresentation}
+                  landingPresentation={landingPresentation}
                 />
                 <div className={cn(
                   "flex min-h-11 items-center justify-end border-slate-200 bg-white px-1.5 sm:border-t md:border-s lg:border-t-0",
                   resultsPresentation && "min-h-0 justify-start border-0 bg-transparent px-0",
+                  landingPresentation && "lg:min-h-[58px] lg:border-0 lg:bg-white lg:px-1.5",
                 )}>
                   <button
                     type="button"
@@ -294,6 +305,7 @@ export function MultiCityFlightEditor({
                     className={cn(
                       "focus-ring inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-35 lg:w-11",
                       resultsPresentation && "w-auto justify-start px-2 text-[13px] text-[#56658E] lg:w-auto",
+                      landingPresentation && "lg:h-full lg:w-12 lg:rounded-none",
                     )}
                   >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -336,6 +348,7 @@ function MultiCityAirportField({
   onInvalidate,
   t,
   resultsPresentation,
+  landingPresentation,
 }: {
   legIndex: number;
   field: AirportField;
@@ -349,6 +362,7 @@ function MultiCityAirportField({
   onInvalidate: () => void;
   t: (key: string) => string;
   resultsPresentation: boolean;
+  landingPresentation: boolean;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -497,6 +511,11 @@ function MultiCityAirportField({
               "flight-results-edit-field-surface min-h-[66px] rounded-none border-0 bg-white px-3 py-[9px] shadow-none hover:border-0 [&_label]:mb-1 [&_label]:text-[10px] [&_label]:font-extrabold [&_label]:leading-[14px] [&_label]:tracking-[0.5px] [&_label]:text-[#56658E] sm:[&_svg]:text-[#071A48] sm:[&_input]:font-semibold",
               field === "origin" ? "sm:col-start-1" : "sm:col-start-3",
             ),
+          landingPresentation &&
+            cn(
+              "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-white lg:px-4 lg:py-2 lg:shadow-none lg:hover:border-0 lg:focus-within:border-0 lg:focus-within:bg-white lg:focus-within:ring-0",
+              field === "origin" ? "lg:col-start-1" : "lg:col-start-3",
+            ),
         )}
       />
       <MobileAirportPicker
@@ -529,6 +548,7 @@ function MultiCityDateField({
   onChange,
   t,
   resultsPresentation,
+  landingPresentation,
 }: {
   legIndex: number;
   value: string;
@@ -539,6 +559,7 @@ function MultiCityDateField({
   onChange: (value: string) => void;
   t: (key: string) => string;
   resultsPresentation: boolean;
+  landingPresentation: boolean;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
@@ -566,6 +587,8 @@ function MultiCityDateField({
           flightSearchFieldShellClassName,
           "sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-white sm:shadow-none sm:focus-within:ring-0",
           resultsPresentation && "flight-results-edit-surface min-h-[66px] rounded-[13px] border border-[#E7ECF5] bg-white px-3 py-[9px] shadow-none hover:border-[#E7ECF5]",
+          landingPresentation &&
+            "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:bg-white lg:px-4 lg:py-2 lg:shadow-none lg:hover:border-slate-200 lg:focus-within:ring-0",
         )}
       >
         <label className={cn(flightSearchFieldLabelClassName, resultsPresentation && "mb-1 text-[10px] font-extrabold leading-[14px] tracking-[0.5px] text-[#56658E]")}>{fieldLabel}</label>
