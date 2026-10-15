@@ -24,8 +24,6 @@ import { useSession } from "next-auth/react";
 import {
   ArrowRightLeft,
   ArrowUp,
-  ChevronLeft,
-  ChevronRight,
   Calendar,
   Check,
   ChevronDown,
@@ -54,7 +52,6 @@ import { resultActionHref } from "@/lib/travel/resultAction";
 import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
 import { kayakFlightCardModel } from "./kayakCardModels";
 import { KayakResultCard } from "./KayakResultCard";
-import { nearbyFarePrice } from "@/components/results/nearbyFarePrice";
 import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters";
 import { FlightPriceAlertControl } from "@/components/results/FlightPriceAlertControl";
 import { FlightResultsScrollIndicator } from "@/components/results/FlightResultsScrollIndicator";
@@ -314,15 +311,7 @@ type NearbyFareRequest = {
 };
 
 const nearbyFareRangeSize = 10;
-const nearbyFareVisibleCount = 7;
 const nearbyFareDaysBeforeAnchor = 4;
-const nearbyFareCenteredVisibleStart = Math.max(
-  0,
-  Math.min(
-    nearbyFareDaysBeforeAnchor - Math.floor(nearbyFareVisibleCount / 2),
-    nearbyFareRangeSize - nearbyFareVisibleCount,
-  ),
-);
 const nearbyFareRequestConcurrency = 1;
 const nearbyFareCacheTtlMs = 10 * 60 * 1000;
 
@@ -1062,9 +1051,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>(null);
   const alignedMobileNearbyFareSearchRef = useRef<string | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
-  const [nearbyFareVisibleStart, setNearbyFareVisibleStart] = useState(
-    nearbyFareCenteredVisibleStart,
-  );
   const [returnDateInput, setReturnDateInput] = useState(
     initialDateSafeParams.get("returnDate") || "",
   );
@@ -3416,31 +3402,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   );
 
 
-
-  useEffect(() => {
-    if (!body?.departureDate) return;
-
-    const departureDate = parseDateValue(body.departureDate);
-    if (!departureDate) return;
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset the window when the searched date changes.
-    setNearbyFareVisibleStart(nearbyFareCenteredVisibleStart);
-  }, [body?.departureDate]);
-
-  const navigateNearbyFareWindow = useCallback(
-    (direction: "previous" | "next") => {
-      setNearbyFareVisibleStart((current) =>
-        Math.max(
-          0,
-          Math.min(
-            current + (direction === "previous" ? -1 : 1),
-            nearbyFareRangeSize - nearbyFareVisibleCount,
-          ),
-        ),
-      );
-    },
-    [],
-  );
 
   const sortOptions = useMemo(
     () => [
@@ -7304,167 +7265,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     </div>
                     {cheaperNearbyFare ? <button type="button" onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)} className="flight-mobile-cheaper-nearby focus-ring flex min-h-[28px] max-w-full items-center px-0 text-left font-medium text-slate-600 hover:text-[#075EE8]">Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}</button> : null}
                   </div>
-                  <div
-                  className="hidden w-full sm:block"
-                  aria-label="Nearby departure fares"
-                >
-                  <div data-desktop-nearby-fare-rail className="relative grid w-full grid-cols-7 items-stretch gap-2 overflow-visible rounded-2xl bg-transparent p-0">
-                    <button
-                      type="button"
-                      aria-label="Previous nearby fare date"
-                      disabled={nearbyFareVisibleStart === 0}
-                      onClick={() => navigateNearbyFareWindow("previous")}
-                      className="focus-ring absolute -left-9 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
-                    >
-                      <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-                    </button>
-
-                    {(nearbyFares.length
-                      ? nearbyFares.slice(
-                          nearbyFareVisibleStart,
-                          nearbyFareVisibleStart + nearbyFareVisibleCount,
-                        )
-                      : Array.from(
-                          { length: nearbyFareVisibleCount },
-                          (_, index) => ({
-                            date: `loading-${index}`,
-                            status: "loading" as const,
-                          }),
-                        )
-                    ).map((fare) => {
-                      const selected = fare.date === body?.departureDate;
-                      const displayPriceData =
-                        fare.status === "success"
-                          ? formatDisplayPrice({
-                              amount: fare.amount,
-                              sourceCurrency: fare.currency,
-                              displayCurrency: selectedCurrency,
-                              convertSourceEstimate: true,
-                              useFlightResultSymbols: true,
-                              rates: currencyRates.rates,
-                              isFallbackRate: currencyRates.isFallback,
-                            })
-                          : null;
-                      const displayPrice = displayPriceData?.formatted ?? null;
-                      const desktopPrice = displayPriceData ? nearbyFarePrice(displayPriceData, calendarLocale) : null;
-                      const accessibleFare =
-                        displayPrice ??
-                        (fare.status === "loading"
-                          ? "Loading fare"
-                          : "Unavailable");
-                      const accessibleDate = fare.date.startsWith("loading-")
-                        ? "Loading date"
-                        : `${formatFareStripWeekdayLabel(fare.date, calendarLocale)}, ${formatFareStripDateLabel(fare.date, calendarLocale)}`;
-
-                      return (
-                        <button
-                          key={fare.date}
-                          type="button"
-                          data-fare-date-cell
-                          aria-label={`${accessibleDate}: ${accessibleFare}`}
-                          aria-current={selected ? "date" : undefined}
-                          aria-pressed={selected}
-                          disabled={
-                            selected || loading || fare.status === "loading"
-                          }
-                          onClick={() => handleNearbyFareDateSelect(fare.date)}
-                          className={cn(
-                            "focus-ring relative flex min-h-[74px] min-w-0 flex-col items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white px-1.5 py-2 text-center shadow-sm transition duration-200 hover:border-[#075EE8]/40 hover:bg-slate-50",
-                            selected && "border-[#075EE8] bg-blue-50/60",
-                          )}
-                        >
-                          {fare.status === "loading" ? (
-                            <>
-                              <span className="h-3 w-12 animate-pulse rounded bg-slate-200" />
-                              <span className="mt-2 h-3 w-8 animate-pulse rounded bg-slate-200" />
-                              <span className="mt-2 h-3 w-14 animate-pulse rounded bg-slate-200" />
-                            </>
-                          ) : (
-                            <>
-                              {selected ? <span className="absolute inset-x-2 top-0 h-0.5 rounded-b bg-[#075EE8]" aria-hidden="true" /> : null}
-                              <span
-                                className={cn(
-                                  "text-[11px] font-medium uppercase leading-[14px]",
-                                  selected
-                                    ? "text-[#075EE8]"
-                                    : "text-slate-800",
-                                )}
-                              >
-                                {formatFareStripDateLabel(
-                                  fare.date,
-                                  calendarLocale,
-                                ).toUpperCase()}
-                              </span>
-                              <span
-                                className={cn(
-                                  "text-[10px] font-medium uppercase leading-[13px] tracking-[0.05em]",
-                                  selected
-                                    ? "text-[#075EE8]"
-                                    : "text-slate-500",
-                                )}
-                              >
-                                {formatFareStripWeekdayLabel(
-                                  fare.date,
-                                  calendarLocale,
-                                ).toUpperCase()}
-                              </span>
-                              <span
-                                className={cn(
-                                  "flight-fare-strip-price mt-1 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium leading-5 lg:hidden",
-                                  selected
-                                    ? "text-[#075EE8]"
-                                    : "text-slate-900",
-                                )}
-                                data-price-size={
-                                  ((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 13
-                                    ? "extra-long"
-                                    : ((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 10
-                                      ? "long"
-                                      : "default"
-                                }
-                                dir="ltr"
-                              >
-                                {displayPrice ?? "Unavailable"}
-                              </span>
-                              <span
-                                className={cn("desktop-flight-fare-price hidden lg:block", selected ? "text-[#075EE8]" : "text-slate-900")}
-                                data-price-size={desktopPrice?.size ?? "long"}
-                                title={desktopPrice?.full}
-                                aria-label={desktopPrice?.full}
-                                dir="ltr"
-                              >
-                                {desktopPrice?.formatted ?? "Unavailable"}
-                              </span>
-                            </>
-                          )}
-                        </button>
-                      );
-                    })}
-
-                    <button
-                      type="button"
-                      aria-label="Next nearby fare date"
-                      disabled={
-                        nearbyFareVisibleStart >=
-                        nearbyFareRangeSize - nearbyFareVisibleCount
-                      }
-                      onClick={() => navigateNearbyFareWindow("next")}
-                      className="focus-ring absolute -right-9 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
-                    >
-                      <ChevronRight className="h-5 w-5" aria-hidden="true" />
-                    </button>
-                  </div>
-                  {cheaperNearbyFare ? (
-                    <button
-                      type="button"
-                      data-desktop-cheaper-nearby
-                      onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)}
-                      className="desktop-flight-cheaper-nearby focus-ring mt-2 flex min-h-7 w-fit max-w-full items-center px-0 text-left text-slate-600 transition-colors hover:text-[#075EE8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-                    >
-                      Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}
-                    </button>
-                  ) : null}
-                </div>
                 </>
               ) : null}
 
