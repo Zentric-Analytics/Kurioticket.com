@@ -97,6 +97,7 @@ const approvedProviderBookingUrl = (
 export function CarResultCard({
   car,
   badge,
+  mobileBadge,
   detailsHref,
   search,
   onSelect,
@@ -112,6 +113,7 @@ export function CarResultCard({
 }: {
   car: NormalizedCarResult;
   badge?: CarResultBadge;
+  mobileBadge?: CarResultBadge | null;
   detailsHref: string | null;
   search: CarSearchParams;
   onSelect?: (car: NormalizedCarResult) => void;
@@ -161,6 +163,8 @@ export function CarResultCard({
     ? `${car.modelName} ${orSimilarLabel}`
     : car.modelName;
   const BadgeIcon = badge ? carResultBadgeIcons[badge] : null;
+  const mobileBadgeLabel = mobileBadge === undefined ? badge : mobileBadge;
+  const MobileBadgeIcon = mobileBadgeLabel ? carResultBadgeIcons[mobileBadgeLabel] : null;
   const dailyDisplayPrice = formatDisplayPrice({
     amount: offer.pricePerDay,
     sourceCurrency: offer.currency,
@@ -363,11 +367,11 @@ export function CarResultCard({
               data-car-card-mobile-information
               className="min-w-0 bg-white px-2.5 pb-2 pt-[7px]"
             >
-              {badge && BadgeIcon ? (
+              {mobileBadgeLabel && MobileBadgeIcon ? (
                 <div className="mb-1 flex min-w-0 justify-end">
                   <span className="inline-flex min-h-5 shrink-0 items-center gap-1 whitespace-nowrap rounded-[5px] bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold leading-4 text-emerald-700">
-                    <BadgeIcon size={11} aria-hidden="true" />
-                    {badge}
+                    <MobileBadgeIcon size={11} aria-hidden="true" />
+                    {mobileBadgeLabel}
                   </span>
                 </div>
               ) : null}
@@ -720,7 +724,8 @@ export function CarResultCard({
 
                 {car.categoryLabel ? (
                   <p
-                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-3" : "row-start-2"} mt-1 whitespace-nowrap px-4 text-[10px] font-bold uppercase leading-[15px] tracking-[0.1em] text-[#004BB8]`}
+                    data-car-card-desktop-category
+                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-3" : "row-start-2"} mt-1 whitespace-nowrap px-4 text-[10px] font-bold uppercase leading-[15px] tracking-[0.1em] text-[#004BB8] lg:-mt-1`}
                   >
                     {car.categoryLabel}
                   </p>
