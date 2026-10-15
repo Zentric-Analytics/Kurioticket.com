@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { ChevronRight, Info, X } from "lucide-react-native";
+import { CarFront, ChevronRight, IdCard, Info, MapPin, ShieldCheck, Wallet, X } from "lucide-react-native";
 import { SvgUri } from "react-native-svg";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import type { CarResult } from "../../api/travelApi";
@@ -11,7 +11,7 @@ import { money } from "./SearchUi";
 import { presentCarOfferCurrency } from "./carDisplayCurrency";
 import { nativeCarResultDealChoices } from "./nativeCarResultDeals";
 import { resolveTravelProviderLogo } from "./providerLogoResolver";
-import { getCarRateDisclosureSections, getCarRatePaymentLabel } from "../../../../../src/lib/cars/carRateDisclosure";
+import { getCarRateDisclosureSections, getCarRatePaymentLabel, type CarRateDisclosureSection } from "../../../../../src/lib/cars/carRateDisclosure";
 
 function ProviderMark({ name, logoUrl }: { name: string; logoUrl?: string }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
@@ -27,6 +27,32 @@ function ProviderMark({ name, logoUrl }: { name: string; logoUrl?: string }) {
   return <View accessible={false} style={styles.fallbackMark}><Text style={styles.fallbackLetter}>{name.trim().slice(0, 1).toUpperCase() || "P"}</Text></View>;
 }
 
+
+const rateSectionIcons = {
+  payment: Wallet,
+  policies: ShieldCheck,
+  pickup: MapPin,
+  driver: IdCard,
+  vehicle: CarFront,
+  other: Info,
+} as const;
+
+function RateSectionHeading({
+  id, title, textColor, iconColor,
+}: {
+  id: CarRateDisclosureSection["id"];
+  title: string;
+  textColor: string;
+  iconColor: string;
+}) {
+  const SectionIcon = rateSectionIcons[id];
+  return (
+    <View style={styles.sectionHeading}>
+      <SectionIcon accessible={false} size={17} strokeWidth={1.8} color={iconColor} />
+      <Text accessibilityRole="header" style={[styles.sectionTitle, { color: textColor }]}>{title}</Text>
+    </View>
+  );
+}
 
 /** Compact seller offers, with all supplier facts in a rate-specific native sheet. */
 export function NativeCarResultOfferPicker({
@@ -123,7 +149,7 @@ export function NativeCarResultOfferPicker({
               <Text numberOfLines={2} style={[styles.seller, { color: theme.textSecondary }]}>Booking provider · {selectedChoice?.providerName ?? ""}</Text>
               <Text style={[styles.sandboxNote, { color: theme.textSecondary }]}>KAYAK sandbox · Simulated rates and availability. No live booking.</Text>
             </View>
-            <Pressable accessibilityRole="button" accessibilityLabel="Close rate details" onPress={() => setSelectedKey(null)} style={[styles.closeButton, { borderColor: theme.border }]}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Close rate details" onPress={() => setSelectedKey(null)} style={styles.closeButton}>
               <X accessible={false} color={theme.textPrimary} size={20} />
             </Pressable>
           </View>
@@ -131,24 +157,24 @@ export function NativeCarResultOfferPicker({
             {selectedPrice && selectedChoice ? (
               <>
                 <View style={[styles.paymentSection, { borderBottomColor: theme.border }]}>
-                  <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.textPrimary }]}>Price and payment</Text>
+                  <RateSectionHeading id="payment" title="Price and payment" textColor={theme.textPrimary} iconColor={theme.textSecondary} />
                   <Text style={[styles.sheetPrice, { color: theme.textPrimary }]}>{money(selectedPrice.currency, selectedPrice.pricePerDay)}<Text style={[styles.sheetPerDay, { color: theme.textSecondary }]}> per day</Text></Text>
                   <Text style={[styles.sheetTotal, { color: theme.textSecondary }]}>Estimated total: {money(selectedPrice.currency, selectedPrice.totalPrice)}</Text>
                   <Text style={[styles.sheetPayment, { color: theme.textSecondary }]}>Payment timing: {getCarRatePaymentLabel(selectedChoice.offer) ?? "Not supplied"}</Text>
                   {paymentFacts.map((fact, index) => (
                     <View key={fact.label + ":" + index} style={[styles.factRow, { borderBottomColor: theme.border }]}>
                       <Text style={[styles.factLabel, { color: theme.textSecondary }]}>{fact.label}</Text>
-                      <Text style={[styles.factValue, { color: theme.textPrimary }]}>{fact.value}</Text>
+                      <Text style={[styles.factValue, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{fact.value}</Text>
                     </View>
                   ))}
                 </View>
                 {disclosureSections.filter(section => section.id !== "payment").map(section => (
                   <View key={section.id} style={[styles.section, { borderBottomColor: theme.border }]}>
-                    <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.textPrimary }]}>{section.title}</Text>
+                    <RateSectionHeading id={section.id} title={section.title} textColor={theme.textPrimary} iconColor={theme.textSecondary} />
                     {section.facts.map((fact, index) => (
                       <View key={fact.label + ":" + index} style={[styles.factRow, { borderBottomColor: theme.border }]}>
                         <Text style={[styles.factLabel, { color: theme.textSecondary }]}>{fact.label}</Text>
-                        <Text style={[styles.factValue, { color: theme.textPrimary }]}>{fact.value}</Text>
+                        <Text style={[styles.factValue, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{fact.value}</Text>
                       </View>
                     ))}
                   </View>
@@ -189,7 +215,7 @@ const styles = StyleSheet.create({
   sheetTitle: { fontSize: 18, lineHeight: 23, fontWeight: "700", fontFamily: appFonts.bold },
   seller: { fontSize: 13, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
   sandboxNote: { fontSize: 11, lineHeight: 16, marginTop: 2, fontFamily: appFonts.regular },
-  closeButton: { width: 44, height: 44, borderWidth: StyleSheet.hairlineWidth, borderRadius: 22, alignItems: "center", justifyContent: "center" },
+  closeButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   sheetBody: { paddingTop: 16, paddingBottom: 24 },
   sheetPrice: { fontSize: 22, fontWeight: "700", fontFamily: appFonts.bold, fontVariant: ["tabular-nums"], lineHeight: 28 },
   sheetPerDay: { fontSize: 12, fontWeight: "500", fontFamily: appFonts.medium },
@@ -197,9 +223,10 @@ const styles = StyleSheet.create({
   sheetPayment: { marginTop: 4, marginBottom: 12, fontSize: 12, lineHeight: 18, fontFamily: appFonts.medium },
   paymentSection: { borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: 16 },
   section: { borderBottomWidth: StyleSheet.hairlineWidth, paddingTop: 16, paddingBottom: 12, gap: 0 },
-  sectionTitle: { marginBottom: 12, fontSize: 15, lineHeight: 21, letterSpacing: -0.18, fontWeight: "600", fontFamily: appFonts.semibold },
+  sectionHeading: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
+  sectionTitle: { flex: 1, minWidth: 0, fontSize: 15, lineHeight: 21, letterSpacing: -0.18, fontWeight: "600", fontFamily: appFonts.semibold },
   factRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, minWidth: 0, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },
   factLabel: { width: "42%", minWidth: 0, flexShrink: 1, fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
-  factValue: { flex: 1, minWidth: 0, textAlign: "right", fontSize: 13, lineHeight: 19, fontWeight: "500", fontFamily: appFonts.medium },
+  factValue: { flex: 1, minWidth: 0, textAlign: "right", fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
   disclaimer: { marginTop: 12, fontSize: 11, lineHeight: 16, fontFamily: appFonts.medium },
 });
