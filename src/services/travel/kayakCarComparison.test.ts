@@ -133,7 +133,7 @@ test("captured seven-option KAYAK results display only supplied return locations
   }
   const first = getCarRateDisclosureSections({ suppliedFacts: offers[0].attributes, currency: offers[0].currency });
   assert.equal(first.find(section => section.id === "policies")?.facts.find(fact => fact.label === "Cancellation")?.value,
-    "Confirm conditions with provider; supplied indicators differ");
+    "Free cancellation advertised; conditions and fees may apply");
   const second = getCarRateDisclosureSections({ suppliedFacts: offers[1].attributes, currency: offers[1].currency });
   assert.equal(second.find(section => section.id === "policies")?.facts.find(fact => fact.label === "Cancellation"), undefined);
 });
