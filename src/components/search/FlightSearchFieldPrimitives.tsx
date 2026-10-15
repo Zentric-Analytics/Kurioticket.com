@@ -21,6 +21,7 @@ type FlightAirportFieldControlProps = {
   label: string;
   value: string;
   desktopValue?: string;
+  showDesktopSecondary?: boolean;
   placeholder: string;
   mobilePlaceholder: string;
   useMainFlightLandingMobilePresentation?: boolean;
@@ -47,6 +48,7 @@ export const FlightAirportFieldControl = React.forwardRef<
     label,
     value,
     desktopValue,
+    showDesktopSecondary = true,
     placeholder,
     mobilePlaceholder,
     useMainFlightLandingMobilePresentation = false,
@@ -120,7 +122,7 @@ export const FlightAirportFieldControl = React.forwardRef<
             autoComplete="off"
             className="h-6 w-full min-w-0 rounded-none border-0 bg-transparent pe-0 text-[15px] font-medium tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
           />
-          {display.secondary ? <span className="block truncate text-[10px] font-medium leading-3 text-slate-600">{display.secondary}</span> : null}
+          {showDesktopSecondary && display.secondary ? <span className="block truncate text-[10px] font-medium leading-3 text-slate-600">{display.secondary}</span> : null}
         </span>
       </div>
       <div id={suggestionsId}>{desktopSuggestions}</div>
