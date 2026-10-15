@@ -18,6 +18,8 @@ type Props = {
   car: NormalizedCarResult;
   selectedOfferId: string;
   onSelectOffer: (offer: CarOffer) => void;
+  expanded: boolean;
+  onExpandedChange: (expanded: boolean) => void;
   compact?: boolean;
   desktopPanelTarget?: HTMLElement | null;
 };
@@ -99,11 +101,12 @@ function RateSectionIcon({ id }: { id: CarRateDisclosureSection["id"] }) {
 export function CarDealPicker({
   car,
   compact = false,
+  expanded,
+  onExpandedChange,
 }: Props) {
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const groups = useMemo(() => getCarDealPickerGroups(car), [car]);
-  const [expanded, setExpanded] = useState(false);
   const [detailsKey, setDetailsKey] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const dialogHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -206,7 +209,7 @@ export function CarDealPicker({
                   <span className={["ml-0.5 font-medium text-[#64748B]", compact ? "text-[10px]" : ""].join(" ")}>/day</span>
                 </p>
               </div>
-              <div data-car-deal-provider-action-slot className={["flex min-w-0 items-center justify-start gap-0.5", compact ? "max-[359px]:pl-4" : ""].join(" ")}>
+              <div data-car-deal-provider-action-slot className={["flex min-w-0 items-center gap-0.5", expanded ? "justify-end pr-2" : "justify-start", compact ? "max-[359px]:pl-4" : ""].join(" ")}>
                 {bookingHref ? (
                   <a
                     href={bookingHref}
@@ -243,7 +246,7 @@ export function CarDealPicker({
             data-car-deal-more-offers
             className="inline-flex min-h-9 items-center gap-1 text-[10px] font-semibold text-[#004BB8] md:min-h-6"
             style={compact ? { fontSize: 11, lineHeight: "16px", fontWeight: 600 } : undefined}
-            onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
+            onClick={event => { event.stopPropagation(); onExpandedChange(!expanded); }}
             aria-expanded={expanded}
           >
             {expanded ? "Show fewer offers" : "+" + (groups.length - INITIAL_VISIBLE_OFFER_COUNT) + " more offers"}
