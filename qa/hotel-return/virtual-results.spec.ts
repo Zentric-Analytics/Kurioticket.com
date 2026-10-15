@@ -122,12 +122,12 @@ test("Cars mobile card balances category and moves four specifications underneat
 });
 
 
-test("Cars single provider bars match Hotel-style blue actions and nearby info on 320–430px screens", async ({ page }) => {
+test("Cars offer controls are legible and easy to tap on small phones without overflowing the main price rail", async ({ page }) => {
   const baseOffer = carBase.offers[0];
   if (!baseOffer) throw new Error("Missing fixture offer");
   const result = {
     ...carBase,
-    id: "kayak-sandbox:hotel-style-car-bars",
+    id: "kayak-sandbox:mobile-touch-targets",
     inventorySource: "kayak-sandbox" as const,
     offers: Array.from({ length: 7 }, (_, index) => ({
       ...baseOffer,
@@ -147,59 +147,76 @@ test("Cars single provider bars match Hotel-style blue actions and nearby info o
     await page.goto(routes.cars);
     const card = page.locator("[data-car-result-card-shell]").first();
     const offers = card.locator("[data-car-card-mobile-offers]");
-    const footer = card.locator("[data-car-card-mobile-pricing]");
+    const rail = card.locator("[data-car-card-mobile-pricing]");
     const rows = offers.locator("[data-car-deal-provider-offer]");
     const toggle = offers.locator("[data-car-deal-more-offers]").filter({ visible: true });
     await expect(rows).toHaveCount(7);
     await expect(rows.filter({ visible: true })).toHaveCount(3);
+    await expect(toggle).toHaveCount(1);
     await expect(toggle).toContainText("+4 more offers");
-    await expect(footer).toBeVisible();
-    await expect(offers.locator("[data-car-deal-provider-offers]")).toHaveCSS("min-height", "162px");
-    const cardBox = (await card.boundingBox())!;
-    const offerBox = (await offers.boundingBox())!;
-    const footerBox = (await footer.boundingBox())!;
-    expect(offerBox.x).toBeGreaterThanOrEqual(cardBox.x);
-    expect(offerBox.x + offerBox.width).toBeLessThanOrEqual(cardBox.x + cardBox.width + 1);
-    expect(footerBox.y).toBeGreaterThanOrEqual(offerBox.y + offerBox.height - 1);
+    await expect(rail).toBeVisible();
 
-    for (let index = 0; index < 3; index++) {
-      const row = rows.nth(index);
-      const brand = row.locator("[data-car-deal-provider-brand]");
-      const logo = brand.locator("span").first();
-      const name = row.locator("[data-car-deal-provider-name]");
-      const info = row.locator("[data-car-rate-info]");
-      const price = row.locator("[data-car-deal-provider-price]");
-      const action = row.locator("[data-car-deal-provider-view-deal]");
-      const r = (await row.boundingBox())!;
-      const l = (await logo.boundingBox())!;
-      const n = (await name.boundingBox())!;
-      const i = (await info.boundingBox())!;
-      const p = (await price.boundingBox())!;
-      const a = (await action.boundingBox())!;
-      expect(l.x + l.width).toBeLessThanOrEqual(n.x + 1);
-      expect(i.x).toBeGreaterThanOrEqual(n.x + n.width);
-      expect(i.x - (n.x + n.width)).toBeLessThanOrEqual(9);
-      expect(p.x).toBeGreaterThanOrEqual(i.x + i.width - 1);
-      expect(a.x).toBeGreaterThanOrEqual(p.x + p.width - 1);
-      expect(Math.abs((p.y + p.height / 2) - (a.y + a.height / 2))).toBeLessThanOrEqual(11);
-      expect(a.height).toBeGreaterThanOrEqual(36);
-      expect(r.x).toBeGreaterThanOrEqual(offerBox.x - 1);
-      expect(r.x + r.width).toBeLessThanOrEqual(offerBox.x + offerBox.width + 1);
-      await expect(row).toHaveCSS("background-color", "rgb(255, 255, 255)");
-      await expect(row).toHaveCSS("border-top-width", "1px");
-      await expect(action).toHaveCSS("background-color", "rgb(0, 75, 184)");
-      await expect(action).toHaveCSS("color", "rgb(255, 255, 255)");
-      await expect(action).toHaveAttribute("target", "_blank");
-      await expect(action).toHaveAttribute("rel", "noopener noreferrer");
+    const toggleTextSize = await toggle.evaluate(element => parseFloat(getComputedStyle(element).fontSize));
+    expect(toggleTextSize).toBeGreaterThanOrEqual(10);
+    expect(toggleTextSize).toBeLessThanOrEqual(12);
+    const railRect = (await rail.boundingBox())!;
+    const row = rows.first();
+    const name = row.locator("[data-car-deal-provider-name]");
+    const price = row.locator("[data-car-deal-provider-price]");
+    const viewDeal = row.locator("[data-car-deal-provider-view-deal]");
+    const info = row.locator("[data-car-rate-info]");
+    const nameRect = (await name.boundingBox())!;
+    const priceRect = (await price.boundingBox())!;
+    const linkRect = (await viewDeal.boundingBox())!;
+    const infoRect = (await info.boundingBox())!;
+
+    for (const [locator, minimumSize] of [[name, 11], [price, 12], [viewDeal, 12]] as const) {
+      const size = await locator.evaluate(element => parseFloat(getComputedStyle(element).fontSize));
+      expect(size).toBeGreaterThanOrEqual(minimumSize);
     }
-    const firstRateButton = rows.first().locator("[data-car-rate-info]");
-    await expect(firstRateButton.locator("svg")).toBeVisible();
-    await firstRateButton.click();
-    await expect(page.locator("[data-car-rate-dialog][open]")).toBeVisible();
-    await page.getByRole("button", { name: "Close rate details" }).click();
+    expect(nameRect.x + nameRect.width).toBeLessThanOrEqual(priceRect.x + 1);
+    expect(linkRect.height).toBeGreaterThanOrEqual(36);
+    expect(infoRect.height).toBeGreaterThanOrEqual(36);
+    expect(infoRect.width).toBeGreaterThanOrEqual(28);
+    // Exact sequence: logo, provider name, info, per-day price, View deal.
+    const logo = row.locator("[data-car-deal-provider-brand] > span").first();
+    const logoRect = (await logo.boundingBox())!;
+    expect(logoRect.x + logoRect.width).toBeLessThanOrEqual(nameRect.x + 1);
+    expect(nameRect.x + nameRect.width).toBeLessThanOrEqual(infoRect.x + 1);
+    expect(infoRect.x + infoRect.width).toBeLessThanOrEqual(priceRect.x + 1);
+    expect(infoRect.x + infoRect.width).toBeLessThanOrEqual(railRect.x + 1);
+    const infoGap = infoRect.x - (nameRect.x + nameRect.width);
+    expect(infoGap).toBeGreaterThanOrEqual(7);
+    expect(infoGap).toBeLessThanOrEqual(16);
+    if (width < 360) {
+      expect(linkRect.y).toBeGreaterThanOrEqual(priceRect.y + priceRect.height - 1);
+    } else {
+      expect(priceRect.x + priceRect.width).toBeLessThanOrEqual(linkRect.x + 1);
+    }
+    const visible = rows.filter({ visible: true });
+    const iconXs: number[] = [];
+    const priceXs: number[] = [];
+    for (let index = 0; index < 3; index++) {
+      const seller = visible.nth(index);
+      const iconBox = await seller.locator("[data-car-rate-info]").boundingBox();
+      const priceBox = await seller.locator("[data-car-deal-provider-price]").boundingBox();
+      expect(iconBox).not.toBeNull();
+      expect(priceBox).not.toBeNull();
+      iconXs.push(iconBox!.x);
+      priceXs.push(priceBox!.x);
+    }
+    expect(Math.max(...iconXs) - Math.min(...iconXs)).toBeLessThanOrEqual(1);
+    expect(Math.max(...priceXs) - Math.min(...priceXs)).toBeLessThanOrEqual(1);
+    const infoSvg = info.locator("svg");
+    await expect(infoSvg).toBeVisible();
+    const iconWidth = await infoSvg.evaluate(element => element.getBoundingClientRect().width);
+    expect(iconWidth).toBeGreaterThanOrEqual(16);
+
     await toggle.click();
     await expect(rows.filter({ visible: true })).toHaveCount(7);
     await expect(toggle).toContainText("Show fewer offers");
+    const expandedToggleSize = await toggle.evaluate(element => parseFloat(getComputedStyle(element).fontSize));
+    expect(expandedToggleSize).toBe(toggleTextSize);
     await toggle.click();
     await expect(rows.filter({ visible: true })).toHaveCount(3);
   }
@@ -209,10 +226,13 @@ test("Cars single provider bars match Hotel-style blue actions and nearby info o
   const desktopCard = page.locator("[data-car-result-card-shell]").first();
   const desktopOffer = desktopCard.locator('[data-region="details"] [data-car-deal-provider-offer]').first();
   await expect(desktopOffer).toBeVisible();
-  await expect(desktopOffer).toHaveCSS("background-color", "rgb(255, 255, 255)");
-  await expect(desktopOffer.locator("[data-car-deal-provider-view-deal]")).toHaveCSS("background-color", "rgb(0, 75, 184)");
   await expect(desktopCard.locator('[data-region="pricing"]')).toBeVisible();
+  const desktopFont = await desktopOffer.locator("[data-car-deal-provider-name]").evaluate(
+    element => parseFloat(getComputedStyle(element).fontSize),
+  );
+  expect(desktopFont).toBe(10);
 });
+
 
 test("Cars list previews three offers with equal collapsed heights and retains ten distinct deals", async ({ page }) => {
   const firstOffer = carBase.offers[0];
@@ -244,10 +264,10 @@ test("Cars list previews three offers with equal collapsed heights and retains t
     await expect(rows).toHaveCount(count);
     await expect(rows.filter({ visible: true })).toHaveCount(Math.min(count, 3));
     const offerMinHeight = (await offers.locator("[data-car-deal-provider-offers]").boundingBox())!.height;
-    expect(offerMinHeight).toBeGreaterThanOrEqual(162);
+    expect(offerMinHeight).toBeGreaterThanOrEqual(108);
     const disclosure = offers.locator("[data-car-deal-more-slot]");
     const disclosureHeight = (await disclosure.boundingBox())!.height;
-    expect(disclosureHeight).toBeGreaterThanOrEqual(32);
+    expect(disclosureHeight).toBeGreaterThanOrEqual(36);
     if (count <= 3) {
       if (threeRowHeight !== null) expect(Math.abs(offerMinHeight - threeRowHeight)).toBeLessThanOrEqual(2);
       threeRowHeight = offerMinHeight;
@@ -264,13 +284,13 @@ test("Cars list previews three offers with equal collapsed heights and retains t
       if (count >= 5) {
         const firstRow = (await rows.first().boundingBox())!;
         const fifthRow = (await rows.nth(4).boundingBox())!;
-        expect(fifthRow.y + fifthRow.height - firstRow.y).toBeLessThanOrEqual(285);
+        expect(fifthRow.y + fifthRow.height - firstRow.y).toBeLessThanOrEqual(190);
       }
       await toggle.click();
       await expect(rows.filter({ visible: true })).toHaveCount(3);
     }
   }
-  // Narrow mobile cards retain one horizontal bar per supplier; one- and two-offer
+  // Narrow mobile cards stack each offer onto two lines; one- and two-offer
   // cards still reserve the same height as a three-offer preview.
   let stackedMinimumHeight: number | null = null;
   for (const count of [1, 2, 3]) {
@@ -281,99 +301,147 @@ test("Cars list previews three offers with equal collapsed heights and retains t
     const list = cards.first().locator("[data-car-card-mobile-offers] [data-car-deal-provider-offers]");
     await expect(list.locator("[data-car-deal-provider-offer]")).toHaveCount(count);
     const height = (await list.boundingBox())!.height;
-    expect(height).toBeGreaterThanOrEqual(162);
+    expect(height).toBeGreaterThanOrEqual(240);
     if (stackedMinimumHeight !== null) expect(Math.abs(height - stackedMinimumHeight)).toBeLessThanOrEqual(2);
     stackedMinimumHeight = height;
   }
 
 });
 
-test("Cars Hotel-style horizontal offer bars stay within the card while desktop T remains intact", async ({ page }) => {
+test("Cars comparison rows stay horizontal within the existing card beside the main price on mobile and desktop", async ({ page }) => {
   const firstOffer = carBase.offers[0];
   if (!firstOffer) throw new Error("Missing test offer");
-  let offerCount = 3;
+
   const makeResult = (count: number) => ({
-    ...carBase, id: "fixture-inline-offer-bars",
+    ...carBase, id: "fixture-inline-offers",
     offers: Array.from({ length: count }, (_, index) => ({
-      ...firstOffer, id: "offer-" + index, freeCancellation: true,
-      bookingProviderName: "Seller " + index,
+      ...firstOffer, id: "offer-" + index, freeCancellation: true, bookingProviderName: "Seller " + index,
       bookingUrl: "https://example.com/offer-" + index,
       pricePerDay: 30 + index, totalPrice: 90 + index * 3,
     })),
   });
+
+  let offerCount = 3;
   await page.route("**/api/cars/search", route =>
     route.fulfill({ json: { results: [makeResult(offerCount)], status: "available" } }));
 
   for (const viewport of [{ width: 375, height: 812 }, { width: 390, height: 844 }, { width: 1365, height: 900 }]) {
     await page.setViewportSize(viewport);
     let threeOfferHeight: number | null = null;
+
     for (const count of [3, 5]) {
       offerCount = count;
       await page.goto(routes.cars);
-      const card = page.locator("[data-car-result-card-shell]").first();
-      const mobile = viewport.width < 640;
-      const area = mobile ? card.locator("[data-car-card-mobile-offers]") : card.locator('[data-region="details"]');
-      const primaryPrice = mobile ? card.locator("[data-car-card-mobile-pricing]") : card.locator('[data-region="pricing"]');
-      const rows = area.locator("[data-car-deal-provider-offer]");
-      const toggle = area.locator("[data-car-deal-more-offers]").filter({ visible: true });
-      await expect(rows).toHaveCount(count);
-      await expect(rows.filter({ visible: true })).toHaveCount(3);
-      await expect(card.locator("article")).toHaveCSS("background-color", "rgb(255, 255, 255)");
-      if (count === 3) await expect(toggle).toHaveCount(0);
-      else await expect(toggle).toContainText("+2 more offers");
 
-      const p = (await primaryPrice.boundingBox())!;
-      const c = (await card.boundingBox())!;
-      const a = (await area.boundingBox())!;
-      if (mobile) {
-        expect(p.y).toBeGreaterThanOrEqual(a.y + a.height - 1);
-        await expect(primaryPrice).toHaveCSS("border-top-width", "1px");
-        await expect(area.locator("[data-car-deal-provider-offers]")).toHaveCSS("min-height", "162px");
+      const card = page.locator("[data-car-result-card-shell]").first();
+      await expect(card).toBeVisible();
+      const mobile = viewport.width < 640;
+      const dealArea = mobile
+        ? card.locator("[data-car-card-mobile-offers]")
+        : card.locator('[data-region="details"]');
+      const mainPrice = mobile
+        ? card.locator("[data-car-card-mobile-pricing]")
+        : card.locator('[data-region="pricing"]');
+
+      const rows = dealArea.locator("[data-car-deal-provider-offer]");
+      const rightSpecLabel = mobile
+        ? card.locator("[data-car-card-mobile-specs] ul").nth(1).locator("li span").first()
+        : card.locator("[data-car-card-desktop-header-specs] li").nth(1).locator("span").first();
+      await expect(rows).toHaveCount(count);
+      const initiallyVisible = Math.min(count, 3);
+      await expect(rows.filter({ visible: true })).toHaveCount(initiallyVisible);
+      const toggle = dealArea.locator("[data-car-deal-more-offers]").filter({ visible: true });
+      if (count <= initiallyVisible) {
+        await expect(toggle).toHaveCount(0);
       } else {
-        await expect(area).toHaveCSS("border-top-width", "1px");
-        await expect(primaryPrice).toHaveCSS("border-top-width", "1px");
-        await expect(primaryPrice).toHaveCSS("border-left-width", "1px");
+        await expect(toggle).toHaveCount(1);
+        await expect(toggle).toContainText("+" + (count - initiallyVisible) + " more offers");
+        await expect(toggle).toHaveAttribute("aria-expanded", "false");
+      }
+      if (!mobile) {
+        // Only the desktop card changes: its main surface, header and pricing rail
+        // match the pure-white mobile surface. Amenities directly follow cancellation.
+        await expect(card.locator("article")).toHaveCSS("background-color", "rgb(255, 255, 255)");
+        await expect(card.locator("[data-car-card-desktop-header-rail]")).toHaveCSS("background-color", "rgb(255, 255, 255)");
+        await expect(mainPrice).toHaveCSS("background-color", "rgb(255, 255, 255)");
+        await expect(dealArea).toHaveCSS("border-top-width", "1px");
+        await expect(mainPrice).toHaveCSS("border-top-width", "1px");
+        await expect(mainPrice).toHaveCSS("border-left-width", "1px");
         const cancellation = card.locator("[data-car-card-desktop-shared-header] [data-car-card-desktop-free-cancellation]");
         const amenities = card.locator("[data-car-card-desktop-header-specs]");
-        const cancellationBox = (await cancellation.boundingBox())!;
-        const amenitiesBox = (await amenities.boundingBox())!;
-        expect(amenitiesBox.y).toBeGreaterThanOrEqual(cancellationBox.y + cancellationBox.height - 1);
-        expect(a.y).toBeGreaterThanOrEqual(amenitiesBox.y + amenitiesBox.height - 1);
-        expect(Math.abs(a.y - p.y)).toBeLessThanOrEqual(2);
+        const cancellationBox = await cancellation.boundingBox();
+        const amenitiesBox = await amenities.boundingBox();
+        expect(cancellationBox).not.toBeNull();
+        expect(amenitiesBox).not.toBeNull();
+        expect(amenitiesBox!.y).toBeGreaterThanOrEqual(cancellationBox!.y + cancellationBox!.height - 1);
+        expect(amenitiesBox!.y - (cancellationBox!.y + cancellationBox!.height)).toBeLessThanOrEqual(30);
+        const detailsRect = (await dealArea.boundingBox())!;
+        const pricingRect = (await mainPrice.boundingBox())!;
+        expect(detailsRect.y).toBeGreaterThanOrEqual(amenitiesBox!.y + amenitiesBox!.height - 1);
+        expect(detailsRect.y - (amenitiesBox!.y + amenitiesBox!.height)).toBeLessThanOrEqual(17);
+        expect(Math.abs(detailsRect.y - pricingRect.y)).toBeLessThanOrEqual(2);
+        const image = card.locator('[data-region="image"] > div').first();
+        const imageBox = await image.boundingBox();
+        expect(imageBox).not.toBeNull();
+        expect(imageBox!.height).toBeLessThanOrEqual(230);
       }
-
-      for (let index = 0; index < 3; index++) {
-        const row = rows.nth(index);
-        const name = (await row.locator("[data-car-deal-provider-name]").boundingBox())!;
-        const price = (await row.locator("[data-car-deal-provider-price]").boundingBox())!;
-        const action = row.locator("[data-car-deal-provider-view-deal]");
-        const button = (await action.boundingBox())!;
-        const infoButton = row.locator("[data-car-rate-info]");
-        const info = (await infoButton.count()) ? await infoButton.boundingBox() : null;
-        const r = (await row.boundingBox())!;
-        expect(r.x).toBeGreaterThanOrEqual(a.x - 1);
-        expect(r.x + r.width).toBeLessThanOrEqual(a.x + a.width + 1);
-        expect(r.y + r.height).toBeLessThanOrEqual(c.y + c.height + 1);
-        expect(name.x + name.width).toBeLessThanOrEqual(price.x + 1);
-        if (info) {
-          expect(info.x - (name.x + name.width)).toBeLessThanOrEqual(9);
-          expect(info.x).toBeGreaterThanOrEqual(name.x + name.width);
-        }
-        expect(price.x + price.width).toBeLessThanOrEqual(button.x + 1);
-        await expect(action).toHaveCSS("background-color", "rgb(0, 75, 184)");
-        await expect(action).toHaveCSS("color", "rgb(255, 255, 255)");
-      }
-      if (count > 3) {
+      const previewCardHeight = (await card.boundingBox())!.height;
+      if (!mobile) expect(previewCardHeight).toBeLessThanOrEqual(370);
+      if (count > initiallyVisible) {
         await toggle.click();
         await expect(rows.filter({ visible: true })).toHaveCount(count);
-        await toggle.click();
-        await expect(rows.filter({ visible: true })).toHaveCount(3);
+        await expect(toggle).toHaveAttribute("aria-expanded", "true");
+        await expect(toggle).toContainText("Show fewer offers");
       }
-      if (count === 3) threeOfferHeight = c.height;
-      else expect(c.height).toBeGreaterThanOrEqual(threeOfferHeight!);
+      const rightSpecRect = await rightSpecLabel.boundingBox();
+      expect(rightSpecRect).not.toBeNull();
+      await expect(card.locator("[data-supplier-information]")).toHaveCount(0);
+      await expect(mainPrice).toBeVisible();
+
+      const mainRect = await mainPrice.boundingBox();
+      const cardRect = await card.boundingBox();
+      expect(mainRect).not.toBeNull();
+      expect(cardRect).not.toBeNull();
+
+      for (let index = 0; index < count; index++) {
+        const row = rows.nth(index);
+        const provider = await row.locator("[data-car-deal-provider-name]").boundingBox();
+        const price = await row.locator("[data-car-deal-provider-price]").boundingBox();
+        const link = await row.locator("[data-car-deal-provider-view-deal]").boundingBox();
+        const brand = row.locator("[data-car-deal-provider-brand]");
+        const info = row.locator("[data-car-rate-info]");
+        const iconBox = (await info.count()) ? await info.boundingBox() : null;
+        const rowRect = await row.boundingBox();
+
+        expect(provider).not.toBeNull();
+        expect(price).not.toBeNull();
+        expect(link).not.toBeNull();
+        expect(rowRect).not.toBeNull();
+        if (await info.count()) {
+          expect(iconBox).not.toBeNull();
+          const logoBox = await brand.locator("span").first().boundingBox();
+          expect(logoBox).not.toBeNull();
+          expect(logoBox!.x + logoBox!.width).toBeLessThanOrEqual(provider!.x + 1);
+          expect(provider!.x + provider!.width).toBeLessThanOrEqual(iconBox!.x + 1);
+          expect(iconBox!.x + iconBox!.width).toBeLessThanOrEqual(price!.x + 1);
+        }
+        expect(provider!.x + provider!.width).toBeLessThanOrEqual(price!.x + 1);
+        expect(price!.x + price!.width + 6).toBeLessThanOrEqual(link!.x + 1);
+        if (!mobile) expect(Math.abs(link!.x - rightSpecRect!.x)).toBeLessThanOrEqual(3);
+        const providerCenterY = provider!.y + provider!.height / 2;
+        const linkCenterY = link!.y + link!.height / 2;
+        expect(Math.abs(providerCenterY - linkCenterY)).toBeLessThanOrEqual(3);
+        expect(rowRect!.x + rowRect!.width).toBeLessThanOrEqual(mainRect!.x + 1);
+        expect(rowRect!.y + rowRect!.height).toBeLessThanOrEqual(cardRect!.y + cardRect!.height + 1);
+      }
+      if (count === 3) threeOfferHeight = cardRect!.height;
+      else expect(cardRect!.height).toBeGreaterThanOrEqual(threeOfferHeight!);
     }
   }
 });
+
+
+
 
 test("desktop Cars previews three sellers and expands all additional offers without affecting mobile previews", async ({ page }) => {
   const original = carBase.offers[0];
@@ -407,7 +475,7 @@ test("desktop Cars previews three sellers and expands all additional offers with
     await expect(card.locator("article")).toHaveCSS("background-color", "rgb(255, 255, 255)");
     const offerList = detail.locator("[data-car-deal-provider-offers]");
     const listHeight = (await offerList.boundingBox())!.height;
-    expect(listHeight).toBeGreaterThanOrEqual(138);
+    expect(listHeight).toBeGreaterThanOrEqual(76);
     if (count <= 3) {
       await expect(more).toHaveCount(0);
     } else {
