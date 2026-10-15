@@ -143,6 +143,10 @@ test("Cars rate details match Flight Details white, far-right fact alignment and
     "min-w-0 break-words",
     "text-[11px] font-bold uppercase",
     "divide-y divide-[#E2E8F0]",
-    "getCarRateDisclosureSections(selectedOffer)",
+    'data-car-rate-section="payment"',
+    "Price and payment",
+    "disclosureSections.filter(section => section.id !== \"payment\")",
+    "data-car-rate-source-note",
   ]) assert.ok(sheet.includes(token), token);
+  assert.ok(picker.includes("getCarRateDisclosureSections(selectedOffer)"));
 });

@@ -8,6 +8,7 @@ import { kayakCarCardModel } from "@/components/results/kayakCardModels";
 import { getCarDealPickerGroups, filterCarResults, sortCarOffers } from "@/lib/cars/carResults";
 import { capturedKayakCars } from "./fixtures/kayakCarsCaptured";
 import { formatCarSupplierFacts } from "@/lib/cars/supplierFacts";
+import { getCarRateDisclosureSections } from "@/lib/cars/carRateDisclosure";
 
 test("browser-loaded and server KAYAK cars use the same complete grouping", () => {
   assert.equal(groupKayakCarResults, sharedCarGrouping);
@@ -115,4 +116,24 @@ test("invalid options are excluded without losing valid siblings or inventing ad
   const cars = groupKayakCarResults(scopeKayakOfferIds(normalizeSandboxOffers("cars", data), "s").map(offer => kayakCarCardModel(offer, 3, "LAX")));
   assert.equal(cars[0].offers.length, 1);
   assert.equal(cars[0].offers[0].bookingProviderName, "Seller A");
+});
+
+
+test("captured seven-option KAYAK results display only supplied return locations and truthful cancellation conditions", () => {
+  const offers = normalizeSandboxOffers("cars", capturedKayakCars);
+  assert.equal(offers.length, 7);
+  for (const offer of offers) {
+    assert.equal(offer.attributes?.some(fact => fact.label.startsWith("Drop-off · ")), false);
+    const sections = getCarRateDisclosureSections({ suppliedFacts: offer.attributes, currency: offer.currency });
+    const facts = sections.flatMap(section => section.facts);
+    assert.equal(facts.find(fact => fact.label === "Rental agency")?.value, "Priceless");
+    assert.equal(facts.find(fact => fact.label === "Pickup location")?.value, "9750 Airport Boulevard");
+    assert.equal(facts.some(fact => fact.label === "Return location"), false);
+    assert.doesNotMatch(JSON.stringify(sections), /XXAR|sandbox\.png|\.coordinates|badge.*code|\.displayname/i);
+  }
+  const first = getCarRateDisclosureSections({ suppliedFacts: offers[0].attributes, currency: offers[0].currency });
+  assert.equal(first.find(section => section.id === "policies")?.facts.find(fact => fact.label === "Cancellation")?.value,
+    "Free cancellation advertised; conditions and fees may apply");
+  const second = getCarRateDisclosureSections({ suppliedFacts: offers[1].attributes, currency: offers[1].currency });
+  assert.equal(second.find(section => section.id === "policies")?.facts.find(fact => fact.label === "Cancellation"), undefined);
 });

@@ -174,3 +174,19 @@ test("native Cars rate sheet aligns provider values at the far right and stays w
     "getCarRateDisclosureSections(selectedChoice.offer)",
   ]) assert.ok(sheet.includes(token), token);
 });
+
+
+test("native Cars rate details keep price, source disclosure and mapped policies aligned with web", () => {
+  const sheet = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
+  for (const token of [
+    "KAYAK sandbox · Simulated rates and availability. No live booking.",
+    "Booking provider · ",
+    "getCarRateDisclosureSections(selectedChoice.offer)",
+    'disclosureSections.filter(section => section.id !== "payment")',
+    "Price and payment",
+    "Payment timing:",
+    "styles.paymentSection",
+    'factValue: { flex: 1, minWidth: 0, textAlign: "right"',
+  ]) assert.ok(sheet.includes(token), token);
+  assert.ok(!sheet.includes("getCarRateDisclosureSections(selectedChoice.offer).map(section"));
+});

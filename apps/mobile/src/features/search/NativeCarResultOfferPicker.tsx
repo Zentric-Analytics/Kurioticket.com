@@ -44,6 +44,8 @@ export function NativeCarResultOfferPicker({
   const narrowActions = rowWidth > 0 && rowWidth < 268;
   const stackVeryNarrow = rowWidth > 0 && rowWidth < 225;
   const selectedChoice = choices.find(choice => choice.key === selectedKey);
+  const disclosureSections = selectedChoice ? getCarRateDisclosureSections(selectedChoice.offer) : [];
+  const paymentFacts = disclosureSections.find(section => section.id === "payment")?.facts ?? [];
   const selectedPrice = selectedChoice
     ? presentCarOfferCurrency(selectedChoice.offer, displayCurrency, rates)
     : null;
@@ -122,19 +124,29 @@ export function NativeCarResultOfferPicker({
           <View style={styles.sheetHeader}>
             <View style={styles.sheetHeading}>
               <Text style={[styles.sheetTitle, { color: theme.textPrimary }]}>Rate details</Text>
-              <Text numberOfLines={1} style={[styles.seller, { color: theme.textSecondary }]}>{selectedChoice?.providerName ?? ""}</Text>
+              <Text numberOfLines={1} style={[styles.seller, { color: theme.textSecondary }]}>Booking provider · {selectedChoice?.providerName ?? ""}</Text>
             </View>
             <Pressable accessibilityRole="button" accessibilityLabel="Close rate details" onPress={() => setSelectedKey(null)} style={styles.closeButton}>
               <X accessible={false} color={theme.textPrimary} size={20} />
             </Pressable>
           </View>
+          <Text style={[styles.sandboxNote, { color: theme.textSecondary }]}>KAYAK sandbox · Simulated rates and availability. No live booking.</Text>
           <ScrollView contentContainerStyle={styles.sheetBody} nestedScrollEnabled>
             {selectedPrice && selectedChoice ? (
               <>
-                <Text style={[styles.sheetPrice, { color: theme.textPrimary }]}>{money(selectedPrice.currency, selectedPrice.pricePerDay)}<Text style={[styles.sheetPerDay, { color: theme.textSecondary }]}> per day</Text></Text>
-                <Text style={[styles.sheetTotal, { color: theme.textSecondary }]}>Estimated total: {money(selectedPrice.currency, selectedPrice.totalPrice)}</Text>
-                <Text style={[styles.sheetPayment, { color: theme.textSecondary }]}>{getCarRatePaymentLabel(selectedChoice.offer) ?? "Payment timing not supplied"}</Text>
-                {getCarRateDisclosureSections(selectedChoice.offer).map(section => (
+                <View style={[styles.paymentSection, { borderTopColor: theme.border, borderBottomColor: theme.border }]}>
+                  <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Price and payment</Text>
+                  <Text style={[styles.sheetPrice, { color: theme.textPrimary }]}>{money(selectedPrice.currency, selectedPrice.pricePerDay)}<Text style={[styles.sheetPerDay, { color: theme.textSecondary }]}> per day</Text></Text>
+                  <Text style={[styles.sheetTotal, { color: theme.textSecondary }]}>Estimated total: {money(selectedPrice.currency, selectedPrice.totalPrice)}</Text>
+                  <Text style={[styles.sheetPayment, { color: theme.textSecondary }]}>Payment timing: {getCarRatePaymentLabel(selectedChoice.offer) ?? "Not supplied"}</Text>
+                  {paymentFacts.map((fact, index) => (
+                    <View key={fact.label + ":" + index} style={[styles.factRow, { borderBottomColor: theme.border }]}>
+                      <Text style={[styles.factLabel, { color: theme.textSecondary }]}>{fact.label}</Text>
+                      <Text style={[styles.factValue, { color: theme.textPrimary }]}>{fact.value}</Text>
+                    </View>
+                  ))}
+                </View>
+                {disclosureSections.filter(section => section.id !== "payment").map(section => (
                   <View key={section.id} style={[styles.section, { borderTopColor: theme.border }]}>
                     <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>{section.title}</Text>
                     {section.facts.map((fact, index) => (
@@ -145,7 +157,7 @@ export function NativeCarResultOfferPicker({
                     ))}
                   </View>
                 ))}
-                <Text style={[styles.disclaimer, { color: theme.textSecondary }]}>These conditions are specific to this offer. Confirm final terms with the rental provider before booking.</Text>
+                <Text style={[styles.disclaimer, { color: theme.textSecondary }]}>Sandbox rate information is simulated. Confirm pricing, rental eligibility, and final terms directly with the rental provider before booking.</Text>
               </>
             ) : null}
           </ScrollView>
@@ -181,12 +193,14 @@ const styles = StyleSheet.create({
   sheetHeading: { flex: 1, minWidth: 0, gap: 3 },
   sheetTitle: { fontSize: 18, lineHeight: 23, fontWeight: "700", fontFamily: appFonts.bold },
   seller: { fontSize: 13, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
+  sandboxNote: { fontSize: 11, lineHeight: 16, marginBottom: 10, fontFamily: appFonts.regular },
   closeButton: { minWidth: 40, minHeight: 40, alignItems: "center", justifyContent: "center" },
   sheetBody: { paddingBottom: 18 },
   sheetPrice: { fontSize: 22, fontWeight: "700", fontFamily: appFonts.bold, fontVariant: ["tabular-nums"], lineHeight: 28 },
   sheetPerDay: { fontSize: 12, fontWeight: "500", fontFamily: appFonts.medium },
   sheetTotal: { marginTop: 4, fontSize: 13, lineHeight: 18, fontFamily: appFonts.medium },
   sheetPayment: { marginTop: 4, marginBottom: 12, fontSize: 11, lineHeight: 16, fontFamily: appFonts.medium },
+  paymentSection: { borderTopWidth: 1, borderBottomWidth: 1, paddingTop: 12, paddingBottom: 10, marginBottom: 4 },
   section: { borderTopWidth: 1, paddingTop: 12, paddingBottom: 6, gap: 0 },
   sectionTitle: { marginBottom: 8, fontSize: 11, lineHeight: 15, letterSpacing: 0.85, textTransform: "uppercase", fontWeight: "700", fontFamily: appFonts.bold },
   factRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, minWidth: 0, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth },
