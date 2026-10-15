@@ -131,3 +131,18 @@ test("guided selection and legacy comparison component remain isolated from stan
   assert.match(comparison, /desktopDetailsSelector/);
   assert.doesNotMatch(comparison, /window\.open|router\./);
 });
+
+test("Cars rate details match Flight Details white, far-right fact alignment and readable hierarchy", () => {
+  const sheet = picker.slice(picker.indexOf('data-car-rate-dialog'));
+  for (const token of [
+    "bg-white",
+    "data-car-rate-fact-row",
+    "data-car-rate-fact-value",
+    "grid-cols-[minmax(0,42%)_minmax(0,1fr)]",
+    "whitespace-pre-wrap text-right",
+    "min-w-0 break-words",
+    "text-[11px] font-bold uppercase",
+    "divide-y divide-[#E2E8F0]",
+    "getCarRateDisclosureSections(selectedOffer)",
+  ]) assert.ok(sheet.includes(token), token);
+});
