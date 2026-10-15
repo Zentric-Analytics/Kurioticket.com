@@ -230,7 +230,7 @@ test("native Cars Rate details has clean X, leading icons and softer values with
   assert.ok(sheet.includes('<SectionIcon accessible={false} size={18} strokeWidth={2.1} color={iconColor} />'));
   assert.ok(sheet.includes('<RateSectionHeading id="payment" title="Price and payment"'));
   assert.ok(sheet.includes('<RateSectionHeading id={section.id} title={section.title}'));
-  assert.ok(sheet.includes('sectionHeading: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }'));
+  assert.ok(sheet.includes('sectionHeading: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 18 }'));
   assert.ok(sheet.includes('factValue: { flex: 1, minWidth: 0, textAlign: "right", fontSize: 13, lineHeight: 19, fontWeight: "500", fontFamily: appFonts.medium }'));
   assert.equal((sheet.match(/style=\{\[styles\.factValue, \{ color: theme\.dark \? "#E2E8F0" : "#1E293B" \}\]\}/g) ?? []).length, 2);
   const closeButtonStyle = sheet.match(/closeButton: \{([^}]+)\}/)?.[1];
