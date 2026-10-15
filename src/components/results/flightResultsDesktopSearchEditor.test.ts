@@ -48,7 +48,7 @@ test("desktop results keeps trip type inside the clicked edit-search state", () 
   assert.match(source, /const showCompactSearchSummary = !isSearchExpandedWhileSticky;/);
   assert.match(
     source,
-    /shouldShowDesktopCompactSummary &&\s*showCompactSearchSummary[\s\S]*?onClick=\{expandStickySearch\}/,
+    /shouldShowDesktopCompactSummary &&\s*showCompactSearchSummary[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?navigateDesktopMultiCityToLanding\(\)[\s\S]*?expandStickySearch\(\)/,
   );
   assert.match(
     source,
