@@ -171,30 +171,32 @@ export function CarDealPicker({
               ].join(" ")}
               data-car-deal-provider-offer
             >
-              <div data-car-deal-provider-meta className={["flex min-w-0 items-center gap-1", compact ? "pr-2" : "pr-3"].join(" ")}>
-                <div data-car-deal-provider-brand className={["flex min-w-0 flex-1 items-center", compact ? "gap-0.5" : "gap-1"].join(" ")}>
+              <div data-car-deal-provider-meta className={["grid min-w-0 items-center gap-x-1", compact ? "grid-cols-[minmax(0,1fr)_32px_66px] pr-1" : "grid-cols-[minmax(0,1fr)_28px_66px] pr-2"].join(" ")}>
+                <div data-car-deal-provider-brand className={["flex min-w-0 items-center", compact ? "gap-0.5" : "gap-1"].join(" ")}>
                   <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden">
                     <ProviderMark group={group} compact={compact} />
                   </span>
                   <span
-                    className={[(compact ? "text-[11px] leading-[15px]" : "text-[10px] leading-3"), "min-w-0 truncate whitespace-nowrap font-semibold text-[#334155]"].join(" ")}
+                    className={[(compact ? "text-[11px] leading-[15px]" : "text-[10px] leading-3"), "min-w-0 flex-1 truncate whitespace-nowrap font-semibold text-[#334155]"].join(" ")}
                     title={group.providerName}
                     data-car-deal-provider-name
                   >
                     {group.providerName}
                   </span>
-                  {hasDetails ? (
+
+                
+                </div>
+                {hasDetails ? (
                   <button
                     type="button"
                     data-car-rate-info
-                    className={["ml-1.5 inline-flex shrink-0 items-center justify-center rounded-full text-[#64748B] hover:text-[#334155] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40", compact ? "h-9 w-8 max-[389px]:w-7" : "h-6 w-7"].join(" ")}
+                    className={["inline-flex shrink-0 items-center justify-center rounded-full text-[#64748B] hover:text-[#334155] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40", compact ? "h-9 w-8" : "h-6 w-7"].join(" ")}
                     aria-label={"Rate information for " + group.providerName + ", " + formatOfferPrice(offer) + " per day"}
                     onClick={event => { event.stopPropagation(); setDetailsKey(group.key); }}
                   >
                     <Info size={compact ? 17 : 16} strokeWidth={1.9} aria-hidden="true" />
                   </button>
                   ) : null}
-                </div>
                 <p
                   className={[(compact ? "text-[12px] leading-[16px]" : "text-xs leading-[14px]"), "min-w-0 max-w-full truncate whitespace-nowrap font-bold tabular-nums text-[#07133B]"].join(" ")}
                   dir="ltr"
