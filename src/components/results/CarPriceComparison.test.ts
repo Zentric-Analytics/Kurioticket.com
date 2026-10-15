@@ -43,16 +43,16 @@ test("provider offers show logo, name, per-day price and a direct provider View 
   assert.match(picker, /data-car-deal-picker-compact/);
   assert.ok(picker.includes('min-h-9 max-[359px]:grid-cols-1'));
   assert.ok(picker.includes('compact ? "min-h-9" : "min-h-6"'));
-  assert.ok(picker.includes('compact ? "h-9 w-9 max-[389px]:w-8" : "h-6 w-6"'));
+  assert.ok(picker.includes('compact ? "h-9 w-8 max-[389px]:w-7" : "h-6 w-7"'));
   assert.ok(picker.includes('max-[409px]:hidden'));
-  assert.ok(picker.includes('h-9 w-9 max-[389px]:w-8'));
-  assert.match(picker, /Info size=\{compact \? 16 : 14\}/);
+  assert.ok(picker.includes('h-9 w-8 max-[389px]:w-7'));
+  assert.match(picker, /Info size=\{compact \? 17 : 16\}/);
   assert.equal((picker.match(/fontSize: 11, lineHeight: "16px", fontWeight: 600/g) ?? []).length, 2);
   assert.match(card, /data-car-card-mobile-offers[\s\S]*flex-\[2\.65\]/);
   assert.match(card, /data-car-card-mobile-pricing[\s\S]*flex-\[1\.1\]/);
   assert.ok(picker.includes('min-w-0 truncate whitespace-nowrap font-semibold'));
   assert.match(picker, /compact \? "gap-0\.5" : "gap-1"/);
-  assert.ok(picker.includes('grid-cols-[minmax(0,calc(50%_+_20px))_minmax(0,1fr)]'));
+  assert.ok(picker.includes('grid-cols-[minmax(0,calc(65%_+_20px))_minmax(0,1fr)]'));
   assert.ok(picker.includes('grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)]'));
   assert.match(picker, /const offer = group\.primaryOffer/);
   assert.match(picker, /amount: offer\.pricePerDay/);
@@ -247,4 +247,31 @@ test("compact desktop Cars cards expose three offers and accurately count expand
   assert.doesNotMatch(compactSource, /groups\.slice\(/);
   assert.match(compactSource, /groups\.map\(\(group, index\) =>/);
   assert.match(compactSource, /index < INITIAL_MOBILE_OFFER_COUNT[\s\S]*?"grid md:hidden"/);
+});
+
+
+test("Cars inline offer rows place info after provider branding and before price and link on web", () => {
+  const offers = picker.slice(picker.indexOf('data-car-deal-provider-offers'), picker.indexOf('{groups.length > INITIAL_MOBILE_OFFER_COUNT ? ('));
+  const logoAt = offers.indexOf('<ProviderMark group={group} compact={compact} />');
+  const nameAt = offers.indexOf('data-car-deal-provider-name');
+  const infoAt = offers.indexOf('data-car-rate-info');
+  const priceAt = offers.indexOf('data-car-deal-provider-price');
+  const viewDealAt = offers.indexOf('data-car-deal-provider-view-deal');
+  assert.ok(logoAt >= 0 && logoAt < nameAt && nameAt < infoAt && infoAt < priceAt && priceAt < viewDealAt);
+  assert.match(offers, /data-car-deal-provider-brand/);
+  assert.match(offers, /ml-1\.5 inline-flex shrink-0 items-center/);
+  assert.match(offers, /aria-label=\{"Rate information for " \+ group\.providerName/);
+  assert.match(offers, /setDetailsKey\(group\.key\)/);
+  assert.match(offers, /grid-cols-\[minmax\(0,calc\(65%_\+_20px\)\)_minmax\(0,1fr\)\]/);
+  assert.doesNotMatch(offers.slice(offers.indexOf('data-car-deal-provider-action-slot')), /<Info/);
+});
+
+test("Cars offers reserve a stable three-row preview without fabricating provider options", () => {
+  assert.match(picker, /min-h-\[108px\] md:min-h-\[76px\]/);
+  assert.match(picker, /compact \? "grid-cols-\[minmax/);
+  assert.match(picker, /"grid md:hidden"/);
+  assert.match(picker, /min-h-9 max-\[359px\]:grid-cols-1/);
+  assert.match(picker, /: "grid-cols-\[minmax\(0,calc\(50%_\+_31px\)\)_minmax\(0,1fr\)\] min-h-6"/);
+  assert.match(picker, /groups\.map\(\(group, index\) =>/);
+  assert.doesNotMatch(picker, /placeholder|Empty provider|ghost rate/i);
 });
