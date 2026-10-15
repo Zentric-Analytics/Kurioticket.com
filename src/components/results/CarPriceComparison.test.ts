@@ -141,7 +141,7 @@ test("Cars rate details match Flight Details white, far-right fact alignment and
     "grid-cols-[minmax(0,42%)_minmax(0,1fr)]",
     "whitespace-pre-wrap text-right",
     "min-w-0 break-words",
-    "text-[11px] font-bold uppercase",
+    "text-[15px] font-semibold leading-[21px]",
     "divide-y divide-[#E2E8F0]",
     'data-car-rate-section="payment"',
     "Price and payment",
@@ -149,4 +149,30 @@ test("Cars rate details match Flight Details white, far-right fact alignment and
     "data-car-rate-source-note",
   ]) assert.ok(sheet.includes(token), token);
   assert.ok(picker.includes("getCarRateDisclosureSections(selectedOffer)"));
+});
+
+
+test("Cars mobile Rate details fills the viewport with a fixed safe-area header and independent scroll", () => {
+  const sheet = picker.slice(picker.indexOf('data-car-rate-dialog'));
+  for (const token of [
+    "h-[100dvh] max-h-[100dvh]",
+    "overflow-hidden",
+    "open:flex",
+    "rounded-none border-0 bg-white p-0",
+    "data-car-rate-header",
+    "shrink-0 border-b",
+    "pt-[max(14px,env(safe-area-inset-top))]",
+    "data-car-rate-scroll",
+    "min-h-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto",
+    "pb-[max(24px,env(safe-area-inset-bottom))]",
+    "md:h-auto md:max-h-[80dvh]",
+    "md:w-[540px]",
+    "md:rounded-2xl",
+    "text-[15px] font-semibold leading-[21px]",
+    "Close rate details",
+  ]) assert.ok(sheet.includes(token), token);
+  assert.doesNotMatch(sheet, /max-h-\[85dvh\]|font-bold uppercase|tracking-\[0\.85px\]/);
+  assert.equal((sheet.match(/text-\[15px\] font-semibold leading-\[21px\]/g) ?? []).length, 2);
+  assert.ok(sheet.indexOf("data-car-rate-header") < sheet.indexOf("data-car-rate-scroll"));
+  assert.ok(sheet.indexOf("data-car-rate-scroll") < sheet.indexOf("data-car-rate-section"));
 });
