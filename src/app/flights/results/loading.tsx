@@ -9,6 +9,7 @@ export default function PageLoading() {
         flushMobileBottom
         hideDesktopTravelNav
         hideMobileCategoryTabs
+        hideMobileResultsNavbarDivider
         hotelDesktopBoundary
         flightResultsDesktopSticky
         mobileResultsTrailingActions

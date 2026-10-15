@@ -1415,26 +1415,16 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     );
   }
 
-  let loadingContent = null;
-  if (loading || filterApplying) {
-    if (guided) {
-      return (
-        <section aria-labelledby="deals-guided-hotel-results-status" aria-busy="true" className="mt-6 space-y-4">
-          <h2 ref={guidedLoadingStatusRef} id="deals-guided-hotel-results-status" tabIndex={-1} className="text-lg font-bold text-slate-950" role="status">
-            {t("deals.guided.hotelResults.loading")}
-          </h2>
-          <HotelCardSkeleton />
-          <HotelCardSkeleton />
-        </section>
-      );
-    }
-    loadingContent = (
-      <SearchResultsLoadingTransition
-        searchType="hotel"
-        active={loading}
-        searchKey={bodySearchKey}
-        summary={[body.destination, body.checkIn + " — " + body.checkOut, body.guests + " guests, " + body.rooms + " rooms"]}
-      />
+  let loadingContent: ReactNode = null;
+  if ((loading || filterApplying) && guided) {
+    return (
+      <section aria-labelledby="deals-guided-hotel-results-status" aria-busy="true" className="mt-6 space-y-4">
+        <h2 ref={guidedLoadingStatusRef} id="deals-guided-hotel-results-status" tabIndex={-1} className="text-lg font-bold text-slate-950" role="status">
+          {t("deals.guided.hotelResults.loading")}
+        </h2>
+        <HotelCardSkeleton />
+        <HotelCardSkeleton />
+      </section>
     );
   }
 
@@ -1492,7 +1482,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   );
 
   const mobileResultsFiltersContent =
-    !guided && results.length > 0 ? (
+    !guided && (results.length > 0 || loading) ? (
       <section
         data-hotel-results-toolbar
         className="w-full py-2 sm:hidden"
@@ -1502,8 +1492,65 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       </section>
     ) : null;
 
+  const mobileEditSearchSheet = !guided ? (
+    <MobileResultsEditSheet
+      open={mobileHotelSearchOpen}
+      browserCanvasColor="#ffffff"
+      backdropClassName={mobileStyles.editBackdrop}
+      smoothMotion
+      isolatedBackdrop
+      closing={mobileHotelSearchClosing}
+      onCloseAnimationComplete={finishMobileHotelSearchClose}
+      nestedLayerOpen={mobileHotelNestedLayerOpen}
+      title={t("editHotelSearch") || "Edit hotel search"}
+      onClose={closeMobileHotelSearch}
+      className={mobileStyles.editSheet}
+      contentClassName=""
+    >
+      <HotelSearchBar
+        key={`mobile-drawer-${bodySearchKey}-${body.sort}`}
+        idPrefix="hotel-results-mobile-drawer"
+        initialDestination={activeMobileHotelSearchDraft.destination}
+        initialDestinationId={activeMobileHotelSearchDraft.destinationId}
+        initialCheckIn={activeMobileHotelSearchDraft.checkIn}
+        initialCheckOut={activeMobileHotelSearchDraft.checkOut}
+        initialGuests={activeMobileHotelSearchDraft.guests}
+        initialAdults={activeMobileHotelSearchDraft.adults}
+        initialChildren={activeMobileHotelSearchDraft.children}
+        initialRooms={activeMobileHotelSearchDraft.rooms}
+        initialSort={body.sort}
+        errorRole="alert"
+        compact
+        mobileLayout="drawer"
+        mobileResultsSheet
+        onCloseMobileSearch={closeMobileHotelSearch}
+        onMobileDraftChange={updateMobileHotelSearchDraft}
+        onMobileNestedLayerChange={setMobileHotelNestedLayerOpen}
+        onSubmitStart={() => {
+          mobileHotelSearchModalityRef.current = "programmatic";
+          triggerSearchApplying();
+        }}
+      />
+    </MobileResultsEditSheet>
+  ) : null;
+
+  if (loading || filterApplying) {
+    loadingContent = (
+      <SearchResultsLoadingTransition
+        searchType="hotel"
+        active={loading}
+        searchKey={bodySearchKey}
+        desktopSearch={renderDesktopHotelSearch("hotel-results-nav-search")}
+        mobileSearch={renderMobileHotelNavSearch()}
+        mobileFilters={mobileResultsFiltersContent}
+        summary={[body.destination, body.checkIn + " — " + body.checkOut, body.guests + " guests, " + body.rooms + " rooms"]}
+      />
+    );
+  }
+
   return (
     <>
+      {mobileEditSearchSheet}
       {!guided && !loadingContent && mobileNavSearchTarget
         ? createPortal(renderMobileHotelNavSearch(), mobileNavSearchTarget)
         : null}
@@ -1535,48 +1582,6 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
             }
           : {})}
       >
-        {!guided ? (
-          <MobileResultsEditSheet
-            open={mobileHotelSearchOpen}
-            browserCanvasColor="#ffffff"
-            backdropClassName={mobileStyles.editBackdrop}
-            smoothMotion
-            isolatedBackdrop
-            closing={mobileHotelSearchClosing}
-            onCloseAnimationComplete={finishMobileHotelSearchClose}
-            nestedLayerOpen={mobileHotelNestedLayerOpen}
-            title={t("editHotelSearch") || "Edit hotel search"}
-            onClose={closeMobileHotelSearch}
-            className={mobileStyles.editSheet}
-            contentClassName=""
-          >
-            <HotelSearchBar
-              key={`mobile-drawer-${bodySearchKey}-${body.sort}`}
-              idPrefix="hotel-results-mobile-drawer"
-              initialDestination={activeMobileHotelSearchDraft.destination}
-              initialDestinationId={activeMobileHotelSearchDraft.destinationId}
-              initialCheckIn={activeMobileHotelSearchDraft.checkIn}
-              initialCheckOut={activeMobileHotelSearchDraft.checkOut}
-              initialGuests={activeMobileHotelSearchDraft.guests}
-              initialAdults={activeMobileHotelSearchDraft.adults}
-              initialChildren={activeMobileHotelSearchDraft.children}
-              initialRooms={activeMobileHotelSearchDraft.rooms}
-              initialSort={body.sort}
-              errorRole="alert"
-              compact
-              mobileLayout="drawer"
-              mobileResultsSheet
-              onCloseMobileSearch={closeMobileHotelSearch}
-              onMobileDraftChange={updateMobileHotelSearchDraft}
-              onMobileNestedLayerChange={setMobileHotelNestedLayerOpen}
-              onSubmitStart={() => {
-                mobileHotelSearchModalityRef.current = "programmatic";
-                triggerSearchApplying();
-              }}
-            />
-          </MobileResultsEditSheet>
-        ) : null}
-
         {!guided ? (
           <section data-hotel-results-desktop-search className="hidden bg-[#f6f8fb] pb-1 pt-5 sm:block lg:hidden">
             <div className="page-shell">
