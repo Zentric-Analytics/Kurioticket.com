@@ -405,6 +405,9 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await firstInfo.click();
     const dialog = area.locator("[data-car-rate-dialog]");
     await expect(dialog).toBeVisible();
+    const sheetHeading = dialog.locator("[data-car-rate-heading]");
+    await expect(sheetHeading).toBeFocused(); // Safari should not auto-highlight the X.
+    await expect(dialog.getByRole("button", { name: "Close rate details" })).not.toBeFocused();
     const fixedHeader = dialog.locator("[data-car-rate-header]");
     const rateScroll = dialog.locator("[data-car-rate-scroll]");
     await expect(fixedHeader).toBeVisible();
@@ -455,6 +458,13 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     }
     const closeButton = dialog.getByRole("button", { name: "Close rate details" });
     await expect(closeButton).toHaveCSS("border-top-width", "0px");
+    await expect(closeButton).toHaveCSS("box-shadow", "none");
+    await expect(closeButton).toHaveCSS("outline-style", "none");
+    // Keyboard-only focus remains visible as a subtle background, not a blue ring.
+    await page.keyboard.press("Tab");
+    await expect(closeButton).toBeFocused();
+    await expect(closeButton).toHaveCSS("background-color", "rgb(241, 245, 249)");
+    await expect(closeButton).toHaveCSS("box-shadow", "none");
     const firstValue = dialog.locator("[data-car-rate-fact-value]").first();
     await expect(firstValue).toHaveCSS("font-weight", "400");
     await expect(firstValue).toHaveCSS("color", "rgb(51, 65, 85)");
@@ -500,6 +510,11 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await dialog.getByRole("button", { name: "Close rate details" }).click();
     await expect(dialog).not.toBeVisible();
     expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
+    const resultRow = page.locator('[data-cars-results-card-list] [data-virtual-index]').first();
+    await resultRow.focus(); // Virtualized result rows are programmatically focusable.
+    await expect(resultRow).toHaveCSS("outline-style", "none");
+    const carBorder = await card.locator("article").first().evaluate(element => getComputedStyle(element).borderTopColor);
+    expect(carBorder).not.toBe("rgb(0, 75, 184)");
     await rows.nth(1).locator("[data-car-rate-info]").click();
     await expect(dialog.getByText("Airport Pickup 1", { exact: true })).toBeVisible();
     await expect(dialog.getByText("Airport Pickup 0", { exact: true })).toHaveCount(0);
