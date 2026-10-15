@@ -111,7 +111,7 @@ export function getCarRateDisclosureSections(offer: SupplierOffer): CarRateDiscl
     : Boolean(policyFee && /[1-9]/.test(policyFee));
   const hasCancellationFields = [...fields.keys()].some(key => key.startsWith("policy.cancellation."));
   if (badgesAdvertiseFree && (unlimited === false || feePossiblyPositive)) {
-    add("policies", "Cancellation", "Confirm conditions with provider; supplied indicators differ");
+    add("policies", "Cancellation", "Free cancellation advertised; conditions and fees may apply");
   } else if (badgesAdvertiseFree) {
     add("policies", "Cancellation", "Free cancellation advertised; check provider conditions");
   } else if (unlimited === false) {
