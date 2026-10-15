@@ -11,7 +11,7 @@ import { ArrowUp, Check, ChevronDown, SlidersHorizontal, SquarePen, Star, X } fr
 import type { PublicHotelResult } from "@/lib/types";
 import { readHotelSearchResponse } from "@/lib/search/readHotelSearchResponse";
 import { readHotelReturnSnapshot, rememberHotelReturnSnapshot } from "@/lib/hotels/hotelReturnSnapshot";
-import { BrandedLoading } from "@/components/layout/BrandedLoading";
+import { clearSearchResultsLoadingSession, SearchResultsLoadingTransition } from "@/components/layout/SearchResultsLoadingTransition";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
 import { HotelCardSkeleton } from "@/components/ui/Skeleton";
@@ -372,6 +372,9 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const bodySearchKey = [body.destinationId, body.destination, body.checkIn, body.checkOut, body.guests, hotelOccupancy(body).adults, hotelOccupancy(body).children, body.rooms, petFriendlyOnly ? "pets" : "", providerMode].join("-");
   // A changed search must not display cards belonging to the previous request.
   const loading = inventoryLoading || completedSearchKey !== bodySearchKey;
+  useEffect(() => {
+    if (!loading) clearSearchResultsLoadingSession("hotel", bodySearchKey);
+  }, [bodySearchKey, loading]);
   const bodyMobileSearchDraft = useMemo<HotelMobileSearchDraft>(
     () => ({
       destinationId: body.destinationId,
@@ -1426,9 +1429,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       );
     }
     loadingContent = (
-      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.16),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)]">
-        <BrandedLoading variant="fullscreen" visual="logoPulse" showProgress={false} searchType="hotel" className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5" contentClassName="max-w-md text-center" />
-      </main>
+      <SearchResultsLoadingTransition
+        searchType="hotel"
+        active={loading}
+        searchKey={bodySearchKey}
+        summary={[body.destination, body.checkIn + " — " + body.checkOut, body.guests + " guests, " + body.rooms + " rooms"]}
+      />
     );
   }
 

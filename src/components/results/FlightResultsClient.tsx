@@ -45,7 +45,7 @@ import {
 } from "@/components/results/mobileNearbyFareRail";
 
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
-import { BrandedLoading } from "@/components/layout/BrandedLoading";
+import { clearSearchResultsLoadingSession, SearchResultsLoadingTransition } from "@/components/layout/SearchResultsLoadingTransition";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { FlightCard } from "@/components/results/FlightCard";
@@ -3800,6 +3800,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }) || (!guidedMode && kayak?.vertical === "flights" && kayak.status === "loading");
 
   useEffect(() => {
+    if (!resultsUiPreparing) clearSearchResultsLoadingSession("flight", currentFlightSearchKey);
+  }, [currentFlightSearchKey, resultsUiPreparing]);
+
+  useEffect(() => {
     if (!resultsUiPreparing || !isStickySearchPanelOpen) return;
 
     const frame = window.requestAnimationFrame(() => {
@@ -7072,30 +7076,19 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       <>
       {standaloneResultsHeader}
       {renderMobileEditSearchDrawer()}
-      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.16),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)] sm:bg-white">
-        <BrandedLoading
-          variant="fullscreen"
-          visual="logoPulse"
-          showProgress={false}
-          searchType="flight"
-          className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5 sm:hidden"
-          contentClassName="max-w-md text-center"
-        />
-        <BrandedLoading
-          variant="fullscreen"
-          visual="logoPulse"
-          showProgress={false}
-          contentClassName="max-w-md text-center"
-          searchType="flight"
-          className="hidden min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5 sm:flex"
-          messages={[
-            t("flightResults.loading.checkingAirlinesAndFares"),
-            t("flightResults.loading.comparingRoutesAndProviders"),
-            t("flightResults.loading.findingBestAvailableOptions"),
-            t("flightResults.loading.preparingResults"),
-          ]}
-        />
-      </main>
+      <SearchResultsLoadingTransition
+        searchType="flight"
+        active={resultsUiPreparing}
+        mobileHeaderProvided={Boolean(standaloneResultsHeader)}
+        searchKey={currentFlightSearchKey}
+        messages={[
+          t("flightResults.loading.checkingAirlinesAndFares"),
+          t("flightResults.loading.comparingRoutesAndProviders"),
+          t("flightResults.loading.findingBestAvailableOptions"),
+          t("flightResults.loading.preparingResults"),
+        ]}
+        summary={body ? [body.origin, body.destination, body.returnDate ? body.departureDate + " — " + body.returnDate : body.departureDate, body.travelers + " travelers"] : undefined}
+      />
       </>
     );
   }

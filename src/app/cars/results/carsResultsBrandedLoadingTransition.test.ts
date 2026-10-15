@@ -7,8 +7,16 @@ const loadingSource = readFileSync(
   new URL("./loading.tsx", import.meta.url),
   "utf8",
 );
+const transitionSource = readFileSync(
+  new URL("../../../components/layout/SearchResultsLoadingTransition.tsx", import.meta.url),
+  "utf8",
+);
+const brandedLoadingSource = readFileSync(
+  new URL("../../../components/layout/BrandedLoading.tsx", import.meta.url),
+  "utf8",
+);
 
-test("Cars streams branded results below the persistent Results header", () => {
+test("Cars keeps the persistent Results header above the shared loading transition", () => {
   const headerIndex = pageSource.indexOf("<AppHeader");
   const suspenseIndex = pageSource.indexOf("<Suspense");
 
@@ -17,7 +25,7 @@ test("Cars streams branded results below the persistent Results header", () => {
   // The recorded loading-footer correction removed the extra page-level footer.
   assert.doesNotMatch(pageSource, /<Footer/);
   assert.match(pageSource, /fallback=\{[\s\S]*?<CarsResultsFallback/);
-  assert.match(pageSource, /<BrandedLoading/);
+  assert.match(pageSource, /<SearchResultsLoadingTransition/);
 });
 
 test("Cars uses canonical JSON inventory rather than streaming every card in HTML", () => {
@@ -59,8 +67,9 @@ test("Cars loading uses localized rotating copy without an artificial delay", ()
     "carsResults.loading.preparingResults",
   ]) {
     assert.match(pageSource, new RegExp(key.replaceAll(".", "\\.")));
-    assert.match(loadingSource, new RegExp(key.replaceAll(".", "\\.")));
   }
+  assert.match(loadingSource, /<SearchResultsLoadingTransition searchType="car" \/>/);
+  assert.match(brandedLoadingSource, /searchLoadingPresentation\(searchType, locale\)/);
   assert.doesNotMatch(pageSource, /setTimeout|delay\s*\(/);
   assert.doesNotMatch(loadingSource, /setTimeout|delay\s*\(/);
   assert.match(pageSource, /<CarsResultsMobileSafeArea \/>/);
@@ -69,6 +78,10 @@ test("Cars loading uses localized rotating copy without an artificial delay", ()
   assert.match(loadingSource, /<AppHeader[\s\S]*stableMobileSafeAreaTop[\s\S]*\/>/);
   assert.doesNotMatch(loadingSource, /<AppHeader[\s\S]*mobileSurface="muted"[\s\S]*\/>/);
   assert.doesNotMatch(pageSource, /<AppHeader[\s\S]*mobileSurface="muted"[\s\S]*\/>/);
-  assert.match(loadingSource, /min-h-\[calc\(100svh-5rem\)\]/);
+  assert.match(transitionSource, /BRANDED_LOADING_DURATION_MS = 8_000/);
+  assert.match(transitionSource, /BRANDED_LOADING_DURATION_MS - \(Date\.now\(\) - currentSession\.startedAt\)/);
+  assert.match(transitionSource, /completedIdentity === loadingIdentity/);
+  assert.match(transitionSource, /className="min-h-\[calc\(100svh-5rem\)\] w-full bg-white px-5"/);
+  assert.match(brandedLoadingSource, /whiteSearchBackground[\s\S]*?"bg-white"/);
   assert.doesNotMatch(loadingSource, /<Footer/);
 });

@@ -7,6 +7,7 @@ const desktopCard = readFileSync(new URL("./FlightCard.tsx", import.meta.url), "
 const results = readFileSync(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
 const state = readFileSync(new URL("./MobileFlightResultsState.tsx", import.meta.url), "utf8");
 const loading = readFileSync(new URL("../layout/BrandedLoading.tsx", import.meta.url), "utf8");
+const resultsLoadingTransition = readFileSync(new URL("../layout/SearchResultsLoadingTransition.tsx", import.meta.url), "utf8");
 
 test("mobile card uses native geometry and one whole-card details target", () => {
   assert.match(card, /rounded-2xl[^\n]*px-3 py-\[9px\]/);
@@ -45,14 +46,11 @@ test("standalone mobile loading uses the quiet branded status presentation", () 
   const preparing = results.indexOf("if (resultsUiPreparing) {");
   const guided = results.indexOf("if (guidedMode) return (", preparing);
   const loadingBranch = results.slice(preparing, guided);
-  const mobileLoaderStart = loadingBranch.indexOf("<BrandedLoading");
-  const mobileLoaderEnd = loadingBranch.indexOf("/>", mobileLoaderStart);
-  const mobileLoader = loadingBranch.slice(mobileLoaderStart, mobileLoaderEnd);
-
-  assert.match(mobileLoader, /showProgress=\{false\}/);
-  assert.match(mobileLoader, /searchType="flight"/);
-  assert.match(mobileLoader, /sm:hidden/);
-  assert.doesNotMatch(mobileLoader, /accessibleProgress|messages=\{/);
+  assert.match(loadingBranch, /<SearchResultsLoadingTransition[\s\S]*searchType="flight"/);
+  assert.match(loadingBranch, /active=\{resultsUiPreparing\}/);
+  assert.doesNotMatch(loadingBranch, /accessibleProgress/);
+  assert.match(resultsLoadingTransition, /showProgress=\{false\}/);
+  assert.match(resultsLoadingTransition, /searchType=\{searchType\}/);
   assert.match(loading, /searchLoadingPresentation\(searchType, locale\)/);
   assert.match(loading, /role=\{accessibleProgress \? "progressbar" : "status"\}/);
   assert.match(loading, /motion-reduce:animate-none/);
