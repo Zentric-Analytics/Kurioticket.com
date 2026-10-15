@@ -170,7 +170,7 @@ test("native Cars rate sheet aligns provider values at the far right and stays w
     'factRow: { flexDirection: "row", alignItems: "flex-start"',
     'factLabel: { width: "42%"',
     'factValue: { flex: 1, minWidth: 0, textAlign: "right"',
-    'textTransform: "uppercase"',
+    'sectionTitle: { marginBottom: 12, fontSize: 15, lineHeight: 21',
     "getCarRateDisclosureSections(selectedChoice.offer)",
   ]) assert.ok(sheet.includes(token), token);
 });
@@ -189,4 +189,28 @@ test("native Cars rate details keep price, source disclosure and mapped policies
     'factValue: { flex: 1, minWidth: 0, textAlign: "right"',
   ]) assert.ok(sheet.includes(token), token);
   assert.ok(!sheet.includes("getCarRateDisclosureSections(selectedChoice.offer).map(section"));
+});
+
+
+test("native Cars Rate details is full screen with safe insets, fixed header and independent scrolling", () => {
+  const sheet = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
+  for (const token of [
+    'SafeAreaProvider, SafeAreaView',
+    'transparent={false}',
+    'presentationStyle="fullScreen"',
+    'statusBarTranslucent={false}',
+    'edges={["top", "bottom", "left", "right"]}',
+    'accessibilityViewIsModal',
+    'sheetScreen: { flex: 1, paddingHorizontal: 18 }',
+    'sheetScroll: { flex: 1, minHeight: 0 }',
+    'style={styles.sheetScroll}',
+    'borderBottomWidth: StyleSheet.hairlineWidth',
+    'fontSize: 15, lineHeight: 21, letterSpacing: -0.18',
+    'accessibilityRole="header"',
+    'fontFamily: appFonts.semibold',
+    'Close rate details',
+  ]) assert.ok(sheet.includes(token), token);
+  assert.ok(sheet.indexOf('style={styles.sheetHeader}') === -1);
+  assert.ok(sheet.indexOf('styles.sheetHeader') < sheet.indexOf('style={styles.sheetScroll}'));
+  assert.doesNotMatch(sheet, /maxHeight: "82%"|textTransform: "uppercase"|styles\.modalRoot|styles\.backdrop/);
 });
