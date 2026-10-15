@@ -118,7 +118,7 @@ test("Cars card typography uses the shared Inter hierarchy without changing card
 test("upper information keeps both provider-aware spec columns below cancellation while lower band owns booking", () => {
   const firstStart = top.indexOf('<View style={c.specColumn}>');
   const middleStart = top.indexOf('<View style={c.specColumn}>', firstStart + 1);
-  const commerceStart = lower.indexOf('<View style={c.commerceColumn}>');
+  const commerceStart = lower.indexOf('<View style={[c.commerceColumn,{borderTopColor:carDividerColor}]}>');
   const first = top.slice(firstStart, middleStart);
   const middle = top.slice(middleStart);
   const commerce = lower.slice(commerceStart);
