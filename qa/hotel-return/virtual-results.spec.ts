@@ -451,7 +451,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
       const titleBox = await heading.locator("span").boundingBox();
       expect(iconBox).not.toBeNull();
       expect(titleBox).not.toBeNull();
-      expect(iconBox!.right).toBeLessThanOrEqual(titleBox!.x + 1);
+      expect(iconBox!.x + iconBox!.width).toBeLessThanOrEqual(titleBox!.x + 1);
     }
     const closeButton = dialog.getByRole("button", { name: "Close rate details" });
     await expect(closeButton).toHaveCSS("border-top-width", "0px");
