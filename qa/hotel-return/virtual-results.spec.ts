@@ -411,14 +411,14 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await expect(dialog.locator("[data-car-rate-section=payment]")).toBeVisible();
     await expect(dialog).toHaveCSS("background-color", "rgb(255, 255, 255)");
     await expect(dialog.locator("[data-car-rate-fact-row]")).toHaveCount(6);
-    await expect(dialog.locator("[data-car-rate-section]").evaluateAll(elements =>
-      elements.map(element => element.getAttribute("data-car-rate-section")))).resolves.toEqual(
+    expect(await dialog.locator("[data-car-rate-section]").evaluateAll(elements =>
+      elements.map(element => element.getAttribute("data-car-rate-section")))).toEqual(
         ["payment", "policies", "pickup", "driver", "vehicle"]
       );
     await expect(dialog.getByText("Price and payment", { exact: true })).toBeVisible();
     await expect(dialog.getByText("Security deposit", { exact: true })).toBeVisible();
     await expect(dialog.getByText("Credit card required", { exact: true })).toBeVisible();
-    await expect(dialog.getByText("KAYAK sandbox", { exact: false })).toBeVisible();
+    await expect(dialog.locator("[data-car-rate-source-note]")).toContainText("KAYAK sandbox");
     await expect(dialog.getByText("XXAR", { exact: true })).toHaveCount(0);
     await expect(dialog.getByText("future-enum", { exact: true })).toHaveCount(0);
     await expect(dialog.getByText("fullToFull", { exact: true })).toHaveCount(0);
