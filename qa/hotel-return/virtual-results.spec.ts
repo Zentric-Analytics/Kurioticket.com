@@ -388,7 +388,7 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
         const link = await row.locator("[data-car-deal-provider-view-deal]").boundingBox();
         const brand = row.locator("[data-car-deal-provider-brand]");
         const info = row.locator("[data-car-rate-info]");
-        const iconBox = await info.boundingBox();
+        const iconBox = (await info.count()) ? await info.boundingBox() : null;
         const rowRect = await row.boundingBox();
 
         expect(provider).not.toBeNull();
