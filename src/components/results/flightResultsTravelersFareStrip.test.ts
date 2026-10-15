@@ -41,7 +41,10 @@ test("long nearby-fare currency values use adaptive sizing without wrapping", ()
   );
   assert.match(styles, /white-space: nowrap/);
   assert.match(styles, /max-width: 100%/);
-  assert.match(source, /displayPrice \?\? "Unavailable"/);
+  assert.match(
+    source,
+    /const visibleFare = displayPrice \?\? \(fare\.status === "loading" \? "•••" : fare\.status === "unavailable" \? "No fare"/,
+  );
   assert.match(source, /overflow-hidden text-ellipsis whitespace-nowrap/);
 });
 
@@ -56,6 +59,31 @@ test("desktop nearby fare calendar and cheaper-nearby insight are removed withou
 });
 
 
+test("nearby fare provider requests run only on mobile viewports and react to breakpoint changes", () => {
+  assert.match(
+    source,
+    /const \[mobileNearbyFaresEnabled, setMobileNearbyFaresEnabled\] = useState\([\s\S]*?matchMedia\("\(max-width: 639px\)"\)\.matches/,
+  );
+  assert.match(
+    source,
+    /const mediaQuery = window\.matchMedia\("\(max-width: 639px\)"\);[\s\S]*?mediaQuery\.addEventListener\("change", handleChange\)[\s\S]*?mediaQuery\.removeEventListener\("change", handleChange\)/,
+  );
+  assert.match(
+    source,
+    /if \(!mobileNearbyFaresEnabled\) \{[\s\S]*?setNearbyFares\(\[\]\)[\s\S]*?return \(\) => window\.clearTimeout\(timer\);/,
+  );
+  const nearbyEffectStart = source.indexOf(
+    "const generation = nearbyFareGenerationRef.current + 1",
+  );
+  const nearbyEffectEnd = source.indexOf(
+    "useEffect(() => {\n    if (!tripTypeMenuOpen)",
+    nearbyEffectStart,
+  );
+  const nearbyEffect = source.slice(nearbyEffectStart, nearbyEffectEnd);
+  assert.match(nearbyEffect, /fetch\("\/api\/flights\/search"/);
+  assert.match(nearbyEffect, /mobileNearbyFaresEnabled/);
+});
+
 test("mobile nearby fares keep one truthful fare state and selection handler", () => {
   assert.equal(source.match(/const \[nearbyFares, setNearbyFares\]/g)?.length, 1);
   assert.equal(source.match(/nearbyFareCacheRef = useRef/g)?.length, 1);
@@ -69,7 +97,7 @@ test("mobile nearby fares keep one truthful fare state and selection handler", (
 test("mobile nearby fares scroll horizontally without widening the page", () => {
   const marker = source.indexOf('data-nearby-fare-presentation="mobile"');
   const start = source.lastIndexOf("<div", marker);
-  const end = source.indexOf('className="hidden w-full sm:block"', start);
+  const end = source.indexOf("{mobileFlightPriceAlertQuery", start);
   const mobileStrip = source.slice(start, end);
 
   assert.match(mobileStrip, /sm:hidden/);
