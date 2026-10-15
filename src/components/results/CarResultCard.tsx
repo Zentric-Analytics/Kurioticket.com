@@ -661,7 +661,7 @@ export function CarResultCard({
 
               <div
                 data-car-card-desktop-shared-header
-                className={`hidden lg:grid lg:grid-cols-[minmax(0,1fr)_152px] lg:gap-y-0 ${badge && BadgeIcon ? "lg:grid-rows-[24px_44px_auto_auto_auto]" : "lg:grid-rows-[44px_auto_auto_auto]"}`}
+                className={`hidden lg:grid lg:grid-cols-[minmax(0,1fr)_152px] lg:gap-y-0 ${badge && BadgeIcon ? "lg:grid-rows-[24px_44px_auto_auto_auto_auto]" : "lg:grid-rows-[44px_auto_auto_auto_auto]"}`}
               >
                 <div
                   data-car-card-desktop-header-rail
@@ -745,6 +745,18 @@ export function CarResultCard({
                     <span className="whitespace-nowrap">{t("carsResults.freeCancellation")}</span>
                   </div>
                 ) : null}
+                <ul
+                  data-car-card-desktop-header-specs
+                  aria-label="Vehicle specifications"
+                  className={`z-10 col-start-1 ${badge && BadgeIcon ? "row-start-6" : "row-start-5"} grid grid-cols-2 gap-x-5 gap-y-1 px-4 pb-3 pt-2 text-[13px] font-semibold leading-[18px] tracking-[-0.001em] text-[#334155]`}
+                >
+                  {desktopStandaloneSpecifications.map(([Icon, label]) => (
+                    <li key={label} className="flex min-w-0 items-center gap-1.5">
+                      <Icon size={15} className="shrink-0 text-slate-500" aria-hidden="true" />
+                      <span className="min-w-0 whitespace-nowrap">{label}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </>
           )}
@@ -752,11 +764,11 @@ export function CarResultCard({
 
         <div
           data-region="details"
-          className={`col-start-1 row-start-3 min-w-0 border-t border-[#E2E8F0] px-3 py-3 md:col-start-2 md:row-start-2 md:border-t-0 md:px-4 md:pb-3 md:pt-1 ${!guidedPlanning ? "lg:border-t-0 lg:pb-2 lg:pt-2" : ""}`}
+          className={`col-start-1 row-start-3 min-w-0 border-t border-[#E2E8F0] px-3 py-3 md:col-start-2 md:row-start-2 md:border-t-0 md:px-4 md:pb-3 md:pt-1 ${!guidedPlanning ? "lg:border-t lg:border-[#CBD5E1] lg:pb-2 lg:pt-2" : ""}`}
         >
           <ul
             data-car-card-desktop-primary-specs
-            className={`grid gap-x-5 gap-y-2 text-[12px] font-medium leading-4 text-[#536B92] ${guidedPlanning ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 lg:text-[13px] lg:font-semibold lg:leading-[18px] lg:tracking-[-0.001em] lg:text-[#334155]"}`}
+            className={`grid gap-x-5 gap-y-2 text-[12px] font-medium leading-4 text-[#536B92] ${guidedPlanning ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 lg:hidden lg:text-[13px] lg:font-semibold lg:leading-[18px] lg:tracking-[-0.001em] lg:text-[#334155]"}`}
           >
             {(guidedPlanning ? specifications : desktopStandaloneSpecifications).map(([Icon, label]) => (
               <li key={label} className="flex min-w-0 items-center gap-1.5">
@@ -782,7 +794,7 @@ export function CarResultCard({
 
         <div
           data-region="pricing"
-          className={`col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 ${!guidedPlanning ? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t-0 lg:border-[#E2E8F0] lg:pb-2 lg:text-right" : "lg:row-span-2 lg:row-start-1 lg:items-center lg:justify-center lg:border-s lg:border-t-0 lg:text-center"} ${desktopSurfaceParity ? "bg-white" : "bg-slate-50/45 lg:bg-white"}`}
+          className={`col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 ${!guidedPlanning ? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-[#CBD5E1] lg:pb-2 lg:text-right" : "lg:row-span-2 lg:row-start-1 lg:items-center lg:justify-center lg:border-s lg:border-t-0 lg:text-center"} ${desktopSurfaceParity ? "bg-white" : "bg-slate-50/45 lg:bg-white"}`}
         >
           {!guidedPlanning ? (
             <div
