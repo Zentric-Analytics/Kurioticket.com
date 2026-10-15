@@ -301,7 +301,6 @@ function HotelResultsShell() {
         </aside>
         <section className="min-w-0 space-y-2 sm:space-y-4">
           <ResultsToolbarSkeleton />
-          <TrackPriceSkeleton label="Track this stay price" />
           <div className="space-y-2 sm:space-y-4">
             {[0, 1, 2, 3].map((index) => (
               <LoadingReveal key={index} index={index}>
