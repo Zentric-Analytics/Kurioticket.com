@@ -236,34 +236,38 @@ export function CarDealPicker({
         aria-label="Rental rate details"
         onClose={() => setDetailsKey(null)}
         onClick={event => { event.stopPropagation(); if (event.target === event.currentTarget) event.currentTarget.close(); }}
-        className="fixed inset-x-0 bottom-0 top-auto m-0 max-h-[85dvh] w-full max-w-none overflow-y-auto rounded-t-2xl border border-[#D8E1EC] bg-white p-4 text-[#07133B] shadow-2xl backdrop:bg-[#07133B]/55 md:inset-0 md:m-auto md:max-h-[80vh] md:w-[540px] md:max-w-[calc(100%_-_2rem)] md:rounded-2xl md:p-5"
+        className="fixed inset-0 m-0 h-[100dvh] max-h-[100dvh] w-full max-w-none flex-col overflow-hidden rounded-none border-0 bg-white p-0 text-[#07133B] shadow-none backdrop:bg-[#07133B]/55 open:flex md:inset-0 md:m-auto md:h-auto md:max-h-[80dvh] md:w-[540px] md:max-w-[calc(100%_-_2rem)] md:rounded-2xl md:border md:border-[#D8E1EC] md:shadow-2xl"
       >
         {selectedOffer && selectedGroup ? (
-          <div className="space-y-3" onClick={event => event.stopPropagation()}>
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-base font-bold">Rate details</p>
-                <p className="mt-1 truncate text-sm font-semibold text-[#475569]">Booking provider · {selectedGroup.providerName}</p>
-                <p data-car-rate-source-note className="mt-1 text-[11px] leading-[16px] text-[#64748B]">KAYAK sandbox · Simulated rates and availability. No live booking.</p>
+          <>
+            <div data-car-rate-header className="shrink-0 border-b border-[#E2E8F0] bg-white px-4 pb-3 pt-[max(14px,env(safe-area-inset-top))] md:px-5 md:pt-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-[18px] font-semibold leading-6 tracking-tight text-[#0F172A]">Rate details</h2>
+                  <p className="mt-1 break-words text-[13px] font-medium leading-5 text-[#475569]">Booking provider · {selectedGroup.providerName}</p>
+                  <p data-car-rate-source-note className="mt-1 text-[11px] leading-[16px] text-[#64748B]">KAYAK sandbox · Simulated rates and availability. No live booking.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => dialogRef.current?.close()}
+                  aria-label="Close rate details"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#B6C9E8] text-[#07133B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+                >
+                  <X size={20} aria-hidden="true" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => dialogRef.current?.close()}
-                aria-label="Close rate details"
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#07133B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
-              >
-                <X size={20} aria-hidden="true" />
-              </button>
             </div>
-            <section data-car-rate-section="payment" className="border-y border-[#E2E8F0] py-3">
-              <h3 className="mb-2 text-[11px] font-bold uppercase leading-[15px] tracking-[0.85px] text-[#64748B]">Price and payment</h3>
+            <div data-car-rate-scroll className="min-h-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-contain bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 [-webkit-overflow-scrolling:touch] md:px-5 md:pb-5">
+              <div className="min-w-0" onClick={event => event.stopPropagation()}>
+            <section data-car-rate-section="payment" className="border-b border-[#E2E8F0] pb-4">
+              <h3 className="mb-3 text-[15px] font-semibold leading-[21px] tracking-[-0.012em] text-[#1E293B]">Price and payment</h3>
               <p className="text-xl font-bold tabular-nums">{formatOfferPrice(selectedOffer)}<span className="ml-1 text-xs font-medium text-[#64748B]">per day</span></p>
               <p className="mt-1 text-sm text-[#475569]">Estimated total: {formatTotal(selectedOffer)}</p>
               <p className="mt-1 text-xs text-[#64748B]">Payment timing: {getCarRatePaymentLabel(selectedOffer) ?? "Not supplied"}</p>
               {paymentFacts.length ? (
                 <dl className="mt-2 divide-y divide-[#E2E8F0]">
                   {paymentFacts.map((fact, index) => (
-                    <div key={fact.label + ":" + index} data-car-rate-fact-row className="grid min-w-0 grid-cols-[minmax(0,42%)_minmax(0,1fr)] items-start gap-x-4 py-2 text-[13px] leading-[19px] first:pt-0">
+                    <div key={fact.label + ":" + index} data-car-rate-fact-row className="grid min-w-0 grid-cols-[minmax(0,42%)_minmax(0,1fr)] items-start gap-x-4 py-2.5 text-[13px] leading-[19px] first:pt-0">
                       <dt className="min-w-0 break-words font-normal text-[#64748B]">{fact.label}</dt>
                       <dd data-car-rate-fact-value className="min-w-0 break-words whitespace-pre-wrap text-right font-medium text-[#0F172A]">{fact.value}</dd>
                     </div>
@@ -272,14 +276,14 @@ export function CarDealPicker({
               ) : null}
             </section>
             {disclosureSections.filter(section => section.id !== "payment").map(section => (
-              <section key={section.id} className="min-w-0 border-b border-[#D8E1EC] pb-3" data-car-rate-section={section.id}>
-                <h3 className="mb-2 text-[11px] font-bold uppercase leading-[15px] tracking-[0.85px] text-[#64748B]">{section.title}</h3>
+              <section key={section.id} className="min-w-0 border-b border-[#E2E8F0] py-4" data-car-rate-section={section.id}>
+                <h3 className="mb-3 text-[15px] font-semibold leading-[21px] tracking-[-0.012em] text-[#1E293B]">{section.title}</h3>
                 <dl className="divide-y divide-[#E2E8F0]">
                   {section.facts.map((fact, index) => (
                     <div
                       key={fact.label + ":" + index}
                       data-car-rate-fact-row
-                      className="grid min-w-0 grid-cols-[minmax(0,42%)_minmax(0,1fr)] items-start gap-x-4 py-2 text-[13px] leading-[19px] first:pt-0"
+                      className="grid min-w-0 grid-cols-[minmax(0,42%)_minmax(0,1fr)] items-start gap-x-4 py-2.5 text-[13px] leading-[19px] first:pt-0"
                     >
                       <dt className="min-w-0 break-words font-normal text-[#64748B]">{fact.label}</dt>
                       <dd data-car-rate-fact-value className="min-w-0 break-words whitespace-pre-wrap text-right font-medium text-[#0F172A]">{fact.value}</dd>
@@ -288,8 +292,10 @@ export function CarDealPicker({
                 </dl>
               </section>
             ))}
-            <p className="text-[11px] leading-[17px] text-[#64748B]">Sandbox rate information is simulated. Confirm pricing, rental eligibility, and final terms directly with the rental provider before booking.</p>
-          </div>
+            <p className="pt-4 text-[11px] leading-[17px] text-[#64748B]">Sandbox rate information is simulated. Confirm pricing, rental eligibility, and final terms directly with the rental provider before booking.</p>
+              </div>
+            </div>
+          </>
         ) : null}
       </dialog>
     </div>
