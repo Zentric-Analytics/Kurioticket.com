@@ -93,7 +93,7 @@ const rateSectionIcons = {
 
 function RateSectionIcon({ id }: { id: CarRateDisclosureSection["id"] }) {
   const SectionIcon = rateSectionIcons[id];
-  return <SectionIcon data-car-rate-section-icon={id} aria-hidden="true" size={17} strokeWidth={1.8} className="shrink-0 text-[#64748B]" />;
+  return <SectionIcon data-car-rate-section-icon={id} aria-hidden="true" size={18} strokeWidth={2.1} className="shrink-0 text-[#475569]" />;
 }
 
 export function CarDealPicker({
@@ -262,12 +262,9 @@ export function CarDealPicker({
         {selectedOffer && selectedGroup ? (
           <>
             <div data-car-rate-header className="shrink-0 border-b border-[#E2E8F0] bg-white px-4 pb-3 pt-[max(14px,env(safe-area-inset-top))] md:px-5 md:pt-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <h2 ref={dialogHeadingRef} data-car-rate-heading="true" tabIndex={-1} className="text-[18px] font-semibold leading-6 tracking-tight text-[#0F172A] focus:outline-none">Rate details</h2>
-                  <p className="mt-1 break-words text-[13px] font-medium leading-5 text-[#475569]">Booking provider · {selectedGroup.providerName}</p>
-                  <p data-car-rate-source-note className="mt-1 text-[11px] leading-[16px] text-[#64748B]">KAYAK sandbox · Simulated rates and availability. No live booking.</p>
-                </div>
+              <div data-car-rate-title-row className="grid min-h-11 grid-cols-[44px_minmax(0,1fr)_44px] items-center">
+                <span aria-hidden="true" className="h-11 w-11" />
+                <h2 ref={dialogHeadingRef} data-car-rate-heading="true" tabIndex={-1} className="min-w-0 text-center text-[18px] font-semibold leading-6 tracking-tight text-[#0F172A] focus:outline-none">Rate details</h2>
                 <button
                   type="button"
                   onClick={() => dialogRef.current?.close()}
@@ -277,20 +274,21 @@ export function CarDealPicker({
                   <X size={20} aria-hidden="true" />
                 </button>
               </div>
+              <p className="mt-1 break-words text-[13px] font-medium leading-5 text-[#475569]">Booking provider · {selectedGroup.providerName}</p>
             </div>
             <div data-car-rate-scroll className="min-h-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-contain bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 [-webkit-overflow-scrolling:touch] md:px-5 md:pb-5">
               <div className="min-w-0" onClick={event => event.stopPropagation()}>
             <section data-car-rate-section="payment" className="border-b border-[#E2E8F0] pb-4">
               <h3 className="mb-3 flex min-w-0 items-center gap-2 text-[15px] font-semibold leading-[21px] tracking-[-0.012em] text-[#1E293B]"><RateSectionIcon id="payment" /><span className="min-w-0">Price and payment</span></h3>
               <p className="text-xl font-bold tabular-nums">{formatOfferPrice(selectedOffer)}<span className="ml-1 text-xs font-medium text-[#64748B]">per day</span></p>
-              <p className="mt-1 text-sm text-[#475569]">Estimated total: {formatTotal(selectedOffer)}</p>
+              <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 text-[14px] leading-5"><span className="font-medium text-[#475569]">Estimated total:</span><strong data-car-rate-total-price className="font-semibold tabular-nums text-[#0F172A]">{formatTotal(selectedOffer)}</strong></p>
               <p className="mt-1 text-xs text-[#64748B]">Payment timing: {getCarRatePaymentLabel(selectedOffer) ?? "Not supplied"}</p>
               {paymentFacts.length ? (
                 <dl className="mt-2 divide-y divide-[#E2E8F0]">
                   {paymentFacts.map((fact, index) => (
                     <div key={fact.label + ":" + index} data-car-rate-fact-row className="grid min-w-0 grid-cols-[minmax(0,42%)_minmax(0,1fr)] items-start gap-x-4 py-2.5 text-[13px] leading-[19px] first:pt-0">
-                      <dt className="min-w-0 break-words font-normal text-[#64748B]">{fact.label}</dt>
-                      <dd data-car-rate-fact-value className="min-w-0 break-words whitespace-pre-wrap text-right font-normal text-[#334155]">{fact.value}</dd>
+                      <dt className="min-w-0 break-words font-normal text-[#475569]">{fact.label}</dt>
+                      <dd data-car-rate-fact-value className="min-w-0 break-words whitespace-pre-wrap text-right font-medium text-[#1E293B]">{fact.value}</dd>
                     </div>
                   ))}
                 </dl>
@@ -306,14 +304,13 @@ export function CarDealPicker({
                       data-car-rate-fact-row
                       className="grid min-w-0 grid-cols-[minmax(0,42%)_minmax(0,1fr)] items-start gap-x-4 py-2.5 text-[13px] leading-[19px] first:pt-0"
                     >
-                      <dt className="min-w-0 break-words font-normal text-[#64748B]">{fact.label}</dt>
-                      <dd data-car-rate-fact-value className="min-w-0 break-words whitespace-pre-wrap text-right font-normal text-[#334155]">{fact.value}</dd>
+                      <dt className="min-w-0 break-words font-normal text-[#475569]">{fact.label}</dt>
+                      <dd data-car-rate-fact-value className="min-w-0 break-words whitespace-pre-wrap text-right font-medium text-[#1E293B]">{fact.value}</dd>
                     </div>
                   ))}
                 </dl>
               </section>
             ))}
-            <p className="pt-4 text-[11px] leading-[17px] text-[#64748B]">Sandbox rate information is simulated. Confirm pricing, rental eligibility, and final terms directly with the rental provider before booking.</p>
               </div>
             </div>
           </>

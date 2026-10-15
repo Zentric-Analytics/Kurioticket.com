@@ -179,10 +179,13 @@ test("native Cars rate sheet aligns provider values at the far right and stays w
 });
 
 
-test("native Cars rate details keep price, source disclosure and mapped policies aligned with web", () => {
+test("native Cars rate details keep centered heading, emphasized total and mapped policies aligned with web", () => {
   const sheet = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
   for (const token of [
-    "KAYAK sandbox · Simulated rates and availability. No live booking.",
+    "sheetTitleRow: { flexDirection:",
+    "sheetHeadingSpacer: { width: 44, height: 44 }",
+    'textAlign: "center"',
+    "styles.sheetTotalAmount",
     "Booking provider · ",
     "getCarRateDisclosureSections(selectedChoice.offer)",
     'disclosureSections.filter(section => section.id !== "payment")',
@@ -192,6 +195,8 @@ test("native Cars rate details keep price, source disclosure and mapped policies
     'factValue: { flex: 1, minWidth: 0, textAlign: "right"',
   ]) assert.ok(sheet.includes(token), token);
   assert.ok(!sheet.includes("getCarRateDisclosureSections(selectedChoice.offer).map(section"));
+  assert.ok(!sheet.includes("KAYAK sandbox · Simulated rates and availability. No live booking."));
+  assert.ok(!sheet.includes("Sandbox rate information is simulated."));
 });
 
 
@@ -231,12 +236,12 @@ test("native Cars Rate details has clean X, leading icons and softer values with
     ["other", "Info"],
   ]) assert.ok(mapping.includes(id + ": " + name), id);
   assert.ok(sheet.includes("function RateSectionHeading("));
-  assert.ok(sheet.includes('<SectionIcon accessible={false} size={17} strokeWidth={1.8} color={iconColor} />'));
+  assert.ok(sheet.includes('<SectionIcon accessible={false} size={18} strokeWidth={2.1} color={iconColor} />'));
   assert.ok(sheet.includes('<RateSectionHeading id="payment" title="Price and payment"'));
   assert.ok(sheet.includes('<RateSectionHeading id={section.id} title={section.title}'));
   assert.ok(sheet.includes('sectionHeading: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }'));
-  assert.ok(sheet.includes('factValue: { flex: 1, minWidth: 0, textAlign: "right", fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular }'));
-  assert.equal((sheet.match(/style=\{\[styles\.factValue, \{ color: theme\.dark \? "#CBD5E1" : "#334155" \}\]\}/g) ?? []).length, 2);
+  assert.ok(sheet.includes('factValue: { flex: 1, minWidth: 0, textAlign: "right", fontSize: 13, lineHeight: 19, fontWeight: "500", fontFamily: appFonts.medium }'));
+  assert.equal((sheet.match(/style=\{\[styles\.factValue, \{ color: theme\.dark \? "#E2E8F0" : "#1E293B" \}\]\}/g) ?? []).length, 2);
   const closeButtonStyle = sheet.match(/closeButton: \{([^}]+)\}/)?.[1];
   assert.ok(closeButtonStyle);
   assert.doesNotMatch(closeButtonStyle, /border|backgroundColor/);

@@ -560,6 +560,12 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await expect(fixedHeader).toBeVisible();
     await expect(rateScroll).toBeVisible();
     await expect(rateScroll).toHaveCSS("overflow-y", "auto");
+    await expect(dialog.locator("[data-car-rate-title-row]")).toBeVisible();
+    const titleBox = await sheetHeading.boundingBox();
+    const headerBox = await fixedHeader.boundingBox();
+    expect(titleBox).not.toBeNull();
+    expect(headerBox).not.toBeNull();
+    expect(Math.abs((titleBox!.x + titleBox!.width / 2) - (headerBox!.x + headerBox!.width / 2))).toBeLessThanOrEqual(1);
     const dialogBox = await dialog.boundingBox();
     expect(dialogBox).not.toBeNull();
     if (mobile) {
@@ -577,6 +583,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await expect(dialog.getByText("Airport Pickup 0", { exact: true })).toBeVisible();
     await expect(dialog.getByText("Airport Pickup 1", { exact: true })).toHaveCount(0);
     await expect(dialog.getByText("Estimated total:", { exact: false })).toBeVisible();
+    await expect(dialog.locator("[data-car-rate-total-price]")).toHaveCSS("font-weight", "600");
     await expect(dialog.locator("[data-car-rate-section=payment]")).toBeVisible();
     await expect(dialog).toHaveCSS("background-color", "rgb(255, 255, 255)");
     await expect(dialog.locator("[data-car-rate-fact-row]")).toHaveCount(6);
@@ -587,7 +594,8 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await expect(dialog.getByText("Price and payment", { exact: true })).toBeVisible();
     await expect(dialog.getByText("Security deposit", { exact: true })).toBeVisible();
     await expect(dialog.getByText("Credit card required", { exact: true })).toBeVisible();
-    await expect(dialog.locator("[data-car-rate-source-note]")).toContainText("KAYAK sandbox");
+    await expect(dialog.locator("[data-car-rate-source-note]")).toHaveCount(0);
+    await expect(dialog.getByText("Sandbox rate information is simulated.", { exact: false })).toHaveCount(0);
     // Outline icons are visible to sighted customers, decorative to assistive tech,
     // and placed to the left of each heading without changing the supplier content.
     for (const sectionId of ["payment", "policies", "pickup", "driver", "vehicle"]) {
@@ -616,8 +624,8 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     expect(keyboardBackground).not.toBe(unfocusedBackground);
     await expect(closeButton).toHaveCSS("box-shadow", "none");
     const firstValue = dialog.locator("[data-car-rate-fact-value]").first();
-    await expect(firstValue).toHaveCSS("font-weight", "400");
-    await expect(firstValue).toHaveCSS("color", "rgb(51, 65, 85)");
+    await expect(firstValue).toHaveCSS("font-weight", "500");
+    await expect(firstValue).toHaveCSS("color", "rgb(30, 41, 59)");
     await expect(dialog.getByText("XXAR", { exact: true })).toHaveCount(0);
     await expect(dialog.getByText("future-enum", { exact: true })).toHaveCount(0);
     await expect(dialog.getByText("fullToFull", { exact: true })).toHaveCount(0);
