@@ -233,6 +233,18 @@ test("Rate details keeps a centered footer outside scroll with the inspected pro
   assert.match(sheet, /onClick=\{isolateProviderAction\}/);
 });
 
+test("Rate details footer View deal text is centered without arrows on mobile and desktop", () => {
+  const footer = picker.slice(picker.indexOf("data-car-rate-footer"));
+  assert.ok(footer.startsWith("data-car-rate-footer"));
+  assert.doesNotMatch(footer, /ChevronRight|<svg/);
+  assert.equal((footer.match(/>\s*View deal\s*</g) ?? []).length, 2);
+  assert.equal((footer.match(/items-center justify-center rounded-lg/g) ?? []).length, 2);
+  assert.doesNotMatch(footer, /items-center justify-center gap-2/);
+  assert.match(footer, /data-car-rate-view-deal/);
+  assert.match(footer, /data-car-rate-view-deal-unavailable/);
+  assert.match(picker, /View deal <ChevronRight size=\{compact \? 11 : 12\}/);
+});
+
 test("Cars Rate details desktop scrollbar is slim with smaller arrows and isolated from other surfaces", () => {
   const start = globalStyles.indexOf("/* Desktop Cars Rate details alone:");
   assert.ok(start >= 0, "Rate details scrollbar scope is required");
