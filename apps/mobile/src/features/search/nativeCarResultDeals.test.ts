@@ -160,3 +160,17 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.match(theme, /priceAlertSurface: "#EDF6FF"/);
   assert.match(theme, /priceAlertBorder: "#C8DFF7"/);
 });
+
+test("native Cars rate sheet aligns provider values at the far right and stays white in light theme", () => {
+  const sheet = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
+  const theme = readFileSync("src/theme/AppTheme.tsx", "utf8");
+  assert.ok(theme.includes('surface: "#FFFFFF"'));
+  for (const token of [
+    "backgroundColor: theme.surface",
+    'factRow: { flexDirection: "row", alignItems: "flex-start"',
+    'factLabel: { width: "42%"',
+    'factValue: { flex: 1, minWidth: 0, textAlign: "right"',
+    'textTransform: "uppercase"',
+    "getCarRateDisclosureSections(selectedChoice.offer)",
+  ]) assert.ok(sheet.includes(token), token);
+});

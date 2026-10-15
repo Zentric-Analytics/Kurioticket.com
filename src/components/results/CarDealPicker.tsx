@@ -237,7 +237,7 @@ export function CarDealPicker({
         className="fixed inset-x-0 bottom-0 top-auto m-0 max-h-[85dvh] w-full max-w-none overflow-y-auto rounded-t-2xl border border-[#D8E1EC] bg-white p-4 text-[#07133B] shadow-2xl backdrop:bg-[#07133B]/55 md:inset-0 md:m-auto md:max-h-[80vh] md:w-[540px] md:max-w-[calc(100%_-_2rem)] md:rounded-2xl md:p-5"
       >
         {selectedOffer && selectedGroup ? (
-          <div className="space-y-4" onClick={event => event.stopPropagation()}>
+          <div className="space-y-3" onClick={event => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-base font-bold">Rate details</p>
@@ -258,19 +258,23 @@ export function CarDealPicker({
               <p className="mt-1 text-xs text-[#64748B]">{getCarRatePaymentLabel(selectedOffer) ?? "Payment timing not supplied"}</p>
             </div>
             {getCarRateDisclosureSections(selectedOffer).map(section => (
-              <section key={section.id} className="space-y-2" data-car-rate-section={section.id}>
-                <h3 className="text-sm font-bold">{section.title}</h3>
-                <dl className="space-y-2">
+              <section key={section.id} className="min-w-0 border-b border-[#D8E1EC] pb-3" data-car-rate-section={section.id}>
+                <h3 className="mb-2 text-[11px] font-bold uppercase leading-[15px] tracking-[0.85px] text-[#64748B]">{section.title}</h3>
+                <dl className="divide-y divide-[#E2E8F0]">
                   {section.facts.map((fact, index) => (
-                    <div key={fact.label + ":" + index} className="grid grid-cols-[minmax(0,42%)_minmax(0,1fr)] gap-x-3 border-b border-[#F0F2F6] pb-2 text-xs">
-                      <dt className="min-w-0 break-words font-semibold text-[#475569]">{fact.label}</dt>
-                      <dd className="min-w-0 break-words whitespace-pre-wrap text-[#07133B]">{fact.value}</dd>
+                    <div
+                      key={fact.label + ":" + index}
+                      data-car-rate-fact-row
+                      className="grid min-w-0 grid-cols-[minmax(0,42%)_minmax(0,1fr)] items-start gap-x-4 py-2 text-[13px] leading-[19px] first:pt-0"
+                    >
+                      <dt className="min-w-0 break-words font-normal text-[#64748B]">{fact.label}</dt>
+                      <dd data-car-rate-fact-value className="min-w-0 break-words whitespace-pre-wrap text-right font-medium text-[#0F172A]">{fact.value}</dd>
                     </div>
                   ))}
                 </dl>
               </section>
             ))}
-            <p className="text-xs leading-5 text-[#64748B]">These conditions are specific to this offer. Confirm final terms with the rental provider before booking.</p>
+            <p className="text-[11px] leading-[17px] text-[#64748B]">These conditions are specific to this offer. Confirm final terms with the rental provider before booking.</p>
           </div>
         ) : null}
       </dialog>
