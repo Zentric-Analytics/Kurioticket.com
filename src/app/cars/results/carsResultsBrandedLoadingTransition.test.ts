@@ -81,7 +81,7 @@ test("Cars loading uses localized rotating copy without an artificial delay", ()
   assert.match(transitionSource, /BRANDED_LOADING_DURATION_MS = 8_000/);
   assert.match(transitionSource, /BRANDED_LOADING_DURATION_MS - \(Date\.now\(\) - currentSession\.startedAt\)/);
   assert.match(transitionSource, /completedIdentity === loadingIdentity/);
-  assert.match(transitionSource, /className="min-h-\[calc\(100svh-5rem\)\] w-full bg-white px-5"/);
+  assert.match(transitionSource, /className="results-loading-surface min-h-\[calc\(100svh-5rem\)\] w-full !bg-white px-5"/);
   assert.match(brandedLoadingSource, /whiteSearchBackground[\s\S]*?"bg-white"/);
   assert.doesNotMatch(loadingSource, /<Footer/);
 });
