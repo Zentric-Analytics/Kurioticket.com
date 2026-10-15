@@ -151,9 +151,9 @@ test("Cars offer controls are legible and easy to tap on small phones without ov
     const rows = offers.locator("[data-car-deal-provider-offer]");
     const toggle = offers.locator("[data-car-deal-more-offers]").filter({ visible: true });
     await expect(rows).toHaveCount(7);
-    await expect(rows.filter({ visible: true })).toHaveCount(5);
+    await expect(rows.filter({ visible: true })).toHaveCount(3);
     await expect(toggle).toHaveCount(1);
-    await expect(toggle).toContainText("+2 more offers");
+    await expect(toggle).toContainText("+4 more offers");
     await expect(rail).toBeVisible();
 
     const toggleTextSize = await toggle.evaluate(element => parseFloat(getComputedStyle(element).fontSize));
@@ -193,6 +193,20 @@ test("Cars offer controls are legible and easy to tap on small phones without ov
     } else {
       expect(priceRect.x + priceRect.width).toBeLessThanOrEqual(linkRect.x + 1);
     }
+    const visible = rows.filter({ visible: true });
+    const iconXs: number[] = [];
+    const priceXs: number[] = [];
+    for (let index = 0; index < 3; index++) {
+      const seller = visible.nth(index);
+      const iconBox = await seller.locator("[data-car-rate-info]").boundingBox();
+      const priceBox = await seller.locator("[data-car-deal-provider-price]").boundingBox();
+      expect(iconBox).not.toBeNull();
+      expect(priceBox).not.toBeNull();
+      iconXs.push(iconBox!.x);
+      priceXs.push(priceBox!.x);
+    }
+    expect(Math.max(...iconXs) - Math.min(...iconXs)).toBeLessThanOrEqual(1);
+    expect(Math.max(...priceXs) - Math.min(...priceXs)).toBeLessThanOrEqual(1);
     const infoSvg = info.locator("svg");
     await expect(infoSvg).toBeVisible();
     const iconWidth = await infoSvg.evaluate(element => element.getBoundingClientRect().width);
@@ -204,7 +218,7 @@ test("Cars offer controls are legible and easy to tap on small phones without ov
     const expandedToggleSize = await toggle.evaluate(element => parseFloat(getComputedStyle(element).fontSize));
     expect(expandedToggleSize).toBe(toggleTextSize);
     await toggle.click();
-    await expect(rows.filter({ visible: true })).toHaveCount(5);
+    await expect(rows.filter({ visible: true })).toHaveCount(3);
   }
 
   await page.setViewportSize({ width: 1365, height: 900 });
@@ -220,7 +234,7 @@ test("Cars offer controls are legible and easy to tap on small phones without ov
 });
 
 
-test("Cars list defaults to five offers, hides expand control at five, and preserves ten distinct deals", async ({ page }) => {
+test("Cars list previews three offers with equal collapsed heights and retains ten distinct deals", async ({ page }) => {
   const firstOffer = carBase.offers[0];
   if (!firstOffer) throw new Error("Missing offer fixture");
   let offerCount = 1;
@@ -238,6 +252,7 @@ test("Cars list defaults to five offers, hides expand control at five, and prese
   });
   await page.route("**/api/cars/search", route =>
     route.fulfill({ json: { results: [makeResult(offerCount)], status: "available" } }));
+  let threeRowHeight: number | null = null;
   for (const count of [1, 2, 3, 5, 7, 10]) {
     offerCount = count;
     await page.setViewportSize({ width: 390, height: 844 });
@@ -247,25 +262,32 @@ test("Cars list defaults to five offers, hides expand control at five, and prese
     const rows = offers.locator("[data-car-deal-provider-offer]");
     const toggle = offers.locator("[data-car-deal-more-offers]").filter({ visible: true });
     await expect(rows).toHaveCount(count);
-    await expect(rows.filter({ visible: true })).toHaveCount(Math.min(count, 5));
+    await expect(rows.filter({ visible: true })).toHaveCount(Math.min(count, 3));
     const offerMinHeight = (await offers.locator("[data-car-deal-provider-offers]").boundingBox())!.height;
     expect(offerMinHeight).toBeGreaterThanOrEqual(108);
+    const disclosure = offers.locator("[data-car-deal-more-slot]");
+    const disclosureHeight = (await disclosure.boundingBox())!.height;
+    expect(disclosureHeight).toBeGreaterThanOrEqual(36);
+    if (count <= 3) {
+      if (threeRowHeight !== null) expect(Math.abs(offerMinHeight - threeRowHeight)).toBeLessThanOrEqual(2);
+      threeRowHeight = offerMinHeight;
+    }
     await expect(card.locator("[data-car-card-mobile-pricing]")).toBeVisible();
-    if (count <= 5) {
+    if (count <= 3) {
       await expect(toggle).toHaveCount(0);
     } else {
       await expect(toggle).toHaveCount(1);
-      await expect(toggle).toContainText("+" + (count - 5) + " more offers");
+      await expect(toggle).toContainText("+" + (count - 3) + " more offers");
       await toggle.click();
       await expect(rows.filter({ visible: true })).toHaveCount(count);
       await expect(toggle).toContainText("Show fewer offers");
+      if (count >= 5) {
+        const firstRow = (await rows.first().boundingBox())!;
+        const fifthRow = (await rows.nth(4).boundingBox())!;
+        expect(fifthRow.y + fifthRow.height - firstRow.y).toBeLessThanOrEqual(190);
+      }
       await toggle.click();
-      await expect(rows.filter({ visible: true })).toHaveCount(5);
-    }
-    if (count >= 5) {
-      const firstRow = (await rows.first().boundingBox())!;
-      const fifthRow = (await rows.nth(4).boundingBox())!;
-      expect(fifthRow.y + fifthRow.height - firstRow.y).toBeLessThanOrEqual(190);
+      await expect(rows.filter({ visible: true })).toHaveCount(3);
     }
   }
   // Narrow mobile cards stack each offer onto two lines; one- and two-offer
@@ -326,7 +348,7 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
         ? card.locator("[data-car-card-mobile-specs] ul").nth(1).locator("li span").first()
         : card.locator("[data-car-card-desktop-header-specs] li").nth(1).locator("span").first();
       await expect(rows).toHaveCount(count);
-      const initiallyVisible = Math.min(count, mobile ? 5 : 3);
+      const initiallyVisible = Math.min(count, 3);
       await expect(rows.filter({ visible: true })).toHaveCount(initiallyVisible);
       const toggle = dealArea.locator("[data-car-deal-more-offers]").filter({ visible: true });
       if (count <= initiallyVisible) {
@@ -514,7 +536,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     const rows = area.locator("[data-car-deal-provider-offer]");
     const main = mobile ? card.locator("[data-car-card-mobile-pricing]") : card.locator('[data-region="pricing"]');
     await expect(rows).toHaveCount(7);
-    await expect(rows.filter({ visible: true })).toHaveCount(mobile ? 5 : 3);
+    await expect(rows.filter({ visible: true })).toHaveCount(3);
     await expect(main).toBeVisible();
     await expect(area.locator("[data-car-rate-terms]")).toHaveCount(0);
     await expect(area.getByText("Rate details", { exact: true })).toHaveCount(0);

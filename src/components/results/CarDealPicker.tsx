@@ -22,10 +22,9 @@ type Props = {
   desktopPanelTarget?: HTMLElement | null;
 };
 
-// Keep mobile and desktop previews independent of the number of seller quotes.
-// Every seller remains in the list and can be expanded on either layout.
-const INITIAL_MOBILE_OFFER_COUNT = 5;
-const INITIAL_DESKTOP_OFFER_COUNT = 3;
+// Keep every Cars surface at three visible offer rows by default.
+// Never discard the remaining provider offers: the disclosure expands the full list.
+const INITIAL_VISIBLE_OFFER_COUNT = 3;
 
 const providerInitial = (name: string) =>
   name.trim().charAt(0).toLocaleUpperCase() || "P";
@@ -158,13 +157,9 @@ export function CarDealPicker({
           const offer = group.primaryOffer;
           const bookingHref = approvedProviderBookingUrl(car, offer);
           const hasDetails = car.inventorySource === "kayak-sandbox" && Boolean(offer.suppliedFacts?.length);
-          const responsiveVisibility = expanded
+          const responsiveVisibility = expanded || index < INITIAL_VISIBLE_OFFER_COUNT
             ? "grid"
-            : index < INITIAL_DESKTOP_OFFER_COUNT
-              ? "grid"
-              : index < INITIAL_MOBILE_OFFER_COUNT
-                ? "grid md:hidden"
-                : "hidden";
+            : "hidden";
           return (
             <div
               key={group.key}
@@ -176,30 +171,32 @@ export function CarDealPicker({
               ].join(" ")}
               data-car-deal-provider-offer
             >
-              <div data-car-deal-provider-meta className={["flex min-w-0 items-center gap-1", compact ? "pr-2" : "pr-3"].join(" ")}>
-                <div data-car-deal-provider-brand className={["flex min-w-0 flex-1 items-center", compact ? "gap-0.5" : "gap-1"].join(" ")}>
+              <div data-car-deal-provider-meta className={["grid min-w-0 items-center gap-x-2", compact ? "grid-cols-[minmax(0,1fr)_32px_66px] pr-2" : "grid-cols-[minmax(0,1fr)_28px_66px] pr-2"].join(" ")}>
+                <div data-car-deal-provider-brand className={["flex min-w-0 items-center", compact ? "gap-0.5" : "gap-1"].join(" ")}>
                   <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden">
                     <ProviderMark group={group} compact={compact} />
                   </span>
                   <span
-                    className={[(compact ? "text-[11px] leading-[15px]" : "text-[10px] leading-3"), "min-w-0 truncate whitespace-nowrap font-semibold text-[#334155]"].join(" ")}
+                    className={[(compact ? "text-[11px] leading-[15px]" : "text-[10px] leading-3"), "min-w-0 flex-1 truncate whitespace-nowrap font-semibold text-[#334155]"].join(" ")}
                     title={group.providerName}
                     data-car-deal-provider-name
                   >
                     {group.providerName}
                   </span>
-                  {hasDetails ? (
+                </div>
+                {hasDetails ? (
                   <button
                     type="button"
                     data-car-rate-info
-                    className={["ml-1.5 inline-flex shrink-0 items-center justify-center rounded-full text-[#64748B] hover:text-[#334155] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40", compact ? "h-9 w-8 max-[389px]:w-7" : "h-6 w-7"].join(" ")}
+                    className={["inline-flex shrink-0 items-center justify-center rounded-full text-[#64748B] hover:text-[#334155] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40", compact ? "h-9 w-8" : "h-6 w-7"].join(" ")}
                     aria-label={"Rate information for " + group.providerName + ", " + formatOfferPrice(offer) + " per day"}
                     onClick={event => { event.stopPropagation(); setDetailsKey(group.key); }}
                   >
                     <Info size={compact ? 17 : 16} strokeWidth={1.9} aria-hidden="true" />
                   </button>
-                  ) : null}
-                </div>
+                ) : (
+                  <span data-car-rate-info-spacer aria-hidden="true" className={compact ? "h-9 w-8" : "h-6 w-7"} />
+                )}
                 <p
                   className={[(compact ? "text-[12px] leading-[16px]" : "text-xs leading-[14px]"), "min-w-0 max-w-full truncate whitespace-nowrap font-bold tabular-nums text-[#07133B]"].join(" ")}
                   dir="ltr"
@@ -237,32 +234,23 @@ export function CarDealPicker({
           );
         })}
       </div>
-      {groups.length > INITIAL_MOBILE_OFFER_COUNT ? (
-        <button
-          type="button"
-          data-car-deal-more-offers
-          className="mt-0.5 inline-flex min-h-9 items-center gap-1 text-[10px] font-semibold text-[#004BB8] md:hidden"
-          style={compact ? { fontSize: 11, lineHeight: "16px", fontWeight: 600 } : undefined}
-          onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
-          aria-expanded={expanded}
-        >
-          {expanded ? "Show fewer offers" : "+" + (groups.length - INITIAL_MOBILE_OFFER_COUNT) + " more offers"}
-          <ChevronRight size={12} className={expanded ? "-rotate-90" : "rotate-90"} aria-hidden="true" />
-        </button>
-      ) : null}
-      {groups.length > INITIAL_DESKTOP_OFFER_COUNT ? (
-        <button
-          type="button"
-          data-car-deal-more-offers
-          className="mt-1 hidden min-h-6 items-center gap-1 text-[10px] font-semibold text-[#004BB8] md:inline-flex"
-          style={compact ? { fontSize: 11, lineHeight: "16px", fontWeight: 600 } : undefined}
-          onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
-          aria-expanded={expanded}
-        >
-          {expanded ? "Show fewer offers" : "+" + (groups.length - INITIAL_DESKTOP_OFFER_COUNT) + " more offers"}
-          <ChevronRight size={12} className={expanded ? "-rotate-90" : "rotate-90"} aria-hidden="true" />
-        </button>
-      ) : null}
+      {/* Reserve a disclosure row even when only one or two providers are available.
+          This keeps collapsed three-offer cards the same height without fake offers. */}
+      <div data-car-deal-more-slot className="mt-0.5 flex min-h-9 items-center md:mt-1 md:min-h-6">
+        {groups.length > INITIAL_VISIBLE_OFFER_COUNT ? (
+          <button
+            type="button"
+            data-car-deal-more-offers
+            className="inline-flex min-h-9 items-center gap-1 text-[10px] font-semibold text-[#004BB8] md:min-h-6"
+            style={compact ? { fontSize: 11, lineHeight: "16px", fontWeight: 600 } : undefined}
+            onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
+            aria-expanded={expanded}
+          >
+            {expanded ? "Show fewer offers" : "+" + (groups.length - INITIAL_VISIBLE_OFFER_COUNT) + " more offers"}
+            <ChevronRight size={12} className={expanded ? "-rotate-90" : "rotate-90"} aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
       <dialog
         ref={dialogRef}
         data-car-rate-dialog
