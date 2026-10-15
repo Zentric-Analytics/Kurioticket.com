@@ -262,6 +262,8 @@ test("native Cars rows keep logo, name, rate info, price and View deal in that e
   assert.match(picker, /meta: \{ minWidth: 0, flexDirection: "row"/);
   assert.match(picker, /rowWidth \* 0\.65 \+ 20/);
   assert.match(picker, /providers: \{ minWidth: 0, minHeight: 120/);
+  assert.match(picker, /providersStacked: \{ minHeight: 258 \}/);
+  assert.match(picker, /stackVeryNarrow && styles\.providersStacked/);
   assert.match(picker, /provider: \{ minHeight: 40/);
   assert.match(picker, /visibleChoices = expanded \? choices : choices\.slice\(0, 5\)/);
 });
