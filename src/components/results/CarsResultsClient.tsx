@@ -54,6 +54,7 @@ import { CarCardSkeleton } from "@/components/ui/Skeleton";
 import { prefersReducedResultsMotion } from "@/lib/results/paginationTransition";
 import {
   assignCarBadges,
+  assignVisibleCarSortBadges,
   buildCarDetailsHref,
   doesCarMatchFilterOption,
   ensureCarProviderCoverage,
@@ -2056,6 +2057,10 @@ export function CarsResultsExperience({
     const ranked = sortCarResults(filterCarResults(results, selectedCarFilters, displayPricePerDay), sort);
     return sort === "recommended" ? ensureCarProviderCoverage(ranked) : ranked;
   }, [displayPricePerDay, results, selectedCarFilters, sort]);
+  const desktopBadges = useMemo(
+    () => (guidedPlanning ? badges : assignVisibleCarSortBadges(visibleResults, sort, badges)),
+    [guidedPlanning, badges, visibleResults, sort],
+  );
   useEffect(() => {
     if (guidedPlanning || typeof window === "undefined") return undefined;
     const update = () => {
@@ -2951,7 +2956,8 @@ export function CarsResultsExperience({
                       key={car.id}
                       car={car}
                       search={search}
-                      badge={badges.get(car.id)}
+                      badge={desktopBadges.get(car.id)}
+                      mobileBadge={badges.get(car.id) ?? null}
                       detailsHref={detailsHrefForCar(car)}
                       selectedDealOfferId={selectedDealOfferIds[car.id]}
                       onDealOfferSelected={selectCompareDealOffer}
