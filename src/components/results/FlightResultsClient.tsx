@@ -7573,7 +7573,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         onClick={() => {
           window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         }}
-        className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] end-4 z-40 max-sm:z-[800] inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white lg:bg-[#FEFFFF] text-[#004BB8] shadow-md transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:shadow-lg sm:transition sm:hover:bg-slate-50 sm:focus-visible:outline-none sm:focus-visible:ring-2 sm:focus-visible:ring-[#004BB8]/40 sm:focus-visible:ring-offset-2 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
+        className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] end-4 z-40 max-sm:z-[800] inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white lg:bg-[#FEFFFF] text-[#004BB8] shadow-[0_3px_10px_rgba(15,23,42,0.10)] transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:transition sm:hover:bg-slate-50 sm:focus-visible:outline-none sm:focus-visible:ring-2 sm:focus-visible:ring-[#004BB8]/40 sm:focus-visible:ring-offset-2 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
       >
         <ArrowUp className="h-[18px] w-[18px] sm:h-5 sm:w-5" aria-hidden="true" />
       </button>
