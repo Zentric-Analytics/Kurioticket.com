@@ -47,7 +47,7 @@ test("Cars disclosures have customer-facing order, labels, and no mutation or le
   assert.deepEqual(suppliedFacts, unchanged);
 });
 
-test("cancellation badge conflicting with provider policy or fee is never shown as a free-cancellation promise", () => {
+test("cancellation badge with conditional terms never becomes an unconditional promise", () => {
   const suppliedFacts = [
     { label: "policy · cancellation · is Unlimited", value: "No" },
     { label: "policy · cancellation · limit Hours", value: "48" },
@@ -59,7 +59,7 @@ test("cancellation badge conflicting with provider policy or fee is never shown 
   const sections = getCarRateDisclosureSections({ suppliedFacts, currency: "USD" });
   assert.equal(row(sections, "policies", "Cancellation"), "Free cancellation advertised; conditions and fees may apply");
   assert.equal(row(sections, "policies", "Provider-listed policy fee"), "$44.0 USD · Check when it applies");
-  assert.doesNotMatch(JSON.stringify(sections), /Free cancellation advertised|limit Hours|48 hours|is Unlimited/);
+  assert.doesNotMatch(JSON.stringify(sections), /limit Hours|48 hours|is Unlimited|freeCancellation/);
   assert.equal(row(getCarRateDisclosureSections({
     suppliedFacts: [{ label: "badges 1 · code", value: "freeCancellation" }],
   }), "policies", "Cancellation"), "Free cancellation advertised; check provider conditions");
