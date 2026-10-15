@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   sheetPayment: { marginTop: 4, marginBottom: 12, fontSize: 12, lineHeight: 18, fontFamily: appFonts.medium },
   paymentSection: { borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: 16 },
   section: { borderBottomWidth: StyleSheet.hairlineWidth, paddingTop: 16, paddingBottom: 12, gap: 0 },
-  sectionHeading: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
+  sectionHeading: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 18 },
   sectionTitle: { flex: 1, minWidth: 0, fontSize: 15, lineHeight: 21, letterSpacing: -0.18, fontWeight: "600", fontFamily: appFonts.semibold },
   factRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, minWidth: 0, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },
   factLabel: { width: "42%", minWidth: 0, flexShrink: 1, fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
