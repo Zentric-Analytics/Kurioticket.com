@@ -170,7 +170,7 @@ test("native Cars rate sheet aligns provider values at the far right and stays w
     'factRow: { flexDirection: "row", alignItems: "flex-start"',
     'factLabel: { width: "42%"',
     'factValue: { flex: 1, minWidth: 0, textAlign: "right"',
-    'sectionTitle: { marginBottom: 12, fontSize: 15, lineHeight: 21',
+    'sectionTitle: { flex: 1, minWidth: 0, fontSize: 15, lineHeight: 21',
     "getCarRateDisclosureSections(selectedChoice.offer)",
   ]) assert.ok(sheet.includes(token), token);
 });
@@ -213,4 +213,31 @@ test("native Cars Rate details is full screen with safe insets, fixed header and
   assert.ok(sheet.indexOf('style={styles.sheetHeader}') === -1);
   assert.ok(sheet.indexOf('styles.sheetHeader') < sheet.indexOf('style={styles.sheetScroll}'));
   assert.doesNotMatch(sheet, /maxHeight: "82%"|textTransform: "uppercase"|styles\.modalRoot|styles\.backdrop/);
+});
+
+
+test("native Cars Rate details has clean X, leading icons and softer values without changing selected data", () => {
+  const sheet = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
+  const mapping = sheet.slice(sheet.indexOf("const rateSectionIcons"), sheet.indexOf("function RateSectionHeading"));
+  for (const [id, name] of [
+    ["payment", "Wallet"],
+    ["policies", "ShieldCheck"],
+    ["pickup", "MapPin"],
+    ["driver", "IdCard"],
+    ["vehicle", "CarFront"],
+    ["other", "Info"],
+  ]) assert.ok(mapping.includes(id + ": " + name), id);
+  assert.ok(sheet.includes("function RateSectionHeading("));
+  assert.ok(sheet.includes('<SectionIcon accessible={false} size={17} strokeWidth={1.8} color={iconColor} />'));
+  assert.ok(sheet.includes('<RateSectionHeading id="payment" title="Price and payment"'));
+  assert.ok(sheet.includes('<RateSectionHeading id={section.id} title={section.title}'));
+  assert.ok(sheet.includes('sectionHeading: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }'));
+  assert.ok(sheet.includes('factValue: { flex: 1, minWidth: 0, textAlign: "right", fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular }'));
+  assert.equal((sheet.match(/style=\{\[styles\.factValue, \{ color: theme\.dark \? "#CBD5E1" : "#334155" \}\]\}/g) ?? []).length, 2);
+  const closeButtonStyle = sheet.match(/closeButton: \{([^}]+)\}/)?.[1];
+  assert.ok(closeButtonStyle);
+  assert.doesNotMatch(closeButtonStyle, /border|backgroundColor/);
+  assert.ok(sheet.includes('accessibilityLabel="Close rate details"'));
+  assert.ok(sheet.includes('presentationStyle="fullScreen"'));
+  assert.ok(sheet.includes('getCarRateDisclosureSections(selectedChoice.offer)'));
 });
