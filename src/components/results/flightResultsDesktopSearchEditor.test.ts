@@ -16,14 +16,6 @@ function desktopEditorSource() {
   return source.slice(start, end);
 }
 
-function fareStripSource() {
-  const start = source.indexOf("data-desktop-nearby-fare-rail");
-  const end = source.indexOf('className="hidden w-full items-center', start);
-  assert.notEqual(start, -1);
-  assert.notEqual(end, -1);
-  return source.slice(start, end);
-}
-
 test("desktop results editor uses one clean accessible trip-type radio row", () => {
   const editor = desktopEditorSource();
   const roundTrip = editor.indexOf('label: t("roundTrip")');
@@ -117,35 +109,23 @@ test("desktop traveler picker uses clean traveler names and preserves counters",
   assert.match(popover, /max={adultCount}/);
 });
 
-test("fare strip is one bounded seven-date grid with adjacent week controls", () => {
-  const strip = fareStripSource();
-  assert.equal(source.match(/const nearbyFareVisibleCount = 7;/g)?.length, 1);
-  assert.match(strip, /data-desktop-nearby-fare-rail/);
-  assert.match(strip, /data-desktop-nearby-fare-rail className="relative grid w-full grid-cols-7/);
-  assert.match(source, /aria-label="Previous nearby fare date"[\s\S]*?absolute -left-9 top-1\/2/);
-  assert.match(source, /aria-label="Next nearby fare date"[\s\S]*?absolute -right-9 top-1\/2/);
-  assert.doesNotMatch(strip, /max-w-\[980px\]|mx-auto|grid-cols-\[42px_repeat\(7,minmax\(0,1fr\)\)_42px\]/);
-  assert.match(strip, /aria-label="Previous nearby fare date"/);
-  assert.match(strip, /aria-label="Next nearby fare date"/);
-  assert.match(strip, /navigateNearbyFareWindow\("previous"\)/);
-  assert.match(strip, /navigateNearbyFareWindow\("next"\)/);
-  assert.match(strip, /displayPrice \?\? "Unavailable"/);
-  const desktopRail = strip.slice(
-    strip.indexOf("data-desktop-nearby-fare-rail"),
-  );
-  assert.doesNotMatch(desktopRail, /overflow-x-auto/);
-  assert.match(desktopRail, /rounded-2xl bg-transparent p-0/);
-  assert.match(desktopRail, /selected && "border-\[#075EE8\] bg-blue-50\/60"/);
-  assert.equal(desktopRail.match(/absolute -(?:left|right)-9 top-1\/2[^\n]*h-9 w-9/g)?.length, 2);
+
+test("desktop results omit the nearby-fare calendar while mobile keeps its fare rail", () => {
+  assert.doesNotMatch(source, /data-desktop-nearby-fare-rail/);
+  assert.doesNotMatch(source, /aria-label="Previous nearby fare date"/);
+  assert.doesNotMatch(source, /aria-label="Next nearby fare date"/);
+  assert.doesNotMatch(source, /navigateNearbyFareWindow/);
+  assert.match(source, /data-nearby-fare-presentation="mobile"/);
+  assert.match(source, /flight-mobile-cheaper-nearby/);
 });
 
-test("fare windows are bounded and hidden for multi-city", () => {
-  assert.match(source, /nearbyFareRangeSize - nearbyFareVisibleCount/);
-  assert.match(source, /nearbyFareDaysBeforeAnchor - Math\.floor\(nearbyFareVisibleCount \/ 2\)/);
-  assert.match(source, /setNearbyFareVisibleStart\(nearbyFareCenteredVisibleStart\)/);
+
+test("nearby fare support is mobile-only and remains excluded from multi-city", () => {
+  assert.match(source, /const nearbyFareRangeSize = 10;/);
+  assert.doesNotMatch(source, /nearbyFareVisibleCount|nearbyFareVisibleStart|nearbyFareCenteredVisibleStart/);
+  assert.match(source, /mobileNearbyFaresEnabled/);
   assert.match(source, /body\?\.tripType !== "multi-city"/);
 });
-
 
 test("desktop Multi-city edits navigate to the Flight landing form with Multi-city active", () => {
   const navigationStart = source.indexOf("function buildDesktopMultiCityLandingHref");
