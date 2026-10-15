@@ -171,7 +171,7 @@ export function CarDealPicker({
               ].join(" ")}
               data-car-deal-provider-offer
             >
-              <div data-car-deal-provider-meta className={["grid min-w-0 items-center gap-x-1", compact ? "grid-cols-[minmax(0,1fr)_32px_66px] pr-1" : "grid-cols-[minmax(0,1fr)_28px_66px] pr-2"].join(" ")}>
+              <div data-car-deal-provider-meta className={["grid min-w-0 items-center gap-x-2", compact ? "grid-cols-[minmax(0,1fr)_32px_66px] pr-1" : "grid-cols-[minmax(0,1fr)_28px_66px] pr-2"].join(" ")}>
                 <div data-car-deal-provider-brand className={["flex min-w-0 items-center", compact ? "gap-0.5" : "gap-1"].join(" ")}>
                   <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden">
                     <ProviderMark group={group} compact={compact} />
@@ -183,8 +183,6 @@ export function CarDealPicker({
                   >
                     {group.providerName}
                   </span>
-
-                
                 </div>
                 {hasDetails ? (
                   <button
@@ -196,7 +194,9 @@ export function CarDealPicker({
                   >
                     <Info size={compact ? 17 : 16} strokeWidth={1.9} aria-hidden="true" />
                   </button>
-                  ) : null}
+                ) : (
+                  <span data-car-rate-info-spacer aria-hidden="true" className={compact ? "h-9 w-8" : "h-6 w-7"} />
+                )}
                 <p
                   className={[(compact ? "text-[12px] leading-[16px]" : "text-xs leading-[14px]"), "min-w-0 max-w-full truncate whitespace-nowrap font-bold tabular-nums text-[#07133B]"].join(" ")}
                   dir="ltr"
