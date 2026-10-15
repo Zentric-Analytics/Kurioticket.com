@@ -12,7 +12,8 @@ const globals = readFileSync(new URL("../../app/globals.css", import.meta.url), 
 
 test("desktop Flight Results adopts approved mobile-web visual rules without replacing mobile contracts", () => {
   assert.match(results, /data-flight-results-main className="max-sm:overflow-x-clip bg-\[#F5F7FB\][^"]*sm:bg-\[#F3F6FA\][^"]*lg:bg-white"/);
-  assert.match(results, /data-desktop-cheaper-nearby/);
+  assert.doesNotMatch(results, /data-desktop-nearby-fare-rail|data-desktop-cheaper-nearby/);
+  assert.match(results, /data-nearby-fare-presentation="mobile"/);
   assert.match(results, /className="max-sm:pt-2 max-sm:pb-1 sm:mb-4"><div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
   assert.match(results, /data-flight-results-card-list className="space-y-3 sm:space-y-4"/);
   assert.match(alert, /data-flight-price-alert[^\n]*className="block"/);
@@ -72,23 +73,14 @@ test("standalone desktop Flight Results keeps the Hotel-style Popular filters ca
   assert.match(filters, /openCompactSection/);
 });
 
-test("desktop nearby fares keep seven dates and arrows but use mobile-like individual tiles", () => {
-  assert.match(results, /const nearbyFareVisibleCount = 7;/);
-  assert.match(results, /data-desktop-nearby-fare-rail className="relative grid w-full grid-cols-7/);
-  assert.match(results, /aria-label="Previous nearby fare date"[\s\S]*?-left-9 top-1\/2/);
-  assert.match(results, /aria-label="Next nearby fare date"[\s\S]*?-right-9 top-1\/2/);
-  assert.doesNotMatch(results, /data-desktop-nearby-fare-rail[^\n]*max-w-\[980px\]|data-desktop-nearby-fare-rail[^\n]*mx-auto|grid-cols-\[42px_repeat\(7,minmax\(0,1fr\)\)_42px\]/);
-  assert.match(globals, /\[data-desktop-nearby-fare-rail\] \{[\s\S]*?grid-template-columns: repeat\(7, minmax\(0, 1fr\)\);/);
-  assert.match(results, /rounded-lg border border-slate-200 bg-white[^"]*shadow-sm/);
-  assert.match(results, /text-\[11px\] font-medium uppercase leading-\[14px\]/);
-  assert.match(results, /text-\[10px\] font-medium uppercase leading-\[13px\] tracking-\[0\.05em\]/);
-  assert.match(results, /data-desktop-cheaper-nearby/);
-  const desktopNearby = results.match(/data-desktop-cheaper-nearby[\s\S]*?className="([^"]*)"[\s\S]*?>\s*Cheaper nearby:/)?.[1] ?? "";
-  assert.match(desktopNearby, /px-0/);
-  assert.match(desktopNearby, /w-fit/);
-  assert.match(desktopNearby, /desktop-flight-cheaper-nearby/);
-  assert.match(globals, /\.desktop-flight-cheaper-nearby \{\s*font-size: 11px !important;\s*font-weight: 600 !important;\s*line-height: 16px !important;/);
-  assert.doesNotMatch(desktopNearby, /mx-auto|rounded-full|bg-white|ring-slate-200/);
+
+test("desktop Flight Results remove nearby fares while preserving the mobile rail", () => {
+  assert.doesNotMatch(results, /data-desktop-nearby-fare-rail/);
+  assert.doesNotMatch(results, /data-desktop-cheaper-nearby/);
+  assert.doesNotMatch(results, /nearbyFareVisibleCount|nearbyFareVisibleStart|navigateNearbyFareWindow/);
+  assert.doesNotMatch(globals, /data-desktop-nearby-fare-rail|desktop-flight-fare-price|desktop-flight-cheaper-nearby/);
+  assert.match(results, /data-nearby-fare-presentation="mobile"/);
+  assert.match(results, /flight-mobile-cheaper-nearby/);
   assert.match(results, /Cheaper nearby: \{formatFareStripDateLabel\(cheaperNearbyFare\.date, calendarLocale\)\} · Save \{cheaperNearbyFare\.savings\}/);
 });
 
