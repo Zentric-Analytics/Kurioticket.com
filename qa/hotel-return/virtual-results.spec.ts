@@ -184,7 +184,7 @@ test("Cars offer controls are legible and easy to tap on small phones without ov
     expect(logoRect.x + logoRect.width).toBeLessThanOrEqual(nameRect.x + 1);
     expect(nameRect.x + nameRect.width).toBeLessThanOrEqual(infoRect.x + 1);
     expect(infoRect.x + infoRect.width).toBeLessThanOrEqual(priceRect.x + 1);
-    expect(infoRect.x).toBeGreaterThanOrEqual(railRect.x + 1 - railRect.width * 3);
+    expect(infoRect.x + infoRect.width).toBeLessThanOrEqual(railRect.x + 1);
     const infoGap = infoRect.x - (nameRect.x + nameRect.width);
     expect(infoGap).toBeGreaterThanOrEqual(7);
     expect(infoGap).toBeLessThanOrEqual(16);
