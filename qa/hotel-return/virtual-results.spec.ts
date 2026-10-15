@@ -364,9 +364,17 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
       totalPrice: 150 + index * 3,
       suppliedFacts: [
         { label: "payment Type", value: index % 2 === 0 ? "prepay" : "payAtPickup" },
+        { label: "fees 1 · code", value: "securityDeposit" },
+        { label: "fees 1 · rate · display Price", value: "$200" },
+        { label: "fees 1 · is Included In Total", value: "No" },
         { label: "Pickup · address", value: "Airport Pickup " + index },
         { label: "policy · fuel · code", value: "fullToFull" },
         { label: "policy · fuel · description", value: "Return the vehicle with a full tank or confirm the refueling terms with the rental desk before pickup." },
+        { label: "is Credit Card Required", value: "Yes" },
+        { label: "brand", value: "Ford Transit or similar, a longer provider-supplied vehicle description that must wrap on a narrow phone" },
+        { label: "fuel", value: "petrol" },
+        { label: "sipp", value: "XXAR" },
+        { label: "futureField", value: "future-enum" },
       ],
     })),
   };
@@ -402,7 +410,18 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await expect(dialog.getByText("Estimated total:", { exact: false })).toBeVisible();
     await expect(dialog.locator("[data-car-rate-section=payment]")).toBeVisible();
     await expect(dialog).toHaveCSS("background-color", "rgb(255, 255, 255)");
-    await expect(dialog.locator("[data-car-rate-fact-row]")).toHaveCount(4);
+    await expect(dialog.locator("[data-car-rate-fact-row]")).toHaveCount(6);
+    await expect(dialog.locator("[data-car-rate-section]").evaluateAll(elements =>
+      elements.map(element => element.getAttribute("data-car-rate-section")))).resolves.toEqual(
+        ["payment", "policies", "pickup", "driver", "vehicle"]
+      );
+    await expect(dialog.getByText("Price and payment", { exact: true })).toBeVisible();
+    await expect(dialog.getByText("Security deposit", { exact: true })).toBeVisible();
+    await expect(dialog.getByText("Credit card required", { exact: true })).toBeVisible();
+    await expect(dialog.getByText("KAYAK sandbox", { exact: false })).toBeVisible();
+    await expect(dialog.getByText("XXAR", { exact: true })).toHaveCount(0);
+    await expect(dialog.getByText("future-enum", { exact: true })).toHaveCount(0);
+    await expect(dialog.getByText("fullToFull", { exact: true })).toHaveCount(0);
     // Both narrow mobile sheets and desktop dialogs keep every supplier value
     // at the far-right content gutter, including long wrapping descriptions.
     const alignment = await dialog.locator("[data-car-rate-fact-row]").evaluateAll(elements =>
