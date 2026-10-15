@@ -116,6 +116,27 @@ test("mobile preference selectors open full-screen without unmounting the curren
 });
 
 
+test("Hotel Results account drawer covers the full mobile viewport instead of sitting below the results header", () => {
+  const accountStart = headerSource.indexOf('{isSignedIn && mobileAccountOpen && typeof document !== "undefined"');
+  const accountEnd = headerSource.indexOf('{languageOpen && typeof document !== "undefined"', accountStart);
+  const accountDrawer = headerSource.slice(accountStart, accountEnd);
+
+  assert.ok(accountStart >= 0);
+  assert.match(
+    accountDrawer,
+    /mobileResultsSearch && mobileResultsTrailingActions && !fullscreenHotelMobileMenu && "max-sm:top-\[calc\(72px\+env\(safe-area-inset-top\)\)\] max-sm:z-\[940\]"/,
+  );
+  assert.match(accountDrawer, /fullscreenHotelMobileMenu && "max-sm:z-\[1100\]"/);
+  assert.match(
+    accountDrawer,
+    /fullscreenHotelMobileMenu && "max-sm:inset-x-0 max-sm:top-0 max-sm:w-full max-sm:max-w-none"/,
+  );
+  assert.doesNotMatch(
+    accountDrawer,
+    /mobileResultsSearch && mobileResultsTrailingActions && "max-sm:top-\[calc\(72px\+env\(safe-area-inset-top\)\)\]/,
+  );
+});
+
 test("mobile currency selector renders above the Hotel Results full-screen hamburger", () => {
   const selectorSource = readFileSync(
     new URL("../region/CountryCurrencySelector.tsx", import.meta.url),
