@@ -83,3 +83,9 @@ QA_BASE_URL=http://127.0.0.1:3051 npx playwright test --config qa/mobile-web/bro
 ```
 
 Install Chromium and WebKit with Playwright first. Optional `QA_CHROMIUM_PATH`/`QA_WEBKIT_PATH` select installed executables. `QA_STATIC_ROOT` is only for the local environment's static-chunk transport adapter and is unnecessary with a normal local server.
+
+## PR refresh against latest dev
+
+Before opening the PR, latest dev was fetched again at `38464183e040aa9b731eaa260b45080796cf073e` and safely merged into the existing branch. Its 17 additional commits were Cars changes; the Flight implementation and PR scope remain unchanged.
+
+After the merge, TypeScript, focused ESLint, all 48 direct regression tests and diff checks passed. The refreshed full suite reports **4,061 passed / nine failed / 4,070 total**. The exact same nine failures listed above were independently reproduced in an archived, untouched copy of latest dev (50 passed / nine failed across the seven affected test files). No additional failure was introduced.
