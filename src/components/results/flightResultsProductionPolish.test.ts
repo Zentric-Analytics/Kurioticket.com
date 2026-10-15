@@ -110,7 +110,7 @@ test("mobile Flight Results contains the filter rail within its gutter and keeps
   assert.match(card, /block w-full rounded-2xl/);
 });
 
-test("Flight Results matches Hotel mobile Back-to-top styling while preserving desktop and scroll behavior", async () => {
+test("Flight Results Back-to-top matches responsive card surfaces with a rounded-square shape", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
@@ -125,15 +125,18 @@ test("Flight Results matches Hotel mobile Back-to-top styling while preserving d
   assert.match(source, /window\.scrollTo\(\{ top: 0, left: 0, behavior: "auto" \}\)/);
   assert.match(source, /bottom-\[calc\(1rem\+env\(safe-area-inset-bottom\)\)\]/);
   assert.match(source, /end-4 z-40/);
-  assert.match(source, /rounded-xl[^\n]*sm:rounded-full/);
   assert.match(source, /sm:bottom-\[calc\(1rem\+env\(safe-area-inset-bottom\)\)\]/);
   assert.match(source, /<ArrowUp className="h-\[18px\] w-\[18px\] sm:h-5 sm:w-5" aria-hidden="true"/);
   const backToTopStart = source.indexOf('aria-label="Back to top"');
   const backToTopEnd = source.indexOf("</button>", backToTopStart);
   const backToTop = source.slice(backToTopStart, backToTopEnd);
+  assert.match(backToTop, /\brounded-xl\b/);
   assert.doesNotMatch(backToTop, /sm:hidden|prefersReducedResultsMotion\(\) \? "auto" : "smooth"/);
-  assert.match(backToTop, /bg-\[#F8FAFC\] text-\[#004BB8\] shadow-md/);
-  assert.match(backToTop, /sm:bg-white sm:shadow-lg/);
+  assert.match(backToTop, /\bbg-white\b/);
+  assert.match(backToTop, /lg:bg-\[#FEFFFF\]/);
+  assert.doesNotMatch(backToTop, /rounded-full|F8FAFC|sm:bg-white/);
+  assert.match(backToTop, /text-\[#004BB8\] shadow-md/);
+  assert.match(backToTop, /sm:shadow-lg/);
   assert.match(backToTop, /h-11 w-11 items-center justify-center/);
   assert.match(backToTop, /max-sm:z-\[800\]/);
   assert.doesNotMatch(source, /setShowBackToTop\(window\.scrollY > 600\)/);

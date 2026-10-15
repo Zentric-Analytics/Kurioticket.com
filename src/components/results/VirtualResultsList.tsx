@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
-import { defaultRangeExtractor, useWindowVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
+import { defaultRangeExtractor, observeWindowOffset, useWindowVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
+
+import { isResultsBodyFixed, observeFlightResultsWindowOffset } from "./flightResultsViewport";
 
 const measurements = new Map<string, VirtualItem[]>();
 export const resultIdKey = (item: { id: string }) => item.id;
@@ -26,13 +28,15 @@ export function ResultsViewport({ mobile, children }: { mobile: boolean; childre
 
 /** Window scrolling stays continuous; only nearby cards are mounted. The full
  * inventory remains in the caller for sorting, filters and result counts. */
-export function VirtualResultsList<T>({ items, itemKey, renderItem, estimateHeight = 320, label, rowClassName = "pb-4" }: {
+export function VirtualResultsList<T>({ items, itemKey, renderItem, estimateHeight = 320, label, rowClassName = "pb-4", preserveViewportOnScrollLock = false }: {
   items: readonly T[];
   itemKey: (item: T) => string;
   renderItem: (item: T, index: number) => ReactNode;
   estimateHeight?: number;
   label: string;
   rowClassName?: string;
+  /** Flight mobile overlays temporarily replace window scrolling with a fixed body. */
+  preserveViewportOnScrollLock?: boolean;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const width = useSyncExternalStore(subscribeWidth, viewportWidth, serverWidth);
@@ -48,7 +52,11 @@ export function VirtualResultsList<T>({ items, itemKey, renderItem, estimateHeig
     if (focusedIndex !== undefined && !indices.includes(focusedIndex)) indices.push(focusedIndex);
     return indices.sort((a, b) => a - b);
   }, [focusedIndex]);
+  const reconcileViewport = useRef<() => void>(() => {});
+  const observeFlightOffset = useCallback((instance: Parameters<typeof observeWindowOffset>[0], callback: Parameters<typeof observeWindowOffset>[1]) =>
+    observeFlightResultsWindowOffset(instance, callback, () => reconcileViewport.current()), []);
   const virtualizer = useWindowVirtualizer({
+    observeElementOffset: preserveViewportOnScrollLock ? observeFlightOffset : observeWindowOffset,
     count: items.length, getItemKey, estimateSize: () => estimateHeight,
     overscan: 4, scrollMargin, rangeExtractor,
     initialRect: { width: 1200, height: 900 },
@@ -65,9 +73,10 @@ export function VirtualResultsList<T>({ items, itemKey, renderItem, estimateHeig
     let frame = 0;
     let previousWidth = 0;
     const update = () => {
+      if (frame) cancelAnimationFrame(frame);
       frame = 0;
       const element = root.current;
-      if (!element) return;
+      if (!element || (preserveViewportOnScrollLock && isResultsBodyFixed())) return;
       const rect = element.getBoundingClientRect();
       const top = rect.top + window.scrollY;
       setScrollMargin(previous => Math.abs(previous - top) > 1 ? top : previous);
@@ -75,13 +84,14 @@ export function VirtualResultsList<T>({ items, itemKey, renderItem, estimateHeig
       previousWidth = rect.width;
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    reconcileViewport.current = update;
     update();
     const observer = new ResizeObserver(schedule);
     if (root.current) observer.observe(root.current);
     observer.observe(document.body);
     window.addEventListener("resize", schedule);
     return () => { observer.disconnect(); window.removeEventListener("resize", schedule); cancelAnimationFrame(frame); };
-  }, [virtualizer]);
+  }, [preserveViewportOnScrollLock, virtualizer]);
 
   const rows = virtualizer.getVirtualItems();
   useLayoutEffect(() => {
