@@ -348,6 +348,7 @@ function MultiCityAirportField({
   onInvalidate,
   t,
   resultsPresentation,
+  landingPresentation,
 }: {
   legIndex: number;
   field: AirportField;
@@ -361,6 +362,7 @@ function MultiCityAirportField({
   onInvalidate: () => void;
   t: (key: string) => string;
   resultsPresentation: boolean;
+  landingPresentation: boolean;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -509,6 +511,11 @@ function MultiCityAirportField({
               "flight-results-edit-field-surface min-h-[66px] rounded-none border-0 bg-white px-3 py-[9px] shadow-none hover:border-0 [&_label]:mb-1 [&_label]:text-[10px] [&_label]:font-extrabold [&_label]:leading-[14px] [&_label]:tracking-[0.5px] [&_label]:text-[#56658E] sm:[&_svg]:text-[#071A48] sm:[&_input]:font-semibold",
               field === "origin" ? "sm:col-start-1" : "sm:col-start-3",
             ),
+          landingPresentation &&
+            cn(
+              "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-white lg:px-4 lg:py-2 lg:shadow-none lg:hover:border-0 lg:focus-within:border-0 lg:focus-within:bg-white lg:focus-within:ring-0",
+              field === "origin" ? "lg:col-start-1" : "lg:col-start-3",
+            ),
         )}
       />
       <MobileAirportPicker
@@ -541,6 +548,7 @@ function MultiCityDateField({
   onChange,
   t,
   resultsPresentation,
+  landingPresentation,
 }: {
   legIndex: number;
   value: string;
@@ -551,6 +559,7 @@ function MultiCityDateField({
   onChange: (value: string) => void;
   t: (key: string) => string;
   resultsPresentation: boolean;
+  landingPresentation: boolean;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
@@ -578,6 +587,8 @@ function MultiCityDateField({
           flightSearchFieldShellClassName,
           "sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-white sm:shadow-none sm:focus-within:ring-0",
           resultsPresentation && "flight-results-edit-surface min-h-[66px] rounded-[13px] border border-[#E7ECF5] bg-white px-3 py-[9px] shadow-none hover:border-[#E7ECF5]",
+          landingPresentation &&
+            "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:bg-white lg:px-4 lg:py-2 lg:shadow-none lg:hover:border-slate-200 lg:focus-within:ring-0",
         )}
       >
         <label className={cn(flightSearchFieldLabelClassName, resultsPresentation && "mb-1 text-[10px] font-extrabold leading-[14px] tracking-[0.5px] text-[#56658E]")}>{fieldLabel}</label>
