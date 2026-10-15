@@ -190,7 +190,7 @@ test("standalone desktop uses a shared header row for identity and actions witho
   assert.match(details, /desktopStandaloneSpecifications/);
   assert.match(
     details,
-    /guidedPlanning \? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 lg:text-\[13px\] lg:font-semibold lg:leading-\[18px\] lg:tracking-\[-0\.001em\] lg:text-\[#334155\]"/,
+    /guidedPlanning \? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 lg:hidden lg:text-\[13px\] lg:font-semibold lg:leading-\[18px\] lg:tracking-\[-0\.001em\] lg:text-\[#334155\]"/,
   );
   assert.match(source, /getCarSpecificationIcon\(title\(car\.transmission\)\)/);
 
