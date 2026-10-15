@@ -268,6 +268,7 @@ test("Cars inline offer rows place info after provider branding and before price
 
 test("Cars offers reserve a stable three-row preview without fabricating provider options", () => {
   assert.match(picker, /min-h-\[108px\] md:min-h-\[76px\]/);
+  assert.match(picker, /max-\[359px\]:min-h-\[240px\]/);
   assert.match(picker, /compact \? "grid-cols-\[minmax/);
   assert.match(picker, /"grid md:hidden"/);
   assert.match(picker, /min-h-9 max-\[359px\]:grid-cols-1/);
