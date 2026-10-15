@@ -288,6 +288,17 @@ test("Cars inline offer rows place info after provider branding and before price
   assert.doesNotMatch(offers.slice(offers.indexOf('data-car-deal-provider-action-slot')), /<Info/);
 });
 
+test("Cars provider expansion is parent-controlled and keeps supplier clickout actions", () => {
+  assert.match(picker, /expanded: boolean;/);
+  assert.match(picker, /onExpandedChange: \(expanded: boolean\) => void;/);
+  assert.match(picker, /onExpandedChange\(!expanded\)/);
+  assert.doesNotMatch(picker, /const \[expanded, setExpanded\] = useState\(false\)/);
+  assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
+  assert.match(picker, /expanded \? "justify-end pr-2" : "justify-start"/);
+  assert.match(picker, /href=\{bookingHref\}/);
+  assert.match(picker, /setDetailsKey\(group\.key\)/);
+});
+
 test("Cars offers reserve a stable three-row preview without fabricating provider options", () => {
   assert.match(picker, /min-h-\[108px\] md:min-h-\[76px\]/);
   assert.match(picker, /max-\[359px\]:min-h-\[240px\]/);
