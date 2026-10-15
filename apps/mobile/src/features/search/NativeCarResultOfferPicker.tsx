@@ -91,18 +91,18 @@ export function NativeCarResultOfferPicker({
       const actionColor = bookingUrl ? (theme.dark ? "#8FB5FF" : "#004BB8") : "#94A3B8";
       const hasDetails = result.inventorySource === "kayak-sandbox" && Boolean(offer.suppliedFacts?.length);
       return <View key={key} style={[styles.provider, stackVeryNarrow && styles.providerNarrow]}>
-        <View style={[styles.meta, { width: stackVeryNarrow ? ("100%" as const) : rowWidth > 0 ? Math.min(rowWidth, rowWidth / 2 + 20) : ("58%" as const) }]}>
+        <View style={[styles.meta, { width: stackVeryNarrow ? ("100%" as const) : rowWidth > 0 ? Math.min(rowWidth, rowWidth * 0.65 + 20) : ("65%" as const) }]}>
           <View style={styles.brand}>
             <ProviderMark name={providerName} logoUrl={logoUrl} />
             <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.providerName, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{providerName}</Text>
-          {hasDetails ? <Pressable
+            {hasDetails ? <Pressable
             accessibilityRole="button"
             accessibilityLabel={"Rate information for " + providerName}
             onPress={() => setSelectedKey(key)}
             style={styles.infoAction}
           >
             <Info accessible={false} size={17} strokeWidth={1.9} color={theme.textSecondary} />
-          </Pressable> : null}
+            </Pressable> : null}
           </View>
           <Text numberOfLines={1} ellipsizeMode="tail" adjustsFontSizeToFit minimumFontScale={0.78} style={[styles.price, { color: theme.textPrimary }]}>{money(displayed.currency, displayed.pricePerDay)}<Text style={[styles.perDay, { color: theme.textSecondary }]}>/day</Text></Text>
         </View>
