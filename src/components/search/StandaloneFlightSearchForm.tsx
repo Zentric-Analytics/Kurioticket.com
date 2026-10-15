@@ -1588,9 +1588,24 @@ export function StandaloneFlightSearchForm({
           ))}
         </div>
 
-        {tripType === "multi-city" ? <MultiCityFlightEditor legs={multiCityLegs} onChange={setMultiCityLegs} minimumDate={toIsoDate(todayLocal)} onAirportValidityChange={setMultiCityAirportsValid} /> : null}
+        {tripType === "multi-city" ? (
+          <MultiCityFlightEditor
+            legs={multiCityLegs}
+            onChange={setMultiCityLegs}
+            minimumDate={toIsoDate(todayLocal)}
+            presentation="landing"
+            onAirportValidityChange={setMultiCityAirportsValid}
+          />
+        ) : null}
 
-        <div className={cn("grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 lg:items-stretch lg:gap-0", tripType === "multi-city" ? "mt-3 sm:grid-cols-[minmax(164px,1fr)_136px]" : "lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px]")}>
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 lg:items-stretch lg:gap-0",
+            tripType === "multi-city"
+              ? "mt-3 sm:grid-cols-[minmax(164px,1fr)_136px] lg:grid-cols-[minmax(0,4.55fr)_minmax(164px,1.05fr)_136px] lg:overflow-visible lg:rounded-none lg:ring-0"
+              : "lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px]",
+          )}
+        >
           <div className={cn("grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 lg:bg-transparent", tripType === "multi-city" && "hidden")}>
             <FlightAirportFieldControl
               ref={originWrapRef}
@@ -1744,11 +1759,17 @@ export function StandaloneFlightSearchForm({
             ) : null}
           </div>
 
+          {tripType === "multi-city" ? (
+            <div aria-hidden="true" className="hidden lg:block" />
+          ) : null}
+
           <div
             ref={travelersWrapRef}
             className={cn(
               searchFieldShellClassName,
               travelersOpen && "sm:z-20",
+              tripType === "multi-city" &&
+                "lg:rounded-s-2xl lg:border lg:border-e-0 lg:border-slate-200 lg:bg-white",
             )}
           >
             <label className={searchFieldLabelClassName}>
