@@ -60,6 +60,7 @@ import {
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { MobileHotelGuestsRoomsPicker } from "@/components/search/MobileHotelGuestsRoomsPicker";
 import { DealsSearchForm } from "@/components/search/DealsSearchForm";
+import { StandaloneFlightSearchForm } from "@/components/search/StandaloneFlightSearchForm";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
 import type { CarLocationSuggestion } from "@/lib/cars/carLocationSuggestions";
 import { resolveDesktopPopoverGeometry } from "@/components/search/desktopPopoverGeometry";
@@ -3407,6 +3408,7 @@ export function SearchTabs({
       )}
 
       {tab === "flights" ? (
+        mobileHomepage ? (
         <form
           onSubmit={
             onFlightSubmit
@@ -4028,6 +4030,12 @@ export function SearchTabs({
             onClose: () => setActiveMobileAirportPicker(null),
           })}
         </form>
+        ) : (
+          <StandaloneFlightSearchForm
+            localizeCalendarLabels
+            presentation="homepage-embedded"
+          />
+        )
       ) : tab === "hotels" ? (
         <form
           onSubmit={
