@@ -261,6 +261,31 @@ export function assignCarBadges(results: NormalizedCarResult[]) {
   return assignments;
 }
 
+/**
+ * The first result in the current desktop sort gets the matching sort badge.
+ * Keep distinct source-wide awards on the other cards without duplicating
+ * the leader's label. Mobile continues using the original source awards.
+ */
+export function assignVisibleCarSortBadges(
+  visibleResults: NormalizedCarResult[],
+  sort: CarSort,
+  sourceBadges: ReadonlyMap<string, CarResultBadge>,
+): Map<string, CarResultBadge> {
+  const badges = new Map(sourceBadges);
+  const leader = visibleResults[0];
+  if (!leader) return badges;
+  const activeBadge: CarResultBadge =
+    sort === "lowestTotal" ? "Cheapest" :
+    sort === "topRated" ? "Top rated" : "Best value";
+  // Do not claim a supplier-rating award if no rating was supplied.
+  if (sort === "topRated" && !Number.isFinite(leader.supplierRating)) return badges;
+  for (const [id, badge] of badges) {
+    if (badge === activeBadge) badges.delete(id);
+  }
+  badges.set(leader.id, activeBadge);
+  return badges;
+}
+
 export function calculateRentalDays(pickupDate: string, dropoffDate: string) {
   const pickup = Date.parse(`${pickupDate}T00:00:00Z`);
   const dropoff = Date.parse(`${dropoffDate}T00:00:00Z`);
