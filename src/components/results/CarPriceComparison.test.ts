@@ -176,3 +176,30 @@ test("Cars mobile Rate details fills the viewport with a fixed safe-area header 
   assert.ok(sheet.indexOf("data-car-rate-header") < sheet.indexOf("data-car-rate-scroll"));
   assert.ok(sheet.indexOf("data-car-rate-scroll") < sheet.indexOf("data-car-rate-section"));
 });
+
+
+test("Cars Rate details uses borderless close, left-side semantic section icons, and softer right-hand values", () => {
+  const iconMapping = picker.slice(picker.indexOf("const rateSectionIcons"), picker.indexOf("function RateSectionIcon"));
+  for (const [id, name] of [
+    ["payment", "Wallet"],
+    ["policies", "ShieldCheck"],
+    ["pickup", "MapPin"],
+    ["driver", "IdCard"],
+    ["vehicle", "CarFront"],
+    ["other", "Info"],
+  ]) assert.ok(iconMapping.includes(id + ": " + name), id);
+  assert.ok(picker.includes('data-car-rate-section-icon={id}'));
+  assert.ok(picker.includes('aria-hidden="true" size={17} strokeWidth={1.8}'));
+  const sheet = picker.slice(picker.indexOf('data-car-rate-dialog'));
+  assert.ok(sheet.includes('<RateSectionIcon id="payment" />'));
+  assert.ok(sheet.includes('<RateSectionIcon id={section.id} />'));
+  assert.equal((sheet.match(/<h3 className="mb-3 flex min-w-0 items-center gap-2/g) ?? []).length, 2);
+  const closeButton = sheet.match(/aria-label="Close rate details"\s+className="([^"]+)"/)?.[1];
+  assert.ok(closeButton);
+  assert.ok(closeButton.includes("h-11 w-11"));
+  assert.equal(closeButton.split(/\s+/).some(token => token === "border" || token.startsWith("border-")), false);
+  assert.ok(closeButton.includes("focus-visible:ring-2")); // Keyboard focus remains clearly visible.
+  assert.equal((sheet.match(/data-car-rate-fact-value className="[^"]*text-right font-normal text-\[#334155\]/g) ?? []).length, 2);
+  assert.ok(sheet.includes('grid-cols-[minmax(0,42%)_minmax(0,1fr)]'));
+  assert.ok(sheet.includes("h-[100dvh] max-h-[100dvh]"));
+});
