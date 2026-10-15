@@ -438,6 +438,26 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await expect(dialog.getByText("Security deposit", { exact: true })).toBeVisible();
     await expect(dialog.getByText("Credit card required", { exact: true })).toBeVisible();
     await expect(dialog.locator("[data-car-rate-source-note]")).toContainText("KAYAK sandbox");
+    // Outline icons are visible to sighted customers, decorative to assistive tech,
+    // and placed to the left of each heading without changing the supplier content.
+    for (const sectionId of ["payment", "policies", "pickup", "driver", "vehicle"]) {
+      const section = dialog.locator(`[data-car-rate-section="${sectionId}"]`);
+      const heading = section.locator("h3");
+      const icon = heading.locator("[data-car-rate-section-icon]");
+      await expect(icon).toHaveCount(1);
+      await expect(icon).toHaveAttribute("data-car-rate-section-icon", sectionId);
+      await expect(icon).toHaveAttribute("aria-hidden", "true");
+      const iconBox = await icon.boundingBox();
+      const titleBox = await heading.locator("span").boundingBox();
+      expect(iconBox).not.toBeNull();
+      expect(titleBox).not.toBeNull();
+      expect(iconBox!.right).toBeLessThanOrEqual(titleBox!.x + 1);
+    }
+    const closeButton = dialog.getByRole("button", { name: "Close rate details" });
+    await expect(closeButton).toHaveCSS("border-top-width", "0px");
+    const firstValue = dialog.locator("[data-car-rate-fact-value]").first();
+    await expect(firstValue).toHaveCSS("font-weight", "400");
+    await expect(firstValue).toHaveCSS("color", "rgb(51, 65, 85)");
     await expect(dialog.getByText("XXAR", { exact: true })).toHaveCount(0);
     await expect(dialog.getByText("future-enum", { exact: true })).toHaveCount(0);
     await expect(dialog.getByText("fullToFull", { exact: true })).toHaveCount(0);
