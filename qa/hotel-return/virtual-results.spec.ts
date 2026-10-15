@@ -371,7 +371,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
         { label: "policy · fuel · code", value: "fullToFull" },
         { label: "policy · fuel · description", value: "Return the vehicle with a full tank or confirm the refueling terms with the rental desk before pickup." },
         { label: "is Credit Card Required", value: "Yes" },
-        { label: "brand", value: "Ford Transit or similar, a longer provider-supplied vehicle description that must wrap on a narrow phone" },
+        { label: "brand", value: "Ford Transit or similar, a longer provider-supplied vehicle description for a special rental category. Confirm the exact model at pickup. This intentionally long vehicle description checks line wrapping, tall content, the fixed Rate details header, and readable alignment on narrow mobile screens and in the desktop dialog. Additional notes may run across multiple lines without pushing the close button away." },
         { label: "fuel", value: "petrol" },
         { label: "sipp", value: "XXAR" },
         { label: "futureField", value: "future-enum" },
