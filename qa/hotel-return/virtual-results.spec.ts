@@ -268,6 +268,22 @@ test("Cars list defaults to five offers, hides expand control at five, and prese
       expect(fifthRow.y + fifthRow.height - firstRow.y).toBeLessThanOrEqual(190);
     }
   }
+  // Narrow mobile cards stack each offer onto two lines; one- and two-offer
+  // cards still reserve the same height as a three-offer preview.
+  let stackedMinimumHeight: number | null = null;
+  for (const count of [1, 2, 3]) {
+    offerCount = count;
+    await page.setViewportSize({ width: 320, height: 844 });
+    await page.goto(routes.cars);
+    const cards = page.locator("[data-car-result-card-shell]");
+    const list = cards.first().locator("[data-car-card-mobile-offers] [data-car-deal-provider-offers]");
+    await expect(list.locator("[data-car-deal-provider-offer]")).toHaveCount(count);
+    const height = (await list.boundingBox())!.height;
+    expect(height).toBeGreaterThanOrEqual(240);
+    if (stackedMinimumHeight !== null) expect(Math.abs(height - stackedMinimumHeight)).toBeLessThanOrEqual(2);
+    stackedMinimumHeight = height;
+  }
+
 });
 
 test("Cars comparison rows stay horizontal within the existing card beside the main price on mobile and desktop", async ({ page }) => {
