@@ -80,7 +80,7 @@ export function NativeCarResultOfferPicker({
 
   return <View
     accessibilityLabel="Car deal providers"
-    style={styles.providers}
+    style={[styles.providers, stackVeryNarrow && styles.providersStacked]}
     onLayout={event => {
       const width = Math.round(event.nativeEvent.layout.width);
       setRowWidth(current => current === width ? current : width);
@@ -192,6 +192,7 @@ export function NativeCarResultOfferPicker({
 
 const styles = StyleSheet.create({
   providers: { minWidth: 0, minHeight: 120, gap: 0, paddingTop: 0, paddingBottom: 0 },
+  providersStacked: { minHeight: 258 },
   provider: { minHeight: 40, minWidth: 0, flexDirection: "row", alignItems: "center" },
   providerNarrow: { flexDirection: "column", alignItems: "stretch", paddingVertical: 3 },
   meta: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4, paddingLeft: 6, paddingRight: 8 },
