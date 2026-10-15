@@ -77,7 +77,7 @@ test("each leg has an accessible route-boundary swap and canonical displayed dat
 });
 
 test("results presentation uses grouped Results route, date, and swap geometry", () => {
-  assert.match(editor, /presentation\?: "standalone" \| "homepage" \| "results"/);
+  assert.match(editor, /presentation\?: "standalone" \| "homepage" \| "landing" \| "results"/);
   assert.match(editor, /data-multi-city-presentation=\{presentation\}/);
   assert.match(editor, /data-multi-city-results-route-card/);
   assert.match(editor, /flight-results-edit-surface gap-0 overflow-hidden rounded-\[13px\] border border-\[#E7ECF5\] bg-white/);
@@ -132,9 +132,34 @@ test("results dates use canonical travel wording without changing standalone wor
 test("homepage and standalone retain their existing presentation path", () => {
   assert.match(editor, /presentation = "standalone"/);
   assert.match(editor, /const resultsPresentation = presentation === "results"/);
+  assert.match(editor, /const landingPresentation = presentation === "landing"/);
   assert.match(editor, /resultsPresentation &&/);
   assert.match(editor, /sm:min-h-\[58px\] sm:rounded-none sm:border-0/);
   assert.match(editor, /\{resultsPresentation \? \([\s\S]*?data-multi-city-results-route-divider[\s\S]*?\) : null\}/);
+});
+
+test("landing presentation matches the round-trip desktop search geometry without changing mobile", () => {
+  assert.match(
+    editor,
+    /landingPresentation &&\s*"lg:grid-cols-\[minmax\(0,3\.35fr\)_minmax\(172px,1\.2fr\)_48px\][^"]*lg:rounded-2xl[^"]*lg:ring-1 lg:ring-slate-200"/,
+  );
+  assert.match(
+    editor,
+    /landingPresentation &&\s*"lg:grid-cols-\[minmax\(0,1fr\)_44px_minmax\(0,1fr\)\][^"]*lg:border-e lg:border-slate-200/,
+  );
+  assert.match(
+    editor,
+    /landingPresentation &&\s*"lg:static lg:col-start-2 lg:row-start-1 lg:h-8 lg:w-8/,
+  );
+  assert.match(
+    editor,
+    /landingPresentation &&\s*cn\([\s\S]*?lg:min-h-\[58px\][\s\S]*?field === "origin" \? "lg:col-start-1" : "lg:col-start-3"/,
+  );
+  assert.match(
+    editor,
+    /landingPresentation &&\s*"lg:min-h-\[58px\][^"]*lg:border-e lg:border-slate-200/,
+  );
+  assert.doesNotMatch(editor, /landingPresentation &&\s*"[^"]*sm:/);
 });
 
 

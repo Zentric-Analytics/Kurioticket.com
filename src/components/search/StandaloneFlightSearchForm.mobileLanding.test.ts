@@ -106,6 +106,25 @@ test("all mobile trip options update canonical state including Multi-city", () =
   assert.match(source, /<MultiCityFlightEditor/);
 });
 
+test("desktop Multi-city landing uses the dedicated aligned presentation and right-side traveler/search rail", () => {
+  assert.match(
+    source,
+    /<MultiCityFlightEditor[\s\S]*?presentation="landing"[\s\S]*?onAirportValidityChange=\{setMultiCityAirportsValid\}/,
+  );
+  assert.match(
+    source,
+    /tripType === "multi-city"[\s\S]*?lg:grid-cols-\[minmax\(0,4\.55fr\)_minmax\(164px,1\.05fr\)_136px\][\s\S]*?lg:ring-0/,
+  );
+  assert.match(
+    source,
+    /tripType === "multi-city" \? \([\s\S]*?<div aria-hidden="true" className="hidden lg:block" \/>/,
+  );
+  assert.match(
+    source,
+    /tripType === "multi-city" &&\s*"lg:rounded-s-2xl lg:border lg:border-e-0 lg:border-slate-200 lg:bg-white"/,
+  );
+});
+
 test("standalone Flights uses the canonical indexed Multi-city search contract", () => {
   assert.match(source, /sm:inline-flex sm:gap-1/);
   assert.match(
