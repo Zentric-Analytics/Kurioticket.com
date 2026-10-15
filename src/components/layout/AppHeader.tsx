@@ -1572,7 +1572,12 @@ export function AppHeader({
                     fullscreenHotelMobileMenu && "max-sm:inset-x-0 max-sm:top-0 max-sm:w-full max-sm:max-w-none",
                   )}
                 >
-                  <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
+                  <nav
+                    className={cn(
+                      "page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]",
+                      fullscreenHotelMobileMenu && "max-sm:pt-[calc(1.25rem+env(safe-area-inset-top))]",
+                    )}
+                  >
                     <section aria-label="Account">
                       <div className="flex items-center gap-3 px-2.5 pb-5">
                         <span className="relative inline-flex h-10 w-10 shrink-0 items-center overflow-visible">
