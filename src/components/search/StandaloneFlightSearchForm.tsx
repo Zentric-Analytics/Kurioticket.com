@@ -1622,6 +1622,7 @@ export function StandaloneFlightSearchForm({
               label={t("origin")}
               value={origin}
               desktopValue={desktopOriginLabel}
+              showDesktopSecondary={false}
               placeholder={t("cityOrAirport")}
               mobilePlaceholder={t("cityOrAirport")}
               useMainFlightLandingMobilePresentation={
@@ -1669,6 +1670,7 @@ export function StandaloneFlightSearchForm({
               label={t("destination")}
               value={destination}
               desktopValue={desktopDestinationLabel}
+              showDesktopSecondary={false}
               placeholder={t("cityOrAirport")}
               mobilePlaceholder={t("flightSearchDestinationPlaceholderShort")}
               useMainFlightLandingMobilePresentation={
