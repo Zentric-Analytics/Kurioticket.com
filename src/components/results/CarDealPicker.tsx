@@ -330,9 +330,9 @@ export function CarDealPicker({
                     aria-label={"View deal from " + selectedGroup.providerName}
                     onClick={isolateProviderAction}
                     data-car-rate-view-deal
-                    className="inline-flex min-h-11 w-full max-w-[240px] items-center justify-center gap-2 rounded-lg bg-[#004BB8] px-5 py-2.5 text-[14px] font-semibold leading-5 text-white transition-colors hover:bg-[#003B91] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
+                    className="inline-flex min-h-11 w-full max-w-[240px] items-center justify-center rounded-lg bg-[#004BB8] px-5 py-2.5 text-[14px] font-semibold leading-5 text-white transition-colors hover:bg-[#003B91] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
                   >
-                    View deal <ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
+                    View deal
                   </a>
                 ) : (
                   <button
@@ -340,9 +340,9 @@ export function CarDealPicker({
                     disabled
                     data-car-rate-view-deal-unavailable
                     aria-label={"Booking link unavailable for " + selectedGroup.providerName}
-                    className="inline-flex min-h-11 w-full max-w-[240px] cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-[#004BB8] px-5 py-2.5 text-[14px] font-semibold leading-5 text-white opacity-40"
+                    className="inline-flex min-h-11 w-full max-w-[240px] cursor-not-allowed items-center justify-center rounded-lg bg-[#004BB8] px-5 py-2.5 text-[14px] font-semibold leading-5 text-white opacity-40"
                   >
-                    View deal <ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
+                    View deal
                   </button>
                 )}
               </div>

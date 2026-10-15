@@ -604,6 +604,25 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await expect(footerLink).toHaveAttribute("aria-label", "View deal from Same Seller");
     await expect(footerLink).toHaveAttribute("target", "_blank");
     await expect(footerLink).toHaveAttribute("rel", "noopener noreferrer");
+    await expect(footerLink).toHaveText("View deal");
+    await expect(footerLink.locator("svg")).toHaveCount(0);
+    await expect(footerLink).toHaveCSS("justify-content", "center");
+    await expect(footerLink).toHaveCSS("align-items", "center");
+    const labelAlignment = await footerLink.evaluate(element => {
+      const text = Array.from(element.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.textContent?.trim());
+      if (!text) return null;
+      const range = document.createRange();
+      range.selectNodeContents(text);
+      const textBox = range.getBoundingClientRect();
+      const buttonBox = element.getBoundingClientRect();
+      return {
+        horizontal: Math.abs(textBox.x + textBox.width / 2 - (buttonBox.x + buttonBox.width / 2)),
+        vertical: Math.abs(textBox.y + textBox.height / 2 - (buttonBox.y + buttonBox.height / 2)),
+      };
+    });
+    expect(labelAlignment).not.toBeNull();
+    expect(labelAlignment!.horizontal).toBeLessThanOrEqual(2);
+    expect(labelAlignment!.vertical).toBeLessThanOrEqual(4);
     await expect(rateScroll).toBeVisible();
     await expect(rateScroll).toHaveCSS("overflow-y", "auto");
     if (!mobile) {
@@ -747,6 +766,10 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     const unavailableAction = dialog.locator("[data-car-rate-view-deal-unavailable]");
     await expect(unavailableAction).toBeVisible();
     await expect(unavailableAction).toBeDisabled();
+    await expect(unavailableAction).toHaveText("View deal");
+    await expect(unavailableAction.locator("svg")).toHaveCount(0);
+    await expect(unavailableAction).toHaveCSS("justify-content", "center");
+    await expect(unavailableAction).toHaveCSS("align-items", "center");
     await closeButton.click();
     await expect(dialog).not.toBeVisible();
     await area.locator("[data-car-deal-more-offers]").filter({ visible: true }).click();
