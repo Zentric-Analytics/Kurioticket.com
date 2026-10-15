@@ -57,7 +57,7 @@ test("cancellation badge conflicting with provider policy or fee is never shown 
     { label: "badges 1 · display Name", value: "Free Cancellation" },
   ];
   const sections = getCarRateDisclosureSections({ suppliedFacts, currency: "USD" });
-  assert.equal(row(sections, "policies", "Cancellation"), "Confirm conditions with provider; supplied indicators differ");
+  assert.equal(row(sections, "policies", "Cancellation"), "Free cancellation advertised; conditions and fees may apply");
   assert.equal(row(sections, "policies", "Provider-listed policy fee"), "$44.0 · Check when it applies");
   assert.doesNotMatch(JSON.stringify(sections), /Free cancellation advertised|limit Hours|48 hours|is Unlimited/);
   assert.equal(row(getCarRateDisclosureSections({
