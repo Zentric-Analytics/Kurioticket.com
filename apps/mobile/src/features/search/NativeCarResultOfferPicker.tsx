@@ -136,9 +136,9 @@ export function NativeCarResultOfferPicker({
                 <Text style={[styles.sheetPayment, { color: theme.textSecondary }]}>{getCarRatePaymentLabel(selectedChoice.offer) ?? "Payment timing not supplied"}</Text>
                 {getCarRateDisclosureSections(selectedChoice.offer).map(section => (
                   <View key={section.id} style={[styles.section, { borderTopColor: theme.border }]}>
-                    <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>{section.title}</Text>
+                    <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>{section.title}</Text>
                     {section.facts.map((fact, index) => (
-                      <View key={fact.label + ":" + index} style={styles.factRow}>
+                      <View key={fact.label + ":" + index} style={[styles.factRow, { borderBottomColor: theme.border }]}>
                         <Text style={[styles.factLabel, { color: theme.textSecondary }]}>{fact.label}</Text>
                         <Text style={[styles.factValue, { color: theme.textPrimary }]}>{fact.value}</Text>
                       </View>
@@ -187,10 +187,10 @@ const styles = StyleSheet.create({
   sheetPerDay: { fontSize: 12, fontWeight: "500", fontFamily: appFonts.medium },
   sheetTotal: { marginTop: 4, fontSize: 13, lineHeight: 18, fontFamily: appFonts.medium },
   sheetPayment: { marginTop: 4, marginBottom: 12, fontSize: 11, lineHeight: 16, fontFamily: appFonts.medium },
-  section: { borderTopWidth: 1, paddingTop: 12, paddingBottom: 6, gap: 10 },
-  sectionTitle: { fontSize: 13, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
-  factRow: { flexDirection: "row", gap: 10 },
-  factLabel: { width: "38%", fontSize: 11, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
-  factValue: { flex: 1, minWidth: 0, fontSize: 11, lineHeight: 16, fontWeight: "500", fontFamily: appFonts.medium },
+  section: { borderTopWidth: 1, paddingTop: 12, paddingBottom: 6, gap: 0 },
+  sectionTitle: { marginBottom: 8, fontSize: 11, lineHeight: 15, letterSpacing: 0.85, textTransform: "uppercase", fontWeight: "700", fontFamily: appFonts.bold },
+  factRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, minWidth: 0, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth },
+  factLabel: { width: "42%", minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 18, fontWeight: "400", fontFamily: appFonts.regular },
+  factValue: { flex: 1, minWidth: 0, textAlign: "right", fontSize: 12, lineHeight: 18, fontWeight: "500", fontFamily: appFonts.medium },
   disclaimer: { marginTop: 12, fontSize: 11, lineHeight: 16, fontFamily: appFonts.medium },
 });

@@ -366,6 +366,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
         { label: "payment Type", value: index % 2 === 0 ? "prepay" : "payAtPickup" },
         { label: "Pickup · address", value: "Airport Pickup " + index },
         { label: "policy · fuel · code", value: "fullToFull" },
+        { label: "policy · fuel · description", value: "Return the vehicle with a full tank or confirm the refueling terms with the rental desk before pickup." },
       ],
     })),
   };
@@ -400,6 +401,33 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await expect(dialog.getByText("Airport Pickup 1", { exact: true })).toHaveCount(0);
     await expect(dialog.getByText("Estimated total:", { exact: false })).toBeVisible();
     await expect(dialog.locator("[data-car-rate-section=payment]")).toBeVisible();
+    await expect(dialog).toHaveCSS("background-color", "rgb(255, 255, 255)");
+    await expect(dialog.locator("[data-car-rate-fact-row]")).toHaveCount(4);
+    // Both narrow mobile sheets and desktop dialogs keep every supplier value
+    // at the far-right content gutter, including long wrapping descriptions.
+    const alignment = await dialog.locator("[data-car-rate-fact-row]").evaluateAll(elements =>
+      elements.map(element => {
+        const label = element.querySelector("dt");
+        const value = element.querySelector<HTMLElement>("[data-car-rate-fact-value]");
+        if (!label || !value) return null;
+        const rowBox = element.getBoundingClientRect();
+        const labelBox = label.getBoundingClientRect();
+        const valueBox = value.getBoundingClientRect();
+        return {
+          textAlign: getComputedStyle(value).textAlign,
+          rightGap: Math.abs(rowBox.right - valueBox.right),
+          labelGap: valueBox.left - labelBox.right,
+          overflow: value.scrollWidth > value.clientWidth + 1,
+        };
+      })
+    );
+    for (const fact of alignment) {
+      expect(fact).not.toBeNull();
+      expect(fact!.textAlign).toBe("right");
+      expect(fact!.rightGap).toBeLessThanOrEqual(1);
+      expect(fact!.labelGap).toBeGreaterThanOrEqual(10);
+      expect(fact!.overflow).toBe(false);
+    }
     await dialog.getByRole("button", { name: "Close rate details" }).click();
     await expect(dialog).not.toBeVisible();
     expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
