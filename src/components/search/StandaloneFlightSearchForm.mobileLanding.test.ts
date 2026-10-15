@@ -118,11 +118,11 @@ test("desktop Round-trip and One-way resolve selected airports to City plus IATA
   );
   assert.match(
     source,
-    /label=\{t\("origin"\)\}[\s\S]*?value=\{origin\}[\s\S]*?desktopValue=\{desktopOriginLabel\}/,
+    /label=\{t\("origin"\)\}[\s\S]*?value=\{origin\}[\s\S]*?desktopValue=\{desktopOriginLabel\}[\s\S]*?showDesktopSecondary=\{false\}/,
   );
   assert.match(
     source,
-    /label=\{t\("destination"\)\}[\s\S]*?value=\{destination\}[\s\S]*?desktopValue=\{desktopDestinationLabel\}/,
+    /label=\{t\("destination"\)\}[\s\S]*?value=\{destination\}[\s\S]*?desktopValue=\{desktopDestinationLabel\}[\s\S]*?showDesktopSecondary=\{false\}/,
   );
 });
 
