@@ -43,9 +43,9 @@ test("provider offers show logo, name, per-day price and a direct provider View 
   assert.match(picker, /data-car-deal-picker-compact/);
   assert.ok(picker.includes('min-h-9 max-[359px]:grid-cols-1'));
   assert.ok(picker.includes('compact ? "min-h-9" : "min-h-6"'));
-  assert.ok(picker.includes('compact ? "h-9 w-8 max-[389px]:w-7" : "h-6 w-7"'));
+  assert.ok(picker.includes('compact ? "h-9 w-8" : "h-6 w-7"'));
   assert.ok(picker.includes('max-[409px]:hidden'));
-  assert.ok(picker.includes('h-9 w-8 max-[389px]:w-7'));
+  assert.ok(picker.includes('h-9 w-8'));
   assert.match(picker, /Info size=\{compact \? 17 : 16\}/);
   assert.equal((picker.match(/fontSize: 11, lineHeight: "16px", fontWeight: 600/g) ?? []).length, 1);
   assert.match(card, /data-car-card-mobile-offers[\s\S]*flex-\[2\.65\]/);
@@ -91,7 +91,7 @@ test("inline provider offers do not retain the old comparison overlays", () => {
   assert.doesNotMatch(picker, /data-car-rate-terms|CarRateDetails\(/);
   assert.match(picker, /data-car-deal-provider-meta/);
   assert.match(picker, /data-car-deal-provider-action-slot/);
-  assert.ok(picker.includes('compact ? "pr-2" : "pr-3"'));
+  assert.ok(picker.includes('compact ? "grid-cols-[minmax(0,1fr)_32px_66px] pr-2" : "grid-cols-[minmax(0,1fr)_28px_66px] pr-2"'));
   assert.match(card, /data-car-card-mobile-specs[\s\S]*grid min-w-0 grid-cols-2 gap-x-2/);
   assert.match(card, /data-car-card-mobile-offers[\s\S]*<CarDealPicker/);
   assert.ok(card.indexOf("data-car-card-mobile-specs") < card.indexOf("data-car-card-mobile-lower-band"));
@@ -254,7 +254,10 @@ test("Cars inline offer rows place info after provider branding and before price
   const viewDealAt = offers.indexOf('data-car-deal-provider-view-deal');
   assert.ok(logoAt >= 0 && logoAt < nameAt && nameAt < infoAt && infoAt < priceAt && priceAt < viewDealAt);
   assert.match(offers, /data-car-deal-provider-brand/);
-  assert.match(offers, /ml-1\.5 inline-flex shrink-0 items-center/);
+  assert.match(offers, /data-car-rate-info-spacer/);
+  assert.match(offers, /grid min-w-0 items-center gap-x-2/);
+  assert.match(offers, /grid-cols-\[minmax\(0,1fr\)_32px_66px\]/);
+  assert.match(offers, /grid-cols-\[minmax\(0,1fr\)_28px_66px\]/);
   assert.match(offers, /aria-label=\{"Rate information for " \+ group\.providerName/);
   assert.match(offers, /setDetailsKey\(group\.key\)/);
   assert.match(offers, /grid-cols-\[minmax\(0,calc\(65%_\+_20px\)\)_minmax\(0,1fr\)\]/);
