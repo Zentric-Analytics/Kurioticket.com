@@ -48,7 +48,7 @@ test("desktop results keeps trip type inside the clicked edit-search state", () 
   assert.match(source, /const showCompactSearchSummary = !isSearchExpandedWhileSticky;/);
   assert.match(
     source,
-    /shouldShowDesktopCompactSummary &&\s*showCompactSearchSummary[\s\S]*?onClick=\{expandStickySearch\}/,
+    /shouldShowDesktopCompactSummary &&\s*showCompactSearchSummary[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?navigateDesktopMultiCityToLanding\(\)[\s\S]*?expandStickySearch\(\)/,
   );
   assert.match(
     source,
@@ -147,31 +147,37 @@ test("fare windows are bounded and hidden for multi-city", () => {
 });
 
 
-test("desktop Multi-city stays on Results and renders the shared multi-city editor", () => {
+test("desktop Multi-city edits navigate to the Flight landing form with Multi-city active", () => {
+  const navigationStart = source.indexOf("function buildDesktopMultiCityLandingHref");
   const tripTypeStart = source.indexOf("function handleTripTypeChange");
-  const stickyStart = source.indexOf("const expandStickySearch");
-  const submitStart = source.indexOf("function handleCompactSearchSubmit");
-  const renderStart = source.indexOf('placement === "desktop" && tripTypeInput === "multi-city"');
-  const tripTypeHandler = source.slice(tripTypeStart, stickyStart);
-  const stickyHandlers = source.slice(stickyStart, submitStart);
-  const multiCityEditor = source.slice(renderStart);
+  const headerStart = source.indexOf("function renderDesktopHeaderSearchBar");
+  const headerEnd = source.indexOf("function renderStickySearchPopoutOverlay", headerStart);
+  const navigation = source.slice(navigationStart, tripTypeStart);
+  const header = source.slice(headerStart, headerEnd);
 
-  assert.doesNotMatch(tripTypeHandler, /router\.push\(\`\/flights\?/);
-  assert.doesNotMatch(stickyHandlers, /router\.push\(\`\/flights\?/);
+  assert.notEqual(navigationStart, -1);
+  assert.match(navigation, /nextParams\.set\("tripType", "multi-city"\)/);
+  assert.match(navigation, /nextParams\.delete\("returnDate"\)/);
+  assert.match(navigation, /appendFlightLegParams\(nextParams, projection\.legs\)/);
+  assert.match(navigation, /return `\/flights\?\$\{nextParams\.toString\(\)\}`/);
   assert.match(
-    stickyHandlers,
-    /tripTypeInput === "multi-city"[\s\S]*target === "origin"[\s\S]*target === "destination"[\s\S]*\? "trip"[\s\S]*setActiveStickySearchTarget\(resolvedTarget\)/,
+    navigation,
+    /router\.push\(buildDesktopMultiCityLandingHref\(\), \{ scroll: true \}\)/,
   );
   assert.match(
-    multiCityEditor,
-    /<MultiCityFlightEditor[\s\S]*minimumDate=\{formatDateValue\(new Date\(\)\)\}[\s\S]*presentation="results"[\s\S]*onAirportValidityChange=\{setMultiCityAirportsValid\}/,
+    navigation,
+    /function openDesktopSearchEditor[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?navigateDesktopMultiCityToLanding\(\)[\s\S]*?return;/,
   );
   assert.match(
-    multiCityEditor,
-    /ref=\{travelerCabinWrapRef\}[\s\S]*aria-label=\{t\("travelersAndCabinClass"\)\}[\s\S]*<TravelerCabinPopover/,
+    header,
+    /option\.value === "multi-city"[\s\S]*?navigateDesktopMultiCityToLanding\(\)[\s\S]*?return;[\s\S]*?handleTripTypeChange\(option\.value\)/,
+  );
+  assert.doesNotMatch(
+    header,
+    /option\.value === "multi-city"[\s\S]{0,260}setIsSearchExpandedWhileSticky\(true\)/,
   );
   assert.match(
     source,
-    /handleCompactSearchSubmit[\s\S]*appendFlightLegParams\(nextParams, multiCityLegs\)[\s\S]*router\.push\(\`\/flights\/results\?/,
+    /onClick=\{\(\) => \{[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?navigateDesktopMultiCityToLanding\(\)[\s\S]*?expandStickySearch\(\)/,
   );
 });
