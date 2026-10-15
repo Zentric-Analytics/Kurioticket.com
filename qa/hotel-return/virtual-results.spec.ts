@@ -405,6 +405,25 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await firstInfo.click();
     const dialog = area.locator("[data-car-rate-dialog]");
     await expect(dialog).toBeVisible();
+    const fixedHeader = dialog.locator("[data-car-rate-header]");
+    const rateScroll = dialog.locator("[data-car-rate-scroll]");
+    await expect(fixedHeader).toBeVisible();
+    await expect(rateScroll).toBeVisible();
+    await expect(rateScroll).toHaveCSS("overflow-y", "auto");
+    const dialogBox = await dialog.boundingBox();
+    expect(dialogBox).not.toBeNull();
+    if (mobile) {
+      // A true mobile full-height sheet must fill the usable browser viewport.
+      expect(Math.abs(dialogBox!.x)).toBeLessThanOrEqual(2);
+      expect(Math.abs(dialogBox!.y)).toBeLessThanOrEqual(2);
+      expect(Math.abs(dialogBox!.width - viewport.width)).toBeLessThanOrEqual(2);
+      expect(Math.abs(dialogBox!.height - viewport.height)).toBeLessThanOrEqual(2);
+      await expect(dialog).toHaveCSS("border-top-left-radius", "0px");
+    } else {
+      // Desktop retains the intentionally compact centered dialog.
+      expect(dialogBox!.width).toBeLessThanOrEqual(541);
+      expect(dialogBox!.height).toBeLessThan(viewport.height * 0.85);
+    }
     await expect(dialog.getByText("Airport Pickup 0", { exact: true })).toBeVisible();
     await expect(dialog.getByText("Airport Pickup 1", { exact: true })).toHaveCount(0);
     await expect(dialog.getByText("Estimated total:", { exact: false })).toBeVisible();
@@ -447,6 +466,17 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
       expect(fact!.labelGap).toBeGreaterThanOrEqual(10);
       expect(fact!.overflow).toBe(false);
     }
+    const fixedHeaderBefore = await fixedHeader.boundingBox();
+    expect(fixedHeaderBefore).not.toBeNull();
+    const scrollDistance = await rateScroll.evaluate(element => {
+      element.scrollTop = element.scrollHeight;
+      return element.scrollTop;
+    });
+    expect(scrollDistance).toBeGreaterThan(40);
+    const fixedHeaderAfter = await fixedHeader.boundingBox();
+    expect(fixedHeaderAfter).not.toBeNull();
+    expect(Math.abs(fixedHeaderAfter!.y - fixedHeaderBefore!.y)).toBeLessThanOrEqual(2);
+    await expect(dialog.getByRole("button", { name: "Close rate details" })).toBeVisible();
     await dialog.getByRole("button", { name: "Close rate details" }).click();
     await expect(dialog).not.toBeVisible();
     expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
