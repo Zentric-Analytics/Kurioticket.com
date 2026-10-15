@@ -2946,7 +2946,7 @@ export function CarsResultsExperience({
                       "cars-filter-results-reveal",
                   )}
                 >
-                  <VirtualResultsList items={visibleResults} itemKey={resultIdKey} label="Car results" rowClassName="pb-3.5 sm:pb-4" estimateHeight={360} renderItem={car => (
+                  <VirtualResultsList items={visibleResults} itemKey={resultIdKey} label="Car results" rowClassName="pb-3.5 sm:pb-4 focus:outline-none" estimateHeight={360} renderItem={car => (
                     <CarResultCard
                       key={car.id}
                       car={car}
