@@ -33,7 +33,7 @@ test("Cars disclosures have customer-facing order, labels, and no mutation or le
   const unchanged = structuredClone(suppliedFacts);
   const sections = getCarRateDisclosureSections({ suppliedFacts, currency: "USD" });
   assert.deepEqual(sections.map(section => section.id), ["payment", "policies", "pickup", "driver", "vehicle"]);
-  assert.equal(row(sections, "payment", "Security deposit"), "$150.00 · Not included in estimated total");
+  assert.equal(row(sections, "payment", "Security deposit"), "$150.00 USD · Not included in estimated total");
   assert.equal(row(sections, "policies", "Fuel return policy"), "Full to full");
   assert.equal(row(sections, "pickup", "Rental agency"), "Budget");
   assert.equal(row(sections, "pickup", "Return location"), "Return street");
@@ -58,7 +58,7 @@ test("cancellation badge conflicting with provider policy or fee is never shown 
   ];
   const sections = getCarRateDisclosureSections({ suppliedFacts, currency: "USD" });
   assert.equal(row(sections, "policies", "Cancellation"), "Free cancellation advertised; conditions and fees may apply");
-  assert.equal(row(sections, "policies", "Provider-listed policy fee"), "$44.0 · Check when it applies");
+  assert.equal(row(sections, "policies", "Provider-listed policy fee"), "$44.0 USD · Check when it applies");
   assert.doesNotMatch(JSON.stringify(sections), /Free cancellation advertised|limit Hours|48 hours|is Unlimited/);
   assert.equal(row(getCarRateDisclosureSections({
     suppliedFacts: [{ label: "badges 1 · code", value: "freeCancellation" }],
@@ -99,7 +99,7 @@ test("fee amount is never reused across different fee codes or currencies", () =
     { label: "fees 1 · is Included In Total", value: "Yes" },
     { label: "fees 2 · code", value: "youngDriver" },
   ] });
-  assert.equal(row(sections, "payment", "Security deposit"), "$200.00 · Included in estimated total");
+  assert.equal(row(sections, "payment", "Security deposit"), "$200.00 USD · Included in estimated total");
   assert.equal(row(sections, "payment", "Young-driver fee"), "Amount not supplied");
   const unknownCurrency = getCarRateDisclosureSections({
     suppliedFacts: [{ label: "fees 1 · code", value: "securityDeposit" }, { label: "fees 1 · rate · price", value: "200" }],
