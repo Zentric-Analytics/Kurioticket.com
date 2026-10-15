@@ -475,6 +475,26 @@ test("desktop Flight renders the Hotel-style Popular filters card directly after
   assert.match(source, /data-flight-sticky-popular-filters[\s\S]*?bg-white/);
   assert.match(source, /text-\[13px\] font-medium leading-5 text-\[#26354A\]/);
   assert.match(source, /text-\[12px\] font-semibold leading-5 tabular-nums text-\[#526174\]/);
+  assert.match(source, /className="peer sr-only"/);
+  assert.match(
+    source,
+    /h-\[14px\] w-\[14px\][^"]*rounded-\[2px\][^"]*peer-focus-visible:ring-2/,
+  );
+  assert.match(
+    source,
+    /filter\.selected[\s\S]*?border-\[#0067DB\] bg-\[#0067DB\] text-white[\s\S]*?border-slate-300 bg-white group-hover:border-slate-400/,
+  );
+  assert.match(
+    source,
+    /<Check[\s\S]*?className="h-2\.5 w-2\.5"[\s\S]*?strokeWidth=\{3\}/,
+  );
+  assert.doesNotMatch(
+    source.slice(
+      source.indexOf("function StickyFlightPopularFilters"),
+      source.indexOf("type MobileShortcutSheet"),
+    ),
+    /accent-\[#004BB8\]|className="h-4 w-4 shrink-0 cursor-pointer/,
+  );
   assert.match(source, /<div>\{renderDesktopFlightFilters\(\)\}<\/div>[\s\S]*?<StickyFlightPopularFilters/);
   assert.doesNotMatch(source, /showStickyFlightFilters/);
   assert.doesNotMatch(source, /shouldShowFlightStickyPopularFilters/);
