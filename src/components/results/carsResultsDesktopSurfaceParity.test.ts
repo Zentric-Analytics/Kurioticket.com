@@ -145,20 +145,22 @@ test("desktop Cars filters use the Hotels white filter surface without changing 
   assert.match(results, /data-cars-mobile-filter-shell[\s\S]*?bg-\[#F2F4F8\]/);
 });
 
-test("mobile car information matches the Hotels white surface without changing standalone desktop parity", () => {
+test("desktop and mobile Cars result cards use the same pure-white surface", () => {
   assert.match(card, /desktopSurfaceParity = false/);
   assert.match(card, /border border-\[#D8E1EC\] bg-white shadow-\[0_2px_10px_rgba\(24,48,91,0\.08\)\] md:rounded-2xl/);
   assert.match(
     card,
-    /desktopSurfaceParity \? "md:bg-\[#E7EBF1\]" : "md:bg-white"/,
+    /md:rounded-2xl md:bg-white md:shadow/,
   );
+  assert.match(card, /data-car-card-desktop-header-rail[\s\S]*?bg-white/);
+  assert.doesNotMatch(card, /md:bg-\[#E7EBF1\]/);
   assert.match(
     card,
     /data-region="image"[\s\S]*?bg-white[\s\S]*?aspect-\[4\/3\][^"]*bg-white/,
   );
   assert.match(
     card,
-    /data-region="pricing"[\s\S]*?desktopSurfaceParity \? "bg-\[#E7EBF1\]" : "bg-slate-50\/45 lg:bg-white"/,
+    /data-region="pricing"[\s\S]*?desktopSurfaceParity \? "bg-white" : "bg-slate-50\/45 lg:bg-white"/,
   );
   assert.match(
     card,
@@ -195,10 +197,10 @@ test("KAYAK car cards and loading canvases stay inside the same standalone deskt
     /<main className="flex min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white">/,
   );
   assert.match(skeleton, /desktopSurfaceParity = false/);
-  assert.match(skeleton, /desktopSurfaceParity && "md:bg-\[#E7EBF1\]"/);
+  assert.match(skeleton, /desktopSurfaceParity && "md:bg-white"/);
   assert.match(
     skeleton,
-    /desktopSurfaceParity \? "md:bg-\[#E7EBF1\] lg:bg-\[#E7EBF1\]" : "lg:bg-white"/,
+    /desktopSurfaceParity \? "md:bg-white lg:bg-white" : "lg:bg-white"/,
   );
   assert.equal(
     (results.match(/<CarCardSkeleton desktopSurfaceParity \/>/g) ?? []).length,

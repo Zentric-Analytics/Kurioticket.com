@@ -142,7 +142,7 @@ export function CarCardSkeleton({
       aria-label="Loading car result"
       className={cn(
         "overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white md:rounded-2xl",
-        desktopSurfaceParity && "md:bg-[#E7EBF1]",
+        desktopSurfaceParity && "md:bg-white",
         transitionMotion === "shimmer" && "cars-filter-card-skeleton",
       )}
     >
@@ -195,7 +195,7 @@ export function CarCardSkeleton({
             <Skeleton className="h-6 w-32" />
           </div>
         </div>
-        <div className={cn("col-span-full flex min-w-0 flex-col border-t border-slate-200 bg-slate-50/45 px-4 py-3 lg:col-span-1 lg:border-s lg:border-t-0", desktopSurfaceParity ? "md:bg-[#E7EBF1] lg:bg-[#E7EBF1]" : "lg:bg-white")}>
+        <div className={cn("col-span-full flex min-w-0 flex-col border-t border-slate-200 bg-slate-50/45 px-4 py-3 lg:col-span-1 lg:border-s lg:border-t-0", desktopSurfaceParity ? "md:bg-white lg:bg-white" : "lg:bg-white")}>
           <div className="space-y-2">
             <div className="space-y-1">
               <Skeleton className="h-3 w-20" />

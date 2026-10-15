@@ -19,7 +19,7 @@ const between = (startMarker: string, endMarker: string) => {
   return source.slice(start, end);
 };
 
-test("mobile Cars card matches the Hotels white information area without changing layout or desktop", () => {
+test("mobile Cars card keeps white parity while desktop now also uses pure white", () => {
   const mobile = source.slice(
     source.indexOf("data-car-card-mobile-main"),
     source.indexOf('data-region="image"'),
@@ -31,7 +31,7 @@ test("mobile Cars card matches the Hotels white information area without changin
   assert.match(mobile, /data-car-card-mobile-information\s+className="[^"]*bg-white px-2\.5/);
   assert.match(mobile, /data-car-card-mobile-lower-band\s+className="[^"]*border-t border-\[#CBD5E1\] bg-white"/);
   assert.doesNotMatch(mobile, /bg-\[#E7EBF1\]/);
-  assert.match(source, /desktopSurfaceParity \? "md:bg-\[#E7EBF1\]" : "md:bg-white"/);
+  assert.match(source, /md:rounded-2xl md:bg-white md:shadow/);
   assert.match(mobile, /<CarDealPicker/);
   assert.match(mobile, /dailyDisplayPrice\.formatted/);
 });

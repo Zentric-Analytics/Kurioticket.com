@@ -300,16 +300,43 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
         ? card.locator("[data-car-card-mobile-specs] ul").nth(1).locator("li span").first()
         : dealArea.locator("[data-car-card-desktop-primary-specs] li").nth(1).locator("span").first();
       await expect(rows).toHaveCount(count);
-      const initiallyVisible = Math.min(count, 5);
+      const initiallyVisible = Math.min(count, mobile ? 5 : 3);
       await expect(rows.filter({ visible: true })).toHaveCount(initiallyVisible);
-      if (count <= 5) {
-        await expect(dealArea.locator("[data-car-deal-more-offers]").filter({ visible: true })).toHaveCount(0);
+      const toggle = dealArea.locator("[data-car-deal-more-offers]").filter({ visible: true });
+      if (count <= initiallyVisible) {
+        await expect(toggle).toHaveCount(0);
+      } else {
+        await expect(toggle).toHaveCount(1);
+        await expect(toggle).toContainText("+" + (count - initiallyVisible) + " more offers");
+        await expect(toggle).toHaveAttribute("aria-expanded", "false");
       }
+      if (!mobile) {
+        // Only the desktop card changes: its main surface, header and pricing rail
+        // match the pure-white mobile surface. Amenities directly follow cancellation.
+        await expect(card.locator("article")).toHaveCSS("background-color", "rgb(255, 255, 255)");
+        await expect(card.locator("[data-car-card-desktop-header-rail]")).toHaveCSS("background-color", "rgb(255, 255, 255)");
+        await expect(mainPrice).toHaveCSS("background-color", "rgb(255, 255, 255)");
+        await expect(dealArea).toHaveCSS("border-top-width", "0px");
+        const cancellation = card.locator("[data-car-card-desktop-shared-header] [data-car-card-desktop-free-cancellation]");
+        const amenities = dealArea.locator("[data-car-card-desktop-primary-specs]");
+        const cancellationBox = await cancellation.boundingBox();
+        const amenitiesBox = await amenities.boundingBox();
+        expect(cancellationBox).not.toBeNull();
+        expect(amenitiesBox).not.toBeNull();
+        expect(amenitiesBox!.y).toBeGreaterThanOrEqual(cancellationBox!.y + cancellationBox!.height - 1);
+        expect(amenitiesBox!.y - (cancellationBox!.y + cancellationBox!.height)).toBeLessThanOrEqual(30);
+        const image = card.locator('[data-region="image"] > div').first();
+        const imageBox = await image.boundingBox();
+        expect(imageBox).not.toBeNull();
+        expect(imageBox!.height).toBeLessThanOrEqual(230);
+      }
+      const previewCardHeight = (await card.boundingBox())!.height;
+      if (!mobile) expect(previewCardHeight).toBeLessThanOrEqual(370);
       if (count > initiallyVisible) {
-        const more = dealArea.locator("[data-car-deal-more-offers]").filter({ visible: true });
-        await expect(more).toHaveCount(1);
-        await more.click();
+        await toggle.click();
         await expect(rows.filter({ visible: true })).toHaveCount(count);
+        await expect(toggle).toHaveAttribute("aria-expanded", "true");
+        await expect(toggle).toContainText("Show fewer offers");
       }
       const rightSpecRect = await rightSpecLabel.boundingBox();
       expect(rightSpecRect).not.toBeNull();
@@ -347,6 +374,57 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
   }
 });
 
+
+
+
+test("desktop Cars previews three sellers and expands all additional offers without affecting mobile previews", async ({ page }) => {
+  const original = carBase.offers[0];
+  if (!original) throw new Error("Missing Cars comparison test offer");
+  let sellerCount = 3;
+  await page.route("**/api/cars/search", route => route.fulfill({ json: {
+    results: [{
+      ...carBase,
+      id: "desktop-three-seller-preview",
+      offers: Array.from({ length: sellerCount }, (_, index) => ({
+        ...original,
+        id: "desktop-seller-" + index,
+        bookingProviderName: "Distinct Seller " + index,
+        pricePerDay: 50 + index,
+        totalPrice: 150 + 3 * index,
+        bookingUrl: "https://example.com/deal-" + index,
+      })),
+    }],
+    status: "available",
+  } }));
+  await page.setViewportSize({ width: 1365, height: 900 });
+  for (const count of [1, 3, 4, 5, 7, 10]) {
+    sellerCount = count;
+    await page.goto(routes.cars);
+    const card = page.locator("[data-car-result-card-shell]").first();
+    const detail = card.locator('[data-region="details"]');
+    const rows = detail.locator("[data-car-deal-provider-offer]");
+    const more = detail.locator("[data-car-deal-more-offers]").filter({ visible: true });
+    await expect(rows).toHaveCount(count);
+    await expect(rows.filter({ visible: true })).toHaveCount(Math.min(3, count));
+    await expect(card.locator("article")).toHaveCSS("background-color", "rgb(255, 255, 255)");
+    if (count <= 3) {
+      await expect(more).toHaveCount(0);
+    } else {
+      await expect(more).toContainText("+" + (count - 3) + " more offers");
+      const compactHeight = (await card.boundingBox())!.height;
+      await more.click();
+      await expect(rows.filter({ visible: true })).toHaveCount(count);
+      await expect(more).toHaveAttribute("aria-expanded", "true");
+      expect((await card.boundingBox())!.height).toBeGreaterThanOrEqual(compactHeight);
+      await more.click();
+      await expect(rows.filter({ visible: true })).toHaveCount(3);
+      await expect(more).toHaveAttribute("aria-expanded", "false");
+      await expect(more).toContainText("+" + (count - 3) + " more offers");
+    }
+    // The original provider View deal links remain available without a re-query.
+    await expect(rows.first().locator("[data-car-deal-provider-view-deal]")).toBeVisible();
+  }
+});
 
 test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer terms without a details page", async ({ page }) => {
   const firstOffer = carBase.offers[0];
@@ -389,7 +467,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     const rows = area.locator("[data-car-deal-provider-offer]");
     const main = mobile ? card.locator("[data-car-card-mobile-pricing]") : card.locator('[data-region="pricing"]');
     await expect(rows).toHaveCount(7);
-    await expect(rows.filter({ visible: true })).toHaveCount(5);
+    await expect(rows.filter({ visible: true })).toHaveCount(mobile ? 5 : 3);
     await expect(main).toBeVisible();
     await expect(area.locator("[data-car-rate-terms]")).toHaveCount(0);
     await expect(area.getByText("Rate details", { exact: true })).toHaveCount(0);
