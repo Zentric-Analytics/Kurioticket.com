@@ -89,7 +89,7 @@ const rateSectionIcons = {
 
 function RateSectionIcon({ id }: { id: CarRateDisclosureSection["id"] }) {
   const SectionIcon = rateSectionIcons[id];
-  return <SectionIcon aria-hidden="true" size={17} strokeWidth={1.8} className="shrink-0 text-[#64748B]" />;
+  return <SectionIcon data-car-rate-section-icon={id} aria-hidden="true" size={17} strokeWidth={1.8} className="shrink-0 text-[#64748B]" />;
 }
 
 export function CarDealPicker({
