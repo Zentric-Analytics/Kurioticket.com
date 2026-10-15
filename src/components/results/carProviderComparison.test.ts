@@ -102,12 +102,12 @@ test("provider picker exposes every supplied seller without a three-provider cut
   assert.match(picker, /getCarDealPickerGroups\(car\)/);
   assert.match(picker, /groups\.map\(\(group, index\) =>/);
   assert.doesNotMatch(picker, /groups\.slice\(/);
-  assert.ok(picker.includes('grid-cols-[minmax(0,calc(65%_+_20px))_minmax(0,1fr)]'));
-  assert.ok(picker.includes('grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)]'));
+  assert.ok(picker.includes('grid-cols-[minmax(0,1fr)_auto_78px]'));
+  assert.ok(picker.includes('rounded-xl border border-[#D9E2E8] bg-white'));
   assert.match(picker, /data-car-rate-info/);
   assert.match(picker, /data-car-rate-dialog/);
   assert.doesNotMatch(picker, /data-car-rate-terms|col-span-2 flex min-w-0 flex-wrap/);
-  assert.ok(picker.includes('space-y-0'));
+  assert.ok(picker.includes('space-y-1.5 md:min-h-[138px] md:space-y-1'));
   assert.doesNotMatch(picker, /grid-cols-3 gap-y-3|Compare deals/);
   const groups = getCarDealPickerGroups({
     inventorySource: "kayak-sandbox",
