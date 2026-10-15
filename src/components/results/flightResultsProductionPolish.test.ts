@@ -135,8 +135,8 @@ test("Flight Results Back-to-top matches responsive card surfaces with a rounded
   assert.match(backToTop, /\bbg-white\b/);
   assert.match(backToTop, /lg:bg-\[#FEFFFF\]/);
   assert.doesNotMatch(backToTop, /rounded-full|F8FAFC|sm:bg-white/);
-  assert.match(backToTop, /text-\[#004BB8\] shadow-md/);
-  assert.match(backToTop, /sm:shadow-lg/);
+  assert.match(backToTop, /text-\[#004BB8\] shadow-\[0_3px_10px_rgba\(15,23,42,0\.10\)\]/);
+  assert.doesNotMatch(backToTop, /\bshadow-md\b|sm:shadow-lg/);
   assert.match(backToTop, /h-11 w-11 items-center justify-center/);
   assert.match(backToTop, /max-sm:z-\[800\]/);
   assert.doesNotMatch(source, /setShowBackToTop\(window\.scrollY > 600\)/);
