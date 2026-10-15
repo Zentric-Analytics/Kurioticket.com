@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 const card = readFileSync(new URL("./CarResultCard.tsx", import.meta.url), "utf8");
 const picker = readFileSync(new URL("./CarDealPicker.tsx", import.meta.url), "utf8");
 const comparison = readFileSync(new URL("./CarPriceComparison.tsx", import.meta.url), "utf8");
+const globalStyles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 const desktop = card.slice(card.indexOf('data-region="heading"'));
 const specs = desktop.slice(
   desktop.indexOf("data-car-card-desktop-primary-specs"),
@@ -187,10 +188,11 @@ test("Cars Rate details uses borderless close, polished section icons, and reada
   const sheet = picker.slice(picker.indexOf('data-car-rate-dialog'));
   assert.ok(sheet.includes('<RateSectionIcon id="payment" />'));
   assert.ok(sheet.includes('<RateSectionIcon id={section.id} />'));
-  assert.equal((sheet.match(/<h3 className="mb-3 flex min-w-0 items-center gap-2/g) ?? []).length, 2);
+  assert.equal((sheet.match(/<h3 className="mb-\[18px\] flex min-w-0 items-center gap-2/g) ?? []).length, 2);
   const closeButton = sheet.match(/aria-label="Close rate details"\s+className="([^"]+)"/)?.[1];
   assert.ok(closeButton);
   assert.ok(closeButton.includes("h-11 w-11"));
+  assert.ok(closeButton.includes("md:hidden"), "desktop close icon hidden, mobile icon preserved");
   assert.equal(closeButton.split(/\s+/).some(token => token === "border" || token.startsWith("border-")), false);
   assert.ok(closeButton.includes("focus-visible:bg-slate-100")); // Keyboard focus stays visible without a blue circle.
   assert.equal((sheet.match(/data-car-rate-fact-value className="[^"]*text-right font-medium text-\[#1E293B\]/g) ?? []).length, 2);
@@ -198,6 +200,22 @@ test("Cars Rate details uses borderless close, polished section icons, and reada
   assert.ok(sheet.includes("h-[100dvh] max-h-[100dvh]"));
 });
 
+
+test("Cars Rate details desktop scrollbar is slim with smaller arrows and isolated from other surfaces", () => {
+  const start = globalStyles.indexOf("/* Desktop Cars Rate details alone:");
+  assert.ok(start >= 0, "Rate details scrollbar scope is required");
+  const end = globalStyles.indexOf("@media (max-width: 639px)", start);
+  assert.ok(end > start);
+  const css = globalStyles.slice(start, end);
+  assert.match(css, /@media \(min-width: 768px\)/);
+  assert.match(css, /@supports \(-moz-appearance: none\)/);
+  assert.match(css, /\[data-car-rate-dialog\] \[data-car-rate-scroll\]::-webkit-scrollbar \{\s*width: 7px;/);
+  assert.match(css, /::-webkit-scrollbar-thumb \{\s*background-color: #94a3b8;/);
+  assert.match(css, /::-webkit-scrollbar-button:vertical \{[\s\S]*?height: 10px;[\s\S]*?background-size: 6px 4px;/);
+  assert.match(css, /::-webkit-scrollbar-button:vertical:decrement/);
+  assert.match(css, /::-webkit-scrollbar-button:vertical:increment/);
+  assert.doesNotMatch(css, /\[data-cars-time-list\]|\[data-cars-age-list\]|\[data-hotel/);
+});
 
 test("touch-opened Cars rate details focuses its accessible heading instead of producing a blue close-button halo", () => {
   const sheet = picker.slice(picker.indexOf('data-car-rate-dialog'));
@@ -214,6 +232,7 @@ test("touch-opened Cars rate details focuses its accessible heading instead of p
   const closeButton = sheet.match(/aria-label="Close rate details"\s+className="([^"]+)"/)?.[1];
   assert.ok(closeButton);
   assert.ok(closeButton.includes("h-11 w-11"));
+  assert.ok(closeButton.includes("md:hidden"), "desktop close icon hidden, mobile icon preserved");
   assert.equal(closeButton.includes("focus-visible:ring-"), false);
   assert.equal(closeButton.includes("ring-[#004BB8]"), false);
   assert.ok(sheet.includes('focus:outline-none'));

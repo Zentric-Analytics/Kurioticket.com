@@ -486,12 +486,19 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await expect(dialog).toBeVisible();
     const sheetHeading = dialog.locator("[data-car-rate-heading]");
     await expect(sheetHeading).toBeFocused(); // Safari should not auto-highlight the X.
-    await expect(dialog.getByRole("button", { name: "Close rate details" })).not.toBeFocused();
+    const closeButton = dialog.locator('button[aria-label="Close rate details"]');
+    await expect(closeButton).not.toBeFocused();
     const fixedHeader = dialog.locator("[data-car-rate-header]");
     const rateScroll = dialog.locator("[data-car-rate-scroll]");
     await expect(fixedHeader).toBeVisible();
     await expect(rateScroll).toBeVisible();
     await expect(rateScroll).toHaveCSS("overflow-y", "auto");
+    if (!mobile) {
+      const scrollbarWidth = await rateScroll.evaluate(element =>
+        getComputedStyle(element, "::-webkit-scrollbar").width
+      );
+      expect(scrollbarWidth).toBe("7px");
+    }
     await expect(dialog.locator("[data-car-rate-title-row]")).toBeVisible();
     const titleBox = await sheetHeading.boundingBox();
     const headerBox = await fixedHeader.boundingBox();
@@ -507,10 +514,12 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
       expect(Math.abs(dialogBox!.width - viewport.width)).toBeLessThanOrEqual(2);
       expect(Math.abs(dialogBox!.height - viewport.height)).toBeLessThanOrEqual(2);
       await expect(dialog).toHaveCSS("border-top-left-radius", "0px");
+      await expect(closeButton).toBeVisible();
     } else {
       // Desktop retains the intentionally compact centered dialog.
       expect(dialogBox!.width).toBeLessThanOrEqual(541);
       expect(dialogBox!.height).toBeLessThan(viewport.height * 0.85);
+      await expect(closeButton).toBeHidden();
     }
     await expect(dialog.getByText("Airport Pickup 0", { exact: true })).toBeVisible();
     await expect(dialog.getByText("Airport Pickup 1", { exact: true })).toHaveCount(0);
@@ -533,6 +542,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     for (const sectionId of ["payment", "policies", "pickup", "driver", "vehicle"]) {
       const section = dialog.locator(`[data-car-rate-section="${sectionId}"]`);
       const heading = section.locator("h3");
+      await expect(heading).toHaveCSS("margin-bottom", "18px");
       const icon = heading.locator("[data-car-rate-section-icon]");
       await expect(icon).toHaveCount(1);
       await expect(icon).toHaveAttribute("data-car-rate-section-icon", sectionId);
@@ -543,18 +553,20 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
       expect(titleBox).not.toBeNull();
       expect(iconBox!.x + iconBox!.width).toBeLessThanOrEqual(titleBox!.x + 1);
     }
-    const closeButton = dialog.getByRole("button", { name: "Close rate details" });
-    await expect(closeButton).toHaveCSS("border-top-width", "0px");
-    await expect(closeButton).toHaveCSS("box-shadow", "none");
-    await expect(closeButton).toHaveCSS("outline-style", "none");
-    // Check a visible keyboard focus treatment without coupling the assertion
-    // to Tailwind's color serialization (rgb vs oklch).
-    const unfocusedBackground = await closeButton.evaluate(element => getComputedStyle(element).backgroundColor);
-    await page.keyboard.press("Tab");
-    await expect(closeButton).toBeFocused();
-    const keyboardBackground = await closeButton.evaluate(element => getComputedStyle(element).backgroundColor);
-    expect(keyboardBackground).not.toBe(unfocusedBackground);
-    await expect(closeButton).toHaveCSS("box-shadow", "none");
+    if (mobile) {
+      await expect(closeButton).toHaveCSS("border-top-width", "0px");
+      await expect(closeButton).toHaveCSS("box-shadow", "none");
+      await expect(closeButton).toHaveCSS("outline-style", "none");
+      // Touch-opened mobile sheets retain a visible, keyboard-accessible X.
+      const unfocusedBackground = await closeButton.evaluate(element => getComputedStyle(element).backgroundColor);
+      await page.keyboard.press("Tab");
+      await expect(closeButton).toBeFocused();
+      const keyboardBackground = await closeButton.evaluate(element => getComputedStyle(element).backgroundColor);
+      expect(keyboardBackground).not.toBe(unfocusedBackground);
+      await expect(closeButton).toHaveCSS("box-shadow", "none");
+    } else {
+      await expect(closeButton).toBeHidden();
+    }
     const firstValue = dialog.locator("[data-car-rate-fact-value]").first();
     await expect(firstValue).toHaveCSS("font-weight", "500");
     await expect(firstValue).toHaveCSS("color", "rgb(30, 41, 59)");
@@ -596,8 +608,13 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     const fixedHeaderAfter = await fixedHeader.boundingBox();
     expect(fixedHeaderAfter).not.toBeNull();
     expect(Math.abs(fixedHeaderAfter!.y - fixedHeaderBefore!.y)).toBeLessThanOrEqual(2);
-    await expect(dialog.getByRole("button", { name: "Close rate details" })).toBeVisible();
-    await dialog.getByRole("button", { name: "Close rate details" }).click();
+    if (mobile) {
+      await expect(closeButton).toBeVisible();
+      await closeButton.click();
+    } else {
+      // Desktop removes the visible X; clicking the backdrop still dismisses the modal.
+      await page.mouse.click(8, 8);
+    }
     await expect(dialog).not.toBeVisible();
     expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
     const resultRow = page.locator('[data-cars-results-card-list] [data-virtual-index]').first();
