@@ -50,7 +50,7 @@ test("provider offers show logo, name, per-day price and a direct provider View 
   assert.equal((picker.match(/fontSize: 11, lineHeight: "16px", fontWeight: 600/g) ?? []).length, 1);
   assert.match(card, /data-car-card-mobile-offers[\s\S]*flex-\[2\.65\]/);
   assert.match(card, /data-car-card-mobile-pricing[\s\S]*flex-\[1\.1\]/);
-  assert.ok(picker.includes('min-w-0 truncate whitespace-nowrap font-semibold'));
+  assert.ok(picker.includes('min-w-0 flex-1 truncate whitespace-nowrap font-semibold'));
   assert.match(picker, /compact \? "gap-0\.5" : "gap-1"/);
   assert.ok(picker.includes('grid-cols-[minmax(0,calc(65%_+_20px))_minmax(0,1fr)]'));
   assert.ok(picker.includes('grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)]'));
