@@ -181,5 +181,5 @@ test("approved and KAYAK details inherit the Results-card price typography contr
   }
   const resultSource = compact(resultCard);
   assert.match(resultSource, /dailyPrice:\{maxWidth:"100%",fontSize:19,fontWeight:"600",fontFamily:appFonts\.semibold,lineHeight:22,letterSpacing:-0\.25,fontVariant:\["tabular-nums"\]/);
-  assert.match(resultSource, /perDayLabel:\{maxWidth:"100%",marginTop:1,fontSize:10,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:13/);
+  assert.match(resultSource, /perDayLabel:\{maxWidth:"100%",fontSize:10,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:13/);
 });

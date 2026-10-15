@@ -106,7 +106,7 @@ test("native Cars balances the category label and positions specifications below
   assert.match(card, /specColumn:\{flex:1,minWidth:0,gap:6,paddingRight:1/);
   assert.doesNotMatch(lower, /<View style=\{c\.specRow\}>/);
   assert.match(lower, /<NativeCarResultOfferPicker result=\{result\}/);
-  assert.match(lower, /<View style=\{c\.commerceColumn\}>/);
+  assert.match(lower, /<View style=\{\[c\.commerceColumn,\{borderTopColor:carDividerColor\}\]\}>/);
 });
 
 test("native inline provider card keeps logos, individual prices and disabled unavailable actions", () => {
@@ -121,28 +121,19 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.match(picker, /presentCarOfferCurrency\(offer, displayCurrency, rates\)/);
   assert.match(picker, /Linking\.openURL\(bookingUrl\)/);
   assert.match(picker, /disabled=\{!bookingUrl\}/);
-  assert.match(picker, /provider: \{ minHeight: 40, minWidth: 0, flexDirection: "row", alignItems: "center"/);
-  assert.match(picker, /providerNarrow: \{ flexDirection: "column"/);
-  assert.match(picker, /narrowActions = rowWidth > 0 && rowWidth < 268/);
-  assert.match(picker, /stackVeryNarrow = rowWidth > 0 && rowWidth < 225/);
-  assert.match(picker, /providers: \{ minWidth: 0, gap: 0, paddingTop: 0, paddingBottom: 0/);
-  assert.match(picker, /offerRows: \{ minWidth: 0, minHeight: 120 \}/);
+  assert.match(picker, /provider: \{ minHeight: 50, minWidth: 0, flexDirection: "row", alignItems: "center"/);
+  assert.match(picker, /offerRows: \{ minWidth: 0, minHeight: 168 \}/);
   assert.match(picker, /moreSlot: \{ minHeight: 36, justifyContent: "center" \}/);
-  assert.match(picker, /brand: \{ flex: 1, minWidth: 0/);
-  assert.match(picker, /Math\.round\(event\.nativeEvent\.layout\.width\)/);
-  assert.match(picker, /rowWidth \* 0\.65 \+ 20/);
-  assert.match(picker, /meta: \{ minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4, paddingLeft: 4, paddingRight: 4/);
-  assert.match(picker, /action: \{ minHeight: 40, flex: 1, minWidth: 0[\s\S]*justifyContent: "flex-start"/);
-  assert.match(picker, /logo: \{ width: 16, height: 16/);
-  assert.match(picker, /providerName: \{ flex: 1, minWidth: 0, fontSize: 11, lineHeight: 15/);
-  assert.match(picker, /price: \{ width: 58, flexShrink: 0, textAlign: "right", fontSize: 12, lineHeight: 16/);
-  assert.match(picker, /link: \{ fontSize: 12, lineHeight: 16/);
-  assert.match(picker, /infoAction: \{ width: 32, height: 40, flexShrink: 0/);
-  assert.match(picker, /moreAction: \{ minHeight: 36/);
-  assert.match(picker, /moreText: \{ fontSize: 11, lineHeight: 16/);
-  assert.match(card, /detailsColumn:\{flex:2\.6/);
-  assert.match(card, /commerceColumn:\{flex:1\.1/);
-  assert.match(picker, /price: \{ width: 58, flexShrink: 0, textAlign: "right"/);
+  assert.match(picker, /brand: \{ flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4 \}/);
+  assert.match(picker, /providerName: \{ flexShrink: 1, minWidth: 0, fontSize: 11, lineHeight: 16/);
+  assert.match(picker, /price: \{ width: 67, flexShrink: 0, textAlign: "right", fontSize: 12, lineHeight: 16/);
+  assert.match(picker, /infoAction: \{ width: 25, height: 40, flexShrink: 0/);
+  assert.match(picker, /action: \{ width: 78, minHeight: 36, flexShrink: 0[\s\S]*backgroundColor: "#004BB8"/);
+  assert.match(picker, /link: \{ fontSize: 12, lineHeight: 16, color: "#FFFFFF"/);
+  assert.match(picker, /actionDisabled: \{ opacity: 0\.4 \}/);
+  assert.match(picker, /nativeCarResultDealChoices\(result\)/);
+  assert.match(card, /detailsColumn:\{width:"100%",minWidth:0/);
+  assert.match(card, /commerceColumn:\{width:"100%",minWidth:0,flexDirection:"row"/);
   assert.match(picker, /visibleChoices = expanded \? choices : choices\.slice\(0, INITIAL_VISIBLE_OFFER_COUNT\)/);
   assert.match(picker, /choices\.length > INITIAL_VISIBLE_OFFER_COUNT/);
   assert.equal((picker.match(/choices\.length - INITIAL_VISIBLE_OFFER_COUNT/g) ?? []).length, 2);
@@ -251,47 +242,45 @@ test("native Cars Rate details has clean X, leading icons and softer values with
 });
 
 
-test("native Cars rows keep logo, name, rate info, price and View deal in that exact order", () => {
+test("native Cars Hotel-style bars keep logo, name, info, price and action in order", () => {
   const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
   const rows = picker.slice(picker.indexOf("{visibleChoices.map("), picker.indexOf("{choices.length > INITIAL_VISIBLE_OFFER_COUNT ? ("));
-  const positions = [
-    rows.indexOf("<ProviderMark name={providerName} logoUrl={logoUrl} />"),
-    rows.indexOf("{providerName}</Text>"),
-    rows.indexOf('accessibilityLabel={"Rate information for " + providerName}'),
-    rows.indexOf("money(displayed.currency, displayed.pricePerDay)"),
-    rows.indexOf('accessibilityLabel={"View deal from " + providerName}'),
+  const tokens = [
+    "<ProviderMark name={providerName} logoUrl={logoUrl} />",
+    "{providerName}</Text>",
+    'accessibilityLabel={"Rate information for " + providerName}',
+    "money(displayed.currency, displayed.pricePerDay)",
+    'accessibilityLabel={"View deal from " + providerName}',
   ];
+  const positions = tokens.map(token => rows.indexOf(token));
   assert.ok(positions.every(index => index >= 0), positions.join(","));
   assert.ok(positions.every((position, index) => index === 0 || position > positions[index - 1]!));
-  assert.match(rows, /<Info accessible=\{false\} size=\{17\} strokeWidth=\{1\.9\}/);
+  assert.match(rows, /<Info accessible=\{false\} size=\{18\} strokeWidth=\{1\.6\}/);
   assert.match(rows, /onPress=\{\(\) => setSelectedKey\(key\)\}/);
   assert.match(rows, /onPress=\{bookingUrl \? \(\) => void Linking\.openURL\(bookingUrl\)/);
-  assert.match(picker, /infoAction: \{ width: 32, height: 40, flexShrink: 0/);
-  assert.match(picker, /meta: \{ minWidth: 0, flexDirection: "row"/);
-  assert.match(picker, /rowWidth \* 0\.65 \+ 20/);
-  assert.match(picker, /offerRows: \{ minWidth: 0, minHeight: 120/);
-  assert.match(picker, /moreSlot: \{ minHeight: 36/);
-  assert.match(picker, /offerRowsStacked: \{ minHeight: 258 \}/);
-  assert.match(picker, /stackVeryNarrow && styles\.offerRowsStacked/);
-  assert.match(picker, /provider: \{ minHeight: 40/);
+  assert.match(rows, /disabled=\{!bookingUrl\}/);
+  assert.match(rows, /styles\.actionDisabled/);
+  assert.match(rows, /backgroundColor: theme\.dark \? theme\.surface : "#FFFFFF"/);
+  assert.doesNotMatch(rows, /rowWidth|stackVeryNarrow/);
+  assert.match(picker, /infoAction: \{ width: 25, height: 40, flexShrink: 0/);
+  assert.match(picker, /offerRows: \{ minWidth: 0, minHeight: 168 \}/);
+  assert.match(picker, /provider: \{ minHeight: 50/);
   assert.match(picker, /visibleChoices = expanded \? choices : choices\.slice\(0, INITIAL_VISIBLE_OFFER_COUNT\)/);
 });
 
 
-test("native Cars reserves exactly three visible provider rows plus an aligned disclosure slot", () => {
+test("native Cars reserves three compact provider bars and a disclosure row", () => {
   const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
   assert.match(picker, /const INITIAL_VISIBLE_OFFER_COUNT = 3;/);
   assert.match(picker, /visibleChoices = expanded \? choices : choices\.slice\(0, INITIAL_VISIBLE_OFFER_COUNT\)/);
-  assert.match(picker, /style=\{\[styles\.offerRows, stackVeryNarrow && styles\.offerRowsStacked\]\}/);
-  assert.match(picker, /style=\{styles\.moreSlot\}/);
-  assert.match(picker, /offerRows: \{ minWidth: 0, minHeight: 120 \}/);
-  assert.match(picker, /offerRowsStacked: \{ minHeight: 258 \}/);
+  assert.match(picker, /<View style=\{styles\.offerRows\}>/);
+  assert.match(picker, /<View style=\{styles\.moreSlot\}>/);
+  assert.match(picker, /offerRows: \{ minWidth: 0, minHeight: 168 \}/);
   assert.match(picker, /moreSlot: \{ minHeight: 36/);
+  assert.match(picker, /provider: \{ minHeight: 50/);
+  assert.match(picker, /borderWidth: 1, borderRadius: 10/);
   assert.match(picker, /choices\.length > INITIAL_VISIBLE_OFFER_COUNT/);
   assert.match(picker, /choices\.length - INITIAL_VISIBLE_OFFER_COUNT/);
   assert.match(picker, /accessibilityState=\{\{ expanded \}\}/);
-  assert.match(picker, /style=\{styles\.infoAction\} accessible=\{false\}/);
-  assert.match(picker, /infoAction: \{ width: 32, height: 40, flexShrink: 0/);
-  assert.match(picker, /price: \{ width: 58, flexShrink: 0, textAlign: "right"/);
-  assert.doesNotMatch(picker, /choices\.slice\(0, 5\)|choices\.length - 5/);
+  assert.doesNotMatch(picker, /rowWidth|providerNarrow|offerRowsStacked|choices\.slice\(0, 5\)/);
 });
