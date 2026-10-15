@@ -7,6 +7,8 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { searchLoadingPresentation } from "@/shared/presentation/searchLoadingPresentation";
 
+import styles from "./BrandedLoading.module.css";
+
 type BrandedLoadingProps = {
   title?: string;
   description?: string;
@@ -70,6 +72,7 @@ export function BrandedLoading({
 }: BrandedLoadingProps) {
   const { t, locale } = useLocale();
   const isFullscreen = variant === "fullscreen";
+  const whiteSearchBackground = isFullscreen && (searchType === "flight" || searchType === "hotel" || searchType === "car");
   const logoPulse = visual === "logoPulse";
   const hotelSearchCopy = useMemo(
     () => ({
@@ -125,7 +128,10 @@ export function BrandedLoading({
   return (
     <section
       className={cn(
-        "relative flex overflow-hidden bg-[linear-gradient(180deg,#F8FAFC_0%,#FFFFFF_100%)] text-[#021C2B]",
+        "relative flex overflow-hidden text-[#021C2B]",
+        whiteSearchBackground
+          ? "bg-white"
+          : "bg-[linear-gradient(180deg,#F8FAFC_0%,#FFFFFF_100%)]",
         variantClasses[variant],
         className,
       )}
@@ -135,7 +141,7 @@ export function BrandedLoading({
       aria-busy="true"
     >
       <div
-        className="pointer-events-none absolute inset-0 opacity-70"
+        className={cn("pointer-events-none absolute inset-0 opacity-70", whiteSearchBackground && styles.hideDecoration)}
         aria-hidden="true"
       >
         <div className="absolute -left-20 top-12 h-44 w-44 rounded-full bg-[#5CB6B2]/[0.06] blur-3xl" />

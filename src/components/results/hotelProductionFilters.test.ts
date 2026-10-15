@@ -72,7 +72,7 @@ test("filter sheet applies local filters through the normal Hotel results loadin
   assert.match(source, /mobileRoomTypesShortcutLabel/);
   assert.match(source, /bg-slate-950\/35 sm:backdrop-blur-\[1px\]/);
   assert.match(source, /if \(loading \|\| filterApplying\)/);
-  assert.match(source, /<BrandedLoading variant="fullscreen"[\s\S]*searchType="hotel"/);
+  assert.match(source, /<SearchResultsLoadingTransition[\s\S]*searchType="hotel"/);
 });
 
 test("mobile results expose one filter toolbar and one in-sheet clear action", () => {
@@ -131,7 +131,7 @@ test("mobile Hotel filter apply uses the normal page loader and compact selected
   const quickApply = source.slice(source.indexOf('className="h-11 w-\[32%\] shrink-0 rounded-lg bg-[#004BB8]'), source.indexOf("</footer>", source.indexOf('className="h-11 w-\[32%\] shrink-0 rounded-lg bg-[#004BB8]')));
   assert.match(quickApply, /triggerFilterApplying\(\)/);
   assert.match(source, /if \(loading \|\| filterApplying\)/);
-  assert.match(source, /<BrandedLoading variant="fullscreen"[\s\S]*searchType="hotel"/);
+  assert.match(source, /<SearchResultsLoadingTransition[\s\S]*searchType="hotel"/);
   assert.match(source, /active[\s\S]{0,160}border-\[#142033\] bg-\[#142033\] text-white/);
   assert.match(source, /active \? "pl-2 pr-6" : "px-2"/);
   assert.match(source, /absolute right-0\.5 top-1\/2 inline-flex h-6 w-6/);

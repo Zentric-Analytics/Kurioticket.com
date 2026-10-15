@@ -2,7 +2,7 @@ import { Suspense, type ReactNode } from "react";
 import { cookies } from "next/headers";
 
 import { AppHeader } from "@/components/layout/AppHeader";
-import { BrandedLoading } from "@/components/layout/BrandedLoading";
+import { SearchResultsLoadingTransition } from "@/components/layout/SearchResultsLoadingTransition";
 import { CarInventoryLoader } from "@/components/results/CarInventoryLoader";
 import { CarsResultsMobileSafeArea } from "@/components/results/CarsResultsMobileSafeArea";
 import type { LocationBoundCarSearchParams } from "@/lib/cars/types";
@@ -121,6 +121,7 @@ export default async function CarsResultsPage({
         key={searchIdentity}
         fallback={
           <CarsResultsFallback
+            summary={[values.pickupLocation, values.pickupDate + " — " + values.dropoffDate, values.pickupTime + " — " + values.dropoffTime, "Driver age " + values.driverAge]}
             title={
               t["carsResults.loading.title"] ??
               enTranslations["carsResults.loading.title"]
@@ -144,6 +145,7 @@ export default async function CarsResultsPage({
       >
         <CarsResultsContent values={values} searchIdentity={searchIdentity}
           fallback={<CarsResultsFallback
+            summary={[values.pickupLocation, values.pickupDate + " — " + values.dropoffDate, values.pickupTime + " — " + values.dropoffTime, "Driver age " + values.driverAge]}
             title={t["carsResults.loading.title"] ?? enTranslations["carsResults.loading.title"]}
             messages={[t["carsResults.loading.checkingCarsAndRates"] ?? enTranslations["carsResults.loading.checkingCarsAndRates"]]}
           />} />
@@ -175,21 +177,11 @@ function CarsResultsContent({
 function CarsResultsFallback({
   title,
   messages,
+  summary,
 }: {
   title: string;
   messages: string[];
+  summary: string[];
 }) {
-  return (
-    <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-white">
-      <BrandedLoading
-        variant="fullscreen"
-        visual="logoPulse"
-        showProgress={false}
-        className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
-        contentClassName="max-w-md text-center"
-        title={title}
-        messages={messages}
-      />
-    </main>
-  );
+  return <SearchResultsLoadingTransition searchType="car" title={title} messages={messages} summary={summary} searchKey={summary.join("-")} />;
 }

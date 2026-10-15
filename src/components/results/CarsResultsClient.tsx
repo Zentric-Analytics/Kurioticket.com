@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
-import { BrandedLoading } from "@/components/layout/BrandedLoading";
+import { clearSearchResultsLoadingSession, SearchResultsLoadingTransition } from "@/components/layout/SearchResultsLoadingTransition";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
@@ -530,11 +530,15 @@ export function CarsResultsClient({
   const { locale, t: dictionary } = useLocale();
   const router = useRouter();
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
+  const searchKey = JSON.stringify(values);
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileSearchClosing, setMobileSearchClosing] = useState(false);
   const mobileSearchCloseTimerRef = useRef<number | null>(null);
   const [isSearchSubmitting, setIsSearchSubmitting] = useState(false);
+  useEffect(() => {
+    if (!isSearchSubmitting) clearSearchResultsLoadingSession("car", searchKey);
+  }, [isSearchSubmitting, searchKey]);
   const [pickupValidation, setPickupValidation] = useState<{
     pickupDate: string; pickupTime: string; message: string;
   } | null>(null);
@@ -1522,22 +1526,19 @@ export function CarsResultsClient({
 
   if (isSearchSubmitting) {
     return (
-      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-white">
-        <BrandedLoading
-          variant="fullscreen"
-          visual="logoPulse"
-          showProgress={false}
-          className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
-          contentClassName="max-w-md text-center"
-          title={t("carsResults.loading.title")}
-          messages={[
-            t("carsResults.loading.checkingCarsAndRates"),
-            t("carsResults.loading.comparingVehiclesAndProviders"),
-            t("carsResults.loading.findingBestAvailableOptions"),
-            t("carsResults.loading.preparingResults"),
-          ]}
-        />
-      </main>
+      <SearchResultsLoadingTransition
+        searchType="car"
+        active={isSearchSubmitting}
+        searchKey={searchKey}
+        title={t("carsResults.loading.title")}
+        messages={[
+          t("carsResults.loading.checkingCarsAndRates"),
+          t("carsResults.loading.comparingVehiclesAndProviders"),
+          t("carsResults.loading.findingBestAvailableOptions"),
+          t("carsResults.loading.preparingResults"),
+        ]}
+        summary={[pickupLocationLabel, pickupDate + " — " + dropoffDate, pickupTime + " — " + dropoffTime, "Driver age " + driverAge]}
+      />
     );
   }
 
@@ -2526,9 +2527,19 @@ export function CarsResultsExperience({
 
   if (providersLoading) {
     return (
-      <div data-cars-results-page-transition="providers">
-        <CarsResultsPageTransitionSkeleton />
-      </div>
+      <SearchResultsLoadingTransition
+        searchType="car"
+        active={providersLoading}
+        searchKey={JSON.stringify(search)}
+        mobileHeaderProvided
+        desktopHeaderProvided
+        summary={[
+          search.pickupLocation,
+          search.pickupDate + " — " + search.dropoffDate,
+          search.pickupTime + " — " + search.dropoffTime,
+          "Driver age " + search.driverAge,
+        ]}
+      />
     );
   }
 
@@ -3184,16 +3195,6 @@ export function CarsResultsExperience({
       ) : null}
     </section>
     </>
-  );
-}
-
-function CarsResultsPageTransitionSkeleton() {
-  return (
-    <div aria-hidden="true" className="cars-results-desktop-typeface fixed inset-0 z-[1200] overflow-hidden bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-white">
-      <div className="h-20 border-b border-slate-100 bg-white px-4 sm:h-24"><div className="mx-auto flex h-full max-w-[1400px] items-center justify-between"><div className="h-8 w-40 animate-pulse rounded-md bg-slate-200 motion-reduce:animate-none" /><div className="h-10 w-10 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none" /></div></div>
-      <div className="border-b border-slate-100 bg-white px-4 py-5"><div className="mx-auto max-w-[1180px]"><div className="hidden h-[72px] animate-pulse grid-cols-[1.2fr_.9fr_1fr_.7fr_112px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm motion-reduce:animate-none sm:grid">{["pickup", "return", "dates", "age"].map((item) => <div key={item} className="border-r border-slate-200 p-4"><div className="h-4 w-28 rounded bg-slate-200" /><div className="mt-2 h-3 w-20 rounded bg-slate-100" /></div>)}<div className="m-2 rounded-xl bg-[#D9E7F7]" /></div><div className="h-16 animate-pulse rounded-2xl border border-slate-200 bg-white p-4 shadow-sm motion-reduce:animate-none sm:hidden"><div className="h-4 w-52 rounded bg-slate-200" /><div className="mt-2 h-3 w-36 rounded bg-slate-100" /></div></div></div>
-      <div className="mx-auto max-w-[1020px] px-4 py-5 sm:py-6"><div className="mb-4 flex gap-2 sm:hidden">{[84, 92, 76, 116].map((width) => <div key={width} className="h-11 shrink-0 animate-pulse rounded-lg border border-slate-200 bg-white motion-reduce:animate-none" style={{ width }} />)}</div><div className="grid min-w-0 gap-5 lg:grid-cols-[232px_minmax(0,1fr)] xl:grid-cols-[236px_minmax(0,1fr)]"><aside className="hidden space-y-5 border-r border-slate-200 pr-5 lg:block"><div className="h-6 w-24 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />{["vehicle", "transmission", "seats", "features"].map((item) => <div key={item} className="border-t border-slate-200 pt-5"><div className="h-4 w-28 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /><div className="mt-4 h-4 w-4/5 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /><div className="mt-3 h-4 w-3/5 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div>)}</aside><section className="min-w-0"><div className="mb-4 flex items-center justify-between"><div><div className="h-6 w-40 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /><div className="mt-2 h-3 w-16 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div><div className="hidden h-9 w-36 animate-pulse rounded bg-slate-200 motion-reduce:animate-none sm:block" /></div><div className="space-y-4"><CarCardSkeleton desktopSurfaceParity /><CarCardSkeleton desktopSurfaceParity /><CarCardSkeleton desktopSurfaceParity /></div></section></div></div>
-    </div>
   );
 }
 

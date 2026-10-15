@@ -106,7 +106,7 @@ test("mobile Search captures the live form before submit-close and router naviga
   assert.match(source, /shouldRestoreScroll=\{shouldRestoreMobileSearchScroll\}/);
 });
 
-test("mobile Search replaces stale Cars results with localized branded loading", () => {
+test("mobile Search replaces stale Cars results with the shared delayed loading transition", () => {
   const pendingBranch = source.slice(
     source.indexOf("if (isSearchSubmitting) {"),
     source.indexOf(
@@ -116,10 +116,9 @@ test("mobile Search replaces stale Cars results with localized branded loading",
   );
 
   assert.match(source, /const \[isSearchSubmitting, setIsSearchSubmitting\]/);
-  assert.match(pendingBranch, /<BrandedLoading/);
-  assert.match(pendingBranch, /variant="fullscreen"/);
-  assert.match(pendingBranch, /visual="logoPulse"/);
-  assert.match(pendingBranch, /showProgress=\{false\}/);
+  assert.match(pendingBranch, /<SearchResultsLoadingTransition/);
+  assert.match(pendingBranch, /active=\{isSearchSubmitting\}/);
+  assert.match(pendingBranch, /searchType="car"/);
   assert.doesNotMatch(pendingBranch, /CarsResultsExperience|CarResultCard/);
 
   for (const key of [

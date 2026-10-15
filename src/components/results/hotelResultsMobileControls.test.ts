@@ -147,7 +147,7 @@ test("active Hotel mobile shortcuts use the font-color fill, compact X, and norm
   assert.doesNotMatch(resultsSource, /border-\[#075EE8\] bg-\[#EAF2FF\] text-\[#004BB8\]/);
   assert.doesNotMatch(resultsSource, /data-hotel-filter-refresh-progress/);
   assert.match(resultsSource, /if \(loading \|\| filterApplying\)/);
-  assert.match(resultsSource, /<BrandedLoading variant="fullscreen"[\s\S]*searchType="hotel"/);
+  assert.match(resultsSource, /<SearchResultsLoadingTransition[\s\S]*searchType="hotel"/);
   assert.match(resultsSource, /active \? "pl-2 pr-6" : "px-2"/);
   assert.match(resultsSource, /absolute right-0\.5 top-1\/2 inline-flex h-6 w-6/);
 });
