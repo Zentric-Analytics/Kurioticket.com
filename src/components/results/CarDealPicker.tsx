@@ -152,7 +152,7 @@ export function CarDealPicker({
         role="list"
         aria-label="Car deal providers"
         data-car-deal-provider-offers
-        className={["min-w-0 min-h-[108px] md:min-h-[76px]", compact ? "space-y-0" : "space-y-0.5"].join(" ")}
+        className={["min-w-0 min-h-[108px] md:min-h-[76px]", compact ? "max-[359px]:min-h-[240px] space-y-0" : "space-y-0.5"].join(" ")}
       >
         {groups.map((group, index) => {
           const offer = group.primaryOffer;
