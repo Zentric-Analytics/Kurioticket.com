@@ -19,7 +19,7 @@ test("Car card shell and two-level grid retain safe natural layout", () => {
   assert.match(style("card"), /borderWidth:1,borderRadius:13,overflow:"hidden"/);
   assert.match(style("topSection"), /minHeight:156,flexDirection:"row",alignItems:"stretch"/);
   assert.match(style("visualColumn"), /width:"40%",minHeight:156,padding:6/);
-  assert.match(style("lowerBand"), /flexDirection:"row",alignItems:"stretch",borderTopWidth:1/);
+  assert.match(style("lowerBand"), /flexDirection:"column",alignItems:"stretch",borderTopWidth:1/);
   assert.doesNotMatch(style("card").replace(/shadowOffset:\{[^}]*\}/, ""), /(?:^|,)height:/);
   for (const name of ["topSection", "visualColumn", "identityZone", "lowerBand", "specColumn", "commerceColumn"])
     assert.doesNotMatch(style(name), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translateY|(?:^|,)height:/);
@@ -143,7 +143,7 @@ test("upper information keeps both provider-aware spec columns below cancellatio
   assert.match(source, /const carDividerColor = theme\.dark \? theme\.border : "#CBD5E1"/);
   assert.match(source, /\[c\.lowerBand,\{backgroundColor:carInformationSurface,borderTopColor:carDividerColor\}\]/);
   assert.match(style("lowerBand"), /borderTopWidth:1/);
-  assert.match(source, /<View style=\{c\.commerceColumn\}>/);
+  assert.match(source, /<View style=\{\[c\.commerceColumn,\{borderTopColor:carDividerColor\}\]\}>/);
   assert.doesNotMatch(source, /c\.commerceColumn[^>]*borderLeftColor:carDividerColor/);
   assert.doesNotMatch(style("commerceColumn"), /borderLeftWidth|borderRightWidth|borderLeftColor|borderRightColor/);
   assert.match(providerPresentation, /sandboxPresentation\?\.specs/);
@@ -165,13 +165,13 @@ test("commerce remains authoritative, responsive, and accessible", () => {
   assert.doesNotMatch(source, /money\(offer\.currency, offer\.totalPrice\)|offer\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
   assert.match(source, /Live price unavailable/);
   assert.match(source, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\}/);
-  assert.match(style("detailsColumn"), /flex:2\.6,minWidth:0,paddingBottom:2/);
-  assert.match(style("commerceColumn"), /flex:1\.1,minWidth:0,justifyContent:"space-between"/);
-  assert.match(style("priceColumn"), /minWidth:0,maxWidth:"100%",alignItems:"flex-end"/);
+  assert.match(style("detailsColumn"), /width:"100%",minWidth:0,paddingHorizontal:9,paddingTop:8,paddingBottom:4/);
+  assert.match(style("commerceColumn"), /width:"100%",minWidth:0,flexDirection:"row",alignItems:"center",justifyContent:"space-between"/);
+  assert.match(style("priceColumn"), /minWidth:0,maxWidth:"100%",flexDirection:"row",alignItems:"baseline",gap:6/);
   assert.match(style("dailyPrice"), /maxWidth:"100%",fontSize:19,fontWeight:"600",fontFamily:appFonts\.semibold,lineHeight:22/);
   assert.match(style("dailyPrice"), /fontVariant:\["tabular-nums"\]/);
   assert.doesNotMatch(style("dailyPrice"), /fontSize:22|fontSize:20|fontWeight:"700"/);
-  assert.match(style("perDayLabel"), /fontSize:10,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:13,textAlign:"right"/);
+  assert.match(style("perDayLabel"), /fontSize:10,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:13/);
   assert.doesNotMatch(style("perDayLabel"), /fontSize:11|lineHeight:14/);
   assert.doesNotMatch(styles, /(?:^|,)total:|taxDisclosure:|(?:^|,)perDay:/);
   assert.match(source, /<Pressable accessibilityRole=\{primaryBookingUrl \? "link" : "button"\}/);
@@ -204,4 +204,21 @@ test("pickup pin aligns to the first line while long locations keep wrapping", (
   assert.match(style("meta"), /flex:1,minWidth:0[^}]*lineHeight:15/);
   const locationMarkup = source.slice(source.indexOf('<View style={c.location}>'), source.indexOf('</View>', source.indexOf('<View style={c.location}>')));
   assert.doesNotMatch(locationMarkup, /numberOfLines|ellipsizeMode/);
+});
+
+
+test("native Cars uses full-width Hotel-style provider bars followed by a small primary-price footer", () => {
+  const offers = readFileSync(resolve("src/features/search/NativeCarResultOfferPicker.tsx"), "utf8");
+  assert.match(style("lowerBand"), /flexDirection:"column",alignItems:"stretch"/);
+  assert.match(style("detailsColumn"), /width:"100%",minWidth:0/);
+  assert.match(style("commerceColumn"), /width:"100%",minWidth:0,flexDirection:"row"/);
+  assert.match(style("commerceColumn"), /borderTopWidth:1/);
+  assert.match(source, /<NativeCarResultOfferPicker result=\{result\}/);
+  assert.match(offers, /minHeight: 50, minWidth: 0, flexDirection: "row"/);
+  assert.match(offers, /borderWidth: 1, borderRadius: 10/);
+  assert.match(offers, /action: \{ width: 78, minHeight: 36/);
+  assert.match(offers, /backgroundColor: "#004BB8"/);
+  assert.match(offers, /link: \{ fontSize: 12, lineHeight: 16, color: "#FFFFFF"/);
+  assert.match(offers, /infoAction: \{ width: 25, height: 40/);
+  assert.match(offers, /choices\.slice\(0, INITIAL_VISIBLE_OFFER_COUNT\)/);
 });
