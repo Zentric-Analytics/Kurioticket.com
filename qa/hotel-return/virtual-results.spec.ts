@@ -542,7 +542,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
       ...firstOffer,
       id: "option-" + index,
       bookingProviderName: index < 2 ? "Same Seller" : "Seller " + index,
-      bookingUrl: "https://affiliates.kayak.com/sandbox-clickout",
+      bookingUrl: index === 6 ? "https://invalid.example.org/not-a-kayak-checkout" : `https://sandbox-en-us.kayakaffiliates.com/in?offer=option-${index}`,
       pricePerDay: 50 + index,
       totalPrice: 150 + index * 3,
       suppliedFacts: [
@@ -595,7 +595,15 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await expect(closeButton).not.toBeFocused();
     const fixedHeader = dialog.locator("[data-car-rate-header]");
     const rateScroll = dialog.locator("[data-car-rate-scroll]");
+    const fixedFooter = dialog.locator("[data-car-rate-footer]");
+    const footerLink = fixedFooter.locator("[data-car-rate-view-deal]");
     await expect(fixedHeader).toBeVisible();
+    await expect(fixedFooter).toBeVisible();
+    await expect(footerLink).toBeVisible();
+    await expect(footerLink).toHaveAttribute("href", "https://sandbox-en-us.kayakaffiliates.com/in?offer=option-0");
+    await expect(footerLink).toHaveAttribute("aria-label", "View deal from Same Seller");
+    await expect(footerLink).toHaveAttribute("target", "_blank");
+    await expect(footerLink).toHaveAttribute("rel", "noopener noreferrer");
     await expect(rateScroll).toBeVisible();
     await expect(rateScroll).toHaveCSS("overflow-y", "auto");
     if (!mobile) {
@@ -610,8 +618,15 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     expect(titleBox).not.toBeNull();
     expect(headerBox).not.toBeNull();
     expect(Math.abs((titleBox!.x + titleBox!.width / 2) - (headerBox!.x + headerBox!.width / 2))).toBeLessThanOrEqual(1);
+    const footerBox = await fixedFooter.boundingBox();
+    const footerLinkBox = await footerLink.boundingBox();
+    expect(footerBox).not.toBeNull();
+    expect(footerLinkBox).not.toBeNull();
+    expect(Math.abs((footerLinkBox!.x + footerLinkBox!.width / 2) - (footerBox!.x + footerBox!.width / 2))).toBeLessThanOrEqual(1);
+    expect(footerLinkBox!.height).toBeGreaterThanOrEqual(44);
     const dialogBox = await dialog.boundingBox();
     expect(dialogBox).not.toBeNull();
+    expect(footerBox!.y + footerBox!.height).toBeLessThanOrEqual(dialogBox!.y + dialogBox!.height + 1);
     if (mobile) {
       // A true mobile full-height sheet must fill the usable browser viewport.
       expect(Math.abs(dialogBox!.x)).toBeLessThanOrEqual(2);
@@ -624,7 +639,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
       // Desktop retains the intentionally compact centered dialog.
       expect(dialogBox!.width).toBeLessThanOrEqual(541);
       expect(dialogBox!.height).toBeLessThan(viewport.height * 0.85);
-      await expect(closeButton).toBeHidden();
+      await expect(closeButton).toBeVisible();
     }
     await expect(dialog.getByText("Airport Pickup 0", { exact: true })).toBeVisible();
     await expect(dialog.getByText("Airport Pickup 1", { exact: true })).toHaveCount(0);
@@ -670,7 +685,9 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
       expect(keyboardBackground).not.toBe(unfocusedBackground);
       await expect(closeButton).toHaveCSS("box-shadow", "none");
     } else {
-      await expect(closeButton).toBeHidden();
+      await expect(closeButton).toBeVisible();
+      await expect(closeButton).toHaveCSS("border-top-width", "0px");
+      await expect(closeButton).toHaveCSS("box-shadow", "none");
     }
     const firstValue = dialog.locator("[data-car-rate-fact-value]").first();
     await expect(firstValue).toHaveCSS("font-weight", "500");
@@ -704,24 +721,34 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
       expect(fact!.overflow).toBe(false);
     }
     const fixedHeaderBefore = await fixedHeader.boundingBox();
+    const fixedFooterBefore = await fixedFooter.boundingBox();
     expect(fixedHeaderBefore).not.toBeNull();
+    expect(fixedFooterBefore).not.toBeNull();
     const scrollDistance = await rateScroll.evaluate(element => {
       element.scrollTop = element.scrollHeight;
       return element.scrollTop;
     });
     expect(scrollDistance).toBeGreaterThan(40);
     const fixedHeaderAfter = await fixedHeader.boundingBox();
+    const fixedFooterAfter = await fixedFooter.boundingBox();
     expect(fixedHeaderAfter).not.toBeNull();
+    expect(fixedFooterAfter).not.toBeNull();
     expect(Math.abs(fixedHeaderAfter!.y - fixedHeaderBefore!.y)).toBeLessThanOrEqual(2);
-    if (mobile) {
-      await expect(closeButton).toBeVisible();
-      await closeButton.click();
-    } else {
-      // Desktop removes the visible X; clicking the backdrop still dismisses the modal.
-      await page.mouse.click(8, 8);
-    }
+    expect(Math.abs(fixedFooterAfter!.y - fixedFooterBefore!.y)).toBeLessThanOrEqual(2);
+    await expect(closeButton).toBeVisible();
+    await closeButton.click();
     await expect(dialog).not.toBeVisible();
     expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
+    // A supplier with rate terms but no approved booking URL must have a disabled action.
+    await rows.last().locator("[data-car-rate-info]").click();
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText("Airport Pickup 6", { exact: true })).toBeVisible();
+    await expect(dialog.locator("[data-car-rate-view-deal]")).toHaveCount(0);
+    const unavailableAction = dialog.locator("[data-car-rate-view-deal-unavailable]");
+    await expect(unavailableAction).toBeVisible();
+    await expect(unavailableAction).toBeDisabled();
+    await closeButton.click();
+    await expect(dialog).not.toBeVisible();
     await area.locator("[data-car-deal-more-offers]").filter({ visible: true }).click();
     await expect(rows.filter({ visible: true })).toHaveCount(3);
     await expect(main).toBeVisible();
@@ -732,6 +759,9 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     expect(carBorder).not.toBe("rgb(0, 75, 184)");
     await rows.nth(1).locator("[data-car-rate-info]").click();
     await expect(dialog.getByText("Airport Pickup 1", { exact: true })).toBeVisible();
+    await expect(dialog.locator("[data-car-rate-view-deal]")).toHaveAttribute(
+      "href", "https://sandbox-en-us.kayakaffiliates.com/in?offer=option-1"
+    );
     await expect(dialog.getByText("Airport Pickup 0", { exact: true })).toHaveCount(0);
     await page.keyboard.press("Escape");
     await expect(dialog).not.toBeVisible();
