@@ -125,17 +125,17 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.match(picker, /providerNarrow: \{ flexDirection: "column"/);
   assert.match(picker, /narrowActions = rowWidth > 0 && rowWidth < 268/);
   assert.match(picker, /stackVeryNarrow = rowWidth > 0 && rowWidth < 225/);
-  assert.match(picker, /providers: \{ minWidth: 0, gap: 0, paddingTop: 0, paddingBottom: 0/);
+  assert.match(picker, /providers: \{ minWidth: 0, minHeight: 120, gap: 0, paddingTop: 0, paddingBottom: 0/);
   assert.match(picker, /brand: \{ flex: 1, minWidth: 0/);
   assert.match(picker, /Math\.round\(event\.nativeEvent\.layout\.width\)/);
-  assert.match(picker, /rowWidth \/ 2 \+ 20/);
+  assert.match(picker, /rowWidth \* 0\.65 \+ 20/);
   assert.match(picker, /meta: \{ minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4, paddingLeft: 6, paddingRight: 8/);
   assert.match(picker, /action: \{ minHeight: 40, flex: 1, minWidth: 0[\s\S]*justifyContent: "flex-start"/);
   assert.match(picker, /logo: \{ width: 16, height: 16/);
-  assert.match(picker, /providerName: \{ flex: 1, minWidth: 0, fontSize: 11, lineHeight: 15/);
+  assert.match(picker, /providerName: \{ flexShrink: 1, minWidth: 0, fontSize: 11, lineHeight: 15/);
   assert.match(picker, /price: \{ flexShrink: 1, minWidth: 0, fontSize: 12, lineHeight: 16/);
   assert.match(picker, /link: \{ fontSize: 12, lineHeight: 16/);
-  assert.match(picker, /infoAction: \{ width: 36, height: 40/);
+  assert.match(picker, /infoAction: \{ width: 32, height: 40, marginLeft: 6/);
   assert.match(picker, /moreAction: \{ minHeight: 36/);
   assert.match(picker, /moreText: \{ fontSize: 11, lineHeight: 16/);
   assert.match(card, /detailsColumn:\{flex:2\.6/);
@@ -240,4 +240,28 @@ test("native Cars Rate details has clean X, leading icons and softer values with
   assert.ok(sheet.includes('accessibilityLabel="Close rate details"'));
   assert.ok(sheet.includes('presentationStyle="fullScreen"'));
   assert.ok(sheet.includes('getCarRateDisclosureSections(selectedChoice.offer)'));
+});
+
+
+test("native Cars rows keep logo, name, rate info, price and View deal in that exact order", () => {
+  const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
+  const rows = picker.slice(picker.indexOf("{visibleChoices.map("), picker.indexOf("{choices.length > 5 ? ("));
+  const positions = [
+    rows.indexOf("<ProviderMark name={providerName} logoUrl={logoUrl} />"),
+    rows.indexOf("{providerName}</Text>"),
+    rows.indexOf('accessibilityLabel={"Rate information for " + providerName}'),
+    rows.indexOf("money(displayed.currency, displayed.pricePerDay)"),
+    rows.indexOf('accessibilityLabel={"View deal from " + providerName}'),
+  ];
+  assert.ok(positions.every(index => index >= 0), positions.join(","));
+  assert.ok(positions.every((position, index) => index === 0 || position > positions[index - 1]!));
+  assert.match(rows, /<Info accessible=\{false\} size=\{17\} strokeWidth=\{1\.9\}/);
+  assert.match(rows, /onPress=\{\(\) => setSelectedKey\(key\)\}/);
+  assert.match(rows, /onPress=\{bookingUrl \? \(\) => void Linking\.openURL\(bookingUrl\)/);
+  assert.match(picker, /infoAction: \{ width: 32, height: 40, marginLeft: 6/);
+  assert.match(picker, /meta: \{ minWidth: 0, flexDirection: "row"/);
+  assert.match(picker, /rowWidth \* 0\.65 \+ 20/);
+  assert.match(picker, /providers: \{ minWidth: 0, minHeight: 120/);
+  assert.match(picker, /provider: \{ minHeight: 40/);
+  assert.match(picker, /visibleChoices = expanded \? choices : choices\.slice\(0, 5\)/);
 });
