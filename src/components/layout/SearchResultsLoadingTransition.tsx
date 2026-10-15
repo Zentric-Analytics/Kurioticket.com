@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import {
@@ -47,6 +47,9 @@ export function SearchResultsLoadingTransition({
   active = true,
   mobileHeaderProvided = false,
   desktopHeaderProvided = false,
+  desktopSearch,
+  mobileSearch,
+  mobileFilters,
 }: {
   searchType: SearchType;
   title?: string;
@@ -56,6 +59,9 @@ export function SearchResultsLoadingTransition({
   active?: boolean;
   mobileHeaderProvided?: boolean;
   desktopHeaderProvided?: boolean;
+  desktopSearch?: ReactNode;
+  mobileSearch?: ReactNode;
+  mobileFilters?: ReactNode;
 }) {
   const [completedIdentity, setCompletedIdentity] = useState<string | null>(null);
   const [headerSlots, setHeaderSlots] = useState<HeaderSlots>({
@@ -136,6 +142,9 @@ export function SearchResultsLoadingTransition({
         headerSlots={headerSlots}
         mobileHeaderProvided={mobileHeaderProvided}
         desktopHeaderProvided={desktopHeaderProvided}
+        desktopSearch={desktopSearch}
+        mobileSearch={mobileSearch}
+        mobileFilters={mobileFilters}
       />
     );
   }
@@ -159,22 +168,28 @@ function ResultsShell({
   headerSlots,
   mobileHeaderProvided,
   desktopHeaderProvided,
+  desktopSearch,
+  mobileSearch,
+  mobileFilters,
 }: {
   searchType: SearchType;
   headerSlots: HeaderSlots;
   mobileHeaderProvided: boolean;
   desktopHeaderProvided: boolean;
+  desktopSearch?: ReactNode;
+  mobileSearch?: ReactNode;
+  mobileFilters?: ReactNode;
 }) {
   return (
     <>
       {headerSlots.desktopSearch && !desktopHeaderProvided
-        ? createPortal(<HeaderSearchSkeleton searchType={searchType} />, headerSlots.desktopSearch)
+        ? createPortal(desktopSearch ?? <HeaderSearchSkeleton searchType={searchType} />, headerSlots.desktopSearch)
         : null}
       {headerSlots.mobileSearch && !mobileHeaderProvided
-        ? createPortal(<MobileSearchSkeleton searchType={searchType} />, headerSlots.mobileSearch)
+        ? createPortal(mobileSearch ?? <MobileSearchSkeleton searchType={searchType} />, headerSlots.mobileSearch)
         : null}
       {headerSlots.mobileFilters && !mobileHeaderProvided
-        ? createPortal(<MobileFiltersSkeleton />, headerSlots.mobileFilters)
+        ? createPortal(mobileFilters ?? <MobileFiltersSkeleton />, headerSlots.mobileFilters)
         : null}
       {searchType === "hotel" ? <HotelResultsShell /> : null}
       {searchType === "flight" ? <FlightResultsShell /> : null}

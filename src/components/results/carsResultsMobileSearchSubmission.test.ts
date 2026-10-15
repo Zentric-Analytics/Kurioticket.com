@@ -119,6 +119,9 @@ test("mobile Search replaces stale Cars results with the shared delayed loading 
   assert.match(pendingBranch, /<SearchResultsLoadingTransition/);
   assert.match(pendingBranch, /active=\{isSearchSubmitting\}/);
   assert.match(pendingBranch, /searchType="car"/);
+  assert.match(pendingBranch, /desktopSearch=\{renderCarsSearchForm\("desktop-navbar"\)\}/);
+  assert.match(pendingBranch, /mobileSearch=\{renderMobileHeaderSearch\(\)\}/);
+  assert.match(pendingBranch, /\{mobileSearchOverlays\}/);
   assert.doesNotMatch(pendingBranch, /CarsResultsExperience|CarResultCard/);
 
   for (const key of [
