@@ -131,6 +131,36 @@ const normalizeCabinClass = (value: string): CabinClass => {
   return "economy";
 };
 
+const parseTravelerCount = (
+  value: string | null,
+  fallback: number,
+  min: number,
+  max: number,
+) => {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed)) return fallback;
+  return Math.min(max, Math.max(min, parsed));
+};
+
+const restoredTravelerCabinState = (params: URLSearchParams) => {
+  const adults = parseTravelerCount(params.get("adults"), 1, 1, 9);
+  const children = parseTravelerCount(
+    params.get("children"),
+    0,
+    0,
+    Math.max(0, 9 - adults),
+  );
+  const infants = parseTravelerCount(
+    params.get("infants"),
+    0,
+    0,
+    Math.max(0, Math.min(adults, 9 - adults - children)),
+  );
+  const cabinClass = normalizeCabinClass(params.get("cabinClass") ?? "economy");
+
+  return { adults, children, infants, cabinClass };
+};
+
 const parseIsoDate = (value: string) => {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
   const [year, month, day] = value.split("-").map(Number);
@@ -312,8 +342,19 @@ export function StandaloneFlightSearchForm({
     if (params.get("tripType") !== "multi-city") return;
     const restored = parseFlightLegParams(params);
     if (restored.length < 2) return;
+
+    const restoredTravelers = restoredTravelerCabinState(params);
+
     setTripType("multi-city");
     setMultiCityLegs(restored);
+    setAdultCount(restoredTravelers.adults);
+    setChildCount(restoredTravelers.children);
+    setInfantCount(restoredTravelers.infants);
+    setDraftAdultCount(restoredTravelers.adults);
+    setDraftChildCount(restoredTravelers.children);
+    setDraftInfantCount(restoredTravelers.infants);
+    setCabinClass(restoredTravelers.cabinClass);
+    setDraftCabinClass(restoredTravelers.cabinClass);
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
   const [datesOpen, setDatesOpen] = useState(false);
