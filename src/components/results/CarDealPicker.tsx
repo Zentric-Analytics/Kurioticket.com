@@ -22,6 +22,11 @@ type Props = {
   desktopPanelTarget?: HTMLElement | null;
 };
 
+// Keep mobile and desktop previews independent of the number of seller quotes.
+// Every seller remains in the list and can be expanded on either layout.
+const INITIAL_MOBILE_OFFER_COUNT = 5;
+const INITIAL_DESKTOP_OFFER_COUNT = 3;
+
 const providerInitial = (name: string) =>
   name.trim().charAt(0).toLocaleUpperCase() || "P";
 
@@ -153,7 +158,13 @@ export function CarDealPicker({
           const offer = group.primaryOffer;
           const bookingHref = approvedProviderBookingUrl(car, offer);
           const hasDetails = car.inventorySource === "kayak-sandbox" && Boolean(offer.suppliedFacts?.length);
-          const responsiveVisibility = expanded ? "grid" : index < 5 ? "grid" : "hidden";
+          const responsiveVisibility = expanded
+            ? "grid"
+            : index < INITIAL_DESKTOP_OFFER_COUNT
+              ? "grid"
+              : index < INITIAL_MOBILE_OFFER_COUNT
+                ? "grid md:hidden"
+                : "hidden";
           return (
             <div
               key={group.key}
@@ -225,7 +236,7 @@ export function CarDealPicker({
           );
         })}
       </div>
-      {groups.length > 5 ? (
+      {groups.length > INITIAL_MOBILE_OFFER_COUNT ? (
         <button
           type="button"
           data-car-deal-more-offers
@@ -234,11 +245,11 @@ export function CarDealPicker({
           onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
           aria-expanded={expanded}
         >
-          {expanded ? "Show fewer offers" : "+" + (groups.length - 5) + " more offers"}
+          {expanded ? "Show fewer offers" : "+" + (groups.length - INITIAL_MOBILE_OFFER_COUNT) + " more offers"}
           <ChevronRight size={12} className={expanded ? "-rotate-90" : "rotate-90"} aria-hidden="true" />
         </button>
       ) : null}
-      {groups.length > 5 ? (
+      {groups.length > INITIAL_DESKTOP_OFFER_COUNT ? (
         <button
           type="button"
           data-car-deal-more-offers
@@ -247,7 +258,7 @@ export function CarDealPicker({
           onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
           aria-expanded={expanded}
         >
-          {expanded ? "Show fewer offers" : "+" + (groups.length - 5) + " more offers"}
+          {expanded ? "Show fewer offers" : "+" + (groups.length - INITIAL_DESKTOP_OFFER_COUNT) + " more offers"}
           <ChevronRight size={12} className={expanded ? "-rotate-90" : "rotate-90"} aria-hidden="true" />
         </button>
       ) : null}
