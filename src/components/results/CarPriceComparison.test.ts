@@ -148,9 +148,14 @@ test("Cars rate details match Flight Details white, far-right fact alignment and
     'data-car-rate-section="payment"',
     "Price and payment",
     "disclosureSections.filter(section => section.id !== \"payment\")",
-    "data-car-rate-source-note",
+    "data-car-rate-title-row",
+    "data-car-rate-total-price",
   ]) assert.ok(sheet.includes(token), token);
   assert.ok(picker.includes("getCarRateDisclosureSections(selectedOffer)"));
+  assert.ok(sheet.includes('grid-cols-[44px_minmax(0,1fr)_44px] items-center'));
+  assert.ok(sheet.includes('data-car-rate-heading="true" tabIndex={-1} className="min-w-0 text-center'));
+  assert.ok(sheet.includes('font-semibold tabular-nums text-[#0F172A]'));
+  assert.doesNotMatch(sheet, /KAYAK sandbox · Simulated rates and availability|Sandbox rate information is simulated/);
 });
 
 
@@ -180,7 +185,7 @@ test("Cars mobile Rate details fills the viewport with a fixed safe-area header 
 });
 
 
-test("Cars Rate details uses borderless close, left-side semantic section icons, and softer right-hand values", () => {
+test("Cars Rate details uses borderless close, polished section icons, and readable right-hand values", () => {
   const iconMapping = picker.slice(picker.indexOf("const rateSectionIcons"), picker.indexOf("function RateSectionIcon"));
   for (const [id, name] of [
     ["payment", "Wallet"],
@@ -191,7 +196,7 @@ test("Cars Rate details uses borderless close, left-side semantic section icons,
     ["other", "Info"],
   ]) assert.ok(iconMapping.includes(id + ": " + name), id);
   assert.ok(picker.includes('data-car-rate-section-icon={id}'));
-  assert.ok(picker.includes('aria-hidden="true" size={17} strokeWidth={1.8}'));
+  assert.ok(picker.includes('aria-hidden="true" size={18} strokeWidth={2.1}'));
   const sheet = picker.slice(picker.indexOf('data-car-rate-dialog'));
   assert.ok(sheet.includes('<RateSectionIcon id="payment" />'));
   assert.ok(sheet.includes('<RateSectionIcon id={section.id} />'));
@@ -201,7 +206,7 @@ test("Cars Rate details uses borderless close, left-side semantic section icons,
   assert.ok(closeButton.includes("h-11 w-11"));
   assert.equal(closeButton.split(/\s+/).some(token => token === "border" || token.startsWith("border-")), false);
   assert.ok(closeButton.includes("focus-visible:bg-slate-100")); // Keyboard focus stays visible without a blue circle.
-  assert.equal((sheet.match(/data-car-rate-fact-value className="[^"]*text-right font-normal text-\[#334155\]/g) ?? []).length, 2);
+  assert.equal((sheet.match(/data-car-rate-fact-value className="[^"]*text-right font-medium text-\[#1E293B\]/g) ?? []).length, 2);
   assert.ok(sheet.includes('grid-cols-[minmax(0,42%)_minmax(0,1fr)]'));
   assert.ok(sheet.includes("h-[100dvh] max-h-[100dvh]"));
 });
