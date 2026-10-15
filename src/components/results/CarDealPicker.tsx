@@ -155,7 +155,7 @@ export function CarDealPicker({
         role="list"
         aria-label="Car deal providers"
         data-car-deal-provider-offers
-        className={["min-w-0 min-h-[108px] md:min-h-[76px]", compact ? "max-[359px]:min-h-[240px] space-y-0" : "space-y-0.5"].join(" ")}
+        className={["min-w-0 min-h-[108px] md:min-h-[76px]", compact ? "max-[359px]:min-h-[240px] space-y-0" : "space-y-0.5 lg:space-y-1.5 lg:min-h-[108px]"].join(" ")}
       >
         {groups.map((group, index) => {
           const offer = group.primaryOffer;
@@ -171,7 +171,7 @@ export function CarDealPicker({
               className={[
                 responsiveVisibility, "min-w-0 items-center",
                 compact ? "grid-cols-[minmax(0,calc(65%_+_20px))_minmax(0,1fr)] min-h-9 max-[359px]:grid-cols-1 max-[359px]:py-1"
-                        : "grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)] min-h-6",
+                        : "grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)] min-h-6 lg:min-h-8",
               ].join(" ")}
               data-car-deal-provider-offer
             >
@@ -240,7 +240,7 @@ export function CarDealPicker({
       </div>
       {/* Reserve a disclosure row even when only one or two providers are available.
           This keeps collapsed three-offer cards the same height without fake offers. */}
-      <div data-car-deal-more-slot className="mt-0.5 flex min-h-9 items-center md:mt-1 md:min-h-6">
+      <div data-car-deal-more-slot className="mt-0.5 flex min-h-9 items-center md:mt-1 md:min-h-6 lg:mt-2">
         {groups.length > INITIAL_VISIBLE_OFFER_COUNT ? (
           <button
             type="button"

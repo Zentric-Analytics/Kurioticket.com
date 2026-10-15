@@ -156,6 +156,7 @@ test("Cars offer controls are legible and easy to tap on small phones without ov
     await expect(toggle).toContainText("+4 more offers");
     await expect(rail).toBeVisible();
 
+    await expect(rows.first()).toHaveCSS("min-height", "36px"); // The mobile web row metrics remain unchanged.
     const toggleTextSize = await toggle.evaluate(element => parseFloat(getComputedStyle(element).fontSize));
     expect(toggleTextSize).toBeGreaterThanOrEqual(10);
     expect(toggleTextSize).toBeLessThanOrEqual(12);
@@ -398,7 +399,7 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
         expect(imageBox!.height).toBeLessThanOrEqual(230);
       }
       const previewCardHeight = (await card.boundingBox())!.height;
-      if (!mobile) expect(previewCardHeight).toBeLessThanOrEqual(370);
+      if (!mobile) expect(previewCardHeight).toBeLessThanOrEqual(410); // Bounded increase for evenly spaced desktop rows.
       const previewMainRect = await mainPrice.boundingBox();
       expect(previewMainRect).not.toBeNull();
       if (count > initiallyVisible) {
@@ -511,7 +512,19 @@ test("desktop Cars previews three sellers and expands all additional offers with
     await expect(card.locator("article")).toHaveCSS("background-color", "rgb(255, 255, 255)");
     const offerList = detail.locator("[data-car-deal-provider-offers]");
     const listHeight = (await offerList.boundingBox())!.height;
-    expect(listHeight).toBeGreaterThanOrEqual(76);
+    expect(listHeight).toBeGreaterThanOrEqual(108);
+    await expect(offerList).toHaveCSS("min-height", "108px");
+    await expect(rows.first()).toHaveCSS("min-height", "32px");
+    const assertEvenDesktopRowGap = async (index: number) => {
+      const current = await rows.nth(index).boundingBox();
+      const next = await rows.nth(index + 1).boundingBox();
+      expect(current).not.toBeNull();
+      expect(next).not.toBeNull();
+      const gap = next!.y - (current!.y + current!.height);
+      expect(gap).toBeGreaterThanOrEqual(5);
+      expect(gap).toBeLessThanOrEqual(7);
+    };
+    if (count >= 2) await assertEvenDesktopRowGap(0);
     if (count <= 3) {
       await expect(more).toHaveCount(0);
     } else {
@@ -520,6 +533,8 @@ test("desktop Cars previews three sellers and expands all additional offers with
       await more.click();
       await expect(rows.filter({ visible: true })).toHaveCount(count);
       await expect(more).toHaveAttribute("aria-expanded", "true");
+      await assertEvenDesktopRowGap(2); // The fourth offer gets the same spacing as preview rows.
+      if (count > 4) await assertEvenDesktopRowGap(count - 2);
       expect((await card.boundingBox())!.height).toBeGreaterThanOrEqual(compactHeight);
       await more.click();
       await expect(rows.filter({ visible: true })).toHaveCount(3);
