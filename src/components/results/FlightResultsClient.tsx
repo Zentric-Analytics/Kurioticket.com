@@ -1051,6 +1051,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>(null);
   const alignedMobileNearbyFareSearchRef = useRef<string | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
+  const [mobileNearbyFaresEnabled, setMobileNearbyFaresEnabled] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 639px)").matches,
+  );
   const [returnDateInput, setReturnDateInput] = useState(
     initialDateSafeParams.get("returnDate") || "",
   );
@@ -2703,6 +2708,19 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }, []);
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    const handleChange = (event: MediaQueryListEvent) => {
+      setMobileNearbyFaresEnabled(event.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!desktopSortOpen) return;
 
     function handleClose(event: MouseEvent) {
@@ -2734,6 +2752,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const activeRequests = nearbyFareRequestsRef.current;
     activeRequests.forEach((request) => request.controller.abort());
     activeRequests.clear();
+
+    if (!mobileNearbyFaresEnabled) {
+      const timer = window.setTimeout(() => {
+        setNearbyFares([]);
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
 
     if (guidedMode) {
       nearbyFareCacheRef.current.clear();
@@ -2915,7 +2940,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       activeRequests.forEach((request) => request.controller.abort());
       activeRequests.clear();
     };
-  }, [body, currencyRates.rates, guidedMode, providerResults, selectedCurrency, loading, backgroundRefreshing]);
+  }, [
+    body,
+    currencyRates.rates,
+    guidedMode,
+    providerResults,
+    selectedCurrency,
+    loading,
+    backgroundRefreshing,
+    mobileNearbyFaresEnabled,
+  ]);
 
   useEffect(() => {
     if (!tripTypeMenuOpen) return;
