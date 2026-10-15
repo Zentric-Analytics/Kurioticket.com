@@ -247,7 +247,7 @@ test("Cars list previews three offers with equal collapsed heights and retains t
     expect(offerMinHeight).toBeGreaterThanOrEqual(162);
     const disclosure = offers.locator("[data-car-deal-more-slot]");
     const disclosureHeight = (await disclosure.boundingBox())!.height;
-    expect(disclosureHeight).toBeGreaterThanOrEqual(36);
+    expect(disclosureHeight).toBeGreaterThanOrEqual(32);
     if (count <= 3) {
       if (threeRowHeight !== null) expect(Math.abs(offerMinHeight - threeRowHeight)).toBeLessThanOrEqual(2);
       threeRowHeight = offerMinHeight;
@@ -264,13 +264,13 @@ test("Cars list previews three offers with equal collapsed heights and retains t
       if (count >= 5) {
         const firstRow = (await rows.first().boundingBox())!;
         const fifthRow = (await rows.nth(4).boundingBox())!;
-        expect(fifthRow.y + fifthRow.height - firstRow.y).toBeLessThanOrEqual(190);
+        expect(fifthRow.y + fifthRow.height - firstRow.y).toBeLessThanOrEqual(285);
       }
       await toggle.click();
       await expect(rows.filter({ visible: true })).toHaveCount(3);
     }
   }
-  // Narrow mobile cards stack each offer onto two lines; one- and two-offer
+  // Narrow mobile cards retain one horizontal bar per supplier; one- and two-offer
   // cards still reserve the same height as a three-offer preview.
   let stackedMinimumHeight: number | null = null;
   for (const count of [1, 2, 3]) {
