@@ -403,21 +403,17 @@ test("desktop detail panel keeps all values inline at every desktop card width",
   );
 });
 
-test("desktop nearby fares use a contained mobile-like hierarchy", async () => {
+
+test("desktop Flight Results omit nearby-fare calendar and cheaper-nearby insight", async () => {
   const source = await readFile(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
-  const start = source.indexOf("data-desktop-nearby-fare-rail");
-  const strip = source.slice(start, source.indexOf("Next nearby fare date", start) + 300);
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
 
-  assert.match(strip, /data-desktop-nearby-fare-rail className="relative grid w-full grid-cols-7[^"]*gap-2[^"]*bg-transparent/);
-  assert.match(source, /aria-label="Previous nearby fare date"[\s\S]*?-left-9 top-1\/2/);
-  assert.match(source, /aria-label="Next nearby fare date"[\s\S]*?-right-9 top-1\/2/);
-  assert.doesNotMatch(strip, /max-w-\[980px\]|mx-auto|grid-cols-\[42px_repeat\(7,minmax\(0,1fr\)\)_42px\]/);
-  assert.match(strip, /min-h-\[74px\]/);
-  assert.match(strip, /rounded-lg border border-slate-200 bg-white/);
-  assert.match(strip, /selected && "border-\[#075EE8\] bg-blue-50\/60"/);
-  assert.match(strip, /absolute inset-x-2 top-0 h-0\.5 rounded-b bg-\[#075EE8\]/);
+  assert.doesNotMatch(source, /data-desktop-nearby-fare-rail/);
+  assert.doesNotMatch(source, /data-desktop-cheaper-nearby/);
+  assert.doesNotMatch(styles, /data-desktop-nearby-fare-rail|desktop-flight-fare-price|desktop-flight-cheaper-nearby/);
+  assert.match(source, /data-nearby-fare-presentation="mobile"/);
+  assert.match(source, /flight-mobile-cheaper-nearby/);
 });
-
 
 test("desktop Flight filters use the Hotel typography hierarchy and checkbox rhythm", async () => {
   const filters = await readFile(
@@ -501,7 +497,8 @@ test("desktop Flight Popular filters reuse the authoritative Flight filter state
   assert.match(source, /onToggle=\{toggleStickyFlightPopularFilter\}/);
 });
 
-test("desktop Flight result meta typography uses the premium hierarchy", async () => {
+
+test("desktop Flight result summary keeps the premium hierarchy after nearby-fare removal", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
@@ -510,14 +507,8 @@ test("desktop Flight result meta typography uses the premium hierarchy", async (
     new URL("../../app/globals.css", import.meta.url),
     "utf8",
   );
-  const cheaperStart = source.indexOf("data-desktop-cheaper-nearby");
-  const cheaper = source.slice(cheaperStart, cheaperStart + 1200);
-  assert.match(cheaper, /desktop-flight-cheaper-nearby/);
-  assert.doesNotMatch(cheaper, /text-\[13px\]|font-medium leading-5/);
-  assert.match(styles, /\.desktop-flight-cheaper-nearby \{[\s\S]*?font-size: 11px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?line-height: 16px !important;[\s\S]*?font-variation-settings: "wght" 600;/);
-  assert.match(cheaper, /Cheaper nearby: \{formatFareStripDateLabel\(cheaperNearbyFare\.date, calendarLocale\)\} · Save \{cheaperNearbyFare\.savings\}/);
-  assert.match(cheaper, /hover:text-\[#075EE8\]/);
-  assert.doesNotMatch(cheaper, /rounded-full|bg-white\/70|ring-slate-200\/70/);
+
+  assert.doesNotMatch(source, /data-desktop-cheaper-nearby|desktop-flight-cheaper-nearby/);
 
   const summaryStart = source.indexOf(
     'className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-1 lg:bg-transparent"',
@@ -536,3 +527,4 @@ test("desktop Flight result meta typography uses the premium hierarchy", async (
   assert.match(source, /data-flight-results-card-list className="space-y-3 sm:space-y-4"/);
   assert.doesNotMatch(source, /data-flight-results-card-list className="space-y-3 sm:space-y-4 sm:pt-2 lg:pt-3"/);
 });
+
