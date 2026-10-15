@@ -22,6 +22,11 @@ type Props = {
   desktopPanelTarget?: HTMLElement | null;
 };
 
+// Keep mobile and desktop previews independent of the number of seller quotes.
+// Every seller remains in the list and can be expanded on either layout.
+const INITIAL_MOBILE_OFFER_COUNT = 5;
+const INITIAL_DESKTOP_OFFER_COUNT = 3;
+
 const providerInitial = (name: string) =>
   name.trim().charAt(0).toLocaleUpperCase() || "P";
 
@@ -102,6 +107,7 @@ export function CarDealPicker({
   const [expanded, setExpanded] = useState(false);
   const [detailsKey, setDetailsKey] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const dialogHeadingRef = useRef<HTMLHeadingElement>(null);
   const selectedGroup = groups.find(group => group.key === detailsKey);
   const selectedOffer = selectedGroup?.primaryOffer;
   const disclosureSections = selectedOffer ? getCarRateDisclosureSections(selectedOffer) : [];
@@ -110,7 +116,13 @@ export function CarDealPicker({
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    if (selectedOffer && !dialog.open) dialog.showModal();
+    if (selectedOffer && !dialog.open) {
+      dialog.showModal();
+      // Prevent Safari from auto-focusing the first button (X) and drawing a
+      // persistent focus circle on a touch-opened sheet. Announce the heading
+      // instead; keyboard Tab still reaches the close button normally.
+      dialogHeadingRef.current?.focus({ preventScroll: true });
+    }
     if (!selectedOffer && dialog.open) dialog.close();
   }, [selectedOffer]);
 
@@ -146,7 +158,13 @@ export function CarDealPicker({
           const offer = group.primaryOffer;
           const bookingHref = approvedProviderBookingUrl(car, offer);
           const hasDetails = car.inventorySource === "kayak-sandbox" && Boolean(offer.suppliedFacts?.length);
-          const responsiveVisibility = expanded ? "grid" : index < 5 ? "grid" : "hidden";
+          const responsiveVisibility = expanded
+            ? "grid"
+            : index < INITIAL_DESKTOP_OFFER_COUNT
+              ? "grid"
+              : index < INITIAL_MOBILE_OFFER_COUNT
+                ? "grid md:hidden"
+                : "hidden";
           return (
             <div
               key={group.key}
@@ -218,7 +236,7 @@ export function CarDealPicker({
           );
         })}
       </div>
-      {groups.length > 5 ? (
+      {groups.length > INITIAL_MOBILE_OFFER_COUNT ? (
         <button
           type="button"
           data-car-deal-more-offers
@@ -227,11 +245,11 @@ export function CarDealPicker({
           onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
           aria-expanded={expanded}
         >
-          {expanded ? "Show fewer offers" : "+" + (groups.length - 5) + " more offers"}
+          {expanded ? "Show fewer offers" : "+" + (groups.length - INITIAL_MOBILE_OFFER_COUNT) + " more offers"}
           <ChevronRight size={12} className={expanded ? "-rotate-90" : "rotate-90"} aria-hidden="true" />
         </button>
       ) : null}
-      {groups.length > 5 ? (
+      {groups.length > INITIAL_DESKTOP_OFFER_COUNT ? (
         <button
           type="button"
           data-car-deal-more-offers
@@ -240,7 +258,7 @@ export function CarDealPicker({
           onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
           aria-expanded={expanded}
         >
-          {expanded ? "Show fewer offers" : "+" + (groups.length - 5) + " more offers"}
+          {expanded ? "Show fewer offers" : "+" + (groups.length - INITIAL_DESKTOP_OFFER_COUNT) + " more offers"}
           <ChevronRight size={12} className={expanded ? "-rotate-90" : "rotate-90"} aria-hidden="true" />
         </button>
       ) : null}
@@ -250,14 +268,14 @@ export function CarDealPicker({
         aria-label="Rental rate details"
         onClose={() => setDetailsKey(null)}
         onClick={event => { event.stopPropagation(); if (event.target === event.currentTarget) event.currentTarget.close(); }}
-        className="fixed inset-0 m-0 h-[100dvh] max-h-[100dvh] w-full max-w-none flex-col overflow-hidden rounded-none border-0 bg-white p-0 text-[#07133B] shadow-none backdrop:bg-[#07133B]/55 open:flex md:inset-0 md:m-auto md:h-auto md:max-h-[80dvh] md:w-[540px] md:max-w-[calc(100%_-_2rem)] md:rounded-2xl md:border md:border-[#D8E1EC] md:shadow-2xl"
+        className="fixed inset-0 m-0 h-[100dvh] max-h-[100dvh] w-full max-w-none flex-col overflow-hidden rounded-none border-0 bg-white p-0 text-[#07133B] shadow-none focus:outline-none backdrop:bg-[#07133B]/55 open:flex md:inset-0 md:m-auto md:h-auto md:max-h-[80dvh] md:w-[540px] md:max-w-[calc(100%_-_2rem)] md:rounded-2xl md:border md:border-[#D8E1EC] md:shadow-2xl"
       >
         {selectedOffer && selectedGroup ? (
           <>
             <div data-car-rate-header className="shrink-0 border-b border-[#E2E8F0] bg-white px-4 pb-3 pt-[max(14px,env(safe-area-inset-top))] md:px-5 md:pt-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-[18px] font-semibold leading-6 tracking-tight text-[#0F172A]">Rate details</h2>
+                  <h2 ref={dialogHeadingRef} data-car-rate-heading="true" tabIndex={-1} className="text-[18px] font-semibold leading-6 tracking-tight text-[#0F172A] focus:outline-none">Rate details</h2>
                   <p className="mt-1 break-words text-[13px] font-medium leading-5 text-[#475569]">Booking provider · {selectedGroup.providerName}</p>
                   <p data-car-rate-source-note className="mt-1 text-[11px] leading-[16px] text-[#64748B]">KAYAK sandbox · Simulated rates and availability. No live booking.</p>
                 </div>
@@ -265,7 +283,7 @@ export function CarDealPicker({
                   type="button"
                   onClick={() => dialogRef.current?.close()}
                   aria-label="Close rate details"
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#07133B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#07133B] focus-visible:bg-slate-100 focus-visible:outline-none"
                 >
                   <X size={20} aria-hidden="true" />
                 </button>

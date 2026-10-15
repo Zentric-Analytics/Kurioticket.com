@@ -20,11 +20,13 @@ test("standalone desktop owns exactly four required primary specifications", () 
   assert.doesNotMatch(specs, /Air conditioning|Snowflake/);
 });
 
-test("provider offers render every normalized provider without a three-provider cutoff", () => {
+test("provider offers retain all normalized sellers behind a three-row desktop preview", () => {
   assert.match(card, /<CarDealPicker/);
   assert.match(picker, /getCarDealPickerGroups\(car\)/);
   assert.match(picker, /groups\.map\(\(group, index\) =>/);
   assert.doesNotMatch(picker, /groups\.slice\(/);
+  assert.match(picker, /const INITIAL_DESKTOP_OFFER_COUNT = 3;/);
+  assert.match(picker, /const INITIAL_MOBILE_OFFER_COUNT = 5;/);
   assert.match(picker, /data-car-deal-provider-offers/);
   assert.match(picker, /data-car-deal-provider-offer/);
   assert.doesNotMatch(picker, /data-car-deal-provider-chips|extraCount|Compare providers/);
@@ -76,11 +78,15 @@ test("provider View deal validates its own URL and stays isolated from main offe
 test("inline provider offers do not retain the old comparison overlays", () => {
   assert.ok(picker.includes('min-w-0 items-center'));
   assert.ok(picker.includes('min-h-6'));
-  assert.match(picker, /responsiveVisibility = expanded \? "grid" : index < 5 \? "grid" : "hidden"/);
-  assert.equal((picker.match(/groups\.length > 5/g) ?? []).length, 2);
-  assert.equal((picker.match(/groups\.length - 5/g) ?? []).length, 2);
-  assert.doesNotMatch(picker, /groups\.length > 3|groups\.length - 3|index < 3/);
-  assert.match(picker, /groups\.length > 5/);
+  assert.match(picker, /responsiveVisibility = expanded/);
+  assert.match(picker, /index < INITIAL_DESKTOP_OFFER_COUNT/);
+  assert.match(picker, /index < INITIAL_MOBILE_OFFER_COUNT/);
+  assert.match(picker, /"grid md:hidden"/);
+  assert.match(picker, /groups\.length > INITIAL_MOBILE_OFFER_COUNT/);
+  assert.match(picker, /groups\.length > INITIAL_DESKTOP_OFFER_COUNT/);
+  assert.match(picker, /groups\.length - INITIAL_MOBILE_OFFER_COUNT/);
+  assert.match(picker, /groups\.length - INITIAL_DESKTOP_OFFER_COUNT/);
+  assert.equal((picker.match(/data-car-deal-more-offers/g) ?? []).length, 2);
   assert.match(picker, /data-car-deal-more-offers/);
   assert.match(picker, /data-car-rate-info/);
   assert.match(picker, /data-car-rate-dialog/);
@@ -198,8 +204,47 @@ test("Cars Rate details uses borderless close, left-side semantic section icons,
   assert.ok(closeButton);
   assert.ok(closeButton.includes("h-11 w-11"));
   assert.equal(closeButton.split(/\s+/).some(token => token === "border" || token.startsWith("border-")), false);
-  assert.ok(closeButton.includes("focus-visible:ring-2")); // Keyboard focus remains clearly visible.
+  assert.ok(closeButton.includes("focus-visible:bg-slate-100")); // Keyboard focus stays visible without a blue circle.
   assert.equal((sheet.match(/data-car-rate-fact-value className="[^"]*text-right font-normal text-\[#334155\]/g) ?? []).length, 2);
   assert.ok(sheet.includes('grid-cols-[minmax(0,42%)_minmax(0,1fr)]'));
   assert.ok(sheet.includes("h-[100dvh] max-h-[100dvh]"));
+});
+
+
+test("touch-opened Cars rate details focuses its accessible heading instead of producing a blue close-button halo", () => {
+  const sheet = picker.slice(picker.indexOf('data-car-rate-dialog'));
+  for (const required of [
+    "const dialogHeadingRef = useRef<HTMLHeadingElement>(null)",
+    "dialog.showModal();",
+    "dialogHeadingRef.current?.focus({ preventScroll: true });",
+    "ref={dialogHeadingRef}",
+    "data-car-rate-heading=\"true\"",
+    "tabIndex={-1}",
+    "focus:outline-none",
+    "focus-visible:bg-slate-100",
+  ]) assert.ok(picker.includes(required), required);
+  const closeButton = sheet.match(/aria-label="Close rate details"\s+className="([^"]+)"/)?.[1];
+  assert.ok(closeButton);
+  assert.ok(closeButton.includes("h-11 w-11"));
+  assert.equal(closeButton.includes("focus-visible:ring-"), false);
+  assert.equal(closeButton.includes("ring-[#004BB8]"), false);
+  assert.ok(sheet.includes('focus:outline-none'));
+  const results = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
+  assert.match(results, /label="Car results" rowClassName="pb-3\.5 sm:pb-4 focus:outline-none"/);
+  assert.match(results, /<CarResultCard/);
+  assert.doesNotMatch(card.slice(card.indexOf('data-car-result-card-shell className="w-full"'), card.indexOf("data-car-card-mobile-main")), /ring-2|border-\[#004BB8\]/);
+});
+
+test("compact desktop Cars cards expose three offers and accurately count expandable remainder", () => {
+  const compactSource = picker.slice(picker.indexOf("const INITIAL_MOBILE_OFFER_COUNT"));
+  const mobileToggle = compactSource.slice(compactSource.indexOf("{groups.length > INITIAL_MOBILE_OFFER_COUNT ? ("));
+  const desktopToggle = compactSource.slice(compactSource.indexOf("{groups.length > INITIAL_DESKTOP_OFFER_COUNT ? ("));
+  assert.match(mobileToggle, /INITIAL_MOBILE_OFFER_COUNT/);
+  assert.match(desktopToggle, /INITIAL_DESKTOP_OFFER_COUNT/);
+  assert.match(desktopToggle, /Show fewer offers/);
+  assert.match(desktopToggle, /aria-expanded=\{expanded\}/);
+  assert.match(desktopToggle, /md:inline-flex/);
+  assert.doesNotMatch(compactSource, /groups\.slice\(/);
+  assert.match(compactSource, /groups\.map\(\(group, index\) =>/);
+  assert.match(compactSource, /index < INITIAL_MOBILE_OFFER_COUNT[\s\S]*?"grid md:hidden"/);
 });
