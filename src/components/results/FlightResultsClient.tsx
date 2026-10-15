@@ -2061,6 +2061,86 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     clearRecentSearches();
   }
 
+  function buildDesktopMultiCityLandingHref() {
+    const nextParams = new URLSearchParams(searchQueryString);
+    nextParams.set("tripType", "multi-city");
+    nextParams.delete("returnDate");
+
+    for (let index = 1; index <= MULTI_CITY_MAX_LEGS; index += 1) {
+      nextParams.delete(`origin${index}`);
+      nextParams.delete(`destination${index}`);
+      nextParams.delete(`departureDate${index}`);
+    }
+    nextParams.delete("legCount");
+
+    const firstLeg = {
+      origin: originCode || originInput.trim().toUpperCase(),
+      destination: destinationCode || destinationInput.trim().toUpperCase(),
+      departureDate: departureDateInput,
+    };
+    const candidateLegs =
+      multiCityLegs.length >= MULTI_CITY_MIN_LEGS
+        ? multiCityLegs
+        : [
+            firstLeg,
+            tripTypeInput === "round-trip" && returnDateInput
+              ? {
+                  origin: firstLeg.destination,
+                  destination: firstLeg.origin,
+                  departureDate: returnDateInput,
+                }
+              : {
+                  origin: firstLeg.destination,
+                  destination: "",
+                  departureDate: departureDateInput,
+                },
+          ];
+    const projection = projectSearchLegs("multi-city", candidateLegs);
+
+    nextParams.set("origin", projection.origin);
+    nextParams.set("destination", projection.destination);
+    nextParams.set("departureDate", projection.departureDate);
+    nextParams.set("adults", String(adultCount));
+    nextParams.set("children", String(childCount));
+    nextParams.set("infants", String(infantCount));
+    nextParams.set(
+      "travelers",
+      String(adultCount + childCount + infantCount),
+    );
+    nextParams.set("cabinClass", cabinClassInput);
+    nextParams.set("currency", selectedCurrency);
+    appendFlightLegParams(nextParams, projection.legs);
+
+    return `/flights?${nextParams.toString()}`;
+  }
+
+  function navigateDesktopMultiCityToLanding() {
+    closeFlightSearchPopovers();
+    stickySearchPanelOpenRef.current = false;
+    setIsSearchExpandedWhileSticky(false);
+    setActiveStickySearchTarget(null);
+    setActiveDesktopSearchSurface(null);
+    router.push(buildDesktopMultiCityLandingHref(), { scroll: true });
+  }
+
+  function openDesktopSearchEditor(
+    launcher: HTMLElement,
+    target:
+      | "trip"
+      | "origin"
+      | "destination"
+      | "dates"
+      | "return"
+      | "travelers",
+  ) {
+    if (tripTypeInput === "multi-city") {
+      navigateDesktopMultiCityToLanding();
+      return;
+    }
+
+    openStickySearchEditor(launcher, target);
+  }
+
   function handleTripTypeChange(nextTripType: string) {
     markExpandedSearchInteraction();
 
@@ -5107,7 +5187,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 collapseStickySearch();
                 return;
               }
-              openStickySearchEditor(event.currentTarget, "trip");
+              openDesktopSearchEditor(event.currentTarget, "trip");
               setTripTypeMenuOpen(true);
             }}
             className={selectorClass}
@@ -5143,15 +5223,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     onClick={(event) => {
                       event.preventDefault();
                       event.stopPropagation();
-                      handleTripTypeChange(option.value);
-                      setTripTypeMenuOpen(false);
                       if (option.value === "multi-city") {
-                        stickySearchPanelOpenRef.current = true;
-                        setIsSearchExpandedWhileSticky(true);
-                        setActiveStickySearchTarget("trip");
-                        setActiveDesktopSearchSurface("sticky");
+                        navigateDesktopMultiCityToLanding();
                         return;
                       }
+                      handleTripTypeChange(option.value);
+                      setTripTypeMenuOpen(false);
                       collapseStickySearch();
                     }}
                   >
@@ -5215,7 +5292,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 ) {
                   setOriginInput(compactOriginLabel);
                 }
-                openStickySearchEditor(input, "origin");
+                openDesktopSearchEditor(input, "origin");
                 if (enteringOrigin) {
                   window.requestAnimationFrame(() => {
                     input.select();
@@ -5227,7 +5304,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   !isStickySearchPanelOpen ||
                   activeStickySearchTarget !== "origin"
                 ) {
-                  openStickySearchEditor(event.currentTarget, "origin");
+                  openDesktopSearchEditor(event.currentTarget, "origin");
                 }
               }}
               onBlur={(event) => {
@@ -5375,7 +5452,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 ) {
                   setDestinationInput(compactDestinationLabel);
                 }
-                openStickySearchEditor(input, "destination");
+                openDesktopSearchEditor(input, "destination");
                 if (enteringDestination) {
                   window.requestAnimationFrame(() => {
                     input.select();
@@ -5387,7 +5464,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   !isStickySearchPanelOpen ||
                   activeStickySearchTarget !== "destination"
                 ) {
-                  openStickySearchEditor(event.currentTarget, "destination");
+                  openDesktopSearchEditor(event.currentTarget, "destination");
                 }
               }}
               onBlur={(event) => {
@@ -5499,7 +5576,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               Boolean(activeDatePicker)
             }
             aria-label={`${t("editFlightSearch")}: ${dateSummary}`}
-            onClick={(event) => openStickySearchEditor(event.currentTarget, "dates")}
+            onClick={(event) => openDesktopSearchEditor(event.currentTarget, "dates")}
             className={cn(fieldClass, "w-full justify-center px-1.5")}
           >
             <span className={valueClass}>{dateSummary}</span>
@@ -5552,7 +5629,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               travelerPopoverOpen
             }
             aria-label={`${t("editFlightSearch")}: ${travelerCabinSummary}`}
-            onClick={(event) => openStickySearchEditor(event.currentTarget, "travelers")}
+            onClick={(event) => openDesktopSearchEditor(event.currentTarget, "travelers")}
             className={cn(selectorClass, "gap-0.5 px-1")}
           >
             <UserRound className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
@@ -5706,7 +5783,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             <button
               type="button"
               aria-label={t("editFlightSearch")}
-              onClick={expandStickySearch}
+              onClick={() => {
+                if (tripTypeInput === "multi-city") {
+                  navigateDesktopMultiCityToLanding();
+                  return;
+                }
+                expandStickySearch();
+              }}
               className="group focus-ring flex min-h-11 w-full min-w-0 items-center justify-between gap-3 bg-white px-4 py-2 text-start transition hover:bg-slate-50"
             >
               <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-sm text-slate-700">
@@ -5786,7 +5869,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   type="button"
                   role="radio"
                   aria-checked={selected}
-                  onClick={() => handleTripTypeChange(option.value)}
+                  onClick={() => {
+                    if (option.value === "multi-city") {
+                      navigateDesktopMultiCityToLanding();
+                      return;
+                    }
+                    handleTripTypeChange(option.value);
+                  }}
                   className="focus-ring inline-flex min-h-9 items-center gap-2 rounded-md px-1 text-sm font-medium text-slate-800 transition-colors hover:text-[#075EE8] focus-visible:ring-2 focus-visible:ring-[#075EE8]/30"
                 >
                   <span
@@ -5932,7 +6021,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     type="button"
                     role="radio"
                     aria-checked={selected}
-                    onClick={() => handleTripTypeChange(option.value)}
+                    onClick={() => {
+                    if (option.value === "multi-city") {
+                      navigateDesktopMultiCityToLanding();
+                      return;
+                    }
+                    handleTripTypeChange(option.value);
+                  }}
                     className="focus-ring inline-flex min-h-9 items-center gap-2 rounded-md px-1 text-sm font-medium text-slate-800 transition-colors hover:text-[#075EE8] focus-visible:ring-2 focus-visible:ring-[#075EE8]/30"
                   >
                     <span
