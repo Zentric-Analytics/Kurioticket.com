@@ -171,7 +171,7 @@ export function CarDealPicker({
               role="listitem"
               className={[
                 responsiveVisibility, "min-w-0 items-center",
-                compact ? "grid-cols-[minmax(0,calc(50%_+_20px))_minmax(0,1fr)] min-h-9 max-[359px]:grid-cols-1 max-[359px]:py-1"
+                compact ? "grid-cols-[minmax(0,calc(65%_+_20px))_minmax(0,1fr)] min-h-9 max-[359px]:grid-cols-1 max-[359px]:py-1"
                         : "grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)] min-h-6",
               ].join(" ")}
               data-car-deal-provider-offer
@@ -188,17 +188,17 @@ export function CarDealPicker({
                   >
                     {group.providerName}
                   </span>
-                {hasDetails ? (
+                  {hasDetails ? (
                   <button
                     type="button"
                     data-car-rate-info
-                    className={["ml-1.5 inline-flex shrink-0 items-center justify-center rounded-full text-[#64748B] hover:text-[#334155] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40", compact ? "h-9 w-8 max-[389px]:w-7" : "h-7 w-7"].join(" ")}
+                    className={["ml-1.5 inline-flex shrink-0 items-center justify-center rounded-full text-[#64748B] hover:text-[#334155] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40", compact ? "h-9 w-8 max-[389px]:w-7" : "h-6 w-7"].join(" ")}
                     aria-label={"Rate information for " + group.providerName + ", " + formatOfferPrice(offer) + " per day"}
                     onClick={event => { event.stopPropagation(); setDetailsKey(group.key); }}
                   >
                     <Info size={compact ? 17 : 16} strokeWidth={1.9} aria-hidden="true" />
                   </button>
-                ) : null}
+                  ) : null}
                 </div>
                 <p
                   className={[(compact ? "text-[12px] leading-[16px]" : "text-xs leading-[14px]"), "min-w-0 max-w-full truncate whitespace-nowrap font-bold tabular-nums text-[#07133B]"].join(" ")}
