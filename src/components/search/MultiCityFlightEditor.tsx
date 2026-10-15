@@ -493,6 +493,7 @@ function MultiCityAirportField({
             ? formatAirportLabel(selectedAirport, locale)
             : undefined
         }
+        showDesktopSecondary={!landingPresentation}
         placeholder={t("cityOrAirport")}
         mobilePlaceholder={t("cityOrAirport")}
         useMainFlightLandingMobilePresentation
