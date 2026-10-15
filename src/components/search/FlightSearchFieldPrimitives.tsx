@@ -20,6 +20,7 @@ export const flightDesktopPopoverSelector =
 type FlightAirportFieldControlProps = {
   label: string;
   value: string;
+  desktopValue?: string;
   placeholder: string;
   mobilePlaceholder: string;
   useMainFlightLandingMobilePresentation?: boolean;
@@ -45,6 +46,7 @@ export const FlightAirportFieldControl = React.forwardRef<
   {
     label,
     value,
+    desktopValue,
     placeholder,
     mobilePlaceholder,
     useMainFlightLandingMobilePresentation = false,
@@ -110,7 +112,7 @@ export const FlightAirportFieldControl = React.forwardRef<
             aria-autocomplete="list"
             aria-controls={open ? suggestionsId : undefined}
             aria-expanded={open}
-            value={value}
+            value={desktopValue ?? value}
             onFocus={onDesktopFocus}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={onKeyDown}

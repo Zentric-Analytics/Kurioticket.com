@@ -51,6 +51,7 @@ import { Button } from "@/components/ui/Button";
 import {
   type AirportOption,
   formatAirportLabel,
+  getAirportByCode,
   getLocalizedAirportCountryName,
   getLocalizedCityName,
 } from "@/data/airports";
@@ -306,6 +307,14 @@ export function StandaloneFlightSearchForm({
   const originCode = originState.code;
   const [destination, setDestination] = useState("");
   const [destinationCode, setDestinationCode] = useState("");
+  const desktopOriginLabel = useMemo(() => {
+    const airport = getAirportByCode(originCode);
+    return airport ? formatAirportLabel(airport, locale) : origin;
+  }, [locale, origin, originCode]);
+  const desktopDestinationLabel = useMemo(() => {
+    const airport = getAirportByCode(destinationCode);
+    return airport ? formatAirportLabel(airport, locale) : destination;
+  }, [destination, destinationCode, locale]);
   const [originOpen, setOriginOpen] = useState(false);
   const [destinationOpen, setDestinationOpen] = useState(false);
   const [activeMobilePicker, setActiveMobilePicker] =
@@ -1612,6 +1621,7 @@ export function StandaloneFlightSearchForm({
               inputRef={originInputRef}
               label={t("origin")}
               value={origin}
+              desktopValue={desktopOriginLabel}
               placeholder={t("cityOrAirport")}
               mobilePlaceholder={t("cityOrAirport")}
               useMainFlightLandingMobilePresentation={
@@ -1658,6 +1668,7 @@ export function StandaloneFlightSearchForm({
               inputRef={destinationInputRef}
               label={t("destination")}
               value={destination}
+              desktopValue={desktopDestinationLabel}
               placeholder={t("cityOrAirport")}
               mobilePlaceholder={t("flightSearchDestinationPlaceholderShort")}
               useMainFlightLandingMobilePresentation={

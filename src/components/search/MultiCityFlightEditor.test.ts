@@ -122,6 +122,17 @@ test("results airport values are code-only while placeholders and rich picker co
   assert.match(editor, /\{option\.code\}/);
 });
 
+test("desktop airport labels use City plus IATA without changing mobile value rendering", () => {
+  assert.match(primitives, /desktopValue\?: string/);
+  assert.match(primitives, /value=\{desktopValue \?\? value\}/);
+  assert.match(
+    editor,
+    /desktopValue=\{[\s\S]*?landingPresentation && selectedAirport && draftQuery === null[\s\S]*?formatAirportLabel\(selectedAirport, locale\)/,
+  );
+  assert.match(editor, /<MobileAirportPicker[\s\S]*?value=\{query\}/);
+  assert.match(editor, /value=\{resultsPresentation && draftQuery === null \? code : query\}/);
+});
+
 test("results dates use canonical travel wording without changing standalone wording", () => {
   assert.match(editor, /t\(resultsPresentation \? "travelDates" : "flightMultiCity\.departureDate"\)/);
   assert.match(editor, /aria-label=\{`\$\{fieldLabel\}/);
