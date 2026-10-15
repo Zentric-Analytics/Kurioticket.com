@@ -22,10 +22,9 @@ type Props = {
   desktopPanelTarget?: HTMLElement | null;
 };
 
-// Keep mobile and desktop previews independent of the number of seller quotes.
-// Every seller remains in the list and can be expanded on either layout.
-const INITIAL_MOBILE_OFFER_COUNT = 5;
-const INITIAL_DESKTOP_OFFER_COUNT = 3;
+// Keep every Cars surface at three visible offer rows by default.
+// Never discard the remaining provider offers: the disclosure expands the full list.
+const INITIAL_VISIBLE_OFFER_COUNT = 3;
 
 const providerInitial = (name: string) =>
   name.trim().charAt(0).toLocaleUpperCase() || "P";
@@ -158,13 +157,9 @@ export function CarDealPicker({
           const offer = group.primaryOffer;
           const bookingHref = approvedProviderBookingUrl(car, offer);
           const hasDetails = car.inventorySource === "kayak-sandbox" && Boolean(offer.suppliedFacts?.length);
-          const responsiveVisibility = expanded
+          const responsiveVisibility = expanded || index < INITIAL_VISIBLE_OFFER_COUNT
             ? "grid"
-            : index < INITIAL_DESKTOP_OFFER_COUNT
-              ? "grid"
-              : index < INITIAL_MOBILE_OFFER_COUNT
-                ? "grid md:hidden"
-                : "hidden";
+            : "hidden";
           return (
             <div
               key={group.key}
@@ -237,32 +232,23 @@ export function CarDealPicker({
           );
         })}
       </div>
-      {groups.length > INITIAL_MOBILE_OFFER_COUNT ? (
-        <button
-          type="button"
-          data-car-deal-more-offers
-          className="mt-0.5 inline-flex min-h-9 items-center gap-1 text-[10px] font-semibold text-[#004BB8] md:hidden"
-          style={compact ? { fontSize: 11, lineHeight: "16px", fontWeight: 600 } : undefined}
-          onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
-          aria-expanded={expanded}
-        >
-          {expanded ? "Show fewer offers" : "+" + (groups.length - INITIAL_MOBILE_OFFER_COUNT) + " more offers"}
-          <ChevronRight size={12} className={expanded ? "-rotate-90" : "rotate-90"} aria-hidden="true" />
-        </button>
-      ) : null}
-      {groups.length > INITIAL_DESKTOP_OFFER_COUNT ? (
-        <button
-          type="button"
-          data-car-deal-more-offers
-          className="mt-1 hidden min-h-6 items-center gap-1 text-[10px] font-semibold text-[#004BB8] md:inline-flex"
-          style={compact ? { fontSize: 11, lineHeight: "16px", fontWeight: 600 } : undefined}
-          onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
-          aria-expanded={expanded}
-        >
-          {expanded ? "Show fewer offers" : "+" + (groups.length - INITIAL_DESKTOP_OFFER_COUNT) + " more offers"}
-          <ChevronRight size={12} className={expanded ? "-rotate-90" : "rotate-90"} aria-hidden="true" />
-        </button>
-      ) : null}
+      {/* Reserve a disclosure row even when only one or two providers are available.
+          This keeps collapsed three-offer cards the same height without fake offers. */}
+      <div data-car-deal-more-slot className="mt-0.5 flex min-h-9 items-center md:mt-1 md:min-h-6">
+        {groups.length > INITIAL_VISIBLE_OFFER_COUNT ? (
+          <button
+            type="button"
+            data-car-deal-more-offers
+            className="inline-flex min-h-9 items-center gap-1 text-[10px] font-semibold text-[#004BB8] md:min-h-6"
+            style={compact ? { fontSize: 11, lineHeight: "16px", fontWeight: 600 } : undefined}
+            onClick={event => { event.stopPropagation(); setExpanded(current => !current); }}
+            aria-expanded={expanded}
+          >
+            {expanded ? "Show fewer offers" : "+" + (groups.length - INITIAL_VISIBLE_OFFER_COUNT) + " more offers"}
+            <ChevronRight size={12} className={expanded ? "-rotate-90" : "rotate-90"} aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
       <dialog
         ref={dialogRef}
         data-car-rate-dialog
