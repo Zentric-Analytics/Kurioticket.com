@@ -201,7 +201,7 @@ test("Cars Rate details uses borderless close, polished section icons, and reada
   const sheet = picker.slice(picker.indexOf('data-car-rate-dialog'));
   assert.ok(sheet.includes('<RateSectionIcon id="payment" />'));
   assert.ok(sheet.includes('<RateSectionIcon id={section.id} />'));
-  assert.equal((sheet.match(/<h3 className="mb-\[18px\] flex min-w-0 items-center gap-2/g) ?? []).length, 2);
+  assert.equal((sheet.match(/<h3 className="mb-\[24px\] flex min-w-0 items-center gap-2/g) ?? []).length, 2);
   const closeButton = sheet.match(/aria-label="Close rate details"\s+className="([^"]+)"/)?.[1];
   assert.ok(closeButton);
   assert.ok(closeButton.includes("h-11 w-11"));
