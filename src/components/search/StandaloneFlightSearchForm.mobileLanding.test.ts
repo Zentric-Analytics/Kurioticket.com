@@ -106,6 +106,26 @@ test("all mobile trip options update canonical state including Multi-city", () =
   assert.match(source, /<MultiCityFlightEditor/);
 });
 
+test("desktop Round-trip and One-way resolve selected airports to City plus IATA while mobile keeps the canonical value", () => {
+  assert.match(source, /getAirportByCode/);
+  assert.match(
+    source,
+    /const desktopOriginLabel = useMemo\(\(\) => \{[\s\S]*?getAirportByCode\(originCode\)[\s\S]*?formatAirportLabel\(airport, locale\) : origin/,
+  );
+  assert.match(
+    source,
+    /const desktopDestinationLabel = useMemo\(\(\) => \{[\s\S]*?getAirportByCode\(destinationCode\)[\s\S]*?formatAirportLabel\(airport, locale\) : destination/,
+  );
+  assert.match(
+    source,
+    /label=\{t\("origin"\)\}[\s\S]*?value=\{origin\}[\s\S]*?desktopValue=\{desktopOriginLabel\}/,
+  );
+  assert.match(
+    source,
+    /label=\{t\("destination"\)\}[\s\S]*?value=\{destination\}[\s\S]*?desktopValue=\{desktopDestinationLabel\}/,
+  );
+});
+
 test("desktop Multi-city landing uses the dedicated aligned presentation and right-side traveler/search rail", () => {
   assert.match(
     source,
