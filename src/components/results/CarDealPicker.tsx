@@ -265,7 +265,7 @@ export function CarDealPicker({
                   type="button"
                   onClick={() => dialogRef.current?.close()}
                   aria-label="Close rate details"
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#07133B] focus-visible:bg-slate-100 focus-visible:outline-none"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#07133B] focus-visible:bg-slate-100 focus-visible:outline-none md:hidden"
                 >
                   <X size={20} aria-hidden="true" />
                 </button>
@@ -275,7 +275,7 @@ export function CarDealPicker({
             <div data-car-rate-scroll className="min-h-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-contain bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 [-webkit-overflow-scrolling:touch] md:px-5 md:pb-5">
               <div className="min-w-0" onClick={event => event.stopPropagation()}>
             <section data-car-rate-section="payment" className="border-b border-[#E2E8F0] pb-4">
-              <h3 className="mb-3 flex min-w-0 items-center gap-2 text-[15px] font-semibold leading-[21px] tracking-[-0.012em] text-[#1E293B]"><RateSectionIcon id="payment" /><span className="min-w-0">Price and payment</span></h3>
+              <h3 className="mb-[18px] flex min-w-0 items-center gap-2 text-[15px] font-semibold leading-[21px] tracking-[-0.012em] text-[#1E293B]"><RateSectionIcon id="payment" /><span className="min-w-0">Price and payment</span></h3>
               <p className="text-xl font-bold tabular-nums">{formatOfferPrice(selectedOffer)}<span className="ml-1 text-xs font-medium text-[#64748B]">per day</span></p>
               <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 text-[14px] leading-5"><span className="font-medium text-[#475569]">Estimated total:</span><strong data-car-rate-total-price className="font-semibold tabular-nums text-[#0F172A]">{formatTotal(selectedOffer)}</strong></p>
               <p className="mt-1 text-xs text-[#64748B]">Payment timing: {getCarRatePaymentLabel(selectedOffer) ?? "Not supplied"}</p>
@@ -292,7 +292,7 @@ export function CarDealPicker({
             </section>
             {disclosureSections.filter(section => section.id !== "payment").map(section => (
               <section key={section.id} className="min-w-0 border-b border-[#E2E8F0] py-4" data-car-rate-section={section.id}>
-                <h3 className="mb-3 flex min-w-0 items-center gap-2 text-[15px] font-semibold leading-[21px] tracking-[-0.012em] text-[#1E293B]"><RateSectionIcon id={section.id} /><span className="min-w-0">{section.title}</span></h3>
+                <h3 className="mb-[18px] flex min-w-0 items-center gap-2 text-[15px] font-semibold leading-[21px] tracking-[-0.012em] text-[#1E293B]"><RateSectionIcon id={section.id} /><span className="min-w-0">{section.title}</span></h3>
                 <dl className="divide-y divide-[#E2E8F0]">
                   {section.facts.map((fact, index) => (
                     <div
