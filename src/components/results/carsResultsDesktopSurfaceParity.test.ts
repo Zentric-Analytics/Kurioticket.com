@@ -99,15 +99,30 @@ test("desktop Cars results body is compact, centered, and keeps shared surfaces 
   );
   assert.match(
     card,
-    /hidden md:grid lg:grid-cols-\[220px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[228px_minmax\(0,1fr\)_152px\]/,
+    /hidden md:grid lg:grid-cols-\[204px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[212px_minmax\(0,1fr\)_152px\]/,
   );
   assert.match(
     skeleton,
-    /lg:grid-cols-\[220px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[228px_minmax\(0,1fr\)_152px\]/,
+    /lg:grid-cols-\[204px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[212px_minmax\(0,1fr\)_152px\]/,
   );
   assert.match(
     card,
     /<article[\s\S]*?relative w-full overflow-hidden/,
+  );
+  assert.match(
+    card,
+    /md:!h-\[220px\] md:!min-h-\[220px\] md:max-h-\[220px\] md:self-start lg:!h-\[200px\] lg:!min-h-\[200px\] lg:max-h-\[200px\]/,
+    "the smaller media frame is limited to large-screen breakpoints",
+  );
+  assert.match(
+    skeleton,
+    /aspect-\[4\/3\] w-full rounded-xl lg:aspect-auto lg:h-\[200px\]/,
+    "the desktop skeleton image matches the compact 200px frame",
+  );
+  assert.match(
+    card,
+    /data-car-card-mobile-image[\s\S]*?min-h-\[144px\]/,
+    "the separately rendered mobile image retains its original minimum height",
   );
 });
 
