@@ -441,6 +441,13 @@ test("Cars mobile provider rows span the full card while desktop keeps its separ
         // The rule runs edge-to-edge inside the rounded card border.
         expect(Math.abs(dividerBox!.x - (cardArticleBox!.x + 1))).toBeLessThanOrEqual(2);
         expect(Math.abs(dividerBox!.x + dividerBox!.width - (cardArticleBox!.x + cardArticleBox!.width - 1))).toBeLessThanOrEqual(2);
+        // Desktop offers start with a paragraph-style inset beneath the compact image.
+        const initialRowBox = await rows.first().boundingBox();
+        expect(initialRowBox).not.toBeNull();
+        const leftOfferInset = initialRowBox!.x - cardArticleBox!.x;
+        expect(leftOfferInset).toBeGreaterThanOrEqual(29);
+        expect(leftOfferInset).toBeLessThanOrEqual(38);
+        expect(initialRowBox!.x).toBeLessThan(imageBox!.x + imageBox!.width - 40);
       }
       const previewCardHeight = (await card.boundingBox())!.height;
       if (!mobile) expect(previewCardHeight).toBeLessThanOrEqual(410); // Bounded increase for evenly spaced desktop rows.
@@ -502,7 +509,14 @@ test("Cars mobile provider rows span the full card while desktop keeps its separ
         }
         expect(provider!.x + provider!.width).toBeLessThanOrEqual(price!.x + 1);
         expect(price!.x + price!.width + 6).toBeLessThanOrEqual(link!.x + 1);
-        if (!mobile && !expandedOffers) expect(Math.abs(link!.x - rightSpecRect!.x)).toBeLessThanOrEqual(3);
+        if (!mobile) {
+          // All desktop View deal links finish at the same restrained right inset.
+          const actionRect = await row.locator("[data-car-deal-provider-action-slot]").boundingBox();
+          expect(actionRect).not.toBeNull();
+          expect(actionRect!.width).toBeGreaterThanOrEqual(90);
+          expect(Math.abs(link!.x + link!.width - (actionRect!.x + actionRect!.width - 8))).toBeLessThanOrEqual(3);
+          expect(rowRect!.x).toBeLessThan(rightSpecRect!.x);
+        }
         const providerCenterY = provider!.y + provider!.height / 2;
         const linkCenterY = link!.y + link!.height / 2;
         expect(Math.abs(providerCenterY - linkCenterY)).toBeLessThanOrEqual(3);
