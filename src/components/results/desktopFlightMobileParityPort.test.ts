@@ -14,14 +14,16 @@ test("desktop Flight Results moves price tracking into the sidebar without repla
   assert.match(results, /data-flight-results-main className="max-sm:overflow-x-clip bg-\[#F5F7FB\][^"]*sm:bg-\[#F3F6FA\][^"]*lg:bg-white"/);
   assert.doesNotMatch(results, /data-desktop-nearby-fare-rail|data-desktop-cheaper-nearby/);
   assert.match(results, /data-nearby-fare-presentation="mobile"/);
-  assert.match(results, /className="max-sm:pt-2 max-sm:pb-1 sm:hidden"><div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
+  assert.match(results, /className="max-sm:pt-2 max-sm:pb-1 sm:mb-4 lg:hidden"><div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
   assert.match(results, /data-flight-price-alert-sidebar-slot/);
   assert.match(results, /desktopPortalTarget=\{desktopFlightPriceAlertTarget\}/);
   assert.match(results, /data-flight-results-card-list className="space-y-3 sm:space-y-4"/);
   assert.match(alert, /data-flight-price-alert-sidebar/);
   assert.match(alert, /min-h-\[48px\]/);
   assert.match(alert, />Track flight price</);
-  assert.match(alert, /createPortal\(desktopControl, desktopPortalTarget\)/);
+  assert.match(alert, /window\.matchMedia\("\(min-width: 1024px\)"\)/);
+  assert.match(alert, /desktopSidebarActive && desktopPortalTarget[\s\S]*?createPortal\(desktopControl, desktopPortalTarget\)/);
+  assert.match(alert, /hidden sm:block lg:hidden/);
 });
 
 test("desktop Flight filters follow the approved section hierarchy and selected-state language", () => {
