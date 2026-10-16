@@ -77,8 +77,22 @@ export async function POST(request: Request) {
   try {
     const resolved = await resolveRegularKayakSearch("hotels", kayakProviderCriteria(search as unknown as Record<string, unknown>),
       (term, vertical = "hotels") => client.places(vertical, term, trackId, request.signal));
-    if (!resolved.supported || resolved.search.vertical !== "hotels")
+    if (!resolved.supported || resolved.search.vertical !== "hotels") {
+      after(async () => {
+        const session = (await resolveOptionalWebApiSession())?.session;
+        await Promise.all([
+          logSearchHistory({ userId: session?.user?.id, type: "HOTEL", destination: search.destination,
+            checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
+            query: search, resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
+          trackAnalyticsEvent({ userId: session?.user?.id, type: "SEARCH",
+            name: "hotel_search", metadata: { destination: search.destination, resultCount: 0, progressive: true, unsupported: true, trackId } }),
+          logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search", status: "DISABLED",
+            latencyMs: Date.now() - startedAt, errorMessage: "unsupported_search",
+            metadata: { progressive: true, trackId } }),
+        ]);
+      });
       return NextResponse.json({ error: resolved.supported ? "Invalid search." : resolved.reason, status: "unavailable", results: [] }, { status: 422 });
+    }
     const batch = await client.searchHotelBatch(resolved.search, trackId, state?.checkpoint, request.signal);
     const nights = Math.max(1, Math.round((Date.parse(search.checkOut) - Date.parse(search.checkIn)) / 86_400_000));
     const results: NormalizedHotelResult[] = batch.offers.flatMap(offer => {
