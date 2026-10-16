@@ -379,9 +379,14 @@ test("Cars mobile provider rows span the full card while desktop keeps its separ
         await expect(card.locator("article")).toHaveCSS("background-color", "rgb(255, 255, 255)");
         await expect(card.locator("[data-car-card-desktop-header-rail]")).toHaveCSS("background-color", "rgb(255, 255, 255)");
         await expect(mainPrice).toHaveCSS("background-color", "rgb(255, 255, 255)");
-        await expect(dealArea).toHaveCSS("border-top-width", "1px");
-        await expect(mainPrice).toHaveCSS("border-top-width", "1px");
+        // The horizontal rule is a single full-width grid line, not duplicate section borders.
+        await expect(dealArea).toHaveCSS("border-top-width", "0px");
+        await expect(mainPrice).toHaveCSS("border-top-width", "0px");
         await expect(mainPrice).toHaveCSS("border-left-width", "1px");
+        const sharedDivider = card.locator("[data-car-card-desktop-full-width-divider]");
+        await expect(sharedDivider).toBeVisible();
+        await expect(sharedDivider).toHaveCSS("height", "1px");
+        await expect(sharedDivider).toHaveCSS("background-color", "rgb(203, 213, 225)");
         const cancellation = card.locator("[data-car-card-desktop-shared-header] [data-car-card-desktop-free-cancellation]");
         const amenities = card.locator("[data-car-card-desktop-header-specs]");
         const cancellationBox = await cancellation.boundingBox();
@@ -397,8 +402,21 @@ test("Cars mobile provider rows span the full card while desktop keeps its separ
         expect(Math.abs(detailsRect.y - pricingRect.y)).toBeLessThanOrEqual(2);
         const image = card.locator('[data-region="image"] > div').first();
         const imageBox = await image.boundingBox();
+        const dividerBox = await sharedDivider.boundingBox();
+        const cardArticleBox = await card.locator("article").boundingBox();
         expect(imageBox).not.toBeNull();
-        expect(imageBox!.height).toBeLessThanOrEqual(230);
+        expect(dividerBox).not.toBeNull();
+        expect(cardArticleBox).not.toBeNull();
+        expect(imageBox!.height).toBeGreaterThanOrEqual(174);
+        expect(imageBox!.height).toBeLessThanOrEqual(178);
+        // Media and amenities end in row one; the shared rule starts row two.
+        expect(imageBox!.y + imageBox!.height).toBeLessThanOrEqual(dividerBox!.y + 1);
+        expect(dividerBox!.y).toBeGreaterThanOrEqual(amenitiesBox!.y + amenitiesBox!.height - 1);
+        expect(Math.abs(detailsRect.y - dividerBox!.y)).toBeLessThanOrEqual(2);
+        expect(Math.abs(pricingRect.y - dividerBox!.y)).toBeLessThanOrEqual(2);
+        // The rule runs edge-to-edge inside the rounded card border.
+        expect(Math.abs(dividerBox!.x - (cardArticleBox!.x + 1))).toBeLessThanOrEqual(2);
+        expect(Math.abs(dividerBox!.x + dividerBox!.width - (cardArticleBox!.x + cardArticleBox!.width - 1))).toBeLessThanOrEqual(2);
       }
       const previewCardHeight = (await card.boundingBox())!.height;
       if (!mobile) expect(previewCardHeight).toBeLessThanOrEqual(410); // Bounded increase for evenly spaced desktop rows.
