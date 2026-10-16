@@ -15,6 +15,11 @@ test("Android progressive Hotel starts with one verified provider page and conti
   assert.match(route, /request\.headers\.get\("x-mobile-platform"\) !== "android"/);
   assert.match(route, /hotelSearchSchema\.safeParse/);
   assert.match(route, /await rememberProviderResults\("hotel", results, search\)/);
+  assert.match(route, /await getHotelSearchCohort\(search\)/);
+  assert.match(route, /await rememberHotelSearchCohort\(cumulative, search\)/);
+  assert.match(route, /logSearchHistory\(/);
+  assert.match(route, /trackAnalyticsEvent\(/);
+  assert.match(route, /logProviderCall\(/);
   assert.match(route, /nextCursor, progressive: true/);
 });
 
