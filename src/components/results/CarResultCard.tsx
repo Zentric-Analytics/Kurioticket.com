@@ -481,13 +481,13 @@ export function CarResultCard({
       )}
 
       <div
-        className={`${guidedPlanning ? "grid lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]" : "hidden md:grid lg:grid-cols-[204px_minmax(0,1fr)_152px] xl:grid-cols-[212px_minmax(0,1fr)_152px]"} grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:grid-cols-[250px_minmax(0,1fr)]`}
+        className={`${guidedPlanning ? "grid lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]" : "hidden md:grid lg:grid-cols-[192px_minmax(0,1fr)_152px] xl:grid-cols-[200px_minmax(0,1fr)_152px]"} grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:grid-cols-[250px_minmax(0,1fr)]`}
       >
         <div
           data-region="image"
-          className={`col-span-2 row-start-1 flex items-stretch border-b border-[#E2E8F0] bg-white md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 md:border-b-0 md:border-e ${!guidedPlanning ? "lg:border-e-0 lg:items-center" : ""}`}
+          className={`col-span-2 row-start-1 flex items-stretch border-b border-[#E2E8F0] bg-white md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 md:border-b-0 md:border-e ${!guidedPlanning ? "lg:row-span-1 lg:border-e-0 lg:items-start" : ""}`}
         >
-          <div className={["relative aspect-[4/3] w-full overflow-hidden bg-white md:aspect-auto md:h-full md:min-h-[220px]", !guidedPlanning ? "md:!h-[220px] md:!min-h-[220px] md:max-h-[220px] md:self-start lg:!h-[200px] lg:!min-h-[200px] lg:max-h-[200px]" : ""].join(" ")}>
+          <div className={["relative aspect-[4/3] w-full overflow-hidden bg-white md:aspect-auto md:h-full md:min-h-[220px]", !guidedPlanning ? "md:!h-[220px] md:!min-h-[220px] md:max-h-[220px] md:self-start lg:!h-[176px] lg:!min-h-[176px] lg:max-h-[176px]" : ""].join(" ")}>
             <CarResultImage
               imageUrl={car.imageUrl}
               imageAlt={car.imageAlt}
@@ -717,9 +717,17 @@ export function CarResultCard({
           )}
         </div>
 
+        {!guidedPlanning ? (
+          <div
+            data-car-card-desktop-full-width-divider
+            aria-hidden="true"
+            className="pointer-events-none hidden lg:col-span-3 lg:col-start-1 lg:row-start-2 lg:z-20 lg:block lg:h-px lg:w-full lg:self-start lg:bg-[#CBD5E1]"
+          />
+        ) : null}
+
         <div
           data-region="details"
-          className={`col-start-1 row-start-3 min-w-0 border-t border-[#E2E8F0] px-3 py-3 md:col-start-2 md:row-start-2 md:border-t-0 md:px-4 md:pb-3 md:pt-1 ${!guidedPlanning ? "lg:border-t lg:border-[#CBD5E1] lg:pb-2 lg:pt-2" : ""} ${!guidedPlanning ? `lg:col-span-2 lg:col-start-2 lg:transition-[padding-right] lg:duration-300 lg:ease-in-out motion-reduce:transition-none ${offersExpanded ? "lg:pr-4" : "lg:pr-[168px]"}` : ""}`}
+          className={`col-start-1 row-start-3 min-w-0 border-t border-[#E2E8F0] px-3 py-3 md:col-start-2 md:row-start-2 md:border-t-0 md:px-4 md:pb-3 md:pt-1 ${!guidedPlanning ? "lg:border-t-0 lg:border-[#CBD5E1] lg:pb-2 lg:pt-2" : ""} ${!guidedPlanning ? `lg:col-span-2 lg:col-start-2 lg:transition-[padding-right] lg:duration-300 lg:ease-in-out motion-reduce:transition-none ${offersExpanded ? "lg:pr-4" : "lg:pr-[168px]"}` : ""}`}
         >
           <ul
             data-car-card-desktop-primary-specs
@@ -753,7 +761,7 @@ export function CarResultCard({
           data-region="pricing"
           aria-hidden={offersExpanded}
           inert={offersExpanded ? true : undefined}
-          className={`col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 ${!guidedPlanning ? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-[#CBD5E1] lg:pb-2 lg:text-right" : "lg:row-span-2 lg:row-start-1 lg:items-center lg:justify-center lg:border-s lg:border-t-0 lg:text-center"} ${desktopSurfaceParity ? "bg-white" : "bg-slate-50/45 lg:bg-white"} ${!guidedPlanning ? "lg:z-10 lg:transition-[opacity,visibility] lg:duration-300 lg:ease-in-out motion-reduce:transition-none" : ""} ${!guidedPlanning ? (offersExpanded ? "md:hidden lg:flex lg:invisible lg:pointer-events-none lg:opacity-0" : "lg:visible lg:opacity-100") : ""}`}
+          className={`col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 ${!guidedPlanning ? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t-0 lg:border-[#CBD5E1] lg:pb-2 lg:text-right" : "lg:row-span-2 lg:row-start-1 lg:items-center lg:justify-center lg:border-s lg:border-t-0 lg:text-center"} ${desktopSurfaceParity ? "bg-white" : "bg-slate-50/45 lg:bg-white"} ${!guidedPlanning ? "lg:z-10 lg:transition-[opacity,visibility] lg:duration-300 lg:ease-in-out motion-reduce:transition-none" : ""} ${!guidedPlanning ? (offersExpanded ? "md:hidden lg:flex lg:invisible lg:pointer-events-none lg:opacity-0" : "lg:visible lg:opacity-100") : ""}`}
         >
           {!guidedPlanning ? (
             <div
