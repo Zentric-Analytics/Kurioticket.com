@@ -515,8 +515,10 @@ test("desktop Flight renders the Hotel-style Popular filters card directly after
   assert.match(source, /sticky top-\[88px\]/);
   assert.match(source, /max-h-\[calc\(100vh-100px\)\]/);
   assert.match(source, /data-flight-sticky-popular-filters[\s\S]*?bg-white/);
-  assert.match(source, /text-\[13px\] font-medium leading-5 text-\[#26354A\]/);
-  assert.match(source, /text-\[12px\] font-semibold leading-5 tabular-nums text-\[#526174\]/);
+  assert.match(source, /text-\[12px\] font-normal leading-4 text-\[#142033\]/);
+  assert.match(source, /shrink-0 tabular-nums text-slate-500/);
+  assert.doesNotMatch(source, /text-\[13px\] font-medium leading-5 text-\[#26354A\]/);
+  assert.doesNotMatch(source, /text-\[12px\] font-semibold leading-5 tabular-nums text-\[#526174\]/);
   assert.match(source, /className="peer sr-only"/);
   assert.match(
     source,

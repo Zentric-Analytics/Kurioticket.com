@@ -270,7 +270,7 @@ function StickyFlightPopularFilters({
         {popularFilters.map((filter) => (
           <label
             key={filter.key}
-            className="group flex min-h-7 cursor-pointer items-center gap-2 rounded px-0.5 text-[13px] font-medium leading-5 text-[#26354A] hover:bg-slate-50"
+            className="group flex min-h-7 cursor-pointer items-center gap-2 rounded px-0.5 text-[12px] font-normal leading-4 text-[#142033] hover:bg-slate-50"
           >
             <span className="relative flex shrink-0 items-center justify-center">
               <input
@@ -300,7 +300,7 @@ function StickyFlightPopularFilters({
             <span className="min-w-0 flex-1 truncate" title={filter.label}>
               {filter.label}
             </span>
-            <span className="shrink-0 text-[12px] font-semibold leading-5 tabular-nums text-[#526174]">
+            <span className="shrink-0 tabular-nums text-slate-500">
               {filter.count}
             </span>
           </label>
