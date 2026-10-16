@@ -555,10 +555,21 @@ test("mobile offers stay full-width while desktop pricing rail animates during e
   assert.equal((source.match(/inert=\{offersExpanded \? true : undefined\}/g) ?? []).length, 1);
   assert.doesNotMatch(source, /data-car-card-mobile-pricing/);
   assert.match(source, /data-car-card-mobile-offers\s+className="w-full min-w-0 px-2 py-1\.5"/);
-  assert.match(source, /lg:col-span-2 lg:col-start-2 lg:transition-\[padding-right\]/);
+  assert.match(source, /lg:col-span-3 lg:col-start-1 lg:pl-8 lg:transition-\[padding-right\]/);
   assert.match(source, /offersExpanded \? "lg:pr-4" : "lg:pr-\[168px\]"/);
   assert.match(source, /md:hidden lg:flex lg:invisible lg:pointer-events-none lg:opacity-0/);
   assert.match(source, /motion-reduce:transition-none/);
+});
+
+test("desktop offer rows occupy the image's lower-left space without moving the T divider or pricing rail", () => {
+  const details = source.slice(source.indexOf('data-region="details"'), source.indexOf('data-region="pricing"'));
+  const pricing = source.slice(source.indexOf('data-region="pricing"'));
+  assert.match(details, /lg:col-span-3 lg:col-start-1 lg:pl-8 lg:transition-\[padding-right\]/);
+  assert.match(details, /offersExpanded \? "lg:pr-4" : "lg:pr-\[168px\]"/);
+  assert.match(source, /data-car-card-desktop-full-width-divider[\s\S]*?lg:col-span-3 lg:col-start-1 lg:row-start-2/);
+  assert.match(pricing, /lg:col-span-1 lg:col-start-3/);
+  assert.match(pricing, /lg:items-stretch lg:border-s lg:border-t-0 lg:border-\[#CBD5E1\]/);
+  assert.match(source, /data-car-card-mobile-offers[\s\S]*?className="w-full min-w-0 px-2 py-1\.5"/);
 });
 
 test("standalone desktop pricing is anchored to the card bottom-right while guided pricing stays centered", () => {
