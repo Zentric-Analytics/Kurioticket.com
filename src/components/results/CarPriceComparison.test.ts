@@ -261,7 +261,7 @@ test("Rate details footer View deal text is centered without arrows on mobile an
   assert.doesNotMatch(footer, /items-center justify-center gap-2/);
   assert.match(footer, /data-car-rate-view-deal/);
   assert.match(footer, /data-car-rate-view-deal-unavailable/);
-  assert.match(picker, /View deal <ChevronRight size=\{compact \? 11 : 12\}/);
+  assert.match(picker, /View deal <ChevronRight size=\{12\}/);
 });
 
 test("Cars Rate details desktop scrollbar is slim with smaller arrows and isolated from other surfaces", () => {
@@ -376,14 +376,14 @@ test("desktop rows stay compact while full-width mobile provider rows keep their
   assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
 });
 
-test("desktop provider logos and offer labels are readable without changing compact mobile sizing", () => {
-  assert.ok(picker.includes('compact ? "h-4 w-4 max-w-full object-contain" : "h-4 w-4 max-w-full object-contain lg:h-[18px] lg:w-[18px]"'));
+test("desktop provider styles remain unchanged while mobile offer typography scales proportionately", () => {
+  assert.ok(picker.includes('compact ? "h-[19px] w-[19px] max-w-full object-contain" : "h-4 w-4 max-w-full object-contain lg:h-[18px] lg:w-[18px]"'));
   assert.ok(picker.includes('lg:h-[18px] lg:w-[18px]"'));
   assert.ok(picker.includes('text-[10px] leading-3 lg:text-[12px] lg:leading-4'));
   assert.ok(picker.includes('text-xs leading-[14px] lg:text-[13px] lg:leading-[17px]'));
   assert.ok(picker.includes('text-[11px] leading-4 lg:text-[12px]'));
-  assert.ok(picker.includes('compact ? "text-[11px] leading-[15px]"'));
-  assert.ok(picker.includes('compact ? "text-[12px] leading-[16px]"'));
+  assert.ok(picker.includes('compact ? "text-[12px] leading-4"'));
+  assert.ok(picker.includes('compact ? "text-[13px] leading-[17px]"'));
   assert.ok(picker.includes('style={compact ? { fontSize: 11, lineHeight: "16px", fontWeight: 600 } : undefined}'));
 });
 
