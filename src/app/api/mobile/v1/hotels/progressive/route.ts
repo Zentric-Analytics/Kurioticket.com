@@ -90,9 +90,10 @@ export async function POST(request: Request) {
       await rememberProviderResults("hotel", results, search);
     }
     const classified = classifyHotels(results.map(toPublicHotel), [], trackId);
+    const now = Date.now();
     const nextCursor = batch.checkpoint ? encode({
       search, trackId, snapshot, checkpoint: batch.checkpoint,
-      issuedAt: Date.now(), expiresAt: Date.now() + TTL_MS,
+      issuedAt: now, expiresAt: now + TTL_MS,
     }, key) : null;
     if (!nextCursor && results.length) await rememberHotelSearchCohort(results, search);
     return NextResponse.json({ ...classified, nextCursor, progressive: true,
