@@ -364,7 +364,7 @@ export function DesktopFlightFilters({
         </HotelStyleFilterSection>
 
         <HotelStyleFilterSection title={`${t("takeoff")} / ${t("landing")}`}>
-          <div className="mb-2.5 grid grid-cols-2 rounded-[10px] bg-slate-100 p-1">
+          <div className="mb-2 grid grid-cols-2 rounded-[10px] bg-slate-100 p-1">
             {["takeoff", "landing"].map((mode) => <button key={mode} type="button" onClick={() => { onFilterChange(); setTimeFilterMode(mode as TimeFilterMode); onFilterCommit(); }} className={cn("min-h-8 rounded-lg px-2 py-1 text-[12px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30", isGuidedComfortable && "min-h-10 text-[13px]", timeFilterMode === mode ? "bg-white font-semibold text-[#004BB8] shadow-sm" : "text-slate-700 hover:text-slate-950")}>{mode === "takeoff" ? t("takeoff") : t("landing")}</button>)}
           </div>
           <div
