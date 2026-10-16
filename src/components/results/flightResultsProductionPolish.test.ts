@@ -480,7 +480,7 @@ test("desktop Flight filters match Hotel desktop typography while keeping the Fl
 
   assert.match(
     primaryFilters,
-    /h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-\[13px\] text-slate-950 placeholder:text-slate-500/,
+    /h-8 w-full rounded-md border border-slate-300 bg-white px-3 text-\[13px\] text-slate-950 placeholder:text-slate-500/,
   );
   assert.doesNotMatch(
     primaryFilters,
@@ -513,6 +513,7 @@ test("desktop Flight filters match Hotel desktop typography while keeping the Fl
   assert.match(primaryFilters, /flex min-h-9 items-center justify-between gap-3 px-3 py-1\.5/);
   assert.match(primaryFilters, /mb-2 flex items-center gap-1\.5 text-\[12px\]/);
   assert.match(primaryFilters, /min-h-8 rounded-lg px-2 py-1 text-\[12px\]/);
+  assert.match(primaryFilters, /mb-2 grid grid-cols-2 rounded-\[10px\]/);
   assert.match(primaryFilters, /h-8 w-full rounded-md border border-slate-300/);
   assert.match(facetRow, /min-h-\[28px\]/);
   assert.doesNotMatch(filters, /border-t border-slate-200\/60 px-3 py-3 first:border-t-0/);
@@ -621,7 +622,7 @@ test("desktop Flight result summary keeps the premium hierarchy after nearby-far
   assert.doesNotMatch(source, /data-desktop-cheaper-nearby|desktop-flight-cheaper-nearby/);
 
   const summaryStart = source.indexOf(
-    'className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-1 lg:bg-transparent"',
+    'className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-0 lg:bg-transparent"',
   );
   const summary = source.slice(summaryStart, summaryStart + 4200);
   assert.match(summary, /text-\[12px\] font-semibold leading-4 text-\[#191E3B\]/);
