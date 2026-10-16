@@ -72,14 +72,29 @@ test("mobile provider hierarchy is subtly larger inside the existing fixed-heigh
   assert.match(rows, /compact \? "inline-flex h-\[19px\] w-\[19px\] shrink-0 items-center justify-center overflow-hidden"/);
   assert.match(rows, /compact \? "text-\[12px\] leading-4"/);
   assert.match(rows, /Info size=\{compact \? 18 : 16\}/);
-  assert.match(rows, /compact \? "text-\[13px\] leading-\[17px\]"/);
+  assert.match(rows, /compact \? "flex h-9 items-center text-\[13px\] leading-\[17px\]"/);
   assert.match(rows, /compact \? "text-\[11px\]" : "lg:text-\[11px\]"/);
   assert.equal((rows.match(/compact \? "text-\[13px\] leading-4"/g) ?? []).length, 2);
   assert.match(rows, /View deal <ChevronRight size=\{12\}/);
-  assert.match(rows, /compact \? "h-9 w-8" : "h-6 w-7"/);
+  assert.match(rows, /compact \? "h-9 w-8 place-self-center" : "h-6 w-7"/);
   assert.match(rows, /compact \? "min-h-9" : "min-h-6"/);
   assert.match(picker, /data-car-deal-more-slot className="mt-0\.5 flex min-h-9 items-center md:mt-1 md:min-h-6 lg:mt-1"/);
   assert.match(rows, /"grid-cols-\[minmax\(0,calc\(50%_\+_31px\)\)_minmax\(0,1fr\)\] min-h-6 lg:min-h-\[30px\]"/);
+});
+
+test("mobile information glyph and amount/day group share the same row center and baseline", () => {
+  const rows = picker.slice(picker.indexOf("data-car-deal-provider-offers"), picker.indexOf("data-car-deal-more-slot"));
+  assert.match(rows, /compact \? "h-9 w-8 place-self-center" : "h-6 w-7"/);
+  assert.match(rows, /Info size=\{compact \? 18 : 16\}/);
+  assert.match(rows, /compact \? "flex h-9 items-center text-\[13px\] leading-\[17px\]" : "text-xs leading-\[14px\] lg:text-\[13px\] lg:leading-\[17px\]"/);
+  assert.match(rows, /data-car-deal-price-baseline/);
+  assert.match(rows, /compact \? "inline-flex max-w-full items-baseline gap-0\.5 whitespace-nowrap" : "contents"/);
+  assert.match(rows, /data-car-deal-price-amount/);
+  assert.match(rows, /data-car-deal-provider-per-day/);
+  assert.match(rows, /compact \? "text-\[11px\] leading-\[15px\]" : "ml-0\.5 lg:text-\[11px\]"/);
+  assert.match(rows, /compact \? "grid-cols-\[minmax\(0,calc\(68%_\+_20px\)\)_minmax\(0,1fr\)\] min-h-9/);
+  assert.match(rows, /compact \? "grid-cols-\[minmax\(0,1fr\)_32px_66px\] pr-2"/);
+  assert.match(rows, /compact \? "min-h-9" : "min-h-6"/);
 });
 
 test("provider View deal validates its own URL and stays isolated from main offer selection", () => {
