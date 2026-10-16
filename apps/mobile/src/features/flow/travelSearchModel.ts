@@ -65,6 +65,7 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
   }
   if (product === "hotel") {
     const destinationId = text(params.destinationId);
+    const destinationLocation = parseLocationTarget(text(params.destinationLocation));
     const destination = text(params.destination);
     const checkIn = text(params.checkIn); const checkOut = text(params.checkOut);
     const guestsValue = text(params.guests); const roomsValue = text(params.rooms);
@@ -74,7 +75,7 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
     const minimumLocalIso = localIsoDate(now);
     if (!isHotelTodayOrFutureLocalDate(checkIn, minimumLocalIso) || !isHotelTodayOrFutureLocalDate(checkOut, minimumLocalIso) || checkOut <= checkIn) return { error: "Choose valid check-in and check-out dates." };
     if (!isValidHotelOccupancy(guests, rooms)) return { error: "Choose valid guest and room counts." };
-    const payload = { ...(destinationId ? { destinationId } : {}), destination, checkIn, checkOut, guests, rooms };
+    const payload = { ...(destinationId ? { destinationId } : {}), ...(destinationLocation ? { destinationLocation } : {}), destination, checkIn, checkOut, guests, rooms };
     return { plan: { payload, key: JSON.stringify(["hotel", ...Object.values(payload)]), summary: `${destination} · ${checkIn} – ${checkOut}` } };
   }
   const pickupLocation = text(params.pickupLocation); const dropoffLocation = text(params.dropoffLocation) || pickupLocation;

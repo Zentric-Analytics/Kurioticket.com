@@ -48,6 +48,11 @@ test("Hotel plans use the device-local calendar baseline across the UTC midnight
 test("Hotel plans preserve canonical destination identity when provided", () => {
   assert.equal(buildSearchPlan("hotel", { destinationId: "fr-paris", destination: "Paris, France", checkIn: "2026-08-10", checkOut: "2026-08-12", guests: "2", rooms: "1" }, now).plan?.payload.destinationId, "fr-paris");
 });
+test("Hotel plans preserve the selected canonical destination target", () => {
+  const destinationLocation = JSON.stringify({ id: "hotel:tempe", kind: "city", primaryLabel: "Tempe", supportingLabel: "Arizona, United States", submittedValue: "Tempe, Arizona, United States", selectionToken: "opaque-server-selection-token-123456789" });
+  const plan = buildSearchPlan("hotel", { destination: "Tempe, Arizona, United States", destinationLocation, checkIn: "2026-08-10", checkOut: "2026-08-12", guests: "1", rooms: "1" }, now).plan!;
+  assert.deepEqual(plan.payload.destinationLocation, JSON.parse(destinationLocation));
+});
 test("destination-only Hotel intent cannot become a canonical search plan", () => {
   assert.equal(buildSearchPlan("hotel", { destination: "London" }, now).plan, undefined);
   assert.match(buildSearchPlan("hotel", { destination: "London" }, now).error ?? "", /Complete your stay/);
