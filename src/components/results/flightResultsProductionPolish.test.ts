@@ -415,38 +415,73 @@ test("desktop Flight Results omit nearby-fare calendar and cheaper-nearby insigh
   assert.match(source, /flight-mobile-cheaper-nearby/);
 });
 
-test("desktop Flight filters keep the light surface with a stronger readable text hierarchy", async () => {
+test("desktop Flight filters match Hotel desktop typography while keeping the Flight surface", async () => {
   const filters = await readFile(
     new URL("./DesktopFlightFilters.tsx", import.meta.url),
     "utf8",
   );
+  const hotels = await readFile(
+    new URL("./HotelResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const primaryFilters = filters.slice(
+    filters.indexOf("data-flight-hotel-filter-visual-parity"),
+    filters.indexOf("function CompactFilterSection"),
+  );
+  const facetRow = filters.slice(
+    filters.indexOf("function FacetRow"),
+  );
 
-  assert.match(filters, /data-flight-desktop-filter-surface/);
-  assert.match(filters, /data-flight-hotel-filter-visual-parity/);
-  assert.match(filters, /overflow-hidden rounded-lg border border-\[#CFD9E5\] bg-\[#F2F4F8\]/);
-  assert.match(filters, /\{t\("hotelResults\.filterBy"\)\}/);
-  assert.match(filters, /text-\[14px\] font-bold tracking-\[-0\.01em\] text-slate-950/);
-  assert.match(filters, /text-\[14px\] font-semibold leading-5 text-slate-950/);
-  assert.match(filters, /text-\[13px\] font-medium leading-5 text-\[#26354A\]/);
-  assert.match(filters, /text-\[12px\] font-semibold leading-5 tabular-nums text-\[#526174\]/);
-  assert.match(filters, /text-\[13px\] font-medium text-slate-900 placeholder:text-slate-600/);
-  assert.match(filters, /text-\[13px\] font-medium leading-5 tabular-nums text-\[#334155\]/);
-  assert.match(filters, /font-medium text-\[#334155\]/);
-  assert.match(filters, /data-flight-filter-price-summary/);
-  assert.match(filters, /data-flight-filter-time-summary/);
-  assert.match(filters, /data-flight-filter-duration-summary/);
+  assert.match(primaryFilters, /overflow-hidden rounded-lg border border-\[#CFD9E5\] bg-\[#F2F4F8\]/);
+  assert.match(primaryFilters, /\{t\("hotelResults\.filterBy"\)\}/);
+  assert.match(primaryFilters, /text-\[14px\] font-bold tracking-\[-0\.01em\] text-slate-950/);
+
+  assert.match(hotels, /layout === "desktop" && "text-\[13px\]"/);
+  assert.match(hotels, /text-sm font-bold leading-5 text-slate-950/);
+  assert.match(filters, /text-\[13px\] font-bold leading-5 text-slate-950/);
+
+  assert.match(hotels, /text-\[12px\] font-medium leading-5 text-slate-700/);
+  assert.match(filters, /text-\[12px\] font-medium leading-5 text-slate-700/);
+
+  assert.match(hotels, /text-\[12px\] leading-5/);
+  assert.match(hotels, /font-medium tabular-nums text-slate-500/);
+  assert.match(
+    filters,
+    /text-\[12px\] font-medium leading-5 tabular-nums text-slate-500/,
+  );
+
+  assert.match(
+    primaryFilters,
+    /h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-\[13px\] text-slate-950 placeholder:text-slate-500/,
+  );
   assert.doesNotMatch(
-    filters.slice(filters.indexOf("data-flight-hotel-filter-visual-parity")),
+    primaryFilters,
+    /font-medium text-slate-900 placeholder:text-slate-600/,
+  );
+  assert.match(
+    hotels,
+    /layout === "desktop" && "h-9 rounded-md text-\[13px\]"/,
+  );
+  assert.match(hotels, /text-slate-950[^"]*placeholder:text-slate-500/);
+
+  assert.match(primaryFilters, /data-flight-filter-price-summary/);
+  assert.match(primaryFilters, /data-flight-filter-time-summary/);
+  assert.match(primaryFilters, /data-flight-filter-duration-summary/);
+  assert.match(
+    primaryFilters,
+    /text-\[12px\] font-medium leading-5(?: tabular-nums)? text-slate-600/,
+  );
+  assert.match(hotels, /text-xs font-medium text-slate-600/);
+
+  assert.match(facetRow, /h-\[14px\] w-\[14px\]/);
+  assert.match(facetRow, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
+  assert.match(facetRow, /<Check className="h-2\.5 w-2\.5"/);
+
+  assert.doesNotMatch(
+    primaryFilters,
     /\{t\("price"\)\}: \{formatFilterPrice/,
   );
   assert.match(filters, /border-t border-slate-200\/60 px-3 py-3 first:border-t-0/);
-  assert.match(filters, /min-h-6 w-full items-center justify-between/);
-  assert.match(filters, /h-\[14px\] w-\[14px\]/);
-  assert.match(filters, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
-  assert.match(filters, /<Check className="h-2\.5 w-2\.5"/);
-  assert.match(filters, /text-\[13px\] font-semibold leading-5 tracking-\[-0\.005em\] text-slate-800/);
-  assert.doesNotMatch(filters, /text-\[12px\] font-medium leading-5 text-slate-700/);
-  assert.doesNotMatch(filters, /placeholder:text-slate-400/);
   assert.doesNotMatch(filters, /data-flight-hotel-filter-visual-parity[\s\S]{0,300}bg-white/);
 });
 test("desktop Flight Stops filter shows labels and counts without fare hints", async () => {

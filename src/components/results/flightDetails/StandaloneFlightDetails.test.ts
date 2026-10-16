@@ -642,8 +642,13 @@ test("desktop Pick your fare cards mirror the native hierarchy without changing 
   assert.match(desktop, /overflow-x-auto overscroll-x-contain/);
   assert.match(desktop, /sm:flex sm:snap-x sm:snap-mandatory/);
   assert.match(desktop, /data-desktop-fare-card[\s\S]*?h-\[150px\] w-\[250px\] min-w-\[250px\] shrink-0 snap-start[\s\S]*?rounded-\[15px\] border-\[1\.5px\]/);
-  assert.match(desktop, /border-\[#075EE8\][\s\S]*?shadow-\[0_6px_16px/);
-  assert.match(desktop, /border-\[#D7E0EC\][\s\S]*?shadow-\[0_2px_7px/);
+  assert.match(
+    desktop,
+    /rounded-\[15px\] border-\[1\.5px\] bg-white[\s\S]*?shadow-\[0_2px_7px_rgba\(7,19,59,0\.07\)\]/,
+  );
+  assert.match(desktop, /selected \? "border-\[#075EE8\]" : "border-\[#D7E0EC\]/);
+  assert.doesNotMatch(desktop, /bg-\[#075EE8\]\/\[0\.025\]/);
+  assert.doesNotMatch(desktop, /selected \? "[^"]*shadow-/);
   assert.doesNotMatch(desktop, /selected \? "[^"]*border-(?:2|\[2px\])/);
   assert.match(desktop, /data-desktop-fare-content className="min-w-0 pb-14"/);
   assert.match(desktop, /data-empty-benefits=\{!compactTerms\.length \|\| undefined\}/);
