@@ -2071,7 +2071,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     clearRecentSearches();
   }
 
-  function buildDesktopMultiCityLandingHref() {
+  function buildDesktopMultiCityHomeHref() {
     const nextParams = new URLSearchParams(searchQueryString);
     nextParams.set("tripType", "multi-city");
     nextParams.delete("returnDate");
@@ -2121,16 +2121,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     nextParams.set("currency", selectedCurrency);
     appendFlightLegParams(nextParams, projection.legs);
 
-    return `/flights?${nextParams.toString()}`;
+    return `/?${nextParams.toString()}`;
   }
 
-  function navigateDesktopMultiCityToLanding() {
+  function navigateDesktopMultiCityToHome() {
     closeFlightSearchPopovers();
     stickySearchPanelOpenRef.current = false;
     setIsSearchExpandedWhileSticky(false);
     setActiveStickySearchTarget(null);
     setActiveDesktopSearchSurface(null);
-    router.push(buildDesktopMultiCityLandingHref(), { scroll: true });
+    router.push(buildDesktopMultiCityHomeHref(), { scroll: true });
   }
 
   function openDesktopSearchEditor(
@@ -2144,7 +2144,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       | "travelers",
   ) {
     if (tripTypeInput === "multi-city") {
-      navigateDesktopMultiCityToLanding();
+      navigateDesktopMultiCityToHome();
       return;
     }
 
@@ -5238,7 +5238,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       event.preventDefault();
                       event.stopPropagation();
                       if (option.value === "multi-city") {
-                        navigateDesktopMultiCityToLanding();
+                        navigateDesktopMultiCityToHome();
                         return;
                       }
                       handleTripTypeChange(option.value);
@@ -5799,7 +5799,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               aria-label={t("editFlightSearch")}
               onClick={() => {
                 if (tripTypeInput === "multi-city") {
-                  navigateDesktopMultiCityToLanding();
+                  navigateDesktopMultiCityToHome();
                   return;
                 }
                 expandStickySearch();
@@ -5885,7 +5885,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   aria-checked={selected}
                   onClick={() => {
                     if (option.value === "multi-city") {
-                      navigateDesktopMultiCityToLanding();
+                      navigateDesktopMultiCityToHome();
                       return;
                     }
                     handleTripTypeChange(option.value);
@@ -6037,7 +6037,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     aria-checked={selected}
                     onClick={() => {
                     if (option.value === "multi-city") {
-                      navigateDesktopMultiCityToLanding();
+                      navigateDesktopMultiCityToHome();
                       return;
                     }
                     handleTripTypeChange(option.value);
