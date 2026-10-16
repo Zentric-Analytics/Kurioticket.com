@@ -30,10 +30,11 @@ type Props = {
   submitNavigation?: "push" | "replace";
   onBeforeNavigate?: () => void;
   editAppearance?: boolean;
+  onValidatedSubmit?: (params: ReturnType<typeof hotelSearchParams>) => void;
 };
 const displayDate = (iso: string) => localDateFromIso(iso)?.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) ?? iso;
 
-export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function HotelSearchPanel({ params, embedded = false, showSubmit = true, submitLabel = "Search hotels", submitNavigation = "push", onBeforeNavigate, editAppearance = false }, ref) {
+export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function HotelSearchPanel({ params, embedded = false, showSubmit = true, submitLabel = "Search hotels", submitNavigation = "push", onBeforeNavigate, editAppearance = false, onValidatedSubmit }, ref) {
   const ft = useFlowTheme();
   const { locale } = useMobileLocalization();
   const initial = useRef<ReturnType<typeof initializeHotelForm> | undefined>(undefined);
@@ -76,6 +77,7 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
     const nextErrors = validateHotelForm(form);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) { setNotice("Please correct the highlighted search details."); if (nextErrors.destination) setDestinationOpen(true); else if (nextErrors.checkIn || nextErrors.checkOut) setDatesOpen(true); return; }
+    if (onValidatedSubmit) { onValidatedSubmit(hotelSearchParams(form)); return; }
     onBeforeNavigate?.();
     router[submitNavigation]({ pathname: "/hotel-results", params: hotelSearchParams(form) });
   };
