@@ -104,3 +104,12 @@ test("Android hotel edit waits for the Modal to finish closing and refreshes Res
   assert.match(result, /onAfterClose=\{Platform\.OS === "android" \? finishAndroidHotelEdit : undefined\}/);
   assert.match(model, /destinationId: undefined, destinationLocation: next\.destinationLocation \|\| undefined/);
 });
+
+test("hardware Back cannot discard a submitted Android hotel edit during modal exit", () => {
+  const source = resultsSource();
+  const close = source.slice(source.indexOf("  const closeHotelEditSearch = useCallback"), source.indexOf("  const edit = () => {", source.indexOf("  const closeHotelEditSearch = useCallback")));
+  assert.match(close, /if \(pendingHotelEditParams\.current\) return;/);
+  assert.doesNotMatch(close, /pendingHotelEditParams\.current = null/);
+  assert.match(close, /setHotelEditSearchOpen\(false\)/);
+  assert.match(source, /const nextParams = pendingHotelEditParams\.current;[\s\S]*pendingHotelEditParams\.current = null;[\s\S]*router\.setParams\(hotelSearchRouteParamPatch\(nextParams\)\)/);
+});
