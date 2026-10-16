@@ -179,7 +179,24 @@ test("Cars mobile offers fill the card without a duplicate price rail and preser
     for (const [locator, actualSize] of [[name, "12px"], [price, "13px"], [viewDeal, "13px"]] as const) {
       await expect(locator).toHaveCSS("font-size", actualSize);
     }
-    await expect(price.locator("span")).toHaveCSS("font-size", "11px");
+    const day = price.locator("[data-car-deal-provider-per-day]");
+    const amount = price.locator("[data-car-deal-price-amount]");
+    const baseline = price.locator("[data-car-deal-price-baseline]");
+    await expect(day).toHaveCSS("font-size", "11px");
+    await expect(price).toHaveCSS("height", "36px");
+    await expect(price).toHaveCSS("align-items", "center");
+    await expect(baseline).toHaveCSS("align-items", "baseline");
+    await expect(info).toHaveCSS("align-self", "center");
+    await expect(info).toHaveCSS("justify-self", "center");
+    const centerY = (box: { y: number; height: number }) => box.y + box.height / 2;
+    const infoGlyphBox = (await info.locator("svg").boundingBox())!;
+    const baselineBox = (await baseline.boundingBox())!;
+    const amountBox = (await amount.boundingBox())!;
+    const dayBox = (await day.boundingBox())!;
+    expect(Math.abs(centerY(infoGlyphBox) - centerY(baselineBox))).toBeLessThanOrEqual(2);
+    expect(Math.abs(amountBox.y + amountBox.height - (dayBox.y + dayBox.height))).toBeLessThanOrEqual(3);
+    expect(dayBox.x - (amountBox.x + amountBox.width)).toBeGreaterThanOrEqual(1);
+    expect(dayBox.x - (amountBox.x + amountBox.width)).toBeLessThanOrEqual(5);
     if (width >= 360) {
       const visibleRows = rows.filter({ visible: true });
       for (let index = 0; index < 3; index++) {
@@ -224,6 +241,7 @@ test("Cars mobile offers fill the card without a duplicate price rail and preser
     const visible = rows.filter({ visible: true });
     const iconXs: number[] = [];
     const priceXs: number[] = [];
+    const iconCenterOffsets: number[] = [];
     for (let index = 0; index < 3; index++) {
       const seller = visible.nth(index);
       const iconBox = await seller.locator("[data-car-rate-info]").boundingBox();
@@ -232,9 +250,15 @@ test("Cars mobile offers fill the card without a duplicate price rail and preser
       expect(priceBox).not.toBeNull();
       iconXs.push(iconBox!.x);
       priceXs.push(priceBox!.x);
+      const glyph = await seller.locator("[data-car-rate-info] svg").boundingBox();
+      const priceLine = await seller.locator("[data-car-deal-price-baseline]").boundingBox();
+      expect(glyph).not.toBeNull();
+      expect(priceLine).not.toBeNull();
+      iconCenterOffsets.push(Math.abs((glyph!.y + glyph!.height / 2) - (priceLine!.y + priceLine!.height / 2)));
     }
     expect(Math.max(...iconXs) - Math.min(...iconXs)).toBeLessThanOrEqual(1);
     expect(Math.max(...priceXs) - Math.min(...priceXs)).toBeLessThanOrEqual(1);
+    expect(Math.max(...iconCenterOffsets)).toBeLessThanOrEqual(2);
     const infoSvg = info.locator("svg");
     await expect(infoSvg).toBeVisible();
     const iconWidth = await infoSvg.evaluate(element => element.getBoundingClientRect().width);
@@ -249,6 +273,9 @@ test("Cars mobile offers fill the card without a duplicate price rail and preser
     const expandedOffers = (await offers.boundingBox())!;
     expect(Math.abs(expandedOffers.x + expandedOffers.width - (fullWidthBand.x + fullWidthBand.width))).toBeLessThanOrEqual(2);
     await expect(rows.last().locator("[data-car-deal-provider-view-deal]")).toBeVisible();
+    const lastIconGlyph = (await rows.last().locator("[data-car-rate-info] svg").boundingBox())!;
+    const lastPriceLine = (await rows.last().locator("[data-car-deal-price-baseline]").boundingBox())!;
+    expect(Math.abs(centerY(lastIconGlyph) - centerY(lastPriceLine))).toBeLessThanOrEqual(2);
     const expandedToggleSize = await toggle.evaluate(element => parseFloat(getComputedStyle(element).fontSize));
     expect(expandedToggleSize).toBe(toggleTextSize);
     await toggle.click();
