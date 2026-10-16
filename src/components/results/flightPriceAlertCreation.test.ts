@@ -75,7 +75,9 @@ test("desktop Flight alert uses the compact sidebar treatment without helper cop
   assert.match(control, /min-h-\[48px\][^"]*rounded-xl border border-\[#CFE0F8\] bg-\[#EEF6FF\]/);
   assert.match(control, />Track flight price</);
   assert.match(control, /surface === "desktop" \? "h-6 w-11" : "h-7 w-12"/);
-  assert.match(control, /createPortal\(desktopControl, desktopPortalTarget\)/);
+  assert.match(control, /window\.matchMedia\("\(min-width: 1024px\)"\)/);
+  assert.match(control, /desktopSidebarActive && desktopPortalTarget[\s\S]*?createPortal\(desktopControl, desktopPortalTarget\)/);
+  assert.match(control, /hidden sm:block lg:hidden/);
   assert.equal(control.slice(control.indexOf("const desktopEditor")).match(/Choose a target and we’ll notify you if the price drops\./g)?.length, 1);
 });
 
