@@ -33,7 +33,7 @@ test("mobile Cars card keeps white parity while desktop now also uses pure white
   assert.doesNotMatch(mobile, /bg-\[#E7EBF1\]/);
   assert.match(source, /md:rounded-2xl md:bg-white md:shadow/);
   assert.match(mobile, /<CarDealPicker/);
-  assert.match(mobile, /dailyDisplayPrice\.formatted/);
+  assert.doesNotMatch(mobile, /data-car-card-mobile-pricing|dailyDisplayPrice\.formatted/);
 });
 
 test("standalone mobile uses a marked 40/60 image and information row", () => {
@@ -82,24 +82,19 @@ test("mobile identity and four spec slots sit below cancellation beside the imag
   );
 });
 
-test("mobile conversion strip is full width, divided once, and retains accessible pricing/action", () => {
+test("mobile lower band uses all available width for supplier offers without duplicate main pricing", () => {
   const conversion = between(
     "data-car-card-mobile-lower-band",
-    'className={`${guidedPlanning ? "grid',
+    'className={${guidedPlanning ? "grid',
   );
-  assert.match(conversion, /border-t/);
-  assert.match(conversion, /dailyDisplayPrice\.formatted/);
-  assert.match(conversion, /dir="ltr"/);
-  assert.match(conversion, /mobileStandaloneViewDealClassName/);
-  assert.match(source, /const mobileStandaloneViewDealClassName =\s*"inline-flex min-h-9/);
-  assert.match(conversion, /data-car-card-mobile-offers[\s\S]*px-2 py-1\.5 transition-\[flex-grow\]/);
-  assert.match(conversion, /offersExpanded \? "flex-\[1\]" : "flex-\[2\.65\]"/);
-  assert.match(conversion, /data-car-card-mobile-pricing/);
-  assert.match(conversion, /items-end justify-center overflow-hidden transition-\[flex-grow,padding,opacity,visibility\]/);
-  assert.match(conversion, /invisible pointer-events-none flex-\[0\] px-0 py-0 opacity-0/);
-  assert.match(conversion, /visible flex-\[1\.1\] px-2\.5 py-2 opacity-100/);
-  assert.match(conversion, /focus-visible:ring-2/);
-  assert.doesNotMatch(conversion, /Taxes and fees included/);
+  assert.match(conversion, /border-t border-\[#CBD5E1\] bg-white/);
+  assert.match(conversion, /data-car-card-mobile-offers\s+className="w-full min-w-0 px-2 py-1\.5"/);
+  assert.doesNotMatch(conversion, /data-car-card-mobile-pricing|dailyDisplayPrice\.formatted|mobileStandaloneViewDeal/);
+  assert.doesNotMatch(conversion, /flex-\[2\.65\]|flex-\[1\.1\]|transition-\[flex-grow\]/);
+  assert.equal((conversion.match(/<CarDealPicker/g) ?? []).length, 1);
+  assert.match(conversion, /expanded=\{offersExpanded\}/);
+  assert.match(conversion, /onExpandedChange=\{handleOffersExpandedChange\}/);
+  assert.doesNotMatch(source, /const mobileStandaloneViewDealClassName|const mobileStandaloneViewDealVisualStyle/);
 });
 
 test("legacy composition is hidden only for standalone mobile while compact desktop rails stay explicit", () => {
