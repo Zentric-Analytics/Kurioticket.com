@@ -217,7 +217,7 @@ test("desktop standalone keeps Best value above the shared action row and pricin
   );
   assert.match(
     pricing,
-    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-\[#CBD5E1\] lg:pb-2 lg:text-right"/,
+    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t-0 lg:border-\[#CBD5E1\] lg:pb-2 lg:text-right"/,
   );
   assert.match(
     pricing,
@@ -229,10 +229,15 @@ test("desktop standalone keeps Best value above the shared action row and pricin
   );
 });
 
-test("standalone desktop T divider begins below amenities and joins the pricing rail", () => {
+test("standalone desktop T divider spans the entire card below the image and amenities", () => {
   const desktop = source.slice(source.indexOf('data-region="image"'));
+  const image = desktop.slice(0, desktop.indexOf('data-region="heading"'));
   const heading = desktop.slice(
     desktop.indexOf('data-region="heading"'),
+    desktop.indexOf('data-car-card-desktop-full-width-divider'),
+  );
+  const divider = desktop.slice(
+    desktop.indexOf('data-car-card-desktop-full-width-divider'),
     desktop.indexOf('data-region="details"'),
   );
   const details = desktop.slice(
@@ -241,22 +246,18 @@ test("standalone desktop T divider begins below amenities and joins the pricing 
   );
   const pricing = desktop.slice(desktop.indexOf('data-region="pricing"'));
 
-  assert.match(
-    desktop,
-    /data-region="image"[\s\S]*?\$\{!guidedPlanning \? "lg:border-e-0 lg:items-center" : ""\}/,
-  );
-  assert.doesNotMatch(
-    heading,
-    /data-car-card-desktop-header-rail[\s\S]*?border-s/,
-  );
-  assert.match(
-    details,
-    /\$\{!guidedPlanning \? "lg:border-t lg:border-\[#CBD5E1\] lg:pb-2 lg:pt-2" : ""\}/,
-  );
-  assert.match(
-    pricing,
-    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-\[#CBD5E1\] lg:pb-2 lg:text-right"/,
-  );
+  assert.match(image, /md:col-span-1 md:col-start-1 md:row-span-2/);
+  assert.match(image, /lg:row-span-1 lg:border-e-0 lg:items-start/);
+  assert.match(image, /lg:!h-\[176px\] lg:!min-h-\[176px\] lg:max-h-\[176px\]/);
+  assert.match(heading, /data-car-card-desktop-header-specs/);
+  assert.doesNotMatch(heading, /data-car-card-desktop-header-rail[\s\S]*?border-s/);
+  assert.match(desktop, /\{!guidedPlanning \? \(\s*<div\s+data-car-card-desktop-full-width-divider/);
+  assert.match(divider, /aria-hidden="true"/);
+  assert.match(divider, /pointer-events-none hidden lg:col-span-3 lg:col-start-1 lg:row-start-2 lg:z-20 lg:block lg:h-px lg:w-full lg:self-start lg:bg-\[#CBD5E1\]/);
+  assert.match(details, /lg:border-t-0 lg:border-\[#CBD5E1\] lg:pb-2 lg:pt-2/);
+  assert.match(pricing, /lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t-0 lg:border-\[#CBD5E1\]/);
+  assert.doesNotMatch(details, /lg:border-t lg:border-\[#CBD5E1\]/);
+  assert.doesNotMatch(pricing, /lg:border-s lg:border-t lg:border-\[#CBD5E1\]/);
 });
 
 test("Kayak standalone desktop reuses Kurioticket save/share controls while mobile stays unchanged", () => {
@@ -565,15 +566,15 @@ test("standalone desktop pricing is anchored to the card bottom-right while guid
 
   assert.match(
     desktop,
-    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-\[#CBD5E1\] lg:pb-2 lg:text-right" : "lg:row-span-2 lg:row-start-1 lg:items-center lg:justify-center lg:border-s lg:border-t-0 lg:text-center"/,
+    /!guidedPlanning \? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t-0 lg:border-\[#CBD5E1\] lg:pb-2 lg:text-right" : "lg:row-span-2 lg:row-start-1 lg:items-center lg:justify-center lg:border-s lg:border-t-0 lg:text-center"/,
   );
 });
 
 test("desktop and guided contracts retain their responsive grid and owned disclosures", () => {
-  assert.match(source, /guidedPlanning \? "grid lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\] xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]" : "hidden md:grid lg:grid-cols-\[220px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[228px_minmax\(0,1fr\)_152px\]"/);
+  assert.match(source, /guidedPlanning \? "grid lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\] xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]" : "hidden md:grid lg:grid-cols-\[192px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[200px_minmax\(0,1fr\)_152px\]"/);
   assert.match(source, /md:grid-cols-\[250px_minmax\(0,1fr\)\]/);
-  assert.match(source, /lg:grid-cols-\[220px_minmax\(0,1fr\)_152px\]/);
-  assert.match(source, /xl:grid-cols-\[228px_minmax\(0,1fr\)_152px\]/);
+  assert.match(source, /lg:grid-cols-\[192px_minmax\(0,1fr\)_152px\]/);
+  assert.match(source, /xl:grid-cols-\[200px_minmax\(0,1fr\)_152px\]/);
   assert.match(source, /lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\]/);
   assert.match(source, /xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]/);
   const desktop = source.slice(source.indexOf('data-region="heading"'));
@@ -853,7 +854,7 @@ test("standalone desktop narrows the card without wrapping identity or metadata"
   const desktop = source.slice(source.indexOf('data-region="heading"'));
   assert.match(
     source,
-    /hidden md:grid lg:grid-cols-\[220px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[228px_minmax\(0,1fr\)_152px\]/,
+    /hidden md:grid lg:grid-cols-\[192px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[200px_minmax\(0,1fr\)_152px\]/,
   );
   assert.match(
     desktop,
@@ -890,11 +891,11 @@ test("desktop Cars cards use pure-white surfaces and keep amenities close to Fre
   assert.match(source, /data-car-card-desktop-header-rail[\s\S]*?bg-white/);
   assert.match(source, /data-region="pricing"[\s\S]*?desktopSurfaceParity \? "bg-white" : "bg-slate-50\/45 lg:bg-white"/);
   assert.match(source, /md:!h-\[220px\] md:!min-h-\[220px\] md:max-h-\[220px\]/);
-  assert.match(source, /lg:border-e-0 lg:items-center/);
+  assert.match(source, /lg:row-span-1 lg:border-e-0 lg:items-start/);
   const details = source.slice(source.indexOf('data-region="details"'), source.indexOf('data-region="pricing"'));
-  assert.match(details, /lg:border-t lg:border-\[#CBD5E1\] lg:pb-2 lg:pt-2/);
+  assert.match(details, /lg:border-t-0 lg:border-\[#CBD5E1\] lg:pb-2 lg:pt-2/);
   assert.match(details, /data-car-card-desktop-primary-specs[\s\S]*?<CarDealPicker/);
-  assert.match(details, /lg:border-t lg:border-\[#CBD5E1\]/);
+  assert.match(details, /lg:border-t-0 lg:border-\[#CBD5E1\]/);
 });
 
 
@@ -906,8 +907,8 @@ test("desktop-only Cars T divider sits after the amenities, with mobile and nati
   assert.match(header, /row-start-6" : "row-start-5"/);
   assert.match(header, /desktopStandaloneSpecifications\.map\(\(\[Icon, label\]\) =>/);
   assert.match(details, /grid-cols-2 lg:hidden lg:text-\[13px\]/);
-  assert.match(details, /\$\{!guidedPlanning \? "lg:border-t lg:border-\[#CBD5E1\] lg:pb-2 lg:pt-2" : ""\}/);
-  assert.match(pricing, /lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-\[#CBD5E1\]/);
+  assert.match(details, /\$\{!guidedPlanning \? "lg:border-t-0 lg:border-\[#CBD5E1\] lg:pb-2 lg:pt-2" : ""\}/);
+  assert.match(pricing, /lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t-0 lg:border-\[#CBD5E1\]/);
   assert.match(source, /data-car-card-mobile-lower-band[\s\S]*border-t border-\[#CBD5E1\]/);
   assert.doesNotMatch(header, /data-car-deal-provider-offers/);
 });

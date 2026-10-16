@@ -99,11 +99,11 @@ test("desktop Cars results body is compact, centered, and keeps shared surfaces 
   );
   assert.match(
     card,
-    /hidden md:grid lg:grid-cols-\[204px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[212px_minmax\(0,1fr\)_152px\]/,
+    /hidden md:grid lg:grid-cols-\[192px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[200px_minmax\(0,1fr\)_152px\]/,
   );
   assert.match(
     skeleton,
-    /lg:grid-cols-\[204px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[212px_minmax\(0,1fr\)_152px\]/,
+    /lg:grid-cols-\[192px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[200px_minmax\(0,1fr\)_152px\]/,
   );
   assert.match(
     card,
@@ -111,13 +111,13 @@ test("desktop Cars results body is compact, centered, and keeps shared surfaces 
   );
   assert.match(
     card,
-    /md:!h-\[220px\] md:!min-h-\[220px\] md:max-h-\[220px\] md:self-start lg:!h-\[200px\] lg:!min-h-\[200px\] lg:max-h-\[200px\]/,
+    /md:!h-\[220px\] md:!min-h-\[220px\] md:max-h-\[220px\] md:self-start lg:!h-\[176px\] lg:!min-h-\[176px\] lg:max-h-\[176px\]/,
     "the smaller media frame is limited to large-screen breakpoints",
   );
   assert.match(
     skeleton,
-    /aspect-\[4\/3\] w-full rounded-xl lg:aspect-auto lg:h-\[200px\]/,
-    "the desktop skeleton image matches the compact 200px frame",
+    /aspect-\[4\/3\] w-full rounded-xl lg:aspect-auto lg:h-\[176px\]/,
+    "the desktop skeleton image matches the compact 176px frame",
   );
   assert.match(
     card,
