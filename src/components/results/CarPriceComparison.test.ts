@@ -85,6 +85,7 @@ test("mobile provider hierarchy is subtly larger inside the existing fixed-heigh
 test("mobile information glyph and amount/day group share the same row center and baseline", () => {
   const rows = picker.slice(picker.indexOf("data-car-deal-provider-offers"), picker.indexOf("data-car-deal-more-slot"));
   assert.match(rows, /compact \? "h-9 w-8 place-self-center" : "h-6 w-7"/);
+  assert.ok(rows.includes('data-car-rate-info-spacer aria-hidden="true" className={compact ? "h-9 w-8 place-self-center" : "h-6 w-7"}'));
   assert.match(rows, /Info size=\{compact \? 18 : 16\}/);
   assert.match(rows, /compact \? "flex h-9 items-center text-\[13px\] leading-\[17px\]" : "text-xs leading-\[14px\] lg:text-\[13px\] lg:leading-\[17px\]"/);
   assert.match(rows, /data-car-deal-price-baseline/);
