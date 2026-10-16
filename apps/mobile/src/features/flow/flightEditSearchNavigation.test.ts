@@ -137,7 +137,8 @@ test("changed flight edits update route params while open and close after observ
   assert.match(observedKeyEffect, /const targetKey = pendingFlightEditTargetKey\.current;\s*if \(!editSearchOpen \|\| !targetKey \|\| plan\.plan\?\.key !== targetKey\) return;\s*pendingFlightEditTargetKey\.current = null;\s*setEditSearchOpen\(false\);/);
   assert.match(observedKeyEffect, /\}, \[editSearchOpen, plan\.plan\?\.key\]\);/);
   assert.doesNotMatch(submitHandler + observedKeyEffect, /router\.(?:replace|push)|requestAnimationFrame|cancelAnimationFrame|setTimeout/);
-  assert.doesNotMatch(source, /flightEditNavigationFrame|completeFlightEditSearch|onAfterClose|pendingFlightEditSearchParams/);
+  const flightModal = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
+  assert.doesNotMatch(submitHandler + observedKeyEffect + flightModal, /flightEditNavigationFrame|completeFlightEditSearch|onAfterClose|pendingFlightEditSearchParams/);
 });
 
 test("FlightSearchPanel preserves validation and default navigation around its validated override", () => {
