@@ -546,13 +546,13 @@ export function CarResultCard({
       )}
 
       <div
-        className={`${guidedPlanning ? "grid lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]" : "hidden md:grid lg:grid-cols-[220px_minmax(0,1fr)_152px] xl:grid-cols-[228px_minmax(0,1fr)_152px]"} grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:grid-cols-[250px_minmax(0,1fr)]`}
+        className={`${guidedPlanning ? "grid lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]" : "hidden md:grid lg:grid-cols-[204px_minmax(0,1fr)_152px] xl:grid-cols-[212px_minmax(0,1fr)_152px]"} grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:grid-cols-[250px_minmax(0,1fr)]`}
       >
         <div
           data-region="image"
           className={`col-span-2 row-start-1 flex items-stretch border-b border-[#E2E8F0] bg-white md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 md:border-b-0 md:border-e ${!guidedPlanning ? "lg:border-e-0 lg:items-center" : ""}`}
         >
-          <div className={["relative aspect-[4/3] w-full overflow-hidden bg-white md:aspect-auto md:h-full md:min-h-[220px]", !guidedPlanning ? "md:!h-[220px] md:!min-h-[220px] md:max-h-[220px] md:self-start" : ""].join(" ")}>
+          <div className={["relative aspect-[4/3] w-full overflow-hidden bg-white md:aspect-auto md:h-full md:min-h-[220px]", !guidedPlanning ? "md:!h-[220px] md:!min-h-[220px] md:max-h-[220px] md:self-start lg:!h-[200px] lg:!min-h-[200px] lg:max-h-[200px]" : ""].join(" ")}>
             <CarResultImage
               imageUrl={car.imageUrl}
               imageAlt={car.imageAlt}
