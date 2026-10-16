@@ -514,7 +514,7 @@ function FacetRow({ label, count, secondaryLabel, rightLabel, checked, onChange,
   const trailingLabel = rightLabel ?? (typeof count === "number" ? String(count) : null);
 
   if (compact) {
-    return <label className={cn("flex cursor-pointer items-center rounded-lg font-medium leading-5 transition-all gap-2 px-1.5 py-1 text-[13px]", checked ? "font-semibold text-slate-950" : "text-slate-800 hover:bg-slate-100/70 hover:text-slate-950")}><input type="checkbox" className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue" checked={checked} onChange={onChange} /><span className="min-w-0 flex-1"><span className="block break-words">{label}</span>{secondaryLabel ? <span className="block break-words text-[12px] font-medium leading-4 text-slate-500">{secondaryLabel}</span> : null}</span>{trailingLabel ? <span className="ms-auto min-w-6 shrink-0 text-right text-[12px] font-medium leading-5 tabular-nums text-slate-500">{trailingLabel}</span> : null}</label>;
+    return <label className={cn("flex cursor-pointer items-center rounded-lg font-medium leading-5 transition-all gap-2 px-1.5 py-1 text-[13px]", checked ? "font-semibold text-slate-950" : "text-slate-800 hover:bg-slate-100/70 hover:text-slate-950")}><input type="checkbox" className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue" checked={checked} onChange={onChange} /><span className="min-w-0 flex-1"><span className="block break-words">{label}</span>{secondaryLabel ? <span className="block break-words text-[12px] font-medium leading-4 text-[#526174]">{secondaryLabel}</span> : null}</span>{trailingLabel ? <span className="ms-auto min-w-6 shrink-0 text-right text-[12px] font-semibold leading-5 tabular-nums text-[#526174]">{trailingLabel}</span> : null}</label>;
   }
 
   return (
