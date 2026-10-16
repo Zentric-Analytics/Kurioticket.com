@@ -619,7 +619,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     router.setParams(hotelSearchRouteParamPatch(nextParams));
   }, []);
   const closeHotelEditSearch = useCallback(() => {
-    pendingHotelEditParams.current = null;
+    // Android can deliver a Back/onRequestClose while the submitted edit sheet
+    // is still animating out. Only a deliberate pre-submit close may cancel.
+    if (pendingHotelEditParams.current) return;
     setHotelEditSearchOpen(false);
   }, []);
   const edit = () => {
