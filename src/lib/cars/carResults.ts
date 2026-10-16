@@ -262,9 +262,10 @@ export function assignCarBadges(results: NormalizedCarResult[]) {
 }
 
 /**
- * The first result in the current desktop sort gets the matching sort badge.
- * Keep distinct source-wide awards on the other cards without duplicating
- * the leader's label. Mobile continues using the original source awards.
+ * Recommended uses the same objective awards as mobile web and never
+ * manufactures a Best value badge for the first visible car.
+ * Price and rating sorts can highlight their visible leader without
+ * duplicating the active award; the source/mobile mapping stays immutable.
  */
 export function assignVisibleCarSortBadges(
   visibleResults: NormalizedCarResult[],
@@ -272,11 +273,12 @@ export function assignVisibleCarSortBadges(
   sourceBadges: ReadonlyMap<string, CarResultBadge>,
 ): Map<string, CarResultBadge> {
   const badges = new Map(sourceBadges);
+  // Recommended is an ordering, not an automatic Best value award.
+  // Use the same objective badges already displayed on mobile web.
+  if (sort === "recommended") return badges;
   const leader = visibleResults[0];
   if (!leader) return badges;
-  const activeBadge: CarResultBadge =
-    sort === "lowestTotal" ? "Cheapest" :
-    sort === "topRated" ? "Top rated" : "Best value";
+  const activeBadge: CarResultBadge = sort === "lowestTotal" ? "Cheapest" : "Top rated";
   // Do not claim a supplier-rating award if no rating was supplied.
   if (sort === "topRated" && !Number.isFinite(leader.supplierRating)) return badges;
   for (const [id, badge] of badges) {
