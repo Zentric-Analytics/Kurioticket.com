@@ -1,5 +1,7 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
+import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { hotelSearchSchema } from "@/lib/validation";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
@@ -9,14 +11,14 @@ import { resolveRegularKayakSearch } from "@/services/travel/kayakRegularSearch"
 import { kayakProviderCriteria } from "@/services/travel/kayakMetasearchProvider";
 import { kayakHotelCardModel } from "@/components/results/kayakCardModels";
 import { rememberHotels, toPublicHotel } from "@/lib/searchCache";
-import { rememberHotelSearchCohort, rememberProviderResults } from "@/services/travel/providerResultCache";
+import { getHotelSearchCohort, rememberHotelSearchCohort, rememberProviderResults } from "@/services/travel/providerResultCache";
 import { classifyHotels } from "@/lib/travel/searchContract";
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 
 export const runtime = "nodejs";
 const MAX_CURSOR_BYTES = 16384;
 const TTL_MS = 90_000;
-type State = { search: HotelSearchParams; trackId: string; snapshot: string; checkpoint: KayakHotelBatchCheckpoint; expiresAt: number; issuedAt: number; };
+type State = { search: HotelSearchParams; trackId: string; snapshot: string; checkpoint: KayakHotelBatchCheckpoint; expiresAt: number; issuedAt: number; startedAt: number; };
 
 function signature(value: string, key: string) {
   return createHmac("sha256", key).update("android-hotel-progressive-v1:" + value).digest("base64url");
@@ -35,7 +37,8 @@ function decode(value: unknown, key: string): State | null {
   try {
     const state = JSON.parse(Buffer.from(parts[0], "base64url").toString("utf8")) as State;
     if (!state || Date.now() > state.expiresAt || Date.now() < state.issuedAt ||
-        state.expiresAt - state.issuedAt !== TTL_MS ||
+        state.expiresAt - state.issuedAt !== TTL_MS || !Number.isSafeInteger(state.startedAt) ||
+        state.startedAt > state.issuedAt || state.startedAt < state.issuedAt - 120_000 ||
         !/^[a-f0-9-]{36}$/.test(state.trackId) || !/^[a-f0-9-]{36}$/.test(state.snapshot) ||
         !state.checkpoint || !Number.isSafeInteger(state.checkpoint.nextPage) ||
         state.checkpoint.nextPage < 1 || state.checkpoint.nextPage > 199 ||
@@ -67,6 +70,7 @@ export async function POST(request: Request) {
   const parsed = state ? { success: true as const, data: state.search } : hotelSearchSchema.safeParse(input.search);
   if (!parsed.success) return NextResponse.json({ error: "Invalid hotel search." }, { status: 400 });
   const search = parsed.data;
+  const startedAt = state?.startedAt ?? Date.now();
   const trackId = state?.trackId ?? randomUUID();
   const snapshot = state?.snapshot ?? randomUUID();
   const client = new KayakSandboxClient(key, undefined, undefined, "kayakaffiliateapp", getKayakClientIp(request));
@@ -84,23 +88,59 @@ export async function POST(request: Request) {
       }, nights);
       return model ? [model] : [];
     });
-    // Persist every completed batch before exposing clickable hotel details.
+    // Always reconstruct the verified same-search cohort, including early-page
+    // rates and related properties. Ignore any previous search snapshot for
+    // identical criteria; only this signed cursor's snapshot may be appended.
+    const previous = state
+      ? (await getHotelSearchCohort(search)).filter(item => item.id.startsWith("kayak-sandbox:" + snapshot + ":"))
+      : [];
+    const cumulative = [...new Map([...previous, ...results].map(item => [item.id, item])).values()];
     if (results.length) {
-      rememberHotels(results, search);
+      rememberHotels(cumulative, search);
       await rememberProviderResults("hotel", results, search);
     }
+    // Persist before returning clickable results. Never publish only the final
+    // page: the cohort underpins same-property rates and related hotels.
+    if (cumulative.length) await rememberHotelSearchCohort(cumulative, search);
     const classified = classifyHotels(results.map(toPublicHotel), [], trackId);
     const now = Date.now();
     const nextCursor = batch.checkpoint ? encode({
       search, trackId, snapshot, checkpoint: batch.checkpoint,
-      issuedAt: now, expiresAt: now + TTL_MS,
+      startedAt, issuedAt: now, expiresAt: now + TTL_MS,
     }, key) : null;
-    if (!nextCursor && results.length) await rememberHotelSearchCohort(results, search);
+    if (!nextCursor) {
+      after(async () => {
+        const session = (await resolveOptionalWebApiSession())?.session;
+        await Promise.all([
+          logSearchHistory({ userId: session?.user?.id, type: "HOTEL", destination: search.destination,
+            checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
+            query: search, resultCount: cumulative.length, latencyMs: Date.now() - startedAt,
+            status: "SUCCESS" }),
+          trackAnalyticsEvent({ userId: session?.user?.id, type: "SEARCH",
+            name: "hotel_search", metadata: { destination: search.destination, resultCount: cumulative.length, progressive: true, trackId } }),
+          logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search", status: "SUCCESS",
+            latencyMs: Date.now() - startedAt, metadata: { progressive: true, trackId, resultCount: cumulative.length } }),
+        ]);
+      });
+    }
     return NextResponse.json({ ...classified, nextCursor, progressive: true,
       completed: nextCursor === null, receivedCount: results.length,
       providerRowsSeen: batch.providerRows, estimatedTotal: batch.checkpoint?.total ?? batch.providerRows });
   } catch (error) {
     const unavailable = error instanceof KayakError ? error.code : "unavailable";
+    after(async () => {
+      const session = (await resolveOptionalWebApiSession())?.session;
+      await Promise.all([
+        logSearchHistory({ userId: session?.user?.id, type: "HOTEL", destination: search.destination,
+          checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
+          query: search, resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
+        trackAnalyticsEvent({ userId: session?.user?.id, type: "SEARCH",
+          name: "hotel_search", metadata: { destination: search.destination, resultCount: 0, progressive: true, failed: true, trackId } }),
+        logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search",
+          status: "FAILED", latencyMs: Date.now() - startedAt, errorMessage: unavailable,
+          metadata: { progressive: true, trackId } }),
+      ]);
+    });
     return NextResponse.json({ error: "Hotel provider is temporarily unavailable.", code: unavailable, status: "unavailable", results: [] }, { status: 503 });
   }
 }
