@@ -332,7 +332,7 @@ export function DesktopFlightFilters({
     <div
       data-flight-desktop-filter-surface
       data-flight-hotel-filter-visual-parity
-      className="desktop-filter-sidebar overflow-hidden rounded-lg border border-[#CFD9E5] bg-[#F2F4F8]"
+      className="desktop-filter-sidebar overflow-hidden rounded-lg border border-[#B8C6D6] bg-[#F2F4F8] shadow-[0_8px_22px_-18px_rgba(15,23,42,0.28)]"
     >
       <div className="flex min-h-10 items-center justify-between gap-3 px-3 py-2">
         <h2 className="truncate text-[14px] font-bold tracking-[-0.01em] text-slate-950">
