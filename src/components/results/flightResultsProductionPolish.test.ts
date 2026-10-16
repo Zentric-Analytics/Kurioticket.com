@@ -432,7 +432,14 @@ test("desktop Flight filters keep the light surface with a stronger readable tex
   assert.match(filters, /text-\[13px\] font-medium text-slate-900 placeholder:text-slate-600/);
   assert.match(filters, /text-\[13px\] font-medium leading-5 tabular-nums text-\[#334155\]/);
   assert.match(filters, /font-medium text-\[#334155\]/);
-  assert.match(filters, /border-t border-slate-200\/75 px-3 py-3 first:border-t-0/);
+  assert.match(filters, /data-flight-filter-price-summary/);
+  assert.match(filters, /data-flight-filter-time-summary/);
+  assert.match(filters, /data-flight-filter-duration-summary/);
+  assert.doesNotMatch(
+    filters.slice(filters.indexOf("data-flight-hotel-filter-visual-parity")),
+    /\{t\("price"\)\}: \{formatFilterPrice/,
+  );
+  assert.match(filters, /border-t border-slate-200\/60 px-3 py-3 first:border-t-0/);
   assert.match(filters, /min-h-6 w-full items-center justify-between/);
   assert.match(filters, /h-\[14px\] w-\[14px\]/);
   assert.match(filters, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
@@ -495,7 +502,7 @@ test("desktop Flight renders the Hotel-style Popular filters card directly after
     ),
     /accent-\[#004BB8\]|className="h-4 w-4 shrink-0 cursor-pointer/,
   );
-  assert.match(source, /<div>\{renderDesktopFlightFilters\(\)\}<\/div>[\s\S]*?<StickyFlightPopularFilters/);
+  assert.match(source, /data-flight-price-alert-sidebar-slot[\s\S]*?<div>\{renderDesktopFlightFilters\(\)\}<\/div>[\s\S]*?<StickyFlightPopularFilters/);
   assert.doesNotMatch(source, /showStickyFlightFilters/);
   assert.doesNotMatch(source, /shouldShowFlightStickyPopularFilters/);
   assert.doesNotMatch(source, /desktopFilterPanelRef|desktopResultsContentRef/);
