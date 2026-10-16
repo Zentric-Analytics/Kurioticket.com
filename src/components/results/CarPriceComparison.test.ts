@@ -38,16 +38,16 @@ test("provider offers show logo, name, per-day price and a direct provider View 
   assert.match(picker, /group\.logoUrl/);
   assert.match(picker, /title=\{group\.providerName\}/);
   assert.match(picker, /data-car-deal-provider-name/);
-  assert.ok(picker.includes('text-[11px] leading-[15px]'));
-  assert.ok(picker.includes('text-[12px] leading-[16px]'));
-  assert.ok(picker.includes('text-[12px] leading-4'));
+  assert.ok(picker.includes('compact ? "text-[12px] leading-4" : "text-[10px] leading-3 lg:text-[12px] lg:leading-4"'));
+  assert.ok(picker.includes('compact ? "text-[13px] leading-[17px]"'));
+  assert.ok(picker.includes('compact ? "text-[13px] leading-4"'));
   assert.match(picker, /data-car-deal-picker-compact/);
   assert.ok(picker.includes('min-h-9 max-[359px]:grid-cols-1'));
   assert.ok(picker.includes('compact ? "min-h-9" : "min-h-6"'));
   assert.ok(picker.includes('compact ? "h-9 w-8" : "h-6 w-7"'));
   assert.ok(picker.includes('max-[409px]:hidden'));
   assert.ok(picker.includes('h-9 w-8'));
-  assert.match(picker, /Info size=\{compact \? 17 : 16\}/);
+  assert.match(picker, /Info size=\{compact \? 18 : 16\}/);
   assert.equal((picker.match(/fontSize: 11, lineHeight: "16px", fontWeight: 600/g) ?? []).length, 1);
   assert.match(card, /data-car-card-mobile-offers\s+className="w-full min-w-0 px-2 py-1\.5"/);
   assert.doesNotMatch(card, /data-car-card-mobile-pricing/);
@@ -61,6 +61,25 @@ test("provider offers show logo, name, per-day price and a direct provider View 
   assert.match(picker, />\/day</);
   assert.match(picker, /data-car-deal-provider-view-deal/);
   assert.match(picker, />\s*View deal\s*</);
+});
+
+test("mobile provider hierarchy is subtly larger inside the existing fixed-height offer rows", () => {
+  const providerMark = picker.slice(picker.indexOf("function ProviderMark"), picker.indexOf("const rateSectionIcons"));
+  assert.match(providerMark, /compact \? "h-\[19px\] w-\[19px\] max-w-full object-contain" : "h-4 w-4 max-w-full object-contain lg:h-\[18px\] lg:w-\[18px\]"/);
+  assert.match(providerMark, /compact \? "text-\[12px\]" : "text-\[10px\] lg:text-\[11px\]"/);
+  const rows = picker.slice(picker.indexOf("data-car-deal-provider-offers"), picker.indexOf("data-car-deal-more-slot"));
+  assert.match(rows, /compact \? "grid-cols-\[minmax\(0,calc\(68%_\+_20px\)\)_minmax\(0,1fr\)\] min-h-9 max-\[359px\]:grid-cols-1 max-\[359px\]:py-1"/);
+  assert.match(rows, /compact \? "inline-flex h-\[19px\] w-\[19px\] shrink-0 items-center justify-center overflow-hidden"/);
+  assert.match(rows, /compact \? "text-\[12px\] leading-4"/);
+  assert.match(rows, /Info size=\{compact \? 18 : 16\}/);
+  assert.match(rows, /compact \? "text-\[13px\] leading-\[17px\]"/);
+  assert.match(rows, /compact \? "text-\[11px\]" : "lg:text-\[11px\]"/);
+  assert.equal((rows.match(/compact \? "text-\[13px\] leading-4"/g) ?? []).length, 2);
+  assert.match(rows, /View deal <ChevronRight size=\{12\}/);
+  assert.match(rows, /compact \? "h-9 w-8" : "h-6 w-7"/);
+  assert.match(rows, /compact \? "min-h-9" : "min-h-6"/);
+  assert.match(picker, /data-car-deal-more-slot className="mt-0\.5 flex min-h-9 items-center md:mt-1 md:min-h-6 lg:mt-1"/);
+  assert.match(rows, /"grid-cols-\[minmax\(0,calc\(50%_\+_31px\)\)_minmax\(0,1fr\)\] min-h-6 lg:min-h-\[30px\]"/);
 });
 
 test("provider View deal validates its own URL and stays isolated from main offer selection", () => {
@@ -242,7 +261,7 @@ test("Rate details footer View deal text is centered without arrows on mobile an
   assert.doesNotMatch(footer, /items-center justify-center gap-2/);
   assert.match(footer, /data-car-rate-view-deal/);
   assert.match(footer, /data-car-rate-view-deal-unavailable/);
-  assert.match(picker, /View deal <ChevronRight size=\{compact \? 11 : 12\}/);
+  assert.match(picker, /View deal <ChevronRight size=\{12\}/);
 });
 
 test("Cars Rate details desktop scrollbar is slim with smaller arrows and isolated from other surfaces", () => {
@@ -357,14 +376,14 @@ test("desktop rows stay compact while full-width mobile provider rows keep their
   assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
 });
 
-test("desktop provider logos and offer labels are readable without changing compact mobile sizing", () => {
-  assert.ok(picker.includes('compact ? "h-4 w-4 max-w-full object-contain" : "h-4 w-4 max-w-full object-contain lg:h-[18px] lg:w-[18px]"'));
+test("desktop provider styles remain unchanged while mobile offer typography scales proportionately", () => {
+  assert.ok(picker.includes('compact ? "h-[19px] w-[19px] max-w-full object-contain" : "h-4 w-4 max-w-full object-contain lg:h-[18px] lg:w-[18px]"'));
   assert.ok(picker.includes('lg:h-[18px] lg:w-[18px]"'));
   assert.ok(picker.includes('text-[10px] leading-3 lg:text-[12px] lg:leading-4'));
   assert.ok(picker.includes('text-xs leading-[14px] lg:text-[13px] lg:leading-[17px]'));
   assert.ok(picker.includes('text-[11px] leading-4 lg:text-[12px]'));
-  assert.ok(picker.includes('compact ? "text-[11px] leading-[15px]"'));
-  assert.ok(picker.includes('compact ? "text-[12px] leading-[16px]"'));
+  assert.ok(picker.includes('compact ? "text-[12px] leading-4"'));
+  assert.ok(picker.includes('compact ? "text-[13px] leading-[17px]"'));
   assert.ok(picker.includes('style={compact ? { fontSize: 11, lineHeight: "16px", fontWeight: 600 } : undefined}'));
 });
 
