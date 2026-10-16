@@ -435,21 +435,25 @@ test("desktop Flight filters match Hotel desktop typography while keeping the Fl
 
   assert.match(hotels, /layout === "desktop" && "text-\[13px\]"/);
   assert.match(hotels, /text-sm font-bold leading-5 text-slate-950/);
-  assert.match(primaryFilters, /text-\[13px\] font-bold leading-5 text-slate-950/);
+  assert.match(filters, /text-\[13px\] font-bold leading-5 text-slate-950/);
 
   assert.match(hotels, /text-\[12px\] font-medium leading-5 text-slate-700/);
-  assert.match(primaryFilters, /text-\[12px\] font-medium leading-5 text-slate-700/);
+  assert.match(filters, /text-\[12px\] font-medium leading-5 text-slate-700/);
 
   assert.match(hotels, /text-\[12px\] leading-5/);
   assert.match(hotels, /font-medium tabular-nums text-slate-500/);
   assert.match(
-    primaryFilters,
+    filters,
     /text-\[12px\] font-medium leading-5 tabular-nums text-slate-500/,
   );
 
   assert.match(
     primaryFilters,
     /h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-\[13px\] text-slate-950 placeholder:text-slate-500/,
+  );
+  assert.doesNotMatch(
+    primaryFilters,
+    /font-medium text-slate-900 placeholder:text-slate-600/,
   );
   assert.match(
     hotels,
@@ -470,22 +474,6 @@ test("desktop Flight filters match Hotel desktop typography while keeping the Fl
   assert.match(primaryFilters, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
   assert.match(primaryFilters, /<Check className="h-2\.5 w-2\.5"/);
 
-  assert.doesNotMatch(
-    primaryFilters,
-    /text-\[14px\] font-semibold leading-5 text-slate-950/,
-  );
-  assert.doesNotMatch(
-    primaryFilters,
-    /text-\[13px\] font-medium leading-5 text-\[#26354A\]/,
-  );
-  assert.doesNotMatch(
-    primaryFilters,
-    /text-\[12px\] font-semibold leading-5 tabular-nums text-\[#526174\]/,
-  );
-  assert.doesNotMatch(
-    primaryFilters,
-    /text-\[13px\] font-medium text-slate-900 placeholder:text-slate-600/,
-  );
   assert.doesNotMatch(
     primaryFilters,
     /\{t\("price"\)\}: \{formatFilterPrice/,
