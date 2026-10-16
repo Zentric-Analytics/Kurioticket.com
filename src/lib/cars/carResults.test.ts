@@ -141,14 +141,23 @@ test("badges identify distinct leaders", () => {
   assert.ok([...b.values()].includes("Top rated"));
   assert.ok([...b.values()].includes("Best value"));
 });
-test("desktop visible sort leaders earn the corresponding badge without mutating mobile badge assignments", () => {
+test("desktop Recommended mirrors mobile badges while price and rating sorts decorate their visible leader", () => {
   const sourceBadges = assignCarBadges(cars);
   const originalAssignments = [...sourceBadges.entries()];
   const leader = { ...cars[0], id: "test-visible-leader", supplierRating: 4.8 };
   const other = { ...cars[1], id: "test-visible-other" };
   const visible = [leader, other];
+  const recommended = assignVisibleCarSortBadges(visible, "recommended", sourceBadges);
+  assert.deepEqual(recommended, sourceBadges, "Recommended must match the original mobile badges");
+  assert.equal(recommended.has(leader.id), false, "the leading car gets no fabricated Best value award");
+  const awarded = cars.find(car => sourceBadges.has(car.id));
+  assert.ok(awarded);
+  assert.equal(
+    assignVisibleCarSortBadges([awarded], "recommended", sourceBadges).get(awarded.id),
+    sourceBadges.get(awarded.id),
+    "genuine awards must remain visible under Recommended",
+  );
   for (const [sort, expectedBadge] of [
-    ["recommended", "Best value"],
     ["lowestTotal", "Cheapest"],
     ["topRated", "Top rated"],
   ] as const) {

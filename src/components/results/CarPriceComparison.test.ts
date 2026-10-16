@@ -293,7 +293,7 @@ test("desktop and mobile web use the same three-offer preview with a reserved di
   assert.match(toggle, /Show fewer offers/);
   assert.match(toggle, /aria-expanded=\{expanded\}/);
   assert.match(toggle, /groups\.length - INITIAL_VISIBLE_OFFER_COUNT/);
-  assert.match(compactSource, /data-car-deal-more-slot className="mt-0\.5 flex min-h-9 items-center md:mt-1 md:min-h-6 lg:mt-2"/);
+  assert.match(compactSource, /data-car-deal-more-slot className="mt-0\.5 flex min-h-9 items-center md:mt-1 md:min-h-6 lg:mt-1"/);
   assert.match(compactSource, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
   assert.doesNotMatch(compactSource, /groups\.slice\(/);
   assert.match(compactSource, /groups\.map\(\(group, index\) =>/);
@@ -302,7 +302,7 @@ test("desktop and mobile web use the same three-offer preview with a reserved di
 
 test("desktop-only Cars offers toggle text is compact but mobile font is unchanged", () => {
   const control = picker.slice(picker.indexOf("data-car-deal-more-offers"), picker.indexOf("data-car-rate-dialog"));
-  assert.match(control, /text-\[10px\] font-semibold text-\[#004BB8\] md:min-h-6 lg:text-\[9\.5px\] lg:font-medium/);
+  assert.match(control, /text-\[10px\] font-semibold text-\[#004BB8\] md:min-h-6 lg:text-\[12px\] lg:font-semibold/);
   assert.match(control, /style=\{compact \? \{ fontSize: 11, lineHeight: "16px", fontWeight: 600 \} : undefined\}/);
   assert.match(control, /expanded \? "Show fewer offers"/);
   assert.match(control, /aria-expanded=\{expanded\}/);
@@ -311,7 +311,7 @@ test("desktop-only Cars offers toggle text is compact but mobile font is unchang
   const desktopRule = globalCss.indexOf("[data-car-deal-picker]:not([data-car-deal-picker-compact]) [data-car-deal-more-offers]");
   assert.ok(fontReset >= 0 && desktopRule > fontReset, "desktop rule follows the unlayered font reset");
   assert.match(globalCss.slice(fontReset, desktopRule), /@media \(min-width: 1024px\)/);
-  assert.match(globalCss.slice(desktopRule, desktopRule + 155), /font-size: 9\.5px;\s*line-height: 14px;\s*font-weight: 500;/);
+  assert.match(globalCss.slice(desktopRule, desktopRule + 155), /font-size: 12px;\s*line-height: 16px;\s*font-weight: 600;/);
 });
 
 test("Cars inline offer rows place info after provider branding and before price and link on web", () => {
@@ -344,17 +344,28 @@ test("Cars provider expansion is parent-controlled and keeps supplier clickout a
   assert.match(picker, /setDetailsKey\(group\.key\)/);
 });
 
-test("desktop Cars provider offers have even vertical space while mobile compact rows are unchanged", () => {
-  // Desktop only: each visible row is at least 32px tall with a consistent 6px gap.
-  // The 108px minimum reserves the same height for one-, two- and three-offer previews.
-  assert.ok(picker.includes('compact ? "max-[359px]:min-h-[240px] space-y-0" : "space-y-0.5 lg:space-y-1.5 lg:min-h-[108px]"'));
-  assert.ok(picker.includes(': "grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)] min-h-6 lg:min-h-8"'));
-  assert.ok(picker.includes('data-car-deal-more-slot className="mt-0.5 flex min-h-9 items-center md:mt-1 md:min-h-6 lg:mt-2"'));
+test("desktop Cars provider rows have compact, consistent breathing room while mobile stays unchanged", () => {
+  // Desktop only: each row is 30px with a restrained 4px gap.
+  // 98px reserves exactly three rows with two gaps without inflating short previews.
+  assert.ok(picker.includes('compact ? "max-[359px]:min-h-[240px] space-y-0" : "space-y-0.5 lg:space-y-1 lg:min-h-[98px]"'));
+  assert.ok(picker.includes(': "grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)] min-h-6 lg:min-h-[30px]"'));
+  assert.ok(picker.includes('data-car-deal-more-slot className="mt-0.5 flex min-h-9 items-center md:mt-1 md:min-h-6 lg:mt-1"'));
   // No mobile spacing, tap-target, price, info, or provider-action changes.
   assert.ok(picker.includes('compact ? "grid-cols-[minmax(0,calc(65%_+_20px))_minmax(0,1fr)] min-h-9 max-[359px]:grid-cols-1 max-[359px]:py-1"'));
   assert.ok(picker.includes('compact ? "h-9 w-8" : "h-6 w-7"'));
   assert.ok(picker.includes('compact ? "min-h-9" : "min-h-6"'));
   assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
+});
+
+test("desktop provider logos and offer labels are readable without changing compact mobile sizing", () => {
+  assert.ok(picker.includes('compact ? "h-4 w-4 max-w-full object-contain" : "h-4 w-4 max-w-full object-contain lg:h-[18px] lg:w-[18px]"'));
+  assert.ok(picker.includes('lg:h-[18px] lg:w-[18px]"'));
+  assert.ok(picker.includes('text-[10px] leading-3 lg:text-[12px] lg:leading-4'));
+  assert.ok(picker.includes('text-xs leading-[14px] lg:text-[13px] lg:leading-[17px]'));
+  assert.ok(picker.includes('text-[11px] leading-4 lg:text-[12px]'));
+  assert.ok(picker.includes('compact ? "text-[11px] leading-[15px]"'));
+  assert.ok(picker.includes('compact ? "text-[12px] leading-[16px]"'));
+  assert.ok(picker.includes('style={compact ? { fontSize: 11, lineHeight: "16px", fontWeight: 600 } : undefined}'));
 });
 
 test("Cars offers reserve a stable three-row preview without fabricating provider options", () => {
@@ -365,7 +376,7 @@ test("Cars offers reserve a stable three-row preview without fabricating provide
   assert.match(picker, /compact \? "grid-cols-\[minmax/);
   assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
   assert.match(picker, /min-h-9 max-\[359px\]:grid-cols-1/);
-  assert.match(picker, /: "grid-cols-\[minmax\(0,calc\(50%_\+_31px\)\)_minmax\(0,1fr\)\] min-h-6 lg:min-h-8"/);
+  assert.match(picker, /: "grid-cols-\[minmax\(0,calc\(50%_\+_31px\)\)_minmax\(0,1fr\)\] min-h-6 lg:min-h-\[30px\]"/);
   assert.match(picker, /groups\.map\(\(group, index\) =>/);
   assert.doesNotMatch(picker, /placeholder|Empty provider|ghost rate/i);
 });
