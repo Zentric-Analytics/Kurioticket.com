@@ -50,23 +50,11 @@ const carResultBadgeIcons: Record<CarResultBadge, LucideIcon> = {
   "Top rated": Star,
 };
 
-const mobileStandaloneViewDealClassName =
-  "inline-flex min-h-9 shrink-0 items-center justify-end gap-1";
-
 const desktopStandaloneViewDealClassName =
   "mt-2 inline-flex min-h-9 items-center justify-end gap-1";
 
 const unavailableStandaloneViewDealClassName =
   "appearance-none border-0 bg-transparent p-0 disabled:opacity-100";
-
-const mobileStandaloneViewDealVisualStyle: CSSProperties = {
-  color: "#004BB8",
-  WebkitTextFillColor: "#004BB8",
-  fontSize: "12px",
-  fontWeight: 600,
-  lineHeight: "16px",
-  opacity: 1,
-};
 
 const desktopStandaloneViewDealVisualStyle: CSSProperties = {
   color: "#004BB8",
@@ -475,7 +463,7 @@ export function CarResultCard({
           >
             <div
               data-car-card-mobile-offers
-              className={`min-w-0 px-2 py-1.5 transition-[flex-grow] duration-300 ease-in-out motion-reduce:transition-none ${offersExpanded ? "flex-[1]" : "flex-[2.65]"}`}
+              className="w-full min-w-0 px-2 py-1.5"
             >
               {!guidedPlanning ? (
                 <CarDealPicker
@@ -487,59 +475,6 @@ export function CarResultCard({
                   onExpandedChange={handleOffersExpandedChange}
                 />
               ) : null}
-            </div>
-            <div
-              data-car-card-mobile-pricing
-              aria-hidden={offersExpanded}
-              inert={offersExpanded ? true : undefined}
-              className={[
-                "flex min-w-0 flex-col items-end justify-center overflow-hidden transition-[flex-grow,padding,opacity,visibility] duration-300 ease-in-out motion-reduce:transition-none",
-                offersExpanded
-                  ? "invisible pointer-events-none flex-[0] px-0 py-0 opacity-0 max-[359px]:px-0"
-                  : "visible flex-[1.1] px-2.5 py-2 opacity-100 max-[359px]:px-1",
-              ].join(" ")}
-            >
-              <p
-                className="max-w-full whitespace-nowrap text-[19px] font-semibold leading-[22px] tracking-[-0.02em] text-[#07133B] tabular-nums"
-                dir="ltr"
-                title={dailyDisplayPrice.title}
-                aria-label={dailyDisplayPrice.ariaLabel}
-              >
-                {dailyDisplayPrice.formatted}
-              </p>
-              <p className="mt-px text-[10px] font-medium leading-[13px] text-[#536B92]">per day</p>
-            {onSelect ? (
-              <button
-                type="button"
-                onClick={() => onSelect(car)}
-                aria-label={actionAriaLabel}
-                className={`${mobileStandaloneViewDealClassName} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40`}
-                style={mobileStandaloneViewDealVisualStyle}
-              >
-                View deal <ChevronRight size={14} aria-hidden="true" />
-              </button>
-            ) : providerBookingHref ? (
-              <a
-                href={providerBookingHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`View deal from ${offer.bookingProviderName || offer.rentalCompanyName}`}
-                className={`${mobileStandaloneViewDealClassName} transition-colors hover:text-[#003A8C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40`}
-                style={mobileStandaloneViewDealVisualStyle}
-              >
-                View deal <ChevronRight size={14} aria-hidden="true" />
-              </a>
-            ) : (
-              <button
-                type="button"
-                disabled
-                aria-label="Provider booking link unavailable"
-                className={`${mobileStandaloneViewDealClassName} ${unavailableStandaloneViewDealClassName} cursor-not-allowed`}
-                style={mobileStandaloneViewDealVisualStyle}
-              >
-                View deal <ChevronRight size={14} aria-hidden="true" />
-              </button>
-            )}
             </div>
           </div>
         </div>
