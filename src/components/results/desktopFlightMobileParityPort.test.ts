@@ -10,14 +10,18 @@ const details = readFileSync(new URL("./flightDetails/StandaloneFlightDetails.ts
 const searchFields = readFileSync(new URL("../search/FlightSearchFieldPrimitives.tsx", import.meta.url), "utf8");
 const globals = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 
-test("desktop Flight Results adopts approved mobile-web visual rules without replacing mobile contracts", () => {
+test("desktop Flight Results moves price tracking into the sidebar without replacing mobile contracts", () => {
   assert.match(results, /data-flight-results-main className="max-sm:overflow-x-clip bg-\[#F5F7FB\][^"]*sm:bg-\[#F3F6FA\][^"]*lg:bg-white"/);
   assert.doesNotMatch(results, /data-desktop-nearby-fare-rail|data-desktop-cheaper-nearby/);
   assert.match(results, /data-nearby-fare-presentation="mobile"/);
-  assert.match(results, /className="max-sm:pt-2 max-sm:pb-1 sm:mb-4"><div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
+  assert.match(results, /className="max-sm:pt-2 max-sm:pb-1 sm:hidden"><div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
+  assert.match(results, /data-flight-price-alert-sidebar-slot/);
+  assert.match(results, /desktopPortalTarget=\{desktopFlightPriceAlertTarget\}/);
   assert.match(results, /data-flight-results-card-list className="space-y-3 sm:space-y-4"/);
-  assert.match(alert, /data-flight-price-alert[^\n]*className="block"/);
-  assert.match(alert, /sm:min-h-\[56px\]/);
+  assert.match(alert, /data-flight-price-alert-sidebar/);
+  assert.match(alert, /min-h-\[48px\]/);
+  assert.match(alert, />Track flight price</);
+  assert.match(alert, /createPortal\(desktopControl, desktopPortalTarget\)/);
 });
 
 test("desktop Flight filters follow the approved section hierarchy and selected-state language", () => {
@@ -36,7 +40,12 @@ test("desktop Flight filters follow the approved section hierarchy and selected-
   assert.ok(order.every((position, index) => position >= 0 && (index === 0 || position > order[index - 1])));
   assert.match(filters, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
   assert.match(filters, /<Check className="h-2\.5 w-2\.5"/);
-  assert.match(filters, /\{t\("price"\)\}: \{formatFilterPrice/);
+  assert.match(filters, /data-flight-filter-price-summary/);
+  assert.match(filters, /formatFilterPrice\(Math\.min\(maxPrice, priceBounds\.max\)\)/);
+  assert.match(filters, /data-flight-filter-time-summary/);
+  assert.match(filters, /\{timeFilterMode === "takeoff" \? t\("takeoff"\) : t\("landing"\)\} · \{airportCode \|\| "—"\}/);
+  assert.match(filters, /data-flight-filter-duration-summary/);
+  assert.doesNotMatch(primaryFilters, /\{t\("price"\)\}: \{formatFilterPrice/);
   assert.match(filters, /peer-focus-visible:ring-2/);
 });
 
@@ -63,7 +72,7 @@ test("standalone desktop Flight Results keeps the Hotel-style Popular filters ca
   assert.match(results, /function StickyFlightPopularFilters\(/);
   assert.match(results, /data-flight-sticky-popular-filters/);
   assert.match(results, /sticky top-\[88px\]/);
-  assert.match(results, /<div>\{renderDesktopFlightFilters\(\)\}<\/div>[\s\S]*?<StickyFlightPopularFilters/);
+  assert.match(results, /data-flight-price-alert-sidebar-slot[\s\S]*?<div>\{renderDesktopFlightFilters\(\)\}<\/div>[\s\S]*?<StickyFlightPopularFilters/);
   assert.doesNotMatch(results, /showStickyFlightFilters|shouldShowFlightStickyPopularFilters/);
   assert.doesNotMatch(results, /desktopCompactFilterRef|desktopFilterSentinelRef/);
 
