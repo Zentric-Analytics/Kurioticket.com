@@ -488,6 +488,12 @@ function MultiCityAirportField({
         label={label}
         inputLabel={inputLabel}
         value={resultsPresentation && draftQuery === null ? code : query}
+        desktopValue={
+          landingPresentation && selectedAirport && draftQuery === null
+            ? formatAirportLabel(selectedAirport, locale)
+            : undefined
+        }
+        showDesktopSecondary={!landingPresentation}
         placeholder={t("cityOrAirport")}
         mobilePlaceholder={t("cityOrAirport")}
         useMainFlightLandingMobilePresentation

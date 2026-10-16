@@ -202,6 +202,20 @@ test("standalone desktop uses a shared header row for identity and actions witho
   assert.match(mobile, /mobileSpecColumns\.map/);
 });
 
+test("desktop badges, mobile source awards and identity spacing remain independent", () => {
+  assert.match(source, /mobileBadge\?: CarResultBadge \| null/);
+  assert.match(source, /mobileBadge === undefined \? badge : mobileBadge/);
+  assert.match(source, /const MobileBadgeIcon = mobileBadgeLabel \? carResultBadgeIcons\[mobileBadgeLabel\] : null/);
+  const mobile = source.slice(source.indexOf("data-car-card-mobile-information"), source.indexOf("data-car-card-mobile-identity"));
+  assert.match(mobile, /mobileBadgeLabel && MobileBadgeIcon/);
+  assert.match(mobile, /\{mobileBadgeLabel\}/);
+  const desktop = source.slice(source.indexOf("data-car-card-desktop-shared-header"), source.indexOf('data-region="details"'));
+  assert.match(desktop, /data-car-card-desktop-badge/);
+  assert.match(desktop, /data-car-card-desktop-title-row[\s\S]*?h-11/);
+  assert.match(desktop, /data-car-card-desktop-actions[\s\S]*?h-11/);
+  assert.match(desktop, /data-car-card-desktop-category[\s\S]*?lg:-mt-1/);
+});
+
 test("desktop standalone title and save/share occupy the exact same grid row below Best value", () => {
   const desktop = source.slice(source.indexOf('data-region="heading"'));
   const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
@@ -495,7 +509,8 @@ test("mobile card matches native compact height, semantic spec columns, and top-
     source.indexOf("data-car-card-mobile-offers"),
     source.indexOf("data-car-card-mobile-pricing"),
   );
-  assert.match(offers, /flex-\[2\.65\] px-2 py-1\.5/);
+  assert.match(offers, /px-2 py-1\.5 transition-\[flex-grow\]/);
+  assert.match(offers, /offersExpanded \? "flex-\[1\]" : "flex-\[2\.65\]"/);
   assert.match(offers, /<CarDealPicker/);
   assert.doesNotMatch(offers, /mobileSpecColumns\.map/);
 
@@ -569,6 +584,19 @@ test("standalone desktop pricing follows the selected provider and keeps one Vie
   );
   assert.match(desktop, /carsResults\.comparison\.perDay/);
   assert.doesNotMatch(desktop, /<CarPriceComparison/);
+});
+
+test("expanded standalone provider offers reclaim the mobile and desktop pricing space", () => {
+  assert.match(source, /expandedOffersForCar === car\.id/);
+  assert.match(source, /setExpandedOffersForCar\(expanded \? car\.id : null\)/);
+  assert.equal((source.match(/expanded=\{offersExpanded\}/g) ?? []).length, 2);
+  assert.equal((source.match(/onExpandedChange=\{handleOffersExpandedChange\}/g) ?? []).length, 2);
+  assert.equal((source.match(/aria-hidden=\{offersExpanded\}/g) ?? []).length, 2);
+  assert.equal((source.match(/inert=\{offersExpanded \? true : undefined\}/g) ?? []).length, 2);
+  assert.match(source, /lg:col-span-2 lg:col-start-2 lg:transition-\[padding-right\]/);
+  assert.match(source, /offersExpanded \? "lg:pr-4" : "lg:pr-\[168px\]"/);
+  assert.match(source, /md:hidden lg:flex lg:invisible lg:pointer-events-none lg:opacity-0/);
+  assert.match(source, /motion-reduce:transition-none/);
 });
 
 test("standalone desktop pricing is anchored to the card bottom-right while guided pricing stays centered", () => {

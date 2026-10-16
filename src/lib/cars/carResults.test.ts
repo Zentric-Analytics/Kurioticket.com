@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   assignCarBadges,
+  assignVisibleCarSortBadges,
   buildCarDetailsHref,
   calculateRentalDays,
   ensureCarProviderCoverage,
@@ -140,6 +141,39 @@ test("badges identify distinct leaders", () => {
   assert.ok([...b.values()].includes("Top rated"));
   assert.ok([...b.values()].includes("Best value"));
 });
+test("desktop Recommended mirrors mobile badges while price and rating sorts decorate their visible leader", () => {
+  const sourceBadges = assignCarBadges(cars);
+  const originalAssignments = [...sourceBadges.entries()];
+  const leader = { ...cars[0], id: "test-visible-leader", supplierRating: 4.8 };
+  const other = { ...cars[1], id: "test-visible-other" };
+  const visible = [leader, other];
+  const recommended = assignVisibleCarSortBadges(visible, "recommended", sourceBadges);
+  assert.deepEqual(recommended, sourceBadges, "Recommended must match the original mobile badges");
+  assert.equal(recommended.has(leader.id), false, "the leading car gets no fabricated Best value award");
+  const awarded = cars.find(car => sourceBadges.has(car.id));
+  assert.ok(awarded);
+  assert.equal(
+    assignVisibleCarSortBadges([awarded], "recommended", sourceBadges).get(awarded.id),
+    sourceBadges.get(awarded.id),
+    "genuine awards must remain visible under Recommended",
+  );
+  for (const [sort, expectedBadge] of [
+    ["lowestTotal", "Cheapest"],
+    ["topRated", "Top rated"],
+  ] as const) {
+    const actual = assignVisibleCarSortBadges(visible, sort, sourceBadges);
+    assert.equal(actual.get(leader.id), expectedBadge);
+    assert.equal([...actual.values()].filter(badge => badge === expectedBadge).length, 1);
+    assert.deepEqual([...sourceBadges.entries()], originalAssignments);
+    assert.deepEqual(assignVisibleCarSortBadges(visible, sort, sourceBadges), actual);
+  }
+  const filteredFirst = { ...cars[2], id: "filtered-first" };
+  assert.equal(assignVisibleCarSortBadges([filteredFirst], "lowestTotal", sourceBadges).get(filteredFirst.id), "Cheapest");
+  assert.deepEqual(assignVisibleCarSortBadges([], "recommended", sourceBadges), sourceBadges);
+  const unrated = { ...leader, supplierRating: undefined };
+  assert.deepEqual(assignVisibleCarSortBadges([unrated], "topRated", new Map()), new Map());
+});
+
 test("pricing duration and catalogue are deterministic and immutable", () => {
   const snapshot = JSON.stringify(staticCarCatalogue);
   assert.equal(calculateRentalDays("2026-08-01", "2026-08-04"), 3);

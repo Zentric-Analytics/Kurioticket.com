@@ -415,7 +415,7 @@ test("desktop Flight Results omit nearby-fare calendar and cheaper-nearby insigh
   assert.match(source, /flight-mobile-cheaper-nearby/);
 });
 
-test("desktop Flight filters use the Hotel typography hierarchy and checkbox rhythm", async () => {
+test("desktop Flight filters keep the light surface with a stronger readable text hierarchy", async () => {
   const filters = await readFile(
     new URL("./DesktopFlightFilters.tsx", import.meta.url),
     "utf8",
@@ -426,17 +426,22 @@ test("desktop Flight filters use the Hotel typography hierarchy and checkbox rhy
   assert.match(filters, /overflow-hidden rounded-lg border border-\[#CFD9E5\] bg-\[#F2F4F8\]/);
   assert.match(filters, /\{t\("hotelResults\.filterBy"\)\}/);
   assert.match(filters, /text-\[14px\] font-bold tracking-\[-0\.01em\] text-slate-950/);
-  assert.match(filters, /text-\[13px\] font-bold leading-5 text-slate-950/);
+  assert.match(filters, /text-\[14px\] font-semibold leading-5 text-slate-950/);
+  assert.match(filters, /text-\[13px\] font-medium leading-5 text-\[#26354A\]/);
+  assert.match(filters, /text-\[12px\] font-semibold leading-5 tabular-nums text-\[#526174\]/);
+  assert.match(filters, /text-\[13px\] font-medium text-slate-900 placeholder:text-slate-600/);
+  assert.match(filters, /text-\[13px\] font-medium leading-5 tabular-nums text-\[#334155\]/);
+  assert.match(filters, /font-medium text-\[#334155\]/);
   assert.match(filters, /border-t border-slate-200\/75 px-3 py-3 first:border-t-0/);
   assert.match(filters, /min-h-6 w-full items-center justify-between/);
   assert.match(filters, /h-\[14px\] w-\[14px\]/);
   assert.match(filters, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
   assert.match(filters, /<Check className="h-2\.5 w-2\.5"/);
-  assert.match(filters, /text-\[12px\] font-medium leading-5 tabular-nums text-slate-500/);
   assert.match(filters, /text-\[13px\] font-semibold leading-5 tracking-\[-0\.005em\] text-slate-800/);
+  assert.doesNotMatch(filters, /text-\[12px\] font-medium leading-5 text-slate-700/);
+  assert.doesNotMatch(filters, /placeholder:text-slate-400/);
   assert.doesNotMatch(filters, /data-flight-hotel-filter-visual-parity[\s\S]{0,300}bg-white/);
 });
-
 test("desktop Flight Stops filter shows labels and counts without fare hints", async () => {
   const filters = await readFile(
     new URL("./DesktopFlightFilters.tsx", import.meta.url),
@@ -468,6 +473,28 @@ test("desktop Flight renders the Hotel-style Popular filters card directly after
   assert.match(source, /sticky top-\[88px\]/);
   assert.match(source, /max-h-\[calc\(100vh-100px\)\]/);
   assert.match(source, /data-flight-sticky-popular-filters[\s\S]*?bg-white/);
+  assert.match(source, /text-\[13px\] font-medium leading-5 text-\[#26354A\]/);
+  assert.match(source, /text-\[12px\] font-semibold leading-5 tabular-nums text-\[#526174\]/);
+  assert.match(source, /className="peer sr-only"/);
+  assert.match(
+    source,
+    /h-\[14px\] w-\[14px\][^"]*rounded-\[2px\][^"]*peer-focus-visible:ring-2/,
+  );
+  assert.match(
+    source,
+    /filter\.selected[\s\S]*?border-\[#0067DB\] bg-\[#0067DB\] text-white[\s\S]*?border-slate-300 bg-white group-hover:border-slate-400/,
+  );
+  assert.match(
+    source,
+    /<Check[\s\S]*?className="h-2\.5 w-2\.5"[\s\S]*?strokeWidth=\{3\}/,
+  );
+  assert.doesNotMatch(
+    source.slice(
+      source.indexOf("function StickyFlightPopularFilters"),
+      source.indexOf("type MobileShortcutSheet"),
+    ),
+    /accent-\[#004BB8\]|className="h-4 w-4 shrink-0 cursor-pointer/,
+  );
   assert.match(source, /<div>\{renderDesktopFlightFilters\(\)\}<\/div>[\s\S]*?<StickyFlightPopularFilters/);
   assert.doesNotMatch(source, /showStickyFlightFilters/);
   assert.doesNotMatch(source, /shouldShowFlightStickyPopularFilters/);

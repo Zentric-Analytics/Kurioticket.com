@@ -97,6 +97,7 @@ const approvedProviderBookingUrl = (
 export function CarResultCard({
   car,
   badge,
+  mobileBadge,
   detailsHref,
   search,
   onSelect,
@@ -112,6 +113,7 @@ export function CarResultCard({
 }: {
   car: NormalizedCarResult;
   badge?: CarResultBadge;
+  mobileBadge?: CarResultBadge | null;
   detailsHref: string | null;
   search: CarSearchParams;
   onSelect?: (car: NormalizedCarResult) => void;
@@ -135,6 +137,8 @@ export function CarResultCard({
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? key;
   const { start: startRouteProgress } = useRouteProgress();
   const [shareConfirmation, setShareConfirmation] = useState("");
+  // Virtualized list rows may be recycled; expansion belongs to the current car ID.
+  const [expandedOffersForCar, setExpandedOffersForCar] = useState<string | null>(null);
   const [mobileDetailsPending, setMobileDetailsPending] = useState(false);
   const [desktopDealPanelTarget, setDesktopDealPanelTarget] =
     useState<HTMLDivElement | null>(null);
@@ -151,11 +155,16 @@ export function CarResultCard({
   if (!offer) return null;
   const providerBookingHref = approvedProviderBookingUrl(car, offer);
   const guidedPlanning = presentation === "guided-planning";
+  const offersExpanded = !guidedPlanning && expandedOffersForCar === car.id;
+  const handleOffersExpandedChange = (expanded: boolean) =>
+    setExpandedOffersForCar(expanded ? car.id : null);
   const orSimilarLabel = planningLabels?.orSimilar ?? t("deals.results.car.orSimilar");
   const vehicleName = car.orSimilar
     ? `${car.modelName} ${orSimilarLabel}`
     : car.modelName;
   const BadgeIcon = badge ? carResultBadgeIcons[badge] : null;
+  const mobileBadgeLabel = mobileBadge === undefined ? badge : mobileBadge;
+  const MobileBadgeIcon = mobileBadgeLabel ? carResultBadgeIcons[mobileBadgeLabel] : null;
   const dailyDisplayPrice = formatDisplayPrice({
     amount: offer.pricePerDay,
     sourceCurrency: offer.currency,
@@ -317,6 +326,7 @@ export function CarResultCard({
   return (
     <div data-car-result-card-shell className="w-full">
     <article
+      data-car-card-offers-expanded={offersExpanded ? "true" : "false"}
       className={`relative w-full overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white shadow-[0_2px_10px_rgba(24,48,91,0.08)] md:rounded-2xl md:bg-white md:shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] md:transition md:duration-200 md:hover:-translate-y-0.5 md:hover:border-[#CBD6E2] md:hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]`}
     >
       <CarsRouteLoadingOverlay active={mobileDetailsPending} />
@@ -357,11 +367,11 @@ export function CarResultCard({
               data-car-card-mobile-information
               className="min-w-0 bg-white px-2.5 pb-2 pt-[7px]"
             >
-              {badge && BadgeIcon ? (
+              {mobileBadgeLabel && MobileBadgeIcon ? (
                 <div className="mb-1 flex min-w-0 justify-end">
                   <span className="inline-flex min-h-5 shrink-0 items-center gap-1 whitespace-nowrap rounded-[5px] bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold leading-4 text-emerald-700">
-                    <BadgeIcon size={11} aria-hidden="true" />
-                    {badge}
+                    <MobileBadgeIcon size={11} aria-hidden="true" />
+                    {mobileBadgeLabel}
                   </span>
                 </div>
               ) : null}
@@ -461,11 +471,11 @@ export function CarResultCard({
 
           <div
             data-car-card-mobile-lower-band
-            className="flex min-w-0 flex-col items-stretch border-t border-[#CBD5E1] bg-white"
+            className="flex min-w-0 items-stretch border-t border-[#CBD5E1] bg-white"
           >
             <div
               data-car-card-mobile-offers
-              className="min-w-0 w-full px-2.5 py-2"
+              className={`min-w-0 px-2 py-1.5 transition-[flex-grow] duration-300 ease-in-out motion-reduce:transition-none ${offersExpanded ? "flex-[1]" : "flex-[2.65]"}`}
             >
               {!guidedPlanning ? (
                 <CarDealPicker
@@ -473,14 +483,22 @@ export function CarResultCard({
                   selectedOfferId={offer.id}
                   onSelectOffer={selectDealOffer}
                   compact
+                  expanded={offersExpanded}
+                  onExpandedChange={handleOffersExpandedChange}
                 />
               ) : null}
             </div>
             <div
               data-car-card-mobile-pricing
-              className="flex min-w-0 w-full items-center justify-between gap-3 border-t border-[#E2E8F0] px-3 py-1.5"
+              aria-hidden={offersExpanded}
+              inert={offersExpanded ? true : undefined}
+              className={[
+                "flex min-w-0 flex-col items-end justify-center overflow-hidden transition-[flex-grow,padding,opacity,visibility] duration-300 ease-in-out motion-reduce:transition-none",
+                offersExpanded
+                  ? "invisible pointer-events-none flex-[0] px-0 py-0 opacity-0 max-[359px]:px-0"
+                  : "visible flex-[1.1] px-2.5 py-2 opacity-100 max-[359px]:px-1",
+              ].join(" ")}
             >
-              <div data-car-card-mobile-primary-price className="flex min-w-0 items-baseline gap-1.5">
               <p
                 className="max-w-full whitespace-nowrap text-[19px] font-semibold leading-[22px] tracking-[-0.02em] text-[#07133B] tabular-nums"
                 dir="ltr"
@@ -490,8 +508,6 @@ export function CarResultCard({
                 {dailyDisplayPrice.formatted}
               </p>
               <p className="mt-px text-[10px] font-medium leading-[13px] text-[#536B92]">per day</p>
-              </div>
-              <div className="flex shrink-0 items-center">
             {onSelect ? (
               <button
                 type="button"
@@ -524,7 +540,6 @@ export function CarResultCard({
                 View deal <ChevronRight size={14} aria-hidden="true" />
               </button>
             )}
-              </div>
             </div>
           </div>
         </div>
@@ -709,7 +724,8 @@ export function CarResultCard({
 
                 {car.categoryLabel ? (
                   <p
-                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-3" : "row-start-2"} mt-1 whitespace-nowrap px-4 text-[10px] font-bold uppercase leading-[15px] tracking-[0.1em] text-[#004BB8]`}
+                    data-car-card-desktop-category
+                    className={`col-start-1 ${badge && BadgeIcon ? "row-start-3" : "row-start-2"} mt-1 whitespace-nowrap px-4 text-[10px] font-bold uppercase leading-[15px] tracking-[0.1em] text-[#004BB8] lg:-mt-1`}
                   >
                     {car.categoryLabel}
                   </p>
@@ -768,7 +784,7 @@ export function CarResultCard({
 
         <div
           data-region="details"
-          className={`col-start-1 row-start-3 min-w-0 border-t border-[#E2E8F0] px-3 py-3 md:col-start-2 md:row-start-2 md:border-t-0 md:px-4 md:pb-3 md:pt-1 ${!guidedPlanning ? "lg:border-t lg:border-[#CBD5E1] lg:pb-2 lg:pt-2" : ""}`}
+          className={`col-start-1 row-start-3 min-w-0 border-t border-[#E2E8F0] px-3 py-3 md:col-start-2 md:row-start-2 md:border-t-0 md:px-4 md:pb-3 md:pt-1 ${!guidedPlanning ? "lg:border-t lg:border-[#CBD5E1] lg:pb-2 lg:pt-2" : ""} ${!guidedPlanning ? `lg:col-span-2 lg:col-start-2 lg:transition-[padding-right] lg:duration-300 lg:ease-in-out motion-reduce:transition-none ${offersExpanded ? "lg:pr-4" : "lg:pr-[168px]"}` : ""}`}
         >
           <ul
             data-car-card-desktop-primary-specs
@@ -791,6 +807,8 @@ export function CarResultCard({
               selectedOfferId={offer.id}
               onSelectOffer={selectDealOffer}
               desktopPanelTarget={desktopDealPanelTarget}
+              expanded={offersExpanded}
+              onExpandedChange={handleOffersExpandedChange}
             />
           ) : null}
 
@@ -798,7 +816,9 @@ export function CarResultCard({
 
         <div
           data-region="pricing"
-          className={`col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 ${!guidedPlanning ? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-[#CBD5E1] lg:pb-2 lg:text-right" : "lg:row-span-2 lg:row-start-1 lg:items-center lg:justify-center lg:border-s lg:border-t-0 lg:text-center"} ${desktopSurfaceParity ? "bg-white" : "bg-slate-50/45 lg:bg-white"}`}
+          aria-hidden={offersExpanded}
+          inert={offersExpanded ? true : undefined}
+          className={`col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 ${!guidedPlanning ? "lg:row-start-2 lg:row-span-1 lg:items-stretch lg:border-s lg:border-t lg:border-[#CBD5E1] lg:pb-2 lg:text-right" : "lg:row-span-2 lg:row-start-1 lg:items-center lg:justify-center lg:border-s lg:border-t-0 lg:text-center"} ${desktopSurfaceParity ? "bg-white" : "bg-slate-50/45 lg:bg-white"} ${!guidedPlanning ? "lg:z-10 lg:transition-[opacity,visibility] lg:duration-300 lg:ease-in-out motion-reduce:transition-none" : ""} ${!guidedPlanning ? (offersExpanded ? "md:hidden lg:flex lg:invisible lg:pointer-events-none lg:opacity-0" : "lg:visible lg:opacity-100") : ""}`}
         >
           {!guidedPlanning ? (
             <div

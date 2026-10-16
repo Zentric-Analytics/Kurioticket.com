@@ -427,6 +427,17 @@ textarea {
   font: inherit;
 }
 
+/* The unlayered button font reset above overrides Tailwind's layered text
+   utilities. Apply the desktop-only Cars disclosure sizing after the reset;
+   the compact mobile control keeps its existing inline 11px treatment. */
+@media (min-width: 1024px) {
+  [data-car-deal-picker]:not([data-car-deal-picker-compact]) [data-car-deal-more-offers] {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+  }
+}
+
 @media (min-width: 1024px) {
   .flight-results-nav-route-input {
     font-family: var(--font-sans);
@@ -2499,6 +2510,53 @@ textarea {
   display: none;
   width: 0;
   height: 0;
+}
+
+/* Desktop Cars Rate details alone: slim scrolling thumb and scaled-down arrow glyphs. */
+@media (min-width: 768px) {
+  /* Firefox uses the native thin rail. Chromium and WebKit use the exact custom rail below. */
+  @supports (-moz-appearance: none) {
+    [data-car-rate-dialog] [data-car-rate-scroll] {
+      scrollbar-width: thin;
+      scrollbar-color: #94a3b8 transparent;
+    }
+  }
+
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar-track,
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar-thumb {
+    background-color: #94a3b8;
+    border-radius: 999px;
+  }
+
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b;
+  }
+
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar-button:vertical {
+    display: block;
+    height: 10px;
+    background-color: transparent;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 6px 4px;
+  }
+
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar-button:vertical:decrement {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4' viewBox='0 0 6 4'%3E%3Cpath d='M1 3 3 1 5 3' fill='none' stroke='%2364748b' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar-button:vertical:increment {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4' viewBox='0 0 6 4'%3E%3Cpath d='M1 1 3 3 5 1' fill='none' stroke='%2364748b' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
 }
 
 @media (max-width: 639px) {

@@ -51,6 +51,7 @@ import { Button } from "@/components/ui/Button";
 import {
   type AirportOption,
   formatAirportLabel,
+  getAirportByCode,
   getLocalizedAirportCountryName,
   getLocalizedCityName,
 } from "@/data/airports";
@@ -213,7 +214,7 @@ const buildMonthCells = (monthDate: Date) => {
 type StandaloneFlightSearchFormProps = {
   localizeCalendarLabels?: boolean;
   mobileHeroCard?: boolean;
-  presentation?: "default" | "main-flight-landing";
+  presentation?: "default" | "main-flight-landing" | "homepage-embedded";
 };
 
 export function StandaloneFlightSearchForm({
@@ -265,6 +266,8 @@ export function StandaloneFlightSearchForm({
   const { start: startRouteProgress } = useRouteProgress();
   const useMainFlightLandingMobilePresentation =
     presentation === "main-flight-landing";
+  const useHomepageEmbeddedPresentation =
+    presentation === "homepage-embedded";
   const defaultTripTypeOptions = [
     ["round-trip", t("roundTrip")],
     ["one-way", t("oneWay")],
@@ -306,6 +309,14 @@ export function StandaloneFlightSearchForm({
   const originCode = originState.code;
   const [destination, setDestination] = useState("");
   const [destinationCode, setDestinationCode] = useState("");
+  const desktopOriginLabel = useMemo(() => {
+    const airport = getAirportByCode(originCode);
+    return airport ? formatAirportLabel(airport, locale) : origin;
+  }, [locale, origin, originCode]);
+  const desktopDestinationLabel = useMemo(() => {
+    const airport = getAirportByCode(destinationCode);
+    return airport ? formatAirportLabel(airport, locale) : destination;
+  }, [destination, destinationCode, locale]);
   const [originOpen, setOriginOpen] = useState(false);
   const [destinationOpen, setDestinationOpen] = useState(false);
   const [activeMobilePicker, setActiveMobilePicker] =
@@ -1469,8 +1480,12 @@ export function StandaloneFlightSearchForm({
     <section
       ref={standaloneFormCardRef}
       className={cn(
-        "relative isolate z-[120] rounded-2xl border border-white/70 bg-white/92 p-3 shadow-[0_10px_26px_rgba(15,23,42,0.06)] ring-1 ring-slate-950/[0.05] backdrop-blur-xl sm:rounded-[1.5rem] sm:border-slate-200/80 sm:bg-white sm:p-4 sm:shadow-[0_16px_38px_rgba(15,23,42,0.10)] sm:backdrop-blur-none",
+        "relative isolate z-[120]",
+        useHomepageEmbeddedPresentation
+          ? "border-0 bg-transparent p-0 shadow-none ring-0 backdrop-blur-none sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none"
+          : "rounded-2xl border border-white/70 bg-white/92 p-3 shadow-[0_10px_26px_rgba(15,23,42,0.06)] ring-1 ring-slate-950/[0.05] backdrop-blur-xl sm:rounded-[1.5rem] sm:border-slate-200/80 sm:bg-white sm:p-4 sm:shadow-[0_16px_38px_rgba(15,23,42,0.10)] sm:backdrop-blur-none",
         mobileHeroCard &&
+          !useHomepageEmbeddedPresentation &&
           "border-white/85 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.38)] ring-slate-950/[0.06] sm:p-4",
       )}
     >
@@ -1491,7 +1506,8 @@ export function StandaloneFlightSearchForm({
           </div>
         ) : null}
 
-        {!useMainFlightLandingMobilePresentation ? (
+        {!useMainFlightLandingMobilePresentation &&
+        !useHomepageEmbeddedPresentation ? (
           <div
             className="hidden w-fit items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3 py-2 shadow-sm ring-1 ring-[#004BB8]/10 sm:flex"
             data-testid="desktop-flight-landing-identity"
@@ -1612,6 +1628,8 @@ export function StandaloneFlightSearchForm({
               inputRef={originInputRef}
               label={t("origin")}
               value={origin}
+              desktopValue={desktopOriginLabel}
+              showDesktopSecondary={false}
               placeholder={t("cityOrAirport")}
               mobilePlaceholder={t("cityOrAirport")}
               useMainFlightLandingMobilePresentation={
@@ -1658,6 +1676,8 @@ export function StandaloneFlightSearchForm({
               inputRef={destinationInputRef}
               label={t("destination")}
               value={destination}
+              desktopValue={desktopDestinationLabel}
+              showDesktopSecondary={false}
               placeholder={t("cityOrAirport")}
               mobilePlaceholder={t("flightSearchDestinationPlaceholderShort")}
               useMainFlightLandingMobilePresentation={

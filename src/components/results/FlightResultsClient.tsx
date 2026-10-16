@@ -270,18 +270,37 @@ function StickyFlightPopularFilters({
         {popularFilters.map((filter) => (
           <label
             key={filter.key}
-            className="flex min-h-7 cursor-pointer items-center gap-2 rounded px-0.5 text-[12px] font-normal leading-4 text-[#142033] hover:bg-slate-50"
+            className="group flex min-h-7 cursor-pointer items-center gap-2 rounded px-0.5 text-[13px] font-medium leading-5 text-[#26354A] hover:bg-slate-50"
           >
-            <input
-              type="checkbox"
-              checked={filter.selected}
-              onChange={() => onToggle(filter.group, filter.value)}
-              className="h-4 w-4 shrink-0 cursor-pointer accent-[#004BB8]"
-            />
+            <span className="relative flex shrink-0 items-center justify-center">
+              <input
+                type="checkbox"
+                checked={filter.selected}
+                onChange={() => onToggle(filter.group, filter.value)}
+                className="peer sr-only"
+              />
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[2px] border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2",
+                  filter.selected
+                    ? "border-[#0067DB] bg-[#0067DB] text-white"
+                    : "border-slate-300 bg-white group-hover:border-slate-400",
+                )}
+              >
+                {filter.selected ? (
+                  <Check
+                    className="h-2.5 w-2.5"
+                    strokeWidth={3}
+                    aria-hidden="true"
+                  />
+                ) : null}
+              </span>
+            </span>
             <span className="min-w-0 flex-1 truncate" title={filter.label}>
               {filter.label}
             </span>
-            <span className="shrink-0 tabular-nums text-slate-500">
+            <span className="shrink-0 text-[12px] font-semibold leading-5 tabular-nums text-[#526174]">
               {filter.count}
             </span>
           </label>
@@ -2052,7 +2071,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     clearRecentSearches();
   }
 
-  function buildDesktopMultiCityLandingHref() {
+  function buildDesktopMultiCityHomeHref() {
     const nextParams = new URLSearchParams(searchQueryString);
     nextParams.set("tripType", "multi-city");
     nextParams.delete("returnDate");
@@ -2102,16 +2121,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     nextParams.set("currency", selectedCurrency);
     appendFlightLegParams(nextParams, projection.legs);
 
-    return `/flights?${nextParams.toString()}`;
+    return `/?${nextParams.toString()}`;
   }
 
-  function navigateDesktopMultiCityToLanding() {
+  function navigateDesktopMultiCityToHome() {
     closeFlightSearchPopovers();
     stickySearchPanelOpenRef.current = false;
     setIsSearchExpandedWhileSticky(false);
     setActiveStickySearchTarget(null);
     setActiveDesktopSearchSurface(null);
-    router.push(buildDesktopMultiCityLandingHref(), { scroll: true });
+    router.push(buildDesktopMultiCityHomeHref(), { scroll: true });
   }
 
   function openDesktopSearchEditor(
@@ -2125,7 +2144,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       | "travelers",
   ) {
     if (tripTypeInput === "multi-city") {
-      navigateDesktopMultiCityToLanding();
+      navigateDesktopMultiCityToHome();
       return;
     }
 
@@ -5219,7 +5238,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       event.preventDefault();
                       event.stopPropagation();
                       if (option.value === "multi-city") {
-                        navigateDesktopMultiCityToLanding();
+                        navigateDesktopMultiCityToHome();
                         return;
                       }
                       handleTripTypeChange(option.value);
@@ -5780,7 +5799,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               aria-label={t("editFlightSearch")}
               onClick={() => {
                 if (tripTypeInput === "multi-city") {
-                  navigateDesktopMultiCityToLanding();
+                  navigateDesktopMultiCityToHome();
                   return;
                 }
                 expandStickySearch();
@@ -5866,7 +5885,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   aria-checked={selected}
                   onClick={() => {
                     if (option.value === "multi-city") {
-                      navigateDesktopMultiCityToLanding();
+                      navigateDesktopMultiCityToHome();
                       return;
                     }
                     handleTripTypeChange(option.value);
@@ -6018,7 +6037,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     aria-checked={selected}
                     onClick={() => {
                     if (option.value === "multi-city") {
-                      navigateDesktopMultiCityToLanding();
+                      navigateDesktopMultiCityToHome();
                       return;
                     }
                     handleTripTypeChange(option.value);
