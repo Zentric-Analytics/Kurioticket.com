@@ -85,7 +85,7 @@ test("mobile identity and four spec slots sit below cancellation beside the imag
 test("mobile lower band uses all available width for supplier offers without duplicate main pricing", () => {
   const conversion = between(
     "data-car-card-mobile-lower-band",
-    'className={${guidedPlanning ? "grid',
+    'className={`${guidedPlanning ? "grid',
   );
   assert.match(conversion, /border-t border-\[#CBD5E1\] bg-white/);
   assert.match(conversion, /data-car-card-mobile-offers\s+className="w-full min-w-0 px-2 py-1\.5"/);
