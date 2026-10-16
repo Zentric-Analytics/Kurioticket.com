@@ -63,8 +63,16 @@ test("Flight editor dismissal and stale request protections are explicit", () =>
   assert.match(control, /\.current\?\.focus\(\)/);
 });
 
-test("Flight feedback is accessible and never claims tracking before save", () => {
-  assert.match(control, /role=\{feedback\.startsWith\("error"\) \? "alert" : "status"\} aria-live="polite"/);
+test("Flight feedback is accessible, portaled, and never claims tracking before save", () => {
+  assert.match(
+    control,
+    /role=\{feedback\.startsWith\("error"\) \? "alert" : "status"\}[\s\S]*?aria-live="polite"/,
+  );
+  assert.match(control, /const feedbackToast = feedback && feedback !== "error-save"/);
+  assert.match(
+    control,
+    /feedbackToast && typeof document !== "undefined"[\s\S]*?createPortal\(feedbackToast, document\.body\)/,
+  );
   assert.match(control, /Price alert saved/);
   assert.match(control, /Price alert paused/);
   assert.doesNotMatch(control, /Price tracking is on/);
