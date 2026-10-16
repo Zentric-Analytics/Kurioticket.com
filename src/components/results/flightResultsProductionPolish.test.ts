@@ -432,7 +432,11 @@ test("desktop Flight filters match Hotel desktop typography while keeping the Fl
     filters.indexOf("function FacetRow"),
   );
 
-  assert.match(primaryFilters, /overflow-hidden rounded-lg border border-\[#CFD9E5\] bg-\[#F2F4F8\]/);
+  assert.match(
+    primaryFilters,
+    /overflow-hidden rounded-lg border border-\[#B8C6D6\] bg-\[#F2F4F8\] shadow-\[0_8px_22px_-18px_rgba\(15,23,42,0\.28\)\]/,
+  );
+  assert.doesNotMatch(primaryFilters, /border-\[#CFD9E5\]/);
   assert.match(primaryFilters, /\{t\("hotelResults\.filterBy"\)\}/);
   assert.match(primaryFilters, /text-\[14px\] font-bold tracking-\[-0\.01em\] text-slate-950/);
 
