@@ -1,6 +1,7 @@
 import { getApiBaseUrl } from "../config/apiUrl";
 import { readSession } from "../storage/sessionStorage";
 import { Platform } from "react-native";
+import type { CanonicalLocation } from "@/lib/locations/types";
 import Constants from "expo-constants";
 import type { PublicHotelProviderDetails } from "../../../../src/lib/hotels/hotelProviderDetails";
 import type { NormalizedCarResult } from "../../../../src/lib/cars/types";
@@ -59,7 +60,17 @@ export type TwoFactorSetup = { otpauthUri:string; manualSetupKey:string; expires
 export type TwoFactorStatus = { enabled:boolean; method:string|null; enabledAt:string|null; disabledAt:string|null; recoveryCodesRemaining:number };
 export type AccountDeletionRequest = { id:string; status:string; requestedAt:string; deletionScheduledAt:string; cancelledAt:string|null; completedAt:string|null; canReactivate:boolean };
 export type HotelDestinationKind = "city" | "district" | "landmark" | "airport-area";
-export type HotelDestinationSuggestion = { id: string; name: string; country: string; countryCode: string; region?: string; kind: HotelDestinationKind; searchValue: string; aliases?: string[] };
+export type HotelDestinationSuggestion = {
+  id: string;
+  name: string;
+  country: string;
+  countryCode: string;
+  region?: string;
+  kind: HotelDestinationKind;
+  searchValue: string;
+  aliases?: string[];
+  canonical?: CanonicalLocation;
+};
 /** Allows the shared server orchestrator to finish polling slower providers. */
 export const METASEARCH_REQUEST_TIMEOUT_MS = 35_000;
 
