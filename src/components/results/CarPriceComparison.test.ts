@@ -300,6 +300,20 @@ test("desktop and mobile web use the same three-offer preview with a reserved di
   assert.equal((compactSource.match(/data-car-deal-more-offers/g) ?? []).length, 1);
 });
 
+test("desktop-only Cars offers toggle text is compact but mobile font is unchanged", () => {
+  const control = picker.slice(picker.indexOf("data-car-deal-more-offers"), picker.indexOf("data-car-rate-dialog"));
+  assert.match(control, /text-\[10px\] font-semibold text-\[#004BB8\] md:min-h-6 lg:text-\[9\.5px\] lg:font-medium/);
+  assert.match(control, /style=\{compact \? \{ fontSize: 11, lineHeight: "16px", fontWeight: 600 \} : undefined\}/);
+  assert.match(control, /expanded \? "Show fewer offers"/);
+  assert.match(control, /aria-expanded=\{expanded\}/);
+  const globalCss = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
+  const fontReset = globalCss.indexOf("button,\ninput,\nselect,\ntextarea {\n  font: inherit;");
+  const desktopRule = globalCss.indexOf("[data-car-deal-picker]:not([data-car-deal-picker-compact]) [data-car-deal-more-offers]");
+  assert.ok(fontReset >= 0 && desktopRule > fontReset, "desktop rule follows the unlayered font reset");
+  assert.match(globalCss.slice(fontReset, desktopRule), /@media \(min-width: 1024px\)/);
+  assert.match(globalCss.slice(desktopRule, desktopRule + 155), /font-size: 9\.5px;\s*line-height: 14px;\s*font-weight: 500;/);
+});
+
 test("Cars inline offer rows place info after provider branding and before price and link on web", () => {
   const offers = picker.slice(picker.indexOf('data-car-deal-provider-offers'), picker.indexOf('{groups.length > INITIAL_VISIBLE_OFFER_COUNT ? ('));
   const logoAt = offers.indexOf('<ProviderMark group={group} compact={compact} />');

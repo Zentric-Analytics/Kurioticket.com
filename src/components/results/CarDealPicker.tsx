@@ -245,7 +245,7 @@ export function CarDealPicker({
           <button
             type="button"
             data-car-deal-more-offers
-            className="inline-flex min-h-9 items-center gap-1 text-[10px] font-semibold text-[#004BB8] md:min-h-6"
+            className="inline-flex min-h-9 items-center gap-1 text-[10px] font-semibold text-[#004BB8] md:min-h-6 lg:text-[9.5px] lg:font-medium"
             style={compact ? { fontSize: 11, lineHeight: "16px", fontWeight: 600 } : undefined}
             onClick={event => { event.stopPropagation(); onExpandedChange(!expanded); }}
             aria-expanded={expanded}

@@ -56,7 +56,7 @@ test("mobile identity and four spec slots sit below cancellation beside the imag
     "data-car-card-mobile-lower-band",
   );
   assert.match(main, /\{car\.categoryLabel\}/);
-  assert.match(main, /\{badge && BadgeIcon \? \(/);
+  assert.match(main, /\{mobileBadgeLabel && MobileBadgeIcon \? \(/);
   assert.match(main, /text-\[15px\]/);
   assert.match(main, /<MapPin/);
   assert.match(main, /\{car\.pickupLocation\}/);

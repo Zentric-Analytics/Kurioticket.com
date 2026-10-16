@@ -427,6 +427,17 @@ textarea {
   font: inherit;
 }
 
+/* The unlayered button font reset above overrides Tailwind's layered text
+   utilities. Apply the desktop-only Cars disclosure sizing after the reset;
+   the compact mobile control keeps its existing inline 11px treatment. */
+@media (min-width: 1024px) {
+  [data-car-deal-picker]:not([data-car-deal-picker-compact]) [data-car-deal-more-offers] {
+    font-size: 9.5px;
+    line-height: 14px;
+    font-weight: 500;
+  }
+}
+
 @media (min-width: 1024px) {
   .flight-results-nav-route-input {
     font-family: var(--font-sans);
