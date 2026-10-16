@@ -376,7 +376,7 @@ test("Cars offers reserve a stable three-row preview without fabricating provide
   assert.match(picker, /compact \? "grid-cols-\[minmax/);
   assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
   assert.match(picker, /min-h-9 max-\[359px\]:grid-cols-1/);
-  assert.match(picker, /: "grid-cols-\[minmax\(0,calc\(50%_\+_31px\)\)_minmax\(0,1fr\)\] min-h-6 lg:min-h-[30px]"/);
+  assert.match(picker, /: "grid-cols-\[minmax\(0,calc\(50%_\+_31px\)\)_minmax\(0,1fr\)\] min-h-6 lg:min-h-\[30px\]"/);
   assert.match(picker, /groups\.map\(\(group, index\) =>/);
   assert.doesNotMatch(picker, /placeholder|Empty provider|ghost rate/i);
 });
