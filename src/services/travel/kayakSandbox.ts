@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { normalizeKayakFlightInformation, sanitizeKayakFlightText } from "./kayakFlightInformation";
 import { isIP } from "node:net";
+import { createHash } from "node:crypto";
 import { kayakImageUrl, kayakImages, kayakFlightLegs, kayakFlightAttributes, kayakAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
 import { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
 import type { FlightFareTerm, FlightOptionalService, FlightProviderCondition, FlightAirlineBaggagePolicy, FlightProviderDetails } from "@/lib/types";
@@ -376,6 +377,21 @@ export type KayakSearchTiming = {
   stages: Record<SearchStage, { operations: number; elapsedMs: number }>;
 };
 
+export type KayakHotelBatchCheckpoint = {
+  nextPage: number;
+  total: number;
+  pageHashes: string[];
+};
+
+export type KayakHotelBatch = {
+  offers: SandboxOffer[];
+  checkpoint: KayakHotelBatchCheckpoint | null;
+  providerRows: number;
+};
+
+/** Search only verified, complete KAYAK hotel pages, never transient poll rows.
+ * Continuations carry server-authenticated page state; no unfinished response
+ * is treated as complete inventory. Regular full searches remain unchanged. */
 export class KayakSandboxClient {
   constructor(
     private readonly key: string,
@@ -489,6 +505,93 @@ export class KayakSandboxClient {
         return [];
       return [{ label: text(row.fullName) || text(row.name), value, kind: text(row.primaryPlaceType) || undefined }];
     });
+  }
+
+  async searchHotelBatch(
+    search: Extract<KayakSearch, { vertical: "hotels" }>,
+    trackId: string,
+    checkpoint?: KayakHotelBatchCheckpoint,
+    externalSignal?: AbortSignal,
+  ): Promise<KayakHotelBatch> {
+    const signal = AbortSignal.any([
+      AbortSignal.timeout(30_000),
+      ...(externalSignal ? [externalSignal] : []),
+    ]);
+    const firstPage = checkpoint?.nextPage ?? 0;
+    const expectedPreviousTotal = checkpoint?.total;
+    const previousHashes = checkpoint?.pageHashes ?? [];
+    const pageSize = HOTEL_PAGE_SIZE;
+    // One page gets the first verified hotels on screen promptly; subsequent
+    // requests advance three pages per round trip without hitting the API limiter.
+    const batchSize = firstPage === 0 ? 1 : 3;
+    const maxPageCount = 200;
+    if (!Number.isSafeInteger(firstPage) || firstPage < 0 || firstPage >= maxPageCount ||
+        (checkpoint && (!Number.isSafeInteger(expectedPreviousTotal) || expectedPreviousTotal! < firstPage * pageSize ||
+          previousHashes.length !== firstPage || previousHashes.some(hash => !/^[A-Za-z0-9_-]{43}$/.test(hash))))) {
+      throw new KayakError("invalid_response");
+    }
+    const seen = new Set(previousHashes);
+    if (seen.size !== previousHashes.length) throw new KayakError("invalid_response");
+    const offers: SandboxOffer[] = [];
+    let total = expectedPreviousTotal;
+    let offset = firstPage * pageSize;
+    let dictionary: unknown = [];
+    for (let pageIndex = firstPage; pageIndex < Math.min(maxPageCount, firstPage + batchSize); pageIndex++) {
+      let completedPage: ObjectValue | undefined;
+      for (let attempt = 0; attempt < 12; attempt++) {
+        if (signal.aborted) throw new KayakError("timeout");
+        const response = await this.request("/api/3.0/hotels", trackId, {
+          destination: search.destination,
+          checkin: search.departure,
+          checkout: search.returnDate,
+          rooms: String(search.adults),
+          currencyCode: "USD",
+          responseOptions: "multipleHotelsAllRates,images,features,rateBreakdown,reviews,hotelPlace",
+          onlyIfComplete: "false",
+          pageSize: String(pageSize),
+          pageIndex: String(pageIndex),
+        }, undefined, signal);
+        if (response.isComplete === true) { completedPage = response; break; }
+        if (attempt < 11) await this.pause(750);
+      }
+      if (!completedPage) throw new KayakError("timeout");
+      if (!Array.isArray(completedPage.results)) throw new KayakError("invalid_response");
+      const count = completedPage.results.length;
+      const providerTotal = completedPage.totalFilteredResults;
+      if (typeof providerTotal !== "number" || !Number.isSafeInteger(providerTotal) ||
+          providerTotal < 0 || providerTotal > maxPageCount * pageSize ||
+          (total !== undefined && providerTotal !== total)) {
+        throw new KayakError("invalid_response");
+      }
+      total = providerTotal;
+      const hash = createHash("sha256").update(JSON.stringify(completedPage.results)).digest("base64url");
+      if (count > 0 && seen.has(hash)) throw new KayakError("invalid_response");
+      seen.add(hash);
+      if (count && !dictionary) dictionary = [];
+      if (count && pageIndex === firstPage) {
+        try {
+          const constants = await this.request("/api/4.0/constants-mapping", trackId,
+            { types: "facility", languageCode: "en" }, null, signal);
+          dictionary = object(constants.facility).features;
+        } catch { /* Metadata failure must not discard valid provider offers. */ }
+      }
+      offers.push(...normalizeSandboxOffers("hotels", {
+        ...completedPage, amenityDictionary: dictionary,
+      }, offset));
+      offset += count;
+      if (offset > total || (count === 0 && offset < total)) throw new KayakError("invalid_response");
+      if (offset === total) {
+        return { offers: offers.sort((a, b) => a.price - b.price), checkpoint: null, providerRows: offset };
+      }
+      if (count !== pageSize) throw new KayakError("invalid_response");
+    }
+    const nextPage = firstPage + batchSize;
+    if (nextPage >= maxPageCount || total === undefined) throw new KayakError("invalid_response");
+    return {
+      offers: offers.sort((a, b) => a.price - b.price),
+      checkpoint: { nextPage, total, pageHashes: [...seen] },
+      providerRows: offset,
+    };
   }
 
   async search(

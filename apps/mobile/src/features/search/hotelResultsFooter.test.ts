@@ -26,7 +26,7 @@ test("Hotel cards still end with conditional pagination and no replacement foote
   assert.ok(cards >= 0 && cards < pagination);
   assert.match(
     hotelList,
-    /ListFooterComponent=\{status === "ready" && sorted\.length \? \([\s\S]*?<HotelResultsPagination page=\{clampedHotelPage\} pages=\{hotelPageCount\} disabled=\{hotelPageChanging\} onPage=\{changeHotelPage\}\/>/,
+    /ListFooterComponent=\{status === "ready" && sorted\.length \? \([\s\S]*?<HotelResultsPagination page=\{clampedHotelPage\} pages=\{hotelPageCount\} disabled=\{hotelPageChanging \|\| hotelProgressivePending\} onPage=\{changeHotelPage\}\/>/,
   );
   assert.doesNotMatch(afterPagination, /<Image|logo|tagline|Seller|copyright|Privacy|Terms|Cookies|footer|divider/i);
 });

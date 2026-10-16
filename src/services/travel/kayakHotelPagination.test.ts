@@ -147,3 +147,48 @@ test("hotel pagination counts provider rows, not the number of bookable rates", 
   assert.deepEqual(result.map(offer => offer.price), [100, 200]);
   assert.equal(new Set(result.map(offer => offer.id)).size, 2);
 });
+
+test("progressive Hotel publishes a verified first batch then resumes remaining rows without duplication", async () => {
+  const requested: number[] = [];
+  const client = new KayakSandboxClient("test", async (input) => {
+    const u = new URL(String(input));
+    if (u.pathname.includes("constants-mapping")) return Response.json({ facility: { features: [] } });
+    const page = Number(u.searchParams.get("pageIndex"));
+    requested.push(page);
+    return Response.json({
+      isComplete: true, totalFilteredResults: 507, currencyCode: "USD",
+      results: Array.from({ length: page < 2 ? 250 : 7 }, (_, i) => hotel(page * 250 + i)),
+    });
+  }, async () => {});
+  const first = await client.searchHotelBatch(search, "session");
+  assert.equal(first.offers.length, 250);
+  assert.equal(first.checkpoint?.nextPage, 1);
+  const second = await client.searchHotelBatch(search, "session", first.checkpoint!);
+  assert.equal(second.offers.length, 257);
+  assert.equal(second.checkpoint, null);
+  assert.equal(new Set([...first.offers, ...second.offers].map(o => o.id)).size, 507);
+  assert.deepEqual(requested, [0, 1, 2]);
+});
+
+test("progressive Hotel never publishes incomplete poll rows", async () => {
+  let attempts = 0;
+  const client = new KayakSandboxClient("test", async input => {
+    if (new URL(String(input)).pathname.includes("constants-mapping")) return Response.json({});
+    attempts++;
+    return Response.json({ isComplete: attempts > 1, totalFilteredResults: 1,
+      currencyCode: "USD", results: [hotel(attempts > 1 ? 0 : 99)] });
+  }, async () => {});
+  const page = await client.searchHotelBatch(search, "session");
+  assert.deepEqual(page.offers.map(o => o.title), ["Hotel 0"]);
+  assert.equal(page.checkpoint, null);
+});
+
+test("progressive Hotel rejects replay of an already completed provider page", async () => {
+  const client = new KayakSandboxClient("test", async input => {
+    if (new URL(String(input)).pathname.includes("constants-mapping")) return Response.json({});
+    return Response.json({ isComplete: true, totalFilteredResults: 500, currencyCode: "USD",
+      results: Array.from({length:250}, (_, i) => hotel(i)) });
+  }, async () => {});
+  const first = await client.searchHotelBatch(search, "session");
+  await assert.rejects(client.searchHotelBatch(search, "session", first.checkpoint!), { code: "invalid_response" });
+});
