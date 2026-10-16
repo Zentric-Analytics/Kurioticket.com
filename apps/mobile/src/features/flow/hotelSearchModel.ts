@@ -61,6 +61,11 @@ export const changeRooms = (form: HotelForm, delta: number): HotelForm => ({ ...
 export const countLabel = (count: number, singular: string) => `${count} ${singular}${count === 1 ? "" : "s"}`;
 export const hotelSearchParams = (form: HotelForm) => ({ destination: form.destination.trim(), ...(form.destinationLocation ? { destinationLocation: form.destinationLocation } : {}), checkIn: form.checkIn, checkOut: form.checkOut, guests: String(form.guests), rooms: String(form.rooms) });
 
+/** Clear stale provider destination IDs when replacing an edited Hotel Results search in place. */
+export function hotelSearchRouteParamPatch(next: Record<string, string | undefined>): Record<string, string | undefined> {
+  return { ...next, destinationId: undefined, destinationLocation: next.destinationLocation || undefined };
+}
+
 /** Keep the provider binding server-authenticated while carrying the selected place through native navigation. */
 export function hotelDestinationLocation(suggestion: HotelDestinationSuggestion, destination = suggestion.searchValue) {
   const canonical = suggestion.canonical;
