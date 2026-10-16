@@ -698,13 +698,15 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     const main = mobile ? card.locator("[data-car-card-mobile-pricing]") : card.locator('[data-region="pricing"]');
     await expect(rows).toHaveCount(7);
     await expect(rows.filter({ visible: true })).toHaveCount(3);
-    await expect(main).toBeVisible();
+    if (mobile) await expect(main).toHaveCount(0);
+    else await expect(main).toBeVisible();
     await expect(area.locator("[data-car-rate-terms]")).toHaveCount(0);
     await expect(area.getByText("Rate details", { exact: true })).toHaveCount(0);
     const initialHeight = (await card.boundingBox())!.height;
     await area.locator("[data-car-deal-more-offers]").filter({ visible: true }).click();
     await expect(rows.filter({ visible: true })).toHaveCount(7);
-    await expect(main).toBeHidden();
+    if (mobile) await expect(main).toHaveCount(0);
+    else await expect(main).toBeHidden();
     await expect.poll(async () => (await card.boundingBox())!.height).toBeGreaterThan(initialHeight);
 
     const firstInfo = rows.first().locator("[data-car-rate-info]");
@@ -899,7 +901,8 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await expect(dialog).not.toBeVisible();
     await area.locator("[data-car-deal-more-offers]").filter({ visible: true }).click();
     await expect(rows.filter({ visible: true })).toHaveCount(3);
-    await expect(main).toBeVisible();
+    if (mobile) await expect(main).toHaveCount(0);
+    else await expect(main).toBeVisible();
     const resultRow = page.locator('[data-cars-results-card-list] [data-virtual-index]').first();
     await resultRow.focus(); // Virtualized result rows are programmatically focusable.
     await expect(resultRow).toHaveCSS("outline-style", "none");
@@ -913,7 +916,8 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await expect(dialog.getByText("Airport Pickup 0", { exact: true })).toHaveCount(0);
     await page.keyboard.press("Escape");
     await expect(dialog).not.toBeVisible();
-    await expect(main).toBeVisible();
+    if (mobile) await expect(main).toHaveCount(0);
+    else await expect(main).toBeVisible();
     if (!mobile) {
       const image = card.locator('[data-region="image"] > div').first();
       const imageRect = await image.boundingBox();
