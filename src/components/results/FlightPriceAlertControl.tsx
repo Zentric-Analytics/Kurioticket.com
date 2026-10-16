@@ -41,7 +41,7 @@ const replaceAlert = (alerts: WebFlightAlert[], alert: WebFlightAlert) => [
 ];
 export const FLIGHT_PRICE_ALERT_SNACKBAR_DURATION_MS = 3_600;
 
-export function FlightPriceAlertControl({ query: queryInput, results }: { query: unknown; results: PublicFlightResult[] }) {
+export function FlightPriceAlertControl({ query: queryInput, results, desktopPortalTarget = null }: { query: unknown; results: PublicFlightResult[]; desktopPortalTarget?: HTMLElement | null }) {
   const router = useRouter();
   const { status: sessionStatus } = useSession();
   const parsedQuery = useMemo(() => buildCanonicalFlightPriceAlertQuery(queryInput), [queryInput]);
@@ -66,6 +66,7 @@ export function FlightPriceAlertControl({ query: queryInput, results }: { query:
   const [preservedPausedTarget, setPreservedPausedTarget] = useState<{ id: string; target: number } | null>(null);
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [snackbarLeaving, setSnackbarLeaving] = useState(false);
+  const [desktopSidebarActive, setDesktopSidebarActive] = useState(false);
   const pendingRef = useRef(false);
   const requestRef = useRef(0);
   const mutationRef = useRef(0);
@@ -141,6 +142,14 @@ export function FlightPriceAlertControl({ query: queryInput, results }: { query:
       window.removeEventListener("keydown", dismiss);
     };
   }, [openSurface]);
+
+  useEffect(() => {
+    const desktopQuery = window.matchMedia("(min-width: 1024px)");
+    const syncDesktopPlacement = () => setDesktopSidebarActive(desktopQuery.matches);
+    syncDesktopPlacement();
+    desktopQuery.addEventListener("change", syncDesktopPlacement);
+    return () => desktopQuery.removeEventListener("change", syncDesktopPlacement);
+  }, []);
 
   useEffect(() => {
     if (openSurface !== "desktop") return;
@@ -293,8 +302,28 @@ export function FlightPriceAlertControl({ query: queryInput, results }: { query:
   );
 
   const switchButton = (surface: Surface) => (
-    <button ref={surface === "mobile" ? mobileSwitchRef : desktopSwitchRef} type="button" role="switch" aria-label="Track this flight price" aria-checked={tracking} aria-busy={pending || !known} disabled={pending || !known} onClick={() => void toggle(!tracking, surface)} className={cn("relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 disabled:cursor-wait disabled:opacity-55", tracking ? "border-[#004BB8] bg-[#004BB8]" : "border-slate-300 bg-slate-200")}>
-      <span className={cn("inline-block h-6 w-6 rounded-full bg-white shadow-sm transition-transform", tracking ? "translate-x-5" : "translate-x-0.5")} />
+    <button
+      ref={surface === "mobile" ? mobileSwitchRef : desktopSwitchRef}
+      type="button"
+      role="switch"
+      aria-label="Track this flight price"
+      aria-checked={tracking}
+      aria-busy={pending || !known}
+      disabled={pending || !known}
+      onClick={() => void toggle(!tracking, surface)}
+      className={cn(
+        "relative inline-flex shrink-0 items-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 disabled:cursor-wait disabled:opacity-55",
+        surface === "desktop" ? "h-6 w-11" : "h-7 w-12",
+        tracking ? "border-[#004BB8] bg-[#004BB8]" : "border-slate-300 bg-slate-200",
+      )}
+    >
+      <span
+        className={cn(
+          "inline-block rounded-full bg-white shadow-sm transition-transform",
+          surface === "desktop" ? "h-5 w-5" : "h-6 w-6",
+          tracking ? "translate-x-5" : "translate-x-0.5",
+        )}
+      />
     </button>
   );
 
@@ -351,15 +380,56 @@ export function FlightPriceAlertControl({ query: queryInput, results }: { query:
     document.body,
   ) : null;
 
-  return <>
-    <section data-flight-price-alert className="block" aria-label="Flight price alert">
-      <div className="flex min-h-[52px] items-center gap-2 rounded-xl border border-[#CFE0F8] bg-[#EEF6FF] px-3 sm:hidden"><Bell className="h-[17px] w-[17px] shrink-0 text-[#004BB8]" aria-hidden="true" /><h2 className="min-w-0 flex-1 truncate text-[13px] font-bold text-slate-950">Track this flight price</h2>{pending ? <LoaderCircle className="h-4 w-4 animate-spin text-[#004BB8]" aria-hidden="true" /> : null}{switchButton("mobile")}</div>
-      <div className="hidden rounded-2xl border border-[#CFE0F8] bg-[#EEF6FF] px-4 py-2 shadow-[0_10px_26px_-24px_rgba(15,23,42,0.45)] sm:block sm:min-h-[56px]">
-        <div className="flex min-h-10 items-center justify-between gap-2"><div className="flex min-w-0 items-center gap-2"><Bell className="h-[18px] w-[18px] shrink-0 text-[#004BB8]" strokeWidth={2} aria-hidden="true" /><h2 className="truncate text-sm font-semibold leading-5 text-slate-950">Track this flight price</h2></div><span className="flex items-center gap-1.5">{pending ? <LoaderCircle className="h-4 w-4 animate-spin text-[#004BB8]" aria-hidden="true" /> : null}{switchButton("desktop")}</span></div>
+  const feedbackToast = feedback && feedback !== "error-save" ? (
+    <div
+      role={feedback.startsWith("error") ? "alert" : "status"}
+      aria-live="polite"
+      className={cn(
+        "fixed inset-x-3 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-[110] mx-auto flex max-w-md items-center gap-2.5 rounded-[14px] border border-slate-200 bg-white px-3 py-2.5 shadow-[0_12px_34px_rgba(15,23,42,0.2)] transition duration-200",
+        snackbarLeaving ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100",
+      )}
+    >
+      <CheckCircle2
+        className={cn("h-5 w-5", feedback.startsWith("error") ? "text-rose-600" : "text-[#004BB8]")}
+        aria-hidden="true"
+      />
+      <strong className="text-sm text-slate-950">
+        {feedback === "saved" ? "Price alert saved" : feedback === "paused" ? "Price alert paused" : "Couldn't pause price alert"}
+      </strong>
+    </div>
+  ) : null;
+
+  const desktopControl = (
+    <section
+      data-flight-price-alert
+      data-flight-price-alert-sidebar
+      className="w-full"
+      aria-label="Flight price alert"
+    >
+      <div className="flex min-h-[48px] items-center justify-between gap-2 rounded-xl border border-[#CFE0F8] bg-[#EEF6FF] px-3.5 shadow-[0_8px_22px_-22px_rgba(15,23,42,0.42)]">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <Bell className="h-[17px] w-[17px] shrink-0 text-[#004BB8]" strokeWidth={2} aria-hidden="true" />
+          <h2 className="truncate text-[13px] font-semibold leading-5 text-slate-950">Track flight price</h2>
+        </div>
+        <span className="flex shrink-0 items-center gap-1.5">
+          {pending ? <LoaderCircle className="h-4 w-4 animate-spin text-[#004BB8]" aria-hidden="true" /> : null}
+          {switchButton("desktop")}
+        </span>
       </div>
     </section>
+  );
+
+  return <>
+    <section data-flight-price-alert className="block sm:hidden" aria-label="Flight price alert">
+      <div className="flex min-h-[52px] items-center gap-2 rounded-xl border border-[#CFE0F8] bg-[#EEF6FF] px-3"><Bell className="h-[17px] w-[17px] shrink-0 text-[#004BB8]" aria-hidden="true" /><h2 className="min-w-0 flex-1 truncate text-[13px] font-bold text-slate-950">Track this flight price</h2>{pending ? <LoaderCircle className="h-4 w-4 animate-spin text-[#004BB8]" aria-hidden="true" /> : null}{switchButton("mobile")}</div>
+    </section>
+    {desktopSidebarActive && desktopPortalTarget && typeof document !== "undefined"
+      ? createPortal(desktopControl, desktopPortalTarget)
+      : <div className="hidden sm:block lg:hidden">{desktopControl}</div>}
     {mobileEditor}
     {desktopEditor}
-    {feedback && feedback !== "error-save" ? <div role={feedback.startsWith("error") ? "alert" : "status"} aria-live="polite" className={cn("fixed inset-x-3 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-[110] mx-auto flex max-w-md items-center gap-2.5 rounded-[14px] border border-slate-200 bg-white px-3 py-2.5 shadow-[0_12px_34px_rgba(15,23,42,0.2)] transition duration-200", snackbarLeaving ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100")}><CheckCircle2 className={cn("h-5 w-5", feedback.startsWith("error") ? "text-rose-600" : "text-[#004BB8]")} aria-hidden="true" /><strong className="text-sm text-slate-950">{feedback === "saved" ? "Price alert saved" : feedback === "paused" ? "Price alert paused" : "Couldn't pause price alert"}</strong></div> : null}
+    {feedbackToast && typeof document !== "undefined"
+      ? createPortal(feedbackToast, document.body)
+      : feedbackToast}
   </>;
 }

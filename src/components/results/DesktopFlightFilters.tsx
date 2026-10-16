@@ -352,29 +352,41 @@ export function DesktopFlightFilters({
 
       <div className="space-y-0 bg-transparent">
         <HotelStyleFilterSection title={t("price")}>
-          <div className={cn("mb-2.5 grid grid-cols-2 gap-4 text-[13px] font-medium leading-5 tabular-nums text-[#334155]", isGuidedComfortable && "text-[13px]")}>
-            <span className="min-w-0">{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.min) : "—"}</span>
-            <span className="min-w-0 text-right">{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.max) : "—"}</span>
+          <div
+            data-flight-filter-price-summary
+            className={cn("mb-2.5 flex items-center gap-1.5 text-[13px] font-medium leading-5 tabular-nums text-[#334155]", isGuidedComfortable && "text-[13px]")}
+          >
+            <span className="min-w-0 truncate">{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.min) : "—"}</span>
+            <span aria-hidden="true" className="shrink-0 text-slate-400">—</span>
+            <span className="min-w-0 truncate font-semibold text-slate-950">{priceBounds.max && priceLabelCurrency ? formatFilterPrice(Math.min(maxPrice, priceBounds.max)) : "—"}</span>
           </div>
           <input aria-label={t("price")} className={rangeClass} type="range" min={priceBounds.min || 0} max={priceBounds.max || 0} step={25} value={priceBounds.max ? Math.min(maxPrice, priceBounds.max) : 0} disabled={!priceBounds.max} onPointerUp={onFilterCommit} onMouseUp={onFilterCommit} onTouchEnd={onFilterCommit} onKeyUp={onFilterCommit} onBlur={onFilterCommit} onChange={(event) => { onFilterChange(); setMaxPrice(Number(event.target.value)); }} />
-          {priceBounds.max && priceLabelCurrency ? <p className="mt-2 text-[13px] font-semibold leading-5 text-slate-950">{t("price")}: {formatFilterPrice(Math.min(maxPrice, priceBounds.max))}</p> : null}
         </HotelStyleFilterSection>
 
         <HotelStyleFilterSection title={`${t("takeoff")} / ${t("landing")}`}>
           <div className="mb-2.5 grid grid-cols-2 rounded-[10px] bg-slate-100 p-1">
             {["takeoff", "landing"].map((mode) => <button key={mode} type="button" onClick={() => { onFilterChange(); setTimeFilterMode(mode as TimeFilterMode); onFilterCommit(); }} className={cn("min-h-9 rounded-lg px-2 py-1.5 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30", isGuidedComfortable && "min-h-10", timeFilterMode === mode ? "bg-white text-[#004BB8] shadow-sm" : "text-slate-800 hover:text-slate-950")}>{mode === "takeoff" ? t("takeoff") : t("landing")}</button>)}
           </div>
-          <div className={cn("mb-2.5 flex items-center justify-between gap-3 text-[13px] leading-5", isGuidedComfortable && "text-[13px]")}>
-            <span className="min-w-0 font-medium text-[#334155]">{timeFilterMode === "takeoff" ? `${t("takeoffTimeFromOrigin")} (${airportCode || "—"})` : `${t("landingTimeAtDestination")} (${airportCode || "—"})`}</span>
+          <div
+            data-flight-filter-time-summary
+            className={cn("mb-2.5 flex items-center justify-between gap-3 text-[13px] leading-5", isGuidedComfortable && "text-[13px]")}
+          >
+            <span className="min-w-0 truncate font-medium text-[#334155]">
+              {timeFilterMode === "takeoff" ? t("takeoff") : t("landing")} · {airportCode || "—"}
+            </span>
             <span className="shrink-0 font-semibold tabular-nums text-slate-950">{timeBoundsForMode ? formatTimeFromMinutes(maxTimeForMode ?? timeBoundsForMode.max, calendarLocale) : "—"}</span>
           </div>
           <input aria-label={timeFilterMode === "takeoff" ? t("takeoff") : t("landing")} className={rangeClass} type="range" min={timeBoundsForMode?.min ?? 0} max={timeBoundsForMode?.max ?? 0} step={15} value={maxTimeForMode ?? timeBoundsForMode?.max ?? 0} disabled={!timeBoundsForMode} onPointerUp={onFilterCommit} onMouseUp={onFilterCommit} onTouchEnd={onFilterCommit} onKeyUp={onFilterCommit} onBlur={onFilterCommit} onChange={(event) => { onFilterChange(); setMaxTimeForMode(Number(event.target.value)); }} />
         </HotelStyleFilterSection>
 
         <HotelStyleFilterSection title={t("duration")}>
-          <div className={cn("mb-2.5 flex items-center justify-between gap-3 text-[13px] leading-5", isGuidedComfortable && "text-[13px]")}>
-            <span className="font-medium text-[#334155]">{t("duration")}</span>
-            <span className="shrink-0 font-semibold tabular-nums text-slate-950">{durationBounds ? formatDurationFromMinutes(maxDurationMinutes ?? durationBounds.max, t) : "—"}</span>
+          <div
+            data-flight-filter-duration-summary
+            className={cn("mb-2.5 flex items-center gap-1.5 text-[13px] font-medium leading-5 tabular-nums text-[#334155]", isGuidedComfortable && "text-[13px]")}
+          >
+            <span>{durationBounds ? formatDurationFromMinutes(durationBounds.min, t) : "—"}</span>
+            <span aria-hidden="true" className="text-slate-400">—</span>
+            <span className="font-semibold text-slate-950">{durationBounds ? formatDurationFromMinutes(maxDurationMinutes ?? durationBounds.max, t) : "—"}</span>
           </div>
           <input aria-label={t("duration")} className={rangeClass} type="range" min={durationBounds?.min ?? 0} max={durationBounds?.max ?? 0} step={15} value={maxDurationMinutes ?? durationBounds?.max ?? 0} disabled={!durationBounds} onPointerUp={onFilterCommit} onMouseUp={onFilterCommit} onTouchEnd={onFilterCommit} onKeyUp={onFilterCommit} onBlur={onFilterCommit} onChange={(event) => { onFilterChange(); setMaxDurationMinutes(Number(event.target.value)); }} />
         </HotelStyleFilterSection>
@@ -464,7 +476,7 @@ function HotelStyleFilterSection({ title, children }: { title: string; children:
   const panelId = useId();
 
   return (
-    <section className="border-t border-slate-200/75 px-3 py-3 first:border-t-0">
+    <section className="border-t border-slate-200/60 px-3 py-3 first:border-t-0">
       <h3 className="text-[14px] font-semibold leading-5 text-slate-950">
         <button
           type="button"
