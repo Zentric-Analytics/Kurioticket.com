@@ -66,6 +66,7 @@ export function FlightPriceAlertControl({ query: queryInput, results, desktopPor
   const [preservedPausedTarget, setPreservedPausedTarget] = useState<{ id: string; target: number } | null>(null);
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [snackbarLeaving, setSnackbarLeaving] = useState(false);
+  const [desktopSidebarActive, setDesktopSidebarActive] = useState(false);
   const pendingRef = useRef(false);
   const requestRef = useRef(0);
   const mutationRef = useRef(0);
@@ -141,6 +142,14 @@ export function FlightPriceAlertControl({ query: queryInput, results, desktopPor
       window.removeEventListener("keydown", dismiss);
     };
   }, [openSurface]);
+
+  useEffect(() => {
+    const desktopQuery = window.matchMedia("(min-width: 1024px)");
+    const syncDesktopPlacement = () => setDesktopSidebarActive(desktopQuery.matches);
+    syncDesktopPlacement();
+    desktopQuery.addEventListener("change", syncDesktopPlacement);
+    return () => desktopQuery.removeEventListener("change", syncDesktopPlacement);
+  }, []);
 
   useEffect(() => {
     if (openSurface !== "desktop") return;
@@ -312,9 +321,7 @@ export function FlightPriceAlertControl({ query: queryInput, results, desktopPor
         className={cn(
           "inline-block rounded-full bg-white shadow-sm transition-transform",
           surface === "desktop" ? "h-5 w-5" : "h-6 w-6",
-          tracking
-            ? surface === "desktop" ? "translate-x-5" : "translate-x-5"
-            : "translate-x-0.5",
+          tracking ? "translate-x-5" : "translate-x-0.5",
         )}
       />
     </button>
@@ -397,9 +404,9 @@ export function FlightPriceAlertControl({ query: queryInput, results, desktopPor
     <section data-flight-price-alert className="block sm:hidden" aria-label="Flight price alert">
       <div className="flex min-h-[52px] items-center gap-2 rounded-xl border border-[#CFE0F8] bg-[#EEF6FF] px-3"><Bell className="h-[17px] w-[17px] shrink-0 text-[#004BB8]" aria-hidden="true" /><h2 className="min-w-0 flex-1 truncate text-[13px] font-bold text-slate-950">Track this flight price</h2>{pending ? <LoaderCircle className="h-4 w-4 animate-spin text-[#004BB8]" aria-hidden="true" /> : null}{switchButton("mobile")}</div>
     </section>
-    {desktopPortalTarget && typeof document !== "undefined"
+    {desktopSidebarActive && desktopPortalTarget && typeof document !== "undefined"
       ? createPortal(desktopControl, desktopPortalTarget)
-      : null}
+      : <div className="hidden sm:block lg:hidden">{desktopControl}</div>}
     {mobileEditor}
     {desktopEditor}
     {feedback && feedback !== "error-save" ? <div role={feedback.startsWith("error") ? "alert" : "status"} aria-live="polite" className={cn("fixed inset-x-3 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-[110] mx-auto flex max-w-md items-center gap-2.5 rounded-[14px] border border-slate-200 bg-white px-3 py-2.5 shadow-[0_12px_34px_rgba(15,23,42,0.2)] transition duration-200", snackbarLeaving ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100")}><CheckCircle2 className={cn("h-5 w-5", feedback.startsWith("error") ? "text-rose-600" : "text-[#004BB8]")} aria-hidden="true" /><strong className="text-sm text-slate-950">{feedback === "saved" ? "Price alert saved" : feedback === "paused" ? "Price alert paused" : "Couldn't pause price alert"}</strong></div> : null}
