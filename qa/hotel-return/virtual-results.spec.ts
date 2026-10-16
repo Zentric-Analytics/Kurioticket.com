@@ -103,7 +103,7 @@ test("Cars mobile card balances category and moves four specifications underneat
     }
     await expect(card.getByText("MINIVAN", { exact: true }).filter({ visible: true })).toBeVisible();
     await expect(lower.locator("[data-car-deal-provider-offer]")).toHaveCount(1);
-    await expect(card.locator("[data-car-card-mobile-pricing]")).toBeVisible();
+    await expect(card.locator("[data-car-card-mobile-pricing]")).toHaveCount(0);
   }
 
   await page.route("**/api/cars/search", route =>
@@ -122,7 +122,7 @@ test("Cars mobile card balances category and moves four specifications underneat
 });
 
 
-test("Cars offer controls are legible and easy to tap on small phones without overflowing the main price rail", async ({ page }) => {
+test("Cars mobile offers fill the card without a duplicate price rail and preserve accessible supplier controls", async ({ page }) => {
   const baseOffer = carBase.offers[0];
   if (!baseOffer) throw new Error("Missing fixture offer");
   const result = {
@@ -147,21 +147,24 @@ test("Cars offer controls are legible and easy to tap on small phones without ov
     await page.goto(routes.cars);
     const card = page.locator("[data-car-result-card-shell]").first();
     const offers = card.locator("[data-car-card-mobile-offers]");
-    const rail = card.locator("[data-car-card-mobile-pricing]");
+    const band = card.locator("[data-car-card-mobile-lower-band]");
     const rows = offers.locator("[data-car-deal-provider-offer]");
     const toggle = offers.locator("[data-car-deal-more-offers]").filter({ visible: true });
     await expect(rows).toHaveCount(7);
     await expect(rows.filter({ visible: true })).toHaveCount(3);
     await expect(toggle).toHaveCount(1);
     await expect(toggle).toContainText("+4 more offers");
-    await expect(rail).toBeVisible();
+    await expect(card.locator("[data-car-card-mobile-pricing]")).toHaveCount(0);
 
     await expect(rows.first()).toHaveCSS("min-height", "36px"); // The mobile web row metrics remain unchanged.
     const toggleTextSize = await toggle.evaluate(element => parseFloat(getComputedStyle(element).fontSize));
     expect(toggleTextSize).toBeGreaterThanOrEqual(10);
     expect(toggleTextSize).toBeLessThanOrEqual(12);
-    const railRect = (await rail.boundingBox())!;
-    const originalOffersWidth = (await offers.boundingBox())!.width;
+    const bandRect = (await band.boundingBox())!;
+    const initialOffersRect = (await offers.boundingBox())!;
+    const originalOffersWidth = initialOffersRect.width;
+    expect(initialOffersRect.width).toBeGreaterThan(bandRect.width - 3);
+    expect(Math.abs(initialOffersRect.x + initialOffersRect.width - (bandRect.x + bandRect.width))).toBeLessThanOrEqual(2);
     const row = rows.first();
     const name = row.locator("[data-car-deal-provider-name]");
     const price = row.locator("[data-car-deal-provider-price]");
@@ -186,10 +189,13 @@ test("Cars offer controls are legible and easy to tap on small phones without ov
     expect(logoRect.x + logoRect.width).toBeLessThanOrEqual(nameRect.x + 1);
     expect(nameRect.x + nameRect.width).toBeLessThanOrEqual(infoRect.x + 1);
     expect(infoRect.x + infoRect.width).toBeLessThanOrEqual(priceRect.x + 1);
-    expect(infoRect.x + infoRect.width).toBeLessThanOrEqual(railRect.x + 1);
+    expect(infoRect.x + infoRect.width).toBeLessThanOrEqual(initialOffersRect.x + initialOffersRect.width + 1);
     const infoGap = infoRect.x - (nameRect.x + nameRect.width);
     expect(infoGap).toBeGreaterThanOrEqual(7);
     expect(infoGap).toBeLessThanOrEqual(16);
+    const offerRight = initialOffersRect.x + initialOffersRect.width;
+    expect(offerRight - (linkRect.x + linkRect.width)).toBeGreaterThanOrEqual(-1);
+    expect(offerRight - (linkRect.x + linkRect.width)).toBeLessThanOrEqual(35);
     if (width < 360) {
       expect(linkRect.y).toBeGreaterThanOrEqual(priceRect.y + priceRect.height - 1);
     } else {
@@ -217,9 +223,8 @@ test("Cars offer controls are legible and easy to tap on small phones without ov
     await toggle.click();
     await expect(rows.filter({ visible: true })).toHaveCount(7);
     await expect(toggle).toContainText("Show fewer offers");
-    await expect(rail).toHaveAttribute("aria-hidden", "true");
-    await expect(rail).toBeHidden();
-    await expect.poll(async () => (await offers.boundingBox())!.width).toBeGreaterThan(originalOffersWidth + 20);
+    await expect(card.locator("[data-car-card-mobile-pricing]")).toHaveCount(0);
+    await expect.poll(async () => Math.abs((await offers.boundingBox())!.width - originalOffersWidth)).toBeLessThanOrEqual(2);
     const fullWidthBand = (await card.locator("[data-car-card-mobile-lower-band]").boundingBox())!;
     const expandedOffers = (await offers.boundingBox())!;
     expect(Math.abs(expandedOffers.x + expandedOffers.width - (fullWidthBand.x + fullWidthBand.width))).toBeLessThanOrEqual(2);
@@ -228,10 +233,8 @@ test("Cars offer controls are legible and easy to tap on small phones without ov
     expect(expandedToggleSize).toBe(toggleTextSize);
     await toggle.click();
     await expect(rows.filter({ visible: true })).toHaveCount(3);
-    await expect(rail).toHaveAttribute("aria-hidden", "false");
-    await expect(rail).toBeVisible();
-    await expect.poll(async () => Math.abs((await offers.boundingBox())!.width - originalOffersWidth)).toBeLessThanOrEqual(3);
-    expect(railRect.width).toBeGreaterThan(0);
+    await expect(card.locator("[data-car-card-mobile-pricing]")).toHaveCount(0);
+    await expect.poll(async () => Math.abs((await offers.boundingBox())!.width - originalOffersWidth)).toBeLessThanOrEqual(2);
   }
 
   await page.setViewportSize({ width: 1365, height: 900 });
@@ -285,7 +288,7 @@ test("Cars list previews three offers with equal collapsed heights and retains t
       if (threeRowHeight !== null) expect(Math.abs(offerMinHeight - threeRowHeight)).toBeLessThanOrEqual(2);
       threeRowHeight = offerMinHeight;
     }
-    await expect(card.locator("[data-car-card-mobile-pricing]")).toBeVisible();
+    await expect(card.locator("[data-car-card-mobile-pricing]")).toHaveCount(0);
     if (count <= 3) {
       await expect(toggle).toHaveCount(0);
     } else {
