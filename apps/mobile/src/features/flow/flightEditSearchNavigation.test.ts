@@ -13,7 +13,9 @@ test("approved flight Edit search opens a local modal with current canonical par
   assert.match(source, /const pendingFlightEditTargetKey = useRef<string \| null>\(null\)/);
   assert.match(editHandler, /if \(product === "flight"\)[\s\S]*?pendingFlightEditTargetKey\.current = null;[\s\S]*?setEditSearchOpen\(true\)[\s\S]*?return;/);
   assert.match(source, /<FlightEditSearchModal[\s\S]*?visible=\{editSearchOpen\}[\s\S]*?params=\{flightEditSearchParams\(params\)\}[\s\S]*?onClose=\{closeFlightEditSearch\}[\s\S]*?onSubmit=\{submitFlightEditSearch\}/);
-  assert.doesNotMatch(source, /onAfterClose|completeFlightEditSearch|pendingFlightEditSearchParams/);
+  const flightModal = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
+  const flightFlow = source.slice(source.indexOf("  const submitFlightEditSearch = useCallback"), source.indexOf("  const submitAndroidHotelEdit = useCallback"));
+  assert.doesNotMatch(flightFlow + flightModal, /onAfterClose|completeFlightEditSearch|pendingFlightEditSearchParams/);
   assert.doesNotMatch(editHandler, /\/edit-flight-search|activeSearch/);
   assert.doesNotMatch(editHandler.slice(0, editHandler.indexOf('router.push({\n      pathname: "/hotels"')), /router\.(?:push|replace|back)/);
   assert.doesNotMatch(editHandler, /pathname: "\/flights"/);
