@@ -18,7 +18,7 @@ test("Hotel Results Edit opens an in-place Hotel editor with current committed p
   assert.match(source, /const \[hotelEditPresentation, setHotelEditPresentation\] = useState\(0\)/);
   assert.match(edit, /if \(product === "flight"\)[\s\S]*setEditSearchOpen\(true\)[\s\S]*return;[\s\S]*setHotelEditPresentation\(\(presentation\) => presentation \+ 1\);[\s\S]*setHotelEditSearchOpen\(true\)/);
   assert.doesNotMatch(edit, /router\.(?:push|replace)|pathname: "\/hotels"/);
-  assert.match(source, /<HotelEditSearchModal[\s\S]*key=\{hotelEditPresentation\}[\s\S]*visible=\{hotelEditSearchOpen\}[\s\S]*params=\{params\}[\s\S]*onClose=\{\(\) => setHotelEditSearchOpen\(false\)\}/);
+  assert.match(source, /<HotelEditSearchModal[\s\S]*key=\{hotelEditPresentation\}[\s\S]*visible=\{hotelEditSearchOpen\}[\s\S]*params=\{params\}[\s\S]*onClose=\{closeHotelEditSearch\}[\s\S]*onAndroidSubmit=\{Platform\.OS === "android" \? submitAndroidHotelEdit : undefined\}/);
   assert.doesNotMatch(source, /topInset=\{topSafeAreaInset\}/);
 });
 
@@ -49,7 +49,7 @@ test("Hotel edit modal embeds the shared form and replaces only after closing", 
   assert.match(modal, /accessibilityViewIsModal/);
   assert.match(modal, /accessibilityLabel="Close hotel edit search"/);
   assert.match(modal, /keyboardShouldPersistTaps="handled"/);
-  assert.match(modal, /<HotelSearchPanel embedded params=\{presentedParams\} submitNavigation="replace" onBeforeNavigate=\{onClose\} editAppearance submitLabel="Search" \/>/);
+  assert.match(modal, /<HotelSearchPanel embedded params=\{presentedParams\} submitNavigation="replace" onBeforeNavigate=\{onClose\} onValidatedSubmit=\{Platform\.OS === "android" \? onAndroidSubmit : undefined\} editAppearance submitLabel="Search" \/>/);
   assert.doesNotMatch(modal, /router\.|hotelSearchParams|travelApi/);
   assert.match(modal, /useRetainedPickerContext\(visible, params\)/);
 });
@@ -57,6 +57,7 @@ test("Hotel edit modal embeds the shared form and replaces only after closing", 
 test("Hotel form preserves push by default and closes before configured navigation", () => {
   const panel = panelSource();
   assert.match(panel, /submitNavigation = "push", onBeforeNavigate, editAppearance = false/);
+  assert.match(panel, /if \(onValidatedSubmit\) \{ onValidatedSubmit\(hotelSearchParams\(form\)\); return; \}/);
   assert.match(panel, /onBeforeNavigate\?\.\(\);\s*router\[submitNavigation\]\(\{ pathname: "\/hotel-results", params: hotelSearchParams\(form\) \}\)/);
   const validation = panel.indexOf("const nextErrors = validateHotelForm(form)");
   const close = panel.indexOf("onBeforeNavigate?.()", validation);
@@ -88,4 +89,18 @@ test("Hotel edit modal matches Flight header and content geometry", () => {
   assert.match(modal, /title: \{[^\n]*fontSize: 19, lineHeight: 24, fontWeight: "600" \}/);
   assert.match(modal, /close: \{ width: 44, height: 44/);
   assert.match(modal, /<X accessible=\{false\} size=\{23\}/);
+});
+
+test("Android hotel edit waits for the Modal to finish closing and refreshes Results in place", () => {
+  const result = resultsSource();
+  const modal = modalSource();
+  const model = read("src/features/flow/hotelSearchModel.ts");
+  assert.match(result, /const submitAndroidHotelEdit = useCallback/);
+  assert.match(result, /const finishAndroidHotelEdit = useCallback/);
+  assert.match(result, /pendingHotelEditParams\.current = nextPlan\.plan\.key === plan\.plan\?\.key \? null : nextParams/);
+  assert.match(result, /router\.setParams\(hotelSearchRouteParamPatch\(nextParams\)\)/);
+  assert.match(result, /setResults\(\[\]\);[\s\S]*setHotelFilters\(emptyHotelFilters\(\)\)/);
+  assert.match(modal, /Platform\.OS === "android" && !visible && !motion\.rendered/);
+  assert.match(result, /onAfterClose=\{Platform\.OS === "android" \? finishAndroidHotelEdit : undefined\}/);
+  assert.match(model, /destinationId: undefined, destinationLocation: next\.destinationLocation \|\| undefined/);
 });
