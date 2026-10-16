@@ -272,7 +272,7 @@ export function DesktopFlightFilters({
             selectedCount={compactSections.time}
             onToggle={() => toggleCompactSection("time")}
           >
-            <div className="mb-2.5 grid grid-cols-2 rounded-[10px] bg-slate-100 p-1">
+            <div className="mb-2 grid grid-cols-2 rounded-[10px] bg-slate-100 p-1">
               {["takeoff", "landing"].map((mode) => <button key={mode} type="button" onClick={() => setTimeFilterMode(mode as TimeFilterMode)} className={cn("min-h-9 rounded-lg px-2 py-1.5 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30", isGuidedComfortable && "min-h-10", timeFilterMode === mode ? "bg-white text-[#004BB8] shadow-sm" : "text-slate-800 hover:text-slate-950")}>{mode === "takeoff" ? t("takeoff") : t("landing")}</button>)}
             </div>
             <div className={cn("mb-2.5 flex items-center justify-between gap-3 text-[13px] leading-5", isGuidedComfortable && "text-[13px]")}>
@@ -334,7 +334,7 @@ export function DesktopFlightFilters({
       data-flight-hotel-filter-visual-parity
       className="desktop-filter-sidebar overflow-hidden rounded-lg border border-[#B8C6D6] bg-[#F2F4F8] shadow-[0_8px_22px_-18px_rgba(15,23,42,0.28)]"
     >
-      <div className="flex min-h-10 items-center justify-between gap-3 px-3 py-2">
+      <div className="flex min-h-9 items-center justify-between gap-3 px-3 py-1.5">
         <h2 className="truncate text-[14px] font-bold tracking-[-0.01em] text-slate-950">
           {t("hotelResults.filterBy")}
         </h2>
@@ -354,7 +354,7 @@ export function DesktopFlightFilters({
         <HotelStyleFilterSection title={t("price")}>
           <div
             data-flight-filter-price-summary
-            className={cn("mb-2.5 flex items-center gap-1.5 text-[12px] font-medium leading-5 tabular-nums text-slate-600", isGuidedComfortable && "text-[13px]")}
+            className={cn("mb-2 flex items-center gap-1.5 text-[12px] font-medium leading-5 tabular-nums text-slate-600", isGuidedComfortable && "text-[13px]")}
           >
             <span className="min-w-0 truncate">{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.min) : "—"}</span>
             <span aria-hidden="true" className="shrink-0 text-slate-400">—</span>
@@ -364,12 +364,12 @@ export function DesktopFlightFilters({
         </HotelStyleFilterSection>
 
         <HotelStyleFilterSection title={`${t("takeoff")} / ${t("landing")}`}>
-          <div className="mb-2.5 grid grid-cols-2 rounded-[10px] bg-slate-100 p-1">
-            {["takeoff", "landing"].map((mode) => <button key={mode} type="button" onClick={() => { onFilterChange(); setTimeFilterMode(mode as TimeFilterMode); onFilterCommit(); }} className={cn("min-h-9 rounded-lg px-2 py-1.5 text-[12px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30", isGuidedComfortable && "min-h-10 text-[13px]", timeFilterMode === mode ? "bg-white font-semibold text-[#004BB8] shadow-sm" : "text-slate-700 hover:text-slate-950")}>{mode === "takeoff" ? t("takeoff") : t("landing")}</button>)}
+          <div className="mb-2 grid grid-cols-2 rounded-[10px] bg-slate-100 p-1">
+            {["takeoff", "landing"].map((mode) => <button key={mode} type="button" onClick={() => { onFilterChange(); setTimeFilterMode(mode as TimeFilterMode); onFilterCommit(); }} className={cn("min-h-8 rounded-lg px-2 py-1 text-[12px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30", isGuidedComfortable && "min-h-10 text-[13px]", timeFilterMode === mode ? "bg-white font-semibold text-[#004BB8] shadow-sm" : "text-slate-700 hover:text-slate-950")}>{mode === "takeoff" ? t("takeoff") : t("landing")}</button>)}
           </div>
           <div
             data-flight-filter-time-summary
-            className={cn("mb-2.5 flex items-center justify-between gap-3 text-[12px] font-medium leading-5 text-slate-600", isGuidedComfortable && "text-[13px]")}
+            className={cn("mb-2 flex items-center justify-between gap-3 text-[12px] font-medium leading-5 text-slate-600", isGuidedComfortable && "text-[13px]")}
           >
             <span className="min-w-0 truncate">
               {timeFilterMode === "takeoff" ? t("takeoff") : t("landing")} · {airportCode || "—"}
@@ -382,7 +382,7 @@ export function DesktopFlightFilters({
         <HotelStyleFilterSection title={t("duration")}>
           <div
             data-flight-filter-duration-summary
-            className={cn("mb-2.5 flex items-center gap-1.5 text-[12px] font-medium leading-5 tabular-nums text-slate-600", isGuidedComfortable && "text-[13px]")}
+            className={cn("mb-2 flex items-center gap-1.5 text-[12px] font-medium leading-5 tabular-nums text-slate-600", isGuidedComfortable && "text-[13px]")}
           >
             <span>{durationBounds ? formatDurationFromMinutes(durationBounds.min, t) : "—"}</span>
             <span aria-hidden="true" className="text-slate-400">—</span>
@@ -395,7 +395,7 @@ export function DesktopFlightFilters({
 
         <OptionSection title={t("airlines")} emptyText={t("airlinesAppearAfterResultsLoad")}>
           <label className="sr-only" htmlFor={`${idPrefix}-airline-search`}>{t("accountDashboard.preferences.booking.searchAirlines")}</label>
-          <input id={`${idPrefix}-airline-search`} className="mb-2.5 h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] text-slate-950 placeholder:text-slate-500 focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/20" placeholder={t("accountDashboard.preferences.booking.searchAirlines")} type="search" value={airlineSearch} onChange={(event) => setAirlineSearch(event.target.value)} />
+          <input id={`${idPrefix}-airline-search`} className="mb-2 h-8 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] text-slate-950 placeholder:text-slate-500 focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/20" placeholder={t("accountDashboard.preferences.booking.searchAirlines")} type="search" value={airlineSearch} onChange={(event) => setAirlineSearch(event.target.value)} />
           {visibleAirlines.map((option) => <FacetRow key={option.value} label={option.label} count={option.count} checked={selectedAirlines.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedAirlines); onFilterCommit(); }} />)}
           {!airlineSearch.trim() && airlineOptions.length > 5 ? <button type="button" className="mx-auto mt-2 flex min-h-9 items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB]" onClick={() => setShowAllAirlines((current) => !current)}>{showAllAirlines ? t("hotelResults.showLess") : t("showMoreResults")}<ChevronDown aria-hidden="true" className={cn("h-3.5 w-3.5 transition", showAllAirlines && "rotate-180")} /></button> : null}
         </OptionSection>
@@ -476,7 +476,7 @@ function HotelStyleFilterSection({ title, children }: { title: string; children:
   const panelId = useId();
 
   return (
-    <section className="border-t border-slate-200/60 px-3 py-3 first:border-t-0">
+    <section className="border-t border-slate-200/60 px-3 py-2.5 first:border-t-0">
       <h3 className="text-[13px] font-bold leading-5 text-slate-950">
         <button
           type="button"
@@ -518,7 +518,7 @@ function FacetRow({ label, count, secondaryLabel, rightLabel, checked, onChange,
   }
 
   return (
-    <label className="group flex min-h-[30px] min-w-0 cursor-pointer items-center justify-between gap-3 rounded-md px-0.5 py-1 text-[12px] font-medium leading-5 text-slate-700 transition hover:bg-slate-50 hover:text-slate-950">
+    <label className="group flex min-h-[28px] min-w-0 cursor-pointer items-center justify-between gap-3 rounded-md px-0.5 py-1 text-[12px] font-medium leading-5 text-slate-700 transition hover:bg-slate-50 hover:text-slate-950">
       <span className="flex min-w-0 flex-1 items-start gap-2">
         <input className="peer sr-only" type="checkbox" checked={checked} onChange={onChange} />
         <span aria-hidden="true" className={cn("mt-0.5 flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[2px] border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2", checked ? "border-[#0067DB] bg-[#0067DB] text-white" : "border-slate-300 bg-white group-hover:border-slate-400")}>

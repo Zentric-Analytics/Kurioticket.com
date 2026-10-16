@@ -80,7 +80,10 @@ test("Flight feedback is accessible, portaled, and never claims tracking before 
 
 test("desktop Flight alert uses the compact sidebar treatment without helper copy", () => {
   assert.match(control, /data-flight-price-alert-sidebar/);
-  assert.match(control, /min-h-\[48px\][^"]*rounded-xl border border-\[#CFE0F8\] bg-\[#EEF6FF\]/);
+  assert.match(control, /h-10[^"]*rounded-xl border border-\[#CFE0F8\] bg-\[#EEF6FF\][^"]*px-3/);
+  assert.match(results, /data-flight-price-alert-sidebar-slot[\s\S]{0,120}className="min-h-\[40px\]"/);
+  assert.doesNotMatch(control, /min-h-\[48px\]/);
+  assert.doesNotMatch(results, /data-flight-price-alert-sidebar-slot[\s\S]{0,120}min-h-\[48px\]/);
   assert.match(control, />Track flight price</);
   assert.match(control, /surface === "desktop" \? "h-6 w-11" : "h-7 w-12"/);
   assert.match(control, /window\.matchMedia\("\(min-width: 1024px\)"\)/);

@@ -45,7 +45,7 @@ test("mobile nearby insight, quick filters, and price alert use compact native-l
     "utf8",
   );
 
-  assert.match(source, /cn\(resultStackClass, "space-y-1 sm:space-y-4"\)/);
+  assert.match(source, /cn\(resultStackClass, "space-y-1 sm:space-y-4 lg:space-y-3"\)/);
   const nearbyInsight = source.match(/className="([^"]*)">Cheaper nearby:/)?.[1] ?? "";
   assert.match(nearbyInsight, /min-h-\[28px\]/);
   assert.match(nearbyInsight, /flight-mobile-cheaper-nearby/);
@@ -415,6 +415,30 @@ test("desktop Flight Results omit nearby-fare calendar and cheaper-nearby insigh
   assert.match(source, /flight-mobile-cheaper-nearby/);
 });
 
+test("desktop Flight results summary uses the exact Hotel 12px gap before the first card", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const hotels = await readFile(
+    new URL("./HotelResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    hotels,
+    /<div className="space-y-3">[\s\S]*?role="group"[\s\S]*?data-hotel-continuous-results/,
+  );
+  assert.match(
+    source,
+    /cn\(resultStackClass, "space-y-1 sm:space-y-4 lg:space-y-3"\)/,
+  );
+  assert.match(
+    source,
+    /data-flight-results-desktop-summary[\s\S]{0,180}className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-0 lg:bg-transparent"/,
+  );
+});
+
 test("desktop Flight filters match Hotel desktop typography while keeping the Flight surface", async () => {
   const filters = await readFile(
     new URL("./DesktopFlightFilters.tsx", import.meta.url),
@@ -456,7 +480,7 @@ test("desktop Flight filters match Hotel desktop typography while keeping the Fl
 
   assert.match(
     primaryFilters,
-    /h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-\[13px\] text-slate-950 placeholder:text-slate-500/,
+    /h-8 w-full rounded-md border border-slate-300 bg-white px-3 text-\[13px\] text-slate-950 placeholder:text-slate-500/,
   );
   assert.doesNotMatch(
     primaryFilters,
@@ -485,7 +509,19 @@ test("desktop Flight filters match Hotel desktop typography while keeping the Fl
     primaryFilters,
     /\{t\("price"\)\}: \{formatFilterPrice/,
   );
-  assert.match(filters, /border-t border-slate-200\/60 px-3 py-3 first:border-t-0/);
+  assert.match(filters, /border-t border-slate-200\/60 px-3 py-2\.5 first:border-t-0/);
+  assert.match(primaryFilters, /flex min-h-9 items-center justify-between gap-3 px-3 py-1\.5/);
+  assert.match(primaryFilters, /mb-2 flex items-center gap-1\.5 text-\[12px\]/);
+  assert.match(primaryFilters, /min-h-8 rounded-lg px-2 py-1 text-\[12px\]/);
+  assert.match(primaryFilters, /mb-2 grid grid-cols-2 rounded-\[10px\]/);
+  assert.match(primaryFilters, /h-8 w-full rounded-md border border-slate-300/);
+  assert.match(facetRow, /min-h-\[28px\]/);
+  assert.doesNotMatch(filters, /border-t border-slate-200\/60 px-3 py-3 first:border-t-0/);
+  assert.doesNotMatch(primaryFilters, /min-h-10 items-center justify-between gap-3 px-3 py-2/);
+  assert.doesNotMatch(primaryFilters, /mb-2\.5 flex items-center/);
+  assert.doesNotMatch(primaryFilters, /min-h-9 rounded-lg px-2 py-1\.5 text-\[12px\]/);
+  assert.doesNotMatch(primaryFilters, /h-9 w-full rounded-md border border-slate-300/);
+  assert.doesNotMatch(facetRow, /min-h-\[30px\]/);
   assert.doesNotMatch(filters, /data-flight-hotel-filter-visual-parity[\s\S]{0,300}bg-white/);
 });
 test("desktop Flight Stops filter shows labels and counts without fare hints", async () => {
@@ -586,7 +622,7 @@ test("desktop Flight result summary keeps the premium hierarchy after nearby-far
   assert.doesNotMatch(source, /data-desktop-cheaper-nearby|desktop-flight-cheaper-nearby/);
 
   const summaryStart = source.indexOf(
-    'className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-1 lg:bg-transparent"',
+    'className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-0 lg:bg-transparent"',
   );
   const summary = source.slice(summaryStart, summaryStart + 4200);
   assert.match(summary, /text-\[12px\] font-semibold leading-4 text-\[#191E3B\]/);

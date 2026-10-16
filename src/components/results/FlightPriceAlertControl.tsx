@@ -406,7 +406,7 @@ export function FlightPriceAlertControl({ query: queryInput, results, desktopPor
       className="w-full"
       aria-label="Flight price alert"
     >
-      <div className="flex min-h-[48px] items-center justify-between gap-2 rounded-xl border border-[#CFE0F8] bg-[#EEF6FF] px-3.5 shadow-[0_8px_22px_-22px_rgba(15,23,42,0.42)]">
+      <div className="flex h-10 items-center justify-between gap-2 rounded-xl border border-[#CFE0F8] bg-[#EEF6FF] px-3 shadow-[0_8px_22px_-22px_rgba(15,23,42,0.42)]">
         <div className="flex min-w-0 items-center gap-2.5">
           <Bell className="h-[17px] w-[17px] shrink-0 text-[#004BB8]" strokeWidth={2} aria-hidden="true" />
           <h2 className="truncate text-[13px] font-semibold leading-5 text-slate-950">Track flight price</h2>
