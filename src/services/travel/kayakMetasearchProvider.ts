@@ -17,10 +17,19 @@ export function scopeKayakOfferIds<T extends { id: string; hotelPropertyKey?: st
   }));
 }
 
+/** Android's OkHttp/Dalvik transport identifier is rejected by KAYAK's Hotel sandbox.
+ * Use KAYAK's established affiliate-app default for native Hotel requests while
+ * keeping real browser/iOS agents and all Flight/Car requests unchanged. */
+export function kayakProviderUserAgent(vertical: KayakVertical, incoming?: string): string | undefined {
+  const agent = incoming?.trim();
+  if (!agent) return undefined;
+  return vertical === "hotels" && /^(?:okhttp|dalvik)\//i.test(agent) ? undefined : agent;
+}
+
 async function search<T>(vertical: KayakVertical, criteria: Record<string, string>, context?: KayakRequestContext, map?: (offer: Parameters<typeof kayakFlightCardModel>[0]) => T | null): Promise<ProviderResult<T>> {
   const startedAt = Date.now();
   if (!isKayakSandboxEnabled() || !context?.clientIp) return { provider: "KAYAK sandbox", results: [], status: "skipped", latencyMs: Date.now() - startedAt };
-  const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined, context.userAgent?.trim() || undefined, context.clientIp);
+  const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined, kayakProviderUserAgent(vertical, context.userAgent), context.clientIp);
   try {
     const trackId = context.trackId || crypto.randomUUID();
     const resolved = await resolveRegularKayakSearch(vertical, criteria, (term, requested = "hotels") => client.places(requested, term, trackId, context.signal));
