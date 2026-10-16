@@ -133,6 +133,7 @@ test("Cars mobile offers fill the card without a duplicate price rail and preser
       ...baseOffer,
       id: "touch-offer-" + index,
       bookingProviderName: index === 0 ? "Extra Long Rental Provider Name" : "Seller " + index,
+      bookingProviderLogoUrl: index === 0 ? "/brand/kurioticket-icon-blue.svg" : undefined,
       bookingUrl: "https://affiliates.kayak.com/sandbox-clickout",
       pricePerDay: index === 6 ? 233 : 49 + index,
       totalPrice: 200 + index * 5,
@@ -175,9 +176,21 @@ test("Cars mobile offers fill the card without a duplicate price rail and preser
     const linkRect = (await viewDeal.boundingBox())!;
     const infoRect = (await info.boundingBox())!;
 
-    for (const [locator, minimumSize] of [[name, 11], [price, 12], [viewDeal, 12]] as const) {
-      const size = await locator.evaluate(element => parseFloat(getComputedStyle(element).fontSize));
-      expect(size).toBeGreaterThanOrEqual(minimumSize);
+    for (const [locator, actualSize] of [[name, "12px"], [price, "13px"], [viewDeal, "13px"]] as const) {
+      await expect(locator).toHaveCSS("font-size", actualSize);
+    }
+    await expect(price.locator("span")).toHaveCSS("font-size", "11px");
+    if (width >= 360) {
+      const visibleRows = rows.filter({ visible: true });
+      for (let index = 0; index < 3; index++) {
+        const rect = (await visibleRows.nth(index).boundingBox())!;
+        expect(rect.height).toBeLessThanOrEqual(36.5);
+      }
+      const bandHeight = (await band.boundingBox())!.height;
+      expect(bandHeight).toBeLessThanOrEqual(164); // Prevent added card height.
+    } else {
+      const rowRect = (await rows.first().boundingBox())!;
+      expect(rowRect.height).toBeLessThanOrEqual(80.5); // Existing 320px stacked layout.
     }
     expect(nameRect.x + nameRect.width).toBeLessThanOrEqual(priceRect.x + 1);
     expect(linkRect.height).toBeGreaterThanOrEqual(36);
@@ -186,6 +199,13 @@ test("Cars mobile offers fill the card without a duplicate price rail and preser
     // Exact sequence: logo, provider name, info, per-day price, View deal.
     const logo = row.locator("[data-car-deal-provider-brand] > span").first();
     const logoRect = (await logo.boundingBox())!;
+    expect(logoRect.width).toBe(19);
+    expect(logoRect.height).toBe(19);
+    const logoImg = logo.locator("img");
+    if (await logoImg.count()) {
+      await expect(logoImg).toHaveCSS("width", "19px");
+      await expect(logoImg).toHaveCSS("height", "19px");
+    }
     expect(logoRect.x + logoRect.width).toBeLessThanOrEqual(nameRect.x + 1);
     expect(nameRect.x + nameRect.width).toBeLessThanOrEqual(infoRect.x + 1);
     expect(infoRect.x + infoRect.width).toBeLessThanOrEqual(priceRect.x + 1);
@@ -218,7 +238,7 @@ test("Cars mobile offers fill the card without a duplicate price rail and preser
     const infoSvg = info.locator("svg");
     await expect(infoSvg).toBeVisible();
     const iconWidth = await infoSvg.evaluate(element => element.getBoundingClientRect().width);
-    expect(iconWidth).toBeGreaterThanOrEqual(16);
+    expect(iconWidth).toBe(18);
 
     await toggle.click();
     await expect(rows.filter({ visible: true })).toHaveCount(7);
@@ -246,7 +266,11 @@ test("Cars mobile offers fill the card without a duplicate price rail and preser
   const desktopFont = await desktopOffer.locator("[data-car-deal-provider-name]").evaluate(
     element => parseFloat(getComputedStyle(element).fontSize),
   );
-  expect(desktopFont).toBe(12); // Desktop provider names intentionally use 12px; mobile sizes remain unchanged.
+  expect(desktopFont).toBe(12); // Desktop remains unchanged.
+  await expect(desktopOffer.locator("[data-car-deal-provider-price]")).toHaveCSS("font-size", "13px");
+  await expect(desktopOffer.locator("[data-car-deal-provider-view-deal]")).toHaveCSS("font-size", "12px");
+  await expect(desktopOffer.locator("[data-car-deal-provider-brand] > span").first()).toHaveCSS("width", "18px");
+  await expect(desktopOffer.locator("[data-car-rate-info] svg")).toHaveAttribute("width", "16");
 });
 
 
