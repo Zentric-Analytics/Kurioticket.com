@@ -49,11 +49,11 @@ test("provider offers show logo, name, per-day price and a direct provider View 
   assert.ok(picker.includes('h-9 w-8'));
   assert.match(picker, /Info size=\{compact \? 17 : 16\}/);
   assert.equal((picker.match(/fontSize: 11, lineHeight: "16px", fontWeight: 600/g) ?? []).length, 1);
-  assert.match(card, /data-car-card-mobile-offers[\s\S]*flex-\[2\.65\]/);
-  assert.match(card, /data-car-card-mobile-pricing[\s\S]*flex-\[1\.1\]/);
+  assert.match(card, /data-car-card-mobile-offers\s+className="w-full min-w-0 px-2 py-1\.5"/);
+  assert.doesNotMatch(card, /data-car-card-mobile-pricing/);
   assert.ok(picker.includes('min-w-0 flex-1 truncate whitespace-nowrap font-semibold'));
   assert.match(picker, /compact \? "gap-0\.5" : "gap-1"/);
-  assert.ok(picker.includes('grid-cols-[minmax(0,calc(65%_+_20px))_minmax(0,1fr)]'));
+  assert.ok(picker.includes('grid-cols-[minmax(0,calc(68%_+_20px))_minmax(0,1fr)]'));
   assert.ok(picker.includes('grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)]'));
   assert.match(picker, /const offer = group\.primaryOffer/);
   assert.match(picker, /amount: offer\.pricePerDay/);
@@ -106,13 +106,13 @@ test("inline provider offers do not retain the old comparison overlays", () => {
   );
 });
 
-test("standalone main View deal remains independently validated", () => {
+test("desktop main View deal remains independently validated", () => {
   assert.match(card, /const approvedProviderBookingUrl/);
   assert.match(card, /sandboxBookingUrl\(offer\.bookingUrl\)/);
   assert.match(card, /url\.protocol !== "https:" \|\| url\.username \|\| url\.password/);
-  assert.equal((card.match(/href=\{providerBookingHref\}/g) ?? []).length, 2);
-  assert.equal((card.match(/target="_blank"/g) ?? []).length, 2);
-  assert.equal((card.match(/rel="noopener noreferrer"/g) ?? []).length, 2);
+  assert.equal((card.match(/href=\{providerBookingHref\}/g) ?? []).length, 1);
+  assert.equal((card.match(/target="_blank"/g) ?? []).length, 1);
+  assert.equal((card.match(/rel="noopener noreferrer"/g) ?? []).length, 1);
   assert.match(card, /aria-label="Provider booking link unavailable"/);
   assert.doesNotMatch(card, /href="#"/);
 });
@@ -122,7 +122,7 @@ test("selected provider state remains available to the existing main card View d
   assert.match(card, /const selectedOfferId = selectedDealOfferId \?\? localSelectedOfferId/);
   assert.match(card, /car\.offers\.find\(\(candidate\) => candidate\.id === selectedOfferId\)/);
   assert.match(card, /const providerBookingHref = approvedProviderBookingUrl\(car, offer\)/);
-  assert.equal((card.match(/href=\{providerBookingHref\}/g) ?? []).length, 2);
+  assert.equal((card.match(/href=\{providerBookingHref\}/g) ?? []).length, 1);
   assert.match(desktop, /dailyDisplayPrice\.formatted/);
   assert.doesNotMatch(desktop, /<CarPriceComparison/);
 });
@@ -329,7 +329,7 @@ test("Cars inline offer rows place info after provider branding and before price
   assert.match(offers, /grid-cols-\[minmax\(0,1fr\)_28px_66px\]/);
   assert.match(offers, /aria-label=\{"Rate information for " \+ group\.providerName/);
   assert.match(offers, /setDetailsKey\(group\.key\)/);
-  assert.match(offers, /grid-cols-\[minmax\(0,calc\(65%_\+_20px\)\)_minmax\(0,1fr\)\]/);
+  assert.match(offers, /grid-cols-\[minmax\(0,calc\(68%_\+_20px\)\)_minmax\(0,1fr\)\]/);
   assert.doesNotMatch(offers.slice(offers.indexOf('data-car-deal-provider-action-slot')), /<Info/);
 });
 
@@ -339,19 +339,19 @@ test("Cars provider expansion is parent-controlled and keeps supplier clickout a
   assert.match(picker, /onExpandedChange\(!expanded\)/);
   assert.doesNotMatch(picker, /const \[expanded, setExpanded\] = useState\(false\)/);
   assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
-  assert.match(picker, /expanded \? "justify-end pr-2" : "justify-start"/);
+  assert.match(picker, /compact \|\| expanded \? "justify-end pr-2" : "justify-start"/);
   assert.match(picker, /href=\{bookingHref\}/);
   assert.match(picker, /setDetailsKey\(group\.key\)/);
 });
 
-test("desktop Cars provider rows have compact, consistent breathing room while mobile stays unchanged", () => {
+test("desktop rows stay compact while full-width mobile provider rows keep their touch targets", () => {
   // Desktop only: each row is 30px with a restrained 4px gap.
   // 98px reserves exactly three rows with two gaps without inflating short previews.
   assert.ok(picker.includes('compact ? "max-[359px]:min-h-[240px] space-y-0" : "space-y-0.5 lg:space-y-1 lg:min-h-[98px]"'));
   assert.ok(picker.includes(': "grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)] min-h-6 lg:min-h-[30px]"'));
   assert.ok(picker.includes('data-car-deal-more-slot className="mt-0.5 flex min-h-9 items-center md:mt-1 md:min-h-6 lg:mt-1"'));
-  // No mobile spacing, tap-target, price, info, or provider-action changes.
-  assert.ok(picker.includes('compact ? "grid-cols-[minmax(0,calc(65%_+_20px))_minmax(0,1fr)] min-h-9 max-[359px]:grid-cols-1 max-[359px]:py-1"'));
+  // Preserve mobile 36px touch targets and price/info sizing; use the full-width mobile provider grid.
+  assert.ok(picker.includes('compact ? "grid-cols-[minmax(0,calc(68%_+_20px))_minmax(0,1fr)] min-h-9 max-[359px]:grid-cols-1 max-[359px]:py-1"'));
   assert.ok(picker.includes('compact ? "h-9 w-8" : "h-6 w-7"'));
   assert.ok(picker.includes('compact ? "min-h-9" : "min-h-6"'));
   assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);

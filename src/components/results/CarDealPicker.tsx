@@ -170,7 +170,7 @@ export function CarDealPicker({
               role="listitem"
               className={[
                 responsiveVisibility, "min-w-0 items-center",
-                compact ? "grid-cols-[minmax(0,calc(65%_+_20px))_minmax(0,1fr)] min-h-9 max-[359px]:grid-cols-1 max-[359px]:py-1"
+                compact ? "grid-cols-[minmax(0,calc(68%_+_20px))_minmax(0,1fr)] min-h-9 max-[359px]:grid-cols-1 max-[359px]:py-1"
                         : "grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)] min-h-6 lg:min-h-[30px]",
               ].join(" ")}
               data-car-deal-provider-offer
@@ -210,7 +210,7 @@ export function CarDealPicker({
                   <span className={["ml-0.5 font-medium text-[#64748B]", compact ? "text-[10px]" : "lg:text-[11px]"].join(" ")}>/day</span>
                 </p>
               </div>
-              <div data-car-deal-provider-action-slot className={["flex min-w-0 items-center gap-0.5", expanded ? "justify-end pr-2" : "justify-start", compact ? "max-[359px]:pl-4" : ""].join(" ")}>
+              <div data-car-deal-provider-action-slot className={["flex min-w-0 items-center gap-0.5", compact || expanded ? "justify-end pr-2" : "justify-start", compact ? "max-[359px]:pl-4" : ""].join(" ")}>
                 {bookingHref ? (
                   <a
                     href={bookingHref}
