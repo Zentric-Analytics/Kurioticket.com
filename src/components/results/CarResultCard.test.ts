@@ -79,68 +79,27 @@ test("KAYAK handoff is validated once while guided detail navigation remains ava
   assert.equal((source.match(/prefetch=\{car\.inventorySource === "kayak-sandbox" \? false : undefined\}/g) ?? []).length, 1);
 });
 
-test("KAYAK and Kurioticket View deal use Kurioticket compact sizing with KAYAK color and weight", () => {
-  assert.match(
-    source,
-    /const mobileStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*WebkitTextFillColor: "#004BB8"[\s\S]*fontSize: "12px"[\s\S]*fontWeight: 600[\s\S]*lineHeight: "16px"/,
-  );
+test("desktop standalone View deal keeps its existing style and safe fallback", () => {
   assert.match(
     source,
     /const desktopStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*color: "#004BB8"[\s\S]*WebkitTextFillColor: "#004BB8"[\s\S]*fontSize: "13px"[\s\S]*fontWeight: 700[\s\S]*lineHeight: "18px"/,
   );
-  assert.equal(
-    (source.match(/style=\{mobileStandaloneViewDealVisualStyle\}/g) ?? []).length,
-    3,
-  );
-  assert.equal(
-    (source.match(/style=\{desktopStandaloneViewDealVisualStyle\}/g) ?? []).length,
-    2,
-  );
-  assert.equal(
-    (source.match(/<ChevronRight size=\{14\} aria-hidden="true" \/>/g) ?? []).length,
-    3,
-  );
-  assert.equal(
-    (source.match(/<ChevronRight className="h-\[15px\] w-\[15px\]" aria-hidden="true" \/>/g) ?? []).length,
-    2,
-  );
-  assert.equal(
-    (source.match(/\$\{unavailableStandaloneViewDealClassName\}/g) ?? []).length,
-    2,
-  );
+  assert.equal((source.match(/style=\{desktopStandaloneViewDealVisualStyle\}/g) ?? []).length, 2);
+  assert.equal((source.match(/<ChevronRight className="h-\[15px\] w-\[15px\]" aria-hidden="true" \/>/g) ?? []).length, 2);
+  assert.equal((source.match(/\$\{unavailableStandaloneViewDealClassName\}/g) ?? []).length, 1);
+  assert.doesNotMatch(source, /mobileStandaloneViewDealVisualStyle|mobileStandaloneViewDealClassName/);
 });
 
-test("standalone mobile follows native daily-price and consistent View deal commerce", () => {
+test("standalone mobile uses one full-width offer area and no duplicate price or View deal", () => {
   const mobile = source.slice(
-    source.indexOf("data-car-card-mobile-lower-band"),
-    source.indexOf("grid-cols-[minmax(0,1.1fr)"),
+    source.indexOf("data-car-card-mobile-main"),
+    source.indexOf('data-region="image"'),
   );
-  assert.doesNotMatch(mobile, /totalDisplayPrice\.formatted|>Total</);
-  assert.match(
-    mobile,
-    /text-\[19px\][^\"]*font-semibold[^\"]*text-\[#07133B\][^\"]*tabular-nums/,
-  );
-  assert.match(mobile, /dailyDisplayPrice\.formatted/);
-  assert.match(mobile, />per day</);
-  assert.match(mobile, /View deal <ChevronRight/);
-  assert.match(
-    source,
-    /const mobileStandaloneViewDealVisualStyle: CSSProperties = \{[\s\S]*fontSize: "12px"[\s\S]*fontWeight: 600/,
-  );
-  assert.equal(
-    (source.match(/\$\{mobileStandaloneViewDealClassName\}/g) ?? []).length,
-    3,
-  );
-  assert.match(
-    mobile,
-    /disabled[\s\S]*aria-label="Provider booking link unavailable"[\s\S]*mobileStandaloneViewDealClassName[\s\S]*unavailableStandaloneViewDealClassName[\s\S]*cursor-not-allowed/,
-  );
-  assert.doesNotMatch(
-    mobile,
-    /aria-label="Provider booking link unavailable"[\s\S]{0,220}text-slate-400/,
-  );
-  assert.doesNotMatch(mobile, /bg-\[#004BB8\]/);
-  assert.doesNotMatch(mobile, /Taxes and fees included/);
+  assert.match(mobile, /data-car-card-mobile-lower-band/);
+  assert.match(mobile, /data-car-card-mobile-offers\s+className="w-full min-w-0 px-2 py-1\.5"/);
+  assert.match(mobile, /<CarDealPicker[\s\S]*?compact[\s\S]*?expanded=\{offersExpanded\}/);
+  assert.doesNotMatch(mobile, /data-car-card-mobile-pricing|View deal <ChevronRight|mobileStandaloneViewDealClassName/);
+  assert.match(source, /const desktopStandaloneViewDealVisualStyle/);
 });
 
 test("desktop media fills its column and unsupported tax copy stays hidden", () => {
@@ -507,10 +466,10 @@ test("mobile card matches native compact height, semantic spec columns, and top-
   assert.doesNotMatch(specs, /<li[^>]*py-2\.5/);
   const offers = source.slice(
     source.indexOf("data-car-card-mobile-offers"),
-    source.indexOf("data-car-card-mobile-pricing"),
+    source.indexOf('data-region="image"'),
   );
-  assert.match(offers, /px-2 py-1\.5 transition-\[flex-grow\]/);
-  assert.match(offers, /offersExpanded \? "flex-\[1\]" : "flex-\[2\.65\]"/);
+  assert.match(offers, /w-full min-w-0 px-2 py-1\.5/);
+  assert.doesNotMatch(offers, /data-car-card-mobile-pricing|flex-\[2\.65\]|transition-\[flex-grow\]/);
   assert.match(offers, /<CarDealPicker/);
   assert.doesNotMatch(offers, /mobileSpecColumns\.map/);
 
@@ -586,13 +545,15 @@ test("standalone desktop pricing follows the selected provider and keeps one Vie
   assert.doesNotMatch(desktop, /<CarPriceComparison/);
 });
 
-test("expanded standalone provider offers reclaim the mobile and desktop pricing space", () => {
+test("mobile offers stay full-width while desktop pricing rail animates during expansion", () => {
   assert.match(source, /expandedOffersForCar === car\.id/);
   assert.match(source, /setExpandedOffersForCar\(expanded \? car\.id : null\)/);
   assert.equal((source.match(/expanded=\{offersExpanded\}/g) ?? []).length, 2);
   assert.equal((source.match(/onExpandedChange=\{handleOffersExpandedChange\}/g) ?? []).length, 2);
-  assert.equal((source.match(/aria-hidden=\{offersExpanded\}/g) ?? []).length, 2);
-  assert.equal((source.match(/inert=\{offersExpanded \? true : undefined\}/g) ?? []).length, 2);
+  assert.equal((source.match(/aria-hidden=\{offersExpanded\}/g) ?? []).length, 1);
+  assert.equal((source.match(/inert=\{offersExpanded \? true : undefined\}/g) ?? []).length, 1);
+  assert.doesNotMatch(source, /data-car-card-mobile-pricing/);
+  assert.match(source, /data-car-card-mobile-offers\s+className="w-full min-w-0 px-2 py-1\.5"/);
   assert.match(source, /lg:col-span-2 lg:col-start-2 lg:transition-\[padding-right\]/);
   assert.match(source, /offersExpanded \? "lg:pr-4" : "lg:pr-\[168px\]"/);
   assert.match(source, /md:hidden lg:flex lg:invisible lg:pointer-events-none lg:opacity-0/);
