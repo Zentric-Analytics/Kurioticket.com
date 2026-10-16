@@ -727,7 +727,7 @@ export function CarResultCard({
 
         <div
           data-region="details"
-          className={`col-start-1 row-start-3 min-w-0 border-t border-[#E2E8F0] px-3 py-3 md:col-start-2 md:row-start-2 md:border-t-0 md:px-4 md:pb-3 md:pt-1 ${!guidedPlanning ? "lg:border-t-0 lg:border-[#CBD5E1] lg:pb-2 lg:pt-2" : ""} ${!guidedPlanning ? `lg:col-span-2 lg:col-start-2 lg:transition-[padding-right] lg:duration-300 lg:ease-in-out motion-reduce:transition-none ${offersExpanded ? "lg:pr-4" : "lg:pr-[168px]"}` : ""}`}
+          className={`col-start-1 row-start-3 min-w-0 border-t border-[#E2E8F0] px-3 py-3 md:col-start-2 md:row-start-2 md:border-t-0 md:px-4 md:pb-3 md:pt-1 ${!guidedPlanning ? "lg:border-t-0 lg:border-[#CBD5E1] lg:pb-2 lg:pt-2" : ""} ${!guidedPlanning ? `lg:col-span-3 lg:col-start-1 lg:pl-8 lg:transition-[padding-right] lg:duration-300 lg:ease-in-out motion-reduce:transition-none ${offersExpanded ? "lg:pr-4" : "lg:pr-[168px]"}` : ""}`}
         >
           <ul
             data-car-card-desktop-primary-specs
