@@ -98,6 +98,17 @@ test("mobile information glyph and amount/day group share the same row center an
   assert.match(rows, /compact \? "min-h-9" : "min-h-6"/);
 });
 
+test("desktop provider rows balance flexible branding, price, and right-aligned View deal only at lg+", () => {
+  const rows = picker.slice(picker.indexOf("data-car-deal-provider-offers"), picker.indexOf("data-car-deal-more-slot"));
+  assert.match(rows, /!compact \? "lg:grid-cols-\[minmax\(0,2fr\)_minmax\(0,1fr\)\]" : ""/);
+  assert.match(rows, /compact \|\| expanded \? "justify-end pr-2" : "justify-start lg:justify-end lg:pr-2"/);
+  assert.match(rows, /compact \? "grid-cols-\[minmax\(0,calc\(68%_\+_20px\)\)_minmax\(0,1fr\)\]/);
+  assert.match(rows, /: "grid-cols-\[minmax\(0,calc\(50%_\+_31px\)\)_minmax\(0,1fr\)\] min-h-6 lg:min-h-\[30px\]"/);
+  assert.match(rows, /data-car-deal-provider-meta/);
+  assert.match(rows, /data-car-deal-provider-price/);
+  assert.match(rows, /data-car-deal-provider-action-slot/);
+});
+
 test("provider View deal validates its own URL and stays isolated from main offer selection", () => {
   assert.match(picker, /const approvedProviderBookingUrl/);
   assert.match(picker, /sandboxBookingUrl\(offer\.bookingUrl\)/);
@@ -374,7 +385,7 @@ test("Cars provider expansion is parent-controlled and keeps supplier clickout a
   assert.match(picker, /onExpandedChange\(!expanded\)/);
   assert.doesNotMatch(picker, /const \[expanded, setExpanded\] = useState\(false\)/);
   assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
-  assert.match(picker, /compact \|\| expanded \? "justify-end pr-2" : "justify-start"/);
+  assert.match(picker, /compact \|\| expanded \? "justify-end pr-2" : "justify-start lg:justify-end lg:pr-2"/);
   assert.match(picker, /href=\{bookingHref\}/);
   assert.match(picker, /setDetailsKey\(group\.key\)/);
 });
