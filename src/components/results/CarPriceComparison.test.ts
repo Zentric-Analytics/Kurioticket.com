@@ -306,6 +306,12 @@ test("desktop-only Cars offers toggle text is compact but mobile font is unchang
   assert.match(control, /style=\{compact \? \{ fontSize: 11, lineHeight: "16px", fontWeight: 600 \} : undefined\}/);
   assert.match(control, /expanded \? "Show fewer offers"/);
   assert.match(control, /aria-expanded=\{expanded\}/);
+  const globalCss = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
+  const fontReset = globalCss.indexOf("button,\ninput,\nselect,\ntextarea {\n  font: inherit;");
+  const desktopRule = globalCss.indexOf("[data-car-deal-picker]:not([data-car-deal-picker-compact]) [data-car-deal-more-offers]");
+  assert.ok(fontReset >= 0 && desktopRule > fontReset, "desktop rule follows the unlayered font reset");
+  assert.match(globalCss.slice(fontReset, desktopRule), /@media \(min-width: 1024px\)/);
+  assert.match(globalCss.slice(desktopRule, desktopRule + 155), /font-size: 9\.5px;\s*line-height: 14px;\s*font-weight: 500;/);
 });
 
 test("Cars inline offer rows place info after provider branding and before price and link on web", () => {
