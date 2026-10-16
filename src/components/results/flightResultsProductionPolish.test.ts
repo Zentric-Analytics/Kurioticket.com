@@ -428,6 +428,9 @@ test("desktop Flight filters match Hotel desktop typography while keeping the Fl
     filters.indexOf("data-flight-hotel-filter-visual-parity"),
     filters.indexOf("function CompactFilterSection"),
   );
+  const facetRow = filters.slice(
+    filters.indexOf("function FacetRow"),
+  );
 
   assert.match(primaryFilters, /overflow-hidden rounded-lg border border-\[#CFD9E5\] bg-\[#F2F4F8\]/);
   assert.match(primaryFilters, /\{t\("hotelResults\.filterBy"\)\}/);
@@ -470,9 +473,9 @@ test("desktop Flight filters match Hotel desktop typography while keeping the Fl
   );
   assert.match(hotels, /text-xs font-medium text-slate-600/);
 
-  assert.match(primaryFilters, /h-\[14px\] w-\[14px\]/);
-  assert.match(primaryFilters, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
-  assert.match(primaryFilters, /<Check className="h-2\.5 w-2\.5"/);
+  assert.match(facetRow, /h-\[14px\] w-\[14px\]/);
+  assert.match(facetRow, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
+  assert.match(facetRow, /<Check className="h-2\.5 w-2\.5"/);
 
   assert.doesNotMatch(
     primaryFilters,
