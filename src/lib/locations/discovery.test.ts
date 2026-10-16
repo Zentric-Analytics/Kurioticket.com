@@ -87,3 +87,33 @@ test("provider IATA city codes are not relabeled or merged as airports", async (
   });
   assert.deepEqual(new Set(result.suggestions.map((suggestion) => suggestion.kind)), new Set(["city", "airport"]));
 });
+
+test("provider cities with the same name keep their distinct destinations", async () => {
+  const tempeArizona = providerLocation("kayak", "kplace:60798", {
+    ...place("tempe-arizona", "Tempe", "city"),
+    supportingLabel: "Arizona, United States",
+    submittedValue: "Tempe, Arizona, United States",
+    country: undefined,
+  });
+  const tempeNewSouthWales = providerLocation("kayak", "kplace:2764694", {
+    ...place("tempe-new-south-wales", "Tempe", "city"),
+    supportingLabel: "New South Wales, Australia",
+    submittedValue: "Tempe, New South Wales, Australia",
+    country: undefined,
+  });
+  const result = await discoverLocations({
+    query: "Tempe",
+    product: "hotels",
+    catalog: [],
+    adapters: [{ provider: "kayak", products: ["hotels"], discover: async () => [tempeArizona, tempeNewSouthWales] }],
+    supportedByProviders: ["kayak"],
+  });
+
+  assert.equal(result.suggestions.length, 2);
+  assert.deepEqual(result.suggestions.map((suggestion) => suggestion.submittedValue), [
+    "Tempe, Arizona, United States",
+    "Tempe, New South Wales, Australia",
+  ]);
+  assert.deepEqual(resolveProviderSelection(result.suggestions[0], "hotels", "kayak"), { ok: true, value: "kplace:60798" });
+  assert.deepEqual(resolveProviderSelection(result.suggestions[1], "hotels", "kayak"), { ok: true, value: "kplace:2764694" });
+});
