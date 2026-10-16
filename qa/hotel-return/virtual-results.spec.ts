@@ -510,7 +510,8 @@ test("desktop Cars sort badge follows the selected sort and keeps title aligned 
   const badge = heading.locator("[data-car-card-desktop-badge]");
   const cardName = heading.locator("[data-car-card-desktop-title-row] h2");
   await expect(cardName).toHaveText("Sort Leader");
-  await expect(badge).toContainText("Best value");
+  await expect(badge).toContainText("Cheapest"); // Recommended uses the same objective award as mobile.
+  await expect(badge).not.toContainText("Best value");
 
   const checkIdentitySpacing = async () => {
     const nameRect = await cardName.boundingBox();
@@ -532,13 +533,18 @@ test("desktop Cars sort badge follows the selected sort and keeps title aligned 
   await checkIdentitySpacing();
   const toggle = firstCard.locator("[data-car-deal-more-offers]").filter({ visible: true });
   await expect(toggle).toContainText("+2 more offers");
-  await expect(toggle).toHaveCSS("font-size", "9.5px");
-  await expect(toggle).toHaveCSS("line-height", "14px");
-  await expect(toggle).toHaveCSS("font-weight", "500");
+  const offerRow = firstCard.locator('[data-region="details"] [data-car-deal-provider-offer]').first();
+  await expect(offerRow.locator('[data-car-deal-provider-brand] > span').first()).toHaveCSS("width", "18px");
+  await expect(offerRow.locator("[data-car-deal-provider-name]")).toHaveCSS("font-size", "12px");
+  await expect(offerRow.locator("[data-car-deal-provider-price]")).toHaveCSS("font-size", "13px");
+  await expect(offerRow.locator("[data-car-deal-provider-view-deal]")).toHaveCSS("font-size", "12px");
+  await expect(toggle).toHaveCSS("font-size", "12px");
+  await expect(toggle).toHaveCSS("line-height", "16px");
+  await expect(toggle).toHaveCSS("font-weight", "600");
   await toggle.click();
   await expect(toggle).toContainText("Show fewer offers");
-  await expect(toggle).toHaveCSS("font-size", "9.5px");
-  await expect(toggle).toHaveCSS("font-weight", "500");
+  await expect(toggle).toHaveCSS("font-size", "12px");
+  await expect(toggle).toHaveCSS("font-weight", "600");
   await toggle.click();
   await expect(toggle).toContainText("+2 more offers");
 
@@ -598,20 +604,21 @@ test("desktop Cars previews three sellers and expands all additional offers with
     await expect(card.locator("article")).toHaveCSS("background-color", "rgb(255, 255, 255)");
     const offerList = detail.locator("[data-car-deal-provider-offers]");
     const listHeight = (await offerList.boundingBox())!.height;
-    expect(listHeight).toBeGreaterThanOrEqual(108);
-    await expect(offerList).toHaveCSS("min-height", "108px");
-    await expect(rows.first()).toHaveCSS("min-height", "32px");
+    expect(listHeight).toBeGreaterThanOrEqual(98);
+    await expect(offerList).toHaveCSS("min-height", "98px");
+    await expect(rows.first()).toHaveCSS("min-height", "30px");
     const assertEvenDesktopRowGap = async (index: number) => {
       const current = await rows.nth(index).boundingBox();
       const next = await rows.nth(index + 1).boundingBox();
       expect(current).not.toBeNull();
       expect(next).not.toBeNull();
       const gap = next!.y - (current!.y + current!.height);
-      expect(gap).toBeGreaterThanOrEqual(5);
-      expect(gap).toBeLessThanOrEqual(7);
+      expect(gap).toBeGreaterThanOrEqual(3);
+      expect(gap).toBeLessThanOrEqual(5);
     };
     if (count >= 2) await assertEvenDesktopRowGap(0);
     if (count <= 3) {
+      expect(listHeight).toBeLessThanOrEqual(100); // No oversized short-offer reserve.
       await expect(more).toHaveCount(0);
     } else {
       await expect(more).toContainText("+" + (count - 3) + " more offers");
