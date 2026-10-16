@@ -192,22 +192,27 @@ export function CarDealPicker({
                   <button
                     type="button"
                     data-car-rate-info
-                    className={["inline-flex shrink-0 items-center justify-center rounded-full text-[#64748B] hover:text-[#334155] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40", compact ? "h-9 w-8" : "h-6 w-7"].join(" ")}
+                    className={["inline-flex shrink-0 items-center justify-center rounded-full text-[#64748B] hover:text-[#334155] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40", compact ? "h-9 w-8 place-self-center" : "h-6 w-7"].join(" ")}
                     aria-label={"Rate information for " + group.providerName + ", " + formatOfferPrice(offer) + " per day"}
                     onClick={event => { event.stopPropagation(); setDetailsKey(group.key); }}
                   >
                     <Info size={compact ? 18 : 16} strokeWidth={1.9} aria-hidden="true" />
                   </button>
                 ) : (
-                  <span data-car-rate-info-spacer aria-hidden="true" className={compact ? "h-9 w-8" : "h-6 w-7"} />
+                  <span data-car-rate-info-spacer aria-hidden="true" className={compact ? "h-9 w-8 place-self-center" : "h-6 w-7"} />
                 )}
                 <p
-                  className={[(compact ? "text-[13px] leading-[17px]" : "text-xs leading-[14px] lg:text-[13px] lg:leading-[17px]"), "min-w-0 max-w-full truncate whitespace-nowrap font-bold tabular-nums text-[#07133B]"].join(" ")}
+                  className={[(compact ? "flex h-9 items-center text-[13px] leading-[17px]" : "text-xs leading-[14px] lg:text-[13px] lg:leading-[17px]"), "min-w-0 max-w-full truncate whitespace-nowrap font-bold tabular-nums text-[#07133B]"].join(" ")}
                   dir="ltr"
                   data-car-deal-provider-price
                 >
-                  {formatOfferPrice(offer)}
-                  <span className={["ml-0.5 font-medium text-[#64748B]", compact ? "text-[11px]" : "lg:text-[11px]"].join(" ")}>/day</span>
+                  <span
+                    data-car-deal-price-baseline
+                    className={compact ? "inline-flex max-w-full items-baseline gap-0.5 whitespace-nowrap" : "contents"}
+                  >
+                    <span data-car-deal-price-amount>{formatOfferPrice(offer)}</span>
+                    <span data-car-deal-provider-per-day className={["font-medium text-[#64748B]", compact ? "text-[11px] leading-[15px]" : "ml-0.5 lg:text-[11px]"].join(" ")}>/day</span>
+                  </span>
                 </p>
               </div>
               <div data-car-deal-provider-action-slot className={["flex min-w-0 items-center gap-0.5", compact || expanded ? "justify-end pr-2" : "justify-start", compact ? "max-[359px]:pl-4" : ""].join(" ")}>
