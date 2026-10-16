@@ -278,6 +278,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [hotelFilterSection, setHotelFilterSection] = useState<HotelFilterSectionName>("all");
   const [hotelQuickFilter, setHotelQuickFilter] = useState<HotelResultsQuickFilterKind | null>(null);
   const [hotelPage, setHotelPage] = useState(1);
+  const [hotelProgressivePending, setHotelProgressivePending] = useState(false);
   const [hotelPageChanging, setHotelPageChanging] = useState(false);
   const [hotelFilterApplying, setHotelFilterApplying] = useState(false);
   const hotelFilterFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -394,6 +395,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       });
     }
     requestInFlight.current = true;
+    if (product === "hotel") setHotelProgressivePending(false);
     setStatus("loading");
     setMessage("");
     if (visualTest) {
@@ -420,7 +422,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 controller.abort("ui-deadline");
               },
             )
-          : await travelApi.searchHotels(plan.plan.payload, { signal: controller.signal, requestId });
+          : Platform.OS === "android"
+            ? await travelApi.searchHotelsProgressive(plan.plan.payload, null, { signal: controller.signal, requestId })
+            : await travelApi.searchHotels(plan.plan.payload, { signal: controller.signal, requestId });
       if (!isCurrent()) return;
       if (product === "hotel" && "warningCategory" in response && response.warningCategory === "provider_unavailable") {
         setResults([]); resultsRef.current = []; setStatus("error");
@@ -488,6 +492,40 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setStatus(valid.length ? "ready" : "empty");
       setMessage(response.warnings?.[0] || "");
       void recordRecentSearchBestEffort(buildRecentSearch(product, plan.plan.payload));
+      if (product === "hotel" && Platform.OS === "android" && "progressive" in response && response.progressive && response.nextCursor) {
+        // The first validated batch is already visible. Subsequent completed
+        // pages are merged without navigating away or resetting the list.
+        let cursor: string | null = response.nextCursor;
+        const merged = new Map((valid as HotelResult[]).map(hotel => [hotel.id, hotel]));
+        setHotelProgressivePending(true);
+        while (cursor && isCurrent()) {
+          try {
+            const page = await travelApi.searchHotelsProgressive(plan.plan.payload, cursor, { signal: controller.signal, requestId });
+            if (!isCurrent()) return;
+            const accepted = acceptCanonicalResults(page.results as HotelResult[], safeCanonicalHotelResult);
+            if (canonicalResultsWereSilentlyLost(accepted)) {
+              setMessage("Some hotel results could not be displayed safely.");
+              break;
+            }
+            for (const hotel of accepted.accepted) merged.set(hotel.id, hotel);
+            const cumulative = [...merged.values()];
+            setResults(cumulative);
+            resultsRef.current = cumulative;
+            setStatus(cumulative.length ? "ready" : "loading");
+            cursor = page.nextCursor ?? null;
+          } catch (error) {
+            if (isCurrent()) setMessage("Some hotels are still unavailable. You can browse the results already loaded.");
+            break;
+          }
+        }
+        if (isCurrent()) {
+          setHotelProgressivePending(false);
+          setStatus(resultsRef.current.length ? "ready" : "empty");
+        }
+      } else if (product === "hotel") {
+        setHotelProgressivePending(false);
+      }
+
       if (__DEV__ && product === "flight") {
         console.info("[flight-search:client-processing]", {
           requestId,
@@ -1208,7 +1246,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             ItemSeparatorComponent={() => <View style={s0.hotelResultsItemSeparator} />}
             ListFooterComponent={status === "ready" && sorted.length ? (
               <View style={[s0.hotelResultsBody, s0.hotelResultsFooter]}>
-                <HotelResultsPagination page={clampedHotelPage} pages={hotelPageCount} disabled={hotelPageChanging} onPage={changeHotelPage}/>
+                {hotelProgressivePending ? <View accessibilityLiveRegion="polite"><ActivityIndicator size="small" color={theme.textSecondary}/><Text style={{color: theme.textSecondary, textAlign: "center"}}>Loading more hotels…</Text></View> : null}
+                <HotelResultsPagination page={clampedHotelPage} pages={hotelPageCount} disabled={hotelPageChanging || hotelProgressivePending} onPage={changeHotelPage}/>
               </View>
             ) : null}
             alwaysBounceVertical={false}
