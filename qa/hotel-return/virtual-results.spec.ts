@@ -533,9 +533,12 @@ test("desktop Cars sort badge follows the selected sort and keeps title aligned 
   const toggle = firstCard.locator("[data-car-deal-more-offers]").filter({ visible: true });
   await expect(toggle).toContainText("+2 more offers");
   await expect(toggle).toHaveCSS("font-size", "9.5px");
+  await expect(toggle).toHaveCSS("line-height", "14px");
+  await expect(toggle).toHaveCSS("font-weight", "500");
   await toggle.click();
   await expect(toggle).toContainText("Show fewer offers");
   await expect(toggle).toHaveCSS("font-size", "9.5px");
+  await expect(toggle).toHaveCSS("font-weight", "500");
   await toggle.click();
   await expect(toggle).toContainText("+2 more offers");
 
@@ -558,7 +561,9 @@ test("desktop Cars sort badge follows the selected sort and keeps title aligned 
   const mobileCard = page.locator("[data-car-result-card-shell]").first();
   await expect(mobileCard.locator("[data-car-card-mobile-information]")).toContainText("Sort Leader");
   await expect(mobileCard.locator("[data-car-card-mobile-information]")).toContainText("Cheapest");
-  await expect(mobileCard.locator("[data-car-deal-more-offers]").filter({ visible: true })).toHaveCSS("font-size", "11px");
+  const mobileToggle = mobileCard.locator("[data-car-deal-more-offers]").filter({ visible: true });
+  await expect(mobileToggle).toHaveCSS("font-size", "11px");
+  await expect(mobileToggle).toHaveCSS("font-weight", "600");
 });
 
 test("desktop Cars previews three sellers and expands all additional offers without affecting mobile previews", async ({ page }) => {
