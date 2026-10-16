@@ -12,7 +12,7 @@ export type DiscoverySourceStatus = { provider: string; status: "success" | "fai
 
 const identity = (location: CanonicalLocation) => location.codes?.iata
   ? `iata:${location.kind}:${location.codes.iata.toUpperCase()}`
-  : `${location.kind}:${location.primaryLabel.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, "")}:${location.country?.code?.toUpperCase() ?? ""}`;
+  : `${location.kind}:${location.primaryLabel.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, "")}:${(location.country?.code || location.supportingLabel || location.submittedValue).normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, "")}`;
 
 function merge(left: CanonicalLocation, right: CanonicalLocation): CanonicalLocation {
   const bindings = [...(left.providerBindings ?? []), ...(right.providerBindings ?? [])].filter((binding, index, all) =>
