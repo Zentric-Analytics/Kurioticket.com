@@ -25,7 +25,9 @@ function encodePayload(payload: Payload) {
     payload.id,
     payload.product,
     payload.exp,
-    payload.bindings.map(({ provider, value, kind, verification, provenance }) => [provider, value, kind ?? "", verification, provenance]),
+    // `kind` is display metadata and is not needed to resolve a provider value.
+    // Keeping it out of the token leaves room for long airport and landmark IDs.
+    payload.bindings.map(({ provider, value, verification, provenance }) => [provider, value, verification, provenance]),
   ]);
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", key(), iv);
@@ -58,8 +60,11 @@ function decodePayload(token: string): Payload | null {
     if (typeof exp !== "number" || !Number.isSafeInteger(exp) || !Array.isArray(rawBindings) || rawBindings.length > 12) return null;
     const bindings: LocationProviderBinding[] = [];
     for (const raw of rawBindings) {
-      if (!Array.isArray(raw) || raw.length !== 5) return null;
-      const [provider, value, kind, verification, provenance] = raw;
+      if (!Array.isArray(raw) || (raw.length !== 4 && raw.length !== 5)) return null;
+      // Accept the original five-field payload while issuing the compact form.
+      const [provider, value, kind, verification, provenance] = raw.length === 4
+        ? [raw[0], raw[1], "", raw[2], raw[3]]
+        : raw;
       if (typeof provider !== "string" || provider.length < 1 || provider.length > 40) return null;
       if (typeof value !== "string" || value.length < 1 || value.length > 180) return null;
       if (typeof kind !== "string" || kind.length > 40) return null;
