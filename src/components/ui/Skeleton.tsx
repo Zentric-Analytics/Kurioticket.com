@@ -175,10 +175,10 @@ export function CarCardSkeleton({
       </div>
       <div
         data-car-card-skeleton-desktop
-        className="hidden md:grid md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[220px_minmax(0,1fr)_152px] xl:grid-cols-[228px_minmax(0,1fr)_152px]"
+        className="hidden md:grid md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[204px_minmax(0,1fr)_152px] xl:grid-cols-[212px_minmax(0,1fr)_152px]"
       >
         <div className={cn("flex items-center border-b border-[#E2E8F0] bg-slate-50 p-2.5 md:border-b-0 md:border-e", desktopSurfaceParity && "md:bg-white")}>
-          <Skeleton className="aspect-[4/3] w-full rounded-xl" />
+          <Skeleton className="aspect-[4/3] w-full rounded-xl lg:aspect-auto lg:h-[200px]" />
         </div>
         <div className="space-y-2.5 px-4 py-3">
           <Skeleton className="h-3 w-24" />
