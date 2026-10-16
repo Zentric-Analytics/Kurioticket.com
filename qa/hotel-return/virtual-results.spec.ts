@@ -324,7 +324,7 @@ test("Cars list previews three offers with equal collapsed heights and retains t
 
 });
 
-test("Cars comparison rows stay horizontal within the existing card beside the main price on mobile and desktop", async ({ page }) => {
+test("Cars mobile provider rows span the full card while desktop keeps its separate price rail", async ({ page }) => {
   const firstOffer = carBase.offers[0];
   if (!firstOffer) throw new Error("Missing test offer");
 
@@ -355,9 +355,8 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
       const dealArea = mobile
         ? card.locator("[data-car-card-mobile-offers]")
         : card.locator('[data-region="details"]');
-      const mainPrice = mobile
-        ? card.locator("[data-car-card-mobile-pricing]")
-        : card.locator('[data-region="pricing"]');
+      const mainPrice = card.locator('[data-region="pricing"]');
+      if (mobile) await expect(card.locator("[data-car-card-mobile-pricing]")).toHaveCount(0);
 
       const rows = dealArea.locator("[data-car-deal-provider-offer]");
       const rightSpecLabel = mobile
@@ -403,8 +402,15 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
       }
       const previewCardHeight = (await card.boundingBox())!.height;
       if (!mobile) expect(previewCardHeight).toBeLessThanOrEqual(410); // Bounded increase for evenly spaced desktop rows.
-      const previewMainRect = await mainPrice.boundingBox();
-      expect(previewMainRect).not.toBeNull();
+      const previewMainRect = mobile ? null : await mainPrice.boundingBox();
+      if (!mobile) expect(previewMainRect).not.toBeNull();
+      const mobileFullBand = mobile ? await card.locator("[data-car-card-mobile-lower-band]").boundingBox() : null;
+      if (mobile) {
+        expect(mobileFullBand).not.toBeNull();
+        const offersRect = await dealArea.boundingBox();
+        expect(offersRect).not.toBeNull();
+        expect(Math.abs(offersRect!.x + offersRect!.width - (mobileFullBand!.x + mobileFullBand!.width))).toBeLessThanOrEqual(2);
+      }
       if (count > initiallyVisible) {
         await toggle.click();
         await expect(rows.filter({ visible: true })).toHaveCount(count);
@@ -415,17 +421,17 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
       expect(rightSpecRect).not.toBeNull();
       await expect(card.locator("[data-supplier-information]")).toHaveCount(0);
       const expandedOffers = count > initiallyVisible;
-      if (expandedOffers) {
-        await expect(mainPrice).toHaveAttribute("aria-hidden", "true");
-        await expect(mainPrice).toBeHidden();
-        if (!mobile) {
+      if (!mobile) {
+        if (expandedOffers) {
+          await expect(mainPrice).toHaveAttribute("aria-hidden", "true");
+          await expect(mainPrice).toBeHidden();
           await expect.poll(async () => {
             const row = await rows.first().boundingBox();
             return row!.x + row!.width - previewMainRect!.x;
           }).toBeGreaterThan(20);
+        } else {
+          await expect(mainPrice).toBeVisible();
         }
-      } else {
-        await expect(mainPrice).toBeVisible();
       }
       const cardRect = await card.boundingBox();
       expect(cardRect).not.toBeNull();
@@ -458,8 +464,16 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
         const providerCenterY = provider!.y + provider!.height / 2;
         const linkCenterY = link!.y + link!.height / 2;
         expect(Math.abs(providerCenterY - linkCenterY)).toBeLessThanOrEqual(3);
-        if (!expandedOffers) expect(rowRect!.x + rowRect!.width).toBeLessThanOrEqual(previewMainRect!.x + 1);
-        else expect(rowRect!.x + rowRect!.width).toBeLessThanOrEqual(cardRect!.x + cardRect!.width + 1);
+        if (mobile) {
+          expect(rowRect!.x + rowRect!.width).toBeLessThanOrEqual(mobileFullBand!.x + mobileFullBand!.width + 1);
+          const rightEdgeGap = mobileFullBand!.x + mobileFullBand!.width - (link!.x + link!.width);
+          expect(rightEdgeGap).toBeGreaterThanOrEqual(-1);
+          expect(rightEdgeGap).toBeLessThanOrEqual(35);
+        } else if (!expandedOffers) {
+          expect(rowRect!.x + rowRect!.width).toBeLessThanOrEqual(previewMainRect!.x + 1);
+        } else {
+          expect(rowRect!.x + rowRect!.width).toBeLessThanOrEqual(cardRect!.x + cardRect!.width + 1);
+        }
         expect(rowRect!.y + rowRect!.height).toBeLessThanOrEqual(cardRect!.y + cardRect!.height + 1);
       }
       if (count === 3) threeOfferHeight = cardRect!.height;
@@ -468,8 +482,8 @@ test("Cars comparison rows stay horizontal within the existing card beside the m
         await toggle.click();
         await expect(rows.filter({ visible: true })).toHaveCount(3);
         await expect(toggle).toHaveAttribute("aria-expanded", "false");
-        await expect(mainPrice).toBeVisible();
         if (!mobile) {
+          await expect(mainPrice).toBeVisible();
           await expect.poll(async () => {
             const row = await rows.first().boundingBox();
             return row!.x + row!.width - previewMainRect!.x;
