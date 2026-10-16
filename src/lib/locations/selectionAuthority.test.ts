@@ -38,3 +38,20 @@ test("selection tokens are encrypted, portable, tamper-evident, and time-limited
   assert.deepEqual(resolveProviderSelection({ ...selected, selectionToken: tampered }, "hotels", "kayak"), { ok: false, reason: "LOCATION_RESOLUTION_FAILED" });
   assert.deepEqual(resolveProviderSelection(selected, "hotels", "kayak", Date.now() + 15 * 60_000 + 1), { ok: false, reason: "LOCATION_RESOLUTION_FAILED" });
 });
+
+test("long airport destinations stay within the portable token limit", () => {
+  const location: CanonicalLocation = {
+    id: "place:john-f-kennedy-intl-new-york-united-states-jfk",
+    kind: "airport",
+    primaryLabel: "John F Kennedy Intl",
+    supportingLabel: "New York, United States, (JFK)",
+    submittedValue: "John F Kennedy Intl, New York, United States, (JFK)",
+    staticCoverage: { flights: "none", hotels: "none", cars: "none", packages: "none" },
+    providerBindings: [{ provider: "kayak", value: "kplace:175485", kind: "airport", verification: "verified", provenance: "provider-discovery" }],
+    source: { catalog: "kurioticket", datasetVersion: "test" },
+  };
+  const selected = publicLocationSelection(location, "hotels");
+
+  assert.ok(selected.selectionToken.length <= 200);
+  assert.deepEqual(resolveProviderSelection(selected, "hotels", "kayak"), { ok: true, value: "kplace:175485" });
+});
