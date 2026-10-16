@@ -40,7 +40,7 @@ test("desktop results keeps trip type inside the clicked edit-search state", () 
   assert.match(source, /const showCompactSearchSummary = !isSearchExpandedWhileSticky;/);
   assert.match(
     source,
-    /shouldShowDesktopCompactSummary &&\s*showCompactSearchSummary[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?navigateDesktopMultiCityToLanding\(\)[\s\S]*?expandStickySearch\(\)/,
+    /shouldShowDesktopCompactSummary &&\s*showCompactSearchSummary[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?navigateDesktopMultiCityToHome\(\)[\s\S]*?expandStickySearch\(\)/,
   );
   assert.match(
     source,
@@ -127,8 +127,8 @@ test("nearby fare support is mobile-only and remains excluded from multi-city", 
   assert.match(source, /body\?\.tripType !== "multi-city"/);
 });
 
-test("desktop Multi-city edits navigate to the Flight landing form with Multi-city active", () => {
-  const navigationStart = source.indexOf("function buildDesktopMultiCityLandingHref");
+test("desktop Multi-city edits navigate to the homepage Flight form with Multi-city active", () => {
+  const navigationStart = source.indexOf("function buildDesktopMultiCityHomeHref");
   const tripTypeStart = source.indexOf("function handleTripTypeChange");
   const headerStart = source.indexOf("function renderDesktopHeaderSearchBar");
   const headerEnd = source.indexOf("function renderStickySearchPopoutOverlay", headerStart);
@@ -139,18 +139,18 @@ test("desktop Multi-city edits navigate to the Flight landing form with Multi-ci
   assert.match(navigation, /nextParams\.set\("tripType", "multi-city"\)/);
   assert.match(navigation, /nextParams\.delete\("returnDate"\)/);
   assert.match(navigation, /appendFlightLegParams\(nextParams, projection\.legs\)/);
-  assert.match(navigation, /return `\/flights\?\$\{nextParams\.toString\(\)\}`/);
+  assert.match(navigation, /return `\/\?\$\{nextParams\.toString\(\)\}`/);
   assert.match(
     navigation,
-    /router\.push\(buildDesktopMultiCityLandingHref\(\), \{ scroll: true \}\)/,
+    /router\.push\(buildDesktopMultiCityHomeHref\(\), \{ scroll: true \}\)/,
   );
   assert.match(
     navigation,
-    /function openDesktopSearchEditor[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?navigateDesktopMultiCityToLanding\(\)[\s\S]*?return;/,
+    /function openDesktopSearchEditor[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?navigateDesktopMultiCityToHome\(\)[\s\S]*?return;/,
   );
   assert.match(
     header,
-    /option\.value === "multi-city"[\s\S]*?navigateDesktopMultiCityToLanding\(\)[\s\S]*?return;[\s\S]*?handleTripTypeChange\(option\.value\)/,
+    /option\.value === "multi-city"[\s\S]*?navigateDesktopMultiCityToHome\(\)[\s\S]*?return;[\s\S]*?handleTripTypeChange\(option\.value\)/,
   );
   assert.doesNotMatch(
     header,
@@ -158,6 +158,6 @@ test("desktop Multi-city edits navigate to the Flight landing form with Multi-ci
   );
   assert.match(
     source,
-    /onClick=\{\(\) => \{[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?navigateDesktopMultiCityToLanding\(\)[\s\S]*?expandStickySearch\(\)/,
+    /onClick=\{\(\) => \{[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?navigateDesktopMultiCityToHome\(\)[\s\S]*?expandStickySearch\(\)/,
   );
 });
