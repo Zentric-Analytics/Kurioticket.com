@@ -243,7 +243,7 @@ test("Cars offer controls are legible and easy to tap on small phones without ov
   const desktopFont = await desktopOffer.locator("[data-car-deal-provider-name]").evaluate(
     element => parseFloat(getComputedStyle(element).fontSize),
   );
-  expect(desktopFont).toBe(10);
+  expect(desktopFont).toBe(12); // Desktop provider names intentionally use 12px; mobile sizes remain unchanged.
 });
 
 
