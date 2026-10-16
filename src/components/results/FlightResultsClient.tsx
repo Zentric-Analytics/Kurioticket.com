@@ -4079,6 +4079,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     String(activeFilterCount),
   );
   const flightResultsTopRef = useRef<HTMLDivElement | null>(null);
+  const [desktopFlightPriceAlertTarget, setDesktopFlightPriceAlertTarget] =
+    useState<HTMLDivElement | null>(null);
 
   const renderDesktopFlightFilters = () => (
     <DesktopFlightFilters
@@ -7263,7 +7265,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-0 pt-0 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-4"
       >
         <aside className="relative hidden self-stretch lg:block">
-          <div>{renderDesktopFlightFilters()}</div>
+          <div className="space-y-3">
+            {mobileFlightPriceAlertQuery ? (
+              <div
+                ref={setDesktopFlightPriceAlertTarget}
+                data-flight-price-alert-sidebar-slot
+                className="min-h-[48px]"
+              />
+            ) : null}
+            <div>{renderDesktopFlightFilters()}</div>
+          </div>
           <StickyFlightPopularFilters
             t={t}
             stopOptions={stopOptions}
@@ -7321,7 +7332,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 </>
               ) : null}
 
-              {mobileFlightPriceAlertQuery ? <div className="max-sm:pt-2 max-sm:pb-1 sm:mb-4"><div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)]"><FlightPriceAlertControl query={mobileFlightPriceAlertQuery} results={providerResults} /></div></div> : null}
+              {mobileFlightPriceAlertQuery ? <div className="max-sm:pt-2 max-sm:pb-1 sm:hidden"><div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)]"><FlightPriceAlertControl query={mobileFlightPriceAlertQuery} results={providerResults} desktopPortalTarget={desktopFlightPriceAlertTarget} /></div></div> : null}
 
               <div data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden">
                 <div
