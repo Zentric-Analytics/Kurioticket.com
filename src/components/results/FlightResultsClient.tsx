@@ -7270,7 +7270,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               <div
                 ref={setDesktopFlightPriceAlertTarget}
                 data-flight-price-alert-sidebar-slot
-                className="min-h-[48px]"
+                className="min-h-[40px]"
               />
             ) : null}
             <div>{renderDesktopFlightFilters()}</div>
@@ -7302,7 +7302,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             {!guidedMode && kayak && results.length === 0 ? "Search results" : formatResultsFound(sortedResults.length, t)}
           </h2>
           {!guidedMode && kayak && results.length === 0 ? <CombinedSearchEmpty otherStatus={loading ? "loading" : error ? "error" : "success"} retry={retryMainInventorySearch} /> : (
-            <div className={cn(resultStackClass, "space-y-1 sm:space-y-4")}>
+            <div className={cn(resultStackClass, "space-y-1 sm:space-y-4 lg:space-y-3")}>
               {body?.tripType !== "multi-city" ? (
                 <>
                   <div className="w-full min-w-0 max-w-full overflow-hidden sm:hidden" aria-label="Nearby departure fares" data-nearby-fare-presentation="mobile">
@@ -7377,7 +7377,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
               <div
                 data-flight-results-desktop-summary
-                className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-1 lg:bg-transparent"
+                className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-0 lg:bg-transparent"
               >
                 <div>
                   <p className="text-[12px] font-semibold leading-4 text-[#191E3B]">
