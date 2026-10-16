@@ -8,7 +8,7 @@ const hotel = readFileSync("src/components/results/HotelPriceAlertControl.tsx", 
 
 test("Flight Results passes unfiltered provider inventory into its one alert control", () => {
   assert.equal(results.match(/<FlightPriceAlertControl/g)?.length, 1);
-  assert.match(results, /<FlightPriceAlertControl query=\{mobileFlightPriceAlertQuery\} results=\{providerResults\}/);
+  assert.match(results, /<FlightPriceAlertControl query=\{mobileFlightPriceAlertQuery\} results=\{providerResults\} desktopPortalTarget=\{desktopFlightPriceAlertTarget\}/);
   assert.doesNotMatch(results, /results=\{filtered|results=\{sortedResults/);
 });
 
@@ -70,9 +70,12 @@ test("Flight feedback is accessible and never claims tracking before save", () =
   assert.doesNotMatch(control, /Price tracking is on/);
 });
 
-test("desktop Flight alert restores the compact original blue treatment without helper copy", () => {
-  assert.match(control, /hidden rounded-2xl border border-\[#CFE0F8\] bg-\[#EEF6FF\] px-4 py-2/);
-  assert.match(control, /flex min-h-10 items-center justify-between gap-2/);
+test("desktop Flight alert uses the compact sidebar treatment without helper copy", () => {
+  assert.match(control, /data-flight-price-alert-sidebar/);
+  assert.match(control, /min-h-\[48px\][^"]*rounded-xl border border-\[#CFE0F8\] bg-\[#EEF6FF\]/);
+  assert.match(control, />Track flight price</);
+  assert.match(control, /surface === "desktop" \? "h-6 w-11" : "h-7 w-12"/);
+  assert.match(control, /createPortal\(desktopControl, desktopPortalTarget\)/);
   assert.equal(control.slice(control.indexOf("const desktopEditor")).match(/Choose a target and we’ll notify you if the price drops\./g)?.length, 1);
 });
 
