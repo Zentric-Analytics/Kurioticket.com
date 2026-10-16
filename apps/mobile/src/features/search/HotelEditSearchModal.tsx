@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Animated, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { X } from "lucide-react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,9 +9,9 @@ import { useRetainedPickerContext } from "../flow/retainedPickerContext";
 import { useSearchPickerMotion } from "../flow/searchPickerPresentation";
 import { FLIGHT_FLOATING_SHEET_BOTTOM_GAP, FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, FLIGHT_RESULTS_LIGHT_CANVAS } from "./FlightResultsSheetShell";
 
-type Props = { visible: boolean; params: Record<string, RouteValue>; onClose: () => void };
+type Props = { visible: boolean; params: Record<string, RouteValue>; onClose: () => void; onAndroidSubmit?: (params: Record<string, string | undefined>) => void; onAfterClose?: () => void };
 
-export function HotelEditSearchModal({ visible, params, onClose }: Props) {
+export function HotelEditSearchModal({ visible, params, onClose, onAndroidSubmit, onAfterClose }: Props) {
   const ft = useFlowTheme();
   const resultsCanvas = ft.theme.dark ? ft.colors.page : FLIGHT_RESULTS_LIGHT_CANVAS;
   const { bottom: bottomSafeAreaInset } = useSafeAreaInsets();
@@ -18,6 +19,7 @@ export function HotelEditSearchModal({ visible, params, onClose }: Props) {
   const internalBottomPadding = Math.max(20, bottomSafeAreaInset - floatingBottomGap);
   const motion = useSearchPickerMotion(visible, { additionalTravelDistance: floatingBottomGap });
   const presentedParams = useRetainedPickerContext(visible, params);
+  useEffect(() => { if (Platform.OS === "android" && !visible && !motion.rendered) onAfterClose?.(); }, [visible, motion.rendered, onAfterClose]);
   if (!motion.rendered) return null;
 
   return (
@@ -34,7 +36,7 @@ export function HotelEditSearchModal({ visible, params, onClose }: Props) {
               </Pressable>
             </View>
             <ScrollView style={{ backgroundColor: resultsCanvas }} contentContainerStyle={[styles.content, { paddingBottom: internalBottomPadding }]} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
-              <HotelSearchPanel embedded params={presentedParams} submitNavigation="replace" onBeforeNavigate={onClose} editAppearance submitLabel="Search" />
+              <HotelSearchPanel embedded params={presentedParams} submitNavigation="replace" onBeforeNavigate={onClose} onValidatedSubmit={Platform.OS === "android" ? onAndroidSubmit : undefined} editAppearance submitLabel="Search" />
             </ScrollView>
           </Animated.View>
         </SafeAreaView>

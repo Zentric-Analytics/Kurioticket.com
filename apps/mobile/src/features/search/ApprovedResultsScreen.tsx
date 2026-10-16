@@ -74,6 +74,7 @@ import {
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { flightEditSearchParams, flightSearchRouteParamPatch } from "../flow/flightSearchModel";
+import { hotelSearchRouteParamPatch } from "../flow/hotelSearchModel";
 import { FlightEditSearchModal } from "./FlightEditSearchModal";
 import { HotelEditSearchModal } from "./HotelEditSearchModal";
 import {
@@ -269,6 +270,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const pendingFlightEditTargetKey = useRef<string | null>(null);
   const [hotelEditSearchOpen, setHotelEditSearchOpen] = useState(false);
   const [hotelEditPresentation, setHotelEditPresentation] = useState(0);
+  const pendingHotelEditParams = useRef<Record<string, string | undefined> | null>(null);
   const [filterSection, setFilterSection] = useState<FlightFilterSectionName>("all");
   const [hotelFilters, setHotelFilters] = useState<HotelFilters>(emptyHotelFilters);
   const [hotelSort, setHotelSort] = useState<HotelSortMode>(defaultHotelSort);
@@ -597,6 +599,31 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     pendingFlightEditTargetKey.current = null;
     setEditSearchOpen(false);
   }, [editSearchOpen, plan.plan?.key]);
+  const submitAndroidHotelEdit = useCallback((nextParams: Record<string, string | undefined>) => {
+    const nextPlan = buildSearchPlan("hotel", nextParams);
+    if (!nextPlan.plan) return;
+    pendingHotelEditParams.current = nextPlan.plan.key === plan.plan?.key ? null : nextParams;
+    setHotelEditSearchOpen(false);
+  }, [plan.plan?.key]);
+  const finishAndroidHotelEdit = useCallback(() => {
+    const nextParams = pendingHotelEditParams.current;
+    if (!nextParams) return;
+    pendingHotelEditParams.current = null;
+    activeSearch.current?.abort("hotel-edit");
+    setResults([]);
+    resultsRef.current = [];
+    setMessage("");
+    setHotelFilters(emptyHotelFilters());
+    setHotelPage(1);
+    setStatus("loading");
+    router.setParams(hotelSearchRouteParamPatch(nextParams));
+  }, []);
+  const closeHotelEditSearch = useCallback(() => {
+    // Android can deliver a Back/onRequestClose while the submitted edit sheet
+    // is still animating out. Only a deliberate pre-submit close may cancel.
+    if (pendingHotelEditParams.current) return;
+    setHotelEditSearchOpen(false);
+  }, []);
   const edit = () => {
     if (product === "flight") {
       pendingFlightEditTargetKey.current = null;
@@ -1224,7 +1251,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           key={hotelEditPresentation}
           visible={hotelEditSearchOpen}
           params={params}
-          onClose={() => setHotelEditSearchOpen(false)}
+          onClose={closeHotelEditSearch}
+          onAndroidSubmit={Platform.OS === "android" ? submitAndroidHotelEdit : undefined}
+          onAfterClose={Platform.OS === "android" ? finishAndroidHotelEdit : undefined}
         />
       ) : null}
       {flightResults ? (

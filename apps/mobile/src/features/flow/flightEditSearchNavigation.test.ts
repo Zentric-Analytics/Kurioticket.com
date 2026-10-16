@@ -13,7 +13,9 @@ test("approved flight Edit search opens a local modal with current canonical par
   assert.match(source, /const pendingFlightEditTargetKey = useRef<string \| null>\(null\)/);
   assert.match(editHandler, /if \(product === "flight"\)[\s\S]*?pendingFlightEditTargetKey\.current = null;[\s\S]*?setEditSearchOpen\(true\)[\s\S]*?return;/);
   assert.match(source, /<FlightEditSearchModal[\s\S]*?visible=\{editSearchOpen\}[\s\S]*?params=\{flightEditSearchParams\(params\)\}[\s\S]*?onClose=\{closeFlightEditSearch\}[\s\S]*?onSubmit=\{submitFlightEditSearch\}/);
-  assert.doesNotMatch(source, /onAfterClose|completeFlightEditSearch|pendingFlightEditSearchParams/);
+  const flightModal = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
+  const flightFlow = source.slice(source.indexOf("  const submitFlightEditSearch = useCallback"), source.indexOf("  const submitAndroidHotelEdit = useCallback"));
+  assert.doesNotMatch(flightFlow + flightModal, /onAfterClose|completeFlightEditSearch|pendingFlightEditSearchParams/);
   assert.doesNotMatch(editHandler, /\/edit-flight-search|activeSearch/);
   assert.doesNotMatch(editHandler.slice(0, editHandler.indexOf('router.push({\n      pathname: "/hotels"')), /router\.(?:push|replace|back)/);
   assert.doesNotMatch(editHandler, /pathname: "\/flights"/);
@@ -137,7 +139,8 @@ test("changed flight edits update route params while open and close after observ
   assert.match(observedKeyEffect, /const targetKey = pendingFlightEditTargetKey\.current;\s*if \(!editSearchOpen \|\| !targetKey \|\| plan\.plan\?\.key !== targetKey\) return;\s*pendingFlightEditTargetKey\.current = null;\s*setEditSearchOpen\(false\);/);
   assert.match(observedKeyEffect, /\}, \[editSearchOpen, plan\.plan\?\.key\]\);/);
   assert.doesNotMatch(submitHandler + observedKeyEffect, /router\.(?:replace|push)|requestAnimationFrame|cancelAnimationFrame|setTimeout/);
-  assert.doesNotMatch(source, /flightEditNavigationFrame|completeFlightEditSearch|onAfterClose|pendingFlightEditSearchParams/);
+  const flightModal = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
+  assert.doesNotMatch(submitHandler + observedKeyEffect + flightModal, /flightEditNavigationFrame|completeFlightEditSearch|onAfterClose|pendingFlightEditSearchParams/);
 });
 
 test("FlightSearchPanel preserves validation and default navigation around its validated override", () => {
