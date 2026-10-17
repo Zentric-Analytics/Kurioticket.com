@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { Info, X } from "lucide-react-native";
 import type { PublicHotelProviderDetails } from "../../../../../src/lib/hotels/hotelProviderDetails";
 import type { PublicHotelResult } from "../../../../../src/lib/types";
@@ -153,7 +153,7 @@ function HotelRateProviderBrand({ row, theme }: { row: NativeHotelRateRow; theme
 export function NativeHotelRatesSection({
   rows,
   onViewDeal,
-  pendingRateId,
+  onRateInfo,
   stayDateText,
   nightText,
   detailsStatus,
@@ -162,22 +162,19 @@ export function NativeHotelRatesSection({
 }: {
   rows: NativeHotelRateRow[];
   onViewDeal: (rateId: string) => void;
-  pendingRateId: string | null;
+  onRateInfo: (row: NativeHotelRateRow, anchor: HotelRateInfoAnchor) => void;
   stayDateText: string | null;
   nightText: string | null;
   detailsStatus: DetailsStatus;
   theme: Theme;
   accentColor: string;
 }) {
-  const { width, height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const narrow = width < 350;
   const infoRefs = useRef<Map<string, View>>(new Map());
-  const [popover, setPopover] = useState<{ id: string; anchor: HotelRateInfoAnchor } | null>(null);
-  const activeRate = popover ? rows.find(row => row.id === popover.id) : null;
-  const openRateInfo = (rowId: string) => {
-    if (popover?.id === rowId) { setPopover(null); return; }
-    infoRefs.current.get(rowId)?.measureInWindow((x, y, anchorWidth, anchorHeight) => {
-      setPopover({ id: rowId, anchor: { x, y, width: anchorWidth, height: anchorHeight } });
+  const openRateInfo = (row: NativeHotelRateRow) => {
+    infoRefs.current.get(row.id)?.measureInWindow((x, y, anchorWidth, anchorHeight) => {
+      onRateInfo(row, { x, y, width: anchorWidth, height: anchorHeight });
     });
   };
   if (detailsStatus === "loading") return null;
@@ -196,7 +193,6 @@ export function NativeHotelRatesSection({
 
     <View accessibilityLabel="Hotel rates" style={s.dealList}>
       {rows.map(row => {
-        const pending = pendingRateId === row.id;
         return <View key={row.id} style={[s.dealCard, narrow && s.narrowCard, {
           backgroundColor: theme.surface,
           borderColor: theme.dark ? theme.border : "#D9E2E8",
@@ -214,8 +210,7 @@ export function NativeHotelRatesSection({
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={`Rate details for ${row.roomName || row.providerName}`}
-                  accessibilityState={{ expanded: popover?.id === row.id }}
-                  onPress={() => openRateInfo(row.id)}
+                  onPress={() => openRateInfo(row)}
                   hitSlop={8}
                   style={s.infoButton}
                 ><Info size={narrow ? 16 : 18} strokeWidth={1.6} color={theme.textSecondary} /></Pressable>
@@ -230,51 +225,43 @@ export function NativeHotelRatesSection({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`View deal with ${row.providerName}, ${row.totalAccessibilityLabel}`}
-              accessibilityState={{ disabled: !row.actionable || pendingRateId !== null, busy: pending }}
-              disabled={!row.actionable || pendingRateId !== null}
+              accessibilityState={{ disabled: !row.actionable }}
+              disabled={!row.actionable}
               onPress={() => onViewDeal(row.id)}
               style={({ pressed }) => [s.viewDealButton, narrow && s.narrowButton, { backgroundColor: accentColor },
-                (!row.actionable || pendingRateId !== null) && s.disabledButton,
+                !row.actionable && s.disabledButton,
                 pressed && s.pressedButton]}
-            ><Text style={[s.viewDealText, narrow && s.narrowButtonText]}>{pending ? "Opening…" : "View deal"}</Text></Pressable>
+            ><Text style={[s.viewDealText, narrow && s.narrowButtonText]}>View deal</Text></Pressable>
           </View>
 
         </View>;
       })}
     </View>
-    {activeRate && popover ? (
-      <NativeHotelRatePopover
-        key={activeRate.id}
-        row={activeRate}
-        anchor={popover.anchor}
-        viewport={{ width, height }}
-        theme={theme}
-        onClose={() => setPopover(null)}
-      />
-    ) : null}
   </View>;
 }
 
-function NativeHotelRatePopover({
-  row, anchor, viewport, theme, onClose,
+export function NativeHotelRatePopover({
+  row, anchor, viewport, theme, onClose, onBoundsChange,
 }: {
   row: NativeHotelRateRow;
   anchor: HotelRateInfoAnchor;
   viewport: { width: number; height: number };
   theme: Theme;
   onClose: () => void;
+  onBoundsChange: (bounds: { left: number; top: number; width: number; height: number }) => void;
 }) {
   const [measuredHeight, setMeasuredHeight] = useState(440);
   const placement = placeHotelRatePopover(anchor, viewport, measuredHeight);
-  return <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
-    <View style={s.popupRoot}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Close rate details" style={StyleSheet.absoluteFill} onPress={onClose} />
-      <View accessibilityViewIsModal accessibilityLabel="Rate details" style={[s.popup, {
+  // Render within Hotel Details' own root, not in a native Modal. Transparent
+  // surroundings let the underlying ScrollView keep its touch gestures.
+  return <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+      <View accessibilityLabel="Rate details" style={[s.popup, {
         left: placement.left, top: placement.top, width: placement.width, maxHeight: placement.maxHeight,
         backgroundColor: theme.surface, borderColor: theme.border,
       }]} onLayout={event => {
-        const next = event.nativeEvent.layout.height;
-        if (Math.abs(next - measuredHeight) > 1) setMeasuredHeight(next);
+        const layout = event.nativeEvent.layout;
+        onBoundsChange({ left: layout.x, top: layout.y, width: layout.width, height: layout.height });
+        if (Math.abs(layout.height - measuredHeight) > 1) setMeasuredHeight(layout.height);
       }}>
         <View pointerEvents="none" style={[s.popupPointer, placement.pointerSide === "left"
           ? { left: -6, borderBottomWidth: 1, borderLeftWidth: 1 }
@@ -308,8 +295,7 @@ function NativeHotelRatePopover({
           </View>
         </ScrollView>
       </View>
-    </View>
-  </Modal>;
+  </View>;
 }
 
 const s = StyleSheet.create({
