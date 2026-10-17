@@ -137,7 +137,7 @@ test("native KAYAK Cars details do not invent unsupported static-provider facts 
 
 test("sandbox native results omit recommendations while retaining provider data and standard save/share actions", () => {
   const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
-  assert.match(card, /cheapest \? <View style=\{c\.bestValueRow\}>/);
+  assert.match(card, /badge && BadgeIcon \? <View style=\{c\.bestValueRow\}>/);
   assert.doesNotMatch(card, /!sandbox \? <View style=\{c\.utilityColumn\}>/);
   assert.match(card, /accessibilityLabel=\{savedState\.saved \? `Remove \$\{result\.modelName\} from saved` : `Save \$\{result\.modelName\}`\}/);
   assert.match(card, /accessibilityLabel=\{`Share \$\{result\.modelName\}`\}/);
@@ -180,6 +180,6 @@ test("approved and KAYAK details inherit the Results-card price typography contr
     assert.doesNotMatch(source, /dockPerDay:/);
   }
   const resultSource = compact(resultCard);
-  assert.match(resultSource, /dailyPrice:\{maxWidth:"100%",fontSize:19,fontWeight:"600",fontFamily:appFonts\.semibold,lineHeight:22,letterSpacing:-0\.25,fontVariant:\["tabular-nums"\]/);
+  assert.match(resultSource, /<NativeCarResultOfferPicker result=\{result\}/);
   assert.match(resultSource, /perDayLabel:\{maxWidth:"100%",marginTop:1,fontSize:10,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:13/);
 });
