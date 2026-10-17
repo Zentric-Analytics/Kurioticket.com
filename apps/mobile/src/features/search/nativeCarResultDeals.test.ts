@@ -319,10 +319,7 @@ test("native Cars fits 1-3 real offer rows and reserves overflow space only for 
   assert.match(picker, /infoAction: \{ width: 32, height: 36, flexShrink: 0/);
   assert.match(picker, /price: \{ width: 66, flexShrink: 0, textAlign: "left"/);
   assert.doesNotMatch(picker, /choices\.slice\(0, 5\)|choices\.length - 5/);
-  // A single or double offer must never inherit the three-row or disclosure minimum.
-  for (const count of [1, 2, 3, 4, 5, 10]) {
-    const hasMoreOffers = count > 3;
-    assert.equal(hasMoreOffers ? 108 : 0, count <= 3 ? 0 : 108);
-    assert.equal(hasMoreOffers ? 36 : 0, count <= 3 ? 0 : 36);
-  }
+  // The base offer list has no fixed minimum, and the empty disclosure is never mounted.
+  assert.doesNotMatch(picker, /offerRows: \{ minWidth: 0, minHeight:/);
+  assert.doesNotMatch(picker, /<View style=\{styles.moreSlot\}>\s*\{choices.length >/);
 });
