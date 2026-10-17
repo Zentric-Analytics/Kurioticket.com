@@ -301,7 +301,7 @@ test("Cars mobile offers fill the card without a duplicate price rail and preser
 });
 
 
-test("Cars list previews three offers with equal collapsed heights and retains ten distinct deals", async ({ page }) => {
+test("Cars results use content-sized offer rows for 1-3 and preserve 4+ expandable preview", async ({ page }) => {
   const firstOffer = carBase.offers[0];
   if (!firstOffer) throw new Error("Missing offer fixture");
   let offerCount = 1;
@@ -319,8 +319,9 @@ test("Cars list previews three offers with equal collapsed heights and retains t
   });
   await page.route("**/api/cars/search", route =>
     route.fulfill({ json: { results: [makeResult(offerCount)], status: "available" } }));
-  let threeRowHeight: number | null = null;
-  for (const count of [1, 2, 3, 5, 7, 10]) {
+  let previousShortCardHeight: number | null = null;
+  let collapsedOverflowHeight: number | null = null;
+  for (const count of [1, 2, 3, 4, 5, 7, 10]) {
     offerCount = count;
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(routes.cars);
@@ -330,14 +331,20 @@ test("Cars list previews three offers with equal collapsed heights and retains t
     const toggle = offers.locator("[data-car-deal-more-offers]").filter({ visible: true });
     await expect(rows).toHaveCount(count);
     await expect(rows.filter({ visible: true })).toHaveCount(Math.min(count, 3));
-    const offerMinHeight = (await offers.locator("[data-car-deal-provider-offers]").boundingBox())!.height;
-    expect(offerMinHeight).toBeGreaterThanOrEqual(108);
+    const offerListHeight = (await offers.locator("[data-car-deal-provider-offers]").boundingBox())!.height;
+    expect(Math.abs(offerListHeight - Math.min(count, 3) * 36)).toBeLessThanOrEqual(2);
     const disclosure = offers.locator("[data-car-deal-more-slot]");
-    const disclosureHeight = (await disclosure.boundingBox())!.height;
-    expect(disclosureHeight).toBeGreaterThanOrEqual(36);
+    const cardHeight = (await card.boundingBox())!.height;
     if (count <= 3) {
-      if (threeRowHeight !== null) expect(Math.abs(offerMinHeight - threeRowHeight)).toBeLessThanOrEqual(2);
-      threeRowHeight = offerMinHeight;
+      await expect(disclosure).toHaveCount(0);
+      if (previousShortCardHeight !== null) expect(cardHeight).toBeGreaterThan(previousShortCardHeight + 34);
+      previousShortCardHeight = cardHeight;
+    } else {
+      await expect(disclosure).toHaveCount(1);
+      const disclosureHeight = (await disclosure.boundingBox())!.height;
+      expect(disclosureHeight).toBeGreaterThanOrEqual(36);
+      if (collapsedOverflowHeight !== null) expect(Math.abs(cardHeight - collapsedOverflowHeight)).toBeLessThanOrEqual(2);
+      collapsedOverflowHeight = cardHeight;
     }
     await expect(card.locator("[data-car-card-mobile-pricing]")).toHaveCount(0);
     if (count <= 3) {
@@ -357,10 +364,9 @@ test("Cars list previews three offers with equal collapsed heights and retains t
       await expect(rows.filter({ visible: true })).toHaveCount(3);
     }
   }
-  // Narrow mobile cards stack each offer onto two lines; one- and two-offer
-  // cards still reserve the same height as a three-offer preview.
-  let stackedMinimumHeight: number | null = null;
-  for (const count of [1, 2, 3]) {
+  // At 320px, each offer stacks its meta and action; short cards must still shrink.
+  let previousNarrowHeight: number | null = null;
+  for (const count of [1, 2, 3, 4]) {
     offerCount = count;
     await page.setViewportSize({ width: 320, height: 844 });
     await page.goto(routes.cars);
@@ -368,11 +374,40 @@ test("Cars list previews three offers with equal collapsed heights and retains t
     const list = cards.first().locator("[data-car-card-mobile-offers] [data-car-deal-provider-offers]");
     await expect(list.locator("[data-car-deal-provider-offer]")).toHaveCount(count);
     const height = (await list.boundingBox())!.height;
-    expect(height).toBeGreaterThanOrEqual(240);
-    if (stackedMinimumHeight !== null) expect(Math.abs(height - stackedMinimumHeight)).toBeLessThanOrEqual(2);
-    stackedMinimumHeight = height;
+    const disclosure = cards.first().locator("[data-car-deal-more-slot]");
+    if (count <= 3) {
+      await expect(disclosure).toHaveCount(0);
+      if (previousNarrowHeight !== null) expect(height).toBeGreaterThan(previousNarrowHeight + 65);
+      previousNarrowHeight = height;
+    } else {
+      expect(height).toBeGreaterThanOrEqual(240);
+      await expect(disclosure).toHaveCount(1);
+    }
   }
 
+  // Desktop offers have 30px rows and 4px gaps, with no empty disclosure slot.
+  let previousDesktopHeight: number | null = null;
+  for (const count of [1, 2, 3, 4]) {
+    offerCount = count;
+    await page.setViewportSize({ width: 1365, height: 900 });
+    await page.goto(routes.cars);
+    const card = page.locator("[data-car-result-card-shell]").first();
+    const details = card.locator('[data-region="details"]');
+    const list = details.locator("[data-car-deal-provider-offers]");
+    const disclosure = details.locator("[data-car-deal-more-slot]");
+    const height = (await list.boundingBox())!.height;
+    const visibleCount = Math.min(count, 3);
+    expect(Math.abs(height - (visibleCount * 30 + (visibleCount - 1) * 4))).toBeLessThanOrEqual(2);
+    if (count <= 3) {
+      await expect(disclosure).toHaveCount(0);
+      const cardHeight = (await card.boundingBox())!.height;
+      if (previousDesktopHeight !== null) expect(cardHeight).toBeGreaterThan(previousDesktopHeight + 29);
+      previousDesktopHeight = cardHeight;
+    } else {
+      await expect(disclosure).toHaveCount(1);
+      await expect(details.locator("[data-car-deal-more-offers]")).toContainText("+1 more offer");
+    }
+  }
 });
 
 test("Cars mobile provider rows span the full card while desktop keeps its separate price rail", async ({ page }) => {
