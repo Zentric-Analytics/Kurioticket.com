@@ -106,7 +106,7 @@ test("Cars keeps tablet search and removes the Cars breadcrumb/navigation comple
   assert.doesNotMatch(cars, />Home<|>Cars<|>Car results</);
   assert.match(
     cars,
-    /data-cars-results-scroll-region[\s\S]*?lg:max-w-\[1020px\] lg:pt-5/,
+    /data-cars-results-scroll-region[\s\S]*?data-cars-results-hotel-column[\s\S]*?lg:max-w-\[1080px\][\s\S]*?lg:pt-5/,
   );
   assert.equal(
     (cars.match(/renderCarsSearchForm\("desktop-full"\)/g) ?? []).length,

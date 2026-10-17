@@ -1673,7 +1673,7 @@ export function CarsResultsClient({
       ? createPortal(renderMobileHeaderSearch(), mobileNavSearchTarget)
       : null}
     {mobileSearchOverlays}
-    <main className="flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-white pb-8">
+    <main className="flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-[#F7F9FC] pb-8">
       <div
         className={cn(
           "pointer-events-none fixed inset-x-0 top-0 z-[1000] hidden px-4 transition-all duration-200 lg:block",
@@ -1833,7 +1833,8 @@ export function CarsResultsClient({
       <div
         ref={resultsGridRef}
         data-cars-results-scroll-region
-        className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-0 sm:pt-6 lg:max-w-[1020px] lg:pt-5"
+        data-cars-results-hotel-column
+        className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-0 sm:pt-6 lg:mt-3 lg:max-w-[1080px] lg:rounded-2xl lg:border lg:border-[#E1E6EA] lg:bg-white lg:px-5 lg:pb-5 lg:pt-5 lg:shadow-[0_2px_8px_rgba(25,32,36,0.04)]"
       >
         <CarsResultsExperience
           results={initialResults}
