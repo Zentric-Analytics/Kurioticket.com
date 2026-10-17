@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatCarResultsScheduleSummary } from "./carResultsSummary";
+import { formatCarResultsScheduleSummary, formatCompactCarResultsScheduleSummary } from "./carResultsSummary";
 
 test("formats the exact English rental schedule without timezone shifts", () => {
   assert.equal(formatCarResultsScheduleSummary({
@@ -38,4 +38,16 @@ test("fails safely when schedule values are missing or invalid", () => {
   assert.equal(formatCarResultsScheduleSummary({ pickupDate: "invalid", pickupTime: "25:00" }), "");
   assert.equal(formatCarResultsScheduleSummary({ pickupDate: "2026-02-30", pickupTime: "10:00" }), "10:00 AM");
   assert.doesNotMatch(formatCarResultsScheduleSummary({ pickupDate: "2026-09-09" }), /Invalid Date|NaN|undefined| at$/);
+});
+
+test("compact native schedule respects locale day/month and 12-hour or 24-hour time conventions", () => {
+  const input={pickupDate:"2026-10-17",dropoffDate:"2026-10-19",pickupTime:"10:30",dropoffTime:"18:00"};
+  const us=formatCompactCarResultsScheduleSummary({...input,locale:"en-US"});
+  const gb=formatCompactCarResultsScheduleSummary({...input,locale:"en-GB"});
+  assert.match(us,/Oct 17/);
+  assert.match(gb,/17 Oct/);
+  assert.match(us,/AM/);
+  assert.doesNotMatch(gb,/AM|PM/);
+  assert.match(gb,/18:00/);
+  assert.doesNotMatch(us,/Invalid Date|NaN/);
 });

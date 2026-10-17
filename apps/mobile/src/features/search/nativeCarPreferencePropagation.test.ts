@@ -29,7 +29,7 @@ test("native Cars consumes the canonical reactive app language instead of owning
 test("native Cars display pricing consumes canonical currency across results and both detail surfaces", () => {
   assert.match(currencyHook, /const \{ currency \} = useMobileLocalization\(\)/);
   assert.match(card, /useCarDisplayCurrency\(\)/);
-  assert.match(card, /presentCarOfferCurrency\(primaryOffer, displayCurrency, rates\)/);
+  assert.match(card, /<NativeCarResultOfferPicker result=\{result\} displayCurrency=\{displayCurrency\} rates=\{rates\}/);
   for (const source of [detail, kayakDetail]) {
     assert.match(source, /useCarDisplayCurrency\(\)/);
     assert.match(source, /presentCarOfferCurrency\(candidate, displayCurrency, rates\)/);
@@ -63,13 +63,8 @@ test("language and currency presentation changes cannot restart or rewrite the c
   assert.doesNotMatch(card + currencyHook, /searchCars\(|setFilters\(|setSort\(/);
 });
 
-test("currency propagation preserves the daily-price Car card commerce contract", () => {
-  assert.match(card, /money\(offer\.currency, offer\.pricePerDay\)/);
-  assert.match(card, />per day<\/Text>/);
-  assert.doesNotMatch(card, /money\(offer\.currency, offer\.totalPrice\)/);
-  assert.doesNotMatch(card, /offer\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
-  assert.match(card, /useSavedCar\(result, searchParams\)/);
-  assert.match(card, /nativeCarPrimaryBookingUrl\(result\)/);
-  assert.match(card, /onPress=\{primaryBookingUrl \? \(\) => void Linking\.openURL\(primaryBookingUrl\) : undefined\}/);
-  assert.match(card, /disabled=\{!primaryBookingUrl\}/);
+test("currency propagation feeds the full-width provider picker", () => {
+  assert.match(card, /useCarDisplayCurrency\(\)/);
+  assert.match(card, /<NativeCarResultOfferPicker result=\{result\} displayCurrency=\{displayCurrency\} rates=\{rates\}/);
+  assert.doesNotMatch(card, /commerceColumn|primaryBookingUrl/);
 });

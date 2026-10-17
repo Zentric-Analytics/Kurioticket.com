@@ -13,10 +13,10 @@ const carAlertModal = carAlert.slice(carAlert.indexOf("{open ? <Modal"), carAler
 test("Cars Results replaces branded chrome with two Hotel-style header targets", () => {
   assert.doesNotMatch(cars, /import[^\n]*\bTopBar\b|<TopBar(?:\s|\/|>)/);
   assert.doesNotMatch(cars, /import \{ BottomNav \}|<BottomNav(?:\s|\/|>)/);
-  assert.doesNotMatch(carHeader, /Logo|Kurioticket|Bell|Notifications|notification badge|profile|menu/i);
+  assert.match(carHeader, /accessibilityLabel="Profile"/);
   assert.match(carHeader, /accessibilityLabel="Go back"[^]*?onPress=\{\(\)=>router\.back\(\)\}[^]*?<ArrowLeft/);
   assert.match(carHeader, /accessibilityLabel=\{`Edit car search\. \$\{destination\}\. \$\{secondaryLine\}`\} onPress=\{onEdit\}/);
-  assert.equal((carHeader.match(/<Pressable/g) ?? []).length, 2);
+  assert.equal((carHeader.match(/<Pressable/g) ?? []).length, 4);
 });
 
 test("Cars header uses compact safe-area-aware Hotel geometry", () => {
@@ -37,7 +37,7 @@ test("native Cars header has the mobile-web white surface, 28px left curve and m
   assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{headerSurfaceColor\}/);
   assert.match(cars, /r\.carFilterSectionHeader,\{backgroundColor:headerSurfaceColor\}/);
   assert.match(cars, /<FlatList ref=\{carScrollRef\} style=\{\{backgroundColor:carCanvasColor\}\}/);
-  assert.doesNotMatch(carHeader, /profile|hamburger|menu/i);
+  assert.match(carHeader, /accessibilityLabel="Menu"/);
 });
 
 test("native Cars rail matches the mobile-web full-height spacing and 28px curve", () => {
@@ -51,7 +51,7 @@ test("native Cars rail matches the mobile-web full-height spacing and 28px curve
   assert.match(cars, /r\.carFilterSectionHeader,\{backgroundColor:headerSurfaceColor\}/);
   assert.match(cars, /const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
   assert.match(cars, /const headerSurfaceColor = theme\.dark \? theme\.background : "#FFFFFF"/);
-  assert.doesNotMatch(carHeader, /profile|hamburger|menu/i);
+  assert.match(carHeader, /accessibilityLabel="Menu"/);
   const railHeight = 8 + 44 + 8;
   assert.equal(railHeight, 60, "native rail height must match the 60px mobile-web rail");
 });
@@ -68,6 +68,8 @@ test("Cars summary remains derived from canonical search data", () => {
   assert.match(cars, /payload\.dropoffDate/);
   assert.match(cars, /payload\.dropoffTime/);
   assert.match(cars, /carSummarySecondary=formatCarResultsScheduleSummary/);
+  assert.match(cars, /carSummaryCompact=formatCompactCarResultsScheduleSummary/);
+  assert.match(cars, /assignCarBadges\(results,pricePerDay\)/);
   const summaryBuilder = cars.slice(cars.indexOf("const carSummarySecondary"), cars.indexOf("const edit="));
   assert.doesNotMatch(summaryBuilder, /driverAge|Any age|years old/);
   assert.doesNotMatch(cars, /Paris, France|Sep 6|20 years old/);
@@ -100,7 +102,7 @@ test("Cars keep a modest outer gutter while preserving result-card spacing with 
   const slot = cars.match(/carResultCardSlot:\{([^}]*)\}/)?.[1] ?? "";
   assert.doesNotMatch(slot, /(?:minW|w|W)idth|position|absolute|transform|margin(?:Horizontal)?:-|Dimensions|window|screen/);
   assert.doesNotMatch(cars, /carResultCardSlot:\{[^}]*width:"100%"|carResultCardSlot:\{[^}]*Dimensions/);
-  assert.match(cars, /renderItem=\{\(\{item,index\}\)=><View style=\{r\.carResultCardSlot\}><CarResultCard result=\{item\} rank=\{index\} cheapest=\{item\.id===cheapestCarId\} imageUri=\{resolveNativeCarImageUri\(item\.imageUrl\)\} searchParams=\{payload\} resultBackgroundColor=\{carCanvasColor\}\/><\/View>\}/);
+  assert.match(cars, /renderItem=\{\(\{item,index\}\)=><View style=\{r\.carResultCardSlot\}><CarResultCard result=\{item\} rank=\{index\} badge=\{carBadges\.get\(item\.id\)\} imageUri=\{resolveNativeCarImageUri\(item\.imageUrl\)\} searchParams=\{payload\} resultBackgroundColor=\{carCanvasColor\}\/><\/View>\}/);
   assert.match(cars, /style=\{\[r\.skeleton,r\.carResultCardSlot,\{backgroundColor:/);
   assert.match(cars, /skeleton:\{height:216/);
   assert.doesNotMatch(cars, /<NativeCarPriceAlert[^>]*carResultCardSlot|<View accessibilityLabel="Car results summary"[^>]*carResultCardSlot/);
@@ -246,7 +248,7 @@ test("Cars Results keeps the mobile-web white chrome and muted search/body while
   assert.match(cars, /<FlatList ref=\{carScrollRef\} style=\{\{backgroundColor:carCanvasColor\}\}/);
   assert.match(cars, /r\.carSummaryCard,\{backgroundColor:theme\.dark\?theme\.surface:CAR_RESULTS_LIGHT_CANVAS/);
   assert.match(cars, /<CarResultCard[^>]*resultBackgroundColor=\{carCanvasColor\}/);
-  assert.doesNotMatch(carHeader, /profile|hamburger|menu/i);
+  assert.match(carHeader, /accessibilityLabel="Menu"/);
   assert.doesNotMatch(cars, /r\.filterRail,\{backgroundColor:theme\.dark\?theme\.surface:"#FFFFFF"\}/);
 });
 

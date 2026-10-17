@@ -1,32 +1,33 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Image, Linking, Pressable, Share, StyleSheet, Text, View } from "react-native";
-import { Award, BriefcaseBusiness, CarFront, ChevronRight, DoorOpen, MapPin, Share2, ShieldCheck, Users } from "lucide-react-native";
+import { Image, Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { Award, BriefcaseBusiness, CarFront, DoorOpen, MapPin, Share2, ShieldCheck, Star, Tag, Users } from "lucide-react-native";
 import type { CarResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
-import { money, ui } from "./SearchUi";
+import { ui } from "./SearchUi";
 import { useSavedCar } from "./carSavedState";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { getPrimaryCarOffer } from "../../../../../src/lib/cars/carResults";
 import { NativeCarResultOfferPicker } from "./NativeCarResultOfferPicker";
-import { nativeCarPrimaryBookingUrl } from "./nativeCarResultDeals";
 import { isCuratedCarResultImage } from "../../../../../src/lib/cars/carResultImage";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { nativeCarResultIdentity } from "./nativeCarResultIdentity";
-import { presentCarOfferCurrency } from "./carDisplayCurrency";
-import { useCarDisplayCurrency } from "./useCarDisplayCurrency";
 import { isKayakSandboxCar, nativeCarPrimarySpecLabels } from "./nativeCarProviderPresentation";
+import { useCarDisplayCurrency } from "./useCarDisplayCurrency";
+import type { CarResultBadge } from "../../../../../src/lib/cars/carResults";
 
-export function CarResultCard({ result, rank, cheapest, imageUri, searchParams, resultBackgroundColor }: {
-  result: CarResult; rank: number; cheapest?: boolean; imageUri?: string;
+const carBadgeIcons = { "Best value": Award, Cheapest: Tag, "Top rated": Star } as const;
+
+export function CarResultCard({ result, rank, badge, imageUri, searchParams, resultBackgroundColor }: {
+  result: CarResult; rank: number; badge?: CarResultBadge; imageUri?: string;
   searchParams: Record<string, unknown>; resultBackgroundColor: string;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
   useEffect(() => setImageFailed(false), [imageUri]);
   const savedState = useSavedCar(result, searchParams);
   const { displayCurrency, rates } = useCarDisplayCurrency();
-  const primaryOffer = getPrimaryCarOffer(result);
-  const offer = primaryOffer ? presentCarOfferCurrency(primaryOffer, displayCurrency, rates) : undefined;
+  const offer = getPrimaryCarOffer(result);
+  const BadgeIcon = badge ? carBadgeIcons[badge] : null;
   const { theme } = useAppTheme();
   const carInformationSurface = theme.dark ? resultBackgroundColor : "#FFFFFF";
   const carDividerColor = theme.dark ? theme.border : "#CBD5E1";
@@ -44,13 +45,12 @@ export function CarResultCard({ result, rank, cheapest, imageUri, searchParams, 
     : /automatic/i.test(specLabels.transmission)
       ? "transmissionAutomatic"
       : null;
-  const primaryBookingUrl = nativeCarPrimaryBookingUrl(result);
   const share = () => void Share.share({ message: result.modelName, title: result.modelName });
   return <View style={[c.card,{backgroundColor:carInformationSurface,borderColor:theme.dark?theme.border:"#D8E1EC",shadowColor:theme.dark?"#000000":"#18305B"}]}>
     <View style={c.topSection}>
       <View style={[c.visualColumn,{backgroundColor:theme.surface}]}><View style={c.visual}>{imageUri && !imageFailed ? <Image source={{ uri: imageUri }} resizeMode={imageResizeMode} style={[c.image,curatedImage&&c.curatedImage]} accessibilityLabel={result.imageAlt} onError={() => setImageFailed(true)} /> : <View accessibilityLabel={`${result.modelName} vehicle image unavailable`} style={c.imageFallback}><FlowIcon name="car" size={48} color="#315A7D" /><Text style={c.fallbackText}>Vehicle image unavailable</Text></View>}</View></View>
       <View style={[c.identityZone,{backgroundColor:carInformationSurface}]}>
-        {cheapest ? <View style={c.bestValueRow}><View style={c.badge}><Award size={11} color="#15803D" /><Text style={c.badgeText}>Cheapest</Text></View></View> : null}
+        {badge && BadgeIcon ? <View style={c.bestValueRow}><View style={c.badge}><BadgeIcon size={11} color="#15803D" /><Text style={c.badgeText}>{badge}</Text></View></View> : null}
         <View style={c.headerRow}>
           <View style={c.identityColumn}>
             <Text numberOfLines={1} style={[c.name,{color:theme.textPrimary}]}>{identity.primaryName}</Text>
@@ -85,12 +85,6 @@ export function CarResultCard({ result, rank, cheapest, imageUri, searchParams, 
       <View style={c.detailsColumn}>
         <NativeCarResultOfferPicker result={result} displayCurrency={displayCurrency} rates={rates}/>
       </View>
-      <View style={c.commerceColumn}>
-          <View style={c.priceColumn}>
-            {offer ? <><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[c.dailyPrice,{color:theme.textPrimary}]}>{money(offer.currency, offer.pricePerDay)}</Text><Text style={[c.perDayLabel,{color:theme.textSecondary}]}>per day</Text></> : <Text style={[c.unavailablePrice,{color:theme.textSecondary}]}>Live price unavailable</Text>}
-          </View>
-        <Pressable accessibilityRole={primaryBookingUrl ? "link" : "button"} accessibilityLabel={`View deal for ${result.modelName}`} accessibilityState={{disabled: !primaryBookingUrl}} disabled={!primaryBookingUrl} onPress={primaryBookingUrl ? () => void Linking.openURL(primaryBookingUrl) : undefined} hitSlop={{top:4,bottom:4,left:4,right:4}} style={({pressed}) => [c.viewDeal,pressed&&c.pressed]}><Text style={[c.viewDealText,{color:theme.dark ? "#8FB5FF" : ui.blue}]}>View deal</Text><ChevronRight accessible={false} size={16} strokeWidth={2.2} color={theme.dark ? "#8FB5FF" : ui.blue} /></Pressable>
-      </View>
     </View>
   </View>;
 }
@@ -98,5 +92,5 @@ function Spec({ icon, label }: { icon: ReactNode; label: string }) { const { the
 const c = StyleSheet.create({
   card:{borderWidth:1,borderRadius:13,overflow:"hidden",shadowOpacity:0.08,shadowRadius:10,shadowOffset:{width:0,height:2},elevation:2},topSection:{minHeight:156,flexDirection:"row",alignItems:"stretch"},visualColumn:{width:"40%",minHeight:156,padding:6},visual:{flex:1,overflow:"hidden",borderRadius:10},image:{...StyleSheet.absoluteFillObject},curatedImage:{transform:[{scale:1.08}]},imageFallback:{flex:1,alignItems:"center",justifyContent:"center",gap:7,padding:8},fallbackText:{fontSize:10,fontWeight:"600",fontFamily:appFonts.semibold,color:"#315A7D",textAlign:"center"},
   identityZone:{flex:1,minWidth:0,paddingHorizontal:10,paddingTop:7,paddingBottom:8},bestValueRow:{minWidth:0,alignItems:"flex-end",marginBottom:4},freeCancellation:{minWidth:0,flexShrink:1,flexDirection:"row",alignItems:"center",gap:3},freeCancellationText:{fontSize:11,lineHeight:15,fontWeight:"600",fontFamily:appFonts.semibold},headerRow:{flexDirection:"row",alignItems:"flex-start",gap:6},identityColumn:{flex:1,minWidth:0},name:{fontSize:15,fontWeight:"700",fontFamily:appFonts.bold,lineHeight:18,letterSpacing:-0.15,color:ui.navy},identityLine:{minWidth:0,lineHeight:18},secondaryModel:{fontSize:15,fontWeight:"700",fontFamily:appFonts.bold,lineHeight:18,letterSpacing:-0.15},similar:{fontSize:11,fontWeight:"500",fontFamily:appFonts.medium,lineHeight:16,color:"#536B92"},category:{marginTop:5,fontSize:10,fontWeight:"700",fontFamily:appFonts.bold,letterSpacing:0.9,lineHeight:15,textTransform:"uppercase",color:"#004BB8"},utilityColumn:{flexShrink:0,alignItems:"flex-end"},badge:{flexShrink:0,flexDirection:"row",alignItems:"center",gap:3,borderRadius:5,backgroundColor:"#ECFDF5",paddingHorizontal:5,paddingVertical:2},badgeText:{fontSize:9,fontWeight:"700",fontFamily:appFonts.bold,color:"#15803D"},actions:{flexDirection:"row",alignItems:"center"},action:{width:28,height:44,justifyContent:"flex-start"},saveAction:{alignItems:"flex-end",paddingRight:2},shareAction:{alignItems:"flex-start",paddingLeft:2},pressed:{opacity:0.7},identityDetails:{minWidth:0,marginTop:3,gap:6},location:{flexDirection:"row",alignItems:"flex-start",gap:4},locationIcon:{marginTop:1},meta:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",fontFamily:appFonts.medium,lineHeight:15,color:"#536B92"},
-  lowerBand:{flexDirection:"row",alignItems:"stretch",borderTopWidth:1},detailsColumn:{flex:2.6,minWidth:0,paddingBottom:2},specRow:{minWidth:0,flexDirection:"row",alignItems:"flex-start",gap:6,marginTop:2},specColumn:{flex:1,minWidth:0,gap:6,paddingRight:1},spec:{minWidth:0,flexDirection:"row",alignItems:"flex-start",gap:4},specText:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",fontFamily:appFonts.medium,lineHeight:14,color:"#536B92"},commerceColumn:{flex:1.1,minWidth:0,justifyContent:"space-between",paddingLeft:4,paddingRight:9,paddingTop:8,paddingBottom:5},priceColumn:{minWidth:0,maxWidth:"100%",alignItems:"flex-end"},unavailablePrice:{maxWidth:"100%",textAlign:"right",fontSize:11,fontWeight:"500",fontFamily:appFonts.medium,lineHeight:15},dailyPrice:{maxWidth:"100%",fontSize:19,fontWeight:"600",fontFamily:appFonts.semibold,lineHeight:22,letterSpacing:-0.25,fontVariant:["tabular-nums"],color:ui.navy},perDayLabel:{maxWidth:"100%",marginTop:1,fontSize:10,fontWeight:"500",fontFamily:appFonts.medium,lineHeight:13,textAlign:"right"},viewDeal:{minHeight:36,flexDirection:"row",alignItems:"center",justifyContent:"flex-end",gap:4},viewDealText:{fontSize:13,lineHeight:16,fontWeight:"600",fontFamily:appFonts.semibold},
+  lowerBand:{flexDirection:"row",alignItems:"stretch",borderTopWidth:1},detailsColumn:{flex:1,minWidth:0,paddingHorizontal:8,paddingVertical:6},specRow:{minWidth:0,flexDirection:"row",alignItems:"flex-start",gap:6,marginTop:2},specColumn:{flex:1,minWidth:0,gap:6,paddingRight:1},spec:{minWidth:0,flexDirection:"row",alignItems:"flex-start",gap:4},specText:{flex:1,minWidth:0,fontSize:11,fontWeight:"500",fontFamily:appFonts.medium,lineHeight:14,color:"#536B92"},
 });
