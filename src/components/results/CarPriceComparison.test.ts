@@ -332,14 +332,17 @@ test("touch-opened Cars rate details focuses its accessible heading instead of p
   assert.doesNotMatch(card.slice(card.indexOf('data-car-result-card-shell className="w-full"'), card.indexOf("data-car-card-mobile-main")), /ring-2|border-\[#004BB8\]/);
 });
 
-test("desktop and mobile web use the same three-offer preview with a reserved disclosure slot", () => {
+test("web Cars fits one to three offers and retains the overflow preview only for four or more", () => {
   const compactSource = picker.slice(picker.indexOf("const INITIAL_VISIBLE_OFFER_COUNT"));
-  const toggle = compactSource.slice(compactSource.indexOf("{groups.length > INITIAL_VISIBLE_OFFER_COUNT ? ("));
+  const toggle = compactSource.slice(compactSource.indexOf("{hasMoreOffers ? ("));
   assert.match(compactSource, /const INITIAL_VISIBLE_OFFER_COUNT = 3/);
+  assert.match(compactSource, /hasMoreOffers = groups\.length > INITIAL_VISIBLE_OFFER_COUNT/);
+  assert.match(compactSource, /hasMoreOffers \? "min-h-\[108px\] md:min-h-\[76px\]" : ""/);
+  assert.match(compactSource, /hasMoreOffers \? \(compact \? "max-\[359px\]:min-h-\[240px\]" : "lg:min-h-\[98px\]"\) : ""/);
+  assert.match(toggle, /\{hasMoreOffers \? \(\s*<div data-car-deal-more-slot/);
   assert.match(toggle, /Show fewer offers/);
   assert.match(toggle, /aria-expanded=\{expanded\}/);
   assert.match(toggle, /groups\.length - INITIAL_VISIBLE_OFFER_COUNT/);
-  assert.match(compactSource, /data-car-deal-more-slot className="mt-0\.5 flex min-h-9 items-center md:mt-1 md:min-h-6 lg:mt-1"/);
   assert.match(compactSource, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
   assert.doesNotMatch(compactSource, /groups\.slice\(/);
   assert.match(compactSource, /groups\.map\(\(group, index\) =>/);
@@ -391,9 +394,9 @@ test("Cars provider expansion is parent-controlled and keeps supplier clickout a
 });
 
 test("desktop rows stay compact while full-width mobile provider rows keep their touch targets", () => {
-  // Desktop only: each row is 30px with a restrained 4px gap.
-  // 98px reserves exactly three rows with two gaps without inflating short previews.
-  assert.ok(picker.includes('compact ? "max-[359px]:min-h-[240px] space-y-0" : "space-y-0.5 lg:space-y-1 lg:min-h-[98px]"'));
+  // Desktop rows remain 30px with 4px gaps. Only overflow cards reserve three row slots.
+  assert.ok(picker.includes('compact ? "space-y-0" : "space-y-0.5 lg:space-y-1"'));
+  assert.ok(picker.includes('hasMoreOffers ? (compact ? "max-[359px]:min-h-[240px]" : "lg:min-h-[98px]") : ""'));
   assert.ok(picker.includes(': "grid-cols-[minmax(0,calc(50%_+_31px))_minmax(0,1fr)] min-h-6 lg:min-h-[30px]"'));
   assert.ok(picker.includes('data-car-deal-more-slot className="mt-0.5 flex min-h-9 items-center md:mt-1 md:min-h-6 lg:mt-1"'));
   // Preserve mobile 36px touch targets and price/info sizing; use the full-width mobile provider grid.
@@ -414,15 +417,19 @@ test("desktop provider styles remain unchanged while mobile offer typography sca
   assert.ok(picker.includes('style={compact ? { fontSize: 11, lineHeight: "16px", fontWeight: 600 } : undefined}'));
 });
 
-test("Cars offers reserve a stable three-row preview without fabricating provider options", () => {
-  assert.match(picker, /min-h-\[108px\] md:min-h-\[76px\]/);
-  assert.match(picker, /max-\[359px\]:min-h-\[240px\]/);
-  assert.match(picker, /data-car-deal-more-slot/);
+test("Cars web offer sections use content height for 1-3 and reserve the preview only for 4+", () => {
+  const offerList = picker.slice(picker.indexOf("data-car-deal-provider-offers"), picker.indexOf("{groups.map("));
+  assert.match(picker, /hasMoreOffers = groups\.length > INITIAL_VISIBLE_OFFER_COUNT/);
+  assert.match(offerList, /hasMoreOffers \? "min-h-\[108px\] md:min-h-\[76px\]" : ""/);
+  assert.match(offerList, /compact \? "space-y-0" : "space-y-0.5 lg:space-y-1"/);
+  assert.match(offerList, /hasMoreOffers \? \(compact \? "max-\[359px\]:min-h-\[240px\]" : "lg:min-h-\[98px\]"\) : ""/);
+  assert.match(picker, /\{hasMoreOffers \? \(\s*<div data-car-deal-more-slot/);
   assert.match(picker, /flex min-h-9 items-center md:mt-1 md:min-h-6/);
   assert.match(picker, /compact \? "grid-cols-\[minmax/);
   assert.match(picker, /responsiveVisibility = expanded \|\| index < INITIAL_VISIBLE_OFFER_COUNT/);
   assert.match(picker, /min-h-9 max-\[359px\]:grid-cols-1/);
   assert.match(picker, /: "grid-cols-\[minmax\(0,calc\(50%_\+_31px\)\)_minmax\(0,1fr\)\] min-h-6 lg:min-h-\[30px\]"/);
   assert.match(picker, /groups\.map\(\(group, index\) =>/);
+  assert.doesNotMatch(picker, /Reserve a disclosure row even when only one or two/);
   assert.doesNotMatch(picker, /placeholder|Empty provider|ghost rate/i);
 });

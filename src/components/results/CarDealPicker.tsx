@@ -107,6 +107,8 @@ export function CarDealPicker({
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const groups = useMemo(() => getCarDealPickerGroups(car), [car]);
+  // Only overflow cards reserve a three-row preview and a disclosure control.
+  const hasMoreOffers = groups.length > INITIAL_VISIBLE_OFFER_COUNT;
   const [detailsKey, setDetailsKey] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const dialogHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -155,7 +157,12 @@ export function CarDealPicker({
         role="list"
         aria-label="Car deal providers"
         data-car-deal-provider-offers
-        className={["min-w-0 min-h-[108px] md:min-h-[76px]", compact ? "max-[359px]:min-h-[240px] space-y-0" : "space-y-0.5 lg:space-y-1 lg:min-h-[98px]"].join(" ")}
+        className={[
+          "min-w-0",
+          hasMoreOffers ? "min-h-[108px] md:min-h-[76px]" : "",
+          compact ? "space-y-0" : "space-y-0.5 lg:space-y-1",
+          hasMoreOffers ? (compact ? "max-[359px]:min-h-[240px]" : "lg:min-h-[98px]") : "",
+        ].filter(Boolean).join(" ")}
       >
         {groups.map((group, index) => {
           const offer = group.primaryOffer;
@@ -244,10 +251,8 @@ export function CarDealPicker({
           );
         })}
       </div>
-      {/* Reserve a disclosure row even when only one or two providers are available.
-          This keeps collapsed three-offer cards the same height without fake offers. */}
-      <div data-car-deal-more-slot className="mt-0.5 flex min-h-9 items-center md:mt-1 md:min-h-6 lg:mt-1">
-        {groups.length > INITIAL_VISIBLE_OFFER_COUNT ? (
+      {hasMoreOffers ? (
+        <div data-car-deal-more-slot className="mt-0.5 flex min-h-9 items-center md:mt-1 md:min-h-6 lg:mt-1">
           <button
             type="button"
             data-car-deal-more-offers
@@ -259,8 +264,8 @@ export function CarDealPicker({
             {expanded ? "Show fewer offers" : "+" + (groups.length - INITIAL_VISIBLE_OFFER_COUNT) + " more offers"}
             <ChevronRight size={12} className={expanded ? "-rotate-90" : "rotate-90"} aria-hidden="true" />
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
       <dialog
         ref={dialogRef}
         data-car-rate-dialog

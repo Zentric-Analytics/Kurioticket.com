@@ -126,7 +126,7 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.doesNotMatch(picker, /hideActionChevron/);
   assert.match(picker, /stackVeryNarrow = rowWidth > 0 && rowWidth < 260/);
   assert.match(picker, /providers: \{ minWidth: 0, gap: 0, paddingTop: 0, paddingBottom: 0/);
-  assert.match(picker, /offerRows: \{ minWidth: 0, minHeight: 108 \}/);
+  assert.match(picker, /offerRowsPreview: \{ minHeight: 108 \}/);
   assert.match(picker, /moreSlot: \{ minHeight: 36, justifyContent: "center" \}/);
   assert.match(picker, /brand: \{ flex: 1, minWidth: 0/);
   assert.match(picker, /Math\.round\(event\.nativeEvent\.layout\.width\)/);
@@ -293,29 +293,33 @@ test("native Cars rows keep logo, name, rate info, price and View deal in that e
   assert.match(picker, /infoAction: \{ width: 32, height: 36, flexShrink: 0/);
   assert.match(picker, /meta: \{ minWidth: 0, flexDirection: "row"/);
   assert.match(picker, /rowWidth \* 0\.68 \+ 20/);
-  assert.match(picker, /offerRows: \{ minWidth: 0, minHeight: 108/);
+  assert.match(picker, /offerRowsPreview: \{ minHeight: 108/);
   assert.match(picker, /moreSlot: \{ minHeight: 36/);
   assert.match(picker, /offerRowsStacked: \{ minHeight: 240 \}/);
-  assert.match(picker, /stackVeryNarrow && styles\.offerRowsStacked/);
+  assert.match(picker, /hasMoreOffers && stackVeryNarrow && styles\.offerRowsStacked/);
   assert.match(picker, /provider: \{ minHeight: 36/);
   assert.match(picker, /visibleChoices = expanded \? choices : choices\.slice\(0, INITIAL_VISIBLE_OFFER_COUNT\)/);
 });
 
 
-test("native Cars reserves exactly three visible provider rows plus an aligned disclosure slot", () => {
+test("native Cars fits 1-3 real offer rows and reserves overflow space only for 4+", () => {
   const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
   assert.match(picker, /const INITIAL_VISIBLE_OFFER_COUNT = 3;/);
   assert.match(picker, /visibleChoices = expanded \? choices : choices\.slice\(0, INITIAL_VISIBLE_OFFER_COUNT\)/);
-  assert.match(picker, /style=\{\[styles\.offerRows, stackVeryNarrow && styles\.offerRowsStacked\]\}/);
-  assert.match(picker, /style=\{styles\.moreSlot\}/);
-  assert.match(picker, /offerRows: \{ minWidth: 0, minHeight: 108 \}/);
+  assert.match(picker, /hasMoreOffers = choices\.length > INITIAL_VISIBLE_OFFER_COUNT/);
+  assert.match(picker, /style=\{\[styles\.offerRows, hasMoreOffers && styles\.offerRowsPreview, hasMoreOffers && stackVeryNarrow && styles\.offerRowsStacked\]\}/);
+  assert.match(picker, /\{hasMoreOffers \? \(\s*<View style=\{styles\.moreSlot\}>/);
+  assert.match(picker, /offerRows: \{ minWidth: 0 \}/);
+  assert.match(picker, /offerRowsPreview: \{ minHeight: 108 \}/);
   assert.match(picker, /offerRowsStacked: \{ minHeight: 240 \}/);
   assert.match(picker, /moreSlot: \{ minHeight: 36/);
-  assert.match(picker, /choices\.length > INITIAL_VISIBLE_OFFER_COUNT/);
   assert.match(picker, /choices\.length - INITIAL_VISIBLE_OFFER_COUNT/);
   assert.match(picker, /accessibilityState=\{\{ expanded \}\}/);
   assert.match(picker, /style=\{styles\.infoAction\} accessible=\{false\}/);
   assert.match(picker, /infoAction: \{ width: 32, height: 36, flexShrink: 0/);
   assert.match(picker, /price: \{ width: 66, flexShrink: 0, textAlign: "left"/);
   assert.doesNotMatch(picker, /choices\.slice\(0, 5\)|choices\.length - 5/);
+  // The base offer list has no fixed minimum, and the empty disclosure is never mounted.
+  assert.doesNotMatch(picker, /offerRows: \{ minWidth: 0, minHeight:/);
+  assert.doesNotMatch(picker, /<View style=\{styles.moreSlot\}>\s*\{choices.length >/);
 });
