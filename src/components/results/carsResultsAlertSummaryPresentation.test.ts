@@ -46,7 +46,7 @@ test("Cars aligns both mobile controls with a compact heading and leaves no sepa
 });
 
 test("Cars results heading aligns to the inner card gutters and sits close to the first card on mobile", () => {
-  const summaryClasses = cars.match(/className=\{cn\(\s*"([^"]+)",\s*!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\] lg:gap-x-3 lg:gap-y-0",\s*\)\}\s+data-cars-results-summary-row/)?.[1];
+  const summaryClasses = cars.match(/className=\{cn\(\s*"([^"]+)",\s*!embedded && "lg:grid-cols-\[max-content_minmax\(0,1fr\)_max-content\] lg:gap-x-3 lg:gap-y-0",\s*\)\}\s+data-cars-results-summary-row/)?.[1];
   assert.ok(summaryClasses, "the existing results-count and tracking row is retained");
   assert.match(summaryClasses, /grid-cols-\[minmax\(0,1fr\)_auto\] items-center/);
   assert.match(summaryClasses, /gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1/);
@@ -104,14 +104,14 @@ test("Cars leaves the entire left-side result count and grid placement unchanged
   assert.match(alert, /role="switch" aria-checked=\{tracking\}/);
 });
 
-test("desktop Cars places a compact Track prices control beside Sort without changing the mobile or tablet row", () => {
+test("desktop Cars balances whitespace around Track prices without changing mobile or tablet rows", () => {
   const alertStart = alert.indexOf("data-cars-price-alert");
   const alertEnd = alert.indexOf("</section>", alertStart);
   const alertMarkup = alert.slice(alertStart, alertEnd);
   assert.match(alertMarkup, /sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full/);
   assert.match(alertMarkup, /lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-\[240px\]/);
   assert.doesNotMatch(alertMarkup, /lg:w-\[calc\(100%_-_12rem\)\]/);
-  assert.match(cars, /!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\] lg:gap-x-3 lg:gap-y-0"/);
+  assert.match(cars, /!embedded && "lg:grid-cols-\[max-content_minmax\(0,1fr\)_max-content\] lg:gap-x-3 lg:gap-y-0"/);
   assert.match(alertMarkup, /lg:justify-self-center/);
   assert.match(cars, /!embedded && "sm:row-start-2 lg:row-start-1 lg:min-w-max"/);
   assert.match(cars, /!embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1 lg:justify-self-end lg:min-w-max lg:max-w-none"/);
