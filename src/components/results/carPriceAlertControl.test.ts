@@ -71,7 +71,7 @@ test("mobile Cars stays flat while desktop spans map width and matches Flight st
   assert.match(source, /createPortal\(trackingControl, desktopPortalTarget\)/);
   assert.match(source, /data-cars-price-alert-inline/);
   assert.equal((source.match(/role="switch"/g) ?? []).length, 1);
-  assert.equal((source.match(/fetch\("\/api\/price-alerts"/g) ?? []).length, 1);
+  assert.equal((source.match(/fetch\("\/api\/price-alerts"/g) ?? []).length, 2, "one GET reconciliation and one POST creation path");
   assert.match(section, /lg:rounded-xl lg:border-\[#CFE0F8\] lg:bg-\[#EEF6FF\] lg:px-2 lg:py-0/);
   assert.doesNotMatch(section, /lg:mx-auto|lg:w-\[calc\(100%_-_12rem\)\]/);
   assert.match(source, /sm:min-h-\[52px\] sm:justify-start sm:gap-2\.5 lg:min-h-9 lg:gap-1\.5/);
