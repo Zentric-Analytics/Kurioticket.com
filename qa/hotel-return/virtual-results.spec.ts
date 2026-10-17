@@ -85,6 +85,48 @@ test("Cars desktop Hotels-details-style column includes map, filters and cards; 
   }
 });
 
+test("Cars reduced desktop column preserves complete count, centered Track prices and Sort by", async ({ page }) => {
+  await page.route("**/api/cars/search", route =>
+    route.fulfill({ json: { results: [carBase], status: "available" } }));
+  for (const width of [1024, 1365, 1600]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(routes.cars);
+    const column = page.locator("[data-cars-results-hotel-column]");
+    const content = column.locator("[data-cars-results-content-column]");
+    const summary = content.locator("[data-cars-results-summary-row]");
+    const resultsList = content.locator("[data-cars-results-card-list]");
+    const card = resultsList.locator("[data-car-result-card-shell]").first();
+    const heading = summary.locator("h2").first();
+    const alert = summary.locator("[data-cars-price-alert]");
+    const sortLabel = summary.locator(".cars-results-desktop-sort-label");
+    const sortButton = summary.locator(".cars-results-desktop-sort-trigger");
+    const boxes = await Promise.all([column, content, summary, card, heading, alert, sortLabel, sortButton].map(el => el.boundingBox()));
+    for (const box of boxes) expect(box).not.toBeNull();
+    const [columnBox, contentBox, summaryBox, cardBox, countBox, alertBox, sortLabelBox, sortBox] = boxes as Array<{ x: number; y: number; width: number; height: number }>;
+    expect(columnBox.width).toBeLessThanOrEqual(930);
+    expect(Math.abs(contentBox.width - cardBox.width)).toBeLessThanOrEqual(2);
+    expect(Math.abs(summaryBox.width - cardBox.width)).toBeLessThanOrEqual(2);
+    expect(Math.abs(summaryBox.x - cardBox.x)).toBeLessThanOrEqual(2);
+    const centerX = (box: { x: number; width: number }) => box.x + box.width / 2;
+    expect(Math.abs(centerX(summaryBox) - centerX(alertBox))).toBeLessThanOrEqual(2);
+    for (const box of [countBox, alertBox, sortLabelBox, sortBox]) {
+      expect(box.x).toBeGreaterThanOrEqual(summaryBox.x - 2);
+      expect(box.x + box.width).toBeLessThanOrEqual(summaryBox.x + summaryBox.width + 2);
+    }
+    expect(countBox.x + countBox.width + 2).toBeLessThanOrEqual(alertBox.x);
+    expect(alertBox.x + alertBox.width + 2).toBeLessThanOrEqual(sortLabelBox.x);
+    const noClippedText = async (selector: string) => summary.locator(selector).evaluate(el => el.scrollWidth <= el.clientWidth + 2);
+    expect(await noClippedText("h2")).toBe(true);
+    expect(await noClippedText(".cars-results-desktop-sort-trigger span")).toBe(true);
+    await expect(sortLabel).toHaveText("Sort by");
+    await expect(sortButton).toContainText("Recommended");
+    await expect(alert).toBeVisible();
+    await expect(card.locator('[data-region="pricing"]')).toBeHidden();
+    const actions = card.locator("[data-car-card-desktop-shared-header] [data-car-card-desktop-actions] button");
+    await expect(actions).toHaveCount(2);
+  }
+});
+
 test("Cars cards omit the supplier-information bar and preserve View deal on mobile and desktop", async ({ page }) => {
   const result = { ...carBase, offers: carBase.offers.map(offer => ({ ...offer, suppliedFacts: [{ label: "Fuel policy", value: "Return with the supplied fuel level" }] })) };
   await page.route("**/api/cars/search", route => route.fulfill({ json: { results: [result], status: "available" } }));
@@ -395,7 +437,7 @@ test("Cars mobile offers fill the card without a duplicate price rail and preser
   const desktopCard = page.locator("[data-car-result-card-shell]").first();
   const desktopOffer = desktopCard.locator('[data-region="details"] [data-car-deal-provider-offer]').first();
   await expect(desktopOffer).toBeVisible();
-  await expect(desktopCard.locator('[data-region="pricing"]')).toBeVisible();
+  await expect(desktopCard.locator('[data-region="pricing"]')).toBeHidden();
   const desktopFont = await desktopOffer.locator("[data-car-deal-provider-name]").evaluate(
     element => parseFloat(getComputedStyle(element).fontSize),
   );
@@ -518,7 +560,7 @@ test("Cars results use content-sized offer rows for 1-3 and preserve 4+ expandab
   }
 });
 
-test("Cars mobile provider rows span the full card while desktop keeps its separate price rail", async ({ page }) => {
+test("Cars mobile offers stay full-width while desktop eliminates the duplicate price rail", async ({ page }) => {
   const firstOffer = carBase.offers[0];
   if (!firstOffer) throw new Error("Missing test offer");
 
@@ -568,21 +610,28 @@ test("Cars mobile provider rows span the full card while desktop keeps its separ
         await expect(toggle).toHaveAttribute("aria-expanded", "false");
       }
       if (!mobile) {
-        // Only the desktop card changes: its main surface, header and pricing rail
-        // match the pure-white mobile surface. Amenities directly follow cancellation.
+        // The redundant desktop rail is hidden; the reduced article owns the
+        // entire vehicle and offer surface with no reserved price gutter.
         await expect(card.locator("article")).toHaveCSS("background-color", "rgb(255, 255, 255)");
-        await expect(card.locator("[data-car-card-desktop-header-rail]")).toHaveCSS("background-color", "rgb(255, 255, 255)");
-        await expect(mainPrice).toHaveCSS("background-color", "rgb(255, 255, 255)");
-        // The horizontal rule is a single full-width grid line, not duplicate section borders.
-        await expect(dealArea).toHaveCSS("border-top-width", "0px");
-        await expect(mainPrice).toHaveCSS("border-top-width", "0px");
-        await expect(mainPrice).toHaveCSS("border-left-width", "1px");
+        await expect(mainPrice).toBeHidden();
+        await expect(card.locator("[data-car-card-desktop-header-rail]")).toHaveCount(0);
         const sharedDivider = card.locator("[data-car-card-desktop-full-width-divider]");
         await expect(sharedDivider).toBeVisible();
         await expect(sharedDivider).toHaveCSS("height", "1px");
         await expect(sharedDivider).toHaveCSS("background-color", "rgb(203, 213, 225)");
-        const cancellation = card.locator("[data-car-card-desktop-shared-header] [data-car-card-desktop-free-cancellation]");
-        const amenities = card.locator("[data-car-card-desktop-header-specs]");
+        const heading = card.locator("[data-car-card-desktop-shared-header]");
+        const cardName = heading.locator("[data-car-card-desktop-title-row] h2");
+        const headerActions = heading.locator("[data-car-card-desktop-actions]");
+        await expect(cardName).toBeVisible();
+        await expect(headerActions.locator("button")).toHaveCount(2);
+        const nameBox = (await cardName.boundingBox())!;
+        const saveBox = (await headerActions.locator("button").first().boundingBox())!;
+        const shareBox = (await headerActions.locator("button").nth(1).boundingBox())!;
+        const centerY = (box: { y: number; height: number }) => box.y + box.height / 2;
+        expect(Math.abs(centerY(saveBox) - centerY(nameBox))).toBeLessThanOrEqual(3);
+        expect(Math.abs(centerY(shareBox) - centerY(nameBox))).toBeLessThanOrEqual(3);
+        const cancellation = heading.locator("[data-car-card-desktop-free-cancellation]");
+        const amenities = heading.locator("[data-car-card-desktop-header-specs]");
         const cancellationBox = await cancellation.boundingBox();
         const amenitiesBox = await amenities.boundingBox();
         expect(cancellationBox).not.toBeNull();
@@ -590,38 +639,32 @@ test("Cars mobile provider rows span the full card while desktop keeps its separ
         expect(amenitiesBox!.y).toBeGreaterThanOrEqual(cancellationBox!.y + cancellationBox!.height - 1);
         expect(amenitiesBox!.y - (cancellationBox!.y + cancellationBox!.height)).toBeLessThanOrEqual(30);
         const detailsRect = (await dealArea.boundingBox())!;
-        const pricingRect = (await mainPrice.boundingBox())!;
-        expect(detailsRect.y).toBeGreaterThanOrEqual(amenitiesBox!.y + amenitiesBox!.height - 1);
-        expect(detailsRect.y - (amenitiesBox!.y + amenitiesBox!.height)).toBeLessThanOrEqual(17);
-        expect(Math.abs(detailsRect.y - pricingRect.y)).toBeLessThanOrEqual(2);
         const image = card.locator('[data-region="image"] > div').first();
-        const imageBox = await image.boundingBox();
-        const dividerBox = await sharedDivider.boundingBox();
-        const cardArticleBox = await card.locator("article").boundingBox();
-        expect(imageBox).not.toBeNull();
-        expect(dividerBox).not.toBeNull();
-        expect(cardArticleBox).not.toBeNull();
-        expect(imageBox!.height).toBeGreaterThanOrEqual(174);
-        expect(imageBox!.height).toBeLessThanOrEqual(178);
-        // Media and amenities end in row one; the shared rule starts row two.
-        expect(imageBox!.y + imageBox!.height).toBeLessThanOrEqual(dividerBox!.y + 1);
-        expect(dividerBox!.y).toBeGreaterThanOrEqual(amenitiesBox!.y + amenitiesBox!.height - 1);
-        expect(Math.abs(detailsRect.y - dividerBox!.y)).toBeLessThanOrEqual(2);
-        expect(Math.abs(pricingRect.y - dividerBox!.y)).toBeLessThanOrEqual(2);
-        // The rule runs edge-to-edge inside the rounded card border.
-        expect(Math.abs(dividerBox!.x - (cardArticleBox!.x + 1))).toBeLessThanOrEqual(2);
-        expect(Math.abs(dividerBox!.x + dividerBox!.width - (cardArticleBox!.x + cardArticleBox!.width - 1))).toBeLessThanOrEqual(2);
-        // Desktop offers start with a paragraph-style inset beneath the compact image.
-        const initialRowBox = await rows.first().boundingBox();
-        expect(initialRowBox).not.toBeNull();
-        const leftOfferInset = initialRowBox!.x - cardArticleBox!.x;
-        expect(leftOfferInset).toBeGreaterThanOrEqual(29);
-        expect(leftOfferInset).toBeLessThanOrEqual(38);
-        expect(initialRowBox!.x).toBeLessThan(imageBox!.x + imageBox!.width - 40);
+        const imageBox = (await image.boundingBox())!;
+        const dividerBox = (await sharedDivider.boundingBox())!;
+        const articleBox = (await card.locator("article").boundingBox())!;
+        expect(imageBox.height).toBeGreaterThanOrEqual(174);
+        expect(imageBox.height).toBeLessThanOrEqual(178);
+        expect(imageBox.y + imageBox.height).toBeLessThanOrEqual(dividerBox.y + 1);
+        expect(dividerBox.y).toBeGreaterThanOrEqual(amenitiesBox!.y + amenitiesBox!.height - 1);
+        expect(Math.abs(detailsRect.y - dividerBox.y)).toBeLessThanOrEqual(2);
+        expect(Math.abs(dividerBox.x - (articleBox.x + 1))).toBeLessThanOrEqual(2);
+        expect(Math.abs(dividerBox.x + dividerBox.width - (articleBox.x + articleBox.width - 1))).toBeLessThanOrEqual(2);
+        expect(Math.abs(detailsRect.x - (articleBox.x + 1))).toBeLessThanOrEqual(2);
+        expect(detailsRect.x + detailsRect.width).toBeLessThanOrEqual(articleBox.x + articleBox.width + 1);
+        expect(shareBox.x + shareBox.width).toBeLessThanOrEqual(articleBox.x + articleBox.width + 1);
+        // The paragraph-style offers start under the original image region.
+        const firstRow = (await rows.first().boundingBox())!;
+        const leftInset = firstRow.x - articleBox.x;
+        expect(leftInset).toBeGreaterThanOrEqual(29);
+        expect(leftInset).toBeLessThanOrEqual(38);
+        expect(firstRow.x).toBeLessThan(imageBox.x + imageBox.width - 40);
+        // No empty 152px gap remains between the providers and the new card edge.
+        expect(articleBox.x + articleBox.width - (firstRow.x + firstRow.width)).toBeLessThanOrEqual(24);
       }
       const previewCardHeight = (await card.boundingBox())!.height;
       if (!mobile) expect(previewCardHeight).toBeLessThanOrEqual(410); // Bounded increase for evenly spaced desktop rows.
-      const previewMainRect = mobile ? null : await mainPrice.boundingBox();
+      const previewMainRect = mobile ? null : await dealArea.boundingBox();
       if (!mobile) expect(previewMainRect).not.toBeNull();
       const mobileFullBand = mobile ? await card.locator("[data-car-card-mobile-lower-band]").boundingBox() : null;
       if (mobile) {
@@ -641,16 +684,13 @@ test("Cars mobile provider rows span the full card while desktop keeps its separ
       await expect(card.locator("[data-supplier-information]")).toHaveCount(0);
       const expandedOffers = count > initiallyVisible;
       if (!mobile) {
-        if (expandedOffers) {
-          await expect(mainPrice).toHaveAttribute("aria-hidden", "true");
-          await expect(mainPrice).toBeHidden();
-          await expect.poll(async () => {
-            const row = await rows.first().boundingBox();
-            return row!.x + row!.width - previewMainRect!.x;
-          }).toBeGreaterThan(20);
-        } else {
-          await expect(mainPrice).toBeVisible();
-        }
+        await expect(mainPrice).toBeHidden();
+        // Expanded and collapsed rows both fill the same content-width area.
+        await expect.poll(async () => {
+          const row = (await rows.first().boundingBox())!;
+          const details = (await dealArea.boundingBox())!;
+          return details.x + details.width - (row.x + row.width);
+        }).toBeGreaterThanOrEqual(0);
       }
       const cardRect = await card.boundingBox();
       expect(cardRect).not.toBeNull();
@@ -695,9 +735,8 @@ test("Cars mobile provider rows span the full card while desktop keeps its separ
           const rightEdgeGap = mobileFullBand!.x + mobileFullBand!.width - (link!.x + link!.width);
           expect(rightEdgeGap).toBeGreaterThanOrEqual(-1);
           expect(rightEdgeGap).toBeLessThanOrEqual(35);
-        } else if (!expandedOffers) {
-          expect(rowRect!.x + rowRect!.width).toBeLessThanOrEqual(previewMainRect!.x + 1);
         } else {
+          expect(rowRect!.x + rowRect!.width).toBeLessThanOrEqual(previewMainRect!.x + previewMainRect!.width + 1);
           expect(rowRect!.x + rowRect!.width).toBeLessThanOrEqual(cardRect!.x + cardRect!.width + 1);
         }
         expect(rowRect!.y + rowRect!.height).toBeLessThanOrEqual(cardRect!.y + cardRect!.height + 1);
@@ -709,11 +748,12 @@ test("Cars mobile provider rows span the full card while desktop keeps its separ
         await expect(rows.filter({ visible: true })).toHaveCount(3);
         await expect(toggle).toHaveAttribute("aria-expanded", "false");
         if (!mobile) {
-          await expect(mainPrice).toBeVisible();
+          await expect(mainPrice).toBeHidden();
           await expect.poll(async () => {
-            const row = await rows.first().boundingBox();
-            return row!.x + row!.width - previewMainRect!.x;
-          }).toBeLessThanOrEqual(1);
+            const row = (await rows.first().boundingBox())!;
+            const details = (await dealArea.boundingBox())!;
+            return details.x + details.width - (row.x + row.width);
+          }).toBeGreaterThanOrEqual(0);
         }
       }
     }
