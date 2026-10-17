@@ -35,3 +35,25 @@ test("native rate presentation does not expand the card and keeps mobile web row
   assert.match(source, /pointerEvents="box-none"/);
   assert.match(source, /accessibilityLabel="Close Rate details"/);
 });
+
+test("Hotel rate details dismiss outside taps and scroll without blocking the screen", () => {
+  const screen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+  const rates = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
+  assert.match(screen, /onStartShouldSetResponderCapture=\{event => \{/);
+  assert.match(screen, /if \(pageX < box.left \|\| pageX > box.left \+ box.width/);
+  assert.match(screen, /onScrollBeginDrag=\{closeRateInfo\}/);
+  assert.match(screen, /onMomentumScrollBegin=\{closeRateInfo\}/);
+  assert.match(screen, /onRateInfo=\{showRateInfo\}/);
+  assert.match(rates, /pointerEvents="box-none"/);
+  assert.doesNotMatch(rates, /<Modal/);
+});
+
+test("Native Hotel View deal uses unchanged label and never disables other valid offers", () => {
+  const screen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+  const rates = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
+  assert.doesNotMatch(rates, /Opening…|pendingRateId/);
+  assert.match(rates, /disabled=\{!row.actionable\}/);
+  assert.match(rates, />View deal<\/Text>/);
+  assert.match(screen, /travelApi.hotelRedirect\(selected.offerId\)/);
+  assert.match(screen, /await openProviderInApp\(response.url\)/);
+});
