@@ -4,6 +4,7 @@ import test from "node:test";
 
 const source = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const alert = readFileSync("src/features/search/HotelPriceAlert.tsx", "utf8");
+const details = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
 
 test("Flight Results keeps one compact accessible Track Price switch", () => {
   assert.equal(source.match(/<FlightPriceAlert /g)?.length, 1);
@@ -44,9 +45,30 @@ test("Flight reserves loading space and exposes feedback only after authoritativ
 });
 
 test("Hotel retains its target slider, validation, saved-target matching and modal accessibility", () => {
-  assert.match(alert, /matchingHotelPriceAlert\(alerts, search\)/);
-  assert.match(alert, /buildHotelPriceAlertPayload\(plan, alertTarget, alertCurrency\)/);
+  assert.match(alert, /matchingHotelPriceAlert\(alerts, search, hotelId\)/);
+  assert.match(alert, /buildHotelPriceAlertPayload\(plan, alertTarget, alertCurrency, hotel\)/);
   assert.match(alert, /readyToCreate/);
   assert.match(alert, /accessibilityViewIsModal/);
   assert.doesNotMatch(alert, /TextInput|keyboardType|autoFocus/);
+});
+
+test("Hotel tracking card matches mobile web white colour, alignment and full filter list", () => {
+  const web = readFileSync("../../src/components/results/HotelPriceAlertControl.tsx", "utf8");
+  assert.match(web, /min-h-\[58px\]/);
+  assert.match(web, /border-\[#D8E1EC\] bg-white/);
+  assert.match(alert, /hotelWebCompact: \{ minHeight: 58/);
+  assert.match(alert, /hotelBellTile: \{ width: 36, height: 36/);
+  assert.match(alert, /backgroundColor: theme.dark \? theme.surface : "#FFFFFF"/);
+  assert.match(alert, /borderColor: theme.dark \? theme.border : "#D8E1EC"/);
+  assert.match(alert, /hotelWebSubtitle/);
+  assert.match(alert, /hotelWebSwitchTrack: \{ width: 42, height: 24/);
+  assert.match(alert, /onPress=\{\(\) => void handleToggle\(!isTracking\)\}/);
+  assert.match(source, /<HotelResultsShortcut label=\{hotelRoomTypesShortcutLabel\}/);
+  assert.doesNotMatch(source, /<HotelPriceAlert\b/);
+  assert.equal(details.match(/<HotelPriceAlert\b/g)?.length, 1);
+  assert.match(details, /activeHotelTab === "details" && hotelAlertPlan && showHotelPriceAlert/);
+  assert.ok(details.indexOf("<HotelStayEditor") < details.indexOf("<HotelPriceAlert"));
+  assert.ok(details.indexOf("<HotelPriceAlert") < details.indexOf("<NativeHotelBookingDetails"));
+  assert.match(details, /hotel=\{result\}[\s\S]*hotelResults=\{\[result\]\}/);
+  assert.match(details, /available=\{availability.priceAlerts\}/);
 });

@@ -46,11 +46,11 @@ test("hotel alert price basis keeps provider truth while presenting the resolved
   });
 });
 
-test("hotel result price alert uses a stable localized slider sheet without numeric keyboard entry", () => {
+test("hotel details price alert uses a stable localized slider sheet without numeric keyboard entry", () => {
   const component = readFileSync("src/features/search/HotelPriceAlert.tsx", "utf8");
-  const results = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
+  const details = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
 
-  assert.match(results, /<HotelPriceAlert[\s\S]*?displayCurrency=\{currencyState\.resolution\.resolvedCurrency\}[\s\S]*?rates=\{currencyState\.rates\}/);
+  assert.match(details, /<HotelPriceAlert[\s\S]*?displayCurrency=\{displayPrices\?\.total\?\.currency \?\? result\.currency \?\? "USD"\}[\s\S]*?rates=\{hotelCurrencyRates\}/);
   assert.match(component, /<FlightRangeSlider[\s\S]*?singleMaximum/);
   assert.match(component, /message\("currentTotal"\)/);
   assert.match(component, /message\("dropsBy"\)/);
@@ -61,7 +61,7 @@ test("hotel result price alert uses a stable localized slider sheet without nume
   assert.match(component, /const alertCurrency = priceBasis\?\.providerCurrency/);
   assert.match(component, /\(!available && !isTracking\)/);
   assert.doesNotMatch(component, /TextInput|KeyboardAvoidingView|keyboardType|autoFocus/);
-  assert.match(component, /buildHotelPriceAlertPayload\(plan, alertTarget, alertCurrency\)/);
+  assert.match(component, /buildHotelPriceAlertPayload\(plan, alertTarget, alertCurrency, hotel\)/);
 });
 
 test("hotel result price alert preserves only paused targets represented by the slider", () => {

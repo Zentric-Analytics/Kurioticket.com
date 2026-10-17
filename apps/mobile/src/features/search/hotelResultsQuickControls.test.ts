@@ -29,8 +29,8 @@ test("Hotel rail keeps Filter Price Stars Facilities Room & bed while Sort lives
   assert.match(rail, /openHotelQuickFilter\("facilities"\)/);
   assert.match(rail, /hotelQuickFilter === "roomTypes"/);
   assert.match(rail, /openHotelQuickFilter\("roomTypes"\)/);
-  assert.match(screen, /const showRoomAndBedShortcut = hotelOptions\.roomTypes\.length > 0 \|\| hotelFilters\.roomTypes\.length > 0/);
-  assert.match(rail, /showRoomAndBedShortcut \? <HotelResultsShortcut label=\{hotelRoomTypesShortcutLabel\}/);
+  assert.doesNotMatch(screen, /const showRoomAndBedShortcut/);
+  assert.match(rail, /<HotelResultsShortcut label=\{hotelRoomTypesShortcutLabel\}/);
   assert.doesNotMatch(screen, /hotelOptions\.roomTypes\.length\s*(?:>=\s*2|>\s*1)/);
   for (const contract of [
     /<ScrollView\s+horizontal/,

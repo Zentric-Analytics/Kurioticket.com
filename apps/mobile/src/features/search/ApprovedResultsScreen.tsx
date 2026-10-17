@@ -150,7 +150,7 @@ import { getLowestPricedHotelId, hasHotelPrice } from "@/lib/hotels/hotelResultA
 import { clampHotelResultsPage, getHotelResultsPageCount, paginateHotelResults } from "@/lib/hotels/hotelResultsPagination";
 import { hasGoogleMapsDiscovery } from "./hotelResultsPresentation";
 import { HotelResultsPagination } from "./HotelResultsPagination";
-import { FlightPriceAlert, HotelPriceAlert } from "./HotelPriceAlert";
+import { FlightPriceAlert } from "./HotelPriceAlert";
 import { PriceTrackingSnackbar, type CarPriceAlertFeedback } from "./NativeCarPriceAlert";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { mobileLocales, type MobileLocale } from "../../localization/mobileLocalizationCatalog";
@@ -685,7 +685,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     String(plan.plan?.payload.destination || ""),
     currencyState?.rates ?? {},
   ), [currencyState?.rates, plan.plan?.payload.destination, product, results]);
-  const showRoomAndBedShortcut = hotelOptions.roomTypes.length > 0 || hotelFilters.roomTypes.length > 0;
   const filteredHotelResults = useMemo(() => product === "hotel"
     ? filterHotels(results as HotelResult[], hotelFilters, hotelOptions)
     : [], [hotelFilters, hotelOptions, product, results]);
@@ -1074,7 +1073,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               {hotelOptions.price ? <HotelResultsShortcut label={hotelPriceShortcutLabel} selected={hotelPriceFilterActive} expanded={hotelQuickFilter === "price"} onPress={() => openHotelQuickFilter("price")} onClear={hotelPriceFilterActive ? () => clearHotelQuickFilter("price") : undefined} /> : null}
               <HotelResultsShortcut label={hotelStarsShortcutLabel} selected={hotelFilters.starRatings.length > 0} expanded={hotelQuickFilter === "stars"} onPress={() => openHotelQuickFilter("stars")} onClear={hotelFilters.starRatings.length ? () => clearHotelQuickFilter("stars") : undefined} />
               <HotelResultsShortcut label={hotelFacilitiesShortcutLabel} selected={hotelFilters.facilities.length > 0} expanded={hotelQuickFilter === "facilities"} onPress={() => openHotelQuickFilter("facilities")} onClear={hotelFilters.facilities.length ? () => clearHotelQuickFilter("facilities") : undefined} />
-              {showRoomAndBedShortcut ? <HotelResultsShortcut label={hotelRoomTypesShortcutLabel} selected={hotelFilters.roomTypes.length > 0} expanded={hotelQuickFilter === "roomTypes"} onPress={() => openHotelQuickFilter("roomTypes")} onClear={hotelFilters.roomTypes.length ? () => clearHotelQuickFilter("roomTypes") : undefined} /> : null}
+              <HotelResultsShortcut label={hotelRoomTypesShortcutLabel} selected={hotelFilters.roomTypes.length > 0} expanded={hotelQuickFilter === "roomTypes"} onPress={() => openHotelQuickFilter("roomTypes")} onClear={hotelFilters.roomTypes.length ? () => clearHotelQuickFilter("roomTypes") : undefined} />
             </>
     </ScrollView>
   ));
@@ -1106,7 +1105,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       {status === "ready" && product === "hotel" && sorted.length > 0 ? (
         <>
           {hasGoogleMapsDiscovery(results as HotelResult[]) ? <View style={[s0.hotelAttribution,{backgroundColor:theme.surface,borderColor:theme.border}]}><Text style={{color:theme.textSecondary}}>Hotel discovery data provided by Google Maps</Text></View> : null}
-          {plan.plan && currencyState ? <HotelPriceAlert plan={plan.plan} hotelResults={results as HotelResult[]} available={availability.priceAlerts} displayCurrency={currencyState.resolution.resolvedCurrency} rates={currencyState.rates} /> : null}
         </>
       ) : null}
       {status === "ready" && product === "hotel" && results.length > 0 && sorted.length === 0 ? (
