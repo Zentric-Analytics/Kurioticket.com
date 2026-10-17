@@ -29,8 +29,42 @@ test("native rate presentation does not expand the card and keeps mobile web row
   assert.match(source, /dealCard: \{ minHeight: 76/);
   assert.match(source, /viewDealButton: \{ minHeight: 32/);
   assert.match(source, /priceColumn: \{ flexDirection: "row", alignItems: "baseline"/);
-  assert.match(source, /<NativeHotelRatePopover/);
+  const detailScreen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+  assert.match(detailScreen, /<NativeHotelRatePopover/);
   assert.doesNotMatch(source, /expanded && infoAvailable/);
-  assert.match(source, /onRequestClose=\{onClose\}/);
+  assert.doesNotMatch(source, /<Modal|onRequestClose=\{onClose\}/);
+  assert.match(source, /pointerEvents="box-none"/);
   assert.match(source, /accessibilityLabel="Close Rate details"/);
+});
+
+test("Hotel rate details dismiss outside taps and scroll without blocking the screen", () => {
+  const screen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+  const rates = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
+  assert.match(screen, /onStartShouldSetResponderCapture=\{event => \{/);
+  assert.match(screen, /if \(!onTrigger && \(pageX < box.left/);
+  assert.match(screen, /onScrollBeginDrag=\{closeRateInfo\}/);
+  assert.match(screen, /onMomentumScrollBegin=\{closeRateInfo\}/);
+  assert.match(screen, /onRateInfo=\{showRateInfo\}/);
+  assert.match(rates, /pointerEvents="box-none"/);
+  assert.doesNotMatch(rates, /<Modal/);
+});
+
+test("Native Hotel View deal uses unchanged label and never disables other valid offers", () => {
+  const screen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+  const rates = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
+  assert.doesNotMatch(rates, /Opening…|pendingRateId/);
+  assert.match(rates, /disabled=\{!row.actionable\}/);
+  assert.match(rates, />View deal<\/Text>/);
+  assert.match(screen, /travelApi.hotelRedirect\(selected.offerId\)/);
+  assert.match(screen, /await openProviderInApp\(response.url\)/);
+});
+
+test("native Hotel rate interactions keep rows independent and the popup data current", () => {
+  const screen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+  assert.match(screen, /dealsOpeningRef\.current\.has\(rateId\)/);
+  assert.match(screen, /dealsOpeningRef\.current\.add\(rateId\)/);
+  assert.match(screen, /dealsOpeningRef\.current\.delete\(rateId\)/);
+  assert.match(screen, /if \(!onTrigger &&/);
+  assert.match(screen, /rateInfoRef\.current\?\.id === row\.id/);
+  assert.match(screen, /row=\{rateRows\.find\(row => row\.id === rateInfo\.id\)!\}/);
 });

@@ -137,6 +137,6 @@ test("active Hotel detail tabs preserve independent scroll state and reset for a
   assert.match(screen, /onPress=\{\(\) => selectHotelTab\(tab\)\}/);
   assert.match(screen, /onScroll=\{\(\{ nativeEvent \}\) =>/);
   assert.match(screen, /\[result\.id\]/);
-  assert.match(screen, /setPendingRateId\(null\)/);
+  assert.match(screen, /closeRateInfo\(\)/);
   assert.doesNotMatch(screen, /setRoomsOpen\(|HotelRoomOptionsModal/);
 });
