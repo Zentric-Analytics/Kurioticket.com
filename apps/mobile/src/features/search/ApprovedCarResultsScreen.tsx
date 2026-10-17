@@ -24,7 +24,7 @@ import { CarPriceAlertSnackbar, NativeCarPriceAlert, type CarPriceAlertFeedback 
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { getLocationFieldDisplay } from "../../../../../src/lib/search/locationFieldDisplay";
 import { NATIVE_FILTER_RESULTS_TRANSITION_MS } from "./filterResultsTransition";
-import { formatCarResultsScheduleSummary } from "../../../../../src/lib/cars/carResultsSummary";
+import { formatCarResultsScheduleSummary, formatCompactCarResultsScheduleSummary } from "../../../../../src/lib/cars/carResultsSummary";
 import { resolveCarResultImageSource } from "../../../../../src/lib/cars/carResultImage";
 import { useCarDisplayCurrency } from "./useCarDisplayCurrency";
 import { carDisplayPricePerDay } from "./carDisplayCurrency";
@@ -140,16 +140,12 @@ export function ApprovedCarResultsScreen() {
   const quickGroups=useMemo(()=>carQuickFilterGroupIds.flatMap(id=>{const group=filterGroups.find(candidate=>candidate.id===id);return group?[group]:[];}),[filterGroups]);
   const copy=useMemo(()=>carFilterCopy(locale),[locale]);
   const filtered=useMemo(()=>{const ranked=sortCarResults(filterCarResults(results,filters,pricePerDay),sort);return sort==="recommended"?ensureCarProviderCoverage(ranked):ranked;},[results,filters,pricePerDay,sort]);
-  const carBadges=useMemo(()=>assignCarBadges(results),[results]);
+  const carBadges=useMemo(()=>assignCarBadges(results,pricePerDay),[results,pricePerDay]);
   const payload=plan.plan?.payload||{};
   const canonicalPickupLocation=String(payload.pickupLocation||"");
   const carSummaryDestination=getLocationFieldDisplay(canonicalPickupLocation).primary;
   const carSummarySecondary=formatCarResultsScheduleSummary({pickupDate:String(payload.pickupDate||""),pickupTime:String(payload.pickupTime||""),dropoffDate:String(payload.dropoffDate||""),dropoffTime:String(payload.dropoffTime||""),locale});
-  const compactDate=(value:string)=>{const match=/^\d{4}-(\d{2})-(\d{2})$/.exec(value);return match?`${Number(match[1])}/${Number(match[2])}`:"";};
-  const compactTime=(value:string)=>/^\d{2}:\d{2}$/.test(value)?value:"";
-  const compactPickupDate=compactDate(String(payload.pickupDate||""));
-  const compactReturnDate=compactDate(String(payload.dropoffDate||""));
-  const carSummaryCompact=[compactPickupDate&&compactReturnDate?`${compactPickupDate}–${compactReturnDate}`:compactPickupDate||compactReturnDate,[compactTime(String(payload.pickupTime||"")),compactTime(String(payload.dropoffTime||""))].filter(Boolean).join("–")].filter(Boolean).join(" · ")||carSummarySecondary;
+  const carSummaryCompact=formatCompactCarResultsScheduleSummary({pickupDate:String(payload.pickupDate||""),pickupTime:String(payload.pickupTime||""),dropoffDate:String(payload.dropoffDate||""),dropoffTime:String(payload.dropoffTime||""),locale})||carSummarySecondary;
   const edit=()=>setCarEditSearchOpen(true);
   const startCarResultsTransition=()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);setCarResultsApplying(true);scrollCarResultsToTop();carResultsApplyingTimer.current=setTimeout(()=>setCarResultsApplying(false),NATIVE_FILTER_RESULTS_TRANSITION_MS);};
   const changeCarFilters=(next:SelectedCarFilters)=>{carFilterSessionDirtyRef.current=true;setFilters(next);};
