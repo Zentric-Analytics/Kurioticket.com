@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { placeHotelRatePopover } from "./nativeHotelRatePopoverPlacement";
 
@@ -22,7 +23,6 @@ test("tall supplier details are scrollable within the safe viewport", () => {
 });
 
 test("native rate presentation does not expand the card and keeps mobile web row measurements", () => {
-  const { readFileSync } = require("node:fs") as typeof import("node:fs");
   const source = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
   const web = readFileSync("../../src/components/results/hotelDetails/HotelPriceComparisonSection.tsx", "utf8");
   assert.match(web, /min-h-\[76px\]/);
