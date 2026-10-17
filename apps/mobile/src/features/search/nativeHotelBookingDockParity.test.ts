@@ -46,7 +46,7 @@ test("mobile web reference renders dedicated Hotel provider offers from shared o
 
 test("native Hotel rate cards replace the bottom dock on all tabs", () => {
   assert.doesNotMatch(detailSource, /bookingDock|NativeSupplierInformation|Property information supplied by KAYAK/);
-  assert.match(detailSource, /contentContainerStyle=\\{\\{ paddingBottom: 24 \\+ inset\\.bottom \\}\\}/);
+  assert.ok(detailSource.includes('contentContainerStyle={{ paddingBottom: 24 + inset.bottom }}'));
   assert.match(detailSource, /onViewDeal=\\{\\(rateId\\) => void continueHotelRate\\(rateId\\)\\}/);
   assert.match(detailSource, /travelApi\\.hotelRedirect\\(selected\\.offerId\\)/);
   assert.match(ratesSource, /onPress=\\{\\(\\) => onViewDeal\\(row\\.id\\)\\}/);
