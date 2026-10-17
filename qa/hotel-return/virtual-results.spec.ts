@@ -56,12 +56,17 @@ test("Cars desktop Hotels-details-style column includes map, filters and cards; 
       continue;
     }
 
-    await expect(main).toHaveCSS("background-color", "rgb(247, 249, 252)");
+    await expect(main).toHaveCSS("background-color", "rgb(255, 255, 255)");
+    await expect(main).toHaveCSS("padding-bottom", "48px");
+    await expect(main).toHaveCSS("padding-top", "24px");
     await expect(column).toHaveCSS("background-color", "rgb(255, 255, 255)");
     await expect(column).toHaveCSS("border-color", "rgb(225, 230, 234)");
     await expect(column).toHaveCSS("border-radius", "16px");
     await expect(column).toHaveCSS("padding-left", "20px");
     await expect(column).toHaveCSS("padding-right", "20px");
+    await expect(column).toHaveCSS("margin-top", "0px");
+    await expect(column).toHaveCSS("padding-top", "28px");
+    await expect(column).toHaveCSS("padding-bottom", "28px");
 
     const map = column.locator("[data-cars-results-map-preview]");
     const filters = column.locator(".desktop-filter-sidebar").first();
@@ -69,6 +74,11 @@ test("Cars desktop Hotels-details-style column includes map, filters and cards; 
     await expect(map).toBeVisible();
     await expect(filters).toBeVisible();
     await expect(list).toBeVisible();
+    await expect(map).toHaveCSS("margin-bottom", "16px");
+    const content = column.locator("[data-cars-results-content-column]");
+    await expect(content).toHaveClass(/lg:space-y-5/);
+    const firstRow = list.locator("[data-virtual-index]").first();
+    await expect(firstRow).toHaveCSS("padding-bottom", "20px");
     const containerBox = (await column.boundingBox())!;
     const insetLeft = containerBox.x + 17;
     const insetRight = containerBox.x + containerBox.width - 17;
@@ -80,7 +90,8 @@ test("Cars desktop Hotels-details-style column includes map, filters and cards; 
     const mapBox = (await map.boundingBox())!;
     const filtersBox = (await filters.boundingBox())!;
     const cardBox = (await card.boundingBox())!;
-    expect(mapBox.y + mapBox.height).toBeLessThanOrEqual(filtersBox.y + 3);
+    expect(filtersBox.y - (mapBox.y + mapBox.height)).toBeGreaterThanOrEqual(14);
+    expect(filtersBox.y - (mapBox.y + mapBox.height)).toBeLessThanOrEqual(18);
     expect(mapBox.x + mapBox.width).toBeLessThan(cardBox.x);
   }
 });
