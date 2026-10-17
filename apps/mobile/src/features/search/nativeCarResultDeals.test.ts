@@ -140,7 +140,7 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.match(picker, /infoAction: \{ width: 32, height: 36, flexShrink: 0/);
   assert.match(picker, /moreAction: \{ minHeight: 36/);
   assert.match(picker, /moreText: \{ fontSize: 11, lineHeight: 16/);
-  assert.match(card, /detailsColumn:\{flex:2\.6/);
+  assert.match(card, /detailsColumn:\{flex:1/);
   assert.doesNotMatch(card, /commerceColumn/);
   assert.match(picker, /price: \{ width: 66, flexShrink: 0, textAlign: "left"/);
   assert.match(picker, /visibleChoices = expanded \? choices : choices\.slice\(0, INITIAL_VISIBLE_OFFER_COUNT\)/);
