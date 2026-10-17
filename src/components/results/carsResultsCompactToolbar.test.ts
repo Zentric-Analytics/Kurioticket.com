@@ -117,7 +117,7 @@ test("source-contract: Cars keeps the mobile count and alert row while compactin
   const alertPosition = summaryRow.indexOf("<CarPriceAlertControl");
   assert.ok(alertPosition > summaryRow.indexOf("<h2"));
   assert.equal((resultsToolbar.match(/<CarPriceAlertControl/g) ?? []).length, 1);
-  assert.match(summaryRow, /className=\{cn\("col-start-2 row-start-1 hidden[^"]*sm:flex sm:gap-2", !embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1"\)\}/);
+  assert.match(summaryRow, /className=\{cn\("col-start-2 row-start-1 hidden[^"]*sm:flex sm:gap-2", !embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1 lg:justify-self-end"\)\}/);
   assert.ok(summaryRow.indexOf("<h2") < summaryRow.indexOf("ref={carsSortRef}"));
   assert.match(summaryRow, /className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap[^"\n]*"/);
   assert.match(resultsToolbar, /className="relative inline-flex min-w-0 max-w-full shrink/);
