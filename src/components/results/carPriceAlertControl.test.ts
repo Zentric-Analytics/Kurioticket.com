@@ -57,7 +57,7 @@ test("Cars price tracking snackbar defines enter, exit, and reduced-motion behav
   assert.match(globals, /prefers-reduced-motion: reduce[\s\S]*cars-price-alert-snackbar-entering,[\s\S]*cars-price-alert-snackbar-leaving \{ animation: none; \}/);
 });
 
-test("mobile Cars tracking is a compact, accessible, right-aligned control with unchanged desktop card", () => {
+test("mobile Cars tracking stays flat while desktop gets a compact Sort-aligned control", () => {
   const section = source.match(/data-cars-price-alert\s+className="([^"]+)"/)?.[1];
   assert.ok(section, "tracking section remains a scroll-indicator anchor");
   const mobileClasses = section.split(/\s+/).filter((name) => !name.includes(":"));
@@ -65,7 +65,13 @@ test("mobile Cars tracking is a compact, accessible, right-aligned control with 
   assert.doesNotMatch(mobileClasses.join(" "), /rounded|border|shadow|bg-\[#/);
   assert.match(section, /sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full sm:justify-self-center/);
   assert.match(section, /sm:rounded-2xl sm:border sm:border-blue-100 sm:bg-\[#EDF6FF\] sm:px-4 sm:py-1 sm:shadow-sm/);
-  assert.match(section, /lg:mx-auto lg:w-\[calc\(100%_-_12rem\)\] lg:bg-\[#F1F7FE\]/);
+  assert.match(section, /lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-\[240px\] lg:justify-self-end/);
+  assert.match(section, /lg:rounded-lg lg:bg-\[#F1F7FE\] lg:px-2 lg:py-0/);
+  assert.doesNotMatch(section, /lg:mx-auto|lg:w-\[calc\(100%_-_12rem\)\]/);
+  assert.match(source, /sm:min-h-\[52px\] sm:justify-start sm:gap-2\.5 lg:min-h-9 lg:gap-1\.5/);
+  assert.match(source, /sm:bg-blue-50 sm:text-\[#004BB8\] lg:h-6 lg:w-6/);
+  assert.match(source, /sm:text-sm sm:text-slate-950 lg:overflow-hidden lg:whitespace-nowrap lg:text-\[13px\] lg:font-semibold lg:leading-4/);
+  assert.match(source, /lg:h-9 lg:w-12/);
   assert.match(source, /flex min-h-11 min-w-0 items-center justify-end gap-1\.5 max-\[359px\]:gap-1 sm:min-h-\[52px\] sm:justify-start sm:gap-2\.5/);
   assert.match(source, /min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-\[12px\] font-semibold leading-\[17px\] text-\[#07133B\]/);
   assert.match(source, /max-\[359px\]:text-\[10\.5px\] sm:flex-1 sm:overflow-visible sm:whitespace-normal/);
