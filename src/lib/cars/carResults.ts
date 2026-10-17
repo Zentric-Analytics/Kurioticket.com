@@ -247,10 +247,24 @@ export function ensureCarProviderCoverage<T extends NormalizedCarResult>(ranked:
   return [...leaders, ...rest];
 }
 
-export function assignCarBadges(results: NormalizedCarResult[]) {
+export function assignCarBadges(
+  results: NormalizedCarResult[],
+  resolveDisplayPricePerDay?: CarPricePerDayResolver,
+) {
   const assignments = new Map<string, CarResultBadge>();
   const candidates: Array<[CarResultBadge, NormalizedCarResult[]]> = [
-    ["Cheapest", sortCarResults(results, "lowestTotal")],
+    ["Cheapest", resolveDisplayPricePerDay
+      ? [...results].sort((a,b)=>{
+          const aPrice=resolveDisplayPricePerDay(a);
+          const bPrice=resolveDisplayPricePerDay(b);
+          const aValid=typeof aPrice==="number"&&Number.isFinite(aPrice)&&aPrice>=0;
+          const bValid=typeof bPrice==="number"&&Number.isFinite(bPrice)&&bPrice>=0;
+          return (aValid?aPrice:Infinity)-(bValid?bPrice:Infinity)||a.id.localeCompare(b.id);
+        }).filter(car=>{
+          const value=resolveDisplayPricePerDay(car);
+          return typeof value==="number"&&Number.isFinite(value)&&value>=0;
+        })
+      : sortCarResults(results, "lowestTotal")],
     ["Top rated", sortCarResults(results, "topRated")],
     ["Best value", [...results].sort((a, b) => b.recommendationScore - a.recommendationScore || a.id.localeCompare(b.id))],
   ];
