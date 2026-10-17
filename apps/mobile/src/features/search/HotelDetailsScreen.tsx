@@ -55,7 +55,6 @@ import { NativeHotelBookingDetails } from "./NativeHotelBookingDetails";
 import {
   buildNativeHotelRateRows,
   NativeHotelRatesSection,
-  type NativeHotelRateRow,
 } from "./NativeHotelRatesSection";
 import { HotelDetailsLoadingState } from "./HotelDetailsLoadingState";
 
@@ -156,7 +155,7 @@ function HotelDetail({
     status: HotelDetailsStatus;
     response: MobileHotelDetailsResponse | null;
   } | null>(null);
-  const [selectedRateId, setSelectedRateId] = useState<string | null>(null);
+  const [pendingRateId, setPendingRateId] = useState<string | null>(null);
   const guestCount = positiveCount(params.guests, 2, HOTEL_LIMITS.guests.max);
   const roomCount = positiveCount(params.rooms, 1, HOTEL_LIMITS.rooms.max);
   const hotelResultsStack =
@@ -165,7 +164,7 @@ function HotelDetail({
       : params.hotelResultsStack) === "1";
 
   useEffect(() => {
-    setSelectedRateId(null);
+    setPendingRateId(null);
     setLookAroundInteracting(false);
   }, [result.id]);
 
@@ -410,46 +409,40 @@ function HotelDetail({
   const staySummary = hotelStaySummary(checkIn, checkOut, guestCount, roomCount);
   const rateRows = buildNativeHotelRateRows({
     offers: hotelOffers,
-    providerName: result.bookingProviderName?.trim() || result.provider,
-    providerLogoUrl: result.providerLogoUrl ?? null,
+    primaryHotel: result,
+    propertyOffers: details?.propertyOffers,
+    primaryProviderDetails: details?.providerDetails,
     nightlyPrice: displayPrices?.nightly ?? null,
     totalPrice: displayPrices?.total ?? null,
     hasPrice,
+    displayCurrency: displayPrices?.total?.currency ?? result.currency ?? "USD",
+    exchangeRates: hotelCurrencyRates,
   });
-  const rateRowKey = rateRows.map(({ id, actionable }) => `${id}:${actionable ? "1" : "0"}`).join("\u0000");
-
-  useEffect(() => {
-    setSelectedRateId((current) => {
-      if (current && rateRows.some((row) => row.id === current && row.actionable)) return current;
-      return rateRows.find((row) => row.actionable)?.id ?? null;
-    });
-  }, [rateRowKey]);
-
-  const selectedRate: NativeHotelRateRow | null =
-    rateRows.find((row) => row.id === selectedRateId && row.actionable)
-    ?? rateRows.find((row) => row.actionable)
-    ?? null;
-  const selectedRateIdForView = selectedRate?.id ?? null;
-  const bookingActionLabel = "View deal";
-
   const openProviderInApp = async (url: string) => {
     const WebBrowser = await import("expo-web-browser");
     return WebBrowser.openBrowserAsync(url, { dismissButtonStyle: "close" });
   };
 
-  const continueSelectedRate = async () => {
-    if (!selectedRate?.actionable) return;
-    const targetUrl =
-      selectedRate.offerId === "internal-rooms"
-        ? kurioticketWebUrl
-        : selectedRate.offerId === "provider" && providerHandoffAvailable
-          ? redirectUrl
-          : "";
-    if (!targetUrl) return;
+  const continueHotelRate = async (rateId: string) => {
+    if (pendingRateId) return;
+    const selected = rateRows.find(row => row.id === rateId && row.actionable);
+    if (!selected) return;
+    const targetUrl = selected.offerId === "internal-rooms"
+      ? kurioticketWebUrl : null;
+    setPendingRateId(rateId);
     try {
-      await openProviderInApp(targetUrl);
+      if (targetUrl) {
+        await openProviderInApp(targetUrl);
+      } else {
+        // Resolve and audit the selected individual provider offer server-side;
+        // do not send every room's View deal to the initial hotel's URL.
+        const response = await travelApi.hotelRedirect(selected.offerId);
+        await openProviderInApp(response.url);
+      }
     } catch {
       Alert.alert("Unable to open provider", "Please refresh and try again.");
+    } finally {
+      setPendingRateId(null);
     }
   };
 
@@ -538,7 +531,7 @@ function HotelDetail({
         alwaysBounceVertical={false}
         overScrollMode="never"
         style={{ backgroundColor: hotelCanvasColor }}
-        contentContainerStyle={{ paddingBottom: selectedRate ? 120 + inset.bottom : 24 + inset.bottom }}
+        contentContainerStyle={{ paddingBottom: 24 + inset.bottom }}
         onScroll={({ nativeEvent }) => {
           const offset = nativeEvent.contentOffset.y;
           currentHotelScrollOffset.current = offset;
@@ -660,8 +653,8 @@ function HotelDetail({
           {activeHotelTab === "deals" ? (
             <NativeHotelRatesSection
               rows={rateRows}
-              selectedRateId={selectedRateIdForView}
-              onSelectRate={setSelectedRateId}
+              onViewDeal={(rateId) => void continueHotelRate(rateId)}
+              pendingRateId={pendingRateId}
               stayDateText={staySummary.dateText}
               nightText={staySummary.nightText}
               detailsStatus={detailsStatus}
@@ -670,8 +663,7 @@ function HotelDetail({
             />
           ) : null}
         </View>
-        <NativeSupplierInformation facts={hotelSupplierFacts(details?.providerDetails, false)} title="Property information supplied by KAYAK" />
-        {details?.propertyOffers?.map(({ hotel, providerDetails }) => <NativeSupplierInformation key={hotel.id} facts={hotelSupplierFacts(providerDetails).filter(fact => /^(Room|Free cancellation|Pay later|Bundled rate|Rate breakdown|Rate condition)/.test(fact.label))} title={`Rate information — ${hotel.bookingProviderName || hotel.provider} — ${providerDetails?.rate?.roomName || "Room"} — ${hotel.currency} ${hotel.totalPrice}`} />)}
+        {activeHotelTab === "details" ? <NativeSupplierInformation facts={hotelSupplierFacts(details?.providerDetails, false)} title="Property information supplied by KAYAK" /> : null}
       </ScrollView>
 
       {detailsStatus === "loading" ? (
@@ -731,54 +723,6 @@ function HotelDetail({
         </Pressable>
       </View>
 
-      {detailsStatus !== "loading" && selectedRate ? (
-        <View
-          style={[
-            s.bookingDock,
-            {
-              paddingBottom: Math.max(inset.bottom, 10),
-              backgroundColor: theme.surface,
-              borderTopColor: theme.border,
-            },
-          ]}
-        >
-          <View style={s.bookingDockContent}>
-            <View style={s.bookingDockPrice}>
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.62}
-                accessibilityLabel={selectedRate.totalAccessibilityLabel}
-                style={[s.bookingDockTotal, { color: theme.textPrimary }]}
-              >
-                {selectedRate.totalPrice}
-              </Text>
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.82}
-                style={[s.bookingDockLabel, { color: theme.textSecondary }]}
-              >
-                {selectedRate.totalLabel}
-              </Text>
-            </View>
-            <View style={s.bookingDockAction}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`${bookingActionLabel} with ${selectedRate.providerName}. ${selectedRate.totalAccessibilityLabel}`}
-                onPress={() => void continueSelectedRate()}
-                style={({ pressed }) => [
-                  s.bookingDockButton,
-                  { backgroundColor: hotelAccent },
-                  pressed && s.bookingDockButtonPressed,
-                ]}
-              >
-                <Text style={s.bookingDockButtonText}>{bookingActionLabel}</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      ) : null}
 
 
     </SafeAreaView>
@@ -815,64 +759,5 @@ const s = StyleSheet.create({
   tabText: { fontSize: 13, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
   tabTextCompact: { fontSize: 12 },
   detailBody: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8, gap: 6 },
-  bookingDock: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    minHeight: 88,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 18,
-    paddingTop: 11,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 7,
-    zIndex: 25,
-  },
-  bookingDockContent: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 14,
-  },
-  bookingDockPrice: { flex: 1, minWidth: 0, gap: 1 },
-  bookingDockTotal: {
-    maxWidth: "100%",
-    fontSize: 19,
-    lineHeight: 22,
-    fontWeight: "600",
-    fontFamily: appFonts.semibold,
-    letterSpacing: -0.25,
-    textAlign: "left",
-    fontVariant: ["tabular-nums"],
-  },
-  bookingDockLabel: {
-    flexShrink: 1,
-    minWidth: 0,
-    fontSize: 11,
-    lineHeight: 16,
-    fontWeight: "600",
-    fontFamily: appFonts.semibold,
-  },
-  bookingDockAction: { flex: 0.78, minWidth: 140, maxWidth: 180 },
-  bookingDockButton: {
-    width: "100%",
-    minHeight: 48,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  bookingDockButtonPressed: { opacity: 0.82 },
-  bookingDockButtonText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: "700",
-    fontFamily: appFonts.bold,
-    textAlign: "center",
-  },
+
 });
