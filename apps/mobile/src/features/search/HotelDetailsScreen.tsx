@@ -535,6 +535,18 @@ function HotelDetail({
     <SafeAreaView
       style={[s.safe, { backgroundColor: hotelCanvasColor }]}
       edges={[]}
+      onStartShouldSetResponderCapture={event => {
+        if (!rateInfoRef.current) return false;
+        const box = ratePopupBoundsRef.current;
+        if (!box) return false;
+        const { pageX, pageY } = event.nativeEvent;
+        if (pageX < box.left || pageX > box.left + box.width ||
+            pageY < box.top || pageY > box.top + box.height) {
+          closeRateInfo();
+        }
+        // Outside touches and drags still reach the underlying Hotel screen.
+        return false;
+      }}
     >
       <ScrollView
         ref={hotelDetailScrollRef}
@@ -685,17 +697,6 @@ function HotelDetail({
 
       {rateInfo && activeHotelTab === "deals" ? (
         <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-          <View pointerEvents="box-none" style={StyleSheet.absoluteFill}
-            onStartShouldSetResponderCapture={event => {
-              const box = ratePopupBoundsRef.current;
-              if (!box) return false;
-              const { pageX, pageY } = event.nativeEvent;
-              const inside = pageX >= box.left && pageX <= box.left + box.width
-                && pageY >= box.top && pageY <= box.top + box.height;
-              if (!inside) closeRateInfo();
-              return false;
-            }}
-          />
           <NativeHotelRatePopover
             row={rateInfo.row}
             anchor={rateInfo.anchor}
