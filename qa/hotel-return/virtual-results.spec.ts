@@ -52,6 +52,46 @@ test("Cars cards omit the supplier-information bar and preserve View deal on mob
   }
 });
 
+test("Cars desktop tracking is compact and aligned beside Sort while mobile and tablet retain their rows", async ({ page }) => {
+  await page.route("**/api/cars/search", route =>
+    route.fulfill({ json: { results: [carBase], status: "available" } }));
+
+  for (const width of [390, 820, 1024, 1365]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(routes.cars);
+    const summary = page.locator("[data-cars-results-summary-row]").first();
+    const alert = summary.locator("[data-cars-price-alert]");
+    const count = summary.locator("h2").first();
+    const sort = summary.locator(".cars-results-desktop-sort-trigger");
+    await expect(alert).toBeVisible();
+    await expect(count).toBeVisible();
+    await expect(alert.getByRole("switch", { name: "Track car prices" })).toBeVisible();
+
+    const alertBox = (await alert.boundingBox())!;
+    const countBox = (await count.boundingBox())!;
+    if (width >= 1024) {
+      await expect(sort).toBeVisible();
+      const sortBox = (await sort.boundingBox())!;
+      const centerY = (box: { y: number; height: number }) => box.y + box.height / 2;
+      expect(alertBox.width).toBeLessThanOrEqual(241);
+      expect(alertBox.height).toBeLessThanOrEqual(40);
+      expect(Math.abs(centerY(alertBox) - centerY(sortBox))).toBeLessThanOrEqual(3);
+      expect(Math.abs(centerY(alertBox) - centerY(countBox))).toBeLessThanOrEqual(3);
+      expect(countBox.x + countBox.width).toBeLessThanOrEqual(alertBox.x + 1);
+      expect(alertBox.x + alertBox.width).toBeLessThanOrEqual(sortBox.x + 1);
+    } else if (width >= 640) {
+      await expect(sort).toBeVisible();
+      const sortBox = (await sort.boundingBox())!;
+      expect(alertBox.width).toBeGreaterThan(400);
+      expect(alertBox.y + alertBox.height).toBeLessThanOrEqual(sortBox.y);
+    } else {
+      await expect(sort).not.toBeVisible();
+      expect(alertBox.width).toBeLessThan(280);
+      expect(countBox.x + countBox.width).toBeLessThanOrEqual(alertBox.x + 2);
+    }
+  }
+});
+
 test("Cars mobile card balances category and moves four specifications underneath cancellation without crowding", async ({ page }) => {
   const offer = carBase.offers[0];
   if (!offer) throw new Error("Fixture offer missing");

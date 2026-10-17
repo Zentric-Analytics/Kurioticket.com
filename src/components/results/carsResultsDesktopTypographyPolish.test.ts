@@ -135,7 +135,7 @@ test("standalone desktop result cards use a polished identity, details, and pric
   );
   assert.match(
     alert,
-    /lg:text-\[14px\] lg:font-bold lg:leading-5 lg:tracking-\[-0\.002em\] lg:text-slate-950/,
+    /lg:whitespace-nowrap lg:text-\[13px\] lg:font-semibold lg:leading-4 lg:tracking-\[-0\.002em\] lg:text-slate-950/,
   );
 });
 

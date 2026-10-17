@@ -147,7 +147,7 @@ test("desktop Cars pricing and price tracking keep price emphasis without over-w
   assert.match(comparison, /text-\[21px\] font-bold leading-\[25px\] tracking-\[-0\.012em\]/);
   assert.match(comparison, /text-\[13px\] font-medium leading-5 text-\[#475569\]/);
   assert.match(comparison, /cleanStaticSummary \? "text-\[14px\] tracking-\[-0\.003em\]" : "text-\[14px\] tracking-\[-0\.005em\]"/);
-  assert.match(alert, /lg:text-\[14px\] lg:font-bold lg:leading-5 lg:tracking-\[-0\.002em\] lg:text-slate-950/);
+  assert.match(alert, /lg:whitespace-nowrap lg:text-\[13px\] lg:font-semibold lg:leading-4 lg:tracking-\[-0\.002em\] lg:text-slate-950/);
 });
 
 

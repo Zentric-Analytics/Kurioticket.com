@@ -46,7 +46,7 @@ test("Cars aligns both mobile controls with a compact heading and leaves no sepa
 });
 
 test("Cars results heading aligns to the inner card gutters and sits close to the first card on mobile", () => {
-  const summaryClasses = cars.match(/className="([^"]+)"\s+data-cars-results-summary-row/)?.[1];
+  const summaryClasses = cars.match(/className=\{cn\(\s*"([^"]+)",\s*!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto_auto\] lg:gap-x-3 lg:gap-y-0",\s*\)\}\s+data-cars-results-summary-row/)?.[1];
   assert.ok(summaryClasses, "the existing results-count and tracking row is retained");
   assert.match(summaryClasses, /grid-cols-\[minmax\(0,1fr\)_auto\] items-center/);
   assert.match(summaryClasses, /gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1/);
@@ -62,7 +62,7 @@ test("Cars results heading aligns to the inner card gutters and sits close to th
   assert.doesNotMatch(cars, /w-full space-y-3\.5 max-sm:!mt-0\.5/);
   assert.match(alert, /min-h-11 min-w-0 items-center justify-end gap-1\.5 max-\[359px\]:gap-1 sm:min-h-\[52px\]/);
   assert.match(alert, /flex h-11 w-\[51px\] shrink-0 items-center justify-end/);
-  assert.match(alert, /className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full[^"]*sm:w-12"/);
+  assert.match(alert, /className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full[^"]*sm:w-12 lg:h-9"/);
   assert.match(alert, /aria-hidden="true" className=\{`relative inline-flex h-6 w-11[^}]*sm:h-7 sm:w-12/);
   assert.match(alert, /role="switch" aria-checked=\{tracking\}/);
 });
@@ -94,7 +94,7 @@ test("standalone mobile Cars redistributes space from the card gap to the filter
 });
 
 test("Cars leaves the entire left-side result count and grid placement unchanged", () => {
-  assert.match(cars, /className=\{cn\("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2"\)\}/);
+  assert.match(cars, /className=\{cn\("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2 lg:row-start-1"\)\}/);
   assert.match(cars, /className="truncate whitespace-nowrap text-\[12px\] font-semibold leading-4 tracking-\[-0\.002em\] text-\[#07133B\][^"]*max-\[359px\]:text-\[11px\] sm:text-\[14px\]/);
   assert.match(cars, /grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_auto\] items-center gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1/);
   assert.match(cars, /<CarPriceAlertControl search=\{search\} results=\{providerResults\} \/>/);
@@ -104,14 +104,16 @@ test("Cars leaves the entire left-side result count and grid placement unchanged
   assert.match(alert, /role="switch" aria-checked=\{tracking\}/);
 });
 
-test("desktop Cars alert stays full width above the separate count and Sort row", () => {
+test("desktop Cars places a compact Track prices control beside Sort without changing the mobile or tablet row", () => {
   const alertStart = alert.indexOf("data-cars-price-alert");
   const alertEnd = alert.indexOf("</section>", alertStart);
   const alertMarkup = alert.slice(alertStart, alertEnd);
   assert.match(alertMarkup, /sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full/);
-  assert.match(alertMarkup, /lg:mx-auto lg:w-\[calc\(100%_-_12rem\)\]/);
-  assert.doesNotMatch(alertMarkup, /\blg:w-auto\b/);
-  assert.match(cars, /!embedded && "sm:row-start-2"/);
+  assert.match(alertMarkup, /lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-\[240px\]/);
+  assert.doesNotMatch(alertMarkup, /lg:w-\[calc\(100%_-_12rem\)\]/);
+  assert.match(cars, /!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto_auto\] lg:gap-x-3 lg:gap-y-0"/);
+  assert.match(cars, /!embedded && "sm:row-start-2 lg:row-start-1"/);
+  assert.match(cars, /!embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1"/);
   assert.match(cars, /col-start-2 row-start-1 hidden[^"]*sm:flex/);
 });
 
