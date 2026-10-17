@@ -11,5 +11,6 @@ test("Flight keeps its compact native switch and expanded touch target", () => {
 test("Hotel retains its switch appearance without Flight's additional hit area", () => {
   assert.match(source, /product = "hotel"/);
   assert.match(source, /hitSlop=\{flight \? 6 : undefined\}/);
-  assert.match(source, /switchIos: \{ transform: \[\{ translateY: 8 \}\]/);
+  assert.match(source, /hotelWebSwitchTrack: \{ width: 42, height: 24/);
+  assert.match(source, /hotelWebCompact: \{ minHeight: 58/);
 });
