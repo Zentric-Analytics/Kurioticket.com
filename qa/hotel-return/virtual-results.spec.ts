@@ -374,7 +374,7 @@ test("Cars results use content-sized offer rows for 1-3 and preserve 4+ expandab
     const list = cards.first().locator("[data-car-card-mobile-offers] [data-car-deal-provider-offers]");
     await expect(list.locator("[data-car-deal-provider-offer]")).toHaveCount(count);
     const height = (await list.boundingBox())!.height;
-    const disclosure = cards.first().locator("[data-car-deal-more-slot]");
+    const disclosure = cards.first().locator("[data-car-card-mobile-offers] [data-car-deal-more-slot]");
     if (count <= 3) {
       await expect(disclosure).toHaveCount(0);
       if (previousNarrowHeight !== null) expect(height).toBeGreaterThan(previousNarrowHeight + 65);
@@ -707,7 +707,7 @@ test("desktop Cars sort badge follows the selected sort and keeps title aligned 
   await expect(mobileToggle).toHaveCSS("font-weight", "600");
 });
 
-test("desktop Cars previews three sellers and expands all additional offers without affecting mobile previews", async ({ page }) => {
+test("desktop Cars sizes one-to-three seller rows to content and expands additional offers without affecting mobile previews", async ({ page }) => {
   const original = carBase.offers[0];
   if (!original) throw new Error("Missing Cars comparison test offer");
   let sellerCount = 3;
@@ -739,8 +739,10 @@ test("desktop Cars previews three sellers and expands all additional offers with
     await expect(card.locator("article")).toHaveCSS("background-color", "rgb(255, 255, 255)");
     const offerList = detail.locator("[data-car-deal-provider-offers]");
     const listHeight = (await offerList.boundingBox())!.height;
-    expect(listHeight).toBeGreaterThanOrEqual(98);
-    await expect(offerList).toHaveCSS("min-height", "98px");
+    const visibleCount = Math.min(3, count);
+    const expectedHeight = visibleCount * 30 + (visibleCount - 1) * 4;
+    expect(Math.abs(listHeight - expectedHeight)).toBeLessThanOrEqual(2);
+    if (count > 3) await expect(offerList).toHaveCSS("min-height", "98px");
     await expect(rows.first()).toHaveCSS("min-height", "30px");
     const assertEvenDesktopRowGap = async (index: number) => {
       const current = await rows.nth(index).boundingBox();
