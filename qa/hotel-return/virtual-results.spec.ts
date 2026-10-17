@@ -968,7 +968,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await expect(rows).toHaveCount(7);
     await expect(rows.filter({ visible: true })).toHaveCount(3);
     if (mobile) await expect(main).toHaveCount(0);
-    else await expect(main).toBeVisible();
+    else await expect(main).toBeHidden(); // Standalone desktop has no duplicate price rail.
     await expect(area.locator("[data-car-rate-terms]")).toHaveCount(0);
     await expect(area.getByText("Rate details", { exact: true })).toHaveCount(0);
     const initialHeight = (await card.boundingBox())!.height;
@@ -1171,7 +1171,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await area.locator("[data-car-deal-more-offers]").filter({ visible: true }).click();
     await expect(rows.filter({ visible: true })).toHaveCount(3);
     if (mobile) await expect(main).toHaveCount(0);
-    else await expect(main).toBeVisible();
+    else await expect(main).toBeHidden(); // Standalone desktop has no duplicate price rail.
     const resultRow = page.locator('[data-cars-results-card-list] [data-virtual-index]').first();
     await resultRow.focus(); // Virtualized result rows are programmatically focusable.
     await expect(resultRow).toHaveCSS("outline-style", "none");
@@ -1186,7 +1186,7 @@ test("KAYAK Cars with seven distinct rates stay compact and reveal exact offer t
     await page.keyboard.press("Escape");
     await expect(dialog).not.toBeVisible();
     if (mobile) await expect(main).toHaveCount(0);
-    else await expect(main).toBeVisible();
+    else await expect(main).toBeHidden(); // Standalone desktop has no duplicate price rail.
     if (!mobile) {
       const image = card.locator('[data-region="image"] > div').first();
       const imageRect = await image.boundingBox();
