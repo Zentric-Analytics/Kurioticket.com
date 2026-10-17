@@ -174,7 +174,7 @@ test("desktop standalone title and save/share occupy the exact same grid row bel
 test("standalone desktop keeps Best value above name-aligned Save and Share with no separate lg pricing rail", () => {
   const heading = source.slice(source.indexOf('data-car-card-desktop-shared-header'), source.indexOf('data-region="details"'));
   const pricing = source.slice(source.indexOf('data-region="pricing"'));
-  assert.match(heading, /data-car-card-desktop-badge[\s\S]*?row-start-1[\s\S]*?data-car-card-desktop-title-row/);
+  assert.match(heading, /row-start-1 flex h-6 items-start justify-end px-3[\s\S]*?data-car-card-desktop-badge[\s\S]*?data-car-card-desktop-title-row/);
   assert.match(heading, /data-car-card-desktop-title-row[\s\S]*?data-car-card-desktop-actions/);
   assert.match(heading, /data-car-card-desktop-actions[\s\S]*?row-start-2" : "row-start-1"/);
   assert.match(pricing, /"lg:!hidden"/);
