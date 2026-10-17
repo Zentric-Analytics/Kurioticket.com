@@ -50,7 +50,7 @@ test("hotel details price alert uses a stable localized slider sheet without num
   const component = readFileSync("src/features/search/HotelPriceAlert.tsx", "utf8");
   const details = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
 
-  assert.match(details, /<HotelPriceAlert[\s\S]*?displayCurrency=\{displayPrices\?\.total\.currency \?\? result\.currency \?\? "USD"\}[\s\S]*?rates=\{hotelCurrencyRates\}/);
+  assert.match(details, /<HotelPriceAlert[\s\S]*?displayCurrency=\{displayPrices\?\.total\?\.currency \?\? result\.currency \?\? "USD"\}[\s\S]*?rates=\{hotelCurrencyRates\}/);
   assert.match(component, /<FlightRangeSlider[\s\S]*?singleMaximum/);
   assert.match(component, /message\("currentTotal"\)/);
   assert.match(component, /message\("dropsBy"\)/);

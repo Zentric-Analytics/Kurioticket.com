@@ -683,7 +683,7 @@ function HotelDetail({
                 hotel={result}
                 hotelResults={[result]}
                 available={availability.priceAlerts}
-                displayCurrency={displayPrices?.total.currency ?? result.currency ?? "USD"}
+                displayCurrency={displayPrices?.total?.currency ?? result.currency ?? "USD"}
                 rates={hotelCurrencyRates}
               />
             </View>
