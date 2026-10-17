@@ -685,7 +685,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     String(plan.plan?.payload.destination || ""),
     currencyState?.rates ?? {},
   ), [currencyState?.rates, plan.plan?.payload.destination, product, results]);
-  const showRoomAndBedShortcut = hotelOptions.roomTypes.length > 0 || hotelFilters.roomTypes.length > 0;
   const filteredHotelResults = useMemo(() => product === "hotel"
     ? filterHotels(results as HotelResult[], hotelFilters, hotelOptions)
     : [], [hotelFilters, hotelOptions, product, results]);
@@ -1074,7 +1073,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               {hotelOptions.price ? <HotelResultsShortcut label={hotelPriceShortcutLabel} selected={hotelPriceFilterActive} expanded={hotelQuickFilter === "price"} onPress={() => openHotelQuickFilter("price")} onClear={hotelPriceFilterActive ? () => clearHotelQuickFilter("price") : undefined} /> : null}
               <HotelResultsShortcut label={hotelStarsShortcutLabel} selected={hotelFilters.starRatings.length > 0} expanded={hotelQuickFilter === "stars"} onPress={() => openHotelQuickFilter("stars")} onClear={hotelFilters.starRatings.length ? () => clearHotelQuickFilter("stars") : undefined} />
               <HotelResultsShortcut label={hotelFacilitiesShortcutLabel} selected={hotelFilters.facilities.length > 0} expanded={hotelQuickFilter === "facilities"} onPress={() => openHotelQuickFilter("facilities")} onClear={hotelFilters.facilities.length ? () => clearHotelQuickFilter("facilities") : undefined} />
-              {showRoomAndBedShortcut ? <HotelResultsShortcut label={hotelRoomTypesShortcutLabel} selected={hotelFilters.roomTypes.length > 0} expanded={hotelQuickFilter === "roomTypes"} onPress={() => openHotelQuickFilter("roomTypes")} onClear={hotelFilters.roomTypes.length ? () => clearHotelQuickFilter("roomTypes") : undefined} /> : null}
+              <HotelResultsShortcut label={hotelRoomTypesShortcutLabel} selected={hotelFilters.roomTypes.length > 0} expanded={hotelQuickFilter === "roomTypes"} onPress={() => openHotelQuickFilter("roomTypes")} onClear={hotelFilters.roomTypes.length ? () => clearHotelQuickFilter("roomTypes") : undefined} />
             </>
     </ScrollView>
   ));
