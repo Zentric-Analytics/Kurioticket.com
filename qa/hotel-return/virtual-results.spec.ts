@@ -115,9 +115,10 @@ test("Cars reduced desktop column preserves complete count, centered Track price
     }
     expect(countBox.x + countBox.width + 2).toBeLessThanOrEqual(alertBox.x);
     expect(alertBox.x + alertBox.width + 2).toBeLessThanOrEqual(sortLabelBox.x);
-    const noClippedText = async (selector: string) => summary.locator(selector).evaluate(el => el.scrollWidth <= el.clientWidth + 2);
-    expect(await noClippedText("h2")).toBe(true);
-    expect(await noClippedText(".cars-results-desktop-sort-trigger span")).toBe(true);
+    const countNotClipped = await heading.evaluate(el => el.scrollWidth <= el.clientWidth + 2);
+    const sortNotClipped = await sortButton.locator("span").first().evaluate(el => el.scrollWidth <= el.clientWidth + 2);
+    expect(countNotClipped).toBe(true);
+    expect(sortNotClipped).toBe(true);
     await expect(sortLabel).toHaveText("Sort by");
     await expect(sortButton).toContainText("Recommended");
     await expect(alert).toBeVisible();
