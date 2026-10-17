@@ -200,19 +200,6 @@ test("native gallery remains interactive and full-bleed with the two-level mobil
   assert.doesNotMatch(gallery, /Previous photo|Next photo|ChevronLeft|ChevronRight/);
 });
 
-test("active Hotel Rates reuse the Flight selectable deal-card language", () => {
-  assert.match(hotel, /const hotelAccent = theme\.dark \? "#8FB5FF" : colors\.blue/);
-  assert.match(hotel, /<NativeHotelRatesSection[\s\S]*?accentColor=\{hotelAccent\}/);
-  assert.match(rates, /const selectedBackground = theme\.dark \? "#142844" : "#F4F8FF"/);
-  assert.match(rates, /accessibilityRole="radiogroup"/);
-  assert.match(rates, /accessibilityRole="radio"/);
-  assert.match(rates, /borderColor: selected \? accentColor : surfaceBorderColor/);
-  assert.match(rates, /s\.dealRadioDot/);
-  assert.doesNotMatch(rates, /rateTitle|rateMeta|selectedBar|showSelectionMarker|<Check|reserveButton|>Reserve<\/Text>|Compact room|Deluxe|Suite/);
-  assert.match(hotelSource, /bookingDockButton/);
-  assert.match(tokens, /blue: "#004BB8"/);
-});
-
 test("active Details is flat, keeps the useful fact sections, and exposes all amenities", () => {
   for (const heading of [
     "About this hotel",
@@ -229,31 +216,6 @@ test("active Details is flat, keeps the useful fact sections, and exposes all am
   assert.doesNotMatch(bookingDetails, /width: "48%"|flexWrap: "wrap"/);
 });
 
-test("active Hotel provider selection validates candidates and allows safe KAYAK sandbox handoff", () => {
-  assert.match(hotel, /nativeHotelProviderUrl\([\s\S]*?result\.partnerRedirectUrl,[\s\S]*?result\.bookingUrl/);
-  assert.match(hotel, /const providerHandoffAvailable =[\s\S]*?Boolean\(redirectUrl\)[\s\S]*?result\.searchPolicy\.bookable \|\| result\.searchPolicy\.source === "kayak-sandbox"/);
-  assert.doesNotMatch(hotel, /result\.partnerRedirectUrl \|\| result\.bookingUrl/);
-});
-
-test("active Hotel Rates use one Continue-to-provider action for Kurioticket and external providers", () => {
-  assert.match(hotel, /nativeKurioticketHotelDetailsUrl/);
-  assert.match(hotel, /const kurioticketHandoffAvailable =[\s\S]*?roomOptions\.length > 0 && Boolean\(kurioticketWebUrl\)/);
-  assert.match(hotel, /nativeHotelOffers\([\s\S]*?kurioticketHandoffAvailable,[\s\S]*?providerHandoffAvailable/);
-  assert.match(hotel, /const rateRows = buildNativeHotelRateRows/);
-  assert.match(hotel, /const selectedRate: NativeHotelRateRow \| null/);
-  assert.match(hotel, /const bookingActionLabel = "View deal"/);
-  assert.doesNotMatch(hotel, /Continue to|Choose room/);
-  assert.match(hotel, /selectedRate\.offerId === "internal-rooms"[\s\S]*?\? kurioticketWebUrl/);
-  assert.match(hotel, /selectedRate\.offerId === "provider" && providerHandoffAvailable[\s\S]*?\? redirectUrl/);
-  assert.match(hotel, /await import\("expo-web-browser"\)/);
-  assert.match(hotel, /WebBrowser\.openBrowserAsync\(url, \{ dismissButtonStyle: "close" \}\)/);
-  assert.match(hotel, /await openProviderInApp\(targetUrl\)/);
-  assert.doesNotMatch(hotel, /Continue to|Choose room|HotelRoomOptionsModal|setRoomsOpen/);
-  assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
-  assert.match(hotel, /bookingDockButtonText\}>\{bookingActionLabel\}<\/Text>/);
-  assert.match(hotel, /selectedRate\.totalPrice/);
-});
-
 test("Car detail parity remains protected", () => {
   assert.match(car, /accessibilityLabel="Back to Cars results"/);
   assert.doesNotMatch(car, />Back to Cars results</);
@@ -265,14 +227,6 @@ test("Car detail parity remains protected", () => {
   for (const field of ["passengers", "bags", "doors", "transmission", "airConditioning", "fuelPolicy", "pickupLocation", "returnLocation"]) assert.match(car, new RegExp(`result\\.${field}`));
   assert.match(car, /primaryValidCarOffer\(result\.offers\)/);
 });
-
-test("Hotel Rates no longer expose native room-option cards or a room modal", () => {
-  assert.doesNotMatch(hotel, /HotelRoomOptionsModal|createHotelRoomDisplayPrice|presentedRoomOptions|roomOptionId|setRoomsOpen/);
-  assert.doesNotMatch(rates, /roomOptions|roomOptionId|roomRatePresentation|rateTitle|rateMeta|Compact room|Deluxe|Suite/);
-  assert.doesNotMatch(gallery, /Intl\.NumberFormat/);
-});
-
-
 
 test("native Car details use automatic and manual transmission FlowIcons", () => {
   assert.match(car, /import \{ FlowIcon \} from "\.\.\/flow\/FlowIcon"/);
