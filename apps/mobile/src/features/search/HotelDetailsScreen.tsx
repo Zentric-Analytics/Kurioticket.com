@@ -675,7 +675,7 @@ function HotelDetail({
           />
         ) : null}
 
-        <View style={[s.detailBody, activeHotelTab === "details" && showHotelPriceAlert && s.detailBodyWithAlert]}>
+        <View style={s.detailBody}>
           {activeHotelTab === "details" && hotelAlertPlan && showHotelPriceAlert ? (
             <View style={s.hotelPriceAlert}>
               <HotelPriceAlert
@@ -829,7 +829,6 @@ const s = StyleSheet.create({
   tabText: { fontSize: 13, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
   tabTextCompact: { fontSize: 12 },
   detailBody: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8, gap: 6 },
-  detailBodyWithAlert: { paddingTop: 8 },
-  hotelPriceAlert: { marginBottom: 10 },
+  hotelPriceAlert: { marginTop: -2, marginBottom: 10 },
 
 });
