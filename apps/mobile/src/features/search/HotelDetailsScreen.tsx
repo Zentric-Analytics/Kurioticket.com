@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { NativeSupplierInformation } from "./NativeSupplierInformation";
-import { hotelSupplierFacts } from "../../../../../src/lib/hotels/hotelSupplierFacts";
 import {
   Alert,
   Platform,
@@ -663,7 +661,7 @@ function HotelDetail({
             />
           ) : null}
         </View>
-        {activeHotelTab === "details" ? <NativeSupplierInformation facts={hotelSupplierFacts(details?.providerDetails, false)} title="Property information supplied by KAYAK" /> : null}
+
       </ScrollView>
 
       {detailsStatus === "loading" ? (
