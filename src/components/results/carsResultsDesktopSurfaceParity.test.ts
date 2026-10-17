@@ -132,11 +132,11 @@ test("desktop Cars breathing room separates map, filters, toolbar and result car
   assert.doesNotMatch(results, /lg:max-w-\[1080px\]/);
 });
 
-test("desktop Cars keeps the count, centered tracking and Sort toolbar inside the shortened white column", () => {
+test("desktop Cars balances Track prices between count and Sort inside the shortened white column", () => {
   assert.match(results, /lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\]/);
   assert.match(results, /data-cars-results-content-column className=\{cn\("min-w-0 space-y-0 sm:space-y-4", !embedded && presentation === "standalone" && "lg:space-y-5"\)\}/);
   assert.match(results, /data-cars-results-summary-row[\s\S]*?\{!embedded \? <CarPriceAlertControl[\s\S]*?cars-results-desktop-sort-trigger/);
-  assert.match(results, /lg:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/);
+  assert.match(results, /lg:grid-cols-\[max-content_minmax\(0,1fr\)_max-content\]/);
   assert.match(alert, /lg:w-fit lg:max-w-\[240px\] lg:justify-self-center/);
   assert.match(loading, /lg:max-w-\[928px\]/);
   assert.doesNotMatch(results, /lg:max-w-\[1080px\]/);
