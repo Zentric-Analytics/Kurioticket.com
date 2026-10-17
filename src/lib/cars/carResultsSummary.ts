@@ -99,3 +99,27 @@ export const formatCarResultsScheduleSummary = ({
     formatEndpoint(dropoffDate, dropoffTime, resolvedLocale),
   ].filter(Boolean).join(" – ");
 };
+
+/** Concise locale-aware summary for narrow native Cars headers. */
+export const formatCompactCarResultsScheduleSummary = ({
+  pickupDate, pickupTime, dropoffDate, dropoffTime, locale,
+}: CarResultsScheduleSummaryInput) => {
+  const resolvedLocale = safeLocale(locale);
+  const compactDate = (value?: string) => {
+    const date = parseCalendarDate(value);
+    return date ? new Intl.DateTimeFormat(resolvedLocale, {
+      month: "short", day: "numeric", timeZone: "UTC",
+    }).format(date) : "";
+  };
+  const compactTime = (value?: string) => {
+    const time = parseWallClockTime(value);
+    if (!time) return "";
+    const instant = new Date(Date.UTC(2000, 0, 1, time.hour, time.minute));
+    return new Intl.DateTimeFormat(resolvedLocale, {
+      hour: "numeric", minute: "2-digit", timeZone: "UTC",
+    }).format(instant);
+  };
+  const dates = [compactDate(pickupDate), compactDate(dropoffDate)].filter(Boolean).join(" – ");
+  const times = [compactTime(pickupTime), compactTime(dropoffTime)].filter(Boolean).join(" – ");
+  return [dates,times].filter(Boolean).join(" · ");
+};
