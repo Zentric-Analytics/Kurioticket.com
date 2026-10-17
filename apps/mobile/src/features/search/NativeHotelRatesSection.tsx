@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { Info } from "lucide-react-native";
+import { useRef, useState } from "react";
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Info, X } from "lucide-react-native";
 import type { PublicHotelProviderDetails } from "../../../../../src/lib/hotels/hotelProviderDetails";
 import type { PublicHotelResult } from "../../../../../src/lib/types";
 import { hotelSupplierFacts } from "../../../../../src/lib/hotels/hotelSupplierFacts";
@@ -10,6 +10,7 @@ import { createHotelDisplayPrices } from "./hotelDetailCurrency";
 import type { NativeHotelOffer } from "./nativeHotelDetailsModel";
 import { nativeHotelProviderUrl } from "./nativeHotelDetailsModel";
 import { ProviderLogo } from "./ProviderLogo";
+import { placeHotelRatePopover, type HotelRateInfoAnchor } from "./nativeHotelRatePopoverPlacement";
 
 type Theme = {
   dark: boolean;
@@ -168,7 +169,17 @@ export function NativeHotelRatesSection({
   theme: Theme;
   accentColor: string;
 }) {
-  const [expandedRateId, setExpandedRateId] = useState<string | null>(null);
+  const { width, height } = useWindowDimensions();
+  const narrow = width < 350;
+  const infoRefs = useRef<Map<string, View>>(new Map());
+  const [popover, setPopover] = useState<{ id: string; anchor: HotelRateInfoAnchor } | null>(null);
+  const activeRate = popover ? rows.find(row => row.id === popover.id) : null;
+  const openRateInfo = (rowId: string) => {
+    if (popover?.id === rowId) { setPopover(null); return; }
+    infoRefs.current.get(rowId)?.measureInWindow((x, y, anchorWidth, anchorHeight) => {
+      setPopover({ id: rowId, anchor: { x, y, width: anchorWidth, height: anchorHeight } });
+    });
+  };
   if (detailsStatus === "loading") return null;
 
   return <View style={s.section}>
@@ -186,9 +197,7 @@ export function NativeHotelRatesSection({
     <View accessibilityLabel="Hotel rates" style={s.dealList}>
       {rows.map(row => {
         const pending = pendingRateId === row.id;
-        const expanded = expandedRateId === row.id;
-        const infoAvailable = Boolean(row.roomName || row.rateFacts.length || row.cancellationLabel || row.paymentLabel);
-        return <View key={row.id} style={[s.dealCard, {
+        return <View key={row.id} style={[s.dealCard, narrow && s.narrowCard, {
           backgroundColor: theme.surface,
           borderColor: theme.dark ? theme.border : "#D9E2E8",
         }]}>
@@ -198,21 +207,25 @@ export function NativeHotelRatesSection({
                 <View style={s.brandContainer}>
                   <HotelRateProviderBrand row={row} theme={theme} />
                 </View>
-                {infoAvailable ? <Pressable
+                <Pressable
+                  ref={element => {
+                    if (element) infoRefs.current.set(row.id, element);
+                    else infoRefs.current.delete(row.id);
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel={`Rate details for ${row.roomName || row.providerName}`}
-                  accessibilityState={{ expanded }}
-                  onPress={() => setExpandedRateId(expanded ? null : row.id)}
+                  accessibilityState={{ expanded: popover?.id === row.id }}
+                  onPress={() => openRateInfo(row.id)}
                   hitSlop={8}
                   style={s.infoButton}
-                ><Info size={18} strokeWidth={1.7} color={theme.textSecondary} /></Pressable> : null}
+                ><Info size={narrow ? 16 : 18} strokeWidth={1.6} color={theme.textSecondary} /></Pressable>
               </View>
             </View>
             <View style={s.priceColumn}>
-              <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}
+              <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}
                 accessibilityLabel={`Stay total: ${row.totalAccessibilityLabel}`}
-                style={[s.dealPrice, { color: theme.textPrimary }]}>{row.totalPrice}</Text>
-              <Text numberOfLines={1} style={[s.dealPriceLabel, { color: theme.textSecondary }]}>{row.totalLabel}</Text>
+                style={[s.dealPrice, narrow && s.narrowPrice, { color: theme.textPrimary }]}>{row.totalPrice}</Text>
+              <Text numberOfLines={1} style={[s.dealPriceLabel, narrow && s.narrowPriceLabel, { color: theme.textSecondary }]}>{row.totalLabel}</Text>
             </View>
             <Pressable
               accessibilityRole="button"
@@ -220,57 +233,120 @@ export function NativeHotelRatesSection({
               accessibilityState={{ disabled: !row.actionable || pendingRateId !== null, busy: pending }}
               disabled={!row.actionable || pendingRateId !== null}
               onPress={() => onViewDeal(row.id)}
-              style={({ pressed }) => [s.viewDealButton, { backgroundColor: accentColor },
+              style={({ pressed }) => [s.viewDealButton, narrow && s.narrowButton, { backgroundColor: accentColor },
                 (!row.actionable || pendingRateId !== null) && s.disabledButton,
                 pressed && s.pressedButton]}
-            ><Text style={s.viewDealText}>{pending ? "Opening…" : "View deal"}</Text></Pressable>
+            ><Text style={[s.viewDealText, narrow && s.narrowButtonText]}>{pending ? "Opening…" : "View deal"}</Text></Pressable>
           </View>
-          {expanded && infoAvailable ? <View style={[s.rateDetails, { borderTopColor: theme.border }]}>
-            <Text style={[s.rateHeading, { color: theme.textPrimary }]}>Rate details</Text>
-            <Text style={[s.rateSupplier, { color: theme.textPrimary }]}>{row.providerName}</Text>
-            {row.roomName ? <Text style={[s.rateBody, { color: theme.textSecondary }]}>{row.roomName}</Text> : null}
-            {row.cancellationLabel || row.paymentLabel ? <View style={s.rateFacts}>
-              <Text style={[s.rateHeading, { color: theme.textPrimary }]}>Booking conditions</Text>
-              {row.cancellationLabel ? <Text style={[s.rateBody, { color: theme.textSecondary }]}>{row.cancellationLabel}</Text> : null}
-              {row.paymentLabel ? <Text style={[s.rateBody, { color: theme.textSecondary }]}>{row.paymentLabel}</Text> : null}
-            </View> : null}
-            {row.rateFacts.length ? <View style={s.rateFacts}>
-              <Text style={[s.rateHeading, { color: theme.textPrimary }]}>Supplier rate information</Text>
-              {row.rateFacts.map((fact, index) => <View key={`${fact.label}-${index}`} style={s.factRow}>
-                <Text style={[s.factLabel, { color: theme.textSecondary }]}>{fact.label}</Text>
-                <Text selectable style={[s.factValue, { color: theme.textPrimary }]}>{fact.value}</Text>
-              </View>)}
-              {row.sourceCurrency ? <Text style={[s.rateNote, { color: theme.textSecondary }]}>Supplier figures may be in {row.sourceCurrency}.</Text> : null}
-            </View> : null}
-            <View style={[s.totalRow, { backgroundColor: theme.dark ? theme.border : "#F3F5F9" }]}>
-              <Text style={[s.rateBody, { color: theme.textPrimary }]}>Stay total</Text>
-              <Text style={[s.rateHeading, { color: theme.textPrimary }]}>{row.totalPrice}</Text>
-            </View>
-          </View> : null}
+
         </View>;
       })}
     </View>
+    {activeRate && popover ? (
+      <NativeHotelRatePopover
+        key={activeRate.id}
+        row={activeRate}
+        anchor={popover.anchor}
+        viewport={{ width, height }}
+        theme={theme}
+        onClose={() => setPopover(null)}
+      />
+    ) : null}
   </View>;
 }
 
+function NativeHotelRatePopover({
+  row, anchor, viewport, theme, onClose,
+}: {
+  row: NativeHotelRateRow;
+  anchor: HotelRateInfoAnchor;
+  viewport: { width: number; height: number };
+  theme: Theme;
+  onClose: () => void;
+}) {
+  const [measuredHeight, setMeasuredHeight] = useState(440);
+  const placement = placeHotelRatePopover(anchor, viewport, measuredHeight);
+  return <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
+    <View style={s.popupRoot}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Close rate details" style={StyleSheet.absoluteFill} onPress={onClose} />
+      <View accessibilityViewIsModal accessibilityLabel="Rate details" style={[s.popup, {
+        left: placement.left, top: placement.top, width: placement.width, maxHeight: placement.maxHeight,
+        backgroundColor: theme.surface, borderColor: theme.border,
+      }]} onLayout={event => {
+        const next = event.nativeEvent.layout.height;
+        if (Math.abs(next - measuredHeight) > 1) setMeasuredHeight(next);
+      }}>
+        <View pointerEvents="none" style={[s.popupPointer, placement.pointerSide === "left"
+          ? { left: -6, borderBottomWidth: 1, borderLeftWidth: 1 }
+          : { right: -6, borderTopWidth: 1, borderRightWidth: 1 },
+          { top: placement.pointerTop, backgroundColor: theme.surface, borderColor: theme.border }]} />
+        <ScrollView style={s.popupScroll} contentContainerStyle={s.popupContent} showsVerticalScrollIndicator nestedScrollEnabled>
+          <View style={s.popupHeader}>
+            <Text accessibilityRole="header" style={[s.popupTitle, { color: theme.textPrimary }]}>Rate details</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Close Rate details" onPress={onClose} hitSlop={8} style={s.popupClose}>
+              <X size={18} color={theme.textSecondary} strokeWidth={1.8} />
+            </Pressable>
+          </View>
+          <Text style={[s.popupProvider, { color: theme.textPrimary }]}>{row.providerName}</Text>
+          <Text style={[s.popupRoom, { color: theme.textSecondary }]}>{row.roomName || "Room description not supplied"}</Text>
+          {(row.cancellationLabel || row.paymentLabel) ? <View style={s.popupSection}>
+            <Text style={[s.popupHeading, { color: theme.textPrimary }]}>Booking conditions</Text>
+            {row.cancellationLabel ? <View style={s.factRow}><Text style={[s.factLabel, { color: theme.textSecondary }]}>Cancellation</Text><Text style={[s.factValue, { color: theme.textPrimary }]}>{row.cancellationLabel}</Text></View> : null}
+            {row.paymentLabel ? <View style={s.factRow}><Text style={[s.factLabel, { color: theme.textSecondary }]}>Payment</Text><Text style={[s.factValue, { color: theme.textPrimary }]}>{row.paymentLabel}</Text></View> : null}
+          </View> : null}
+          {row.rateFacts.length ? <View style={s.popupSection}>
+            <Text style={[s.popupHeading, { color: theme.textPrimary }]}>Price details</Text>
+            {row.rateFacts.map((fact, index) => <View key={`${fact.label}-${index}`} style={s.factRow}>
+              <Text style={[s.factLabel, { color: theme.textSecondary }]}>{fact.label.replace(/^Rate breakdown · /, "")}</Text>
+              <Text selectable style={[s.factValue, { color: theme.textPrimary }]}>{fact.value}</Text>
+            </View>)}
+            {row.sourceCurrency ? <Text style={[s.rateNote, { color: theme.textSecondary }]}>Supplier figures may be in {row.sourceCurrency}.</Text> : null}
+          </View> : null}
+          <View style={[s.totalRow, { backgroundColor: theme.dark ? theme.border : "#F2F4F8" }]}>
+            <Text style={[s.rateBody, { color: theme.textPrimary }]}>Stay total</Text>
+            <Text style={[s.rateHeading, { color: theme.textPrimary }]}>{row.totalPrice}</Text>
+          </View>
+        </ScrollView>
+      </View>
+    </View>
+  </Modal>;
+}
+
 const s = StyleSheet.create({
+  popupRoot: { flex: 1 },
+  popup: { position: "absolute", borderWidth: 1, borderRadius: 14, overflow: "visible", shadowColor: "#192024", shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 10 },
+  popupPointer: { position: "absolute", width: 10, height: 10, transform: [{ rotate: "45deg" }], borderColor: "#E1E6EB", zIndex: 1 },
+  popupScroll: { borderRadius: 14, flexGrow: 0 },
+  popupContent: { padding: 14, gap: 7 },
+  popupHeader: { minHeight: 22, flexDirection: "row", justifyContent: "center", alignItems: "center", marginBottom: 3 },
+  popupTitle: { fontSize: 14, fontWeight: "600", fontFamily: appFonts.semibold },
+  popupClose: { position: "absolute", right: 0, top: -3, width: 28, height: 28, justifyContent: "center", alignItems: "center" },
+  popupProvider: { fontSize: 12, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
+  popupRoom: { fontSize: 12, lineHeight: 18, fontFamily: appFonts.regular },
+  popupSection: { gap: 5, marginTop: 12 },
+  popupHeading: { fontSize: 12, lineHeight: 18, fontFamily: appFonts.semibold, fontWeight: "600", marginBottom: 1 },
   section: { paddingBottom: 18 },
   stay: { fontSize: 13, lineHeight: 19, fontWeight: "400", fontFamily: appFonts.regular },
-  dealList: { gap: 10, paddingTop: 12, paddingBottom: 12 },
-  dealCard: { minHeight: 84, borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12, justifyContent: "center" },
-  dealMain: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  providerColumn: { flex: 1, minWidth: 90, maxWidth: "36%" },
-  providerRow: { flexDirection: "row", alignItems: "center", gap: 3 },
-  brandContainer: { flex: 1, minWidth: 0, justifyContent: "center" },
-  kurioticketProviderLogo: { width: 100, maxWidth: "100%", height: 25 },
+  dealList: { gap: 8, paddingTop: 2, paddingBottom: 6 },
+  dealCard: { minHeight: 76, borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12, justifyContent: "center" },
+  narrowCard: { paddingHorizontal: 8 },
+  dealMain: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 4 },
+  providerColumn: { flexShrink: 1, minWidth: 0, maxWidth: "36%" },
+  providerRow: { flexDirection: "row", alignItems: "center", gap: 2 },
+  brandContainer: { flexShrink: 1, minWidth: 0, justifyContent: "center" },
+  kurioticketProviderLogo: { width: 64, maxWidth: "100%", height: 25 },
   providerLogoTile: { width: 30, height: 27, justifyContent: "center" },
-  dealProvider: { fontSize: 12, lineHeight: 17, fontWeight: "600", fontFamily: appFonts.semibold },
-  infoButton: { width: 23, height: 28, alignItems: "center", justifyContent: "center" },
-  priceColumn: { alignItems: "center", flexShrink: 1, minWidth: 75, maxWidth: "38%" },
-  dealPrice: { fontSize: 13, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold, fontVariant: ["tabular-nums"] },
-  dealPriceLabel: { fontSize: 10, lineHeight: 15, fontWeight: "400", fontFamily: appFonts.regular },
-  viewDealButton: { minHeight: 38, minWidth: 82, paddingHorizontal: 8, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  viewDealText: { fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold, color: "#FFFFFF" },
+  dealProvider: { fontSize: 11, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
+  infoButton: { width: 20, height: 22, alignItems: "center", justifyContent: "center" },
+  priceColumn: { flexDirection: "row", alignItems: "baseline", justifyContent: "center", gap: 3, flexShrink: 1, minWidth: 0 },
+  dealPrice: { fontSize: 13, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold, fontVariant: ["tabular-nums"], flexShrink: 1 },
+  narrowPrice: { fontSize: 10, lineHeight: 16 },
+  dealPriceLabel: { fontSize: 10, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular },
+  narrowPriceLabel: { fontSize: 9, lineHeight: 16 },
+  viewDealButton: { minHeight: 32, minWidth: 76, paddingHorizontal: 6, borderRadius: 8, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  narrowButton: { minWidth: 68, paddingHorizontal: 4 },
+  viewDealText: { fontSize: 12, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold, color: "#FFFFFF" },
+  narrowButtonText: { fontSize: 11, lineHeight: 17 },
   pressedButton: { opacity: 0.83 },
   disabledButton: { opacity: 0.45 },
   rateDetails: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 14, marginTop: 12, gap: 7 },
