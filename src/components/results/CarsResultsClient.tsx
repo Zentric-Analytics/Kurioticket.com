@@ -2810,7 +2810,7 @@ export function CarsResultsExperience({
                 <div
                   className={cn(
                     "grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1.5 gap-y-0 px-2 max-[359px]:px-1 sm:gap-x-2 sm:gap-y-3 sm:px-0",
-                    !embedded && "lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-x-3 lg:gap-y-0",
+                    !embedded && "lg:grid-cols-[max-content_minmax(0,1fr)_max-content] lg:gap-x-3 lg:gap-y-0",
                   )}
                   data-cars-results-summary-row
                 >
