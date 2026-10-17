@@ -1,81 +1,37 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-
-const detailSource = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
-const ratesSource = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
-const webMobileDetails = readFileSync(
-  "../../src/components/results/hotelDetails/MobileHotelDetails.tsx",
-  "utf8",
-);
-const webMobileCss = readFileSync(
-  "../../src/components/results/hotelDetails/HotelDetailsMobile.module.css",
-  "utf8",
-);
-
-function rateStyle(name: string, nextName?: string) {
-  const start = ratesSource.indexOf(`  ${name}:`);
-  const end = nextName
-    ? ratesSource.indexOf(`  ${nextName}:`, start)
-    : ratesSource.indexOf("\n});", start);
-  assert.notEqual(start, -1, `${name} style must exist`);
-  assert.notEqual(end, -1, `${nextName ?? "stylesheet end"} must follow ${name}`);
-  return ratesSource.slice(start, end);
-}
-
-test("mobile web reference renders dedicated Hotel provider offers from shared offer data", () => {
-  assert.match(webMobileDetails, /import \{ MobileProviderOffer \} from "\.\/HotelPriceComparisonSection"/);
-  assert.match(webMobileDetails, /offers\.map\(offer => <MobileProviderOffer/);
-  assert.match(webMobileDetails, /onInfo=\{anchor => \{ setRateAnchor\(anchor\); setRateInfo\(current =>/);
-  assert.match(webMobileDetails, /perNightText=\{props\.perNightText\}/);
-  assert.match(webMobileDetails, /totalPrice: total/);
-  const rateListStart = webMobileDetails.indexOf('<div aria-label="Hotel rates" className={styles.rateList}>');
-  assert.ok(rateListStart >= 0, "the provider-card list must be present");
-  const rateListEnd = webMobileDetails.indexOf("</div>", rateListStart);
-  assert.ok(rateListEnd > rateListStart);
-  const providerCards = webMobileDetails.slice(rateListStart, rateListEnd);
-  assert.match(providerCards, /offers\.map\(offer => <MobileProviderOffer/);
-  assert.doesNotMatch(providerCards, />Stay total</, "the card list must not repeat the details-dialog total label");
-  assert.match(webMobileDetails, /rateInfo && rateAnchor \? <HotelRatePopover offer=\{rateInfo\} anchor=\{rateAnchor\} onClose=\{\(\) => setRateInfo\(null\)\}/);
-  assert.match(webMobileDetails, /import \{ HotelRatePopover \} from "\.\/HotelRatePopover"/);
-  assert.doesNotMatch(webMobileDetails, /<HotelRateInfoPopover/);
-  assert.doesNotMatch(webMobileDetails, /className=\{styles\.rateAction\}/);
-  assert.doesNotMatch(webMobileCss, /\.rate\[data-selected="true"\][^}]*border-color: var\(--accent\)/);
+const hotel = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+const rates = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
+test("all three native Hotel Details tabs have no persistent booking dock", () => {
+  assert.doesNotMatch(hotel, /bookingDock|bookingDockButton|selectedRate\.totalPrice/);
+  assert.match(hotel, /contentContainerStyle=\{\{ paddingBottom: 24 \+ inset\.bottom \}\}/);
+  assert.match(hotel, /activeHotelTab === "deals"/);
+  assert.match(hotel, /activeHotelTab === "details"/);
+  assert.match(hotel, /activeHotelTab === "reviews"/);
 });
-
-test("native Hotel keeps one selected-provider dock visible across Rates, Overview, and Reviews", () => {
-  assert.match(detailSource, /detailsStatus !== "loading" && selectedRate/);
-  assert.match(detailSource, /s\.bookingDock/);
-  assert.match(detailSource, /selectedRate\.totalPrice/);
-  assert.match(detailSource, /selectedRate\.totalLabel/);
-  assert.match(detailSource, /const bookingActionLabel = "View deal"/);
-  assert.doesNotMatch(detailSource, /Continue to|Choose room/);
-  assert.match(detailSource, /bookingDockButtonText\}>\{bookingActionLabel\}<\/Text>/);
-  assert.match(detailSource, /onPress=\{\(\) => void continueSelectedRate\(\)\}/);
-  assert.match(detailSource, /contentContainerStyle=\{\{ paddingBottom: selectedRate \? 120 \+ inset\.bottom : 24 \+ inset\.bottom \}\}/);
-  const tabsEnd = detailSource.indexOf("</ScrollView>");
-  const dock = detailSource.indexOf("s.bookingDock");
-  assert.ok(tabsEnd >= 0 && dock > tabsEnd, "booking dock must sit outside tab-specific scrolling content");
+test("every distinct provider offer gets an independent actionable rate card", () => {
+  assert.match(rates, /for \(const \{ hotel, providerDetails \} of providerEntries\)/);
+  assert.match(rates, /id: `provider:\$\{hotel\.id\}`/);
+  assert.match(rates, /offerId: hotel\.id/);
+  assert.match(rates, /new Set<string>\(\)/);
+  assert.match(rates, /View deal/);
+  assert.match(rates, /onPress=\{\(\) => onViewDeal\(row\.id\)\}/);
+  assert.match(rates, /disabled=\{!row\.actionable \|\| pendingRateId !== null\}/);
 });
-
-test("Rates use independent selectable cards with the Flight radio treatment", () => {
-  assert.match(rateStyle("dealList", "dealCard"), /gap: 10[\s\S]*paddingVertical: 12/);
-  assert.match(rateStyle("dealCard", "dealCardSelectedLight"), /minHeight: 96[\s\S]*borderWidth: 1[\s\S]*borderRadius: 14[\s\S]*paddingHorizontal: 15[\s\S]*paddingVertical: 13/);
-  assert.match(ratesSource, /const selectedBackground = theme\.dark \? "#142844" : "#F4F8FF"/);
-  assert.match(ratesSource, /backgroundColor: selected[\s\S]*\? selectedBackground[\s\S]*: theme\.surface/);
-  assert.match(ratesSource, /borderColor: selected \? accentColor : surfaceBorderColor/);
-  assert.match(ratesSource, /accessibilityRole="radiogroup"/);
-  assert.match(ratesSource, /accessibilityRole="radio"/);
-  assert.match(ratesSource, /s\.dealRadioDot/);
-  assert.doesNotMatch(ratesSource, /rateDivider|rateList|rateTitle|rateMeta|actionControl|Choose room/);
+test("rate info stays attached to its offer and property facts appear only in Overview", () => {
+  assert.match(rates, /expandedRateId === row\.id/);
+  assert.match(rates, /row\.rateFacts\.map/);
+  assert.match(rates, /Booking conditions/);
+  assert.match(hotel, /activeHotelTab === "details" \? <NativeSupplierInformation/);
+  assert.doesNotMatch(hotel, /Rate information —/);
 });
-
-test("Rates show provider nightly prices while the persistent dock owns the selected stay total", () => {
-  assert.match(ratesSource, /nightlyPrice:[\s\S]*nightlyPrice\.formatted/);
-  assert.match(ratesSource, /totalPrice:[\s\S]*totalPrice\.formatted/);
-  assert.equal(ratesSource.match(/totalLabel: "Stay total"/g)?.length, 2);
-  assert.doesNotMatch(ratesSource, /totalLabel: "Estimated stay total"|estimated stay total/);
-  assert.match(ratesSource, /"per night"/);
-  assert.match(detailSource, /selectedRate\.totalAccessibilityLabel/);
+test("native deal handoffs use the actual selected offer ID through verified server redirect", () => {
+  assert.match(hotel, /rateRows\.find\(row => row\.id === rateId && row\.actionable\)/);
+  assert.match(hotel, /travelApi\.hotelRedirect\(selected\.offerId\)/);
+  assert.match(hotel, /await openProviderInApp\(response\.url\)/);
+  assert.match(hotel, /selected\.offerId === "internal-rooms"/);
+  const api = readFileSync("src/api/travelApi.ts", "utf8");
+  assert.match(api, /hotelRedirect: \(id: string\)/);
+  assert.match(api, /type: "hotel", sourcePage: "native_hotel_details"/);
 });
-
