@@ -179,8 +179,8 @@ test("desktop price alert retains blue styling while mobile tracking sits direct
   assert.ok(section);
   assert.match(section, /bg-transparent px-0 py-0/);
   assert.match(section, /sm:rounded-2xl sm:border sm:border-blue-100 sm:bg-\[#EDF6FF\] sm:px-4 sm:py-1 sm:shadow-sm/);
-  assert.match(section, /lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-\[240px\] lg:justify-self-end/);
-  assert.match(section, /lg:rounded-lg lg:bg-\[#F1F7FE\] lg:px-2 lg:py-0/);
+  assert.match(section, /lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-\[240px\] lg:justify-self-center/);
+  assert.match(section, /lg:rounded-xl lg:border-\[#CFE0F8\] lg:bg-\[#EEF6FF\] lg:px-2 lg:py-0/);
   assert.doesNotMatch(section.split("sm:")[0], /border|rounded|shadow|bg-\[#/);
   assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-\[#F7F9FC\] pb-8">/);
   assert.doesNotMatch(section, /(?:sm|lg):bg-white/);
