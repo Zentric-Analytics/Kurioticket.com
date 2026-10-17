@@ -132,12 +132,14 @@ test("desktop Cars breathing room separates map, filters, toolbar and result car
   assert.doesNotMatch(results, /lg:max-w-\[1080px\]/);
 });
 
-test("desktop Cars balances Track prices between count and Sort inside the shortened white column", () => {
+test("desktop Cars aligns full-width tracking over the map while count and Sort remain visible", () => {
   assert.match(results, /lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\]/);
   assert.match(results, /data-cars-results-content-column className=\{cn\("min-w-0 space-y-0 sm:space-y-4", !embedded && presentation === "standalone" && "lg:space-y-5"\)\}/);
-  assert.match(results, /data-cars-results-summary-row[\s\S]*?\{!embedded \? <CarPriceAlertControl[\s\S]*?cars-results-desktop-sort-trigger/);
-  assert.match(results, /lg:grid-cols-\[max-content_minmax\(0,1fr\)_max-content\]/);
-  assert.match(alert, /lg:w-fit lg:max-w-\[240px\] lg:justify-self-center/);
+  assert.match(results, /data-cars-price-alert-sidebar-slot[\s\S]*?<CarsResultsMapPreview/);
+  assert.match(results, /data-cars-results-summary-row[\s\S]*?<CarPriceAlertControl[\s\S]*?desktopPortalTarget=\{desktopCarPriceAlertTarget\}/);
+  assert.match(results, /lg:grid-cols-\[minmax\(0,1fr\)_auto\]/);
+  assert.match(alert, /lg:w-full lg:max-w-none lg:justify-self-stretch/);
+  assert.match(results, /data-cars-price-alert-sidebar-slot[\s\S]*?className="mb-3 w-full empty:hidden"/);
   assert.match(loading, /lg:max-w-\[928px\]/);
   assert.doesNotMatch(results, /lg:max-w-\[1080px\]/);
 });
@@ -210,7 +212,7 @@ test("desktop price alert retains blue styling while mobile tracking sits direct
   assert.ok(section);
   assert.match(section, /bg-transparent px-0 py-0/);
   assert.match(section, /sm:rounded-2xl sm:border sm:border-blue-100 sm:bg-\[#EDF6FF\] sm:px-4 sm:py-1 sm:shadow-sm/);
-  assert.match(section, /lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-\[240px\] lg:justify-self-center/);
+  assert.match(section, /lg:col-span-1 lg:w-full lg:max-w-none lg:justify-self-stretch/);
   assert.match(section, /lg:rounded-xl lg:border-\[#CFE0F8\] lg:bg-\[#EEF6FF\] lg:px-2 lg:py-0/);
   assert.doesNotMatch(section.split("sm:")[0], /border|rounded|shadow|bg-\[#/);
   assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white pb-8 lg:pb-12 lg:pt-6">/);

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { Bell, CheckCircle2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
@@ -22,7 +23,11 @@ type WebCarPriceAlert = MatchableCarPriceAlert & { id: string };
 type SuccessFeedback = "active" | "inactive" | null;
 type PriceTrackingError = "start" | "stop" | null;
 
-export function CarPriceAlertControl({ search, results }: { search: CarSearchParams; results: NormalizedCarResult[] }) {
+export function CarPriceAlertControl({ search, results, desktopPortalTarget = null }: {
+  search: CarSearchParams;
+  results: NormalizedCarResult[];
+  desktopPortalTarget?: HTMLElement | null;
+}) {
   const router = useRouter();
   const { t: dictionary } = useLocale();
   const t = useCallback((key: string) => dictionary[key] ?? en[key] ?? key, [dictionary]);
@@ -36,6 +41,7 @@ export function CarPriceAlertControl({ search, results }: { search: CarSearchPar
   const [feedback, setFeedback] = useState<SuccessFeedback>(null);
   const [error, setError] = useState<PriceTrackingError>(null);
   const [snackbarLeaving, setSnackbarLeaving] = useState(false);
+  const [desktopSidebarActive, setDesktopSidebarActive] = useState(false);
   const pendingRef = useRef(false);
   const requestRef = useRef(0);
   const switchRef = useRef<HTMLButtonElement>(null);
@@ -57,6 +63,13 @@ export function CarPriceAlertControl({ search, results }: { search: CarSearchPar
   }, [search]);
 
   useEffect(() => { void reconcile(); return () => { requestRef.current += 1; }; }, [reconcile]);
+  useEffect(() => {
+    const desktopQuery = window.matchMedia("(min-width: 1024px)");
+    const syncDesktopPlacement = () => setDesktopSidebarActive(desktopQuery.matches);
+    syncDesktopPlacement();
+    desktopQuery.addEventListener("change", syncDesktopPlacement);
+    return () => desktopQuery.removeEventListener("change", syncDesktopPlacement);
+  }, []);
   useEffect(() => {
     if (!feedback) return;
     const leave = window.setTimeout(() => setSnackbarLeaving(true), CAR_PRICE_ALERT_SNACKBAR_DURATION_MS - 180);
@@ -113,11 +126,11 @@ export function CarPriceAlertControl({ search, results }: { search: CarSearchPar
   const committedTracking = matchingAlert?.status === "ACTIVE";
   const tracking = optimisticTracking ?? committedTracking;
   const disabled = !reconciled;
-  return <>
+  const trackingControl = (
     <section
       aria-label={t("carsResults.priceTracking.title")}
       data-cars-price-alert
-      className="col-start-2 row-start-1 mb-0 w-auto min-w-0 max-w-full justify-self-end bg-transparent px-0 py-0 sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full sm:justify-self-center sm:rounded-2xl sm:border sm:border-blue-100 sm:bg-[#EDF6FF] sm:px-4 sm:py-1 sm:shadow-sm lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-[240px] lg:justify-self-center lg:rounded-xl lg:border-[#CFE0F8] lg:bg-[#EEF6FF] lg:px-2 lg:py-0"
+      className="col-start-2 row-start-1 mb-0 w-auto min-w-0 max-w-full justify-self-end bg-transparent px-0 py-0 sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full sm:justify-self-center sm:rounded-2xl sm:border sm:border-blue-100 sm:bg-[#EDF6FF] sm:px-4 sm:py-1 sm:shadow-sm lg:col-span-1 lg:w-full lg:max-w-none lg:justify-self-stretch lg:rounded-xl lg:border-[#CFE0F8] lg:bg-[#EEF6FF] lg:px-2 lg:py-0"
     >
       <div className="flex min-h-11 min-w-0 items-center justify-end gap-1.5 max-[359px]:gap-1 sm:min-h-[52px] sm:justify-start sm:gap-2.5 lg:min-h-9 lg:gap-1.5">
         <span className="inline-flex shrink-0 items-center justify-center text-[#1769AA] sm:h-8 sm:w-8 sm:rounded-full sm:bg-blue-50 sm:text-[#004BB8] lg:h-6 lg:w-6"><Bell className="h-4 w-4 max-[359px]:h-[15px] max-[359px]:w-[15px] sm:h-[17px] sm:w-[17px] lg:h-4 lg:w-4" aria-hidden="true" /></span>
@@ -131,6 +144,11 @@ export function CarPriceAlertControl({ search, results }: { search: CarSearchPar
         </span>
       </div>
     </section>
+  );
+  return <>
+    {desktopSidebarActive && desktopPortalTarget && typeof document !== "undefined"
+      ? createPortal(trackingControl, desktopPortalTarget)
+      : <div className="contents lg:hidden" data-cars-price-alert-inline>{trackingControl}</div>}
     {feedback ? <div role="status" aria-live="polite" className={`fixed bottom-[calc(max(env(safe-area-inset-bottom),12px)+12px)] left-4 right-4 z-[110] mx-auto flex max-w-md items-center gap-2.5 rounded-[14px] border-[0.5px] border-[#C8DFF7] bg-[#EDF6FF] px-[13px] py-[11px] shadow-[0_4px_16px_rgba(15,23,42,0.16)] ${snackbarLeaving ? "cars-price-alert-snackbar-leaving" : "cars-price-alert-snackbar-entering"}`}>
       <CheckCircle2 className="h-5 w-5 shrink-0 text-[#1769AA]" aria-hidden="true" />
       <span className="flex min-w-0 flex-1 flex-col gap-px"><strong className="block text-[14px] font-bold leading-[19px] text-slate-950 lg:text-[15px] lg:font-bold lg:leading-5">{t(feedback === "active" ? "carsResults.priceTracking.active" : "carsResults.priceTracking.inactive")}</strong><span className="block text-[12.5px] leading-[17px] text-slate-600 lg:text-[13px] lg:font-medium lg:leading-5 lg:text-[#475569]">{t(feedback === "active" ? "carsResults.priceTracking.activeBody" : "carsResults.priceTracking.inactiveBody")}</span></span>

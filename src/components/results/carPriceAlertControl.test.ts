@@ -57,7 +57,7 @@ test("Cars price tracking snackbar defines enter, exit, and reduced-motion behav
   assert.match(globals, /prefers-reduced-motion: reduce[\s\S]*cars-price-alert-snackbar-entering,[\s\S]*cars-price-alert-snackbar-leaving \{ animation: none; \}/);
 });
 
-test("mobile Cars tracking stays flat while desktop is centered and matches Flight styling", () => {
+test("mobile Cars stays flat while desktop spans map width and matches Flight styling", () => {
   const section = source.match(/data-cars-price-alert\s+className="([^"]+)"/)?.[1];
   assert.ok(section, "tracking section remains a scroll-indicator anchor");
   const mobileClasses = section.split(/\s+/).filter((name) => !name.includes(":"));
@@ -65,7 +65,13 @@ test("mobile Cars tracking stays flat while desktop is centered and matches Flig
   assert.doesNotMatch(mobileClasses.join(" "), /rounded|border|shadow|bg-\[#/);
   assert.match(section, /sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full sm:justify-self-center/);
   assert.match(section, /sm:rounded-2xl sm:border sm:border-blue-100 sm:bg-\[#EDF6FF\] sm:px-4 sm:py-1 sm:shadow-sm/);
-  assert.match(section, /lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-\[240px\] lg:justify-self-center/);
+  assert.match(section, /lg:col-span-1 lg:w-full lg:max-w-none lg:justify-self-stretch/);
+  assert.match(source, /desktopPortalTarget\?: HTMLElement \| null/);
+  assert.match(source, /matchMedia\("\(min-width: 1024px\)"\)/);
+  assert.match(source, /createPortal\(trackingControl, desktopPortalTarget\)/);
+  assert.match(source, /data-cars-price-alert-inline/);
+  assert.equal((source.match(/role="switch"/g) ?? []).length, 1);
+  assert.equal((source.match(/fetch\("\/api\/price-alerts"/g) ?? []).length, 2, "one GET reconciliation and one POST creation path");
   assert.match(section, /lg:rounded-xl lg:border-\[#CFE0F8\] lg:bg-\[#EEF6FF\] lg:px-2 lg:py-0/);
   assert.doesNotMatch(section, /lg:mx-auto|lg:w-\[calc\(100%_-_12rem\)\]/);
   assert.match(source, /sm:min-h-\[52px\] sm:justify-start sm:gap-2\.5 lg:min-h-9 lg:gap-1\.5/);
