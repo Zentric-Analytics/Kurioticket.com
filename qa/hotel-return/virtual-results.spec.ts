@@ -63,18 +63,32 @@ test("Cars desktop tracking is compact and aligned beside Sort while mobile and 
     const alert = summary.locator("[data-cars-price-alert]");
     const count = summary.locator("h2").first();
     const sort = summary.locator(".cars-results-desktop-sort-trigger");
+    const visibleTrack = alert.locator('button[role="switch"] > span[aria-hidden="true"]');
+    const visibleThumb = visibleTrack.locator("span").first();
     await expect(alert).toBeVisible();
     await expect(count).toBeVisible();
     await expect(alert.getByRole("switch", { name: "Track car prices" })).toBeVisible();
 
     const alertBox = (await alert.boundingBox())!;
     const countBox = (await count.boundingBox())!;
+    const trackBox = (await visibleTrack.boundingBox())!;
+    const thumbBox = (await visibleThumb.boundingBox())!;
     if (width >= 1024) {
       await expect(sort).toBeVisible();
       const sortBox = (await sort.boundingBox())!;
       const centerY = (box: { y: number; height: number }) => box.y + box.height / 2;
+      const summaryBox = (await summary.boundingBox())!;
+      const centerX = (box: { x: number; width: number }) => box.x + box.width / 2;
       expect(alertBox.width).toBeLessThanOrEqual(241);
       expect(alertBox.height).toBeLessThanOrEqual(40);
+      // Center the entire tracking bar in the results column, not just its contents.
+      expect(Math.abs(centerX(alertBox) - centerX(summaryBox))).toBeLessThanOrEqual(2);
+      expect(Math.abs(trackBox.width - 44)).toBeLessThanOrEqual(1);
+      expect(Math.abs(trackBox.height - 24)).toBeLessThanOrEqual(1);
+      expect(Math.abs(thumbBox.width - 20)).toBeLessThanOrEqual(1);
+      expect(Math.abs(thumbBox.height - 20)).toBeLessThanOrEqual(1);
+      await expect(alert).toHaveCSS("background-color", "rgb(238, 246, 255)");
+      await expect(alert).toHaveCSS("border-top-color", "rgb(207, 224, 248)");
       expect(Math.abs(centerY(alertBox) - centerY(sortBox))).toBeLessThanOrEqual(3);
       expect(Math.abs(centerY(alertBox) - centerY(countBox))).toBeLessThanOrEqual(3);
       expect(countBox.x + countBox.width).toBeLessThanOrEqual(alertBox.x + 1);
@@ -83,10 +97,15 @@ test("Cars desktop tracking is compact and aligned beside Sort while mobile and 
       await expect(sort).toBeVisible();
       const sortBox = (await sort.boundingBox())!;
       expect(alertBox.width).toBeGreaterThan(400);
+      expect(Math.abs(trackBox.width - 48)).toBeLessThanOrEqual(1);
+      expect(Math.abs(trackBox.height - 28)).toBeLessThanOrEqual(1);
       expect(alertBox.y + alertBox.height).toBeLessThanOrEqual(sortBox.y);
     } else {
       await expect(sort).not.toBeVisible();
       expect(alertBox.width).toBeLessThan(280);
+      expect(Math.abs(trackBox.width - 44)).toBeLessThanOrEqual(1);
+      expect(Math.abs(trackBox.height - 24)).toBeLessThanOrEqual(1);
+      expect(Math.abs(thumbBox.width - 18)).toBeLessThanOrEqual(1);
       expect(countBox.x + countBox.width).toBeLessThanOrEqual(alertBox.x + 2);
     }
   }
