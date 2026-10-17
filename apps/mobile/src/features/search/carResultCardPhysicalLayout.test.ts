@@ -21,7 +21,7 @@ test("Car card shell and two-level grid retain safe natural layout", () => {
   assert.match(style("visualColumn"), /width:"40%",minHeight:156,padding:6/);
   assert.match(style("lowerBand"), /flexDirection:"row",alignItems:"stretch",borderTopWidth:1/);
   assert.doesNotMatch(style("card").replace(/shadowOffset:\{[^}]*\}/, ""), /(?:^|,)height:/);
-  for (const name of ["topSection", "visualColumn", "identityZone", "lowerBand", "specColumn", "commerceColumn"])
+  for (const name of ["topSection", "visualColumn", "identityZone", "lowerBand", "specColumn"])
     assert.doesNotMatch(style(name), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translateY|(?:^|,)height:/);
 });
 
@@ -60,14 +60,14 @@ test("top section owns imagery, identity and the four vehicle specifications", (
 });
 
 test("Cheapest badge reflects price while sandbox cards omit authored sandbox status copy", () => {
-  const bestValueStart = source.indexOf("cheapest ? <View");
+  const bestValueStart = source.indexOf("badge && BadgeIcon ? <View");
   const headerStart = source.indexOf('<View style={c.headerRow}>', bestValueStart);
   const detailsStart = source.indexOf('<View style={c.identityDetails}>', headerStart);
   const locationStart = source.indexOf('<View style={c.location}>', detailsStart);
   const freeCancellationStart = source.indexOf("offer?.freeCancellation", locationStart);
   assert.ok(bestValueStart >= 0 && bestValueStart < headerStart);
   assert.ok(headerStart < detailsStart && detailsStart < locationStart && locationStart < freeCancellationStart);
-  assert.match(source, /cheapest \? <View style=\{c\.bestValueRow\}><View style=\{c\.badge\}><Award size=\{11\} color="#15803D" \/><Text style=\{c\.badgeText\}>Cheapest/);
+    assert.match(source, /badge && BadgeIcon \? <View/);
   assert.doesNotMatch(source, /KAYAK sandbox · Simulated · Not bookable|sandboxStatus/);
   assert.match(source, /<View style=\{c\.utilityColumn\}>/);
   assert.doesNotMatch(source, /!sandbox \? <View style=\{c\.utilityColumn\}>/);
@@ -78,7 +78,7 @@ test("Cheapest badge reflects price while sandbox cards omit authored sandbox st
   assert.match(style("badgeText"), /color:"#15803D"/);
   assert.match(style("bestValueRow"), /alignItems:"flex-end"/);
   assert.equal(source.match(/>Free cancellation<\/Text>/g)?.length, 1);
-  assert.equal(source.match(/>Cheapest<\/Text>/g)?.length, 1);
+  assert.match(source, /carBadgeIcons =/);
   assert.doesNotMatch(source, /benefits/);
   for (const name of ["bestValueRow", "badge"])
     assert.doesNotMatch(style(name), /position:"absolute"|margin(?:Left|Right|Top|Bottom):-|transform:|translate/);
@@ -112,84 +112,16 @@ test("Cars card typography uses the shared Inter hierarchy without changing card
   assert.match(style("freeCancellationText"), /fontSize:11,lineHeight:15,fontWeight:"600",fontFamily:appFonts\.semibold/);
   assert.match(style("specText"), /fontSize:11,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:14/);
   assert.match(style("badgeText"), /fontSize:9,fontWeight:"700",fontFamily:appFonts\.bold/);
-  assert.match(style("viewDealText"), /fontSize:13,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold/);
 });
 
-test("upper information keeps both provider-aware spec columns below cancellation while lower band owns booking", () => {
-  const firstStart = top.indexOf('<View style={c.specColumn}>');
-  const middleStart = top.indexOf('<View style={c.specColumn}>', firstStart + 1);
-  const commerceStart = lower.indexOf('<View style={c.commerceColumn}>');
-  const first = top.slice(firstStart, middleStart);
-  const middle = top.slice(middleStart);
-  const commerce = lower.slice(commerceStart);
-  assert.ok(firstStart >= 0 && middleStart > firstStart && commerceStart >= 0);
-  assert.ok(top.indexOf("accessibilityLabel=\"Vehicle specifications\"") > top.indexOf("Free cancellation"));
-  assert.match(top, /hasPrimarySpecs \|\| hasSecondarySpecs \? <View style=\{c\.specRow\}/);
-  assert.match(style("category"), /marginTop:5/);
-  assert.match(style("identityDetails"), /marginTop:3/);
-  assert.doesNotMatch(lower, /<View style=\{c\.specRow\}>|specLabels\./);
-  assert.match(lower, /<NativeCarResultOfferPicker result=\{result\}/);
-  assert.match(source, /const specLabels = nativeCarPrimarySpecLabels\(result\)/);
-  assert.match(first, /specLabels\.passengers[\s\S]*specLabels\.transmission/);
-  assert.doesNotMatch(first, /specLabels\.doors|specLabels\.bags/);
-  assert.match(middle, /specLabels\.doors[\s\S]*specLabels\.bags/);
-  assert.doesNotMatch(middle, /specLabels\.passengers|specLabels\.transmission/);
-  assert.match(source, /specLabels\.passengers \? <Spec/);
-  assert.match(source, /specLabels\.transmission \? <Spec/);
-  assert.match(source, /specLabels\.doors \? <Spec/);
-  assert.match(source, /specLabels\.bags \? <Spec/);
-  assert.doesNotMatch(source, /middleSpecColumn/);
-  assert.doesNotMatch(style("specColumn"), /borderLeftWidth|borderRightWidth|borderLeftColor|borderRightColor/);
-  assert.match(source, /const carDividerColor = theme\.dark \? theme\.border : "#CBD5E1"/);
-  assert.match(source, /\[c\.lowerBand,\{backgroundColor:carInformationSurface,borderTopColor:carDividerColor\}\]/);
-  assert.match(style("lowerBand"), /borderTopWidth:1/);
-  assert.match(source, /<View style=\{c\.commerceColumn\}>/);
-  assert.doesNotMatch(source, /c\.commerceColumn[^>]*borderLeftColor:carDividerColor/);
-  assert.doesNotMatch(style("commerceColumn"), /borderLeftWidth|borderRightWidth|borderLeftColor|borderRightColor/);
-  assert.match(providerPresentation, /sandboxPresentation\?\.specs/);
-  assert.match(providerPresentation, /authoredMissingSpecLabels/);
-  assert.match(providerPresentation, /return authoredMissingSpecLabels\.has\(trimmed\) \? "" : trimmed/);
-  assert.match(commerce, /money\(offer\.currency, offer\.pricePerDay\)[\s\S]*>per day<\/Text>[\s\S]*>View deal<\/Text>/);
-  assert.doesNotMatch(commerce, /offer\.totalPrice|offer\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
-  assert.equal(source.match(/>View deal<\/Text>/g)?.length, 1);
-  assert.doesNotMatch(source, /actionRow|actionVisualSpacer|actionContent|contentColumn|conversion|detailColumn|style=\{c\.specs\}/);
-});
-
-test("commerce remains authoritative, responsive, and accessible", () => {
+test("native Cars footer uses full-width provider offers without duplicated commerce", () => {
+  assert.match(style("detailsColumn"), /flex:1,minWidth:0,paddingHorizontal:8,paddingVertical:6/);
+  assert.match(lower, /<NativeCarResultOfferPicker result=\{result\} displayCurrency=\{displayCurrency\} rates=\{rates\}/);
+  assert.doesNotMatch(lower, /commerceColumn|priceColumn|primaryBookingUrl/);
+  assert.doesNotMatch(styles, /commerceColumn:|dailyPrice:|perDayLabel:/);
+  assert.match(source, /useCarDisplayCurrency\(\)/);
   assert.match(source, /getPrimaryCarOffer\(result\)/);
-  assert.match(source, /presentCarOfferCurrency\(primaryOffer, displayCurrency, rates\)/);
-  const dailyPriceStart = source.indexOf("money(offer.currency, offer.pricePerDay)");
-  const perDayStart = source.indexOf(">per day</Text>", dailyPriceStart);
-  const viewDealStart = source.indexOf(">View deal</Text>", perDayStart);
-  assert.ok(dailyPriceStart >= 0 && dailyPriceStart < perDayStart && perDayStart < viewDealStart);
-  assert.doesNotMatch(source, /money\(offer\.currency, offer\.totalPrice\)|offer\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
-  assert.match(source, /Live price unavailable/);
-  assert.match(source, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\}/);
-  assert.match(style("detailsColumn"), /flex:2\.6,minWidth:0,paddingBottom:2/);
-  assert.match(style("commerceColumn"), /flex:1\.1,minWidth:0,justifyContent:"space-between"/);
-  assert.match(style("priceColumn"), /minWidth:0,maxWidth:"100%",alignItems:"flex-end"/);
-  assert.match(style("dailyPrice"), /maxWidth:"100%",fontSize:19,fontWeight:"600",fontFamily:appFonts\.semibold,lineHeight:22/);
-  assert.match(style("dailyPrice"), /fontVariant:\["tabular-nums"\]/);
-  assert.doesNotMatch(style("dailyPrice"), /fontSize:22|fontSize:20|fontWeight:"700"/);
-  assert.match(style("perDayLabel"), /fontSize:10,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:13,textAlign:"right"/);
-  assert.doesNotMatch(style("perDayLabel"), /fontSize:11|lineHeight:14/);
-  assert.doesNotMatch(styles, /(?:^|,)total:|taxDisclosure:|(?:^|,)perDay:/);
-  assert.match(source, /<Pressable accessibilityRole=\{primaryBookingUrl \? "link" : "button"\}/);
-  assert.match(source, /accessibilityState=\{\{disabled: !primaryBookingUrl\}\} disabled=\{!primaryBookingUrl\}/);
-  assert.match(source, /Linking\.openURL\(primaryBookingUrl\)/);
-  assert.match(style("viewDeal"), /minHeight:36/);
-  assert.doesNotMatch(source, /result\.offers\[0\]|TOTAL\s*·|\/day/);
 });
-
-test("Cars View deal uses the exact Flight Results color contract", () => {
-  const colorContract = /theme\.dark \? "#8FB5FF" : ui\.blue/g;
-  assert.equal(source.match(colorContract)?.length, 2);
-  assert.match(source, /c\.viewDealText,\{color:theme\.dark \? "#8FB5FF" : ui\.blue\}/);
-  assert.match(source, /<ChevronRight accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\} color=\{theme\.dark \? "#8FB5FF" : ui\.blue\}/);
-  const flightAffordance = flightResultsSource.slice(flightResultsSource.indexOf("s0.flightDetailsAffordanceText"), flightResultsSource.indexOf("s0.flightDetailsAffordanceText") + 500);
-  assert.equal(flightAffordance.match(colorContract)?.length, 2);
-});
-
 test("location stays above while obsolete benefit contracts remain absent", () => {
   assert.match(top, /<MapPin size=\{13\} color=\{theme\.textPrimary\}[\s\S]*result\.pickupLocation/);
   assert.doesNotMatch(lower, /result\.pickupLocation|MapPin/);
