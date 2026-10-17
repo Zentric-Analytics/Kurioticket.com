@@ -86,7 +86,7 @@ test("source-contract: Cars count row omits the old pagination range", () => {
   assert.doesNotMatch(summaryRow, /resultsDisplayRange|Showing results .* through|data-cars-results-visible-range/);
 });
 
-test("source-contract: Cars count and tracking share a shrink-safe mobile row without moving desktop Sort", () => {
+test("source-contract: Cars keeps the mobile count and alert row while compacting desktop beside Sort", () => {
   const resultsToolbar = source.slice(
     source.lastIndexOf("<div", source.indexOf("data-cars-results-toolbar")),
     source.indexOf("{resultsTransitioning ?"),
@@ -102,7 +102,8 @@ test("source-contract: Cars count and tracking share a shrink-safe mobile row wi
   assert.equal(toolbarClass.split(" ").includes("flex-wrap"), false);
 
   assert.match(summaryRow, /grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_auto\] items-center gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1 sm:gap-x-2/);
-  assert.match(summaryRow, /className=\{cn\("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2"\)\}/);
+  assert.match(summaryRow, /className=\{cn\("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2 lg:row-start-1"\)\}/);
+  assert.match(summaryRow, /!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto_auto\] lg:gap-x-3 lg:gap-y-0"/);
   assert.match(summaryRow, /<h2[^>]*className="[^"]*truncate[^"]*whitespace-nowrap/);
   assert.match(summaryRow, /max-\[359px\]:text-\[11px\]/);
   assert.doesNotMatch(summaryRow, /sr-only|flex-nowrap items-center justify-between/);
@@ -115,7 +116,7 @@ test("source-contract: Cars count and tracking share a shrink-safe mobile row wi
   const alertPosition = summaryRow.indexOf("<CarPriceAlertControl");
   assert.ok(alertPosition > summaryRow.indexOf("<h2"));
   assert.equal((resultsToolbar.match(/<CarPriceAlertControl/g) ?? []).length, 1);
-  assert.match(summaryRow, /className=\{cn\("col-start-2 row-start-1 hidden[^"]*sm:flex sm:gap-2", !embedded && "sm:row-start-2"\)\}/);
+  assert.match(summaryRow, /className=\{cn\("col-start-2 row-start-1 hidden[^"]*sm:flex sm:gap-2", !embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1"\)\}/);
   assert.ok(summaryRow.indexOf("<h2") < summaryRow.indexOf("ref={carsSortRef}"));
   assert.match(summaryRow, /className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap[^"\n]*"/);
   assert.match(resultsToolbar, /className="relative inline-flex min-w-0 max-w-full shrink/);
