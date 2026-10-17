@@ -30,13 +30,17 @@ const hotelDesktopStyles = readFileSync(
   new URL("./hotelDetails/HotelDetailsDesktop.module.css", import.meta.url),
   "utf8",
 );
+const hotelResults = readFileSync(
+  new URL("./HotelResultsClient.tsx", import.meta.url),
+  "utf8",
+);
 const loading = readFileSync(
   new URL("../layout/SearchResultsLoadingTransition.tsx", import.meta.url),
   "utf8",
 );
 
-test("standalone Cars desktop uses the Hotels details continuous column without changing mobile canvases", () => {
-  // Compare the actual Hotels details desktop source, not a separately invented color.
+test("standalone Cars desktop matches Hotels results white body and preserves the Hotels details content column", () => {
+  // Preserve the actual Hotels details column, but use the separate Hotels results page body color.
   const hotelCard = hotelDesktopStyles.match(/\.contentCard\s*\{([^}]+)\}/)?.[1];
   assert.ok(hotelCard);
   assert.match(hotelCard, /border: 1px solid #E1E6EA;/);
@@ -44,11 +48,12 @@ test("standalone Cars desktop uses the Hotels details continuous column without 
   assert.match(hotelCard, /background: #fff;/);
   assert.match(hotelCard, /box-shadow: 0 2px 8px rgb\(25 32 36 \/ 4%\);/);
   assert.match(hotelDesktopStyles, /\.desktop\s*\{[^}]*background: #F7F9FC;/);
+  assert.match(hotelResults, /flex-1 overflow-x-clip bg-\[#F5F7FB\] pb-2 sm:pb-8 sm:bg-\[#f6f8fb\] lg:bg-white/);
 
-  assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-\[#F7F9FC\] pb-8">/);
+  assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white pb-8 lg:pb-12">/);
   assert.match(
     results,
-    /data-cars-results-scroll-region\s+data-cars-results-hotel-column\s+className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-0 sm:pt-6 lg:mt-3 lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:pb-5 lg:pt-5 lg:shadow-\[0_2px_8px_rgba\(25,32,36,0\.04\)\]"/,
+    /data-cars-results-scroll-region\s+data-cars-results-hotel-column\s+className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-0 sm:pt-6 lg:mt-6 lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:pb-7 lg:pt-7 lg:shadow-\[0_2px_8px_rgba\(25,32,36,0\.04\)\]"/,
   );
   assert.match(results, /<CarsResultsExperience[\s\S]*?results=\{initialResults\}/);
   assert.match(results, /createPortal\(\s*renderCarsSearchForm\("desktop-navbar"\),\s*desktopNavSearchTarget,\s*\)/);
@@ -57,8 +62,8 @@ test("standalone Cars desktop uses the Hotels details continuous column without 
   assert.match(route, /<AppHeader[\s\S]*?flushDesktopBottom[\s\S]*?stableMobileSafeAreaTop[\s\S]*?hotelDesktopBoundary[\s\S]*?carsResultsDesktopSticky/);
 
   assert.match(loading, /aria-label="Loading car results"/);
-  assert.match(loading, /data-cars-results-loading-hotel-column[\s\S]*?lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:py-5 lg:shadow-\[0_2px_8px_rgba\(25,32,36,0\.04\)\]/);
-  assert.match(loading, /results-loading-surface min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] pb-8 sm:bg-\[#f6f8fb\] lg:bg-\[#F7F9FC\]/);
+  assert.match(loading, /data-cars-results-loading-hotel-column[\s\S]*?lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:py-7 lg:shadow-\[0_2px_8px_rgba\(25,32,36,0\.04\)\]/);
+  assert.match(loading, /results-loading-surface min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] pb-8 sm:bg-\[#f6f8fb\] lg:bg-white lg:pb-12/);
   assert.match(results, /desktopSurfaceParity=\{!embedded && presentation === "standalone"\}/);
   assert.equal(
     (results.match(/desktopSurfaceParity=\{!embedded && presentation === "standalone"\}/g) ?? []).length,
@@ -70,7 +75,7 @@ test("standalone Cars desktop uses the Hotels details continuous column without 
 test("desktop Cars results body is compact, centered, and keeps shared surfaces aligned", () => {
   assert.match(
     results,
-    /data-cars-results-scroll-region[\s\S]*?data-cars-results-hotel-column[\s\S]*?lg:mt-3 lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:pb-5 lg:pt-5/,
+    /data-cars-results-scroll-region[\s\S]*?data-cars-results-hotel-column[\s\S]*?lg:mt-6 lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:pb-7 lg:pt-7/,
   );
   assert.match(
     results,
@@ -113,9 +118,23 @@ test("desktop Cars results body is compact, centered, and keeps shared surfaces 
   );
 });
 
+test("desktop Cars breathing room separates map, filters, toolbar and result cards without widening the column", () => {
+  const map = readFileSync(new URL("./CarsResultsMapPreview.tsx", import.meta.url), "utf8");
+  assert.match(results, /lg:mt-6 lg:max-w-\[928px\]/);
+  assert.match(results, /lg:px-5 lg:pb-7 lg:pt-7/);
+  assert.match(results, /data-cars-results-content-column className=\{cn\("min-w-0 space-y-0 sm:space-y-4", !embedded && presentation === "standalone" && "lg:space-y-5"\)\}/);
+  assert.match(results, /rowClassName=\{cn\("pb-3\.5 sm:pb-4 focus:outline-none", !embedded && presentation === "standalone" && "lg:pb-5"\)\}/);
+  assert.equal((results.match(/"max-sm:!mt-0 lg:space-y-5"/g) ?? []).length, 2);
+  assert.match(map, /data-cars-results-map-preview/);
+  assert.match(map, /className="relative mb-2 h-\[150px\][^"]*lg:mb-4"/);
+  assert.match(loading, /data-cars-results-loading-hotel-column[\s\S]*?lg:max-w-\[928px\][\s\S]*?lg:px-5 lg:py-7/);
+  assert.match(loading, /<div className="space-y-4 lg:space-y-5">[\s\S]*?<CarCardSkeleton desktopSurfaceParity \/>/);
+  assert.doesNotMatch(results, /lg:max-w-\[1080px\]/);
+});
+
 test("desktop Cars keeps the count, centered tracking and Sort toolbar inside the shortened white column", () => {
   assert.match(results, /lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\]/);
-  assert.match(results, /data-cars-results-content-column className="min-w-0 space-y-0 sm:space-y-4"/);
+  assert.match(results, /data-cars-results-content-column className=\{cn\("min-w-0 space-y-0 sm:space-y-4", !embedded && presentation === "standalone" && "lg:space-y-5"\)\}/);
   assert.match(results, /data-cars-results-summary-row[\s\S]*?\{!embedded \? <CarPriceAlertControl[\s\S]*?cars-results-desktop-sort-trigger/);
   assert.match(results, /lg:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/);
   assert.match(alert, /lg:w-fit lg:max-w-\[240px\] lg:justify-self-center/);
@@ -194,7 +213,7 @@ test("desktop price alert retains blue styling while mobile tracking sits direct
   assert.match(section, /lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-\[240px\] lg:justify-self-center/);
   assert.match(section, /lg:rounded-xl lg:border-\[#CFE0F8\] lg:bg-\[#EEF6FF\] lg:px-2 lg:py-0/);
   assert.doesNotMatch(section.split("sm:")[0], /border|rounded|shadow|bg-\[#/);
-  assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-\[#F7F9FC\] pb-8">/);
+  assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white pb-8 lg:pb-12">/);
   assert.doesNotMatch(section, /(?:sm|lg):bg-white/);
 });
 
