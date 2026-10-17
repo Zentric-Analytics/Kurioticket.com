@@ -111,7 +111,8 @@ test("desktop Cars places a compact Track prices control beside Sort without cha
   assert.match(alertMarkup, /sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full/);
   assert.match(alertMarkup, /lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-\[240px\]/);
   assert.doesNotMatch(alertMarkup, /lg:w-\[calc\(100%_-_12rem\)\]/);
-  assert.match(cars, /!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto_auto\] lg:gap-x-3 lg:gap-y-0"/);
+  assert.match(cars, /!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\] lg:gap-x-3 lg:gap-y-0"/);
+  assert.match(alertMarkup, /lg:justify-self-center/);
   assert.match(cars, /!embedded && "sm:row-start-2 lg:row-start-1"/);
   assert.match(cars, /!embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1"/);
   assert.match(cars, /col-start-2 row-start-1 hidden[^"]*sm:flex/);
