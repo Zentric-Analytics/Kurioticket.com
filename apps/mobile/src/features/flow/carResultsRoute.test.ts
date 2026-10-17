@@ -29,10 +29,11 @@ test("approved car results use live canonical inventory and inline safe provider
 
 test("car card preserves identity and four provider-aware specs while presenting only the converted daily price", () => {
   const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
+  const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
   const providerPresentation = readFileSync("src/features/search/nativeCarProviderPresentation.ts", "utf8");
   for (const field of ["modelName", "categoryLabel", "pickupLocation"]) assert.match(card, new RegExp(`result\\.${field}`));
   assert.match(card, /offer\?\.freeCancellation/);
-  assert.match(card, /offer\.pricePerDay/);
+  assert.match(picker, /displayed\.pricePerDay/);
   assert.match(card, /nativeCarPrimarySpecLabels\(result\)/);
   for (const field of ["passengers", "bags", "doors", "transmission"]) assert.match(providerPresentation, new RegExp(`result\\.${field}`));
   assert.match(providerPresentation, /sandboxPresentation\?\.specs/);
