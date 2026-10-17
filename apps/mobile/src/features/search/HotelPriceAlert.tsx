@@ -31,6 +31,7 @@ import { displayPrice, formatMarketCurrency, type ExchangeRates } from "../curre
 import {
   buildHotelPriceAlertPayload,
   matchingHotelPriceAlert,
+  type HotelAlertProperty,
 } from "../flow/hotelPriceAlertModel";
 import { buildFlightPriceAlertPayload, flightPriceAlertMatchesPlan, matchingFlightPriceAlert, pauseActiveFlightPriceAlerts, selectAutomaticFlightBaseline } from "../flow/flightPriceAlertModel";
 import type { SearchPlan } from "../flow/travelSearchModel";
@@ -49,6 +50,7 @@ import { ui } from "./SearchUi";
 type Props = {
   plan: SearchPlan;
   hotelResults: HotelResult[];
+  hotel?: HotelAlertProperty;
   available?: boolean;
   displayCurrency: string;
   rates: ExchangeRates;
@@ -71,6 +73,7 @@ function formatDropPercent(value: number) {
 export function HotelPriceAlert({
   plan,
   hotelResults,
+  hotel,
   available = true,
   displayCurrency,
   rates,
@@ -79,6 +82,7 @@ export function HotelPriceAlert({
   onFeedback,
 }: Props) {
   const flight = product === "flight";
+  const hotelId = flight ? undefined : hotel?.id;
   const { theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { locale, t } = useMobileLocalization();
@@ -93,7 +97,7 @@ export function HotelPriceAlert({
   const saveLabel = flight ? "Save price alert" : message("createAlert");
   const matchAlert = useCallback((alerts: MobilePriceAlert[], search: SearchPlan) => flight
     ? matchingFlightPriceAlert(alerts, search)
-    : matchingHotelPriceAlert(alerts, search), [flight]);
+    : matchingHotelPriceAlert(alerts, search, hotelId), [flight, hotelId]);
   const [matchingAlertState, setMatchingAlertState] = useState<{ planKey: string; alert: MobilePriceAlert }>();
   const [reconciledPlanKey, setReconciledPlanKey] = useState<string>();
   const [loadingAlert, setLoadingAlert] = useState(true);
@@ -105,9 +109,9 @@ export function HotelPriceAlert({
   const pendingRef = useRef(false);
   const reconciliationRef = useRef(0);
   const targetIntentRef = useRef(new PriceAlertTargetIntent());
+  const planKey = hotelId ? JSON.stringify([plan.key, hotelId]) : plan.key;
   const planRef = useRef(plan);
-  planRef.current = plan;
-  const planKey = plan.key;
+  planRef.current = { ...plan, key: planKey };
   useEffect(() => {
     targetIntentRef.current.close();
     setSheetOpen(false);
@@ -186,23 +190,23 @@ export function HotelPriceAlert({
     try {
       const session = await readSession().catch(() => null);
       if (!session) {
-        if (reconciliation === reconciliationRef.current) {
+        if (reconciliation === reconciliationRef.current && planRef.current.key === reconciliationPlanKey) {
           setCurrentMatchingAlert(undefined);
           setReconciledPlanKey(reconciliationPlanKey);
         }
         return;
       }
       const alerts = (await travelApi.priceAlerts()).alerts;
-      if (reconciliation !== reconciliationRef.current) return;
+      if (reconciliation !== reconciliationRef.current || planRef.current.key !== reconciliationPlanKey) return;
       setCurrentMatchingAlert(matchAlert(alerts, reconciliationPlan));
       setReconciledPlanKey(reconciliationPlanKey);
     } catch (cause) {
-      if (reconciliation === reconciliationRef.current && cause instanceof TravelApiError && cause.status === 401) {
+      if (reconciliation === reconciliationRef.current && planRef.current.key === reconciliationPlanKey && cause instanceof TravelApiError && cause.status === 401) {
         setCurrentMatchingAlert(undefined);
         setReconciledPlanKey(reconciliationPlanKey);
       }
     } finally {
-      if (reconciliation === reconciliationRef.current) setLoadingAlert(false);
+      if (reconciliation === reconciliationRef.current && planRef.current.key === reconciliationPlanKey) setLoadingAlert(false);
     }
   }, [matchAlert, planKey, setCurrentMatchingAlert]);
 
@@ -316,12 +320,13 @@ export function HotelPriceAlert({
         ? await travelApi.updatePriceAlertStatus(samePausedTarget.id, "ACTIVE")
         : await travelApi.createPriceAlert(flight
           ? buildFlightPriceAlertPayload(plan, alertTarget, alertCurrency)
-          : buildHotelPriceAlertPayload(plan, alertTarget, alertCurrency));
+          : buildHotelPriceAlertPayload(plan, alertTarget, alertCurrency, hotel));
       if (planRef.current.key !== planKey) return;
       setCurrentMatchingAlert(saved.alert);
       closeSheet();
       if (flight) onFeedback?.("active");
     } catch (cause) {
+      if (planRef.current.key !== planKey) return;
       if (cause instanceof TravelApiError && cause.status === 401) {
         closeSheet();
         requireSignIn();
@@ -351,6 +356,7 @@ export function HotelPriceAlert({
           }
         }
         await reconcile();
+        if (planRef.current.key !== planKey) return;
         setError(message("priceAlertAlreadyExists"));
       } else {
         setError(message("priceAlertCreateError"));
@@ -418,8 +424,8 @@ export function HotelPriceAlert({
             style={[styles.hotelWebSwitchTouch, toggleDisabled && styles.hotelWebSwitchDisabled]}
           >
             <View style={[styles.hotelWebSwitchTrack, {
-              borderColor: isTracking ? "#004BB8" : theme.dark ? theme.border : "#CBD5E1",
-              backgroundColor: isTracking ? "#004BB8" : theme.dark ? "#465269" : "#E2E8F0",
+              borderColor: isTracking ? (theme.dark ? theme.switchTrackActive : "#004BB8") : theme.dark ? theme.border : "#CBD5E1",
+              backgroundColor: isTracking ? (theme.dark ? theme.switchTrackActive : "#004BB8") : theme.dark ? "#465269" : "#E2E8F0",
             }]}>
               <View style={[styles.hotelWebSwitchThumb, isTracking && styles.hotelWebSwitchThumbOn]} />
             </View>
@@ -530,7 +536,7 @@ export function HotelPriceAlert({
 }
 
 /** Flight and Hotel use the same target editor and lifecycle protections. */
-export function FlightPriceAlert(props: Omit<Props, "hotelResults" | "product"> & { flightResults: FlightResult[] }) {
+export function FlightPriceAlert(props: Omit<Props, "hotelResults" | "hotel" | "product"> & { flightResults: FlightResult[] }) {
   return <HotelPriceAlert {...props} product="flight" hotelResults={[]} />;
 }
 

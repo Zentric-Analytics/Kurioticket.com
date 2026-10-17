@@ -22,6 +22,9 @@ import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { FlowIcon } from "../flow/FlowIcon";
 import { HOTEL_LIMITS } from "../flow/hotelSearchModel";
+import { hotelAlertPresentation } from "../flow/hotelPriceAlertModel";
+import { buildSearchPlan } from "../flow/travelSearchModel";
+import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import {
   resolveDisplayCurrencyContext,
   type DisplayCurrencyResolution,
@@ -49,6 +52,7 @@ import { prepareNativeRelatedHotels, type NativeRelatedHotel } from "./nativeHot
 import { NativeHotelReviewsSection, nativeHotelReviewPresentation } from "./NativeHotelReviewsSection";
 import { hotelResultsDismissCount } from "./hotelDetailReturnNavigation";
 import { HotelStayEditor } from "./HotelStayEditor";
+import { HotelPriceAlert } from "./HotelPriceAlert";
 import { NativeHotelBookingDetails } from "./NativeHotelBookingDetails";
 import {
   buildNativeHotelRateRows,
@@ -122,6 +126,7 @@ function HotelDetail({
 }) {
   const navigation = useNavigation();
   const { theme } = useAppTheme();
+  const { availability } = useFeatureAvailability();
   const hotelCanvasColor = theme.dark ? theme.background : theme.surface;
   const hotelAccent = theme.dark ? "#8FB5FF" : colors.blue;
   const inset = useSafeAreaInsets();
@@ -187,6 +192,14 @@ function HotelDetail({
   const destination = String(params.destination || result.location);
   const checkIn = String(params.checkIn || "");
   const checkOut = String(params.checkOut || "");
+  const hotelAlertPlan = buildSearchPlan("hotel", {
+    destination,
+    checkIn,
+    checkOut,
+    guests: String(guestCount),
+    rooms: String(roomCount),
+  }).plan;
+  const showHotelPriceAlert = hotelAlertPresentation("hotel", hotelAlertPlan, [result]).enabled;
   const enrichmentKey = `${result.id}\u0000${destination}\u0000${checkIn}\u0000${checkOut}\u0000${guestCount}\u0000${roomCount}`;
   const details = detailsState?.key === enrichmentKey ? detailsState.response : null;
   const detailsStatus: HotelDetailsStatus = detailsState?.key === enrichmentKey
@@ -662,7 +675,19 @@ function HotelDetail({
           />
         ) : null}
 
-        <View style={s.detailBody}>
+        <View style={[s.detailBody, activeHotelTab === "details" && showHotelPriceAlert && s.detailBodyWithAlert]}>
+          {activeHotelTab === "details" && hotelAlertPlan && showHotelPriceAlert ? (
+            <View style={s.hotelPriceAlert}>
+              <HotelPriceAlert
+                plan={hotelAlertPlan}
+                hotel={result}
+                hotelResults={[result]}
+                available={availability.priceAlerts}
+                displayCurrency={displayPrices?.total.currency ?? result.currency ?? "USD"}
+                rates={hotelCurrencyRates}
+              />
+            </View>
+          ) : null}
           {activeHotelTab === "details" ? (
             <NativeHotelBookingDetails
               result={result}
@@ -804,5 +829,7 @@ const s = StyleSheet.create({
   tabText: { fontSize: 13, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
   tabTextCompact: { fontSize: 12 },
   detailBody: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8, gap: 6 },
+  detailBodyWithAlert: { paddingTop: 8 },
+  hotelPriceAlert: { marginBottom: 10 },
 
 });
