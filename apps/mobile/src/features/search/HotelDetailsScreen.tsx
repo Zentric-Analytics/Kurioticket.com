@@ -53,7 +53,10 @@ import { NativeHotelBookingDetails } from "./NativeHotelBookingDetails";
 import {
   buildNativeHotelRateRows,
   NativeHotelRatesSection,
+  NativeHotelRatePopover,
+  type NativeHotelRateRow,
 } from "./NativeHotelRatesSection";
+import type { HotelRateInfoAnchor } from "./nativeHotelRatePopoverPlacement";
 import { HotelDetailsLoadingState } from "./HotelDetailsLoadingState";
 
 type HotelDetailTab = "details" | "reviews" | "deals";
@@ -133,7 +136,7 @@ function HotelDetail({
           | undefined
       )?.id === result.id,
   );
-  const width = useWindowDimensions().width;
+  const { width, height } = useWindowDimensions();
   const [activeHotelTab, setActiveHotelTab] = useState<HotelDetailTab>("deals");
   const activeHotelTabRef = useRef<HotelDetailTab>("deals");
   const hotelDetailScrollRef = useRef<ScrollView>(null);
@@ -153,7 +156,22 @@ function HotelDetail({
     status: HotelDetailsStatus;
     response: MobileHotelDetailsResponse | null;
   } | null>(null);
-  const [pendingRateId, setPendingRateId] = useState<string | null>(null);
+  const [rateInfo, setRateInfo] = useState<{ row: NativeHotelRateRow; anchor: HotelRateInfoAnchor } | null>(null);
+  const rateInfoRef = useRef<{ row: NativeHotelRateRow; anchor: HotelRateInfoAnchor } | null>(null);
+  const ratePopupBoundsRef = useRef<{ left: number; top: number; width: number; height: number } | null>(null);
+  const dealOpeningRef = useRef(false);
+  const closeRateInfo = useCallback(() => {
+    rateInfoRef.current = null;
+    ratePopupBoundsRef.current = null;
+    setRateInfo(null);
+  }, []);
+  const showRateInfo = useCallback((row: NativeHotelRateRow, anchor: HotelRateInfoAnchor) => {
+    if (rateInfoRef.current?.row.id === row.id) { closeRateInfo(); return; }
+    const next = { row, anchor };
+    rateInfoRef.current = next;
+    ratePopupBoundsRef.current = null;
+    setRateInfo(next);
+  }, [closeRateInfo]);
   const guestCount = positiveCount(params.guests, 2, HOTEL_LIMITS.guests.max);
   const roomCount = positiveCount(params.rooms, 1, HOTEL_LIMITS.rooms.max);
   const hotelResultsStack =
@@ -162,9 +180,9 @@ function HotelDetail({
       : params.hotelResultsStack) === "1";
 
   useEffect(() => {
-    setPendingRateId(null);
+    closeRateInfo();
     setLookAroundInteracting(false);
-  }, [result.id]);
+  }, [result.id, closeRateInfo]);
 
   const destination = String(params.destination || result.location);
   const checkIn = String(params.checkIn || "");
@@ -422,25 +440,22 @@ function HotelDetail({
   };
 
   const continueHotelRate = async (rateId: string) => {
-    if (pendingRateId) return;
+    if (dealOpeningRef.current) return;
     const selected = rateRows.find(row => row.id === rateId && row.actionable);
     if (!selected) return;
-    const targetUrl = selected.offerId === "internal-rooms"
-      ? kurioticketWebUrl : null;
-    setPendingRateId(rateId);
+    closeRateInfo();
+    dealOpeningRef.current = true;
     try {
-      if (targetUrl) {
-        await openProviderInApp(targetUrl);
+      if (selected.offerId === "internal-rooms") {
+        if (kurioticketWebUrl) await openProviderInApp(kurioticketWebUrl);
       } else {
-        // Resolve and audit the selected individual provider offer server-side;
-        // do not send every room's View deal to the initial hotel's URL.
         const response = await travelApi.hotelRedirect(selected.offerId);
         await openProviderInApp(response.url);
       }
     } catch {
       Alert.alert("Unable to open provider", "Please refresh and try again.");
     } finally {
-      setPendingRateId(null);
+      dealOpeningRef.current = false;
     }
   };
 
@@ -483,6 +498,7 @@ function HotelDetail({
 
   const selectHotelTab = useCallback((tab: HotelDetailTab) => {
     if (tab === activeHotelTabRef.current) return;
+    closeRateInfo();
     const targetOffset =
       hotelTabScrollOffsets.current[tab] ?? currentHotelScrollOffset.current;
     restoringHotelTabScrollRef.current = true;
@@ -496,7 +512,7 @@ function HotelDetail({
         restoringHotelTabScrollRef.current = false;
       });
     });
-  }, [syncHotelTabsPinned]);
+  }, [syncHotelTabsPinned, closeRateInfo]);
 
   useEffect(() => {
     restoringHotelTabScrollRef.current = true;
@@ -532,12 +548,15 @@ function HotelDetail({
         contentContainerStyle={{ paddingBottom: 24 + inset.bottom }}
         onScroll={({ nativeEvent }) => {
           const offset = nativeEvent.contentOffset.y;
+          if (rateInfoRef.current) closeRateInfo();
           currentHotelScrollOffset.current = offset;
           syncHotelTabsPinned(offset);
           if (!restoringHotelTabScrollRef.current) {
             hotelTabScrollOffsets.current[activeHotelTabRef.current] = offset;
           }
         }}
+        onScrollBeginDrag={closeRateInfo}
+        onMomentumScrollBegin={closeRateInfo}
         scrollEventThrottle={16}
       >
         <View style={s.heroShell}>
@@ -652,7 +671,7 @@ function HotelDetail({
             <NativeHotelRatesSection
               rows={rateRows}
               onViewDeal={(rateId) => void continueHotelRate(rateId)}
-              pendingRateId={pendingRateId}
+              onRateInfo={showRateInfo}
               stayDateText={staySummary.dateText}
               nightText={staySummary.nightText}
               detailsStatus={detailsStatus}
@@ -663,6 +682,30 @@ function HotelDetail({
         </View>
 
       </ScrollView>
+
+      {rateInfo && activeHotelTab === "deals" ? (
+        <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+          <View pointerEvents="box-none" style={StyleSheet.absoluteFill}
+            onStartShouldSetResponderCapture={event => {
+              const box = ratePopupBoundsRef.current;
+              if (!box) return false;
+              const { pageX, pageY } = event.nativeEvent;
+              const inside = pageX >= box.left && pageX <= box.left + box.width
+                && pageY >= box.top && pageY <= box.top + box.height;
+              if (!inside) closeRateInfo();
+              return false;
+            }}
+          />
+          <NativeHotelRatePopover
+            row={rateInfo.row}
+            anchor={rateInfo.anchor}
+            viewport={{ width, height }}
+            theme={theme}
+            onClose={closeRateInfo}
+            onBoundsChange={bounds => { ratePopupBoundsRef.current = bounds; }}
+          />
+        </View>
+      ) : null}
 
       {detailsStatus === "loading" ? (
         <View
