@@ -103,7 +103,8 @@ test("source-contract: Cars keeps the mobile count and alert row while compactin
 
   assert.match(summaryRow, /grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_auto\] items-center gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1 sm:gap-x-2/);
   assert.match(summaryRow, /className=\{cn\("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2 lg:row-start-1"\)\}/);
-  assert.match(summaryRow, /!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto_auto\] lg:gap-x-3 lg:gap-y-0"/);
+  assert.match(summaryRow, /!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\] lg:gap-x-3 lg:gap-y-0"/);
+  assert.match(summaryRow, /lg:col-start-3 lg:row-start-1 lg:justify-self-end/);
   assert.match(summaryRow, /<h2[^>]*className="[^"]*truncate[^"]*whitespace-nowrap/);
   assert.match(summaryRow, /max-\[359px\]:text-\[11px\]/);
   assert.doesNotMatch(summaryRow, /sr-only|flex-nowrap items-center justify-between/);
