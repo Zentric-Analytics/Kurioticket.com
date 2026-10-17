@@ -203,7 +203,7 @@ test("Cars uses the flat right-side tracking control on mobile without changing 
   assert.match(alertSource, /col-start-2 row-start-1 mb-0 w-auto min-w-0 max-w-full justify-self-end bg-transparent/);
   assert.match(alertSource, /sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full/);
   assert.match(alertSource, /sm:border-blue-100 sm:bg-\[#EDF6FF\]/);
-  assert.match(alertSource, /lg:bg-\[#F1F7FE\]/);
+  assert.match(alertSource, /lg:bg-\[#EEF6FF\]/);
   assert.match(alertSource, /lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-\[240px\]/);
   assert.match(alertSource, /text-\[#1769AA\]/);
   assert.match(alertSource, /sm:rounded-full sm:bg-blue-50/);
