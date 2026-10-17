@@ -37,7 +37,7 @@ test("car card preserves identity and four provider-aware specs while presenting
   for (const field of ["passengers", "bags", "doors", "transmission"]) assert.match(providerPresentation, new RegExp(`result\\.${field}`));
   assert.match(providerPresentation, /sandboxPresentation\?\.specs/);
   assert.doesNotMatch(card, /offer\.totalPrice|offer\??\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
-  assert.match(card, />View deal<\/Text>/);
+  assert.match(picker, />View deal<\/Text>/);
   assert.doesNotMatch(card, />View car<\/Text>/);
   assert.match(card, /Share\.share/);
   assert.match(card, /getPrimaryCarOffer\(result\)/);
