@@ -1834,7 +1834,7 @@ export function CarsResultsClient({
         ref={resultsGridRef}
         data-cars-results-scroll-region
         data-cars-results-hotel-column
-        className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-0 sm:pt-6 lg:mt-3 lg:max-w-[1080px] lg:rounded-2xl lg:border lg:border-[#E1E6EA] lg:bg-white lg:px-5 lg:pb-5 lg:pt-5 lg:shadow-[0_2px_8px_rgba(25,32,36,0.04)]"
+        className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-0 sm:pt-6 lg:mt-3 lg:max-w-[928px] lg:rounded-2xl lg:border lg:border-[#E1E6EA] lg:bg-white lg:px-5 lg:pb-5 lg:pt-5 lg:shadow-[0_2px_8px_rgba(25,32,36,0.04)]"
       >
         <CarsResultsExperience
           results={initialResults}
@@ -2638,7 +2638,7 @@ export function CarsResultsExperience({
             ) : null}
           </aside>
         ) : null}
-        <div className="min-w-0 space-y-0 sm:space-y-4">
+        <div data-cars-results-content-column className="min-w-0 space-y-0 sm:space-y-4">
           {results.length > 0 ? (
             <>
               <div
