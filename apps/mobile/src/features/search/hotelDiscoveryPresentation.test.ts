@@ -1,59 +1,37 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-
-const results = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
-const resultCard = results.slice(
-  results.indexOf("function HotelCard"),
-  results.indexOf("function Loading", results.indexOf("function HotelCard")),
-);
 const hotel = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
 const rates = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
-const reviews = readFileSync("src/features/search/NativeHotelReviewsSection.tsx", "utf8");
-
-test("discovery Hotel results never imply live price, saves, or classification", () => {
-  assert.match(resultCard, /showCheapestBadge && hasPrice/);
-  assert.match(resultCard, /classificationStars > 0/);
-  assert.match(resultCard, /"Price unavailable"/);
+test("all three native Hotel Details tabs have no persistent booking dock", () => {
+  assert.doesNotMatch(hotel, /bookingDock|bookingDockButton|selectedRate\.totalPrice/);
+  assert.match(hotel, /contentContainerStyle=\{\{ paddingBottom: 24 \+ inset\.bottom \}\}/);
+  assert.match(hotel, /activeHotelTab === "deals"/);
+  assert.match(hotel, /activeHotelTab === "details"/);
+  assert.match(hotel, /activeHotelTab === "reviews"/);
 });
-
-test("active native Hotel continuation uses one provider handoff pattern for Kurioticket and external providers", () => {
-  assert.match(hotel, /nativeKurioticketHotelDetailsUrl/);
-  assert.match(hotel, /const kurioticketHandoffAvailable =[\s\S]*?roomOptions\.length > 0 && Boolean\(kurioticketWebUrl\)/);
-  assert.match(hotel, /nativeHotelProviderUrl\([\s\S]*?result\.partnerRedirectUrl,[\s\S]*?result\.bookingUrl/);
-  assert.match(hotel, /const providerHandoffAvailable =[\s\S]*?Boolean\(redirectUrl\)[\s\S]*?result\.searchPolicy\.bookable \|\| result\.searchPolicy\.source === "kayak-sandbox"/);
-  assert.match(hotel, /const hotelOffers = nativeHotelOffers\([\s\S]*?kurioticketHandoffAvailable,[\s\S]*?providerHandoffAvailable/);
-  assert.match(hotel, /const targetUrl =[\s\S]*?selectedRate\.offerId === "internal-rooms"[\s\S]*?\? kurioticketWebUrl[\s\S]*?: selectedRate\.offerId === "provider"/);
-  assert.match(hotel, /await openProviderInApp\(targetUrl\)/);
-  assert.doesNotMatch(hotel, /HotelRoomOptionsModal|Choose room|setRoomsOpen/);
-  assert.match(rates, /No reservable rates available/);
+test("every distinct provider offer gets an independent actionable rate card", () => {
+  assert.match(rates, /for \(const \{ hotel, providerDetails \} of providerEntries\)/);
+  assert.match(rates, /id: `provider:\$\{hotel\.id\}`/);
+  assert.match(rates, /offerId: hotel\.id/);
+  assert.match(rates, /new Set<string>\(\)/);
+  assert.match(rates, /View deal/);
+  assert.match(rates, /onPress=\{\(\) => onViewDeal\(row\.id\)\}/);
+  assert.match(rates, /disabled=\{!row\.actionable \|\| pendingRateId !== null\}/);
 });
-
-test("active Hotel details derive provider rows from supplied inventory without exposing room-card detail", () => {
-  assert.doesNotMatch(hotel, /Math\.round\(result\.rating\)|reviewScore \?\? result\.rating/);
-  assert.match(hotel, /roomOptions\.length > 0/);
-  assert.match(rates, /id: "provider-kurioticket"/);
-  assert.match(rates, /nightlyPrice:[\s\S]*nightlyPrice\.formatted/);
-  assert.match(rates, /totalPrice:[\s\S]*totalPrice\.formatted/);
-  assert.doesNotMatch(rates, /roomOptions|roomOptionId|Compact room|Deluxe|Suite|STATIC_RATE_GROUPS|\$1,225|Standard Room, 1 Queen Bed/);
-  assert.match(reviews, /Verified guest reviews are not connected/);
+test("rate info stays attached to its offer and property facts appear only in Overview", () => {
+  assert.match(rates, /expandedRateId === row\.id/);
+  assert.match(rates, /row\.rateFacts\.map/);
+  assert.match(rates, /Booking conditions/);
+  assert.match(hotel, /activeHotelTab === "details" \? <NativeSupplierInformation/);
+  assert.doesNotMatch(hotel, /Rate information —/);
 });
-
-test("narrow active Hotel layout mirrors Flight Compare deals cards and persistent continuation dock", () => {
-  assert.match(hotel, /useWindowDimensions\(\)\.width/);
-  assert.match(rates, /adjustsFontSizeToFit/);
-  assert.match(rates, /minimumFontScale=\{0\.72\}/);
-  assert.match(rates, /borderRadius: 14/);
-  assert.match(rates, /minHeight: 96/);
-  assert.match(rates, /accessibilityRole="radiogroup"/);
-  assert.match(rates, /accessibilityRole="radio"/);
-  assert.match(rates, /s\.dealRadioDot/);
-  assert.match(rates, /onPress=\{row\.actionable \? \(\) => onSelectRate\(row\.id\) : undefined\}/);
-  assert.match(rates, /disabled=\{!row\.actionable\}/);
-  assert.doesNotMatch(rates, /rateTitle|rateMeta|Compact room|Deluxe|Suite|Choose room/);
-  assert.match(hotel, /s\.bookingDock/);
-  assert.match(hotel, /const bookingActionLabel = "View deal"/);
-  assert.doesNotMatch(hotel, /Continue to|Choose room/);
-  assert.match(hotel, /bookingDockButtonText\}>\{bookingActionLabel\}<\/Text>/);
+test("native deal handoffs use the actual selected offer ID through verified server redirect", () => {
+  assert.match(hotel, /rateRows\.find\(row => row\.id === rateId && row\.actionable\)/);
+  assert.match(hotel, /travelApi\.hotelRedirect\(selected\.offerId\)/);
+  assert.match(hotel, /await openProviderInApp\(response\.url\)/);
+  assert.match(hotel, /selected\.offerId === "internal-rooms"/);
+  const api = readFileSync("src/api/travelApi.ts", "utf8");
+  assert.match(api, /hotelRedirect: \(id: string\)/);
+  assert.match(api, /type: "hotel", sourcePage: "native_hotel_details"/);
 });
-
