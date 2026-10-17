@@ -199,12 +199,13 @@ test("mobile result rhythm no longer reserves space for the removed summary card
   );
 });
 
-test("Cars uses the flat right-side tracking control on mobile without changing its desktop blue card", () => {
+test("Cars keeps flat right-side mobile tracking while desktop blue card spans map width", () => {
   assert.match(alertSource, /col-start-2 row-start-1 mb-0 w-auto min-w-0 max-w-full justify-self-end bg-transparent/);
   assert.match(alertSource, /sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full/);
   assert.match(alertSource, /sm:border-blue-100 sm:bg-\[#EDF6FF\]/);
   assert.match(alertSource, /lg:bg-\[#EEF6FF\]/);
-  assert.match(alertSource, /lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-\[240px\]/);
+  assert.match(alertSource, /lg:col-span-1 lg:w-full lg:max-w-none lg:justify-self-stretch/);
+  assert.match(resultsSource, /data-cars-price-alert-sidebar-slot[\s\S]*?<CarsResultsMapPreview/);
   assert.match(alertSource, /text-\[#1769AA\]/);
   assert.match(alertSource, /sm:rounded-full sm:bg-blue-50/);
   assert.match(alertSource, /whitespace-nowrap text-\[12px\] font-semibold leading-\[17px\] text-\[#07133B\]/);
