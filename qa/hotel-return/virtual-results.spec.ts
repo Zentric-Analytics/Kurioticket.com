@@ -38,6 +38,53 @@ const routes = {
   flights: `/flights/results?tripType=one-way&origin=SFO&destination=LOS&departureDate=${date}&adults=1&children=0&infants=0&travelers=1&cabinClass=economy&sort=cheapest`,
   cars: `/cars/results?${new URLSearchParams(carSearch)}`,
 };
+test("Cars desktop Hotels-details-style column includes map, filters and cards; mobile and tablet remain unwrapped", async ({ page }) => {
+  await page.route("**/api/cars/search", route => route.fulfill({ json: { results: [carBase], status: "available" } }));
+  for (const width of [390, 820, 1024, 1365]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(routes.cars);
+    const main = page.locator("main").first();
+    const column = page.locator("[data-cars-results-hotel-column]");
+    const card = column.locator("[data-car-result-card-shell]").first();
+    await expect(column).toBeVisible();
+    await expect(card).toBeVisible();
+
+    if (width < 1024) {
+      await expect(main).toHaveCSS("background-color", width < 640 ? "rgb(245, 247, 251)" : "rgb(246, 248, 251)");
+      await expect(column).toHaveCSS("border-top-width", "0px");
+      await expect(column).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+      continue;
+    }
+
+    await expect(main).toHaveCSS("background-color", "rgb(247, 249, 252)");
+    await expect(column).toHaveCSS("background-color", "rgb(255, 255, 255)");
+    await expect(column).toHaveCSS("border-color", "rgb(225, 230, 234)");
+    await expect(column).toHaveCSS("border-radius", "16px");
+    await expect(column).toHaveCSS("padding-left", "20px");
+    await expect(column).toHaveCSS("padding-right", "20px");
+
+    const map = column.locator("[data-cars-results-map-preview]");
+    const filters = column.locator(".desktop-filter-sidebar").first();
+    const list = column.locator("[data-cars-results-card-list]");
+    await expect(map).toBeVisible();
+    await expect(filters).toBeVisible();
+    await expect(list).toBeVisible();
+    const containerBox = (await column.boundingBox())!;
+    const insetLeft = containerBox.x + 17;
+    const insetRight = containerBox.x + containerBox.width - 17;
+    for (const element of [map, filters, card]) {
+      const rect = (await element.boundingBox())!;
+      expect(rect.x).toBeGreaterThanOrEqual(insetLeft);
+      expect(rect.x + rect.width).toBeLessThanOrEqual(insetRight);
+    }
+    const mapBox = (await map.boundingBox())!;
+    const filtersBox = (await filters.boundingBox())!;
+    const cardBox = (await card.boundingBox())!;
+    expect(mapBox.y + mapBox.height).toBeLessThanOrEqual(filtersBox.y + 3);
+    expect(mapBox.x + mapBox.width).toBeLessThan(cardBox.x);
+  }
+});
+
 test("Cars cards omit the supplier-information bar and preserve View deal on mobile and desktop", async ({ page }) => {
   const result = { ...carBase, offers: carBase.offers.map(offer => ({ ...offer, suppliedFacts: [{ label: "Fuel policy", value: "Return with the supplied fuel level" }] })) };
   await page.route("**/api/cars/search", route => route.fulfill({ json: { results: [result], status: "available" } }));
