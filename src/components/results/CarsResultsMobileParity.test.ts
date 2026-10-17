@@ -35,7 +35,7 @@ const stickyShortcuts = resultsSource.slice(
 test("Cars Results keeps the established responsive canvas surfaces", () => {
   assert.match(
     resultsSource,
-    /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white pb-8">/,
+    /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-\[#F7F9FC\] pb-8">/,
   );
 });
 
