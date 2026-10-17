@@ -1673,7 +1673,7 @@ export function CarsResultsClient({
       ? createPortal(renderMobileHeaderSearch(), mobileNavSearchTarget)
       : null}
     {mobileSearchOverlays}
-    <main className="flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-[#F7F9FC] pb-8">
+    <main className="flex-1 bg-[#F5F7FB] sm:bg-[#f6f8fb] lg:bg-white pb-8 lg:pb-12">
       <div
         className={cn(
           "pointer-events-none fixed inset-x-0 top-0 z-[1000] hidden px-4 transition-all duration-200 lg:block",
@@ -1834,7 +1834,7 @@ export function CarsResultsClient({
         ref={resultsGridRef}
         data-cars-results-scroll-region
         data-cars-results-hotel-column
-        className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-0 sm:pt-6 lg:mt-3 lg:max-w-[928px] lg:rounded-2xl lg:border lg:border-[#E1E6EA] lg:bg-white lg:px-5 lg:pb-5 lg:pt-5 lg:shadow-[0_2px_8px_rgba(25,32,36,0.04)]"
+        className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-0 sm:pt-6 lg:mt-6 lg:max-w-[928px] lg:rounded-2xl lg:border lg:border-[#E1E6EA] lg:bg-white lg:px-5 lg:pb-7 lg:pt-7 lg:shadow-[0_2px_8px_rgba(25,32,36,0.04)]"
       >
         <CarsResultsExperience
           results={initialResults}
@@ -2638,7 +2638,7 @@ export function CarsResultsExperience({
             ) : null}
           </aside>
         ) : null}
-        <div data-cars-results-content-column className="min-w-0 space-y-0 sm:space-y-4">
+        <div data-cars-results-content-column className={cn("min-w-0 space-y-0 sm:space-y-4", !embedded && presentation === "standalone" && "lg:space-y-5")}>
           {results.length > 0 ? (
             <>
               <div
@@ -2921,7 +2921,7 @@ export function CarsResultsExperience({
                   }
                   className={cn(
                     "w-full space-y-3.5 sm:space-y-4",
-                    !embedded && presentation === "standalone" ? "max-sm:!mt-0" : "max-sm:!mt-1",
+                    !embedded && presentation === "standalone" ? "max-sm:!mt-0 lg:space-y-5" : "max-sm:!mt-1",
                     !guidedPlanning && "w-full",
                   )}
                 >
@@ -2948,14 +2948,14 @@ export function CarsResultsExperience({
                   aria-busy="false"
                   className={cn(
                     "w-full space-y-3.5 sm:space-y-4",
-                    !embedded && presentation === "standalone" ? "max-sm:!mt-0" : "max-sm:!mt-1",
+                    !embedded && presentation === "standalone" ? "max-sm:!mt-0 lg:space-y-5" : "max-sm:!mt-1",
                     !guidedPlanning && "w-full",
                     filterTransitionPhase === "revealing" &&
                       filterTransitionMobile &&
                       "cars-filter-results-reveal",
                   )}
                 >
-                  <VirtualResultsList items={visibleResults} itemKey={resultIdKey} label="Car results" rowClassName="pb-3.5 sm:pb-4 focus:outline-none" estimateHeight={360} renderItem={car => (
+                  <VirtualResultsList items={visibleResults} itemKey={resultIdKey} label="Car results" rowClassName={cn("pb-3.5 sm:pb-4 focus:outline-none", !embedded && presentation === "standalone" && "lg:pb-5")} estimateHeight={360} renderItem={car => (
                     <CarResultCard
                       key={car.id}
                       car={car}
