@@ -20,7 +20,7 @@ test("approved car results use live canonical inventory and inline safe provider
   assert.match(screen, /<CarResultCard result=\{item\}/);
   assert.doesNotMatch(screen, /pathname:\s*"\/car-details"|carResultsStack|const openDeal=/);
   assert.match(card, /<NativeCarResultOfferPicker result=\{result\}/);
-  assert.match(card, /nativeCarPrimaryBookingUrl\(result\)/);
+  assert.doesNotMatch(card, /nativeCarPrimaryBookingUrl\(result\)/);
   assert.match(picker, /Linking\.openURL\(bookingUrl\)/);
   assert.match(deals, /getCarDealPickerGroups\(result\)/);
   assert.match(deals, /validHttpsBookingUrl\(offer\.bookingUrl\)/);
@@ -29,15 +29,16 @@ test("approved car results use live canonical inventory and inline safe provider
 
 test("car card preserves identity and four provider-aware specs while presenting only the converted daily price", () => {
   const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
+  const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
   const providerPresentation = readFileSync("src/features/search/nativeCarProviderPresentation.ts", "utf8");
   for (const field of ["modelName", "categoryLabel", "pickupLocation"]) assert.match(card, new RegExp(`result\\.${field}`));
   assert.match(card, /offer\?\.freeCancellation/);
-  assert.match(card, /offer\.pricePerDay/);
+  assert.match(picker, /displayed\.pricePerDay/);
   assert.match(card, /nativeCarPrimarySpecLabels\(result\)/);
   for (const field of ["passengers", "bags", "doors", "transmission"]) assert.match(providerPresentation, new RegExp(`result\\.${field}`));
   assert.match(providerPresentation, /sandboxPresentation\?\.specs/);
   assert.doesNotMatch(card, /offer\.totalPrice|offer\??\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
-  assert.match(card, />View deal<\/Text>/);
+  assert.match(picker, />View deal<\/Text>/);
   assert.doesNotMatch(card, />View car<\/Text>/);
   assert.match(card, /Share\.share/);
   assert.match(card, /getPrimaryCarOffer\(result\)/);

@@ -303,3 +303,12 @@ test("retired static catalogue details never resolve", async () => {
   assert.equal(await getCarDetails("not-a-known-id", search), null);
   for (const car of cars) assert.equal(await getCarDetails(car.id, search), null);
 });
+
+test("display-currency badge resolver does not compare raw mixed-currency values", () => {
+  const usd={...cars[0],id:"usd-price",supplierRating:4, recommendationScore:3};
+  const jpy={...cars[1],id:"jpy-price",supplierRating:4, recommendationScore:2};
+  const badges=assignCarBadges([usd,jpy],car=>car.id==="usd-price"?100:8);
+  assert.equal(badges.get("jpy-price"),"Cheapest");
+  assert.equal([...badges.values()].filter(value=>value==="Cheapest").length,1);
+  assert.equal([...assignCarBadges([usd,jpy],()=>undefined).values()].includes("Cheapest"),false);
+});
