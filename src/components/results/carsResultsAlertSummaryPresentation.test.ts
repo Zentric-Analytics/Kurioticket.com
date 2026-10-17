@@ -23,7 +23,7 @@ test("Cars Results summary selects compact display values but retains canonical 
   assert.equal(dropoff, "Lyon, France");
 });
 
-test("Cars keeps one tracking control in the results-count row, below quick filters", () => {
+test("Cars keeps one mobile tracking control and portals it above the desktop map", () => {
   assert.equal((cars.match(/<CarPriceAlertControl/g) ?? []).length, 1);
   const quickFilters = cars.indexOf("data-cars-results-quick-filters");
   const toolbar = cars.indexOf("data-cars-results-toolbar", quickFilters);
@@ -33,8 +33,14 @@ test("Cars keeps one tracking control in the results-count row, below quick filt
   const sort = cars.indexOf("ref={carsSortRef}", summary);
   assert.ok(quickFilters >= 0 && quickFilters < toolbar && toolbar < summary);
   assert.ok(summary < count && count < alertControl && alertControl < sort);
+  const slot = cars.indexOf("data-cars-price-alert-sidebar-slot");
+  const map = cars.indexOf("<CarsResultsMapPreview", slot);
+  const filters = cars.indexOf("<CarFilters", map);
+  assert.ok(slot >= 0 && slot < map && map < filters);
+  assert.match(cars, /ref=\{setDesktopCarPriceAlertTarget\}/);
+  assert.match(cars, /data-cars-price-alert-sidebar-slot[\s\S]*?className="mb-3 w-full empty:hidden"/);
   assert.match(cars, /grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_auto\] items-center gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1 sm:gap-x-2 sm:gap-y-3 sm:px-0/);
-  assert.match(cars, /<CarPriceAlertControl search=\{search\} results=\{providerResults\} \/>/);
+  assert.match(cars, /<CarPriceAlertControl[\s\S]*?desktopPortalTarget=\{desktopCarPriceAlertTarget\}[\s\S]*?\/>/);
 });
 
 test("Cars aligns both mobile controls with a compact heading and leaves no separate tracking row", () => {
@@ -46,8 +52,8 @@ test("Cars aligns both mobile controls with a compact heading and leaves no sepa
 });
 
 test("Cars results heading aligns to the inner card gutters and sits close to the first card on mobile", () => {
-  const summaryClasses = cars.match(/className=\{cn\(\s*"([^"]+)",\s*!embedded && "lg:grid-cols-\[max-content_minmax\(0,1fr\)_max-content\] lg:gap-x-3 lg:gap-y-0",\s*\)\}\s+data-cars-results-summary-row/)?.[1];
-  assert.ok(summaryClasses, "the existing results-count and tracking row is retained");
+  const summaryClasses = cars.match(/className=\{cn\(\s*"([^"]+)",\s*!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto\] lg:gap-x-3 lg:gap-y-0",\s*\)\}\s+data-cars-results-summary-row/)?.[1];
+  assert.ok(summaryClasses, "the existing mobile results-count and tracking row is retained");
   assert.match(summaryClasses, /grid-cols-\[minmax\(0,1fr\)_auto\] items-center/);
   assert.match(summaryClasses, /gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1/);
   assert.match(summaryClasses, /sm:gap-x-2 sm:gap-y-3 sm:px-0/);
@@ -97,24 +103,26 @@ test("Cars leaves the entire left-side result count and grid placement unchanged
   assert.match(cars, /className=\{cn\("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2 lg:row-start-1 lg:min-w-max"\)\}/);
   assert.match(cars, /className="truncate whitespace-nowrap text-\[12px\] font-semibold leading-4 tracking-\[-0\.002em\] text-\[#07133B\][^"]*max-\[359px\]:text-\[11px\] sm:text-\[14px\]/);
   assert.match(cars, /grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_auto\] items-center gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1/);
-  assert.match(cars, /<CarPriceAlertControl search=\{search\} results=\{providerResults\} \/>/);
+  assert.match(cars, /<CarPriceAlertControl[\s\S]*?desktopPortalTarget=\{desktopCarPriceAlertTarget\}[\s\S]*?\/>/);
   assert.match(alert, /whitespace-nowrap text-\[12px\] font-semibold leading-\[17px\] text-\[#07133B\]/);
   assert.match(alert, /gap-1\.5 max-\[359px\]:gap-1 sm:min-h-\[52px\]/);
   assert.match(alert, /h-11 w-\[51px\] shrink-0 items-center justify-end/);
   assert.match(alert, /role="switch" aria-checked=\{tracking\}/);
 });
 
-test("desktop Cars balances whitespace around Track prices without changing mobile or tablet rows", () => {
+test("desktop Cars fills sidebar map width while preserving mobile and tablet rows", () => {
   const alertStart = alert.indexOf("data-cars-price-alert");
   const alertEnd = alert.indexOf("</section>", alertStart);
   const alertMarkup = alert.slice(alertStart, alertEnd);
   assert.match(alertMarkup, /sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full/);
-  assert.match(alertMarkup, /lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-\[240px\]/);
+  assert.match(alertMarkup, /lg:col-span-1 lg:w-full lg:max-w-none lg:justify-self-stretch/);
   assert.doesNotMatch(alertMarkup, /lg:w-\[calc\(100%_-_12rem\)\]/);
-  assert.match(cars, /!embedded && "lg:grid-cols-\[max-content_minmax\(0,1fr\)_max-content\] lg:gap-x-3 lg:gap-y-0"/);
-  assert.match(alertMarkup, /lg:justify-self-center/);
+  assert.match(cars, /!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto\] lg:gap-x-3 lg:gap-y-0"/);
+  assert.match(alertMarkup, /lg:justify-self-stretch/);
+  assert.match(alert, /createPortal\(trackingControl, desktopPortalTarget\)/);
+  assert.match(alert, /data-cars-price-alert-inline/);
   assert.match(cars, /!embedded && "sm:row-start-2 lg:row-start-1 lg:min-w-max"/);
-  assert.match(cars, /!embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1 lg:justify-self-end lg:min-w-max lg:max-w-none"/);
+  assert.match(cars, /!embedded && "sm:row-start-2 lg:col-start-2 lg:row-start-1 lg:justify-self-end lg:min-w-max lg:max-w-none"/);
   assert.match(cars, /col-start-2 row-start-1 hidden[^"]*sm:flex/);
 });
 
