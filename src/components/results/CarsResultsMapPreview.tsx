@@ -72,7 +72,7 @@ export function CarsResultsMapPreview({ location }: { location: string }) {
   return (
     <>
       <div
-        className="relative mb-2 h-[150px] w-full overflow-hidden rounded-lg border border-slate-200 bg-[#e8eef2]"
+        className="relative mb-2 h-[150px] w-full overflow-hidden rounded-lg border border-slate-200 bg-[#e8eef2] lg:mb-4"
         data-cars-results-map-preview
       >
         <iframe
