@@ -57,7 +57,7 @@ test("Cars price tracking snackbar defines enter, exit, and reduced-motion behav
   assert.match(globals, /prefers-reduced-motion: reduce[\s\S]*cars-price-alert-snackbar-entering,[\s\S]*cars-price-alert-snackbar-leaving \{ animation: none; \}/);
 });
 
-test("mobile Cars tracking stays flat while desktop gets a compact Sort-aligned control", () => {
+test("mobile Cars tracking stays flat while desktop is centered and matches Flight styling", () => {
   const section = source.match(/data-cars-price-alert\s+className="([^"]+)"/)?.[1];
   assert.ok(section, "tracking section remains a scroll-indicator anchor");
   const mobileClasses = section.split(/\s+/).filter((name) => !name.includes(":"));
@@ -65,8 +65,8 @@ test("mobile Cars tracking stays flat while desktop gets a compact Sort-aligned 
   assert.doesNotMatch(mobileClasses.join(" "), /rounded|border|shadow|bg-\[#/);
   assert.match(section, /sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full sm:justify-self-center/);
   assert.match(section, /sm:rounded-2xl sm:border sm:border-blue-100 sm:bg-\[#EDF6FF\] sm:px-4 sm:py-1 sm:shadow-sm/);
-  assert.match(section, /lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-\[240px\] lg:justify-self-end/);
-  assert.match(section, /lg:rounded-lg lg:bg-\[#F1F7FE\] lg:px-2 lg:py-0/);
+  assert.match(section, /lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-\[240px\] lg:justify-self-center/);
+  assert.match(section, /lg:rounded-xl lg:border-\[#CFE0F8\] lg:bg-\[#EEF6FF\] lg:px-2 lg:py-0/);
   assert.doesNotMatch(section, /lg:mx-auto|lg:w-\[calc\(100%_-_12rem\)\]/);
   assert.match(source, /sm:min-h-\[52px\] sm:justify-start sm:gap-2\.5 lg:min-h-9 lg:gap-1\.5/);
   assert.match(source, /sm:bg-blue-50 sm:text-\[#004BB8\] lg:h-6 lg:w-6/);
@@ -94,12 +94,25 @@ test("mobile Cars switch has a 44px visual track, 24px height, 18px thumb, and f
   assert.match(source, /flex h-11 w-\[51px\] shrink-0 items-center justify-end/);
   assert.match(source, /<button ref=\{switchRef\} type="button" role="switch"/);
   assert.match(source, /className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full[^"]*sm:w-12 lg:h-9"/);
-  assert.match(source, /aria-hidden="true" className=\{`relative inline-flex h-6 w-11[^}]*sm:h-7 sm:w-12/);
+  assert.match(source, /aria-hidden="true" className=\{`relative inline-flex h-6 w-11[^}]*sm:h-7 sm:w-12 lg:h-6 lg:w-11/);
   assert.match(source, /h-\[18px\] w-\[18px\][^}]*sm:h-5 sm:w-5/);
-  assert.match(source, /tracking \? "translate-x-\[23px\] rtl:-translate-x-\[23px\] sm:translate-x-\[22px\] sm:rtl:-translate-x-\[22px\]"/);
-  assert.match(source, /: "translate-x-\[3px\] rtl:-translate-x-\[3px\]"/);
+  assert.match(source, /tracking \? "translate-x-\[23px\] rtl:-translate-x-\[23px\] sm:translate-x-\[22px\] sm:rtl:-translate-x-\[22px\] lg:translate-x-5 lg:rtl:-translate-x-5"/);
+  assert.match(source, /: "translate-x-\[3px\] rtl:-translate-x-\[3px\] lg:translate-x-0\.5 lg:rtl:-translate-x-0\.5"/);
   assert.equal((source.match(/role="switch"/g) ?? []).length, 1);
   assert.match(source, /aria-checked=\{tracking\} aria-busy=\{pending\} disabled=\{disabled\}/);
+  assert.match(source, /onClick=\{\(\) => void toggle\(!tracking\)\}/);
+});
+
+test("desktop Cars copies the Flight price switch visual size and surface without shrinking mobile targets", () => {
+  const flight = readFileSync(new URL("./FlightPriceAlertControl.tsx", import.meta.url), "utf8");
+  assert.match(flight, /surface === "desktop" \? "h-6 w-11" : "h-7 w-12"/);
+  assert.match(flight, /surface === "desktop" \? "h-5 w-5" : "h-6 w-6"/);
+  assert.match(flight, /border-\[#CFE0F8\] bg-\[#EEF6FF\]/);
+  assert.match(source, /sm:h-7 sm:w-12 lg:h-6 lg:w-11/);
+  assert.match(source, /h-\[18px\] w-\[18px\][^}]*sm:h-5 sm:w-5/);
+  assert.match(source, /lg:translate-x-5 lg:rtl:-translate-x-5/);
+  assert.match(source, /lg:translate-x-0\.5 lg:rtl:-translate-x-0\.5/);
+  assert.match(source, /className="relative inline-flex h-11 w-11[^"]*sm:w-12 lg:h-9"/);
   assert.match(source, /onClick=\{\(\) => void toggle\(!tracking\)\}/);
 });
 
