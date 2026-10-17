@@ -18,9 +18,9 @@ test("Cars Results exposes provider links in cards without navigating to the det
   assert.doesNotMatch(results, /const openDeal=/);
   assert.match(results, /<CarResultCard result=\{item\}/);
   assert.match(card, /<NativeCarResultOfferPicker result=\{result\}/);
-  assert.match(card, /nativeCarPrimaryBookingUrl\(result\)/);
-  assert.match(card, /disabled=\{!primaryBookingUrl\}/);
-  assert.match(card, /Linking\.openURL\(primaryBookingUrl\)/);
+  assert.doesNotMatch(card, /nativeCarPrimaryBookingUrl\(result\)/);
+  assert.match(picker, /disabled=\{!bookingUrl\}/);
+  assert.match(picker, /Linking\.openURL\(bookingUrl\)/);
   assert.match(picker, /Linking\.openURL\(bookingUrl\)/);
   assert.match(dealActions, /getCarDealPickerGroups\(result\)/);
   assert.doesNotMatch(card, /router\.push|\/car-details/);
