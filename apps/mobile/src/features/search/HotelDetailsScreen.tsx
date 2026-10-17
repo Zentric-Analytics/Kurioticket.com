@@ -156,18 +156,18 @@ function HotelDetail({
     status: HotelDetailsStatus;
     response: MobileHotelDetailsResponse | null;
   } | null>(null);
-  const [rateInfo, setRateInfo] = useState<{ row: NativeHotelRateRow; anchor: HotelRateInfoAnchor } | null>(null);
-  const rateInfoRef = useRef<{ row: NativeHotelRateRow; anchor: HotelRateInfoAnchor } | null>(null);
+  const [rateInfo, setRateInfo] = useState<{ id: string; anchor: HotelRateInfoAnchor } | null>(null);
+  const rateInfoRef = useRef<{ id: string; anchor: HotelRateInfoAnchor } | null>(null);
   const ratePopupBoundsRef = useRef<{ left: number; top: number; width: number; height: number } | null>(null);
-  const dealOpeningRef = useRef(false);
+  const dealsOpeningRef = useRef<Set<string>>(new Set());
   const closeRateInfo = useCallback(() => {
     rateInfoRef.current = null;
     ratePopupBoundsRef.current = null;
     setRateInfo(null);
   }, []);
   const showRateInfo = useCallback((row: NativeHotelRateRow, anchor: HotelRateInfoAnchor) => {
-    if (rateInfoRef.current?.row.id === row.id) { closeRateInfo(); return; }
-    const next = { row, anchor };
+    if (rateInfoRef.current?.id === row.id) { closeRateInfo(); return; }
+    const next = { id: row.id, anchor };
     rateInfoRef.current = next;
     ratePopupBoundsRef.current = null;
     setRateInfo(next);
@@ -440,11 +440,11 @@ function HotelDetail({
   };
 
   const continueHotelRate = async (rateId: string) => {
-    if (dealOpeningRef.current) return;
+    if (dealsOpeningRef.current.has(rateId)) return;
     const selected = rateRows.find(row => row.id === rateId && row.actionable);
     if (!selected) return;
     closeRateInfo();
-    dealOpeningRef.current = true;
+    dealsOpeningRef.current.add(rateId);
     try {
       if (selected.offerId === "internal-rooms") {
         if (kurioticketWebUrl) await openProviderInApp(kurioticketWebUrl);
@@ -455,7 +455,7 @@ function HotelDetail({
     } catch {
       Alert.alert("Unable to open provider", "Please refresh and try again.");
     } finally {
-      dealOpeningRef.current = false;
+      dealsOpeningRef.current.delete(rateId);
     }
   };
 
@@ -540,8 +540,11 @@ function HotelDetail({
         const box = ratePopupBoundsRef.current;
         if (!box) return false;
         const { pageX, pageY } = event.nativeEvent;
-        if (pageX < box.left || pageX > box.left + box.width ||
-            pageY < box.top || pageY > box.top + box.height) {
+        const trigger = rateInfoRef.current.anchor;
+        const onTrigger = pageX >= trigger.x - 8 && pageX <= trigger.x + trigger.width + 8
+          && pageY >= trigger.y - 8 && pageY <= trigger.y + trigger.height + 8;
+        if (!onTrigger && (pageX < box.left || pageX > box.left + box.width ||
+            pageY < box.top || pageY > box.top + box.height)) {
           closeRateInfo();
         }
         // Outside touches and drags still reach the underlying Hotel screen.
@@ -695,10 +698,10 @@ function HotelDetail({
 
       </ScrollView>
 
-      {rateInfo && activeHotelTab === "deals" ? (
+      {rateInfo && activeHotelTab === "deals" && rateRows.some(row => row.id === rateInfo.id) ? (
         <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
           <NativeHotelRatePopover
-            row={rateInfo.row}
+            row={rateRows.find(row => row.id === rateInfo.id)!}
             anchor={rateInfo.anchor}
             viewport={{ width, height }}
             theme={theme}
