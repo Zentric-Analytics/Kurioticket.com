@@ -180,6 +180,6 @@ test("approved and KAYAK details inherit the Results-card price typography contr
     assert.doesNotMatch(source, /dockPerDay:/);
   }
   const resultSource = compact(resultCard);
-  assert.match(resultSource, /<NativeCarResultOfferPicker result=\{result\}/);
-  assert.match(resultSource, /perDayLabel:\{maxWidth:"100%",marginTop:1,fontSize:10,fontWeight:"500",fontFamily:appFonts\.medium,lineHeight:13/);
+  assert.match(resultSource, /<NativeCarResultOfferPickerresult=\{result\}/);
+  assert.doesNotMatch(resultSource, /commerceColumn:|perDayLabel:|dailyPrice:/);
 });
