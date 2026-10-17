@@ -1,37 +1,55 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-const hotel = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
-const rates = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
-test("all three native Hotel Details tabs have no persistent booking dock", () => {
-  assert.doesNotMatch(hotel, /bookingDock|bookingDockButton|selectedRate\.totalPrice/);
-  assert.match(hotel, /contentContainerStyle=\{\{ paddingBottom: 24 \+ inset\.bottom \}\}/);
-  assert.match(hotel, /activeHotelTab === "deals"/);
-  assert.match(hotel, /activeHotelTab === "details"/);
-  assert.match(hotel, /activeHotelTab === "reviews"/);
+
+const detailSource = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+const ratesSource = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
+const webMobileDetails = readFileSync(
+  "../../src/components/results/hotelDetails/MobileHotelDetails.tsx",
+  "utf8",
+);
+const webMobileCss = readFileSync(
+  "../../src/components/results/hotelDetails/HotelDetailsMobile.module.css",
+  "utf8",
+);
+
+function rateStyle(name: string, nextName?: string) {
+  const start = ratesSource.indexOf(`  ${name}:`);
+  const end = nextName
+    ? ratesSource.indexOf(`  ${nextName}:`, start)
+    : ratesSource.indexOf("\n});", start);
+  assert.notEqual(start, -1, `${name} style must exist`);
+  assert.notEqual(end, -1, `${nextName ?? "stylesheet end"} must follow ${name}`);
+  return ratesSource.slice(start, end);
+}
+
+test("mobile web reference renders dedicated Hotel provider offers from shared offer data", () => {
+  assert.match(webMobileDetails, /import \{ MobileProviderOffer \} from "\.\/HotelPriceComparisonSection"/);
+  assert.match(webMobileDetails, /offers\.map\(offer => <MobileProviderOffer/);
+  assert.match(webMobileDetails, /onInfo=\{anchor => \{ setRateAnchor\(anchor\); setRateInfo\(current =>/);
+  assert.match(webMobileDetails, /perNightText=\{props\.perNightText\}/);
+  assert.match(webMobileDetails, /totalPrice: total/);
+  const rateListStart = webMobileDetails.indexOf('<div aria-label="Hotel rates" className={styles.rateList}>');
+  assert.ok(rateListStart >= 0, "the provider-card list must be present");
+  const rateListEnd = webMobileDetails.indexOf("</div>", rateListStart);
+  assert.ok(rateListEnd > rateListStart);
+  const providerCards = webMobileDetails.slice(rateListStart, rateListEnd);
+  assert.match(providerCards, /offers\.map\(offer => <MobileProviderOffer/);
+  assert.doesNotMatch(providerCards, />Stay total</, "the card list must not repeat the details-dialog total label");
+  assert.match(webMobileDetails, /rateInfo && rateAnchor \? <HotelRatePopover offer=\{rateInfo\} anchor=\{rateAnchor\} onClose=\{\(\) => setRateInfo\(null\)\}/);
+  assert.match(webMobileDetails, /import \{ HotelRatePopover \} from "\.\/HotelRatePopover"/);
+  assert.doesNotMatch(webMobileDetails, /<HotelRateInfoPopover/);
+  assert.doesNotMatch(webMobileDetails, /className=\{styles\.rateAction\}/);
+  assert.doesNotMatch(webMobileCss, /\.rate\[data-selected="true"\][^}]*border-color: var\(--accent\)/);
 });
-test("every distinct provider offer gets an independent actionable rate card", () => {
-  assert.match(rates, /for \(const \{ hotel, providerDetails \} of providerEntries\)/);
-  assert.match(rates, /id: `provider:\$\{hotel\.id\}`/);
-  assert.match(rates, /offerId: hotel\.id/);
-  assert.match(rates, /new Set<string>\(\)/);
-  assert.match(rates, /View deal/);
-  assert.match(rates, /onPress=\{\(\) => onViewDeal\(row\.id\)\}/);
-  assert.match(rates, /disabled=\{!row\.actionable \|\| pendingRateId !== null\}/);
-});
-test("rate info stays attached to its offer and property facts appear only in Overview", () => {
-  assert.match(rates, /expandedRateId === row\.id/);
-  assert.match(rates, /row\.rateFacts\.map/);
-  assert.match(rates, /Booking conditions/);
-  assert.doesNotMatch(hotel, /NativeSupplierInformation|Property information supplied by KAYAK/);
-  assert.doesNotMatch(hotel, /Rate information —/);
-});
-test("native deal handoffs use the actual selected offer ID through verified server redirect", () => {
-  assert.match(hotel, /rateRows\.find\(row => row\.id === rateId && row\.actionable\)/);
-  assert.match(hotel, /travelApi\.hotelRedirect\(selected\.offerId\)/);
-  assert.match(hotel, /await openProviderInApp\(response\.url\)/);
-  assert.match(hotel, /selected\.offerId === "internal-rooms"/);
-  const api = readFileSync("src/api/travelApi.ts", "utf8");
-  assert.match(api, /hotelRedirect: \(id: string\)/);
-  assert.match(api, /type: "hotel", sourcePage: "native_hotel_details"/);
+
+
+test("native Hotel rate cards replace the bottom dock on all tabs", () => {
+  assert.doesNotMatch(detailSource, /bookingDock|NativeSupplierInformation|Property information supplied by KAYAK/);
+  assert.match(detailSource, /contentContainerStyle=\\{\\{ paddingBottom: 24 \\+ inset\\.bottom \\}\\}/);
+  assert.match(detailSource, /onViewDeal=\\{\\(rateId\\) => void continueHotelRate\\(rateId\\)\\}/);
+  assert.match(detailSource, /travelApi\\.hotelRedirect\\(selected\\.offerId\\)/);
+  assert.match(ratesSource, /onPress=\\{\\(\\) => onViewDeal\\(row\\.id\\)\\}/);
+  assert.match(ratesSource, /hotelSupplierFacts\\(providerDetails\\)/);
+  assert.match(ratesSource, /Bundled rate\\|Rate breakdown\\|Rate condition/);
 });
