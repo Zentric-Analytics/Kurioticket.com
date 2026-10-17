@@ -31,6 +31,7 @@ test("native rate presentation does not expand the card and keeps mobile web row
   assert.match(source, /priceColumn: \{ flexDirection: "row", alignItems: "baseline"/);
   assert.match(source, /<NativeHotelRatePopover/);
   assert.doesNotMatch(source, /expanded && infoAvailable/);
-  assert.match(source, /onRequestClose=\{onClose\}/);
+  assert.doesNotMatch(source, /<Modal|onRequestClose=\{onClose\}/);
+  assert.match(source, /pointerEvents="box-none"/);
   assert.match(source, /accessibilityLabel="Close Rate details"/);
 });
