@@ -55,6 +55,8 @@ function RateSectionHeading({
 }
 
 /** Compact seller offers, with all supplier facts in a rate-specific native sheet. */
+// Keep the complete View deal label and 12pt chevron visible at compact native card widths.
+const MIN_VIEW_DEAL_ACTION_WIDTH = 88;
 const INITIAL_VISIBLE_OFFER_COUNT = 3;
 export function NativeCarResultOfferPicker({
   result, displayCurrency, rates,
@@ -69,7 +71,6 @@ export function NativeCarResultOfferPicker({
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const choices = nativeCarResultDealChoices(result);
   const visibleChoices = expanded ? choices : choices.slice(0, INITIAL_VISIBLE_OFFER_COUNT);
-  const hideActionChevron = rowWidth === 0 || rowWidth < 410;
   const stackVeryNarrow = rowWidth > 0 && rowWidth < 260;
   const selectedChoice = choices.find(choice => choice.key === selectedKey);
   const selectedRateBookingUrl = selectedChoice?.bookingUrl ?? null;
@@ -94,7 +95,7 @@ export function NativeCarResultOfferPicker({
       const actionColor = bookingUrl ? (theme.dark ? "#8FB5FF" : "#004BB8") : "#94A3B8";
       const hasDetails = result.inventorySource === "kayak-sandbox" && Boolean(offer.suppliedFacts?.length);
       return <View key={key} style={[styles.provider, stackVeryNarrow && styles.providerNarrow]}>
-        <View style={[styles.meta, { width: stackVeryNarrow ? ("100%" as const) : rowWidth > 0 ? Math.min(rowWidth, rowWidth * 0.68 + 20) : ("68%" as const) }]}>
+        <View style={[styles.meta, { width: stackVeryNarrow ? ("100%" as const) : rowWidth > 0 ? Math.min(rowWidth - MIN_VIEW_DEAL_ACTION_WIDTH, rowWidth * 0.68 + 20) : ("68%" as const) }]}>
           <View style={styles.brand}>
             <ProviderMark name={providerName} logoUrl={logoUrl} />
             <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.providerName, { color: theme.dark ? theme.textSecondary : "#334155" }]}>{providerName}</Text>
@@ -122,7 +123,7 @@ export function NativeCarResultOfferPicker({
             style={styles.action}
           >
             <Text style={[styles.link, { color: actionColor }]}>View deal</Text>
-            {bookingUrl && !hideActionChevron ? <ChevronRight accessible={false} size={12} color={actionColor} /> : null}
+            {bookingUrl ? <ChevronRight accessible={false} size={12} strokeWidth={2} color={actionColor} /> : null}
           </Pressable>
 
         </View>
