@@ -23,7 +23,7 @@ test("rate info stays attached to its offer and property facts appear only in Ov
   assert.match(rates, /expandedRateId === row\.id/);
   assert.match(rates, /row\.rateFacts\.map/);
   assert.match(rates, /Booking conditions/);
-  assert.match(hotel, /activeHotelTab === "details" \? <NativeSupplierInformation/);
+  assert.doesNotMatch(hotel, /NativeSupplierInformation|Property information supplied by KAYAK/);
   assert.doesNotMatch(hotel, /Rate information —/);
 });
 test("native deal handoffs use the actual selected offer ID through verified server redirect", () => {
