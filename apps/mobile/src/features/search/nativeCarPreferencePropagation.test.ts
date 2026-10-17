@@ -29,7 +29,7 @@ test("native Cars consumes the canonical reactive app language instead of owning
 test("native Cars display pricing consumes canonical currency across results and both detail surfaces", () => {
   assert.match(currencyHook, /const \{ currency \} = useMobileLocalization\(\)/);
   assert.match(card, /useCarDisplayCurrency\(\)/);
-  assert.match(card, /presentCarOfferCurrency\(primaryOffer, displayCurrency, rates\)/);
+  assert.match(card, /<NativeCarResultOfferPicker result=\{result\} displayCurrency=\{displayCurrency\} rates=\{rates\}/);
   for (const source of [detail, kayakDetail]) {
     assert.match(source, /useCarDisplayCurrency\(\)/);
     assert.match(source, /presentCarOfferCurrency\(candidate, displayCurrency, rates\)/);
