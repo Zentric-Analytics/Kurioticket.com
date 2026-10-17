@@ -102,7 +102,7 @@ test("source-contract: Cars keeps the mobile count and alert row while compactin
   assert.equal(toolbarClass.split(" ").includes("flex-wrap"), false);
 
   assert.match(summaryRow, /grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_auto\] items-center gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1 sm:gap-x-2/);
-  assert.match(summaryRow, /className=\{cn\("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2 lg:row-start-1"\)\}/);
+  assert.match(summaryRow, /className=\{cn\("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2 lg:row-start-1 lg:min-w-max"\)\}/);
   assert.match(summaryRow, /!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\] lg:gap-x-3 lg:gap-y-0"/);
   assert.match(summaryRow, /lg:col-start-3 lg:row-start-1 lg:justify-self-end/);
   assert.match(summaryRow, /<h2[^>]*className="[^"]*truncate[^"]*whitespace-nowrap/);
@@ -117,10 +117,12 @@ test("source-contract: Cars keeps the mobile count and alert row while compactin
   const alertPosition = summaryRow.indexOf("<CarPriceAlertControl");
   assert.ok(alertPosition > summaryRow.indexOf("<h2"));
   assert.equal((resultsToolbar.match(/<CarPriceAlertControl/g) ?? []).length, 1);
-  assert.match(summaryRow, /className=\{cn\("col-start-2 row-start-1 hidden[^"]*sm:flex sm:gap-2", !embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1 lg:justify-self-end"\)\}/);
+  assert.match(summaryRow, /className=\{cn\("col-start-2 row-start-1 hidden[^"]*sm:flex sm:gap-2", !embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1 lg:justify-self-end lg:min-w-max lg:max-w-none"\)\}/);
   assert.ok(summaryRow.indexOf("<h2") < summaryRow.indexOf("ref={carsSortRef}"));
   assert.match(summaryRow, /className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap[^"\n]*"/);
-  assert.match(resultsToolbar, /className="relative inline-flex min-w-0 max-w-full shrink/);
+  assert.match(resultsToolbar, /className="relative inline-flex min-w-0 max-w-full shrink[^"]*lg:max-w-none lg:shrink-0/);
+  assert.match(resultsToolbar, /cars-results-desktop-sort-trigger[^"]*lg:max-w-none/);
+  assert.match(resultsToolbar, /lg:tracking-\[-0\.005em\] lg:overflow-visible/);
   assert.match(resultsToolbar, /className="cars-results-desktop-sort-trigger inline-flex h-9 min-w-0 max-w-full/);
   assert.match(resultsToolbar, /<span className="min-w-0 truncate whitespace-nowrap">\s*\{selectedCarSortLabel\}/);
   assert.match(resultsToolbar, /"shrink-0 text-current transition-transform duration-150"/);

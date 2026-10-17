@@ -97,11 +97,13 @@ test("mobile lower band uses all available width for supplier offers without dup
   assert.doesNotMatch(source, /const mobileStandaloneViewDealClassName|const mobileStandaloneViewDealVisualStyle/);
 });
 
-test("legacy composition is hidden only for standalone mobile while compact desktop rails stay explicit", () => {
-  assert.match(source, /guidedPlanning \? "grid lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\] xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]" : "hidden md:grid lg:grid-cols-\[192px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[200px_minmax\(0,1fr\)_152px\]"/);
+test("legacy tablet and guided layout remain intact while standalone desktop uses only two columns", () => {
+  assert.match(source, /guidedPlanning \? "grid lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\] xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]" : "hidden md:grid lg:grid-cols-\[192px_minmax\(0,1fr\)\] xl:grid-cols-\[200px_minmax\(0,1fr\)\]"/);
   assert.match(source, /md:grid-cols-\[250px_minmax\(0,1fr\)\]/);
-  assert.match(source, /lg:grid-cols-\[192px_minmax\(0,1fr\)_152px\]/);
-  assert.match(source, /xl:grid-cols-\[200px_minmax\(0,1fr\)_152px\]/);
+  assert.match(source, /lg:grid-cols-\[192px_minmax\(0,1fr\)\]/);
+  assert.match(source, /xl:grid-cols-\[200px_minmax\(0,1fr\)\]/);
+  assert.doesNotMatch(source, /lg:grid-cols-\[192px_minmax\(0,1fr\)_152px\]/);
+  assert.match(source, /"lg:!hidden"/);
   const desktopImage = between('data-region="image"', 'data-region="heading"');
   assert.match(desktopImage, /md:col-span-1 md:col-start-1 md:row-span-2/);
   assert.match(desktopImage, /lg:row-span-1 lg:border-e-0 lg:items-start/);

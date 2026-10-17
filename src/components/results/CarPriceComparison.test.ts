@@ -152,7 +152,7 @@ test("inline provider offers do not retain the old comparison overlays", () => {
   );
 });
 
-test("desktop main View deal remains independently validated", () => {
+test("provider links remain validated and standalone duplicate action is hidden at desktop", () => {
   assert.match(card, /const approvedProviderBookingUrl/);
   assert.match(card, /sandboxBookingUrl\(offer\.bookingUrl\)/);
   assert.match(card, /url\.protocol !== "https:" \|\| url\.username \|\| url\.password/);
@@ -160,10 +160,13 @@ test("desktop main View deal remains independently validated", () => {
   assert.equal((card.match(/target="_blank"/g) ?? []).length, 1);
   assert.equal((card.match(/rel="noopener noreferrer"/g) ?? []).length, 1);
   assert.match(card, /aria-label="Provider booking link unavailable"/);
+  assert.match(card, /guidedPlanning \? "lg:col-span-1[^"]+" : "lg:!hidden"/);
+  assert.match(picker, /data-car-deal-provider-view-deal/);
+  assert.match(picker, /data-car-deal-provider-action-slot/);
   assert.doesNotMatch(card, /href="#"/);
 });
 
-test("selected provider state remains available to the existing main card View deal", () => {
+test("selected offer state remains available for tablet fallback while desktop provider rows own View deal", () => {
   assert.match(card, /const \[localSelectedOfferId, setLocalSelectedOfferId\] = useState/);
   assert.match(card, /const selectedOfferId = selectedDealOfferId \?\? localSelectedOfferId/);
   assert.match(card, /car\.offers\.find\(\(candidate\) => candidate\.id === selectedOfferId\)/);

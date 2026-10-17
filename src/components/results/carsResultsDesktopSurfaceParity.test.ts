@@ -48,7 +48,7 @@ test("standalone Cars desktop uses the Hotels details continuous column without 
   assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-\[#F7F9FC\] pb-8">/);
   assert.match(
     results,
-    /data-cars-results-scroll-region\s+data-cars-results-hotel-column\s+className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-0 sm:pt-6 lg:mt-3 lg:max-w-\[1080px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:pb-5 lg:pt-5 lg:shadow-\[0_2px_8px_rgba\(25,32,36,0\.04\)\]"/,
+    /data-cars-results-scroll-region\s+data-cars-results-hotel-column\s+className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-0 sm:pt-6 lg:mt-3 lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:pb-5 lg:pt-5 lg:shadow-\[0_2px_8px_rgba\(25,32,36,0\.04\)\]"/,
   );
   assert.match(results, /<CarsResultsExperience[\s\S]*?results=\{initialResults\}/);
   assert.match(results, /createPortal\(\s*renderCarsSearchForm\("desktop-navbar"\),\s*desktopNavSearchTarget,\s*\)/);
@@ -57,7 +57,7 @@ test("standalone Cars desktop uses the Hotels details continuous column without 
   assert.match(route, /<AppHeader[\s\S]*?flushDesktopBottom[\s\S]*?stableMobileSafeAreaTop[\s\S]*?hotelDesktopBoundary[\s\S]*?carsResultsDesktopSticky/);
 
   assert.match(loading, /aria-label="Loading car results"/);
-  assert.match(loading, /data-cars-results-loading-hotel-column[\s\S]*?lg:max-w-\[1080px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:py-5 lg:shadow-\[0_2px_8px_rgba\(25,32,36,0\.04\)\]/);
+  assert.match(loading, /data-cars-results-loading-hotel-column[\s\S]*?lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:py-5 lg:shadow-\[0_2px_8px_rgba\(25,32,36,0\.04\)\]/);
   assert.match(loading, /results-loading-surface min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] pb-8 sm:bg-\[#f6f8fb\] lg:bg-\[#F7F9FC\]/);
   assert.match(results, /desktopSurfaceParity=\{!embedded && presentation === "standalone"\}/);
   assert.equal(
@@ -70,7 +70,7 @@ test("standalone Cars desktop uses the Hotels details continuous column without 
 test("desktop Cars results body is compact, centered, and keeps shared surfaces aligned", () => {
   assert.match(
     results,
-    /data-cars-results-scroll-region[\s\S]*?data-cars-results-hotel-column[\s\S]*?lg:mt-3 lg:max-w-\[1080px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:pb-5 lg:pt-5/,
+    /data-cars-results-scroll-region[\s\S]*?data-cars-results-hotel-column[\s\S]*?lg:mt-3 lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:pb-5 lg:pt-5/,
   );
   assert.match(
     results,
@@ -78,7 +78,7 @@ test("desktop Cars results body is compact, centered, and keeps shared surfaces 
   );
   assert.match(
     results,
-    /data-cars-results-loading-hotel-column[\s\S]*?lg:max-w-\[1080px\] lg:rounded-2xl[\s\S]*?lg:grid-cols-\[232px_minmax\(0,1fr\)\] xl:grid-cols-\[236px_minmax\(0,1fr\)\]/,
+    /data-cars-results-loading-hotel-column[\s\S]*?lg:max-w-\[928px\] lg:rounded-2xl[\s\S]*?lg:grid-cols-\[232px_minmax\(0,1fr\)\] xl:grid-cols-\[236px_minmax\(0,1fr\)\]/,
   );
   assert.match(
     alert,
@@ -86,11 +86,11 @@ test("desktop Cars results body is compact, centered, and keeps shared surfaces 
   );
   assert.match(
     card,
-    /hidden md:grid lg:grid-cols-\[192px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[200px_minmax\(0,1fr\)_152px\]/,
+    /hidden md:grid lg:grid-cols-\[192px_minmax\(0,1fr\)\] xl:grid-cols-\[200px_minmax\(0,1fr\)\]/,
   );
   assert.match(
     skeleton,
-    /lg:grid-cols-\[192px_minmax\(0,1fr\)_152px\] xl:grid-cols-\[200px_minmax\(0,1fr\)_152px\]/,
+    /desktopSurfaceParity[\s\S]*?\? "lg:grid-cols-\[192px_minmax\(0,1fr\)\] xl:grid-cols-\[200px_minmax\(0,1fr\)\]"/,
   );
   assert.match(
     card,
@@ -111,6 +111,16 @@ test("desktop Cars results body is compact, centered, and keeps shared surfaces 
     /data-car-card-mobile-image[\s\S]*?min-h-\[144px\]/,
     "the separately rendered mobile image retains its original minimum height",
   );
+});
+
+test("desktop Cars keeps the count, centered tracking and Sort toolbar inside the shortened white column", () => {
+  assert.match(results, /lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\]/);
+  assert.match(results, /data-cars-results-content-column className="min-w-0 space-y-0 sm:space-y-4"/);
+  assert.match(results, /data-cars-results-summary-row[\s\S]*?\{!embedded \? <CarPriceAlertControl[\s\S]*?cars-results-desktop-sort-trigger/);
+  assert.match(results, /lg:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/);
+  assert.match(alert, /lg:w-fit lg:max-w-\[240px\] lg:justify-self-center/);
+  assert.match(loading, /lg:max-w-\[928px\]/);
+  assert.doesNotMatch(results, /lg:max-w-\[1080px\]/);
 });
 
 test("desktop Cars filters use the Hotels white filter surface without changing mobile filters", () => {
@@ -154,7 +164,9 @@ test("desktop and mobile Cars result cards use the same pure-white surface", () 
     card,
     /md:rounded-2xl md:bg-white md:shadow/,
   );
-  assert.match(card, /data-car-card-desktop-header-rail[\s\S]*?bg-white/);
+  assert.doesNotMatch(card, /data-car-card-desktop-header-rail/);
+  assert.match(card, /data-car-card-desktop-shared-header[\s\S]*?lg:grid-cols-\[minmax\(0,1fr\)_auto\]/);
+  assert.match(card, /data-region="pricing"[\s\S]*?lg:!hidden/);
   assert.doesNotMatch(card, /md:bg-\[#E7EBF1\]/);
   assert.match(
     card,
@@ -211,7 +223,7 @@ test("KAYAK car cards and loading canvases stay inside the same standalone deskt
   );
 });
 
-test("desktop white column encompasses map, filters, toolbar and result cards without changing their layout", () => {
+test("narrowed desktop white column encompasses map, filters, full toolbar and narrower result cards", () => {
   const shell = results.indexOf('data-cars-results-scroll-region');
   const experience = results.indexOf('<CarsResultsExperience', shell);
   const grid = results.indexOf('ref={carsResultsBodyRef}', experience);

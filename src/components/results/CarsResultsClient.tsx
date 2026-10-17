@@ -1834,7 +1834,7 @@ export function CarsResultsClient({
         ref={resultsGridRef}
         data-cars-results-scroll-region
         data-cars-results-hotel-column
-        className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-0 sm:pt-6 lg:mt-3 lg:max-w-[1080px] lg:rounded-2xl lg:border lg:border-[#E1E6EA] lg:bg-white lg:px-5 lg:pb-5 lg:pt-5 lg:shadow-[0_2px_8px_rgba(25,32,36,0.04)]"
+        className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-0 sm:pt-6 lg:mt-3 lg:max-w-[928px] lg:rounded-2xl lg:border lg:border-[#E1E6EA] lg:bg-white lg:px-5 lg:pb-5 lg:pt-5 lg:shadow-[0_2px_8px_rgba(25,32,36,0.04)]"
       >
         <CarsResultsExperience
           results={initialResults}
@@ -2638,7 +2638,7 @@ export function CarsResultsExperience({
             ) : null}
           </aside>
         ) : null}
-        <div className="min-w-0 space-y-0 sm:space-y-4">
+        <div data-cars-results-content-column className="min-w-0 space-y-0 sm:space-y-4">
           {results.length > 0 ? (
             <>
               <div
@@ -2814,12 +2814,12 @@ export function CarsResultsExperience({
                   )}
                   data-cars-results-summary-row
                 >
-                  <div className={cn("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2 lg:row-start-1")}>
+                  <div className={cn("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2 lg:row-start-1 lg:min-w-max")}>
                     <h2
                       ref={resultHeadingRef}
                       id={resultHeadingId}
                       tabIndex={-1}
-                      className="truncate whitespace-nowrap text-[12px] font-semibold leading-4 tracking-[-0.002em] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] max-[359px]:text-[11px] sm:text-[14px] sm:font-semibold sm:leading-5 sm:tracking-[-0.004em] lg:text-[14px] lg:font-semibold lg:leading-5 lg:tracking-[-0.005em]"
+                      className="truncate whitespace-nowrap text-[12px] font-semibold leading-4 tracking-[-0.002em] text-[#07133B] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] max-[359px]:text-[11px] sm:text-[14px] sm:font-semibold sm:leading-5 sm:tracking-[-0.004em] lg:text-[14px] lg:font-semibold lg:leading-5 lg:tracking-[-0.005em] lg:overflow-visible"
                     >
                       {resultHeading ??
                         t(
@@ -2835,13 +2835,13 @@ export function CarsResultsExperience({
                     </h2>
                   </div>
                   {!embedded ? <CarPriceAlertControl search={search} results={providerResults} /> : null}
-                  <div className={cn("col-start-2 row-start-1 hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2", !embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1 lg:justify-self-end")}>
-                    <span className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
+                  <div className={cn("col-start-2 row-start-1 hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2", !embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1 lg:justify-self-end lg:min-w-max lg:max-w-none")}>
+                    <span className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm lg:text-[13px]">
                       {t("carsResults.sortBy")}:
                     </span>
                     <div
                       ref={carsSortRef}
-                      className="relative inline-flex min-w-0 max-w-full shrink items-center whitespace-nowrap"
+                      className="relative inline-flex min-w-0 max-w-full shrink items-center whitespace-nowrap lg:max-w-none lg:shrink-0"
                     >
                       <button
                         ref={carsSortButtonRef}
@@ -2849,7 +2849,7 @@ export function CarsResultsExperience({
                         aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
                         aria-haspopup="menu"
                         aria-expanded={carsSortOpen}
-                        className="cars-results-desktop-sort-trigger inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#07133B] sm:gap-2 sm:px-2 sm:text-[16px]"
+                        className="cars-results-desktop-sort-trigger inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#07133B] sm:gap-2 sm:px-2 sm:text-[16px] lg:max-w-none lg:gap-1 lg:px-1 lg:text-[14px]"
                         onClick={() => setCarsSortOpen((open) => !open)}
                       >
                         <span className="min-w-0 truncate whitespace-nowrap">

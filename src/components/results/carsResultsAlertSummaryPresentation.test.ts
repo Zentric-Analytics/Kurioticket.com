@@ -94,7 +94,7 @@ test("standalone mobile Cars redistributes space from the card gap to the filter
 });
 
 test("Cars leaves the entire left-side result count and grid placement unchanged", () => {
-  assert.match(cars, /className=\{cn\("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2 lg:row-start-1"\)\}/);
+  assert.match(cars, /className=\{cn\("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2 lg:row-start-1 lg:min-w-max"\)\}/);
   assert.match(cars, /className="truncate whitespace-nowrap text-\[12px\] font-semibold leading-4 tracking-\[-0\.002em\] text-\[#07133B\][^"]*max-\[359px\]:text-\[11px\] sm:text-\[14px\]/);
   assert.match(cars, /grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_auto\] items-center gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1/);
   assert.match(cars, /<CarPriceAlertControl search=\{search\} results=\{providerResults\} \/>/);
@@ -113,8 +113,8 @@ test("desktop Cars places a compact Track prices control beside Sort without cha
   assert.doesNotMatch(alertMarkup, /lg:w-\[calc\(100%_-_12rem\)\]/);
   assert.match(cars, /!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\] lg:gap-x-3 lg:gap-y-0"/);
   assert.match(alertMarkup, /lg:justify-self-center/);
-  assert.match(cars, /!embedded && "sm:row-start-2 lg:row-start-1"/);
-  assert.match(cars, /!embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1"/);
+  assert.match(cars, /!embedded && "sm:row-start-2 lg:row-start-1 lg:min-w-max"/);
+  assert.match(cars, /!embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1 lg:justify-self-end lg:min-w-max lg:max-w-none"/);
   assert.match(cars, /col-start-2 row-start-1 hidden[^"]*sm:flex/);
 });
 
