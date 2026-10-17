@@ -50,10 +50,10 @@ test("standalone Cars desktop matches Hotels results white body and preserves th
   assert.match(hotelDesktopStyles, /\.desktop\s*\{[^}]*background: #F7F9FC;/);
   assert.match(hotelResults, /flex-1 overflow-x-clip bg-\[#F5F7FB\] pb-2 sm:pb-8 sm:bg-\[#f6f8fb\] lg:bg-white/);
 
-  assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white pb-8 lg:pb-12">/);
+  assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white pb-8 lg:pb-12 lg:pt-6">/);
   assert.match(
     results,
-    /data-cars-results-scroll-region\s+data-cars-results-hotel-column\s+className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-0 sm:pt-6 lg:mt-6 lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:pb-7 lg:pt-7 lg:shadow-\[0_2px_8px_rgba\(25,32,36,0\.04\)\]"/,
+    /data-cars-results-scroll-region\s+data-cars-results-hotel-column\s+className="page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-0 sm:pt-6 lg:mt-0 lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:pb-7 lg:pt-7 lg:shadow-\[0_2px_8px_rgba\(25,32,36,0\.04\)\]"/,
   );
   assert.match(results, /<CarsResultsExperience[\s\S]*?results=\{initialResults\}/);
   assert.match(results, /createPortal\(\s*renderCarsSearchForm\("desktop-navbar"\),\s*desktopNavSearchTarget,\s*\)/);
@@ -63,7 +63,7 @@ test("standalone Cars desktop matches Hotels results white body and preserves th
 
   assert.match(loading, /aria-label="Loading car results"/);
   assert.match(loading, /data-cars-results-loading-hotel-column[\s\S]*?lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:py-7 lg:shadow-\[0_2px_8px_rgba\(25,32,36,0\.04\)\]/);
-  assert.match(loading, /results-loading-surface min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] pb-8 sm:bg-\[#f6f8fb\] lg:bg-white lg:pb-12/);
+  assert.match(loading, /results-loading-surface min-h-\[calc\(100svh-5rem\)\] flex-1 bg-\[#F5F7FB\] pb-8 sm:bg-\[#f6f8fb\] lg:bg-white lg:pb-12 lg:pt-6/);
   assert.match(results, /desktopSurfaceParity=\{!embedded && presentation === "standalone"\}/);
   assert.equal(
     (results.match(/desktopSurfaceParity=\{!embedded && presentation === "standalone"\}/g) ?? []).length,
@@ -75,7 +75,7 @@ test("standalone Cars desktop matches Hotels results white body and preserves th
 test("desktop Cars results body is compact, centered, and keeps shared surfaces aligned", () => {
   assert.match(
     results,
-    /data-cars-results-scroll-region[\s\S]*?data-cars-results-hotel-column[\s\S]*?lg:mt-6 lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:pb-7 lg:pt-7/,
+    /data-cars-results-scroll-region[\s\S]*?data-cars-results-hotel-column[\s\S]*?lg:mt-0 lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\] lg:bg-white lg:px-5 lg:pb-7 lg:pt-7/,
   );
   assert.match(
     results,
@@ -120,7 +120,7 @@ test("desktop Cars results body is compact, centered, and keeps shared surfaces 
 
 test("desktop Cars breathing room separates map, filters, toolbar and result cards without widening the column", () => {
   const map = readFileSync(new URL("./CarsResultsMapPreview.tsx", import.meta.url), "utf8");
-  assert.match(results, /lg:mt-6 lg:max-w-\[928px\]/);
+  assert.match(results, /lg:mt-0 lg:max-w-\[928px\]/);
   assert.match(results, /lg:px-5 lg:pb-7 lg:pt-7/);
   assert.match(results, /data-cars-results-content-column className=\{cn\("min-w-0 space-y-0 sm:space-y-4", !embedded && presentation === "standalone" && "lg:space-y-5"\)\}/);
   assert.match(results, /rowClassName=\{cn\("pb-3\.5 sm:pb-4 focus:outline-none", !embedded && presentation === "standalone" && "lg:pb-5"\)\}/);
@@ -213,7 +213,7 @@ test("desktop price alert retains blue styling while mobile tracking sits direct
   assert.match(section, /lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:max-w-\[240px\] lg:justify-self-center/);
   assert.match(section, /lg:rounded-xl lg:border-\[#CFE0F8\] lg:bg-\[#EEF6FF\] lg:px-2 lg:py-0/);
   assert.doesNotMatch(section.split("sm:")[0], /border|rounded|shadow|bg-\[#/);
-  assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white pb-8 lg:pb-12">/);
+  assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white pb-8 lg:pb-12 lg:pt-6">/);
   assert.doesNotMatch(section, /(?:sm|lg):bg-white/);
 });
 
