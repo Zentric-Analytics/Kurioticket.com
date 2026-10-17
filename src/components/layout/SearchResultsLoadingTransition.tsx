@@ -356,14 +356,14 @@ function FlightResultsShell() {
 function CarResultsShell() {
   return (
     <div
-      className="results-loading-surface min-h-[calc(100svh-5rem)] flex-1 bg-[#F5F7FB] pb-8 sm:bg-[#f6f8fb] lg:bg-white lg:pb-12"
+      className="results-loading-surface min-h-[calc(100svh-5rem)] flex-1 bg-[#F5F7FB] pb-8 sm:bg-[#f6f8fb] lg:bg-white lg:pb-12 lg:pt-6"
       role="status"
       aria-label="Loading car results"
       aria-busy="true"
     >
       <div
         data-cars-results-loading-hotel-column
-        className="mx-auto max-w-[1020px] px-4 py-5 sm:py-6 lg:mt-6 lg:w-[calc(100%_-_32px)] lg:max-w-[928px] lg:rounded-2xl lg:border lg:border-[#E1E6EA] lg:bg-white lg:px-5 lg:py-7 lg:shadow-[0_2px_8px_rgba(25,32,36,0.04)]"
+        className="mx-auto max-w-[1020px] px-4 py-5 sm:py-6 lg:mt-0 lg:w-[calc(100%_-_32px)] lg:max-w-[928px] lg:rounded-2xl lg:border lg:border-[#E1E6EA] lg:bg-white lg:px-5 lg:py-7 lg:shadow-[0_2px_8px_rgba(25,32,36,0.04)]"
       >
         <div aria-hidden="true" className="mb-4 flex gap-2 overflow-hidden sm:hidden">
           {[84, 92, 76, 116].map((width) => (
