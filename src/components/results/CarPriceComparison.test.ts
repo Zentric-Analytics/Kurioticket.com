@@ -330,7 +330,7 @@ test("touch-opened Cars rate details focuses its accessible heading instead of p
   assert.equal(closeButton.includes("ring-[#004BB8]"), false);
   assert.ok(sheet.includes('focus:outline-none'));
   const results = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
-  assert.match(results, /label="Car results" rowClassName="pb-3\.5 sm:pb-4 focus:outline-none"/);
+  assert.match(results, /label="Car results" rowClassName=\{cn\("pb-3\.5 sm:pb-4 focus:outline-none", !embedded && presentation === "standalone" && "lg:pb-5"\)\}/);
   assert.match(results, /<CarResultCard/);
   assert.doesNotMatch(card.slice(card.indexOf('data-car-result-card-shell className="w-full"'), card.indexOf("data-car-card-mobile-main")), /ring-2|border-\[#004BB8\]/);
 });
