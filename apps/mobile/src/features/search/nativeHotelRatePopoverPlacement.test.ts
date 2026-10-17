@@ -29,7 +29,8 @@ test("native rate presentation does not expand the card and keeps mobile web row
   assert.match(source, /dealCard: \{ minHeight: 76/);
   assert.match(source, /viewDealButton: \{ minHeight: 32/);
   assert.match(source, /priceColumn: \{ flexDirection: "row", alignItems: "baseline"/);
-  assert.match(source, /<NativeHotelRatePopover/);
+  const detailScreen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+  assert.match(detailScreen, /<NativeHotelRatePopover/);
   assert.doesNotMatch(source, /expanded && infoAvailable/);
   assert.doesNotMatch(source, /<Modal|onRequestClose=\{onClose\}/);
   assert.match(source, /pointerEvents="box-none"/);
