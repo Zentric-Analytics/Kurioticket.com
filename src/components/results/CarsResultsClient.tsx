@@ -2836,7 +2836,7 @@ export function CarsResultsExperience({
                   </div>
                   {!embedded ? <CarPriceAlertControl search={search} results={providerResults} /> : null}
                   <div className={cn("col-start-2 row-start-1 hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2", !embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1 lg:justify-self-end lg:min-w-max lg:max-w-none")}>
-                    <span className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
+                    <span className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm lg:text-[13px]">
                       {t("carsResults.sortBy")}:
                     </span>
                     <div
@@ -2849,7 +2849,7 @@ export function CarsResultsExperience({
                         aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
                         aria-haspopup="menu"
                         aria-expanded={carsSortOpen}
-                        className="cars-results-desktop-sort-trigger inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#07133B] sm:gap-2 sm:px-2 sm:text-[16px] lg:max-w-none"
+                        className="cars-results-desktop-sort-trigger inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#07133B] sm:gap-2 sm:px-2 sm:text-[16px] lg:max-w-none lg:gap-1 lg:px-1 lg:text-[14px]"
                         onClick={() => setCarsSortOpen((open) => !open)}
                       >
                         <span className="min-w-0 truncate whitespace-nowrap">
