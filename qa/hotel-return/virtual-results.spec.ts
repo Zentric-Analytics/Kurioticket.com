@@ -58,12 +58,13 @@ test("Cars desktop Hotels-details-style column includes map, filters and cards; 
 
     await expect(main).toHaveCSS("background-color", "rgb(255, 255, 255)");
     await expect(main).toHaveCSS("padding-bottom", "48px");
+    await expect(main).toHaveCSS("padding-top", "24px");
     await expect(column).toHaveCSS("background-color", "rgb(255, 255, 255)");
     await expect(column).toHaveCSS("border-color", "rgb(225, 230, 234)");
     await expect(column).toHaveCSS("border-radius", "16px");
     await expect(column).toHaveCSS("padding-left", "20px");
     await expect(column).toHaveCSS("padding-right", "20px");
-    await expect(column).toHaveCSS("margin-top", "24px");
+    await expect(column).toHaveCSS("margin-top", "0px");
     await expect(column).toHaveCSS("padding-top", "28px");
     await expect(column).toHaveCSS("padding-bottom", "28px");
 
