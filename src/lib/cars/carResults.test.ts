@@ -310,5 +310,5 @@ test("display-currency badge resolver does not compare raw mixed-currency values
   const badges=assignCarBadges([usd,jpy],car=>car.id==="usd-price"?100:8);
   assert.equal(badges.get("jpy-price"),"Cheapest");
   assert.equal([...badges.values()].filter(value=>value==="Cheapest").length,1);
-  assert.equal(assignCarBadges([usd,jpy],()=>undefined).has("usd-price"),false);
+  assert.equal([...assignCarBadges([usd,jpy],()=>undefined).values()].includes("Cheapest"),false);
 });
