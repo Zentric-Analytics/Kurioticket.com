@@ -41,7 +41,7 @@ test("Hotel rate details dismiss outside taps and scroll without blocking the sc
   const screen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
   const rates = readFileSync("src/features/search/NativeHotelRatesSection.tsx", "utf8");
   assert.match(screen, /onStartShouldSetResponderCapture=\{event => \{/);
-  assert.match(screen, /if \(pageX < box.left \|\| pageX > box.left \+ box.width/);
+  assert.match(screen, /if \(!onTrigger && \(pageX < box.left/);
   assert.match(screen, /onScrollBeginDrag=\{closeRateInfo\}/);
   assert.match(screen, /onMomentumScrollBegin=\{closeRateInfo\}/);
   assert.match(screen, /onRateInfo=\{showRateInfo\}/);
@@ -57,4 +57,14 @@ test("Native Hotel View deal uses unchanged label and never disables other valid
   assert.match(rates, />View deal<\/Text>/);
   assert.match(screen, /travelApi.hotelRedirect\(selected.offerId\)/);
   assert.match(screen, /await openProviderInApp\(response.url\)/);
+});
+
+test("native Hotel rate interactions keep rows independent and the popup data current", () => {
+  const screen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+  assert.match(screen, /dealsOpeningRef\.current\.has\(rateId\)/);
+  assert.match(screen, /dealsOpeningRef\.current\.add\(rateId\)/);
+  assert.match(screen, /dealsOpeningRef\.current\.delete\(rateId\)/);
+  assert.match(screen, /if \(!onTrigger &&/);
+  assert.match(screen, /rateInfoRef\.current\?\.id === row\.id/);
+  assert.match(screen, /row=\{rateRows\.find\(row => row\.id === rateInfo\.id\)!\}/);
 });
