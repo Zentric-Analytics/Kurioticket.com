@@ -217,6 +217,8 @@ function CarResultsHeader({destination,secondaryLine,onEdit,backgroundColor}:{de
           <SquarePen size={16} strokeWidth={2.2} color={theme.icon}/>
         </View>
       </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Profile" onPress={()=>router.push("/(tabs)/profile")} style={r.carHeaderUtility}><CircleUserRound size={21} color={theme.icon}/></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Menu" onPress={()=>router.push("/settings")} style={r.carHeaderUtility}><Menu size={22} color={theme.icon}/></Pressable>
     </View>
   </View>;
 }
