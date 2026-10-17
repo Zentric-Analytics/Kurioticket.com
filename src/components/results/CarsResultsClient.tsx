@@ -2809,7 +2809,7 @@ export function CarsResultsExperience({
                 <div
                   className={cn(
                     "grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1.5 gap-y-0 px-2 max-[359px]:px-1 sm:gap-x-2 sm:gap-y-3 sm:px-0",
-                    !embedded && "lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:gap-x-3 lg:gap-y-0",
+                    !embedded && "lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-x-3 lg:gap-y-0",
                   )}
                   data-cars-results-summary-row
                 >
@@ -2834,7 +2834,7 @@ export function CarsResultsExperience({
                     </h2>
                   </div>
                   {!embedded ? <CarPriceAlertControl search={search} results={providerResults} /> : null}
-                  <div className={cn("col-start-2 row-start-1 hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2", !embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1")}>
+                  <div className={cn("col-start-2 row-start-1 hidden min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:flex sm:gap-2", !embedded && "sm:row-start-2 lg:col-start-3 lg:row-start-1 lg:justify-self-end")}>
                     <span className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap text-xs font-medium text-[#536B92] sm:text-sm">
                       {t("carsResults.sortBy")}:
                     </span>
