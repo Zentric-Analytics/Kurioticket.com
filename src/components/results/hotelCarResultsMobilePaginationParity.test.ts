@@ -35,7 +35,7 @@ test("Cars quick filters preserve one mobile inline tracking instance with deskt
       alert < applied,
   );
   assert.match(cars.slice(quickFilters, toolbarStart), /lg:hidden/);
-  assert.match(cars.slice(alert - 35, alert + 190), /!embedded \? \([\s\S]*?<CarPriceAlertControl/);
+  assert.match(cars.slice(summary, applied), /\{!embedded \? \(\s*<CarPriceAlertControl/);
   assert.match(cars, /desktopPortalTarget=\{desktopCarPriceAlertTarget\}/);
   assert.match(cars, /data-cars-price-alert-sidebar-slot[\s\S]*?<CarsResultsMapPreview/);
 });
