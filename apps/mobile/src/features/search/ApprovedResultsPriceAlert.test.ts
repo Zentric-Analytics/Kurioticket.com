@@ -50,3 +50,17 @@ test("Hotel retains its target slider, validation, saved-target matching and mod
   assert.match(alert, /accessibilityViewIsModal/);
   assert.doesNotMatch(alert, /TextInput|keyboardType|autoFocus/);
 });
+
+test("Hotel tracking card matches mobile web white colour, alignment and full filter list", () => {
+  const web = readFileSync("../../src/components/results/HotelPriceAlertControl.tsx", "utf8");
+  assert.match(web, /min-h-\[58px\]/);
+  assert.match(web, /border-\[#D8E1EC\] bg-white/);
+  assert.match(alert, /hotelWebCompact: \{ minHeight: 58/);
+  assert.match(alert, /hotelBellTile: \{ width: 36, height: 36/);
+  assert.match(alert, /backgroundColor: theme.dark \? theme.surface : "#FFFFFF"/);
+  assert.match(alert, /borderColor: theme.dark \? theme.border : "#D8E1EC"/);
+  assert.match(alert, /hotelWebSubtitle/);
+  assert.match(alert, /hotelWebSwitchTrack: \{ width: 42, height: 24/);
+  assert.match(alert, /onPress=\{\(\) => void handleToggle\(!isTracking\)\}/);
+  assert.match(source, /<HotelResultsShortcut label=\{hotelRoomTypesShortcutLabel\}/);
+});
