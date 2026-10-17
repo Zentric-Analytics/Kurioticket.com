@@ -46,7 +46,7 @@ test("Cars aligns both mobile controls with a compact heading and leaves no sepa
 });
 
 test("Cars results heading aligns to the inner card gutters and sits close to the first card on mobile", () => {
-  const summaryClasses = cars.match(/className=\{cn\(\s*"([^"]+)",\s*!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto_auto\] lg:gap-x-3 lg:gap-y-0",\s*\)\}\s+data-cars-results-summary-row/)?.[1];
+  const summaryClasses = cars.match(/className=\{cn\(\s*"([^"]+)",\s*!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\] lg:gap-x-3 lg:gap-y-0",\s*\)\}\s+data-cars-results-summary-row/)?.[1];
   assert.ok(summaryClasses, "the existing results-count and tracking row is retained");
   assert.match(summaryClasses, /grid-cols-\[minmax\(0,1fr\)_auto\] items-center/);
   assert.match(summaryClasses, /gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1/);
