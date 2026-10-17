@@ -175,7 +175,7 @@ export function CarCardSkeleton({
       </div>
       <div
         data-car-card-skeleton-desktop
-        className="hidden md:grid md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[192px_minmax(0,1fr)_152px] xl:grid-cols-[200px_minmax(0,1fr)_152px]"
+        className="hidden md:grid md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[192px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)]"
       >
         <div className={cn("flex items-center border-b border-[#E2E8F0] bg-slate-50 p-2.5 md:border-b-0 md:border-e lg:border-e-0 lg:p-0", desktopSurfaceParity && "md:bg-white")}>
           <Skeleton className="aspect-[4/3] w-full rounded-xl lg:aspect-auto lg:h-[176px]" />
@@ -195,8 +195,8 @@ export function CarCardSkeleton({
             <Skeleton className="h-6 w-32" />
           </div>
         </div>
-        <div className={cn("col-span-full flex min-w-0 flex-col border-t border-slate-200 bg-slate-50/45 px-4 py-3 lg:col-span-1 lg:border-s lg:border-t-0", desktopSurfaceParity ? "md:bg-white lg:bg-white" : "lg:bg-white")}>
-          <div className="space-y-2">
+        <div className={cn("col-span-full flex min-w-0 flex-col border-t border-slate-200 bg-slate-50/45 px-4 py-3 lg:col-span-2 lg:border-s-0 lg:border-t", desktopSurfaceParity ? "md:bg-white lg:bg-white" : "lg:bg-white")}>
+          <div className="space-y-2 lg:hidden">
             <div className="space-y-1">
               <Skeleton className="h-3 w-20" />
               <Skeleton className="h-5 w-24" />
@@ -206,8 +206,17 @@ export function CarCardSkeleton({
               <Skeleton className="h-7 w-32" />
               <Skeleton className="h-3 w-32" />
             </div>
+            <Skeleton className="mt-3 h-10 w-full" />
           </div>
-          <Skeleton className="mt-3 h-10 w-full lg:mt-auto" />
+          <div className="hidden w-full space-y-2 lg:block">
+            {[0, 1, 2].map((index) => (
+              <div key={index} className="flex h-[30px] items-center justify-between gap-4">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-3 w-14" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
