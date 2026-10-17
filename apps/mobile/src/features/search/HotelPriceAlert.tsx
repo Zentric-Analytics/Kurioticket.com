@@ -369,27 +369,62 @@ export function HotelPriceAlert({
   return (
     <View
       accessibilityLabel={alertTitle}
-      style={[styles.compact, flight && styles.flightCompact, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}
+      style={[
+        styles.compact,
+        flight ? styles.flightCompact : styles.hotelWebCompact,
+        flight
+          ? { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }
+          : { backgroundColor: theme.dark ? theme.surface : "#FFFFFF", borderColor: theme.dark ? theme.border : "#D8E1EC" },
+      ]}
     >
-      <Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent} />
+      {flight ? (
+        <Bell accessible={false} size={17} strokeWidth={2} color={theme.priceAlertAccent} />
+      ) : (
+        <View style={[styles.hotelBellTile, { backgroundColor: theme.dark ? theme.background : "#F5F7FB" }]}>
+          <Bell accessible={false} size={18} strokeWidth={2} color={theme.dark ? theme.textPrimary : "#142033"} />
+        </View>
+      )}
       <View style={styles.compactCopy}>
-        <Text numberOfLines={1} style={[styles.compactTitle, { color: theme.textPrimary }]}>{alertTitle}</Text>
+        <Text numberOfLines={1} style={[styles.compactTitle, !flight && styles.hotelWebTitle, { color: flight || theme.dark ? theme.textPrimary : "#1A1A1A" }]}>{alertTitle}</Text>
+        {!flight ? <Text numberOfLines={2} style={[styles.hotelWebSubtitle, { color: theme.dark ? theme.textSecondary : "#595959" }]}>
+          {locale.startsWith("en") ? "Get automatic alerts when prices change." : alertBody}
+        </Text> : null}
       </View>
-      <View style={styles.switchSlot}>
-        {flight ? <View style={styles.flightLoadingSlot}>{pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent} /> : null}</View> : pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent} /> : null}
-        <Switch
-          hitSlop={flight ? 6 : undefined}
-          style={Platform.OS === "ios" ? styles.switchIos : undefined}
-          accessibilityRole="switch"
-          accessibilityLabel={alertTitle}
-          accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }}
-          disabled={toggleDisabled}
-          value={isTracking}
-          onValueChange={(next) => void handleToggle(next)}
-          trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }}
-          thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"}
-          ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}
-        />
+      <View style={[styles.switchSlot, !flight && styles.hotelWebSwitchSlot]}>
+        {flight ? (
+          <>
+            <View style={styles.flightLoadingSlot}>{pending ? <ActivityIndicator accessible={false} size="small" color={theme.priceAlertAccent} /> : null}</View>
+            <Switch
+              hitSlop={flight ? 6 : undefined}
+              style={Platform.OS === "ios" ? styles.switchIos : undefined}
+              accessibilityRole="switch"
+              accessibilityLabel={alertTitle}
+              accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }}
+              disabled={toggleDisabled}
+              value={isTracking}
+              onValueChange={(next) => void handleToggle(next)}
+              trackColor={{ false: theme.dark ? "#465269" : "#CBD5E1", true: theme.switchTrackActive }}
+              thumbColor={isTracking ? "#FFFFFF" : theme.dark ? "#D9E1EF" : "#FFFFFF"}
+              ios_backgroundColor={theme.dark ? "#465269" : "#CBD5E1"}
+            />
+          </>
+        ) : (
+          <Pressable
+            accessibilityRole="switch"
+            accessibilityLabel={alertTitle}
+            accessibilityState={{ checked: isTracking, disabled: toggleDisabled, busy: pending || loadingAlert }}
+            disabled={toggleDisabled}
+            onPress={() => void handleToggle(!isTracking)}
+            style={[styles.hotelWebSwitchTouch, toggleDisabled && styles.hotelWebSwitchDisabled]}
+          >
+            <View style={[styles.hotelWebSwitchTrack, {
+              borderColor: isTracking ? "#004BB8" : theme.dark ? theme.border : "#CBD5E1",
+              backgroundColor: isTracking ? "#004BB8" : theme.dark ? "#465269" : "#E2E8F0",
+            }]}>
+              <View style={[styles.hotelWebSwitchThumb, isTracking && styles.hotelWebSwitchThumbOn]} />
+            </View>
+          </Pressable>
+        )}
       </View>
 
       <Modal
@@ -503,6 +538,16 @@ const styles = StyleSheet.create({
   flightCompact: { minHeight: 52 },
   flightLoadingSlot: { width: 20, minHeight: 44, alignItems: "center", justifyContent: "center" },
   compact: { width: "100%", minHeight: 48, borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 2, flexDirection: "row", alignItems: "center", gap: 8 },
+  hotelWebCompact: { minHeight: 58, paddingVertical: 8, gap: 12 },
+  hotelBellTile: { width: 36, height: 36, borderRadius: 8, flexShrink: 0, alignItems: "center", justifyContent: "center" },
+  hotelWebTitle: { fontSize: 14, lineHeight: 20, fontWeight: "600", fontFamily: appFonts.semibold },
+  hotelWebSubtitle: { marginTop: 2, fontSize: 12, lineHeight: 16, fontWeight: "400", fontFamily: appFonts.regular },
+  hotelWebSwitchSlot: { minWidth: 44, justifyContent: "center", gap: 0 },
+  hotelWebSwitchTouch: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  hotelWebSwitchDisabled: { opacity: 0.55 },
+  hotelWebSwitchTrack: { width: 42, height: 24, borderWidth: 1, borderRadius: 12, justifyContent: "center" },
+  hotelWebSwitchThumb: { width: 20, height: 20, borderRadius: 10, backgroundColor: "#FFFFFF", marginLeft: 2, shadowColor: "#000000", shadowOpacity: 0.12, shadowRadius: 1, elevation: 1 },
+  hotelWebSwitchThumbOn: { transform: [{ translateX: 18 }] },
   compactCopy: { flex: 1, minWidth: 0 },
   compactTitle: { fontSize: 12.5, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },
   switchSlot: { minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 },
