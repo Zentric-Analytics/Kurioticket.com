@@ -77,7 +77,7 @@ test("mobile Cars tracking stays flat while desktop gets a compact Sort-aligned 
   assert.match(source, /max-\[359px\]:text-\[10\.5px\] sm:flex-1 sm:overflow-visible sm:whitespace-normal/);
   assert.match(source, /h-4 w-4 max-\[359px\]:h-\[15px\] max-\[359px\]:w-\[15px\] sm:h-\[17px\] sm:w-\[17px\]/);
   assert.match(source, /h-11 w-\[51px\] shrink-0 items-center/);
-  assert.match(source, /className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full[^"]*sm:w-12"/);
+  assert.match(source, /className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full[^"]*sm:w-12 lg:h-9"/);
   assert.match(source, /aria-hidden="true" className=\{`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors sm:h-7 sm:w-12/);
   assert.match(source, /h-\[18px\] w-\[18px\] rounded-full bg-white shadow transition-transform sm:h-5 sm:w-5/);
   assert.match(source, /translate-x-\[23px\] rtl:-translate-x-\[23px\] sm:translate-x-\[22px\] sm:rtl:-translate-x-\[22px\]/);
@@ -93,7 +93,7 @@ test("mobile Cars switch has a 44px visual track, 24px height, 18px thumb, and f
   assert.equal(mobile.offOffset, 3);
   assert.match(source, /flex h-11 w-\[51px\] shrink-0 items-center justify-end/);
   assert.match(source, /<button ref=\{switchRef\} type="button" role="switch"/);
-  assert.match(source, /className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full[^"]*sm:w-12"/);
+  assert.match(source, /className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full[^"]*sm:w-12 lg:h-9"/);
   assert.match(source, /aria-hidden="true" className=\{`relative inline-flex h-6 w-11[^}]*sm:h-7 sm:w-12/);
   assert.match(source, /h-\[18px\] w-\[18px\][^}]*sm:h-5 sm:w-5/);
   assert.match(source, /tracking \? "translate-x-\[23px\] rtl:-translate-x-\[23px\] sm:translate-x-\[22px\] sm:rtl:-translate-x-\[22px\]"/);
