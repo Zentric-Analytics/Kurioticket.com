@@ -68,6 +68,8 @@ test("Cars summary remains derived from canonical search data", () => {
   assert.match(cars, /payload\.dropoffDate/);
   assert.match(cars, /payload\.dropoffTime/);
   assert.match(cars, /carSummarySecondary=formatCarResultsScheduleSummary/);
+  assert.match(cars, /carSummaryCompact=formatCompactCarResultsScheduleSummary/);
+  assert.match(cars, /assignCarBadges\(results,pricePerDay\)/);
   const summaryBuilder = cars.slice(cars.indexOf("const carSummarySecondary"), cars.indexOf("const edit="));
   assert.doesNotMatch(summaryBuilder, /driverAge|Any age|years old/);
   assert.doesNotMatch(cars, /Paris, France|Sep 6|20 years old/);
