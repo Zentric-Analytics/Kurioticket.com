@@ -132,7 +132,7 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.match(picker, /Math\.round\(event\.nativeEvent\.layout\.width\)/);
   assert.match(picker, /rowWidth \* 0\.68 \+ 20/);
   assert.match(picker, /meta: \{ minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4, paddingLeft: 4, paddingRight: 4/);
-  assert.match(picker, /action: \{ minHeight: 36, flex: 1, minWidth: 0[\s\S]*justifyContent: "flex-start"/);
+  assert.match(picker, /action: \{ minHeight: 36, flex: 1, minWidth: 0[\s\S]*justifyContent: "flex-end"/);
   assert.match(picker, /logo: \{ width: 19, height: 19/);
   assert.match(picker, /providerName: \{ flex: 1, minWidth: 0, fontSize: 11, lineHeight: 15/);
   assert.match(picker, /price: \{ width: 66, flexShrink: 0, textAlign: "left", fontSize: 13, lineHeight: 17/);
