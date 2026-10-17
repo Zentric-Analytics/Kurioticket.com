@@ -123,7 +123,7 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.match(picker, /disabled=\{!bookingUrl\}/);
   assert.match(picker, /provider: \{ minHeight: 36, minWidth: 0, flexDirection: "row", alignItems: "center"/);
   assert.match(picker, /providerNarrow: \{ flexDirection: "column"/);
-  assert.match(picker, /hideActionChevron = rowWidth === 0 \|\| rowWidth < 410/);
+  assert.doesNotMatch(picker, /hideActionChevron/);
   assert.match(picker, /stackVeryNarrow = rowWidth > 0 && rowWidth < 260/);
   assert.match(picker, /providers: \{ minWidth: 0, gap: 0, paddingTop: 0, paddingBottom: 0/);
   assert.match(picker, /offerRows: \{ minWidth: 0, minHeight: 108 \}/);
@@ -162,6 +162,30 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.match(results, /backgroundColor:theme\.dark\?theme\.surface:CAR_RESULTS_LIGHT_CANVAS/);
   assert.match(theme, /priceAlertSurface: "#EDF6FF"/);
   assert.match(theme, /priceAlertBorder: "#C8DFF7"/);
+});
+
+test("native Cars keeps the 12pt View deal arrow visible for actionable offers at compact widths", () => {
+  const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
+  const actionStart = picker.indexOf('accessibilityLabel={"View deal from " + providerName}');
+  assert.ok(actionStart > -1);
+  const actionEnd = picker.indexOf("</Pressable>", actionStart);
+  assert.ok(actionEnd > actionStart);
+  const action = picker.slice(actionStart, actionEnd);
+
+  // Available offers display an arrow at all widths; unavailable ones still cannot navigate.
+  assert.match(action, /disabled=\{!bookingUrl\}/);
+  assert.match(action, /onPress=\{bookingUrl \? \(\) => void Linking\.openURL\(bookingUrl\) : undefined\}/);
+  assert.match(action, /\{bookingUrl \? <ChevronRight accessible=\{false\} size=\{12\} strokeWidth=\{2\} color=\{actionColor\} \/> : null\}/);
+  assert.doesNotMatch(action, /hideActionChevron|rowWidth/);
+
+  // The provider/details/price area yields space to the chevron action only when necessary.
+  assert.match(picker, /const MIN_VIEW_DEAL_ACTION_WIDTH = 88;/);
+  assert.match(picker, /Math\.min\(rowWidth - MIN_VIEW_DEAL_ACTION_WIDTH, rowWidth \* 0\.68 \+ 20\)/);
+  assert.match(picker, /stackVeryNarrow = rowWidth > 0 && rowWidth < 260/);
+  for (const width of [260, 280, 320, 360, 390, 409, 414]) {
+    const metaWidth = Math.min(width - 88, width * 0.68 + 20);
+    assert.ok(width - metaWidth >= 88, "View deal action clipped at width " + width);
+  }
 });
 
 test("native Cars rate sheet aligns provider values at the far right and stays white in light theme", () => {
