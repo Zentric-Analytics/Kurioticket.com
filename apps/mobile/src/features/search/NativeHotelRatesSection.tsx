@@ -86,7 +86,7 @@ export function buildNativeHotelRateRows({
       cancellationLabel: null,
       paymentLabel: null,
       rateFacts: [],
-      sourceCurrency: hasPrice ? primaryHotel.currency : null,
+      sourceCurrency: hasPrice ? (primaryHotel.currency ?? null) : null,
     });
   }
 
@@ -108,8 +108,10 @@ export function buildNativeHotelRateRows({
       : createHotelDisplayPrices(perNight, amount, currency, displayCurrency, exchangeRates);
     if (!prices.total) continue;
     const rate = providerDetails?.rate;
+    // Room and booking conditions already have dedicated sections in the expanded card.
+    // Only include the remaining provider-specific pricing/rate conditions here.
     const facts = hotelSupplierFacts(providerDetails).filter(fact =>
-      /^(Room|Free cancellation|Pay later|Bundled rate|Rate breakdown|Rate condition)/.test(fact.label));
+      /^(Bundled rate|Rate breakdown|Rate condition)/.test(fact.label));
     rows.push({
       id: `provider:${hotel.id}`,
       offerId: hotel.id,
