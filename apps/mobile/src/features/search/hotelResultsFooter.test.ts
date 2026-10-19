@@ -18,7 +18,7 @@ test("Hotel Results owns no brand or legal footer", () => {
   assert.equal(existsSync(resolve("src/features/search/hotelResultsFooterCopy.ts")), false);
 });
 
-test("Hotel cards end with loading feedback only while more inventory is pending", () => {
+test("Hotel cards retain loading feedback for pending server or presentation results", () => {
   const cards = hotelList.indexOf("<HotelCard");
   const footer = hotelList.indexOf("ListFooterComponent");
   const footerContent = hotelList.slice(footer, hotelList.indexOf("alwaysBounceVertical", footer));
@@ -26,7 +26,7 @@ test("Hotel cards end with loading feedback only while more inventory is pending
   assert.ok(cards >= 0 && cards < footer);
   assert.match(
     footerContent,
-    /ListFooterComponent=\{status === "ready" && sorted\.length > 0 && hotelProgressivePending \? \(/,
+    /ListFooterComponent=\{status === "ready" && sorted\.length > 0 && \(hotelProgressivePending \|\| hotelScrolling\.hasMore\) \? \(/,
   );
   assert.match(footerContent, /accessibilityLiveRegion="polite"[\s\S]*ActivityIndicator[\s\S]*Loading more hotels…/);
   assert.match(footerContent, /\) : null\}/);
@@ -57,7 +57,7 @@ test("Native Hotel Results has no floating Back-to-top affordance", () => {
 
   const owner = screen.match(/<SectionList\s+ref=\{hotelResultsListRef\}[\s\S]*?alwaysBounceVertical=\{false\}[\s\S]*?>/)?.[0];
   assert.ok(owner);
-  assert.doesNotMatch(owner, /onScroll=|scrollEventThrottle=/);
+  assert.match(owner, /onScroll=\{hotelScrolling\.onScroll\}/);
 });
 
 test("Hotel scroll ref and result positioning remain available", () => {
