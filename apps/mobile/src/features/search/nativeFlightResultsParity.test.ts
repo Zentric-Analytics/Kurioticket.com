@@ -17,9 +17,13 @@ test("native pressable summary retains Back and Edit with approved header sizing
  assert.match(header,/onPress=\{\(\) => router.back\(\)\}/);assert.match(header,/onPress=\{onEdit\}/);assert.match(header,/<SquarePen/);
  assert.match(screen,/flightRouteSummaryCard: \{[^\n]*minHeight: 62/);assert.match(screen,/flightRouteSummaryText: \{[^\n]*fontWeight: "700"/);
 });
-test("content shares 12px gutters and card rhythm while chips retain accessible compact targets",()=>{
- for(const style of ["flightCardItem","flightAlertOuter","flightResultsSummaryRow"])assert.match(screen,new RegExp(`${style}: \\{[^\\n]*(?:paddingHorizontal|marginHorizontal): 12`));
- assert.match(screen,/flightCardItem: \{[^\n]*paddingBottom: 12/);assert.match(controls,/paddingLeft: 12/);assert.match(controls,/minHeight: 44/);assert.match(controls,/height: 36/);assert.match(controls,/gap: 6/);
+test("Flight Results uses the approved card, alert, and first-card spacing rhythm",()=>{
+ assert.match(screen,/flightCardItem: \{[^\n]*paddingHorizontal: 16,[^\n]*paddingBottom: 12/);
+ assert.match(screen,/flightAlertOuter: \{ marginHorizontal: 8 \}/);
+ assert.match(screen,/flightResultsSummaryRow: \{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 4/);
+ assert.match(screen,/flightResultsIntro: \{ paddingTop: 0, paddingBottom: 12 \}/);
+ assert.equal(4 + 12, 16, "Results found keeps the same 16px gap before the first card as mobile Results");
+ assert.match(controls,/paddingLeft: 12/);assert.match(controls,/minHeight: 44/);assert.match(controls,/height: 36/);assert.match(controls,/gap: 6/);
 });
 test("independent accessible group clear actions preserve tap versus drag behavior",()=>{
  for(const pattern of [/onClear/,/copy\.clearFilters/,/<X accessible=\{false\}/,/isFlightQuickControlTap/,/onAccessibilityAction/])assert.match(controls,pattern);
