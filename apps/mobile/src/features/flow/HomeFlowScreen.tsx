@@ -242,16 +242,18 @@ function HomePageContent() {
                 onPress={() => setActiveProduct(product.id)}
                 style={({ pressed }) => [
                   styles.product,
+                  selected && [styles.productActive, { backgroundColor: ft.colors.selected, borderBottomColor: ft.colors.blue }],
                   pressed && ft.styles.pressed,
                 ]}
               >
-                <View style={[styles.productIcon, selected && { backgroundColor: ft.colors.blue }]}>
-                  {product.icon === "packages" ? (
-                    <PackagesIcon color={selected ? "#FFFFFF" : ft.colors.icon} />
-                  ) : (
-                    <FlowIcon name={product.icon} color={selected ? "#FFFFFF" : ft.colors.icon} />
-                  )}
-                </View>
+                {product.icon === "packages" ? (
+                  <PackagesIcon color={selected ? ft.colors.selectedLabelText : ft.colors.icon} />
+                ) : (
+                  <FlowIcon
+                    name={product.icon}
+                    color={selected ? ft.colors.selectedLabelText : ft.colors.icon}
+                  />
+                )}
                 <Text
                   style={[
                     styles.productText, { color: ft.colors.text },
@@ -355,7 +357,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
   },
-  productIcon: { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  productText: { color: flowColors.navy, fontSize: 11, fontWeight: "400" },
-  productTextActive: { fontWeight: "700" },
+  productActive: {
+    backgroundColor: "#F3F7FF",
+    borderBottomColor: flowColors.blue,
+    borderBottomWidth: 2,
+  },
+  productText: { color: flowColors.navy, fontSize: 11, fontWeight: "700" },
+  productTextActive: { color: flowColors.blue },
 });
