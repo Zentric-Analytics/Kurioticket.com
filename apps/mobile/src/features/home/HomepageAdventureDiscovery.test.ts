@@ -49,16 +49,20 @@ test("only fresh, exact-route, provider-backed fares can be displayed", () => {
   assert.doesNotMatch(section, /regionCode=NG|currency=USD/);
 });
 
-test("every discovery card shows From while only valid fares show an amount", () => {
-  assert.match(section, /<View style=\{styles\.fare\}><Text[^>]*>From<\/Text>\{formattedFare \? <Text[^>]*>\{formattedFare\}<\/Text> : null\}<\/View>/);
-  assert.doesNotMatch(section, /formattedFare \? <View style=\{styles\.fare\}>/);
+test("From and its amount render together only for a valid fare", () => {
+  assert.match(section, /\{formattedFare \? <View style=\{styles\.fare\}><Text[^>]*>From<\/Text><Text[^>]*>\{formattedFare\}<\/Text><\/View> : null\}/);
   assert.match(section, /fare \? new Intl\.NumberFormat\(marketplace\.locale, \{ style: "currency", currency: fare\.currency, maximumFractionDigits: 0 \}\)\.format\(fare\.price\) : undefined/);
   assert.doesNotMatch(section, />\s*(?:\$0|N\/A|--|Unavailable)\s*</i);
   assert.match(section, /accessibilityLabel=\{`\$\{item\.title\}\. \$\{item\.originCode\} to \$\{item\.destinationCode\}\.\$\{formattedFare \? ` From \$\{formattedFare\}\.` : ""\}`\}/);
 });
 
 test("cards form two independent responsive horizontal rows with safe image fallback", () => {
-  assert.match(section, /Math\.min\(210, Math\.max\(170, width \* 0\.44\)\)/);
+  assert.match(section, /REFERENCE_CARD_SCREEN_FRACTION = 332 \/ 592/);
+  assert.match(section, /REFERENCE_CARD_HEIGHT_RATIO = 614 \/ 332/);
+  assert.match(section, /Math\.min\(320, Math\.max\(200, Math\.round\(width \* REFERENCE_CARD_SCREEN_FRACTION\)\)\)/);
+  assert.match(section, /minHeight: Math\.round\(width \* REFERENCE_CARD_HEIGHT_RATIO\)/);
+  assert.match(section, /imageFrame: \{ width: "100%", aspectRatio: 4 \/ 3 \}/);
+  assert.doesNotMatch(section, /card: \{ height:|numberOfLines=\{2\} style=\{\[styles\.title/);
   assert.doesNotMatch(section, /flexWrap|homepage-adventure-grid/);
   assert.equal(section.match(/<ScrollView/g)?.length, 2);
   assert.equal(section.match(/\bhorizontal\b/g)?.length, 2);
