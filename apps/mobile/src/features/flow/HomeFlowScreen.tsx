@@ -251,7 +251,7 @@ function HomePageContent() {
               >
                 <HomeProductIcon
                   name={product.icon}
-                  size={36}
+                  size={26}
                   cutoutColor={selected ? ft.colors.selected : ft.colors.card}
                   color={selected ? ft.colors.selectedLabelText : (ft.theme.dark ? ft.colors.icon : "#1A1A1A")}
                 />
