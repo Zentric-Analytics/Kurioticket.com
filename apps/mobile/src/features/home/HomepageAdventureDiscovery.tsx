@@ -13,9 +13,8 @@ import { getHomepageAdventureDiscoveryItems, readFreshDiscoveryFare, splitAdvent
 import type { MarketplaceContext } from "../../../../../src/shared/marketplace/marketplaceContext";
 
 const ROW_GAP = 12;
-// Reference: a 332 × 614 card on a 592 px-wide screen, with 4:3 imagery.
+// Reference width: 332 px on a 592 px-wide screen, with 4:3 imagery.
 const REFERENCE_CARD_SCREEN_FRACTION = 332 / 592;
-const REFERENCE_CARD_HEIGHT_RATIO = 614 / 332;
 
 export function HomepageAdventureDiscovery() {
   const ft = useFlowTheme();
@@ -91,7 +90,7 @@ function AdventureCard({ item, width, fare, marketplace, imageFailed, saved, onI
   const ft = useFlowTheme();
   const formattedFare = fare ? new Intl.NumberFormat(marketplace.locale, { style: "currency", currency: fare.currency, maximumFractionDigits: 0 }).format(fare.price) : undefined;
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`${item.title}. ${item.originCode} to ${item.destinationCode}.${formattedFare ? ` From ${formattedFare}.` : ""}`} onPress={() => router.push(discoverAdventureNavigation(item, marketplace))} style={({ pressed }) => [styles.card, { width, minHeight: Math.round(width * REFERENCE_CARD_HEIGHT_RATIO), backgroundColor: ft.colors.card, borderColor: ft.colors.border }, ft.styles.shadow, pressed && flowStyles.pressed]}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${item.title}. ${item.originCode} to ${item.destinationCode}.${formattedFare ? ` From ${formattedFare}.` : ""}`} onPress={() => router.push(discoverAdventureNavigation(item, marketplace))} style={({ pressed }) => [styles.card, { width, backgroundColor: ft.colors.card, borderColor: ft.colors.border }, ft.styles.shadow, pressed && flowStyles.pressed]}>
       <View style={styles.imageFrame}>
         {imageFailed ? <View accessibilityLabel={`Image unavailable for ${item.destinationCode}`} testID={`adventure-image-fallback-${item.id}`} style={[styles.imageFallback, { backgroundColor: ft.colors.neutralImage }]}><FlowIcon name="compass" color={ft.colors.icon} size={22} /><Text style={[styles.fallbackCode, { color: ft.colors.textPrimary }]}>{item.destinationCode}</Text></View> : <Image accessibilityIgnoresInvertColors accessibilityLabel={item.imageAlt} onError={onImageError} resizeMode="cover" source={item.image} style={styles.image} />}
         <AndroidFavoriteButton saved={saved} label={`${saved ? "Remove" : "Add"} ${item.title} ${saved ? "from" : "to"} favorites`} onPress={(event) => { event.stopPropagation(); onFavorite(); }} style={styles.heart} variant="webParity" />
@@ -108,7 +107,7 @@ function AdventureCard({ item, width, fare, marketplace, imageFailed, saved, onI
 
 const styles = StyleSheet.create({
   section: { gap: 16, marginTop: 4 }, header: { gap: 6 }, heading: { fontSize: 20, lineHeight: 26, fontWeight: "700", letterSpacing: -0.25 }, subtitle: { fontSize: 14, lineHeight: 21 },
-  rowViewport: { marginHorizontal: -14 }, rowContent: { gap: ROW_GAP, paddingHorizontal: 14, paddingRight: 40 }, card: { borderRadius: 16, borderWidth: 1, overflow: "hidden" }, imageFrame: { width: "100%", aspectRatio: 4 / 3 }, image: { width: "100%", height: "100%" },
+  rowViewport: { marginHorizontal: -14 }, rowContent: { alignItems: "flex-start", gap: ROW_GAP, paddingHorizontal: 14, paddingRight: 40 }, card: { borderRadius: 16, borderWidth: 1, overflow: "hidden" }, imageFrame: { width: "100%", aspectRatio: 4 / 3 }, image: { width: "100%", height: "100%" },
   imageFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6 }, fallbackCode: { fontSize: 13, fontWeight: "900", letterSpacing: 1.4 }, heart: { position: "absolute", right: 8, top: 8 },
-  copy: { flex: 1, padding: 8 }, title: { minHeight: 40, fontSize: 15, lineHeight: 20, fontWeight: "700" }, route: { marginTop: 6, fontSize: 12, lineHeight: 17, fontWeight: "600" }, meta: { marginTop: 5, fontSize: 11, lineHeight: 16, fontWeight: "500", letterSpacing: 0.35 }, fare: { marginTop: "auto", flexDirection: "row", alignItems: "baseline", gap: 5 }, from: { fontSize: 12, fontWeight: "600" }, price: { flexShrink: 1, minWidth: 0, fontSize: 18, lineHeight: 24, fontWeight: "700" },
+  copy: { padding: 8 }, title: { fontSize: 15, lineHeight: 20, fontWeight: "700" }, route: { marginTop: 6, fontSize: 12, lineHeight: 17, fontWeight: "600" }, meta: { marginTop: 5, fontSize: 11, lineHeight: 16, fontWeight: "500", letterSpacing: 0.35 }, fare: { marginTop: 12, flexDirection: "row", alignItems: "baseline", gap: 5 }, from: { fontSize: 12, fontWeight: "600" }, price: { flexShrink: 1, minWidth: 0, fontSize: 18, lineHeight: 24, fontWeight: "700" },
 });

@@ -1,7 +1,7 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { Pressable, StyleSheet, View } from "react-native";
-import { HomePresentationProvider, Text, useHomePresentation } from "../home/HomePresentation";
-import { homeHotelColors, resolveHomeTheme } from "../home/homeHotelPresentation";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { HomePresentationProvider, useHomePresentation } from "../home/HomePresentation";
+import { resolveHomeTheme } from "../home/homeHotelPresentation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "../../theme/tokens";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
@@ -21,7 +21,8 @@ function TabBarContent({ state, descriptors, navigation }: BottomTabBarProps) {
   const { theme: parentTheme } = useAppTheme();
   const isHome = useHomePresentation();
   const theme = resolveHomeTheme(parentTheme, isHome);
-  const activeColor = isHome ? (theme.dark ? "#8FB5FF" : homeHotelColors.action) : "#0754F7";
+  const activeColor = theme.dark ? "#8FB5FF" : "#0754F7";
+  const inactiveColor = theme.dark ? parentTheme.muted : "#1A1A1A";
   return (
     <View style={[styles.shell, { paddingBottom: Math.max(insets.bottom, 10), backgroundColor: theme.surface, borderTopColor: theme.border }]} accessibilityRole="tablist">
       {state.routes.map((route, index) => {
@@ -41,8 +42,8 @@ function TabBarContent({ state, descriptors, navigation }: BottomTabBarProps) {
             onLongPress={() => navigation.emit({ type: "tabLongPress", target: route.key })}
             style={({ pressed }) => [styles.item, focused && styles.itemSelected, pressed && styles.itemPressed]}
           >
-            <FlowIcon name={icons[route.name] ?? "home"} size={23} color={focused ? activeColor : theme.muted} />
-            <Text numberOfLines={1} style={[styles.label, { color: theme.muted }, focused && styles.labelSelected, focused && { color: activeColor }]}>{label}</Text>
+            <FlowIcon name={icons[route.name] ?? "home"} size={23} strokeWidth={1.3} color={focused ? activeColor : inactiveColor} />
+            <Text numberOfLines={1} style={[styles.label, { color: inactiveColor }, focused && styles.labelSelected, focused && { color: activeColor }]}>{label}</Text>
           </Pressable>
         );
       })}
@@ -55,6 +56,6 @@ const styles = StyleSheet.create({
   item: { flex: 1, minHeight: 56, borderRadius: 16, alignItems: "center", justifyContent: "center", gap: 5 },
   itemSelected: {},
   itemPressed: { opacity: 0.72 },
-  label: { color: colors.muted, fontSize: 11, lineHeight: 14, fontWeight: "700" },
+  label: { color: colors.muted, fontSize: 11, lineHeight: 14, fontWeight: "500" },
   labelSelected: { color: "#0754F7" },
 });
