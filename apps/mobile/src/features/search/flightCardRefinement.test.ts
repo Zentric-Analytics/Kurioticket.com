@@ -316,7 +316,7 @@ test("flight journey gives its center column responsive surplus width", () => {
   const interSectionGaps = 6 * 2;
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
     const cardContentWidth = viewport - 32 - 24;
-    const indentedJourneyWidth = cardContentWidth - 32 - 10;
+    const indentedJourneyWidth = cardContentWidth - 36 - 10;
     const renderedTimelineWidth = cardContentWidth - departureWidth - arrivalWidth - interSectionGaps;
     assert.ok(renderedTimelineWidth >= 70, `${viewport}px keeps a readable route line`);
     assert.equal(
