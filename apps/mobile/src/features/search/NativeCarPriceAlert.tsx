@@ -3,21 +3,24 @@ import { Alert, Animated, Easing, I18nManager, Pressable, StyleSheet, Text, View
 import { router, useFocusEffect } from "expo-router";
 import { Bell, CircleCheck } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { travelApi, TravelApiError, type CarResult, type MobilePriceAlert } from "../../api/travelApi";
+import { travelApi, TravelApiError, type MobilePriceAlert } from "../../api/travelApi";
+import type { CarOffer } from "../../../../../src/lib/cars/types";
+import type { CarPriceAlertOfferScope } from "../../../../../src/lib/price-alerts/carPriceAlerts";
 import { readSession } from "../../storage/sessionStorage";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { signInHref } from "../auth/signInIntent";
-import { buildAutomaticCarPriceAlertPayload, carAlertPresentation, matchingCarPriceAlert } from "../flow/carPriceAlertModel";
+import { buildAutomaticCarPriceAlertPayload, matchingCarPriceAlert } from "../flow/carPriceAlertModel";
 import type { SearchPlan } from "../flow/travelSearchModel";
 
 export const CAR_PRICE_ALERT_SNACKBAR_DURATION_MS = 3_600;
 export type CarPriceAlertFeedback = "active" | "paused" | null;
 type MatchingCarAlertState = { planKey: string; alert: MobilePriceAlert };
 
-export function NativeCarPriceAlert({ plan, results, available, onFeedback }: { plan?: SearchPlan; results: CarResult[]; available: boolean; onFeedback?: (feedback: CarPriceAlertFeedback) => void }) {
+export function NativeCarPriceAlert({ plan, resultId, offer, available, onFeedback }: { plan?: SearchPlan; resultId: string; offer: CarOffer; available: boolean; onFeedback?: (feedback: CarPriceAlertFeedback) => void }) {
   const { theme } = useAppTheme();
-  const presentation = useMemo(() => carAlertPresentation(plan, results), [plan?.key, results]);
+  const scope: CarPriceAlertOfferScope = useMemo(() => ({ resultId, offerId: offer.id, providerName: offer.bookingProviderName.trim() || offer.rentalCompanyName.trim() }), [resultId, offer.id, offer.bookingProviderName, offer.rentalCompanyName]);
+  const baseline = plan && Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 ? offer : undefined;
   const [matchingAlertState, setMatchingAlertState] = useState<MatchingCarAlertState>();
   const [reconciledPlanKey, setReconciledPlanKey] = useState<string>();
   const [loading, setLoading] = useState(true);
@@ -28,13 +31,14 @@ export function NativeCarPriceAlert({ plan, results, available, onFeedback }: { 
   const planRef = useRef(plan);
   planRef.current = plan;
   const planKey = plan?.key;
-  const matchingAlert = matchingAlertState && matchingAlertState.planKey === planKey ? matchingAlertState.alert : undefined;
-  const alertKnown = Boolean(planKey) && reconciledPlanKey === planKey;
+  const scopeKey = planKey ? [planKey, scope.resultId, scope.offerId, scope.providerName].join("|") : undefined;
+  const matchingAlert = matchingAlertState && matchingAlertState.planKey === scopeKey ? matchingAlertState.alert : undefined;
+  const alertKnown = Boolean(scopeKey) && reconciledPlanKey === scopeKey;
 
   const showFeedback = useCallback((feedback: Exclude<CarPriceAlertFeedback, null>) => {
     onFeedback?.(feedback);
   }, [onFeedback]);
-  const setCurrentMatchingAlert = useCallback((alert: MobilePriceAlert | undefined) => setMatchingAlertState(alert && planKey ? { planKey, alert } : undefined), [planKey]);
+  const setCurrentMatchingAlert = useCallback((alert: MobilePriceAlert | undefined) => setMatchingAlertState(alert && scopeKey ? { planKey: scopeKey, alert } : undefined), [scopeKey]);
   const signIn = () => Alert.alert("Sign in required", "Sign in to save this price alert to your account.", [{ text: "Sign in", onPress: () => router.push(signInHref("/(tabs)/profile")) }, { text: "Cancel", style: "cancel" }]);
   const showFailure = (next: boolean) => Alert.alert(
     next ? "Couldn’t turn on price tracking" : "Couldn’t turn off price tracking",
@@ -44,7 +48,7 @@ export function NativeCarPriceAlert({ plan, results, available, onFeedback }: { 
 
   const reconcile = useCallback(async () => {
     const reconciliationPlan = planRef.current;
-    const reconciliationPlanKey = planKey;
+    const reconciliationPlanKey = scopeKey;
     if (!reconciliationPlan || !reconciliationPlanKey) return;
     const reconciliation = ++reconciliationRef.current;
     if (reconciledPlanKey !== reconciliationPlanKey) setLoading(true);
@@ -55,16 +59,16 @@ export function NativeCarPriceAlert({ plan, results, available, onFeedback }: { 
       }
       const alerts = (await travelApi.priceAlerts()).alerts;
       if (reconciliation !== reconciliationRef.current) return;
-      setCurrentMatchingAlert(matchingCarPriceAlert(alerts, reconciliationPlan));
+      setCurrentMatchingAlert(matchingCarPriceAlert(alerts, reconciliationPlan, scope));
       setReconciledPlanKey(reconciliationPlanKey);
     } catch (cause) {
       if (reconciliation === reconciliationRef.current && cause instanceof TravelApiError && cause.status === 401) { setCurrentMatchingAlert(undefined); setReconciledPlanKey(reconciliationPlanKey); }
     } finally { if (reconciliation === reconciliationRef.current) setLoading(false); }
-  }, [planKey, reconciledPlanKey, setCurrentMatchingAlert]);
+  }, [scopeKey, scope, reconciledPlanKey, setCurrentMatchingAlert]);
   useFocusEffect(useCallback(() => { void reconcile(); }, [reconcile]));
 
   const toggle = async (next: boolean) => {
-    if (!plan || pendingRef.current || !alertKnown || (!available && next)) return;
+    if (!plan || !baseline || pendingRef.current || !alertKnown || (!available && next)) return;
     if (next && matchingAlert?.status === "ACTIVE") return;
     if (!next && matchingAlert?.status !== "ACTIVE") return;
     pendingRef.current = true;
@@ -77,25 +81,23 @@ export function NativeCarPriceAlert({ plan, results, available, onFeedback }: { 
       if (next && matchingAlert?.status === "PAUSED") {
         saved = (await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")).alert;
       } else if (next) {
-        const baseline = presentation.baselineOffer;
-        if (!baseline) throw new Error("missing_baseline");
-        saved = (await travelApi.createPriceAlert(buildAutomaticCarPriceAlertPayload(plan, baseline.totalPrice, baseline.currency))).alert;
+        saved = (await travelApi.createPriceAlert(buildAutomaticCarPriceAlertPayload(plan, baseline.totalPrice, baseline.currency, scope))).alert;
       } else {
         saved = (await travelApi.updatePriceAlertStatus(matchingAlert!.id, "PAUSED")).alert;
       }
       setCurrentMatchingAlert(saved);
-      setReconciledPlanKey(planKey);
+      setReconciledPlanKey(scopeKey);
       showFeedback(next ? "active" : "paused");
     } catch (cause) {
       if (next && cause instanceof TravelApiError && cause.status === 409) {
         const alerts = await travelApi.priceAlerts().then(({ alerts }) => alerts).catch(() => []);
-        const canonical = matchingCarPriceAlert(alerts, plan);
+        const canonical = matchingCarPriceAlert(alerts, plan, scope);
         if (canonical) {
           const saved = canonical.status === "PAUSED" ? (await travelApi.updatePriceAlertStatus(canonical.id, "ACTIVE")).alert : canonical;
-          setCurrentMatchingAlert(saved); setReconciledPlanKey(planKey); showFeedback("active");
+          setCurrentMatchingAlert(saved); setReconciledPlanKey(scopeKey); showFeedback("active");
         } else showFailure(true);
       } else if (cause instanceof TravelApiError && cause.status === 401) {
-        setCurrentMatchingAlert(undefined); setReconciledPlanKey(planKey); signIn();
+        setCurrentMatchingAlert(undefined); setReconciledPlanKey(scopeKey); signIn();
       } else showFailure(next);
     } finally { pendingRef.current = false; setPending(false); setOptimisticTracking(null); }
   };
@@ -118,12 +120,12 @@ export function NativeCarPriceAlert({ plan, results, available, onFeedback }: { 
     inputRange: [0, 1],
     outputRange: [0, I18nManager.isRTL ? -20 : 20],
   });
-  if (!presentation.visible) return null;
+  if (!baseline || !scope.providerName) return null;
   return <View style={styles.control}>
-    <Bell accessible={false} size={16} strokeWidth={2} color={theme.priceAlertAccent}/>
-    <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.title, { color: theme.dark ? theme.textPrimary : "#07133B" }]}>Track car prices</Text>
+    <Bell accessible={false} size={14} strokeWidth={2} color={theme.priceAlertAccent}/>
+    <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.title, { color: theme.dark ? theme.textPrimary : "#07133B" }]}>Track prices</Text>
     <View style={styles.switchSlot}>
-      <Pressable accessibilityRole="switch" accessibilityLabel="Track car prices" accessibilityState={{ checked: tracking, disabled, busy: pending }} disabled={disabled} onPress={() => void toggle(!tracking)} style={styles.switchTouchTarget}>
+      <Pressable accessibilityRole="switch" accessibilityLabel={`Track prices for ${scope.providerName} offer`} accessibilityState={{ checked: tracking, disabled, busy: pending }} disabled={disabled} onPress={() => void toggle(!tracking)} style={styles.switchTouchTarget}>
         <View pointerEvents="none" style={[styles.switchTrack, { backgroundColor: tracking ? theme.switchTrackActive : theme.dark ? "#465269" : "#CBD5E1", borderColor: tracking ? theme.switchTrackActive : theme.dark ? "#465269" : "#CBD5E1" }]}>
           <Animated.View style={[styles.switchThumb, I18nManager.isRTL && !I18nManager.doLeftAndRightSwapInRTL ? styles.switchThumbRtl : styles.switchThumbLtr, { transform: [{ translateX: thumbTranslateX }] }]}/>
         </View>
@@ -164,9 +166,9 @@ export function CarPriceAlertSnackbar({ feedback, onDismiss }: { feedback: Exclu
 export const PriceTrackingSnackbar = CarPriceAlertSnackbar;
 
 const styles = StyleSheet.create({
-  control: { flexShrink: 1, minWidth: 0, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 6 },
-  title: { minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 17, fontWeight: "600", fontFamily: appFonts.semibold },
-  switchSlot: { width: 51, height: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end" },
+  control: { flexShrink: 0, minWidth: 0, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 },
+  title: { minWidth: 0, flexShrink: 1, fontSize: 11, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
+  switchSlot: { width: 44, height: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end" },
   switchTouchTarget: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   switchTrack: { width: 44, height: 24, borderRadius: 12, borderWidth: 1, justifyContent: "center" },
   switchThumb: { position: "absolute", top: 3, width: 18, height: 18, borderRadius: 9, backgroundColor: "#FFFFFF", shadowColor: "#0F172A", shadowOpacity: 0.12, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
