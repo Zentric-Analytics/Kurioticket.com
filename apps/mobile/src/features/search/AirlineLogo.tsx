@@ -8,7 +8,7 @@ type Props = {
   airlineName: string;
   logoUrl?: string | null;
   fallbackCharacters?: number;
-  variant?: "default" | "result-card";
+  variant?: "default" | "result-card" | "compact-result-card";
   /** Diagnostic seam: false keeps layout identical without mounting remote SVG native views. */
   allowRemoteSvg?: boolean;
 };
@@ -26,7 +26,9 @@ export function AirlineLogo({
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const visibleUrl = resolveTravelProviderLogo(logoUrl);
   const failed = visibleUrl !== null && failedUrl === visibleUrl;
-  const isResultCard = variant === "result-card";
+  const isResultCard = variant === "result-card" || variant === "compact-result-card";
+  const isCompactResultCard = variant === "compact-result-card";
+  const resultCardTileStyle = isCompactResultCard ? styles.compactResultCardTile : styles.resultCardTile;
   const resultCardTileColors = {
     backgroundColor: theme.dark ? "#F8FAFC" : "#FFFFFF",
     borderColor: theme.dark ? theme.border : "#D8E1EC",
@@ -40,7 +42,7 @@ export function AirlineLogo({
     return (
       <View
         style={[
-          isResultCard ? styles.resultCardTile : styles.tile,
+          isResultCard ? resultCardTileStyle : styles.tile,
           isResultCard
             ? resultCardTileColors
             : { backgroundColor: theme.background, borderColor: theme.border },
@@ -55,7 +57,7 @@ export function AirlineLogo({
 
   return (
     <View
-      style={isResultCard ? [styles.resultCardTile, resultCardTileColors] : styles.logo}
+      style={isResultCard ? [resultCardTileStyle, resultCardTileColors] : styles.logo}
       accessibilityRole="image"
       accessibilityLabel={`${airlineName} logo`}
     >
@@ -101,6 +103,15 @@ const styles = StyleSheet.create({
     height: 42,
     flexShrink: 0,
     borderRadius: 10,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  compactResultCardTile: {
+    width: 36,
+    height: 36,
+    flexShrink: 0,
+    borderRadius: 8,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",

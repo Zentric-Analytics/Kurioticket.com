@@ -6,6 +6,7 @@ const logo = readFileSync("src/features/search/AirlineLogo.tsx", "utf8");
 const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const filterSheet = readFileSync("src/features/search/FlightFilterSheet.tsx", "utf8");
 const detailScreen = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
+const nativeFlightDetails = readFileSync("src/features/search/NativeFlightDetails.tsx", "utf8");
 
 test("Flight Results use provider logos without a platform image policy", () => {
   assert.match(screen, /<AirlineLogo[\s\S]*?logoUrl=\{result\.airlineLogo\}/);
@@ -18,23 +19,24 @@ test("Flight Filter airline rows match the current Web text-only treatment", () 
   assert.doesNotMatch(filterSheet, /<AirlineLogo|r\.airlineLogo|logoUrl=/);
 });
 
-test("only Flight Results opt into the result-card logo presentation", () => {
-  assert.match(screen, /<AirlineLogo[\s\S]*?logoUrl=\{result\.airlineLogo\}[\s\S]*?variant="result-card"/);
-  assert.doesNotMatch(filterSheet, /variant="result-card"/);
-  assert.doesNotMatch(detailScreen, /variant="result-card"/);
+test("Flight Results use the compact result logo tile without changing Details presentation", () => {
+  assert.match(screen, /<AirlineLogo[\s\S]*?logoUrl=\{result\.airlineLogo\}[\s\S]*?variant="compact-result-card"/);
+  assert.doesNotMatch(filterSheet, /variant="compact-result-card"/);
+  assert.doesNotMatch(detailScreen, /variant="compact-result-card"/);
+  assert.doesNotMatch(nativeFlightDetails, /variant="compact-result-card"/);
+  assert.match(nativeFlightDetails, /variant="result-card"/);
   assert.match(logo, /variant = "default"/);
 });
 
-test("result-card logos share one bounded premium tile while defaults remain 32px", () => {
+test("Results get a 36px logo tile while existing result-card consumers stay 42px", () => {
   assert.match(logo, /logo: \{[\s\S]*?width: 32,[\s\S]*?height: 32/);
   assert.match(logo, /tile: \{[\s\S]*?width: 32,[\s\S]*?height: 32/);
   assert.match(logo, /resultCardTile: \{[\s\S]*?width: 42,[\s\S]*?height: 42,[\s\S]*?borderRadius: 10,[\s\S]*?borderWidth: 1/);
+  assert.match(logo, /compactResultCardTile: \{[\s\S]*?width: 36,[\s\S]*?height: 36,[\s\S]*?borderRadius: 8,[\s\S]*?borderWidth: 1/);
   assert.match(logo, /resultCardArtwork: \{ width: 32, height: 32 \}/);
-  assert.match(logo, /width=\{isResultCard \? 32 : "100%"\}/);
-  assert.match(logo, /style=\{isResultCard \? styles\.resultCardArtwork : styles\.image\}/);
+  assert.match(logo, /const isResultCard = variant === "result-card" \|\| variant === "compact-result-card"/);
+  assert.match(logo, /const resultCardTileStyle = isCompactResultCard \? styles\.compactResultCardTile : styles\.resultCardTile/);
   assert.match(logo, /resizeMode="contain"/);
-  assert.match(logo, /isResultCard \? styles\.resultCardTile : styles\.tile/);
-  assert.match(logo, /isResultCard \? \[styles\.resultCardTile, resultCardTileColors\] : styles\.logo/);
 });
 
 test("normal SVG and raster logos retain their native render paths and fallback", () => {

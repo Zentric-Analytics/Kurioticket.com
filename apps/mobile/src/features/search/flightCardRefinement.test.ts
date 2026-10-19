@@ -10,12 +10,15 @@ const card = source.slice(source.indexOf("function FlightCard"), source.indexOf(
 test("Flight Results uses its narrow support palette only for approved supporting copy", () => {
   assert.match(source, /const flightSupportText = \{\s*light: "#64748B",\s*dark: "#B8C3D8",\s*\} as const/);
   assert.match(card, /const supportTextColor = theme\.dark \? flightSupportText\.dark : flightSupportText\.light/);
-  for (const style of ["flightNumber", "operatingCarrierText", "stopLabel", "flightMetadataLabel"]) {
+  for (const style of ["flightNumber", "operatingCarrierText", "stopLabel"]) {
     assert.match(card, new RegExp(`s0\\.${style},\\s*\\{\\s*color:\\s*supportTextColor\\s*\\}`));
   }
-  for (const style of ["airlineName", "time", "airportCode", "journeyDuration", "bigPrice"]) {
+  for (const style of ["airlineName", "time", "airportCode", "journeyDuration"]) {
     assert.match(card, new RegExp(`s0\\.${style}, \\{ color: theme\\.textPrimary \\}`));
   }
+  assert.match(card, /const metadataTextColor = theme\.dark \? theme\.textPrimary : flightResultsColors\.cardMetadata/);
+  assert.match(card, /const metadataIconColor = theme\.dark \? flightSupportText\.dark : flightResultsColors\.secondary/);
+  assert.match(card, /const priceColor = theme\.dark \? theme\.textPrimary : flightResultsColors\.cardPrice/);
   const appTheme = readFileSync(resolve("src/theme/AppTheme.tsx"), "utf8");
   assert.match(appTheme, /textSecondary: "#56658E"/);
   assert.match(appTheme, /textSecondary: "#AAB5CD"/);
@@ -59,7 +62,7 @@ test("main flight card uses a theme-aware bordered surface and restrained native
   assert.match(cardStyle, /elevation: 2/);
   assert.match(card, /backgroundColor: theme\.surface/);
   assert.match(card, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
-  assert.match(card, /shadowColor: theme\.dark \? "#000000" : "#18305B"/);
+  assert.match(card, /shadowColor: theme\.dark \? "#000000" : "#0F172A"/);
   assert.doesNotMatch(cardStyle, /backgroundColor: ["']white["']/);
 });
 
@@ -146,7 +149,7 @@ test("fare-rule summary classifies varied provider language without exact matchi
 
 test("flight card uses a compact three-row metadata column while airline identity may grow", () => {
   const metadataBlock = card.slice(card.indexOf('style={s0.flightMetadataRegion}'));
-  assert.match(card, /style=\{\[s0\.bigPrice, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\}/);
+  assert.match(card, /style=\{\[s0\.bigPrice, \{ color: priceColor \}\]\} numberOfLines=\{1\}/);
   assert.doesNotMatch(card, /s0\.bigPrice[^>]*(?:adjustsFontSizeToFit|minimumFontScale)/);
   assert.match(card, /style=\{\[s0\.airlineName, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{2\} ellipsizeMode="tail">/);
   assert.equal(card.match(/style=\{s0\.flightMetadataItem\}/g)?.length, 3);
@@ -157,18 +160,18 @@ test("flight card uses a compact three-row metadata column while airline identit
   assert.match(source, /flightMetadataItem: \{ width: "100%", minWidth: 0, minHeight: 16, flexDirection: "row", alignItems: "center", gap: 6 \}/);
   assert.match(source, /flightMetadataText: \{ flex: 1, minWidth: 0/);
   assert.match(source, /flightCommercialRegion: \{ width: "46%", minWidth: 104, flexShrink: 0, alignSelf: "stretch", alignItems: "flex-end", justifyContent: "space-between"/);
-  assert.equal(card.match(/s0\.flightMetadataLabel, \{ color: supportTextColor \}/g)?.length, 3);
-  assert.equal(card.match(/s0\.flightMetadataText, \{ color: theme\.textPrimary \}/g)?.length, 3);
+  assert.equal(card.match(/s0\.flightMetadataLabel, \{ color: metadataTextColor \}/g)?.length, 3);
+  assert.equal(card.match(/s0\.flightMetadataText, \{ color: metadataTextColor \}/g)?.length, 3);
   assert.doesNotMatch(source, /flightMetadataIconTile|flightMetadataCopy|flightMetadataValue|flightMetadataLabel: \{[^}]*width/);
   assert.doesNotMatch(source, /metadataSeparator:/);
   assert.doesNotMatch(metadataBlock, />·<\/Text>/);
   for (const icon of ["Luggage", "Armchair", "FileText"]) {
-    assert.match(card, new RegExp(`<${icon} accessible=\\{false\\} size=\\{15\\} strokeWidth=\\{2\\.4\\} color=\\{supportTextColor\\}/>`));
+    assert.match(card, new RegExp(`<${icon} accessible=\\{false\\} size=\\{15\\} strokeWidth=\\{2\\.4\\} color=\\{metadataIconColor\\}/>`));
   }
   assert.doesNotMatch(source, /benefitList:|benefitItem:/);
   assert.doesNotMatch(source, /flightDealAction(?:Text)?:/);
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
-    const cardContentWidth = viewport - 28 - 24;
+    const cardContentWidth = viewport - 32 - 24;
     assert.ok(cardContentWidth >= 258, `${viewport}px reserves at least 258px for the journey row`);
   }
 });
@@ -179,13 +182,14 @@ test("flight result cards use the responsive list width with a safe reduced oute
   assert.match(source, /<View style=\{s0\.flightCardItem\}[^>]*>[\s\S]*?<FlightCard/);
   assert.match(source, /body: \{ paddingHorizontal: 18, paddingBottom: 92, gap: 14 \}/);
   assert.match(source, /flightResultsBody: \{ paddingHorizontal: 12, gap: 12 \}/);
+  assert.match(source, /flightCardItem: \{ paddingHorizontal: 16, paddingBottom: 12 \}/);
   assert.match(source, /card: \{[\s\S]*?width: "100%",[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,/);
 
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
-    const outerInset = 12;
+    const outerInset = 16;
     const cardWidth = viewport - outerInset * 2;
     assert.equal(cardWidth + outerInset * 2, viewport, `${viewport}px card stays within the screen`);
-    assert.ok(outerInset >= 12 && outerInset <= 16, `${viewport}px keeps the requested safe edge spacing`);
+    assert.equal(outerInset, 16, `${viewport}px uses the mobile Results card gutter`);
   }
 });
 
@@ -201,7 +205,7 @@ test("flight card keeps long prices single-line in the full-width fare row", () 
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
   assert.match(source, /metadataItem: \{ flex: 1, minWidth: 0, flexDirection: "row"/);
   assert.match(source, /flightLowerSection: \{[^\n]*flexDirection: "row"/);
-  assert.match(source, /flightDetailsAffordance: \{ width: "100%", minHeight: 16, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
+  assert.match(source, /flightDetailsAffordance: \{ width: "100%", minHeight: 16, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 2 \}/);
   assert.match(source, /flightDetailsAffordanceText: \{ fontSize: 13, lineHeight: 15, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
   assert.doesNotMatch(source, /actionColumn:/);
   assert.doesNotMatch(source, /priceBox:/);
@@ -242,7 +246,7 @@ test("airline identity preserves its accessible name while bounding very long vi
 test("flight identity actions use a normal horizontal row without changing journey spacing", () => {
   assert.match(source, /airlineHeader: \{ width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start" \}/);
   assert.match(source, /airlineCopy: \{ flex: 1, minWidth: 0 \}/);
-  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0, transform: \[\{ translateY: -3 \}\] \}/);
+  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0 \}/);
   assert.doesNotMatch(source, /identityActions: \{[^}]*position: "absolute"/);
   assert.doesNotMatch(source, /airlineHeader: \{[^}]*paddingRight: 68/);
   assert.match(source, /journeyList: \{ width: "100%", marginTop: 8, gap: 10 \}/);
@@ -273,10 +277,13 @@ test("narrow flight cards reserve deterministic space for every journey section"
   const airlineLogo = readFileSync(resolve("src/features/search/AirlineLogo.tsx"), "utf8");
   assert.match(source, /journeyPrimaryRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 \}/);
   assert.match(card, /<AirlineLogo[\s\S]*logoUrl=\{result\.airlineLogo\}/);
-  assert.match(card, /<AirlineLogo[\s\S]*?variant="result-card"/);
   assert.match(airlineLogo, /logo: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
   assert.match(airlineLogo, /tile: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
-  assert.match(source, /airlineLogoColumn: \{ width: 38, flexShrink: 0, alignItems: "center" \}/);
+  assert.match(source, /airlineLogoColumn: \{ width: 36, flexShrink: 0, alignItems: "center" \}/);
+  assert.match(source, /flightIdentityLayout: \{ width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 10 \}/);
+  assert.match(card, /variant="compact-result-card"/);
+  assert.match(airlineLogo, /compactResultCardTile: \{[\s\S]*?width: 36,[\s\S]*?height: 36,[\s\S]*?borderRadius: 8,[\s\S]*?borderWidth: 1/);
+  assert.match(airlineLogo, /resultCardTile: \{[\s\S]*?width: 42,[\s\S]*?height: 42/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46/);
   assert.match(source, /departureColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
   assert.match(source, /arrivalColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
@@ -284,7 +291,7 @@ test("narrow flight cards reserve deterministic space for every journey section"
   const readableMinimums = 72 + 70 + 72;
   const interSectionGaps = 6 * 2;
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
-    const cardContentWidth = viewport - 28 - 24;
+    const cardContentWidth = viewport - 32 - 24;
     assert.ok(
       cardContentWidth >= readableMinimums + interSectionGaps,
       `${viewport}px fits departure, route, and arrival minimums without overlap`,
@@ -308,14 +315,14 @@ test("flight journey gives its center column responsive surplus width", () => {
   const arrivalWidth = 72;
   const interSectionGaps = 6 * 2;
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
-    const cardContentWidth = viewport - 28 - 24;
-    const indentedJourneyWidth = cardContentWidth - 32 - 10;
+    const cardContentWidth = viewport - 32 - 24;
+    const indentedJourneyWidth = cardContentWidth - 36 - 10;
     const renderedTimelineWidth = cardContentWidth - departureWidth - arrivalWidth - interSectionGaps;
     assert.ok(renderedTimelineWidth >= 70, `${viewport}px keeps a readable route line`);
     assert.equal(
       renderedTimelineWidth - (indentedJourneyWidth - departureWidth - arrivalWidth - interSectionGaps),
-      42,
-      `${viewport}px journey no longer loses the 32px logo and 10px identity gap`,
+      46,
+      `${viewport}px journey preserves the 36px logo and 10px identity gap`,
     );
   }
 });
@@ -362,7 +369,7 @@ test("highlight is the only conditional identity action and uses the released ri
   assert.match(header, /\{highlight \? \(\s*<View style=\{s0\.identityActions\}>[\s\S]*?s0\.resultBadge[\s\S]*?<\/View>\s*\) : null\}/);
   assert.doesNotMatch(header, /favorite|placeholder|invisible|opacity:\s*0/i);
   assert.match(source, /airlineCopy: \{ flex: 1, minWidth: 0 \}/);
-  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0, transform: \[\{ translateY: -3 \}\] \}/);
+  assert.match(source, /identityActions: \{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0 \}/);
   assert.doesNotMatch(source, /favoriteButton|favoritePending|favoritePressed/);
   assert.match(card, /const highlightLabel = highlight === "Best" \? "Best value" : highlight/);
   assert.match(card, /accessibilityLabel=\{`\$\{highlightLabel\} flight result`\}/);
@@ -371,7 +378,7 @@ test("highlight is the only conditional identity action and uses the released ri
   assert.match(card, /theme\.dark \? "#8BE0B0" : "#157347"/);
   assert.match(card, /theme\.dark \? "#173568" : "#EEF4FF"/);
   assert.match(card, /theme\.dark \? "#8FB5FF" : ui\.blue/);
-  assert.match(source, /resultBadge: \{ height: 24,[^}]*paddingHorizontal: 9, borderRadius: 12 \}/);
+  assert.match(source, /resultBadge: \{ height: 24,[^}]*paddingHorizontal: 8, borderRadius: 12 \}/);
   assert.match(source, /resultBadgeText: \{ fontSize: 10, lineHeight: 13, fontWeight: "800", fontFamily: appFonts\.extraBold \}/);
   assert.match(source, /journeyList: \{ width: "100%", marginTop: 8, gap: 10 \}/);
 });
@@ -384,3 +391,19 @@ test("saved flights remain visible through the canonical Saved source", () => {
   assert.doesNotMatch(savedScreen, /pathname: "\/flight-details"/);
   assert.doesNotMatch(savedScreen, /useSavedFlights\(\)|savedFlights\.values/);
 });
+
+test("Flight card footer uses the released light-mode metadata, divider, price, and action colors", () => {
+  const presentation = readFileSync(resolve("src/features/search/flightResultsPresentation.ts"), "utf8");
+  assert.match(presentation, /cardMetadata: "#475569"/);
+  assert.match(presentation, /cardPrice: "#020617"/);
+  assert.match(presentation, /cardDivider: "#E2E8F0"/);
+  assert.match(card, /borderTopColor: theme\.dark \? theme\.border : flightResultsColors\.cardDivider/);
+  assert.equal(card.match(/s0\.flightMetadataText, \{ color: metadataTextColor \}/g)?.length, 3);
+  assert.equal(card.match(/s0\.flightMetadataLabel, \{ color: metadataTextColor \}/g)?.length, 3);
+  assert.equal(card.match(/color=\{metadataIconColor\}/g)?.length, 3);
+  assert.match(card, /s0\.bigPrice, \{ color: priceColor \}/);
+  assert.match(card, /s0\.flightDetailsAffordanceText, \{ color: theme\.dark \? "#8FB5FF" : ui\.blue \}/);
+  assert.match(card, /<ChevronRight accessible=\{false\} size=\{16\} strokeWidth=\{2\.2\} color=\{theme\.dark \? "#8FB5FF" : ui\.blue\}/);
+  assert.match(source, /flightCardFooter: \{ width: "100%", marginTop: 5, paddingTop: 7, borderTopWidth: 1/);
+});
+

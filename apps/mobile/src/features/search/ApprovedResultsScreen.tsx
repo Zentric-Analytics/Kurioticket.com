@@ -1500,6 +1500,9 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   const { theme } = useAppTheme();
   const ui = useFlightResultsUi(sharedUi);
   const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
+  const metadataTextColor = theme.dark ? theme.textPrimary : flightResultsColors.cardMetadata;
+  const metadataIconColor = theme.dark ? flightSupportText.dark : flightResultsColors.secondary;
+  const priceColor = theme.dark ? theme.textPrimary : flightResultsColors.cardPrice;
   useEffect(() => {
     if (logInitialMount) {
       logFlightSearchCheckpoint("flight-search:initial-card-mounted", { platform: Platform.OS });
@@ -1542,7 +1545,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
         {
           backgroundColor: theme.surface,
           borderColor: theme.dark ? theme.border : "#D8E1EC",
-          shadowColor: theme.dark ? "#000000" : "#18305B",
+          shadowColor: theme.dark ? "#000000" : "#0F172A",
         },
         pressed && s0.flightCardPressed,
       ]}
@@ -1553,7 +1556,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
             <AirlineLogo
               airlineName={result.airlineName}
               logoUrl={result.airlineLogo}
-              variant="result-card"
+              variant="compact-result-card"
               allowRemoteSvg={process.env.EXPO_PUBLIC_DISABLE_REMOTE_AIRLINE_SVG !== "1"}
             />
           </View>
@@ -1597,7 +1600,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
           ))}
         </View>
       </View>
-      <View style={[s0.flightCardFooter, { borderTopColor: theme.border }]}> 
+      <View style={[s0.flightCardFooter, { borderTopColor: theme.dark ? theme.border : flightResultsColors.cardDivider }]}> 
         <View style={s0.flightLowerSection}>
           <View
             accessible
@@ -1605,29 +1608,29 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
             style={s0.flightMetadataRegion}
           >
             <View style={s0.flightMetadataItem}>
-              <Luggage accessible={false} size={15} strokeWidth={2.4} color={supportTextColor}/>
-              <Text style={[s0.flightMetadataText, { color: theme.textPrimary }]}>
-                <Text style={[s0.flightMetadataLabel, { color: supportTextColor }]}>{labels.baggage}:</Text>{" "}
+              <Luggage accessible={false} size={15} strokeWidth={2.4} color={metadataIconColor}/>
+              <Text style={[s0.flightMetadataText, { color: metadataTextColor }]}>
+                <Text style={[s0.flightMetadataLabel, { color: metadataTextColor }]}>{labels.baggage}:</Text>{" "}
                 {baggageSummary}
               </Text>
             </View>
             <View style={s0.flightMetadataItem}>
-              <Armchair accessible={false} size={15} strokeWidth={2.4} color={supportTextColor}/>
-              <Text style={[s0.flightMetadataText, { color: theme.textPrimary }]}>
-                <Text style={[s0.flightMetadataLabel, { color: supportTextColor }]}>{labels.cabin}:</Text>{" "}
+              <Armchair accessible={false} size={15} strokeWidth={2.4} color={metadataIconColor}/>
+              <Text style={[s0.flightMetadataText, { color: metadataTextColor }]}>
+                <Text style={[s0.flightMetadataLabel, { color: metadataTextColor }]}>{labels.cabin}:</Text>{" "}
                 {cabinSummary}
               </Text>
             </View>
             <View style={s0.flightMetadataItem}>
-              <FileText accessible={false} size={15} strokeWidth={2.4} color={supportTextColor}/>
-              <Text style={[s0.flightMetadataText, { color: theme.textPrimary }]}>
-                <Text style={[s0.flightMetadataLabel, { color: supportTextColor }]}>{labels.fareRules}:</Text>{" "}
+              <FileText accessible={false} size={15} strokeWidth={2.4} color={metadataIconColor}/>
+              <Text style={[s0.flightMetadataText, { color: metadataTextColor }]}>
+                <Text style={[s0.flightMetadataLabel, { color: metadataTextColor }]}>{labels.fareRules}:</Text>{" "}
                 {labels.review}
               </Text>
             </View>
           </View>
           <View style={s0.flightCommercialRegion}>
-            <Text accessible={false} style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1}>
+            <Text accessible={false} style={[s0.bigPrice, { color: priceColor }]} numberOfLines={1}>
               {fare?.formatted ?? "—"}
             </Text>
             <View accessible={false} style={s0.flightDetailsAffordance}>
@@ -2010,7 +2013,7 @@ const s0 = StyleSheet.create({
   hotelFilterChip:{minHeight:44,borderRadius:18,borderWidth:1,paddingHorizontal:12,alignItems:"center",justifyContent:"center"},
   hotelAttribution:{borderWidth:1,borderRadius:10,padding:10},
   flightResultsBody: { paddingHorizontal: 12, gap: 12 },
-  flightCardItem: { paddingHorizontal: 12, paddingBottom: 12 },
+  flightCardItem: { paddingHorizontal: 16, paddingBottom: 12 },
   flightResultsIntro: { paddingTop: 0, paddingBottom: 12 },
   notice: { backgroundColor: "#F2F6FF", color: ui.navy, padding: 10, borderRadius: 8 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
@@ -2021,19 +2024,19 @@ const s0 = StyleSheet.create({
   hotelResultsSortText: { fontSize: 13, lineHeight: 17, fontWeight: "600", fontFamily: appFonts.semibold },
   hotelFilteredEmpty: { alignItems: "center", gap: 10, paddingVertical: 28 },
   hotelClearFilters: { color: ui.blue, fontSize: 15, fontWeight: "800" },
-  flightResultsSummaryRow: { paddingHorizontal: 12, paddingTop: 6, paddingBottom: 10, alignItems: "stretch" },
+  flightResultsSummaryRow: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 4, alignItems: "stretch" },
   flightResultsCountColumn: { minWidth: 0, flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 8 },
   flightResultCount: { fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts.bold },
-  card: { width: "100%", borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9, gap: 5, shadowColor: "#18305B", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 },
+  card: { width: "100%", borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9, gap: 5, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 },
   cardPressed: { opacity: 0.94 },
   airlineHeader: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start" },
   airlineCopy: { flex: 1, minWidth: 0 },
-  identityActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0, transform: [{ translateY: -3 }] },
-  resultBadge: { height: 24, flexDirection: "row", alignItems: "center", paddingHorizontal: 9, borderRadius: 12 },
+  identityActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, gap: 0 },
+  resultBadge: { height: 24, flexDirection: "row", alignItems: "center", paddingHorizontal: 8, borderRadius: 12 },
   resultBadgeText: { fontSize: 10, lineHeight: 13, fontWeight: "800", fontFamily: appFonts.extraBold },
   flightMain: { width: "100%", alignItems: "stretch" },
-  flightIdentityLayout: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 8 },
-  airlineLogoColumn: { width: 38, flexShrink: 0, alignItems: "center" },
+  flightIdentityLayout: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  airlineLogoColumn: { width: 36, flexShrink: 0, alignItems: "center" },
   flightDetails: { flex: 1, minWidth: 0 },
   airlineName: { fontSize: 13, lineHeight: 17, color: ui.navy, fontWeight: "700", fontFamily: appFonts.bold },
   flightNumber: { marginTop: 1, fontSize: 11, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
@@ -2060,14 +2063,14 @@ const s0 = StyleSheet.create({
   fareRow: { width: "100%", paddingTop: 0, flexDirection: "row", justifyContent: "flex-end" },
   fareCopy: { width: "100%", maxWidth: "100%", minWidth: 0, alignItems: "flex-end" },
   flightCardPressed: { opacity: 0.78, transform: [{ scale: 0.995 }] },
-  flightCardFooter: { width: "100%", marginTop: 5, paddingTop: 7, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "#D8E1EC" },
+  flightCardFooter: { width: "100%", marginTop: 5, paddingTop: 7, borderTopWidth: 1, borderTopColor: "#E2E8F0" },
   flightLowerSection: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 8 },
   flightMetadataRegion: { flex: 1, minWidth: 0, paddingTop: 1, alignItems: "flex-start", gap: 5 },
   flightMetadataItem: { width: "100%", minWidth: 0, minHeight: 16, flexDirection: "row", alignItems: "center", gap: 6 },
   flightMetadataText: { flex: 1, minWidth: 0, fontSize: 10.5, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
   flightMetadataLabel: { fontWeight: "600", fontFamily: appFonts.semibold },
   flightCommercialRegion: { width: "46%", minWidth: 104, flexShrink: 0, alignSelf: "stretch", alignItems: "flex-end", justifyContent: "space-between" },
-  flightDetailsAffordance: { width: "100%", minHeight: 16, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 },
+  flightDetailsAffordance: { width: "100%", minHeight: 16, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 2 },
   flightDetailsAffordanceText: { fontSize: 13, lineHeight: 15, fontWeight: "600", fontFamily: appFonts.semibold },
   metadataDivider: { width: "100%", height: StyleSheet.hairlineWidth, marginTop: 6, marginBottom: 4 },
   metadataFooterContainer: { width: "100%", alignItems: "center" },
@@ -2170,7 +2173,7 @@ const s0 = StyleSheet.create({
   flightAlert: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 0, flexDirection: "row", alignItems: "center", gap: 4, overflow: "hidden" },
   compactPriceAlert: { width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 8 },
   hotelCompactPriceAlert: { minHeight: 48, paddingVertical: 2 },
-  flightAlertOuter: { marginHorizontal: 12 },
+  flightAlertOuter: { marginHorizontal: 8 },
   flightAlertCopy: { flex: 1, minWidth: 0, gap: 1 },
   flightAlertCompactTitle: { fontSize: 12.5, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlertTitle: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },

@@ -80,7 +80,7 @@ test("provider fare strings retain readable footer space across supported phone 
   assert.ok(longestCardLabel.length < "Provider price: ₫18,750,000".length);
 
   for (const viewport of [320, 360, 375, 390, 412, 430]) {
-    const footerWidth = viewport - 28 - 24;
+    const footerWidth = viewport - 32 - 24;
     const commercialWidth = footerWidth * 0.46;
     const metadataWidth = footerWidth - 8 - commercialWidth;
     assert.ok(commercialWidth >= 104, `${viewport}px keeps the commercial minimum`);

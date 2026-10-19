@@ -11,11 +11,11 @@ test("metadata keeps three compact inline rows beside the price region", () => {
 
   assert.equal(metadata.match(/style=\{s0\.flightMetadataItem\}/g)?.length, 3);
   for (const icon of ["Luggage", "Armchair", "FileText"]) {
-    assert.match(metadata, new RegExp(`<${icon} accessible=\\{false\\} size=\\{15\\} strokeWidth=\\{2\.4\\} color=\\{supportTextColor\\}/>`));
+    assert.match(metadata, new RegExp(`<${icon} accessible=\\{false\\} size=\\{15\\} strokeWidth=\\{2\.4\\} color=\\{metadataIconColor\\}/>`));
   }
   assert.match(source, /flightMetadataRegion: \{ flex: 1, minWidth: 0[^}]*gap: 5/);
   assert.match(source, /flightMetadataItem: \{ width: "100%", minWidth: 0, minHeight: 16, flexDirection: "row", alignItems: "center", gap: 6 \}/);
-  assert.match(source, /flightDetailsAffordance: \{ width: "100%", minHeight: 16, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
+  assert.match(source, /flightDetailsAffordance: \{ width: "100%", minHeight: 16, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 2 \}/);
   assert.match(source, /flightMetadataText: \{ flex: 1, minWidth: 0/);
   assert.doesNotMatch(source, /flightMetadataIconTile|flightMetadataCopy|flightMetadataValue/);
   assert.doesNotMatch(metadata, /backgroundColor|border(?:Left|Right)|shadow|elevation|Chevron|Pressable/);
@@ -38,8 +38,8 @@ test("metadata labels are stronger than naturally wrapping values", () => {
 
   assert.match(source, /flightMetadataText: \{[^}]*fontWeight: "500"[^}]*appFonts\.medium/);
   assert.match(source, /flightMetadataLabel: \{ fontWeight: "600", fontFamily: appFonts\.semibold \}/);
-  assert.equal(metadata.match(/flightMetadataText, \{ color: theme\.textPrimary \}/g)?.length, 3);
-  assert.equal(metadata.match(/flightMetadataLabel, \{ color: supportTextColor \}/g)?.length, 3);
+  assert.equal(metadata.match(/flightMetadataText, \{ color: metadataTextColor \}/g)?.length, 3);
+  assert.equal(metadata.match(/flightMetadataLabel, \{ color: metadataTextColor \}/g)?.length, 3);
   assert.doesNotMatch(source, /flightMetadataLabel: \{[^}]*width:\s*\d+/);
 });
 
@@ -62,17 +62,17 @@ test("metadata has one complete accessibility label with decorative icons", () =
   assert.match(card, /const baggageAccessibility = result\.baggageInfo\?\.trim\(\) \|\| baggageSummary/);
   assert.match(card, /const fareRulesAccessibility = result\.refundInfo\?\.trim\(\) \|\| fareRulesSummary/);
   assert.match(card, /accessibilityLabel=\{`\$\{labels\.baggage\}: \$\{baggageAccessibility\}\. \$\{labels\.cabin\}: \$\{cabinSummary\}\. \$\{labels\.fareRule\}: \$\{fareRulesAccessibility\}\.`\}/);
-  assert.equal(card.match(/<(?:Luggage|Armchair|FileText) accessible=\{false\} size=\{15\} strokeWidth=\{2\.4\} color=\{supportTextColor\}\/>/g)?.length, 3);
+  assert.equal(card.match(/<(?:Luggage|Armchair|FileText) accessible=\{false\} size=\{15\} strokeWidth=\{2\.4\} color=\{metadataIconColor\}\/>/g)?.length, 3);
   assert.equal(card.match(/<(?:Luggage|Armchair|FileText) accessible=\{false\}/g)?.length, 3);
 });
 
 test("metadata and full-width journey fit supported mobile widths", () => {
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
-    const cardWidth = viewport - 28;
+    const cardWidth = viewport - 32;
     const contentWidth = cardWidth - 24;
     assert.ok(contentWidth > 0, `${viewport}px card remains inside its viewport`);
-    assert.ok(contentWidth >= 268, `${viewport}px retains a non-overflowing footer text region`);
-    assert.ok(contentWidth - 8 - 104 >= 156, `${viewport}px keeps separate metadata and price columns`);
+    assert.ok(contentWidth >= 264, `${viewport}px retains a non-overflowing footer text region`);
+    assert.ok(contentWidth - 8 - 104 >= 152, `${viewport}px keeps separate metadata and price columns`);
   }
   assert.match(source, /journeyList: \{ width: "100%"/);
   assert.match(card, /style=\{s0\.flightMetadataRegion\}[\s\S]*?style=\{s0\.flightCommercialRegion\}/);

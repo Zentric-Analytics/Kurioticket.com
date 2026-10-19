@@ -4,6 +4,7 @@ export const flightResultsColors = {
   secondary: "#64748B", border: "#D8E1EC", filterCanvas: "#F2F4F8", surface: "#FFFFFF",
   alertSurface: "#EEF6FF", alertBorder: "#CFE0F8", count: "#F1F5F9", pressed: "#F8FAFC",
   dateAccent: "#075EE8", dateSelectedSurface: "rgba(239, 246, 255, 0.6)", journeyLabel: "#0057E7",
+  cardMetadata: "#475569", cardPrice: "#020617", cardDivider: "#E2E8F0",
 } as const;
 export function resolveFlightResultsTheme<T extends { dark: boolean }>(theme: T, enabled: boolean): T {
   if (!enabled || theme.dark) return theme;
