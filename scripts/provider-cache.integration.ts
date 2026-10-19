@@ -64,7 +64,7 @@ test("PostgreSQL persists every batched offer, duplicate update and complete coh
     assert.deepEqual((await getProviderResultWithContext("hotel", results[1041].id))?.result, results[1041]);
     // Repeat the same criteria with fresh provider IDs, then resolve an older
     // offer on a worker with no in-memory hotel cache.
-    const original = { ...results[0], id: "kayak-sandbox:original:one", propertyGroupId: "original:hotel" };
+    const original = { ...results[0], id: "kayak-sandbox:original:one", provider: "KAYAK sandbox", propertyGroupId: "original:hotel" };
     if (original.inventoryKind === "discovery") throw new Error("Expected priced inventory");
     const sibling = { ...original, id: "kayak-sandbox:original:two", totalPrice: 280, roomType: "Suite" };
     const newer = { ...original, id: "kayak-sandbox:newer:one", propertyGroupId: "newer:hotel" };
