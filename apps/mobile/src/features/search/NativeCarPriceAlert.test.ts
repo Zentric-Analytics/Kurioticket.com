@@ -33,9 +33,9 @@ test("native car rate details places a compact tinted offer tracking pill beside
   assert.match(source, /<Bell accessible=\{false\} size=\{14\} strokeWidth=\{2\}/);
   assert.match(source, />Track car prices<\/Text>/);
   assert.doesNotMatch(source, /Track rental car prices/);
-  assert.match(source, /control: \{ flexShrink: 0, minHeight: 44, flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 6, borderWidth: 1, borderRadius: 10 \}/);
+  assert.match(source, /control: \{ flexShrink: 0, minHeight: 44, flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 4, borderWidth: 1, borderRadius: 10 \}/);
   assert.match(source, /title: \{ flexShrink: 0, fontSize: 11, lineHeight: 16/);
-  assert.match(source, /iconBadge: \{ width: 24, height: 24/);
+  assert.match(source, /iconBadge: \{ width: 20, height: 20/);
   assert.match(themeSource, /priceAlertSurface: "#EDF6FF"/);
   assert.match(themeSource, /priceAlertBorder: "#C8DFF7"/);
   assert.match(source, /switchSlot: \{ width: 44, height: 44/);
