@@ -14,8 +14,8 @@ import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
 import { travelApi } from "../../api/travelApi";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
-import { FlowIcon, type FlowIconName } from "./FlowIcon";
-import { PackagesIcon } from "./PackagesIcon";
+import { CarFront, Hotel, Luggage, Plane } from "lucide-react-native";
+import { FlowIcon } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import { HotelSearchPanel } from "./HotelSearchPanel";
 import { CarSearchPanel } from "./CarSearchPanel";
@@ -178,11 +178,13 @@ function HomeFlightSearchSurface({ children }: { children: React.ReactNode }) {
   );
 }
 
+const productIcons = { flight: Plane, hotel: Hotel, car: CarFront, packages: Luggage };
+
 const products: {
   id: HomeProduct;
   label: string;
   route: "/flights" | "/hotels" | "/cars" | "/packages";
-  icon: FlowIconName | "packages";
+  icon: keyof typeof productIcons;
 }[] = [
   { id: "flights", label: "Flights", route: "/flights", icon: "flight" },
   { id: "hotels", label: "Hotels", route: "/hotels", icon: "hotel" },
@@ -236,6 +238,7 @@ function HomePageContent() {
         <View style={[styles.products, { backgroundColor: ft.colors.card }, ft.styles.shadow]}>
           {products.map((product) => {
             const selected = activeProduct === product.id;
+            const ProductIcon = productIcons[product.icon];
             return (
               <Pressable
                 key={product.label}
@@ -249,16 +252,13 @@ function HomePageContent() {
                   pressed && ft.styles.pressed,
                 ]}
               >
-                {product.icon === "packages" ? (
-                  <PackagesIcon size={28} strokeWidth={1.3} color={selected ? ft.colors.selectedLabelText : (ft.theme.dark ? ft.colors.icon : "#1A1A1A")} />
-                ) : (
-                  <FlowIcon
-                    name={product.icon}
-                    size={28}
-                    strokeWidth={1.3}
-                    color={selected ? ft.colors.selectedLabelText : (ft.theme.dark ? ft.colors.icon : "#1A1A1A")}
-                  />
-                )}
+                <ProductIcon
+                  size={28}
+                  strokeWidth={1.3}
+                  color={selected ? ft.colors.selectedLabelText : (ft.theme.dark ? ft.colors.icon : "#1A1A1A")}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                />
                 <NativeText
                   style={[
                     styles.productText, { color: ft.theme.dark ? ft.colors.text : "#1A1A1A" },
