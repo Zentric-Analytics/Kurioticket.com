@@ -1117,13 +1117,13 @@ function ResultsScreen({ product }: { product: Product }) {
   if (status === "loading" || hotelCurrencyPending) return <NativeBrandedSearchLoading product={product} />;
   if (product === "hotel" && hotelFilterApplying) return <NativeBrandedSearchLoading product="hotel" />;
   return (
-    <SafeAreaView style={[s0.safe, { backgroundColor: flightResults ? flightCanvasColor : hotelCanvasColor }]} edges={["top"]}>
+    <SafeAreaView style={[s0.safe, { backgroundColor: flightResults ? (theme.dark ? flightCanvasColor : flightResultsColors.surface) : hotelCanvasColor }]} edges={["top"]}>
       {flightResults ? (
         <FlightResultsHeader
           route={flightSummary.route}
           secondaryLine={flightSummary.secondaryLine}
           onEdit={edit}
-          backgroundColor={flightCanvasColor}
+          backgroundColor={theme.dark ? flightCanvasColor : flightResultsColors.surface}
         />
       ) : null}
       {product === "flight" ? (
@@ -1136,7 +1136,7 @@ function ResultsScreen({ product }: { product: Product }) {
           keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
           renderSectionHeader={() => (
             <View
-              style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}
+              style={[s0.flightFilterSectionHeader, { backgroundColor: theme.dark ? flightCanvasColor : flightResultsColors.surface }]}
             >
               {filterRail}
             </View>
@@ -1353,7 +1353,7 @@ function FlightResultsHeader({
           style={({ pressed }) => [
             s0.flightRouteSummaryCard,
             {
-              backgroundColor: theme.surface,
+              backgroundColor: theme.dark ? theme.surface : flightResultsColors.canvas,
               borderColor: theme.dark ? theme.border : "#D8E1EC",
             },
             pressed && s0.flightRouteSummaryCardPressed,
