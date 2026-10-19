@@ -321,8 +321,8 @@ test("flight journey gives its center column responsive surplus width", () => {
     assert.ok(renderedTimelineWidth >= 70, `${viewport}px keeps a readable route line`);
     assert.equal(
       renderedTimelineWidth - (indentedJourneyWidth - departureWidth - arrivalWidth - interSectionGaps),
-      42,
-      `${viewport}px journey no longer loses the 32px logo and 10px identity gap`,
+      46,
+      `${viewport}px journey preserves the 36px logo and 10px identity gap`,
     );
   }
 });
