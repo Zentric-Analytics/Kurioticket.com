@@ -826,7 +826,7 @@ function ResultsScreen({ product }: { product: Product }) {
     // a transition so it cannot hold the dismissal in the same render.
     startHotelFilterTransition(() => setHotelFilters(next));
   };
-  const transitionHotelFilters = (next: HotelFilters) => { startHotelFilterTransition(() => setHotelFilters(next)); startHotelResultsTransition(false); };
+  const transitionHotelFilters = (next: SetStateAction<HotelFilters>) => { startHotelFilterTransition(() => setHotelFilters(next)); startHotelResultsTransition(false); };
   const completeHotelFilterSession = () => { setHotelFilterOpen(false); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;startHotelResultsTransition(false);} };
   const openHotelFilters = (section: HotelFilterSectionName) => {
     hotelFilterSessionDirtyRef.current=false;
@@ -836,18 +836,20 @@ function ResultsScreen({ product }: { product: Product }) {
   const openHotelQuickFilter = (kind: HotelResultsQuickFilterKind) => { hotelFilterSessionDirtyRef.current=false; setHotelQuickFilter(kind); };
   const closeHotelQuickFilter = () => { setHotelQuickFilter(null); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;startHotelResultsTransition(false);} };
   const clearHotelQuickFilter = (kind: Exclude<HotelResultsQuickFilterKind, "sort">) => {
-    const next = { ...hotelFilters };
-    if (kind === "price") {
-      next.minimumPrice = null;
-      next.maximumPrice = null;
-    } else if (kind === "stars") {
-      next.starRatings = [];
-    } else if (kind === "facilities") {
-      next.facilities = [];
-    } else {
-      next.roomTypes = [];
-    }
-    transitionHotelFilters(next);
+    transitionHotelFilters(current => {
+      const next = { ...current };
+      if (kind === "price") {
+        next.minimumPrice = null;
+        next.maximumPrice = null;
+      } else if (kind === "stars") {
+        next.starRatings = [];
+      } else if (kind === "facilities") {
+        next.facilities = [];
+      } else {
+        next.roomTypes = [];
+      }
+      return next;
+    });
   };
   const handleFullFlightFiltersChange = useCallback((next: FlightFilters) => setFilters(next), []);
   const handleQuickFlightFiltersChange = useCallback((next: FlightFilters) => setFilters(next), []);

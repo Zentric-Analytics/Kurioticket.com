@@ -8,6 +8,23 @@ const hotel=(id:string,overrides:Partial<HotelResult>={}):HotelResult=>({id,prov
 const raw=[hotel("a",{classificationStars:5,name:"Grand Resort",amenities:["Free Wi-Fi","Pool"],roomType:"Family suite, king bed, half board",catalogueProfile:profile({propertyType:" Resort ",travellerFeatures:[" Family friendly "],accessibilityFeatures:["Step-free access"],room:{name:"Family Suite",bedConfiguration:"King Bed"}})}),hotel("b",{classificationStars:4,neighbourhood:"Montmartre, Paris",name:"City Apartment",amenities:["Parking"],roomType:"Double room, queen bed, full board",cancellationInfo:"Flexible cancellation",catalogueProfile:profile({propertyType:"Apartment",travellerFeatures:["family FRIENDLY"],accessibilityFeatures:["step-free ACCESS"],room:{name:"Double Room",bedConfiguration:"Queen bed"}})}),hotel("c",{classificationStars:undefined,neighbourhood:" le marais ",name:"Quiet Hostel",amenities:["Pool"],roomType:"Twin room, twin beds, all-inclusive",cancellationInfo:"Cancellation details",catalogueProfile:profile({propertyType:"Hostel",travellerFeatures:[],accessibilityFeatures:[],room:{name:"Twin Room",bedConfiguration:"Twin beds"}})})];
 const options=buildHotelFilterOptions(raw,"Paris",{USD:1,EUR:.8});
 
+test("provider room names without catalogue profiles remain selectable with matching counts",()=>{
+  const hotels=[hotel("a",{roomType:"DELUXE KING"}),hotel("b",{roomType:" deluxe king "}),hotel("c",{roomType:"Superior Double Room"}),hotel("unknown",{roomType:"Room"}),hotel("empty",{roomType:""})];
+  const options=buildHotelFilterOptions(hotels,"Paris");
+  assert.deepEqual(options.roomTypes,[{value:"provider-room:deluxe king",label:"DELUXE KING",count:2},{value:"provider-room:superior double room",label:"Superior Double Room",count:1}]);
+  for(const option of options.roomTypes) assert.equal(filterHotels(hotels,{...emptyHotelFilters(),roomTypes:[option.value]},options).length,option.count);
+  assert.deepEqual(filterHotels(hotels,{...emptyHotelFilters(),roomTypes:options.roomTypes.map(x=>x.value)},options).map(x=>x.id),["a","b","c"]);
+});
+
+test("room and bed provider fallbacks preserve authoritative catalogue fields",()=>{
+  const hotels=[hotel("provider",{roomType:"Suite with king bed"}),hotel("catalogue",{roomType:"Suite with king bed",catalogueProfile:profile({room:{name:"Double room",bedConfiguration:"Queen bed"}})}),hotel("blank",{roomType:"Studio with twin beds",catalogueProfile:profile({room:{name:" ",bedConfiguration:" "}})})];
+  const options=buildHotelFilterOptions(hotels,"Paris");
+  assert.deepEqual(filterHotels(hotels,{...emptyHotelFilters(),roomTypes:["double-room"]},options).map(x=>x.id),["catalogue"]);
+  assert.deepEqual(filterHotels(hotels,{...emptyHotelFilters(),bedTypes:["king-bed"]},options).map(x=>x.id),["provider"]);
+  assert.deepEqual(filterHotels(hotels,{...emptyHotelFilters(),bedTypes:["twin-beds"]},options).map(x=>x.id),["blank"]);
+  assert.equal(options.roomTypes.some(x=>x.value==="provider-room:suite with king bed"&&x.count===1),true);
+});
+
 test("default model includes every field and preserves input order",()=>{assert.deepEqual(emptyHotelFilters(),{propertyNameQuery:"",minimumPrice:null,maximumPrice:null,starRatings:[],areas:[],propertyTypes:[],roomTypes:[],bedTypes:[],meals:[],cancellationPolicies:[],facilities:[],travellerFeatures:[],accessibility:[]});assert.deepEqual(filterHotels(raw,emptyHotelFilters(),options).map(x=>x.id),["a","b","c"]);assert.deepEqual(raw.map(x=>x.id),["a","b","c"])});
 test("property name is trimmed, case-insensitive, and ANDs",()=>{assert.deepEqual(filterHotels(raw,{...emptyHotelFilters(),propertyNameQuery:"  GRAND  "},options).map(x=>x.id),["a"]);assert.deepEqual(filterHotels(raw,{...emptyHotelFilters(),propertyNameQuery:"hotel",facilities:["pool"]},options).map(x=>x.id),[])});
 test("minimum, maximum and combined ranges compare converted total price",()=>{const priced=[hotel("usd",{totalPrice:200,pricePerNight:999,currency:"USD"}),hotel("eur",{totalPrice:160,pricePerNight:1,currency:"EUR"}),hotel("high",{totalPrice:400,pricePerNight:1,currency:"USD"}),hotel("unknown",{totalPrice:100,pricePerNight:1,currency:"XYZ"})],o=buildHotelFilterOptions(priced,"Paris",{USD:1,EUR:.8});assert.equal(o.price?.minimum,0);assert.deepEqual(filterHotels(priced,{...emptyHotelFilters(),minimumPrice:250},o).map(x=>x.id),["high"]);assert.deepEqual(filterHotels(priced,{...emptyHotelFilters(),maximumPrice:200},o).map(x=>x.id),["usd","eur"]);assert.deepEqual(filterHotels(priced,{...emptyHotelFilters(),minimumPrice:190,maximumPrice:210},o).map(x=>x.id),["usd","eur"])});

@@ -41,6 +41,15 @@ test("quick Apply defers only filter derivation while dismissal stays urgent", (
   assert.match(close, /startHotelResultsTransition\(false\)/);
 });
 
+test("successive chip clears compose against the latest queued filter state", () => {
+  const clear = screen.slice(screen.indexOf("const clearHotelQuickFilter"), screen.indexOf("const handleFullFlightFiltersChange"));
+  assert.match(clear, /transitionHotelFilters\(current => \{/);
+  assert.match(clear, /const next = \{ \.\.\.current \}/);
+  assert.match(clear, /return next/);
+  assert.doesNotMatch(clear, /\.\.\.hotelFilters/);
+  assert.match(screen, /const transitionHotelFilters = \(next: SetStateAction<HotelFilters>\)/);
+});
+
 test("changed Hotel Sort Apply updates ordering immediately and resets scroll position", () => {
   const sheet = screen.slice(screen.indexOf("<HotelResultsQuickFilterSheet"), screen.indexOf("/> : null", screen.indexOf("<HotelResultsQuickFilterSheet")));
   assert.match(sheet, /onSortChange=\{\(next\) => \{ if\(next===hotelSort\)return;setHotelSort\(next\);startHotelResultsTransition\(\); \}\}/);
