@@ -85,7 +85,7 @@ test("desktop Cars results body is compact, centered, and keeps shared surfaces 
     results,
     /data-cars-results-loading-hotel-column[\s\S]*?lg:max-w-\[928px\] lg:rounded-2xl[\s\S]*?lg:grid-cols-\[232px_minmax\(0,1fr\)\] xl:grid-cols-\[236px_minmax\(0,1fr\)\]/,
   );
-  assert.match(alert, /data-cars-price-alert className="inline-flex min-w-0 shrink-0 items-center justify-end"/);
+  assert.match(alert, /data-cars-price-alert className="inline-flex w-fit max-w-full shrink-0 items-center rounded-\[10px\]"/);
   assert.doesNotMatch(results, /data-cars-price-alert-sidebar-slot/);
   assert.match(
     card,
@@ -207,7 +207,7 @@ test("desktop and mobile car rates share an inline tracking control inside rate 
   const picker = readFileSync(new URL("./CarDealPicker.tsx", import.meta.url), "utf8");
   const section = alert.match(/data-cars-price-alert className="([^"]+)"/)?.[1];
   assert.ok(section);
-  assert.match(section, /inline-flex min-w-0 shrink-0 items-center justify-end/);
+  assert.match(section, /inline-flex w-fit max-w-full shrink-0 items-center rounded-\[10px\]/);
   assert.doesNotMatch(section, /sm:rounded-2xl|lg:bg-\[#EEF6FF\]/);
   assert.match(picker, /data-car-rate-provider-alert-row/);
   assert.match(picker, /<CarPriceAlertControl/);
