@@ -46,6 +46,16 @@ test("a sole provider is selected without requiring invented provider data", () 
   assert.deepEqual(nativeFlightDealSelection(null, single), single.deals[0]);
 });
 
+test("native Details falls back to the first real provider when the fare offer is not one of the displayed deals", () => {
+  const unmatched = choice("SOURCE", [
+    { key: "seller-a", offerId: "A", providerName: "Seller A", price: 500 },
+    { key: "seller-b", offerId: "B", providerName: "Seller B", price: 600 },
+  ]);
+  assert.equal(nativeFlightDealSelection(null, unmatched), null);
+  assert.match(source, /nativeFlightDealSelection\(selectedDealOfferId,selected\)\?\?selected\.deals\[0\]\?\?null/);
+  assert.match(source, /nativeFlightDealSelection\(current,selected\)\?\?selected\.deals\[0\]\?\?null/);
+});
+
 test("Compare deals uses selectable provider cards with their own booking actions", () => {
   const availableStart = source.indexOf('return <SafeAreaView edges={[]} style={[s.safe,{backgroundColor:contentCanvasColor}]}');
   const availableEnd = source.indexOf("function FlightDetailsLoadingSkeleton", availableStart);
