@@ -345,23 +345,19 @@ test("native Cars View deal opens the selected provider inside Kurioticket, like
 
 test("native Cars prevents repeated provider launches and reports browser errors", () => {
   const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
-  assert.match(picker, /if \(dealOpeningRef\.current \|\| pendingRateDealRef\.current\) return false;/);
-  assert.match(picker, /if \(dealOpeningRef\.current \|\| pendingRateDealRef\.current\) return;/);
+  assert.match(picker, /if \(dealOpeningRef\.current\) return false;/);
+  assert.match(picker, /if \(dealOpeningRef\.current\) return;/);
   assert.match(picker, /dealOpeningRef\.current = true;/);
   assert.match(picker, /dealOpeningRef\.current = false;/);
   assert.match(picker, /Alert\.alert\("Unable to open provider", "Please refresh and try again\."\)/);
-  assert.match(picker, /if \(dealOpeningRef\.current \|\| pendingRateDealRef\.current\) return;/);
 });
 
-test("native Cars safely sequences the full-screen Rate details modal and in-app provider browser", () => {
+test("native Cars preserves Rate details beneath the provider browser", () => {
   const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
-  assert.match(picker, /if \(Platform\.OS === "android"\)/);
-  assert.match(picker, /pendingRateDealRef\.current = url;\s*setSelectedKey\(null\);/);
-  assert.match(picker, /onDismiss=\{openPendingRateDeal\}/);
-  assert.match(picker, /if \(Platform\.OS === "android"\) \{\s*void openProviderInApp\(url\)\.then\(opened => \{\s*if \(opened\) setSelectedKey\(null\);/);
-  assert.match(picker, /return Platform\.OS !== "android" \|\| response\.type === "opened";/);
-  assert.doesNotMatch(picker, /InteractionManager\.runAfterInteractions\(/);
-  assert.match(picker, /const url = pendingRateDealRef\.current;\s*pendingRateDealRef\.current = null;\s*if \(url\) void openProviderInApp\(url\);/);
+  assert.match(picker, /const continueRateDeal = \(url: string\) => \{\s*if \(dealOpeningRef\.current\) return;\s*void openProviderInApp\(url\);/);
+  assert.doesNotMatch(picker, /pendingRateDealRef/);
+  assert.doesNotMatch(picker, /onDismiss=\{openPendingRateDeal\}/);
   assert.match(picker, /onRequestClose=\{\(\) => setSelectedKey\(null\)\}/);
   assert.match(picker, /presentationStyle="fullScreen"/);
 });
+

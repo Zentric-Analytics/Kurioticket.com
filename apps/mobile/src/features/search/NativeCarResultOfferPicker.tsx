@@ -75,11 +75,10 @@ export function NativeCarResultOfferPicker({
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [priceAlertFeedback, setPriceAlertFeedback] = useState<CarPriceAlertFeedback>(null);
   const dealOpeningRef = useRef(false);
-  const pendingRateDealRef = useRef<string | null>(null);
 
   // Mirror native Hotels: present the seller inside the app instead of launching Safari.
   const openProviderInApp = async (url: string): Promise<boolean> => {
-    if (dealOpeningRef.current || pendingRateDealRef.current) return false;
+    if (dealOpeningRef.current) return false;
     dealOpeningRef.current = true;
     try {
       const WebBrowser = await import("expo-web-browser");
@@ -95,27 +94,11 @@ export function NativeCarResultOfferPicker({
     }
   };
 
-  const openPendingRateDeal = () => {
-    const url = pendingRateDealRef.current;
-    pendingRateDealRef.current = null;
-    if (url) void openProviderInApp(url);
-  };
-
-  // iOS SafariViewController needs Rate details dismissed first. Android
-  // Chrome Custom Tabs starts a separate activity; launch it while Rate details
-  // is still mounted, then close the sheet only after the "opened" result.
-  // This avoids relying on Android's unsupported Modal.onDismiss callback or
-  // InteractionManager, which does not wait for native dialog animations.
+  // Keep Rate details mounted while the provider browser is presented.
+  // Dismissing the sheet here returns users to Cars results when Safari closes.
   const continueRateDeal = (url: string) => {
-    if (dealOpeningRef.current || pendingRateDealRef.current) return;
-    if (Platform.OS === "android") {
-      void openProviderInApp(url).then(opened => {
-        if (opened) setSelectedKey(null);
-      });
-      return;
-    }
-    pendingRateDealRef.current = url;
-    setSelectedKey(null);
+    if (dealOpeningRef.current) return;
+    void openProviderInApp(url);
   };
   const choices = nativeCarResultDealChoices(result);
   const visibleChoices = expanded ? choices : choices.slice(0, INITIAL_VISIBLE_OFFER_COUNT);
@@ -200,7 +183,6 @@ export function NativeCarResultOfferPicker({
       presentationStyle="fullScreen"
       statusBarTranslucent={false}
       onRequestClose={() => setSelectedKey(null)}
-      onDismiss={openPendingRateDeal}
     >
       <SafeAreaProvider>
         <SafeAreaView edges={["top", "bottom", "left", "right"]} style={[styles.sheetScreen, { backgroundColor: theme.surface }]} accessibilityViewIsModal>
