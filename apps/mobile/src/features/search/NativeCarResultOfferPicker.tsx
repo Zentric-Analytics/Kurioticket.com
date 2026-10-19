@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Alert, Image, InteractionManager, LayoutAnimation, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, LayoutAnimation, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { CarFront, ChevronRight, IdCard, Info, MapPin, ShieldCheck, Wallet, X } from "lucide-react-native";
 import { SvgUri } from "react-native-svg";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -78,14 +78,18 @@ export function NativeCarResultOfferPicker({
   const pendingRateDealRef = useRef<string | null>(null);
 
   // Mirror native Hotels: present the seller inside the app instead of launching Safari.
-  const openProviderInApp = async (url: string) => {
-    if (dealOpeningRef.current || pendingRateDealRef.current) return;
+  const openProviderInApp = async (url: string): Promise<boolean> => {
+    if (dealOpeningRef.current || pendingRateDealRef.current) return false;
     dealOpeningRef.current = true;
     try {
       const WebBrowser = await import("expo-web-browser");
-      await WebBrowser.openBrowserAsync(url, { dismissButtonStyle: "close" });
+      const response = await WebBrowser.openBrowserAsync(url, { dismissButtonStyle: "close" });
+      // On Android, "opened" confirms the Custom Tab activity was launched.
+      // On iOS this promise completes when the in-app Safari sheet is dismissed.
+      return Platform.OS !== "android" || response.type === "opened";
     } catch {
       Alert.alert("Unable to open provider", "Please refresh and try again.");
+      return false;
     } finally {
       dealOpeningRef.current = false;
     }
@@ -97,16 +101,21 @@ export function NativeCarResultOfferPicker({
     if (url) void openProviderInApp(url);
   };
 
-  // The Rate details sheet is a full-screen native Modal on iOS. Dismiss it first
-  // so SafariViewController is not presented over an already-presented controller.
+  // iOS SafariViewController needs Rate details dismissed first. Android
+  // Chrome Custom Tabs starts a separate activity; launch it while Rate details
+  // is still mounted, then close the sheet only after the "opened" result.
+  // This avoids relying on Android's unsupported Modal.onDismiss callback or
+  // InteractionManager, which does not wait for native dialog animations.
   const continueRateDeal = (url: string) => {
     if (dealOpeningRef.current || pendingRateDealRef.current) return;
+    if (Platform.OS === "android") {
+      void openProviderInApp(url).then(opened => {
+        if (opened) setSelectedKey(null);
+      });
+      return;
+    }
     pendingRateDealRef.current = url;
     setSelectedKey(null);
-    if (Platform.OS !== "ios") {
-      // Android does not guarantee Modal.onDismiss; wait for the closing transition.
-      InteractionManager.runAfterInteractions(openPendingRateDeal);
-    }
   };
   const choices = nativeCarResultDealChoices(result);
   const visibleChoices = expanded ? choices : choices.slice(0, INITIAL_VISIBLE_OFFER_COUNT);
