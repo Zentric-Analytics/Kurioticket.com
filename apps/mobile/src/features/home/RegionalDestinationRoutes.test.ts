@@ -40,13 +40,13 @@ test("complete website-defined NG fallback routes render in selector order", () 
   assert.match(sectionSource, /Discover destinations from your region/);
 });
 
-test("shared Android and iOS homepage places the section after promos with only bottom breathing room", () => {
-  const promoIndex = homeSource.indexOf("<HomepageDealPromos />");
+test("shared Android and iOS homepage places the section after adventure discovery with only bottom breathing room", () => {
+  const adventureIndex = homeSource.indexOf("<HomepageAdventureDiscovery />");
   const regionalIndex = homeSource.indexOf("<RegionalDestinationRoutes />");
   const scrollEndIndex = homeSource.indexOf("</ScrollView>", regionalIndex);
 
-  assert.ok(promoIndex >= 0);
-  assert.ok(regionalIndex > promoIndex);
+  assert.ok(adventureIndex >= 0);
+  assert.ok(regionalIndex > adventureIndex);
   assert.ok(scrollEndIndex > regionalIndex);
   assert.match(homeSource, /const HOME_CONTENT_HORIZONTAL_PADDING = 14/);
   assert.match(homeSource, /content: \{ paddingHorizontal: HOME_CONTENT_HORIZONTAL_PADDING, paddingBottom: 26, gap: 14 \}/);

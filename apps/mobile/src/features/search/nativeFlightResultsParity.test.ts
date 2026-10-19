@@ -52,13 +52,13 @@ test("terminal Results states retain dates below the sticky rail", () => {
  assert.match(footer, /\{flightDateStrip\}[\s\S]*<FlightResultsState/);
 });
 
-test("light Flight Results keeps header, sticky filters, and Results canvas on one continuous tinted surface", () => {
+test("light Flight Results keeps safe area, header, and sticky filters white above the tinted Results canvas", () => {
  const header = screen.slice(screen.indexOf("function FlightResultsHeader"), screen.indexOf("function HotelResultsHeader"));
  const list = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf("<HotelResultsHeader", screen.indexOf("<Animated.SectionList")));
- assert.match(screen, /<FlightResultsHeader[\s\S]*?backgroundColor=\{flightCanvasColor\}/);
- assert.match(list, /s0\.flightFilterSectionHeader, \{ backgroundColor: flightCanvasColor \}/);
- assert.match(header, /backgroundColor: theme\.surface/);
- assert.doesNotMatch(header, /borderWidth: theme\.dark \? 1 : 0/);
+ assert.match(screen, /<SafeAreaView style=\{\[s0\.safe, \{ backgroundColor: flightResults \? \(theme\.dark \? flightCanvasColor : flightResultsColors\.surface\) : hotelCanvasColor \}\]\}/);
+ assert.match(screen, /<FlightResultsHeader[\s\S]*?backgroundColor=\{theme\.dark \? flightCanvasColor : flightResultsColors\.surface\}/);
+ assert.match(list, /s0\.flightFilterSectionHeader, \{ backgroundColor: theme\.dark \? flightCanvasColor : flightResultsColors\.surface, borderBottomColor: theme\.dark \? theme\.border : "#D8E1EC" \}/);
+ assert.match(header, /backgroundColor: theme\.dark \? theme\.surface : flightResultsColors\.canvas/);
  assert.match(list, /s0\.flightResultsIntro, \{ backgroundColor: flightCanvasColor \}/);
 });
 
@@ -71,5 +71,16 @@ test("date selection and journey label use their exact mobile Results accent rol
  assert.match(dates, /borderColor: theme\.dark \? "#8FB5FF" : flightResultsColors\.dateAccent/);
  assert.match(dates, /flightDateSelectedAccent, \{ backgroundColor: theme\.dark \? "#8FB5FF" : flightResultsColors\.dateAccent \}/);
  assert.match(screen, /s0\.journeyLabel, \{ color: theme\.dark \? "#8FB5FF" : flightResultsColors\.journeyLabel \}/);
+});
+
+test("Flight filter rail finishes with the curved left edge and compact white breathing room", () => {
+ assert.match(
+  screen,
+  /flightFilterSectionHeader: \{ paddingTop: 8, paddingBottom: 8, borderBottomLeftRadius: 28, borderBottomRightRadius: 0, overflow: "hidden", borderBottomWidth: 1 \}/,
+ );
+ assert.match(
+  screen,
+  /s0\.flightFilterSectionHeader, \{ backgroundColor: theme\.dark \? flightCanvasColor : flightResultsColors\.surface, borderBottomColor: theme\.dark \? theme\.border : "#D8E1EC" \}/,
+ );
 });
 

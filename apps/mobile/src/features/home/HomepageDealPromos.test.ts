@@ -101,13 +101,9 @@ test("deal cards reuse vector icons and navigate through shared handlers", () =>
   assert.doesNotMatch(promo, /require\(|\.(?:png|jpe?g|gif|webp)/i);
 });
 
-test("promos follow adventure discovery for every home session", () => {
-  const adventure = home.indexOf("<HomepageAdventureDiscovery />");
-  const promos = home.indexOf("<HomepageDealPromos />");
-
-  assert.ok(adventure !== -1 && adventure < promos);
-  assert.equal(home.match(/<HomepageDealPromos \/>/g)?.length, 1);
-  assert.doesNotMatch(home, /isAuthenticated\s*\?[^:]*HomepageDealPromos/s);
+test("native homepage omits both promotional deal cards", () => {
+  assert.doesNotMatch(home, /HomepageDealPromos|Flight deals from top airlines|Hotel savings worldwide/);
+  assert.match(home, /<HomepageAdventureDiscovery \/>\s*<RegionalDestinationRoutes \/>/);
 });
 
 test("promos remain homepage-only and no third planning section is added", () => {
