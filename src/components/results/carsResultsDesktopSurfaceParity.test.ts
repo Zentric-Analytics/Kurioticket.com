@@ -122,7 +122,7 @@ test("desktop Cars breathing room separates map, filters, toolbar and result car
   assert.match(results, /lg:px-5 lg:pb-7 lg:pt-7/);
   assert.match(results, /data-cars-results-content-column className=\{cn\("min-w-0 space-y-0 sm:space-y-4", !embedded && presentation === "standalone" && "lg:space-y-5"\)\}/);
   assert.match(results, /rowClassName=\{cn\("pb-3\.5 sm:pb-4 focus:outline-none", !embedded && presentation === "standalone" && "lg:pb-5"\)\}/);
-  assert.equal((results.match(/"max-sm:!mt-0 lg:space-y-5"/g) ?? []).length, 2);
+  assert.equal((results.match(/"max-sm:!mt-2 lg:space-y-5"/g) ?? []).length, 2);
   assert.match(map, /data-cars-results-map-preview/);
   assert.match(map, /className="relative mb-2 h-\[150px\][^"]*lg:mb-4"/);
   assert.match(loading, /data-cars-results-loading-hotel-column[\s\S]*?lg:max-w-\[928px\][\s\S]*?lg:px-5 lg:py-7/);
