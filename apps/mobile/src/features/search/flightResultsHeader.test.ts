@@ -79,7 +79,8 @@ test("Flight Results header keeps light glass on Back and the edit affordance", 
   assert.match(results, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
   assert.match(header, /accessibilityLabel="Go back"[\s\S]*?<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s0\.flightHeaderBackGlass\} \/>[\s\S]*?<ArrowLeft size=\{25\} strokeWidth=\{2\} color="#0F172A" \/>/);
   assert.match(styles, /flightHeaderBackGlass: \{ position: "absolute", left: 2, right: 2, top: 2, bottom: 2, borderRadius: 20 \}/);
-  assert.doesNotMatch(routeCard, /DetailGlassSurface|hotelLight/);\n  assert.match(header, /style=\{s0\.flightRouteSummaryEdit\}[\s\S]*?<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s0\.flightRouteSummaryEditGlass\} \/>/);
+  assert.doesNotMatch(routeCard, /DetailGlassSurface|hotelLight/);
+  assert.match(header, /style=\{s0\.flightRouteSummaryEdit\}[\s\S]*?<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s0\.flightRouteSummaryEditGlass\} \/>/);
   assert.match(header, /backgroundColor: theme\.surface/);
 });
 
