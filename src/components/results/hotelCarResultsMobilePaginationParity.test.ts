@@ -20,24 +20,15 @@ test("Hotels and Cars render continuous result lists without page controls", () 
   );
 });
 
-test("Cars quick filters preserve one mobile inline tracking instance with desktop sidebar portal", () => {
-  assert.equal((cars.match(/<CarPriceAlertControl/g) ?? []).length, 1);
+test("Cars quick filters retain their position with no page-level price alert", () => {
   const quickFilters = cars.indexOf("data-cars-results-quick-filters");
-  const toolbarStart = cars.indexOf("data-cars-results-toolbar", quickFilters);
-  const summary = cars.indexOf("data-cars-results-summary-row", toolbarStart);
-  const alert = cars.indexOf("<CarPriceAlertControl", summary);
+  const toolbar = cars.indexOf("data-cars-results-toolbar", quickFilters);
+  const summary = cars.indexOf("data-cars-results-summary-row", toolbar);
   const applied = cars.indexOf("{appliedCarFilters.length", summary);
-  assert.ok(
-    quickFilters >= 0 &&
-      quickFilters < toolbarStart &&
-      toolbarStart < summary &&
-      summary < alert &&
-      alert < applied,
-  );
-  assert.match(cars.slice(quickFilters, toolbarStart), /lg:hidden/);
-  assert.match(cars.slice(summary, applied), /\{!embedded \? \(\s*<CarPriceAlertControl/);
-  assert.match(cars, /desktopPortalTarget=\{desktopCarPriceAlertTarget\}/);
-  assert.match(cars, /data-cars-price-alert-sidebar-slot[\s\S]*?<CarsResultsMapPreview/);
+  assert.ok(quickFilters >= 0 && quickFilters < toolbar && toolbar < summary && summary < applied);
+  assert.match(cars.slice(quickFilters, toolbar), /lg:hidden/);
+  assert.doesNotMatch(cars, /<CarPriceAlertControl|desktopCarPriceAlertTarget|data-cars-price-alert-sidebar-slot/);
+  assert.match(cars, /<CarsResultsMapPreview location=\{search\.pickupLocation\} \/>/);
 });
 
 test("Hotel results retain the approved alert-free layout and a stable results scroll anchor", () => {

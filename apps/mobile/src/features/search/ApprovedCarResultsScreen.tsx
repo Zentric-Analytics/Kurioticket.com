@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AccessibilityInfo, Animated, Easing, FlatList, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
+import { FlatList, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, ArrowUp, ChevronDown, SlidersHorizontal, SquarePen } from "lucide-react-native";
+import { ArrowLeft, ChevronDown, SlidersHorizontal, SquarePen } from "lucide-react-native";
 import { travelApi, type CarResult } from "../../api/travelApi";
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { acceptCanonicalResults, canonicalResultsWereSilentlyLost } from "../flow/canonicalResultAcceptance";
@@ -21,7 +21,6 @@ import { carFilterCopy, carFilterGroupLabel } from "./carFilterCopy";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { CarEditSearchModal } from "./CarEditSearchModal";
 import { DetailGlassSurface } from "./DetailGlassSurface";
-import { CarPriceAlertSnackbar, NativeCarPriceAlert, type CarPriceAlertFeedback } from "./NativeCarPriceAlert";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { getLocationFieldDisplay } from "../../../../../src/lib/search/locationFieldDisplay";
 import { NATIVE_FILTER_RESULTS_TRANSITION_MS } from "./filterResultsTransition";
@@ -29,7 +28,6 @@ import { formatCarResultsScheduleSummary, formatCompactCarResultsScheduleSummary
 import { resolveCarResultImageSource } from "../../../../../src/lib/cars/carResultImage";
 import { useCarDisplayCurrency } from "./useCarDisplayCurrency";
 import { carDisplayPricePerDay } from "./carDisplayCurrency";
-import { beginCarBackToTopReturn, updateCarBackToTopScroll } from "./carResultsBackToTopState";
 
 type Status = "loading" | "ready" | "empty" | "error";
 const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB";
@@ -71,67 +69,11 @@ export function ApprovedCarResultsScreen() {
   const carResultsApplyingTimer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined);
   const carFilterSessionDirtyRef=useRef(false);
   const [carEditSearchOpen,setCarEditSearchOpen] = useState(false);
-  const [priceAlertFeedback,setPriceAlertFeedback] = useState<CarPriceAlertFeedback>(null);
-  const dismissPriceAlertFeedback=useCallback((feedback: Exclude<CarPriceAlertFeedback, null>)=>setPriceAlertFeedback(current=>current===feedback?null:current),[]);
   const carScrollRef=useRef<FlatList<CarResult>>(null);
-  const [carBackToTopVisible,setCarBackToTopVisible]=useState(false);
-  const carBackToTopProgress=useRef(new Animated.Value(0)).current;
-  const [carBackToTopReducedMotion,setCarBackToTopReducedMotion]=useState(false);
-  useEffect(()=>{
-    let active=true;
-    AccessibilityInfo.isReduceMotionEnabled().then(value=>{if(active)setCarBackToTopReducedMotion(value);}).catch(()=>undefined);
-    const subscription=AccessibilityInfo.addEventListener("reduceMotionChanged",setCarBackToTopReducedMotion);
-    return ()=>{active=false;subscription.remove();};
-  },[]);
-  useEffect(()=>{
-    const animation=Animated.timing(carBackToTopProgress,{
-      toValue:carBackToTopVisible && status==="ready" && !carResultsApplying?1:0,
-      duration:carBackToTopReducedMotion?0:150,
-      easing:Easing.bezier(0.4,0,0.2,1),
-      useNativeDriver:true,
-    });
-    animation.start();
-    return ()=>animation.stop();
-  },[carBackToTopVisible,carBackToTopProgress,carBackToTopReducedMotion,status,carResultsApplying]);
-  const carBackToTopVisibleRef=useRef(false);
-  const carBackToTopReturningRef=useRef(false);
-  const carBackToTopOffsetRef=useRef(0);
-  const hideCarBackToTop=useCallback(()=>{
-    carBackToTopVisibleRef.current=false;
-    setCarBackToTopVisible(false);
-  },[]);
-  const handleCarScroll=useCallback((event:NativeSyntheticEvent<NativeScrollEvent>)=>{
-    const next=updateCarBackToTopScroll({
-      offset:carBackToTopOffsetRef.current,
-      returning:carBackToTopReturningRef.current,
-      visible:carBackToTopVisibleRef.current,
-    },event.nativeEvent.contentOffset.y);
-    carBackToTopOffsetRef.current=next.offset;
-    carBackToTopReturningRef.current=next.returning;
-    // Only the actual list offset decides ordinary visibility. A separately
-    // timed first-card viewability callback must never override this state.
-    if(next.visible!==carBackToTopVisibleRef.current){
-      carBackToTopVisibleRef.current=next.visible;
-      setCarBackToTopVisible(next.visible);
-    }
-  },[]);
-  // Reconcile the settled offset: iOS may coalesce the last onScroll event.
-  // Releasing the programmatic-return guard here also prevents a later swipe
-  // from inheriting a stale animation state.
-  const handleCarScrollSettled=useCallback((event:NativeSyntheticEvent<NativeScrollEvent>)=>{
-    carBackToTopReturningRef.current=false;
-    handleCarScroll(event);
-  },[handleCarScroll]);
+  // Filter changes still reset the list position, without rendering a floating Back-to-top control.
   const scrollCarResultsToTop=useCallback(()=>{
-    const next=beginCarBackToTopReturn({
-      offset:carBackToTopOffsetRef.current,
-      returning:carBackToTopReturningRef.current,
-      visible:carBackToTopVisibleRef.current,
-    });
-    carBackToTopReturningRef.current=next.returning;
-    hideCarBackToTop();
     carScrollRef.current?.scrollToOffset({offset:0,animated:true});
-  },[hideCarBackToTop]);
+  },[]);
   const searchSequence=useRef(0);
   const activeSearch=useRef<AbortController|null>(null);
   const activeExecutionKey=useRef<string|undefined>(undefined);
@@ -148,7 +90,7 @@ export function ApprovedCarResultsScreen() {
     catch(error){if(controller.signal.aborted||sequence!==searchSequence.current)return;setStatus("error");setMessage(error instanceof Error?error.message:"Car search failed");}
   },[plan.plan?.key,retry]);
   useEffect(()=>{const executionKey=`${plan.plan?.key??"invalid"}:${retry}`;if(searchAbortTimer.current)clearTimeout(searchAbortTimer.current);searchAbortTimer.current=undefined;if(activeExecutionKey.current!==executionKey){activeExecutionKey.current=executionKey;void load();}return()=>{searchAbortTimer.current=setTimeout(()=>{if(activeExecutionKey.current!==executionKey)return;searchSequence.current+=1;activeSearch.current?.abort("screen-cleanup");activeExecutionKey.current=undefined;},0);};},[load,plan.plan?.key,retry]);
-  useEffect(()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);carResultsApplyingTimer.current=undefined;setCarResultsApplying(false);carBackToTopVisibleRef.current=false;carBackToTopReturningRef.current=false;carBackToTopOffsetRef.current=0;setCarBackToTopVisible(false);return()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);};},[plan.plan?.key]);
+  useEffect(()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);carResultsApplyingTimer.current=undefined;setCarResultsApplying(false);return()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);};},[plan.plan?.key]);
   const filterGroups=useMemo(()=>visibleCarFilterGroups(results,pricePerDay),[pricePerDay,results]);
   const quickGroups=useMemo(()=>carQuickFilterGroupIds.flatMap(id=>{const group=filterGroups.find(candidate=>candidate.id===id);return group?[group]:[];}),[filterGroups]);
   const copy=useMemo(()=>carFilterCopy(locale),[locale]);
@@ -170,7 +112,6 @@ export function ApprovedCarResultsScreen() {
   const listData=status==="ready"&&!carResultsApplying?filtered:[];
   const listHeader=<>{message?<Text accessibilityRole="alert" style={[r.notice,{backgroundColor:theme.surface,color:theme.textPrimary,borderColor:theme.dark?theme.border:"#D8E1EC"}]}>{message}</Text>:null}{status==="ready"?<View accessibilityLabel="Car results summary" style={[r.carResultsSummaryRow, viewportWidth < 360 && r.carResultsSummaryRowNarrow]}>
     {!carResultsApplying?<Text accessibilityRole="header" numberOfLines={1} style={[r.carResultCount,{color:theme.textPrimary}]}>{carResultCountLabel(filtered.length)}</Text>:null}
-    <NativeCarPriceAlert plan={plan.plan} results={results} available={availability.priceAlerts} onFeedback={setPriceAlertFeedback}/>
   </View>:null}</>;
   const listEmpty=status==="empty"?<Empty title="No rental cars found" body="Try changing your dates, pickup location, or filters." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:status==="error"?<Empty title="Car search could not be completed" body={message||"Check your connection and try again."} retry={()=>setRetry((value)=>value+1)} edit={edit}/>:status==="ready"&&carResultsApplying?<CarSkeletons/>:status==="ready"&&!filtered.length?<Empty title="No cars match these filters" body="Clear filters to see the available rental cars." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:null;
   if(status==="loading") return <NativeBrandedSearchLoading product="car"/>;
@@ -188,16 +129,10 @@ export function ApprovedCarResultsScreen() {
     {/* Render the complete bounded result set in the first virtualized batch.
         UIKit then receives the final contentSize before scrolling begins, while
         image prefetching stays independently limited to the first few assets. */}
-    <FlatList ref={carScrollRef} style={{backgroundColor:carCanvasColor}} data={listData} keyExtractor={result=>result.id} renderItem={({item,index})=><View style={r.carResultCardSlot}><CarResultCard result={item} rank={index} badge={carBadges.get(item.id)} imageUri={resolveNativeCarImageUri(item.imageUrl)} searchParams={payload} resultBackgroundColor={carCanvasColor}/></View>} ItemSeparatorComponent={CarResultItemSeparator} ListHeaderComponent={listHeader} ListEmptyComponent={listEmpty} initialNumToRender={Math.max(results.length,1)} maxToRenderPerBatch={Math.max(results.length,CAR_RESULT_RENDER_BATCH_SIZE)} windowSize={CAR_RESULT_WINDOW_SIZE} updateCellsBatchingPeriod={CAR_RESULT_BATCHING_PERIOD_MS} removeClippedSubviews={Platform.OS === "android"} showsVerticalScrollIndicator={true} automaticallyAdjustsScrollIndicatorInsets={false} scrollIndicatorInsets={carResultsScrollIndicatorInsets} alwaysBounceVertical={false} bounces={false} overScrollMode="never" keyboardShouldPersistTaps="handled" onScroll={handleCarScroll} scrollEventThrottle={16} onScrollBeginDrag={(event)=>{carBackToTopReturningRef.current=false;handleCarScroll(event);}} onScrollEndDrag={handleCarScrollSettled} onMomentumScrollBegin={handleCarScroll} onMomentumScrollEnd={handleCarScrollSettled} onScrollToTop={handleCarScroll} contentContainerStyle={[r.body,{paddingBottom:Math.max(insets.bottom + 64,64)}]}/>
-    <Animated.View pointerEvents={carBackToTopVisible && status==="ready" && !carResultsApplying?"box-none":"none"} style={[r.carBackToTop,{bottom:Math.max(insets.bottom,0)+16,backgroundColor:theme.dark?theme.surface:"#EEF2F6",borderColor:theme.dark?theme.border:"#E2E8F0",opacity:carBackToTopProgress,transform:[{translateY:carBackToTopProgress.interpolate({inputRange:[0,1],outputRange:[8,0]})}]}]}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Back to top" accessibilityHint="Scroll to the beginning of car results" accessibilityElementsHidden={!carBackToTopVisible} importantForAccessibility={carBackToTopVisible?"auto":"no-hide-descendants"} disabled={!carBackToTopVisible || status!=="ready" || carResultsApplying} onPress={scrollCarResultsToTop} style={({pressed})=>[r.carBackToTopTouch,{opacity:pressed?0.76:1}]}>
-        <ArrowUp accessible={false} size={18} strokeWidth={2.2} color={theme.dark?theme.textPrimary:"#004BB8"}/>
-      </Pressable>
-    </Animated.View>
+    <FlatList ref={carScrollRef} style={{backgroundColor:carCanvasColor}} data={listData} keyExtractor={result=>result.id} renderItem={({item,index})=><View style={r.carResultCardSlot}><CarResultCard result={item} rank={index} badge={carBadges.get(item.id)} imageUri={resolveNativeCarImageUri(item.imageUrl)} searchParams={payload} resultBackgroundColor={carCanvasColor} plan={plan.plan} priceAlertsAvailable={availability.priceAlerts}/></View>} ItemSeparatorComponent={CarResultItemSeparator} ListHeaderComponent={listHeader} ListEmptyComponent={listEmpty} initialNumToRender={Math.max(results.length,1)} maxToRenderPerBatch={Math.max(results.length,CAR_RESULT_RENDER_BATCH_SIZE)} windowSize={CAR_RESULT_WINDOW_SIZE} updateCellsBatchingPeriod={CAR_RESULT_BATCHING_PERIOD_MS} removeClippedSubviews={Platform.OS === "android"} showsVerticalScrollIndicator={true} automaticallyAdjustsScrollIndicatorInsets={false} scrollIndicatorInsets={carResultsScrollIndicatorInsets} alwaysBounceVertical={false} bounces={false} overScrollMode="never" keyboardShouldPersistTaps="handled" contentContainerStyle={[r.body,{paddingBottom:Math.max(insets.bottom + 64,64)}]}/>
     <CarFilterSheet visible={filterSheetVisible} results={results} filters={filters} pricePerDay={pricePerDay} onChange={changeCarFilters} onClose={completeCarFilterSession}/>
     {quickSheetKind ? <CarResultsQuickFilterSheet key={quickSheetKind} kind={quickSheetKind} results={results} filters={filters} pricePerDay={pricePerDay} sort={sort} onApplyFilters={(next)=>{changeCarFilters(next);}} onApplySort={(next)=>{if(next!==sort){setSort(next);startCarResultsTransition();}}} onClose={()=>{setQuickSheetKind(null);if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}}}/> : null}
     <CarEditSearchModal visible={carEditSearchOpen} params={params} onClose={()=>setCarEditSearchOpen(false)}/>
-    {priceAlertFeedback ? <CarPriceAlertSnackbar key={priceAlertFeedback} feedback={priceAlertFeedback} onDismiss={dismissPriceAlertFeedback}/> : null}
   </SafeAreaView>;
 }
 
@@ -234,4 +169,4 @@ function CarResultsHeader({destination,secondaryLine,onEdit,backgroundColor}:{de
 
 function CarResultItemSeparator(){return <View style={r.carResultItemSeparator}/>;}
 function CarSkeletons(){const {theme}=useAppTheme();return <View accessibilityRole="progressbar" accessibilityState={{busy:true}} accessibilityLabel="Updating car results" style={r.skeletonGroup}><View style={r.foundSkeleton}/>{[0,1,2].map((key)=><View key={key} style={[r.skeleton,r.carResultCardSlot,{backgroundColor:theme.surface,borderColor:theme.dark?theme.border:"#D8E1EC"}]}><View style={r.skeletonImage}/><View style={r.skeletonLines}><View style={r.skeletonLine}/><View style={[r.skeletonLine,{width:"65%"}]}/><View style={[r.skeletonLine,{width:"82%"}]}/></View></View>)}</View>;}
-const r=StyleSheet.create({safe:{flex:1},carHeader:{paddingTop:12,paddingBottom:8},carBackToTop:{position:"absolute",right:16,width:44,height:44,alignItems:"center",justifyContent:"center",borderRadius:12,borderWidth:1,zIndex:20,elevation:5,shadowColor:"#0F172A",shadowOpacity:0.15,shadowRadius:6,shadowOffset:{width:0,height:3}},carBackToTopTouch:{width:"100%",height:"100%",alignItems:"center",justifyContent:"center"},carHeaderBackdrop:{width:"100%"},carHeaderSurface:{borderBottomLeftRadius:28,borderBottomRightRadius:0,borderBottomWidth:StyleSheet.hairlineWidth,overflow:"hidden"},carHeaderMainRow:{width:"100%",flexDirection:"row",alignItems:"center",gap:6},carHeaderSide:{width:44,flexShrink:0},carHeaderBack:{width:44,height:44,alignItems:"center",justifyContent:"center",shadowColor:"#0F172A",shadowOffset:{width:0,height:2},shadowOpacity:0.12,shadowRadius:6,elevation:6},carHeaderBackGlass:{position:"absolute",left:2,right:2,top:2,bottom:2,borderRadius:20},carHeaderControlPressed:{opacity:0.55},carSummaryCard:{flex:1,minWidth:0,minHeight:62,borderWidth:1,borderRadius:13,flexDirection:"row",alignItems:"center",overflow:"hidden"},carSummaryCardPressed:{opacity:0.76},carSummaryText:{flex:1,minWidth:0,justifyContent:"center",paddingLeft:14,paddingVertical:9},carSummaryDestination:{fontSize:14,lineHeight:18,fontWeight:"700",fontFamily:appFonts.bold},carSummarySecondary:{marginTop:3,fontSize:10.5,lineHeight:14,fontWeight:"500",fontFamily:appFonts.medium},carSummaryEditSlot:{width:44,height:44,flexShrink:0,alignItems:"center",justifyContent:"center"},carSummaryEditGlass:{position:"absolute",left:4,right:4,top:4,bottom:4,borderRadius:18},carFilterSectionHeader:{paddingTop:8,paddingBottom:8},filterRail:{height:44,flexGrow:0,flexShrink:0},filters:{paddingLeft:12,paddingRight:16,gap:6,alignItems:"center",flexWrap:"nowrap"},shortcutTouchTarget:{minWidth:44,minHeight:44,justifyContent:"center"},shortcut:{height:36,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:4,borderWidth:1,borderRadius:9,paddingHorizontal:10},shortcutLabel:{fontSize:13,lineHeight:16,fontWeight:"600",fontFamily:appFonts.semibold},shortcutCount:{minWidth:20,height:20,borderRadius:10,paddingHorizontal:6,alignItems:"center",justifyContent:"center"},shortcutCountText:{fontSize:11,lineHeight:14,fontWeight:"600",fontFamily:appFonts.semibold},shortcutChevronExpanded:{transform:[{rotate:"180deg"}]},body:{paddingHorizontal:14},carResultCardSlot:{marginHorizontal:0},carResultItemSeparator:{height:14},notice:{borderWidth:1,borderRadius:10,padding:12},carResultsSummaryRow:{marginTop:8,marginBottom:2,minHeight:44,paddingHorizontal:8,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8},carResultsSummaryRowNarrow:{paddingHorizontal:4},carResultCount:{fontSize:12,lineHeight:16,fontWeight:"600",fontFamily:appFonts.semibold},sort:{minHeight:44,flexDirection:"row",alignItems:"center",gap:5,paddingHorizontal:2},sortPrefix:{fontSize:11,color:ui.muted},sortValue:{fontSize:14,color:ui.navy},skeletonGroup:{gap:14},foundSkeleton:{height:44,borderRadius:12,backgroundColor:"#EEF1F6"},skeleton:{height:216,borderRadius:13,borderWidth:1,overflow:"hidden",flexDirection:"row"},skeletonImage:{width:"40%",backgroundColor:"#EEF1F6"},skeletonLines:{flex:1,padding:16,gap:15},skeletonLine:{height:13,borderRadius:6,backgroundColor:"#EEF1F6",width:"90%"}});
+const r=StyleSheet.create({safe:{flex:1},carHeader:{paddingTop:12,paddingBottom:8},carHeaderBackdrop:{width:"100%"},carHeaderSurface:{borderBottomLeftRadius:28,borderBottomRightRadius:0,borderBottomWidth:StyleSheet.hairlineWidth,overflow:"hidden"},carHeaderMainRow:{width:"100%",flexDirection:"row",alignItems:"center",gap:6},carHeaderSide:{width:44,flexShrink:0},carHeaderBack:{width:44,height:44,alignItems:"center",justifyContent:"center",shadowColor:"#0F172A",shadowOffset:{width:0,height:2},shadowOpacity:0.12,shadowRadius:6,elevation:6},carHeaderBackGlass:{position:"absolute",left:2,right:2,top:2,bottom:2,borderRadius:20},carHeaderControlPressed:{opacity:0.55},carSummaryCard:{flex:1,minWidth:0,minHeight:62,borderWidth:1,borderRadius:13,flexDirection:"row",alignItems:"center",overflow:"hidden"},carSummaryCardPressed:{opacity:0.76},carSummaryText:{flex:1,minWidth:0,justifyContent:"center",paddingLeft:14,paddingVertical:9},carSummaryDestination:{fontSize:14,lineHeight:18,fontWeight:"700",fontFamily:appFonts.bold},carSummarySecondary:{marginTop:3,fontSize:10.5,lineHeight:14,fontWeight:"500",fontFamily:appFonts.medium},carSummaryEditSlot:{width:44,height:44,flexShrink:0,alignItems:"center",justifyContent:"center"},carSummaryEditGlass:{position:"absolute",left:4,right:4,top:4,bottom:4,borderRadius:18},carFilterSectionHeader:{paddingTop:8,paddingBottom:8},filterRail:{height:44,flexGrow:0,flexShrink:0},filters:{paddingLeft:12,paddingRight:16,gap:6,alignItems:"center",flexWrap:"nowrap"},shortcutTouchTarget:{minWidth:44,minHeight:44,justifyContent:"center"},shortcut:{height:36,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:4,borderWidth:1,borderRadius:9,paddingHorizontal:10},shortcutLabel:{fontSize:13,lineHeight:16,fontWeight:"600",fontFamily:appFonts.semibold},shortcutCount:{minWidth:20,height:20,borderRadius:10,paddingHorizontal:6,alignItems:"center",justifyContent:"center"},shortcutCountText:{fontSize:11,lineHeight:14,fontWeight:"600",fontFamily:appFonts.semibold},shortcutChevronExpanded:{transform:[{rotate:"180deg"}]},body:{paddingHorizontal:14},carResultCardSlot:{marginHorizontal:0},carResultItemSeparator:{height:14},notice:{borderWidth:1,borderRadius:10,padding:12},carResultsSummaryRow:{marginTop:8,marginBottom:2,minHeight:44,paddingHorizontal:8,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8},carResultsSummaryRowNarrow:{paddingHorizontal:4},carResultCount:{fontSize:12,lineHeight:16,fontWeight:"600",fontFamily:appFonts.semibold},sort:{minHeight:44,flexDirection:"row",alignItems:"center",gap:5,paddingHorizontal:2},sortPrefix:{fontSize:11,color:ui.muted},sortValue:{fontSize:14,color:ui.navy},skeletonGroup:{gap:14},foundSkeleton:{height:44,borderRadius:12,backgroundColor:"#EEF1F6"},skeleton:{height:216,borderRadius:13,borderWidth:1,overflow:"hidden",flexDirection:"row"},skeletonImage:{width:"40%",backgroundColor:"#EEF1F6"},skeletonLines:{flex:1,padding:16,gap:15},skeletonLine:{height:13,borderRadius:6,backgroundColor:"#EEF1F6",width:"90%"}});

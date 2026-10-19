@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const screen = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
-const backToTopState = readFileSync("src/features/search/carResultsBackToTopState.ts", "utf8");
 const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
 const listStart = screen.indexOf("<FlatList ref={carScrollRef}");
 const listEnd = screen.indexOf("contentContainerStyle=", listStart);
@@ -40,15 +39,12 @@ test("Cars gives the native indicator stable naturally-sized card geometry", () 
   assert.doesNotMatch(cardStyle.replace(/shadowOffset:\{[^}]*\}/, ""), /(?:^|,)height:/);
 });
 
-test("Cars keeps stable cross-platform boundary behavior", () => {
+test("Cars preserves stable scroll boundaries without a back-to-top listener", () => {
   assert.match(list, /alwaysBounceVertical=\{false\}/);
   assert.match(list, /bounces=\{false\}/);
   assert.match(list, /overScrollMode="never"/);
-  assert.match(list, /onScroll=\{handleCarScroll\} scrollEventThrottle=\{16\}/);
-  assert.match(list, /onScrollBeginDrag=\{\(event\)=>\{carBackToTopReturningRef\.current=false;handleCarScroll\(event\);\}\}/);
-  assert.match(backToTopState, /const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 320/);
-  assert.match(list, /onMomentumScrollEnd=\{handleCarScrollSettled\}/);
-  assert.match(list, /onScrollEndDrag=\{handleCarScrollSettled\}/);
-  assert.match(list, /onScrollToTop=\{handleCarScroll\}/);
+  assert.doesNotMatch(list, /onScroll=\{handleCarScroll\}|onScrollBeginDrag|onScrollEndDrag|onMomentumScrollEnd|onScrollToTop=\{handleCarScroll\}/);
+  assert.match(list, /showsVerticalScrollIndicator=\{true\}/);
   assert.doesNotMatch(list, /getItemLayout|ListFooterComponent/);
 });
+

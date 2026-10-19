@@ -12,3 +12,16 @@ test("only presents comparable supported-currency total offers", () => { const r
 test("prefers active and retains paused matching alerts", () => { assert.equal(matchingCarPriceAlert([alert("PAUSED"), alert("ACTIVE")], plan)?.status, "ACTIVE"); assert.equal(matchingCarPriceAlert([alert("PAUSED")], plan)?.status, "PAUSED"); });
 test("target alerts do not control the automatic toggle", () => { assert.equal(matchingCarPriceAlert([alert("ACTIVE", plan.payload, "TARGET")], plan), undefined); });
 test("does not match an incomplete or different rental identity", () => { assert.equal(matchingCarPriceAlert([alert("ACTIVE", { ...plan.payload, pickupTime: "11:00" })], plan), undefined); });
+
+test("native car alerts belong to an individual result and provider offer", () => {
+  const scope = { resultId: "kayak-sandbox:one", offerId: "quote-1", providerName: "QEEQ.COM" };
+  const other = { ...scope, offerId: "quote-2" };
+  const scoped = buildAutomaticCarPriceAlertPayload(plan, 150, "USD", scope);
+  assert.deepEqual(scoped.query.offer, scope);
+  const current = alert("ACTIVE", scoped.query);
+  assert.equal(matchingCarPriceAlert([current], plan, scope), current);
+  assert.equal(matchingCarPriceAlert([current], plan, other), undefined);
+  assert.equal(matchingCarPriceAlert([current], plan), undefined);
+  assert.equal(matchingCarPriceAlert([alert("ACTIVE")], plan, scope), undefined);
+  assert.equal(matchingCarPriceAlert([current], plan, { ...scope, providerName: "Priceline" }), undefined);
+});

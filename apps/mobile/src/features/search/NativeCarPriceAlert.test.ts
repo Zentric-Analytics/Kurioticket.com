@@ -6,7 +6,7 @@ const source = readFileSync("src/features/search/NativeCarPriceAlert.tsx", "utf8
 const themeSource = readFileSync("src/theme/AppTheme.tsx", "utf8");
 
 test("Cars toggle creates automatic tracking without a target-price sheet", () => {
-  assert.match(source, /buildAutomaticCarPriceAlertPayload\(plan, baseline\.totalPrice, baseline\.currency\)/);
+  assert.match(source, /buildAutomaticCarPriceAlertPayload\(plan, baseline\.totalPrice, baseline\.currency, scope\)/);
   assert.doesNotMatch(source, /Target rental total|TextInput|Modal|Create alert/);
   assert.match(source, /matchingAlert\?\.status === "PAUSED"[\s\S]*updatePriceAlertStatus\(matchingAlert\.id, "ACTIVE"\)/);
 });
@@ -25,21 +25,22 @@ test("Cars toggle has no visible submission loading UI", () => {
   assert.match(source, /optimisticTracking/);
 });
 
-test("native Cars price tracking is an inline label with a compact accessible switch instead of a blue panel", () => {
+test("native car rate details uses a compact 44px inline offer-tracking switch", () => {
+  const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
   assert.match(source, /return <View style=\{styles\.control\}>/);
-  assert.doesNotMatch(source, /styles\.control, \{ backgroundColor: theme\.priceAlertSurface/);
-  assert.match(source, /<Bell accessible=\{false\} size=\{16\} strokeWidth=\{2\} color=\{theme\.priceAlertAccent\}/);
-  assert.match(source, /<Text numberOfLines=\{1\} ellipsizeMode="tail" style=\{\[styles\.title,/);
-  assert.match(source, />Track car prices<\/Text>/);
+  assert.match(picker, /<NativeCarPriceAlert/);
+  assert.match(picker, /Booking provider ·/);
+  assert.match(source, /<Bell accessible=\{false\} size=\{14\} strokeWidth=\{2\}/);
+  assert.match(source, />Track prices<\/Text>/);
   assert.doesNotMatch(source, /Track rental car prices/);
-  assert.match(source, /control: \{ flexShrink: 1, minWidth: 0, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 6 \}/);
-  assert.match(source, /title: \{ minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 17, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
-  assert.match(source, /switchSlot: \{ width: 51, height: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end" \}/);
+  assert.match(source, /control: \{ flexShrink: 0, minWidth: 0, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
+  assert.match(source, /title: \{ minWidth: 0, flexShrink: 1, fontSize: 11, lineHeight: 16/);
+  assert.match(source, /switchSlot: \{ width: 44, height: 44/);
   assert.doesNotMatch(source, /<Switch\b/);
 });
 
 test("native Cars compact switch uses a 44-by-24 track, 18px thumb and full 44px target", () => {
-  assert.match(source, /<Pressable accessibilityRole="switch" accessibilityLabel="Track car prices"/);
+  assert.match(source, /<Pressable accessibilityRole="switch" accessibilityLabel=\{\x60Track prices for \$\{scope\.providerName\} offer\x60\}/);
   assert.match(source, /accessibilityState=\{\{ checked: tracking, disabled, busy: pending \}\} disabled=\{disabled\} onPress=\{\(\) => void toggle\(!tracking\)\}/);
   assert.match(source, /switchTouchTarget: \{ width: 44, height: 44, alignItems: "center", justifyContent: "center" \}/);
   assert.match(source, /switchTrack: \{ width: 44, height: 24, borderRadius: 12, borderWidth: 1/);
@@ -71,18 +72,15 @@ test("RTL thumb anchors exactly once with or without automatic React Native left
   }
 });
 
-test("native Cars keeps the result count readable alongside tracking at small phone widths", () => {
-  const trackFixed = 16 + 6 + 51; // bell, minimum gap, trailing control slot
-  const rowGap = 8;
-  for (const width of [320, 359, 360, 375, 390, 414, 480]) {
-    const outerGutters = 2 * (14 + (width < 360 ? 4 : 8));
-    const available = width - outerGutters - rowGap;
-    assert.ok(available - trackFixed > 110, "count and title retain layout space");
-  }
-  assert.match(source, /minWidth: 0, flexShrink: 1, fontSize: 12/);
+test("Cars result count remains independent of tracking when rate details opens", () => {
+  const results = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
+  const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
+  assert.match(results, /carResultCountLabel\(filtered\.length\)/);
+  assert.doesNotMatch(results, /<NativeCarPriceAlert/);
+  assert.match(picker, /sellerRow: \{ marginTop: 3, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 \}/);
+  assert.match(picker, /seller: \{ flex: 1, minWidth: 0/);
   assert.match(source, /numberOfLines=\{1\} ellipsizeMode="tail"/);
-  assert.equal(14 + 8, 22, "regular phones use the web 22-point tracking inset");
-  assert.equal(14 + 4, 18, "narrow phones use the web 18-point tracking inset");
+  assert.match(source, /switchTouchTarget: \{ width: 44, height: 44/);
 });
 
 test("Cars toggle preserves sign-in and explicit failure feedback", () => {

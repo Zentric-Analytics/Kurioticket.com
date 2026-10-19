@@ -86,25 +86,26 @@ export function CarsResultsScrollIndicator() {
         return;
       }
 
-      const priceAlert = document.querySelector<HTMLElement>(
-        "[data-cars-price-alert]",
+      // The results summary remains the stable scroll start now that tracking lives in Rate details.
+      const resultsSummary = document.querySelector<HTMLElement>(
+        "[data-cars-results-summary-row]",
       );
       const resultsRegion = document.querySelector<HTMLElement>(
         "[data-cars-results-scroll-region]",
       );
-      if (!priceAlert || !resultsRegion) {
+      if (!resultsSummary || !resultsRegion) {
         resetGeometry();
         return;
       }
 
-      resizeObserver?.observe(priceAlert);
+      resizeObserver?.observe(resultsSummary);
       resizeObserver?.observe(resultsRegion);
 
       const viewportHeight = visualViewport?.height ?? window.innerHeight;
       const scrollY = window.scrollY;
       const scrollStart = Math.max(
         0,
-        priceAlert.getBoundingClientRect().top + scrollY,
+        resultsSummary.getBoundingClientRect().top + scrollY,
       );
       const regionBottom = Math.max(
         scrollStart,
