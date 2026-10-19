@@ -168,8 +168,8 @@ export function CarPriceAlertSnackbar({ feedback, onDismiss }: { feedback: Exclu
 export const PriceTrackingSnackbar = CarPriceAlertSnackbar;
 
 const styles = StyleSheet.create({
-  control: { flexShrink: 0, minHeight: 44, flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 6, borderWidth: 1, borderRadius: 10 },
-  iconBadge: { width: 24, height: 24, flexShrink: 0, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  control: { flexShrink: 0, minHeight: 44, flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 4, borderWidth: 1, borderRadius: 10 },
+  iconBadge: { width: 20, height: 20, flexShrink: 0, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   title: { flexShrink: 0, fontSize: 11, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
   switchSlot: { width: 44, height: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end" },
   switchTouchTarget: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
