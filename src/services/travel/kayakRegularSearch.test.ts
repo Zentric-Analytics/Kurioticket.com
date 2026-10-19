@@ -5,6 +5,111 @@ import { KayakSandboxClient } from "./kayakSandbox";
 import { issueLocationSelection } from "@/lib/locations/selectionAuthority";
 
 const hotel = { destination: "Boston, Massachusetts, United States", checkIn: "2099-10-12", checkOut: "2099-10-17", guests: "2", rooms: "1", currency: "JPY" };
+
+for (const fixture of [
+  {
+    destination: "New York, NY", destinationId: "us-new-york", providerValue: "kplace:59560",
+    specificDestination: "New York Mills, New York, United States", specificProviderValue: "kplace:59561",
+    commaFreeDestinations: ["New York United States", "New York New York United States", "New York NY United States"],
+    commaFreeNearNames: ["New York Mills United States", "New York Mills New York United States"],
+    candidates: [
+      { label: "New York, United States", value: "kplace:59560", kind: "city" },
+      { label: "Syracuse, New York, United States", value: "kplace:59696", kind: "city" },
+      { label: "New York Mills, New York, United States", value: "kplace:59561", kind: "city" },
+      { label: "Brooklyn, New York, United States", value: "kplace:164176", kind: "city" },
+      { label: "Queens, New York, United States", value: "kplace:164175", kind: "city" },
+    ],
+  },
+  {
+    destination: "Miami, FL", destinationId: "us-miami", providerValue: "kplace:53912",
+    specificDestination: "Miami Beach, Florida, United States", specificProviderValue: "kplace:53913",
+    commaFreeDestinations: ["Miami United States", "Miami Florida United States", "Miami FL United States"],
+    commaFreeNearNames: ["Miami Beach United States", "Miami Beach Florida United States"],
+    candidates: [
+      { label: "Miami, Florida, United States", value: "kplace:53912", kind: "city" },
+      { label: "Miami Beach, Florida, United States", value: "kplace:53913", kind: "city" },
+    ],
+  },
+]) {
+  test(`popular hotel destination ${fixture.destination} prefers the exact city over longer city names`, async () => {
+    for (const candidates of [fixture.candidates, [...fixture.candidates].reverse()]) {
+      const result = await resolveRegularKayakSearch("hotels", {
+        ...hotel, destination: fixture.destination, destinationId: fixture.destinationId,
+      }, async (term, vertical) => {
+        assert.equal(term, fixture.destination);
+        assert.equal(vertical, "hotels");
+        return candidates;
+      });
+      assert.ok(result.supported && result.search.vertical === "hotels");
+      assert.equal(result.search.destination, fixture.providerValue);
+    }
+  });
+
+  test(`explicit hotel destination ${fixture.specificDestination} is never replaced by the broader catalogue city`, async () => {
+    const search = { ...hotel, destination: fixture.specificDestination };
+    for (const candidates of [fixture.candidates, [...fixture.candidates].reverse()]) {
+      const result = await resolveRegularKayakSearch("hotels", search, async () => candidates);
+      assert.ok(result.supported && result.search.vertical === "hotels");
+      assert.equal(result.search.destination, fixture.specificProviderValue);
+    }
+    const withoutRequestedCity = await resolveRegularKayakSearch("hotels", search,
+      async () => fixture.candidates.filter(candidate => candidate.value !== fixture.specificProviderValue));
+    assert.equal(withoutRequestedCity.supported, false);
+  });
+
+  test(`comma-free hotel destination ${fixture.destination} recognizes only known country and region forms`, async () => {
+    for (const destination of fixture.commaFreeDestinations) {
+      for (const candidates of [fixture.candidates, [...fixture.candidates].reverse()]) {
+        const result = await resolveRegularKayakSearch("hotels", { ...hotel, destination }, async (term, vertical) => {
+          assert.equal(term, destination);
+          assert.equal(vertical, "hotels");
+          return candidates;
+        });
+        assert.ok(result.supported && result.search.vertical === "hotels", destination);
+        assert.equal(result.search.destination, fixture.providerValue);
+      }
+    }
+  });
+
+  test(`comma-free names near ${fixture.destination} are never absorbed into the catalogue city`, async () => {
+    for (const destination of fixture.commaFreeNearNames) {
+      const result = await resolveRegularKayakSearch("hotels", { ...hotel, destination }, async () => fixture.candidates);
+      assert.equal(result.supported, false, destination);
+    }
+  });
+
+  test(`comma-free ${fixture.destination} still rejects wrong-country, wrong-kind and ambiguous provider matches`, async () => {
+    const exactCity = fixture.candidates.find(candidate => candidate.value === fixture.providerValue)!;
+    const search = { ...hotel, destination: fixture.commaFreeDestinations[0] };
+    for (const candidates of [
+      [{ ...exactCity, label: `${exactCity.label.split(",")[0]}, Mexico` }],
+      [{ ...exactCity, kind: "airport" }],
+      [exactCity, { ...exactCity, value: "kplace:99999" }],
+    ]) {
+      const result = await resolveRegularKayakSearch("hotels", search, async () => candidates);
+      assert.equal(result.supported, false);
+    }
+  });
+}
+
+test("hotel catalogue aliases still resolve to the verified canonical city", async () => {
+  const result = await resolveRegularKayakSearch("hotels", { ...hotel, destination: "NYC" }, async () => [
+    { label: "New York, United States", value: "kplace:59560", kind: "city" },
+    { label: "New York Mills, New York, United States", value: "kplace:59561", kind: "city" },
+  ]);
+  assert.ok(result.supported && result.search.vertical === "hotels");
+  assert.equal(result.search.destination, "kplace:59560");
+});
+
+test("an exact provider city wins even when its name is also a broader catalogue alias", async () => {
+  const result = await resolveRegularKayakSearch("hotels", { ...hotel, destination: "Miami Beach" }, async () => [
+    { label: "Miami, Florida, United States", value: "kplace:53912", kind: "city" },
+    { label: "Miami Beach, Florida, United States", value: "kplace:53913", kind: "city" },
+  ]);
+  assert.ok(result.supported && result.search.vertical === "hotels");
+  assert.equal(result.search.destination, "kplace:53913");
+});
+
 test("hotel location recovery never substitutes the same city name in another country", async () => {
   const result = await resolveRegularKayakSearch("hotels", { ...hotel, destination: "San Francisco, California, United States" }, async () => [
     { label: "San Francisco, Nayarit, Mexico", value: "kplace:2", kind: "city" },

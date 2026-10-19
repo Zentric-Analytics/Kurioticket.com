@@ -110,9 +110,9 @@ export async function GET(request: Request) {
   {
     const discovery = await discoverLocations({ query, product: "hotels", catalog: hotelDestinations.map(fromHotelDestination), adapters: availableDiscoveryAdapters(request, "hotels"), limit, timeoutMs: 900, supportedByProviders: ["kayak"] });
     const suggestions = discovery.suggestions.map((canonical) => ({
-      id: canonical.id, name: canonical.primaryLabel, region: canonical.region || canonical.supportingLabel.split(",")[0] || "",
-      country: canonical.country?.name || canonical.supportingLabel.split(",").at(-1)?.trim() || "",
-      countryCode: canonical.country?.code, kind: canonical.kind === "airport" ? "airport-area" : ["district", "landmark"].includes(canonical.kind) ? canonical.kind : "city",
+      id: canonical.id, name: canonical.primaryLabel, region: canonical.region || (canonical.kind === "custom" ? "" : canonical.supportingLabel.split(",")[0]) || "",
+      country: canonical.country?.name || (canonical.kind === "custom" ? "" : canonical.supportingLabel.split(",").at(-1)?.trim()) || "",
+      countryCode: canonical.country?.code, kind: canonical.kind === "airport" ? "airport-area" : ["district", "landmark", "custom"].includes(canonical.kind) ? canonical.kind : "city",
       searchValue: canonical.submittedValue, canonical,
     }));
     const providerUnavailable = discovery.sources.length === 0 || discovery.sources.some((source) => source.status !== "success");

@@ -23,6 +23,7 @@ export const hotelDestinationKindLabels: Record<HotelDestinationKind, string> = 
   district: "Area",
   landmark: "Landmark",
   "airport-area": "Airport area",
+  custom: "Destination",
 };
 
 export const hotelDestinationKindTranslationKeys: Record<HotelDestinationKind, string> = {
@@ -30,6 +31,7 @@ export const hotelDestinationKindTranslationKeys: Record<HotelDestinationKind, s
   district: "hotelDestinationKind.district",
   landmark: "hotelDestinationKind.landmark",
   "airport-area": "hotelDestinationKind.airport-area",
+  custom: "hotelSearchDestinationLabel",
 };
 
 const normalizeCountryHint = (value: string | null | undefined) => {
