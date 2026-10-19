@@ -4,6 +4,8 @@ import { CarFront, ChevronRight, IdCard, Info, MapPin, ShieldCheck, Wallet, X } 
 import { SvgUri } from "react-native-svg";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import type { CarResult } from "../../api/travelApi";
+import type { SearchPlan } from "../flow/travelSearchModel";
+import { CarPriceAlertSnackbar, NativeCarPriceAlert, type CarPriceAlertFeedback } from "./NativeCarPriceAlert";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import type { ExchangeRates } from "../currency/displayCurrency";
@@ -59,16 +61,19 @@ function RateSectionHeading({
 const MIN_VIEW_DEAL_ACTION_WIDTH = 88;
 const INITIAL_VISIBLE_OFFER_COUNT = 3;
 export function NativeCarResultOfferPicker({
-  result, displayCurrency, rates,
+  result, displayCurrency, rates, plan, priceAlertsAvailable,
 }: {
   result: CarResult;
   displayCurrency: string;
   rates: ExchangeRates;
+  plan?: SearchPlan;
+  priceAlertsAvailable: boolean;
 }) {
   const { theme } = useAppTheme();
   const [rowWidth, setRowWidth] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [priceAlertFeedback, setPriceAlertFeedback] = useState<CarPriceAlertFeedback>(null);
   const choices = nativeCarResultDealChoices(result);
   const visibleChoices = expanded ? choices : choices.slice(0, INITIAL_VISIBLE_OFFER_COUNT);
   const hasMoreOffers = choices.length > INITIAL_VISIBLE_OFFER_COUNT;
@@ -163,7 +168,12 @@ export function NativeCarResultOfferPicker({
                 <X accessible={false} color={theme.textPrimary} size={20} />
               </Pressable>
             </View>
-            <Text numberOfLines={2} style={[styles.seller, { color: theme.textSecondary }]}>Booking provider · {selectedChoice?.providerName ?? ""}</Text>
+            <View style={styles.sellerRow}>
+              <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.seller, { color: theme.textSecondary }]}>Booking provider · {selectedChoice?.providerName ?? ""}</Text>
+              {selectedChoice && plan ? (
+                <NativeCarPriceAlert key={result.id + ":" + selectedChoice.key} plan={plan} resultId={result.id} offer={selectedChoice.offer} available={priceAlertsAvailable} onFeedback={setPriceAlertFeedback} />
+              ) : null}
+            </View>
           </View>
           <ScrollView style={styles.sheetScroll} contentContainerStyle={styles.sheetBody} showsVerticalScrollIndicator={false} nestedScrollEnabled>
             {selectedPrice && selectedChoice ? (
@@ -210,6 +220,7 @@ export function NativeCarResultOfferPicker({
               <Text style={styles.sheetViewDealText}>View deal</Text>
             </Pressable>
           </View>
+          {priceAlertFeedback ? <CarPriceAlertSnackbar key={priceAlertFeedback} feedback={priceAlertFeedback} onDismiss={(value) => setPriceAlertFeedback(current => current === value ? null : current)} /> : null}
         </SafeAreaView>
       </SafeAreaProvider>
     </Modal>
@@ -250,7 +261,8 @@ const styles = StyleSheet.create({
   sheetTitleRow: { flexDirection: "row", alignItems: "center", minHeight: 44 },
   sheetHeadingSpacer: { width: 44, height: 44 },
   sheetTitle: { flex: 1, minWidth: 0, textAlign: "center", fontSize: 18, lineHeight: 23, fontWeight: "700", fontFamily: appFonts.bold },
-  seller: { marginTop: 3, fontSize: 13, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
+  sellerRow: { marginTop: 3, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
+  seller: { flex: 1, minWidth: 0, fontSize: 12, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
   closeButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   sheetBody: { paddingTop: 16, paddingBottom: 24 },
   sheetPrice: { fontSize: 22, fontWeight: "700", fontFamily: appFonts.bold, fontVariant: ["tabular-nums"], lineHeight: 28 },
