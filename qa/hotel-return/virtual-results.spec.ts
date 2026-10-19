@@ -178,7 +178,7 @@ test("Cars rate details aligns offer-only tracking with the booking provider on 
     const info = page.locator("[data-car-rate-info]").filter({ visible: true }).first();
     await expect(info).toBeVisible();
     await info.click();
-    const dialog = page.locator("[data-car-rate-dialog]");
+    const dialog = page.locator("dialog[data-car-rate-dialog][open]");
     await expect(dialog).toBeVisible();
     const row = dialog.locator("[data-car-rate-provider-alert-row]");
     const provider = row.locator("p").first();
@@ -198,7 +198,7 @@ test("Cars rate details aligns offer-only tracking with the booking provider on 
     expect(Math.abs(trackBox!.height - 24)).toBeLessThanOrEqual(1);
     expect(Math.abs(thumbBox!.width - 18)).toBeLessThanOrEqual(1);
     await dialog.getByRole("button", { name: "Close rate details" }).click();
-    await expect(dialog).not.toBeVisible();
+    await expect(page.locator("dialog[data-car-rate-dialog][open]")).toHaveCount(0);
     await expect(page.locator("[data-cars-price-alert]")).toHaveCount(0);
   }
 });
