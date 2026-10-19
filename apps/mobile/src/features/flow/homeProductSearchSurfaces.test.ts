@@ -23,7 +23,7 @@ test("Home Flight search owns a full-width rounded lower boundary", () => {
   assert.doesNotMatch(home, /homeFlightSearchSurface: \{[^}]*border(?:Top|Left|Right|Bottom)?Width/s);
   assert.doesNotMatch(home, /homeFlightSearchBottom/);
   assert.match(home, /flights: availability\.flightSearch\s*\? <HomeFlightSearchSurface>\s*<FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker \/>\s*<\/HomeFlightSearchSurface>/);
-  assert.equal(home.match(/<HomeFlightSearchSurface>/g)?.length, 1);
+  assert.equal(home.match(/<HomeFlightSearchSurface>/g)?.length, 2);
   assert.match(home, /\{searchPanel\[activeProduct\]\}\s*<PopularDestinationStays compactTopSpacing=\{activeProduct === "flights"\} \/>/);
 });
 
@@ -82,10 +82,13 @@ test("Home gives separate-card Hotel and Cars forms quiet full-width rounded low
   assert.match(home, /cars:[\s\S]*startWithEmptyRentalDates/);
   assert.doesNotMatch(products, /startWithEmptyRentalDates/);
 });
-test("Home Packages uses one package-owned card and dedicated route uses the same form", () => {
+test("Home Packages shares the Flights canvas and has no outer card", () => {
   assert.match(home, /<PackagesSearchPanel presentation="home" \/>/);
   assert.match(products, /const packageBuilder = <PackageSearchForm presentation=\{presentation\} \/>/);
-  assert.match(products, /return isHome \? \([\s\S]*?ft\.styles\.card/);
+  assert.match(home, /<HomeFlightSearchSurface>\s*<PackagesSearchPanel presentation="home" \/>\s*<\/HomeFlightSearchSurface>/);
+  const packages = products.slice(products.indexOf("export function PackagesSearchPanel"), products.indexOf("const styles"));
+  assert.match(packages, /return packageBuilder/);
+  assert.doesNotMatch(packages, /ft\.styles\.card|ft\.styles\.shadow/);
   assert.match(products, /export function DealsScreen\(\)[\s\S]*?<PackagesSearchPanel \/>/);
   assert.doesNotMatch(products, /<FlightSearchPanel embedded|<HotelSearchPanel embedded|<CarSearchPanel embedded/);
 });

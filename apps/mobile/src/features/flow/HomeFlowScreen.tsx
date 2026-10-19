@@ -211,7 +211,9 @@ function HomePageContent() {
         </HomeCarsSearchSurface>
       : <UnavailableNotice text="Car search is temporarily unavailable. Flights and hotels remain available." />,
     packages: availability.deals
-      ? <PackagesSearchPanel presentation="home" />
+      ? <HomeFlightSearchSurface>
+          <PackagesSearchPanel presentation="home" />
+        </HomeFlightSearchSurface>
       : <UnavailableNotice text="Packages are temporarily unavailable. You can still search available flights, hotels, and cars separately." />,
   } satisfies Record<HomeProduct, React.ReactNode>;
 

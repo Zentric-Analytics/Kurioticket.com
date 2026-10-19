@@ -12,6 +12,10 @@ test("Packages is one owned form with one CTA and no embedded product stack", ()
   assert.doesNotMatch(screen, /<FlightSearchPanel embedded|<HotelSearchPanel embedded|<CarSearchPanel embedded/);
   assert.doesNotMatch(screen, />\s*(Flights|Hotels|Cars)\s*</);
   assert.match(screen, /<PackageSearchForm presentation=\{presentation\}/);
+  assert.equal((form.match(/styles\.homeFieldCard, /g) ?? []).length, 3);
+  assert.match(form, /homeFieldCard:\{borderWidth:1,borderRadius:13,overflow:"hidden",marginTop:10\}/);
+  assert.match(form, /const fieldAppearance = isHome \? "resultsModalCard" : "default"/);
+  assert.match(form, /isHome \? styles\.homeFields : \[styles\.fields/);
 });
 
 test("compact package selector is a horizontally scrolling accessible selection group", () => {
