@@ -56,6 +56,52 @@ test("details preserves every same-property rate without mixing providers or sea
   assert.ok(payload.relatedHotels.every((hotel: { id: string }) => hotel.id !== second.id));
 });
 
+test("details preserve separate rate cards when the original search had a destination ID", async () => {
+  const first = { ...testHotel("rate-canonical-one", "Canonical Hotel"), provider: "KAYAK sandbox", propertyGroupId: "snapshot:canonical" };
+  const second = { ...first, id: "rate-canonical-two", totalPrice: 280, roomType: "Suite" };
+  const otherProperty = { ...first, id: "rate-other-property", propertyGroupId: "snapshot:other" };
+  const otherProvider = { ...first, id: "rate-other-provider", provider: "Other Provider" };
+  const search = {
+    destinationId: "place:nyc",
+    destination: "New York",
+    checkIn: "2027-11-10",
+    checkOut: "2027-11-13",
+    guests: 2,
+    adults: 1,
+    children: 1,
+    rooms: 1,
+  };
+  rememberHotels([first, second, otherProperty, otherProvider], search);
+  // Neither web nor native details links transmit the selected destination ID.
+  // Native also omits the original adults/children split.
+  const params = new URLSearchParams({
+    id: first.id, destination: search.destination,
+    checkIn: search.checkIn, checkOut: search.checkOut,
+    guests: String(search.guests), rooms: String(search.rooms),
+  });
+  const response = await GET(new Request(`https://kurioticket.test/api/hotels/details?${params}`));
+  const body = await response.json();
+  assert.equal(response.status, 200);
+  assert.deepEqual(body.propertyOffers.map((rate: { hotel: { id: string } }) => rate.hotel.id), [first.id, second.id]);
+  assert.equal(body.propertyOffers[1].hotel.totalPrice, 280);
+  assert.equal(body.propertyOffers[1].hotel.roomType, "Suite");
+  assert.deepEqual(body.relatedHotels.map((hotel: { id: string }) => hotel.id), [otherProperty.id]);
+});
+
+test("explicitly mismatched hotel stay never retrieves sibling rate cards", async () => {
+  const first = { ...testHotel("rate-stay-first", "Hotel"), propertyGroupId: "snapshot:rate-stay" };
+  const second = { ...first, id: "rate-stay-second" };
+  const search = { destinationId: "place:nyc", destination: "New York", checkIn: "2027-12-01", checkOut: "2027-12-04", guests: 2, adults: 1, children: 1, rooms: 1 };
+  rememberHotels([first, second], search);
+  for (const override of [{ checkOut: "2027-12-05" }, { guests: "3" }, { adults: "2" }, { children: "0" }, { rooms: "2" }]) {
+    const params = new URLSearchParams({ id: first.id, destination: search.destination, checkIn: search.checkIn, checkOut: search.checkOut, guests: String(search.guests), rooms: String(search.rooms), ...override });
+    const response = await GET(new Request(`https://kurioticket.test/api/hotels/details?${params}`));
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.deepEqual(body.propertyOffers.map((rate: { hotel: { id: string } }) => rate.hotel.id), [first.id]);
+  }
+});
+
 test("hotel details returns 400 when id is missing", async () => {
   const response = await GET(
     new Request("https://kurioticket.test/api/hotels/details"),
