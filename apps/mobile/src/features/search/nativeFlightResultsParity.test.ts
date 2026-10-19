@@ -52,11 +52,11 @@ test("terminal Results states retain dates below the sticky rail", () => {
  assert.match(footer, /\{flightDateStrip\}[\s\S]*<FlightResultsState/);
 });
 
-test("light Flight Results uses tinted header canvas with a white summary and white sticky rail", () => {
+test("light Flight Results keeps header, sticky filters, and Results canvas on one continuous tinted surface", () => {
  const header = screen.slice(screen.indexOf("function FlightResultsHeader"), screen.indexOf("function HotelResultsHeader"));
  const list = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf("<HotelResultsHeader", screen.indexOf("<Animated.SectionList")));
  assert.match(screen, /<FlightResultsHeader[\s\S]*?backgroundColor=\{flightCanvasColor\}/);
- assert.match(list, /s0\.flightFilterSectionHeader, \{ backgroundColor: theme\.dark \? flightCanvasColor : flightResultsColors\.surface \}/);
+ assert.match(list, /s0\.flightFilterSectionHeader, \{ backgroundColor: flightCanvasColor \}/);
  assert.match(header, /backgroundColor: theme\.surface/);
  assert.doesNotMatch(header, /borderWidth: theme\.dark \? 1 : 0/);
  assert.match(list, /s0\.flightResultsIntro, \{ backgroundColor: flightCanvasColor \}/);
