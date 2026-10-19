@@ -46,6 +46,7 @@ test("deal comparison presents provider cards with direct booking actions",()=>{
   assert.match(surface,/const displayedDeals=choice\.deals\.length/);
   assert.match(deals,/deal\.providerName/);
   assert.match(deals,/dealPrices\[deal\.priceKey\]/);
+  assert.match(deals,/const canViewDeal=deal\.canContinue&&pricesReady&&Boolean\(price\)/);
   assert.match(deals,/accessibilityRole="radiogroup"/);
   assert.match(deals,/accessibilityRole="radio"/);
   assert.match(deals,/onSelectDeal\(deal\.offerId\)/);
