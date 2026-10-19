@@ -57,7 +57,7 @@ test("light Flight Results keeps safe area, header, and sticky filters white abo
  const list = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf("<HotelResultsHeader", screen.indexOf("<Animated.SectionList")));
  assert.match(screen, /<SafeAreaView style=\{\[s0\.safe, \{ backgroundColor: flightResults \? \(theme\.dark \? flightCanvasColor : flightResultsColors\.surface\) : hotelCanvasColor \}\]\}/);
  assert.match(screen, /<FlightResultsHeader[\s\S]*?backgroundColor=\{theme\.dark \? flightCanvasColor : flightResultsColors\.surface\}/);
- assert.match(list, /s0\.flightFilterSectionHeader, \{ backgroundColor: theme\.dark \? flightCanvasColor : flightResultsColors\.surface \}/);
+ assert.match(list, /s0\.flightFilterSectionHeader, \{ backgroundColor: theme\.dark \? flightCanvasColor : flightResultsColors\.surface, borderBottomColor: theme\.dark \? theme\.border : "#D8E1EC" \}/);
  assert.match(header, /backgroundColor: theme\.dark \? theme\.surface : flightResultsColors\.canvas/);
  assert.match(list, /s0\.flightResultsIntro, \{ backgroundColor: flightCanvasColor \}/);
 });
