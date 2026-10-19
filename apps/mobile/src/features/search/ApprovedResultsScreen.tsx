@@ -1110,13 +1110,13 @@ function ResultsScreen({ product }: { product: Product }) {
     && !currencyState;
   if (status === "loading" || hotelCurrencyPending) return <NativeBrandedSearchLoading product={product} />;
   return (
-    <SafeAreaView style={[s0.safe, { backgroundColor: flightResults ? flightCanvasColor : hotelCanvasColor }]} edges={["top"]}>
+    <SafeAreaView style={[s0.safe, { backgroundColor: flightResults ? (theme.dark ? flightCanvasColor : flightResultsColors.surface) : hotelCanvasColor }]} edges={["top"]}>
       {flightResults ? (
         <FlightResultsHeader
           route={flightSummary.route}
           secondaryLine={flightSummary.secondaryLine}
           onEdit={edit}
-          backgroundColor={flightCanvasColor}
+          backgroundColor={theme.dark ? flightCanvasColor : flightResultsColors.surface}
         />
       ) : null}
       {product === "flight" ? (
@@ -1129,7 +1129,7 @@ function ResultsScreen({ product }: { product: Product }) {
           keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
           renderSectionHeader={() => (
             <View
-              style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}
+              style={[s0.flightFilterSectionHeader, { backgroundColor: theme.dark ? flightCanvasColor : flightResultsColors.surface, borderBottomColor: theme.dark ? theme.border : "#D8E1EC" }]}
             >
               {filterRail}
             </View>
@@ -1348,7 +1348,7 @@ function FlightResultsHeader({
           style={({ pressed }) => [
             s0.flightRouteSummaryCard,
             {
-              backgroundColor: theme.surface,
+              backgroundColor: theme.dark ? theme.surface : flightResultsColors.canvas,
               borderColor: theme.dark ? theme.border : "#D8E1EC",
             },
             pressed && s0.flightRouteSummaryCardPressed,
@@ -1957,7 +1957,7 @@ const s0 = StyleSheet.create({
   hotelFilterContent: { paddingLeft: 12, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" },
   hotelFilterSectionHeader: { paddingBottom: 12 },
   hotelResultsListContainer: { flex: 1, overflow: "hidden" },
-  flightFilterSectionHeader: { paddingTop: 8 },
+  flightFilterSectionHeader: { paddingTop: 8, paddingBottom: 8, borderBottomLeftRadius: 28, borderBottomRightRadius: 0, overflow: "hidden", borderBottomWidth: 1 },
   resultsScroll: { flex: 1 },
   flightResultsListContainer: { flex: 1 },
   flightResultsContent: { flexGrow: 1 },
