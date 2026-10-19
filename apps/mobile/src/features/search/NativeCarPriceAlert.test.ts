@@ -73,7 +73,7 @@ test("RTL thumb anchors exactly once with or without automatic React Native left
 
 test("native Cars keeps the result count readable alongside tracking at small phone widths", () => {
   const trackFixed = 16 + 6 + 51; // bell, minimum gap, trailing control slot
-  const outerGutters = 2 * (14 + 8);
+  const outerGutters = 2 * (14 + 10);
   const rowGap = 8;
   for (const width of [320, 360, 375, 390, 414, 480]) {
     const available = width - outerGutters - rowGap;
@@ -81,6 +81,7 @@ test("native Cars keeps the result count readable alongside tracking at small ph
   }
   assert.match(source, /minWidth: 0, flexShrink: 1, fontSize: 12/);
   assert.match(source, /numberOfLines=\{1\} ellipsizeMode="tail"/);
+  assert.equal(14 + 10, 16 + 8, "native tracking switch is inset equally to mobile web from the right edge");
 });
 
 test("Cars toggle preserves sign-in and explicit failure feedback", () => {
