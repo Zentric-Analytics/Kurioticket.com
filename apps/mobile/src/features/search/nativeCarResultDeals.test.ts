@@ -159,7 +159,7 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.match(card, /<NativeCarResultOfferPicker result=\{result\}/);
   assert.match(picker, /disabled=\{!bookingUrl\}/);
   assert.doesNotMatch(results, /\/car-details/);
-  assert.match(results, /backgroundColor:theme\.dark\?theme\.surface:CAR_RESULTS_LIGHT_CANVAS/);
+  assert.match(results, /r\.carSummaryCard,\{backgroundColor:theme\.surface,borderColor:/);
   assert.match(theme, /priceAlertSurface: "#EDF6FF"/);
   assert.match(theme, /priceAlertBorder: "#C8DFF7"/);
 });

@@ -10,22 +10,64 @@ const carHeader = cars.slice(cars.indexOf("function CarResultsHeader"), cars.ind
 const hotelHeader = hotels.slice(hotels.indexOf("function HotelResultsHeader"), hotels.indexOf("const HotelResultsShortcut"));
 const carAlertModal = carAlert.slice(carAlert.indexOf("{open ? <Modal"), carAlert.indexOf("</Modal> : null}"));
 
-test("Cars Results replaces branded chrome with two Hotel-style header targets", () => {
+test("Cars Results renders the same two-control navbar as Hotels", () => {
   assert.doesNotMatch(cars, /import[^\n]*\bTopBar\b|<TopBar(?:\s|\/|>)/);
   assert.doesNotMatch(cars, /import \{ BottomNav \}|<BottomNav(?:\s|\/|>)/);
-  assert.match(carHeader, /accessibilityLabel="Profile"/);
+  assert.doesNotMatch(carHeader, /accessibilityLabel="Profile"|accessibilityLabel="Menu"/);
+  assert.doesNotMatch(cars, /\bCircleUserRound\b|\bMenu\b|carHeaderUtility/);
   assert.match(carHeader, /accessibilityLabel="Go back"[^]*?onPress=\{\(\)=>router\.back\(\)\}[^]*?<ArrowLeft/);
   assert.match(carHeader, /accessibilityLabel=\{`Edit car search\. \$\{destination\}\. \$\{secondaryLine\}`\} onPress=\{onEdit\}/);
-  assert.equal((carHeader.match(/<Pressable/g) ?? []).length, 4);
+  assert.equal((carHeader.match(/<Pressable/g) ?? []).length, 2);
+  assert.equal((hotelHeader.match(/<Pressable/g) ?? []).length, 2);
+  assert.match(carHeader, /<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{r\.carHeaderBackGlass\}\/>/);
+  assert.match(carHeader, /<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{r\.carSummaryEditGlass\}\/>/);
+  assert.match(carHeader, /<ArrowLeft size=\{25\} strokeWidth=\{2\} color="#0F172A"\/>/);
+  assert.match(carHeader, /<SquarePen size=\{16\} strokeWidth=\{2\.2\} color="#0F172A"\/>/);
+  assert.match(carHeader, /r\.carSummaryCard,\{backgroundColor:theme\.surface,borderColor:/);
 });
 
 test("Cars header uses compact safe-area-aware Hotel geometry", () => {
   for (const contract of [/paddingLeft:Math\.max\(insets\.left\+6,6\)/,/carHeaderMainRow:\{width:"100%",flexDirection:"row",alignItems:"center",gap:6\}/,/carHeaderSide:\{width:44,flexShrink:0\}/,/carHeaderBack:\{width:44,height:44/,/carSummaryCard:\{flex:1,minWidth:0,minHeight:62/,/carSummaryEditSlot:\{width:44,height:44,flexShrink:0/]) assert.match(cars, contract);
 });
-test("native Cars header has the mobile-web white surface, 28px left curve and muted underlay", () => {
+
+test("Cars header geometry and glass positions remain identical to Hotels", () => {
+  const style = (source: string, key: string) => {
+    const start = source.search(new RegExp("\\b" + key + ":\\s*\\{"));
+    assert.ok(start >= 0, "missing style " + key);
+    const opening = source.indexOf("{", start);
+    let depth = 0;
+    for (let i = opening; i < source.length; i += 1) {
+      if (source[i] === "{") depth += 1;
+      if (source[i] === "}") depth -= 1;
+      if (depth === 0) return source.slice(opening, i + 1).replace(/\s+/g, "");
+    }
+    assert.fail("unterminated style " + key);
+  };
+  const pairs = [
+    ["carHeader", "hotelHeader"],
+    ["carHeaderMainRow", "hotelHeaderMainRow"],
+    ["carHeaderSide", "hotelHeaderSide"],
+    ["carHeaderBack", "hotelHeaderBack"],
+    ["carHeaderBackGlass", "hotelHeaderBackGlass"],
+    ["carHeaderControlPressed", "hotelHeaderControlPressed"],
+    ["carSummaryCard", "hotelSummaryCard"],
+    ["carSummaryCardPressed", "hotelSummaryCardPressed"],
+    ["carSummaryText", "hotelSummaryText"],
+    ["carSummaryDestination", "hotelSummaryDestination"],
+    ["carSummarySecondary", "hotelSummarySecondary"],
+    ["carSummaryEditSlot", "hotelSummaryEditSlot"],
+    ["carSummaryEditGlass", "hotelSummaryEditGlass"],
+  ] as const;
+  for (const [car, hotel] of pairs) {
+    assert.equal(style(cars, car), style(hotels, hotel), car + " must match Hotels");
+  }
+  assert.match(cars, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
+});
+
+test("native Cars keeps the white filter rail and curved surface below its Hotel-style navbar", () => {
   assert.match(cars, /const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
   assert.match(cars, /const headerSurfaceColor = theme\.dark \? theme\.background : "#FFFFFF"/);
-  assert.match(cars, /<SafeAreaView style=\{\[r\.safe,\{backgroundColor:headerSurfaceColor\}\]\} edges=\{\["top"\]\}>/);
+  assert.match(cars, /<SafeAreaView style=\{\[r\.safe,\{backgroundColor:carCanvasColor\}\]\} edges=\{\["top"\]\}>/);
   assert.match(cars, /<View style=\{\[r\.carHeaderBackdrop,\{backgroundColor:carCanvasColor\}\]\}>/);
   assert.match(cars, /<View style=\{\[r\.carHeaderSurface,\{backgroundColor:headerSurfaceColor,borderBottomColor:theme\.dark\?theme\.border:"#D8E1EC"\}\]\}>/);
   assert.match(cars, /carHeaderSurface:\{borderBottomLeftRadius:28,borderBottomRightRadius:0,borderBottomWidth:StyleSheet\.hairlineWidth,overflow:"hidden"\}/);
@@ -34,10 +76,10 @@ test("native Cars header has the mobile-web white surface, 28px left curve and m
   const filters = cars.indexOf("<View style={[r.carFilterSectionHeader", search);
   const list = cars.indexOf("<FlatList ref={carScrollRef}", filters);
   assert.ok(search > 0 && filters > search && list > filters);
-  assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{headerSurfaceColor\}/);
+  assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{carCanvasColor\}/);
   assert.match(cars, /r\.carFilterSectionHeader,\{backgroundColor:headerSurfaceColor\}/);
   assert.match(cars, /<FlatList ref=\{carScrollRef\} style=\{\{backgroundColor:carCanvasColor\}\}/);
-  assert.match(carHeader, /accessibilityLabel="Menu"/);
+  assert.doesNotMatch(carHeader, /accessibilityLabel="Menu"/);
 });
 
 test("native Cars rail matches the mobile-web full-height spacing and 28px curve", () => {
@@ -51,7 +93,7 @@ test("native Cars rail matches the mobile-web full-height spacing and 28px curve
   assert.match(cars, /r\.carFilterSectionHeader,\{backgroundColor:headerSurfaceColor\}/);
   assert.match(cars, /const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
   assert.match(cars, /const headerSurfaceColor = theme\.dark \? theme\.background : "#FFFFFF"/);
-  assert.match(carHeader, /accessibilityLabel="Menu"/);
+  assert.doesNotMatch(carHeader, /accessibilityLabel="Menu"/);
   const railHeight = 8 + 44 + 8;
   assert.equal(railHeight, 60, "native rail height must match the 60px mobile-web rail");
 });
@@ -237,18 +279,18 @@ test("Cars quick controls use the Flight-family icon, geometry, and surface cont
   assert.match(cars, /shortcutChevronExpanded:\{transform:\[\{rotate:"180deg"\}\]\}/);
 });
 
-test("Cars Results keeps the mobile-web white chrome and muted search/body while preserving its native arrangement", () => {
+test("Cars Results adopts Hotels navbar while preserving white filters and results canvas", () => {
   assert.match(cars, /const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
   assert.match(cars, /const carCanvasColor = theme\.dark \? theme\.background : CAR_RESULTS_LIGHT_CANVAS/);
   assert.match(cars, /const headerSurfaceColor = theme\.dark \? theme\.background : "#FFFFFF"/);
-  assert.match(cars, /r\.safe,\{backgroundColor:headerSurfaceColor\}/);
-  assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{headerSurfaceColor\}/);
+  assert.match(cars, /r\.safe,\{backgroundColor:carCanvasColor\}/);
+  assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{carCanvasColor\}/);
   assert.match(carHeader, /\{backgroundColor,paddingLeft:/);
   assert.match(cars, /r\.carFilterSectionHeader,\{backgroundColor:headerSurfaceColor\}/);
   assert.match(cars, /<FlatList ref=\{carScrollRef\} style=\{\{backgroundColor:carCanvasColor\}\}/);
-  assert.match(cars, /r\.carSummaryCard,\{backgroundColor:theme\.dark\?theme\.surface:CAR_RESULTS_LIGHT_CANVAS/);
+  assert.match(cars, /r\.carSummaryCard,\{backgroundColor:theme\.surface/);
   assert.match(cars, /<CarResultCard[^>]*resultBackgroundColor=\{carCanvasColor\}/);
-  assert.match(carHeader, /accessibilityLabel="Menu"/);
+  assert.doesNotMatch(carHeader, /accessibilityLabel="Menu"/);
   assert.doesNotMatch(cars, /r\.filterRail,\{backgroundColor:theme\.dark\?theme\.surface:"#FFFFFF"\}/);
 });
 
