@@ -9,6 +9,7 @@ export function useHotelResultsScrolling(identity: string, total: number) {
   const [filterHeight, setFilterHeight] = useState(56);
   const filterTranslation = useRef(new Animated.Value(0)).current;
   const scrollState = useRef(initialHotelFilterScrollState());
+  const ignoreDirectionUntilGesture = useRef(true);
   const currentIdentity = useRef(identity);
   currentIdentity.current = identity;
   const currentTotal = useRef(total);
@@ -38,6 +39,7 @@ export function useHotelResultsScrolling(identity: string, total: number) {
   const beginInteraction = useCallback(() => {
     if (dragEndTimer.current) clearTimeout(dragEndTimer.current);
     dragEndTimer.current = null;
+    ignoreDirectionUntilGesture.current = false;
     revealGate.current?.begin();
   }, []);
   const endDrag = useCallback(() => {
@@ -49,6 +51,7 @@ export function useHotelResultsScrolling(identity: string, total: number) {
 
   const resetFilters = useCallback(() => {
     scrollState.current = initialHotelFilterScrollState();
+    ignoreDirectionUntilGesture.current = true;
     setFilterHidden(false);
     filterTranslation.stopAnimation();
     filterTranslation.setValue(0);
@@ -79,6 +82,11 @@ export function useHotelResultsScrolling(identity: string, total: number) {
 
   const onScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    if (ignoreDirectionUntilGesture.current) {
+      // Sort/filter repositioning is programmatic, not a new scroll direction.
+      scrollState.current = { offset: Math.max(0, contentOffset.y), travel: 0, hidden: false };
+      return;
+    }
     const previous = scrollState.current;
     const next = nextHotelFilterScrollState(previous, contentOffset.y, contentSize.height - layoutMeasurement.height);
     scrollState.current = next;

@@ -702,7 +702,7 @@ function ResultsScreen({ product }: { product: Product }) {
     }
     return sortHotelsForResults(filteredHotelResults, hotelSort, currencyState?.rates);
   }, [filteredHotelResults, ownedFlightResults, filters, hotelSort, sort, product, flightPriceContext, normalizeFlightPrice, currencyState?.rates]);
-  const hotelScrollIdentity = JSON.stringify([plan.plan?.key, retry, hotelSort, hotelFilters, currencyState?.resolution.resolvedCurrency]);
+  const hotelScrollIdentity = JSON.stringify([plan.plan?.key, retry, hotelSort, hotelFilters]);
   const hotelScrolling = useHotelResultsScrolling(hotelScrollIdentity, product === "hotel" ? sorted.length : 0);
   const cheapestHotelId = useMemo(() => product === "hotel"
     ? getLowestPricedHotelId(filteredHotelResults, currencyState?.rates)
