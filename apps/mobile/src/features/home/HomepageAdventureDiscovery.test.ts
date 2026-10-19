@@ -58,9 +58,10 @@ test("From and its amount render together only for a valid fare", () => {
 
 test("cards form two independent responsive horizontal rows with safe image fallback", () => {
   assert.match(section, /REFERENCE_CARD_SCREEN_FRACTION = 332 \/ 592/);
-  assert.match(section, /REFERENCE_CARD_HEIGHT_RATIO = 614 \/ 332/);
   assert.match(section, /Math\.min\(320, Math\.max\(200, Math\.round\(width \* REFERENCE_CARD_SCREEN_FRACTION\)\)\)/);
-  assert.match(section, /minHeight: Math\.round\(width \* REFERENCE_CARD_HEIGHT_RATIO\)/);
+  assert.doesNotMatch(section, /REFERENCE_CARD_HEIGHT_RATIO|minHeight:/);
+  assert.match(section, /copy: \{ padding: 8 \}/);
+  assert.match(section, /fare: \{ marginTop: 12,/);
   assert.match(section, /imageFrame: \{ width: "100%", aspectRatio: 4 \/ 3 \}/);
   assert.doesNotMatch(section, /card: \{ height:|numberOfLines=\{2\} style=\{\[styles\.title/);
   assert.doesNotMatch(section, /flexWrap|homepage-adventure-grid/);
