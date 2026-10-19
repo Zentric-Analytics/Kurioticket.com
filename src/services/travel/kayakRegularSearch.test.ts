@@ -10,6 +10,8 @@ for (const fixture of [
   {
     destination: "New York, NY", destinationId: "us-new-york", providerValue: "kplace:59560",
     specificDestination: "New York Mills, New York, United States", specificProviderValue: "kplace:59561",
+    commaFreeDestinations: ["New York United States", "New York New York United States", "New York NY United States"],
+    commaFreeNearNames: ["New York Mills United States", "New York Mills New York United States"],
     candidates: [
       { label: "New York, United States", value: "kplace:59560", kind: "city" },
       { label: "Syracuse, New York, United States", value: "kplace:59696", kind: "city" },
@@ -21,6 +23,8 @@ for (const fixture of [
   {
     destination: "Miami, FL", destinationId: "us-miami", providerValue: "kplace:53912",
     specificDestination: "Miami Beach, Florida, United States", specificProviderValue: "kplace:53913",
+    commaFreeDestinations: ["Miami United States", "Miami Florida United States", "Miami FL United States"],
+    commaFreeNearNames: ["Miami Beach United States", "Miami Beach Florida United States"],
     candidates: [
       { label: "Miami, Florida, United States", value: "kplace:53912", kind: "city" },
       { label: "Miami Beach, Florida, United States", value: "kplace:53913", kind: "city" },
@@ -51,6 +55,40 @@ for (const fixture of [
     const withoutRequestedCity = await resolveRegularKayakSearch("hotels", search,
       async () => fixture.candidates.filter(candidate => candidate.value !== fixture.specificProviderValue));
     assert.equal(withoutRequestedCity.supported, false);
+  });
+
+  test(`comma-free hotel destination ${fixture.destination} recognizes only known country and region forms`, async () => {
+    for (const destination of fixture.commaFreeDestinations) {
+      for (const candidates of [fixture.candidates, [...fixture.candidates].reverse()]) {
+        const result = await resolveRegularKayakSearch("hotels", { ...hotel, destination }, async (term, vertical) => {
+          assert.equal(term, destination);
+          assert.equal(vertical, "hotels");
+          return candidates;
+        });
+        assert.ok(result.supported && result.search.vertical === "hotels", destination);
+        assert.equal(result.search.destination, fixture.providerValue);
+      }
+    }
+  });
+
+  test(`comma-free names near ${fixture.destination} are never absorbed into the catalogue city`, async () => {
+    for (const destination of fixture.commaFreeNearNames) {
+      const result = await resolveRegularKayakSearch("hotels", { ...hotel, destination }, async () => fixture.candidates);
+      assert.equal(result.supported, false, destination);
+    }
+  });
+
+  test(`comma-free ${fixture.destination} still rejects wrong-country, wrong-kind and ambiguous provider matches`, async () => {
+    const exactCity = fixture.candidates.find(candidate => candidate.value === fixture.providerValue)!;
+    const search = { ...hotel, destination: fixture.commaFreeDestinations[0] };
+    for (const candidates of [
+      [{ ...exactCity, label: `${exactCity.label.split(",")[0]}, Mexico` }],
+      [{ ...exactCity, kind: "airport" }],
+      [exactCity, { ...exactCity, value: "kplace:99999" }],
+    ]) {
+      const result = await resolveRegularKayakSearch("hotels", search, async () => candidates);
+      assert.equal(result.supported, false);
+    }
   });
 }
 

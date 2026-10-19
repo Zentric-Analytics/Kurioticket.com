@@ -46,8 +46,16 @@ function providerPlaceMatch(
   const normalizedInput = normalizePlace(term);
   const requestedName = normalizePlace(term.split(",")[0] || term);
   const catalogue = hotelDestinations.find(destination => {
-    const names = [destination.name, destination.searchValue, ...(destination.aliases || [])]
-      .map(normalizePlace);
+    // Match whole known city/geography labels even when commas are omitted.
+    // Extra city-name words must not be mistaken for a region or country.
+    const names = [
+      destination.name, destination.searchValue, ...(destination.aliases || []),
+      ...(preferExactName ? [
+        [destination.name, destination.country],
+        [destination.name, destination.region, destination.country],
+        [destination.searchValue, destination.country],
+      ].map(parts => parts.filter(Boolean).join(" ")) : []),
+    ].map(normalizePlace);
     const catalogueName = normalizePlace(destination.name);
     return names.includes(normalizedInput)
       || ((preferExactName ? requestedName === catalogueName : normalizedInput.startsWith(`${catalogueName} `))
