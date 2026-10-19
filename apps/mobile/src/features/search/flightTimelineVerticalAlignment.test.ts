@@ -42,7 +42,7 @@ test("equal side columns preserve centered flexible rows at every supported widt
   assert.match(source, /departureColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
   assert.match(source, /arrivalColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
-    const contentWidth = viewport - 28 - 24;
+    const contentWidth = viewport - 32 - 24;
     const timelineWidth = contentWidth - 72 - 72 - 12;
     assert.ok(timelineWidth >= 100, `${viewport}px leaves a readable timeline without overflow`);
     assert.equal(72, 72, `${viewport}px keeps equal side columns`);
