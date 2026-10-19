@@ -8,6 +8,7 @@ import { searchHotels } from "@/services/travel/hotelAggregator";
 import type { KayakRequestContext } from "@/services/travel/kayakMetasearchProvider";
 import { searchCars } from "@/services/travel/carAggregator";
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
+import { carPriceAlertOfferSchema, type CarPriceAlertOfferScope } from "@/lib/price-alerts/carPriceAlerts";
 import { priceAlertEmail, sendOptionalEmail } from "@/services/emailService";
 import { persistCanonicalNotificationEvent, type NotificationPersistenceClient } from "@/services/notificationService";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
@@ -97,10 +98,12 @@ export function selectHotelPriceAlertResult(
   return null;
 }
 
-export function selectCarPriceAlertResult(cars: readonly NormalizedCarResult[], requestedCurrency: string): ResolvedPrice | null {
+export function selectCarPriceAlertResult(cars: readonly NormalizedCarResult[], requestedCurrency: string, scopedOffer?: CarPriceAlertOfferScope): ResolvedPrice | null {
   const currency = requestedCurrency.trim().toUpperCase();
   const candidates = cars.flatMap((car) => car.offers.map((offer) => ({ car, offer })))
-    .filter(({ offer }) => Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && offer.currency.trim().toUpperCase() === currency)
+    .filter(({ car, offer }) => Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && offer.currency.trim().toUpperCase() === currency &&
+      (!scopedOffer || (car.id === scopedOffer.resultId && offer.id === scopedOffer.offerId &&
+        offer.bookingProviderName.trim().toLowerCase() === scopedOffer.providerName.trim().toLowerCase())))
     .sort((left, right) => left.offer.totalPrice - right.offer.totalPrice || left.car.id.localeCompare(right.car.id) || left.offer.id.localeCompare(right.offer.id));
   const selected = candidates[0];
   return selected ? { provider: selected.offer.bookingProviderName, price: selected.offer.totalPrice, currency, url: selected.offer.bookingUrl, payload: { resultId: selected.car.id, offerId: selected.offer.id } } : null;
@@ -237,9 +240,12 @@ export async function resolveAlertPrice(alert: PriceAlertRecord, options: { kaya
     return selected;
   }
   if (alert.type === "CAR") {
-    const result = await searchCars(alert.query as CarSearchParams);
-    const selected = selectCarPriceAlertResult(result.results, alert.currency);
-    if (!selected) throw new Error("live_car_price_unavailable");
+    const query = alert.query as CarSearchParams & { offer?: unknown };
+    const scopedOffer = query?.offer === undefined ? undefined : carPriceAlertOfferSchema.safeParse(query.offer);
+    if (scopedOffer && !scopedOffer.success) throw new Error("invalid_car_offer_identity");
+    const result = await searchCars(query);
+    const selected = selectCarPriceAlertResult(result.results, alert.currency, scopedOffer?.data);
+    if (!selected) throw new Error(scopedOffer ? "live_car_offer_unavailable" : "live_car_price_unavailable");
     return selected;
   }
   const search = alert.query as Partial<HotelSearchParams> & { hotelId?: unknown };
