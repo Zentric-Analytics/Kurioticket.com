@@ -1136,7 +1136,7 @@ function ResultsScreen({ product }: { product: Product }) {
           keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
           renderSectionHeader={() => (
             <View
-              style={[s0.flightFilterSectionHeader, { backgroundColor: theme.dark ? flightCanvasColor : flightResultsColors.surface }]}
+              style={[s0.flightFilterSectionHeader, { backgroundColor: theme.dark ? flightCanvasColor : flightResultsColors.surface, borderBottomColor: theme.dark ? theme.border : "#D8E1EC" }]}
             >
               {filterRail}
             </View>
@@ -1958,7 +1958,7 @@ const s0 = StyleSheet.create({
   hotelFilterContent: { paddingLeft: 12, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" },
   hotelFilterSectionHeader: { paddingBottom: 12 },
   hotelResultsListContainer: { flex: 1, overflow: "hidden" },
-  flightFilterSectionHeader: { paddingTop: 8 },
+  flightFilterSectionHeader: { paddingTop: 8, paddingBottom: 8, borderBottomLeftRadius: 28, borderBottomRightRadius: 0, overflow: "hidden", borderBottomWidth: 1 },
   resultsScroll: { flex: 1 },
   flightResultsListContainer: { flex: 1 },
   flightResultsContent: { flexGrow: 1 },
