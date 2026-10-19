@@ -46,13 +46,30 @@ test("a sole provider is selected without requiring invented provider data", () 
   assert.deepEqual(nativeFlightDealSelection(null, single), single.deals[0]);
 });
 
-test("Compare deals uses selectable cards and one dock handoff", () => {
-  assert.match(source, /accessibilityRole="radiogroup" accessibilityLabel="Flight deal options"/);
-  assert.match(source, /accessibilityRole="radio" accessibilityState=\{\{selected:isSelected\}\}/);
-  assert.match(source, /borderColor:isSelected\?ui\.blue:surfaceBorderColor/);
-  assert.doesNotMatch(source, /View deal|viewDealAction|s\.dealRow/);
+test("native Details falls back to the first real provider when the fare offer is not one of the displayed deals", () => {
+  const unmatched = choice("SOURCE", [
+    { key: "seller-a", offerId: "A", providerName: "Seller A", price: 500 },
+    { key: "seller-b", offerId: "B", providerName: "Seller B", price: 600 },
+  ]);
+  assert.equal(nativeFlightDealSelection(null, unmatched), null);
+  assert.match(source, /nativeFlightDealSelection\(selectedDealOfferId,selected\)\?\?selected\.deals\[0\]\?\?null/);
+  assert.match(source, /nativeFlightDealSelection\(current,selected\)\?\?selected\.deals\[0\]\?\?null/);
+});
+
+test("Compare deals uses selectable provider cards with their own booking actions", () => {
+  const availableStart = source.indexOf('return <SafeAreaView edges={[]} style={[s.safe,{backgroundColor:contentCanvasColor}]}');
+  const availableEnd = source.indexOf("function FlightDetailsLoadingSkeleton", availableStart);
+  const available = source.slice(availableStart, availableEnd);
+  const dealsStart = source.indexOf('if(tab==="deals")');
+  const dealsEnd = source.indexOf('if(tab==="details")', dealsStart);
+  const deals = source.slice(dealsStart, dealsEnd);
+
+  assert.match(deals, /accessibilityRole="radiogroup" accessibilityLabel="Flight deal options"/);
+  assert.match(deals, /accessibilityRole="radio"/);
+  assert.match(deals, /onSelectDeal\(deal\.offerId\)/);
+  assert.match(deals, /ProviderLogo provider=\{deal\.providerName\}/);
+  assert.match(deals, />View deal<\/Text>/);
+  assert.match(deals, /onViewDeal\(deal\.offerId\)/);
   assert.match(source, /displayPrices\[`deal:\$\{selectedDeal\.key\}`\]/);
-  assert.doesNotMatch(source, /provider=selectedDeal\?\.providerName\?\?|`Continue to \$\{provider\}`/);
-  assert.match(source, /booking\?"Checking offer…":"Continue deal"/);
-  assert.match(source, /handoff\(selectedDeal\?\.offerId\?\?offer\.id\)/);
+  assert.doesNotMatch(available, /Continue deal|s\.sticky/);
 });
