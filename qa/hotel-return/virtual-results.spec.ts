@@ -153,7 +153,18 @@ test("Cars cards omit the supplier-information bar and preserve View deal on mob
 
 
 test("Cars rate details aligns offer-only tracking with the booking provider on mobile, tablet and desktop", async ({ page }) => {
-  const result = { ...carBase, offers: carBase.offers.map(offer => ({ ...offer, suppliedFacts: [{ label: "Mileage", value: "Unlimited mileage" }] })) };
+  // Rate information is only exposed for KAYAK-sandbox inventory with supplier facts.
+  // Do not use the static Kurioticket fixture source here: it intentionally hides the info action.
+  const result = {
+    ...carBase,
+    id: "kayak-sandbox:rate-details-qa-fixture",
+    inventorySource: "kayak-sandbox" as const,
+    offers: carBase.offers.map((offer, index) => ({
+      ...offer,
+      id: `kayak-sandbox:rate-offer-${index}`,
+      suppliedFacts: [{ label: "Mileage", value: "Unlimited mileage" }],
+    })),
+  };
   await page.route("**/api/cars/search", route =>
     route.fulfill({ json: { results: [result], status: "available" } }));
 
