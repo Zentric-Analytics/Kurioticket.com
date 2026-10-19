@@ -29,7 +29,7 @@ import { formatCarResultsScheduleSummary, formatCompactCarResultsScheduleSummary
 import { resolveCarResultImageSource } from "../../../../../src/lib/cars/carResultImage";
 import { useCarDisplayCurrency } from "./useCarDisplayCurrency";
 import { carDisplayPricePerDay } from "./carDisplayCurrency";
-import { beginCarBackToTopReturn, updateCarBackToTopScroll } from "./carResultsBackToTopState";
+import { beginCarBackToTopReturn, hasVisibleFirstCarResult, updateCarBackToTopScroll, type CarBackToTopViewableItem } from "./carResultsBackToTopState";
 
 type Status = "loading" | "ready" | "empty" | "error";
 const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB";
@@ -83,20 +83,33 @@ export function ApprovedCarResultsScreen() {
     return ()=>{active=false;subscription.remove();};
   },[]);
   useEffect(()=>{
-    Animated.timing(carBackToTopProgress,{
+    const animation=Animated.timing(carBackToTopProgress,{
       toValue:carBackToTopVisible && status==="ready" && !carResultsApplying?1:0,
-      duration:carBackToTopReducedMotion?0:200,
-      easing:Easing.out(Easing.cubic),
+      duration:carBackToTopReducedMotion?0:150,
+      easing:Easing.bezier(0.4,0,0.2,1),
       useNativeDriver:true,
-    }).start();
+    });
+    animation.start();
+    return ()=>animation.stop();
   },[carBackToTopVisible,carBackToTopProgress,carBackToTopReducedMotion,status,carResultsApplying]);
   const carBackToTopVisibleRef=useRef(false);
   const carBackToTopReturningRef=useRef(false);
   const carBackToTopOffsetRef=useRef(0);
+  const carFirstResultNearTopRef=useRef(false);
+  // A first result must be mostly visible before treating viewability as a
+  // near-top signal; partial card visibility must not delay normal activation.
+  const carBackToTopViewabilityConfig=useRef({itemVisiblePercentThreshold:80}).current;
   const hideCarBackToTop=useCallback(()=>{
     carBackToTopVisibleRef.current=false;
     setCarBackToTopVisible(false);
   },[]);
+  // Viewability independently clears a stale floating button when the first
+  // result comes back into view, even if iOS coalesces the final scroll event.
+  const handleCarViewableItemsChanged=useRef(({viewableItems}:{viewableItems:readonly CarBackToTopViewableItem[]})=>{
+    const nearTop=hasVisibleFirstCarResult(viewableItems);
+    carFirstResultNearTopRef.current=nearTop;
+    if(nearTop)hideCarBackToTop();
+  }).current;
   const handleCarScroll=useCallback((event:NativeSyntheticEvent<NativeScrollEvent>)=>{
     const next=updateCarBackToTopScroll({
       offset:carBackToTopOffsetRef.current,
@@ -105,9 +118,12 @@ export function ApprovedCarResultsScreen() {
     },event.nativeEvent.contentOffset.y);
     carBackToTopOffsetRef.current=next.offset;
     carBackToTopReturningRef.current=next.returning;
-    if(next.visible!==carBackToTopVisibleRef.current){
-      carBackToTopVisibleRef.current=next.visible;
-      setCarBackToTopVisible(next.visible);
+    // iOS may dispatch a delayed scroll event after first-card viewability.
+    // Do not let that stale offset re-show the control near the list origin.
+    const visible=next.visible && !carFirstResultNearTopRef.current;
+    if(visible!==carBackToTopVisibleRef.current){
+      carBackToTopVisibleRef.current=visible;
+      setCarBackToTopVisible(visible);
     }
   },[]);
   const scrollCarResultsToTop=useCallback(()=>{
@@ -136,7 +152,7 @@ export function ApprovedCarResultsScreen() {
     catch(error){if(controller.signal.aborted||sequence!==searchSequence.current)return;setStatus("error");setMessage(error instanceof Error?error.message:"Car search failed");}
   },[plan.plan?.key,retry]);
   useEffect(()=>{const executionKey=`${plan.plan?.key??"invalid"}:${retry}`;if(searchAbortTimer.current)clearTimeout(searchAbortTimer.current);searchAbortTimer.current=undefined;if(activeExecutionKey.current!==executionKey){activeExecutionKey.current=executionKey;void load();}return()=>{searchAbortTimer.current=setTimeout(()=>{if(activeExecutionKey.current!==executionKey)return;searchSequence.current+=1;activeSearch.current?.abort("screen-cleanup");activeExecutionKey.current=undefined;},0);};},[load,plan.plan?.key,retry]);
-  useEffect(()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);carResultsApplyingTimer.current=undefined;setCarResultsApplying(false);carBackToTopVisibleRef.current=false;carBackToTopReturningRef.current=false;carBackToTopOffsetRef.current=0;setCarBackToTopVisible(false);return()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);};},[plan.plan?.key]);
+  useEffect(()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);carResultsApplyingTimer.current=undefined;setCarResultsApplying(false);carBackToTopVisibleRef.current=false;carBackToTopReturningRef.current=false;carBackToTopOffsetRef.current=0;carFirstResultNearTopRef.current=false;setCarBackToTopVisible(false);return()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);};},[plan.plan?.key]);
   const filterGroups=useMemo(()=>visibleCarFilterGroups(results,pricePerDay),[pricePerDay,results]);
   const quickGroups=useMemo(()=>carQuickFilterGroupIds.flatMap(id=>{const group=filterGroups.find(candidate=>candidate.id===id);return group?[group]:[];}),[filterGroups]);
   const copy=useMemo(()=>carFilterCopy(locale),[locale]);
@@ -176,7 +192,7 @@ export function ApprovedCarResultsScreen() {
     {/* Render the complete bounded result set in the first virtualized batch.
         UIKit then receives the final contentSize before scrolling begins, while
         image prefetching stays independently limited to the first few assets. */}
-    <FlatList ref={carScrollRef} style={{backgroundColor:carCanvasColor}} data={listData} keyExtractor={result=>result.id} renderItem={({item,index})=><View style={r.carResultCardSlot}><CarResultCard result={item} rank={index} badge={carBadges.get(item.id)} imageUri={resolveNativeCarImageUri(item.imageUrl)} searchParams={payload} resultBackgroundColor={carCanvasColor}/></View>} ItemSeparatorComponent={CarResultItemSeparator} ListHeaderComponent={listHeader} ListEmptyComponent={listEmpty} initialNumToRender={Math.max(results.length,1)} maxToRenderPerBatch={Math.max(results.length,CAR_RESULT_RENDER_BATCH_SIZE)} windowSize={CAR_RESULT_WINDOW_SIZE} updateCellsBatchingPeriod={CAR_RESULT_BATCHING_PERIOD_MS} removeClippedSubviews={Platform.OS === "android"} showsVerticalScrollIndicator={true} automaticallyAdjustsScrollIndicatorInsets={false} scrollIndicatorInsets={carResultsScrollIndicatorInsets} alwaysBounceVertical={false} bounces={false} overScrollMode="never" keyboardShouldPersistTaps="handled" onScroll={handleCarScroll} scrollEventThrottle={16} onScrollBeginDrag={()=>{carBackToTopReturningRef.current=false;}} onScrollEndDrag={handleCarScroll} onMomentumScrollBegin={handleCarScroll} onMomentumScrollEnd={(event)=>{carBackToTopReturningRef.current=false;handleCarScroll(event);}} contentContainerStyle={[r.body,{paddingBottom:Math.max(insets.bottom + 64,64)}]}/>
+    <FlatList ref={carScrollRef} style={{backgroundColor:carCanvasColor}} data={listData} keyExtractor={result=>result.id} renderItem={({item,index})=><View style={r.carResultCardSlot}><CarResultCard result={item} rank={index} badge={carBadges.get(item.id)} imageUri={resolveNativeCarImageUri(item.imageUrl)} searchParams={payload} resultBackgroundColor={carCanvasColor}/></View>} ItemSeparatorComponent={CarResultItemSeparator} ListHeaderComponent={listHeader} ListEmptyComponent={listEmpty} initialNumToRender={Math.max(results.length,1)} maxToRenderPerBatch={Math.max(results.length,CAR_RESULT_RENDER_BATCH_SIZE)} windowSize={CAR_RESULT_WINDOW_SIZE} updateCellsBatchingPeriod={CAR_RESULT_BATCHING_PERIOD_MS} removeClippedSubviews={Platform.OS === "android"} showsVerticalScrollIndicator={true} automaticallyAdjustsScrollIndicatorInsets={false} scrollIndicatorInsets={carResultsScrollIndicatorInsets} alwaysBounceVertical={false} bounces={false} overScrollMode="never" keyboardShouldPersistTaps="handled" onScroll={handleCarScroll} scrollEventThrottle={16} onScrollBeginDrag={(event)=>{carBackToTopReturningRef.current=false;handleCarScroll(event);}} onScrollEndDrag={handleCarScroll} onMomentumScrollBegin={handleCarScroll} onMomentumScrollEnd={handleCarScroll} onScrollToTop={handleCarScroll} onViewableItemsChanged={handleCarViewableItemsChanged} viewabilityConfig={carBackToTopViewabilityConfig} contentContainerStyle={[r.body,{paddingBottom:Math.max(insets.bottom + 64,64)}]}/>
     <Animated.View pointerEvents={carBackToTopVisible && status==="ready" && !carResultsApplying?"box-none":"none"} style={[r.carBackToTop,{bottom:Math.max(insets.bottom,0)+16,backgroundColor:theme.dark?theme.surface:"#EEF2F6",borderColor:theme.dark?theme.border:"#E2E8F0",opacity:carBackToTopProgress,transform:[{translateY:carBackToTopProgress.interpolate({inputRange:[0,1],outputRange:[8,0]})}]}]}>
       <Pressable accessibilityRole="button" accessibilityLabel="Back to top" accessibilityHint="Scroll to the beginning of car results" accessibilityElementsHidden={!carBackToTopVisible} importantForAccessibility={carBackToTopVisible?"auto":"no-hide-descendants"} disabled={!carBackToTopVisible || status!=="ready" || carResultsApplying} onPress={scrollCarResultsToTop} style={({pressed})=>[r.carBackToTopTouch,{opacity:pressed?0.76:1}]}>
         <ArrowUp accessible={false} size={18} strokeWidth={2.2} color={theme.dark?theme.textPrimary:"#004BB8"}/>

@@ -3,8 +3,10 @@
  * Keep scroll visibility direction-independent. Only suppress events while
  * the list is genuinely animating back toward offset zero.
  */
-// The native list begins below the persistent search/filter header, unlike the web page.
-// Reveal within the first result card instead of waiting for a second card.
+// The web threshold is measured from the document origin, while native
+// scrolls only its result list beneath persistent search and filter controls.
+// Retain the earlier result-relative activation, rather than making native
+// wait until more car cards have passed on screen.
 export const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
 
 export type CarBackToTopScrollState = {
@@ -13,11 +15,25 @@ export type CarBackToTopScrollState = {
   visible: boolean;
 };
 
+export type CarBackToTopViewableItem = {
+  index: number | null;
+  isViewable: boolean;
+};
+
 export const INITIAL_CAR_BACK_TO_TOP_SCROLL_STATE: CarBackToTopScrollState = {
   offset: 0,
   returning: false,
   visible: false,
 };
+
+// On some native scroll completions the final onScroll(0) event is coalesced.
+// Viewability is an independent near-top signal; it is never used to SHOW the
+// button, only to prevent the button lingering over the first result card.
+export function hasVisibleFirstCarResult(
+  items: readonly CarBackToTopViewableItem[],
+): boolean {
+  return items.some((item) => item.index === 0 && item.isViewable);
+}
 
 export function updateCarBackToTopScroll(
   previous: CarBackToTopScrollState,
