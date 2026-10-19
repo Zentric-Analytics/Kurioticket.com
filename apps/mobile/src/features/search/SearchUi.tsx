@@ -19,6 +19,7 @@ import { useEffect, useRef, useState } from "react";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
 import { useFlightResultsTheme as useAppTheme, useFlightResultsUi } from "./FlightResultsPresentationContext";
 import { appFonts } from "../../theme/typography";
+import { flightResultsColors } from "./flightResultsPresentation";
 import {
   deriveNearbyDateSuggestion,
   getDateWindow,
@@ -323,19 +324,19 @@ export function DateStrip({
                 },
                 !flightResults && active && s.dateActive,
                 flightResults && active && {
-                  backgroundColor: theme.dark ? "#142B55" : "#EEF6FF",
-                  borderColor: resultsUi.blue,
+                  backgroundColor: theme.dark ? "#142B55" : flightResultsColors.dateSelectedSurface,
+                  borderColor: theme.dark ? "#8FB5FF" : flightResultsColors.dateAccent,
                 },
                 pressed && s.datePressed,
               ]}
             >
-              {flightResults && active ? <View accessible={false} style={[s.flightDateSelectedAccent, { backgroundColor: resultsUi.blue }]} /> : null}
+              {flightResults && active ? <View accessible={false} style={[s.flightDateSelectedAccent, { backgroundColor: theme.dark ? "#8FB5FF" : flightResultsColors.dateAccent }]} /> : null}
               {flightResults ? (
                 <>
-                  <Text style={[s.day, s.flightDateLabel, { color: theme.textPrimary }, active && { color: theme.dark ? "#8FB5FF" : resultsUi.blue }]}>
+                  <Text style={[s.day, s.flightDateLabel, { color: theme.textPrimary }, active && { color: theme.dark ? "#8FB5FF" : flightResultsColors.dateAccent }]}>
                     {shortDate(iso).toUpperCase()}
                   </Text>
-                  <Text style={[s.day, s.flightDateWeekday, { color: theme.textSecondary }, active && { color: theme.dark ? "#8FB5FF" : resultsUi.blue }]}>
+                  <Text style={[s.day, s.flightDateWeekday, { color: theme.textSecondary }, active && { color: theme.dark ? "#8FB5FF" : flightResultsColors.dateAccent }]}>
                     {x.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase()}
                   </Text>
                 </>
@@ -356,7 +357,7 @@ export function DateStrip({
                   s.day,
                   flightResults && s.flightDateLabel,
                   flightResults && { color: theme.textPrimary },
-                  active && { color: theme.dark ? "#8FB5FF" : resultsUi.blue },
+                  active && { color: theme.dark ? "#8FB5FF" : flightResultsColors.dateAccent },
                 ]}
               >
                 {shortDate(iso)}
@@ -374,7 +375,7 @@ export function DateStrip({
                     s.datePrice,
                     flightResults && s.flightDatePrice,
                     flightResults && { color: theme.textPrimary },
-                    active && { color: theme.dark ? "#8FB5FF" : resultsUi.blue },
+                    active && { color: theme.dark ? "#8FB5FF" : flightResultsColors.dateAccent },
                     flightResults && nearbySuggestion?.date === iso && !active && { color: resultsUi.green },
                   ]}
                 >

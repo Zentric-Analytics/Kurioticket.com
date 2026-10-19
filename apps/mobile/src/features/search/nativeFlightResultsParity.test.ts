@@ -51,3 +51,25 @@ test("terminal Results states retain dates below the sticky rail", () => {
  const footer = screen.slice(screen.indexOf("ListFooterComponent={terminalFlightState"), screen.indexOf("showsVerticalScrollIndicator={true}", screen.indexOf("ListFooterComponent={terminalFlightState")));
  assert.match(footer, /\{flightDateStrip\}[\s\S]*<FlightResultsState/);
 });
+
+test("light Flight Results keeps white chrome above the tinted results canvas", () => {
+ const header = screen.slice(screen.indexOf("function FlightResultsHeader"), screen.indexOf("function HotelResultsHeader"));
+ const list = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf("<HotelResultsHeader", screen.indexOf("<Animated.SectionList")));
+ assert.match(screen, /<FlightResultsHeader[\s\S]*?backgroundColor=\{theme\.dark \? flightCanvasColor : flightResultsColors\.surface\}/);
+ assert.match(list, /s0\.flightFilterSectionHeader, \{ backgroundColor: theme\.dark \? flightCanvasColor : flightResultsColors\.surface \}/);
+ assert.match(header, /backgroundColor: theme\.dark \? theme\.surface : flightResultsColors\.canvas/);
+ assert.match(header, /borderWidth: theme\.dark \? 1 : 0/);
+ assert.match(list, /s0\.flightResultsIntro, \{ backgroundColor: flightCanvasColor \}/);
+});
+
+test("date selection and journey label use their exact mobile Results accent roles", () => {
+ const presentation = read("flightResultsPresentation.ts");
+ assert.match(presentation, /dateAccent: "#075EE8"/);
+ assert.match(presentation, /dateSelectedSurface: "rgba\(239, 246, 255, 0\.6\)"/);
+ assert.match(presentation, /journeyLabel: "#0057E7"/);
+ assert.match(dates, /backgroundColor: theme\.dark \? "#142B55" : flightResultsColors\.dateSelectedSurface/);
+ assert.match(dates, /borderColor: theme\.dark \? "#8FB5FF" : flightResultsColors\.dateAccent/);
+ assert.match(dates, /flightDateSelectedAccent, \{ backgroundColor: theme\.dark \? "#8FB5FF" : flightResultsColors\.dateAccent \}/);
+ assert.match(screen, /s0\.journeyLabel, \{ color: theme\.dark \? "#8FB5FF" : flightResultsColors\.journeyLabel \}/);
+});
+

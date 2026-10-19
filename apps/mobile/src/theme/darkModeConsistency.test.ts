@@ -125,7 +125,7 @@ test("the active Flight results journey keeps its semantic surface and text hier
   assert.doesNotMatch(sortSheet, /#142B55|#F7FAFF/);
   assert.match(searchUi, /backgroundColor: flightResults \? theme\.background : theme\.surface/);
   assert.match(searchUi, /backgroundColor: theme\.surface/);
-  assert.match(searchUi, /theme\.dark \? "#142B55" : "#EEF6FF"/);
+  assert.match(searchUi, /theme\.dark \? "#142B55" : flightResultsColors\.dateSelectedSurface/);
   assert.match(searchUi, /nearbyDateInsightText, \{ color: theme\.textSecondary, fontFamily: appFonts\.semibold \}/);
   assert.match(states, /backgroundColor: theme\.surface/);
   assert.match(states, /color: theme\.textPrimary/);

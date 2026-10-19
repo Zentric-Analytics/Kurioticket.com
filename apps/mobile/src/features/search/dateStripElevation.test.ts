@@ -18,11 +18,11 @@ test("flight result tiles use bordered fare-calendar geometry without elevation"
   for (const expected of [/minWidth: 76/, /maxWidth: 96/, /height: 70/, /borderRadius: 8/, /borderWidth: 1/, /position: "relative"/, /overflow: "hidden"/]) assert.match(baseCard, expected);
   assert.doesNotMatch(baseCard, /shadow|elevation/);
   assert.match(component, /backgroundColor: theme\.surface,[\s\S]*?borderColor: theme\.border/);
-  assert.match(component, /backgroundColor: theme\.dark \? "#142B55" : "#EEF6FF",[\s\S]*?borderColor: resultsUi\.blue/);
+  assert.match(component, /backgroundColor: theme\.dark \? "#142B55" : flightResultsColors\.dateSelectedSurface,[\s\S]*?borderColor: theme\.dark \? "#8FB5FF" : flightResultsColors\.dateAccent/);
 });
 
 test("selected tiles have a decorative two-pixel top accent", () => {
-  assert.match(component, /flightResults && active \? <View accessible=\{false\} style=\{\[s\.flightDateSelectedAccent, \{ backgroundColor: resultsUi\.blue \}\]\}/);
+  assert.match(component, /flightResults && active \? <View accessible=\{false\} style=\{\[s\.flightDateSelectedAccent, \{ backgroundColor: theme\.dark \? "#8FB5FF" : flightResultsColors\.dateAccent \}\]\}/);
   for (const expected of [/position: "absolute"/, /top: 0/, /left: 8/, /right: 8/, /height: 2/, /backgroundColor: ui\.blue/]) assert.match(accent, expected);
 });
 

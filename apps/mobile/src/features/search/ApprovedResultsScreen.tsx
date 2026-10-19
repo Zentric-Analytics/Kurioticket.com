@@ -1119,7 +1119,7 @@ function ResultsScreen({ product }: { product: Product }) {
           route={flightSummary.route}
           secondaryLine={flightSummary.secondaryLine}
           onEdit={edit}
-          backgroundColor={flightCanvasColor}
+          backgroundColor={theme.dark ? flightCanvasColor : flightResultsColors.surface}
         />
       ) : null}
       {product === "flight" ? (
@@ -1132,7 +1132,7 @@ function ResultsScreen({ product }: { product: Product }) {
           keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
           renderSectionHeader={() => (
             <View
-              style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}
+              style={[s0.flightFilterSectionHeader, { backgroundColor: theme.dark ? flightCanvasColor : flightResultsColors.surface }]}
             >
               {filterRail}
             </View>
@@ -1342,6 +1342,7 @@ function FlightResultsHeader({
             {
               backgroundColor: theme.dark ? theme.surface : flightResultsColors.canvas,
               borderColor: theme.dark ? theme.border : "#D8E1EC",
+              borderWidth: theme.dark ? 1 : 0,
             },
           ]}
         >
@@ -1649,7 +1650,7 @@ function FlightJourneyRow({ label, leg, locale }: { label: string; leg: FlightCa
       accessible
       accessibilityLabel={`${label.toLowerCase()}: ${clock(leg.departureTime)} ${leg.originAirport}${departureDate ? `, ${departureDate}` : ""} to ${clock(leg.arrivalTime)} ${leg.destinationAirport}${arrivalDate ? `, ${arrivalDate}` : ""}, ${leg.duration}, ${stopLabel}`}
     >
-      <Text style={[s0.journeyLabel, { color: theme.dark ? "#8FB5FF" : ui.blue }]}>{label}</Text>
+      <Text style={[s0.journeyLabel, { color: theme.dark ? "#8FB5FF" : flightResultsColors.journeyLabel }]}>{label}</Text>
       <View style={s0.journeyPrimaryRow}>
         <View style={s0.departureColumn}>
           <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.departureTime)}</Text>
