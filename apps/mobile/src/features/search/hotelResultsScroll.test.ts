@@ -51,8 +51,8 @@ test("search/sort/filter reset invalidates even an uncancellable old reveal", ()
 });
 
 test("Hotel filters stay visible above the list without direction tracking", () => {
-  const screen = readFileSync(new URL("./ApprovedResultsScreen.tsx", import.meta.url), "utf8");
-  const hook = readFileSync(new URL("./useHotelResultsScrolling.ts", import.meta.url), "utf8");
+  const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
+  const hook = readFileSync("src/features/search/useHotelResultsScrolling.ts", "utf8");
   const hotel = screen.slice(screen.indexOf("<HotelResultsHeader"), screen.indexOf("<FlightSortSheet"));
   assert.match(hotel, /<View style=\{\[s0\.hotelFilterSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?<SectionList/);
   assert.doesNotMatch(hotel, /filterHidden|filterTranslation|onScroll=|onFilterLayout/);
