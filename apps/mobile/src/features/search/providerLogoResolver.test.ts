@@ -29,6 +29,16 @@ test("providers retain the initial only as the shared image component's final fa
   assert.match(providerLogo, /logoUrl=\{logoUrl\}/);
 });
 
+test("flight Compare deals provider logos have mobile-web 64x28 and narrow 48x28 variants", () => {
+  const providerLogo = readFileSync(resolve("src/features/search/ProviderLogo.tsx"), "utf8");
+  const airlineLogo = readFileSync(resolve("src/features/search/AirlineLogo.tsx"), "utf8");
+
+  assert.match(providerLogo, /"deal-card" \| "deal-card-compact"/);
+  assert.match(providerLogo, /variant === "deal-card" \? "provider-deal" : variant === "deal-card-compact" \? "provider-deal-compact"/);
+  assert.match(airlineLogo, /providerDeal:\s*\{[\s\S]*width: 64,[\s\S]*height: 28/);
+  assert.match(airlineLogo, /providerDealCompact:\s*\{[\s\S]*width: 48,[\s\S]*height: 28/);
+});
+
 test("provider logos reuse the remote-image failure fallback used by flight results", () => {
   const providerLogo = readFileSync(resolve("src/features/search/ProviderLogo.tsx"), "utf8");
   const airlineLogo = readFileSync(resolve("src/features/search/AirlineLogo.tsx"), "utf8");
