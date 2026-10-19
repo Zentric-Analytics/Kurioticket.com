@@ -5,6 +5,7 @@ import { getPrisma } from "../src/lib/prisma";
 import { rememberProviderResults, getProviderResultWithContext, rememberHotelSearchCohort, getHotelSearchCohort } from "../src/services/travel/providerResultCache";
 import type { NormalizedHotelResult } from "../src/lib/types";
 import { createPrismaFlightCacheBackend, type SharedFlightCacheRecord } from "../src/lib/searchCache";
+import { GET as hotelDetails } from "../src/app/api/hotels/details/route";
 import { deleteExpiredCacheBatch } from "../src/lib/cacheMaintenance";
 
 // Deliberately refuse non-disposable targets, including all Render hosts.
@@ -61,6 +62,26 @@ test("PostgreSQL persists every batched offer, duplicate update and complete coh
     // A later search must not overwrite the first search's distinct result identity.
     await rememberProviderResults("hotel", [{ id: "second-search", name: "Other hotel" }], search);
     assert.deepEqual((await getProviderResultWithContext("hotel", results[1041].id))?.result, results[1041]);
+    // Repeat the same criteria with fresh provider IDs, then resolve an older
+    // offer on a worker with no in-memory hotel cache.
+    const original = { ...results[0], id: "kayak-sandbox:original:one", propertyGroupId: "original:hotel" };
+    if (original.inventoryKind === "discovery") throw new Error("Expected priced inventory");
+    const sibling = { ...original, id: "kayak-sandbox:original:two", totalPrice: 280, roomType: "Suite" };
+    const newer = { ...original, id: "kayak-sandbox:newer:one", propertyGroupId: "newer:hotel" };
+    await rememberProviderResults("hotel", [original, sibling], search);
+    assert.equal(await rememberHotelSearchCohort([original, sibling], search), true);
+    assert.equal(await rememberHotelSearchCohort([newer], search), true);
+    assert.deepEqual(await getHotelSearchCohort(search), [newer]);
+    assert.deepEqual(await getHotelSearchCohort(search, undefined, original.id), [original, sibling]);
+    assert.deepEqual(await getHotelSearchCohort(search, undefined, "kayak-sandbox:missing:one"), []);
+    const params = new URLSearchParams({ id: original.id, ...search, guests: "1", rooms: "1" });
+    const response = await hotelDetails(new Request(`https://kurioticket.test/api/hotels/details?${params}`));
+    assert.equal(response.status, 200);
+    const details = await response.json();
+    assert.deepEqual(details.propertyOffers.map((offer: { hotel: { id: string } }) => offer.hotel.id), [original.id, sibling.id]);
+    assert.equal(details.propertyOffers[1].hotel.totalPrice, 280);
+    assert.equal(details.propertyOffers[1].hotel.roomType, "Suite");
+    assert.deepEqual(await getHotelSearchCohort(search, Date.now() + 31 * 60_000, original.id), []);
     // A blocked database must not hold the response indefinitely or proceed
     // with thousands of queued writes. Use only this disposable table.
     let releaseLock!: () => void;

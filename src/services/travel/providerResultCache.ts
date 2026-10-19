@@ -126,6 +126,13 @@ function hotelSearchCohortId(search: HotelSearchParams) {
   return `${HOTEL_SEARCH_COHORT_PREFIX}${createHash("sha256").update(identity).digest("hex")}`;
 }
 
+// KAYAK public IDs carry the server-generated snapshot before the supplier row.
+// Include the search identity so a snapshot can never bridge different stays.
+function hotelSnapshotCohortId(search: HotelSearchParams, resultId: string) {
+  const snapshot = /^kayak-sandbox:([^:]+):/.exec(resultId)?.[1];
+  return snapshot ? `${hotelSearchCohortId(search)}:snapshot:${snapshot}` : null;
+}
+
 function carLocationTargetIdentity(
   target: LocationBoundCarSearchParams["pickupLocationTarget"],
 ) {
@@ -288,6 +295,11 @@ export async function rememberHotelSearchCohort(
   if (!results.length) return true;
   const resultId = hotelSearchCohortId(search);
   try {
+    const snapshotIds = new Set(results.map(result => hotelSnapshotCohortId(search, result.id)).filter((id): id is string => id !== null));
+    for (const snapshotId of snapshotIds) {
+      const snapshotResults = results.filter(result => hotelSnapshotCohortId(search, result.id) === snapshotId);
+      await writeSearchCohort("hotel", snapshotId, snapshotResults, search, now);
+    }
     await writeSearchCohort("hotel", resultId, results, search, now);
     return true;
   } catch {
@@ -299,10 +311,19 @@ export async function rememberHotelSearchCohort(
 export async function getHotelSearchCohort(
   search: HotelSearchParams,
   now = Date.now(),
+  selectedResultId?: string,
 ): Promise<NormalizedHotelResult[]> {
   const resultId = hotelSearchCohortId(search);
   try {
-    return await readSearchCohort("hotel", resultId, now) as NormalizedHotelResult[];
+    const snapshotId = selectedResultId ? hotelSnapshotCohortId(search, selectedResultId) : null;
+    if (snapshotId) {
+      const snapshot = await readSearchCohort("hotel", snapshotId, now) as NormalizedHotelResult[];
+      if (snapshot.some(result => result.id === selectedResultId)) return snapshot;
+    }
+    // Rolling deployments can still have only the old criteria-keyed cohort.
+    // Never attach it to an offer from a different snapshot.
+    const cohort = await readSearchCohort("hotel", resultId, now) as NormalizedHotelResult[];
+    return !selectedResultId || cohort.some(result => result.id === selectedResultId) ? cohort : [];
   } catch {
     console.error("[provider-result-cache]", { event: "cohort_read_error", vertical: "hotel" });
     return [];

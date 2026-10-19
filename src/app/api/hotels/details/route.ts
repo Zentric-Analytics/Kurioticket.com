@@ -103,7 +103,7 @@ export async function GET(request: Request) {
     ?? hotelSearchContext(providerContext?.searchContext);
   const persistedSearch = originalSearch ?? (search.destination ? search : null);
   const persistedCohort = !memoryContext && persistedSearch
-    ? await getHotelSearchCohort(persistedSearch)
+    ? await getHotelSearchCohort(persistedSearch, undefined, id)
     : [];
   const candidate = memoryContext?.hotel ?? providerContext?.result
     ?? persistedCohort.find(hotel => hotel.id === id) ?? null;

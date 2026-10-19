@@ -40,6 +40,7 @@ export const FLIGHT_CACHE_TTL_MS = 1000 * 60 * 30;
 const CLEANUP_LIMIT = 200;
 const CLEANUP_INTERVAL_MS = 60_000;
 type HotelCacheRecord = CacheRecord<NormalizedHotelResult> & {
+  cohort: NormalizedHotelResult[];
   searchKey: string | null;
   searchContext: HotelSearchParams | null;
 };
@@ -442,6 +443,7 @@ export function rememberHotels(
   for (const result of snapshot) {
     hotelCache.set(result.id, {
       value: result,
+      cohort: search ? snapshot : [],
       expiresAt,
       searchKey,
       searchContext,
@@ -478,9 +480,9 @@ export function getHotelDetailsCacheContext(
 
   const selected = hotelCache.get(id);
   if (!selected) return null;
-  const cohort = selected.searchKey
-    ? hotelSearchCache.get(selected.searchKey)?.value ?? []
-    : [];
+  // Keep the exact array that produced this offer. The latest criteria-keyed
+  // search can belong to a different provider snapshot with identical criteria.
+  const cohort = selected.cohort;
   return {
     hotel: clone(selected.value),
     searchContext: selected.searchContext ? clone(selected.searchContext) : null,
