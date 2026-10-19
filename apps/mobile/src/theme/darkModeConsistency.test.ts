@@ -107,8 +107,8 @@ test("the active Flight results journey keeps its semantic surface and text hier
   assert.match(results, /const flightSupportText = \{\s*light: "#64748B",\s*dark: "#B8C3D8"/);
   assert.match(results, /s0\.operatingCarrierText, \{ color: supportTextColor \}/);
   assert.match(results, /s0\.time, \{ color: theme\.textPrimary \}/);
-  assert.match(results, /s0\.flightMetadataLabel, \{ color: supportTextColor \}/);
-  assert.match(results, /borderTopColor: theme\.border/);
+  assert.match(results, /s0\.flightMetadataLabel, \{ color: metadataTextColor \}/);
+  assert.match(results, /borderTopColor: theme\.dark \? theme\.border : flightResultsColors\.cardDivider/);
   assert.match(results, /<FlightPriceAlert/);
   assert.match(read("src/features/search/HotelPriceAlert.tsx"), /backgroundColor: theme\.priceAlertSurface, borderColor: theme\.priceAlertBorder/);
   assert.match(read("src/theme/AppTheme.tsx"), /priceAlertBorder:/);
