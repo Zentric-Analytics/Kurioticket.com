@@ -25,17 +25,17 @@ test("Cars toggle has no visible submission loading UI", () => {
   assert.match(source, /optimisticTracking/);
 });
 
-test("native car rate details places a compact tinted offer tracking pill beside the provider", () => {
+test("native car rate details restores a separate tinted 54px offer-tracking bar", () => {
   const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
   assert.match(source, /return <View style=\{\[styles\.control, \{ backgroundColor: theme\.priceAlertSurface, borderColor: theme\.priceAlertBorder \}]\}>/);
   assert.match(picker, /<NativeCarPriceAlert/);
   assert.match(picker, /Booking provider ·/);
-  assert.match(source, /<Bell accessible=\{false\} size=\{14\} strokeWidth=\{2\}/);
+  assert.match(source, /<Bell accessible=\{false\} size=\{16\} strokeWidth=\{2\}/);
   assert.match(source, />Track car prices<\/Text>/);
   assert.doesNotMatch(source, /Track rental car prices/);
-  assert.match(source, /control: \{ flexShrink: 0, minHeight: 44, flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 4, borderWidth: 1, borderRadius: 10 \}/);
-  assert.match(source, /title: \{ flexShrink: 0, fontSize: 11, lineHeight: 16/);
-  assert.match(source, /iconBadge: \{ width: 20, height: 20/);
+  assert.match(source, /control: \{ minWidth: 0, minHeight: 54, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 10, paddingVertical: 3, borderWidth: 1, borderRadius: 12 \}/);
+  assert.match(source, /title: \{ minWidth: 0, flex: 1, fontSize: 13, lineHeight: 18/);
+  assert.match(source, /iconBadge: \{ width: 32, height: 32/);
   assert.match(themeSource, /priceAlertSurface: "#EDF6FF"/);
   assert.match(themeSource, /priceAlertBorder: "#C8DFF7"/);
   assert.match(source, /switchSlot: \{ width: 44, height: 44/);
@@ -80,9 +80,9 @@ test("Cars result count remains independent of tracking when rate details opens"
   const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
   assert.match(results, /carResultCountLabel\(filtered\.length\)/);
   assert.doesNotMatch(results, /<NativeCarPriceAlert/);
-  assert.match(picker, /sellerRow: \{ marginTop: 6, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 \}/);
-  assert.match(picker, /seller: \{ flex: 1, minWidth: 0/);
-  assert.match(source, /numberOfLines=\{1\}/);
+  assert.match(picker, /sellerRow: \{ marginTop: 6, minWidth: 0, alignItems: "stretch", gap: 5 \}/);
+  assert.match(picker, /seller: \{ minWidth: 0/);
+  assert.match(source, /numberOfLines=\{2\}/);
   assert.match(source, /switchTouchTarget: \{ width: 44, height: 44/);
 });
 
