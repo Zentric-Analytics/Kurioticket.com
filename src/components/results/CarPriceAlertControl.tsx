@@ -122,9 +122,9 @@ export function CarPriceAlertControl({ search, car, offer }: {
   const tracking = optimisticTracking ?? committedTracking;
   const disabled = !reconciled;
   return <>
-    <section aria-label={t("carsResults.priceTracking.title")} data-cars-price-alert className="inline-flex w-fit max-w-full shrink-0 items-center rounded-[10px] border border-[#CFE0F8] bg-[#EEF6FF] px-1.5 py-0 shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
-      <div className="flex min-h-11 min-w-0 items-center gap-1">
-        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/85">
+    <section aria-label={t("carsResults.priceTracking.title")} data-cars-price-alert className="inline-flex w-fit max-w-full shrink-0 items-center rounded-[10px] border border-[#CFE0F8] bg-[#EEF6FF] px-1 py-0 shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
+      <div className="flex min-h-11 min-w-0 items-center gap-0.5">
+        <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/85">
           <Bell className="h-3.5 w-3.5 text-[#1769AA]" aria-hidden="true" />
         </span>
         <span className="whitespace-nowrap text-[11px] font-semibold leading-4 tracking-[-0.005em] text-[#07133B]">{t("carsResults.priceTracking.title")}</span>
