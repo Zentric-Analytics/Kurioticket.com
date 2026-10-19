@@ -51,28 +51,28 @@ test("Cars results heading keeps the compact mobile gutters and card gap without
   assert.match(summaryClasses, /grid-cols-\[minmax\(0,1fr\)_auto\] items-center/);
   assert.match(summaryClasses, /gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1/);
   assert.match(summaryClasses, /sm:gap-x-2 sm:gap-y-3 sm:px-0/);
-  assert.equal((cars.match(/"w-full space-y-3\.5 sm:space-y-4",\s*!embedded && presentation === "standalone" \? "max-sm:!mt-0" : "max-sm:!mt-1"/g) ?? []).length, 2);
+  assert.equal((cars.match(/"w-full space-y-3\.5 sm:space-y-4",\s*!embedded && presentation === "standalone" \? "max-sm:!mt-2" : "max-sm:!mt-1"/g) ?? []).length, 2);
   assert.doesNotMatch(cars, /w-full space-y-3\.5 max-sm:!mt-2\.5/);
   assert.match(alert, /className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full/);
 });
 
 test("Cars count row preserves card separation after removing the tracking toggle", () => {
-  assert.equal((cars.match(/"w-full space-y-3\.5 sm:space-y-4",\s*!embedded && presentation === "standalone" \? "max-sm:!mt-0" : "max-sm:!mt-1"/g) ?? []).length, 2);
+  assert.equal((cars.match(/"w-full space-y-3\.5 sm:space-y-4",\s*!embedded && presentation === "standalone" \? "max-sm:!mt-2" : "max-sm:!mt-1"/g) ?? []).length, 2);
   assert.match(cars, /data-cars-results-summary-row/);
-  assert.match(alert, /flex min-h-11 min-w-0 items-center justify-end gap-1\.5/);
+  assert.match(alert, /flex min-h-11 w-full min-w-0 items-center gap-2/);
   assert.match(alert, /relative inline-flex h-6 w-11 shrink-0 items-center rounded-full/);
   assert.doesNotMatch(cars, /<CarPriceAlertControl/);
 });
 
-test("standalone mobile Cars matches native filter-to-count spacing without increasing the first card gap", () => {
+test("standalone mobile Cars preserves filter-to-count spacing while adding a small first-card gap", () => {
   const toolbar = cars.slice(cars.indexOf("data-cars-results-filter-origin"), cars.indexOf("data-cars-results-summary-row"));
   assert.match(toolbar, /!embedded && presentation === "standalone" && "max-sm:pt-6"/);
   assert.doesNotMatch(toolbar, /sm:pt-2 lg:pt-2/);
-  // Both loading and loaded lists have zero mobile top margin only for standalone Cars.
-  assert.equal((cars.match(/!embedded && presentation === "standalone" \? "max-sm:!mt-0" : "max-sm:!mt-1"/g) ?? []).length, 2);
+  // Both loading and loaded lists have the same 8px first-card gap only for standalone Cars.
+  assert.equal((cars.match(/!embedded && presentation === "standalone" \? "max-sm:!mt-2" : "max-sm:!mt-1"/g) ?? []).length, 2);
   assert.match(cars, /min-w-0 space-y-0 sm:space-y-4/);
   assert.doesNotMatch(toolbar, /max-sm:pt-(?:0|1|2|3|4|5)\b/);
-  assert.match(cars, /!embedded && presentation === "standalone" \? "max-sm:!mt-0" : "max-sm:!mt-1"/);
+  assert.match(cars, /!embedded && presentation === "standalone" \? "max-sm:!mt-2" : "max-sm:!mt-1"/);
 });
 
 test("Cars keeps the left-side result count while the offer alert lives in rate details", () => {
