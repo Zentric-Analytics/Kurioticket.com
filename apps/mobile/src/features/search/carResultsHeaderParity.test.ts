@@ -162,19 +162,19 @@ test("Cars keep a modest outer gutter while preserving result-card spacing with 
   assert.doesNotMatch(cars, /<NativeCarPriceAlert[^>]*carResultCardSlot|<View accessibilityLabel="Car results summary"[^>]*carResultCardSlot/);
 });
 
-test("Cars result summary keeps Hotel typography but owns a balanced non-floating rhythm", () => {
-  assert.match(cars, /const carResultCountLabel = \(count: number\) => `\$\{count\} \$\{count === 1 \? "Result" : "Results"\} found`/);
+test("Cars result count and tracking row match mobile-web type, inset and breathing space", () => {
+  assert.match(cars, /const carResultCountLabel = \(count: number\) => `\$\{count\} \$\{count === 1 \? "result" : "results"\} found`/);
   assert.match(cars, /<Text accessibilityRole="header" numberOfLines=\{1\} style=\{\[r\.carResultCount,\{color:theme\.textPrimary\}\]\}>\{carResultCountLabel\(filtered\.length\)\}<\/Text>/);
-  assert.match(cars, /carResultCount:\{fontSize:13,lineHeight:17,fontWeight:"700",fontFamily:appFonts\.bold\}/);
-  assert.match(cars, /carResultsSummaryRow:\{marginTop:2,marginBottom:2,minHeight:44,paddingHorizontal:8,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\}/);
+  assert.match(cars, /carResultCount:\{fontSize:12,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
+  assert.match(cars, /carResultsSummaryRow:\{marginTop:8,marginBottom:2,minHeight:44,paddingHorizontal:10,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\}/);
   assert.doesNotMatch(cars, /carResultsSummaryRow:\{[^}]*minHeight:38/);
   assert.match(cars, /carResultsSummaryRow:\{[^}]*alignItems:"center"/);
   assert.doesNotMatch(cars, /carResultsSummaryRow:\{[^}]*margin(?:Top|Bottom):-/);
   const previousHeight = 10 + 44 + 10;
-  const compactHeight = 2 + 44 + 2;
-  assert.equal(compactHeight, 48, "Cars results heading should match mobile-web row rhythm");
-  assert.equal(previousHeight - compactHeight, 16, "reduce total extra breathing room by 16 points");
-  assert.match(cars, /carResultCount:\{fontSize:13,lineHeight:17,fontWeight:"700",fontFamily:appFonts\.bold\}/);
+  const compactHeight = 8 + 44 + 2;
+  assert.equal(compactHeight, 54, "Cars summary reserves mobile-web 8-point breathing space above the 44-point row");
+  assert.equal(previousHeight - compactHeight, 10, "avoid restoring the previous oversized gaps below the filter rail");
+  assert.match(cars, /carResultCount:\{fontSize:12,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
   assert.match(cars, /carHeaderSurface:\{borderBottomLeftRadius:28,borderBottomRightRadius:0/);
   assert.doesNotMatch(cars, /carResultsCountColumn/);
   assert.match(cars, /body:\{paddingHorizontal:14\}/);
@@ -185,6 +185,25 @@ test("Cars result summary keeps Hotel typography but owns a balanced non-floatin
   assert.match(hotels, /hotelResultsSummaryRow: \{ minHeight: 38, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 \}/);
   assert.match(hotels, /hotelResultsCountColumn: \{ flex: 1, minWidth: 0, justifyContent: "center" \}/);
   assert.match(hotels, /hotelResultsItemSeparator: \{ height: 14 \}/);
+});
+
+test("native Cars summary follows phone web typography and preserves exact tracking-toggle placement", () => {
+  const webCars = readFileSync("../../src/components/results/CarsResultsClient.tsx", "utf8");
+  const webAlert = readFileSync("../../src/components/results/CarPriceAlertControl.tsx", "utf8");
+  assert.match(webCars, /"max-sm:pt-2"/);
+  assert.match(webCars, /truncate whitespace-nowrap text-\[12px\] font-semibold leading-4 tracking-\[-0\.002em\]/);
+  assert.match(webCars, /gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1/);
+  assert.match(webAlert, /flex h-11 w-\[51px\] shrink-0 items-center justify-end/);
+  assert.match(webAlert, /relative inline-flex h-11 w-11 shrink-0 items-center justify-center/);
+  assert.match(cars, /carResultsSummaryRow:\{marginTop:8,marginBottom:2,minHeight:44,paddingHorizontal:10,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\}/);
+  assert.match(cars, /carResultCount:\{fontSize:12,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
+  assert.match(carAlert, /control: \{ flexShrink: 1, minWidth: 0, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 6 \}/);
+  assert.match(carAlert, /switchSlot: \{ width: 51, minHeight: 44, flexShrink: 0, alignItems: "flex-end", justifyContent: "center" \}/);
+  assert.match(carAlert, /switchTouchTarget: \{ width: 44, height: 44, alignItems: "center", justifyContent: "center" \}/);
+  assert.match(carAlert, /switchTrack: \{ width: 44, height: 24/);
+  const webOuterGutter = 16 + 8; // page-shell 16px + web summary px-2
+  const nativeOuterGutter = 14 + 10; // native body + summary inset
+  assert.equal(nativeOuterGutter, webOuterGutter, "count and switch align to the same 24-point screen gutters as web");
 });
 
 test("Cars Results places one compact price control alongside the count without a separate panel", () => {
@@ -198,7 +217,7 @@ test("Cars Results places one compact price control alongside the count without 
   assert.match(cars, /carFilterSectionHeader:\{paddingTop:8,paddingBottom:8\}/);
   assert.match(hotels, /hotelFilterSectionHeader: \{ paddingBottom: 12 \}/);
   assert.match(cars, /body:\{paddingHorizontal:14\}/);
-  assert.match(cars, /carResultsSummaryRow:\{marginTop:2,marginBottom:2,minHeight:44,paddingHorizontal:8,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\}/);
+  assert.match(cars, /carResultsSummaryRow:\{marginTop:8,marginBottom:2,minHeight:44,paddingHorizontal:10,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\}/);
   assert.match(carAlert, /<Bell accessible=\{false\} size=\{16\}/);
   assert.match(carAlert, /<Pressable accessibilityRole="switch" accessibilityLabel="Track car prices"/);
   assert.match(carAlert, />Track car prices<\/Text>/);
