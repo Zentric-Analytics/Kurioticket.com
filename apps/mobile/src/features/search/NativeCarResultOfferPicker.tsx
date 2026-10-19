@@ -79,7 +79,7 @@ export function NativeCarResultOfferPicker({
 
   // Mirror native Hotels: present the seller inside the app instead of launching Safari.
   const openProviderInApp = async (url: string) => {
-    if (dealOpeningRef.current) return;
+    if (dealOpeningRef.current || pendingRateDealRef.current) return;
     dealOpeningRef.current = true;
     try {
       const WebBrowser = await import("expo-web-browser");
